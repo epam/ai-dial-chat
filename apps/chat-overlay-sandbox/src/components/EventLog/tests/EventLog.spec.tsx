@@ -18,11 +18,17 @@ describe('EventLog', () => {
 
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
     expect(panel?.hasAttribute('inert')).toBe(true);
+    expect(panel?.classList.contains('translate-y-full')).toBe(true);
+    expect(panel?.classList.contains('desktop:translate-x-full')).toBe(true);
 
     await user.click(trigger);
 
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
     expect(panel?.hasAttribute('inert')).toBe(false);
+    expect(panel?.classList.contains('translate-y-full')).toBe(false);
+    expect(panel?.classList.contains('desktop:translate-x-full')).toBe(false);
+    expect(panel?.classList.contains('translate-y-0')).toBe(true);
+    expect(panel?.classList.contains('desktop:translate-x-0')).toBe(true);
     expect(document.activeElement).toBe(
       screen.getByRole('button', { name: 'Close' }),
     );
@@ -30,7 +36,17 @@ describe('EventLog', () => {
     await user.keyboard('{Escape}');
 
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(panel?.classList.contains('translate-y-full')).toBe(true);
     expect(document.activeElement).toBe(trigger);
+  });
+
+  it('renders the event count on an opaque contrasting badge', () => {
+    render(<EventLog entries={['12:00 ready']} onClear={vi.fn()} />);
+
+    const count = screen.getByLabelText('1 events');
+
+    expect(count.classList.contains('bg-layer-raised')).toBe(true);
+    expect(count.classList.contains('text-primary')).toBe(true);
   });
 
   it('copies and clears populated entries', async () => {

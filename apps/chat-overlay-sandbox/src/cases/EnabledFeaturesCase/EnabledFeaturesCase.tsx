@@ -3,6 +3,11 @@ import {
   OverlayEventType,
   OverlayFeature,
 } from '@epam/ai-dial-chat-overlay';
+import {
+  DialInput,
+  DialNeutralButton,
+  DialPrimaryButton,
+} from '@epam/ai-dial-ui-kit';
 import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import EventLog from '../../components/EventLog/EventLog';
 import MissingEnvNotice from '../../components/MissingEnvNotice/MissingEnvNotice';
@@ -102,49 +107,44 @@ const EnabledFeaturesCase: FC = () => {
 
   return (
     <div>
-      <h1>enabledFeatures case</h1>
+      <h1 className="text-3xl font-bold">enabledFeatures case</h1>
 
       <p aria-live="polite">
         Ready: {isReady ? 'yes' : 'waiting for handshake...'}
       </p>
-      <div
-        style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}
-      >
+      <div className="my-3 flex flex-wrap gap-2">
         {Object.entries(PRESETS).map(([label, features]) => (
-          <button
+          <DialNeutralButton
             key={label}
+            className="min-h-11"
             type="button"
+            label={label}
             disabled={!isReady}
             onClick={() => void applyPreset(label, features)}
-          >
-            {label}
-          </button>
+          />
         ))}
       </div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        <label htmlFor="custom-input">Custom comma-separated list</label>
-        <input
+      <div className="mb-3 flex flex-col items-stretch gap-2 desktop:flex-row desktop:items-end">
+        <DialInput
           id="custom-input"
+          containerClassName="min-w-0 flex-1"
+          className="min-h-11"
           type="text"
+          labelProps={{ label: 'Custom comma-separated list' }}
           value={customInput}
-          onChange={(e) => setCustomInput(e.target.value)}
+          onChange={(value) => setCustomInput(value ?? '')}
         />
-        <button
+        <DialPrimaryButton
+          className="min-h-11"
           type="button"
+          label="Apply custom list"
           disabled={!isReady}
           onClick={() => void applyCustom()}
-        >
-          Apply custom list
-        </button>
+        />
       </div>
       <div
         ref={rootRef}
-        style={{
-          position: 'relative',
-          width: 'min(100%, 380px)',
-          height: 600,
-          marginBottom: 16,
-        }}
+        className="relative mb-4 h-[min(600px,78dvh)] w-[min(100%,380px)] desktop:h-[600px]"
       />
 
       <EventLog entries={log} onClear={() => setLog([])} />

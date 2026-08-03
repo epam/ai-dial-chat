@@ -1,4 +1,5 @@
 import { ChatOverlay, OverlayEventType } from '@epam/ai-dial-chat-overlay';
+import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
 import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import EventLog from '../../components/EventLog/EventLog';
 import MissingEnvNotice from '../../components/MissingEnvNotice/MissingEnvNotice';
@@ -173,64 +174,65 @@ const DirectOverlayCase: FC = () => {
 
   return (
     <div>
-      <h1>Direct ChatOverlay case</h1>
+      <h1 className="text-3xl font-bold">Direct ChatOverlay case</h1>
       <p aria-live="polite">
         Ready: {isReady ? 'yes' : 'waiting for handshake...'}
       </p>
       {isHandshakeSlow && !isReady && <p role="alert">{handshakeHint}</p>}
-      <div
-        style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}
-      >
-        <button type="button" onClick={handleGetMessages} disabled={!isReady}>
-          Get messages
-        </button>
-        <button type="button" onClick={handleSendMessage} disabled={!isReady}>
-          Send message
-        </button>
-        <button
+      <div className="my-3 flex flex-wrap gap-2">
+        <DialNeutralButton
+          className="min-h-11"
           type="button"
+          label="Get messages"
+          onClick={handleGetMessages}
+          disabled={!isReady}
+        />
+        <DialNeutralButton
+          className="min-h-11"
+          type="button"
+          label="Send message"
+          onClick={handleSendMessage}
+          disabled={!isReady}
+        />
+        <DialNeutralButton
+          className="min-h-11"
+          type="button"
+          label="Update theme + model"
           onClick={handleUpdateThemeAndModel}
           disabled={!isReady}
-        >
-          Update theme + model
-        </button>
-        <button
+        />
+        <DialNeutralButton
+          className="min-h-11"
           type="button"
+          label="Update theme to light"
           onClick={handleUpdateThemeToLight}
           disabled={!isReady}
-        >
-          Update theme to light
-        </button>
-        <button
+        />
+        <DialNeutralButton
+          className="min-h-11"
           type="button"
+          label="Set input content"
           onClick={handleSetInputContent}
           disabled={!isReady}
-        >
-          Set input content
-        </button>
-        <button
+        />
+        <DialNeutralButton
+          className="min-h-11"
           type="button"
+          label="Set system prompt"
           onClick={handleSetSystemPrompt}
           disabled={!isReady}
-        >
-          Set system prompt
-        </button>
-        <button
+        />
+        <DialNeutralButton
+          className="min-h-11"
           type="button"
+          label="Set temperature"
           onClick={handleSetTemperature}
           disabled={!isReady}
-        >
-          Set temperature
-        </button>
+        />
       </div>
       <div
         ref={rootRef}
-        style={{
-          position: 'relative',
-          width: 'min(100%, 380px)',
-          height: 600,
-          marginBottom: 16,
-        }}
+        className="relative mb-4 h-[min(600px,78dvh)] w-[min(100%,380px)] desktop:h-[600px]"
       />
       <EventLog entries={log} onClear={() => setLog([])} />
     </div>

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AuthUiModeCase from '../AuthUiModeCase';
@@ -39,6 +39,16 @@ describe('AuthUiModeCase', () => {
     mocks.getChatOverlayHost.mockReturnValue('https://chat.example.com');
   });
 
+  const selectProviderMode = async (
+    user: ReturnType<typeof userEvent.setup>,
+    fieldName: string,
+    optionName: string,
+  ) => {
+    const field = screen.getByRole('group', { name: fieldName });
+    await user.click(within(field).getByRole('button'));
+    await user.click(await screen.findByRole('option', { name: optionName }));
+  };
+
   it('constructs the overlay with two provider UI modes', () => {
     render(<AuthUiModeCase />);
 
@@ -61,14 +71,8 @@ describe('AuthUiModeCase', () => {
     const firstProviderId = screen.getByLabelText('Provider 1 ID');
     await user.clear(firstProviderId);
     await user.type(firstProviderId, 'custom/provider');
-    await user.selectOptions(
-      screen.getByLabelText('Provider 1 mode'),
-      'external',
-    );
-    await user.selectOptions(
-      screen.getByLabelText('Provider 2 mode'),
-      'sameWindow',
-    );
+    await selectProviderMode(user, 'Provider 1 mode', 'External');
+    await selectProviderMode(user, 'Provider 2 mode', 'Same window');
     await user.click(
       screen.getByRole('button', { name: 'Apply auth settings' }),
     );
@@ -105,10 +109,7 @@ describe('AuthUiModeCase', () => {
     expect(screen.getByText('3 providers configured')).toBeTruthy();
 
     await user.type(screen.getByLabelText('Provider 3 ID'), 'github');
-    await user.selectOptions(
-      screen.getByLabelText('Provider 3 mode'),
-      'sameWindow',
-    );
+    await selectProviderMode(user, 'Provider 3 mode', 'Same window');
     await user.click(
       screen.getByRole('button', { name: 'Apply auth settings' }),
     );

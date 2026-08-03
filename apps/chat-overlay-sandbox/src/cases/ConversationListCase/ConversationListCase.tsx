@@ -1,19 +1,16 @@
 import { ChatOverlay } from '@epam/ai-dial-chat-overlay';
 import {
-  ChangeEvent,
-  FC,
-  memo,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+  DialDangerButton,
+  DialInput,
+  DialNeutralButton,
+  DialSelectField,
+} from '@epam/ai-dial-ui-kit';
+import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import EventLog from '../../components/EventLog/EventLog';
 import MissingEnvNotice from '../../components/MissingEnvNotice/MissingEnvNotice';
 import { getChatOverlayHost } from '../../env';
 
 interface ConversationListControlsProps {
-  title: string;
   isReady: boolean;
   conversations: ConversationSelectorOption[];
   onGetConversations: () => void;
@@ -38,7 +35,6 @@ const getConversationSelectorLabel = ({
 
 /** Control panel for exercising the conversation-list methods against one visible overlay. */
 const ConversationListControls: FC<ConversationListControlsProps> = ({
-  title,
   isReady,
   conversations,
   onGetConversations,
@@ -55,130 +51,114 @@ const ConversationListControls: FC<ConversationListControlsProps> = ({
   const [conversationId, setConversationId] = useState('');
   const [newName, setNewName] = useState('');
 
-  const handleConversationIdSelect = (
-    event: ChangeEvent<HTMLSelectElement>,
-  ) => {
-    setConversationId(event.target.value);
-  };
-
   return (
-    <section className="conversation-list-controls">
-      <h2>{title}</h2>
-      <div className="conversation-list-controls__groups">
-        <fieldset className="conversation-list-controls__group">
-          <legend>Read</legend>
-          <div className="conversation-list-controls__actions">
-            <button
+    <section className="mb-4 max-w-[960px]">
+      <div className="grid grid-cols-1 gap-3 desktop:grid-cols-2">
+        <fieldset className="m-0 min-w-0 rounded-lg border border-secondary px-3 py-3">
+          <legend className="px-1 font-semibold">Read</legend>
+          <div className="flex flex-wrap gap-2 [&>*]:min-h-11 [&>*]:min-w-[160px] [&>*]:flex-1">
+            <DialNeutralButton
               type="button"
+              label="Get conversations"
               onClick={onGetConversations}
               disabled={!isReady}
-            >
-              Get conversations
-            </button>
-            <button
+            />
+            <DialNeutralButton
               type="button"
+              label="Get selected conversations"
               onClick={onGetSelectedConversations}
               disabled={!isReady}
-            >
-              Get selected conversations
-            </button>
-            <button type="button" onClick={onRefreshList} disabled={!isReady}>
-              Refresh list
-            </button>
-            <button
+            />
+            <DialNeutralButton
               type="button"
+              label="Refresh list"
+              onClick={onRefreshList}
+              disabled={!isReady}
+            />
+            <DialNeutralButton
+              type="button"
+              label="Create local conversation"
               onClick={onCreateLocalConversation}
               disabled={!isReady}
-            >
-              Create local conversation
-            </button>
+            />
           </div>
         </fieldset>
-        <fieldset className="conversation-list-controls__group">
-          <legend>Create persisted</legend>
-          <div className="conversation-list-controls__fields">
-            <label>
-              Deployment id (optional){' '}
-              <input
-                value={deploymentId}
-                onChange={(event) => setDeploymentId(event.target.value)}
-              />
-            </label>
-            <label>
-              First message (optional){' '}
-              <input
-                value={firstMessage}
-                onChange={(event) => setFirstMessage(event.target.value)}
-              />
-            </label>
-            <button
+        <fieldset className="m-0 min-w-0 rounded-lg border border-secondary px-3 py-3">
+          <legend className="px-1 font-semibold">Create persisted</legend>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,220px),1fr))] items-end gap-2.5">
+            <DialInput
+              id="deployment-id"
+              className="min-h-11"
+              labelProps={{ label: 'Deployment id (optional)' }}
+              value={deploymentId}
+              onChange={(value) => setDeploymentId(value ?? '')}
+            />
+            <DialInput
+              id="first-message"
+              className="min-h-11"
+              labelProps={{ label: 'First message (optional)' }}
+              value={firstMessage}
+              onChange={(value) => setFirstMessage(value ?? '')}
+            />
+            <DialNeutralButton
+              className="min-h-11 w-full"
               type="button"
+              label="Create conversation"
               onClick={() => onCreateConversation(deploymentId, firstMessage)}
               disabled={!isReady}
-            >
-              Create conversation
-            </button>
+            />
           </div>
         </fieldset>
-        <fieldset className="conversation-list-controls__group conversation-list-controls__group--wide">
-          <legend>Mutate by id</legend>
-          <div className="conversation-list-controls__fields conversation-list-controls__fields--mutate">
-            <label>
-              Conversation id{' '}
-              <select
-                value={conversationId}
-                onChange={handleConversationIdSelect}
-              >
-                <option value="">— select from last Get conversations —</option>
-                {conversations.map((conversation) => (
-                  <option
-                    key={conversation.id}
-                    value={conversation.id}
-                    title={conversation.id}
-                  >
-                    {getConversationSelectorLabel(conversation)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Conversation id override
-              <input
-                placeholder="or type an id"
-                value={conversationId}
-                onChange={(event) => setConversationId(event.target.value)}
-              />
-            </label>
-            <label>
-              New conversation name
-              <input
-                placeholder="new name"
-                value={newName}
-                onChange={(event) => setNewName(event.target.value)}
-              />
-            </label>
-            <div className="conversation-list-controls__actions conversation-list-controls__actions--mutate">
-              <button
+        <fieldset className="m-0 min-w-0 rounded-lg border border-secondary px-3 py-3 desktop:col-span-2">
+          <legend className="px-1 font-semibold">Mutate by id</legend>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,220px),1fr))] items-end gap-2.5">
+            <DialSelectField
+              id="conversation-id-select"
+              label="Conversation id"
+              selectClassName="min-h-11 w-full"
+              placeholder="— select from last Get conversations —"
+              value={conversationId}
+              options={conversations.map((conversation) => ({
+                value: conversation.id,
+                label: getConversationSelectorLabel(conversation),
+              }))}
+              onChange={(value) => setConversationId(value as string)}
+            />
+            <DialInput
+              id="conversation-id-override"
+              className="min-h-11"
+              labelProps={{ label: 'Conversation id override' }}
+              placeholder="or type an id"
+              value={conversationId}
+              onChange={(value) => setConversationId(value ?? '')}
+            />
+            <DialInput
+              id="new-conversation-name"
+              className="min-h-11"
+              labelProps={{ label: 'New conversation name' }}
+              placeholder="new name"
+              value={newName}
+              onChange={(value) => setNewName(value ?? '')}
+            />
+            <div className="col-span-full flex flex-wrap gap-2 self-end [&>*]:min-h-11 [&>*]:min-w-24 [&>*]:flex-1">
+              <DialNeutralButton
                 type="button"
+                label="Select conversation by id"
                 onClick={() => onSelectConversation(conversationId)}
                 disabled={!isReady || !conversationId}
-              >
-                Select conversation by id
-              </button>
-              <button
+              />
+              <DialNeutralButton
                 type="button"
+                label="Rename conversation by id"
                 onClick={() => onRenameConversation(conversationId, newName)}
                 disabled={!isReady || !conversationId}
-              >
-                Rename conversation by id
-              </button>
-              <button
+              />
+              <DialDangerButton
                 type="button"
+                label="Delete conversation by id"
                 onClick={() => onDeleteConversation(conversationId)}
                 disabled={!isReady || !conversationId}
-              >
-                Delete conversation by id
-              </button>
+              />
             </div>
           </div>
         </fieldset>
@@ -303,10 +283,9 @@ const ConversationListCase: FC = () => {
   }
 
   return (
-    <div className="conversation-list-case">
-      <h1>Conversation-list methods case</h1>
+    <div className="max-w-[960px] pb-6">
+      <h1 className="text-3xl font-bold">Conversation-list methods case</h1>
       <ConversationListControls
-        title="ChatOverlay"
         isReady={isDirectReady}
         conversations={directConversations}
         onGetConversations={() => void handleDirectGetConversations()}
@@ -326,7 +305,10 @@ const ConversationListCase: FC = () => {
         }
         onDeleteConversation={(id) => void handleDirectDeleteConversation(id)}
       />
-      <div ref={directRootRef} className="conversation-list-case__overlay" />
+      <div
+        ref={directRootRef}
+        className="relative my-4 h-[min(600px,78dvh)] w-[min(100%,380px)] desktop:h-[600px]"
+      />
       <EventLog entries={directLog} onClear={() => setDirectLog([])} />
     </div>
   );

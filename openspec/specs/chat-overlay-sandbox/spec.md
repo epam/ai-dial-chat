@@ -20,6 +20,27 @@
 - **WHEN** `npm exec nx serve chat-overlay-sandbox` is run
 - **THEN** a Vite dev server starts serving the sandbox app
 
+### Requirement: Sandbox controls use the shared UI Kit and Tailwind
+
+All sandbox-owned buttons SHALL use button components exported by `@epam/ai-dial-ui-kit`. Text inputs and selectors SHALL use `DialInput` and `DialSelectField` so the developer playground exercises the same controls as the main application. Sandbox layout and presentation SHALL be authored with mobile-first Tailwind utility classes, using the workspace `mobile`/`desktop` breakpoints and logical direction utilities. A CSS entry file MAY remain solely to load the Tailwind layers and the UI Kit's published stylesheet; it SHALL NOT contain sandbox-specific selector rules.
+
+#### Scenario: No native sandbox controls remain
+
+- **WHEN** the sandbox source components are inspected
+- **THEN** they contain no native `<button>`, `<input>`, or `<select>` elements owned by the sandbox
+- **AND** actions use UI Kit button components while text and selection fields use `DialInput` and `DialSelectField`
+
+#### Scenario: Presentation is colocated as Tailwind utilities
+
+- **WHEN** sandbox-specific layout and visual styling is inspected
+- **THEN** it is expressed through Tailwind utility classes in the React components
+- **AND** the Tailwind entry stylesheet contains no custom selectors
+
+#### Scenario: Controls remain usable across viewport sizes and directions
+
+- **WHEN** a case is rendered on mobile, desktop, or under an RTL document direction
+- **THEN** controls retain at least a 44px touch target, responsive layouts use the named `desktop` breakpoint, and directional positioning uses logical start/end utilities
+
 ### Requirement: Sandbox host URL is configured via a Vite-prefixed env var
 
 The sandbox SHALL read the chat app's overlay host URL from `import.meta.env.VITE_CHAT_OVERLAY_HOST`, documented in an `apps/chat-overlay-sandbox/.env.development` (or equivalent) file, since only `VITE_`-prefixed variables are exposed to client-side Vite code in this repo's toolchain.

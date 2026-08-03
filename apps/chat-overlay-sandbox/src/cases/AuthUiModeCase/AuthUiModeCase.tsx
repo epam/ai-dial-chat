@@ -3,6 +3,13 @@ import {
   OverlayAuthUiMode,
   OverlayEventType,
 } from '@epam/ai-dial-chat-overlay';
+import {
+  DialDangerButton,
+  DialInput,
+  DialNeutralButton,
+  DialPrimaryButton,
+  DialSelectField,
+} from '@epam/ai-dial-ui-kit';
 import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import EventLog from '../../components/EventLog/EventLog';
 import MissingEnvNotice from '../../components/MissingEnvNotice/MissingEnvNotice';
@@ -122,8 +129,8 @@ const AuthUiModeCase: FC = () => {
   }
 
   return (
-    <main className="auth-ui-mode-case">
-      <h1>Provider auth UI mode case</h1>
+    <main className="max-w-[960px] pb-6">
+      <h1 className="text-3xl font-bold">Provider auth UI mode case</h1>
       <p>
         Use provider IDs returned by your deployment. Test while signed out:
         configured providers appear in the login picker, and unconfigured
@@ -134,75 +141,83 @@ const AuthUiModeCase: FC = () => {
         the provider and tenant before selecting it.
       </p>
 
-      <fieldset className="auth-ui-mode-controls">
-        <legend>auth.providerUiModes</legend>
-        <p className="auth-ui-mode-controls__count" aria-live="polite">
+      <fieldset className="my-4 max-w-[720px] rounded-lg border border-secondary px-3 py-3">
+        <legend className="px-1 font-semibold">auth.providerUiModes</legend>
+        <p className="mb-3 mt-1 text-secondary" aria-live="polite">
           {providerModes.length}{' '}
           {providerModes.length === 1 ? 'provider' : 'providers'} configured
         </p>
-        <div className="auth-ui-mode-controls__providers">
+        <div className="mb-3 grid grid-cols-1 gap-3">
           {providerModes.map((provider, index) => (
             <div
               key={provider.fieldId}
-              className="auth-ui-mode-controls__provider"
+              className="grid grid-cols-1 gap-2 desktop:grid-cols-[repeat(2,minmax(0,1fr))_auto] desktop:items-end"
             >
-              <label>
-                Provider {index + 1} ID
-                <input
-                  type="text"
-                  value={provider.id}
-                  onChange={(event) =>
-                    updateProviderId(index, event.target.value)
-                  }
-                />
-              </label>
-              <label>
-                Provider {index + 1} mode
-                <select
-                  value={provider.mode}
-                  onChange={(event) =>
-                    updateProviderMode(
-                      index,
-                      event.target.value as OverlayAuthUiMode,
-                    )
-                  }
-                >
-                  <option value={OverlayAuthUiMode.External}>External</option>
-                  <option value={OverlayAuthUiMode.SameWindow}>
-                    Same window
-                  </option>
-                </select>
-              </label>
-              <button
-                className="auth-ui-mode-controls__remove"
+              <DialInput
+                id={`provider-${provider.fieldId}-id`}
+                className="min-h-11"
+                type="text"
+                labelProps={{ label: `Provider ${index + 1} ID` }}
+                value={provider.id}
+                onChange={(value) => updateProviderId(index, value ?? '')}
+              />
+              <DialSelectField
+                id={`provider-${provider.fieldId}-mode`}
+                label={`Provider ${index + 1} mode`}
+                selectClassName="min-h-11 w-full"
+                value={provider.mode}
+                options={[
+                  {
+                    value: OverlayAuthUiMode.External,
+                    label: 'External',
+                  },
+                  {
+                    value: OverlayAuthUiMode.SameWindow,
+                    label: 'Same window',
+                  },
+                ]}
+                onChange={(value) =>
+                  updateProviderMode(index, value as OverlayAuthUiMode)
+                }
+              />
+              <DialDangerButton
+                className="min-h-11 w-full desktop:w-auto"
                 type="button"
+                label={<span aria-hidden>Remove</span>}
                 aria-label={`Remove provider ${index + 1}`}
                 disabled={providerModes.length === 1}
                 onClick={() => removeProvider(provider.fieldId)}
-              >
-                Remove
-              </button>
+              />
             </div>
           ))}
         </div>
-        <div className="auth-ui-mode-controls__actions">
-          <button type="button" onClick={addProvider}>
-            Add provider
-          </button>
-          <button
+        <div className="flex flex-wrap gap-2">
+          <DialNeutralButton
+            className="min-h-11"
             type="button"
+            label="Add provider"
+            onClick={addProvider}
+          />
+          <DialDangerButton
+            className="min-h-11"
+            type="button"
+            label="Clear provider settings"
             disabled={providerModes.length === 0}
             onClick={() => void clearProviderModes()}
-          >
-            Clear provider settings
-          </button>
-          <button type="button" onClick={() => void applyProviderModes()}>
-            Apply auth settings
-          </button>
+          />
+          <DialPrimaryButton
+            className="min-h-11"
+            type="button"
+            label="Apply auth settings"
+            onClick={() => void applyProviderModes()}
+          />
         </div>
       </fieldset>
 
-      <div ref={rootRef} className="auth-ui-mode-case__overlay" />
+      <div
+        ref={rootRef}
+        className="relative my-4 h-[min(600px,78dvh)] w-[min(100%,380px)] desktop:h-[600px]"
+      />
       <EventLog entries={log} onClear={() => setLog([])} />
     </main>
   );
