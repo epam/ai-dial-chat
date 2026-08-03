@@ -4,7 +4,7 @@
 The system SHALL provide a `CustomAppEditor` page that reuses `ToolsetEditorHeader` and a new `CustomAppEditorView`. The editor has two steps: General and Settings. The General step reuses `GeneralForm`. The Settings step renders `CustomAppSettingsForm`. The editor supports both **create** and **edit** modes; edit mode is entered when `ToolsetEditorQuery.Id` is present in the URL.
 
 #### Scenario: Navigate to custom app editor (create)
-- **WHEN** user clicks "Create Custom App" in the catalog
+- **WHEN** user clicks "Custom App" in the catalog
 - **THEN** the app navigates to the Custom App Editor with no `id` query param (creation mode)
 
 #### Scenario: Navigate to custom app editor (edit)

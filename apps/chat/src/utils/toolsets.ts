@@ -69,6 +69,23 @@ export const getDefaultToolsetForm = (
   auth: getDefaultAuthFormData(),
 });
 
+export const DEFAULT_CUSTOM_APP_GENERAL_FORM: ToolsetFormData = {
+  name: '',
+  version: '0.0.1',
+  iconUrl: '',
+  description: '',
+  topics: [],
+  intro: '',
+  endpoint: '',
+  protocol: ToolsetTransportType.Http,
+  allowedTools: [],
+  auth: {
+    authenticationType: ToolsetAuthTypes.None,
+    withLogin: WithLogin.WithoutLogin,
+    isLoggedIn: false,
+  },
+};
+
 const isSignedIn = (status?: string): boolean =>
   status === ToolsetAuthStatus.SignedIn;
 

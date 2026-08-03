@@ -27,50 +27,16 @@ import type {
 } from '../../types/custom-apps';
 import { ROUTES } from '../../types/routes';
 import type { ToolsetFormData } from '../../types/toolsets';
+import { ToolsetEditorSteps } from '../../types/toolsets';
 import {
-  ToolsetAuthTypes,
-  ToolsetEditorSteps,
-  ToolsetTransportType,
-  WithLogin,
-} from '../../types/toolsets';
-import { isValidFeaturesData, MIME_TYPE_REGEX } from '../../utils/custom-apps';
+  DEFAULT_CUSTOM_APP_SETTINGS_FORM,
+  isValidAbsoluteUrl,
+  isValidFeaturesData,
+  MIME_TYPE_REGEX,
+} from '../../utils/custom-apps';
+import { DEFAULT_CUSTOM_APP_GENERAL_FORM } from '../../utils/toolsets';
 import CustomAppEditorView from './CustomAppEditorView';
 import ToolsetEditorHeader from './ToolsetEditorHeader';
-
-const DEFAULT_GENERAL_FORM: ToolsetFormData = {
-  name: '',
-  version: '0.0.1',
-  iconUrl: '',
-  description: '',
-  topics: [],
-  intro: '',
-  endpoint: '',
-  protocol: ToolsetTransportType.Http,
-  allowedTools: [],
-  auth: {
-    authenticationType: ToolsetAuthTypes.None,
-    withLogin: WithLogin.WithoutLogin,
-    isLoggedIn: false,
-  },
-};
-
-const DEFAULT_SETTINGS_FORM: CustomAppFormData = {
-  completionUrl: '',
-  featuresData: '',
-  inputAttachmentTypes: [],
-  maxInputAttachments: '',
-};
-
-const isValidAbsoluteUrl = (value: string): boolean => {
-  const trimmed = value.trim();
-  if (!trimmed) return false;
-  if (!/^https?:\/\//.test(trimmed)) return false;
-  try {
-    return Boolean(new URL(trimmed));
-  } catch {
-    return false;
-  }
-};
 
 const CustomAppEditor: FC = () => {
   const { t } = useTranslation();
@@ -89,10 +55,11 @@ const CustomAppEditor: FC = () => {
     [searchParams],
   );
 
-  const [generalForm, setGeneralForm] =
-    useState<ToolsetFormData>(DEFAULT_GENERAL_FORM);
+  const [generalForm, setGeneralForm] = useState<ToolsetFormData>(
+    DEFAULT_CUSTOM_APP_GENERAL_FORM,
+  );
   const [settingsForm, setSettingsForm] = useState<CustomAppFormData>(
-    DEFAULT_SETTINGS_FORM,
+    DEFAULT_CUSTOM_APP_SETTINGS_FORM,
   );
   const [generalErrors, setGeneralErrors] = useState<Record<string, string>>(
     {},
@@ -116,7 +83,7 @@ const CustomAppEditor: FC = () => {
 
         if (deployment) {
           setGeneralForm({
-            ...DEFAULT_GENERAL_FORM,
+            ...DEFAULT_CUSTOM_APP_GENERAL_FORM,
             name: deployment.displayName ?? '',
             description: deployment.description ?? '',
             iconUrl: deployment.iconUrl ?? '',
