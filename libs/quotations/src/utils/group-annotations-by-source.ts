@@ -1,5 +1,4 @@
 import type { Annotation } from '@epam/ai-dial-chat-shared';
-import { safeDecodeURI } from './string-utils';
 
 /** A set of annotations that all cite the same source document. */
 export interface AnnotationGroup {
@@ -15,6 +14,14 @@ export interface AnnotationGroup {
   /** The first annotation in the group — used for the inline citation marker position. */
   primaryAnnotation: Annotation;
 }
+
+const safeDecodeURI = (s: string): string => {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
+};
 
 const deriveSourceName = (url: string): string => {
   try {
@@ -33,10 +40,7 @@ const deriveSourceName = (url: string): string => {
   }
 };
 
-/**
- * Groups annotations by their source attachment URL.
- * Annotations without a `body.source.attachment.url` are excluded.
- */
+/** Groups annotations by their source attachment URL. Annotations without a `body.source.attachment.url` are excluded. */
 export const groupAnnotationsBySource = (
   annotations: Annotation[],
 ): AnnotationGroup[] => {

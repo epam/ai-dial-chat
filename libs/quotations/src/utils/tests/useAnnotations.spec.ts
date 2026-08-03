@@ -56,7 +56,6 @@ describe('useAnnotations', () => {
   it('skips null/undefined annotation entries', () => {
     const msg: Message = {
       ...baseMessage(),
-      // Cast to exercise the null-guard path
       custom_content: {
         annotations: [null as unknown as Annotation, validAnnotation],
       },

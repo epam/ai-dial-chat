@@ -20,18 +20,18 @@ import type {
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
 import { FileExtension, MIMEType } from '@epam/ai-dial-chat-shared';
-import { LRUCache } from 'lru-cache';
 import {
   annotationHighlightId,
   annotationsToPdfHighlights,
-} from './annotation';
+  parsePdfPageReference,
+  type AnnotationGroup,
+} from '@epam/ai-dial-quotations';
+import { LRUCache } from 'lru-cache';
 import {
   isDialFileId,
   resolveDialFileDownloadUrl,
   resolveDialUrl,
 } from './dial-file';
-import type { AnnotationGroup } from './group-annotations-by-source';
-import { parsePdfPageReference } from './reference-attachment';
 
 /**
  * Decodes a base64 string into raw bytes, or `undefined` if the string is not
