@@ -1,5 +1,6 @@
 import { memo, useMemo, type FC } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
 import { useStreamedMarkdownContent } from '../../hooks/useStreamedMarkdownContent';
 import { CodeBlockTheme } from '../../types/code-editor';
@@ -113,8 +114,8 @@ export interface MarkdownRendererColors {
   border?: string;
 }
 
-/** GFM remark plugins list, shared across all markdown instances. */
-const remarkPlugins = [remarkGfm];
+/** Remark plugins list, shared across all markdown instances: GFM support, then soft-break-to-hard-break conversion so single newlines render as visible line breaks. */
+const remarkPlugins = [remarkGfm, remarkBreaks];
 
 /** Stable empty classNames object used as the default when no `classNames` prop is passed. */
 const EMPTY_CLASS_NAMES: MarkdownRendererClassNames = {};
