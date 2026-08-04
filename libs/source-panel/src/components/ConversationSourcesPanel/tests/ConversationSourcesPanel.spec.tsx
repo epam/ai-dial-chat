@@ -9,7 +9,6 @@ import type { ConversationSourcesPanelLabels } from '../ConversationSourcesPanel
 import ConversationSourcesPanel from '../ConversationSourcesPanel';
 
 vi.mock('@epam/ai-dial-sidebar', () => ({
-  PanelEmpty: ({ label }: { label: string }) => <div>{label}</div>,
   PanelNoResults: ({ label }: { label: string }) => <div>{label}</div>,
   SidebarOrientation: { Left: 'left', Right: 'right' },
   SidebarPanel: ({
@@ -73,6 +72,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       onClick={onClick}
     />
   ),
+  DialNoDataContent: ({ title }: { title: string }) => <div>{title}</div>,
   DialEllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
   Highlight: ({ text }: { text: string }) => <span>{text}</span>,
 }));
@@ -99,7 +99,7 @@ const LABELS: ConversationSourcesPanelLabels = {
   closeLabel: 'Close',
   searchPlaceholder: 'Search',
   searchClearLabel: 'Clear search',
-  emptyLabel: 'Empty',
+  noDataLabel: 'No data',
   noResultsLabel: 'No results',
   downloadAllLabel: 'Download all',
   uploadedSectionTitle: 'Uploaded files',
@@ -172,7 +172,7 @@ describe('ConversationSourcesPanel', () => {
 
   it('renders empty state when no data', () => {
     renderPanel();
-    expect(screen.getByText('Empty')).toBeTruthy();
+    expect(screen.getByText('No data')).toBeTruthy();
     expect(screen.queryByRole('heading')).toBeNull();
     expect(screen.queryByRole('searchbox')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Download all' })).toBeNull();
