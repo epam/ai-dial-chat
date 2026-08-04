@@ -703,7 +703,7 @@ describe('DeploymentsService', () => {
           {
             ...mockApplication,
             id: 'applications/BUCKET_HASH/my-app',
-            owner: 'Valery Dluski',
+            owner: 'Test User',
           },
         ],
       });

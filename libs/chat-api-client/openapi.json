@@ -7251,7 +7251,7 @@
           },
           "publishedBy": {
             "type": "string",
-            "example": "Valery Dluski"
+            "example": "Test User"
           }
         },
         "required": ["path", "folderPath", "publishedAt", "publishedBy"]

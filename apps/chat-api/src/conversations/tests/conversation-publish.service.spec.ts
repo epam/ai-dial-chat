@@ -46,7 +46,7 @@ describe('ConversationPublishService', () => {
       vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
         okResponse({
           createdAt: 1_700_000_000_000,
-          author: 'Valery Dluski',
+          author: 'Test User',
         }),
       );
 
@@ -55,7 +55,7 @@ describe('ConversationPublishService', () => {
         'bucket-123',
         'my-conversation-abc',
         'Organization/Data Science/Shared chats',
-        'Valery Dluski',
+        'Test User',
       );
 
       expect(dialClient.client.getConversation).toHaveBeenCalledWith(
@@ -76,7 +76,7 @@ describe('ConversationPublishService', () => {
                 'conversations/public/Organization/Data%20Science/Shared%20chats/my-conversation-abc',
             },
           ],
-          displayAuthor: 'Valery Dluski',
+          displayAuthor: 'Test User',
           rules: [],
         },
       });
@@ -84,7 +84,7 @@ describe('ConversationPublishService', () => {
         path: 'conversations/bucket-123/my-conversation-abc',
         folderPath: 'Organization/Data Science/Shared chats',
         publishedAt: new Date(1_700_000_000_000).toISOString(),
-        publishedBy: 'Valery Dluski',
+        publishedBy: 'Test User',
       });
       expect(cacheManager.del).toHaveBeenCalledWith(
         'conversation-publish-history:conversations/bucket-123/my-conversation-abc',
@@ -160,7 +160,7 @@ describe('ConversationPublishService', () => {
         'bucket-123',
         'Planning/My conversation',
         'Organization',
-        'Valery Dluski',
+        'Test User',
       );
 
       expect(dialClient.client.getConversation).toHaveBeenCalledWith(
@@ -202,7 +202,7 @@ describe('ConversationPublishService', () => {
           'bucket-123',
           'missing-conversation',
           'Organization/Data Science',
-          'Valery Dluski',
+          'Test User',
         ),
       ).rejects.toMatchObject({ status: 404 });
       expect(dialClient.client.createPublication).not.toHaveBeenCalled();
@@ -223,7 +223,7 @@ describe('ConversationPublishService', () => {
           'bucket-123',
           'my-conversation-abc',
           'Organization/Production',
-          'Valery Dluski',
+          'Test User',
         ),
       ).rejects.toBeInstanceOf(ForbiddenException);
     });
@@ -243,7 +243,7 @@ describe('ConversationPublishService', () => {
           'bucket-123',
           'my-conversation-abc',
           'Organization/Data Science',
-          'Valery Dluski',
+          'Test User',
         ),
       ).rejects.toBeInstanceOf(BadGatewayException);
     });
@@ -259,7 +259,7 @@ describe('ConversationPublishService', () => {
             name: 'Q3 planning notes',
             targetFolder: 'public/Organization/Data Science/',
             createdAt: 1_700_000_000_000,
-            author: 'Valery Dluski',
+            author: 'Test User',
             resources: [
               {
                 sourceUrl: 'conversations/bucket-123/my-conversation-abc',
@@ -293,7 +293,7 @@ describe('ConversationPublishService', () => {
           path: 'conversations/bucket-123/my-conversation-abc',
           folderPath: 'Organization/Data Science',
           publishedAt: new Date(1_700_000_000_000).toISOString(),
-          publishedBy: 'Valery Dluski',
+          publishedBy: 'Test User',
         },
       ]);
     });

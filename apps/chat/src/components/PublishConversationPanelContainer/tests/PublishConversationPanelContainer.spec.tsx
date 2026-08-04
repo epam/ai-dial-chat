@@ -168,7 +168,7 @@ describe('PublishConversationPanelContainer', () => {
       path: 'conversations/bucket-123/my-conversation-abc',
       folderPath: 'Shared',
       publishedAt: new Date().toISOString(),
-      publishedBy: 'Valery Dluski',
+      publishedBy: 'Test User',
     });
     const onClose = vi.fn();
     render(
@@ -207,7 +207,7 @@ describe('PublishConversationPanelContainer', () => {
       path: 'conversations/bucket-123/my-conversation-abc',
       folderPath: 'Shared',
       publishedAt: new Date().toISOString(),
-      publishedBy: 'Valery Dluski',
+      publishedBy: 'Test User',
     });
     await renderContainer();
 
@@ -284,7 +284,7 @@ describe('PublishConversationPanelContainer', () => {
       path: 'conversations/bucket-123/my-conversation-abc',
       folderPath: 'Shared',
       publishedAt: new Date().toISOString(),
-      publishedBy: 'Valery Dluski',
+      publishedBy: 'Test User',
     });
     await renderContainer();
 
