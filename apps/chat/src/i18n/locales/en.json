@@ -393,7 +393,9 @@
     "preferences": "Preferences",
     "usage": "Usage",
     "usagePageSubtitle": "Per-model figures below sum to the totals · settle after each response · times in your timezone · set by your organization.",
-    "usageByModel": "By model"
+    "usageByModel": "By model",
+    "usageLoadError": "Could not load your usage data. Please try again.",
+    "usageLoading": "Loading usage data"
   },
   "attachments": {
     "downloadFile": "Download file",

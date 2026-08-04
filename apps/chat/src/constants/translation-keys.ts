@@ -452,6 +452,8 @@ export enum SettingsI18nKeys {
   Usage = 'settings.usage',
   UsagePageSubtitle = 'settings.usagePageSubtitle',
   UsageByModel = 'settings.usageByModel',
+  UsageLoadError = 'settings.usageLoadError',
+  UsageLoading = 'settings.usageLoading',
 }
 
 export enum ConversationPanelI18nKeys {

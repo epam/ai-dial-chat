@@ -1,14 +1,19 @@
 import { UsageModelTable, UsageSummaryCard } from '@epam/ai-dial-kit';
+import { DialSpinner, NeutralButton } from '@epam/ai-dial-ui-kit';
 import { type FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import ProfileSettingsNav from '../../components/ProfileSettingsNav/ProfileSettingsNav';
-import { SettingsI18nKeys } from '../../constants/translation-keys';
-import { MOCK_USAGE_ROWS, MOCK_USAGE_WINDOWS } from './mock-usage-data';
+import {
+  ButtonsI18nKeys,
+  SettingsI18nKeys,
+} from '../../constants/translation-keys';
+import { useAccountUsage } from '../../hooks/useAccountUsage';
 
 type Props = Record<string, never>;
 
 const ProfileUsage: FC<Props> = () => {
   const { t } = useTranslation();
+  const { windows, rows, isLoading, hasError, refresh } = useAccountUsage();
 
   return (
     <div className="flex h-full min-h-0 w-full">
@@ -21,18 +26,47 @@ const ProfileUsage: FC<Props> = () => {
             {t(SettingsI18nKeys.UsagePageSubtitle)}
           </p>
 
-          <UsageSummaryCard windows={MOCK_USAGE_WINDOWS} className="mb-10" />
+          {isLoading && (
+            <div className="flex items-center justify-center py-16">
+              <DialSpinner />
+              <span role="status" aria-live="polite" className="sr-only">
+                {t(SettingsI18nKeys.UsageLoading)}
+              </span>
+            </div>
+          )}
 
-          <div className="mb-5 flex items-baseline gap-2.5">
-            <span className="dial-h3-text">
-              {t(SettingsI18nKeys.UsageByModel)}
-            </span>
-            <span className="dial-small-semi-text text-secondary">
-              {MOCK_USAGE_ROWS.length}
-            </span>
-          </div>
+          {!isLoading && hasError && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="flex flex-col items-start gap-3 py-16"
+            >
+              <p className="dial-body-text">
+                {t(SettingsI18nKeys.UsageLoadError)}
+              </p>
+              <NeutralButton
+                label={t(ButtonsI18nKeys.Retry)}
+                onClick={refresh}
+              />
+            </div>
+          )}
 
-          <UsageModelTable rows={MOCK_USAGE_ROWS} />
+          {!isLoading && !hasError && (
+            <>
+              <UsageSummaryCard windows={windows} className="mb-10" />
+
+              <div className="mb-5 flex items-baseline gap-2.5">
+                <span className="dial-h3-text">
+                  {t(SettingsI18nKeys.UsageByModel)}
+                </span>
+                <span className="dial-small-semi-text text-secondary">
+                  {rows.length}
+                </span>
+              </div>
+
+              <UsageModelTable rows={rows} />
+            </>
+          )}
         </div>
       </div>
     </div>
