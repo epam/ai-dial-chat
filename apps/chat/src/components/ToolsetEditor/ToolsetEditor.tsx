@@ -12,6 +12,7 @@ import { ToolsetEditorSteps } from '@/src/types/toolsets';
 
 import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/selectors';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
@@ -39,6 +40,8 @@ export const ToolsetEditor = () => {
     [ToolsetEditorQuery.IsCreating]: isCreating,
   } = router.query;
   const isCreatingToolset = !idQuery || isTruthyQuery(isCreating);
+
+  const locale = useAppSelector(UISelectors.selectLocale);
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
   const toolsets = useAppSelector(ToolsetSelectors.selectToolsets);
   const editorStep = useAppSelector(ToolsetSelectors.selectEditorStep);
@@ -57,13 +60,14 @@ export const ToolsetEditor = () => {
       toolset: toolsetDetails,
       toolsets,
       isAdminReview,
+      locale,
     }),
     mode: 'onChange',
     reValidateMode: 'onChange',
     resolver: zodResolver(ToolsetEditorFormSchema),
   });
   const lastSubmittedValuesRef = useRef<ToolsetEditorForm>(
-    getDefaultFormData({ toolset: toolsetDetails, toolsets }),
+    getDefaultFormData({ toolset: toolsetDetails, toolsets, locale }),
   );
 
   const isDirty = formMethods.formState.isDirty;
@@ -123,9 +127,10 @@ export const ToolsetEditor = () => {
       });
       lastSubmittedValuesRef.current = getDefaultFormData({
         toolset: payloadToolset,
+        locale,
       });
     },
-    [dispatch, formMethods, isCreatingToolset, toolsetDetails],
+    [dispatch, formMethods, isCreatingToolset, toolsetDetails, locale],
   );
 
   const handleSubmit = useCallback(

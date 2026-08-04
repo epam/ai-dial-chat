@@ -43,11 +43,11 @@ dialSharedWithMeTest(
     testInfo,
   ) => {
     setTestIds(
-      'EPMRTC-1858',
-      'EPMRTC-1861',
-      'EPMRTC-3182',
-      'EPMRTC-5567',
-      'EPMRTC-6105',
+      'EPMDIAL-3808',
+      'EPMDIAL-3812',
+      'EPMDIAL-3833',
+      'EPMDIAL-4094',
+      'EPMDIAL-4103',
     );
     let folderPrompt: FolderPrompt;
     let sharePromptByLinkResponse: ShareByLinkResponseModel;
@@ -193,7 +193,7 @@ dialSharedWithMeTest(
     setTestIds,
   }) => {
     dialSharedWithMeTest.slow();
-    setTestIds('EPMRTC-1860', 'EPMRTC-1866', 'EPMRTC-1863');
+    setTestIds('EPMDIAL-3809', 'EPMDIAL-3817', 'EPMDIAL-3815');
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[];
     let shareFolderByLinkResponse: ShareByLinkResponseModel;
@@ -359,7 +359,7 @@ dialSharedWithMeTest(
     additionalShareUserLocalStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1859', 'EPMRTC-3110', 'EPMRTC-1865');
+    setTestIds('EPMDIAL-3810', 'EPMDIAL-3811', 'EPMDIAL-3819');
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[];
     let shareFolderByLinkResponse: ShareByLinkResponseModel;
@@ -491,7 +491,7 @@ dialSharedWithMeTest(
     setTestIds,
     additionalShareUserLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-2033', 'EPMRTC-1862', 'EPMRTC-3500', 'EPMRTC-1864');
+    setTestIds('EPMDIAL-3826', 'EPMDIAL-3814', 'EPMDIAL-3838', 'EPMDIAL-3816');
     let folderPrompt: FolderPrompt;
     let folder: FolderInterface;
     let prompt: Prompt;
@@ -611,7 +611,7 @@ dialSharedWithMeTest(
     promptBarFolderAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-8858');
+    setTestIds('EPMDIAL-3796');
     let folderPrompts: FolderPrompt;
     let folder: FolderInterface;
     let openedPromptName: string;

@@ -53,11 +53,11 @@ dialAdminTest(
     entityDetailsModalAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-7990',
-      'EPMRTC-7866',
-      'EPMRTC-7991',
-      'EPMRTC-7992',
-      'EPMRTC-8001',
+      'EPMDIAL-5549',
+      'EPMDIAL-5420',
+      'EPMDIAL-5550',
+      'EPMDIAL-5551',
+      'EPMDIAL-5560',
     );
 
     const toolsetEntity = {
@@ -394,7 +394,7 @@ dialSharedWithMeTest(
     additionalShareUserToolsetLoginModal,
     additionalShareUserToolsetLoginModalAssertion,
   }) => {
-    setTestIds('EPMRTC-7173');
+    setTestIds('EPMDIAL-5417');
 
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
@@ -565,7 +565,7 @@ dialSharedWithMeTest(
     additionalShareUserToolsetLoginModal,
     additionalShareUserToolsetLoginModalAssertion,
   }) => {
-    setTestIds('EPMRTC-7184');
+    setTestIds('EPMDIAL-5418');
 
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
@@ -740,7 +740,7 @@ dialAdminTest(
     setTestIds,
     adminPage,
   }) => {
-    setTestIds('EPMRTC-7993', 'EPMRTC-7996', 'EPMRTC-8000', 'EPMRTC-7998');
+    setTestIds('EPMDIAL-5552', 'EPMDIAL-5556', 'EPMDIAL-5555', 'EPMDIAL-5558');
 
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),

@@ -42,6 +42,7 @@ import {
 } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-storage';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import { constructPath, getFileWithType } from '@/src/utils/app/file';
 import {
   getConversationAttachmentWithPath,
@@ -165,18 +166,21 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
 
           return of(ImportExportActions.exportConversationSuccess());
         }),
-        catchError(() =>
-          concat(
+        catchError((err) => {
+          const { traceId } = parseApiError(err);
+
+          return concat(
             of(
               UIActions.showErrorToast({
                 message: translate(CommonI18nKeys.UploadingConversationsError, {
                   ns: Translation.Common,
                 }),
+                traceId,
               }),
             ),
             of(ImportExportActions.exportFail()),
-          ),
-        ),
+          );
+        }),
         takeUntil(action$.pipe(ofType(ImportExportActions.exportCancel.type))),
       );
     }),
@@ -213,18 +217,21 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
       exportConversations(filteredConversations, folders, appName);
       return EMPTY;
     }),
-    catchError(() =>
-      concat(
+    catchError((err) => {
+      const { traceId } = parseApiError(err);
+
+      return concat(
         of(
           UIActions.showErrorToast({
             message: translate(CommonI18nKeys.UploadingConversationsError, {
               ns: Translation.Common,
             }),
+            traceId,
           }),
         ),
         of(ImportExportActions.exportFail()),
-      ),
-    ),
+      );
+    }),
   );
 
 const exportPromptEpic: AppEpic = (action$, state$) =>
@@ -284,18 +291,21 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
       exportPrompts(filteredPrompts, folders, appName);
       return EMPTY;
     }),
-    catchError(() =>
-      concat(
+    catchError((err) => {
+      const { traceId } = parseApiError(err);
+
+      return concat(
         of(
           UIActions.showErrorToast({
             message: translate(CommonI18nKeys.UploadingPromptsError, {
               ns: Translation.Common,
             }),
+            traceId,
           }),
         ),
         of(ImportExportActions.exportFail()),
-      ),
-    ),
+      );
+    }),
   );
 
 const exportLocalStorageChatsEpic: AppEpic = (action$, state$) => {
@@ -369,7 +379,7 @@ const importConversationsEpic: AppEpic = (action$) =>
       });
 
       if (!preparedConversations.length) {
-        return of(ImportExportActions.importFail(FeatureType.Chat));
+        return of(ImportExportActions.importFail({ type: FeatureType.Chat }));
       }
 
       return getDuplicatedConversations(preparedConversations).pipe(
@@ -398,7 +408,14 @@ const importConversationsEpic: AppEpic = (action$) =>
         }),
       );
     }),
-    catchError(() => of(ImportExportActions.importFail(FeatureType.Chat))),
+    catchError((err) =>
+      of(
+        ImportExportActions.importFail({
+          type: FeatureType.Chat,
+          ...parseApiError(err),
+        }),
+      ),
+    ),
   );
 
 const importPromptsEpic: AppEpic = (action$) =>
@@ -499,7 +516,9 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                 uploadedConversations.length &&
                 !conversationsListing.length
               ) {
-                return of(ImportExportActions.importFail(FeatureType.Chat));
+                return of(
+                  ImportExportActions.importFail({ type: FeatureType.Chat }),
+                );
               }
 
               const foldersIds = uniq(
@@ -570,7 +589,9 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                 ),
               );
             }),
-            catchError(() => {
+            catchError((err) => {
+              const { traceId } = parseApiError(err);
+
               return concat(
                 of(
                   UIActions.showErrorToast({
@@ -580,14 +601,27 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                         ns: Translation.Common,
                       },
                     ),
+                    traceId,
                   }),
                 ),
-                of(ImportExportActions.importFail(FeatureType.Chat)),
+                of(
+                  ImportExportActions.importFail({
+                    type: FeatureType.Chat,
+                    traceId,
+                  }),
+                ),
               );
             }),
           ); //listing of all entities
         }),
-        catchError(() => of(ImportExportActions.importFail(FeatureType.Chat))),
+        catchError((err) =>
+          of(
+            ImportExportActions.importFail({
+              type: FeatureType.Chat,
+              ...parseApiError(err),
+            }),
+          ),
+        ),
       );
 
       const cancel$ = action$.pipe(
@@ -671,13 +705,16 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
                 ),
               );
             }),
-            catchError(() => {
+            catchError((err) => {
+              const { traceId } = parseApiError(err);
+
               return concat(
                 of(
                   UIActions.showErrorToast({
                     message: translate(CommonI18nKeys.UploadingPromptsError, {
                       ns: Translation.Common,
                     }),
+                    traceId,
                   }),
                 ),
                 of(ImportExportActions.importPromptsFail()),
@@ -1025,7 +1062,7 @@ const importZipEpic: AppEpic = (action$) =>
                   ),
                 }),
               ),
-              of(ImportExportActions.importFail(FeatureType.Chat)),
+              of(ImportExportActions.importFail({ type: FeatureType.Chat })),
             );
           }
           const file = zip.file(preUnzippedHistory.history.name);
@@ -1042,7 +1079,7 @@ const importZipEpic: AppEpic = (action$) =>
                   ),
                 }),
               ),
-              of(ImportExportActions.importFail(FeatureType.Chat)),
+              of(ImportExportActions.importFail({ type: FeatureType.Chat })),
             );
           }
 
@@ -1059,7 +1096,9 @@ const importZipEpic: AppEpic = (action$) =>
                       ),
                     }),
                   ),
-                  of(ImportExportActions.importFail(FeatureType.Chat)),
+                  of(
+                    ImportExportActions.importFail({ type: FeatureType.Chat }),
+                  ),
                 );
               }
 
@@ -1088,7 +1127,9 @@ const importZipEpic: AppEpic = (action$) =>
                       ),
                     }),
                   ),
-                  of(ImportExportActions.importFail(FeatureType.Chat)),
+                  of(
+                    ImportExportActions.importFail({ type: FeatureType.Chat }),
+                  ),
                 );
               }
 
@@ -1112,13 +1153,21 @@ const importZipEpic: AppEpic = (action$) =>
               ).pipe(
                 switchMap((attachmentsToUpload) => {
                   if (!attachmentsToUpload.length) {
-                    return of(ImportExportActions.importFail(FeatureType.Chat));
+                    return of(
+                      ImportExportActions.importFail({
+                        type: FeatureType.Chat,
+                      }),
+                    );
                   }
 
                   const bucket = BucketService.getBucket();
 
                   if (!bucket.length) {
-                    return of(ImportExportActions.importFail(FeatureType.Chat));
+                    return of(
+                      ImportExportActions.importFail({
+                        type: FeatureType.Chat,
+                      }),
+                    );
                   }
 
                   const importFileFolderPaths = uniq(
@@ -1167,7 +1216,9 @@ const importZipEpic: AppEpic = (action$) =>
 
                       if (!preparedConversations.length) {
                         return of(
-                          ImportExportActions.importFail(FeatureType.Chat),
+                          ImportExportActions.importFail({
+                            type: FeatureType.Chat,
+                          }),
                         );
                       }
 
@@ -1224,7 +1275,7 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
       const bucket = BucketService.getBucket();
 
       if (!bucket.length) {
-        return of(ImportExportActions.importFail(FeatureType.Chat));
+        return of(ImportExportActions.importFail({ type: FeatureType.Chat }));
       }
 
       const importFileFolderPaths = uniq(
@@ -1355,7 +1406,7 @@ const uploadAllAttachmentsSuccessEpic: AppEpic = (action$, state$) =>
           (!uploadedAttachments.length && !ignoredAttachmentsIds?.length) ||
           attachmentsErrors.length
         ) {
-          return of(ImportExportActions.importFail(FeatureType.Chat));
+          return of(ImportExportActions.importFail({ type: FeatureType.Chat }));
         }
 
         if (
@@ -1526,7 +1577,7 @@ const checkImportFailEpic: AppEpic = (action$, state$) =>
         attachmentsErrors.length &&
         attachmentsToUpload.length === attachmentsErrors.length
       ) {
-        return of(ImportExportActions.importFail(FeatureType.Chat));
+        return of(ImportExportActions.importFail({ type: FeatureType.Chat }));
       }
 
       return EMPTY;
@@ -1540,11 +1591,12 @@ const importFailEpic: AppEpic = (action$) =>
       return of(
         UIActions.showErrorToast({
           message: translate(
-            payload === FeatureType.Chat
+            payload.type === FeatureType.Chat
               ? CommonI18nKeys.ImportConversationsFailed
               : CommonI18nKeys.ImportPromptsFailed,
             { ns: Translation.Common },
           ),
+          traceId: payload?.traceId,
         }),
       );
     }),

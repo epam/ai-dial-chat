@@ -20,7 +20,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-944');
+    setTestIds('EPMDIAL-3569');
     await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -50,7 +50,7 @@ dialTest(
     localStorageManager,
     folderPrompts,
   }) => {
-    setTestIds('EPMRTC-946', 'EPMRTC-6144');
+    setTestIds('EPMDIAL-3581', 'EPMDIAL-3639');
     let promptInFolder: FolderPrompt;
     let folderName: string;
     let promptName: string;
@@ -115,7 +115,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-2730', 'EPMRTC-948', 'EPMRTC-1382');
+    setTestIds('EPMDIAL-3766', 'EPMDIAL-3588', 'EPMDIAL-3598');
     const newName = 'updated folder name';
     const randomFolderIndex = GeneratorUtil.randomNumberInRange(2) + 1;
 
@@ -192,7 +192,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-949');
+    setTestIds('EPMDIAL-3589');
     const newName = 'updated folder name';
     await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
@@ -226,7 +226,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-950');
+    setTestIds('EPMDIAL-3590');
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
     await dataInjector.createPrompts(
       promptInFolder.prompts,
@@ -265,7 +265,7 @@ dialTest(
     selectFolderModalAssertion,
     promptBarFolderAssertion,
   }) => {
-    setTestIds('EPMRTC-962');
+    setTestIds('EPMDIAL-3626');
     const newFolderName = ExpectedConstants.newFolderWithIndexTitle(1);
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
@@ -318,7 +318,7 @@ dialTest(
     selectFolderModalAssertion,
     promptBarFolderAssertion,
   }) => {
-    setTestIds('EPMRTC-963');
+    setTestIds('EPMDIAL-3627');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
     await localStorageManager.setShowSideBarPanels();
@@ -370,7 +370,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-966');
+    setTestIds('EPMDIAL-3603');
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
     await dataInjector.createPrompts(
       promptInFolder.prompts,
@@ -410,7 +410,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-967', 'EPMRTC-1383');
+    setTestIds('EPMDIAL-3604', 'EPMDIAL-3602');
     await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -481,7 +481,7 @@ dialTest(
     confirmationDialog,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-968');
+    setTestIds('EPMDIAL-3605');
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
     await dataInjector.createPrompts(
       promptInFolder.prompts,
@@ -523,7 +523,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1384');
+    setTestIds('EPMDIAL-3607');
     const levelsCount = 4;
     const levelToDelete = 2;
     let nestedFolders: FolderInterface[];
@@ -607,7 +607,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1174');
+    setTestIds('EPMDIAL-6450');
     let firstFolderPrompt: FolderPrompt;
     let secondFolderPrompts: FolderPrompt;
 

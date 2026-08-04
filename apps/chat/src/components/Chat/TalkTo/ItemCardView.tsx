@@ -28,7 +28,11 @@ import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors, ToolsetSelectors } from '@/src/store/selectors';
+import {
+  ModelsSelectors,
+  ToolsetSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
@@ -97,6 +101,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
 }: ItemCardViewProps<T>) => {
   const { t } = useTranslation(Translation.Marketplace);
 
+  const locale = useAppSelector(UISelectors.selectLocale);
   const allModels = useAppSelector(ModelsSelectors.selectModels);
   const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
 
@@ -257,7 +262,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
                 : 'xl:block',
             )}
           >
-            {getModelShortDescription(entity)}
+            {getModelShortDescription(entity, locale)}
           </EntityMarkdownDescription>
         </div>
       </div>
@@ -267,7 +272,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
           isUnavailableModel ? 'text-error' : 'text-secondary',
         )}
       >
-        {getModelShortDescription(entity)}
+        {getModelShortDescription(entity, locale)}
       </EntityMarkdownDescription>
       <div className="mt-auto">
         <div

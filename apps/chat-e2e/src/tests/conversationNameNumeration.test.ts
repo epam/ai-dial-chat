@@ -19,59 +19,6 @@ dialTest.beforeAll(async () => {
 });
 
 dialTest.skip(
-  'Default chat numeration.\n' + 'Chat numeration continues after 999',
-  async ({
-    dialHomePage,
-    conversations,
-    chatBar,
-    conversationData,
-    dataInjector,
-    setTestIds,
-    localStorageManager,
-  }) => {
-    setTestIds('EPMRTC-1624', 'EPMRTC-2955');
-    let conversation: Conversation;
-    const initConversationIndex = 999;
-    const initialConversationName =
-      ExpectedConstants.newConversationWithIndexTitle(initConversationIndex);
-
-    await dialTest.step(
-      'Prepare new conversation with index 999 in name',
-      async () => {
-        conversation = conversationData.prepareDefaultConversation(
-          defaultModel,
-          initialConversationName,
-        );
-        await dataInjector.createConversations([conversation]);
-        await localStorageManager.setShowSideBarPanels();
-      },
-    );
-
-    await dialTest.step(
-      'Create several new conversations and verify name is incremented',
-      async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await conversations.selectEntity(conversation.name);
-        for (let i = 1; i <= 2; i++) {
-          await chatBar.createNewEntity();
-          await expect
-            .soft(
-              conversations.getEntityByName(
-                ExpectedConstants.newConversationWithIndexTitle(
-                  initConversationIndex + i,
-                ),
-              ),
-              ExpectedMessages.conversationIsVisible,
-            )
-            .toBeVisible();
-        }
-      },
-    );
-  },
-);
-
-dialTest.skip(
   'Renamed chats are not counted into default chat numeration',
   async ({
     dialHomePage,
@@ -84,7 +31,7 @@ dialTest.skip(
     renameConversationModal,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1625');
+    setTestIds('EPMDIAL-2880');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
     const thirdConversationName =
@@ -170,7 +117,7 @@ dialTest.skip(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1626');
+    setTestIds('EPMDIAL-2881');
     const latestIndex = 3;
     const conversationsArray: Conversation[] = [];
 
@@ -228,7 +175,7 @@ dialTest(
     localStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2947');
+    setTestIds('EPMDIAL-2883');
     const initConversationName = GeneratorUtil.randomString(7);
     let nestedFolders: FolderInterface[];
     let secondLevelFolderConversation: Conversation;
@@ -311,7 +258,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-2798');
+    setTestIds('EPMDIAL-2884');
     const requestBasedConversationName = 'test';
     let conversation: Conversation;
 
@@ -387,7 +334,7 @@ dialTest(
     setTestIds,
     renameConversationModal,
   }) => {
-    setTestIds('EPMRTC-2915', 'EPMRTC-2956', 'EPMRTC-2931');
+    setTestIds('EPMDIAL-2886', 'EPMDIAL-2889', 'EPMDIAL-2887');
     const duplicatedName = GeneratorUtil.randomString(7);
     let folderConversation: FolderConversation;
     let firstFolderConversation: Conversation;
@@ -520,7 +467,7 @@ dialTest(
     renameConversationModal,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-2933');
+    setTestIds('EPMDIAL-2885');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
 
@@ -573,7 +520,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-2932');
+    setTestIds('EPMDIAL-2888');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[];
     const nestedFolderLevel = 2;

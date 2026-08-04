@@ -37,7 +37,7 @@ dialOverlayTest(
     overlayFileApiHelper,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3773', 'EPMRTC-3765', 'EPMRTC-4868');
+    setTestIds('EPMDIAL-2279', 'EPMDIAL-2269', 'EPMDIAL-2270');
 
     let attachmentConversation: Conversation;
 
@@ -135,7 +135,7 @@ dialOverlayTest(
     overlayConversations,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3773');
+    setTestIds('EPMDIAL-2279');
 
     let attachmentConversation: Conversation;
 
@@ -182,7 +182,7 @@ dialOverlayTest(
     overlayTalkToAgentDialog,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-4868', 'EPMRTC-5694');
+    setTestIds('EPMDIAL-2270', 'EPMDIAL-2271');
 
     await dialOverlayTest.step(
       'Open sandbox and verify "Change agent" link is not displayed for a new conversation',
@@ -225,7 +225,7 @@ dialOverlayTest(
     overlaySendMessage,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3780', 'EPMRTC-3765', 'EPMRTC-4846');
+    setTestIds('EPMDIAL-2288', 'EPMDIAL-2269', 'EPMDIAL-2333');
 
     await dialOverlayTest.step(
       'Open sandbox and verify model information, send request field and "Change agent" link are available',
@@ -307,7 +307,7 @@ dialOverlayTest(
     overlayBaseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-6311');
+    setTestIds('EPMDIAL-2243');
     let agents: DialAIEntityModel[];
 
     await dialOverlayTest.step(

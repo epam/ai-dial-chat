@@ -10,6 +10,9 @@ import { isMyApplication } from '@/src/utils/app/id';
 import { FeatureType, ScreenState } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/selectors';
+
 import { TableIconSizes } from '@/src/constants/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
@@ -39,6 +42,8 @@ export const MarketplaceEntitiesTableLeftSideRow: React.FC<
     onRowHover,
     onBookmarkClick,
   }) => {
+    const locale = useAppSelector(UISelectors.selectLocale);
+
     const screenState = useScreenState();
 
     const { iconSize, shareIconSize } = TableIconSizes[screenState];
@@ -87,7 +92,7 @@ export const MarketplaceEntitiesTableLeftSideRow: React.FC<
               />
             </div>
             <EntityMarkdownDescription className="mt-2 hidden max-w-screen-sm truncate whitespace-normal break-all !text-sm font-light !leading-[18px] text-secondary md:line-clamp-3">
-              {getModelShortDescription(entity)}
+              {getModelShortDescription(entity, locale)}
             </EntityMarkdownDescription>
           </div>
         </div>

@@ -49,12 +49,12 @@ dialTest(
   }) => {
     dialTest.slow();
     setTestIds(
-      'EPMRTC-512',
-      'EPMRTC-3451',
-      'EPMRTC-4735',
-      'EPMRTC-1448',
-      'EPMRTC-1132',
-      'EPMRTC-3452',
+      'EPMDIAL-6305',
+      'EPMDIAL-3011',
+      'EPMDIAL-5991',
+      'EPMDIAL-6317',
+      'EPMDIAL-6306',
+      'EPMDIAL-3104',
     );
     let firstConversation: Conversation;
     let secondConversation: Conversation;
@@ -281,7 +281,7 @@ dialTest(
     talkToAgentDialog,
   }) => {
     dialTest.slow();
-    setTestIds('EPMRTC-1132');
+    setTestIds('EPMDIAL-6306');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
     let historyConversation: Conversation;
@@ -379,7 +379,7 @@ dialTest(
     baseAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1535');
+    setTestIds('EPMDIAL-6314');
     const message = GeneratorUtil.randomString(10);
     let replayConversation: Conversation;
 
@@ -466,7 +466,7 @@ dialTest(
     conversations,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-514', 'EPMRTC-1165');
+    setTestIds('EPMDIAL-6307', 'EPMDIAL-6308');
     let conversation: Conversation;
     let replayConversation: Conversation;
     await dialTest.step('Prepare conversation to replay', async () => {
@@ -538,7 +538,7 @@ dialTest(
     conversations,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1312');
+    setTestIds('EPMDIAL-6304');
     let errorConversation: Conversation;
     let replayConversation: Conversation;
 

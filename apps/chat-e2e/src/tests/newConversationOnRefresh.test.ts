@@ -17,13 +17,13 @@ import { PublishActions } from '@epam/ai-dial-shared';
 const publicationsToUnpublish: Publication[] = [];
 
 dialTest(
-  'New conversation stays on Back to Chat if new conversation was on the screen\n' + //EPMRTC-4587
-    'New conversation is NOT created on browser refresh if conversation with cleared history is focused\n' + //EPMRTC-4586
-    'New conversation is NOT created on Back to Chat if conversation with history was focused\n' + //EPMRTC-4718
-    'New conversation is NOT created on Search on My workspace opened from the chat header\n' + //EPMRTC-4590
-    'New conversation is created on browser refresh if conversation with history from Pinned or Today is focused.\n' + //EPMRTC-4588
-    'Autofocus on chat input when refresh page.\n' + //EPMRTC-5450
-    'New conversation is created on browser refresh if selectedConversationIds from local storage was deleted', //EPMRTC-4593
+  'New conversation stays on Back to Chat if new conversation was on the screen\n' + //EPMDIAL-5766
+    'New conversation is NOT created on browser refresh if conversation with cleared history is focused\n' + //EPMDIAL-5767
+    'New conversation is NOT created on Back to Chat if conversation with history was focused\n' + //EPMDIAL-5769
+    'New conversation is NOT created on Search on My workspace opened from the chat header\n' + //EPMDIAL-5768
+    'New conversation is created on browser refresh if conversation with history from Pinned or Today is focused.\n' + //EPMDIAL-5770
+    'Autofocus on chat input when refresh page.\n' + //EPMDIAL-5778
+    'New conversation is created on browser refresh if selectedConversationIds from local storage was deleted', //EPMDIAL-5776
   async ({
     dialHomePage,
     chat,
@@ -46,13 +46,13 @@ dialTest(
     agentInfoAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-4587',
-      'EPMRTC-4586',
-      'EPMRTC-4718',
-      'EPMRTC-4590',
-      'EPMRTC-4588',
-      'EPMRTC-5450',
-      'EPMRTC-4593',
+      'EPMDIAL-5766',
+      'EPMDIAL-5767',
+      'EPMDIAL-5769',
+      'EPMDIAL-5768',
+      'EPMDIAL-5770',
+      'EPMDIAL-5778',
+      'EPMDIAL-5776',
     );
     dialTest.slow();
     const initialConversationName = GeneratorUtil.randomString(7);
@@ -252,9 +252,9 @@ dialTest(
 );
 
 dialTest(
-  'New conversation is created on browser refresh if two chats with history are in compare mode\n' + //EPMRTC-4592
-    'New conversation is created on browser refresh if conversation in Playback mode is selected\n' + //EPMRTC-4682
-    'New conversation is created on browser refresh if conversation in Replay mode is selected', //EPMRTC-4683
+  'New conversation is created on browser refresh if two chats with history are in compare mode\n' + //EPMDIAL-5773
+    'New conversation is created on browser refresh if conversation in Playback mode is selected\n' + //EPMDIAL-5774
+    'New conversation is created on browser refresh if conversation in Replay mode is selected', //EPMDIAL-5775
   async ({
     dialHomePage,
     chat,
@@ -268,7 +268,7 @@ dialTest(
     compareConversation,
     appContainer,
   }) => {
-    setTestIds('EPMRTC-4592', 'EPMRTC-4682', 'EPMRTC-4683');
+    setTestIds('EPMDIAL-5773', 'EPMDIAL-5774', 'EPMDIAL-5775');
     let models: DialAIEntityModel[];
     let initialConversation: Conversation;
     let conversationToCompare: Conversation;
@@ -405,7 +405,7 @@ dialAdminTest(
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-4591', 'EPMRTC-4589');
+    setTestIds('EPMDIAL-5771', 'EPMDIAL-5772');
     let adminConversation: Conversation;
 
     await dialTest.step(

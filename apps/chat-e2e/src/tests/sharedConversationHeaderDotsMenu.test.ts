@@ -41,12 +41,12 @@ dialSharedWithMeTest(
     baseAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-4745',
-      'EPMRTC-4758',
-      'EPMRTC-4759',
-      'EPMRTC-4793',
-      'EPMRTC-4792',
-      'EPMRTC-4754',
+      'EPMDIAL-6013',
+      'EPMDIAL-6016',
+      'EPMDIAL-6017',
+      'EPMDIAL-6019',
+      'EPMDIAL-6018',
+      'EPMDIAL-6014',
     );
     const randomModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModels(),

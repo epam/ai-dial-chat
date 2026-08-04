@@ -132,14 +132,6 @@ export const organizationFolderIdToPublishPathSuffix = (
   return getIdWithoutRootPathSegments(folderId) || undefined;
 };
 
-export const getOrganizationPublishPathDepth = (
-  folderId: string | undefined,
-): number => {
-  const relative = folderId ? getIdWithoutRootPathSegments(folderId) : '';
-  const segments = relative.split('/').filter(Boolean);
-  return segments.length === 0 ? 0 : segments.length - 1;
-};
-
 export const remapPublicFolderToFilesNamespace = (
   folder: FolderInterface,
 ): FolderInterface => {

@@ -16,7 +16,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1621');
+    setTestIds('EPMDIAL-3724');
 
     await dialTest.step(
       'Create several new prompt folders and verify their names are incremented',
@@ -51,7 +51,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1622');
+    setTestIds('EPMDIAL-3726');
     let folderNumber = 1;
 
     await dialTest.step(
@@ -134,7 +134,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-2967');
+    setTestIds('EPMDIAL-3727');
 
     await dialTest.step('Create a new folder', async () => {
       await localStorageManager.setShowSideBarPanels();
@@ -187,7 +187,7 @@ dialTest(
     localStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2968');
+    setTestIds('EPMDIAL-3728');
     const duplicatedFolderName = 'Duplicated Name';
 
     await dialTest.step('Create four folders', async () => {

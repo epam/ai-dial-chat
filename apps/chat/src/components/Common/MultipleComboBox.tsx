@@ -293,13 +293,13 @@ export function MultipleComboBox<T>({
     <Tooltip tooltip={tooltip}>
       <div
         className={classNames(
-          'relative w-full bg-transparent',
+          'relative flex w-full items-center bg-transparent',
           disabled && 'cursor-not-allowed',
           className,
         )}
         data-qa={dataQa}
       >
-        <div className="flex w-full flex-col gap-1">
+        <div className="flex grow flex-col gap-1">
           <div
             ref={refs.reference as RefObject<HTMLDivElement>}
             onClick={() => {
@@ -336,7 +336,7 @@ export function MultipleComboBox<T>({
                     >
                       <span
                         className={classNames(
-                          'flex items-center justify-between gap-2 rounded bg-accent-primary-alpha p-1 pr-0',
+                          'flex items-center justify-between gap-2 rounded bg-accent-primary-alpha px-3 pr-0',
                           itemHeightClassName
                             ? itemHeightClassName
                             : 'h-[24px]',
@@ -440,7 +440,7 @@ export function MultipleComboBox<T>({
                 )}
           </ul>
         </div>
-        <div className="flex flex-col justify-center gap-2">
+        <div className="flex items-center gap-2">
           {hasDeleteAll && selectedItems.length > 0 && (
             <CloseButtonSmall
               className={classNames('text-primary', closeButtonClassName)}

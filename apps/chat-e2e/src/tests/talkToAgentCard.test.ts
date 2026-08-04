@@ -59,18 +59,18 @@ dialTest(
     entityVersionsDropdownMenuAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-1065',
-      'EPMRTC-5161',
-      'EPMRTC-1061',
-      'EPMRTC-1062',
-      'EPMRTC-5154',
-      'EPMRTC-1063',
-      'EPMRTC-1031',
-      'EPMRTC-8693',
-      'EPMRTC-5084',
-      'EPMRTC-1037',
-      'EPMRTC-5908',
-      'EPMRTC-1056',
+      'EPMDIAL-5841',
+      'EPMDIAL-5829',
+      'EPMDIAL-5833',
+      'EPMDIAL-5834',
+      'EPMDIAL-5848',
+      'EPMDIAL-5835',
+      'EPMDIAL-5831',
+      'EPMDIAL-5849',
+      'EPMDIAL-5871',
+      'EPMDIAL-5839',
+      'EPMDIAL-5844',
+      'EPMDIAL-5840',
     );
 
     const appFirstVersion = GeneratorUtil.randomEntityVersion();
@@ -357,14 +357,14 @@ dialTest(
     sendMessageAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-5160',
-      'EPMRTC-1055',
-      'EPMRTC-5541',
-      'EPMRTC-5556',
-      'EPMRTC-5155',
-      'EPMRTC-1054',
-      'EPMRTC-4623',
-      'EPMRTC-5218',
+      'EPMDIAL-5830',
+      'EPMDIAL-5843',
+      'EPMDIAL-5836',
+      'EPMDIAL-5842',
+      'EPMDIAL-5832',
+      'EPMDIAL-5846',
+      'EPMDIAL-5847',
+      'EPMDIAL-5747',
     );
 
     const appVersion = GeneratorUtil.randomEntityVersion();
@@ -814,15 +814,15 @@ dialTest(
     modelApiHelper,
   }) => {
     setTestIds(
-      'EPMRTC-6275',
-      'EPMRTC-6291',
-      'EPMRTC-6296',
-      'EPMRTC-6284',
-      'EPMRTC-6289',
-      'EPMRTC-6290',
-      'EPMRTC-6287',
-      'EPMRTC-6288',
-      'EPMRTC-6292',
+      'EPMDIAL-5855',
+      'EPMDIAL-5862',
+      'EPMDIAL-5867',
+      'EPMDIAL-5859',
+      'EPMDIAL-5860',
+      'EPMDIAL-5861',
+      'EPMDIAL-5864',
+      'EPMDIAL-5865',
+      'EPMDIAL-5866',
     );
 
     let appModel: ApiApplicationModelRegular;
@@ -1058,7 +1058,7 @@ dialTest(
     modelApiHelper,
     adminCustomApplicationPublishingUtil,
   }) => {
-    setTestIds('EPMRTC-6237', 'EPMRTC-6297');
+    setTestIds('EPMDIAL-5868', 'EPMDIAL-5869');
 
     let firstApp: CustomAppAttributes;
     let secondAppFirstVersion: CustomAppAttributes;

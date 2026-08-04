@@ -35,7 +35,7 @@ dialTest(
     sendMessage,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-494', 'EPMRTC-492', 'EPMRTC-496');
+    setTestIds('EPMDIAL-6426', 'EPMDIAL-6415', 'EPMDIAL-6427');
     const deltaY = 50;
     let conversation: Conversation;
 
@@ -148,7 +148,7 @@ dialTest(
     sendMessage,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3071');
+    setTestIds('EPMDIAL-6416');
     let conversation: Conversation;
 
     await dialTest.step('Prepare conversation with long response', async () => {
@@ -207,7 +207,7 @@ dialTest(
     chatBar,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-493', 'EPMRTC-3072', 'EPMRTC-1783', 'EPMRTC-1754');
+    setTestIds('EPMDIAL-6419', 'EPMDIAL-6420', 'EPMDIAL-6429', 'EPMDIAL-6300');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
 
@@ -335,7 +335,7 @@ dialTest(
     compareConversation,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3079');
+    setTestIds('EPMDIAL-6421');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
     const firstConversationName = GeneratorUtil.randomString(5);
@@ -418,7 +418,7 @@ dialTest(
     chatMessagesAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3074', 'EPMRTC-432', 'EPMRTC-1759', 'EPMRTC-8470');
+    setTestIds('EPMDIAL-6417', 'EPMDIAL-6038', 'EPMDIAL-6046', 'EPMDIAL-6045');
     let stageConversation: Conversation;
     const stagesCount = 3;
     const messageIndex = 2;
@@ -525,7 +525,7 @@ dialTest(
     sendMessageAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3073');
+    setTestIds('EPMDIAL-6418');
     let imageConversation: Conversation;
 
     await dialTest.step(
@@ -584,7 +584,7 @@ dialTest(
     chatMessages,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3076');
+    setTestIds('EPMDIAL-6433');
     let conversation: Conversation;
     const userRequests = [
       GeneratorUtil.randomString(300),

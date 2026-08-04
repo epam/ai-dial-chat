@@ -18,7 +18,7 @@ import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors } from '@/src/store/selectors';
+import { MarketplaceSelectors, UISelectors } from '@/src/store/selectors';
 
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import {
@@ -45,13 +45,15 @@ interface CardFooterProps<T> {
 const CardFooter = <T extends MarketplaceEntity>({
   entity,
 }: CardFooterProps<T>) => {
+  const locale = useAppSelector(UISelectors.selectLocale);
+
   return (
     <>
       <EntityMarkdownDescription
         className="mt-3 hidden text-ellipsis text-sm leading-[18px] text-secondary md:line-clamp-2 xl:hidden"
         data-qa="entity-description"
       >
-        {getModelShortDescription(entity)}
+        {getModelShortDescription(entity, locale)}
       </EntityMarkdownDescription>
       <div className="flex flex-col gap-2 pt-3 xl:pt-4">
         <div className="w-full">
@@ -84,6 +86,7 @@ export const MarketplaceEntityCard = memo(
   }: MarketplaceEntityCardProps<T>) => {
     const { t } = useTranslation(Translation.Marketplace);
 
+    const locale = useAppSelector(UISelectors.selectLocale);
     const selectedEntitiesTab = useAppSelector(
       MarketplaceSelectors.selectSelectedEntitiesTab,
     );
@@ -180,7 +183,7 @@ export const MarketplaceEntityCard = memo(
               </div>
               <div data-qa="entity-description" className="hidden xl:block">
                 <EntityMarkdownDescription className="text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
-                  {getModelShortDescription(entity)}
+                  {getModelShortDescription(entity, locale)}
                 </EntityMarkdownDescription>
               </div>
             </div>

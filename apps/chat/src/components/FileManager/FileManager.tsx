@@ -11,6 +11,7 @@ import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
+import { MAX_NEW_FOLDER_PATH_SEGMENTS } from '@/src/constants/folders';
 import { SideBarI18nKeys } from '@/src/constants/i18n';
 
 import { FilesUploadingModal } from './FilesUploadingModal';
@@ -79,6 +80,8 @@ export const FileManager: React.FC = () => {
     handleOpenUnshareFilesDialog,
     handleOpenRemoveFilesAccessDialog,
     handleRenameValidation,
+    handleCreateFolderValidate,
+    showMaxDepthError,
 
     sharedWithMeIds,
 
@@ -162,7 +165,9 @@ export const FileManager: React.FC = () => {
           onUnshareFiles={handleOpenUnshareFilesDialog}
           onRemoveFilesAccess={handleOpenRemoveFilesAccessDialog}
           onRenameValidate={handleRenameValidation}
-          onCreateFolderValidate={handleRenameValidation}
+          onCreateFolderValidate={handleCreateFolderValidate}
+          maxNewFolderDepth={MAX_NEW_FOLDER_PATH_SEGMENTS}
+          onNewFolderDepthExceeded={showMaxDepthError}
           sharedWithMeIds={sharedWithMeIds}
           uploadEnabled={uploadEnabled}
           clearSearchResults={handleClearSearch}

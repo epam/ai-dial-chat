@@ -30,13 +30,13 @@ dialTest(
     promptPreviewModalAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-2991',
-      'EPMRTC-1278',
-      'EPMRTC-6147',
-      'EPMRTC-2993',
-      'EPMRTC-2994',
-      'EPMRTC-2997',
-      'EPMRTC-3085',
+      'EPMDIAL-3752',
+      'EPMDIAL-3754',
+      'EPMDIAL-3646',
+      'EPMDIAL-3755',
+      'EPMDIAL-3756',
+      'EPMDIAL-3757',
+      'EPMDIAL-3758',
     );
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);

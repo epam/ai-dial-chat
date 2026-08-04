@@ -11,6 +11,7 @@ import {
   getWebAPIToolsetStr,
   isDialAiEntityModel,
   migrateMCPToolsetIdName,
+  parseLocalizedDescription,
   safeStringifyApplicationFeatures,
 } from '@/src/utils/app/application';
 import { getDefaultSchemaModel } from '@/src/utils/app/application-type-schema';
@@ -70,7 +71,11 @@ import { DEFAULT_VERSION } from '@/src/constants/publication';
 import {
   DEFAULT_QUICK_APPS_MODEL,
   DialDeploymentToolsetToolTypes,
+  ORCHESTRATOR_ATTACHMENT_STRATEGY_VALUE,
+  REPRESENTATION_TOOLING_FEATURE_VALUE,
+  TIMESTAMP_FEATURE_VALUE,
   ToolsetTypes,
+  WEB_FETCH_FEATURE_VALUE,
 } from '@/src/constants/quick-apps';
 import {
   AttachmentTypesSchema,
@@ -280,6 +285,8 @@ export const QuickApp2Schema = zodValidation
     timestamp: zodValidation.boolean(),
     fileTools: zodValidation.boolean(),
     processLargeFiles: zodValidation.boolean(),
+    addAttachment: zodValidation.boolean(),
+    webFetch: zodValidation.boolean(),
   })
   .superRefine((data, ctx) => {
     if (data.isJsonView) {
@@ -397,9 +404,11 @@ export type AppsEditorFormType = (
 const getBaseFormData = ({
   app,
   models,
+  locale,
 }: {
   app?: CustomApplicationModel;
   models?: ShareEntity[];
+  locale: string;
 }): BaseAppForm => ({
   name:
     app?.name ??
@@ -416,7 +425,7 @@ const getBaseFormData = ({
     DEFAULT_APPLICATION_NAME,
   version: app ? (app.version ?? '') : DEFAULT_VERSION,
   iconUrl: app?.iconUrl ?? '',
-  description: app?.description ?? '',
+  description: parseLocalizedDescription(locale, app?.description),
   topics: app?.topics ?? [],
 });
 
@@ -538,6 +547,14 @@ const getQuickApp2FormData = (
     'dial_files' in (appProperties?.features ?? {})
       ? !!appProperties?.features?.dial_files
       : false;
+  const addAttachment =
+    'representation_tooling' in (appProperties?.features ?? {})
+      ? !!appProperties?.features?.representation_tooling?.add_attachment
+      : false;
+  const webFetch =
+    'web_fetch' in (appProperties?.features ?? {})
+      ? !!appProperties?.features?.web_fetch?.enabled
+      : false;
   const processLargeFiles =
     'attachment_strategy' in (appProperties?.orchestrator ?? {})
       ? !!appProperties?.orchestrator?.attachment_strategy
@@ -583,6 +600,8 @@ const getQuickApp2FormData = (
     timestamp,
     fileTools,
     processLargeFiles,
+    addAttachment,
+    webFetch,
   };
 };
 
@@ -711,6 +730,7 @@ export const getDefaultFormData = ({
   type,
   toolSupportingModelIds,
   schema,
+  locale,
 }: {
   type: string;
   app?: CustomApplicationModel;
@@ -718,8 +738,9 @@ export const getDefaultFormData = ({
   runtime?: string;
   toolSupportingModelIds?: string[];
   schema?: ApiDetailedApplicationTypeSchema;
+  locale: string;
 }): AppsEditorFormType => ({
-  ...getBaseFormData({ app, models }),
+  ...getBaseFormData({ app, models, locale }),
   ...getSettingsFormData({
     app,
     runtime,
@@ -1019,7 +1040,7 @@ export const getApplicationPayload = ({
             },
             ...(!!model?.inputAttachmentTypes?.length && {
               attachment_strategy: data.processLargeFiles
-                ? { type: 'lazy_on_demand' }
+                ? ORCHESTRATOR_ATTACHMENT_STRATEGY_VALUE
                 : null,
             }),
           },
@@ -1041,12 +1062,12 @@ export const getApplicationPayload = ({
             ),
           }),
           features: {
-            timestamp: data.timestamp
-              ? {
-                  injection_strategy: 'tool_call',
-                }
-              : null,
+            timestamp: data.timestamp ? TIMESTAMP_FEATURE_VALUE : null,
             dial_files: data.fileTools ? {} : null,
+            representation_tooling: data.addAttachment
+              ? REPRESENTATION_TOOLING_FEATURE_VALUE
+              : null,
+            web_fetch: data.webFetch ? WEB_FETCH_FEATURE_VALUE : null,
           },
           ...(starters.length
             ? {

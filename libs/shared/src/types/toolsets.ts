@@ -27,7 +27,7 @@ export interface Toolset {
   id?: string;
   toolset?: string;
   name?: string;
-  description?: string;
+  description?: string | Record<string, string>;
   icon_url?: string;
   user_roles?: string[];
   description_keywords?: string[];
