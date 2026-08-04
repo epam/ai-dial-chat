@@ -1,5 +1,39 @@
 import { describe, expect, it } from 'vitest';
-import { sanitizeFileName, trimFileNameToByteLimit } from '../file-name';
+import {
+  sanitizeFileName,
+  splitFileNameExtension,
+  trimFileNameToByteLimit,
+} from '../file-name';
+
+describe('splitFileNameExtension', () => {
+  it('splits a name with an extension', () => {
+    expect(splitFileNameExtension('report.pdf')).toEqual({
+      base: 'report',
+      extension: '.pdf',
+    });
+  });
+
+  it('treats only the last dot as the extension separator', () => {
+    expect(splitFileNameExtension('archive.tar.gz')).toEqual({
+      base: 'archive.tar',
+      extension: '.gz',
+    });
+  });
+
+  it('returns an empty extension for a name with no dot', () => {
+    expect(splitFileNameExtension('README')).toEqual({
+      base: 'README',
+      extension: '',
+    });
+  });
+
+  it('treats a leading dot as part of the base name, not an extension', () => {
+    expect(splitFileNameExtension('.gitignore')).toEqual({
+      base: '.gitignore',
+      extension: '',
+    });
+  });
+});
 
 describe('sanitizeFileName', () => {
   it('replaces forbidden chars and preserves extension', () => {
