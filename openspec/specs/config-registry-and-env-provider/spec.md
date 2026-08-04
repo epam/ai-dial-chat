@@ -346,3 +346,8 @@ This follows the exact pattern of the existing `customVisualizers` and `uiFeatur
 
 - **WHEN** `PUBLICATION_FILTER_SOURCES` is set to an empty string
 - **THEN** the resolved value is `['title', 'role', 'dial_roles']`, not `[]` — an empty source list would make the access-rules source picker unusable, the same footgun already prevented for `uiFeatures.enabledUiFeatures`
+
+#### Scenario: Oversized source fails environment validation
+
+- **WHEN** any comma-separated `PUBLICATION_FILTER_SOURCES` entry is longer than 200 characters after trimming
+- **THEN** environment validation fails at application startup instead of exposing the oversized value through client config

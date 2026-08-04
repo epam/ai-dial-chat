@@ -204,6 +204,21 @@ describe('PublishAccessRuleEditor', () => {
     expect(isDisabled(screen.getByRole('button', { name: 'Save' }))).toBe(true);
   });
 
+  it('rejects a regex pattern longer than 200 characters', async () => {
+    renderEditor();
+    await userEvent.selectOptions(
+      screen.getByLabelText('Source'),
+      'dial_roles',
+    );
+    await userEvent.selectOptions(screen.getByLabelText('Function'), 'REGEX');
+    await userEvent.type(screen.getByLabelText('Pattern'), 'a'.repeat(201));
+
+    expect(screen.getByRole('alert').textContent).toContain(
+      'Enter a valid regular expression.',
+    );
+    expect(isDisabled(screen.getByRole('button', { name: 'Save' }))).toBe(true);
+  });
+
   it('clears the pattern state when switching from REGEX to CONTAIN', async () => {
     renderEditor();
     await userEvent.selectOptions(

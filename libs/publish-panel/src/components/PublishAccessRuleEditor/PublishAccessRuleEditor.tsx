@@ -18,6 +18,7 @@ import {
 import { PublicationRule, PublicationRuleFunction } from '../../models/publish';
 
 const MAX_TARGETS_DEFAULT = 20;
+const MAX_RULE_VALUE_LENGTH = 200;
 /** `DialSelect`'s built-in search is enabled once the source list is long enough to be hard to scan. */
 const SEARCHABLE_SOURCE_THRESHOLD = 8;
 
@@ -71,7 +72,7 @@ export interface PublishAccessRuleEditorProps {
 
 const isValidRegex = (pattern: string): boolean => {
   const trimmed = pattern.trim();
-  if (trimmed.length === 0) {
+  if (trimmed.length === 0 || trimmed.length > MAX_RULE_VALUE_LENGTH) {
     return false;
   }
   try {

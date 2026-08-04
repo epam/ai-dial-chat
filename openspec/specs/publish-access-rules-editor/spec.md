@@ -103,7 +103,7 @@ The single-rule editor (`PublishAccessRuleEditor`) SHALL offer a source control 
 
 ### Requirement: Single-rule editor validates REGEX rules
 
-When `function` is `REGEX`, the editor SHALL offer exactly one text input (not a multi-tag input) for the pattern. Validity SHALL be checked by attempting `new RegExp(trimmedPattern)` inside a try/catch; an empty (post-trim) pattern SHALL also be treated as invalid. An invalid pattern SHALL show a localized inline error and SHALL disable the Save action; the error SHALL be associated with the input via `aria-describedby`. On save, the pattern SHALL be stored as the single entry of `targets` (`targets.length === 1`), unmodified (not trimmed), because leading/trailing characters may be meaningful in a regex.
+When `function` is `REGEX`, the editor SHALL offer exactly one text input (not a multi-tag input) for the pattern. A pattern longer than 200 characters SHALL be treated as invalid before attempting to construct a `RegExp`, matching the backend target-length limit and bounding synchronous parsing work on the browser's main thread. For patterns within the limit, validity SHALL be checked by attempting `new RegExp(trimmedPattern)` inside a try/catch; an empty (post-trim) pattern SHALL also be treated as invalid. An invalid pattern SHALL show a localized inline error and SHALL disable the Save action; the error SHALL be associated with the input via `aria-describedby`. On save, the pattern SHALL be stored as the single entry of `targets` (`targets.length === 1`), unmodified (not trimmed), because leading/trailing characters may be meaningful in a regex.
 
 #### Scenario: Valid regex is accepted
 - **GIVEN** `function` is `REGEX` and the user enters `^eng-.*$`
@@ -119,6 +119,12 @@ When `function` is `REGEX`, the editor SHALL offer exactly one text input (not a
 - **GIVEN** `function` is `REGEX` and the pattern field is empty or whitespace-only
 - **WHEN** validity is checked
 - **THEN** the field is treated as invalid and Save is disabled
+
+#### Scenario: Oversized regex is rejected before parsing
+
+- **GIVEN** `function` is `REGEX` and the pattern contains more than 200 characters
+- **WHEN** validity is checked
+- **THEN** the field is treated as invalid and Save is disabled without constructing a `RegExp`
 
 #### Scenario: Switching from REGEX to CONTAIN clears the single-pattern state
 - **GIVEN** the user has entered a pattern under `REGEX`
