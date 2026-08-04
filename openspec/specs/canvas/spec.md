@@ -59,6 +59,10 @@ All app-level strings are in `AttachmentCanvasI18nKeys` (`apps/chat/src/constant
 | `ForbiddenErrorLabel` | `"You don't have permission to access this file"` |
 | `CopyAsMarkdown` | `"Copy markdown"` |
 | `Copied` | `"Copied!"` |
+| `HtmlFrameBlocked` | `"This page cannot be displayed in preview"` |
+| `HtmlOpenInNewTab` | `"Open in new tab"` |
+| `HtmlViewSource` | `"View source"` |
+| `HtmlViewRendered` | `"View rendered"` |
 
 Lib-level string props use English defaults and are overridden by the app via `AttachmentCanvasContainer`.
 
@@ -102,10 +106,23 @@ For `AttachmentType.File` attachments, `openFileCanvas` (`apps/chat/src/hooks/at
 | `json` extension | `resolveJsonCanvasContent` | `JsonCanvasContent` or `PlainTextCanvasContent` (parse failure) |
 | `pdf` extension | `resolvePdfCanvasContent` | `PdfCanvasContent` |
 | `image/*` MIME | `resolveImageCanvasContent` | `ImageCanvasContent` |
-| Other text-previewable (see `TEXT_EXTENSIONS`) | `resolveTextCanvasContent` | `PlainTextCanvasContent` |
+| `html`, `htm` extension | `resolveHtmlCanvasContent` | `HtmlCanvasContent` |
+| Other text-previewable (see `TEXT_EXTENSIONS`, excluding `html`/`htm`) | `resolveCodeCanvasContent` | `CodeCanvasContent` |
 | Everything else | `createUnsupportedCanvasContent` | `UnsupportedCanvasContent` |
 
-Extension checks for `md`/`markdown` and `json` run *before* the generic `isTextPreviewable` branch.
+Extension checks for `md`/`markdown` and `json` run *before* the generic `isTextPreviewable` branch. The `html`/`htm` branch runs before the generic `isTextPreviewable` branch. The `isTextPreviewable` branch now routes to `resolveCodeCanvasContent` (returning `CodeCanvasContent`) instead of `resolveTextCanvasContent`.
+
+#### Scenario: html extension routes to Html
+
+- **WHEN** `openFileCanvas` is called with an attachment whose name ends in `.html`
+- **THEN** `resolveHtmlCanvasContent` is called
+- **AND** the canvas opens with `HtmlCanvasContent`
+
+#### Scenario: ts extension routes to Code
+
+- **WHEN** `openFileCanvas` is called with an attachment whose name ends in `.ts`
+- **THEN** `resolveCodeCanvasContent` is called with `language: 'typescript'`
+- **AND** the canvas opens with `CodeCanvasContent`
 
 ---
 
@@ -289,8 +306,20 @@ Some attachments (e.g. an LLM-revised image prompt saved back onto the conversat
 | `Markdown` | `text: string` | `MarkdownRenderer` from `@epam/ai-dial-chat-shared`, neutral defaults |
 | `Json` | `value: unknown` | `react-json-view-lite` `JsonView`, container has `dir="ltr"` |
 | `Pdf` | `url: string; highlights?: InputHighlightData[]; selectedHighlightId?: string` | `PdfContent` (thumbnail sidebar + `DocumentPreview` from `@epam/ai-dial-react-pdf-highlighter`) |
+| `Code` | `text: string; language?: string` | `CodeContent` (`react-syntax-highlighter` PrismLight inside `dir="ltr"`) |
+| `Html` | `srcdoc?: string; url?: string` | `HtmlContent` (sandboxed `<iframe>`) |
 | `Unsupported` | — | Centered "Preview not supported" message |
 | `Error` | `errorType: AttachmentErrorType; url?: string` | Centered error message, text depends on `errorType` (see "Error rendering" below) |
+
+#### Scenario: Code content type uses CodeContent renderer
+
+- **WHEN** `AttachmentCanvas` renders a `CodeCanvasContent`
+- **THEN** a `CodeContent` component is mounted in the panel body
+
+#### Scenario: Html content type uses HtmlContent renderer
+
+- **WHEN** `AttachmentCanvas` renders an `HtmlCanvasContent`
+- **THEN** an `HtmlContent` component is mounted in the panel body
 
 ---
 

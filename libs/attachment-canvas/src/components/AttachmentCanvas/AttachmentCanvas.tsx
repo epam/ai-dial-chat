@@ -13,8 +13,10 @@ import {
 import {
   IconAlertTriangle,
   IconCheck,
+  IconCode,
   IconCopy,
   IconDownload,
+  IconEye,
   IconLock,
   IconMarkdown,
 } from '@tabler/icons-react';
@@ -35,6 +37,8 @@ import {
   AttachmentErrorType,
 } from '../../types/attachment-canvas';
 import { isDownloadable } from '../../utils/download';
+import { CodeContent } from '../CodeContent/CodeContent';
+import { HtmlContent } from '../HtmlContent/HtmlContent';
 import { PdfContent } from '../PdfContent/PdfContent';
 import { VisualizerCanvasRenderer } from '../VisualizerCanvasRenderer/VisualizerCanvasRenderer';
 import styles from './AttachmentCanvas.module.scss';
@@ -105,6 +109,10 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     unsupportedLabel = 'Preview is not supported for this file',
     loadErrorLabel = 'Failed to load file',
     forbiddenErrorLabel = "You don't have permission to access this file",
+    htmlFrameBlockedLabel = 'This page cannot be displayed in preview',
+    htmlOpenInNewTabLabel = 'Open in new tab',
+    htmlViewSourceLabel = 'View source',
+    htmlViewRenderedLabel = 'View rendered',
   },
   onDownload,
   onCopyText,
@@ -122,6 +130,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   const [isCopiedText, setIsCopiedText] = useState(false);
   const [isCopiedMarkdown, setIsCopiedMarkdown] = useState(false);
   const [isCopiedJson, setIsCopiedJson] = useState(false);
+  const [isHtmlSourceView, setIsHtmlSourceView] = useState(false);
   const copyTextResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copyJsonResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -172,6 +181,14 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     };
   }, []);
 
+  const handleToggleHtmlView = useCallback(() => {
+    setIsHtmlSourceView((prev) => !prev);
+  }, []);
+
+  useEffect(() => {
+    setIsHtmlSourceView(false);
+  }, [content]);
+
   const {
     colors,
     typography,
@@ -192,10 +209,16 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     [stylesProp],
   );
 
+  const showHtmlToggle =
+    !isLoading &&
+    content.type === AttachmentContentType.Html &&
+    content.srcdoc != null;
+
   const showCopyText =
     !isLoading &&
     onCopyText != null &&
-    content.type === AttachmentContentType.PlainText;
+    (content.type === AttachmentContentType.PlainText ||
+      content.type === AttachmentContentType.Code);
   const showCopyMarkdown =
     !isLoading &&
     onCopyMarkdown != null &&
@@ -218,6 +241,8 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
         return 'h-full overflow-auto';
       case AttachmentContentType.Pdf:
       case AttachmentContentType.Visualizer:
+      case AttachmentContentType.Code:
+      case AttachmentContentType.Html:
         return 'h-full overflow-hidden';
       default:
         return 'h-full overflow-auto p-4';
@@ -316,6 +341,20 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
             </div>
           </div>
         );
+      case AttachmentContentType.Code:
+        return <CodeContent content={content} />;
+      case AttachmentContentType.Html:
+        return (
+          <HtmlContent
+            content={content}
+            labels={{
+              htmlFrameBlockedLabel,
+              htmlOpenInNewTabLabel,
+            }}
+            isSourceView={isHtmlSourceView}
+            title={fileName}
+          />
+        );
       case AttachmentContentType.Pdf:
         return (
           <PdfContent
@@ -369,6 +408,9 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     loadErrorLabel,
     forbiddenErrorLabel,
     visualizerErrorLabel,
+    htmlFrameBlockedLabel,
+    htmlOpenInNewTabLabel,
+    isHtmlSourceView,
     loadPdf,
   ]);
 
@@ -393,8 +435,41 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
         ),
       }}
       rightActions={
-        showCopyText || showCopyMarkdown || showCopyJson || showDownload ? (
+        showHtmlToggle ||
+        showCopyText ||
+        showCopyMarkdown ||
+        showCopyJson ||
+        showDownload ? (
           <>
+            {showHtmlToggle && (
+              <GhostIconButton
+                icon={
+                  isHtmlSourceView ? (
+                    <IconEye
+                      size={DIAL_ICON_SIZE.LG}
+                      stroke={1.5}
+                      aria-hidden
+                    />
+                  ) : (
+                    <IconCode
+                      size={DIAL_ICON_SIZE.LG}
+                      stroke={1.5}
+                      aria-hidden
+                    />
+                  )
+                }
+                aria-label={
+                  isHtmlSourceView ? htmlViewRenderedLabel : htmlViewSourceLabel
+                }
+                aria-pressed={isHtmlSourceView}
+                tooltipProps={{
+                  tooltip: isHtmlSourceView
+                    ? htmlViewRenderedLabel
+                    : htmlViewSourceLabel,
+                }}
+                onClick={handleToggleHtmlView}
+              />
+            )}
             {showCopyText && (
               <GhostIconButton
                 icon={
@@ -485,7 +560,9 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     >
       <div
         style={
-          !isLoading && content.type === AttachmentContentType.PlainText
+          !isLoading &&
+          (content.type === AttachmentContentType.PlainText ||
+            content.type === AttachmentContentType.Code)
             ? cssVars
             : undefined
         }

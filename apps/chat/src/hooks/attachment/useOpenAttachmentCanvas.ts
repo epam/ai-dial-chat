@@ -1,6 +1,8 @@
 import {
   AttachmentContentType,
   createUnsupportedCanvasContent,
+  extensionToLanguage,
+  isHtmlPreviewable,
   isTextPreviewable,
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
@@ -16,6 +18,8 @@ import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useTheme } from '../../context/ThemeContext';
 import {
   referenceAttachmentToPdfCanvasContent,
+  resolveCodeCanvasContent,
+  resolveHtmlCanvasContent,
   resolveImageCanvasContent,
   resolveJsonCanvasContent,
   resolveMarkdownCanvasContent,
@@ -142,7 +146,11 @@ export const useOpenAttachmentCanvas = () => {
         }
       }
 
-      if (attachment.name != null && !isTextPreviewable(attachment.name)) {
+      if (
+        attachment.name != null &&
+        !isTextPreviewable(attachment.name) &&
+        !isHtmlPreviewable(attachment.name)
+      ) {
         openCanvas(
           createUnsupportedCanvasContent(resolveDialUrl(attachment)),
           attachment.name,
@@ -151,7 +159,33 @@ export const useOpenAttachmentCanvas = () => {
         return true;
       }
 
-      const content = await resolveTextCanvasContent(attachment);
+      if (attachment.name != null && isHtmlPreviewable(attachment.name)) {
+        const content = await resolveHtmlCanvasContent(attachment);
+        if (content != null) {
+          openCanvas(content, attachment.name, canvasAttachmentId);
+          return true;
+        }
+        /* External HTML URL: no DIAL download URL, fall back to url-only HtmlCanvasContent. */
+        if (attachment.url != null) {
+          openCanvas(
+            { type: AttachmentContentType.Html, url: attachment.url },
+            attachment.name,
+            canvasAttachmentId,
+          );
+          return true;
+        }
+        return false;
+      }
+
+      const dotIdx2 = (attachment.name ?? '').lastIndexOf('.');
+      const ext2 =
+        dotIdx2 !== -1
+          ? (attachment.name ?? '').slice(dotIdx2 + 1).toLowerCase()
+          : '';
+      const content = await resolveCodeCanvasContent(
+        attachment,
+        extensionToLanguage(ext2),
+      );
       if (content == null) return false;
       openCanvas(content, attachment.name, canvasAttachmentId);
       return true;
