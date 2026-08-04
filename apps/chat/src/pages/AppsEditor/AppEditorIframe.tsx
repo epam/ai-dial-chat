@@ -12,6 +12,12 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  ToolsetOAuthInitiationResultType,
+  ToolsetOAuthResultType,
+} from '../../constants/toolsets';
 import { AppsEditorI18nKeys } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -24,12 +30,6 @@ import type {
   TriggerSaveMessage,
 } from '../../types/apps-editor';
 import { AppsEditorEvent } from '../../types/apps-editor';
-import {
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
-  ToolsetOAuthInitiationResultType,
-  ToolsetOAuthResultType,
-} from '../../types/toolsets';
 import {
   mapDeploymentDetailsDtoToEntityDetails,
   mapToolsetCredentials,

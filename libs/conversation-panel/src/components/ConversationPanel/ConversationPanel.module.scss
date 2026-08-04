@@ -21,21 +21,19 @@
 
 .dropZoneActive {
   @apply ring-1 ring-inset;
-  --tw-ring-color: var(
-    --cp-drop-zone-ring,
-    var(--stroke-accent-primary, #124ace)
-  );
+  --tw-ring-color: var(--cp-drop-zone-ring, var(--stroke-info, #124ace));
 }
 
 .triggerActive {
   background: var(
     --cp-trigger-bg,
-    var(--controls-bg-accent-primary-alpha-active, #7da4ff5c)
+    var(--bg-control-accent-alpha-active, #2764d933)
   );
   .triggerIcon {
-    color: var(--cp-trigger-icon, var(--text-accent-primary, #124ace));
+    color: var(--cp-trigger-icon, var(--text-accent, #124ace));
   }
 }
+
 .triggerIcon {
   color: var(--cp-trigger-icon-idle, var(--text-secondary, #6b7280));
 }

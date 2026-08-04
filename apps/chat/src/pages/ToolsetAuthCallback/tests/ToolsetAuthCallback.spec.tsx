@@ -4,21 +4,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   TOOLSET_REDIRECT_STATE_KEY,
   ToolsetOAuthCallbackQuery,
-} from '../../../constants/toolsets';
-import * as externalServicesApi from '../../../server-api/external-services';
-import * as toolsetsApi from '../../../server-api/toolsets';
-import type {
-  ToolsetOAuthChannelMessage,
-  ToolsetRedirectState,
-} from '../../../types/toolsets';
-import {
   OAuthResourceKind,
   ToolsetAuthTypes,
   ToolsetOAuthChannelControlType,
   ToolsetCredentialsLevel,
   ToolsetOAuthFailureReason,
   ToolsetOAuthResultType,
-} from '../../../types/toolsets';
+} from '../../../constants/toolsets';
+import type {
+  ToolsetOAuthChannelMessage,
+  ToolsetRedirectState,
+} from '../../../models/toolsets';
+import * as externalServicesApi from '../../../server-api/external-services';
+import * as toolsetsApi from '../../../server-api/toolsets';
 import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import ToolsetAuthCallback from '../ToolsetAuthCallback';
 

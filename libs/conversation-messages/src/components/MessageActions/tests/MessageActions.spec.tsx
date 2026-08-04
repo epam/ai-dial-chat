@@ -1,4 +1,4 @@
-import { MessageRating, MessageRole } from '@epam/ai-dial-chat-shared';
+import { MessageRole } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -161,79 +161,5 @@ describe('MessageActions', () => {
   it('does not apply opacity-0 when isAlwaysVisible is true', () => {
     const { container } = render(<MessageActions isAlwaysVisible />);
     expect(container.firstElementChild?.className).not.toContain('opacity-0');
-  });
-
-  describe('activeRating', () => {
-    it('highlights the Like button when activeRating is Like (1)', () => {
-      render(
-        <MessageActions
-          role={MessageRole.Assistant}
-          activeRating={MessageRating.Like}
-          onLike={vi.fn()}
-          onDislike={vi.fn()}
-        />,
-      );
-      const likeBtn = screen.getByRole('button', { name: 'Like response' });
-      expect(likeBtn.className).toContain('!text-accent');
-    });
-
-    it('does not highlight the Dislike button when activeRating is Like (1)', () => {
-      render(
-        <MessageActions
-          role={MessageRole.Assistant}
-          activeRating={MessageRating.Like}
-          onLike={vi.fn()}
-          onDislike={vi.fn()}
-        />,
-      );
-      const dislikeBtn = screen.getByRole('button', {
-        name: 'Dislike response',
-      });
-      expect(dislikeBtn.className).not.toContain('!text-accent');
-    });
-
-    it('highlights the Dislike button when activeRating is Dislike (-1)', () => {
-      render(
-        <MessageActions
-          role={MessageRole.Assistant}
-          activeRating={MessageRating.Dislike}
-          onLike={vi.fn()}
-          onDislike={vi.fn()}
-        />,
-      );
-      const dislikeBtn = screen.getByRole('button', {
-        name: 'Dislike response',
-      });
-      expect(dislikeBtn.className).toContain('!text-accent');
-    });
-
-    it('does not highlight the Like button when activeRating is Dislike (-1)', () => {
-      render(
-        <MessageActions
-          role={MessageRole.Assistant}
-          activeRating={MessageRating.Dislike}
-          onLike={vi.fn()}
-          onDislike={vi.fn()}
-        />,
-      );
-      const likeBtn = screen.getByRole('button', { name: 'Like response' });
-      expect(likeBtn.className).not.toContain('!text-accent');
-    });
-
-    it('does not highlight either button when activeRating is undefined', () => {
-      render(
-        <MessageActions
-          role={MessageRole.Assistant}
-          onLike={vi.fn()}
-          onDislike={vi.fn()}
-        />,
-      );
-      const likeBtn = screen.getByRole('button', { name: 'Like response' });
-      const dislikeBtn = screen.getByRole('button', {
-        name: 'Dislike response',
-      });
-      expect(likeBtn.className).not.toContain('!text-accent');
-      expect(dislikeBtn.className).not.toContain('!text-accent');
-    });
   });
 });

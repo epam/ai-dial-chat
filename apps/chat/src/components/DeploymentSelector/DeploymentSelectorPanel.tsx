@@ -290,7 +290,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
   return (
     <div className="flex min-w-[240px] flex-col">
       {/* Sticky search header */}
-      <div className="sticky top-0 z-10 bg-layer-0 px-1 pb-3 pt-2">
+      <div className="sticky top-0 z-10 bg-layer-raised px-1 pb-3 pt-2">
         <SearchBar
           value={query}
           labels={{

@@ -680,7 +680,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       <input
         ref={importFileInputRef}
         type="file"
-        accept=".json,.dial,.zip"
+        accept=".json,.dial,.zip,application/json,application/zip"
         className="sr-only"
         aria-hidden
         tabIndex={-1}

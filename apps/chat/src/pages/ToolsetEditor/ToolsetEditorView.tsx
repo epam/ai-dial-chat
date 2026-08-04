@@ -2,16 +2,17 @@ import { PrimaryButton, NeutralButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ToolsetEditorSteps } from '../../constants/toolsets';
 import {
   ButtonsI18nKeys,
   EditorI18nKeys,
+  ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
 import type {
   ToolsetAuthFormData,
   ToolsetFormData,
   ToolsetFormErrors,
-} from '../../types/toolsets';
-import { ToolsetEditorSteps } from '../../types/toolsets';
+} from '../../models/toolsets';
 import GeneralForm from './EditorForm/GeneralForm';
 import SettingsForm from './EditorForm/SettingsForm';
 
@@ -50,7 +51,15 @@ const ToolsetEditorView: FC<Props> = ({
       <div className="flex h-full w-full min-w-0 flex-col">
         <div className="flex-1 overflow-y-auto p-6">
           {isGeneralStep ? (
-            <GeneralForm form={form} errors={errors} onChange={onChange} />
+            <GeneralForm
+              form={form}
+              errors={errors}
+              namePlaceholder={t(ToolsetEditorI18nKeys.NamePlaceholder)}
+              descriptionPlaceholder={t(
+                ToolsetEditorI18nKeys.DescriptionPlaceholder,
+              )}
+              onChange={onChange}
+            />
           ) : (
             <SettingsForm
               form={form}

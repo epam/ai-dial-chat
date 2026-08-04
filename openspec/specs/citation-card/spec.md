@@ -20,7 +20,7 @@
   - When `onPreview` is provided: label depends on source type — `text/html` or `application/xhtml+xml` → "Open in browser" (`citations.popup.openInBrowser`); all other types → "Download" (`citations.popup.download`).
   - When `onPreview` is **not** provided: label is always "Open in browser" (`citations.popup.openInBrowser`), regardless of source content type — a group with no preview capability is by definition an external reference, never a local download.
 
-Panel styling: `w-[400px]`, `bg-layer-0`, `border border-primary`, `rounded-lg`, `p-4`, `shadow-lg`.
+Panel styling: `w-[400px]`, `bg-layer-raised`, `border border-primary`, `rounded-lg`, `p-4`, `shadow-lg`.
 
 The component SHALL accept:
 ```ts

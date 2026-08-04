@@ -70,6 +70,9 @@ const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
 const ToolsetEditorPage = lazy(
   () => import('../pages/ToolsetEditor/ToolsetEditor'),
 );
+const CustomAppEditorPage = lazy(
+  () => import('../pages/ToolsetEditor/CustomAppEditor'),
+);
 const ToolsetAuthCallbackPage = lazy(
   () => import('../pages/ToolsetAuthCallback/ToolsetAuthCallback'),
 );
@@ -259,6 +262,13 @@ const App: FC = () => {
     [navigate, isMobile, closePanel],
   );
 
+  const handleNewChat = useCallback(() => {
+    if (isMobile) {
+      closePanel();
+    }
+    navigate(ROUTES.Root);
+  }, [navigate, isMobile, closePanel]);
+
   return (
     <div className="flex size-full flex-col">
       <AnnouncementBanner />
@@ -273,7 +283,7 @@ const App: FC = () => {
           activeConversationId={activeConversationId}
           onClose={closePanel}
           onSelectConversation={handleSelectConversation}
-          onNewChat={() => navigate(ROUTES.Root)}
+          onNewChat={handleNewChat}
           requestedFilter={panelRequestedFilter}
           onRequestedFilterChange={() => setPanelRequestedFilter(undefined)}
           onActiveFilterChange={handlePanelActiveFilterChange}
@@ -289,7 +299,7 @@ const App: FC = () => {
             onMenuToggle={toggleNav}
             isConversationPanelOpen={isPanelOpen}
             onConversationPanelToggle={togglePanel}
-            onNewChat={() => navigate(ROUTES.Root)}
+            onNewChat={handleNewChat}
           />
           <Routes>
             <Route
@@ -297,7 +307,7 @@ const App: FC = () => {
                 <ChatLayout
                   isPanelOpen={isPanelOpen}
                   onTogglePanel={togglePanel}
-                  onNewChat={() => navigate(ROUTES.Root)}
+                  onNewChat={handleNewChat}
                 />
               }
             >
@@ -411,6 +421,16 @@ const App: FC = () => {
                 <RouteErrorBoundary>
                   <Suspense fallback={<RouteFallback />}>
                     <ToolsetEditorPage />
+                  </Suspense>
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
+              path={ROUTES.CustomAppEditor}
+              element={
+                <RouteErrorBoundary>
+                  <Suspense fallback={<RouteFallback />}>
+                    <CustomAppEditorPage />
                   </Suspense>
                 </RouteErrorBoundary>
               }
