@@ -286,6 +286,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
         onClick={startCreatingFolder}
         label={createFolderLabel}
         iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} aria-hidden />}
+        disabled={disabled}
       />
     </div>
   );

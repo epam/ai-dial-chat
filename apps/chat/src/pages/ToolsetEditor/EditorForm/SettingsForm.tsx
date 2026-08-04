@@ -111,9 +111,17 @@ const SettingsForm: FC<Props> = ({
           onClick={handleCopyEndpoint}
           icon={
             isCopied ? (
-              <IconCheck size={DIAL_ICON_SIZE.SM} className="text-success" />
+              <IconCheck
+                size={DIAL_ICON_SIZE.SM}
+                className="text-success"
+                aria-hidden
+              />
             ) : (
-              <IconCopy size={DIAL_ICON_SIZE.SM} className="text-secondary" />
+              <IconCopy
+                size={DIAL_ICON_SIZE.SM}
+                className="text-secondary"
+                aria-hidden
+              />
             )
           }
         />

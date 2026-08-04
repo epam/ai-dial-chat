@@ -135,9 +135,10 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
                     <IconCheck
                       size={DIAL_ICON_SIZE.SM}
                       className={styles.copiedIcon}
+                      aria-hidden
                     />
                   ) : (
-                    <IconCopy size={DIAL_ICON_SIZE.SM} />
+                    <IconCopy size={DIAL_ICON_SIZE.SM} aria-hidden />
                   )
                 }
                 aria-label={isCopied ? copiedLabel : copyLabel}

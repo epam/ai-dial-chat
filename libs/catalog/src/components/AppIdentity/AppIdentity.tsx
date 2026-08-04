@@ -4,6 +4,7 @@ import { FC, ReactNode } from 'react';
 import { CatalogEntityType } from '../../types/entity-type';
 import { EntityTypeLabel } from '../EntityTypeLabel/EntityTypeLabel';
 import styles from './AppIdentity.module.scss';
+import { DeploymentSize } from '../../types/deployment-icon-size';
 
 /** Props for the shared AppIdentity block used in browse and favorite cards. */
 export interface AppIdentityProps {
@@ -20,11 +21,8 @@ export interface AppIdentityProps {
    * When undefined, the row is hidden even in size 'lg'.
    */
   lastUsed?: string;
-  /**
-   * 'sm' — browse cards: 44 px logo, radius 12 px, no last-used line.
-   * 'lg' — favorite cards: 54 px logo, radius 14 px, includes last-used line.
-   */
-  size: 'sm' | 'lg';
+  /** Size of the block, which controls the logo size and whether the last-used row is shown. */
+  size: DeploymentSize;
   /** Search query used to highlight matching text in the name. */
   query?: string;
   /** Additional classes applied to the root element. */
@@ -60,10 +58,10 @@ export const AppIdentity: FC<AppIdentityProps> = ({
   lastUsedTrailing,
   iconClassName,
 }) => {
-  const isLg = size === 'lg';
+  const isLg = size === DeploymentSize.LG;
   const logoClass = isLg
-    ? 'h-[54px] w-[54px] rounded-[14px]'
-    : 'h-[44px] w-[44px] rounded-lg';
+    ? 'size-[54px] rounded-[14px]'
+    : 'size-[44px] rounded-lg';
   const logoSize = isLg ? 54 : 44;
 
   return (
@@ -118,7 +116,6 @@ export const AppIdentity: FC<AppIdentityProps> = ({
             )}
           </div>
 
-          {/* Last-used row — rendered only in size 'lg' */}
           {isLg && lastUsed != null && (
             <div className="flex items-center gap-2">
               <span

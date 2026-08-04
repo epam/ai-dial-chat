@@ -174,7 +174,7 @@ describe('MessageActions', () => {
         />,
       );
       const likeBtn = screen.getByRole('button', { name: 'Like response' });
-      expect(likeBtn.className).toContain('text-accent-primary');
+      expect(likeBtn.className).toContain('!text-accent');
     });
 
     it('does not highlight the Dislike button when activeRating is Like (1)', () => {
@@ -189,7 +189,7 @@ describe('MessageActions', () => {
       const dislikeBtn = screen.getByRole('button', {
         name: 'Dislike response',
       });
-      expect(dislikeBtn.className).not.toContain('text-accent-primary');
+      expect(dislikeBtn.className).not.toContain('!text-accent');
     });
 
     it('highlights the Dislike button when activeRating is Dislike (-1)', () => {
@@ -204,7 +204,7 @@ describe('MessageActions', () => {
       const dislikeBtn = screen.getByRole('button', {
         name: 'Dislike response',
       });
-      expect(dislikeBtn.className).toContain('text-accent-primary');
+      expect(dislikeBtn.className).toContain('!text-accent');
     });
 
     it('does not highlight the Like button when activeRating is Dislike (-1)', () => {
@@ -217,7 +217,7 @@ describe('MessageActions', () => {
         />,
       );
       const likeBtn = screen.getByRole('button', { name: 'Like response' });
-      expect(likeBtn.className).not.toContain('text-accent-primary');
+      expect(likeBtn.className).not.toContain('!text-accent');
     });
 
     it('does not highlight either button when activeRating is undefined', () => {
@@ -232,8 +232,8 @@ describe('MessageActions', () => {
       const dislikeBtn = screen.getByRole('button', {
         name: 'Dislike response',
       });
-      expect(likeBtn.className).not.toContain('text-accent-primary');
-      expect(dislikeBtn.className).not.toContain('text-accent-primary');
+      expect(likeBtn.className).not.toContain('!text-accent');
+      expect(dislikeBtn.className).not.toContain('!text-accent');
     });
   });
 });

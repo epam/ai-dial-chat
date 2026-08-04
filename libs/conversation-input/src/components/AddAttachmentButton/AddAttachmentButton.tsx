@@ -109,7 +109,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
             {item.isSelected && (
               <IconCheck
                 size={BASE_ICON_SIZE}
-                className="text-accent-primary"
+                className="text-accent"
                 aria-hidden
               />
             )}

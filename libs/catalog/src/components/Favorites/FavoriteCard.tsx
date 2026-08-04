@@ -104,7 +104,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
       {isSelected && (
         <IconCheck
           size={DIAL_ICON_SIZE.SM}
-          className="absolute end-3 top-3 shrink-0 text-accent-primary"
+          className="absolute end-3 top-3 shrink-0 text-accent"
           aria-hidden
         />
       )}
