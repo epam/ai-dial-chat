@@ -113,11 +113,15 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   const [isChatSettingsOpen, setIsChatSettingsOpen] = useState(false);
   const [isToolsSheetOpen, setIsToolsSheetOpen] = useState(false);
 
-  const cssVars = buildCssVars({
-    '--aab-selected-tool-icon': colors?.selectedToolIcon,
-    '--aab-tool-icon': colors?.toolIcon,
-    '--aab-chevron-icon': colors?.chevronIcon,
-  });
+  const cssVars = useMemo(
+    () =>
+      buildCssVars({
+        '--aab-selected-tool-icon': colors?.selectedToolIcon,
+        '--aab-tool-icon': colors?.toolIcon,
+        '--aab-chevron-icon': colors?.chevronIcon,
+      }),
+    [colors?.selectedToolIcon, colors?.toolIcon, colors?.chevronIcon],
+  );
 
   const hasTools = toolsMenuItems.length > 0 && onToolToggle != null;
 

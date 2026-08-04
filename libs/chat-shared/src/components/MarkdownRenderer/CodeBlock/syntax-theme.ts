@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 
 /** Style map consumed by `react-syntax-highlighter`'s `Prism` renderer. */
 type PrismStyleMap = Record<string, CSSProperties>;
-// TODO: review
+// TODO: review colors
 const MUTED: CSSProperties = { color: 'var(--text-secondary, #6B7280)' };
 const BLUE: CSSProperties = { color: 'var(--bg-accent-primary, #2764d9)' };
 const VIOLET: CSSProperties = {
