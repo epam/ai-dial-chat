@@ -189,10 +189,10 @@ apps/chat/src/
 
 Current implementation uses **React Context** with no external state library.
 
-| Context                | State owned                                                                                                                                                                                                                                                                                                                                          |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `UserContext`          | Auth status (`loading \| authenticated \| unauthenticated`), `UserProfile`, `refresh()`, `reset()`                                                                                                                                                                                                                                                   |
-| `ThemeContext`         | Active theme ID, theme list, `setTheme()`, logo URL, loading flag                                                                                                                                                                                                                                                                                    |
+| Context                | State owned                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UserContext`          | Auth status (`loading \| authenticated \| unauthenticated`), `UserProfile`, `refresh()`, `reset()`                                                                                                                                                                                                                                                                                                                        |
+| `ThemeContext`         | Active theme ID, theme list, `setTheme()`, logo URL, loading flag                                                                                                                                                                                                                                                                                                                                                         |
 | `ClientChannelContext` | DIAL Core client-channel id, pending `toolset/signin` **and** `external-service/signin` events, `reportEvent()`, `ensureConnected()` — mounted inside `RequireAuth` alongside `GenerationProvider` so it survives conversation navigation; see [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services) |
 
 Context pattern (reference: `ThemeContext.tsx`):
@@ -220,17 +220,17 @@ Behaviour applied automatically:
 
 `ApiEndpoints` enum centralises all URL constants:
 
-| Key              | URL                      |
-| ---------------- | ------------------------ |
-| `THEMES`         | `/api/themes`            |
-| `THEME_ICON`     | `/api/themes/icon`       |
-| `CONVERSATIONS`  | `/api/v1/conversations`  |
-| `DEPLOYMENTS`    | `/api/deployments`       |
-| `MODELS`         | `/api/v1/models`         |
-| `AUTH_ME`        | `/api/v1/auth/me`        |
-| `AUTH_PROVIDERS` | `/api/v1/auth/providers` |
-| `AUTH_LOGOUT`    | `/api/v1/auth/logout`    |
-| `CLIENT_CHANNEL` | `/api/v1/client-channel` |
+| Key                 | URL                         |
+| ------------------- | --------------------------- |
+| `THEMES`            | `/api/themes`               |
+| `THEME_ICON`        | `/api/themes/icon`          |
+| `CONVERSATIONS`     | `/api/v1/conversations`     |
+| `DEPLOYMENTS`       | `/api/deployments`          |
+| `MODELS`            | `/api/v1/models`            |
+| `AUTH_ME`           | `/api/v1/auth/me`           |
+| `AUTH_PROVIDERS`    | `/api/v1/auth/providers`    |
+| `AUTH_LOGOUT`       | `/api/v1/auth/logout`       |
+| `CLIENT_CHANNEL`    | `/api/v1/client-channel`    |
 | `EXTERNAL_SERVICES` | `/api/v1/external-services` |
 
 ### SSE streaming
@@ -342,7 +342,7 @@ DIAL Core RPC proxy used to deliver mid-completion `toolset/signin` and `externa
 BFF proxy for an application's external-service credentials, driving the `external-service/signin` interrupt above. See [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services).
 
 | Method | Path                                                    | Description                                        |
-| ------ | -------------------------------------------------------- | --------------------------------------------------- |
+| ------ | ------------------------------------------------------- | -------------------------------------------------- |
 | `GET`  | `/api/v1/external-services/{appId}/{serviceId}`         | Get display metadata + auth type (not cached)      |
 | `POST` | `/api/v1/external-services/{appId}/{serviceId}/signin`  | Submit API-key/OAuth credentials                   |
 | `POST` | `/api/v1/external-services/{appId}/{serviceId}/signout` | Revoke credentials (Core 404 = idempotent success) |

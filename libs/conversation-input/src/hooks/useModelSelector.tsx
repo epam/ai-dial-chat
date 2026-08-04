@@ -19,6 +19,7 @@ import {
   filterDeployments,
   getDeploymentLabel,
 } from '../utils/deployment';
+import styles from './useModelSelector.module.scss';
 
 /** Options passed to `useModelSelector`. */
 export interface UseModelSelectorOptions {
@@ -30,8 +31,10 @@ export interface UseModelSelectorOptions {
   onDeploymentChange?: (id: string) => void;
   /** Status labels for the selector dropdown. */
   modelSelectorLabels?: ModelSelectorLabels;
-  /** Class applied to the sticky search header wrapper for theming. Defaults to `'bg-layer-raised'`. */
+  /** Class applied to the sticky search header wrapper for theming. Defaults to a `--bg-layer-raised` background. */
   searchHeaderClassName?: string;
+  /** Class applied to the currently selected menu item. Defaults to a `--bg-accent-primary-alpha` background. */
+  selectedItemClassName?: string;
 }
 
 /** Values returned by `useModelSelector`. */
@@ -56,7 +59,8 @@ export const useModelSelector = ({
   selectedDeploymentId,
   onDeploymentChange,
   modelSelectorLabels,
-  searchHeaderClassName = 'bg-layer-raised',
+  searchHeaderClassName = styles.searchHeader,
+  selectedItemClassName = styles.selectedItem,
 }: UseModelSelectorOptions): UseModelSelectorResult => {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -133,7 +137,7 @@ export const useModelSelector = ({
           item.displayName ?? item.id,
         ),
         onClick: () => onDeploymentChange?.(item.id),
-        className: isSelected ? 'bg-accent-primary-alpha' : undefined,
+        className: isSelected ? selectedItemClassName : undefined,
       };
     });
   }, [
@@ -143,6 +147,7 @@ export const useModelSelector = ({
     selectedDeploymentId,
     modelSelectorLabels,
     onDeploymentChange,
+    selectedItemClassName,
   ]);
 
   const menuHeader: ReactNode = useMemo(

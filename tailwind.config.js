@@ -17,7 +17,6 @@ const backgroundsColors = {
   'shadow-grey': 'var(--shadow-grey-1000, #161B2D08)',
 
   // REMOVED: old names, need to remove
-  'layer-0': 'var(--bg-layer-raised, #FCFCFC)',
   'layer-1': 'var(--bg-layer-1, #E0E6F0)',
   'layer-2': 'var(--bg-layer-2, #EEF1F7)',
   'layer-3': 'var(--bg-layer-3, #FCFCFC)',

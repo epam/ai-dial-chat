@@ -1,4 +1,6 @@
 import {
+  buildCssVars,
+  mergeClasses,
   ResponseFormat,
   type ToolMenuItem,
   useIsMobile,
@@ -30,6 +32,7 @@ import { BottomSheet } from '../BottomSheet/BottomSheet';
 import { ChatSettingsBottomSheet } from '../ChatSettingsBottomSheet/ChatSettingsBottomSheet';
 import { ChatSettingsModal } from '../ChatSettingsModal/ChatSettingsModal';
 import { ToolsBottomSheet } from '../ToolsBottomSheet/ToolsBottomSheet';
+import styles from './AddAttachmentButton.module.scss';
 
 /** A single item injected into the attachment menu by the host app. */
 export interface ExtraMenuItem {
@@ -73,6 +76,18 @@ interface AddAttachmentButtonProps {
   toolsMenuTitle?: string;
   /** Accessible label for the back arrow in the mobile tools bottom sheet. Defaults to `'Back'`. */
   toolsBackLabel?: string;
+  /** Color overrides. */
+  colors?: AddAttachmentButtonColors;
+}
+
+/** Color overrides for `AddAttachmentButton`, applied as CSS custom properties with app theme fallbacks. */
+export interface AddAttachmentButtonColors {
+  /** Checkmark icon color for a selected tool in the Tools submenu. Fallback: `--text-accent`. */
+  selectedToolIcon?: string;
+  /** Icon color for each tool row in the Tools submenu. Fallback: `--text-secondary`. */
+  toolIcon?: string;
+  /** Chevron icon color on the mobile "Tools"/"Chat settings" rows. Fallback: `--text-secondary`. */
+  chevronIcon?: string;
 }
 
 /** "+" trigger button that opens an attachment/settings menu (desktop dropdown or mobile bottom sheet). */
@@ -91,11 +106,18 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   onToolToggle,
   toolsMenuTitle = 'Tools',
   toolsBackLabel = 'Back',
+  colors,
 }) => {
   const isMobile = useIsMobile();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isChatSettingsOpen, setIsChatSettingsOpen] = useState(false);
   const [isToolsSheetOpen, setIsToolsSheetOpen] = useState(false);
+
+  const cssVars = buildCssVars({
+    '--aab-selected-tool-icon': colors?.selectedToolIcon,
+    '--aab-tool-icon': colors?.toolIcon,
+    '--aab-chevron-icon': colors?.chevronIcon,
+  });
 
   const hasTools = toolsMenuItems.length > 0 && onToolToggle != null;
 
@@ -109,18 +131,24 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
             {item.isSelected && (
               <IconCheck
                 size={BASE_ICON_SIZE}
-                className="text-accent"
+                style={cssVars}
+                className={styles.selectedToolIcon}
                 aria-hidden
               />
             )}
           </span>
         ),
         icon: (
-          <span className="flex items-center text-secondary">{item.icon}</span>
+          <span
+            style={cssVars}
+            className={mergeClasses('flex items-center', styles.toolIcon)}
+          >
+            {item.icon}
+          </span>
         ),
         onClick: () => onToolToggle?.(item.id),
       })),
-    [toolsMenuItems, onToolToggle],
+    [toolsMenuItems, onToolToggle, cssVars],
   );
 
   const menuItems = useMemo(
@@ -154,7 +182,11 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
                       <IconChevronRight
                         size={BASE_ICON_SIZE}
                         stroke={1.5}
-                        className="text-secondary rtl:scale-x-[-1]"
+                        style={cssVars}
+                        className={mergeClasses(
+                          'rtl:scale-x-[-1]',
+                          styles.chevronIcon,
+                        )}
                         aria-hidden
                       />
                     ),
@@ -175,7 +207,11 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
                 <IconChevronRight
                   size={BASE_ICON_SIZE}
                   stroke={1.5}
-                  className="text-secondary rtl:scale-x-[-1]"
+                  style={cssVars}
+                  className={mergeClasses(
+                    'rtl:scale-x-[-1]',
+                    styles.chevronIcon,
+                  )}
                   aria-hidden
                 />
               ) : null,
@@ -193,6 +229,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
       hasTools,
       toolsMenuTitle,
       toolsSubmenuChildren,
+      cssVars,
     ],
   );
 

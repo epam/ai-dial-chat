@@ -1,0 +1,7 @@
+.icon {
+  color: var(--tbs-icon-text, var(--text-secondary, #6b7280));
+}
+
+.selectedIcon {
+  color: var(--tbs-selected-icon-text, var(--text-accent, #1d4ed8));
+}
