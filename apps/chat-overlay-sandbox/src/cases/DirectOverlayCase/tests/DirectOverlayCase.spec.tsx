@@ -26,9 +26,9 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock('@epam/ai-dial-chat-overlay', () => ({
+vi.mock('@epam/ai-dial-chat-overlay', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-overlay')>()),
   ChatOverlay: mocks.ChatOverlay,
-  OverlayEventType,
 }));
 
 vi.mock('../../../env', () => ({

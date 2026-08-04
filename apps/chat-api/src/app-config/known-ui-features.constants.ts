@@ -1,10 +1,10 @@
 /**
- * The set of recognized `OverlayFeature` wire values, duplicated here rather
- * than imported from the browser-facing overlay package, keeping this
- * Node-only service independent of the frontend SDK.
- * Keep this list in sync with `OverlayFeature`
- * (`libs/chat-overlay/src/protocol/overlay-protocol.ts`) — its own test
- * suite asserts it has exactly 38 members, matching the count here.
+ * The set of recognized UI feature wire values, duplicated here rather than
+ * imported from the browser-facing overlay package, keeping this Node-only
+ * service independent of the frontend SDK.
+ * `KNOWN_UI_FEATURES` is a backend superset of `OverlayFeature` (32 public
+ * members); it includes backend-only feature strings not exported by the
+ * overlay library. The companion test asserts exactly 38 members.
  */
 export const KNOWN_UI_FEATURES: ReadonlySet<string> = new Set([
   'code-apps',
