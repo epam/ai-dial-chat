@@ -25,7 +25,7 @@
 
 ### Requirement: Duplicate is dispatched through the existing onCopyFiles callback
 
-Triggering the Duplicate action SHALL be handled entirely by `@epam/ai-dial-ui-kit`'s internal `DialFileManager` logic, which computes a same-folder destination and a collision-free name, then calls the app's existing `onCopyFiles(items, destinationFolder)` callback (already wired per [file-manager-copy-move](../../../specs/file-manager-copy-move/spec.md)). This capability SHALL NOT introduce a separate `onDuplicate` callback or a distinct BFF request path — duplicated items flow through the same `POST /api/v1/files/copy` endpoint as an ordinary same-folder copy.
+Triggering the Duplicate action SHALL be handled entirely by `@epam/ai-dial-react-file-manager`'s internal `DialFileManager` logic, which computes a same-folder destination and a collision-free name, then calls the app's existing `onCopyFiles(items, destinationFolder)` callback (already wired per [file-manager-copy-move](../../../specs/file-manager-copy-move/spec.md)). This capability SHALL NOT introduce a separate `onDuplicate` callback or a distinct BFF request path — duplicated items flow through the same `POST /api/v1/files/copy` endpoint as an ordinary same-folder copy.
 
 **State ownership**: no new state is introduced in `useDialFileManager`; `isCopying` (from `file-manager-copy-move`) covers the in-flight state for a duplicate the same way it covers an ordinary copy.
 
@@ -43,7 +43,7 @@ Triggering the Duplicate action SHALL be handled entirely by `@epam/ai-dial-ui-k
 
 ### Requirement: Naming collision avoidance is ui-kit-owned
 
-The destination name for a duplicated file or folder SHALL be computed by `@epam/ai-dial-ui-kit` against the destination folder's already-loaded listing, using the pattern `"{base} ({n}){ext}"` for files (extension preserved, `n` starting at 1 and incrementing until unused) and `"{name} ({n})"` for folders. This app SHALL NOT implement or duplicate this naming logic.
+The destination name for a duplicated file or folder SHALL be computed by `@epam/ai-dial-react-file-manager` against the destination folder's already-loaded listing, using the pattern `"{base} ({n}){ext}"` for files (extension preserved, `n` starting at 1 and incrementing until unused) and `"{name} ({n})"` for folders. This app SHALL NOT implement or duplicate this naming logic.
 
 #### Scenario: First duplicate of a file gets "(1)" suffix
 

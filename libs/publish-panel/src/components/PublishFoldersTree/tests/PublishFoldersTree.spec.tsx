@@ -1,4 +1,5 @@
-import { DialFile, DialFileNodeType } from '@epam/ai-dial-ui-kit';
+import { DialFile, DialFileNodeType } from '@epam/ai-dial-react-file-manager';
+import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
@@ -8,7 +9,7 @@ import { PublishFoldersTree } from '../PublishFoldersTree';
 
 const capturedProps: {
   current: ComponentProps<
-    typeof import('@epam/ai-dial-ui-kit').DialFoldersTree
+    typeof import('@epam/ai-dial-react-file-manager').DialFoldersTree
   > | null;
 } = { current: null };
 
@@ -22,8 +23,9 @@ const renderFileRow = (
   </div>
 );
 
-vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-react-file-manager')>();
   return {
     ...actual,
     DialFoldersTree: (props: ComponentProps<typeof actual.DialFoldersTree>) => {
@@ -66,11 +68,12 @@ describe('PublishFoldersTree', () => {
   it('converts PublishFolderNode[] to DialFile[] with showFiles disabled, wrapped under the root node', () => {
     renderTree();
     expect(capturedProps.current?.showFiles).toBe(false);
-    expect(capturedProps.current?.items.map((f) => f.path)).toEqual(['']);
-    expect(capturedProps.current?.items[0]?.items?.map((f) => f.path)).toEqual([
-      'Shared',
-      'My workspace',
-    ]);
+    expect(
+      capturedProps.current?.items.map((f: DialFile) => f.path),
+    ).toEqual(['']);
+    expect(
+      capturedProps.current?.items[0]?.items?.map((f: DialFile) => f.path),
+    ).toEqual(['Shared', 'My workspace']);
   });
 
   it('passes the selected path joined as a string', () => {
@@ -94,12 +97,16 @@ describe('PublishFoldersTree', () => {
 
   it('filters the tree to matching folders when searchQuery is set', () => {
     renderTree({ searchQuery: 'data science' });
-    expect(capturedProps.current?.items.map((f) => f.path)).toEqual(['']);
-    expect(capturedProps.current?.items[0]?.items?.map((f) => f.path)).toEqual([
-      'Shared',
-    ]);
     expect(
-      capturedProps.current?.items[0]?.items?.[0]?.items?.map((f) => f.path),
+      capturedProps.current?.items.map((f: DialFile) => f.path),
+    ).toEqual(['']);
+    expect(
+      capturedProps.current?.items[0]?.items?.map((f: DialFile) => f.path),
+    ).toEqual(['Shared']);
+    expect(
+      capturedProps.current?.items[0]?.items?.[0]?.items?.map(
+        (f: DialFile) => f.path,
+      ),
     ).toEqual(['Shared/Data Science']);
   });
 
@@ -112,16 +119,7 @@ describe('PublishFoldersTree', () => {
   });
 
   describe('per-row context menu (add sibling / add child)', () => {
-    const clickMenuItem = (
-      menuItems: ReturnType<
-        NonNullable<
-          ComponentProps<
-            typeof import('@epam/ai-dial-ui-kit').DialFoldersTree
-          >['getContextMenuItems']
-        >
-      >,
-      key: string,
-    ) =>
+    const clickMenuItem = (menuItems: DropdownItem[], key: string) =>
       act(() =>
         menuItems
           .find((item) => item.key === key)
@@ -137,7 +135,9 @@ describe('PublishFoldersTree', () => {
         nodeType: DialFileNodeType.FOLDER,
       };
       const menuItems = capturedProps.current?.getContextMenuItems?.(rootFile);
-      expect(menuItems?.map((item) => item.key)).toEqual(['add-child']);
+      expect(menuItems?.map((item: DropdownItem) => item.key)).toEqual([
+        'add-child',
+      ]);
     });
 
     it('includes both actions for a non-root folder', () => {
@@ -150,7 +150,7 @@ describe('PublishFoldersTree', () => {
       };
       const menuItems =
         capturedProps.current?.getContextMenuItems?.(sharedFile);
-      expect(menuItems?.map((item) => item.key)).toEqual([
+      expect(menuItems?.map((item: DropdownItem) => item.key)).toEqual([
         'add-child',
         'add-sibling',
       ]);
@@ -193,7 +193,7 @@ describe('PublishFoldersTree', () => {
     expect(capturedProps.current?.createdFolderPath).toBe('Shared');
     expect(
       capturedProps.current?.items[0]?.items?.[0]?.items?.map(
-        (file) => file.name,
+        (file: DialFile) => file.name,
       ),
     ).toEqual(['Data Science']);
   });
@@ -210,7 +210,9 @@ describe('PublishFoldersTree', () => {
     expect(capturedProps.current?.createdFolderPath).toBe('');
     expect(capturedProps.current?.newFolderDefaultName).toBe('New folder 2');
     expect(
-      capturedProps.current?.items[0]?.items?.map((file) => file.name),
+      capturedProps.current?.items[0]?.items?.map(
+        (file: DialFile) => file.name,
+      ),
     ).toEqual(['Shared', 'My workspace', 'New folder']);
   });
 

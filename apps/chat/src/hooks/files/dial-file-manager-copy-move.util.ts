@@ -1,5 +1,5 @@
-import type { DialCopiedItem } from '@epam/ai-dial-ui-kit';
-import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
+import type { DialCopiedItem } from '@epam/ai-dial-react-file-manager';
+import { DialFileNodeType } from '@epam/ai-dial-react-file-manager';
 import type {
   CopyItemDto,
   MoveItemDto,

@@ -1,5 +1,6 @@
 import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
 import '@epam/ai-dial-ui-kit/styles.css';
+import '@epam/ai-dial-react-file-manager/styles.css';
 import '@epam/ai-dial-react-pdf-highlighter/styles.css';
 import '@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css';
 import '@uiw/react-markdown-preview/markdown.css';

@@ -1,14 +1,16 @@
-import { PrimaryButton } from '@epam/ai-dial-ui-kit';
 import {
   DialFileManager,
   DialFileManagerActions,
   DialFileManagerTabs,
-  DialSpinner,
   GridSelectionMode,
-  NOT_ALLOWED_SYMBOLS_REGEXP,
   type DialFileAcceptType,
   type FileManagerGridRow,
   type ToolbarOptions,
+} from '@epam/ai-dial-react-file-manager';
+import {
+  NOT_ALLOWED_SYMBOLS_REGEXP,
+  PrimaryButton,
+  DialSpinner,
 } from '@epam/ai-dial-ui-kit';
 import { memo, useEffect, useMemo, useState, type FC } from 'react';
 import OperationLoaderModal from '../../components/DialFileManagerModal/OperationLoaderModal';

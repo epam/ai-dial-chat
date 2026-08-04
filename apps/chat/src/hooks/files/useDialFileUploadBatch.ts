@@ -1,5 +1,9 @@
-import type { DialFile, DialUploadFileItem } from '@epam/ai-dial-ui-kit';
-import { DialFileManagerTabs, NotificationVariant } from '@epam/ai-dial-ui-kit';
+import type {
+  DialFile,
+  DialUploadFileItem,
+} from '@epam/ai-dial-react-file-manager';
+import { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type {
   ListFilesItemDto,
   UploadArchiveEntryResultDto,
