@@ -549,7 +549,10 @@
             "name": "deployment",
             "required": true,
             "in": "path",
+            "description": "DIAL deployment identifier. Slash-separated identifiers must be percent-encoded as one request path parameter.",
             "schema": {
+              "maxLength": 2048,
+              "example": "applications/bucket/My App",
               "type": "string"
             }
           }
@@ -564,6 +567,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid deployment identifier"
           },
           "401": {
             "description": "Unauthorized"
@@ -591,7 +597,10 @@
             "name": "deployment",
             "required": true,
             "in": "path",
+            "description": "DIAL deployment identifier. Slash-separated identifiers must be percent-encoded as one request path parameter.",
             "schema": {
+              "maxLength": 2048,
+              "example": "applications/bucket/My App",
               "type": "string"
             }
           }
@@ -606,6 +615,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid deployment identifier"
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
@@ -642,7 +654,10 @@
             "name": "deployment",
             "required": true,
             "in": "path",
+            "description": "DIAL deployment identifier. Slash-separated identifiers must be percent-encoded as one request path parameter.",
             "schema": {
+              "maxLength": 2048,
+              "example": "applications/bucket/My App",
               "type": "string"
             }
           }
@@ -657,6 +672,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid deployment identifier"
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"

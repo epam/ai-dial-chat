@@ -24,6 +24,10 @@ export default defineConfig(() => ({
   plugins: [react(), svgr()],
   resolve: {
     alias: {
+      /* remark-math resolves math delimiters through micromark-extension-math, which only
+       * recognizes `$...$`/`$$...$$`. This fork additionally recognizes the `\(...\)`/`\[...\]`
+       * delimiters that LLMs commonly emit. */
+      'micromark-extension-math': 'micromark-extension-llm-math',
       '@epam/ai-dial-chat-shared': path.resolve(
         __dirname,
         '../../libs/chat-shared/src/index.ts',

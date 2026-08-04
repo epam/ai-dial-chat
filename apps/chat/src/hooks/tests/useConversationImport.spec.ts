@@ -23,9 +23,13 @@ import { useConversations } from '../../context/ConversationsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { UnauthorizedError } from '../../server-api/base';
 import { saveConversation } from '../../server-api/conversations.api';
-import { uploadFile } from '../../server-api/files.api';
+import { listFiles, uploadFile } from '../../server-api/files.api';
 import { ExportJobStatus } from '../../types/conversation-export';
+import { formatDateYM } from '../../utils/date';
 import { useConversationImport } from '../useConversationImport';
+
+/** The month folder `buildUploadPath`/the allocator would use for "now" — computed once per test run. */
+const currentUploadMonth = (): string => formatDateYM(new Date());
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -44,6 +48,7 @@ vi.mock('../../server-api/conversations.api', () => ({
 
 vi.mock('../../server-api/files.api', () => ({
   uploadFile: vi.fn(),
+  listFiles: vi.fn(),
 }));
 
 const mockShowNotification = vi.fn();
@@ -113,6 +118,11 @@ describe('useConversationImport', () => {
       refresh: vi.fn(),
       reset: vi.fn(),
     } as unknown as ReturnType<typeof useUser>);
+    vi.mocked(listFiles).mockResolvedValue({
+      bucket: 'user-bucket',
+      path: '',
+      items: [],
+    } as never);
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
@@ -313,10 +323,10 @@ describe('useConversationImport', () => {
   });
 
   describe('importConversations — .dial archive', () => {
-    it('uploads attachments to uploads/<day>/ and rewrites the reference', async () => {
+    it('uploads attachments to uploads/<month>/ and rewrites the reference', async () => {
       vi.mocked(saveConversation).mockResolvedValue({} as never);
       vi.mocked(uploadFile).mockResolvedValue({
-        url: 'files/user-bucket/uploads/2026-07-17/q1.pdf',
+        url: 'files/user-bucket/uploads/2026-07/q1.pdf',
       } as never);
       const { result } = renderHook(() => useConversationImport());
       const file = dialFile(
@@ -341,19 +351,276 @@ describe('useConversationImport', () => {
         await result.current.importConversations(file);
       });
 
+      expect(listFiles).toHaveBeenCalledOnce();
+      const [listParams] = vi.mocked(listFiles).mock.calls[0];
+      expect(listParams).toMatchObject({
+        bucket: 'user-bucket',
+        path: expect.stringMatching(/^uploads\/\d{4}-\d{2}$/),
+      });
+
       expect(uploadFile).toHaveBeenCalledOnce();
-      const [bucket, path, , options] = vi.mocked(uploadFile).mock.calls[0];
+      const [bucket, path, uploadedFile, options] =
+        vi.mocked(uploadFile).mock.calls[0];
       expect(bucket).toBe('user-bucket');
-      expect(path).toMatch(/^uploads\/\d{4}-\d{2}-\d{2}\/q1\.pdf$/);
+      expect(path).toMatch(/^uploads\/\d{4}-\d{2}\/q1\.pdf$/);
+      expect((uploadedFile as File).name).toBe('q1.pdf');
       expect(options).toMatchObject({ uploadMode: 'create-only' });
 
       const [, savedConversation] = vi.mocked(saveConversation).mock.calls[0];
       const attachment = (savedConversation as Conversation).messages[0]
         .custom_content?.attachments?.[0];
-      expect(attachment?.url).toBe(
-        'files/user-bucket/uploads/2026-07-17/q1.pdf',
-      );
+      expect(attachment?.url).toBe('files/user-bucket/uploads/2026-07/q1.pdf');
+      expect(attachment?.title).toBe('q1.pdf');
       expect(result.current.jobs[0].status).toBe(ExportJobStatus.Success);
+    });
+
+    it('never lists the upload folder for a plain JSON import', async () => {
+      vi.mocked(saveConversation).mockResolvedValue({} as never);
+      const { result } = renderHook(() => useConversationImport());
+      const file = jsonFile({
+        version: 5,
+        history: [makeConversation()],
+        folders: [],
+      });
+
+      await act(async () => {
+        await result.current.importConversations(file);
+      });
+
+      expect(listFiles).not.toHaveBeenCalled();
+      expect(result.current.jobs[0].status).toBe(ExportJobStatus.Success);
+    });
+
+    it('suffixes an upload path when the destination name is already listed in the bucket', async () => {
+      const month = currentUploadMonth();
+      vi.mocked(saveConversation).mockResolvedValue({} as never);
+      vi.mocked(listFiles).mockResolvedValue({
+        bucket: 'user-bucket',
+        path: `uploads/${month}`,
+        items: [{ name: 'q1.pdf' } as never],
+      });
+      vi.mocked(uploadFile).mockResolvedValue({
+        url: `files/user-bucket/uploads/${month}/q1 (1).pdf`,
+      } as never);
+      const { result } = renderHook(() => useConversationImport());
+      const file = dialFile(
+        {
+          version: 5,
+          history: [
+            makeConversation({
+              messages: [
+                makeAttachmentMessage(
+                  'files/old-bucket/reports/q1.pdf',
+                  'q1.pdf',
+                ),
+              ],
+            }),
+          ],
+          folders: [],
+        },
+        { 'reports/q1.pdf': 'pdf-bytes' },
+      );
+
+      await act(async () => {
+        await result.current.importConversations(file);
+      });
+
+      /* No wasted 409 round-trip: the pre-fill already knew the name was taken. */
+      expect(uploadFile).toHaveBeenCalledOnce();
+      const [, path, uploadedFile] = vi.mocked(uploadFile).mock.calls[0];
+      expect(path).toBe(`uploads/${month}/q1%20(1).pdf`);
+      expect((uploadedFile as File).name).toBe('q1 (1).pdf');
+
+      const [, savedConversation] = vi.mocked(saveConversation).mock.calls[0];
+      const attachment = (savedConversation as Conversation).messages[0]
+        .custom_content?.attachments?.[0];
+      expect(attachment?.title).toBe('q1 (1).pdf');
+    });
+
+    it('uploads the same source path referenced by two conversations twice, suffixing the second', async () => {
+      const month = currentUploadMonth();
+      vi.mocked(saveConversation).mockResolvedValue({} as never);
+      vi.mocked(uploadFile).mockResolvedValue({
+        url: `files/user-bucket/uploads/${month}/q1.pdf`,
+      } as never);
+      const { result } = renderHook(() => useConversationImport());
+      const file = dialFile(
+        {
+          version: 5,
+          history: [
+            makeConversation({
+              id: 'bucket-a/gpt-4o__A',
+              messages: [
+                makeAttachmentMessage(
+                  'files/old-bucket/reports/q1.pdf',
+                  'q1.pdf',
+                ),
+              ],
+            }),
+            makeConversation({
+              id: 'bucket-a/gpt-4o__B',
+              messages: [
+                makeAttachmentMessage(
+                  'files/old-bucket/reports/q1.pdf',
+                  'q1.pdf',
+                ),
+              ],
+            }),
+          ],
+          folders: [],
+        },
+        { 'reports/q1.pdf': 'pdf-bytes' },
+      );
+
+      await act(async () => {
+        await result.current.importConversations(file);
+      });
+
+      expect(uploadFile).toHaveBeenCalledTimes(2);
+      const paths = vi.mocked(uploadFile).mock.calls.map((call) => call[1]);
+      expect(paths).toEqual([
+        `uploads/${month}/q1.pdf`,
+        `uploads/${month}/q1%20(1).pdf`,
+      ]);
+    });
+
+    it('uploads two refs sharing a basename from different source folders in one conversation, suffixing the second', async () => {
+      const month = currentUploadMonth();
+      vi.mocked(saveConversation).mockResolvedValue({} as never);
+      vi.mocked(uploadFile).mockResolvedValue({
+        url: `files/user-bucket/uploads/${month}/q1.pdf`,
+      } as never);
+      const { result } = renderHook(() => useConversationImport());
+      const file = dialFile(
+        {
+          version: 5,
+          history: [
+            makeConversation({
+              messages: [
+                makeAttachmentMessage(
+                  'files/old-bucket/reports/q1.pdf',
+                  'q1.pdf',
+                ),
+                makeAttachmentMessage('files/old-bucket/2025/q1.pdf', 'q1.pdf'),
+              ],
+            }),
+          ],
+          folders: [],
+        },
+        { 'reports/q1.pdf': 'a', '2025/q1.pdf': 'b' },
+      );
+
+      await act(async () => {
+        await result.current.importConversations(file);
+      });
+
+      expect(uploadFile).toHaveBeenCalledTimes(2);
+      const paths = vi.mocked(uploadFile).mock.calls.map((call) => call[1]);
+      expect(paths).toEqual([
+        `uploads/${month}/q1.pdf`,
+        `uploads/${month}/q1%20(1).pdf`,
+      ]);
+    });
+
+    it('uploads a file referenced by two messages of the same conversation only once', async () => {
+      vi.mocked(saveConversation).mockResolvedValue({} as never);
+      vi.mocked(uploadFile).mockResolvedValue({
+        url: 'files/user-bucket/uploads/2026-07/q1.pdf',
+      } as never);
+      const { result } = renderHook(() => useConversationImport());
+      const file = dialFile(
+        {
+          version: 5,
+          history: [
+            makeConversation({
+              messages: [
+                makeAttachmentMessage(
+                  'files/old-bucket/reports/q1.pdf',
+                  'q1.pdf',
+                ),
+                makeAttachmentMessage(
+                  'files/old-bucket/reports/q1.pdf',
+                  'q1.pdf',
+                ),
+              ],
+            }),
+          ],
+          folders: [],
+        },
+        { 'reports/q1.pdf': 'pdf-bytes' },
+      );
+
+      await act(async () => {
+        await result.current.importConversations(file);
+      });
+
+      expect(uploadFile).toHaveBeenCalledOnce();
+    });
+
+    it('assigns suffixes in reference order for a conversation with more attachments than the upload concurrency limit, regardless of upload resolution order', async () => {
+      vi.mocked(saveConversation).mockResolvedValue({} as never);
+      const resolvers: Array<() => void> = [];
+      vi.mocked(uploadFile).mockImplementation(
+        (_bucket, path) =>
+          new Promise((resolve) => {
+            resolvers.push(() =>
+              resolve({ url: `files/user-bucket/${path}` } as never),
+            );
+          }),
+      );
+      const { result } = renderHook(() => useConversationImport());
+      const attachmentEntries: Record<string, string> = {};
+      const messages = Array.from({ length: 6 }, (_, index) => {
+        const path = `folder-${index}/dup.pdf`;
+        attachmentEntries[path] = `bytes-${index}`;
+        return makeAttachmentMessage(`files/old-bucket/${path}`, 'dup.pdf');
+      });
+      const file = dialFile(
+        {
+          version: 5,
+          history: [makeConversation({ messages })],
+          folders: [],
+        },
+        attachmentEntries,
+      );
+
+      let importSettled = false;
+      const importPromise = result.current
+        .importConversations(file)
+        .then(() => {
+          importSettled = true;
+        });
+
+      /* ATTACHMENT_CONCURRENCY (5) workers start synchronously; the 6th only
+       * starts once one of the first 5 resolves and frees a slot. */
+      await waitFor(() => expect(resolvers.length).toBe(5));
+      resolvers[0]();
+      await waitFor(() => expect(resolvers.length).toBe(6));
+
+      /* Resolve everything else in reverse invocation order to prove the
+       * suffix each attachment got does not depend on resolution order. */
+      for (let i = resolvers.length - 1; i >= 1; i -= 1) {
+        resolvers[i]();
+      }
+      await act(async () => {
+        await importPromise;
+      });
+
+      expect(importSettled).toBe(true);
+      /* Whatever the current month is, the six suffixes must appear in
+       * reference order (folder-0..folder-5), not upload-resolution order. */
+      const paths = vi.mocked(uploadFile).mock.calls.map((call) => call[1]);
+      const suffixes = paths.map((path) =>
+        decodeURIComponent(path.split('/')[2]),
+      );
+      expect(suffixes).toEqual([
+        'dup.pdf',
+        'dup (1).pdf',
+        'dup (2).pdf',
+        'dup (3).pdf',
+        'dup (4).pdf',
+        'dup (5).pdf',
+      ]);
     });
 
     it('detects the old-chat archive JSON entry name', async () => {
@@ -415,7 +682,54 @@ describe('useConversationImport', () => {
       expect(result.current.jobs[0].status).toBe(ExportJobStatus.Success);
     });
 
-    it('shows a distinct error toast naming the file when the upload path already exists (409)', async () => {
+    it('retries the upload under a suffixed name when a create-only 409 races another upload', async () => {
+      const month = currentUploadMonth();
+      vi.mocked(saveConversation).mockResolvedValue({} as never);
+      vi.mocked(uploadFile)
+        .mockRejectedValueOnce(
+          new ResponseError(new Response(null, { status: 409 }), 'Conflict'),
+        )
+        .mockResolvedValueOnce({
+          url: `files/user-bucket/uploads/${month}/photo (1).png`,
+        } as never);
+      const { result } = renderHook(() => useConversationImport());
+      const file = dialFile(
+        {
+          version: 5,
+          history: [
+            makeConversation({
+              messages: [
+                makeAttachmentMessage('files/old-bucket/photo.png', 'photo'),
+              ],
+            }),
+          ],
+          folders: [],
+        },
+        { 'photo.png': 'bytes' },
+      );
+
+      await act(async () => {
+        await result.current.importConversations(file);
+      });
+
+      expect(uploadFile).toHaveBeenCalledTimes(2);
+      const [, firstPath] = vi.mocked(uploadFile).mock.calls[0];
+      const [, secondPath, secondFile] = vi.mocked(uploadFile).mock.calls[1];
+      expect(firstPath).toBe(`uploads/${month}/photo.png`);
+      expect(secondPath).toBe(`uploads/${month}/photo%20(1).png`);
+      expect((secondFile as File).name).toBe('photo (1).png');
+      expect(mockShowNotification).not.toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'error' }),
+      );
+
+      const [, savedConversation] = vi.mocked(saveConversation).mock.calls[0];
+      const attachment = (savedConversation as Conversation).messages[0]
+        .custom_content?.attachments?.[0];
+      expect(attachment?.title).toBe('photo (1).png');
+      expect(result.current.jobs[0].status).toBe(ExportJobStatus.Success);
+    });
+
+    it('skips the attachment and shows a warning once the conflict retry limit is exhausted', async () => {
       vi.mocked(saveConversation).mockResolvedValue({} as never);
       vi.mocked(uploadFile).mockRejectedValue(
         new ResponseError(new Response(null, { status: 409 }), 'Conflict'),
@@ -440,13 +754,84 @@ describe('useConversationImport', () => {
         await result.current.importConversations(file);
       });
 
+      /* One initial attempt plus ATTACHMENT_CONFLICT_RETRY_LIMIT (5) retries. */
+      expect(uploadFile).toHaveBeenCalledTimes(6);
       expect(mockShowNotification).toHaveBeenCalledWith(
         expect.objectContaining({
-          variant: 'error',
+          variant: 'warning',
           message: expect.stringContaining('photo.png'),
         }),
       );
+      expect(mockShowNotification).not.toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'error' }),
+      );
       expect(result.current.jobs[0].status).toBe(ExportJobStatus.Success);
+    });
+
+    it('still uploads attachments when listing the upload folder fails for a reason other than 401', async () => {
+      vi.mocked(saveConversation).mockResolvedValue({} as never);
+      vi.mocked(listFiles).mockRejectedValue(new Error('folder not found'));
+      vi.mocked(uploadFile).mockResolvedValue({
+        url: 'files/user-bucket/uploads/2026-07/q1.pdf',
+      } as never);
+      const { result } = renderHook(() => useConversationImport());
+      const file = dialFile(
+        {
+          version: 5,
+          history: [
+            makeConversation({
+              messages: [
+                makeAttachmentMessage(
+                  'files/old-bucket/reports/q1.pdf',
+                  'q1.pdf',
+                ),
+              ],
+            }),
+          ],
+          folders: [],
+        },
+        { 'reports/q1.pdf': 'pdf-bytes' },
+      );
+
+      await act(async () => {
+        await result.current.importConversations(file);
+      });
+
+      expect(uploadFile).toHaveBeenCalledOnce();
+      expect(result.current.jobs[0].status).toBe(ExportJobStatus.Success);
+    });
+
+    it('shows no toast and marks the job failed when listing the upload folder returns a 401', async () => {
+      vi.mocked(listFiles).mockRejectedValue(
+        new UnauthorizedError('/api/v1/files'),
+      );
+      const { result } = renderHook(() => useConversationImport());
+      const file = dialFile(
+        {
+          version: 5,
+          history: [
+            makeConversation({
+              messages: [
+                makeAttachmentMessage(
+                  'files/old-bucket/reports/q1.pdf',
+                  'q1.pdf',
+                ),
+              ],
+            }),
+          ],
+          folders: [],
+        },
+        { 'reports/q1.pdf': 'pdf-bytes' },
+      );
+
+      await act(async () => {
+        await result.current.importConversations(file);
+      });
+
+      expect(uploadFile).not.toHaveBeenCalled();
+      expect(saveConversation).not.toHaveBeenCalled();
+      expect(mockShowNotification).not.toHaveBeenCalled();
+      expect(result.current.jobs[0].status).toBe(ExportJobStatus.Failed);
     });
 
     it('shows no toast and marks the job failed on a 401 during attachment upload', async () => {

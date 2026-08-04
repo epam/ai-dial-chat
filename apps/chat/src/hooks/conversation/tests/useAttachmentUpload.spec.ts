@@ -13,9 +13,7 @@ vi.mock('../../../server-api/files.api', () => ({
   uploadFile: vi.fn(),
 }));
 vi.mock('../../../utils/build-upload-path', () => ({
-  buildUploadPath: vi.fn(
-    (attachment: { name: string }) => `uploads/${attachment.name}`,
-  ),
+  buildUploadPath: vi.fn((fileName: string) => `uploads/${fileName}`),
 }));
 
 const mockUploadFile = vi.mocked(uploadFile);

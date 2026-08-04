@@ -83,9 +83,7 @@ vi.mock('../../server-api/conversations.api');
 vi.mock('../../server-api/files.api');
 vi.mock('../../utils/attachment-to-dto');
 vi.mock('../../utils/build-upload-path', () => ({
-  buildUploadPath: vi.fn(
-    (attachment: { name: string }) => `uploads/${attachment.name}`,
-  ),
+  buildUploadPath: vi.fn((fileName: string) => `uploads/${fileName}`),
 }));
 vi.mock('../../components/StarterButtons/StarterButtons', () => ({
   default: ({
