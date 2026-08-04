@@ -1146,7 +1146,7 @@ describe('ConversationPanelView — import header action', () => {
     const fileInput = document.querySelector(
       'input[type="file"]',
     ) as HTMLInputElement;
-    expect(fileInput.accept).toBe('.json,.dial,.zip');
+    expect(fileInput.accept).toBe('.json,.dial,.zip,application/json,application/zip');
   });
 
   it('selecting a file calls importConversations with that file', () => {

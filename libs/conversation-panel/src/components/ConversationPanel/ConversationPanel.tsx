@@ -93,8 +93,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     useEffect(() => {
       if (activeFilter == null) return;
       setActiveTab(activeFilter);
-      onActiveFilterChange?.(activeFilter);
-    }, [activeFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [activeFilter]);
 
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
       () => ALL_GROUP_KEYS,

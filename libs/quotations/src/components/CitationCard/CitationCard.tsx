@@ -40,6 +40,14 @@ export interface CitationCardColors {
   cardBorder?: string;
   /** Card background color. Fallback: `--bg-layer-raised`. */
   cardBackground?: string;
+  /** Quoted excerpt text color. Fallback: `--text-secondary`. */
+  quoteText?: string;
+  /** Annotation title text color. Fallback: `--text-primary`. */
+  titleText?: string;
+  /** Pagination switcher text color. Fallback: `--text-secondary`. */
+  switcherText?: string;
+  /** Source name text color. Fallback: `--text-primary`. */
+  sourceNameText?: string;
 }
 
 /** Typography (font utility class) overrides for `CitationCard`. */
@@ -112,6 +120,10 @@ export const CitationCard: FC<CitationCardProps> = ({
   const cssVars = buildCssVars({
     '--cc-card-border': colors?.cardBorder,
     '--cc-card-bg': colors?.cardBackground,
+    '--cc-quote-text': colors?.quoteText,
+    '--cc-title-text': colors?.titleText,
+    '--cc-switcher-text': colors?.switcherText,
+    '--cc-source-name-text': colors?.sourceNameText,
   });
 
   return (
@@ -133,7 +145,8 @@ export const CitationCard: FC<CitationCardProps> = ({
             text={group.sourceName}
             className={mergeClasses(
               sourceNameClassName,
-              'min-w-0 text-primary',
+              'min-w-0',
+              styles.sourceName,
             )}
           />
         </div>
@@ -145,7 +158,7 @@ export const CitationCard: FC<CitationCardProps> = ({
               aria-label={labels.previousCitation}
               onClick={() => onIndexChange((activeIndex - 1 + total) % total)}
             />
-            <span className={mergeClasses(switcherClassName, 'text-secondary')}>
+            <span className={mergeClasses(switcherClassName, styles.switcher)}>
               {labels.formatSwitcherText(activeIndex + 1, total)}
             </span>
             <GhostIconButton
@@ -164,7 +177,7 @@ export const CitationCard: FC<CitationCardProps> = ({
             <p
               className={mergeClasses(
                 titleClassName,
-                'text-primary',
+                styles.title,
                 hasSwitcher && groupHasTitle && 'min-h-[1lh]',
               )}
             >
@@ -179,7 +192,8 @@ export const CitationCard: FC<CitationCardProps> = ({
                   classNames={{
                     p: mergeClasses(
                       quoteClassName,
-                      'line-clamp-6 text-secondary',
+                      'line-clamp-6',
+                      styles.quote,
                     ),
                   }}
                 />
