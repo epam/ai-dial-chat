@@ -10,6 +10,11 @@ import { ConfigService } from '@nestjs/config';
 import { AppConfigService } from '../app-config/app-config.service';
 import { FeatureKey } from '../app-config/feature-flags/feature-key.enum';
 import {
+  extractDialErrorMessage,
+  handleDialFetchError,
+  mapDialHttpStatus,
+} from '../common/dial/dial-error.mapper';
+import {
   getApiKeyAuthHeaders,
   getBearerAuthHeaders,
 } from '../common/utils/auth-header';
@@ -111,24 +116,17 @@ export class ConversationNamingService {
       `On-demand title generation for ${conversation.id}: model=${utilityModelId} timeoutMs=${timeoutMs} userContentLength=${userContent.length}`,
     );
 
-    let llmTitle: string;
-    try {
-      llmTitle = await this.sendNamingCompletion(
-        utilityModelId,
-        getBearerAuthHeaders(token),
-        userContent,
-        timeoutMs,
-      );
-    } catch (error) {
-      this.logger.warn(
-        `On-demand LLM title generation failed for ${conversation.id}`,
-        (error as Error | undefined)?.stack,
-      );
-      if (error instanceof Error && error.message.includes('timed out')) {
-        throw new ServiceUnavailableException('LLM title generation timed out');
-      }
-      throw new BadGatewayException('LLM title generation failed');
-    }
+    /*
+     * sendNamingCompletion already maps upstream failures to the matching
+     * typed Nest exception (via mapDialHttpStatus / handleDialFetchError) and
+     * logs the upstream status/body, so failures just propagate as-is.
+     */
+    const llmTitle = await this.sendNamingCompletion(
+      utilityModelId,
+      getBearerAuthHeaders(token),
+      userContent,
+      timeoutMs,
+    );
 
     const sanitisedTitle = prepareEntityName(llmTitle);
     if (!sanitisedTitle) {
@@ -379,6 +377,7 @@ export class ConversationNamingService {
   ): Promise<string> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    const context = `LLM naming request (model=${modelId})`;
 
     this.logger.debug(
       `LLM naming request to DIAL Core: model=${modelId} apiVersion=${this.dialClient.dialApiVersion} headers=${JSON.stringify(this.formatHeadersForLog(headers))}`,
@@ -407,12 +406,13 @@ export class ConversationNamingService {
         `LLM naming response from DIAL Core: model=${modelId} ${this.formatDialResponseForLog(result)}`,
       );
 
-      if (!result.response.ok || result.error != null) {
-        this.logger.debug(
-          `LLM naming request failed for model=${modelId}: status=${result.response.status}`,
-        );
-        throw new Error(
-          `DIAL Core rejected LLM naming request (status ${result.response.status})`,
+      if (result.error != null || !result.response.ok) {
+        return mapDialHttpStatus(
+          result.response.status,
+          context,
+          this.logger,
+          result.error,
+          extractDialErrorMessage(result.error),
         );
       }
 
@@ -423,10 +423,7 @@ export class ConversationNamingService {
       );
       return rawTitle;
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error(`LLM naming timed out after ${timeoutMs}ms`);
-      }
-      throw error;
+      return handleDialFetchError(error, context, this.logger, timeoutMs);
     } finally {
       clearTimeout(timeoutId);
     }
