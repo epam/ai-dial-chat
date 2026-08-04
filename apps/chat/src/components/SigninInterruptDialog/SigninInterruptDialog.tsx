@@ -1,15 +1,13 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-shared';
-import {
-  GhostButton,
-  Input,
-  NeutralButton,
-  PrimaryButton,
-} from '@epam/ai-dial-kit';
+import { Input } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
   DialPopup,
   DialSpinner,
+  GhostButton,
+  NeutralButton,
   PopupSize,
+  PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import type { DialToolsetDto } from '@epam/chat-api-client';
 import { IconAlertCircleFilled } from '@tabler/icons-react';
@@ -39,6 +37,7 @@ import {
   useToolsetLogin,
 } from '../../hooks/toolsets/useToolsetLogin';
 import { useUiFeature } from '../../hooks/useUiFeature';
+import type { ResolvedRowInfo } from '../../models/signin-interrupt';
 import { ClientChannelReportResult } from '../../server-api/client-channel';
 import {
   ExternalServiceAuthType,
@@ -51,18 +50,16 @@ import {
   PendingSigninEventKind,
   type PendingSigninEvent,
 } from '../../types/client-channel';
+import { RowAuthType } from '../../types/signin-interrupt';
 import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
 } from '../../types/toolsets';
+import { buildExternalServiceScopeId } from '../../utils/external-services';
 import {
-  buildExternalServiceScopeId,
-  getExternalServiceFallbackName,
-} from '../../utils/external-services';
-import {
-  getToolsetFallbackName,
-  isPublicToolsetId,
-} from '../../utils/toolsets';
+  resolveExternalServiceInfo,
+  resolveToolsetInfo,
+} from '../../utils/signin-interrupt';
 
 enum RowStatus {
   Idle = 'idle',
@@ -76,71 +73,6 @@ interface RowState {
 }
 
 const DEFAULT_ROW_STATE: RowState = { status: RowStatus.Idle, apiKey: '' };
-
-/** Auth-type discriminant shared by both event kinds — `ToolsetAuthTypes` and `ExternalServiceAuthType` are string-identical enums. */
-type RowAuthType = 'NONE' | 'API_KEY' | 'OAUTH';
-
-interface ResolvedRowInfo {
-  displayName: string;
-  displayVersion?: string;
-  authenticationType?: RowAuthType;
-  credentialsLevel: ToolsetCredentialsLevel | ExternalServiceCredentialsLevel;
-  oauthSettings?: {
-    clientId?: string;
-    authorizationEndpoint?: string;
-    scopes?: string[];
-    codeChallenge?: string;
-    codeChallengeMethod?: string;
-  };
-}
-
-const resolveToolsetInfo = (
-  toolsetId: string,
-  toolset: DialToolsetDto | undefined,
-): ResolvedRowInfo => ({
-  displayName: toolset?.displayName ?? getToolsetFallbackName(toolsetId),
-  displayVersion: toolset?.displayVersion,
-  authenticationType: toolset?.authSettings?.authenticationType as
-    | RowAuthType
-    | undefined,
-  credentialsLevel: isPublicToolsetId(toolsetId)
-    ? ToolsetCredentialsLevel.User
-    : ToolsetCredentialsLevel.Global,
-  oauthSettings: {
-    clientId: toolset?.authSettings?.clientId,
-    authorizationEndpoint: toolset?.authSettings?.authorizationEndpoint,
-    scopes: toolset?.authSettings?.scopesSupported,
-    codeChallenge: toolset?.authSettings?.codeChallenge,
-    codeChallengeMethod: toolset?.authSettings?.codeChallengeMethod,
-  },
-});
-
-const resolveExternalServiceInfo = (
-  serviceName: string,
-  service: GetExternalServiceResponseDto | undefined,
-): ResolvedRowInfo => ({
-  displayName:
-    service?.displayName || getExternalServiceFallbackName(serviceName),
-  authenticationType: service?.authenticationType as RowAuthType | undefined,
-  /*
-   * Best-effort default per design.md Open Question 2 — Core does not yet
-   * document how a *pushed* event determines credentials level; USER
-   * unless the service is only signed out at GLOBAL level.
-   */
-  credentialsLevel:
-    service?.globalAuthStatus != null &&
-    service.globalAuthStatus !== 'SIGNED_IN' &&
-    service.userLevelAuthStatus == null
-      ? ExternalServiceCredentialsLevel.Global
-      : ExternalServiceCredentialsLevel.User,
-  oauthSettings: {
-    clientId: service?.clientId,
-    authorizationEndpoint: service?.authorizationEndpoint,
-    scopes: service?.scopesSupported,
-    codeChallenge: service?.codeChallenge,
-    codeChallengeMethod: service?.codeChallengeMethod,
-  },
-});
 
 interface SigninRowProps {
   event: PendingSigninEvent;
@@ -161,9 +93,8 @@ const SigninRow: FC<SigninRowProps> = ({
 }) => {
   const { t } = useTranslation();
   const isProcessing = rowState.status === RowStatus.Processing;
-  // ToolsetAuthTypes and ExternalServiceAuthType are string-identical; one enum covers both event kinds.
-  const isApiKey = info.authenticationType === ToolsetAuthTypes.ApiKey;
-  const isNoAuth = info.authenticationType === ToolsetAuthTypes.None;
+  const isApiKey = info.authenticationType === RowAuthType.ApiKey;
+  const isNoAuth = info.authenticationType === RowAuthType.None;
   const canSubmitLogin = !isApiKey || rowState.apiKey.trim().length > 0;
 
   return (
@@ -402,7 +333,7 @@ const SigninInterruptDialog: FC = () => {
       if (event.kind !== PendingSigninEventKind.ExternalService) continue;
       const key = getResourceKey(event);
       const info = infoByResourceKey.get(key);
-      if (info?.authenticationType !== ToolsetAuthTypes.None) continue;
+      if (info?.authenticationType !== RowAuthType.None) continue;
       if (autoResolvedRef.current.has(event.id)) continue;
 
       autoResolvedRef.current.add(event.id);
