@@ -425,7 +425,7 @@ const deletePromptsEpic: AppEpic = (action$) =>
         switchMap((result) => {
           const failed = result.filter((r) => !!r.name);
           const failedNames = failed.map(({ name }) => name) as string[];
-          const traceId = failed[failed.length - 1].traceId;
+          const traceId = failed[failed.length - 1]?.traceId;
           return concat(
             iif(
               () => failedNames.length > 0,
