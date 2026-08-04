@@ -1,4 +1,4 @@
-import { OverlayFeature } from '@epam/ai-dial-chat-shared';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { Input } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
