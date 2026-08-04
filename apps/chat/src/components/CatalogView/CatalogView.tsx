@@ -16,7 +16,11 @@ import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
-import { ToolsetEditorQuery } from '../../constants/toolsets';
+import {
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  ToolsetEditorQuery,
+} from '../../constants/toolsets';
 import {
   ApiI18nKeys,
   AuthI18nKeys,
@@ -42,7 +46,6 @@ import {
 } from '../../hooks/toolsets/useToolsetLogin';
 import { useCatalogSortFilterPreference } from '../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import { useUiFeature } from '../../hooks/useUiFeature';
-import type { ToolsetAuthTypes, ToolsetCredentialsLevel } from '../../constants/toolsets';
 import { deleteApplication } from '../../server-api/applications';
 import { getDeploymentLimits } from '../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../server-api/deployments';
