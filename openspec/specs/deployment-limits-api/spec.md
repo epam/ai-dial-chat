@@ -2,7 +2,7 @@
 
 ### Requirement: Authenticated deployment limits endpoint
 
-The BFF SHALL expose `GET /api/v1/deployments/:deploymentName/limits` that returns spent/limit statistics for a single deployment visible to the authenticated session user.
+The BFF SHALL expose `GET /api/v1/deployments/:deployment/limits` that returns spent/limit statistics for a single deployment visible to the authenticated session user.
 
 The endpoint:
 
@@ -16,7 +16,7 @@ The endpoint:
 - MUST NOT cache the response server-side — every request MUST call DIAL Core (usage data is real-time)
 - MUST set `Cache-Control: private, no-store` on the HTTP response
 - SHALL map upstream errors via `mapDialHttpStatus` / `handleDialFetchError` (401, 403, 404, 429, 502, 503)
-- Controller handler name / OpenAPI operationId: **`getDeploymentLimits`** → generated client method `getDeploymentLimits({ deploymentName })`
+- Controller handler name / OpenAPI operationId: **`getDeploymentLimits`** → generated client method `getDeploymentLimits({ deployment })`
 - Works for any deployment type (model, application, toolset) — `deploymentName` is the DIAL deployment identifier
 
 **Example response (200):**
@@ -77,18 +77,20 @@ Each stats field SHALL be typed as `LimitStatsDto` with `{ total: number; used: 
 
 ### Requirement: Deployment name path parameter validation
 
-The `:deploymentName` path parameter MUST be validated with the same allowlist regex as model names: `[a-zA-Z0-9_\-.:@]`.
+The `:deployment` path parameter MUST support both single-segment static deployment names and slash-separated DIAL resource identifiers such as `applications/{bucket}/{path}` and `toolsets/{bucket}/{path}`. Callers MUST percent-encode the complete identifier when placing it in the single BFF path parameter; decoded `/` characters are structural separators inside the deployment identifier.
 
-Slash-separated names must be URL-encoded by the caller (`/` → `%2F`). Disallowed characters SHALL cause `400 Bad Request` before any upstream call.
+The BFF MUST validate the decoded identifier before any upstream call. It SHALL reject an identifier longer than 2048 characters, an empty path segment, a `.` or `..` path segment (including percent-encoded variants decoded at the route boundary), or an ASCII control character with `400 Bad Request`. Spaces and URL-reserved characters are not globally forbidden because DIAL Core permits them in deployment/resource names when correctly percent-encoded.
 
-#### Scenario: Valid deployment name passes validation
+After validation, the BFF MUST percent-encode every `/`-separated segment independently before passing the identifier to the DIAL SDK, while preserving structural `/` separators. This prevents the SDK's string-interpolated URL from interpreting deployment-name content as a query, fragment, or path traversal.
 
-- **WHEN** the path param is `gpt-4o`, `anthropic.claude-3-5`, or `@org/model:tag`
-- **THEN** the request proceeds to upstream proxying
+#### Scenario: Valid deployment identifiers pass validation
+
+- **WHEN** the decoded path param is `gpt-4o`, `applications/bucket/My App`, or `toolsets/public/folder/my-toolset`
+- **THEN** the request proceeds to upstream proxying with each segment safely percent-encoded
 
 #### Scenario: Invalid deployment name is rejected
 
-- **WHEN** the path param contains `../`, whitespace, or other disallowed characters
+- **WHEN** the decoded path param contains an empty segment, a `.` or `..` segment, an ASCII control character, or exceeds 2048 characters
 - **THEN** the BFF returns `400 Bad Request` without calling DIAL Core
 
 ---
@@ -98,7 +100,7 @@ Slash-separated names must be URL-encoded by the caller (`/` → `%2F`). Disallo
 `apps/chat/src/server-api/deployment-limits.ts` (or an equivalent export from the deployments wrapper) SHALL export a typed async function `getDeploymentLimits` that:
 
 - Accepts `deploymentName: string`
-- Calls the generated `@epam/chat-api-client` method `getDeploymentLimits({ deploymentName })` via `deploymentsApi`
+- Calls the generated `@epam/chat-api-client` method `getDeploymentLimits({ deployment: deploymentName })` via `deploymentsApi`
 - Returns `Promise<DeploymentLimitsResponseDto>`
 
 No direct `fetch` calls are permitted in this helper.
