@@ -1,10 +1,14 @@
+import 'katex/dist/katex.min.css';
 import { memo, useMemo, type FC } from 'react';
-import ReactMarkdown, { type Components } from 'react-markdown';
+import ReactMarkdown, { type Components, type Options } from 'react-markdown';
+import rehypeKatex from 'rehype-katex';
 import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
 import { useStreamedMarkdownContent } from '../../hooks/useStreamedMarkdownContent';
 import { CodeBlockTheme } from '../../types/code-editor';
 import { buildCssVars } from '../../utils/build-css-vars';
+import { preprocessLaTeX } from '../../utils/latex';
 import { mergeClasses } from '../../utils/merge-class';
 import { MarkdownCodeBlock } from './CodeBlock/CodeBlock';
 import styles from './MarkdownRenderer.module.scss';
@@ -114,8 +118,21 @@ export interface MarkdownRendererColors {
   border?: string;
 }
 
-/** Remark plugins list, shared across all markdown instances: GFM support, then soft-break-to-hard-break conversion so single newlines render as visible line breaks. */
-const remarkPlugins = [remarkGfm, remarkBreaks];
+/**
+ * Remark plugins list, shared across all markdown instances: GFM support,
+ * soft-break-to-hard-break conversion so single newlines render as visible
+ * line breaks, then math-span detection for KaTeX rendering.
+ */
+const remarkPlugins: Options['remarkPlugins'] = [
+  remarkGfm,
+  remarkBreaks,
+  [remarkMath, { singleDollarTextMath: false }],
+];
+
+/** KaTeX rehype plugin list, shared across all markdown instances. */
+const rehypePlugins: Options['rehypePlugins'] = [
+  [rehypeKatex, { output: 'mathml', strict: false }],
+];
 
 /** Stable empty classNames object used as the default when no `classNames` prop is passed. */
 const EMPTY_CLASS_NAMES: MarkdownRendererClassNames = {};
@@ -312,6 +329,10 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
       isStreaming,
       streamCharactersPerSecond,
     );
+    const processedContent = useMemo(
+      () => preprocessLaTeX(displayedContent),
+      [displayedContent],
+    );
 
     const cssVars = buildCssVars({
       '--cm-thinking-inverted': colors?.thinkingPrimary,
@@ -355,9 +376,10 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
       <div style={cssVars}>
         <ReactMarkdown
           remarkPlugins={remarkPlugins}
+          rehypePlugins={rehypePlugins}
           components={mergedComponents}
         >
-          {displayedContent}
+          {processedContent}
         </ReactMarkdown>
       </div>
     );

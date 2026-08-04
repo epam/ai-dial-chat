@@ -17,6 +17,7 @@ import { DeploymentConfigurationDto } from './dto/deployment-configuration.dto';
 import { DeploymentDetailsDto } from './dto/deployment-details.dto';
 import { DeploymentsResponseDto } from './dto/deployment-item.dto';
 import { DeploymentsQueryDto } from './dto/deployments-query.dto';
+import { GetDeploymentDto } from './dto/get-deployment.dto';
 
 @ApiTags('deployments')
 @Controller({ path: 'deployments', version: '1' })
@@ -88,6 +89,7 @@ export class DeploymentsController {
       'Results are cached server-side for 60 seconds per user.',
   })
   @ApiResponse({ status: 200, type: DeploymentConfigurationDto })
+  @ApiResponse({ status: 400, description: 'Invalid deployment identifier' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
     status: 404,
@@ -100,11 +102,11 @@ export class DeploymentsController {
   @ApiResponse({ status: 503, description: 'DIAL Core is unreachable' })
   getDeploymentConfiguration(
     @Req() req: Request,
-    @Param('deployment') deployment: string,
+    @Param() params: GetDeploymentDto,
   ) {
     const { at, sub } = req.user as SessionUser;
     return this.deploymentsService.getDeploymentConfiguration(
-      deployment,
+      params.deployment,
       sub,
       at,
     );
@@ -126,6 +128,7 @@ export class DeploymentsController {
     description: 'Successfully retrieved deployment limits',
     type: DeploymentLimitsResponseDto,
   })
+  @ApiResponse({ status: 400, description: 'Invalid deployment identifier' })
   @ApiResponse({
     status: 401,
     description: 'Not authenticated — valid session cookie required',
@@ -148,12 +151,9 @@ export class DeploymentsController {
     status: 503,
     description: 'DIAL Core is unavailable or timed out',
   })
-  getDeploymentLimits(
-    @Req() req: Request,
-    @Param('deployment') deployment: string,
-  ) {
+  getDeploymentLimits(@Req() req: Request, @Param() params: GetDeploymentDto) {
     const { at } = req.user as SessionUser;
-    return this.deploymentsService.getDeploymentLimits(deployment, at);
+    return this.deploymentsService.getDeploymentLimits(params.deployment, at);
   }
 
   @Get(':deployment/details')
@@ -171,6 +171,7 @@ export class DeploymentsController {
       'changed since the last fetch.',
   })
   @ApiResponse({ status: 200, type: DeploymentDetailsDto })
+  @ApiResponse({ status: 400, description: 'Invalid deployment identifier' })
   @ApiResponse({
     status: 401,
     description: 'Not authenticated — valid session cookie required',
@@ -185,11 +186,12 @@ export class DeploymentsController {
     status: 503,
     description: 'DIAL Core is unavailable or timed out',
   })
-  getDeploymentDetails(
-    @Req() req: Request,
-    @Param('deployment') deployment: string,
-  ) {
+  getDeploymentDetails(@Req() req: Request, @Param() params: GetDeploymentDto) {
     const { sub, at } = req.user as SessionUser;
-    return this.deploymentsService.getDeploymentDetails(sub, deployment, at);
+    return this.deploymentsService.getDeploymentDetails(
+      sub,
+      params.deployment,
+      at,
+    );
   }
 }

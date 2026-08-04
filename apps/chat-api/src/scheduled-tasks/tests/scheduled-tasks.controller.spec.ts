@@ -147,9 +147,23 @@ describe('ScheduledTasksController (integration)', () => {
       expect(service.listScheduledTasks).not.toHaveBeenCalled();
     });
 
-    it('returns 400 for an unrecognized sort query parameter', async () => {
+    it('forwards a valid sort query param to the service', async () => {
+      service.listScheduledTasks.mockResolvedValue({ items: [mockSchedule] });
+
       await request(app.getHttpServer())
         .get('/api/v1/scheduled-tasks?sort=nameAZ')
+        .expect(200);
+
+      expect(service.listScheduledTasks).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        { sort: 'nameAZ' },
+      );
+    });
+
+    it('returns 400 for an invalid sort query parameter', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/scheduled-tasks?sort=oldest')
         .expect(400);
       expect(service.listScheduledTasks).not.toHaveBeenCalled();
     });

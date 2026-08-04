@@ -1,8 +1,10 @@
 import type { Conversation } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
+import { createUploadPathAllocator } from '../build-upload-path';
 import {
   formatQuotedNameList,
   parseImportEnvelope,
+  planAttachmentUploads,
   rebaseConversationId,
   rewriteAttachmentUrls,
   UnsupportedImportFormatError,
@@ -252,6 +254,17 @@ describe('formatQuotedNameList', () => {
   });
 });
 
+/** Builds a message carrying a single DIAL-file attachment referencing `fileId`. */
+const makeAttachmentMessage = (
+  fileId: string,
+  title: string,
+): Conversation['messages'][number] => ({
+  role: 'assistant' as Conversation['messages'][number]['role'],
+  content: '',
+  timestamp: '2026-07-10T00:00:00.000Z',
+  custom_content: { attachments: [{ title, url: fileId }] },
+});
+
 describe('rewriteAttachmentUrls', () => {
   it('rewrites a matched url and reference_url without mutating the input', () => {
     const conversation = makeConversation({
@@ -272,25 +285,68 @@ describe('rewriteAttachmentUrls', () => {
         },
       ],
     });
-    const urlMap = new Map([
+    const targetMap = new Map([
       [
         'files/old-bucket/reports/q1.pdf',
-        'files/new-bucket/uploads/2026-07-17/q1.pdf',
+        { url: 'files/new-bucket/uploads/2026-07/q1.pdf' },
       ],
       [
         'files/old-bucket/reports/q1.pdf#page=2',
-        'files/new-bucket/uploads/2026-07-17/q1.pdf#page=2',
+        { url: 'files/new-bucket/uploads/2026-07/q1.pdf#page=2' },
       ],
     ]);
 
-    const result = rewriteAttachmentUrls(conversation, urlMap);
+    const result = rewriteAttachmentUrls(conversation, targetMap);
 
     expect(result.messages[0].custom_content?.attachments?.[0]).toMatchObject({
-      url: 'files/new-bucket/uploads/2026-07-17/q1.pdf',
-      reference_url: 'files/new-bucket/uploads/2026-07-17/q1.pdf#page=2',
+      url: 'files/new-bucket/uploads/2026-07/q1.pdf',
+      reference_url: 'files/new-bucket/uploads/2026-07/q1.pdf#page=2',
     });
     expect(conversation.messages[0].custom_content?.attachments?.[0].url).toBe(
       'files/old-bucket/reports/q1.pdf',
+    );
+  });
+
+  it('rewrites the title when the target carries a renamed title', () => {
+    const conversation = makeConversation({
+      messages: [
+        makeAttachmentMessage('files/old-bucket/reports/q1.pdf', 'q1.pdf'),
+      ],
+    });
+    const targetMap = new Map([
+      [
+        'files/old-bucket/reports/q1.pdf',
+        {
+          url: 'files/new-bucket/uploads/2026-07/q1 (1).pdf',
+          title: 'q1 (1).pdf',
+        },
+      ],
+    ]);
+
+    const result = rewriteAttachmentUrls(conversation, targetMap);
+
+    expect(result.messages[0].custom_content?.attachments?.[0].title).toBe(
+      'q1 (1).pdf',
+    );
+  });
+
+  it('leaves the title untouched when the target carries no title', () => {
+    const conversation = makeConversation({
+      messages: [
+        makeAttachmentMessage('files/old-bucket/reports/q1.pdf', 'q1.pdf'),
+      ],
+    });
+    const targetMap = new Map([
+      [
+        'files/old-bucket/reports/q1.pdf',
+        { url: 'files/new-bucket/uploads/2026-07/q1.pdf' },
+      ],
+    ]);
+
+    const result = rewriteAttachmentUrls(conversation, targetMap);
+
+    expect(result.messages[0].custom_content?.attachments?.[0].title).toBe(
+      'q1.pdf',
     );
   });
 
@@ -329,5 +385,126 @@ describe('rewriteAttachmentUrls', () => {
     const result = rewriteAttachmentUrls(conversation, new Map());
 
     expect(result.messages[0]).toEqual(conversation.messages[0]);
+  });
+});
+
+describe('planAttachmentUploads', () => {
+  const date = new Date(2026, 6, 17);
+
+  it('allocates a plan item in collectAttachmentRefs order', () => {
+    const conversation = makeConversation({
+      messages: [
+        makeAttachmentMessage('files/old-bucket/reports/q1.pdf', 'q1.pdf'),
+        makeAttachmentMessage('files/old-bucket/2025/q2.pdf', 'q2.pdf'),
+      ],
+    });
+    const attachmentBytes = new Map([
+      ['reports/q1.pdf', new Uint8Array([1])],
+      ['2025/q2.pdf', new Uint8Array([2])],
+    ]);
+    const allocator = createUploadPathAllocator({ date });
+
+    const { plan, skippedNames } = planAttachmentUploads(
+      conversation,
+      attachmentBytes,
+      allocator,
+    );
+
+    expect(skippedNames).toEqual([]);
+    expect(plan.map((item) => item.allocated.fileName)).toEqual([
+      'q1.pdf',
+      'q2.pdf',
+    ]);
+  });
+
+  it('suffixes the second of two different source paths sharing a basename', () => {
+    const conversation = makeConversation({
+      messages: [
+        makeAttachmentMessage('files/old-bucket/reports/q1.pdf', 'q1.pdf'),
+        makeAttachmentMessage('files/old-bucket/2025/q1.pdf', 'q1.pdf'),
+      ],
+    });
+    const attachmentBytes = new Map([
+      ['reports/q1.pdf', new Uint8Array([1])],
+      ['2025/q1.pdf', new Uint8Array([2])],
+    ]);
+    const allocator = createUploadPathAllocator({ date });
+
+    const { plan } = planAttachmentUploads(
+      conversation,
+      attachmentBytes,
+      allocator,
+    );
+
+    expect(plan.map((item) => item.allocated.fileName)).toEqual([
+      'q1.pdf',
+      'q1 (1).pdf',
+    ]);
+  });
+
+  it('skips a file id with no path segment without consuming an allocator index', () => {
+    /* Starts with `files/` (passes isDialFileId) but has no `/` after the
+     * bucket, so resolveDialFileBucketAndPath returns undefined. */
+    const conversation = makeConversation({
+      messages: [
+        makeAttachmentMessage('files/only-bucket-no-path', 'missing'),
+        makeAttachmentMessage('files/old-bucket/reports/q1.pdf', 'q1.pdf'),
+      ],
+    });
+    const attachmentBytes = new Map([['reports/q1.pdf', new Uint8Array([1])]]);
+    const allocator = createUploadPathAllocator({ date });
+
+    const { plan, skippedNames } = planAttachmentUploads(
+      conversation,
+      attachmentBytes,
+      allocator,
+    );
+
+    expect(skippedNames).toEqual(['only-bucket-no-path']);
+    expect(plan.map((item) => item.allocated.fileName)).toEqual(['q1.pdf']);
+  });
+
+  it('skips a reference with no bytes in the archive without consuming an allocator index', () => {
+    const conversation = makeConversation({
+      messages: [
+        makeAttachmentMessage(
+          'files/old-bucket/reports/missing.pdf',
+          'missing.pdf',
+        ),
+        makeAttachmentMessage('files/old-bucket/reports/q1.pdf', 'q1.pdf'),
+      ],
+    });
+    const attachmentBytes = new Map([['reports/q1.pdf', new Uint8Array([1])]]);
+    const allocator = createUploadPathAllocator({ date });
+
+    const { plan, skippedNames } = planAttachmentUploads(
+      conversation,
+      attachmentBytes,
+      allocator,
+    );
+
+    expect(skippedNames).toEqual(['missing.pdf']);
+    expect(plan.map((item) => item.allocated.fileName)).toEqual(['q1.pdf']);
+  });
+
+  it('suffixes a name already present in a pre-filled allocator', () => {
+    const conversation = makeConversation({
+      messages: [
+        makeAttachmentMessage('files/old-bucket/reports/q1.pdf', 'q1.pdf'),
+      ],
+    });
+    const attachmentBytes = new Map([['reports/q1.pdf', new Uint8Array([1])]]);
+    const allocator = createUploadPathAllocator({
+      date,
+      existingNames: ['q1.pdf'],
+    });
+
+    const { plan } = planAttachmentUploads(
+      conversation,
+      attachmentBytes,
+      allocator,
+    );
+
+    expect(plan[0].allocated.fileName).toBe('q1 (1).pdf');
   });
 });

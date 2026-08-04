@@ -197,6 +197,28 @@ describe('ConversationController (integration)', () => {
       );
     });
 
+    it('accepts a deploymentId containing parentheses', async () => {
+      const conversation = {
+        id: 'test-bucket/gemini-2.5-flash-image_(ek)__Hello',
+      };
+      const deploymentId = 'gemini-2.5-flash-image_(ek)';
+      service.createConversation.mockReturnValue(conversation);
+
+      const result = await request(app.getHttpServer())
+        .post('/conversations')
+        .send({ firstMessage: 'Hello', deploymentId })
+        .expect(201);
+
+      expect(result.body).toEqual(conversation);
+      expect(service.createConversation).toHaveBeenCalledWith(
+        'Hello',
+        TEST_USER.at,
+        TEST_USER.bucket,
+        deploymentId,
+        undefined,
+      );
+    });
+
     it('returns 400 when deploymentId contains malformed percent-encoding', async () => {
       await request(app.getHttpServer())
         .post('/conversations')

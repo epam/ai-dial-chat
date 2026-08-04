@@ -263,6 +263,34 @@ Activating the panel-level close control SHALL clear the queue immediately, with
 - **WHEN** the user cancels (or dismisses) the dialog instead of confirming
 - **THEN** the dialog closes, no job is removed, and no in-flight request is aborted
 
+### Requirement: Auto-closing the queue once every job has succeeded
+
+The queue panel SHALL close itself automatically 8 seconds after the last job in it settles, but only when **every** job has status success — matching the no-confirmation-needed condition above. If any job is still **in progress** or is (or becomes) **failed** at any point during that 8-second window, the auto-close SHALL NOT fire; the panel then stays open until the user closes it manually (going through the confirmation flow above when applicable). This applies to both the import queue and the export queue, since both render the same `ImportExportQueue` panel.
+
+#### Scenario: All jobs succeed and the user takes no action
+
+- **GIVEN** every job in the queue has status success
+- **WHEN** 8 seconds pass with no user interaction
+- **THEN** the queue panel closes itself automatically
+
+#### Scenario: A failed job blocks auto-close
+
+- **GIVEN** the queue contains at least one job with status failed
+- **WHEN** 8 seconds pass with no user interaction
+- **THEN** the panel does NOT auto-close; it remains open until the user closes it manually
+
+#### Scenario: A job still in progress blocks auto-close
+
+- **GIVEN** the queue contains at least one job still in progress
+- **WHEN** 8 seconds pass with no user interaction
+- **THEN** the panel does NOT auto-close
+
+#### Scenario: A new job starting during the countdown cancels it
+
+- **GIVEN** every job in the queue has status success and the 8-second auto-close countdown is running
+- **WHEN** the user starts a new export/import before the countdown elapses
+- **THEN** the countdown is cancelled (the panel does not close itself) because the queue once again contains an in-progress job
+
 ---
 
 ### Requirement: Retrying a failed export job
