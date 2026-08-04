@@ -68,9 +68,9 @@ describe('PublishFoldersTree', () => {
   it('converts PublishFolderNode[] to DialFile[] with showFiles disabled, wrapped under the root node', () => {
     renderTree();
     expect(capturedProps.current?.showFiles).toBe(false);
-    expect(
-      capturedProps.current?.items.map((f: DialFile) => f.path),
-    ).toEqual(['']);
+    expect(capturedProps.current?.items.map((f: DialFile) => f.path)).toEqual([
+      '',
+    ]);
     expect(
       capturedProps.current?.items[0]?.items?.map((f: DialFile) => f.path),
     ).toEqual(['Shared', 'My workspace']);
@@ -97,9 +97,9 @@ describe('PublishFoldersTree', () => {
 
   it('filters the tree to matching folders when searchQuery is set', () => {
     renderTree({ searchQuery: 'data science' });
-    expect(
-      capturedProps.current?.items.map((f: DialFile) => f.path),
-    ).toEqual(['']);
+    expect(capturedProps.current?.items.map((f: DialFile) => f.path)).toEqual([
+      '',
+    ]);
     expect(
       capturedProps.current?.items[0]?.items?.map((f: DialFile) => f.path),
     ).toEqual(['Shared']);
