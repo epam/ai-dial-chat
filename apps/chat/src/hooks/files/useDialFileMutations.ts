@@ -3,13 +3,12 @@ import type {
   DialDeletedItem,
   DialFile,
   DialUploadFileItem,
-} from '@epam/ai-dial-ui-kit';
+} from '@epam/ai-dial-react-file-manager';
 import {
   DialFileManagerTabs,
   DialFileNodeType,
-  NOT_ALLOWED_SYMBOLS,
-  NotificationVariant,
-} from '@epam/ai-dial-ui-kit';
+} from '@epam/ai-dial-react-file-manager';
+import { NOT_ALLOWED_SYMBOLS, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type {
   CreateFolderResponseDto,
   DeleteItemDto,

@@ -1,4 +1,4 @@
-import { FileManagerGridRow } from '@epam/ai-dial-ui-kit';
+import { FileManagerGridRow } from '@epam/ai-dial-react-file-manager';
 import {
   CellEditingStartedEvent,
   GridApi,
@@ -51,7 +51,7 @@ const defaultResolveTargetNode = (
   newNodes.find((node) => node.data?.isTemporary) ?? newNodes[0] ?? null;
 
 /**
- * `@epam/ai-dial-ui-kit`'s `GridOptions` type does not forward raw AG Grid
+ * `@epam/ai-dial-react-file-manager`'s `GridOptions` type does not forward raw AG Grid
  * event callbacks (`onCellEditingStarted`/`onRowDataUpdated`), so this hook
  * binds directly to the `GridApi` obtained via `DialFileManager`'s
  * `onGridApiChange` prop and uses AG Grid's own `addEventListener` instead of

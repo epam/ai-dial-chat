@@ -6,7 +6,7 @@ Define the DIAL file manager attach modal UI contract, including tab chrome, att
 
 ### Requirement: Tab navigation UI in DialFileManagerModal
 
-`DialFileManagerModal` SHALL render My files, Shared with me, and Organization tabs using `useDialFileManagerTabs` from `@epam/ai-dial-ui-kit`. The hook is called with an i18n-translated label map and `DialFileManagerTabs.MyFiles` as the initial tab. The resulting `tabs`, `activeTab`, and `handleTabChange` are wired to `toolbarOptions.tabs`, `toolbarOptions.activeTab`, and `toolbarOptions.onTabChange` respectively. No custom tab UI is built — the ui-kit toolbar handles tab rendering.
+`DialFileManagerModal` SHALL render My files, Shared with me, and Organization tabs using `useDialFileManagerTabs` from `@epam/ai-dial-react-file-manager`. The hook is called with an i18n-translated label map and `DialFileManagerTabs.MyFiles` as the initial tab. The resulting `tabs`, `activeTab`, and `handleTabChange` are wired to `toolbarOptions.tabs`, `toolbarOptions.activeTab`, and `toolbarOptions.onTabChange` respectively. No custom tab UI is built — the ui-kit toolbar handles tab rendering.
 
 RTL: tab bar direction is handled by the ui-kit; no physical direction classes on the modal wrapper.
 
