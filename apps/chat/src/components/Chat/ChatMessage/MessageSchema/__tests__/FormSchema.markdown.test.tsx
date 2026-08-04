@@ -12,6 +12,7 @@ import {
 import {
   DialSchemaProperties,
   FormSchemaPropertyWidget,
+  JSONSchemaPropertyType,
   MessageFormSchema,
 } from '@epam/ai-dial-shared';
 
@@ -42,7 +43,7 @@ vi.mock('@/src/store/selectors', () => ({
 }));
 
 const buttonPropertySchema = {
-  type: 'string',
+  type: JSONSchemaPropertyType.string,
   [DialSchemaProperties.DialWidget]: FormSchemaPropertyWidget.buttons,
   oneOf: [
     {
@@ -52,7 +53,7 @@ const buttonPropertySchema = {
       [DialSchemaProperties.DialWidgetOptions]: { submit: true },
     },
   ],
-} as const;
+};
 
 describe('FormSchema markdown descriptions', () => {
   beforeEach(() => {
