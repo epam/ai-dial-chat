@@ -98,7 +98,47 @@ describe('PublishController (integration)', () => {
         'Organization/Data Science',
         '1.2.0',
         'Test User',
+        undefined,
       );
+    });
+
+    it('forwards rules from the request body to the service', async () => {
+      const rules = [
+        {
+          source: 'roles',
+          function: 'CONTAIN',
+          targets: ['engineering', 'support'],
+        },
+      ];
+
+      await request(app.getHttpServer())
+        .post('/api/v1/catalog/toolset/tool-abc123/publish')
+        .send({ ...validBody, rules })
+        .expect(201);
+
+      expect(service.publish).toHaveBeenCalledWith(
+        TEST_USER.at,
+        'toolset',
+        'tool-abc123',
+        'Organization/Data Science',
+        '1.2.0',
+        'Test User',
+        rules,
+      );
+    });
+
+    it('returns 400 for an invalid rule function enum value', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/catalog/toolset/tool-abc123/publish')
+        .send({
+          ...validBody,
+          rules: [
+            { source: 'roles', function: 'MATCHES', targets: ['engineering'] },
+          ],
+        })
+        .expect(400);
+
+      expect(service.publish).not.toHaveBeenCalled();
     });
 
     it('returns 400 for an unknown entityType', async () => {

@@ -1,6 +1,7 @@
 // Models
-export { PublishCalloutKind } from './models/publish';
+export { PublishCalloutKind, PublicationRuleFunction } from './models/publish';
 export type {
+  PublicationRule,
   PublishDerivationInput,
   PublishDerivedState,
   PublishFolderNode,
@@ -30,6 +31,18 @@ export {
 export type { FolderNameValidationMessages } from './utils/publish-folder-tree';
 
 // Components
+export { PublishAccessRuleEditor } from './components/PublishAccessRuleEditor/PublishAccessRuleEditor';
+export type {
+  PublishAccessRuleEditorLabels,
+  PublishAccessRuleEditorProps,
+} from './components/PublishAccessRuleEditor/PublishAccessRuleEditor';
+
+export { PublishAccessRules } from './components/PublishAccessRules/PublishAccessRules';
+export type {
+  PublishAccessRulesLabels,
+  PublishAccessRulesProps,
+} from './components/PublishAccessRules/PublishAccessRules';
+
 export { PublishHistoryList } from './components/PublishHistoryList/PublishHistoryList';
 export type { PublishHistoryListProps } from './components/PublishHistoryList/PublishHistoryList';
 

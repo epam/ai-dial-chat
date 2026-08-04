@@ -29,6 +29,7 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       enabledUiFeatures,
       footerHtmlMessage: '',
       customVisualizers: [],
+      publicationFilterSources: ['title', 'role', 'dial_roles'],
     },
   } satisfies AppConfigState);
 

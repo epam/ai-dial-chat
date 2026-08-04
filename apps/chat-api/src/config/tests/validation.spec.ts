@@ -112,4 +112,23 @@ describe('validate', () => {
     });
     expect(config.OVERLAY_SANDBOX_ENABLED).toBe(expected);
   });
+
+  it('parses publication filter sources up to 200 characters', () => {
+    const source = 'a'.repeat(200);
+    const config = validate({
+      ...baseConfig,
+      PUBLICATION_FILTER_SOURCES: `${source}, role`,
+    });
+
+    expect(config.PUBLICATION_FILTER_SOURCES).toEqual([source, 'role']);
+  });
+
+  it('fails fast when a publication filter source exceeds 200 characters', () => {
+    expect(() =>
+      validate({
+        ...baseConfig,
+        PUBLICATION_FILTER_SOURCES: 'a'.repeat(201),
+      }),
+    ).toThrow(/Environment validation failed/);
+  });
 });

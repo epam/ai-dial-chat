@@ -44,6 +44,27 @@ export interface PublishResourceSummary {
   version?: string;
 }
 
+/** Combining function applied across a rule's `targets`. */
+export enum PublicationRuleFunction {
+  Equal = 'EQUAL',
+  Contain = 'CONTAIN',
+  Regex = 'REGEX',
+}
+
+/**
+ * One access-restriction rule: grants access when `source`'s claim value
+ * matches any of `targets` (OR) under `function`. Rules within a publish
+ * request are combined with AND.
+ */
+export interface PublicationRule {
+  /** Claim/category name this rule matches against, e.g. `'role'`. */
+  source: string;
+  /** Combining function applied across `targets`. */
+  function: PublicationRuleFunction;
+  /** Values combined with OR; exactly one pattern when `function` is `Regex`. */
+  targets: string[];
+}
+
 /** Which callout (if any) the publish panel should show below the folder picker. */
 export enum PublishCalloutKind {
   /** No callout — no folder selected, or a request is in flight. */
