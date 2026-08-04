@@ -1,5 +1,5 @@
 .container {
-  background: var(--st-bg, var(--bg-layer-5, #f5f7fa));
+  background: var(--st-bg, var(--bg-layer-base, #f5f7fa));
 }
 
 .subtitle {
@@ -7,5 +7,5 @@
 }
 
 .sortButton {
-  color: var(--st-sort-text, var(--text-accent-primary, #124ace));
+  color: var(--st-sort-text, var(--text-accent, #124ace));
 }

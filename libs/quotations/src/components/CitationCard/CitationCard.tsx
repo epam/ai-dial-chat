@@ -1,5 +1,6 @@
 import type { Annotation } from '@epam/ai-dial-chat-shared';
 import {
+  buildCssVars,
   MarkdownRenderer,
   mergeClasses,
   MIMEType,
@@ -13,6 +14,7 @@ import {
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { FC, memo, ReactNode } from 'react';
 import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
+import styles from './CitationCard.module.scss';
 
 /** User-visible strings for `CitationCard`. */
 export interface CitationCardLabels {
@@ -30,6 +32,14 @@ export interface CitationCardLabels {
   openInBrowser: string;
   /** Label for the "Download" button. */
   download: string;
+}
+
+/** Color overrides for `CitationCard`, applied as CSS custom properties with app theme fallbacks. */
+export interface CitationCardColors {
+  /** Card border color. Fallback: `--stroke-primary`. */
+  cardBorder?: string;
+  /** Card background color. Fallback: `--bg-layer-raised`. */
+  cardBackground?: string;
 }
 
 /** Typography (font utility class) overrides for `CitationCard`. */
@@ -66,6 +76,8 @@ export interface CitationCardProps {
   labels: CitationCardLabels;
   /** Optional typography class overrides. */
   typography?: CitationCardTypography;
+  /** Optional color overrides. */
+  colors?: CitationCardColors;
 }
 
 /** Popup card displaying a citation's title, quoted excerpt, and navigation controls. */
@@ -78,6 +90,7 @@ export const CitationCard: FC<CitationCardProps> = ({
   headerIcon,
   labels,
   typography,
+  colors,
 }) => {
   const total = group.annotations.length;
   const annotation = group.annotations[activeIndex] ?? group.primaryAnnotation;
@@ -96,12 +109,21 @@ export const CitationCard: FC<CitationCardProps> = ({
   const quoteClassName = typography?.quoteClassName ?? 'dial-small-text';
   const switcherClassName = typography?.switcherClassName ?? 'dial-tiny-text';
 
+  const cssVars = buildCssVars({
+    '--cc-card-border': colors?.cardBorder,
+    '--cc-card-bg': colors?.cardBackground,
+  });
+
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label={labels.ariaLabel}
-      className="flex w-[400px] flex-col gap-3 rounded-lg border border-primary bg-layer-0 p-4 shadow-lg"
+      style={cssVars}
+      className={mergeClasses(
+        'flex w-[400px] flex-col gap-3 rounded-lg border p-4 shadow-lg',
+        styles.card,
+      )}
     >
       {/* Header */}
       <div className="flex items-center justify-between gap-2">

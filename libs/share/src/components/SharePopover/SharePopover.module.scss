@@ -1,5 +1,5 @@
 .accessTriggerBtn {
-  background-color: var(--shp-access-trigger-bg, var(--bg-layer-0, #fcfcfc));
+  background-color: var(--shp-access-trigger-bg, var(--bg-layer-raised, #fcfcfc));
   border: 1px solid
     var(
       --shp-access-trigger-border,
@@ -51,7 +51,7 @@
  * hover/focus/open states or chevron, since there is nothing to open.
  */
 .accessStaticLabel {
-  background-color: var(--shp-access-trigger-bg, var(--bg-layer-0, #fcfcfc));
+  background-color: var(--shp-access-trigger-bg, var(--bg-layer-raised, #fcfcfc));
   border: 1px solid
     var(
       --shp-access-trigger-border,
