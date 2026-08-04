@@ -1,5 +1,5 @@
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
-  OverlayFeature,
   ResponseFormat,
   type Attachment,
   type DeploymentItem,

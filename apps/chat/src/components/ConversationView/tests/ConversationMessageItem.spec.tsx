@@ -1,8 +1,5 @@
-import {
-  MessageRole,
-  OverlayFeature,
-  type Message,
-} from '@epam/ai-dial-chat-shared';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import { MessageRole, type Message } from '@epam/ai-dial-chat-shared';
 import type { MessageActionsProps } from '@epam/ai-dial-conversation-messages';
 import { render, screen } from '@testing-library/react';
 import type { ComponentProps } from 'react';

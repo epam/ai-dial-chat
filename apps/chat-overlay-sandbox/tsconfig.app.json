@@ -37,9 +37,6 @@
   "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx"],
   "references": [
     {
-      "path": "../../libs/chat-shared/tsconfig.lib.json"
-    },
-    {
       "path": "../../libs/chat-overlay/tsconfig.lib.json"
     }
   ]

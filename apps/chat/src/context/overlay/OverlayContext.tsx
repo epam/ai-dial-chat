@@ -25,7 +25,7 @@ import {
   type SetTemperaturePayload,
   type SetTemperatureResponse,
   isOverlayMessageRequest,
-} from '@epam/ai-dial-chat-shared';
+} from '@epam/ai-dial-chat-overlay';
 import {
   createContext,
   FC,

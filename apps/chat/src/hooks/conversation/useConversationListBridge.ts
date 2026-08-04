@@ -5,7 +5,7 @@ import type {
   OverlayConversationError,
   RenameConversationResponse,
   SelectConversationResponse,
-} from '@epam/ai-dial-chat-shared';
+} from '@epam/ai-dial-chat-overlay';
 import type {
   ConversationListItemDto,
   ConversationResponseDto,
