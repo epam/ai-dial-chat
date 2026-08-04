@@ -12,7 +12,7 @@ export const DEFAULT_MARKDOWN_CLASS_NAMES: MarkdownRendererClassNames = {
   ul: 'mb-3 space-y-1',
   ol: 'mb-3 space-y-1',
   codeInline:
-    'mx-0.5 bg-bg-layer-raised px-1.5 text-[0.875em] text-primary break-words [overflow-wrap:anywhere]',
+    'mx-0.5 bg-layer-raised px-1.5 text-[0.875em] text-primary break-words [overflow-wrap:anywhere]',
   blockquote: 'my-4',
   link: 'break-words [overflow-wrap:anywhere]',
   tableWrapper: 'my-4',
