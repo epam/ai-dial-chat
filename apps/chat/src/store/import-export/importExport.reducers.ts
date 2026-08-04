@@ -80,7 +80,10 @@ export const importExportSlice = createSlice({
       state.operation = Operation.Importing;
     },
     importStop: (state) => state,
-    importFail: (state, _action: PayloadAction<FeatureType>) => state,
+    importFail: (
+      state,
+      _action: PayloadAction<{ type: FeatureType; traceId?: string }>,
+    ) => state,
     uploadConversationAttachments: (
       state,
       {

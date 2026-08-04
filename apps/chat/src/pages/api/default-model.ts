@@ -6,7 +6,8 @@ import { validateServerSession } from '@/src/utils/auth/session';
 import { getEntity } from '@/src/utils/server/get-entity';
 import { logger } from '@/src/utils/server/logger';
 import { mapCoreEntityToDialModel } from '@/src/utils/server/map-core-entity';
-import { getFullToken } from '@/src/utils/server/server';
+import { ServerUtils, getFullToken } from '@/src/utils/server/server';
+import { setTraceparentHeader } from '@/src/utils/server/traceparent';
 
 import {
   DEFAULT_MODEL,
@@ -14,6 +15,7 @@ import {
 } from '@/src/constants/default-server-settings';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  setTraceparentHeader(res);
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
   if (!isSessionValid) {
@@ -33,7 +35,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(200).json(mapCoreEntityToDialModel(entity, true));
   } catch (error) {
     logger.error(error);
-    return res.status(500).send('Error');
+    return ServerUtils.sendAPIError(res, error);
   }
 };
 

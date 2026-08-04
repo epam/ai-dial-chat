@@ -15,6 +15,7 @@ import { combineEpics, ofType } from 'redux-observable';
 import { FileService } from '@/src/utils/app/data/file-service';
 import { TextFileService } from '@/src/utils/app/data/text-file-service';
 import { selectFirstFileAction$ } from '@/src/utils/app/epics-helpers/code-editor.epic-helpers';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
@@ -60,12 +61,14 @@ const getFileTextContentEpic: AppEpic = (action$) =>
         }),
         catchError((error) => {
           console.error(error);
+          const { traceId } = parseApiError(error);
           return concat(
             of(
               UIActions.showErrorToast({
                 message: translate(ChatI18nKeys.FileContentRequestFailed, {
                   ns: Translation.Chat,
                 }),
+                traceId,
               }),
             ),
             of(CodeEditorActions.getFileTextContentFail()),
@@ -161,10 +164,12 @@ const deleteFileEpic: AppEpic = (action$, state$) =>
             ...actions,
           );
         }),
-        catchError(() => {
+        catchError((err) => {
+          const { traceId } = parseApiError(err);
           return of(
             FilesActions.deleteFileFail({
               fileName: file.name,
+              traceId,
             }),
           );
         }),
@@ -205,11 +210,13 @@ const updateFileContentEpic: AppEpic = (action$, state$) =>
         }),
         catchError((error) => {
           console.error(error);
+          const { traceId } = parseApiError(error);
           return of(
             UIActions.showErrorToast({
               message: translate(ChatI18nKeys.FileContentUpdateFailed, {
                 ns: Translation.Chat,
               }),
+              traceId,
             }),
           );
         }),

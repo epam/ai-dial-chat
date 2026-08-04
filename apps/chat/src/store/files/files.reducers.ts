@@ -258,6 +258,7 @@ export const filesSlice = createSlice({
       }: PayloadAction<{
         id: string;
         errorMessage?: string;
+        traceId?: string;
       }>,
     ) => {
       const updatedFile = state.files.find((file) => file.id === payload.id);
@@ -373,7 +374,10 @@ export const filesSlice = createSlice({
         state.chosenFileIds = xor(state.chosenFileIds, idsToReselect.fileIds);
       }
     },
-    getFilesFail: (state) => {
+    getFilesFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => {
       state.filesStatus = UploadStatus.FAILED;
     },
     getFileMetadata: (
@@ -396,7 +400,10 @@ export const filesSlice = createSlice({
       state.loadingFileMetadata = false;
       state.fileMetadata = payload.metadata as UIKitDialFile;
     },
-    getFileMetadataFail: (state) => {
+    getFileMetadataFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => {
       state.loadingFileMetadata = false;
       state.fileMetadata = null;
     },
@@ -593,6 +600,7 @@ export const filesSlice = createSlice({
         payload,
       }: PayloadAction<{
         folderId?: string;
+        traceId?: string;
       }>,
     ) => {
       state.loadingFolderId = undefined;
@@ -748,6 +756,7 @@ export const filesSlice = createSlice({
       state,
       _action: PayloadAction<{
         fileName: string;
+        traceId?: string;
       }>,
     ) => state,
     downloadFilesList: (

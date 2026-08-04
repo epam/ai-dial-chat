@@ -663,7 +663,11 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
         }),
         catchError((err) => {
           console.error(err);
-          return of(PublicationActions.uploadPublishedWithMeItemsFail());
+          return of(
+            PublicationActions.uploadPublishedWithMeItemsFail(
+              parseApiError(err),
+            ),
+          );
         }),
       ),
     ),
@@ -672,11 +676,12 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
 const uploadPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.uploadPublishedWithMeItemsFail.type),
-    map(() =>
+    map(({ payload }) =>
       UIActions.showErrorToast({
         message: translate(CommonI18nKeys.PublishedItemsUploadFailed, {
           ns: Translation.Common,
         }),
+        traceId: payload?.traceId,
       }),
     ),
   );
@@ -1424,7 +1429,11 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
         }),
         catchError((err) => {
           console.error(err);
-          return of(PublicationActions.uploadAllPublishedWithMeItemsFail());
+          return of(
+            PublicationActions.uploadAllPublishedWithMeItemsFail(
+              parseApiError(err),
+            ),
+          );
         }),
       );
     }),
@@ -1433,11 +1442,12 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
 const uploadAllPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.uploadAllPublishedWithMeItemsFail.type),
-    map(() =>
+    map(({ payload }) =>
       UIActions.showErrorToast({
         message: translate(CommonI18nKeys.PublishedItemsUploadFailed, {
           ns: Translation.Common,
         }),
+        traceId: payload?.traceId,
       }),
     ),
   );
