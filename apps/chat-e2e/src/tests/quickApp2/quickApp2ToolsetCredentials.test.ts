@@ -1656,6 +1656,7 @@ dialAdminTest(
   async ({
     adminPage,
     adminDialHomePage,
+    adminLocalStorageManager,
     adminApproveRequiredConversations,
     adminPublishingApprovalModal,
     adminPublishedApplicationReviewModal,
@@ -1770,6 +1771,7 @@ dialAdminTest(
           await adminToolsetApiHelper.listToolsets(),
           [oauthMock],
         );
+        await adminLocalStorageManager.setShowSideBarPanels();
       },
     );
 
