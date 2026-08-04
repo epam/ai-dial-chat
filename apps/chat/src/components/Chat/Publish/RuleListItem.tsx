@@ -4,8 +4,6 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getLastPathSegment } from '@/src/utils/app/common';
-
 import { PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
@@ -22,6 +20,21 @@ interface Props {
   ruleClassNames?: string;
 }
 
+/**
+ * Formats a folder path for display by replacing the first segment (bucket)
+ * with a localized "Organization" label and joining the remaining segments.
+ * Example: "public/Folder01/Folder02/Folder03" -> "Organization / Folder01 / Folder02 / Folder03"
+ */
+const formatFolderPathForDisplay = (path: string, organizationLabel: string): string => {
+  const segments = path.split('/');
+  if (segments.length === 0) return '';
+
+  // Replace first segment (bucket like "public") with organization label
+  segments[0] = organizationLabel;
+
+  return segments.join(' / ');
+};
+
 export function RuleListItem({
   path,
   rules,
@@ -32,10 +45,12 @@ export function RuleListItem({
   const { translateSource, translateFunction } =
     usePublicationFilterTranslation();
 
+  const displayPath = formatFolderPathForDisplay(path, t(ChatI18nKeys.Organization));
+
   return (
     <>
       <div className="mb-1 text-xs text-secondary" data-qa="published-path">
-        <DialEllipsisTooltip text={getLastPathSegment(path)} />
+        <DialEllipsisTooltip text={displayPath} />
       </div>
       <div className="mb-3 flex flex-wrap gap-1 text-xs" data-qa="rules-list">
         {rules.map((rule, idx) => (
