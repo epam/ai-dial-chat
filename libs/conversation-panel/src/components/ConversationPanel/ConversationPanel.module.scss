@@ -27,7 +27,7 @@
 .triggerActive {
   background: var(
     --cp-trigger-bg,
-    var(--bg-control-accent-alpha-active, #2764D933)
+    var(--bg-control-accent-alpha-active, #2764d933)
   );
   .triggerIcon {
     color: var(--cp-trigger-icon, var(--text-accent, #124ace));
@@ -38,6 +38,6 @@
   color: var(--cp-trigger-icon-idle, var(--text-secondary, #6b7280));
 }
 
-:export {ddd
+:export {
   skeletonColor: var(--cp-skeleton-color, var(--bg-layer-4, #d1dbea));
 }
