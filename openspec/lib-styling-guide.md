@@ -63,10 +63,10 @@ Not allowed in SCSS (use Tailwind instead):
 // ✅ correct — only CSS vars
 .wrapper {
   background: var(--ci-bg, var(--bg-layer-sunken, #EEF1F7));
-  border-color: var(--ci-border, var(--stroke-primary, #696e7c));
+  border-color: var(--ci-border, var(--stroke-primary, #6B7280));
 
   &:focus-within {
-    border-color: var(--ci-border-focus, var(--stroke-focus, #eef1f7));
+    border-color: var(--ci-border-focus, var(--stroke-focus, #161B2D));
   }
 }
 

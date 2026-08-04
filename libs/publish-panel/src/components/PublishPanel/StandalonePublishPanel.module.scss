@@ -10,7 +10,7 @@
 
 .panel {
   background: var(--bg-layer-raised, #fcfcfc);
-  border-inline-start-color: var(--stroke-secondary, #242c42);
+  border-inline-start-color: var(--stroke-secondary, #d1dbea);
 }
 
 .divider {
@@ -19,5 +19,5 @@
 
 .content {
   scrollbar-width: thin;
-  scrollbar-color: var(--stroke-secondary, #242c42) transparent;
+  scrollbar-color: var(--stroke-secondary, #d1dbea) transparent;
 }

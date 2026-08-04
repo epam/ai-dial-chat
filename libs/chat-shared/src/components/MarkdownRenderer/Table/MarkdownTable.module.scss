@@ -12,7 +12,7 @@
 
 .scrollContainer {
   scrollbar-width: thin;
-  scrollbar-color: var(--cm-table-scrollbar, var(--stroke-primary, #7c8293))
+  scrollbar-color: var(--cm-table-scrollbar, var(--stroke-primary, #6b7280))
     transparent;
 
   &::-webkit-scrollbar {
@@ -24,7 +24,7 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: var(--cm-table-scrollbar, var(--stroke-primary, #7c8293));
+    background-color: var(--cm-table-scrollbar, var(--stroke-primary, #6b7280));
     border-radius: 4px;
   }
 }

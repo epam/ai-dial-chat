@@ -113,7 +113,7 @@ div[role='menu']:has(> [role='none']) {
     background-image: none;
     box-shadow: none;
     transform: none;
-    background-color: var(--controls-bg-disable, #d1dbea) !important;
+    background-color: var(--bg-control-disable, #c7cbd4) !important;
     color: var(--text-white, #ffffff) !important;
     cursor: not-allowed;
   }

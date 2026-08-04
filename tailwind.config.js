@@ -33,7 +33,6 @@ const backgroundsColors = {
 };
 
 const controlsBgColors = {
-  // COLORS 2.0
   'control-accent-alpha': 'var(--bg-control-accent-alpha, #2764D90F)', // blue-500 alpha-6
   'control-accent-alpha-hover':
     'var(--bg-control-accent-alpha-hover, #2764D924)', // blue-500 alpha-14
@@ -54,13 +53,6 @@ const controlsBgColors = {
     'var(--bg-control-error-alpha-active, #F7646433)', // red-800 alpha-20
 
   'control-disable': 'var(--bg-control-disable, #C7CBD4)', // grey-700
-
-  // REMOVED: old names, need to remove
-  'controls-accent-primary-alpha-active':
-    'var(--controls-bg-accent-primary-alpha-active, #7DA4FF5C)',
-
-  'controls-error': 'var(--controls-bg-error, #AE2F2F)',
-  'controls-disable': 'var(--controls-bg-disable, #D1DBEA)',
 };
 
 const borderColors = {
