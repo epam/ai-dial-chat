@@ -1,5 +1,5 @@
 import type { CatalogItemCredentials } from '@epam/ai-dial-catalog';
-import type { ToolsetCredentialsLevel } from './toolsets';
+import type { ToolsetCredentialsLevel } from '../constants/toolsets';
 
 export enum AppsEditorQuery {
   Step = 'step',

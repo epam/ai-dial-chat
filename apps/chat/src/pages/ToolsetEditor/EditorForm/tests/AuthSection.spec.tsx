@@ -12,18 +12,18 @@ import {
   ToolsetEditorI18nKeys,
 } from '../../../../constants/translation-keys';
 import { useNotification } from '../../../../context/NotificationContext';
-import * as toolsetsApi from '../../../../server-api/toolsets';
-import { ROUTES } from '../../../../types/routes';
 import type {
   ToolsetAuthFormData,
   ToolsetFormErrors,
-} from '../../../../types/toolsets';
+} from '../../../../models/toolsets';
 import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
   ToolsetOAuthResultType,
   WithLogin,
-} from '../../../../types/toolsets';
+} from '../../../../constants/toolsets';
+import * as toolsetsApi from '../../../../server-api/toolsets';
+import { ROUTES } from '../../../../types/routes';
 import { getToolsetOAuthChannelName } from '../../../../utils/toolsets';
 import AuthSection from '../AuthSection';
 

@@ -2,12 +2,12 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { EditorI18nKeys } from '../../../../constants/translation-keys';
-import type { ToolsetFormData } from '../../../../types/toolsets';
+import type { ToolsetFormData } from '../../../../models/toolsets';
 import {
   ToolsetAuthTypes,
   ToolsetTransportType,
   WithLogin,
-} from '../../../../types/toolsets';
+} from '../../../../constants/toolsets';
 import GeneralForm from '../GeneralForm';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -106,7 +106,13 @@ const renderForm = (
 ) => {
   const form = makeForm(overrides);
   return render(
-    <GeneralForm form={form} errors={errors} onChange={onChange} />,
+    <GeneralForm
+      form={form}
+      errors={errors}
+      onChange={onChange}
+      namePlaceholder={''}
+      descriptionPlaceholder={''}
+    />,
   );
 };
 

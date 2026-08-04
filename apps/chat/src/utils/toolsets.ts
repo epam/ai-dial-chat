@@ -7,8 +7,6 @@ import {
   TOOLSET_REDIRECT_STATE_KEY,
   ToolsetOAuthCallbackQuery,
 } from '../constants/toolsets';
-import { getToolset } from '../server-api/toolsets';
-import { ROUTES } from '../types/routes';
 import type {
   ToolsetAuthFormData,
   ToolsetFormData,
@@ -16,7 +14,7 @@ import type {
   ToolsetOAuthInitiationResult,
   ToolsetOAuthResult,
   ToolsetRedirectState,
-} from '../types/toolsets';
+} from '../models/toolsets';
 import {
   OAuthResourceKind,
   ToolsetAuthStatus,
@@ -28,7 +26,9 @@ import {
   ToolsetOAuthResultType,
   ToolsetTransportType,
   WithLogin,
-} from '../types/toolsets';
+} from '../constants/toolsets';
+import { getToolset } from '../server-api/toolsets';
+import { ROUTES } from '../types/routes';
 
 /**
  * Returns a storage-safe toolset name that does not collide with any existing

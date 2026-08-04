@@ -43,7 +43,7 @@ describe('mapDeploymentToCatalogItem', () => {
       undefined,
       undefined,
       undefined,
-      'schemas/quickapps2',
+      ['schemas/quickapps2'],
     );
 
     expect(result.isEditable).toBe(true);
@@ -55,7 +55,7 @@ describe('mapDeploymentToCatalogItem', () => {
       undefined,
       undefined,
       undefined,
-      'schemas/other',
+      ['schemas/other'],
     );
 
     expect(result.isEditable).toBe(false);
@@ -67,7 +67,7 @@ describe('mapDeploymentToCatalogItem', () => {
       undefined,
       undefined,
       undefined,
-      'schemas/quickapps2',
+      ['schemas/quickapps2'],
     );
 
     expect(result.isEditable).toBe(false);
@@ -85,7 +85,7 @@ describe('mapDeploymentToCatalogItem', () => {
       undefined,
       undefined,
       undefined,
-      'schemas/quickapps2',
+      ['schemas/quickapps2'],
     );
 
     expect(result.isEditable).toBe(true);
@@ -97,7 +97,61 @@ describe('mapDeploymentToCatalogItem', () => {
       undefined,
       undefined,
       undefined,
-      'schemas/quickapps2',
+      ['schemas/quickapps2'],
+    );
+
+    expect(result.isEditable).toBe(false);
+  });
+
+  it('marks a custom app (no schema id) editable when the user owns it and isCustomAppsEditable is true', () => {
+    const result = mapDeploymentToCatalogItem(
+      {
+        id: 'applications/bucket/My Custom App',
+        displayName: 'My Custom App',
+        type: 'application',
+        isMy: true,
+      },
+      undefined,
+      undefined,
+      undefined,
+      [],
+      true,
+    );
+
+    expect(result.isEditable).toBe(true);
+  });
+
+  it('does not mark a custom app editable when isCustomAppsEditable is false', () => {
+    const result = mapDeploymentToCatalogItem(
+      {
+        id: 'applications/bucket/My Custom App',
+        displayName: 'My Custom App',
+        type: 'application',
+        isMy: true,
+      },
+      undefined,
+      undefined,
+      undefined,
+      [],
+      false,
+    );
+
+    expect(result.isEditable).toBe(false);
+  });
+
+  it('does not mark a custom app editable when the user does not own it', () => {
+    const result = mapDeploymentToCatalogItem(
+      {
+        id: 'applications/bucket/Some App',
+        displayName: 'Some App',
+        type: 'application',
+        isMy: false,
+      },
+      undefined,
+      undefined,
+      undefined,
+      [],
+      true,
     );
 
     expect(result.isEditable).toBe(false);

@@ -1,16 +1,16 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  getToolset,
-  loginToolset,
-  logoutToolset,
-} from '../../../server-api/toolsets';
-import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
-} from '../../../types/toolsets';
+} from '../../../constants/toolsets';
+import {
+  getToolset,
+  loginToolset,
+  logoutToolset,
+} from '../../../server-api/toolsets';
 import {
   initiateOAuthLogin,
   navigateToolsetOAuthPopup,

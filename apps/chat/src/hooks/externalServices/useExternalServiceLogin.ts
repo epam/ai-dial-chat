@@ -13,7 +13,7 @@ import {
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
   WithLogin,
-} from '../../types/toolsets';
+} from '../../constants/toolsets';
 import { buildExternalServiceScopeId } from '../../utils/external-services';
 import {
   navigateToolsetOAuthPopup,

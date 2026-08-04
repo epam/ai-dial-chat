@@ -25,19 +25,19 @@ import {
   ToolsetEditorI18nKeys,
 } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
-import { loginToolset, logoutToolset } from '../../../server-api/toolsets';
 import type {
   ToolsetAuthFormData,
   ToolsetFormErrors,
   ToolsetOAuthInitiationResult,
-} from '../../../types/toolsets';
+} from '../../../models/toolsets';
 import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
   WithLogin,
-} from '../../../types/toolsets';
+} from '../../../constants/toolsets';
+import { loginToolset, logoutToolset } from '../../../server-api/toolsets';
 import {
   fetchToolsetAuthSettings,
   initiateOAuthLogin,

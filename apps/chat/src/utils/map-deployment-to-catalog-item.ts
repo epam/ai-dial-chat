@@ -151,7 +151,8 @@ export const mapDeploymentToCatalogItem = (
   favoriteIds: ReadonlySet<string> = new Set(),
   entityDetails?: EntitySpecificDetails,
   t?: TFunction,
-  editableSchemaId?: string,
+  editableSchemaIds: string[] = [],
+  isCustomAppsEditable = false,
 ): CatalogItem => {
   const name = deployment.displayName ?? deployment.id;
   const normalizedType = (deployment.type ?? '').toLowerCase();
@@ -176,8 +177,11 @@ export const mapDeploymentToCatalogItem = (
     sharedWithMe: deployment.sharedWithMe ?? false,
     isEditable:
       (!!deployment.isMy || !!deployment.canEdit) &&
-      !!editableSchemaId &&
-      deployment.applicationTypeSchemaId === editableSchemaId,
+      ((editableSchemaIds.length > 0 &&
+        editableSchemaIds.includes(deployment.applicationTypeSchemaId ?? '')) ||
+        (isCustomAppsEditable &&
+          !deployment.applicationTypeSchemaId &&
+          normalizedType === 'application')),
     folder:
       t != null
         ? resolveDeploymentFolder(deployment, t)

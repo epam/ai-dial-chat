@@ -28,6 +28,7 @@ import { useNotification } from '../../../context/NotificationContext';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { useCatalogSortFilterPreference } from '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import { useUiFeature } from '../../../hooks/useUiFeature';
+import { ToolsetOAuthResultType } from '../../../constants/toolsets';
 import { deleteApplication } from '../../../server-api/applications';
 import { getDeploymentLimits } from '../../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../../server-api/deployments';
@@ -41,7 +42,6 @@ import {
 } from '../../../server-api/toolsets';
 import { AuthStatus } from '../../../types/auth-status';
 import { ROUTES } from '../../../types/routes';
-import { ToolsetOAuthResultType } from '../../../types/toolsets';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import CatalogView from '../CatalogView';

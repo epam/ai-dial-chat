@@ -152,17 +152,33 @@ export class ApplicationsService {
       const appPath = `${body.name}__${version}`;
       const encodedPath = encodeURIComponent(appPath);
 
+      const {
+        endpoint,
+        features,
+        inputAttachmentTypes,
+        maxInputAttachments,
+        ...remainingProps
+      } = (body.applicationProperties ?? {}) as Record<string, unknown>;
+
       const dialBody: DialApplication = {
         displayName: body.name,
         displayVersion: version,
-        application_type_schema_id: body.type,
-        application_properties: body.applicationProperties ?? {},
       };
+      if (body.type) dialBody.application_type_schema_id = body.type;
+      if (Object.keys(remainingProps).length > 0)
+        dialBody.application_properties = remainingProps;
       if (body.description != null) dialBody.description = body.description;
       if (body.iconUrl != null) dialBody.iconUrl = body.iconUrl;
       if (body.topics != null && body.topics.length > 0)
         dialBody.descriptionKeywords = body.topics;
       if (body.intro != null) dialBody.intro = body.intro;
+      if (typeof endpoint === 'string') dialBody.endpoint = endpoint;
+      if (features != null)
+        dialBody.features = features as (typeof dialBody)['features'];
+      if (Array.isArray(inputAttachmentTypes))
+        dialBody.inputAttachmentTypes = inputAttachmentTypes as string[];
+      if (typeof maxInputAttachments === 'number')
+        dialBody.maxInputAttachments = maxInputAttachments;
 
       const response = await this.dialClient.client.saveCustomApplication(
         bucket,
@@ -236,6 +252,14 @@ export class ApplicationsService {
         mergedBody.descriptionKeywords = body.topics;
       }
       if (body.intro != null) mergedBody.intro = body.intro;
+      if (body.version != null) mergedBody.displayVersion = body.version;
+      if (body.endpoint != null) mergedBody.endpoint = body.endpoint;
+      if (body.features != null)
+        mergedBody.features = body.features as (typeof mergedBody)['features'];
+      if (body.inputAttachmentTypes != null)
+        mergedBody.inputAttachmentTypes = body.inputAttachmentTypes;
+      if (body.maxInputAttachments != null)
+        mergedBody.maxInputAttachments = body.maxInputAttachments;
 
       const saveResponse = await this.dialClient.client.saveCustomApplication(
         bucket,
