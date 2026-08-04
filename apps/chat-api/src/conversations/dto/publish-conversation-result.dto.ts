@@ -17,6 +17,6 @@ export class PublishConversationResultDto {
   @ApiProperty({ example: '2026-07-15T10:00:00.000Z' })
   publishedAt!: string;
 
-  @ApiProperty({ example: 'Valery Dluski' })
+  @ApiProperty({ example: 'Test User' })
   publishedBy!: string;
 }

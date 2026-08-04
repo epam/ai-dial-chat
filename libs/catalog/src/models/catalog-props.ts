@@ -1,4 +1,5 @@
 import type {
+  PublicationRule,
   PublishFolderNode,
   PublishFooterLabels,
   PublishHistoryEntry,
@@ -114,14 +115,26 @@ export interface CatalogProps {
   publishLoadingPaths?: Set<string>;
   /** Resolves whether the current user can publish to a given folder path. */
   hasPublishWriteAccess?: (folderPath: string[]) => boolean;
-  /** Called with the destination folder path when the user confirms publish/update. */
-  onPublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
+  /** Called with the destination folder path and current access rules when the user confirms publish/update. */
+  onPublish?: (
+    item: CatalogItem,
+    folderPath: string[],
+    rules: PublicationRule[],
+  ) => Promise<void>;
   /** Called after a successful publish; use this to surface a success notification. */
   onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
   /** Called when the user confirms a new folder name in the publish flow. */
   onCreatePublishFolder?: (parentPath: string[], name: string) => void;
   /** Text overrides forwarded to the publish flow. */
   publishLabels?: PublishPanelLabels & PublishFooterLabels;
+  /** Options offered in the access-rules editor's source picker. Defaults to `[]` when absent. */
+  ruleSourceOptions?: string[];
+  /**
+   * Resolves the access rules already configured for a destination folder,
+   * called whenever the selected folder changes. The result fully replaces
+   * the rules editor's contents. Omit to skip pre-filling entirely.
+   */
+  onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
   /** Called when the "Edit" button is clicked in the details panel. Shown only when the item's `isEditable` is `true`. */
   onEdit?: (item: CatalogItem) => void;
   /**

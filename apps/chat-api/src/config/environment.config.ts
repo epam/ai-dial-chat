@@ -10,6 +10,7 @@ import {
   IsUrl,
   Matches,
   Max,
+  MaxLength,
   Min,
 } from 'class-validator';
 
@@ -735,4 +736,16 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   CUSTOM_VISUALIZERS?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  @MaxLength(200, { each: true })
+  PUBLICATION_FILTER_SOURCES?: string[] = [];
 }

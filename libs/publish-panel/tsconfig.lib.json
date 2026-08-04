@@ -24,6 +24,9 @@
   ],
   "references": [
     {
+      "path": "../ai-dial-kit/tsconfig.lib.json"
+    },
+    {
       "path": "../chat-shared/tsconfig.lib.json"
     },
     {

@@ -76,7 +76,7 @@ export class ConversationPublishController {
   publish(
     @Req() req: Request,
     @Query() { path }: ConversationPathDto,
-    @Body() { folderPath }: PublishConversationDto,
+    @Body() { folderPath, rules }: PublishConversationDto,
   ): Promise<PublishConversationResultDto> {
     const { at, bucket, claims } = req.user as SessionUser;
     return this.conversationPublishService.publish(
@@ -85,6 +85,7 @@ export class ConversationPublishController {
       path,
       folderPath,
       getUserDisplayName(claims),
+      rules,
     );
   }
 

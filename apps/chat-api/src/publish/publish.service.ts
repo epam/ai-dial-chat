@@ -14,6 +14,7 @@ import { DialClientService } from '../dial/dial-client.service';
 import { CatalogEntityType } from './dto/catalog-entity-params.dto';
 import { PublishHistoryEntryDto } from './dto/publish-history-entry.dto';
 import { PublishResultDto } from './dto/publish-result.dto';
+import type { PublishRuleDto } from './dto/publish-rule.dto';
 import {
   getPublicationsListScope,
   getPublicTargetFolder,
@@ -87,6 +88,7 @@ export class PublishService {
     folderPath: string,
     version: string,
     author: string,
+    rules?: PublishRuleDto[],
   ): Promise<PublishResultDto> {
     const publicTargetFolder = getPublicTargetFolder(folderPath);
     const targetUrl = `${getResourceTypePrefix(entityId)}/${publicTargetFolder}${getResourceName(entityId)}`;
@@ -96,7 +98,7 @@ export class PublishService {
       targetFolder: publicTargetFolder,
       resources: [{ action: 'ADD' as const, sourceUrl: entityId, targetUrl }],
       displayAuthor: author,
-      rules: [],
+      rules: rules ?? [],
     };
     let result;
     try {
