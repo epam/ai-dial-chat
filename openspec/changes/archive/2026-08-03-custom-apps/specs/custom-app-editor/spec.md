@@ -24,7 +24,7 @@ The `CustomAppSettingsForm` SHALL contain exactly four fields rendered in this o
 1. **Chat completion URL** — `<Input>` field, validated as a valid absolute URL; error shown on invalid value
 2. **Features data** — `<Textarea>` with description "Enter key-value pairs for rate_endpoint and/or configuration_endpoint in JSON format." and JSON placeholder
 3. **Attachment types** — `<TagInput>` for MIME type entries
-4. **Max attachments number** — `<Input type="number">` with minimum value 1
+4. **Max attachments number** — `<Input type="number">` with minimum value 0
 
 #### Scenario: Chat completion URL validation
 - **WHEN** user enters an invalid URL in the Chat completion URL field and submits

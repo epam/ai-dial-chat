@@ -23,7 +23,7 @@ The system SHALL provide a `CustomAppEditor` page that reuses `ToolsetEditorHead
 The `CustomAppSettingsForm` SHALL contain exactly four fields rendered in this order:
 1. **Features data** — `<Textarea>` with description "Enter key-value pairs for rate_endpoint and/or configuration_endpoint in JSON format." and JSON placeholder
 2. **Attachment types** — `<TagInput>` for MIME type entries
-3. **Max attachments number** — `<Input type="number">` with minimum value 1
+3. **Max attachments number** — `<Input type="number">` with minimum value 0
 4. **Chat completion URL** — `<Input>` field, validated as a valid absolute URL; error shown on invalid value
 
 #### Scenario: Chat completion URL validation

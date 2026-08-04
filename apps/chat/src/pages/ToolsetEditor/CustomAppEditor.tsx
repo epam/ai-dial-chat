@@ -13,7 +13,10 @@ import {
   DEFAULT_CUSTOM_APP_SETTINGS_FORM,
   MIME_TYPE_REGEX,
 } from '../../constants/custom-apps';
-import { ToolsetEditorQuery } from '../../constants/toolsets';
+import {
+  ToolsetEditorQuery,
+  ToolsetEditorSteps,
+} from '../../constants/toolsets';
 import {
   ButtonsI18nKeys,
   CustomAppI18nKeys,
@@ -26,7 +29,6 @@ import type {
   CustomAppFormErrors,
   CustomAppGeneralFormData,
 } from '../../models/custom-apps';
-import { ToolsetEditorSteps } from '../../constants/toolsets';
 import {
   createApplication,
   updateApplication,
