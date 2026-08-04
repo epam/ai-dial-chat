@@ -683,7 +683,12 @@ export class ConversationService {
               isPinned: pinnedSet.has(decodedId),
               isReadonly,
               isScheduledTask: scheduledTask !== null,
-              ...(scheduledTask ?? {}),
+              ...(scheduledTask !== null
+                ? {
+                    scheduleId: scheduledTask.scheduleId,
+                    runId: scheduledTask.runId,
+                  }
+                : {}),
             };
           });
 
@@ -726,7 +731,12 @@ export class ConversationService {
                   isPinned: pinnedSet.has(decodedId),
                   isReadonly: true,
                   isScheduledTask: scheduledTask !== null,
-                  ...(scheduledTask ?? {}),
+                  ...(scheduledTask !== null
+                    ? {
+                        scheduleId: scheduledTask.scheduleId,
+                        runId: scheduledTask.runId,
+                      }
+                    : {}),
                 };
               })
           : [];

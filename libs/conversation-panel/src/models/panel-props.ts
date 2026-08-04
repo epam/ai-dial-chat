@@ -34,7 +34,7 @@ export interface ConversationItem {
   href?: string;
   /** When `true`, a "TASK" pill badge is rendered at the end of the row. */
   showTaskBadge?: boolean;
-  /** Text shown inside the task badge. Required when `showTaskBadge` is `true`. */
+  /** Text shown inside the task badge. When `showTaskBadge` is `true` and this is omitted, the badge renders with no text. */
   taskBadgeLabel?: string;
 }
 

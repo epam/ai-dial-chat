@@ -3,6 +3,10 @@ import { safeDecodeURIComponent } from '../../common/utils/uri';
 const SCHEDULER_SEGMENT = '.scheduler';
 const SCHEDULER_ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
 
+// Path shape: conversations/{bucket}/.scheduler/{scheduleId}/{runId}/...
+const BUCKET_SEGMENT_INDEX = 1;
+const SCHEDULER_SEGMENT_INDEX = BUCKET_SEGMENT_INDEX + 1;
+
 export interface ScheduledTaskConversationPath {
   scheduleId: string;
   runId: string;
@@ -17,9 +21,7 @@ export interface ScheduledTaskConversationPath {
 export const parseScheduledTaskConversationPath = (
   resourceId: string,
 ): ScheduledTaskConversationPath | null => {
-  // Expected shape: conversations/{bucket}/.scheduler/{scheduleId}/{runId}/...
   const segments = resourceId.split('/');
-  const SCHEDULER_SEGMENT_INDEX = 2;
   if (segments[SCHEDULER_SEGMENT_INDEX] !== SCHEDULER_SEGMENT) return null;
 
   const [rawScheduleId, rawRunId] = segments.slice(

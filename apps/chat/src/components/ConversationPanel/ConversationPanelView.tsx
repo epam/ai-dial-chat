@@ -251,8 +251,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           isIconLoading: isDeploymentsLoading,
           source: getConversationSource(item),
           href: getConversationRoute(id),
-          showTaskBadge: item.isScheduledTask,
-          taskBadgeLabel,
+          ...(item.isScheduledTask
+            ? { showTaskBadge: true, taskBadgeLabel }
+            : {}),
         };
       }),
     [

@@ -70,7 +70,6 @@ const seedConversations = [
     sharedWithMe: false,
     publishedWithMe: false,
     isReadonly: false,
-
     isScheduledTask: false,
   },
   {
@@ -81,7 +80,6 @@ const seedConversations = [
     sharedWithMe: false,
     publishedWithMe: false,
     isReadonly: false,
-
     isScheduledTask: false,
   },
   {
@@ -92,7 +90,6 @@ const seedConversations = [
     sharedWithMe: false,
     publishedWithMe: false,
     isReadonly: false,
-
     isScheduledTask: false,
   },
 ];
@@ -179,7 +176,6 @@ describe('ConversationsContext — deleteAllConversations', () => {
         sharedWithMe: true,
         publishedWithMe: false,
         isReadonly: true,
-
         isScheduledTask: false,
       },
     ];
@@ -246,7 +242,6 @@ describe('ConversationsContext — deleteAllConversations', () => {
         sharedWithMe: false,
         publishedWithMe: false,
         isReadonly: false,
-
         isScheduledTask: false,
       },
     ];
