@@ -1,23 +1,26 @@
-// Colors are CSS-var-driven so consumers can theme the panel.
-// Layout, spacing, and border-radius live in Tailwind classes in the TSX.
-// Mirrors ../Details/DetailsPanel.module.scss's backdrop/panel/divider/content
-// rules — kept as a separate module rather than shared, since this panel has
-// no other coupling to DetailsPanel (see design.md D4).
-
 .backdrop {
-  background: var(--bg-blackout, #0c101d4d);
+  background: var(--spp-backdrop-bg, var(--bg-blackout, #0c101d4d));
 }
 
 .panel {
-  background: var(--bg-layer-raised, #fcfcfc);
-  border-inline-start-color: var(--stroke-secondary, #d1dbea);
+  background: var(--spp-panel-bg, var(--bg-layer-raised, #fcfcfc));
+  border-inline-start-color: var(
+    --spp-panel-border,
+    var(--stroke-secondary, #d1dbea)
+  );
 }
 
 .divider {
-  border-block-end: 1px solid var(--stroke-tertiary, #e0e6f0);
+  border-block-end: 1px solid
+    var(--spp-divider-border, var(--stroke-tertiary, #e0e6f0));
 }
 
 .content {
   scrollbar-width: thin;
-  scrollbar-color: var(--stroke-secondary, #d1dbea) transparent;
+  scrollbar-color: var(--spp-scrollbar-thumb, var(--stroke-secondary, #d1dbea))
+    transparent;
+}
+
+.title {
+  color: var(--spp-title-text, var(--text-primary, #161b2d));
 }

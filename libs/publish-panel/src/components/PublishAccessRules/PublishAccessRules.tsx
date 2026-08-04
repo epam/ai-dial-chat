@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
   ButtonVariant,
@@ -17,6 +17,7 @@ import {
   PublishAccessRuleEditor,
   PublishAccessRuleEditorLabels,
 } from '../PublishAccessRuleEditor/PublishAccessRuleEditor';
+import styles from './PublishAccessRules.module.scss';
 
 const MAX_RULES_DEFAULT = 20;
 
@@ -74,6 +75,28 @@ export interface PublishAccessRulesProps {
   maxTargetsPerRule?: number;
   /** Text overrides for all user-visible strings. */
   labels?: PublishAccessRulesLabels;
+  /** Typography class for the section heading. Default: `'dial-body-semi-text'`. */
+  headingClassName?: string;
+  /** Typography class for the loading message. Default: `'dial-small-text'`. */
+  loadingClassName?: string;
+  /** Typography class for each rule chip's text. Default: `'dial-small-text'`. */
+  ruleTextClassName?: string;
+  /** Color overrides. */
+  colors?: PublishAccessRulesColors;
+}
+
+/** Color overrides for {@link PublishAccessRules}, applied as CSS custom properties with app theme fallbacks. */
+export interface PublishAccessRulesColors {
+  /** Rule row border color. Fallback: `--stroke-tertiary`. */
+  ruleBorder?: string;
+  /** Rule row background color. Fallback: `--bg-layer-sunken`. */
+  ruleBackground?: string;
+  /** Section heading text color. Fallback: `--text-primary`. */
+  headingText?: string;
+  /** Loading message text color. Fallback: `--text-secondary`. */
+  loadingText?: string;
+  /** Rule chip text color. Fallback: `--text-primary`. */
+  ruleText?: string;
 }
 
 const functionLabel = (
@@ -102,7 +125,19 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
   maxRules = MAX_RULES_DEFAULT,
   maxTargetsPerRule,
   labels = {},
+  headingClassName = 'dial-body-semi-text',
+  loadingClassName = 'dial-small-text',
+  ruleTextClassName = 'dial-small-text',
+  colors,
 }) => {
+  const cssVars = buildCssVars({
+    '--par-rule-border': colors?.ruleBorder,
+    '--par-rule-bg': colors?.ruleBackground,
+    '--par-heading-text': colors?.headingText,
+    '--par-loading-text': colors?.loadingText,
+    '--par-rule-text': colors?.ruleText,
+  });
+
   const {
     heading = 'Allow access if all match',
     addRuleLabel = 'Add rule',
@@ -179,12 +214,20 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
         {statusMessage}
       </span>
 
-      <div className="dial-body-semi-text mb-2 text-primary">{heading}</div>
+      <div className={mergeClasses('mb-2', headingClassName, styles.heading)}>
+        {heading}
+      </div>
 
       {isLoading && (
-        <div className="mb-2 flex items-center gap-2 text-secondary">
+        <div
+          className={mergeClasses(
+            'mb-2 flex items-center gap-2',
+            loadingClassName,
+            styles.loading,
+          )}
+        >
           <DialSpinner size={16} ariaLabel={loadingLabel} />
-          <span className="dial-small-text">{loadingLabel}</span>
+          <span>{loadingLabel}</span>
         </div>
       )}
 
@@ -208,9 +251,19 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
             return (
               <li
                 key={index}
-                className="flex items-center justify-between gap-2 rounded-lg border border-tertiary bg-layer-sunken px-3 py-2"
+                style={cssVars}
+                className={mergeClasses(
+                  'flex items-center justify-between gap-2 rounded-lg border px-3 py-2',
+                  styles.ruleRow,
+                )}
               >
-                <span className="dial-small-text truncate text-primary">
+                <span
+                  className={mergeClasses(
+                    'truncate',
+                    ruleTextClassName,
+                    styles.ruleText,
+                  )}
+                >
                   <span className="font-semibold">{rule.source}</span>{' '}
                   {functionLabel(rule.function, functionLabels)}: {targetsText}
                 </span>

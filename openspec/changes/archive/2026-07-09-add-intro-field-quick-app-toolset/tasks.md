@@ -203,7 +203,7 @@
       `Textarea.tsx`, which are now pure pass-throughs. Also swapped the focus border color
       from the ui-kit default `--stroke-focus` (near-white, barely visible on a light theme,
       and after 9.4.1 nearly identical to the new lighter resting `--stroke-tertiary`) to
-      `--stroke-accent-primary` plus a soft focus box-shadow ring, matching `SearchBar`'s own
+      `--stroke-info` plus a soft focus box-shadow ring, matching `SearchBar`'s own
       focus treatment. Updated `Input.spec.tsx`/`Textarea.spec.tsx` (className is now forwarded
       verbatim, no injected class). Re-verified: `@epam/ai-dial-kit` test/lint/typecheck/build,
       `@epam/ai-dial-deployment-creation-form` test/lint, and `@epam/chat`

@@ -88,9 +88,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
       className={mergeClasses(
         'box-border min-w-0 cursor-pointer flex-row items-start gap-1 text-start',
         isLeaving && styles.cardLeaving,
-        isSelected
-          ? 'border-accent-primary !bg-accent-primary-alpha'
-          : undefined,
+        isSelected ? 'border-info !bg-accent-primary-alpha' : undefined,
       )}
       onClick={handleClick}
       onKeyDown={handleKeyDown}

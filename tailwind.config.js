@@ -71,12 +71,8 @@ const borderColors = {
   'error-alpha': 'var(--stroke-error-alpha, #AE2F2F73)', // red-800 alpha-45
 
   // REMOVED: old names, need to remove
-  'accent-primary': 'var(--stroke-accent-primary, #124ACE)',
-  'accent-primary-hover': 'var(--stroke-accent-primary-hover, #7DA4FF)',
   'hover-tint': 'var(--stroke-hover-tint, #0000001f)',
   hairline: 'var(--stroke-hairline, #0000000d)',
-  'controls-accent': 'var(--controls-bg-accent, #5C8DEA)',
-  'accent-primary-hover': 'var(--stroke-accent-primary-hover, #4878d2)',
 };
 
 const textColors = {

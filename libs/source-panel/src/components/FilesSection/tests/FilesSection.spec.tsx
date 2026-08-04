@@ -41,9 +41,7 @@ const renderSection = (
   attachments: DisplayAttachment[],
   props?: Partial<Parameters<typeof FilesSection>[0]>,
 ) =>
-  render(
-    <FilesSection attachments={attachments} title="Files" {...props} />,
-  );
+  render(<FilesSection attachments={attachments} title="Files" {...props} />);
 
 describe('FilesSection', () => {
   it('renders the title', () => {
