@@ -17,4 +17,20 @@ describe('CONFIG_DEFINITIONS', () => {
       envVar: 'CUSTOM_VISUALIZERS',
     });
   });
+
+  it('contains the publish.publicationFilterSources entry with the expected shape', () => {
+    const entry = CONFIG_DEFINITIONS.find(
+      (definition) => definition.key === 'publish.publicationFilterSources',
+    );
+
+    expect(entry).toMatchObject({
+      key: 'publish.publicationFilterSources',
+      type: 'config',
+      valueType: 'json',
+      visibility: 'client',
+      defaultValue: ['title', 'role', 'dial_roles'],
+      critical: false,
+      envVar: 'PUBLICATION_FILTER_SOURCES',
+    });
+  });
 });

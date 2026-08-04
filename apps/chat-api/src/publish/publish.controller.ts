@@ -66,7 +66,7 @@ export class PublishController {
   publish(
     @Req() req: Request,
     @Param() { entityType, entityId }: CatalogEntityParamsDto,
-    @Body() { folderPath, version }: PublishCatalogEntityDto,
+    @Body() { folderPath, version, rules }: PublishCatalogEntityDto,
   ): Promise<PublishResultDto> {
     const { at, claims } = req.user as SessionUser;
     return this.publishService.publish(
@@ -76,6 +76,7 @@ export class PublishController {
       folderPath,
       version,
       getUserDisplayName(claims),
+      rules,
     );
   }
 

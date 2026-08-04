@@ -842,11 +842,15 @@ export class DeploymentsService {
       throw new NotFoundException('Resource not found');
     }
     const raw = result.data;
+    this.logger.debug(
+      `DIAL Core application details for "${deployment}": ${JSON.stringify(raw)}`,
+    );
 
     const data: DeploymentDetailsDto = {
       id: deployment,
       type: 'application',
       applicationDetails: {
+        displayName: raw.display_name,
         applicationProperties: isRecord(raw.application_properties)
           ? raw.application_properties
           : undefined,
@@ -862,6 +866,10 @@ export class DeploymentsService {
         createdAt: raw.created_at,
       },
     };
+
+    this.logger.debug(
+      `Application details sent to frontend for "${deployment}": ${JSON.stringify(data)}`,
+    );
 
     return data;
   }

@@ -193,7 +193,7 @@ Current implementation uses **React Context** with no external state library.
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `UserContext`          | Auth status (`loading \| authenticated \| unauthenticated`), `UserProfile`, `refresh()`, `reset()`                                                                                                                                                                                                                                                   |
 | `ThemeContext`         | Active theme ID, theme list, `setTheme()`, logo URL, loading flag                                                                                                                                                                                                                                                                                    |
-| `ClientChannelContext` | DIAL Core client-channel id, pending `toolset/signin` events, `reportEvent()`, `ensureConnected()` — mounted inside `RequireAuth` alongside `GenerationProvider` so it survives conversation navigation; see [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-toolset-sign-in-during-a-completion) |
+| `ClientChannelContext` | DIAL Core client-channel id, pending `toolset/signin` **and** `external-service/signin` events, `reportEvent()`, `ensureConnected()` — mounted inside `RequireAuth` alongside `GenerationProvider` so it survives conversation navigation; see [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services) |
 
 Context pattern (reference: `ThemeContext.tsx`):
 
@@ -231,6 +231,7 @@ Behaviour applied automatically:
 | `AUTH_PROVIDERS` | `/api/v1/auth/providers` |
 | `AUTH_LOGOUT`    | `/api/v1/auth/logout`    |
 | `CLIENT_CHANNEL` | `/api/v1/client-channel` |
+| `EXTERNAL_SERVICES` | `/api/v1/external-services` |
 
 ### SSE streaming
 
@@ -283,6 +284,7 @@ apps/chat-api/src/
 ├── conversations/         # Conversation CRUD + completions
 ├── chat/                  # Direct DIAL Core proxy
 ├── client-channel/        # DIAL Core client-channel proxy (subscribe/report/unsubscribe SSE relay)
+├── external-services/     # Application external-service metadata + signin/signout proxy
 ├── deployments/           # Available deployments listing
 ├── models/                # Available models listing
 ├── themes/                # Theme config + icon serving
@@ -327,13 +329,23 @@ One folder per domain. **No `modules/` wrapper** — `{domain}.module.ts` sits d
 
 #### Client Channel (`/api/v1/client-channel`)
 
-DIAL Core RPC proxy used to deliver mid-completion `toolset/signin` interrupts. See [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-toolset-sign-in-during-a-completion).
+DIAL Core RPC proxy used to deliver mid-completion `toolset/signin` and `external-service/signin` interrupts. See [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services).
 
 | Method | Path                                 | Description                                         |
 | ------ | ------------------------------------ | --------------------------------------------------- |
 | `POST` | `/api/v1/client-channel/subscribe`   | Open the SSE relay, get/resume a channel id         |
 | `POST` | `/api/v1/client-channel/report`      | Report `{ id, result }` back to a blocked tool call |
 | `POST` | `/api/v1/client-channel/unsubscribe` | Close the channel                                   |
+
+#### External Services (`/api/v1/external-services`)
+
+BFF proxy for an application's external-service credentials, driving the `external-service/signin` interrupt above. See [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services).
+
+| Method | Path                                                    | Description                                        |
+| ------ | -------------------------------------------------------- | --------------------------------------------------- |
+| `GET`  | `/api/v1/external-services/{appId}/{serviceId}`         | Get display metadata + auth type (not cached)      |
+| `POST` | `/api/v1/external-services/{appId}/{serviceId}/signin`  | Submit API-key/OAuth credentials                   |
+| `POST` | `/api/v1/external-services/{appId}/{serviceId}/signout` | Revoke credentials (Core 404 = idempotent success) |
 
 #### Infrastructure
 

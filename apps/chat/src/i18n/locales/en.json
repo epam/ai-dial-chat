@@ -328,6 +328,31 @@
     "invalidFolderNameError": "Folder name contains invalid characters.",
     "duplicateFolderNameError": "A folder with this name already exists."
   },
+  "publishAccessRules": {
+    "heading": "Allow access if all match",
+    "addRuleLabel": "Add rule",
+    "clearAllLabel": "Clear all",
+    "orSeparatorLabel": "Or",
+    "removeRuleAriaLabelTemplate": "Remove rule for {source}: {targets}",
+    "equalFunctionLabel": "Equal",
+    "containFunctionLabel": "Contain",
+    "regexFunctionLabel": "Regex",
+    "loadingLabel": "Loading existing rules…",
+    "loadErrorLabel": "Couldn't load existing rules for this folder. You can still add rules manually.",
+    "ruleAddedAnnouncement": "Rule added.",
+    "ruleRemovedAnnouncement": "Rule removed.",
+    "rulesClearedAnnouncement": "All rules cleared.",
+    "rulesLoadedAnnouncement": "Existing rules loaded for the selected folder.",
+    "sourceLabel": "Source",
+    "sourcePlaceholder": "Select...",
+    "functionLabel": "Function",
+    "targetsLabel": "Targets",
+    "targetsPlaceholder": "Add a target",
+    "patternLabel": "Pattern",
+    "patternPlaceholder": "Enter a regular expression",
+    "invalidRegexError": "Enter a valid regular expression.",
+    "dialogAriaLabel": "Add access rule"
+  },
   "conversationExport": {
     "exportLabel": "Export",
     "exportAllLabel": "Export conversations",
@@ -835,11 +860,12 @@
     }
   },
   "toolsetSignin": {
-    "dialogTitle": "Toolset sign-in required",
-    "dialogDescription": "One or more tools need you to sign in before the conversation can continue.",
+    "dialogTitle": "Sign-in required",
+    "dialogDescription": "One or more tools or services need you to sign in before the conversation can continue.",
     "rowDecline": "Decline",
     "declineAll": "Decline all",
     "fallbackName": "Toolset",
+    "fallbackNameExternalService": "External service",
     "apiKeyLabel": "API key",
     "apiKeyPlaceholder": "Enter API key",
     "errorLoginFailed": "Failed to log in. Please try again.",
@@ -847,7 +873,8 @@
     "errorDeclineFailed": "Failed to decline. Please try again.",
     "errorRetry": "Retry",
     "statusLoginSuccess": "Login succeeded for {{name}}.",
-    "statusDeclineSuccess": "Declined {{name}}."
+    "statusDeclineSuccess": "Declined {{name}}.",
+    "noCredentialsRequired": "No credentials required"
   },
   "voiceRecording": {
     "micLabel": "Record voice message",

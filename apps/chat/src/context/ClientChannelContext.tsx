@@ -17,9 +17,12 @@ import {
 } from '../server-api/client-channel';
 import {
   ClientChannelRpcRequest,
+  EXTERNAL_SERVICE_SIGNIN_METHOD,
   PendingSigninEvent,
+  PendingSigninEventKind,
   TOOLSET_SIGNIN_METHOD,
 } from '../types/client-channel';
+import { parseExternalServiceUrl } from '../utils/external-services';
 import { useFeatureFlag } from './AppConfigContext';
 
 /** Capped exponential backoff for reconnect attempts (ms). After these are exhausted, the provider waits for `ensureConnected` (e.g. the next completion) or tab visibility to resume. */
@@ -50,15 +53,34 @@ interface Props {
 const parseSigninEvent = (payload: string): PendingSigninEvent | null => {
   try {
     const parsed = JSON.parse(payload) as ClientChannelRpcRequest;
-    if (
-      parsed.method !== TOOLSET_SIGNIN_METHOD ||
-      typeof parsed.id !== 'string'
-    ) {
-      return null;
+    if (typeof parsed.id !== 'string') return null;
+
+    if (parsed.method === TOOLSET_SIGNIN_METHOD) {
+      const toolsetId = parsed.params?.toolsetId;
+      if (typeof toolsetId !== 'string') return null;
+      return { kind: PendingSigninEventKind.Toolset, id: parsed.id, toolsetId };
     }
-    const toolsetId = parsed.params?.toolsetId;
-    if (typeof toolsetId !== 'string') return null;
-    return { id: parsed.id, toolsetId };
+
+    if (parsed.method === EXTERNAL_SERVICE_SIGNIN_METHOD) {
+      /*
+       * `params.url` is `applications/{bucket}/{app}/external_services/{name}`
+       * — split into the application's own id (for metadata) and the
+       * specific service name (keys the app's `external_services` map and
+       * is required, rejoined, as the sign-in/sign-out scope id).
+       */
+      const url = parsed.params?.url;
+      if (typeof url !== 'string' || !url) return null;
+      const parsedUrl = parseExternalServiceUrl(url);
+      if (!parsedUrl) return null;
+      return {
+        kind: PendingSigninEventKind.ExternalService,
+        id: parsed.id,
+        appId: parsedUrl.appId,
+        serviceName: parsedUrl.serviceName,
+      };
+    }
+
+    return null;
   } catch {
     return null;
   }

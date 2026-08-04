@@ -4,8 +4,8 @@ import { getUserDisplayName } from './user-display-name';
 describe('getUserDisplayName', () => {
   it('prefers the name claim', () => {
     expect(
-      getUserDisplayName({ name: 'Valery Dluski', email: 'v.d@example.com' }),
-    ).toBe('Valery Dluski');
+      getUserDisplayName({ name: 'Test User', email: 'v.d@example.com' }),
+    ).toBe('Test User');
   });
 
   it('falls back to preferred_username when name is absent', () => {

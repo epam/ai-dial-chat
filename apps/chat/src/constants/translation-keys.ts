@@ -494,6 +494,32 @@ export enum ConversationPublishI18nKeys {
   DuplicateFolderNameError = 'conversationPublish.duplicateFolderNameError',
 }
 
+export enum PublishAccessRulesI18nKeys {
+  Heading = 'publishAccessRules.heading',
+  AddRuleLabel = 'publishAccessRules.addRuleLabel',
+  ClearAllLabel = 'publishAccessRules.clearAllLabel',
+  OrSeparatorLabel = 'publishAccessRules.orSeparatorLabel',
+  RemoveRuleAriaLabelTemplate = 'publishAccessRules.removeRuleAriaLabelTemplate',
+  EqualFunctionLabel = 'publishAccessRules.equalFunctionLabel',
+  ContainFunctionLabel = 'publishAccessRules.containFunctionLabel',
+  RegexFunctionLabel = 'publishAccessRules.regexFunctionLabel',
+  LoadingLabel = 'publishAccessRules.loadingLabel',
+  LoadErrorLabel = 'publishAccessRules.loadErrorLabel',
+  RuleAddedAnnouncement = 'publishAccessRules.ruleAddedAnnouncement',
+  RuleRemovedAnnouncement = 'publishAccessRules.ruleRemovedAnnouncement',
+  RulesClearedAnnouncement = 'publishAccessRules.rulesClearedAnnouncement',
+  RulesLoadedAnnouncement = 'publishAccessRules.rulesLoadedAnnouncement',
+  SourceLabel = 'publishAccessRules.sourceLabel',
+  SourcePlaceholder = 'publishAccessRules.sourcePlaceholder',
+  FunctionLabel = 'publishAccessRules.functionLabel',
+  TargetsLabel = 'publishAccessRules.targetsLabel',
+  TargetsPlaceholder = 'publishAccessRules.targetsPlaceholder',
+  PatternLabel = 'publishAccessRules.patternLabel',
+  PatternPlaceholder = 'publishAccessRules.patternPlaceholder',
+  InvalidRegexError = 'publishAccessRules.invalidRegexError',
+  DialogAriaLabel = 'publishAccessRules.dialogAriaLabel',
+}
+
 export enum ConversationExportI18nKeys {
   ExportLabel = 'conversationExport.exportLabel',
   ExportAllLabel = 'conversationExport.exportAllLabel',
@@ -738,6 +764,7 @@ export enum ToolsetSigninI18nKeys {
   RowDecline = 'toolsetSignin.rowDecline',
   DeclineAll = 'toolsetSignin.declineAll',
   FallbackName = 'toolsetSignin.fallbackName',
+  FallbackNameExternalService = 'toolsetSignin.fallbackNameExternalService',
   ApiKeyLabel = 'toolsetSignin.apiKeyLabel',
   ApiKeyPlaceholder = 'toolsetSignin.apiKeyPlaceholder',
   ErrorLoginFailed = 'toolsetSignin.errorLoginFailed',
@@ -746,6 +773,7 @@ export enum ToolsetSigninI18nKeys {
   ErrorRetry = 'toolsetSignin.errorRetry',
   StatusLoginSuccess = 'toolsetSignin.statusLoginSuccess',
   StatusDeclineSuccess = 'toolsetSignin.statusDeclineSuccess',
+  NoCredentialsRequired = 'toolsetSignin.noCredentialsRequired',
 }
 
 export enum ErrorBoundaryI18nKeys {

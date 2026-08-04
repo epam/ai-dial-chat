@@ -13,7 +13,7 @@ Each `.mmd` file is a standalone Mermaid source. SVG versions (committed next to
 | [`05-logout-flow.mmd`](./05-logout-flow.mmd)                           | Federated logout                                  |
 | [`06-cross-pod-stateless.mmd`](./06-cross-pod-stateless.mmd)           | Cross-pod stateless decryption                    |
 | [`07-cookie-structure.mmd`](./07-cookie-structure.mmd)                 | Encrypted cookie payload structure                |
-| [`08-toolset-signin-interrupt.mmd`](./08-toolset-signin-interrupt.mmd) | Mid-completion toolset sign-in via client-channel |
+| [`08-toolset-signin-interrupt.mmd`](./08-toolset-signin-interrupt.mmd) | Mid-completion toolset **and application external-service** sign-in via client-channel |
 
 ---
 
