@@ -10,7 +10,7 @@ const backgroundsColors = {
   warning: 'var(--bg-warning, #FAF0CF)', // yellow-100
   info: 'var(--bg-info, #E1EAF9)', // blue-100
   success: 'var(--bg-success, #DBF1EB)', // green-100
-  backdrop: 'var(--bg-backdrop, #161B2DB2)', // grey-1000 with 70% opacity
+  backdrop: 'var(--bg-backdrop, #161B2D4D)', // grey-1000 with 70% opacity
 
   // shadow colors
   'shadow-blue': 'var(--shadow-blue-500, #2764D924)',

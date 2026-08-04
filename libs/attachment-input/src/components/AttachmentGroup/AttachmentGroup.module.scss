@@ -1,10 +1,4 @@
-.container {
-  background: var(--ai-group-bg, var(--bg-layer-2, #eef1f7));
-  border-color: var(--ai-group-border, var(--stroke-secondary, #d1dbea));
-}
-
 .headerIcon,
-.headerLabel,
-.downloadAllButton {
+.headerLabel {
   color: var(--ai-group-text, var(--text-secondary, #6b7280));
 }

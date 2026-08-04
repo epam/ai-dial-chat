@@ -3,6 +3,7 @@ import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { ATTACHMENT_COLLAPSE_THRESHOLD } from '../../../constants/attachment-group';
 import { AttachmentGroup } from '../AttachmentGroup';
 
 const makeImage = (id: string): DisplayAttachment => ({
@@ -41,86 +42,47 @@ describe('AttachmentGroup', () => {
       expect(screen.queryByRole('button', { name: /show less/i })).toBeNull();
     });
 
-    it('shows a simple grid for 2-4 images with no collapsing', () => {
+    it('shows a wrapping flex row for 2-4 images with no collapsing', () => {
       const images = ['a', 'b', 'c'].map(makeImage);
       render(<AttachmentGroup attachments={images} />);
 
       expect(screen.getByText('3 attachments')).toBeTruthy();
       expect(screen.getAllByRole('listitem')).toHaveLength(3);
+      const grid = screen.getByRole('list');
+      expect(grid.className).toContain('flex');
+      expect(grid.className).toContain('flex-wrap');
+      expect(grid.className).not.toContain('grid');
     });
 
-    it('collapses 5+ attachments behind a "+N" tile, with no header toggle until expanded', () => {
+    it('renders every tile in a fixed 5-column grid at the collapse threshold, with no "+N" tile', () => {
+      const images = Array.from(
+        { length: ATTACHMENT_COLLAPSE_THRESHOLD },
+        (_, i) => makeImage(`img${i}`),
+      );
+      render(<AttachmentGroup attachments={images} />);
+
+      expect(
+        screen.getByText(`${ATTACHMENT_COLLAPSE_THRESHOLD} attachments`),
+      ).toBeTruthy();
+      expect(screen.getAllByRole('listitem')).toHaveLength(
+        ATTACHMENT_COLLAPSE_THRESHOLD,
+      );
+      const grid = screen.getByRole('list');
+      expect(grid.className).toContain('grid');
+      expect(grid.className).toContain('grid-cols-[repeat(5,83px)]');
+      expect(
+        screen.queryByRole('button', { name: /show \d+ more/i }),
+      ).toBeNull();
+      expect(screen.queryByRole('button', { name: /show less/i })).toBeNull();
+    });
+
+    it('renders every tile with no hidden subset when well above the collapse threshold', () => {
       const images = Array.from({ length: 13 }, (_, i) => makeImage(`img${i}`));
       render(<AttachmentGroup attachments={images} />);
 
       expect(screen.getByText('13 attachments')).toBeTruthy();
-      // 4 visible images + the "+N" tile, each wrapped in its own listitem.
-      expect(screen.getAllByRole('listitem')).toHaveLength(5);
-      expect(
-        screen.getByRole('button', { name: 'Show 9 more attachments' }),
-      ).toBeTruthy();
-      expect(screen.queryByRole('button', { name: /show less/i })).toBeNull();
-    });
-
-    it('expands to show every attachment via the "+N" tile, revealing a "Show less" action', async () => {
-      const user = userEvent.setup();
-      const images = Array.from({ length: 13 }, (_, i) => makeImage(`img${i}`));
-      render(
-        <AttachmentGroup
-          attachments={images}
-          labels={{ showLessLabel: 'Show less' }}
-        />,
-      );
-
-      await user.click(
-        screen.getByRole('button', { name: 'Show 9 more attachments' }),
-      );
-
-      // 13 images + the "show less" tile, each wrapped in its own listitem.
-      expect(screen.getAllByRole('listitem')).toHaveLength(14);
-      expect(screen.getByRole('button', { name: 'Show less' })).toBeTruthy();
-    });
-
-    it('collapses again via the "Show less" header action', async () => {
-      const user = userEvent.setup();
-      const images = Array.from({ length: 13 }, (_, i) => makeImage(`img${i}`));
-      render(
-        <AttachmentGroup
-          attachments={images}
-          labels={{ showLessLabel: 'Show less' }}
-        />,
-      );
-
-      await user.click(
-        screen.getByRole('button', { name: 'Show 9 more attachments' }),
-      );
-      await user.click(screen.getByRole('button', { name: 'Show less' }));
-
-      // Back to 4 visible images + the "+N" tile.
-      expect(screen.getAllByRole('listitem')).toHaveLength(5);
-      expect(
-        screen.getByRole('button', { name: 'Show 9 more attachments' }),
-      ).toBeTruthy();
-    });
-
-    it('keeps the group width fixed when expanding a collapsible group (only rows are added)', async () => {
-      const user = userEvent.setup();
-      const images = Array.from({ length: 13 }, (_, i) => makeImage(`img${i}`));
-      const { container } = render(<AttachmentGroup attachments={images} />);
-
-      const getWidthClass = () =>
-        container.firstElementChild?.className
-          .split(' ')
-          .find((c) => c.startsWith('max-w-['));
-
-      const collapsedWidthClass = getWidthClass();
-      expect(collapsedWidthClass).toBe('max-w-[492px]');
-
-      await user.click(
-        screen.getByRole('button', { name: 'Show 9 more attachments' }),
-      );
-
-      expect(getWidthClass()).toBe(collapsedWidthClass);
+      // All 13 tiles are present in the DOM, none hidden behind a "+N" tile.
+      expect(screen.getAllByRole('listitem')).toHaveLength(13);
     });
 
     it('does not force a fixed width on a group below the collapse threshold', () => {
@@ -142,12 +104,9 @@ describe('AttachmentGroup', () => {
       expect(rootClassName).toContain('w-full');
       expect(rootClassName).toContain('max-w-[492px]');
       // Without min-w-0, a shrink-to-fit ancestor (the message bubble's own
-      // `w-fit` wrapper) treats this group's un-scrolled grid content as its
-      // floor and never actually narrows on a real mobile viewport.
+      // `w-fit` wrapper) treats this group's grid content as its floor and
+      // never actually narrows on a real mobile viewport.
       expect(rootClassName).toContain('min-w-0');
-
-      const grid = screen.getByRole('list');
-      expect(grid.className).toContain('overflow-x-auto');
     });
   });
 

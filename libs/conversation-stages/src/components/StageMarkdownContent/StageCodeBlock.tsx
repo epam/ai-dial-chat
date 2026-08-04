@@ -1,7 +1,7 @@
 import { copyToClipboard, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialGhostIconButton,
+  GhostIconButton,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
@@ -57,7 +57,7 @@ export const StageCodeBlock: FC<Props> = ({
         styles.codeBlock,
       )}
     >
-      <DialGhostIconButton
+      <GhostIconButton
         size={ElementSize.Small}
         icon={
           isCopied ? (

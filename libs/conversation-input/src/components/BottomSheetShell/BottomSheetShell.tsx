@@ -2,7 +2,7 @@ import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialCloseButton,
-  DialGhostIconButton,
+  GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowLeft } from '@tabler/icons-react';
 import type { CSSProperties, FC, ReactNode } from 'react';
@@ -104,7 +104,7 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
             <div className="relative flex h-[60px] flex-shrink-0 items-center justify-center px-4">
               {onBack && (
                 <div className="absolute start-4">
-                  <DialGhostIconButton
+                  <GhostIconButton
                     icon={
                       <IconArrowLeft
                         size={DIAL_ICON_SIZE.LG}
