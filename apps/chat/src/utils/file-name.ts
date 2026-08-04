@@ -4,13 +4,22 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { NOT_ALLOWED_SYMBOLS_REGEXP } from '@epam/ai-dial-ui-kit';
 
+/** Splits a file name into its base and extension, using only the last dot. */
+export const splitFileNameExtension = (
+  fileName: string,
+): { base: string; extension: string } => {
+  const dotIndex = fileName.lastIndexOf('.');
+  const hasExtension = dotIndex > 0;
+  return {
+    base: hasExtension ? fileName.slice(0, dotIndex) : fileName,
+    extension: hasExtension ? fileName.slice(dotIndex) : '',
+  };
+};
+
 export const trimFileNameToByteLimit = (name: string, limit = 255): string => {
   if (getUtf8ByteLength(name) <= limit) return name;
 
-  const lastDot = name.lastIndexOf('.');
-  const hasExtension = lastDot > 0;
-  const base = hasExtension ? name.slice(0, lastDot) : name;
-  const ext = hasExtension ? name.slice(lastDot) : '';
+  const { base, extension: ext } = splitFileNameExtension(name);
   const extBytes = getUtf8ByteLength(ext);
   const baseLimit = limit - extBytes;
 
@@ -33,11 +42,7 @@ export const trimFileNameToByteLimit = (name: string, limit = 255): string => {
  * If the base name is empty after sanitization, returns the original name unchanged.
  */
 export const sanitizeFileName = (name: string): string => {
-  const lastDot = name.lastIndexOf('.');
-  const hasExtension = lastDot > 0;
-
-  const baseName = hasExtension ? name.slice(0, lastDot) : name;
-  const extension = hasExtension ? name.slice(lastDot) : '';
+  const { base: baseName, extension } = splitFileNameExtension(name);
 
   const sanitizedBase = baseName
     .replace(new RegExp(NOT_ALLOWED_SYMBOLS_REGEXP.source, 'g'), '_')

@@ -18,9 +18,7 @@ vi.mock('../../../utils/attachment-to-dto', () => ({
   attachmentsToDtos: vi.fn(),
 }));
 vi.mock('../../../utils/build-upload-path', () => ({
-  buildUploadPath: vi.fn(
-    (attachment: { name: string }) => `uploads/${attachment.name}`,
-  ),
+  buildUploadPath: vi.fn((fileName: string) => `uploads/${fileName}`),
 }));
 vi.mock('../../../server-api/files.api', () => ({
   uploadFile: vi.fn(),
