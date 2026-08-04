@@ -11,7 +11,7 @@ import type {
   ConversationResponseDto,
 } from '@epam/chat-api-client';
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { getConversationRoute } from '../../constants/routes';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';

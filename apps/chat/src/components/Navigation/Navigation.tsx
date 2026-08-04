@@ -3,7 +3,7 @@ import { DIAL_ICON_SIZE, IconButton, mergeClasses } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router';
 import { NAVIGATION_CONFIG } from '../../constants/navigation';
 import {
   ChatI18nKeys,

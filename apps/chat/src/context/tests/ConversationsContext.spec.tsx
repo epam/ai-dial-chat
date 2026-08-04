@@ -30,7 +30,7 @@ vi.mock('../UserConfigContext', () => ({
   }),
 }));
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => vi.fn(),
 }));
 vi.mock('../AppConfigContext', () => ({

@@ -25,7 +25,7 @@ When the user submits a message from the welcome screen at `/`, the application 
 
 ### Requirement: The /conversations/:conversationId route renders the correct conversation
 
-The application SHALL declare a React Router v6 route at `/conversations/:conversationId` in `apps/chat/src/app/app.tsx`. The route SHALL render a lazy-loaded `<ConversationPage>` component. `ConversationPage` SHALL read `:conversationId` from `useParams`, retrieve the matching `Conversation` from `ConversationContext`, and display its messages. State ownership: `ConversationContext` holds a `Map<string, Conversation>` populated from API responses. `ConversationPage` uses `React.memo`.
+The application SHALL declare a React Router route at `/conversations/:conversationId` in `apps/chat/src/app/app.tsx`. The route SHALL render a lazy-loaded `<ConversationPage>` component. `ConversationPage` SHALL read `:conversationId` from `useParams`, retrieve the matching `Conversation` from `ConversationContext`, and display its messages. State ownership: `ConversationContext` holds a `Map<string, Conversation>` populated from API responses. `ConversationPage` uses `React.memo`.
 
 #### Scenario: Known conversation ID renders messages
 

@@ -18,7 +18,7 @@ import {
   useCallback,
   useState,
 } from 'react';
-import { type NavigateFunction } from 'react-router-dom';
+import { type NavigateFunction } from 'react-router';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { CompletionMode } from '../../server-api/chat-stream.api';
 import {

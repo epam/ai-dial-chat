@@ -98,7 +98,7 @@ const capturedPublishProps: {
   } | null;
 } = { current: null };
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
   useSearchParams: () => [mockSearchParams, mockSetSearchParams],
 }));

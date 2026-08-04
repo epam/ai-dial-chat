@@ -22,7 +22,7 @@ const mockApplyOverlayOverride = vi.fn();
 let mockAuthStatus = AuthStatus.Authenticated;
 let mockOverlayAllowedOrigins: string[] = ['https://partner.example.com'];
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
 }));
 
