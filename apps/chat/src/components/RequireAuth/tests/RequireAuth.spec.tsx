@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { ReactNode } from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../../context/auth/UserContext';
 import * as OverlayContextModule from '../../../context/overlay/OverlayContext';

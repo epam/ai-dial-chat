@@ -1,6 +1,6 @@
 import { memo, type FC, type ReactNode } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { ErrorBoundaryI18nKeys } from '../../constants/translation-keys';
 import ErrorFallback, { type ErrorFallbackProps } from './ErrorFallback';
 

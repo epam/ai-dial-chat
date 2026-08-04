@@ -1,7 +1,7 @@
 import { DialConfirmationPopup } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   AuthI18nKeys,
   ButtonsI18nKeys,

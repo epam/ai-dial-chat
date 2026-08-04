@@ -6,7 +6,7 @@ import {
   Routes,
   useNavigate,
   useSearchParams,
-} from 'react-router-dom';
+} from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotFoundI18nKeys } from '../../../constants/translation-keys';
 import ScheduledTasksPage from '../ScheduledTasksPage';

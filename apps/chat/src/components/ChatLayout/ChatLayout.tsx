@@ -5,7 +5,7 @@ import { IconLayoutSidebarRight, IconPlus } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Outlet, useMatch } from 'react-router-dom';
+import { Outlet, useMatch } from 'react-router';
 import {
   ButtonsI18nKeys,
   ConversationPanelI18nKeys,
