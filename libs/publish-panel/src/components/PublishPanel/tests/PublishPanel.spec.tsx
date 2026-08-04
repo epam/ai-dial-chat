@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { ComponentProps, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  PublicationRuleFunction,
   PublishFolderNode,
   PublishHistoryEntry,
   PublishResourceSummary,
@@ -97,6 +99,9 @@ const renderPanel = (props?: Partial<ComponentProps<typeof PublishPanel>>) =>
       hasExistingPublicationInFolder={false}
       hasWriteAccess={true}
       isSubmitting={false}
+      rules={[]}
+      onRulesChange={vi.fn()}
+      ruleSourceOptions={['title', 'role', 'dial_roles']}
       {...props}
     />,
   );
@@ -118,6 +123,33 @@ describe('PublishPanel', () => {
   it('renders the folder section title', () => {
     renderPanel();
     expect(screen.getByText('Publish to folder')).toBeTruthy();
+  });
+
+  it('renders the access-rules section between the folder block and history', () => {
+    renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
+    expect(screen.getByText('Allow access if all match')).toBeTruthy();
+  });
+
+  it('renders existing rules as chips and forwards removals via onRulesChange', async () => {
+    const onRulesChange = vi.fn();
+    renderPanel({
+      rules: [
+        {
+          source: 'role',
+          function: PublicationRuleFunction.Contain,
+          targets: ['engineering'],
+        },
+      ],
+      onRulesChange,
+    });
+
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: 'Remove rule for role: engineering',
+      }),
+    );
+
+    expect(onRulesChange).toHaveBeenCalledWith([]);
   });
 
   it('hides the history section until a folder is selected', () => {

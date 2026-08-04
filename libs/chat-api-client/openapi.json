@@ -4127,6 +4127,53 @@
         "tags": ["publish"]
       }
     },
+    "/api/v1/publish/rules": {
+      "get": {
+        "description": "Returns the exact requested folder's own access-restriction rules by proxying DIAL Core's `getPublicationRules` — ancestor-folder rules in the underlying response are discarded, never returned.",
+        "operationId": "getPublishRules",
+        "parameters": [
+          {
+            "name": "folderPath",
+            "required": true,
+            "in": "query",
+            "description": "Destination folder under the Organization/public bucket to look up existing access rules for.",
+            "schema": {
+              "example": "Organization/Data Science/Shared chats",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The folder's own rules, or an empty array when it has none",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishRulesResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid folderPath"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Get a destination folder's already-configured access rules",
+        "tags": ["publish"]
+      }
+    },
     "/api/v1/scheduled-tasks": {
       "get": {
         "description": "Returns the DIAL Scheduler schedules visible to the authenticated session user. Proxies the DIAL Scheduler routed-deployment API using the session access token. Results are cached server-side for 30 seconds per user.",
@@ -4600,6 +4647,14 @@
             "items": {
               "$ref": "#/components/schemas/CustomVisualizerDto"
             }
+          },
+          "publicationFilterSources": {
+            "description": "Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES; falls back to the legacy default when unset or empty.",
+            "example": ["title", "role", "dial_roles"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -4610,7 +4665,8 @@
           "overlayAllowedOrigins",
           "enabledUiFeatures",
           "footerHtmlMessage",
-          "customVisualizers"
+          "customVisualizers",
+          "publicationFilterSources"
         ]
       },
       "ClientConfigMetadataDto": {
@@ -7103,6 +7159,30 @@
         },
         "required": ["confirm"]
       },
+      "PublishRuleDto": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "Claim/category name this rule matches against.",
+            "example": "roles"
+          },
+          "function": {
+            "type": "string",
+            "enum": ["EQUAL", "CONTAIN", "REGEX"],
+            "example": "CONTAIN"
+          },
+          "targets": {
+            "description": "Values combined with OR; exactly one pattern when function is REGEX.",
+            "example": ["engineering", "support"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["source", "function", "targets"]
+      },
       "PublishConversationDto": {
         "type": "object",
         "properties": {
@@ -7110,6 +7190,14 @@
             "type": "string",
             "description": "Destination folder under the Organization/public bucket, forwarded to DIAL Core as `targetFolder`.",
             "example": "Organization/Data Science/Shared chats"
+          },
+          "rules": {
+            "description": "Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.",
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishRuleDto"
+            }
           }
         },
         "required": ["folderPath"]
@@ -8286,6 +8374,14 @@
             "type": "string",
             "description": "Version label for this publish.",
             "example": "1.2.0"
+          },
+          "rules": {
+            "description": "Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.",
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishRuleDto"
+            }
           }
         },
         "required": ["folderPath", "version"]
@@ -8365,6 +8461,19 @@
           "publishedAt",
           "publishedBy"
         ]
+      },
+      "PublishRulesResultDto": {
+        "type": "object",
+        "properties": {
+          "rules": {
+            "description": "The requested folder's own access-restriction rules, or an empty array when the folder has none configured.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishRuleDto"
+            }
+          }
+        },
+        "required": ["rules"]
       },
       "ScheduleCronDto": {
         "type": "object",

@@ -6,12 +6,17 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode, useMemo, useState } from 'react';
 import {
+  PublicationRule,
   PublishCalloutKind,
   PublishFolderNode,
   PublishHistoryEntry,
   PublishResourceSummary,
 } from '../../models/publish';
 import { derivePublishState } from '../../utils/publish-state';
+import {
+  PublishAccessRules,
+  PublishAccessRulesLabels,
+} from '../PublishAccessRules/PublishAccessRules';
 import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
 import { PublishHistoryList } from '../PublishHistoryList/PublishHistoryList';
 
@@ -49,6 +54,8 @@ export interface PublishPanelLabels {
   historyErrorLabel?: string;
   /** Label used for the bucket root as a destination and as `{folder}` in callouts when it is selected. Default: `'Organization'`. */
   rootFolderLabel?: string;
+  /** Text overrides for the access-rules section. */
+  accessRulesLabels?: PublishAccessRulesLabels;
 }
 
 /** Props for {@link PublishPanel}. */
@@ -113,6 +120,16 @@ export interface PublishPanelProps {
    * `PublishDerivationInput.allowReplace`). Default `true`.
    */
   allowReplace?: boolean;
+  /** Current access rules, combined with AND. */
+  rules: PublicationRule[];
+  /** Called with the full next rules array on add, remove, or clear. */
+  onRulesChange: (rules: PublicationRule[]) => void;
+  /** Options offered in the access-rules editor's source picker. */
+  ruleSourceOptions: string[];
+  /** Whether existing rules are currently being fetched for the selected folder. Default: `false`. */
+  isRulesLoading?: boolean;
+  /** Whether the most recent existing-rules fetch failed. Default: `false`. */
+  hasRulesLoadError?: boolean;
   /** Text overrides for all user-visible strings. */
   labels?: PublishPanelLabels;
 }
@@ -136,6 +153,11 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   isSubmitting,
   hasSubmitError = false,
   allowReplace = true,
+  rules,
+  onRulesChange,
+  ruleSourceOptions,
+  isRulesLoading = false,
+  hasRulesLoadError = false,
   labels = {},
 }) => {
   const {
@@ -155,6 +177,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     historyLoadingLabel,
     historyErrorLabel,
     rootFolderLabel = 'Organization',
+    accessRulesLabels,
   } = labels;
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -255,6 +278,16 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             </div>
           )}
       </div>
+
+      <PublishAccessRules
+        rules={rules}
+        onRulesChange={onRulesChange}
+        sourceOptions={ruleSourceOptions}
+        disabled={isSubmitting}
+        isLoading={isRulesLoading}
+        hasLoadError={hasRulesLoadError}
+        labels={accessRulesLabels}
+      />
 
       {isFolderSelected && resource?.version != null && (
         <div>

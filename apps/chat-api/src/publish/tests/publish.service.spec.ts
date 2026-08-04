@@ -2,6 +2,7 @@ import { BadGatewayException, ForbiddenException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../dial/dial-client.service';
 import { CatalogEntityType } from '../dto/catalog-entity-params.dto';
+import { PublishRuleFunction } from '../dto/publish-rule.dto';
 import { PublishService } from '../publish.service';
 
 const okResponse = (data: unknown) =>
@@ -79,6 +80,57 @@ describe('PublishService', () => {
       );
     });
 
+    it('passes the caller-supplied rules through to createPublication unchanged', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({}),
+      );
+
+      const rules = [
+        {
+          source: 'roles',
+          function: PublishRuleFunction.Contain,
+          targets: ['engineering', 'support'],
+        },
+      ];
+
+      await service.publish(
+        'token-abc',
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/tool-abc123__1.2.0',
+        'Organization/Data Science',
+        '1.2.0',
+        'Test User',
+        rules,
+      );
+
+      expect(dialClient.client.createPublication).toHaveBeenCalledWith(
+        expect.objectContaining({ body: expect.objectContaining({ rules }) }),
+      );
+    });
+
+    it('defaults rules to [] when omitted', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({}),
+      );
+
+      await service.publish(
+        'token-abc',
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/tool-abc123__1.2.0',
+        'Organization/Data Science',
+        '1.2.0',
+        'Test User',
+      );
+
+      expect(dialClient.client.createPublication).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({ rules: [] }),
+        }),
+      );
+    });
+
     it('builds targetUrl as resourceTypePrefix + targetFolder + resourceName, matching the DIAL Core OpenAPI spec example', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
@@ -87,7 +139,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
-        CatalogEntityType.Agent,
+        CatalogEntityType.Application,
         'applications/bucket-123/My App Name__0.0.1',
         'DK Test with nested/Level 1',
         '0.0.1',
@@ -121,7 +173,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
-        CatalogEntityType.Agent,
+        CatalogEntityType.Application,
         'applications/bucket-123/My App Name__0.0.1',
         '',
         '0.0.1',
@@ -150,7 +202,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
-        CatalogEntityType.Agent,
+        CatalogEntityType.Application,
         'applications/bucket-123/Untitled%20app123123123123__0.0.1',
         'test 14.04',
         '0.0.1',
@@ -206,7 +258,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
-        CatalogEntityType.Agent,
+        CatalogEntityType.Application,
         'applications/bucket-123/Untitled%20app%202222232__0.0.1',
         'folder02',
         '0.0.1',

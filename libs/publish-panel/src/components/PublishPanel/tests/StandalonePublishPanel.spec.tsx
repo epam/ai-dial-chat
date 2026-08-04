@@ -37,6 +37,9 @@ const renderPanel = (
       hasExistingPublicationInFolder={false}
       hasWriteAccess
       isSubmitting={false}
+      rules={[]}
+      onRulesChange={vi.fn()}
+      ruleSourceOptions={[]}
       onClose={vi.fn()}
       onSubmit={vi.fn()}
       {...props}

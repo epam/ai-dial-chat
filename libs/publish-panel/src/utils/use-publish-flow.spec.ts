@@ -1,6 +1,11 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { PublishFolderNode, PublishHistoryEntry } from '../models/publish';
+import {
+  PublicationRule,
+  PublicationRuleFunction,
+  PublishFolderNode,
+  PublishHistoryEntry,
+} from '../models/publish';
 import { PublishFlowItem, usePublishFlow } from './use-publish-flow';
 
 const item: PublishFlowItem = {
@@ -119,7 +124,7 @@ describe('usePublishFlow', () => {
       await result.current.handleSubmit();
     });
 
-    expect(onPublish).toHaveBeenCalledWith(item, []);
+    expect(onPublish).toHaveBeenCalledWith(item, [], []);
   });
 
   it('adds a locally created folder and reports it to the host', () => {
@@ -193,7 +198,7 @@ describe('usePublishFlow', () => {
       await result.current.handleSubmit();
     });
 
-    expect(onPublish).toHaveBeenCalledWith(item, ['Shared']);
+    expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], []);
     expect(onPublishSuccess).toHaveBeenCalledWith(item, ['Shared']);
   });
 
@@ -353,5 +358,200 @@ describe('usePublishFlow', () => {
         (child) => child.name === 'Releases',
       ),
     ).toBe(false);
+  });
+
+  describe('rules', () => {
+    const rule: PublicationRule = {
+      source: 'role',
+      function: PublicationRuleFunction.Contain,
+      targets: ['engineering'],
+    };
+
+    it('forwards the current rules to onPublish', async () => {
+      const onPublish = vi.fn().mockResolvedValue(undefined);
+      const { result } = renderHook(() =>
+        usePublishFlow({ item, history, folderItems, onPublish }),
+      );
+
+      act(() => {
+        result.current.setSelectedFolderPath(['Shared']);
+        result.current.setRules([rule]);
+      });
+
+      await act(async () => {
+        await result.current.handleSubmit();
+      });
+
+      expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [rule]);
+    });
+
+    it('setRules updates state independent of folder selection', () => {
+      const { result } = renderHook(() =>
+        usePublishFlow({
+          item,
+          history,
+          folderItems,
+          onPublish: vi.fn().mockResolvedValue(undefined),
+        }),
+      );
+
+      act(() => {
+        result.current.setRules([rule]);
+      });
+
+      expect(result.current.rules).toEqual([rule]);
+      expect(result.current.selectedFolderPath).toBeUndefined();
+    });
+
+    it('clears rules on reset', () => {
+      const { result } = renderHook(() =>
+        usePublishFlow({
+          item,
+          history,
+          folderItems,
+          onPublish: vi.fn().mockResolvedValue(undefined),
+        }),
+      );
+
+      act(() => {
+        result.current.setRules([rule]);
+      });
+      act(() => {
+        result.current.reset();
+      });
+
+      expect(result.current.rules).toEqual([]);
+    });
+
+    it('fetches existing rules on folder selection and overwrites rules on success', async () => {
+      const onFetchExistingRules = vi.fn().mockResolvedValue([rule]);
+      const { result } = renderHook(() =>
+        usePublishFlow({
+          item,
+          history,
+          folderItems,
+          onPublish: vi.fn().mockResolvedValue(undefined),
+          onFetchExistingRules,
+        }),
+      );
+
+      act(() => {
+        result.current.setSelectedFolderPath(['Shared']);
+      });
+
+      expect(onFetchExistingRules).toHaveBeenCalledWith(['Shared']);
+      await waitFor(() => {
+        expect(result.current.isRulesLoading).toBe(false);
+      });
+      expect(result.current.rules).toEqual([rule]);
+      expect(result.current.hasRulesLoadError).toBe(false);
+    });
+
+    it('overwrites manually entered rules with the fetch result for the newly selected folder', async () => {
+      const onFetchExistingRules = vi.fn().mockResolvedValue([rule]);
+      const { result } = renderHook(() =>
+        usePublishFlow({
+          item,
+          history,
+          folderItems,
+          onPublish: vi.fn().mockResolvedValue(undefined),
+          onFetchExistingRules,
+        }),
+      );
+
+      act(() => {
+        result.current.setSelectedFolderPath(['Shared']);
+      });
+      await waitFor(() => {
+        expect(result.current.isRulesLoading).toBe(false);
+      });
+
+      const manualRule: PublicationRule = {
+        source: 'title',
+        function: PublicationRuleFunction.Equal,
+        targets: ['Internal Tools'],
+      };
+      act(() => {
+        result.current.setRules([manualRule]);
+      });
+      expect(result.current.rules).toEqual([manualRule]);
+
+      onFetchExistingRules.mockResolvedValue([]);
+      act(() => {
+        result.current.setSelectedFolderPath(['Shared', 'Data Science']);
+      });
+
+      await waitFor(() => {
+        expect(result.current.rules).toEqual([]);
+      });
+    });
+
+    it('sets hasRulesLoadError and leaves rules unchanged when the fetch fails', async () => {
+      const onFetchExistingRules = vi.fn().mockRejectedValue(new Error('boom'));
+      const { result } = renderHook(() =>
+        usePublishFlow({
+          item,
+          history,
+          folderItems,
+          onPublish: vi.fn().mockResolvedValue(undefined),
+          onFetchExistingRules,
+        }),
+      );
+
+      act(() => {
+        result.current.setRules([rule]);
+        result.current.setSelectedFolderPath(['Shared']);
+      });
+
+      await waitFor(() => {
+        expect(result.current.hasRulesLoadError).toBe(true);
+      });
+      expect(result.current.rules).toEqual([rule]);
+    });
+
+    it('clears rules to [] when the folder selection is cleared', async () => {
+      const onFetchExistingRules = vi.fn().mockResolvedValue([rule]);
+      const { result } = renderHook(() =>
+        usePublishFlow({
+          item,
+          history,
+          folderItems,
+          onPublish: vi.fn().mockResolvedValue(undefined),
+          onFetchExistingRules,
+        }),
+      );
+
+      act(() => {
+        result.current.setSelectedFolderPath(['Shared']);
+      });
+      await waitFor(() => {
+        expect(result.current.rules).toEqual([rule]);
+      });
+
+      act(() => {
+        result.current.setSelectedFolderPath(undefined);
+      });
+
+      expect(result.current.rules).toEqual([]);
+    });
+
+    it('skips the fetch entirely when onFetchExistingRules is omitted', () => {
+      const { result } = renderHook(() =>
+        usePublishFlow({
+          item,
+          history,
+          folderItems,
+          onPublish: vi.fn().mockResolvedValue(undefined),
+        }),
+      );
+
+      act(() => {
+        result.current.setRules([rule]);
+        result.current.setSelectedFolderPath(['Shared']);
+      });
+
+      expect(result.current.rules).toEqual([rule]);
+      expect(result.current.isRulesLoading).toBe(false);
+    });
   });
 });

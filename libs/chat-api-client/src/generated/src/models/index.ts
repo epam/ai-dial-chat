@@ -504,6 +504,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   customVisualizers: Array<CustomVisualizerDto>;
+  /**
+   * Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES; falls back to the legacy default when unset or empty.
+   * @type {Array<string>}
+   * @memberof ClientConfigDto
+   */
+  publicationFilterSources: Array<string>;
 }
 /**
  *
@@ -4003,6 +4009,12 @@ export interface PublishCatalogEntityDto {
    * @memberof PublishCatalogEntityDto
    */
   version: string;
+  /**
+   * Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.
+   * @type {Array<PublishRuleDto>}
+   * @memberof PublishCatalogEntityDto
+   */
+  rules?: Array<PublishRuleDto>;
 }
 /**
  *
@@ -4016,6 +4028,12 @@ export interface PublishConversationDto {
    * @memberof PublishConversationDto
    */
   folderPath: string;
+  /**
+   * Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.
+   * @type {Array<PublishRuleDto>}
+   * @memberof PublishConversationDto
+   */
+  rules?: Array<PublishRuleDto>;
 }
 /**
  *
@@ -4158,6 +4176,56 @@ export const PublishResultDtoEntityTypeEnum = {
 export type PublishResultDtoEntityTypeEnum =
   (typeof PublishResultDtoEntityTypeEnum)[keyof typeof PublishResultDtoEntityTypeEnum];
 
+/**
+ *
+ * @export
+ * @interface PublishRuleDto
+ */
+export interface PublishRuleDto {
+  /**
+   * Claim/category name this rule matches against.
+   * @type {string}
+   * @memberof PublishRuleDto
+   */
+  source: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishRuleDto
+   */
+  function: PublishRuleDtoFunctionEnum;
+  /**
+   * Values combined with OR; exactly one pattern when function is REGEX.
+   * @type {Array<string>}
+   * @memberof PublishRuleDto
+   */
+  targets: Array<string>;
+}
+
+/**
+ * @export
+ */
+export const PublishRuleDtoFunctionEnum = {
+  Equal: 'EQUAL',
+  Contain: 'CONTAIN',
+  Regex: 'REGEX',
+} as const;
+export type PublishRuleDtoFunctionEnum =
+  (typeof PublishRuleDtoFunctionEnum)[keyof typeof PublishRuleDtoFunctionEnum];
+
+/**
+ *
+ * @export
+ * @interface PublishRulesResultDto
+ */
+export interface PublishRulesResultDto {
+  /**
+   * The requested folder's own access-restriction rules, or an empty array when the folder has none configured.
+   * @type {Array<PublishRuleDto>}
+   * @memberof PublishRulesResultDto
+   */
+  rules: Array<PublishRuleDto>;
+}
 /**
  *
  * @export

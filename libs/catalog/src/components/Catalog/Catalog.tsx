@@ -45,6 +45,8 @@ export const Catalog: FC<CatalogProps> = ({
   onPublishSuccess,
   onCreatePublishFolder,
   publishLabels,
+  ruleSourceOptions,
+  onFetchExistingRules,
   shareOverlay,
   isShareVisible,
   connectOverlay,
@@ -518,6 +520,8 @@ export const Catalog: FC<CatalogProps> = ({
           onPublishSuccess={onPublishSuccess}
           onCreatePublishFolder={onCreatePublishFolder}
           publishLabels={publishLabels}
+          ruleSourceOptions={ruleSourceOptions}
+          onFetchExistingRules={onFetchExistingRules}
           shareOverlay={shareOverlay}
           isShareVisible={isShareVisible}
           connectOverlay={connectOverlay}
