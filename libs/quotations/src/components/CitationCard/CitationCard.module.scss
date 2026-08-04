@@ -1,0 +1,20 @@
+.card {
+  border-color: var(--cc-card-border, var(--stroke-primary, #6b7280));
+  background: var(--cc-card-bg, var(--bg-layer-raised, #fcfcfc));
+}
+
+.quote {
+  color: var(--cc-quote-text, var(--text-secondary, #6b7280));
+}
+
+.title {
+  color: var(--cc-title-text, var(--text-primary, #161b2d));
+}
+
+.switcher {
+  color: var(--cc-switcher-text, var(--text-secondary, #6b7280));
+}
+
+.sourceName {
+  color: var(--cc-source-name-text, var(--text-primary, #161b2d));
+}

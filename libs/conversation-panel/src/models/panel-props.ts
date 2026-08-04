@@ -52,24 +52,8 @@ export interface ConversationPanelTypography {
 export interface NewChatButtonColors {
   /** Default background. */
   background?: string;
-  /** Hover background. */
-  hoverBackground?: string;
-  /** Active/pressed background. */
-  activeBackground?: string;
   /** Label and icon color. */
   text?: string;
-  /** Blue shadow in the default state. */
-  shadowBlue?: string;
-  /** Blue shadow on hover. */
-  shadowBlueHover?: string;
-  /** Blue shadow while active/pressed. */
-  shadowBlueActive?: string;
-  /** Purple shadow in the default state. */
-  shadowPurple?: string;
-  /** Purple shadow on hover. */
-  shadowPurpleHover?: string;
-  /** Purple shadow while active/pressed. */
-  shadowPurpleActive?: string;
 }
 
 /** CSS custom-property overrides for `ConversationPanel`. */

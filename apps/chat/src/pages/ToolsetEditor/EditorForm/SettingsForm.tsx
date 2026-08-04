@@ -12,6 +12,7 @@ import type { FC } from 'react';
 import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ConnectMcpUrlContent from '../../../components/ConnectMcpUrlContent/ConnectMcpUrlContent';
+import { ToolsetTransportType } from '../../../constants/toolsets';
 import {
   ApiI18nKeys,
   BasicI18nKeys,
@@ -24,7 +25,6 @@ import type {
   ToolsetFormData,
   ToolsetFormErrors,
 } from '../../../models/toolsets';
-import { ToolsetTransportType } from '../../../constants/toolsets';
 import { buildToolsetMcpUrl } from '../../../utils/mcp-endpoint-url';
 import AuthSection from './AuthSection';
 

@@ -1,0 +1,10 @@
+.searchHeader {
+  background: var(--ms-search-header-bg, var(--bg-layer-raised, #fcfcfc));
+}
+
+.selectedItem {
+  background: var(
+    --ms-selected-item-bg,
+    var(--bg-accent-primary-alpha, #7da4ff2e)
+  );
+}

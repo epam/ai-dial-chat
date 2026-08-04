@@ -16,20 +16,6 @@ import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import {
   TOOLSET_REDIRECT_STATE_KEY,
   ToolsetOAuthCallbackQuery,
-} from '../../constants/toolsets';
-import {
-  ExternalServiceAuthType,
-  ExternalServiceCredentialsLevel,
-  signInExternalService,
-} from '../../server-api/external-services';
-import { loginToolset } from '../../server-api/toolsets';
-import { ROUTES } from '../../types/routes';
-import type {
-  ToolsetOAuthChannelMessage,
-  ToolsetOAuthResultAcknowledgement,
-  ToolsetRedirectState,
-} from '../../models/toolsets';
-import {
   OAuthResourceKind,
   ToolsetAuthTypes,
   ToolsetOAuthChannelControlType,
@@ -37,6 +23,18 @@ import {
   ToolsetOAuthFailureReason,
   ToolsetOAuthResultType,
 } from '../../constants/toolsets';
+import type {
+  ToolsetOAuthChannelMessage,
+  ToolsetOAuthResultAcknowledgement,
+  ToolsetRedirectState,
+} from '../../models/toolsets';
+import {
+  ExternalServiceAuthType,
+  ExternalServiceCredentialsLevel,
+  signInExternalService,
+} from '../../server-api/external-services';
+import { loginToolset } from '../../server-api/toolsets';
+import { ROUTES } from '../../types/routes';
 import { parseExternalServiceUrl } from '../../utils/external-services';
 import { getToolsetOAuthChannelName } from '../../utils/toolsets';
 

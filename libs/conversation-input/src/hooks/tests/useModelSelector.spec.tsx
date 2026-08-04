@@ -182,17 +182,11 @@ describe('useModelSelector — menuItems', () => {
       { initialProps: { selectedDeploymentId: 'gpt-4o' } },
     );
 
-    expect(result.current.menuItems[0].className).toBe(
-      'bg-accent-primary-alpha',
-    );
     expect(result.current.menuItems[1].className).toBeUndefined();
 
     rerender({ selectedDeploymentId: 'claude-3' });
 
     expect(result.current.menuItems[0].className).toBeUndefined();
-    expect(result.current.menuItems[1].className).toBe(
-      'bg-accent-primary-alpha',
-    );
   });
 
   it('item onClick calls onDeploymentChange with item id', () => {

@@ -2,6 +2,7 @@ import { PrimaryButton, NeutralButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ToolsetEditorSteps } from '../../constants/toolsets';
 import {
   ButtonsI18nKeys,
   EditorI18nKeys,
@@ -12,7 +13,6 @@ import type {
   ToolsetFormData,
   ToolsetFormErrors,
 } from '../../models/toolsets';
-import { ToolsetEditorSteps } from '../../constants/toolsets';
 import GeneralForm from './EditorForm/GeneralForm';
 import SettingsForm from './EditorForm/SettingsForm';
 
