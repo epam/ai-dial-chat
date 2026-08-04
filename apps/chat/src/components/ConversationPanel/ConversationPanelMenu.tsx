@@ -48,7 +48,7 @@ const PanelMenuTrigger: FC<PanelMenuTriggerProps> = ({ items, label }) => {
         icon={
           <IconDotsVertical
             size={DIAL_ICON_SIZE.SM}
-            className={isOpen ? 'text-accent-primary' : 'text-secondary'}
+            className={isOpen ? 'text-accent' : 'text-secondary'}
           />
         }
         className={isOpen ? 'bg-control-accent-alpha-hover' : undefined}

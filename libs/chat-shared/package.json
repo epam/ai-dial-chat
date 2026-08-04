@@ -28,7 +28,7 @@
     "remark-math": "^6.0.0",
     "rehype-katex": "^7.0.1",
     "katex": "^0.16.22",
-    "@epam/ai-dial-ui-kit": "^0.13.0-dev.25"
+    "@epam/ai-dial-ui-kit": "^0.13.0-dev.26"
   },
   "dependencies": {
     "classnames": "2.5.1",

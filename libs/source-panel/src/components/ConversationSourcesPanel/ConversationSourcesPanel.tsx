@@ -6,7 +6,7 @@ import {
   SidebarOrientation,
   SidebarPanel,
 } from '@epam/ai-dial-sidebar';
-import { DialGhostIconButton } from '@epam/ai-dial-ui-kit';
+import { GhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconDownload } from '@tabler/icons-react';
 import { memo, useLayoutEffect, useMemo, useState, type FC } from 'react';
 import type { ConversationSourcesPanelProps } from '../../models/conversation-sources-panel-props';
@@ -103,7 +103,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
       onResizeStop={onResizeStop}
       rightActions={
         !isEmpty && (
-          <DialGhostIconButton
+          <GhostIconButton
             icon={<IconDownload {...BASE_LG_ICON_PROPS} />}
             aria-label={labels.downloadAllLabel}
             tooltipProps={{ tooltip: labels.downloadAllLabel }}

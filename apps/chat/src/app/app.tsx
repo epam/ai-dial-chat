@@ -160,14 +160,27 @@ const App: FC = () => {
   const { handleClose: closeSourcesPanel } = useSourcesSidebar();
   const { isPanelOpen, openPanel, closePanel } = useConversationPanel();
 
+  /* Tracks whether the user has explicitly closed the panel. When true, prevents
+     automatic panel opening on navigation (new chat, starter send). Reset on route
+     changes that leave the conversation section. */
+  const userClosedPanelRef = useRef(false);
+
   const togglePanel = useCallback(() => {
-    if (!isPanelOpen) closeCanvas();
+    if (!isPanelOpen) {
+      closeCanvas();
+      userClosedPanelRef.current = false;
+    } else {
+      userClosedPanelRef.current = true;
+    }
     isPanelOpen ? closePanel() : openPanel();
   }, [isPanelOpen, closeCanvas, openPanel, closePanel]);
 
   // Always close the panel when switching to mobile so a stored desktop `true` doesn't bleed through
   useEffect(() => {
-    if (isMobile) closePanel();
+    if (isMobile) {
+      closePanel();
+      userClosedPanelRef.current = false;
+    }
   }, [isMobile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -179,7 +192,8 @@ const App: FC = () => {
       !pathname.startsWith(ROUTES.Conversations)
     ) {
       closePanel();
-    } else if (!isMobile && !isCanvasOpen) {
+      userClosedPanelRef.current = false;
+    } else if (!isMobile && !isCanvasOpen && !userClosedPanelRef.current) {
       isConversationsSectionOpenByDefault ? openPanel() : closePanel();
     }
   }, [pathname, isConversationsSectionOpenByDefault]); // eslint-disable-line react-hooks/exhaustive-deps
