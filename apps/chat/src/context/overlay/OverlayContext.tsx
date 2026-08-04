@@ -38,7 +38,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { getConversationRoute } from '../../constants/routes';
 import { AuthStatus } from '../../types/auth-status';
 import { UserConfigStatus } from '../../types/user-config-status';

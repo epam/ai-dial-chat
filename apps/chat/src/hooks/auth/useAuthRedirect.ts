@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import { useUser } from '../../context/auth/UserContext';
 import { getProviders } from '../../server-api/auth.api';
 import { AuthStatus } from '../../types/auth-status';

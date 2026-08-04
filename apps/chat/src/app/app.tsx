@@ -23,7 +23,7 @@ import {
   useLocation,
   useMatch,
   useNavigate,
-} from 'react-router-dom';
+} from 'react-router';
 import AnnouncementBanner from '../components/AnnouncementBanner/AnnouncementBanner';
 import ChatLayout from '../components/ChatLayout/ChatLayout';
 import ConversationPanelView from '../components/ConversationPanel/ConversationPanelView';

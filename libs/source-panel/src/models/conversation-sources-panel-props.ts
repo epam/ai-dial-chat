@@ -11,8 +11,8 @@ export interface ConversationSourcesPanelLabels {
   searchPlaceholder: string;
   /** Accessible label for the search input clear button. */
   searchClearLabel: string;
-  /** Text shown when the panel has no files or sources. */
-  emptyLabel: string;
+  /** Text shown in the centred empty state when the panel has no files or sources. */
+  noDataLabel: string;
   /** Text shown when a search query matches nothing. */
   noResultsLabel: string;
   /** Accessible label for the download-all icon button. */

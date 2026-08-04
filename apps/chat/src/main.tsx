@@ -9,7 +9,7 @@ import { GlobalWorkerOptions } from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { lazy, StrictMode, Suspense } from 'react';
 import * as ReactDOM from 'react-dom/client';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router';
 import App from './app/app';
 import { RootErrorBoundary } from './components/ErrorBoundary/ErrorBoundary';
 import NotificationContainer from './components/Notification/NotificationContainer';

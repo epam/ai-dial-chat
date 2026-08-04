@@ -9,7 +9,7 @@ import {
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useMatch } from 'react-router-dom';
+import { useMatch } from 'react-router';
 import {
   ButtonsI18nKeys,
   ConversationPanelI18nKeys,
