@@ -7,7 +7,7 @@ import {
   getCredentialsBadgeState,
   getCredentialsUiState,
 } from '@epam/ai-dial-catalog';
-import { OverlayFeature } from '@epam/ai-dial-chat-shared';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import type { DialToolsetDto } from '@epam/chat-api-client';
 import { render, screen, waitFor } from '@testing-library/react';

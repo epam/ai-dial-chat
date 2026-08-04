@@ -553,7 +553,6 @@ export enum ConversationImportI18nKeys {
   FailedTitle = 'conversationImport.failedTitle',
   Failed = 'conversationImport.failed',
   WarningAttachmentSkipped = 'conversationImport.warningAttachmentSkipped',
-  AttachmentNameConflict = 'conversationImport.attachmentNameConflict',
   UnsupportedFormat = 'conversationImport.unsupportedFormat',
 }
 

@@ -7,8 +7,8 @@ import {
 import { SidebarOrientation, SidebarPanel } from '@epam/ai-dial-sidebar';
 import {
   DIAL_ICON_SIZE,
-  DialGhostIconButton,
   DialSpinner,
+  GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconAlertTriangle,
@@ -396,12 +396,20 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
         showCopyText || showCopyMarkdown || showCopyJson || showDownload ? (
           <>
             {showCopyText && (
-              <DialGhostIconButton
+              <GhostIconButton
                 icon={
                   isCopiedText ? (
-                    <IconCheck size={DIAL_ICON_SIZE.LG} stroke={1.5} />
+                    <IconCheck
+                      size={DIAL_ICON_SIZE.LG}
+                      stroke={1.5}
+                      aria-hidden
+                    />
                   ) : (
-                    <IconCopy size={DIAL_ICON_SIZE.LG} stroke={1.5} />
+                    <IconCopy
+                      size={DIAL_ICON_SIZE.LG}
+                      stroke={1.5}
+                      aria-hidden
+                    />
                   )
                 }
                 aria-label={isCopiedText ? copiedTextLabel : copyTextLabel}
@@ -412,12 +420,20 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
               />
             )}
             {showCopyMarkdown && (
-              <DialGhostIconButton
+              <GhostIconButton
                 icon={
                   isCopiedMarkdown ? (
-                    <IconCheck size={DIAL_ICON_SIZE.LG} stroke={1.5} />
+                    <IconCheck
+                      size={DIAL_ICON_SIZE.LG}
+                      stroke={1.5}
+                      aria-hidden
+                    />
                   ) : (
-                    <IconMarkdown size={DIAL_ICON_SIZE.LG} stroke={1.5} />
+                    <IconMarkdown
+                      size={DIAL_ICON_SIZE.LG}
+                      stroke={1.5}
+                      aria-hidden
+                    />
                   )
                 }
                 aria-label={
@@ -432,12 +448,20 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
               />
             )}
             {showCopyJson && (
-              <DialGhostIconButton
+              <GhostIconButton
                 icon={
                   isCopiedJson ? (
-                    <IconCheck size={DIAL_ICON_SIZE.LG} stroke={1.5} />
+                    <IconCheck
+                      size={DIAL_ICON_SIZE.LG}
+                      stroke={1.5}
+                      aria-hidden
+                    />
                   ) : (
-                    <IconCopy size={DIAL_ICON_SIZE.LG} stroke={1.5} />
+                    <IconCopy
+                      size={DIAL_ICON_SIZE.LG}
+                      stroke={1.5}
+                      aria-hidden
+                    />
                   )
                 }
                 aria-label={isCopiedJson ? copiedJsonLabel : copyJsonLabel}
@@ -448,7 +472,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
               />
             )}
             {showDownload && (
-              <DialGhostIconButton
+              <GhostIconButton
                 icon={<IconDownload size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
                 aria-label={downloadLabel}
                 tooltipProps={{ tooltip: downloadLabel }}

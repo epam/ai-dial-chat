@@ -24,10 +24,6 @@ export default defineConfig(({ command }) => ({
         import.meta.dirname,
         '../../libs/chat-overlay/src/index.ts',
       ),
-      '@epam/ai-dial-chat-shared': path.resolve(
-        import.meta.dirname,
-        '../../libs/chat-shared/src/index.ts',
-      ),
     },
   },
   // Uncomment this if you are using workers.

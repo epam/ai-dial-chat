@@ -1,7 +1,7 @@
 import {
   OverlayEventType,
   OverlayRequestType,
-} from '@epam/ai-dial-chat-shared';
+} from '@epam/ai-dial-chat-overlay';
 import {
   ConversationDeletionFailureDtoCodeEnum,
   type ConversationDeletionResultDto,

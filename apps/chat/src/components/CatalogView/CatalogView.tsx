@@ -8,7 +8,7 @@ import {
   CredentialsLevel,
   CredentialStatus,
 } from '@epam/ai-dial-catalog';
-import { OverlayFeature } from '@epam/ai-dial-chat-shared';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { ToolsetLogoutBodyDto } from '@epam/chat-api-client';

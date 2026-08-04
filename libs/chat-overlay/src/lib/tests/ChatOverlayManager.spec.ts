@@ -1,5 +1,5 @@
-import { OverlayFeature } from '@epam/ai-dial-chat-shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { OverlayFeature } from '../../protocol';
 import { ChatOverlay } from '../ChatOverlay';
 import { ChatOverlayManager } from '../ChatOverlayManager';
 

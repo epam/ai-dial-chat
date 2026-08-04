@@ -1,7 +1,9 @@
 import {
   BadGatewayException,
   BadRequestException,
+  ForbiddenException,
   ServiceUnavailableException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -507,6 +509,57 @@ describe('ConversationNamingService', () => {
       await expect(
         service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket'),
       ).rejects.toBeInstanceOf(BadGatewayException);
+    });
+
+    it('surfaces the upstream display_message when DIAL Core rejects with 429', async () => {
+      vi.spyOn(
+        service['dialClient'].client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: { ok: false, status: 429 },
+        error: {
+          error: {
+            message: 'Hit token rate limit.',
+            display_message: "You've exceeded your monthly token limit",
+            code: '429',
+          },
+        },
+      } as never);
+
+      await expect(
+        service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket'),
+      ).rejects.toMatchObject({
+        status: 429,
+        response: "You've exceeded your monthly token limit",
+      });
+    });
+
+    it('throws ForbiddenException when the upstream request is rejected with 403', async () => {
+      vi.spyOn(
+        service['dialClient'].client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: { ok: false, status: 403 },
+        error: { message: 'forbidden' },
+      } as never);
+
+      await expect(
+        service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('throws UnauthorizedException when the upstream request is rejected with 401', async () => {
+      vi.spyOn(
+        service['dialClient'].client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: { ok: false, status: 401 },
+        error: { message: 'unauthorized' },
+      } as never);
+
+      await expect(
+        service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket'),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
     });
 
     it('throws ServiceUnavailableException when the LLM call times out', async () => {

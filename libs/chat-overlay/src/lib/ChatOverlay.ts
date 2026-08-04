@@ -30,7 +30,7 @@ import {
   type SetTemperatureResponse,
   isOverlayMessageEvent,
   isOverlayMessageResponse,
-} from '@epam/ai-dial-chat-shared';
+} from '../protocol';
 import { DEFAULT_LOADER_INNER_HTML } from './internal/default-loader';
 import { DeferredRequest } from './internal/deferred-request';
 import { setStyles } from './internal/dom-styles';

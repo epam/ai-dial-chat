@@ -258,7 +258,7 @@ describe('ScheduledTasks', () => {
     expect(screen.getAllByText('2').length).toBeGreaterThan(0);
   });
 
-  it('sorts rendered cards by nameAZ', () => {
+  it('renders cards in the order items are received, regardless of sortKey', () => {
     renderScheduledTasks({
       items: [
         buildItem({ id: '1', displayName: 'Zeta' }),
@@ -270,7 +270,7 @@ describe('ScheduledTasks', () => {
     const titles = screen
       .getAllByText(/Zeta|Alpha/)
       .map((el) => el.textContent);
-    expect(titles).toEqual(['Alpha', 'Zeta']);
+    expect(titles).toEqual(['Zeta', 'Alpha']);
   });
 
   it('calls onCreateClick when the create button is clicked', async () => {

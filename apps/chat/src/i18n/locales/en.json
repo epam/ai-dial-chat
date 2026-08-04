@@ -268,7 +268,7 @@
       "step_other": "steps"
     },
     "attachMenuDialFileSystem": "DIAL file system",
-    "addMenuTitle": "Add files",
+    "addMenuTitle": "Add",
     "messageTooLong": "Max allowed message length is {{max}}"
   },
   "conversationPanel": {
@@ -385,7 +385,6 @@
     "failedTitle": "Error",
     "failed": "{{names}} was not imported. Please try again.",
     "warningAttachmentSkipped": "{{names}} could not be uploaded and were skipped.",
-    "attachmentNameConflict": "{{names}} already exists. Please rename it and try again.",
     "unsupportedFormat": "This file could not be imported. Please choose a valid export file."
   },
   "auth": {

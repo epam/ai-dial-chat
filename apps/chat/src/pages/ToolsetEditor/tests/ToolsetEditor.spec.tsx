@@ -202,6 +202,12 @@ vi.mock('../ToolsetEditorView', () => ({
         >
           report-login-success
         </button>
+        <button
+          type="button"
+          onClick={() => onAuthChange({ isLoggedIn: false })}
+        >
+          report-logout-success
+        </button>
       </div>
     );
   },
@@ -504,6 +510,18 @@ describe('ToolsetEditor', () => {
     await user.click(
       await screen.findByRole('button', {
         name: 'report-login-success',
+      }),
+    );
+
+    await waitFor(() => expect(mockRefetchToolsets).toHaveBeenCalledOnce());
+  });
+
+  it('refetches toolsets after the auth section reports a successful logout', async () => {
+    renderEditor();
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'report-logout-success',
       }),
     );
 

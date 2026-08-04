@@ -8,6 +8,7 @@ import {
 import { IconCheck } from '@tabler/icons-react';
 import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
 import type { CardProps } from '../../models/card-props';
+import { DeploymentSize } from '../../types/deployment-icon-size';
 import { getFeaturedEntityStyle } from '../../utils/styles';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
 import { CredentialsBadge } from '../CredentialsBadge/CredentialsBadge';
@@ -98,7 +99,7 @@ export const Card: FC<CardProps> = ({
       {isSelected && (
         <IconCheck
           size={DIAL_ICON_SIZE.SM}
-          className="absolute end-3 top-3 shrink-0 text-accent-primary"
+          className="absolute end-3 top-3 shrink-0 text-accent"
           aria-hidden
         />
       )}
@@ -108,7 +109,7 @@ export const Card: FC<CardProps> = ({
         type={item.type}
         name={item.name}
         version={item.version}
-        size="sm"
+        size={DeploymentSize.SM}
         query={query}
         className="min-w-0 flex-1"
         iconClassName={styles.cardIcon}

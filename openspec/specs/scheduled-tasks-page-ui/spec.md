@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines the Scheduled Tasks list page: feature-flag gating, the presentational `ScheduledTasks` lib component's header/toolbar/content-state rendering, data fetching and DTO mapping in the app, client-side search/sort, i18n, and RTL/accessibility requirements.
+Defines the Scheduled Tasks list page: feature-flag gating, the presentational `ScheduledTasks` lib component's header/toolbar/content-state rendering, data fetching and DTO mapping in the app, server-driven search/sort, i18n, and RTL/accessibility requirements.
 ## Requirements
 ### Requirement: Scheduled Tasks page renders behind a feature flag
 
@@ -65,11 +65,11 @@ All directional layout in the Scheduled Tasks header, toolbar, and empty state M
 - `isLoading` is `true` (initial load) → the content region renders a `DialSpinner` and no other content-region markup.
 - `error` is set → the content region renders an error message with a retry action that invokes `onRetry`.
 - `isLoading` is `false`, `error` is unset, and `items` is empty because the source list itself is empty (no `searchQuery` in effect) → the content region renders the shared `PanelEmptyState` component (from `@epam/ai-dial-chat-shared`) with `texts.emptyStateLabel`.
-- `isLoading` is `false`, `error` is unset, `items` is empty, and a non-empty `searchQuery` is in effect → the content region renders a distinct "no results" state (not `PanelEmptyState`, not the card grid) using `texts.noResultsLabel`. Because search is now server-driven, this state reflects the server returning zero matches, not a client-side filter reducing a non-empty array to zero.
-- `isLoading` is `false`, `error` is unset, and `items` is non-empty → the content region renders the card grid: `items` are first sorted by `sortKey` (client-side, over the currently loaded items — see the modified "Client-side search and sort over the fetched list" requirement), then grouped by `sectionKey`, each group rendered as a `ScheduledTaskSection` containing a `ScheduledTaskCardGrid` of `ScheduledTaskCard`s. The `'shared'` group renders with a title + count badge (`texts.sharedSectionTitle`); the `'myTasks'` group renders with no title/count row, just its card grid. When `isLoadingMore` is `true`, exactly `skeletonCount` `ScheduledTaskCardSkeleton` elements render as **trailing children inside the last rendered section's own `ScheduledTaskCardGrid`** (via that grid's `trailingSkeletonCount` prop) — not in a separate grid container below all sections — so they continue filling the current CSS grid row (via `grid-auto-flow`) instead of unconditionally starting a new row and leaving a gap in a partially-filled last row.
+- `isLoading` is `false`, `error` is unset, `items` is empty, and a non-empty `searchQuery` is in effect → the content region renders a distinct "no results" state (not `PanelEmptyState`, not the card grid) using `texts.noResultsLabel`. Because search is server-driven, this state reflects the server returning zero matches, not a client-side filter reducing a non-empty array to zero.
+- `isLoading` is `false`, `error` is unset, and `items` is non-empty → the content region renders the card grid: `items` are grouped by `sectionKey` **in the order they were received** (no client-side reordering by `sortKey` — sort order is now applied server-side, see the "Server-driven search and sort over the full remote dataset" requirement), each group rendered as a `ScheduledTaskSection` containing a `ScheduledTaskCardGrid` of `ScheduledTaskCard`s. The `'shared'` group renders with a title + count badge (`texts.sharedSectionTitle`); the `'myTasks'` group renders with no title/count row, just its card grid. When `isLoadingMore` is `true`, exactly `skeletonCount` `ScheduledTaskCardSkeleton` elements render as **trailing children inside the last rendered section's own `ScheduledTaskCardGrid`** (via that grid's `trailingSkeletonCount` prop) — not in a separate grid container below all sections — so they continue filling the current CSS grid row (via `grid-auto-flow`) instead of unconditionally starting a new row and leaving a gap in a partially-filled last row.
 - A scroll sentinel is rendered at the end of the content region's scrollable area; when it becomes visible and `hasMore && !isLoadingMore && !isLoading`, `onLoadMore` is invoked (if provided).
 
-The component MUST NOT import from `apps/chat`, `server-api`, any generated API client, routing, feature-flag context, auth, env, or analytics — all such knowledge is passed in via props. Fetching, pagination-state management, and DTO mapping happen in the app; sorting of the currently-loaded `items` remains a pure, deterministic operation the lib (or the page, calling the lib's exported sort utility) performs given `items`/`sortKey`, unchanged from today.
+The component MUST NOT import from `apps/chat`, `server-api`, any generated API client, routing, feature-flag context, auth, env, or analytics — all such knowledge is passed in via props. Fetching, pagination-state management, sort-state management, and DTO mapping happen in the app; the lib performs no sorting of `items` itself — `sortKey`/`onSortChange` are used only to drive the toolbar control's UI state (selected option, `aria-selected`), not to reorder rendered cards.
 
 #### Scenario: Header and toolbar render from props
 
@@ -96,10 +96,10 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 - **WHEN** `ScheduledTasks` renders with `items = []` and a non-empty `searchQuery`
 - **THEN** the content region renders the no-results state with `texts.noResultsLabel`, distinct from `PanelEmptyState`
 
-#### Scenario: Non-empty items render grouped card grid ordered by sortKey
+#### Scenario: Non-empty items render grouped card grid in received order
 
-- **WHEN** `items` contains entries with `sectionKey: 'shared'` and `sectionKey: 'myTasks'`
-- **THEN** the content region renders one `ScheduledTaskSection` per distinct `sectionKey` present, each containing that section's `ScheduledTaskCardGrid` with items ordered by `sortKey`; the `'shared'` section shows a title and a count badge equal to the number of items in that section, while the `'myTasks'` section shows neither a title nor a count badge
+- **WHEN** `items` contains entries with `sectionKey: 'shared'` and `sectionKey: 'myTasks'`, already ordered by the caller
+- **THEN** the content region renders one `ScheduledTaskSection` per distinct `sectionKey` present, each containing that section's `ScheduledTaskCardGrid` with items in the same order they appear in `items` (no reordering by `sortKey` inside the lib); the `'shared'` section shows a title and a count badge equal to the number of items in that section, while the `'myTasks'` section shows neither a title nor a count badge
 
 #### Scenario: Loading-more state appends trailing skeletons inside the last section's grid
 
@@ -147,32 +147,32 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 
 ### Requirement: List page fetches scheduled tasks and refreshes after create
 
-`ScheduledTasksPage` SHALL fetch the list via a `useScheduledTasks` hook (`apps/chat/src/hooks/scheduled-tasks/useScheduledTasks.ts`) that owns pagination and search state, and exposes `{ items, searchQuery, setSearchQuery, sortKey, setSortKey, isLoading, isLoadingMore, error, hasMore, loadMore, refetch }`. On mount, and whenever `searchQuery` changes (debounced ~300ms), the hook SHALL reset accumulated `items` and call `listScheduledTasks({ limit, offset: 0, search: searchQuery, signal })` from `apps/chat/src/server-api/scheduled-tasks.api.ts`, using `AbortController` to cancel any prior in-flight request for that same trigger and a cancelled flag to guard against post-unmount/post-superseded state updates. Changing `sortKey` does NOT trigger a request — it only affects client-side ordering of the currently-loaded `items` (see the modified "Client-side search and sort over the fetched list" requirement). Calling `loadMore()` SHALL, only when `hasMore && !isLoadingMore && !isLoading`, fetch the next page at `offset = items.length` with the current `search` and append the mapped, deduplicated-by-`id` results to `items`. The page SHALL map each `ScheduledTaskDto` to `ScheduledTaskItem` (locale-aware label formatting happens here, not in the lib) and pass `items`, `hasMore` (derived from the response's `next !== null`), `isLoadingMore`, and `loadMore` into `ScheduledTasks`. When the user navigates back to `/scheduled-tasks` from the create flow, the page SHALL call `refetch()`, which resets to page 0 with the current `search`, so a newly created task appears without a full page reload.
+`ScheduledTasksPage` SHALL fetch the list via a `useScheduledTasks` hook (`apps/chat/src/hooks/scheduled-tasks/useScheduledTasks.ts`) that owns pagination, search, and sort state, and exposes `{ items, searchQuery, setSearchQuery, sortKey, setSortKey, isLoading, isLoadingMore, error, hasMore, loadMore, refetch }`. On mount, whenever `searchQuery` changes (debounced ~300ms), and whenever `sortKey` changes (immediately, no debounce — it's a discrete toolbar selection, not free text), the hook SHALL reset accumulated `items` and call `listScheduledTasks({ limit, offset: 0, search: searchQuery, sort: sortKey, signal })` from `apps/chat/src/server-api/scheduled-tasks.api.ts`, using `AbortController` to cancel any prior in-flight request for that same trigger and a cancelled flag to guard against post-unmount/post-superseded state updates. Calling `loadMore()` SHALL, only when `hasMore && !isLoadingMore && !isLoading`, fetch the next page at `offset = items.length` with the current `search` and `sort` and append the mapped, deduplicated-by-`id` results to `items` — the appended page is not locally reordered, since it is already in the same server-chosen order as page 0. The page SHALL map each `ScheduledTaskDto` to `ScheduledTaskItem` (locale-aware label formatting happens here, not in the lib) and pass `items`, `hasMore` (derived from the response's `next !== null`), `isLoadingMore`, and `loadMore` into `ScheduledTasks`. When the user navigates back to `/scheduled-tasks` from the create flow, the page SHALL call `refetch()`, which resets to page 0 with the current `search` and `sort`, so a newly created task appears without a full page reload.
 
 #### Scenario: List fetches page 0 on mount
 
 - **WHEN** `ScheduledTasksPage` mounts with the feature flag enabled
-- **THEN** `listScheduledTasks({ offset: 0, ... })` is called exactly once, and the resolved items are passed to `ScheduledTasks` as `items`
+- **THEN** `listScheduledTasks({ offset: 0, sort: sortKey, ... })` is called exactly once, and the resolved items are passed to `ScheduledTasks` as `items`
 
 #### Scenario: Unmount before fetch resolves does not update state
 
 - **WHEN** `ScheduledTasksPage` unmounts while a `listScheduledTasks()` call is still in flight
 - **THEN** the in-flight request is aborted and no state update is attempted after unmount
 
-#### Scenario: Returning from create refetches page 0 with the current search
+#### Scenario: Returning from create refetches page 0 with the current search and sort
 
-- **WHEN** the user creates a task via the create flow and is navigated back to `/scheduled-tasks` with an active `searchQuery`
-- **THEN** `useScheduledTasks.refetch()` is invoked, resetting to `offset = 0` with the current `search`, and the newly created task is visible once the refetch resolves (if it matches the current search), without a full page reload
+- **WHEN** the user creates a task via the create flow and is navigated back to `/scheduled-tasks` with an active `searchQuery` and `sortKey`
+- **THEN** `useScheduledTasks.refetch()` is invoked, resetting to `offset = 0` with the current `search` and `sort`, and the newly created task is visible once the refetch resolves (if it matches the current search), without a full page reload
 
 #### Scenario: Fetch failure surfaces an error with retry
 
 - **WHEN** `listScheduledTasks()` rejects
 - **THEN** `useScheduledTasks` exposes a non-null `error`, and `ScheduledTasksPage` passes an `onRetry` that calls `refetch()` into `ScheduledTasks`
 
-#### Scenario: Load more appends the next page without resetting existing items
+#### Scenario: Load more appends the next page in server order without resetting existing items
 
 - **WHEN** `loadMore()` is called while `hasMore` is `true` and no fetch is already in flight
-- **THEN** `isLoadingMore` becomes `true` during the request, the previously loaded items remain rendered, and the newly fetched page's items are appended (deduplicated by `id`) once the request resolves, after which `isLoadingMore` returns to `false`
+- **THEN** `isLoadingMore` becomes `true` during the request, the previously loaded items remain rendered, the request includes the current `sort`, and the newly fetched page's items are appended (deduplicated by `id`, in server-returned order) once the request resolves, after which `isLoadingMore` returns to `false`
 
 #### Scenario: Load more is a no-op when there is no next page or a load is already in flight
 
@@ -217,11 +217,13 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 - **WHEN** a task is created with a `description`, and the list is refetched afterward
 - **THEN** searching by a substring of that description matches the task's card, consistent with the existing `descriptionPreview` search-matching behavior
 
-### Requirement: Client-side search and sort over the fetched list
+### Requirement: Server-driven search and sort over the full remote dataset
 
-Search is now server-driven and full-dataset; sort remains a client-side operation over whatever items are currently loaded in the browser, because the upstream DIAL Scheduler list endpoint has no sort/order capability (confirmed from its source — only pagination and a name filter are supported).
+Both search and sort SHALL be server-driven and SHALL apply to the full remote dataset, not just loaded pages — the upstream DIAL Scheduler list endpoint supports `order_by`/`order_dir` in addition to pagination and the name filter (see the modified `scheduled-tasks-api` "List scheduled tasks" requirement), superseding the prior design decision that treated sort as a client-side-only, loaded-pages-only concern.
 
-`ScheduledTasksPage` SHALL send `searchQuery` to `GET /api/v1/scheduled-tasks` as the `search` query parameter (see the modified `scheduled-tasks-api` "List scheduled tasks" requirement) instead of filtering the fetched array locally; `filterScheduledTaskItems` is removed from `libs/scheduled-tasks/src/utils/filter-sort.ts`. `ScheduledTasks`/`ScheduledTasksPage` SHALL continue to sort the currently-loaded `items` by `sortKey` using `sortScheduledTaskItems` (unchanged): `firstToRun`/`lastToRun` order by `sortValues.nextRunAt` ascending/descending (items missing `nextRunAt` sort last), `newest` orders by `sortValues.createdAt` descending (items missing `createdAt` sort last), and `nameAZ` orders by `displayName` ascending. Because pagination now loads the dataset incrementally (see the new "Infinite scroll loads and appends additional pages" requirement), sort only orders the pages fetched so far, not the full remote dataset — an accepted, documented limitation, not a regression versus today's single-page behavior.
+`ScheduledTasksPage` SHALL send `searchQuery` as the `search` query parameter and `sortKey` as the `sort` query parameter on every `listScheduledTasks` call (initial load, sort change, debounced search, load-more) instead of filtering or reordering the fetched array locally. `filterScheduledTaskItems` and `sortScheduledTaskItems` are both removed from `libs/scheduled-tasks/src/utils/filter-sort.ts` — `ScheduledTasks`/`ScheduledTasksPage` render `items` exactly in the order the server returned them, for both grouping and ordering within each `sectionKey` group. `ScheduledTasksSortKey` (the enum type) is retained: it remains the shared contract name for the toolbar's selected option and is now also the literal shape of the BFF's `sort` query parameter.
+
+The frontend SHALL NOT reimplement "missing `nextRunAt` sorts last" logic — when `sortKey` is `firstToRun` or `lastToRun`, the upstream service already places schedules with no next run time (paused/inactive) last, and the frontend trusts the server-returned order as-is.
 
 `map-scheduled-task-dto.ts`'s `formatCronScheduleLabel` SHALL convert the stored UTC `cron.fields.hour`/`minute` (and `day_of_week`/`day` when present) back to the current browser's local time before formatting the display label, using the same reference-`Date` conversion technique (inverse direction) as the submit-side conversion in `buildCronFields`, so the displayed recurring schedule time always matches the wall-clock time that will actually execute. This mirrors the existing local-display behavior already used for "once" schedules via `Intl.DateTimeFormat(undefined, ...)`.
 
@@ -230,20 +232,25 @@ Search is now server-driven and full-dataset; sort remains a client-side operati
 - **WHEN** `searchQuery = "competitor"` is set
 - **THEN** `GET /api/v1/scheduled-tasks` is called with `search=competitor`, and the rendered `items` are exactly what the server returned — no additional client-side substring filtering is applied
 
-#### Scenario: Sort by nameAZ orders alphabetically over loaded items
+#### Scenario: Sort sends a server request instead of reordering locally
 
-- **WHEN** `sortKey = "nameAZ"` and the currently loaded `items` contains `displayName` values `"Zeta"`, `"Alpha"`
-- **THEN** the rendered card order is `"Alpha"`, `"Zeta"`
+- **WHEN** `sortKey = "nameAZ"` is set
+- **THEN** `GET /api/v1/scheduled-tasks` is called with `sort=nameAZ`, and the rendered card order is exactly the order the server returned — no client-side comparator is applied
 
-#### Scenario: Items missing sort field sort last
-
-- **WHEN** `sortKey = "newest"` and one loaded item has no `sortValues.createdAt` while others do
-- **THEN** the item without `createdAt` renders after all items that have it
-
-#### Scenario: Sort does not trigger a new fetch
+#### Scenario: Sort change resets pagination and refetches page 0
 
 - **WHEN** the user changes `sortKey`
-- **THEN** no new `GET /api/v1/scheduled-tasks` request is sent; only the already-loaded `items` are reordered for rendering
+- **THEN** `useScheduledTasks` resets accumulated `items`, aborts any in-flight request, and issues a new `listScheduledTasks` request at `offset = 0` with the new `sort` value
+
+#### Scenario: Load more preserves the active sort across appended pages
+
+- **WHEN** `loadMore()` is called after the user has changed `sortKey`
+- **THEN** the request for the next page includes the current `sort` value, so appended items remain in the same server-chosen order as the already-rendered pages
+
+#### Scenario: Sort and search compose in the same request
+
+- **WHEN** both a non-empty `searchQuery` and a non-default `sortKey` are active
+- **THEN** the single `listScheduledTasks` request includes both `search` and `sort`, and the server-returned `items` reflect both constraints applied together
 
 #### Scenario: Recurring schedule label shows the local equivalent of the stored UTC time
 
@@ -290,17 +297,22 @@ All directional layout in the card, section, grid, loading, error, and no-result
 
 ### Requirement: Server-driven search triggers refetch from page 0
 
-Changing `searchQuery` (debounced ~300ms to avoid a request per keystroke) in `ScheduledTasksPage` SHALL reset `useScheduledTasks`'s accumulated `items` and issue a new `listScheduledTasks` request at `offset = 0` with the new `search` value, aborting any still-in-flight request from a superseded search value so a stale response cannot overwrite a newer one.
+Changing `searchQuery` (debounced ~300ms to avoid a request per keystroke) or `sortKey` (immediately, no debounce) in `ScheduledTasksPage` SHALL reset `useScheduledTasks`'s accumulated `items` and issue a new `listScheduledTasks` request at `offset = 0` with the new `search`/`sort` value, aborting any still-in-flight request from a superseded search or sort value so a stale response cannot overwrite a newer one.
 
 #### Scenario: Debounced search resets and refetches
 
 - **WHEN** the user types into the search input
 - **THEN** no request is sent until ~300ms after the last keystroke, at which point `items` resets and a new page-0 request is sent with `search` set to the current input value
 
+#### Scenario: Sort change resets and refetches immediately
+
+- **WHEN** the user selects a different sort option
+- **THEN** `items` resets and a new page-0 request is sent immediately (no debounce) with `sort` set to the newly selected value
+
 #### Scenario: A stale in-flight request does not overwrite a newer one
 
-- **WHEN** the user changes `searchQuery` again before a previous debounced search request has resolved
-- **THEN** the previous request is aborted (or its resolution is ignored), and only the response for the latest `searchQuery` is applied to `items`
+- **WHEN** the user changes `searchQuery` or `sortKey` again before a previous request has resolved
+- **THEN** the previous request is aborted (or its resolution is ignored), and only the response for the latest `search`/`sort` combination is applied to `items`
 
 ### Requirement: Infinite scroll loads and appends additional pages
 

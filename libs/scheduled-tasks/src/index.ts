@@ -38,7 +38,6 @@ export type {
   ScheduledTaskSortValues,
 } from './models/scheduled-task-item';
 export { ScheduledTaskSectionKey } from './models/scheduled-task-item';
-export { sortScheduledTaskItems } from './utils/filter-sort';
 export { ScheduledTasksSortKey } from './types/scheduled-tasks-sort-key';
 export { ScheduledTaskCreateForm } from './components/ScheduledTaskCreateForm/ScheduledTaskCreateForm';
 export type {

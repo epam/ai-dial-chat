@@ -22,16 +22,6 @@
   border-radius: 0;
 }
 
-.copyButton {
-  background: var(--bg-layer-2, #1a2035);
-  color: var(--text-secondary, #6b7280);
-
-  &:hover {
-    background: var(--bg-layer-3, #242c42);
-    color: var(--text-primary, #161b2d);
-  }
-}
-
 .pre {
   color: var(--text-primary, #161b2d);
 }

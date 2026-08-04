@@ -21,7 +21,6 @@ import {
 import { FC, useEffect, useMemo, useRef } from 'react';
 import { ScheduledTaskSectionKey } from '../../models/scheduled-task-item';
 import { ScheduledTasksProps } from '../../models/scheduled-tasks-props';
-import { sortScheduledTaskItems } from '../../utils/filter-sort';
 import { ScheduledTaskCardGrid } from '../ScheduledTaskCardGrid/ScheduledTaskCardGrid';
 import { ScheduledTaskSection } from '../ScheduledTaskSection/ScheduledTaskSection';
 import styles from './ScheduledTasks.module.scss';
@@ -108,11 +107,6 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
   const activeSortLabel =
     labels.sortOptions.find((option) => option.key === sortKey)?.label ?? '';
 
-  const sortedItems = useMemo(
-    () => sortScheduledTaskItems(items, sortKey),
-    [items, sortKey],
-  );
-
   const sections = useMemo(() => {
     const sectionTitles: Partial<Record<ScheduledTaskSectionKey, string>> = {
       [ScheduledTaskSectionKey.Shared]: labels.sharedSectionTitle,
@@ -120,9 +114,9 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
     return SECTION_ORDER.map((key) => ({
       key,
       title: sectionTitles[key],
-      items: sortedItems.filter((item) => item.sectionKey === key),
+      items: items.filter((item) => item.sectionKey === key),
     })).filter((section) => section.items.length > 0);
-  }, [sortedItems, labels.sharedSectionTitle]);
+  }, [items, labels.sharedSectionTitle]);
 
   const statusMessage = getStatusMessage(
     isLoading,
