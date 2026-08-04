@@ -1945,7 +1945,10 @@
             "description": "Missing or invalid path, or conversation has no content"
           },
           "401": {
-            "description": "Not authenticated"
+            "description": "Not authenticated, or DIAL Core rejected the calling user’s token for the configured utility model"
+          },
+          "403": {
+            "description": "Not authorized to use the configured utility model"
           },
           "404": {
             "description": "Conversation not found"
