@@ -31,7 +31,7 @@ export interface ModelSelectorBottomSheetColors {
   itemActiveBg?: string;
   /** Item leading-icon color. Defaults to `--text-secondary`. */
   itemIcon?: string;
-  /** Selected-row checkmark icon color. Defaults to `--text-accent-primary`. */
+  /** Selected-row checkmark icon color. Defaults to `--text-accent`. */
   checkIcon?: string;
   /** Color overrides forwarded to the underlying `BottomSheetShell` (backdrop, panel background, title, divider). */
   shell?: BottomSheetShellColors;

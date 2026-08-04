@@ -5,7 +5,7 @@
 The `FileDndOverlay` component in `libs/conversation-input` SHALL render as a full-screen fixed overlay (`fixed inset-0 z-[9999]`) with a blurred, semi-transparent backdrop when its `isVisible` prop is `true`.
 
 The overlay SHALL display, centered vertically and horizontally:
-1. `IconFileDescription` from `@epam/ai-dial-ui-kit` in accent color (`text-accent-primary`)
+1. `IconFileDescription` from `@epam/ai-dial-ui-kit` in accent color (`text-accent`)
 2. A title with default text `'Attach files'` (configurable via `title` prop)
 3. A subtitle with default text `'Drop files here to attach them to message'` (configurable via `subtitle` prop)
 
@@ -13,7 +13,7 @@ The overlay SHALL be `pointer-events-none` so that the underlying drop zone cont
 
 The overlay SHALL apply backdrop blur and use `--bg-blackout` (or equivalent semi-transparent background token) as its background.
 
-Typography classes SHALL be configurable via `titleClassName` (default `'dial-subheader2-bold-text'`) and `subtitleClassName` (default `'dial-body-text'`) props. Icon color SHALL be configurable via `iconClassName` (default `'text-accent-primary'`).
+Typography classes SHALL be configurable via `titleClassName` (default `'dial-subheader2-bold-text'`) and `subtitleClassName` (default `'dial-body-text'`) props. Icon color SHALL be configurable via `iconClassName` (default `'text-accent'`).
 
 #### Scenario: Overlay is hidden by default
 

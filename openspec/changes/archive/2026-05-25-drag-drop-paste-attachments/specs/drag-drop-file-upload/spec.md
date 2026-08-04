@@ -4,7 +4,7 @@
 
 ### Requirement: Drop zone on ConversationInput
 
-The `ConversationInput` component SHALL act as a drag-and-drop target for OS files. While one or more files are dragged over the component, a full-cover overlay SHALL be rendered over the `Input` area (excluding the welcome heading and outer padding) with a 1 px dashed border in `--stroke-info`, a semi-transparent `--bg-blackout` background, label text in `--text-secondary` using `dial-tiny-text`, sourced from the `dropLabel` prop (default `"Drop files here"`). This matches the `DialEmptyFileArea` drag-over visual style from `@epam/ai-dial-ui-kit`. Dropping the files SHALL add them to the attachment list using the same pipeline as the file picker.
+The `ConversationInput` component SHALL act as a drag-and-drop target for OS files. While one or more files are dragged over the component, a full-cover overlay SHALL be rendered over the `Input` area (excluding the welcome heading and outer padding) with a 1 px dashed border in `--stroke-accent-primary`, a semi-transparent `--bg-blackout` background, label text in `--text-secondary` using `dial-tiny-text`, sourced from the `dropLabel` prop (default `"Drop files here"`). This matches the `DialEmptyFileArea` drag-over visual style from `@epam/ai-dial-ui-kit`. Dropping the files SHALL add them to the attachment list using the same pipeline as the file picker.
 
 #### Scenario: Drag enter shows overlay
 
@@ -54,12 +54,12 @@ The `ConversationInput` component SHALL act as a drag-and-drop target for OS fil
 #### Scenario: Overlay visual style matches DialEmptyFileArea
 
 - **WHEN** the drag-over overlay is shown
-- **THEN** it has a 1 px dashed border in `--stroke-info`, a semi-transparent `--bg-blackout` background, and label text in `--text-secondary` with `dial-tiny-text` sizing — matching the `DialEmptyFileArea` drag-over appearance
+- **THEN** it has a 1 px dashed border in `--stroke-accent-primary`, a semi-transparent `--bg-blackout` background, and label text in `--text-secondary` with `dial-tiny-text` sizing — matching the `DialEmptyFileArea` drag-over appearance
 
 #### Scenario: Overlay border color is themeable
 
 - **WHEN** `--ci-drop-overlay-border` is set on the root element
-- **THEN** the overlay uses that value instead of `--stroke-info`
+- **THEN** the overlay uses that value instead of `--stroke-accent-primary`
 
 #### Scenario: Non-file drag items are ignored
 

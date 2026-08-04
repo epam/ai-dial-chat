@@ -24,9 +24,9 @@ export interface CardColors {
   hoverBackground?: string;
   /** Card border color. Fallback: `--stroke-secondary`. */
   border?: string;
-  /** Featured card glow color. Fallback: `rgba(125, 164, 255, 0.5)`. */
+  /** Featured card glow color. */
   featuredGlow?: string;
-  /** Featured top accent bar color. Fallback: `--stroke-info`. */
+  /** Featured top accent bar color. Fallback: `--stroke-accent-primary`. */
   featuredBar?: string;
   /** Item name and description text color. Fallback: `--text-primary`. */
   textPrimary?: string;

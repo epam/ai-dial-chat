@@ -89,16 +89,12 @@ const textColors = {
   success: 'var(--text-success, #007274)', // green-800
 
   // REMOVED: old names, need to remove
-  'accent-primary': 'var(--text-accent-primary, #7DA4FF)',
   'accent-secondary': 'var(--text-accent-secondary, #37BABC)',
   // Catalog tab bar — override via CSS custom properties for dark-theme support
-  'catalog-tab-active': 'var(--cat-tab-active-text, #111827)',
   'catalog-tab-inactive': 'var(--cat-tab-inactive-text, #6B7280)',
   'catalog-tab-hover': 'var(--cat-tab-hover-text, #374151)',
   'catalog-badge-active': 'var(--cat-badge-active-text, #2764D9)',
   'catalog-badge-inactive': 'var(--cat-badge-inactive-text, #9CA3AF)',
-  'accent-primary': 'var(--text-accent-primary, #124ACE)',
-  'accent-secondary': 'var(--text-accent-secondary, #007274)',
 };
 
 const placeholderColor = {

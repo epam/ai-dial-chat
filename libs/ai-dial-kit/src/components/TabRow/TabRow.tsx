@@ -18,7 +18,7 @@ export interface TabRowColors {
   activeTabClassName?: string;
   /** Class applied to an inactive tab button. Defaults to `'text-secondary hover:text-primary border-transparent'`. */
   inactiveTabClassName?: string;
-  /** Class applied to the badge when the tab is active. Defaults to `'bg-accent-primary-alpha text-accent-primary'`. */
+  /** Class applied to the badge when the tab is active. Defaults to `'bg-accent-primary-alpha text-accent'`. */
   activeBadgeClassName?: string;
   /** Class applied to the badge when the tab is inactive. Defaults to `'bg-layer-raised text-tertiary'`. */
   inactiveBadgeClassName?: string;
@@ -65,7 +65,7 @@ export const TabRow: FC<TabRowProps> = ({
   const {
     activeTabClassName = 'text-primary',
     inactiveTabClassName = 'text-secondary hover:text-primary border-transparent',
-    activeBadgeClassName = 'bg-accent-primary-alpha text-accent-primary',
+    activeBadgeClassName = 'bg-accent-primary-alpha text-accent',
     inactiveBadgeClassName = 'bg-layer-raised text-tertiary',
   } = colors ?? {};
   const {

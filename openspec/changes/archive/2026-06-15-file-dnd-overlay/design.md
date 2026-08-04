@@ -90,4 +90,4 @@ Rollback: All changes are in one feature branch. No database migration or config
 
 ## Resolved
 
-- **Icon**: `IconFileDescription` from `@epam/ai-dial-ui-kit` in accent color (`text-accent-primary` or equivalent token).
+- **Icon**: `IconFileDescription` from `@epam/ai-dial-ui-kit` in accent color (`text-accent` or equivalent token).

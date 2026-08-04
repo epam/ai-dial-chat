@@ -346,7 +346,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                     />
                     <DialTag
                       label={`Version ${item.version} · current`}
-                      className="shrink-0 whitespace-nowrap !border-tertiary !bg-accent-primary-alpha !text-accent-primary"
+                      className="shrink-0 whitespace-nowrap !border-tertiary !bg-accent-primary-alpha !text-accent"
                     />
                   </>
                 )}

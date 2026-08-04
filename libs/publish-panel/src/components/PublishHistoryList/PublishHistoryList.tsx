@@ -44,7 +44,7 @@ export interface PublishHistoryListColors {
   currentBadgeBorder?: string;
   /** Background color of the "Current" badge. Fallback: `--bg-accent-primary-alpha`. */
   currentBadgeBackground?: string;
-  /** Text color of the "Current" badge. Fallback: `--text-accent-primary`. */
+  /** Text color of the "Current" badge. Fallback: `--text-accent`. */
   currentBadgeText?: string;
   /** Text color of each entry's version line. Fallback: `--text-primary`. */
   versionText?: string;
