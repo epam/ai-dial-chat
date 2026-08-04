@@ -94,6 +94,17 @@ export class EnvConfigProvider implements ConfigProvider {
       return filtered;
     }
 
+    // publish.publicationFilterSources falls back to the registry default when unset/empty
+    if (key === 'publish.publicationFilterSources') {
+      const sources = this.configService.get('PUBLICATION_FILTER_SOURCES', {
+        infer: true,
+      });
+      if (!sources?.length) {
+        return undefined;
+      }
+      return sources;
+    }
+
     // customVisualizers is a JSON array requiring full parse + per-entry validation
     if (key === 'customVisualizers') {
       const raw = this.configService.get('CUSTOM_VISUALIZERS', {

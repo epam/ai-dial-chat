@@ -12,9 +12,12 @@ import {
   ButtonsI18nKeys,
   ConversationPublishI18nKeys,
 } from '../../constants/translation-keys';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import { publishConversation } from '../../server-api/conversation-publish.api';
+import { getPublishRules } from '../../server-api/publish-rules.api';
+import { getAccessRulesLabels } from '../../utils/publish';
 
 /** Props for `PublishConversationPanelContainer`. */
 interface Props {
@@ -47,6 +50,9 @@ const PublishConversationPanelContainer: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { showNotification } = useNotification();
+  const {
+    config: { publicationFilterSources },
+  } = useAppConfig();
 
   const {
     folderItems,
@@ -73,8 +79,8 @@ const PublishConversationPanelContainer: FC<Props> = ({
     folderItems,
     hasWriteAccess: hasPublishWriteAccess,
     onCreateFolder: onCreatePublishFolder,
-    onPublish: async (_item, folderPath) => {
-      await publishConversation(conversationPath, folderPath.join('/'));
+    onPublish: async (_item, folderPath, rules) => {
+      await publishConversation(conversationPath, folderPath.join('/'), rules);
     },
     onPublishSuccess: () => {
       showNotification({
@@ -82,6 +88,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
         message: t(ConversationPublishI18nKeys.SuccessMessage),
       });
     },
+    onFetchExistingRules: (folderPath) => getPublishRules(folderPath.join('/')),
   });
 
   useEffect(() => {
@@ -121,6 +128,11 @@ const PublishConversationPanelContainer: FC<Props> = ({
       isSubmitting={publishFlow.isSubmitting}
       hasSubmitError={publishFlow.hasSubmitError}
       allowReplace={false}
+      rules={publishFlow.rules}
+      onRulesChange={publishFlow.setRules}
+      ruleSourceOptions={publicationFilterSources}
+      isRulesLoading={publishFlow.isRulesLoading}
+      hasRulesLoadError={publishFlow.hasRulesLoadError}
       onClose={onClose}
       returnFocusRef={returnFocusRef}
       onSubmit={handleSubmit}
@@ -139,6 +151,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
         createFolderDuplicateNameError: t(
           ConversationPublishI18nKeys.DuplicateFolderNameError,
         ),
+        accessRulesLabels: getAccessRulesLabels(t),
       }}
       labels={{
         title: t(ButtonsI18nKeys.Publish),

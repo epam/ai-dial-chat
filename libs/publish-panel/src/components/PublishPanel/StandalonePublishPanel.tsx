@@ -2,6 +2,7 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialCloseButton } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode, RefObject, useEffect, useMemo, useRef } from 'react';
 import {
+  PublicationRule,
   PublishFolderNode,
   PublishHistoryEntry,
   PublishResourceSummary,
@@ -69,6 +70,16 @@ export interface StandalonePublishPanelProps {
    * allowed (catalog default) or blocked (conversations). Default `true`.
    */
   allowReplace?: boolean;
+  /** Current access rules, combined with AND. */
+  rules: PublicationRule[];
+  /** Called with the full next rules array on add, remove, or clear. */
+  onRulesChange: (rules: PublicationRule[]) => void;
+  /** Options offered in the access-rules editor's source picker. */
+  ruleSourceOptions: string[];
+  /** Whether existing rules are currently being fetched for the selected folder. Default: `false`. */
+  isRulesLoading?: boolean;
+  /** Whether the most recent existing-rules fetch failed. Default: `false`. */
+  hasRulesLoadError?: boolean;
   /** Called when the panel should be dismissed — Close button, Cancel button, backdrop click, or Escape. */
   onClose: () => void;
   /** Focus target restored when an open panel closes or unmounts. */
@@ -103,6 +114,11 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   isSubmitting,
   hasSubmitError = false,
   allowReplace = true,
+  rules,
+  onRulesChange,
+  ruleSourceOptions,
+  isRulesLoading = false,
+  hasRulesLoadError = false,
   onClose,
   returnFocusRef,
   onSubmit,
@@ -234,6 +250,11 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
               isSubmitting={isSubmitting}
               hasSubmitError={hasSubmitError}
               allowReplace={allowReplace}
+              rules={rules}
+              onRulesChange={onRulesChange}
+              ruleSourceOptions={ruleSourceOptions}
+              isRulesLoading={isRulesLoading}
+              hasRulesLoadError={hasRulesLoadError}
               labels={panelLabels}
             />
           </div>
