@@ -1,8 +1,14 @@
-import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
+import {
+  BadRequestException,
+  Logger,
+  ValidationPipe,
+  VersioningType,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule } from '@nestjs/swagger';
+import type { ValidationError } from 'class-validator';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import 'reflect-metadata';
@@ -14,6 +20,29 @@ import {
   createOpenApiConfig,
   openApiDocumentOptions,
 } from './openapi/openapi.config';
+
+const validationLogger = new Logger('ValidationPipe');
+
+/*
+ * Flattens nested `ValidationError`s into `{ property, constraints }` pairs
+ * for debug logging. Deliberately never includes `.value` — class-validator
+ * attaches the raw submitted value to each error, and some validated DTOs
+ * carry secrets (e.g. `apiKey`, OAuth `code`), which must never reach logs.
+ */
+const flattenValidationErrors = (
+  errors: ValidationError[],
+  prefix = '',
+): Array<{ property: string; constraints?: Record<string, string> }> =>
+  errors.flatMap((error) => {
+    const property = prefix ? `${prefix}.${error.property}` : error.property;
+    const own = error.constraints
+      ? [{ property, constraints: error.constraints }]
+      : [];
+    const nested = error.children?.length
+      ? flattenValidationErrors(error.children, property)
+      : [];
+    return [...own, ...nested];
+  });
 
 async function bootstrap() {
   const runtimeEnvironment = process.env;
@@ -47,6 +76,17 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      exceptionFactory: (errors) => {
+        const flattened = flattenValidationErrors(errors);
+        validationLogger.warn(
+          `Request body validation failed: ${JSON.stringify(flattened)}`,
+        );
+        return new BadRequestException(
+          flattened.flatMap(({ constraints }) =>
+            Object.values(constraints ?? {}),
+          ),
+        );
+      },
     }),
   );
   const globalPrefix = process.env.API_PREFIX || 'api';

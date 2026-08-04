@@ -1382,6 +1382,54 @@ describe('DeploymentsService', () => {
       expect(JSON.stringify(result)).not.toContain('editor.example.com');
     });
 
+    it('maps display_name for an application', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({
+          id: 'applications/public/finhub-via-openapi__1.0.0',
+          display_name: 'finhub-via-openapi',
+        }),
+      );
+
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'applications/public/finhub-via-openapi__1.0.0',
+        'token',
+      );
+
+      expect(result.applicationDetails?.displayName).toBe('finhub-via-openapi');
+    });
+
+    it('logs the raw DIAL Core application response and the mapped response', async () => {
+      const debugSpy = vi
+        .spyOn(Logger.prototype, 'debug')
+        .mockImplementation(() => undefined);
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({
+          id: 'applications/public/finhub-via-openapi__1.0.0',
+          display_name: 'finhub-via-openapi',
+        }),
+      );
+
+      await service.getDeploymentDetails(
+        'user1',
+        'applications/public/finhub-via-openapi__1.0.0',
+        'token',
+      );
+
+      const logged = debugSpy.mock.calls.map((call) => String(call[0]));
+      expect(
+        logged.some((line) => line.includes('DIAL Core application details')),
+      ).toBe(true);
+      expect(logged.some((line) => line.includes('sent to frontend'))).toBe(
+        true,
+      );
+      expect(logged.join('\n')).toContain('finhub-via-openapi');
+
+      debugSpy.mockRestore();
+    });
+
     it('dispatches to getToolset, maps owner/features/auth status, and forwards all non-secret authSettings fields', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.getToolset.mockResolvedValue(

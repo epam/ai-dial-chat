@@ -160,19 +160,24 @@ _Source: [`auth-diagrams/06-cross-pod-stateless.mmd`](./auth-diagrams/06-cross-p
 
 Any pod can decrypt any cookie because all pods share the same active key + previous keys. No session affinity is required.
 
-### 5.5 Interactive Toolset Sign-In During a Completion
+### 5.5 Interactive Sign-In During a Completion (Toolsets and Application External Services)
 
 ![Toolset sign-in interrupt](./auth-diagrams/08-toolset-signin-interrupt.svg)
 
-_Source: [`auth-diagrams/08-toolset-signin-interrupt.mmd`](./auth-diagrams/08-toolset-signin-interrupt.mmd)_
+_Source: [`auth-diagrams/08-toolset-signin-interrupt.mmd`](./auth-diagrams/08-toolset-signin-interrupt.mmd) — the same subscribe/report/unsubscribe shape covers both event kinds described below; a dedicated diagram was not added since the only difference is the RPC `method`/payload and which BFF module handles the login step._
 
-**This is a separate flow from application OIDC login (5.1) and does not touch the session cookie.** The user is already authenticated to Chat; this flow lets DIAL Core ask that already-authenticated user to (re)supply _toolset_ credentials mid-completion, via a generic client-channel RPC mechanism:
+**This is a separate flow from application OIDC login (5.1) and does not touch the session cookie.** The user is already authenticated to Chat; this flow lets DIAL Core ask that already-authenticated user to (re)supply credentials mid-completion, via a generic client-channel RPC mechanism, for either of two distinct resource kinds:
+
+- **Toolsets** — a `toolset/signin` event, handled by `apps/chat-api/src/toolsets/` (`POST /api/v1/toolsets/{name}/login|logout`).
+- **Application external services** — an `external-service/signin` event (`params.url` identifying an `applications/{bucket}/{app}/external_services/{serviceId}` resource), handled by `apps/chat-api/src/external-services/` (`GET /api/v1/external-services/{appId}/{serviceId}`, `POST .../signin`, `POST .../signout`), proxying DIAL Core's `GET /v1/applications/{appId}/external-services/{id}` and `POST /v1/ops/external-service/signin|signout`.
+
+Both kinds share the exact same channel plumbing:
 
 - The SPA subscribes once per session to `POST /api/v1/client-channel/subscribe`, a BFF-relayed SSE stream proxying DIAL Core's own `/v1/ops/client-channel/subscribe`. The BFF never exposes the session's access token to the browser — it stays server-side, same as every other BFF-proxied call.
-- The assigned channel id travels with subsequent completion requests (`X-DIAL-CLIENT-CHANNEL-ID`), so Core can correlate a `toolset/signin` event back to the specific blocked tool call.
-- A `toolset/signin` event surfaces a global dialog; the user logs in with the existing toolset API-key/OAuth mechanics (unchanged from the Catalog/Toolset-Editor flows), and the result is reported back on the same channel (`POST /api/v1/client-channel/report`) so Core can resume or terminate the tool call.
-- Gated behind the `liveChatInteraction` feature flag (`apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`); unsubscribes on logout, tab close, or the flag flipping off.
-- Toolset OAuth opens an external-provider popup and tracks it from the initiating Chat tab. The
+- The assigned channel id travels with subsequent completion requests (`X-DIAL-CLIENT-CHANNEL-ID`), so Core can correlate a `toolset/signin` or `external-service/signin` event back to the specific blocked tool call.
+- Either event kind surfaces as a row in the same global `SigninInterruptDialog`; the user logs in with the resource's own API-key/OAuth mechanics (toolset logins are unchanged from the Catalog/Toolset-Editor flows; the OAuth popup/callback/`BroadcastChannel` handshake is shared verbatim, parameterized by which BFF sign-in call the callback should submit to), and the result is reported back on the same channel (`POST /api/v1/client-channel/report`) so Core can resume or terminate the tool call.
+- Gated behind the same `liveChatInteraction` feature flag (`apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`) for both event kinds — no separate flag; unsubscribes on logout, tab close, or the flag flipping off.
+- OAuth (either kind) opens an external-provider popup and tracks it from the initiating Chat tab. The
   Chat response therefore uses `Cross-Origin-Opener-Policy: same-origin-allow-popups` (rather
   than Helmet's `same-origin` default), preventing provider navigation from severing the
   opener's `WindowProxy` and producing a false `popup.closed` cancellation. Before navigating
