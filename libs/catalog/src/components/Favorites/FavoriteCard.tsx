@@ -3,6 +3,7 @@ import { CardShell, DIAL_ICON_SIZE, ElementSize } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
+import { DeploymentSize } from '../../types/deployment-icon-size';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
 import { CredentialsBadge } from '../CredentialsBadge/CredentialsBadge';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
@@ -116,7 +117,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
           name={item.name}
           version={item.version}
           lastUsed={item.lastUsed}
-          size="lg"
+          size={DeploymentSize.LG}
           query={query}
           className="min-w-0 self-stretch"
           nameClassName={nameClassName}

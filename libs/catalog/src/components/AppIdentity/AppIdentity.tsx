@@ -1,10 +1,10 @@
 import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialEllipsisTooltip, Highlight } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
+import { DeploymentSize } from '../../types/deployment-icon-size';
 import { CatalogEntityType } from '../../types/entity-type';
 import { EntityTypeLabel } from '../EntityTypeLabel/EntityTypeLabel';
 import styles from './AppIdentity.module.scss';
-import { DeploymentSize } from '../../types/deployment-icon-size';
 
 /** Props for the shared AppIdentity block used in browse and favorite cards. */
 export interface AppIdentityProps {
@@ -71,7 +71,6 @@ export const AppIdentity: FC<AppIdentityProps> = ({
         className,
       )}
     >
-      {/* Logo — flex-shrink-0 so a long name can never squeeze the icon */}
       <div
         className={mergeClasses(
           'flex-shrink-0 overflow-hidden',
@@ -91,13 +90,10 @@ export const AppIdentity: FC<AppIdentityProps> = ({
         />
       </div>
 
-      {/* Text stack — type sits above a tightly grouped name+last-used cluster */}
-      <div className="flex min-w-0 flex-1 flex-col gap-[5px]">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <EntityTypeLabel type={type} className={typeClassName} />
 
-        {/* Name + last-used grouped tightly together */}
         <div className="flex min-w-0 flex-col">
-          {/* Name + version: version sits immediately after name text */}
           <div className="flex min-w-0 items-start gap-1 overflow-hidden">
             <span
               className={mergeClasses('flex-3 min-w-0 truncate', nameClassName)}
