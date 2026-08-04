@@ -1,5 +1,5 @@
 .listContainer {
-  background: var(--cat-list-bg, var(--bg-layer-3, #fcfcfc));
+  background: var(--cat-list-bg, var(--bg-layer-raised, #fcfcfc));
   border-color: var(
     --cm-markdown-border,
     var(--cat-list-border, var(--stroke-secondary, #d1dbea))
@@ -27,7 +27,7 @@
     border-top-left-radius: 0.75rem;
     border-top-right-radius: 0.75rem;
 
-    background: var(--cat-list-header-bg, var(--bg-layer-3, #fcfcfc));
+    background: var(--cat-list-header-bg, var(--bg-layer-raised, #fcfcfc));
 
     border-bottom-color: var(
       --cm-table-row-divider,
@@ -53,7 +53,7 @@
   }
 
   :global(.ag-row-even) {
-    background: var(--bg-layer-5, #f5f7fa);
+    background: var(--bg-layer-base, #f5f7fa);
   }
 }
 

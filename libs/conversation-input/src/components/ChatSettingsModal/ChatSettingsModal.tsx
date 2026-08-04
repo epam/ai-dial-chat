@@ -50,7 +50,7 @@ export interface ChatSettingsModalProps {
   saveLabel?: string;
   /** Tooltip shown on the save button when it is disabled (e.g. no response format selected). */
   saveDisabledTooltip?: string;
-  /** CSS class applied for the modal background. Defaults to a `--bg-layer-2` background. */
+  /** CSS class applied for the modal background. Defaults to a `--bg-layer-sunken` background. */
   backgroundClassName?: string;
 }
 

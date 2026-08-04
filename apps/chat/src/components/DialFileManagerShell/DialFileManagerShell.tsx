@@ -513,9 +513,9 @@ const DialFileManagerShell: FC<Props> = ({
           <PrimaryButton label={labels.retryLabel} onClick={retry} />
         </div>
       ) : (
-        <div className="relative flex min-h-0 w-full grow overflow-auto bg-layer-2">
+        <div className="relative flex min-h-0 w-full grow overflow-auto bg-layer-sunken">
           <DialFileManager
-            className="min-h-0 w-full grow bg-layer-2"
+            className="min-h-0 w-full grow bg-layer-sunken"
             gridClassName="size-full"
             items={items}
             path={path}

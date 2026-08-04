@@ -1,5 +1,5 @@
 .tableContainer {
-  background: var(--cm-code-block-bg, var(--bg-layer-3, #fcfcfc));
+  background: var(--cm-code-block-bg, var(--bg-layer-raised, #fcfcfc));
   border-color: var(
     --cm-markdown-border,
     var(--cm-code-block-border, var(--stroke-secondary, #d1dbea))
@@ -30,15 +30,15 @@
 }
 
 .tableHeaderCell {
-  background: var(--cm-code-block-header-bg, var(--bg-layer-3, #fcfcfc));
+  background: var(--cm-code-block-header-bg, var(--bg-layer-raised, #fcfcfc));
 }
 
 .sectionRow td {
-  background: var(--cm-code-block-header-bg, var(--bg-layer-3, #fcfcfc));
+  background: var(--cm-code-block-header-bg, var(--bg-layer-raised, #fcfcfc));
 }
 
 tbody .row:nth-child(even) td {
-  background: var(--cm-table-row-zebra-bg, var(--bg-layer-5, #f5f7fa));
+  background: var(--cm-table-row-zebra-bg, var(--bg-layer-base, #f5f7fa));
 }
 
 .rowDivider {

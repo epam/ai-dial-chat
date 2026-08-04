@@ -73,7 +73,7 @@ export const PublishHistoryList: FC<PublishHistoryListProps> = ({
           key={`${entry.version}-${index}`}
           className={mergeClasses(
             'flex items-center justify-between gap-2 rounded-lg px-3 py-[11px]',
-            index % 2 === 0 && 'bg-layer-2',
+            index % 2 === 0 && 'bg-layer-sunken',
           )}
         >
           <span className="flex min-w-0 items-center gap-2">

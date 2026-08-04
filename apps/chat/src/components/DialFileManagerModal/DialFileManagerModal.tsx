@@ -638,7 +638,7 @@ const DialFileManagerModal: FC<Props> = ({
         </div>
       }
       size={PopupSize.Lg}
-      className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-2 [&>[aria-label='popup-description']]:flex [&>[aria-label='popup-description']]:min-h-0 [&>[aria-label='popup-description']]:flex-col"
+      className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-sunken [&>[aria-label='popup-description']]:flex [&>[aria-label='popup-description']]:min-h-0 [&>[aria-label='popup-description']]:flex-col"
       onClose={onClose}
       footer={
         <div className="flex justify-end px-6 py-4">

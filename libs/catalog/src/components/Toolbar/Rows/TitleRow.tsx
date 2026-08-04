@@ -93,7 +93,7 @@ export const TitleRow: FC<TitleRowProps> = ({
           <div
             className="flex items-center rounded-full border p-[3px]"
             style={{
-              background: 'var(--bg-layer-2, #EEEEF0)',
+              background: 'var(--bg-layer-sunken, #EEF1F7)',
               borderColor: 'var(--stroke-tertiary, #e0e6f0)',
             }}
           >

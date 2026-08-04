@@ -73,7 +73,7 @@
 .row {
   @media (hover: hover) {
     &:hover {
-      background: var(--bg-layer-3, rgba(0, 0, 0, 0.04));
+      background: var(--bg-layer-raised, #fcfcfc);
     }
   }
 

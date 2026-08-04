@@ -25,7 +25,7 @@ export interface ModelSelectorBottomSheetColors {
   divider?: string;
   /** Item label and state-label text color. Defaults to `--text-primary`/`--text-secondary`. */
   itemText?: string;
-  /** Item hover background. Defaults to `--bg-layer-3`. */
+  /** Item hover background. Defaults to `--bg-layer-raised`. */
   itemHoverBg?: string;
   /** Item active/pressed background. Defaults to `--bg-layer-4`. */
   itemActiveBg?: string;

@@ -46,7 +46,7 @@
 ```tsx
 <a
   href={`/api/v1/auth/login/${encodeURIComponent(provider.id)}?callbackUrl=${encodeURIComponent(callbackUrl)}`}
-  className="flex h-10 w-full items-center justify-center gap-2 rounded border border-primary px-3 text-sm font-semibold text-controls-neutral hover:bg-layer-3"
+  className="flex h-10 w-full items-center justify-center gap-2 rounded border border-primary px-3 text-sm font-semibold text-controls-neutral hover:bg-bg-layer-raised"
 >
   <img src={`/auth-providers/${provider.id}.svg`} ... />
   {provider.label}

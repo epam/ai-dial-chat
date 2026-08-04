@@ -208,7 +208,7 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
             return (
               <li
                 key={index}
-                className="flex items-center justify-between gap-2 rounded-lg border border-tertiary bg-layer-2 px-3 py-2"
+                className="flex items-center justify-between gap-2 rounded-lg border border-tertiary bg-layer-sunken px-3 py-2"
               >
                 <span className="dial-small-text truncate text-primary">
                   <span className="font-semibold">{rule.source}</span>{' '}

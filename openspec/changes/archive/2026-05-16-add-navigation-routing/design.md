@@ -72,7 +72,7 @@ const Navigation: FC = () => {
   return (
     <nav
       aria-label={t(NavigationI18nKeys.AriaLabel)}
-      className="flex h-full w-[60px] flex-col justify-between bg-layer-3"
+      className="flex h-full w-[60px] flex-col justify-between bg-bg-layer-raised"
     >
       <div className="flex flex-col items-center gap-1 pt-2">
         {NAVIGATION_CONFIG.map(({ path, icon: Icon, labelKey }) => {

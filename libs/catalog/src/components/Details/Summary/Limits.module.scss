@@ -13,7 +13,7 @@
     border-color: transparent !important;
   }
   &--BY_REQUEST {
-    background: var(--bg-layer-2, #1a2035) !important;
+    background: var(--bg-layer-sunken, #eef1f7) !important;
     color: var(--text-secondary, #6b7280) !important;
     border-color: transparent !important;
   }
@@ -26,14 +26,14 @@
     border-color: transparent !important;
   }
   &--DEPRECATED {
-    background: var(--bg-layer-2, #1a2035) !important;
+    background: var(--bg-layer-sunken, #eef1f7) !important;
     color: var(--text-error, #ae2f2f) !important;
     border-color: transparent !important;
   }
 }
 
 .progressTrack {
-  background: var(--bg-layer-2, #1a2035);
+  background: var(--bg-layer-sunken, #eef1f7);
 }
 
 .progressFill {

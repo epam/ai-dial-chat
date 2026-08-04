@@ -218,7 +218,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between gap-3 rounded-xl border border-tertiary bg-layer-2 px-3.5 py-3">
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-tertiary bg-layer-sunken px-3.5 py-3">
         {renderSummary ? (
           renderSummary()
         ) : (

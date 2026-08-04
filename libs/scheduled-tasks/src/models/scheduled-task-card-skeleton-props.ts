@@ -1,6 +1,6 @@
 /**
  * Color overrides for the {@link ScheduledTaskCardSkeleton} component.
- * `DialSkeleton`'s own default color token (`bg-layer-3`) has no visible
+ * `DialSkeleton`'s own default color token (`bg-bg-layer-raised`) has no visible
  * contrast against the card background in apps that don't override it, so
  * this component requires an explicit color rather than relying on that
  * default — callers can still override it via this prop.

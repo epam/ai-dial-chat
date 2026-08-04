@@ -18,19 +18,13 @@ const backgroundsColors = {
 
   // REMOVED: old names, need to remove
   'layer-1': 'var(--bg-layer-1, #E0E6F0)',
-  'layer-2': 'var(--bg-layer-2, #EEF1F7)',
-  'layer-3': 'var(--bg-layer-3, #FCFCFC)',
   'layer-4': 'var(--bg-layer-4, #D1DBEA)',
-  'layer-5': 'var(--bg-layer-5, #F5F7FA)',
   'layer-6': 'var(--bg-layer-6, #F8FAFC)',
   'layer-7': 'var(--bg-layer-7, #00000006)',
   overlay: 'var(--bg-overlay, #FCFCFC80)',
   inverted: 'var(--bg-inverted, #161B2D)',
   'accent-primary-alpha': 'var(--bg-accent-primary-alpha, #7DA4FF2E)',
   // Catalog tab bar — override via CSS custom properties for dark-theme support
-  'catalog-badge-active': 'var(--cat-badge-active-bg, #EEF2FF)',
-  'catalog-badge-inactive': 'var(--cat-badge-inactive-bg, #F3F4F6)',
-  'accent-secondary-alpha': 'var(--bg-accent-secondary-alpha, #37BABC2E)',
   'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2E)',
   // New Chat button shadow — blue/purple pair at default, hover, and active alpha levels
   'mask-opaque': 'var(--bg-mask-opaque, #000)',

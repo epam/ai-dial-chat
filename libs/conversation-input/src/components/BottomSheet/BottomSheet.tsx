@@ -9,7 +9,7 @@ import styles from './BottomSheet.module.scss';
 export interface BottomSheetColors {
   /** Item label text color. Defaults to `--text-primary`. */
   itemText?: string;
-  /** Item hover background. Defaults to `--bg-layer-3`. */
+  /** Item hover background. Defaults to `--bg-layer-raised`. */
   itemHoverBg?: string;
   /** Item active/pressed background. Defaults to `--bg-layer-4`. */
   itemActiveBg?: string;

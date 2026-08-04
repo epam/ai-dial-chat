@@ -64,8 +64,8 @@ describe('PublishHistoryList', () => {
     render(<PublishHistoryList entries={entries} />);
     const rows = screen.getAllByRole('listitem');
     expect(rows[0].className).not.toContain('border-b');
-    expect(rows[0].className).toContain('bg-layer-2');
+    expect(rows[0].className).toContain('bg-layer-sunken');
     expect(rows[1].className).not.toContain('border-b');
-    expect(rows[1].className).not.toContain('bg-layer-2');
+    expect(rows[1].className).not.toContain('bg-layer-sunken');
   });
 });

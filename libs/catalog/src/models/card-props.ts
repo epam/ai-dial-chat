@@ -18,9 +18,9 @@ export interface CardTypography {
 
 /** Color overrides applied as CSS custom properties for `Card`. */
 export interface CardColors {
-  /** Default card background color. Fallback: `--bg-layer-2`. */
+  /** Default card background color. Fallback: `--bg-layer-sunken`. */
   background?: string;
-  /** Hovered card background color. Fallback: `--bg-layer-3`. */
+  /** Hovered card background color. Fallback: `--bg-layer-raised`. */
   hoverBackground?: string;
   /** Card border color. Fallback: `--stroke-secondary`. */
   border?: string;
