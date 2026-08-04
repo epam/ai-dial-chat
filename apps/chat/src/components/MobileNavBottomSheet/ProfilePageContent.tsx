@@ -1,6 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { BASE_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
-import { IconChevronRight, IconKeyboard, IconLogout } from '@tabler/icons-react';
+import {
+  IconChevronRight,
+  IconKeyboard,
+  IconLogout,
+} from '@tabler/icons-react';
 import { type FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

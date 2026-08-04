@@ -21,15 +21,7 @@ export const NewChatButton: FC<NewChatButtonProps> = memo(
   ({ label, onClick, labelClassName = 'dial-small-semi-text', colors }) => {
     const cssVars = buildCssVars({
       '--cp-new-chat-bg': colors?.background,
-      '--cp-new-chat-hover': colors?.hoverBackground,
-      '--cp-new-chat-active': colors?.activeBackground,
       '--cp-new-chat-text': colors?.text,
-      '--cp-new-chat-shadow-blue': colors?.shadowBlue,
-      '--cp-new-chat-shadow-blue-hover': colors?.shadowBlueHover,
-      '--cp-new-chat-shadow-blue-active': colors?.shadowBlueActive,
-      '--cp-new-chat-shadow-purple': colors?.shadowPurple,
-      '--cp-new-chat-shadow-purple-hover': colors?.shadowPurpleHover,
-      '--cp-new-chat-shadow-purple-active': colors?.shadowPurpleActive,
     });
 
     return (
@@ -38,7 +30,7 @@ export const NewChatButton: FC<NewChatButtonProps> = memo(
           onClick={onClick}
           type="button"
           className={mergeClasses(
-            'flex h-[36px] w-full cursor-pointer items-center justify-center gap-2 rounded-full px-3 py-1',
+            'flex h-[36px] w-full cursor-pointer items-center justify-center gap-2 rounded-full px-3 py-1 shadow-sm hover:shadow-md active:shadow-xs',
             styles.button,
           )}
         >

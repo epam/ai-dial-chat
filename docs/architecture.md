@@ -460,7 +460,7 @@ Themes are defined in [ai-dial-chat-themes](https://github.com/epam/ai-dial-chat
 
 | Group             | Examples                                                                  | Purpose                        |
 | ----------------- | ------------------------------------------------------------------------- | ------------------------------ |
-| `bg-layer-*`      | `bg-layer-raised` … `bg-layer-4`                                               | Background depth levels        |
+| `bg-layer-*`      | `bg-layer-raised` … `bg-layer-4`                                          | Background depth levels        |
 | `bg-accent-*`     | `bg-accent-primary`, `bg-accent-secondary`                                | Brand accent fills             |
 | `bg-*`            | `bg-error`, `bg-warning`, `bg-info`, `bg-success`                         | Semantic state backgrounds     |
 | `text-*`          | `text-primary`, `text-secondary`, `text-error`, `text-accent`             | Text colours                   |

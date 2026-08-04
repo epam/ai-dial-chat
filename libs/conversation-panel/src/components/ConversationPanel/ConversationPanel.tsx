@@ -191,17 +191,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       '--cp-text': colors?.text,
       '--cp-text-secondary': colors?.textSecondary,
       '--cp-new-chat-bg': newChatButtonColors?.background,
-      '--cp-new-chat-hover': newChatButtonColors?.hoverBackground,
-      '--cp-new-chat-active': newChatButtonColors?.activeBackground,
       '--cp-new-chat-text': newChatButtonColors?.text,
-      '--cp-new-chat-shadow-blue': newChatButtonColors?.shadowBlue,
-      '--cp-new-chat-shadow-blue-hover': newChatButtonColors?.shadowBlueHover,
-      '--cp-new-chat-shadow-blue-active': newChatButtonColors?.shadowBlueActive,
-      '--cp-new-chat-shadow-purple': newChatButtonColors?.shadowPurple,
-      '--cp-new-chat-shadow-purple-hover':
-        newChatButtonColors?.shadowPurpleHover,
-      '--cp-new-chat-shadow-purple-active':
-        newChatButtonColors?.shadowPurpleActive,
       '--cp-drop-zone-ring': colors?.dropZoneRing,
       '--cp-trigger-bg': colors?.triggerBackground,
       '--cp-trigger-icon': colors?.triggerIcon,
