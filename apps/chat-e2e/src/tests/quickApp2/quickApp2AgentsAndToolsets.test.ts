@@ -623,8 +623,8 @@ dialTest(
 );
 
 dialTest(
-  '[Agents & Toolsets] Not available agent and toolset stay selected on browser refresh and when user removes/adds new item\n' +
-    '[Quick app 2.0]: One version is displayed on click on bar inside Agents & Toolsets field', // EPMDIAL-4941 + EPMDIAL-4939
+  '[Agents & Toolsets] Not available agent and toolset stay selected on browser refresh and when user removes/adds new item\n' + // EPMDIAL-4941
+    '[Quick app 2.0]: One version is displayed on click on bar inside Agents & Toolsets field', // EPMDIAL-4939
   async ({
     marketplacePage,
     entityEditorPage,
@@ -861,6 +861,22 @@ dialTest(
           quickApp2EditorViewForm.getChipByName(newToolsetName),
           'visible',
         );
+      },
+    );
+
+    await dialTest.step(
+      'Reload the browser and verify the not-available chips are still attached and red',
+      async () => {
+        await entityEditorPage.reloadPage();
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.QuickApp2,
+        );
+        for (const name of [appToDeleteName, toolsetToDeleteName]) {
+          await baseAssertion.assertElementClass(
+            quickApp2EditorViewForm.getChipByName(name),
+            new RegExp(AddQuickApp2SettingsFormSelector.errorChipClass),
+          );
+        }
       },
     );
   },
