@@ -1657,7 +1657,7 @@ dialAdminTest(
     adminPage,
     adminDialHomePage,
     adminLocalStorageManager,
-    adminApproveRequiredConversations,
+    adminApproveRequiredPrompts,
     adminPublishingApprovalModal,
     adminPublishedApplicationReviewModal,
     adminEntityEditorPage,
@@ -1780,7 +1780,7 @@ dialAdminTest(
       async () => {
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
-        await adminApproveRequiredConversations.selectRequest(
+        await adminApproveRequiredPrompts.selectRequest(
           publicToolsetRequestName,
         );
         await adminPublishingApprovalModal.goToEntityReview();
@@ -1828,6 +1828,7 @@ dialAdminTest(
           ),
         );
         await adminToast.closeToast();
+        await adminChatMessagesAssertion.assertMessagesCount(2);
       },
     );
 
@@ -1845,11 +1846,8 @@ dialAdminTest(
     await dialAdminTest.step(
       'Admin opens the publication request with the private toolset and goes to edit',
       async () => {
-        await adminDialHomePage.openHomePage();
-        await adminDialHomePage.waitForPageLoaded();
-        await adminApproveRequiredConversations.selectRequest(
-          ownToolsetRequestName,
-        );
+        await adminEntityEditorPage.goBack();
+        await adminApproveRequiredPrompts.selectRequest(ownToolsetRequestName);
         await adminPublishingApprovalModal.goToEntityReview();
         await adminPublishedApplicationReviewModal.editApplicationButton.click();
         await adminEntityEditorPage.waitForPageLoadedForEdit(
