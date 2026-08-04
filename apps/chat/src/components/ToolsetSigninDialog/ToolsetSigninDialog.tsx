@@ -33,13 +33,13 @@ import {
   useToolsetLogin,
 } from '../../hooks/toolsets/useToolsetLogin';
 import { useUiFeature } from '../../hooks/useUiFeature';
-import { ClientChannelReportResult } from '../../server-api/client-channel';
-import { getToolset } from '../../server-api/toolsets';
-import type { PendingSigninEvent } from '../../types/client-channel';
 import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
-} from '../../types/toolsets';
+} from '../../models/toolsets';
+import { ClientChannelReportResult } from '../../server-api/client-channel';
+import { getToolset } from '../../server-api/toolsets';
+import type { PendingSigninEvent } from '../../types/client-channel';
 import {
   getToolsetFallbackName,
   isPublicToolsetId,

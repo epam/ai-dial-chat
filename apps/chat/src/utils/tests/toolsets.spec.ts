@@ -2,8 +2,6 @@ import type { DialToolsetDto } from '@epam/chat-api-client';
 import { ResponseError } from '@epam/chat-api-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToolsetOAuthCallbackQuery } from '../../constants/toolsets';
-import * as toolsetsApi from '../../server-api/toolsets';
-import { ROUTES } from '../../types/routes';
 import {
   ToolsetAuthTypes,
   ToolsetOAuthChannelControlType,
@@ -13,8 +11,10 @@ import {
   ToolsetOAuthResultType,
   ToolsetTransportType,
   WithLogin,
-} from '../../types/toolsets';
-import type { ToolsetFormData } from '../../types/toolsets';
+} from '../../models/toolsets';
+import type { ToolsetFormData } from '../../models/toolsets';
+import * as toolsetsApi from '../../server-api/toolsets';
+import { ROUTES } from '../../types/routes';
 import {
   buildToolsetAuthorizeUrl,
   encodeToolsetId,

@@ -11,9 +11,9 @@ import type {
   CustomAppFormData,
   CustomAppFormErrors,
   CustomAppGeneralFormData,
-} from '../../types/custom-apps';
-import type { ToolsetFormErrors } from '../../types/toolsets';
-import { ToolsetEditorSteps } from '../../types/toolsets';
+} from '../../models/custom-apps';
+import type { ToolsetFormErrors } from '../../models/toolsets';
+import { ToolsetEditorSteps } from '../../models/toolsets';
 import CustomAppSettingsForm from './EditorForm/CustomAppSettingsForm';
 import GeneralForm from './EditorForm/GeneralForm';
 

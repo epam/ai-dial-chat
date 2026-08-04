@@ -5,18 +5,18 @@ import {
   TOOLSET_REDIRECT_STATE_KEY,
   ToolsetOAuthCallbackQuery,
 } from '../../../constants/toolsets';
-import * as toolsetsApi from '../../../server-api/toolsets';
 import type {
   ToolsetOAuthChannelMessage,
   ToolsetRedirectState,
-} from '../../../types/toolsets';
+} from '../../../models/toolsets';
 import {
   ToolsetAuthTypes,
   ToolsetOAuthChannelControlType,
   ToolsetCredentialsLevel,
   ToolsetOAuthFailureReason,
   ToolsetOAuthResultType,
-} from '../../../types/toolsets';
+} from '../../../models/toolsets';
+import * as toolsetsApi from '../../../server-api/toolsets';
 import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import ToolsetAuthCallback from '../ToolsetAuthCallback';
 

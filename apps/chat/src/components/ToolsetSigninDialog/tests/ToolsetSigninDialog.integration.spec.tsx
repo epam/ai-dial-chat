@@ -14,13 +14,13 @@ import {
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useToolsetLogin } from '../../../hooks/toolsets/useToolsetLogin';
 import { useUiFeature } from '../../../hooks/useUiFeature';
+import { ToolsetAuthTypes } from '../../../models/toolsets';
 import {
   reportClientChannel,
   subscribeClientChannel,
   unsubscribeClientChannel,
 } from '../../../server-api/client-channel';
 import { getToolset } from '../../../server-api/toolsets';
-import { ToolsetAuthTypes } from '../../../types/toolsets';
 import ToolsetSigninDialog from '../ToolsetSigninDialog';
 
 vi.mock('../../../context/AppConfigContext', () => ({

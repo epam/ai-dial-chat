@@ -1,6 +1,6 @@
 import { IconBrandOauth, IconKey, IconLockOff } from '@tabler/icons-react';
 import type { TablerIcon } from '@tabler/icons-react';
-import { ToolsetAuthTypes } from '../types/toolsets';
+import { ToolsetAuthTypes } from '../models/toolsets';
 import { ToolsetEditorI18nKeys } from './translation-keys';
 
 export enum ToolsetEditorQuery {

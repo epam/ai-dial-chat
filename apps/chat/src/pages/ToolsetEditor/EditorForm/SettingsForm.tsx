@@ -23,8 +23,8 @@ import type {
   ToolsetAuthFormData,
   ToolsetFormData,
   ToolsetFormErrors,
-} from '../../../types/toolsets';
-import { ToolsetTransportType } from '../../../types/toolsets';
+} from '../../../models/toolsets';
+import { ToolsetTransportType } from '../../../models/toolsets';
 import { buildToolsetMcpUrl } from '../../../utils/mcp-endpoint-url';
 import AuthSection from './AuthSection';
 

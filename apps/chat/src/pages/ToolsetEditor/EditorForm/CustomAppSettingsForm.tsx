@@ -2,15 +2,13 @@ import { Input, TagInput, Textarea } from '@epam/ai-dial-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { MIME_TYPE_REGEX } from '../../../constants/custom-apps';
 import { CustomAppI18nKeys } from '../../../constants/translation-keys';
 import type {
   CustomAppFormData,
   CustomAppFormErrors,
-} from '../../../types/custom-apps';
-import {
-  MIME_TYPE_REGEX,
-  isValidFeaturesData,
-} from '../../../utils/custom-apps';
+} from '../../../models/custom-apps';
+import { isValidFeaturesData } from '../../../utils/custom-apps';
 
 interface Props {
   form: CustomAppFormData;

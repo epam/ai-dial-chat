@@ -10,8 +10,8 @@ import {
   BasicI18nKeys,
   EditorI18nKeys,
 } from '../../../constants/translation-keys';
-import type { CustomAppGeneralFormData } from '../../../types/custom-apps';
-import type { ToolsetFormErrors } from '../../../types/toolsets';
+import type { CustomAppGeneralFormData } from '../../../models/custom-apps';
+import type { ToolsetFormErrors } from '../../../models/toolsets';
 
 interface Props {
   form: CustomAppGeneralFormData;

@@ -11,8 +11,8 @@ import type {
   ToolsetAuthFormData,
   ToolsetFormData,
   ToolsetFormErrors,
-} from '../../types/toolsets';
-import { ToolsetEditorSteps } from '../../types/toolsets';
+} from '../../models/toolsets';
+import { ToolsetEditorSteps } from '../../models/toolsets';
 import GeneralForm from './EditorForm/GeneralForm';
 import SettingsForm from './EditorForm/SettingsForm';
 

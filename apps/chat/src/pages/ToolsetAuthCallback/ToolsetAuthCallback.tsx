@@ -17,20 +17,20 @@ import {
   TOOLSET_REDIRECT_STATE_KEY,
   ToolsetOAuthCallbackQuery,
 } from '../../constants/toolsets';
-import { loginToolset } from '../../server-api/toolsets';
-import { ROUTES } from '../../types/routes';
 import type {
   ToolsetOAuthChannelMessage,
   ToolsetOAuthResultAcknowledgement,
   ToolsetRedirectState,
-} from '../../types/toolsets';
+} from '../../models/toolsets';
 import {
   ToolsetAuthTypes,
   ToolsetOAuthChannelControlType,
   ToolsetCredentialsLevel,
   ToolsetOAuthFailureReason,
   ToolsetOAuthResultType,
-} from '../../types/toolsets';
+} from '../../models/toolsets';
+import { loginToolset } from '../../server-api/toolsets';
+import { ROUTES } from '../../types/routes';
 import { getToolsetOAuthChannelName } from '../../utils/toolsets';
 
 const TOOLSET_OAUTH_RESULT_RETRY_INTERVAL_MS = 500;

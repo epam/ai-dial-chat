@@ -4,17 +4,17 @@ import type {
 } from '@epam/chat-api-client';
 import { useCallback } from 'react';
 import {
-  getToolset,
-  loginToolset,
-  logoutToolset,
-} from '../../server-api/toolsets';
-import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
   WithLogin,
-} from '../../types/toolsets';
+} from '../../models/toolsets';
+import {
+  getToolset,
+  loginToolset,
+  logoutToolset,
+} from '../../server-api/toolsets';
 import {
   initiateOAuthLogin,
   navigateToolsetOAuthPopup,

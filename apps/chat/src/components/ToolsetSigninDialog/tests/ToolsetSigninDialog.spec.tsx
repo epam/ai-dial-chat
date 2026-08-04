@@ -13,8 +13,8 @@ import {
   useToolsetLogin,
 } from '../../../hooks/toolsets/useToolsetLogin';
 import { useUiFeature } from '../../../hooks/useUiFeature';
+import { ToolsetAuthTypes } from '../../../models/toolsets';
 import { getToolset } from '../../../server-api/toolsets';
-import { ToolsetAuthTypes } from '../../../types/toolsets';
 import ToolsetSigninDialog from '../ToolsetSigninDialog';
 
 vi.mock('../../../context/AppConfigContext', () => ({

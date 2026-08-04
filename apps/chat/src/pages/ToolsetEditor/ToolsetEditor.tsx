@@ -16,6 +16,17 @@ import {
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import type {
+  ToolsetAuthFormData,
+  ToolsetFormData,
+  ToolsetFormErrors,
+} from '../../models/toolsets';
+import {
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  ToolsetEditorSteps,
+  WithLogin,
+} from '../../models/toolsets';
 import {
   createToolset,
   getToolset,
@@ -24,17 +35,6 @@ import {
   updateToolset,
 } from '../../server-api/toolsets';
 import { ROUTES } from '../../types/routes';
-import type {
-  ToolsetAuthFormData,
-  ToolsetFormData,
-  ToolsetFormErrors,
-} from '../../types/toolsets';
-import {
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
-  ToolsetEditorSteps,
-  WithLogin,
-} from '../../types/toolsets';
 import {
   extractToolsetApiErrorMessage,
   formToToolsetBody,

@@ -8,6 +8,11 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
+import {
+  DEFAULT_CUSTOM_APP_GENERAL_FORM,
+  DEFAULT_CUSTOM_APP_SETTINGS_FORM,
+  MIME_TYPE_REGEX,
+} from '../../constants/custom-apps';
 import { ToolsetEditorQuery } from '../../constants/toolsets';
 import {
   ButtonsI18nKeys,
@@ -16,24 +21,21 @@ import {
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import type {
+  CustomAppFormData,
+  CustomAppFormErrors,
+  CustomAppGeneralFormData,
+} from '../../models/custom-apps';
+import { ToolsetEditorSteps } from '../../models/toolsets';
 import {
   createApplication,
   updateApplication,
 } from '../../server-api/applications';
 import { getDeploymentDetails } from '../../server-api/deployments';
-import type {
-  CustomAppFormData,
-  CustomAppFormErrors,
-  CustomAppGeneralFormData,
-} from '../../types/custom-apps';
 import { ROUTES } from '../../types/routes';
-import { ToolsetEditorSteps } from '../../types/toolsets';
 import {
-  DEFAULT_CUSTOM_APP_GENERAL_FORM,
-  DEFAULT_CUSTOM_APP_SETTINGS_FORM,
   isValidAbsoluteUrl,
   isValidFeaturesData,
-  MIME_TYPE_REGEX,
   parseFeaturesData,
 } from '../../utils/custom-apps';
 import CustomAppEditorView from './CustomAppEditorView';
