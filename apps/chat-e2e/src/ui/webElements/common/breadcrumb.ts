@@ -3,6 +3,7 @@ import { BaseElement } from '@/src/ui/webElements';
 import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
+
 export class Breadcrumb extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
     super(page, BreadcrumbSelectors.breadcrumbContainer, parentLocator);
@@ -19,9 +20,10 @@ export class Breadcrumb extends BaseElement {
       }),
     });
 
+  public itemByNameContent = (name: string) =>
+    this.itemByName(name).locator(BreadcrumbSelectors.breadcrumbItemContent);
+
   public async clickBreadcrumbByName(name: string) {
-    await this.itemByName(name)
-      .locator(BreadcrumbSelectors.breadcrumbItemContent)
-      .click();
+    await this.itemByNameContent(name).click();
   }
 }
