@@ -154,8 +154,8 @@ htmlViewRenderedLabel?: string;
 **Blocked-state panel:**
 - Centered in the panel body, same layout as the existing `Unsupported` / `Error` panels.
 - Shows `labels.htmlFrameBlockedLabel` (default: `'This page cannot be displayed in preview'`).
-- Shows an anchor `<a href={content.url} target="_blank" rel="noopener noreferrer">` with the label `labels.htmlOpenInNewTabLabel` (default: `'Open in new tab'`). The anchor SHALL be styled as a primary button using the existing button design token.
-- The anchor SHALL only be rendered when `content.url != null`.
+- Shows a `DialLinkButton` (from `@epam/ai-dial-ui-kit`) with `label={labels.htmlOpenInNewTabLabel}` (default: `'Open in new tab'`) and an `onClick` handler that calls `window.open(content.url, '_blank', 'noopener,noreferrer')`.
+- The button SHALL only be rendered when `content.url != null`.
 
 **Props interface (`HtmlContentProps`):**
 ```ts
@@ -164,6 +164,9 @@ interface HtmlContentProps {
   labels: Pick<AttachmentCanvasLabels, 'htmlFrameBlockedLabel' | 'htmlOpenInNewTabLabel'>;
   isSourceView: boolean;
   title?: string;
+  codeBlockTheme?: CodeBlockTheme;                      // forwarded to CodeContent in source view
+  openInNewTabButtonTypographyClassName?: string;       // default 'dial-body-semi-text'
+  openInNewTabButtonColorClassName?: string;            // default 'text-accent'
 }
 ```
 
@@ -175,7 +178,7 @@ The component MUST NOT read from any app-level context.
 
 **Accessibility:**
 - The iframe SHALL carry `title` set to `title` prop value when provided.
-- The blocked-state "Open in new tab" anchor SHALL carry `aria-label` indicating it opens in a new tab.
+- The blocked-state "Open in new tab" `DialLinkButton` receives its accessible name via the `label` prop (`labels.htmlOpenInNewTabLabel`).
 - The toggle button (in `AttachmentCanvas` header) exposes its current state via `aria-pressed`.
 
 #### Scenario: srcdoc content renders iframe by default

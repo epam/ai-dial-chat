@@ -1,6 +1,6 @@
 import type { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialSpinner } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton, DialSpinner } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   type SyntheticEvent,
@@ -30,10 +30,12 @@ export interface HtmlContentProps {
   isSourceView: boolean;
   /** Accessible title forwarded to the iframe element. */
   title?: string;
-  /** Syntax-highlight color theme forwarded to the source-view `CodeContent`. Defaults to `CodeBlockTheme.Dark`. */
+  /** Syntax-highlight color theme forwarded to the source-view `CodeContent`. When omitted, `CodeContent` falls back to `CodeBlockTheme.Light`. */
   codeBlockTheme?: CodeBlockTheme;
-  /** CSS class applied to the "Open in new tab" anchor in the blocked-state panel. Defaults to `'dial-body-semi-text text-accent underline hover:no-underline'`. */
-  openInNewTabButtonClassName?: string;
+  /** Typography class applied to the "Open in new tab" button in the blocked-state panel. Defaults to `'dial-body-semi-text'`. */
+  openInNewTabButtonTypographyClassName?: string;
+  /** Color class applied to the "Open in new tab" button in the blocked-state panel. Defaults to `'text-accent'`. */
+  openInNewTabButtonColorClassName?: string;
 }
 
 /** Renders HTML content inside a sandboxed iframe, or as highlighted source when `isSourceView` is true. */
@@ -44,7 +46,8 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
     isSourceView,
     title,
     codeBlockTheme,
-    openInNewTabButtonClassName = 'dial-body-semi-text text-accent underline hover:no-underline',
+    openInNewTabButtonTypographyClassName = 'dial-body-semi-text',
+    openInNewTabButtonColorClassName = 'text-accent',
   }) => {
     const {
       htmlFrameBlockedLabel = 'This page cannot be displayed in preview',
@@ -99,18 +102,17 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
         <div className="flex h-full flex-col items-center justify-center gap-3 p-4">
           <p className="text-center">{htmlFrameBlockedLabel}</p>
           {content.url != null && (
-            <a
-              href={content.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={htmlOpenInNewTabLabel}
+            <DialLinkButton
+              label={htmlOpenInNewTabLabel}
+              onClick={() =>
+                window.open(content.url, '_blank', 'noopener,noreferrer')
+              }
               className={mergeClasses(
-                'rounded px-3 py-1.5',
-                openInNewTabButtonClassName,
+                'underline hover:no-underline',
+                openInNewTabButtonTypographyClassName,
+                openInNewTabButtonColorClassName,
               )}
-            >
-              {htmlOpenInNewTabLabel}
-            </a>
+            />
           )}
         </div>
       );

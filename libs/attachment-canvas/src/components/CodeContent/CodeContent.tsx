@@ -1,6 +1,5 @@
 import {
   CodeBlockTheme,
-  mergeClasses,
   restrainedSyntaxTheme,
 } from '@epam/ai-dial-chat-shared';
 import { memo, type FC } from 'react';
@@ -16,13 +15,13 @@ const SYNTAX_THEME = {
 export interface CodeContentProps {
   /** The code/text content to render. */
   content: CodeCanvasContent;
-  /** Syntax-highlight color theme. Defaults to `CodeBlockTheme.Dark`. */
+  /** Syntax-highlight color theme. Defaults to `CodeBlockTheme.Light`. */
   codeBlockTheme?: CodeBlockTheme;
 }
 
 /** Renders syntax-highlighted source code or plain text for a `CodeCanvasContent` payload. */
 export const CodeContent: FC<CodeContentProps> = memo(
-  ({ content, codeBlockTheme = CodeBlockTheme.Dark }) => {
+  ({ content, codeBlockTheme = CodeBlockTheme.Light }) => {
     const { text, language } = content;
     const isPlain = language == null || language === 'plaintext';
     const syntaxTheme = SYNTAX_THEME[codeBlockTheme];
@@ -30,7 +29,7 @@ export const CodeContent: FC<CodeContentProps> = memo(
     return (
       <div dir="ltr" className="h-full overflow-auto">
         {isPlain ? (
-          <pre className={mergeClasses('whitespace-pre-wrap break-words p-4')}>
+          <pre className="whitespace-pre-wrap break-words p-4">
             {text}
           </pre>
         ) : (

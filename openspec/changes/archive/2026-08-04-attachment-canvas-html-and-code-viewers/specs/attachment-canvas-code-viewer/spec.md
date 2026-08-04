@@ -95,7 +95,7 @@ Minimum required mappings:
 
 ### Requirement: `CodeContent` renderer component
 
-`libs/attachment-canvas/src/components/CodeContent/CodeContent.tsx` SHALL render `content.text` using `react-syntax-highlighter`'s `PrismLight` renderer (for smaller bundle size via selective language registration).
+`libs/attachment-canvas/src/components/CodeContent/CodeContent.tsx` SHALL render `content.text` using `react-syntax-highlighter`'s `Prism` renderer.
 
 Behaviour:
 - Wrap the highlighter in `<div dir="ltr">` to force LTR text direction regardless of the app's locale.
@@ -108,7 +108,7 @@ Props interface (`CodeContentProps`):
 ```ts
 interface CodeContentProps {
   content: CodeCanvasContent;
-  codeBlockTheme?: CodeBlockTheme;
+  codeBlockTheme?: CodeBlockTheme; // defaults to CodeBlockTheme.Light
 }
 ```
 
