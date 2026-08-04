@@ -480,7 +480,7 @@ Themes are defined in [ai-dial-chat-themes](https://github.com/epam/ai-dial-chat
 | `controls-bg-*`   | `controls-bg-accent-primary`, `controls-bg-error`, `controls-bg-disable`  | Interactive element fills      |
 | `controls-text-*` | `controls-text-permanent`, `controls-text-neutral`                        | Interactive element text       |
 | `topicColors`     | `bg-topic-*`, `stroke-topic-*`                                            | Application / model topic tags |
-| `authColors`      | `bg-auth-layer-0`, `bg-auth-layer-1`                                      | Auth screen backgrounds        |
+| `authColors`      | `bg-auth-bg-layer-raised`, `bg-auth-layer-1`                                      | Auth screen backgrounds        |
 
 ### Token flow
 
