@@ -16,6 +16,7 @@ import type {
   ToolsetRedirectState,
 } from '../models/toolsets';
 import {
+  OAuthResourceKind,
   ToolsetAuthStatus,
   ToolsetAuthTypes,
   ToolsetOAuthChannelControlType,
@@ -146,12 +147,14 @@ const writeRedirectStateAndNavigate = (
   toolsetId: string,
   credentialsLevel: ToolsetCredentialsLevel,
   redirectUri: string,
+  resourceKind: OAuthResourceKind = OAuthResourceKind.Toolset,
 ): ToolsetOAuthInitiationResult => {
   const redirectState: ToolsetRedirectState = {
     toolsetId,
     credentialsLevel,
     redirectUri,
     state,
+    resourceKind,
   };
   popup.sessionStorage.setItem(
     TOOLSET_REDIRECT_STATE_KEY,
@@ -194,6 +197,7 @@ export const navigateToolsetOAuthPopup = (
   auth: ToolsetAuthFormData,
   toolsetId: string,
   credentialsLevel: ToolsetCredentialsLevel = ToolsetCredentialsLevel.User,
+  resourceKind: OAuthResourceKind = OAuthResourceKind.Toolset,
 ): ToolsetOAuthInitiationResult => {
   const redirectUri = getToolsetRedirectUri();
   const state = crypto.randomUUID();
@@ -209,6 +213,7 @@ export const navigateToolsetOAuthPopup = (
     toolsetId,
     credentialsLevel,
     redirectUri,
+    resourceKind,
   );
 };
 

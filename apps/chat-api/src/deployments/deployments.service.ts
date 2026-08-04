@@ -842,6 +842,9 @@ export class DeploymentsService {
       throw new NotFoundException('Resource not found');
     }
     const raw = result.data;
+    this.logger.debug(
+      `DIAL Core application details for "${deployment}": ${JSON.stringify(raw)}`,
+    );
     const rawRecord = raw as unknown as Record<string, unknown>;
 
     /* For applications with an `applications/{bucket}/{path}` ID, fetch the
@@ -868,6 +871,7 @@ export class DeploymentsService {
       id: deployment,
       type: 'application',
       applicationDetails: {
+        displayName: raw.display_name,
         applicationProperties: (() => {
           const base = isRecord(raw.application_properties)
             ? raw.application_properties
@@ -905,6 +909,10 @@ export class DeploymentsService {
         createdAt: raw.created_at,
       },
     };
+
+    this.logger.debug(
+      `Application details sent to frontend for "${deployment}": ${JSON.stringify(data)}`,
+    );
 
     return data;
   }

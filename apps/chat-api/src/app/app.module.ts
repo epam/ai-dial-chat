@@ -16,6 +16,7 @@ import { validate } from '../config/validation';
 import { ConversationModule } from '../conversations/conversation.module';
 import { DeploymentsModule } from '../deployments/deployments.module';
 import { DialCoreModule } from '../dial/dial-core.module';
+import { ExternalServicesModule } from '../external-services/external-services.module';
 import { FilesModule } from '../files/files.module';
 import { FooterModule } from '../footer/footer.module';
 import { HealthController } from '../health/health.controller';
@@ -69,6 +70,7 @@ import { createServeStaticOptions } from './static-assets';
     ToolsetsModule,
     ChatModule,
     ClientChannelModule,
+    ExternalServicesModule,
     ConversationModule,
     PromptModule,
     UserConfigModule,

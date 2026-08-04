@@ -739,6 +739,7 @@ export enum ToolsetSigninI18nKeys {
   RowDecline = 'toolsetSignin.rowDecline',
   DeclineAll = 'toolsetSignin.declineAll',
   FallbackName = 'toolsetSignin.fallbackName',
+  FallbackNameExternalService = 'toolsetSignin.fallbackNameExternalService',
   ApiKeyLabel = 'toolsetSignin.apiKeyLabel',
   ApiKeyPlaceholder = 'toolsetSignin.apiKeyPlaceholder',
   ErrorLoginFailed = 'toolsetSignin.errorLoginFailed',
@@ -747,6 +748,7 @@ export enum ToolsetSigninI18nKeys {
   ErrorRetry = 'toolsetSignin.errorRetry',
   StatusLoginSuccess = 'toolsetSignin.statusLoginSuccess',
   StatusDeclineSuccess = 'toolsetSignin.statusDeclineSuccess',
+  NoCredentialsRequired = 'toolsetSignin.noCredentialsRequired',
 }
 
 export enum ErrorBoundaryI18nKeys {
