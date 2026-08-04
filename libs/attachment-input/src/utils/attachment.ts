@@ -36,18 +36,10 @@ import {
   IconTerminal2,
   IconVideo,
 } from '@tabler/icons-react';
-import {
-  ATTACHMENT_COLLAPSE_THRESHOLD,
-  ATTACHMENT_COLLAPSED_VISIBLE_COUNT,
-} from '../constants/attachment-group';
 import type {
   AttachmentCardState,
   AttachmentTypeLabels,
 } from '../models/attachment-card';
-import {
-  AttachmentTilesLayout,
-  type AttachmentTilesPlan,
-} from '../models/attachment-group';
 
 /** Generates a unique identifier for an attachment. */
 export const generateAttachmentId = (): string =>
@@ -269,31 +261,5 @@ export const getAttachmentCardState = (
     isLink,
     BottomIcon: isLink ? null : getBottomIcon(attachment),
     typeLabel: isLink ? null : getBottomLabel(attachment, typeLabels),
-  };
-};
-
-/** Decides how the unified tile grid should render for `totalCount` attachments, given whether the group is expanded. */
-export const getAttachmentTilesPlan = (
-  totalCount: number,
-  isExpanded: boolean,
-): AttachmentTilesPlan => {
-  if (totalCount <= 0) {
-    return {
-      layout: AttachmentTilesLayout.None,
-      visibleCount: 0,
-      hiddenCount: 0,
-    };
-  }
-  if (totalCount < ATTACHMENT_COLLAPSE_THRESHOLD || isExpanded) {
-    return {
-      layout: AttachmentTilesLayout.AllVisible,
-      visibleCount: totalCount,
-      hiddenCount: 0,
-    };
-  }
-  return {
-    layout: AttachmentTilesLayout.Collapsed,
-    visibleCount: ATTACHMENT_COLLAPSED_VISIBLE_COUNT,
-    hiddenCount: totalCount - ATTACHMENT_COLLAPSED_VISIBLE_COUNT,
   };
 };

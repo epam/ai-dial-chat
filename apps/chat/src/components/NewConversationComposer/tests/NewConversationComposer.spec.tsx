@@ -1,4 +1,5 @@
-import { OverlayFeature, type DeploymentItem } from '@epam/ai-dial-chat-shared';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import { type DeploymentItem } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import { Suspense } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

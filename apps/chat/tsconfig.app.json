@@ -93,6 +93,9 @@
       "path": "../../libs/chat-shared/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/chat-overlay/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/attachment-canvas/tsconfig.lib.json"
     }
   ]

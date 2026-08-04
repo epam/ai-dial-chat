@@ -19,6 +19,22 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     ariaLabel?: string;
   }) => <div data-progress={value} aria-label={ariaLabel} />,
   DialProgressBarSize: { Small: 'sm', Medium: 'md' },
+  GhostIconButton: ({
+    'aria-label': ariaLabel,
+    onClick,
+    className,
+  }: {
+    'aria-label'?: string;
+    onClick?: () => void;
+    className?: string;
+  }) => (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      onClick={onClick}
+      className={className}
+    />
+  ),
   IconButton: ({
     'aria-label': ariaLabel,
     onClick,

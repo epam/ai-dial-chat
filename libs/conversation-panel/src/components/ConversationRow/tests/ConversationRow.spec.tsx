@@ -56,7 +56,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     React.cloneElement(children, {
       onClick: () => onOpenChange?.(true),
     }),
-  DialGhostIconButton: React.forwardRef<
+  GhostIconButton: React.forwardRef<
     HTMLButtonElement,
     { 'aria-label'?: string; onClick?: () => void }
   >(({ 'aria-label': ariaLabel, onClick }, ref) => (

@@ -5,6 +5,6 @@
   "private": true,
   "dependencies": {
     "@epam/ai-dial-chat-overlay": "*",
-    "@epam/ai-dial-ui-kit": "^0.13.0-dev.23"
+    "@epam/ai-dial-ui-kit": "^0.13.0-dev.26"
   }
 }

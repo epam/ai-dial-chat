@@ -2,7 +2,7 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialDropdown,
-  DialGhostIconButton,
+  GhostIconButton,
   NeutralButton,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
@@ -146,7 +146,7 @@ const SnippetBlock: FC<SnippetBlockProps> = ({
               iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.SM} />}
             />
           </DialDropdown>
-          <DialGhostIconButton
+          <GhostIconButton
             icon={<IconCopy size={DIAL_ICON_SIZE.SM} />}
             aria-label={copyAriaLabel}
             onClick={handleCopy}
@@ -286,7 +286,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
                   {activeEndpoint.url}
                 </span>
               )}
-              <DialGhostIconButton
+              <GhostIconButton
                 icon={<IconCopy size={DIAL_ICON_SIZE.SM} />}
                 aria-label={copyAriaLabel}
                 onClick={() =>
@@ -338,16 +338,13 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
               styles.codeBlock,
             )}
           >
-            <DialGhostIconButton
+            <GhostIconButton
               icon={<IconCopy size={DIAL_ICON_SIZE.SM} />}
               aria-label={copyAriaLabel}
               onClick={() => {
                 void navigator.clipboard.writeText(api.requestExample ?? '');
               }}
-              className={mergeClasses(
-                'absolute end-2 top-2 flex size-6 cursor-pointer items-center justify-center rounded border-none p-0',
-                styles.copyButton,
-              )}
+              className="absolute end-2 top-2"
             />
             <pre
               className={mergeClasses(
@@ -379,16 +376,13 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
               styles.codeBlock,
             )}
           >
-            <DialGhostIconButton
+            <GhostIconButton
               icon={<IconCopy size={DIAL_ICON_SIZE.SM} />}
               aria-label={copyAriaLabel}
               onClick={() => {
                 void navigator.clipboard.writeText(api.responseSchema ?? '');
               }}
-              className={mergeClasses(
-                'absolute end-2 top-2 flex size-6 cursor-pointer items-center justify-center rounded border-none p-0',
-                styles.copyButton,
-              )}
+              className="absolute end-2 top-2"
             />
             <pre
               className={mergeClasses(

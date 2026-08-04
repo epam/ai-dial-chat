@@ -24,7 +24,7 @@ export interface SearchInputColors {
 export interface SearchInputStyles {
   /** Color overrides applied as CSS custom properties. */
   colors?: SearchInputColors;
-  /** CSS class applied to the search icon. Defaults to the module's `.icon` class (`--text-secondary`). */
+  /** CSS class applied to the search icon. */
   iconClassName?: string;
   /** CSS class applied to the outer wrapper. Defaults to `'px-2 py-1'`. */
   wrapperClassName?: string;

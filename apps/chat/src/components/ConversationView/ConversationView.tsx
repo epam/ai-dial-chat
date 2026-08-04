@@ -1,9 +1,9 @@
 import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   DisplayAttachment,
   isStatusMessage,
   MessageRole,
-  OverlayFeature,
   StatusEvent,
   type Annotation,
   type Attachment,

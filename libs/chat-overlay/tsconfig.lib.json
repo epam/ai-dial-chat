@@ -12,11 +12,6 @@
     "types": ["node", "vite/client"]
   },
   "include": ["src/**/*.ts"],
-  "references": [
-    {
-      "path": "../chat-shared/tsconfig.lib.json"
-    }
-  ],
   "exclude": [
     "vite.config.ts",
     "vite.config.mts",
