@@ -8,6 +8,7 @@ import {
   getCredentialsUiState,
 } from '@epam/ai-dial-catalog';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import type { DialToolsetDto } from '@epam/chat-api-client';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -30,6 +31,7 @@ import { useUiFeature } from '../../../hooks/useUiFeature';
 import { deleteApplication } from '../../../server-api/applications';
 import { getDeploymentLimits } from '../../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../../server-api/deployments';
+import { getPublishRules } from '../../../server-api/publish-rules.api';
 import { publishCatalogEntity } from '../../../server-api/publish.api';
 import {
   deleteToolset,
@@ -71,12 +73,18 @@ let mockSearchParams = new URLSearchParams();
 
 const capturedPublishProps: {
   current: {
-    onPublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
+    onPublish?: (
+      item: CatalogItem,
+      folderPath: string[],
+      rules: PublicationRule[],
+    ) => Promise<void>;
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
     isPublishVisible?: (item: CatalogItem) => boolean;
     publishExpandedPaths?: Set<string>;
     onPublishExpandedPathsChange?: (paths: Set<string>) => void;
     publishLoadingPaths?: Set<string>;
+    ruleSourceOptions?: string[];
+    onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
     isConnectVisible?: (item: CatalogItem) => boolean;
     isShareVisible?: (item: CatalogItem) => boolean;
     sortKey?: string;
@@ -96,6 +104,10 @@ vi.mock('react-router-dom', () => ({
 vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   publishCatalogEntity: vi.fn(),
+}));
+
+vi.mock('../../../server-api/publish-rules.api', () => ({
+  getPublishRules: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
@@ -120,6 +132,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onPublish,
     getPublishHistory,
     isPublishVisible,
+    ruleSourceOptions,
+    onFetchExistingRules,
     isConnectVisible,
     isShareVisible,
     sortKey,
@@ -149,9 +163,15 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onPublishExpandedPathsChange?: (paths: Set<string>) => void;
     publishLoadingPaths?: Set<string>;
     onCreatePublishFolder?: (parentPath: string[], name: string) => void;
-    onPublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
+    onPublish?: (
+      item: CatalogItem,
+      folderPath: string[],
+      rules: PublicationRule[],
+    ) => Promise<void>;
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
     isPublishVisible?: (item: CatalogItem) => boolean;
+    ruleSourceOptions?: string[];
+    onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
     isConnectVisible?: (item: CatalogItem) => boolean;
     isShareVisible?: (item: CatalogItem) => boolean;
     sortKey?: string;
@@ -169,6 +189,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       publishExpandedPaths,
       onPublishExpandedPathsChange,
       publishLoadingPaths,
+      ruleSourceOptions,
+      onFetchExistingRules,
       isConnectVisible,
       isShareVisible,
       sortKey,
@@ -488,6 +510,7 @@ describe('CatalogView', () => {
         deepResearchToolId: null,
         footerHtmlMessage: '',
         customVisualizers: [],
+        publicationFilterSources: ['title', 'role', 'dial_roles'],
       },
     });
   });
@@ -600,15 +623,74 @@ describe('CatalogView', () => {
       });
 
       render(<CatalogView />);
-      await capturedPublishProps.current?.onPublish?.(makeCatalogItem(), [
-        'Organization',
-        'Data Science',
-      ]);
+      await capturedPublishProps.current?.onPublish?.(
+        makeCatalogItem(),
+        ['Organization', 'Data Science'],
+        [],
+      );
 
       expect(publishCatalogEntity).toHaveBeenCalledWith(
         'toolset',
         'tool-abc123',
-        { folderPath: 'Organization/Data Science', version: '1.2.0' },
+        {
+          folderPath: 'Organization/Data Science',
+          version: '1.2.0',
+          rules: [],
+        },
+      );
+    });
+
+    it('forwards rules added in the panel to publishCatalogEntity', async () => {
+      vi.mocked(publishCatalogEntity).mockResolvedValue({
+        entityId: 'tool-abc123',
+        entityType: 'toolset',
+        folderPath: 'Organization/Data Science',
+        version: '1.2.0',
+        publishedAt: '2026-07-13T10:00:00.000Z',
+        publishedBy: 'user@example.com',
+      });
+      const rules: PublicationRule[] = [
+        {
+          source: 'role',
+          function: 'CONTAIN' as PublicationRule['function'],
+          targets: ['engineering'],
+        },
+      ];
+
+      render(<CatalogView />);
+      await capturedPublishProps.current?.onPublish?.(
+        makeCatalogItem(),
+        ['Organization', 'Data Science'],
+        rules,
+      );
+
+      expect(publishCatalogEntity).toHaveBeenCalledWith(
+        'toolset',
+        'tool-abc123',
+        { folderPath: 'Organization/Data Science', version: '1.2.0', rules },
+      );
+    });
+
+    it('sources ruleSourceOptions from useAppConfig, not a hardcoded list', () => {
+      render(<CatalogView />);
+
+      expect(capturedPublishProps.current?.ruleSourceOptions).toEqual([
+        'title',
+        'role',
+        'dial_roles',
+      ]);
+    });
+
+    it('onFetchExistingRules forwards the joined folder path to getPublishRules', async () => {
+      render(<CatalogView />);
+
+      await capturedPublishProps.current?.onFetchExistingRules?.([
+        'Organization',
+        'Data Science',
+      ]);
+
+      expect(vi.mocked(getPublishRules)).toHaveBeenCalledWith(
+        'Organization/Data Science',
       );
     });
 
@@ -618,9 +700,11 @@ describe('CatalogView', () => {
       render(<CatalogView />);
 
       await expect(
-        capturedPublishProps.current?.onPublish?.(makeCatalogItem(), [
-          'Organization',
-        ]),
+        capturedPublishProps.current?.onPublish?.(
+          makeCatalogItem(),
+          ['Organization'],
+          [],
+        ),
       ).rejects.toThrow('Forbidden');
     });
 
@@ -712,6 +796,7 @@ describe('CatalogView', () => {
           deepResearchToolId: null,
           footerHtmlMessage: '',
           customVisualizers: [],
+          publicationFilterSources: ['title', 'role', 'dial_roles'],
         },
       });
 

@@ -17,6 +17,7 @@ import { useUser } from './auth/UserContext';
 
 const DEFAULT_TRANSCRIBE_SIZE_LIMIT = 5 * 1024 * 1024;
 const DEFAULT_FILE_MANAGER_TABS = ['my_files', 'shared', 'organization'];
+const DEFAULT_PUBLICATION_FILTER_SOURCES = ['title', 'role', 'dial_roles'];
 
 export interface AppConfigState {
   status: UserConfigStatus;
@@ -34,6 +35,7 @@ export interface AppConfigState {
     deepResearchToolId: string | null;
     footerHtmlMessage: string;
     customVisualizers: CustomVisualizer[];
+    publicationFilterSources: string[];
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
 }
@@ -54,6 +56,7 @@ const INITIAL_STATE: AppConfigState = {
     deepResearchToolId: null,
     footerHtmlMessage: '',
     customVisualizers: [],
+    publicationFilterSources: DEFAULT_PUBLICATION_FILTER_SOURCES,
   },
 };
 
@@ -91,6 +94,9 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             deepResearchToolId: response.config?.deepResearchToolId ?? null,
             footerHtmlMessage: response.config?.footerHtmlMessage ?? '',
             customVisualizers: response.config?.customVisualizers ?? [],
+            publicationFilterSources:
+              response.config?.publicationFilterSources ??
+              DEFAULT_PUBLICATION_FILTER_SOURCES,
           },
           metadata: response.metadata,
         });

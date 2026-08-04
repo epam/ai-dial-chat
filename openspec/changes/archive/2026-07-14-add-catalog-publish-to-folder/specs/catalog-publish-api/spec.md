@@ -31,7 +31,7 @@ Core call made by the service (via `DialClientService.client.createPublication`)
       "targetUrl": "toolsets/public/Organization/Data Science/Published models/tool-abc123__1.2.0"
     }
   ],
-  "displayAuthor": "Valery Dluski",
+  "displayAuthor": "Test User",
   "rules": []
 }
 ```

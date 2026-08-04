@@ -72,6 +72,25 @@ describe('AppConfigService', () => {
       expect(result.config.announcementHtml).toBeNull();
       expect(result.config.footerHtmlMessage).toBe('');
       expect(result.config.customVisualizers).toEqual([]);
+      expect(result.config.publicationFilterSources).toEqual([
+        'title',
+        'role',
+        'dial_roles',
+      ]);
+    });
+
+    it('surfaces an operator-configured publicationFilterSources list verbatim', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'publish.publicationFilterSources'
+          ? ['roles', 'department']
+          : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.publicationFilterSources).toEqual([
+        'roles',
+        'department',
+      ]);
     });
 
     it('surfaces the resolved customVisualizers registry verbatim', async () => {

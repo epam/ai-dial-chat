@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { PublishFolderNode, PublishHistoryEntry } from '../models/publish';
+import {
+  PublicationRule,
+  PublishFolderNode,
+  PublishHistoryEntry,
+} from '../models/publish';
 
 /** An item publishable through {@link usePublishFlow} — versioned or not (e.g. a conversation). */
 export interface PublishFlowItem {
@@ -85,10 +89,22 @@ export interface UsePublishFlowOptions<TItem extends PublishFlowItem> {
    * error callout is surfaced.
    */
   onCreateFolder?: (parentPath: string[], name: string) => void | Promise<void>;
-  /** Called with the destination folder path when the user confirms publish/update. */
-  onPublish: (item: TItem, folderPath: string[]) => Promise<void>;
+  /** Called with the destination folder path and current rules when the user confirms publish/update. */
+  onPublish: (
+    item: TItem,
+    folderPath: string[],
+    rules: PublicationRule[],
+  ) => Promise<void>;
   /** Called after a successful publish; the host surfaces its own success notification. */
   onPublishSuccess?: (item: TItem, folderPath: string[]) => void;
+  /**
+   * Resolves the access rules already configured for a destination folder.
+   * Called whenever `selectedFolderPath` changes to a defined folder; the
+   * result fully replaces the current `rules` state (never merged). Omit to
+   * skip pre-filling entirely — `rules` then only ever changes via
+   * `setRules`.
+   */
+  onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
 }
 
 /** State and handlers returned by {@link usePublishFlow}. */
@@ -123,8 +139,16 @@ export interface UsePublishFlowResult {
    * decide whether to close the flow.
    */
   handleSubmit: () => Promise<boolean>;
-  /** Resets folder selection, any locally-created folders, and the submit error back to their initial state. */
+  /** Resets folder selection, any locally-created folders, rules, and the submit error back to their initial state. */
   reset: () => void;
+  /** Current access rules for the selected folder — fetched, manually edited, or both. */
+  rules: PublicationRule[];
+  /** Replaces the current rules; used by manual add/remove/clear actions. */
+  setRules: (rules: PublicationRule[]) => void;
+  /** Whether `onFetchExistingRules` is currently resolving for the selected folder. */
+  isRulesLoading: boolean;
+  /** Whether the most recent `onFetchExistingRules` call failed. `rules` is left unchanged when this is `true`. */
+  hasRulesLoadError: boolean;
 }
 
 /** Manages all state for the Publish flow: folder selection, local folder creation, existing-publication detection, and submit handling. */
@@ -138,6 +162,7 @@ export const usePublishFlow = <
   onCreateFolder,
   onPublish,
   onPublishSuccess,
+  onFetchExistingRules,
 }: UsePublishFlowOptions<TItem>): UsePublishFlowResult => {
   const [folderItems, setFolderItems] = useState(initialFolderItems);
   useEffect(() => {
@@ -146,6 +171,43 @@ export const usePublishFlow = <
   const [selectedFolderPath, setSelectedFolderPath] = useState<string[]>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitError, setHasSubmitError] = useState(false);
+  const [rules, setRules] = useState<PublicationRule[]>([]);
+  const [isRulesLoading, setIsRulesLoading] = useState(false);
+  const [hasRulesLoadError, setHasRulesLoadError] = useState(false);
+
+  useEffect(() => {
+    if (selectedFolderPath == null) {
+      setRules([]);
+      setHasRulesLoadError(false);
+      return;
+    }
+    if (!onFetchExistingRules) {
+      return;
+    }
+
+    let isCancelled = false;
+    setIsRulesLoading(true);
+    setHasRulesLoadError(false);
+
+    onFetchExistingRules(selectedFolderPath)
+      .then((fetchedRules) => {
+        if (isCancelled) return;
+        setRules(fetchedRules);
+      })
+      .catch(() => {
+        if (isCancelled) return;
+        setHasRulesLoadError(true);
+      })
+      .finally(() => {
+        if (isCancelled) return;
+        setIsRulesLoading(false);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFolderPath]);
 
   const hasExistingPublicationInFolder = useMemo(() => {
     if (!selectedFolderPath) {
@@ -180,7 +242,7 @@ export const usePublishFlow = <
     setIsSubmitting(true);
     setHasSubmitError(false);
     try {
-      await onPublish(item, selectedFolderPath);
+      await onPublish(item, selectedFolderPath, rules);
       onPublishSuccess?.(item, selectedFolderPath);
       return true;
     } catch {
@@ -189,12 +251,14 @@ export const usePublishFlow = <
     } finally {
       setIsSubmitting(false);
     }
-  }, [item, onPublish, onPublishSuccess, selectedFolderPath]);
+  }, [item, onPublish, onPublishSuccess, rules, selectedFolderPath]);
 
   const reset = useCallback(() => {
     setFolderItems(initialFolderItems);
     setSelectedFolderPath(undefined);
     setHasSubmitError(false);
+    setRules([]);
+    setHasRulesLoadError(false);
   }, [initialFolderItems]);
 
   return {
@@ -210,5 +274,9 @@ export const usePublishFlow = <
     hasSubmitError,
     handleSubmit,
     reset,
+    rules,
+    setRules,
+    isRulesLoading,
+    hasRulesLoadError,
   };
 };

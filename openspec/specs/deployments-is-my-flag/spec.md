@@ -11,7 +11,7 @@ The backend SHALL:
 - Apply `isMy` to all deployment types (model, application, toolset).
 - NOT cache `isMy` — it must be re-evaluated per request using the current session identity.
 
-**Rationale for id-based comparison**: DIAL Core's `owner` field is a human-readable display name (e.g. `"Valery Dluski"`), not a machine-comparable identifier. For user-created applications, the bucket is embedded in the deployment `id` as a path segment: `applications/{bucket}/{app-name}`. Checking `id.split('/').includes(bucket)` reliably identifies ownership without depending on the `owner` string format.
+**Rationale for id-based comparison**: DIAL Core's `owner` field is a human-readable display name (e.g. `"Test User"`), not a machine-comparable identifier. For user-created applications, the bucket is embedded in the deployment `id` as a path segment: `applications/{bucket}/{app-name}`. Checking `id.split('/').includes(bucket)` reliably identifies ownership without depending on the `owner` string format.
 
 Authorization: `isMy` is visible to authenticated users only (the endpoint already requires a valid session). No additional role check is required; the value is computed from data the user is already allowed to see.
 

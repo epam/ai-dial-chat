@@ -33,7 +33,7 @@ Frontend context (`apps/chat/src/context/DeploymentsContext.tsx:80–226`) and t
 
 `isMy` is `true` when `item.id.split('/').includes(bucket)`. The NestJS `listDeployments` method already receives `bucket` (from `req.user.bucket` via `SessionUser`, `session.types.ts:30–38`). `isMy` is overlaid in the post-cache pass alongside `isInstalled`.
 
-**Rationale**: DIAL Core's `owner` field is a human-readable display name (e.g. `"Valery Dluski"`), not a machine-comparable identifier — comparing it against `bucket` always produces `false`. For user-created applications, DIAL Core embeds the bucket in the deployment `id`: `applications/{bucket}/{app-name}`. Checking whether the bucket appears as a path segment of `id` reliably identifies ownership for all current deployment types without depending on the `owner` string format.
+**Rationale**: DIAL Core's `owner` field is a human-readable display name (e.g. `"Test User"`), not a machine-comparable identifier — comparing it against `bucket` always produces `false`. For user-created applications, DIAL Core embeds the bucket in the deployment `id`: `applications/{bucket}/{app-name}`. Checking whether the bucket appears as a path segment of `id` reliably identifies ownership for all current deployment types without depending on the `owner` string format.
 
 **Scope**: `isMy` is computed for all deployment types. For system/admin deployments and models whose `id` does not embed a bucket, the result is `false`, which is correct.
 
