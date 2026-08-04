@@ -7,7 +7,7 @@ import ConversationSharedInvitationPage from '../ConversationSharedInvitation';
 const mockNavigate = vi.fn();
 let mockInvitationId: string | undefined = 'abc123';
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
   useParams: () => ({ invitationId: mockInvitationId }),
 }));

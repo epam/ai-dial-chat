@@ -9,7 +9,7 @@ import {
   type FC,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import ProviderIcon from '../../components/ProviderIcon/ProviderIcon';
 import { AuthI18nKeys } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';

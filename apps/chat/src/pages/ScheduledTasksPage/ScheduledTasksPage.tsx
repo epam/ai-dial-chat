@@ -4,7 +4,7 @@ import {
 } from '@epam/ai-dial-scheduled-tasks';
 import { memo, useCallback, useEffect, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { ScheduledTaskCreateQuery } from '../../constants/scheduled-tasks';
 import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';

@@ -20,7 +20,7 @@ const mockRefreshConversations = vi.fn().mockResolvedValue(undefined);
 let mockConversations: ConversationListItemDto[] = [];
 let mockSelectedItemId: string | null = 'gpt-4o';
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
 }));
 

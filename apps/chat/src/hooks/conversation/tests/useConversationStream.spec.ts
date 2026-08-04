@@ -32,7 +32,7 @@ vi.mock('../../../context/ClientChannelContext', () => ({
   })),
 }));
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => vi.fn(),
 }));
 

@@ -3,7 +3,7 @@ import { DIAL_ICON_SIZE, GhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconFileDescription } from '@tabler/icons-react';
 import { memo, useCallback, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useMatch } from 'react-router-dom';
+import { useMatch } from 'react-router';
 import { SidebarI18nKeys } from '../../constants/translation-keys';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { ROUTES } from '../../types/routes';
