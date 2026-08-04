@@ -260,6 +260,11 @@ Configured at startup:
 - Swagger at `/api/docs` (non-production)
 - Static React SPA serving from `apps/chat/dist` for non-`/api/*` routes
 - Global prefix: `api`
+- OpenTelemetry SDK bootstrap (`telemetry/otel-sdk.ts`, imported first, before `reflect-metadata`)
+  — off by default (`OTEL_SDK_DISABLED=true`); when enabled, adds a `traceparent` response header
+  on traced routes and an optional dedicated Prometheus scrape listener (default `:9464/metrics`,
+  independent of the main application port) — see `apps/chat-api/README.md`'s Observability
+  section
 
 NestJS conventions (domain structure, thin controllers, Swagger decorators, Logger, ConfigService, DTO validation) are defined in `apps/chat-api/AGENTS.md` — read it before implementing anything in `apps/chat-api/**`.
 
@@ -289,6 +294,7 @@ apps/chat-api/src/
 ├── models/                # Available models listing
 ├── themes/                # Theme config + icon serving
 ├── health/                # Health check
+├── telemetry/             # OpenTelemetry bootstrap, logger bridge, metrics, traceparent header
 ├── config/                # class-validator env schema
 └── common/                # Shared decorators, interceptors
 ```
