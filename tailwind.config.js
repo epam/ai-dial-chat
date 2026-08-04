@@ -35,7 +35,6 @@ const backgroundsColors = {
   'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2E)',
   // New Chat button shadow — blue/purple pair at default, hover, and active alpha levels
   'mask-opaque': 'var(--bg-mask-opaque, #000)',
-  'accent-primary-fill': 'var(--bg-accent-primary-fill, #5C8DEA)',
   'hover-alpha': 'var(--bg-hover-alpha, rgba(0, 0, 0, 0.04))',
   'focus-ring-alpha': 'var(--bg-focus-ring-alpha, rgba(125, 164, 255, 0.5))',
 };

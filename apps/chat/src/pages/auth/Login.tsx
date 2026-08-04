@@ -91,7 +91,7 @@ const LoginPage: FC = () => {
   }, [loadProviders]);
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-layer-2 mobile:bg-layer-0 mobile:px-6">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-layer-2 mobile:bg-layer-raised mobile:px-6">
       <div
         className="pointer-events-none absolute inset-0 size-full mobile:hidden"
         aria-hidden="true"

@@ -30,7 +30,7 @@ export interface UseModelSelectorOptions {
   onDeploymentChange?: (id: string) => void;
   /** Status labels for the selector dropdown. */
   modelSelectorLabels?: ModelSelectorLabels;
-  /** Class applied to the sticky search header wrapper for theming. Defaults to `'bg-layer-0'`. */
+  /** Class applied to the sticky search header wrapper for theming. Defaults to `'bg-layer-raised'`. */
   searchHeaderClassName?: string;
 }
 
@@ -56,7 +56,7 @@ export const useModelSelector = ({
   selectedDeploymentId,
   onDeploymentChange,
   modelSelectorLabels,
-  searchHeaderClassName = 'bg-layer-0',
+  searchHeaderClassName = 'bg-layer-raised',
 }: UseModelSelectorOptions): UseModelSelectorResult => {
   const [searchQuery, setSearchQuery] = useState('');
 
