@@ -16,6 +16,17 @@ import {
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import type {
+  ToolsetAuthFormData,
+  ToolsetFormData,
+  ToolsetFormErrors,
+} from '../../models/toolsets';
+import {
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  ToolsetEditorSteps,
+  WithLogin,
+} from '../../constants/toolsets';
 import {
   createToolset,
   getToolset,
@@ -24,17 +35,6 @@ import {
   updateToolset,
 } from '../../server-api/toolsets';
 import { ROUTES } from '../../types/routes';
-import type {
-  ToolsetAuthFormData,
-  ToolsetFormData,
-  ToolsetFormErrors,
-} from '../../types/toolsets';
-import {
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
-  ToolsetEditorSteps,
-  WithLogin,
-} from '../../types/toolsets';
 import {
   extractToolsetApiErrorMessage,
   formToToolsetBody,
@@ -92,10 +92,10 @@ const ToolsetEditor: FC = () => {
   const step =
     (searchParams.get(ToolsetEditorQuery.Step) as ToolsetEditorSteps) ??
     ToolsetEditorSteps.General;
-  const returnUrl = useMemo(
-    () => searchParams.get(ToolsetEditorQuery.ReturnUrl) ?? ROUTES.Catalog,
-    [searchParams],
-  );
+  const returnUrl = useMemo(() => {
+    const raw = searchParams.get(ToolsetEditorQuery.ReturnUrl);
+    return raw?.startsWith('/') && !raw.startsWith('//') ? raw : ROUTES.Catalog;
+  }, [searchParams]);
 
   const [form, setForm] = useState<ToolsetFormData | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(isEditMode);

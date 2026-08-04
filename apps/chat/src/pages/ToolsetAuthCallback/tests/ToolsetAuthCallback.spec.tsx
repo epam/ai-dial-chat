@@ -10,7 +10,7 @@ import * as toolsetsApi from '../../../server-api/toolsets';
 import type {
   ToolsetOAuthChannelMessage,
   ToolsetRedirectState,
-} from '../../../types/toolsets';
+} from '../../../models/toolsets';
 import {
   OAuthResourceKind,
   ToolsetAuthTypes,
@@ -18,7 +18,7 @@ import {
   ToolsetCredentialsLevel,
   ToolsetOAuthFailureReason,
   ToolsetOAuthResultType,
-} from '../../../types/toolsets';
+} from '../../../constants/toolsets';
 import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import ToolsetAuthCallback from '../ToolsetAuthCallback';
 

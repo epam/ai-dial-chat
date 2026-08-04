@@ -1,6 +1,6 @@
 import type { ExternalServiceCredentialsLevel } from '../server-api/external-services';
 import type { RowAuthType } from '../types/signin-interrupt';
-import type { ToolsetCredentialsLevel } from '../types/toolsets';
+import type { ToolsetCredentialsLevel } from '../constants/toolsets';
 
 export interface OAuthSettings {
   clientId?: string;

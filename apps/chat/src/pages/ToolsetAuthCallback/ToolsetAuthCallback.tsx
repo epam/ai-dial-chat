@@ -28,7 +28,7 @@ import type {
   ToolsetOAuthChannelMessage,
   ToolsetOAuthResultAcknowledgement,
   ToolsetRedirectState,
-} from '../../types/toolsets';
+} from '../../models/toolsets';
 import {
   OAuthResourceKind,
   ToolsetAuthTypes,
@@ -36,7 +36,7 @@ import {
   ToolsetCredentialsLevel,
   ToolsetOAuthFailureReason,
   ToolsetOAuthResultType,
-} from '../../types/toolsets';
+} from '../../constants/toolsets';
 import { parseExternalServiceUrl } from '../../utils/external-services';
 import { getToolsetOAuthChannelName } from '../../utils/toolsets';
 

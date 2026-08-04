@@ -6,7 +6,7 @@ import {
   BasicI18nKeys,
   EditorI18nKeys,
 } from '../../../constants/translation-keys';
-import { ToolsetEditorSteps } from '../../../types/toolsets';
+import { ToolsetEditorSteps } from '../../../constants/toolsets';
 import ToolsetEditorHeader from '../ToolsetEditorHeader';
 
 interface MockStep {

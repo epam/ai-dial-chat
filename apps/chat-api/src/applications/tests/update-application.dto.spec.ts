@@ -28,14 +28,38 @@ describe('UpdateApplicationBodyDto', () => {
     expect(errors.some((e) => e.property === 'name')).toBe(true);
   });
 
-  it('rejects unknown fields such as type, version, or applicationProperties', async () => {
+  it('rejects unknown fields such as type or applicationProperties', async () => {
     const errors = await validateDto({
       ...BASE_BODY,
       type: 'https://mydial.epam.com/custom_application_schemas/quickapps2',
-      version: '2.0',
       applicationProperties: { tool_sets: [] },
     });
     expect(errors.length).toBeGreaterThan(0);
+  });
+
+  it('passes with version, endpoint, features, inputAttachmentTypes, and maxInputAttachments', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      version: '2.0',
+      endpoint: 'https://api.example.com/chat',
+      features: { system_prompt: true },
+      inputAttachmentTypes: ['image/png'],
+      maxInputAttachments: 5,
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects a non-URL endpoint (no protocol)', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      endpoint: 'no-protocol.example',
+    });
+    expect(errors.some((e) => e.property === 'endpoint')).toBe(true);
+  });
+
+  it('rejects a negative maxInputAttachments', async () => {
+    const errors = await validateDto({ ...BASE_BODY, maxInputAttachments: -1 });
+    expect(errors.some((e) => e.property === 'maxInputAttachments')).toBe(true);
   });
 
   it('passes when intro is exactly 90 characters', async () => {

@@ -10,7 +10,7 @@ import {
 import {
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
-} from '../../../types/toolsets';
+} from '../../../constants/toolsets';
 import {
   navigateToolsetOAuthPopup,
   openToolsetOAuthPopup,

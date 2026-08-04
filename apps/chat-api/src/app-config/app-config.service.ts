@@ -21,7 +21,7 @@ const CACHE_TTL_MS = CACHE_TTL_SECONDS * 1000;
 const DEFAULT_FILE_MANAGER_TABS = ['my_files', 'shared', 'organization'];
 const DEFAULT_PUBLICATION_FILTER_SOURCES = ['title', 'role', 'dial_roles'];
 
-const APP_VERSION: string = packageJson.version;
+const APP_VERSION: string = packageJson?.version;
 
 const FOOTER_ALLOWED_TAGS = ['a', 'span', 'strong', 'u', 'em', 'br', 'p'];
 const FOOTER_ALLOWED_ATTRS: sanitizeHtml.IOptions['allowedAttributes'] = {

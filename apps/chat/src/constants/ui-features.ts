@@ -1,7 +1,7 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 
 /**
- * The 19 `OverlayFeature` keys enabled by default, reflecting today's
+ * The 20 `OverlayFeature` keys enabled by default, reflecting today's
  * unconditional app behavior (see `design.md`'s classification table in the
  * `add-chat-overlay-enabled-features` change). Every other transferable key
  * (13 "modifier" keys) defaults off so a deployment that configures nothing
@@ -27,6 +27,7 @@ export const DEFAULT_ENABLED_UI_FEATURES: ReadonlySet<OverlayFeature> = new Set(
     OverlayFeature.CodeApps,
     OverlayFeature.Catalog,
     OverlayFeature.Toolsets,
+    OverlayFeature.CustomApps,
     OverlayFeature.VoiceInput,
   ],
 );

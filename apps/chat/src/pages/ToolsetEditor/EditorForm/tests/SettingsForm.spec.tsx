@@ -10,12 +10,12 @@ import {
 import type {
   ToolsetAuthFormData,
   ToolsetFormData,
-} from '../../../../types/toolsets';
+} from '../../../../models/toolsets';
 import {
   ToolsetAuthTypes,
   ToolsetTransportType,
   WithLogin,
-} from '../../../../types/toolsets';
+} from '../../../../constants/toolsets';
 import SettingsForm from '../SettingsForm';
 
 vi.mock('../AuthSection', () => ({ default: () => null }));
