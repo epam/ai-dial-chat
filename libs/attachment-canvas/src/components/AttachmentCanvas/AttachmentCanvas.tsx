@@ -342,7 +342,9 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
           </div>
         );
       case AttachmentContentType.Code:
-        return <CodeContent content={content} />;
+        return (
+          <CodeContent content={content} codeBlockTheme={codeBlockTheme} />
+        );
       case AttachmentContentType.Html:
         return (
           <HtmlContent
@@ -353,6 +355,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
             }}
             isSourceView={isHtmlSourceView}
             title={fileName}
+            codeBlockTheme={codeBlockTheme}
           />
         );
       case AttachmentContentType.Pdf:

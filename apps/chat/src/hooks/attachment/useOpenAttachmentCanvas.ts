@@ -177,14 +177,9 @@ export const useOpenAttachmentCanvas = () => {
         return false;
       }
 
-      const dotIdx2 = (attachment.name ?? '').lastIndexOf('.');
-      const ext2 =
-        dotIdx2 !== -1
-          ? (attachment.name ?? '').slice(dotIdx2 + 1).toLowerCase()
-          : '';
       const content = await resolveCodeCanvasContent(
         attachment,
-        extensionToLanguage(ext2),
+        extensionToLanguage(ext),
       );
       if (content == null) return false;
       openCanvas(content, attachment.name, canvasAttachmentId);
