@@ -114,10 +114,10 @@ describe('isOverlayMessageResponse', () => {
 });
 
 describe('OverlayFeature', () => {
-  it('has exactly 32 unique members', () => {
+  it('has exactly 33 unique members', () => {
     const values = Object.values(OverlayFeature);
-    expect(values).toHaveLength(32);
-    expect(new Set(values).size).toBe(32);
+    expect(values).toHaveLength(33);
+    expect(new Set(values).size).toBe(33);
   });
 
   it('includes the pre-existing and newly-added transferable keys', () => {

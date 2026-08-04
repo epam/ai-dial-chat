@@ -160,7 +160,8 @@
     "create": {
       "menuCaption": "Create new",
       "quickApp": "QuickApp",
-      "toolset": "Toolset"
+      "toolset": "Toolset",
+      "customApp": "Custom App"
     },
     "publishSuccessTitle": "Published",
     "publishSuccess": "\"{{name}}\" published to {{folder}}",
@@ -897,6 +898,43 @@
       "error": "Could not load usage limits",
       "tokensRemaining": "{{count}} tokens remaining",
       "progressAriaLabel": "Monthly token usage: {{used}} of {{total}} tokens used"
+    }
+  },
+  "customApp": {
+    "settings": {
+      "completionUrlLabel": "Chat completion URL",
+      "completionUrlDescription": "The URL of the chat completion endpoint for this custom app.",
+      "completionUrlPlaceholder": "https://example.com/openai/deployments/gpt-4o/chat/completions",
+      "completionUrlRequired": "Chat completion URL is required",
+      "completionUrlInvalid": "Enter a valid absolute URL",
+      "featuresDataLabel": "Features data",
+      "featuresDataDescription": "Enter key-value pairs for rate_endpoint and/or configuration_endpoint in JSON format.",
+      "featuresDataPlaceholder": "{\n\t\"rate_endpoint\": \"http://application1/rate\",\n\t\"configuration_endpoint\": \"http://application1/configuration\"\n}",
+      "attachmentTypesLabel": "Attachment types",
+      "attachmentTypesDescription": "Input the MIME type and press 'Enter' to add.",
+      "attachmentTypesPlaceholder": "Enter one or more attachment types",
+      "maxAttachmentsLabel": "Max. input attachments",
+      "maxAttachmentsDescription": "Maximum number of input attachments allowed.",
+      "maxAttachmentsInvalid": "Enter a number greater than or equal to 0",
+      "enterAttachmentTypes": "Enter one or more attachment types",
+      "enterMaxAttachments": "Enter the maximum number of attachments",
+      "typeChatCompletionUrl": "Type chat completion URL",
+      "invalidMimeType": "One or more values are not valid MIME types",
+      "featuresDataInvalid": "Enter valid JSON with rate_endpoint and/or configuration_endpoint"
+    },
+    "general": {
+      "namePlaceholder": "Enter Custom App name",
+      "descriptionPlaceholder": "Describe your Custom App"
+    },
+    "saveConfirm": {
+      "title": "Only valid data will be saved",
+      "description": "Some fields are invalid or required fields are missing. Changes in those fields will not be saved. Exit and save only valid information?",
+      "confirmLabel": "Save"
+    },
+    "error": {
+      "createFailed": "Failed to create custom app. Please try again.",
+      "saveFailed": "Failed to save custom app. Please try again.",
+      "loadFailed": "Failed to load custom app. Please try again."
     }
   }
 }

@@ -1,8 +1,10 @@
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import type { ToolMenuItem } from '@epam/ai-dial-chat-shared';
 import { BASE_ICON_SIZE, Button } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import type { CSSProperties, FC } from 'react';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
+import styles from './ToolsBottomSheet.module.scss';
 
 /** Props for the ToolsBottomSheet component. */
 export interface ToolsBottomSheetProps {
@@ -24,6 +26,16 @@ export interface ToolsBottomSheetProps {
   items: ToolMenuItem[];
   /** Called with the tool id when a row is tapped. */
   onToolToggle: (toolId: string) => void;
+  /** Color overrides. */
+  colors?: ToolsBottomSheetColors;
+}
+
+/** Color overrides for `ToolsBottomSheet`, applied as CSS custom properties with app theme fallbacks. */
+export interface ToolsBottomSheetColors {
+  /** Icon color for each tool row. Fallback: `--text-secondary`. */
+  iconText?: string;
+  /** Checkmark icon color for a selected tool row. Fallback: `--text-accent`. */
+  selectedIconText?: string;
 }
 
 /**
@@ -40,41 +52,53 @@ export const ToolsBottomSheet: FC<ToolsBottomSheetProps> = ({
   title = 'Tools',
   items,
   onToolToggle,
-}) => (
-  <BottomSheetShell
-    isOpen={isOpen}
-    title={title}
-    closeLabel={closeLabel}
-    onClose={onClose}
-    onBack={onBack}
-    backLabel={backLabel}
-    style={style}
-  >
-    <ul role="menu" className="flex flex-col pb-4">
-      {items.map((item) => (
-        <li key={item.id} role="none">
-          <Button
-            type="button"
-            role="menuitemcheckbox"
-            aria-checked={item.isSelected}
-            className="w-full gap-3 px-4 py-[10px] text-start"
-            iconBefore={
-              <span className="flex items-center text-secondary">
-                {item.icon}
-              </span>
-            }
-            iconAfter={
-              item.isSelected ? (
-                <span className="ms-auto text-accent-primary">
-                  <IconCheck size={BASE_ICON_SIZE} aria-hidden />
+  colors,
+}) => {
+  const cssVars = buildCssVars({
+    '--tbs-icon-text': colors?.iconText,
+    '--tbs-selected-icon-text': colors?.selectedIconText,
+  });
+
+  return (
+    <BottomSheetShell
+      isOpen={isOpen}
+      title={title}
+      closeLabel={closeLabel}
+      onClose={onClose}
+      onBack={onBack}
+      backLabel={backLabel}
+      style={style}
+    >
+      <ul role="menu" className="flex flex-col pb-4" style={cssVars}>
+        {items.map((item) => (
+          <li key={item.id} role="none">
+            <Button
+              type="button"
+              role="menuitemcheckbox"
+              aria-checked={item.isSelected}
+              className="w-full gap-3 px-4 py-[10px] text-start"
+              iconBefore={
+                <span
+                  className={mergeClasses('flex items-center', styles.icon)}
+                >
+                  {item.icon}
                 </span>
-              ) : null
-            }
-            label={<span className="dial-small-text">{item.label}</span>}
-            onClick={() => onToolToggle(item.id)}
-          />
-        </li>
-      ))}
-    </ul>
-  </BottomSheetShell>
-);
+              }
+              iconAfter={
+                item.isSelected ? (
+                  <span
+                    className={mergeClasses('ms-auto', styles.selectedIcon)}
+                  >
+                    <IconCheck size={BASE_ICON_SIZE} aria-hidden />
+                  </span>
+                ) : null
+              }
+              label={<span className="dial-small-text">{item.label}</span>}
+              onClick={() => onToolToggle(item.id)}
+            />
+          </li>
+        ))}
+      </ul>
+    </BottomSheetShell>
+  );
+};

@@ -288,7 +288,6 @@ describe('ApplicationsService', () => {
             displayVersion: '1.0',
             application_type_schema_id:
               'https://mydial.epam.com/custom_application_schemas/quickapps2',
-            application_properties: {},
             description: 'A description',
             iconUrl: 'https://example.com/icon.svg',
           },

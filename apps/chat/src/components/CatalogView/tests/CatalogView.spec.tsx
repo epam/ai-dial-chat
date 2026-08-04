@@ -14,7 +14,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ToolsetOAuthCallbackQuery } from '../../../constants/toolsets';
+import {
+  ToolsetOAuthCallbackQuery,
+  ToolsetOAuthResultType,
+} from '../../../constants/toolsets';
 import { CatalogI18nKeys } from '../../../constants/translation-keys';
 import { DEFAULT_ENABLED_UI_FEATURES } from '../../../constants/ui-features';
 import { useAppConfig } from '../../../context/AppConfigContext';
@@ -41,7 +44,6 @@ import {
 } from '../../../server-api/toolsets';
 import { AuthStatus } from '../../../types/auth-status';
 import { ROUTES } from '../../../types/routes';
-import { ToolsetOAuthResultType } from '../../../types/toolsets';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import CatalogView from '../CatalogView';

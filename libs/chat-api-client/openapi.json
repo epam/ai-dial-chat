@@ -5057,7 +5057,8 @@
           },
           "type": {
             "type": "string",
-            "example": "https://mydial.epam.com/custom_application_schemas/quickapps2"
+            "example": "https://mydial.epam.com/custom_application_schemas/quickapps2",
+            "description": "Omit for plain custom applications with no schema type"
           },
           "description": {
             "type": "string",
@@ -5098,7 +5099,7 @@
             }
           }
         },
-        "required": ["name", "type"]
+        "required": ["name"]
       },
       "CreatedApplicationDto": {
         "type": "object",
@@ -5144,6 +5145,28 @@
             "type": "string",
             "example": "Summarizes long documents in one line.",
             "maxLength": 90
+          },
+          "version": {
+            "type": "string",
+            "example": "1.0.0"
+          },
+          "endpoint": {
+            "type": "string",
+            "example": "https://api.example.com/chat"
+          },
+          "features": {
+            "type": "object"
+          },
+          "inputAttachmentTypes": {
+            "example": ["image/png"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "maxInputAttachments": {
+            "type": "number",
+            "example": 5
           }
         },
         "required": ["name"]
@@ -5692,6 +5715,14 @@
           "applicationTypeSchemaId": {
             "type": "string",
             "description": "URI of the custom application type schema, when present"
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "Chat completion endpoint URL for custom applications"
+          },
+          "maxInputAttachments": {
+            "type": "number",
+            "description": "Maximum number of input attachments for custom applications"
           },
           "createdAt": {
             "type": "number",

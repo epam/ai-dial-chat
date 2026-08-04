@@ -114,7 +114,7 @@ export const TitleRow: FC<TitleRowProps> = ({
                     className={mergeClasses(
                       'flex min-h-11 min-w-11 items-center justify-center rounded-full px-3 py-1.5 transition-colors desktop:min-h-8 desktop:min-w-10',
                       isActive
-                        ? 'bg-layer-0 text-accent-primary shadow-sm'
+                        ? 'bg-layer-raised text-accent-primary shadow-sm'
                         : 'text-secondary hover:text-primary',
                     )}
                   >

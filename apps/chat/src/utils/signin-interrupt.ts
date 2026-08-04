@@ -1,9 +1,9 @@
 import type { DialToolsetDto } from '@epam/chat-api-client';
+import { ToolsetCredentialsLevel } from '../constants/toolsets';
 import type { ResolvedRowInfo } from '../models/signin-interrupt';
 import type { GetExternalServiceResponseDto } from '../server-api/external-services';
 import { ExternalServiceCredentialsLevel } from '../server-api/external-services';
 import type { RowAuthType } from '../types/signin-interrupt';
-import { ToolsetCredentialsLevel } from '../types/toolsets';
 import { getExternalServiceFallbackName } from './external-services';
 import { getToolsetFallbackName, isPublicToolsetId } from './toolsets';
 

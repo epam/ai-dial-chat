@@ -54,6 +54,12 @@ export interface MessageActionLabels {
   ariaLabels?: MessageActionAriaLabels;
 }
 
+/** Color overrides for `MessageActions`, applied as CSS custom properties with app theme fallbacks. */
+export interface MessageActionColors {
+  /** Icon color of the active Like/Dislike button. Fallback: `--text-accent`. */
+  activeRatingText?: string;
+}
+
 /** Props for the `MessageActions` component. */
 export interface MessageActionsProps {
   /** Which actions are shown. `'User'` = Edit/Delete; `'Agent'` = Regenerate/Copy/Like/Dislike. Defaults to `'User'`. */
@@ -82,4 +88,6 @@ export interface MessageActionsProps {
   onDislike?: () => void;
   /** Active rating; highlights the matching Like/Dislike button when set. */
   activeRating?: MessageRating;
+  /** Color overrides. */
+  colors?: MessageActionColors;
 }

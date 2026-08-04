@@ -5,12 +5,12 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ToolsetAuthTypes, WithLogin } from '../../../constants/toolsets';
 import { ToolsetEditorI18nKeys } from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import * as toolsetsApi from '../../../server-api/toolsets';
 import { ROUTES } from '../../../types/routes';
-import { ToolsetAuthTypes, WithLogin } from '../../../types/toolsets';
 import ToolsetEditor from '../ToolsetEditor';
 
 vi.mock('../../../server-api/toolsets', () => ({

@@ -28,6 +28,7 @@ const execCommandFallback = (text: string): boolean => {
   textarea.setAttribute('autocomplete', 'off');
   textarea.setAttribute('readonly', '');
   document.body.appendChild(textarea);
+
   try {
     textarea.focus({ preventScroll: true });
     // `textarea.select()` is ignored on iOS Safari — use setSelectionRange.

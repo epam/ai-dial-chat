@@ -37,6 +37,8 @@ export interface ScheduledTaskCardColors {
   newBadgeBackground?: string;
   /** "New" badge text color. Fallback: `--controls-text-permanent`. */
   newBadgeText?: string;
+  /** Divider border color above the location breadcrumb. Fallback: `--stroke-tertiary`. */
+  locationDividerBorder?: string;
 }
 
 /** Typography overrides for the {@link ScheduledTaskCard} component. */
