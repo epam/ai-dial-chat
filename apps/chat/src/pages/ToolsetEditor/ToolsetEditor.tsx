@@ -9,7 +9,13 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
-import { ToolsetEditorQuery } from '../../constants/toolsets';
+import {
+  ToolsetEditorQuery,
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  ToolsetEditorSteps,
+  WithLogin,
+} from '../../constants/toolsets';
 import {
   ToolsetEditorI18nKeys,
   EditorI18nKeys,
@@ -21,12 +27,6 @@ import type {
   ToolsetFormData,
   ToolsetFormErrors,
 } from '../../models/toolsets';
-import {
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
-  ToolsetEditorSteps,
-  WithLogin,
-} from '../../constants/toolsets';
 import {
   createToolset,
   getToolset,

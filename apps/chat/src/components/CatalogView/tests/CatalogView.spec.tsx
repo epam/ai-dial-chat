@@ -14,7 +14,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ToolsetOAuthCallbackQuery } from '../../../constants/toolsets';
+import {
+  ToolsetOAuthCallbackQuery,
+  ToolsetOAuthResultType,
+} from '../../../constants/toolsets';
 import { CatalogI18nKeys } from '../../../constants/translation-keys';
 import { DEFAULT_ENABLED_UI_FEATURES } from '../../../constants/ui-features';
 import { useAppConfig } from '../../../context/AppConfigContext';
@@ -28,7 +31,6 @@ import { useNotification } from '../../../context/NotificationContext';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { useCatalogSortFilterPreference } from '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import { useUiFeature } from '../../../hooks/useUiFeature';
-import { ToolsetOAuthResultType } from '../../../constants/toolsets';
 import { deleteApplication } from '../../../server-api/applications';
 import { getDeploymentLimits } from '../../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../../server-api/deployments';

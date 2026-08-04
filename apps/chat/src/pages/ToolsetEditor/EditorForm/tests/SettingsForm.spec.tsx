@@ -3,6 +3,11 @@ import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  ToolsetAuthTypes,
+  ToolsetTransportType,
+  WithLogin,
+} from '../../../../constants/toolsets';
+import {
   ButtonsI18nKeys,
   CatalogI18nKeys,
   ToolsetEditorI18nKeys,
@@ -11,11 +16,6 @@ import type {
   ToolsetAuthFormData,
   ToolsetFormData,
 } from '../../../../models/toolsets';
-import {
-  ToolsetAuthTypes,
-  ToolsetTransportType,
-  WithLogin,
-} from '../../../../constants/toolsets';
 import SettingsForm from '../SettingsForm';
 
 vi.mock('../AuthSection', () => ({ default: () => null }));

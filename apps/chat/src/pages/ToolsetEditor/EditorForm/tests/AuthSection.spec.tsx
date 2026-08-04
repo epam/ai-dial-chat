@@ -5,6 +5,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   TOOLSET_REDIRECT_STATE_KEY,
   ToolsetOAuthCallbackQuery,
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  ToolsetOAuthResultType,
+  WithLogin,
 } from '../../../../constants/toolsets';
 import {
   ApiI18nKeys,
@@ -16,12 +20,6 @@ import type {
   ToolsetAuthFormData,
   ToolsetFormErrors,
 } from '../../../../models/toolsets';
-import {
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
-  ToolsetOAuthResultType,
-  WithLogin,
-} from '../../../../constants/toolsets';
 import * as toolsetsApi from '../../../../server-api/toolsets';
 import { ROUTES } from '../../../../types/routes';
 import { getToolsetOAuthChannelName } from '../../../../utils/toolsets';

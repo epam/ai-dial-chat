@@ -12,15 +12,15 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppsEditorI18nKeys } from '../../constants/translation-keys';
-import { useUser } from '../../context/auth/UserContext';
-import { useTheme } from '../../context/ThemeContext';
 import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
 } from '../../constants/toolsets';
+import { AppsEditorI18nKeys } from '../../constants/translation-keys';
+import { useUser } from '../../context/auth/UserContext';
+import { useTheme } from '../../context/ThemeContext';
 import { getDeploymentDetails } from '../../server-api/deployments';
 import { getToolset, logoutToolset } from '../../server-api/toolsets';
 import type {
