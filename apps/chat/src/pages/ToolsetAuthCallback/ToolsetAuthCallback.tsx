@@ -36,7 +36,7 @@ import {
   ToolsetCredentialsLevel,
   ToolsetOAuthFailureReason,
   ToolsetOAuthResultType,
-} from '../../models/toolsets';
+} from '../../constants/toolsets';
 import { parseExternalServiceUrl } from '../../utils/external-services';
 import { getToolsetOAuthChannelName } from '../../utils/toolsets';
 

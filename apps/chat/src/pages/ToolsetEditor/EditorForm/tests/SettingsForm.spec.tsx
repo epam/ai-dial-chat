@@ -15,7 +15,7 @@ import {
   ToolsetAuthTypes,
   ToolsetTransportType,
   WithLogin,
-} from '../../../../models/toolsets';
+} from '../../../../constants/toolsets';
 import SettingsForm from '../SettingsForm';
 
 vi.mock('../AuthSection', () => ({ default: () => null }));

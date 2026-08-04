@@ -13,7 +13,7 @@ import type {
   CustomAppGeneralFormData,
 } from '../../models/custom-apps';
 import type { ToolsetFormErrors } from '../../models/toolsets';
-import { ToolsetEditorSteps } from '../../models/toolsets';
+import { ToolsetEditorSteps } from '../../constants/toolsets';
 import CustomAppSettingsForm from './EditorForm/CustomAppSettingsForm';
 import GeneralForm from './EditorForm/GeneralForm';
 

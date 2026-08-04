@@ -1,36 +1,14 @@
-export enum ToolsetAuthTypes {
-  None = 'NONE',
-  ApiKey = 'API_KEY',
-  OAuth = 'OAUTH',
-}
-
-export enum ToolsetTransportType {
-  Http = 'HTTP',
-  Sse = 'SSE',
-}
-
-export enum ToolsetAuthStatus {
-  SignedIn = 'SIGNED_IN',
-  SignedOut = 'SIGNED_OUT',
-  Failed = 'FAILED',
-}
-
-export enum ToolsetCredentialsLevel {
-  Global = 'GLOBAL',
-  User = 'USER',
-  App = 'APP',
-}
-
-export enum ToolsetEditorSteps {
-  General = 'general',
-  Settings = 'settings',
-}
-
-export enum WithLogin {
-  WithLogin = 'with-login',
-  WithoutLogin = 'without-login',
-  WithConfig = 'with-config',
-}
+import type {
+  OAuthResourceKind,
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  ToolsetOAuthChannelControlType,
+  ToolsetOAuthFailureReason,
+  ToolsetOAuthInitiationResultType,
+  ToolsetOAuthResultType,
+  ToolsetTransportType,
+  WithLogin,
+} from '../constants/toolsets';
 
 export interface ToolsetAuthFormData {
   authenticationType: ToolsetAuthTypes;
@@ -85,11 +63,6 @@ export interface ToolsetFormErrors {
  * before navigating it to the provider, since the popup and its opener do
  * not share a `sessionStorage` partition once navigated cross-origin.
  */
-export enum OAuthResourceKind {
-  Toolset = 'toolset',
-  ExternalService = 'external-service',
-}
-
 export interface ToolsetRedirectState {
   toolsetId: string;
   credentialsLevel?: ToolsetCredentialsLevel;
@@ -107,16 +80,6 @@ export interface ToolsetRedirectState {
   resourceKind?: OAuthResourceKind;
 }
 
-/** Outcome of calling `initiateOAuthLogin`. */
-export enum ToolsetOAuthInitiationResultType {
-  /** The popup was opened and navigated to the provider's authorize URL. */
-  Started = 'started',
-  /** The browser blocked the popup before it could be opened. */
-  Blocked = 'blocked',
-  /** The toolset's OAuth configuration is missing required fields. */
-  InvalidConfig = 'invalid-config',
-}
-
 export type ToolsetOAuthInitiationResult =
   | {
       type: ToolsetOAuthInitiationResultType.Started;
@@ -125,22 +88,6 @@ export type ToolsetOAuthInitiationResult =
     }
   | { type: ToolsetOAuthInitiationResultType.Blocked }
   | { type: ToolsetOAuthInitiationResultType.InvalidConfig };
-
-/** Outcome reported back to the tab that initiated an OAuth login. */
-export enum ToolsetOAuthResultType {
-  Success = 'success',
-  Failure = 'failure',
-  /** The popup was closed and focus returned to its opener, or the flow timed out. */
-  Cancelled = 'cancelled',
-}
-
-/** Reason codes the callback popup can report for a failed OAuth login. */
-export enum ToolsetOAuthFailureReason {
-  MissingCode = 'missing-code',
-  MissingRedirectState = 'missing-redirect-state',
-  StateMismatch = 'state-mismatch',
-  LoginRequestFailed = 'login-request-failed',
-}
 
 export interface ToolsetOAuthSuccessMessage {
   type: ToolsetOAuthResultType.Success;
@@ -151,11 +98,6 @@ export interface ToolsetOAuthSuccessMessage {
 export interface ToolsetOAuthFailureMessage {
   type: ToolsetOAuthResultType.Failure;
   reason: ToolsetOAuthFailureReason;
-}
-
-/** Control messages exchanged over a flow-scoped OAuth channel. */
-export enum ToolsetOAuthChannelControlType {
-  ResultAcknowledged = 'result-acknowledged',
 }
 
 /** Confirms that the initiating tab consumed the callback result. */

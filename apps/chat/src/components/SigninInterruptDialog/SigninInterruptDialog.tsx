@@ -54,7 +54,7 @@ import { RowAuthType } from '../../types/signin-interrupt';
 import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
-} from '../../types/toolsets';
+} from '../../constants/toolsets';
 import { buildExternalServiceScopeId } from '../../utils/external-services';
 import {
   resolveExternalServiceInfo,

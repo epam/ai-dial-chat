@@ -12,7 +12,7 @@ import type {
   ToolsetFormData,
   ToolsetFormErrors,
 } from '../../models/toolsets';
-import { ToolsetEditorSteps } from '../../models/toolsets';
+import { ToolsetEditorSteps } from '../../constants/toolsets';
 import GeneralForm from './EditorForm/GeneralForm';
 import SettingsForm from './EditorForm/SettingsForm';
 

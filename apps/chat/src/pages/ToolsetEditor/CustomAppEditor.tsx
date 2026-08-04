@@ -26,7 +26,7 @@ import type {
   CustomAppFormErrors,
   CustomAppGeneralFormData,
 } from '../../models/custom-apps';
-import { ToolsetEditorSteps } from '../../models/toolsets';
+import { ToolsetEditorSteps } from '../../constants/toolsets';
 import {
   createApplication,
   updateApplication,

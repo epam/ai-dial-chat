@@ -20,7 +20,6 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { isQuickAppSchema } from '../../constants/application-schema';
 import {
   AppsEditorI18nKeys,
   BasicI18nKeys,
@@ -28,6 +27,7 @@ import {
 } from '../../constants/translation-keys';
 import { createApplication } from '../../server-api/applications';
 import type { TriggerSaveGeneralPayload } from '../../types/apps-editor';
+import { isQuickAppSchema } from '../../utils/application-schema';
 
 export interface GeneralFormHandle {
   submit: () => Promise<void>;

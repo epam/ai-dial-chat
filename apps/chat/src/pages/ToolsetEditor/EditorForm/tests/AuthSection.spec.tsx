@@ -21,7 +21,7 @@ import {
   ToolsetCredentialsLevel,
   ToolsetOAuthResultType,
   WithLogin,
-} from '../../../../models/toolsets';
+} from '../../../../constants/toolsets';
 import * as toolsetsApi from '../../../../server-api/toolsets';
 import { ROUTES } from '../../../../types/routes';
 import { getToolsetOAuthChannelName } from '../../../../utils/toolsets';

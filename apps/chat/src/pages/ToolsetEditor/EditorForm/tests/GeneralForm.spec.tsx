@@ -7,7 +7,7 @@ import {
   ToolsetAuthTypes,
   ToolsetTransportType,
   WithLogin,
-} from '../../../../models/toolsets';
+} from '../../../../constants/toolsets';
 import GeneralForm from '../GeneralForm';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({

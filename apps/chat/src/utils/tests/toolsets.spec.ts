@@ -11,7 +11,7 @@ import {
   ToolsetOAuthResultType,
   ToolsetTransportType,
   WithLogin,
-} from '../../models/toolsets';
+} from '../../constants/toolsets';
 import type { ToolsetFormData } from '../../models/toolsets';
 import * as toolsetsApi from '../../server-api/toolsets';
 import { ROUTES } from '../../types/routes';

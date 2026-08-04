@@ -36,7 +36,7 @@ import {
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
   WithLogin,
-} from '../../../models/toolsets';
+} from '../../../constants/toolsets';
 import { loginToolset, logoutToolset } from '../../../server-api/toolsets';
 import {
   fetchToolsetAuthSettings,

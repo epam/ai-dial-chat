@@ -26,7 +26,7 @@ import {
   ToolsetCredentialsLevel,
   ToolsetEditorSteps,
   WithLogin,
-} from '../../models/toolsets';
+} from '../../constants/toolsets';
 import {
   createToolset,
   getToolset,

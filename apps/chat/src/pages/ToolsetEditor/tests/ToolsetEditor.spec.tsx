@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToolsetEditorI18nKeys } from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
-import { ToolsetAuthTypes, WithLogin } from '../../../models/toolsets';
+import { ToolsetAuthTypes, WithLogin } from '../../../constants/toolsets';
 import * as toolsetsApi from '../../../server-api/toolsets';
 import { ROUTES } from '../../../types/routes';
 import ToolsetEditor from '../ToolsetEditor';

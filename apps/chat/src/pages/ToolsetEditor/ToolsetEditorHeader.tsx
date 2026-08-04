@@ -8,7 +8,7 @@ import {
   ButtonsI18nKeys,
   EditorI18nKeys,
 } from '../../constants/translation-keys';
-import { ToolsetEditorSteps } from '../../models/toolsets';
+import { ToolsetEditorSteps } from '../../constants/toolsets';
 
 interface Props {
   step: ToolsetEditorSteps;

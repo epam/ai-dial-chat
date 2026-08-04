@@ -26,7 +26,7 @@ import {
   ToolsetOAuthResultType,
   ToolsetTransportType,
   WithLogin,
-} from '../models/toolsets';
+} from '../constants/toolsets';
 import { getToolset } from '../server-api/toolsets';
 import { ROUTES } from '../types/routes';
 

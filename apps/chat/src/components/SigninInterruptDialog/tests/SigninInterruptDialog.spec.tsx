@@ -20,7 +20,7 @@ import { useUiFeature } from '../../../hooks/useUiFeature';
 import { getExternalService } from '../../../server-api/external-services';
 import { getToolset } from '../../../server-api/toolsets';
 import { PendingSigninEventKind } from '../../../types/client-channel';
-import { ToolsetAuthTypes } from '../../../types/toolsets';
+import { ToolsetAuthTypes } from '../../../constants/toolsets';
 import SigninInterruptDialog from '../SigninInterruptDialog';
 
 vi.mock('../../../context/AppConfigContext', () => ({

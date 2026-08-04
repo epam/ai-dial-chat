@@ -9,7 +9,7 @@ import {
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
   WithLogin,
-} from '../../models/toolsets';
+} from '../../constants/toolsets';
 import {
   getToolset,
   loginToolset,

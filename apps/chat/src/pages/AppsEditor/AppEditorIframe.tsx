@@ -20,7 +20,7 @@ import {
   ToolsetCredentialsLevel,
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
-} from '../../models/toolsets';
+} from '../../constants/toolsets';
 import { getDeploymentDetails } from '../../server-api/deployments';
 import { getToolset, logoutToolset } from '../../server-api/toolsets';
 import type {

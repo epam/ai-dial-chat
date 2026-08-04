@@ -24,7 +24,7 @@ import type {
   ToolsetFormData,
   ToolsetFormErrors,
 } from '../../../models/toolsets';
-import { ToolsetTransportType } from '../../../models/toolsets';
+import { ToolsetTransportType } from '../../../constants/toolsets';
 import { buildToolsetMcpUrl } from '../../../utils/mcp-endpoint-url';
 import AuthSection from './AuthSection';
 

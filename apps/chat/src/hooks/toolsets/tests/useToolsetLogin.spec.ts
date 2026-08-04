@@ -5,7 +5,7 @@ import {
   ToolsetCredentialsLevel,
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
-} from '../../../models/toolsets';
+} from '../../../constants/toolsets';
 import {
   getToolset,
   loginToolset,
