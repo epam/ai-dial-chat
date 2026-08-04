@@ -184,7 +184,7 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
               : '!border-transparent',
           )}
           item={
-            <div className="flex w-full items-center gap-2">
+            <div className="flex w-full items-center gap-2 overflow-hidden">
               <ShareIcon
                 {...entity}
                 isPublished={
@@ -194,7 +194,7 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
                 isHighlighted={false}
                 size={10}
                 featureType={FeatureType.Application}
-                containerClassName="flex"
+                containerClassName="flex shrink-0"
               >
                 <ModelIcon
                   entityId={entity.id}
@@ -202,10 +202,12 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
                   size={DEFAULT_ICON_SIZES.SMALL}
                 />
               </ShareIcon>
-              <DialEllipsisTooltip
-                text={getDisplayValue(entity)}
-                contentClassName="!z-[10000]"
-              />
+              <span className="min-w-0 flex-1">
+                <DialEllipsisTooltip
+                  text={getDisplayValue(entity)}
+                  contentClassName="!z-[10000]"
+                />
+              </span>
             </div>
           }
           disabled={readonly}
