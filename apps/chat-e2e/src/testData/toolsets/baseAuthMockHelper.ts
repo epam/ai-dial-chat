@@ -55,6 +55,12 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
    */
   protected abstract buildAuthSettings(): Record<string, unknown>;
 
+  // Auth settings with the sign-in status tracked so far. Call it per request
+  // so a listing served by another mock reflects logins made meanwhile.
+  getAuthSettings(): Record<string, unknown> {
+    return this.buildAuthSettings();
+  }
+
   abstract setupMocks(): Promise<void>;
 
   enableMocking(): void {
@@ -151,12 +157,25 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
       });
   }
 
+  // Every mock registers on the same sign-in endpoint, so without this check
+  // the last one would swallow all logins and flip its own signed-in flags.
+  private isOwnSignInRequest(body: { url?: string }): boolean {
+    const requestedUrl = decodeURIComponent(body.url ?? '');
+    return [this.toolset.id, this.toolset.name]
+      .filter((value): value is string => !!value)
+      .some((value) => decodeURIComponent(value) === requestedUrl);
+  }
+
   async setupSignInRoute(): Promise<void> {
     await this.page
       .context()
       .route(API.toolsetSignInHost(), async (route, request) => {
         if (request.method() !== 'POST') {
           await route.continue();
+          return;
+        }
+        if (!this.isOwnSignInRequest(request.postDataJSON() ?? {})) {
+          await route.fallback();
           return;
         }
         const { backendSignInCode } = this.expectedStatusCodes;
