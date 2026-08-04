@@ -1,12 +1,5 @@
 import { useCallback } from 'react';
 import {
-  ExternalServiceAuthType,
-  ExternalServiceCredentialsLevel,
-  getExternalService,
-  signInExternalService,
-  signOutExternalService,
-} from '../../server-api/external-services';
-import {
   OAuthResourceKind,
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
@@ -14,6 +7,13 @@ import {
   ToolsetOAuthResultType,
   WithLogin,
 } from '../../constants/toolsets';
+import {
+  ExternalServiceAuthType,
+  ExternalServiceCredentialsLevel,
+  getExternalService,
+  signInExternalService,
+  signOutExternalService,
+} from '../../server-api/external-services';
 import { buildExternalServiceScopeId } from '../../utils/external-services';
 import {
   navigateToolsetOAuthPopup,

@@ -6,16 +6,6 @@ import {
   DEFAULT_TOOLSET_VERSION,
   TOOLSET_REDIRECT_STATE_KEY,
   ToolsetOAuthCallbackQuery,
-} from '../constants/toolsets';
-import type {
-  ToolsetAuthFormData,
-  ToolsetFormData,
-  ToolsetOAuthChannelMessage,
-  ToolsetOAuthInitiationResult,
-  ToolsetOAuthResult,
-  ToolsetRedirectState,
-} from '../models/toolsets';
-import {
   OAuthResourceKind,
   ToolsetAuthStatus,
   ToolsetAuthTypes,
@@ -27,6 +17,14 @@ import {
   ToolsetTransportType,
   WithLogin,
 } from '../constants/toolsets';
+import type {
+  ToolsetAuthFormData,
+  ToolsetFormData,
+  ToolsetOAuthChannelMessage,
+  ToolsetOAuthInitiationResult,
+  ToolsetOAuthResult,
+  ToolsetRedirectState,
+} from '../models/toolsets';
 import { getToolset } from '../server-api/toolsets';
 import { ROUTES } from '../types/routes';
 

@@ -17,7 +17,14 @@ import type {
 import type { FC } from 'react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AUTH_TYPE_OPTIONS } from '../../../constants/toolsets';
+import {
+  AUTH_TYPE_OPTIONS,
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  ToolsetOAuthInitiationResultType,
+  ToolsetOAuthResultType,
+  WithLogin,
+} from '../../../constants/toolsets';
 import {
   ApiI18nKeys,
   AuthI18nKeys,
@@ -30,13 +37,6 @@ import type {
   ToolsetFormErrors,
   ToolsetOAuthInitiationResult,
 } from '../../../models/toolsets';
-import {
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
-  ToolsetOAuthInitiationResultType,
-  ToolsetOAuthResultType,
-  WithLogin,
-} from '../../../constants/toolsets';
 import { loginToolset, logoutToolset } from '../../../server-api/toolsets';
 import {
   fetchToolsetAuthSettings,

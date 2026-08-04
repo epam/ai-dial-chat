@@ -262,6 +262,13 @@ const App: FC = () => {
     [navigate, isMobile, closePanel],
   );
 
+  const handleNewChat = useCallback(() => {
+    if (isMobile) {
+      closePanel();
+    }
+    navigate(ROUTES.Root);
+  }, [navigate, isMobile, closePanel]);
+
   return (
     <div className="flex size-full flex-col">
       <AnnouncementBanner />
@@ -276,7 +283,7 @@ const App: FC = () => {
           activeConversationId={activeConversationId}
           onClose={closePanel}
           onSelectConversation={handleSelectConversation}
-          onNewChat={() => navigate(ROUTES.Root)}
+          onNewChat={handleNewChat}
           requestedFilter={panelRequestedFilter}
           onRequestedFilterChange={() => setPanelRequestedFilter(undefined)}
           onActiveFilterChange={handlePanelActiveFilterChange}
@@ -292,7 +299,7 @@ const App: FC = () => {
             onMenuToggle={toggleNav}
             isConversationPanelOpen={isPanelOpen}
             onConversationPanelToggle={togglePanel}
-            onNewChat={() => navigate(ROUTES.Root)}
+            onNewChat={handleNewChat}
           />
           <Routes>
             <Route
@@ -300,7 +307,7 @@ const App: FC = () => {
                 <ChatLayout
                   isPanelOpen={isPanelOpen}
                   onTogglePanel={togglePanel}
-                  onNewChat={() => navigate(ROUTES.Root)}
+                  onNewChat={handleNewChat}
                 />
               }
             >

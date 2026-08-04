@@ -40,7 +40,7 @@ export interface StagesPanelColors {
   iconCompletedColor?: string;
   /** Color of the error/exception icon. Defaults to `--text-warning`. */
   iconErrorColor?: string;
-  /** Background color of fenced code blocks and inline code. Defaults to `--bg-layer-0`. */
+  /** Background color of fenced code blocks and inline code. Defaults to `--bg-layer-raised`. */
   codeBg?: string;
   /** Border color of fenced code blocks and inline code. Defaults to `--stroke-secondary`. */
   codeBorderColor?: string;

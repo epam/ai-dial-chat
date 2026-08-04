@@ -1,4 +1,5 @@
 import {
+  buildCssVars,
   mergeClasses,
   MessageRating,
   MessageRole,
@@ -20,6 +21,7 @@ import {
 } from '@tabler/icons-react';
 import { FC, useCallback, useState } from 'react';
 import type { MessageActionsProps } from '../../models/message-actions';
+import styles from './MessageActions.module.scss';
 
 const COPIED_RESET_MS = 2000;
 
@@ -38,10 +40,15 @@ export const MessageActions: FC<MessageActionsProps> = ({
   isAlwaysVisible,
   className,
   labels,
+  colors,
 }) => {
   const { tooltips, ariaLabels } = labels ?? {};
   const [copied, setCopied] = useState<'copy' | 'markdown' | null>(null);
   const [copyStatus, setCopyStatus] = useState('');
+
+  const cssVars = buildCssVars({
+    '--ma-active-rating-text': colors?.activeRatingText,
+  });
 
   const handleCopy = useCallback(() => {
     onCopy?.();
@@ -63,6 +70,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
     <div
       role="toolbar"
       aria-label={ariaLabels?.actionsGroup ?? 'Message actions'}
+      style={cssVars}
       className={mergeClasses(
         'flex gap-1',
         !isAlwaysVisible && 'opacity-0 group-hover:opacity-100',
@@ -155,7 +163,9 @@ export const MessageActions: FC<MessageActionsProps> = ({
               aria-label={ariaLabels?.likeResponse ?? 'Like response'}
               aria-pressed={activeRating === MessageRating.Like}
               className={
-                activeRating === MessageRating.Like ? '!text-accent' : undefined
+                activeRating === MessageRating.Like
+                  ? styles.activeRating
+                  : undefined
               }
               tooltipProps={{ tooltip: tooltips?.like ?? 'Like' }}
               onClick={onLike}
@@ -169,7 +179,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
               aria-pressed={activeRating === MessageRating.Dislike}
               className={
                 activeRating === MessageRating.Dislike
-                  ? '!text-accent'
+                  ? styles.activeRating
                   : undefined
               }
               tooltipProps={{ tooltip: tooltips?.dislike ?? 'Dislike' }}

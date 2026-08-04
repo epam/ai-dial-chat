@@ -1,0 +1,11 @@
+.selectedToolIcon {
+  color: var(--aab-selected-tool-icon, var(--text-accent, #1d4ed8));
+}
+
+.toolIcon {
+  color: var(--aab-tool-icon, var(--text-secondary, #6b7280));
+}
+
+.chevronIcon {
+  color: var(--aab-chevron-icon, var(--text-secondary, #6b7280));
+}

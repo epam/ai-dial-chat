@@ -189,10 +189,10 @@ apps/chat/src/
 
 Current implementation uses **React Context** with no external state library.
 
-| Context                | State owned                                                                                                                                                                                                                                                                                                                                          |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `UserContext`          | Auth status (`loading \| authenticated \| unauthenticated`), `UserProfile`, `refresh()`, `reset()`                                                                                                                                                                                                                                                   |
-| `ThemeContext`         | Active theme ID, theme list, `setTheme()`, logo URL, loading flag                                                                                                                                                                                                                                                                                    |
+| Context                | State owned                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UserContext`          | Auth status (`loading \| authenticated \| unauthenticated`), `UserProfile`, `refresh()`, `reset()`                                                                                                                                                                                                                                                                                                                        |
+| `ThemeContext`         | Active theme ID, theme list, `setTheme()`, logo URL, loading flag                                                                                                                                                                                                                                                                                                                                                         |
 | `ClientChannelContext` | DIAL Core client-channel id, pending `toolset/signin` **and** `external-service/signin` events, `reportEvent()`, `ensureConnected()` — mounted inside `RequireAuth` alongside `GenerationProvider` so it survives conversation navigation; see [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services) |
 
 Context pattern (reference: `ThemeContext.tsx`):
@@ -220,17 +220,17 @@ Behaviour applied automatically:
 
 `ApiEndpoints` enum centralises all URL constants:
 
-| Key              | URL                      |
-| ---------------- | ------------------------ |
-| `THEMES`         | `/api/themes`            |
-| `THEME_ICON`     | `/api/themes/icon`       |
-| `CONVERSATIONS`  | `/api/v1/conversations`  |
-| `DEPLOYMENTS`    | `/api/deployments`       |
-| `MODELS`         | `/api/v1/models`         |
-| `AUTH_ME`        | `/api/v1/auth/me`        |
-| `AUTH_PROVIDERS` | `/api/v1/auth/providers` |
-| `AUTH_LOGOUT`    | `/api/v1/auth/logout`    |
-| `CLIENT_CHANNEL` | `/api/v1/client-channel` |
+| Key                 | URL                         |
+| ------------------- | --------------------------- |
+| `THEMES`            | `/api/themes`               |
+| `THEME_ICON`        | `/api/themes/icon`          |
+| `CONVERSATIONS`     | `/api/v1/conversations`     |
+| `DEPLOYMENTS`       | `/api/deployments`          |
+| `MODELS`            | `/api/v1/models`            |
+| `AUTH_ME`           | `/api/v1/auth/me`           |
+| `AUTH_PROVIDERS`    | `/api/v1/auth/providers`    |
+| `AUTH_LOGOUT`       | `/api/v1/auth/logout`       |
+| `CLIENT_CHANNEL`    | `/api/v1/client-channel`    |
 | `EXTERNAL_SERVICES` | `/api/v1/external-services` |
 
 ### SSE streaming
@@ -342,7 +342,7 @@ DIAL Core RPC proxy used to deliver mid-completion `toolset/signin` and `externa
 BFF proxy for an application's external-service credentials, driving the `external-service/signin` interrupt above. See [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services).
 
 | Method | Path                                                    | Description                                        |
-| ------ | -------------------------------------------------------- | --------------------------------------------------- |
+| ------ | ------------------------------------------------------- | -------------------------------------------------- |
 | `GET`  | `/api/v1/external-services/{appId}/{serviceId}`         | Get display metadata + auth type (not cached)      |
 | `POST` | `/api/v1/external-services/{appId}/{serviceId}/signin`  | Submit API-key/OAuth credentials                   |
 | `POST` | `/api/v1/external-services/{appId}/{serviceId}/signout` | Revoke credentials (Core 404 = idempotent success) |
@@ -472,7 +472,7 @@ Themes are defined in [ai-dial-chat-themes](https://github.com/epam/ai-dial-chat
 
 | Group             | Examples                                                                  | Purpose                        |
 | ----------------- | ------------------------------------------------------------------------- | ------------------------------ |
-| `bg-layer-*`      | `bg-layer-0` … `bg-layer-4`                                               | Background depth levels        |
+| `bg-layer-*`      | `bg-layer-raised` … `bg-layer-4`                                          | Background depth levels        |
 | `bg-accent-*`     | `bg-accent-primary`, `bg-accent-secondary`                                | Brand accent fills             |
 | `bg-*`            | `bg-error`, `bg-warning`, `bg-info`, `bg-success`                         | Semantic state backgrounds     |
 | `text-*`          | `text-primary`, `text-secondary`, `text-error`, `text-accent`             | Text colours                   |
@@ -480,7 +480,7 @@ Themes are defined in [ai-dial-chat-themes](https://github.com/epam/ai-dial-chat
 | `controls-bg-*`   | `controls-bg-accent-primary`, `controls-bg-error`, `controls-bg-disable`  | Interactive element fills      |
 | `controls-text-*` | `controls-text-permanent`, `controls-text-neutral`                        | Interactive element text       |
 | `topicColors`     | `bg-topic-*`, `stroke-topic-*`                                            | Application / model topic tags |
-| `authColors`      | `bg-auth-layer-0`, `bg-auth-layer-1`                                      | Auth screen backgrounds        |
+| `authColors`      | `bg-auth-bg-layer-raised`, `bg-auth-layer-1`                              | Auth screen backgrounds        |
 
 ### Token flow
 
@@ -491,9 +491,9 @@ theme.json (from /api/themes)
 ThemeProvider (apps/chat)
     │  injects tokens as CSS variables on :root
     ▼
---bg-layer-0, --text-primary, --control-accent, ...
+--bg-layer-raised, --text-primary, --control-accent, ...
     │
-    ├──▶ Tailwind config → bg-[var(--bg-layer-0)], text-[var(--text-primary)], ...
+    ├──▶ Tailwind config → bg-[var(--bg-layer-raised)], text-[var(--text-primary)], ...
     │
     └──▶ SCSS Modules in libs → var(--text-primary, #161B2D)
 ```

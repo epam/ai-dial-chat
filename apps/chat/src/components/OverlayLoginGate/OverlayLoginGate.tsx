@@ -37,7 +37,7 @@ const OverlayLoginGate: FC = () => {
   return (
     <section
       aria-busy={isLoadingProviders || isInFlight}
-      className="flex size-full min-h-dvh items-center justify-center bg-layer-0 px-6 py-8 text-center"
+      className="flex size-full min-h-dvh items-center justify-center bg-layer-raised px-6 py-8 text-center"
     >
       <div className="flex w-full max-w-[420px] flex-col items-center gap-5">
         <div className="flex flex-col items-center gap-3">

@@ -14,7 +14,7 @@ import styles from './BottomSheetShell.module.scss';
 export interface BottomSheetShellColors {
   /** Backdrop background color. Defaults to `--bg-backdrop`. */
   backdrop?: string;
-  /** Sheet panel background color. Defaults to `--bg-layer-0`. */
+  /** Sheet panel background color. Defaults to `--bg-layer-raised`. */
   sheetBg?: string;
   /** Sheet title text color. Defaults to `--text-primary`. */
   sheetText?: string;
