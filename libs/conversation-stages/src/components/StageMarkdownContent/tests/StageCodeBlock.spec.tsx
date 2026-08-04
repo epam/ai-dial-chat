@@ -13,7 +13,7 @@ vi.mock('@epam/ai-dial-chat-shared', () => ({
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16 },
   ElementSize: { Small: 'small' },
-  DialGhostIconButton: ({
+  GhostIconButton: ({
     onClick,
     icon,
     'aria-label': ariaLabel,

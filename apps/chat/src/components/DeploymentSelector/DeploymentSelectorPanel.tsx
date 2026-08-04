@@ -254,7 +254,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
           {isSelected && (
             <IconCheck
               size={DIAL_ICON_SIZE.SM}
-              className="shrink-0 text-accent-primary"
+              className="shrink-0 text-accent"
               aria-hidden
             />
           )}
@@ -267,7 +267,6 @@ const DeploymentSelectorPanel: FC<Props> = ({
                 />
               }
               aria-label={removeFromFavoritesLabel}
-              className="flex-shrink-0"
               onClick={(e) => {
                 e.stopPropagation();
                 handleToggleFavorite(item.id, false);
@@ -277,7 +276,6 @@ const DeploymentSelectorPanel: FC<Props> = ({
             <GhostIconButton
               icon={<IconStar size={DIAL_ICON_SIZE.SM} />}
               aria-label={addToFavoritesLabel}
-              className="flex-shrink-0"
               onClick={(e) => {
                 e.stopPropagation();
                 handleToggleFavorite(item.id, true);

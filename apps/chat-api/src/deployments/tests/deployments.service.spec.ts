@@ -1100,6 +1100,24 @@ describe('DeploymentsService', () => {
       );
     });
 
+    it('encodes each deployment path segment before calling DIAL Core', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'configurationDeployment')
+        .mockResolvedValue(okResponse(schema));
+
+      await service.getDeploymentConfiguration(
+        'applications/bucket/My%20App#1',
+        'user-123',
+        'token',
+      );
+
+      expect(spy).toHaveBeenCalledWith(
+        'applications/bucket/My%20App%231',
+        expect.any(Object),
+      );
+    });
+
     it('returns cached value and skips upstream on cache hit', async () => {
       const { service, cacheManager } = makeService();
       cacheManager.get.mockResolvedValue(schema);
@@ -1195,6 +1213,21 @@ describe('DeploymentsService', () => {
       );
     });
 
+    it('encodes each deployment path segment before calling DIAL Core', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentLimits.mockResolvedValue(okResponse(mockLimits));
+
+      await service.getDeploymentLimits(
+        'applications/bucket/My%20App#1',
+        'token',
+      );
+
+      expect(sdkClient.getDeploymentLimits).toHaveBeenCalledWith(
+        'applications/bucket/My%20App%231',
+        expect.any(Object),
+      );
+    });
+
     it('does not use cache — two calls invoke upstream twice', async () => {
       const { service, sdkClient, cacheManager } = makeService();
       sdkClient.getDeploymentLimits.mockResolvedValue(okResponse(mockLimits));
@@ -1236,6 +1269,24 @@ describe('DeploymentsService', () => {
   });
 
   describe('getDeploymentDetails', () => {
+    it('encodes each deployment path segment before calling DIAL Core', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({ id: 'applications/bucket/My%20App%231' }),
+      );
+
+      await service.getDeploymentDetails(
+        'user1',
+        'applications/bucket/My%20App#1',
+        'token',
+      );
+
+      expect(sdkClient.getApplication).toHaveBeenCalledWith(
+        'applications/bucket/My%20App%231',
+        expect.any(Object),
+      );
+    });
+
     it('dispatches to getModel and maps capabilities/limits/pricing for a model', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.getModel.mockResolvedValue(

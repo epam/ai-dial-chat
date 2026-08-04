@@ -7,6 +7,14 @@ import * as path from 'path';
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/chat-shared',
+  resolve: {
+    alias: {
+      /* remark-math resolves math delimiters through micromark-extension-math, which only
+       * recognizes `$...$`/`$$...$$`. This fork additionally recognizes the `\(...\)`/`\[...\]`
+       * delimiters that LLMs commonly emit. */
+      'micromark-extension-math': 'micromark-extension-llm-math',
+    },
+  },
   plugins: [
     react(),
     dts({

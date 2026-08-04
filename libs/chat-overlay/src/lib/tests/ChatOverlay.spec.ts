@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   OverlayAuthUiMode,
   OverlayEventType,
@@ -6,8 +7,7 @@ import {
   type OverlayMessageRequest,
   OverlayRequestType,
   type ChatOverlayOptions,
-} from '@epam/ai-dial-chat-shared';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+} from '../../protocol';
 import { ChatOverlay, ChatOverlayRequestError } from '../ChatOverlay';
 
 const DOMAIN = 'https://chat.example.com/embed';

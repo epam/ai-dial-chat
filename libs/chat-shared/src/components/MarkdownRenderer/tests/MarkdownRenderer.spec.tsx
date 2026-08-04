@@ -287,4 +287,35 @@ describe('MarkdownRenderer', () => {
     expect(codeEl.tagName).toBe('CODE');
     expect(codeEl.querySelectorAll('br').length).toBe(0);
   });
+
+  it('renders double-dollar LaTeX as a KaTeX math element', () => {
+    const { container } = render(
+      <MarkdownRenderer content="Equation: $$x^2 + y^2 = z^2$$" />,
+    );
+
+    expect(container.querySelector('math')).toBeTruthy();
+  });
+
+  it('renders single-dollar inline LaTeX as a KaTeX math element', () => {
+    const { container } = render(<MarkdownRenderer content="Cost: $x + y$" />);
+
+    expect(container.querySelector('math')).toBeTruthy();
+  });
+
+  it('does not treat a currency amount as LaTeX', () => {
+    const { container } = render(
+      <MarkdownRenderer content="Price is $50 and $100" />,
+    );
+
+    expect(container.querySelector('math')).toBeNull();
+    expect(screen.getByText('Price is $50 and $100')).toBeTruthy();
+  });
+
+  /* `\(...\)`/`\[...\]` (the LLM-style delimiters preprocessLaTeX deliberately leaves untouched,
+   * see latex.spec.ts) only render as math once micromark-extension-math is aliased to
+   * micromark-extension-llm-math in the consuming app's bundler config. Vitest's SSR module
+   * resolution does not apply bundler-level resolve.alias to imports made from *inside* an
+   * npm package (remark-math's own import of micromark-extension-math), so this can't be
+   * asserted through this component test even though a real `vite build` picks up the alias
+   * correctly (verified manually: the built dist bundle contains the aliased extension). */
 });

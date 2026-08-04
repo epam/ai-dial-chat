@@ -3,7 +3,7 @@ import {
   Button,
   DIAL_ICON_SIZE,
   DialDropdown,
-  DialGhostIconButton,
+  GhostIconButton,
   DialSkeleton,
   DialSkeletonVariant,
   ElementSize,
@@ -226,7 +226,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
             matchReferenceWidth={false}
             listClassName="w-[140px] cp-dropdown-overlay"
           >
-            <DialGhostIconButton
+            <GhostIconButton
               ref={actionTriggerRef}
               icon={
                 <IconDotsVertical
@@ -237,11 +237,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
               }
               size={ElementSize.Small}
               aria-label={actionsLabel}
-              className={mergeClasses(
-                'flex items-center justify-center rounded',
-                styles.trigger,
-                isMenuOpen && styles.triggerActive,
-              )}
+              className={mergeClasses(isMenuOpen && styles.triggerActive)}
             />
           </DialDropdown>
         </div>

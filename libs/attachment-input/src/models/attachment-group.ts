@@ -1,26 +1,6 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import type { AttachmentTypeLabels } from './attachment-card';
 
-/** How the unified attachment tile grid should render for a given total attachment count. */
-export enum AttachmentTilesLayout {
-  /** No attachments. */
-  None = 'none',
-  /** Below the collapse threshold, or expanded: every tile shown. */
-  AllVisible = 'all-visible',
-  /** At/above the collapse threshold, not yet expanded: a few tiles + a "+N" tile. */
-  Collapsed = 'collapsed',
-}
-
-/** Rendering plan for the unified attachment tile grid. */
-export interface AttachmentTilesPlan {
-  /** Which rendering mode the grid should use. */
-  layout: AttachmentTilesLayout;
-  /** Number of tiles to actually render. */
-  visibleCount: number;
-  /** Number of attachments hidden behind the "+N" tile (0 unless `layout` is `Collapsed`). */
-  hiddenCount: number;
-}
-
 /** Localised accessible labels for the `AttachmentGroup` component. */
 export interface AttachmentGroupLabels extends AttachmentTypeLabels {
   /** Accessible label for the group region. Defaults to `'Attachments'`. */
@@ -29,8 +9,6 @@ export interface AttachmentGroupLabels extends AttachmentTypeLabels {
   clickLabel?: string;
   /** Accessible label for each row's retry action. Defaults to `'Retry upload'`. */
   retryLabel?: string;
-  /** Label for the "show less" header action, shown once the group has been expanded via the "+N" tile. Defaults to `'Show less'`. */
-  showLessLabel?: string;
   /** Label for the "download all" header action, shown whenever the group has 2+ attachments. Defaults to `'Download all'`. */
   downloadAllLabel?: string;
   /** Accessible label for each tile's open-in-new-tab button. Defaults to `'Open in new tab'`. */
@@ -45,10 +23,6 @@ export interface AttachmentGroupLabels extends AttachmentTypeLabels {
 
 /** CSS custom-property overrides for the `AttachmentGroup` component. */
 export interface AttachmentGroupColors {
-  /** Group container background color. */
-  background?: string;
-  /** Group container border color. */
-  border?: string;
   /** Header icon/label/download-all button text color. */
   text?: string;
 }

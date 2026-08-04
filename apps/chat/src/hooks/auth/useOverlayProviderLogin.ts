@@ -1,4 +1,4 @@
-import { OverlayAuthUiMode } from '@epam/ai-dial-chat-shared';
+import { OverlayAuthUiMode } from '@epam/ai-dial-chat-overlay';
 import type { ProviderInfoDto } from '@epam/chat-api-client';
 import { useCallback, useEffect, useState } from 'react';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
