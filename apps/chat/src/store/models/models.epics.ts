@@ -27,6 +27,7 @@ import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import { isMyApplication } from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
@@ -263,7 +264,8 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
           );
         }),
         catchError((error) => {
-          if (error?.message && error?.message.endsWith('Not Found')) {
+          const { message } = parseApiError(error);
+          if (message?.endsWith('Not Found')) {
             return of(ModelsActions.getInstalledModelIdsFail(myAppIds));
           }
 

@@ -142,12 +142,15 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
         }),
         catchError((err) => {
           console.error("New prompt wasn't created:", err);
+          const { traceId } = parseApiError(err);
+
           return concat(
             of(
               UIActions.showErrorToast({
                 message: translate(CommonI18nKeys.ErrorCreatingPromptExists, {
                   ns: Translation.Common,
                 }),
+                traceId,
               }),
             ),
             of(PromptsActions.setIsNewPromptCreating(false)),
@@ -167,12 +170,14 @@ const saveNewPromptEpic: AppEpic = (action$) =>
           switchMap(() => EMPTY),
           catchError((err) => {
             console.error(err);
+            const { traceId } = parseApiError(err);
             return concat(
               of(
                 UIActions.showErrorToast({
                   message: translate(CommonI18nKeys.ErrorSavingPromptExists, {
                     ns: Translation.Common,
                   }),
+                  traceId,
                 }),
               ),
               of(
@@ -202,10 +207,12 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
       return PromptService.setPromptFolders(promptsFolders).pipe(
         catchError((err) => {
           const message = CommonI18nKeys.ErrorSavingFolders;
+          const { traceId } = parseApiError(err);
           console.error(message, err);
           return of(
             UIActions.showErrorToast({
               message: translate(message, { ns: Translation.Common }),
+              traceId,
             }),
           );
         }),
@@ -252,11 +259,13 @@ const savePromptEpic: AppEpic = (action$, state$) =>
         }),
         catchError((err) => {
           console.error(err);
+          const { traceId } = parseApiError(err);
           return of(
             UIActions.showErrorToast({
               message: translate(CommonI18nKeys.ErrorSavingPromptExists, {
                 ns: Translation.Common,
               }),
+              traceId,
             }),
           );
         }),
@@ -366,12 +375,14 @@ const deletePromptEpic: AppEpic = (action$) =>
         switchMap(() => EMPTY),
         catchError((err) => {
           console.error(err);
+          const { traceId } = parseApiError(err);
           return of(
             UIActions.showErrorToast({
               message: translate(CommonI18nKeys.ErrorDeletingPrompt, {
                 ns: Translation.Common,
                 promptName: payload.prompt.name,
               }),
+              traceId,
             }),
           );
         }),
@@ -397,28 +408,33 @@ const deletePromptsEpic: AppEpic = (action$) =>
       zip(
         payload.promptIds.map((id) =>
           PromptService.deletePrompt(getPromptInfoFromId(id)).pipe(
-            map(() => null),
+            map(() => ({ name: null, traceId: undefined })),
             catchError((err) => {
               const { name } = getPromptInfoFromId(id);
+              const { traceId } = parseApiError(err);
 
               console.error(
                 `An error occurred while deleting the prompt "${name}"`,
                 err,
               );
-              return of(name);
+              return of({ name, traceId });
             }),
           ),
         ),
       ).pipe(
-        switchMap((failedNames) =>
-          concat(
+        switchMap((result) => {
+          const failed = result.filter((r) => !!r.name);
+          const failedNames = failed.map(({ name }) => name) as string[];
+          const traceId = failed[failed.length - 1]?.traceId;
+          return concat(
             iif(
-              () => failedNames.filter(Boolean).length > 0,
+              () => failedNames.length > 0,
               of(
                 UIActions.showErrorToast({
                   message: translate(CommonI18nKeys.ErrorDeletingPrompts, {
                     ns: Translation.Common,
                     failedNames: failedNames.filter(Boolean).join('", "'),
+                    traceId,
                   }),
                 }),
               ),
@@ -429,8 +445,8 @@ const deletePromptsEpic: AppEpic = (action$) =>
                 promptIds: new Set(payload.promptIds),
               }),
             ),
-          ),
-        ),
+          );
+        }),
       ),
     ),
   );
@@ -884,6 +900,8 @@ const uploadFoldersEpic: AppEpic = (action$) =>
         }),
         catchError((err) => {
           console.error('Error during upload prompts and folders', err);
+          const { traceId } = parseApiError(err);
+
           return of(
             UIActions.showErrorToast({
               message: translate(
@@ -892,6 +910,7 @@ const uploadFoldersEpic: AppEpic = (action$) =>
                   ns: Translation.Common,
                 },
               ),
+              traceId,
             }),
           );
         }),
@@ -1047,10 +1066,11 @@ const getPromptMetadataEpic: AppEpic = (action$) =>
             ),
           );
         }),
-        catchError(() => {
+        catchError((err) => {
           return of(
             ChatActions.getEntityInfoFail({
               errorText: 'Could not get prompt info. Try again later',
+              ...parseApiError(err),
             }),
           );
         }),
