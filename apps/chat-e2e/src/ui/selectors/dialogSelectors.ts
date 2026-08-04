@@ -86,6 +86,7 @@ export const ReviewEntityDialog = {
   completionUrl: '[data-qa="app-completion-url"]',
   externalUrlLabel: '[data-qa="app-external-url-label"]',
   externalUrl: '[data-qa="app-external-url"]',
+  editApplicationButton: '[data-qa="admin-edit-application"]',
   endpoint: '[data-qa="toolset-endpoint"]',
   transport: '[data-qa="toolset-transport"]',
   authType: '[data-qa="toolset-authentication-type"]',

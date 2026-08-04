@@ -1649,3 +1649,236 @@ dialAdminTest(
     );
   },
 );
+
+dialAdminTest(
+  '[Quick app 2.0] [Admin view] login form for one public toolset in App editor for app in Approve required - Log in OAuth\n' + // EPMDIAL-5108
+    '[Quick app 2.0] [Admin view] NO login form for one not public toolset in App editor for app in Approve required', // EPMDIAL-5107
+  async ({
+    adminPage,
+    adminDialHomePage,
+    adminApproveRequiredConversations,
+    adminPublishingApprovalModal,
+    adminPublishedApplicationReviewModal,
+    adminEntityEditorPage,
+    adminQuickApp2EditorViewForm,
+    adminEntityDetailsModal,
+    adminEntityDetailsModalAssertion,
+    adminSendMessage,
+    adminChatMessagesAssertion,
+    adminToolsetLoginEventsModal,
+    adminToolsetSignInMock,
+    adminToolsetApiHelper,
+    adminToast,
+    quickApp2Builder,
+    toolsetBuilder,
+    toolsetApiHelper,
+    applicationApiHelper,
+    modelApiHelper,
+    publicationApiHelper,
+    adminPublicationApiHelper,
+    adminUserItemApiHelper,
+    publishRequestBuilder,
+    baseAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMDIAL-5108', 'EPMDIAL-5107');
+    const publicToolsetName = GeneratorUtil.randomToolsetName();
+    const ownToolsetName = GeneratorUtil.randomToolsetName();
+    const publicToolsetAppName = GeneratorUtil.randomApplicationName();
+    const ownToolsetAppName = GeneratorUtil.randomApplicationName();
+    const publicToolsetRequestName =
+      GeneratorUtil.randomPublicationRequestName();
+    const ownToolsetRequestName = GeneratorUtil.randomPublicationRequestName();
+    const version = ExpectedConstants.defaultEntityVersion;
+    let publicToolset: Toolset;
+    let oauthMock: OAuthMockHelper;
+
+    await dialAdminTest.step(
+      'Precondition: publish one toolset and keep the other private',
+      async () => {
+        for (const name of [publicToolsetName, ownToolsetName]) {
+          await toolsetApiHelper.createToolset(
+            toolsetBuilder.withDisplayName(name).build(),
+          );
+        }
+        const createdToolset =
+          (await toolsetApiHelper.getToolset(publicToolsetName))!;
+
+        const publication = await publicationApiHelper.createPublishRequest(
+          publishRequestBuilder
+            .withName(GeneratorUtil.randomPublicationRequestName())
+            .withToolsetResource(createdToolset, PublishActions.ADD)
+            .build(),
+        );
+        await adminPublicationApiHelper.approveRequest(publication);
+        const resource = publication.resources.find(
+          (r) => r.sourceUrl === createdToolset.id,
+        )!;
+        publicToolset = await adminUserItemApiHelper.getItem<Toolset>(
+          resource.targetUrl,
+        );
+        // A published toolset comes back without `id`.
+        publicToolset.id ??= resource.targetUrl;
+      },
+    );
+
+    await dialAdminTest.step(
+      'Precondition: create a Quick app 2.0 per toolset and a publication request for each',
+      async () => {
+        const model = await modelApiHelper.getToolSupportingModel();
+        const ownToolset = (await toolsetApiHelper.getToolset(ownToolsetName))!;
+
+        const publicToolsetApp = await applicationApiHelper.createApplication(
+          quickApp2Builder
+            .withDisplayName(publicToolsetAppName)
+            .withOrchestratorModel(model.id)
+            .addToolset(publicToolset.id!)
+            .build(),
+        );
+        const ownToolsetApp = await applicationApiHelper.createApplication(
+          quickApp2Builder
+            .withDisplayName(ownToolsetAppName)
+            .withOrchestratorModel(model.id)
+            .addToolset(ownToolset.id!)
+            .build(),
+        );
+
+        // Left pending on purpose - the apps must stay in Approve required.
+        await publicationApiHelper.createPublishRequest(
+          publishRequestBuilder
+            .withName(publicToolsetRequestName)
+            .withApplicationResource(publicToolsetApp, PublishActions.ADD)
+            .build(),
+        );
+        await publicationApiHelper.createPublishRequest(
+          publishRequestBuilder
+            .withName(ownToolsetRequestName)
+            .withApplicationResource(ownToolsetApp, PublishActions.ADD)
+            .build(),
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Mock the public toolset as logged out for the admin',
+      async () => {
+        oauthMock = await adminToolsetSignInMock.loggedOutOAuthMock(
+          publicToolset,
+          GeneratorUtil.randomUrl(),
+        );
+        await adminToolsetSignInMock.setupToolsetsListingRoute(
+          await adminToolsetApiHelper.listToolsets(),
+          [oauthMock],
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Admin opens the publication request with the public toolset and goes to edit',
+      async () => {
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredConversations.selectRequest(
+          publicToolsetRequestName,
+        );
+        await adminPublishingApprovalModal.goToEntityReview();
+        await baseAssertion.assertElementState(
+          adminPublishedApplicationReviewModal,
+          'visible',
+        );
+        await adminPublishedApplicationReviewModal.editApplicationButton.click();
+        await adminEntityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.QuickApp2,
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'EPMDIAL-5108: send a message in the preview and log in from the form',
+      async () => {
+        await adminToolsetSignInMock.setupSignInChannel([publicToolset]);
+        await adminDialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await adminSendMessage.messageInput.fillInInput(
+          GeneratorUtil.randomString(10),
+        );
+        await adminSendMessage.sendMessageButton.click();
+        await baseAssertion.assertElementState(
+          adminToolsetLoginEventsModal,
+          'visible',
+        );
+
+        const popupPromise = adminPage.waitForEvent('popup');
+        await adminToolsetLoginEventsModal
+          .getLoginButton(publicToolsetName)
+          .click();
+        await oauthMock.navigateToCallback(await popupPromise);
+        await baseAssertion.assertElementState(
+          adminToolsetLoginEventsModal,
+          'hidden',
+        );
+        await baseAssertion.assertElementText(
+          adminToast,
+          ExpectedConstants.personalLoginSuccessfulMessage(
+            publicToolsetName,
+            version,
+          ),
+        );
+        await adminToast.closeToast();
+      },
+    );
+
+    await dialAdminTest.step(
+      'EPMDIAL-5108: the toolset card shows the toolset is logged in with My creds',
+      async () => {
+        await adminQuickApp2EditorViewForm.clickChipByName(publicToolsetName);
+        await adminEntityDetailsModalAssertion.assertEntityCommonAttributes({
+          expectedCredsLabel: Creds.myCreds,
+        });
+        await adminEntityDetailsModal.closeButton.click();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Admin opens the publication request with the private toolset and goes to edit',
+      async () => {
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredConversations.selectRequest(
+          ownToolsetRequestName,
+        );
+        await adminPublishingApprovalModal.goToEntityReview();
+        await adminPublishedApplicationReviewModal.editApplicationButton.click();
+        await adminEntityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.QuickApp2,
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'EPMDIAL-5107: the private toolset is not available to the admin and no login is asked',
+      async () => {
+        // The admin cannot see someone else's private toolset, so it resolves to
+        // nothing in the listing and the chip goes red.
+        await baseAssertion.assertElementClass(
+          adminQuickApp2EditorViewForm.getChipByName(ownToolsetName),
+          new RegExp(AddQuickApp2SettingsFormSelector.errorChipClass),
+        );
+
+        await adminSendMessage.messageInput.fillInInput(
+          GeneratorUtil.randomString(10),
+        );
+        await adminSendMessage.sendMessageButton.click();
+        await adminChatMessagesAssertion.assertMessagesCount(2);
+        // NOTE: the ticket also expects a Forbidden error in the response. That
+        // text comes from the real orchestration while the response here is
+        // mocked, so only the absence of the login form is checked.
+        await baseAssertion.assertElementState(
+          adminToolsetLoginEventsModal,
+          'hidden',
+        );
+      },
+    );
+  },
+);
