@@ -1,4 +1,4 @@
-import { OverlayFeature } from '@epam/ai-dial-chat-shared';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { render, screen } from '@testing-library/react';
 import type { AriaAttributes } from 'react';
 import { MemoryRouter } from 'react-router-dom';

@@ -388,7 +388,15 @@ export class ConversationController {
     status: 400,
     description: 'Missing or invalid path, or conversation has no content',
   })
-  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({
+    status: 401,
+    description:
+      'Not authenticated, or DIAL Core rejected the calling user’s token for the configured utility model',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Not authorized to use the configured utility model',
+  })
   @ApiResponse({ status: 404, description: 'Conversation not found' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'LLM title generation failed' })
