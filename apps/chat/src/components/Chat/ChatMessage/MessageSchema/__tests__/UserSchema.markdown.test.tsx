@@ -2,8 +2,6 @@ import { beforeEach, describe, it, vi } from 'vitest';
 
 import { render } from '@testing-library/react';
 
-import { Message } from '@/src/types/chat';
-
 import { UserSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/UserSchema';
 
 import {
@@ -14,6 +12,8 @@ import {
 import {
   DialSchemaProperties,
   FormSchemaPropertyWidget,
+  JSONSchemaPropertyType,
+  Message,
   MessageFormSchema,
 } from '@epam/ai-dial-shared';
 
@@ -35,7 +35,7 @@ const configurationSchema: MessageFormSchema = {
   type: 'object',
   properties: {
     persona_selection: {
-      type: 'string',
+      type: JSONSchemaPropertyType.string,
       description: BOLD_MARKDOWN_SAMPLE,
       [DialSchemaProperties.DialWidget]: FormSchemaPropertyWidget.buttons,
       oneOf: [

@@ -17,6 +17,7 @@ import { combineEpics, ofType } from 'redux-observable';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 
 import { PageType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
@@ -145,6 +146,7 @@ const initEpic: AppEpic = (action$, state$) =>
               return concat(...getInitActions(payload));
             }),
             catchError((error) => {
+              const { traceId } = parseApiError(error);
               if (error.status === 401) {
                 window.location.assign('/api/auth/signin');
                 return EMPTY;
@@ -152,6 +154,7 @@ const initEpic: AppEpic = (action$, state$) =>
                 return of(
                   UIActions.showErrorToast({
                     message: errorsMessages.errorGettingUserBucket,
+                    traceId,
                   }),
                 );
               }

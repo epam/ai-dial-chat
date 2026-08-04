@@ -69,7 +69,10 @@ export const applicationSlice = createSlice({
     deleteSuccess: (state) => {
       state.appLoading = UploadStatus.LOADED;
     },
-    deleteFail: (state) => {
+    deleteFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => {
       state.appLoading = UploadStatus.FAILED;
     },
     edit: (
