@@ -1,5 +1,8 @@
 import { HIDDEN_FILE } from '@epam/ai-dial-chat-shared';
-import { DialFilePermission, FileManagerColumnKey } from '@epam/ai-dial-ui-kit';
+import {
+  DialFilePermission,
+  FileManagerColumnKey,
+} from '@epam/ai-dial-react-file-manager';
 
 /** Max number of files uploaded concurrently within a single upload batch. */
 export const UPLOAD_CONCURRENCY = 3;

@@ -1,5 +1,8 @@
-import type { DialFile } from '@epam/ai-dial-ui-kit';
-import { DialFileManagerTabs, DialFileNodeType } from '@epam/ai-dial-ui-kit';
+import type { DialFile } from '@epam/ai-dial-react-file-manager';
+import {
+  DialFileManagerTabs,
+  DialFileNodeType,
+} from '@epam/ai-dial-react-file-manager';
 import type {
   CreateFolderResponseDto,
   FileMetadataResponseDto,

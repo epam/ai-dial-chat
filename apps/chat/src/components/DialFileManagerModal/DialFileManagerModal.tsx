@@ -5,15 +5,17 @@ import {
 import {
   DialFileManagerTabs,
   DialFileNodeType,
+  useDialFileManagerTabs,
+  type DialFile,
+  type FileManagerGridRow,
+} from '@epam/ai-dial-react-file-manager';
+import {
   DialPopup,
   NOT_ALLOWED_SYMBOLS,
   NOT_ALLOWED_SYMBOLS_REGEXP,
   NotificationVariant,
   PopupSize,
   PrimaryButton,
-  useDialFileManagerTabs,
-  type DialFile,
-  type FileManagerGridRow,
 } from '@epam/ai-dial-ui-kit';
 import {
   memo,
