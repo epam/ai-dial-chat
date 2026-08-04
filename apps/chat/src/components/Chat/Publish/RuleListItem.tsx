@@ -25,7 +25,10 @@ interface Props {
  * with a localized "Organization" label and joining the remaining segments.
  * Example: "public/Folder01/Folder02/Folder03" -> "Organization / Folder01 / Folder02 / Folder03"
  */
-const formatFolderPathForDisplay = (path: string, organizationLabel: string): string => {
+const formatFolderPathForDisplay = (
+  path: string,
+  organizationLabel: string,
+): string => {
   const segments = path.split('/');
   if (segments.length === 0) return '';
 
@@ -45,7 +48,10 @@ export function RuleListItem({
   const { translateSource, translateFunction } =
     usePublicationFilterTranslation();
 
-  const displayPath = formatFolderPathForDisplay(path, t(ChatI18nKeys.Organization));
+  const displayPath = formatFolderPathForDisplay(
+    path,
+    t(ChatI18nKeys.Organization),
+  );
 
   return (
     <>

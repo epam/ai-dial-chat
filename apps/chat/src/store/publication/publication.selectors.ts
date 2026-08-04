@@ -1,7 +1,12 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import { getPartialAndFullyChosenFolders } from '@/src/utils/app/folders';
-import { isApplicationId, isConversationId, isFileId, isToolsetId } from '@/src/utils/app/id';
+import {
+  isApplicationId,
+  isConversationId,
+  isFileId,
+  isToolsetId,
+} from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { orderByType } from '@/src/utils/app/publications';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
@@ -105,10 +110,10 @@ const selectFilteredPublicationsWithSearch = (
       }
 
       // Fallback: if no resources, search by publication name
-      return publication.name
-        ?.toLowerCase()
-        .trim()
-        .includes(searchTermLower) ?? false;
+      return (
+        publication.name?.toLowerCase().trim().includes(searchTermLower) ??
+        false
+      );
     });
   });
 
