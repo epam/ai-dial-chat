@@ -67,6 +67,7 @@ import {
   getConversationTitleFromName,
   prepareEntityName,
 } from './utils/conversation.utils';
+import { parseScheduledTaskConversationPath } from './utils/parse-scheduled-task-conversation-path';
 
 const getValidAttachments = (
   customContent?: ConversationMessageDto['custom_content'],
@@ -670,6 +671,7 @@ export class ConversationService {
             const isReadonly =
               overrides.isReadonly ??
               !(item.permissions?.includes('WRITE') ?? false);
+            const scheduledTask = parseScheduledTaskConversationPath(id);
             return {
               id,
               title: getConversationTitleFromName(item.name ?? ''),
@@ -680,6 +682,8 @@ export class ConversationService {
                 overrides.publishedWithMe ?? item.publishedWithMe ?? false,
               isPinned: pinnedSet.has(decodedId),
               isReadonly,
+              isScheduledTask: scheduledTask !== null,
+              ...(scheduledTask ?? {}),
             };
           });
 
@@ -712,6 +716,7 @@ export class ConversationService {
               .map((r) => {
                 const id = r.url ?? `${r.parentPath ?? ''}/${r.name ?? ''}`;
                 const decodedId = safeDecodeURIComponent(id);
+                const scheduledTask = parseScheduledTaskConversationPath(id);
                 return {
                   id,
                   title: getConversationTitleFromName(r.name ?? ''),
@@ -720,6 +725,8 @@ export class ConversationService {
                   publishedWithMe: false,
                   isPinned: pinnedSet.has(decodedId),
                   isReadonly: true,
+                  isScheduledTask: scheduledTask !== null,
+                  ...(scheduledTask ?? {}),
                 };
               })
           : [];

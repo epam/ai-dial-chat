@@ -1977,6 +1977,109 @@ describe('ConversationService', () => {
       expect(sharedItem?.publishedWithMe).toBe(false);
     });
 
+    it('tags a user-bucket item created by a scheduled task with isScheduledTask, scheduleId, and runId', async () => {
+      mockMetadata([
+        {
+          url: 'conversations/test-bucket/.scheduler/sched_abc/run_001/gpt-4o__Morning briefing__uuid',
+          nodeType: 'FILE',
+          updatedAt: 1000,
+        },
+      ]);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items).toEqual([
+        expect.objectContaining({
+          isScheduledTask: true,
+          scheduleId: 'sched_abc',
+          runId: 'run_001',
+        }),
+      ]);
+    });
+
+    it('tags a public-bucket item created by a scheduled task independently of its own path', async () => {
+      mockMetadata(
+        [],
+        [
+          {
+            url: 'conversations/public/.scheduler/sched_pub/run_002/gpt-4o__title',
+            nodeType: 'FILE',
+            updatedAt: 1000,
+          },
+        ],
+      );
+      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items).toEqual([
+        expect.objectContaining({
+          isScheduledTask: true,
+          scheduleId: 'sched_pub',
+          runId: 'run_002',
+        }),
+      ]);
+    });
+
+    it('tags a shared item created by a scheduled task using its own resource id', async () => {
+      mockMetadata([]);
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue({
+        data: {
+          resources: [
+            {
+              url: 'conversations/other-bucket/.scheduler/sched_shr/run_003/gpt-4o__title',
+              nodeType: 'FILE',
+            },
+          ],
+        },
+      } as never);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items).toEqual([
+        expect.objectContaining({
+          isScheduledTask: true,
+          scheduleId: 'sched_shr',
+          runId: 'run_003',
+          sharedWithMe: true,
+        }),
+      ]);
+    });
+
+    it('sets isScheduledTask: false with no scheduleId/runId for a normal conversation', async () => {
+      mockMetadata([
+        {
+          url: 'conversations/test-bucket/gpt-4o__Morning briefing__uuid',
+          nodeType: 'FILE',
+          updatedAt: 1000,
+        },
+      ]);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items[0].isScheduledTask).toBe(false);
+      expect(result.items[0].scheduleId).toBeUndefined();
+      expect(result.items[0].runId).toBeUndefined();
+    });
+
     it('calls getSharedResources with resourceTypes CONVERSATION and with me', async () => {
       mockMetadata([]);
       const spy = vi
