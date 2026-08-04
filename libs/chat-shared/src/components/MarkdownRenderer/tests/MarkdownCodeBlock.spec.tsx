@@ -104,7 +104,7 @@ describe('MarkdownCodeBlock', () => {
     const copiedButton = await screen.findByRole('button', {
       name: 'Copied!',
     });
-    expect(copiedButton.className).toContain('dial-primary-ghost-button');
+    expect(copiedButton.className).toContain('dial-kit-primary-ghost-button');
   });
 
   it('renders a download button next to copy that downloads the code as a file', async () => {

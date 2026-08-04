@@ -42,14 +42,18 @@ export const listSharedFiles = (
   params: ListSharedFilesRequest,
 ): Promise<ListFilesResponseDto> => filesApi.listSharedFiles(params);
 
-export const listFiles = (params: {
-  bucket: string;
-  path?: string;
-  token?: string;
-  limit?: number;
-  recursive?: boolean;
-  permissions?: boolean;
-}): Promise<ListFilesResponseDto> => filesApi.listFiles(params);
+export const listFiles = (
+  params: {
+    bucket: string;
+    path?: string;
+    token?: string;
+    limit?: number;
+    recursive?: boolean;
+    permissions?: boolean;
+  },
+  signal?: AbortSignal,
+): Promise<ListFilesResponseDto> =>
+  filesApi.listFiles(params, signal ? { signal } : undefined);
 
 export const uploadFile = (
   bucket: string,

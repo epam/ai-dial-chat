@@ -1,12 +1,12 @@
-import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { QuotationSource } from '../../../models/quotation-source';
-import ConversationSourcesPanel from '../ConversationSourcesPanel';
 import type { ConversationSourcesPanelLabels } from '../ConversationSourcesPanel';
+import ConversationSourcesPanel from '../ConversationSourcesPanel';
 
 vi.mock('@epam/ai-dial-sidebar', () => ({
   PanelEmpty: ({ label }: { label: string }) => <div>{label}</div>,
@@ -58,22 +58,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   mergeClasses: (...classes: (string | undefined)[]) =>
     classes.filter(Boolean).join(' '),
   GhostIconButton: ({
-    'aria-label': ariaLabel,
-    disabled,
-    onClick,
-  }: {
-    'aria-label': string;
-    disabled?: boolean;
-    onClick?: () => void;
-  }) => (
-    <button
-      type="button"
-      aria-label={ariaLabel}
-      disabled={disabled}
-      onClick={onClick}
-    />
-  ),
-  DialGhostIconButton: ({
     'aria-label': ariaLabel,
     disabled,
     onClick,

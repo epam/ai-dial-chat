@@ -188,12 +188,13 @@ const ToolsetEditor: FC = () => {
       });
 
       /*
-       * AuthSection only reports isLoggedIn=true after the login request has
-       * succeeded (or a successful OAuth login has been recovered).
-       * Keep the shared toolset list in sync with that confirmed status so
-       * returning to the Catalog does not expose the pre-auth snapshot.
+       * AuthSection only includes isLoggedIn in a patch after a login or
+       * logout request has actually resolved (or a successful OAuth login
+       * has been recovered) — never speculatively. Keep the shared toolset
+       * list in sync with that confirmed status in either direction so
+       * returning to the Catalog never shows a stale pre-change snapshot.
        */
-      if (patch.isLoggedIn === true) {
+      if ('isLoggedIn' in patch) {
         void refetchToolsets();
       }
     },

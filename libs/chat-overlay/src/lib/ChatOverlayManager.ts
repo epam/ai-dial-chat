@@ -13,7 +13,7 @@ import type {
   SetOverlayOptionsResponse,
   SetSystemPromptResponse,
   SetTemperatureResponse,
-} from '@epam/ai-dial-chat-shared';
+} from '../protocol';
 import { ChatOverlay } from './ChatOverlay';
 import { setStyles } from './internal/dom-styles';
 

@@ -109,7 +109,7 @@ describe('ScheduledTasksService', () => {
     await service.listScheduledTasks('user-1', 'token');
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(cacheManager.set).toHaveBeenCalledWith(
-      'scheduled-tasks:list:user-1:0::0:',
+      'scheduled-tasks:list:user-1:0::0::firstToRun',
       expect.anything(),
       30_000,
     );
@@ -134,11 +134,11 @@ describe('ScheduledTasksService', () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://dial-core/v1/deployments/applications/scheduler-app/route/v1/schedules/?limit=12&offset=24&name=inbox',
+      'http://dial-core/v1/deployments/applications/scheduler-app/route/v1/schedules/?limit=12&offset=24&name=inbox&order_by=next_run_time&order_dir=asc',
       expect.objectContaining({ method: 'GET' }),
     );
     expect(cacheManager.set).toHaveBeenCalledWith(
-      'scheduled-tasks:list:user-1:0:12:24:inbox',
+      'scheduled-tasks:list:user-1:0:12:24:inbox:firstToRun',
       expect.anything(),
       30_000,
     );
@@ -161,7 +161,7 @@ describe('ScheduledTasksService', () => {
     });
 
     expect(cacheManager.set).toHaveBeenCalledWith(
-      'scheduled-tasks:list:user-1:0::0:a%3Ab',
+      'scheduled-tasks:list:user-1:0::0:a%3Ab:firstToRun',
       expect.anything(),
       30_000,
     );
@@ -181,8 +181,88 @@ describe('ScheduledTasksService', () => {
     await service.listScheduledTasks('user-1', 'token', { search: '' });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://dial-core/v1/deployments/applications/scheduler-app/route/v1/schedules/',
+      'http://dial-core/v1/deployments/applications/scheduler-app/route/v1/schedules/?order_by=next_run_time&order_dir=asc',
       expect.objectContaining({ method: 'GET' }),
+    );
+  });
+
+  it.each([
+    ['firstToRun', 'next_run_time', 'asc'],
+    ['lastToRun', 'next_run_time', 'desc'],
+    ['newest', 'created_at', 'desc'],
+    ['nameAZ', 'name', 'asc'],
+  ] as const)(
+    'maps sort=%s to order_by=%s&order_dir=%s upstream',
+    async (sort, orderBy, orderDir) => {
+      fetchMock.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ results: [] }),
+      });
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        makeCacheManager() as never,
+      );
+
+      await service.listScheduledTasks('user-1', 'token', {
+        sort: sort as never,
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `http://dial-core/v1/deployments/applications/scheduler-app/route/v1/schedules/?order_by=${orderBy}&order_dir=${orderDir}`,
+        expect.objectContaining({ method: 'GET' }),
+      );
+    },
+  );
+
+  it('defaults to the firstToRun mapping when sort is omitted', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ results: [] }),
+    });
+    const service = new ScheduledTasksService(
+      makeDialClient(),
+      makeConfigService('scheduler-app') as never,
+      makeCacheManager() as never,
+    );
+
+    await service.listScheduledTasks('user-1', 'token');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://dial-core/v1/deployments/applications/scheduler-app/route/v1/schedules/?order_by=next_run_time&order_dir=asc',
+      expect.objectContaining({ method: 'GET' }),
+    );
+  });
+
+  it('caches different sort values under different cache keys', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ results: [] }),
+    });
+    const cacheManager = makeCacheManager();
+    const service = new ScheduledTasksService(
+      makeDialClient(),
+      makeConfigService('scheduler-app') as never,
+      cacheManager as never,
+    );
+
+    await service.listScheduledTasks('user-1', 'token', {
+      sort: 'nameAZ' as never,
+    });
+    await service.listScheduledTasks('user-1', 'token', {
+      sort: 'newest' as never,
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(cacheManager.set).toHaveBeenCalledWith(
+      'scheduled-tasks:list:user-1:0::0::nameAZ',
+      expect.anything(),
+      30_000,
+    );
+    expect(cacheManager.set).toHaveBeenCalledWith(
+      'scheduled-tasks:list:user-1:0::0::newest',
+      expect.anything(),
+      30_000,
     );
   });
 

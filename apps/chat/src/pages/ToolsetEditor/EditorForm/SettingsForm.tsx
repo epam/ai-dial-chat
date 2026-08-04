@@ -1,7 +1,7 @@
 import { CatalogEntityType } from '@epam/ai-dial-catalog';
 import {
   DIAL_ICON_SIZE,
-  DialGhostIconButton,
+  GhostIconButton,
   DialInput,
   DialSelect,
   DialTagInput,
@@ -105,15 +105,23 @@ const SettingsForm: FC<Props> = ({
             invalid={!!errors.endpoint}
           />
         </div>
-        <DialGhostIconButton
+        <GhostIconButton
           aria-label={t(ToolsetEditorI18nKeys.CopyUrlLabel)}
           size={ElementSize.Standard}
           onClick={handleCopyEndpoint}
           icon={
             isCopied ? (
-              <IconCheck size={DIAL_ICON_SIZE.SM} className="text-success" />
+              <IconCheck
+                size={DIAL_ICON_SIZE.SM}
+                className="text-success"
+                aria-hidden
+              />
             ) : (
-              <IconCopy size={DIAL_ICON_SIZE.SM} className="text-secondary" />
+              <IconCopy
+                size={DIAL_ICON_SIZE.SM}
+                className="text-secondary"
+                aria-hidden
+              />
             )
           }
         />

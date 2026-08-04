@@ -1,4 +1,4 @@
-import { OverlayFeature } from '@epam/ai-dial-chat-shared';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 
 /**
  * The 20 `OverlayFeature` keys enabled by default, reflecting today's

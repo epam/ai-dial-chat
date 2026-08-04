@@ -1,9 +1,9 @@
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   CodeBlockTheme,
   isStatusMessage,
   mergeClasses,
   MessageRole,
-  OverlayFeature,
   type Annotation,
   type Attachment,
   type AttachmentErrorReason,

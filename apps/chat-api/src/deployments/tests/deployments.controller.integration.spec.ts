@@ -267,6 +267,42 @@ describe('DeploymentsController (integration)', () => {
     });
   });
 
+  describe('deployment path parameter validation', () => {
+    it.each([
+      ['configuration', 'getDeploymentConfiguration'],
+      ['limits', 'getDeploymentLimits'],
+      ['details', 'getDeploymentDetails'],
+    ] as const)(
+      'returns 400 for traversal before calling the %s service',
+      async (suffix, serviceMethod) => {
+        const response = await request(app.getHttpServer())
+          .get(`/api/v1/deployments/..%2Fetc%2Fpasswd/${suffix}`)
+          .expect(400);
+
+        expect(response.body.message).toContain(
+          'deployment must not contain empty, dot, dot-dot, or control-character path segments',
+        );
+        expect(service[serviceMethod]).not.toHaveBeenCalled();
+      },
+    );
+
+    it('returns 400 for an empty decoded path segment', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/deployments/applications%2F%2Fname/limits')
+        .expect(400);
+
+      expect(service.getDeploymentLimits).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 for a deployment identifier longer than 2048 characters', async () => {
+      await request(app.getHttpServer())
+        .get(`/api/v1/deployments/${'a'.repeat(2049)}/limits`)
+        .expect(400);
+
+      expect(service.getDeploymentLimits).not.toHaveBeenCalled();
+    });
+  });
+
   describe('GET /deployments/:deployment/configuration', () => {
     it('returns 200 with JSON Schema object', async () => {
       const schema = {
@@ -338,6 +374,21 @@ describe('DeploymentsController (integration)', () => {
 
       expect(service.getDeploymentLimits).toHaveBeenCalledWith(
         'applications/foo/bar',
+        TEST_USER.at,
+      );
+    });
+
+    it('accepts encoded spaces and reserved characters in a deployment name', async () => {
+      service.getDeploymentLimits.mockResolvedValue(mockLimits);
+
+      await request(app.getHttpServer())
+        .get(
+          '/api/v1/deployments/applications%2Fbucket%2FMy%20App%20%231%2A/limits',
+        )
+        .expect(200);
+
+      expect(service.getDeploymentLimits).toHaveBeenCalledWith(
+        'applications/bucket/My App #1*',
         TEST_USER.at,
       );
     });

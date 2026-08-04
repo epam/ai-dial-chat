@@ -610,7 +610,7 @@ export class DeploymentsService {
 
     try {
       const result = await this.dialClient.client.configurationDeployment(
-        name,
+        encodeDialResourcePath(name),
         {
           headers: getBearerAuthHeaders(accessToken),
         },
@@ -742,9 +742,12 @@ export class DeploymentsService {
     deployment: string,
     accessToken: string,
   ): Promise<DeploymentDetailsDto> {
-    const result = await this.dialClient.client.getModel(deployment, {
-      headers: getBearerAuthHeaders(accessToken),
-    });
+    const result = await this.dialClient.client.getModel(
+      encodeDialResourcePath(deployment),
+      {
+        headers: getBearerAuthHeaders(accessToken),
+      },
+    );
     if (result.error) {
       return mapDialHttpStatus(
         result.response.status,
@@ -819,9 +822,12 @@ export class DeploymentsService {
     deployment: string,
     accessToken: string,
   ): Promise<DeploymentDetailsDto> {
-    const result = await this.dialClient.client.getApplication(deployment, {
-      headers: getBearerAuthHeaders(accessToken),
-    });
+    const result = await this.dialClient.client.getApplication(
+      encodeDialResourcePath(deployment),
+      {
+        headers: getBearerAuthHeaders(accessToken),
+      },
+    );
     if (result.error) {
       return mapDialHttpStatus(
         result.response.status,
@@ -907,9 +913,12 @@ export class DeploymentsService {
     deployment: string,
     accessToken: string,
   ): Promise<DeploymentDetailsDto> {
-    const result = await this.dialClient.client.getToolset(deployment, {
-      headers: getBearerAuthHeaders(accessToken),
-    });
+    const result = await this.dialClient.client.getToolset(
+      encodeDialResourcePath(deployment),
+      {
+        headers: getBearerAuthHeaders(accessToken),
+      },
+    );
     if (result.error) {
       return mapDialHttpStatus(
         result.response.status,
@@ -968,9 +977,12 @@ export class DeploymentsService {
     accessToken: string,
   ): Promise<string[] | undefined> {
     try {
-      const result = await this.dialClient.client.getToolSetTools(deployment, {
-        headers: getBearerAuthHeaders(accessToken),
-      });
+      const result = await this.dialClient.client.getToolSetTools(
+        encodeDialResourcePath(deployment),
+        {
+          headers: getBearerAuthHeaders(accessToken),
+        },
+      );
       if (result.error) {
         this.logger.warn(
           `DIAL Core returned ${result.response.status} for getToolSetTools "${deployment}"`,
@@ -994,7 +1006,7 @@ export class DeploymentsService {
   ): Promise<DeploymentLimitsResponseDto> {
     try {
       const result = await this.dialClient.client.getDeploymentLimits(
-        deploymentName,
+        encodeDialResourcePath(deploymentName),
         {
           headers: getBearerAuthHeaders(accessToken),
         },

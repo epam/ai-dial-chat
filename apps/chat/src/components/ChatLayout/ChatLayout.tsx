@@ -1,4 +1,5 @@
-import { mergeClasses, OverlayFeature } from '@epam/ai-dial-chat-shared';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, GhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconLayoutSidebarRight, IconPlus } from '@tabler/icons-react';
 import type { FC } from 'react';

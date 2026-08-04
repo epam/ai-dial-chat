@@ -2,7 +2,7 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   ElementSize,
-  StaticIconButton,
+  GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconDownload,
@@ -41,7 +41,7 @@ export const ActionButton: FC<ActionProps> = ({
   className,
 }) => {
   return (
-    <StaticIconButton
+    <GhostIconButton
       icon={icon}
       size={ElementSize.Small}
       className={mergeClasses(

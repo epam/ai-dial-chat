@@ -19,7 +19,7 @@ Provides citation and annotation components, hooks, and utilities for AI DIAL co
 - `react` ^19.0.0
 - `@tabler/icons-react` ^3.0.0
 - `@epam/ai-dial-chat-shared` \*
-- `@epam/ai-dial-ui-kit` ^0.13.0-dev.23
+- `@epam/ai-dial-ui-kit` ^0.13.0-dev.26
 
 ## Components
 

@@ -549,7 +549,10 @@
             "name": "deployment",
             "required": true,
             "in": "path",
+            "description": "DIAL deployment identifier. Slash-separated identifiers must be percent-encoded as one request path parameter.",
             "schema": {
+              "maxLength": 2048,
+              "example": "applications/bucket/My App",
               "type": "string"
             }
           }
@@ -564,6 +567,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid deployment identifier"
           },
           "401": {
             "description": "Unauthorized"
@@ -591,7 +597,10 @@
             "name": "deployment",
             "required": true,
             "in": "path",
+            "description": "DIAL deployment identifier. Slash-separated identifiers must be percent-encoded as one request path parameter.",
             "schema": {
+              "maxLength": 2048,
+              "example": "applications/bucket/My App",
               "type": "string"
             }
           }
@@ -606,6 +615,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid deployment identifier"
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
@@ -642,7 +654,10 @@
             "name": "deployment",
             "required": true,
             "in": "path",
+            "description": "DIAL deployment identifier. Slash-separated identifiers must be percent-encoded as one request path parameter.",
             "schema": {
+              "maxLength": 2048,
+              "example": "applications/bucket/My App",
               "type": "string"
             }
           }
@@ -657,6 +672,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid deployment identifier"
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
@@ -1927,7 +1945,10 @@
             "description": "Missing or invalid path, or conversation has no content"
           },
           "401": {
-            "description": "Not authenticated"
+            "description": "Not authenticated, or DIAL Core rejected the calling user’s token for the configured utility model"
+          },
+          "403": {
+            "description": "Not authorized to use the configured utility model"
           },
           "404": {
             "description": "Conversation not found"
@@ -4165,6 +4186,17 @@
               "maxLength": 200,
               "example": "daily",
               "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "Sort order for the returned scheduled tasks. Defaults to `firstToRun`.",
+            "schema": {
+              "example": "firstToRun",
+              "type": "string",
+              "enum": ["firstToRun", "lastToRun", "newest", "nameAZ"]
             }
           }
         ],

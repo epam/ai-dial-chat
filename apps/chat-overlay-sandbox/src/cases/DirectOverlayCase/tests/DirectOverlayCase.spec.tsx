@@ -1,4 +1,4 @@
-import { OverlayEventType } from '@epam/ai-dial-chat-shared';
+import { OverlayEventType } from '@epam/ai-dial-chat-overlay';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode } from 'react';
@@ -26,9 +26,9 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock('@epam/ai-dial-chat-overlay', () => ({
+vi.mock('@epam/ai-dial-chat-overlay', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-overlay')>()),
   ChatOverlay: mocks.ChatOverlay,
-  OverlayEventType,
 }));
 
 vi.mock('../../../env', () => ({

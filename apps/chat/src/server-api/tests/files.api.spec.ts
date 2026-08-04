@@ -24,7 +24,7 @@ describe('listFiles', () => {
 
     const result = await listFiles({ bucket: 'my-bucket' });
 
-    expect(spy).toHaveBeenCalledWith({ bucket: 'my-bucket' });
+    expect(spy).toHaveBeenCalledWith({ bucket: 'my-bucket' }, undefined);
     expect(result).toEqual(MOCK_RESPONSE);
   });
 
@@ -41,13 +41,30 @@ describe('listFiles', () => {
       permissions: true,
     });
 
-    expect(spy).toHaveBeenCalledWith({
-      bucket: 'my-bucket',
-      path: 'folder/',
-      limit: 10,
-      recursive: false,
-      permissions: true,
-    });
+    expect(spy).toHaveBeenCalledWith(
+      {
+        bucket: 'my-bucket',
+        path: 'folder/',
+        limit: 10,
+        recursive: false,
+        permissions: true,
+      },
+      undefined,
+    );
+  });
+
+  it('passes an AbortSignal through to the generated client when provided', async () => {
+    const spy = vi
+      .spyOn(filesApi, 'listFiles')
+      .mockResolvedValue(MOCK_RESPONSE);
+    const controller = new AbortController();
+
+    await listFiles({ bucket: 'my-bucket' }, controller.signal);
+
+    expect(spy).toHaveBeenCalledWith(
+      { bucket: 'my-bucket' },
+      { signal: controller.signal },
+    );
   });
 
   it('propagates rejection from the generated client', async () => {

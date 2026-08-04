@@ -91,7 +91,6 @@ export const CreateButton: FC<CreateButtonProps> = ({
         label={label}
         iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} />}
         onClick={onClick}
-        className={styles.gradientBtn}
       />
     );
   }
@@ -184,7 +183,6 @@ export const CreateButton: FC<CreateButtonProps> = ({
               />
             </span>
           }
-          className={styles.gradientBtn}
           aria-haspopup="menu"
           aria-expanded={isOpen}
           onKeyDown={handleTriggerKeyDown}
