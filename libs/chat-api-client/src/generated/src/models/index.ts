@@ -443,6 +443,12 @@ export interface Check200Response {
    * @memberof Check200Response
    */
   version?: string;
+  /**
+   * Stable identifier for the running deployment, derived from a hash of the served frontend build. Changes when a new deployment replaces the frontend static assets, letting long-lived clients detect that a reload will pick up a newer build.
+   * @type {string}
+   * @memberof Check200Response
+   */
+  buildId?: string;
 }
 /**
  *

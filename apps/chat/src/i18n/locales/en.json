@@ -719,6 +719,10 @@
     "retryLabel": "Try again",
     "reloadLabel": "Reload the page"
   },
+  "appUpdate": {
+    "heading": "New version available",
+    "message": "Reload the page to get the latest version."
+  },
   "share": {
     "title": "Share",
     "qrButtonLabel": "QR",
