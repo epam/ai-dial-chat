@@ -72,7 +72,7 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
   tableBodyCell?: string;
   /** Extra classes on `<th>` only (applied alongside `tableCell`). */
   tableHeader?: string;
-  /** Typography class for `<th>` cells. Defaults to `'font-semibold'`. */
+  /** Typography class for `<th>` cells. Defaults to `'dial-tiny-semi-text uppercase tracking-wider'`. Text color is set separately via `colors.tableHeaderText`. */
   tableHeaderFont?: string;
 }
 
@@ -116,6 +116,16 @@ export interface MarkdownRendererColors {
   thinkingSecondary?: string;
   /** Border color for `<hr>` separators and table cell borders. */
   border?: string;
+  /** Border color for the `<blockquote>` start border. Defaults to `--stroke-primary`. */
+  blockquoteBorder?: string;
+  /** Text color for `<blockquote>` content. Defaults to `--text-secondary`. */
+  blockquoteText?: string;
+  /** Text color for `<a>` links. Defaults to `--text-accent`. */
+  linkText?: string;
+  /** Focus-visible outline color for `<a>` links. Defaults to `--stroke-focus`. */
+  linkFocus?: string;
+  /** Text color for `<th>` table header cells. Defaults to `--text-secondary`. */
+  tableHeaderText?: string;
 }
 
 /**
@@ -218,7 +228,8 @@ const buildMarkdownComponents = (
   blockquote: ({ children }) => (
     <blockquote
       className={mergeClasses(
-        'border-s-2 border-primary py-1 ps-4 text-secondary',
+        'border-s-2 py-1 ps-4',
+        styles.blockquote,
         cn.blockquote,
       )}
     >
@@ -231,7 +242,8 @@ const buildMarkdownComponents = (
       target="_blank"
       rel="noopener noreferrer"
       className={mergeClasses(
-        'decoration-current/60 text-accent underline underline-offset-2 hover:decoration-current focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[var(--stroke-focus,#EEF1F7)]',
+        'decoration-current/60 underline underline-offset-2 hover:decoration-current focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2',
+        styles.link,
         cn.link,
       )}
     >
@@ -286,8 +298,7 @@ const buildMarkdownComponents = (
         'sticky top-0 z-[2] max-w-96 whitespace-normal break-words border-b px-3 py-2.5 text-start [overflow-wrap:anywhere]',
         tableStyles.rowDivider,
         tableStyles.tableHeaderCell,
-        cn.tableHeaderFont ??
-          'dial-tiny-semi-text uppercase tracking-wider text-secondary',
+        cn.tableHeaderFont ?? 'dial-tiny-semi-text uppercase tracking-wider',
         cn.tableCell,
         cn.tableHeader,
       )}
@@ -338,6 +349,11 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
       '--cm-thinking-inverted': colors?.thinkingPrimary,
       '--cm-thinking-secondary': colors?.thinkingSecondary,
       '--cm-markdown-border': colors?.border,
+      '--cm-blockquote-border': colors?.blockquoteBorder,
+      '--cm-blockquote-text': colors?.blockquoteText,
+      '--cm-link-text': colors?.linkText,
+      '--cm-link-focus': colors?.linkFocus,
+      '--cm-table-header-text': colors?.tableHeaderText,
     });
 
     const mergedComponents = useMemo(

@@ -29,9 +29,7 @@ export const CodeContent: FC<CodeContentProps> = memo(
     return (
       <div dir="ltr" className="h-full overflow-auto">
         {isPlain ? (
-          <pre className="whitespace-pre-wrap break-words p-4">
-            {text}
-          </pre>
+          <pre className="whitespace-pre-wrap break-words p-4">{text}</pre>
         ) : (
           <SyntaxHighlighter
             language={language}

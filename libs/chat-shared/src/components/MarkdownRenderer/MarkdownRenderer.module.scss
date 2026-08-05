@@ -24,3 +24,16 @@
 .secondaryBorder {
   border-color: var(--cm-markdown-border, var(--stroke-secondary, #d1dbea));
 }
+
+.blockquote {
+  border-color: var(--cm-blockquote-border, var(--stroke-primary, #6b7280));
+  color: var(--cm-blockquote-text, var(--text-secondary, #6b7280));
+}
+
+.link {
+  color: var(--cm-link-text, var(--text-accent, #1d4ed8));
+
+  &:focus-visible {
+    outline-color: var(--cm-link-focus, var(--stroke-focus, #161b2d));
+  }
+}
