@@ -14,18 +14,22 @@ describe('shutdownOpenTelemetry', () => {
   });
 
   it('resolves once the bounded timeout elapses, without waiting for a hung shutdown', async () => {
-    const hungShutdown = vi.fn().mockReturnValue(
-      new Promise<void>(() => {
-        /* never resolves — simulates a hung exporter */
-      }),
-    );
+    vi.useFakeTimers();
 
-    const start = Date.now();
-    await shutdownOpenTelemetry(50, hungShutdown);
-    const elapsed = Date.now() - start;
+    try {
+      const hungShutdown = vi.fn().mockReturnValue(
+        new Promise<void>(() => {
+          /* never resolves — simulates a hung exporter */
+        }),
+      );
 
-    expect(hungShutdown).toHaveBeenCalledOnce();
-    expect(elapsed).toBeGreaterThanOrEqual(50);
-    expect(elapsed).toBeLessThan(1000);
+      const shutdownPromise = shutdownOpenTelemetry(50, hungShutdown);
+
+      await vi.advanceTimersByTimeAsync(50);
+      await expect(shutdownPromise).resolves.toBeUndefined();
+      expect(hungShutdown).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
