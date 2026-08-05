@@ -64,22 +64,6 @@ export class EnvConfigProvider implements ConfigProvider {
       return true;
     }
 
-    // features.requestApiKey is derived from REQUEST_API_KEY_CODE presence
-    if (key === 'features.requestApiKey') {
-      const code = this.configService.get('REQUEST_API_KEY_CODE', {
-        infer: true,
-      });
-      if (code == null) return undefined;
-      return true;
-    }
-
-    // features.reportAnIssue is derived from REPORT_ISSUE_CODE presence
-    if (key === 'features.reportAnIssue') {
-      const code = this.configService.get('REPORT_ISSUE_CODE', { infer: true });
-      if (code == null) return undefined;
-      return true;
-    }
-
     // fileManager.availableTabs is validated against a fixed allow-list, dropping unknown ids
     if (key === 'fileManager.availableTabs') {
       const availableTabs = this.configService.get(
