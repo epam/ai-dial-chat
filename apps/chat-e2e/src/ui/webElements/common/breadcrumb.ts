@@ -3,7 +3,6 @@ import { BaseElement } from '@/src/ui/webElements';
 import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
-
 export class Breadcrumb extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
     super(page, BreadcrumbSelectors.breadcrumbContainer, parentLocator);
