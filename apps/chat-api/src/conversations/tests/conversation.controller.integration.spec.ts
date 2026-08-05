@@ -583,7 +583,7 @@ describe('ConversationController (integration)', () => {
       const response = {
         items: [
           {
-            id: 'conversations/test-bucket/.scheduler/sched_abc/run_001/gpt-4o__Morning briefing',
+            id: 'conversations/test-bucket/.scheduler/sched_abc/gpt-4o__Morning briefing__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
             title: 'Morning briefing',
             updatedAt: 2000,
             sharedWithMe: false,
@@ -592,7 +592,7 @@ describe('ConversationController (integration)', () => {
             isReadonly: false,
             isScheduledTask: true,
             scheduleId: 'sched_abc',
-            runId: 'run_001',
+            runId: 'c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
           },
           {
             id: 'conversations/test-bucket/gpt-4o__Regular chat__uuid',
@@ -616,7 +616,7 @@ describe('ConversationController (integration)', () => {
       expect(body.items[0]).toMatchObject({
         isScheduledTask: true,
         scheduleId: 'sched_abc',
-        runId: 'run_001',
+        runId: 'c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
       });
       expect(body.items[1].isScheduledTask).toBe(false);
       expect(body.items[1].scheduleId).toBeUndefined();

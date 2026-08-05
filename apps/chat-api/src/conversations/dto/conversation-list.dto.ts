@@ -51,7 +51,7 @@ export class ConversationListItemDto {
 
   @ApiProperty({
     description:
-      'True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{runId}` reserved segment).',
+      'True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{filename}` reserved segment, with `{filename}` shaped `{deploymentId}__{title}__{runId}`).',
     example: false,
   })
   isScheduledTask!: boolean;
