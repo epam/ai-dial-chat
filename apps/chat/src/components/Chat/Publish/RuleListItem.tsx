@@ -38,6 +38,11 @@ export function RuleListItem({
         <DialEllipsisTooltip text={getLastPathSegment(path)} />
       </div>
       <div className="mb-3 flex flex-wrap gap-1 text-xs" data-qa="rules-list">
+        {rules.length === 0 && (
+          <span className="text-xs text-secondary">
+            {t(ChatI18nKeys.PublicationAvailableToAll)}
+          </span>
+        )}
         {rules.map((rule, idx) => (
           <div
             key={`${rule.source}-${idx}`}
