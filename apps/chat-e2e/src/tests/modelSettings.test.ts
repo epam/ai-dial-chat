@@ -29,7 +29,7 @@ dialTest(
     agentSettingAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1046');
+    setTestIds('EPMDIAL-5707');
     const randomModel = GeneratorUtil.randomArrayElement(
       models.filter(
         (m) =>
@@ -95,7 +95,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1084');
+    setTestIds('EPMDIAL-5710');
     const prompts = [
       'test:',
       'test. test:',

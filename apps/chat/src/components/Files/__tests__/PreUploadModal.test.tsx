@@ -87,6 +87,8 @@ const createStore = () =>
             id: `${folderId}/sun.jpg`,
             name: 'sun.jpg',
             folderId,
+            contentLength: 7,
+            contentType: 'image/jpeg',
           },
         ],
       },

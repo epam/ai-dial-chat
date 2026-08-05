@@ -526,6 +526,7 @@ export const conversationsSlice = createSlice({
         conversationId: string;
         messageIndex: number;
         error: string;
+        traceId?: string;
       }>,
     ) => state,
     deleteMessage: (state, _action: PayloadAction<{ index: number }>) => state,
@@ -668,7 +669,10 @@ export const conversationsSlice = createSlice({
     uploadConversationsWithFoldersRecursiveSuccess: (state) => {
       state.conversationsLoaded = true;
     },
-    uploadConversationsFail: (state) => {
+    uploadConversationsFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => {
       state.conversationsStatus = UploadStatus.FAILED;
       state.areConversationsWithContentUploading = false;
     },

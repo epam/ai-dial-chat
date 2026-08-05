@@ -40,18 +40,18 @@ dialOverlayTest(
     setTestIds,
   }) => {
     setTestIds(
-      'EPMRTC-3782',
-      'EPMRTC-3759',
-      'EPMRTC-3760',
-      'EPMRTC-3769',
-      'EPMRTC-3768',
-      'EPMRTC-3771',
-      'EPMRTC-3772',
-      'EPMRTC-3775',
-      'EPMRTC-3776',
-      'EPMRTC-3777',
-      'EPMRTC-3778',
-      'EPMRTC-3767',
+      'EPMDIAL-2281',
+      'EPMDIAL-2258',
+      'EPMDIAL-2259',
+      'EPMDIAL-2275',
+      'EPMDIAL-2276',
+      'EPMDIAL-2278',
+      'EPMDIAL-2264',
+      'EPMDIAL-2265',
+      'EPMDIAL-2282',
+      'EPMDIAL-2283',
+      'EPMDIAL-2267',
+      'EPMDIAL-2274',
     );
 
     await dialTest.step('Verify header is not visible', async () => {
@@ -152,18 +152,18 @@ dialOverlayTest(
     setTestIds,
   }) => {
     setTestIds(
-      'EPMRTC-5779',
-      'EPMRTC-3759',
-      'EPMRTC-3760',
-      'EPMRTC-3771',
-      'EPMRTC-3772',
-      'EPMRTC-3775',
-      'EPMRTC-3776',
-      'EPMRTC-3777',
-      'EPMRTC-3778',
-      'EPMRTC-3779',
-      'EPMRTC-4438',
-      'EPMRTC-3767',
+      'EPMDIAL-2306',
+      'EPMDIAL-2258',
+      'EPMDIAL-2259',
+      'EPMDIAL-2278',
+      'EPMDIAL-2264',
+      'EPMDIAL-2265',
+      'EPMDIAL-2282',
+      'EPMDIAL-2283',
+      'EPMDIAL-2267',
+      'EPMDIAL-2273',
+      'EPMDIAL-2292',
+      'EPMDIAL-2274',
     );
     let conversation: Conversation;
     let prompt: Prompt;
@@ -393,7 +393,7 @@ dialOverlayTest(
     overlaySettingsModal,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3766', 'EPMRTC-3767', 'EPMRTC-3778');
+    setTestIds('EPMDIAL-2272', 'EPMDIAL-2274', 'EPMDIAL-2267');
 
     await dialTest.step(
       'Verify "New Conversation", logo and profile setting buttons are available in the header',
@@ -547,7 +547,7 @@ dialOverlayTest(
     overlayReportAnIssueModal,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3768', 'EPMRTC-3769');
+    setTestIds('EPMDIAL-2276', 'EPMDIAL-2275');
 
     await dialTest.step(
       'Open profile panel and verify API key cannot be requested',
@@ -589,7 +589,7 @@ dialOverlayTest(
     overlayBaseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3768', 'EPMRTC-3769', 'EPMRTC-3775');
+    setTestIds('EPMDIAL-2276', 'EPMDIAL-2275', 'EPMDIAL-2265');
 
     await dialTest.step('Verify header is not available', async () => {
       await overlayHomePage.navigateToUrl(
@@ -610,7 +610,7 @@ dialOverlayTest(
     overlayChatBar,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3775');
+    setTestIds('EPMDIAL-2265');
 
     await dialTest.step(
       'Open conversations side panel and verify "Clip" icon is not visible at the bottom panel',
@@ -638,7 +638,7 @@ dialOverlayTest(
     overlayBaseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-5692');
+    setTestIds('EPMDIAL-2277');
 
     await dialTest.step(
       'Click on the user avatar and verify Settings option is not displayed on the panel',

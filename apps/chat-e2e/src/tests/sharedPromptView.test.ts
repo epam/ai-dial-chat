@@ -32,7 +32,7 @@ dialSharedWithMeTest(
     setTestIds,
     additionalShareUserLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-2035', 'EPMRTC-3183', 'EPMRTC-3184');
+    setTestIds('EPMDIAL-3824', 'EPMDIAL-3834', 'EPMDIAL-3835');
     let prompt: Prompt;
     let shareByLinkResponse: ShareByLinkResponseModel;
     const expectedColor = ThemesUtil.getRgbColorByKey(
@@ -166,7 +166,7 @@ dialSharedWithMeTest(
     apiAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3185', 'EPMRTC-2032');
+    setTestIds('EPMDIAL-3837', 'EPMDIAL-3821');
     let prompt: Prompt;
     let shareByLinkResponse: ShareByLinkResponseModel;
     const updatedName = GeneratorUtil.randomString(10);

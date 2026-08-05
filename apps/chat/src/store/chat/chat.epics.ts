@@ -19,6 +19,7 @@ import {
   requestAudioTranscription,
   sendMessage,
 } from '@/src/utils/app/epics-helpers/chat.epic-helpers';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import { getUserCustomContent } from '@/src/utils/app/file';
 import { removeDescriptionsFromSchema } from '@/src/utils/app/form-schema';
 import {
@@ -165,10 +166,11 @@ const startConfigurationSchemaUploadingEpic: AppEpic = (action$) =>
             }),
           );
         }),
-        catchError(() => {
+        catchError((err) => {
           return of(
             ChatActions.getConfigurationSchemaFailed({
               modelId: payload.modelId,
+              ...parseApiError(err),
             }),
           );
         }),
@@ -179,11 +181,12 @@ const startConfigurationSchemaUploadingEpic: AppEpic = (action$) =>
 const getConfigurationSchemaFailedEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ChatActions.getConfigurationSchemaFailed.type),
-    map(() => {
+    map(({ payload }) => {
       return UIActions.showErrorToast({
         message: translate(ChatI18nKeys.FailedToLoadChatStarters, {
           ns: Translation.Chat,
         }),
+        traceId: payload?.traceId,
       });
     }),
   );
@@ -247,6 +250,7 @@ const getEntityInfoFailEpic: AppEpic = (action$) =>
         of(
           UIActions.showErrorToast({
             message: translate(payload.errorText, { ns: Translation.Chat }),
+            traceId: payload?.traceId,
           }),
         ),
       );
@@ -322,12 +326,20 @@ const handleUserMessageVoiceRecordingEpic: AppEpic = (action$, state$) =>
                         }),
                       ),
                 ),
-                catchError(() =>
-                  of(ChatActions.userMessageTranscriptionFailed()),
+                catchError((err) =>
+                  of(
+                    ChatActions.userMessageTranscriptionFailed(
+                      parseApiError(err),
+                    ),
+                  ),
                 ),
               );
             }),
-            catchError(() => of(ChatActions.userMessageTranscriptionFailed())),
+            catchError((err) =>
+              of(
+                ChatActions.userMessageTranscriptionFailed(parseApiError(err)),
+              ),
+            ),
           ),
         );
       }
@@ -368,7 +380,9 @@ const startTranscriptionEpic: AppEpic = (action$) =>
             }),
           );
         }),
-        catchError(() => of(ChatActions.transcriptionFailed())),
+        catchError((err) =>
+          of(ChatActions.transcriptionFailed(parseApiError(err))),
+        ),
       );
     }),
   );
@@ -438,6 +452,7 @@ const transcriptionFailedEpic: AppEpic = (action$) =>
             ? ChatI18nKeys.TranscriptionFailedTooLarge
             : ChatI18nKeys.TranscriptionFailed,
         ),
+        traceId: payload?.traceId,
       }),
     ),
   );
@@ -452,6 +467,7 @@ const userMessageTranscriptionFailedEpic: AppEpic = (action$) =>
             ? ChatI18nKeys.TranscriptionFailedTooLarge
             : ChatI18nKeys.TranscriptionFailed,
         ),
+        traceId: payload?.traceId,
       }),
     ),
   );

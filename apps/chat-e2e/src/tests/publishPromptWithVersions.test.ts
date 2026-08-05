@@ -38,15 +38,15 @@ dialTest(
     prompts,
   }) => {
     setTestIds(
-      'EPMRTC-5892',
-      'EPMRTC-5900',
-      'EPMRTC-3219',
-      'EPMRTC-5897',
-      'EPMRTC-4437',
-      'EPMRTC-6548',
-      'EPMRTC-5896',
-      'EPMRTC-5901',
-      'EPMRTC-5902',
+      'EPMDIAL-3887',
+      'EPMDIAL-3888',
+      'EPMDIAL-3999',
+      'EPMDIAL-3889',
+      'EPMDIAL-3890',
+      'EPMDIAL-3892',
+      'EPMDIAL-3891',
+      'EPMDIAL-3896',
+      'EPMDIAL-3897',
     );
     let prompt: Prompt;
     const sortedVersionsArray = SortingUtil.sortVersionsArray([

@@ -26,7 +26,7 @@ dialTest(
     chatMessagesAssertion,
     informationModalAssertion,
   }) => {
-    setTestIds('EPMRTC-3000', 'EPMRTC-3056', 'EPMRTC-6103');
+    setTestIds('EPMDIAL-6257', 'EPMDIAL-6258', 'EPMDIAL-3564');
     let conversation: Conversation;
     const firstRequest = 'first request';
     const secondRequest = 'second request';
@@ -101,7 +101,7 @@ dialTest(
     dataInjector,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3001');
+    setTestIds('EPMDIAL-6256');
     let folderConversation: FolderConversation;
 
     await dialTest.step('Prepare conversation inside folder', async () => {

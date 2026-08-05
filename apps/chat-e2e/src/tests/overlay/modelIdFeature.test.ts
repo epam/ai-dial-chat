@@ -42,16 +42,16 @@ dialOverlayTest(
     setTestIds,
   }) => {
     setTestIds(
-      'EPMRTC-3781',
-      'EPMRTC-4693',
-      'EPMRTC-3770',
-      'EPMRTC-4438',
-      'EPMRTC-3782',
-      'EPMRTC-3762',
-      'EPMRTC-3763',
-      'EPMRTC-3764',
-      'EPMRTC-4873',
-      'EPMRTC-6271',
+      'EPMDIAL-2289',
+      'EPMDIAL-2290',
+      'EPMDIAL-2284',
+      'EPMDIAL-2292',
+      'EPMDIAL-2281',
+      'EPMDIAL-2261',
+      'EPMDIAL-2262',
+      'EPMDIAL-2266',
+      'EPMDIAL-2268',
+      'EPMDIAL-2242',
     );
     const randomAgentRequest = 'test';
     const randomModelId = GeneratorUtil.randomArrayElement(

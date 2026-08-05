@@ -86,7 +86,7 @@ dialAdminTest(
     adminPublishingApprovalModalAssertion,
     adminApproveRequiredConversationsAssertion,
   }) => {
-    setTestIds('EPMRTC-3209');
+    setTestIds('EPMDIAL-3453');
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const filterValue = 'age';
     let publishRequestResponse: {
@@ -270,7 +270,7 @@ dialTest(
     publicationApiHelper,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3211', 'EPMRTC-3725');
+    setTestIds('EPMDIAL-3460', 'EPMDIAL-3473');
     const filterValue = E2EUserRole.qa.toLowerCase();
     let publication: Publication;
 
@@ -341,7 +341,7 @@ dialAdminTest(
     adminPublishingRulesAssertion,
     adminPublicationApiHelper,
   }) => {
-    setTestIds('EPMRTC-3424');
+    setTestIds('EPMDIAL-3461');
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const firstFilterValue = E2EUserRole.developer.toLowerCase();
     const secondFilterValue = E2EUserRole.manager.toLowerCase();
@@ -508,7 +508,7 @@ dialAdminTest(
     adminPublishingApprovalModal,
     adminPublishingRulesAssertion,
   }) => {
-    setTestIds('EPMRTC-3425');
+    setTestIds('EPMDIAL-3462');
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const firstFilterValue = E2EUserRole.qa.toLowerCase();
     const secondFilterValue = 'any value';
@@ -667,7 +667,7 @@ dialTest(
     publicationApiHelper,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3508');
+    setTestIds('EPMDIAL-3465');
     const firstFilterValue = E2EUserRole.manager;
     const secondFilterValue = 'test';
     let publication: Publication;
@@ -745,7 +745,7 @@ dialAdminTest(
     adminPublishingApprovalModalAssertion,
     adminApproveRequiredConversationsAssertion,
   }) => {
-    setTestIds('EPMRTC-4167');
+    setTestIds('EPMDIAL-3184');
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const filterValue = E2EUserRole.qa;
     let unpublishRequestResponse: {

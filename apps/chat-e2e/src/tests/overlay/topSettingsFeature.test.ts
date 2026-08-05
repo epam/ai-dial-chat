@@ -18,7 +18,7 @@ dialOverlayTest(
     overlayBaseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3762', 'EPMRTC-3763', 'EPMRTC-3764');
+    setTestIds('EPMDIAL-2261', 'EPMDIAL-2262', 'EPMDIAL-2266');
 
     await dialTest.step(
       'Send the request and verify chat header is not visible',
@@ -52,7 +52,7 @@ dialOverlayTest(
     overlayBaseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-4872');
+    setTestIds('EPMDIAL-2263');
 
     await dialTest.step(
       'Send the request and verify chat name and icon are displayed in the header',
@@ -109,7 +109,7 @@ dialOverlayTest(
     overlayBaseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-4873');
+    setTestIds('EPMDIAL-2268');
 
     await dialTest.step(
       'Send the request and verify dots menu is not displayed in the header',

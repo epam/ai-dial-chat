@@ -24,7 +24,10 @@ export const serviceSlice = createSlice({
     requestApiKeySuccess: (state) => {
       state.isSuccessfullySent = true;
     },
-    requestApiKeyFail: (state) => state,
+    requestApiKeyFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => state,
     resetIsSuccessfullySent: (state) => {
       state.isSuccessfullySent = undefined;
     },

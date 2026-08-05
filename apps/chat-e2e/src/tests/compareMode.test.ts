@@ -51,7 +51,7 @@ dialTest(
     conversationAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-537');
+    setTestIds('EPMDIAL-6199');
     await dialTest.step(
       'Click on compare button on bottom of chat bar and verify compare mode is opened for new two chats',
       async () => {
@@ -98,7 +98,7 @@ dialTest(
     folderConversations,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-546', 'EPMRTC-383');
+    setTestIds('EPMDIAL-6204', 'EPMDIAL-7279');
     let firstModelConversation: Conversation;
     let secondModelConversation: Conversation;
     let modelConversationInFolder: FolderConversation;
@@ -236,7 +236,7 @@ dialTest(
     baseAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1133', 'EPMRTC-541');
+    setTestIds('EPMDIAL-6203', 'EPMDIAL-6206');
     let modelConversation: Conversation;
     let replayConversation: Conversation;
     let playbackConversation: Conversation;
@@ -329,7 +329,7 @@ dialTest(
     compareConversation,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-544', 'EPMRTC-545');
+    setTestIds('EPMDIAL-6209', 'EPMDIAL-6210');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
 
@@ -402,7 +402,7 @@ dialTest(
     compareConversation,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-540');
+    setTestIds('EPMDIAL-6202');
     const firstRequest = 'What is EPAM official name?';
     const secondRequest = 'What is DIAL?';
     const thirdRequest = 'Who is EPAM founder?';
@@ -508,7 +508,7 @@ dialTest(
     conversationAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-552', 'EPMRTC-558');
+    setTestIds('EPMDIAL-6214', 'EPMDIAL-6221');
 
     let firstConversation: Conversation;
     let secondConversation: Conversation;
@@ -683,7 +683,7 @@ dialTest(
     compareConversation,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-555');
+    setTestIds('EPMDIAL-6217');
     const request = ['beautiful', 'second message'];
     const conversationName = request[0];
     const conversationName2 = `${request[0]} 2`;
@@ -791,7 +791,7 @@ dialTest(
     compare,
   }) => {
     dialTest.slow();
-    setTestIds('EPMRTC-1021', 'EPMRTC-4737');
+    setTestIds('EPMDIAL-6236', 'EPMDIAL-5993');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
     const models = ModelsUtil.getLatestModels();
@@ -1023,7 +1023,7 @@ dialTest(
     localStorageManager,
   }) => {
     dialTest.slow();
-    setTestIds('EPMRTC-556', 'EPMRTC-1134');
+    setTestIds('EPMDIAL-6219', 'EPMDIAL-7283');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
     const sides = Object.values(Side);
@@ -1116,7 +1116,7 @@ dialTest(
     compare,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-536', 'EPMRTC-1168');
+    setTestIds('EPMDIAL-6444', 'EPMDIAL-6445');
     const request = 'What is epam official name';
     const firstSearchTerm = 'epam';
     const secondSearchTerm = 'systems';
@@ -1384,7 +1384,7 @@ dialTest(
     chatHeaderAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-542', 'EPMRTC-543', 'EPMRTC-548', 'EPMRTC-828');
+    setTestIds('EPMDIAL-6207', 'EPMDIAL-6208', 'EPMDIAL-6211', 'EPMDIAL-6223');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
 
@@ -1503,7 +1503,7 @@ dialTest(
     localStorageManager,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-557');
+    setTestIds('EPMDIAL-6220');
     let firstFolderConversation: FolderConversation;
     let secondFolderConversation: FolderConversation;
     const conversationName = GeneratorUtil.randomString(7);
@@ -1614,11 +1614,11 @@ dialTest(
     conversationAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-560',
-      'EPMRTC-562',
-      'EPMRTC-559',
-      'EPMRTC-563',
-      'EPMRTC-564',
+      'EPMDIAL-6228',
+      'EPMDIAL-6225',
+      'EPMDIAL-6222',
+      'EPMDIAL-6233',
+      'EPMDIAL-6226',
     );
     let firstConversation: Conversation;
     let secondConversation: Conversation;
