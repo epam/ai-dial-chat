@@ -1,9 +1,16 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import { getPartialAndFullyChosenFolders } from '@/src/utils/app/folders';
-import { isFileId } from '@/src/utils/app/id';
+import {
+  isApplicationId,
+  isConversationId,
+  isFileId,
+  isToolsetId,
+} from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { orderByType } from '@/src/utils/app/publications';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { parseEntityApiKey } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
 import { Publication, PublicationResource } from '@/src/types/publication';
@@ -40,6 +47,27 @@ const selectFilteredPublications = (
     );
   });
 
+/**
+ * Extracts the display name from a publication resource URL.
+ * Handles different entity types (conversations, prompts, files, applications, toolsets).
+ */
+const getResourceDisplayName = (reviewUrl: string): string => {
+  const { name } = splitEntityId(reviewUrl);
+
+  // Files don't have version/model info, return the name as-is
+  if (isFileId(reviewUrl)) {
+    return name;
+  }
+
+  // Parse entity API key to extract the actual name (removing version, model info, etc.)
+  const parsed = parseEntityApiKey(name, {
+    parseVersion: isApplicationId(reviewUrl) || isToolsetId(reviewUrl),
+    parseModel: isConversationId(reviewUrl),
+  });
+
+  return parsed.name;
+};
+
 const selectFilteredPublicationsWithSearch = (
   featureTypes: FeatureType[],
   includeEmptyResourceTypes?: boolean,
@@ -65,14 +93,27 @@ const selectFilteredPublicationsWithSearch = (
         return true;
       }
 
-      if (!publication.name) {
-        return false;
+      const searchTermLower = searchTerm.toLowerCase().trim();
+
+      // Search in publication resources (items inside the publication)
+      // This matches the behavior of other sections where search works on items, not folders
+      if (publication.resources && publication.resources.length > 0) {
+        return publication.resources.some((resource) => {
+          try {
+            const resourceName = getResourceDisplayName(resource.reviewUrl);
+            return resourceName.toLowerCase().trim().includes(searchTermLower);
+          } catch {
+            // If parsing fails, skip this resource
+            return false;
+          }
+        });
       }
 
-      return publication.name
-        .toLowerCase()
-        .trim()
-        .includes(searchTerm.toLowerCase().trim());
+      // Fallback: if no resources, search by publication name
+      return (
+        publication.name?.toLowerCase().trim().includes(searchTermLower) ??
+        false
+      );
     });
   });
 

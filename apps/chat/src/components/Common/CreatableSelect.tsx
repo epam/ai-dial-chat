@@ -1,6 +1,7 @@
 import { IconChevronDown, IconX } from '@tabler/icons-react';
 import React, { FC } from 'react';
 import {
+  ClearIndicatorProps,
   DropdownIndicatorProps,
   GroupBase,
   MultiValueGenericProps,
@@ -42,6 +43,14 @@ const MultiValueRemove = (
     </button>
   );
 };
+
+const ClearIndicator = (
+  props: ClearIndicatorProps<DropdownSelectorOption, true>,
+) => (
+  <components.ClearIndicator {...props}>
+    <IconX size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />
+  </components.ClearIndicator>
+);
 
 const DropdownIndicator = (
   props: DropdownIndicatorProps<DropdownSelectorOption, true>,
@@ -93,6 +102,7 @@ export const CreatableSelect: FC<CreatableSelectProps> = ({
           components={{
             MultiValueContainer,
             MultiValueRemove,
+            ClearIndicator,
             DropdownIndicator,
           }}
           menuPortalTarget={
@@ -108,7 +118,7 @@ export const CreatableSelect: FC<CreatableSelectProps> = ({
               ),
             valueContainer: () => 'flex flex-wrap items-center gap-1 p-1',
             placeholder: () => 'pl-1 text-secondary',
-            input: () => 'text-primary',
+            input: () => 'pl-1 text-primary',
             multiValue: () =>
               'flex h-[31px] items-center gap-2 rounded bg-accent-primary-alpha px-3',
             multiValueLabel: () => 'max-w-[150px] truncate break-all text-xs',

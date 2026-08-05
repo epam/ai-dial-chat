@@ -24,6 +24,7 @@ import {
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
+  fillMissingFolderPaths,
   getDefaultAllEditEntities,
   getPublicationId,
   isEntityIdPublic,
@@ -299,13 +300,22 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
 
   const filteredRuleEntries = useMemo(() => {
     const rulesEntries = Object.entries(rules);
-    return !publication.rules && isReview
-      ? rulesEntries
-      : rulesEntries.filter(([path]) =>
-          isReview && !isEditMode
-            ? path !== publication.targetFolder
-            : path !== editedPublishToUrl,
-        );
+    const filtered =
+      !publication.rules && isReview
+        ? rulesEntries
+        : rulesEntries.filter(([path]) =>
+            isReview && !isEditMode
+              ? path !== publication.targetFolder
+              : path !== editedPublishToUrl,
+          );
+
+    // Fill in missing intermediate folder paths to show complete hierarchy
+    if (filtered.length === 0) return filtered;
+
+    const targetPath =
+      isReview && !isEditMode ? publication.targetFolder : editedPublishToUrl;
+
+    return fillMissingFolderPaths(filtered, targetPath);
   }, [
     rules,
     publication.rules,
