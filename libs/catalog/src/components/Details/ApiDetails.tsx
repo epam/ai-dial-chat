@@ -1,10 +1,5 @@
 import { MarkdownCodeBlock, mergeClasses } from '@epam/ai-dial-chat-shared';
-import {
-  DIAL_ICON_SIZE,
-  ElementSize,
-  InlineSelect,
-} from '@epam/ai-dial-ui-kit';
-import { IconCheck } from '@tabler/icons-react';
+import { ElementSize, InlineSelect } from '@epam/ai-dial-ui-kit';
 import { FC, useEffect, useMemo, useState } from 'react';
 import type {
   CatalogItemApiDetails,
@@ -154,18 +149,11 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
   const endpointItems = useMemo(
     () =>
       endpoints.map((e, i) => ({
-        key: String(i),
-        label: (
-          <span className="flex w-full items-center justify-between gap-2">
-            {e.label}
-            {i === activeEndpointIdx && (
-              <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
-            )}
-          </span>
-        ),
+        key: e.url,
+        label: e.label,
         onClick: () => setActiveEndpointIdx(i),
       })),
-    [endpoints, activeEndpointIdx],
+    [endpoints],
   );
 
   const resourceRows: TableViewRow[] = [];

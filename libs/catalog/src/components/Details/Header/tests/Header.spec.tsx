@@ -189,7 +189,7 @@ describe('Header', () => {
   it('does not render the Manage button for a Model item the user cannot edit, publish, or delete', () => {
     render(
       <Header
-        item={makeItem(CatalogEntityType.Model)}
+        item={{ ...makeItem(CatalogEntityType.Model), isMyApp: false }}
         isPublishVisible={() => false}
       />,
     );
