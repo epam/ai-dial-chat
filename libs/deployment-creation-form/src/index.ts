@@ -13,7 +13,6 @@ export type {
 } from './models/validation';
 export { DeploymentCreationFieldErrorCode } from './models/validation';
 export {
-  DEFAULT_INTRO_MAX_LENGTH,
   NAME_PATTERN,
   VERSION_PATTERN,
   validateDeploymentCreationFields,

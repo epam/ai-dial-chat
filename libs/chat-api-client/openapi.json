@@ -28,6 +28,11 @@
                       "type": "string",
                       "example": "1.0.0",
                       "description": "Application version"
+                    },
+                    "buildId": {
+                      "type": "string",
+                      "example": "3f9a1c2b8e7d",
+                      "description": "Stable identifier for the running deployment, derived from a hash of the served frontend build. Changes when a new deployment replaces the frontend static assets, letting long-lived clients detect that a reload will pick up a newer build."
                     }
                   }
                 }
@@ -372,7 +377,7 @@
     },
     "/api/v1/applications/{applicationName}": {
       "patch": {
-        "description": "Updates the General-step fields (name, description, iconUrl, topics, intro) of an existing application for the authenticated session user, by proxying DIAL Core. Settings-step configuration (application_properties, version) is preserved untouched. Invalidates the applications and deployments list caches on success.",
+        "description": "Updates the General-step fields (name, description, iconUrl, topics) of an existing application for the authenticated session user, by proxying DIAL Core. Settings-step configuration (application_properties, version) is preserved untouched. Invalidates the applications and deployments list caches on success.",
         "operationId": "updateApplication",
         "parameters": [
           {
@@ -4144,78 +4149,6 @@
         "tags": ["share"]
       }
     },
-    "/api/v1/footer/request-api-key": {
-      "post": {
-        "description": "Proxies the form submission to the configured Azure Function. The requester email is injected server-side from the authenticated session.",
-        "operationId": "requestApiKey",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RequestApiKeyDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Request submitted successfully."
-          },
-          "401": {
-            "description": "Not authenticated — valid session cookie required."
-          },
-          "429": {
-            "description": "Rate limit exceeded."
-          },
-          "502": {
-            "description": "Upstream Azure Function returned an error."
-          },
-          "503": {
-            "description": "Azure Functions env vars not configured; submissions are unavailable."
-          }
-        },
-        "summary": "Submit a Request API Key form",
-        "tags": ["footer"]
-      }
-    },
-    "/api/v1/footer/report-issue": {
-      "post": {
-        "description": "Proxies the form submission to the configured Azure Function. The reporter email is injected server-side from the authenticated session.",
-        "operationId": "reportIssue",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReportIssueDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Issue reported successfully."
-          },
-          "401": {
-            "description": "Not authenticated — valid session cookie required."
-          },
-          "429": {
-            "description": "Rate limit exceeded."
-          },
-          "502": {
-            "description": "Upstream Azure Function returned an error."
-          },
-          "503": {
-            "description": "Azure Functions env vars not configured; submissions are unavailable."
-          }
-        },
-        "summary": "Submit a Report an Issue form",
-        "tags": ["footer"]
-      }
-    },
     "/api/v1/catalog/{entityType}/{entityId}/publish": {
       "post": {
         "description": "Publishes a catalog entity (Toolset or Application) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.",
@@ -4871,7 +4804,7 @@
           "footerHtmlMessage": {
             "type": "string",
             "description": "Operator-authored HTML footer message shown below the chat input (desktop) and in the mobile user panel. Empty string when FOOTER_HTML_MESSAGE is not configured. Sanitized server-side; supports %%VERSION%% token.",
-            "example": "v%%VERSION%% — <a href=\"#\" data-dial-action=\"requestApiKey\">Request API Key</a>"
+            "example": "v%%VERSION%% — <a href=\"https://example.com\">Learn more</a>"
           },
           "customVisualizers": {
             "description": "Registry of MIME → visualizer iframe mappings. Sourced from CUSTOM_VISUALIZERS. Empty when unset — the feature is dark by default.",
@@ -5017,11 +4950,6 @@
             "type": "string",
             "example": "A custom application."
           },
-          "intro": {
-            "type": "string",
-            "example": "Summarizes long documents in one line.",
-            "maxLength": 90
-          },
           "input_attachment_types": {
             "example": ["image/png"],
             "type": "array",
@@ -5079,11 +5007,6 @@
               "type": "string"
             }
           },
-          "intro": {
-            "type": "string",
-            "example": "Summarizes long documents in one line.",
-            "maxLength": 90
-          },
           "applicationProperties": {
             "type": "object",
             "example": {
@@ -5140,11 +5063,6 @@
             "items": {
               "type": "string"
             }
-          },
-          "intro": {
-            "type": "string",
-            "example": "Summarizes long documents in one line.",
-            "maxLength": 90
           },
           "version": {
             "type": "string",
@@ -5272,11 +5190,6 @@
           "description": {
             "type": "string",
             "description": "Description from DIAL Core"
-          },
-          "intro": {
-            "type": "string",
-            "description": "Short catalog-friendly intro from DIAL Core",
-            "maxLength": 90
           },
           "interfaces": {
             "description": "Interface types supported by this deployment",
@@ -6445,11 +6358,6 @@
             "type": "string",
             "example": "My toolset description"
           },
-          "intro": {
-            "type": "string",
-            "example": "Runs your toolset in one line.",
-            "maxLength": 90
-          },
           "iconUrl": {
             "type": "string",
             "example": ""
@@ -6616,11 +6524,6 @@
             "items": {
               "type": "string"
             }
-          },
-          "intro": {
-            "type": "string",
-            "example": "Runs your toolset in one line.",
-            "maxLength": 90
           },
           "endpoint": {
             "type": "string",
@@ -8685,71 +8588,6 @@
           }
         },
         "required": ["success"]
-      },
-      "RequestApiKeyDto": {
-        "type": "object",
-        "properties": {
-          "project_id": {
-            "type": "string",
-            "description": "Project name.",
-            "example": "My AI Project"
-          },
-          "project_stream": {
-            "type": "string",
-            "description": "Stream name.",
-            "example": "Stream A"
-          },
-          "project_lead": {
-            "type": "string",
-            "description": "Email of the project tech lead.",
-            "example": "lead@example.com"
-          },
-          "business_reason": {
-            "type": "string",
-            "description": "Business justification for the access request.",
-            "example": "We need access for automated document processing."
-          },
-          "project_end": {
-            "type": "string",
-            "description": "Project end date in DD/MM/YYYY format.",
-            "example": "31/12/2025"
-          },
-          "access_scenario": {
-            "type": "string",
-            "description": "Description of the access scenario.",
-            "example": "Daily batch processing of documents."
-          },
-          "workload_pattern": {
-            "type": "string",
-            "description": "Cost and workload description.",
-            "example": "Estimated 10k tokens per day."
-          }
-        },
-        "required": [
-          "project_id",
-          "project_stream",
-          "project_lead",
-          "business_reason",
-          "project_end",
-          "access_scenario",
-          "workload_pattern"
-        ]
-      },
-      "ReportIssueDto": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string",
-            "description": "Short title describing the issue.",
-            "example": "Something is broken"
-          },
-          "description": {
-            "type": "string",
-            "description": "Detailed description of the issue.",
-            "example": "When I click the button, nothing happens."
-          }
-        },
-        "required": ["title", "description"]
       },
       "PublishCatalogEntityDto": {
         "type": "object",

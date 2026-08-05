@@ -62,13 +62,8 @@ describe('UpdateApplicationBodyDto', () => {
     expect(errors.some((e) => e.property === 'maxInputAttachments')).toBe(true);
   });
 
-  it('passes when intro is exactly 90 characters', async () => {
-    const errors = await validateDto({ ...BASE_BODY, intro: 'a'.repeat(90) });
-    expect(errors).toHaveLength(0);
-  });
-
-  it('rejects intro longer than 90 characters', async () => {
-    const errors = await validateDto({ ...BASE_BODY, intro: 'a'.repeat(91) });
+  it('rejects a request body that still includes an intro property', async () => {
+    const errors = await validateDto({ ...BASE_BODY, intro: 'Short intro' });
     expect(errors.some((e) => e.property === 'intro')).toBe(true);
   });
 

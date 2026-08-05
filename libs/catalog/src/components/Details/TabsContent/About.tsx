@@ -26,7 +26,7 @@ const AboutRunView: FC<AboutRunViewProps> = ({ run, contentClassName }) => {
 };
 
 interface AboutTabProps {
-  /** Raw text to render (bullets/headings are parsed from it). The caller decides whether this is `intro`, `description`, or a fallback between the two. */
+  /** Raw text to render (bullets/headings are parsed from it), typically `item.description`. */
   content: string;
   detailsStyles?: ItemDetailsStyles;
 }

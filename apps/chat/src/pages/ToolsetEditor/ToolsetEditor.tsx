@@ -27,6 +27,7 @@ import type {
   ToolsetFormData,
   ToolsetFormErrors,
 } from '../../models/toolsets';
+import { getApiErrorDetails } from '../../server-api/api-error';
 import {
   createToolset,
   getToolset,
@@ -59,7 +60,6 @@ const AUTH_ERROR_FIELDS: (keyof ToolsetFormErrors)[] = [
 const ERROR_FIELDS: (keyof ToolsetFormErrors)[] = [
   'name',
   'version',
-  'intro',
   'endpoint',
   ...AUTH_ERROR_FIELDS,
 ];
@@ -245,6 +245,7 @@ const ToolsetEditor: FC = () => {
       await refetchToolsets();
       return id;
     } catch (err) {
+      const { traceId } = await getApiErrorDetails(err);
       const upstreamMessage = await extractToolsetApiErrorMessage(err);
       showNotification({
         variant: NotificationVariant.Error,
@@ -255,6 +256,7 @@ const ToolsetEditor: FC = () => {
               ? ToolsetEditorI18nKeys.ErrorUpdateFailed
               : ToolsetEditorI18nKeys.ErrorCreateFailed,
           ),
+        requestId: traceId,
       });
       return null;
     } finally {
@@ -305,9 +307,6 @@ const ToolsetEditor: FC = () => {
       const generalCodes = validateDeploymentCreationFields(data);
       if (generalCodes.name === DeploymentCreationFieldErrorCode.Required) {
         nextErrors.name = t(EditorI18nKeys.NameRequired);
-      }
-      if (generalCodes.intro === DeploymentCreationFieldErrorCode.TooLong) {
-        nextErrors.intro = t(EditorI18nKeys.IntroTooLong);
       }
       if (!data.endpoint.trim()) {
         nextErrors.endpoint = t(ToolsetEditorI18nKeys.EndpointRequired);
@@ -387,7 +386,7 @@ const ToolsetEditor: FC = () => {
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       // Surface the General-step error first by switching to it when needed.
-      if (nextErrors.name || nextErrors.intro) {
+      if (nextErrors.name) {
         setEditorStep(ToolsetEditorSteps.General);
       } else if (
         nextErrors.endpoint ||
@@ -414,13 +413,16 @@ const ToolsetEditor: FC = () => {
       try {
         await runPostSaveAuth(result.id, form);
         navigate(returnUrl);
-      } catch {
+      } catch (error) {
+        const { traceId } = await getApiErrorDetails(error);
         showNotification({
           variant: NotificationVariant.Error,
           message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
+          requestId: traceId,
         });
       }
     } catch (err) {
+      const { traceId } = await getApiErrorDetails(err);
       const upstreamMessage = await extractToolsetApiErrorMessage(err);
       showNotification({
         variant: NotificationVariant.Error,
@@ -431,6 +433,7 @@ const ToolsetEditor: FC = () => {
               ? ToolsetEditorI18nKeys.ErrorUpdateFailed
               : ToolsetEditorI18nKeys.ErrorCreateFailed,
           ),
+        requestId: traceId,
       });
     } finally {
       setIsSaving(false);

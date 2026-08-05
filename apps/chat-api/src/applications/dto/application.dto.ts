@@ -19,12 +19,6 @@ export class ApplicationDto {
   @ApiPropertyOptional({ example: 'A custom application.' })
   description?: string;
 
-  @ApiPropertyOptional({
-    example: 'Summarizes long documents in one line.',
-    maxLength: 90,
-  })
-  intro?: string;
-
   @ApiPropertyOptional({ type: [String], example: ['image/png'] })
   input_attachment_types?: string[];
 

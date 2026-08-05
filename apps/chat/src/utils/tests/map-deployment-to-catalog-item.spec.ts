@@ -14,21 +14,6 @@ import {
 } from '../map-deployment-to-catalog-item';
 
 describe('mapDeploymentToCatalogItem', () => {
-  it('maps the intro field onto the catalog item', () => {
-    const deployment: DeploymentItemDto = {
-      id: 'model-1',
-      type: 'model',
-      displayName: 'Model 1',
-      description: 'Short description',
-      intro: 'A longer intro for the details panel.',
-    };
-
-    const result = mapDeploymentToCatalogItem(deployment);
-
-    expect(result.description).toBe('Short description');
-    expect(result.intro).toBe('A longer intro for the details panel.');
-  });
-
   const baseDeployment: DeploymentItemDto = {
     id: 'applications/bucket/My App__1.0',
     displayName: 'My App',
@@ -367,16 +352,6 @@ describe('mapToolsetToCatalogItem', () => {
     );
 
     expect(result.folder).toEqual([CatalogI18nKeys.FolderPersonal]);
-  });
-
-  it('maps the intro field onto the catalog item', () => {
-    const result = mapToolsetToCatalogItem({
-      id: 'salesforce',
-      toolset: 'salesforce',
-      intro: 'A longer intro for the details panel.',
-    });
-
-    expect(result.intro).toBe('A longer intro for the details panel.');
   });
 
   it('marks a public toolset as isPublic and manageable by an admin', () => {

@@ -265,6 +265,38 @@ describe('DetailsPanel', () => {
     expect(screen.getByText('Limits content')).toBeTruthy();
   });
 
+  it('labels the resource/endpoint tab "Connect" when API details are available', async () => {
+    renderPanel({
+      item: makeItem({
+        details: {
+          api: { resource: { modelId: 'gpt-4o' } },
+        },
+      }),
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Connect' }));
+
+    expect(screen.getByText('Api')).toBeTruthy();
+  });
+
+  it('uses tabConnectLabel to override the Connect tab label', () => {
+    renderPanel({
+      item: makeItem({
+        details: {
+          api: { resource: { modelId: 'gpt-4o' } },
+        },
+      }),
+      texts: { tabConnectLabel: 'Endpoint' },
+    });
+
+    expect(screen.getByRole('button', { name: 'Endpoint' })).toBeTruthy();
+  });
+
+  it('hides the Connect tab when the item has no API details', () => {
+    renderPanel();
+    expect(screen.queryByRole('button', { name: 'Connect' })).toBeNull();
+  });
+
   it('replaces the details content with the publish panel when Publish is clicked', async () => {
     renderPanel();
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
@@ -491,7 +523,7 @@ describe('DetailsPanel', () => {
     ).toBeTruthy();
   });
 
-  it('renders the description inline in the intro section', () => {
+  it('renders the description on the About tab, not in the summary section', () => {
     render(
       <DetailsPanel
         item={makeItem({
@@ -502,7 +534,7 @@ describe('DetailsPanel', () => {
       />,
     );
 
-    expect(screen.getAllByText('about content').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('about content')).toHaveLength(1);
   });
 
   it('includes About as the first tab, ahead of the other available tabs', () => {
@@ -525,5 +557,43 @@ describe('DetailsPanel', () => {
 
     const tablist = screen.getByRole('tablist');
     expect(tablist.textContent).toBe('About');
+  });
+
+  it('places Connect last even when a Tools tab is also available', () => {
+    render(
+      <DetailsPanel
+        item={makeItem({
+          details: {
+            tools: { tools: [] },
+            api: { resource: { modelId: 'gpt-4o' } },
+          },
+        })}
+        isOpen
+        onClose={vi.fn()}
+      />,
+    );
+
+    const tablist = screen.getByRole('tablist');
+    expect(tablist.textContent).toBe('AboutToolsConnect');
+  });
+
+  it('places Connect last among every other available tab', () => {
+    render(
+      <DetailsPanel
+        item={makeItem({
+          details: {
+            overview: { sections: [] },
+            pricing: {},
+            limits: { rows: [] },
+            api: { resource: { modelId: 'gpt-4o' } },
+          },
+        })}
+        isOpen
+        onClose={vi.fn()}
+      />,
+    );
+
+    const tablist = screen.getByRole('tablist');
+    expect(tablist.textContent).toBe('AboutOverviewPricingLimitsConnect');
   });
 });

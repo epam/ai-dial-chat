@@ -52,10 +52,6 @@ const GeneralForm: FC<Props> = ({
         label: t(EditorI18nKeys.TopicsLabel),
         placeholder: t(EditorI18nKeys.TopicsPlaceholder),
       },
-      intro: {
-        label: t(EditorI18nKeys.IntroLabel),
-        placeholder: t(EditorI18nKeys.IntroPlaceholder),
-      },
       ariaLabel: t(EditorI18nKeys.StepGeneral),
     }),
     [t, namePlaceholder, descriptionPlaceholder],
@@ -67,7 +63,6 @@ const GeneralForm: FC<Props> = ({
     iconUrl: form.iconUrl,
     version: form.version,
     topics: form.topics,
-    intro: form.intro,
   };
 
   return (

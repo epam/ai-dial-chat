@@ -25,7 +25,7 @@ const isDeploymentVersionSuffix = (value?: string): boolean => {
     .every((part) => VERSION_NUMBER_PART_REGEX.test(part));
 };
 
-const isUuid = (value: string): boolean => {
+export const isUuid = (value: string): boolean => {
   const parts = value.split('-');
   return (
     parts.length === UUID_PART_LENGTHS.length &&
@@ -41,6 +41,33 @@ const getDeploymentNameParts = (filenameParts: string[]): string[] => {
   return isDeploymentVersionSuffix(versionSuffix)
     ? [name, versionSuffix]
     : [name];
+};
+
+/**
+ * Returns the trailing legacy/run UUID segment of a `{deploymentId}__{title}__{uuid}`
+ * conversation filename, or undefined when the filename has no such suffix.
+ */
+const getFilenameLegacySuffix = (filename: string): string | undefined => {
+  const parts = filename.split(CONVERSATION_NAME_SEPARATOR);
+  if (parts.length < 2) return undefined;
+
+  const deploymentNameParts = getDeploymentNameParts(parts);
+  const hasVersionedDeployment = deploymentNameParts.length > 1;
+  const hasLegacySuffix = hasVersionedDeployment
+    ? isUuid(parts[parts.length - 1])
+    : parts.length >= 3;
+
+  return hasLegacySuffix ? parts[parts.length - 1] : undefined;
+};
+
+/**
+ * Extracts the DIAL Scheduler run id from a scheduled-task conversation
+ * filename (`{deploymentId}__{title}__{runId}`). Returns undefined unless
+ * the trailing suffix is present and is itself a valid UUID.
+ */
+export const getRunIdFromFilename = (filename: string): string | undefined => {
+  const suffix = getFilenameLegacySuffix(filename);
+  return suffix != null && isUuid(suffix) ? suffix : undefined;
 };
 
 export const prepareEntityName = (prompt?: string): string => {

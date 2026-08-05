@@ -126,7 +126,6 @@ const AppsEditor: FC = () => {
             iconUrl: existingDeployment.iconUrl,
             version: existingDeployment.displayVersion,
             topics: existingDeployment.topics,
-            intro: existingDeployment.intro,
           }
         : undefined,
     [existingDeployment],

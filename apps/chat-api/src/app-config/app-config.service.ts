@@ -25,7 +25,7 @@ const APP_VERSION: string = packageJson?.version;
 
 const FOOTER_ALLOWED_TAGS = ['a', 'span', 'strong', 'u', 'em', 'br', 'p'];
 const FOOTER_ALLOWED_ATTRS: sanitizeHtml.IOptions['allowedAttributes'] = {
-  a: ['href', 'target', 'rel', 'data-dial-action'],
+  a: ['href', 'target', 'rel'],
 };
 
 const sanitizeFooterHtml = (raw: string): string => {
@@ -36,8 +36,8 @@ const sanitizeFooterHtml = (raw: string): string => {
     transformTags: {
       a: (tagName, attribs) => {
         const href = attribs.href ?? '';
-        /* Hash links and data-dial-action links are handled client-side; don't force external navigation on them. */
-        if (attribs['data-dial-action'] != null || href.startsWith('#')) {
+        /* Hash links stay in-page; don't force external navigation on them. */
+        if (href.startsWith('#')) {
           return { tagName, attribs };
         }
         return {

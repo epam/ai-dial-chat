@@ -106,6 +106,7 @@ export enum ButtonsI18nKeys {
   CopyUrl = 'buttons.copyUrl',
   LogIn = 'buttons.logIn',
   Publish = 'buttons.publish',
+  Manage = 'buttons.manage',
 }
 
 export enum NavigationI18nKeys {
@@ -637,54 +638,6 @@ export enum FooterMessageI18nKeys {
   RegionAriaLabel = 'footerMessage.regionAriaLabel',
 }
 
-export enum FooterRequestApiKeyI18nKeys {
-  Title = 'footer.requestApiKey.title',
-  DescriptionPrefix = 'footer.requestApiKey.descriptionPrefix',
-  ProjectNameDescription = 'footer.requestApiKey.projectNameDescription',
-  StreamNameDescription = 'footer.requestApiKey.streamNameDescription',
-  ProjectLeadDescription = 'footer.requestApiKey.projectLeadDescription',
-  AccessScenarioDescription = 'footer.requestApiKey.accessScenarioDescription',
-  WorkloadPatternDescriptionPrefix = 'footer.requestApiKey.workloadPatternDescriptionPrefix',
-  WorkloadPatternCaptionPrefix = 'footer.requestApiKey.workloadPatternCaptionPrefix',
-  CheckboxGroupTitle = 'footer.requestApiKey.checkboxGroupTitle',
-  ProjectNameLabel = 'footer.requestApiKey.projectNameLabel',
-  ProjectNamePlaceholder = 'footer.requestApiKey.projectNamePlaceholder',
-  StreamNameLabel = 'footer.requestApiKey.streamNameLabel',
-  StreamNamePlaceholder = 'footer.requestApiKey.streamNamePlaceholder',
-  ProjectLeadLabel = 'footer.requestApiKey.projectLeadLabel',
-  ProjectLeadPlaceholder = 'footer.requestApiKey.projectLeadPlaceholder',
-  BusinessReasonLabel = 'footer.requestApiKey.businessReasonLabel',
-  BusinessReasonPlaceholder = 'footer.requestApiKey.businessReasonPlaceholder',
-  ProjectEndLabel = 'footer.requestApiKey.projectEndLabel',
-  AccessScenarioLabel = 'footer.requestApiKey.accessScenarioLabel',
-  AccessScenarioPlaceholder = 'footer.requestApiKey.accessScenarioPlaceholder',
-  WorkloadPatternLabel = 'footer.requestApiKey.workloadPatternLabel',
-  WorkloadPatternPlaceholder = 'footer.requestApiKey.workloadPatternPlaceholder',
-  CheckboxAzureLabel = 'footer.requestApiKey.checkboxAzureLabel',
-  CheckboxEpamLabel = 'footer.requestApiKey.checkboxEpamLabel',
-  CheckboxClientLabel = 'footer.requestApiKey.checkboxClientLabel',
-  CheckboxLocalLabel = 'footer.requestApiKey.checkboxLocalLabel',
-  CheckboxGroupRequired = 'footer.requestApiKey.checkboxGroupRequired',
-  FieldRequired = 'footer.requestApiKey.fieldRequired',
-  FieldTooLong = 'footer.requestApiKey.fieldTooLong',
-  EmailInvalid = 'footer.requestApiKey.emailInvalid',
-  DateInvalid = 'footer.requestApiKey.dateInvalid',
-  SuccessTitle = 'footer.requestApiKey.successTitle',
-  ErrorTitle = 'footer.requestApiKey.errorTitle',
-}
-
-export enum FooterReportIssueI18nKeys {
-  Title = 'footer.reportIssue.title',
-  IssueTitleLabel = 'footer.reportIssue.issueTitleLabel',
-  IssueTitlePlaceholder = 'footer.reportIssue.issueTitlePlaceholder',
-  DescriptionLabel = 'footer.reportIssue.descriptionLabel',
-  DescriptionPlaceholder = 'footer.reportIssue.descriptionPlaceholder',
-  FieldRequired = 'footer.reportIssue.fieldRequired',
-  FieldTooLong = 'footer.reportIssue.fieldTooLong',
-  SuccessTitle = 'footer.reportIssue.successTitle',
-  ErrorTitle = 'footer.reportIssue.errorTitle',
-}
-
 export enum EditorI18nKeys {
   StepGeneral = 'editor.stepGeneral',
   StepsNavAriaLabel = 'editor.stepsNavAriaLabel',
@@ -698,9 +651,6 @@ export enum EditorI18nKeys {
   VersionPlaceholder = 'editor.versionPlaceholder',
   TopicsLabel = 'editor.topicsLabel',
   TopicsPlaceholder = 'editor.topicsPlaceholder',
-  IntroLabel = 'editor.introLabel',
-  IntroPlaceholder = 'editor.introPlaceholder',
-  IntroTooLong = 'editor.introTooLong',
 }
 
 export enum AppsEditorI18nKeys {
@@ -829,6 +779,13 @@ export enum ConversationInputI18nKeys {
   ProgressAriaLabel = 'conversationInput.usageLimits.progressAriaLabel',
 }
 
+export enum NotificationI18nKeys {
+  RequestIdLabel = 'notification.requestId.label',
+  RequestIdCopyAriaLabel = 'notification.requestId.copyAriaLabel',
+  RequestIdCopiedStatus = 'notification.requestId.copiedStatus',
+  RequestIdCopyFailedStatus = 'notification.requestId.copyFailedStatus',
+}
+
 export enum CustomAppI18nKeys {
   // General form placeholders
   NamePlaceholder = 'customApp.general.namePlaceholder',
@@ -859,4 +816,9 @@ export enum CustomAppI18nKeys {
   SaveConfirmTitle = 'customApp.saveConfirm.title',
   SaveConfirmDescription = 'customApp.saveConfirm.description',
   SaveConfirmLabel = 'customApp.saveConfirm.confirmLabel',
+}
+
+export enum AppUpdateI18nKeys {
+  Heading = 'appUpdate.heading',
+  Message = 'appUpdate.message',
 }

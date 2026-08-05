@@ -87,7 +87,6 @@ const makeForm = (overrides?: Partial<ToolsetFormData>): ToolsetFormData => ({
   iconUrl: '',
   description: '',
   topics: [],
-  intro: '',
   endpoint: 'https://example.com/mcp',
   protocol: ToolsetTransportType.Http,
   allowedTools: [],
@@ -101,7 +100,7 @@ const makeForm = (overrides?: Partial<ToolsetFormData>): ToolsetFormData => ({
 
 const renderForm = (
   overrides?: Partial<ToolsetFormData>,
-  errors: { name?: string; intro?: string } = {},
+  errors: { name?: string } = {},
   onChange = vi.fn(),
 ) => {
   const form = makeForm(overrides);
@@ -123,14 +122,13 @@ describe('GeneralForm', () => {
     vi.clearAllMocks();
   });
 
-  it('renders name, description, icon URL, version, topics, and intro fields', () => {
+  it('renders name, description, icon URL, version, and topics fields', () => {
     renderForm();
     expect(screen.getByLabelText(EditorI18nKeys.NameLabel)).toBeTruthy();
     expect(screen.getByLabelText(EditorI18nKeys.DescriptionLabel)).toBeTruthy();
     expect(screen.getByLabelText(EditorI18nKeys.IconUrlLabel)).toBeTruthy();
     expect(screen.getByLabelText(EditorI18nKeys.VersionLabel)).toBeTruthy();
     expect(screen.getByLabelText(EditorI18nKeys.TopicsLabel)).toBeTruthy();
-    expect(screen.getByLabelText(EditorI18nKeys.IntroLabel)).toBeTruthy();
   });
 
   it('displays the name error message when errors.name is provided', () => {
@@ -165,23 +163,6 @@ describe('GeneralForm', () => {
     await user.type(textarea, 'A description');
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ description: expect.any(String) }),
-    );
-  });
-
-  it('displays the intro error message when errors.intro is provided', () => {
-    renderForm(undefined, { intro: EditorI18nKeys.IntroTooLong });
-    expect(screen.getByText(EditorI18nKeys.IntroTooLong)).toBeTruthy();
-  });
-
-  it('calls onChange with updated intro when the intro input changes', () => {
-    const onChange = vi.fn();
-    renderForm({}, {}, onChange);
-    const introInput = screen.getByLabelText(
-      EditorI18nKeys.IntroLabel,
-    ) as HTMLInputElement;
-    fireEvent.change(introInput, { target: { value: 'A short pitch' } });
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ intro: 'A short pitch' }),
     );
   });
 });

@@ -2,45 +2,33 @@
 
 ## Purpose
 TBD - created by archiving change add-intro-field-quick-app-toolset. Update Purpose after archive.
-
 ## Requirements
-
 ### Requirement: General step fields
 The Quick App editor's General step SHALL allow editing the application name, version, icon
-URL, description, topics, and intro. The icon SHALL be entered as a plain URL text field. Name
+URL, description, and topics. The icon SHALL be entered as a plain URL text field. Name
 SHALL be required and restricted to letters, digits, spaces, underscores, dots, and dashes.
-Intro SHALL be a single-line text field limited to 90 characters and SHALL be optional. These
-fields SHALL be rendered and validated through the shared `deployment-creation-form` library
-component, the same component used by Toolset creation's General step.
+These fields SHALL be rendered and validated through the shared `deployment-creation-form`
+library component, the same component used by Toolset creation's General step. The General
+step SHALL NOT render an Intro field.
 
 #### Scenario: Edit general fields
-- **WHEN** a user types a name, version, icon URL, description, intro, and adds topic tags
+- **WHEN** a user types a name, version, icon URL, description, and adds topic tags
 - **THEN** those values are held in component state without saving
 
 #### Scenario: Name is required
 - **WHEN** a user clears the name field and attempts to save
 - **THEN** the system shows a required-field error for the name and blocks the save
 
-#### Scenario: Intro exceeds the character limit
-- **WHEN** a user enters an intro longer than 90 characters and attempts to save
-- **THEN** the system shows a length-limit error on the intro field and blocks the save
-
-#### Scenario: Intro is optional
-- **WHEN** a user leaves the intro field empty and saves the Quick App
-- **THEN** the save proceeds without an intro-related error
-
 ### Requirement: Create request forwards form fields
-On save, the editor SHALL submit the General step field values — including `intro` when set —
-to the create-application endpoint via the generated `@epam/chat-api-client`
-`ApplicationsApi`, through the `apps/chat/src/server-api/applications.ts` wrapper.
+On save, the editor SHALL submit the General step field values to the create-application
+endpoint via the generated `@epam/chat-api-client` `ApplicationsApi`, through the
+`apps/chat/src/server-api/applications.ts` wrapper. The submitted payload SHALL NOT include an
+`intro` property.
 
-#### Scenario: Save sends intro
-- **WHEN** a user saves a new Quick App with a non-empty intro
-- **THEN** the create request body includes `intro` with the entered value
-
-#### Scenario: Save omits intro
-- **WHEN** a user saves a new Quick App with an empty intro
-- **THEN** the create request body does not include a truthy `intro` value
+#### Scenario: Save sends General step values
+- **WHEN** a user saves a new Quick App with name, description, icon URL, version, and topics
+  filled in
+- **THEN** the create request body includes those field values and no `intro` property
 
 ### Requirement: Editing General step fields persists the changes on Save & Exit
 
@@ -51,12 +39,12 @@ transition. Persistence of General step edits SHALL happen only when the user pe
 final "Save & Exit" action from the Settings step. At that point, if this editor session
 started against an app that already existed (as opposed to one created fresh in this
 session), the editor SHALL include the current General-step values — name, description,
-icon URL, topics, `intro`, and `display_version` — as a `general` payload on the
+icon URL, topics, and `display_version` — as a `general` payload on the
 `TriggerSave` message posted to the embedded Settings-step editor, so the embedded editor
 persists them as part of the single save it already performs for the Settings step. The
-host SHALL NOT make a separate `update-application` (or any other) request to persist
-these values. The `general` payload SHALL NOT include the backend `version` field.
-Triggering a Preview action SHALL NOT
+`general` payload SHALL NOT include an `intro` property. The host SHALL NOT make a separate
+`update-application` (or any other) request to persist these values. The `general` payload
+SHALL NOT include the backend `version` field. Triggering a Preview action SHALL NOT
 include a `general` payload. The `TriggerSave` message's `general` payload SHALL NOT alter
 that application's settings-step configuration (`application_properties`, including
 orchestrator/tool set state) or its `version`. "Save & Exit" SHALL always additionally
@@ -69,11 +57,11 @@ itself touched), matching prior behavior for that step.
   advances to the Settings step with the edited values retained in memory
 
 #### Scenario: Save & Exit forwards edited General fields to the embedded editor
-- **WHEN** a user edits Topic, Description, Intro, Icon, Name, or Version on the General step of an
+- **WHEN** a user edits Topic, Description, Icon, Name, or Version on the General step of an
   existing Quick App, clicks Next, and then clicks Save & Exit on the Settings step
 - **THEN** the `TriggerSave` message posted to the embedded Settings-step editor includes
-  a `general` payload carrying the edited field values, and no `update-application`
-  request is made by the host
+  a `general` payload carrying the edited field values (with no `intro` property), and no
+  `update-application` request is made by the host
 
 #### Scenario: Save & Exit still forwards General fields when General is unchanged
 - **WHEN** a user does not edit any General step field for an existing app, clicks Next,
@@ -102,16 +90,15 @@ itself touched), matching prior behavior for that step.
 
 ### Requirement: SaveSuccess reports whether persisted data changed
 
-The Settings step's embedded editor (the separate Quick Apps application loaded at
-`schema.editorUrl`, out of this repo's source tree) SHALL include a `hasChanges: boolean`
-field on the `AppsEditorEvent.SaveSuccess` message it posts back to the host after a
+The Settings step's embedded editor SHALL include a `hasChanges: boolean` field on the
+`AppsEditorEvent.SaveSuccess` message it posts back to the host after a
 `TriggerSave` completes successfully — for both a plain Settings-step save and one that also
 carried a `general` payload. `hasChanges` SHALL be computed by the embedded editor by
 comparing the record it is about to persist against the record as it existed before this
 save, and SHALL be `true` if any field the user can edit changed — Settings-step
 configuration (`application_properties`, including orchestrator/tool set state,
 conversation starters, chat-input-disabled state, etc.) or any forwarded `general` field
-(name, description, icon URL, topics, intro). It SHALL be `false` when none of those fields
+(name, description, icon URL, topics). It SHALL be `false` when none of those fields
 changed, even though the save still updates server-managed metadata such as `updatedAt`. A
 save that persists no user-editable field change but still touches only metadata (e.g. a
 no-op re-save) SHALL report `hasChanges: false`.
@@ -153,9 +140,9 @@ calling it), threading it through `SettingsStep` to `AppsEditor`.
 
 ### Requirement: Settings step readiness gates Save and Preview
 
-The Settings step's embedded editor runs in an iframe and communicates over
-`postMessage`. The "Save & Exit" and "Preview" actions SHALL be disabled until the
-iframe has signaled it is ready to interact (`AppsEditorEvent.ReadyToInteract`).
+The "Save & Exit" and "Preview" actions SHALL be disabled until the Settings step's
+embedded editor — which runs in an iframe and communicates over `postMessage` — has
+signaled it is ready to interact (`AppsEditorEvent.ReadyToInteract`).
 Triggering a save or preview before readiness would post a message the embedded app is
 not yet listening for, and no response (`SaveSuccess`/`SaveError`) would ever arrive,
 leaving the action's loading state — and therefore the action buttons — stuck disabled
@@ -207,3 +194,4 @@ remain disabled in this state, since `ReadyToSave` still gates them and will not
   the bounded timeout
 - **THEN** the saving state is cleared, an error is shown, and the "Save & Exit" button
   becomes clickable again without a page reload
+

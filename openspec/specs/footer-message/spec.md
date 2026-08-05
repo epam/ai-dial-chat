@@ -1,7 +1,8 @@
 # footer-message Specification
 
 ## Purpose
-TBD - created by archiving change footer-message. Update Purpose after archive.
+Show user useful information in the footer.
+
 ## Requirements
 ### Requirement: Operator-supplied footer HTML is sanitized server-side before use
 
@@ -78,30 +79,6 @@ On `desktop` breakpoint and wider, `FooterMessage` SHALL render inside the chat 
 
 - **WHEN** viewport is at `mobile` breakpoint
 - **THEN** `FooterMessage` is visible in the mobile user panel
-
----
-
-### Requirement: Footer container delegates click events to `data-dial-action` links
-
-The `FooterMessage` component SHALL attach a single `onClick` handler to its root element. When a click originates on or within an element carrying `data-dial-action`, the handler SHALL call `event.preventDefault()` and dispatch the corresponding dialog open action via a callback prop `onDialAction(action: string)`. Clicks on elements with no `data-dial-action` ancestor SHALL pass through normally.
-
-#### Scenario: Dialog-trigger link clicked
-
-- **WHEN** user clicks `<a data-dial-action="requestApiKey" href="#">…</a>` inside the footer
-- **THEN** `event.preventDefault()` is called and `onDialAction("requestApiKey")` is invoked
-
-#### Scenario: Regular link clicked
-
-- **WHEN** user clicks `<a href="https://example.com">…</a>` with no `data-dial-action`
-- **THEN** no `onDialAction` call is made and the default navigation proceeds
-
----
-
-### Requirement: Footer message container is accessible
-
-The footer container SHALL have `data-qa="footer-message"` for test targeting. The inner `<span>` receiving operator HTML SHALL carry `aria-label` describing it as footer content when the message is non-empty.
-
-- **a11y**: `role="contentinfo"` on the outer wrapper (if not already within a `<footer>` landmark); `aria-label` on the content span
 
 #### Scenario: Screen reader identifies footer region
 

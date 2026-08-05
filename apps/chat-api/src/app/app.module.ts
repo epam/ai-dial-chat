@@ -18,7 +18,6 @@ import { DeploymentsModule } from '../deployments/deployments.module';
 import { DialCoreModule } from '../dial/dial-core.module';
 import { ExternalServicesModule } from '../external-services/external-services.module';
 import { FilesModule } from '../files/files.module';
-import { FooterModule } from '../footer/footer.module';
 import { HealthController } from '../health/health.controller';
 import { ModelsModule } from '../models/models.module';
 import { PromptModule } from '../prompts/prompt.module';
@@ -26,6 +25,7 @@ import { PublishModule } from '../publish/publish.module';
 import { RateModule } from '../rate/rate.module';
 import { ScheduledTasksModule } from '../scheduled-tasks/scheduled-tasks.module';
 import { ShareModule } from '../share/share.module';
+import { TelemetryShutdownService } from '../telemetry/telemetry-shutdown.service';
 import { ThemesModule } from '../themes/themes.module';
 import { ToolsetsModule } from '../toolsets/toolsets.module';
 import { TranscriptionModule } from '../transcription/transcription.module';
@@ -79,7 +79,6 @@ import { createServeStaticOptions } from './static-assets';
     TranscriptionModule,
     ThemesModule,
     ShareModule,
-    FooterModule,
     PublishModule,
     ScheduledTasksModule,
   ],
@@ -93,6 +92,7 @@ import { createServeStaticOptions } from './static-assets';
       provide: APP_INTERCEPTOR,
       useClass: MetricsInterceptor,
     },
+    TelemetryShutdownService,
   ],
 })
 export class AppModule {}

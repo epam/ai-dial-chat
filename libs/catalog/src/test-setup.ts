@@ -9,3 +9,17 @@ global.ResizeObserver = class ResizeObserver {
     /* no-op */
   }
 };
+global.IntersectionObserver = class IntersectionObserver {
+  observe() {
+    /* no-op */
+  }
+  unobserve() {
+    /* no-op */
+  }
+  disconnect() {
+    /* no-op */
+  }
+  takeRecords() {
+    return [];
+  }
+} as unknown as typeof IntersectionObserver;

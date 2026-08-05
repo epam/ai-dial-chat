@@ -10,8 +10,6 @@ export interface DeploymentCreationFormValues {
   version: string;
   /** Free-entry topic tags. */
   topics: string[];
-  /** Short catalog-friendly summary, limited to `introMaxLength` characters. */
-  intro: string;
 }
 
 /** Translated, display-ready field errors for the shared form. */
@@ -20,8 +18,6 @@ export interface DeploymentCreationFormFieldErrors {
   name?: string;
   /** Error message for the version field. */
   version?: string;
-  /** Error message for the intro field. */
-  intro?: string;
 }
 
 /** Label and placeholder text for a single field, supplied by the host app. */
@@ -44,8 +40,6 @@ export interface DeploymentCreationFormLabels {
   version: DeploymentCreationFormFieldLabels;
   /** Labels for the topics field. */
   topics: DeploymentCreationFormFieldLabels;
-  /** Labels for the intro field. */
-  intro: DeploymentCreationFormFieldLabels;
   /** Accessible name for the field set group. */
   ariaLabel?: string;
 }
@@ -68,8 +62,6 @@ export interface DeploymentCreationFormProps {
   onChange: (patch: Partial<DeploymentCreationFormValues>) => void;
   /** Pre-translated labels/placeholders for every field. */
   labels: DeploymentCreationFormLabels;
-  /** Maximum character length enforced on the intro field. Defaults to `90`. */
-  introMaxLength?: number;
   /** Optional per-slot class name overrides. */
   styles?: DeploymentCreationFormStyles;
 }

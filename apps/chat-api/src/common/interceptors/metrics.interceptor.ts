@@ -7,13 +7,22 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { isExcludedFromTelemetry } from '../../telemetry/excluded-paths';
+import {
+  httpServerRequestDuration,
+  resolveRouteTemplate,
+} from '../../telemetry/http-metrics';
 import { getErrorDetails } from '../utils/error-details';
 
 /**
- * Interceptor for logging request metrics.
+ * Interceptor for logging and recording request metrics.
  *
- * Logs endpoint duration, method, path, and status code for monitoring purposes.
- * Can be extended to integrate with Prometheus, DataDog, or other monitoring services.
+ * Logs endpoint duration, method, path, and status code, and records the same data on the
+ * shared `http.server.request.duration` histogram (see telemetry/http-metrics.ts), which is a
+ * no-op when OpenTelemetry metrics are disabled. Infra probe routes
+ * (`telemetry/excluded-paths.ts`, e.g. `/api/health`) are still logged but never recorded onto
+ * the histogram, mirroring the same routes' exclusion from tracing so probe traffic doesn't
+ * pollute business-request dashboards/alerting.
  */
 @Injectable()
 export class MetricsInterceptor implements NestInterceptor {
@@ -23,6 +32,8 @@ export class MetricsInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest();
     const { method, url } = request;
     const startTime = Date.now();
+    const route = resolveRouteTemplate(request);
+    const isExcludedFromMetrics = isExcludedFromTelemetry(route);
 
     return next.handle().pipe(
       tap({
@@ -33,10 +44,13 @@ export class MetricsInterceptor implements NestInterceptor {
 
           this.logger.log(`${method} ${url} ${statusCode} - ${duration}ms`);
 
-          /*
-           * TODO: Send metrics to monitoring service (Prometheus, DataDog, etc.)
-           * Example: metricsService.recordHttpRequest({ method, url, statusCode, duration });
-           */
+          if (isExcludedFromMetrics) return;
+
+          httpServerRequestDuration.record(duration / 1000, {
+            'http.request.method': method,
+            'http.route': route,
+            'http.response.status_code': statusCode,
+          });
         },
         error: (error: unknown) => {
           const duration = Date.now() - startTime;
@@ -46,10 +60,13 @@ export class MetricsInterceptor implements NestInterceptor {
             `${method} ${url} ${statusCode} - ${duration}ms - Error: ${message}`,
           );
 
-          /*
-           * TODO: Send error metrics to monitoring service
-           * Example: metricsService.recordHttpError({ method, url, statusCode, duration, error });
-           */
+          if (isExcludedFromMetrics) return;
+
+          httpServerRequestDuration.record(duration / 1000, {
+            'http.request.method': method,
+            'http.route': route,
+            'http.response.status_code': statusCode,
+          });
         },
       }),
     );

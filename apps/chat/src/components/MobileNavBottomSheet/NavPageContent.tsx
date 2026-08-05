@@ -12,7 +12,7 @@ import { useSheetNavigation } from '../../hooks/useSheetNavigation';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
-import FooterContainer from '../FooterDialogs/FooterContainer';
+import FooterMessage from '../FooterMessage/FooterMessage';
 import styles from './MobileNavBottomSheet.module.scss';
 import ProfilePageContent from './ProfilePageContent';
 
@@ -84,7 +84,7 @@ const NavPageContent: FC<Props> = ({ onLogoutRequest }) => {
           </button>
         </li>
       </ul>
-      <FooterContainer />
+      <FooterMessage />
     </>
   );
 };

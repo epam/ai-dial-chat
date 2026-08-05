@@ -157,17 +157,6 @@ export interface CatalogProps {
    */
   isShareVisible?: (item: CatalogItem) => boolean;
   /**
-   * Renders the Connect popover content anchored to the Connect button in the
-   * details panel. When absent, the Connect button is never shown — there is
-   * no non-overlay fallback action.
-   */
-  connectOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
-  /**
-   * Controls whether the "Connect" action is shown for an item. When absent,
-   * the Connect button is never shown.
-   */
-  isConnectVisible?: (item: CatalogItem) => boolean;
-  /**
    * Called when the credentials login form is submitted in the details
    * panel, for the given credentials `level` (`USER` or `GLOBAL`). May
    * return a promise; awaited before refreshing via `onFetchDetails`.
