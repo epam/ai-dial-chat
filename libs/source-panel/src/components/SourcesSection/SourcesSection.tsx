@@ -1,16 +1,16 @@
 import {
   buildCssVars,
-  Highlight,
   MarkdownRenderer,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialGhostIconButton,
   ElementSize,
+  GhostIconButton,
+  Highlight,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
-import { memo, useMemo, useState, type FC } from 'react';
+import { memo, useMemo, useState, type FC, type ReactNode } from 'react';
 import type { QuotationSource } from '../../models/quotation-source';
 import {
   ConversationSourcesPanelColors,
@@ -18,9 +18,10 @@ import {
 } from '../ConversationSourcesPanel/ConversationSourcesPanel';
 import styles from './SourcesSection.module.scss';
 
+/** Props for the `SourcesSection` component. */
 export interface SourcesSectionProps {
   /** Heading text for the sources section. */
-  title: string;
+  title: ReactNode;
   /** List of sources to display. */
   sources: QuotationSource[];
   /** Accessible label for each source's copy-URL button. */
@@ -108,7 +109,7 @@ const SourcesSection: FC<SourcesSectionProps> = ({
                   source.title
                 )}
               </a>
-              <DialGhostIconButton
+              <GhostIconButton
                 size={ElementSize.Small}
                 icon={
                   <IconCopy size={DIAL_ICON_SIZE.SM} stroke={1.5} aria-hidden />

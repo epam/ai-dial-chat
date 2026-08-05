@@ -1,7 +1,7 @@
 ## 1. FileDndOverlay component (lib)
 
 - [x] 1.1 Create `libs/conversation-input/src/components/FileDndOverlay/FileDndOverlay.tsx` with `fixed inset-0 z-[9999]` layout, backdrop blur, and centered icon + title + subtitle; render nothing when `isVisible={false}`
-- [x] 1.2 Add `FileDndOverlayProps` interface to `libs/conversation-input/src/models/` with `isVisible`, `title`, `subtitle`, `iconClassName` (default `'text-accent-primary'`), `titleClassName`, `subtitleClassName` props (all optional except `isVisible`); icon is `IconFileDescription` from `@epam/ai-dial-ui-kit`
+- [x] 1.2 Add `FileDndOverlayProps` interface to `libs/conversation-input/src/models/` with `isVisible`, `title`, `subtitle`, `iconClassName` (default `'text-accent'`), `titleClassName`, `subtitleClassName` props (all optional except `isVisible`); icon is `IconFileDescription` from `@epam/ai-dial-ui-kit`
 - [x] 1.3 Export `FileDndOverlay` and `FileDndOverlayProps` from `libs/conversation-input/src/index.ts`
 
 ## 2. ConversationInput refactor (lib)

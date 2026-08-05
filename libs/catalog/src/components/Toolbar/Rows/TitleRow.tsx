@@ -1,6 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { GhostButton } from '@epam/ai-dial-kit';
-import { DIAL_ICON_SIZE, DialDropdown } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DialDropdown,
+  GhostButton,
+} from '@epam/ai-dial-ui-kit';
 import {
   IconCheck,
   IconChevronDown,
@@ -90,7 +93,7 @@ export const TitleRow: FC<TitleRowProps> = ({
           <div
             className="flex items-center rounded-full border p-[3px]"
             style={{
-              background: 'var(--bg-layer-2, #EEEEF0)',
+              background: 'var(--bg-layer-sunken, #EEF1F7)',
               borderColor: 'var(--stroke-tertiary, #e0e6f0)',
             }}
           >
@@ -111,7 +114,7 @@ export const TitleRow: FC<TitleRowProps> = ({
                     className={mergeClasses(
                       'flex min-h-11 min-w-11 items-center justify-center rounded-full px-3 py-1.5 transition-colors desktop:min-h-8 desktop:min-w-10',
                       isActive
-                        ? 'bg-layer-0 text-accent-primary shadow-sm'
+                        ? 'bg-layer-raised text-accent shadow-sm'
                         : 'text-secondary hover:text-primary',
                     )}
                   >

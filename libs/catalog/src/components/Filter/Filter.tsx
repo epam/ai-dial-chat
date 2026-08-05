@@ -1,6 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { GhostButton, PrimaryButton } from '@epam/ai-dial-kit';
-import { DIAL_ICON_SIZE, DialDropdown } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DialDropdown,
+  PrimaryButton,
+  GhostButton,
+} from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconFilter } from '@tabler/icons-react';
 import {
   FC,
@@ -67,10 +71,7 @@ const toggleTopic = (topic: string, checked: Set<string>): Set<string> => {
   return next;
 };
 
-/**
- * Source-filter dropdown with checkbox list, keyboard navigation, and a
- * footer with Clear + Apply buttons (buffered — changes are committed on Apply).
- */
+/** Source-filter dropdown: checkbox list for topics and My Apps toggle, with buffered Clear/Apply controls. */
 export const Filter: FC<FilterProps> = ({
   checked,
   onChange,

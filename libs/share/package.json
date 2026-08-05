@@ -20,10 +20,10 @@
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "*",
     "@epam/ai-dial-kit": "*",
-    "@epam/ai-dial-ui-kit": "0.12.0-dev.36",
     "@tabler/icons-react": "^3.0.0",
     "react": "^19.0.0",
-    "react-qr-code": "^2.2.0"
+    "react-qr-code": "^2.2.0",
+    "@epam/ai-dial-ui-kit": "^0.13.0-dev.26"
   },
   "nx": {
     "tags": [

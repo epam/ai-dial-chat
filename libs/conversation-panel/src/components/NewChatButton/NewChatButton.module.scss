@@ -1,46 +1,4 @@
 .button {
-  background: var(--cp-new-chat-bg, var(--bg-layer-0, #fcfcfc));
-
-  box-shadow:
-    0 1px 3px
-      var(--cp-new-chat-shadow-blue, var(--bg-new-chat-shadow-blue, #5c8dea33)),
-    0 2px 10px
-      var(
-        --cp-new-chat-shadow-purple,
-        var(--bg-new-chat-shadow-purple, #a972ff24)
-      );
-  color: var(--cp-new-chat-text, var(--text-accent-primary, #124ace));
-  transition:
-    box-shadow 150ms ease,
-    background-color 150ms ease;
-
-  &:hover {
-    background: var(--cp-new-chat-hover, var(--bg-layer-0, #fcfcfc));
-    box-shadow:
-      0 2px 6px
-        var(
-          --cp-new-chat-shadow-blue-hover,
-          var(--bg-new-chat-shadow-blue-hover, #5c8dea47)
-        ),
-      0 4px 16px
-        var(
-          --cp-new-chat-shadow-purple-hover,
-          var(--bg-new-chat-shadow-purple-hover, #a972ff33)
-        );
-  }
-
-  &:active {
-    background: var(--cp-new-chat-active, var(--bg-layer-5, #f5f7fa));
-    box-shadow:
-      0 1px 2px
-        var(
-          --cp-new-chat-shadow-blue-active,
-          var(--bg-new-chat-shadow-blue-active, #5c8dea26)
-        ),
-      0 1px 6px
-        var(
-          --cp-new-chat-shadow-purple-active,
-          var(--bg-new-chat-shadow-purple-active, #a972ff1a)
-        );
-  }
+  background: var(--cp-new-chat-bg, var(--bg-control-neutral, #fcfcfc));
+  color: var(--cp-new-chat-text, var(--text-accent, #1d4ed8));
 }

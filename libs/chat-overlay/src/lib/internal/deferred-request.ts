@@ -5,12 +5,10 @@ const generateRequestId = (): string => {
   return `dial-overlay-${Date.now()}-${requestSequence}`;
 };
 
-/**
- * A single outstanding request: owns its `requestId`, races its response
- * promise against a per-request timeout, and rejects with a descriptive
- * error naming the request type and timeout when unanswered in time.
- */
+/** A single outstanding overlay request: owns its `requestId` and resolves/rejects when the matching response arrives or the timeout elapses. */
 export class DeferredRequest<T = unknown> {
+  /** Exact request type sent to the embedded app. */
+  readonly requestType: string;
   /** Unique id used to match this request to its response message. */
   readonly requestId: string;
   /** Exact response type expected for this request. */
@@ -24,6 +22,7 @@ export class DeferredRequest<T = unknown> {
   private readonly timeoutHandle: ReturnType<typeof setTimeout>;
 
   constructor(requestType: string, timeoutMs: number) {
+    this.requestType = requestType;
     this.requestId = generateRequestId();
     this.responseType = `${requestType}/RESPONSE`;
     this.promise = new Promise<T>((resolve, reject) => {

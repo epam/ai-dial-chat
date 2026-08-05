@@ -65,6 +65,7 @@ export enum ApiI18nKeys {
 }
 
 export enum ButtonsI18nKeys {
+  Retry = 'buttons.retry',
   ShowMore = 'buttons.showMore',
   ShowLess = 'buttons.showLess',
   Create = 'buttons.create',
@@ -112,6 +113,7 @@ export enum NavigationI18nKeys {
   Home = 'navigation.home',
   Catalog = 'navigation.catalog',
   FileManager = 'dialFileManager.page.navLabel',
+  ScheduledTasks = 'scheduledTasks.page.navLabel',
   OpenMenu = 'navigation.openMenu',
   Menu = 'navigation.menu',
   Profile = 'navigation.profile',
@@ -168,6 +170,7 @@ export enum CatalogI18nKeys {
   DetailsLimitsProgressAriaLabel = 'catalog.details.limits.progressAriaLabel',
   CreateQuickApp = 'catalog.create.quickApp',
   CreateToolset = 'catalog.create.toolset',
+  CreateCustomApp = 'catalog.create.customApp',
   PublishSuccessTitle = 'catalog.publishSuccessTitle',
   PublishSuccess = 'catalog.publishSuccess',
   PublishFolderSearchPlaceholder = 'catalog.publishFolderSearchPlaceholder',
@@ -226,6 +229,70 @@ export enum NotFoundI18nKeys {
   OpenCatalog = 'notFound.openCatalog',
 }
 
+export enum ScheduledTasksI18nKeys {
+  NavLabel = 'scheduledTasks.page.navLabel',
+  PageTitle = 'scheduledTasks.page.title',
+  PageSubtitle = 'scheduledTasks.page.subtitle',
+  CreateButtonLabel = 'scheduledTasks.toolbar.createButtonLabel',
+  SearchPlaceholder = 'scheduledTasks.toolbar.searchPlaceholder',
+  SearchAriaLabel = 'scheduledTasks.toolbar.searchAriaLabel',
+  ClearSearchLabel = 'scheduledTasks.toolbar.clearSearchLabel',
+  SortLabel = 'scheduledTasks.toolbar.sortLabel',
+  SortFirstToRun = 'scheduledTasks.toolbar.sortFirstToRun',
+  SortLastToRun = 'scheduledTasks.toolbar.sortLastToRun',
+  SortNewest = 'scheduledTasks.toolbar.sortNewest',
+  SortNameAZ = 'scheduledTasks.toolbar.sortNameAZ',
+  EmptyStateLabel = 'scheduledTasks.emptyState.label',
+  ListNoResultsLabel = 'scheduledTasks.list.noResultsLabel',
+  ListErrorLabel = 'scheduledTasks.list.errorLabel',
+  ListRetryLabel = 'scheduledTasks.list.retryLabel',
+  ListSharedSectionTitle = 'scheduledTasks.list.sharedSectionTitle',
+  ListLoadingMoreLabel = 'scheduledTasks.list.loadingMoreLabel',
+  CardNewBadgeLabel = 'scheduledTasks.card.newBadgeLabel',
+  CardActionsLabel = 'scheduledTasks.card.actionsLabel',
+  CardEditActionLabel = 'scheduledTasks.card.editActionLabel',
+  CardRunNowActionLabel = 'scheduledTasks.card.runNowActionLabel',
+  CardDeleteActionLabel = 'scheduledTasks.card.deleteActionLabel',
+  CardScheduleDailyAt = 'scheduledTasks.card.scheduleDailyAt',
+  CardScheduleWeeklyAt = 'scheduledTasks.card.scheduleWeeklyAt',
+  CardScheduleMonthlyAt = 'scheduledTasks.card.scheduleMonthlyAt',
+  CardScheduleHourlyAt = 'scheduledTasks.card.scheduleHourlyAt',
+  CardScheduleEveryNMinutes = 'scheduledTasks.card.scheduleEveryNMinutes',
+  CardScheduleOnceAt = 'scheduledTasks.card.scheduleOnceAt',
+  CardScheduleRecurringFallback = 'scheduledTasks.card.scheduleRecurringFallback',
+  CreatePageTitle = 'scheduledTasks.create.pageTitle',
+  CreateBackButtonLabel = 'scheduledTasks.create.backButtonLabel',
+  CreateDetailsSectionTitle = 'scheduledTasks.create.detailsSectionTitle',
+  CreateDetailsSectionSubtitle = 'scheduledTasks.create.detailsSectionSubtitle',
+  CreateConfigurationSectionTitle = 'scheduledTasks.create.configurationSectionTitle',
+  CreateConfigurationSectionSubtitle = 'scheduledTasks.create.configurationSectionSubtitle',
+  CreateScheduleSectionLabel = 'scheduledTasks.create.scheduleSectionLabel',
+  CreateScheduleTypeOnce = 'scheduledTasks.create.scheduleTypeOnce',
+  CreateScheduleTypeRecurring = 'scheduledTasks.create.scheduleTypeRecurring',
+  CreateScheduleTypeAriaLabel = 'scheduledTasks.create.scheduleTypeAriaLabel',
+  CreateRunAtLabel = 'scheduledTasks.create.runAtLabel',
+  CreateRunAtRequired = 'scheduledTasks.create.runAtRequired',
+  CreateFrequencyLabel = 'scheduledTasks.create.frequencyLabel',
+  CreateFrequencyDaily = 'scheduledTasks.create.frequencyDaily',
+  CreateFrequencyWeekly = 'scheduledTasks.create.frequencyWeekly',
+  CreateFrequencyMonthly = 'scheduledTasks.create.frequencyMonthly',
+  CreateTimeLabel = 'scheduledTasks.create.timeLabel',
+  CreateTimeInvalid = 'scheduledTasks.create.timeInvalid',
+  CreateDayOfWeekLabel = 'scheduledTasks.create.dayOfWeekLabel',
+  CreateDayOfWeekRequired = 'scheduledTasks.create.dayOfWeekRequired',
+  CreateDayOfMonthLabel = 'scheduledTasks.create.dayOfMonthLabel',
+  CreateDayOfMonthRequired = 'scheduledTasks.create.dayOfMonthRequired',
+  CreateModelOrAgentLabel = 'scheduledTasks.create.modelOrAgentLabel',
+  CreateModelPlaceholder = 'scheduledTasks.create.modelPlaceholder',
+  CreateModelRequired = 'scheduledTasks.create.modelRequired',
+  CreateDescriptionLabel = 'scheduledTasks.create.descriptionLabel',
+  CreateDescriptionMaxLengthError = 'scheduledTasks.create.descriptionMaxLengthError',
+  CreateInstructionsLabel = 'scheduledTasks.create.instructionsLabel',
+  CreatePromptRequired = 'scheduledTasks.create.promptRequired',
+  CreateSuccessNotification = 'scheduledTasks.create.successNotification',
+  CreateErrorNotification = 'scheduledTasks.create.errorNotification',
+}
+
 export enum ConversationI18nKeys {
   StatusModelChangedTitle = 'conversation.statusMessage.modelChangedTitle',
   StatusModelChangedBody = 'conversation.statusMessage.modelChangedBody',
@@ -233,6 +300,7 @@ export enum ConversationI18nKeys {
   StagesStep = 'conversation.stages.step',
   AttachMenuDialFileSystem = 'conversation.attachMenuDialFileSystem',
   AddMenuTitle = 'conversation.addMenuTitle',
+  MessageTooLong = 'conversation.messageTooLong',
 }
 
 export enum DialFileManagerI18nKeys {
@@ -358,6 +426,12 @@ export enum AuthI18nKeys {
   LoginTitle = 'auth.loginTitle',
   LoginDescription = 'auth.loginDescription',
   ProvidersError = 'auth.providersError',
+  OverlayLoginTitle = 'auth.overlayLoginTitle',
+  OverlayLoginDescription = 'auth.overlayLoginDescription',
+  OverlayExternalLoginBlocked = 'auth.overlayExternalLoginBlocked',
+  OverlayLoginTakingLonger = 'auth.overlayLoginTakingLonger',
+  OverlayProviderPickerLoading = 'auth.overlayProviderPickerLoading',
+  OverlayProvidersError = 'auth.overlayProvidersError',
   LogOutConfirmTitle = 'auth.logOutConfirmTitle',
   LogOutConfirmDescription = 'auth.logOutConfirmDescription',
   UserAvatar = 'auth.userAvatar',
@@ -410,6 +484,7 @@ export enum ConversationPanelI18nKeys {
   UnshareSuccessTitle = 'conversationPanel.unshare.unshareSuccessTitle',
   UnshareSuccess = 'conversationPanel.unshare.unshareSuccess',
   UnshareError = 'conversationPanel.unshare.unshareError',
+  TaskBadgeLabel = 'conversationPanel.taskBadgeLabel',
 }
 
 export enum ConversationPublishI18nKeys {
@@ -419,6 +494,32 @@ export enum ConversationPublishI18nKeys {
   EmptyFolderNameError = 'conversationPublish.emptyFolderNameError',
   InvalidFolderNameError = 'conversationPublish.invalidFolderNameError',
   DuplicateFolderNameError = 'conversationPublish.duplicateFolderNameError',
+}
+
+export enum PublishAccessRulesI18nKeys {
+  Heading = 'publishAccessRules.heading',
+  AddRuleLabel = 'publishAccessRules.addRuleLabel',
+  ClearAllLabel = 'publishAccessRules.clearAllLabel',
+  OrSeparatorLabel = 'publishAccessRules.orSeparatorLabel',
+  RemoveRuleAriaLabelTemplate = 'publishAccessRules.removeRuleAriaLabelTemplate',
+  EqualFunctionLabel = 'publishAccessRules.equalFunctionLabel',
+  ContainFunctionLabel = 'publishAccessRules.containFunctionLabel',
+  RegexFunctionLabel = 'publishAccessRules.regexFunctionLabel',
+  LoadingLabel = 'publishAccessRules.loadingLabel',
+  LoadErrorLabel = 'publishAccessRules.loadErrorLabel',
+  RuleAddedAnnouncement = 'publishAccessRules.ruleAddedAnnouncement',
+  RuleRemovedAnnouncement = 'publishAccessRules.ruleRemovedAnnouncement',
+  RulesClearedAnnouncement = 'publishAccessRules.rulesClearedAnnouncement',
+  RulesLoadedAnnouncement = 'publishAccessRules.rulesLoadedAnnouncement',
+  SourceLabel = 'publishAccessRules.sourceLabel',
+  SourcePlaceholder = 'publishAccessRules.sourcePlaceholder',
+  FunctionLabel = 'publishAccessRules.functionLabel',
+  TargetsLabel = 'publishAccessRules.targetsLabel',
+  TargetsPlaceholder = 'publishAccessRules.targetsPlaceholder',
+  PatternLabel = 'publishAccessRules.patternLabel',
+  PatternPlaceholder = 'publishAccessRules.patternPlaceholder',
+  InvalidRegexError = 'publishAccessRules.invalidRegexError',
+  DialogAriaLabel = 'publishAccessRules.dialogAriaLabel',
 }
 
 export enum ConversationExportI18nKeys {
@@ -454,7 +555,6 @@ export enum ConversationImportI18nKeys {
   FailedTitle = 'conversationImport.failedTitle',
   Failed = 'conversationImport.failed',
   WarningAttachmentSkipped = 'conversationImport.warningAttachmentSkipped',
-  AttachmentNameConflict = 'conversationImport.attachmentNameConflict',
   UnsupportedFormat = 'conversationImport.unsupportedFormat',
 }
 
@@ -522,11 +622,67 @@ export enum AttachmentCanvasI18nKeys {
   UnsupportedLabel = 'attachmentCanvas.unsupportedLabel',
   LoadErrorLabel = 'attachmentCanvas.loadErrorLabel',
   ForbiddenErrorLabel = 'attachmentCanvas.forbiddenErrorLabel',
+  HtmlFrameBlocked = 'attachmentCanvas.htmlFrameBlocked',
+  HtmlOpenInNewTab = 'attachmentCanvas.htmlOpenInNewTab',
+  HtmlViewSource = 'attachmentCanvas.htmlViewSource',
+  HtmlViewRendered = 'attachmentCanvas.htmlViewRendered',
 }
 
 export enum AnnouncementBannerI18nKeys {
   RegionAriaLabel = 'announcementBanner.regionAriaLabel',
   CloseLabel = 'announcementBanner.closeLabel',
+}
+
+export enum FooterMessageI18nKeys {
+  RegionAriaLabel = 'footerMessage.regionAriaLabel',
+}
+
+export enum FooterRequestApiKeyI18nKeys {
+  Title = 'footer.requestApiKey.title',
+  DescriptionPrefix = 'footer.requestApiKey.descriptionPrefix',
+  ProjectNameDescription = 'footer.requestApiKey.projectNameDescription',
+  StreamNameDescription = 'footer.requestApiKey.streamNameDescription',
+  ProjectLeadDescription = 'footer.requestApiKey.projectLeadDescription',
+  AccessScenarioDescription = 'footer.requestApiKey.accessScenarioDescription',
+  WorkloadPatternDescriptionPrefix = 'footer.requestApiKey.workloadPatternDescriptionPrefix',
+  WorkloadPatternCaptionPrefix = 'footer.requestApiKey.workloadPatternCaptionPrefix',
+  CheckboxGroupTitle = 'footer.requestApiKey.checkboxGroupTitle',
+  ProjectNameLabel = 'footer.requestApiKey.projectNameLabel',
+  ProjectNamePlaceholder = 'footer.requestApiKey.projectNamePlaceholder',
+  StreamNameLabel = 'footer.requestApiKey.streamNameLabel',
+  StreamNamePlaceholder = 'footer.requestApiKey.streamNamePlaceholder',
+  ProjectLeadLabel = 'footer.requestApiKey.projectLeadLabel',
+  ProjectLeadPlaceholder = 'footer.requestApiKey.projectLeadPlaceholder',
+  BusinessReasonLabel = 'footer.requestApiKey.businessReasonLabel',
+  BusinessReasonPlaceholder = 'footer.requestApiKey.businessReasonPlaceholder',
+  ProjectEndLabel = 'footer.requestApiKey.projectEndLabel',
+  AccessScenarioLabel = 'footer.requestApiKey.accessScenarioLabel',
+  AccessScenarioPlaceholder = 'footer.requestApiKey.accessScenarioPlaceholder',
+  WorkloadPatternLabel = 'footer.requestApiKey.workloadPatternLabel',
+  WorkloadPatternPlaceholder = 'footer.requestApiKey.workloadPatternPlaceholder',
+  CheckboxAzureLabel = 'footer.requestApiKey.checkboxAzureLabel',
+  CheckboxEpamLabel = 'footer.requestApiKey.checkboxEpamLabel',
+  CheckboxClientLabel = 'footer.requestApiKey.checkboxClientLabel',
+  CheckboxLocalLabel = 'footer.requestApiKey.checkboxLocalLabel',
+  CheckboxGroupRequired = 'footer.requestApiKey.checkboxGroupRequired',
+  FieldRequired = 'footer.requestApiKey.fieldRequired',
+  FieldTooLong = 'footer.requestApiKey.fieldTooLong',
+  EmailInvalid = 'footer.requestApiKey.emailInvalid',
+  DateInvalid = 'footer.requestApiKey.dateInvalid',
+  SuccessTitle = 'footer.requestApiKey.successTitle',
+  ErrorTitle = 'footer.requestApiKey.errorTitle',
+}
+
+export enum FooterReportIssueI18nKeys {
+  Title = 'footer.reportIssue.title',
+  IssueTitleLabel = 'footer.reportIssue.issueTitleLabel',
+  IssueTitlePlaceholder = 'footer.reportIssue.issueTitlePlaceholder',
+  DescriptionLabel = 'footer.reportIssue.descriptionLabel',
+  DescriptionPlaceholder = 'footer.reportIssue.descriptionPlaceholder',
+  FieldRequired = 'footer.reportIssue.fieldRequired',
+  FieldTooLong = 'footer.reportIssue.fieldTooLong',
+  SuccessTitle = 'footer.reportIssue.successTitle',
+  ErrorTitle = 'footer.reportIssue.errorTitle',
 }
 
 export enum EditorI18nKeys {
@@ -603,6 +759,7 @@ export enum ToolsetEditorI18nKeys {
   ErrorLoginFailed = 'toolsetEditor.error.loginFailed',
   ErrorLogoutFailed = 'toolsetEditor.error.logoutFailed',
   ErrorPopupBlocked = 'toolsetEditor.error.popupBlocked',
+  ErrorOAuthConfigMissing = 'toolsetEditor.error.oauthConfigMissing',
   LoginSuccess = 'toolsetEditor.success.login',
   LogoutSuccess = 'toolsetEditor.success.logout',
 }
@@ -613,6 +770,7 @@ export enum ToolsetSigninI18nKeys {
   RowDecline = 'toolsetSignin.rowDecline',
   DeclineAll = 'toolsetSignin.declineAll',
   FallbackName = 'toolsetSignin.fallbackName',
+  FallbackNameExternalService = 'toolsetSignin.fallbackNameExternalService',
   ApiKeyLabel = 'toolsetSignin.apiKeyLabel',
   ApiKeyPlaceholder = 'toolsetSignin.apiKeyPlaceholder',
   ErrorLoginFailed = 'toolsetSignin.errorLoginFailed',
@@ -621,6 +779,7 @@ export enum ToolsetSigninI18nKeys {
   ErrorRetry = 'toolsetSignin.errorRetry',
   StatusLoginSuccess = 'toolsetSignin.statusLoginSuccess',
   StatusDeclineSuccess = 'toolsetSignin.statusDeclineSuccess',
+  NoCredentialsRequired = 'toolsetSignin.noCredentialsRequired',
 }
 
 export enum ErrorBoundaryI18nKeys {
@@ -653,4 +812,58 @@ export enum VoiceRecordingI18nKeys {
   StopRecordingLabel = 'voiceRecording.stopRecordingLabel',
   DiscardRecordingLabel = 'voiceRecording.discardRecordingLabel',
   TimerAriaLabel = 'voiceRecording.timerAriaLabel',
+}
+
+export enum ToolsI18nKeys {
+  MenuTitle = 'tools.menuTitle',
+  DeepResearchFallback = 'tools.deepResearchFallback',
+  SelectedCount = 'tools.selectedCount',
+  RemoveTool = 'tools.removeTool',
+}
+
+export enum ConversationInputI18nKeys {
+  TriggerAriaLabel = 'conversationInput.usageLimits.triggerAriaLabel',
+  PopoverTitle = 'conversationInput.usageLimits.popoverTitle',
+  Error = 'conversationInput.usageLimits.error',
+  TokensRemaining = 'conversationInput.usageLimits.tokensRemaining',
+  ProgressAriaLabel = 'conversationInput.usageLimits.progressAriaLabel',
+}
+
+export enum NotificationI18nKeys {
+  RequestIdLabel = 'notification.requestId.label',
+  RequestIdCopyAriaLabel = 'notification.requestId.copyAriaLabel',
+  RequestIdCopiedStatus = 'notification.requestId.copiedStatus',
+  RequestIdCopyFailedStatus = 'notification.requestId.copyFailedStatus',
+}
+
+export enum CustomAppI18nKeys {
+  // General form placeholders
+  NamePlaceholder = 'customApp.general.namePlaceholder',
+  DescriptionPlaceholder = 'customApp.general.descriptionPlaceholder',
+  // Settings form fields
+  CompletionUrlLabel = 'customApp.settings.completionUrlLabel',
+  CompletionUrlDescription = 'customApp.settings.completionUrlDescription',
+  CompletionUrlPlaceholder = 'customApp.settings.completionUrlPlaceholder',
+  CompletionUrlRequired = 'customApp.settings.completionUrlRequired',
+  CompletionUrlInvalid = 'customApp.settings.completionUrlInvalid',
+  FeaturesDataLabel = 'customApp.settings.featuresDataLabel',
+  FeaturesDataDescription = 'customApp.settings.featuresDataDescription',
+  FeaturesDataPlaceholder = 'customApp.settings.featuresDataPlaceholder',
+  FeaturesDataInvalid = 'customApp.settings.featuresDataInvalid',
+  AttachmentTypesLabel = 'customApp.settings.attachmentTypesLabel',
+  AttachmentTypesDescription = 'customApp.settings.attachmentTypesDescription',
+  AttachmentTypesPlaceholder = 'customApp.settings.attachmentTypesPlaceholder',
+  EnterAttachmentTypes = 'customApp.settings.enterAttachmentTypes',
+  InvalidMimeType = 'customApp.settings.invalidMimeType',
+  MaxAttachmentsLabel = 'customApp.settings.maxAttachmentsLabel',
+  MaxAttachmentsDescription = 'customApp.settings.maxAttachmentsDescription',
+  MaxAttachmentsInvalid = 'customApp.settings.maxAttachmentsInvalid',
+  EnterMaxAttachments = 'customApp.settings.enterMaxAttachments',
+  TypeChatCompletionURL = 'customApp.settings.typeChatCompletionUrl',
+  ErrorCreateFailed = 'customApp.error.createFailed',
+  ErrorSaveFailed = 'customApp.error.saveFailed',
+  ErrorLoadFailed = 'customApp.error.loadFailed',
+  SaveConfirmTitle = 'customApp.saveConfirm.title',
+  SaveConfirmDescription = 'customApp.saveConfirm.description',
+  SaveConfirmLabel = 'customApp.saveConfirm.confirmLabel',
 }

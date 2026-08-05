@@ -1,15 +1,14 @@
-import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { QuotationSource } from '../../../models/quotation-source';
-import ConversationSourcesPanel from '../ConversationSourcesPanel';
 import type { ConversationSourcesPanelLabels } from '../ConversationSourcesPanel';
+import ConversationSourcesPanel from '../ConversationSourcesPanel';
 
 vi.mock('@epam/ai-dial-sidebar', () => ({
-  PanelEmpty: ({ label }: { label: string }) => <div>{label}</div>,
   PanelNoResults: ({ label }: { label: string }) => <div>{label}</div>,
   SidebarOrientation: { Left: 'left', Right: 'right' },
   SidebarPanel: ({
@@ -57,7 +56,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ElementSize: { Small: 'small' },
   mergeClasses: (...classes: (string | undefined)[]) =>
     classes.filter(Boolean).join(' '),
-  DialGhostIconButton: ({
+  GhostIconButton: ({
     'aria-label': ariaLabel,
     disabled,
     onClick,
@@ -73,7 +72,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       onClick={onClick}
     />
   ),
+  DialNoDataContent: ({ title }: { title: string }) => <div>{title}</div>,
   DialEllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
+  Highlight: ({ text }: { text: string }) => <span>{text}</span>,
 }));
 
 vi.mock('@epam/ai-dial-conversation-input', () => ({
@@ -98,7 +99,7 @@ const LABELS: ConversationSourcesPanelLabels = {
   closeLabel: 'Close',
   searchPlaceholder: 'Search',
   searchClearLabel: 'Clear search',
-  emptyLabel: 'Empty',
+  noDataLabel: 'No data',
   noResultsLabel: 'No results',
   downloadAllLabel: 'Download all',
   uploadedSectionTitle: 'Uploaded files',
@@ -171,7 +172,7 @@ describe('ConversationSourcesPanel', () => {
 
   it('renders empty state when no data', () => {
     renderPanel();
-    expect(screen.getByText('Empty')).toBeTruthy();
+    expect(screen.getByText('No data')).toBeTruthy();
     expect(screen.queryByRole('heading')).toBeNull();
     expect(screen.queryByRole('searchbox')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Download all' })).toBeNull();

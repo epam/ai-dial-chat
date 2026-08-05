@@ -3,6 +3,12 @@ import type {
   ExportFolder,
   ExportFormat,
 } from '@epam/ai-dial-chat-shared';
+import { collectAttachmentRefs } from './attachment-refs';
+import type {
+  AllocatedUploadPath,
+  UploadPathAllocator,
+} from './build-upload-path';
+import { resolveDialFileBucketAndPath } from './dial-file';
 
 /** Thrown when an imported file cannot be parsed as a supported export envelope. */
 export class UnsupportedImportFormatError extends Error {
@@ -100,7 +106,6 @@ export const rebaseConversationId = (
 ): RebasedConversationId => {
   const rawId = stripRawResourcePrefix(conversation.id);
   const idSegments = rawId.split('/');
-  const oldFileName = idSegments[idSegments.length - 1] ?? rawId;
   const oldFolderId = stripRawResourcePrefix(conversation.folderId);
   const oldBucket = idSegments[0];
 
@@ -111,8 +116,26 @@ export const rebaseConversationId = (
         .filter(Boolean)
     : [];
 
+  /*
+   * Segments after the bucket and any folder sub-paths. For deployments with
+   * a path-like id (e.g. `anthropic/claude-3`), the intermediate segments
+   * belong to the deployment id prefix and must be preserved in the new path,
+   * not dropped as if they were folder segments (issue #7931).
+   */
+  const pathSegmentsAfterBucket = idSegments.slice(1);
+  const pathSegmentsAfterFolder = pathSegmentsAfterBucket.slice(
+    folderSegments.length,
+  );
+  const deploymentPrefixSegments = pathSegmentsAfterFolder.slice(0, -1);
+  const oldFileName =
+    pathSegmentsAfterFolder.at(-1) ?? idSegments.at(-1) ?? rawId;
+
   const newFileName = `${stripTrailingUuid(oldFileName)}__${crypto.randomUUID()}`;
-  const subPath = [...folderSegments, newFileName].join('/');
+  const subPath = [
+    ...folderSegments,
+    ...deploymentPrefixSegments,
+    newFileName,
+  ].join('/');
   const newFolderId = folderSegments.length
     ? `${bucket}/${folderSegments.join('/')}`
     : bucket;
@@ -151,14 +174,23 @@ export const getFolderBreadcrumb = (
 export const formatQuotedNameList = (names: string[]): string =>
   names.map((name) => `"${name}"`).join(', ');
 
+/** New location — and, when the import renamed it, new display name — for an imported attachment. */
+export interface RewrittenAttachmentTarget {
+  /** New `files/{bucket}/{path}` id to write into `url`/`reference_url`. */
+  url: string;
+  /** New display name — present only when a ` (n)` disambiguation suffix was applied. */
+  title?: string;
+}
+
 /**
  * Rewrites every message's attachment `url`/`reference_url` referencing an
- * old file id to its new uploaded location. Attachments not present in
- * `urlMap` are left untouched (immutable — returns a new conversation).
+ * old file id to its new uploaded location, and its `title` when the target
+ * carries a renamed one. Attachments not present in `targetMap` are left
+ * untouched (immutable — returns a new conversation).
  */
 export const rewriteAttachmentUrls = (
   conversation: Conversation,
-  urlMap: Map<string, string>,
+  targetMap: Map<string, RewrittenAttachmentTarget>,
 ): Conversation => ({
   ...conversation,
   messages: conversation.messages.map((message) => {
@@ -170,23 +202,83 @@ export const rewriteAttachmentUrls = (
       custom_content: {
         ...message.custom_content,
         attachments: attachments.map((attachment) => {
-          const newUrl = attachment.url
-            ? urlMap.get(attachment.url)
+          const urlTarget = attachment.url
+            ? targetMap.get(attachment.url)
             : undefined;
-          const newReferenceUrl = attachment.reference_url
-            ? urlMap.get(attachment.reference_url)
+          const referenceTarget = attachment.reference_url
+            ? targetMap.get(attachment.reference_url)
             : undefined;
-          if (newUrl == null && newReferenceUrl == null) return attachment;
+          if (urlTarget == null && referenceTarget == null) return attachment;
 
+          const newTitle = urlTarget?.title ?? referenceTarget?.title;
           return {
             ...attachment,
-            ...(newUrl != null ? { url: newUrl } : {}),
-            ...(newReferenceUrl != null
-              ? { reference_url: newReferenceUrl }
+            ...(urlTarget != null ? { url: urlTarget.url } : {}),
+            ...(referenceTarget != null
+              ? { reference_url: referenceTarget.url }
               : {}),
+            ...(newTitle != null ? { title: newTitle } : {}),
           };
         }),
       },
     };
   }),
 });
+
+/** Best-effort display name for a fileId that failed to resolve to a `{bucket, path}` pair. */
+export const fileIdDisplayName = (fileId: string): string =>
+  fileId.split('/').pop() || fileId;
+
+/** One attachment reference planned for upload, with its collision-free destination already allocated. */
+export interface PlannedAttachmentUpload {
+  /** Original DIAL file id this attachment is uploaded from — the key `rewriteAttachmentUrls` rewrites. */
+  fileId: string;
+  /** Raw bytes read from the archive. */
+  bytes: Uint8Array;
+  /** Basename a 409 retry re-derives its next attempt from (never the already-suffixed name). */
+  originalFileName: string;
+  /** Destination allocated for the first upload attempt. */
+  allocated: AllocatedUploadPath;
+}
+
+/**
+ * Resolves a conversation's unique attachment references to archive bytes
+ * and allocates each a collision-free upload destination, in
+ * `collectAttachmentRefs` order — a synchronous pre-pass so suffix
+ * assignment stays deterministic regardless of later upload concurrency.
+ * A reference that cannot be resolved to a `{bucket, path}` pair, or has no
+ * matching bytes in the archive, is reported in `skippedNames` and does not
+ * consume an allocator slot.
+ */
+export const planAttachmentUploads = (
+  conversation: Conversation,
+  attachmentBytes: Map<string, Uint8Array>,
+  allocator: UploadPathAllocator,
+): { plan: PlannedAttachmentUpload[]; skippedNames: string[] } => {
+  const plan: PlannedAttachmentUpload[] = [];
+  const skippedNames: string[] = [];
+
+  for (const ref of collectAttachmentRefs(conversation)) {
+    const resolved = resolveDialFileBucketAndPath(ref.fileId);
+    if (!resolved) {
+      skippedNames.push(fileIdDisplayName(ref.fileId));
+      continue;
+    }
+
+    const fileName = resolved.path.split('/').pop() ?? resolved.path;
+    const bytes = attachmentBytes.get(resolved.path);
+    if (!bytes) {
+      skippedNames.push(fileName);
+      continue;
+    }
+
+    plan.push({
+      fileId: ref.fileId,
+      bytes,
+      originalFileName: fileName,
+      allocated: allocator.allocate(fileName),
+    });
+  }
+
+  return { plan, skippedNames };
+};

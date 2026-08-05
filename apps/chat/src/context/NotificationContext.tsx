@@ -12,7 +12,13 @@ export interface NotificationItem {
   id: string;
   variant: NotificationVariant;
   title?: string;
-  message: ReactNode;
+  message?: ReactNode;
+  /**
+   * Validated 32-hex W3C trace ID, shown as a "Request ID" under the
+   * notification. Omitted for client-only/validation errors and any non-error
+   * notification.
+   */
+  requestId?: string;
 }
 
 export type ShowNotificationOptions = Omit<NotificationItem, 'id'>;

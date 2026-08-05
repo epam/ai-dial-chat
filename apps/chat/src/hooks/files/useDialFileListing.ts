@@ -1,9 +1,9 @@
-import type { DialFile } from '@epam/ai-dial-ui-kit';
+import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import {
   DialFileManagerTabs,
   DialFileNodeType,
-  NotificationVariant,
-} from '@epam/ai-dial-ui-kit';
+} from '@epam/ai-dial-react-file-manager';
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type {
   CreateFolderResponseDto,
   ListFilesItemDto,
@@ -182,10 +182,10 @@ export const useDialFileListing = ({
     };
   }, []);
 
-  // Fires on mount for every variant (including Standalone) because
-  // `folderPath` initializes to `''` above — no separate mount-effect is
-  // needed to satisfy the standalone page's "load root listing on open"
-  // requirement; it falls out of this effect's existing dependency array.
+  /* Fires on mount for every variant (including Standalone) because
+   * `folderPath` initializes to `''` above — no separate mount-effect is
+   * needed to satisfy the standalone page's "load root listing on open"
+   * requirement; it falls out of this effect's existing dependency array. */
   useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
@@ -238,8 +238,8 @@ export const useDialFileListing = ({
     };
   }, [activeTab, bucket, folderPath, retryCounter, rootLabel]);
 
-  // sharedByMePaths is bucket-scoped (not folder-scoped) — fetched once per
-  // my_files tab activation/retry, independent of the folder-listing effect above.
+  /* sharedByMePaths is bucket-scoped (not folder-scoped) — fetched once per
+   * my_files tab activation/retry, independent of the folder-listing effect above. */
   useEffect(() => {
     if (activeTab !== DialFileManagerTabs.MyFiles) {
       setSharedByMePaths(new Set());

@@ -1,5 +1,4 @@
-import { NeutralButton } from '@epam/ai-dial-kit';
-import { DialFileName, DialPopup } from '@epam/ai-dial-ui-kit';
+import { DialFileName, DialPopup, NeutralButton } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, type FC, type ReactNode } from 'react';
 import type { FileUploadBatchState } from './types/upload';
 
@@ -70,7 +69,7 @@ const UploadProgressModal: FC<Props> = ({
       <div className="flex h-full max-h-full flex-col gap-4 px-6">
         <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
           {files.map((entry) => (
-            <div key={entry.id} className="rounded bg-layer-2 px-3 py-2">
+            <div key={entry.id} className="rounded bg-layer-sunken px-3 py-2">
               <DialFileName
                 name={entry.name}
                 details={renderDetails(entry.percent)}

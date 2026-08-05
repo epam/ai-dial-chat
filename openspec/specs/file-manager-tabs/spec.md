@@ -2,7 +2,7 @@
 
 ### Requirement: Tab navigation in DialFileManagerModal
 
-`DialFileManagerModal` SHALL display the tabs present in the deployment-configured `fileManagerTabs` list (per `file-manager-tab-config`, read via `useAppConfig().config.fileManagerTabs`) — by default `My files`, `Shared with me`, and `Organization` (all three, when `FILE_MANAGER_AVAILABLE_TABS` is unset) — using `useDialFileManagerTabs` from `@epam/ai-dial-ui-kit`, filtered against `fileManagerTabs`. The active tab SHALL be tracked via `handleTabChange` and wired to `DialFileManager` through `toolbarOptions.tabs`, `toolbarOptions.activeTab`, and `toolbarOptions.onTabChange`. The initial tab SHALL be the first tab present in `fileManagerTabs` following the fixed priority `my_files` → `shared` → `organization` (defaulting to `DialFileManagerTabs.MyFiles` when `fileManagerTabs` includes `my_files`, which is the default case).
+`DialFileManagerModal` SHALL display the tabs present in the deployment-configured `fileManagerTabs` list (per `file-manager-tab-config`, read via `useAppConfig().config.fileManagerTabs`) — by default `My files`, `Shared with me`, and `Organization` (all three, when `FILE_MANAGER_AVAILABLE_TABS` is unset) — using `useDialFileManagerTabs` from `@epam/ai-dial-react-file-manager`, filtered against `fileManagerTabs`. The active tab SHALL be tracked via `handleTabChange` and wired to `DialFileManager` through `toolbarOptions.tabs`, `toolbarOptions.activeTab`, and `toolbarOptions.onTabChange`. The initial tab SHALL be the first tab present in `fileManagerTabs` following the fixed priority `my_files` → `shared` → `organization` (defaulting to `DialFileManagerTabs.MyFiles` when `fileManagerTabs` includes `my_files`, which is the default case).
 
 Tab label i18n keys:
 - `my_files` → `dialFileManager.tab.myFiles`
@@ -323,21 +323,18 @@ When the active tab is `shared`, `DialFileManagerShell` SHALL pass the `sharedWi
 
 ---
 
-### Requirement: Selection cleared on tab switch
+### Requirement: Tab-change handler clears selection
 
-When `activeTab` changes, the set of `selectedPaths` SHALL be cleared (reset to an empty `Set`).
+Before changing `activeTab`, the tab-change handler SHALL reset `selectedPaths` to an empty `Set`, preventing stale paths from being carried into another tab's listing.
 
-> **Implementation note:** on the standalone page the tab strip is replaced by the bulk-actions toolbar as soon as any item is selected, so `activeTab` cannot change while a non-empty selection is held. The requirement is trivially satisfied in that path; its primary purpose is to guard against programmatic tab changes (e.g. the active tab becomes unavailable and resets automatically) that could otherwise leave stale paths from the previous tab in `selectedPaths`.
+> **Implementation note:** on user-facing file-manager surfaces, the ui-kit replaces the tab strip with the bulk-actions toolbar while selection is non-empty. Therefore, this is a handler-level invariant and SHALL NOT be tested through a select-file → click-tab DOM flow.
 
-#### Scenario: Selection cleared after programmatic tab reset
+#### Scenario: Handler clears stale selection
 
-- **WHEN** the active tab is reset programmatically (e.g. the previously active tab is removed from `fileManagerTabs`) while files from the old tab were selected
-- **THEN** `selectedPaths` is empty on the new active tab
-
-#### Scenario: Selection cleared on tab switch from Shared to My files
-
-- **WHEN** the user selects a file on the Shared tab and then switches to My files
-- **THEN** `selectedPaths` is empty on the My files tab
+- **GIVEN** `selectedPaths` contains paths from the current tab
+- **WHEN** the tab-change handler is invoked with a different tab
+- **THEN** `selectedPaths` is reset to an empty `Set`
+- **AND** the requested tab becomes active
 
 ---
 

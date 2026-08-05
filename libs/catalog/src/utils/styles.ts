@@ -19,6 +19,7 @@ export const getFeaturedEntityStyle = (
   });
 };
 
+/** Builds CSS custom properties for the `Catalog` component from `CatalogStyles`. */
 export const getStyles = (catalogStyles?: CatalogStyles): CSSProperties => {
   const { colors } = catalogStyles ?? {};
 

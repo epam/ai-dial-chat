@@ -1,17 +1,20 @@
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   ResponseFormat,
   type Attachment,
   type DeploymentItem,
   type DisplayAttachment,
+  type ToolMenuItem,
 } from '@epam/ai-dial-chat-shared';
 import {
   FileDndOverlay,
   type ConversationInputStyles,
+  type ToolsChipLabels,
 } from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { DeploymentItemDto } from '@epam/chat-api-client';
 import type { FC, ReactNode } from 'react';
-import { lazy, memo, useCallback, useState } from 'react';
+import { lazy, memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import {
@@ -19,6 +22,7 @@ import {
   ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationI18nKeys,
+  ConversationInputI18nKeys,
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
   VoiceRecordingI18nKeys,
@@ -36,9 +40,12 @@ import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerSta
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
-import { getApiErrorMessage } from '../../server-api/api-error';
+import { useUiFeature } from '../../hooks/useUiFeature';
+import { getApiErrorDetails } from '../../server-api/api-error';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { getTimeOfDayGreeting } from '../../utils/greeting';
+import FooterContainer from '../FooterDialogs/FooterContainer';
+import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -82,6 +89,10 @@ interface Props {
     attachments: Attachment[],
     chatSettings: NewConversationChatSettings,
   ) => Promise<void>;
+  toolsMenuItems?: ToolMenuItem[];
+  onToolToggle?: (toolId: string) => void;
+  toolsMenuTitle?: string;
+  toolsChipLabels?: ToolsChipLabels;
   /** Rendered below the composer input (e.g. starter buttons). */
   children?: ReactNode;
 }
@@ -101,6 +112,10 @@ const NewConversationComposer: FC<Props> = ({
   message,
   inputStyles,
   onCreateConversation,
+  toolsMenuItems,
+  onToolToggle,
+  toolsMenuTitle,
+  toolsChipLabels,
   children,
 }) => {
   const { t } = useTranslation();
@@ -175,9 +190,34 @@ const NewConversationComposer: FC<Props> = ({
 
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
+  const isEmptyChatSettingsEnabled = useUiFeature(
+    OverlayFeature.EmptyChatSettings,
+  );
+  const isHideEmptyChatChangeAgentEnabled = useUiFeature(
+    OverlayFeature.HideEmptyChatChangeAgent,
+  );
+  const isDisabledSendEnabled = useUiFeature(OverlayFeature.DisabledSend);
+  const isSkipFocusChatInputOnloadEnabled = useUiFeature(
+    OverlayFeature.SkipFocusChatInputOnload,
+  );
+  const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
   const { displayName } = useUserProfile();
   const firstName = displayName.split(' ')[0];
   const { openAttachmentCanvas } = useOpenAttachmentCanvas();
+
+  const usageLimitsLabels = useMemo(
+    () => ({
+      triggerAriaLabel: ({ value }: { value: string }) =>
+        t(ConversationInputI18nKeys.TriggerAriaLabel, { value }),
+      popoverTitle: t(ConversationInputI18nKeys.PopoverTitle),
+      error: t(ConversationInputI18nKeys.Error),
+      tokensRemaining: ({ count }: { count: string }) =>
+        t(ConversationInputI18nKeys.TokensRemaining, { count }),
+      progressAriaLabel: ({ used, total }: { used: string; total: string }) =>
+        t(ConversationInputI18nKeys.ProgressAriaLabel, { used, total }),
+    }),
+    [t],
+  );
 
   const handleAttachmentClick = useCallback(
     (attachment: DisplayAttachment) => {
@@ -204,6 +244,16 @@ const NewConversationComposer: FC<Props> = ({
     [showNotification, t],
   );
 
+  const handleMessageTooLong = useCallback(
+    (_length: number, max: number) => {
+      showNotification({
+        variant: NotificationVariant.Error,
+        message: t(ConversationI18nKeys.MessageTooLong, { max }),
+      });
+    },
+    [showNotification, t],
+  );
+
   const handleSend = useCallback(
     async (text: string, attachments: Attachment[]) => {
       if (isSending || !selectedDeploymentId) return;
@@ -211,10 +261,12 @@ const NewConversationComposer: FC<Props> = ({
       try {
         await onCreateConversation(text, attachments, chatSettingsValues);
       } catch (err) {
-        const errorMessage = await getApiErrorMessage(err);
+        const { message: errorMessage, traceId } =
+          await getApiErrorDetails(err);
         showNotification({
           variant: NotificationVariant.Error,
           message: errorMessage ?? t(ChatI18nKeys.CreateConversationError),
+          requestId: traceId,
         });
       } finally {
         setIsSending(false);
@@ -282,11 +334,14 @@ const NewConversationComposer: FC<Props> = ({
           )}
           placeholder={placeholder}
           styles={inputStyles}
-          deployments={deployments}
+          deployments={
+            isHideEmptyChatChangeAgentEnabled ? undefined : deployments
+          }
           selectedDeploymentId={selectedDeploymentId}
           onDeploymentChange={onDeploymentChange}
           isInputDisabled={isInputDisabled}
           isModelSelectorDisabled={isModelSelectorDisabled}
+          isSendDisabled={isDisabledSendEnabled}
           modelSelectorLabels={modelSelectorLabels}
           addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
           sendLabel={t(ChatI18nKeys.SendMessage)}
@@ -300,12 +355,12 @@ const NewConversationComposer: FC<Props> = ({
           )}
           timerAriaLabel={t(VoiceRecordingI18nKeys.TimerAriaLabel)}
           sendOnEnter={sendOnEnter}
-          chatSettings={chatSettings}
+          chatSettings={isEmptyChatSettingsEnabled ? chatSettings : undefined}
           pendingDropFiles={pendingFiles}
           onDropFilesConsumed={onFilesConsumed}
           pendingAttachments={pendingDialAttachments}
           onPendingAttachmentsConsumed={clearPendingDialAttachments}
-          autoFocus={!isMobile}
+          autoFocus={!isMobile && !isSkipFocusChatInputOnloadEnabled}
           onDialFileSystemClick={
             isAttachmentsAllowed ? openDialFileManager : undefined
           }
@@ -313,12 +368,26 @@ const NewConversationComposer: FC<Props> = ({
           validateAttachment={
             selectedDeployment != null ? validateAttachment : undefined
           }
+          isAttachmentsEnabled={
+            selectedDeployment != null ? isAttachmentsAllowed : undefined
+          }
           maximumAttachmentsAmount={selectedDeployment?.maxInputAttachments}
           onAttachmentsLimitExceeded={handleAttachmentsLimitExceeded}
-          hideAttachFile={!isAttachmentsAllowed}
+          hideAttachFile={!isAttachmentsAllowed || !isInputFilesEnabled}
           fileAccept={fileAccept}
           onAttachmentClick={handleAttachmentClick}
+          onMessageTooLong={handleMessageTooLong}
           modelPickerOverlay={modelPickerOverlay}
+          toolsMenuItems={toolsMenuItems}
+          onToolToggle={onToolToggle}
+          toolsMenuTitle={toolsMenuTitle}
+          toolsChipLabels={toolsChipLabels}
+          usageLimitsSlot={
+            <UsageLimitsControl
+              deploymentId={selectedDeploymentId ?? undefined}
+              labels={usageLimitsLabels}
+            />
+          }
         />
         {introText && (
           <p className="dial-small-text mb-4 mt-4 max-w-3xl text-center text-secondary">
@@ -327,6 +396,7 @@ const NewConversationComposer: FC<Props> = ({
         )}
         {children}
       </div>
+      <FooterContainer />
       {isDialFileManagerOpen && (
         <DialFileManagerModal
           isOpen={isDialFileManagerOpen}

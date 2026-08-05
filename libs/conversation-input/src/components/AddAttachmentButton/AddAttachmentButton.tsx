@@ -1,19 +1,24 @@
 import {
+  buildCssVars,
   mergeClasses,
   ResponseFormat,
+  type ToolMenuItem,
   useIsMobile,
 } from '@epam/ai-dial-chat-shared';
 import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
   DialDropdown,
-  DialGhostIconButton,
+  ElementSize,
+  GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import {
+  IconCheck,
+  IconChevronRight,
   IconPaperclip,
   IconPlus,
   IconSettings,
-  IconChevronRight,
+  IconTool,
 } from '@tabler/icons-react';
 import {
   CSSProperties,
@@ -26,6 +31,8 @@ import type { ChatSettingsConfig } from '../../models/Input';
 import { BottomSheet } from '../BottomSheet/BottomSheet';
 import { ChatSettingsBottomSheet } from '../ChatSettingsBottomSheet/ChatSettingsBottomSheet';
 import { ChatSettingsModal } from '../ChatSettingsModal/ChatSettingsModal';
+import { ToolsBottomSheet } from '../ToolsBottomSheet/ToolsBottomSheet';
+import styles from './AddAttachmentButton.module.scss';
 
 /** A single item injected into the attachment menu by the host app. */
 export interface ExtraMenuItem {
@@ -61,8 +68,29 @@ interface AddAttachmentButtonProps {
   chatSettings?: ChatSettingsConfig;
   /** Additional menu items appended after "Attach file". */
   extraMenuItems?: ExtraMenuItem[];
+  /** Resolved tool toggle items to render in a "Tools" submenu. When empty or absent, no Tools item is shown. */
+  toolsMenuItems?: ToolMenuItem[];
+  /** Called when a tool row is toggled. Receives the tool id. */
+  onToolToggle?: (toolId: string) => void;
+  /** Label for the "Tools" menu item and mobile sheet title. Defaults to `'Tools'`. */
+  toolsMenuTitle?: string;
+  /** Accessible label for the back arrow in the mobile tools bottom sheet. Defaults to `'Back'`. */
+  toolsBackLabel?: string;
+  /** Color overrides. */
+  colors?: AddAttachmentButtonColors;
 }
 
+/** Color overrides for `AddAttachmentButton`, applied as CSS custom properties with app theme fallbacks. */
+export interface AddAttachmentButtonColors {
+  /** Checkmark icon color for a selected tool in the Tools submenu. Fallback: `--text-accent`. */
+  selectedToolIcon?: string;
+  /** Icon color for each tool row in the Tools submenu. Fallback: `--text-secondary`. */
+  toolIcon?: string;
+  /** Chevron icon color on the mobile "Tools"/"Chat settings" rows. Fallback: `--text-secondary`. */
+  chevronIcon?: string;
+}
+
+/** "+" trigger button that opens an attachment/settings menu (desktop dropdown or mobile bottom sheet). */
 export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   onAttachClick,
   attachLabel,
@@ -74,10 +102,58 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   isDisabled = false,
   chatSettings,
   extraMenuItems,
+  toolsMenuItems = [],
+  onToolToggle,
+  toolsMenuTitle = 'Tools',
+  toolsBackLabel = 'Back',
+  colors,
 }) => {
   const isMobile = useIsMobile();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isChatSettingsOpen, setIsChatSettingsOpen] = useState(false);
+  const [isToolsSheetOpen, setIsToolsSheetOpen] = useState(false);
+
+  const cssVars = useMemo(
+    () =>
+      buildCssVars({
+        '--aab-selected-tool-icon': colors?.selectedToolIcon,
+        '--aab-tool-icon': colors?.toolIcon,
+        '--aab-chevron-icon': colors?.chevronIcon,
+      }),
+    [colors?.selectedToolIcon, colors?.toolIcon, colors?.chevronIcon],
+  );
+
+  const hasTools = toolsMenuItems.length > 0 && onToolToggle != null;
+
+  const toolsSubmenuChildren = useMemo(
+    () =>
+      toolsMenuItems.map((item) => ({
+        key: item.id,
+        label: (
+          <span className="flex flex-1 items-center gap-2">
+            <span className="flex-1">{item.label}</span>
+            {item.isSelected && (
+              <IconCheck
+                size={BASE_ICON_SIZE}
+                style={cssVars}
+                className={styles.selectedToolIcon}
+                aria-hidden
+              />
+            )}
+          </span>
+        ),
+        icon: (
+          <span
+            style={cssVars}
+            className={mergeClasses('flex items-center', styles.toolIcon)}
+          >
+            {item.icon}
+          </span>
+        ),
+        onClick: () => onToolToggle?.(item.id),
+      })),
+    [toolsMenuItems, onToolToggle, cssVars],
+  );
 
   const menuItems = useMemo(
     () => [
@@ -92,6 +168,39 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
           ]
         : []),
       ...(extraMenuItems ?? []),
+      ...(hasTools
+        ? [
+            {
+              key: 'tools',
+              label: toolsMenuTitle,
+              icon: <IconTool size={BASE_ICON_SIZE} aria-hidden />,
+              onClick: isMobile
+                ? () => {
+                    setIsToolsSheetOpen(true);
+                    setIsSheetOpen(false);
+                  }
+                : () => undefined,
+              ...(isMobile
+                ? {
+                    iconAfter: (
+                      <IconChevronRight
+                        size={BASE_ICON_SIZE}
+                        stroke={1.5}
+                        style={cssVars}
+                        className={mergeClasses(
+                          'rtl:scale-x-[-1]',
+                          styles.chevronIcon,
+                        )}
+                        aria-hidden
+                      />
+                    ),
+                  }
+                : {
+                    children: toolsSubmenuChildren,
+                  }),
+            },
+          ]
+        : []),
       ...(chatSettings != null
         ? [
             {
@@ -102,7 +211,11 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
                 <IconChevronRight
                   size={BASE_ICON_SIZE}
                   stroke={1.5}
-                  className="text-secondary rtl:scale-x-[-1]"
+                  style={cssVars}
+                  className={mergeClasses(
+                    'rtl:scale-x-[-1]',
+                    styles.chevronIcon,
+                  )}
                   aria-hidden
                 />
               ) : null,
@@ -111,7 +224,17 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
           ]
         : []),
     ],
-    [attachLabel, onAttachClick, chatSettings, extraMenuItems, isMobile],
+    [
+      attachLabel,
+      onAttachClick,
+      chatSettings,
+      extraMenuItems,
+      isMobile,
+      hasTools,
+      toolsMenuTitle,
+      toolsSubmenuChildren,
+      cssVars,
+    ],
   );
 
   if (menuItems.length === 0) return null;
@@ -120,14 +243,12 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
     <>
       {isMobile ? (
         <>
-          <DialGhostIconButton
+          <GhostIconButton
             icon={<IconPlus size={DIAL_ICON_SIZE.LG} aria-hidden />}
             aria-label={addMenuTitle}
+            size={ElementSize.Large}
             tooltipProps={{ tooltip: addMenuTitle }}
-            className={mergeClasses(
-              'size-10 flex-shrink-0',
-              isDisabled && 'pointer-events-none opacity-50',
-            )}
+            disabled={isDisabled}
             onClick={() => setIsSheetOpen(true)}
           />
           <BottomSheet
@@ -140,6 +261,22 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
             className="pb-4"
             btnTextClassName="flex-1"
           />
+          {hasTools && (
+            <ToolsBottomSheet
+              isOpen={isToolsSheetOpen}
+              onBack={() => {
+                setIsToolsSheetOpen(false);
+                setIsSheetOpen(true);
+              }}
+              backLabel={toolsBackLabel}
+              onClose={() => setIsToolsSheetOpen(false)}
+              closeLabel={menuCloseLabel}
+              style={style}
+              title={toolsMenuTitle}
+              items={toolsMenuItems}
+              onToolToggle={onToolToggle}
+            />
+          )}
           {chatSettings != null && (
             <ChatSettingsBottomSheet
               isOpen={isChatSettingsOpen}
@@ -185,11 +322,10 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
             listClassName={listClassName}
             items={menuItems}
           >
-            <DialGhostIconButton
+            <GhostIconButton
               icon={<IconPlus size={DIAL_ICON_SIZE.LG} aria-hidden />}
               aria-label={addMenuTitle}
               tooltipProps={{ tooltip: addMenuTitle }}
-              className="size-10 flex-shrink-0"
               disabled={isDisabled}
             />
           </DialDropdown>

@@ -190,10 +190,10 @@ export const ConversationsProvider = ({
               if (event?.action !== 'UPDATE') continue;
 
               try {
-                // `getConversation` needs the full bucket-qualified path;
-                // `conversationPath` (stripped for `watchConversation`,
-                // which re-qualifies server-side) would break any deployment
-                // id containing a slash, e.g. `applications/{bucket}/{app}`.
+                /* `getConversation` needs the full bucket-qualified path;
+                 * `conversationPath` (stripped for `watchConversation`,
+                 * which re-qualifies server-side) would break any deployment
+                 * id containing a slash, e.g. `applications/{bucket}/{app}`. */
                 const conversation = (await getConversation(
                   fullConversationId,
                 )) as ConversationResponseDto;
@@ -348,6 +348,7 @@ export const ConversationsProvider = ({
           publishedWithMe: false,
           isPinned: false,
           isReadonly: false,
+          isScheduledTask: false,
         },
         ...prev,
       ]);

@@ -1,5 +1,8 @@
-import { NeutralButton } from '@epam/ai-dial-kit';
-import { DIAL_ICON_SIZE, DialSpinner } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DialSpinner,
+  NeutralButton,
+} from '@epam/ai-dial-ui-kit';
 import { IconTrash } from '@tabler/icons-react';
 import { FC, useCallback, useState } from 'react';
 import { CatalogItem } from '../../../../models/catalog-item';
@@ -28,7 +31,7 @@ interface DeleteButtonProps {
  */
 const shouldShowDelete = (item: CatalogItem): boolean =>
   item.isMyApp === true &&
-  (item.type === CatalogEntityType.Application ||
+  (item.type === CatalogEntityType.Agent ||
     item.type === CatalogEntityType.Toolset);
 
 /**

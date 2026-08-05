@@ -3,12 +3,12 @@ import type { FC } from 'react';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import EditorHeader from '../../components/EditorHeader/EditorHeader';
+import { ToolsetEditorSteps } from '../../constants/toolsets';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
   EditorI18nKeys,
 } from '../../constants/translation-keys';
-import { ToolsetEditorSteps } from '../../types/toolsets';
 
 interface Props {
   step: ToolsetEditorSteps;

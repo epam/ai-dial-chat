@@ -1,7 +1,6 @@
 export { AttachmentCard } from './components/AttachmentCard/AttachmentCard';
 export { AttachmentTray } from './components/AttachmentTray/AttachmentTray';
 export { AttachmentGroup } from './components/AttachmentGroup/AttachmentGroup';
-export { AttachmentMoreTile } from './components/AttachmentMoreTile/AttachmentMoreTile';
 export { FileDndOverlay } from './components/FileDndOverlay/FileDndOverlay';
 
 export type {
@@ -19,21 +18,12 @@ export type {
   AttachmentTrayStyles,
 } from './models/attachment-tray';
 export {
-  AttachmentTilesLayout,
   type AttachmentGroupProps,
   type AttachmentGroupLabels,
   type AttachmentGroupColors,
   type AttachmentGroupTypography,
   type AttachmentGroupStyles,
-  type AttachmentTilesPlan,
 } from './models/attachment-group';
-export type {
-  AttachmentMoreTileProps,
-  AttachmentMoreTileLabels,
-  AttachmentMoreTileColors,
-  AttachmentMoreTileTypography,
-  AttachmentMoreTileStyles,
-} from './models/attachment-more-tile';
 export type {
   FileDndOverlayProps,
   FileDndOverlayLabels,
@@ -56,14 +46,10 @@ export {
   getAttachmentCardState,
   getExtFromContentType,
   getAttachmentIcon,
-  getAttachmentTilesPlan,
   getNameWithoutExtension,
   mimeTypesToExtensionLabels,
   isMimeTypeAllowed,
 } from './utils/attachment';
 
-export {
-  ATTACHMENT_COLLAPSE_THRESHOLD,
-  ATTACHMENT_COLLAPSED_VISIBLE_COUNT,
-} from './constants/attachment-group';
+export { ATTACHMENT_COLLAPSE_THRESHOLD } from './constants/attachment-group';
 export { MAX_UPLOADS_PER_MINUTE } from './constants/upload';

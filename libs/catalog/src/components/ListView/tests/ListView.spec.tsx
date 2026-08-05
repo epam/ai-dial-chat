@@ -9,6 +9,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   mergeClasses: (...args: (string | undefined)[]) =>
     args.filter(Boolean).join(' '),
+  DialNoDataContent: ({ title }: { title?: string }) => <span>{title}</span>,
   DialGrid: ({
     rowData,
     emptyStateTitle,
@@ -85,6 +86,7 @@ describe('ListView', () => {
         <ListView
           items={[]}
           query=""
+          type={CatalogEntityType.Model}
           ariaLabel="Catalog"
           emptyStateTitle="No items"
         />,
@@ -97,6 +99,7 @@ describe('ListView', () => {
       <ListView
         items={[]}
         query=""
+        type={CatalogEntityType.Model}
         ariaLabel="Catalog"
         emptyStateTitle="No items"
       />,
@@ -111,6 +114,7 @@ describe('ListView', () => {
       <ListView
         items={[item]}
         query=""
+        type={CatalogEntityType.Model}
         ariaLabel="Catalog"
         onToggleFavorite={onToggleFavorite}
       />,
@@ -126,6 +130,7 @@ describe('ListView', () => {
       <ListView
         items={[item1, item2]}
         query=""
+        type={CatalogEntityType.Model}
         ariaLabel="Catalog"
         selectedItemId="item-2"
       />,
@@ -142,6 +147,7 @@ describe('ListView', () => {
       <ListView
         items={[item]}
         query=""
+        type={CatalogEntityType.Model}
         ariaLabel="Catalog"
         selectedItemId="item-1"
       />,
@@ -151,14 +157,28 @@ describe('ListView', () => {
   });
 
   it('uses a fixed dense row height — constant across every row regardless of content', () => {
-    render(<ListView items={[]} query="" ariaLabel="Catalog" />);
+    render(
+      <ListView
+        type={CatalogEntityType.Model}
+        items={[makeItem({ id: 'x', name: 'x' })]}
+        query=""
+        ariaLabel="Catalog"
+      />,
+    );
     expect(
       screen.getByLabelText('Catalog').getAttribute('data-row-height'),
     ).toBe('60');
   });
 
   it('removes ag-grid header column dividers (no vertical dividers in this view)', () => {
-    render(<ListView items={[]} query="" ariaLabel="Catalog" />);
+    render(
+      <ListView
+        type={CatalogEntityType.Model}
+        items={[makeItem({ id: 'x', name: 'x' })]}
+        query=""
+        ariaLabel="Catalog"
+      />,
+    );
     expect(
       screen
         .getByLabelText('Catalog')
@@ -167,7 +187,14 @@ describe('ListView', () => {
   });
 
   it("does not enable ag-grid's built-in alternating row colors (zebra striping is done via CSS override instead, to avoid stacking with it)", () => {
-    render(<ListView items={[]} query="" ariaLabel="Catalog" />);
+    render(
+      <ListView
+        type={CatalogEntityType.Model}
+        items={[makeItem({ id: 'x', name: 'x' })]}
+        query=""
+        ariaLabel="Catalog"
+      />,
+    );
     expect(
       screen
         .getByLabelText('Catalog')

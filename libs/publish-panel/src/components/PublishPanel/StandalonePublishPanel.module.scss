@@ -1,0 +1,26 @@
+.backdrop {
+  background: var(--spp-backdrop-bg, var(--bg-blackout, #0c101d4d));
+}
+
+.panel {
+  background: var(--spp-panel-bg, var(--bg-layer-raised, #fcfcfc));
+  border-inline-start-color: var(
+    --spp-panel-border,
+    var(--stroke-secondary, #d1dbea)
+  );
+}
+
+.divider {
+  border-block-end: 1px solid
+    var(--spp-divider-border, var(--stroke-tertiary, #e0e6f0));
+}
+
+.content {
+  scrollbar-width: thin;
+  scrollbar-color: var(--spp-scrollbar-thumb, var(--stroke-secondary, #d1dbea))
+    transparent;
+}
+
+.title {
+  color: var(--spp-title-text, var(--text-primary, #161b2d));
+}

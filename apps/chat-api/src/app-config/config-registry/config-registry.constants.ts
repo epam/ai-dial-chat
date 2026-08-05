@@ -38,6 +38,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'DEFAULT_DEPLOYMENT',
   },
   {
+    key: 'deployments.deepResearchToolId',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Tool ID for the Deep Research deployment-configuration property. When set, the frontend renders a Tools submenu with that tool toggle. Null when DEEP_RESEARCH_TOOL_ID is not set.',
+    owner: 'chat-team',
+    envVar: 'DEEP_RESEARCH_TOOL_ID',
+  },
+  {
     key: 'dialCore.externalUrl',
     type: 'config',
     valueType: 'string',
@@ -60,6 +72,51 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Null/empty hides the banner. Sourced from ANNOUNCEMENT_HTML_MESSAGE.',
     owner: 'chat-team',
     envVar: 'ANNOUNCEMENT_HTML_MESSAGE',
+  },
+  {
+    key: 'footer.html',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Operator-authored HTML footer message shown below the chat input (desktop) and in the mobile user panel. Null/empty hides the footer. Sourced from FOOTER_HTML_MESSAGE. Supports %%VERSION%% token substitution.',
+    owner: 'chat-team',
+    envVar: 'FOOTER_HTML_MESSAGE',
+  },
+  {
+    key: 'features.footer',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether the footer HTML message area is shown. Automatically enabled when FOOTER_HTML_MESSAGE is set.',
+    owner: 'chat-team',
+  },
+  {
+    key: 'features.requestApiKey',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether the Request API Key dialog is available via the footer data-dial-action trigger. Automatically enabled when REQUEST_API_KEY_CODE is set.',
+    owner: 'chat-team',
+  },
+  {
+    key: 'features.reportAnIssue',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether the Report an Issue dialog is available via the footer data-dial-action trigger. Automatically enabled when REPORT_ISSUE_CODE is set.',
+    owner: 'chat-team',
   },
   {
     key: 'features.asrEnabled',
@@ -146,5 +203,56 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     owner: 'chat-team',
     envVar: 'LIVE_CHAT_INTERACTION_ENABLED',
     allowedRolesEnvVar: 'LIVE_CHAT_INTERACTION_ENABLED_ROLES',
+  },
+  {
+    key: 'features.scheduledTasksEnabled',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether the Scheduled Tasks feature is enabled, including the DIAL Scheduler ' +
+      'proxy endpoints, the Scheduled Tasks page, and its sidebar navigation entry. ' +
+      'Set SCHEDULED_TASKS_ENABLED_ROLES to restrict to specific roles.',
+    owner: 'chat-team',
+    envVar: 'SCHEDULED_TASKS_ENABLED',
+    allowedRolesEnvVar: 'SCHEDULED_TASKS_ENABLED_ROLES',
+  },
+  {
+    key: 'uiFeatures.enabledUiFeatures',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'When set, the complete list of OverlayFeature values that are enabled (replace semantics). Replaces DEFAULT_ENABLED_UI_FEATURES entirely — includes both positive and Hide* modifier flags. When not set (null), the compiled-in DEFAULT_ENABLED_UI_FEATURES baseline is used. Does not affect an overlay host that supplies its own enabledFeatures — that replaces the active set entirely.',
+    owner: 'chat-team',
+    envVar: 'ENABLED_UI_FEATURES',
+  },
+  {
+    key: 'customVisualizers',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: [],
+    critical: false,
+    description:
+      'Registry of MIME type → visualizer iframe URL mappings. An attachment whose MIME type matches an entry opens in the AttachmentCanvas rendered by that visualizer instead of the default preview. Empty (feature dark) when CUSTOM_VISUALIZERS is unset. Invalid JSON or invalid entries are dropped with an error log; boot never fails on malformed config.',
+    owner: 'chat-team',
+    envVar: 'CUSTOM_VISUALIZERS',
+  },
+  {
+    key: 'publish.publicationFilterSources',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: ['title', 'role', 'dial_roles'],
+    critical: false,
+    description:
+      "Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES (comma-separated); falls back to the legacy default when unset or empty.",
+    owner: 'chat-team',
+    envVar: 'PUBLICATION_FILTER_SOURCES',
   },
 ];

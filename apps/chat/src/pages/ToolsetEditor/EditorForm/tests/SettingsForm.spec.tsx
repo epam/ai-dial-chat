@@ -3,6 +3,11 @@ import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  ToolsetAuthTypes,
+  ToolsetTransportType,
+  WithLogin,
+} from '../../../../constants/toolsets';
+import {
   ButtonsI18nKeys,
   CatalogI18nKeys,
   ToolsetEditorI18nKeys,
@@ -10,12 +15,7 @@ import {
 import type {
   ToolsetAuthFormData,
   ToolsetFormData,
-} from '../../../../types/toolsets';
-import {
-  ToolsetAuthTypes,
-  ToolsetTransportType,
-  WithLogin,
-} from '../../../../types/toolsets';
+} from '../../../../models/toolsets';
 import SettingsForm from '../SettingsForm';
 
 vi.mock('../AuthSection', () => ({ default: () => null }));
@@ -30,18 +30,19 @@ vi.mock('@epam/ai-dial-chat-shared', () => ({
   mergeClasses: (...classes: (string | undefined | false)[]) =>
     classes.filter(Boolean).join(' '),
   useCodeCopy: vi.fn(() => ({ isCopied: false, copy: vi.fn() })),
-}));
-
-vi.mock('@epam/ai-dial-kit', () => ({
-  NeutralButton: ({
-    label,
+  CopyButton: ({
+    copyLabel,
+    copiedLabel,
+    isCopied,
     onClick,
   }: {
-    label?: string;
+    copyLabel?: string;
+    copiedLabel?: string;
+    isCopied?: boolean;
     onClick?: () => void;
   }) => (
     <button type="button" onClick={onClick}>
-      {label}
+      {isCopied ? copiedLabel : copyLabel}
     </button>
   ),
 }));
@@ -53,6 +54,28 @@ vi.mock('../../../../utils/mcp-endpoint-url', () => ({
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  PrimaryButton: ({
+    label,
+    onClick,
+  }: {
+    label?: string;
+    onClick?: () => void;
+  }) => (
+    <button type="button" onClick={onClick}>
+      {label}
+    </button>
+  ),
+  NeutralButton: ({
+    label,
+    onClick,
+  }: {
+    label?: string;
+    onClick?: () => void;
+  }) => (
+    <button type="button" onClick={onClick}>
+      {label}
+    </button>
+  ),
   DialInput: ({
     value,
     onChange,
@@ -123,7 +146,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       />
     </label>
   ),
-  DialIconButton: ({
+  GhostIconButton: ({
     onClick,
     'aria-label': ariaLabel,
     icon,
@@ -136,7 +159,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {icon}
     </button>
   ),
-  ButtonAppearance: { Ghost: 'ghost' },
   ElementSize: { Standard: 'standard' },
   DIAL_ICON_SIZE: { SM: 16 },
 }));
@@ -167,6 +189,7 @@ const renderSettings = (endpoint = 'https://example.com/mcp') =>
       errors={{}}
       isSaving={false}
       toolsetId="toolsets/b/my__1.0.0"
+      isEditMode
       onChange={vi.fn()}
       onAuthChange={vi.fn()}
       onEnsureSaved={vi.fn().mockResolvedValue(true)}
@@ -222,6 +245,7 @@ describe('SettingsForm — copy endpoint', () => {
         errors={{ endpoint: 'toolsetEditor.settings.endpointRequired' }}
         isSaving={false}
         toolsetId=""
+        isEditMode={false}
         onChange={vi.fn()}
         onAuthChange={vi.fn()}
         onEnsureSaved={vi.fn().mockResolvedValue(true)}
@@ -262,6 +286,7 @@ describe('SettingsForm — Connect toolset section', () => {
         errors={{}}
         isSaving={false}
         toolsetId=""
+        isEditMode={false}
         onChange={vi.fn()}
         onAuthChange={vi.fn()}
         onEnsureSaved={vi.fn().mockResolvedValue(true)}
@@ -285,6 +310,7 @@ describe('SettingsForm — Connect toolset section', () => {
         errors={{}}
         isSaving={false}
         toolsetId="toolsets/b/my__1.0.0"
+        isEditMode
         onChange={vi.fn()}
         onAuthChange={vi.fn()}
         onEnsureSaved={vi.fn().mockResolvedValue(true)}

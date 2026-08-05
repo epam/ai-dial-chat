@@ -1,3 +1,4 @@
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ConversationPanel,
@@ -36,7 +37,7 @@ import {
   type FC,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   getConversationRoute,
   normalizeConversationId,
@@ -55,6 +56,8 @@ import { useNotification } from '../../context/NotificationContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useConversationExport } from '../../hooks/useConversationExport';
 import { useConversationImport } from '../../hooks/useConversationImport';
+import { useUiFeature } from '../../hooks/useUiFeature';
+import { getApiErrorDetails } from '../../server-api/api-error';
 import { discardSharedCatalogItem } from '../../server-api/share.api';
 import { ConversationExportMode } from '../../types/conversation-export';
 import { ROUTES } from '../../types/routes';
@@ -103,6 +106,15 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
+  const isConversationsSectionEnabled = useUiFeature(
+    OverlayFeature.ConversationsSection,
+  );
+  const isConversationsSharingEnabled = useUiFeature(
+    OverlayFeature.ConversationsSharing,
+  );
+  const isConversationsPublishingEnabled = useUiFeature(
+    OverlayFeature.ConversationsPublishing,
+  );
   const {
     jobs: exportJobs,
     exportSingle,
@@ -218,6 +230,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [items],
   );
 
+  const taskBadgeLabel = t(ConversationPanelI18nKeys.TaskBadgeLabel);
+
   const conversations: ConversationItem[] = useMemo(
     () =>
       items.map((item) => {
@@ -238,6 +252,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           isIconLoading: isDeploymentsLoading,
           source: getConversationSource(item),
           href: getConversationRoute(id),
+          ...(item.isScheduledTask
+            ? { showTaskBadge: true, taskBadgeLabel }
+            : {}),
         };
       }),
     [
@@ -245,6 +262,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       deploymentIconByModelId,
       deploymentNameByModelId,
       isDeploymentsLoading,
+      taskBadgeLabel,
     ],
   );
 
@@ -328,10 +346,12 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
               onDuplicateReadonly?.();
             }
             navigate(getConversationRoute(newPath));
-          } catch {
+          } catch (error) {
+            const { traceId } = await getApiErrorDetails(error);
             showNotification({
               variant: NotificationVariant.Error,
               message: t(ConversationPanelI18nKeys.DuplicateError),
+              requestId: traceId,
             });
           }
         },
@@ -393,33 +413,48 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         },
         duplicateAction,
         exportAction,
-        {
-          key: 'share',
-          label: t(ShareI18nKeys.Title),
-          icon: (
-            <IconShare size={DIAL_ICON_SIZE.SM} className="text-secondary" />
-          ),
-          onClick: () => setPendingShareConversationPath(contextId),
-        },
-        {
-          key: 'publish',
-          label: t(ButtonsI18nKeys.Publish),
-          icon: (
-            <IconWorldShare
-              size={DIAL_ICON_SIZE.SM}
-              className="text-secondary"
-            />
-          ),
-          // Unlike Share's itemId (which wants the full `conversations/{bucket}/{name}`
-          // resource path), the publish endpoint's `path` query param follows the
-          // rename/delete/duplicate convention — bucket-relative, no `conversations/`
-          // prefix — so it must be stripped here (see conversation-publish.service.ts).
-          onClick: () =>
-            setPendingPublishConversation({
-              path: getConversationPath(normalizeConversationId(contextId)),
-              title: panelItem.title,
-            }),
-        },
+        ...(isConversationsSharingEnabled
+          ? [
+              {
+                key: 'share',
+                label: t(ShareI18nKeys.Title),
+                icon: (
+                  <IconShare
+                    size={DIAL_ICON_SIZE.SM}
+                    className="text-secondary"
+                  />
+                ),
+                onClick: () => setPendingShareConversationPath(contextId),
+              },
+            ]
+          : []),
+        ...(isConversationsPublishingEnabled
+          ? [
+              {
+                key: 'publish',
+                label: t(ButtonsI18nKeys.Publish),
+                icon: (
+                  <IconWorldShare
+                    size={DIAL_ICON_SIZE.SM}
+                    className="text-secondary"
+                  />
+                ),
+                /*
+                 * Unlike Share's itemId (which wants the full `conversations/{bucket}/{name}`
+                 * resource path), the publish endpoint's `path` query param follows the
+                 * rename/delete/duplicate convention — bucket-relative, no `conversations/`
+                 * prefix — so it must be stripped here (see conversation-publish.service.ts).
+                 */
+                onClick: () =>
+                  setPendingPublishConversation({
+                    path: getConversationPath(
+                      normalizeConversationId(contextId),
+                    ),
+                    title: panelItem.title,
+                  }),
+              },
+            ]
+          : []),
         {
           key: 'delete',
           label: t(ButtonsI18nKeys.Delete),
@@ -437,6 +472,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       pinConversation,
       duplicateConversation,
       panelActiveConversationId,
+      isConversationsSharingEnabled,
+      isConversationsPublishingEnabled,
       navigate,
       onDuplicateReadonly,
       showNotification,
@@ -609,49 +646,50 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       '[--sb-bg-resize-handler:transparent]',
     );
   }
-
   return (
     <>
-      <ConversationPanel
-        conversations={conversations}
-        isLoading={isLoading}
-        isOpen={isOpen}
-        onSelectConversation={onSelectConversation}
-        activeConversationId={panelActiveConversationId}
-        activeFilter={requestedFilter}
-        onActiveFilterChange={handleActiveFilterChange}
-        labels={{
-          title: t(ConversationPanelI18nKeys.Title),
-          emptyLabel: t(ConversationPanelI18nKeys.Empty),
-          noResultsLabel: t(BasicI18nKeys.NoResults),
-          newChatLabel: t(ButtonsI18nKeys.NewChat),
-          searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
-          searchClearLabel: t(BasicI18nKeys.ClearSearch),
-          filterLabels,
-          groupLabels,
-          actionsLabel: t(ConversationPanelI18nKeys.ActionsLabel),
-          closeAriaLabel: t(ConversationPanelI18nKeys.ToggleAriaLabel),
-        }}
-        onNewChat={onNewChat}
-        getActions={getActions}
-        onActionMenuOpen={handleActionMenuOpen}
-        onToggle={isMobile ? onClose : undefined}
-        className={panelClassName}
-        styles={PANEL_STYLES}
-        onMoveConversation={handleMoveConversation}
-        headerActions={
-          <ConversationPanelMenu
-            activeConversationId={activeConversationId}
-            onExportAll={handleExportAll}
-            onImport={handleImportClick}
-          />
-        }
-      />
+      {isConversationsSectionEnabled && (
+        <ConversationPanel
+          conversations={conversations}
+          isLoading={isLoading}
+          isOpen={isOpen}
+          onSelectConversation={onSelectConversation}
+          activeConversationId={panelActiveConversationId}
+          activeFilter={requestedFilter}
+          onActiveFilterChange={handleActiveFilterChange}
+          labels={{
+            title: t(ConversationPanelI18nKeys.Title),
+            emptyLabel: t(ConversationPanelI18nKeys.Empty),
+            noResultsLabel: t(BasicI18nKeys.NoResults),
+            newChatLabel: t(ButtonsI18nKeys.NewChat),
+            searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
+            searchClearLabel: t(BasicI18nKeys.ClearSearch),
+            filterLabels,
+            groupLabels,
+            actionsLabel: t(ConversationPanelI18nKeys.ActionsLabel),
+            closeAriaLabel: t(ConversationPanelI18nKeys.ToggleAriaLabel),
+          }}
+          onNewChat={onNewChat}
+          getActions={getActions}
+          onActionMenuOpen={handleActionMenuOpen}
+          onToggle={isMobile ? onClose : undefined}
+          className={panelClassName}
+          styles={PANEL_STYLES}
+          onMoveConversation={handleMoveConversation}
+          headerActions={
+            <ConversationPanelMenu
+              activeConversationId={activeConversationId}
+              onExportAll={handleExportAll}
+              onImport={handleImportClick}
+            />
+          }
+        />
+      )}
 
       <input
         ref={importFileInputRef}
         type="file"
-        accept=".json,.dial,.zip"
+        accept=".json,.dial,.zip,application/json,application/zip"
         className="sr-only"
         aria-hidden
         tabIndex={-1}
@@ -737,29 +775,32 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onGenerateWithAi={handleGenerateRenameWithAi}
       />
 
-      <DialPopup
-        open={pendingShareConversationPath !== null}
-        onClose={handleCloseSharePopover}
-        dividers={false}
-        hideClose
-        headerClassName="hidden"
-        size={PopupSize.Sm}
-      >
-        <ShareConversationPopoverContainer
-          conversationPath={pendingShareConversationPath ?? ''}
+      {isConversationsSharingEnabled && (
+        <DialPopup
+          open={pendingShareConversationPath !== null}
           onClose={handleCloseSharePopover}
-        />
-      </DialPopup>
-
-      {pendingPublishConversation !== null && (
-        <PublishConversationPanelContainer
-          isOpen
-          conversationPath={pendingPublishConversation.path}
-          conversationTitle={pendingPublishConversation.title}
-          onClose={handleClosePublishPanel}
-          returnFocusRef={publishReturnFocusRef}
-        />
+          dividers={false}
+          hideClose
+          headerClassName="hidden"
+          size={PopupSize.Sm}
+        >
+          <ShareConversationPopoverContainer
+            conversationPath={pendingShareConversationPath ?? ''}
+            onClose={handleCloseSharePopover}
+          />
+        </DialPopup>
       )}
+
+      {isConversationsPublishingEnabled &&
+        pendingPublishConversation !== null && (
+          <PublishConversationPanelContainer
+            isOpen
+            conversationPath={pendingPublishConversation.path}
+            conversationTitle={pendingPublishConversation.title}
+            onClose={handleClosePublishPanel}
+            returnFocusRef={publishReturnFocusRef}
+          />
+        )}
     </>
   );
 };

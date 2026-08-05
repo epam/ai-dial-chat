@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
+import { CustomVisualizerDto } from './custom-visualizer.dto';
 
 export class ClientConfigDto {
   @ApiProperty({
@@ -63,6 +64,20 @@ export class ClientConfigDto {
   })
   overlayAllowedOrigins!: string[];
 
+  @ApiProperty({
+    description:
+      'When set, the complete list of OverlayFeature values that are enabled (replace semantics). Sourced from ENABLED_UI_FEATURES, filtered to recognized values. When null, the compiled-in DEFAULT_ENABLED_UI_FEATURES baseline is used. Does not affect an overlay host that supplies its own enabledFeatures.',
+    type: [String],
+    nullable: true,
+    example: [
+      'header',
+      'likes',
+      'conversations-sharing',
+      'hide-new-conversation',
+    ],
+  })
+  enabledUiFeatures!: string[] | null;
+
   @ApiPropertyOptional({
     description:
       'Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Null when ANNOUNCEMENT_HTML_MESSAGE is not configured.',
@@ -73,6 +88,41 @@ export class ClientConfigDto {
   @IsOptional()
   @IsString()
   announcementHtml!: string | null;
+
+  @ApiPropertyOptional({
+    description:
+      'Tool ID for the Deep Research deployment-configuration property. Null when DEEP_RESEARCH_TOOL_ID is not set.',
+    example: 'deep_research',
+    nullable: true,
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  deepResearchToolId!: string | null;
+
+  @ApiProperty({
+    description:
+      'Operator-authored HTML footer message shown below the chat input (desktop) and in the mobile user panel. Empty string when FOOTER_HTML_MESSAGE is not configured. Sanitized server-side; supports %%VERSION%% token.',
+    example:
+      'v%%VERSION%% — <a href="#" data-dial-action="requestApiKey">Request API Key</a>',
+    type: String,
+  })
+  footerHtmlMessage!: string;
+
+  @ApiProperty({
+    description:
+      'Registry of MIME → visualizer iframe mappings. Sourced from CUSTOM_VISUALIZERS. Empty when unset — the feature is dark by default.',
+    type: [CustomVisualizerDto],
+  })
+  customVisualizers!: CustomVisualizerDto[];
+
+  @ApiProperty({
+    description:
+      "Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES; falls back to the legacy default when unset or empty.",
+    type: [String],
+    example: ['title', 'role', 'dial_roles'],
+  })
+  publicationFilterSources!: string[];
 }
 
 export class ClientConfigMetadataDto {

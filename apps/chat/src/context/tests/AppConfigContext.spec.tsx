@@ -60,7 +60,9 @@ describe('AppConfigContext', () => {
     ]);
     expect(result.current.config.overlayEnabled).toBe(false);
     expect(result.current.config.overlayAllowedOrigins).toEqual([]);
+    expect(result.current.config.enabledUiFeatures).toBeNull();
     expect(result.current.config.announcementHtml).toBeNull();
+    expect(result.current.config.customVisualizers).toEqual([]);
   });
 
   it('transitions to ready after successful API call', async () => {
@@ -204,6 +206,31 @@ describe('AppConfigContext', () => {
     ]);
   });
 
+  it('populates enabledUiFeatures from a successful API call', async () => {
+    mockGetClientConfig.mockResolvedValue({
+      appId: 'chat-ui',
+      features: { asrEnabled: false },
+      config: {
+        asrModelId: null,
+        transcribeSizeLimitBytes: 5_242_880,
+        dialCoreExternalUrl: null,
+        enabledUiFeatures: ['header', 'likes', 'hide-new-conversation'],
+      },
+      metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
+    } as unknown as ClientConfigResponseDto);
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+
+    expect(result.current.config.enabledUiFeatures).toEqual([
+      'header',
+      'likes',
+      'hide-new-conversation',
+    ]);
+  });
+
   describe('useFeatureFlag', () => {
     it('returns false while loading', () => {
       mockGetClientConfig.mockReturnValue(new Promise(() => undefined));
@@ -269,6 +296,90 @@ describe('AppConfigContext', () => {
 
       // Status should still be loading because the provider was unmounted.
       expect(result.current.status).toBe(UserConfigStatus.Loading);
+    });
+  });
+
+  describe('customVisualizers', () => {
+    it('defaults to [] before the config loads', () => {
+      mockGetClientConfig.mockReturnValue(new Promise(() => undefined));
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      expect(result.current.config.customVisualizers).toEqual([]);
+    });
+
+    it('surfaces customVisualizers from the API response', async () => {
+      const entry = {
+        contentType: 'application/x-test',
+        url: 'https://viz.example.com',
+        title: 'my-viz',
+      };
+      mockGetClientConfig.mockResolvedValue({
+        ...READY_RESPONSE,
+        config: {
+          ...(READY_RESPONSE as { config: object }).config,
+          customVisualizers: [entry],
+        },
+      } as unknown as ClientConfigResponseDto);
+
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+      expect(result.current.config.customVisualizers).toEqual([entry]);
+    });
+
+    it('defaults to [] when customVisualizers is absent from the response', async () => {
+      mockGetClientConfig.mockResolvedValue(READY_RESPONSE);
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+      expect(result.current.config.customVisualizers).toEqual([]);
+    });
+  });
+
+  describe('publicationFilterSources', () => {
+    it('defaults to the legacy-matching list before the config loads', () => {
+      mockGetClientConfig.mockReturnValue(new Promise(() => undefined));
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      expect(result.current.config.publicationFilterSources).toEqual([
+        'title',
+        'role',
+        'dial_roles',
+      ]);
+    });
+
+    it('surfaces an operator-configured list from a successful API call', async () => {
+      mockGetClientConfig.mockResolvedValue({
+        ...READY_RESPONSE,
+        config: {
+          ...(READY_RESPONSE as { config: object }).config,
+          publicationFilterSources: ['roles', 'department'],
+        },
+      } as unknown as ClientConfigResponseDto);
+
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+      expect(result.current.config.publicationFilterSources).toEqual([
+        'roles',
+        'department',
+      ]);
+    });
+
+    it('remains at the default when the API call fails', async () => {
+      mockGetClientConfig.mockRejectedValue(new Error('network error'));
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Error),
+      );
+
+      expect(result.current.config.publicationFilterSources).toEqual([
+        'title',
+        'role',
+        'dial_roles',
+      ]);
     });
   });
 });

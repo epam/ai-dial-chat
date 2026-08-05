@@ -1,18 +1,6 @@
 /// <reference lib="dom" />
 
-/**
- * Copies `text` to the clipboard. Returns `true` when the write succeeded,
- * `false` when both paths failed (e.g. sandboxed iframe without clipboard
- * permission).
- *
- * Strategy:
- * 1. Async Clipboard API (`navigator.clipboard.writeText`) — the preferred
- *    path on modern browsers. Requires a secure context (HTTPS) and the page
- *    to be focused.
- * 2. `execCommand('copy')` fallback — used when the Clipboard API is
- *    unavailable (HTTP, older browsers) or rejects. Uses `setSelectionRange`
- *    instead of `select()` because iOS Safari ignores `textarea.select()`.
- */
+/** Copies `text` to the clipboard; returns `true` on success, `false` when both the Clipboard API and the `execCommand` fallback fail. */
 export const copyToClipboard = (text: string): Promise<boolean> => {
   if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
     /*
@@ -40,6 +28,7 @@ const execCommandFallback = (text: string): boolean => {
   textarea.setAttribute('autocomplete', 'off');
   textarea.setAttribute('readonly', '');
   document.body.appendChild(textarea);
+
   try {
     textarea.focus({ preventScroll: true });
     // `textarea.select()` is ignored on iOS Safari — use setSelectionRange.

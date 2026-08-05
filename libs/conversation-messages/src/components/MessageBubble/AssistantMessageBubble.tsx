@@ -8,7 +8,7 @@ import {
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
 import { AttachmentGroup } from '@epam/ai-dial-conversation-input';
-import { DialRoundedButton } from '@epam/ai-dial-ui-kit';
+import { NeutralButton } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import type { AssistantMessageBubbleProps } from '../../models/message-bubble';
 import { MessageActions } from '../MessageActions/MessageActions';
@@ -33,6 +33,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   onAttachmentRetry,
   codeBlockTheme,
   labels,
+  selectedAttachmentId,
 }) => {
   const { colors, typography, className, bubbleClassName } = bubbleStyles ?? {};
   const {
@@ -116,6 +117,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
               retryLabel: attachmentRetryLabel,
               openInNewTabLabel: attachmentOpenInNewTabLabel,
             }}
+            selectedAttachmentId={selectedAttachmentId}
           />
           {afterContent}
           <MessageActions
@@ -135,7 +137,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
           >
             {starters.map((starter, index) => (
               <div key={index} role="listitem" className="min-w-[40px]">
-                <DialRoundedButton
+                <NeutralButton
                   label={starter.title}
                   className="min-w-[40px]"
                   onClick={() => onSelectStarter(starter)}

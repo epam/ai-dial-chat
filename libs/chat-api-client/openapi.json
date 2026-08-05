@@ -381,7 +381,7 @@
             "in": "path",
             "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-app__1.0",
               "type": "string"
             }
@@ -443,7 +443,7 @@
             "in": "path",
             "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-app__1.0",
               "type": "string"
             }
@@ -549,7 +549,10 @@
             "name": "deployment",
             "required": true,
             "in": "path",
+            "description": "DIAL deployment identifier. Slash-separated identifiers must be percent-encoded as one request path parameter.",
             "schema": {
+              "maxLength": 2048,
+              "example": "applications/bucket/My App",
               "type": "string"
             }
           }
@@ -564,6 +567,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid deployment identifier"
           },
           "401": {
             "description": "Unauthorized"
@@ -591,7 +597,10 @@
             "name": "deployment",
             "required": true,
             "in": "path",
+            "description": "DIAL deployment identifier. Slash-separated identifiers must be percent-encoded as one request path parameter.",
             "schema": {
+              "maxLength": 2048,
+              "example": "applications/bucket/My App",
               "type": "string"
             }
           }
@@ -606,6 +615,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid deployment identifier"
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
@@ -642,7 +654,10 @@
             "name": "deployment",
             "required": true,
             "in": "path",
+            "description": "DIAL deployment identifier. Slash-separated identifiers must be percent-encoded as one request path parameter.",
             "schema": {
+              "maxLength": 2048,
+              "example": "applications/bucket/My App",
               "type": "string"
             }
           }
@@ -657,6 +672,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid deployment identifier"
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
@@ -1009,7 +1027,7 @@
             "in": "path",
             "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-toolset",
               "type": "string"
             }
@@ -1064,7 +1082,7 @@
             "in": "path",
             "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-toolset",
               "type": "string"
             }
@@ -1126,7 +1144,7 @@
             "in": "path",
             "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-toolset",
               "type": "string"
             }
@@ -1173,7 +1191,7 @@
             "in": "path",
             "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-toolset",
               "type": "string"
             }
@@ -1234,7 +1252,7 @@
             "in": "path",
             "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-toolset",
               "type": "string"
             }
@@ -1445,6 +1463,206 @@
         },
         "summary": "Unsubscribe from the client channel",
         "tags": ["client-channel"]
+      }
+    },
+    "/api/v1/external-services/{appId}/{serviceId}": {
+      "get": {
+        "description": "Returns an application external service's display metadata and authentication type by proxying DIAL Core (GET /v1/applications/{appId}/external-services/{id}) using the caller's session access token.",
+        "operationId": "getExternalService",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
+              "type": "string"
+            }
+          },
+          {
+            "name": "serviceId",
+            "required": true,
+            "in": "path",
+            "description": "The external service id defined in the application's `external_services` config.",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "finhub-api2",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved external-service metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetExternalServiceResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid appId or serviceId — disallowed characters"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission, or the liveChatInteraction feature is not enabled"
+          },
+          "404": {
+            "description": "External service not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          }
+        },
+        "summary": "Get application external-service metadata",
+        "tags": ["external-services"]
+      }
+    },
+    "/api/v1/external-services/{appId}/{serviceId}/signin": {
+      "post": {
+        "description": "Submits API key or OAuth authorization-code credentials for an application external service by proxying DIAL Core (POST /v1/ops/external-service/signin). Credential payloads are never logged.",
+        "operationId": "signInExternalService",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
+              "type": "string"
+            }
+          },
+          {
+            "name": "serviceId",
+            "required": true,
+            "in": "path",
+            "description": "The external service id defined in the application's `external_services` config.",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "finhub-api2",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExternalServiceSigninBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalServiceAuthResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid path segments or body"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission, or the liveChatInteraction feature is not enabled"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response or rejected sign-in"
+          }
+        },
+        "summary": "Submit external-service credentials",
+        "tags": ["external-services"]
+      }
+    },
+    "/api/v1/external-services/{appId}/{serviceId}/signout": {
+      "post": {
+        "description": "Revokes an application external service's credentials by proxying DIAL Core (POST /v1/ops/external-service/signout). A Core 404 (nothing to revoke) is treated as idempotent success.",
+        "operationId": "signOutExternalService",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
+              "type": "string"
+            }
+          },
+          {
+            "name": "serviceId",
+            "required": true,
+            "in": "path",
+            "description": "The external service id defined in the application's `external_services` config.",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "finhub-api2",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExternalServiceLogoutBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials revoked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalServiceAuthResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid path segments or body"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission, or the liveChatInteraction feature is not enabled"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          }
+        },
+        "summary": "Revoke external-service credentials",
+        "tags": ["external-services"]
       }
     },
     "/api/v1/conversations": {
@@ -1927,7 +2145,10 @@
             "description": "Missing or invalid path, or conversation has no content"
           },
           "401": {
-            "description": "Not authenticated"
+            "description": "Not authenticated, or DIAL Core rejected the calling user’s token for the configured utility model"
+          },
+          "403": {
+            "description": "Not authorized to use the configured utility model"
           },
           "404": {
             "description": "Conversation not found"
@@ -2195,6 +2416,466 @@
         },
         "summary": "Get publish history for a conversation",
         "tags": ["conversations"]
+      }
+    },
+    "/api/v1/prompts": {
+      "get": {
+        "description": "Returns all personal prompts and the folder hierarchy.",
+        "operationId": "listPrompts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Prompts returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptListResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "List personal prompts",
+        "tags": ["prompts"]
+      },
+      "post": {
+        "operationId": "createPrompt",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePromptDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Prompt created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "409": {
+            "description": "Prompt already exists at that path"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "Create a personal prompt",
+        "tags": ["prompts"]
+      },
+      "put": {
+        "operationId": "updatePrompt",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Prompt path to update",
+            "schema": {
+              "maxLength": 2048,
+              "example": "Work/AI/my-prompt",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePromptDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Prompt updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Prompt not found"
+          },
+          "409": {
+            "description": "Rename target already exists"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "Update a personal prompt",
+        "tags": ["prompts"]
+      },
+      "delete": {
+        "operationId": "deletePrompt",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Prompt path to delete",
+            "schema": {
+              "maxLength": 2048,
+              "example": "Work/AI/my-prompt",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Prompt deleted"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Prompt not found"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "Delete a personal prompt",
+        "tags": ["prompts"]
+      }
+    },
+    "/api/v1/prompts/item": {
+      "get": {
+        "operationId": "getPrompt",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Prompt path within the prompts namespace",
+            "schema": {
+              "maxLength": 2048,
+              "example": "Work/AI/my-prompt",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prompt returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Prompt not found"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "Get a personal prompt",
+        "tags": ["prompts"]
+      }
+    },
+    "/api/v1/prompts/public": {
+      "get": {
+        "operationId": "listPublicPrompts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Prompts returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicPromptListResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "List organisation prompts",
+        "tags": ["prompts"]
+      }
+    },
+    "/api/v1/prompts/public/item": {
+      "get": {
+        "operationId": "getPublicPrompt",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Prompt path within the prompts namespace",
+            "schema": {
+              "maxLength": 2048,
+              "example": "Work/AI/my-prompt",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prompt returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Prompt not found"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "Get an organisation prompt",
+        "tags": ["prompts"]
+      }
+    },
+    "/api/v1/prompts/folders": {
+      "post": {
+        "operationId": "createPromptFolder",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePromptFolderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Folder created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptFolderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "409": {
+            "description": "Folder already exists"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "Create a prompt folder",
+        "tags": ["prompts"]
+      },
+      "put": {
+        "operationId": "renamePromptFolder",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Folder path to rename",
+            "schema": {
+              "maxLength": 2048,
+              "example": "Work/AI/my-prompt",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenamePromptFolderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Folder renamed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptFolderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Folder not found"
+          },
+          "409": {
+            "description": "Target folder already exists"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "Rename a prompt folder",
+        "tags": ["prompts"]
+      },
+      "delete": {
+        "operationId": "deletePromptFolder",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Folder path to delete",
+            "schema": {
+              "maxLength": 2048,
+              "example": "Work/AI/my-prompt",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Folder deleted"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Folder not found"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "Delete a prompt folder",
+        "tags": ["prompts"]
+      }
+    },
+    "/api/v1/prompts/move": {
+      "post": {
+        "operationId": "movePrompt",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Prompt path to move",
+            "schema": {
+              "maxLength": 2048,
+              "example": "Work/AI/my-prompt",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MovePromptDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Prompt moved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Prompt not found"
+          },
+          "409": {
+            "description": "Target path already exists"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "Move a personal prompt to a different folder",
+        "tags": ["prompts"]
       }
     },
     "/api/v1/files": {
@@ -3316,7 +3997,7 @@
     },
     "/api/v1/share": {
       "post": {
-        "description": "Creates a share link for a DIAL Core resource (catalog entity — agent, application, skill, toolset, or model — or conversation) by proxying DIAL Core's resource-sharing API. Returns the share URL, access level, and expiry.",
+        "description": "Creates a share link for a DIAL Core resource (catalog entity — agent, application, skill, toolset, or model — conversation, or prompt) by proxying DIAL Core's resource-sharing API. Returns the share URL, access level, and expiry.",
         "operationId": "createShareLink",
         "parameters": [],
         "requestBody": {
@@ -3463,6 +4144,78 @@
         "tags": ["share"]
       }
     },
+    "/api/v1/footer/request-api-key": {
+      "post": {
+        "description": "Proxies the form submission to the configured Azure Function. The requester email is injected server-side from the authenticated session.",
+        "operationId": "requestApiKey",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestApiKeyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request submitted successfully."
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required."
+          },
+          "429": {
+            "description": "Rate limit exceeded."
+          },
+          "502": {
+            "description": "Upstream Azure Function returned an error."
+          },
+          "503": {
+            "description": "Azure Functions env vars not configured; submissions are unavailable."
+          }
+        },
+        "summary": "Submit a Request API Key form",
+        "tags": ["footer"]
+      }
+    },
+    "/api/v1/footer/report-issue": {
+      "post": {
+        "description": "Proxies the form submission to the configured Azure Function. The reporter email is injected server-side from the authenticated session.",
+        "operationId": "reportIssue",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportIssueDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Issue reported successfully."
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required."
+          },
+          "429": {
+            "description": "Rate limit exceeded."
+          },
+          "502": {
+            "description": "Upstream Azure Function returned an error."
+          },
+          "503": {
+            "description": "Azure Functions env vars not configured; submissions are unavailable."
+          }
+        },
+        "summary": "Submit a Report an Issue form",
+        "tags": ["footer"]
+      }
+    },
     "/api/v1/catalog/{entityType}/{entityId}/publish": {
       "post": {
         "description": "Publishes a catalog entity (Toolset or Application) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.",
@@ -3594,6 +4347,302 @@
         "summary": "Get publish history for a catalog entity",
         "tags": ["publish"]
       }
+    },
+    "/api/v1/publish/rules": {
+      "get": {
+        "description": "Returns the exact requested folder's own access-restriction rules by proxying DIAL Core's `getPublicationRules` — ancestor-folder rules in the underlying response are discarded, never returned.",
+        "operationId": "getPublishRules",
+        "parameters": [
+          {
+            "name": "folderPath",
+            "required": true,
+            "in": "query",
+            "description": "Destination folder under the Organization/public bucket to look up existing access rules for.",
+            "schema": {
+              "example": "Organization/Data Science/Shared chats",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The folder's own rules, or an empty array when it has none",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishRulesResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid folderPath"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Get a destination folder's already-configured access rules",
+        "tags": ["publish"]
+      }
+    },
+    "/api/v1/scheduled-tasks": {
+      "get": {
+        "description": "Returns the DIAL Scheduler schedules visible to the authenticated session user. Proxies the DIAL Scheduler routed-deployment API using the session access token. Results are cached server-side for 30 seconds per user.",
+        "operationId": "listScheduledTasks",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Maximum number of scheduled tasks to return.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Offset of the first scheduled task to return.",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Case-insensitive substring match against the scheduled task display name.",
+            "schema": {
+              "maxLength": 200,
+              "example": "daily",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "Sort order for the returned scheduled tasks. Defaults to `firstToRun`.",
+            "schema": {
+              "example": "firstToRun",
+              "type": "string",
+              "enum": ["firstToRun", "lastToRun", "newest", "nameAZ"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved scheduled task list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListScheduledTasksResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid limit, offset, or search query parameter"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The scheduledTasksEnabled feature is not enabled for this user"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
+          }
+        },
+        "summary": "List scheduled tasks",
+        "tags": ["scheduled-tasks"]
+      },
+      "post": {
+        "description": "Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt, using the authenticated session user's dial-oauth credentials. Invalidates the scheduled tasks list cache on success.",
+        "operationId": "createScheduledTask",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateScheduledTaskBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Scheduled task created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedScheduledTaskDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — missing or invalid fields"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The scheduledTasksEnabled feature is not enabled for this user"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
+          }
+        },
+        "summary": "Create a scheduled task",
+        "tags": ["scheduled-tasks"]
+      }
+    },
+    "/api/v1/scheduled-tasks/{scheduleId}": {
+      "get": {
+        "description": "Returns a single DIAL Scheduler schedule by id, proxying DIAL Scheduler using the session user's access token. Not cached.",
+        "operationId": "getScheduledTask",
+        "parameters": [
+          {
+            "name": "scheduleId",
+            "required": true,
+            "in": "path",
+            "description": "DIAL Scheduler schedule identifier.",
+            "schema": {
+              "pattern": "^[A-Za-z0-9_-]{1,128}$",
+              "example": "sched_123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the scheduled task",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid scheduleId"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The scheduledTasksEnabled feature is not enabled for this user"
+          },
+          "404": {
+            "description": "Scheduled task not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
+          }
+        },
+        "summary": "Get a scheduled task by id",
+        "tags": ["scheduled-tasks"]
+      },
+      "put": {
+        "description": "Updates an existing DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.",
+        "operationId": "updateScheduledTask",
+        "parameters": [
+          {
+            "name": "scheduleId",
+            "required": true,
+            "in": "path",
+            "description": "DIAL Scheduler schedule identifier.",
+            "schema": {
+              "pattern": "^[A-Za-z0-9_-]{1,128}$",
+              "example": "sched_123",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateScheduledTaskBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Scheduled task updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdatedScheduledTaskDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid scheduleId or body fields"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The scheduledTasksEnabled feature is not enabled for this user"
+          },
+          "404": {
+            "description": "Scheduled task not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
+          }
+        },
+        "summary": "Update a scheduled task",
+        "tags": ["scheduled-tasks"]
+      }
     }
   },
   "info": {
@@ -3685,6 +4734,67 @@
         },
         "required": ["sub", "providerId", "claims", "bucket", "isAdmin"]
       },
+      "CustomVisualizerDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The postMessage protocol namespace, NOT a display label. Every message exchanged with the iframe is prefixed \"${title}/…\", and the visualizer application must be constructed with this identical string as its appName. A mismatch is a silent failure — the iframe loads but never receives data.",
+            "example": "my-viz"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the visualizer. Accepted for schema parity; not consumed by the host UI.",
+            "example": "Renders a Plotly figure"
+          },
+          "icon": {
+            "type": "string",
+            "description": "Icon URL or identifier for the visualizer. Accepted for schema parity; not consumed by the host UI.",
+            "example": "https://viz.example.com/icon.svg"
+          },
+          "contentType": {
+            "type": "string",
+            "description": "MIME type(s) this entry matches. Accepts a comma-separated list of MIME types (e.g. \"application/vnd.plotly.v1+json, application/vnd.vega.v5+json\").",
+            "example": "application/vnd.plotly.v1+json"
+          },
+          "url": {
+            "type": "string",
+            "description": "Absolute HTTP(S) URL of the visualizer iframe.",
+            "example": "https://viz.example.com"
+          },
+          "requestTimeout": {
+            "type": "number",
+            "description": "Milliseconds to wait for a send() request response before rejecting. Defaults to 10000 when unset. Does not bound the initial READY_TO_INTERACT handshake.",
+            "example": 15000
+          },
+          "width": {
+            "type": "number",
+            "description": "Suggested initial width of the canvas panel in pixels.",
+            "example": 800
+          },
+          "height": {
+            "type": "number",
+            "description": "Suggested initial height of the canvas panel in pixels.",
+            "example": 600
+          },
+          "mobileHeight": {
+            "type": "number",
+            "description": "Suggested canvas panel height on mobile-sized screens in pixels.",
+            "example": 400
+          },
+          "passAuthInfo": {
+            "type": "boolean",
+            "description": "Whether the host should pass auth info to the visualizer. Accepted for schema parity; auth forwarding is not yet wired.",
+            "example": false
+          },
+          "passExplicitToken": {
+            "type": "boolean",
+            "description": "Whether the host should pass an explicit access token. Accepted for schema parity; auth forwarding is not yet wired.",
+            "example": false
+          }
+        },
+        "required": ["title", "contentType", "url"]
+      },
       "ClientConfigDto": {
         "type": "object",
         "properties": {
@@ -3732,11 +4842,51 @@
               "type": "string"
             }
           },
+          "enabledUiFeatures": {
+            "description": "When set, the complete list of OverlayFeature values that are enabled (replace semantics). Sourced from ENABLED_UI_FEATURES, filtered to recognized values. When null, the compiled-in DEFAULT_ENABLED_UI_FEATURES baseline is used. Does not affect an overlay host that supplies its own enabledFeatures.",
+            "nullable": true,
+            "example": [
+              "header",
+              "likes",
+              "conversations-sharing",
+              "hide-new-conversation"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "announcementHtml": {
             "type": "string",
             "description": "Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Null when ANNOUNCEMENT_HTML_MESSAGE is not configured.",
-            "example": "Welcome to <a href=\"https://dialx.ai\">DIAL</a>!",
+            "example": "Welcome to <a href=\"https://your-site.example.com\">DIAL</a>!",
             "nullable": true
+          },
+          "deepResearchToolId": {
+            "type": "string",
+            "description": "Tool ID for the Deep Research deployment-configuration property. Null when DEEP_RESEARCH_TOOL_ID is not set.",
+            "example": "deep_research",
+            "nullable": true
+          },
+          "footerHtmlMessage": {
+            "type": "string",
+            "description": "Operator-authored HTML footer message shown below the chat input (desktop) and in the mobile user panel. Empty string when FOOTER_HTML_MESSAGE is not configured. Sanitized server-side; supports %%VERSION%% token.",
+            "example": "v%%VERSION%% — <a href=\"#\" data-dial-action=\"requestApiKey\">Request API Key</a>"
+          },
+          "customVisualizers": {
+            "description": "Registry of MIME → visualizer iframe mappings. Sourced from CUSTOM_VISUALIZERS. Empty when unset — the feature is dark by default.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomVisualizerDto"
+            }
+          },
+          "publicationFilterSources": {
+            "description": "Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES; falls back to the legacy default when unset or empty.",
+            "example": ["title", "role", "dial_roles"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -3744,7 +4894,11 @@
           "transcribeSizeLimitBytes",
           "fileManagerTabs",
           "overlayEnabled",
-          "overlayAllowedOrigins"
+          "overlayAllowedOrigins",
+          "enabledUiFeatures",
+          "footerHtmlMessage",
+          "customVisualizers",
+          "publicationFilterSources"
         ]
       },
       "ClientConfigMetadataDto": {
@@ -3903,7 +5057,8 @@
           },
           "type": {
             "type": "string",
-            "example": "https://mydial.epam.com/custom_application_schemas/quickapps2"
+            "example": "https://mydial.epam.com/custom_application_schemas/quickapps2",
+            "description": "Omit for plain custom applications with no schema type"
           },
           "description": {
             "type": "string",
@@ -3944,7 +5099,7 @@
             }
           }
         },
-        "required": ["name", "type"]
+        "required": ["name"]
       },
       "CreatedApplicationDto": {
         "type": "object",
@@ -3990,6 +5145,28 @@
             "type": "string",
             "example": "Summarizes long documents in one line.",
             "maxLength": 90
+          },
+          "version": {
+            "type": "string",
+            "example": "1.0.0"
+          },
+          "endpoint": {
+            "type": "string",
+            "example": "https://api.example.com/chat"
+          },
+          "features": {
+            "type": "object"
+          },
+          "inputAttachmentTypes": {
+            "example": ["image/png"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "maxInputAttachments": {
+            "type": "number",
+            "example": 5
           }
         },
         "required": ["name"]
@@ -4497,6 +5674,10 @@
       "ApplicationDetailsDto": {
         "type": "object",
         "properties": {
+          "displayName": {
+            "type": "string",
+            "description": "Display name reported by DIAL Core"
+          },
           "applicationProperties": {
             "type": "object",
             "additionalProperties": true,
@@ -4534,6 +5715,14 @@
           "applicationTypeSchemaId": {
             "type": "string",
             "description": "URI of the custom application type schema, when present"
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "Chat completion endpoint URL for custom applications"
+          },
+          "maxInputAttachments": {
+            "type": "number",
+            "description": "Maximum number of input attachments for custom applications"
           },
           "createdAt": {
             "type": "number",
@@ -5718,6 +6907,112 @@
         },
         "required": ["id", "result"]
       },
+      "GetExternalServiceResponseDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "example": "FinHub API"
+          },
+          "description": {
+            "type": "string",
+            "example": "Financial data lookup service"
+          },
+          "authenticationType": {
+            "type": "string",
+            "enum": ["NONE", "API_KEY", "OAUTH"],
+            "example": "API_KEY"
+          },
+          "userLevelAuthStatus": {
+            "type": "string",
+            "example": "SIGNED_IN",
+            "description": "USER-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one."
+          },
+          "globalAuthStatus": {
+            "type": "string",
+            "example": "SIGNED_OUT",
+            "description": "GLOBAL-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one."
+          },
+          "clientId": {
+            "type": "string",
+            "example": "my-client-id"
+          },
+          "authorizationEndpoint": {
+            "type": "string",
+            "example": "https://auth.example.com/authorize"
+          },
+          "scopesSupported": {
+            "example": ["read", "write"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "codeChallenge": {
+            "type": "string",
+            "example": "abc123"
+          },
+          "codeChallengeMethod": {
+            "type": "string",
+            "example": "S256"
+          }
+        },
+        "required": ["displayName", "authenticationType"]
+      },
+      "ExternalServiceSigninBodyDto": {
+        "type": "object",
+        "properties": {
+          "credentialsLevel": {
+            "type": "string",
+            "enum": ["GLOBAL", "APPLICATION", "USER"],
+            "example": "USER"
+          },
+          "authenticationType": {
+            "type": "string",
+            "enum": ["NONE", "API_KEY", "OAUTH"],
+            "example": "API_KEY"
+          },
+          "apiKey": {
+            "type": "string",
+            "description": "API key value (API_KEY auth)."
+          },
+          "code": {
+            "type": "string",
+            "description": "OAuth authorization code (OAUTH auth)."
+          },
+          "redirectUri": {
+            "type": "string",
+            "description": "OAuth redirect URI used for the code exchange."
+          }
+        },
+        "required": ["credentialsLevel", "authenticationType"]
+      },
+      "ExternalServiceAuthResultDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": ["success"]
+      },
+      "ExternalServiceLogoutBodyDto": {
+        "type": "object",
+        "properties": {
+          "credentialsLevel": {
+            "type": "string",
+            "enum": ["GLOBAL", "APPLICATION", "USER"],
+            "example": "USER"
+          },
+          "authenticationType": {
+            "type": "string",
+            "enum": ["NONE", "API_KEY", "OAUTH"],
+            "example": "API_KEY"
+          }
+        },
+        "required": ["credentialsLevel", "authenticationType"]
+      },
       "CreateConversationDto": {
         "type": "object",
         "properties": {
@@ -5733,7 +7028,7 @@
             "example": "applications/catalog/Untitled%20app%201__0.0.1",
             "minLength": 1,
             "maxLength": 256,
-            "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$"
+            "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$"
           },
           "custom_content": {
             "description": "Extra DIAL payload attached to the first user message",
@@ -5822,6 +7117,11 @@
           },
           "custom_content": {
             "$ref": "#/components/schemas/ConversationMessageCustomContentDto"
+          },
+          "streamErrorMessage": {
+            "type": "string",
+            "description": "Error message when the generation ended in error. Presence signals a terminal error state; absence means the generation succeeded or is still in progress.",
+            "example": "You have exceeded your daily token limit."
           }
         },
         "required": ["role", "content", "timestamp"]
@@ -5939,6 +7239,21 @@
             "type": "boolean",
             "description": "True when the current user does not have WRITE permission on this conversation.",
             "example": false
+          },
+          "isScheduledTask": {
+            "type": "boolean",
+            "description": "True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{runId}` reserved segment).",
+            "example": false
+          },
+          "scheduleId": {
+            "type": "string",
+            "description": "DIAL Scheduler schedule identifier. Present only when `isScheduledTask` is true.",
+            "example": "sched_123"
+          },
+          "runId": {
+            "type": "string",
+            "description": "DIAL Scheduler run identifier. Present only when `isScheduledTask` is true.",
+            "example": "run_001"
           }
         },
         "required": [
@@ -5948,7 +7263,8 @@
           "sharedWithMe",
           "publishedWithMe",
           "isPinned",
-          "isReadonly"
+          "isReadonly",
+          "isScheduledTask"
         ]
       },
       "ConversationListResponseDto": {
@@ -6232,6 +7548,30 @@
         },
         "required": ["confirm"]
       },
+      "PublishRuleDto": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "Claim/category name this rule matches against.",
+            "example": "roles"
+          },
+          "function": {
+            "type": "string",
+            "enum": ["EQUAL", "CONTAIN", "REGEX"],
+            "example": "CONTAIN"
+          },
+          "targets": {
+            "description": "Values combined with OR; exactly one pattern when function is REGEX.",
+            "example": ["engineering", "support"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["source", "function", "targets"]
+      },
       "PublishConversationDto": {
         "type": "object",
         "properties": {
@@ -6239,6 +7579,14 @@
             "type": "string",
             "description": "Destination folder under the Organization/public bucket, forwarded to DIAL Core as `targetFolder`.",
             "example": "Organization/Data Science/Shared chats"
+          },
+          "rules": {
+            "description": "Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.",
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishRuleDto"
+            }
           }
         },
         "required": ["folderPath"]
@@ -6260,10 +7608,203 @@
           },
           "publishedBy": {
             "type": "string",
-            "example": "Valery Dluski"
+            "example": "Test User"
           }
         },
         "required": ["path", "folderPath", "publishedAt", "publishedBy"]
+      },
+      "PromptResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Prompt path within the prompts namespace (used as stable ID)",
+            "example": "Work/AI/my-prompt"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name",
+            "example": "My Prompt"
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional description",
+            "maxLength": 2000
+          },
+          "content": {
+            "type": "string",
+            "description": "Prompt text content",
+            "maxLength": 50000
+          },
+          "folderId": {
+            "type": "string",
+            "description": "Parent folder path; empty string means root",
+            "example": "Work/AI"
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "Creation timestamp (Unix ms)",
+            "example": 1700000000000
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Last update timestamp (Unix ms)",
+            "example": 1700000001000
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "content",
+          "folderId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PromptFolderResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Folder path within the prompts namespace",
+            "example": "Work/AI"
+          },
+          "name": {
+            "type": "string",
+            "description": "Last path segment (display name)",
+            "example": "AI"
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "PromptListResponseDto": {
+        "type": "object",
+        "properties": {
+          "prompts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromptResponseDto"
+            }
+          },
+          "folders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromptFolderResponseDto"
+            }
+          },
+          "sharedWithMe": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromptResponseDto"
+            }
+          }
+        },
+        "required": ["prompts", "folders", "sharedWithMe"]
+      },
+      "CreatePromptDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Prompt name. Must not contain a forward slash.",
+            "example": "My Prompt",
+            "maxLength": 256
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional description",
+            "maxLength": 2000
+          },
+          "content": {
+            "type": "string",
+            "description": "Prompt text. May contain {{variableName}} placeholders.",
+            "maxLength": 50000
+          },
+          "folderId": {
+            "type": "string",
+            "description": "Parent folder path. Empty string or omit for root.",
+            "example": "Work/AI"
+          }
+        },
+        "required": ["name", "content"]
+      },
+      "UpdatePromptDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "New display name. Must not contain a forward slash.",
+            "maxLength": 256
+          },
+          "description": {
+            "type": "string",
+            "description": "Updated description",
+            "maxLength": 2000
+          },
+          "content": {
+            "type": "string",
+            "description": "Updated prompt text",
+            "maxLength": 50000
+          }
+        }
+      },
+      "PublicPromptListResponseDto": {
+        "type": "object",
+        "properties": {
+          "prompts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromptResponseDto"
+            }
+          },
+          "folders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromptFolderResponseDto"
+            }
+          }
+        },
+        "required": ["prompts", "folders"]
+      },
+      "CreatePromptFolderDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Folder name. Must not contain a forward slash.",
+            "example": "AI",
+            "maxLength": 256
+          },
+          "parentId": {
+            "type": "string",
+            "description": "Parent folder path. Omit or leave empty to create at root.",
+            "example": "Work"
+          }
+        },
+        "required": ["name"]
+      },
+      "RenamePromptFolderDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "New folder name. Must not contain a forward slash.",
+            "example": "Machine Learning",
+            "maxLength": 256
+          }
+        },
+        "required": ["name"]
+      },
+      "MovePromptDto": {
+        "type": "object",
+        "properties": {
+          "targetFolderId": {
+            "type": "string",
+            "description": "Target folder path. Empty string to move to root.",
+            "example": "Work/AI"
+          }
+        },
+        "required": ["targetFolderId"]
       },
       "FileUploadResponseDto": {
         "type": "object",
@@ -7145,6 +8686,71 @@
         },
         "required": ["success"]
       },
+      "RequestApiKeyDto": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "Project name.",
+            "example": "My AI Project"
+          },
+          "project_stream": {
+            "type": "string",
+            "description": "Stream name.",
+            "example": "Stream A"
+          },
+          "project_lead": {
+            "type": "string",
+            "description": "Email of the project tech lead.",
+            "example": "lead@example.com"
+          },
+          "business_reason": {
+            "type": "string",
+            "description": "Business justification for the access request.",
+            "example": "We need access for automated document processing."
+          },
+          "project_end": {
+            "type": "string",
+            "description": "Project end date in DD/MM/YYYY format.",
+            "example": "31/12/2025"
+          },
+          "access_scenario": {
+            "type": "string",
+            "description": "Description of the access scenario.",
+            "example": "Daily batch processing of documents."
+          },
+          "workload_pattern": {
+            "type": "string",
+            "description": "Cost and workload description.",
+            "example": "Estimated 10k tokens per day."
+          }
+        },
+        "required": [
+          "project_id",
+          "project_stream",
+          "project_lead",
+          "business_reason",
+          "project_end",
+          "access_scenario",
+          "workload_pattern"
+        ]
+      },
+      "ReportIssueDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Short title describing the issue.",
+            "example": "Something is broken"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description of the issue.",
+            "example": "When I click the button, nothing happens."
+          }
+        },
+        "required": ["title", "description"]
+      },
       "PublishCatalogEntityDto": {
         "type": "object",
         "properties": {
@@ -7157,6 +8763,14 @@
             "type": "string",
             "description": "Version label for this publish.",
             "example": "1.2.0"
+          },
+          "rules": {
+            "description": "Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.",
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishRuleDto"
+            }
           }
         },
         "required": ["folderPath", "version"]
@@ -7236,6 +8850,275 @@
           "publishedAt",
           "publishedBy"
         ]
+      },
+      "PublishRulesResultDto": {
+        "type": "object",
+        "properties": {
+          "rules": {
+            "description": "The requested folder's own access-restriction rules, or an empty array when the folder has none configured.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishRuleDto"
+            }
+          }
+        },
+        "required": ["rules"]
+      },
+      "ScheduleCronDto": {
+        "type": "object",
+        "properties": {
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "minute": "0",
+              "hour": "9"
+            },
+            "description": "Cron field map using supported Scheduler keys (year, month, day, week, day_of_week, hour, minute, second)."
+          }
+        },
+        "required": ["fields"]
+      },
+      "ScheduleTriggerDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-07-24T09:00:00.000Z"
+          },
+          "cron": {
+            "$ref": "#/components/schemas/ScheduleCronDto"
+          }
+        }
+      },
+      "ScheduledTaskDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "sched_123"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "Daily summary"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/ScheduleTriggerDto"
+          },
+          "nextRunTime": {
+            "type": "string",
+            "example": "2026-07-28T12:00:00.000Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-07-23T21:27:07.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-07-23T21:27:07.000Z"
+          },
+          "triggerType": {
+            "type": "string",
+            "enum": ["cron", "date"],
+            "example": "cron"
+          },
+          "serviceId": {
+            "type": "string",
+            "example": "dial-oauth"
+          },
+          "createdBy": {
+            "type": "string",
+            "example": "70e570e9-cc23-4ffd-9182-078d09f116ac"
+          },
+          "description": {
+            "type": "string",
+            "example": "Summarizes unread inbox items every morning"
+          }
+        },
+        "required": ["id", "displayName", "trigger"]
+      },
+      "ListScheduledTasksResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduledTaskDto"
+            }
+          },
+          "count": {
+            "type": "number",
+            "example": 4,
+            "description": "Total number of schedules upstream, across all pages."
+          },
+          "limit": {
+            "type": "number",
+            "example": 20,
+            "description": "Page size used by the upstream DIAL Scheduler response."
+          },
+          "offset": {
+            "type": "number",
+            "example": 0,
+            "description": "Offset of `items` within the full upstream result set."
+          },
+          "next": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "Upstream URL for the next page, or null if this is the last page."
+          },
+          "previous": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "Upstream URL for the previous page, or null if this is the first page."
+          }
+        },
+        "required": ["items"]
+      },
+      "CreateScheduledTaskBodyDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "example": "Daily summary"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/ScheduleTriggerDto"
+          },
+          "model": {
+            "type": "string",
+            "example": "gpt-4.1-mini-2025-04-14"
+          },
+          "prompt": {
+            "type": "string",
+            "example": "Summarize my inbox"
+          },
+          "description": {
+            "type": "string",
+            "example": "Summarizes unread inbox items every morning"
+          }
+        },
+        "required": ["displayName", "trigger", "model", "prompt"]
+      },
+      "CreatedScheduledTaskDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "sched_123"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "Daily summary"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/ScheduleTriggerDto"
+          },
+          "nextRunTime": {
+            "type": "string",
+            "example": "2026-07-28T12:00:00.000Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-07-23T21:27:07.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-07-23T21:27:07.000Z"
+          },
+          "triggerType": {
+            "type": "string",
+            "enum": ["cron", "date"],
+            "example": "cron"
+          },
+          "serviceId": {
+            "type": "string",
+            "example": "dial-oauth"
+          },
+          "createdBy": {
+            "type": "string",
+            "example": "70e570e9-cc23-4ffd-9182-078d09f116ac"
+          },
+          "description": {
+            "type": "string",
+            "example": "Summarizes unread inbox items every morning"
+          }
+        },
+        "required": ["id", "displayName", "trigger"]
+      },
+      "UpdateScheduledTaskBodyDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "example": "Daily summary"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/ScheduleTriggerDto"
+          },
+          "model": {
+            "type": "string",
+            "example": "gpt-4.1-mini-2025-04-14"
+          },
+          "prompt": {
+            "type": "string",
+            "example": "Summarize my inbox"
+          },
+          "description": {
+            "type": "string",
+            "example": "Summarizes unread inbox items every morning"
+          }
+        },
+        "required": ["displayName", "trigger", "model", "prompt"]
+      },
+      "UpdatedScheduledTaskDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "sched_123"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "Daily summary"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/ScheduleTriggerDto"
+          },
+          "nextRunTime": {
+            "type": "string",
+            "example": "2026-07-28T12:00:00.000Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-07-23T21:27:07.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-07-23T21:27:07.000Z"
+          },
+          "triggerType": {
+            "type": "string",
+            "enum": ["cron", "date"],
+            "example": "cron"
+          },
+          "serviceId": {
+            "type": "string",
+            "example": "dial-oauth"
+          },
+          "createdBy": {
+            "type": "string",
+            "example": "70e570e9-cc23-4ffd-9182-078d09f116ac"
+          },
+          "description": {
+            "type": "string",
+            "example": "Summarizes unread inbox items every morning"
+          }
+        },
+        "required": ["id", "displayName", "trigger"]
       }
     }
   }

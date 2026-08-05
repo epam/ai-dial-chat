@@ -1,8 +1,8 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialCloseButton,
-  DialGhostIconButton,
+  GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowLeft } from '@tabler/icons-react';
 import type { CSSProperties, FC, ReactNode } from 'react';
@@ -10,14 +10,23 @@ import { createPortal } from 'react-dom';
 import { useBottomSheet } from '../../hooks/useBottomSheet';
 import styles from './BottomSheetShell.module.scss';
 
+/** Color overrides for the `BottomSheetShell` component, applied as CSS custom properties. */
+export interface BottomSheetShellColors {
+  /** Backdrop background color. Defaults to `--bg-backdrop`. */
+  backdrop?: string;
+  /** Sheet panel background color. Defaults to `--bg-layer-raised`. */
+  sheetBg?: string;
+  /** Sheet title text color. Defaults to `--text-primary`. */
+  sheetText?: string;
+  /** Divider line color below the header. Defaults to `--bg-layer-4`. */
+  divider?: string;
+}
+
 /** Props for the shared bottom-sheet overlay shell. */
 export interface BottomSheetShellProps {
   /** Controls sheet visibility. */
   isOpen: boolean;
-  /**
-   * Heading text rendered in the sheet header and used as the dialog
-   * accessible name. When omitted the header is hidden entirely.
-   */
+  /** Heading text for the sheet header and dialog accessible name; header hidden when omitted. */
   title?: string;
   /** Accessible label for the close (×) button. Required when `title` is provided. */
   closeLabel?: string;
@@ -27,10 +36,7 @@ export interface BottomSheetShellProps {
   onBack?: () => void;
   /** Accessible label for the back button. Required when `onBack` is provided. */
   backLabel?: string;
-  /**
-   * Accessible name for the dialog when no `title` is shown.
-   * Ignored when `title` is present (title doubles as the accessible name).
-   */
+  /** Dialog accessible name used when `title` is omitted. */
   'aria-label'?: string;
   /** Inline CSS custom properties forwarded to the sheet root for theming. */
   style?: CSSProperties;
@@ -38,15 +44,13 @@ export interface BottomSheetShellProps {
   titleClassName?: string;
   /** Extra classes appended to the sheet container (e.g. a max-height constraint). */
   className?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: BottomSheetShellColors;
   /** Sheet body rendered below the header divider. */
   children: ReactNode;
 }
 
-/**
- * Generic mobile bottom-sheet shell: renders a portal with a backdrop, a fixed
- * bottom-anchored panel, and an optional header. Handles Escape-to-close and
- * body scroll locking. Consumers supply the body.
- */
+/** Generic mobile bottom-sheet shell: backdrop, bottom-anchored panel, optional header, Escape-to-close, and body-scroll lock. */
 export const BottomSheetShell: FC<BottomSheetShellProps> = ({
   isOpen,
   title,
@@ -58,17 +62,26 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
   style,
   titleClassName = 'dial-body-semi-text',
   className,
+  colors,
   children,
 }) => {
   useBottomSheet(isOpen, onClose);
 
   if (!isOpen || typeof document === 'undefined') return null;
 
+  const cssVars = buildCssVars({
+    '--ci-backdrop': colors?.backdrop,
+    '--ci-sheet-bg': colors?.sheetBg,
+    '--ci-sheet-text': colors?.sheetText,
+    '--ci-sheet-divider': colors?.divider,
+  });
+
   return createPortal(
     <>
       {/* Backdrop — onPointerDown avoids the touch-synthesized ghost click */}
       <div
         className={mergeClasses(styles.backdrop, 'fixed inset-0 z-[55]')}
+        style={cssVars}
         onPointerDown={onClose}
         aria-hidden
       />
@@ -78,7 +91,7 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
         role="dialog"
         aria-modal
         aria-label={title ?? ariaLabel}
-        style={style}
+        style={{ ...cssVars, ...style }}
         className={mergeClasses(
           styles.sheet,
           'fixed inset-x-0 bottom-0 z-[60] flex max-h-[85dvh] flex-col',
@@ -91,7 +104,7 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
             <div className="relative flex h-[60px] flex-shrink-0 items-center justify-center px-4">
               {onBack && (
                 <div className="absolute start-4">
-                  <DialGhostIconButton
+                  <GhostIconButton
                     icon={
                       <IconArrowLeft
                         size={DIAL_ICON_SIZE.LG}
@@ -115,7 +128,9 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
                 />
               </div>
             </div>
-            <div className="h-px flex-shrink-0" />
+            <div
+              className={mergeClasses(styles.divider, 'h-px flex-shrink-0')}
+            />
           </>
         )}
         <div className="overflow-y-auto">{children}</div>

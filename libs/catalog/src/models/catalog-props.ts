@@ -1,14 +1,19 @@
+import type {
+  PublicationRule,
+  PublishFolderNode,
+  PublishFooterLabels,
+  PublishHistoryEntry,
+  PublishPanelLabels,
+} from '@epam/ai-dial-publish-panel';
 import type { ReactNode } from 'react';
-import type { PublishFooterTexts } from '../components/PublishPanel/PublishFooter';
-import type { PublishPanelTexts } from '../components/PublishPanel/PublishPanel';
 import type { CatalogEntityType } from '../types/entity-type';
 import type { CatalogSortKey } from '../types/sort';
 import type { CredentialsLevel } from '../types/toolset-auth';
+import type { CatalogViewMode } from '../types/view-mode';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
 import type { CatalogItemDetailsFetchResult } from './item-details-data';
 import type { ItemDetailsTexts } from './item-details-props';
-import type { PublishFolderNode, PublishHistoryEntry } from './publish';
 
 /** A single option in the Create dropdown. */
 export interface CreateOption {
@@ -20,7 +25,7 @@ export interface CreateOption {
   icon?: ReactNode;
   /**
    * Tailwind classes applied to the icon container — controls background tint
-   * and icon colour. Example: `'bg-accent-secondary-alpha text-accent-secondary'`.
+   * and icon color.
    */
   iconContainerClassName?: string;
   /** Called when this option is selected. */
@@ -110,14 +115,26 @@ export interface CatalogProps {
   publishLoadingPaths?: Set<string>;
   /** Resolves whether the current user can publish to a given folder path. */
   hasPublishWriteAccess?: (folderPath: string[]) => boolean;
-  /** Called with the destination folder path when the user confirms publish/update. */
-  onPublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
+  /** Called with the destination folder path and current access rules when the user confirms publish/update. */
+  onPublish?: (
+    item: CatalogItem,
+    folderPath: string[],
+    rules: PublicationRule[],
+  ) => Promise<void>;
   /** Called after a successful publish; use this to surface a success notification. */
   onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
   /** Called when the user confirms a new folder name in the publish flow. */
   onCreatePublishFolder?: (parentPath: string[], name: string) => void;
   /** Text overrides forwarded to the publish flow. */
-  publishTexts?: PublishPanelTexts & PublishFooterTexts;
+  publishLabels?: PublishPanelLabels & PublishFooterLabels;
+  /** Options offered in the access-rules editor's source picker. Defaults to `[]` when absent. */
+  ruleSourceOptions?: string[];
+  /**
+   * Resolves the access rules already configured for a destination folder,
+   * called whenever the selected folder changes. The result fully replaces
+   * the rules editor's contents. Omit to skip pre-filling entirely.
+   */
+  onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
   /** Called when the "Edit" button is clicked in the details panel. Shown only when the item's `isEditable` is `true`. */
   onEdit?: (item: CatalogItem) => void;
   /**
@@ -133,6 +150,12 @@ export interface CatalogProps {
    * of calling `onShare`.
    */
   shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
+  /**
+   * Additional caller-supplied rule for whether the "Share" action is shown
+   * for the item, combined (AND) with the built-in ownership/type rule.
+   * Absent means the built-in rule alone decides.
+   */
+  isShareVisible?: (item: CatalogItem) => boolean;
   /**
    * Renders the Connect popover content anchored to the Connect button in the
    * details panel. When absent, the Connect button is never shown — there is
@@ -183,6 +206,8 @@ export interface CatalogProps {
   hideCreateButton?: boolean;
   /** Hides the page heading (title row), e.g. when the host renders its own title outside the catalog. Default: false. */
   hidePageTitle?: boolean;
+  /** Initial Browse view mode (grid or list). Default: `CatalogViewMode.Grid`. */
+  initialViewMode?: CatalogViewMode;
   /** ID of an item to visually mark as selected (border, tint, and checkmark) in the Browse grid. */
   selectedItemId?: string;
   /**

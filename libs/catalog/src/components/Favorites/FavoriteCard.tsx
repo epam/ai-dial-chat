@@ -1,8 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, ElementSize } from '@epam/ai-dial-ui-kit';
+import { CardShell, DIAL_ICON_SIZE, ElementSize } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
+import { AppIdentityColors } from '../../models/app-identity-styles';
 import { CatalogItem } from '../../models/catalog-item';
+import { DeploymentSize } from '../../types/deployment-icon-size';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
 import { CredentialsBadge } from '../CredentialsBadge/CredentialsBadge';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
@@ -18,8 +20,10 @@ export interface FavoriteCardProps {
   onToggle?: (id: string, isStarred: boolean) => void;
   /** Called when the card body is clicked. */
   onClick?: (item: CatalogItem) => void;
-  /** CSS class for the entity name. Default: 'dial-body-semi-text text-primary'. */
+  /** Typography CSS class for the entity name. Default: 'dial-body-semi-text'. */
   nameClassName?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: AppIdentityColors;
   /** CSS class for the version string. Default: 'dial-tiny-text text-secondary'. */
   versionClassName?: string;
   /** CSS class for the last-used text. Default: 'dial-tiny-text text-secondary'. */
@@ -43,6 +47,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
   onToggle,
   onClick,
   nameClassName,
+  colors,
   versionClassName,
   lastUsedClassName,
   query,
@@ -79,19 +84,15 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
   );
 
   return (
-    <article
+    <CardShell
       data-card-id={item.id}
       role={handleClick != null ? 'button' : undefined}
       tabIndex={handleClick != null ? 0 : undefined}
       aria-label={item.name}
       className={mergeClasses(
-        'relative box-border flex min-w-0 cursor-pointer items-start gap-1',
-        'rounded-[20px] border-2 p-[22px] text-start',
-        styles.card,
+        'box-border min-w-0 cursor-pointer flex-row items-start gap-1 text-start',
         isLeaving && styles.cardLeaving,
-        isSelected
-          ? 'border-accent-primary !bg-accent-primary-alpha'
-          : 'border-transparent',
+        isSelected ? 'border-info !bg-accent-primary-alpha' : undefined,
       )}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
@@ -106,7 +107,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
       {isSelected && (
         <IconCheck
           size={DIAL_ICON_SIZE.SM}
-          className="absolute end-3 top-3 shrink-0 text-accent-primary"
+          className="absolute end-3 top-3 shrink-0 text-accent"
           aria-hidden
         />
       )}
@@ -118,10 +119,11 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
           name={item.name}
           version={item.version}
           lastUsed={item.lastUsed}
-          size="lg"
+          size={DeploymentSize.LG}
           query={query}
           className="min-w-0 self-stretch"
           nameClassName={nameClassName}
+          colors={colors}
           versionClassName={versionClassName}
           lastUsedClassName={lastUsedClassName}
         />
@@ -139,6 +141,6 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
         }
         className="self-end"
       />
-    </article>
+    </CardShell>
   );
 };

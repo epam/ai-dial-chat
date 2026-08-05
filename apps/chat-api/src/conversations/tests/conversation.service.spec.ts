@@ -1291,7 +1291,7 @@ describe('ConversationService', () => {
       });
     });
 
-    it('sends current starter configuration only as top-level custom_fields', async () => {
+    it('moves current starter configuration to top-level custom_fields without clearing message content', async () => {
       const conversation = {
         ...baseConversation,
         messages: [
@@ -1315,7 +1315,12 @@ describe('ConversationService', () => {
       );
 
       expect(sendSpy.mock.calls[0][1].body).toMatchObject({
-        messages: [{ role: ConversationMessageRole.User, content: '' }],
+        messages: [
+          {
+            role: ConversationMessageRole.User,
+            content: 'Pick a number',
+          },
+        ],
         stream: true,
         custom_fields: { configuration: { button: 1 } },
       });
@@ -1325,7 +1330,38 @@ describe('ConversationService', () => {
       ).toBeUndefined();
     });
 
-    it('moves persisted form configuration to custom_fields and submits form_value messages', async () => {
+    it('sends tool configuration_value as custom_fields.configuration', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Research this topic',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      const { sendSpy } = await callStream(
+        conversation,
+        'Research this topic',
+        'gpt-4o',
+        { configuration_value: { deep_research: true } },
+      );
+
+      expect(sendSpy.mock.calls[0][1].body).toMatchObject({
+        messages: expect.arrayContaining([
+          {
+            role: ConversationMessageRole.User,
+            content: 'Research this topic',
+          },
+        ]),
+        custom_fields: { configuration: { deep_research: true } },
+      });
+    });
+
+    it('moves persisted form configuration to custom_fields without clearing message content', async () => {
       const conversation = {
         ...baseConversation,
         messages: [
@@ -1375,7 +1411,10 @@ describe('ConversationService', () => {
       });
 
       expect(sendSpy.mock.calls[0][1].body.messages).toEqual([
-        { role: ConversationMessageRole.User, content: '' },
+        {
+          role: ConversationMessageRole.User,
+          content: 'Pick a number',
+        },
         {
           role: ConversationMessageRole.Assistant,
           content: 'Pick a number',
@@ -1397,7 +1436,7 @@ describe('ConversationService', () => {
       });
     });
 
-    it('saves partial message with hasStreamError when DIAL Core returns non-ok response', async () => {
+    it('saves partial message with streamErrorMessage when DIAL Core returns non-ok response', async () => {
       vi.spyOn(
         service['dialClient'].client,
         'getConversation',
@@ -1432,18 +1471,17 @@ describe('ConversationService', () => {
         res as never,
       );
 
-      // Should have saved at start (placeholder) + at error (partial with hasStreamError)
+      // Should have saved at start (placeholder) + at error (partial with streamErrorMessage)
       expect(saveConversationSpy).toHaveBeenCalledTimes(2);
       const errorSave = saveConversationSpy.mock.calls[1][2].body as {
-        messages: { hasStreamError?: boolean }[];
+        messages: { streamErrorMessage?: string }[];
       };
-      const assistantMsg = errorSave.messages.at(-1);
-      expect((assistantMsg as Record<string, unknown>).hasStreamError).toBe(
-        true,
-      );
+      const assistantMsg = errorSave.messages.at(-1) as Record<string, unknown>;
+      /* 400 response has no JSON body in this mock — streamErrorMessage is '' (error with no specific text) */
+      expect(assistantMsg.streamErrorMessage).toBe('');
     });
 
-    it('saves partial message with hasStreamError for an in-band DIAL error chunk (no choices)', async () => {
+    it('saves partial message with streamErrorMessage for an in-band DIAL error chunk (no choices)', async () => {
       vi.spyOn(
         service['dialClient'].client,
         'getConversation',
@@ -1498,10 +1536,12 @@ describe('ConversationService', () => {
 
       expect(saveConversationSpy).toHaveBeenCalledTimes(2);
       const errorSave = saveConversationSpy.mock.calls[1][2].body as {
-        messages: { content?: string; hasStreamError?: boolean }[];
+        messages: { content?: string; streamErrorMessage?: string }[];
       };
       const assistantMsg = errorSave.messages.at(-1) as Record<string, unknown>;
-      expect(assistantMsg.hasStreamError).toBe(true);
+      expect(assistantMsg.streamErrorMessage).toBe(
+        'Failed to connect to upstream server',
+      );
       expect(assistantMsg.content).toBe('');
     });
 
@@ -1935,6 +1975,109 @@ describe('ConversationService', () => {
       );
       expect(sharedItem?.sharedWithMe).toBe(true);
       expect(sharedItem?.publishedWithMe).toBe(false);
+    });
+
+    it('tags a user-bucket item created by a scheduled task with isScheduledTask, scheduleId, and runId', async () => {
+      mockMetadata([
+        {
+          url: 'conversations/test-bucket/.scheduler/sched_abc/run_001/gpt-4o__Morning briefing__uuid',
+          nodeType: 'FILE',
+          updatedAt: 1000,
+        },
+      ]);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items).toEqual([
+        expect.objectContaining({
+          isScheduledTask: true,
+          scheduleId: 'sched_abc',
+          runId: 'run_001',
+        }),
+      ]);
+    });
+
+    it('tags a public-bucket item created by a scheduled task independently of its own path', async () => {
+      mockMetadata(
+        [],
+        [
+          {
+            url: 'conversations/public/.scheduler/sched_pub/run_002/gpt-4o__title',
+            nodeType: 'FILE',
+            updatedAt: 1000,
+          },
+        ],
+      );
+      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items).toEqual([
+        expect.objectContaining({
+          isScheduledTask: true,
+          scheduleId: 'sched_pub',
+          runId: 'run_002',
+        }),
+      ]);
+    });
+
+    it('tags a shared item created by a scheduled task using its own resource id', async () => {
+      mockMetadata([]);
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue({
+        data: {
+          resources: [
+            {
+              url: 'conversations/other-bucket/.scheduler/sched_shr/run_003/gpt-4o__title',
+              nodeType: 'FILE',
+            },
+          ],
+        },
+      } as never);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items).toEqual([
+        expect.objectContaining({
+          isScheduledTask: true,
+          scheduleId: 'sched_shr',
+          runId: 'run_003',
+          sharedWithMe: true,
+        }),
+      ]);
+    });
+
+    it('sets isScheduledTask: false with no scheduleId/runId for a normal conversation', async () => {
+      mockMetadata([
+        {
+          url: 'conversations/test-bucket/gpt-4o__Morning briefing__uuid',
+          nodeType: 'FILE',
+          updatedAt: 1000,
+        },
+      ]);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items[0].isScheduledTask).toBe(false);
+      expect(result.items[0].scheduleId).toBeUndefined();
+      expect(result.items[0].runId).toBeUndefined();
     });
 
     it('calls getSharedResources with resourceTypes CONVERSATION and with me', async () => {

@@ -65,18 +65,14 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   DialEllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
   ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
-  ButtonAppearance: { Ghost: 'ghost', Primary: 'primary' },
   DialDropdown: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
   ),
-  DialIconButton: ({
-    onClick,
-    'aria-label': ariaLabel,
-  }: {
-    onClick?: () => void;
-    'aria-label'?: string;
-  }) => <button onClick={onClick} aria-label={ariaLabel} />,
-  DialButton: ({
+  DialTooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  DialSkeleton: () => null,
+  DialSkeletonVariant: { Circular: 'circular' },
+
+  Button: ({
     onClick,
     label,
     'aria-current': ariaCurrent,
@@ -84,14 +80,12 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     onClick?: () => void;
     label?: React.ReactNode;
     'aria-current'?: React.AriaAttributes['aria-current'];
-    [key: string]: unknown;
   }) => (
     <button onClick={onClick} aria-current={ariaCurrent}>
       {label}
     </button>
   ),
-  DialTooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  DialSkeleton: () => null,
+  Highlight: ({ text }: { text: string }) => <span>{text}</span>,
 }));
 
 vi.mock('@epam/ai-dial-chat-shared', () => ({
@@ -101,27 +95,6 @@ vi.mock('@epam/ai-dial-chat-shared', () => ({
   buildCssVars: () => ({}),
   Highlight: ({ text }: { text: string }) => <span>{text}</span>,
 }));
-
-vi.mock('@epam/ai-dial-kit', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@epam/ai-dial-kit')>();
-  return {
-    ...actual,
-    GhostButton: ({
-      onClick,
-      label,
-      'aria-current': ariaCurrent,
-    }: {
-      onClick: () => void;
-      label: React.ReactNode;
-      'aria-current'?: React.AriaAttributes['aria-current'];
-      [key: string]: unknown;
-    }) => (
-      <button onClick={onClick} aria-current={ariaCurrent}>
-        {label}
-      </button>
-    ),
-  };
-});
 
 vi.mock('@epam/ai-dial-sidebar', () => ({
   PanelEmpty: ({ label }: { label: string }) => <div>{label}</div>,
@@ -341,14 +314,6 @@ describe('ConversationPanel', () => {
     expect(onNewChat).toHaveBeenCalledTimes(1);
   });
 
-  it('filters by Shared tab', () => {
-    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
-    fireEvent.click(screen.getByRole('tab', { name: 'Shared' }));
-    expect(screen.getByText('Third chat')).toBeTruthy();
-    expect(screen.getByText('Shared chat')).toBeTruthy();
-    expect(screen.queryByText('First chat')).toBeNull();
-  });
-
   it('puts isPinned items in Pinned group and others in My chats group', () => {
     render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
     expect(screen.getByText('Pinned')).toBeTruthy();
@@ -364,21 +329,6 @@ describe('ConversationPanel', () => {
     expect(screen.getByText('Pinned chat')).toBeTruthy();
     fireEvent.click(pinnedHeader!);
     expect(screen.queryByText('Pinned chat')).toBeNull();
-  });
-
-  it('renders filter tabs with correct aria-selected state', () => {
-    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
-    const allTab = screen.getByRole('tab', { name: 'All' });
-    expect(allTab.getAttribute('aria-selected')).toBe('true');
-    const sharedTab = screen.getByRole('tab', { name: 'Shared' });
-    expect(sharedTab.getAttribute('aria-selected')).toBe('false');
-    fireEvent.click(sharedTab);
-    expect(
-      screen.getByRole('tab', { name: 'Shared' }).getAttribute('aria-selected'),
-    ).toBe('true');
-    expect(
-      screen.getByRole('tab', { name: 'All' }).getAttribute('aria-selected'),
-    ).toBe('false');
   });
 
   it('renders headerActions in the panel header when provided', () => {

@@ -281,6 +281,48 @@ When `validateAttachment` is not provided, existing behaviour is unchanged.
 
 ---
 
+### Requirement: Input suppresses text-to-attachment paste conversion when attachments are disabled
+
+`ConversationInputProps`, `InputProps`, and `EditMessageInputProps` SHALL accept an optional `isAttachmentsEnabled?: boolean` prop. When absent the value defaults to `true` (no change in behaviour).
+
+When `isAttachmentsEnabled` is `false`, the `useClipboardPaste` handler SHALL NOT convert long pasted plain text into a `text/plain` attachment. The text SHALL be inserted inline into the textarea as if no threshold existed. Image clipboard items (pasted screenshots) are unaffected — they still convert to `AttachmentType.Image` attachments and proceed through the normal `validateAttachment` path.
+
+The host app is responsible for setting `isAttachmentsEnabled` based on whether the selected deployment supports attachments:
+- When no deployment is selected, the prop is omitted (undefined → `true`), allowing conversion.
+- When a deployment is selected, the host passes `isAttachmentsEnabled={isAttachmentsAllowed}` where `isAttachmentsAllowed` is derived from `selectedDeployment.inputAttachmentTypes` being non-empty.
+
+This prevents the erroneous "Attachments not supported" error banner that appeared when a user pasted a long prompt into the input while a model with no attachment support was selected.
+
+#### Scenario: Long pasted text on a model without attachment support stays inline
+
+- **WHEN** `isAttachmentsEnabled` is `false`
+- **AND** the user pastes plain text longer than `pasteTextThreshold` characters
+- **THEN** the text is inserted into the textarea normally
+- **AND** no attachment card is created
+- **AND** no "Attachments not supported" notification appears
+
+#### Scenario: Long pasted text on a model with attachment support is converted normally
+
+- **WHEN** `isAttachmentsEnabled` is `true` (default)
+- **AND** the user pastes plain text longer than `pasteTextThreshold` characters
+- **THEN** the text is converted to a `text/plain` attachment and shown as an attachment card
+- **AND** the textarea receives no text (paste is intercepted)
+
+#### Scenario: Pasted image is unaffected by isAttachmentsEnabled
+
+- **WHEN** `isAttachmentsEnabled` is `false`
+- **AND** the user pastes an image from the clipboard (no plain text in the clipboard)
+- **THEN** the image is still converted to an `AttachmentType.Image` attachment
+- **AND** the normal `validateAttachment` path runs for the image attachment
+
+#### Scenario: No deployment selected — conversion is not suppressed
+
+- **WHEN** `isAttachmentsEnabled` is `undefined` (no deployment selected)
+- **AND** the user pastes plain text longer than `pasteTextThreshold` characters
+- **THEN** the text is converted to a `text/plain` attachment (default behaviour)
+
+---
+
 ### Requirement: Input enforces an optional maximum attachment count
 
 `ConversationInputProps`, `InputProps`, and `EditMessageInputProps` SHALL accept optional host-injected count-limit props:

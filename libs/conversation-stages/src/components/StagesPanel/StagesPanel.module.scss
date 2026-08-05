@@ -3,10 +3,8 @@
 }
 
 .row {
-  border-radius: 8px;
-
   &:hover {
-    background: var(--cs-row-hover, var(--bg-layer-2, #eef1f7));
+    background: var(--cs-row-hover, var(--bg-layer-sunken, #eef1f7));
   }
 }
 
@@ -15,7 +13,7 @@
 }
 
 .stageName {
-  color: var(--cs-stage-text, var(--text-secondary, #575f73));
+  color: var(--cs-stage-text, var(--text-secondary, #6b7280));
 }
 
 .stageNameFailed {
@@ -27,59 +25,55 @@
 }
 
 .tag {
-  color: var(--cs-tag-text, var(--text-tertiary, #808898));
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  color: var(--cs-tag-text, var(--text-tertiary, #c7cbd4));
 }
 
 .count {
-  color: var(--cs-count-text, var(--text-tertiary, #808898));
+  color: var(--cs-count-text, var(--text-tertiary, #c7cbd4));
   font-variant-numeric: tabular-nums;
 }
 
 .duration {
-  color: var(--cs-duration-text, var(--text-tertiary, #808898));
+  color: var(--cs-duration-text, var(--text-tertiary, #c7cbd4));
   font-variant-numeric: tabular-nums;
 }
 
 .iconSecondary {
-  color: var(--cs-icon-secondary, var(--text-secondary, #575f73));
+  color: var(--cs-icon-secondary, var(--text-secondary, #6b7280));
   opacity: 0.7;
 }
 
-/* Completed-check icon — same glyph and size as the CollapsedGroup summary's "Executed N steps" check, but grey: --text-tertiary still clears the AA non-text 3:1 floor (icons are aria-hidden, not normal text) in both themes. */
 .iconCompleted {
-  color: var(--cs-icon-completed, var(--text-tertiary, #808898));
+  color: var(--cs-icon-completed, var(--text-tertiary, #c7cbd4));
 }
 
-/* Exception icon (failed) — the one case that keeps a saturated, alarming color; orange (DS "warning" token), not red. */
 .iconError {
   color: var(--cs-icon-error, var(--text-warning, #7f6300));
 }
 
 .stageContent {
-  color: var(--cs-stage-text, var(--text-secondary, #575f73));
+  color: var(--cs-stage-text, var(--text-secondary, #6b7280));
   line-height: 150% !important;
 }
 
 .codeBlock {
-  background: var(--cs-code-bg, var(--bg-layer-0, #fcfcfc));
+  background: var(--cs-code-bg, var(--bg-layer-raised, #fcfcfc));
   border-color: var(--cs-code-border, var(--stroke-secondary, #d1dbea));
   color: var(--cs-code-text, var(--text-primary, #161b2d));
 }
 
 .codeInline {
-  background: var(--cs-code-bg, var(--bg-layer-0, #fcfcfc));
+  background: var(--cs-code-bg, var(--bg-layer-raised, #fcfcfc));
   border: 1px solid var(--cs-code-border, var(--stroke-secondary, #d1dbea));
   color: var(--cs-code-text, var(--text-primary, #161b2d));
 }
 
 .blockquote {
-  border-color: var(--cs-stage-text, var(--text-secondary, #575f73));
-  color: var(--cs-stage-text, var(--text-secondary, #575f73));
+  border-color: var(--cs-stage-text, var(--text-secondary, #6b7280));
+  color: var(--cs-stage-text, var(--text-secondary, #6b7280));
 }
 
 .tableCell {
   border-color: var(--cs-border, var(--stroke-secondary, #d1dbea));
-  color: var(--cs-stage-text, var(--text-secondary, #575f73));
+  color: var(--cs-stage-text, var(--text-secondary, #6b7280));
 }

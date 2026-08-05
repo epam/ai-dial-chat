@@ -24,13 +24,12 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { NavigateFunction } from 'react-router-dom';
+import type { NavigateFunction } from 'react-router';
 import ConversationView from '../../components/ConversationView/ConversationView';
 import NewConversationComposer, {
   type NewConversationChatSettings,
 } from '../../components/NewConversationComposer/NewConversationComposer';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
-import { CONVERSATION_ROUTE_INPUT_STYLES } from '../../constants/input-styles';
 import {
   AppsEditorI18nKeys,
   ButtonsI18nKeys,
@@ -42,7 +41,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
 import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
 import { useConversationStream } from '../../hooks/conversation/useConversationStream';
-import { getApiErrorMessage } from '../../server-api/api-error';
+import { getApiErrorDetails } from '../../server-api/api-error';
 import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
   createConversation as apiCreateConversation,
@@ -140,18 +139,13 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     });
   }, [showNotification, t]);
 
-  const {
-    startStream,
-    handleStop,
-    isStreaming,
-    canStopStreaming,
-    hasStreamError,
-  } = useConversationStream({
-    conversationId: conversationId ?? undefined,
-    setConversation,
-    conversationRef,
-    onStopError: handleStopError,
-  });
+  const { startStream, handleStop, isStreaming, canStopStreaming } =
+    useConversationStream({
+      conversationId: conversationId ?? undefined,
+      setConversation,
+      conversationRef,
+      onStopError: handleStopError,
+    });
 
   const handleCreateConversation = useCallback(
     async (
@@ -219,10 +213,12 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
             temperature: 0.5,
           });
         } catch (err) {
-          const errorMessage = await getApiErrorMessage(err);
+          const { message: errorMessage, traceId } =
+            await getApiErrorDetails(err);
           showNotification({
             variant: NotificationVariant.Error,
             message: errorMessage ?? t(ChatI18nKeys.CreateConversationError),
+            requestId: traceId,
           });
         }
       };
@@ -319,7 +315,6 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
             placeholder={t(AppsEditorI18nKeys.PreviewChatPlaceholder)}
             introText={quickAppStarters.introText}
             message={inputMessage}
-            inputStyles={CONVERSATION_ROUTE_INPUT_STYLES}
             onCreateConversation={handleCreateConversation}
           >
             <StarterButtons
@@ -356,7 +351,6 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         isAssistantTyping={isStreaming}
         canStopAssistant={canStopStreaming}
         placeholder={t(AppsEditorI18nKeys.PreviewChatPlaceholder)}
-        streamErrorText={hasStreamError ? t(ChatI18nKeys.StreamError) : ''}
         stoppedGeneratingText={t(ChatI18nKeys.StoppedGenerating)}
         isAudioMessageSupported={isAudioMessageSupported}
         conversation={conversation}

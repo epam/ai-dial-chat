@@ -18,7 +18,7 @@ Specifies the right-side conversation sources panel: the sidebar shell lib (`lib
 - Set the produced context's `displayName` to the supplied parameter.
 - Return a guarded hook that throws a clear error when used outside the Provider.
 
-`apps/chat/src/context/sidebar/RightSidebarContext.tsx` SHALL invoke the factory once and re-export `RightSidebarProvider` and `useRightSidebar`.
+`apps/chat/src/context/sidebar/RightSidebarContext.tsx` SHALL invoke the factory once and re-export `RightSidebarProvider` and `useSourcesSidebar`.
 
 #### Scenario: Factory produces independent contexts
 
@@ -27,12 +27,12 @@ Specifies the right-side conversation sources panel: the sidebar shell lib (`lib
 
 #### Scenario: Initial state is closed
 
-- **WHEN** a consumer reads `useRightSidebar().isOpen` immediately after mount
+- **WHEN** a consumer reads `useSourcesSidebar().isOpen` immediately after mount
 - **THEN** the value is `false`
 
 #### Scenario: `open` sets isOpen to true
 
-- **WHEN** a consumer calls `useRightSidebar().open()`
+- **WHEN** a consumer calls `useSourcesSidebar().open()`
 - **THEN** subsequent reads of `isOpen` return `true`
 
 #### Scenario: `toggle` flips the current value
@@ -44,26 +44,26 @@ Specifies the right-side conversation sources panel: the sidebar shell lib (`lib
 
 #### Scenario: Hook outside provider throws
 
-- **WHEN** `useRightSidebar()` is called from a component not wrapped in `RightSidebarProvider`
+- **WHEN** `useSourcesSidebar()` is called from a component not wrapped in `RightSidebarProvider`
 - **THEN** an error is thrown describing the missing provider
 
 ---
 
 ### Requirement: Header toggles the right sidebar
 
-`apps/chat/src/components/Header/Header.tsx` SHALL render a right-aligned `DialGhostIconButton` (icon: `IconFile` from `@tabler/icons-react`) that calls `useRightSidebar().toggle()` on click. The header SHALL keep `<Logo />` horizontally centred when the toggle is present (e.g. via `grid-cols-[1fr_auto_1fr]`). The button SHALL set `aria-pressed` from `isOpen`. Its `aria-label` and tooltip text SHALL come from i18n keys `sidebar.sources.toggleOpen` (when closed) and `sidebar.sources.toggleClose` (when open).
+`apps/chat/src/components/Header/Header.tsx` SHALL render a right-aligned `GhostIconButton` (icon: `IconFileDescription` from `@tabler/icons-react`) that calls `useSourcesSidebar().open()` on click. The button SHALL only be rendered when the sidebar is closed (`isOpen === false`). The header SHALL keep `<Logo />` horizontally centred when the toggle is present (e.g. via `grid-cols-[1fr_auto_1fr]`). Its `aria-label` and tooltip text SHALL come from i18n key `sidebar.base.toggleOpen`.
 
-#### Scenario: Toggle button present in the header
+#### Scenario: Open button is visible only when sidebar is closed
 
-- **WHEN** `Header` renders inside `RightSidebarProvider`
-- **THEN** a button with the open/close `aria-label` exists and is positioned at the right edge
+- **WHEN** `Header` renders and `useSourcesSidebar().isOpen === false`
+- **THEN** a button with `aria-label` from `sidebar.base.toggleOpen` exists and is positioned at the right edge
+- **AND WHEN** `useSourcesSidebar().isOpen === true`
+- **THEN** no open button is rendered in the header
 
-#### Scenario: Click toggles the context
+#### Scenario: Click opens the sidebar
 
-- **WHEN** the button is clicked
-- **THEN** `useRightSidebar().isOpen` flips
-- **AND** `aria-pressed` reflects the new value
-- **AND** the `aria-label` switches between the open and close strings
+- **WHEN** the open button is clicked
+- **THEN** `useSourcesSidebar().isOpen` becomes `true`
 
 #### Scenario: Logo stays centred
 
@@ -89,7 +89,7 @@ The lib SHALL export `SidebarPanel: FC<SidebarPanelProps>` from `libs/sidebar/sr
 - `typography?: SidebarPanelTypography` — optional overrides (`fontClassName`, `fontFamily`, `fontSize`).
 - `className?: string` — extra class merged onto the root.
 
-The shell SHALL render an `<aside role="complementary" aria-label={ariaLabel}>` with a fixed `360 px` width, full height, a `48 px` header bar, and a vertically scrollable body. A close `DialGhostIconButton` (icon: `IconX`) SHALL always be present and SHALL call `onClose` when activated. Width, height, body scroll, and header-bar height SHALL be identical for both `side` values.
+The shell SHALL render an `<aside role="complementary" aria-label={ariaLabel}>` with a fixed `360 px` width, full height, a `48 px` header bar, and a vertically scrollable body. A close `GhostIconButton` (icon: `IconX`) SHALL always be present and SHALL call `onClose` when activated. Width, height, body scroll, and header-bar height SHALL be identical for both `side` values.
 
 Theming SHALL follow `openspec/lib-styling-guide.md`: the SCSS module `SidebarPanel.module.scss` contains only CSS-variable references with hex fallbacks (`--sb-bg`, `--sb-border`); layout, spacing, and border-radius live in Tailwind classes inside the TSX. The component SHALL apply `colors` / `typography` overrides via `buildCssVars` from `@epam/ai-dial-chat-shared`.
 
@@ -157,15 +157,13 @@ The panel SHALL be considered empty when `uploaded.length === 0` and `generated.
 When the panel is empty:
 
 - The header SHALL contain only the built-in close button; `leftActions` and `rightActions` SHALL not render search or download-all buttons.
-- The body SHALL render a full-height, horizontally and vertically centred empty state.
-- The empty state SHALL contain a decorative `IconFileDescription` followed by the i18n value of `sidebar.sources.empty.noData` (`"No data"`).
-- The icon SHALL be hidden from assistive technology.
-- The Uploaded Files, Generated Files, and Sources section headings and their section-level empty messages SHALL not render.
+- The body SHALL render `DialNoDataContent` from `@epam/ai-dial-ui-kit`, centred horizontally and vertically, with `title` set to the i18n value of `basic.noData` (`"No data"`). No `icon` prop is supplied, so `DialNoDataContent` uses its default icon.
+- No section headings SHALL be rendered.
 
 When the panel is not empty:
 
-- `leftActions` SHALL contain a disabled `DialGhostIconButton` with `IconSearch` and the i18n `aria-label` `sidebar.sources.search`.
-- `rightActions` SHALL contain a `DialGhostIconButton` with `IconDownload` and the i18n `aria-label` `sidebar.sources.downloadAll`. This button SHALL be enabled whenever at least one attachment in `uploaded` or `generated` is downloadable (i.e. has a DIAL-hosted file URL resolvable by the same mechanism `handleAttachmentClick` uses), and SHALL be disabled only when no attachment currently in `uploaded`/`generated` is downloadable.
+- `leftActions` SHALL contain a search input (text field with `IconSearch`) whose `aria-label` is the i18n value of `sidebar.sources.search`. Typing into the input filters sources as described in the Search scenario below.
+- `rightActions` SHALL contain a `GhostIconButton` with `IconDownload` and the i18n `aria-label` `sidebar.sources.downloadAll`. This button SHALL be enabled whenever at least one attachment in `uploaded` or `generated` is downloadable (i.e. has a DIAL-hosted file URL resolvable by the same mechanism `handleAttachmentClick` uses), and SHALL be disabled only when no attachment currently in `uploaded`/`generated` is downloadable.
 - Activating the enabled download-all button SHALL trigger a download of every downloadable attachment in `uploaded` and `generated`, using the same URL-resolution and download-triggering mechanism as clicking an individual attachment card. Attachments that are not downloadable via that mechanism (e.g. reference-only attachments) SHALL be silently skipped, matching single-click behavior for those attachments.
 - The body SHALL render, in order: the Uploaded Files `FilesSection`, the Generated Files `FilesSection`, and `SourcesSection` (receiving `sources={filteredSources}`, `title`, and `copyLabel`).
 
@@ -177,8 +175,8 @@ For both states:
 
 #### Scenario: Global empty state when no files exist
 
-- **WHEN** `ConversationSourcesPanel` derives empty `uploaded` and `generated` lists
-- **THEN** the body shows the centred file-description icon and `sidebar.sources.empty.noData`
+- **WHEN** `ConversationSourcesPanel` derives empty `uploaded`, `generated`, and `sources` lists
+- **THEN** the body shows centred `DialNoDataContent` with the `basic.noData` title and default icon
 - **AND** no section heading is rendered
 - **AND** no search or download-all button is rendered
 
@@ -186,7 +184,7 @@ For both states:
 
 - **WHEN** at least one attachment is present in `uploaded`, `generated`, or `sources`
 - **THEN** the global empty state is not rendered
-- **AND** the search button is rendered disabled
+- **AND** the search input is rendered enabled
 - **AND** the Uploaded Files, Generated Files, and Sources sections are rendered
 
 #### Scenario: Download-all button is enabled when a downloadable attachment is present
@@ -236,6 +234,65 @@ For both states:
 
 - **WHEN** a user clicks an attachment card in the panel
 - **THEN** `handleAttachmentClick` is invoked with the corresponding `DisplayAttachment`
+
+---
+
+### Requirement: Source link clicks are routed by URL and content type
+
+`ConversationSourcesPanel` SHALL wire `handleSourceClick` as `onSourceClick` on `SourcesSection`. `handleSourceClick` SHALL route each click as follows:
+
+1. **External non-previewable URL** — if the URL is not a DIAL file ID and does not pass the previewability test (see below), open `window.open(url, '_blank', 'noopener,noreferrer')` immediately and return.
+2. **External previewable document or DIAL file** — build a `DisplayAttachment` from the `QuotationSource` and call `openAttachmentCanvas(attachment)`. If the canvas opens (`true`), close the sources sidebar. If the canvas does not open (`false`) and the URL is not a DIAL file ID, open `window.open(url, '_blank', 'noopener,noreferrer')`. If the canvas does not open and the URL is a DIAL file ID, trigger a download.
+
+**Previewability test** — `isExternalSourcePreviewable(contentType, url)` exported from `apps/chat/src/utils/attachment-canvas.ts`:
+
+- Returns `true` if `contentType` starts with `'image/'` or `'audio/'` (these content types are specific and unlikely to be mislabelled by web-search grounding APIs).
+- Otherwise, extracts the last path segment of `url` (ignoring query string and fragment) and finds the extension after the last `.`. Returns `true` when:
+  - the extension is `'pdf'` (`FileExtension.PDF`) — binary format rendered by the PDF canvas renderer; or
+  - `isTextPreviewable(fileName)` from `@epam/ai-dial-attachment-canvas` returns `true` — covers `.md`, `.markdown`, `.json`, `.txt`, `.xml`, `.csv`, and all other plain-text formats the canvas text renderer supports.
+- If there is no dot in the last path segment, returns `false`.
+- Returns `false` on invalid URLs.
+
+The rationale: some web-search grounding APIs (e.g. Google Vertex AI) label every web reference — YouTube, news articles, blog posts — with `content-type: text/markdown` regardless of actual content. Relying on the content type alone would route all web sources through the canvas pipeline and produce a "Preview not supported" error. The URL extension is the reliable signal; image and audio types are exempted because they are not mislabelled this way.
+
+#### Scenario: Web-search reference URL without a file extension opens in a new tab
+
+- **GIVEN** a `QuotationSource` with `contentType = 'text/markdown'` and a redirect URL containing no file extension (e.g. `https://vertexaisearch.cloud.google.com/grounding-api-redirect/...`)
+- **WHEN** the user clicks the source link
+- **THEN** `window.open` is called with the URL, `'_blank'`, and `'noopener,noreferrer'`
+- **AND** the canvas is not opened
+
+#### Scenario: External PDF URL opens in the canvas
+
+- **GIVEN** a `QuotationSource` with a URL whose last path segment ends in `.pdf`
+- **WHEN** the user clicks the source link
+- **THEN** `openAttachmentCanvas` is called with a `DisplayAttachment` built from the source
+- **AND** if the canvas opens, the sources sidebar is closed
+
+#### Scenario: External text-previewable URL opens in the canvas
+
+- **GIVEN** a `QuotationSource` with a URL whose last path segment has an extension recognised by `isTextPreviewable` (e.g. `.md`, `.markdown`, `.json`, `.txt`, `.csv`, `.xml`)
+- **WHEN** the user clicks the source link
+- **THEN** `openAttachmentCanvas` is called
+- **AND** if the canvas opens, the sources sidebar is closed
+
+#### Scenario: Image source opens in the canvas regardless of URL extension
+
+- **GIVEN** a `QuotationSource` with `contentType = 'image/png'` (or any `image/*` value)
+- **WHEN** the user clicks the source link
+- **THEN** `openAttachmentCanvas` is called
+
+#### Scenario: Canvas failure on external previewable URL falls back to new tab
+
+- **GIVEN** a `QuotationSource` with a previewable URL extension (e.g. `.pdf`) but where `openAttachmentCanvas` returns `false`
+- **WHEN** the user clicks the source link
+- **THEN** `window.open` is called with the source URL, `'_blank'`, and `'noopener,noreferrer'`
+
+#### Scenario: Canvas failure on DIAL file falls back to download
+
+- **GIVEN** a `QuotationSource` whose URL is a DIAL file ID and where `openAttachmentCanvas` returns `false`
+- **WHEN** the user clicks the source link
+- **THEN** the attachment download handler is invoked (not `window.open`)
 
 ---
 
@@ -334,16 +391,16 @@ interface QuotationSource {
 For `UploadedFilesSection` and `GeneratedFilesSection`:
 
 - When `attachments.length > 0`: render a 3-column grid (`role="list"`) where each cell (`role="listitem"`) wraps an `AttachmentCard` (no `onRemove`, no `onRetry`) sized `w-full`. When an `onAttachmentClick` callback is provided to the section, the section SHALL forward `(att) => onAttachmentClick(att)` to each card's `onClick` prop and pass the i18n value of `sidebar.sources.attachment.downloadLabel` as `clickLabel`. When `onAttachmentClick` is not provided, `onClick` SHALL be omitted.
-- When `attachments.length === 0`: render the `emptyMessage` text in place of the grid.
+- When `attachments.length === 0`: return `null` (no title or content rendered).
 
 Both `UploadedFilesSection` and `GeneratedFilesSection` SHALL accept an optional `onAttachmentClick?: (attachment: DisplayAttachment) => void` prop.
 
 For `SourcesSection`:
 
-- Accept `Props { title: string; sources: QuotationSource[]; copyLabel: string }`.
+- Accept `Props { title: string; sources: QuotationSource[]; copyLabel: string; onSourceClick?: (source: QuotationSource) => void }`.
 - When `sources.length === 0`: return `null` (no title or empty message rendered).
 - When `sources.length > 0`: render a `<ul>` where each `<li>` contains two rows:
-  - **Row 1** (flex, `items-center`, `justify-between`): an `<a href={source.url} target="_blank" rel="noopener noreferrer">` showing `source.title` with `truncate`; and a `DialGhostIconButton` with `IconCopy` that calls `navigator.clipboard.writeText(source.url)` on click, `aria-label={copyLabel}`.
+  - **Row 1** (flex, `items-center`, `justify-between`): an `<a href={source.url} target="_blank" rel="noopener noreferrer">` showing `source.title` with `truncate`; and a `GhostIconButton` with `IconCopy` that calls `navigator.clipboard.writeText(source.url)` on click, `aria-label={copyLabel}`. When `onSourceClick` is provided, clicking the `<a>` SHALL call `e.preventDefault()` and invoke `onSourceClick(source)` instead of following the `href`.
   - **Row 2** (only when `source.quote` is present): a `<div>` with `quoteClassName` (typography), `styles.quote` (color token), `line-clamp-5`, and `[&>div>*+*]:mt-1` (spacing between block elements), containing a `MarkdownRenderer` rendering `source.quote`. The `[&>div>*+*]:mt-1` selector targets the block-level children of `MarkdownRenderer`'s root `<div>` to add consistent vertical spacing between headings, paragraphs, and lists.
 
 `SourcesSection` is located at `libs/source-panel/src/components/SourcesSection/SourcesSection.tsx`.
@@ -356,7 +413,7 @@ For `SourcesSection`:
 #### Scenario: Uploaded Files section empty
 
 - **WHEN** `UploadedFilesSection` receives `[]`
-- **THEN** the rendered DOM contains the title and the empty-message text, but no grid
+- **THEN** nothing is rendered — no title, no grid
 
 #### Scenario: Generated Files section parity
 
@@ -401,20 +458,26 @@ For `SourcesSection`:
 
 ---
 
-### Requirement: Panel mounts as a sibling of `<main>` and unmounts when closed
+### Requirement: Panel mounts as a sibling of `<main>` and is hidden when closed
 
-`apps/chat/src/app/app.tsx` (or the active conversation page) SHALL render the right-sidebar slot as a sibling of `<main>` inside the root flex row. The slot SHALL render `<ConversationSourcesPanel>` when `useRightSidebar().isOpen === true`, and SHALL render `null` (no element) when `isOpen === false`. Opening or closing the sidebar SHALL NOT modify `<main>`'s class names or layout props.
+`apps/chat/src/app/app.tsx` (or the active conversation page) SHALL render the right-sidebar slot as a sibling of `<main>` inside the root flex row. Opening or closing the sidebar SHALL NOT modify `<main>`'s class names or layout props.
 
-#### Scenario: Closed sidebar renders no element
+When `isOpen === false` the panel SHALL be visually and functionally removed. Two acceptable implementations:
+- **Unmount**: the slot renders `null` so no `<aside>` element exists in the DOM.
+- **Animated collapse** (preferred for smooth transitions): the `<aside>` element remains in the DOM but is collapsed to zero width and marked `inert` so it occupies no visible space, receives no pointer events, and is removed from both the tab order and the accessibility tree.
+
+In either case, when `isOpen === false`, no focusable element inside the panel SHALL be reachable by keyboard and the `complementary` landmark SHALL not be perceivable by assistive technology.
+
+#### Scenario: Closed sidebar is not perceivable
 
 - **WHEN** `isOpen === false`
-- **THEN** the right-sidebar slot renders `null`
-- **AND** no `aside` with `aria-label` matching `sidebar.sources.ariaLabel` exists in the DOM
+- **THEN** the panel either does not exist in the DOM, or exists with zero width and the `inert` attribute
+- **AND** no focusable element inside the panel is reachable by keyboard
 
 #### Scenario: Open sidebar renders the panel
 
 - **WHEN** `isOpen === true`
-- **THEN** an `aside` with `aria-label` matching `sidebar.sources.ariaLabel` is mounted as a sibling of `<main>`
+- **THEN** an `aside` with `aria-label` matching `sidebar.sources.ariaLabel` is mounted as a sibling of `<main>` and is visible
 
 #### Scenario: Toggling does not modify main layout
 
@@ -425,12 +488,12 @@ For `SourcesSection`:
 
 ### Requirement: All sidebar user-visible strings come from i18n
 
-All user-visible strings in the right sidebar (toggle aria-labels, panel aria-label, close label, section titles, panel-level and section-level empty-state messages, search and download-all aria-labels, attachment click label) SHALL be sourced from i18n keys defined in `apps/chat/src/i18n/locales/en.json` under `sidebar.base.*` and `sidebar.sources.*`. A typed `SidebarI18nKeys` enum/object SHALL be exposed from `apps/chat/src/constants/translation-keys.ts` for consumers.
+All user-visible strings in the right sidebar (toggle aria-label, panel aria-label, close label, section titles, search and download-all aria-labels, attachment click label) SHALL be sourced from i18n keys. Sidebar-specific strings live under `sidebar.base.*` and `sidebar.sources.*` in `apps/chat/src/i18n/locales/en.json`; the all-empty "No data" string reuses `basic.noData`. A typed `SidebarI18nKeys` enum/object SHALL be exposed from `apps/chat/src/constants/translation-keys.ts` for consumers.
 
 #### Scenario: New keys added to en.json
 
 - **WHEN** `apps/chat/src/i18n/locales/en.json` is inspected
-- **THEN** it contains keys `sidebar.base.toggleOpen`, `sidebar.base.toggleClose`, `sidebar.base.close`, `sidebar.sources.ariaLabel`, `sidebar.sources.search`, `sidebar.sources.downloadAll`, `sidebar.sources.copySource`, `sidebar.sources.sections.uploadedFiles`, `sidebar.sources.sections.generatedFiles`, `sidebar.sources.sections.sources`, `sidebar.sources.empty.noData`, `sidebar.sources.empty.uploadedFiles`, `sidebar.sources.empty.generatedFiles`, `sidebar.sources.empty.sources`, `sidebar.sources.attachment.downloadLabel`
+- **THEN** it contains keys `sidebar.base.toggleOpen`, `sidebar.sources.ariaLabel`, `sidebar.sources.downloadAll`, `sidebar.sources.sections.uploadedFiles`, `sidebar.sources.sections.generatedFiles`, `sidebar.sources.sections.sources`
 
 #### Scenario: Components consume the typed key map
 

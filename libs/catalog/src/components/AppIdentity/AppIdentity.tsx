@@ -1,10 +1,12 @@
 import {
+  buildCssVars,
   DeploymentIcon,
-  Highlight,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
+import { DialEllipsisTooltip, Highlight } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
+import { AppIdentityColors } from '../../models/app-identity-styles';
+import { DeploymentSize } from '../../types/deployment-icon-size';
 import { CatalogEntityType } from '../../types/entity-type';
 import { EntityTypeLabel } from '../EntityTypeLabel/EntityTypeLabel';
 import styles from './AppIdentity.module.scss';
@@ -24,19 +26,18 @@ export interface AppIdentityProps {
    * When undefined, the row is hidden even in size 'lg'.
    */
   lastUsed?: string;
-  /**
-   * 'sm' — browse cards: 44 px logo, radius 12 px, no last-used line.
-   * 'lg' — favorite cards: 54 px logo, radius 14 px, includes last-used line.
-   */
-  size: 'sm' | 'lg';
+  /** Size of the block, which controls the logo size and whether the last-used row is shown. */
+  size: DeploymentSize;
   /** Search query used to highlight matching text in the name. */
   query?: string;
   /** Additional classes applied to the root element. */
   className?: string;
   /** CSS class for the type label. Default: 'dial-caption-semi-text'. */
   typeClassName?: string;
-  /** CSS class for the entity name. Default: 'dial-body-semi-text text-primary'. */
+  /** Typography CSS class for the entity name. Default: 'dial-body-semi-text'. */
   nameClassName?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: AppIdentityColors;
   /** CSS class for the version string. Default: 'dial-tiny-text text-secondary'. */
   versionClassName?: string;
   /** CSS class for the last-used line text and icon. Default: 'dial-tiny-text text-secondary'. */
@@ -58,17 +59,19 @@ export const AppIdentity: FC<AppIdentityProps> = ({
   query,
   className,
   typeClassName = 'dial-caption-semi-text',
-  nameClassName = 'dial-body-semi-text text-primary',
+  nameClassName = 'dial-body-semi-text',
+  colors,
   versionClassName = 'dial-tiny-text text-secondary',
   lastUsedClassName = 'dial-tiny-text text-tertiary',
   lastUsedTrailing,
   iconClassName,
 }) => {
-  const isLg = size === 'lg';
+  const isLg = size === DeploymentSize.LG;
   const logoClass = isLg
-    ? 'h-[54px] w-[54px] rounded-[14px]'
-    : 'h-[44px] w-[44px] rounded-lg';
+    ? 'size-[54px] rounded-[14px]'
+    : 'size-[44px] rounded-lg';
   const logoSize = isLg ? 54 : 44;
+  const cssVars = buildCssVars({ '--ai-name-text': colors?.nameColor });
 
   return (
     <div
@@ -76,8 +79,8 @@ export const AppIdentity: FC<AppIdentityProps> = ({
         'flex min-w-0 items-start gap-[14px] rounded-xl',
         className,
       )}
+      style={cssVars}
     >
-      {/* Logo — flex-shrink-0 so a long name can never squeeze the icon */}
       <div
         className={mergeClasses(
           'flex-shrink-0 overflow-hidden',
@@ -97,18 +100,16 @@ export const AppIdentity: FC<AppIdentityProps> = ({
         />
       </div>
 
-      {/* Text stack — type sits above a tightly grouped name+last-used cluster */}
-      <div className="flex min-w-0 flex-1 flex-col gap-[5px]">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <EntityTypeLabel type={type} className={typeClassName} />
 
-        {/* Name + last-used grouped tightly together */}
         <div className="flex min-w-0 flex-col">
-          {/* Name + version: version sits immediately after name text */}
           <div className="flex min-w-0 items-start gap-1 overflow-hidden">
             <span
               className={mergeClasses(
-                'flex-3 min-w-0 shrink truncate',
+                'flex-3 min-w-0 truncate',
                 nameClassName,
+                styles.name,
               )}
             >
               {query ? <Highlight text={name} query={query} /> : name}
@@ -117,20 +118,16 @@ export const AppIdentity: FC<AppIdentityProps> = ({
               <DialEllipsisTooltip
                 text={version}
                 className={mergeClasses(
-                  'flex-1',
-                  styles.numericText,
+                  'flex-2 tabular-nums',
                   versionClassName,
                 )}
               />
             )}
           </div>
 
-          {/* Last-used row — rendered only in size 'lg' */}
           {isLg && lastUsed != null && (
             <div className="flex items-center gap-2">
-              <span
-                className={mergeClasses(styles.numericText, lastUsedClassName)}
-              >
+              <span className={mergeClasses('tabular-nums', lastUsedClassName)}>
                 {lastUsed}
               </span>
               {lastUsedTrailing}

@@ -1,7 +1,5 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Input, NeutralButton } from '@epam/ai-dial-kit';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
-import { IconCheck, IconCopy } from '@tabler/icons-react';
+import { CopyButton, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { Input } from '@epam/ai-dial-kit';
 import { FC } from 'react';
 import styles from '../SharePopover/SharePopover.module.scss';
 
@@ -55,17 +53,11 @@ export const LinkView: FC<LinkViewProps> = ({
         aria-label={linkAriaLabel}
         containerClassName="min-w-0 flex-1"
       />
-      <NeutralButton
-        label={isCopied ? copiedButtonLabel : copyButtonLabel}
-        iconBefore={
-          isCopied ? (
-            <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
-          ) : (
-            <IconCopy size={DIAL_ICON_SIZE.SM} aria-hidden />
-          )
-        }
+      <CopyButton
+        copiedLabel={copiedButtonLabel}
+        copyLabel={copyButtonLabel}
+        isCopied={isCopied}
         onClick={onCopy}
-        className="shrink-0"
       />
     </div>
     {/* Screen-reader-only announcement: button label change is visual-only. */}

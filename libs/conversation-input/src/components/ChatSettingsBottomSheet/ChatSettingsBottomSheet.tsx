@@ -1,7 +1,6 @@
 import type { DeploymentFeatures } from '@epam/ai-dial-chat-shared';
 import { mergeClasses, ResponseFormat } from '@epam/ai-dial-chat-shared';
-import { PrimaryButton } from '@epam/ai-dial-kit';
-import { DialTooltip } from '@epam/ai-dial-ui-kit';
+import { DialTooltip, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import type { CSSProperties, FC } from 'react';
 import { useChatSettingsForm } from '../../hooks/useChatSettingsForm';
 import type { ChatSettingsValues } from '../../models/Input';
@@ -58,10 +57,7 @@ export interface ChatSettingsBottomSheetProps {
   saveDisabledTooltip?: string;
 }
 
-/**
- * Mobile bottom sheet that renders the chat-settings form inline with a back
- * arrow to return to the preceding sheet.
- */
+/** Mobile bottom sheet for chat settings with a back button to return to the preceding sheet. */
 export const ChatSettingsBottomSheet: FC<ChatSettingsBottomSheetProps> = ({
   isOpen,
   onBack,

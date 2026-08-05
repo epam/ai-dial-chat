@@ -22,21 +22,11 @@ export interface StageItemProps {
   typography?: StageTypography;
   /** User-visible strings. */
   labels?: StagesPanelLabels;
-  /**
-   * Overrides the displayed name without affecting duration extraction —
-   * used to relabel an individual attempt (e.g. `'Attempt 2'`) inside a
-   * collapsed `×N` group while still reading that attempt's own duration
-   * from its real `stage.name`.
-   */
+  /** Overrides the displayed name; used to relabel individual attempts (e.g. `'Attempt 2'`) inside a `×N` group. */
   nameOverride?: string;
 }
 
-/**
- * A single flat stage row: icon · name · tag? · duration? · chevron? — every
- * element but the icon and name is optional and renders only when the data
- * exists. Plain when the stage has no expandable content or attachments;
- * becomes a disclosure button when it does.
- */
+/** Renders a single stage row, optionally expandable to show its content. */
 export const StageItem: FC<StageItemProps> = ({
   stage,
   isLive,
@@ -81,7 +71,7 @@ export const StageItem: FC<StageItemProps> = ({
       {stage.tag && (
         <span
           className={mergeClasses(
-            'flex-none',
+            'flex-none uppercase',
             typography?.countFontClassName ?? 'dial-tiny-text',
             styles.tag,
           )}

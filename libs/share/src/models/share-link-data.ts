@@ -6,9 +6,6 @@ export interface ShareLinkData {
   url: string;
   /** Number of days the link stays active before expiring. */
   expiresInDays: number;
-  /**
-   * Access levels currently granted to anyone with the link. Edit access
-   * implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.
-   */
+  /** Access levels granted to anyone with the link. */
   access: ShareLinkAccess[];
 }

@@ -7,15 +7,27 @@ import type { ToolsetLoginBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
-import { ToolsetEditorQuery } from '../../constants/toolsets';
+import {
+  ToolsetEditorQuery,
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  ToolsetEditorSteps,
+  WithLogin,
+} from '../../constants/toolsets';
 import {
   ToolsetEditorI18nKeys,
   EditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import type {
+  ToolsetAuthFormData,
+  ToolsetFormData,
+  ToolsetFormErrors,
+} from '../../models/toolsets';
+import { getApiErrorDetails } from '../../server-api/api-error';
 import {
   createToolset,
   getToolset,
@@ -24,17 +36,6 @@ import {
   updateToolset,
 } from '../../server-api/toolsets';
 import { ROUTES } from '../../types/routes';
-import type {
-  ToolsetAuthFormData,
-  ToolsetFormData,
-  ToolsetFormErrors,
-} from '../../types/toolsets';
-import {
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
-  ToolsetEditorSteps,
-  WithLogin,
-} from '../../types/toolsets';
 import {
   extractToolsetApiErrorMessage,
   formToToolsetBody,
@@ -92,10 +93,10 @@ const ToolsetEditor: FC = () => {
   const step =
     (searchParams.get(ToolsetEditorQuery.Step) as ToolsetEditorSteps) ??
     ToolsetEditorSteps.General;
-  const returnUrl = useMemo(
-    () => searchParams.get(ToolsetEditorQuery.ReturnUrl) ?? ROUTES.Catalog,
-    [searchParams],
-  );
+  const returnUrl = useMemo(() => {
+    const raw = searchParams.get(ToolsetEditorQuery.ReturnUrl);
+    return raw?.startsWith('/') && !raw.startsWith('//') ? raw : ROUTES.Catalog;
+  }, [searchParams]);
 
   const [form, setForm] = useState<ToolsetFormData | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(isEditMode);
@@ -188,12 +189,13 @@ const ToolsetEditor: FC = () => {
       });
 
       /*
-       * AuthSection only reports isLoggedIn=true after the login request has
-       * succeeded (or a successful OAuth login has been recovered).
-       * Keep the shared toolset list in sync with that confirmed status so
-       * returning to the Catalog does not expose the pre-auth snapshot.
+       * AuthSection only includes isLoggedIn in a patch after a login or
+       * logout request has actually resolved (or a successful OAuth login
+       * has been recovered) — never speculatively. Keep the shared toolset
+       * list in sync with that confirmed status in either direction so
+       * returning to the Catalog never shows a stale pre-change snapshot.
        */
-      if (patch.isLoggedIn === true) {
+      if ('isLoggedIn' in patch) {
         void refetchToolsets();
       }
     },
@@ -244,6 +246,7 @@ const ToolsetEditor: FC = () => {
       await refetchToolsets();
       return id;
     } catch (err) {
+      const { traceId } = await getApiErrorDetails(err);
       const upstreamMessage = await extractToolsetApiErrorMessage(err);
       showNotification({
         variant: NotificationVariant.Error,
@@ -254,6 +257,7 @@ const ToolsetEditor: FC = () => {
               ? ToolsetEditorI18nKeys.ErrorUpdateFailed
               : ToolsetEditorI18nKeys.ErrorCreateFailed,
           ),
+        requestId: traceId,
       });
       return null;
     } finally {
@@ -413,13 +417,16 @@ const ToolsetEditor: FC = () => {
       try {
         await runPostSaveAuth(result.id, form);
         navigate(returnUrl);
-      } catch {
+      } catch (error) {
+        const { traceId } = await getApiErrorDetails(error);
         showNotification({
           variant: NotificationVariant.Error,
           message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
+          requestId: traceId,
         });
       }
     } catch (err) {
+      const { traceId } = await getApiErrorDetails(err);
       const upstreamMessage = await extractToolsetApiErrorMessage(err);
       showNotification({
         variant: NotificationVariant.Error,
@@ -430,6 +437,7 @@ const ToolsetEditor: FC = () => {
               ? ToolsetEditorI18nKeys.ErrorUpdateFailed
               : ToolsetEditorI18nKeys.ErrorCreateFailed,
           ),
+        requestId: traceId,
       });
     } finally {
       setIsSaving(false);
@@ -491,6 +499,7 @@ const ToolsetEditor: FC = () => {
         errors={visibleErrors}
         isSaving={isSaving}
         toolsetId={persistedToolsetId}
+        isEditMode={isEditMode}
         onNext={handleNext}
         onCancel={handleCancel}
         onEnsureSaved={handleEnsureSaved}

@@ -1,21 +1,41 @@
 import {
+  buildCssVars,
   type DeploymentItem,
-  Highlight,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
+  Button,
   DIAL_ICON_SIZE,
-  DialButton,
   DialSearch,
   ElementSize,
+  Highlight,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import { type CSSProperties, type FC, useEffect, useState } from 'react';
 import { List, type RowComponentProps } from 'react-window';
 import { buildDeploymentIcon, filterDeployments } from '../../utils/deployment';
+import type { BottomSheetShellColors } from '../BottomSheetShell/BottomSheetShell';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
 import { ModelSelectorSkeletonRows } from '../ModelSelectorSkeleton/ModelSelectorSkeleton';
 import styles from './ModelSelectorBottomSheet.module.scss';
+
+/** Color overrides for the `ModelSelectorBottomSheet` component, applied as CSS custom properties. */
+export interface ModelSelectorBottomSheetColors {
+  /** Divider color between the search field and the deployment list. Defaults to `--bg-layer-4`. */
+  divider?: string;
+  /** Item label and state-label text color. Defaults to `--text-primary`/`--text-secondary`. */
+  itemText?: string;
+  /** Item hover background. Defaults to `--bg-layer-raised`. */
+  itemHoverBg?: string;
+  /** Item active/pressed background. Defaults to `--bg-layer-4`. */
+  itemActiveBg?: string;
+  /** Item leading-icon color. Defaults to `--text-secondary`. */
+  itemIcon?: string;
+  /** Selected-row checkmark icon color. Defaults to `--text-accent`. */
+  checkIcon?: string;
+  /** Color overrides forwarded to the underlying `BottomSheetShell` (backdrop, panel background, title, divider). */
+  shell?: BottomSheetShellColors;
+}
 
 /** Fixed pixel height of a single deployment row, used by the virtualized list. */
 const ROW_HEIGHT = 44;
@@ -58,12 +78,9 @@ const ModelRow = ({
 
   return (
     <div style={style} {...ariaAttributes}>
-      <DialButton
+      <Button
         type="button"
-        className={mergeClasses(
-          styles.item,
-          'flex h-full w-full items-center gap-3 px-4',
-        )}
+        className={mergeClasses(styles.item, 'h-full w-full gap-3 px-4')}
         iconBefore={<span className={styles.itemIcon}>{modelIcon}</span>}
         label={
           <span className="flex flex-1 items-center justify-between gap-2">
@@ -121,13 +138,11 @@ export interface ModelSelectorBottomSheetProps {
   titleClassName?: string;
   /** CSS class applied to each item label and the state label. Defaults to `'dial-small-text'`. */
   labelClassName?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: ModelSelectorBottomSheetColors;
 }
 
-/**
- * A bottom-sheet overlay for the model/deployment selector on mobile viewports.
- * Renders the shared {@link BottomSheetShell} with a search input that filters
- * the deployment list (virtualized for large lists) as the user types.
- */
+/** Mobile bottom-sheet model selector with search and a virtualized deployment list. */
 export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
   isOpen,
   title,
@@ -143,6 +158,7 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
   style,
   titleClassName = 'dial-body-semi-text',
   labelClassName = 'dial-small-text',
+  colors,
 }) => {
   const [query, setQuery] = useState('');
 
@@ -164,6 +180,15 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
     onClose();
   };
 
+  const cssVars = buildCssVars({
+    '--ci-sheet-divider': colors?.divider,
+    '--ci-sheet-text': colors?.itemText,
+    '--ci-sheet-item-hover': colors?.itemHoverBg,
+    '--ci-sheet-item-active': colors?.itemActiveBg,
+    '--ci-sheet-icon': colors?.itemIcon,
+    '--ci-check-icon': colors?.checkIcon,
+  });
+
   return (
     <BottomSheetShell
       isOpen={isOpen}
@@ -173,55 +198,60 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
       style={style}
       titleClassName={titleClassName}
       className="max-h-[80dvh]"
+      colors={colors?.shell}
     >
-      {/* Search */}
-      {hasDeployments && !isLoading && (
-        <>
-          <div className="flex-shrink-0 px-4 py-[10px]">
-            <DialSearch
-              value={query}
-              placeholder={searchPlaceholder}
-              size={ElementSize.Standard}
-              onChange={setQuery}
+      <div className="contents" style={cssVars}>
+        {/* Search */}
+        {hasDeployments && !isLoading && (
+          <>
+            <div className="flex-shrink-0 px-4 py-[10px]">
+              <DialSearch
+                value={query}
+                placeholder={searchPlaceholder}
+                size={ElementSize.Standard}
+                onChange={setQuery}
+              />
+            </div>
+            <div
+              className={mergeClasses(styles.divider, 'h-px flex-shrink-0')}
             />
-          </div>
-          <div className={mergeClasses(styles.divider, 'h-px flex-shrink-0')} />
-        </>
-      )}
+          </>
+        )}
 
-      {/* List */}
-      {isLoading ? (
-        <ModelSelectorSkeletonRows loadingLabel={loadingLabel} />
-      ) : stateLabel ? (
-        <div
-          role="list"
-          className={mergeClasses(
-            styles.stateLabel,
-            labelClassName,
-            'px-4 py-4',
-          )}
-        >
-          {stateLabel}
-        </div>
-      ) : (
-        <List<ModelRowData>
-          role="list"
-          className="overflow-y-auto"
-          style={{
-            height: Math.min(filtered.length, MAX_VISIBLE_ROWS) * ROW_HEIGHT,
-          }}
-          rowComponent={ModelRow}
-          rowCount={filtered.length}
-          rowHeight={ROW_HEIGHT}
-          rowProps={{
-            items: filtered,
-            selectedDeploymentId,
-            labelClassName,
-            query,
-            onSelect: handleSelect,
-          }}
-        />
-      )}
+        {/* List */}
+        {isLoading ? (
+          <ModelSelectorSkeletonRows loadingLabel={loadingLabel} />
+        ) : stateLabel ? (
+          <div
+            role="list"
+            className={mergeClasses(
+              styles.stateLabel,
+              labelClassName,
+              'px-4 py-4',
+            )}
+          >
+            {stateLabel}
+          </div>
+        ) : (
+          <List<ModelRowData>
+            role="list"
+            className="overflow-y-auto"
+            style={{
+              height: Math.min(filtered.length, MAX_VISIBLE_ROWS) * ROW_HEIGHT,
+            }}
+            rowComponent={ModelRow}
+            rowCount={filtered.length}
+            rowHeight={ROW_HEIGHT}
+            rowProps={{
+              items: filtered,
+              selectedDeploymentId,
+              labelClassName,
+              query,
+              onSelect: handleSelect,
+            }}
+          />
+        )}
+      </div>
     </BottomSheetShell>
   );
 };

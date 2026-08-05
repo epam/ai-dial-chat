@@ -1,12 +1,12 @@
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { FC, memo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { ShareI18nKeys } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
-import { getApiErrorMessage } from '../../server-api/api-error';
+import { getApiErrorDetails } from '../../server-api/api-error';
 import { acceptInvitation } from '../../server-api/share.api';
 import { CatalogQuery } from '../../types/catalog';
 import { ROUTES } from '../../types/routes';
@@ -65,10 +65,12 @@ const SharedInvitationPage: FC<Props> = ({
         if (sharedItem) mergeSharedItem(sharedItem);
         navigate(getTargetRoute(itemId), { replace: true });
       } catch (err) {
-        const errorMessage = await getApiErrorMessage(err);
+        const { message: errorMessage, traceId } =
+          await getApiErrorDetails(err);
         showNotification({
           variant: NotificationVariant.Error,
           message: errorMessage ?? t(ShareI18nKeys.InvitationAcceptError),
+          requestId: traceId,
         });
         navigate(errorFallbackRoute, { replace: true });
       }

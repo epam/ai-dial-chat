@@ -4,10 +4,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { SidebarOrientation } from '../../../types/orientation';
 import { SidebarPanel } from '../SidebarPanel';
 
-// Minimal mock so DialGhostIconButton passes through aria-label and calls onClick.
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { LG: 24 },
-  DialGhostIconButton: ({
+  GhostIconButton: ({
     'aria-label': ariaLabel,
     onClick,
   }: {
@@ -174,5 +173,30 @@ describe('SidebarPanel', () => {
     );
     const style = container.querySelector('aside')?.getAttribute('style') ?? '';
     expect(style).not.toContain('--sb-bg');
+  });
+
+  it('w-full className overrides inline width', () => {
+    const { container } = render(
+      <SidebarPanel
+        {...defaultProps}
+        styles={{ className: 'w-full' }}
+        defaultWidth={360}
+      >
+        <span />
+      </SidebarPanel>,
+    );
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.classList.contains('w-full')).toBe(true);
+    expect(wrapper.style.width).toBe('');
+  });
+
+  it('applies inline width when w-full className is absent', () => {
+    const { container } = render(
+      <SidebarPanel {...defaultProps} defaultWidth={360}>
+        <span />
+      </SidebarPanel>,
+    );
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.style.width).toBe('360px');
   });
 });

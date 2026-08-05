@@ -11,7 +11,7 @@ import SharedInvitationPage from '../SharedInvitation';
 const mockNavigate = vi.fn();
 let mockInvitationId: string | undefined = 'abc123';
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
   useParams: () => ({ invitationId: mockInvitationId }),
 }));
@@ -53,6 +53,7 @@ describe('SharedInvitationPage', () => {
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,

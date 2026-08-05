@@ -3,18 +3,25 @@ import {
   CatalogEntityType,
   CatalogItem,
   CatalogItemDetailsFetchResult,
+  CatalogViewMode,
+  CreateOption,
   CredentialsLevel,
   CredentialStatus,
-  CreateOption,
 } from '@epam/ai-dial-catalog';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { ToolsetLogoutBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
-import { ToolsetEditorQuery } from '../../constants/toolsets';
+import {
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  ToolsetEditorQuery,
+} from '../../constants/toolsets';
 import {
   ApiI18nKeys,
   AuthI18nKeys,
@@ -28,6 +35,10 @@ import {
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import {
+  FavoriteEntityType,
+  useFavoriteApplications,
+} from '../../context/FavoriteApplicationsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import {
@@ -35,19 +46,17 @@ import {
   useToolsetLogin,
 } from '../../hooks/toolsets/useToolsetLogin';
 import { useCatalogSortFilterPreference } from '../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
-import useFavoriteApplications, {
-  FavoriteEntityType,
-} from '../../hooks/useFavoriteApplications/useFavoriteApplications';
+import { useUiFeature } from '../../hooks/useUiFeature';
+import { getApiErrorDetails } from '../../server-api/api-error';
 import { deleteApplication } from '../../server-api/applications';
 import { getDeploymentLimits } from '../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../server-api/deployments';
+import { getPublishRules } from '../../server-api/publish-rules.api';
 import { publishCatalogEntity } from '../../server-api/publish.api';
 import { deleteToolset, logoutToolset } from '../../server-api/toolsets';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { CatalogQuery } from '../../types/catalog';
 import { ROUTES } from '../../types/routes';
-import type { ToolsetAuthTypes } from '../../types/toolsets';
-import { ToolsetCredentialsLevel } from '../../types/toolsets';
 import { isQuickAppSchema } from '../../utils/application-schema';
 import { mapDeploymentLimitsDtoToCatalogLimits } from '../../utils/map-deployment-limits-to-catalog';
 import {
@@ -59,14 +68,13 @@ import {
   mapEntityDetailsToCatalogDetails,
   mapToolsetCredentials,
 } from '../../utils/map-entity-details-to-catalog';
-import { toPublishEntityType } from '../../utils/publish';
+import { getAccessRulesLabels, toPublishEntityType } from '../../utils/publish';
 import ConnectPopoverContainer from '../ConnectPopoverContainer/ConnectPopoverContainer';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 
 /** Entity types shown in the catalog picker modal: models and agents only. */
 const PICKER_VISIBLE_TYPES = new Set<CatalogEntityType>([
   CatalogEntityType.Model,
-  CatalogEntityType.Application,
   CatalogEntityType.Agent,
 ]);
 
@@ -144,6 +152,22 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [schemas],
   );
 
+  const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
+  const isCatalogTableViewEnabled = useUiFeature(
+    OverlayFeature.CatalogTableView,
+  );
+  const isCatalogHideMyAppsEnabled = useUiFeature(
+    OverlayFeature.CatalogHideMyApps,
+  );
+  const isToolsetsEnabled = useUiFeature(OverlayFeature.Toolsets);
+  const isCustomAppsEnabled = useUiFeature(OverlayFeature.CustomApps);
+  const isCustomApplicationsEnabled = useUiFeature(
+    OverlayFeature.CustomApplications,
+  );
+  const isHideCustomAppCreationEnabled = useUiFeature(
+    OverlayFeature.HideCustomAppCreation,
+  );
+
   const catalogItems = useMemo(
     () => [
       ...deployments.map((d) =>
@@ -152,23 +176,37 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
           favoriteIds,
           undefined,
           t,
-          quickAppSchemaId,
+          quickAppSchemaId ? [quickAppSchemaId] : [],
+          isCustomAppsEnabled,
         ),
       ),
-      ...toolsets.map((toolset) =>
-        mapToolsetToCatalogItem(toolset, favoriteIds, isAdmin, t),
-      ),
+      ...(isToolsetsEnabled
+        ? toolsets.map((toolset) =>
+            mapToolsetToCatalogItem(toolset, favoriteIds, isAdmin, t),
+          )
+        : []),
     ],
-    [deployments, favoriteIds, t, toolsets, quickAppSchemaId, isAdmin],
+    [
+      deployments,
+      favoriteIds,
+      t,
+      toolsets,
+      quickAppSchemaId,
+      isAdmin,
+      isToolsetsEnabled,
+      isCustomAppsEnabled,
+    ],
   );
 
-  const visibleCatalogItems = useMemo(
-    () =>
-      isSelectorMode
-        ? catalogItems.filter((item) => PICKER_VISIBLE_TYPES.has(item.type))
-        : catalogItems,
-    [catalogItems, isSelectorMode],
-  );
+  const visibleCatalogItems = useMemo(() => {
+    let result = isSelectorMode
+      ? catalogItems.filter((item) => PICKER_VISIBLE_TYPES.has(item.type))
+      : catalogItems;
+    if (isCatalogHideMyAppsEnabled) {
+      result = result.filter((item) => !item.isMyApp);
+    }
+    return result;
+  }, [catalogItems, isSelectorMode, isCatalogHideMyAppsEnabled]);
 
   const reconciledFilterTopics = useMemo(() => {
     const availableTopics = new Set(
@@ -351,10 +389,12 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         await logoutToolset(item.id, body);
         showLogoutSuccess(item, params.level);
         await refetchToolsets();
-      } catch {
+      } catch (error) {
+        const { traceId } = await getApiErrorDetails(error);
         showNotification({
           variant: NotificationVariant.Error,
           message: t(ToolsetEditorI18nKeys.ErrorLogoutFailed),
+          requestId: traceId,
         });
       }
     },
@@ -390,7 +430,8 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
             { name },
           ),
         });
-      } catch {
+      } catch (error) {
+        const { traceId } = await getApiErrorDetails(error);
         showNotification({
           variant: NotificationVariant.Error,
           title: t(
@@ -404,6 +445,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
               : FavoritesI18nKeys.RemoveFailed,
             { name },
           ),
+          requestId: traceId,
         });
       }
     },
@@ -418,8 +460,8 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [setSelectedItemId, navigate],
   );
 
-  // Picker mode: a card click selects it and closes the modal immediately,
-  // without opening its details.
+  /* Picker mode: a card click selects it and closes the modal immediately,
+   * without opening its details. */
   const handleCardSelect = useCallback(
     (item: CatalogItem) => {
       setSelectedItemId(item.id);
@@ -431,7 +473,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const isPrimaryActionVisible = useCallback(
     (item: CatalogItem) =>
       item.type === CatalogEntityType.Model ||
-      item.type === CatalogEntityType.Application,
+      item.type === CatalogEntityType.Agent,
     [],
   );
 
@@ -445,11 +487,21 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     (item: CatalogItem) => {
       if (!dialCoreExternalUrl) return false;
       if (item.type === CatalogEntityType.Toolset) return true;
-      return (
-        item.type === CatalogEntityType.Application && item.supportsMcp === true
-      );
+      return item.type === CatalogEntityType.Agent && item.supportsMcp === true;
     },
     [dialCoreExternalUrl],
+  );
+
+  const isApplicationsSharingEnabled = useUiFeature(
+    OverlayFeature.ApplicationsSharing,
+  );
+  const isToolsetsSharingEnabled = useUiFeature(OverlayFeature.ToolsetsSharing);
+  const isShareVisible = useCallback(
+    (item: CatalogItem) =>
+      item.type === CatalogEntityType.Toolset
+        ? isToolsetsSharingEnabled
+        : isApplicationsSharingEnabled,
+    [isApplicationsSharingEnabled, isToolsetsSharingEnabled],
   );
 
   /*
@@ -461,7 +513,11 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const getPublishHistory = useCallback(async () => [], []);
 
   const handlePublish = useCallback(
-    async (item: CatalogItem, folderPath: string[]) => {
+    async (
+      item: CatalogItem,
+      folderPath: string[],
+      rules: PublicationRule[],
+    ) => {
       const entityType = toPublishEntityType(item.type);
       if (!entityType) {
         throw new Error(`Entity type "${item.type}" is not publishable`);
@@ -469,8 +525,14 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       await publishCatalogEntity(entityType, item.id, {
         folderPath: folderPath.join('/'),
         version: item.version,
+        rules,
       });
     },
+    [],
+  );
+
+  const handleFetchExistingRules = useCallback(
+    (folderPath: string[]) => getPublishRules(folderPath.join('/')),
     [],
   );
 
@@ -523,6 +585,20 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         return;
       }
 
+      const deployment = deployments.find((d) => d.id === item.id);
+      if (
+        isCustomAppsEnabled &&
+        deployment != null &&
+        !deployment.applicationTypeSchemaId
+      ) {
+        const params = new URLSearchParams({
+          [ToolsetEditorQuery.Id]: item.id,
+          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
+        });
+        navigate(`${ROUTES.CustomAppEditor}?${params.toString()}`);
+        return;
+      }
+
       if (!quickAppSchemaId) return;
       navigate(
         buildEditorUrl({
@@ -532,7 +608,13 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         }),
       );
     },
-    [quickAppSchemaId, navigate, buildEditorUrl],
+    [
+      deployments,
+      isCustomAppsEnabled,
+      quickAppSchemaId,
+      navigate,
+      buildEditorUrl,
+    ],
   );
 
   const handleDelete = useCallback(
@@ -552,9 +634,11 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
           message: t(CatalogI18nKeys.DetailsDeleteSuccess, { name: item.name }),
         });
       } catch (err) {
+        const { traceId } = await getApiErrorDetails(err);
         showNotification({
           variant: NotificationVariant.Error,
           message: t(CatalogI18nKeys.DetailsDeleteError),
+          requestId: traceId,
         });
         throw err;
       }
@@ -565,7 +649,11 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const createOptions = useMemo<CreateOption[]>(() => {
     const options: CreateOption[] = [];
 
-    if (quickAppSchemaId) {
+    if (
+      quickAppSchemaId &&
+      isCustomApplicationsEnabled &&
+      !isHideCustomAppCreationEnabled
+    ) {
       options.push({
         label: t(CatalogI18nKeys.CreateQuickApp),
         onClick: () =>
@@ -579,18 +667,45 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       });
     }
 
-    options.push({
-      label: t(CatalogI18nKeys.CreateToolset),
-      onClick: () => {
-        const params = new URLSearchParams({
-          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
-        });
-        navigate(`${ROUTES.ToolsetEditor}?${params.toString()}`);
-      },
-    });
+    if (isToolsetsEnabled) {
+      options.push({
+        label: t(CatalogI18nKeys.CreateToolset),
+        onClick: () => {
+          const params = new URLSearchParams({
+            [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
+          });
+          navigate(`${ROUTES.ToolsetEditor}?${params.toString()}`);
+        },
+      });
+    }
+
+    if (isCustomAppsEnabled && !isHideCustomAppCreationEnabled) {
+      options.push({
+        label: t(CatalogI18nKeys.CreateCustomApp),
+        onClick: () => {
+          const params = new URLSearchParams({
+            [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
+          });
+          navigate(`${ROUTES.CustomAppEditor}?${params.toString()}`);
+        },
+      });
+    }
 
     return options;
-  }, [quickAppSchemaId, navigate, t, buildEditorUrl]);
+  }, [
+    quickAppSchemaId,
+    navigate,
+    t,
+    buildEditorUrl,
+    isCustomApplicationsEnabled,
+    isHideCustomAppCreationEnabled,
+    isToolsetsEnabled,
+    isCustomAppsEnabled,
+  ]);
+
+  if (!isCatalogEnabled && !isSelectorMode) {
+    return null;
+  }
 
   return (
     <Catalog
@@ -600,6 +715,9 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       createOptions={createOptions}
       hideCreateButton={isSelectorMode}
       hidePageTitle={isSelectorMode}
+      initialViewMode={
+        isCatalogTableViewEnabled ? CatalogViewMode.List : undefined
+      }
       selectedItemId={
         isSelectorMode ? (selectedItemId ?? undefined) : undefined
       }
@@ -629,17 +747,21 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       hasPublishWriteAccess={hasPublishWriteAccess}
       onPublish={handlePublish}
       onPublishSuccess={handlePublishSuccess}
-      publishTexts={{
+      ruleSourceOptions={config.publicationFilterSources}
+      onFetchExistingRules={handleFetchExistingRules}
+      publishLabels={{
         searchPlaceholder: t(CatalogI18nKeys.PublishFolderSearchPlaceholder),
-        folderEmptyStateText: t(CatalogI18nKeys.PublishFolderEmptyState, {
+        folderEmptyStateLabel: t(CatalogI18nKeys.PublishFolderEmptyState, {
           query: '{query}',
         }),
-        historyLoadingText: t(CatalogI18nKeys.PublishHistoryLoading),
-        historyErrorText: t(CatalogI18nKeys.PublishHistoryError),
+        historyLoadingLabel: t(CatalogI18nKeys.PublishHistoryLoading),
+        historyErrorLabel: t(CatalogI18nKeys.PublishHistoryError),
+        accessRulesLabels: getAccessRulesLabels(t),
       }}
       shareOverlay={(item, onClose) => (
         <SharePopoverContainer item={item} onClose={onClose} />
       )}
+      isShareVisible={isShareVisible}
       isConnectVisible={isConnectVisible}
       connectOverlay={(item, onClose) => (
         <ConnectPopoverContainer item={item} onClose={onClose} />
@@ -663,7 +785,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         ariaLabel: t(NavigationI18nKeys.Catalog),
         tabLabels: {
           [CatalogEntityType.Model]: t(CatalogI18nKeys.TabModels),
-          [CatalogEntityType.Application]: t(CatalogI18nKeys.TabApplications),
+          [CatalogEntityType.Agent]: t(CatalogI18nKeys.TabApplications),
           [CatalogEntityType.Toolset]: t(CatalogI18nKeys.TabToolsets),
         },
       }}

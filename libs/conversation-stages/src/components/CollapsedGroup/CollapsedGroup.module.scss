@@ -1,5 +1,5 @@
 .toggleButton {
-  color: var(--cs-cg-label, var(--text-secondary, #575f73));
+  color: var(--cs-cg-label, var(--text-secondary, #6b7280));
   width: 100%;
   justify-content: flex-start !important;
 
@@ -9,26 +9,22 @@
 }
 
 .executedLabel {
-  color: var(--cs-cg-label, var(--text-secondary, #575f73));
+  color: var(--cs-cg-label, var(--text-secondary, #6b7280));
 }
 
-/* Execution time — muted like the row-level duration (--text-tertiary), not the loud --text-primary ink used for the rest of the summary line. */
 .stepsCount {
-  color: var(--cs-cg-steps-count, var(--text-tertiary, #808898));
+  color: var(--cs-cg-steps-count, var(--text-tertiary, #c7cbd4));
   font-variant-numeric: tabular-nums;
 }
 
-/* Finished-and-successful summary's leading check — a quiet accent, not a loud green. */
 .doneIcon {
   color: var(--cs-cg-done, var(--text-success, #007274));
 }
 
-/* Failed summary — "N failed" renders in the same warning (orange) token as a failed row, so the outcome reads without opening the group. */
 .failedText {
   color: var(--cs-cg-failed, var(--text-warning, #7f6300));
 }
 
-/* Running summary's live step name. */
 .liveName {
   color: var(--cs-cg-label, var(--text-primary, #161b2d));
 }

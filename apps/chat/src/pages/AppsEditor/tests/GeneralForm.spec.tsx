@@ -68,10 +68,21 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
   return {
     ...actual,
-    DialNotification: ({ message }: { variant?: string; message?: string }) => (
-      <p role="alert">{message}</p>
-    ),
+    ErrorMessageNotification: ({
+      message,
+    }: {
+      variant?: string;
+      message?: string;
+    }) => <p role="alert">{message}</p>,
     NotificationVariant: { Error: 'error' },
+  };
+});
+
+vi.mock('@epam/ai-dial-catalog', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@epam/ai-dial-catalog')>();
+  return {
+    ...actual,
+    Card: () => <div>Preview</div>,
   };
 });
 
@@ -332,7 +343,7 @@ describe('GeneralForm', () => {
       });
     });
 
-    it('returns the current trimmed values after edits, excluding version', async () => {
+    it('returns the current trimmed values after edits, including display_version but excluding the backend version field', async () => {
       const ref = createRef<GeneralFormHandle>();
 
       renderForm(
@@ -357,6 +368,7 @@ describe('GeneralForm', () => {
       expect(ref.current?.getValues()).toEqual({
         name: 'Renamed App',
         description: 'New description',
+        display_version: '1.0.0',
         iconUrl: undefined,
         topics: undefined,
         intro: 'New intro',

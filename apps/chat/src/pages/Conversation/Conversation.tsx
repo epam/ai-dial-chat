@@ -13,16 +13,16 @@ import {
 import type { ConversationResponseDto } from '@epam/chat-api-client';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router';
 import ConversationView from '../../components/ConversationView/ConversationView';
 import NegativeFeedbackModal from '../../components/ConversationView/Rate/NegativeFeedbackModal';
 import { getConversationRoute } from '../../constants/routes';
 import {
-  AttachmentsI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationPanelI18nKeys,
   RateI18nKeys,
+  ToolsI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversations } from '../../context/ConversationsContext';
@@ -38,13 +38,16 @@ import { useActiveConversationBridge } from '../../hooks/conversation/useActiveC
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
 import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
 import { useConversationStream } from '../../hooks/conversation/useConversationStream';
+import { useToolsMenu } from '../../hooks/conversation/useToolsMenu';
 import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect';
+import { getApiErrorDetails } from '../../server-api/api-error';
 import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
   getConversation as apiGetConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
 import { ROUTES } from '../../types/routes';
+import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { getConversationPath } from '../../utils/conversation-path';
 import { shouldWatchForDisplayNameUpdate } from '../../utils/display-name-watch';
 import { isAwaitingGenerationResume } from '../../utils/generation-resume';
@@ -104,24 +107,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     (filenames: string[]) => {
       showNotification({
         variant: NotificationVariant.Error,
-        title: t(AttachmentsI18nKeys.NetworkErrorTitle),
-        message: (
-          <div className="min-w-0 overflow-hidden">
-            <span className="whitespace-pre-line">
-              {t(AttachmentsI18nKeys.NetworkErrorMessage)}
-            </span>
-            <ul className="mt-1 max-w-[508px]">
-              {filenames.map((name, i) => (
-                <li key={i} className="flex items-center gap-1 overflow-hidden">
-                  <span className="shrink-0" aria-hidden>
-                    •
-                  </span>
-                  <span className="min-w-0 flex-1 truncate">{name}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ),
+        ...buildNetworkUploadErrorNotification(filenames, t),
       });
     },
     [showNotification, t],
@@ -374,12 +360,14 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
             resumeIfAwaitingGeneration(id, result);
           }
         }
-      } catch {
+      } catch (error) {
         if (notificationShownForRef.current !== id) {
           notificationShownForRef.current = id;
+          const { traceId } = await getApiErrorDetails(error);
           showNotification({
             variant: NotificationVariant.Error,
             message: t(ChatI18nKeys.ConversationNotFound),
+            requestId: traceId,
           });
         }
         navigate(ROUTES.Root);
@@ -425,6 +413,9 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     navigate(`${pathname}${search}`, { replace: true, state: null });
   }, [conversationId, prefetchedConversation, navigate, pathname, search]);
 
+  const { toolsMenuItems, onToolToggle, toolConfigurationValue } =
+    useToolsMenu();
+
   const {
     handleSend,
     handleUploadAttachment,
@@ -452,6 +443,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     setConversation,
     navigate,
     showNetworkError: handleNetworkUploadError,
+    toolConfigurationValue,
   });
 
   useEffect(() => {
@@ -554,7 +546,6 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           canStopAssistant={canStopStreaming}
           placeholder={t(ChatI18nKeys.Placeholder)}
           onSelectStarter={handleButtonSelect}
-          streamErrorText={t(ChatI18nKeys.StreamError)}
           stoppedGeneratingText={t(ChatI18nKeys.StoppedGenerating)}
           isReadOnly={isReadOnly}
           onDuplicateConversation={handleDuplicateConversation}
@@ -566,6 +557,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           inputContentRevision={
             overlay ? overlayInputContent.revision : undefined
           }
+          toolsMenuItems={toolsMenuItems}
+          onToolToggle={onToolToggle}
+          toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}
+          toolsChipLabels={{
+            countLabel: (count) => t(ToolsI18nKeys.SelectedCount, { count }),
+            removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
+          }}
         />
       </div>
 

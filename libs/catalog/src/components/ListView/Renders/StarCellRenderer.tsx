@@ -5,6 +5,7 @@ import { GridContext } from '../../../models/grid-context';
 import { StarToggleButton } from '../../StarToggleButton/StarToggleButton';
 import styles from '../ListView.module.scss';
 
+/** ag-grid cell renderer for the star/favorite toggle column. */
 export const StarCellRenderer: FC<
   ICellRendererParams<CatalogItem, unknown, GridContext>
 > = ({ data, context }) => {

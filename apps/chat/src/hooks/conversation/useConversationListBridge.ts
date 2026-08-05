@@ -5,13 +5,13 @@ import type {
   OverlayConversationError,
   RenameConversationResponse,
   SelectConversationResponse,
-} from '@epam/ai-dial-chat-shared';
+} from '@epam/ai-dial-chat-overlay';
 import type {
   ConversationListItemDto,
   ConversationResponseDto,
 } from '@epam/chat-api-client';
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { getConversationRoute } from '../../constants/routes';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';

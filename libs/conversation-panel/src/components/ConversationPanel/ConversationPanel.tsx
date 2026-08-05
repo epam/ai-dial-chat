@@ -38,6 +38,7 @@ import {
 import { FilterTabs } from '../FilterTabs/FilterTabs';
 import { NewChatButton } from '../NewChatButton/NewChatButton';
 import { RowRenderer } from '../RowRenderer/RowRenderer';
+import styles from './ConversationPanel.module.scss';
 import { matchesSearch, matchesTab } from './utils';
 
 const ALL_GROUP_KEYS = new Set<string>([
@@ -67,7 +68,12 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     activeFilter,
     onActiveFilterChange,
   }) => {
-    const { colors, typography } = panelStyles ?? {};
+    const {
+      colors,
+      typography,
+      newChatButton: newChatButtonColors,
+    } = panelStyles ?? {};
+
     const {
       title,
       emptyLabel,
@@ -87,8 +93,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     useEffect(() => {
       if (activeFilter == null) return;
       setActiveTab(activeFilter);
-      onActiveFilterChange?.(activeFilter);
-    }, [activeFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [activeFilter]);
+
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
       () => ALL_GROUP_KEYS,
     );
@@ -184,16 +190,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       '--cp-item-active': colors?.itemActive,
       '--cp-text': colors?.text,
       '--cp-text-secondary': colors?.textSecondary,
-      '--cp-new-chat-hover': colors?.newChatHoverBackground,
-      '--cp-new-chat-active': colors?.newChatActiveBackground,
-      '--cp-new-chat-bg': colors?.newChatBackground,
-      '--cp-new-chat-text': colors?.newChatText,
-      '--cp-new-chat-shadow-blue': colors?.newChatShadowBlue,
-      '--cp-new-chat-shadow-blue-hover': colors?.newChatShadowBlueHover,
-      '--cp-new-chat-shadow-blue-active': colors?.newChatShadowBlueActive,
-      '--cp-new-chat-shadow-purple': colors?.newChatShadowPurple,
-      '--cp-new-chat-shadow-purple-hover': colors?.newChatShadowPurpleHover,
-      '--cp-new-chat-shadow-purple-active': colors?.newChatShadowPurpleActive,
+      '--cp-new-chat-bg': newChatButtonColors?.background,
+      '--cp-new-chat-text': newChatButtonColors?.text,
       '--cp-drop-zone-ring': colors?.dropZoneRing,
       '--cp-trigger-bg': colors?.triggerBackground,
       '--cp-trigger-icon': colors?.triggerIcon,
@@ -289,14 +287,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     useEffect(() => {
       if (!activeConversationId) return;
 
-      const groupKey = groups.find((group) =>
-        group.items.some((item) => item.id === activeConversationId),
-      )?.key;
-      if (groupKey && !expandedGroups.has(groupKey)) {
-        setExpandedGroups((prev) => new Set(prev).add(groupKey));
-        return;
-      }
-
       if (lastScrolledIdRef.current === activeConversationId) return;
 
       const index = virtualRows.findIndex(
@@ -330,6 +320,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           groupHeaderClassName: typography?.groupHeaderClassName,
           itemTitleClassName: typography?.itemTitleClassName,
           itemIconBadgeClassName: panelStyles?.itemIconBadgeClassName,
+          taskBadgeClassName: panelStyles?.taskBadgeClassName,
         },
         draggingId,
         dragOverId,
@@ -354,6 +345,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         typography?.groupHeaderClassName,
         typography?.itemTitleClassName,
         panelStyles?.itemIconBadgeClassName,
+        panelStyles?.taskBadgeClassName,
         draggingId,
         dragOverId,
         allowedDropGroups,
@@ -398,6 +390,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           label={newChatLabel}
           onClick={onNewChat}
           labelClassName={typography?.newChatLabelClassName}
+          colors={newChatButtonColors}
         />
 
         <SearchInput
@@ -439,7 +432,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
                   showTitle={{ width: getSkeletonWidth(i) }}
                   paragraph={false}
                   active
-                  color="var(--bg-layer-4)"
+                  color={styles.skeletonColor}
                 />
               ))}
             </div>

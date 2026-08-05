@@ -45,19 +45,28 @@
   ],
   "references": [
     {
-      "path": "../../libs/share/tsconfig.lib.json"
+      "path": "../../libs/deployment-creation-form/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/deployment-creation-form/tsconfig.lib.json"
+      "path": "../../libs/scheduled-tasks/tsconfig.lib.json"
     },
     {
       "path": "../../libs/starter-buttons/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/share/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/attachment-input/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/ai-dial-kit/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/conversation-input/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/quotations/tsconfig.lib.json"
     },
     {
       "path": "../../libs/conversation-stages/tsconfig.lib.json"
@@ -72,7 +81,7 @@
       "path": "../../libs/chat-api-client/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/ai-dial-kit/tsconfig.lib.json"
+      "path": "../../libs/publish-panel/tsconfig.lib.json"
     },
     {
       "path": "../../libs/catalog/tsconfig.lib.json"
@@ -82,6 +91,9 @@
     },
     {
       "path": "../../libs/chat-shared/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/chat-overlay/tsconfig.lib.json"
     },
     {
       "path": "../../libs/attachment-canvas/tsconfig.lib.json"

@@ -3,8 +3,8 @@ import {
   DialFileManagerTabs,
   DialFileNodeType,
   FileManagerColumnKey,
-  NotificationVariant,
-} from '@epam/ai-dial-ui-kit';
+} from '@epam/ai-dial-react-file-manager';
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as useDialFileManagerModule from '../../../hooks/files/useDialFileManager';
@@ -61,8 +61,9 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-react-file-manager')>();
   const { DialFileManagerTabs: Tabs, DialFileManagerActions: Actions } = actual;
   return {
     ...actual,
@@ -239,17 +240,27 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
           }) ?? false,
         )}
       >
-        {toolbarOptions?.tabs?.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() =>
-              toolbarOptions.onTabChange?.(tab.id as DialFileManagerTabs)
-            }
-          >
-            {tab.name}
-          </button>
-        ))}
+        {selectedPaths?.size
+          ? null
+          : toolbarOptions?.tabs?.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() =>
+                  toolbarOptions.onTabChange?.(tab.id as DialFileManagerTabs)
+                }
+              >
+                {tab.name}
+              </button>
+            ))}
+        <button
+          type="button"
+          onClick={() =>
+            toolbarOptions?.onTabChange?.(DialFileManagerTabs.Shared)
+          }
+        >
+          Invoke tab-change handler
+        </button>
         {selectedPaths?.size ? (
           <>
             <span>
@@ -491,7 +502,7 @@ describe('DialFileManagerModal', () => {
     render(<DialFileManagerModal {...defaultProps} />);
     const fileManager = screen.getByRole('region', { name: 'file manager' });
     expect(fileManager.classList.contains('grow')).toBe(true);
-    expect(fileManager.classList.contains('bg-layer-2')).toBe(true);
+    expect(fileManager.classList.contains('bg-layer-sunken')).toBe(true);
     expect(fileManager.getAttribute('data-grid-class')).toBe('size-full');
     expect(fileManager.getAttribute('data-grid-layout')).toBe('normal');
     expect(fileManager.getAttribute('data-show-hidden-files-toggle')).toBe(
@@ -540,7 +551,7 @@ describe('DialFileManagerModal', () => {
 
     const dialog = screen.getByRole('dialog');
     expect(dialog.classList.contains('!h-[min(800px,100dvh)]')).toBe(true);
-    expect(dialog.classList.contains('!bg-layer-2')).toBe(true);
+    expect(dialog.classList.contains('!bg-layer-sunken')).toBe(true);
     expect(
       dialog.classList.contains("[&>[aria-label='popup-description']]:min-h-0"),
     ).toBe(true);
@@ -890,21 +901,21 @@ describe('DialFileManagerModal — tab navigation', () => {
     );
   });
 
-  it('calls handleTabChange and clears selectedPaths on tab switch', () => {
+  it('clears selectedPaths when the tab-change handler is invoked', () => {
     mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} />);
 
-    // Select a file first
     fireEvent.click(screen.getByRole('button', { name: 'Select report' }));
     expect(screen.getByText('1 item selected')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Shared with Me' })).toBeNull();
 
-    // Switch tab — this should clear selectedPaths and call handleTabChange
-    fireEvent.click(screen.getByRole('button', { name: 'Shared with Me' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Invoke tab-change handler' }),
+    );
 
     expect(mockHandleTabChange).toHaveBeenCalledWith(
       DialFileManagerTabs.Shared,
     );
-    // After tab switch, selection should be cleared (no "1 item selected" text)
     expect(screen.queryByText('1 item selected')).toBeNull();
   });
 });

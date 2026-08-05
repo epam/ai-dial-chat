@@ -1,0 +1,24 @@
+.chip {
+  background: var(--ci-chip-bg, var(--bg-layer-base, #f5f7fa));
+  border-color: var(--ci-chip-border, var(--stroke-secondary, #d1dbea));
+}
+
+.chipIcon {
+  color: var(--ci-chip-icon, var(--text-secondary, #6b7280));
+}
+
+.chipText {
+  color: var(--ci-chip-text, var(--text-primary, #161b2d));
+}
+
+.chipClose {
+  color: var(--ci-chip-close, var(--text-secondary, #6b7280));
+
+  &:hover {
+    color: var(--ci-chip-close-hover, var(--text-primary, #161b2d));
+  }
+
+  &:focus-visible {
+    color: var(--ci-chip-close-hover, var(--text-primary, #161b2d));
+  }
+}

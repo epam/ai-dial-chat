@@ -57,7 +57,7 @@ A small `getFileTypeIcon(contentType: string): TablerIcon` utility maps MIME pre
 
 ### 7 — Attach trigger uses `DialDropdown` + `+` button, not a direct paperclip button
 
-The attach entry point is a `DialGhostIconButton` (`IconPlus`, 40×40, 18px icon) that opens a `DialDropdown` (`placement="bottom-start"`) with a single "Attach file" item. Clicking the item triggers the hidden `<input type="file">`.
+The attach entry point is a `GhostIconButton` (`IconPlus`, 40×40, 18px icon) that opens a `DialDropdown` (`placement="bottom-start"`) with a single "Attach file" item. Clicking the item triggers the hidden `<input type="file">`.
 
 **Why a dropdown instead of a direct button:** Phase 2 will add further attachment sources (DIAL file system, prompt library, pasted content). A dropdown accommodates additional items without changing the trigger affordance or the surrounding layout. Switching from a direct-action button to a dropdown later would require a visible layout change and a spec update; establishing the pattern in phase 1 avoids that churn.
 

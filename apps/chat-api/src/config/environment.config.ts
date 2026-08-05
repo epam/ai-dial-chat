@@ -10,6 +10,7 @@ import {
   IsUrl,
   Matches,
   Max,
+  MaxLength,
   Min,
 } from 'class-validator';
 
@@ -92,10 +93,11 @@ export class EnvironmentVariables {
   AUTH_TRANSACTION_COOKIE_NAME?: string = '__Host-chat.tx';
 
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value == null) return undefined;
-    if (typeof value === 'boolean') return value;
-    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
   })
   @IsBoolean()
   AUTH_COOKIE_SECURE?: boolean = true;
@@ -513,7 +515,31 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  DEEP_RESEARCH_TOOL_ID?: string;
+
+  @IsOptional()
+  @IsString()
   ANNOUNCEMENT_HTML_MESSAGE?: string;
+
+  @IsOptional()
+  @IsString()
+  FOOTER_HTML_MESSAGE?: string;
+
+  @IsOptional()
+  @IsUrl({
+    require_tld: false,
+    require_protocol: true,
+    protocols: ['https', 'http'],
+  })
+  AZURE_FUNCTIONS_API_HOST?: string;
+
+  @IsOptional()
+  @IsString()
+  REQUEST_API_KEY_CODE?: string;
+
+  @IsOptional()
+  @IsString()
+  REPORT_ISSUE_CODE?: string;
 
   @IsOptional()
   @IsString()
@@ -612,10 +638,10 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @Transform(({ obj, key }) => {
-    // Reads the raw source value (not `value`, which class-transformer's
-    // `enableImplicitConversion` may have already coerced to `true` for any
-    // non-empty string, including the literal string "false") so an env var
-    // explicitly set to "false"/"0"/"no" parses to `false` as intended.
+    /* Reads the raw source value (not `value`, which class-transformer's
+     * `enableImplicitConversion` may have already coerced to `true` for any
+     * non-empty string, including the literal string "false") so an env var
+     * explicitly set to "false"/"0"/"no" parses to `false` as intended. */
     const raw = (obj as Record<string, unknown>)[key];
     if (raw == null) return undefined;
     if (typeof raw === 'boolean') return raw;
@@ -647,6 +673,18 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @Transform(({ value }) => {
+    if (value == null || value === '') return null;
+    const parts = String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+    return parts.length > 0 ? parts : null;
+  })
+  @IsString({ each: true })
+  ENABLED_UI_FEATURES?: string[] | null = null;
+
+  @IsOptional()
+  @Transform(({ value }) => {
     if (value == null) return undefined;
     if (typeof value === 'boolean') return value;
     return !['false', '0', 'no'].includes(String(value).toLowerCase());
@@ -664,4 +702,50 @@ export class EnvironmentVariables {
   })
   @IsString({ each: true })
   LIVE_CHAT_INTERACTION_ENABLED_ROLES?: string[] = [];
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null) return undefined;
+    if (typeof value === 'boolean') return value;
+    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  })
+  @IsBoolean()
+  SCHEDULED_TASKS_ENABLED?: boolean = false;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  SCHEDULED_TASKS_ENABLED_ROLES?: string[] = [];
+
+  @IsOptional()
+  @IsString()
+  SCHEDULER_APP_ID?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  SCHEDULER_SERVICE_TIMEOUT_MS?: number = 10_000;
+
+  @IsOptional()
+  @IsString()
+  CUSTOM_VISUALIZERS?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  @MaxLength(200, { each: true })
+  PUBLICATION_FILTER_SOURCES?: string[] = [];
 }

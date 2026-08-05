@@ -1,3 +1,4 @@
+import type { CustomVisualizer } from '@epam/ai-dial-chat-shared';
 import {
   createContext,
   FC,
@@ -16,8 +17,9 @@ import { useUser } from './auth/UserContext';
 
 const DEFAULT_TRANSCRIBE_SIZE_LIMIT = 5 * 1024 * 1024;
 const DEFAULT_FILE_MANAGER_TABS = ['my_files', 'shared', 'organization'];
+const DEFAULT_PUBLICATION_FILTER_SOURCES = ['title', 'role', 'dial_roles'];
 
-interface AppConfigState {
+export interface AppConfigState {
   status: UserConfigStatus;
   features: Record<string, boolean>;
   config: {
@@ -28,7 +30,12 @@ interface AppConfigState {
     fileManagerTabs: string[];
     overlayEnabled: boolean;
     overlayAllowedOrigins: string[];
+    enabledUiFeatures: string[] | null;
     announcementHtml: string | null;
+    deepResearchToolId: string | null;
+    footerHtmlMessage: string;
+    customVisualizers: CustomVisualizer[];
+    publicationFilterSources: string[];
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
 }
@@ -44,7 +51,12 @@ const INITIAL_STATE: AppConfigState = {
     fileManagerTabs: DEFAULT_FILE_MANAGER_TABS,
     overlayEnabled: false,
     overlayAllowedOrigins: [],
+    enabledUiFeatures: null,
     announcementHtml: null,
+    deepResearchToolId: null,
+    footerHtmlMessage: '',
+    customVisualizers: [],
+    publicationFilterSources: DEFAULT_PUBLICATION_FILTER_SOURCES,
   },
 };
 
@@ -77,7 +89,14 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
               response.config?.fileManagerTabs ?? DEFAULT_FILE_MANAGER_TABS,
             overlayEnabled: response.config?.overlayEnabled ?? false,
             overlayAllowedOrigins: response.config?.overlayAllowedOrigins ?? [],
+            enabledUiFeatures: response.config?.enabledUiFeatures ?? null,
             announcementHtml: response.config?.announcementHtml ?? null,
+            deepResearchToolId: response.config?.deepResearchToolId ?? null,
+            footerHtmlMessage: response.config?.footerHtmlMessage ?? '',
+            customVisualizers: response.config?.customVisualizers ?? [],
+            publicationFilterSources:
+              response.config?.publicationFilterSources ??
+              DEFAULT_PUBLICATION_FILTER_SOURCES,
           },
           metadata: response.metadata,
         });

@@ -1,7 +1,7 @@
 import {
   OverlayEventType,
   OverlayRequestType,
-} from '@epam/ai-dial-chat-shared';
+} from '@epam/ai-dial-chat-overlay';
 import {
   ConversationDeletionFailureDtoCodeEnum,
   type ConversationDeletionResultDto,
@@ -30,7 +30,7 @@ vi.mock('../UserConfigContext', () => ({
   }),
 }));
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => vi.fn(),
 }));
 vi.mock('../AppConfigContext', () => ({
@@ -46,6 +46,13 @@ vi.mock('../auth/UserContext', () => ({
 }));
 vi.mock('../ThemeContext', () => ({
   useTheme: () => ({ setTheme: vi.fn() }),
+}));
+vi.mock('../UiFeaturesContext', () => ({
+  useUiFeatures: () => ({
+    isEnabled: () => true,
+    enabledFeatures: new Set(),
+    applyOverlayOverride: vi.fn(),
+  }),
 }));
 
 const mockListConversations = vi.mocked(conversationsApi.listConversations);
@@ -63,6 +70,7 @@ const seedConversations = [
     sharedWithMe: false,
     publishedWithMe: false,
     isReadonly: false,
+    isScheduledTask: false,
   },
   {
     id: 'conv2',
@@ -72,6 +80,7 @@ const seedConversations = [
     sharedWithMe: false,
     publishedWithMe: false,
     isReadonly: false,
+    isScheduledTask: false,
   },
   {
     id: 'conv3',
@@ -81,6 +90,7 @@ const seedConversations = [
     sharedWithMe: false,
     publishedWithMe: false,
     isReadonly: false,
+    isScheduledTask: false,
   },
 ];
 
@@ -166,6 +176,7 @@ describe('ConversationsContext — deleteAllConversations', () => {
         sharedWithMe: true,
         publishedWithMe: false,
         isReadonly: true,
+        isScheduledTask: false,
       },
     ];
     mockListConversations.mockResolvedValueOnce({ items: afterDelete });
@@ -231,6 +242,7 @@ describe('ConversationsContext — deleteAllConversations', () => {
         sharedWithMe: false,
         publishedWithMe: false,
         isReadonly: false,
+        isScheduledTask: false,
       },
     ];
     mockListConversations.mockResolvedValueOnce({ items: refreshedConvs });

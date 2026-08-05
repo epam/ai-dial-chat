@@ -37,7 +37,7 @@ DOMPurify (`3.4.11`, already a root dependency) sanitizes the message in the `ap
 `app.tsx`'s root is currently a horizontal flex row. Wrap it in an outer `flex-col` with `<AnnouncementBanner />` as the first child and the existing row as a `min-h-0 flex-1` second child, so the banner spans sidebar + panels + main. `App` is already inside `AppConfigProvider` (via `main.tsx`), so the container's `useAppConfig()` is valid. **Alternative:** insert only inside `<main>` above `<Header>` — rejected because the old banner spanned the full width, not just the content column.
 
 ### D6 — Styling with valid tokens
-Use `text-controls-permanent` over a valid accent background token (e.g. `bg-accent-primary-fill`); the old `from-accent-secondary to-accent-tertiary` gradient stops do **not** exist in this `tailwind.config.js`. Close button uses logical `end-*` positioning (RTL), the speakerphone icon is `aria-hidden`, and the root is a named `role="region"`.
+Use `text-control-permanent` over a valid accent background token; the old `from-accent-secondary to-accent-tertiary` gradient stops do **not** exist in this `tailwind.config.js`. Close button uses logical `end-*` positioning (RTL), the speakerphone icon is `aria-hidden`, and the root is a named `role="region"`.
 
 ## Risks / Trade-offs
 

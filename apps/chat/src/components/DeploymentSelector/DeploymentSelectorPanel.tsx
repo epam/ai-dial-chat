@@ -1,22 +1,24 @@
 import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
+import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { SearchBar } from '@epam/ai-dial-kit';
 import {
-  DeploymentIcon,
+  DIAL_ICON_SIZE,
+  GhostButton,
+  GhostIconButton,
+  DialEllipsisTooltip,
   Highlight,
-  mergeClasses,
-} from '@epam/ai-dial-chat-shared';
-import { GhostButton, GhostIconButton, SearchBar } from '@epam/ai-dial-kit';
-import { DialEllipsisTooltip, DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+} from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconStar, IconStarFilled } from '@tabler/icons-react';
 import {
   memo,
-  type FC,
-  type KeyboardEvent,
-  type ReactNode,
   useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
+  type FC,
+  type KeyboardEvent,
+  type ReactNode,
 } from 'react';
 import styles from './DeploymentSelectorPanel.module.scss';
 
@@ -61,10 +63,8 @@ interface Props {
   labels?: DeploymentSelectorLabels;
 }
 
-// Matches the conversation panel's group-header color (.groupHeader in
-// ConversationPanel.module.scss: text-tertiary at 55% opacity).
 const SECTION_HEADING_CLASS_NAME =
-  'dial-tiny-semi-text px-3 pb-0.5 pt-2 uppercase text-tertiary opacity-[0.55]';
+  'dial-tiny-semi-text px-3 pb-0.5 pt-2 uppercase text-tertiary';
 
 // Must match the .rowLeaving exit-animation duration in DeploymentSelectorPanel.module.scss.
 const ROW_LEAVE_ANIMATION_MS = 180;
@@ -120,8 +120,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
       favorites.filter(
         (f) =>
           f.type === CatalogEntityType.Model ||
-          f.type === CatalogEntityType.Agent ||
-          f.type === CatalogEntityType.Application,
+          f.type === CatalogEntityType.Agent,
       ),
     [favorites],
   );
@@ -220,9 +219,9 @@ const DeploymentSelectorPanel: FC<Props> = ({
           tabIndex={0}
           className={mergeClasses(
             'flex cursor-pointer items-center gap-2 rounded-lg border px-2 py-1.5',
-            'transition-colors hover:bg-layer-2',
+            'transition-colors hover:bg-layer-sunken',
             isSelected
-              ? 'border-accent-primary bg-accent-primary-alpha'
+              ? 'border-info bg-accent-primary-alpha'
               : 'border-transparent',
           )}
           onClick={() => handleSelect(item)}
@@ -255,7 +254,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
           {isSelected && (
             <IconCheck
               size={DIAL_ICON_SIZE.SM}
-              className="shrink-0 text-accent-primary"
+              className="shrink-0 text-accent"
               aria-hidden
             />
           )}
@@ -268,7 +267,6 @@ const DeploymentSelectorPanel: FC<Props> = ({
                 />
               }
               aria-label={removeFromFavoritesLabel}
-              className="flex-shrink-0"
               onClick={(e) => {
                 e.stopPropagation();
                 handleToggleFavorite(item.id, false);
@@ -278,7 +276,6 @@ const DeploymentSelectorPanel: FC<Props> = ({
             <GhostIconButton
               icon={<IconStar size={DIAL_ICON_SIZE.SM} />}
               aria-label={addToFavoritesLabel}
-              className="flex-shrink-0"
               onClick={(e) => {
                 e.stopPropagation();
                 handleToggleFavorite(item.id, true);
@@ -293,7 +290,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
   return (
     <div className="flex min-w-[240px] flex-col">
       {/* Sticky search header */}
-      <div className="sticky top-0 z-10 bg-layer-0 px-1 pb-3 pt-2">
+      <div className="sticky top-0 z-10 bg-layer-raised px-1 pb-3 pt-2">
         <SearchBar
           value={query}
           labels={{

@@ -1,5 +1,9 @@
-import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  FolderPath,
+  PrimaryButton,
+  NeutralButton,
+} from '@epam/ai-dial-ui-kit';
 import {
   IconKey,
   IconLogin,
@@ -21,7 +25,6 @@ import {
 } from '../../../types/toolset-auth';
 import { getCredentialsUiState } from '../../../utils/toolset-credentials';
 import { EntityHeader } from '../../EntityHeader/EntityHeader';
-import { FolderPath } from '../../FolderPath/FolderPath';
 import { ConnectButton } from './ConnectButton/ConnectButton';
 import { DeleteButton } from './DeleteButton/DeleteButton';
 import { ShareButton } from './ShareButton/ShareButton';
@@ -36,6 +39,11 @@ interface HeaderProps {
    * provided, clicking Share opens this popover instead of calling `onShare`.
    */
   shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
+  /**
+   * Additional caller-supplied rule for whether Share is shown, combined
+   * (AND) with the built-in ownership/type rule.
+   */
+  isShareVisible?: (item: CatalogItem) => boolean;
   /**
    * Renders the Connect popover content anchored to the Connect button. When
    * absent, the Connect button is never shown.
@@ -74,13 +82,14 @@ interface HeaderProps {
   /** Called when the "Publish" button is clicked; the host swaps this panel's content to the publish view. */
   onOpenPublish?: () => void;
 }
-/** Right-side slide-in panel displaying full details for a catalog item. */
+/** Details panel header bar: entity identity (icon + name + version), action buttons (Share, Connect, Edit, Delete, Publish), and inline credentials section. */
 export const Header: FC<HeaderProps> = ({
   item,
   onUseInChat,
   isPrimaryActionVisible,
   onShare,
   shareOverlay,
+  isShareVisible,
   connectOverlay,
   isConnectVisible,
   onEdit,
@@ -113,13 +122,13 @@ export const Header: FC<HeaderProps> = ({
     texts?.hasPrimaryAction !== false &&
     (isPrimaryActionVisible?.(item) ??
       (item.type === CatalogEntityType.Model ||
-        item.type === CatalogEntityType.Application));
+        item.type === CatalogEntityType.Agent));
 
   const shouldShowPublish =
     isPublishVisible?.(item) ??
     (item.type === CatalogEntityType.Model ||
       item.type === CatalogEntityType.Toolset ||
-      item.type === CatalogEntityType.Application);
+      item.type === CatalogEntityType.Agent);
 
   const shouldShowEditAction = !!onEdit && !!item.isEditable;
 
@@ -195,6 +204,7 @@ export const Header: FC<HeaderProps> = ({
           item={item}
           onShare={onShare}
           shareOverlay={shareOverlay}
+          isShareVisible={isShareVisible}
           label={texts?.shareLabel}
         />
         <DeleteButton

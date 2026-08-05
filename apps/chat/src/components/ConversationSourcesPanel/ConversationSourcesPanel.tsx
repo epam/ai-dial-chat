@@ -21,6 +21,7 @@ import { useConversationSources } from '../../hooks/conversation-sources/useConv
 import useLocalStorage from '../../hooks/useLocalStorage';
 import usePanelMaxWidth from '../../hooks/usePanelMaxWidth';
 import { StorageKey } from '../../types/storage-key';
+import { isExternalSourcePreviewable } from '../../utils/attachment-canvas';
 import { isDialFileId } from '../../utils/dial-file';
 
 const MIN_PANEL_WIDTH = 312;
@@ -54,6 +55,13 @@ const ConversationSourcesPanelContainer: FC = () => {
   const handleSourceClick = useCallback(
     async (source: QuotationSource) => {
       const { url, title, contentType } = source;
+      if (
+        !isDialFileId(url) &&
+        !isExternalSourcePreviewable(contentType, url)
+      ) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+        return;
+      }
       const attachment: DisplayAttachment = {
         id: url,
         name: title,
@@ -109,7 +117,7 @@ const ConversationSourcesPanelContainer: FC = () => {
       closeLabel: t(ButtonsI18nKeys.Close),
       searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
       searchClearLabel: t(BasicI18nKeys.ClearSearch),
-      emptyLabel: t(BasicI18nKeys.Empty),
+      noDataLabel: t(BasicI18nKeys.Empty),
       noResultsLabel: t(BasicI18nKeys.NoResults),
       downloadAllLabel: t(SidebarI18nKeys.DownloadAll),
       uploadedSectionTitle: t(SidebarI18nKeys.SectionUploadedFiles),

@@ -1,22 +1,22 @@
 import { render, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   TOOLSET_REDIRECT_STATE_KEY,
   ToolsetOAuthCallbackQuery,
-} from '../../../constants/toolsets';
-import * as toolsetsApi from '../../../server-api/toolsets';
-import type {
-  ToolsetOAuthChannelMessage,
-  ToolsetRedirectState,
-} from '../../../types/toolsets';
-import {
+  OAuthResourceKind,
   ToolsetAuthTypes,
   ToolsetOAuthChannelControlType,
   ToolsetCredentialsLevel,
   ToolsetOAuthFailureReason,
   ToolsetOAuthResultType,
-} from '../../../types/toolsets';
+} from '../../../constants/toolsets';
+import type {
+  ToolsetOAuthChannelMessage,
+  ToolsetRedirectState,
+} from '../../../models/toolsets';
+import * as externalServicesApi from '../../../server-api/external-services';
+import * as toolsetsApi from '../../../server-api/toolsets';
 import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import ToolsetAuthCallback from '../ToolsetAuthCallback';
 
@@ -38,6 +38,16 @@ const listenForResult = (flowId: string): Promise<ToolsetOAuthChannelMessage> =>
 
 vi.mock('../../../server-api/toolsets', () => ({
   loginToolset: vi.fn(),
+}));
+
+vi.mock('../../../server-api/external-services', () => ({
+  ExternalServiceAuthType: { None: 'NONE', ApiKey: 'API_KEY', OAuth: 'OAUTH' },
+  ExternalServiceCredentialsLevel: {
+    Global: 'GLOBAL',
+    Application: 'APPLICATION',
+    User: 'USER',
+  },
+  signInExternalService: vi.fn(),
 }));
 
 vi.mock('../../../components/RouteFallback/RouteFallback', () => ({
@@ -110,6 +120,35 @@ describe('ToolsetAuthCallback', () => {
         }),
       ),
     );
+    await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
+  });
+
+  it('calls signInExternalService with the appId/serviceId parsed from the scope id instead of loginToolset when resourceKind is ExternalService', async () => {
+    setRedirectState({
+      toolsetId:
+        'applications/public/finhub-via-openapi__1.0.0/external_services/finhub-api2',
+      credentialsLevel: ToolsetCredentialsLevel.User,
+      redirectUri: 'http://localhost/auth/toolset-signin',
+      resourceKind: OAuthResourceKind.ExternalService,
+    });
+    vi.mocked(externalServicesApi.signInExternalService).mockResolvedValue({
+      success: true,
+    });
+
+    renderCallback('?code=auth-code-xyz');
+
+    await waitFor(() =>
+      expect(externalServicesApi.signInExternalService).toHaveBeenCalledWith(
+        'applications/public/finhub-via-openapi__1.0.0',
+        'finhub-api2',
+        expect.objectContaining({
+          authenticationType: 'OAUTH',
+          code: 'auth-code-xyz',
+          redirectUri: 'http://localhost/auth/toolset-signin',
+        }),
+      ),
+    );
+    expect(toolsetsApi.loginToolset).not.toHaveBeenCalled();
     await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
   });
 

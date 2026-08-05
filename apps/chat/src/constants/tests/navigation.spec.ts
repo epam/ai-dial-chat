@@ -28,6 +28,17 @@ describe('NAVIGATION_CONFIG', () => {
     expect(resolveKey(NavigationI18nKeys.FileManager)).toBe('File Manager');
   });
 
+  it('includes a Scheduled Tasks entry gated behind the scheduledTasksEnabled flag', () => {
+    const scheduledTasksItem = NAVIGATION_CONFIG.find(
+      (item) => item.path === ROUTES.ScheduledTasks,
+    );
+    expect(scheduledTasksItem).toBeTruthy();
+    expect(scheduledTasksItem?.labelKey).toBe(
+      NavigationI18nKeys.ScheduledTasks,
+    );
+    expect(scheduledTasksItem?.featureFlag).toBe('scheduledTasksEnabled');
+  });
+
   it('resolves every nav item label key to an existing en.json string', () => {
     NAVIGATION_CONFIG.forEach((item) => {
       expect(typeof resolveKey(item.labelKey)).toBe('string');

@@ -1,5 +1,5 @@
 .wrapper {
-  background: var(--sb-bg, var(--bg-layer-3, #fcfcfc));
+  background: var(--sb-bg, var(--bg-layer-raised, #fcfcfc));
   border-color: var(--sb-border, var(--stroke-tertiary, #e0e6f0));
 }
 
@@ -34,6 +34,6 @@
 
 .resizeHandler {
   width: 4px !important;
-  color: var(--sb-resize-handler, var(--text-info, #124ace)) !important;
-  background: var(--sb-bg-resize-handler, var(--text-info, #124ace));
+  color: var(--sb-resize-handler, var(--text-info, #1d4ed8)) !important;
+  background: var(--sb-bg-resize-handler, var(--text-info, #1d4ed8));
 }

@@ -13,8 +13,18 @@ Request:
 POST /api/v1/conversations/publish?path=bucket-123%2Fmy-conversation-abc
 Content-Type: application/json
 
-{ "folderPath": "Organization/Data Science/Shared chats" }
+{
+  "folderPath": "Organization/Data Science/Shared chats",
+  "rules": [
+    {
+      "source": "role",
+      "function": "CONTAIN",
+      "targets": ["engineering"]
+    }
+  ]
+}
 ```
+(`rules` is optional; omitting it is equivalent to `rules: []`.)
 
 Core call made by the service (via `DialClientService.client.createPublication`):
 ```json
@@ -28,13 +38,19 @@ Core call made by the service (via `DialClientService.client.createPublication`)
       "targetUrl": "conversations/public/Organization/Data Science/Shared chats/my-conversation-abc"
     }
   ],
-  "displayAuthor": "Valery Dluski",
-  "rules": []
+  "displayAuthor": "Test User",
+  "rules": [
+    {
+      "source": "role",
+      "function": "CONTAIN",
+      "targets": ["engineering"]
+    }
+  ]
 }
 ```
-`name` SHALL be the conversation's current title, re-fetched server-side via `ConversationService` at publish time (not accepted from the request body) so a stale or client-forged title cannot be sent to Core — see design.md's Open Questions for the rationale. `targetUrl`'s final segment SHALL be the conversation resource path's own last segment (its resource name), not its title, so the destination path stays stable across renames. `displayAuthor` is resolved from the session's OIDC claims via the existing `getUserDisplayName` helper, identical to catalog publish. `rules` is always `[]`.
+`name` SHALL be the conversation's current title, re-fetched server-side via `ConversationService` at publish time (not accepted from the request body) so a stale or client-forged title cannot be sent to Core — see design.md's Open Questions for the rationale. `targetUrl`'s final segment SHALL be the conversation resource path's own last segment (its resource name), not its title, so the destination path stays stable across renames. `displayAuthor` is resolved from the session's OIDC claims via the existing `getUserDisplayName` helper, identical to catalog publish. `rules` is the caller-supplied, validated array of access-restriction rules (`dto.rules ?? []`), passed through to Core unchanged, using the same `PublishRuleDto`/`PublishRuleFunction` shared with catalog publish (see `catalog-publish-api`'s "Publish request accepts optional access rules" requirement — the validation rules, limits, and source-allowlist rationale are identical and not repeated here).
 
-`folderPath` is validated with `class-validator` reusing `IsValidFilePath` (blocks `..`/absolute-path escapes) exactly as `PublishCatalogEntityDto` does. `path` (the conversation path) reuses `ConversationPathDto`'s existing validation.
+`folderPath` is validated with `class-validator` reusing `IsValidFilePath` (blocks `..`/absolute-path escapes) exactly as `PublishCatalogEntityDto` does. `path` (the conversation path) reuses `ConversationPathDto`'s existing validation. `rules` is validated exactly as in `PublishCatalogEntityDto` (same `PublishRuleDto`, same limits).
 
 Response (201):
 ```json
@@ -42,16 +58,16 @@ Response (201):
   "path": "conversations/bucket-123/my-conversation-abc",
   "folderPath": "Organization/Data Science/Shared chats",
   "publishedAt": "2026-07-15T10:00:00.000Z",
-  "publishedBy": "Valery Dluski"
+  "publishedBy": "Test User"
 }
 ```
-(`PublishConversationResultDto` — no `version`, no `entityType`/`entityId` pair, since there is exactly one resource kind and no version dimension.)
+(`PublishConversationResultDto` — no `version`, no `entityType`/`entityId` pair, since there is exactly one resource kind and no version dimension. The response SHALL NOT echo back `rules`, matching `catalog-publish-api`'s response contract.)
 
-Generated-client impact: OpenAPI `operationId: publishConversation`; request DTO `PublishConversationDto` (`folderPath: string`, `path` as a query param via `ConversationPathDto`); response DTO `PublishConversationResultDto`. Frontend caller: new `apps/chat/src/server-api/conversation-publish.api.ts` thin wrapper using the normal (non-`Raw`) generated method.
+Generated-client impact: OpenAPI `operationId: publishConversation`; request DTO `PublishConversationDto` (now including optional `rules?: PublishRuleDto[]`, reusing the same `PublishRuleDto`/`PublishRuleFunction` as `PublishCatalogEntityDto`); response DTO `PublishConversationResultDto` (unchanged). Frontend caller: `apps/chat/src/server-api/conversation-publish.api.ts` thin wrapper using the normal (non-`Raw`) generated method.
 
-Rate limiting: `@Throttle({ default: { limit: 10, ttl: 60000 } })`, matching the catalog publish endpoint's write-endpoint throttle profile.
+Rate limiting: `@Throttle({ default: { limit: 10, ttl: 60000 } })`, matching the catalog publish endpoint's write-endpoint throttle profile. Unchanged by this requirement.
 
-Authorization: caller SHALL be authenticated (existing session guard). The service SHALL resolve the bucket exclusively from the authenticated session and SHALL never accept a bucket from the request. Consequently, a path that exists only in another user's bucket is indistinguishable from a missing path and returns 404, avoiding disclosure of another user's resources. Write access to `folderPath` is enforced by DIAL Core itself when `createPublication` is called. A Core 403 SHALL map to `ForbiddenException` via `handleDialSdkError`/`mapDialHttpStatus`.
+Authorization: caller SHALL be authenticated (existing session guard). The service SHALL resolve the bucket exclusively from the authenticated session and SHALL never accept a bucket from the request. Consequently, a path that exists only in another user's bucket is indistinguishable from a missing path and returns 404, avoiding disclosure of another user's resources. Write access to `folderPath` is enforced by DIAL Core itself when `createPublication` is called. A Core 403 SHALL map to `ForbiddenException` via `handleDialSdkError`/`mapDialHttpStatus`. This is unchanged by adding `rules`.
 
 #### Scenario: Successful publish
 - **WHEN** an authenticated user with write access to the target folder submits a valid publish request for their own conversation
@@ -81,6 +97,14 @@ Authorization: caller SHALL be authenticated (existing session guard). The servi
 - **WHEN** the Core `createPublication` call fails unexpectedly (network error, 5xx, timeout)
 - **THEN** the service throws `BadGatewayException` or `ServiceUnavailableException` (per `handleDialSdkError`) and logs the failure without logging request bodies containing tokens
 
+#### Scenario: Request omitting rules behaves exactly as before this change
+- **WHEN** a request body has no `rules` field at all (an older client, or a client not using the new UI)
+- **THEN** the DTO normalizes the missing field to `rules: []`, Core receives `rules: []`, and the request succeeds exactly as it did before this change
+
+#### Scenario: Invalid rules payload is rejected with 400
+- **WHEN** a request includes a malformed `rules` entry (invalid `function` enum value, empty `source`, or empty `targets`)
+- **THEN** the `ValidationPipe` rejects the request with 400 before reaching the service or Core, per the same validation contract defined in `catalog-publish-api`'s "Publish request accepts optional access rules" requirement
+
 ### Requirement: Publish history endpoint derives history from Core publications, scoped by conversation path
 
 The backend SHALL expose `GET /api/v1/conversations/publish-history?path=<conversation-path>` returning every publication this conversation path has ever been published to, most recent first. It SHALL call Core's `getPublications` with the caller's own-bucket list scope (`{ url: "publications/{bucket}/" }`) and filter the response to `resources[].sourceUrl === "conversations/{bucket}/{normalizedPath}"`, matching `PublishService.getPublishHistory`'s corrected list-scope behavior. Each entry's `folderPath` SHALL have the `public/` prefix and trailing slash stripped, matching the existing `stripPublicTargetFolder` behavior.
@@ -92,7 +116,7 @@ Response (200):
     "path": "conversations/bucket-123/my-conversation-abc",
     "folderPath": "Organization/Data Science/Shared chats",
     "publishedAt": "2026-07-15T10:00:00.000Z",
-    "publishedBy": "Valery Dluski"
+    "publishedBy": "Test User"
   }
 ]
 ```

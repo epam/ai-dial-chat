@@ -1,20 +1,26 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AuthI18nKeys } from '../../../constants/translation-keys';
+import {
+  AuthI18nKeys,
+  SettingsI18nKeys,
+} from '../../../constants/translation-keys';
 import * as UserContextModule from '../../../context/auth/UserContext';
 import * as ThemeContextModule from '../../../context/ThemeContext';
 import * as BreakpointModule from '../../../hooks/breakpoint/useBreakpoint';
+import * as useUiFeatureModule from '../../../hooks/useUiFeature';
 import { AuthStatus } from '../../../types/auth-status';
 import { UserMenu } from '../UserMenu';
 
 vi.mock('../../../context/auth/UserContext');
 vi.mock('../../../context/ThemeContext');
 vi.mock('../../../hooks/breakpoint/useBreakpoint');
+vi.mock('../../../hooks/useUiFeature');
 
 const mockUseUser = vi.mocked(UserContextModule.useUser);
 const mockUseTheme = vi.mocked(ThemeContextModule.useTheme);
 const mockUseIsMobile = vi.mocked(BreakpointModule.useIsMobile);
+const mockUseUiFeature = vi.mocked(useUiFeatureModule.useUiFeature);
 
 const defaultTheme = {
   currentTheme: 'dark',
@@ -56,6 +62,7 @@ describe('UserMenu', () => {
     vi.clearAllMocks();
     mockUseTheme.mockReturnValue(defaultTheme);
     mockUseIsMobile.mockReturnValue(false);
+    mockUseUiFeature.mockReturnValue(false);
   });
 
   it('returns null when status is loading', () => {
@@ -161,5 +168,42 @@ describe('UserMenu', () => {
 
     const button = screen.getByRole('button');
     expect(button.getAttribute('aria-label')).toBeTruthy();
+  });
+
+  it('shows the keyboard-shortcuts settings item by default', () => {
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: mockUser,
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter>
+        <UserMenu />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole('button'));
+
+    expect(screen.getByText(SettingsI18nKeys.KeyboardShortcuts)).toBeTruthy();
+  });
+
+  it('hides the keyboard-shortcuts settings item when hide-user-settings is enabled', () => {
+    mockUseUiFeature.mockReturnValue(true);
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: mockUser,
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter>
+        <UserMenu />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole('button'));
+
+    expect(screen.queryByText(SettingsI18nKeys.KeyboardShortcuts)).toBeNull();
   });
 });

@@ -1,13 +1,18 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, ElementSize } from '@epam/ai-dial-ui-kit';
+import {
+  CardShell,
+  DIAL_ICON_SIZE,
+  ElementSize,
+  FolderPath,
+} from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
 import type { CardProps } from '../../models/card-props';
+import { DeploymentSize } from '../../types/deployment-icon-size';
 import { getFeaturedEntityStyle } from '../../utils/styles';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
 import { CredentialsBadge } from '../CredentialsBadge/CredentialsBadge';
 import { FeaturedChip } from '../FeaturedChip/FeaturedChip';
-import { FolderPath } from '../FolderPath/FolderPath';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { TopicsLine } from '../TopicTag/TopicTag';
 import styles from './CardGrid.module.scss';
@@ -61,7 +66,7 @@ export const Card: FC<CardProps> = ({
   );
 
   return (
-    <article
+    <CardShell
       {...(onClick
         ? {
             role: 'button' as const,
@@ -73,13 +78,10 @@ export const Card: FC<CardProps> = ({
       aria-label={item.name}
       style={getFeaturedEntityStyle(item)}
       className={mergeClasses(
-        'relative box-border flex cursor-pointer flex-col gap-[14px]',
-        'rounded-[20px] border-2 p-[22px]',
+        'box-border cursor-pointer',
         styles.card,
         item.isFeatured ? styles.featuredCard : undefined,
-        isSelected
-          ? 'border-accent-primary !bg-accent-primary-alpha'
-          : 'border-transparent',
+        isSelected ? 'border-info !bg-accent-primary-alpha' : undefined,
         className,
       )}
     >
@@ -95,7 +97,7 @@ export const Card: FC<CardProps> = ({
       {isSelected && (
         <IconCheck
           size={DIAL_ICON_SIZE.SM}
-          className="absolute end-3 top-3 shrink-0 text-accent-primary"
+          className="absolute end-3 top-3 shrink-0 text-accent"
           aria-hidden
         />
       )}
@@ -105,7 +107,7 @@ export const Card: FC<CardProps> = ({
         type={item.type}
         name={item.name}
         version={item.version}
-        size="sm"
+        size={DeploymentSize.SM}
         query={query}
         className="min-w-0 flex-1"
         iconClassName={styles.cardIcon}
@@ -155,6 +157,6 @@ export const Card: FC<CardProps> = ({
           />
         </div>
       </div>
-    </article>
+    </CardShell>
   );
 };

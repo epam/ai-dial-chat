@@ -1,12 +1,13 @@
 import { DialConfirmationPopup } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   AuthI18nKeys,
   ButtonsI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
+import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { logout } from '../../server-api/auth.api';
 import { ROUTES } from '../../types/routes';
 
@@ -19,6 +20,7 @@ const LogoutConfirmationModal: FC<Props> = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { reset } = useUser();
+  const overlay = useOptionalOverlay();
 
   const handleConfirm = async () => {
     try {
@@ -27,7 +29,9 @@ const LogoutConfirmationModal: FC<Props> = ({ isOpen, onClose }) => {
       console.error('Logout request failed', err);
     }
     reset();
-    navigate(ROUTES.Login);
+    if (!overlay) {
+      navigate(ROUTES.Login);
+    }
   };
 
   return (

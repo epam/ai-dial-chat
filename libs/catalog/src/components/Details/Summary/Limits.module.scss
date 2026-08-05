@@ -9,12 +9,12 @@
       --bg-warning-secondary,
       rgba(238, 200, 64, 0.12)
     ) !important;
-    color: var(--text-warning, #eec840) !important;
+    color: var(--text-warning, #7f6300) !important;
     border-color: transparent !important;
   }
   &--BY_REQUEST {
-    background: var(--bg-layer-2, #1a2035) !important;
-    color: var(--text-secondary, #575f73) !important;
+    background: var(--bg-layer-sunken, #eef1f7) !important;
+    color: var(--text-secondary, #6b7280) !important;
     border-color: transparent !important;
   }
   &--BETA {
@@ -22,24 +22,24 @@
       --bg-accent-primary-alpha,
       rgba(99, 116, 255, 0.12)
     ) !important;
-    color: var(--text-accent-primary, #6374ff) !important;
+    color: var(--text-accent, #1d4ed8) !important;
     border-color: transparent !important;
   }
   &--DEPRECATED {
-    background: var(--bg-layer-2, #1a2035) !important;
-    color: var(--text-error, #f2655a) !important;
+    background: var(--bg-layer-sunken, #eef1f7) !important;
+    color: var(--text-error, #ae2f2f) !important;
     border-color: transparent !important;
   }
 }
 
 .progressTrack {
-  background: var(--bg-layer-2, #1a2035);
+  background: var(--bg-layer-sunken, #eef1f7);
 }
 
 .progressFill {
-  background: var(--text-accent-primary, #6374ff);
+  background: var(--text-accent, #1d4ed8);
 }
 
 .resetLabel {
-  color: var(--text-secondary, #575f73);
+  color: var(--text-secondary, #6b7280);
 }

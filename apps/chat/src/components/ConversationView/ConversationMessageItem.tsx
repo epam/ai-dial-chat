@@ -1,3 +1,4 @@
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   CodeBlockTheme,
   isStatusMessage,
@@ -17,31 +18,35 @@ import {
   type MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
 import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
-import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
+import {
+  CitationCardProvider,
+  CitationDropdown,
+  getReferenceAttachmentGroups,
+  groupAnnotationsBySource,
+  isReferenceOnlyAttachment,
+  useAnnotations,
+  useCitationCard,
+} from '@epam/ai-dial-quotations';
+import { ErrorMessageNotification } from '@epam/ai-dial-ui-kit';
 import { IconLink } from '@tabler/icons-react';
 import { FC, lazy, memo, Suspense, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AttachmentsI18nKeys,
+  BasicI18nKeys,
   ButtonsI18nKeys,
+  ChatI18nKeys,
+  CitationsI18nKeys,
 } from '../../constants/translation-keys';
-import { CitationCardProvider } from '../../context/CitationCardContext';
 import { useTheme } from '../../context/ThemeContext';
-import { useAnnotations } from '../../hooks/annotations/useAnnotations';
 import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
-import { useCitationCard } from '../../hooks/citations/useCitationCard';
 import { useCitationMarkdownComponents } from '../../hooks/citations/useCitationMarkdownComponents';
+import { useUiFeature } from '../../hooks/useUiFeature';
 import { ThemeId } from '../../types/theme-id';
 import { openAnnotationAttachment } from '../../utils/annotation';
 import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
-import { groupAnnotationsBySource } from '../../utils/group-annotations-by-source';
 import { messageHasStages } from '../../utils/message-utils';
-import {
-  getReferenceAttachmentGroups,
-  isReferenceOnlyAttachment,
-} from '../../utils/reference-attachment';
-import CitationDropdown from '../Citations/CitationDropdown/CitationDropdown';
 import { buildMessageActions } from './utils/build-message-actions';
 import {
   getMessageStarterProps,
@@ -103,7 +108,6 @@ interface Props {
   showLessUserMessageAriaLabel: string;
   statusModelChangedTitle: string;
   formatStatusModelChangedBody: (from: string, to: string) => string;
-  streamErrorText: string;
   stoppedGeneratingText: string;
   thinkingLabel: string;
   executedLabel: string;
@@ -113,6 +117,7 @@ interface Props {
   validateAttachment?: (
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
+  isAttachmentsEnabled?: boolean;
   maximumAttachmentsAmount?: number;
   onAttachmentsLimitExceeded?: (count: number, limit: number) => void;
   hideAttachFile?: boolean;
@@ -128,6 +133,16 @@ interface Props {
   pendingAttachments?: Attachment[];
   /** Called after `pendingAttachments` have been inserted into the edit-message tray. */
   onPendingAttachmentsConsumed?: () => void;
+  /**
+   * Message-scoped key (`${messageIndex}:${attachmentId}`) of the attachment
+   * currently open in the canvas panel, if any — set by `ConversationView`
+   * from the canvas context. Renders that tile's selected visual state only
+   * within the message that actually opened it, since `DisplayAttachment.id`
+   * alone can recur across different messages.
+   */
+  selectedAttachmentKey?: string;
+  /** Called when the user pastes text that exceeds the max length while attachments are disabled. */
+  onMessageTooLong?: (length: number, max: number) => void;
 }
 
 const ConversationMessageItem: FC<Props> = ({
@@ -161,13 +176,13 @@ const ConversationMessageItem: FC<Props> = ({
   showLessUserMessageAriaLabel,
   statusModelChangedTitle,
   formatStatusModelChangedBody,
-  streamErrorText,
   stoppedGeneratingText,
   thinkingLabel,
   executedLabel,
   stepsLabel,
   onPreviewReference,
   validateAttachment,
+  isAttachmentsEnabled,
   maximumAttachmentsAmount,
   onAttachmentsLimitExceeded,
   hideAttachFile,
@@ -177,9 +192,21 @@ const ConversationMessageItem: FC<Props> = ({
   dialFileSystemLabel,
   pendingAttachments,
   onPendingAttachmentsConsumed,
+  selectedAttachmentKey,
+  onMessageTooLong,
 }) => {
   const { t } = useTranslation();
   const { currentTheme } = useTheme();
+  const isLikesEnabled = useUiFeature(OverlayFeature.Likes);
+  const isEditUserMessageHidden = useUiFeature(
+    OverlayFeature.HideEditUserMessage,
+  );
+  const isRegenerateAssistantMessageHidden = useUiFeature(
+    OverlayFeature.HideRegenerateAssistantMessage,
+  );
+  const isDeleteUserMessageHidden = useUiFeature(
+    OverlayFeature.HideDeleteUserMessage,
+  );
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
   const { handleAttachmentClick: handleDownload } = useAttachmentAction();
@@ -233,6 +260,13 @@ const ConversationMessageItem: FC<Props> = ({
     if (attachment) openAnnotationAttachment(attachment);
   }, []);
 
+  const selectedAttachmentKeyPrefix = `${index}:`;
+  const selectedAttachmentId = selectedAttachmentKey?.startsWith(
+    selectedAttachmentKeyPrefix,
+  )
+    ? selectedAttachmentKey.slice(selectedAttachmentKeyPrefix.length)
+    : undefined;
+
   if (isEditing) {
     return (
       <div className="flex justify-end">
@@ -273,6 +307,7 @@ const ConversationMessageItem: FC<Props> = ({
             pendingDropFiles={pendingDropFiles}
             onDropFilesConsumed={onDropFilesConsumed}
             validateAttachment={validateAttachment}
+            isAttachmentsEnabled={isAttachmentsEnabled}
             maximumAttachmentsAmount={maximumAttachmentsAmount}
             onAttachmentsLimitExceeded={onAttachmentsLimitExceeded}
             hideAttachFile={hideAttachFile}
@@ -282,6 +317,7 @@ const ConversationMessageItem: FC<Props> = ({
             pendingAttachments={pendingAttachments}
             onPendingAttachmentsConsumed={onPendingAttachmentsConsumed}
             onAttachmentClick={handleAttachmentClick}
+            onMessageTooLong={onMessageTooLong}
           />
         </Suspense>
       </div>
@@ -342,7 +378,7 @@ const ConversationMessageItem: FC<Props> = ({
           ...(msg.role === MessageRole.User ? USER_MESSAGE_TEXT_STYLES : {}),
           className: isUserMessage ? 'justify-end' : 'justify-start',
           bubbleClassName: mergeClasses(
-            msg.hasStreamError ? 'w-full' : undefined,
+            msg.streamErrorMessage != null ? 'w-full' : undefined,
           ),
         }}
         markdownComponents={
@@ -355,18 +391,25 @@ const ConversationMessageItem: FC<Props> = ({
           msg,
           index,
           {
-            onEdit: !isAssistantTyping ? onStartEdit : undefined,
+            onEdit:
+              !isAssistantTyping && !isEditUserMessageHidden
+                ? onStartEdit
+                : undefined,
             onHoverEdit: preloadEditInput,
-            onDelete: onDeleteMessage,
-            onRegenerate: onRegenerateMessage,
-            onRate: onRateMessage,
-            onDislike: onDislikeMessage,
+            onDelete: isDeleteUserMessageHidden ? undefined : onDeleteMessage,
+            onRegenerate: isRegenerateAssistantMessageHidden
+              ? undefined
+              : onRegenerateMessage,
+            onRate: isLikesEnabled ? onRateMessage : undefined,
+            onDislike: isLikesEnabled ? onDislikeMessage : undefined,
           },
           tooltips,
           ariaLabels,
         )}
         afterContent={
-          referenceGroups.length > 0 || hasStages || msg.hasStreamError ? (
+          referenceGroups.length > 0 ||
+          hasStages ||
+          msg.streamErrorMessage != null ? (
             <>
               {referenceGroups.length > 0 && (
                 <div className="flex w-full flex-wrap gap-2">
@@ -386,6 +429,40 @@ const ConversationMessageItem: FC<Props> = ({
                         }
                         onOpenInBrowser={handleOpenReferenceInBrowser}
                         icon={<IconLink size={14} aria-hidden />}
+                        cardLabels={{
+                          ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {
+                            source: group.sourceName,
+                          }),
+                          previousCitation: t(
+                            CitationsI18nKeys.PopupPreviousCitation,
+                          ),
+                          nextCitation: t(CitationsI18nKeys.PopupNextCitation),
+                          formatSwitcherText: (current, total) =>
+                            t(CitationsI18nKeys.PopupSwitcher, {
+                              current,
+                              total,
+                            }),
+                          preview: t(BasicI18nKeys.Preview),
+                          openInBrowser: t(
+                            CitationsI18nKeys.PopupOpenInBrowser,
+                          ),
+                          download: t(ButtonsI18nKeys.Download),
+                        }}
+                        markerLabels={{
+                          ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {
+                            source: group.sourceName,
+                          }),
+                          label: t(CitationsI18nKeys.MarkerLabel, {
+                            source: group.sourceName,
+                          }),
+                          labelWithOverflow: t(
+                            CitationsI18nKeys.MarkerLabelWithOverflow,
+                            {
+                              source: group.sourceName,
+                              count: group.annotations.length - 1,
+                            },
+                          ),
+                        }}
                       />
                     );
                   })}
@@ -398,11 +475,12 @@ const ConversationMessageItem: FC<Props> = ({
                   labels={{ executedLabel, stepsLabel }}
                 />
               )}
-              {msg.hasStreamError && (
+              {msg.streamErrorMessage != null && (
                 <div className="w-full">
-                  <DialNotification
-                    variant={NotificationVariant.Error}
-                    message={streamErrorText}
+                  <ErrorMessageNotification
+                    message={
+                      msg.streamErrorMessage || t(ChatI18nKeys.StreamError)
+                    }
                   />
                 </div>
               )}
@@ -429,6 +507,7 @@ const ConversationMessageItem: FC<Props> = ({
         codeBlockTheme={codeBlockTheme}
         onAttachmentClick={handleAttachmentClick}
         onDownloadAll={handleDownloadAll}
+        selectedAttachmentId={selectedAttachmentId}
       />
     </CitationCardProvider>
   );

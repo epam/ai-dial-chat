@@ -67,11 +67,7 @@ export interface UseAttachmentsResult {
   hasBlockedAttachments: boolean;
 }
 
-/**
- * Manages all attachment state and side-effects for the `Input` component:
- * building, uploading, adding, removing, retrying, expanding, and consuming
- * pending drop/attachment queues.
- */
+/** Manages attachment state and lifecycle for the `Input` component. */
 export const useAttachments = ({
   initialAttachments,
   onUploadAttachment,
@@ -126,24 +122,38 @@ export const useAttachments = ({
     });
   }, []);
 
+  const onAttachmentsChangeRef = useRef(onAttachmentsChange);
+  useEffect(() => {
+    onAttachmentsChangeRef.current = onAttachmentsChange;
+  }, [onAttachmentsChange]);
+
+  /* Track whether the current attachments value came from an explicit update
+   * (not the initial mount) so the notification effect below skips the mount. */
+  const isInitialMountRef = useRef(true);
+
   const updateAttachments = useCallback(
     (updater: (current: Attachment[]) => Attachment[]) => {
       setAttachments((prev) => {
         const updated = updater(prev);
-        if (updated !== prev) onAttachmentsChange?.(updated);
-        return updated;
+        return updated !== prev ? updated : prev;
       });
     },
-    [onAttachmentsChange],
+    [],
   );
 
-  const resetAttachments = useCallback(
-    (items: Attachment[]) => {
-      setAttachments(items);
-      onAttachmentsChange?.(items);
-    },
-    [onAttachmentsChange],
-  );
+  /* Call onAttachmentsChange after state settles, outside the render phase. */
+  useEffect(() => {
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      return;
+    }
+    onAttachmentsChangeRef.current?.(attachments);
+    // attachments identity changes only when updateAttachments/resetAttachments produce a new array.
+  }, [attachments]);
+
+  const resetAttachments = useCallback((items: Attachment[]) => {
+    setAttachments(items);
+  }, []);
 
   const uploadAttachment = useCallback(
     async (attachment: Attachment) => {
@@ -215,6 +225,7 @@ export const useAttachments = ({
           toAdd.forEach((attachment) => {
             if (attachment.previewUrl)
               URL.revokeObjectURL(attachment.previewUrl);
+            if (attachment.playUrl) URL.revokeObjectURL(attachment.playUrl);
           });
           onAttachmentsLimitExceeded?.(count, maximumAttachmentsAmount);
           return;

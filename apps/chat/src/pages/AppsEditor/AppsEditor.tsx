@@ -1,14 +1,13 @@
 import {
-  DialNotification,
   DialSpinner,
-  NotificationVariant,
+  ErrorMessageNotification,
   StepStatus,
 } from '@epam/ai-dial-ui-kit';
 import type { ApplicationSchemaSummaryDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import EditorHeader from '../../components/EditorHeader/EditorHeader';
 import {
   AppsEditorI18nKeys,
@@ -132,6 +131,10 @@ const AppsEditor: FC = () => {
         : undefined,
     [existingDeployment],
   );
+
+  useEffect(() => {
+    setIsPreviewing(false);
+  }, [step]);
 
   const handleCreated = useCallback(
     (appId: string, displayName?: string, iconUrl?: string) => {
@@ -376,15 +379,13 @@ const AppsEditor: FC = () => {
         previewButtonLabel={t(BasicI18nKeys.Preview)}
         exitPreviewButtonLabel={t(AppsEditorI18nKeys.ExitPreviewButton)}
         isPreviewing={isPreviewing}
-        onPreview={canPreview ? handlePreview : undefined}
+        onPreview={step === AppsEditorStep.Settings ? handlePreview : undefined}
+        isPreviewDisabled={!canPreview}
       />
 
       {!isGeneralStep && saveError && (
         <div className="p-2">
-          <DialNotification
-            variant={NotificationVariant.Error}
-            message={saveError}
-          />
+          <ErrorMessageNotification message={saveError} />
         </div>
       )}
 
@@ -420,11 +421,11 @@ const AppsEditor: FC = () => {
         </div>
         {isSaving && (
           <div
-            className="absolute inset-0 flex items-center justify-center bg-blackout"
+            className="bg-blackout absolute inset-0 flex items-center justify-center"
             aria-label={t(AppsEditorI18nKeys.SavingOverlayLabel)}
             aria-live="polite"
           >
-            <div className="flex items-center gap-3 rounded-lg bg-layer-2 px-4 py-3 shadow-lg">
+            <div className="flex items-center gap-3 rounded-lg bg-layer-sunken px-4 py-3 shadow-lg">
               <DialSpinner />
               <span className="text-sm text-primary">
                 {t(AppsEditorI18nKeys.SavingOverlayLabel)}

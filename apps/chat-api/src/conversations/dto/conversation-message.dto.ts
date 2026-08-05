@@ -70,4 +70,13 @@ export class ConversationMessageDto {
   @ValidateNested()
   @Type(() => ConversationMessageCustomContentDto)
   custom_content?: ConversationMessageCustomContentDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Error message when the generation ended in error. Presence signals a terminal error state; absence means the generation succeeded or is still in progress.',
+    example: 'You have exceeded your daily token limit.',
+  })
+  @IsOptional()
+  @IsString()
+  streamErrorMessage?: string;
 }

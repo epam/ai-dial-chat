@@ -199,55 +199,6 @@ export class ModelDetailsDto {
   createdAt?: number;
 }
 
-export class ApplicationDetailsDto {
-  @ApiPropertyOptional({
-    type: 'object',
-    additionalProperties: true,
-    description:
-      'Non-secret custom application properties reported by DIAL Core',
-  })
-  applicationProperties?: Record<string, unknown>;
-
-  @ApiPropertyOptional({ description: 'Runtime environment for the function' })
-  functionRuntime?: string;
-
-  @ApiPropertyOptional({
-    description: 'Current deployment status of the function',
-  })
-  functionStatus?: string;
-
-  @ApiPropertyOptional({
-    description: 'Custom route names exposed by the application',
-    type: [String],
-  })
-  routes?: string[];
-
-  @ApiPropertyOptional({
-    description: 'Owner of the deployment as reported by DIAL Core',
-  })
-  owner?: string;
-
-  @ApiPropertyOptional({ type: DeploymentFeaturesDetailsDto })
-  features?: DeploymentFeaturesDetailsDto;
-
-  @ApiPropertyOptional({
-    description: 'Accepted MIME types for input attachments',
-    type: [String],
-  })
-  inputAttachmentTypes?: string[];
-
-  @ApiPropertyOptional({
-    description: 'URI of the custom application type schema, when present',
-  })
-  applicationTypeSchemaId?: string;
-
-  @ApiPropertyOptional({
-    description:
-      'Timestamp of creation time from DIAL Core (e.g. 1714768496000)',
-  })
-  createdAt?: number;
-}
-
 export class ToolsetAuthSettingsDto {
   @ApiPropertyOptional({
     description: 'Type of authentication',
@@ -322,6 +273,68 @@ export class ToolsetAuthSettingsDto {
     description: '(OAuth/PKCE only) PKCE challenge method (e.g. S256)',
   })
   codeChallengeMethod?: string;
+}
+
+export class ApplicationDetailsDto {
+  @ApiPropertyOptional({ description: 'Display name reported by DIAL Core' })
+  displayName?: string;
+
+  @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: true,
+    description:
+      'Non-secret custom application properties reported by DIAL Core',
+  })
+  applicationProperties?: Record<string, unknown>;
+
+  @ApiPropertyOptional({ description: 'Runtime environment for the function' })
+  functionRuntime?: string;
+
+  @ApiPropertyOptional({
+    description: 'Current deployment status of the function',
+  })
+  functionStatus?: string;
+
+  @ApiPropertyOptional({
+    description: 'Custom route names exposed by the application',
+    type: [String],
+  })
+  routes?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Owner of the deployment as reported by DIAL Core',
+  })
+  owner?: string;
+
+  @ApiPropertyOptional({ type: DeploymentFeaturesDetailsDto })
+  features?: DeploymentFeaturesDetailsDto;
+
+  @ApiPropertyOptional({
+    description: 'Accepted MIME types for input attachments',
+    type: [String],
+  })
+  inputAttachmentTypes?: string[];
+
+  @ApiPropertyOptional({
+    description: 'URI of the custom application type schema, when present',
+  })
+  applicationTypeSchemaId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Chat completion endpoint URL for custom applications',
+  })
+  endpoint?: string;
+
+  @ApiPropertyOptional({
+    description: 'Maximum number of input attachments for custom applications',
+  })
+  maxInputAttachments?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Timestamp of creation time from DIAL Core (e.g. 1714768496000)',
+  })
+  createdAt?: number;
 }
 
 export class ToolsetDetailsDto {

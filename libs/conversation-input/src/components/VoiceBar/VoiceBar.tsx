@@ -2,7 +2,8 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialErrorText,
-  DialGhostIconButton,
+  GhostIconButton,
+  PrimaryIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconPlayerStopFilled, IconX } from '@tabler/icons-react';
 import {
@@ -14,6 +15,7 @@ import {
   useRef,
 } from 'react';
 import { VoiceRecorderState } from '../../hooks/useVoiceRecorder';
+import inputStyles from '../Input/Input.module.scss';
 import styles from './VoiceBar.module.scss';
 
 const BAR_WIDTH = 3;
@@ -50,11 +52,7 @@ export interface VoiceBarProps {
   className?: string;
 }
 
-/**
- * Renders the voice recording bar: a live MM:SS timer, a scrolling waveform canvas
- * driven by a ring buffer, and state-based controls. Replaces the `Input` component
- * while voice state is not `idle`.
- */
+/** Voice recording bar: live timer, scrolling waveform, stop and discard controls. */
 export const VoiceBar: FC<VoiceBarProps> = ({
   state,
   analyserNodeRef,
@@ -189,24 +187,16 @@ export const VoiceBar: FC<VoiceBarProps> = ({
 
   const controls = (
     <div className="flex flex-shrink-0 items-center justify-end gap-1">
-      <DialGhostIconButton
+      <GhostIconButton
         icon={<IconX size={DIAL_ICON_SIZE.LG} aria-hidden />}
         aria-label={discardLabel}
-        className="size-10 flex-shrink-0"
         onClick={onDiscard}
       />
       {isRecording && (
-        <DialGhostIconButton
-          icon={
-            <IconPlayerStopFilled
-              size={DIAL_ICON_SIZE.LG}
-              className={styles.stopRecordingIcon}
-              aria-hidden
-            />
-          }
+        <PrimaryIconButton
+          icon={<IconPlayerStopFilled size={DIAL_ICON_SIZE.LG} />}
+          onClick={() => onStop?.()}
           aria-label={stopLabel}
-          className="size-10 flex-shrink-0"
-          onClick={onStop}
         />
       )}
     </div>
@@ -217,16 +207,22 @@ export const VoiceBar: FC<VoiceBarProps> = ({
       <div
         style={style}
         className={mergeClasses(
-          styles.container,
-          'flex min-h-[56px] w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border px-3 desktop:flex-row desktop:items-center desktop:gap-2 desktop:py-2',
-          isError && styles.containerError,
+          inputStyles.wrapper,
+          'flex min-h-[64px] w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border px-3 shadow-md desktop:flex-row desktop:items-center desktop:gap-2 desktop:py-2',
+          isError && styles.wrapperError,
         )}
       >
         {/* Row 1 on mobile / inline on desktop: timer + waveform canvas */}
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           {isRecording && (
             <>
-              <span className={styles.recordingDot} aria-hidden />
+              <span
+                className={mergeClasses(
+                  styles.recordingDot,
+                  'pointer-events-none block size-[8px] rounded-3xl',
+                )}
+                aria-hidden
+              />
               <span
                 className={mergeClasses(styles.timer, 'flex-shrink-0')}
                 aria-label={timerLabel}

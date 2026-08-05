@@ -28,11 +28,32 @@ and an API key value, and SHALL validate that the key header name is present.
 ### Requirement: OAuth credential fields
 When OAuth auth is selected with config, the system SHALL allow entering client id, client
 secret, authorization endpoint, token endpoint, and scopes, and SHALL require client id and
-client secret before triggering the login.
+client secret before triggering the login, except that client secret is not required when the
+editor was opened to edit a toolset that was already saved with OAuth-with-config credentials
+(i.e. the editor's route carries an existing toolset id) — Core never returns a stored client
+secret, so re-entering it is not required to log in again with the already-stored value. The
+required-field indicator on the Client Secret input and the login-button gating condition SHALL
+derive from this same "editing an already-saved toolset" state, not from whether the toolset has
+merely acquired a persisted id during the current create flow (e.g. from an in-progress draft
+auto-save).
 
 #### Scenario: Missing OAuth client credentials
 - **WHEN** OAuth auth with config is selected and client id or client secret is empty
 - **THEN** the system shows required errors for the missing field(s) and blocks the login
+
+#### Scenario: Client secret required while creating a new toolset
+- **WHEN** a user is creating a new toolset (the editor was not opened with an existing toolset
+  id in its route) and selects OAuth with login & config, even after the in-progress draft has
+  been auto-saved and acquired an id
+- **THEN** the Client Secret field is marked required and the Log In button stays disabled until
+  a client secret is entered
+
+#### Scenario: Client secret optional when re-logging in on an already-saved toolset
+- **WHEN** a user opens the editor to edit a toolset that was already saved with OAuth
+  with-login-&-config credentials (the editor's route carries that toolset's id)
+- **THEN** the Client Secret field is not marked required and the Log In button can become
+  enabled without a client secret value, provided the other required fields (client id, valid
+  endpoints) are filled in
 
 ### Requirement: Login mode selection
 For API Key and OAuth, the system SHALL offer login-mode options (with login, without login,
@@ -121,30 +142,47 @@ never be navigated away and, after receiving a successful result, SHALL show a s
 notification and refetch the shared toolset list so the updated authentication status is visible
 without a second login attempt or page reload.
 
+For the Toolset Editor's "With Login" OAuth mode specifically (no manually configured client),
+where the `clientId`/`authorizationEndpoint` are assigned by DIAL Core's dynamic client
+registration during create/update rather than entered by the user, the system SHALL open the
+same-origin placeholder popup synchronously in the click handler (before any asynchronous work),
+then, after the persist-before-login step resolves the toolset id, fetch that toolset's current
+`authSettings` and use the Core-issued `clientId`/`authorizationEndpoint` from that fetch — not
+the pre-save form state, which does not carry them — to build the authorize URL and navigate the
+already-open popup. If the manually configured client fields are already present in the editor's
+form state (the "with login & config" mode, or an already-saved toolset being re-logged-in),
+the system SHALL continue to build the authorize URL directly from that form state without an
+extra fetch.
+
 #### Scenario: Initiate OAuth login from the editor
+
 - **WHEN** a user saves an OAuth toolset in login-with-config mode from the Toolset Editor, or
   clicks "Log in" on an already-configured OAuth toolset
 - **THEN** the system stores redirect state with `credentialsLevel: USER`, opens the provider
   authorization URL in a new window/tab, and the editor tab remains on its current page
 
 #### Scenario: Initiate OAuth login from the Catalog at USER level
+
 - **WHEN** a user clicks "Log in" for an OAuth toolset in the Catalog Details Panel in a section
   scoped to `USER`
 - **THEN** the system stores redirect state with `credentialsLevel: USER`, opens the provider
   authorization URL in a new window/tab, and the Catalog tab remains on its current page
 
 #### Scenario: Initiate OAuth login from the Catalog at GLOBAL level
+
 - **WHEN** an admin clicks "Log in" in the "Entire organization credentials" section of an OAuth
   toolset in the Catalog Details Panel
 - **THEN** the system stores redirect state with `credentialsLevel: GLOBAL`, opens the provider
   authorization URL in a new window/tab, and the Catalog tab remains on its current page
 
 #### Scenario: Authorize URL includes PKCE parameters when configured
+
 - **WHEN** the toolset's stored OAuth configuration includes a `code_challenge` and
   `code_challenge_method`
 - **THEN** the authorize URL includes both as query parameters
 
 #### Scenario: Complete OAuth callback and report the result
+
 - **WHEN** the provider redirects back to the callback route inside the window opened for
   login
 - **THEN** the system reads the stored redirect state, calls the login endpoint with the code,
@@ -154,12 +192,14 @@ without a second login attempt or page reload.
   itself
 
 #### Scenario: External provider navigation preserves popup tracking
+
 - **WHEN** the OAuth popup navigates from Chat to a cross-origin identity provider
 - **THEN** Chat's `same-origin-allow-popups` COOP policy keeps the popup reference observable by
   the opener, while the popup's cleared `window.opener` prevents the provider from navigating the
   Chat tab
 
 #### Scenario: Opener recovers a result after the channel event is missed
+
 - **WHEN** the callback wrote its result into the popup URL, but the opener did not receive the
   first `BroadcastChannel` event
 - **THEN** the callback repeats the result, while the opener can also read it from the same-origin
@@ -177,19 +217,40 @@ without a second login attempt or page reload.
 - **THEN** the system resolves the login flow as cancelled without showing an error notification
 
 #### Scenario: Successful OAuth login refreshes the initiating page
+
 - **WHEN** the opener receives a successful OAuth login result
 - **THEN** it shows a success notification and refetches the shared toolset list so the updated
   authentication status is immediately available in the initiating tab
 
 #### Scenario: Callback without stored state
+
 - **WHEN** the callback route is reached with no valid stored redirect state
 - **THEN** the system does not attempt a login and closes the window
+
+#### Scenario: First login for a brand-new dynamically-registered toolset succeeds
+
+- **WHEN** a user creates a new toolset, selects OAuth "With Login" (no manually configured
+  client), and clicks "Log in" for the very first time
+- **THEN** the system opens a placeholder popup synchronously, persists the new toolset, fetches
+  its Core-issued `authSettings`, builds the authorize URL from the fetched `clientId`/
+  `authorizationEndpoint`, and navigates the already-open popup to it instead of showing "Failed
+  to log in"
+
+#### Scenario: Manually configured OAuth client skips the extra fetch
+
+- **WHEN** a user logs in via OAuth "With Login & Config" (client id/secret entered manually), or
+  clicks "Log in" again on an already-saved OAuth toolset
+- **THEN** the system builds the authorize URL directly from the editor's current form state
+  without fetching the toolset again first
 
 ### Requirement: Logged-in state and logout
 When a toolset is logged in at a credentials level, the system SHALL disable the
 authentication type selector and credential fields and SHALL offer a Log out action guarded
 by a confirmation dialog that revokes the credentials on confirm and shows a success
-notification.
+notification. On a successful logout, the system SHALL also refetch the shared toolset list,
+matching the refresh that already happens on a successful login, so a toolset card's credential
+badge outside the editor (e.g. in the Catalog) reflects the logged-out status without requiring
+an unrelated navigation or page refresh first.
 
 #### Scenario: Disabled fields when logged in
 - **WHEN** the loaded toolset is already logged in
@@ -198,7 +259,7 @@ notification.
 #### Scenario: Confirm logout
 - **WHEN** a user clicks Log out and confirms the dialog
 - **THEN** the system calls the logout endpoint to revoke the credentials, closes the confirm
-  dialog, and shows a success notification
+  dialog, shows a success notification, and refetches the shared toolset list
 
 #### Scenario: Cancel logout
 - **WHEN** a user clicks Log out and cancels the dialog
@@ -206,7 +267,14 @@ notification.
 
 #### Scenario: Logout failure
 - **WHEN** the logout endpoint call fails
-- **THEN** the system shows an error notification and the logged-in state is unchanged
+- **THEN** the system shows an error notification, the logged-in state is unchanged, and the
+  shared toolset list is not refetched
+
+#### Scenario: Catalog badge reflects a logout performed from the Editor
+- **WHEN** a user logs out of a toolset from the Toolset Editor's Auth section and then navigates
+  to the Catalog
+- **THEN** the toolset's card badge shows the logged-out credential status without requiring a
+  separate refresh action
 
 ### Requirement: Auth section disabled while saving
 The authentication section SHALL be disabled while a save is in progress to prevent a race

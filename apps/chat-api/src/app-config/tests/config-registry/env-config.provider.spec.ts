@@ -229,6 +229,63 @@ describe('EnvConfigProvider', () => {
     });
   });
 
+  describe('features.scheduledTasksEnabled', () => {
+    it('returns true when SCHEDULED_TASKS_ENABLED is true', async () => {
+      const { provider } = makeProvider({
+        SCHEDULED_TASKS_ENABLED: true,
+      });
+      expect(
+        await provider.resolve('features.scheduledTasksEnabled', ctx),
+      ).toBe(true);
+    });
+
+    it('returns undefined when SCHEDULED_TASKS_ENABLED is absent', async () => {
+      const { provider } = makeProvider({
+        SCHEDULED_TASKS_ENABLED: undefined,
+      });
+      expect(
+        await provider.resolve('features.scheduledTasksEnabled', ctx),
+      ).toBeUndefined();
+    });
+
+    describe('role gating via SCHEDULED_TASKS_ENABLED_ROLES', () => {
+      it('returns true when the roles env var is empty (unrestricted)', async () => {
+        const { provider } = makeProvider({
+          SCHEDULED_TASKS_ENABLED: true,
+          SCHEDULED_TASKS_ENABLED_ROLES: [],
+        });
+        expect(
+          await provider.resolve('features.scheduledTasksEnabled', ctx),
+        ).toBe(true);
+      });
+
+      it('returns true when user has a matching role', async () => {
+        const { provider } = makeProvider({
+          SCHEDULED_TASKS_ENABLED: true,
+          SCHEDULED_TASKS_ENABLED_ROLES: ['admin'],
+        });
+        const ctxWithRole: AppConfigEvalContext = { ...ctx, roles: ['admin'] };
+        expect(
+          await provider.resolve('features.scheduledTasksEnabled', ctxWithRole),
+        ).toBe(true);
+      });
+
+      it('returns false when user roles do not intersect with the allowed roles', async () => {
+        const { provider } = makeProvider({
+          SCHEDULED_TASKS_ENABLED: true,
+          SCHEDULED_TASKS_ENABLED_ROLES: ['admin'],
+        });
+        const ctxWithRole: AppConfigEvalContext = {
+          ...ctx,
+          roles: ['viewer'],
+        };
+        expect(
+          await provider.resolve('features.scheduledTasksEnabled', ctxWithRole),
+        ).toBe(false);
+      });
+    });
+  });
+
   describe('dialCore.externalUrl', () => {
     it('returns the external URL when DIAL_CORE_EXTERNAL_URL is set', async () => {
       const { provider } = makeProvider({
@@ -281,6 +338,175 @@ describe('EnvConfigProvider', () => {
       expect(
         await provider.resolve('fileManager.availableTabs', ctx),
       ).toBeUndefined();
+    });
+  });
+
+  describe('customVisualizers', () => {
+    it('returns undefined when CUSTOM_VISUALIZERS is not set', async () => {
+      const { provider } = makeProvider({ CUSTOM_VISUALIZERS: undefined });
+      expect(await provider.resolve('customVisualizers', ctx)).toBeUndefined();
+    });
+
+    it('returns [] and logs an error when CUSTOM_VISUALIZERS is invalid JSON', async () => {
+      const { provider } = makeProvider({ CUSTOM_VISUALIZERS: 'not-json' });
+      const loggerErrorSpy = vi.spyOn(provider['logger'], 'error');
+
+      expect(await provider.resolve('customVisualizers', ctx)).toEqual([]);
+      expect(loggerErrorSpy).toHaveBeenCalled();
+    });
+
+    it('returns [] and logs an error when CUSTOM_VISUALIZERS is valid JSON but not an array', async () => {
+      const { provider } = makeProvider({
+        CUSTOM_VISUALIZERS: JSON.stringify({ contentType: 'x' }),
+      });
+      const loggerErrorSpy = vi.spyOn(provider['logger'], 'error');
+
+      expect(await provider.resolve('customVisualizers', ctx)).toEqual([]);
+      expect(loggerErrorSpy).toHaveBeenCalled();
+    });
+
+    it('accepts a valid entry and preserves its fields verbatim', async () => {
+      const { provider } = makeProvider({
+        CUSTOM_VISUALIZERS: JSON.stringify([
+          {
+            title: 'my-viz',
+            description: 'my viz description',
+
+            contentType: 'application/x-my-viz',
+            url: 'https://viz.example.com',
+          },
+        ]),
+      });
+
+      expect(await provider.resolve('customVisualizers', ctx)).toEqual([
+        {
+          title: 'my-viz',
+          description: 'my viz description',
+
+          contentType: 'application/x-my-viz',
+          url: 'https://viz.example.com',
+          requestTimeout: undefined,
+          passAuthInfo: undefined,
+          passExplicitToken: undefined,
+        },
+      ]);
+    });
+
+    it('keeps other valid entries when one entry fails validation', async () => {
+      const { provider } = makeProvider({
+        CUSTOM_VISUALIZERS: JSON.stringify([
+          {
+            title: 'my-viz',
+
+            contentType: 'application/x-my-viz',
+            url: 'https://viz.example.com',
+          },
+          { contentType: '', url: 'not-a-url', title: 'bad', icon: 'x' },
+        ]),
+      });
+      const loggerErrorSpy = vi.spyOn(provider['logger'], 'error');
+
+      const result = (await provider.resolve(
+        'customVisualizers',
+        ctx,
+      )) as unknown[];
+
+      expect(result).toHaveLength(1);
+      expect(loggerErrorSpy).toHaveBeenCalled();
+    });
+
+    it('drops an entry with a missing title', async () => {
+      const { provider } = makeProvider({
+        CUSTOM_VISUALIZERS: JSON.stringify([
+          {
+            contentType: 'application/x-my-viz',
+            url: 'https://viz.example.com',
+          },
+        ]),
+      });
+
+      expect(await provider.resolve('customVisualizers', ctx)).toEqual([]);
+    });
+
+    it('accepts a whitespace-only title (some visualizers use spaces as appName)', async () => {
+      const { provider } = makeProvider({
+        CUSTOM_VISUALIZERS: JSON.stringify([
+          {
+            contentType: 'application/x-my-viz',
+            url: 'https://viz.example.com',
+            title: ' ',
+          },
+        ]),
+      });
+
+      const result = (await provider.resolve('customVisualizers', ctx)) as {
+        title: string;
+      }[];
+      expect(result).toHaveLength(1);
+      expect(result[0].title).toBe(' ');
+    });
+
+    it('accepts a comma-separated contentType and stores it verbatim', async () => {
+      const { provider } = makeProvider({
+        CUSTOM_VISUALIZERS: JSON.stringify([
+          {
+            contentType: 'application/x-a, application/x-b',
+            url: 'https://viz.example.com',
+            title: 'multi',
+          },
+        ]),
+      });
+
+      const result = (await provider.resolve(
+        'customVisualizers',
+        ctx,
+      )) as Array<{ contentType: string }>;
+      expect(result[0].contentType).toBe('application/x-a, application/x-b');
+    });
+
+    it('keeps an entry with unrecognized fields, logging a warning listing them', async () => {
+      const { provider } = makeProvider({
+        CUSTOM_VISUALIZERS: JSON.stringify([
+          {
+            title: 'my-viz',
+            contentType: 'application/x-my-viz',
+            url: 'https://viz.example.com',
+            width: 800,
+            expanded: true,
+          },
+        ]),
+      });
+      const loggerWarnSpy = vi.spyOn(provider['logger'], 'warn');
+
+      const result = (await provider.resolve(
+        'customVisualizers',
+        ctx,
+      )) as Array<Record<string, unknown>>;
+
+      expect(result).toHaveLength(1);
+      expect(result[0].width).toBe(800);
+      expect(result[0]).not.toHaveProperty('expanded');
+      expect(loggerWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('expanded'),
+      );
+    });
+  });
+
+  describe('publish.publicationFilterSources', () => {
+    it('returns undefined when PUBLICATION_FILTER_SOURCES is not set', async () => {
+      const { provider } = makeProvider({ PUBLICATION_FILTER_SOURCES: [] });
+      expect(
+        await provider.resolve('publish.publicationFilterSources', ctx),
+      ).toBeUndefined();
+    });
+
+    it('returns the parsed, trimmed array when PUBLICATION_FILTER_SOURCES is set', async () => {
+      const { provider } = makeProvider({
+        PUBLICATION_FILTER_SOURCES: ['roles', 'department', 'title'],
+      });
+      expect(
+        await provider.resolve('publish.publicationFilterSources', ctx),
+      ).toEqual(['roles', 'department', 'title']);
     });
   });
 

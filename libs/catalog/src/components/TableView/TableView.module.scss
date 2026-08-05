@@ -1,13 +1,13 @@
 .sectionHeading {
-  color: var(--text-secondary, #9fa6bd);
+  color: var(--text-secondary, #6b7280);
 }
 
 .rowAlt {
-  background: var(--bg-layer-2, #eeeef0);
+  background: var(--bg-layer-sunken, #eef1f7);
 }
 
 .label {
-  color: var(--text-secondary, #9fa6bd);
+  color: var(--text-secondary, #6b7280);
 }
 
 .checkIcon {
@@ -15,13 +15,13 @@
 }
 
 .valueTrue {
-  color: var(--text-primary, #eef1f7);
+  color: var(--text-primary, #161b2d);
 }
 
 .valueFalse {
-  color: var(--text-secondary, #9fa6bd);
+  color: var(--text-secondary, #6b7280);
 }
 
 .valueText {
-  color: var(--text-primary, #eef1f7);
+  color: var(--text-primary, #161b2d);
 }

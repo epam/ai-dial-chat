@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useDeployments } from '../../context/DeploymentsContext';
-import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
+import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 
 const DeploymentSelectorOverlay = lazy(

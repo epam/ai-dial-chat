@@ -1,0 +1,66 @@
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
+import { describe, expect, it } from 'vitest';
+import { PublishCatalogEntityDto } from '../dto/publish-catalog-entity.dto';
+
+const BASE_BODY = {
+  folderPath: 'Organization/Data Science',
+  version: '1.2.0',
+};
+
+async function validateDto(plain: Record<string, unknown>) {
+  const instance = plainToInstance(PublishCatalogEntityDto, plain);
+  return validate(instance, { whitelist: true, forbidNonWhitelisted: true });
+}
+
+describe('PublishCatalogEntityDto — rules', () => {
+  it('passes when rules is omitted', async () => {
+    const errors = await validateDto(BASE_BODY);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('passes when rules is an empty array', async () => {
+    const errors = await validateDto({ ...BASE_BODY, rules: [] });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('passes with a valid nested rule', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      rules: [
+        { source: 'roles', function: 'CONTAIN', targets: ['engineering'] },
+      ],
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects more than 20 rules', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      rules: Array.from({ length: 21 }, () => ({
+        source: 'roles',
+        function: 'CONTAIN',
+        targets: ['engineering'],
+      })),
+    });
+    expect(errors.some((e) => e.property === 'rules')).toBe(true);
+  });
+
+  it('rejects a malformed nested rule object', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      rules: [{ source: 123, function: 'CONTAIN', targets: 'engineering' }],
+    });
+    expect(errors.some((e) => e.property === 'rules')).toBe(true);
+  });
+
+  it('rejects a rule with an invalid function enum value', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      rules: [
+        { source: 'roles', function: 'MATCHES', targets: ['engineering'] },
+      ],
+    });
+    expect(errors.some((e) => e.property === 'rules')).toBe(true);
+  });
+});

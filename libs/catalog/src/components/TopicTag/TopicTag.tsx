@@ -1,6 +1,13 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialTag, DialTooltip } from '@epam/ai-dial-ui-kit';
-import { FC, useLayoutEffect, useRef, useState } from 'react';
+import {
+  FC,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import styles from './TopicTag.module.scss';
 
 /** Props for TopicTag. */
@@ -30,61 +37,123 @@ export interface TopicsLineProps {
   className?: string;
 }
 
-/**
- * Renders topics on a single line, collapsing whatever doesn't fit into a
- * "+N" overflow badge. The row never wraps — this is measured by horizontal
- * overflow (each tag's right edge vs. the container width), not by row
- * position, so it works the same whether the container is loosely sized
- * (card grid) or a fixed-width table cell (list view).
- */
+/* Matches the `gap-2` Tailwind class on the root element below. */
+const GAP = 8;
+
+/** Renders topics on a single line, collapsing overflow into a "+N" badge. */
 export const TopicsLine: FC<TopicsLineProps> = ({
   topics,
   overflowAriaLabel,
   className,
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const tagRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const tagWidthCacheRef = useRef<number[]>([]);
+  const badgeRef = useRef<HTMLDivElement>(null);
+
   const [visibleCount, setVisibleCount] = useState(topics.length);
-  const topicsRef = useRef<HTMLDivElement>(null);
 
   const topicsKey = topics.join('\0');
 
-  useLayoutEffect(() => {
-    const container = topicsRef.current;
-    if (!container || topics.length === 0) {
-      setVisibleCount(topics.length);
-      return;
-    }
-
-    const children = Array.from(container.children) as HTMLElement[];
-    if (children.length === 0) return;
+  /*
+   * Tag widths are cached from the one render where every tag is mounted
+   * (visibleCount === topics.length) and reused afterwards. Once tags are
+   * collapsed into "+N" they leave the DOM, so re-measuring the *container*
+   * on resize must not depend on re-reading widths from tags that are no
+   * longer there — and the container itself must not be the resize target,
+   * since shrinking its own content would otherwise look like an external
+   * resize and cause it to over-collapse.
+   */
+  const computeVisibleCount = useCallback(() => {
+    const container = containerRef.current;
+    if (!container || topics.length === 0) return;
 
     const containerWidth = container.clientWidth;
+    if (containerWidth === 0) return;
 
-    let cutoff = children.length;
-    for (let i = 0; i < children.length; i++) {
-      if (children[i].offsetLeft + children[i].offsetWidth > containerWidth) {
-        cutoff = i;
-        break;
-      }
+    const allMounted = tagRefs.current
+      .slice(0, topics.length)
+      .every((el) => el != null);
+    if (allMounted) {
+      tagWidthCacheRef.current = tagRefs.current
+        .slice(0, topics.length)
+        .map((el) => el?.offsetWidth ?? 0);
     }
 
-    // If there is overflow, reduce by one to leave room for the "+N" badge
-    setVisibleCount(
-      cutoff < children.length ? Math.max(0, cutoff - 1) : children.length,
+    const widths = tagWidthCacheRef.current;
+    if (widths.length !== topics.length) return;
+
+    const badgeWidth = badgeRef.current?.offsetWidth ?? 0;
+
+    let usedWidth = 0;
+    let count = 0;
+    for (let i = 0; i < topics.length; i++) {
+      const needsBadge = topics.length - (i + 1) > 0;
+      const projectedWidth =
+        usedWidth +
+        (i > 0 ? GAP : 0) +
+        widths[i] +
+        (needsBadge ? GAP + badgeWidth : 0);
+
+      if (projectedWidth > containerWidth) break;
+
+      usedWidth += (i > 0 ? GAP : 0) + widths[i];
+      count = i + 1;
+    }
+
+    setVisibleCount(count);
+  }, [topics.length]);
+
+  useLayoutEffect(() => {
+    tagWidthCacheRef.current = [];
+    setVisibleCount(topics.length);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [topicsKey]);
+
+  useLayoutEffect(() => {
+    computeVisibleCount();
+  });
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver(() => computeVisibleCount());
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [computeVisibleCount]);
+
+  if (topics.length === 0) {
+    return (
+      <div
+        ref={containerRef}
+        className={mergeClasses(
+          'flex min-w-0 flex-1 flex-nowrap items-center gap-2 overflow-hidden',
+          className,
+        )}
+      />
     );
-  }, [topicsKey, topics.length]);
+  }
 
   const overflow = topics.length - visibleCount;
 
   return (
     <div
-      ref={topicsRef}
+      ref={containerRef}
       className={mergeClasses(
-        'flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden',
+        'flex min-w-0 flex-1 flex-nowrap items-center gap-2 overflow-hidden',
         className,
       )}
     >
-      {topics.slice(0, visibleCount).map((p) => (
-        <TopicTag key={p} label={p} />
+      {topics.slice(0, visibleCount).map((p, index) => (
+        <div
+          key={p}
+          ref={(el) => {
+            tagRefs.current[index] = el;
+          }}
+        >
+          <TopicTag label={p} />
+        </div>
       ))}
       {overflow > 0 && (
         <DialTooltip tooltip={topics.slice(visibleCount).join(', ')}>
@@ -97,6 +166,13 @@ export const TopicsLine: FC<TopicsLineProps> = ({
           </span>
         </DialTooltip>
       )}
+      <div
+        ref={badgeRef}
+        aria-hidden
+        className="invisible absolute -left-full -top-full"
+      >
+        <TopicTag label={`+${topics.length}`} />
+      </div>
     </div>
   );
 };

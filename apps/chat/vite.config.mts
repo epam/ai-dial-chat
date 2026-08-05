@@ -24,9 +24,17 @@ export default defineConfig(() => ({
   plugins: [react(), svgr()],
   resolve: {
     alias: {
+      /* remark-math resolves math delimiters through micromark-extension-math, which only
+       * recognizes `$...$`/`$$...$$`. This fork additionally recognizes the `\(...\)`/`\[...\]`
+       * delimiters that LLMs commonly emit. */
+      'micromark-extension-math': 'micromark-extension-llm-math',
       '@epam/ai-dial-chat-shared': path.resolve(
         __dirname,
         '../../libs/chat-shared/src/index.ts',
+      ),
+      '@epam/ai-dial-chat-overlay': path.resolve(
+        __dirname,
+        '../../libs/chat-overlay/src/index.ts',
       ),
       '@epam/ai-dial-conversation-input': path.resolve(
         __dirname,
@@ -60,6 +68,10 @@ export default defineConfig(() => ({
         __dirname,
         '../../libs/catalog/src/index.ts',
       ),
+      '@epam/ai-dial-publish-panel': path.resolve(
+        __dirname,
+        '../../libs/publish-panel/src/index.ts',
+      ),
       '@epam/ai-dial-source-panel': path.resolve(
         __dirname,
         '../../libs/source-panel/src/index.ts',
@@ -83,6 +95,14 @@ export default defineConfig(() => ({
       '@epam/ai-dial-deployment-creation-form': path.resolve(
         __dirname,
         '../../libs/deployment-creation-form/src/index.ts',
+      ),
+      '@epam/ai-dial-scheduled-tasks': path.resolve(
+        __dirname,
+        '../../libs/scheduled-tasks/src/index.ts',
+      ),
+      '@epam/ai-dial-quotations': path.resolve(
+        __dirname,
+        '../../libs/quotations/src/index.ts',
       ),
       '@epam/ai-dial-react-pdf-highlighter/styles.css': path.resolve(
         __dirname,

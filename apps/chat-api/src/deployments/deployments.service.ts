@@ -8,6 +8,7 @@ import {
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { getResourceDisplayNameFallback } from '../common/utils/resource-name';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { HIDDEN_FILE } from '../constants/dial.constants';
@@ -609,7 +610,7 @@ export class DeploymentsService {
 
     try {
       const result = await this.dialClient.client.configurationDeployment(
-        name,
+        encodeDialResourcePath(name),
         {
           headers: getBearerAuthHeaders(accessToken),
         },
@@ -741,9 +742,12 @@ export class DeploymentsService {
     deployment: string,
     accessToken: string,
   ): Promise<DeploymentDetailsDto> {
-    const result = await this.dialClient.client.getModel(deployment, {
-      headers: getBearerAuthHeaders(accessToken),
-    });
+    const result = await this.dialClient.client.getModel(
+      encodeDialResourcePath(deployment),
+      {
+        headers: getBearerAuthHeaders(accessToken),
+      },
+    );
     if (result.error) {
       return mapDialHttpStatus(
         result.response.status,
@@ -818,9 +822,12 @@ export class DeploymentsService {
     deployment: string,
     accessToken: string,
   ): Promise<DeploymentDetailsDto> {
-    const result = await this.dialClient.client.getApplication(deployment, {
-      headers: getBearerAuthHeaders(accessToken),
-    });
+    const result = await this.dialClient.client.getApplication(
+      encodeDialResourcePath(deployment),
+      {
+        headers: getBearerAuthHeaders(accessToken),
+      },
+    );
     if (result.error) {
       return mapDialHttpStatus(
         result.response.status,
@@ -835,14 +842,51 @@ export class DeploymentsService {
       throw new NotFoundException('Resource not found');
     }
     const raw = result.data;
+    this.logger.debug(
+      `DIAL Core application details for "${deployment}": ${JSON.stringify(raw)}`,
+    );
+    const rawRecord = raw as unknown as Record<string, unknown>;
+
+    /* For applications with an `applications/{bucket}/{path}` ID, fetch the
+     * full config via getCustomApplication to get endpoint —
+     * getApplication (model listing) does not expose that field. */
+    let customAppRaw: Record<string, unknown> | undefined;
+    const appParts = deployment.startsWith('applications/')
+      ? deployment.slice('applications/'.length).split('/')
+      : undefined;
+    if (appParts && appParts.length >= 2) {
+      const bucket = appParts[0];
+      const path = encodeDialResourcePath(appParts.slice(1).join('/'));
+      const customResult = await this.dialClient.client.getCustomApplication(
+        bucket,
+        path,
+        { headers: getBearerAuthHeaders(accessToken) },
+      );
+      if (!customResult.error && customResult.data != null) {
+        customAppRaw = customResult.data as unknown as Record<string, unknown>;
+      }
+    }
 
     const data: DeploymentDetailsDto = {
       id: deployment,
       type: 'application',
       applicationDetails: {
-        applicationProperties: isRecord(raw.application_properties)
-          ? raw.application_properties
-          : undefined,
+        displayName: raw.display_name,
+        applicationProperties: (() => {
+          const base = isRecord(raw.application_properties)
+            ? raw.application_properties
+            : {};
+          /* Include raw features from the custom-app config so the editor
+           * textarea can display them. DIAL Core expands stored features with
+           * all defaults, so the user may see more keys than they originally
+           * entered — this is the most accurate representation available. */
+          const storedFeatures = customAppRaw?.features as unknown;
+          const merged =
+            storedFeatures != null
+              ? { ...base, features: storedFeatures }
+              : base;
+          return Object.keys(merged).length > 0 ? merged : undefined;
+        })(),
         functionRuntime: raw.function?.runtime,
         functionStatus: raw.function?.status,
         routes: raw.routes ? Object.keys(raw.routes) : undefined,
@@ -852,9 +896,23 @@ export class DeploymentsService {
           ? raw.input_attachment_types
           : undefined,
         applicationTypeSchemaId: raw.application_type_schema_id,
+        endpoint:
+          typeof customAppRaw?.endpoint === 'string'
+            ? customAppRaw.endpoint
+            : typeof rawRecord.endpoint === 'string'
+              ? rawRecord.endpoint
+              : undefined,
+        maxInputAttachments:
+          typeof raw.max_input_attachments === 'number'
+            ? raw.max_input_attachments
+            : undefined,
         createdAt: raw.created_at,
       },
     };
+
+    this.logger.debug(
+      `Application details sent to frontend for "${deployment}": ${JSON.stringify(data)}`,
+    );
 
     return data;
   }
@@ -863,9 +921,12 @@ export class DeploymentsService {
     deployment: string,
     accessToken: string,
   ): Promise<DeploymentDetailsDto> {
-    const result = await this.dialClient.client.getToolset(deployment, {
-      headers: getBearerAuthHeaders(accessToken),
-    });
+    const result = await this.dialClient.client.getToolset(
+      encodeDialResourcePath(deployment),
+      {
+        headers: getBearerAuthHeaders(accessToken),
+      },
+    );
     if (result.error) {
       return mapDialHttpStatus(
         result.response.status,
@@ -924,9 +985,12 @@ export class DeploymentsService {
     accessToken: string,
   ): Promise<string[] | undefined> {
     try {
-      const result = await this.dialClient.client.getToolSetTools(deployment, {
-        headers: getBearerAuthHeaders(accessToken),
-      });
+      const result = await this.dialClient.client.getToolSetTools(
+        encodeDialResourcePath(deployment),
+        {
+          headers: getBearerAuthHeaders(accessToken),
+        },
+      );
       if (result.error) {
         this.logger.warn(
           `DIAL Core returned ${result.response.status} for getToolSetTools "${deployment}"`,
@@ -950,7 +1014,7 @@ export class DeploymentsService {
   ): Promise<DeploymentLimitsResponseDto> {
     try {
       const result = await this.dialClient.client.getDeploymentLimits(
-        deploymentName,
+        encodeDialResourcePath(deploymentName),
         {
           headers: getBearerAuthHeaders(accessToken),
         },

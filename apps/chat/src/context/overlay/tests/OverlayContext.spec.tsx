@@ -1,24 +1,28 @@
 import {
   OverlayEventType,
+  OverlayRequestErrorCode,
   OverlayRequestType,
-} from '@epam/ai-dial-chat-shared';
+} from '@epam/ai-dial-chat-overlay';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthStatus } from '../../../types/auth-status';
+import { UserConfigStatus } from '../../../types/user-config-status';
 import {
   type ConversationListBridge,
   OverlayProvider,
+  shouldDeferOverlayModeUntilConfigReady,
   useOptionalOverlay,
   useOverlay,
 } from '../OverlayContext';
 
 const mockNavigate = vi.fn();
 const mockSetTheme = vi.fn();
+const mockApplyOverlayOverride = vi.fn();
 let mockAuthStatus = AuthStatus.Authenticated;
 let mockOverlayAllowedOrigins: string[] = ['https://partner.example.com'];
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
 }));
 
@@ -34,6 +38,14 @@ vi.mock('../../auth/UserContext', () => ({
 
 vi.mock('../../ThemeContext', () => ({
   useTheme: () => ({ setTheme: mockSetTheme }),
+}));
+
+vi.mock('../../UiFeaturesContext', () => ({
+  useUiFeatures: () => ({
+    isEnabled: () => true,
+    enabledFeatures: new Set(),
+    applyOverlayOverride: mockApplyOverlayOverride,
+  }),
 }));
 
 const wrapper = ({ children }: { children: ReactNode }) =>
@@ -66,6 +78,29 @@ describe('OverlayContext', () => {
       expect(() => renderHook(() => useOverlay())).toThrow(
         'useOverlay must be used within an OverlayProvider',
       );
+    });
+  });
+
+  describe('OverlayModeGate config loading', () => {
+    it('defers framed rendering until config can decide overlay eligibility', () => {
+      expect(
+        shouldDeferOverlayModeUntilConfigReady(UserConfigStatus.Loading, true),
+      ).toBe(true);
+    });
+
+    it('does not defer top-level rendering while config is loading', () => {
+      expect(
+        shouldDeferOverlayModeUntilConfigReady(UserConfigStatus.Loading, false),
+      ).toBe(false);
+    });
+
+    it('does not defer framed rendering after config leaves loading', () => {
+      expect(
+        shouldDeferOverlayModeUntilConfigReady(UserConfigStatus.Ready, true),
+      ).toBe(false);
+      expect(
+        shouldDeferOverlayModeUntilConfigReady(UserConfigStatus.Error, true),
+      ).toBe(false);
     });
   });
 
@@ -140,6 +175,97 @@ describe('OverlayContext', () => {
   });
 
   describe('SET_OVERLAY_OPTIONS', () => {
+    it('accepts a missing auth provider mode map and exposes undefined', async () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      dispatchFromHost({
+        type: OverlayRequestType.SetOverlayOptions,
+        requestId: 'req-no-auth-modes',
+        payload: { hostDomain: 'https://partner.example.com' },
+      });
+
+      expect(result.current.authProviderUiModes).toBeUndefined();
+      await waitFor(() => {
+        expect(
+          postMessageSpy.mock.calls.some(
+            ([message]) =>
+              (message as { requestId?: string }).requestId ===
+              'req-no-auth-modes',
+          ),
+        ).toBe(true);
+      });
+    });
+
+    it('stores a valid auth provider mode map', async () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+
+      act(() => {
+        dispatchFromHost({
+          type: OverlayRequestType.SetOverlayOptions,
+          requestId: 'req-auth-modes',
+          payload: {
+            hostDomain: 'https://partner.example.com',
+            authProviderUiModes: { keycloak: 'sameWindow' },
+          },
+        });
+      });
+
+      await waitFor(() => {
+        expect(result.current.authProviderUiModes).toEqual({
+          keycloak: 'sameWindow',
+        });
+      });
+    });
+
+    it.each([
+      ['a non-object value', 'invalid'],
+      ['a map containing a non-string value', { keycloak: 42 }],
+    ])('treats %s for auth provider modes as absent', async (_, value) => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      act(() => {
+        dispatchFromHost({
+          type: OverlayRequestType.SetOverlayOptions,
+          requestId: 'req-invalid-auth-modes',
+          payload: {
+            hostDomain: 'https://partner.example.com',
+            authProviderUiModes: value,
+          },
+        });
+      });
+
+      expect(result.current.authProviderUiModes).toBeUndefined();
+      await waitFor(() => {
+        expect(
+          postMessageSpy.mock.calls.some(
+            ([message]) =>
+              (message as { requestId?: string }).requestId ===
+              'req-invalid-auth-modes',
+          ),
+        ).toBe(true);
+      });
+    });
+
+    it('rejects an auth provider mode map from an untrusted origin', () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+
+      dispatchFromHost(
+        {
+          type: OverlayRequestType.SetOverlayOptions,
+          requestId: 'req-untrusted-auth-modes',
+          payload: {
+            hostDomain: 'https://evil.example.com',
+            authProviderUiModes: { keycloak: 'sameWindow' },
+          },
+        },
+        'https://evil.example.com',
+      );
+
+      expect(result.current.authProviderUiModes).toBeUndefined();
+    });
+
     it('rejects an origin outside the allowlist: no theme change, no response', () => {
       mockOverlayAllowedOrigins = ['https://partner.example.com'];
       renderHook(() => useOverlay(), { wrapper });
@@ -251,6 +377,130 @@ describe('OverlayContext', () => {
       });
 
       expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('abc'));
+    });
+
+    it('applies enabledFeatures via UiFeaturesContext when present', async () => {
+      renderHook(() => useOverlay(), { wrapper });
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      dispatchFromHost({
+        type: OverlayRequestType.SetOverlayOptions,
+        requestId: 'req-enabled-features',
+        payload: {
+          hostDomain: 'https://partner.example.com',
+          enabledFeatures: ['header', 'likes'],
+        },
+      });
+
+      expect(mockApplyOverlayOverride).toHaveBeenCalledWith([
+        'header',
+        'likes',
+      ]);
+      await waitFor(() => {
+        const responseCalls = postMessageSpy.mock.calls.filter(
+          ([message]) =>
+            (message as { requestId?: string }).requestId ===
+            'req-enabled-features',
+        );
+        expect(responseCalls).toHaveLength(1);
+      });
+    });
+
+    it('does not call applyOverlayOverride when enabledFeatures is absent', () => {
+      renderHook(() => useOverlay(), { wrapper });
+
+      dispatchFromHost({
+        type: OverlayRequestType.SetOverlayOptions,
+        requestId: 'req-no-enabled-features',
+        payload: {
+          hostDomain: 'https://partner.example.com',
+          theme: 'dark',
+        },
+      });
+
+      expect(mockApplyOverlayOverride).not.toHaveBeenCalled();
+    });
+
+    it('rejects a non-array enabledFeatures payload as malformed', () => {
+      renderHook(() => useOverlay(), { wrapper });
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      dispatchFromHost({
+        type: OverlayRequestType.SetOverlayOptions,
+        requestId: 'req-invalid-enabled-features',
+        payload: {
+          hostDomain: 'https://partner.example.com',
+          enabledFeatures: 'header,likes',
+        },
+      });
+
+      expect(mockApplyOverlayOverride).not.toHaveBeenCalled();
+      expect(postMessageSpy).not.toHaveBeenCalled();
+    });
+
+    it('logs unknown enabledFeatures values and still applies the request', async () => {
+      renderHook(() => useOverlay(), { wrapper });
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      dispatchFromHost({
+        type: OverlayRequestType.SetOverlayOptions,
+        requestId: 'req-unknown-enabled-features',
+        payload: {
+          hostDomain: 'https://partner.example.com',
+          enabledFeatures: ['header', 'not-a-real-feature', 'report-an-issue'],
+        },
+      });
+
+      expect(mockApplyOverlayOverride).toHaveBeenCalledWith([
+        'header',
+        'not-a-real-feature',
+        'report-an-issue',
+      ]);
+      expect(console.warn).toHaveBeenCalledWith(
+        'Overlay: ignored unknown enabledFeatures entry: "not-a-real-feature"',
+      );
+      expect(console.warn).toHaveBeenCalledWith(
+        'Overlay: ignored unknown enabledFeatures entry: "report-an-issue"',
+      );
+      await waitFor(() => {
+        const responseCalls = postMessageSpy.mock.calls.filter(
+          ([message]) =>
+            (message as { requestId?: string }).requestId ===
+            'req-unknown-enabled-features',
+        );
+        expect(responseCalls).toHaveLength(1);
+        expect(responseCalls[0][0]).toMatchObject({
+          payload: { applied: true },
+        });
+      });
+    });
+
+    it('applies theme, modelId, and enabledFeatures together before a single response', async () => {
+      renderHook(() => useOverlay(), { wrapper });
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      act(() => {
+        dispatchFromHost({
+          type: OverlayRequestType.SetOverlayOptions,
+          requestId: 'req-combined',
+          payload: {
+            hostDomain: 'https://partner.example.com',
+            theme: 'dark',
+            modelId: 'gpt-4o',
+            enabledFeatures: ['header'],
+          },
+        });
+      });
+
+      expect(mockSetTheme).toHaveBeenCalledWith('dark');
+      expect(mockApplyOverlayOverride).toHaveBeenCalledWith(['header']);
+      await waitFor(() => {
+        const responseCalls = postMessageSpy.mock.calls.filter(
+          ([message]) =>
+            (message as { requestId?: string }).requestId === 'req-combined',
+        );
+        expect(responseCalls).toHaveLength(1);
+      });
     });
   });
 
@@ -375,7 +625,7 @@ describe('OverlayContext', () => {
       });
     });
 
-    it('rejects malformed active-conversation request payloads without responding', () => {
+    it('responds with a structured error for malformed active-conversation request payloads', () => {
       const { result } = renderHook(() => useOverlay(), { wrapper });
       establishHostDomain();
       const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
@@ -402,18 +652,22 @@ describe('OverlayContext', () => {
       ).not.toThrow();
 
       expect(sendMessage).not.toHaveBeenCalled();
-      expect(
-        postMessageSpy.mock.calls.some(
-          ([message]) =>
-            (message as { requestId?: string }).requestId === 'malformed-send',
-        ),
-      ).toBe(false);
+      const response = postMessageSpy.mock.calls.find(
+        ([message]) =>
+          (message as { requestId?: string }).requestId === 'malformed-send',
+      )?.[0] as {
+        error: { code: OverlayRequestErrorCode; message: string };
+      };
+      expect(response.error).toEqual({
+        code: OverlayRequestErrorCode.InvalidPayload,
+        message: expect.stringContaining(OverlayRequestType.SendMessage),
+      });
       expect(console.warn).toHaveBeenCalledWith(
-        expect.stringContaining('malformed'),
+        expect.stringContaining(OverlayRequestErrorCode.InvalidPayload),
       );
     });
 
-    it('handles rejected bridge calls without sending a false success response', async () => {
+    it('responds with a structured error when a bridge call rejects', async () => {
       const { result } = renderHook(() => useOverlay(), { wrapper });
       establishHostDomain();
       const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
@@ -441,16 +695,49 @@ describe('OverlayContext', () => {
       await waitFor(() => {
         expect(sendMessage).toHaveBeenCalledWith('hi');
         expect(console.warn).toHaveBeenCalledWith(
-          expect.stringContaining('failed to execute'),
+          expect.stringContaining(
+            OverlayRequestErrorCode.RequestExecutionFailed,
+          ),
           expect.any(Error),
         );
       });
-      expect(
-        postMessageSpy.mock.calls.some(
-          ([message]) =>
-            (message as { requestId?: string }).requestId === 'rejected-send',
-        ),
-      ).toBe(false);
+      const response = postMessageSpy.mock.calls.find(
+        ([message]) =>
+          (message as { requestId?: string }).requestId === 'rejected-send',
+      )?.[0] as {
+        error: { code: OverlayRequestErrorCode; message: string };
+      };
+      expect(response.error).toEqual({
+        code: OverlayRequestErrorCode.RequestExecutionFailed,
+        message: 'send failed',
+      });
+    });
+
+    it('responds immediately when an active-conversation method is called from the empty composer', () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      establishHostDomain();
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      act(() => {
+        result.current.notifyConversationLoaded();
+      });
+      dispatchFromHost({
+        type: OverlayRequestType.GetMessages,
+        requestId: 'get-without-conversation',
+      });
+
+      const response = postMessageSpy.mock.calls.find(
+        ([message]) =>
+          (message as { requestId?: string }).requestId ===
+          'get-without-conversation',
+      )?.[0] as {
+        error: { code: OverlayRequestErrorCode; message: string };
+      };
+      expect(response.error).toEqual({
+        code: OverlayRequestErrorCode.ActiveConversationUnavailable,
+        message:
+          'No active conversation is open. Open or create a conversation before calling this method.',
+      });
     });
 
     it('answers subsequent requests against a newly-registered bridge, not the previous one', async () => {

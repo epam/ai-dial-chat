@@ -23,9 +23,9 @@ Every themeable value uses a three-tier fallback chain defined **once** in the S
 
 ```scss
 // 1. User override via prop  → --ci-bg (set inline by component)
-// 2. App theme variable      → --bg-layer-2
-// 3. Hard fallback hex       → #161B2D
-background: var(--ci-bg, var(--bg-layer-2, #161b2d));
+// 2. App theme variable      → --bg-layer-sunken
+// 3. Hard fallback hex       → #EEF1F7
+background: var(--ci-bg, var(--bg-layer-sunken, #EEF1F7));
 ```
 
 Hex fallbacks live **only** in `.module.scss`. Never duplicate them in TypeScript.
@@ -62,19 +62,19 @@ Not allowed in SCSS (use Tailwind instead):
 ```scss
 // ✅ correct — only CSS vars
 .wrapper {
-  background: var(--ci-bg, var(--bg-layer-2, #161b2d));
-  border-color: var(--ci-border, var(--stroke-primary, #696e7c));
+  background: var(--ci-bg, var(--bg-layer-sunken, #EEF1F7));
+  border-color: var(--ci-border, var(--stroke-primary, #6B7280));
 
   &:focus-within {
-    border-color: var(--ci-border-focus, var(--stroke-focus, #eef1f7));
+    border-color: var(--ci-border-focus, var(--stroke-focus, #161B2D));
   }
 }
 
 .textarea {
-  color: var(--ci-text, var(--text-primary, #eef1f7));
+  color: var(--ci-text, var(--text-primary, #161B2D));
 
   &::placeholder {
-    color: var(--ci-placeholder, var(--text-secondary, #575F73));
+    color: var(--ci-placeholder, var(--text-secondary, #6B7280));
   }
 }
 
@@ -174,7 +174,7 @@ Wire the typography vars in `.module.scss` on the element(s) where font styles a
 ```scss
 // ✅ correct — no fallback needed; unset var inherits from parent
 .content {
-  color: var(--ci-text, var(--text-primary, #eef1f7));
+  color: var(--ci-text, var(--text-primary, #161B2D));
   font-size: var(--ci-font-size);
   font-weight: var(--ci-font-weight);
   line-height: var(--ci-line-height);

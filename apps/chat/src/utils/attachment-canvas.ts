@@ -1,34 +1,40 @@
 import type {
+  CodeCanvasContent,
   ErrorCanvasContent,
+  HtmlCanvasContent,
   ImageCanvasContent,
   JsonCanvasContent,
   MarkdownCanvasContent,
   PdfCanvasContent,
   PlainTextCanvasContent,
+  VisualizerCanvasContent,
 } from '@epam/ai-dial-attachment-canvas';
 import {
   AttachmentContentType,
   AttachmentErrorType,
+  isHtmlPreviewable,
+  isTextPreviewable,
 } from '@epam/ai-dial-attachment-canvas';
 import type {
   Annotation,
   Attachment,
   AttachmentResource,
+  CustomVisualizer,
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
-import { MIMEType } from '@epam/ai-dial-chat-shared';
-import { LRUCache } from 'lru-cache';
+import { FileExtension, MIMEType } from '@epam/ai-dial-chat-shared';
 import {
   annotationHighlightId,
   annotationsToPdfHighlights,
-} from './annotation';
+  parsePdfPageReference,
+  type AnnotationGroup,
+} from '@epam/ai-dial-quotations';
+import { LRUCache } from 'lru-cache';
 import {
   isDialFileId,
   resolveDialFileDownloadUrl,
   resolveDialUrl,
 } from './dial-file';
-import type { AnnotationGroup } from './group-annotations-by-source';
-import { parsePdfPageReference } from './reference-attachment';
 
 /**
  * Decodes a base64 string into raw bytes, or `undefined` if the string is not
@@ -89,6 +95,37 @@ const networkFailureContent = (url: string): ErrorCanvasContent => ({
   errorType: AttachmentErrorType.LoadFailed,
   url,
 });
+
+/* Returns true when an external source URL should be opened in the canvas
+ * rather than a new browser tab.
+ *
+ * Image and audio content types are trusted directly since web-search grounding
+ * APIs do not mislabel them. For document types we rely solely on the URL path
+ * extension — Google's grounding API labels every web reference (YouTube,
+ * Forbes, etc.) as 'text/markdown', so content-type alone is unreliable. */
+export const isExternalSourcePreviewable = (
+  contentType: string,
+  url: string,
+): boolean => {
+  if (contentType.startsWith('image/') || contentType.startsWith('audio/')) {
+    return true;
+  }
+  try {
+    const { pathname } = new URL(url);
+    const fileName = pathname.split('/').pop() ?? '';
+    const dot = fileName.lastIndexOf('.');
+    if (dot === -1) return false;
+    const ext = fileName.slice(dot + 1).toLowerCase();
+    /* 'pdf' is not in TEXT_EXTENSIONS; 'html'/'htm' are not in TEXT_EXTENSIONS (they use HtmlContent), so both must be checked explicitly. */
+    return (
+      ext === FileExtension.PDF ||
+      isTextPreviewable(fileName) ||
+      isHtmlPreviewable(fileName)
+    );
+  } catch {
+    return false;
+  }
+};
 
 /*
  * Session-scoped LRU caches keyed by DIAL download URL.
@@ -265,6 +302,36 @@ export const resolveMarkdownCanvasContent = async (
   return { type: AttachmentContentType.Markdown, text: result };
 };
 
+const HTML_SRCDOC_SIZE_LIMIT = 1_048_576;
+
+/** Resolves a syntax-highlighted code canvas content payload from a DisplayAttachment, or `null` if unavailable. */
+export const resolveCodeCanvasContent = async (
+  attachment: DisplayAttachment,
+  language?: string,
+): Promise<CodeCanvasContent | ErrorCanvasContent | null> => {
+  const result = await resolveAttachmentText(attachment);
+  if (result == null) return null;
+  if (typeof result !== 'string') return result;
+  return { type: AttachmentContentType.Code, text: result, language };
+};
+
+/**
+ * Resolves an HTML canvas content payload from a DisplayAttachment.
+ * Fetches and inlines the HTML as `srcdoc` when the attachment has a download URL or inline data.
+ * Returns `null` if no source is available, or an `ErrorCanvasContent` on fetch failure.
+ * Rejects `srcdoc` payloads larger than 1 MiB to prevent browser truncation.
+ */
+export const resolveHtmlCanvasContent = async (
+  attachment: DisplayAttachment,
+): Promise<HtmlCanvasContent | ErrorCanvasContent | null> => {
+  const result = await resolveAttachmentText(attachment);
+  if (result == null) return null;
+  if (typeof result !== 'string') return result;
+  if (result.length > HTML_SRCDOC_SIZE_LIMIT) return null;
+  const url = resolveDialUrl(attachment) ?? undefined;
+  return { type: AttachmentContentType.Html, srcdoc: result, url };
+};
+
 /**
  * Builds a `PdfCanvasContent` for a PDF citation annotation, including highlights
  * for all annotations in the same source group and scroll target for the clicked one.
@@ -362,4 +429,48 @@ export const resolveJsonCanvasContent = async (
   } catch {
     return { type: AttachmentContentType.PlainText, text: result };
   }
+};
+
+/**
+ * Fetches the attachment payload and builds a `VisualizerCanvasContent` for the
+ * given registry entry and theme. Returns `null` when the payload cannot be
+ * fetched (caller should fall through to default content-type handling).
+ *
+ * Only JSON payloads are parsed into `data`. Non-JSON payloads (plain text,
+ * CSV, binary, …) resolve with `data: {}` — the visualizer still receives
+ * `mimeType` and `layout`, just no payload body. This is intentional: only
+ * JSON attachment content is forwarded to visualizers in this version.
+ */
+export const resolveVisualizerCanvasContent = async (
+  attachment: DisplayAttachment,
+  entry: CustomVisualizer,
+  themeId: string,
+): Promise<VisualizerCanvasContent | null> => {
+  const result = await resolveAttachmentText(attachment);
+  if (result == null || typeof result !== 'string') return null;
+
+  let data: unknown = {};
+  try {
+    const parsed = JSON.parse(result);
+    if (typeof parsed === 'object' && parsed !== null) {
+      data = parsed;
+    }
+  } catch {
+    /* non-JSON payload — send as empty object; visualizer receives raw mimeType */
+  }
+
+  return {
+    type: AttachmentContentType.Visualizer,
+    url: entry.url,
+    mimeType: attachment.contentType,
+    data,
+    layout: {
+      width: entry.width,
+      height: entry.height,
+      mobileHeight: entry.mobileHeight,
+      themeId,
+    },
+    visualizerName: entry.title,
+    requestTimeout: entry.requestTimeout,
+  };
 };

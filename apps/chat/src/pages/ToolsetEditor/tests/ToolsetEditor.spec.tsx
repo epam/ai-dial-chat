@@ -3,14 +3,14 @@ import { ResponseError } from '@epam/chat-api-client';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ToolsetAuthTypes, WithLogin } from '../../../constants/toolsets';
 import { ToolsetEditorI18nKeys } from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import * as toolsetsApi from '../../../server-api/toolsets';
 import { ROUTES } from '../../../types/routes';
-import { ToolsetAuthTypes, WithLogin } from '../../../types/toolsets';
 import ToolsetEditor from '../ToolsetEditor';
 
 vi.mock('../../../server-api/toolsets', () => ({
@@ -201,6 +201,12 @@ vi.mock('../ToolsetEditorView', () => ({
           onClick={() => onAuthChange({ isLoggedIn: true })}
         >
           report-login-success
+        </button>
+        <button
+          type="button"
+          onClick={() => onAuthChange({ isLoggedIn: false })}
+        >
+          report-logout-success
         </button>
       </div>
     );
@@ -504,6 +510,18 @@ describe('ToolsetEditor', () => {
     await user.click(
       await screen.findByRole('button', {
         name: 'report-login-success',
+      }),
+    );
+
+    await waitFor(() => expect(mockRefetchToolsets).toHaveBeenCalledOnce());
+  });
+
+  it('refetches toolsets after the auth section reports a successful logout', async () => {
+    renderEditor();
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'report-logout-success',
       }),
     );
 

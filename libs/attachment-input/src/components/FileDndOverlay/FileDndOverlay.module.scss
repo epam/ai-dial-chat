@@ -1,11 +1,11 @@
 .overlay {
-  background: var(--fd-bg, var(--bg-backdrop, #0c101d4d));
+  background: var(--ai-fd-bg, var(--bg-backdrop, #161b2d4d));
 }
 
 .icon {
-  color: var(--fd-icon, var(--text-accent-primary, #124ace));
+  color: var(--ai-fd-icon, var(--text-accent, #1d4ed8));
 }
 
 .deniedIcon {
-  color: var(--fd-denied-icon, var(--text-error, #ae2f2f));
+  color: var(--ai-fd-denied-icon, var(--text-error, #ae2f2f));
 }

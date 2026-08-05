@@ -60,7 +60,7 @@ Response:
   "path": "conversations/{bucket}/{path}",
   "folderPath": "Organization/Data Science",
   "publishedAt": "2026-07-15T10:00:00.000Z",
-  "publishedBy": "Valery Dluski"
+  "publishedBy": "Test User"
 }
 ```
 (`PublishConversationResultDto` — no `version`, no `entityType`/`entityId` pair since there's exactly one resource kind.)

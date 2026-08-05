@@ -24,10 +24,6 @@ export default defineConfig(({ command }) => ({
         import.meta.dirname,
         '../../libs/chat-overlay/src/index.ts',
       ),
-      '@epam/ai-dial-chat-shared': path.resolve(
-        import.meta.dirname,
-        '../../libs/chat-shared/src/index.ts',
-      ),
     },
   },
   // Uncomment this if you are using workers.
@@ -47,6 +43,7 @@ export default defineConfig(({ command }) => ({
     watch: false,
     globals: true,
     environment: 'jsdom',
+    setupFiles: ['./src/test-setup.ts'],
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
     coverage: {

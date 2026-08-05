@@ -6,6 +6,9 @@ export enum AttachmentContentType {
   Markdown = 'markdown',
   Json = 'json',
   Pdf = 'pdf',
+  Code = 'code',
+  Html = 'html',
+  Visualizer = 'visualizer',
   Unsupported = 'unsupported',
   Error = 'error',
 }

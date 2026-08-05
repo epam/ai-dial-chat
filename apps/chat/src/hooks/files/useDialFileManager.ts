@@ -2,7 +2,7 @@ import {
   DialFileManagerActions,
   DialFileManagerTabs,
   FileManagerColumnKey,
-} from '@epam/ai-dial-ui-kit';
+} from '@epam/ai-dial-react-file-manager';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

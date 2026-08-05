@@ -48,7 +48,7 @@ const KeyboardPageContent: FC = () => {
                   size={DIAL_ICON_SIZE.SM}
                   stroke={2}
                   aria-hidden
-                  className="text-accent-primary"
+                  className="text-accent"
                 />
               )}
             </button>

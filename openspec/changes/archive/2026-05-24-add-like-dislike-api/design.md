@@ -155,7 +155,7 @@ Update `onLike` and `onDislike` JSDoc: callbacks fire whether toggling on or off
 - Accept `activeRating` prop.
 - Wrap both thumbs buttons so clicking the currently-active one calls `onLike()`/`onDislike()` anyway — the parent computes the toggle.
 - Apply a highlight class when active: add `isActive` by comparing `activeRating` to `MessageRating.Like` or `MessageRating.Dislike`.
-  Use the `DialGhostIconButton` `className` prop with a Tailwind class (`text-accent-primary` or `text-[--uikit-accent-primary]`) to tint the icon when active.
+  Use the `GhostIconButton` `className` prop with a Tailwind class (`text-accent` or `text-[--uikit-accent-primary]`) to tint the icon when active.
 
 ---
 

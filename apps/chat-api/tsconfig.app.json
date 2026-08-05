@@ -7,8 +7,10 @@
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
     "target": "es2021",
-    "composite": true
+    "composite": true,
+    "resolveJsonModule": true
   },
   "include": ["src/**/*.ts"],
   "exclude": [
@@ -19,5 +21,6 @@
     "src/**/*.spec.tsx",
     "src/**/*.test.ts",
     "src/**/*.test.tsx"
-  ]
+  ],
+  "references": []
 }

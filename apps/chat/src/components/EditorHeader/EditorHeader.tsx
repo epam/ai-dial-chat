@@ -1,6 +1,10 @@
-import { GhostButton, NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
-import { DialSteps } from '@epam/ai-dial-ui-kit';
 import type { Step } from '@epam/ai-dial-ui-kit';
+import {
+  DialSteps,
+  GhostButton,
+  PrimaryButton,
+  NeutralButton,
+} from '@epam/ai-dial-ui-kit';
 import { IconEye, IconEyeOff } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo } from 'react';
@@ -25,6 +29,7 @@ interface Props {
   isPreviewing?: boolean;
   /** Renders the preview/exit-preview button in the trailing action group, before Cancel/Save, only when provided. */
   onPreview?: () => void;
+  isPreviewDisabled?: boolean;
 }
 
 const EditorHeader: FC<Props> = ({
@@ -42,9 +47,10 @@ const EditorHeader: FC<Props> = ({
   previewButtonLabel,
   exitPreviewButtonLabel,
   isPreviewing = false,
+  isPreviewDisabled = false,
   onPreview,
 }) => (
-  <header className="flex items-center justify-between gap-3 border-b border-b-tertiary bg-layer-2 px-4 py-1">
+  <header className="flex items-center justify-between gap-3 border-b border-b-tertiary bg-layer-sunken px-4 py-1">
     <div className="flex items-center gap-3">
       {title && (
         <h1 className="dial-caption-text justify-start text-primary">
@@ -66,22 +72,20 @@ const EditorHeader: FC<Props> = ({
     <div className="flex items-center gap-2">
       {onPreview && (
         <GhostButton
-          type="button"
           label={isPreviewing ? exitPreviewButtonLabel : previewButtonLabel}
           iconBefore={isPreviewing ? <IconEyeOff /> : <IconEye />}
           onClick={onPreview}
+          disabled={isPreviewDisabled}
         />
       )}
       {!isPreviewing && (
         <>
           <NeutralButton
-            type="button"
             label={cancelButtonLabel}
             onClick={onCancel}
             disabled={isSaving}
           />
           <PrimaryButton
-            type="button"
             label={saveButtonLabel}
             onClick={onSave}
             disabled={isSaving || isSaveDisabled}

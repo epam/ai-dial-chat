@@ -148,11 +148,6 @@ export class FilesListingService {
           `listFiles DIAL page: bucket=${bucket}, path=${normalizedPath}, page=${page}, count=${pageData.items.length}, hasNextPage=${nextToken != null}`,
         );
       } while (shouldAggregateAllPages && token != null);
-
-      this.logger.debug(
-        `listFiles DIAL raw: bucket=${bucket}, path=${normalizedPath}, count=${rawItems.length}, items=[${summarizeDialRawItems(rawItems)}]`,
-      );
-
       const items = rawItems.map((item) => normalizeFileItem(item, bucket));
       const resolvedPermissions = resolveListingPermissions(
         rawItems,

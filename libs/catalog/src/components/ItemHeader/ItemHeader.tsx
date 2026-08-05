@@ -1,5 +1,5 @@
-import { Highlight, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DialEllipsisTooltip, Highlight } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
 import styles from './ItemHeader.module.scss';
 
@@ -14,6 +14,7 @@ interface ItemHeaderProps {
   trailing?: ReactNode;
 }
 
+/** Item title header with optional numeric or string postfix and trailing slot. */
 export const ItemHeader: FC<ItemHeaderProps> = ({
   title,
   postfix,
@@ -25,7 +26,9 @@ export const ItemHeader: FC<ItemHeaderProps> = ({
 }) => {
   return (
     <div className={mergeClasses('flex items-center gap-2', className)}>
-      <h3 className={mergeClasses('min-w-0', titleClassName, styles.title)}>
+      <h3
+        className={mergeClasses('flex-3 min-w-0', titleClassName, styles.title)}
+      >
         {query ? (
           <Highlight text={title} query={query} />
         ) : (
@@ -34,7 +37,7 @@ export const ItemHeader: FC<ItemHeaderProps> = ({
       </h3>
       {postfix != null && (
         <DialEllipsisTooltip
-          className={mergeClasses(postfixClassName, styles.count)}
+          className={mergeClasses('flex-2', postfixClassName, styles.count)}
           text={postfix}
         />
       )}

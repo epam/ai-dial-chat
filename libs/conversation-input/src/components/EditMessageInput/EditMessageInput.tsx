@@ -1,7 +1,10 @@
 import type { Attachment, DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { RequestStatus, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
-import { BASE_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import {
+  BASE_ICON_SIZE,
+  NeutralButton,
+  PrimaryButton,
+} from '@epam/ai-dial-ui-kit';
 import { IconFile } from '@tabler/icons-react';
 import {
   ChangeEvent,
@@ -16,6 +19,7 @@ import type { EditMessageInputProps } from '../../models/ConversationInput';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
 import { Input } from '../Input/Input';
 
+/** Inline edit-message form: pre-populated textarea, existing attachment tray, and Save/Cancel actions. */
 export const EditMessageInput: FC<EditMessageInputProps> = ({
   message,
   initialAttachments = [],
@@ -35,6 +39,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   pendingDropFiles: externalPendingFiles,
   onDropFilesConsumed,
   validateAttachment,
+  isAttachmentsEnabled,
   hideAttachFile = false,
   fileAccept,
   maximumAttachmentsAmount,
@@ -44,6 +49,8 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   pendingAttachments,
   onPendingAttachmentsConsumed,
   onAttachmentClick,
+  pasteTextThreshold,
+  onMessageTooLong,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingDropFiles, setPendingDropFiles] = useState<File[]>([]);
@@ -84,9 +91,15 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   );
 
   const handleSaveClick = () => {
-    if (canSend) {
-      handleSend(currentText, currentNewAttachments);
+    if (!canSend) return;
+    if (
+      !isAttachmentsEnabled &&
+      currentText.length >= (pasteTextThreshold ?? 4000)
+    ) {
+      onMessageTooLong?.(currentText.length, pasteTextThreshold ?? 4000);
+      return;
     }
+    handleSend(currentText, currentNewAttachments);
   };
 
   const handleDropFilesConsumed = useCallback(
@@ -136,11 +149,14 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
         prefixAttachments={keptAttachments}
         onRemovePrefixAttachment={handleRemovePreExisting}
         validateAttachment={validateAttachment}
+        isAttachmentsEnabled={isAttachmentsEnabled}
         maximumAttachmentsAmount={maximumAttachmentsAmount}
         onAttachmentsLimitExceeded={onAttachmentsLimitExceeded}
         pendingAttachments={pendingAttachments}
         onPendingAttachmentsConsumed={onPendingAttachmentsConsumed}
         onAttachmentClick={onAttachmentClick}
+        pasteTextThreshold={pasteTextThreshold}
+        onMessageTooLong={onMessageTooLong}
       />
 
       {/* Action row — outside the bordered box */}

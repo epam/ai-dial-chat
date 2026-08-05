@@ -7,25 +7,34 @@ import {
   getCredentialsBadgeState,
   getCredentialsUiState,
 } from '@epam/ai-dial-catalog';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import type { DialToolsetDto } from '@epam/chat-api-client';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ToolsetOAuthCallbackQuery } from '../../../constants/toolsets';
+import {
+  ToolsetOAuthCallbackQuery,
+  ToolsetOAuthResultType,
+} from '../../../constants/toolsets';
 import { CatalogI18nKeys } from '../../../constants/translation-keys';
+import { DEFAULT_ENABLED_UI_FEATURES } from '../../../constants/ui-features';
 import { useAppConfig } from '../../../context/AppConfigContext';
 import { useUser } from '../../../context/auth/UserContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
+import {
+  FavoriteEntityType,
+  useFavoriteApplications,
+} from '../../../context/FavoriteApplicationsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { useCatalogSortFilterPreference } from '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
-import useFavoriteApplications, {
-  FavoriteEntityType,
-} from '../../../hooks/useFavoriteApplications/useFavoriteApplications';
+import { useUiFeature } from '../../../hooks/useUiFeature';
 import { deleteApplication } from '../../../server-api/applications';
 import { getDeploymentLimits } from '../../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../../server-api/deployments';
+import { getPublishRules } from '../../../server-api/publish-rules.api';
 import { publishCatalogEntity } from '../../../server-api/publish.api';
 import {
   deleteToolset,
@@ -35,7 +44,6 @@ import {
 } from '../../../server-api/toolsets';
 import { AuthStatus } from '../../../types/auth-status';
 import { ROUTES } from '../../../types/routes';
-import { ToolsetOAuthResultType } from '../../../types/toolsets';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import CatalogView from '../CatalogView';
@@ -67,13 +75,20 @@ let mockSearchParams = new URLSearchParams();
 
 const capturedPublishProps: {
   current: {
-    onPublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
+    onPublish?: (
+      item: CatalogItem,
+      folderPath: string[],
+      rules: PublicationRule[],
+    ) => Promise<void>;
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
     isPublishVisible?: (item: CatalogItem) => boolean;
     publishExpandedPaths?: Set<string>;
     onPublishExpandedPathsChange?: (paths: Set<string>) => void;
     publishLoadingPaths?: Set<string>;
+    ruleSourceOptions?: string[];
+    onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
     isConnectVisible?: (item: CatalogItem) => boolean;
+    isShareVisible?: (item: CatalogItem) => boolean;
     sortKey?: string;
     onSortChange?: (key: string) => void;
     filterTopics?: Set<string>;
@@ -83,7 +98,7 @@ const capturedPublishProps: {
   } | null;
 } = { current: null };
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
   useSearchParams: () => [mockSearchParams, mockSetSearchParams],
 }));
@@ -91,6 +106,10 @@ vi.mock('react-router-dom', () => ({
 vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   publishCatalogEntity: vi.fn(),
+}));
+
+vi.mock('../../../server-api/publish-rules.api', () => ({
+  getPublishRules: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
@@ -115,7 +134,10 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onPublish,
     getPublishHistory,
     isPublishVisible,
+    ruleSourceOptions,
+    onFetchExistingRules,
     isConnectVisible,
+    isShareVisible,
     sortKey,
     onSortChange,
     filterTopics,
@@ -143,10 +165,17 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onPublishExpandedPathsChange?: (paths: Set<string>) => void;
     publishLoadingPaths?: Set<string>;
     onCreatePublishFolder?: (parentPath: string[], name: string) => void;
-    onPublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
+    onPublish?: (
+      item: CatalogItem,
+      folderPath: string[],
+      rules: PublicationRule[],
+    ) => Promise<void>;
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
     isPublishVisible?: (item: CatalogItem) => boolean;
+    ruleSourceOptions?: string[];
+    onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
     isConnectVisible?: (item: CatalogItem) => boolean;
+    isShareVisible?: (item: CatalogItem) => boolean;
     sortKey?: string;
     onSortChange?: (key: string) => void;
     filterTopics?: Set<string>;
@@ -162,7 +191,10 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       publishExpandedPaths,
       onPublishExpandedPathsChange,
       publishLoadingPaths,
+      ruleSourceOptions,
+      onFetchExistingRules,
       isConnectVisible,
+      isShareVisible,
       sortKey,
       onSortChange,
       filterTopics,
@@ -349,6 +381,24 @@ vi.mock('../../../context/NotificationContext', () => ({
   useNotification: vi.fn(),
 }));
 
+vi.mock('../../../context/FavoriteApplicationsContext', () => ({
+  FavoriteEntityType: {
+    Deployment: 'deployment',
+    Toolset: 'toolset',
+  },
+  useFavoriteApplications: vi.fn(),
+}));
+vi.mock('../../../hooks/useUiFeature', async () => {
+  const { DEFAULT_ENABLED_UI_FEATURES } =
+    await import('../../../constants/ui-features');
+  return {
+    useUiFeature: vi.fn(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (feature: any) => DEFAULT_ENABLED_UI_FEATURES.has(feature),
+    ),
+  };
+});
+
 vi.mock(
   '../../../hooks/useFavoriteApplications/useFavoriteApplications',
   () => ({
@@ -377,6 +427,9 @@ describe('CatalogView', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useUiFeature).mockImplementation((feature) =>
+      DEFAULT_ENABLED_UI_FEATURES.has(feature),
+    );
     mockSearchParams = new URLSearchParams();
     capturedPopup = undefined;
     Object.defineProperty(window, 'location', {
@@ -406,6 +459,7 @@ describe('CatalogView', () => {
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -454,7 +508,12 @@ describe('CatalogView', () => {
         fileManagerTabs: ['my_files', 'shared', 'organization'],
         overlayEnabled: false,
         overlayAllowedOrigins: [],
+        enabledUiFeatures: null,
         announcementHtml: null,
+        deepResearchToolId: null,
+        footerHtmlMessage: '',
+        customVisualizers: [],
+        publicationFilterSources: ['title', 'role', 'dial_roles'],
       },
     });
   });
@@ -567,28 +626,75 @@ describe('CatalogView', () => {
       });
 
       render(<CatalogView />);
-      await capturedPublishProps.current?.onPublish?.(makeCatalogItem(), [
-        'Organization',
-        'Data Science',
-      ]);
+      await capturedPublishProps.current?.onPublish?.(
+        makeCatalogItem(),
+        ['Organization', 'Data Science'],
+        [],
+      );
 
       expect(publishCatalogEntity).toHaveBeenCalledWith(
         'toolset',
         'tool-abc123',
-        { folderPath: 'Organization/Data Science', version: '1.2.0' },
+        {
+          folderPath: 'Organization/Data Science',
+          version: '1.2.0',
+          rules: [],
+        },
       );
     });
 
-    it('rejects when the entity type is not publishable', async () => {
+    it('forwards rules added in the panel to publishCatalogEntity', async () => {
+      vi.mocked(publishCatalogEntity).mockResolvedValue({
+        entityId: 'tool-abc123',
+        entityType: 'toolset',
+        folderPath: 'Organization/Data Science',
+        version: '1.2.0',
+        publishedAt: '2026-07-13T10:00:00.000Z',
+        publishedBy: 'user@example.com',
+      });
+      const rules: PublicationRule[] = [
+        {
+          source: 'role',
+          function: 'CONTAIN' as PublicationRule['function'],
+          targets: ['engineering'],
+        },
+      ];
+
+      render(<CatalogView />);
+      await capturedPublishProps.current?.onPublish?.(
+        makeCatalogItem(),
+        ['Organization', 'Data Science'],
+        rules,
+      );
+
+      expect(publishCatalogEntity).toHaveBeenCalledWith(
+        'toolset',
+        'tool-abc123',
+        { folderPath: 'Organization/Data Science', version: '1.2.0', rules },
+      );
+    });
+
+    it('sources ruleSourceOptions from useAppConfig, not a hardcoded list', () => {
       render(<CatalogView />);
 
-      await expect(
-        capturedPublishProps.current?.onPublish?.(
-          makeCatalogItem({ type: CatalogEntityType.Agent }),
-          ['Organization'],
-        ),
-      ).rejects.toThrow();
-      expect(publishCatalogEntity).not.toHaveBeenCalled();
+      expect(capturedPublishProps.current?.ruleSourceOptions).toEqual([
+        'title',
+        'role',
+        'dial_roles',
+      ]);
+    });
+
+    it('onFetchExistingRules forwards the joined folder path to getPublishRules', async () => {
+      render(<CatalogView />);
+
+      await capturedPublishProps.current?.onFetchExistingRules?.([
+        'Organization',
+        'Data Science',
+      ]);
+
+      expect(vi.mocked(getPublishRules)).toHaveBeenCalledWith(
+        'Organization/Data Science',
+      );
     });
 
     it('propagates a publish API failure (e.g. 403) to the caller', async () => {
@@ -597,9 +703,11 @@ describe('CatalogView', () => {
       render(<CatalogView />);
 
       await expect(
-        capturedPublishProps.current?.onPublish?.(makeCatalogItem(), [
-          'Organization',
-        ]),
+        capturedPublishProps.current?.onPublish?.(
+          makeCatalogItem(),
+          ['Organization'],
+          [],
+        ),
       ).rejects.toThrow('Forbidden');
     });
 
@@ -624,11 +732,6 @@ describe('CatalogView', () => {
           makeCatalogItem({ isMyApp: false }),
         ),
       ).toBe(false);
-      expect(
-        capturedPublishProps.current?.isPublishVisible?.(
-          makeCatalogItem({ type: CatalogEntityType.Agent }),
-        ),
-      ).toBe(false);
     });
   });
 
@@ -649,7 +752,7 @@ describe('CatalogView', () => {
       expect(
         capturedPublishProps.current?.isConnectVisible?.(
           makeCatalogItem({
-            type: CatalogEntityType.Application,
+            type: CatalogEntityType.Agent,
             supportsMcp: true,
           }),
         ),
@@ -662,7 +765,7 @@ describe('CatalogView', () => {
       expect(
         capturedPublishProps.current?.isConnectVisible?.(
           makeCatalogItem({
-            type: CatalogEntityType.Application,
+            type: CatalogEntityType.Agent,
             supportsMcp: false,
           }),
         ),
@@ -691,7 +794,12 @@ describe('CatalogView', () => {
           fileManagerTabs: ['my_files', 'shared', 'organization'],
           overlayEnabled: false,
           overlayAllowedOrigins: [],
+          enabledUiFeatures: null,
           announcementHtml: null,
+          deepResearchToolId: null,
+          footerHtmlMessage: '',
+          customVisualizers: [],
+          publicationFilterSources: ['title', 'role', 'dial_roles'],
         },
       });
 
@@ -705,11 +813,55 @@ describe('CatalogView', () => {
       expect(
         capturedPublishProps.current?.isConnectVisible?.(
           makeCatalogItem({
-            type: CatalogEntityType.Application,
+            type: CatalogEntityType.Agent,
             supportsMcp: true,
           }),
         ),
       ).toBe(false);
+    });
+  });
+
+  describe('share wiring', () => {
+    it('shows Share for a toolset item when toolsets-sharing is enabled', () => {
+      vi.mocked(useUiFeature).mockReturnValue(true);
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.isShareVisible?.(
+          makeCatalogItem({ type: CatalogEntityType.Toolset }),
+        ),
+      ).toBe(true);
+    });
+
+    it('hides Share for a toolset item when toolsets-sharing is disabled', () => {
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) => feature !== OverlayFeature.ToolsetsSharing,
+      );
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.isShareVisible?.(
+          makeCatalogItem({ type: CatalogEntityType.Toolset }),
+        ),
+      ).toBe(false);
+    });
+
+    it('hides Share for an application item when applications-sharing is disabled, independent of toolsets-sharing', () => {
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) => feature !== OverlayFeature.ApplicationsSharing,
+      );
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.isShareVisible?.(
+          makeCatalogItem({ type: CatalogEntityType.Agent }),
+        ),
+      ).toBe(false);
+      expect(
+        capturedPublishProps.current?.isShareVisible?.(
+          makeCatalogItem({ type: CatalogEntityType.Toolset }),
+        ),
+      ).toBe(true);
     });
   });
 
@@ -755,6 +907,7 @@ describe('CatalogView', () => {
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -785,6 +938,7 @@ describe('CatalogView', () => {
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -827,6 +981,7 @@ describe('CatalogView', () => {
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -870,6 +1025,7 @@ describe('CatalogView', () => {
       selectedItemId: null,
       setSelectedItemId,
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -903,6 +1059,7 @@ describe('CatalogView', () => {
       selectedItemId: null,
       setSelectedItemId,
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -929,6 +1086,7 @@ describe('CatalogView', () => {
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -964,6 +1122,7 @@ describe('CatalogView', () => {
       selectedItemId: 'gpt-4o',
       setSelectedItemId,
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -989,6 +1148,7 @@ describe('CatalogView', () => {
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -1101,6 +1261,7 @@ describe('CatalogView', () => {
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -1161,6 +1322,7 @@ describe('CatalogView', () => {
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -1236,6 +1398,7 @@ describe('CatalogView', () => {
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -1266,6 +1429,7 @@ describe('CatalogView', () => {
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -1309,6 +1473,7 @@ describe('CatalogView', () => {
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -1348,6 +1513,7 @@ describe('CatalogView', () => {
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -1396,6 +1562,7 @@ describe('CatalogView', () => {
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -1448,6 +1615,7 @@ describe('CatalogView', () => {
         selectedItemId: null,
         setSelectedItemId: vi.fn(),
         restoreSelectedItemId: vi.fn(),
+        restoreDefaultSelection: vi.fn(),
         selectedDeploymentConfiguration: null,
         isLoading: false,
         error: null,
@@ -1668,6 +1836,7 @@ describe('CatalogView', () => {
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -1720,6 +1889,7 @@ describe('CatalogView', () => {
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -1761,6 +1931,7 @@ describe('CatalogView', () => {
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -1799,6 +1970,7 @@ describe('CatalogView', () => {
         selectedItemId: null,
         setSelectedItemId: vi.fn(),
         restoreSelectedItemId: vi.fn(),
+        restoreDefaultSelection: vi.fn(),
         selectedDeploymentConfiguration: null,
         isLoading: false,
         error: null,
@@ -1829,6 +2001,7 @@ describe('CatalogView', () => {
         selectedItemId: null,
         setSelectedItemId: vi.fn(),
         restoreSelectedItemId: vi.fn(),
+        restoreDefaultSelection: vi.fn(),
         selectedDeploymentConfiguration: null,
         isLoading: false,
         error: null,
@@ -1899,6 +2072,185 @@ describe('CatalogView', () => {
       expect(
         capturedPublishProps.current?.onMyAppsActiveChange,
       ).toBeUndefined();
+    });
+  });
+
+  describe('UI feature gates', () => {
+    it('renders nothing when catalog is disabled (non-selector mode)', () => {
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) =>
+          DEFAULT_ENABLED_UI_FEATURES.has(feature) &&
+          feature !== OverlayFeature.Catalog,
+      );
+      const { container } = render(<CatalogView />);
+      expect(container.firstChild).toBeNull();
+    });
+
+    it('still renders in selector mode when catalog is disabled', () => {
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) =>
+          DEFAULT_ENABLED_UI_FEATURES.has(feature) &&
+          feature !== OverlayFeature.Catalog,
+      );
+      render(<CatalogView isSelectorMode onClose={vi.fn()} />);
+      expect(screen.getByLabelText('Catalog item ids')).toBeTruthy();
+    });
+
+    it('excludes toolset items and the Create Toolset option when toolsets is disabled', async () => {
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        restoreDefaultSelection: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [
+          {
+            id: 'toolsets/b/search__0.0.1',
+            toolset: 'toolsets/b/search__0.0.1',
+            displayName: 'Search',
+            isMy: true,
+          },
+        ],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn(),
+        mergeSharedItem: vi.fn(),
+      });
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) =>
+          DEFAULT_ENABLED_UI_FEATURES.has(feature) &&
+          feature !== OverlayFeature.Toolsets,
+      );
+
+      render(<CatalogView />);
+
+      expect(
+        screen.getByLabelText('Catalog item ids').textContent,
+      ).not.toContain('toolsets/b/search__0.0.1');
+      expect(
+        screen.queryByRole('button', { name: CatalogI18nKeys.CreateToolset }),
+      ).toBeNull();
+    });
+
+    it('shows Create Quick App by default when a quick-app schema exists', () => {
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        restoreDefaultSelection: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [{ id: 'foo-quickapps2', displayName: 'Quick app 2.0' }],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn(),
+        mergeSharedItem: vi.fn(),
+      } as never);
+
+      render(<CatalogView />);
+
+      expect(
+        screen.getByRole('button', { name: CatalogI18nKeys.CreateQuickApp }),
+      ).toBeTruthy();
+    });
+
+    it('hides Create Quick App when custom-applications is disabled', () => {
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        restoreDefaultSelection: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [{ id: 'foo-quickapps2', displayName: 'Quick app 2.0' }],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn(),
+        mergeSharedItem: vi.fn(),
+      } as never);
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) =>
+          DEFAULT_ENABLED_UI_FEATURES.has(feature) &&
+          feature !== OverlayFeature.CustomApplications,
+      );
+
+      render(<CatalogView />);
+
+      expect(
+        screen.queryByRole('button', { name: CatalogI18nKeys.CreateQuickApp }),
+      ).toBeNull();
+    });
+
+    it('hides Create Quick App when hide-custom-app-creation is enabled', () => {
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        restoreDefaultSelection: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [{ id: 'foo-quickapps2', displayName: 'Quick app 2.0' }],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn(),
+        mergeSharedItem: vi.fn(),
+      } as never);
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) =>
+          DEFAULT_ENABLED_UI_FEATURES.has(feature) ||
+          feature === OverlayFeature.HideCustomAppCreation,
+      );
+
+      render(<CatalogView />);
+
+      expect(
+        screen.queryByRole('button', { name: CatalogI18nKeys.CreateQuickApp }),
+      ).toBeNull();
+    });
+
+    it("excludes the current user's own items when catalog-hide-my-apps is enabled", () => {
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        restoreDefaultSelection: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [
+          {
+            id: 'toolsets/b/search__0.0.1',
+            toolset: 'toolsets/b/search__0.0.1',
+            displayName: 'Search',
+            isMy: true,
+          },
+        ],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn(),
+        mergeSharedItem: vi.fn(),
+      });
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) =>
+          DEFAULT_ENABLED_UI_FEATURES.has(feature) ||
+          feature === OverlayFeature.CatalogHideMyApps,
+      );
+
+      render(<CatalogView />);
+
+      expect(
+        screen.getByLabelText('Catalog item ids').textContent,
+      ).not.toContain('toolsets/b/search__0.0.1');
     });
   });
 });

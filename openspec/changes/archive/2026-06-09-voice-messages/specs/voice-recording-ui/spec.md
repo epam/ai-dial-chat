@@ -2,7 +2,7 @@
 
 ### Requirement: Mic button in ConversationInput
 
-`ConversationInput` SHALL render a ghost icon button (UI kit `DialGhostIconButton`, 40 px outer / 24 px icon) on the right side of the action bar when `isTranscriptionSupported` is `true` **and the message text field is empty**. The button SHALL be hidden when `isTranscriptionSupported` is `false`, not provided, or when the text field contains non-whitespace characters.
+`ConversationInput` SHALL render a ghost icon button (UI kit `GhostIconButton`, 40 px outer / 24 px icon) on the right side of the action bar when `isTranscriptionSupported` is `true` **and the message text field is empty**. The button SHALL be hidden when `isTranscriptionSupported` is `false`, not provided, or when the text field contains non-whitespace characters.
 
 The mic button SHALL remain visible and interactive regardless of whether other attachment uploads are in progress.
 

@@ -11,26 +11,31 @@
 import type { ToolsetLoginBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import {
   TOOLSET_REDIRECT_STATE_KEY,
   ToolsetOAuthCallbackQuery,
-} from '../../constants/toolsets';
-import { loginToolset } from '../../server-api/toolsets';
-import { ROUTES } from '../../types/routes';
-import type {
-  ToolsetOAuthChannelMessage,
-  ToolsetOAuthResultAcknowledgement,
-  ToolsetRedirectState,
-} from '../../types/toolsets';
-import {
+  OAuthResourceKind,
   ToolsetAuthTypes,
   ToolsetOAuthChannelControlType,
   ToolsetCredentialsLevel,
   ToolsetOAuthFailureReason,
   ToolsetOAuthResultType,
-} from '../../types/toolsets';
+} from '../../constants/toolsets';
+import type {
+  ToolsetOAuthChannelMessage,
+  ToolsetOAuthResultAcknowledgement,
+  ToolsetRedirectState,
+} from '../../models/toolsets';
+import {
+  ExternalServiceAuthType,
+  ExternalServiceCredentialsLevel,
+  signInExternalService,
+} from '../../server-api/external-services';
+import { loginToolset } from '../../server-api/toolsets';
+import { ROUTES } from '../../types/routes';
+import { parseExternalServiceUrl } from '../../utils/external-services';
 import { getToolsetOAuthChannelName } from '../../utils/toolsets';
 
 const TOOLSET_OAUTH_RESULT_RETRY_INTERVAL_MS = 500;
@@ -159,23 +164,57 @@ const ToolsetAuthCallback: FC = () => {
       }
 
       try {
-        const body: ToolsetLoginBodyDto = {
-          url: redirectState.toolsetId,
-          credentialsLevel: (redirectState.credentialsLevel ??
-            ToolsetCredentialsLevel.User) as ToolsetLoginBodyDto['credentialsLevel'],
-          authenticationType:
-            ToolsetAuthTypes.OAuth as ToolsetLoginBodyDto['authenticationType'],
-          code,
-          redirectUri:
-            redirectState.redirectUri ??
-            `${window.location.origin}${ROUTES.ToolsetEditorCallback}`,
-        };
-        await loginToolset(redirectState.toolsetId, body);
+        const credentialsLevel =
+          redirectState.credentialsLevel ?? ToolsetCredentialsLevel.User;
+        const redirectUri =
+          redirectState.redirectUri ??
+          `${window.location.origin}${ROUTES.ToolsetEditorCallback}`;
+
+        if (redirectState.resourceKind === OAuthResourceKind.ExternalService) {
+          /*
+           * `toolsetId` holds the composite scope id built by
+           * `buildExternalServiceScopeId` (`{appId}/external_services/
+           * {serviceId}`) — the BFF's signin route takes `appId`/`serviceId`
+           * separately and reconstructs this same scope id server-side, so
+           * it must be parsed back here. External-service OAuth logins
+           * triggered by this app only ever use USER or GLOBAL (see
+           * useExternalServiceLogin) — never ToolsetCredentialsLevel.App,
+           * which ExternalServiceCredentialsLevel has no equivalent for — so
+           * the shared 'USER'/'GLOBAL' string values are safe to carry
+           * across the two enums here.
+           */
+          const parsed = parseExternalServiceUrl(redirectState.toolsetId);
+          if (!parsed) {
+            reportResult(flowId, {
+              type: ToolsetOAuthResultType.Failure,
+              reason: ToolsetOAuthFailureReason.MissingRedirectState,
+            });
+            return;
+          }
+          await signInExternalService(parsed.appId, parsed.serviceName, {
+            credentialsLevel:
+              credentialsLevel as unknown as ExternalServiceCredentialsLevel,
+            authenticationType: ExternalServiceAuthType.OAuth,
+            code,
+            redirectUri,
+          });
+        } else {
+          const body: ToolsetLoginBodyDto = {
+            url: redirectState.toolsetId,
+            credentialsLevel:
+              credentialsLevel as ToolsetLoginBodyDto['credentialsLevel'],
+            authenticationType:
+              ToolsetAuthTypes.OAuth as ToolsetLoginBodyDto['authenticationType'],
+            code,
+            redirectUri,
+          };
+          await loginToolset(redirectState.toolsetId, body);
+        }
+
         reportResult(flowId, {
           type: ToolsetOAuthResultType.Success,
           toolsetId: redirectState.toolsetId,
-          credentialsLevel:
-            redirectState.credentialsLevel ?? ToolsetCredentialsLevel.User,
+          credentialsLevel,
         });
       } catch {
         reportResult(flowId, {

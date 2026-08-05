@@ -6,7 +6,9 @@ import type { CatalogItem } from '../../../../../models/catalog-item';
 import { CatalogEntityType } from '../../../../../types/entity-type';
 import { DeleteButton } from '../DeleteButton';
 
-vi.mock('@epam/ai-dial-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  DialSpinner: () => <svg />,
   NeutralButton: ({
     label,
     iconBefore,
@@ -23,10 +25,6 @@ vi.mock('@epam/ai-dial-kit', () => ({
       {label}
     </button>
   ),
-}));
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialSpinner: () => <svg />,
 }));
 vi.mock('@tabler/icons-react', () => ({
   IconTrash: () => <svg />,
@@ -65,7 +63,7 @@ describe('DeleteButton', () => {
       <DeleteButton
         item={makeItem({
           isMyApp: true,
-          type: CatalogEntityType.Application,
+          type: CatalogEntityType.Agent,
         })}
       />,
     );

@@ -1,25 +1,30 @@
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { AriaAttributes } from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import type { AriaAttributes, ComponentProps } from 'react';
+import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  ButtonsI18nKeys,
   ChatI18nKeys,
+  ConversationPanelI18nKeys,
   SidebarI18nKeys,
 } from '../../../constants/translation-keys';
 import { SourcesSidebarProvider } from '../../../context/SourcesSidebarContext';
 import * as ThemeContext from '../../../context/ThemeContext';
+import * as useUiFeatureModule from '../../../hooks/useUiFeature';
 import { ROUTES } from '../../../types/routes';
 import Header from '../Header';
 
 vi.mock('../../../context/ThemeContext');
+vi.mock('../../../hooks/useUiFeature');
 vi.mock('../../../utils/icon-path');
 vi.mock('@epam/ai-dial-attachment-canvas', () => ({
   useAttachmentCanvas: () => ({ closeCanvas: vi.fn() }),
 }));
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { LG: 24 },
-  DialGhostIconButton: ({
+  GhostIconButton: ({
     'aria-label': ariaLabel,
     'aria-pressed': ariaPressed,
     onClick,
@@ -37,17 +42,18 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
 }));
 
-const renderHeader = () =>
+const renderHeader = (props?: Partial<ComponentProps<typeof Header>>) =>
   render(
     <MemoryRouter initialEntries={[`${ROUTES.Conversations}/test`]}>
       <SourcesSidebarProvider>
-        <Header onMenuToggle={vi.fn()} />
+        <Header onMenuToggle={vi.fn()} {...props} />
       </SourcesSidebarProvider>
     </MemoryRouter>,
   );
 
 describe('Header', () => {
   const mockUseTheme = vi.mocked(ThemeContext.useTheme);
+  const mockUseUiFeature = vi.mocked(useUiFeatureModule.useUiFeature);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -59,6 +65,9 @@ describe('Header', () => {
       setTheme: vi.fn(),
       isLoading: false,
     });
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature !== OverlayFeature.HideNewConversation,
+    );
   });
 
   it('renders Header component', () => {
@@ -109,5 +118,53 @@ describe('Header', () => {
     expect(
       screen.queryByRole('button', { name: SidebarI18nKeys.ToggleOpen }),
     ).toBeNull();
+  });
+
+  it('does not render when the header feature is disabled', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature !== OverlayFeature.Header,
+    );
+    const { container } = renderHeader();
+    expect(container.querySelector('header')).toBeNull();
+  });
+
+  it('hides the conversations-panel-toggle button when the feature is disabled', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature !== OverlayFeature.ConversationsPanelToggle,
+    );
+    renderHeader({ onConversationPanelToggle: vi.fn() });
+    expect(
+      screen.queryByRole('button', {
+        name: ConversationPanelI18nKeys.ToggleAriaLabel,
+      }),
+    ).toBeNull();
+  });
+
+  it('shows the conversations-panel-toggle button when the feature is enabled', () => {
+    renderHeader({ onConversationPanelToggle: vi.fn() });
+    expect(
+      screen.getByRole('button', {
+        name: ConversationPanelI18nKeys.ToggleAriaLabel,
+      }),
+    ).toBeTruthy();
+  });
+
+  it('hides the new-conversation button when hide-new-conversation is enabled', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) =>
+        feature === OverlayFeature.Header ||
+        feature === OverlayFeature.HideNewConversation,
+    );
+    renderHeader({ onNewChat: vi.fn() });
+    expect(
+      screen.queryByRole('button', { name: ButtonsI18nKeys.NewChat }),
+    ).toBeNull();
+  });
+
+  it('shows the new-conversation button when hide-new-conversation is disabled', () => {
+    renderHeader({ onNewChat: vi.fn() });
+    expect(
+      screen.getByRole('button', { name: ButtonsI18nKeys.NewChat }),
+    ).toBeTruthy();
   });
 });

@@ -1,4 +1,7 @@
-import type { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
+import type {
+  CodeBlockTheme,
+  CustomVisualizerDataLayout,
+} from '@epam/ai-dial-chat-shared';
 import type { SidebarPanelStyles } from '@epam/ai-dial-sidebar';
 import type { InputHighlightData } from '@epam/pdf-highlighter-kit';
 import type { CSSProperties } from 'react';
@@ -61,6 +64,44 @@ export interface AudioCanvasContent {
   mimeType?: string;
 }
 
+/** Content payload for syntax-highlighted source-code or text file attachments. */
+export interface CodeCanvasContent {
+  /** Discriminates the content type to select the correct renderer. */
+  type: AttachmentContentType.Code;
+  /** The raw source text to display. */
+  text: string;
+  /** `react-syntax-highlighter` language identifier (e.g. `'typescript'`). `undefined` renders plain monospace. */
+  language?: string;
+}
+
+/** Content payload for HTML file attachments or external HTML URL sources. */
+export interface HtmlCanvasContent {
+  /** Discriminates the content type to select the correct renderer. */
+  type: AttachmentContentType.Html;
+  /** Full HTML text rendered via `srcdoc` in a sandboxed iframe. Used for file attachments. */
+  srcdoc?: string;
+  /** External URL rendered via `src` in a sandboxed iframe. Used for external link sources. */
+  url?: string;
+}
+
+/** Content payload for a custom-visualizer attachment rendered inside a sandboxed iframe. */
+export interface VisualizerCanvasContent {
+  /** Discriminates the content type to select the correct renderer. */
+  type: AttachmentContentType.Visualizer;
+  /** Iframe `src`, resolved from the matching registry entry's `url`. */
+  url: string;
+  /** The attachment's own MIME type (not the registry entry's raw, possibly comma-separated, `contentType`). */
+  mimeType: string;
+  /** Opaque attachment payload consumed by the visualizer. */
+  data: unknown;
+  /** Presentation layout hints (`themeId`, `width`, `height`, `mobileHeight`). */
+  layout: CustomVisualizerDataLayout;
+  /** postMessage protocol namespace — MUST equal the registry entry's `title`, or the iframe never receives data. */
+  visualizerName: string;
+  /** Milliseconds to wait for a `send()` request's response before rejecting. From the registry entry; does NOT bound the handshake. */
+  requestTimeout?: number;
+}
+
 /** Content payload for attachments whose format cannot be previewed. */
 export interface UnsupportedCanvasContent {
   /** Discriminates the content type to select the correct renderer. */
@@ -87,6 +128,9 @@ export type AttachmentCanvasContent =
   | MarkdownCanvasContent
   | JsonCanvasContent
   | PdfCanvasContent
+  | CodeCanvasContent
+  | HtmlCanvasContent
+  | VisualizerCanvasContent
   | UnsupportedCanvasContent
   | ErrorCanvasContent;
 
@@ -161,6 +205,16 @@ export interface AttachmentCanvasLabels {
   copyJsonLabel?: string;
   /** Tooltip and accessible label for the copy-JSON button after a successful copy. Defaults to `'Copied!'`. */
   copiedJsonLabel?: string;
+  /** Message shown inside the visualizer canvas when the iframe handshake fails. Defaults to `'Failed to load visualizer'`. */
+  visualizerErrorLabel?: string;
+  /** Message shown when a URL-sourced iframe is blocked by the page's CSP or X-Frame-Options. Defaults to `'This page cannot be displayed in preview'`. */
+  htmlFrameBlockedLabel?: string;
+  /** Label for the "Open in new tab" fallback link shown alongside `htmlFrameBlockedLabel`. Defaults to `'Open in new tab'`. */
+  htmlOpenInNewTabLabel?: string;
+  /** Tooltip and `aria-label` for the toggle button when the rendered view is active (clicking switches to source). Defaults to `'View source'`. */
+  htmlViewSourceLabel?: string;
+  /** Tooltip and `aria-label` for the toggle button when the source view is active (clicking switches back to rendered). Defaults to `'View rendered'`. */
+  htmlViewRenderedLabel?: string;
 }
 
 /** Props for the AttachmentCanvas component. */

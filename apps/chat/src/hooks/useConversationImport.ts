@@ -14,26 +14,40 @@ import { useUser } from '../context/auth/UserContext';
 import { useConversations } from '../context/ConversationsContext';
 import { useNotification } from '../context/NotificationContext';
 import type { QueueJob } from '../models/conversation-queue';
+import { getApiErrorDetails } from '../server-api/api-error';
 import { UnauthorizedError } from '../server-api/base';
 import { saveConversation } from '../server-api/conversations.api';
-import { uploadFile } from '../server-api/files.api';
+import { listFiles, uploadFile } from '../server-api/files.api';
 import { ExportJobStatus } from '../types/conversation-export';
 import { runWithConcurrency } from '../utils/async';
-import { collectAttachmentRefs } from '../utils/attachment-refs';
-import { buildImportUploadPath } from '../utils/build-upload-path';
-import { resolveDialFileBucketAndPath } from '../utils/dial-file';
+import {
+  createUploadPathAllocator,
+  type UploadPathAllocator,
+} from '../utils/build-upload-path';
+import { formatDateYM } from '../utils/date';
 import {
   formatQuotedNameList,
   getFolderBreadcrumb,
   parseImportEnvelope,
+  planAttachmentUploads,
   rebaseConversationId,
   rewriteAttachmentUrls,
   UnsupportedImportFormatError,
+  type RewrittenAttachmentTarget,
 } from '../utils/import-conversation';
 import { parseDialArchive } from '../utils/zip-import';
 
 /** Maximum number of concurrent attachment upload requests during an archive import. */
 const ATTACHMENT_CONCURRENCY = 5;
+/**
+ * Maximum number of ` (n)` re-allocation attempts after a create-only 409.
+ * Lower than the backend's own retry budget (50, `files-upload.service.ts`)
+ * because each retry here re-POSTs the whole attachment body over the user's
+ * uplink, whereas the backend re-streams from a local temp file. With the
+ * `listFiles` pre-fill in place, a 409 means another tab/session won a race —
+ * losing several in a row is already pathological.
+ */
+const ATTACHMENT_CONFLICT_RETRY_LIMIT = 5;
 
 /** File-extension check for `.dial`/`.zip` archive imports (vs. plain `.json`). */
 const isArchiveFile = (file: File): boolean => /\.(dial|zip)$/i.test(file.name);
@@ -77,99 +91,108 @@ const parseImportFile = async (file: File): Promise<ParsedImportFile> => {
 };
 
 type AttachmentUploadResult =
-  | { kind: 'uploaded'; oldFileId: string; newFileId: string }
-  | { kind: 'conflict'; name: string }
+  | {
+      kind: 'uploaded';
+      oldFileId: string;
+      newFileId: string;
+      newTitle?: string;
+    }
   | { kind: 'skipped'; name: string };
 
-/** Best-effort display name for a fileId that failed to resolve to a `{bucket, path}` pair. */
-const fileIdDisplayName = (fileId: string): string =>
-  fileId.split('/').pop() || fileId;
-
 /**
- * Uploads every attachment a conversation references to `uploads/<day>/`,
- * skipping (and reporting by name) any reference that cannot be resolved or
- * fails to upload. A destination name that already exists is reported
- * separately as a conflict (upload uses `create-only` mode — no silent
- * renaming). Returns a map from the conversation's original file ids to their
- * new uploaded location, ready for `rewriteAttachmentUrls`.
+ * Uploads every attachment a conversation references, retrying under a
+ * ` (n)`-suffixed name (via `allocator`) when a create-only upload hits a
+ * name conflict (409) — up to `ATTACHMENT_CONFLICT_RETRY_LIMIT` times, after
+ * which the attachment is reported as skipped instead. References that
+ * cannot be resolved or have no matching archive bytes are reported as
+ * skipped by `planAttachmentUploads` without ever reaching the network.
+ * Returns a map from the conversation's original file ids to their new
+ * uploaded location (and, when renamed, new display name), ready for
+ * `rewriteAttachmentUrls`.
  */
 const uploadConversationAttachments = async (
   conversation: Conversation,
   attachmentBytes: Map<string, Uint8Array>,
   bucket: string,
-  date: Date,
+  allocator: UploadPathAllocator,
   signal: AbortSignal,
 ): Promise<{
-  urlMap: Map<string, string>;
-  conflictNames: string[];
+  targetMap: Map<string, RewrittenAttachmentTarget>;
   skippedNames: string[];
   isUnauthorized: boolean;
 }> => {
-  const refs = collectAttachmentRefs(conversation);
+  const { plan, skippedNames: unplannedSkippedNames } = planAttachmentUploads(
+    conversation,
+    attachmentBytes,
+    allocator,
+  );
   let isUnauthorized = false;
 
   const results = await runWithConcurrency(
-    refs,
+    plan,
     ATTACHMENT_CONCURRENCY,
-    async (ref): Promise<AttachmentUploadResult | undefined> => {
+    async (item): Promise<AttachmentUploadResult | undefined> => {
       if (signal.aborted || isUnauthorized) return undefined;
-      const resolved = resolveDialFileBucketAndPath(ref.fileId);
-      if (!resolved) {
-        return { kind: 'skipped', name: fileIdDisplayName(ref.fileId) };
-      }
-      const fileName = resolved.path.split('/').pop() ?? resolved.path;
-      const bytes = attachmentBytes.get(resolved.path);
-      if (!bytes) {
-        return { kind: 'skipped', name: fileName };
-      }
 
-      const uploadPath = buildImportUploadPath(fileName, date);
-      try {
-        /*
-         * fflate's Uint8Array (from unzipSync) is typed over ArrayBufferLike,
-         * which BlobPart does not accept — re-copy into a plain ArrayBuffer-backed
-         * Uint8Array first (same workaround as zip-export.ts's toZipUint8Array).
-         */
-        const file = new File([new Uint8Array(bytes)], fileName);
-        const response = await uploadFile(bucket, uploadPath, file, {
-          uploadMode: 'create-only',
-          signal,
-        });
-        return {
-          kind: 'uploaded',
-          oldFileId: ref.fileId,
-          newFileId: response.url,
-        };
-      } catch (error) {
-        if (signal.aborted) return undefined;
-        if (error instanceof UnauthorizedError) {
-          isUnauthorized = true;
-          return undefined;
+      let attempt = item.allocated;
+      for (
+        let retry = 0;
+        retry <= ATTACHMENT_CONFLICT_RETRY_LIMIT;
+        retry += 1
+      ) {
+        try {
+          /*
+           * fflate's Uint8Array (from unzipSync) is typed over ArrayBufferLike,
+           * which BlobPart does not accept — re-copy into a plain ArrayBuffer-backed
+           * Uint8Array first (same workaround as zip-export.ts's toZipUint8Array).
+           */
+          const file = new File([new Uint8Array(item.bytes)], attempt.fileName);
+          const response = await uploadFile(bucket, attempt.path, file, {
+            uploadMode: 'create-only',
+            signal,
+          });
+          return {
+            kind: 'uploaded',
+            oldFileId: item.fileId,
+            newFileId: response.url,
+            newTitle: attempt.isRenamed ? attempt.fileName : undefined,
+          };
+        } catch (error) {
+          if (signal.aborted) return undefined;
+          if (error instanceof UnauthorizedError) {
+            isUnauthorized = true;
+            return undefined;
+          }
+          const isConflict =
+            error instanceof ResponseError && error.response.status === 409;
+          if (!isConflict || retry === ATTACHMENT_CONFLICT_RETRY_LIMIT) {
+            return { kind: 'skipped', name: item.originalFileName };
+          }
+          allocator.markTaken(attempt.fileName);
+          attempt = allocator.allocate(item.originalFileName);
         }
-        if (error instanceof ResponseError && error.response.status === 409) {
-          return { kind: 'conflict', name: fileName };
-        }
-        return { kind: 'skipped', name: fileName };
       }
+      /* Unreachable: the loop above always returns, either on success or once
+       * retries are exhausted — kept only to satisfy TS control-flow analysis. */
+      return { kind: 'skipped', name: item.originalFileName };
     },
   );
 
-  const urlMap = new Map<string, string>();
-  const conflictNames: string[] = [];
-  const skippedNames: string[] = [];
+  const targetMap = new Map<string, RewrittenAttachmentTarget>();
+  const skippedNames: string[] = [...unplannedSkippedNames];
   for (const result of results) {
     if (result.kind === 'uploaded') {
-      urlMap.set(result.oldFileId, result.newFileId);
-    } else if (result.kind === 'conflict') {
-      conflictNames.push(result.name);
+      targetMap.set(result.oldFileId, {
+        url: result.newFileId,
+        ...(result.newTitle != null ? { title: result.newTitle } : {}),
+      });
     } else {
       skippedNames.push(result.name);
     }
   }
 
   return {
-    urlMap,
-    conflictNames: signal.aborted || isUnauthorized ? [] : conflictNames,
+    targetMap,
     skippedNames: signal.aborted || isUnauthorized ? [] : skippedNames,
     isUnauthorized: !signal.aborted && isUnauthorized,
   };
@@ -191,11 +214,13 @@ interface UseConversationImportResult {
 /**
  * Owns the import job queue: parses a selected export file (`.json` or
  * `.dial`/`.zip`, v5 envelope, old- or new-chat origin) once per file, then
- * re-uploads any archive attachments to `uploads/<YYYY-MM-DD>/`, rewrites
- * attachment references, regenerates each conversation's id/path with a
- * fresh UUID (collision-free save, no replace dialog), and persists every
- * conversation. Mirrors `useConversationExport`'s job-queue/cancel/retry
- * architecture — one job per imported file, not per conversation.
+ * re-uploads any archive attachments to `uploads/<YYYY-MM>/` — disambiguating
+ * a name collision with a ` (n)` suffix instead of rejecting it — rewrites
+ * attachment references (and renamed titles), regenerates each conversation's
+ * id/path with a fresh UUID (collision-free save, no replace dialog), and
+ * persists every conversation. Mirrors `useConversationExport`'s
+ * job-queue/cancel/retry architecture — one job per imported file, not per
+ * conversation.
  */
 export const useConversationImport = (): UseConversationImportResult => {
   const { t } = useTranslation();
@@ -243,28 +268,67 @@ export const useConversationImport = (): UseConversationImportResult => {
 
       const successNames: string[] = [];
       const failedNames: string[] = [];
-      const conflictNames: string[] = [];
       const skippedAttachmentNames: string[] = [];
       let isUnauthorized = false;
+      /* Only the first failing conversation's trace ID is shown — see the batch-failure rule
+       * in api-error-trace-correlation's spec. */
+      let firstFailureTraceId: string | undefined;
       const today = new Date();
+
+      /*
+       * The allocator is created once for the whole job (not per conversation)
+       * so a source path referenced by two different conversations in the same
+       * archive still gets a distinct, deterministic ` (n)` suffix rather than
+       * two competing uploads. It is pre-filled from the destination folder's
+       * current contents so a name that already exists in the bucket — from an
+       * earlier upload or a previous import — is suffixed immediately instead
+       * of round-tripping through a 409 first.
+       */
+      let allocator: UploadPathAllocator | undefined;
+      if (parsed.isArchive) {
+        const uploadFolder = `uploads/${formatDateYM(today)}`;
+        let existingNames: string[] = [];
+        try {
+          const listing = await listFiles(
+            { bucket, path: uploadFolder },
+            signal,
+          );
+          existingNames = listing.items.map((item) => item.name);
+        } catch (error) {
+          if (signal.aborted) return;
+          if (error instanceof UnauthorizedError) {
+            updateJob(jobId, { status: ExportJobStatus.Failed });
+            return;
+          }
+          /* Listing is an optimization, not a correctness requirement — a
+           * missing month folder (404, common on the first import of the
+           * month), a permissions error, or a network failure just means the
+           * allocator starts empty and relies on retry-on-409 instead. */
+          console.error(
+            'Failed to list the upload folder for attachment name disambiguation',
+            error,
+          );
+        }
+        allocator = createUploadPathAllocator({ date: today, existingNames });
+      }
 
       for (const conversation of parsed.history) {
         if (signal.aborted) return;
         if (isUnauthorized) break;
 
         try {
-          // TODO: a normalizeImportedConversation(conversation) step may be
-          // needed here before upload/rebase, for old-chat-shaped files —
-          // deferred per design.md until real-world testing shows which gaps
-          // (missing lastActivityDate/assistantModelId/etc.) actually need
-          // filling in.
-          let urlMap = new Map<string, string>();
-          if (parsed.isArchive) {
+          /* TODO: a normalizeImportedConversation(conversation) step may be
+           * needed here before upload/rebase, for old-chat-shaped files —
+           * deferred per design.md until real-world testing shows which gaps
+           * (missing lastActivityDate/assistantModelId/etc.) actually need
+           * filling in. */
+          let targetMap = new Map<string, RewrittenAttachmentTarget>();
+          if (parsed.isArchive && allocator) {
             const result = await uploadConversationAttachments(
               conversation,
               parsed.attachments,
               bucket,
-              today,
+              allocator,
               signal,
             );
             if (signal.aborted) return;
@@ -275,13 +339,10 @@ export const useConversationImport = (): UseConversationImportResult => {
             if (result.skippedNames.length > 0) {
               skippedAttachmentNames.push(...result.skippedNames);
             }
-            if (result.conflictNames.length > 0) {
-              conflictNames.push(...result.conflictNames);
-            }
-            urlMap = result.urlMap;
+            targetMap = result.targetMap;
           }
 
-          const rewritten = rewriteAttachmentUrls(conversation, urlMap);
+          const rewritten = rewriteAttachmentUrls(conversation, targetMap);
           const { conversation: regenerated, subPath } = rebaseConversationId(
             rewritten,
             bucket,
@@ -312,6 +373,9 @@ export const useConversationImport = (): UseConversationImportResult => {
             break;
           }
           failedNames.push(conversation.name);
+          if (firstFailureTraceId === undefined) {
+            firstFailureTraceId = (await getApiErrorDetails(error)).traceId;
+          }
           console.error('Failed to import a conversation', error);
         }
       }
@@ -343,6 +407,7 @@ export const useConversationImport = (): UseConversationImportResult => {
           message: t(ConversationImportI18nKeys.Failed, {
             names: formatQuotedNameList(failedNames),
           }),
+          requestId: firstFailureTraceId,
         });
       }
       if (skippedAttachmentNames.length > 0) {
@@ -353,16 +418,6 @@ export const useConversationImport = (): UseConversationImportResult => {
           }),
         });
       }
-      if (conflictNames.length > 0) {
-        showNotification({
-          variant: NotificationVariant.Error,
-          title: t(ConversationImportI18nKeys.FailedTitle),
-          message: t(ConversationImportI18nKeys.AttachmentNameConflict, {
-            names: formatQuotedNameList(conflictNames),
-          }),
-        });
-      }
-
       updateJob(jobId, {
         status:
           failedNames.length > 0

@@ -23,12 +23,22 @@ describe('createMessagePair', () => {
   });
 
   it('should include form_value in custom_content when provided', () => {
-    const result = createMessagePair('Pick a number', undefined, {
-      button: 1,
+    const result = createMessagePair('Pick a number', {
+      form_value: { button: 1 },
     });
 
     expect(result.userMessage.custom_content?.form_value).toEqual({
       button: 1,
+    });
+  });
+
+  it('should include configuration_value in custom_content when provided', () => {
+    const result = createMessagePair('Research this', {
+      configuration_value: { deep_research: true },
+    });
+
+    expect(result.userMessage.custom_content?.configuration_value).toEqual({
+      deep_research: true,
     });
   });
 
@@ -39,7 +49,7 @@ describe('createMessagePair', () => {
   });
 
   it('should set deploymentId on assistant message when provided', () => {
-    const result = createMessagePair('Hello', undefined, undefined, 'gpt-4');
+    const result = createMessagePair('Hello', undefined, 'gpt-4');
 
     expect(result.assistantMessage.deploymentId).toBe('gpt-4');
   });

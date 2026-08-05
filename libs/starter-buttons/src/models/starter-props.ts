@@ -1,21 +1,22 @@
 import type { StarterOption } from '@epam/ai-dial-chat-shared';
 
-/** Localized text strings used by the StarterButtons component. */
+/** Accessible labels used by the `StarterButtons` component. */
 export interface StarterButtonsLabels {
-  /** Label for the visible list of starter buttons. */
+  /** Accessible label (`aria-label`) for the visible buttons list. */
   list: string;
-  /** Label for the overflow menu that holds buttons that do not fit. */
+  /** Accessible label (`aria-label`) for the overflow menu button. */
   overflow: string;
 }
 
+/** Style overrides for the `StarterButtons` component. */
 export interface StarterButtonsStyles {
-  /** Extra CSS class applied to the outer container div. */
+  /** Icon size in px for the overflow menu icon. Defaults to `BASE_MD_ICON_PROPS.size`. */
   iconSize?: number;
-  /** Stroke width of the search and clear icons. Defaults to the icon's own default. */
+  /** Stroke width for the overflow menu icon. Defaults to `BASE_MD_ICON_PROPS.stroke`. */
   iconStrokeWidth?: number;
 }
 
-/** Props for the StarterButtons component. */
+/** Props for the `StarterButtons` component. */
 export interface StarterButtonsProps {
   /** Starter prompt options to display as buttons. */
   starters: StarterOption[];

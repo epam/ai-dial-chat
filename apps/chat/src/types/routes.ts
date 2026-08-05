@@ -7,6 +7,7 @@ export enum ROUTES {
   Conversations = '/conversations',
   AppsEditor = '/apps-editor',
   ToolsetEditor = '/toolset-editor',
+  CustomAppEditor = '/custom-app-editor',
   /**
    * The sole registered OAuth redirect_uri for every toolset's IdP client.
    * Landed on by both the admin ToolsetEditor's redirect flow AND the
@@ -19,4 +20,6 @@ export enum ROUTES {
   ToolsetEditorCallback = '/toolset-editor/callback',
   ToolsetSignIn = '/auth/toolset-signin',
   FileManager = '/files',
+  ScheduledTasks = '/scheduled-tasks',
+  ScheduledTaskCreate = '/scheduled-tasks/new',
 }

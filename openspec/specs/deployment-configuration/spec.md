@@ -4,7 +4,9 @@
 
 ### Requirement: Backend exposes deployment configuration schema endpoint
 
-`GET /api/deployments/:deployment/configuration` SHALL proxy the DIAL Core `GET /v1/deployments/{deployment_name}/configuration` endpoint using the authenticated session user's access token. The response body SHALL be the raw JSON object returned by DIAL Core (`Record<string, unknown>`). The endpoint is hosted on the **unversioned** `DeploymentsController` (no `version: '1'` decorator), so the route resolves to `/api/deployments/...` (not `/api/v1/...`). The endpoint SHALL be documented in Swagger under the `deployments` tag.
+`GET /api/v1/deployments/:deployment/configuration` SHALL proxy the DIAL Core `GET /v1/deployments/{deployment_name}/configuration` endpoint using the authenticated session user's access token. The response body SHALL be the raw JSON object returned by DIAL Core (`Record<string, unknown>`). The endpoint is hosted on the versioned `DeploymentsController`, so the route resolves below `/api/v1/deployments`. The endpoint SHALL be documented in Swagger under the `deployments` tag.
+
+The decoded `deployment` parameter may be a single-segment static deployment name or a slash-separated DIAL resource identifier. The BFF MUST reject identifiers longer than 2048 characters, empty segments, `.` or `..` segments, and ASCII control characters with 400 before calling DIAL Core. For accepted values it MUST percent-encode every segment independently before passing the identifier to the DIAL SDK, preserving structural `/` separators.
 
 Cache: results SHALL be cached in-memory for 60 seconds, keyed as `deployments:configuration:<userSub>:<deploymentName>`.
 
@@ -12,7 +14,7 @@ Rate limiting: inherits the global throttler default (no per-route override requ
 
 #### Scenario: Configuration returned for a configurable deployment
 
-- **WHEN** an authenticated user calls `GET /api/deployments/my-model/configuration` and DIAL Core returns a JSON Schema object
+- **WHEN** an authenticated user calls `GET /api/v1/deployments/my-model/configuration` and DIAL Core returns a JSON Schema object
 - **THEN** the endpoint returns HTTP 200 with the JSON Schema body
 
 #### Scenario: Cache hit avoids upstream call
@@ -39,6 +41,11 @@ Rate limiting: inherits the global throttler default (no per-route override requ
 
 - **WHEN** the request carries no valid session cookie
 - **THEN** the endpoint returns HTTP 401
+
+#### Scenario: Unsafe deployment id is rejected before proxying
+
+- **WHEN** the decoded `deployment` parameter contains an empty segment, a `.` or `..` segment, or an ASCII control character
+- **THEN** the endpoint returns HTTP 400 without calling DIAL Core
 
 ---
 
@@ -182,9 +189,9 @@ Each button SHALL use `DialRoundedButton` from `@epam/ai-dial-ui-kit`. The list 
 - `getDeploymentConfigurationRaw(requestParameters: GetDeploymentConfigurationRequest): Promise<runtime.ApiResponse<Record<string, unknown>>>`
 - `getDeploymentConfiguration(requestParameters: GetDeploymentConfigurationRequest): Promise<Record<string, unknown>>`
 
-The path SHALL be `/api/deployments/{deployment}/configuration` (unversioned, matching the backend controller).
+The path SHALL be `/api/v1/deployments/{deployment}/configuration` (versioned, matching the backend controller).
 
-The `openapi.json` source SHALL include a `GET /api/deployments/{deployment}/configuration` operation with:
+The `openapi.json` source SHALL include a `GET /api/v1/deployments/{deployment}/configuration` operation with:
 - `operationId`: `getDeploymentConfiguration`
 - Path parameter `deployment` (string, required)
 - Response 200: `application/json` with schema `{ type: object, additionalProperties: true }`
@@ -194,3 +201,29 @@ The `openapi.json` source SHALL include a `GET /api/deployments/{deployment}/con
 
 - **WHEN** the source is updated and the client is built
 - **THEN** `deploymentsApi.getDeploymentConfiguration({ deployment: 'my-model' })` compiles without TypeScript errors and returns `Promise<Record<string, unknown>>`
+
+---
+
+### Requirement: Frontend consumption of deployment configuration schema
+
+The system SHALL expose the deployment configuration schema (`DeploymentConfigurationSchema`) to frontend consumers for:
+1. Extracting starter options from `properties.*.oneOf` arrays (existing behavior).
+2. Extracting tool toggle metadata from boolean properties whose key matches a configured tool id (new behavior).
+
+The `DeploymentsContext` SHALL continue to expose `selectedDeploymentConfiguration: DeploymentConfigurationSchema | null` unchanged. Downstream consumers (hooks, components) are responsible for interpreting specific schema properties.
+
+#### Scenario: Existing starter extraction unchanged
+- **WHEN** the deployment configuration schema contains a property with `oneOf` starter options and `dial:widget: "starter"`
+- **THEN** `getStartersFromSchema()` continues to extract and render starter buttons as before
+
+#### Scenario: Tool property extraction by configured id
+- **WHEN** the deployment configuration schema contains a property key matching the configured `deepResearchToolId` with boolean type
+- **THEN** the `useToolsMenu` hook extracts that property's `title` and `default` to construct a `ToolMenuItem`
+
+#### Scenario: Non-matching properties ignored
+- **WHEN** the deployment configuration schema contains boolean properties whose keys do NOT match `deepResearchToolId`
+- **THEN** those properties are NOT rendered as tool menu items (they are ignored in this slice)
+
+#### Scenario: Schema with both starters and tools
+- **WHEN** the schema contains both a starter property (with `oneOf`) and a tool property (boolean matching configured id)
+- **THEN** both starter buttons and the Tools menu item render independently without interference

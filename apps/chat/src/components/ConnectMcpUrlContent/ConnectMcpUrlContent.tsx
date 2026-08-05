@@ -1,8 +1,9 @@
 import { CatalogEntityType } from '@epam/ai-dial-catalog';
-import { mergeClasses, useCodeCopy } from '@epam/ai-dial-chat-shared';
-import { NeutralButton } from '@epam/ai-dial-kit';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
-import { IconCheck, IconCopy } from '@tabler/icons-react';
+import {
+  CopyButton,
+  mergeClasses,
+  useCodeCopy,
+} from '@epam/ai-dial-chat-shared';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +11,6 @@ import {
   ButtonsI18nKeys,
   CatalogI18nKeys,
 } from '../../constants/translation-keys';
-
 interface Props {
   entityType: CatalogEntityType;
   url: string;
@@ -46,15 +46,10 @@ const ConnectMcpUrlContent: FC<Props> = ({
         </p>
       </div>
       <div>
-        <NeutralButton
-          label={isCopied ? copiedLabel : copyLabel}
-          iconBefore={
-            isCopied ? (
-              <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
-            ) : (
-              <IconCopy size={DIAL_ICON_SIZE.SM} aria-hidden />
-            )
-          }
+        <CopyButton
+          copiedLabel={copiedLabel}
+          copyLabel={copyLabel}
+          isCopied={isCopied}
           onClick={copy}
         />
       </div>

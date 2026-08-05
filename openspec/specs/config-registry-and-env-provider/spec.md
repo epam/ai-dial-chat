@@ -222,3 +222,132 @@ The `CONFIG_DEFINITIONS` registry SHALL include an `announcement.html` entry so 
 
 - **WHEN** `ANNOUNCEMENT_HTML_MESSAGE` is not set
 - **THEN** resolving `announcement.html` returns `null` and startup validation does not fail
+
+---
+
+### Requirement: Registry contains the uiFeatures.enabledUiFeatures key
+
+`CONFIG_DEFINITIONS` (`apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`) SHALL include an entry with `key='uiFeatures.enabledUiFeatures'`, `type='config'`, `valueType='json'`, `visibility='client'`, `defaultValue=null`, `critical=false`, `envVar='ENABLED_UI_FEATURES'`. This key is deliberately namespaced `uiFeatures.*` to avoid collision with the pre-existing `features.*` boolean capability flags (`features.asrEnabled`, `features.liveChatInteraction`), which this key does not affect.
+
+**Feature flag:** Not gated. The registry is a backend implementation detail with no user-visible flag.
+
+**RTL impact:** None. **i18n impact:** None.
+
+#### Scenario: Registry contains the enabledUiFeatures key
+
+- **WHEN** the registry is imported
+- **THEN** it MUST contain an entry with `key='uiFeatures.enabledUiFeatures'`, `type='config'`, `valueType='json'`, `visibility='client'`, `envVar='ENABLED_UI_FEATURES'`, and `defaultValue=null`
+
+### Requirement: EnvConfigProvider resolves ENABLED_UI_FEATURES as a trimmed string array or null
+
+`EnvironmentVariables.ENABLED_UI_FEATURES` SHALL be declared `string[] | null`, optional, defaulting to `null`, parsed with a comma-separated-list `@Transform` that trims entries, filters empty strings, and returns `null` when the value is absent, empty, or produces an empty array — so the compiled-in `DEFAULT_ENABLED_UI_FEATURES` baseline is used unless the operator explicitly provides a non-empty list. Validated with `@IsString({ each: true })` — no enum-membership validation at this layer, so new `OverlayFeature` values never require an env-schema change.
+
+**Cache:** None at the provider level — `ConfigService` values are boot-time constants, matching every other `EnvConfigProvider`-resolved key.
+
+**RTL impact:** None. **i18n impact:** None.
+
+#### Scenario: Comma-separated env var parses to a trimmed array
+
+- **WHEN** `ENABLED_UI_FEATURES=header, likes ` is set
+- **THEN** `EnvConfigProvider.resolve('uiFeatures.enabledUiFeatures', ctx)` returns `['header', 'likes']`
+
+#### Scenario: Unset env var resolves to null
+
+- **WHEN** `ENABLED_UI_FEATURES` is not set
+- **THEN** `EnvConfigProvider.resolve('uiFeatures.enabledUiFeatures', ctx)` returns `null`, and the compiled-in `DEFAULT_ENABLED_UI_FEATURES` baseline is used
+
+### Requirement: Unrecognized entries are filtered with a warning at the service layer, not at env validation
+
+`AppConfigService.getClientConfig` SHALL filter the resolved `uiFeatures.enabledUiFeatures` list to values that are members of the shared `OverlayFeature` enum before including it in the response, logging a `warn`-level message (naming the unrecognized value) for each entry dropped. When all entries are unrecognized, the service SHALL log an additional warning and return `null` (falling back to compiled-in defaults), rather than sending an empty array that would break the entire UI. This filtering SHALL NOT cause application boot to fail and SHALL NOT reject the request — the response always returns `200 OK`.
+
+#### Scenario: Unrecognized entry is dropped and logged
+
+- **WHEN** `ENABLED_UI_FEATURES=header,not-a-real-feature` is set
+- **THEN** `config.enabledUiFeatures` in the client-config response is `['header']`, and a warning naming `'not-a-real-feature'` is logged
+
+#### Scenario: All-unrecognized input falls back to null, not an empty list
+
+- **WHEN** `ENABLED_UI_FEATURES=totally-invalid` is set
+- **THEN** the response is still `200 OK` with `config.enabledUiFeatures: null` (compiled-in defaults are used), and a warning is logged
+
+---
+
+### Requirement: Registry declares the customVisualizers key
+
+The `CONFIG_DEFINITIONS` registry (`apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`) SHALL include a new entry:
+
+- `key='customVisualizers'`
+- `type='config'`
+- `valueType='json'`
+- `visibility='client'`
+- `defaultValue=[]`
+- `critical=false`
+- `envVar='CUSTOM_VISUALIZERS'`
+- `description` — human-readable summary of the visualizer registry semantics.
+- `owner` — matches the ownership convention used by other registry entries.
+
+The parsed value type MUST be `CustomVisualizer[]` (see `custom-visualizers` capability). Elements that fail per-entry validation SHALL be dropped with an error log at boot; total parse failure SHALL yield `[]`.
+
+**Feature flag:** none. The registry entry is a backend implementation detail.
+
+#### Scenario: Registry contains customVisualizers key
+
+- **WHEN** the registry is imported
+- **THEN** it MUST contain an entry with `key='customVisualizers'`, `type='config'`, `valueType='json'`, `visibility='client'`, `envVar='CUSTOM_VISUALIZERS'`, and `defaultValue=[]`
+
+#### Scenario: Env resolves to parsed array
+
+- **WHEN** `CUSTOM_VISUALIZERS='[{"contentType":"application/x-my-viz","url":"https://viz.example.com"}]'` and the config is resolved
+- **THEN** the `customVisualizers` value on the resolved config equals `[{ contentType: 'application/x-my-viz', url: 'https://viz.example.com' }]`
+
+#### Scenario: Missing env falls back to default
+
+- **WHEN** `CUSTOM_VISUALIZERS` is unset
+- **THEN** the `customVisualizers` value on the resolved config equals `[]`
+
+---
+
+### Requirement: Registry declares the publish.publicationFilterSources key
+
+`CONFIG_DEFINITIONS` (`apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`) SHALL include a new entry:
+
+- `key='publish.publicationFilterSources'`
+- `type='config'`
+- `valueType='json'`
+- `visibility='client'`
+- `defaultValue=['title', 'role', 'dial_roles']`
+- `critical=false`
+- `envVar='PUBLICATION_FILTER_SOURCES'`
+- `description` — summarizes that this is the allowed set of claim/category names selectable as a publication access rule's `source`.
+- `owner` — matches the ownership convention used by other registry entries (`'chat-team'`).
+
+This follows the exact pattern of the existing `customVisualizers` and `uiFeatures.enabledUiFeatures` entries: a `valueType='json'` array resolved from a comma-separated environment variable, with a non-empty compiled-in default so the feature (the access-rules source picker) is always usable even when the operator has not configured anything.
+
+**Feature flag:** Not gated. The registry entry is a backend implementation detail with no user-visible feature flag of its own — the rules editor UI is always shown (see `publish-access-rules-editor`), and this key only controls the *content* of its source list.
+
+**RTL impact:** None. **i18n impact:** None (raw claim/category strings, not localized labels — see design.md's Open Questions).
+
+#### Scenario: Registry contains the publish.publicationFilterSources key
+
+- **WHEN** the registry is imported
+- **THEN** it MUST contain an entry with `key='publish.publicationFilterSources'`, `type='config'`, `valueType='json'`, `visibility='client'`, `envVar='PUBLICATION_FILTER_SOURCES'`, and `defaultValue=['title', 'role', 'dial_roles']`
+
+#### Scenario: Env resolves to a parsed, trimmed array
+
+- **WHEN** `PUBLICATION_FILTER_SOURCES=roles, department , title` is set and the config is resolved
+- **THEN** the resolved value is `['roles', 'department', 'title']` (trimmed, comma-separated)
+
+#### Scenario: Missing env falls back to the product default
+
+- **WHEN** `PUBLICATION_FILTER_SOURCES` is unset
+- **THEN** the resolved value is `['title', 'role', 'dial_roles']`
+
+#### Scenario: Empty env value falls back to the default, not an empty list
+
+- **WHEN** `PUBLICATION_FILTER_SOURCES` is set to an empty string
+- **THEN** the resolved value is `['title', 'role', 'dial_roles']`, not `[]` — an empty source list would make the access-rules source picker unusable, the same footgun already prevented for `uiFeatures.enabledUiFeatures`
+
+#### Scenario: Oversized source fails environment validation
+
+- **WHEN** any comma-separated `PUBLICATION_FILTER_SOURCES` entry is longer than 200 characters after trimming
+- **THEN** environment validation fails at application startup instead of exposing the oversized value through client config

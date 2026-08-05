@@ -8,6 +8,8 @@ import {
   DialProgressBar,
   DialProgressBarSize,
   ElementSize,
+  GhostIconButton,
+  IconButton,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconAlertCircleFilled,
@@ -17,7 +19,7 @@ import {
   IconRefresh,
   IconX,
 } from '@tabler/icons-react';
-import { memo, useCallback, useState, type FC } from 'react';
+import { memo, useCallback, useEffect, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
@@ -33,6 +35,8 @@ interface Props {
   onDismiss: (jobId: string) => void;
   onRetry: (jobId: string) => void;
 }
+
+const AUTO_CLOSE_DELAY_MS = 8000;
 
 const getCloseConfirmDescriptionKey = (
   hasInProgress: boolean,
@@ -90,12 +94,12 @@ const JobRow: FC<JobRowProps> = ({ job, onDismiss, onRetry }) => {
         )}
         {job.status === ExportJobStatus.Failed && (
           <>
-            <DialIconButton
+            <IconButton
               aria-label={t(ConversationExportI18nKeys.RetryJobAriaLabel, {
                 title: job.label,
               })}
               appearance={ButtonAppearance.Ghost}
-              size={ElementSize.Small}
+              size={ElementSize.Large}
               icon={
                 <IconRefresh
                   size={DIAL_ICON_SIZE.SM}
@@ -103,7 +107,6 @@ const JobRow: FC<JobRowProps> = ({ job, onDismiss, onRetry }) => {
                 />
               }
               onClick={() => onRetry(job.id)}
-              className={STATUS_SLOT_CLASS}
             />
             <span className={STATUS_SLOT_CLASS}>
               <IconAlertCircleFilled size={16} className="text-error" />
@@ -156,6 +159,19 @@ const ImportExportQueue: FC<Props> = ({
     onClose();
   }, [onClose]);
 
+  const hasInProgress = jobs.some(
+    (job) => job.status === ExportJobStatus.InProgress,
+  );
+  const hasFailed = jobs.some((job) => job.status === ExportJobStatus.Failed);
+  const canAutoClose = jobs.length > 0 && !hasInProgress && !hasFailed;
+
+  useEffect(() => {
+    if (!canAutoClose) return undefined;
+
+    const timeoutId = setTimeout(onClose, AUTO_CLOSE_DELAY_MS);
+    return () => clearTimeout(timeoutId);
+  }, [canAutoClose, onClose]);
+
   if (jobs.length === 0) return null;
 
   const finishedCount = jobs.filter(
@@ -165,28 +181,24 @@ const ImportExportQueue: FC<Props> = ({
     (job) => job.status === ExportJobStatus.Failed,
   ).length;
   const percentage = Math.round((finishedCount / jobs.length) * 100);
-  const hasInProgress = jobs.some(
-    (job) => job.status === ExportJobStatus.InProgress,
-  );
-  const hasFailed = failedCount > 0;
 
   return (
     <div
       role="status"
       aria-live="polite"
-      className="w-[320px] rounded-lg bg-layer-2 shadow-lg"
+      className="w-[320px] rounded-lg bg-layer-base shadow-lg"
     >
       <div className="flex items-center justify-between px-3 py-2">
         <div className="flex items-center gap-2">
           <span className="dial-small-semi-text text-primary">{title}</span>
           {failedCount > 0 && (
-            <span className="dial-small-semi-text inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-controls-error px-1 text-white">
+            <span className="dial-small-semi-text inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-control-error px-1 text-tertiary">
               {failedCount}
             </span>
           )}
         </div>
         <div className="flex items-center gap-1">
-          <DialIconButton
+          <IconButton
             aria-label={
               isCollapsed
                 ? t(ConversationExportI18nKeys.ExpandQueueAriaLabel)
@@ -210,11 +222,10 @@ const ImportExportQueue: FC<Props> = ({
             onClick={() => setIsCollapsed((value) => !value)}
             className={STATUS_SLOT_CLASS}
           />
-          <DialIconButton
+          <GhostIconButton
             aria-label={t(ConversationExportI18nKeys.CloseQueueAriaLabel)}
-            appearance={ButtonAppearance.Ghost}
             size={ElementSize.Small}
-            icon={<IconX size={DIAL_ICON_SIZE.SM} className="text-secondary" />}
+            icon={<IconX size={DIAL_ICON_SIZE.SM} />}
             onClick={handleClose}
             className={STATUS_SLOT_CLASS}
           />

@@ -43,7 +43,7 @@
 
 ### Requirement: Header toggles the right sidebar
 
-`apps/chat/src/components/Header/Header.tsx` SHALL render a right-aligned `DialGhostIconButton` (icon: `IconFile` from `@tabler/icons-react`) that calls `useRightSidebar().toggle()` on click. The header SHALL keep `<Logo />` horizontally centred when the toggle is present (e.g. via `grid-cols-[1fr_auto_1fr]`). The button SHALL set `aria-pressed` from `isOpen`. Its `aria-label` and tooltip text SHALL come from i18n keys `sidebar.sources.toggleOpen` (when closed) and `sidebar.sources.toggleClose` (when open).
+`apps/chat/src/components/Header/Header.tsx` SHALL render a right-aligned `GhostIconButton` (icon: `IconFile` from `@tabler/icons-react`) that calls `useRightSidebar().toggle()` on click. The header SHALL keep `<Logo />` horizontally centred when the toggle is present (e.g. via `grid-cols-[1fr_auto_1fr]`). The button SHALL set `aria-pressed` from `isOpen`. Its `aria-label` and tooltip text SHALL come from i18n keys `sidebar.sources.toggleOpen` (when closed) and `sidebar.sources.toggleClose` (when open).
 
 #### Scenario: Toggle button present in the header
 
@@ -81,7 +81,7 @@ The lib SHALL export `SidebarPanel: FC<SidebarPanelProps>` from `libs/sidebar/sr
 - `typography?: SidebarPanelTypography` — optional overrides (`fontClassName`, `fontFamily`, `fontSize`).
 - `className?: string` — extra class merged onto the root.
 
-The shell SHALL render an `<aside role="complementary" aria-label={ariaLabel}>` with a fixed `360 px` width, full height, a `48 px` header bar, and a vertically scrollable body. A close `DialGhostIconButton` (icon: `IconX`) SHALL always be present and SHALL call `onClose` when activated. Width, height, body scroll, and header-bar height SHALL be identical for both `side` values.
+The shell SHALL render an `<aside role="complementary" aria-label={ariaLabel}>` with a fixed `360 px` width, full height, a `48 px` header bar, and a vertically scrollable body. A close `GhostIconButton` (icon: `IconX`) SHALL always be present and SHALL call `onClose` when activated. Width, height, body scroll, and header-bar height SHALL be identical for both `side` values.
 
 Theming SHALL follow `openspec/lib-styling-guide.md`: the SCSS module `SidebarPanel.module.scss` contains only CSS-variable references with hex fallbacks (`--sb-bg`, `--sb-border`); layout, spacing, and border-radius live in Tailwind classes inside the TSX. The component SHALL apply `colors` / `typography` overrides via `buildCssVars` from `@epam/ai-dial-chat-shared`.
 
@@ -142,8 +142,8 @@ Theming SHALL follow `openspec/lib-styling-guide.md`: the SCSS module `SidebarPa
 
 `apps/chat/src/components/ConversationSourcesPanel/ConversationSourcesPanel.tsx` SHALL accept `Props { messages: Message[]; onSearch?: () => void; onDownloadAll?: () => void; }`, import `SidebarPanel` from `@epam/ai-dial-sidebar`, and render `<SidebarPanel side="right">` whose:
 
-- `leftActions` contains a `DialGhostIconButton` (icon: `IconSearch`) that calls `onSearch` when provided. When `onSearch` is omitted, the button SHALL be `disabled` and have `aria-disabled="true"`. Its `aria-label` SHALL be the i18n value of `sidebar.sources.search`.
-- `rightActions` contains a `DialGhostIconButton` (icon: `IconDownload`) that calls `onDownloadAll` when provided. When `onDownloadAll` is omitted, the button SHALL be `disabled` and have `aria-disabled="true"`. Its `aria-label` SHALL be the i18n value of `sidebar.sources.downloadAll`.
+- `leftActions` contains a `GhostIconButton` (icon: `IconSearch`) that calls `onSearch` when provided. When `onSearch` is omitted, the button SHALL be `disabled` and have `aria-disabled="true"`. Its `aria-label` SHALL be the i18n value of `sidebar.sources.search`.
+- `rightActions` contains a `GhostIconButton` (icon: `IconDownload`) that calls `onDownloadAll` when provided. When `onDownloadAll` is omitted, the button SHALL be `disabled` and have `aria-disabled="true"`. Its `aria-label` SHALL be the i18n value of `sidebar.sources.downloadAll`.
 - `onClose` SHALL call `useRightSidebar().close()`.
 - `ariaLabel` SHALL be the i18n value of `sidebar.sources.ariaLabel`.
 - `closeLabel` SHALL be the i18n value of `sidebar.sources.close`.

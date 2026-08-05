@@ -3,9 +3,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppConfigService } from '../app-config.service';
 import type { AppConfigEvalContext } from '../app-config.types';
 import type { CompositeConfigProvider } from '../config-registry/composite-config.provider';
+import { CONFIG_DEFINITIONS } from '../config-registry/config-registry.constants';
 import { FeatureKey } from '../feature-flags/feature-key.enum';
 
 const ctx: AppConfigEvalContext = { appId: 'chat-ui' };
+
+// getClientConfig resolves exactly one definition per client-visible config key.
+const CLIENT_DEFINITIONS_COUNT = CONFIG_DEFINITIONS.filter(
+  (def) => def.visibility === 'client',
+).length;
 
 function makeService(
   resolveImpl: (key: string) => Promise<unknown | undefined>,
@@ -62,7 +68,43 @@ describe('AppConfigService', () => {
       ]);
       expect(result.config.overlayEnabled).toBe(false);
       expect(result.config.overlayAllowedOrigins).toEqual([]);
+      expect(result.config.enabledUiFeatures).toBeNull();
       expect(result.config.announcementHtml).toBeNull();
+      expect(result.config.footerHtmlMessage).toBe('');
+      expect(result.config.customVisualizers).toEqual([]);
+      expect(result.config.publicationFilterSources).toEqual([
+        'title',
+        'role',
+        'dial_roles',
+      ]);
+    });
+
+    it('surfaces an operator-configured publicationFilterSources list verbatim', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'publish.publicationFilterSources'
+          ? ['roles', 'department']
+          : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.publicationFilterSources).toEqual([
+        'roles',
+        'department',
+      ]);
+    });
+
+    it('surfaces the resolved customVisualizers registry verbatim', async () => {
+      const entry = {
+        contentType: 'application/x-my-viz',
+        url: 'https://viz.example.com',
+        title: 'my-viz',
+      };
+      const { service } = makeService(async (key: string) =>
+        key === 'customVisualizers' ? [entry] : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.customVisualizers).toEqual([entry]);
     });
 
     it('returns resolved values when providers succeed', async () => {
@@ -76,7 +118,9 @@ describe('AppConfigService', () => {
         if (key === 'overlay.enabled') return true;
         if (key === 'overlay.allowedOrigins')
           return ['https://partner.example.com'];
+        if (key === 'uiFeatures.enabledUiFeatures') return ['likes'];
         if (key === 'announcement.html') return 'Welcome to <b>DIAL</b>!';
+        if (key === 'deployments.deepResearchToolId') return 'deep_research';
         return undefined;
       });
       const result = await service.getClientConfig(ctx);
@@ -93,7 +137,40 @@ describe('AppConfigService', () => {
       expect(result.config.overlayAllowedOrigins).toEqual([
         'https://partner.example.com',
       ]);
-      expect(result.config.announcementHtml).toBe('Welcome to <b>DIAL</b>!');
+      expect(result.config.enabledUiFeatures).toEqual(['likes']);
+      expect(result.config.deepResearchToolId).toBe('deep_research');
+    });
+
+    it('filters unrecognized enabledUiFeatures entries, keeps known ones, and logs a warning', async () => {
+      const { service } = makeService(async (key: string) => {
+        if (key === 'uiFeatures.enabledUiFeatures')
+          return ['likes', 'not-a-real-feature'];
+        return undefined;
+      });
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.enabledUiFeatures).toEqual(['likes']);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('not-a-real-feature'),
+      );
+    });
+
+    it('falls back to null (use defaults) when every enabledUiFeatures entry is unrecognized', async () => {
+      const { service } = makeService(async (key: string) => {
+        if (key === 'uiFeatures.enabledUiFeatures') return ['totally-invalid'];
+        return undefined;
+      });
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.enabledUiFeatures).toBeNull();
     });
 
     it('returns null defaultDeploymentId when DEFAULT_DEPLOYMENT is not set', async () => {
@@ -120,6 +197,82 @@ describe('AppConfigService', () => {
       );
       const result = await service.getClientConfig(ctx);
       expect(result.config.announcementHtml).toBe('Welcome to <b>DIAL</b>!');
+    });
+
+    it('returns null deepResearchToolId when DEEP_RESEARCH_TOOL_ID is not set', async () => {
+      const { service } = makeService(async () => undefined);
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.deepResearchToolId).toBeNull();
+    });
+
+    it('returns the configured deepResearchToolId when DEEP_RESEARCH_TOOL_ID is set', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'deployments.deepResearchToolId' ? 'deep_research' : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.deepResearchToolId).toBe('deep_research');
+    });
+
+    it('returns empty string for footerHtmlMessage when FOOTER_HTML_MESSAGE is not set', async () => {
+      const { service } = makeService(async () => undefined);
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.footerHtmlMessage).toBe('');
+    });
+
+    it('sanitizes footerHtmlMessage and strips disallowed tags', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'footer.html'
+          ? '<p>Hello <script>alert(1)</script><span>world</span></p>'
+          : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.footerHtmlMessage).not.toContain('<script>');
+      expect(result.config.footerHtmlMessage).toContain('<span>world</span>');
+    });
+
+    it('strips onclick and other event-handler attributes from footerHtmlMessage', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'footer.html'
+          ? '<span onclick="evil()">Click me</span>'
+          : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.footerHtmlMessage).not.toContain('onclick');
+      expect(result.config.footerHtmlMessage).toContain('Click me');
+    });
+
+    it('injects target="_blank" and rel="noopener noreferrer" on anchor tags in footerHtmlMessage', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'footer.html'
+          ? '<a href="https://example.com">Link</a>'
+          : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.footerHtmlMessage).toContain('target="_blank"');
+      expect(result.config.footerHtmlMessage).toContain(
+        'rel="noopener noreferrer"',
+      );
+    });
+
+    it('preserves data-dial-action attribute on anchors in footerHtmlMessage', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'footer.html'
+          ? '<a href="#" data-dial-action="requestApiKey">Request</a>'
+          : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.footerHtmlMessage).toContain(
+        'data-dial-action="requestApiKey"',
+      );
+    });
+
+    it('substitutes %%VERSION%% token in footerHtmlMessage', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'footer.html' ? 'Version: %%VERSION%%' : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.footerHtmlMessage).toMatch(/Version: \S+/);
+      expect(result.config.footerHtmlMessage).not.toContain('%%VERSION%%');
     });
 
     it('never leaks the internal DIAL_CORE_URL value under any key', async () => {
@@ -164,7 +317,9 @@ describe('AppConfigService', () => {
         first,
         60_000,
       );
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(10);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(
+        CLIENT_DEFINITIONS_COUNT,
+      );
     });
 
     it('does not share cached config across role sets', async () => {
@@ -181,7 +336,9 @@ describe('AppConfigService', () => {
         roles: ['viewer'],
       });
 
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(20);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(
+        CLIENT_DEFINITIONS_COUNT * 2,
+      );
     });
   });
 

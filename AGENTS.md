@@ -44,6 +44,7 @@ Use these local skills directly:
 
 - `./.agents/skills/address-current-branch-review/SKILL.md` for processing unresolved GitHub review threads on the current branch. Fix requests do not authorize inline replies; reply only after the user explicitly asks and the pushed fix is visible in the PR.
 - `./.claude/skills/code-review-and-quality/SKILL.md` for review before merge or any quality pass
+- `./.claude/skills/refactoring-audit/SKILL.md` for deep refactoring/tech-debt audits and local planning docs (`refactoring-backend.md`, `refactoring-frontend.md`)
 - `./.claude/skills/figma/SKILL.md` for translating Figma designs into React components
 - `./.claude/skills/responsive-design/SKILL.md` for any UI work that must support both mobile and desktop, or any review of mobile parity
 
@@ -127,7 +128,7 @@ All apps and libs target WCAG 2.1 **AAA**. Apply this by default on any interact
 
 ## Search result highlighting
 
-Whenever implementing or modifying a search feature (search bars, filterable dropdowns, model/deployment pickers, conversation search, file/attachment search, sources panels, catalog/app search, etc.), render each result's matched text with the shared `Highlight` component (`libs/chat-shared/src/components/Highlight/Highlight.tsx`, exported as `Highlight` from `@epam/ai-dial-chat-shared`) instead of plain text or a bespoke highlighter. Thread the search query down through intermediate props (e.g. `searchQuery`) to whichever component renders the result label. See `.claude/rules/search-results-highlight.md` for details.
+Whenever implementing or modifying a search feature (search bars, filterable dropdowns, model/deployment pickers, conversation search, file/attachment search, sources panels, catalog/app search, etc.), render each result's matched text with the shared `Highlight` component (exported as `Highlight` from `@epam/ai-dial-ui-kit`) instead of plain text or a bespoke highlighter. Thread the search query down through intermediate props (e.g. `searchQuery`) to whichever component renders the result label. See `.claude/rules/search-results-highlight.md` for details.
 
 ## @epam/ai-dial-ui-kit MCP tools
 

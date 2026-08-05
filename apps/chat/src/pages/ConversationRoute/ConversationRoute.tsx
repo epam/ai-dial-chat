@@ -15,20 +15,20 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import { useDeploymentSelectorOverlay } from '../../components/DeploymentSelector/useDeploymentSelectorOverlay';
 import NewConversationComposer, {
   type NewConversationChatSettings,
 } from '../../components/NewConversationComposer/NewConversationComposer';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
-import { CONVERSATION_ROUTE_INPUT_STYLES } from '../../constants/input-styles';
 import { getConversationRoute } from '../../constants/routes';
-import { ChatI18nKeys } from '../../constants/translation-keys';
+import { ChatI18nKeys, ToolsI18nKeys } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
-import { getApiErrorMessage } from '../../server-api/api-error';
+import { useToolsMenu } from '../../hooks/conversation/useToolsMenu';
+import { getApiErrorDetails } from '../../server-api/api-error';
 import {
   createConversation as apiCreateConversation,
   saveConversation,
@@ -36,6 +36,7 @@ import {
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { getConversationPath } from '../../utils/conversation-path';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
+import { hasActiveToolConfig } from '../../utils/message-utils';
 import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import {
   getStarterConversationText,
@@ -60,6 +61,7 @@ const ConversationRoute: FC = () => {
     selectedItemId,
     setSelectedItemId,
     restoreSelectedItemId,
+    restoreDefaultSelection,
     selectedDeploymentConfiguration,
     isLoading,
     error,
@@ -69,12 +71,28 @@ const ConversationRoute: FC = () => {
    * Honors a deploymentId passed as router state (e.g. by the overlay's
    * conversation-list bridge opening the composer with a pre-selected
    * deployment) without persisting it as the user's own preference.
+   *
+   * Otherwise, re-resolves selectedItemId back to the user's own preference:
+   * having viewed a different conversation may have left a transient,
+   * non-persisted model in selectedItemId via restoreSelectedItemId, which
+   * must not leak into the next new chat. Skipped while an overlay pending
+   * model selection is still awaiting app.tsx's own resolution, so that
+   * effect's preselection is not clobbered.
    */
   useEffect(() => {
     if (routeDeploymentId) {
       restoreSelectedItemId(routeDeploymentId);
+      return;
     }
-  }, [restoreSelectedItemId, routeDeploymentId]);
+    if (!overlay?.pendingModelId) {
+      restoreDefaultSelection();
+    }
+  }, [
+    restoreSelectedItemId,
+    restoreDefaultSelection,
+    routeDeploymentId,
+    overlay?.pendingModelId,
+  ]);
 
   /*
    * This is the "no conversation selected" empty state. Overlay mode must
@@ -86,6 +104,9 @@ const ConversationRoute: FC = () => {
     overlay?.notifyConversationLoaded();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [Boolean(overlay)]);
+
+  const { toolsMenuItems, onToolToggle, toolConfigurationValue } =
+    useToolsMenu();
 
   const selectedDeployment = useMemo(
     () => items.find((item) => item.id === selectedItemId),
@@ -147,10 +168,12 @@ const ConversationRoute: FC = () => {
     ) => {
       if (!selectedItemId) return;
       const attachmentDtos = attachmentsToDtos(attachments || []);
+      const hasToolConfig = hasActiveToolConfig(toolConfigurationValue);
       const conversation = await apiCreateConversation(
         message,
         selectedItemId,
         attachmentDtos,
+        hasToolConfig ? toolConfigurationValue : undefined,
       );
       const savedConversation = {
         ...conversation,
@@ -166,7 +189,7 @@ const ConversationRoute: FC = () => {
         state: { conversation: savedConversation },
       });
     },
-    [navigate, selectedItemId],
+    [navigate, selectedItemId, toolConfigurationValue],
   );
 
   const handleStarterSelect = useCallback(
@@ -177,23 +200,30 @@ const ConversationRoute: FC = () => {
           return;
         }
 
-        const configurationValue = propertyKey
+        const starterConfig = propertyKey
           ? { [propertyKey]: starter.const }
           : undefined;
+        const mergedConfigurationValue = {
+          ...starterConfig,
+          ...toolConfigurationValue,
+        };
+        const hasConfig = Object.keys(mergedConfigurationValue).length > 0;
         const createAndNavigate = async () => {
           try {
             const conversation = await apiCreateConversation(
               text,
               selectedItemId,
               [],
-              configurationValue,
+              hasConfig ? mergedConfigurationValue : undefined,
             );
             navigate(getConversationRoute(conversation.id));
           } catch (err) {
-            const errorMessage = await getApiErrorMessage(err);
+            const { message: errorMessage, traceId } =
+              await getApiErrorDetails(err);
             showNotification({
               variant: NotificationVariant.Error,
               message: errorMessage ?? t(ChatI18nKeys.CreateConversationError),
+              requestId: traceId,
             });
           }
         };
@@ -204,7 +234,15 @@ const ConversationRoute: FC = () => {
         setInputMessage(text);
       }
     },
-    [description, propertyKey, selectedItemId, navigate, showNotification, t],
+    [
+      description,
+      propertyKey,
+      selectedItemId,
+      navigate,
+      showNotification,
+      t,
+      toolConfigurationValue,
+    ],
   );
 
   const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
@@ -222,9 +260,15 @@ const ConversationRoute: FC = () => {
         placeholder={t(ChatI18nKeys.Placeholder)}
         introText={starterIntroText}
         message={inputMessage}
-        inputStyles={CONVERSATION_ROUTE_INPUT_STYLES}
         onCreateConversation={handleCreateConversation}
         modelPickerOverlay={renderOverlay}
+        toolsMenuItems={toolsMenuItems}
+        onToolToggle={onToolToggle}
+        toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}
+        toolsChipLabels={{
+          countLabel: (count) => t(ToolsI18nKeys.SelectedCount, { count }),
+          removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
+        }}
       >
         <StarterButtons
           starters={activeStarters}

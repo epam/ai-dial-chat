@@ -179,7 +179,7 @@ Navigation MUST be triggered by checking `activeConversationId` directly — NOT
 
 After the API returns with `failed.length > 0 && (deleted > 0 || alreadyAbsent > 0)`:
 - The popup is closed.
-- A `DialNotification` with `variant={NotificationVariant.Error}` is shown with text from `ConversationPanelI18nKeys.DeleteAllPartialError`.
+- A `Notification` with `variant={NotificationVariant.Error}` is shown with text from `ConversationPanelI18nKeys.DeleteAllPartialError`.
 - If `activeConversationId` is non-null, the app navigates to `ROUTES.ROOT`.
 - The notification is closable and dismisses when its close button is clicked.
 
@@ -187,7 +187,7 @@ After the API returns with `failed.length > 0 && (deleted > 0 || alreadyAbsent >
 
 - **WHEN** the API returns `{ deleted: 2, failed: [{ code: 'UPSTREAM_ERROR' }] }`
 - **THEN** the popup is closed
-- **AND** a `DialNotification` with the partial-error message is displayed
+- **AND** a `Notification` with the partial-error message is displayed
 - **AND** clicking the notification's close button dismisses it
 
 ---
@@ -198,7 +198,7 @@ After the API returns with `failed.length > 0 && deleted === 0 && alreadyAbsent 
 - The popup remains open.
 - An inline error message from `ConversationPanelI18nKeys.DeleteAllError` is shown inside the popup description.
 - No navigation occurs.
-- No `DialNotification` is shown.
+- No `Notification` is shown.
 - The conversation list is unchanged.
 
 After the API call throws (network error or server error before per-item results):
@@ -250,7 +250,7 @@ New keys:
 ### Requirement: RTL — dropdown placement and notification use logical positioning
 
 - `DialDropdown` uses `placement="bottom-end"` so the menu opens at the logical end of the trigger (left in RTL, right in LTR).
-- The `DialNotification` for partial error uses `start-4` (not `left-4`) in its `className`.
+- The `Notification` for partial error uses `start-4` (not `left-4`) in its `className`.
 
 #### Scenario: dropdown placement is logically correct in RTL
 

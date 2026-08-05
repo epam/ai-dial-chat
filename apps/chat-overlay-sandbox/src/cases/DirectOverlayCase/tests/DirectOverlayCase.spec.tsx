@@ -1,4 +1,4 @@
-import { OverlayEventType } from '@epam/ai-dial-chat-shared';
+import { OverlayEventType } from '@epam/ai-dial-chat-overlay';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode } from 'react';
@@ -26,9 +26,9 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock('@epam/ai-dial-chat-overlay', () => ({
+vi.mock('@epam/ai-dial-chat-overlay', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-overlay')>()),
   ChatOverlay: mocks.ChatOverlay,
-  OverlayEventType,
 }));
 
 vi.mock('../../../env', () => ({
@@ -152,6 +152,39 @@ describe('DirectOverlayCase', () => {
 
     expect(mocks.instanceMethods.sendMessage).toHaveBeenCalledWith(
       'Hello from the sandbox',
+    );
+  });
+
+  it('reports rejected actions in the console and Event log', async () => {
+    const user = userEvent.setup();
+    const error = new Error(
+      'ChatOverlay: request "@DIAL_OVERLAY/GET_MESSAGES" failed [ACTIVE_CONVERSATION_UNAVAILABLE]: No active conversation is open.',
+    );
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    mocks.instanceMethods.ready.mockResolvedValueOnce(true);
+    mocks.instanceMethods.getMessages.mockRejectedValueOnce(error);
+    render(<DirectOverlayCase />);
+
+    const getMessagesButton = await screen.findByRole('button', {
+      name: 'Get messages',
+    });
+    await waitFor(() =>
+      expect((getMessagesButton as HTMLButtonElement).disabled).toBe(false),
+    );
+    await user.click(getMessagesButton);
+
+    const eventLogButton = await screen.findByRole('button', {
+      name: /Event log 1 events/i,
+    });
+    await user.click(eventLogButton);
+    expect(
+      screen.getByText(/getMessages failed.*ACTIVE_CONVERSATION_UNAVAILABLE/),
+    ).toBeTruthy();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('ACTIVE_CONVERSATION_UNAVAILABLE'),
+      error,
     );
   });
 

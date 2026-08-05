@@ -32,6 +32,12 @@ export interface AcceptInvitationResponseDto {
  */
 export interface ApplicationDetailsDto {
   /**
+   * Display name reported by DIAL Core
+   * @type {string}
+   * @memberof ApplicationDetailsDto
+   */
+  displayName?: string;
+  /**
    * Non-secret custom application properties reported by DIAL Core
    * @type {{ [key: string]: unknown }}
    * @memberof ApplicationDetailsDto
@@ -79,6 +85,18 @@ export interface ApplicationDetailsDto {
    * @memberof ApplicationDetailsDto
    */
   applicationTypeSchemaId?: string;
+  /**
+   * Chat completion endpoint URL for custom applications
+   * @type {string}
+   * @memberof ApplicationDetailsDto
+   */
+  endpoint?: string;
+  /**
+   * Maximum number of input attachments for custom applications
+   * @type {number}
+   * @memberof ApplicationDetailsDto
+   */
+  maxInputAttachments?: number;
   /**
    * Timestamp of creation time from DIAL Core (e.g. 1714768496000)
    * @type {number}
@@ -475,11 +493,41 @@ export interface ClientConfigDto {
    */
   overlayAllowedOrigins: Array<string>;
   /**
+   * When set, the complete list of OverlayFeature values that are enabled (replace semantics). Sourced from ENABLED_UI_FEATURES, filtered to recognized values. When null, the compiled-in DEFAULT_ENABLED_UI_FEATURES baseline is used. Does not affect an overlay host that supplies its own enabledFeatures.
+   * @type {Array<string>}
+   * @memberof ClientConfigDto
+   */
+  enabledUiFeatures: Array<string> | null;
+  /**
    * Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Null when ANNOUNCEMENT_HTML_MESSAGE is not configured.
    * @type {string}
    * @memberof ClientConfigDto
    */
   announcementHtml?: string | null;
+  /**
+   * Tool ID for the Deep Research deployment-configuration property. Null when DEEP_RESEARCH_TOOL_ID is not set.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  deepResearchToolId?: string | null;
+  /**
+   * Operator-authored HTML footer message shown below the chat input (desktop) and in the mobile user panel. Empty string when FOOTER_HTML_MESSAGE is not configured. Sanitized server-side; supports %%VERSION%% token.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  footerHtmlMessage: string;
+  /**
+   * Registry of MIME → visualizer iframe mappings. Sourced from CUSTOM_VISUALIZERS. Empty when unset — the feature is dark by default.
+   * @type {Array<CustomVisualizerDto>}
+   * @memberof ClientConfigDto
+   */
+  customVisualizers: Array<CustomVisualizerDto>;
+  /**
+   * Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES; falls back to the legacy default when unset or empty.
+   * @type {Array<string>}
+   * @memberof ClientConfigDto
+   */
+  publicationFilterSources: Array<string>;
 }
 /**
  *
@@ -642,6 +690,24 @@ export interface ConversationListItemDto {
    * @memberof ConversationListItemDto
    */
   isReadonly: boolean;
+  /**
+   * True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{runId}` reserved segment).
+   * @type {boolean}
+   * @memberof ConversationListItemDto
+   */
+  isScheduledTask: boolean;
+  /**
+   * DIAL Scheduler schedule identifier. Present only when `isScheduledTask` is true.
+   * @type {string}
+   * @memberof ConversationListItemDto
+   */
+  scheduleId?: string;
+  /**
+   * DIAL Scheduler run identifier. Present only when `isScheduledTask` is true.
+   * @type {string}
+   * @memberof ConversationListItemDto
+   */
+  runId?: string;
 }
 /**
  *
@@ -751,6 +817,12 @@ export interface ConversationMessageDto {
    * @memberof ConversationMessageDto
    */
   customContent?: ConversationMessageCustomContentDto;
+  /**
+   * Error message when the generation ended in error. Presence signals a terminal error state; absence means the generation succeeded or is still in progress.
+   * @type {string}
+   * @memberof ConversationMessageDto
+   */
+  streamErrorMessage?: string;
 }
 
 /**
@@ -1133,11 +1205,11 @@ export interface CreateApplicationBodyDto {
    */
   name: string;
   /**
-   *
+   * Omit for plain custom applications with no schema type
    * @type {string}
    * @memberof CreateApplicationBodyDto
    */
-  type: string;
+  type?: string;
   /**
    *
    * @type {string}
@@ -1271,6 +1343,93 @@ export interface CreateFolderResponseDto {
 /**
  *
  * @export
+ * @interface CreatePromptDto
+ */
+export interface CreatePromptDto {
+  /**
+   * Prompt name. Must not contain a forward slash.
+   * @type {string}
+   * @memberof CreatePromptDto
+   */
+  name: string;
+  /**
+   * Optional description
+   * @type {string}
+   * @memberof CreatePromptDto
+   */
+  description?: string;
+  /**
+   * Prompt text. May contain {{variableName}} placeholders.
+   * @type {string}
+   * @memberof CreatePromptDto
+   */
+  content: string;
+  /**
+   * Parent folder path. Empty string or omit for root.
+   * @type {string}
+   * @memberof CreatePromptDto
+   */
+  folderId?: string;
+}
+/**
+ *
+ * @export
+ * @interface CreatePromptFolderDto
+ */
+export interface CreatePromptFolderDto {
+  /**
+   * Folder name. Must not contain a forward slash.
+   * @type {string}
+   * @memberof CreatePromptFolderDto
+   */
+  name: string;
+  /**
+   * Parent folder path. Omit or leave empty to create at root.
+   * @type {string}
+   * @memberof CreatePromptFolderDto
+   */
+  parentId?: string;
+}
+/**
+ *
+ * @export
+ * @interface CreateScheduledTaskBodyDto
+ */
+export interface CreateScheduledTaskBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {ScheduleTriggerDto}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  trigger: ScheduleTriggerDto;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  model: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  prompt: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  description?: string;
+}
+/**
+ *
+ * @export
  * @interface CreateShareLinkDto
  */
 export interface CreateShareLinkDto {
@@ -1322,6 +1481,157 @@ export interface CreatedApplicationDto {
    * @memberof CreatedApplicationDto
    */
   object?: string;
+}
+/**
+ *
+ * @export
+ * @interface CreatedScheduledTaskDto
+ */
+export interface CreatedScheduledTaskDto {
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {ScheduleTriggerDto}
+   * @memberof CreatedScheduledTaskDto
+   */
+  trigger: ScheduleTriggerDto;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  nextRunTime?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  createdAt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  updatedAt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  triggerType?: CreatedScheduledTaskDtoTriggerTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  serviceId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  createdBy?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  description?: string;
+}
+
+/**
+ * @export
+ */
+export const CreatedScheduledTaskDtoTriggerTypeEnum = {
+  Cron: 'cron',
+  Date: 'date',
+} as const;
+export type CreatedScheduledTaskDtoTriggerTypeEnum =
+  (typeof CreatedScheduledTaskDtoTriggerTypeEnum)[keyof typeof CreatedScheduledTaskDtoTriggerTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface CustomVisualizerDto
+ */
+export interface CustomVisualizerDto {
+  /**
+   * The postMessage protocol namespace, NOT a display label. Every message exchanged with the iframe is prefixed "${title}/…", and the visualizer application must be constructed with this identical string as its appName. A mismatch is a silent failure — the iframe loads but never receives data.
+   * @type {string}
+   * @memberof CustomVisualizerDto
+   */
+  title: string;
+  /**
+   * Human-readable description of the visualizer. Accepted for schema parity; not consumed by the host UI.
+   * @type {string}
+   * @memberof CustomVisualizerDto
+   */
+  description?: string;
+  /**
+   * Icon URL or identifier for the visualizer. Accepted for schema parity; not consumed by the host UI.
+   * @type {string}
+   * @memberof CustomVisualizerDto
+   */
+  icon?: string;
+  /**
+   * MIME type(s) this entry matches. Accepts a comma-separated list of MIME types (e.g. "application/vnd.plotly.v1+json, application/vnd.vega.v5+json").
+   * @type {string}
+   * @memberof CustomVisualizerDto
+   */
+  contentType: string;
+  /**
+   * Absolute HTTP(S) URL of the visualizer iframe.
+   * @type {string}
+   * @memberof CustomVisualizerDto
+   */
+  url: string;
+  /**
+   * Milliseconds to wait for a send() request response before rejecting. Defaults to 10000 when unset. Does not bound the initial READY_TO_INTERACT handshake.
+   * @type {number}
+   * @memberof CustomVisualizerDto
+   */
+  requestTimeout?: number;
+  /**
+   * Suggested initial width of the canvas panel in pixels.
+   * @type {number}
+   * @memberof CustomVisualizerDto
+   */
+  width?: number;
+  /**
+   * Suggested initial height of the canvas panel in pixels.
+   * @type {number}
+   * @memberof CustomVisualizerDto
+   */
+  height?: number;
+  /**
+   * Suggested canvas panel height on mobile-sized screens in pixels.
+   * @type {number}
+   * @memberof CustomVisualizerDto
+   */
+  mobileHeight?: number;
+  /**
+   * Whether the host should pass auth info to the visualizer. Accepted for schema parity; auth forwarding is not yet wired.
+   * @type {boolean}
+   * @memberof CustomVisualizerDto
+   */
+  passAuthInfo?: boolean;
+  /**
+   * Whether the host should pass an explicit access token. Accepted for schema parity; auth forwarding is not yet wired.
+   * @type {boolean}
+   * @memberof CustomVisualizerDto
+   */
+  passExplicitToken?: boolean;
 }
 /**
  *
@@ -2906,6 +3216,121 @@ export interface DuplicateConversationResponseDto {
 /**
  *
  * @export
+ * @interface ExternalServiceAuthResultDto
+ */
+export interface ExternalServiceAuthResultDto {
+  /**
+   *
+   * @type {boolean}
+   * @memberof ExternalServiceAuthResultDto
+   */
+  success: boolean;
+}
+/**
+ *
+ * @export
+ * @interface ExternalServiceLogoutBodyDto
+ */
+export interface ExternalServiceLogoutBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceLogoutBodyDto
+   */
+  credentialsLevel: ExternalServiceLogoutBodyDtoCredentialsLevelEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceLogoutBodyDto
+   */
+  authenticationType: ExternalServiceLogoutBodyDtoAuthenticationTypeEnum;
+}
+
+/**
+ * @export
+ */
+export const ExternalServiceLogoutBodyDtoCredentialsLevelEnum = {
+  Global: 'GLOBAL',
+  Application: 'APPLICATION',
+  User: 'USER',
+} as const;
+export type ExternalServiceLogoutBodyDtoCredentialsLevelEnum =
+  (typeof ExternalServiceLogoutBodyDtoCredentialsLevelEnum)[keyof typeof ExternalServiceLogoutBodyDtoCredentialsLevelEnum];
+
+/**
+ * @export
+ */
+export const ExternalServiceLogoutBodyDtoAuthenticationTypeEnum = {
+  None: 'NONE',
+  ApiKey: 'API_KEY',
+  Oauth: 'OAUTH',
+} as const;
+export type ExternalServiceLogoutBodyDtoAuthenticationTypeEnum =
+  (typeof ExternalServiceLogoutBodyDtoAuthenticationTypeEnum)[keyof typeof ExternalServiceLogoutBodyDtoAuthenticationTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface ExternalServiceSigninBodyDto
+ */
+export interface ExternalServiceSigninBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceSigninBodyDto
+   */
+  credentialsLevel: ExternalServiceSigninBodyDtoCredentialsLevelEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceSigninBodyDto
+   */
+  authenticationType: ExternalServiceSigninBodyDtoAuthenticationTypeEnum;
+  /**
+   * API key value (API_KEY auth).
+   * @type {string}
+   * @memberof ExternalServiceSigninBodyDto
+   */
+  apiKey?: string;
+  /**
+   * OAuth authorization code (OAUTH auth).
+   * @type {string}
+   * @memberof ExternalServiceSigninBodyDto
+   */
+  code?: string;
+  /**
+   * OAuth redirect URI used for the code exchange.
+   * @type {string}
+   * @memberof ExternalServiceSigninBodyDto
+   */
+  redirectUri?: string;
+}
+
+/**
+ * @export
+ */
+export const ExternalServiceSigninBodyDtoCredentialsLevelEnum = {
+  Global: 'GLOBAL',
+  Application: 'APPLICATION',
+  User: 'USER',
+} as const;
+export type ExternalServiceSigninBodyDtoCredentialsLevelEnum =
+  (typeof ExternalServiceSigninBodyDtoCredentialsLevelEnum)[keyof typeof ExternalServiceSigninBodyDtoCredentialsLevelEnum];
+
+/**
+ * @export
+ */
+export const ExternalServiceSigninBodyDtoAuthenticationTypeEnum = {
+  None: 'NONE',
+  ApiKey: 'API_KEY',
+  Oauth: 'OAUTH',
+} as const;
+export type ExternalServiceSigninBodyDtoAuthenticationTypeEnum =
+  (typeof ExternalServiceSigninBodyDtoAuthenticationTypeEnum)[keyof typeof ExternalServiceSigninBodyDtoAuthenticationTypeEnum];
+
+/**
+ *
+ * @export
  * @interface FileMetadataResponseDto
  */
 export interface FileMetadataResponseDto {
@@ -3014,6 +3439,85 @@ export interface GenerateTitleResponseDto {
    */
   name: string;
 }
+/**
+ *
+ * @export
+ * @interface GetExternalServiceResponseDto
+ */
+export interface GetExternalServiceResponseDto {
+  /**
+   *
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  authenticationType: GetExternalServiceResponseDtoAuthenticationTypeEnum;
+  /**
+   * USER-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one.
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  userLevelAuthStatus?: string;
+  /**
+   * GLOBAL-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one.
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  globalAuthStatus?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  clientId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  authorizationEndpoint?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof GetExternalServiceResponseDto
+   */
+  scopesSupported?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  codeChallenge?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  codeChallengeMethod?: string;
+}
+
+/**
+ * @export
+ */
+export const GetExternalServiceResponseDtoAuthenticationTypeEnum = {
+  None: 'NONE',
+  ApiKey: 'API_KEY',
+  Oauth: 'OAUTH',
+} as const;
+export type GetExternalServiceResponseDtoAuthenticationTypeEnum =
+  (typeof GetExternalServiceResponseDtoAuthenticationTypeEnum)[keyof typeof GetExternalServiceResponseDtoAuthenticationTypeEnum];
+
 /**
  *
  * @export
@@ -3165,6 +3669,49 @@ export interface ListFilesResponseDto {
    * @memberof ListFilesResponseDto
    */
   permissions?: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface ListScheduledTasksResponseDto
+ */
+export interface ListScheduledTasksResponseDto {
+  /**
+   *
+   * @type {Array<ScheduledTaskDto>}
+   * @memberof ListScheduledTasksResponseDto
+   */
+  items: Array<ScheduledTaskDto>;
+  /**
+   * Total number of schedules upstream, across all pages.
+   * @type {number}
+   * @memberof ListScheduledTasksResponseDto
+   */
+  count?: number;
+  /**
+   * Page size used by the upstream DIAL Scheduler response.
+   * @type {number}
+   * @memberof ListScheduledTasksResponseDto
+   */
+  limit?: number;
+  /**
+   * Offset of `items` within the full upstream result set.
+   * @type {number}
+   * @memberof ListScheduledTasksResponseDto
+   */
+  offset?: number;
+  /**
+   * Upstream URL for the next page, or null if this is the last page.
+   * @type {string}
+   * @memberof ListScheduledTasksResponseDto
+   */
+  next?: string | null;
+  /**
+   * Upstream URL for the previous page, or null if this is the first page.
+   * @type {string}
+   * @memberof ListScheduledTasksResponseDto
+   */
+  previous?: string | null;
 }
 /**
  *
@@ -3514,6 +4061,19 @@ export interface MoveItemResultDto {
 /**
  *
  * @export
+ * @interface MovePromptDto
+ */
+export interface MovePromptDto {
+  /**
+   * Target folder path. Empty string to move to root.
+   * @type {string}
+   * @memberof MovePromptDto
+   */
+  targetFolderId: string;
+}
+/**
+ *
+ * @export
  * @interface MutatedToolsetDto
  */
 export interface MutatedToolsetDto {
@@ -3523,6 +4083,99 @@ export interface MutatedToolsetDto {
    * @memberof MutatedToolsetDto
    */
   id: string;
+}
+/**
+ *
+ * @export
+ * @interface PromptFolderResponseDto
+ */
+export interface PromptFolderResponseDto {
+  /**
+   * Folder path within the prompts namespace
+   * @type {string}
+   * @memberof PromptFolderResponseDto
+   */
+  id: string;
+  /**
+   * Last path segment (display name)
+   * @type {string}
+   * @memberof PromptFolderResponseDto
+   */
+  name: string;
+}
+/**
+ *
+ * @export
+ * @interface PromptListResponseDto
+ */
+export interface PromptListResponseDto {
+  /**
+   *
+   * @type {Array<PromptResponseDto>}
+   * @memberof PromptListResponseDto
+   */
+  prompts: Array<PromptResponseDto>;
+  /**
+   *
+   * @type {Array<PromptFolderResponseDto>}
+   * @memberof PromptListResponseDto
+   */
+  folders: Array<PromptFolderResponseDto>;
+  /**
+   *
+   * @type {Array<PromptResponseDto>}
+   * @memberof PromptListResponseDto
+   */
+  sharedWithMe: Array<PromptResponseDto>;
+}
+/**
+ *
+ * @export
+ * @interface PromptResponseDto
+ */
+export interface PromptResponseDto {
+  /**
+   * Prompt path within the prompts namespace (used as stable ID)
+   * @type {string}
+   * @memberof PromptResponseDto
+   */
+  id: string;
+  /**
+   * Display name
+   * @type {string}
+   * @memberof PromptResponseDto
+   */
+  name: string;
+  /**
+   * Optional description
+   * @type {string}
+   * @memberof PromptResponseDto
+   */
+  description?: string;
+  /**
+   * Prompt text content
+   * @type {string}
+   * @memberof PromptResponseDto
+   */
+  content: string;
+  /**
+   * Parent folder path; empty string means root
+   * @type {string}
+   * @memberof PromptResponseDto
+   */
+  folderId: string;
+  /**
+   * Creation timestamp (Unix ms)
+   * @type {number}
+   * @memberof PromptResponseDto
+   */
+  createdAt: number;
+  /**
+   * Last update timestamp (Unix ms)
+   * @type {number}
+   * @memberof PromptResponseDto
+   */
+  updatedAt: number;
 }
 /**
  *
@@ -3546,6 +4199,25 @@ export interface ProviderInfoDto {
 /**
  *
  * @export
+ * @interface PublicPromptListResponseDto
+ */
+export interface PublicPromptListResponseDto {
+  /**
+   *
+   * @type {Array<PromptResponseDto>}
+   * @memberof PublicPromptListResponseDto
+   */
+  prompts: Array<PromptResponseDto>;
+  /**
+   *
+   * @type {Array<PromptFolderResponseDto>}
+   * @memberof PublicPromptListResponseDto
+   */
+  folders: Array<PromptFolderResponseDto>;
+}
+/**
+ *
+ * @export
  * @interface PublishCatalogEntityDto
  */
 export interface PublishCatalogEntityDto {
@@ -3561,6 +4233,12 @@ export interface PublishCatalogEntityDto {
    * @memberof PublishCatalogEntityDto
    */
   version: string;
+  /**
+   * Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.
+   * @type {Array<PublishRuleDto>}
+   * @memberof PublishCatalogEntityDto
+   */
+  rules?: Array<PublishRuleDto>;
 }
 /**
  *
@@ -3574,6 +4252,12 @@ export interface PublishConversationDto {
    * @memberof PublishConversationDto
    */
   folderPath: string;
+  /**
+   * Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.
+   * @type {Array<PublishRuleDto>}
+   * @memberof PublishConversationDto
+   */
+  rules?: Array<PublishRuleDto>;
 }
 /**
  *
@@ -3716,6 +4400,56 @@ export const PublishResultDtoEntityTypeEnum = {
 export type PublishResultDtoEntityTypeEnum =
   (typeof PublishResultDtoEntityTypeEnum)[keyof typeof PublishResultDtoEntityTypeEnum];
 
+/**
+ *
+ * @export
+ * @interface PublishRuleDto
+ */
+export interface PublishRuleDto {
+  /**
+   * Claim/category name this rule matches against.
+   * @type {string}
+   * @memberof PublishRuleDto
+   */
+  source: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishRuleDto
+   */
+  function: PublishRuleDtoFunctionEnum;
+  /**
+   * Values combined with OR; exactly one pattern when function is REGEX.
+   * @type {Array<string>}
+   * @memberof PublishRuleDto
+   */
+  targets: Array<string>;
+}
+
+/**
+ * @export
+ */
+export const PublishRuleDtoFunctionEnum = {
+  Equal: 'EQUAL',
+  Contain: 'CONTAIN',
+  Regex: 'REGEX',
+} as const;
+export type PublishRuleDtoFunctionEnum =
+  (typeof PublishRuleDtoFunctionEnum)[keyof typeof PublishRuleDtoFunctionEnum];
+
+/**
+ *
+ * @export
+ * @interface PublishRulesResultDto
+ */
+export interface PublishRulesResultDto {
+  /**
+   * The requested folder's own access-restriction rules, or an empty array when the folder has none configured.
+   * @type {Array<PublishRuleDto>}
+   * @memberof PublishRulesResultDto
+   */
+  rules: Array<PublishRuleDto>;
+}
 /**
  *
  * @export
@@ -3898,6 +4632,19 @@ export interface RenameItemResultDto {
 /**
  *
  * @export
+ * @interface RenamePromptFolderDto
+ */
+export interface RenamePromptFolderDto {
+  /**
+   * New folder name. Must not contain a forward slash.
+   * @type {string}
+   * @memberof RenamePromptFolderDto
+   */
+  name: string;
+}
+/**
+ *
+ * @export
  * @interface ReportClientChannelDto
  */
 export interface ReportClientChannelDto {
@@ -3925,6 +4672,74 @@ export const ReportClientChannelDtoResultEnum = {
 export type ReportClientChannelDtoResultEnum =
   (typeof ReportClientChannelDtoResultEnum)[keyof typeof ReportClientChannelDtoResultEnum];
 
+/**
+ *
+ * @export
+ * @interface ReportIssueDto
+ */
+export interface ReportIssueDto {
+  /**
+   * Short title describing the issue.
+   * @type {string}
+   * @memberof ReportIssueDto
+   */
+  title: string;
+  /**
+   * Detailed description of the issue.
+   * @type {string}
+   * @memberof ReportIssueDto
+   */
+  description: string;
+}
+/**
+ *
+ * @export
+ * @interface RequestApiKeyDto
+ */
+export interface RequestApiKeyDto {
+  /**
+   * Project name.
+   * @type {string}
+   * @memberof RequestApiKeyDto
+   */
+  projectId: string;
+  /**
+   * Stream name.
+   * @type {string}
+   * @memberof RequestApiKeyDto
+   */
+  projectStream: string;
+  /**
+   * Email of the project tech lead.
+   * @type {string}
+   * @memberof RequestApiKeyDto
+   */
+  projectLead: string;
+  /**
+   * Business justification for the access request.
+   * @type {string}
+   * @memberof RequestApiKeyDto
+   */
+  businessReason: string;
+  /**
+   * Project end date in DD/MM/YYYY format.
+   * @type {string}
+   * @memberof RequestApiKeyDto
+   */
+  projectEnd: string;
+  /**
+   * Description of the access scenario.
+   * @type {string}
+   * @memberof RequestApiKeyDto
+   */
+  accessScenario: string;
+  /**
+   * Cost and workload description.
+   * @type {string}
+   * @memberof RequestApiKeyDto
+   */
+  workloadPattern: string;
+}
 /**
  *
  * @export
@@ -3983,6 +4798,116 @@ export interface SaveConversationBodyDto {
    */
   conversation: ConversationResponseDto;
 }
+/**
+ *
+ * @export
+ * @interface ScheduleCronDto
+ */
+export interface ScheduleCronDto {
+  /**
+   * Cron field map using supported Scheduler keys (year, month, day, week, day_of_week, hour, minute, second).
+   * @type {{ [key: string]: string; }}
+   * @memberof ScheduleCronDto
+   */
+  fields: { [key: string]: string };
+}
+/**
+ *
+ * @export
+ * @interface ScheduleTriggerDto
+ */
+export interface ScheduleTriggerDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduleTriggerDto
+   */
+  date?: string;
+  /**
+   *
+   * @type {ScheduleCronDto}
+   * @memberof ScheduleTriggerDto
+   */
+  cron?: ScheduleCronDto;
+}
+/**
+ *
+ * @export
+ * @interface ScheduledTaskDto
+ */
+export interface ScheduledTaskDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {ScheduleTriggerDto}
+   * @memberof ScheduledTaskDto
+   */
+  trigger: ScheduleTriggerDto;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  nextRunTime?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  createdAt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  updatedAt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  triggerType?: ScheduledTaskDtoTriggerTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  serviceId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  createdBy?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  description?: string;
+}
+
+/**
+ * @export
+ */
+export const ScheduledTaskDtoTriggerTypeEnum = {
+  Cron: 'cron',
+  Date: 'date',
+} as const;
+export type ScheduledTaskDtoTriggerTypeEnum =
+  (typeof ScheduledTaskDtoTriggerTypeEnum)[keyof typeof ScheduledTaskDtoTriggerTypeEnum];
+
 /**
  *
  * @export
@@ -4752,6 +5677,36 @@ export interface UpdateApplicationBodyDto {
    * @memberof UpdateApplicationBodyDto
    */
   intro?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateApplicationBodyDto
+   */
+  version?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateApplicationBodyDto
+   */
+  endpoint?: string;
+  /**
+   *
+   * @type {object}
+   * @memberof UpdateApplicationBodyDto
+   */
+  features?: object;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof UpdateApplicationBodyDto
+   */
+  inputAttachmentTypes?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof UpdateApplicationBodyDto
+   */
+  maxInputAttachments?: number;
 }
 /**
  *
@@ -4794,6 +5749,68 @@ export interface UpdatePinsDto {
 /**
  *
  * @export
+ * @interface UpdatePromptDto
+ */
+export interface UpdatePromptDto {
+  /**
+   * New display name. Must not contain a forward slash.
+   * @type {string}
+   * @memberof UpdatePromptDto
+   */
+  name?: string;
+  /**
+   * Updated description
+   * @type {string}
+   * @memberof UpdatePromptDto
+   */
+  description?: string;
+  /**
+   * Updated prompt text
+   * @type {string}
+   * @memberof UpdatePromptDto
+   */
+  content?: string;
+}
+/**
+ *
+ * @export
+ * @interface UpdateScheduledTaskBodyDto
+ */
+export interface UpdateScheduledTaskBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateScheduledTaskBodyDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {ScheduleTriggerDto}
+   * @memberof UpdateScheduledTaskBodyDto
+   */
+  trigger: ScheduleTriggerDto;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateScheduledTaskBodyDto
+   */
+  model: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateScheduledTaskBodyDto
+   */
+  prompt: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateScheduledTaskBodyDto
+   */
+  description?: string;
+}
+/**
+ *
+ * @export
  * @interface UpdateSelectedDeploymentDto
  */
 export interface UpdateSelectedDeploymentDto {
@@ -4829,6 +5846,84 @@ export interface UpdatedApplicationDto {
    */
   object?: string;
 }
+/**
+ *
+ * @export
+ * @interface UpdatedScheduledTaskDto
+ */
+export interface UpdatedScheduledTaskDto {
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {ScheduleTriggerDto}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  trigger: ScheduleTriggerDto;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  nextRunTime?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  createdAt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  updatedAt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  triggerType?: UpdatedScheduledTaskDtoTriggerTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  serviceId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  createdBy?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  description?: string;
+}
+
+/**
+ * @export
+ */
+export const UpdatedScheduledTaskDtoTriggerTypeEnum = {
+  Cron: 'cron',
+  Date: 'date',
+} as const;
+export type UpdatedScheduledTaskDtoTriggerTypeEnum =
+  (typeof UpdatedScheduledTaskDtoTriggerTypeEnum)[keyof typeof UpdatedScheduledTaskDtoTriggerTypeEnum];
+
 /**
  *
  * @export

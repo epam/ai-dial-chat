@@ -173,6 +173,47 @@ DIAL Core's sharing mechanism grants READ access to the resource at its original
 
 ---
 
+### Requirement: Scheduler-created conversations are detected from their DIAL Core resource path
+
+`apps/chat-api/src/conversations/utils/parse-scheduled-task-conversation-path.ts` SHALL export a pure function `parseScheduledTaskConversationPath(resourceId: string): { scheduleId: string; runId: string } | null` with no dependency injection, logging, or DIAL Core client access.
+
+A conversation resource id matches the scheduler pattern **iff** the `/`-delimited segment immediately following the bucket segment is the literal `.scheduler`, followed by exactly two further segments read as `scheduleId` and `runId` (an optional filename segment may follow and is ignored by this function).
+
+The function SHALL:
+1. Split the id into `/`-delimited segments.
+2. Return `null` if the segment after the bucket is not exactly `.scheduler`.
+3. Read the next two segments as candidate `scheduleId` and `runId`.
+4. Decode each candidate with the existing `safeDecodeURIComponent` helper (`apps/chat-api` equivalent used elsewhere in this spec for path segments).
+5. Validate each decoded candidate against `^[A-Za-z0-9_-]{1,128}$` (the same allowlist used by the scheduled-tasks BFF routes — see the [scheduled-tasks-api spec](../scheduled-tasks-api/spec.md)).
+6. Return `{ scheduleId, runId }` only when both candidates pass validation; return `null` in every other case (missing segments, empty segments, decode failure, validation failure). The function MUST NOT throw.
+
+#### Scenario: Valid scheduler path returns scheduleId and runId
+
+- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched_abc/run_001/gpt-4o__Morning briefing__uuid")` is called
+- **THEN** it returns `{ scheduleId: "sched_abc", runId: "run_001" }`
+
+#### Scenario: Normal conversation path returns null
+
+- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/gpt-4o__Morning briefing__uuid")` is called
+- **THEN** it returns `null`
+
+#### Scenario: Missing runId segment returns null
+
+- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched_abc")` is called
+- **THEN** it returns `null`
+
+#### Scenario: scheduleId or runId failing the allowlist returns null
+
+- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched abc!/run_001/title")` is called (scheduleId contains a space and `!`, outside `^[A-Za-z0-9_-]{1,128}$`)
+- **THEN** it returns `null`
+
+#### Scenario: URL-encoded ids are decoded before validation
+
+- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched%5Fabc/run%5F001/title")` is called
+- **THEN** it returns `{ scheduleId: "sched_abc", runId: "run_001" }`
+
+---
+
 ### Requirement: GET /api/v1/conversations/list returns a merged list from the user bucket, public bucket, and shared resources
 
 The backend SHALL expose `GET /api/v1/conversations/list` in `apps/chat-api/src/conversations/conversation.controller.ts`. The endpoint is backed by DIAL Core metadata and the DIAL Core sharing API (not an in-memory store). It accepts the following query parameters validated by `ListConversationsQueryDto`:
@@ -191,6 +232,9 @@ class ConversationListItemDto {
   publishedWithMe: boolean; // True when this conversation is from the public bucket (organisation content)
   isPinned: boolean;        // True when the user has pinned this conversation
   isReadonly: boolean;      // True when the caller does not have WRITE permission on this exact resource
+  isScheduledTask: boolean; // True when the resource path matches the .scheduler reserved-segment pattern
+  scheduleId?: string;      // Present only when isScheduledTask === true; the scheduler task id from the path
+  runId?: string;           // Present only when isScheduledTask === true; the scheduler run id from the path
 }
 
 class ConversationListResponseDto {
@@ -211,6 +255,8 @@ Items from all three sources are merged and sorted by `updatedAt` descending. `F
 
 **No personal/public merging.** The service SHALL NOT attempt to match or merge a user-bucket item with a public-bucket item, even when a personal conversation has been published and both a personal copy and a public copy exist. Each is returned as its own independent list item with its own `id`: the personal copy keeps its user-bucket `id`, real `isReadonly` (from DIAL Core permissions), and `publishedWithMe: false` (unless DIAL Core itself reports otherwise); the public copy is a separate entry with its own `conversations/public/...` id, `isReadonly: true`, and `publishedWithMe: true`. This guarantees any link built from a returned `id` (conversation open/navigation links, and share links created via `POST /api/v1/share`) always resolves to the bucket that specific item actually represents, and that the personal copy's pin status and permissions are never affected by publishing.
 
+**Scheduler metadata.** For every merged item (from any of the three sources), the service SHALL call `parseScheduledTaskConversationPath(item.id)` (see the "Scheduler-created conversations are detected from their DIAL Core resource path" requirement above). When it returns a non-null result, the item SHALL have `isScheduledTask: true`, `scheduleId` and `runId` set from the result. When it returns `null`, the item SHALL have `isScheduledTask: false` with `scheduleId`/`runId` omitted. This detection is independent per item — a scheduler-created conversation that also happens to be shared or published is still tagged using its own resource id, not any other copy's id.
+
 **Compound `nextToken`.** Pagination state is tracked independently for the user bucket and public bucket (the `getSharedResources` endpoint returns all results at once and has no cursor). The response `nextToken` format is `ct1.<base64url(JSON)>` where the JSON object has optional fields `u` (user-bucket cursor) and `p` (public-bucket cursor). An incoming token without the `ct1.` prefix is treated as a legacy user-only cursor. The response `nextToken` is omitted when neither paginated source has more results.
 
 **Resilience.** If the public bucket or shared resources call fails (throws or returns an error response), the endpoint logs a warning and continues — it still returns results from the other sources. If the user bucket call fails, the endpoint returns the error to the client.
@@ -222,7 +268,7 @@ Rate limiting: global default applies (no handler-level `@Throttle` override).
 Generated-client impact:
 - OpenAPI operationId: `listConversations`
 - SDK method: `ConversationsApi.listConversations({ limit?, nextToken? })`
-- Response type: `ConversationListResponseDto`
+- Response type: `ConversationListResponseDto` (regenerated to include `isScheduledTask`/`scheduleId`/`runId` on `ConversationListItemDto`)
 - Frontend callers use the normal (non-Raw) generated method via `apps/chat/src/server-api/conversations.api.ts`
 
 Error codes:
@@ -296,6 +342,18 @@ Error codes:
 - **WHEN** a user has pinned their own conversation (its user-bucket `id` is in the pinned-ids set) and that same conversation has also been published to the public bucket
 - **THEN** the response item with the user-bucket `id` has `isPinned: true`
 - **AND** the response item with the public-bucket `id` has `isPinned: false` (pins are never applied to a `publishedWithMe: true` item unless its own id was explicitly pinned)
+
+#### Scenario: Scheduler-created conversation is tagged with schedule and run ids
+
+- **GIVEN** a user-bucket item with `id: "conversations/test-bucket/.scheduler/sched_abc/run_001/gpt-4o__Morning briefing__uuid"`
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** the matching response item has `isScheduledTask: true`, `scheduleId: "sched_abc"`, `runId: "run_001"`
+
+#### Scenario: Normal conversation has isScheduledTask false with no ids
+
+- **GIVEN** a user-bucket item with `id: "conversations/test-bucket/gpt-4o__Morning briefing__uuid"`
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** the matching response item has `isScheduledTask: false` and no `scheduleId`/`runId` fields
 
 ---
 

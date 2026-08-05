@@ -1,14 +1,11 @@
-import {
-  type DeploymentItem,
-  Highlight,
-  mergeClasses,
-} from '@epam/ai-dial-chat-shared';
+import { type DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { GradientCheckIcon } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
   DialSearch,
   DropdownItem,
   ElementSize,
+  Highlight,
 } from '@epam/ai-dial-ui-kit';
 import { type ReactNode, useMemo, useState } from 'react';
 import {
@@ -22,6 +19,7 @@ import {
   filterDeployments,
   getDeploymentLabel,
 } from '../utils/deployment';
+import styles from './useModelSelector.module.scss';
 
 /** Options passed to `useModelSelector`. */
 export interface UseModelSelectorOptions {
@@ -33,8 +31,10 @@ export interface UseModelSelectorOptions {
   onDeploymentChange?: (id: string) => void;
   /** Status labels for the selector dropdown. */
   modelSelectorLabels?: ModelSelectorLabels;
-  /** Class applied to the sticky search header wrapper for theming. Defaults to `'bg-layer-0'`. */
+  /** Class applied to the sticky search header wrapper for theming. Defaults to a `--bg-layer-raised` background. */
   searchHeaderClassName?: string;
+  /** Class applied to the currently selected menu item. Defaults to a `--bg-accent-primary-alpha` background. */
+  selectedItemClassName?: string;
 }
 
 /** Values returned by `useModelSelector`. */
@@ -59,7 +59,8 @@ export const useModelSelector = ({
   selectedDeploymentId,
   onDeploymentChange,
   modelSelectorLabels,
-  searchHeaderClassName = 'bg-layer-0',
+  searchHeaderClassName = styles.searchHeader,
+  selectedItemClassName = styles.selectedItem,
 }: UseModelSelectorOptions): UseModelSelectorResult => {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -136,7 +137,7 @@ export const useModelSelector = ({
           item.displayName ?? item.id,
         ),
         onClick: () => onDeploymentChange?.(item.id),
-        className: isSelected ? 'bg-accent-primary-alpha' : undefined,
+        className: isSelected ? selectedItemClassName : undefined,
       };
     });
   }, [
@@ -146,6 +147,7 @@ export const useModelSelector = ({
     selectedDeploymentId,
     modelSelectorLabels,
     onDeploymentChange,
+    selectedItemClassName,
   ]);
 
   const menuHeader: ReactNode = useMemo(

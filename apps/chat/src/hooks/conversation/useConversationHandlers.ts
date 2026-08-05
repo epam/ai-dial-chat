@@ -18,7 +18,7 @@ import {
   useCallback,
   useState,
 } from 'react';
-import { type NavigateFunction } from 'react-router-dom';
+import { type NavigateFunction } from 'react-router';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
@@ -30,7 +30,10 @@ import { ROUTES } from '../../types/routes';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { getConversationPath } from '../../utils/conversation-path';
 import { createMessagePair } from '../../utils/message-factory';
-import { isMessageChanged } from '../../utils/message-utils';
+import {
+  hasActiveToolConfig,
+  isMessageChanged,
+} from '../../utils/message-utils';
 import { getStarterSubmitText } from '../../utils/starter-option';
 import { useAttachmentUpload } from './useAttachmentUpload';
 
@@ -53,6 +56,8 @@ interface Params {
   navigate: NavigateFunction;
   /** Called with batched filenames after a burst of network-error upload failures. */
   showNetworkError?: (filenames: string[]) => void;
+  /** Tool toggle configuration values merged into every outgoing completion request. */
+  toolConfigurationValue?: Record<string, boolean>;
   /**
    * When provided, overrides the globally-selected deployment for every
    * message sent through this hook. Used by callers that pin the
@@ -72,6 +77,7 @@ export const useConversationHandlers = ({
   setConversation,
   navigate,
   showNetworkError,
+  toolConfigurationValue,
   fixedModelId,
 }: Params) => {
   const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(
@@ -99,10 +105,21 @@ export const useConversationHandlers = ({
       if (!conversationId || !conversation) return;
 
       const attachmentDtos = attachmentsToDtos(attachments);
+      const hasToolConfig = hasActiveToolConfig(toolConfigurationValue);
+      const customContent: MessageCustomContent | undefined =
+        attachmentDtos?.length || hasToolConfig
+          ? {
+              ...(attachmentDtos?.length
+                ? { attachments: attachmentDtos }
+                : {}),
+              ...(hasToolConfig
+                ? { configuration_value: toolConfigurationValue }
+                : {}),
+            }
+          : undefined;
       const { userMessage, assistantMessage } = createMessagePair(
         message,
-        attachmentDtos,
-        undefined,
+        customContent,
         selectedItemId,
       );
       setConversation((prev) => {
@@ -120,7 +137,7 @@ export const useConversationHandlers = ({
         message,
         conversation.messages.length + 1,
         selectedItemId ?? conversation.model.id,
-        { attachments: attachmentDtos },
+        customContent,
         crypto.randomUUID(),
         CompletionMode.Append,
       );
@@ -132,6 +149,7 @@ export const useConversationHandlers = ({
       selectedItemId,
       setConversation,
       startStream,
+      toolConfigurationValue,
     ],
   );
 
@@ -156,7 +174,7 @@ export const useConversationHandlers = ({
           custom_content: undefined,
           wasStoppedByUser: undefined,
           stoppedWithoutContent: undefined,
-          hasStreamError: undefined,
+          streamErrorMessage: undefined,
         };
         const next = {
           ...prev,
@@ -327,11 +345,27 @@ export const useConversationHandlers = ({
       const configurationValue = propertyKey
         ? { [propertyKey]: starter.const }
         : undefined;
+      const hasToolConfig = hasActiveToolConfig(toolConfigurationValue);
+      const mergedConfigurationValue = {
+        ...(configurationValue ?? {}),
+        ...(hasToolConfig ? toolConfigurationValue : {}),
+      };
+      const hasConfigurationValue =
+        Object.keys(mergedConfigurationValue).length > 0;
+
+      const customContent: MessageCustomContent | undefined =
+        configurationValue || hasConfigurationValue
+          ? {
+              ...(configurationValue ? { form_value: configurationValue } : {}),
+              ...(hasConfigurationValue
+                ? { configuration_value: mergedConfigurationValue }
+                : {}),
+            }
+          : undefined;
 
       const { userMessage, assistantMessage } = createMessagePair(
         displayText,
-        undefined,
-        configurationValue,
+        customContent,
         selectedItemId,
       );
       setConversation((prev) => {
@@ -344,12 +378,18 @@ export const useConversationHandlers = ({
         return next;
       });
 
+      /* `configuration_value` is sent even when `configurationValue` (the
+       * form-based starter value) is absent but a tool toggle is active.
+       * Unlike the previous code that omitted customContent entirely for
+       * non-form starters, active tool config must always be forwarded so
+       * the completion endpoint can apply it regardless of how the starter
+       * was triggered. */
       startStream(
         conversationId,
         submitText,
         conversation.messages.length + 1,
         selectedItemId ?? conversation.model.id,
-        configurationValue ? { form_value: configurationValue } : undefined,
+        customContent,
         crypto.randomUUID(),
         CompletionMode.Append,
       );
@@ -361,6 +401,7 @@ export const useConversationHandlers = ({
       selectedItemId,
       setConversation,
       startStream,
+      toolConfigurationValue,
     ],
   );
 
@@ -480,7 +521,7 @@ export const useConversationHandlers = ({
         text,
         updatedMessages.length - 1,
         selectedItemId ?? conversation.model.id,
-        allAttachments.length > 0 ? { attachments: allAttachments } : undefined,
+        updatedCustomContent,
         crypto.randomUUID(),
         CompletionMode.Edit,
       );

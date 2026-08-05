@@ -14,6 +14,7 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
+import type { PublishRuleDto } from '../publish/dto/publish-rule.dto';
 import {
   getPublicationsListScope,
   getPublicTargetFolder,
@@ -67,12 +68,13 @@ export class ConversationPublishService {
     path: string,
     folderPath: string,
     author: string,
+    rules?: PublishRuleDto[],
   ): Promise<PublishConversationResultDto> {
     const encodedPath = encodeDialResourcePath(path);
     const sourceUrl = `${CONVERSATION_RESOURCE_PREFIX}/${bucket}/${encodedPath}`;
 
-    // Re-fetches the conversation's current title server-side, scoped to the
-    // caller's own bucket only, rather than trusting a client-supplied value.
+    /* Re-fetches the conversation's current title server-side, scoped to the
+     * caller's own bucket only, rather than trusting a client-supplied value. */
     const {
       data: conversation,
       error: getError,
@@ -101,7 +103,7 @@ export class ConversationPublishService {
       targetFolder: publicTargetFolder,
       resources: [{ action: 'ADD' as const, sourceUrl, targetUrl }],
       displayAuthor: author,
-      rules: [],
+      rules: rules ?? [],
     };
 
     let result;

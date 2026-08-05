@@ -32,7 +32,7 @@ Single flat file following project convention (`DeploymentsContext`, `ThemeConte
 
 ## 4. Sidebar toggle button (`apps/chat`)
 
-- [x] 4.1 Update `apps/chat/src/components/Header/Header.tsx`: switch the root from a centred flex to `grid-cols-[1fr_auto_1fr]`, keep `<Logo />` in the centre column, add a right-aligned `DialGhostIconButton` with `IconFile` (`@tabler/icons-react`).
+- [x] 4.1 Update `apps/chat/src/components/Header/Header.tsx`: switch the root from a centred flex to `grid-cols-[1fr_auto_1fr]`, keep `<Logo />` in the centre column, add a right-aligned `GhostIconButton` with `IconFile` (`@tabler/icons-react`).
 - [x] 4.2 Wire the button to `useRightSidebar().toggle()`. Set `aria-pressed={isOpen}`. Use `t(SidebarI18nKeys.ToggleOpen)` when closed, `t(SidebarI18nKeys.ToggleClose)` when open, for both `aria-label` and `tooltipProps.tooltip`.
 - [x] 4.3 Update `apps/chat/src/components/Header/tests/Header.spec.tsx`: assert toggle present, clicking it toggles the context value (wrap test in `<RightSidebarProvider>`), `aria-pressed` reflects state, `aria-label` switches strings.
 
@@ -49,8 +49,8 @@ Single flat file following project convention (`DeploymentsContext`, `ThemeConte
 - [x] 5.5 Create folder `libs/sidebar/src/components/SidebarPanel/`. Add `SidebarPanel.tsx` exporting `SidebarPanel: FC<SidebarPanelProps>`. File-header comment: `leftActions` / `rightActions` are header-bar positions and are independent of `side`.
 - [x] 5.6 Render `<aside role="complementary" aria-label={ariaLabel}>` with `w-[360px]`, full height column, header bar (48 px) with bottom border, scrollable body (`overflow-y-auto`). Layout via Tailwind only (no SCSS for layout, per `openspec/lib-styling-guide.md`).
 - [x] 5.7 Apply the side-specific divider via Tailwind: `side === 'right'` → `border-l`; `side === 'left'` → `border-r`. The actual color comes from a CSS variable (next step), so use a class like `border-l` / `border-r` plus the SCSS module's `border-color` rule.
-- [x] 5.8 Header bar layout: three logical regions (left group / spacer / right group). Always render `leftActions` in the left group and `rightActions` in the right group. Append the built-in close `DialGhostIconButton` (`IconX`) to the **outer-edge** group: `side === 'right'` → close in right group as last child; `side === 'left'` → close in left group as first child. Close button uses `closeLabel` for both `aria-label` and `tooltipProps.tooltip`.
-- [x] 5.9 Create `libs/sidebar/src/components/SidebarPanel/SidebarPanel.module.scss` per the lib styling guide. Define three CSS-variable rules with hex fallbacks: `--sb-bg` (panel background, default `var(--bg-layer-2, #161B2D)`), `--sb-border` (divider color, default `var(--stroke-primary, #696e7c)`). No layout, no spacing, no border-radius in the SCSS module.
+- [x] 5.8 Header bar layout: three logical regions (left group / spacer / right group). Always render `leftActions` in the left group and `rightActions` in the right group. Append the built-in close `GhostIconButton` (`IconX`) to the **outer-edge** group: `side === 'right'` → close in right group as last child; `side === 'left'` → close in left group as first child. Close button uses `closeLabel` for both `aria-label` and `tooltipProps.tooltip`.
+- [x] 5.9 Create `libs/sidebar/src/components/SidebarPanel/SidebarPanel.module.scss` per the lib styling guide. Define three CSS-variable rules with hex fallbacks: `--sb-bg` (panel background, default `var(--bg-layer-sunken, #EEF1F7)`), `--sb-border` (divider color, default `var(--stroke-primary, #6B7280)`). No layout, no spacing, no border-radius in the SCSS module.
 - [x] 5.10 Inside `SidebarPanel.tsx`, build CSS-var overrides via `buildCssVars` from `@epam/ai-dial-chat-shared` (`--sb-bg`, `--sb-border`, plus typography vars). Apply via `style={cssVars}`. Merge classes via `mergeClasses(styles.wrapper, …, typography?.fontClassName, className)`.
 - [x] 5.11 Add `libs/sidebar/src/index.ts` exporting `SidebarPanel`, `SidebarPanelProps`, `SidebarPanelColors`, `SidebarPanelTypography`, `SidebarOrientation`.
 - [x] 5.12 Update `libs/sidebar/vite.config.mts` to emit `dist/style.css` (mirror `libs/conversation-input/vite.config.mts`).
@@ -78,8 +78,8 @@ Single flat file following project convention (`DeploymentsContext`, `ThemeConte
 - [x] 7.1 Create `apps/chat/src/components/ConversationSourcesPanel/ConversationSourcesPanel.tsx` with `Props { messages: Message[]; onSearch?: () => void; onDownloadAll?: () => void; }`.
 - [x] 7.2 Inside the component: call `useConversationSources(messages)` for `{ uploaded, generated }`; call `useRightSidebar()` for `close`; call `useTranslation()` for labels.
 - [x] 7.3 Import `SidebarPanel` from `@epam/ai-dial-sidebar` and import `'@epam/ai-dial-sidebar/styles.css'` once in `apps/chat/src/main.tsx` (alongside the existing conversation-input styles import). Compose `<SidebarPanel side="right">` with:
-  - `leftActions`: `<DialGhostIconButton icon={<IconSearch />} aria-label={t(SidebarI18nKeys.Search)} disabled={!onSearch} onClick={onSearch} />`
-  - `rightActions`: `<DialGhostIconButton icon={<IconDownload />} aria-label={t(SidebarI18nKeys.DownloadAll)} disabled={!onDownloadAll} onClick={onDownloadAll} />`
+  - `leftActions`: `<GhostIconButton icon={<IconSearch />} aria-label={t(SidebarI18nKeys.Search)} disabled={!onSearch} onClick={onSearch} />`
+  - `rightActions`: `<GhostIconButton icon={<IconDownload />} aria-label={t(SidebarI18nKeys.DownloadAll)} disabled={!onDownloadAll} onClick={onDownloadAll} />`
   - `onClose={close}`, `ariaLabel={t(SidebarI18nKeys.AriaLabel)}`, `closeLabel={t(SidebarI18nKeys.Close)}`
   - children: the three section components in order (Uploaded, Generated, Sources)
 - [x] 7.4 Unit tests in `ConversationSourcesPanel/tests/ConversationSourcesPanel.spec.tsx` covering: derives uploaded vs generated correctly from messages, search and download buttons disabled when callbacks omitted, search and download buttons fire callbacks when provided, close button closes the sidebar via context, sections render in order.

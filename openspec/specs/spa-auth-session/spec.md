@@ -30,7 +30,9 @@ The SPA SHALL load the current user session from the BFF on initial mount by iss
 
 ### Requirement: Automatic redirect to the BFF login flow when unauthenticated
 
-The SPA SHALL automatically initiate the BFF login flow when the user is unauthenticated. Before redirecting, it MUST compute an application `callbackUrl` from the current browser URL (`window.location.href`, including pathname, search, and hash) so the BFF can return the user to the same application origin/page after authentication. The redirect policy MUST depend on the number of registered providers reported by `GET /api/v1/auth/providers`:
+The SPA SHALL automatically initiate the BFF login flow when the user is unauthenticated, **unless the caller explicitly disables this behavior**. `useAuthRedirect` SHALL accept an optional `options: { disabled?: boolean }` argument. When `options.disabled` is `true`, the hook's effect MUST return before performing any of the following: fetching `GET /api/v1/auth/providers`, reading or writing the session-storage redirect-attempt guard, calling `navigate(...)`, or calling `window.location.assign(...)`. Omitting `options` or passing `{ disabled: false }` (or `{}`) MUST preserve the exact behavior below, unchanged.
+
+Before redirecting (when not disabled), it MUST compute an application `callbackUrl` from the current browser URL (`window.location.href`, including pathname, search, and hash) so the BFF can return the user to the same application origin/page after authentication. The redirect policy MUST depend on the number of registered providers reported by `GET /api/v1/auth/providers`:
 
 - Exactly one provider → top-level browser navigation to `/api/v1/auth/login/<providerId>?callbackUrl=<encoded-current-url>` via `window.location.assign`.
 - More than one provider → client-side navigation to `/login?callbackUrl=<encoded-current-url>` via React Router `navigate(..., { replace: true })`, where the user picks a provider.
@@ -39,12 +41,12 @@ The redirect MUST NOT fire while the bootstrap status is `loading`, MUST NOT per
 
 #### Scenario: Single provider auto-redirect
 
-- **WHEN** the bootstrap finishes with `status = 'unauthenticated'` and `GET /api/v1/auth/providers` returns one entry
+- **WHEN** the bootstrap finishes with `status = 'unauthenticated'` and `GET /api/v1/auth/providers` returns one entry, and the hook was not called with `disabled: true`
 - **THEN** the SPA performs `window.location.assign('/api/v1/auth/login/<id>?callbackUrl=<encoded-current-url>')` exactly once during that session
 
 #### Scenario: Multi-provider navigation to picker
 
-- **WHEN** the bootstrap finishes with `status = 'unauthenticated'` and `GET /api/v1/auth/providers` returns two or more entries
+- **WHEN** the bootstrap finishes with `status = 'unauthenticated'` and `GET /api/v1/auth/providers` returns two or more entries, and the hook was not called with `disabled: true`
 - **THEN** the SPA calls React Router `navigate('/login?callbackUrl=<encoded-current-url>', { replace: true })` exactly once and renders the lazy-loaded `<LoginPage />`
 
 #### Scenario: Already authenticated user lands on /login
@@ -56,6 +58,16 @@ The redirect MUST NOT fire while the bootstrap status is `loading`, MUST NOT per
 
 - **WHEN** the bootstrap status is `loading`
 - **THEN** no redirect is performed and the gate renders `null`
+
+#### Scenario: Disabled flag suppresses every automatic side effect
+
+- **WHEN** `useAuthRedirect({ disabled: true })` is called with `status = 'unauthenticated'` and `pathname !== '/login'`
+- **THEN** the SPA does NOT call `GET /api/v1/auth/providers`, does NOT call `navigate(...)`, and does NOT call `window.location.assign(...)`
+
+#### Scenario: Omitted options preserve existing behavior
+
+- **WHEN** `useAuthRedirect()` is called with no arguments (as `<LoginPage />` does today)
+- **THEN** its behavior is identical to every scenario above that does not mention the `disabled` flag
 
 ---
 
@@ -77,12 +89,23 @@ The shared `request()` helper in `apps/chat/src/server-api/base.ts` SHALL includ
 
 ### Requirement: 401 responses surface as a typed UnauthorizedError and reset the session
 
-When the `request()` helper observes an HTTP `401` response, it SHALL throw an `UnauthorizedError` (subclass of `Error`, `status: 401`, exposes the originating URL) and SHALL invoke every listener registered through an `onUnauthorized(listener)` API exposed from the same module. The `UserContext` provider MUST register a single listener that resets `status` to `unauthenticated` and clears `user`, allowing the redirect policy from the "Automatic redirect" requirement to take over.
+When the `request()` helper observes an HTTP `401` response, it SHALL throw an `UnauthorizedError` (subclass of `Error`, `status: 401`, exposes the originating URL) and SHALL invoke every listener registered through an `onUnauthorized(listener)` API exposed from the same module.
 
-#### Scenario: 401 on a protected endpoint resets context
+The `UserContext` provider MUST register a single listener that, before resetting `status`, first attempts a bounded self-heal probe: if `status` is currently `Authenticated`, it issues one `GET /api/v1/auth/me` using whatever session cookie the browser currently holds.
 
-- **WHEN** any non-bootstrap API call returns `401`
-- **THEN** the helper throws `UnauthorizedError`, the registered `UserContext` listener is invoked, `status` becomes `unauthenticated`, and `user` becomes `null`
+- If that probe succeeds, the listener SHALL adopt the returned profile (`setUser(profile)`), keep `status` as `Authenticated`, and SHALL NOT reset `status` to `Unauthenticated` — the original 401 is treated as resolved (e.g. a same-instant refresh-token race the backend or a concurrent request already resolved), and the protected tree is NOT unmounted.
+- If the probe also fails (returns `401` or any other error), the listener SHALL reset `status` to `Unauthenticated` and clear `user`, allowing the redirect policy from the "Automatic redirect" requirement to take over, exactly as before this probe was introduced.
+- If `status` is not currently `Authenticated` (e.g. still `Loading` or already `Unauthenticated`), the listener SHALL skip the probe and reset the session immediately, as before — there is no already-authenticated state to attempt to recover.
+
+#### Scenario: 401 on a protected endpoint resets context when the session is genuinely invalid
+
+- **WHEN** any non-bootstrap API call returns `401` while `status === Authenticated`, and the subsequent `GET /api/v1/auth/me` self-heal probe also returns `401`
+- **THEN** the helper throws `UnauthorizedError`, the registered `UserContext` listener is invoked, the probe is attempted and fails, `status` becomes `Unauthenticated`, and `user` becomes `null`
+
+#### Scenario: 401 on a protected endpoint recovers when the session is actually still valid
+
+- **WHEN** any non-bootstrap API call returns `401` while `status === Authenticated`, and the subsequent `GET /api/v1/auth/me` self-heal probe returns `200` with a valid `UserProfile`
+- **THEN** the listener adopts the returned profile, `status` remains `Authenticated`, `user` is updated to the probed profile, and the protected tree is NOT unmounted
 
 #### Scenario: Non-401 errors are unchanged
 
@@ -98,7 +121,10 @@ When the `request()` helper observes an HTTP `401` response, it SHALL throw an `
 
 ### Requirement: Routing gates protected UI behind a resolved session
 
-The SPA SHALL declare two top-level routes in `apps/chat/src/main.tsx`: `/login` (the provider picker) and `*` (everything else, wrapped in a `<RequireAuth>` gate). The `<RequireAuth>` component MUST render its `children` only when `status === 'authenticated'`, render `null` while `status === 'loading'`, and trigger the redirect policy (single-provider auto-redirect or `/login` navigation) while `status === 'unauthenticated'`.
+The SPA SHALL declare two top-level routes in `apps/chat/src/main.tsx`: `/login` (the provider picker) and `*` (everything else, wrapped in a `<RequireAuth>` gate). The `<RequireAuth>` component MUST render its `children` only when `status === 'authenticated'`, render `null` while `status === 'loading'` and overlay mode is not active (see `chat-overlay-app-mode` for the overlay-mode loading presentation), and, when `status === 'unauthenticated'`:
+
+- outside overlay mode (`useOptionalOverlay()` returns `undefined`): call `useAuthRedirect()` with no disabling options, triggering the existing automatic redirect policy;
+- inside overlay mode (`useOptionalOverlay()` returns a defined value): call `useAuthRedirect({ disabled: true })`, so no automatic redirect is attempted, and render the overlay login gate defined in `overlay-external-login` instead of `null`.
 
 #### Scenario: Authenticated user sees the chat
 
@@ -107,13 +133,23 @@ The SPA SHALL declare two top-level routes in `apps/chat/src/main.tsx`: `/login`
 
 #### Scenario: Loading user sees nothing
 
-- **WHEN** `<RequireAuth>` mounts with `status = 'loading'`
+- **WHEN** `<RequireAuth>` mounts with `status = 'loading'` outside overlay mode
 - **THEN** it renders `null` and does NOT trigger any redirect
 
 #### Scenario: Login route renders the picker
 
 - **WHEN** the URL pathname is `/login` and there are two or more registered providers
 - **THEN** the lazy-loaded `<LoginPage />` mounts and the `<RequireAuth>` gate is NOT mounted for the same render
+
+#### Scenario: Unauthenticated outside overlay mode still auto-redirects
+
+- **WHEN** `<RequireAuth>` mounts with `status = 'unauthenticated'` and `useOptionalOverlay()` returns `undefined`
+- **THEN** `useAuthRedirect()` is called without `disabled`, so the existing single-provider/multi-provider automatic redirect policy still applies
+
+#### Scenario: Unauthenticated inside overlay mode does not auto-redirect
+
+- **WHEN** `<RequireAuth>` mounts with `status = 'unauthenticated'` and `useOptionalOverlay()` returns a defined overlay context value
+- **THEN** `useAuthRedirect({ disabled: true })` is called, no `window.location.assign` or `navigate` call is made as a result, and the overlay login gate renders instead of `null`
 
 ---
 
@@ -226,7 +262,12 @@ The change SHALL ship co-located Vitest specs that cover every new module: `User
 
 While `UserContext.status === Authenticated`, the SPA SHALL re-validate the session by issuing `GET /api/v1/auth/me` whenever the tab regains visibility (`document.visibilitychange` firing with `document.visibilityState === 'visible'`) or the window regains focus (`window` `focus` event), so that an identity change made in another tab or another same-origin flow is detected without waiting for a `401` on some other request. The revalidation SHALL be skipped while a previous bootstrap/revalidation request for this provider instance is still in flight, and SHALL NOT be performed while `status` is `Loading` or `Unauthenticated`.
 
-The comparison SHALL use `UserProfile.sub` (the stable subject identifier), not `providerId` or any other claim. If the newly fetched profile's `sub` differs from the currently held `user.sub`, the SPA SHALL clear the CSRF token and adopt the new profile in place by calling `setUser(newProfile)`, leaving `status` as `Authenticated`. The protected tree SHALL NOT be unmounted for this case — the session is already validly authenticated as the new identity, so there is nothing to redirect to a login screen for. Every identity-scoped context (see `conversations-context`, `user-config-frontend-init`, and `deployments-context`) is responsible for detecting the changed `sub` on its own and resetting/refetching accordingly. If the revalidation request itself returns `401` (the session was revoked, not merely switched), the SPA SHALL treat that identically to the existing `onUnauthorized` invalidation path — clearing the CSRF token, setting `user` to `null`, and setting `status` to `Unauthenticated` — so `RequireAuth` unmounts the protected tree and the normal bootstrap/redirect policy re-authenticates from scratch. If the newly fetched profile's `sub` is unchanged, the SPA SHALL update `user` in place (to pick up any other changed claims) without altering `status`.
+The comparison SHALL use `UserProfile.sub` (the stable subject identifier), not `providerId` or any other claim. If the newly fetched profile's `sub` differs from the currently held `user.sub`, the SPA SHALL clear the CSRF token and adopt the new profile in place by calling `setUser(newProfile)`, leaving `status` as `Authenticated`. The protected tree SHALL NOT be unmounted for this case — the session is already validly authenticated as the new identity, so there is nothing to redirect to a login screen for. Every identity-scoped context (see `conversations-context`, `user-config-frontend-init`, and `deployments-context`) is responsible for detecting the changed `sub` on its own and resetting/refetching accordingly. If the newly fetched profile's `sub` is unchanged, the SPA SHALL update `user` in place (to pick up any other changed claims) without altering `status`.
+
+If the revalidation request itself returns `401` (rather than a differing-`sub` profile), the SPA SHALL first attempt the same bounded self-heal probe described in "401 responses surface as a typed UnauthorizedError and reset the session" (a fresh `GET /api/v1/auth/me` retry) before deciding the session is genuinely revoked:
+
+- If that retry succeeds, the SPA SHALL adopt the returned profile and keep `status` as `Authenticated`, exactly as the "unchanged identity" / "identity changed" scenarios above — the original `401` is treated as a transient race, not a revocation.
+- If the retry also fails, the SPA SHALL treat that identically to the existing `onUnauthorized` invalidation path — clearing the CSRF token, setting `user` to `null`, and setting `status` to `Unauthenticated` — so `RequireAuth` unmounts the protected tree and the normal bootstrap/redirect policy re-authenticates from scratch.
 
 #### Scenario: Tab regains focus with an unchanged identity
 
@@ -238,10 +279,15 @@ The comparison SHALL use `UserProfile.sub` (the stable subject identifier), not 
 - **WHEN** an authenticated tab's window regains focus and `GET /api/v1/auth/me` returns `200` with a `UserProfile` whose `sub` differs from the currently held `user.sub`
 - **THEN** the CSRF token is cleared, `user` is set to the newly-fetched profile, `status` remains `Authenticated`, and the protected tree (including `DeploymentsProvider`, `ConversationsProvider`, `UserConfigProvider`) is NOT unmounted
 
-#### Scenario: Tab regains visibility after the session was revoked
+#### Scenario: Tab regains visibility after a same-instant refresh race, not a real revocation
 
-- **WHEN** an authenticated tab's `document.visibilityState` becomes `'visible'` and the revalidation `GET /api/v1/auth/me` returns `401`
-- **THEN** the same invalidation as an in-flight `401` (`onUnauthorized`) is applied: CSRF cleared, `user` becomes `null`, `status` becomes `Unauthenticated`
+- **WHEN** an authenticated tab's `document.visibilityState` becomes `'visible'`, the revalidation `GET /api/v1/auth/me` returns `401`, and an immediate retry of `GET /api/v1/auth/me` returns `200` with a valid `UserProfile`
+- **THEN** `user` is set to the profile returned by the retry, `status` remains `Authenticated`, and the protected tree is NOT unmounted
+
+#### Scenario: Tab regains visibility after the session was genuinely revoked
+
+- **WHEN** an authenticated tab's `document.visibilityState` becomes `'visible'`, the revalidation `GET /api/v1/auth/me` returns `401`, and the retry of `GET /api/v1/auth/me` also returns `401`
+- **THEN** the same invalidation as a genuinely-failed `401` (`onUnauthorized`) is applied: CSRF cleared, `user` becomes `null`, `status` becomes `Unauthenticated`
 
 #### Scenario: Revalidation is skipped while unauthenticated or loading
 

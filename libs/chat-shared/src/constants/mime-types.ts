@@ -1,9 +1,4 @@
-/**
- * Maps MIME types to their canonical file extension.
- * Covers cases where the subtype differs from the common extension
- * (e.g. `text/markdown` → `md`, `image/jpeg` → `jpg`) and vendor/x- types
- * whose subtype is not a usable extension on its own.
- */
+/** Maps MIME types to canonical file extensions. */
 export const MIME_TYPE_EXT_MAP: Record<string, string> = {
   // Text
   'text/markdown': 'md',
@@ -44,5 +39,7 @@ export const MIME_TYPE_EXT_MAP: Record<string, string> = {
   'image/svg+xml': 'svg',
 };
 
+/** MIME type wildcard that matches any content type. */
 export const MIME_TYPE_WILDCARD = '*/*';
+/** MIME type prefix shared by all audio content types. */
 export const MIME_TYPE_AUDIO_PREFIX = 'audio/';

@@ -6,42 +6,36 @@
   color: var(--cp-text, var(--text-primary, #161b2d));
 
   &:hover {
-    background: var(--cp-item-hover, var(--bg-layer-2, #eef1f7));
+    background: var(--cp-item-hover, var(--bg-layer-sunken, #eef1f7));
   }
 
   &.itemActive {
-    background: var(--cp-item-active, var(--bg-layer-2, #eef1f7));
+    background: var(--cp-item-active, var(--bg-layer-sunken, #eef1f7));
     color: var(--cp-text, var(--text-primary, #161b2d));
   }
 }
 
 .groupHeader {
-  color: var(--cp-text-secondary, var(--text-tertiary, #808898));
-  opacity: 0.55;
+  color: var(--cp-text-secondary, var(--text-tertiary, #c7cbd4));
 }
 
 .dropZoneActive {
   @apply ring-1 ring-inset;
-  --tw-ring-color: var(
-    --cp-drop-zone-ring,
-    var(--stroke-accent-primary, #124ace)
-  );
+  --tw-ring-color: var(--cp-drop-zone-ring, var(--stroke-info, #124ace));
 }
 
-.trigger {
-  &.triggerActive {
-    background: var(
-      --cp-trigger-bg,
-      var(--controls-bg-accent-primary-alpha-active, #7da4ff5c)
-    );
-    .triggerIcon {
-      color: var(--cp-trigger-icon, var(--text-accent-primary, #124ace));
-    }
+.triggerActive {
+  background: var(
+    --cp-trigger-bg,
+    var(--bg-control-accent-alpha-active, #2764d933)
+  );
+  .triggerIcon {
+    color: var(--cp-trigger-icon, var(--text-accent, #1d4ed8));
   }
 }
 
 .triggerIcon {
-  color: var(--cp-trigger-icon-idle, var(--text-secondary, #575f73));
+  color: var(--cp-trigger-icon-idle, var(--text-secondary, #6b7280));
 }
 
 :export {

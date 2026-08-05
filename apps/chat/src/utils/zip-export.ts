@@ -17,7 +17,7 @@ const toZipUint8Array = (data: Uint8Array): Uint8Array =>
  * are both rejected). No character allowlist — real-world filenames
  * routinely contain spaces, parentheses, and non-ASCII characters, and any
  * character that would be unsafe in the eventual upload URL is already
- * percent-encoded downstream by `buildImportUploadPath`/`buildUploadPath`.
+ * percent-encoded downstream by `buildUploadPath`.
  */
 export const isValidArchivePath = (path: string): boolean =>
   path.length > 0 &&

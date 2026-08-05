@@ -4,19 +4,20 @@ import type { ConversationInputProps } from '../../models/ConversationInput';
 import { Input } from '../Input/Input';
 import styles from './ConversationInput.module.scss';
 
+/** Root conversation input: wraps the `Input` component with a welcome message and style override support. */
 export const ConversationInput: FC<ConversationInputProps> = ({
   isStreaming = false,
   placeholder = 'Type a prompt or use "/" to select one',
   welcomeText,
   styles: stylesProp,
   className,
+  inputClassName,
   isInputDisabled = false,
   ...inputProps
 }) => {
   const { colors, typography } = stylesProp ?? {};
 
   const cssVars = buildCssVars({
-    '--ci-root-bg': colors?.background,
     '--ci-welcome-color': colors?.welcomeText,
   });
 
@@ -33,7 +34,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           className={mergeClasses(
             styles.welcome,
             'm-0 text-center',
-            typography?.welcomeClassName,
+            typography?.welcomeClassName || 'dial-display2-text',
           )}
         >
           {welcomeText}
@@ -45,6 +46,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           isStreaming={isStreaming}
           isInputDisabled={isInputDisabled}
           {...inputProps}
+          className={inputClassName}
           colors={colors?.input}
           typography={typography?.input}
         />

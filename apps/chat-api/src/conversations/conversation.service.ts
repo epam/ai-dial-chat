@@ -8,7 +8,10 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { handleDialSdkError } from '../common/dial/dial-error.mapper';
+import {
+  extractDialErrorMessage,
+  handleDialSdkError,
+} from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
@@ -64,6 +67,7 @@ import {
   getConversationTitleFromName,
   prepareEntityName,
 } from './utils/conversation.utils';
+import { parseScheduledTaskConversationPath } from './utils/parse-scheduled-task-conversation-path';
 
 const getValidAttachments = (
   customContent?: ConversationMessageDto['custom_content'],
@@ -667,6 +671,7 @@ export class ConversationService {
             const isReadonly =
               overrides.isReadonly ??
               !(item.permissions?.includes('WRITE') ?? false);
+            const scheduledTask = parseScheduledTaskConversationPath(id);
             return {
               id,
               title: getConversationTitleFromName(item.name ?? ''),
@@ -677,6 +682,13 @@ export class ConversationService {
                 overrides.publishedWithMe ?? item.publishedWithMe ?? false,
               isPinned: pinnedSet.has(decodedId),
               isReadonly,
+              isScheduledTask: scheduledTask !== null,
+              ...(scheduledTask !== null
+                ? {
+                    scheduleId: scheduledTask.scheduleId,
+                    runId: scheduledTask.runId,
+                  }
+                : {}),
             };
           });
 
@@ -709,6 +721,7 @@ export class ConversationService {
               .map((r) => {
                 const id = r.url ?? `${r.parentPath ?? ''}/${r.name ?? ''}`;
                 const decodedId = safeDecodeURIComponent(id);
+                const scheduledTask = parseScheduledTaskConversationPath(id);
                 return {
                   id,
                   title: getConversationTitleFromName(r.name ?? ''),
@@ -717,6 +730,13 @@ export class ConversationService {
                   publishedWithMe: false,
                   isPinned: pinnedSet.has(decodedId),
                   isReadonly: true,
+                  isScheduledTask: scheduledTask !== null,
+                  ...(scheduledTask !== null
+                    ? {
+                        scheduleId: scheduledTask.scheduleId,
+                        runId: scheduledTask.runId,
+                      }
+                    : {}),
                 };
               })
           : [];
@@ -1181,6 +1201,7 @@ export class ConversationService {
     | {
         outcome: 'rejected';
         status: number;
+        errorMessage: string;
         assembledMessage: ConversationMessageDto;
       }
     | { outcome: 'completed'; assembledMessage: ConversationMessageDto }
@@ -1211,12 +1232,36 @@ export class ConversationService {
         })) as { response: globalThis.Response; error?: unknown };
 
       if (!dialResult.response.ok || !dialResult.response.body) {
+        let errorMessage = '';
+
+        /* 1. SDK-parsed error — most reliable, SDK reads body before us */
+        if (dialResult.error != null) {
+          errorMessage = extractDialErrorMessage(dialResult.error) ?? '';
+        }
+
+        /* 2. Raw body — for cases where SDK didn't parse it */
+        if (!errorMessage) {
+          try {
+            const rawBody = await dialResult.response.text();
+            errorMessage = extractDialErrorMessage(JSON.parse(rawBody)) ?? '';
+          } catch {
+            /* non-JSON or empty body */
+          }
+        }
+
+        /*
+         * When DIAL Core provides no error text (empty body, non-JSON), leave
+         * errorMessage as '' — the frontend localizes a generic fallback via
+         * i18n. A non-null streamErrorMessage (even '') still signals the
+         * terminal error state for resume detection.
+         */
         this.logger.error(
-          `DIAL Core rejected completion request — model: ${model}, status: ${dialResult.response.status}`,
+          `DIAL Core rejected completion request — model: ${model}, status: ${dialResult.response.status}${errorMessage ? `: ${errorMessage}` : ''}`,
         );
         return {
           outcome: 'rejected',
           status: dialResult.response.status,
+          errorMessage,
           assembledMessage,
         };
       }
@@ -1416,18 +1461,10 @@ export class ConversationService {
         .filter((m) => m.custom_content?.configuration_value)
         .at(-1)?.custom_content?.configuration_value;
 
-    const lastUserMessage =
-      messagesForCompletion[messagesForCompletion.length - 1];
-    const shouldHideCurrentConfigurationContent =
-      customContent?.configuration_value !== undefined &&
-      lastUserMessage?.role === ConversationMessageRole.User;
-
     const dialMessages = messagesForCompletion
       .filter((m) => m.role !== ConversationMessageRole.Status)
-      .map((m, index, filteredMessages) => {
+      .map((m) => {
         const validAttachments = getValidAttachments(m.custom_content);
-        const hasConfigurationValue =
-          m.custom_content?.configuration_value !== undefined;
         const content = Object.fromEntries(
           Object.entries({
             ...m.custom_content,
@@ -1438,12 +1475,7 @@ export class ConversationService {
         );
         return {
           role: m.role,
-          content:
-            hasConfigurationValue ||
-            (shouldHideCurrentConfigurationContent &&
-              index === filteredMessages.length - 1)
-              ? ''
-              : m.content,
+          content: m.content,
           ...(Object.keys(content).length > 0
             ? { custom_content: content }
             : {}),
@@ -1529,10 +1561,8 @@ export class ConversationService {
             ...relayResult.assembledMessage.custom_content,
             event_type: undefined,
           } as never,
+          streamErrorMessage: relayResult.errorMessage,
         };
-        (
-          errored as ConversationMessageDto & { hasStreamError?: boolean }
-        ).hasStreamError = true;
         await finalize(GenerationStatus.Error, errored);
         break;
       }
@@ -1547,7 +1577,7 @@ export class ConversationService {
           ...relayResult.assembledMessage,
           ...(wasStopped
             ? { wasStoppedByUser: true }
-            : { hasStreamError: true }),
+            : { streamErrorMessage: '' }),
         } as ConversationMessageDto;
         await finalize(
           wasStopped ? GenerationStatus.Stopped : GenerationStatus.Error,
@@ -1560,9 +1590,11 @@ export class ConversationService {
           'DIAL Core streamCompletion failed',
           relayResult.error,
         );
+        const errorMessage =
+          relayResult.error instanceof Error ? relayResult.error.message : '';
         const partialMsg = {
           ...relayResult.assembledMessage,
-          hasStreamError: true,
+          streamErrorMessage: errorMessage,
         } as ConversationMessageDto;
         await finalize(GenerationStatus.Error, partialMsg);
         break;

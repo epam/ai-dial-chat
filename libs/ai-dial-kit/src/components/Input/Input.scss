@@ -21,13 +21,13 @@
     box-shadow 150ms ease;
 
   &:not(:disabled):hover {
-    border-color: var(--stroke-accent-primary, #7da4ff) !important;
+    border-color: var(--stroke-info, #124ace) !important;
   }
 
   &:not(:disabled):active,
   &:not(:disabled):focus,
   &:not(:disabled):focus-within {
-    border-color: var(--stroke-accent-primary, #124ace) !important;
+    border-color: var(--stroke-info, #124ace) !important;
     box-shadow: 0 0 0 4px var(--bg-accent-primary-alpha, #7da4ff2e) !important;
   }
 }

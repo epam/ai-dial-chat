@@ -1,8 +1,12 @@
-import type { Annotation, DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import type {
+  Annotation,
+  CustomVisualizer,
+  DisplayAttachment,
+} from '@epam/ai-dial-chat-shared';
 import { AttachmentType } from '@epam/ai-dial-chat-shared';
+import { annotationsToPdfHighlights } from '@epam/ai-dial-quotations';
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { annotationsToPdfHighlights } from '../../../utils/annotation';
 import { useOpenAttachmentCanvas } from '../useOpenAttachmentCanvas';
 
 const {
@@ -12,8 +16,12 @@ const {
   mockResolveMarkdown,
   mockResolveJson,
   mockResolveText,
+  mockResolveCode,
   mockResolvePdf,
   mockReferenceToPdf,
+  mockResolveVisualizer,
+  mockFindVisualizerForMime,
+  mockCustomVisualizersRef,
 } = vi.hoisted(() => ({
   mockOpenCanvas: vi.fn(),
   mockOpenCanvasLoading: vi.fn(),
@@ -21,8 +29,14 @@ const {
   mockResolveMarkdown: vi.fn(),
   mockResolveJson: vi.fn(),
   mockResolveText: vi.fn(),
+  mockResolveCode: vi.fn(),
   mockResolvePdf: vi.fn(),
   mockReferenceToPdf: vi.fn(),
+  mockResolveVisualizer: vi.fn(),
+  mockFindVisualizerForMime: vi.fn(),
+  /* Mutable so individual tests can populate the registry the real
+   * `findVisualizerForMime` reads from. */
+  mockCustomVisualizersRef: { current: [] as CustomVisualizer[] },
 }));
 
 vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
@@ -46,15 +60,35 @@ vi.mock('../../../context/SourcesSidebarContext', () => ({
   useSourcesSidebar: () => ({ handleClose: vi.fn() }),
 }));
 
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({
+    status: 'ready',
+    config: { customVisualizers: mockCustomVisualizersRef.current },
+  }),
+}));
+
+vi.mock('../../../context/ThemeContext', () => ({
+  useTheme: () => ({ currentTheme: 'light' }),
+}));
+
+vi.mock('../../../utils/attachment-visualizer', () => ({
+  findVisualizerForMime: (...args: unknown[]) =>
+    mockFindVisualizerForMime(...args),
+}));
+
 vi.mock('../../../utils/attachment-canvas', () => ({
   resolveImageCanvasContent: vi.fn(),
   resolveMarkdownCanvasContent: (...args: unknown[]) =>
     mockResolveMarkdown(...args),
   resolveJsonCanvasContent: (...args: unknown[]) => mockResolveJson(...args),
   resolveTextCanvasContent: (...args: unknown[]) => mockResolveText(...args),
+  resolveCodeCanvasContent: (...args: unknown[]) => mockResolveCode(...args),
+  resolveHtmlCanvasContent: vi.fn(),
   resolvePdfCanvasContent: (...args: unknown[]) => mockResolvePdf(...args),
   referenceAttachmentToPdfCanvasContent: (...args: unknown[]) =>
     mockReferenceToPdf(...args),
+  resolveVisualizerCanvasContent: (...args: unknown[]) =>
+    mockResolveVisualizer(...args),
 }));
 
 const makeAttachment = (
@@ -125,14 +159,19 @@ describe('useOpenAttachmentCanvas routing', () => {
     expect(mockResolveText).not.toHaveBeenCalled();
   });
 
-  it('routes .jsonl attachments to the plain-text resolver (not JSON)', async () => {
-    mockResolveText.mockResolvedValue({ type: 'plain_text', text: '{}\n{}' });
+  it('routes .jsonl attachments to the code resolver (not JSON)', async () => {
+    mockResolveCode.mockResolvedValue({
+      type: 'code',
+      text: '{}\n{}',
+      language: 'json',
+    });
 
     const { result } = renderHook(() => useOpenAttachmentCanvas());
     await result.current.openAttachmentCanvas(makeAttachment('stream.jsonl'));
 
-    expect(mockResolveText).toHaveBeenCalledOnce();
+    expect(mockResolveCode).toHaveBeenCalledOnce();
     expect(mockResolveJson).not.toHaveBeenCalled();
+    expect(mockResolveText).not.toHaveBeenCalled();
   });
 
   it('opens the canvas with the resolved content', async () => {
@@ -145,7 +184,7 @@ describe('useOpenAttachmentCanvas routing', () => {
     );
 
     expect(opened).toBe(true);
-    expect(mockOpenCanvas).toHaveBeenCalledWith(content, 'doc.md');
+    expect(mockOpenCanvas).toHaveBeenCalledWith(content, 'doc.md', 'doc.md');
   });
 
   it('routes text/markdown MIME type to the markdown resolver (ignores .pdf extension in title)', async () => {
@@ -219,7 +258,11 @@ describe('useOpenAttachmentCanvas routing', () => {
     expect(mockResolveMarkdown).not.toHaveBeenCalled();
     expect(mockResolveJson).not.toHaveBeenCalled();
     expect(mockResolveText).not.toHaveBeenCalled();
-    expect(mockOpenCanvas).toHaveBeenCalledWith(pdfContent, 'doc.pdf');
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      pdfContent,
+      'doc.pdf',
+      'doc.pdf',
+    );
   });
 
   it('routes .pdf extension to the PDF resolver', async () => {
@@ -281,7 +324,11 @@ describe('useOpenAttachmentCanvas routing', () => {
     );
 
     expect(opened).toBe(true);
-    expect(mockOpenCanvas).toHaveBeenCalledWith(pdfContent, 'report.pdf');
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      pdfContent,
+      'report.pdf',
+      'report.pdf',
+    );
     expect(mockResolveMarkdown).not.toHaveBeenCalled();
   });
 
@@ -324,6 +371,7 @@ describe('useOpenAttachmentCanvas routing', () => {
         type: 'plain_text',
         text: 'A serene sunrise over a tranquil landscape.',
       },
+      'Revised prompt',
       'Revised prompt',
     );
   });
@@ -484,5 +532,201 @@ describe('annotationsToPdfHighlights', () => {
 
   it('returns an empty array when given an empty list', () => {
     expect(annotationsToPdfHighlights([])).toEqual([]);
+  });
+});
+
+describe('useOpenAttachmentCanvas — visualizer routing', () => {
+  const visualizerEntry = {
+    title: 'my-viz',
+    description: 'test viz',
+    icon: 'icon.svg',
+    contentType: 'application/x-my-viz',
+    url: 'https://viz.example.com',
+    requestTimeout: 5000,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockCustomVisualizersRef.current = [];
+  });
+
+  it('opens the canvas with visualizer content when MIME matches a registry entry', async () => {
+    const vizContent = {
+      type: 'visualizer',
+      url: 'https://viz.example.com',
+      visualizerName: 'my-viz',
+      mimeType: 'application/x-my-viz',
+      data: {},
+      layout: { themeId: 'light' },
+    };
+    mockFindVisualizerForMime.mockReturnValue(visualizerEntry);
+    mockResolveVisualizer.mockResolvedValue(vizContent);
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    const opened = await result.current.openAttachmentCanvas(
+      makeAttachment('chart.x-my-viz', 'application/x-my-viz'),
+    );
+
+    expect(opened).toBe(true);
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      vizContent,
+      'chart.x-my-viz',
+      'chart.x-my-viz',
+    );
+    expect(mockResolveMarkdown).not.toHaveBeenCalled();
+  });
+
+  it('carries visualizerName equal to the entry title', async () => {
+    const vizContent = {
+      type: 'visualizer',
+      visualizerName: 'my-viz',
+      mimeType: 'application/x-my-viz',
+      url: '',
+      data: {},
+      layout: { themeId: 'light' },
+    };
+    mockFindVisualizerForMime.mockReturnValue(visualizerEntry);
+    mockResolveVisualizer.mockResolvedValue(vizContent);
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    await result.current.openAttachmentCanvas(
+      makeAttachment('f.viz', 'application/x-my-viz'),
+    );
+
+    const [content] = mockOpenCanvas.mock.calls[0];
+    expect(content.visualizerName).toBe('my-viz');
+  });
+
+  it('carries mimeType equal to the attachment MIME, not the raw entry contentType', async () => {
+    const commaEntry = {
+      ...visualizerEntry,
+      contentType: 'application/x-foo, application/x-my-viz',
+    };
+    const vizContent = {
+      type: 'visualizer',
+      visualizerName: 'my-viz',
+      mimeType: 'application/x-my-viz',
+      url: '',
+      data: {},
+      layout: { themeId: 'light' },
+    };
+    mockFindVisualizerForMime.mockReturnValue(commaEntry);
+    mockResolveVisualizer.mockResolvedValue(vizContent);
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    await result.current.openAttachmentCanvas(
+      makeAttachment('f.viz', 'application/x-my-viz'),
+    );
+
+    const [content] = mockOpenCanvas.mock.calls[0];
+    expect(content.mimeType).toBe('application/x-my-viz');
+  });
+
+  it('falls through to existing PDF/Markdown/JSON handling when visualizer payload fetch fails', async () => {
+    mockFindVisualizerForMime.mockReturnValue(visualizerEntry);
+    mockResolveVisualizer.mockResolvedValue(null);
+    mockResolvePdf.mockResolvedValue({ type: 'pdf', url: 'u' });
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    const opened = await result.current.openAttachmentCanvas(
+      makeAttachment('doc.pdf', 'application/pdf'),
+    );
+
+    expect(opened).toBe(true);
+    expect(mockResolvePdf).toHaveBeenCalled();
+  });
+
+  it('falls through to Unsupported canvas when visualizer payload fetch returns an error (e.g. 403)', async () => {
+    /* resolveVisualizerCanvasContent maps ErrorCanvasContent (403/load
+     * failure) to null — same fallthrough as a missing payload. For a
+     * custom MIME that is not PDF/Markdown/JSON and not text-previewable,
+     * the hook must open Unsupported rather than leave the canvas empty. */
+    mockFindVisualizerForMime.mockReturnValue(visualizerEntry);
+    mockResolveVisualizer.mockResolvedValue(null);
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    const opened = await result.current.openAttachmentCanvas(
+      makeAttachment('chart.viz', 'application/x-my-viz'),
+    );
+
+    expect(opened).toBe(true);
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'unsupported' }),
+      'chart.viz',
+      'chart.viz',
+    );
+  });
+
+  it('does not call resolveVisualizerCanvasContent when registry is empty', async () => {
+    mockFindVisualizerForMime.mockReturnValue(undefined);
+    mockResolveMarkdown.mockResolvedValue({ type: 'markdown', text: '# H' });
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    await result.current.openAttachmentCanvas(makeAttachment('readme.md'));
+
+    expect(mockResolveVisualizer).not.toHaveBeenCalled();
+  });
+
+  describe('with the real findVisualizerForMime', () => {
+    beforeEach(async () => {
+      const { findVisualizerForMime: actualFindVisualizerForMime } =
+        await vi.importActual<
+          typeof import('../../../utils/attachment-visualizer')
+        >('../../../utils/attachment-visualizer');
+      mockFindVisualizerForMime.mockImplementation(actualFindVisualizerForMime);
+    });
+
+    it('matches case-insensitively end-to-end', async () => {
+      mockCustomVisualizersRef.current = [visualizerEntry];
+      mockResolveVisualizer.mockResolvedValue({
+        type: 'visualizer',
+        visualizerName: 'my-viz',
+        mimeType: 'APPLICATION/X-MY-VIZ',
+        url: '',
+        data: {},
+        layout: { themeId: 'light' },
+      });
+
+      const { result } = renderHook(() => useOpenAttachmentCanvas());
+      const opened = await result.current.openAttachmentCanvas(
+        makeAttachment('chart.viz', 'APPLICATION/X-MY-VIZ'),
+      );
+
+      expect(opened).toBe(true);
+      expect(mockResolveVisualizer).toHaveBeenCalledWith(
+        expect.objectContaining({ contentType: 'APPLICATION/X-MY-VIZ' }),
+        visualizerEntry,
+        'light',
+      );
+    });
+
+    it('matches a comma-separated entry via a MIME from the middle of the list', async () => {
+      const commaEntry: CustomVisualizer = {
+        ...visualizerEntry,
+        contentType:
+          'application/x-foo, application/x-my-viz, application/x-bar',
+      };
+      mockCustomVisualizersRef.current = [commaEntry];
+      mockResolveVisualizer.mockResolvedValue({
+        type: 'visualizer',
+        visualizerName: 'my-viz',
+        mimeType: 'application/x-my-viz',
+        url: '',
+        data: {},
+        layout: { themeId: 'light' },
+      });
+
+      const { result } = renderHook(() => useOpenAttachmentCanvas());
+      const opened = await result.current.openAttachmentCanvas(
+        makeAttachment('chart.viz', 'application/x-my-viz'),
+      );
+
+      expect(opened).toBe(true);
+      expect(mockResolveVisualizer).toHaveBeenCalledWith(
+        expect.anything(),
+        commaEntry,
+        'light',
+      );
+    });
   });
 });

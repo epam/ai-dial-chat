@@ -1,17 +1,17 @@
 .sectionHeading {
-  color: var(--text-secondary, #575f73);
+  color: var(--text-secondary, #6b7280);
 }
 
 .urlBox {
-  background: var(--bg-layer-2, #eeeef0);
+  background: var(--bg-layer-sunken, #eef1f7);
 }
 
 .snippetWrapper {
-  border: 1px solid var(--stroke-secondary, #242c42);
+  border: 1px solid var(--stroke-secondary, #d1dbea);
 }
 
 .snippetTabs {
-  border-bottom: 1px solid var(--stroke-secondary, #242c42);
+  border-bottom: 1px solid var(--stroke-secondary, #d1dbea);
 }
 
 .codeBlock {
@@ -22,16 +22,6 @@
   border-radius: 0;
 }
 
-.copyButton {
-  background: var(--bg-layer-2, #1a2035);
-  color: var(--text-secondary, #575f73);
-
-  &:hover {
-    background: var(--bg-layer-3, #242c42);
-    color: var(--text-primary, #e4e6f0);
-  }
-}
-
 .pre {
-  color: var(--text-primary, #e4e6f0);
+  color: var(--text-primary, #161b2d);
 }

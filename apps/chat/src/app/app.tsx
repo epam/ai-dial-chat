@@ -2,6 +2,7 @@ import {
   AttachmentCanvasContainer,
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
 import { FilterTab } from '@epam/ai-dial-conversation-panel';
 import {
@@ -22,7 +23,7 @@ import {
   useLocation,
   useMatch,
   useNavigate,
-} from 'react-router-dom';
+} from 'react-router';
 import AnnouncementBanner from '../components/AnnouncementBanner/AnnouncementBanner';
 import ChatLayout from '../components/ChatLayout/ChatLayout';
 import ConversationPanelView from '../components/ConversationPanel/ConversationPanelView';
@@ -49,6 +50,7 @@ import { useConversationListBridge } from '../hooks/conversation/useConversation
 import usePanelMaxWidth, {
   MIN_CONTENT_AREA_WIDTH,
 } from '../hooks/usePanelMaxWidth';
+import { useUiFeature } from '../hooks/useUiFeature';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
@@ -58,15 +60,24 @@ const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 const DialFileManagerPage = lazy(
   () => import('../pages/DialFileManagerPage/DialFileManagerPage'),
 );
+const ScheduledTasksPage = lazy(
+  () => import('../pages/ScheduledTasksPage/ScheduledTasksPage'),
+);
+const ScheduledTaskCreatePage = lazy(
+  () => import('../pages/ScheduledTaskCreatePage/ScheduledTaskCreatePage'),
+);
 const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
 const ToolsetEditorPage = lazy(
   () => import('../pages/ToolsetEditor/ToolsetEditor'),
 );
+const CustomAppEditorPage = lazy(
+  () => import('../pages/ToolsetEditor/CustomAppEditor'),
+);
 const ToolsetAuthCallbackPage = lazy(
   () => import('../pages/ToolsetAuthCallback/ToolsetAuthCallback'),
 );
-const ToolsetSigninDialog = lazy(
-  () => import('../components/ToolsetSigninDialog/ToolsetSigninDialog'),
+const SigninInterruptDialog = lazy(
+  () => import('../components/SigninInterruptDialog/SigninInterruptDialog'),
 );
 const SharedInvitationPage = lazy(
   () => import('../pages/SharedInvitation/SharedInvitation'),
@@ -141,18 +152,38 @@ const App: FC = () => {
   const closeNav = useCallback(() => setIsNavOpen(false), []);
   const toggleNav = useCallback(() => setIsNavOpen((prev) => !prev), []);
 
+  const isConversationsSectionOpenByDefault = useUiFeature(
+    OverlayFeature.ShowConversationsSectionByDefault,
+  );
+  const isAttachmentsManagerEnabled = useUiFeature(
+    OverlayFeature.AttachmentsManager,
+  );
+
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   const { handleClose: closeSourcesPanel } = useSourcesSidebar();
   const { isPanelOpen, openPanel, closePanel } = useConversationPanel();
 
+  /* Tracks whether the user has explicitly closed the panel. When true, prevents
+     automatic panel opening on navigation (new chat, starter send). Reset on route
+     changes that leave the conversation section. */
+  const userClosedPanelRef = useRef(false);
+
   const togglePanel = useCallback(() => {
-    if (!isPanelOpen) closeCanvas();
+    if (!isPanelOpen) {
+      closeCanvas();
+      userClosedPanelRef.current = false;
+    } else {
+      userClosedPanelRef.current = true;
+    }
     isPanelOpen ? closePanel() : openPanel();
   }, [isPanelOpen, closeCanvas, openPanel, closePanel]);
 
   // Always close the panel when switching to mobile so a stored desktop `true` doesn't bleed through
   useEffect(() => {
-    if (isMobile) closePanel();
+    if (isMobile) {
+      closePanel();
+      userClosedPanelRef.current = false;
+    }
   }, [isMobile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -164,10 +195,11 @@ const App: FC = () => {
       !pathname.startsWith(ROUTES.Conversations)
     ) {
       closePanel();
-    } else if (!isMobile && !isCanvasOpen) {
-      openPanel();
+      userClosedPanelRef.current = false;
+    } else if (!isMobile && !isCanvasOpen && !userClosedPanelRef.current) {
+      isConversationsSectionOpenByDefault ? openPanel() : closePanel();
     }
-  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pathname, isConversationsSectionOpenByDefault]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* Safety net for openCanvas call sites that bypass useOpenAttachmentCanvas
      (e.g. citation preview, collapsed stage attachments). */
@@ -230,12 +262,19 @@ const App: FC = () => {
     [navigate, isMobile, closePanel],
   );
 
+  const handleNewChat = useCallback(() => {
+    if (isMobile) {
+      closePanel();
+    }
+    navigate(ROUTES.Root);
+  }, [navigate, isMobile, closePanel]);
+
   return (
     <div className="flex size-full flex-col">
       <AnnouncementBanner />
       <div className="flex min-h-0 flex-1 flex-row">
         <Suspense fallback={null}>
-          <ToolsetSigninDialog />
+          <SigninInterruptDialog />
         </Suspense>
         <Navigation isOpen={isNavOpen} onClose={closeNav} />
 
@@ -244,7 +283,7 @@ const App: FC = () => {
           activeConversationId={activeConversationId}
           onClose={closePanel}
           onSelectConversation={handleSelectConversation}
-          onNewChat={() => navigate(ROUTES.Root)}
+          onNewChat={handleNewChat}
           requestedFilter={panelRequestedFilter}
           onRequestedFilterChange={() => setPanelRequestedFilter(undefined)}
           onActiveFilterChange={handlePanelActiveFilterChange}
@@ -260,7 +299,7 @@ const App: FC = () => {
             onMenuToggle={toggleNav}
             isConversationPanelOpen={isPanelOpen}
             onConversationPanelToggle={togglePanel}
-            onNewChat={() => navigate(ROUTES.Root)}
+            onNewChat={handleNewChat}
           />
           <Routes>
             <Route
@@ -268,7 +307,7 @@ const App: FC = () => {
                 <ChatLayout
                   isPanelOpen={isPanelOpen}
                   onTogglePanel={togglePanel}
-                  onNewChat={() => navigate(ROUTES.Root)}
+                  onNewChat={handleNewChat}
                 />
               }
             >
@@ -327,6 +366,26 @@ const App: FC = () => {
               }
             />
             <Route
+              path={ROUTES.ScheduledTasks}
+              element={
+                <RouteErrorBoundary>
+                  <Suspense fallback={<RouteFallback />}>
+                    <ScheduledTasksPage />
+                  </Suspense>
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
+              path={ROUTES.ScheduledTaskCreate}
+              element={
+                <RouteErrorBoundary>
+                  <Suspense fallback={<RouteFallback />}>
+                    <ScheduledTaskCreatePage />
+                  </Suspense>
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
               path={ROUTES.AppsEditor}
               element={
                 <RouteErrorBoundary>
@@ -367,6 +426,16 @@ const App: FC = () => {
               }
             />
             <Route
+              path={ROUTES.CustomAppEditor}
+              element={
+                <RouteErrorBoundary>
+                  <Suspense fallback={<RouteFallback />}>
+                    <CustomAppEditorPage />
+                  </Suspense>
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
               path="*"
               element={
                 <RouteErrorBoundary>
@@ -379,7 +448,7 @@ const App: FC = () => {
           </Routes>
         </main>
         {isConversationRoute && <ConversationSourcesPanel />}
-        {isConversationRoute && (
+        {isConversationRoute && isAttachmentsManagerEnabled && (
           <AttachmentCanvasContainer
             labels={{
               ariaLabel: t(AttachmentCanvasI18nKeys.AriaLabel),
@@ -396,6 +465,16 @@ const App: FC = () => {
               copiedMarkdownLabel: t(ButtonsI18nKeys.Copied),
               copyJsonLabel: t(ButtonsI18nKeys.CopyAsJson),
               copiedJsonLabel: t(ButtonsI18nKeys.Copied),
+              htmlFrameBlockedLabel: t(
+                AttachmentCanvasI18nKeys.HtmlFrameBlocked,
+              ),
+              htmlOpenInNewTabLabel: t(
+                AttachmentCanvasI18nKeys.HtmlOpenInNewTab,
+              ),
+              htmlViewSourceLabel: t(AttachmentCanvasI18nKeys.HtmlViewSource),
+              htmlViewRenderedLabel: t(
+                AttachmentCanvasI18nKeys.HtmlViewRendered,
+              ),
             }}
             isMobile={isMobile}
             defaultWidth={canvasDefaultWidth}

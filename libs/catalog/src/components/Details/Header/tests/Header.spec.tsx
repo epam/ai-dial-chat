@@ -9,14 +9,10 @@ import {
 } from '../../../../types/toolset-auth';
 import { Header } from '../Header';
 
-vi.mock('@epam/ai-dial-kit', () => ({
-  PrimaryButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
+vi.mock('@epam/ai-dial-ui-kit', () => ({
+  GhostButton: ({ label, onClick }: { label: string; onClick: () => void }) => (
+    <button onClick={onClick}>{label}</button>
+  ),
   NeutralButton: ({
     label,
     onClick,
@@ -24,12 +20,17 @@ vi.mock('@epam/ai-dial-kit', () => ({
     label: string;
     onClick: () => void;
   }) => <button onClick={onClick}>{label}</button>,
-  GhostButton: ({ label, onClick }: { label: string; onClick: () => void }) => (
-    <button onClick={onClick}>{label}</button>
-  ),
-}));
-vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  PrimaryButton: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick: () => void;
+  }) => <button onClick={onClick}>{label}</button>,
+  FolderPath: ({ segments }: { segments: string[] }) => (
+    <>{segments.join(' / ')}</>
+  ),
 }));
 vi.mock('@tabler/icons-react', () => ({
   IconKey: () => <svg />,
@@ -40,9 +41,6 @@ vi.mock('@tabler/icons-react', () => ({
 }));
 vi.mock('../../../EntityHeader/EntityHeader', () => ({
   EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
-}));
-vi.mock('../../../FolderPath/FolderPath', () => ({
-  FolderPath: () => <div />,
 }));
 vi.mock('../ShareButton/ShareButton', () => ({
   ShareButton: ({ label }: { label?: string }) => (
@@ -98,17 +96,12 @@ describe('Header', () => {
   });
 
   it('renders Use in chat for an Application item', () => {
-    render(<Header item={makeItem(CatalogEntityType.Application)} />);
+    render(<Header item={makeItem(CatalogEntityType.Agent)} />);
     expect(screen.getByRole('button', { name: 'Use in chat' })).toBeTruthy();
   });
 
   it('does not render Use in chat for a Toolset item', () => {
     render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
-    expect(screen.queryByRole('button', { name: 'Use in chat' })).toBeNull();
-  });
-
-  it('does not render Use in chat for non-selectable entity types by default', () => {
-    render(<Header item={makeItem(CatalogEntityType.Agent)} />);
     expect(screen.queryByRole('button', { name: 'Use in chat' })).toBeNull();
   });
 
@@ -202,7 +195,7 @@ describe('Header', () => {
   it('does not render Edit when onEdit is not supplied', () => {
     render(
       <Header
-        item={{ ...makeItem(CatalogEntityType.Application), isEditable: true }}
+        item={{ ...makeItem(CatalogEntityType.Agent), isEditable: true }}
       />,
     );
     expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
@@ -211,7 +204,7 @@ describe('Header', () => {
   it('does not render Edit when the item is not editable', () => {
     render(
       <Header
-        item={{ ...makeItem(CatalogEntityType.Application), isEditable: false }}
+        item={{ ...makeItem(CatalogEntityType.Agent), isEditable: false }}
         onEdit={vi.fn()}
       />,
     );
@@ -221,7 +214,7 @@ describe('Header', () => {
   it('renders Edit when onEdit is supplied and the item is editable', () => {
     render(
       <Header
-        item={{ ...makeItem(CatalogEntityType.Application), isEditable: true }}
+        item={{ ...makeItem(CatalogEntityType.Agent), isEditable: true }}
         onEdit={vi.fn()}
       />,
     );
@@ -231,7 +224,7 @@ describe('Header', () => {
   it('uses editActionLabel for the Edit button label', () => {
     render(
       <Header
-        item={{ ...makeItem(CatalogEntityType.Application), isEditable: true }}
+        item={{ ...makeItem(CatalogEntityType.Agent), isEditable: true }}
         onEdit={vi.fn()}
         texts={{ editActionLabel: 'Modify' }}
       />,
@@ -242,7 +235,7 @@ describe('Header', () => {
   it('calls onEdit with the item when Edit is clicked', async () => {
     const onEdit = vi.fn();
     const item = {
-      ...makeItem(CatalogEntityType.Application),
+      ...makeItem(CatalogEntityType.Agent),
       isEditable: true,
     };
     render(<Header item={item} onEdit={onEdit} />);

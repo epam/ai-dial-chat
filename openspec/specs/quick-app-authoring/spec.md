@@ -51,11 +51,12 @@ transition. Persistence of General step edits SHALL happen only when the user pe
 final "Save & Exit" action from the Settings step. At that point, if this editor session
 started against an app that already existed (as opposed to one created fresh in this
 session), the editor SHALL include the current General-step values — name, description,
-icon URL, and topics, and `intro` — as a `general` payload on the `TriggerSave` message
-posted to the embedded Settings-step editor, so the embedded editor persists them as part
-of the single save it already performs for the Settings step. The host SHALL NOT make a
-separate `update-application` (or any other) request to persist these values. The
-`general` payload SHALL NOT include `version`. Triggering a Preview action SHALL NOT
+icon URL, topics, `intro`, and `display_version` — as a `general` payload on the
+`TriggerSave` message posted to the embedded Settings-step editor, so the embedded editor
+persists them as part of the single save it already performs for the Settings step. The
+host SHALL NOT make a separate `update-application` (or any other) request to persist
+these values. The `general` payload SHALL NOT include the backend `version` field.
+Triggering a Preview action SHALL NOT
 include a `general` payload. The `TriggerSave` message's `general` payload SHALL NOT alter
 that application's settings-step configuration (`application_properties`, including
 orchestrator/tool set state) or its `version`. "Save & Exit" SHALL always additionally
@@ -68,7 +69,7 @@ itself touched), matching prior behavior for that step.
   advances to the Settings step with the edited values retained in memory
 
 #### Scenario: Save & Exit forwards edited General fields to the embedded editor
-- **WHEN** a user edits Topic, Description, Intro, Icon, or Name on the General step of an
+- **WHEN** a user edits Topic, Description, Intro, Icon, Name, or Version on the General step of an
   existing Quick App, clicks Next, and then clicks Save & Exit on the Settings step
 - **THEN** the `TriggerSave` message posted to the embedded Settings-step editor includes
   a `general` payload carrying the edited field values, and no `update-application`
@@ -190,6 +191,10 @@ remain disabled in this state, since `ReadyToSave` still gates them and will not
 #### Scenario: Preview is disabled before the Settings step is ready
 - **WHEN** the Settings step's iframe has not yet sent `ReadyToInteract`
 - **THEN** the "Preview" button is disabled and cannot trigger a preview
+
+#### Scanario: Preview is reset when step is changed
+- **WHEN** current step is changed
+- **THEN** Preview state is reset and becomes false
 
 #### Scenario: Buttons re-enable once the Settings step becomes ready
 - **WHEN** the Settings step's iframe sends `ReadyToInteract` after the user has been

@@ -1,8 +1,7 @@
 import {
-  ButtonVariant,
   DIAL_ICON_SIZE,
-  DialGhostIconButton,
   ElementSize,
+  GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconCopy, IconDownload } from '@tabler/icons-react';
 import { type FC, memo } from 'react';
@@ -67,10 +66,7 @@ const syntaxTheme = {
   light: restrainedSyntaxTheme,
 };
 
-/**
- * Renders a fenced or multiline code block with a sticky header (language label + copy button),
- * syntax highlighting via Prism, a height-constrained scrollable body, and always-LTR code direction.
- */
+/** Renders a fenced or multi-line code block with syntax highlighting and a copy button. */
 export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
   ({
     language,
@@ -127,25 +123,26 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
           </span>
           {!isStreaming && (
             <div className="flex items-center gap-1">
-              <DialGhostIconButton
+              <GhostIconButton
                 icon={<IconDownload size={DIAL_ICON_SIZE.SM} />}
                 aria-label={downloadLabel}
-                variant={ButtonVariant.Primary}
                 size={ElementSize.Small}
                 onClick={handleDownload}
               />
-              <DialGhostIconButton
+              <GhostIconButton
                 icon={
                   isCopied ? (
-                    <IconCheck size={DIAL_ICON_SIZE.SM} />
+                    <IconCheck
+                      size={DIAL_ICON_SIZE.SM}
+                      className={styles.copiedIcon}
+                      aria-hidden
+                    />
                   ) : (
-                    <IconCopy size={DIAL_ICON_SIZE.SM} />
+                    <IconCopy size={DIAL_ICON_SIZE.SM} aria-hidden />
                   )
                 }
                 aria-label={isCopied ? copiedLabel : copyLabel}
-                variant={ButtonVariant.Primary}
                 size={ElementSize.Small}
-                className={isCopied ? styles.copiedIcon : undefined}
                 onClick={copy}
               />
             </div>

@@ -1,3 +1,6 @@
+/** File extensions that are rendered as HTML in a sandboxed iframe. */
+export const HTML_EXTENSIONS = new Set(['html', 'htm']);
+
 /** File extensions that are known to be previewable as plain text. */
 export const TEXT_EXTENSIONS = new Set([
   'txt',
@@ -15,8 +18,6 @@ export const TEXT_EXTENSIONS = new Set([
   'ini',
   'conf',
   'cfg',
-  'html',
-  'htm',
   'css',
   'scss',
   'sass',

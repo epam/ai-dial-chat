@@ -87,6 +87,26 @@ describe('ConversationInput', () => {
     const textarea = container.querySelector('textarea');
     expect(textarea?.placeholder).toBe('Ask me anything');
   });
+
+  it('merges inputClassName onto the inner Input wrapper, not the outer root', () => {
+    const { container } = render(
+      <ConversationInput inputClassName="border-2 border-info" />,
+    );
+    const innerWrapper = container.querySelector('.border-2');
+    expect(innerWrapper).toBeTruthy();
+    expect(innerWrapper?.classList.contains('border-info')).toBe(true);
+  });
+
+  it('disables the send button when isSendDisabled is true, without disabling the textarea', () => {
+    const { container } = render(
+      <ConversationInput message="Hello" onSend={vi.fn()} isSendDisabled />,
+    );
+    expect(screen.getByLabelText('Send message').hasAttribute('disabled')).toBe(
+      true,
+    );
+    const textarea = container.querySelector('textarea');
+    expect(textarea?.disabled).toBe(false);
+  });
 });
 
 describe('ConversationInput — attachments', () => {

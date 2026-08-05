@@ -99,10 +99,9 @@ describe('DeploymentsController', () => {
       service.getDeploymentConfiguration as ReturnType<typeof vi.fn>
     ).mockResolvedValue(schema);
 
-    const result = await controller.getDeploymentConfiguration(
-      mockReq,
-      'statgpt',
-    );
+    const result = await controller.getDeploymentConfiguration(mockReq, {
+      deployment: 'statgpt',
+    });
     expect(result).toEqual(schema);
     expect(service.getDeploymentConfiguration).toHaveBeenCalledWith(
       'statgpt',
@@ -117,7 +116,9 @@ describe('DeploymentsController', () => {
       service.getDeploymentConfiguration as ReturnType<typeof vi.fn>
     ).mockRejectedValue(new NotFoundException());
     await expect(
-      controller.getDeploymentConfiguration(mockReq, 'unknown'),
+      controller.getDeploymentConfiguration(mockReq, {
+        deployment: 'unknown',
+      }),
     ).rejects.toThrow(NotFoundException);
   });
 
@@ -128,7 +129,9 @@ describe('DeploymentsController', () => {
       limits,
     );
 
-    const result = await controller.getDeploymentLimits(mockReq, 'gpt-4o');
+    const result = await controller.getDeploymentLimits(mockReq, {
+      deployment: 'gpt-4o',
+    });
     expect(result).toEqual(limits);
     expect(service.getDeploymentLimits).toHaveBeenCalledWith(
       'gpt-4o',
@@ -142,7 +145,7 @@ describe('DeploymentsController', () => {
       new NotFoundException(),
     );
     await expect(
-      controller.getDeploymentLimits(mockReq, 'unknown'),
+      controller.getDeploymentLimits(mockReq, { deployment: 'unknown' }),
     ).rejects.toThrow(NotFoundException);
   });
 
@@ -153,7 +156,9 @@ describe('DeploymentsController', () => {
       service.getDeploymentDetails as ReturnType<typeof vi.fn>
     ).mockResolvedValue(details);
 
-    const result = await controller.getDeploymentDetails(mockReq, 'gpt-4o');
+    const result = await controller.getDeploymentDetails(mockReq, {
+      deployment: 'gpt-4o',
+    });
     expect(result).toEqual(details);
     expect(service.getDeploymentDetails).toHaveBeenCalledWith(
       TEST_USER.sub,
@@ -168,7 +173,7 @@ describe('DeploymentsController', () => {
       service.getDeploymentDetails as ReturnType<typeof vi.fn>
     ).mockRejectedValue(new NotFoundException());
     await expect(
-      controller.getDeploymentDetails(mockReq, 'unknown'),
+      controller.getDeploymentDetails(mockReq, { deployment: 'unknown' }),
     ).rejects.toThrow(NotFoundException);
   });
 });

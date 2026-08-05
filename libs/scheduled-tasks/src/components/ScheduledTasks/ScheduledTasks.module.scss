@@ -1,0 +1,11 @@
+.container {
+  background: var(--st-bg, var(--bg-layer-base, #f5f7fa));
+}
+
+.subtitle {
+  color: var(--st-subtitle-text, var(--text-secondary, #6b7280));
+}
+
+.sortButton {
+  color: var(--st-sort-text, var(--text-accent, #1d4ed8));
+}

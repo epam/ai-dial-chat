@@ -3,18 +3,28 @@ import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { DeploymentItemDto, DialToolsetDto } from '@epam/chat-api-client';
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { ReactNode, useEffect } from 'react';
-import { MemoryRouter, useNavigate } from 'react-router-dom';
+import { ReactNode, useEffect, useState, type Context } from 'react';
+import { MemoryRouter, useNavigate } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../context/auth/UserContext';
 import * as DeploymentsContextModule from '../../context/DeploymentsContext';
 import * as NotificationContextModule from '../../context/NotificationContext';
+import * as OverlayContextMock from '../../context/overlay/OverlayContext';
+import * as ToolsMenuModule from '../../hooks/conversation/useToolsMenu';
 import * as KeyboardShortcutModule from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import * as conversationsApi from '../../server-api/conversations.api';
 import * as filesApi from '../../server-api/files.api';
 import { AuthStatus } from '../../types/auth-status';
 import * as attachmentToDtoModule from '../../utils/attachment-to-dto';
 import ConversationRoute from './ConversationRoute';
+
+const OverlayTestCtx = (
+  OverlayContextMock as unknown as {
+    _OverlayTestCtx: Context<
+      { notifyConversationLoaded: () => void } | undefined
+    >;
+  }
+)._OverlayTestCtx;
 
 const overlayMocks = vi.hoisted(() => ({
   current: undefined as
@@ -26,6 +36,15 @@ const overlayMocks = vi.hoisted(() => ({
 vi.mock('../../hooks/attachment/useOpenAttachmentCanvas', () => ({
   useOpenAttachmentCanvas: () => ({ openAttachmentCanvas: vi.fn() }),
 }));
+vi.mock(
+  '../../components/DeploymentSelector/useDeploymentSelectorOverlay',
+  () => ({
+    useDeploymentSelectorOverlay: () => ({
+      renderOverlay: vi.fn(),
+      catalogModal: null,
+    }),
+  }),
+);
 vi.mock('../../context/AppConfigContext', () => ({
   default: ({ children }: { children: ReactNode }) => children,
   useAppConfig: () => ({
@@ -38,17 +57,33 @@ vi.mock('../../context/AppConfigContext', () => ({
 vi.mock('../../context/DeploymentsContext');
 vi.mock('../../context/auth/UserContext');
 vi.mock('../../context/NotificationContext');
-vi.mock('../../context/overlay/OverlayContext', () => ({
-  useOptionalOverlay: () => overlayMocks.current,
-}));
+vi.mock('../../context/overlay/OverlayContext', async () => {
+  const { createContext, useContext } = await import('react');
+  const _OverlayTestCtx = createContext<
+    { notifyConversationLoaded: () => void } | undefined
+  >(undefined);
+  return {
+    useOptionalOverlay: () => useContext(_OverlayTestCtx),
+    _OverlayTestCtx,
+  };
+});
 vi.mock('../../hooks/keyboard-shortcut/useKeyboardShortcutPreference');
+vi.mock('../../hooks/useUiFeature', async () => {
+  const { DEFAULT_ENABLED_UI_FEATURES } =
+    await import('../../constants/ui-features');
+  return {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    useUiFeature: (feature: any) => DEFAULT_ENABLED_UI_FEATURES.has(feature),
+  };
+});
+vi.mock('../../hooks/conversation/useToolsMenu', () => ({
+  useToolsMenu: vi.fn(),
+}));
 vi.mock('../../server-api/conversations.api');
 vi.mock('../../server-api/files.api');
 vi.mock('../../utils/attachment-to-dto');
 vi.mock('../../utils/build-upload-path', () => ({
-  buildUploadPath: vi.fn(
-    (attachment: { name: string }) => `uploads/${attachment.name}`,
-  ),
+  buildUploadPath: vi.fn((fileName: string) => `uploads/${fileName}`),
 }));
 vi.mock('../../components/StarterButtons/StarterButtons', () => ({
   default: ({
@@ -77,7 +112,7 @@ vi.mock('../../components/StarterButtons/StarterButtons', () => ({
     <div>
       {starters.map((starter) => (
         <button
-          key={starter.const}
+          key={String(starter.const)}
           type="button"
           onClick={() => onSelect(starter)}
         >
@@ -189,6 +224,7 @@ describe('ConversationRoute', () => {
   const mockUseKeyboardShortcutPreference = vi.mocked(
     KeyboardShortcutModule.useKeyboardShortcutPreference,
   );
+  const mockUseToolsMenu = vi.mocked(ToolsMenuModule.useToolsMenu);
   const mockUseNotification = vi.mocked(
     NotificationContextModule.useNotification,
   );
@@ -199,15 +235,16 @@ describe('ConversationRoute', () => {
   );
   const mockShowNotification = vi.fn();
   const mockRestoreSelectedItemId = vi.fn();
+  const mockRestoreDefaultSelection = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    overlayMocks.current = undefined;
     mockUseDeployments.mockReturnValue({
       items: mockItems,
       selectedItemId: 'gpt-4o',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: mockRestoreSelectedItemId,
+      restoreDefaultSelection: mockRestoreDefaultSelection,
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -237,6 +274,11 @@ describe('ConversationRoute', () => {
     mockUseKeyboardShortcutPreference.mockReturnValue({
       preference: SendOnEnter.Enter,
       setPreference: vi.fn(),
+    });
+    mockUseToolsMenu.mockReturnValue({
+      toolsMenuItems: [],
+      onToolToggle: vi.fn(),
+      toolConfigurationValue: {},
     });
     mockUseNotification.mockReturnValue({
       notifications: [],
@@ -276,23 +318,88 @@ describe('ConversationRoute', () => {
     });
   });
 
-  it('notifies overlay when overlay context becomes available after initial render', async () => {
-    const view = renderRoute();
+  it('calls restoreDefaultSelection on mount when there is no router-state deploymentId and no pending overlay model', async () => {
+    renderRoute();
 
-    expect(overlayMocks.notifyConversationLoaded).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(mockRestoreDefaultSelection).toHaveBeenCalledOnce();
+    });
+    expect(mockRestoreSelectedItemId).not.toHaveBeenCalled();
+  });
 
-    overlayMocks.current = {
-      notifyConversationLoaded: overlayMocks.notifyConversationLoaded,
-    };
-    view.rerender(
-      <MemoryRouter>
+  it('does not call restoreDefaultSelection when mounted with an explicit router-state deploymentId', async () => {
+    render(
+      <MemoryRouter
+        initialEntries={[
+          { pathname: '/', state: { deploymentId: 'gpt-4o-mini' } },
+        ]}
+      >
         <ConversationRoute />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(mockRestoreSelectedItemId).toHaveBeenCalledWith('gpt-4o-mini');
+    });
+    expect(mockRestoreDefaultSelection).not.toHaveBeenCalled();
+  });
+
+  it('does not call restoreDefaultSelection while an overlay pending model selection is awaiting resolution', async () => {
+    render(
+      <MemoryRouter>
+        <OverlayTestCtx.Provider
+          value={
+            {
+              notifyConversationLoaded: overlayMocks.notifyConversationLoaded,
+              pendingModelId: 'overlay-model',
+            } as never
+          }
+        >
+          <ConversationRoute />
+        </OverlayTestCtx.Provider>
       </MemoryRouter>,
     );
 
     await waitFor(() => {
       expect(overlayMocks.notifyConversationLoaded).toHaveBeenCalledOnce();
     });
+    expect(mockRestoreDefaultSelection).not.toHaveBeenCalled();
+  });
+
+  it('notifies overlay when overlay context becomes available after initial render', async () => {
+    let setOverlay!: (
+      v: { notifyConversationLoaded: () => void } | undefined,
+    ) => void;
+    const OverlayDriver = ({ children }: { children: ReactNode }) => {
+      const [overlay, setO] = useState<
+        { notifyConversationLoaded: () => void } | undefined
+      >(undefined);
+      // eslint-disable-next-line react-hooks/globals
+      setOverlay = setO;
+      return (
+        <OverlayTestCtx.Provider value={overlay}>
+          {children}
+        </OverlayTestCtx.Provider>
+      );
+    };
+
+    render(
+      <MemoryRouter>
+        <OverlayDriver>
+          <ConversationRoute />
+        </OverlayDriver>
+      </MemoryRouter>,
+    );
+
+    expect(overlayMocks.notifyConversationLoaded).not.toHaveBeenCalled();
+
+    await act(async () => {
+      setOverlay({
+        notifyConversationLoaded: overlayMocks.notifyConversationLoaded,
+      });
+    });
+
+    expect(overlayMocks.notifyConversationLoaded).toHaveBeenCalledOnce();
   });
 
   it('calls apiCreateConversation with selectedItemId when send fires', async () => {
@@ -307,6 +414,7 @@ describe('ConversationRoute', () => {
       expect(mockCreateConversation).toHaveBeenCalledWith(
         'Hello',
         'gpt-4o',
+        undefined,
         undefined,
       );
     });
@@ -364,6 +472,7 @@ describe('ConversationRoute', () => {
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -390,6 +499,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'gpt-4o',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: {
         isChatMessageInputDisabled: true,
       },
@@ -420,6 +530,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'gpt-4o',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: { type: 'object' },
       isLoading: false,
       error: null,
@@ -451,6 +562,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'gpt-4o',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -516,6 +628,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'gpt-4o',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration,
       isLoading: false,
       error: null,
@@ -555,6 +668,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'gpt-4o',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -609,6 +723,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'deepseek-ocr-2',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration,
       isLoading: false,
       error: null,
@@ -631,6 +746,62 @@ describe('ConversationRoute', () => {
         'deepseek-ocr-2',
         [],
         { starter: 0 },
+      );
+    });
+  });
+
+  it('lets tool configuration override submit starter configuration on key conflict', async () => {
+    mockUseToolsMenu.mockReturnValue({
+      toolsMenuItems: [],
+      onToolToggle: vi.fn(),
+      toolConfigurationValue: { starter: true },
+    });
+    const selectedDeploymentConfiguration: DeploymentConfigurationSchema = {
+      type: 'object',
+      properties: {
+        starter: {
+          oneOf: [
+            {
+              const: 0,
+              title: 'Starter override',
+              'dial:widgetOptions': {
+                populateText: 'Run starter',
+                submit: true,
+                confirmationMessage: null,
+              },
+            },
+          ],
+        },
+      },
+    };
+    mockUseDeployments.mockReturnValue({
+      items: mockItems,
+      selectedItemId: 'deepseek-ocr-2',
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
+      selectedDeploymentConfiguration,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+      refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
+    });
+
+    renderRoute();
+
+    await act(async () => {
+      screen.getByText('Starter override').click();
+    });
+
+    await waitFor(() => {
+      expect(mockCreateConversation).toHaveBeenCalledWith(
+        'Run starter',
+        'deepseek-ocr-2',
+        [],
+        { starter: true },
       );
     });
   });
@@ -669,6 +840,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'deepseek-ocr-2',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration,
       isLoading: false,
       error: null,
@@ -720,6 +892,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'form-example',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration,
       isLoading: false,
       error: null,
@@ -770,6 +943,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'deepseek-ocr-2',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration,
       isLoading: false,
       error: null,
@@ -883,6 +1057,7 @@ describe('ConversationRoute', () => {
       expect(mockCreateConversation).toHaveBeenCalledWith(
         'Hello',
         'gpt-4o',
+        undefined,
         undefined,
       );
     });

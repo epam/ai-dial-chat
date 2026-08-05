@@ -1,4 +1,3 @@
-import { PrimaryButton } from '@epam/ai-dial-kit';
 import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
@@ -9,6 +8,7 @@ import {
   ElementSize,
   NotificationVariant,
   mergeClasses,
+  PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import type {
   ToolsetLoginBodyDto,
@@ -17,7 +17,14 @@ import type {
 import type { FC } from 'react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AUTH_TYPE_OPTIONS } from '../../../constants/toolsets';
+import {
+  AUTH_TYPE_OPTIONS,
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  ToolsetOAuthInitiationResultType,
+  ToolsetOAuthResultType,
+  WithLogin,
+} from '../../../constants/toolsets';
 import {
   ApiI18nKeys,
   AuthI18nKeys,
@@ -25,26 +32,20 @@ import {
   ToolsetEditorI18nKeys,
 } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
-import {
-  getToolset,
-  loginToolset,
-  logoutToolset,
-} from '../../../server-api/toolsets';
 import type {
   ToolsetAuthFormData,
   ToolsetFormErrors,
-} from '../../../types/toolsets';
+  ToolsetOAuthInitiationResult,
+} from '../../../models/toolsets';
+import { getApiErrorDetails } from '../../../server-api/api-error';
+import { loginToolset, logoutToolset } from '../../../server-api/toolsets';
 import {
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
-  ToolsetOAuthInitiationResultType,
-  ToolsetOAuthResultType,
-  WithLogin,
-} from '../../../types/toolsets';
-import {
+  fetchToolsetAuthSettings,
   initiateOAuthLogin,
   isToolsetAuthValid,
   isValidEndpointUrl,
+  navigateToolsetOAuthPopup,
+  openToolsetOAuthPopup,
   waitForToolsetOAuthResult,
 } from '../../../utils/toolsets';
 
@@ -53,6 +54,7 @@ interface Props {
   errors: ToolsetFormErrors;
   isSaving: boolean;
   toolsetId: string;
+  isEditMode: boolean;
   endpoint: string;
   onAuthChange: (patch: Partial<ToolsetAuthFormData>) => void;
   onEnsureSaved: () => Promise<string | false>;
@@ -87,6 +89,7 @@ const AuthSection: FC<Props> = ({
   errors,
   isSaving,
   toolsetId,
+  isEditMode,
   endpoint,
   onAuthChange,
   onEnsureSaved,
@@ -95,7 +98,6 @@ const AuthSection: FC<Props> = ({
   const { showNotification } = useNotification();
   const [isAuthBusy, setIsAuthBusy] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const isEditMode = Boolean(toolsetId);
 
   const isControlsDisabled = auth.isLoggedIn || isSaving || isAuthBusy;
 
@@ -116,70 +118,163 @@ const AuthSection: FC<Props> = ({
     onAuthChange({ withLogin: value as WithLogin });
   };
 
+  /*
+   * Shared by both OAuth initiation paths below: waits for the popup result
+   * and applies the same success/failure/cancelled handling regardless of
+   * whether the authorize URL was built from already-known form state or
+   * from settings freshly fetched after dynamic client registration.
+   */
+  const handleOAuthInitiation = async (
+    initiation: ToolsetOAuthInitiationResult,
+    savedToolsetId: string,
+  ) => {
+    if (initiation.type !== ToolsetOAuthInitiationResultType.Started) {
+      /*
+       * `InvalidConfig` means the authorize URL couldn't be built from a
+       * known-good client (e.g. Core's dynamic client registration didn't
+       * return a usable clientId/authorizationEndpoint) — distinct from a
+       * browser-blocked popup, and from a generic post-redirect login
+       * failure, so it gets its own actionable message.
+       */
+      const errorKey =
+        initiation.type === ToolsetOAuthInitiationResultType.Blocked
+          ? ToolsetEditorI18nKeys.ErrorPopupBlocked
+          : ToolsetEditorI18nKeys.ErrorOAuthConfigMissing;
+      showNotification({
+        variant: NotificationVariant.Error,
+        message: t(errorKey),
+      });
+      return;
+    }
+
+    setIsAuthBusy(true);
+    const result = await waitForToolsetOAuthResult(
+      initiation.popup,
+      initiation.flowId,
+      {
+        toolsetId: savedToolsetId,
+        credentialsLevel: ToolsetCredentialsLevel.User,
+      },
+    );
+    setIsAuthBusy(false);
+
+    if (result.type === ToolsetOAuthResultType.Success) {
+      onAuthChange({ isLoggedIn: true });
+      showNotification({
+        variant: NotificationVariant.Success,
+        message: t(ToolsetEditorI18nKeys.LoginSuccess),
+      });
+    } else if (result.type === ToolsetOAuthResultType.Failure) {
+      showNotification({
+        variant: NotificationVariant.Error,
+        message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
+      });
+    } else if (result.type === ToolsetOAuthResultType.Cancelled) {
+      /*
+       * Treat the backend as the final authority if popup tracking or
+       * cross-process message delivery ever still reports a false cancel.
+       * This keeps the form from showing "logged out" after a login that
+       * actually completed server-side.
+       */
+      try {
+        const refreshedAuth = await fetchToolsetAuthSettings(savedToolsetId);
+        if (refreshedAuth.isLoggedIn) {
+          onAuthChange({ isLoggedIn: true });
+          showNotification({
+            variant: NotificationVariant.Success,
+            message: t(ToolsetEditorI18nKeys.LoginSuccess),
+          });
+        }
+      } catch {
+        // Best-effort verification only — a genuine cancel stays silent.
+      }
+    }
+  };
+
   const handleLogIn = async () => {
     if (!canLogIn) return;
 
-    const savedToolsetId = await onEnsureSaved();
-    if (!savedToolsetId) return;
-
     if (auth.authenticationType === ToolsetAuthTypes.OAuth) {
-      const initiation = initiateOAuthLogin(auth, savedToolsetId);
-      if (initiation.type !== ToolsetOAuthInitiationResultType.Started) {
-        showNotification({
-          variant: NotificationVariant.Error,
-          message: t(
-            initiation.type === ToolsetOAuthInitiationResultType.Blocked
-              ? ToolsetEditorI18nKeys.ErrorPopupBlocked
-              : ToolsetEditorI18nKeys.ErrorLoginFailed,
-          ),
-        });
+      /*
+       * "With Login" and no client id yet means this OAuth client relies on
+       * Core's dynamic client registration (RFC 7591), which only assigns
+       * `clientId`/`authorizationEndpoint` once the toolset is created — the
+       * pre-save `auth` form state never carries them (the fields aren't
+       * even rendered outside "With Login & Config"). Opening the popup
+       * synchronously here, before the persist/fetch awaits, keeps it a
+       * user-triggered popup rather than one browsers block as programmatic.
+       */
+      const needsDynamicRegistration =
+        auth.withLogin === WithLogin.WithLogin && !auth.clientId?.trim();
+
+      if (needsDynamicRegistration) {
+        const popup = openToolsetOAuthPopup();
+        if (!popup) {
+          showNotification({
+            variant: NotificationVariant.Error,
+            message: t(ToolsetEditorI18nKeys.ErrorPopupBlocked),
+          });
+          return;
+        }
+
+        /*
+         * Set busy immediately once the popup is open — this branch has two
+         * awaits (persist, then fetch) before `handleOAuthInitiation` would
+         * otherwise set it, and `onEnsureSaved` resolves in a single
+         * microtask when the form is already saved and unchanged (it never
+         * flips `isSaving`). Without this, a second click during that window
+         * would open a second popup and start a second concurrent login.
+         * The `finally` covers every exit from this branch — the two early
+         * returns below, and both the Started and non-Started outcomes of
+         * `handleOAuthInitiation` (which already clears busy itself for the
+         * Started case, making this a harmless redundant reset).
+         */
+        setIsAuthBusy(true);
+        try {
+          const savedToolsetId = await onEnsureSaved();
+          if (!savedToolsetId) {
+            popup.close();
+            return;
+          }
+
+          let resolvedAuth: ToolsetAuthFormData;
+          try {
+            resolvedAuth = await fetchToolsetAuthSettings(savedToolsetId);
+          } catch (error) {
+            popup.close();
+            const { traceId } = await getApiErrorDetails(error);
+            showNotification({
+              variant: NotificationVariant.Error,
+              message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
+              requestId: traceId,
+            });
+            return;
+          }
+          onAuthChange(resolvedAuth);
+
+          const initiation = navigateToolsetOAuthPopup(
+            popup,
+            resolvedAuth,
+            savedToolsetId,
+            ToolsetCredentialsLevel.User,
+          );
+          await handleOAuthInitiation(initiation, savedToolsetId);
+        } finally {
+          setIsAuthBusy(false);
+        }
         return;
       }
 
-      setIsAuthBusy(true);
-      const result = await waitForToolsetOAuthResult(
-        initiation.popup,
-        initiation.flowId,
-        {
-          toolsetId: savedToolsetId,
-          credentialsLevel: ToolsetCredentialsLevel.User,
-        },
-      );
-      setIsAuthBusy(false);
+      const savedToolsetId = await onEnsureSaved();
+      if (!savedToolsetId) return;
 
-      if (result.type === ToolsetOAuthResultType.Success) {
-        onAuthChange({ isLoggedIn: true });
-        showNotification({
-          variant: NotificationVariant.Success,
-          message: t(ToolsetEditorI18nKeys.LoginSuccess),
-        });
-      } else if (result.type === ToolsetOAuthResultType.Failure) {
-        showNotification({
-          variant: NotificationVariant.Error,
-          message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
-        });
-      } else if (result.type === ToolsetOAuthResultType.Cancelled) {
-        /*
-         * Treat the backend as the final authority if popup tracking or
-         * cross-process message delivery ever still reports a false cancel.
-         * This keeps the form from showing "logged out" after a login that
-         * actually completed server-side.
-         */
-        try {
-          const refreshed = await getToolset(savedToolsetId);
-          if (refreshed.authSettings?.userLevelAuthStatus === 'SIGNED_IN') {
-            onAuthChange({ isLoggedIn: true });
-            showNotification({
-              variant: NotificationVariant.Success,
-              message: t(ToolsetEditorI18nKeys.LoginSuccess),
-            });
-          }
-        } catch {
-          // Best-effort verification only — a genuine cancel stays silent.
-        }
-      }
+      const initiation = initiateOAuthLogin(auth, savedToolsetId);
+      await handleOAuthInitiation(initiation, savedToolsetId);
       return;
     }
+
+    const savedToolsetId = await onEnsureSaved();
+    if (!savedToolsetId) return;
 
     setIsAuthBusy(true);
     try {
@@ -197,10 +292,12 @@ const AuthSection: FC<Props> = ({
         variant: NotificationVariant.Success,
         message: t(ToolsetEditorI18nKeys.LoginSuccess),
       });
-    } catch {
+    } catch (error) {
+      const { traceId } = await getApiErrorDetails(error);
       showNotification({
         variant: NotificationVariant.Error,
         message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
+        requestId: traceId,
       });
     } finally {
       setIsAuthBusy(false);
@@ -224,10 +321,12 @@ const AuthSection: FC<Props> = ({
         variant: NotificationVariant.Success,
         message: t(ToolsetEditorI18nKeys.LogoutSuccess),
       });
-    } catch {
+    } catch (error) {
+      const { traceId } = await getApiErrorDetails(error);
       showNotification({
         variant: NotificationVariant.Error,
         message: t(ToolsetEditorI18nKeys.ErrorLogoutFailed),
+        requestId: traceId,
       });
     } finally {
       setIsAuthBusy(false);
@@ -242,7 +341,6 @@ const AuthSection: FC<Props> = ({
             {t(ToolsetEditorI18nKeys.LoggedInLabel)}
           </span>
           <PrimaryButton
-            type="button"
             size={ElementSize.Small}
             label={t(ButtonsI18nKeys.LogOut)}
             onClick={() => setShowLogoutConfirm(true)}
@@ -254,7 +352,6 @@ const AuthSection: FC<Props> = ({
     return (
       <div className="flex">
         <PrimaryButton
-          type="button"
           size={ElementSize.Small}
           label={t(ButtonsI18nKeys.LogIn)}
           onClick={handleLogIn}
@@ -435,14 +532,12 @@ const AuthSection: FC<Props> = ({
             >
               <Icon
                 size={DIAL_ICON_SIZE.SM}
-                className={
-                  isSelected ? 'text-accent-primary' : 'text-secondary'
-                }
+                className={isSelected ? 'text-accent' : 'text-secondary'}
               />
               <span
                 className={mergeClasses(
                   'text-sm',
-                  isSelected ? 'text-accent-primary' : 'text-primary',
+                  isSelected ? 'text-accent' : 'text-primary',
                 )}
               >
                 {t(option.labelKey)}

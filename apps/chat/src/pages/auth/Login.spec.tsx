@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthI18nKeys } from '../../constants/translation-keys';
 import * as UserContextModule from '../../context/auth/UserContext';
@@ -27,6 +27,7 @@ describe('LoginPage', () => {
   const mockUseTheme = vi.mocked(ThemeContextModule.useTheme);
   const mockUseAuthRedirect = vi.mocked(useAuthRedirectModule.useAuthRedirect);
   const mockGetProviders = vi.mocked(authApi.getProviders);
+  const neverResolvingProviders = new Promise<never>(() => undefined);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -134,6 +135,14 @@ describe('LoginPage', () => {
     expect(href).not.toContain('evil.example.com');
   });
 
+  it('calls useAuthRedirect with no arguments, preserving the default (non-disabled) redirect policy', () => {
+    mockGetProviders.mockReturnValue(neverResolvingProviders);
+
+    renderLogin();
+
+    expect(mockUseAuthRedirect).toHaveBeenCalledWith();
+  });
+
   it('renders theme favicon when currentThemeFavicon is set', () => {
     mockUseTheme.mockReturnValue({
       currentTheme: ThemeId.Light,
@@ -142,7 +151,7 @@ describe('LoginPage', () => {
       setTheme: vi.fn(),
       isLoading: false,
     });
-    mockGetProviders.mockResolvedValue([]);
+    mockGetProviders.mockReturnValue(neverResolvingProviders);
 
     const { container } = renderLogin();
 

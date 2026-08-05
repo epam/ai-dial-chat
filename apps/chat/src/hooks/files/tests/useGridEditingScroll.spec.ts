@@ -1,4 +1,4 @@
-import { FileManagerGridRow } from '@epam/ai-dial-ui-kit';
+import { FileManagerGridRow } from '@epam/ai-dial-react-file-manager';
 import { act, renderHook } from '@testing-library/react';
 import type {
   CellEditingStartedEvent,

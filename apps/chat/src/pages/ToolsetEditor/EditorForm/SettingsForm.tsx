@@ -1,8 +1,7 @@
 import { CatalogEntityType } from '@epam/ai-dial-catalog';
 import {
-  ButtonAppearance,
   DIAL_ICON_SIZE,
-  DialIconButton,
+  GhostIconButton,
   DialInput,
   DialSelect,
   DialTagInput,
@@ -13,6 +12,7 @@ import type { FC } from 'react';
 import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ConnectMcpUrlContent from '../../../components/ConnectMcpUrlContent/ConnectMcpUrlContent';
+import { ToolsetTransportType } from '../../../constants/toolsets';
 import {
   ApiI18nKeys,
   BasicI18nKeys,
@@ -24,8 +24,7 @@ import type {
   ToolsetAuthFormData,
   ToolsetFormData,
   ToolsetFormErrors,
-} from '../../../types/toolsets';
-import { ToolsetTransportType } from '../../../types/toolsets';
+} from '../../../models/toolsets';
 import { buildToolsetMcpUrl } from '../../../utils/mcp-endpoint-url';
 import AuthSection from './AuthSection';
 
@@ -34,6 +33,7 @@ interface Props {
   errors: ToolsetFormErrors;
   isSaving: boolean;
   toolsetId: string;
+  isEditMode: boolean;
   onChange: (patch: Partial<ToolsetFormData>) => void;
   onAuthChange: (patch: Partial<ToolsetAuthFormData>) => void;
   onEnsureSaved: () => Promise<string | false>;
@@ -44,6 +44,7 @@ const SettingsForm: FC<Props> = ({
   errors,
   isSaving,
   toolsetId,
+  isEditMode,
   onChange,
   onAuthChange,
   onEnsureSaved,
@@ -104,16 +105,23 @@ const SettingsForm: FC<Props> = ({
             invalid={!!errors.endpoint}
           />
         </div>
-        <DialIconButton
+        <GhostIconButton
           aria-label={t(ToolsetEditorI18nKeys.CopyUrlLabel)}
-          appearance={ButtonAppearance.Ghost}
           size={ElementSize.Standard}
           onClick={handleCopyEndpoint}
           icon={
             isCopied ? (
-              <IconCheck size={DIAL_ICON_SIZE.SM} className="text-success" />
+              <IconCheck
+                size={DIAL_ICON_SIZE.SM}
+                className="text-success"
+                aria-hidden
+              />
             ) : (
-              <IconCopy size={DIAL_ICON_SIZE.SM} className="text-secondary" />
+              <IconCopy
+                size={DIAL_ICON_SIZE.SM}
+                className="text-secondary"
+                aria-hidden
+              />
             )
           }
         />
@@ -144,6 +152,7 @@ const SettingsForm: FC<Props> = ({
         errors={errors}
         isSaving={isSaving}
         toolsetId={toolsetId}
+        isEditMode={isEditMode}
         endpoint={form.endpoint}
         onAuthChange={onAuthChange}
         onEnsureSaved={onEnsureSaved}
@@ -154,7 +163,7 @@ const SettingsForm: FC<Props> = ({
           entityType={CatalogEntityType.Toolset}
           url={mcpUrl}
           copyLabelKey={ButtonsI18nKeys.CopyUrl}
-          className="border-primary/10 border-t pt-4"
+          className="border-t border-tertiary pt-4"
         />
       )}
     </div>

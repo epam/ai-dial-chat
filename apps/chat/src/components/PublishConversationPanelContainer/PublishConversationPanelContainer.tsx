@@ -3,7 +3,7 @@ import {
   PublishResourceSummary,
   StandalonePublishPanel,
   usePublishFlow,
-} from '@epam/ai-dial-catalog';
+} from '@epam/ai-dial-publish-panel';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC, RefObject } from 'react';
 import { memo, useEffect, useState } from 'react';
@@ -12,9 +12,12 @@ import {
   ButtonsI18nKeys,
   ConversationPublishI18nKeys,
 } from '../../constants/translation-keys';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import { publishConversation } from '../../server-api/conversation-publish.api';
+import { getPublishRules } from '../../server-api/publish-rules.api';
+import { getAccessRulesLabels } from '../../utils/publish';
 
 /** Props for `PublishConversationPanelContainer`. */
 interface Props {
@@ -47,6 +50,9 @@ const PublishConversationPanelContainer: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { showNotification } = useNotification();
+  const {
+    config: { publicationFilterSources },
+  } = useAppConfig();
 
   const {
     folderItems,
@@ -73,8 +79,8 @@ const PublishConversationPanelContainer: FC<Props> = ({
     folderItems,
     hasWriteAccess: hasPublishWriteAccess,
     onCreateFolder: onCreatePublishFolder,
-    onPublish: async (_item, folderPath) => {
-      await publishConversation(conversationPath, folderPath.join('/'));
+    onPublish: async (_item, folderPath, rules) => {
+      await publishConversation(conversationPath, folderPath.join('/'), rules);
     },
     onPublishSuccess: () => {
       showNotification({
@@ -82,6 +88,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
         message: t(ConversationPublishI18nKeys.SuccessMessage),
       });
     },
+    onFetchExistingRules: (folderPath) => getPublishRules(folderPath.join('/')),
   });
 
   useEffect(() => {
@@ -121,14 +128,19 @@ const PublishConversationPanelContainer: FC<Props> = ({
       isSubmitting={publishFlow.isSubmitting}
       hasSubmitError={publishFlow.hasSubmitError}
       allowReplace={false}
+      rules={publishFlow.rules}
+      onRulesChange={publishFlow.setRules}
+      ruleSourceOptions={publicationFilterSources}
+      isRulesLoading={publishFlow.isRulesLoading}
+      hasRulesLoadError={publishFlow.hasRulesLoadError}
       onClose={onClose}
       returnFocusRef={returnFocusRef}
       onSubmit={handleSubmit}
-      footerTexts={{
+      footerLabels={{
         cancelLabel: t(ButtonsI18nKeys.Cancel),
         publishDefaultLabel: t(ButtonsI18nKeys.Publish),
       }}
-      panelTexts={{
+      panelLabels={{
         replaceWarning: t(ConversationPublishI18nKeys.AlreadyPublishedWarning),
         createFolderEmptyNameError: t(
           ConversationPublishI18nKeys.EmptyFolderNameError,
@@ -139,8 +151,9 @@ const PublishConversationPanelContainer: FC<Props> = ({
         createFolderDuplicateNameError: t(
           ConversationPublishI18nKeys.DuplicateFolderNameError,
         ),
+        accessRulesLabels: getAccessRulesLabels(t),
       }}
-      texts={{
+      labels={{
         title: t(ButtonsI18nKeys.Publish),
         ariaLabel: t(ConversationPublishI18nKeys.PanelAriaLabel),
         closeAriaLabel: t(ButtonsI18nKeys.Close),

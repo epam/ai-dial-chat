@@ -11,6 +11,7 @@ import {
   type OverlayMessageEvent,
   type OverlayMessageRequest,
   type OverlayMessageResponse,
+  type OverlayRequestError,
   OverlayEventType,
   OverlayFeature,
   OverlayRequestType,
@@ -29,7 +30,7 @@ import {
   type SetTemperatureResponse,
   isOverlayMessageEvent,
   isOverlayMessageResponse,
-} from '@epam/ai-dial-chat-shared';
+} from '../protocol';
 import { DEFAULT_LOADER_INNER_HTML } from './internal/default-loader';
 import { DeferredRequest } from './internal/deferred-request';
 import { setStyles } from './internal/dom-styles';
@@ -37,6 +38,23 @@ import { Task } from './internal/task';
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
 const LOADER_ATTRIBUTE = 'data-dial-overlay-loader';
+
+/** Error returned by the embedded chat for a well-formed overlay request. */
+export class ChatOverlayRequestError extends Error {
+  /** Stable embedded-chat error code. */
+  readonly code: OverlayRequestError['code'];
+  /** Request type that failed. */
+  readonly requestType: string;
+
+  constructor(requestType: string, error: OverlayRequestError) {
+    super(
+      `ChatOverlay: request "${requestType}" failed [${error.code}]: ${error.message}`,
+    );
+    this.name = 'ChatOverlayRequestError';
+    this.code = error.code;
+    this.requestType = requestType;
+  }
+}
 
 const resolveRoot = (root: HTMLElement | string): HTMLElement => {
   if (typeof root !== 'string') {
@@ -258,13 +276,25 @@ export class ChatOverlay {
    */
   setOverlayOptions(
     options: Partial<
-      Pick<ChatOverlayOptions, 'theme' | 'modelId' | 'overlayConversationId'>
+      Pick<
+        ChatOverlayOptions,
+        | 'theme'
+        | 'modelId'
+        | 'overlayConversationId'
+        | 'enabledFeatures'
+        | 'auth'
+      >
     >,
   ): Promise<SetOverlayOptionsResponse> {
     this.options.theme = options.theme ?? this.options.theme;
     this.options.modelId = options.modelId ?? this.options.modelId;
     this.options.overlayConversationId =
       options.overlayConversationId ?? this.options.overlayConversationId;
+    this.options.enabledFeatures =
+      options.enabledFeatures ?? this.options.enabledFeatures;
+    if (Object.hasOwn(options, 'auth')) {
+      this.options.auth = options.auth;
+    }
     return this.sendCurrentOverlayOptions();
   }
 
@@ -334,6 +364,16 @@ export class ChatOverlay {
     }
     if (this.options.overlayConversationId !== undefined) {
       payload.overlayConversationId = this.options.overlayConversationId;
+    }
+    if (this.options.enabledFeatures !== undefined) {
+      payload.enabledFeatures = this.options.enabledFeatures;
+    }
+    const authProviderUiModes = this.options.auth?.providerUiModes;
+    if (
+      authProviderUiModes !== undefined &&
+      Object.keys(authProviderUiModes).length > 0
+    ) {
+      payload.authProviderUiModes = authProviderUiModes;
     }
     return this.send<SetOverlayOptionsResponse>(
       OverlayRequestType.SetOverlayOptions,
@@ -411,6 +451,12 @@ export class ChatOverlay {
       return;
     }
     this.pendingRequests.delete(message.requestId);
+    if (message.error) {
+      pending.reject(
+        new ChatOverlayRequestError(pending.requestType, message.error),
+      );
+      return;
+    }
     pending.resolve(message.payload);
   }
 

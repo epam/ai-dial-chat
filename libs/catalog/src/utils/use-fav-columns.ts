@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react';
 
-/**
- * Returns the column count for the Favorites grid.
- * Responsive: ≥1024 px → 4, ≥640 px → 2, else 1.
- */
+/** Returns the column count for the Favorites grid: ≥1024 px → 4, ≥640 px → 2, else 1. */
 export const useFavColumns = (): number => {
   const [width, setWidth] = useState(() => window.innerWidth);
 

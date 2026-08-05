@@ -3,7 +3,7 @@
 }
 
 .statusLabel {
-  color: var(--text-secondary, #575f73);
+  color: var(--text-secondary, #6b7280);
 }
 
 .errorIcon {
@@ -33,7 +33,7 @@
 }
 
 .jsonPunctuation {
-  color: var(--text-secondary, #575f73);
+  color: var(--text-secondary, #6b7280);
 }
 
 .jsonStringValue {
@@ -41,7 +41,7 @@
 }
 
 .jsonNumberValue {
-  color: var(--text-accent-primary, #124ace);
+  color: var(--text-accent, #1d4ed8);
 }
 
 .jsonBooleanValue {
@@ -49,11 +49,11 @@
 }
 
 .jsonNullValue {
-  color: var(--text-secondary, #575f73);
+  color: var(--text-secondary, #6b7280);
 }
 
 .jsonExpandIcon {
-  color: var(--text-secondary, #575f73);
+  color: var(--text-secondary, #6b7280);
 
   &:hover {
     color: var(--text-primary, #161b2d);
@@ -67,7 +67,7 @@
 }
 
 .jsonCollapseIcon {
-  color: var(--text-secondary, #575f73);
+  color: var(--text-secondary, #6b7280);
 
   &:hover {
     color: var(--text-primary, #161b2d);
@@ -88,8 +88,8 @@
 }
 
 .jsonCollapsedContent {
-  color: var(--text-secondary, #575f73);
-  background-color: var(--bg-layer-3, #fcfcfc);
+  color: var(--text-secondary, #6b7280);
+  background-color: var(--bg-layer-raised, #fcfcfc);
   font-size: 0.75em; // em-based — cannot be a static Tailwind class
 
   &::after {

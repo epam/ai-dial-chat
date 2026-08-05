@@ -20,13 +20,13 @@
   },
   "dependencies": {
     "react-window": "^2.2.7",
-    "@epam/ai-dial-kit": "0.0.1"
+    "@epam/ai-dial-kit": "0.0.1",
+    "@epam/ai-dial-ui-kit": "^0.13.0-dev.26"
   },
   "peerDependencies": {
     "react": "^19.0.0",
     "@tabler/icons-react": "^3.0.0",
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-ui-kit": "0.12.0-dev.36",
     "@epam/ai-dial-sidebar": "0.0.1"
   },
   "nx": {

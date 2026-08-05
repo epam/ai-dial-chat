@@ -160,7 +160,8 @@
     "create": {
       "menuCaption": "Create new",
       "quickApp": "QuickApp",
-      "toolset": "Toolset"
+      "toolset": "Toolset",
+      "customApp": "Custom App"
     },
     "publishSuccessTitle": "Published",
     "publishSuccess": "\"{{name}}\" published to {{folder}}",
@@ -240,6 +241,7 @@
     "copyLink": "Copy link",
     "copyUrl": "Copy URL",
     "logIn": "Log in",
+    "retry": "Retry",
     "publish": "Publish"
   },
   "sidebar": {
@@ -267,7 +269,8 @@
       "step_other": "steps"
     },
     "attachMenuDialFileSystem": "DIAL file system",
-    "addMenuTitle": "Add files"
+    "addMenuTitle": "Add",
+    "messageTooLong": "Max allowed message length is {{max}}"
   },
   "conversationPanel": {
     "title": "Chats",
@@ -316,7 +319,8 @@
       "unshareSuccessTitle": "Deleted",
       "unshareSuccess": "\"{{name}}\" was deleted from your conversations.",
       "unshareError": "Failed to delete \"{{name}}\". Please try again."
-    }
+    },
+    "taskBadgeLabel": "TASK"
   },
   "conversationPublish": {
     "panelAriaLabel": "Publish conversation",
@@ -326,9 +330,34 @@
     "invalidFolderNameError": "Folder name contains invalid characters.",
     "duplicateFolderNameError": "A folder with this name already exists."
   },
+  "publishAccessRules": {
+    "heading": "Allow access if all match",
+    "addRuleLabel": "Add rule",
+    "clearAllLabel": "Clear all",
+    "orSeparatorLabel": "Or",
+    "removeRuleAriaLabelTemplate": "Remove rule for {source}: {targets}",
+    "equalFunctionLabel": "Equal",
+    "containFunctionLabel": "Contain",
+    "regexFunctionLabel": "Regex",
+    "loadingLabel": "Loading existing rules…",
+    "loadErrorLabel": "Couldn't load existing rules for this folder. You can still add rules manually.",
+    "ruleAddedAnnouncement": "Rule added.",
+    "ruleRemovedAnnouncement": "Rule removed.",
+    "rulesClearedAnnouncement": "All rules cleared.",
+    "rulesLoadedAnnouncement": "Existing rules loaded for the selected folder.",
+    "sourceLabel": "Source",
+    "sourcePlaceholder": "Select...",
+    "functionLabel": "Function",
+    "targetsLabel": "Targets",
+    "targetsPlaceholder": "Add a target",
+    "patternLabel": "Pattern",
+    "patternPlaceholder": "Enter a regular expression",
+    "invalidRegexError": "Enter a valid regular expression.",
+    "dialogAriaLabel": "Add access rule"
+  },
   "conversationExport": {
     "exportLabel": "Export",
-    "exportAllLabel": "Export conservations",
+    "exportAllLabel": "Export conversations",
     "withAttachmentsOption": "With attachments",
     "withoutAttachmentsOption": "Without attachments",
     "queueTitle": "Exporting",
@@ -358,7 +387,6 @@
     "failedTitle": "Error",
     "failed": "{{names}} was not imported. Please try again.",
     "warningAttachmentSkipped": "{{names}} could not be uploaded and were skipped.",
-    "attachmentNameConflict": "{{names}} already exists. Please rename it and try again.",
     "unsupportedFormat": "This file could not be imported. Please choose a valid export file."
   },
   "auth": {
@@ -367,6 +395,12 @@
     "loginTitle": "Welcome to DIAL Chat",
     "loginDescription": "Sign in with:",
     "providersError": "Could not load identity providers. Please retry.",
+    "overlayLoginTitle": "Sign in to continue",
+    "overlayLoginDescription": "Choose a sign-in option to use DIAL Chat in this embedded view.",
+    "overlayExternalLoginBlocked": "The sign-in tab was blocked. Allow popups for this site and try again.",
+    "overlayLoginTakingLonger": "Sign-in is taking longer than expected. Finish it in the opened tab, or try again.",
+    "overlayProviderPickerLoading": "Loading sign-in providers\u2026",
+    "overlayProvidersError": "Could not load sign-in providers. Please try again.",
     "logOutConfirmTitle": "Log out?",
     "logOutConfirmDescription": "Are you sure you want to log out?",
     "userAvatar": "User avatar"
@@ -430,6 +464,82 @@
     "overlaySubtitle": "Drop files here to attach them to message",
     "overlayDeniedTitle": "No attachments allowed",
     "overlayDeniedSubtitle": "Attachments can't be added to message"
+  },
+  "scheduledTasks": {
+    "page": {
+      "navLabel": "Scheduled tasks",
+      "title": "Scheduled tasks",
+      "subtitle": "Automate recurring tasks with scheduled runs, or execute them on demand whenever you need."
+    },
+    "toolbar": {
+      "createButtonLabel": "New task",
+      "searchPlaceholder": "Search scheduled tasks...",
+      "searchAriaLabel": "Search scheduled tasks by name",
+      "clearSearchLabel": "Clear scheduled tasks search",
+      "sortLabel": "Sort",
+      "sortFirstToRun": "First to run",
+      "sortLastToRun": "Last to run",
+      "sortNewest": "Newest",
+      "sortNameAZ": "Name A-Z"
+    },
+    "emptyState": {
+      "label": "No scheduled tasks yet"
+    },
+    "list": {
+      "noResultsLabel": "No results",
+      "errorLabel": "Failed to load scheduled tasks",
+      "retryLabel": "Retry",
+      "sharedSectionTitle": "Shared",
+      "loadingMoreLabel": "Loading more scheduled tasks…"
+    },
+    "card": {
+      "newBadgeLabel": "NEW",
+      "actionsLabel": "More actions",
+      "editActionLabel": "Edit",
+      "runNowActionLabel": "Run now",
+      "deleteActionLabel": "Delete",
+      "scheduleDailyAt": "Every day at {{time}}",
+      "scheduleWeeklyAt": "Every {{day}} at {{time}}",
+      "scheduleMonthlyAt": "Monthly on day {{day}} at {{time}}",
+      "scheduleHourlyAt": "Hourly at :{{minute}}",
+      "scheduleEveryNMinutes_one": "Every minute",
+      "scheduleEveryNMinutes_other": "Every {{count}} minutes",
+      "scheduleOnceAt": "Once on {{date}}",
+      "scheduleRecurringFallback": "Recurring schedule"
+    },
+    "create": {
+      "pageTitle": "New task",
+      "backButtonLabel": "Back",
+      "detailsSectionTitle": "Details",
+      "detailsSectionSubtitle": "Basic info about this scheduled task",
+      "configurationSectionTitle": "Configuration",
+      "configurationSectionSubtitle": "Write custom instructions for this task",
+      "scheduleSectionLabel": "Schedule",
+      "scheduleTypeOnce": "Once",
+      "scheduleTypeRecurring": "Recurring",
+      "scheduleTypeAriaLabel": "Schedule type",
+      "runAtLabel": "Run at",
+      "runAtRequired": "Choose a future date and time",
+      "frequencyLabel": "Frequency",
+      "frequencyDaily": "Daily",
+      "frequencyWeekly": "Weekly",
+      "frequencyMonthly": "Monthly",
+      "timeLabel": "Time",
+      "timeInvalid": "Enter a valid time",
+      "dayOfWeekLabel": "Day of week",
+      "dayOfWeekRequired": "Day of week is required",
+      "dayOfMonthLabel": "Day of month",
+      "dayOfMonthRequired": "Day of month is required",
+      "modelOrAgentLabel": "Model or Agent",
+      "modelPlaceholder": "Select a model",
+      "modelRequired": "Model is required",
+      "descriptionLabel": "Description",
+      "descriptionMaxLengthError": "Description must be 500 characters or fewer",
+      "instructionsLabel": "Instructions",
+      "promptRequired": "Instructions are required",
+      "successNotification": "Scheduled task created",
+      "errorNotification": "Failed to create the scheduled task"
+    }
   },
   "dialFileManager": {
     "attach": "Attach",
@@ -581,11 +691,74 @@
     "downloadLabel": "Download attachment",
     "unsupportedLabel": "Preview is not supported for this file",
     "loadErrorLabel": "Failed to load file",
-    "forbiddenErrorLabel": "You don't have permission to access this file"
+    "forbiddenErrorLabel": "You don't have permission to access this file",
+    "htmlFrameBlocked": "This page cannot be displayed in preview",
+    "htmlOpenInNewTab": "Open in new tab",
+    "htmlViewSource": "View source",
+    "htmlViewRendered": "View rendered"
   },
   "announcementBanner": {
     "regionAriaLabel": "Announcement",
     "closeLabel": "Close announcement"
+  },
+  "notification": {
+    "requestId": {
+      "label": "Request ID",
+      "copyAriaLabel": "Copy request ID",
+      "copiedStatus": "Request ID copied",
+      "copyFailedStatus": "Couldn't copy request ID"
+    }
+  },
+  "footerMessage": {
+    "regionAriaLabel": "Footer"
+  },
+  "footer": {
+    "requestApiKey": {
+      "title": "Request API Key",
+      "descriptionPrefix": "We are glad to provide API access for PoC, research, accelerators development purposes, and internal projects. It is also possible to use this as a very short-term solution for early development stages while you are spinning up your dedicated environment. Any kind of client external must use their own dedicated infrastructure, not this API - you can install DIAL there, see instructions at ",
+      "projectNameLabel": "Project name",
+      "projectNamePlaceholder": "Enter project name",
+      "projectNameDescription": "Use one from Delivery Central",
+      "streamNameLabel": "Stream Name",
+      "streamNamePlaceholder": "Enter stream name",
+      "streamNameDescription": "Use one from Delivery Central. Must be unique per key request.",
+      "projectLeadLabel": "Project Tech Lead responsible for API token usage",
+      "projectLeadPlaceholder": "lead@example.com",
+      "projectLeadDescription": "Please provide email",
+      "businessReasonLabel": "Business justification",
+      "businessReasonPlaceholder": "Describe the business justification",
+      "projectEndLabel": "End date of the project",
+      "accessScenarioLabel": "Access scenario description",
+      "accessScenarioPlaceholder": "Describe the access scenario",
+      "accessScenarioDescription": "By default, access to the model is available from EPAM VPN only. If you want to deploy your solution anywhere beyond your personal laptop, please describe your scenario.",
+      "workloadPatternLabel": "Cost and workload description",
+      "workloadPatternPlaceholder": "Describe the expected costs and workload",
+      "workloadPatternDescriptionPrefix": "We need to understand how much cost your solution will generate monthly, and your workload pattern in terms of requests quantity and tokens usage during standard and peak workloads. Please describe this.",
+      "workloadPatternCaptionPrefix": "Ensure you provided a \"max X USD/month\" metric. More information is available at ",
+      "checkboxGroupTitle": "Please acknowledge that your API usage should comply with:",
+      "checkboxGroupRequired": "Please acknowledge all items above",
+      "checkboxAzureLabel": "Azure Cognitive Service Terms and Conditions",
+      "checkboxEpamLabel": "Usage is compliant to EPAM company policies",
+      "checkboxClientLabel": "This key will not be used for client project production load",
+      "checkboxLocalLabel": "Local law regulations (if some)",
+      "fieldRequired": "This field is required",
+      "fieldTooLong": "Must be {{max}} characters or fewer",
+      "emailInvalid": "Please enter a valid email address",
+      "dateInvalid": "Must be a valid date",
+      "successTitle": "API Key requested successfully",
+      "errorTitle": "Failed to submit the request. Please try again."
+    },
+    "reportIssue": {
+      "title": "Report an Issue",
+      "issueTitleLabel": "Title",
+      "issueTitlePlaceholder": "Briefly describe the issue",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Provide details about the issue",
+      "fieldRequired": "This field is required",
+      "fieldTooLong": "Must be {{max}} characters or fewer",
+      "successTitle": "Issue reported successfully",
+      "errorTitle": "Failed to report the issue. Please try again."
+    }
   },
   "errorBoundary": {
     "heading": "Something went wrong",
@@ -692,7 +865,8 @@
       "updateFailed": "Failed to update toolset. Please try again.",
       "loginFailed": "Failed to log in. Please check your credentials and try again.",
       "logoutFailed": "Failed to log out. Please try again.",
-      "popupBlocked": "The login popup was blocked by your browser. Please allow popups for this site and try again."
+      "popupBlocked": "The login popup was blocked by your browser. Please allow popups for this site and try again.",
+      "oauthConfigMissing": "The OAuth provider did not return a valid client configuration. Please check the endpoint or contact your administrator."
     },
     "success": {
       "login": "Successfully logged in.",
@@ -700,11 +874,12 @@
     }
   },
   "toolsetSignin": {
-    "dialogTitle": "Toolset sign-in required",
-    "dialogDescription": "One or more tools need you to sign in before the conversation can continue.",
+    "dialogTitle": "Sign-in required",
+    "dialogDescription": "One or more tools or services need you to sign in before the conversation can continue.",
     "rowDecline": "Decline",
     "declineAll": "Decline all",
     "fallbackName": "Toolset",
+    "fallbackNameExternalService": "External service",
     "apiKeyLabel": "API key",
     "apiKeyPlaceholder": "Enter API key",
     "errorLoginFailed": "Failed to log in. Please try again.",
@@ -712,12 +887,66 @@
     "errorDeclineFailed": "Failed to decline. Please try again.",
     "errorRetry": "Retry",
     "statusLoginSuccess": "Login succeeded for {{name}}.",
-    "statusDeclineSuccess": "Declined {{name}}."
+    "statusDeclineSuccess": "Declined {{name}}.",
+    "noCredentialsRequired": "No credentials required"
   },
   "voiceRecording": {
     "micLabel": "Record voice message",
     "stopRecordingLabel": "Stop recording",
     "discardRecordingLabel": "Discard recording",
     "timerAriaLabel": "Recording time"
+  },
+  "tools": {
+    "menuTitle": "Tools",
+    "deepResearchFallback": "Deep research",
+    "selectedCount_one": "{{count}} tool",
+    "selectedCount_other": "{{count}} tools",
+    "removeTool": "Remove {{label}}"
+  },
+  "conversationInput": {
+    "usageLimits": {
+      "triggerAriaLabel": "Monthly token usage: {{value}}",
+      "popoverTitle": "Usage Limit",
+      "error": "Could not load usage limits",
+      "tokensRemaining": "{{count}} tokens remaining",
+      "progressAriaLabel": "Monthly token usage: {{used}} of {{total}} tokens used"
+    }
+  },
+  "customApp": {
+    "settings": {
+      "completionUrlLabel": "Chat completion URL",
+      "completionUrlDescription": "The URL of the chat completion endpoint for this custom app.",
+      "completionUrlPlaceholder": "https://example.com/openai/deployments/gpt-4o/chat/completions",
+      "completionUrlRequired": "Chat completion URL is required",
+      "completionUrlInvalid": "Enter a valid absolute URL",
+      "featuresDataLabel": "Features data",
+      "featuresDataDescription": "Enter key-value pairs for rate_endpoint and/or configuration_endpoint in JSON format.",
+      "featuresDataPlaceholder": "{\n\t\"rate_endpoint\": \"http://application1/rate\",\n\t\"configuration_endpoint\": \"http://application1/configuration\"\n}",
+      "attachmentTypesLabel": "Attachment types",
+      "attachmentTypesDescription": "Input the MIME type and press 'Enter' to add.",
+      "attachmentTypesPlaceholder": "Enter one or more attachment types",
+      "maxAttachmentsLabel": "Max. input attachments",
+      "maxAttachmentsDescription": "Maximum number of input attachments allowed.",
+      "maxAttachmentsInvalid": "Enter a number greater than or equal to 0",
+      "enterAttachmentTypes": "Enter one or more attachment types",
+      "enterMaxAttachments": "Enter the maximum number of attachments",
+      "typeChatCompletionUrl": "Type chat completion URL",
+      "invalidMimeType": "One or more values are not valid MIME types",
+      "featuresDataInvalid": "Enter valid JSON with rate_endpoint and/or configuration_endpoint"
+    },
+    "general": {
+      "namePlaceholder": "Enter Custom App name",
+      "descriptionPlaceholder": "Describe your Custom App"
+    },
+    "saveConfirm": {
+      "title": "Only valid data will be saved",
+      "description": "Some fields are invalid or required fields are missing. Changes in those fields will not be saved. Exit and save only valid information?",
+      "confirmLabel": "Save"
+    },
+    "error": {
+      "createFailed": "Failed to create custom app. Please try again.",
+      "saveFailed": "Failed to save custom app. Please try again.",
+      "loadFailed": "Failed to load custom app. Please try again."
+    }
   }
 }

@@ -4,36 +4,27 @@ import {
   mergeClasses,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import {
-  IconChevronUp,
+  DIAL_ICON_SIZE,
+  ElementSize,
+  GhostIconButton,
+} from '@epam/ai-dial-ui-kit';
+import {
   IconDownload,
   IconFile,
   IconPaperclip,
   IconPhoto,
 } from '@tabler/icons-react';
-import { useMemo, useState, type FC } from 'react';
+import { type FC } from 'react';
 import { ATTACHMENT_COLLAPSE_THRESHOLD } from '../../constants/attachment-group';
-import {
-  AttachmentTilesLayout,
-  type AttachmentGroupProps,
-} from '../../models/attachment-group';
-import { getAttachmentTilesPlan } from '../../utils/attachment';
+import { type AttachmentGroupProps } from '../../models/attachment-group';
 import { AttachmentCard } from '../AttachmentCard/AttachmentCard';
-import { AttachmentMoreTile } from '../AttachmentMoreTile/AttachmentMoreTile';
 import styles from './AttachmentGroup.module.scss';
 
 const pluralize = (count: number, noun: string): string =>
   `${count} ${noun}${count === 1 ? '' : 's'}`;
 
-/**
- * Adaptive attachment group for an already-sent message: every attachment —
- * image or file — renders as one uniform 84x84 rounded-square tile, wrapped
- * in a single grid. 5+ attachments collapse behind a "+N" tile; expanding
- * reveals a same-shaped collapse tile to show less again. Type is
- * communicated by glyph + extension text only; color is reserved for
- * upload state. Download actions are icon-only, matching the rest of the app.
- */
+/** Renders every attachment as a tile: a wrapping flex row below the collapse threshold, a fixed 5-column grid at or above it. */
 export const AttachmentGroup: FC<AttachmentGroupProps> = ({
   attachments,
   onAttachmentClick,
@@ -41,12 +32,12 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
   onRetry,
   labels,
   styles: groupStyles,
+  selectedAttachmentId,
 }) => {
   const {
     ariaLabel = 'Attachments',
     clickLabel = 'Download attachment',
     retryLabel = 'Retry upload',
-    showLessLabel = 'Show less',
     downloadAllLabel = 'Download all',
     openInNewTabLabel,
     getHeaderLabel = (count: number) => pluralize(count, 'attachment'),
@@ -54,23 +45,10 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
     pastedLabel,
     imageLabel,
   } = labels ?? {};
-  const {
-    typography: { headerLabelClassName = 'dial-tiny-semi-text' } = {},
-    colors,
-    className,
-  } = groupStyles ?? {};
+  const { typography, colors, className } = groupStyles ?? {};
   const cssVars = buildCssVars({
-    '--ci-group-bg': colors?.background,
-    '--ci-group-border': colors?.border,
-    '--ci-group-text': colors?.text,
+    '--ai-group-text': colors?.text,
   });
-
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  const plan = useMemo(
-    () => getAttachmentTilesPlan(attachments.length, isExpanded),
-    [attachments.length, isExpanded],
-  );
 
   if (attachments.length === 0) return null;
 
@@ -81,8 +59,6 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
 
   const HeaderIcon = isMixed ? IconPaperclip : hasImages ? IconPhoto : IconFile;
   const headerLabel = getHeaderLabel(attachments.length);
-
-  const visibleAttachments = attachments.slice(0, plan.visibleCount);
 
   const handleDownloadAll = () => {
     /*
@@ -118,30 +94,32 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
       aria-label={ariaLabel}
       style={cssVars}
       className={mergeClasses(
-        'rounded-2xl border p-3',
+        'flex flex-col gap-1',
         isCollapsible ? 'w-full min-w-0 max-w-[492px]' : 'max-w-[420px]',
         styles.container,
         className,
       )}
     >
-      <div className="mb-3 flex min-h-6 items-center gap-2">
-        <HeaderIcon
-          size={DIAL_ICON_SIZE.SM}
-          className={mergeClasses('shrink-0', styles.headerIcon)}
-          aria-hidden
-        />
-        <span
-          className={mergeClasses(headerLabelClassName, styles.headerLabel)}
-        >
-          {headerLabel}
-        </span>
-        {attachments.length >= 2 && (onDownloadAll || onAttachmentClick) && (
-          <DialGhostIconButton
-            icon={<IconDownload size={DIAL_ICON_SIZE.SM} aria-hidden />}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1">
+          <HeaderIcon
+            size={DIAL_ICON_SIZE.SM}
+            className={mergeClasses('shrink-0', styles.headerIcon)}
+            aria-hidden
+          />
+          <span
             className={mergeClasses(
-              'ms-auto h-6 w-6 rounded-lg',
-              styles.downloadAllButton,
+              typography?.headerLabelClassName ?? 'dial-tiny-semi-text',
+              styles.headerLabel,
             )}
+          >
+            {headerLabel}
+          </span>
+        </div>
+        {attachments.length >= 2 && (onDownloadAll || onAttachmentClick) && (
+          <GhostIconButton
+            icon={<IconDownload size={DIAL_ICON_SIZE.SM} aria-hidden />}
+            size={ElementSize.Small}
             aria-label={downloadAllLabel}
             onClick={handleDownloadAll}
           />
@@ -153,13 +131,11 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
         aria-label={headerLabel}
         className={mergeClasses(
           'gap-3',
-          isCollapsible
-            ? 'grid grid-cols-[repeat(5,83px)] overflow-x-auto'
-            : 'flex flex-wrap',
+          isCollapsible ? 'grid grid-cols-[repeat(5,83px)]' : 'flex flex-wrap',
         )}
       >
-        {visibleAttachments.map((attachment) => (
-          <div key={attachment.id} role="listitem">
+        {attachments.map((attachment, index) => (
+          <div key={`${attachment.id}-${index}`} role="listitem">
             <AttachmentCard
               attachment={attachment}
               onClick={onAttachmentClick}
@@ -173,30 +149,10 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
                 imageLabel,
                 openInNewTabLabel,
               }}
+              isSelected={attachment.id === selectedAttachmentId}
             />
           </div>
         ))}
-
-        {plan.layout === AttachmentTilesLayout.Collapsed && (
-          <div role="listitem">
-            <AttachmentMoreTile
-              count={plan.hiddenCount}
-              onClick={() => setIsExpanded(true)}
-            />
-          </div>
-        )}
-
-        {isCollapsible && isExpanded && (
-          <div role="listitem">
-            <AttachmentMoreTile
-              count={0}
-              onClick={() => setIsExpanded(false)}
-              labels={{ ariaLabel: showLessLabel }}
-            >
-              <IconChevronUp size={DIAL_ICON_SIZE.MD} aria-hidden />
-            </AttachmentMoreTile>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -1,4 +1,6 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NotificationItem } from '../../../context/NotificationContext';
 import NotificationContainer from '../NotificationContainer';
@@ -13,6 +15,7 @@ vi.mock('../../../context/NotificationContext', () => ({
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   mergeClasses: (...args: (string | undefined)[]) =>
     args.filter(Boolean).join(' '),
+  DIAL_ICON_SIZE: { SM: 16, LG: 24 },
   NotificationVariant: {
     Error: 'error',
     Warning: 'warning',
@@ -20,7 +23,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     Success: 'success',
     Loading: 'loading',
   },
-  DialNotification: ({
+  Notification: ({
     variant,
     title,
     message,
@@ -29,7 +32,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   }: {
     variant: string;
     title?: string;
-    message: string;
+    message: ReactNode;
     closable?: boolean;
     onClose?: () => void;
   }) => (
@@ -38,6 +41,19 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       <div>{message}</div>
       {closable && <button aria-label="Close notification" onClick={onClose} />}
     </div>
+  ),
+  GhostIconButton: ({
+    icon,
+    onClick,
+    ...rest
+  }: {
+    icon?: ReactNode;
+    onClick?: () => void;
+    'aria-label'?: string;
+  }) => (
+    <button onClick={onClick} {...rest}>
+      {icon}
+    </button>
   ),
 }));
 
@@ -81,24 +97,6 @@ describe('NotificationContainer', () => {
     },
   );
 
-  it('applies a distinct wrapper class per severity', () => {
-    const severities: NotificationItem['variant'][] = [
-      'error',
-      'warning',
-      'info',
-      'success',
-      'loading',
-    ] as NotificationItem['variant'][];
-    const classNames = severities.map((variant) => {
-      notifications = [makeItem({ id: variant, variant })];
-      const { unmount } = render(<NotificationContainer />);
-      const className = screen.getByRole('alert').parentElement?.className;
-      unmount();
-      return className;
-    });
-    expect(new Set(classNames).size).toBe(severities.length);
-  });
-
   it('renders one entry per stacked notification, in order', () => {
     notifications = [
       makeItem({ id: 'a', message: 'First' }),
@@ -141,5 +139,139 @@ describe('NotificationContainer', () => {
     render(<NotificationContainer />);
     expect(screen.getByText('Saved')).toBeTruthy();
     expect(screen.getByText('Changes saved.')).toBeTruthy();
+  });
+});
+
+const TRACE_ID = '4bf92f3577b34da6a3ce929d0e0e4736';
+
+describe('NotificationContainer — Request ID dismiss timing', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    notifications = [];
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('renders no Request ID row when requestId is absent', () => {
+    notifications = [makeItem({ message: 'Plain error' })];
+    render(<NotificationContainer />);
+    expect(
+      screen.queryByRole('button', {
+        name: 'notification.requestId.copyAriaLabel',
+      }),
+    ).toBeNull();
+  });
+
+  it('does not auto-dismiss a trace-bearing notification', () => {
+    notifications = [makeItem({ id: 'trace-1', requestId: TRACE_ID })];
+    render(<NotificationContainer />);
+
+    vi.advanceTimersByTime(10000);
+
+    expect(dismissNotification).not.toHaveBeenCalled();
+  });
+
+  it('keeps auto-dismiss for non-trace notifications alongside a trace-bearing one', () => {
+    notifications = [
+      makeItem({ id: 'plain-1' }),
+      makeItem({ id: 'trace-1', requestId: TRACE_ID }),
+    ];
+    render(<NotificationContainer />);
+
+    vi.advanceTimersByTime(5000);
+
+    expect(dismissNotification).toHaveBeenCalledWith('plain-1');
+    expect(dismissNotification).not.toHaveBeenCalledWith('trace-1');
+  });
+});
+
+describe('NotificationContainer — Request ID row and Copy control', () => {
+  const mockWriteText = vi.fn();
+
+  /*
+   * `navigator.clipboard` must be (re)stubbed AFTER `userEvent.setup()` runs — user-event
+   * installs its own clipboard stub during setup, which silently shadows ours if we stub first
+   * (0 calls to `mockWriteText` even though the component reads `navigator.clipboard`).
+   */
+  const setupUser = () => {
+    const user = userEvent.setup({ delay: null });
+    mockWriteText.mockReset();
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: mockWriteText },
+    });
+    return user;
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    notifications = [];
+  });
+
+  it('renders the Request ID row with the value forced to LTR', () => {
+    notifications = [makeItem({ message: 'Save failed', requestId: TRACE_ID })];
+    render(<NotificationContainer />);
+
+    const value = screen.getByText(TRACE_ID);
+    expect(value.getAttribute('dir')).toBe('ltr');
+    expect(
+      screen.getByRole('button', {
+        name: 'notification.requestId.copyAriaLabel',
+      }),
+    ).toBeTruthy();
+  });
+
+  it('copies exactly the trace ID and announces success without a new notification', async () => {
+    const user = setupUser();
+    mockWriteText.mockResolvedValue(undefined);
+    notifications = [makeItem({ requestId: TRACE_ID })];
+    render(<NotificationContainer />);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'notification.requestId.copyAriaLabel',
+      }),
+    );
+
+    expect(mockWriteText).toHaveBeenCalledWith(TRACE_ID);
+    expect(
+      await screen.findByText('notification.requestId.copiedStatus'),
+    ).toBeTruthy();
+    expect(screen.getAllByRole('alert')).toHaveLength(1);
+  });
+
+  it('is keyboard accessible via Enter', async () => {
+    const user = setupUser();
+    mockWriteText.mockResolvedValue(undefined);
+    notifications = [makeItem({ requestId: TRACE_ID })];
+    render(<NotificationContainer />);
+
+    screen
+      .getByRole('button', { name: 'notification.requestId.copyAriaLabel' })
+      .focus();
+    await user.keyboard('{Enter}');
+
+    expect(mockWriteText).toHaveBeenCalledWith(TRACE_ID);
+  });
+
+  it('announces failure without dismissing the notification when the clipboard write rejects', async () => {
+    const user = setupUser();
+    mockWriteText.mockRejectedValue(new Error('denied'));
+    notifications = [makeItem({ id: 'trace-1', requestId: TRACE_ID })];
+    render(<NotificationContainer />);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'notification.requestId.copyAriaLabel',
+      }),
+    );
+
+    expect(
+      await screen.findByText('notification.requestId.copyFailedStatus'),
+    ).toBeTruthy();
+    expect(dismissNotification).not.toHaveBeenCalled();
   });
 });

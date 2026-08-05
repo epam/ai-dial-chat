@@ -6,7 +6,7 @@ import {
 import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
-import { GroupedStageRow } from '../../models/stage-grouping';
+import { StageRow } from '../../models/stage-grouping';
 import type {
   StagesPanelLabels,
   StagesPanelProps,
@@ -25,7 +25,7 @@ import styles from './StagesPanel.module.scss';
 
 interface StageGroupRowProps {
   /** The collapsed `×N` group to render. */
-  row: GroupedStageRow;
+  row: StageRow;
   /** Whether this stage group contains the currently executing (live) stage. */
   isLive: boolean;
   /** Typography configuration applied to stage text elements. */
@@ -34,11 +34,7 @@ interface StageGroupRowProps {
   labels?: StagesPanelLabels;
 }
 
-/**
- * Renders a collapsed `×N` group: one summary row (name, attempt count,
- * total duration) that expands to the individual attempts. Not exported —
- * an implementation detail of how `StagesPanel` renders a `GroupedStageRow`.
- */
+/** Expandable summary row for a collapsed `×N` group of identical stage attempts. */
 const StageGroupRow: FC<StageGroupRowProps> = ({
   row,
   isLive,
@@ -52,8 +48,8 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
   } = labels ?? {};
   const [isOpen, setIsOpen] = useState(false);
 
-  const hasFailed = row.attempts.some((a) => a.status === StageStatus.Failed);
-  const totalSeconds = row.attempts.reduce((sum, attempt) => {
+  const hasFailed = row.attempts?.some((a) => a.status === StageStatus.Failed);
+  const totalSeconds = (row.attempts || []).reduce((sum, attempt) => {
     const { durationLabel } = cleanStageName(attempt.name);
     return sum + (parseDurationSeconds(durationLabel) ?? 0);
   }, 0);
@@ -67,7 +63,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
         className={mergeClasses(
-          'flex w-full items-center gap-2 px-2 py-1.5 text-start',
+          'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-start',
           styles.row,
         )}
       >
@@ -96,7 +92,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
             styles.count,
           )}
         >
-          ×{row.attempts.length}
+          ×{row.attempts?.length ?? 0}
         </span>
         {totalDurationLabel && (
           <span
@@ -129,7 +125,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
       >
         <div className="overflow-hidden">
           <ul role="list" className="mt-1 flex flex-col gap-0.5 ps-6">
-            {row.attempts.map((attempt, i) => (
+            {row.attempts?.map((attempt, i) => (
               <li key={attempt.index} role="listitem">
                 <StageItem
                   stage={attempt}
@@ -137,7 +133,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
                   isLive={
                     isLive &&
                     attempt.index ===
-                      row.attempts[row.attempts.length - 1].index
+                      row.attempts?.[row.attempts.length - 1]?.index
                   }
                   typography={typography}
                   labels={labels}
@@ -151,11 +147,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
   );
 };
 
-/**
- * Displays an agent's accumulated stages as a flat, inline list of rows — no
- * card, border, or panel around it. Repeated identical stage names collapse
- * into one `×N` row that expands to the individual attempts.
- */
+/** Flat inline list of agent stages; repeated identical names collapse into a ×N group row. */
 export const StagesPanel: FC<StagesPanelProps> = ({
   stages,
   isStreaming,
@@ -168,8 +160,19 @@ export const StagesPanel: FC<StagesPanelProps> = ({
   const cssVars = buildCssVars({
     '--cs-text': colors?.text,
     '--cs-row-hover': colors?.rowHoverColor,
+    '--cs-button-bg': colors?.collapsedButtonBg,
     '--cs-stage-text': colors?.stageTextColor,
     '--cs-failed-text': colors?.failedColor,
+    '--cs-tag-text': colors?.tagTextColor,
+    '--cs-count-text': colors?.countTextColor,
+    '--cs-duration-text': colors?.durationTextColor,
+    '--cs-icon-secondary': colors?.iconSecondaryColor,
+    '--cs-icon-completed': colors?.iconCompletedColor,
+    '--cs-icon-error': colors?.iconErrorColor,
+    '--cs-code-bg': colors?.codeBg,
+    '--cs-code-border': colors?.codeBorderColor,
+    '--cs-code-text': colors?.codeTextColor,
+    '--cs-border': colors?.borderColor,
   });
 
   const liveStage = isStreaming ? findLiveStage(stages) : undefined;
@@ -182,7 +185,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
     >
       <ul role="list" className="flex w-full flex-col gap-0.5 ps-5">
         {rows.map((row) =>
-          row.kind === 'single' ? (
+          row.stage ? (
             <li key={row.key} role="listitem">
               <StageItem
                 stage={row.stage}
@@ -197,7 +200,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
                 row={row}
                 isLive={
                   liveStage?.index ===
-                  row.attempts[row.attempts.length - 1].index
+                  row.attempts?.[row.attempts.length - 1].index
                 }
                 typography={typography}
                 labels={labels}

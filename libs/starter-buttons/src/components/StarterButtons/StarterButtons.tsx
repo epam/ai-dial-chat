@@ -1,8 +1,13 @@
 import { BASE_MD_ICON_PROPS } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
-import { DialDropdown, DialRoundedButton } from '@epam/ai-dial-ui-kit';
+import {
+  DialDropdown,
+  NeutralButton,
+  ButtonAppearance,
+  NeutralIconButton,
+} from '@epam/ai-dial-ui-kit';
 import { IconDots, IconDotsVertical } from '@tabler/icons-react';
-import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { StarterButtonsProps } from '../../models/starter-props';
 
 const MAX_VISIBLE = 4;
@@ -86,6 +91,14 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
     computeVisibleCount(starters.length);
   });
 
+  const iconProps = useMemo(() => {
+    return {
+      ...BASE_MD_ICON_PROPS,
+      stroke: styles?.iconStrokeWidth ?? BASE_MD_ICON_PROPS.stroke,
+      size: styles?.iconSize ?? BASE_MD_ICON_PROPS.size,
+    };
+  }, [styles?.iconStrokeWidth, styles?.iconSize]);
+
   if (starters.length === 0) return null;
 
   const effectiveVisible = Math.min(visibleCount, MAX_VISIBLE);
@@ -115,8 +128,9 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
               pillRefs.current[index] = el;
             }}
           >
-            <DialRoundedButton
+            <NeutralButton
               label={starter.title}
+              appearance={ButtonAppearance.Outlined}
               onClick={() => onSelect(starter)}
             />
           </div>
@@ -130,24 +144,13 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
               matchReferenceWidth={false}
               listClassName="cp-dropdown-overlay"
             >
-              <DialRoundedButton
-                iconAfter={
+              <NeutralIconButton
+                appearance={ButtonAppearance.Outlined}
+                icon={
                   isMobile ? (
-                    <IconDots
-                      {...BASE_MD_ICON_PROPS}
-                      stroke={
-                        styles?.iconStrokeWidth ?? BASE_MD_ICON_PROPS.stroke
-                      }
-                      size={styles?.iconSize ?? BASE_MD_ICON_PROPS.size}
-                    />
+                    <IconDots {...iconProps} />
                   ) : (
-                    <IconDotsVertical
-                      {...BASE_MD_ICON_PROPS}
-                      stroke={
-                        styles?.iconStrokeWidth ?? BASE_MD_ICON_PROPS.stroke
-                      }
-                      size={styles?.iconSize ?? BASE_MD_ICON_PROPS.size}
-                    />
+                    <IconDotsVertical {...iconProps} />
                   )
                 }
                 aria-label={labels.overflow}

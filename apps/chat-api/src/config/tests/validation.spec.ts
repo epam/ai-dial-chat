@@ -70,6 +70,15 @@ describe('validate', () => {
     ).not.toThrow();
   });
 
+  it('parses AUTH_COOKIE_SECURE=false as false', () => {
+    const config = validate({
+      ...baseConfig,
+      AUTH_COOKIE_SECURE: 'false',
+    });
+
+    expect(config.AUTH_COOKIE_SECURE).toBe(false);
+  });
+
   it('defaults OVERLAY_ENABLED to false when unset', () => {
     const config = validate({ ...baseConfig });
     expect(config.OVERLAY_ENABLED).toBe(false);
@@ -102,5 +111,24 @@ describe('validate', () => {
       OVERLAY_SANDBOX_ENABLED: rawValue,
     });
     expect(config.OVERLAY_SANDBOX_ENABLED).toBe(expected);
+  });
+
+  it('parses publication filter sources up to 200 characters', () => {
+    const source = 'a'.repeat(200);
+    const config = validate({
+      ...baseConfig,
+      PUBLICATION_FILTER_SOURCES: `${source}, role`,
+    });
+
+    expect(config.PUBLICATION_FILTER_SOURCES).toEqual([source, 'role']);
+  });
+
+  it('fails fast when a publication filter source exceeds 200 characters', () => {
+    expect(() =>
+      validate({
+        ...baseConfig,
+        PUBLICATION_FILTER_SOURCES: 'a'.repeat(201),
+      }),
+    ).toThrow(/Environment validation failed/);
   });
 });

@@ -38,9 +38,7 @@ export enum MessageRole {
   Status = 'status',
 }
 
-/** A user-submitted thumbs-up or thumbs-down rating for an assistant message.
- * Stored as a signed integer that DIAL Core adds to the message's running like count:
- * `Like = 1` increments the count, `Dislike = -1` decrements it. */
+/** User-submitted thumbs-up or thumbs-down rating for an assistant message. */
 export enum MessageRating {
   Like = 1,
   Dislike = -1,
@@ -57,10 +55,7 @@ export enum StageStatus {
 /** Permitted scalar/array types for a single form field value. */
 export type MessageFormValueType = number | string | boolean | string[];
 
-/**
- * A key-value map submitted from a form widget embedded in a message.
- * Keys are field identifiers; values are typed form field values (or `undefined` for unset fields).
- */
+/** Key-value map of field identifiers to form field values, submitted from an embedded form widget. */
 export type MessageFormValue = Record<string, MessageFormValueType | undefined>;
 
 /** Discriminator values for `StatusMessageCustomContent.event_type`. */
@@ -68,10 +63,7 @@ export enum StatusEvent {
   ModelChanged = 'model_changed',
 }
 
-/**
- * Extra payload attached to a `MessageRole.Status` message.
- * Discriminated by `event_type`; forward-compatible with future event types.
- */
+/** Extra payload attached to a `MessageRole.Status` message. */
 export interface StatusMessageCustomContent {
   /** Machine-readable event discriminator. */
   event_type: StatusEvent;
@@ -114,31 +106,19 @@ export interface Message {
 
   /** DIAL Core response identifier used for the rate API. Present on the final chunk. */
   responseId?: string;
-  /**
-   * Extra DIAL API payload attached to the message.
-   * Present on both user requests (uploaded files) and assistant responses
-   * (generated/referenced files).
-   */
+  /** Extra DIAL API payload; present on user requests and assistant responses. */
   custom_content?: MessageCustomContent;
-  /** User-submitted rating for this message. Only meaningful for assistant messages. Stored in-memory only; not persisted. */
+  /** User-submitted rating for this message. */
   rating?: MessageRating;
-  /**
-   * ID of the deployment that generated this message.
-   * Set on `MessageRole.Assistant` and `MessageRole.Status` messages.
-   * Used to render the deployment icon next to assistant responses.
-   */
+  /** Deployment ID on `MessageRole.Assistant` and `MessageRole.Status` messages. */
   deploymentId?: string;
+  /* Human-readable error text from a failed stream. Present when generation ended in error — absence means generation succeeded or is still in progress. Used for both resume detection and UI error display. */
+  streamErrorMessage?: string;
   /** Allows extra SDK-level properties to pass through when serializing to DIAL Core. */
   [key: string]: unknown;
 }
 
-/**
- * An in-conversation system event message produced by the client (never forwarded to DIAL Core).
- * Discriminated from `Message` by `role: MessageRole.Status`.
- * Defined as a standalone interface rather than extending `Message` because
- * `custom_content` has an incompatible type (`StatusMessageCustomContent` vs
- * `MessageCustomContent`), which prevents structural subtyping.
- */
+/** In-conversation system event message, always with `role: MessageRole.Status`. */
 export interface StatusMessage extends Omit<
   Message,
   'role' | 'custom_content'
@@ -149,10 +129,7 @@ export interface StatusMessage extends Omit<
   custom_content?: StatusMessageCustomContent;
 }
 
-/**
- * A single stage entry produced by an agent during a streaming response.
- * Stages are delivered incrementally via `StreamChunkDelta.custom_content.stages`.
- */
+/** A single agent execution stage produced during a streaming response. */
 export interface Stage {
   /** Zero-based ordering key; used to merge/upsert incoming stage updates. */
   index: number;
@@ -193,11 +170,7 @@ export interface StreamChunkDelta {
     /** Partial annotation updates; merge by `index` into the accumulating annotation list. */
     annotations?: Annotation[];
   };
-  /**
-   * Raw custom fields in the DIAL wire format.
-   * Annotations here use `pdf_region` selectors and `attachment_index` references
-   * and must be normalized to the internal model before use.
-   */
+  /** Raw custom fields in the DIAL wire format. */
   custom_fields?: {
     /** Raw annotations in the DIAL wire format; must be normalized before use. */
     annotations?: unknown[];

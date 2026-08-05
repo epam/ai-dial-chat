@@ -16,15 +16,32 @@ This document defines functional and non-functional requirements for the initial
 
 ### FR-1 — Conversation Input (`@epam/ai-dial-conversation-input`)
 
-| ID     | Requirement                                                                              | Priority |
-| ------ | ---------------------------------------------------------------------------------------- | -------- |
-| FR-1.1 | User can type a message and send it via the Send button or `Enter` key                   | Must     |
-| FR-1.2 | `Shift+Enter` inserts a newline without sending                                          | Must     |
-| FR-1.3 | Send button is disabled when the input is empty or a response is streaming               | Must     |
-| FR-1.4 | User can attach files to a message; attached files are displayed as chips before sending | Should   |
-| FR-1.5 | User can remove an attached file chip before sending                                     | Should   |
-| FR-1.6 | Input supports slash commands (e.g. `/help`) with a dropdown picker                      | Could    |
-| FR-1.7 | Input supports `@mention` syntax with a dropdown picker                                  | Could    |
+| ID     | Requirement                                                                                                                    | Priority |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| FR-1.1 | User can type a message and send it via the Send button or `Enter` key                                                         | Must     |
+| FR-1.2 | `Shift+Enter` inserts a newline without sending                                                                                | Must     |
+| FR-1.3 | Send button is disabled when the input is empty or a response is streaming                                                     | Must     |
+| FR-1.4 | User can attach files to a message; attached files are displayed as chips before sending                                       | Should   |
+| FR-1.5 | User can remove an attached file chip before sending                                                                           | Should   |
+| FR-1.6 | Input supports slash commands (e.g. `/help`) with a dropdown picker                                                            | Could    |
+| FR-1.7 | Input supports `@mention` syntax with a dropdown picker                                                                        | Could    |
+| FR-1.8 | Conversation Input shows the selected deployment's finite or unlimited monthly token allowance through a compact usage control | Should   |
+| FR-1.9 | Finite limits reveal a percentage; unlimited limits reveal `Unlimited`; both open a one-bar `Usage Limit` popover              | Should   |
+
+#### Token-usage limits control
+
+The app-owned `UsageLimitsControl` is passed to the isolated Conversation Input
+library through `usageLimitsSlot`. It reads only `monthTokenStats`. At rest the
+trigger shows a compact circular ring; hover, keyboard focus, and the open state
+reveal either the finite percentage or the localized `Unlimited` value at the
+ring's inline-start side inside one rounded capsule.
+
+For finite limits the popover shows one monthly `DialProgressBar` and
+`N tokens remaining`. For unlimited limits it follows the Catalog convention:
+the row remains visible, the progress bar uses the normalized `used` and raw
+`total`, and the value is `Unlimited`. Opening the popover refreshes data
+silently without replacing its content with a loader. At 90% finite usage the
+ring and percentage use the theme error color.
 
 ### FR-2 — Message Feed (`@epam/ai-dial-conversation-messages`)
 
@@ -117,13 +134,13 @@ This document defines functional and non-functional requirements for the initial
 
 ### NFR-2 — Security
 
-| ID      | Requirement                                                                                |
-| ------- | ------------------------------------------------------------------------------------------ |
-| NFR-2.1 | All state-changing API calls include a `X-CSRF-Token` header validated against the session |
-| NFR-2.2 | Session cookies are `HttpOnly`, `Secure`, `SameSite=Strict`                                |
-| NFR-2.3 | `helmet` enforces CSP, HSTS, and standard security headers on all responses                |
-| NFR-2.4 | No auth tokens or user credentials are ever passed to or stored by UI libraries            |
-| NFR-2.5 | Conversation completions endpoint is rate-limited to 10 req/min per session                |
+| ID      | Requirement                                                                                                                                                    |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| NFR-2.1 | All state-changing API calls include a `X-CSRF-Token` header validated against the session                                                                     |
+| NFR-2.2 | Session cookies are `HttpOnly`, `Secure` by default, `SameSite=Lax` normally, and `SameSite=None; Secure` only for overlay embedding that must work cross-site |
+| NFR-2.3 | `helmet` enforces CSP, HSTS, and standard security headers on all responses                                                                                    |
+| NFR-2.4 | No auth tokens or user credentials are ever passed to or stored by UI libraries                                                                                |
+| NFR-2.5 | Conversation completions endpoint is rate-limited to 10 req/min per session                                                                                    |
 
 ### NFR-3 — Accessibility
 

@@ -1,9 +1,13 @@
+import type {
+  PublicationRule,
+  PublishFolderNode,
+  PublishFooterLabels,
+  PublishHistoryEntry,
+  PublishPanelLabels,
+} from '@epam/ai-dial-publish-panel';
 import type { ReactNode } from 'react';
-import type { PublishFooterTexts } from '../components/PublishPanel/PublishFooter';
-import type { PublishPanelTexts } from '../components/PublishPanel/PublishPanel';
 import type { CredentialsLevel } from '../types/toolset-auth';
 import type { CatalogItem } from './catalog-item';
-import type { PublishFolderNode, PublishHistoryEntry } from './publish';
 
 /** Text overrides for all user-visible strings in `DetailsPanel`. */
 export interface ItemDetailsTexts {
@@ -192,19 +196,37 @@ export interface DetailsPanelProps {
   publishLoadingPaths?: Set<string>;
   /** Resolves whether the current user can publish to a given folder path. */
   hasPublishWriteAccess?: (folderPath: string[]) => boolean;
-  /** Called with the destination folder path when the user confirms publish/update. */
-  onPublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
+  /** Called with the destination folder path and current access rules when the user confirms publish/update. */
+  onPublish?: (
+    item: CatalogItem,
+    folderPath: string[],
+    rules: PublicationRule[],
+  ) => Promise<void>;
   /** Called after a successful publish; use this to surface a success notification. */
   onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
   /** Called when the user confirms a new folder name in the publish flow. */
   onCreatePublishFolder?: (parentPath: string[], name: string) => void;
   /** Text overrides forwarded to the publish flow. */
-  publishTexts?: PublishPanelTexts & PublishFooterTexts;
+  publishLabels?: PublishPanelLabels & PublishFooterLabels;
+  /** Options offered in the access-rules editor's source picker. Defaults to `[]` when absent. */
+  ruleSourceOptions?: string[];
+  /**
+   * Resolves the access rules already configured for a destination folder,
+   * called whenever the selected folder changes. The result fully replaces
+   * the rules editor's contents. Omit to skip pre-filling entirely.
+   */
+  onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
   /**
    * Renders the Share popover content anchored to the Share button. When
    * provided, clicking Share opens this popover instead of calling `onShare`.
    */
   shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
+  /**
+   * Additional caller-supplied rule for whether the "Share" action is shown
+   * for the item, combined (AND) with the built-in ownership/type rule.
+   * Absent means the built-in rule alone decides.
+   */
+  isShareVisible?: (item: CatalogItem) => boolean;
   /**
    * Renders the Connect popover content anchored to the Connect button. When
    * absent, the Connect button is never shown — there is no non-overlay

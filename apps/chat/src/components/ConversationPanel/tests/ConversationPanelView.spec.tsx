@@ -1,3 +1,4 @@
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   ConversationDeletionFailureDtoCodeEnum,
   type ConversationDeletionResultDto,
@@ -16,6 +17,7 @@ import { useConversations } from '../../../context/ConversationsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { useConversationExport } from '../../../hooks/useConversationExport';
 import { useConversationImport } from '../../../hooks/useConversationImport';
+import { useUiFeature } from '../../../hooks/useUiFeature';
 import { discardSharedCatalogItem } from '../../../server-api/share.api';
 import {
   ConversationExportMode,
@@ -33,6 +35,7 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
       conversations: panelConversations,
       getActions,
       onActionMenuOpen,
+      className,
     }: {
       headerActions?: ReactNode;
       conversations?: Array<{ id: string }>;
@@ -50,8 +53,9 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
         item: { id: string },
         trigger: HTMLButtonElement,
       ) => void;
+      className?: string;
     }) => (
-      <div role="region" aria-label="conversation panel">
+      <div role="region" aria-label="conversation panel" className={className}>
         {headerActions}
         {panelConversations?.map((item) => (
           <div key={item.id}>
@@ -158,20 +162,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         </div>
       );
     },
-    DialIconButton: ({
-      'aria-label': ariaLabel,
-      onClick,
-      icon,
-    }: {
-      'aria-label': string;
-      onClick?: () => void;
-      icon?: ReactNode;
-    }) => (
-      <button aria-label={ariaLabel} onClick={onClick}>
-        {icon}
-      </button>
-    ),
-    DialNotification: ({
+    ErrorMessageNotification: ({
       message,
       onClose,
       closable,
@@ -216,7 +207,7 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
 }));
 
@@ -229,6 +220,7 @@ vi.mock('../../../context/DeploymentsContext', () => ({
 vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
   useIsMobile: () => false,
 }));
+vi.mock('../../../hooks/useUiFeature');
 vi.mock('../../../constants/routes', () => ({
   getConversationRoute: (id: string) => `/conversations/${id}`,
   normalizeConversationId: (id: string) => id,
@@ -413,6 +405,7 @@ const openDeleteAllPopup = () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(useUiFeature).mockReturnValue(true);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vi.mocked(useConversations).mockReturnValue(baseContextValue as any);
   vi.mocked(useNotification).mockReturnValue({
@@ -914,6 +907,14 @@ describe('ConversationPanelView — share', () => {
       expect(screen.queryByRole('dialog')).toBeNull();
     });
   });
+
+  it('excludes Share from the menu when conversations-sharing is disabled', () => {
+    vi.mocked(useUiFeature).mockImplementation(
+      (feature) => feature !== OverlayFeature.ConversationsSharing,
+    );
+    render(<ConversationPanelView {...defaultProps} />);
+    expect(screen.queryByRole('button', { name: SHARE_LABEL })).toBeNull();
+  });
 });
 
 describe('ConversationPanelView — publish', () => {
@@ -992,6 +993,14 @@ describe('ConversationPanelView — publish', () => {
         screen.queryByRole('dialog', { name: 'publish conversation' }),
       ).toBeNull();
     });
+  });
+
+  it('excludes Publish from the menu when conversations-publishing is disabled', () => {
+    vi.mocked(useUiFeature).mockImplementation(
+      (feature) => feature !== OverlayFeature.ConversationsPublishing,
+    );
+    render(<ConversationPanelView {...defaultProps} />);
+    expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
   });
 });
 
@@ -1137,7 +1146,9 @@ describe('ConversationPanelView — import header action', () => {
     const fileInput = document.querySelector(
       'input[type="file"]',
     ) as HTMLInputElement;
-    expect(fileInput.accept).toBe('.json,.dial,.zip');
+    expect(fileInput.accept).toBe(
+      '.json,.dial,.zip,application/json,application/zip',
+    );
   });
 
   it('selecting a file calls importConversations with that file', () => {
@@ -1534,5 +1545,24 @@ describe('ConversationPanelView — unshare (shared-with-me delete)', () => {
 
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(discardSharedCatalogItem).not.toHaveBeenCalled();
+  });
+});
+
+describe('ConversationPanelView — UI feature gates', () => {
+  it('does not render the panel when conversations-section is disabled', () => {
+    vi.mocked(useUiFeature).mockImplementation(
+      (feature) => feature !== OverlayFeature.ConversationsSection,
+    );
+    render(<ConversationPanelView {...defaultProps} />);
+    expect(
+      screen.queryByRole('region', { name: 'conversation panel' }),
+    ).toBeNull();
+  });
+
+  it('renders the panel when conversations-section is enabled', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    expect(
+      screen.getByRole('region', { name: 'conversation panel' }),
+    ).toBeTruthy();
   });
 });

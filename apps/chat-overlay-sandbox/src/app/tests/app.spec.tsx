@@ -12,10 +12,21 @@ vi.mock('../../cases/ManagerOverlayCase/ManagerOverlayCase', () => ({
 vi.mock('../../cases/ConversationListCase/ConversationListCase', () => ({
   default: () => <div>Conversation-list case content</div>,
 }));
+vi.mock('../../cases/EnabledFeaturesCase/EnabledFeaturesCase', () => ({
+  default: () => <div>Enabled-features case content</div>,
+}));
+vi.mock('../../cases/AuthUiModeCase/AuthUiModeCase', () => ({
+  default: () => <div>Auth UI mode case content</div>,
+}));
 
 describe('App', () => {
   it('lists the v1-scoped cases and the conversation-list case', () => {
     render(<App />);
+
+    expect(
+      screen.getByRole('heading', { name: 'Chat Overlay Sandbox', level: 1 }),
+    ).toBeTruthy();
+    expect(screen.getByText('5 scenarios')).toBeTruthy();
 
     expect(
       screen.getByRole('button', { name: 'Direct ChatOverlay case' }),
@@ -27,6 +38,12 @@ describe('App', () => {
       screen.getByRole('button', {
         name: 'Conversation-list methods case',
       }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'enabledFeatures case' }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Provider auth UI mode case' }),
     ).toBeTruthy();
   });
 
@@ -57,9 +74,7 @@ describe('App', () => {
     );
     expect(screen.getByText('Direct case content')).toBeTruthy();
 
-    await user.click(
-      screen.getByRole('button', { name: '← Back to case list' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'Back to case list' }));
     expect(
       screen.getByRole('button', { name: 'Direct ChatOverlay case' }),
     ).toBeTruthy();
@@ -85,5 +100,26 @@ describe('App', () => {
       }),
     );
     expect(screen.getByText('Conversation-list case content')).toBeTruthy();
+  });
+
+  it('navigates to the enabledFeatures case', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(
+      screen.getByRole('button', { name: 'enabledFeatures case' }),
+    );
+    expect(screen.getByText('Enabled-features case content')).toBeTruthy();
+  });
+
+  it('navigates to the provider auth UI mode case', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(
+      screen.getByRole('button', { name: 'Provider auth UI mode case' }),
+    );
+
+    expect(screen.getByText('Auth UI mode case content')).toBeTruthy();
   });
 });

@@ -62,6 +62,11 @@ function makeService(
     getDeploymentLimits: vi.fn(),
     getModel: vi.fn(),
     getApplication: vi.fn(),
+    getCustomApplication: vi.fn().mockResolvedValue({
+      error: true,
+      response: { status: 404 },
+      data: null,
+    }),
     getToolset: vi.fn(),
     getToolSetTools: vi.fn(),
     getSharedResources: vi
@@ -703,7 +708,7 @@ describe('DeploymentsService', () => {
           {
             ...mockApplication,
             id: 'applications/BUCKET_HASH/my-app',
-            owner: 'Valery Dluski',
+            owner: 'Test User',
           },
         ],
       });
@@ -1100,6 +1105,24 @@ describe('DeploymentsService', () => {
       );
     });
 
+    it('encodes each deployment path segment before calling DIAL Core', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'configurationDeployment')
+        .mockResolvedValue(okResponse(schema));
+
+      await service.getDeploymentConfiguration(
+        'applications/bucket/My%20App#1',
+        'user-123',
+        'token',
+      );
+
+      expect(spy).toHaveBeenCalledWith(
+        'applications/bucket/My%20App%231',
+        expect.any(Object),
+      );
+    });
+
     it('returns cached value and skips upstream on cache hit', async () => {
       const { service, cacheManager } = makeService();
       cacheManager.get.mockResolvedValue(schema);
@@ -1195,6 +1218,21 @@ describe('DeploymentsService', () => {
       );
     });
 
+    it('encodes each deployment path segment before calling DIAL Core', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentLimits.mockResolvedValue(okResponse(mockLimits));
+
+      await service.getDeploymentLimits(
+        'applications/bucket/My%20App#1',
+        'token',
+      );
+
+      expect(sdkClient.getDeploymentLimits).toHaveBeenCalledWith(
+        'applications/bucket/My%20App%231',
+        expect.any(Object),
+      );
+    });
+
     it('does not use cache — two calls invoke upstream twice', async () => {
       const { service, sdkClient, cacheManager } = makeService();
       sdkClient.getDeploymentLimits.mockResolvedValue(okResponse(mockLimits));
@@ -1236,6 +1274,24 @@ describe('DeploymentsService', () => {
   });
 
   describe('getDeploymentDetails', () => {
+    it('encodes each deployment path segment before calling DIAL Core', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({ id: 'applications/bucket/My%20App%231' }),
+      );
+
+      await service.getDeploymentDetails(
+        'user1',
+        'applications/bucket/My%20App#1',
+        'token',
+      );
+
+      expect(sdkClient.getApplication).toHaveBeenCalledWith(
+        'applications/bucket/My%20App%231',
+        expect.any(Object),
+      );
+    });
+
     it('dispatches to getModel and maps capabilities/limits/pricing for a model', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.getModel.mockResolvedValue(
@@ -1329,6 +1385,54 @@ describe('DeploymentsService', () => {
       });
       expect(JSON.stringify(result)).not.toContain('SECRET');
       expect(JSON.stringify(result)).not.toContain('editor.example.com');
+    });
+
+    it('maps display_name for an application', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({
+          id: 'applications/public/finhub-via-openapi__1.0.0',
+          display_name: 'finhub-via-openapi',
+        }),
+      );
+
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'applications/public/finhub-via-openapi__1.0.0',
+        'token',
+      );
+
+      expect(result.applicationDetails?.displayName).toBe('finhub-via-openapi');
+    });
+
+    it('logs the raw DIAL Core application response and the mapped response', async () => {
+      const debugSpy = vi
+        .spyOn(Logger.prototype, 'debug')
+        .mockImplementation(() => undefined);
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({
+          id: 'applications/public/finhub-via-openapi__1.0.0',
+          display_name: 'finhub-via-openapi',
+        }),
+      );
+
+      await service.getDeploymentDetails(
+        'user1',
+        'applications/public/finhub-via-openapi__1.0.0',
+        'token',
+      );
+
+      const logged = debugSpy.mock.calls.map((call) => String(call[0]));
+      expect(
+        logged.some((line) => line.includes('DIAL Core application details')),
+      ).toBe(true);
+      expect(logged.some((line) => line.includes('sent to frontend'))).toBe(
+        true,
+      );
+      expect(logged.join('\n')).toContain('finhub-via-openapi');
+
+      debugSpy.mockRestore();
     });
 
     it('dispatches to getToolset, maps owner/features/auth status, and forwards all non-secret authSettings fields', async () => {

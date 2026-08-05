@@ -24,11 +24,7 @@ export interface SearchBarProps {
   clearLabel?: string;
 }
 
-/**
- * Catalog search bar. Reuses the shared {@link BaseSearchBar} default colors
- * (background, border, hover/focus, icon and text colors) and only adjusts
- * height, radius, padding, and icon/text size for the catalog layout.
- */
+/** Catalog-layout search bar (50 px height, XL radius, adjusted icon size). */
 export const SearchBar: FC<SearchBarProps> = ({
   value,
   onChange,

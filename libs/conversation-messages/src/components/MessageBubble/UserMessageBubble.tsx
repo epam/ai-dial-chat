@@ -6,11 +6,7 @@ import {
   useCollapsedText,
 } from '@epam/ai-dial-chat-shared';
 import { AttachmentGroup } from '@epam/ai-dial-conversation-input';
-import {
-  DIAL_ICON_SIZE,
-  DialLinkButton,
-  ElementSize,
-} from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, ElementSize, LinkButton } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { FC, useId } from 'react';
 import type { UserMessageBubbleProps } from '../../models/message-bubble';
@@ -33,6 +29,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   onAttachmentClick,
   onDownloadAll,
   onAttachmentRetry,
+  selectedAttachmentId,
 }) => {
   const { colors, typography, className, bubbleClassName } = bubbleStyles ?? {};
   const {
@@ -71,8 +68,8 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
 
   const positionRadius =
     position === BubblePosition.Top
-      ? 'rounded-ee-[6px] rounded-se-[16px]'
-      : 'rounded-se-[6px] rounded-ee-[16px]';
+      ? 'rounded-ee-md rounded-se-2xl'
+      : 'rounded-se-md rounded-ee-2xl';
 
   const textClass = mergeClasses(styles.text, typography?.fontClassName);
   const expandAriaLabel = showMoreAriaLabel ?? showMoreLabel;
@@ -104,6 +101,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
             openInNewTabLabel: attachmentOpenInNewTabLabel,
           }}
           styles={{ className: 'max-w-[640px]' }}
+          selectedAttachmentId={selectedAttachmentId}
         />
         {text && (
           <div
@@ -135,7 +133,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
                 </p>
               </div>
               {isOverflowing && (
-                <DialLinkButton
+                <LinkButton
                   label={<>{toggleLabel}</>}
                   iconBefore={
                     <ToggleIcon size={DIAL_ICON_SIZE.SM} aria-hidden="true" />

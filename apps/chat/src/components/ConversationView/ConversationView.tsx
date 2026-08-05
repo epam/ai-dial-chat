@@ -1,4 +1,5 @@
 import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   DisplayAttachment,
   isStatusMessage,
@@ -10,18 +11,22 @@ import {
   type MessageRating,
   type Message as MessageType,
   type StarterOption,
+  type ToolMenuItem,
 } from '@epam/ai-dial-chat-shared';
-import { FileDndOverlay } from '@epam/ai-dial-conversation-input';
+import {
+  FileDndOverlay,
+  type ToolsChipLabels,
+} from '@epam/ai-dial-conversation-input';
 import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
-import { NeutralButton } from '@epam/ai-dial-kit';
 import {
-  DialFabButton,
-  DialNotification,
-  NotificationVariant,
   DIAL_ICON_SIZE,
+  ErrorMessageNotification,
+  FabButton,
+  NeutralButton,
+  NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
 import {
@@ -35,12 +40,12 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
-import { CONVERSATION_VIEW_INPUT_STYLES } from '../../constants/input-styles';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationI18nKeys,
+  ConversationInputI18nKeys,
   ConversationPanelI18nKeys,
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
@@ -57,6 +62,7 @@ import { useConversationScroll } from '../../hooks/conversation/useConversationS
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
+import { useUiFeature } from '../../hooks/useUiFeature';
 import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
 import {
   dialFilesToAttachments,
@@ -67,6 +73,8 @@ import { isMessageChanged } from '../../utils/message-utils';
 import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
+import FooterContainer from '../FooterDialogs/FooterContainer';
+import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 import ConversationMessageItem from './ConversationMessageItem';
 
 const ConversationInput = lazy(async () => {
@@ -107,7 +115,6 @@ interface Props {
   isAssistantTyping?: boolean;
   canStopAssistant?: boolean;
   initialModelId: string;
-  streamErrorText: string;
   stoppedGeneratingText: string;
   isReadOnly?: boolean;
   onDuplicateConversation?: () => void;
@@ -129,6 +136,10 @@ interface Props {
    * to be picked. The chip stays visible — it is not hidden.
    */
   fixedModel?: { id: string; displayName?: string; iconUrl?: string };
+  toolsMenuItems?: ToolMenuItem[];
+  onToolToggle?: (toolId: string) => void;
+  toolsMenuTitle?: string;
+  toolsChipLabels?: ToolsChipLabels;
 }
 
 const ConversationView: FC<Props> = ({
@@ -150,7 +161,6 @@ const ConversationView: FC<Props> = ({
   isAssistantTyping = false,
   canStopAssistant = false,
   initialModelId,
-  streamErrorText,
   stoppedGeneratingText,
   isReadOnly = false,
   onDuplicateConversation,
@@ -161,6 +171,10 @@ const ConversationView: FC<Props> = ({
   fixedModel,
   inputContent,
   inputContentRevision,
+  toolsMenuItems,
+  onToolToggle,
+  toolsMenuTitle,
+  toolsChipLabels,
 }) => {
   const isModelFixed = !!fixedModel;
   const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
@@ -169,6 +183,14 @@ const ConversationView: FC<Props> = ({
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
+  const isDisallowChangeAgentEnabled = useUiFeature(
+    OverlayFeature.DisallowChangeAgent,
+  );
+  const isDisabledSendEnabled = useUiFeature(OverlayFeature.DisabledSend);
+  const isSkipFocusChatInputOnloadEnabled = useUiFeature(
+    OverlayFeature.SkipFocusChatInputOnload,
+  );
+  const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
   // bucket is the authenticated user's DIAL Core storage bucket from their profile
   const bucket = user?.bucket ?? '';
   const [isDialFileManagerOpen, setIsDialFileManagerOpen] = useState(false);
@@ -177,7 +199,8 @@ const ConversationView: FC<Props> = ({
   >([]);
   const [attachmentsAmount, setAttachmentsAmount] = useState(0);
   const { openAttachmentCanvas } = useOpenAttachmentCanvas();
-  const { openCanvas } = useAttachmentCanvas();
+  const { openCanvas, attachmentId: selectedAttachmentKey } =
+    useAttachmentCanvas();
 
   const handlePreviewReference = useCallback(
     (annotation: Annotation) => {
@@ -354,6 +377,20 @@ const ConversationView: FC<Props> = ({
     itemCount: items.length,
   });
 
+  const usageLimitsLabels = useMemo(
+    () => ({
+      triggerAriaLabel: ({ value }: { value: string }) =>
+        t(ConversationInputI18nKeys.TriggerAriaLabel, { value }),
+      popoverTitle: t(ConversationInputI18nKeys.PopoverTitle),
+      error: t(ConversationInputI18nKeys.Error),
+      tokensRemaining: ({ count }: { count: string }) =>
+        t(ConversationInputI18nKeys.TokensRemaining, { count }),
+      progressAriaLabel: ({ used, total }: { used: string; total: string }) =>
+        t(ConversationInputI18nKeys.ProgressAriaLabel, { used, total }),
+    }),
+    [t],
+  );
+
   const formatStatusModelChangedBody = useCallback(
     (from: string, to: string) =>
       t(ConversationI18nKeys.StatusModelChangedBody, {
@@ -380,8 +417,8 @@ const ConversationView: FC<Props> = ({
   const handleSendWithAnchor = useCallback(
     async (message: string, attachments: Attachment[]) => {
       armAnchor(messages.length);
-      // ConversationInput awaits this to know whether to restore the draft
-      // on failure — forward onSend's result rather than discarding it.
+      /* ConversationInput awaits this to know whether to restore the draft
+       * on failure — forward onSend's result rather than discarding it. */
       await onSend(message, attachments);
     },
     [onSend, messages.length, armAnchor],
@@ -468,6 +505,16 @@ const ConversationView: FC<Props> = ({
     [showNotification, t],
   );
 
+  const handleMessageTooLong = useCallback(
+    (_length: number, max: number) => {
+      showNotification({
+        variant: NotificationVariant.Error,
+        message: t(ConversationI18nKeys.MessageTooLong, { max }),
+      });
+    },
+    [showNotification, t],
+  );
+
   const handleInputAttachmentClick = useCallback(
     (attachment: DisplayAttachment) => {
       void openAttachmentCanvas(attachment);
@@ -476,8 +523,14 @@ const ConversationView: FC<Props> = ({
   );
 
   const handleMessageAttachmentClick = useCallback(
-    (attachment: DisplayAttachment) => {
-      void openAttachmentCanvas(attachment);
+    (attachment: DisplayAttachment, messageIndex: number) => {
+      /*
+       * DisplayAttachment.id is derived from content (url/data/title), so the
+       * same id can recur across different messages (e.g. the same file
+       * attached twice) — prefix with the message index so the "selected"
+       * tile highlight can't spuriously match a different message's tile.
+       */
+      void openAttachmentCanvas(attachment, `${messageIndex}:${attachment.id}`);
     },
     [openAttachmentCanvas],
   );
@@ -559,7 +612,6 @@ const ConversationView: FC<Props> = ({
                       ConversationI18nKeys.StatusModelChangedTitle,
                     )}
                     formatStatusModelChangedBody={formatStatusModelChangedBody}
-                    streamErrorText={streamErrorText}
                     stoppedGeneratingText={stoppedGeneratingText}
                     thinkingLabel={t(ChatI18nKeys.Thinking)}
                     executedLabel={t(ConversationI18nKeys.StagesExecuted)}
@@ -580,13 +632,23 @@ const ConversationView: FC<Props> = ({
                         ? validateAttachment
                         : undefined
                     }
+                    isAttachmentsEnabled={
+                      selectedDeployment != null
+                        ? isAttachmentsAllowed
+                        : undefined
+                    }
                     maximumAttachmentsAmount={
                       selectedDeployment?.maxInputAttachments
                     }
                     onAttachmentsLimitExceeded={handleAttachmentsLimitExceeded}
-                    hideAttachFile={!isAttachmentsAllowed}
+                    hideAttachFile={
+                      !isAttachmentsAllowed || !isInputFilesEnabled
+                    }
                     fileAccept={fileAccept}
-                    onAttachmentClick={handleMessageAttachmentClick}
+                    onAttachmentClick={(attachment) =>
+                      handleMessageAttachmentClick(attachment, index)
+                    }
+                    selectedAttachmentKey={selectedAttachmentKey}
                     onDialFileSystemClick={
                       isAttachmentsAllowed
                         ? () => setIsDialFileManagerOpen(true)
@@ -605,6 +667,7 @@ const ConversationView: FC<Props> = ({
                         ? () => setPendingDialAttachments([])
                         : undefined
                     }
+                    onMessageTooLong={handleMessageTooLong}
                   />
                 </div>
               );
@@ -619,7 +682,7 @@ const ConversationView: FC<Props> = ({
         </div>
 
         {isScrollButtonVisible && (
-          <DialFabButton
+          <FabButton
             aria-label={t(ChatI18nKeys.ScrollToBottom)}
             onClick={scrollToBottom}
             className="absolute bottom-0 left-1/2 -translate-x-1/2"
@@ -630,15 +693,12 @@ const ConversationView: FC<Props> = ({
       <div
         role="region"
         aria-label={t(ChatI18nKeys.MessageInput)}
-        className="relative z-10 w-full px-6 pb-4"
+        className="relative z-10 w-full px-6"
       >
         {isReadOnly ? (
           <div className="flex flex-col items-center justify-center gap-2 p-4">
             {duplicateError && (
-              <DialNotification
-                variant={NotificationVariant.Error}
-                message={duplicateError}
-              />
+              <ErrorMessageNotification message={duplicateError} />
             )}
             <NeutralButton
               label={t(ConversationPanelI18nKeys.DuplicateReadOnlyDescription)}
@@ -650,7 +710,6 @@ const ConversationView: FC<Props> = ({
           <>
             <Suspense fallback={null}>
               <ConversationInput
-                styles={CONVERSATION_VIEW_INPUT_STYLES}
                 message={inputContent}
                 messageRevision={inputContentRevision}
                 onSend={handleSendWithAnchor}
@@ -666,7 +725,10 @@ const ConversationView: FC<Props> = ({
                   fixedModel ? fixedModel.id : selectedItemId
                 }
                 onDeploymentChange={fixedModel ? undefined : setSelectedItemId}
-                isModelSelectorDisabled={isModelFixed}
+                isModelSelectorDisabled={
+                  isModelFixed || isDisallowChangeAgentEnabled
+                }
+                isSendDisabled={isDisabledSendEnabled}
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
                 addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
@@ -685,6 +747,10 @@ const ConversationView: FC<Props> = ({
                 messageHistory={messageHistory}
                 sendOnEnter={sendOnEnter}
                 chatSettings={chatSettings}
+                toolsMenuItems={toolsMenuItems}
+                onToolToggle={onToolToggle}
+                toolsMenuTitle={toolsMenuTitle}
+                toolsChipLabels={toolsChipLabels}
                 pendingDropFiles={!isEditActive ? pendingFiles : undefined}
                 pendingAttachments={
                   !isEditActive ? pendingDialAttachments : undefined
@@ -697,7 +763,7 @@ const ConversationView: FC<Props> = ({
                     ? () => setPendingDialAttachments([])
                     : undefined
                 }
-                autoFocus={!isMobile}
+                autoFocus={!isMobile && !isSkipFocusChatInputOnloadEnabled}
                 onDialFileSystemClick={
                   isAttachmentsAllowed
                     ? () => setIsDialFileManagerOpen(true)
@@ -709,14 +775,26 @@ const ConversationView: FC<Props> = ({
                 validateAttachment={
                   selectedDeployment != null ? validateAttachment : undefined
                 }
+                isAttachmentsEnabled={
+                  selectedDeployment != null ? isAttachmentsAllowed : undefined
+                }
                 maximumAttachmentsAmount={
                   selectedDeployment?.maxInputAttachments
                 }
                 onAttachmentsLimitExceeded={handleAttachmentsLimitExceeded}
-                hideAttachFile={!isAttachmentsAllowed}
+                hideAttachFile={!isAttachmentsAllowed || !isInputFilesEnabled}
                 fileAccept={fileAccept}
                 onAttachmentClick={handleInputAttachmentClick}
                 modelPickerOverlay={isModelFixed ? undefined : renderOverlay}
+                onMessageTooLong={handleMessageTooLong}
+                usageLimitsSlot={
+                  <UsageLimitsControl
+                    deploymentId={
+                      fixedModel ? fixedModel.id : (selectedItemId ?? undefined)
+                    }
+                    labels={usageLimitsLabels}
+                  />
+                }
               />
             </Suspense>
             <Suspense fallback={null}>
@@ -800,6 +878,15 @@ const ConversationView: FC<Props> = ({
           </>
         )}
       </div>
+      {/*
+       * FooterContainer is intentionally co-located with each view that can
+       * render a footer message (ConversationView, NewConversationComposer,
+       * NavPageContent). Only one view is visible at a time, so at most one
+       * instance is active. If the footer feature grows to require shared
+       * dialog state across views, lift FooterContainer to a single top-level
+       * provider instead.
+       */}
+      <FooterContainer />
       {catalogModal}
     </>
   );

@@ -3,6 +3,7 @@ import type {
   AttachmentErrorReason,
   DeploymentItem,
   DisplayAttachment,
+  ToolMenuItem,
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
 import type {
@@ -11,12 +12,11 @@ import type {
   InputTypography,
   ModelSelectorLabels,
   SendOnEnter,
+  ToolsChipLabels,
 } from './Input';
 
 /** CSS custom-property overrides for the `ConversationInput` component. */
 export interface ConversationInputColors {
-  /** Root container background color. */
-  background?: string;
   /** Welcome heading text color. */
   welcomeText?: string;
   /** Color overrides forwarded to the inner `Input` component. */
@@ -47,12 +47,7 @@ export interface EditMessageInputProps {
   initialAttachments?: DisplayAttachment[];
   /** Called when the user clicks the Cancel button. */
   onCancel: () => void;
-  /**
-   * Called when the user clicks Save & Submit.
-   * @param message - The edited message text.
-   * @param keptAttachments - Pre-existing attachments the user did not remove.
-   * @param newAttachments - New attachments added during editing.
-   */
+  /** Called when the user clicks Save & Submit. */
   onSave: (
     message: string,
     keptAttachments: DisplayAttachment[],
@@ -93,18 +88,16 @@ export interface EditMessageInputProps {
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
   /**
-   * Maximum number of kept plus newly added attachments. Undefined, `0`, or
-   * non-finite values mean there is no count limit.
+   * When `false`, long pasted plain text is inserted inline instead of being
+   * converted to a text attachment. Set to `false` when the selected model
+   * does not support attachments. Defaults to `true`.
    */
+  isAttachmentsEnabled?: boolean;
+  /** Maximum total kept-plus-new attachments; unlimited when `undefined`, `0`, or non-finite. */
   maximumAttachmentsAmount?: number;
-  /**
-   * Called when adding a file/drop batch would exceed
-   * `maximumAttachmentsAmount`.
-   */
+  /** Called when adding a batch would exceed `maximumAttachmentsAmount`. */
   onAttachmentsLimitExceeded?: (count: number, limit: number) => void;
-  /**
-   * When `true`, the "Attach file" button is hidden.
-   */
+  /** When `true`, the "Attach file" button is hidden. */
   hideAttachFile?: boolean;
   /**
    * Value applied verbatim as the `accept` attribute on the native device
@@ -128,6 +121,14 @@ export interface EditMessageInputProps {
    * When absent the cards are not rendered as interactive.
    */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /** Character count above which pasted plain-text triggers `onMessageTooLong` when attachments are disabled. Defaults to `4000`. */
+  pasteTextThreshold?: number;
+  /**
+   * Called when the user pastes text whose length is ≥ `pasteTextThreshold` while
+   * `isAttachmentsEnabled` is `false`. The text is still inserted inline — the
+   * host is responsible for surfacing the error to the user.
+   */
+  onMessageTooLong?: (length: number, max: number) => void;
 }
 
 /** Props accepted by the `ConversationInput` component. */
@@ -197,6 +198,17 @@ export interface ConversationInputProps {
    */
   isModelSelectorDisabled?: boolean;
   /**
+   * When `true`, disables the send action without removing or dimming the
+   * send button itself. Independent of `isInputDisabled`. Defaults to `false`.
+   */
+  isSendDisabled?: boolean;
+  /**
+   * Extra class name(s) merged onto the inner `Input` wrapper element (the
+   * bordered container around the textarea/model-selector/send-button row),
+   * distinct from `className` which styles this component's own outer root.
+   */
+  inputClassName?: string;
+  /**
    * When `true`, the mic button is rendered and voice recording is enabled.
    * The host app derives this from the selected deployment's `inputAttachmentTypes`.
    * When `false` or absent, the mic button is hidden and the voice bar is never shown.
@@ -254,6 +266,12 @@ export interface ConversationInputProps {
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
   /**
+   * When `false`, long pasted plain text is inserted inline instead of being
+   * converted to a text attachment. Set to `false` when the selected model
+   * does not support attachments. Defaults to `true`.
+   */
+  isAttachmentsEnabled?: boolean;
+  /**
    * Maximum number of attachments allowed in the input tray. Undefined, `0`,
    * or non-finite values mean there is no count limit.
    */
@@ -282,4 +300,22 @@ export interface ConversationInputProps {
    */
   // TODO: review usage
   modelPickerOverlay?: (onClose: () => void) => ReactNode;
+  /** Resolved tool toggle items rendered in a "Tools" submenu. When empty or absent, no Tools item is shown. */
+  toolsMenuItems?: ToolMenuItem[];
+  /** Called when a tool row is toggled. Receives the tool id. */
+  onToolToggle?: (toolId: string) => void;
+  /** Label for the "Tools" menu item and mobile sheet title. Defaults to `'Tools'`. */
+  toolsMenuTitle?: string;
+  /** Accessible label for the back arrow in the mobile tools bottom sheet. Defaults to `'Back'`. */
+  toolsBackLabel?: string;
+  /** Labels for the selected-tools chip row shown in the input when tools are active. */
+  toolsChipLabels?: ToolsChipLabels;
+  /** Arbitrary slot rendered in the action row before the model selector. Use to inject app-level controls (e.g. a token-usage indicator). */
+  usageLimitsSlot?: ReactNode;
+  /**
+   * Called when the user pastes text whose length is ≥ `pasteTextThreshold` while
+   * `isAttachmentsEnabled` is `false`. The text is still inserted inline — the
+   * host is responsible for surfacing the error to the user.
+   */
+  onMessageTooLong?: (length: number, max: number) => void;
 }

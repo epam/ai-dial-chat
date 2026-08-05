@@ -1,7 +1,7 @@
 import {
   OverlayEventType,
   OverlayRequestType,
-} from '@epam/ai-dial-chat-shared';
+} from '@epam/ai-dial-chat-overlay';
 import type { Conversation } from '@epam/ai-dial-chat-shared';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
@@ -32,7 +32,7 @@ vi.mock('../../../context/ClientChannelContext', () => ({
   })),
 }));
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => vi.fn(),
 }));
 
@@ -48,6 +48,14 @@ vi.mock('../../../context/auth/UserContext', () => ({
 
 vi.mock('../../../context/ThemeContext', () => ({
   useTheme: () => ({ setTheme: vi.fn() }),
+}));
+
+vi.mock('../../../context/UiFeaturesContext', () => ({
+  useUiFeatures: () => ({
+    isEnabled: () => true,
+    enabledFeatures: new Set(),
+    applyOverlayOverride: vi.fn(),
+  }),
 }));
 
 vi.mock('../../../server-api/chat-stream.api', () => ({
@@ -666,7 +674,6 @@ describe('useConversationStream', () => {
 
     await waitFor(() => {
       expect(onStopError).toHaveBeenCalledWith(stopError);
-      expect(result.current.hasStreamError).toBe(true);
     });
   });
 

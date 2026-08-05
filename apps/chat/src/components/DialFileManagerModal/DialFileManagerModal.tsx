@@ -2,18 +2,20 @@ import {
   isMimeTypeAllowed,
   mimeTypesToExtensionLabels,
 } from '@epam/ai-dial-attachment-input';
-import { PrimaryButton } from '@epam/ai-dial-kit';
 import {
   DialFileManagerTabs,
   DialFileNodeType,
-  DialPopup,
-  NotificationVariant,
-  NOT_ALLOWED_SYMBOLS,
-  NOT_ALLOWED_SYMBOLS_REGEXP,
-  PopupSize,
   useDialFileManagerTabs,
   type DialFile,
   type FileManagerGridRow,
+} from '@epam/ai-dial-react-file-manager';
+import {
+  DialPopup,
+  NOT_ALLOWED_SYMBOLS,
+  NOT_ALLOWED_SYMBOLS_REGEXP,
+  NotificationVariant,
+  PopupSize,
+  PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import {
   memo,
@@ -638,7 +640,7 @@ const DialFileManagerModal: FC<Props> = ({
         </div>
       }
       size={PopupSize.Lg}
-      className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-2 [&>[aria-label='popup-description']]:flex [&>[aria-label='popup-description']]:min-h-0 [&>[aria-label='popup-description']]:flex-col"
+      className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-sunken [&>[aria-label='popup-description']]:flex [&>[aria-label='popup-description']]:min-h-0 [&>[aria-label='popup-description']]:flex-col"
       onClose={onClose}
       footer={
         <div className="flex justify-end px-6 py-4">

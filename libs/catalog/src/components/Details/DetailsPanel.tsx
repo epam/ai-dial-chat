@@ -1,23 +1,29 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { GhostIconButton, TabRow } from '@epam/ai-dial-kit';
+import { TabRow } from '@epam/ai-dial-kit';
+import {
+  derivePublishState,
+  PublishFooter,
+  PublishPanel,
+  usePublishFlow,
+} from '@epam/ai-dial-publish-panel';
+import type {
+  PublishFolderNode,
+  PublishHistoryEntry,
+} from '@epam/ai-dial-publish-panel';
 import {
   DialCloseButton,
   DialConfirmationPopup,
   DialSkeleton,
+  DialTag,
+  GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import type { CatalogItem } from '../../models/catalog-item';
 import type { DetailsPanelProps } from '../../models/item-details-props';
-import type {
-  PublishFolderNode,
-  PublishHistoryEntry,
-} from '../../models/publish';
 import { CatalogDetailsTab } from '../../types/detail-tab';
-import { derivePublishState } from '../../utils/publish-state';
 import { getSignedInLevel } from '../../utils/toolset-credentials';
-import { usePublishFlow } from '../../utils/use-publish-flow';
-import { PublishFooter } from '../PublishPanel/PublishFooter';
-import { PublishPanel } from '../PublishPanel/PublishPanel';
+import { EntityHeader } from '../EntityHeader/EntityHeader';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { ApiDetails } from './ApiDetails';
 import { CredentialsSection } from './Credentials/CredentialsSection';
@@ -32,6 +38,7 @@ import { Tools } from './TabsContent/Tools/Tools';
 
 const NO_OP_PUBLISH = async () => undefined;
 const EMPTY_PUBLISH_FOLDERS: PublishFolderNode[] = [];
+const EMPTY_RULE_SOURCE_OPTIONS: string[] = [];
 
 /** Right-side slide-in panel displaying full details for a catalog item. */
 export const DetailsPanel: FC<DetailsPanelProps> = ({
@@ -54,8 +61,11 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onPublish,
   onPublishSuccess,
   onCreatePublishFolder,
-  publishTexts,
+  publishLabels,
+  ruleSourceOptions = EMPTY_RULE_SOURCE_OPTIONS,
+  onFetchExistingRules,
   shareOverlay,
+  isShareVisible,
   connectOverlay,
   isConnectVisible,
   onEdit,
@@ -104,7 +114,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     };
   }, [isPublishOpen, getPublishHistory, item]);
 
-  const publishFlow = usePublishFlow({
+  const publishFlow = usePublishFlow<CatalogItem>({
     item,
     history: publishHistory,
     folderItems: publishFolderItems,
@@ -112,6 +122,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     onCreateFolder: onCreatePublishFolder,
     onPublish: onPublish ?? NO_OP_PUBLISH,
     onPublishSuccess,
+    onFetchExistingRules,
   });
 
   const publishDerived = useMemo(
@@ -320,7 +331,25 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           {isPublishOpen ? (
             <div className="p-[22px]">
               <PublishPanel
-                item={item}
+                resource={{
+                  title: item.name,
+                  version: item.version,
+                  iconUrl: item.iconUrl,
+                }}
+                renderSummary={() => (
+                  <>
+                    <EntityHeader
+                      item={item}
+                      iconSize={40}
+                      hasFeaturedTag={false}
+                      showVersion={false}
+                    />
+                    <DialTag
+                      label={`Version ${item.version} · current`}
+                      className="shrink-0 whitespace-nowrap !border-tertiary !bg-accent-primary-alpha !text-accent"
+                    />
+                  </>
+                )}
                 history={publishHistory}
                 isHistoryLoading={isPublishHistoryLoading}
                 hasHistoryError={hasPublishHistoryError}
@@ -337,7 +366,12 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 hasWriteAccess={publishFlow.hasWriteAccess}
                 isSubmitting={publishFlow.isSubmitting}
                 hasSubmitError={publishFlow.hasSubmitError}
-                texts={publishTexts}
+                rules={publishFlow.rules}
+                onRulesChange={publishFlow.setRules}
+                ruleSourceOptions={ruleSourceOptions}
+                isRulesLoading={publishFlow.isRulesLoading}
+                hasRulesLoadError={publishFlow.hasRulesLoadError}
+                labels={publishLabels}
               />
             </div>
           ) : (
@@ -348,6 +382,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 isPrimaryActionVisible={isPrimaryActionVisible}
                 onShare={onShare}
                 shareOverlay={shareOverlay}
+                isShareVisible={isShareVisible}
                 connectOverlay={connectOverlay}
                 isConnectVisible={isConnectVisible}
                 isPublishVisible={isPublishVisible}
@@ -488,7 +523,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             isSubmitLoading={publishDerived.isSubmitLoading}
             onCancel={handleClosePublish}
             onSubmit={handleSubmitPublish}
-            texts={publishTexts}
+            labels={publishLabels}
           />
         )}
       </div>

@@ -10,11 +10,11 @@ Specifies the validation and error notification flow when a user attaches a file
 
 Before calling `onUploadAttachment`, the app SHALL validate each attachment's MIME type against the selected deployment's `inputAttachmentTypes`. Validation uses the `validateAttachment` prop on `ConversationInput` / `Input`, which the app supplies.
 
-A file is invalid when none of the allowed MIME entries match: exact equality (`application/pdf`) OR wildcard prefix match (`image/*` matches `image/jpeg`). Global wildcards `*` and `*/*` match any MIME type. When `inputAttachmentTypes` is empty or undefined, the attachment button is already hidden and this path is unreachable.
+A file is invalid when none of the allowed MIME entries match: exact equality (`application/pdf`) OR wildcard prefix match (`image/*` matches `image/jpeg`). Global wildcards `*` and `*/*` match any MIME type. When `inputAttachmentTypes` is empty or undefined, the attachment button is hidden; however, clipboard paste of images can still add attachments and will reach this validation path. Long pasted plain text is handled separately — see the `isAttachmentsEnabled` requirement in `conversation-input-attachments`.
 
 Invalid files SHALL be placed immediately into `status: RequestStatus.Error` with `errorReason: AttachmentErrorReason.UnsupportedType` without calling `onUploadAttachment`.
 
-After processing a batch of added files (from file picker, drag-and-drop, or clipboard), if any were invalid the app SHALL show exactly one `DialNotification` (variant `Error`) with:
+After processing a batch of added files (from file picker, drag-and-drop, or clipboard), if any were invalid the app SHALL show exactly one `Notification` (variant `Error`) with:
 - **title**: i18n key `attachments.unsupportedType.title` → "File extension not supported"
 - **message**: i18n key `attachments.unsupportedType.message` → "This model can only process {{formats}}. Please upload a file in a supported format.", where `{{formats}}` is a comma-separated human-readable list of accepted types derived from `inputAttachmentTypes`.
 
@@ -28,7 +28,7 @@ The `formats` list is produced by a pure app-level utility `mimeTypesToExtension
 
 **RTL**: notification is direction-agnostic (top-center portal). No additional directional changes.
 
-**Accessibility**: `DialNotification` carries `role="alert"`; no additional ARIA required.
+**Accessibility**: `Notification` carries `role="alert"`; no additional ARIA required.
 
 **Memoisation**: `validateAttachment` callback on `ConversationView` / `ConversationRoute` SHALL be wrapped in `useCallback` keyed on `inputAttachmentTypes`. Because it is keyed on `inputAttachmentTypes`, its identity changes whenever the user switches the selected model/deployment; `useAttachments` uses that identity change as the trigger to re-validate attachments already in the tray (see `conversation-input-attachments` — "Attachments already in the tray are re-validated when validateAttachment changes").
 

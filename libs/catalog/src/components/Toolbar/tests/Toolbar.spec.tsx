@@ -6,8 +6,6 @@ import { Toolbar } from '../Toolbar';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  ButtonAppearance: { Solid: 'solid', Ghost: 'ghost' },
-  ButtonVariant: { Primary: 'primary' },
   ElementSize: { Small: 'small', Regular: 'regular' },
   DialSearch: ({
     value,
@@ -24,20 +22,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       onChange={(e) => onChange(e.target.value)}
     />
   ),
-  DialGhostButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
-  DialPrimaryButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
   DialEllipsisTooltip: ({
     text,
     className,
@@ -59,41 +43,21 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </>
   ),
   DialCheckbox: ({ label }: { label: string }) => <span>{label}</span>,
-  DialLinkButton: ({
-    label,
-  }: {
-    label: string;
-    className?: string;
-    iconAfter?: React.ReactNode;
-  }) => <button>{label}</button>,
-  DialDangerButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick: () => void;
-    iconBefore?: React.ReactNode;
-    className?: string;
-    size?: string;
-    appearance?: string;
-  }) => <button onClick={onClick}>{label}</button>,
   DialIcon: () => null,
-  DialPrimaryIconButton: ({
+  GhostButton: ({
+    icon,
     onClick,
   }: {
-    onClick: () => void;
-    icon?: React.ReactNode;
-    size?: string;
-    appearance?: string;
-  }) => <button aria-label="view-mode" onClick={onClick} />,
-  DialButtonDropdown: ({
+    icon: React.ReactNode;
+    onClick?: () => void;
+  }) => <button onClick={onClick}>{icon}</button>,
+  PrimaryButton: ({
     label,
+    onClick,
   }: {
     label: string;
-    variant?: string;
-    appearance?: string;
-    items?: unknown[];
-  }) => <button aria-label="sort">{label}</button>,
+    onClick?: () => void;
+  }) => <button onClick={onClick}>{label}</button>,
 }));
 
 vi.mock('@tabler/icons-react', () => ({

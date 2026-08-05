@@ -4,7 +4,7 @@
 
 ### Requirement: Client-side routing resolves three top-level routes
 
-The application SHALL declare three routes using React Router v6 `<Routes>` in `apps/chat/src/app/app.tsx`. The `/` route MUST render `<ConversationRoute>` (the welcome screen — no longer holds message state). The `/catalog` route MUST render a lazy-loaded `<CatalogView>` stub. The `/conversations/:conversationId` route MUST render a lazy-loaded `<ConversationPage>`. Any unregistered path MUST NOT match these routes without an explicit fallback route.
+The application SHALL declare three routes using React Router `<Routes>` in `apps/chat/src/app/app.tsx`. The `/` route MUST render `<ConversationRoute>` (the welcome screen — no longer holds message state). The `/catalog` route MUST render a lazy-loaded `<CatalogView>` stub. The `/conversations/:conversationId` route MUST render a lazy-loaded `<ConversationPage>`. Any unregistered path MUST NOT match these routes without an explicit fallback route.
 
 #### Scenario: Root path renders the welcome screen
 
@@ -35,7 +35,7 @@ The application SHALL declare three routes using React Router v6 `<Routes>` in `
 
 ### Requirement: Navigation sidebar reflects the active route via aria-current
 
-The `<Navigation>` component SHALL read `useLocation().pathname` from React Router and mark exactly one `DialGhostIconButton` with `aria-current="page"` — the one whose configured `path` matches the current pathname. No other button SHALL carry `aria-current` at the same time.
+The `<Navigation>` component SHALL read `useLocation().pathname` from React Router and mark exactly one `GhostIconButton` with `aria-current="page"` — the one whose configured `path` matches the current pathname. No other button SHALL carry `aria-current` at the same time.
 
 #### Scenario: Home button is active on /
 
@@ -56,7 +56,7 @@ The `<Navigation>` component SHALL read `useLocation().pathname` from React Rout
 
 ### Requirement: Navigation buttons perform client-side navigation
 
-Each `DialGhostIconButton` in the top section of `<Navigation>` MUST call `useNavigate()(path)` when clicked. Navigation MUST be client-side (no full page reload).
+Each `GhostIconButton` in the top section of `<Navigation>` MUST call `useNavigate()(path)` when clicked. Navigation MUST be client-side (no full page reload).
 
 #### Scenario: Clicking Home navigates to /
 
@@ -72,18 +72,35 @@ Each `DialGhostIconButton` in the top section of `<Navigation>` MUST call `useNa
 
 ### Requirement: Navigation is driven by NAVIGATION_CONFIG
 
-The `<Navigation>` component SHALL NOT hard-code route paths or icon components. It MUST iterate over the exported `NAVIGATION_CONFIG` constant from `apps/chat/src/constants/navigation.ts` to render buttons. Adding a new entry to `NAVIGATION_CONFIG` MUST automatically render a new button in the sidebar with no changes to `Navigation.tsx`.
+The `<Navigation>` component SHALL NOT hard-code route paths or icon components. It MUST iterate over the exported `NAVIGATION_CONFIG` constant from `apps/chat/src/constants/navigation.ts` to render buttons. Adding a new entry to `NAVIGATION_CONFIG` MUST automatically render a new button in the sidebar with no changes to `Navigation.tsx`, unless the entry declares an optional `featureFlag` key.
+
+Each `NavigationItem` MAY declare an optional `featureFlag: string` field naming a short `useFeatureFlag` key. `<Navigation>` SHALL filter `NAVIGATION_CONFIG` before rendering: an item with no `featureFlag` always renders; an item with a `featureFlag` renders only when `useFeatureFlag(item.featureFlag)` resolves to `true` for the current session. Filtering MUST be evaluated on every render (it MUST react to a flag value becoming available/changing after initial mount, not just at first render).
 
 #### Scenario: Config drives rendered buttons
 
-- **WHEN** `NAVIGATION_CONFIG` contains two entries (home, catalog)
+- **WHEN** `NAVIGATION_CONFIG` contains two entries (home, catalog), neither with a `featureFlag`
 - **THEN** exactly two icon buttons are rendered in the top `<div>` of `<nav>`
+
+#### Scenario: Flag-gated item hidden when flag is off
+
+- **WHEN** `NAVIGATION_CONFIG` contains an entry with `featureFlag: 'scheduledTasksEnabled'` and `useFeatureFlag('scheduledTasksEnabled')` returns `false`
+- **THEN** no button for that entry is rendered in `<nav>`
+
+#### Scenario: Flag-gated item shown when flag is on
+
+- **WHEN** `NAVIGATION_CONFIG` contains an entry with `featureFlag: 'scheduledTasksEnabled'` and `useFeatureFlag('scheduledTasksEnabled')` returns `true`
+- **THEN** a button for that entry is rendered in `<nav>`, with the same `aria-label`/tooltip/active-state behavior as ungated entries
+
+#### Scenario: Ungated entries are unaffected
+
+- **WHEN** `NAVIGATION_CONFIG` mixes gated and ungated entries
+- **THEN** every ungated entry renders regardless of any flag's value
 
 ---
 
 ### Requirement: Navigation sidebar exposes accessible labels and tooltip
 
-Every `DialGhostIconButton` in the navigation top section MUST carry an `aria-label` derived from the `labelKey` field of its `NavigationItem` via `useTranslation().t()`. The same string MUST be passed to `tooltipProps.tooltip` so hover users see the label.
+Every `GhostIconButton` in the navigation top section MUST carry an `aria-label` derived from the `labelKey` field of its `NavigationItem` via `useTranslation().t()`. The same string MUST be passed to `tooltipProps.tooltip` so hover users see the label.
 
 #### Scenario: aria-label and tooltip match the i18n value
 
