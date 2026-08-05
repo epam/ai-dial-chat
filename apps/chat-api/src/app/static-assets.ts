@@ -5,6 +5,10 @@ import type { ServeStaticModuleOptions } from '@nestjs/serve-static';
 const API_ROUTE_EXCLUDE_PATTERN = '/api{/*splat}';
 export const OVERLAY_SANDBOX_ROUTE = '/overlay-sandbox';
 const OVERLAY_SANDBOX_ROUTE_EXCLUDE_PATTERN = `${OVERLAY_SANDBOX_ROUTE}{/*splat}`;
+/* Matches Vite's default `build.assetsDir` ('assets'). Neither apps/chat nor
+ * apps/chat-overlay-sandbox override assetsDir in vite.config.ts — if either
+ * ever does, this pattern must be updated to match, or missing assets will
+ * silently fall back to serving index.html again. */
 const ASSETS_ROUTE_EXCLUDE_PATTERN = '/assets{/*splat}';
 const OVERLAY_SANDBOX_ASSETS_ROUTE_EXCLUDE_PATTERN = `${OVERLAY_SANDBOX_ROUTE}/assets{/*splat}`;
 const SPA_RENDER_PATH = '/{*frontendRoute}';

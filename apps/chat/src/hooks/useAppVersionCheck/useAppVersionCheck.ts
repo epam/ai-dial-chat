@@ -17,17 +17,33 @@ interface UseAppVersionCheckResult {
 export const useAppVersionCheck = (): UseAppVersionCheckResult => {
   const [isNewVersionAvailable, setIsNewVersionAvailable] = useState(false);
   const baselineBuildIdRef = useRef<string | null>(null);
+  const isBaselineCheckInFlightRef = useRef(false);
   const intervalIdRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const visibilityListenerRef = useRef<(() => void) | null>(null);
 
   const stopPolling = useCallback(() => {
     if (intervalIdRef.current !== null) {
       clearInterval(intervalIdRef.current);
       intervalIdRef.current = null;
     }
+    if (visibilityListenerRef.current !== null) {
+      document.removeEventListener(
+        'visibilitychange',
+        visibilityListenerRef.current,
+      );
+      visibilityListenerRef.current = null;
+    }
   }, []);
 
   const checkVersion = useCallback(
     async (isCancelled: () => boolean) => {
+      const isEstablishingBaseline = baselineBuildIdRef.current === null;
+      if (isEstablishingBaseline) {
+        if (isBaselineCheckInFlightRef.current) {
+          return;
+        }
+        isBaselineCheckInFlightRef.current = true;
+      }
       try {
         const { buildId } = await checkHealth();
         if (isCancelled() || !buildId) {
@@ -43,6 +59,10 @@ export const useAppVersionCheck = (): UseAppVersionCheckResult => {
         }
       } catch {
         // Transient health-check failure: keep current state, retry on the next interval/visibility check.
+      } finally {
+        if (isEstablishingBaseline) {
+          isBaselineCheckInFlightRef.current = false;
+        }
       }
     },
     [stopPolling],
@@ -63,12 +83,12 @@ export const useAppVersionCheck = (): UseAppVersionCheckResult => {
         void checkVersion(isCancelled);
       }
     };
+    visibilityListenerRef.current = handleVisibilityChange;
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       cancelled = true;
       stopPolling();
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [checkVersion, stopPolling]);
 

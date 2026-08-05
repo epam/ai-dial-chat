@@ -1,10 +1,32 @@
 import { createHash } from 'crypto';
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { resolveFrontendRootPath } from '../app/static-assets';
 import { Public } from '../common/decorators/public.decorator';
+
+const readPackageVersion = (): string => {
+  /* apps/chat-api/package.json sits two levels above this file's source location
+   * (src/health) but only one level above the bundled webpack output (dist),
+   * so both layouts are tried. */
+  const candidates = [
+    join(__dirname, '..', '..', 'package.json'),
+    join(__dirname, '..', 'package.json'),
+  ];
+  const packageJsonPath = candidates.find(existsSync);
+  if (!packageJsonPath) {
+    return 'dev';
+  }
+  try {
+    const { version } = JSON.parse(readFileSync(packageJsonPath, 'utf-8')) as {
+      version?: string;
+    };
+    return version ?? 'dev';
+  } catch {
+    return 'dev';
+  }
+};
 
 const computeBuildId = (): string => {
   try {
@@ -13,9 +35,10 @@ const computeBuildId = (): string => {
     return createHash('sha256').update(contents).digest('hex').slice(0, 12);
   } catch {
     /* No built frontend on disk (e.g. local dev without a build). Falls back to a
-     * per-process value so a single running instance still reports one stable id;
+     * fixed placeholder so restarts of an API-only instance (CI, staging without a
+     * built dist) never falsely look like a new deployment to a polling client;
      * this path never runs against a real deployment, which always serves a built dist. */
-    return `dev-${Date.now()}`;
+    return 'dev';
   }
 };
 
@@ -24,6 +47,7 @@ const computeBuildId = (): string => {
  * env var — means every pod serving the same deployed image reports the same
  * value, and the value changes exactly when a new frontend build is deployed. */
 const BUILD_ID = computeBuildId();
+const APP_VERSION = readPackageVersion();
 
 /**
  * Health check controller.
@@ -77,7 +101,7 @@ export class HealthController {
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
-      version: '1.0.0',
+      version: APP_VERSION,
       buildId: BUILD_ID,
     };
   }
