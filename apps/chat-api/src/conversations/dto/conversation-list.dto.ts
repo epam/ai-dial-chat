@@ -48,6 +48,27 @@ export class ConversationListItemDto {
     example: false,
   })
   isReadonly!: boolean;
+
+  @ApiProperty({
+    description:
+      'True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{runId}` reserved segment).',
+    example: false,
+  })
+  isScheduledTask!: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'DIAL Scheduler schedule identifier. Present only when `isScheduledTask` is true.',
+    example: 'sched_123',
+  })
+  scheduleId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'DIAL Scheduler run identifier. Present only when `isScheduledTask` is true.',
+    example: 'run_001',
+  })
+  runId?: string;
 }
 
 export class ConversationListResponseDto {

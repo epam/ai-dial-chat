@@ -60,8 +60,16 @@ const makeItem = (
   isReadonly: false,
   sharedWithMe: false,
   publishedWithMe: false,
+  isScheduledTask: false,
   ...overrides,
 });
+
+/** The overlay protocol does not forward scheduler-only fields — strip them before comparing against bridge output. */
+const makeOverlayItem = (overrides?: Partial<ConversationListItemDto>) => {
+  const { isScheduledTask, scheduleId, runId, ...overlayItem } =
+    makeItem(overrides);
+  return overlayItem;
+};
 
 const makeOverlay = (): OverlayContextType & {
   registerConversationListBridge: ReturnType<
@@ -138,8 +146,8 @@ describe('useConversationListBridge', () => {
     const bridge = getRegisteredBridge(overlay);
 
     expect(bridge.getConversations()).toEqual([
-      makeItem({ id: 'conv-1', title: 'One' }),
-      makeItem({ id: 'conv-2', title: 'Two', isPinned: true }),
+      makeOverlayItem({ id: 'conv-1', title: 'One' }),
+      makeOverlayItem({ id: 'conv-2', title: 'Two', isPinned: true }),
     ]);
   });
 
@@ -361,7 +369,7 @@ describe('useConversationListBridge', () => {
         'New title',
       );
       expect(response.conversation).toEqual(
-        makeItem({
+        makeOverlayItem({
           id: 'conversations/bucket/conv-1',
           title: 'New title',
         }),
