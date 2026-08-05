@@ -323,7 +323,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
         <div
           className={mergeClasses(
-            'min-h-0 flex-1 overflow-y-auto',
+            'flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto',
             styles.content,
           )}
         >
@@ -420,11 +420,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
               <div className={styles.divider} />
 
-              <Summary
-                item={item}
-                texts={texts}
-                detailsStyles={detailsStyles}
-              />
+              <Summary item={item} texts={texts} />
 
               <div className="flex items-center gap-2 px-[22px]">
                 <TabRow
@@ -459,7 +455,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
               <div
                 className={mergeClasses(
-                  activeTab !== CatalogDetailsTab.Overview && 'px-[22px] py-4',
+                  activeTab !== CatalogDetailsTab.Overview && 'px-[22px]',
                 )}
               >
                 {activeTab === CatalogDetailsTab.About && (

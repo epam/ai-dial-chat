@@ -523,7 +523,7 @@ describe('DetailsPanel', () => {
     ).toBeTruthy();
   });
 
-  it('renders the description inline in the summary section', () => {
+  it('renders the description on the About tab, not in the summary section', () => {
     render(
       <DetailsPanel
         item={makeItem({
@@ -534,7 +534,7 @@ describe('DetailsPanel', () => {
       />,
     );
 
-    expect(screen.getAllByText('about content').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('about content')).toHaveLength(1);
   });
 
   it('includes About as the first tab, ahead of the other available tabs', () => {

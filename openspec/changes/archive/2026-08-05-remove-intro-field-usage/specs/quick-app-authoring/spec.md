@@ -87,9 +87,8 @@ itself touched), matching prior behavior for that step.
 
 ### Requirement: SaveSuccess reports whether persisted data changed
 
-The Settings step's embedded editor (the separate Quick Apps application loaded at
-`schema.editorUrl`, out of this repo's source tree) SHALL include a `hasChanges: boolean`
-field on the `AppsEditorEvent.SaveSuccess` message it posts back to the host after a
+The Settings step's embedded editor SHALL include a `hasChanges: boolean` field on the
+`AppsEditorEvent.SaveSuccess` message it posts back to the host after a
 `TriggerSave` completes successfully — for both a plain Settings-step save and one that also
 carried a `general` payload. `hasChanges` SHALL be computed by the embedded editor by
 comparing the record it is about to persist against the record as it existed before this

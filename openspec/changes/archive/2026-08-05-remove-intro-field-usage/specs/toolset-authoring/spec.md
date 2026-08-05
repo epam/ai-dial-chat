@@ -1,8 +1,8 @@
 ## MODIFIED Requirements
 
 ### Requirement: Draft toolset creation on advancing to Settings
-When a user advances from the General step to the Settings step for a toolset that has not
-yet been persisted, the editor SHALL create the toolset via the backend write API using the
+The editor SHALL create the toolset via the backend write API when a user advances from the
+General step to the Settings step for a toolset that has not yet been persisted, using the
 General-step field values (name, version, icon URL, description, topics) and an empty
 endpoint, before switching to the Settings step. The returned toolset id SHALL be used for
 the remainder of the session — Settings-step actions, login, the Connect toolset section, and

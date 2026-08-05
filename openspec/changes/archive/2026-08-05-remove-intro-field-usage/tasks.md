@@ -60,7 +60,7 @@
 
 ## 8. Final verification
 
-- [ ] 8.1 Grep `\bintro\b` (case-insensitive, word-boundary) across `apps/` and `libs/` and confirm zero true-positive hits remain (excluding `introText`/`intro_text` and the unrelated comment in `starter-option.ts`)
-- [ ] 8.2 Run `npm exec nx affected --target=lint --base=origin/development-1.0`
-- [ ] 8.3 Run `npm exec nx affected --target=test --base=origin/development-1.0`
-- [ ] 8.4 Run `npm exec nx affected --target=build --base=origin/development-1.0`
+- [x] 8.1 Grep `\bintro\b` (case-insensitive, word-boundary) across `apps/` and `libs/` and confirm zero true-positive hits remain (excluding `introText`/`intro_text` and the unrelated comment in `starter-option.ts`) — confirmed clean; also fixed a stale doc comment in `libs/catalog/src/components/Details/TabsContent/About.tsx`
+- [x] 8.2 Run `npm exec nx affected --target=lint --base=origin/development-1.0` — passes (0 errors; only pre-existing unrelated warnings)
+- [ ] 8.3 Run `npm exec nx affected --target=test --base=origin/development-1.0` — not completed; run was interrupted by the user before finishing. Prior spot-checks (chat-api's applications/toolsets/deployments suites, 297 tests) passed; broader suite run across all affected projects was not confirmed
+- [x] 8.4 Run `npm exec nx affected --target=build --base=origin/development-1.0` — passes (20 affected projects build successfully)

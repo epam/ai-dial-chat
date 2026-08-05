@@ -1,13 +1,11 @@
-import { mergeClasses, MarkdownCodeBlock } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, DialDropdown } from '@epam/ai-dial-ui-kit';
-import { IconCheck, IconChevronDown } from '@tabler/icons-react';
+import { MarkdownCodeBlock, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
-  FC,
-  useEffect,
-  useMemo,
-  useState,
-  type ButtonHTMLAttributes,
-} from 'react';
+  DIAL_ICON_SIZE,
+  ElementSize,
+  InlineSelect,
+} from '@epam/ai-dial-ui-kit';
+import { IconCheck } from '@tabler/icons-react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import type {
   CatalogItemApiDetails,
   CodeSnippet,
@@ -28,27 +26,6 @@ const SYNTAX_LANGUAGES: Record<CodeLanguage, string> = {
   [CodeLanguage.Curl]: 'bash',
   [CodeLanguage.JavaScript]: 'javascript',
 };
-
-interface InlineSelectTriggerProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  /** Currently selected option's label, shown before the chevron. */
-  label: string;
-}
-
-// TODO: replace inline select in ui kit
-const InlineSelectTrigger: FC<InlineSelectTriggerProps> = ({
-  label,
-  ...rest
-}) => (
-  <button
-    type="button"
-    aria-haspopup="menu"
-    {...rest}
-    className="dial-small-text focus-visible:outline-focus -me-2 -ms-3 flex h-8 items-center gap-1 rounded-full pe-2 ps-3 text-primary hover:bg-control-accent-alpha-hover focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 active:bg-control-accent-alpha-active"
-  >
-    {label}
-    <IconChevronDown size={DIAL_ICON_SIZE.MD} aria-hidden />
-  </button>
-);
 
 /** Props for `ApiDetails`. */
 export interface ApiDetailsProps {
@@ -107,21 +84,12 @@ const SnippetBlock: FC<SnippetBlockProps> = ({
     () =>
       snippets.map((s) => ({
         key: s.language,
-        label: (
-          <span className="flex w-full items-center justify-between gap-2">
-            {LANGUAGE_LABELS[s.language] ?? s.language}
-            {s.language === activeSnippet && (
-              <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
-            )}
-          </span>
-        ),
+        label: LANGUAGE_LABELS[s.language] ?? s.language,
         onClick: () => setActiveSnippet(s.language),
       })),
-    [snippets, activeSnippet],
+    [snippets],
   );
 
-  const activeLabel =
-    LANGUAGE_LABELS[activeSnippet as CodeLanguage] ?? activeSnippet;
   const activeCode =
     snippets.find((s) => s.language === activeSnippet)?.code ?? '';
 
@@ -147,14 +115,14 @@ const SnippetBlock: FC<SnippetBlockProps> = ({
         codeClassName={codeClassName}
         hideDownload
         titleSlot={
-          <DialDropdown
+          <InlineSelect
             items={snippetItems}
             matchReferenceWidth={false}
             placement="bottom-end"
+            size={ElementSize.Small}
+            selectedKey={activeSnippet}
             listClassName="cp-dropdown-overlay"
-          >
-            <InlineSelectTrigger label={activeLabel} />
-          </DialDropdown>
+          />
         }
       />
     </section>
@@ -256,14 +224,14 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
               codeClassName={codeClassName}
               hideDownload
               titleSlot={
-                <DialDropdown
+                <InlineSelect
                   items={endpointItems}
                   matchReferenceWidth={false}
                   placement="bottom-end"
+                  size={ElementSize.Small}
+                  selectedKey={activeEndpoint.url}
                   listClassName="cp-dropdown-overlay"
-                >
-                  <InlineSelectTrigger label={activeEndpoint.label} />
-                </DialDropdown>
+                />
               }
             />
           )}
