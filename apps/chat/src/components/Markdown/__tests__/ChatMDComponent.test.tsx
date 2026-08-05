@@ -353,6 +353,53 @@ describe('ChatMDComponent', () => {
     });
   });
 
+  describe('compact mode', () => {
+    const renderWithMode = (compactMode: boolean) => {
+      const { container, unmount } = renderWithStore(
+        <ChatMDComponent
+          isShowResponseLoader={false}
+          content="Some answer"
+          compactMode={compactMode}
+        />,
+      );
+      const className = container.firstElementChild?.className ?? '';
+      unmount();
+
+      return className;
+    };
+
+    it('toggles the compact class with the prop, keeping base prose styling', () => {
+      const compact = renderWithMode(true);
+      const regular = renderWithMode(false);
+
+      expect(compact).toContain('prose-compact');
+      expect(regular).not.toContain('prose-compact');
+      expect(compact).toContain('prose');
+      expect(regular).toContain('prose');
+    });
+
+    it('does not change which elements are rendered', () => {
+      const content = 'First\n\n&nbsp;\n\nSecond';
+
+      const { unmount } = renderWithStore(
+        <ChatMDComponent
+          isShowResponseLoader={false}
+          content={content}
+          compactMode
+        />,
+      );
+      expect(screen.queryAllByRole('paragraph')).toHaveLength(2);
+      expect(screen.getByText('First')).toBeInTheDocument();
+      unmount();
+
+      renderWithStore(
+        <ChatMDComponent isShowResponseLoader={false} content={content} />,
+      );
+      expect(screen.queryAllByRole('paragraph')).toHaveLength(2);
+      expect(screen.getByText('First')).toBeInTheDocument();
+    });
+  });
+
   describe('response loader', () => {
     it('shows response loader cursor when isShowResponseLoader is true', () => {
       renderWithStore(

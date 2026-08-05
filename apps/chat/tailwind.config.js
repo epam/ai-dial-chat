@@ -1,4 +1,51 @@
 const defaultTheme = require('tailwindcss/defaultTheme');
+const typographyStyles = require('@tailwindcss/typography/src/styles');
+
+const COMPACT_RHYTHM_SCALE = 0.5;
+
+const scaleEmValue = (value) => {
+  const match = /^(-?[\d.]+)em$/.exec(String(value));
+
+  if (!match) {
+    return value;
+  }
+
+  const scaled = +(parseFloat(match[1]) * COMPACT_RHYTHM_SCALE).toFixed(4);
+
+  return scaled === 0 ? '0' : `${scaled}em`;
+};
+
+const buildCompactTypographyCss = () => {
+  const base = typographyStyles.default
+    ? typographyStyles.default.base
+    : typographyStyles.base;
+  const declarations = Array.isArray(base.css)
+    ? Object.assign({}, ...base.css)
+    : base.css;
+
+  return Object.entries(declarations).reduce((acc, [selector, rules]) => {
+    if (
+      !rules ||
+      typeof rules !== 'object' ||
+      (rules.marginTop === undefined && rules.marginBottom === undefined)
+    ) {
+      return acc;
+    }
+
+    const scaled = {};
+
+    if (rules.marginTop !== undefined) {
+      scaled.marginTop = scaleEmValue(rules.marginTop);
+    }
+    if (rules.marginBottom !== undefined) {
+      scaled.marginBottom = scaleEmValue(rules.marginBottom);
+    }
+
+    acc[selector] = scaled;
+
+    return acc;
+  }, {});
+};
 
 // Default color palette is black when no themes presented
 const commonBgColors = {
@@ -136,44 +183,8 @@ module.exports = {
             },
           },
         },
-        chat: {
-          css: {
-            p: { marginTop: '0.75em', marginBottom: '0.75em' },
-            h1: { marginTop: '0', marginBottom: '0.5em' },
-            h2: { marginTop: '1.2em', marginBottom: '0.5em' },
-            h3: { marginTop: '1em', marginBottom: '0.4em' },
-            h4: { marginTop: '0.9em', marginBottom: '0.3em' },
-            blockquote: { marginTop: '1em', marginBottom: '1em' },
-            pre: { marginTop: '1em', marginBottom: '1em' },
-            ol: { marginTop: '0.75em', marginBottom: '0.75em' },
-            ul: { marginTop: '0.75em', marginBottom: '0.75em' },
-            li: { marginTop: '0.25em', marginBottom: '0.25em' },
-            hr: { marginTop: '1.5em', marginBottom: '1.5em' },
-            table: { marginTop: '1em', marginBottom: '1em' },
-            img: { marginTop: '1em', marginBottom: '1em' },
-            picture: { marginTop: '1em', marginBottom: '1em' },
-            video: { marginTop: '1em', marginBottom: '1em' },
-            figure: { marginTop: '1em', marginBottom: '1em' },
-            figcaption: { marginTop: '0.5em' },
-            dl: { marginTop: '0.75em', marginBottom: '0.75em' },
-            dt: { marginTop: '0.75em' },
-            dd: { marginTop: '0.25em' },
-            '> ul > li p': { marginTop: '0.4em', marginBottom: '0.4em' },
-            '> ul > li > p:first-child': { marginTop: '0.75em' },
-            '> ul > li > p:last-child': { marginBottom: '0.75em' },
-            '> ol > li > p:first-child': { marginTop: '0.75em' },
-            '> ol > li > p:last-child': { marginBottom: '0.75em' },
-            'ul ul, ul ol, ol ul, ol ol': {
-              marginTop: '0.4em',
-              marginBottom: '0.4em',
-            },
-            'hr + *': { marginTop: '0' },
-            'h2 + *': { marginTop: '0' },
-            'h3 + *': { marginTop: '0' },
-            'h4 + *': { marginTop: '0' },
-            '> :first-child': { marginTop: '0' },
-            '> :last-child': { marginBottom: '0' },
-          },
+        compact: {
+          css: buildCompactTypographyCss(),
         },
       },
     },

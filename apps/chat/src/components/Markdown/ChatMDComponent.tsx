@@ -67,6 +67,7 @@ interface ChatMDComponentProps {
   content: string;
   isInner?: boolean;
   plainTextMode?: boolean;
+  compactMode?: boolean;
 }
 
 const transformUri = (src: string): string => {
@@ -283,6 +284,7 @@ export const ChatMDComponent = memo(
     content,
     isInner = false,
     plainTextMode = false,
+    compactMode = false,
   }: ChatMDComponentProps) => {
     const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
@@ -293,11 +295,8 @@ export const ChatMDComponent = memo(
     const screenState = useScreenState();
 
     const mdClassNames = classnames(
-      // `prose-chat` tightens the article-oriented vertical rhythm the
-      // typography plugin ships with. Defined in tailwind.config.js so every
-      // element is tuned in one place; applied only here so user messages,
-      // attachments and descriptions keep the stock spacing.
-      'prose prose-chat min-w-full dark:prose-invert prose-a:text-primary prose-a:underline',
+      'prose min-w-full dark:prose-invert prose-a:text-primary prose-a:underline',
+      compactMode && 'prose-compact',
       isChatFullWidth && 'max-w-none',
       isOverlay && 'text-sm',
       (screenState === ScreenState.SM || isOverlay) && 'leading-[150%]',
