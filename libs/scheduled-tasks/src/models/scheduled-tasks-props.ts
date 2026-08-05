@@ -49,11 +49,11 @@ export interface ScheduledTasksLabels {
  * custom properties with app theme fallbacks.
  */
 export interface ScheduledTasksColors {
-  /** Root container background. Fallback: `--bg-layer-5`. */
+  /** Root container background. Fallback: `--bg-layer-base`. */
   background?: string;
   /** Subtitle and status-message (empty/no-results/error) text color. Fallback: `--text-secondary`. */
   subtitleText?: string;
-  /** Sort control label/icon color. Fallback: `--text-accent-primary`. */
+  /** Sort control label/icon color. Fallback: `--text-accent`. */
   sortButtonText?: string;
   /** Background color of the load-more placeholder skeleton bars. Fallback: `--bg-layer-4`. */
   skeletonColor?: string;

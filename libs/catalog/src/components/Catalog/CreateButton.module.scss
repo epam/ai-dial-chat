@@ -55,13 +55,13 @@
   transition: background 100ms ease;
 
   &:hover {
-    background: var(--bg-layer-3, rgba(0, 0, 0, 0.04));
+    background: var(--bg-layer-raised, #fcfcfc);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--text-accent-primary);
+    outline: 2px solid var(--text-accent);
     outline-offset: -2px;
-    background: var(--bg-layer-3, rgba(0, 0, 0, 0.04));
+    background: var(--bg-layer-raised, #fcfcfc);
   }
 }
 

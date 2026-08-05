@@ -1,3 +1,4 @@
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialSpinner,
@@ -5,6 +6,7 @@ import {
   NeutralButton,
 } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
+import styles from './PublishFooter.module.scss';
 
 /** Text overrides for all user-visible strings in {@link PublishFooter}. */
 export interface PublishFooterLabels {
@@ -34,6 +36,14 @@ export interface PublishFooterProps {
   onSubmit: () => void;
   /** Text overrides for all user-visible strings. */
   labels?: PublishFooterLabels;
+  /** Color overrides. */
+  colors?: PublishFooterColors;
+}
+
+/** Color overrides for {@link PublishFooter}, applied as CSS custom properties with app theme fallbacks. */
+export interface PublishFooterColors {
+  /** Top border color. Fallback: `--stroke-tertiary`. */
+  border?: string;
 }
 
 /** Action row for the Publish flow: pinned Cancel and Publish/Update buttons. */
@@ -45,7 +55,12 @@ export const PublishFooter: FC<PublishFooterProps> = ({
   onCancel,
   onSubmit,
   labels = {},
+  colors,
 }) => {
+  const cssVars = buildCssVars({
+    '--pf-border': colors?.border,
+  });
+
   const {
     cancelLabel = 'Cancel',
     publishDefaultLabel = 'Publish',
@@ -64,7 +79,13 @@ export const PublishFooter: FC<PublishFooterProps> = ({
   })();
 
   return (
-    <div className="flex items-center justify-end gap-2 border-t border-tertiary px-3.5 py-4 rtl:flex-row-reverse rtl:justify-start">
+    <div
+      style={cssVars}
+      className={mergeClasses(
+        'flex items-center justify-end gap-2 border-t px-3.5 py-4 rtl:flex-row-reverse rtl:justify-start',
+        styles.footer,
+      )}
+    >
       <GhostButton
         label={cancelLabel}
         disabled={isSubmitLoading}

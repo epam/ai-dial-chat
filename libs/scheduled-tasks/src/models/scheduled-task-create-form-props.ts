@@ -122,7 +122,7 @@ export interface ScheduledTaskCreateFormLabels {
  * as CSS custom properties with app theme fallbacks.
  */
 export interface ScheduledTaskCreateFormColors {
-  /** Root container background. Fallback: `--bg-layer-5`. */
+  /** Root container background. Fallback: `--bg-layer-base`. */
   background?: string;
   /** Header row's bottom border color. Fallback: `--stroke-tertiary`. */
   headerBorder?: string;

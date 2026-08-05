@@ -25,7 +25,7 @@ export interface CreateOption {
   icon?: ReactNode;
   /**
    * Tailwind classes applied to the icon container — controls background tint
-   * and icon colour. Example: `'bg-accent-secondary-alpha text-accent-secondary'`.
+   * and icon color.
    */
   iconContainerClassName?: string;
   /** Called when this option is selected. */

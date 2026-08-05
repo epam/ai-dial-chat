@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialCloseButton } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode, RefObject, useEffect, useMemo, useRef } from 'react';
 import {
@@ -92,6 +92,26 @@ export interface StandalonePublishPanelProps {
   footerLabels?: PublishFooterLabels;
   /** Text overrides for the header/shell. */
   labels?: StandalonePublishPanelLabels;
+  /** Typography class for the header title. Default: `'dial-body-semi-text'`. */
+  titleClassName?: string;
+  /** Color overrides. */
+  colors?: StandalonePublishPanelColors;
+}
+
+/** Color overrides for {@link StandalonePublishPanel}, applied as CSS custom properties with app theme fallbacks. */
+export interface StandalonePublishPanelColors {
+  /** Backdrop background color. Fallback: `--bg-blackout`. */
+  backdropBackground?: string;
+  /** Panel background color. Fallback: `--bg-layer-raised`. */
+  panelBackground?: string;
+  /** Panel's leading-edge border color (desktop only). Fallback: `--stroke-secondary`. */
+  panelBorder?: string;
+  /** Divider border color below the header. Fallback: `--stroke-tertiary`. */
+  dividerBorder?: string;
+  /** Scrollbar thumb color of the scrollable content area. Fallback: `--stroke-secondary`. */
+  scrollbarThumb?: string;
+  /** Header title text color. Fallback: `--text-primary`. */
+  titleText?: string;
 }
 
 /** Standalone end-edge slide-in panel for the Publish flow: full-screen backdrop, entity summary, folder picker, history list, and pinned footer. */
@@ -125,7 +145,18 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   panelLabels,
   footerLabels,
   labels = {},
+  titleClassName = 'dial-body-semi-text',
+  colors,
 }) => {
+  const cssVars = buildCssVars({
+    '--spp-backdrop-bg': colors?.backdropBackground,
+    '--spp-panel-bg': colors?.panelBackground,
+    '--spp-panel-border': colors?.panelBorder,
+    '--spp-divider-border': colors?.dividerBorder,
+    '--spp-scrollbar-thumb': colors?.scrollbarThumb,
+    '--spp-title-text': colors?.titleText,
+  });
+
   const panelRef = useRef<HTMLDivElement>(null);
   const {
     title = 'Publish',
@@ -184,6 +215,7 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   return (
     <>
       <div
+        style={cssVars}
         className={mergeClasses(
           'fixed inset-0 z-[51] transition-opacity duration-300',
           styles.backdrop,
@@ -201,6 +233,7 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
         aria-hidden={!isOpen}
         inert={!isOpen}
         tabIndex={-1}
+        style={cssVars}
         className={mergeClasses(
           'fixed inset-y-0 end-0 z-[52] flex w-full flex-col overflow-hidden',
           'desktop:rounded-ts-xl desktop:rounded-bs-xl desktop:w-[540px] desktop:border-s',
@@ -211,7 +244,13 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
       >
         <div className="flex shrink-0 items-center gap-2 px-[22px] py-3">
           <div className="flex-1" />
-          <span className="dial-body-semi-text flex-1 text-center text-primary">
+          <span
+            className={mergeClasses(
+              'flex-1 text-center',
+              titleClassName,
+              styles.title,
+            )}
+          >
             {title}
           </span>
           <div className="flex flex-1 justify-end">

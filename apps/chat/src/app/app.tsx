@@ -465,6 +465,16 @@ const App: FC = () => {
               copiedMarkdownLabel: t(ButtonsI18nKeys.Copied),
               copyJsonLabel: t(ButtonsI18nKeys.CopyAsJson),
               copiedJsonLabel: t(ButtonsI18nKeys.Copied),
+              htmlFrameBlockedLabel: t(
+                AttachmentCanvasI18nKeys.HtmlFrameBlocked,
+              ),
+              htmlOpenInNewTabLabel: t(
+                AttachmentCanvasI18nKeys.HtmlOpenInNewTab,
+              ),
+              htmlViewSourceLabel: t(AttachmentCanvasI18nKeys.HtmlViewSource),
+              htmlViewRenderedLabel: t(
+                AttachmentCanvasI18nKeys.HtmlViewRendered,
+              ),
             }}
             isMobile={isMobile}
             defaultWidth={canvasDefaultWidth}

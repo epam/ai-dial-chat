@@ -192,7 +192,7 @@ const ImportExportQueue: FC<Props> = ({
         <div className="flex items-center gap-2">
           <span className="dial-small-semi-text text-primary">{title}</span>
           {failedCount > 0 && (
-            <span className="dial-small-semi-text inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-controls-error px-1 text-tertiary">
+            <span className="dial-small-semi-text inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-control-error px-1 text-tertiary">
               {failedCount}
             </span>
           )}

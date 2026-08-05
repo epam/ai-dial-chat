@@ -348,6 +348,7 @@ export const ConversationsProvider = ({
           publishedWithMe: false,
           isPinned: false,
           isReadonly: false,
+          isScheduledTask: false,
         },
         ...prev,
       ]);

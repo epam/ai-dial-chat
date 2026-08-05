@@ -16,7 +16,7 @@
 ## 3. Login Page — UI (slice 1)
 
 - [x] 3.1 Rewrite `apps/chat/src/pages/auth/Login.tsx`:
-  - Full-screen container (`relative flex min-h-screen items-center justify-center overflow-hidden bg-layer-2 mobile:bg-layer-raised mobile:px-6`)
+  - Full-screen container (`relative flex min-h-screen items-center justify-center overflow-hidden bg-layer-sunken mobile:bg-layer-raised mobile:px-6`)
   - `<picture>` element with `(min-width: 1920px)` source and 768-px fallback `<img>`; hidden on mobile (`mobile:hidden`)
   - Card: `bg-overlay`; mobile: `bg-transparent rounded-none p-0`
   - Theme favicon span (rendered when `currentThemeFavicon` is set)

@@ -578,6 +578,50 @@ describe('ConversationController (integration)', () => {
         body.items[0].id.startsWith(`conversations/${TEST_USER.bucket}/`),
       ).toBe(false);
     });
+
+    it('returns isScheduledTask, scheduleId, and runId for a scheduler-created conversation', async () => {
+      const response = {
+        items: [
+          {
+            id: 'conversations/test-bucket/.scheduler/sched_abc/run_001/gpt-4o__Morning briefing',
+            title: 'Morning briefing',
+            updatedAt: 2000,
+            sharedWithMe: false,
+            publishedWithMe: false,
+            isPinned: false,
+            isReadonly: false,
+            isScheduledTask: true,
+            scheduleId: 'sched_abc',
+            runId: 'run_001',
+          },
+          {
+            id: 'conversations/test-bucket/gpt-4o__Regular chat__uuid',
+            title: 'Regular chat',
+            updatedAt: 1000,
+            sharedWithMe: false,
+            publishedWithMe: false,
+            isPinned: false,
+            isReadonly: false,
+            isScheduledTask: false,
+          },
+        ],
+        nextToken: undefined,
+      };
+      service.listConversations.mockReturnValue(response);
+
+      const { body } = await request(app.getHttpServer())
+        .get('/conversations/list')
+        .expect(200);
+
+      expect(body.items[0]).toMatchObject({
+        isScheduledTask: true,
+        scheduleId: 'sched_abc',
+        runId: 'run_001',
+      });
+      expect(body.items[1].isScheduledTask).toBe(false);
+      expect(body.items[1].scheduleId).toBeUndefined();
+      expect(body.items[1].runId).toBeUndefined();
+    });
   });
 
   describe('PATCH /conversations', () => {

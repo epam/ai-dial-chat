@@ -229,6 +229,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [items],
   );
 
+  const taskBadgeLabel = t(ConversationPanelI18nKeys.TaskBadgeLabel);
+
   const conversations: ConversationItem[] = useMemo(
     () =>
       items.map((item) => {
@@ -249,6 +251,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           isIconLoading: isDeploymentsLoading,
           source: getConversationSource(item),
           href: getConversationRoute(id),
+          ...(item.isScheduledTask
+            ? { showTaskBadge: true, taskBadgeLabel }
+            : {}),
         };
       }),
     [
@@ -256,6 +261,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       deploymentIconByModelId,
       deploymentNameByModelId,
       isDeploymentsLoading,
+      taskBadgeLabel,
     ],
   );
 

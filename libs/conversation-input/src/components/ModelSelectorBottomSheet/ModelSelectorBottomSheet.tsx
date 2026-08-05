@@ -25,13 +25,13 @@ export interface ModelSelectorBottomSheetColors {
   divider?: string;
   /** Item label and state-label text color. Defaults to `--text-primary`/`--text-secondary`. */
   itemText?: string;
-  /** Item hover background. Defaults to `--bg-layer-3`. */
+  /** Item hover background. Defaults to `--bg-layer-raised`. */
   itemHoverBg?: string;
   /** Item active/pressed background. Defaults to `--bg-layer-4`. */
   itemActiveBg?: string;
   /** Item leading-icon color. Defaults to `--text-secondary`. */
   itemIcon?: string;
-  /** Selected-row checkmark icon color. Defaults to `--text-accent-primary`. */
+  /** Selected-row checkmark icon color. Defaults to `--text-accent`. */
   checkIcon?: string;
   /** Color overrides forwarded to the underlying `BottomSheetShell` (backdrop, panel background, title, divider). */
   shell?: BottomSheetShellColors;

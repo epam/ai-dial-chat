@@ -90,13 +90,11 @@ describe('ConversationInput', () => {
 
   it('merges inputClassName onto the inner Input wrapper, not the outer root', () => {
     const { container } = render(
-      <ConversationInput inputClassName="border-2 border-accent-primary" />,
+      <ConversationInput inputClassName="border-2 border-info" />,
     );
     const innerWrapper = container.querySelector('.border-2');
     expect(innerWrapper).toBeTruthy();
-    expect(innerWrapper?.classList.contains('border-accent-primary')).toBe(
-      true,
-    );
+    expect(innerWrapper?.classList.contains('border-info')).toBe(true);
   });
 
   it('disables the send button when isSendDisabled is true, without disabling the textarea', () => {

@@ -14,7 +14,7 @@
   &:focus-within {
     border-color: color-mix(
       in srgb,
-      var(--stroke-accent-primary, #7da4ff) 50%,
+      var(--stroke-info, #124ace) 50%,
       transparent
     );
     box-shadow: none;

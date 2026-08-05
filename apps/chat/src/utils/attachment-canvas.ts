@@ -1,5 +1,7 @@
 import type {
+  CodeCanvasContent,
   ErrorCanvasContent,
+  HtmlCanvasContent,
   ImageCanvasContent,
   JsonCanvasContent,
   MarkdownCanvasContent,
@@ -10,6 +12,7 @@ import type {
 import {
   AttachmentContentType,
   AttachmentErrorType,
+  isHtmlPreviewable,
   isTextPreviewable,
 } from '@epam/ai-dial-attachment-canvas';
 import type {
@@ -113,8 +116,12 @@ export const isExternalSourcePreviewable = (
     const dot = fileName.lastIndexOf('.');
     if (dot === -1) return false;
     const ext = fileName.slice(dot + 1).toLowerCase();
-    // 'pdf' is not in isTextPreviewable's TEXT_EXTENSIONS, so it must be checked explicitly.
-    return ext === FileExtension.PDF || isTextPreviewable(fileName);
+    /* 'pdf' is not in TEXT_EXTENSIONS; 'html'/'htm' are not in TEXT_EXTENSIONS (they use HtmlContent), so both must be checked explicitly. */
+    return (
+      ext === FileExtension.PDF ||
+      isTextPreviewable(fileName) ||
+      isHtmlPreviewable(fileName)
+    );
   } catch {
     return false;
   }
@@ -293,6 +300,36 @@ export const resolveMarkdownCanvasContent = async (
   if (result == null) return null;
   if (typeof result !== 'string') return result;
   return { type: AttachmentContentType.Markdown, text: result };
+};
+
+const HTML_SRCDOC_SIZE_LIMIT = 1_048_576;
+
+/** Resolves a syntax-highlighted code canvas content payload from a DisplayAttachment, or `null` if unavailable. */
+export const resolveCodeCanvasContent = async (
+  attachment: DisplayAttachment,
+  language?: string,
+): Promise<CodeCanvasContent | ErrorCanvasContent | null> => {
+  const result = await resolveAttachmentText(attachment);
+  if (result == null) return null;
+  if (typeof result !== 'string') return result;
+  return { type: AttachmentContentType.Code, text: result, language };
+};
+
+/**
+ * Resolves an HTML canvas content payload from a DisplayAttachment.
+ * Fetches and inlines the HTML as `srcdoc` when the attachment has a download URL or inline data.
+ * Returns `null` if no source is available, or an `ErrorCanvasContent` on fetch failure.
+ * Rejects `srcdoc` payloads larger than 1 MiB to prevent browser truncation.
+ */
+export const resolveHtmlCanvasContent = async (
+  attachment: DisplayAttachment,
+): Promise<HtmlCanvasContent | ErrorCanvasContent | null> => {
+  const result = await resolveAttachmentText(attachment);
+  if (result == null) return null;
+  if (typeof result !== 'string') return result;
+  if (result.length > HTML_SRCDOC_SIZE_LIMIT) return null;
+  const url = resolveDialUrl(attachment) ?? undefined;
+  return { type: AttachmentContentType.Html, srcdoc: result, url };
 };
 
 /**

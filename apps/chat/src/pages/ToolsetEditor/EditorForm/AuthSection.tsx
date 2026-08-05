@@ -525,14 +525,12 @@ const AuthSection: FC<Props> = ({
             >
               <Icon
                 size={DIAL_ICON_SIZE.SM}
-                className={
-                  isSelected ? 'text-accent-primary' : 'text-secondary'
-                }
+                className={isSelected ? 'text-accent' : 'text-secondary'}
               />
               <span
                 className={mergeClasses(
                   'text-sm',
-                  isSelected ? 'text-accent-primary' : 'text-primary',
+                  isSelected ? 'text-accent' : 'text-primary',
                 )}
               >
                 {t(option.labelKey)}

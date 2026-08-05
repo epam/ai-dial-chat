@@ -484,6 +484,7 @@ export enum ConversationPanelI18nKeys {
   UnshareSuccessTitle = 'conversationPanel.unshare.unshareSuccessTitle',
   UnshareSuccess = 'conversationPanel.unshare.unshareSuccess',
   UnshareError = 'conversationPanel.unshare.unshareError',
+  TaskBadgeLabel = 'conversationPanel.taskBadgeLabel',
 }
 
 export enum ConversationPublishI18nKeys {
@@ -621,6 +622,10 @@ export enum AttachmentCanvasI18nKeys {
   UnsupportedLabel = 'attachmentCanvas.unsupportedLabel',
   LoadErrorLabel = 'attachmentCanvas.loadErrorLabel',
   ForbiddenErrorLabel = 'attachmentCanvas.forbiddenErrorLabel',
+  HtmlFrameBlocked = 'attachmentCanvas.htmlFrameBlocked',
+  HtmlOpenInNewTab = 'attachmentCanvas.htmlOpenInNewTab',
+  HtmlViewSource = 'attachmentCanvas.htmlViewSource',
+  HtmlViewRendered = 'attachmentCanvas.htmlViewRendered',
 }
 
 export enum AnnouncementBannerI18nKeys {

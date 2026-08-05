@@ -1,6 +1,11 @@
-import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  DeploymentIcon,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import { DialEllipsisTooltip, Highlight } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
+import { AppIdentityColors } from '../../models/app-identity-styles';
 import { DeploymentSize } from '../../types/deployment-icon-size';
 import { CatalogEntityType } from '../../types/entity-type';
 import { EntityTypeLabel } from '../EntityTypeLabel/EntityTypeLabel';
@@ -29,8 +34,10 @@ export interface AppIdentityProps {
   className?: string;
   /** CSS class for the type label. Default: 'dial-caption-semi-text'. */
   typeClassName?: string;
-  /** CSS class for the entity name. Default: 'dial-body-semi-text text-primary'. */
+  /** Typography CSS class for the entity name. Default: 'dial-body-semi-text'. */
   nameClassName?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: AppIdentityColors;
   /** CSS class for the version string. Default: 'dial-tiny-text text-secondary'. */
   versionClassName?: string;
   /** CSS class for the last-used line text and icon. Default: 'dial-tiny-text text-secondary'. */
@@ -52,7 +59,8 @@ export const AppIdentity: FC<AppIdentityProps> = ({
   query,
   className,
   typeClassName = 'dial-caption-semi-text',
-  nameClassName = 'dial-body-semi-text text-primary',
+  nameClassName = 'dial-body-semi-text',
+  colors,
   versionClassName = 'dial-tiny-text text-secondary',
   lastUsedClassName = 'dial-tiny-text text-tertiary',
   lastUsedTrailing,
@@ -63,6 +71,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
     ? 'size-[54px] rounded-[14px]'
     : 'size-[44px] rounded-lg';
   const logoSize = isLg ? 54 : 44;
+  const cssVars = buildCssVars({ '--ai-name-text': colors?.nameColor });
 
   return (
     <div
@@ -70,6 +79,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
         'flex min-w-0 items-start gap-[14px] rounded-xl',
         className,
       )}
+      style={cssVars}
     >
       <div
         className={mergeClasses(
@@ -96,7 +106,11 @@ export const AppIdentity: FC<AppIdentityProps> = ({
         <div className="flex min-w-0 flex-col">
           <div className="flex min-w-0 items-start gap-1 overflow-hidden">
             <span
-              className={mergeClasses('flex-3 min-w-0 truncate', nameClassName)}
+              className={mergeClasses(
+                'flex-3 min-w-0 truncate',
+                nameClassName,
+                styles.name,
+              )}
             >
               {query ? <Highlight text={name} query={query} /> : name}
             </span>
@@ -104,8 +118,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
               <DialEllipsisTooltip
                 text={version}
                 className={mergeClasses(
-                  'flex-2',
-                  styles.numericText,
+                  'flex-2 tabular-nums',
                   versionClassName,
                 )}
               />
@@ -115,7 +128,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
           {isLg && lastUsed != null && (
             <div className="flex items-center gap-2">
               <span
-                className={mergeClasses(styles.numericText, lastUsedClassName)}
+                className={mergeClasses('tabular-nums', lastUsedClassName)}
               >
                 {lastUsed}
               </span>

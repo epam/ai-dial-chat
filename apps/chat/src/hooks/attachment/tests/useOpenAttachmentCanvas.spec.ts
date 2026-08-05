@@ -16,6 +16,7 @@ const {
   mockResolveMarkdown,
   mockResolveJson,
   mockResolveText,
+  mockResolveCode,
   mockResolvePdf,
   mockReferenceToPdf,
   mockResolveVisualizer,
@@ -28,6 +29,7 @@ const {
   mockResolveMarkdown: vi.fn(),
   mockResolveJson: vi.fn(),
   mockResolveText: vi.fn(),
+  mockResolveCode: vi.fn(),
   mockResolvePdf: vi.fn(),
   mockReferenceToPdf: vi.fn(),
   mockResolveVisualizer: vi.fn(),
@@ -80,6 +82,8 @@ vi.mock('../../../utils/attachment-canvas', () => ({
     mockResolveMarkdown(...args),
   resolveJsonCanvasContent: (...args: unknown[]) => mockResolveJson(...args),
   resolveTextCanvasContent: (...args: unknown[]) => mockResolveText(...args),
+  resolveCodeCanvasContent: (...args: unknown[]) => mockResolveCode(...args),
+  resolveHtmlCanvasContent: vi.fn(),
   resolvePdfCanvasContent: (...args: unknown[]) => mockResolvePdf(...args),
   referenceAttachmentToPdfCanvasContent: (...args: unknown[]) =>
     mockReferenceToPdf(...args),
@@ -155,14 +159,19 @@ describe('useOpenAttachmentCanvas routing', () => {
     expect(mockResolveText).not.toHaveBeenCalled();
   });
 
-  it('routes .jsonl attachments to the plain-text resolver (not JSON)', async () => {
-    mockResolveText.mockResolvedValue({ type: 'plain_text', text: '{}\n{}' });
+  it('routes .jsonl attachments to the code resolver (not JSON)', async () => {
+    mockResolveCode.mockResolvedValue({
+      type: 'code',
+      text: '{}\n{}',
+      language: 'json',
+    });
 
     const { result } = renderHook(() => useOpenAttachmentCanvas());
     await result.current.openAttachmentCanvas(makeAttachment('stream.jsonl'));
 
-    expect(mockResolveText).toHaveBeenCalledOnce();
+    expect(mockResolveCode).toHaveBeenCalledOnce();
     expect(mockResolveJson).not.toHaveBeenCalled();
+    expect(mockResolveText).not.toHaveBeenCalled();
   });
 
   it('opens the canvas with the resolved content', async () => {

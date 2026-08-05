@@ -66,6 +66,7 @@ export const RowRenderer = ({
         actionsLabel={actionsLabel}
         itemTitleClassName={styles?.itemTitleClassName}
         itemIconBadgeClassName={styles?.itemIconBadgeClassName}
+        taskBadgeClassName={styles?.taskBadgeClassName}
         rowGroupKey={row.groupKey}
         rows={rows}
         draggingId={draggingId}
