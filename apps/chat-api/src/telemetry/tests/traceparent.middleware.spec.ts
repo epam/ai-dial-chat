@@ -4,7 +4,10 @@ import { W3CTraceContextPropagator } from '@opentelemetry/core';
 import { BasicTracerProvider } from '@opentelemetry/sdk-trace-base';
 import type { Response } from 'express';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { traceparentMiddleware } from '../traceparent.middleware';
+import {
+  getActiveTraceparent,
+  traceparentMiddleware,
+} from '../traceparent.middleware';
 
 const createResponse = (): Response =>
   ({
@@ -57,5 +60,25 @@ describe('traceparentMiddleware', () => {
 
     expect(res.setHeader).not.toHaveBeenCalled();
     expect(next).toHaveBeenCalledOnce();
+  });
+
+  describe('getActiveTraceparent', () => {
+    it('returns a W3C-format traceparent string when a valid span is active', () => {
+      const tracerProvider = new BasicTracerProvider();
+      const tracer = tracerProvider.getTracer('test');
+      const span = tracer.startSpan('test-span');
+      let traceparent: string | undefined;
+
+      context.with(trace.setSpan(context.active(), span), () => {
+        traceparent = getActiveTraceparent();
+      });
+      span.end();
+
+      expect(traceparent).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-0[01]$/);
+    });
+
+    it('returns undefined when no span is active', () => {
+      expect(getActiveTraceparent()).toBeUndefined();
+    });
   });
 });

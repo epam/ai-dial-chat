@@ -451,7 +451,12 @@ processors, no additional listening port, and no outbound network calls for tele
   propagation into outbound calls (DIAL Core, `fetch`), with `GET /api/health` and
   `GET /metrics` excluded from span creation. A `traceparent` response header (W3C format) is set
   on every traced response — success or error — and exposed to browser callers via
-  `Access-Control-Expose-Headers`.
+  `Access-Control-Expose-Headers`. `apps/chat-api/src/common/filters/traceparent-error.filter.ts`
+  (a global exception filter registered in `main.ts`) mirrors that same value onto JSON error
+  response bodies as a `traceparent` property, so a client can correlate a failure with server
+  traces/logs without reading response headers; it never alters `statusCode`/`message`/`error`,
+  and adds nothing when no valid trace is active or the response isn't a fresh JSON error body
+  (streaming/file/redirect responses, or one whose headers were already sent).
 - **Logs**: `apps/chat-api/src/telemetry/nestjs-otel-logger.ts`'s `NestOtelLogger` subclasses the
   standard NestJS `ConsoleLogger`. Console output and `LOG_LEVEL` gating are unchanged; when
   enabled, the same call is additionally exported through the OpenTelemetry Logs API with a

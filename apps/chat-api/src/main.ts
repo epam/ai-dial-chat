@@ -20,6 +20,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import 'reflect-metadata';
 import { AppModule } from './app/app.module';
+import { TraceparentErrorFilter } from './common/filters/traceparent-error.filter';
 import { createHelmetOptions } from './config/csp';
 import { EnvironmentVariables } from './config/environment.config';
 import { resolveLogLevels } from './config/log-levels';
@@ -68,6 +69,7 @@ async function bootstrap() {
 
   app.use(cookieParser());
   app.use(traceparentMiddleware);
+  app.useGlobalFilters(new TraceparentErrorFilter());
 
   app.enableVersioning({ type: VersioningType.URI });
 

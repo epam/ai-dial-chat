@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserConfigI18nKeys } from '../constants/translation-keys';
+import { getApiErrorDetails } from '../server-api/api-error';
 import {
   getUserConfig,
   pinConversation as apiPinConversation,
@@ -84,9 +85,11 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
       } catch (err) {
         if (guard.isCancelled) return;
         console.error('[UserConfigContext] Failed to load user config', err);
+        const { traceId } = await getApiErrorDetails(err);
         showNotification({
           variant: NotificationVariant.Error,
           message: t(UserConfigI18nKeys.LoadError),
+          requestId: traceId,
         });
         setStatus(UserConfigStatus.Error);
       }

@@ -40,6 +40,7 @@ import { useConversationHandlers } from '../../hooks/conversation/useConversatio
 import { useConversationStream } from '../../hooks/conversation/useConversationStream';
 import { useToolsMenu } from '../../hooks/conversation/useToolsMenu';
 import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect';
+import { getApiErrorDetails } from '../../server-api/api-error';
 import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
   getConversation as apiGetConversation,
@@ -359,12 +360,14 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
             resumeIfAwaitingGeneration(id, result);
           }
         }
-      } catch {
+      } catch (error) {
         if (notificationShownForRef.current !== id) {
           notificationShownForRef.current = id;
+          const { traceId } = await getApiErrorDetails(error);
           showNotification({
             variant: NotificationVariant.Error,
             message: t(ChatI18nKeys.ConversationNotFound),
+            requestId: traceId,
           });
         }
         navigate(ROUTES.Root);

@@ -41,7 +41,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
 import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
 import { useConversationStream } from '../../hooks/conversation/useConversationStream';
-import { getApiErrorMessage } from '../../server-api/api-error';
+import { getApiErrorDetails } from '../../server-api/api-error';
 import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
   createConversation as apiCreateConversation,
@@ -213,10 +213,12 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
             temperature: 0.5,
           });
         } catch (err) {
-          const errorMessage = await getApiErrorMessage(err);
+          const { message: errorMessage, traceId } =
+            await getApiErrorDetails(err);
           showNotification({
             variant: NotificationVariant.Error,
             message: errorMessage ?? t(ChatI18nKeys.CreateConversationError),
+            requestId: traceId,
           });
         }
       };

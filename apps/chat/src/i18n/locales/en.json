@@ -670,6 +670,14 @@
     "regionAriaLabel": "Announcement",
     "closeLabel": "Close announcement"
   },
+  "notification": {
+    "requestId": {
+      "label": "Request ID",
+      "copyAriaLabel": "Copy request ID",
+      "copiedStatus": "Request ID copied",
+      "copyFailedStatus": "Couldn't copy request ID"
+    }
+  },
   "footerMessage": {
     "regionAriaLabel": "Footer"
   },

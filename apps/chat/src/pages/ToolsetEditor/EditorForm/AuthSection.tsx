@@ -25,6 +25,7 @@ import {
   ToolsetEditorI18nKeys,
 } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
+import { getApiErrorDetails } from '../../../server-api/api-error';
 import { loginToolset, logoutToolset } from '../../../server-api/toolsets';
 import type {
   ToolsetAuthFormData,
@@ -239,11 +240,13 @@ const AuthSection: FC<Props> = ({
           let resolvedAuth: ToolsetAuthFormData;
           try {
             resolvedAuth = await fetchToolsetAuthSettings(savedToolsetId);
-          } catch {
+          } catch (error) {
             popup.close();
+            const { traceId } = await getApiErrorDetails(error);
             showNotification({
               variant: NotificationVariant.Error,
               message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
+              requestId: traceId,
             });
             return;
           }
@@ -289,10 +292,12 @@ const AuthSection: FC<Props> = ({
         variant: NotificationVariant.Success,
         message: t(ToolsetEditorI18nKeys.LoginSuccess),
       });
-    } catch {
+    } catch (error) {
+      const { traceId } = await getApiErrorDetails(error);
       showNotification({
         variant: NotificationVariant.Error,
         message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
+        requestId: traceId,
       });
     } finally {
       setIsAuthBusy(false);
@@ -316,10 +321,12 @@ const AuthSection: FC<Props> = ({
         variant: NotificationVariant.Success,
         message: t(ToolsetEditorI18nKeys.LogoutSuccess),
       });
-    } catch {
+    } catch (error) {
+      const { traceId } = await getApiErrorDetails(error);
       showNotification({
         variant: NotificationVariant.Error,
         message: t(ToolsetEditorI18nKeys.ErrorLogoutFailed),
+        requestId: traceId,
       });
     } finally {
       setIsAuthBusy(false);

@@ -18,6 +18,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DeploymentSelectorI18nKeys } from '../constants/translation-keys';
+import { getApiErrorDetails } from '../server-api/api-error';
 import { getApplicationSchemas } from '../server-api/application-schemas';
 import { getDeploymentConfiguration } from '../server-api/deployments';
 import { getDeployments } from '../server-api/deployments.api';
@@ -287,11 +288,13 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       const { data } = await listToolsets();
       if (toolsetsRequestIdRef.current !== requestId) return;
       setToolsets(sortToolsets(data ?? []));
-    } catch {
+    } catch (error) {
       if (toolsetsRequestIdRef.current !== requestId) return;
+      const { traceId } = await getApiErrorDetails(error);
       showNotification({
         variant: NotificationVariant.Error,
         message: t(DeploymentSelectorI18nKeys.RefetchToolsetsFailed),
+        requestId: traceId,
       });
     }
   }, [showNotification, t]);
@@ -306,11 +309,13 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
         );
         if (deploymentsRequestIdRef.current !== requestId) return;
         setRawDeployments(sortDeployments(deployments ?? []));
-      } catch {
+      } catch (error) {
         if (deploymentsRequestIdRef.current !== requestId) return;
+        const { traceId } = await getApiErrorDetails(error);
         showNotification({
           variant: NotificationVariant.Error,
           message: t(DeploymentSelectorI18nKeys.RefetchDeploymentsFailed),
+          requestId: traceId,
         });
       }
     },

@@ -57,6 +57,7 @@ import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useConversationExport } from '../../hooks/useConversationExport';
 import { useConversationImport } from '../../hooks/useConversationImport';
 import { useUiFeature } from '../../hooks/useUiFeature';
+import { getApiErrorDetails } from '../../server-api/api-error';
 import { discardSharedCatalogItem } from '../../server-api/share.api';
 import { ConversationExportMode } from '../../types/conversation-export';
 import { ROUTES } from '../../types/routes';
@@ -339,10 +340,12 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
               onDuplicateReadonly?.();
             }
             navigate(getConversationRoute(newPath));
-          } catch {
+          } catch (error) {
+            const { traceId } = await getApiErrorDetails(error);
             showNotification({
               variant: NotificationVariant.Error,
               message: t(ConversationPanelI18nKeys.DuplicateError),
+              requestId: traceId,
             });
           }
         },
