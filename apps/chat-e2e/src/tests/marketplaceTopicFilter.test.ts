@@ -1,5 +1,4 @@
 import { EntityType } from '@/chat/types/common';
-import { Publication } from '@/chat/types/publication';
 import dialTest from '@/src/core/dialFixtures';
 import {
   CheckboxState,
@@ -13,8 +12,6 @@ import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 import { Locator } from '@playwright/test';
-
-const publicationsToUnpublish: Publication[] = [];
 
 dialTest(
   'Topics: the filter is applied and search results are shown. Custom app. DIAL Marketplace.\n' +
@@ -38,6 +35,7 @@ dialTest(
     marketplaceEntitiesSection,
     baseAssertion,
     tooltip,
+    page,
     tooltipAssertion,
   }) => {
     setTestIds(
@@ -105,7 +103,6 @@ dialTest(
             await adminPublicationApiHelper.createPublishRequest(
               publishRequest,
             );
-          publicationsToUnpublish.push(appPublication);
           await adminPublicationApiHelper.approveRequest(appPublication);
         }
 
@@ -159,13 +156,15 @@ dialTest(
         await baseAssertion.assertElementTextIsTruncated(longTopicLabel);
         await longTopicLabel.hover();
         await tooltipAssertion.assertTooltipContent(longTopic);
+        await page.mouse.move(0, 0);
+        await tooltip.waitForState({ state: 'hidden' });
 
         const shortTopicLabel = marketplaceFilter.filterByPropertyOptionLabel(
           MarketplaceFilterTypes.topics,
           firstTopic,
         );
         await shortTopicLabel.hover();
-        await tooltipAssertion.assertElementState(tooltip, 'hidden');
+        await tooltipAssertion.assertTooltipState('hidden');
       },
     );
 
@@ -315,7 +314,6 @@ dialTest(
           .build();
         const appPublication =
           await adminPublicationApiHelper.createPublishRequest(publishRequest);
-        publicationsToUnpublish.push(appPublication);
         await adminPublicationApiHelper.approveRequest(appPublication);
       },
     );
@@ -611,7 +609,6 @@ dialTest(
             await adminPublicationApiHelper.createPublishRequest(
               publishRequest,
             );
-          publicationsToUnpublish.push(appPublication);
           await adminPublicationApiHelper.approveRequest(appPublication);
         }
       },
@@ -824,6 +821,7 @@ dialTest(
     marketplaceHeader,
     entityDetailsModal,
     marketplaceEntities,
+    tooltip,
     baseAssertion,
     tooltipAssertion,
   }) => {
@@ -852,7 +850,19 @@ dialTest(
         await tooltipAssertion.assertTooltipContent(
           allTopics.slice(visibleCount).join('\n'),
         );
+        const hiddenCount = (await tooltip.getContent()).split('\n').length;
+        baseAssertion.assertValue(
+          visibleCount + hiddenCount,
+          allTopics.length,
+          ExpectedMessages.numberOfTopicsIsCorrect,
+        );
         await hiddenTopicsElement.click();
+      } else {
+        baseAssertion.assertValue(
+          visibleCount,
+          allTopics.length,
+          ExpectedMessages.numberOfTopicsIsCorrect,
+        );
       }
     };
 

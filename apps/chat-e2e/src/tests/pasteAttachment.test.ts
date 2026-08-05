@@ -28,7 +28,7 @@ dialTest(
     'The postfix to the file name is added automatically if to paste the file with the name already exists in the uploads folder.\n' +
     'Ctrl-V or drag&drop a file without extension.\n' +
     'Toast Error appears if to attach txt file when image is available only.\n' +
-    'Ctrl-V pastes 10 files into input' +
+    'Ctrl-V pastes 10 files into input.\n' +
     'Ctrl-V pastes a file into user-message in edit mode. Successful message',
   async ({
     dialHomePage,

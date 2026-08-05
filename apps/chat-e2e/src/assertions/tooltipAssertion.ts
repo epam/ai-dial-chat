@@ -1,5 +1,5 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
-import { ExpectedMessages } from '@/src/testData';
+import { ElementState, ExpectedMessages } from '@/src/testData';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { expect } from '@playwright/test';
 
@@ -33,5 +33,15 @@ export class TooltipAssertion extends BaseAssertion {
       this.tooltip.getElementLocator(),
       `Element style property: ${property} is valid`,
     ).toHaveCSS(property, value);
+  }
+
+  public async assertTooltipState(expectedState: ElementState) {
+    await this.assertElementState(
+      this.tooltip,
+      expectedState,
+      expectedState === 'visible'
+        ? ExpectedMessages.tooltipIsVisible
+        : ExpectedMessages.tooltipIsHidden,
+    );
   }
 }
