@@ -12,7 +12,11 @@ import { formErrors, urlErrors } from '@/src/constants/form-errors';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 import { MarketplaceEntityBaseSchema } from '@/src/constants/validation-helpers';
 
-import { ToolsetAuthTypes, ToolsetTransportType } from '@epam/ai-dial-shared';
+import {
+  TokenEndpointAuthMethod,
+  ToolsetAuthTypes,
+  ToolsetTransportType,
+} from '@epam/ai-dial-shared';
 
 export const ENDPOINT_PLACEHOLDER = 'ENDPOINT_PLACEHOLDER';
 
@@ -35,6 +39,9 @@ export const ToolsetLoginFormSchema = zodValidation
     clientSecret: zodValidation.string().optional(),
     authorizationEndpoint: zodValidation.string().optional(),
     tokenEndpoint: zodValidation.string().optional(),
+    tokenEndpointAuthMethod: zodValidation
+      .enum(TokenEndpointAuthMethod)
+      .optional(),
     scopes: zodValidation.array(zodValidation.string()).optional(),
   })
   .superRefine((data, ctx) => {
@@ -147,6 +154,9 @@ export const getDefaultLoginFormData = ({
         authorizationEndpoint:
           toolset?.authSettings?.authorizationEndpoint ?? '',
         tokenEndpoint: toolset?.authSettings?.tokenEndpoint ?? '',
+        tokenEndpointAuthMethod:
+          toolset?.authSettings?.tokenEndpointAuthMethod ??
+          TokenEndpointAuthMethod.ClientSecretPost,
         withLogin:
           !prevData &&
           toolset?.authSettings?.clientSecret &&
