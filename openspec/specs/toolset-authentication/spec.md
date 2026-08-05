@@ -207,14 +207,12 @@ extra fetch.
   outcome, and refreshes the toolset status
 
 #### Scenario: Popup reference is severed during cross-origin navigation
-
 - **WHEN** the OAuth provider navigation makes the opener's retained popup reference report
   `closed` while the OAuth window remains open
 - **THEN** the opener keeps the flow channel active, consumes and acknowledges the callback
   result, and the callback closes its own window
 
 #### Scenario: User manually closes the OAuth popup
-
 - **WHEN** the popup is closed without a result and focus returns to the initiating tab
 - **THEN** the system resolves the login flow as cancelled without showing an error notification
 
