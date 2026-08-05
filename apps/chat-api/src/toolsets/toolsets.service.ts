@@ -79,7 +79,6 @@ interface RawDialToolset {
   display_version?: string;
   displayVersion?: string;
   description?: string;
-  intro?: string;
   icon_url?: string;
   iconUrl?: string;
   owner?: string;
@@ -114,7 +113,6 @@ type DialToolsetSaveBody = {
   iconUrl?: string;
   descriptionKeywords?: string[];
   reference?: string;
-  intro?: string;
 };
 
 /*
@@ -244,7 +242,6 @@ const toDialToolsetBody = (
   if (body.iconUrl != null) dialBody.iconUrl = body.iconUrl;
   if (body.topics != null) dialBody.descriptionKeywords = body.topics;
   if (body.reference != null) dialBody.reference = body.reference;
-  if (body.intro != null) dialBody.intro = body.intro;
   return dialBody;
 };
 
@@ -445,7 +442,6 @@ const mapDialToolsetToDto = (raw: RawDialToolset): DialToolsetDto => ({
     getResourceDisplayNameFallback(raw.id),
   displayVersion: raw.displayVersion ?? raw.display_version,
   description: raw.description,
-  intro: raw.intro,
   iconUrl: raw.iconUrl ?? raw.icon_url,
   owner: raw.owner,
   object: raw.object,

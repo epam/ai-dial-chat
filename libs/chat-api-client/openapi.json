@@ -377,7 +377,7 @@
     },
     "/api/v1/applications/{applicationName}": {
       "patch": {
-        "description": "Updates the General-step fields (name, description, iconUrl, topics, intro) of an existing application for the authenticated session user, by proxying DIAL Core. Settings-step configuration (application_properties, version) is preserved untouched. Invalidates the applications and deployments list caches on success.",
+        "description": "Updates the General-step fields (name, description, iconUrl, topics) of an existing application for the authenticated session user, by proxying DIAL Core. Settings-step configuration (application_properties, version) is preserved untouched. Invalidates the applications and deployments list caches on success.",
         "operationId": "updateApplication",
         "parameters": [
           {
@@ -4950,11 +4950,6 @@
             "type": "string",
             "example": "A custom application."
           },
-          "intro": {
-            "type": "string",
-            "example": "Summarizes long documents in one line.",
-            "maxLength": 90
-          },
           "input_attachment_types": {
             "example": ["image/png"],
             "type": "array",
@@ -5012,11 +5007,6 @@
               "type": "string"
             }
           },
-          "intro": {
-            "type": "string",
-            "example": "Summarizes long documents in one line.",
-            "maxLength": 90
-          },
           "applicationProperties": {
             "type": "object",
             "example": {
@@ -5073,11 +5063,6 @@
             "items": {
               "type": "string"
             }
-          },
-          "intro": {
-            "type": "string",
-            "example": "Summarizes long documents in one line.",
-            "maxLength": 90
           },
           "version": {
             "type": "string",
@@ -5205,11 +5190,6 @@
           "description": {
             "type": "string",
             "description": "Description from DIAL Core"
-          },
-          "intro": {
-            "type": "string",
-            "description": "Short catalog-friendly intro from DIAL Core",
-            "maxLength": 90
           },
           "interfaces": {
             "description": "Interface types supported by this deployment",
@@ -6378,11 +6358,6 @@
             "type": "string",
             "example": "My toolset description"
           },
-          "intro": {
-            "type": "string",
-            "example": "Runs your toolset in one line.",
-            "maxLength": 90
-          },
           "iconUrl": {
             "type": "string",
             "example": ""
@@ -6549,11 +6524,6 @@
             "items": {
               "type": "string"
             }
-          },
-          "intro": {
-            "type": "string",
-            "example": "Runs your toolset in one line.",
-            "maxLength": 90
           },
           "endpoint": {
             "type": "string",

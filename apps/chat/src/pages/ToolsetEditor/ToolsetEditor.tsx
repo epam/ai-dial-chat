@@ -60,7 +60,6 @@ const AUTH_ERROR_FIELDS: (keyof ToolsetFormErrors)[] = [
 const ERROR_FIELDS: (keyof ToolsetFormErrors)[] = [
   'name',
   'version',
-  'intro',
   'endpoint',
   ...AUTH_ERROR_FIELDS,
 ];
@@ -309,9 +308,6 @@ const ToolsetEditor: FC = () => {
       if (generalCodes.name === DeploymentCreationFieldErrorCode.Required) {
         nextErrors.name = t(EditorI18nKeys.NameRequired);
       }
-      if (generalCodes.intro === DeploymentCreationFieldErrorCode.TooLong) {
-        nextErrors.intro = t(EditorI18nKeys.IntroTooLong);
-      }
       if (!data.endpoint.trim()) {
         nextErrors.endpoint = t(ToolsetEditorI18nKeys.EndpointRequired);
       } else if (!isValidEndpointUrl(data.endpoint)) {
@@ -390,7 +386,7 @@ const ToolsetEditor: FC = () => {
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       // Surface the General-step error first by switching to it when needed.
-      if (nextErrors.name || nextErrors.intro) {
+      if (nextErrors.name) {
         setEditorStep(ToolsetEditorSteps.General);
       } else if (
         nextErrors.endpoint ||

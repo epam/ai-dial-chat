@@ -33,7 +33,6 @@ export interface DeploymentGeneralFormData {
   iconUrl: string;
   description: string;
   topics: string[];
-  intro: string;
 }
 
 export interface ToolsetFormData extends DeploymentGeneralFormData {
@@ -47,7 +46,6 @@ export interface ToolsetFormData extends DeploymentGeneralFormData {
 export interface ToolsetFormErrors {
   name?: string;
   version?: string;
-  intro?: string;
   endpoint?: string;
   keyHeader?: string;
   apiKey?: string;

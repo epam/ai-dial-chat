@@ -651,9 +651,6 @@ export enum EditorI18nKeys {
   VersionPlaceholder = 'editor.versionPlaceholder',
   TopicsLabel = 'editor.topicsLabel',
   TopicsPlaceholder = 'editor.topicsPlaceholder',
-  IntroLabel = 'editor.introLabel',
-  IntroPlaceholder = 'editor.introPlaceholder',
-  IntroTooLong = 'editor.introTooLong',
 }
 
 export enum AppsEditorI18nKeys {

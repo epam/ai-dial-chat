@@ -16,23 +16,17 @@ interface SummaryProp {
   detailsStyles?: ItemDetailsStyles;
 }
 
-/** Right-side slide-in panel summary: intro/description, topics, and usage limits. */
+/** Right-side slide-in panel summary: description, topics, and usage limits. */
 export const Summary: FC<SummaryProp> = ({ item, texts, detailsStyles }) => {
-  const { introCaptionClassName = 'dial-caption-text' } =
-    detailsStyles?.typography ?? {};
-
   return (
     <div className="flex shrink-0 flex-col gap-5 px-[22px] py-4">
       <div className="flex flex-col gap-2.5">
         <span
-          className={mergeClasses(introCaptionClassName, styles.introCaption)}
+          className={mergeClasses('dial-caption-text', styles.aboutCaption)}
         >
-          {texts?.introLabel ?? 'Intro'}
+          {texts?.tabAboutLabel ?? 'About'}
         </span>
-        <AboutTab
-          content={item.intro ?? item.description}
-          detailsStyles={detailsStyles}
-        />
+        <AboutTab content={item.description} detailsStyles={detailsStyles} />
       </div>
       {item.topics.length > 0 && (
         <div className="flex flex-wrap gap-2">

@@ -15,7 +15,6 @@ export interface RawDeploymentDto {
   created_at?: number;
   reference?: string;
   description?: string;
-  intro?: string;
   display_version?: string;
   interfaces?: string | string[];
   application_type_schema_id?: string;

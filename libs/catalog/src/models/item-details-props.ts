@@ -17,8 +17,6 @@ export interface ItemDetailsTexts {
   tabConnectLabel?: string;
   /** Accessible label for the icon-only "Manage" button (opens the Edit/Publish/Delete menu). Default: `'Manage'`. */
   manageActionLabel?: string;
-  /** Caption above the intro/description text. Default: `'Intro'`. */
-  introLabel?: string;
   /** "About" tab label. Default: `'About'`. */
   tabAboutLabel?: string;
   /** "Overview" tab label. Default: `'Overview'`. */
@@ -127,11 +125,9 @@ export interface ItemDetailsTypography {
   providerClassName?: string;
   /** Typography class for the version string. Default: `'dial-tiny-text'`. */
   versionClassName?: string;
-  /** Typography class for the intro section caption. Default: `'dial-caption-text'`. */
-  introCaptionClassName?: string;
-  /** Typography class for section headings inside the intro/description content. Default: `'dial-small-semi-text'`. */
+  /** Typography class for section headings inside the description content. Default: `'dial-small-semi-text'`. */
   contentHeadingClassName?: string;
-  /** Typography class for the intro/description body text. Default: `'dial-small-text'`. */
+  /** Typography class for the description body text. Default: `'dial-small-text'`. */
   contentClassName?: string;
   /** Typography class for Overview section headings. Default: `'dial-caption-text'`. */
   overviewSectionClassName?: string;

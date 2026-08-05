@@ -523,7 +523,7 @@ describe('DetailsPanel', () => {
     ).toBeTruthy();
   });
 
-  it('renders the description inline in the intro section', () => {
+  it('renders the description inline in the summary section', () => {
     render(
       <DetailsPanel
         item={makeItem({

@@ -171,7 +171,6 @@ export class ApplicationsService {
       if (body.iconUrl != null) dialBody.iconUrl = body.iconUrl;
       if (body.topics != null && body.topics.length > 0)
         dialBody.descriptionKeywords = body.topics;
-      if (body.intro != null) dialBody.intro = body.intro;
       if (typeof endpoint === 'string') dialBody.endpoint = endpoint;
       if (features != null)
         dialBody.features = features as (typeof dialBody)['features'];
@@ -251,7 +250,6 @@ export class ApplicationsService {
       if (body.topics != null && body.topics.length > 0) {
         mergedBody.descriptionKeywords = body.topics;
       }
-      if (body.intro != null) mergedBody.intro = body.intro;
       if (body.version != null) mergedBody.displayVersion = body.version;
       if (body.endpoint != null) mergedBody.endpoint = body.endpoint;
       if (body.features != null)
