@@ -1,16 +1,12 @@
 import type { FC } from 'react';
-import { memo, useEffect, useMemo, useRef } from 'react';
+import { memo, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FooterMessageI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { UserConfigStatus } from '../../types/user-config-status';
-import { findDialAction, sanitizeFooterHtml } from '../../utils/footer-message';
+import { sanitizeFooterHtml } from '../../utils/footer-message';
 
-interface Props {
-  onDialAction: (action: string) => void;
-}
-
-const FooterMessage: FC<Props> = ({ onDialAction }) => {
+const FooterMessage: FC = () => {
   const { t } = useTranslation();
   const {
     status,
@@ -29,19 +25,6 @@ const FooterMessage: FC<Props> = ({ onDialAction }) => {
 
   const isVisible =
     status === UserConfigStatus.Ready && isFooterEnabled && !!sanitizedHtml;
-
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    const handleClick = (e: MouseEvent) => {
-      const action = findDialAction(e.target);
-      if (!action) return;
-      e.preventDefault();
-      onDialAction(action);
-    };
-    el.addEventListener('click', handleClick);
-    return () => el.removeEventListener('click', handleClick);
-  }, [isVisible, onDialAction]);
 
   if (!isVisible) {
     return null;
