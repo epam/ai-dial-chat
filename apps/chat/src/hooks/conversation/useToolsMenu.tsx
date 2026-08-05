@@ -59,10 +59,10 @@ export const useToolsMenu = () => {
   );
 
   const toolsMenuItems: ToolMenuItem[] = useMemo(() => {
-    if (deepResearchToolId == null) return [];
+    if (schemaProperty == null || deepResearchToolId == null) return [];
 
     const label =
-      (typeof schemaProperty?.title === 'string' && schemaProperty.title) ||
+      (typeof schemaProperty.title === 'string' && schemaProperty.title) ||
       t(ToolsI18nKeys.DeepResearchFallback);
 
     return [
