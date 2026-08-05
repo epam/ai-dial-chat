@@ -25,11 +25,9 @@ export class PublishingRulesAssertion extends BaseAssertion {
     seeChangesButton?: ElementState;
   }) {
     if (labelsToVerify.publishPath) {
-      // Format the expected path as "Organization / {folderName}" to match the display format
-      const expectedPath = `Organization / ${labelsToVerify.publishPath}`;
       await this.assertElementText(
         this.publishingRules.publishingPath,
-        expectedPath,
+        labelsToVerify.publishPath,
       );
     }
     if (labelsToVerify.allowAccessLabel) {
