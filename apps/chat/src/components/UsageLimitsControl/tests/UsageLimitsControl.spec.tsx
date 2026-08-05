@@ -203,6 +203,70 @@ describe('UsageLimitsControl', () => {
     expect(screen.getByText('25%').className).toContain('opacity-100');
   });
 
+  it('refreshes limits when generation completes', () => {
+    const refresh = vi.fn();
+    mockUseDeploymentUsageLimits.mockReturnValue({
+      ...defaultHookResult,
+      refresh,
+    });
+    const { rerender } = render(
+      <UsageLimitsControl
+        deploymentId="gpt-4o"
+        isGenerationInProgress
+        labels={labels}
+      />,
+    );
+
+    rerender(
+      <UsageLimitsControl
+        deploymentId="gpt-4o"
+        isGenerationInProgress={false}
+        labels={labels}
+      />,
+    );
+
+    expect(refresh).toHaveBeenCalledOnce();
+  });
+
+  it('waits for an active limits request before refreshing after generation', () => {
+    const refresh = vi.fn();
+    mockUseDeploymentUsageLimits.mockReturnValue({
+      ...defaultHookResult,
+      isLoading: true,
+      refresh,
+    });
+    const { rerender } = render(
+      <UsageLimitsControl
+        deploymentId="gpt-4o"
+        isGenerationInProgress
+        labels={labels}
+      />,
+    );
+
+    rerender(
+      <UsageLimitsControl
+        deploymentId="gpt-4o"
+        isGenerationInProgress={false}
+        labels={labels}
+      />,
+    );
+    expect(refresh).not.toHaveBeenCalled();
+
+    mockUseDeploymentUsageLimits.mockReturnValue({
+      ...defaultHookResult,
+      refresh,
+    });
+    rerender(
+      <UsageLimitsControl
+        deploymentId="gpt-4o"
+        isGenerationInProgress={false}
+        labels={{ ...labels }}
+      />,
+    );
+
+    expect(refresh).toHaveBeenCalledOnce();
+  });
+
   it('shows refresh errors without disabling adjacent input', async () => {
     mockUseDeploymentUsageLimits.mockReturnValue({
       ...defaultHookResult,

@@ -792,6 +792,7 @@ const ConversationView: FC<Props> = ({
                     deploymentId={
                       fixedModel ? fixedModel.id : (selectedItemId ?? undefined)
                     }
+                    isGenerationInProgress={isAssistantTyping}
                     labels={usageLimitsLabels}
                   />
                 }
