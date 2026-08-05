@@ -2,6 +2,7 @@ import { catchError, of, switchMap } from 'rxjs';
 
 import { combineEpics, ofType } from 'redux-observable';
 
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -76,7 +77,9 @@ const requestApiKeyEpic: AppEpic = (action$) =>
         body: JSON.stringify(payload),
       }).pipe(
         switchMap(() => of(ServiceActions.requestApiKeySuccess())),
-        catchError(() => of(ServiceActions.requestApiKeyFail())),
+        catchError((err) =>
+          of(ServiceActions.requestApiKeyFail(parseApiError(err))),
+        ),
       );
     }),
   );
@@ -98,12 +101,13 @@ const requestApiKeySuccessEpic: AppEpic = (action$) =>
 const requestApiKeyFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ServiceActions.requestApiKeyFail.type),
-    switchMap(() =>
+    switchMap(({ payload }) =>
       of(
         UIActions.showErrorToast({
           message: translate(CommonI18nKeys.GeneralServerError, {
             ns: Translation.Common,
           }),
+          traceId: payload?.traceId,
         }),
       ),
     ),

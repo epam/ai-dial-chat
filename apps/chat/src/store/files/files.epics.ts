@@ -185,11 +185,12 @@ const uploadFileEpic: AppEpic = (action$) =>
           ),
         ),
         catchError((error) => {
-          const { message } = parseApiError(error);
+          const { message, traceId } = parseApiError(error);
           return of(
             FilesActions.uploadFileFail({
               id: payload.id,
               errorMessage: message,
+              traceId,
             }),
           );
         }),
@@ -326,7 +327,9 @@ const getFilesEpic: AppEpic = (action$) =>
                 foldersSet: new Set([payload.id ?? getFileRootId()]),
               }),
             ),
-            catchError(() => of(FilesActions.getFilesFail())),
+            catchError((err) =>
+              of(FilesActions.getFilesFail(parseApiError(err))),
+            ),
           ),
         ),
       ),
@@ -344,7 +347,9 @@ const getFileMetadataEpic: AppEpic = (action$) =>
           }
           return FilesActions.getFileMetadataSuccess({ metadata });
         }),
-        catchError(() => of(FilesActions.getFileMetadataFail())),
+        catchError((err) =>
+          of(FilesActions.getFileMetadataFail(parseApiError(err))),
+        ),
       ),
     ),
   );
@@ -383,7 +388,9 @@ const getFullListingEpic: AppEpic = (action$, state$) =>
             }
             return from(actions);
           }),
-          catchError(() => of(FilesActions.getFullListingFail())),
+          catchError((err) =>
+            of(FilesActions.getFullListingFail(parseApiError(err))),
+          ),
         );
       }
 
@@ -437,8 +444,13 @@ const getFileFoldersEpic: AppEpic = (action$) =>
             folders,
           }),
         ),
-        catchError(() =>
-          of(FilesActions.getFoldersFail({ folderId: payload.id })),
+        catchError((err) =>
+          of(
+            FilesActions.getFoldersFail({
+              folderId: payload.id,
+              ...parseApiError(err),
+            }),
+          ),
         ),
       ),
     ),
@@ -471,15 +483,16 @@ const getFilesWithFoldersFailToastEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.getFoldersFail.type, FilesActions.getFilesFail.type),
     scan(
-      (acc) => {
+      (acc, { payload }) => {
         acc.count += 1;
+        acc.traceId = payload?.traceId ?? acc.traceId;
         return acc;
       },
-      { count: 0 },
+      { count: 0, traceId: undefined as string | undefined },
     ),
     filter(({ count }) => count === 2),
     take(1),
-    map(() =>
+    map(({ traceId }) =>
       UIActions.showToast({
         type: ToastType.Error,
         title: translate(CommonI18nKeys.FailedToLoadFilesAndFolders, {
@@ -488,6 +501,7 @@ const getFilesWithFoldersFailToastEpic: AppEpic = (action$) =>
         message: translate(CommonI18nKeys.CheckInternetConnection, {
           ns: Translation.Common,
         }),
+        traceId,
       }),
     ),
   );
@@ -548,10 +562,11 @@ const deleteFileEpic: AppEpic = (action$, state$) =>
             ),
           );
         }),
-        catchError(() => {
+        catchError((err) => {
           return of(
             FilesActions.deleteFileFail({
               fileName: file.name,
+              ...parseApiError(err),
             }),
           );
         }),
@@ -567,6 +582,7 @@ const deleteFileFailEpic: AppEpic = (action$) =>
         message: translate(FilesI18nKeys.FailedToDelete, {
           ns: Translation.Files,
           fileName: payload.fileName,
+          traceId: payload?.traceId,
         }),
       });
     }),
@@ -929,11 +945,12 @@ const uploadFilesEpic: AppEpic = (action$) =>
             if (canceled) {
               return EMPTY;
             }
-            const { message } = parseApiError(error);
+            const { message, traceId } = parseApiError(error);
             return of(
               FilesActions.uploadFileFail({
                 id: fileId,
                 errorMessage: message,
+                traceId,
               }),
             );
           }),
@@ -958,6 +975,7 @@ const uploadFilesEpic: AppEpic = (action$) =>
             } else if (action.type === FilesActions.uploadFileFail.type) {
               acc.finished += 1;
               acc.failCount += 1;
+              acc.traceId = (action.payload as { traceId?: string })?.traceId;
 
               if (
                 isResourcePathTooLongError(
@@ -978,11 +996,19 @@ const uploadFilesEpic: AppEpic = (action$) =>
             failCount: 0,
             pathTooLong: false,
             lastAction: null as any,
+            traceId: undefined as string | undefined,
           },
         ),
 
         mergeMap(
-          ({ finished, total, successCount, pathTooLong, lastAction }) => {
+          ({
+            finished,
+            total,
+            successCount,
+            pathTooLong,
+            lastAction,
+            traceId,
+          }) => {
             const actions: AppAction[] = [lastAction];
 
             if (canceled || finished !== total) {
@@ -1005,6 +1031,7 @@ const uploadFilesEpic: AppEpic = (action$) =>
                     : translate(CommonI18nKeys.CheckInternetConnection, {
                         ns: Translation.Common,
                       }),
+                  traceId,
                 }),
                 FilesActions.uploadFilesFail(),
               );

@@ -137,8 +137,14 @@ export const publicationSlice = createSlice({
     ) => {
       state.allPublishedWithMeItemsUploaded[payload.featureType] = true;
     },
-    uploadAllPublishedWithMeItemsFail: (state) => state,
-    uploadPublishedWithMeItemsFail: (state) => state,
+    uploadAllPublishedWithMeItemsFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => state,
+    uploadPublishedWithMeItemsFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => state,
     approvePublication: (state, _actions: PayloadAction<{ url: string }>) => {
       state.isPublicationUpdating = true;
     },

@@ -25,6 +25,8 @@ describe('detectUploadFileConflicts', () => {
           id: `${folderId}/sun.jpg`,
           name: 'sun.jpg',
           folderId,
+          contentLength: 7,
+          contentType: 'image/jpeg',
         },
       ],
       bucket: 'test-bucket',
@@ -64,6 +66,8 @@ describe('applyUploadReplaceActions', () => {
       name: 'sun.jpg',
       folderId,
       fileContent: file,
+      contentLength: 7,
+      contentType: 'image/jpeg',
     };
 
     const resolved = applyUploadReplaceActions({
@@ -75,6 +79,8 @@ describe('applyUploadReplaceActions', () => {
           id: `${folderId}/sun.jpg`,
           name: 'sun.jpg',
           folderId,
+          contentLength: 7,
+          contentType: 'image/jpeg',
         },
       ],
       folderId,
@@ -93,6 +99,8 @@ describe('applyUploadReplaceActions', () => {
       name: 'sun.jpg',
       folderId,
       fileContent: file,
+      contentLength: 7,
+      contentType: 'image/jpeg',
     };
 
     const resolved = applyUploadReplaceActions({
@@ -104,6 +112,8 @@ describe('applyUploadReplaceActions', () => {
           id: `${folderId}/sun.jpg`,
           name: 'sun.jpg',
           folderId,
+          contentLength: 7,
+          contentType: 'image/jpeg',
         },
       ],
       folderId,
@@ -122,6 +132,8 @@ describe('applyUploadReplaceActions', () => {
       name: 'sun.jpg',
       folderId,
       fileContent: file,
+      contentLength: 7,
+      contentType: 'image/jpeg',
     };
 
     const resolved = applyUploadReplaceActions({
@@ -133,6 +145,8 @@ describe('applyUploadReplaceActions', () => {
           id: `${folderId}/sun.jpg`,
           name: 'sun.jpg',
           folderId,
+          contentLength: 7,
+          contentType: 'image/jpeg',
         },
       ],
       folderId,
