@@ -28,7 +28,7 @@ Core call made by the service (via `DialClientService.client.createPublication`)
       "targetUrl": "conversations/public/Organization/Data Science/Shared chats/my-conversation-abc"
     }
   ],
-  "displayAuthor": "Valery Dluski",
+  "displayAuthor": "Test User",
   "rules": []
 }
 ```
@@ -42,7 +42,7 @@ Response (201):
   "path": "conversations/bucket-123/my-conversation-abc",
   "folderPath": "Organization/Data Science/Shared chats",
   "publishedAt": "2026-07-15T10:00:00.000Z",
-  "publishedBy": "Valery Dluski"
+  "publishedBy": "Test User"
 }
 ```
 (`PublishConversationResultDto` — no `version`, no `entityType`/`entityId` pair, since there is exactly one resource kind and no version dimension.)
@@ -92,7 +92,7 @@ Response (200):
     "path": "conversations/bucket-123/my-conversation-abc",
     "folderPath": "Organization/Data Science/Shared chats",
     "publishedAt": "2026-07-15T10:00:00.000Z",
-    "publishedBy": "Valery Dluski"
+    "publishedBy": "Test User"
   }
 ]
 ```

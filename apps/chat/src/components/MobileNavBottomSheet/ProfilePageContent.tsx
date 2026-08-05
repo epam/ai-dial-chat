@@ -2,7 +2,6 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { BASE_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import {
   IconChevronRight,
-  IconColorSwatch,
   IconKeyboard,
   IconLogout,
 } from '@tabler/icons-react';
@@ -12,13 +11,11 @@ import {
   ButtonsI18nKeys,
   SettingsI18nKeys,
 } from '../../constants/translation-keys';
-import { useTheme } from '../../context/ThemeContext';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { useSheetNavigation } from '../../hooks/useSheetNavigation';
 import AvatarInitials from '../Navigation/AvatarInitials';
 import KeyboardPageContent from './KeyboardPageContent';
 import styles from './MobileNavBottomSheet.module.scss';
-import ThemePageContent from './ThemePageContent';
 
 interface Props {
   onLogoutRequest: () => void;
@@ -26,7 +23,6 @@ interface Props {
 
 const ProfilePageContent: FC<Props> = ({ onLogoutRequest }) => {
   const { t } = useTranslation();
-  const { themes } = useTheme();
   const { push, close } = useSheetNavigation();
   const {
     displayName,
@@ -35,15 +31,6 @@ const ProfilePageContent: FC<Props> = ({ onLogoutRequest }) => {
     isFallbackIconShown,
     setIsFallbackIconShown,
   } = useUserProfile();
-
-  const hasMultipleThemes = (themes?.length ?? 0) > 1;
-
-  const handleTheme = () => {
-    push({
-      title: t(SettingsI18nKeys.Theme),
-      content: <ThemePageContent />,
-    });
-  };
 
   const handleKeyboard = () => {
     push({
@@ -83,34 +70,6 @@ const ProfilePageContent: FC<Props> = ({ onLogoutRequest }) => {
       </div>
 
       <ul className="flex flex-col">
-        {hasMultipleThemes && (
-          <li>
-            <button
-              type="button"
-              className={mergeClasses(
-                styles.item,
-                'flex w-full items-center gap-3 px-4 py-[10px] text-start',
-              )}
-              onClick={handleTheme}
-            >
-              <IconColorSwatch
-                size={BASE_ICON_SIZE}
-                stroke={1.5}
-                aria-hidden
-                className={styles.itemIcon}
-              />
-              <span className="dial-small-text flex-1">
-                {t(SettingsI18nKeys.Theme)}
-              </span>
-              <IconChevronRight
-                size={BASE_ICON_SIZE}
-                stroke={1.5}
-                aria-hidden
-                className={mergeClasses(styles.itemIcon, 'rtl:scale-x-[-1]')}
-              />
-            </button>
-          </li>
-        )}
         <li>
           <button
             type="button"

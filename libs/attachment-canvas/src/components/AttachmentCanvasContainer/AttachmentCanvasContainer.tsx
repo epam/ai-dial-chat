@@ -6,6 +6,7 @@ import { memo, useCallback, type FC } from 'react';
 import { useAttachmentCanvas } from '../../context/AttachmentCanvasContext';
 import type {
   AttachmentCanvasLabels,
+  CodeCanvasContent,
   JsonCanvasContent,
   MarkdownCanvasContent,
   PlainTextCanvasContent,
@@ -45,6 +46,10 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
         copiedMarkdownLabel,
         copyJsonLabel,
         copiedJsonLabel,
+        htmlFrameBlockedLabel,
+        htmlOpenInNewTabLabel,
+        htmlViewSourceLabel,
+        htmlViewRenderedLabel,
       } = labels ?? {};
 
       const { isOpen, isLoading, content, fileName, closeCanvas } =
@@ -57,6 +62,8 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
       const handleCopyText = useCallback(() => {
         if (content.type === AttachmentContentType.PlainText) {
           void copyToClipboard((content as PlainTextCanvasContent).text);
+        } else if (content.type === AttachmentContentType.Code) {
+          void copyToClipboard((content as CodeCanvasContent).text);
         }
       }, [content]);
 
@@ -94,10 +101,15 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
             unsupportedLabel,
             loadErrorLabel,
             forbiddenErrorLabel,
+            htmlFrameBlockedLabel,
+            htmlOpenInNewTabLabel,
+            htmlViewSourceLabel,
+            htmlViewRenderedLabel,
           }}
           onDownload={handleDownload}
           onCopyText={
-            content.type === AttachmentContentType.PlainText
+            content.type === AttachmentContentType.PlainText ||
+            content.type === AttachmentContentType.Code
               ? handleCopyText
               : undefined
           }

@@ -1,5 +1,5 @@
-import type { DialFileManagerTabs } from '@epam/ai-dial-ui-kit';
-import { DialFileManager } from '@epam/ai-dial-ui-kit';
+import type { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
+import { DialFileManager } from '@epam/ai-dial-react-file-manager';
 import type { ComponentProps, ReactNode } from 'react';
 
 type DialFileManagerComponentProps = ComponentProps<typeof DialFileManager>;

@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useMatch } from 'react-router';
 import {
   ClientChannelReportResult,
   reportClientChannel,
@@ -22,6 +23,7 @@ import {
   PendingSigninEventKind,
   TOOLSET_SIGNIN_METHOD,
 } from '../types/client-channel';
+import { ROUTES } from '../types/routes';
 import { parseExternalServiceUrl } from '../utils/external-services';
 import { useFeatureFlag } from './AppConfigContext';
 
@@ -88,13 +90,29 @@ const parseSigninEvent = (payload: string): PendingSigninEvent | null => {
 
 export const ClientChannelProvider: FC<Props> = ({ children }) => {
   const isEnabled = useFeatureFlag('liveChatInteraction');
+  /*
+   * `toolset/signin` and `external_service/signin` events can only ever be
+   * pushed by DIAL Core while a completion is streaming, which only happens
+   * on a specific conversation page (`Conversation`, mounted at
+   * `/conversations/*`) and the AppsEditor test-chat preview
+   * (`AppPreviewChat`) — the two callers of `useConversationStream`. The bare
+   * `/` route (`ConversationRoute`) is only the pre-conversation
+   * composer/empty state: it creates a conversation via a plain REST call
+   * and navigates to `/conversations/<id>` before any stream exists, so it
+   * is intentionally excluded here.
+   */
+  const matchConversations = useMatch(`${ROUTES.Conversations}/*`);
+  const matchAppsEditor = useMatch(ROUTES.AppsEditor);
+  const isStreamingCapablePage = !!(matchConversations ?? matchAppsEditor);
+  const isActive = isEnabled && isStreamingCapablePage;
+
   const [channelId, setChannelId] = useState<string | null>(null);
   const [pendingEvents, setPendingEvents] = useState<PendingSigninEvent[]>([]);
 
-  const isEnabledRef = useRef(isEnabled);
+  const isActiveRef = useRef(isActive);
   useEffect(() => {
-    isEnabledRef.current = isEnabled;
-  }, [isEnabled]);
+    isActiveRef.current = isActive;
+  }, [isActive]);
 
   const channelIdRef = useRef<string | null>(null);
   const eventsMapRef = useRef(new Map<string, PendingSigninEvent>());
@@ -171,7 +189,7 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
   const connectRef = useRef<() => Promise<void>>(async () => undefined);
 
   const scheduleReconnect = useCallback(() => {
-    if (isStoppedRef.current || !isEnabledRef.current) return;
+    if (isStoppedRef.current || !isActiveRef.current) return;
     if (attemptRef.current >= RECONNECT_DELAYS_MS.length) return;
 
     const delay = RECONNECT_DELAYS_MS[attemptRef.current];
@@ -183,7 +201,7 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
   }, [clearRetryTimeout]);
 
   const connect = useCallback(async () => {
-    if (isStoppedRef.current || !isEnabledRef.current) return;
+    if (isStoppedRef.current || !isActiveRef.current) return;
     if (abortControllerRef.current) return; // already connecting/connected
 
     const controller = new AbortController();
@@ -217,7 +235,7 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
   }, [connect]);
 
   const ensureConnected = useCallback(() => {
-    if (isStoppedRef.current || !isEnabledRef.current) return;
+    if (isStoppedRef.current || !isActiveRef.current) return;
 
     /*
      * Core reuses the same RPC `id` across separate completions (it is not
@@ -255,7 +273,7 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
 
   useEffect(() => {
     isStoppedRef.current = false;
-    if (!isEnabled) {
+    if (!isActive) {
       disconnect();
       return undefined;
     }
@@ -268,10 +286,10 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
       disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEnabled]);
+  }, [isActive]);
 
   useEffect(() => {
-    if (!isEnabled) return undefined;
+    if (!isActive) return undefined;
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
@@ -281,7 +299,7 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () =>
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [isEnabled, ensureConnected]);
+  }, [isActive, ensureConnected]);
 
   const reportEvent = useCallback(
     async (

@@ -23,7 +23,7 @@ export interface ScheduledTaskCardColors {
   titleText?: string;
   /** Description/prompt-preview text color. Fallback: `--text-control-disable`. */
   descriptionText?: string;
-  /** Schedule pill background. Fallback: `--bg-layer-2`. */
+  /** Schedule pill background. Fallback: `--bg-layer-sunken`. */
   schedulePillBackground?: string;
   /** Schedule pill border color. Fallback: `--stroke-tertiary`. */
   schedulePillBorder?: string;
@@ -37,6 +37,8 @@ export interface ScheduledTaskCardColors {
   newBadgeBackground?: string;
   /** "New" badge text color. Fallback: `--controls-text-permanent`. */
   newBadgeText?: string;
+  /** Divider border color above the location breadcrumb. Fallback: `--stroke-tertiary`. */
+  locationDividerBorder?: string;
 }
 
 /** Typography overrides for the {@link ScheduledTaskCard} component. */

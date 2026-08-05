@@ -1,12 +1,11 @@
 import { BASE_LG_ICON_PROPS } from '@epam/ai-dial-chat-shared';
 import {
-  PanelEmpty,
   PanelNoResults,
   SearchInput,
   SidebarOrientation,
   SidebarPanel,
 } from '@epam/ai-dial-sidebar';
-import { GhostIconButton } from '@epam/ai-dial-ui-kit';
+import { DialNoDataContent, GhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconDownload } from '@tabler/icons-react';
 import { memo, useLayoutEffect, useMemo, useState, type FC } from 'react';
 import type { ConversationSourcesPanelProps } from '../../models/conversation-sources-panel-props';
@@ -128,7 +127,9 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
       </span>
       <div className="flex-1 overflow-y-auto p-4">
         {isEmpty ? (
-          <PanelEmpty label={labels.emptyLabel} />
+          <div className="flex h-full items-center justify-center">
+            <DialNoDataContent title={labels.noDataLabel} />
+          </div>
         ) : isNoResults ? (
           <PanelNoResults label={labels.noResultsLabel} />
         ) : (

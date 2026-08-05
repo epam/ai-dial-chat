@@ -23,7 +23,7 @@ import {
   useLocation,
   useMatch,
   useNavigate,
-} from 'react-router-dom';
+} from 'react-router';
 import AnnouncementBanner from '../components/AnnouncementBanner/AnnouncementBanner';
 import ChatLayout from '../components/ChatLayout/ChatLayout';
 import ConversationPanelView from '../components/ConversationPanel/ConversationPanelView';
@@ -69,6 +69,9 @@ const ScheduledTaskCreatePage = lazy(
 const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
 const ToolsetEditorPage = lazy(
   () => import('../pages/ToolsetEditor/ToolsetEditor'),
+);
+const CustomAppEditorPage = lazy(
+  () => import('../pages/ToolsetEditor/CustomAppEditor'),
 );
 const ToolsetAuthCallbackPage = lazy(
   () => import('../pages/ToolsetAuthCallback/ToolsetAuthCallback'),
@@ -259,6 +262,13 @@ const App: FC = () => {
     [navigate, isMobile, closePanel],
   );
 
+  const handleNewChat = useCallback(() => {
+    if (isMobile) {
+      closePanel();
+    }
+    navigate(ROUTES.Root);
+  }, [navigate, isMobile, closePanel]);
+
   return (
     <div className="flex size-full flex-col">
       <AnnouncementBanner />
@@ -273,7 +283,7 @@ const App: FC = () => {
           activeConversationId={activeConversationId}
           onClose={closePanel}
           onSelectConversation={handleSelectConversation}
-          onNewChat={() => navigate(ROUTES.Root)}
+          onNewChat={handleNewChat}
           requestedFilter={panelRequestedFilter}
           onRequestedFilterChange={() => setPanelRequestedFilter(undefined)}
           onActiveFilterChange={handlePanelActiveFilterChange}
@@ -289,7 +299,7 @@ const App: FC = () => {
             onMenuToggle={toggleNav}
             isConversationPanelOpen={isPanelOpen}
             onConversationPanelToggle={togglePanel}
-            onNewChat={() => navigate(ROUTES.Root)}
+            onNewChat={handleNewChat}
           />
           <Routes>
             <Route
@@ -297,7 +307,7 @@ const App: FC = () => {
                 <ChatLayout
                   isPanelOpen={isPanelOpen}
                   onTogglePanel={togglePanel}
-                  onNewChat={() => navigate(ROUTES.Root)}
+                  onNewChat={handleNewChat}
                 />
               }
             >
@@ -416,6 +426,16 @@ const App: FC = () => {
               }
             />
             <Route
+              path={ROUTES.CustomAppEditor}
+              element={
+                <RouteErrorBoundary>
+                  <Suspense fallback={<RouteFallback />}>
+                    <CustomAppEditorPage />
+                  </Suspense>
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
               path="*"
               element={
                 <RouteErrorBoundary>
@@ -445,6 +465,16 @@ const App: FC = () => {
               copiedMarkdownLabel: t(ButtonsI18nKeys.Copied),
               copyJsonLabel: t(ButtonsI18nKeys.CopyAsJson),
               copiedJsonLabel: t(ButtonsI18nKeys.Copied),
+              htmlFrameBlockedLabel: t(
+                AttachmentCanvasI18nKeys.HtmlFrameBlocked,
+              ),
+              htmlOpenInNewTabLabel: t(
+                AttachmentCanvasI18nKeys.HtmlOpenInNewTab,
+              ),
+              htmlViewSourceLabel: t(AttachmentCanvasI18nKeys.HtmlViewSource),
+              htmlViewRenderedLabel: t(
+                AttachmentCanvasI18nKeys.HtmlViewRendered,
+              ),
             }}
             isMobile={isMobile}
             defaultWidth={canvasDefaultWidth}

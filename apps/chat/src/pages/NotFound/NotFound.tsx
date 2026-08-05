@@ -12,7 +12,7 @@ import {
 } from '@tabler/icons-react';
 import { type FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   ButtonsI18nKeys,
   NavigationI18nKeys,
@@ -30,7 +30,7 @@ const NotFoundPage: FC = () => {
   return (
     <section
       aria-label={t(NotFoundI18nKeys.Title)}
-      className="flex min-h-0 flex-1 flex-col bg-layer-5"
+      className="flex min-h-0 flex-1 flex-col bg-layer-base"
     >
       <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto px-4 py-10 desktop:px-8">
         <div

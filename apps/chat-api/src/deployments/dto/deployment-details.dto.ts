@@ -321,6 +321,16 @@ export class ApplicationDetailsDto {
   applicationTypeSchemaId?: string;
 
   @ApiPropertyOptional({
+    description: 'Chat completion endpoint URL for custom applications',
+  })
+  endpoint?: string;
+
+  @ApiPropertyOptional({
+    description: 'Maximum number of input attachments for custom applications',
+  })
+  maxInputAttachments?: number;
+
+  @ApiPropertyOptional({
     description:
       'Timestamp of creation time from DIAL Core (e.g. 1714768496000)',
   })

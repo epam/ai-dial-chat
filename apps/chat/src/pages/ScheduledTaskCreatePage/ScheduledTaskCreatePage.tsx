@@ -9,7 +9,7 @@ import {
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { ScheduledTaskCreateQuery } from '../../constants/scheduled-tasks';
 import {

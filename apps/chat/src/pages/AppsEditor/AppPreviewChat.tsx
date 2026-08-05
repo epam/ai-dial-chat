@@ -24,7 +24,7 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { NavigateFunction } from 'react-router-dom';
+import type { NavigateFunction } from 'react-router';
 import ConversationView from '../../components/ConversationView/ConversationView';
 import NewConversationComposer, {
   type NewConversationChatSettings,

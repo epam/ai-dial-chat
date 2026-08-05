@@ -207,7 +207,7 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
 }));
 
@@ -1146,7 +1146,9 @@ describe('ConversationPanelView — import header action', () => {
     const fileInput = document.querySelector(
       'input[type="file"]',
     ) as HTMLInputElement;
-    expect(fileInput.accept).toBe('.json,.dial,.zip');
+    expect(fileInput.accept).toBe(
+      '.json,.dial,.zip,application/json,application/zip',
+    );
   });
 
   it('selecting a file calls importConversations with that file', () => {

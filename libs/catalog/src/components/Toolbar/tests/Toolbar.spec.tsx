@@ -44,14 +44,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   DialCheckbox: ({ label }: { label: string }) => <span>{label}</span>,
   DialIcon: () => null,
-  DialButtonDropdown: ({
-    label,
-  }: {
-    label: string;
-    variant?: string;
-    appearance?: string;
-    items?: unknown[];
-  }) => <button aria-label="sort">{label}</button>,
   GhostButton: ({
     icon,
     onClick,

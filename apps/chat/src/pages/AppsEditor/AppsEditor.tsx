@@ -7,7 +7,7 @@ import type { ApplicationSchemaSummaryDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import EditorHeader from '../../components/EditorHeader/EditorHeader';
 import {
   AppsEditorI18nKeys,
@@ -425,7 +425,7 @@ const AppsEditor: FC = () => {
             aria-label={t(AppsEditorI18nKeys.SavingOverlayLabel)}
             aria-live="polite"
           >
-            <div className="flex items-center gap-3 rounded-lg bg-layer-2 px-4 py-3 shadow-lg">
+            <div className="flex items-center gap-3 rounded-lg bg-layer-sunken px-4 py-3 shadow-lg">
               <DialSpinner />
               <span className="text-sm text-primary">
                 {t(AppsEditorI18nKeys.SavingOverlayLabel)}

@@ -41,7 +41,7 @@
 }
 
 .jsonNumberValue {
-  color: var(--text-accent-primary, #124ace);
+  color: var(--text-accent, #1d4ed8);
 }
 
 .jsonBooleanValue {
@@ -89,7 +89,7 @@
 
 .jsonCollapsedContent {
   color: var(--text-secondary, #6b7280);
-  background-color: var(--bg-layer-3, #fcfcfc);
+  background-color: var(--bg-layer-raised, #fcfcfc);
   font-size: 0.75em; // em-based — cannot be a static Tailwind class
 
   &::after {

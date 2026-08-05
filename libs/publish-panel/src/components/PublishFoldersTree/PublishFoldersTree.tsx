@@ -1,9 +1,11 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
-  DIAL_ICON_SIZE,
   DialFile,
   DialFileNodeType,
   DialFoldersTree,
+} from '@epam/ai-dial-react-file-manager';
+import {
+  DIAL_ICON_SIZE,
   DropdownItem,
   NeutralButton,
 } from '@epam/ai-dial-ui-kit';
@@ -198,7 +200,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
    * Per-row context menu, mirroring the file manager's "Add sibling" /
    * "Add child" folder-creation actions (see
    * `useFolderCreation`/`startTreeSiblingFolderCreation`/
-   * `startTreeChildFolderCreation` in `@epam/ai-dial-ui-kit`'s `FileManager`
+   * `startTreeChildFolderCreation` in `@epam/ai-dial-react-file-manager`'s `FileManager`
    * — not exported from the package, so reimplemented here against the
    * public `getContextMenuItems` prop instead). "Add sibling" is omitted for
    * the root node, which has no parent to create a sibling under.

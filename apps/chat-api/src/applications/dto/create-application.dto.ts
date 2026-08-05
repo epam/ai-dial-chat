@@ -20,12 +20,14 @@ export class CreateApplicationBodyDto {
   })
   name!: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'https://mydial.epam.com/custom_application_schemas/quickapps2',
+    description: 'Omit for plain custom applications with no schema type',
   })
   @IsString()
   @IsNotEmpty()
-  type!: string;
+  @IsOptional()
+  type?: string;
 
   @ApiPropertyOptional({ example: 'A custom application.' })
   @IsString()

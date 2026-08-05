@@ -19,8 +19,9 @@ import { KNOWN_UI_FEATURES } from './known-ui-features.constants';
 const CACHE_TTL_SECONDS = 60;
 const CACHE_TTL_MS = CACHE_TTL_SECONDS * 1000;
 const DEFAULT_FILE_MANAGER_TABS = ['my_files', 'shared', 'organization'];
+const DEFAULT_PUBLICATION_FILTER_SOURCES = ['title', 'role', 'dial_roles'];
 
-const APP_VERSION: string = packageJson.version;
+const APP_VERSION: string = packageJson?.version;
 
 const FOOTER_ALLOWED_TAGS = ['a', 'span', 'strong', 'u', 'em', 'br', 'p'];
 const FOOTER_ALLOWED_ATTRS: sanitizeHtml.IOptions['allowedAttributes'] = {
@@ -95,6 +96,7 @@ export class AppConfigService {
     let deepResearchToolId: string | null = null;
     let footerHtmlMessage = '';
     let customVisualizers: CustomVisualizerDto[] = [];
+    let publicationFilterSources: string[] = DEFAULT_PUBLICATION_FILTER_SOURCES;
 
     for (const def of clientDefinitions) {
       const value = await this.compositeProvider.resolve(def.key, context);
@@ -152,6 +154,10 @@ export class AppConfigService {
         }
       } else if (def.key === 'customVisualizers') {
         customVisualizers = Array.isArray(resolved) ? resolved : [];
+      } else if (def.key === 'publish.publicationFilterSources') {
+        publicationFilterSources = Array.isArray(resolved)
+          ? resolved
+          : DEFAULT_PUBLICATION_FILTER_SOURCES;
       }
     }
 
@@ -171,6 +177,7 @@ export class AppConfigService {
         enabledUiFeatures,
         deepResearchToolId,
         customVisualizers,
+        publicationFilterSources,
       },
       metadata: {
         resolvedAt: new Date().toISOString(),

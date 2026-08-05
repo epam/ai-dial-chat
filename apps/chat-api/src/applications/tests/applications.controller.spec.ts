@@ -144,13 +144,13 @@ describe('ApplicationsController (integration)', () => {
       expect(service.createApplication).not.toHaveBeenCalled();
     });
 
-    it('returns 400 when type is missing', async () => {
+    it('returns 201 when type is omitted (custom app with no schema)', async () => {
       await request(app.getHttpServer())
         .post('/api/v1/applications')
         .send({ name: 'My App' })
-        .expect(400);
+        .expect(201);
 
-      expect(service.createApplication).not.toHaveBeenCalled();
+      expect(service.createApplication).toHaveBeenCalled();
     });
 
     it('returns 401 when service throws UnauthorizedException', async () => {

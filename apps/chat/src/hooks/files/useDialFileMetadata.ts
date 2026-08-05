@@ -1,4 +1,4 @@
-import type { DialFile } from '@epam/ai-dial-ui-kit';
+import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';

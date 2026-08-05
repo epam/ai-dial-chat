@@ -1,7 +1,7 @@
 .percentageRing {
   background: conic-gradient(
     currentColor calc(var(--usage-percent, 0) * 1%),
-    var(--stroke-primary, #d1dbea) 0
+    var(--stroke-primary, #6b7280) 0
   );
   -webkit-mask: radial-gradient(
     farthest-side,

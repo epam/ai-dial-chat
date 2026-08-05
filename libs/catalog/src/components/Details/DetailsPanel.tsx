@@ -38,6 +38,7 @@ import { Tools } from './TabsContent/Tools/Tools';
 
 const NO_OP_PUBLISH = async () => undefined;
 const EMPTY_PUBLISH_FOLDERS: PublishFolderNode[] = [];
+const EMPTY_RULE_SOURCE_OPTIONS: string[] = [];
 
 /** Right-side slide-in panel displaying full details for a catalog item. */
 export const DetailsPanel: FC<DetailsPanelProps> = ({
@@ -61,6 +62,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onPublishSuccess,
   onCreatePublishFolder,
   publishLabels,
+  ruleSourceOptions = EMPTY_RULE_SOURCE_OPTIONS,
+  onFetchExistingRules,
   shareOverlay,
   isShareVisible,
   connectOverlay,
@@ -119,6 +122,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     onCreateFolder: onCreatePublishFolder,
     onPublish: onPublish ?? NO_OP_PUBLISH,
     onPublishSuccess,
+    onFetchExistingRules,
   });
 
   const publishDerived = useMemo(
@@ -342,7 +346,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                     />
                     <DialTag
                       label={`Version ${item.version} · current`}
-                      className="shrink-0 whitespace-nowrap !border-tertiary !bg-accent-primary-alpha !text-accent-primary"
+                      className="shrink-0 whitespace-nowrap !border-tertiary !bg-accent-primary-alpha !text-accent"
                     />
                   </>
                 )}
@@ -362,6 +366,11 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 hasWriteAccess={publishFlow.hasWriteAccess}
                 isSubmitting={publishFlow.isSubmitting}
                 hasSubmitError={publishFlow.hasSubmitError}
+                rules={publishFlow.rules}
+                onRulesChange={publishFlow.setRules}
+                ruleSourceOptions={ruleSourceOptions}
+                isRulesLoading={publishFlow.isRulesLoading}
+                hasRulesLoadError={publishFlow.hasRulesLoadError}
                 labels={publishLabels}
               />
             </div>

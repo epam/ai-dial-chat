@@ -20,7 +20,7 @@ export interface StageTypography {
 export interface StagesPanelColors {
   /** General text color. Defaults to `--text-primary`. */
   text?: string;
-  /** Background tint on row hover. Defaults to `--bg-layer-2`. */
+  /** Background tint on row hover. Defaults to `--bg-layer-sunken`. */
   rowHoverColor?: string;
   /** Text color of each stage name. Defaults to `--text-secondary`. */
   stageTextColor?: string;
@@ -40,7 +40,7 @@ export interface StagesPanelColors {
   iconCompletedColor?: string;
   /** Color of the error/exception icon. Defaults to `--text-warning`. */
   iconErrorColor?: string;
-  /** Background color of fenced code blocks and inline code. Defaults to `--bg-layer-0`. */
+  /** Background color of fenced code blocks and inline code. Defaults to `--bg-layer-raised`. */
   codeBg?: string;
   /** Border color of fenced code blocks and inline code. Defaults to `--stroke-secondary`. */
   codeBorderColor?: string;

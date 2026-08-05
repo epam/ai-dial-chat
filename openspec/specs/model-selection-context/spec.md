@@ -104,7 +104,7 @@ When the model list resolves to a non-empty array, `ModelsContext` SHALL automat
 - Trigger: 40 × 40 px button in `right_controls` area; model icon (24 × 24) with stacked chevron (20 × 20) on a semi-transparent badge.
 - Open state: background `rgba(125,164,255,0.36)` (`--controls/background/accent-primary-alpha-active`).
 - Closed state: no background (transparent / neutral).
-- Dropdown: 240 px wide, `bg-[var(--background/layer-0)]`, `rounded-[var(--radius-1,4px)]`, `shadow-[0px_0px_4px_0px_rgba(9,13,19,0.15)]`.
+- Dropdown: 240 px wide, `bg-[var(--background/bg-layer-raised)]`, `rounded-[var(--radius-1,4px)]`, `shadow-[0px_0px_4px_0px_rgba(9,13,19,0.15)]`.
 - Items: 40 px tall, `px-3`, `gap-3`; model icon (18 × 18 placeholder) + model id text (14 px, `--text&icon/primary`).
 - First slice uses a generic `@tabler/icons-react` icon for all models.
 

@@ -53,7 +53,7 @@ export const StageCodeBlock: FC<Props> = ({
   return (
     <pre
       className={mergeClasses(
-        'relative max-h-[300px] overflow-auto rounded border p-3 text-sm',
+        'dial-small-text relative max-h-[300px] overflow-auto rounded border p-3',
         styles.codeBlock,
       )}
     >

@@ -1,10 +1,19 @@
+import type { PublicationRule } from '@epam/ai-dial-publish-panel';
+import { PublicationRuleFunction } from '@epam/ai-dial-publish-panel';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNotification } from '../../../context/NotificationContext';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { publishConversation } from '../../../server-api/conversation-publish.api';
+import { getPublishRules } from '../../../server-api/publish-rules.api';
 import PublishConversationPanelContainer from '../PublishConversationPanelContainer';
+
+const mockRule: PublicationRule = {
+  source: 'role',
+  function: PublicationRuleFunction.Contain,
+  targets: ['engineering'],
+};
 
 vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
   const actual =
@@ -20,6 +29,11 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       hasWriteAccess,
       isSubmitting,
       hasSubmitError,
+      rules,
+      onRulesChange,
+      ruleSourceOptions,
+      isRulesLoading,
+      hasRulesLoadError,
       onClose,
       onSubmit,
     }: {
@@ -31,6 +45,11 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       hasWriteAccess: boolean;
       isSubmitting: boolean;
       hasSubmitError: boolean;
+      rules: PublicationRule[];
+      onRulesChange: (rules: PublicationRule[]) => void;
+      ruleSourceOptions: string[];
+      isRulesLoading?: boolean;
+      hasRulesLoadError?: boolean;
       onClose: () => void;
       onSubmit: () => void;
     }) => (
@@ -40,12 +59,22 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
         <span>existing:{String(hasExistingPublicationInFolder)}</span>
         <span>writeAccess:{String(hasWriteAccess)}</span>
         <span>submitting:{String(isSubmitting)}</span>
+        <span>ruleSourceOptions:{ruleSourceOptions.join(',')}</span>
+        <span>rules:{rules.map((r) => r.source).join(',')}</span>
+        <span>rulesLoading:{String(isRulesLoading)}</span>
+        <span>rulesLoadError:{String(hasRulesLoadError)}</span>
         {hasSubmitError && <span role="alert">submit failed</span>}
         <button onClick={() => onSelectedFolderPathChange(['Shared'])}>
           Select Shared
         </button>
+        <button onClick={() => onSelectedFolderPathChange(undefined)}>
+          Deselect folder
+        </button>
         <button onClick={() => void onCreateFolder(['Shared'], 'New')}>
           Create folder
+        </button>
+        <button onClick={() => onRulesChange([...rules, mockRule])}>
+          Add mock rule
         </button>
         <button onClick={onSubmit}>Publish</button>
         <button onClick={onClose}>Close</button>
@@ -56,7 +85,13 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
 
 vi.mock('../../../hooks/publish/usePublishFolders');
 vi.mock('../../../server-api/conversation-publish.api');
+vi.mock('../../../server-api/publish-rules.api');
 vi.mock('../../../context/NotificationContext');
+
+const useAppConfigMock = vi.fn();
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => useAppConfigMock(),
+}));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -93,6 +128,10 @@ beforeEach(() => {
     showNotification: mockShowNotification,
     dismissNotification: vi.fn(),
   });
+  useAppConfigMock.mockReturnValue({
+    config: { publicationFilterSources: ['title', 'role', 'dial_roles'] },
+  });
+  vi.mocked(getPublishRules).mockResolvedValue([]);
 });
 
 describe('PublishConversationPanelContainer', () => {
@@ -129,7 +168,7 @@ describe('PublishConversationPanelContainer', () => {
       path: 'conversations/bucket-123/my-conversation-abc',
       folderPath: 'Shared',
       publishedAt: new Date().toISOString(),
-      publishedBy: 'Valery Dluski',
+      publishedBy: 'Test User',
     });
     const onClose = vi.fn();
     render(
@@ -150,6 +189,7 @@ describe('PublishConversationPanelContainer', () => {
       expect(publishConversation).toHaveBeenCalledWith(
         'my-conversation-abc',
         'Shared',
+        [],
       );
     });
     await waitFor(() => {
@@ -159,6 +199,32 @@ describe('PublishConversationPanelContainer', () => {
         }),
       );
       expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  it('forwards rules added in the panel to publishConversation', async () => {
+    vi.mocked(publishConversation).mockResolvedValue({
+      path: 'conversations/bucket-123/my-conversation-abc',
+      folderPath: 'Shared',
+      publishedAt: new Date().toISOString(),
+      publishedBy: 'Test User',
+    });
+    await renderContainer();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Shared' }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Add mock rule' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    await waitFor(() => {
+      expect(publishConversation).toHaveBeenCalledWith(
+        'my-conversation-abc',
+        'Shared',
+        [mockRule],
+      );
     });
   });
 
@@ -185,5 +251,93 @@ describe('PublishConversationPanelContainer', () => {
     );
 
     expect(screen.getByText('existing:false')).toBeTruthy();
+  });
+
+  it('sources ruleSourceOptions from useAppConfig, not a hardcoded list', async () => {
+    useAppConfigMock.mockReturnValue({
+      config: { publicationFilterSources: ['roles', 'department'] },
+    });
+    await renderContainer();
+
+    expect(screen.getByText('ruleSourceOptions:roles,department')).toBeTruthy();
+  });
+
+  it('selecting a folder triggers getPublishRules and pre-fills the editor', async () => {
+    vi.mocked(getPublishRules).mockResolvedValue([mockRule]);
+    await renderContainer();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Shared' }),
+    );
+
+    await waitFor(() => {
+      expect(getPublishRules).toHaveBeenCalledWith('Shared');
+    });
+    await waitFor(() => {
+      expect(screen.getByText('rules:role')).toBeTruthy();
+    });
+  });
+
+  it('a rules-lookup failure does not block folder selection or submission', async () => {
+    vi.mocked(getPublishRules).mockRejectedValue(new Error('network'));
+    vi.mocked(publishConversation).mockResolvedValue({
+      path: 'conversations/bucket-123/my-conversation-abc',
+      folderPath: 'Shared',
+      publishedAt: new Date().toISOString(),
+      publishedBy: 'Test User',
+    });
+    await renderContainer();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Shared' }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('rulesLoadError:true')).toBeTruthy();
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+    await waitFor(() => {
+      expect(publishConversation).toHaveBeenCalled();
+    });
+  });
+
+  it('resets rules when the panel closes and reopens', async () => {
+    vi.mocked(getPublishRules).mockResolvedValue([]);
+    const { rerender } = render(
+      <PublishConversationPanelContainer
+        isOpen
+        conversationPath="my-conversation-abc"
+        conversationTitle="Q3 planning notes"
+        onClose={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Shared' }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Add mock rule' }),
+    );
+    expect(screen.getByText('rules:role')).toBeTruthy();
+
+    rerender(
+      <PublishConversationPanelContainer
+        isOpen={false}
+        conversationPath="my-conversation-abc"
+        conversationTitle="Q3 planning notes"
+        onClose={vi.fn()}
+      />,
+    );
+    rerender(
+      <PublishConversationPanelContainer
+        isOpen
+        conversationPath="my-conversation-abc"
+        conversationTitle="Q3 planning notes"
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('rules:')).toBeTruthy();
   });
 });

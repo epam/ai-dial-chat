@@ -1,0 +1,16 @@
+.dialog {
+  background: var(--pare-mobile-bg, var(--bg-layer-1, #e0e6f0));
+
+  @media (min-width: 769px) {
+    border-color: var(--pare-border, var(--stroke-tertiary, #e0e6f0));
+    background: var(--pare-bg, var(--bg-layer-sunken, #eef1f7));
+  }
+}
+
+.label {
+  color: var(--pare-label-text, var(--text-primary, #161b2d));
+}
+
+.error {
+  color: var(--pare-error-text, var(--text-error, #ae2f2f));
+}

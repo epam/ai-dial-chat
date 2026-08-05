@@ -7,7 +7,7 @@
 }
 
 .schedulePill {
-  background: var(--stc-pill-bg, var(--bg-layer-2, #eef1f7));
+  background: var(--stc-pill-bg, var(--bg-layer-sunken, #eef1f7));
   border-color: var(--stc-pill-border, var(--stroke-tertiary, #e0e6f0));
 }
 
@@ -25,5 +25,10 @@
 
 .newBadge {
   background: var(--stc-new-badge-bg, var(--bg-control-accent, #124ace));
-  color: var(--stc-new-badge-text, var(--controls-text-permanent, #fcfcfc));
+  color: var(--stc-new-badge-text, var(--text-control-permanent, #fcfcfc));
+}
+
+.locationDivider {
+  border-top: 1px solid
+    var(--stc-location-divider-border, var(--stroke-tertiary, #e0e6f0));
 }

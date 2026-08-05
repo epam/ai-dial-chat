@@ -118,8 +118,8 @@ Existing inline-citation call sites (`CitationDropdown` used from `useCitationMa
 - Returns `[]` immediately when `isStreaming` is `true` (markers are suppressed while streaming is active).
 - When not streaming, resolves annotations in priority order:
   1. `message.custom_content?.annotations` — the internal normalised format accumulated by `apply-chunk.ts` as streaming deltas arrive.
-  2. `message['custom_fields']?.annotations` — the raw DIAL API wire format present on messages loaded from the server rather than streamed in the current session. These are normalised via `normalizeRawAnnotations(raw, message.custom_content?.attachments ?? [])` from `apps/chat/src/utils/annotation.ts`.
-- Filters the resolved list to exclude annotations without `body.source.attachment.url`.
+  2. `message['custom_fields']?.annotations` — the raw DIAL API wire format present on messages loaded from the server rather than streamed in the current session. These are normalised via `normalizeRawAnnotations(raw, message.custom_content?.attachments ?? [])` from `apps/chat/src/utils/annotation.ts`. Note: the DIAL backend does not currently persist annotations in conversation storage, so this branch is exercised only if a future backend change adds persistence. Until then, annotations are available only in the current streaming session and disappear after a page reload.
+- Filters the resolved list to exclude annotations without `body.source.attachment.url`. This also excludes attachments that carry only inline data (no `url`): some grounding providers stream attachments whose content is embedded as base64 or text in the `data` field rather than a resolvable URL, and those cannot be linked or previewed.
 - Handles `null`/`undefined` annotation items gracefully (skips them without throwing).
 - Wraps the result in `useMemo` keyed on `[isStreaming, contentAnnotations, attachments, customFields]`.
 

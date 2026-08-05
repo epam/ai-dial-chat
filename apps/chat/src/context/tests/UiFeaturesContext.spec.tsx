@@ -29,6 +29,7 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       enabledUiFeatures,
       footerHtmlMessage: '',
       customVisualizers: [],
+      publicationFilterSources: ['title', 'role', 'dial_roles'],
     },
   } satisfies AppConfigState);
 
@@ -42,11 +43,11 @@ describe('UiFeaturesContext', () => {
   });
 
   describe('default baseline', () => {
-    it('enables exactly the 19 default-on features', () => {
+    it('enables exactly the 20 default-on features', () => {
       mockAppConfig();
       const { result } = renderHook(() => useUiFeatures(), { wrapper });
 
-      expect(result.current.enabledFeatures.size).toBe(19);
+      expect(result.current.enabledFeatures.size).toBe(20);
       expect(result.current.isEnabled(OverlayFeature.Header)).toBe(true);
       expect(
         result.current.isEnabled(OverlayFeature.ConversationsSection),
@@ -95,7 +96,7 @@ describe('UiFeaturesContext', () => {
       mockAppConfig(null);
       const { result } = renderHook(() => useUiFeatures(), { wrapper });
 
-      expect(result.current.enabledFeatures.size).toBe(19);
+      expect(result.current.enabledFeatures.size).toBe(20);
       expect(result.current.isEnabled(OverlayFeature.Header)).toBe(true);
     });
   });

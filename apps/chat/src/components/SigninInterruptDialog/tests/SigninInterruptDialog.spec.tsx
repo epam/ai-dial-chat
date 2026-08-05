@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ToolsetAuthTypes } from '../../../constants/toolsets';
 import {
   ButtonsI18nKeys,
   ToolsetSigninI18nKeys,
@@ -20,7 +21,6 @@ import { useUiFeature } from '../../../hooks/useUiFeature';
 import { getExternalService } from '../../../server-api/external-services';
 import { getToolset } from '../../../server-api/toolsets';
 import { PendingSigninEventKind } from '../../../types/client-channel';
-import { ToolsetAuthTypes } from '../../../types/toolsets';
 import SigninInterruptDialog from '../SigninInterruptDialog';
 
 vi.mock('../../../context/AppConfigContext', () => ({
@@ -100,6 +100,7 @@ const makeDeploymentsValue = (toolsets: unknown[] = []) => ({
   selectedItemId: null,
   setSelectedItemId: vi.fn(),
   restoreSelectedItemId: vi.fn(),
+  restoreDefaultSelection: vi.fn(),
   selectedDeploymentConfiguration: null,
   isLoading: false,
   error: null,

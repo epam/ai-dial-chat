@@ -1,7 +1,12 @@
+import { CUSTOM_APP_SCHEMA_ID } from '../constants/application-schema';
+
 interface QuickAppSchemaLike {
   id?: string;
   displayName?: string;
 }
+
+export const isCustomAppSchema = (schema?: QuickAppSchemaLike): boolean =>
+  !!schema && schema.id === CUSTOM_APP_SCHEMA_ID;
 
 /* TODO: this matches on schema id suffix / display name because DIAL Core
    does not yet expose a stable capability/type field for schemas. Replace

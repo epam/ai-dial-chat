@@ -1,10 +1,10 @@
 import { HIDDEN_FILE } from '@epam/ai-dial-chat-shared';
-import type { DialFile } from '@epam/ai-dial-ui-kit';
+import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import {
   DialFileManagerTabs,
   DialFileNodeType,
-  NotificationVariant,
-} from '@epam/ai-dial-ui-kit';
+} from '@epam/ai-dial-react-file-manager';
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

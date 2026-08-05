@@ -231,7 +231,7 @@ const buildMarkdownComponents = (
       target="_blank"
       rel="noopener noreferrer"
       className={mergeClasses(
-        'decoration-current/60 text-accent-primary underline underline-offset-2 hover:decoration-current focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[var(--stroke-focus,#EEF1F7)]',
+        'decoration-current/60 text-accent underline underline-offset-2 hover:decoration-current focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[var(--stroke-focus,#EEF1F7)]',
         cn.link,
       )}
     >

@@ -66,6 +66,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
     '--stc-location-leaf-text': colors?.locationLeafText,
     '--stc-new-badge-bg': colors?.newBadgeBackground,
     '--stc-new-badge-text': colors?.newBadgeText,
+    '--stc-location-divider-border': colors?.locationDividerBorder,
   });
 
   const menuItems: DropdownItem[] = [];
@@ -175,7 +176,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
               locationLeafClassName,
               styles.locationLeaf,
             )}
-            className="border-t border-tertiary pt-3"
+            className={mergeClasses('pt-3', styles.locationDivider)}
           />
         )}
       </div>

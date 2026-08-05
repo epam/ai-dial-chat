@@ -11,12 +11,23 @@
 import type { ToolsetLoginBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import {
   TOOLSET_REDIRECT_STATE_KEY,
   ToolsetOAuthCallbackQuery,
+  OAuthResourceKind,
+  ToolsetAuthTypes,
+  ToolsetOAuthChannelControlType,
+  ToolsetCredentialsLevel,
+  ToolsetOAuthFailureReason,
+  ToolsetOAuthResultType,
 } from '../../constants/toolsets';
+import type {
+  ToolsetOAuthChannelMessage,
+  ToolsetOAuthResultAcknowledgement,
+  ToolsetRedirectState,
+} from '../../models/toolsets';
 import {
   ExternalServiceAuthType,
   ExternalServiceCredentialsLevel,
@@ -24,19 +35,6 @@ import {
 } from '../../server-api/external-services';
 import { loginToolset } from '../../server-api/toolsets';
 import { ROUTES } from '../../types/routes';
-import type {
-  ToolsetOAuthChannelMessage,
-  ToolsetOAuthResultAcknowledgement,
-  ToolsetRedirectState,
-} from '../../types/toolsets';
-import {
-  OAuthResourceKind,
-  ToolsetAuthTypes,
-  ToolsetOAuthChannelControlType,
-  ToolsetCredentialsLevel,
-  ToolsetOAuthFailureReason,
-  ToolsetOAuthResultType,
-} from '../../types/toolsets';
 import { parseExternalServiceUrl } from '../../utils/external-services';
 import { getToolsetOAuthChannelName } from '../../utils/toolsets';
 

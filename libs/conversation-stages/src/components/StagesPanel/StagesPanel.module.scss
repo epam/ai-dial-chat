@@ -3,8 +3,6 @@
 }
 
 .row {
-  border-radius: 8px;
-
   &:hover {
     background: var(--cs-row-hover, var(--bg-layer-sunken, #eef1f7));
   }
@@ -28,8 +26,6 @@
 
 .tag {
   color: var(--cs-tag-text, var(--text-tertiary, #c7cbd4));
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 .count {
@@ -47,12 +43,10 @@
   opacity: 0.7;
 }
 
-/* Completed-check icon — same glyph and size as the CollapsedGroup summary's "Executed N steps" check, but grey: --text-tertiary still clears the AA non-text 3:1 floor (icons are aria-hidden, not normal text) in both themes. */
 .iconCompleted {
   color: var(--cs-icon-completed, var(--text-tertiary, #c7cbd4));
 }
 
-/* Exception icon (failed) — the one case that keeps a saturated, alarming color; orange (DS "warning" token), not red. */
 .iconError {
   color: var(--cs-icon-error, var(--text-warning, #7f6300));
 }

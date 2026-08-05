@@ -1,11 +1,19 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
+import {
+  MemoryRouter,
+  type NavigateFunction,
+  Route,
+  Routes,
+  useNavigate,
+} from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   reportClientChannel,
   subscribeClientChannel,
   unsubscribeClientChannel,
 } from '../../server-api/client-channel';
+import { ROUTES } from '../../types/routes';
 import { useFeatureFlag } from '../AppConfigContext';
 import {
   ClientChannelProvider,
@@ -45,9 +53,57 @@ const makeControllableStream = () => {
   };
 };
 
-const wrapper = ({ children }: { children: ReactNode }) => (
-  <ClientChannelProvider>{children}</ClientChannelProvider>
-);
+/** Renders the provider under a given initial route, since it derives `isStreamingCapablePage` via `useMatch`. */
+const makeWrapper =
+  (initialPath: string = ROUTES.Conversations) =>
+  ({ children }: { children: ReactNode }) => (
+    <MemoryRouter initialEntries={[initialPath]}>
+      <Routes>
+        <Route
+          path="*"
+          element={<ClientChannelProvider>{children}</ClientChannelProvider>}
+        />
+      </Routes>
+    </MemoryRouter>
+  );
+
+const wrapper = makeWrapper();
+
+const NavigateCapture = ({
+  onReady,
+}: {
+  onReady: (navigate: NavigateFunction) => void;
+}) => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    onReady(navigate);
+  }, [navigate, onReady]);
+  return null;
+};
+
+/** Like `makeWrapper`, but also exposes a `navigate` function tests can call to simulate route changes without remounting the provider. */
+const makeNavigableWrapper = (initialPath: string) => {
+  let navigateFn: NavigateFunction = () => undefined;
+  const Wrapper = ({ children }: { children: ReactNode }) => (
+    <MemoryRouter initialEntries={[initialPath]}>
+      <NavigateCapture
+        onReady={(navigate) => {
+          navigateFn = navigate;
+        }}
+      />
+      <Routes>
+        <Route
+          path="*"
+          element={<ClientChannelProvider>{children}</ClientChannelProvider>}
+        />
+      </Routes>
+    </MemoryRouter>
+  );
+  return {
+    Wrapper,
+    navigate: (path: string) => act(() => navigateFn(path)),
+  };
+};
 
 describe('ClientChannelProvider', () => {
   beforeEach(() => {
@@ -321,6 +377,119 @@ describe('ClientChannelProvider', () => {
     await waitFor(() => expect(result.current.channelId).toBeNull());
     expect(mockUnsubscribe).toHaveBeenCalledWith('channel-1');
     expect(result.current.pendingEvents).toHaveLength(0);
+  });
+
+  describe('page scoping', () => {
+    it.each([['/files'], ['/']])(
+      'does not subscribe when the flag is enabled but the route (%s) is not streaming-capable',
+      async (path) => {
+        mockUseFeatureFlag.mockReturnValue(true);
+
+        renderHook(() => useClientChannel(), {
+          wrapper: makeWrapper(path),
+        });
+        await act(async () => {
+          await Promise.resolve();
+        });
+
+        expect(mockSubscribe).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([[ROUTES.Conversations], [ROUTES.AppsEditor]])(
+      'subscribes when the flag is enabled and the route is %s',
+      async (path) => {
+        mockUseFeatureFlag.mockReturnValue(true);
+        const { stream } = makeControllableStream();
+        mockSubscribe.mockResolvedValue({
+          body: stream,
+          channelId: 'channel-1',
+        });
+
+        const { result } = renderHook(() => useClientChannel(), {
+          wrapper: makeWrapper(path),
+        });
+
+        await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
+      },
+    );
+
+    it('unsubscribes and clears pending events when navigating off a streaming-capable route', async () => {
+      mockUseFeatureFlag.mockReturnValue(true);
+      const { stream, push } = makeControllableStream();
+      mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
+
+      const { Wrapper, navigate } = makeNavigableWrapper(ROUTES.Conversations);
+      const { result } = renderHook(() => useClientChannel(), {
+        wrapper: Wrapper,
+      });
+      await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
+
+      const frame =
+        'data: {"id":"evt-1","method":"toolset/signin","params":{"toolsetId":"toolsets/b/my-toolset"}}\n\n';
+      await act(async () => {
+        push(frame);
+        await Promise.resolve();
+      });
+      await waitFor(() => expect(result.current.pendingEvents).toHaveLength(1));
+
+      navigate('/files');
+
+      await waitFor(() => expect(result.current.channelId).toBeNull());
+      expect(mockUnsubscribe).toHaveBeenCalledWith('channel-1');
+      expect(result.current.pendingEvents).toHaveLength(0);
+    });
+
+    it('reconnects when navigating back to a streaming-capable route', async () => {
+      mockUseFeatureFlag.mockReturnValue(true);
+      const first = makeControllableStream();
+      mockSubscribe.mockResolvedValueOnce({
+        body: first.stream,
+        channelId: 'channel-1',
+      });
+
+      const { Wrapper, navigate } = makeNavigableWrapper(ROUTES.Conversations);
+      const { result } = renderHook(() => useClientChannel(), {
+        wrapper: Wrapper,
+      });
+      await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
+
+      navigate('/files');
+      await waitFor(() => expect(result.current.channelId).toBeNull());
+
+      const second = makeControllableStream();
+      mockSubscribe.mockResolvedValueOnce({
+        body: second.stream,
+        channelId: 'channel-2',
+      });
+
+      navigate(ROUTES.Conversations);
+
+      await waitFor(() => expect(result.current.channelId).toBe('channel-2'));
+    });
+
+    it('does not disconnect or reconnect when navigating between conversation sub-paths', async () => {
+      mockUseFeatureFlag.mockReturnValue(true);
+      const { stream } = makeControllableStream();
+      mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
+
+      const { Wrapper, navigate } = makeNavigableWrapper(
+        `${ROUTES.Conversations}/conversation-1`,
+      );
+      const { result } = renderHook(() => useClientChannel(), {
+        wrapper: Wrapper,
+      });
+      await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
+
+      navigate(`${ROUTES.Conversations}/conversation-2`);
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(mockUnsubscribe).not.toHaveBeenCalled();
+      expect(mockSubscribe).toHaveBeenCalledOnce();
+      expect(result.current.channelId).toBe('channel-1');
+    });
   });
 
   it('retries with capped backoff and stops after 5 attempts', async () => {

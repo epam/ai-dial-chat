@@ -17,7 +17,14 @@ import type {
 import type { FC } from 'react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AUTH_TYPE_OPTIONS } from '../../../constants/toolsets';
+import {
+  AUTH_TYPE_OPTIONS,
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  ToolsetOAuthInitiationResultType,
+  ToolsetOAuthResultType,
+  WithLogin,
+} from '../../../constants/toolsets';
 import {
   ApiI18nKeys,
   AuthI18nKeys,
@@ -25,20 +32,13 @@ import {
   ToolsetEditorI18nKeys,
 } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
-import { getApiErrorDetails } from '../../../server-api/api-error';
-import { loginToolset, logoutToolset } from '../../../server-api/toolsets';
 import type {
   ToolsetAuthFormData,
   ToolsetFormErrors,
   ToolsetOAuthInitiationResult,
-} from '../../../types/toolsets';
-import {
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
-  ToolsetOAuthInitiationResultType,
-  ToolsetOAuthResultType,
-  WithLogin,
-} from '../../../types/toolsets';
+} from '../../../models/toolsets';
+import { getApiErrorDetails } from '../../../server-api/api-error';
+import { loginToolset, logoutToolset } from '../../../server-api/toolsets';
 import {
   fetchToolsetAuthSettings,
   initiateOAuthLogin,
@@ -532,14 +532,12 @@ const AuthSection: FC<Props> = ({
             >
               <Icon
                 size={DIAL_ICON_SIZE.SM}
-                className={
-                  isSelected ? 'text-accent-primary' : 'text-secondary'
-                }
+                className={isSelected ? 'text-accent' : 'text-secondary'}
               />
               <span
                 className={mergeClasses(
                   'text-sm',
-                  isSelected ? 'text-accent-primary' : 'text-primary',
+                  isSelected ? 'text-accent' : 'text-primary',
                 )}
               >
                 {t(option.labelKey)}

@@ -1,4 +1,5 @@
-import { DialFileManagerTabs, type TabModel } from '@epam/ai-dial-ui-kit';
+import { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
+import type { TabModel } from '@epam/ai-dial-ui-kit';
 import { useEffect, useMemo } from 'react';
 import { useAppConfig } from '../../context/AppConfigContext';
 

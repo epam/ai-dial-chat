@@ -37,7 +37,7 @@ import {
   type FC,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   getConversationRoute,
   normalizeConversationId,
@@ -230,6 +230,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [items],
   );
 
+  const taskBadgeLabel = t(ConversationPanelI18nKeys.TaskBadgeLabel);
+
   const conversations: ConversationItem[] = useMemo(
     () =>
       items.map((item) => {
@@ -250,6 +252,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           isIconLoading: isDeploymentsLoading,
           source: getConversationSource(item),
           href: getConversationRoute(id),
+          ...(item.isScheduledTask
+            ? { showTaskBadge: true, taskBadgeLabel }
+            : {}),
         };
       }),
     [
@@ -257,6 +262,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       deploymentIconByModelId,
       deploymentNameByModelId,
       isDeploymentsLoading,
+      taskBadgeLabel,
     ],
   );
 
@@ -683,7 +689,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       <input
         ref={importFileInputRef}
         type="file"
-        accept=".json,.dial,.zip"
+        accept=".json,.dial,.zip,application/json,application/zip"
         className="sr-only"
         aria-hidden
         tabIndex={-1}

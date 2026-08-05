@@ -3,6 +3,11 @@ import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  ToolsetAuthTypes,
+  ToolsetTransportType,
+  WithLogin,
+} from '../../../../constants/toolsets';
+import {
   ButtonsI18nKeys,
   CatalogI18nKeys,
   ToolsetEditorI18nKeys,
@@ -10,12 +15,7 @@ import {
 import type {
   ToolsetAuthFormData,
   ToolsetFormData,
-} from '../../../../types/toolsets';
-import {
-  ToolsetAuthTypes,
-  ToolsetTransportType,
-  WithLogin,
-} from '../../../../types/toolsets';
+} from '../../../../models/toolsets';
 import SettingsForm from '../SettingsForm';
 
 vi.mock('../AuthSection', () => ({ default: () => null }));
@@ -30,6 +30,21 @@ vi.mock('@epam/ai-dial-chat-shared', () => ({
   mergeClasses: (...classes: (string | undefined | false)[]) =>
     classes.filter(Boolean).join(' '),
   useCodeCopy: vi.fn(() => ({ isCopied: false, copy: vi.fn() })),
+  CopyButton: ({
+    copyLabel,
+    copiedLabel,
+    isCopied,
+    onClick,
+  }: {
+    copyLabel?: string;
+    copiedLabel?: string;
+    isCopied?: boolean;
+    onClick?: () => void;
+  }) => (
+    <button type="button" onClick={onClick}>
+      {isCopied ? copiedLabel : copyLabel}
+    </button>
+  ),
 }));
 
 vi.mock('../../../../utils/mcp-endpoint-url', () => ({

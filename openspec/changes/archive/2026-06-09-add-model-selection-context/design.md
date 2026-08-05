@@ -2,7 +2,7 @@
 
 The initial chat input (`ConversationRoute`) currently hard-codes no model; the backend defaults blindly. The `ThemeContext` pattern (`apps/chat/src/context/ThemeContext.tsx`) establishes the canonical approach for async-loaded, app-wide state in this project: `createContext<T | undefined>(undefined)`, `useMemo` on context value, provider-guard consumer hook. The generated API client (`@epam/chat-api-client`) is integrated (see archived change `connect-generated-api-client`) and already exposes `modelsApi.listModels()` via `apps/chat/src/server-api/models.ts`. `CreateConversationDto` currently carries only `firstMessage` — no `modelId` field exists anywhere in the stack.
 
-The Figma design (node 33:4536) shows the model selector as a 40 px button in the input bar's `right_controls` group: a model icon (24 × 24) with an overlapping chevron (20 × 20) riding a small semi-transparent background badge. Node 27:4520 shows the open dropdown (240 px wide, dark `layer-0` background, 40 px items, model icon + name, divider after the third item, "Add from marketplace" at the bottom). The open state applies a blue-alpha accent (`rgba(125,164,255,0.36)`) to the button background. The dropdown lists real model names (GPT 5.4, Gemini 3.1, Anthropic Claude 4.6, Assistant 10k, Testing-flask, Default-agent) — model icons are product-specific images. The `DialModelDto` exposes `display_name` (human-readable label, e.g. `"Gemini 3 Flash"`) and `icon_url` (SVG filename, e.g. `"Gemini.svg"`) — both optional. Icon files are served as static assets by DIAL Core.
+The Figma design (node 33:4536) shows the model selector as a 40 px button in the input bar's `right_controls` group: a model icon (24 × 24) with an overlapping chevron (20 × 20) riding a small semi-transparent background badge. Node 27:4520 shows the open dropdown (240 px wide, dark `bg-layer-raised` background, 40 px items, model icon + name, divider after the third item, "Add from marketplace" at the bottom). The open state applies a blue-alpha accent (`rgba(125,164,255,0.36)`) to the button background. The dropdown lists real model names (GPT 5.4, Gemini 3.1, Anthropic Claude 4.6, Assistant 10k, Testing-flask, Default-agent) — model icons are product-specific images. The `DialModelDto` exposes `display_name` (human-readable label, e.g. `"Gemini 3 Flash"`) and `icon_url` (SVG filename, e.g. `"Gemini.svg"`) — both optional. Icon files are served as static assets by DIAL Core.
 
 ## Goals / Non-Goals
 
@@ -98,7 +98,7 @@ Active (open) button state: `bg-[rgba(125,164,255,0.36)]` (design token `--contr
 
 Dropdown:
 - Width: `w-60` (240 px)
-- Background: `bg-[var(--background/layer-0)]`
+- Background: `bg-[var(--background/bg-layer-raised)]`
 - Border radius: `rounded-[var(--radius-1,4px)]`
 - Box shadow: `shadow-[0px_0px_4px_0px_rgba(9,13,19,0.15)]`
 - Item height: `h-10` (40 px), `px-3 gap-3`

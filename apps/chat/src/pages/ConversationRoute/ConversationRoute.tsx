@@ -15,7 +15,7 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import { useDeploymentSelectorOverlay } from '../../components/DeploymentSelector/useDeploymentSelectorOverlay';
 import NewConversationComposer, {
   type NewConversationChatSettings,
@@ -61,6 +61,7 @@ const ConversationRoute: FC = () => {
     selectedItemId,
     setSelectedItemId,
     restoreSelectedItemId,
+    restoreDefaultSelection,
     selectedDeploymentConfiguration,
     isLoading,
     error,
@@ -70,12 +71,28 @@ const ConversationRoute: FC = () => {
    * Honors a deploymentId passed as router state (e.g. by the overlay's
    * conversation-list bridge opening the composer with a pre-selected
    * deployment) without persisting it as the user's own preference.
+   *
+   * Otherwise, re-resolves selectedItemId back to the user's own preference:
+   * having viewed a different conversation may have left a transient,
+   * non-persisted model in selectedItemId via restoreSelectedItemId, which
+   * must not leak into the next new chat. Skipped while an overlay pending
+   * model selection is still awaiting app.tsx's own resolution, so that
+   * effect's preselection is not clobbered.
    */
   useEffect(() => {
     if (routeDeploymentId) {
       restoreSelectedItemId(routeDeploymentId);
+      return;
     }
-  }, [restoreSelectedItemId, routeDeploymentId]);
+    if (!overlay?.pendingModelId) {
+      restoreDefaultSelection();
+    }
+  }, [
+    restoreSelectedItemId,
+    restoreDefaultSelection,
+    routeDeploymentId,
+    overlay?.pendingModelId,
+  ]);
 
   /*
    * This is the "no conversation selected" empty state. Overlay mode must

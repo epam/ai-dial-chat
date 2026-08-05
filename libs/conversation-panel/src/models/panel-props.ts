@@ -32,6 +32,10 @@ export interface ConversationItem {
   isIconLoading?: boolean;
   /** Conversation URL. When provided, middle-click opens it in a new tab. */
   href?: string;
+  /** When `true`, a "TASK" pill badge is rendered at the end of the row. */
+  showTaskBadge?: boolean;
+  /** Text shown inside the task badge. When `showTaskBadge` is `true` and this is omitted, the badge renders with no text. */
+  taskBadgeLabel?: string;
 }
 
 /** Font overrides for the header title in `ConversationPanel`. */
@@ -52,24 +56,8 @@ export interface ConversationPanelTypography {
 export interface NewChatButtonColors {
   /** Default background. */
   background?: string;
-  /** Hover background. */
-  hoverBackground?: string;
-  /** Active/pressed background. */
-  activeBackground?: string;
   /** Label and icon color. */
   text?: string;
-  /** Blue shadow in the default state. */
-  shadowBlue?: string;
-  /** Blue shadow on hover. */
-  shadowBlueHover?: string;
-  /** Blue shadow while active/pressed. */
-  shadowBlueActive?: string;
-  /** Purple shadow in the default state. */
-  shadowPurple?: string;
-  /** Purple shadow on hover. */
-  shadowPurpleHover?: string;
-  /** Purple shadow while active/pressed. */
-  shadowPurpleActive?: string;
 }
 
 /** CSS custom-property overrides for `ConversationPanel`. */
@@ -108,6 +96,8 @@ export interface ConversationPanelStyles {
   typography?: ConversationPanelTypography;
   /** CSS class applied to the icon badge in each conversation row. Defaults to `'rounded-full'`. */
   itemIconBadgeClassName?: string;
+  /** CSS class applied to the task pill badge in each conversation row (background, border, text color, and typography). Defaults to `'border-tertiary bg-layer-base text-secondary dial-caption-semi-text uppercase tracking-[0.6px]'`. */
+  taskBadgeClassName?: string;
 }
 
 /** Localised labels and text content for `ConversationPanel`. */

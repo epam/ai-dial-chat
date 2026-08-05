@@ -115,6 +115,14 @@ export class ClientConfigDto {
     type: [CustomVisualizerDto],
   })
   customVisualizers!: CustomVisualizerDto[];
+
+  @ApiProperty({
+    description:
+      "Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES; falls back to the legacy default when unset or empty.",
+    type: [String],
+    example: ['title', 'role', 'dial_roles'],
+  })
+  publicationFilterSources!: string[];
 }
 
 export class ClientConfigMetadataDto {

@@ -1,14 +1,16 @@
-import { PrimaryButton } from '@epam/ai-dial-ui-kit';
 import {
   DialFileManager,
   DialFileManagerActions,
   DialFileManagerTabs,
-  DialSpinner,
   GridSelectionMode,
-  NOT_ALLOWED_SYMBOLS_REGEXP,
   type DialFileAcceptType,
   type FileManagerGridRow,
   type ToolbarOptions,
+} from '@epam/ai-dial-react-file-manager';
+import {
+  NOT_ALLOWED_SYMBOLS_REGEXP,
+  PrimaryButton,
+  DialSpinner,
 } from '@epam/ai-dial-ui-kit';
 import { memo, useEffect, useMemo, useState, type FC } from 'react';
 import OperationLoaderModal from '../../components/DialFileManagerModal/OperationLoaderModal';
@@ -513,9 +515,9 @@ const DialFileManagerShell: FC<Props> = ({
           <PrimaryButton label={labels.retryLabel} onClick={retry} />
         </div>
       ) : (
-        <div className="relative flex min-h-0 w-full grow overflow-auto bg-layer-2">
+        <div className="relative flex min-h-0 w-full grow overflow-auto bg-layer-sunken">
           <DialFileManager
-            className="min-h-0 w-full grow bg-layer-2"
+            className="min-h-0 w-full grow bg-layer-sunken"
             gridClassName="size-full"
             items={items}
             path={path}

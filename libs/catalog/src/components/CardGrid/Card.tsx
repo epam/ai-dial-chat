@@ -81,9 +81,7 @@ export const Card: FC<CardProps> = ({
         'box-border cursor-pointer',
         styles.card,
         item.isFeatured ? styles.featuredCard : undefined,
-        isSelected
-          ? 'border-accent-primary !bg-accent-primary-alpha'
-          : undefined,
+        isSelected ? 'border-info !bg-accent-primary-alpha' : undefined,
         className,
       )}
     >

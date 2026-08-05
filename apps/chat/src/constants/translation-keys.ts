@@ -170,6 +170,7 @@ export enum CatalogI18nKeys {
   DetailsLimitsProgressAriaLabel = 'catalog.details.limits.progressAriaLabel',
   CreateQuickApp = 'catalog.create.quickApp',
   CreateToolset = 'catalog.create.toolset',
+  CreateCustomApp = 'catalog.create.customApp',
   PublishSuccessTitle = 'catalog.publishSuccessTitle',
   PublishSuccess = 'catalog.publishSuccess',
   PublishFolderSearchPlaceholder = 'catalog.publishFolderSearchPlaceholder',
@@ -483,6 +484,7 @@ export enum ConversationPanelI18nKeys {
   UnshareSuccessTitle = 'conversationPanel.unshare.unshareSuccessTitle',
   UnshareSuccess = 'conversationPanel.unshare.unshareSuccess',
   UnshareError = 'conversationPanel.unshare.unshareError',
+  TaskBadgeLabel = 'conversationPanel.taskBadgeLabel',
 }
 
 export enum ConversationPublishI18nKeys {
@@ -492,6 +494,32 @@ export enum ConversationPublishI18nKeys {
   EmptyFolderNameError = 'conversationPublish.emptyFolderNameError',
   InvalidFolderNameError = 'conversationPublish.invalidFolderNameError',
   DuplicateFolderNameError = 'conversationPublish.duplicateFolderNameError',
+}
+
+export enum PublishAccessRulesI18nKeys {
+  Heading = 'publishAccessRules.heading',
+  AddRuleLabel = 'publishAccessRules.addRuleLabel',
+  ClearAllLabel = 'publishAccessRules.clearAllLabel',
+  OrSeparatorLabel = 'publishAccessRules.orSeparatorLabel',
+  RemoveRuleAriaLabelTemplate = 'publishAccessRules.removeRuleAriaLabelTemplate',
+  EqualFunctionLabel = 'publishAccessRules.equalFunctionLabel',
+  ContainFunctionLabel = 'publishAccessRules.containFunctionLabel',
+  RegexFunctionLabel = 'publishAccessRules.regexFunctionLabel',
+  LoadingLabel = 'publishAccessRules.loadingLabel',
+  LoadErrorLabel = 'publishAccessRules.loadErrorLabel',
+  RuleAddedAnnouncement = 'publishAccessRules.ruleAddedAnnouncement',
+  RuleRemovedAnnouncement = 'publishAccessRules.ruleRemovedAnnouncement',
+  RulesClearedAnnouncement = 'publishAccessRules.rulesClearedAnnouncement',
+  RulesLoadedAnnouncement = 'publishAccessRules.rulesLoadedAnnouncement',
+  SourceLabel = 'publishAccessRules.sourceLabel',
+  SourcePlaceholder = 'publishAccessRules.sourcePlaceholder',
+  FunctionLabel = 'publishAccessRules.functionLabel',
+  TargetsLabel = 'publishAccessRules.targetsLabel',
+  TargetsPlaceholder = 'publishAccessRules.targetsPlaceholder',
+  PatternLabel = 'publishAccessRules.patternLabel',
+  PatternPlaceholder = 'publishAccessRules.patternPlaceholder',
+  InvalidRegexError = 'publishAccessRules.invalidRegexError',
+  DialogAriaLabel = 'publishAccessRules.dialogAriaLabel',
 }
 
 export enum ConversationExportI18nKeys {
@@ -594,6 +622,10 @@ export enum AttachmentCanvasI18nKeys {
   UnsupportedLabel = 'attachmentCanvas.unsupportedLabel',
   LoadErrorLabel = 'attachmentCanvas.loadErrorLabel',
   ForbiddenErrorLabel = 'attachmentCanvas.forbiddenErrorLabel',
+  HtmlFrameBlocked = 'attachmentCanvas.htmlFrameBlocked',
+  HtmlOpenInNewTab = 'attachmentCanvas.htmlOpenInNewTab',
+  HtmlViewSource = 'attachmentCanvas.htmlViewSource',
+  HtmlViewRendered = 'attachmentCanvas.htmlViewRendered',
 }
 
 export enum AnnouncementBannerI18nKeys {
@@ -802,4 +834,36 @@ export enum NotificationI18nKeys {
   RequestIdCopyAriaLabel = 'notification.requestId.copyAriaLabel',
   RequestIdCopiedStatus = 'notification.requestId.copiedStatus',
   RequestIdCopyFailedStatus = 'notification.requestId.copyFailedStatus',
+}
+
+export enum CustomAppI18nKeys {
+  // General form placeholders
+  NamePlaceholder = 'customApp.general.namePlaceholder',
+  DescriptionPlaceholder = 'customApp.general.descriptionPlaceholder',
+  // Settings form fields
+  CompletionUrlLabel = 'customApp.settings.completionUrlLabel',
+  CompletionUrlDescription = 'customApp.settings.completionUrlDescription',
+  CompletionUrlPlaceholder = 'customApp.settings.completionUrlPlaceholder',
+  CompletionUrlRequired = 'customApp.settings.completionUrlRequired',
+  CompletionUrlInvalid = 'customApp.settings.completionUrlInvalid',
+  FeaturesDataLabel = 'customApp.settings.featuresDataLabel',
+  FeaturesDataDescription = 'customApp.settings.featuresDataDescription',
+  FeaturesDataPlaceholder = 'customApp.settings.featuresDataPlaceholder',
+  FeaturesDataInvalid = 'customApp.settings.featuresDataInvalid',
+  AttachmentTypesLabel = 'customApp.settings.attachmentTypesLabel',
+  AttachmentTypesDescription = 'customApp.settings.attachmentTypesDescription',
+  AttachmentTypesPlaceholder = 'customApp.settings.attachmentTypesPlaceholder',
+  EnterAttachmentTypes = 'customApp.settings.enterAttachmentTypes',
+  InvalidMimeType = 'customApp.settings.invalidMimeType',
+  MaxAttachmentsLabel = 'customApp.settings.maxAttachmentsLabel',
+  MaxAttachmentsDescription = 'customApp.settings.maxAttachmentsDescription',
+  MaxAttachmentsInvalid = 'customApp.settings.maxAttachmentsInvalid',
+  EnterMaxAttachments = 'customApp.settings.enterMaxAttachments',
+  TypeChatCompletionURL = 'customApp.settings.typeChatCompletionUrl',
+  ErrorCreateFailed = 'customApp.error.createFailed',
+  ErrorSaveFailed = 'customApp.error.saveFailed',
+  ErrorLoadFailed = 'customApp.error.loadFailed',
+  SaveConfirmTitle = 'customApp.saveConfirm.title',
+  SaveConfirmDescription = 'customApp.saveConfirm.description',
+  SaveConfirmLabel = 'customApp.saveConfirm.confirmLabel',
 }

@@ -2,7 +2,7 @@
   background: color-mix(
     in srgb,
     var(--entity-color, #2764d9) 12%,
-    var(--bg-layer-0, #fcfcfc)
+    var(--bg-layer-raised, #fcfcfc)
   ) !important;
   color: var(--entity-color, var(--text-accent, #1d4ed8)) !important;
 }

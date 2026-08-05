@@ -26,7 +26,7 @@ describe('FavoriteCard — selected state', () => {
 
     const card = screen.getByLabelText('Claude');
     expect(card.className).toContain('border-transparent');
-    expect(card.className).not.toContain('border-accent-primary');
+    expect(card.className).not.toContain('border-info');
     expect(card.querySelector('svg[aria-hidden]')).toBeNull();
   });
 
@@ -34,7 +34,7 @@ describe('FavoriteCard — selected state', () => {
     render(<FavoriteCard item={makeItem()} isSelected />);
 
     const card = screen.getByLabelText('Claude');
-    expect(card.className).toContain('border-accent-primary');
+    expect(card.className).toContain('border-info');
     expect(card.className).toContain('bg-accent-primary-alpha');
     expect(card.querySelector('svg[aria-hidden]')).toBeTruthy();
   });

@@ -10,6 +10,7 @@ import { memo, type FC } from 'react';
 import { useChatSettingsForm } from '../../hooks/useChatSettingsForm';
 import type { ChatSettingsValues } from '../../models/Input';
 import { ChatSettingsFields } from '../ChatSettingsFields/ChatSettingsFields';
+import styles from './ChatSettingsModal.module.scss';
 
 /** Props for the ChatSettingsModal component. */
 export interface ChatSettingsModalProps {
@@ -49,6 +50,8 @@ export interface ChatSettingsModalProps {
   saveLabel?: string;
   /** Tooltip shown on the save button when it is disabled (e.g. no response format selected). */
   saveDisabledTooltip?: string;
+  /** CSS class applied for the modal background. Defaults to a `--bg-layer-sunken` background. */
+  backgroundClassName?: string;
 }
 
 /** Desktop modal for chat settings (system prompt, temperature, response format). */
@@ -71,6 +74,7 @@ export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
   temperatureHint,
   saveLabel = 'Apply changes',
   saveDisabledTooltip,
+  backgroundClassName = styles.modal,
 }) => {
   const {
     responseFormat,
@@ -96,7 +100,7 @@ export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
       header={title}
       size={PopupSize.Sm}
       onClose={onClose}
-      className="!bg-layer-2"
+      className={backgroundClassName}
       footer={
         <div className="flex justify-end px-6 py-4">
           <DialTooltip

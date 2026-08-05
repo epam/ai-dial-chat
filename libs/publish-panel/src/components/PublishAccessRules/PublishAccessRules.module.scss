@@ -1,0 +1,16 @@
+.ruleRow {
+  border-color: var(--par-rule-border, var(--stroke-tertiary, #e0e6f0));
+  background: var(--par-rule-bg, var(--bg-layer-sunken, #eef1f7));
+}
+
+.heading {
+  color: var(--par-heading-text, var(--text-primary, #161b2d));
+}
+
+.loading {
+  color: var(--par-loading-text, var(--text-secondary, #6b7280));
+}
+
+.ruleText {
+  color: var(--par-rule-text, var(--text-primary, #161b2d));
+}

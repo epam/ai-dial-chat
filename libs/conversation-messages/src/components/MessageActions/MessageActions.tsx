@@ -1,17 +1,16 @@
 import {
+  buildCssVars,
+  CopyIconButton,
   mergeClasses,
   MessageRating,
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  GhostIconButton,
   ElementSize,
+  GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import {
-  IconCheck,
-  IconCopy,
-  IconMarkdown,
   IconPencilMinus,
   IconRefresh,
   IconThumbDown,
@@ -20,6 +19,7 @@ import {
 } from '@tabler/icons-react';
 import { FC, useCallback, useState } from 'react';
 import type { MessageActionsProps } from '../../models/message-actions';
+import styles from './MessageActions.module.scss';
 
 const COPIED_RESET_MS = 2000;
 
@@ -38,10 +38,15 @@ export const MessageActions: FC<MessageActionsProps> = ({
   isAlwaysVisible,
   className,
   labels,
+  colors,
 }) => {
   const { tooltips, ariaLabels } = labels ?? {};
   const [copied, setCopied] = useState<'copy' | 'markdown' | null>(null);
   const [copyStatus, setCopyStatus] = useState('');
+
+  const cssVars = buildCssVars({
+    '--ma-active-rating-text': colors?.activeRatingText,
+  });
 
   const handleCopy = useCallback(() => {
     onCopy?.();
@@ -63,6 +68,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
     <div
       role="toolbar"
       aria-label={ariaLabels?.actionsGroup ?? 'Message actions'}
+      style={cssVars}
       className={mergeClasses(
         'flex gap-1',
         !isAlwaysVisible && 'opacity-0 group-hover:opacity-100',
@@ -109,45 +115,26 @@ export const MessageActions: FC<MessageActionsProps> = ({
             />
           )}
           {onCopy && (
-            <GhostIconButton
-              icon={
-                copied === 'copy' ? (
-                  <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
-                ) : (
-                  <IconCopy size={DIAL_ICON_SIZE.SM} aria-hidden />
-                )
-              }
-              size={ElementSize.Small}
-              aria-label={ariaLabels?.copyResponse ?? 'Copy response'}
-              tooltipProps={{
-                tooltip:
-                  copied === 'copy'
-                    ? (tooltips?.copied ?? 'Copied!')
-                    : (tooltips?.copy ?? 'Copy'),
-              }}
+            <CopyIconButton
               onClick={handleCopy}
+              size={ElementSize.Small}
+              isCopied={copied === 'copy'}
+              copyLabel={tooltips?.copy ?? 'Copy'}
+              copiedLabel={tooltips?.copied ?? 'Copied!'}
+              ariaLabel={ariaLabels?.copyResponse ?? 'Copy response'}
             />
           )}
           {onCopyMarkdown && (
-            <GhostIconButton
-              icon={
-                copied === 'markdown' ? (
-                  <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
-                ) : (
-                  <IconMarkdown size={DIAL_ICON_SIZE.SM} aria-hidden />
-                )
-              }
-              size={ElementSize.Small}
-              aria-label={ariaLabels?.copyAsMarkdown ?? 'Copy as markdown'}
-              tooltipProps={{
-                tooltip:
-                  copied === 'markdown'
-                    ? (tooltips?.copiedMarkdown ?? 'Copied!')
-                    : (tooltips?.copyMarkdown ?? 'Copy as Markdown'),
-              }}
+            <CopyIconButton
               onClick={handleCopyMarkdown}
+              size={ElementSize.Small}
+              isCopied={copied === 'markdown'}
+              copyLabel={tooltips?.copyMarkdown ?? 'Copy as Markdown'}
+              copiedLabel={tooltips?.copiedMarkdown ?? 'Copied!'}
+              ariaLabel={ariaLabels?.copyAsMarkdown ?? 'Copy as markdown'}
             />
           )}
+
           {onLike && (
             <GhostIconButton
               icon={<IconThumbUp size={DIAL_ICON_SIZE.SM} aria-hidden />}
@@ -155,7 +142,9 @@ export const MessageActions: FC<MessageActionsProps> = ({
               aria-label={ariaLabels?.likeResponse ?? 'Like response'}
               aria-pressed={activeRating === MessageRating.Like}
               className={
-                activeRating === MessageRating.Like ? '!text-accent' : undefined
+                activeRating === MessageRating.Like
+                  ? styles.activeRating
+                  : undefined
               }
               tooltipProps={{ tooltip: tooltips?.like ?? 'Like' }}
               onClick={onLike}
@@ -169,7 +158,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
               aria-pressed={activeRating === MessageRating.Dislike}
               className={
                 activeRating === MessageRating.Dislike
-                  ? '!text-accent'
+                  ? styles.activeRating
                   : undefined
               }
               tooltipProps={{ tooltip: tooltips?.dislike ?? 'Dislike' }}

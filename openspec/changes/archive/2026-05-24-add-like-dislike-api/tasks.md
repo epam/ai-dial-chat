@@ -40,7 +40,7 @@
 ## 6. UI — active rating state in MessageActions
 
 - [x] 6.1 Add `activeRating?: MessageRating` prop (with JSDoc) to `MessageActionsProps` in `libs/conversation-messages/src/models/MessageActions.ts`
-- [x] 6.2 Update `MessageActions` in `libs/conversation-messages/src/components/Message/MessageActions.tsx` to: accept `activeRating`; pass a highlight `className` (e.g. `text-accent-primary`) to the Like button when `activeRating === MessageRating.Like` and to the Dislike button when `activeRating === MessageRating.Dislike`
+- [x] 6.2 Update `MessageActions` in `libs/conversation-messages/src/components/Message/MessageActions.tsx` to: accept `activeRating`; pass a highlight `className` (e.g. `text-accent`) to the Like button when `activeRating === MessageRating.Like` and to the Dislike button when `activeRating === MessageRating.Dislike`
 - [x] 6.3 Add / update tests in `libs/conversation-messages/src/components/Message/tests/MessageActions.spec.tsx` (or co-located spec): Like button active state; Dislike button active state; no active state when `activeRating` is undefined
 - [x] 6.4 Run `npm exec nx typecheck conversation-messages` — no errors
 - [x] 6.5 Run `npm exec nx test conversation-messages` — all tests pass

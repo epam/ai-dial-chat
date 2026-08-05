@@ -845,15 +845,48 @@ export class DeploymentsService {
     this.logger.debug(
       `DIAL Core application details for "${deployment}": ${JSON.stringify(raw)}`,
     );
+    const rawRecord = raw as unknown as Record<string, unknown>;
+
+    /* For applications with an `applications/{bucket}/{path}` ID, fetch the
+     * full config via getCustomApplication to get endpoint —
+     * getApplication (model listing) does not expose that field. */
+    let customAppRaw: Record<string, unknown> | undefined;
+    const appParts = deployment.startsWith('applications/')
+      ? deployment.slice('applications/'.length).split('/')
+      : undefined;
+    if (appParts && appParts.length >= 2) {
+      const bucket = appParts[0];
+      const path = encodeDialResourcePath(appParts.slice(1).join('/'));
+      const customResult = await this.dialClient.client.getCustomApplication(
+        bucket,
+        path,
+        { headers: getBearerAuthHeaders(accessToken) },
+      );
+      if (!customResult.error && customResult.data != null) {
+        customAppRaw = customResult.data as unknown as Record<string, unknown>;
+      }
+    }
 
     const data: DeploymentDetailsDto = {
       id: deployment,
       type: 'application',
       applicationDetails: {
         displayName: raw.display_name,
-        applicationProperties: isRecord(raw.application_properties)
-          ? raw.application_properties
-          : undefined,
+        applicationProperties: (() => {
+          const base = isRecord(raw.application_properties)
+            ? raw.application_properties
+            : {};
+          /* Include raw features from the custom-app config so the editor
+           * textarea can display them. DIAL Core expands stored features with
+           * all defaults, so the user may see more keys than they originally
+           * entered — this is the most accurate representation available. */
+          const storedFeatures = customAppRaw?.features as unknown;
+          const merged =
+            storedFeatures != null
+              ? { ...base, features: storedFeatures }
+              : base;
+          return Object.keys(merged).length > 0 ? merged : undefined;
+        })(),
         functionRuntime: raw.function?.runtime,
         functionStatus: raw.function?.status,
         routes: raw.routes ? Object.keys(raw.routes) : undefined,
@@ -863,6 +896,16 @@ export class DeploymentsService {
           ? raw.input_attachment_types
           : undefined,
         applicationTypeSchemaId: raw.application_type_schema_id,
+        endpoint:
+          typeof customAppRaw?.endpoint === 'string'
+            ? customAppRaw.endpoint
+            : typeof rawRecord.endpoint === 'string'
+              ? rawRecord.endpoint
+              : undefined,
+        maxInputAttachments:
+          typeof raw.max_input_attachments === 'number'
+            ? raw.max_input_attachments
+            : undefined,
         createdAt: raw.created_at,
       },
     };

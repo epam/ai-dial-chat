@@ -22,6 +22,10 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+} from '../../constants/toolsets';
+import {
   ButtonsI18nKeys,
   ToolsetSigninI18nKeys,
 } from '../../constants/translation-keys';
@@ -51,10 +55,6 @@ import {
   type PendingSigninEvent,
 } from '../../types/client-channel';
 import { RowAuthType } from '../../types/signin-interrupt';
-import {
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
-} from '../../types/toolsets';
 import { buildExternalServiceScopeId } from '../../utils/external-services';
 import {
   resolveExternalServiceInfo,

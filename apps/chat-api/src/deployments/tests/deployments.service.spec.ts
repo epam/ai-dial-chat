@@ -62,6 +62,11 @@ function makeService(
     getDeploymentLimits: vi.fn(),
     getModel: vi.fn(),
     getApplication: vi.fn(),
+    getCustomApplication: vi.fn().mockResolvedValue({
+      error: true,
+      response: { status: 404 },
+      data: null,
+    }),
     getToolset: vi.fn(),
     getToolSetTools: vi.fn(),
     getSharedResources: vi
@@ -703,7 +708,7 @@ describe('DeploymentsService', () => {
           {
             ...mockApplication,
             id: 'applications/BUCKET_HASH/my-app',
-            owner: 'Valery Dluski',
+            owner: 'Test User',
           },
         ],
       });
