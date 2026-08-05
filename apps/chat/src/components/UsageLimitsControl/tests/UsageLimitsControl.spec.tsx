@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useDeploymentUsageLimits } from '../../../hooks/useDeploymentUsageLimits';
@@ -169,7 +169,9 @@ describe('UsageLimitsControl', () => {
       }),
     );
 
-    expect(screen.getByRole('dialog')).toBeTruthy();
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toBeTruthy();
+    expect(dialog.getAttribute('aria-modal')).toBeNull();
     expect(screen.getByText('Usage Limit')).toBeTruthy();
     expect(screen.getAllByRole('progressbar')).toHaveLength(1);
     expect(
@@ -246,11 +248,10 @@ describe('UsageLimitsControl', () => {
         <UsageLimitsControl deploymentId="gpt-4o" labels={labels} />
       </>,
     );
-    await userEvent.click(
-      screen.getByRole('button', {
-        name: 'Monthly token usage: 25%',
-      }),
-    );
+    const trigger = screen.getByRole('button', {
+      name: 'Monthly token usage: 25%',
+    });
+    await userEvent.click(trigger);
 
     await userEvent.pointer({
       keys: '[MouseLeft]',
@@ -258,6 +259,9 @@ describe('UsageLimitsControl', () => {
     });
 
     expect(screen.queryByRole('dialog')).toBeNull();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(trigger);
+    });
   });
 
   it('uses logical placement and mobile-safe dimensions', async () => {

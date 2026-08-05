@@ -71,6 +71,9 @@ const UsageLimitsControl: FC<Props> = ({ deploymentId, labels }) => {
         !wrapperRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
+        requestAnimationFrame(() => {
+          triggerRef.current?.focus();
+        });
       }
     };
 
@@ -150,7 +153,6 @@ const UsageLimitsControl: FC<Props> = ({ deploymentId, labels }) => {
         <div
           ref={dialogRef}
           role="dialog"
-          aria-modal="true"
           aria-labelledby={titleId}
           tabIndex={-1}
           className="absolute bottom-full end-0 z-50 mb-2 flex w-64 max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg bg-layer-raised p-4 shadow-lg focus:outline-none"
