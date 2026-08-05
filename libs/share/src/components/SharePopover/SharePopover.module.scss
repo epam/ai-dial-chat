@@ -3,84 +3,39 @@
     --shp-access-trigger-bg,
     var(--bg-layer-raised, #fcfcfc)
   );
-  border: 1px solid
-    var(
-      --shp-access-trigger-border,
-      var(--stroke-hairline, rgba(0, 0, 0, 0.05))
-    );
-  transition:
-    border-color 150ms ease,
-    box-shadow 150ms ease;
-
-  @media (hover: hover) {
-    &:hover:not(:focus-visible) {
-      border-color: var(
-        --shp-access-trigger-border-hover,
-        var(--stroke-hover-tint, rgba(0, 0, 0, 0.12))
-      );
-    }
-  }
-
-  &:focus-visible {
-    outline: none;
-    border-color: color-mix(
-      in srgb,
-      var(--shp-access-trigger-border-focus, var(--stroke-info, #124ace)) 50%,
-      transparent
-    );
-    box-shadow: none;
-  }
+  border-color: var(
+    --shp-access-trigger-border,
+    var(--stroke-secondary, #d1dbea)
+  );
 }
 
 .accessTriggerBtnOpen {
-  border-color: color-mix(
-    in srgb,
-    var(--shp-access-trigger-border-focus, var(--stroke-info, #124ace)) 50%,
-    transparent
+  border-color: var(
+    --shp-access-trigger-border-focus,
+    var(--stroke-info, #124ace)
   );
-}
-
-/*
- * Non-interactive stand-in for `.accessTriggerBtn`, used when the item type
- * only ever supports view access (Model) — same resting look, no
- * hover/focus/open states or chevron, since there is nothing to open.
- */
-.accessStaticLabel {
-  background-color: var(
-    --shp-access-trigger-bg,
-    var(--bg-layer-raised, #fcfcfc)
-  );
-  border: 1px solid
-    var(
-      --shp-access-trigger-border,
-      var(--stroke-hairline, rgba(0, 0, 0, 0.05))
-    );
 }
 
 .accessTriggerLabel {
   color: var(--shp-access-trigger-text, var(--text-primary, #161b2d));
 }
 
-/* Popover title in the header bar. */
 .title {
   color: var(--shp-title-text, var(--text-primary, #161b2d));
 }
 
-/* Icon badge at the start of the "Anyone with the link" row. */
 .linkIconBadge {
   background: var(
     --shp-link-icon-bg,
-    var(--bg-accent-primary-alpha, #7da4ff2e)
+    var(--bg-control-accent-alpha-active, #2764d933)
   );
   color: var(--shp-link-icon-text, var(--text-accent, #1d4ed8));
 }
 
-/* Primary text of the "Anyone with the link" row. */
 .anyoneWithLinkTitle {
   color: var(--shp-anyone-title, var(--text-primary, #161b2d));
 }
 
-/* Secondary text of the "Anyone with the link" row. */
 .anyoneWithLinkSubtitle {
   color: var(--shp-anyone-subtitle, var(--text-secondary, #6b7280));
 }
@@ -93,65 +48,61 @@
     transition: none;
   }
 }
-
+// TODO: replace after implementing the new design for the access control popover
 .accessMenuItem {
   @media (hover: hover) {
     &:hover {
       background: var(
         --shp-menu-item-hover,
-        var(--bg-hover-alpha, rgba(0, 0, 0, 0.04))
+        var(--bg-control-accent-alpha-hover, #2764d924)
       );
     }
-  }
-
-  &:focus-visible {
-    box-shadow: 0 0 0 2px
-      var(
-        --shp-menu-item-focus-shadow,
-        var(--bg-focus-ring-alpha, rgba(125, 164, 255, 0.5))
-      );
   }
 }
 
 .accessMenuItemChecked {
   background: var(
     --shp-menu-item-checked-bg,
-    var(--bg-accent-primary-alpha, #7da4ff2e)
+    var(--bg-control-accent-alpha-hover, #2764d924)
   );
 
   @media (hover: hover) {
     &:hover {
       background: var(
         --shp-menu-item-checked-bg,
-        var(--bg-accent-primary-alpha, #7da4ff2e)
+        var(--bg-control-accent-alpha-hover, #2764d924)
       );
     }
   }
 }
-
+// TODO: replace after implementing the new design for the access control popover
 .accessMenuItemLabel {
   font-size: 14px;
   color: var(--shp-menu-item-label, var(--text-primary, #161b2d));
 }
 
-/* Section heading above the link input, e.g. "Link". */
+.accessMenuItemCheck {
+  color: var(--shp-menu-item-check, var(--text-accent, #1d4ed8));
+}
+
 .sectionLabel {
-  color: var(--shp-section-label, var(--text-secondary, #6b7280)) !important;
   input {
     color: var(--shp-section-label, var(--text-secondary, #6b7280)) !important;
   }
 }
 
-/* Error message shown when share-link creation fails. */
 .errorText {
   color: var(--shp-error-text, var(--text-error, #ae2f2f));
 }
 
-/* Visibility and expiry notes below the access control. */
 .note {
   color: var(--shp-note-text, var(--text-secondary, #6b7280));
 }
 
 .divider {
   background: var(--shp-divider, var(--stroke-tertiary, #e0e6f0));
+}
+
+:export {
+  skeletonColor: var(--shp-skeleton-color, var(--bg-layer-sunken, #eef1f7));
 }

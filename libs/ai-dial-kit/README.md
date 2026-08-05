@@ -66,13 +66,3 @@ import { TabRow } from '@epam/ai-dial-kit';
   onTabChange={setActiveTab}
 />;
 ```
-
-### GradientCheckIcon
-
-Check icon rendered with a gradient fill, used for selection indicators.
-
-```tsx
-import { GradientCheckIcon } from '@epam/ai-dial-kit';
-
-<GradientCheckIcon />;
-```

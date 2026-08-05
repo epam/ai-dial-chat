@@ -28,8 +28,6 @@ const backgroundsColors = {
   'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2E)',
   // New Chat button shadow — blue/purple pair at default, hover, and active alpha levels
   'mask-opaque': 'var(--bg-mask-opaque, #000)',
-  'hover-alpha': 'var(--bg-hover-alpha, rgba(0, 0, 0, 0.04))',
-  'focus-ring-alpha': 'var(--bg-focus-ring-alpha, rgba(125, 164, 255, 0.5))',
 };
 
 const controlsBgColors = {
@@ -56,7 +54,6 @@ const controlsBgColors = {
 };
 
 const borderColors = {
-  // COLORS 2.0
   transparent: 'transparent',
   primary: 'var(--stroke-primary, #6B7280)', // grey-800
   secondary: 'var(--stroke-secondary, #D1DBEA)', // grey-600
@@ -69,10 +66,6 @@ const borderColors = {
   focus: 'var(--stroke-focus, #161B2D)', // grey-1000
   'accent-alpha': 'var(--stroke-accent-alpha, #2764D933)', // blue-500 alpha-20
   'error-alpha': 'var(--stroke-error-alpha, #AE2F2F73)', // red-800 alpha-45
-
-  // REMOVED: old names, need to remove
-  'hover-tint': 'var(--stroke-hover-tint, #0000001f)',
-  hairline: 'var(--stroke-hairline, #0000000d)',
 };
 
 const textColors = {

@@ -1,5 +1,4 @@
 import { type DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { GradientCheckIcon } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
   DialSearch,
@@ -7,6 +6,7 @@ import {
   ElementSize,
   Highlight,
 } from '@epam/ai-dial-ui-kit';
+import { IconCheck } from '@tabler/icons-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import {
   MODEL_SELECTOR_SKELETON_ROW_COUNT,
@@ -35,6 +35,8 @@ export interface UseModelSelectorOptions {
   searchHeaderClassName?: string;
   /** Class applied to the currently selected menu item. Defaults to a `--bg-accent-primary-alpha` background. */
   selectedItemClassName?: string;
+  /** Class applied to the checkmark icon on the currently selected menu item. Defaults to a `--text-accent` color. */
+  selectedItemCheckClassName?: string;
 }
 
 /** Values returned by `useModelSelector`. */
@@ -61,6 +63,7 @@ export const useModelSelector = ({
   modelSelectorLabels,
   searchHeaderClassName = styles.searchHeader,
   selectedItemClassName = styles.selectedItem,
+  selectedItemCheckClassName = styles.selectedItemCheck,
 }: UseModelSelectorOptions): UseModelSelectorResult => {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -128,7 +131,14 @@ export const useModelSelector = ({
               query={searchQuery}
               maxLines={1}
             />
-            {isSelected && <GradientCheckIcon gradientId="ms-check-grad" />}
+            {isSelected && (
+              <IconCheck
+                size={DIAL_ICON_SIZE.SM}
+                stroke={2}
+                className={selectedItemCheckClassName}
+                aria-hidden
+              />
+            )}
           </span>
         ),
         icon: buildDeploymentIcon(
@@ -148,6 +158,7 @@ export const useModelSelector = ({
     modelSelectorLabels,
     onDeploymentChange,
     selectedItemClassName,
+    selectedItemCheckClassName,
   ]);
 
   const menuHeader: ReactNode = useMemo(
