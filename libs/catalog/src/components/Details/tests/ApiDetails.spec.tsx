@@ -198,7 +198,7 @@ describe('ApiDetails', () => {
       screen.getByRole('button', { name: 'Azure OpenAI Endpoint' }),
     );
     await userEvent.click(
-      screen.getByRole('button', { name: 'Anthropic Endpoint' }),
+      screen.getByRole('menuitem', { name: 'Anthropic Endpoint' }),
     );
 
     expect(screen.queryByText('https://azure.example.com')).toBeNull();
@@ -254,7 +254,7 @@ describe('ApiDetails', () => {
     expect(screen.getByText('print(1)')).toBeTruthy();
 
     await userEvent.click(screen.getByRole('button', { name: 'Python' }));
-    await userEvent.click(screen.getByRole('button', { name: 'cURL' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'cURL' }));
 
     expect(screen.queryByText('print(1)')).toBeNull();
     expect(screen.getByText('curl example')).toBeTruthy();
