@@ -24,6 +24,7 @@ import { ServerSlugs } from '@/src/types/slugs-types';
 import { ToolsetInfo } from '@/src/types/toolsets';
 
 import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
+import { DEFAULT_LOCAL } from '@/src/constants/locale';
 import { NA_VERSION } from '@/src/constants/publication';
 import { validVersionRegEx } from '@/src/constants/versions';
 
@@ -150,10 +151,16 @@ export const parseEntityApiKey = <T extends ParseEntityApiKeyOptions>(
 export const getMarketplaceEntityApiKey = (
   entity: Omit<ApplicationInfo | ToolsetInfo, 'folderId' | 'id'>,
 ): string => {
+  // The required `en` locale is used as the entity identifier.
+  const name =
+    typeof entity.name === 'string'
+      ? entity.name
+      : (entity.name?.[DEFAULT_LOCAL] ?? '');
+
   if (!entity.version || entity.version === NA_VERSION) {
-    return entity.name;
+    return name;
   }
-  return [entity.name, entity.version].join(pathKeySeparator);
+  return [name, entity.version].join(pathKeySeparator);
 };
 
 export class ApiUtils {

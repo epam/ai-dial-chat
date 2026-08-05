@@ -27,6 +27,7 @@ import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import { DEFAULT_LOCAL } from '@/src/constants/locale';
 
 import { constructPath, isAttachmentLink } from './file';
 import type { FileMovesMap } from './folders';
@@ -332,8 +333,16 @@ export const isChosenConversationValidForCompare = (
   return convUserMessages.length === selectedConvUserMessages.length;
 };
 
-export const getOpenAIEntityFullName = (model: { name?: string; id: string }) =>
-  model.name || model.id;
+export const getOpenAIEntityFullName = (model: {
+  name?: string | Record<string, string>;
+  id: string;
+}) => {
+  // The required `en` locale is used as the entity identifier / full name.
+  const name =
+    typeof model.name === 'string' ? model.name : model.name?.[DEFAULT_LOCAL];
+
+  return name || model.id;
+};
 
 export const addPausedError = (
   _conversation: Conversation,

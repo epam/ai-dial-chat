@@ -2,7 +2,11 @@ import { useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getModelDescription } from '@/src/utils/app/application';
+import {
+  getLocalizedEntityIdName,
+  getModelDescription,
+  getModelName,
+} from '@/src/utils/app/application';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -51,7 +55,7 @@ const view = withRenderWhenEntities<ReviewToolsetDialogContentProps>({
   const controlsEntity = useMemo(
     () => ({
       id: ApiUtils.decodeApiUrl(toolset.id),
-      name: toolset.name,
+      name: getLocalizedEntityIdName(toolset.name),
       folderId: getFolderIdFromEntityId(toolset.id),
     }),
     [toolset.id, toolset.name],
@@ -67,7 +71,7 @@ const view = withRenderWhenEntities<ReviewToolsetDialogContentProps>({
         <div className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2">
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Name)}
-            value={toolset.name}
+            value={getModelName(toolset, locale)}
             dataQa="entity-name"
           />
           <MarketplaceEntityInfoRow

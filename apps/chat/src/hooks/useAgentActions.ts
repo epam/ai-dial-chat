@@ -2,7 +2,10 @@ import React, { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { getApplicationType } from '@/src/utils/app/application';
+import {
+  getApplicationType,
+  withEntityIdName,
+} from '@/src/utils/app/application';
 import { writeTextToClipboard } from '@/src/utils/app/clipboard';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getApplicationLink } from '@/src/utils/marketplace';
@@ -74,7 +77,7 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
       dispatch(
         ShareActions.share({
           featureType: FeatureType.Application,
-          entity: entity,
+          entity: withEntityIdName(entity),
         }),
       );
     },
@@ -84,7 +87,7 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
   const handleOpenUnshare = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      dispatch(ShareActions.setUnshareEntity(entity));
+      dispatch(ShareActions.setUnshareEntity(withEntityIdName(entity)));
     },
     [dispatch, entity],
   );
@@ -126,7 +129,10 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
       e.stopPropagation();
       dispatch(
         PublicationActions.setPublishModel({
-          entity: { ...entity, folderId: getFolderIdFromEntityId(entity.id) },
+          entity: {
+            ...withEntityIdName(entity),
+            folderId: getFolderIdFromEntityId(entity.id),
+          },
           action: PublishActions.ADD,
         }),
       );
@@ -140,7 +146,10 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
       e.stopPropagation();
       dispatch(
         PublicationActions.setPublishModel({
-          entity: { ...entity, folderId: getFolderIdFromEntityId(entity.id) },
+          entity: {
+            ...withEntityIdName(entity),
+            folderId: getFolderIdFromEntityId(entity.id),
+          },
           action: PublishActions.DELETE,
         }),
       );

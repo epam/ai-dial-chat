@@ -14,7 +14,7 @@ import { useRouter } from 'next/router';
 import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isQuickApp2 } from '@/src/utils/app/application';
+import { isQuickApp2, withEntityIdName } from '@/src/utils/app/application';
 import { constructPath } from '@/src/utils/app/file';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getShareType } from '@/src/utils/app/share';
@@ -207,7 +207,7 @@ function ShareModalView() {
 
   const handleOpenUnshare = useCallback(() => {
     handleClose();
-    dispatch(ShareActions.setUnshareEntity(entity));
+    dispatch(ShareActions.setUnshareEntity(entity && withEntityIdName(entity)));
   }, [dispatch, entity, handleClose]);
 
   const handleOpenUnshareResource = useCallback(() => {

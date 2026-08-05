@@ -10,6 +10,7 @@ import {
   getQuickAppDocumentUrl,
   isApplicationDeployed,
   isApplicationType,
+  withEntityIdName,
 } from '@/src/utils/app/application';
 import { arraysHaveSameElements } from '@/src/utils/app/common';
 import { getValidFormFields } from '@/src/utils/app/forms';
@@ -133,7 +134,7 @@ export const AppsEditor = () => {
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
 
   const modelsWithFolder = useMemo(
-    () => models.map((m) => ({ ...m, folderId: '' })),
+    () => models.map((m) => withEntityIdName({ ...m, folderId: '' })),
     [models],
   );
 

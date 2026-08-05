@@ -1,4 +1,8 @@
-import { isMarketplaceEntityPublic } from '@/src/utils/app/application';
+import {
+  getLocalizedEntityIdName,
+  isMarketplaceEntityPublic,
+  updateLocalizedEntityIdName,
+} from '@/src/utils/app/application';
 import {
   EntityStorageLimits,
   buildByteAwareFitBaseName,
@@ -211,13 +215,14 @@ export const fitToolsetNameToStorageLimits = <
     return toolset;
   }
 
+  const entityIdName = getLocalizedEntityIdName(toolset.name);
   const fittedName = prepareEntityName(
-    truncateToUtf8Bytes(prepareEntityName(toolset.name), availableNameBytes),
+    truncateToUtf8Bytes(prepareEntityName(entityIdName), availableNameBytes),
   );
 
-  return fittedName === toolset.name
+  return fittedName === entityIdName
     ? toolset
-    : { ...toolset, name: fittedName };
+    : (updateLocalizedEntityIdName(toolset, fittedName) as T);
 };
 
 export const getStorageSafeUniqueToolsetName = (params: {

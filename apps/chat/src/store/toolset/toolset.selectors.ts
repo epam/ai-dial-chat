@@ -1,5 +1,9 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import {
+  getLocalizedEntityIdName,
+  withEntityIdName,
+} from '@/src/utils/app/application';
 import { sortItemsVersions } from '@/src/utils/app/common';
 import { withoutFileManagerPlaceholderByName } from '@/src/utils/app/file';
 import {
@@ -48,10 +52,11 @@ const selectToolsets = createSelector(
     const filteredHidden = shouldShowHiddenEntities(hiddenEntityTag, showHidden)
       ? toolsets
       : filterHiddenEntities(toolsets, hiddenEntityTag);
-    const withoutPlaceholder =
-      withoutFileManagerPlaceholderByName(filteredHidden);
+    const withoutPlaceholder = withoutFileManagerPlaceholderByName(
+      filteredHidden.map(withEntityIdName),
+    );
     const sortedToolsets = sortBy(withoutPlaceholder, (toolset) =>
-      toolset.name.toLowerCase(),
+      getLocalizedEntityIdName(toolset.name).toLowerCase(),
     );
 
     return groupMarketplaceEntityAndSaveOrder(sortedToolsets).flatMap(
@@ -143,8 +148,9 @@ const selectToolsetsTopics = createSelector(
     const filteredHidden = shouldShowHiddenEntities(hiddenEntityTag, showHidden)
       ? toolsets
       : filterHiddenEntities(toolsets, hiddenEntityTag);
-    const withoutPlaceholder =
-      withoutFileManagerPlaceholderByName(filteredHidden);
+    const withoutPlaceholder = withoutFileManagerPlaceholderByName(
+      filteredHidden.map(withEntityIdName),
+    );
     return sortBy(
       uniq(
         withoutPlaceholder?.flatMap((toolset) => toolset.topics ?? []) ?? [],

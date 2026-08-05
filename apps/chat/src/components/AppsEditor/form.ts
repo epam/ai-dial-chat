@@ -3,6 +3,7 @@ import { UseFormClearErrors, UseFormSetError } from 'react-hook-form';
 import {
   fitApplicationNameToStorageLimits,
   getEditorSchemaType,
+  getLocalizedEntityIdName,
   getMcpToolsetStr,
   getQuick2AppDocumentUrl,
   getQuickAppDocumentUrl,
@@ -411,8 +412,8 @@ const getBaseFormData = ({
   locale: string;
 }): BaseAppForm => ({
   name:
-    app?.name ??
-    getStorageSafeUniqueApplicationName({
+    getLocalizedEntityIdName(app?.name) ||
+    (getStorageSafeUniqueApplicationName({
       application: {
         name: '',
         version: app?.version ?? DEFAULT_VERSION,
@@ -422,7 +423,7 @@ const getBaseFormData = ({
       defaultName: DEFAULT_APPLICATION_NAME,
       existingNames: (models ?? []).map((m) => m.name),
     }) ??
-    DEFAULT_APPLICATION_NAME,
+      DEFAULT_APPLICATION_NAME),
   version: app ? (app.version ?? '') : DEFAULT_VERSION,
   iconUrl: app?.iconUrl ?? '',
   description: parseLocalizedDescription(locale, app?.description),
@@ -881,7 +882,7 @@ export const getQuickApp2Toolsets = ({
       ) {
         acc.dialAppToolsets.push({
           ...toolData,
-          name: entity.name,
+          name: getLocalizedEntityIdName(entity.name),
           type: ToolsetTypes.DialApp,
           deployment_id: ApiUtils.encodeApiUrl(entity.id),
           ...(doesAgentSupportMcp(entity) && {

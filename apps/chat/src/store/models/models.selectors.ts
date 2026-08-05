@@ -1,5 +1,9 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import {
+  getLocalizedEntityIdName,
+  withEntityIdName,
+} from '@/src/utils/app/application';
 import { sortItemsVersions } from '@/src/utils/app/common';
 import { withoutFileManagerPlaceholderByName } from '@/src/utils/app/file';
 import {
@@ -55,10 +59,11 @@ const selectModels = createSelector(
     const filteredHidden = shouldShowHiddenEntities(hiddenEntityTag, showHidden)
       ? models
       : filterHiddenEntities(models, hiddenEntityTag);
-    const withoutPlaceholder =
-      withoutFileManagerPlaceholderByName(filteredHidden);
+    const withoutPlaceholder = withoutFileManagerPlaceholderByName(
+      filteredHidden.map(withEntityIdName),
+    );
     const sortedResponse = sortBy(withoutPlaceholder, (model) =>
-      model.name.toLowerCase(),
+      getLocalizedEntityIdName(model.name).toLowerCase(),
     );
     const sortedAgents = groupMarketplaceEntityAndSaveOrder(
       sortedResponse,
@@ -97,8 +102,9 @@ const selectModelTopics = createSelector(
     const filteredHidden = shouldShowHiddenEntities(hiddenEntityTag, showHidden)
       ? models
       : filterHiddenEntities(models, hiddenEntityTag);
-    const withoutPlaceholder =
-      withoutFileManagerPlaceholderByName(filteredHidden);
+    const withoutPlaceholder = withoutFileManagerPlaceholderByName(
+      filteredHidden.map(withEntityIdName),
+    );
     return sortBy(
       uniq(withoutPlaceholder?.flatMap((model) => model.topics ?? []) ?? []),
       (topic) => topic.toLowerCase(),

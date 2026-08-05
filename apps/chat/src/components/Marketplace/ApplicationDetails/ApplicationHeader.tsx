@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 import {
   isExternalApp,
   isMarketplaceEntityPublic,
+  withEntityIdName,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 
@@ -32,7 +33,7 @@ export const ApplicationDetailsHeader = ({ entity, isPreview }: Props) => {
     dispatch(
       ShareActions.share({
         featureType: FeatureType.Application,
-        entity: entity,
+        entity: withEntityIdName(entity),
       }),
     );
   }, [dispatch, entity]);

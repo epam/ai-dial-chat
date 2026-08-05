@@ -9,6 +9,7 @@ import classNames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { withEntityIdName } from '@/src/utils/app/application';
 import {
   isEntityNameValid,
   isVersionExists,
@@ -210,8 +211,8 @@ export const PublicationHandlerFooter = ({
         ...files,
         ...conversations,
         ...prompts,
-        ...applications,
-        ...toolsets,
+        ...applications.map(withEntityIdName),
+        ...toolsets.map(withEntityIdName),
       ].filter((entity) => entity.publicationInfo?.isNotExist),
     [conversations, files, prompts, applications, toolsets],
   );

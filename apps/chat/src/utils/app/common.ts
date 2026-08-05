@@ -50,7 +50,11 @@ import { nanoid } from 'nanoid';
  * @param entities2
  * @returns new array without duplicates
  */
-export const combineEntities = <T extends Entity>(
+export const combineEntities = <
+  T extends {
+    id: string;
+  },
+>(
   entities1: T[],
   entities2: T[],
 ): T[] => {

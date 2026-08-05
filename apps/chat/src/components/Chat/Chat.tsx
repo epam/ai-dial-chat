@@ -17,7 +17,11 @@ import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
 import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
-import { isQuickApp2 } from '@/src/utils/app/application';
+import {
+  getModelName,
+  isQuickApp2,
+  parseLocalizedName,
+} from '@/src/utils/app/application';
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
   excludeSystemMessages,
@@ -1174,6 +1178,7 @@ export function Chat({ isPreview }: ChatProps) {
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
+  const locale = useAppSelector(UISelectors.selectLocale);
 
   const isNoMessages = selectedConversations.every(
     ({ messages }) => !messages?.length,
@@ -1191,7 +1196,7 @@ export function Chat({ isPreview }: ChatProps) {
     if (model.viewerUrl) {
       return {
         viewerUrl: model.viewerUrl,
-        title: model.name,
+        title: getModelName(model, locale),
         applicationId: model.id,
       };
     }
@@ -1208,12 +1213,12 @@ export function Chat({ isPreview }: ChatProps) {
       if (schema?.viewerUrl) {
         return {
           viewerUrl: schema.viewerUrl,
-          title: schema.displayName,
+          title: parseLocalizedName(locale, schema.displayName),
           applicationId: model.id,
         };
       }
     }
-  }, [modelsMap, applicationTypeSchemas, selectedConversations]);
+  }, [modelsMap, applicationTypeSchemas, selectedConversations, locale]);
 
   useEffect(() => {
     dispatch(ChatActions.resetFormValue());

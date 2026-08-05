@@ -1,4 +1,7 @@
-import { parseLocalizedDescription } from '@/src/utils/app/application';
+import {
+  getLocalizedEntityIdName,
+  parseLocalizedDescription,
+} from '@/src/utils/app/application';
 import {
   getStorageSafeUniqueToolsetName,
   isToolsetSignedIn,
@@ -190,8 +193,8 @@ export const getDefaultFormData = ({
 }): ToolsetEditorForm => {
   return {
     name:
-      toolset?.name ??
-      getStorageSafeUniqueToolsetName({
+      getLocalizedEntityIdName(toolset?.name) ||
+      (getStorageSafeUniqueToolsetName({
         toolset: {
           name: '',
           version: toolset?.version ?? DEFAULT_VERSION,
@@ -199,9 +202,11 @@ export const getDefaultFormData = ({
           id: toolset?.id,
         },
         defaultName: DEFAULT_TOOLSET_NAME,
-        existingNames: (toolsets ?? []).map((t) => t.name),
+        existingNames: (toolsets ?? []).map((t) =>
+          getLocalizedEntityIdName(t.name),
+        ),
       }) ??
-      DEFAULT_TOOLSET_NAME,
+        DEFAULT_TOOLSET_NAME),
     endpoint: toolset ? (toolset.endpoint ?? '') : ENDPOINT_PLACEHOLDER,
     protocol: toolset?.transport ?? ToolsetTransportType.HTTP,
     description: parseLocalizedDescription(locale, toolset?.description),

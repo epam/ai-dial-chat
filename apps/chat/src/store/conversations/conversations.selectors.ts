@@ -1,5 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { getLocalizedEntityIdName } from '@/src/utils/app/application';
 import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
@@ -826,7 +827,8 @@ const selectNotAllowedItemsForDisplay = createSelector(
         const modelDetails = modelsMap[conv.model.id];
         return {
           conversationId: conv.id,
-          agentName: modelDetails?.name ?? conv.model.id,
+          agentName:
+            getLocalizedEntityIdName(modelDetails?.name) || conv.model.id,
         };
       });
   },

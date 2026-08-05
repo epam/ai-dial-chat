@@ -15,6 +15,7 @@ import { useSessionStorageState } from '@/src/hooks/useSessionStorageState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
+  getModelName,
   isDialAiEntityModel,
   isExternalApp,
 } from '@/src/utils/app/application';
@@ -37,6 +38,7 @@ import {
   ModelsSelectors,
   SettingsSelectors,
   ToolsetSelectors,
+  UISelectors,
   WidgetsSelectors,
 } from '@/src/store/selectors';
 
@@ -181,6 +183,7 @@ const AgentAndToolsetModalView = ({
     ToolsetSelectors.selectInstalledToolsetsSet,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const locale = useAppSelector(UISelectors.selectLocale);
 
   const currentAppReference =
     router.route === Routes.AppsEditor
@@ -359,7 +362,7 @@ const AgentAndToolsetModalView = ({
       .filter((item): item is DisplayedMarketplaceEntity => !!item);
 
     const allGroupedItems = sortBy(allGroupedItemsUnsorted, [
-      (item) => item.name.toLowerCase(),
+      (item) => getModelName(item, locale).toLowerCase(),
     ]);
 
     if (!isMyWorkspace) {
@@ -377,6 +380,7 @@ const AgentAndToolsetModalView = ({
     widgetsSchemaIds,
     currentAppReference,
     installedSet,
+    locale,
   ]);
 
   const handleItemClick = useCallback(

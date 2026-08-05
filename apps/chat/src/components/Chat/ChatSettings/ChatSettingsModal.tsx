@@ -4,6 +4,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getModelName } from '@/src/utils/app/application';
 import { isCreatedMarketplaceEntity } from '@/src/utils/app/marketplace';
 
 import { Conversation, ConversationsTemporarySettings } from '@/src/types/chat';
@@ -12,7 +13,11 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors, PromptsSelectors } from '@/src/store/selectors';
+import {
+  ModelsSelectors,
+  PromptsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 import { MOUSE_OUTSIDE_PRESS_EVENT } from '@/src/constants/modal';
@@ -105,6 +110,7 @@ export const ChatSettings = ({
   const { t } = useTranslation(Translation.Chat);
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const locale = useAppSelector(UISelectors.selectLocale);
 
   const handleOnApplySettings = () => {
     onClose();
@@ -175,7 +181,7 @@ export const ChatSettings = ({
                       )}
                       data-qa="entity-name"
                     >
-                      {model?.name ?? conversation.model.id}
+                      {getModelName(model, locale) || conversation.model.id}
                     </div>
                   </div>
                 </div>

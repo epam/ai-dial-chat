@@ -144,16 +144,14 @@ export const fitApplicationNameToStorageLimits = <
     return application;
   }
 
+  const entityIdName = getLocalizedEntityIdName(application.name);
   const fittedName = prepareEntityName(
-    truncateToUtf8Bytes(
-      prepareEntityName(application.name),
-      availableNameBytes,
-    ),
+    truncateToUtf8Bytes(prepareEntityName(entityIdName), availableNameBytes),
   );
 
-  return fittedName === application.name
+  return fittedName === entityIdName
     ? application
-    : ({ ...application, name: fittedName } as T);
+    : (updateLocalizedEntityIdName(application, fittedName) as T);
 };
 
 export const getStorageSafeUniqueApplicationName = (params: {
@@ -418,6 +416,59 @@ export const getModelDescription = (
   return parseLocalizedDescription(locale, entity.description);
 };
 
+export const parseLocalizedName = (
+  locale: string,
+  name?: string | Record<string, string>,
+): string => {
+  if (typeof name === 'string') return name;
+
+  return name?.[locale] ?? name?.[DEFAULT_LOCAL] ?? '';
+};
+
+export const getLocalizedEntityIdName = (
+  name?: string | Record<string, string>,
+): string => {
+  if (typeof name === 'string') return name;
+
+  return name?.[DEFAULT_LOCAL] ?? '';
+};
+
+export const updateLocalizedEntityIdName = (
+  entity: { name: string | Record<string, string> },
+  newName: string,
+) => {
+  if (typeof entity.name === 'string') return { ...entity, name: newName };
+  else if (typeof entity.name?.[DEFAULT_LOCAL] === 'string') {
+    const updatedLocalizedName = {
+      ...entity.name,
+      [DEFAULT_LOCAL]: newName,
+    };
+
+    return { ...entity, name: updatedLocalizedName };
+  }
+
+  return entity;
+};
+
+export const getModelName = (
+  entity: { name?: string | Record<string, string> } | undefined | null,
+  locale: string,
+): string => parseLocalizedName(locale, entity?.name);
+
+/**
+ * Returns a copy of the entity whose `name` is resolved to the identifier
+ * (`en`) value. Use at boundaries where the entity is treated as a plain
+ * share/publish resource with a string `name`.
+ */
+export const withEntityIdName = <
+  T extends { name?: string | Record<string, string> },
+>(
+  entity: T,
+): Omit<T, 'name'> & { name: string } => ({
+  ...entity,
+  name: getLocalizedEntityIdName(entity.name),
+});
+
 export const getModelShortDescription = (
   entity: { description?: string | Record<string, string> },
   locale: string,
@@ -618,10 +669,11 @@ export const getEditorSchemaType = (
 export const getEntityDisplayName = (
   id: string,
   allEntitiesMap: Record<string, MarketplaceEntity | undefined>,
+  locale: string,
 ): string => {
   const entity = allEntitiesMap[id];
   if (entity?.name) {
-    return entity.name;
+    return parseLocalizedName(locale, entity.name);
   }
 
   return ApiUtils.decodeApiUrl(
