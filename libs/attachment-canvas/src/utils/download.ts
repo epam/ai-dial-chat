@@ -18,7 +18,10 @@ export const isDownloadable = (content: AttachmentCanvasContent): boolean => {
     case AttachmentContentType.Image:
     case AttachmentContentType.Audio:
     case AttachmentContentType.Pdf:
+    case AttachmentContentType.Code:
       return true;
+    case AttachmentContentType.Html:
+      return content.url != null;
     case AttachmentContentType.Visualizer:
       return false;
     case AttachmentContentType.Unsupported:
@@ -70,6 +73,17 @@ export const downloadAttachmentContent = (
     case AttachmentContentType.Image:
     case AttachmentContentType.Audio:
     case AttachmentContentType.Pdf:
+      triggerAnchorDownload(content.url, name);
+      return;
+    case AttachmentContentType.Code:
+      if (content.text === '') return;
+      triggerBlobDownload(
+        new Blob([content.text], { type: MIMEType.Plain }),
+        name,
+      );
+      return;
+    case AttachmentContentType.Html:
+      if (content.url == null) return;
       triggerAnchorDownload(content.url, name);
       return;
     case AttachmentContentType.Visualizer:

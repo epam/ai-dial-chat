@@ -621,6 +621,10 @@ export enum AttachmentCanvasI18nKeys {
   UnsupportedLabel = 'attachmentCanvas.unsupportedLabel',
   LoadErrorLabel = 'attachmentCanvas.loadErrorLabel',
   ForbiddenErrorLabel = 'attachmentCanvas.forbiddenErrorLabel',
+  HtmlFrameBlocked = 'attachmentCanvas.htmlFrameBlocked',
+  HtmlOpenInNewTab = 'attachmentCanvas.htmlOpenInNewTab',
+  HtmlViewSource = 'attachmentCanvas.htmlViewSource',
+  HtmlViewRendered = 'attachmentCanvas.htmlViewRendered',
 }
 
 export enum AnnouncementBannerI18nKeys {

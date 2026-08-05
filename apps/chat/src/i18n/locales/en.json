@@ -690,7 +690,11 @@
     "downloadLabel": "Download attachment",
     "unsupportedLabel": "Preview is not supported for this file",
     "loadErrorLabel": "Failed to load file",
-    "forbiddenErrorLabel": "You don't have permission to access this file"
+    "forbiddenErrorLabel": "You don't have permission to access this file",
+    "htmlFrameBlocked": "This page cannot be displayed in preview",
+    "htmlOpenInNewTab": "Open in new tab",
+    "htmlViewSource": "View source",
+    "htmlViewRendered": "View rendered"
   },
   "announcementBanner": {
     "regionAriaLabel": "Announcement",
