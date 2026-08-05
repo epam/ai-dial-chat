@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FooterReportIssueI18nKeys } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
+import { getApiErrorDetails } from '../../server-api/api-error';
 import type { ReportIssuePayload } from '../../server-api/footer.api';
 import { submitReportIssue } from '../../server-api/footer.api';
 
@@ -26,10 +27,12 @@ export const useReportIssue = (): UseReportIssueResult => {
           title: t(FooterReportIssueI18nKeys.SuccessTitle),
         });
         return true;
-      } catch {
+      } catch (error) {
+        const { traceId } = await getApiErrorDetails(error);
         showNotification({
           variant: NotificationVariant.Error,
           title: t(FooterReportIssueI18nKeys.ErrorTitle),
+          requestId: traceId,
         });
         return false;
       } finally {
