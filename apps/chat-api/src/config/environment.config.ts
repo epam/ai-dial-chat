@@ -712,6 +712,10 @@ export class EnvironmentVariables {
   SCHEDULER_APP_ID?: string;
 
   @IsOptional()
+  @IsString()
+  SCHEDULER_SERVICE_ID?: string;
+
+  @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))
   @IsInt()
   @Min(1000)

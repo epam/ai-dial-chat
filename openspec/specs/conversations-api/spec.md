@@ -177,40 +177,45 @@ DIAL Core's sharing mechanism grants READ access to the resource at its original
 
 `apps/chat-api/src/conversations/utils/parse-scheduled-task-conversation-path.ts` SHALL export a pure function `parseScheduledTaskConversationPath(resourceId: string): { scheduleId: string; runId: string } | null` with no dependency injection, logging, or DIAL Core client access.
 
-A conversation resource id matches the scheduler pattern **iff** the `/`-delimited segment immediately following the bucket segment is the literal `.scheduler`, followed by exactly two further segments read as `scheduleId` and `runId` (an optional filename segment may follow and is ignored by this function).
+A conversation resource id matches the scheduler pattern **iff** the `/`-delimited segment immediately following the bucket segment is the literal `.scheduler`, followed by exactly one further `scheduleId` segment and then the conversation's own filename segment (`{deploymentId}__{title}__{runId}`) — no other segments may follow.
 
 The function SHALL:
 1. Split the id into `/`-delimited segments.
 2. Return `null` if the segment after the bucket is not exactly `.scheduler`.
-3. Read the next two segments as candidate `scheduleId` and `runId`.
-4. Decode each candidate with the existing `safeDecodeURIComponent` helper (`apps/chat-api` equivalent used elsewhere in this spec for path segments).
-5. Validate each decoded candidate against `^[A-Za-z0-9_-]{1,128}$` (the same allowlist used by the scheduled-tasks BFF routes — see the [scheduled-tasks-api spec](../scheduled-tasks-api/spec.md)).
-6. Return `{ scheduleId, runId }` only when both candidates pass validation; return `null` in every other case (missing segments, empty segments, decode failure, validation failure). The function MUST NOT throw.
+3. Return `null` unless exactly two further segments follow `.scheduler`: a candidate `scheduleId` and the conversation filename.
+4. Decode the candidate `scheduleId` with the existing `safeDecodeURIComponent` helper (`apps/chat-api` equivalent used elsewhere in this spec for path segments) and validate it against `^[A-Za-z0-9_-]{1,128}$` (the same allowlist used by the scheduled-tasks BFF routes — see the [scheduled-tasks-api spec](../scheduled-tasks-api/spec.md)).
+5. Decode the filename segment and extract `runId` as its trailing UUID suffix (`{deploymentId}__{title}__{runId}`), using the same UUID-suffix detection as `getConversationTitleFromName`.
+6. Return `{ scheduleId, runId }` only when `scheduleId` passes the allowlist and the filename has a trailing UUID `runId`; return `null` in every other case (missing/extra segments, empty segments, decode failure, validation failure, no UUID suffix). The function MUST NOT throw.
 
 #### Scenario: Valid scheduler path returns scheduleId and runId
 
-- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched_abc/run_001/gpt-4o__Morning briefing__uuid")` is called
-- **THEN** it returns `{ scheduleId: "sched_abc", runId: "run_001" }`
+- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched_abc/gpt-4o__Morning briefing__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5")` is called
+- **THEN** it returns `{ scheduleId: "sched_abc", runId: "c7aeee4c-c01f-41f2-b0db-b8a1a39943f5" }`
 
 #### Scenario: Normal conversation path returns null
 
 - **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/gpt-4o__Morning briefing__uuid")` is called
 - **THEN** it returns `null`
 
-#### Scenario: Missing runId segment returns null
+#### Scenario: Missing filename segment returns null
 
 - **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched_abc")` is called
 - **THEN** it returns `null`
 
-#### Scenario: scheduleId or runId failing the allowlist returns null
+#### Scenario: scheduleId failing the allowlist returns null
 
-- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched abc!/run_001/title")` is called (scheduleId contains a space and `!`, outside `^[A-Za-z0-9_-]{1,128}$`)
+- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched abc!/gpt-4o__title__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5")` is called (scheduleId contains a space and `!`, outside `^[A-Za-z0-9_-]{1,128}$`)
 - **THEN** it returns `null`
 
-#### Scenario: URL-encoded ids are decoded before validation
+#### Scenario: URL-encoded scheduleId is decoded before validation
 
-- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched%5Fabc/run%5F001/title")` is called
-- **THEN** it returns `{ scheduleId: "sched_abc", runId: "run_001" }`
+- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched%5Fabc/gpt-4o__title__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5")` is called
+- **THEN** it returns `{ scheduleId: "sched_abc", runId: "c7aeee4c-c01f-41f2-b0db-b8a1a39943f5" }`
+
+#### Scenario: Filename without a trailing run UUID returns null
+
+- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched_abc/gpt-4o__Morning briefing")` is called
+- **THEN** it returns `null`
 
 ---
 
@@ -345,9 +350,9 @@ Error codes:
 
 #### Scenario: Scheduler-created conversation is tagged with schedule and run ids
 
-- **GIVEN** a user-bucket item with `id: "conversations/test-bucket/.scheduler/sched_abc/run_001/gpt-4o__Morning briefing__uuid"`
+- **GIVEN** a user-bucket item with `id: "conversations/test-bucket/.scheduler/sched_abc/gpt-4o__Morning briefing__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5"`
 - **WHEN** `GET /api/v1/conversations/list` is called
-- **THEN** the matching response item has `isScheduledTask: true`, `scheduleId: "sched_abc"`, `runId: "run_001"`
+- **THEN** the matching response item has `isScheduledTask: true`, `scheduleId: "sched_abc"`, `runId: "c7aeee4c-c01f-41f2-b0db-b8a1a39943f5"`
 
 #### Scenario: Normal conversation has isScheduledTask false with no ids
 

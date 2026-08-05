@@ -141,9 +141,9 @@ Example response (with `?limit=20&offset=0&search=daily&sort=firstToRun`):
 }
 ```
 
-or with `"trigger": { "cron": { "fields": { "minute": "0", "hour": "*" } } }` in place of `date`. `displayName`, `trigger` (exactly one of `date` or `cron.fields`), `model`, and `prompt` are required; `description` is optional (`@IsOptional() @IsString() @MaxLength(500)`) and, when omitted or empty, MUST NOT be sent to DIAL Scheduler. The DTO SHALL NOT accept a client-supplied `stream` field — streaming is fixed server-side (see below) and is not client-controllable.
+or with `"trigger": { "cron": { "fields": { "minute": "0", "hour": "*" } } }` in place of `date`. `displayName`, `trigger` (exactly one of `date` or `cron.fields`), `model`, and `prompt` are required; `description` is optional (`@IsOptional() @IsString() @MaxLength(500)`) and, when omitted or empty, MUST NOT be sent to DIAL Scheduler. The DTO SHALL NOT accept a client-supplied `service_id` or `stream` field — both are fixed/derived server-side (see below) and are not client-controllable.
 
-The service SHALL build the upstream body server-side with fixed `service_id: "dial-oauth"` and `properties`:
+The service SHALL build the upstream body server-side with `service_id` set from `SCHEDULER_SERVICE_ID` (read once at `ScheduledTasksService` construction; see the "SCHEDULER_APP_ID and SCHEDULER_SERVICE_ID environment configuration" requirement) and `properties`:
 
 - `target_type: "chat_completion"`
 - `url`: built by `buildScheduledTaskChatCompletionUrl(DialClientService.baseUrl)` — the base URL (backed by `DIAL_CORE_URL`) with any trailing slash stripped, followed by `/openai` (no double slashes)
@@ -159,8 +159,8 @@ and a top-level `description` field (mapped 1:1, never merged into `properties` 
 
 #### Scenario: Valid create request succeeds
 
-- **WHEN** a request with a valid `displayName`, one trigger variant, `model`, and `prompt` is submitted by an authenticated, feature-enabled user
-- **THEN** the response is `201 Created` with the created schedule's `id`, `displayName`, and `trigger`, and the upstream body sent included `service_id: "dial-oauth"` and `properties.target_type: "chat_completion"`
+- **WHEN** a request with a valid `displayName`, one trigger variant, `model`, and `prompt` is submitted by an authenticated, feature-enabled user, and `SCHEDULER_SERVICE_ID` is configured with a given value
+- **THEN** the response is `201 Created` with the created schedule's `id`, `displayName`, and `trigger`, and the upstream body sent included `service_id` equal to the configured `SCHEDULER_SERVICE_ID` value and `properties.target_type: "chat_completion"`
 
 #### Scenario: Upstream properties include the fixed Scheduler call fields
 
@@ -182,9 +182,9 @@ and a top-level `description` field (mapped 1:1, never merged into `properties` 
 - **WHEN** a valid create request is submitted and `DialClientService.dialApiVersion` resolves to a given value (from `DIAL_API_VERSION`, defaulting to `2024-10-21`)
 - **THEN** the upstream request body's `properties.api_version` equals that same value
 
-#### Scenario: A client-supplied stream field is rejected
+#### Scenario: A client-supplied service_id or stream field is rejected
 
-- **WHEN** a create request body includes a `stream` field
+- **WHEN** a create request body includes a `service_id` and/or `stream` field
 - **THEN** the response is `400 Bad Request` (the global `ValidationPipe`'s `forbidNonWhitelisted: true` rejects the unknown property) and DIAL Core is never contacted
 
 #### Scenario: Missing required field is rejected
@@ -233,7 +233,7 @@ and a top-level `description` field (mapped 1:1, never merged into `properties` 
 
 ### Requirement: Update scheduled task
 
-`PUT /api/v1/scheduled-tasks/:scheduleId` SHALL accept the same `UpdateScheduledTaskBodyDto` shape as create (`displayName`, `trigger`, `model`, `prompt`, optional `description` (≤500 chars); no client-supplied `stream`), apply the same server-side `service_id`/`target_type`/`url`/`api_version`/`create_conversation`/`stream`/`extra_headers`/`retry`/`timeout`/`payload`/`description` construction as create, proxy `PUT {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/{scheduleId}` with the session bearer token, return `200 OK` with the updated `ScheduledTaskDto`, and invalidate that user's list cache on success.
+`PUT /api/v1/scheduled-tasks/:scheduleId` SHALL accept the same `UpdateScheduledTaskBodyDto` shape as create (`displayName`, `trigger`, `model`, `prompt`, optional `description` (≤500 chars); no client-supplied `service_id` or `stream`), apply the same server-side `service_id` (from `SCHEDULER_SERVICE_ID`)/`target_type`/`url`/`api_version`/`create_conversation`/`stream`/`extra_headers`/`retry`/`timeout`/`payload`/`description` construction as create, proxy `PUT {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/{scheduleId}` with the session bearer token, return `200 OK` with the updated `ScheduledTaskDto`, and invalidate that user's list cache on success.
 
 #### Scenario: Valid update succeeds and invalidates list cache
 
@@ -243,7 +243,7 @@ and a top-level `description` field (mapped 1:1, never merged into `properties` 
 #### Scenario: Update carries the same fixed Scheduler call properties as create
 
 - **WHEN** an authenticated, feature-enabled user submits a valid update body for an existing `scheduleId`
-- **THEN** the upstream `PUT` request body's `properties` includes `create_conversation: true`, `stream: false`, `extra_headers: {}`, `retry: null`, and `timeout: null`, matching the create request shape
+- **THEN** the upstream `PUT` request body's `properties` includes `create_conversation: true`, `stream: false`, `extra_headers: {}`, `retry: null`, and `timeout: null`, matching the create request shape, and `service_id` equals the configured `SCHEDULER_SERVICE_ID` value
 
 #### Scenario: Update of unknown schedule id returns 404
 
@@ -252,7 +252,7 @@ and a top-level `description` field (mapped 1:1, never merged into `properties` 
 
 #### Scenario: Invalid update body is rejected
 
-- **WHEN** the update body fails the same validation as create (missing field, both/neither trigger variant, `description` over 500 characters, a client-supplied `stream` field, or a `service_id`/`target_type` other than `dial-oauth`/`chat_completion` if present)
+- **WHEN** the update body fails the same validation as create (missing field, both/neither trigger variant, `description` over 500 characters, a client-supplied `service_id` and/or `stream` field, or a `target_type` other than `chat_completion` if present)
 - **THEN** the response is `400 Bad Request`
 
 ### Requirement: Scheduled task description field
@@ -269,14 +269,24 @@ and a top-level `description` field (mapped 1:1, never merged into `properties` 
 - **WHEN** an upstream schedule response omits `description`
 - **THEN** the mapped `ScheduledTaskDto.description` is `undefined`, and mapping does not throw
 
-### Requirement: SCHEDULER_APP_ID environment configuration
+### Requirement: SCHEDULER_APP_ID and SCHEDULER_SERVICE_ID environment configuration
 
-`EnvironmentVariables` (`apps/chat-api/src/config/environment.config.ts`) SHALL declare `SCHEDULER_APP_ID` as an optional string (`@IsOptional() @IsString()`), consistent with other optional-but-feature-required config such as `THEMES_CONFIG_URL`. `ScheduledTasksService` SHALL throw a `ServiceUnavailableException` with a message identifying the missing configuration on the first request that needs it if `SCHEDULER_APP_ID` is unset, rather than silently proceeding with an invalid upstream URL.
+`EnvironmentVariables` (`apps/chat-api/src/config/environment.config.ts`) SHALL declare both `SCHEDULER_APP_ID` and `SCHEDULER_SERVICE_ID` as optional strings (`@IsOptional() @IsString()`), consistent with other optional-but-feature-required config such as `THEMES_CONFIG_URL`. `ScheduledTasksService` SHALL throw a `ServiceUnavailableException` with a message identifying the missing configuration on the first request that needs it if either `SCHEDULER_APP_ID` or `SCHEDULER_SERVICE_ID` is unset, rather than silently proceeding with an invalid upstream URL or an incorrect `service_id`. `SCHEDULER_SERVICE_ID` is only required by the create and update endpoints (the value it gates, `service_id`, is only sent on those two upstream calls); `SCHEDULER_APP_ID` remains required by all four endpoints, unchanged.
 
 #### Scenario: Missing SCHEDULER_APP_ID fails fast on first use
 
 - **WHEN** `features.scheduledTasksEnabled` is `true` for a user but `SCHEDULER_APP_ID` is not set in the environment, and any of the four endpoints is called
 - **THEN** the response is `503 Service Unavailable` with a message indicating the scheduler application id is not configured, and no upstream request is attempted
+
+#### Scenario: Missing SCHEDULER_SERVICE_ID fails fast on create or update
+
+- **WHEN** `features.scheduledTasksEnabled` is `true` for a user, `SCHEDULER_APP_ID` is set, but `SCHEDULER_SERVICE_ID` is not set in the environment, and the create or update endpoint is called
+- **THEN** the response is `503 Service Unavailable` with a message indicating the scheduler service id is not configured, and no upstream request is attempted
+
+#### Scenario: Missing SCHEDULER_SERVICE_ID does not affect list or get
+
+- **WHEN** `features.scheduledTasksEnabled` is `true` for a user, `SCHEDULER_APP_ID` is set, but `SCHEDULER_SERVICE_ID` is not set, and the list or get endpoint is called
+- **THEN** the request proceeds normally, since `service_id` is only sent on create/update
 
 ### Requirement: Scheduled task next-run and creation timestamps
 
