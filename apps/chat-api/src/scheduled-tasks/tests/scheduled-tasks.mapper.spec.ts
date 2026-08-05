@@ -14,6 +14,7 @@ const DIAL_CORE_URL = 'http://dial-core';
  * stays representative of what the mapper actually receives in production.
  */
 const DIAL_API_VERSION = '2024-10-21';
+const SCHEDULER_SERVICE_ID = 'my-oauth-service';
 
 describe('buildScheduledTaskChatCompletionUrl', () => {
   it('appends /openai to a base URL with no trailing slash', () => {
@@ -36,7 +37,7 @@ describe('buildScheduledTaskChatCompletionUrl', () => {
 });
 
 describe('toUpstreamSchedulePayload', () => {
-  it('builds the fixed dial-oauth/chat_completion body for a date trigger', () => {
+  it('builds the fixed chat_completion body for a date trigger, using the configured service_id', () => {
     const body: CreateScheduledTaskBodyDto = {
       displayName: 'Daily summary',
       trigger: { date: '2026-07-24T09:00:00.000Z' },
@@ -48,11 +49,12 @@ describe('toUpstreamSchedulePayload', () => {
       body,
       DIAL_CORE_URL,
       DIAL_API_VERSION,
+      SCHEDULER_SERVICE_ID,
     );
 
     expect(upstream).toEqual({
       display_name: 'Daily summary',
-      service_id: 'dial-oauth',
+      service_id: SCHEDULER_SERVICE_ID,
       trigger: { date: '2026-07-24T09:00:00.000Z' },
       properties: {
         target_type: 'chat_completion',
@@ -83,6 +85,7 @@ describe('toUpstreamSchedulePayload', () => {
       body,
       DIAL_CORE_URL,
       DIAL_API_VERSION,
+      SCHEDULER_SERVICE_ID,
     );
 
     expect(upstream.trigger).toEqual({
@@ -108,7 +111,12 @@ describe('toUpstreamSchedulePayload', () => {
     };
 
     expect(() =>
-      toUpstreamSchedulePayload(body, DIAL_CORE_URL, DIAL_API_VERSION),
+      toUpstreamSchedulePayload(
+        body,
+        DIAL_CORE_URL,
+        DIAL_API_VERSION,
+        SCHEDULER_SERVICE_ID,
+      ),
     ).toThrow(BadRequestException);
   });
 
@@ -121,7 +129,12 @@ describe('toUpstreamSchedulePayload', () => {
     };
 
     expect(() =>
-      toUpstreamSchedulePayload(body, DIAL_CORE_URL, DIAL_API_VERSION),
+      toUpstreamSchedulePayload(
+        body,
+        DIAL_CORE_URL,
+        DIAL_API_VERSION,
+        SCHEDULER_SERVICE_ID,
+      ),
     ).toThrow(BadRequestException);
   });
 
@@ -138,6 +151,7 @@ describe('toUpstreamSchedulePayload', () => {
       body,
       DIAL_CORE_URL,
       DIAL_API_VERSION,
+      SCHEDULER_SERVICE_ID,
     );
 
     expect(upstream.description).toBe(
@@ -160,6 +174,7 @@ describe('toUpstreamSchedulePayload', () => {
       body,
       DIAL_CORE_URL,
       DIAL_API_VERSION,
+      SCHEDULER_SERVICE_ID,
     );
 
     expect(upstream.description).toBeUndefined();

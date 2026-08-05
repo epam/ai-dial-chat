@@ -116,7 +116,7 @@ export class ScheduledTasksController {
     summary: 'Create a scheduled task',
     description:
       'Creates a DIAL Scheduler schedule that runs a chat completion on the given model ' +
-      "and prompt, using the authenticated session user's dial-oauth credentials. " +
+      'and prompt, using the OAuth external-service id configured via SCHEDULER_SERVICE_ID. ' +
       'Invalidates the scheduled tasks list cache on success.',
   })
   @ApiBody({ type: CreateScheduledTaskBodyDto })

@@ -13,7 +13,7 @@ interface UpstreamScheduleTrigger {
 
 interface UpstreamSchedulePayload {
   display_name: string;
-  service_id: 'dial-oauth';
+  service_id: string;
   trigger: UpstreamScheduleTrigger;
   /*
    * Not confirmed against a live DIAL Scheduler response or its
@@ -95,9 +95,10 @@ export const toUpstreamSchedulePayload = (
   body: CreateScheduledTaskBodyDto,
   dialCoreUrl: string,
   dialApiVersion: string,
+  serviceId: string,
 ): UpstreamSchedulePayload => ({
   display_name: body.displayName,
-  service_id: 'dial-oauth',
+  service_id: serviceId,
   trigger: toUpstreamTrigger(body.trigger),
   ...(body.description ? { description: body.description } : {}),
   properties: {
