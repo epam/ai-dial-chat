@@ -1,6 +1,8 @@
+import { CodeLanguage } from '@epam/ai-dial-catalog';
 import { describe, expect, it } from 'vitest';
 import {
   buildApplicationMcpUrl,
+  buildConnectApi,
   buildToolsetMcpUrl,
 } from '../mcp-endpoint-url';
 
@@ -52,6 +54,24 @@ describe('mcp-endpoint-url', () => {
       expect(
         buildApplicationMcpUrl('https://dial.example.com', 'Team%2FApp One'),
       ).toBe('https://dial.example.com/v1/deployments/Team%2FApp%20One/mcp');
+    });
+  });
+
+  describe('buildToolsetConnectApi', () => {
+    it('sets the resource endpoint URL to the toolset MCP URL', () => {
+      const api = buildConnectApi('https://dial.example.com', 'search-tool');
+      expect(api.resource?.endpointUrl).toBe(
+        'https://dial.example.com/v1/toolset/search-tool/mcp',
+      );
+    });
+
+    it('includes a curl snippet that targets the same endpoint URL', () => {
+      const api = buildConnectApi('https://dial.example.com', 'search-tool');
+      expect(api.snippets).toHaveLength(1);
+      expect(api.snippets?.[0].language).toBe(CodeLanguage.Curl);
+      expect(api.snippets?.[0].code).toContain(
+        'https://dial.example.com/v1/toolset/search-tool/mcp',
+      );
     });
   });
 });

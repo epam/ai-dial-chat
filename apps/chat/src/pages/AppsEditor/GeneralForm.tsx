@@ -44,7 +44,6 @@ export interface GeneralFormInitialValues {
   iconUrl?: string;
   version?: string;
   topics?: string[];
-  intro?: string;
 }
 
 interface Props {
@@ -62,7 +61,6 @@ const EMPTY_VALUES: DeploymentCreationFormValues = {
   iconUrl: '',
   version: '',
   topics: [],
-  intro: '',
 };
 
 const normalizeFormValues = (
@@ -73,7 +71,6 @@ const normalizeFormValues = (
   iconUrl: values.iconUrl ?? '',
   version: values.version ?? '',
   topics: values.topics ?? [],
-  intro: values.intro ?? '',
 });
 
 const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
@@ -117,10 +114,6 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
         label: t(EditorI18nKeys.TopicsLabel),
         placeholder: t(EditorI18nKeys.TopicsPlaceholder),
       },
-      intro: {
-        label: t(EditorI18nKeys.IntroLabel),
-        placeholder: t(EditorI18nKeys.IntroPlaceholder),
-      },
       ariaLabel: t(EditorI18nKeys.StepGeneral),
     }),
     [t],
@@ -144,7 +137,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
       validateNamePattern: true,
       validateVersionPattern: true,
     });
-    if (codes.name || codes.version || codes.intro) {
+    if (codes.name || codes.version) {
       let nameError: string | undefined;
       if (codes.name === DeploymentCreationFieldErrorCode.Required) {
         nameError = t(EditorI18nKeys.NameRequired);
@@ -159,7 +152,6 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
         version: codes.version
           ? t(AppsEditorI18nKeys.GeneralFormVersionInvalid)
           : undefined,
-        intro: codes.intro ? t(EditorI18nKeys.IntroTooLong) : undefined,
       });
       return;
     }
@@ -188,7 +180,6 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
         iconUrl: values.iconUrl.trim() || undefined,
         version: values.version.trim() || undefined,
         topics: values.topics.length > 0 ? values.topics : undefined,
-        intro: values.intro.trim() || undefined,
         applicationProperties,
       });
       onCreated(
@@ -209,7 +200,6 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
       description: values.description.trim() || undefined,
       iconUrl: values.iconUrl.trim() || undefined,
       topics: values.topics.length > 0 ? values.topics : undefined,
-      intro: values.intro.trim() || undefined,
       display_version: values.version.trim() || undefined,
     }),
     [values],
@@ -228,7 +218,6 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
       version: values.version,
       lastUsed: '',
       description: values.description,
-      intro: values.intro,
       folder: [],
       topics: values.topics,
       iconUrl: values.iconUrl.trim() || undefined,

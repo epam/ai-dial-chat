@@ -66,8 +66,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onFetchExistingRules,
   shareOverlay,
   isShareVisible,
-  connectOverlay,
-  isConnectVisible,
   onEdit,
   onDelete,
   onLogin,
@@ -234,20 +232,21 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
         label: texts?.tabLimitsLabel ?? 'Limits',
       });
     }
-    if (item.details?.api != null) {
-      result.push({
-        id: CatalogDetailsTab.Api,
-        label: texts?.tabApiLabel ?? 'API',
-      });
-    }
     if (item.details?.tools != null) {
       result.push({
         id: CatalogDetailsTab.Tools,
         label: texts?.tabToolsLabel ?? 'Tools',
       });
     }
+    // Connect is pushed last, after every other tab, regardless of type.
+    if (item.details?.api != null) {
+      result.push({
+        id: CatalogDetailsTab.Api,
+        label: texts?.tabConnectLabel ?? 'Connect',
+      });
+    }
     return result;
-  }, [item.details, texts]);
+  }, [item, texts]);
 
   // Reset to the first available tab when the item changes or the active
   // tab is no longer in the (possibly newly-fetched) available list.
@@ -324,7 +323,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
         <div
           className={mergeClasses(
-            'min-h-0 flex-1 overflow-y-auto',
+            'flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto',
             styles.content,
           )}
         >
@@ -383,8 +382,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onShare={onShare}
                 shareOverlay={shareOverlay}
                 isShareVisible={isShareVisible}
-                connectOverlay={connectOverlay}
-                isConnectVisible={isConnectVisible}
                 isPublishVisible={isPublishVisible}
                 onOpenPublish={handleOpenPublish}
                 onEdit={onEdit}
@@ -423,11 +420,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
               <div className={styles.divider} />
 
-              <Summary
-                item={item}
-                texts={texts}
-                detailsStyles={detailsStyles}
-              />
+              <Summary item={item} texts={texts} />
 
               <div className="flex items-center gap-2 px-[22px]">
                 <TabRow
@@ -462,7 +455,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
               <div
                 className={mergeClasses(
-                  activeTab !== CatalogDetailsTab.Overview && 'px-[22px] py-4',
+                  activeTab !== CatalogDetailsTab.Overview && 'px-[22px]',
                 )}
               >
                 {activeTab === CatalogDetailsTab.About && (

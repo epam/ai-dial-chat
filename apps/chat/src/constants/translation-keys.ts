@@ -106,6 +106,7 @@ export enum ButtonsI18nKeys {
   CopyUrl = 'buttons.copyUrl',
   LogIn = 'buttons.logIn',
   Publish = 'buttons.publish',
+  Manage = 'buttons.manage',
 }
 
 export enum NavigationI18nKeys {
@@ -650,9 +651,6 @@ export enum EditorI18nKeys {
   VersionPlaceholder = 'editor.versionPlaceholder',
   TopicsLabel = 'editor.topicsLabel',
   TopicsPlaceholder = 'editor.topicsPlaceholder',
-  IntroLabel = 'editor.introLabel',
-  IntroPlaceholder = 'editor.introPlaceholder',
-  IntroTooLong = 'editor.introTooLong',
 }
 
 export enum AppsEditorI18nKeys {

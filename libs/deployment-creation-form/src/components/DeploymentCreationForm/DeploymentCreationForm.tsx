@@ -2,23 +2,20 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { Input, TagInput, Textarea } from '@epam/ai-dial-kit';
 import { useEffect, useRef, type FC } from 'react';
 import type { DeploymentCreationFormProps } from '../../models/deployment-creation-form';
-import { DEFAULT_INTRO_MAX_LENGTH } from '../../utils/validate-deployment-creation-fields';
 
-/** Controlled field set for deployment creation: name, description, icon URL, version, topics, and intro. */
+/** Controlled field set for deployment creation: name, description, icon URL, version, and topics. */
 export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
   values,
   errors,
   onChange,
   labels,
-  introMaxLength = DEFAULT_INTRO_MAX_LENGTH,
   styles,
 }) => {
   const nameInputRef = useRef<HTMLInputElement>(null);
-  const introInputRef = useRef<HTMLInputElement>(null);
   const versionInputRef = useRef<HTMLInputElement>(null);
   const hadErrorsRef = useRef(false);
 
-  const hasErrors = !!(errors.name || errors.intro || errors.version);
+  const hasErrors = !!(errors.name || errors.version);
 
   /*
    * Only steal focus on the transition from no errors to some errors (a
@@ -27,17 +24,13 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
    */
   useEffect(() => {
     if (hasErrors && !hadErrorsRef.current) {
-      const firstInvalidRef = errors.name
-        ? nameInputRef
-        : errors.intro
-          ? introInputRef
-          : versionInputRef;
+      const firstInvalidRef = errors.name ? nameInputRef : versionInputRef;
 
       firstInvalidRef.current?.focus();
     }
 
     hadErrorsRef.current = hasErrors;
-  }, [hasErrors, errors.name, errors.intro, errors.version]);
+  }, [hasErrors, errors.name, errors.version]);
 
   return (
     <div
@@ -65,23 +58,6 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
         placeholder={labels.description.placeholder}
         containerClassName={styles?.field}
       />
-
-      <Input
-        id="deployment-creation-form-intro"
-        inputRef={introInputRef}
-        value={values.intro}
-        onChange={(value) => onChange({ intro: value ?? '' })}
-        labelProps={{ label: labels.intro.label }}
-        placeholder={labels.intro.placeholder}
-        error={errors.intro || undefined}
-        invalid={!!errors.intro}
-        maxLength={introMaxLength}
-        containerClassName={styles?.field}
-      />
-      <span role="status" aria-live="polite" className="sr-only">
-        {values.intro.length >= introMaxLength - 10 &&
-          `${values.intro.length}/${introMaxLength}`}
-      </span>
 
       <Input
         id="deployment-creation-form-icon-url"

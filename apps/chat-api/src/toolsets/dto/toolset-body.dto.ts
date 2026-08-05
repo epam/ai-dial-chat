@@ -8,7 +8,6 @@ import {
   IsOptional,
   IsString,
   Matches,
-  MaxLength,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
@@ -131,15 +130,6 @@ export class ToolsetBodyDto {
   @IsString({ each: true })
   @IsOptional()
   topics?: string[];
-
-  @ApiPropertyOptional({
-    example: 'Runs your toolset in one line.',
-    maxLength: 90,
-  })
-  @IsString()
-  @IsOptional()
-  @MaxLength(90)
-  intro?: string;
 
   /*
    * Empty string is allowed: the toolset editor creates a draft toolset

@@ -94,7 +94,6 @@ const CustomAppEditor: FC = () => {
             iconUrl: deployment.iconUrl ?? '',
             version: deployment.displayVersion ?? '',
             topics: deployment.topics ?? [],
-            intro: deployment.intro ?? '',
           });
         }
 
@@ -210,7 +209,6 @@ const CustomAppEditor: FC = () => {
           iconUrl: generalForm.iconUrl || undefined,
           version: generalForm.version || undefined,
           topics: generalForm.topics,
-          intro: generalForm.intro || undefined,
           endpoint: settingsForm.completionUrl.trim() || undefined,
           features: parsedFeatures,
           inputAttachmentTypes:
@@ -244,7 +242,6 @@ const CustomAppEditor: FC = () => {
           iconUrl: generalForm.iconUrl || undefined,
           version: generalForm.version || undefined,
           topics: generalForm.topics,
-          intro: generalForm.intro || undefined,
           applicationProperties: appProperties,
         };
         await createApplication(body);
