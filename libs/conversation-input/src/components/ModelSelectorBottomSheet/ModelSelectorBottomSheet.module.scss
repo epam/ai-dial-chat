@@ -6,7 +6,7 @@
   color: var(--ci-sheet-text, var(--text-primary, #161b2d));
 
   &:hover {
-    background: var(--ci-sheet-item-hover, var(--bg-layer-3, #fcfcfc));
+    background: var(--ci-sheet-item-hover, var(--bg-layer-raised, #fcfcfc));
   }
 
   &:active {
@@ -19,7 +19,7 @@
 }
 
 .checkIcon {
-  color: var(--ci-check-icon, var(--text-accent-primary, #124ace));
+  color: var(--ci-check-icon, var(--text-accent, #1d4ed8));
 }
 
 .stateLabel {

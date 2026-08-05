@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
  * CSS custom properties with app theme fallbacks.
  */
 export interface ScheduledTaskSectionColors {
-  /** Count badge background. Fallback: `--bg-layer-3`. */
+  /** Count badge background. Fallback: `--bg-layer-raised`. */
   countBadgeBackground?: string;
   /** Count badge text color. Fallback: `--text-secondary`. */
   countBadgeText?: string;

@@ -25,11 +25,7 @@
     outline: none;
     border-color: color-mix(
       in srgb,
-      var(
-          --shp-access-trigger-border-focus,
-          var(--stroke-accent-primary, #124ace)
-        )
-        50%,
+      var(--shp-access-trigger-border-focus, var(--stroke-info, #124ace)) 50%,
       transparent
     );
     box-shadow: none;
@@ -39,11 +35,7 @@
 .accessTriggerBtnOpen {
   border-color: color-mix(
     in srgb,
-    var(
-        --shp-access-trigger-border-focus,
-        var(--stroke-accent-primary, #124ace)
-      )
-      50%,
+    var(--shp-access-trigger-border-focus, var(--stroke-info, #124ace)) 50%,
     transparent
   );
 }
@@ -80,7 +72,7 @@
     --shp-link-icon-bg,
     var(--bg-accent-primary-alpha, #7da4ff2e)
   );
-  color: var(--shp-link-icon-text, var(--text-accent-primary, #124ace));
+  color: var(--shp-link-icon-text, var(--text-accent, #1d4ed8));
 }
 
 /* Primary text of the "Anyone with the link" row. */

@@ -18,19 +18,13 @@ const backgroundsColors = {
 
   // REMOVED: old names, need to remove
   'layer-1': 'var(--bg-layer-1, #E0E6F0)',
-  'layer-2': 'var(--bg-layer-2, #EEF1F7)',
-  'layer-3': 'var(--bg-layer-3, #FCFCFC)',
   'layer-4': 'var(--bg-layer-4, #D1DBEA)',
-  'layer-5': 'var(--bg-layer-5, #F5F7FA)',
   'layer-6': 'var(--bg-layer-6, #F8FAFC)',
   'layer-7': 'var(--bg-layer-7, #00000006)',
   overlay: 'var(--bg-overlay, #FCFCFC80)',
   inverted: 'var(--bg-inverted, #161B2D)',
   'accent-primary-alpha': 'var(--bg-accent-primary-alpha, #7DA4FF2E)',
   // Catalog tab bar — override via CSS custom properties for dark-theme support
-  'catalog-badge-active': 'var(--cat-badge-active-bg, #EEF2FF)',
-  'catalog-badge-inactive': 'var(--cat-badge-inactive-bg, #F3F4F6)',
-  'accent-secondary-alpha': 'var(--bg-accent-secondary-alpha, #37BABC2E)',
   'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2E)',
   // New Chat button shadow — blue/purple pair at default, hover, and active alpha levels
   'mask-opaque': 'var(--bg-mask-opaque, #000)',
@@ -39,7 +33,6 @@ const backgroundsColors = {
 };
 
 const controlsBgColors = {
-  // COLORS 2.0
   'control-accent-alpha': 'var(--bg-control-accent-alpha, #2764D90F)', // blue-500 alpha-6
   'control-accent-alpha-hover':
     'var(--bg-control-accent-alpha-hover, #2764D924)', // blue-500 alpha-14
@@ -60,13 +53,6 @@ const controlsBgColors = {
     'var(--bg-control-error-alpha-active, #F7646433)', // red-800 alpha-20
 
   'control-disable': 'var(--bg-control-disable, #C7CBD4)', // grey-700
-
-  // REMOVED: old names, need to remove
-  'controls-accent-primary-alpha-active':
-    'var(--controls-bg-accent-primary-alpha-active, #7DA4FF5C)',
-
-  'controls-error': 'var(--controls-bg-error, #AE2F2F)',
-  'controls-disable': 'var(--controls-bg-disable, #D1DBEA)',
 };
 
 const borderColors = {
@@ -85,12 +71,8 @@ const borderColors = {
   'error-alpha': 'var(--stroke-error-alpha, #AE2F2F73)', // red-800 alpha-45
 
   // REMOVED: old names, need to remove
-  'accent-primary': 'var(--stroke-accent-primary, #124ACE)',
-  'accent-primary-hover': 'var(--stroke-accent-primary-hover, #7DA4FF)',
   'hover-tint': 'var(--stroke-hover-tint, #0000001f)',
   hairline: 'var(--stroke-hairline, #0000000d)',
-  'controls-accent': 'var(--controls-bg-accent, #5C8DEA)',
-  'accent-primary-hover': 'var(--stroke-accent-primary-hover, #4878d2)',
 };
 
 const textColors = {
@@ -107,16 +89,12 @@ const textColors = {
   success: 'var(--text-success, #007274)', // green-800
 
   // REMOVED: old names, need to remove
-  'accent-primary': 'var(--text-accent-primary, #7DA4FF)',
   'accent-secondary': 'var(--text-accent-secondary, #37BABC)',
   // Catalog tab bar — override via CSS custom properties for dark-theme support
-  'catalog-tab-active': 'var(--cat-tab-active-text, #111827)',
   'catalog-tab-inactive': 'var(--cat-tab-inactive-text, #6B7280)',
   'catalog-tab-hover': 'var(--cat-tab-hover-text, #374151)',
   'catalog-badge-active': 'var(--cat-badge-active-text, #2764D9)',
   'catalog-badge-inactive': 'var(--cat-badge-inactive-text, #9CA3AF)',
-  'accent-primary': 'var(--text-accent-primary, #124ACE)',
-  'accent-secondary': 'var(--text-accent-secondary, #007274)',
 };
 
 const placeholderColor = {

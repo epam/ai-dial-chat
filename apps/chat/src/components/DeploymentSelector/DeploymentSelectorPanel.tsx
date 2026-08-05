@@ -219,9 +219,9 @@ const DeploymentSelectorPanel: FC<Props> = ({
           tabIndex={0}
           className={mergeClasses(
             'flex cursor-pointer items-center gap-2 rounded-lg border px-2 py-1.5',
-            'transition-colors hover:bg-layer-2',
+            'transition-colors hover:bg-layer-sunken',
             isSelected
-              ? 'border-accent-primary bg-accent-primary-alpha'
+              ? 'border-info bg-accent-primary-alpha'
               : 'border-transparent',
           )}
           onClick={() => handleSelect(item)}

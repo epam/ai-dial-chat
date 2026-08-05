@@ -1,5 +1,5 @@
 .container {
-  background: var(--cm-code-block-bg, var(--bg-layer-3, #fcfcfc));
+  background: var(--cm-code-block-bg, var(--bg-layer-raised, #fcfcfc));
   border-color: var(--cm-code-block-border, var(--stroke-secondary, #d1dbea));
 }
 
@@ -8,7 +8,7 @@
 }
 
 .header {
-  background: var(--cm-code-block-header-bg, var(--bg-layer-3, #fcfcfc));
+  background: var(--cm-code-block-header-bg, var(--bg-layer-raised, #fcfcfc));
   border-color: var(--cm-code-block-border, var(--stroke-secondary, #d1dbea));
 }
 
@@ -24,7 +24,7 @@
   scrollbar-width: thin;
   scrollbar-color: var(
       --cm-code-block-scrollbar,
-      var(--stroke-primary, #7c8293)
+      var(--stroke-primary, #6b7280)
     )
     transparent;
 
@@ -40,7 +40,7 @@
   &::-webkit-scrollbar-thumb {
     background-color: var(
       --cm-code-block-scrollbar,
-      var(--stroke-primary, #7c8293)
+      var(--stroke-primary, #6b7280)
     );
     border-radius: 4px;
   }

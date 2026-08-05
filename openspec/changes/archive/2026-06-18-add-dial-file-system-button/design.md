@@ -202,7 +202,7 @@ interface Props {
 ### Modal Behavior
 
 - `DialPopup` with `size={PopupSize.Lg}`, `header={title}`, and an important `!h-[min(800px,100dvh)]` height override to beat the ui-kit's desktop `height: auto`, match the legacy modal's capped 800px height, and prevent row-count-driven resizing.
-- The popup and `DialFileManager` use `bg-layer-2`.
+- The popup and `DialFileManager` use `bg-layer-sunken`.
 - The ui-kit popup body (`[aria-label='popup-description']`) is overridden to `flex min-h-0 flex-col`. Inside it, the file-manager wrapper and `DialFileManager` use `grow`, reproducing the legacy `flex column → grow file-manager area` layout while keeping scrolling inside that area.
 - `DialFileManager` receives `gridClassName="size-full"` and AG Grid `domLayout: 'normal'`. The ui-kit grid otherwise sizes itself from its rows (`autoHeight`), leaving unused modal space below short listings.
 - The footer uses `px-6 py-4`, matching the ui-kit's standard popup action spacing.

@@ -1,7 +1,7 @@
 import { DialSkeleton, DialSkeletonVariant } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 
-const SKELETON_COLOR = 'var(--bg-layer-2, #EEF1F7)';
+const SKELETON_COLOR = 'var(--bg-layer-sunken, #EEF1F7)';
 
 /** Props for {@link LoadingSkeleton}. */
 interface LoadingSkeletonProps {

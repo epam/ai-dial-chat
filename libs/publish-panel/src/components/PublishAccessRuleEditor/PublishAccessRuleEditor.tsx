@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { Input, TagInput } from '@epam/ai-dial-kit';
 import {
   ButtonAppearance,
@@ -16,6 +16,7 @@ import {
   useState,
 } from 'react';
 import { PublicationRule, PublicationRuleFunction } from '../../models/publish';
+import styles from './PublishAccessRuleEditor.module.scss';
 
 const MAX_TARGETS_DEFAULT = 20;
 const MAX_RULE_VALUE_LENGTH = 200;
@@ -68,6 +69,26 @@ export interface PublishAccessRuleEditorProps {
   maxTargets?: number;
   /** Text overrides for all user-visible strings. */
   labels?: PublishAccessRuleEditorLabels;
+  /** Typography class for the source/function field labels. Default: `'dial-small-semi-text'`. */
+  labelClassName?: string;
+  /** Typography class for the pattern validation error. Default: `'dial-small-text'`. */
+  errorClassName?: string;
+  /** Color overrides. */
+  colors?: PublishAccessRuleEditorColors;
+}
+
+/** Color overrides for {@link PublishAccessRuleEditor}, applied as CSS custom properties with app theme fallbacks. */
+export interface PublishAccessRuleEditorColors {
+  /** Background color of the full-screen mobile overlay. Fallback: `--bg-layer-1`. */
+  mobileBackground?: string;
+  /** Border color of the desktop inline panel. Fallback: `--stroke-tertiary`. */
+  border?: string;
+  /** Background color of the desktop inline panel. Fallback: `--bg-layer-sunken`. */
+  background?: string;
+  /** Text color of the source/function field labels. Fallback: `--text-primary`. */
+  labelText?: string;
+  /** Text color of the pattern validation error. Fallback: `--text-error`. */
+  errorText?: string;
 }
 
 const isValidRegex = (pattern: string): boolean => {
@@ -95,7 +116,18 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
   disabled = false,
   maxTargets = MAX_TARGETS_DEFAULT,
   labels = {},
+  labelClassName = 'dial-small-semi-text',
+  errorClassName = 'dial-small-text',
+  colors,
 }) => {
+  const cssVars = buildCssVars({
+    '--pare-mobile-bg': colors?.mobileBackground,
+    '--pare-border': colors?.border,
+    '--pare-bg': colors?.background,
+    '--pare-label-text': colors?.labelText,
+    '--pare-error-text': colors?.errorText,
+  });
+
   const {
     sourceLabel = 'Source',
     sourcePlaceholder = 'Select...',
@@ -216,15 +248,17 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
       aria-label={dialogAriaLabel}
       tabIndex={-1}
       onKeyDown={handleKeyDown}
+      style={cssVars}
       className={mergeClasses(
-        'fixed inset-0 z-[60] flex flex-col gap-3 overflow-y-auto bg-layer-1 p-4',
-        'desktop:static desktop:z-auto desktop:flex-none desktop:overflow-visible desktop:rounded-lg desktop:border desktop:border-tertiary desktop:bg-layer-2 desktop:p-3',
+        'fixed inset-0 z-[60] flex flex-col gap-3 overflow-y-auto p-4',
+        'desktop:static desktop:z-auto desktop:flex-none desktop:overflow-visible desktop:rounded-lg desktop:border desktop:p-3',
+        styles.dialog,
       )}
     >
       <div>
         <label
           htmlFor={sourceElementId}
-          className="dial-small-semi-text mb-1 block text-primary"
+          className={mergeClasses('mb-1 block', labelClassName, styles.label)}
         >
           {sourceLabel}
         </label>
@@ -243,7 +277,7 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
       <div>
         <label
           htmlFor={functionElementId}
-          className="dial-small-semi-text mb-1 block text-primary"
+          className={mergeClasses('mb-1 block', labelClassName, styles.label)}
         >
           {functionLabel}
         </label>
@@ -275,7 +309,11 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
             <span
               id={patternErrorId}
               role="alert"
-              className="dial-small-text mt-1 block text-error"
+              className={mergeClasses(
+                'mt-1 block',
+                errorClassName,
+                styles.error,
+              )}
             >
               {invalidRegexError}
             </span>

@@ -1,0 +1,27 @@
+.currentBadge {
+  border-color: var(
+    --phl-badge-border,
+    var(--stroke-tertiary, #e0e6f0)
+  ) !important;
+  background: var(
+    --phl-badge-bg,
+    var(--bg-accent-primary-alpha, #7da4ff2e)
+  ) !important;
+  color: var(--phl-badge-text, var(--text-accent, #1d4ed8)) !important;
+}
+
+.version {
+  color: var(--phl-version-text, var(--text-primary, #161b2d));
+}
+
+.date {
+  color: var(--phl-date-text, var(--text-secondary, #6b7280));
+}
+
+.emptyState {
+  color: var(--phl-empty-text, var(--text-secondary, #6b7280));
+}
+
+.stripedRow {
+  background: var(--phl-striped-bg, var(--bg-layer-sunken, #eef1f7));
+}

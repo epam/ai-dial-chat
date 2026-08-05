@@ -18,13 +18,13 @@ export interface CardTypography {
 
 /** Color overrides applied as CSS custom properties for `Card`. */
 export interface CardColors {
-  /** Default card background color. Fallback: `--bg-layer-2`. */
+  /** Default card background color. Fallback: `--bg-layer-sunken`. */
   background?: string;
-  /** Hovered card background color. Fallback: `--bg-layer-3`. */
+  /** Hovered card background color. Fallback: `--bg-layer-raised`. */
   hoverBackground?: string;
   /** Card border color. Fallback: `--stroke-secondary`. */
   border?: string;
-  /** Featured card glow color. Fallback: `rgba(125, 164, 255, 0.5)`. */
+  /** Featured card glow color. */
   featuredGlow?: string;
   /** Featured top accent bar color. Fallback: `--stroke-accent-primary`. */
   featuredBar?: string;

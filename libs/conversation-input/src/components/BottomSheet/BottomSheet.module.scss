@@ -2,7 +2,7 @@
   color: var(--ci-sheet-text, var(--text-primary, #161b2d));
 
   &:hover {
-    background: var(--ci-sheet-item-hover, var(--bg-layer-3, #fcfcfc));
+    background: var(--ci-sheet-item-hover, var(--bg-layer-raised, #fcfcfc));
   }
 
   &:active {

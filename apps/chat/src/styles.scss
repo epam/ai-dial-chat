@@ -6,7 +6,7 @@
   html,
   body,
   #root {
-    @apply size-full overflow-hidden bg-layer-5 text-primary;
+    @apply size-full overflow-hidden bg-layer-base text-primary;
     font-family: 'Inter', sans-serif;
     --theme-font: 'Inter', sans-serif;
   }
@@ -44,7 +44,7 @@ div[role='menu']:has(> [role='none']) {
     padding: 0 !important;
   }
 
-  // Item buttons — auto height, custom padding/radius, layer-3 hover
+  // Item buttons — auto height, custom padding/radius, bg-layer-raised hover
   button[role='menuitem'] {
     height: auto !important;
     border-radius: 8px !important;
@@ -113,7 +113,7 @@ div[role='menu']:has(> [role='none']) {
     background-image: none;
     box-shadow: none;
     transform: none;
-    background-color: var(--controls-bg-disable, #d1dbea) !important;
+    background-color: var(--bg-control-disable, #c7cbd4) !important;
     color: var(--text-white, #ffffff) !important;
     cursor: not-allowed;
   }

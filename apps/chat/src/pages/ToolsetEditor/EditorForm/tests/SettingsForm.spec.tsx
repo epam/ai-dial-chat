@@ -30,6 +30,21 @@ vi.mock('@epam/ai-dial-chat-shared', () => ({
   mergeClasses: (...classes: (string | undefined | false)[]) =>
     classes.filter(Boolean).join(' '),
   useCodeCopy: vi.fn(() => ({ isCopied: false, copy: vi.fn() })),
+  CopyButton: ({
+    copyLabel,
+    copiedLabel,
+    isCopied,
+    onClick,
+  }: {
+    copyLabel?: string;
+    copiedLabel?: string;
+    isCopied?: boolean;
+    onClick?: () => void;
+  }) => (
+    <button type="button" onClick={onClick}>
+      {isCopied ? copiedLabel : copyLabel}
+    </button>
+  ),
 }));
 
 vi.mock('../../../../utils/mcp-endpoint-url', () => ({

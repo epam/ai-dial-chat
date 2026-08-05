@@ -69,7 +69,7 @@ The system SHALL open a `DialPopup` modal (title `"Attach files"`, i18n key `bas
 - `DialFileManagerModal` is lazy-loaded via `React.lazy` + `Suspense` in `ConversationView`.
 - `DialPopup` is used with `size={PopupSize.Lg}` and `closeOnOutsideClick={true}`.
 - Closing the modal does NOT modify `message` text or the local `attachments` list in `Input`.
-- The popup and file-manager surface use `bg-layer-2`.
+- The popup and file-manager surface use `bg-layer-sunken`.
 - The footer action container uses `px-6 py-4`.
 - The ui-kit popup body SHALL use `flex min-h-0 flex-col`; the file-manager wrapper and manager SHALL use `grow`, matching the legacy modal layout. Row count SHALL NOT resize the modal.
 - `DialFileManager.gridClassName` SHALL be `"size-full"` and `gridOptions.additionalGridOptions.domLayout` SHALL be `"normal"` so the AG Grid viewport consumes the available manager height instead of using row-driven auto-height.

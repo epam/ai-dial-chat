@@ -38,7 +38,7 @@ export const NameCellRenderer: FC<
           isSelected ? (
             <IconCheck
               size={DIAL_ICON_SIZE.SM}
-              className="shrink-0 text-accent-primary"
+              className="shrink-0 text-accent"
               aria-hidden
             />
           ) : undefined
