@@ -113,10 +113,11 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        const request = await chat.saveAndSubmitRequest();
+        const requests = await chat.saveAndSubmitRequest();
         expect
           .soft(
-            request.messages[0].custom_content.attachments[0].title,
+            requests.completionRequest.messages[0].custom_content.attachments[0]
+              .title,
             ExpectedMessages.requestCustomContentIsValid,
           )
           .toBe(Attachment.sunImageName);
@@ -222,10 +223,10 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        const request = await chat.saveAndSubmitRequest();
+        const requests = await chat.saveAndSubmitRequest();
         expect
           .soft(
-            request.messages[0].custom_content.attachments,
+            requests.completionRequest.messages[0].custom_content.attachments,
             ExpectedMessages.requestCustomContentIsValid,
           )
           .toHaveLength(0);
@@ -347,17 +348,17 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        const request = await chat.saveAndSubmitRequest();
+        const requests = await chat.saveAndSubmitRequest();
         expect
           .soft(
-            request.messages[0].custom_content.attachments,
+            requests.completionRequest.messages[0].custom_content.attachments,
             ExpectedMessages.attachedFilesCountIsValid,
           )
           .toHaveLength(updatedAttachedFiles.length);
         for (const file of updatedAttachedFiles) {
           expect
             .soft(
-              request.messages[0].custom_content.attachments.find(
+              requests.completionRequest.messages[0].custom_content.attachments.find(
                 (a: AttachmentInterface) => a.title === file,
               ),
               ExpectedMessages.requestCustomContentIsValid,

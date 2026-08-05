@@ -16,7 +16,7 @@ import { Compare } from '@/src/ui/webElements/compare';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PublicationReviewControl } from '@/src/ui/webElements/publicationReviewControl';
 import { Locator, Page } from '@playwright/test';
-import { Request } from 'playwright-core';
+import { Request, Response } from 'playwright-core';
 
 export const PROMPT_APPLY_DELAY = 500;
 export const SCROLL_MOVING_DELAY = 100;
@@ -277,15 +277,21 @@ export class Chat extends BaseElement {
       apiPromises.push(unsubscrRespPromise);
     }
     await sendMethod();
-    let request;
+    let completionRequest: Request | undefined;
+    let conversationUpdateRequest: Request | undefined;
     for (let i = 0; i < apiPromises.length; i++) {
       const resolvedPromise = await apiPromises[i];
       if (i === 0) {
-        request = resolvedPromise as Request;
+        completionRequest = resolvedPromise as Request;
+      } else if (i === 1) {
+        conversationUpdateRequest = (resolvedPromise as Response).request();
       }
     }
     await this.waitForResponse(waitForAnswer);
-    return request?.postDataJSON();
+    return {
+      completionRequest: completionRequest?.postDataJSON(),
+      conversationUpdateRequest: conversationUpdateRequest?.postDataJSON(),
+    };
   }
 
   public async sendRequestWithButton(message?: string, waitForAnswer = true) {
@@ -308,13 +314,13 @@ export class Chat extends BaseElement {
     const updateResponsePromise = this.page.waitForResponse(
       (resp) => resp.request().method() === 'PUT',
     );
-    const request = this.sendRequest(
+    const requests = this.sendRequest(
       undefined,
       () => this.getChatMessages().saveAndSubmit.click(),
       waitForAnswer,
     );
     await updateResponsePromise;
-    return request;
+    return requests;
   }
 
   public async playNextChatMessage(waitForResponse = true) {

@@ -1,6 +1,7 @@
 import { ChatSettingsModalSelectors, IconSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
+import { API } from '@/src/testData';
 import { AgentSettings } from '@/src/ui/webElements/agentSettings';
 import { Locator, Page } from '@playwright/test';
 
@@ -46,5 +47,15 @@ export class ConversationSettingsModal extends BaseElement {
       );
     }
     return this.rightAgentSettings;
+  }
+
+  public async applyNewResponseFormat() {
+    const conversRespPromise = this.page.waitForResponse(
+      (resp) =>
+        resp.request().method() === 'PUT' &&
+        resp.url().includes(API.conversationHost),
+    );
+    await this.applyChangesButton.click();
+    await conversRespPromise;
   }
 }

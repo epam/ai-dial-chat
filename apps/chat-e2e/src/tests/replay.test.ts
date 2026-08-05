@@ -670,14 +670,14 @@ dialTest(
       'Send a new message to chat and verify response received',
       async () => {
         const newMessage = '2+3';
-        const newRequest = await chat.sendRequestWithButton(newMessage);
+        const newRequests = await chat.sendRequestWithButton(newMessage);
         chatAssertion.assertValue(
-          newRequest.model.id,
+          newRequests.completionRequest.model.id,
           conversation.model.id,
           ExpectedMessages.chatRequestModelIsValid,
         );
         chatAssertion.assertValue(
-          newRequest.messages[2].content,
+          newRequests.completionRequest.messages[2].content,
           newMessage,
           ExpectedMessages.chatRequestMessageIsValid,
         );

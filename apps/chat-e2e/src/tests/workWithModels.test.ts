@@ -607,8 +607,11 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        const request = await chat.sendRequestWithButton(requestTerm);
-        apiAssertion.assertRequestPrompt(request, prompt.content);
+        const requests = await chat.sendRequestWithButton(requestTerm);
+        apiAssertion.assertRequestPrompt(
+          requests.completionRequest,
+          prompt.content,
+        );
       },
     );
 

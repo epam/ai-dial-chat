@@ -745,12 +745,12 @@ dialSharedWithMeTest(
     await dialTest.step(
       `Send request and verify system prompt is applied`,
       async () => {
-        const request = await additionalShareUserChat.sendRequestWithKeyboard(
+        const requests = await additionalShareUserChat.sendRequestWithKeyboard(
           'test',
           false,
         );
         apiAssertion.assertRequestPrompt(
-          request,
+          requests.completionRequest,
           promptTemplate(promptParamValue) + promptInFolder.content,
         );
       },

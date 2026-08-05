@@ -54,15 +54,18 @@ dialTest(
         );
         const requestsData = await chat.sendRequestWithKeyboard(request, false);
         await toast.closeToast();
-        apiAssertion.assertRequestModelId(requestsData, model);
+        apiAssertion.assertRequestModelId(
+          requestsData.completionRequest,
+          model,
+        );
         apiAssertion.assertRequestPrompt(
-          requestsData,
+          requestsData.completionRequest,
           model.features?.systemPrompt === true
             ? conversation.prompt
             : undefined,
         );
         apiAssertion.assertRequestTemperature(
-          requestsData,
+          requestsData.completionRequest,
           conversation.temperature,
         );
       },

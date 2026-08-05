@@ -1,10 +1,14 @@
-import { ChatBody } from '@/chat/types/chat';
+import { ChatBody, Conversation } from '@/chat/types/chat';
 import { BackendEntity, MoveModel } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { BaseAssertion } from '@/src/assertions';
 import { ExpectedConstants, ExpectedMessages } from '@/src/testData';
 import { ItemUtil } from '@/src/utils';
-import { ConversationEntityModel, Message } from '@epam/ai-dial-shared';
+import {
+  ConversationEntityModel,
+  ConversationResponseFormat,
+  Message,
+} from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 import { APIResponse } from 'playwright-core';
 
@@ -116,6 +120,17 @@ export class ApiAssertion extends BaseAssertion {
         ExpectedMessages.requestPromptIsValid,
       );
     }
+  }
+
+  public assertRequestResponseFormat(
+    request: Conversation,
+    expectedFormat: ConversationResponseFormat | undefined,
+  ) {
+    this.assertValue(
+      request.responseFormat,
+      expectedFormat,
+      ExpectedMessages.requestResponseFormatIsValid,
+    );
   }
 
   public verifyRequestAttachments(

@@ -163,11 +163,14 @@ dialTest(
           await talkToAgentDialog.selectAgent(simpleRequestModel, {
             isHttpMethodTriggered: false,
           });
-          const request = await chat.sendRequestWithPrompt(
+          const requests = await chat.sendRequestWithPrompt(
             promptContent,
             false,
           );
-          apiAssertion.assertRequestMessage(request.messages[0], promptContent);
+          apiAssertion.assertRequestMessage(
+            requests.completionRequest.messages[0],
+            promptContent,
+          );
         }
       },
     );
