@@ -77,9 +77,8 @@ dialAdminTest(
     await dialAdminTest.step(
       'Make the public toolset appear as supporting login (mock its auth settings)',
       async () => {
-        // The backend rejects a toolset with a real OAuth endpoint, so — like the
-        // other login tests — inject auth_settings into the toolset listing.
-        // No login is performed; we only check the Manage creds controls show up.
+        // The backend won't accept a toolset with a real OAuth endpoint, so fake
+        // the auth settings in the listing. Nobody logs in here.
         const oauthMock = new OAuthMockHelper(
           adminPage,
           publishedToolset,
@@ -249,7 +248,7 @@ dialTest(
     await dialTest.step(
       'Mock the toolsets as logged-out OAuth / API key and serve the enriched listing',
       async () => {
-        // The backend rejects a toolset with a real OAuth endpoint, so mock it.
+        // Same reason as above - a real OAuth endpoint would not pass create.
         oauthMock = await toolsetSignInMock.loggedOutOAuthMock(
           oauthToolset,
           oauthEndpoint,
@@ -461,8 +460,7 @@ dialTest(
     await dialTest.step(
       'Make both toolsets appear as logged-out OAuth (mock the listing)',
       async () => {
-        // No login happens here — decline all only needs the toolsets to show
-        // up as login-requiring.
+        // Nobody logs in here - Decline all only needs both toolsets logged out.
         await toolsetSignInMock.setupToolsetsListingRoute(
           await toolsetApiHelper.listToolsets(),
           [
@@ -656,10 +654,8 @@ dialTest(
       },
     );
 
-    // NOTE: the ticket also expects a tools-initialization error in the response
-    // stages after a decline. It is not asserted here: that text comes from the
-    // real orchestration, while this test mocks /api/chat, so the stages would
-    // only ever echo our own mock. Covered manually.
+    // The ticket also expects a tools-init error in the response stages. We mock
+    // /api/chat, so the stages would only echo the mock - checked manually.
     await dialTest.step(
       'Decline one toolset and log in to the other — the modal closes',
       async () => {
@@ -692,10 +688,9 @@ dialTest(
           GeneratorUtil.randomString(10),
         );
         await sendMessage.sendMessageButton.click();
-        // Queue the request only after the message is sent, mirroring the
-        // backend asking again for a still logged-out toolset. Queueing it
-        // earlier would pop the modal on the channel's own reconnect, before
-        // the message was even sent. The logged-in one is not asked again.
+        // Queue it after the send, like the backend asking again for a toolset
+        // that is still logged out. Earlier and the channel reconnect pops the
+        // modal too soon. The one we logged in to is not asked again.
         toolsetSignInMock.requestSignInAgain([declinedToolset]);
         await baseAssertion.assertElementState(
           toolsetLoginEventsModal,
@@ -799,8 +794,8 @@ dialTest(
         publishedToolset = await adminUserItemApiHelper.getItem<Toolset>(
           toolsetResource.targetUrl,
         );
-        // A published toolset comes back without `id`, so keep the resource path
-        // — it is what the app config and the sign-in events refer to.
+        // A published toolset has no `id` - the app config and the sign-in events
+        // both go by the resource path.
         publishedToolset.id ??= toolsetResource.targetUrl;
       },
     );
@@ -985,7 +980,7 @@ dialAdminTest(
           const item = await adminUserItemApiHelper.getItem<Toolset>(
             resource.targetUrl,
           );
-          // A published toolset comes back without `id`.
+          // A published toolset has no `id`.
           item.id ??= resource.targetUrl;
           published.push(item);
         }
@@ -1045,8 +1040,8 @@ dialAdminTest(
           EntityEditorAppTypes.QuickApp2,
         );
 
-        // Only this one - the form must close after its login, otherwise it
-        // covers the chip we click next. The chat toolset is asked for later.
+        // Only this one: the form must close after the login, or it covers the
+        // chip we click next. The chat toolset comes later.
         await adminToolsetSignInMock.setupSignInChannel([editorToolset]);
         await adminDialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
@@ -1061,8 +1056,8 @@ dialAdminTest(
     await dialAdminTest.step(
       'EPMDIAL-5106: the org-logged-in toolset is not asked for a login and its chip is not red',
       async () => {
-        // NOTE: the ticket's "no login form appeared" is not asserted - with a
-        // mocked channel its absence would only prove we pushed no event.
+        // The ticket's "no login form appeared" is not asserted: the channel is
+        // mocked, so its absence would only prove we pushed no event.
         await baseAssertion.assertElementState(
           adminToolsetLoginEventsModal,
           'visible',
@@ -1153,8 +1148,8 @@ dialAdminTest(
           GeneratorUtil.randomString(10),
         );
         await adminSendMessage.sendMessageButton.click();
-        // Queue only after the message is sent - the channel from the editor is
-        // still alive and reconnects on its own, so it would pop the form early.
+        // Queue after the send - the editor's channel is still alive and its
+        // reconnect would pop the form early.
         adminToolsetSignInMock.requestSignInAgain([chatToolset]);
         await baseAssertion.assertElementState(
           adminToolsetLoginEventsModal,
@@ -1545,7 +1540,7 @@ dialAdminTest(
         publishedToolset = await adminUserItemApiHelper.getItem<Toolset>(
           toolsetResource.targetUrl,
         );
-        // A published toolset comes back without `id`.
+        // A published toolset has no `id`.
         publishedToolset.id ??= toolsetResource.targetUrl;
 
         const model = await modelApiHelper.getToolSupportingModel();
@@ -1718,7 +1713,7 @@ dialAdminTest(
         publicToolset = await adminUserItemApiHelper.getItem<Toolset>(
           resource.targetUrl,
         );
-        // A published toolset comes back without `id`.
+        // A published toolset has no `id`.
         publicToolset.id ??= resource.targetUrl;
       },
     );
@@ -1846,6 +1841,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Admin opens the publication request with the private toolset and goes to edit',
       async () => {
+        // The approve screen holds the chat area, so there is no agent info here.
         await adminDialHomePage.navigateBack({ waitForAgentInfo: false });
         await adminApproveRequiredPrompts.selectRequest(ownToolsetRequestName);
         await adminPublishingApprovalModal.goToEntityReview();
@@ -1859,8 +1855,8 @@ dialAdminTest(
     await dialAdminTest.step(
       'EPMDIAL-5107: the private toolset is not available to the admin and no login is asked',
       async () => {
-        // The admin cannot see someone else's private toolset, so it resolves to
-        // nothing in the listing and the chip goes red.
+        // The admin can't see someone else's private toolset, so it resolves to
+        // nothing in the listing and the chip turns red.
         await baseAssertion.assertElementClass(
           adminQuickApp2EditorViewForm.getChipByName(ownToolsetName),
           new RegExp(AddQuickApp2SettingsFormSelector.errorChipClass),
@@ -1871,9 +1867,9 @@ dialAdminTest(
         );
         await adminSendMessage.sendMessageButton.click();
         await adminChatMessagesAssertion.assertMessagesCount(2);
-        // NOTE: the ticket also expects a Forbidden error in the response. That
-        // text comes from the real orchestration while the response here is
-        // mocked, so only the absence of the login form is checked.
+        // The ticket also expects a Forbidden error in the response. It comes
+        // from the real orchestration, and /api/chat is mocked here, so we only
+        // check that no login form shows up.
         await baseAssertion.assertElementState(
           adminToolsetLoginEventsModal,
           'hidden',
