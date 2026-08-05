@@ -36,10 +36,16 @@ import { ConversationSourcesPanel } from '@epam/ai-dial-source-panel';
 import type { ConversationSourcesPanelProps } from '@epam/ai-dial-source-panel';
 
 <ConversationSourcesPanel
-  uploadedFiles={files}
+  isOpen={isOpen}
+  uploaded={uploadedAttachments}
+  generated={generatedAttachments}
   sources={quotations}
-  onFileOpen={handleFileOpen}
+  isMobile={isMobile}
+  labels={labels}
+  onClose={handleClose}
+  onAttachmentClick={handleAttachmentClick}
   onSourceClick={handleSourceClick}
+  onDownloadAll={handleDownloadAll}
 />;
 ```
 
@@ -49,21 +55,23 @@ import type { ConversationSourcesPanelProps } from '@epam/ai-dial-source-panel';
 import type {
   ConversationSourcesPanelProps,
   ConversationSourcesPanelLabels,
+  ConversationSourcesPanelColors,
   ConversationSourcesPanelStyles,
+  ConversationSourcesPanelTypography,
   QuotationSource,
 } from '@epam/ai-dial-source-panel';
 ```
 
 ### QuotationSource
 
-Shape of a single generated source entry.
+Shape of a single cited source entry.
 
 ```tsx
 interface QuotationSource {
-  id: string;
+  url: string;
   title: string;
-  url?: string;
-  excerpt?: string;
+  contentType: string;
+  quote?: string;
 }
 ```
 
@@ -73,9 +81,18 @@ Override default English UI strings with translated values.
 
 ```tsx
 const labels: ConversationSourcesPanelLabels = {
-  title: t('Sources'),
-  filesSection: t('Uploaded files'),
-  sourcesSection: t('Generated sources'),
+  ariaLabel: t('Sources panel'),
+  closeLabel: t('Close'),
   searchPlaceholder: t('Search sources...'),
+  searchClearLabel: t('Clear search'),
+  noDataLabel: t('Empty'),
+  noResultsLabel: t('No results'),
+  downloadAllLabel: t('Download all'),
+  uploadedSectionTitle: t('Uploaded files'),
+  generatedSectionTitle: t('Generated files'),
+  sourcesSectionTitle: t('Sources'),
+  copySourceLabel: t('Copy link'),
+  sourceCopiedLabel: t('Copied!'),
+  attachmentClickLabel: t('Download'),
 };
 ```

@@ -124,6 +124,7 @@ const ConversationSourcesPanelContainer: FC = () => {
       generatedSectionTitle: t(SidebarI18nKeys.SectionGeneratedFiles),
       sourcesSectionTitle: t(SidebarI18nKeys.SectionSources),
       copySourceLabel: t(ButtonsI18nKeys.CopyLink),
+      sourceCopiedLabel: t(ButtonsI18nKeys.Copied),
       attachmentClickLabel: t(AttachmentsI18nKeys.Download),
     }),
     [t],
