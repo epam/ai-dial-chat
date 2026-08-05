@@ -45,10 +45,10 @@ type DialMarkdownEditorTheme = ComponentProps<
  * Presentational create-task form: a back-navigable header (Cancel/Save
  * actions) and a two-column Details/Configuration body. Details holds
  * display name, description, the schedule fields, and the model picker;
- * Configuration holds the markdown Instructions editor and the stream
- * toggle. Field values, validation errors, and model options are all
- * supplied by the host app; this component holds no state of its own and
- * performs no routing, i18n, or network calls.
+ * Configuration holds the markdown Instructions editor. Field values,
+ * validation errors, and model options are all supplied by the host app;
+ * this component holds no state of its own and performs no routing, i18n,
+ * or network calls.
  */
 export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   labels,

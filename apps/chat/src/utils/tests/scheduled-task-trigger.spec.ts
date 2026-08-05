@@ -12,7 +12,6 @@ const baseValues: ScheduledTaskCreateFormValues = {
   time: '09:00',
   modelId: 'gpt-4o',
   prompt: 'Summarize my inbox',
-  stream: true,
 };
 
 describe('mapFormValuesToCreateBody', () => {
@@ -79,7 +78,7 @@ describe('mapFormValuesToCreateBody', () => {
     });
   });
 
-  it('carries displayName, model, prompt, and stream through', () => {
+  it('carries displayName, model, and prompt through', () => {
     const body = mapFormValuesToCreateBody({
       ...baseValues,
       scheduleType: ScheduledTaskScheduleType.Recurring,
@@ -89,7 +88,7 @@ describe('mapFormValuesToCreateBody', () => {
     expect(body.displayName).toBe('Daily summary');
     expect(body.model).toBe('gpt-4o');
     expect(body.prompt).toBe('Summarize my inbox');
-    expect(body.stream).toBe(true);
+    expect(body).not.toHaveProperty('stream');
   });
 
   it('includes a trimmed description when non-empty', () => {

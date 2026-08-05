@@ -8999,11 +8999,6 @@
           "description": {
             "type": "string",
             "example": "Summarizes unread inbox items every morning"
-          },
-          "stream": {
-            "type": "boolean",
-            "example": true,
-            "default": true
           }
         },
         "required": ["displayName", "trigger", "model", "prompt"]
@@ -9075,11 +9070,6 @@
           "description": {
             "type": "string",
             "example": "Summarizes unread inbox items every morning"
-          },
-          "stream": {
-            "type": "boolean",
-            "example": true,
-            "default": true
           }
         },
         "required": ["displayName", "trigger", "model", "prompt"]
