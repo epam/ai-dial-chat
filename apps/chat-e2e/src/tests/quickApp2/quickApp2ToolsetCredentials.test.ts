@@ -1846,6 +1846,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Admin opens the publication request with the private toolset and goes to edit',
       async () => {
+        await adminDialHomePage.navigateBack({ waitForAgentInfo: false });
         await adminApproveRequiredPrompts.selectRequest(ownToolsetRequestName);
         await adminPublishingApprovalModal.goToEntityReview();
         await adminPublishedApplicationReviewModal.editApplicationButton.click();
