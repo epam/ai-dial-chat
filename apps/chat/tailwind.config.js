@@ -1,7 +1,10 @@
 const defaultTheme = require('tailwindcss/defaultTheme');
 const typographyStyles = require('@tailwindcss/typography/src/styles');
-
 const COMPACT_RHYTHM_SCALE = 0.5;
+
+const BASE_RHYTHM_OVERRIDES = {
+  hr: { marginTop: '2em', marginBottom: '2em' },
+};
 
 const scaleEmValue = (value) => {
   const match = /^(-?[\d.]+)em$/.exec(String(value));
@@ -19,9 +22,14 @@ const buildCompactTypographyCss = () => {
   const base = typographyStyles.default
     ? typographyStyles.default.base
     : typographyStyles.base;
-  const declarations = Array.isArray(base.css)
+  const pluginDeclarations = Array.isArray(base.css)
     ? Object.assign({}, ...base.css)
     : base.css;
+  const declarations = { ...pluginDeclarations };
+
+  Object.entries(BASE_RHYTHM_OVERRIDES).forEach(([selector, rules]) => {
+    declarations[selector] = { ...declarations[selector], ...rules };
+  });
 
   return Object.entries(declarations).reduce((acc, [selector, rules]) => {
     if (
@@ -181,6 +189,7 @@ module.exports = {
               borderRadius: '0',
               backgroundColor: 'transparent',
             },
+            ...BASE_RHYTHM_OVERRIDES,
           },
         },
         compact: {
