@@ -1,5 +1,6 @@
-import type { DialFile } from '@epam/ai-dial-ui-kit';
-import { DialFileNodeType, NotificationVariant } from '@epam/ai-dial-ui-kit';
+import type { DialFile } from '@epam/ai-dial-react-file-manager';
+import { DialFileNodeType } from '@epam/ai-dial-react-file-manager';
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as filesApi from '../../../../server-api/files.api';

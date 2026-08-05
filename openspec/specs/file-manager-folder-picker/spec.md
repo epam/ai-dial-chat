@@ -200,7 +200,7 @@ The folder picker SHALL NOT be gated behind `ENABLED_FEATURES` / `ENABLED_FEATUR
 
 ### Requirement: RTL and accessibility
 
-The popup SHALL be rendered entirely by `@epam/ai-dial-ui-kit` using logical CSS properties and the inherited `dir` attribute from `<html>`. This change SHALL NOT introduce any physical-direction Tailwind classes or app-level RTL handling. Keyboard navigation and ARIA roles within the popup SHALL remain ui-kit-owned; the app-level change here is limited to supplying translated strings, which SHALL NOT alter focus order or semantics.
+The popup SHALL be rendered entirely by `@epam/ai-dial-react-file-manager` using logical CSS properties and the inherited `dir` attribute from `<html>`. This change SHALL NOT introduce any physical-direction Tailwind classes or app-level RTL handling. Keyboard navigation and ARIA roles within the popup SHALL remain package-owned; the app-level change here is limited to supplying translated strings, which SHALL NOT alter focus order or semantics.
 
 #### Scenario: Popup inherits RTL layout
 

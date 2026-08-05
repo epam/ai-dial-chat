@@ -1,7 +1,7 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { render, screen } from '@testing-library/react';
 import type { AriaAttributes } from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NAVIGATION_CONFIG } from '../../../constants/navigation';
 import { NavigationI18nKeys } from '../../../constants/translation-keys';

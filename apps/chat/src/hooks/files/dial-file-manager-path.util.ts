@@ -1,5 +1,8 @@
-import type { DialFile } from '@epam/ai-dial-ui-kit';
-import { DialFileNodeType, DialFilePermission } from '@epam/ai-dial-ui-kit';
+import type { DialFile } from '@epam/ai-dial-react-file-manager';
+import {
+  DialFileNodeType,
+  DialFilePermission,
+} from '@epam/ai-dial-react-file-manager';
 import { DialFileManagerActionProfile } from '../../types/file-manager-variant';
 import { safeDecodeURI } from '../../utils/string-utils';
 import {

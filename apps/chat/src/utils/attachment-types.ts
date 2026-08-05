@@ -1,4 +1,4 @@
-import type { DialFileAcceptType } from '@epam/ai-dial-ui-kit';
+import type { DialFileAcceptType } from '@epam/ai-dial-react-file-manager';
 import { extension as getMimeExtension } from 'mime-types';
 
 const ALL_FILES_ACCEPT_TYPE: DialFileAcceptType = '*/*';

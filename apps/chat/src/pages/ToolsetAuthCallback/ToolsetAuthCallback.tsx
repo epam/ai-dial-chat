@@ -11,7 +11,7 @@
 import type { ToolsetLoginBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import {
   TOOLSET_REDIRECT_STATE_KEY,

@@ -7,7 +7,7 @@ import type { ToolsetLoginBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import {
   ToolsetEditorQuery,

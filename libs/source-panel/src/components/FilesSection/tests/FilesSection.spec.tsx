@@ -37,53 +37,49 @@ const makeAttachment = (name: string): DisplayAttachment => ({
   status: RequestStatus.Idle,
 });
 
+const renderSection = (
+  attachments: DisplayAttachment[],
+  props?: Partial<Parameters<typeof FilesSection>[0]>,
+) =>
+  render(
+    <FilesSection attachments={attachments} title="Files" {...props} />,
+  );
+
 describe('FilesSection', () => {
   it('renders the title', () => {
-    render(
-      <FilesSection attachments={[makeAttachment('a.pdf')]} title="Files" />,
-    );
+    renderSection([makeAttachment('a.pdf')]);
     expect(screen.getByText('Files')).toBeTruthy();
   });
 
   it('renders nothing when no attachments', () => {
-    render(<FilesSection attachments={[]} title="Files" />);
+    renderSection([]);
     expect(screen.queryByText('Files')).toBeNull();
     expect(screen.queryByRole('list')).toBeNull();
   });
 
   it('renders a card per attachment', () => {
     const attachments = [makeAttachment('a.pdf'), makeAttachment('b.pdf')];
-    render(<FilesSection attachments={attachments} title="Files" />);
+    renderSection(attachments);
     expect(screen.getByText('a.pdf')).toBeTruthy();
     expect(screen.getByText('b.pdf')).toBeTruthy();
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
   });
 
   it('has role=list grid when attachments present', () => {
-    render(
-      <FilesSection attachments={[makeAttachment('a.pdf')]} title="Files" />,
-    );
+    renderSection([makeAttachment('a.pdf')]);
     expect(screen.getByRole('list')).toBeTruthy();
     expect(screen.getAllByRole('listitem')).toHaveLength(1);
   });
 
   it('cards have no onClick when onAttachmentClick is not provided', () => {
-    render(
-      <FilesSection attachments={[makeAttachment('a.pdf')]} title="Files" />,
-    );
+    renderSection([makeAttachment('a.pdf')]);
     expect(screen.queryByRole('button')).toBeNull();
   });
 
   it('activating a card calls onAttachmentClick with the correct attachment', () => {
     const onAttachmentClick = vi.fn();
     const att = makeAttachment('a.pdf');
-    render(
-      <FilesSection
-        attachments={[att]}
-        title="Files"
-        onAttachmentClick={onAttachmentClick}
-      />,
-    );
+    renderSection([att], { onAttachmentClick });
     fireEvent.click(screen.getByRole('button'));
     expect(onAttachmentClick).toHaveBeenCalledWith(att);
   });
