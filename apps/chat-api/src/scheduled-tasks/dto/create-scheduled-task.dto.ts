@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-  IsBoolean,
   IsDefined,
   IsNotEmpty,
   IsObject,
@@ -44,11 +43,6 @@ export class CreateScheduledTaskBodyDto {
   @IsString()
   @MaxLength(500)
   description?: string;
-
-  @ApiPropertyOptional({ example: true, default: true })
-  @IsOptional()
-  @IsBoolean()
-  stream?: boolean;
 }
 
 export class CreatedScheduledTaskDto extends ScheduledTaskDto {}

@@ -22,7 +22,6 @@ const validCreateBody = {
   trigger: { date: '2026-07-24T09:00:00.000Z' },
   model: 'gpt-4.1-mini-2025-04-14',
   prompt: 'Summarize my inbox',
-  stream: true,
 };
 
 const mockSchedule = {
@@ -334,6 +333,14 @@ describe('ScheduledTasksController (integration)', () => {
       expect(service.createScheduledTask).not.toHaveBeenCalled();
     });
 
+    it('returns 400 when the body includes a client-supplied stream field', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks')
+        .send({ ...validCreateBody, stream: true })
+        .expect(400);
+      expect(service.createScheduledTask).not.toHaveBeenCalled();
+    });
+
     it('returns 400 when the mapper rejects an invalid trigger', async () => {
       service.createScheduledTask.mockRejectedValue(
         new BadRequestException(
@@ -470,6 +477,14 @@ describe('ScheduledTasksController (integration)', () => {
       await request(app.getHttpServer())
         .put('/api/v1/scheduled-tasks/sched_123')
         .send({ ...validCreateBody, description: 'a'.repeat(501) })
+        .expect(400);
+      expect(service.updateScheduledTask).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when the body includes a client-supplied stream field', async () => {
+      await request(app.getHttpServer())
+        .put('/api/v1/scheduled-tasks/sched_123')
+        .send({ ...validCreateBody, stream: true })
         .expect(400);
       expect(service.updateScheduledTask).not.toHaveBeenCalled();
     });

@@ -2,13 +2,38 @@ import { BadRequestException } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import type { CreateScheduledTaskBodyDto } from '../dto/create-scheduled-task.dto';
 import {
+  buildScheduledTaskChatCompletionUrl,
   fromUpstreamSchedule,
   toUpstreamSchedulePayload,
   type UpstreamScheduleResponse,
 } from '../scheduled-tasks.mapper';
 
 const DIAL_CORE_URL = 'http://dial-core';
-const DIAL_API_VERSION = '2025-01-01-preview';
+/*
+ * Matches DialClientService's DIAL_API_VERSION fallback, so this fixture
+ * stays representative of what the mapper actually receives in production.
+ */
+const DIAL_API_VERSION = '2024-10-21';
+
+describe('buildScheduledTaskChatCompletionUrl', () => {
+  it('appends /openai to a base URL with no trailing slash', () => {
+    expect(buildScheduledTaskChatCompletionUrl('http://core')).toBe(
+      'http://core/openai',
+    );
+  });
+
+  it('strips a trailing slash before appending /openai', () => {
+    expect(buildScheduledTaskChatCompletionUrl('http://core/')).toBe(
+      'http://core/openai',
+    );
+  });
+
+  it('does not double up an already-present /openai suffix path', () => {
+    expect(buildScheduledTaskChatCompletionUrl('http://core/openai')).toBe(
+      'http://core/openai/openai',
+    );
+  });
+});
 
 describe('toUpstreamSchedulePayload', () => {
   it('builds the fixed dial-oauth/chat_completion body for a date trigger', () => {
@@ -17,7 +42,6 @@ describe('toUpstreamSchedulePayload', () => {
       trigger: { date: '2026-07-24T09:00:00.000Z' },
       model: 'gpt-4.1-mini-2025-04-14',
       prompt: 'Summarize my inbox',
-      stream: true,
     };
 
     const upstream = toUpstreamSchedulePayload(
@@ -33,17 +57,21 @@ describe('toUpstreamSchedulePayload', () => {
       properties: {
         target_type: 'chat_completion',
         url: 'http://dial-core/openai',
+        api_version: DIAL_API_VERSION,
+        create_conversation: true,
+        stream: false,
+        extra_headers: {},
+        retry: null,
+        timeout: null,
         payload: {
           messages: [{ role: 'user', content: 'Summarize my inbox' }],
           model: 'gpt-4.1-mini-2025-04-14',
-          stream: true,
         },
-        api_version: DIAL_API_VERSION,
       },
     });
   });
 
-  it('builds the fixed body for a cron trigger and defaults stream to true', () => {
+  it('builds the fixed body for a cron trigger', () => {
     const body: CreateScheduledTaskBodyDto = {
       displayName: 'Hourly check',
       trigger: { cron: { fields: { minute: '0', hour: '*' } } },
@@ -60,7 +88,12 @@ describe('toUpstreamSchedulePayload', () => {
     expect(upstream.trigger).toEqual({
       cron: { fields: { minute: '0', hour: '*' } },
     });
-    expect(upstream.properties.payload.stream).toBe(true);
+    expect(upstream.properties.stream).toBe(false);
+    expect(upstream.properties.create_conversation).toBe(true);
+    expect(upstream.properties.extra_headers).toEqual({});
+    expect(upstream.properties.retry).toBeNull();
+    expect(upstream.properties.timeout).toBeNull();
+    expect(upstream.properties.payload).not.toHaveProperty('stream');
   });
 
   it('rejects a trigger with both date and cron', () => {

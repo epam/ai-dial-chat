@@ -40,7 +40,6 @@ const DEFAULT_VALUES: ScheduledTaskCreateFormValues = {
   time: '09:00',
   modelId: '',
   prompt: '',
-  stream: true,
 };
 
 const containsControlCharacter = (value: string): boolean =>

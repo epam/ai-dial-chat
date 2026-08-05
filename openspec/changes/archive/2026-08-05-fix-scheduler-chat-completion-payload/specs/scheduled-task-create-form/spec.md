@@ -1,27 +1,4 @@
-# Spec: scheduled-task-create-form
-
-## Requirements
-
-### Requirement: New task navigates to a dedicated create route
-
-The Scheduled Tasks list page's primary "create" action SHALL navigate to a new route, `ROUTES.ScheduledTaskCreate` (`/scheduled-tasks/new`), passing the current list URL as a `returnUrl` query parameter, instead of invoking a no-op handler. The route SHALL be lazy-loaded and registered in `apps/chat/src/app/app.tsx` using the same `RouteErrorBoundary` + `Suspense` + `RouteFallback` pattern as `ROUTES.ScheduledTasks`. State is owned by the `ScheduledTaskCreatePage` component (local `useState`) — no new React Context is introduced.
-
-**Feature flag:** reuses `scheduledTasksEnabled` (no new flag). **RTL impact:** page mirrors per logical-property rules (see RTL requirement below). **i18n impact:** see i18n requirement below. **Telemetry:** none in this iteration.
-
-#### Scenario: Create button navigates with returnUrl
-
-- **WHEN** `scheduledTasksEnabled` is `true` and the user activates the **New task** button on `/scheduled-tasks`
-- **THEN** the app navigates to `/scheduled-tasks/new?returnUrl=%2Fscheduled-tasks`
-
-#### Scenario: Flag disabled hides the create route
-
-- **WHEN** `scheduledTasksEnabled` resolves to `false` and the user navigates directly to `/scheduled-tasks/new`
-- **THEN** the app renders the same `NotFound` content it renders for any unregistered path
-
-#### Scenario: Route is lazy-loaded
-
-- **WHEN** the JS bundle is evaluated without navigating to `/scheduled-tasks/new`
-- **THEN** the create-task page code is NOT included in the initial bundle
+## MODIFIED Requirements
 
 ### Requirement: Cancel returns to returnUrl; valid submit calls the BFF create endpoint
 
@@ -55,21 +32,6 @@ A valid submit SHALL call `POST /api/v1/scheduled-tasks` through `apps/chat/src/
 
 - **WHEN** the create route is opened with an empty, absolute, protocol-relative, backslash-containing, or control-character-containing `returnUrl`
 - **THEN** Cancel and a successful submit both navigate to `ROUTES.ScheduledTasks`
-
-#### Scenario: Non-empty description is included in the submit body
-
-- **WHEN** the user enters a `description` and activates Create
-- **THEN** the `POST` body includes `description` with the trimmed entered value
-
-#### Scenario: Empty description is omitted from the submit body
-
-- **WHEN** the user leaves `description` empty and activates Create
-- **THEN** the `POST` body has no `description` field
-
-#### Scenario: Description over 500 characters blocks submit
-
-- **WHEN** the user enters a `description` longer than 500 characters and activates Create
-- **THEN** the page shows a validation error, no `POST` request is sent, and the Create action does not proceed
 
 ### Requirement: ScheduledTaskCreateForm lib component matches the BFF create contract
 
@@ -146,37 +108,6 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 
 - **WHEN** the create-task form renders
 - **THEN** no stream toggle or `values.stream`-bound control is present in the rendered output
-
-### Requirement: Page maps form values to BFF trigger shape
-
-`ScheduledTaskCreatePage` SHALL convert form `values` to the BFF `trigger` field before calling `createScheduledTask`:
-
-- When `scheduleType === 'once'`: `trigger = { date: <ISO-8601 datetime> }` built from `runAt`
-- When `scheduleType === 'recurring'` and frequency is Daily: `trigger = { cron: { fields: { hour, minute } } }`, where `hour`/`minute` are the UTC equivalent of the local `time` the user entered, computed via `buildCronFields` in `apps/chat/src/utils/scheduled-task-trigger.ts` using the browser's IANA timezone (`Intl.DateTimeFormat().resolvedOptions().timeZone`)
-- When frequency is Weekly: include `day_of_week` as the UTC-equivalent weekday (shifted ±1, mod 7, relative to the locally-selected `dayOfWeek`, whenever the local→UTC hour conversion crosses a calendar-day boundary), alongside the UTC `hour`/`minute` (exact field name confirmed against scheduler OpenAPI during implementation)
-- When frequency is Monthly: include `day` as the UTC-equivalent day-of-month derived from the same conversion, alongside the UTC `hour`/`minute`
-
-This mapping, including the local→UTC conversion for all recurring fields, MUST live in `apps/chat` (page or `utils/`), not in the lib. `buildCronFields` MUST use a single reference `Date` (constructed from the local `hour`/`minute`, and, for weekly/monthly, rolled to the matching local weekday/day-of-month) and read back `getUTCHours()`/`getUTCMinutes()`/`getUTCDay()`/`getUTCDate()` from it, rather than computing the UTC offset by hand.
-
-#### Scenario: Once schedule sends trigger.date
-
-- **WHEN** the user selects schedule type Once with run at `2026-07-24T09:00` (local) and submits
-- **THEN** the POST body includes `trigger.date` as an ISO-8601 string and no `trigger.cron`
-
-#### Scenario: Daily recurring sends UTC-converted trigger.cron.fields
-
-- **WHEN** the user selects Recurring / Daily with local time `09:00` in a timezone at UTC+2 and submits
-- **THEN** the POST body includes `trigger.cron.fields.hour = '7'` and `trigger.cron.fields.minute = '0'` (the UTC equivalent), not the raw local `hour`/`minute`
-
-#### Scenario: Weekly recurring shifts day_of_week when the UTC conversion crosses midnight
-
-- **WHEN** the user selects Recurring / Weekly with local time `23:30` on Monday in a timezone at UTC+2, so the UTC equivalent falls on Tuesday `21:30`
-- **THEN** the POST body's `trigger.cron.fields.day_of_week` reflects Tuesday (the UTC calendar day), not Monday (the locally-selected day)
-
-#### Scenario: Daily recurring at a timezone-neutral moment is a no-op conversion
-
-- **WHEN** the user's browser timezone is UTC and they select Recurring / Daily with local time `09:00`
-- **THEN** the POST body includes `trigger.cron.fields.hour = '9'` and `trigger.cron.fields.minute = '0'`, unchanged from the entered local value
 
 ### Requirement: Create-task strings flow through react-i18next
 
