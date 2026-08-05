@@ -68,7 +68,7 @@ import {
   mapEntityDetailsToCatalogDetails,
   mapToolsetCredentials,
 } from '../../utils/map-entity-details-to-catalog';
-import { buildToolsetConnectApi } from '../../utils/mcp-endpoint-url';
+import { buildConnectApi } from '../../utils/mcp-endpoint-url';
 import { getAccessRulesLabels, toPublishEntityType } from '../../utils/publish';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 
@@ -250,8 +250,9 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         return {
           ...catalogDetails,
           api:
-            entityDetails.type === 'TOOLSET'
-              ? buildToolsetConnectApi(dialCoreExternalUrl ?? '', item.id)
+            item.type === CatalogEntityType.Toolset ||
+            (item.type === CatalogEntityType.Agent && item.supportsMcp === true)
+              ? buildConnectApi(dialCoreExternalUrl ?? '', item.id)
               : catalogDetails.api,
           limits: mapDeploymentLimitsDtoToCatalogLimits(limitsDto, t),
           credentials:

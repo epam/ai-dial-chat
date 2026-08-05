@@ -114,13 +114,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
       >
         <div
           className={mergeClasses(
-            /* px-4 (16px) matches the code area's own left padding
-             * (SyntaxHighlighter's `padding: '14px 16px'` below), so the
-             * language label/titleSlot text aligns with the code content. */
             'flex min-h-10 items-center justify-between border-b px-4',
-            /* A custom titleSlot (e.g. a select trigger) already fills the
-             * min-h-10 row at its own height, so the header's own vertical
-             * padding would only add unwanted extra height on top of it. */
             titleSlot != null ? 'py-0' : 'py-2',
             styles.header,
             headerClassName,

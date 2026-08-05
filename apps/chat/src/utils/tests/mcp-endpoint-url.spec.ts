@@ -2,7 +2,7 @@ import { CodeLanguage } from '@epam/ai-dial-catalog';
 import { describe, expect, it } from 'vitest';
 import {
   buildApplicationMcpUrl,
-  buildToolsetConnectApi,
+  buildConnectApi,
   buildToolsetMcpUrl,
 } from '../mcp-endpoint-url';
 
@@ -59,20 +59,14 @@ describe('mcp-endpoint-url', () => {
 
   describe('buildToolsetConnectApi', () => {
     it('sets the resource endpoint URL to the toolset MCP URL', () => {
-      const api = buildToolsetConnectApi(
-        'https://dial.example.com',
-        'search-tool',
-      );
+      const api = buildConnectApi('https://dial.example.com', 'search-tool');
       expect(api.resource?.endpointUrl).toBe(
         'https://dial.example.com/v1/toolset/search-tool/mcp',
       );
     });
 
     it('includes a curl snippet that targets the same endpoint URL', () => {
-      const api = buildToolsetConnectApi(
-        'https://dial.example.com',
-        'search-tool',
-      );
+      const api = buildConnectApi('https://dial.example.com', 'search-tool');
       expect(api.snippets).toHaveLength(1);
       expect(api.snippets?.[0].language).toBe(CodeLanguage.Curl);
       expect(api.snippets?.[0].code).toContain(

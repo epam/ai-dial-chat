@@ -30,7 +30,6 @@ import {
   ToolsetAuthenticationType,
   type CredentialsLevel,
 } from '../../../types/toolset-auth';
-import { canDeleteCatalogItem } from '../../../utils/item-actions';
 import { getCredentialsUiState } from '../../../utils/toolset-credentials';
 import { EntityHeader } from '../../EntityHeader/EntityHeader';
 import { ShareButton } from './ShareButton/ShareButton';
@@ -146,7 +145,7 @@ export const Header: FC<HeaderProps> = ({
       item.type === CatalogEntityType.Agent);
 
   const shouldShowEditAction = !!onEdit && !!item.isEditable;
-  const shouldShowDeleteAction = canDeleteCatalogItem(item);
+  const shouldShowDeleteAction = item.isMyApp;
 
   const manageItems = useMemo<DropdownItem[]>(() => {
     const items: DropdownItem[] = [];

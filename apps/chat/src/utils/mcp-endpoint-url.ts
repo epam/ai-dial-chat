@@ -25,7 +25,7 @@ export const buildApplicationMcpUrl = (baseUrl: string, id: string): string =>
   `${trimTrailingSlash(baseUrl)}/v1/deployments/${encodeMcpResourcePath(id)}/mcp`;
 
 /** Builds the "Connect" tab's resource/endpoint/snippet data for a toolset's MCP endpoint. */
-export const buildToolsetConnectApi = (
+export const buildConnectApi = (
   baseUrl: string,
   id: string,
 ): CatalogItemApiDetails => {

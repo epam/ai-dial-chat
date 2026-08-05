@@ -52,7 +52,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
   const featuredStyle = getFeaturedEntityStyle(item);
 
   return (
-    <div className="flex items-start gap-[14px]" style={featuredStyle}>
+    <div className="flex items-start gap-2" style={featuredStyle}>
       <DeploymentIcon
         src={item.iconUrl}
         size={iconSize}

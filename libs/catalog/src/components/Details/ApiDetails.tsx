@@ -34,22 +34,7 @@ interface InlineSelectTriggerProps extends ButtonHTMLAttributes<HTMLButtonElemen
   label: string;
 }
 
-/**
- * Pill-shaped dropdown trigger matching the DIAL UI kit's "Inline-select"
- * pattern (accent-alpha tint on hover/active, focus ring). No standalone
- * ui-kit component exists for this yet, and its own button components ship
- * unlayered CSS that always beats a `className` override from Tailwind's
- * `@layer utilities` regardless of specificity — so this is a plain button
- * built from the design's tokens instead of fighting that cascade.
- * Forwards the rest props so `DialDropdown`'s `cloneElement`-injected
- * `onClick` still reaches the underlying `<button>`.
- * `h-8` (vs. the header's `min-h-10`) leaves visible top/bottom breathing
- * room around the hover/active pill. The negative `-ms-3`/`-me-2` margins
- * cancel most (not all) of the button's own `ps-3`/`pe-2` padding, so the
- * label text lines up with the code content's left edge while the pill's
- * own left edge stops short of the header's border by the 4px difference
- * between the header's `px-4` and the trigger's `-ms-3`.
- */
+// TODO: replace inline select in ui kit
 const InlineSelectTrigger: FC<InlineSelectTriggerProps> = ({
   label,
   ...rest
@@ -300,7 +285,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
 
       {!hasEndpoints && hasLegacySnippets && (
         <SnippetBlock
-          snippets={api.snippets!}
+          snippets={api.snippets ?? []}
           sectionLabel={snippetSectionLabel}
           copyAriaLabel={copyAriaLabel}
           codeClassName={codeClassName}

@@ -1,128 +1,114 @@
 ## ADDED Requirements
 
-### Requirement: `libs/catalog` exposes a host-agnostic Connect header action
+### Requirement: `libs/catalog` renders Connect as a details-panel tab
 
-`libs/catalog` SHALL render a `Connect` action button in the Catalog item details sidebar header (`Details/Header/Header.tsx`), positioned after every other header action button (`Use in chat`, `Edit`, `Share`/recipient-side `Delete`, `Publish`, credentials). A new `ConnectButton` component SHALL be added under `Details/Header/ConnectButton/` (sibling to `Details/Header/ShareButton/`), following the same file/folder and component-props-naming conventions already used there.
+`libs/catalog`'s `DetailsPanel` (`Details/DetailsPanel.tsx`) SHALL render a `Connect` tab in the item details tab row (alongside `About`/`Overview`/`Pricing`/`Limits`/`Tools`), driven purely by data: the tab appears whenever `item.details?.api != null`, positioned last in the tab row regardless of the item's `type` and regardless of which other tabs are present.
 
-`ConnectButton` SHALL render as a `NeutralButton` with a leading plug icon (`IconPlugConnected` from `@tabler/icons-react`, `aria-hidden`, matching the icon-size convention used by the other header action buttons) and a trailing `IconChevronDown`, matching `ShareButton`'s icon pairing. Neither icon is direction-dependent; neither SHALL be mirrored for RTL.
+There is no standalone `Connect` button or popover component. `Details/Header/ConnectButton/` and any app-level `ConnectPopoverContainer` SHALL NOT exist; Connect is reached exclusively by selecting the tab.
 
-`CatalogProps`, `DetailsPanelProps`, and `HeaderProps` SHALL gain:
-- `connectOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode` — renders the Connect popover content anchored to the button; when absent, `Connect` is never shown (there is no non-overlay fallback action).
-- `isConnectVisible?: (item: CatalogItem) => boolean` — controls whether `Connect` renders for a given item; when absent, `Connect` is never shown.
+Selecting the `Connect` tab SHALL render `ApiDetails` (`Details/ApiDetails.tsx`) with `api={item.details.api}`. `ApiDetails` SHALL render, in order, whichever of the following sections the data provides:
+- A `Resource` section (`TableView`) when `api.resource?.modelId` is set.
+- A single copyable endpoint code block (`MarkdownCodeBlock`, `hideDownload`) when `api.resource?.endpointUrl` is set and `api.endpoints` is empty.
+- An `Endpoint` section with a multi-endpoint inline-select (`InlineSelectTrigger` + `DialDropdown`) driving one `MarkdownCodeBlock` per selection, plus that endpoint's own code snippets (language inline-select), when `api.endpoints` is non-empty.
+- A legacy top-level `Code snippet` section (language inline-select) when `api.endpoints` is empty and `api.snippets` is non-empty.
+- `Request example` and `Response schema` sections when `api.requestExample` / `api.responseSchema` are set.
 
-`ItemDetailsTexts` SHALL gain `connectLabel?: string` (default `'Connect'`), used as the trigger button's label for every entity type.
+None of these sections render a download action; every `MarkdownCodeBlock` instance passes `hideDownload`.
 
-`libs/catalog` SHALL NOT import or reference any DIAL Core URL, environment/config value, generated API client, or app-owned MCP-support rule — `connectOverlay` and `isConnectVisible` are the only two integration points the lib exposes for this feature.
+`ItemDetailsTexts` SHALL gain `tabConnectLabel?: string` (default `'Connect'`) for the tab label, plus the existing `ApiDetails` label props (`apiResourceSectionLabel`, `apiSnippetSectionLabel`, `apiModelIdLabel`, `apiEndpointLabel`, `apiRequestExampleLabel`, `apiResponseSchemaLabel`, `copyCodeAriaLabel`).
+
+`libs/catalog` SHALL NOT import or reference any DIAL Core URL, environment/config value, generated API client, or app-owned MCP-support rule — `item.details.api` is the only integration point the lib consumes for this feature; the app decides what data (if any) to populate it with.
 
 **Feature flag:** Not gated.
 
-**RTL impact:** Button uses logical Tailwind classes (`gap-*`, `ps-*`/`pe-*` where applicable) consistent with the existing header action row; no directional icon mirroring needed.
+**RTL impact:** Sections use `text-start`/logical spacing consistent with the rest of the details panel; no directional icons.
 
-**i18n impact:** `connectLabel` default `'Connect'` is a lib-level default string (per the existing `libs/catalog` text-override pattern); the consuming app supplies the localized value through `detailsTexts.connectLabel`.
+**i18n impact:** `tabConnectLabel` default `'Connect'` is a lib-level default string; the consuming app supplies the localized value through `texts.tabConnectLabel`, reusing the shared `Connect` button/tab key rather than a feature-scoped key.
 
-**Accessibility:** `ConnectButton` SHALL set `aria-haspopup="menu"` and `aria-expanded={isOpen}` when `connectOverlay` is provided, matching `ShareButton`'s wiring. The popover SHALL be reachable and dismissible via keyboard (outside click via `DialDropdown`'s `outsideClosable`, plus standard focus handling already provided by `DialDropdown`).
+**Accessibility:** The tab follows the same `TabRow` keyboard/ARIA behavior as every other details tab (`role="tab"`/`aria-selected` provided by `TabRow`). The copy action on each code block announces its "copied" feedback via `MarkdownCodeBlock`'s existing `aria-live="polite"` region; the button's own label stays stable.
 
-#### Scenario: Connect renders after all existing header actions when visible
+#### Scenario: Connect tab renders last when api data is present
 
-- **WHEN** `isConnectVisible(item)` returns `true` and `connectOverlay` is supplied
-- **THEN** the `Connect` button renders as the last element in the header action row, after `Use in chat`/`Edit`/`Share`/`Delete`/`Publish`/credentials (whichever of those are also visible for that item)
+- **WHEN** `item.details?.api` is set
+- **THEN** the `Connect` tab renders as the last tab, after `About`/`Overview`/`Pricing`/`Limits`/`Tools` (whichever of those are also present for that item)
 
-#### Scenario: Connect is hidden when isConnectVisible returns false
+#### Scenario: Connect tab is absent when api data is not supplied
 
-- **WHEN** `isConnectVisible(item)` returns `false`
-- **THEN** no `Connect` button renders for that item, regardless of whether `connectOverlay` is supplied
+- **WHEN** `item.details?.api` is `undefined`
+- **THEN** no `Connect` tab renders for that item
 
-#### Scenario: Connect is hidden when isConnectVisible is not supplied
+#### Scenario: Single endpoint renders one copyable code block
 
-- **WHEN** `isConnectVisible` is `undefined`
-- **THEN** no `Connect` button renders for any item
+- **WHEN** `api.resource.endpointUrl` is set and `api.endpoints` is empty or absent
+- **THEN** `ApiDetails` renders one `MarkdownCodeBlock` containing that URL, with no endpoint selector
 
-#### Scenario: Clicking Connect opens the anchored popover
+#### Scenario: Multiple endpoints render a selector
 
-- **WHEN** the user clicks the `Connect` button
-- **THEN** a `DialDropdown` opens anchored to the button, `aria-expanded` becomes `true`, and it renders the `ReactNode` returned by `connectOverlay(item, onClose)`
-
-#### Scenario: Outside click closes the popover
-
-- **WHEN** the Connect popover is open and the user clicks outside it
-- **THEN** the popover closes and `aria-expanded` returns to `false`
-
-#### Scenario: connectOverlay's onClose callback closes the popover
-
-- **WHEN** the popover content calls the `onClose` callback passed to `connectOverlay`
-- **THEN** the popover closes
+- **WHEN** `api.endpoints` has more than one entry
+- **THEN** `ApiDetails` renders an inline-select trigger; selecting a different endpoint swaps the displayed URL and that endpoint's own snippets
 
 #### Scenario: Label defaults to "Connect" when no text override is supplied
 
-- **WHEN** `detailsTexts.connectLabel` is not supplied
-- **THEN** the button label renders as `'Connect'`
+- **WHEN** `texts.tabConnectLabel` is not supplied
+- **THEN** the tab label renders as `'Connect'`
 
 ---
 
-### Requirement: `apps/chat` resolves Connect visibility and popover content for toolsets and MCP applications
+### Requirement: `apps/chat` supplies Connect API data for toolsets and MCP-capable applications
 
-`apps/chat`'s `CatalogView` SHALL supply `isConnectVisible` and `connectOverlay` to the `Catalog` component from `libs/catalog`.
-
-`isConnectVisible` SHALL return `true` only when a client-safe DIAL Core external URL is configured (see the `app-config-context` and `client-config-endpoint` capabilities) AND:
+`apps/chat`'s `CatalogView` (`handleFetchDetails`) SHALL override the fetched `api` field with `buildConnectApi(dialCoreExternalUrl ?? '', item.id)` when:
 - the item's `type` is `CatalogEntityType.Toolset`, OR
 - the item's `type` is `CatalogEntityType.Agent` AND its `supportsMcp` field is `true`.
 
-`isConnectVisible` SHALL return `false` for `CatalogEntityType.Model`, `CatalogEntityType.Guardrail`, `CatalogEntityType.Skill`, `CatalogEntityType.Mcp`, `CatalogEntityType.Agent`, and non-MCP applications, and for every item when the DIAL Core external URL is not configured.
+For every other item, `api` is left as returned by `mapEntityDetailsToCatalogDetails` (backend-provided endpoint/snippet data for Agents in general, `{ modelId }` for Models).
 
-`connectOverlay` SHALL render a new `ConnectPopoverContainer` component (`apps/chat/src/components/ConnectPopoverContainer/ConnectPopoverContainer.tsx`), which:
-- Shows the title `Connect toolset` when `item.type === CatalogEntityType.Toolset`, or `Connect Application` when `item.type === CatalogEntityType.Agent`.
-- Shows the description `Copy endpoint URL to easily integrate toolset into your workflows` for toolsets, or `Copy endpoint URL to easily integrate application into your workflows` for applications.
-- Renders one `Copy URL` button. Clicking it copies the MCP endpoint URL (built per the URL-helper requirement below) to the clipboard via the browser clipboard API and shows the same transient "copied" feedback convention already used by the Catalog's API-tab copy button (temporary label swap or icon swap plus an `aria-live="polite"` status region; the button's own `aria-label` stays stable).
-- Renders no URL input, read-only text field, or any other visible rendering of the raw URL string.
+Unlike a UI-triggered popover, this override is unconditional: it runs regardless of whether the DIAL Core external URL is configured. When `dialCoreExternalUrl` is not configured, `buildConnectApi` is called with an empty base URL and the endpoint renders as a base-relative path (no absolute host).
+
+`buildConnectApi` SHALL return a `CatalogItemApiDetails` with:
+- `resource.endpointUrl` set to `buildToolsetMcpUrl(baseUrl, id)`.
+- `snippets` containing a single `CodeLanguage.Curl` entry that POSTs a `tools/list` JSON-RPC request to that URL with an `Api-Key` placeholder header.
 
 **Feature flag:** Not gated.
 
-**RTL impact:** Popover text uses `text-start`; no directional icons beyond the shared plug/chevron already covered above.
+**RTL impact:** None (data-only). **i18n impact:** None (the snippet text is a code sample, not localized UI copy).
 
-**i18n impact:** New keys added to `apps/chat/src/i18n/locales/en.json` and `apps/chat/src/constants/translation-keys.ts`: connect popover title (toolset), connect popover title (application), connect popover description (toolset), connect popover description (application). The `Copy URL` button label and the "copied" feedback label SHALL reuse the existing shared `Copy`/`Copied` keys already used elsewhere in the Catalog details panel (per the project's duplicate-i18n-value convention) rather than declaring new ones.
+#### Scenario: Toolset gets a Connect endpoint regardless of type-specific backend data
 
-#### Scenario: Toolset with configured external URL shows Connect
+- **WHEN** an item has `type: CatalogEntityType.Toolset`
+- **THEN** `handleFetchDetails` sets `api` to `buildConnectApi(dialCoreExternalUrl ?? '', item.id)`, replacing whatever `api` the backend-mapped details produced
 
-- **WHEN** an item has `type: CatalogEntityType.Toolset` and the DIAL Core external URL is configured
-- **THEN** `isConnectVisible(item)` returns `true`
+#### Scenario: MCP-capable application gets a Connect endpoint
 
-#### Scenario: MCP-capable application with configured external URL shows Connect
+- **WHEN** an item has `type: CatalogEntityType.Agent` and `supportsMcp: true`
+- **THEN** `handleFetchDetails` sets `api` to `buildConnectApi(dialCoreExternalUrl ?? '', item.id)`
 
-- **WHEN** an item has `type: CatalogEntityType.Agent` and `supportsMcp: true`, and the DIAL Core external URL is configured
-- **THEN** `isConnectVisible(item)` returns `true`
-
-#### Scenario: Non-MCP application never shows Connect
+#### Scenario: Non-MCP application keeps its backend-provided api data
 
 - **WHEN** an item has `type: CatalogEntityType.Agent` and `supportsMcp: false` (or `undefined`)
-- **THEN** `isConnectVisible(item)` returns `false`, regardless of the DIAL Core external URL configuration
+- **THEN** `handleFetchDetails` leaves `api` as returned by `mapEntityDetailsToCatalogDetails`
 
-#### Scenario: Model, Guardrail, Skill, Agent, and Mcp items never show Connect
+#### Scenario: Connect endpoint is still built when the external URL is not configured
 
-- **WHEN** an item's `type` is `CatalogEntityType.Model`, `CatalogEntityType.Guardrail`, `CatalogEntityType.Skill`, `CatalogEntityType.Agent`, or `CatalogEntityType.Mcp`
-- **THEN** `isConnectVisible(item)` returns `false`
+- **WHEN** `config.dialCoreExternalUrl` is `null` and an item has `type: CatalogEntityType.Toolset`
+- **THEN** `handleFetchDetails` still sets `api` via `buildConnectApi('', item.id)`, producing a base-relative endpoint URL rather than omitting the Connect tab
 
-#### Scenario: Nothing shows Connect when the external URL is not configured
+#### Scenario: Copying the endpoint URL
 
-- **WHEN** the DIAL Core external URL is not configured (`config.dialCoreExternalUrl` is `null`)
-- **THEN** `isConnectVisible(item)` returns `false` for every item, including toolsets and MCP applications
-
-#### Scenario: Copy URL copies the correct endpoint and shows feedback
-
-- **WHEN** the user clicks `Copy URL` in the popover for a toolset item with id `toolsets/public/search-tool`
-- **THEN** the clipboard receives `{dialCoreExternalUrl}/v1/toolset/toolsets/public/search-tool/mcp` (per the URL-helper requirement's encoding rules)
-- **AND** the button shows transient copied feedback announced via an `aria-live="polite"` region
+- **WHEN** the user clicks the copy action on the Connect tab's endpoint code block for a toolset item with id `toolsets/public/search-tool`
+- **THEN** the clipboard receives `{dialCoreExternalUrl}/v1/toolset/toolsets/public/search-tool/mcp` (per the URL-helper requirement's encoding rules), or the base-relative equivalent when the external URL is not configured
 
 ---
 
 ### Requirement: MCP endpoint URL helper
 
-`apps/chat` SHALL provide a URL-building utility (e.g. `apps/chat/src/utils/mcp-endpoint-url.ts`) that composes an MCP endpoint URL from a DIAL Core external base URL and an entity id. The utility SHALL:
+`apps/chat` SHALL provide a URL-building utility (`apps/chat/src/utils/mcp-endpoint-url.ts`) that composes an MCP endpoint URL from a DIAL Core external base URL and an entity id. The utility SHALL:
 
 - Trim exactly one trailing `/` from the base URL, if present.
 - Split the entity id on `/` and encode each segment independently: decode the segment defensively first (ignoring decode failures, keeping the raw segment), then re-encode with `encodeURIComponent` — matching the segment-handling behavior of `apps/chat-api/src/common/utils/encode-dial-path.ts`. This means:
   - A literal `%2F` already present inside one segment (i.e., not a `/` path separator) is preserved rather than being treated as introducing an extra path segment.
   - A segment already containing an encoded character (e.g. `%20` for a space) is not double-encoded.
 - Expose `buildToolsetMcpUrl(baseUrl, id)` returning `` `${trimmedBaseUrl}/v1/toolset/${encodedId}/mcp` `` and `buildApplicationMcpUrl(baseUrl, id)` returning `` `${trimmedBaseUrl}/v1/deployments/${encodedId}/mcp` ``, both built on the one shared segment-encoder.
+- Expose `buildConnectApi(baseUrl, id)` returning a `CatalogItemApiDetails` (per the requirement above) built from `buildToolsetMcpUrl`.
 
 **Feature flag:** Not gated. **RTL impact:** None (URL string, not rendered UI). **i18n impact:** None.
 
@@ -156,13 +142,18 @@
 - **WHEN** `buildApplicationMcpUrl(baseUrl, id)` is called
 - **THEN** the result matches `` `${trimmedBaseUrl}/v1/deployments/${encodedId}/mcp` ``
 
+#### Scenario: buildConnectApi shape
+
+- **WHEN** `buildConnectApi(baseUrl, id)` is called
+- **THEN** the result's `resource.endpointUrl` equals `buildToolsetMcpUrl(baseUrl, id)`, and `snippets` contains exactly one `CodeLanguage.Curl` entry referencing that same URL
+
 ---
 
 ### Requirement: `CatalogItem` carries a host-neutral MCP-support flag
 
-`CatalogItem` (`libs/catalog/src/models/catalog-item.ts`) SHALL gain an optional field `supportsMcp?: boolean`, documented as "Whether this application supports the MCP protocol; only meaningful for `Application` items." `libs/catalog` SHALL NOT interpret this field beyond exposing it — visibility logic based on it lives entirely in `apps/chat` (see the `isConnectVisible` requirement above).
+`CatalogItem` (`libs/catalog/src/models/catalog-item.ts`) SHALL gain an optional field `supportsMcp?: boolean`, documented as "Whether this application supports the MCP protocol; only meaningful for `Application` items." `libs/catalog` SHALL NOT interpret this field beyond exposing it — the Connect-data decision based on it lives entirely in `apps/chat` (see the requirement above).
 
-`apps/chat/src/utils/map-deployment-to-catalog-item.ts`'s `mapDeploymentToCatalogItem` SHALL set `supportsMcp: deployment.features?.mcp === true`. `mapToolsetToCatalogItem` SHALL NOT set `supportsMcp` (toolsets are gated on `type === Toolset` alone, not on this flag).
+`apps/chat/src/utils/map-deployment-to-catalog-item.ts`'s `mapDeploymentToCatalogItem` SHALL set `supportsMcp: deployment.features?.mcp === true`. `mapToolsetToCatalogItem` SHALL NOT set `supportsMcp` (toolsets get Connect data gated on `type === Toolset` alone, not on this flag).
 
 **Feature flag:** Not gated. **RTL impact:** None. **i18n impact:** None.
 
