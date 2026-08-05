@@ -127,9 +127,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
 
           {isLg && lastUsed != null && (
             <div className="flex items-center gap-2">
-              <span
-                className={mergeClasses('tabular-nums', lastUsedClassName)}
-              >
+              <span className={mergeClasses('tabular-nums', lastUsedClassName)}>
                 {lastUsed}
               </span>
               {lastUsedTrailing}

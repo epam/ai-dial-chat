@@ -21,6 +21,7 @@ import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
+import { getApiErrorDetails } from '../../server-api/api-error';
 import { createScheduledTask } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
@@ -40,7 +41,6 @@ const DEFAULT_VALUES: ScheduledTaskCreateFormValues = {
   time: '09:00',
   modelId: '',
   prompt: '',
-  stream: true,
 };
 
 const containsControlCharacter = (value: string): boolean =>
@@ -247,10 +247,12 @@ const ScheduledTaskCreatePage: FC = () => {
         message: t(ScheduledTasksI18nKeys.CreateSuccessNotification),
       });
       navigate(returnUrl, { state: { refresh: true } });
-    } catch {
+    } catch (error) {
+      const { traceId } = await getApiErrorDetails(error);
       showNotification({
         variant: NotificationVariant.Error,
         message: t(ScheduledTasksI18nKeys.CreateErrorNotification),
+        requestId: traceId,
       });
       setIsSubmitting(false);
     }

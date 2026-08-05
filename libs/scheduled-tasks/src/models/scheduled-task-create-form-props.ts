@@ -41,8 +41,6 @@ export interface ScheduledTaskCreateFormValues {
   description?: string;
   /** Prompt text sent to the BFF as `prompt` (required). */
   prompt: string;
-  /** Whether the scheduled chat completion streams its response. */
-  stream: boolean;
 }
 
 /** Validation error messages keyed by {@link ScheduledTaskCreateFormValues} field. */

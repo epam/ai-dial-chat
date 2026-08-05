@@ -14,6 +14,7 @@ import { useUser } from '../context/auth/UserContext';
 import { useConversations } from '../context/ConversationsContext';
 import { useNotification } from '../context/NotificationContext';
 import type { QueueJob } from '../models/conversation-queue';
+import { getApiErrorDetails } from '../server-api/api-error';
 import { UnauthorizedError } from '../server-api/base';
 import { saveConversation } from '../server-api/conversations.api';
 import { listFiles, uploadFile } from '../server-api/files.api';
@@ -269,6 +270,9 @@ export const useConversationImport = (): UseConversationImportResult => {
       const failedNames: string[] = [];
       const skippedAttachmentNames: string[] = [];
       let isUnauthorized = false;
+      /* Only the first failing conversation's trace ID is shown — see the batch-failure rule
+       * in api-error-trace-correlation's spec. */
+      let firstFailureTraceId: string | undefined;
       const today = new Date();
 
       /*
@@ -369,6 +373,9 @@ export const useConversationImport = (): UseConversationImportResult => {
             break;
           }
           failedNames.push(conversation.name);
+          if (firstFailureTraceId === undefined) {
+            firstFailureTraceId = (await getApiErrorDetails(error)).traceId;
+          }
           console.error('Failed to import a conversation', error);
         }
       }
@@ -400,6 +407,7 @@ export const useConversationImport = (): UseConversationImportResult => {
           message: t(ConversationImportI18nKeys.Failed, {
             names: formatQuotedNameList(failedNames),
           }),
+          requestId: firstFailureTraceId,
         });
       }
       if (skippedAttachmentNames.length > 0) {

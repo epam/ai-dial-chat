@@ -388,6 +388,17 @@ describe('ScheduledTasksService', () => {
     expect(
       debugSpy.mock.calls.map(([message]) => String(message)).join('\n'),
     ).not.toContain('Summarize my inbox');
+
+    const [, requestInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const sentBody = JSON.parse(requestInit.body as string);
+    expect(sentBody.properties).toMatchObject({
+      create_conversation: true,
+      stream: false,
+      extra_headers: {},
+      retry: null,
+      timeout: null,
+    });
+    expect(sentBody.properties.payload).not.toHaveProperty('stream');
   });
 
   it('invalidating the list cache makes a previously cached list variant unreachable', async () => {
