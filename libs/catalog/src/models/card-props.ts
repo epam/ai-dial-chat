@@ -34,6 +34,14 @@ export interface CardColors {
   textSecondary?: string;
   /** Filled star icon color. Fallback: `--text-warning-icon`. */
   starFilled?: string;
+  /** Border color of a selected card. Fallback: `--stroke-info`. */
+  selectedBorder?: string;
+  /** Background color (tint) of a selected card. Fallback: `--bg-accent-primary-alpha`. */
+  selectedBackground?: string;
+  /** Selected-checkmark icon color. Fallback: `--text-accent`. */
+  checkIcon?: string;
+  /** Top border color of the footer row (folder path / star button). Fallback: `--stroke-tertiary`. */
+  footerBorder?: string;
 }
 
 /** Grouped style overrides for `Card`. */

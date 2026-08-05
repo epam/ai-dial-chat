@@ -122,10 +122,14 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
           size={DeploymentSize.LG}
           query={query}
           className="min-w-0 self-stretch"
-          nameClassName={nameClassName}
-          colors={colors}
-          versionClassName={versionClassName}
-          lastUsedClassName={lastUsedClassName}
+          styles={{
+            colors,
+            typography: {
+              nameClassName,
+              versionClassName,
+              lastUsedClassName,
+            },
+          }}
         />
         <CredentialsBadge
           credentials={item.credentials}

@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconCircleCheckFilled } from '@tabler/icons-react';
 import { FC } from 'react';
@@ -61,6 +61,24 @@ export interface TableViewRow {
   value: string | boolean;
 }
 
+/** Color overrides for `TableView`, applied as CSS custom properties. */
+export interface TableViewColors {
+  /** Section heading text color. Fallback: `--text-secondary`. */
+  sectionHeading?: string;
+  /** Background color of alternating (even-indexed) rows. Fallback: `--bg-layer-sunken`. */
+  rowAlt?: string;
+  /** Row label text color. Fallback: `--text-secondary`. */
+  label?: string;
+  /** Check icon color for `true` values. Fallback: `--text-accent-secondary`. */
+  checkIcon?: string;
+  /** Text color for `true` values. Fallback: `--text-primary`. */
+  valueTrue?: string;
+  /** Text color for `false` values. Fallback: `--text-secondary`. */
+  valueFalse?: string;
+  /** Text color for string values. Fallback: `--text-primary`. */
+  valueText?: string;
+}
+
 /** Props for `TableView`. */
 export interface TableViewProps {
   /** Section label. Defaults to `'Section'`. */
@@ -81,6 +99,8 @@ export interface TableViewProps {
   yesLabel?: string;
   /** Label shown for `false` boolean values. Defaults to `'No'`. */
   noLabel?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: TableViewColors;
 }
 
 /** Renders a labeled section with alternating-row key-value pairs; values may be strings or booleans. */
@@ -94,51 +114,64 @@ export const TableView: FC<TableViewProps> = ({
   sectionClassName = 'dial-caption-text',
   yesLabel = 'Yes',
   noLabel = 'No',
-}) => (
-  <div className="flex flex-col">
-    {values != null && values.length > 0 && (
-      <section>
-        <p
-          className={mergeClasses(
-            'mb-3 mt-0',
-            sectionClassName,
-            styles.sectionHeading,
-          )}
-        >
-          {sectionLabel}
-        </p>
-        <ul className="m-0 list-none p-0">
-          {values.map((row, i) => (
-            <li
-              key={row.label}
-              className={mergeClasses(
-                'flex items-center rounded px-3 py-2',
-                i % 2 === 0 ? styles.rowAlt : undefined,
-              )}
-            >
-              <span
+  colors,
+}) => {
+  const cssVars = buildCssVars({
+    '--tv-section-heading': colors?.sectionHeading,
+    '--tv-row-alt-bg': colors?.rowAlt,
+    '--tv-label': colors?.label,
+    '--tv-check-icon': colors?.checkIcon,
+    '--tv-value-true': colors?.valueTrue,
+    '--tv-value-false': colors?.valueFalse,
+    '--tv-value-text': colors?.valueText,
+  });
+
+  return (
+    <div className="flex flex-col" style={cssVars}>
+      {values != null && values.length > 0 && (
+        <section>
+          <p
+            className={mergeClasses(
+              'mb-3 mt-0',
+              sectionClassName,
+              styles.sectionHeading,
+            )}
+          >
+            {sectionLabel}
+          </p>
+          <ul className="m-0 list-none p-0">
+            {values.map((row, i) => (
+              <li
+                key={row.label}
                 className={mergeClasses(
-                  labelClassName,
-                  styles.label,
-                  'w-2/5 shrink-0',
+                  'flex items-center rounded px-3 py-2',
+                  i % 2 === 0 ? styles.rowAlt : undefined,
                 )}
               >
-                {row.label}
-              </span>
-              <div className="flex w-3/5 items-center gap-1">
-                <RowValue
-                  value={row.value}
-                  valueClassName={valueClassName}
-                  valueTrueClassName={valueTrueClassName}
-                  checkIconClassName={checkIconClassName}
-                  yesLabel={yesLabel}
-                  noLabel={noLabel}
-                />
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
-    )}
-  </div>
-);
+                <span
+                  className={mergeClasses(
+                    labelClassName,
+                    styles.label,
+                    'w-2/5 shrink-0',
+                  )}
+                >
+                  {row.label}
+                </span>
+                <div className="flex w-3/5 items-center gap-1">
+                  <RowValue
+                    value={row.value}
+                    valueClassName={valueClassName}
+                    valueTrueClassName={valueTrueClassName}
+                    checkIconClassName={checkIconClassName}
+                    yesLabel={yesLabel}
+                    noLabel={noLabel}
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
+  );
+};

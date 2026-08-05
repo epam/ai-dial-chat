@@ -16,6 +16,12 @@ export interface ListViewTypography {
 export interface ListViewColors {
   /** Color for item name text. Fallback: `--text-primary`. */
   nameText?: string;
+  /** Background color of even-indexed grid rows. Fallback: `--bg-layer-base`. */
+  rowEvenBackground?: string;
+  /** Border color of the selected row. Fallback: `--stroke-info`. */
+  selectedRowBorder?: string;
+  /** Background color (tint) of the selected row. Fallback: `--bg-accent-primary-alpha`. */
+  selectedRowBackground?: string;
 }
 
 /** Combined style overrides for `ListView`. */

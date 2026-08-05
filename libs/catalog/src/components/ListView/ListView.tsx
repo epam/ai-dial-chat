@@ -58,6 +58,9 @@ export const ListView: FC<ListViewProps> = ({
   const colors = listStyles?.colors;
   const cssVars = {
     '--cat-list-name-text': colors?.nameText,
+    '--cat-list-row-even-bg': colors?.rowEvenBackground,
+    '--cat-list-selected-border': colors?.selectedRowBorder,
+    '--cat-list-selected-bg': colors?.selectedRowBackground,
     ...(stickyHeaderTop != null
       ? { '--list-header-sticky-top': `${stickyHeaderTop}px` }
       : {}),

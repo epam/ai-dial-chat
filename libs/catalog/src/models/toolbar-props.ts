@@ -34,6 +34,18 @@ export interface ToolbarColors {
   divider?: string;
   /** Bottom border color of tabs row. Fallback: `--stroke-secondary`. */
   tabsBorder?: string;
+  /** Background color of the view-toggle wrapper. Fallback: `--bg-layer-sunken`. */
+  viewToggleBackground?: string;
+  /** Border color of the view-toggle wrapper. Fallback: `--stroke-tertiary`. */
+  viewToggleBorder?: string;
+  /** Background color of the active grid/list view-toggle button. Fallback: `--bg-layer-raised`. */
+  viewToggleActiveBackground?: string;
+  /** Icon color of the active grid/list view-toggle button. Fallback: `--text-accent`. */
+  viewToggleActiveText?: string;
+  /** Icon color of an inactive grid/list view-toggle button. Fallback: `--text-secondary`. */
+  viewToggleText?: string;
+  /** Icon color of an inactive grid/list view-toggle button on hover. Fallback: `--text-primary`. */
+  viewToggleTextHover?: string;
 }
 
 /** Grouped style overrides for `Toolbar`. */

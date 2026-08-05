@@ -18,6 +18,7 @@ export const CardGrid: FC<CardGridProps> = memo(
     titles,
     isLoading,
     selectedItemId,
+    skeletonColor = styles.skeletonColor,
   }) => {
     const noResultsTitle = titles?.noResultsTitle ?? 'No results';
     const featuredLabel = titles?.featuredLabel ?? 'Featured';
@@ -80,7 +81,7 @@ export const CardGrid: FC<CardGridProps> = memo(
                 showTitle={{ width: `${60 + ((i * 17) % 30)}%` }}
                 paragraph={{ rows: 3 }}
                 active
-                color="var(--bg-layer-4)"
+                color={skeletonColor}
               />
             </div>
           ))}
