@@ -699,6 +699,66 @@ describe('DeploymentsService', () => {
       expect(result.deployments[0].features?.systemPrompt).toBe(true);
     });
 
+    it('maps features.responsesApi true for a model with responses_api support', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockModel, features: { responses_api: true } }],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].features?.responsesApi).toBe(true);
+    });
+
+    it('maps features.responsesApi true for an application with responses_api support', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockApplication, features: { responses_api: true } }],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].features?.responsesApi).toBe(true);
+    });
+
+    it('omits features.responsesApi when responses_api is absent', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockModel, features: { system_prompt: true } }],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].features?.responsesApi).toBeUndefined();
+    });
+
+    it('maps features.chatCompletion true when chat_completion is present', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockModel, features: { chat_completion: true } }],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].features?.chatCompletion).toBe(true);
+    });
+
     it('sets isMy=true when bucket appears as a path segment in id', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({

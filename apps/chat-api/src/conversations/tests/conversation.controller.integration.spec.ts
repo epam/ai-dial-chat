@@ -14,6 +14,7 @@ import type {
 } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
 import { UserConfigService } from '../../user-config/user-config.service';
 import {
@@ -23,6 +24,8 @@ import {
 import { ConversationNamingService } from '../conversation-naming.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
+import { ChatCompletionsAdapter } from '../generation/chat-completions.adapter';
+import { ResponsesAdapter } from '../generation/responses.adapter';
 
 const TEST_USER = {
   sid: 'test-sid',
@@ -243,9 +246,15 @@ describe('ConversationController (integration)', () => {
           ConversationService,
           UserConfigService,
           ConversationGenerationService,
+          ChatCompletionsAdapter,
+          ResponsesAdapter,
           {
             provide: ConversationNamingService,
             useValue: { maybeRenameAfterFirstReply: vi.fn() },
+          },
+          {
+            provide: DeploymentsService,
+            useValue: { getDeploymentDetails: vi.fn() },
           },
         ],
       }).compile();

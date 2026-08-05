@@ -287,6 +287,12 @@ const mapToDeploymentItem = (
               folderAttachments: raw.features.folder_attachments,
             }),
             ...(hasMcp && { mcp: true }),
+            ...(raw.features?.responses_api === true && {
+              responsesApi: true,
+            }),
+            ...(raw.features?.chat_completion === true && {
+              chatCompletion: true,
+            }),
           }
         : undefined,
     maxInputAttachments:

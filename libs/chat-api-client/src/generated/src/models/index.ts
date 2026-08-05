@@ -823,6 +823,12 @@ export interface ConversationMessageDto {
    * @memberof ConversationMessageDto
    */
   streamErrorMessage?: string;
+  /**
+   * DIAL Responses API id for this message, set only when the generation was routed through the Responses adapter. Diagnostic only — never used to resume a generation (previous_response_id/conversation are never sent).
+   * @type {string}
+   * @memberof ConversationMessageDto
+   */
+  responseId?: string;
 }
 
 /**
@@ -2019,6 +2025,18 @@ export interface DeploymentFeaturesDto {
    * @memberof DeploymentFeaturesDto
    */
   mcp?: boolean;
+  /**
+   * Whether the deployment supports the Responses API
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  responsesApi?: boolean;
+  /**
+   * Whether the deployment supports chat completion requests
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  chatCompletion?: boolean;
 }
 /**
  *

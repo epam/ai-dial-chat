@@ -263,17 +263,17 @@ The session guard is applied globally to `/api/*` routes; everything except `/au
 Testing instructions for the currently implemented slices live in
 [`testing-current-auth-implementation.md`](./testing-current-auth-implementation.md).
 
-| Risk                         | Mitigation                                                                                                                                 |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| XSS reads tokens             | `HttpOnly` cookie + AEAD encryption; tokens never in JS                                                                                    |
-| CSRF on mutating endpoints   | Double-submit CSRF token + default `SameSite=Lax` + `Origin/Sec-Fetch-Site` checks; overlay `SameSite=None` still requires CSRF validation |
-| Refresh token replay         | Refresh token rotation; `sid`/`jti` in payload; reject reused token                                                                        |
-| Cookie tampering             | AES-GCM authenticated tag; decryption fails on any byte change                                                                             |
-| Key compromise               | Key rotation with `kid` header; previous keys for grace period                                                                             |
-| Session fixation             | New `sid` generated on every login                                                                                                         |
-| Open redirect on callback    | Strict IdP `redirect_uri` allow-list plus BFF-side `callbackUrl` validation against allowed application origins                            |
-| Token in URL fragment        | Not used — Authorization Code only, never implicit                                                                                         |
-| Cookie size overflow (Entra) | Split encrypted session value across numbered cookie chunks                                                                                |
+| Risk                         | Mitigation                                                                                                                                      |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| XSS reads tokens             | `HttpOnly` cookie + AEAD encryption; tokens never in JS                                                                                         |
+| CSRF on mutating endpoints   | Double-submit CSRF token + default `SameSite=Lax` + `Origin/Sec-Fetch-Site` checks; overlay `SameSite=None` still requires CSRF validation      |
+| Refresh token replay         | Refresh token rotation; `sid`/`jti` in payload; reject reused token                                                                             |
+| Cookie tampering             | AES-GCM authenticated tag; decryption fails on any byte change                                                                                  |
+| Key compromise               | Key rotation with `kid` header; previous keys for grace period                                                                                  |
+| Session fixation             | New `sid` generated on every login                                                                                                              |
+| Open redirect on callback    | Strict IdP `redirect_uri` allow-list plus BFF-side `callbackUrl` validation against allowed application origins                                 |
+| Token in URL fragment        | Not used — Authorization Code only, never implicit                                                                                              |
+| Cookie size overflow (Entra) | Split encrypted session value across numbered cookie chunks                                                                                     |
 | Multi-tab refresh race       | Per-pod in-memory mutex on `sid`; idempotent refresh; cross-pod collisions absorbed via `at_exp` check (§5.2.1) plus a frontend self-heal probe |
 
 Mandatory transport: HTTPS everywhere, HSTS, `Secure` cookies, strict CSP (`script-src 'self'`).

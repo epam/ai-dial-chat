@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  BadRequestException,
   forwardRef,
   Inject,
   Injectable,
@@ -8,14 +9,12 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import {
-  extractDialErrorMessage,
-  handleDialSdkError,
-} from '../common/dial/dial-error.mapper';
+import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { HIDDEN_FILE } from '../constants/dial.constants';
+import { DeploymentsService } from '../deployments/deployments.service';
 import { DialClientService } from '../dial/dial-client.service';
 import {
   ConversationMetadataDto,
@@ -47,16 +46,24 @@ import { DuplicateConversationResponseDto } from './dto/duplicate-conversation.d
 import { MessageCustomContentDto } from './dto/message-custom-content.dto';
 import { RenameConversationResponseDto } from './dto/rename-conversation.dto';
 import { CompletionMode } from './dto/send-completion.dto';
+import { ChatCompletionsAdapter } from './generation/chat-completions.adapter';
+import {
+  GenerationApi,
+  resolveGenerationApi,
+} from './generation/generation-api';
+import {
+  generationCapabilityResolutionTotal,
+  generationRequestsTotal,
+  generationStreamDuration,
+  generationTimeToFirstDelta,
+} from './generation/generation-metrics';
+import type { GenerationRelayTiming } from './generation/generation.types';
+import { ResponsesAdapter } from './generation/responses.adapter';
 import type {
   MetadataItem,
   MetadataResult,
   SharedResourcesResult,
 } from './types/conversation.types';
-import {
-  applyChunkToMessage,
-  extractDialStreamError,
-  type DialStreamErrorPayload,
-} from './utils/apply-chunk.server';
 import { buildConversationHistory } from './utils/conversation-history-builder';
 import {
   buildConversationUrl,
@@ -69,13 +76,6 @@ import {
 } from './utils/conversation.utils';
 import { parseScheduledTaskConversationPath } from './utils/parse-scheduled-task-conversation-path';
 
-const getValidAttachments = (
-  customContent?: ConversationMessageDto['custom_content'],
-) =>
-  (customContent?.attachments ?? []).filter((attachment) =>
-    Boolean(attachment.data || attachment.url),
-  );
-
 @Injectable()
 export class ConversationService {
   private readonly logger = new Logger(ConversationService.name);
@@ -86,6 +86,9 @@ export class ConversationService {
     private readonly generationService: ConversationGenerationService,
     @Inject(forwardRef(() => ConversationNamingService))
     private readonly conversationNamingService: ConversationNamingService,
+    private readonly deploymentsService: DeploymentsService,
+    private readonly chatCompletionsAdapter: ChatCompletionsAdapter,
+    private readonly responsesAdapter: ResponsesAdapter,
   ) {}
 
   private async conversationPathExists(
@@ -1185,204 +1188,35 @@ export class ConversationService {
   }
 
   /**
-   * Calls the model and relays the SSE response chunks to `res`, writing raw
-   * bytes through and building up `assembledMessage` from the parsed chunks.
-   * Used by `streamCompletion`.
+   * Resolves the generation API for `model` under the caller's own access
+   * token — never trusting a value the browser might have sent — by reading
+   * `features` off `DeploymentsService.getDeploymentDetails`'s cached,
+   * user-token-scoped result. A toolset target is rejected with 400, since
+   * toolsets are not generation deployments.
    */
-  private async relayModelCompletion(
+  private async resolveGenerationApiForDeployment(
+    sub: string,
     model: string,
-    requestBody: unknown,
     token: string,
-    signal: AbortSignal,
-    res: Response,
-    initialAssembledMessage: ConversationMessageDto,
-    clientChannelId?: string,
-  ): Promise<
-    | {
-        outcome: 'rejected';
-        status: number;
-        errorMessage: string;
-        assembledMessage: ConversationMessageDto;
-      }
-    | { outcome: 'completed'; assembledMessage: ConversationMessageDto }
-    | { outcome: 'aborted'; assembledMessage: ConversationMessageDto }
-    | {
-        outcome: 'error';
-        error: unknown;
-        assembledMessage: ConversationMessageDto;
-      }
-  > {
-    let assembledMessage = initialAssembledMessage;
-    let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+  ): Promise<GenerationApi> {
+    const details = await this.deploymentsService.getDeploymentDetails(
+      sub,
+      model,
+      token,
+    );
 
-    try {
-      const dialResult =
-        (await this.dialClient.client.sendChatCompletionRequest(model, {
-          body: requestBody as never,
-          headers: {
-            ...getBearerAuthHeaders(token),
-            Accept: 'text/event-stream',
-            ...(clientChannelId
-              ? { 'X-DIAL-CLIENT-CHANNEL-ID': clientChannelId }
-              : {}),
-          },
-          params: { query: { 'api-version': this.dialClient.dialApiVersion } },
-          parseAs: 'stream',
-          signal,
-        })) as { response: globalThis.Response; error?: unknown };
-
-      if (!dialResult.response.ok || !dialResult.response.body) {
-        let errorMessage = '';
-
-        /* 1. SDK-parsed error — most reliable, SDK reads body before us */
-        if (dialResult.error != null) {
-          errorMessage = extractDialErrorMessage(dialResult.error) ?? '';
-        }
-
-        /* 2. Raw body — for cases where SDK didn't parse it */
-        if (!errorMessage) {
-          try {
-            const rawBody = await dialResult.response.text();
-            errorMessage = extractDialErrorMessage(JSON.parse(rawBody)) ?? '';
-          } catch {
-            /* non-JSON or empty body */
-          }
-        }
-
-        /*
-         * When DIAL Core provides no error text (empty body, non-JSON), leave
-         * errorMessage as '' — the frontend localizes a generic fallback via
-         * i18n. A non-null streamErrorMessage (even '') still signals the
-         * terminal error state for resume detection.
-         */
-        this.logger.error(
-          `DIAL Core rejected completion request — model: ${model}, status: ${dialResult.response.status}${errorMessage ? `: ${errorMessage}` : ''}`,
-        );
-        return {
-          outcome: 'rejected',
-          status: dialResult.response.status,
-          errorMessage,
-          assembledMessage,
-        };
-      }
-
-      upstreamReader = dialResult.response.body.getReader();
-      const decoder = new TextDecoder();
-      let sseBuffer = '';
-      let receivedDone = false;
-      let streamError: DialStreamErrorPayload | null = null;
-
-      while (true) {
-        const { done, value } = await upstreamReader.read();
-        if (done) {
-          this.logger.debug(
-            `relayModelCompletion upstream socket closed without [DONE] — model: ${model}`,
-          );
-          break;
-        }
-
-        res.write(value);
-
-        sseBuffer += decoder.decode(value, { stream: true });
-        const lines = sseBuffer.split('\n');
-        sseBuffer = lines.pop() ?? '';
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || trimmed.startsWith(':')) continue;
-          if (trimmed.startsWith('data:')) {
-            const payload = trimmed.slice(5).trim();
-            if (payload === '[DONE]') {
-              receivedDone = true;
-              continue;
-            }
-            try {
-              const parsed: unknown = JSON.parse(payload);
-              const errorPayload = extractDialStreamError(parsed);
-              if (errorPayload) {
-                /*
-                 * DIAL Core signals a mid-stream failure (e.g. a QuickApp's
-                 * downstream tool call couldn't reach its upstream server)
-                 * with a `{ error: {...} }` chunk instead of the usual
-                 * `choices`-shaped delta, immediately followed by `[DONE]`.
-                 * Treat it the same as a genuine stream error rather than
-                 * letting it fall through `applyChunkToMessage` (which
-                 * silently ignores it) and persisting an empty, non-error
-                 * "completed" message.
-                 */
-                streamError = errorPayload;
-                break;
-              }
-              assembledMessage = applyChunkToMessage(assembledMessage, parsed);
-            } catch {
-              /*
-               * Never log the payload itself here — chunk content is
-               * conversation text, and this fires once per malformed chunk
-               * rather than once per stream, so it must not become a
-               * per-token content log at debug level.
-               */
-              this.logger.debug(
-                `relayModelCompletion malformed chunk — model: ${model}, length: ${payload.length}`,
-              );
-            }
-          }
-        }
-
-        if (streamError) break;
-
-        /*
-         * `[DONE]` is the SSE completion signal. Stop here rather than waiting
-         * for the upstream socket to close — some providers keep the connection
-         * open after `[DONE]`, which would otherwise leave this generation
-         * registered as active and reject the next request (e.g. regenerate)
-         * with a 409 conflict.
-         */
-        if (receivedDone) {
-          this.logger.debug(
-            `relayModelCompletion received [DONE] — model: ${model}`,
-          );
-          break;
-        }
-      }
-
-      if (streamError) {
-        this.logger.debug(
-          `relayModelCompletion outcome: error (in-band stream error chunk) — model: ${model}: ${streamError.message}`,
-        );
-        return {
-          outcome: 'error',
-          error: new Error(streamError.displayMessage ?? streamError.message),
-          assembledMessage,
-        };
-      }
-
-      this.logger.debug(
-        `relayModelCompletion outcome: completed — model: ${model}, assembledContentLength: ${assembledMessage.content?.length ?? 0}`,
+    if (details.type === 'toolset') {
+      throw new BadRequestException(
+        `Deployment "${model}" is a toolset and cannot be used for generation`,
       );
-      return { outcome: 'completed', assembledMessage };
-    } catch (err) {
-      const isAbort =
-        err instanceof Error &&
-        (err.name === 'AbortError' || err.name === 'DOMException');
-      this.logger.debug(
-        `relayModelCompletion outcome: ${isAbort ? 'aborted' : 'error'} — model: ${model}: ${err instanceof Error ? err.message : String(err)}`,
-      );
-      return isAbort
-        ? { outcome: 'aborted', assembledMessage }
-        : { outcome: 'error', error: err, assembledMessage };
-    } finally {
-      if (upstreamReader) {
-        try {
-          /*
-           * cancel() (not releaseLock) so the upstream connection is closed
-           * when we stop early on `[DONE]`, instead of being left dangling.
-           */
-          await upstreamReader.cancel();
-        } catch {
-          /* already closed */
-        }
-      }
     }
+
+    const features =
+      details.type === 'application'
+        ? details.applicationDetails?.features
+        : details.modelDetails?.features;
+
+    return resolveGenerationApi(features);
   }
 
   async streamCompletion(
@@ -1397,6 +1231,7 @@ export class ConversationService {
     customContent: MessageCustomContentDto | undefined,
     sessionId: string,
     res: Response,
+    sub: string,
     clientChannelId?: string,
   ): Promise<void> {
     this.logger.debug(
@@ -1408,6 +1243,28 @@ export class ConversationService {
       conversationPath,
       generationId,
     );
+
+    let generationApi: GenerationApi;
+    try {
+      generationApi = await this.resolveGenerationApiForDeployment(
+        sub,
+        model,
+        token,
+      );
+      generationCapabilityResolutionTotal.add(1, {
+        outcome: 'resolved',
+        'generation.api': generationApi,
+      });
+    } catch (err) {
+      generationCapabilityResolutionTotal.add(1, { outcome: 'failed' });
+      /*
+       * Release the just-registered entry so a failure before streaming starts
+       * doesn't leave the conversation "locked" — otherwise the next request
+       * (e.g. regenerate) would be rejected with a 409 until stale eviction.
+       */
+      this.generationService.error(sessionId, conversationPath, generationId);
+      throw err;
+    }
 
     let startState: ReturnType<typeof buildConversationHistory>;
     try {
@@ -1455,48 +1312,8 @@ export class ConversationService {
       assistantMessageIndex,
     );
 
-    const configuration =
-      customContent?.configuration_value ??
-      messagesForCompletion
-        .filter((m) => m.custom_content?.configuration_value)
-        .at(-1)?.custom_content?.configuration_value;
-
-    const dialMessages = messagesForCompletion
-      .filter((m) => m.role !== ConversationMessageRole.Status)
-      .map((m) => {
-        const validAttachments = getValidAttachments(m.custom_content);
-        const content = Object.fromEntries(
-          Object.entries({
-            ...m.custom_content,
-            attachments: validAttachments.length ? validAttachments : undefined,
-            configuration_value: undefined,
-            stages: undefined,
-          }).filter(([, value]) => value != null),
-        );
-        return {
-          role: m.role,
-          content: m.content,
-          ...(Object.keys(content).length > 0
-            ? { custom_content: content }
-            : {}),
-        };
-      });
-
-    const systemMessages = startConversation.prompt
-      ? [{ role: 'system', content: startConversation.prompt }]
-      : [];
-
-    const requestBody = {
-      messages: [...systemMessages, ...dialMessages],
-      stream: true,
-      ...(startConversation.temperature != null && {
-        temperature: startConversation.temperature,
-      }),
-      ...(configuration ? { custom_fields: { configuration } } : {}),
-    };
-
     this.logger.debug(
-      `streamCompletion sending ${dialMessages.length} message(s) to model: ${model}`,
+      `streamCompletion sending ${messagesForCompletion.length} message(s) to model: ${model} via ${generationApi}`,
     );
 
     res.setHeader('Content-Type', 'text/event-stream');
@@ -1543,15 +1360,53 @@ export class ConversationService {
       }
     };
 
-    const relayResult = await this.relayModelCompletion(
-      model,
-      requestBody,
-      token,
-      abortController.signal,
-      res,
-      assembledMessage,
-      clientChannelId,
-    );
+    const streamStartedAt = Date.now();
+    const timing: GenerationRelayTiming = {};
+
+    const relayResult =
+      generationApi === GenerationApi.Responses
+        ? await this.responsesAdapter.relay(
+            this.responsesAdapter.buildRequest({
+              model,
+              startConversation,
+              messagesForCompletion,
+            }),
+            token,
+            abortController.signal,
+            res,
+            assembledMessage,
+            clientChannelId,
+            timing,
+          )
+        : await this.chatCompletionsAdapter.relay(
+            model,
+            this.chatCompletionsAdapter.buildRequest({
+              startConversation,
+              messagesForCompletion,
+              customContent,
+            }),
+            token,
+            abortController.signal,
+            res,
+            assembledMessage,
+            clientChannelId,
+            timing,
+          );
+
+    generationRequestsTotal.add(1, {
+      'generation.api': generationApi,
+      outcome: relayResult.outcome,
+    });
+    if (timing.firstDeltaAt != null) {
+      generationTimeToFirstDelta.record(
+        (timing.firstDeltaAt - streamStartedAt) / 1000,
+        { 'generation.api': generationApi },
+      );
+    }
+    generationStreamDuration.record((Date.now() - streamStartedAt) / 1000, {
+      'generation.api': generationApi,
+      outcome: relayResult.outcome,
+    });
 
     switch (relayResult.outcome) {
       case 'rejected': {

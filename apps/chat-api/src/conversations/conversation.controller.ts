@@ -215,7 +215,7 @@ export class ConversationController {
     @Res() res: Response,
     @Body() dto: SendCompletionDto,
   ): Promise<void> {
-    const { at, bucket, sid } = req.user as SessionUser;
+    const { at, bucket, sid, sub } = req.user as SessionUser;
     await this.conversationService.streamCompletion(
       dto.path,
       at,
@@ -228,6 +228,7 @@ export class ConversationController {
       dto.custom_content,
       sid,
       res,
+      sub,
       dto.clientChannelId,
     );
   }
