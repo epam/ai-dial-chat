@@ -176,7 +176,6 @@ const baseValues: ScheduledTaskCreateFormValues = {
   time: '09:00',
   modelId: '',
   prompt: '',
-  stream: true,
 };
 
 const renderForm = async (

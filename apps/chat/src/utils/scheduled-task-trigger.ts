@@ -78,6 +78,5 @@ export const mapFormValuesToCreateBody = (
     model: values.modelId,
     prompt: values.prompt.trim(),
     ...(trimmedDescription ? { description: trimmedDescription } : {}),
-    stream: values.stream,
   };
 };

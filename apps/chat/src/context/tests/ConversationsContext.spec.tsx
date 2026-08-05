@@ -70,6 +70,7 @@ const seedConversations = [
     sharedWithMe: false,
     publishedWithMe: false,
     isReadonly: false,
+    isScheduledTask: false,
   },
   {
     id: 'conv2',
@@ -79,6 +80,7 @@ const seedConversations = [
     sharedWithMe: false,
     publishedWithMe: false,
     isReadonly: false,
+    isScheduledTask: false,
   },
   {
     id: 'conv3',
@@ -88,6 +90,7 @@ const seedConversations = [
     sharedWithMe: false,
     publishedWithMe: false,
     isReadonly: false,
+    isScheduledTask: false,
   },
 ];
 
@@ -173,6 +176,7 @@ describe('ConversationsContext — deleteAllConversations', () => {
         sharedWithMe: true,
         publishedWithMe: false,
         isReadonly: true,
+        isScheduledTask: false,
       },
     ];
     mockListConversations.mockResolvedValueOnce({ items: afterDelete });
@@ -238,6 +242,7 @@ describe('ConversationsContext — deleteAllConversations', () => {
         sharedWithMe: false,
         publishedWithMe: false,
         isReadonly: false,
+        isScheduledTask: false,
       },
     ];
     mockListConversations.mockResolvedValueOnce({ items: refreshedConvs });

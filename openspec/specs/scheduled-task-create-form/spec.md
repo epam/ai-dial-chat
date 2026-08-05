@@ -27,7 +27,7 @@ The Scheduled Tasks list page's primary "create" action SHALL navigate to a new 
 
 The create-task page SHALL read a `returnUrl` query parameter (default `ROUTES.ScheduledTasks` when absent or invalid). Cancel SHALL discard in-progress form state, perform no network call, and navigate to `returnUrl`.
 
-A valid submit SHALL call `POST /api/v1/scheduled-tasks` through `apps/chat/src/server-api/scheduled-tasks.api.ts` (wrapping the generated `@epam/chat-api-client` method from `add-scheduled-tasks-api`) with a body matching `CreateScheduledTaskBodyDto`: `displayName`, `trigger`, `model`, `prompt`, optional `description` (trimmed; included only when non-empty, otherwise omitted from the body entirely — never sent as an empty string), and optional `stream`. The page's client-side validator SHALL reject a `description` longer than 500 characters before submit, mirroring the BFF's `@MaxLength(500)`. On **201 Created**, the page SHALL show a success notification via `useNotification` and navigate to `returnUrl`. On **4xx/5xx**, the page SHALL show an error notification, remain on the form with user-entered values (including `description`) preserved, and re-enable the Create action.
+A valid submit SHALL call `POST /api/v1/scheduled-tasks` through `apps/chat/src/server-api/scheduled-tasks.api.ts` (wrapping the generated `@epam/chat-api-client` method from `add-scheduled-tasks-api`) with a body matching `CreateScheduledTaskBodyDto`: `displayName`, `trigger`, `model`, `prompt`, and optional `description` (trimmed; included only when non-empty, otherwise omitted from the body entirely — never sent as an empty string). The body SHALL NOT include a `stream` field — streaming is fixed server-side and is not client-controllable. The page's client-side validator SHALL reject a `description` longer than 500 characters before submit, mirroring the BFF's `@MaxLength(500)`. On **201 Created**, the page SHALL show a success notification via `useNotification` and navigate to `returnUrl`. On **4xx/5xx**, the page SHALL show an error notification, remain on the form with user-entered values (including `description`) preserved, and re-enable the Create action.
 
 **Dependency:** requires `add-scheduled-tasks-api` (`POST /api/v1/scheduled-tasks` + `scheduled-tasks.api.ts` wrapper) to be implemented first.
 
@@ -39,7 +39,7 @@ A valid submit SHALL call `POST /api/v1/scheduled-tasks` through `apps/chat/src/
 #### Scenario: Valid submit persists via BFF and returns
 
 - **WHEN** all required fields pass validation and the user activates Create
-- **THEN** the app sends `POST /api/v1/scheduled-tasks` with `{ displayName, trigger, model, prompt, description?, stream? }`, shows a success notification on 201, and navigates to `returnUrl`
+- **THEN** the app sends `POST /api/v1/scheduled-tasks` with `{ displayName, trigger, model, prompt, description? }` (no `stream` field), shows a success notification on 201, and navigates to `returnUrl`
 
 #### Scenario: Submit failure keeps the form open
 
@@ -87,8 +87,9 @@ It SHALL render:
 - **Day of month** — shown when frequency is Monthly (`values.dayOfMonth`)
 - **Model** — required dropdown populated from `modelOptions` (`values.modelId`)
 - **Prompt** — required textarea (`values.prompt`)
-- **Stream** — toggle (`values.stream`, default `true`)
 - **Cancel / Create** actions
+
+`values` SHALL NOT include a `stream` field, and the form MUST NOT render a stream toggle — scheduled task runs are always non-streaming background executions and this is not a user-configurable option.
 
 `description` is optional and MUST NOT participate in the Create-button required-field guard. The Create action SHALL be disabled while `isSubmitting` is `true` or while `displayName`, `modelId`, or `prompt` are empty (minimum client-side guard; full validation lives in the page).
 
@@ -141,6 +142,11 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 - **WHEN** `scheduleType === 'recurring'`, `frequency === 'weekly'`, and the user selects Monday in the "Day of week" `Calendar` (`mode={CalendarMode.Weekday}`, ISO value `"1"`)
 - **THEN** `onFieldChange('dayOfWeek', '0')` is called (APScheduler convention), not `'1'`
 
+#### Scenario: Form does not expose a stream control
+
+- **WHEN** the create-task form renders
+- **THEN** no stream toggle or `values.stream`-bound control is present in the rendered output
+
 ### Requirement: Page maps form values to BFF trigger shape
 
 `ScheduledTaskCreatePage` SHALL convert form `values` to the BFF `trigger` field before calling `createScheduledTask`:
@@ -174,12 +180,12 @@ This mapping, including the local→UTC conversion for all recurring fields, MUS
 
 ### Requirement: Create-task strings flow through react-i18next
 
-Every user-visible string on the create-task page (page title, schedule-section labels, frequency option labels, model/prompt/description/stream labels, validation messages, success/error notifications) MUST be resolved via `useTranslation().t()` in `ScheduledTaskCreatePage` and passed into the lib as plain strings. Feature-specific keys live under `scheduledTasks.create.*` in `apps/chat/src/i18n/locales/en.json`, referenced through `ScheduledTasksI18nKeys`. The display name label/required message MUST reuse `EditorI18nKeys.NameLabel` and `EditorI18nKeys.NameRequired`. Cancel/Create MUST reuse `ButtonsI18nKeys.Cancel` and `ButtonsI18nKeys.Create`.
+Every user-visible string on the create-task page (page title, schedule-section labels, frequency option labels, model/prompt/description labels, validation messages, success/error notifications) MUST be resolved via `useTranslation().t()` in `ScheduledTaskCreatePage` and passed into the lib as plain strings. Feature-specific keys live under `scheduledTasks.create.*` in `apps/chat/src/i18n/locales/en.json`, referenced through `ScheduledTasksI18nKeys`. The display name label/required message MUST reuse `EditorI18nKeys.NameLabel` and `EditorI18nKeys.NameRequired`. Cancel/Create MUST reuse `ButtonsI18nKeys.Cancel` and `ButtonsI18nKeys.Create`.
 
 #### Scenario: New keys exist for schedule and model copy
 
 - **WHEN** the change is applied
-- **THEN** `en.json` contains at minimum `scheduledTasks.create.pageTitle`, `scheduledTasks.create.scheduleSectionLabel`, `scheduledTasks.create.scheduleTypeOnce`, `scheduledTasks.create.scheduleTypeRecurring`, `scheduledTasks.create.frequencyDaily`, `scheduledTasks.create.frequencyWeekly`, `scheduledTasks.create.frequencyMonthly`, `scheduledTasks.create.timeLabel`, `scheduledTasks.create.modelLabel`, `scheduledTasks.create.promptLabel`, `scheduledTasks.create.descriptionLabel`, `scheduledTasks.create.descriptionMaxLengthError`, `scheduledTasks.create.streamLabel`, `scheduledTasks.create.successNotification`, and `scheduledTasks.create.errorNotification`
+- **THEN** `en.json` contains at minimum `scheduledTasks.create.pageTitle`, `scheduledTasks.create.scheduleSectionLabel`, `scheduledTasks.create.scheduleTypeOnce`, `scheduledTasks.create.scheduleTypeRecurring`, `scheduledTasks.create.frequencyDaily`, `scheduledTasks.create.frequencyWeekly`, `scheduledTasks.create.frequencyMonthly`, `scheduledTasks.create.timeLabel`, `scheduledTasks.create.modelLabel`, `scheduledTasks.create.promptLabel`, `scheduledTasks.create.descriptionLabel`, `scheduledTasks.create.descriptionMaxLengthError`, `scheduledTasks.create.successNotification`, and `scheduledTasks.create.errorNotification`, and no longer needs a `streamLabel` key
 
 #### Scenario: Generic labels are reused, not duplicated
 
@@ -198,7 +204,7 @@ All directional layout in the create-task header and form MUST use Tailwind logi
 #### Scenario: Form fields are labeled
 
 - **WHEN** the create-task form renders
-- **THEN** display name, schedule controls, model, prompt, and stream each have an accessible name distinct from any placeholder text
+- **THEN** display name, schedule controls, model, and prompt each have an accessible name distinct from any placeholder text
 
 #### Scenario: Model dropdown exposes expanded/selected state
 

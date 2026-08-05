@@ -31,11 +31,13 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   Button: ({
     iconBefore,
     label,
+    iconAfter,
     'aria-current': ariaCurrent,
     onClick,
   }: {
     iconBefore?: React.ReactNode;
     label?: React.ReactNode;
+    iconAfter?: React.ReactNode;
     'aria-current'?: React.AriaAttributes['aria-current'];
     onClick?: () => void;
     [key: string]: unknown;
@@ -43,6 +45,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     <button aria-current={ariaCurrent} onClick={onClick}>
       {iconBefore}
       {label}
+      {iconAfter}
     </button>
   ),
   DialEllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
@@ -78,6 +81,9 @@ vi.mock('@epam/ai-dial-chat-shared', () => ({
 
 vi.mock('@tabler/icons-react', () => ({
   IconDotsVertical: () => <span>dots</span>,
+  IconClock: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg data-testid="task-badge-icon" aria-hidden={props['aria-hidden']} />
+  ),
 }));
 
 const baseItem = {
@@ -182,5 +188,72 @@ describe('ConversationRow', () => {
     fireEvent.click(trigger);
 
     expect(onActionMenuOpen).toHaveBeenCalledWith(baseItem, trigger);
+  });
+
+  it('renders the task badge when showTaskBadge is true', () => {
+    render(
+      <ConversationRow
+        item={{ ...baseItem, showTaskBadge: true, taskBadgeLabel: 'TASK' }}
+        isActive={false}
+        onSelectConversation={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('TASK')).toBeTruthy();
+    expect(screen.getByTestId('task-badge-icon')).toBeTruthy();
+  });
+
+  it('does not render the task badge when showTaskBadge is omitted', () => {
+    render(
+      <ConversationRow
+        item={baseItem}
+        isActive={false}
+        onSelectConversation={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText('TASK')).toBeNull();
+    expect(screen.queryByTestId('task-badge-icon')).toBeNull();
+  });
+
+  it('does not render the task badge when showTaskBadge is false', () => {
+    render(
+      <ConversationRow
+        item={{ ...baseItem, showTaskBadge: false, taskBadgeLabel: 'TASK' }}
+        isActive={false}
+        onSelectConversation={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText('TASK')).toBeNull();
+  });
+
+  it('marks the task badge icon as aria-hidden', () => {
+    render(
+      <ConversationRow
+        item={{ ...baseItem, showTaskBadge: true, taskBadgeLabel: 'TASK' }}
+        isActive={false}
+        onSelectConversation={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByTestId('task-badge-icon').getAttribute('aria-hidden'),
+    ).toBe('true');
+  });
+
+  it('clicking the task badge selects the conversation like any other row click', () => {
+    const onSelectConversation = vi.fn();
+    render(
+      <ConversationRow
+        item={{ ...baseItem, showTaskBadge: true, taskBadgeLabel: 'TASK' }}
+        isActive={false}
+        onSelectConversation={onSelectConversation}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('TASK'));
+
+    expect(onSelectConversation).toHaveBeenCalledWith(baseItem.id);
   });
 });

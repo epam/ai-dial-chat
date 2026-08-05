@@ -10,7 +10,7 @@ import {
   Highlight,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
-import { IconDotsVertical } from '@tabler/icons-react';
+import { IconClock, IconDotsVertical } from '@tabler/icons-react';
 import { useCallback, useRef, useState, type DragEvent, type FC } from 'react';
 import { ConversationItem } from '../../models/panel-props';
 import type { VirtualRow } from '../../models/virtual-row';
@@ -42,6 +42,8 @@ export interface ConversationRowProps {
   itemTitleClassName?: string;
   /** CSS class applied to the icon badge. Defaults to `'rounded-full'`. */
   itemIconBadgeClassName?: string;
+  /** CSS class applied to the task pill badge (background, border, text color, and typography). Defaults to `'border-tertiary bg-layer-base text-secondary dial-caption-semi-text tracking-[0.6px]'`. */
+  taskBadgeClassName?: string;
   /** Group this row belongs to — required to enable drag-and-drop. */
   rowGroupKey?: FilterTab;
   /** The full virtual rows array — used to compute drop position. */
@@ -79,6 +81,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   actionsLabel = 'More actions',
   itemTitleClassName = 'dial-small-text',
   itemIconBadgeClassName,
+  taskBadgeClassName = 'border-tertiary bg-layer-base text-secondary dial-caption-semi-text uppercase tracking-[0.6px]',
   rowGroupKey,
   rows,
   draggingId,
@@ -125,6 +128,18 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   );
 
   const buttonPaddingEnd = getButtonPaddingEnd(hasActions, isMenuOpen);
+
+  const taskBadge = item.showTaskBadge ? (
+    <span
+      className={mergeClasses(
+        'flex h-5 shrink-0 items-center justify-center gap-0.5 rounded-full border pe-2 ps-1',
+        taskBadgeClassName,
+      )}
+    >
+      <IconClock size={12} aria-hidden />
+      {item.taskBadgeLabel}
+    </span>
+  ) : undefined;
 
   const isDragEnabled = rowGroupKey != null;
 
@@ -197,7 +212,8 @@ export const ConversationRow: FC<ConversationRowProps> = ({
               maxLines={1}
             />
           }
-          textClassName="min-w-0"
+          iconAfter={taskBadge}
+          textClassName="min-w-0 flex-1"
           aria-current={isActive ? 'page' : undefined}
           onClick={item.href ? undefined : () => onSelectConversation(item.id)}
           tabIndex={item.href ? -1 : undefined}

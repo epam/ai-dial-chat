@@ -9,6 +9,7 @@ src/apis/ChatApi.ts
 src/apis/ClientChannelApi.ts
 src/apis/ConversationsApi.ts
 src/apis/DeploymentsApi.ts
+src/apis/ExternalServicesApi.ts
 src/apis/FilesApi.ts
 src/apis/FooterApi.ts
 src/apis/HealthApi.ts

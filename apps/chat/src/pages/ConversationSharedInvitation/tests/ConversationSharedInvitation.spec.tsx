@@ -30,6 +30,7 @@ vi.mock('../../../context/DeploymentsContext', () => ({
     selectedItemId: null,
     setSelectedItemId: vi.fn(),
     restoreSelectedItemId: vi.fn(),
+    restoreDefaultSelection: vi.fn(),
     selectedDeploymentConfiguration: null,
     isLoading: false,
     error: null,

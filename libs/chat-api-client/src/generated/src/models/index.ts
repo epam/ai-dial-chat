@@ -32,6 +32,12 @@ export interface AcceptInvitationResponseDto {
  */
 export interface ApplicationDetailsDto {
   /**
+   * Display name reported by DIAL Core
+   * @type {string}
+   * @memberof ApplicationDetailsDto
+   */
+  displayName?: string;
+  /**
    * Non-secret custom application properties reported by DIAL Core
    * @type {{ [key: string]: unknown }}
    * @memberof ApplicationDetailsDto
@@ -684,6 +690,24 @@ export interface ConversationListItemDto {
    * @memberof ConversationListItemDto
    */
   isReadonly: boolean;
+  /**
+   * True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{runId}` reserved segment).
+   * @type {boolean}
+   * @memberof ConversationListItemDto
+   */
+  isScheduledTask: boolean;
+  /**
+   * DIAL Scheduler schedule identifier. Present only when `isScheduledTask` is true.
+   * @type {string}
+   * @memberof ConversationListItemDto
+   */
+  scheduleId?: string;
+  /**
+   * DIAL Scheduler run identifier. Present only when `isScheduledTask` is true.
+   * @type {string}
+   * @memberof ConversationListItemDto
+   */
+  runId?: string;
 }
 /**
  *
@@ -1402,12 +1426,6 @@ export interface CreateScheduledTaskBodyDto {
    * @memberof CreateScheduledTaskBodyDto
    */
   description?: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof CreateScheduledTaskBodyDto
-   */
-  stream?: boolean;
 }
 /**
  *
@@ -3198,6 +3216,121 @@ export interface DuplicateConversationResponseDto {
 /**
  *
  * @export
+ * @interface ExternalServiceAuthResultDto
+ */
+export interface ExternalServiceAuthResultDto {
+  /**
+   *
+   * @type {boolean}
+   * @memberof ExternalServiceAuthResultDto
+   */
+  success: boolean;
+}
+/**
+ *
+ * @export
+ * @interface ExternalServiceLogoutBodyDto
+ */
+export interface ExternalServiceLogoutBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceLogoutBodyDto
+   */
+  credentialsLevel: ExternalServiceLogoutBodyDtoCredentialsLevelEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceLogoutBodyDto
+   */
+  authenticationType: ExternalServiceLogoutBodyDtoAuthenticationTypeEnum;
+}
+
+/**
+ * @export
+ */
+export const ExternalServiceLogoutBodyDtoCredentialsLevelEnum = {
+  Global: 'GLOBAL',
+  Application: 'APPLICATION',
+  User: 'USER',
+} as const;
+export type ExternalServiceLogoutBodyDtoCredentialsLevelEnum =
+  (typeof ExternalServiceLogoutBodyDtoCredentialsLevelEnum)[keyof typeof ExternalServiceLogoutBodyDtoCredentialsLevelEnum];
+
+/**
+ * @export
+ */
+export const ExternalServiceLogoutBodyDtoAuthenticationTypeEnum = {
+  None: 'NONE',
+  ApiKey: 'API_KEY',
+  Oauth: 'OAUTH',
+} as const;
+export type ExternalServiceLogoutBodyDtoAuthenticationTypeEnum =
+  (typeof ExternalServiceLogoutBodyDtoAuthenticationTypeEnum)[keyof typeof ExternalServiceLogoutBodyDtoAuthenticationTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface ExternalServiceSigninBodyDto
+ */
+export interface ExternalServiceSigninBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceSigninBodyDto
+   */
+  credentialsLevel: ExternalServiceSigninBodyDtoCredentialsLevelEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceSigninBodyDto
+   */
+  authenticationType: ExternalServiceSigninBodyDtoAuthenticationTypeEnum;
+  /**
+   * API key value (API_KEY auth).
+   * @type {string}
+   * @memberof ExternalServiceSigninBodyDto
+   */
+  apiKey?: string;
+  /**
+   * OAuth authorization code (OAUTH auth).
+   * @type {string}
+   * @memberof ExternalServiceSigninBodyDto
+   */
+  code?: string;
+  /**
+   * OAuth redirect URI used for the code exchange.
+   * @type {string}
+   * @memberof ExternalServiceSigninBodyDto
+   */
+  redirectUri?: string;
+}
+
+/**
+ * @export
+ */
+export const ExternalServiceSigninBodyDtoCredentialsLevelEnum = {
+  Global: 'GLOBAL',
+  Application: 'APPLICATION',
+  User: 'USER',
+} as const;
+export type ExternalServiceSigninBodyDtoCredentialsLevelEnum =
+  (typeof ExternalServiceSigninBodyDtoCredentialsLevelEnum)[keyof typeof ExternalServiceSigninBodyDtoCredentialsLevelEnum];
+
+/**
+ * @export
+ */
+export const ExternalServiceSigninBodyDtoAuthenticationTypeEnum = {
+  None: 'NONE',
+  ApiKey: 'API_KEY',
+  Oauth: 'OAUTH',
+} as const;
+export type ExternalServiceSigninBodyDtoAuthenticationTypeEnum =
+  (typeof ExternalServiceSigninBodyDtoAuthenticationTypeEnum)[keyof typeof ExternalServiceSigninBodyDtoAuthenticationTypeEnum];
+
+/**
+ *
+ * @export
  * @interface FileMetadataResponseDto
  */
 export interface FileMetadataResponseDto {
@@ -3306,6 +3439,85 @@ export interface GenerateTitleResponseDto {
    */
   name: string;
 }
+/**
+ *
+ * @export
+ * @interface GetExternalServiceResponseDto
+ */
+export interface GetExternalServiceResponseDto {
+  /**
+   *
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  authenticationType: GetExternalServiceResponseDtoAuthenticationTypeEnum;
+  /**
+   * USER-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one.
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  userLevelAuthStatus?: string;
+  /**
+   * GLOBAL-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one.
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  globalAuthStatus?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  clientId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  authorizationEndpoint?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof GetExternalServiceResponseDto
+   */
+  scopesSupported?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  codeChallenge?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  codeChallengeMethod?: string;
+}
+
+/**
+ * @export
+ */
+export const GetExternalServiceResponseDtoAuthenticationTypeEnum = {
+  None: 'NONE',
+  ApiKey: 'API_KEY',
+  Oauth: 'OAUTH',
+} as const;
+export type GetExternalServiceResponseDtoAuthenticationTypeEnum =
+  (typeof GetExternalServiceResponseDtoAuthenticationTypeEnum)[keyof typeof GetExternalServiceResponseDtoAuthenticationTypeEnum];
+
 /**
  *
  * @export
@@ -5595,12 +5807,6 @@ export interface UpdateScheduledTaskBodyDto {
    * @memberof UpdateScheduledTaskBodyDto
    */
   description?: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof UpdateScheduledTaskBodyDto
-   */
-  stream?: boolean;
 }
 /**
  *

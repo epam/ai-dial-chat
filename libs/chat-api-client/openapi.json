@@ -381,7 +381,7 @@
             "in": "path",
             "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-app__1.0",
               "type": "string"
             }
@@ -443,7 +443,7 @@
             "in": "path",
             "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-app__1.0",
               "type": "string"
             }
@@ -1027,7 +1027,7 @@
             "in": "path",
             "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-toolset",
               "type": "string"
             }
@@ -1082,7 +1082,7 @@
             "in": "path",
             "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-toolset",
               "type": "string"
             }
@@ -1144,7 +1144,7 @@
             "in": "path",
             "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-toolset",
               "type": "string"
             }
@@ -1191,7 +1191,7 @@
             "in": "path",
             "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-toolset",
               "type": "string"
             }
@@ -1252,7 +1252,7 @@
             "in": "path",
             "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-toolset",
               "type": "string"
             }
@@ -1463,6 +1463,206 @@
         },
         "summary": "Unsubscribe from the client channel",
         "tags": ["client-channel"]
+      }
+    },
+    "/api/v1/external-services/{appId}/{serviceId}": {
+      "get": {
+        "description": "Returns an application external service's display metadata and authentication type by proxying DIAL Core (GET /v1/applications/{appId}/external-services/{id}) using the caller's session access token.",
+        "operationId": "getExternalService",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
+              "type": "string"
+            }
+          },
+          {
+            "name": "serviceId",
+            "required": true,
+            "in": "path",
+            "description": "The external service id defined in the application's `external_services` config.",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "finhub-api2",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved external-service metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetExternalServiceResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid appId or serviceId — disallowed characters"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission, or the liveChatInteraction feature is not enabled"
+          },
+          "404": {
+            "description": "External service not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          }
+        },
+        "summary": "Get application external-service metadata",
+        "tags": ["external-services"]
+      }
+    },
+    "/api/v1/external-services/{appId}/{serviceId}/signin": {
+      "post": {
+        "description": "Submits API key or OAuth authorization-code credentials for an application external service by proxying DIAL Core (POST /v1/ops/external-service/signin). Credential payloads are never logged.",
+        "operationId": "signInExternalService",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
+              "type": "string"
+            }
+          },
+          {
+            "name": "serviceId",
+            "required": true,
+            "in": "path",
+            "description": "The external service id defined in the application's `external_services` config.",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "finhub-api2",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExternalServiceSigninBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalServiceAuthResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid path segments or body"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission, or the liveChatInteraction feature is not enabled"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response or rejected sign-in"
+          }
+        },
+        "summary": "Submit external-service credentials",
+        "tags": ["external-services"]
+      }
+    },
+    "/api/v1/external-services/{appId}/{serviceId}/signout": {
+      "post": {
+        "description": "Revokes an application external service's credentials by proxying DIAL Core (POST /v1/ops/external-service/signout). A Core 404 (nothing to revoke) is treated as idempotent success.",
+        "operationId": "signOutExternalService",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
+              "type": "string"
+            }
+          },
+          {
+            "name": "serviceId",
+            "required": true,
+            "in": "path",
+            "description": "The external service id defined in the application's `external_services` config.",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "finhub-api2",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExternalServiceLogoutBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials revoked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalServiceAuthResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid path segments or body"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission, or the liveChatInteraction feature is not enabled"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          }
+        },
+        "summary": "Revoke external-service credentials",
+        "tags": ["external-services"]
       }
     },
     "/api/v1/conversations": {
@@ -5474,6 +5674,10 @@
       "ApplicationDetailsDto": {
         "type": "object",
         "properties": {
+          "displayName": {
+            "type": "string",
+            "description": "Display name reported by DIAL Core"
+          },
           "applicationProperties": {
             "type": "object",
             "additionalProperties": true,
@@ -6703,6 +6907,112 @@
         },
         "required": ["id", "result"]
       },
+      "GetExternalServiceResponseDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "example": "FinHub API"
+          },
+          "description": {
+            "type": "string",
+            "example": "Financial data lookup service"
+          },
+          "authenticationType": {
+            "type": "string",
+            "enum": ["NONE", "API_KEY", "OAUTH"],
+            "example": "API_KEY"
+          },
+          "userLevelAuthStatus": {
+            "type": "string",
+            "example": "SIGNED_IN",
+            "description": "USER-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one."
+          },
+          "globalAuthStatus": {
+            "type": "string",
+            "example": "SIGNED_OUT",
+            "description": "GLOBAL-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one."
+          },
+          "clientId": {
+            "type": "string",
+            "example": "my-client-id"
+          },
+          "authorizationEndpoint": {
+            "type": "string",
+            "example": "https://auth.example.com/authorize"
+          },
+          "scopesSupported": {
+            "example": ["read", "write"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "codeChallenge": {
+            "type": "string",
+            "example": "abc123"
+          },
+          "codeChallengeMethod": {
+            "type": "string",
+            "example": "S256"
+          }
+        },
+        "required": ["displayName", "authenticationType"]
+      },
+      "ExternalServiceSigninBodyDto": {
+        "type": "object",
+        "properties": {
+          "credentialsLevel": {
+            "type": "string",
+            "enum": ["GLOBAL", "APPLICATION", "USER"],
+            "example": "USER"
+          },
+          "authenticationType": {
+            "type": "string",
+            "enum": ["NONE", "API_KEY", "OAUTH"],
+            "example": "API_KEY"
+          },
+          "apiKey": {
+            "type": "string",
+            "description": "API key value (API_KEY auth)."
+          },
+          "code": {
+            "type": "string",
+            "description": "OAuth authorization code (OAUTH auth)."
+          },
+          "redirectUri": {
+            "type": "string",
+            "description": "OAuth redirect URI used for the code exchange."
+          }
+        },
+        "required": ["credentialsLevel", "authenticationType"]
+      },
+      "ExternalServiceAuthResultDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": ["success"]
+      },
+      "ExternalServiceLogoutBodyDto": {
+        "type": "object",
+        "properties": {
+          "credentialsLevel": {
+            "type": "string",
+            "enum": ["GLOBAL", "APPLICATION", "USER"],
+            "example": "USER"
+          },
+          "authenticationType": {
+            "type": "string",
+            "enum": ["NONE", "API_KEY", "OAUTH"],
+            "example": "API_KEY"
+          }
+        },
+        "required": ["credentialsLevel", "authenticationType"]
+      },
       "CreateConversationDto": {
         "type": "object",
         "properties": {
@@ -6718,7 +7028,7 @@
             "example": "applications/catalog/Untitled%20app%201__0.0.1",
             "minLength": 1,
             "maxLength": 256,
-            "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$"
+            "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$"
           },
           "custom_content": {
             "description": "Extra DIAL payload attached to the first user message",
@@ -6929,6 +7239,21 @@
             "type": "boolean",
             "description": "True when the current user does not have WRITE permission on this conversation.",
             "example": false
+          },
+          "isScheduledTask": {
+            "type": "boolean",
+            "description": "True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{runId}` reserved segment).",
+            "example": false
+          },
+          "scheduleId": {
+            "type": "string",
+            "description": "DIAL Scheduler schedule identifier. Present only when `isScheduledTask` is true.",
+            "example": "sched_123"
+          },
+          "runId": {
+            "type": "string",
+            "description": "DIAL Scheduler run identifier. Present only when `isScheduledTask` is true.",
+            "example": "run_001"
           }
         },
         "required": [
@@ -6938,7 +7263,8 @@
           "sharedWithMe",
           "publishedWithMe",
           "isPinned",
-          "isReadonly"
+          "isReadonly",
+          "isScheduledTask"
         ]
       },
       "ConversationListResponseDto": {
@@ -8673,11 +8999,6 @@
           "description": {
             "type": "string",
             "example": "Summarizes unread inbox items every morning"
-          },
-          "stream": {
-            "type": "boolean",
-            "example": true,
-            "default": true
           }
         },
         "required": ["displayName", "trigger", "model", "prompt"]
@@ -8749,11 +9070,6 @@
           "description": {
             "type": "string",
             "example": "Summarizes unread inbox items every morning"
-          },
-          "stream": {
-            "type": "boolean",
-            "example": true,
-            "default": true
           }
         },
         "required": ["displayName", "trigger", "model", "prompt"]
