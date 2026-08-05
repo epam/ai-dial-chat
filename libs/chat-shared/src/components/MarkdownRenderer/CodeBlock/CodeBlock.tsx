@@ -4,7 +4,7 @@ import {
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconCopy, IconDownload } from '@tabler/icons-react';
-import { type FC, memo } from 'react';
+import { type FC, memo, type ReactNode } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { useCodeCopy } from '../../../hooks/useCodeCopy';
 import { CodeBlockTheme } from '../../../types/code-editor';
@@ -49,6 +49,8 @@ export interface MarkdownCodeBlockProps {
   copiedLabel?: string;
   /** Accessible label for the download button. Defaults to `'Download code'`. */
   downloadLabel?: string;
+  /** When true, hides the download button while still showing copy. Defaults to `false`. */
+  hideDownload?: boolean;
   /** Extra classes applied to the outer container element. */
   containerClassName?: string;
   /** Extra classes applied to the sticky header bar. */
@@ -57,6 +59,8 @@ export interface MarkdownCodeBlockProps {
   codeClassName?: string;
   /** CSS class applied to the language label in the header. Defaults to `'dial-tiny-semi-text uppercase'` plus the module's `.languageLabel` class (`--text-secondary`). */
   languageLabelClassName?: string;
+  /** Custom content rendered in the header in place of the plain `language` label, e.g. a language/endpoint select. Defaults to the plain language text. */
+  titleSlot?: ReactNode;
   /** Color overrides applied as CSS custom properties. */
   colors?: MarkdownCodeBlockColors;
 }
@@ -76,10 +80,12 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
     copyLabel = 'Copy code',
     copiedLabel = 'Copied!',
     downloadLabel = 'Download code',
+    hideDownload = false,
     containerClassName,
     headerClassName,
     codeClassName = 'dial-code-text',
     languageLabelClassName = 'dial-tiny-semi-text uppercase',
+    titleSlot,
     colors,
   }) => {
     const { isCopied, copy } = useCodeCopy(value);
@@ -108,27 +114,38 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
       >
         <div
           className={mergeClasses(
-            'flex min-h-10 items-center justify-between border-b px-3 py-2',
+            /* px-4 (16px) matches the code area's own left padding
+             * (SyntaxHighlighter's `padding: '14px 16px'` below), so the
+             * language label/titleSlot text aligns with the code content. */
+            'flex min-h-10 items-center justify-between border-b px-4',
+            /* A custom titleSlot (e.g. a select trigger) already fills the
+             * min-h-10 row at its own height, so the header's own vertical
+             * padding would only add unwanted extra height on top of it. */
+            titleSlot != null ? 'py-0' : 'py-2',
             styles.header,
             headerClassName,
           )}
         >
-          <span
-            className={mergeClasses(
-              styles.languageLabel,
-              languageLabelClassName,
-            )}
-          >
-            {language}
-          </span>
+          {titleSlot ?? (
+            <span
+              className={mergeClasses(
+                styles.languageLabel,
+                languageLabelClassName,
+              )}
+            >
+              {language}
+            </span>
+          )}
           {!isStreaming && (
             <div className="flex items-center gap-1">
-              <GhostIconButton
-                icon={<IconDownload size={DIAL_ICON_SIZE.SM} />}
-                aria-label={downloadLabel}
-                size={ElementSize.Small}
-                onClick={handleDownload}
-              />
+              {!hideDownload && (
+                <GhostIconButton
+                  icon={<IconDownload size={DIAL_ICON_SIZE.SM} />}
+                  aria-label={downloadLabel}
+                  size={ElementSize.Small}
+                  onClick={handleDownload}
+                />
+              )}
               <GhostIconButton
                 icon={
                   isCopied ? (

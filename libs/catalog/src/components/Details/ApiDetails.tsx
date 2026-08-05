@@ -1,13 +1,13 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { mergeClasses, MarkdownCodeBlock } from '@epam/ai-dial-chat-shared';
+import { DIAL_ICON_SIZE, DialDropdown } from '@epam/ai-dial-ui-kit';
+import { IconCheck, IconChevronDown } from '@tabler/icons-react';
 import {
-  DIAL_ICON_SIZE,
-  DialDropdown,
-  GhostIconButton,
-  NeutralButton,
-  ElementSize,
-} from '@epam/ai-dial-ui-kit';
-import { IconCheck, IconChevronDown, IconCopy } from '@tabler/icons-react';
-import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+  FC,
+  useEffect,
+  useMemo,
+  useState,
+  type ButtonHTMLAttributes,
+} from 'react';
 import type {
   CatalogItemApiDetails,
   CodeSnippet,
@@ -16,20 +16,54 @@ import { CodeLanguage } from '../../types/code-language';
 import { TableView, type TableViewRow } from '../TableView/TableView';
 import styles from './CatalogApiDetails.module.scss';
 
-const isSafeUrl = (url: string): boolean => {
-  try {
-    const { protocol } = new URL(url);
-    return protocol === 'https:' || protocol === 'http:';
-  } catch {
-    return false;
-  }
-};
-
 const LANGUAGE_LABELS: Record<CodeLanguage, string> = {
   [CodeLanguage.Python]: 'Python',
   [CodeLanguage.Curl]: 'cURL',
   [CodeLanguage.JavaScript]: 'JavaScript',
 };
+
+/** Maps this lib's `CodeLanguage` values to the syntax-highlighter language ids `MarkdownCodeBlock` expects. */
+const SYNTAX_LANGUAGES: Record<CodeLanguage, string> = {
+  [CodeLanguage.Python]: 'python',
+  [CodeLanguage.Curl]: 'bash',
+  [CodeLanguage.JavaScript]: 'javascript',
+};
+
+interface InlineSelectTriggerProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  /** Currently selected option's label, shown before the chevron. */
+  label: string;
+}
+
+/**
+ * Pill-shaped dropdown trigger matching the DIAL UI kit's "Inline-select"
+ * pattern (accent-alpha tint on hover/active, focus ring). No standalone
+ * ui-kit component exists for this yet, and its own button components ship
+ * unlayered CSS that always beats a `className` override from Tailwind's
+ * `@layer utilities` regardless of specificity — so this is a plain button
+ * built from the design's tokens instead of fighting that cascade.
+ * Forwards the rest props so `DialDropdown`'s `cloneElement`-injected
+ * `onClick` still reaches the underlying `<button>`.
+ * `h-8` (vs. the header's `min-h-10`) leaves visible top/bottom breathing
+ * room around the hover/active pill. The negative `-ms-3`/`-me-2` margins
+ * cancel most (not all) of the button's own `ps-3`/`pe-2` padding, so the
+ * label text lines up with the code content's left edge while the pill's
+ * own left edge stops short of the header's border by the 4px difference
+ * between the header's `px-4` and the trigger's `-ms-3`.
+ */
+const InlineSelectTrigger: FC<InlineSelectTriggerProps> = ({
+  label,
+  ...rest
+}) => (
+  <button
+    type="button"
+    aria-haspopup="menu"
+    {...rest}
+    className="dial-small-text focus-visible:outline-focus -me-2 -ms-3 flex h-8 items-center gap-1 rounded-full pe-2 ps-3 text-primary hover:bg-control-accent-alpha-hover focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 active:bg-control-accent-alpha-active"
+  >
+    {label}
+    <IconChevronDown size={DIAL_ICON_SIZE.MD} aria-hidden />
+  </button>
+);
 
 /** Props for `ApiDetails`. */
 export interface ApiDetailsProps {
@@ -43,7 +77,7 @@ export interface ApiDetailsProps {
   snippetSectionLabel?: string;
   /** "Model ID" row label. Default: `'Model ID'`. */
   modelIdLabel?: string;
-  /** URL row label inside each endpoint option. Default: `'Endpoint'`. */
+  /** Title shown in the single-endpoint code block's header (when `api.endpoints` is absent). Default: `'Endpoint'`. */
   endpointLabel?: string;
   /** "Request example" row label. Default: `'Request example'`. */
   requestExampleLabel?: string;
@@ -106,10 +140,6 @@ const SnippetBlock: FC<SnippetBlockProps> = ({
   const activeCode =
     snippets.find((s) => s.language === activeSnippet)?.code ?? '';
 
-  const handleCopy = useCallback(() => {
-    void navigator.clipboard.writeText(activeCode);
-  }, [activeCode]);
-
   return (
     <section>
       {sectionLabel != null && (
@@ -123,54 +153,30 @@ const SnippetBlock: FC<SnippetBlockProps> = ({
           {sectionLabel}
         </p>
       )}
-      <div
-        className={mergeClasses(
-          'overflow-hidden rounded-lg',
-          styles.snippetWrapper,
-        )}
-      >
-        <div
-          className={mergeClasses(
-            'flex items-center justify-end gap-2 px-3 py-[6px]',
-            styles.snippetTabs,
-          )}
-        >
+      <MarkdownCodeBlock
+        language={
+          SYNTAX_LANGUAGES[activeSnippet as CodeLanguage] ?? activeSnippet
+        }
+        value={activeCode}
+        copyLabel={copyAriaLabel}
+        codeClassName={codeClassName}
+        hideDownload
+        titleSlot={
           <DialDropdown
             items={snippetItems}
             matchReferenceWidth={false}
+            placement="bottom-end"
             listClassName="cp-dropdown-overlay"
           >
-            <NeutralButton
-              size={ElementSize.Small}
-              label={activeLabel}
-              iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.SM} />}
-            />
+            <InlineSelectTrigger label={activeLabel} />
           </DialDropdown>
-          <GhostIconButton
-            icon={<IconCopy size={DIAL_ICON_SIZE.SM} />}
-            aria-label={copyAriaLabel}
-            onClick={handleCopy}
-          />
-        </div>
-        <div
-          className={mergeClasses('relative rounded-lg p-3', styles.codeBlock)}
-        >
-          <pre
-            className={mergeClasses(
-              'm-0 overflow-x-auto pe-8',
-              codeClassName,
-              styles.pre,
-            )}
-          >
-            <code>{activeCode}</code>
-          </pre>
-        </div>
-      </div>
+        }
+      />
     </section>
   );
 };
 
-/** Renders the API tab: resource identity rows, multi-endpoint selector (models), and code snippets. */
+/** Renders the Connect tab: resource identity rows, a copyable single- or multi-endpoint URL (titled with the endpoint's name), and code snippets. */
 export const ApiDetails: FC<ApiDetailsProps> = ({
   api,
   resourceSectionLabel = 'Resource',
@@ -192,7 +198,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
   const hasEndpoints = endpoints.length > 0;
   const activeEndpoint = endpoints[activeEndpointIdx] ?? null;
 
-  const endpointDropdownItems = useMemo(
+  const endpointItems = useMemo(
     () =>
       endpoints.map((e, i) => ({
         key: String(i),
@@ -213,14 +219,11 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
   if (api.resource?.modelId != null) {
     resourceRows.push({ label: modelIdLabel, value: api.resource.modelId });
   }
-  if (api.resource?.endpointUrl != null) {
-    resourceRows.push({
-      label: endpointLabel,
-      value: api.resource.endpointUrl,
-    });
-  }
 
   const hasResource = resourceRows.length > 0;
+  // Only one of the multi-endpoint selector or this single-endpoint box ever
+  // applies to a given item; guarded here in case a caller supplies both.
+  const singleEndpointUrl = !hasEndpoints ? api.resource?.endpointUrl : null;
   const hasLegacySnippets = (api.snippets?.length ?? 0) > 0;
   const hasRequestExample = api.requestExample != null;
   const hasResponseSchema = api.responseSchema != null;
@@ -237,63 +240,47 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
         />
       )}
 
+      {singleEndpointUrl != null && (
+        <MarkdownCodeBlock
+          language={endpointLabel}
+          value={singleEndpointUrl}
+          copyLabel={copyAriaLabel}
+          codeClassName={codeClassName}
+          hideDownload
+        />
+      )}
+
       {hasEndpoints && (
         <section>
-          <div className="mb-3 flex items-center justify-between">
-            <p
-              className={mergeClasses(
-                'm-0',
-                sectionClassName,
-                styles.sectionHeading,
-              )}
-            >
-              {endpointSectionLabel}
-            </p>
-            <DialDropdown
-              items={endpointDropdownItems}
-              matchReferenceWidth={false}
-              listClassName="cp-dropdown-overlay"
-            >
-              <NeutralButton
-                size={ElementSize.Small}
-                label={activeEndpoint?.label}
-                iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.SM} />}
-              />
-            </DialDropdown>
-          </div>
+          <p
+            className={mergeClasses(
+              'mb-3 mt-0',
+              sectionClassName,
+              styles.sectionHeading,
+            )}
+          >
+            {endpointSectionLabel}
+          </p>
 
-          {/* URL link + copy button */}
           {activeEndpoint != null && (
-            <div
-              className={mergeClasses(
-                'mt-3 flex items-start gap-2 rounded-lg px-3 py-2.5',
-                styles.urlBox,
-              )}
-            >
-              {isSafeUrl(activeEndpoint.url) ? (
-                <a
-                  href={activeEndpoint.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={mergeClasses('flex-1 break-all', codeClassName)}
+            <MarkdownCodeBlock
+              key={activeEndpointIdx}
+              language={activeEndpoint.label}
+              value={activeEndpoint.url}
+              copyLabel={copyAriaLabel}
+              codeClassName={codeClassName}
+              hideDownload
+              titleSlot={
+                <DialDropdown
+                  items={endpointItems}
+                  matchReferenceWidth={false}
+                  placement="bottom-end"
+                  listClassName="cp-dropdown-overlay"
                 >
-                  {activeEndpoint.url}
-                </a>
-              ) : (
-                <span
-                  className={mergeClasses('flex-1 break-all', codeClassName)}
-                >
-                  {activeEndpoint.url}
-                </span>
-              )}
-              <GhostIconButton
-                icon={<IconCopy size={DIAL_ICON_SIZE.SM} />}
-                aria-label={copyAriaLabel}
-                onClick={() =>
-                  void navigator.clipboard.writeText(activeEndpoint.url)
-                }
-              />
-            </div>
+                  <InlineSelectTrigger label={activeEndpoint.label} />
+                </DialDropdown>
+              }
+            />
           )}
 
           {activeEndpoint?.snippets != null &&
@@ -332,30 +319,13 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
           >
             {requestExampleLabel}
           </p>
-          <div
-            className={mergeClasses(
-              'relative rounded-lg p-3',
-              styles.codeBlock,
-            )}
-          >
-            <GhostIconButton
-              icon={<IconCopy size={DIAL_ICON_SIZE.SM} />}
-              aria-label={copyAriaLabel}
-              onClick={() => {
-                void navigator.clipboard.writeText(api.requestExample ?? '');
-              }}
-              className="absolute end-2 top-2"
-            />
-            <pre
-              className={mergeClasses(
-                'm-0 overflow-x-auto pe-8',
-                codeClassName,
-                styles.pre,
-              )}
-            >
-              <code>{api.requestExample}</code>
-            </pre>
-          </div>
+          <MarkdownCodeBlock
+            language="bash"
+            value={api.requestExample ?? ''}
+            copyLabel={copyAriaLabel}
+            codeClassName={codeClassName}
+            hideDownload
+          />
         </section>
       )}
 
@@ -370,30 +340,13 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
           >
             {responseSchemaLabel}
           </p>
-          <div
-            className={mergeClasses(
-              'relative rounded-lg p-3',
-              styles.codeBlock,
-            )}
-          >
-            <GhostIconButton
-              icon={<IconCopy size={DIAL_ICON_SIZE.SM} />}
-              aria-label={copyAriaLabel}
-              onClick={() => {
-                void navigator.clipboard.writeText(api.responseSchema ?? '');
-              }}
-              className="absolute end-2 top-2"
-            />
-            <pre
-              className={mergeClasses(
-                'm-0 overflow-x-auto pe-8',
-                codeClassName,
-                styles.pre,
-              )}
-            >
-              <code>{api.responseSchema}</code>
-            </pre>
-          </div>
+          <MarkdownCodeBlock
+            language="json"
+            value={api.responseSchema ?? ''}
+            copyLabel={copyAriaLabel}
+            codeClassName={codeClassName}
+            hideDownload
+          />
         </section>
       )}
     </div>

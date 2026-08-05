@@ -28,7 +28,7 @@ export interface EntityHeaderProps {
   iconSize?: number;
   /** Search query string; when provided, matching text in the title is highlighted. */
   query?: string;
-  /** Content pinned to the bottom of the text column via `mt-auto`, aligning its baseline with the avatar bottom. When provided, `gap-1` between type and name is removed so the column fills the icon height exactly. */
+  /** Content pinned to the bottom of the text column via `mt-auto`, aligning its baseline with the avatar bottom. When provided, the column stretches to fill the icon height exactly. */
   footer?: ReactNode;
   /** CSS class for the featured chip. */
   featuredChipClassName?: string;
@@ -52,7 +52,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
   const featuredStyle = getFeaturedEntityStyle(item);
 
   return (
-    <div className="flex items-start gap-2" style={featuredStyle}>
+    <div className="flex items-start gap-[14px]" style={featuredStyle}>
       <DeploymentIcon
         src={item.iconUrl}
         size={iconSize}
@@ -62,8 +62,8 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
 
       <div
         className={mergeClasses(
-          'flex min-w-0 flex-1 flex-col',
-          footer == null ? 'gap-1' : 'self-stretch',
+          'flex min-w-0 flex-1 flex-col gap-1',
+          footer != null && 'self-stretch',
         )}
       >
         <div className="relative flex flex-row items-center justify-between">

@@ -1,5 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import {
+  cloneElement,
+  useState,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../../models/catalog-item';
 import { CatalogEntityType } from '../../../../types/entity-type';
@@ -10,8 +16,19 @@ import {
 import { Header } from '../Header';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
-  GhostButton: ({ label, onClick }: { label: string; onClick: () => void }) => (
-    <button onClick={onClick}>{label}</button>
+  DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  DialSpinner: () => <svg />,
+  FolderPath: () => <div />,
+  PrimaryButton: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick: () => void;
+  }) => (
+    <button className="primary" onClick={onClick}>
+      {label}
+    </button>
   ),
   NeutralButton: ({
     label,
@@ -19,25 +36,59 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   }: {
     label: string;
     onClick: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
-  DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  PrimaryButton: ({
-    label,
+  }) => (
+    <button className="neutral" onClick={onClick}>
+      {label}
+    </button>
+  ),
+  NeutralIconButton: ({
+    'aria-label': ariaLabel,
     onClick,
   }: {
-    label: string;
-    onClick: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
-  FolderPath: ({ segments }: { segments: string[] }) => (
-    <>{segments.join(' / ')}</>
-  ),
+    'aria-label'?: string;
+    onClick?: () => void;
+  }) => <button aria-label={ariaLabel} onClick={onClick} />,
+  DialDropdown: ({
+    children,
+    items,
+  }: {
+    children: ReactElement<{ onClick?: () => void }>;
+    items: Array<{
+      key: string;
+      label: ReactNode;
+      disabled?: boolean;
+      onClick?: () => void;
+    }>;
+  }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    return (
+      <div>
+        {cloneElement(children, {
+          onClick: () => setIsOpen((value) => !value),
+        })}
+        {isOpen &&
+          items.map((item) => (
+            <button
+              key={item.key}
+              disabled={item.disabled}
+              onClick={item.onClick}
+            >
+              {item.label}
+            </button>
+          ))}
+      </div>
+    );
+  },
 }));
 vi.mock('@tabler/icons-react', () => ({
+  IconDots: () => <svg />,
   IconKey: () => <svg />,
   IconLogin: () => <svg />,
   IconLogout: () => <svg />,
   IconPencil: () => <svg />,
   IconPlayerPlayFilled: () => <svg />,
+  IconTrash: () => <svg />,
+  IconUpload: () => <svg />,
 }));
 vi.mock('../../../EntityHeader/EntityHeader', () => ({
   EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
@@ -46,35 +97,6 @@ vi.mock('../ShareButton/ShareButton', () => ({
   ShareButton: ({ label }: { label?: string }) => (
     <button>{label ?? 'Share'}</button>
   ),
-}));
-vi.mock('../DeleteButton/DeleteButton', () => ({
-  DeleteButton: ({
-    onDelete,
-    texts,
-  }: {
-    onDelete?: (item: CatalogItem) => void;
-    texts?: { deleteActionLabel?: string };
-  }) => (
-    <button onClick={() => onDelete?.({} as CatalogItem)}>
-      {texts?.deleteActionLabel ?? 'Delete'}
-    </button>
-  ),
-}));
-vi.mock('../ConnectButton/ConnectButton', () => ({
-  ConnectButton: ({
-    label,
-    isConnectVisible,
-    connectOverlay,
-    item,
-  }: {
-    label?: string;
-    isConnectVisible?: (item: CatalogItem) => boolean;
-    connectOverlay?: (item: CatalogItem) => unknown;
-    item: CatalogItem;
-  }) =>
-    isConnectVisible?.(item) && connectOverlay ? (
-      <button>{label ?? 'Connect'}</button>
-    ) : null,
 }));
 
 const makeItem = (type: CatalogEntityType): CatalogItem => ({
@@ -160,27 +182,44 @@ describe('Header', () => {
     expect(screen.getByRole('button', { name: 'Share this' })).toBeTruthy();
   });
 
-  it('renders Publish for a Model item', () => {
+  const openManage = async (label = 'Manage') => {
+    await userEvent.click(screen.getByRole('button', { name: label }));
+  };
+
+  it('does not render the Manage button for a Model item the user cannot edit, publish, or delete', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        isPublishVisible={() => false}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Manage' })).toBeNull();
+  });
+
+  it('renders Publish inside the Manage menu for a Model item', async () => {
     render(<Header item={makeItem(CatalogEntityType.Model)} />);
+    await openManage();
     expect(screen.getByRole('button', { name: 'Publish' })).toBeTruthy();
   });
 
-  it('renders Publish for a Toolset item by default', () => {
+  it('renders Publish inside the Manage menu for a Toolset item by default', async () => {
     render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
+    await openManage();
     expect(screen.getByRole('button', { name: 'Publish' })).toBeTruthy();
   });
 
-  it('uses the publish visibility predicate', () => {
+  it('uses the publish visibility predicate', async () => {
     render(
       <Header
         item={makeItem(CatalogEntityType.Toolset)}
         isPublishVisible={() => false}
       />,
     );
+    await openManage();
     expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
   });
 
-  it('calls onOpenPublish when Publish is clicked', async () => {
+  it('calls onOpenPublish when Publish is clicked in the Manage menu', async () => {
     const onOpenPublish = vi.fn();
     render(
       <Header
@@ -188,40 +227,48 @@ describe('Header', () => {
         onOpenPublish={onOpenPublish}
       />,
     );
+    await openManage();
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
     expect(onOpenPublish).toHaveBeenCalledOnce();
   });
 
-  it('does not render Edit when onEdit is not supplied', () => {
+  it('does not render the Manage button when onEdit is not supplied and no other action applies', () => {
     render(
       <Header
-        item={{ ...makeItem(CatalogEntityType.Agent), isEditable: true }}
+        item={{
+          ...makeItem(CatalogEntityType.Agent),
+          isEditable: true,
+          isMyApp: false,
+        }}
+        isPublishVisible={() => false}
       />,
     );
-    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Manage' })).toBeNull();
   });
 
-  it('does not render Edit when the item is not editable', () => {
+  it('does not render Edit in the Manage menu when the item is not editable', async () => {
     render(
       <Header
         item={{ ...makeItem(CatalogEntityType.Agent), isEditable: false }}
         onEdit={vi.fn()}
       />,
     );
+    await openManage();
     expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
   });
 
-  it('renders Edit when onEdit is supplied and the item is editable', () => {
+  it('renders Edit in the Manage menu when onEdit is supplied and the item is editable', async () => {
     render(
       <Header
         item={{ ...makeItem(CatalogEntityType.Agent), isEditable: true }}
         onEdit={vi.fn()}
       />,
     );
+    await openManage();
     expect(screen.getByRole('button', { name: 'Edit' })).toBeTruthy();
   });
 
-  it('uses editActionLabel for the Edit button label', () => {
+  it('uses editActionLabel for the Edit item label', async () => {
     render(
       <Header
         item={{ ...makeItem(CatalogEntityType.Agent), isEditable: true }}
@@ -229,82 +276,81 @@ describe('Header', () => {
         texts={{ editActionLabel: 'Modify' }}
       />,
     );
+    await openManage();
     expect(screen.getByRole('button', { name: 'Modify' })).toBeTruthy();
   });
 
-  it('calls onEdit with the item when Edit is clicked', async () => {
+  it('calls onEdit with the item when Edit is clicked in the Manage menu', async () => {
     const onEdit = vi.fn();
     const item = {
       ...makeItem(CatalogEntityType.Agent),
       isEditable: true,
     };
     render(<Header item={item} onEdit={onEdit} />);
+    await openManage();
     await userEvent.click(screen.getByRole('button', { name: 'Edit' }));
     expect(onEdit).toHaveBeenCalledWith(item);
   });
 
-  it('renders the Delete button', () => {
+  it('renders Delete in the Manage menu', async () => {
     render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
+    await openManage();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeTruthy();
   });
 
-  it('passes texts.deleteActionLabel through to the Delete button label', () => {
+  it('does not render Delete in the Manage menu for an item the user does not own', async () => {
+    render(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Toolset), isMyApp: false }}
+      />,
+    );
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
+  });
+
+  it('passes texts.deleteActionLabel through to the Delete item label', async () => {
     render(
       <Header
         item={makeItem(CatalogEntityType.Toolset)}
         texts={{ deleteActionLabel: 'Remove' }}
       />,
     );
+    await openManage();
     expect(screen.getByRole('button', { name: 'Remove' })).toBeTruthy();
   });
 
-  it('calls onDelete with the item when Delete is clicked', async () => {
+  it('calls onDelete with the item when Delete is clicked in the Manage menu', async () => {
     const onDelete = vi.fn();
     const item = makeItem(CatalogEntityType.Toolset);
     render(<Header item={item} onDelete={onDelete} />);
+    await openManage();
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
-    expect(onDelete).toHaveBeenCalled();
+    expect(onDelete).toHaveBeenCalledWith(item);
   });
 
-  it('positions Delete immediately after Share in the action row', () => {
-    render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
-    const labels = screen
-      .getAllByRole('button')
-      .map((button) => button.textContent);
-    const shareIndex = labels.indexOf('Share');
-    const deleteIndex = labels.indexOf('Delete');
-    expect(deleteIndex).toBe(shareIndex + 1);
-  });
-
-  it('renders Connect last among visible header actions when visible', () => {
+  it('calls onCloseDetails after a successful delete from the Manage menu', async () => {
+    const onDelete = vi.fn().mockResolvedValue(undefined);
+    const onCloseDetails = vi.fn();
     render(
       <Header
         item={makeItem(CatalogEntityType.Toolset)}
-        isConnectVisible={() => true}
-        connectOverlay={() => <div>overlay</div>}
+        onDelete={onDelete}
+        onCloseDetails={onCloseDetails}
       />,
     );
-    const labels = screen
-      .getAllByRole('button')
-      .map((button) => button.textContent);
-    expect(labels[labels.length - 1]).toBe('Connect');
+    await openManage();
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    expect(onCloseDetails).toHaveBeenCalledOnce();
   });
 
-  it('does not render Connect when isConnectVisible is absent', () => {
-    render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
-    expect(screen.queryByRole('button', { name: 'Connect' })).toBeNull();
-  });
-
-  it('passes texts.connectLabel through to the Connect button label', () => {
+  it('uses manageActionLabel for the Manage button accessible name', () => {
     render(
       <Header
         item={makeItem(CatalogEntityType.Toolset)}
-        isConnectVisible={() => true}
-        connectOverlay={() => <div>overlay</div>}
-        texts={{ connectLabel: 'Connect this' }}
+        texts={{ manageActionLabel: 'More actions' }}
       />,
     );
-    expect(screen.getByRole('button', { name: 'Connect this' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'More actions' })).toBeTruthy();
   });
 
   it('does not render a credentials button when the item has no credentials', () => {
@@ -418,6 +464,43 @@ describe('Header', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
     expect(onToggleCredentials).toHaveBeenCalledOnce();
+  });
+
+  it('renders the credentials button as the primary action, first in the action row, for a Toolset item', () => {
+    const { container } = render(
+      <Header
+        item={{
+          ...makeItem(CatalogEntityType.Toolset),
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.ApiKey,
+            userStatus: CredentialStatus.SignedOut,
+          },
+        }}
+        onLogin={vi.fn()}
+      />,
+    );
+
+    const buttons = screen.getAllByRole('button');
+    expect(buttons[0].textContent).toBe('Log in');
+    expect(container.querySelector('.primary')?.textContent).toBe('Log in');
+  });
+
+  it('keeps the credentials button as a non-primary, non-leading action for a non-Toolset item', () => {
+    render(
+      <Header
+        item={{
+          ...makeItem(CatalogEntityType.Agent),
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.ApiKey,
+            userStatus: CredentialStatus.SignedOut,
+          },
+        }}
+        onLogin={vi.fn()}
+      />,
+    );
+
+    const logInButton = screen.getByRole('button', { name: 'Log in' });
+    expect(logInButton.className).toBe('neutral');
   });
 
   it('calls onRequestLogout instead of onToggleCredentials when signed in', async () => {

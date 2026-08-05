@@ -1,17 +1,24 @@
 import {
   DIAL_ICON_SIZE,
+  DialDropdown,
+  DialSpinner,
   FolderPath,
-  PrimaryButton,
   NeutralButton,
+  NeutralIconButton,
+  PrimaryButton,
+  type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import {
+  IconDots,
   IconKey,
   IconLogin,
   IconLogout,
   IconPencil,
   IconPlayerPlayFilled,
+  IconTrash,
+  IconUpload,
 } from '@tabler/icons-react';
-import { FC, useCallback, type ReactNode } from 'react';
+import { FC, useCallback, useMemo, useState, type ReactNode } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
 import type {
   ItemDetailsStyles,
@@ -23,10 +30,9 @@ import {
   ToolsetAuthenticationType,
   type CredentialsLevel,
 } from '../../../types/toolset-auth';
+import { canDeleteCatalogItem } from '../../../utils/item-actions';
 import { getCredentialsUiState } from '../../../utils/toolset-credentials';
 import { EntityHeader } from '../../EntityHeader/EntityHeader';
-import { ConnectButton } from './ConnectButton/ConnectButton';
-import { DeleteButton } from './DeleteButton/DeleteButton';
 import { ShareButton } from './ShareButton/ShareButton';
 
 interface HeaderProps {
@@ -44,16 +50,9 @@ interface HeaderProps {
    * (AND) with the built-in ownership/type rule.
    */
   isShareVisible?: (item: CatalogItem) => boolean;
-  /**
-   * Renders the Connect popover content anchored to the Connect button. When
-   * absent, the Connect button is never shown.
-   */
-  connectOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
-  /** Controls whether the "Connect" action is shown for the item. When absent, the Connect button is never shown. */
-  isConnectVisible?: (item: CatalogItem) => boolean;
   onEdit?: (item: CatalogItem) => void;
   onDelete?: (item: CatalogItem) => Promise<void> | void;
-  /** Called after a delete confirmed via the Delete button succeeds, to close the whole details panel. */
+  /** Called after a delete confirmed via the Manage menu succeeds, to close the whole details panel. */
   onCloseDetails?: () => void;
   onLogin?: (
     item: CatalogItem,
@@ -82,7 +81,7 @@ interface HeaderProps {
   /** Called when the "Publish" button is clicked; the host swaps this panel's content to the publish view. */
   onOpenPublish?: () => void;
 }
-/** Details panel header bar: entity identity (icon + name + version), action buttons (Share, Connect, Edit, Delete, Publish), and inline credentials section. */
+/** Details panel header bar: entity identity (icon + name + version), action buttons (primary action, Share, a "Manage" menu for Edit/Publish/Delete), and inline credentials section. For Toolsets, the credentials action (Log in / Log out / manage) renders first and styled as the primary action, since Toolsets have no "Use in chat" action. */
 export const Header: FC<HeaderProps> = ({
   item,
   onUseInChat,
@@ -90,8 +89,6 @@ export const Header: FC<HeaderProps> = ({
   onShare,
   shareOverlay,
   isShareVisible,
-  connectOverlay,
-  isConnectVisible,
   onEdit,
   onDelete,
   onCloseDetails,
@@ -110,6 +107,8 @@ export const Header: FC<HeaderProps> = ({
     folderLeafClassName = 'dial-tiny-semi-text',
   } = detailsStyles?.typography ?? {};
 
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const handleUseInChat = useCallback(() => {
     onUseInChat?.(item);
   }, [item, onUseInChat]);
@@ -117,6 +116,22 @@ export const Header: FC<HeaderProps> = ({
   const handleEdit = useCallback(() => {
     onEdit?.(item);
   }, [item, onEdit]);
+
+  const handleOpenPublish = useCallback(() => {
+    onOpenPublish?.();
+  }, [onOpenPublish]);
+
+  const handleDelete = useCallback(async () => {
+    setIsDeleting(true);
+    try {
+      await onDelete?.(item);
+      onCloseDetails?.();
+    } catch {
+      // Failure feedback (e.g. a notification) is the caller's responsibility.
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [item, onDelete, onCloseDetails]);
 
   const shouldShowPrimaryAction =
     texts?.hasPrimaryAction !== false &&
@@ -131,6 +146,53 @@ export const Header: FC<HeaderProps> = ({
       item.type === CatalogEntityType.Agent);
 
   const shouldShowEditAction = !!onEdit && !!item.isEditable;
+  const shouldShowDeleteAction = canDeleteCatalogItem(item);
+
+  const manageItems = useMemo<DropdownItem[]>(() => {
+    const items: DropdownItem[] = [];
+    if (shouldShowEditAction) {
+      items.push({
+        key: 'edit',
+        label: texts?.editActionLabel ?? 'Edit',
+        icon: <IconPencil size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        onClick: handleEdit,
+      });
+    }
+    if (shouldShowPublish) {
+      items.push({
+        key: 'publish',
+        label: texts?.publishLabel ?? 'Publish',
+        icon: <IconUpload size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        onClick: handleOpenPublish,
+      });
+    }
+    if (shouldShowDeleteAction) {
+      items.push({
+        key: 'delete',
+        label: texts?.deleteActionLabel ?? 'Delete',
+        icon: isDeleting ? (
+          <span aria-hidden="true">
+            <DialSpinner size={DIAL_ICON_SIZE.SM} />
+          </span>
+        ) : (
+          <IconTrash size={DIAL_ICON_SIZE.SM} aria-hidden />
+        ),
+        danger: true,
+        disabled: isDeleting,
+        onClick: handleDelete,
+      });
+    }
+    return items;
+  }, [
+    shouldShowEditAction,
+    shouldShowPublish,
+    shouldShowDeleteAction,
+    isDeleting,
+    texts,
+    handleEdit,
+    handleOpenPublish,
+    handleDelete,
+  ]);
 
   const credentialsUiState =
     item.credentials != null &&
@@ -139,6 +201,11 @@ export const Header: FC<HeaderProps> = ({
       : undefined;
   const shouldShowCredentialsAction =
     credentialsUiState != null && (!!onLogin || !!onLogout);
+  /* Toolsets have no "Use in chat" primary action, so the credentials
+   * button (Log in / Log out / manage) takes over as their primary,
+   * leading action instead. */
+  const isCredentialsActionPrimary =
+    item.type === CatalogEntityType.Toolset && shouldShowCredentialsAction;
 
   const handleCredentialsClick = useCallback(() => {
     if (credentialsUiState === CredentialsUiState.LogOut) {
@@ -186,18 +253,18 @@ export const Header: FC<HeaderProps> = ({
         }
       />
       <div className="flex flex-wrap items-center gap-2 ps-[60px]">
+        {isCredentialsActionPrimary && (
+          <PrimaryButton
+            label={credentialsLabel}
+            iconBefore={credentialsIcon}
+            onClick={handleCredentialsClick}
+          />
+        )}
         {shouldShowPrimaryAction && (
           <PrimaryButton
             label={texts?.primaryActionLabel ?? 'Use in chat'}
             iconBefore={<IconPlayerPlayFilled size={DIAL_ICON_SIZE.MD} />}
             onClick={handleUseInChat}
-          />
-        )}
-        {shouldShowEditAction && (
-          <NeutralButton
-            label={texts?.editActionLabel ?? 'Edit'}
-            iconBefore={<IconPencil size={DIAL_ICON_SIZE.MD} />}
-            onClick={handleEdit}
           />
         )}
         <ShareButton
@@ -207,32 +274,33 @@ export const Header: FC<HeaderProps> = ({
           isShareVisible={isShareVisible}
           label={texts?.shareLabel}
         />
-        <DeleteButton
-          item={item}
-          onDelete={onDelete}
-          onDeleted={onCloseDetails}
-          texts={texts}
-        />
-        {shouldShowPublish && (
-          <NeutralButton
-            label={texts?.publishLabel ?? 'Publish'}
-            onClick={onOpenPublish}
-          />
-        )}
-        {shouldShowCredentialsAction && (
+        {shouldShowCredentialsAction && !isCredentialsActionPrimary && (
           <NeutralButton
             label={credentialsLabel}
             iconBefore={credentialsIcon}
             onClick={handleCredentialsClick}
           />
         )}
-        <ConnectButton
-          item={item}
-          connectOverlay={connectOverlay}
-          isConnectVisible={isConnectVisible}
-          label={texts?.connectLabel}
-        />
+        {manageItems.length > 0 && (
+          <DialDropdown
+            items={manageItems}
+            placement="bottom-end"
+            matchReferenceWidth={false}
+            listClassName="cp-dropdown-overlay"
+          >
+            <NeutralIconButton
+              icon={<IconDots size={DIAL_ICON_SIZE.MD} aria-hidden />}
+              aria-label={texts?.manageActionLabel ?? 'Manage'}
+              aria-haspopup="menu"
+            />
+          </DialDropdown>
+        )}
       </div>
+      {isDeleting && (
+        <span role="status" aria-live="polite" className="sr-only">
+          {texts?.deletingStatusLabel ?? 'Deleting'}
+        </span>
+      )}
     </div>
   );
 };

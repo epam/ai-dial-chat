@@ -49,8 +49,6 @@ export const Catalog: FC<CatalogProps> = ({
   onFetchExistingRules,
   shareOverlay,
   isShareVisible,
-  connectOverlay,
-  isConnectVisible,
   onFetchDetails,
   onEdit,
   onDelete,
@@ -524,8 +522,6 @@ export const Catalog: FC<CatalogProps> = ({
           onFetchExistingRules={onFetchExistingRules}
           shareOverlay={shareOverlay}
           isShareVisible={isShareVisible}
-          connectOverlay={connectOverlay}
-          isConnectVisible={isConnectVisible}
           onEdit={onEdit}
           onDelete={onDelete}
           onLogin={handleLogin}

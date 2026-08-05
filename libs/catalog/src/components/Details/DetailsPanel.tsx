@@ -66,8 +66,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onFetchExistingRules,
   shareOverlay,
   isShareVisible,
-  connectOverlay,
-  isConnectVisible,
   onEdit,
   onDelete,
   onLogin,
@@ -234,20 +232,21 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
         label: texts?.tabLimitsLabel ?? 'Limits',
       });
     }
-    if (item.details?.api != null) {
-      result.push({
-        id: CatalogDetailsTab.Api,
-        label: texts?.tabApiLabel ?? 'API',
-      });
-    }
     if (item.details?.tools != null) {
       result.push({
         id: CatalogDetailsTab.Tools,
         label: texts?.tabToolsLabel ?? 'Tools',
       });
     }
+    // Connect is pushed last, after every other tab, regardless of type.
+    if (item.details?.api != null) {
+      result.push({
+        id: CatalogDetailsTab.Api,
+        label: texts?.tabConnectLabel ?? 'Connect',
+      });
+    }
     return result;
-  }, [item.details, texts]);
+  }, [item, texts]);
 
   // Reset to the first available tab when the item changes or the active
   // tab is no longer in the (possibly newly-fetched) available list.
@@ -383,8 +382,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onShare={onShare}
                 shareOverlay={shareOverlay}
                 isShareVisible={isShareVisible}
-                connectOverlay={connectOverlay}
-                isConnectVisible={isConnectVisible}
                 isPublishVisible={isPublishVisible}
                 onOpenPublish={handleOpenPublish}
                 onEdit={onEdit}

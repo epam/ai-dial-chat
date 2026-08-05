@@ -242,7 +242,8 @@
     "copyUrl": "Copy URL",
     "logIn": "Log in",
     "retry": "Retry",
-    "publish": "Publish"
+    "publish": "Publish",
+    "manage": "Manage"
   },
   "sidebar": {
     "base": {

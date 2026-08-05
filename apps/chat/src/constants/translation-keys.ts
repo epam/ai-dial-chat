@@ -106,6 +106,7 @@ export enum ButtonsI18nKeys {
   CopyUrl = 'buttons.copyUrl',
   LogIn = 'buttons.logIn',
   Publish = 'buttons.publish',
+  Manage = 'buttons.manage',
 }
 
 export enum NavigationI18nKeys {
