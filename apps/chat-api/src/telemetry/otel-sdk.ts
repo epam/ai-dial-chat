@@ -82,7 +82,15 @@ export const buildMetricReaders = (
   metricsExporters.map((exporter) => {
     if (exporter === 'prometheus') {
       return new PrometheusExporter({
-        host: env.OTEL_EXPORTER_PROMETHEUS_HOST ?? '0.0.0.0',
+        /*
+         * Default to loopback-only: the scrape port has no authentication, so
+         * binding to all interfaces would expose request rates, route
+         * templates, and status codes to anything reachable on the
+         * container's network. Operators that run a scrape agent outside the
+         * pod/container network namespace must explicitly opt in via
+         * OTEL_EXPORTER_PROMETHEUS_HOST.
+         */
+        host: env.OTEL_EXPORTER_PROMETHEUS_HOST ?? '127.0.0.1',
         port: Number(env.OTEL_EXPORTER_PROMETHEUS_PORT) || 9464,
         endpoint: '/metrics',
       });

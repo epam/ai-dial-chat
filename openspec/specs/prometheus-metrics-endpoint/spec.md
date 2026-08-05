@@ -39,13 +39,16 @@ scrape traffic and business API traffic are never mixed on the same origin.
 
 ### Requirement: Prometheus host and port configuration
 The application SHALL read the Prometheus listener's bind host and port from
-`OTEL_EXPORTER_PROMETHEUS_HOST` and `OTEL_EXPORTER_PROMETHEUS_PORT`, defaulting to `0.0.0.0` and
+`OTEL_EXPORTER_PROMETHEUS_HOST` and `OTEL_EXPORTER_PROMETHEUS_PORT`, defaulting to `127.0.0.1` and
 `9464` respectively, since the underlying Prometheus exporter package does not read these
-variables itself.
+variables itself. The `127.0.0.1` default keeps the unauthenticated scrape endpoint off any
+externally reachable interface unless an operator explicitly opts in by setting
+`OTEL_EXPORTER_PROMETHEUS_HOST` (e.g. `0.0.0.0` for a sidecar/agent scraping across the pod
+network).
 
 #### Scenario: Default host and port
 - **WHEN** the Prometheus exporter is enabled with neither variable set
-- **THEN** the listener binds to `0.0.0.0:9464`
+- **THEN** the listener binds to `127.0.0.1:9464`
 
 #### Scenario: Custom port
 - **WHEN** the Prometheus exporter is enabled with `OTEL_EXPORTER_PROMETHEUS_PORT=9500`

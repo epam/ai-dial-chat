@@ -469,9 +469,13 @@ processors, no additional listening port, and no outbound network calls for tele
   `GET /api/health` (still logged, never recorded) — see `telemetry/excluded-paths.ts`, the same
   exclusion list `otel-sdk.ts` uses for tracing.
 - **Prometheus endpoint**: when the `prometheus` metrics exporter is selected, a dedicated,
-  unauthenticated HTTP listener starts (default `0.0.0.0:9464`, path `/metrics`), entirely
+  unauthenticated HTTP listener starts (default `127.0.0.1:9464`, path `/metrics`), entirely
   independent of the main application port — no new business-API route, no interaction with
-  `helmet`/CORS/rate limiting.
+  `helmet`/CORS/rate limiting. The listener defaults to loopback-only since it has no
+  authentication of its own; a scrape agent running in the same pod/container (e.g. a sidecar)
+  reaches it via `localhost`, not the pod's external IP. Set `OTEL_EXPORTER_PROMETHEUS_HOST=0.0.0.0`
+  only when the scraper genuinely runs outside the container's network namespace, and rely on a
+  firewall/NetworkPolicy to keep the port from being reachable externally.
 - **Shutdown**: `main.ts` calls `app.enableShutdownHooks()`; `TelemetryShutdownService` (a Nest
   `OnApplicationShutdown` provider) flushes and shuts down all telemetry processors, bounded by
   an internal timeout (default 5s) so a hung exporter or unreachable collector can never block
@@ -499,7 +503,7 @@ validator schema only covers application-owned configuration; these are read in
 | `OTEL_EXPORTER_OTLP_ENDPOINT`                                                               | `@opentelemetry/exporter-*-otlp-http`, natively      | `http://localhost:4318`    | Collector endpoint for all signals unless overridden per-signal below.                                                                               |
 | `OTEL_EXPORTER_OTLP_{TRACES,METRICS,LOGS}_ENDPOINT`                                         | same exporter packages, natively                     | unset                      | Per-signal override of the endpoint above.                                                                                                           |
 | `OTEL_EXPORTER_OTLP_HEADERS`                                                                | same exporter packages, natively                     | unset                      | May carry collector auth secrets — never logged by application code.                                                                                 |
-| `OTEL_EXPORTER_PROMETHEUS_HOST`                                                             | our bootstrap, passed to `PrometheusExporter`        | `0.0.0.0`                  | Not auto-read by the exporter package itself.                                                                                                        |
+| `OTEL_EXPORTER_PROMETHEUS_HOST`                                                             | our bootstrap, passed to `PrometheusExporter`        | `127.0.0.1`                | Not auto-read by the exporter package itself. Loopback-only by default since the endpoint has no auth; override to `0.0.0.0` only for a scraper outside the container's network namespace. |
 | `OTEL_EXPORTER_PROMETHEUS_PORT`                                                             | our bootstrap, passed to `PrometheusExporter`        | `9464`                     | Same as above.                                                                                                                                       |
 | `OTEL_BSP_*` / `OTEL_BLRP_*` / `OTEL_METRIC_EXPORT_INTERVAL` / `OTEL_METRIC_EXPORT_TIMEOUT` | batch processors / periodic reader, natively         | SDK defaults               | Standard batching/interval tuning, read natively by the underlying SDK classes.                                                                      |
 | `OTEL_TRACES_SAMPLER` / `OTEL_TRACES_SAMPLER_ARG`                                           | `NodeSDK`, natively                                  | `parentbased_always_on`    | We do not override the sampler in code.                                                                                                              |
