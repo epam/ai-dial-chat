@@ -235,6 +235,7 @@ describe('ConversationRoute', () => {
   );
   const mockShowNotification = vi.fn();
   const mockRestoreSelectedItemId = vi.fn();
+  const mockRestoreDefaultSelection = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -243,6 +244,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'gpt-4o',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: mockRestoreSelectedItemId,
+      restoreDefaultSelection: mockRestoreDefaultSelection,
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -314,6 +316,54 @@ describe('ConversationRoute', () => {
     await waitFor(() => {
       expect(mockRestoreSelectedItemId).toHaveBeenCalledWith('gpt-4.1');
     });
+  });
+
+  it('calls restoreDefaultSelection on mount when there is no router-state deploymentId and no pending overlay model', async () => {
+    renderRoute();
+
+    await waitFor(() => {
+      expect(mockRestoreDefaultSelection).toHaveBeenCalledOnce();
+    });
+    expect(mockRestoreSelectedItemId).not.toHaveBeenCalled();
+  });
+
+  it('does not call restoreDefaultSelection when mounted with an explicit router-state deploymentId', async () => {
+    render(
+      <MemoryRouter
+        initialEntries={[
+          { pathname: '/', state: { deploymentId: 'gpt-4o-mini' } },
+        ]}
+      >
+        <ConversationRoute />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(mockRestoreSelectedItemId).toHaveBeenCalledWith('gpt-4o-mini');
+    });
+    expect(mockRestoreDefaultSelection).not.toHaveBeenCalled();
+  });
+
+  it('does not call restoreDefaultSelection while an overlay pending model selection is awaiting resolution', async () => {
+    render(
+      <MemoryRouter>
+        <OverlayTestCtx.Provider
+          value={
+            {
+              notifyConversationLoaded: overlayMocks.notifyConversationLoaded,
+              pendingModelId: 'overlay-model',
+            } as never
+          }
+        >
+          <ConversationRoute />
+        </OverlayTestCtx.Provider>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(overlayMocks.notifyConversationLoaded).toHaveBeenCalledOnce();
+    });
+    expect(mockRestoreDefaultSelection).not.toHaveBeenCalled();
   });
 
   it('notifies overlay when overlay context becomes available after initial render', async () => {
@@ -422,6 +472,7 @@ describe('ConversationRoute', () => {
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -448,6 +499,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'gpt-4o',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: {
         isChatMessageInputDisabled: true,
       },
@@ -478,6 +530,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'gpt-4o',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: { type: 'object' },
       isLoading: false,
       error: null,
@@ -509,6 +562,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'gpt-4o',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -574,6 +628,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'gpt-4o',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration,
       isLoading: false,
       error: null,
@@ -613,6 +668,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'gpt-4o',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -667,6 +723,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'deepseek-ocr-2',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration,
       isLoading: false,
       error: null,
@@ -722,6 +779,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'deepseek-ocr-2',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration,
       isLoading: false,
       error: null,
@@ -782,6 +840,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'deepseek-ocr-2',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration,
       isLoading: false,
       error: null,
@@ -833,6 +892,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'form-example',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration,
       isLoading: false,
       error: null,
@@ -883,6 +943,7 @@ describe('ConversationRoute', () => {
       selectedItemId: 'deepseek-ocr-2',
       setSelectedItemId: vi.fn(),
       restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration,
       isLoading: false,
       error: null,

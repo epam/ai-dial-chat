@@ -100,6 +100,7 @@ const makeDeploymentsValue = (toolsets: unknown[] = []) => ({
   selectedItemId: null,
   setSelectedItemId: vi.fn(),
   restoreSelectedItemId: vi.fn(),
+  restoreDefaultSelection: vi.fn(),
   selectedDeploymentConfiguration: null,
   isLoading: false,
   error: null,
