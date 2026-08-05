@@ -13,6 +13,7 @@ import { normalizeConversationId } from '../constants/routes';
 import { ConversationExportI18nKeys } from '../constants/translation-keys';
 import { useNotification } from '../context/NotificationContext';
 import type { QueueJob } from '../models/conversation-queue';
+import { getApiErrorDetails } from '../server-api/api-error';
 import { UnauthorizedError } from '../server-api/base';
 import {
   getConversation,
@@ -202,10 +203,12 @@ export const useConversationExport = (): UseConversationExportResult => {
         if (signal.aborted) return;
         const classification = classifyExportError(error);
         if (!classification.isUnauthorized) {
+          const { traceId } = await getApiErrorDetails(error);
           showNotification({
             variant: NotificationVariant.Error,
             title: t(ConversationExportI18nKeys.FailedTitle),
             message: t(ConversationExportI18nKeys.FailedSingle, { title }),
+            requestId: traceId,
           });
         }
         updateJob(jobId, { status: ExportJobStatus.Failed });
@@ -267,10 +270,12 @@ export const useConversationExport = (): UseConversationExportResult => {
         updateJob(jobId, { status: ExportJobStatus.Success });
       } catch (error) {
         if (signal.aborted) return;
+        const { traceId } = await getApiErrorDetails(error);
         showNotification({
           variant: NotificationVariant.Error,
           title: t(ConversationExportI18nKeys.FailedTitle),
           message: t(ConversationExportI18nKeys.FailedSingle, { title }),
+          requestId: traceId,
         });
         updateJob(jobId, { status: ExportJobStatus.Failed });
         console.error('Failed to build conversation export archive', error);
@@ -322,10 +327,12 @@ export const useConversationExport = (): UseConversationExportResult => {
           if (signal.aborted) return;
           const classification = classifyExportError(error);
           if (!classification.isUnauthorized) {
+            const { traceId } = await getApiErrorDetails(error);
             showNotification({
               variant: NotificationVariant.Error,
               title: t(ConversationExportI18nKeys.FailedTitle),
               message: t(ConversationExportI18nKeys.FailedAll),
+              requestId: traceId,
             });
           }
           updateJob(jobId, { status: ExportJobStatus.Failed });
@@ -357,12 +364,14 @@ export const useConversationExport = (): UseConversationExportResult => {
             return;
           }
           if (classification.isNotFound) {
+            const { traceId } = await getApiErrorDetails(error);
             showNotification({
               variant: NotificationVariant.Error,
               title: t(ConversationExportI18nKeys.FailedTitle),
               message: t(ConversationExportI18nKeys.FailedSingle, {
                 title: ref.title,
               }),
+              requestId: traceId,
             });
             console.error(
               'Skipped a conversation during export-all: not found',
@@ -370,10 +379,12 @@ export const useConversationExport = (): UseConversationExportResult => {
             );
             continue;
           }
+          const { traceId: allFailedTraceId } = await getApiErrorDetails(error);
           showNotification({
             variant: NotificationVariant.Error,
             title: t(ConversationExportI18nKeys.FailedTitle),
             message: t(ConversationExportI18nKeys.FailedAll),
+            requestId: allFailedTraceId,
           });
           updateJob(jobId, { status: ExportJobStatus.Failed });
           console.error(
@@ -400,10 +411,12 @@ export const useConversationExport = (): UseConversationExportResult => {
         });
         updateJob(jobId, { status: ExportJobStatus.Success });
       } catch (error) {
+        const { traceId } = await getApiErrorDetails(error);
         showNotification({
           variant: NotificationVariant.Error,
           title: t(ConversationExportI18nKeys.FailedTitle),
           message: t(ConversationExportI18nKeys.FailedAll),
+          requestId: traceId,
         });
         updateJob(jobId, { status: ExportJobStatus.Failed });
         console.error('Failed to build export-all archive', error);

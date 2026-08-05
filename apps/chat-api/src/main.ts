@@ -1,3 +1,10 @@
+/*
+ * Must stay the first import in this file: `otel-sdk.ts` initializes the OpenTelemetry Node SDK
+ * (HTTP/Undici instrumentation) before Nest, Express, cookie-parser, helmet, or any DIAL SDK
+ * client can `require()` those modules first. This relies on `webpack.config.js`'s
+ * `optimization: false` preserving import order — see design.md Risks if that ever changes.
+ */
+import './telemetry/otel-sdk';
 import {
   BadRequestException,
   Logger,
@@ -13,6 +20,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import 'reflect-metadata';
 import { AppModule } from './app/app.module';
+import { TraceparentErrorFilter } from './common/filters/traceparent-error.filter';
 import { createHelmetOptions } from './config/csp';
 import { EnvironmentVariables } from './config/environment.config';
 import { resolveLogLevels } from './config/log-levels';
@@ -20,6 +28,8 @@ import {
   createOpenApiConfig,
   openApiDocumentOptions,
 } from './openapi/openapi.config';
+import { NestOtelLogger } from './telemetry/nestjs-otel-logger';
+import { traceparentMiddleware } from './telemetry/traceparent.middleware';
 
 const validationLogger = new Logger('ValidationPipe');
 
@@ -47,13 +57,19 @@ const flattenValidationErrors = (
 async function bootstrap() {
   const runtimeEnvironment = process.env;
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    logger: resolveLogLevels(
-      runtimeEnvironment['NODE_ENV'],
-      runtimeEnvironment['LOG_LEVEL'],
+    logger: new NestOtelLogger(
+      resolveLogLevels(
+        runtimeEnvironment['NODE_ENV'],
+        runtimeEnvironment['LOG_LEVEL'],
+      ),
     ),
   });
 
+  app.enableShutdownHooks();
+
   app.use(cookieParser());
+  app.use(traceparentMiddleware);
+  app.useGlobalFilters(new TraceparentErrorFilter());
 
   app.enableVersioning({ type: VersioningType.URI });
 
@@ -95,7 +111,7 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:4207',
     credentials: true,
-    exposedHeaders: ['X-CSRF-Token', 'X-DIAL-CLIENT-CHANNEL-ID'],
+    exposedHeaders: ['X-CSRF-Token', 'X-DIAL-CLIENT-CHANNEL-ID', 'traceparent'],
   });
 
   const port = process.env.PORT || 5000;

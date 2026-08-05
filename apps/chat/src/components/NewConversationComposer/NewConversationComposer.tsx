@@ -41,7 +41,7 @@ import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/use
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { useUiFeature } from '../../hooks/useUiFeature';
-import { getApiErrorMessage } from '../../server-api/api-error';
+import { getApiErrorDetails } from '../../server-api/api-error';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { getTimeOfDayGreeting } from '../../utils/greeting';
 import FooterMessage from '../FooterMessage/FooterMessage';
@@ -261,10 +261,12 @@ const NewConversationComposer: FC<Props> = ({
       try {
         await onCreateConversation(text, attachments, chatSettingsValues);
       } catch (err) {
-        const errorMessage = await getApiErrorMessage(err);
+        const { message: errorMessage, traceId } =
+          await getApiErrorDetails(err);
         showNotification({
           variant: NotificationVariant.Error,
           message: errorMessage ?? t(ChatI18nKeys.CreateConversationError),
+          requestId: traceId,
         });
       } finally {
         setIsSending(false);

@@ -19,6 +19,22 @@ export class UnauthorizedError extends Error {
   }
 }
 
+/*
+ * Thrown for any non-ok response from `request()` that isn't a 401. Carries the original
+ * `Response` (cloned before its body is consumed for the CSRF check below) so
+ * `getApiErrorDetails` in `api-error.ts` can resolve a message/traceId from it identically to a
+ * generated-client `ResponseError`, which also retains its source `Response`.
+ */
+export class ApiRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly response: Response,
+  ) {
+    super(message);
+    this.name = 'ApiRequestError';
+  }
+}
+
 export enum CsrfRefreshStatus {
   Ok = 'ok',
   Unauthorized = 'unauthorized',
@@ -211,6 +227,8 @@ const request = async <TResponse>(
       notifyUnauthorized(url);
       throw new UnauthorizedError(url);
     }
+    const responseForError =
+      typeof response.clone === 'function' ? response.clone() : response;
     let errorBody = '';
     try {
       errorBody = await response.text();
@@ -236,8 +254,9 @@ const request = async <TResponse>(
       }
       throw new Error(`CSRF refresh failed for ${method} ${url}`);
     }
-    throw new Error(
+    throw new ApiRequestError(
       `Request failed with status ${response.status} for ${method} ${url}: ${errorBody}`,
+      responseForError,
     );
   }
 

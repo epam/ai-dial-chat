@@ -27,6 +27,7 @@ import type {
   ToolsetFormData,
   ToolsetFormErrors,
 } from '../../models/toolsets';
+import { getApiErrorDetails } from '../../server-api/api-error';
 import {
   createToolset,
   getToolset,
@@ -245,6 +246,7 @@ const ToolsetEditor: FC = () => {
       await refetchToolsets();
       return id;
     } catch (err) {
+      const { traceId } = await getApiErrorDetails(err);
       const upstreamMessage = await extractToolsetApiErrorMessage(err);
       showNotification({
         variant: NotificationVariant.Error,
@@ -255,6 +257,7 @@ const ToolsetEditor: FC = () => {
               ? ToolsetEditorI18nKeys.ErrorUpdateFailed
               : ToolsetEditorI18nKeys.ErrorCreateFailed,
           ),
+        requestId: traceId,
       });
       return null;
     } finally {
@@ -414,13 +417,16 @@ const ToolsetEditor: FC = () => {
       try {
         await runPostSaveAuth(result.id, form);
         navigate(returnUrl);
-      } catch {
+      } catch (error) {
+        const { traceId } = await getApiErrorDetails(error);
         showNotification({
           variant: NotificationVariant.Error,
           message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
+          requestId: traceId,
         });
       }
     } catch (err) {
+      const { traceId } = await getApiErrorDetails(err);
       const upstreamMessage = await extractToolsetApiErrorMessage(err);
       showNotification({
         variant: NotificationVariant.Error,
@@ -431,6 +437,7 @@ const ToolsetEditor: FC = () => {
               ? ToolsetEditorI18nKeys.ErrorUpdateFailed
               : ToolsetEditorI18nKeys.ErrorCreateFailed,
           ),
+        requestId: traceId,
       });
     } finally {
       setIsSaving(false);

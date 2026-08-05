@@ -61,20 +61,28 @@ export class SessionGuard implements CanActivate {
 
     const now = Math.floor(Date.now() / 1000);
     if (payload.at_exp < now + 60) {
-      payload = await this.refresh.refresh(payload);
-      const newToken = await this.session.encrypt(payload);
-      const cookieName = getSessionCookieName(this.config);
-      setCookieValue(
-        res,
-        cookieName,
-        newToken,
-        {
-          ...getCookieOptions(this.config),
-          maxAge: (payload.rt_exp - now) * 1000,
-        },
-        req.cookies as Record<string, string> | undefined,
-      );
-      res.setHeader('X-CSRF-Token', payload.csrf);
+      try {
+        payload = await this.refresh.refresh(payload);
+        const newToken = await this.session.encrypt(payload);
+        const cookieName = getSessionCookieName(this.config);
+        setCookieValue(
+          res,
+          cookieName,
+          newToken,
+          {
+            ...getCookieOptions(this.config),
+            maxAge: (payload.rt_exp - now) * 1000,
+          },
+          req.cookies as Record<string, string> | undefined,
+        );
+        res.setHeader('X-CSRF-Token', payload.csrf);
+      } catch (err) {
+        if (err instanceof UnauthorizedException) {
+          throw err;
+        }
+        this.logger.error('Unexpected error during token refresh', err);
+        throw new UnauthorizedException();
+      }
     }
 
     if (!payload.bucket) {
