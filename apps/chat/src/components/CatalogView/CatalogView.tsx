@@ -47,6 +47,7 @@ import {
 } from '../../hooks/toolsets/useToolsetLogin';
 import { useCatalogSortFilterPreference } from '../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import { useUiFeature } from '../../hooks/useUiFeature';
+import { getApiErrorDetails } from '../../server-api/api-error';
 import { deleteApplication } from '../../server-api/applications';
 import { getDeploymentLimits } from '../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../server-api/deployments';
@@ -388,10 +389,12 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         await logoutToolset(item.id, body);
         showLogoutSuccess(item, params.level);
         await refetchToolsets();
-      } catch {
+      } catch (error) {
+        const { traceId } = await getApiErrorDetails(error);
         showNotification({
           variant: NotificationVariant.Error,
           message: t(ToolsetEditorI18nKeys.ErrorLogoutFailed),
+          requestId: traceId,
         });
       }
     },
@@ -427,7 +430,8 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
             { name },
           ),
         });
-      } catch {
+      } catch (error) {
+        const { traceId } = await getApiErrorDetails(error);
         showNotification({
           variant: NotificationVariant.Error,
           title: t(
@@ -441,6 +445,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
               : FavoritesI18nKeys.RemoveFailed,
             { name },
           ),
+          requestId: traceId,
         });
       }
     },
@@ -629,9 +634,11 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
           message: t(CatalogI18nKeys.DetailsDeleteSuccess, { name: item.name }),
         });
       } catch (err) {
+        const { traceId } = await getApiErrorDetails(err);
         showNotification({
           variant: NotificationVariant.Error,
           message: t(CatalogI18nKeys.DetailsDeleteError),
+          requestId: traceId,
         });
         throw err;
       }

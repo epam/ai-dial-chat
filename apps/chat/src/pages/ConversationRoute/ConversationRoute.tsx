@@ -28,7 +28,7 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useToolsMenu } from '../../hooks/conversation/useToolsMenu';
-import { getApiErrorMessage } from '../../server-api/api-error';
+import { getApiErrorDetails } from '../../server-api/api-error';
 import {
   createConversation as apiCreateConversation,
   saveConversation,
@@ -218,10 +218,12 @@ const ConversationRoute: FC = () => {
             );
             navigate(getConversationRoute(conversation.id));
           } catch (err) {
-            const errorMessage = await getApiErrorMessage(err);
+            const { message: errorMessage, traceId } =
+              await getApiErrorDetails(err);
             showNotification({
               variant: NotificationVariant.Error,
               message: errorMessage ?? t(ChatI18nKeys.CreateConversationError),
+              requestId: traceId,
             });
           }
         };

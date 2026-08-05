@@ -73,7 +73,7 @@ import { isMessageChanged } from '../../utils/message-utils';
 import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
-import FooterContainer from '../FooterDialogs/FooterContainer';
+import FooterMessage from '../FooterMessage/FooterMessage';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 import ConversationMessageItem from './ConversationMessageItem';
 
@@ -792,6 +792,7 @@ const ConversationView: FC<Props> = ({
                     deploymentId={
                       fixedModel ? fixedModel.id : (selectedItemId ?? undefined)
                     }
+                    isGenerationInProgress={isAssistantTyping}
                     labels={usageLimitsLabels}
                   />
                 }
@@ -879,14 +880,14 @@ const ConversationView: FC<Props> = ({
         )}
       </div>
       {/*
-       * FooterContainer is intentionally co-located with each view that can
+       * FooterMessage is intentionally co-located with each view that can
        * render a footer message (ConversationView, NewConversationComposer,
        * NavPageContent). Only one view is visible at a time, so at most one
        * instance is active. If the footer feature grows to require shared
-       * dialog state across views, lift FooterContainer to a single top-level
+       * dialog state across views, lift FooterMessage to a single top-level
        * provider instead.
        */}
-      <FooterContainer />
+      <FooterMessage />
       {catalogModal}
     </>
   );

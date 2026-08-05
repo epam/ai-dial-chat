@@ -637,54 +637,6 @@ export enum FooterMessageI18nKeys {
   RegionAriaLabel = 'footerMessage.regionAriaLabel',
 }
 
-export enum FooterRequestApiKeyI18nKeys {
-  Title = 'footer.requestApiKey.title',
-  DescriptionPrefix = 'footer.requestApiKey.descriptionPrefix',
-  ProjectNameDescription = 'footer.requestApiKey.projectNameDescription',
-  StreamNameDescription = 'footer.requestApiKey.streamNameDescription',
-  ProjectLeadDescription = 'footer.requestApiKey.projectLeadDescription',
-  AccessScenarioDescription = 'footer.requestApiKey.accessScenarioDescription',
-  WorkloadPatternDescriptionPrefix = 'footer.requestApiKey.workloadPatternDescriptionPrefix',
-  WorkloadPatternCaptionPrefix = 'footer.requestApiKey.workloadPatternCaptionPrefix',
-  CheckboxGroupTitle = 'footer.requestApiKey.checkboxGroupTitle',
-  ProjectNameLabel = 'footer.requestApiKey.projectNameLabel',
-  ProjectNamePlaceholder = 'footer.requestApiKey.projectNamePlaceholder',
-  StreamNameLabel = 'footer.requestApiKey.streamNameLabel',
-  StreamNamePlaceholder = 'footer.requestApiKey.streamNamePlaceholder',
-  ProjectLeadLabel = 'footer.requestApiKey.projectLeadLabel',
-  ProjectLeadPlaceholder = 'footer.requestApiKey.projectLeadPlaceholder',
-  BusinessReasonLabel = 'footer.requestApiKey.businessReasonLabel',
-  BusinessReasonPlaceholder = 'footer.requestApiKey.businessReasonPlaceholder',
-  ProjectEndLabel = 'footer.requestApiKey.projectEndLabel',
-  AccessScenarioLabel = 'footer.requestApiKey.accessScenarioLabel',
-  AccessScenarioPlaceholder = 'footer.requestApiKey.accessScenarioPlaceholder',
-  WorkloadPatternLabel = 'footer.requestApiKey.workloadPatternLabel',
-  WorkloadPatternPlaceholder = 'footer.requestApiKey.workloadPatternPlaceholder',
-  CheckboxAzureLabel = 'footer.requestApiKey.checkboxAzureLabel',
-  CheckboxEpamLabel = 'footer.requestApiKey.checkboxEpamLabel',
-  CheckboxClientLabel = 'footer.requestApiKey.checkboxClientLabel',
-  CheckboxLocalLabel = 'footer.requestApiKey.checkboxLocalLabel',
-  CheckboxGroupRequired = 'footer.requestApiKey.checkboxGroupRequired',
-  FieldRequired = 'footer.requestApiKey.fieldRequired',
-  FieldTooLong = 'footer.requestApiKey.fieldTooLong',
-  EmailInvalid = 'footer.requestApiKey.emailInvalid',
-  DateInvalid = 'footer.requestApiKey.dateInvalid',
-  SuccessTitle = 'footer.requestApiKey.successTitle',
-  ErrorTitle = 'footer.requestApiKey.errorTitle',
-}
-
-export enum FooterReportIssueI18nKeys {
-  Title = 'footer.reportIssue.title',
-  IssueTitleLabel = 'footer.reportIssue.issueTitleLabel',
-  IssueTitlePlaceholder = 'footer.reportIssue.issueTitlePlaceholder',
-  DescriptionLabel = 'footer.reportIssue.descriptionLabel',
-  DescriptionPlaceholder = 'footer.reportIssue.descriptionPlaceholder',
-  FieldRequired = 'footer.reportIssue.fieldRequired',
-  FieldTooLong = 'footer.reportIssue.fieldTooLong',
-  SuccessTitle = 'footer.reportIssue.successTitle',
-  ErrorTitle = 'footer.reportIssue.errorTitle',
-}
-
 export enum EditorI18nKeys {
   StepGeneral = 'editor.stepGeneral',
   StepsNavAriaLabel = 'editor.stepsNavAriaLabel',
@@ -827,6 +779,13 @@ export enum ConversationInputI18nKeys {
   Error = 'conversationInput.usageLimits.error',
   TokensRemaining = 'conversationInput.usageLimits.tokensRemaining',
   ProgressAriaLabel = 'conversationInput.usageLimits.progressAriaLabel',
+}
+
+export enum NotificationI18nKeys {
+  RequestIdLabel = 'notification.requestId.label',
+  RequestIdCopyAriaLabel = 'notification.requestId.copyAriaLabel',
+  RequestIdCopiedStatus = 'notification.requestId.copiedStatus',
+  RequestIdCopyFailedStatus = 'notification.requestId.copyFailedStatus',
 }
 
 export enum CustomAppI18nKeys {

@@ -146,6 +146,14 @@ The external auth window receives no token, session id, or credential material f
 
 _Source: [`auth-diagrams/04-api-request-refresh.mmd`](./auth-diagrams/04-api-request-refresh.mmd)_
 
+#### 5.2.1 Lost Refresh-Token Races Across Pods
+
+`RefreshService`'s in-flight mutex (`inFlight: Map<sid, Promise<SessionPayload>>`) only dedupes concurrent refreshes within a single pod — there is no shared store to coordinate across replicas. When two near-simultaneous requests carrying the same not-yet-rotated cookie land on two different pods (a duplicated browser tab racing the original, or several parallel requests one tab fires on waking from idle), both independently exchange the same one-time-use refresh token; the loser gets `invalid_grant` from the IdP.
+
+`RefreshService.doRefresh` distinguishes this from a genuine revocation using only data already in the request's own decrypted payload: if `payload.at_exp` is still in the future when `invalid_grant` is received, the access token is still valid — the session is fine, this pod just lost a race it didn't need to enter — so `doRefresh` returns the payload unchanged instead of throwing, and `SessionGuard` re-writes the same (harmless, unrotated) cookie. The next request, on any pod, reads whatever cookie the browser currently holds, which by then reflects the winning pod's `Set-Cookie`. Only when `payload.at_exp` has already passed does `invalid_grant` result in a genuine `UnauthorizedException` — no shared state is introduced.
+
+As defense in depth for the residual window this can miss (the access token expiring at the same instant as the race), the SPA's `UserContext` performs one bounded self-heal probe — a fresh `GET /api/v1/auth/me` — before invalidating a session that was `Authenticated` a moment ago, both when any API call 401s (`onUnauthorized`) and on the focus/visibility identity-revalidation checkpoint's own 401 path. A real logout still fails the probe and invalidates exactly as before; a lost-race collision typically recovers because the winning pod's `Set-Cookie` has, in virtually all realistic timings, already landed in the browser.
+
 ### 5.3 Logout (Federated)
 
 ![Federated logout](./auth-diagrams/05-logout-flow.svg)
@@ -266,7 +274,7 @@ Testing instructions for the currently implemented slices live in
 | Open redirect on callback    | Strict IdP `redirect_uri` allow-list plus BFF-side `callbackUrl` validation against allowed application origins                            |
 | Token in URL fragment        | Not used — Authorization Code only, never implicit                                                                                         |
 | Cookie size overflow (Entra) | Split encrypted session value across numbered cookie chunks                                                                                |
-| Multi-tab refresh race       | Per-pod in-memory mutex on `sid`; idempotent refresh                                                                                       |
+| Multi-tab refresh race       | Per-pod in-memory mutex on `sid`; idempotent refresh; cross-pod collisions absorbed via `at_exp` check (§5.2.1) plus a frontend self-heal probe |
 
 Mandatory transport: HTTPS everywhere, HSTS, `Secure` cookies, strict CSP (`script-src 'self'`).
 

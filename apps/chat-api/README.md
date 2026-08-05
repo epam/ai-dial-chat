@@ -20,6 +20,7 @@ NestJS backend application for the chat platform. Provides REST API endpoints fo
 - 🔒 Security headers (helmet middleware)
 - 🚦 Rate limiting (100 req/min default)
 - 📊 Request metrics logging
+- 🔭 OpenTelemetry traces, logs, and Prometheus-compatible metrics (opt-in, see [Observability](#observability))
 
 ## Prerequisites
 
@@ -128,9 +129,6 @@ At least one identity provider (see [Auth provider environment variables](#auth-
 | `SCHEDULER_APP_ID`                      | —                              | DIAL Core application id of the DIAL Scheduler routed deployment, used to build the `/v1/deployments/applications/{id}/route/v1/schedules` upstream path for the `/api/v1/scheduled-tasks*` endpoints. Required only when `features.scheduledTasksEnabled` is used; if unset, those endpoints fail fast with `503`.                                                                                                                                                                                                                                                                  |
 | `SCHEDULER_SERVICE_TIMEOUT_MS`          | `10000`                        | Timeout for DIAL Scheduler proxy requests (milliseconds)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `FOOTER_HTML_MESSAGE`                   | —                              | Operator-authored HTML shown in the footer of the chat input area (desktop) and mobile user panel. Supports `%%VERSION%%` token replaced with the current app version server-side. Sanitized server-side (allowlist: `a span strong u em br p`). Unset or empty hides the footer.                                                                                                                                                                                                                                                                                                    |
-| `AZURE_FUNCTIONS_API_HOST`              | —                              | Base URL of the Azure Functions host that backs the footer dialog BFF routes (`POST /api/v1/footer/request-api-key` and `POST /api/v1/footer/report-issue`). All three footer dialog vars (`AZURE_FUNCTIONS_API_HOST`, `REQUEST_API_KEY_CODE`, `REPORT_ISSUE_CODE`) must be set together to enable the routes; missing any one returns 503 on submit.                                                                                                                                                                                                                                |
-| `REQUEST_API_KEY_CODE`                  | —                              | Azure Function key/code for the Request API Key endpoint. Required together with `AZURE_FUNCTIONS_API_HOST` and `REPORT_ISSUE_CODE`.                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `REPORT_ISSUE_CODE`                     | —                              | Azure Function key/code for the Report Issue endpoint. Required together with `AZURE_FUNCTIONS_API_HOST` and `REQUEST_API_KEY_CODE`.                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 #### Auth provider environment variables
 
@@ -325,6 +323,12 @@ apps/chat-api/src/
 │   └── validation.ts      # Validation function
 ├── health/                 # Health check endpoint
 │   └── health.controller.ts
+├── telemetry/               # OpenTelemetry bootstrap, logger bridge, metrics, traceparent header
+│   ├── otel-config.ts
+│   ├── otel-sdk.ts
+│   ├── nestjs-otel-logger.ts
+│   ├── http-metrics.ts
+│   └── traceparent.middleware.ts
 ├── themes/                 # Theme management
 │   ├── dto/               # Data transfer objects
 │   │   └── get-theme-icon.dto.ts
@@ -426,6 +430,131 @@ Set `LOG_LEVEL` to control the minimum emitted level independently from
 `NODE_ENV`. For example, `LOG_LEVEL=debug` enables debug logs in a production
 container without enabling development-only features such as Swagger.
 
+## Observability
+
+`apps/chat-api` ships OpenTelemetry-based distributed tracing, log export, and Prometheus-
+compatible metrics, entirely **off by default**. With no `OTEL_*` environment variable set, the
+application behaves byte-identically to a build without OpenTelemetry: no exporters, no
+processors, no additional listening port, and no outbound network calls for telemetry.
+
+### Architecture
+
+- **Bootstrap**: `apps/chat-api/src/telemetry/otel-sdk.ts` builds and starts an
+  `@opentelemetry/sdk-node` `NodeSDK` instance. It is imported as the very first statement in
+  `main.ts` (before `reflect-metadata`, NestJS, `cookie-parser`, `helmet`, and the DIAL SDK) so
+  that `HttpInstrumentation`/`UndiciInstrumentation` patch Node's `http`/`https`/`undici` modules
+  before anything else can `require()` them.
+- **Traces**: automatic server spans for inbound HTTP requests and automatic W3C trace-context
+  propagation into outbound calls (DIAL Core, `fetch`), with `GET /api/health` and
+  `GET /metrics` excluded from span creation. A `traceparent` response header (W3C format) is set
+  on every traced response — success or error — and exposed to browser callers via
+  `Access-Control-Expose-Headers`. `apps/chat-api/src/common/filters/traceparent-error.filter.ts`
+  (a global exception filter registered in `main.ts`) mirrors that same value onto JSON error
+  response bodies as a `traceparent` property, so a client can correlate a failure with server
+  traces/logs without reading response headers; it never alters `statusCode`/`message`/`error`,
+  and adds nothing when no valid trace is active or the response isn't a fresh JSON error body
+  (streaming/file/redirect responses, or one whose headers were already sent).
+- **Logs**: `apps/chat-api/src/telemetry/nestjs-otel-logger.ts`'s `NestOtelLogger` subclasses the
+  standard NestJS `ConsoleLogger`. Console output and `LOG_LEVEL` gating are unchanged; when
+  enabled, the same call is additionally exported through the OpenTelemetry Logs API with a
+  mapped severity and, when a trace is active, correlated `trace_id`/`span_id`.
+  OpenTelemetry SDK-internal diagnostics are never routed back through this bridge.
+- **Metrics**: `apps/chat-api/src/telemetry/http-metrics.ts` exposes a single
+  `http.server.request.duration` histogram (seconds), attributed by HTTP method, matched route
+  template (never the raw URL — unmatched routes use the bounded literal `unmatched`), and
+  response status code. `MetricsInterceptor` records exactly one data point per request, except
+  `GET /api/health` (still logged, never recorded) — see `telemetry/excluded-paths.ts`, the same
+  exclusion list `otel-sdk.ts` uses for tracing.
+- **Prometheus endpoint**: when the `prometheus` metrics exporter is selected, a dedicated,
+  unauthenticated HTTP listener starts (default `127.0.0.1:9464`, path `/metrics`), entirely
+  independent of the main application port — no new business-API route, no interaction with
+  `helmet`/CORS/rate limiting. The listener defaults to loopback-only since it has no
+  authentication of its own; a scrape agent running in the same pod/container (e.g. a sidecar)
+  reaches it via `localhost`, not the pod's external IP. Set `OTEL_EXPORTER_PROMETHEUS_HOST=0.0.0.0`
+  only when the scraper genuinely runs outside the container's network namespace, and rely on a
+  firewall/NetworkPolicy to keep the port from being reachable externally.
+- **Shutdown**: `main.ts` calls `app.enableShutdownHooks()`; `TelemetryShutdownService` (a Nest
+  `OnApplicationShutdown` provider) flushes and shuts down all telemetry processors, bounded by
+  an internal timeout (default 5s) so a hung exporter or unreachable collector can never block
+  container termination.
+- **Failure mode**: an unreachable OTLP collector never crashes the process, blocks a response,
+  or fails a request — it surfaces only as exporter-level warning logs from the OpenTelemetry
+  SDK's own retry/backoff logic.
+
+### Environment variables
+
+All variables below are standard OpenTelemetry names, consumed either by this application's own
+telemetry bootstrap or directly by the underlying `@opentelemetry/*` SDK/exporter packages. They
+are **not** declared on `EnvironmentVariables` (`config/environment.config.ts`) — that class-
+validator schema only covers application-owned configuration; these are read in
+`telemetry/otel-config.ts`/`telemetry/otel-sdk.ts`, which run before Nest's `ConfigModule` exists.
+
+| Variable                                                                                    | Consumed by                                          | Default (when SDK enabled) | Notes                                                                                                                                                |
+| ------------------------------------------------------------------------------------------- | ---------------------------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OTEL_SDK_DISABLED`                                                                         | our bootstrap                                        | `true`                     | Set to `false` (or any of `false`/`0`/`no`) to enable telemetry. Unset or `true` = fully off.                                                        |
+| `OTEL_SERVICE_NAME`                                                                         | our bootstrap                                        | `package.json` name        | Falls back to `package.json`'s `name`, then the literal `chat-api`.                                                                                  |
+| `OTEL_RESOURCE_ATTRIBUTES`                                                                  | `NodeSDK`'s built-in env resource detector, natively | unset                      | e.g. `deployment.environment=staging`. Passes through untouched alongside our `service.name`/`service.version`.                                      |
+| `OTEL_TRACES_EXPORTER`                                                                      | our bootstrap                                        | `otlp`                     | `otlp` \| `none`.                                                                                                                                    |
+| `OTEL_METRICS_EXPORTER`                                                                     | our bootstrap                                        | `prometheus`               | Comma-separated subset of `otlp`, `prometheus`, `none` (e.g. `otlp,prometheus` runs both). Deliberate deviation from the OTel spec's `otlp` default. |
+| `OTEL_LOGS_EXPORTER`                                                                        | our bootstrap                                        | `otlp`                     | `otlp` \| `none`.                                                                                                                                    |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`                                                               | `@opentelemetry/exporter-*-otlp-http`, natively      | `http://localhost:4318`    | Collector endpoint for all signals unless overridden per-signal below.                                                                               |
+| `OTEL_EXPORTER_OTLP_{TRACES,METRICS,LOGS}_ENDPOINT`                                         | same exporter packages, natively                     | unset                      | Per-signal override of the endpoint above.                                                                                                           |
+| `OTEL_EXPORTER_OTLP_HEADERS`                                                                | same exporter packages, natively                     | unset                      | May carry collector auth secrets — never logged by application code.                                                                                 |
+| `OTEL_EXPORTER_PROMETHEUS_HOST`                                                             | our bootstrap, passed to `PrometheusExporter`        | `127.0.0.1`                | Not auto-read by the exporter package itself. Loopback-only by default since the endpoint has no auth; override to `0.0.0.0` only for a scraper outside the container's network namespace. |
+| `OTEL_EXPORTER_PROMETHEUS_PORT`                                                             | our bootstrap, passed to `PrometheusExporter`        | `9464`                     | Same as above.                                                                                                                                       |
+| `OTEL_BSP_*` / `OTEL_BLRP_*` / `OTEL_METRIC_EXPORT_INTERVAL` / `OTEL_METRIC_EXPORT_TIMEOUT` | batch processors / periodic reader, natively         | SDK defaults               | Standard batching/interval tuning, read natively by the underlying SDK classes.                                                                      |
+| `OTEL_TRACES_SAMPLER` / `OTEL_TRACES_SAMPLER_ARG`                                           | `NodeSDK`, natively                                  | `parentbased_always_on`    | We do not override the sampler in code.                                                                                                              |
+
+**Not supported**: `OTEL_EXPORTER_OTLP_PROTOCOL` (and per-signal variants) is not read — the
+protocol is fixed to `http/protobuf` in code via the `*-otlp-http` exporter packages.
+
+### Local verification
+
+Run a collector (e.g. the [OpenTelemetry Collector](https://github.com/open-telemetry/opentelemetry-collector) with a `debug` exporter) and point the app at it:
+
+```bash
+docker run --rm -p 4318:4318 -v "$PWD/otel-collector-config.yaml":/etc/otelcol/config.yaml \
+  otel/opentelemetry-collector:latest
+```
+
+```bash
+OTEL_SDK_DISABLED=false \
+OTEL_TRACES_EXPORTER=otlp \
+OTEL_LOGS_EXPORTER=otlp \
+OTEL_METRICS_EXPORTER=otlp,prometheus \
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 \
+npx nx serve chat-api
+```
+
+Scrape the Prometheus endpoint directly:
+
+```bash
+curl http://localhost:9464/metrics
+```
+
+**Production smoke test** (build the real bundle, run it standalone with no live collector, using
+only the local Prometheus listener):
+
+```bash
+npm exec nx build chat-api
+
+PORT=5000 \
+NODE_ENV=production \
+DIAL_CORE_URL=http://localhost:9999 \
+AUTH_SESSION_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))") \
+AUTH_CALLBACK_BASE_URL=http://localhost:5000 \
+OTEL_SDK_DISABLED=false \
+OTEL_TRACES_EXPORTER=none \
+OTEL_LOGS_EXPORTER=none \
+OTEL_METRICS_EXPORTER=prometheus \
+node apps/chat-api/dist/main.js &
+
+curl http://localhost:5000/api/health          # expect 200
+curl -i http://localhost:9464/metrics          # expect 200, content-type: text/plain
+
+kill -TERM %1                                  # should exit cleanly within a few seconds
+```
+
 ## Troubleshooting
 
 ### Application won't start
@@ -450,3 +579,4 @@ Adjust the `THEMES_SERVICE_TIMEOUT_MS` environment variable if the external them
 - [NestJS Documentation](https://docs.nestjs.com/)
 - [AI DIAL SDK](https://github.com/epam/ai-dial-sdk)
 - [Swagger/OpenAPI](https://swagger.io/specification/)
+- [OpenTelemetry JS](https://opentelemetry.io/docs/languages/js/)

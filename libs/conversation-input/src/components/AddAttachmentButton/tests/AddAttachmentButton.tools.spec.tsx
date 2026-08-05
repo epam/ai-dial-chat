@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AddAttachmentButton } from '../AddAttachmentButton';
 
@@ -71,6 +72,71 @@ describe('AddAttachmentButton — tools submenu', () => {
     );
     fireEvent.click(screen.getByLabelText('Add'));
     expect(await screen.findByText('Tools')).toBeTruthy();
+  });
+
+  describe('desktop keyboard interaction', () => {
+    it.each([
+      ['Enter', '{Enter}'],
+      ['Space', ' '],
+    ])('opens the Tools submenu with %s', async (_keyName, key) => {
+      const user = userEvent.setup();
+      render(
+        <AddAttachmentButton
+          {...baseProps}
+          onAttachClick={vi.fn()}
+          toolsMenuItems={[singleToolItem]}
+          onToolToggle={vi.fn()}
+          toolsMenuTitle="Tools"
+        />,
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Add' }));
+      const toolsTrigger = await screen.findByRole('menuitem', {
+        name: 'Tools',
+      });
+      toolsTrigger.focus();
+      await user.keyboard(key);
+
+      expect(
+        await screen.findByRole('menuitem', { name: 'Deep Research' }),
+      ).toBeTruthy();
+      expect(toolsTrigger.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('closes only the Tools submenu with Escape and returns focus to its trigger', async () => {
+      const user = userEvent.setup();
+      render(
+        <AddAttachmentButton
+          {...baseProps}
+          onAttachClick={vi.fn()}
+          toolsMenuItems={[singleToolItem]}
+          onToolToggle={vi.fn()}
+          toolsMenuTitle="Tools"
+        />,
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Add' }));
+      const toolsTrigger = await screen.findByRole('menuitem', {
+        name: 'Tools',
+      });
+      toolsTrigger.focus();
+      await user.keyboard('{Enter}');
+      const toolItem = await screen.findByRole('menuitem', {
+        name: 'Deep Research',
+      });
+      toolItem.focus();
+
+      await user.keyboard('{Escape}');
+
+      expect(
+        screen.queryByRole('menuitem', { name: 'Deep Research' }),
+      ).toBeNull();
+      expect(
+        screen.getByRole('menuitem', { name: 'Attach file' }),
+      ).toBeTruthy();
+      expect(toolsTrigger.getAttribute('aria-expanded')).toBe('false');
+      expect(document.activeElement).toBe(toolsTrigger);
+    });
   });
 
   describe('mobile path', () => {
