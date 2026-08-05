@@ -7,6 +7,7 @@ import {
   ConversationsApi,
   DeploymentsApi,
   FilesApi,
+  HealthApi,
   Middleware,
   ModelsApi,
   PublishApi,
@@ -181,3 +182,4 @@ export const shareApi = new ShareApi(config);
 export const publishApi = new PublishApi(config);
 export const clientChannelApi = new ClientChannelApi(config);
 export const scheduledTasksApi = new ScheduledTasksApi(config);
+export const healthApi = new HealthApi(config);

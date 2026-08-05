@@ -819,3 +819,8 @@ export enum CustomAppI18nKeys {
   SaveConfirmDescription = 'customApp.saveConfirm.description',
   SaveConfirmLabel = 'customApp.saveConfirm.confirmLabel',
 }
+
+export enum AppUpdateI18nKeys {
+  Heading = 'appUpdate.heading',
+  Message = 'appUpdate.message',
+}
