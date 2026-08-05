@@ -9,8 +9,6 @@ export enum ApiEndpoints {
   TRANSCRIPTION = '/api/v1/transcription',
   CLIENT_CHANNEL = '/api/v1/client-channel',
   EXTERNAL_SERVICES = '/api/v1/external-services',
-  FOOTER_REQUEST_API_KEY = '/api/v1/footer/request-api-key',
-  FOOTER_REPORT_ISSUE = '/api/v1/footer/report-issue',
 }
 
 export class UnauthorizedError extends Error {

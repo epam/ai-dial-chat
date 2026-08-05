@@ -18,7 +18,6 @@ import { DeploymentsModule } from '../deployments/deployments.module';
 import { DialCoreModule } from '../dial/dial-core.module';
 import { ExternalServicesModule } from '../external-services/external-services.module';
 import { FilesModule } from '../files/files.module';
-import { FooterModule } from '../footer/footer.module';
 import { HealthController } from '../health/health.controller';
 import { ModelsModule } from '../models/models.module';
 import { PromptModule } from '../prompts/prompt.module';
@@ -79,7 +78,6 @@ import { createServeStaticOptions } from './static-assets';
     TranscriptionModule,
     ThemesModule,
     ShareModule,
-    FooterModule,
     PublishModule,
     ScheduledTasksModule,
   ],

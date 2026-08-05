@@ -103,8 +103,7 @@ export class ClientConfigDto {
   @ApiProperty({
     description:
       'Operator-authored HTML footer message shown below the chat input (desktop) and in the mobile user panel. Empty string when FOOTER_HTML_MESSAGE is not configured. Sanitized server-side; supports %%VERSION%% token.',
-    example:
-      'v%%VERSION%% — <a href="#" data-dial-action="requestApiKey">Request API Key</a>',
+    example: 'v%%VERSION%% — <a href="https://example.com">Learn more</a>',
     type: String,
   })
   footerHtmlMessage!: string;

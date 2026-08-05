@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import FooterMessage from '../FooterMessage';
@@ -24,8 +23,7 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-const renderFooter = (onDialAction = vi.fn()) =>
-  render(<FooterMessage onDialAction={onDialAction} />);
+const renderFooter = () => render(<FooterMessage />);
 
 describe('FooterMessage', () => {
   beforeEach(() => {
@@ -83,28 +81,5 @@ describe('FooterMessage', () => {
 
     const region = screen.getByRole('region');
     expect(region.innerHTML).not.toContain('onerror');
-  });
-
-  it('calls onDialAction when a data-dial-action link is clicked', async () => {
-    const onDialAction = vi.fn();
-    mockState.footerHtmlMessage =
-      '<a href="#" data-dial-action="requestApiKey">Request Key</a>';
-    render(<FooterMessage onDialAction={onDialAction} />);
-
-    await userEvent.click(screen.getByText('Request Key'));
-
-    expect(onDialAction).toHaveBeenCalledOnce();
-    expect(onDialAction).toHaveBeenCalledWith('requestApiKey');
-  });
-
-  it('does not call onDialAction when a plain link without data-dial-action is clicked', async () => {
-    const onDialAction = vi.fn();
-    mockState.footerHtmlMessage =
-      '<a href="https://example.com">Plain link</a>';
-    render(<FooterMessage onDialAction={onDialAction} />);
-
-    await userEvent.click(screen.getByText('Plain link'));
-
-    expect(onDialAction).not.toHaveBeenCalled();
   });
 });

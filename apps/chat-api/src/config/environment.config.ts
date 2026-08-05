@@ -526,22 +526,6 @@ export class EnvironmentVariables {
   FOOTER_HTML_MESSAGE?: string;
 
   @IsOptional()
-  @IsUrl({
-    require_tld: false,
-    require_protocol: true,
-    protocols: ['https', 'http'],
-  })
-  AZURE_FUNCTIONS_API_HOST?: string;
-
-  @IsOptional()
-  @IsString()
-  REQUEST_API_KEY_CODE?: string;
-
-  @IsOptional()
-  @IsString()
-  REPORT_ISSUE_CODE?: string;
-
-  @IsOptional()
   @IsString()
   ASR_MODEL?: string;
 
