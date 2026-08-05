@@ -1,6 +1,4 @@
 ---
-analyzer:
-  skip_excluded: true
 excludes:
   paths:
     - pattern: 'package-lock.json'

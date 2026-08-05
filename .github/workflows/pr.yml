@@ -32,14 +32,12 @@ jobs:
         run: npm run validate:agent-docs
 
   run_tests:
-    # Temporary. This branch with the fix provides additional inputs and is based on ai-dial-ci version 4.7.0
-    uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@feat/ort-allow-dynamic-versions-report-formats
+    uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@4.7.1
     with:
-      node-version: '24'
+      node-version: 24
       maximize-build-space: true
-      # ORT 90: fixes ORT 85 NPM graph mapping on Nx 23 lockfile (analyzer: ~2h → ~30m)
-      ort-version: '90.0.0'
+      # ORT 90: fixes ORT 85 NPM graph mapping (analyzer: ~25m → ~3m)
+      ort-version: "90.0.0"
       # ort-config-revision for ORT 90
-      ort-config-revision: '605e909bfe81ee916f66533b7139ac5bdaf1081c'
-      # Skip WebApp (OOM at 5 GiB heap); CycloneDX + SPDX are enough for compliance
-      ort-report-formats: 'CycloneDx,SpdxDocument' # feat branch additional input
+      ort-config-revision: "605e909bfe81ee916f66533b7139ac5bdaf1081c"
+    secrets: inherit
