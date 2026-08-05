@@ -100,7 +100,6 @@ const buildItem = (
   displayName: 'Competitor Updates',
   scheduleLabel: 'Every Monday 12:00',
   sectionKey: ScheduledTaskSectionKey.MyTasks,
-  sortValues: {},
   ...overrides,
 });
 

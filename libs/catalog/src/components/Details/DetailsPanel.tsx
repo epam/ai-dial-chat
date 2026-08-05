@@ -334,7 +334,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 resource={{
                   title: item.name,
                   version: item.version,
-                  iconUrl: item.iconUrl,
                 }}
                 renderSummary={() => (
                   <>

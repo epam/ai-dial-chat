@@ -9,6 +9,26 @@
   );
 }
 
+/* Interactive states apply only to the dropdown trigger; the same class also
+ * styles the read-only access label, which must not react to pointer or focus. */
+button.accessTriggerBtn {
+  @media (hover: hover) {
+    &:hover {
+      border-color: var(
+        --shp-access-trigger-border-hover,
+        var(--stroke-info, #124ace)
+      );
+    }
+  }
+
+  &:focus-visible {
+    border-color: var(
+      --shp-access-trigger-border-focus,
+      var(--stroke-info, #124ace)
+    );
+  }
+}
+
 .accessTriggerBtnOpen {
   border-color: var(
     --shp-access-trigger-border-focus,
@@ -57,6 +77,17 @@
         var(--bg-control-accent-alpha-hover, #2764d924)
       );
     }
+  }
+
+  /* The item clears its outline via Tailwind, so keyboard focus needs the hover
+   * background plus an inset ring that the dropdown's overflow cannot clip. */
+  &:focus-visible {
+    background: var(
+      --shp-menu-item-hover,
+      var(--bg-control-accent-alpha-hover, #2764d924)
+    );
+    box-shadow: inset 0 0 0 2px
+      var(--shp-menu-item-focus-shadow, var(--stroke-info, #124ace));
   }
 }
 
