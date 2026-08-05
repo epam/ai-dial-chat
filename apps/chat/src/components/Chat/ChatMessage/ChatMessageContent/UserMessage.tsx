@@ -689,6 +689,7 @@ export const UserMessage = memo(function UserMessage({
         droppable={false}
         onDrop={handleDropWhileEditing}
         className="w-full"
+        id="edit-message-file-drop-area"
       >
         <div className="flex w-full flex-col gap-3">
           <UserSchema

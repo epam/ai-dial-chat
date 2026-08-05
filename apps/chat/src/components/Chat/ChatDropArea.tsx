@@ -43,6 +43,7 @@ export const ChatDropArea = ({
 
   return (
     <FileDropArea
+      id="file-drop-area"
       className="min-h-0 min-w-0 flex-1"
       onDrop={uploadFiles}
       droppable={isDroppable}
