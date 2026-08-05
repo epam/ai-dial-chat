@@ -71,6 +71,7 @@ const UsageLimitsControl: FC<Props> = ({ deploymentId, labels }) => {
         !wrapperRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
+        /* Restore focus after the pointer event's default focus handling completes. */
         requestAnimationFrame(() => {
           triggerRef.current?.focus();
         });
