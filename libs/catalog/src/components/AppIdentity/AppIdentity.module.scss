@@ -1,6 +1,3 @@
-/* Tabular/lining figures for numeric text: version, last-used date, counts. */
-.numericText {
-  font-feature-settings:
-    'tnum' 1,
-    'lnum' 1;
+.name {
+  color: var(--ai-name-text, var(--text-primary, #161b2d));
 }

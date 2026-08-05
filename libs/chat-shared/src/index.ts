@@ -28,6 +28,7 @@ export * from './constants/dial';
 
 export * from './components/DeploymentIcon/DeploymentIcon';
 export * from './components/InitialsAvatar/InitialsAvatar';
+export * from './components/CopyButton/CopyButton';
 export * from './utils/initials';
 export * from './utils/avatar-color';
 export * from './components/PanelEmptyState/PanelEmptyState';
