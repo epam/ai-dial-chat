@@ -4,9 +4,23 @@ describe('parseScheduledTaskConversationPath', () => {
   it('returns scheduleId and runId for a valid scheduler path', () => {
     expect(
       parseScheduledTaskConversationPath(
-        'conversations/test-bucket/.scheduler/sched_abc/run_001/gpt-4o__Morning briefing__uuid',
+        'conversations/test-bucket/.scheduler/sched_abc/gpt-4o__Morning briefing__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
       ),
-    ).toEqual({ scheduleId: 'sched_abc', runId: 'run_001' });
+    ).toEqual({
+      scheduleId: 'sched_abc',
+      runId: 'c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
+    });
+  });
+
+  it('returns scheduleId and runId for a versioned deployment id', () => {
+    expect(
+      parseScheduledTaskConversationPath(
+        'conversations/test-bucket/.scheduler/fed28845-d883-47e8-adc3-8a6afee464f7/gemini-3.1-flash-lite__gemini__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
+      ),
+    ).toEqual({
+      scheduleId: 'fed28845-d883-47e8-adc3-8a6afee464f7',
+      runId: 'c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
+    });
   });
 
   it('returns null for a normal conversation path', () => {
@@ -17,7 +31,7 @@ describe('parseScheduledTaskConversationPath', () => {
     ).toBeNull();
   });
 
-  it('returns null when the runId segment is missing', () => {
+  it('returns null when the filename segment is missing', () => {
     expect(
       parseScheduledTaskConversationPath(
         'conversations/test-bucket/.scheduler/sched_abc',
@@ -28,7 +42,7 @@ describe('parseScheduledTaskConversationPath', () => {
   it('returns null when a segment is empty', () => {
     expect(
       parseScheduledTaskConversationPath(
-        'conversations/test-bucket/.scheduler//run_001/title',
+        'conversations/test-bucket/.scheduler//gpt-4o__title__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
       ),
     ).toBeNull();
   });
@@ -36,31 +50,42 @@ describe('parseScheduledTaskConversationPath', () => {
   it('returns null when scheduleId fails the allowlist (spaces and symbols)', () => {
     expect(
       parseScheduledTaskConversationPath(
-        'conversations/test-bucket/.scheduler/sched abc!/run_001/title',
+        'conversations/test-bucket/.scheduler/sched abc!/gpt-4o__title__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
       ),
     ).toBeNull();
   });
 
-  it('returns null when runId contains a path traversal attempt', () => {
+  it('returns null when the filename has no trailing run UUID', () => {
     expect(
       parseScheduledTaskConversationPath(
-        'conversations/test-bucket/.scheduler/sched_abc/../title',
+        'conversations/test-bucket/.scheduler/sched_abc/gpt-4o__Morning briefing',
       ),
     ).toBeNull();
   });
 
-  it('decodes URL-encoded ids before validating', () => {
+  it('returns null when there are extra segments after the filename', () => {
     expect(
       parseScheduledTaskConversationPath(
-        'conversations/test-bucket/.scheduler/sched%5Fabc/run%5F001/title',
+        'conversations/test-bucket/.scheduler/sched_abc/gpt-4o__title__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5/extra',
       ),
-    ).toEqual({ scheduleId: 'sched_abc', runId: 'run_001' });
+    ).toBeNull();
+  });
+
+  it('decodes the scheduleId before validating', () => {
+    expect(
+      parseScheduledTaskConversationPath(
+        'conversations/test-bucket/.scheduler/sched%5Fabc/gpt-4o__title__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
+      ),
+    ).toEqual({
+      scheduleId: 'sched_abc',
+      runId: 'c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
+    });
   });
 
   it('returns null when .scheduler appears at the wrong position', () => {
     expect(
       parseScheduledTaskConversationPath(
-        'conversations/test-bucket/folder/.scheduler/sched_abc/run_001',
+        'conversations/test-bucket/folder/.scheduler/sched_abc/gpt-4o__title__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
       ),
     ).toBeNull();
   });

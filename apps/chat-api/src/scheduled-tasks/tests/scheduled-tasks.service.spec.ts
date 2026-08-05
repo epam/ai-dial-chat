@@ -3,10 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../dial/dial-client.service';
 import { ScheduledTasksService } from '../scheduled-tasks.service';
 
-const makeConfigService = (schedulerAppId?: string, timeoutMs = 10_000) => ({
+const makeConfigService = (
+  schedulerAppId?: string,
+  timeoutMs = 10_000,
+  schedulerServiceId: string | undefined = 'my-oauth-service',
+) => ({
   get: vi.fn((key: string) => {
     const config: Record<string, unknown> = {
       SCHEDULER_APP_ID: schedulerAppId,
+      SCHEDULER_SERVICE_ID: schedulerServiceId,
       SCHEDULER_SERVICE_TIMEOUT_MS: timeoutMs,
     };
     return config[key];
@@ -391,6 +396,7 @@ describe('ScheduledTasksService', () => {
 
     const [, requestInit] = fetchMock.mock.calls[0] as [string, RequestInit];
     const sentBody = JSON.parse(requestInit.body as string);
+    expect(sentBody.service_id).toBe('my-oauth-service');
     expect(sentBody.properties).toMatchObject({
       create_conversation: true,
       stream: false,
@@ -399,6 +405,66 @@ describe('ScheduledTasksService', () => {
       timeout: null,
     });
     expect(sentBody.properties.payload).not.toHaveProperty('stream');
+  });
+
+  it('throws ServiceUnavailableException on create when SCHEDULER_SERVICE_ID is unset', async () => {
+    const service = new ScheduledTasksService(
+      makeDialClient(),
+      makeConfigService('scheduler-app', 10_000, '') as never,
+      makeCacheManager() as never,
+    );
+
+    await expect(
+      service.createScheduledTask('user-1', 'token', {
+        displayName: 'Daily summary',
+        trigger: { date: '2026-07-24T09:00:00.000Z' },
+        model: 'gpt-4.1-mini-2025-04-14',
+        prompt: 'Summarize my inbox',
+      }),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('throws ServiceUnavailableException on update when SCHEDULER_SERVICE_ID is unset', async () => {
+    const service = new ScheduledTasksService(
+      makeDialClient(),
+      makeConfigService('scheduler-app', 10_000, '') as never,
+      makeCacheManager() as never,
+    );
+
+    await expect(
+      service.updateScheduledTask('user-1', 'token', 'sched_123', {
+        displayName: 'Daily summary',
+        trigger: { date: '2026-07-24T09:00:00.000Z' },
+        model: 'gpt-4.1-mini-2025-04-14',
+        prompt: 'Summarize my inbox',
+      }),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('is unaffected by a missing SCHEDULER_SERVICE_ID on list and get', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          id: 'sched_123',
+          display_name: 'Daily summary',
+          trigger: { date: '2026-07-24T09:00:00.000Z' },
+        }),
+    });
+    const service = new ScheduledTasksService(
+      makeDialClient(),
+      makeConfigService('scheduler-app', 10_000, '') as never,
+      makeCacheManager() as never,
+    );
+
+    await expect(
+      service.getScheduledTask('token', 'sched_123'),
+    ).resolves.toMatchObject({ id: 'sched_123' });
+    await expect(
+      service.listScheduledTasks('user-1', 'token'),
+    ).resolves.toBeDefined();
   });
 
   it('invalidating the list cache makes a previously cached list variant unreachable', async () => {

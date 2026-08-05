@@ -56,6 +56,7 @@ const SORT_ORDER_MAP: Record<
 export class ScheduledTasksService {
   private readonly logger = new Logger(ScheduledTasksService.name);
   private readonly schedulerAppId: string | undefined;
+  private readonly schedulerServiceId: string | undefined;
   private readonly timeoutMs: number;
 
   constructor(
@@ -64,6 +65,9 @@ export class ScheduledTasksService {
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {
     this.schedulerAppId = configService.get('SCHEDULER_APP_ID', {
+      infer: true,
+    });
+    this.schedulerServiceId = configService.get('SCHEDULER_SERVICE_ID', {
       infer: true,
     });
     this.timeoutMs =
@@ -81,6 +85,18 @@ export class ScheduledTasksService {
       );
     }
     return this.schedulerAppId;
+  }
+
+  private getSchedulerServiceId(): string {
+    if (!this.schedulerServiceId) {
+      this.logger.error(
+        'SCHEDULER_SERVICE_ID is not configured — cannot build DIAL Scheduler upstream payload',
+      );
+      throw new ServiceUnavailableException(
+        'Scheduled tasks are not configured (SCHEDULER_SERVICE_ID is missing)',
+      );
+    }
+    return this.schedulerServiceId;
   }
 
   private buildSchedulesUrl(scheduleId?: string): string {
@@ -302,6 +318,7 @@ export class ScheduledTasksService {
       body,
       this.dialClient.baseUrl,
       this.dialClient.dialApiVersion,
+      this.getSchedulerServiceId(),
     );
 
     const result = await this.fetchUpstream(
@@ -339,6 +356,7 @@ export class ScheduledTasksService {
       body,
       this.dialClient.baseUrl,
       this.dialClient.dialApiVersion,
+      this.getSchedulerServiceId(),
     );
 
     const result = await this.fetchUpstream(

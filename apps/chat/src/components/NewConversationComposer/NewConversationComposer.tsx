@@ -44,7 +44,7 @@ import { useUiFeature } from '../../hooks/useUiFeature';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { getTimeOfDayGreeting } from '../../utils/greeting';
-import FooterContainer from '../FooterDialogs/FooterContainer';
+import FooterMessage from '../FooterMessage/FooterMessage';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 
 const ConversationInput = lazy(async () => {
@@ -396,7 +396,7 @@ const NewConversationComposer: FC<Props> = ({
         )}
         {children}
       </div>
-      <FooterContainer />
+      <FooterMessage />
       {isDialFileManagerOpen && (
         <DialFileManagerModal
           isOpen={isDialFileManagerOpen}

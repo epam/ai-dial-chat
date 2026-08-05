@@ -2349,7 +2349,7 @@ describe('ConversationService', () => {
     it('tags a user-bucket item created by a scheduled task with isScheduledTask, scheduleId, and runId', async () => {
       mockMetadata([
         {
-          url: 'conversations/test-bucket/.scheduler/sched_abc/run_001/gpt-4o__Morning briefing__uuid',
+          url: 'conversations/test-bucket/.scheduler/sched_abc/gpt-4o__Morning briefing__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
           nodeType: 'FILE',
           updatedAt: 1000,
         },
@@ -2365,7 +2365,7 @@ describe('ConversationService', () => {
         expect.objectContaining({
           isScheduledTask: true,
           scheduleId: 'sched_abc',
-          runId: 'run_001',
+          runId: 'c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
         }),
       ]);
     });
@@ -2375,7 +2375,7 @@ describe('ConversationService', () => {
         [],
         [
           {
-            url: 'conversations/public/.scheduler/sched_pub/run_002/gpt-4o__title',
+            url: 'conversations/public/.scheduler/sched_pub/gpt-4o__title__d8bfff5d-d883-47e8-adc3-8a6afee46411',
             nodeType: 'FILE',
             updatedAt: 1000,
           },
@@ -2392,7 +2392,7 @@ describe('ConversationService', () => {
         expect.objectContaining({
           isScheduledTask: true,
           scheduleId: 'sched_pub',
-          runId: 'run_002',
+          runId: 'd8bfff5d-d883-47e8-adc3-8a6afee46411',
         }),
       ]);
     });
@@ -2406,7 +2406,7 @@ describe('ConversationService', () => {
         data: {
           resources: [
             {
-              url: 'conversations/other-bucket/.scheduler/sched_shr/run_003/gpt-4o__title',
+              url: 'conversations/other-bucket/.scheduler/sched_shr/gpt-4o__title__a1b2c3d4-e5f6-4789-abcd-ef0123456789',
               nodeType: 'FILE',
             },
           ],
@@ -2423,7 +2423,7 @@ describe('ConversationService', () => {
         expect.objectContaining({
           isScheduledTask: true,
           scheduleId: 'sched_shr',
-          runId: 'run_003',
+          runId: 'a1b2c3d4-e5f6-4789-abcd-ef0123456789',
           sharedWithMe: true,
         }),
       ]);

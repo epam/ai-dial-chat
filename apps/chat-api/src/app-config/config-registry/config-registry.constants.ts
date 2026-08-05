@@ -97,28 +97,6 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     owner: 'chat-team',
   },
   {
-    key: 'features.requestApiKey',
-    type: 'feature',
-    valueType: 'boolean',
-    visibility: 'client',
-    defaultValue: false,
-    critical: false,
-    description:
-      'Whether the Request API Key dialog is available via the footer data-dial-action trigger. Automatically enabled when REQUEST_API_KEY_CODE is set.',
-    owner: 'chat-team',
-  },
-  {
-    key: 'features.reportAnIssue',
-    type: 'feature',
-    valueType: 'boolean',
-    visibility: 'client',
-    defaultValue: false,
-    critical: false,
-    description:
-      'Whether the Report an Issue dialog is available via the footer data-dial-action trigger. Automatically enabled when REPORT_ISSUE_CODE is set.',
-    owner: 'chat-team',
-  },
-  {
     key: 'features.asrEnabled',
     type: 'feature',
     valueType: 'boolean',

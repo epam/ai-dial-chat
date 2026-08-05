@@ -1233,55 +1233,6 @@
       ]
     },
     {
-      "name": "footer",
-      "item": [
-        {
-          "name": "Submit a Request API Key form",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Origin", "value": "{{origin}}" },
-              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"project_id\": \"My AI Project\",\n  \"project_stream\": \"Stream A\",\n  \"project_lead\": \"lead@example.com\",\n  \"business_reason\": \"We need access for automated document processing.\",\n  \"project_end\": \"31/12/2025\",\n  \"access_scenario\": \"Daily batch processing of documents.\",\n  \"workload_pattern\": \"Estimated 10k tokens per day.\"\n}\n",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/footer/request-api-key",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "footer", "request-api-key"]
-            },
-            "description": "Proxies the form submission to the configured Azure Function. The requester email is injected server-side from the authenticated session.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
-          }
-        },
-        {
-          "name": "Submit a Report an Issue form",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Origin", "value": "{{origin}}" },
-              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Something is broken\",\n  \"description\": \"When I click the button, nothing happens.\"\n}\n",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/footer/report-issue",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "footer", "report-issue"]
-            },
-            "description": "Proxies the form submission to the configured Azure Function. The reporter email is injected server-side from the authenticated session.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
-          }
-        }
-      ]
-    },
-    {
       "name": "health",
       "item": [
         {

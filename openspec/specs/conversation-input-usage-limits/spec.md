@@ -87,8 +87,10 @@ Activating the trigger by pointer or keyboard SHALL open a popover titled
 line containing the locale-formatted `N tokens remaining` value.
 
 The popover SHALL refresh limits on open without displaying a loading
-indicator. It SHALL support Escape, outside activation, trigger reactivation,
-and predictable focus return. Errors SHALL be announced non-disruptively.
+indicator. The control SHALL also refresh limits once when an active generation
+ends so the trigger reflects the latest usage without requiring activation. It
+SHALL support Escape, outside activation, trigger reactivation, and predictable
+focus return. Errors SHALL be announced non-disruptively.
 
 All visible and accessible text SHALL come from app-owned i18n. No feature gate,
 new endpoint, cache, polling, or telemetry SHALL be introduced.
@@ -103,6 +105,12 @@ new endpoint, cache, polling, or telemetry SHALL be introduced.
 
 - **WHEN** limits refresh while the popover is open
 - **THEN** the current values remain visible and no loader appears
+
+#### Scenario: Generation completes
+
+- **WHEN** an active generation ends
+- **THEN** the control refreshes the selected deployment's limits once and
+  updates the trigger without requiring the popover to be opened
 
 #### Scenario: Refresh fails
 

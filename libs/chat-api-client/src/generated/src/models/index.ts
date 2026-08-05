@@ -443,6 +443,12 @@ export interface Check200Response {
    * @memberof Check200Response
    */
   version?: string;
+  /**
+   * Stable identifier for the running deployment, derived from a hash of the served frontend build. Changes when a new deployment replaces the frontend static assets, letting long-lived clients detect that a reload will pick up a newer build.
+   * @type {string}
+   * @memberof Check200Response
+   */
+  buildId?: string;
 }
 /**
  *
@@ -4690,74 +4696,6 @@ export const ReportClientChannelDtoResultEnum = {
 export type ReportClientChannelDtoResultEnum =
   (typeof ReportClientChannelDtoResultEnum)[keyof typeof ReportClientChannelDtoResultEnum];
 
-/**
- *
- * @export
- * @interface ReportIssueDto
- */
-export interface ReportIssueDto {
-  /**
-   * Short title describing the issue.
-   * @type {string}
-   * @memberof ReportIssueDto
-   */
-  title: string;
-  /**
-   * Detailed description of the issue.
-   * @type {string}
-   * @memberof ReportIssueDto
-   */
-  description: string;
-}
-/**
- *
- * @export
- * @interface RequestApiKeyDto
- */
-export interface RequestApiKeyDto {
-  /**
-   * Project name.
-   * @type {string}
-   * @memberof RequestApiKeyDto
-   */
-  projectId: string;
-  /**
-   * Stream name.
-   * @type {string}
-   * @memberof RequestApiKeyDto
-   */
-  projectStream: string;
-  /**
-   * Email of the project tech lead.
-   * @type {string}
-   * @memberof RequestApiKeyDto
-   */
-  projectLead: string;
-  /**
-   * Business justification for the access request.
-   * @type {string}
-   * @memberof RequestApiKeyDto
-   */
-  businessReason: string;
-  /**
-   * Project end date in DD/MM/YYYY format.
-   * @type {string}
-   * @memberof RequestApiKeyDto
-   */
-  projectEnd: string;
-  /**
-   * Description of the access scenario.
-   * @type {string}
-   * @memberof RequestApiKeyDto
-   */
-  accessScenario: string;
-  /**
-   * Cost and workload description.
-   * @type {string}
-   * @memberof RequestApiKeyDto
-   */
-  workloadPattern: string;
-}
 /**
  *
  * @export

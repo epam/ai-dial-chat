@@ -254,16 +254,14 @@ describe('AppConfigService', () => {
       );
     });
 
-    it('preserves data-dial-action attribute on anchors in footerHtmlMessage', async () => {
+    it('strips data-dial-action attribute from anchors in footerHtmlMessage', async () => {
       const { service } = makeService(async (key: string) =>
         key === 'footer.html'
           ? '<a href="#" data-dial-action="requestApiKey">Request</a>'
           : undefined,
       );
       const result = await service.getClientConfig(ctx);
-      expect(result.config.footerHtmlMessage).toContain(
-        'data-dial-action="requestApiKey"',
-      );
+      expect(result.config.footerHtmlMessage).not.toContain('data-dial-action');
     });
 
     it('substitutes %%VERSION%% token in footerHtmlMessage', async () => {
