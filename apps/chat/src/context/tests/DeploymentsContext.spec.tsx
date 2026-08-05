@@ -262,6 +262,53 @@ describe('DeploymentsContext', () => {
     expect(contextMocks.setSelectedDeployment).not.toHaveBeenCalled();
   });
 
+  it('restoreDefaultSelection re-applies the persisted user preference over a stale in-memory value', async () => {
+    contextMocks.selectedDeploymentId = mockItem1.id;
+
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() =>
+      expect(result.current.selectedItemId).toBe(mockItem1.id),
+    );
+
+    act(() => {
+      result.current.restoreSelectedItemId(mockItem2.id);
+    });
+    expect(result.current.selectedItemId).toBe(mockItem2.id);
+
+    act(() => {
+      result.current.restoreDefaultSelection();
+    });
+
+    expect(result.current.selectedItemId).toBe(mockItem1.id);
+    expect(contextMocks.setSelectedDeployment).not.toHaveBeenCalled();
+  });
+
+  it('restoreDefaultSelection falls back to the operator default when there is no persisted preference', async () => {
+    contextMocks.defaultDeploymentId = mockItem2.id;
+
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() =>
+      expect(result.current.selectedItemId).toBe(mockItem2.id),
+    );
+
+    act(() => {
+      result.current.restoreSelectedItemId(mockItem1.id);
+    });
+    expect(result.current.selectedItemId).toBe(mockItem1.id);
+
+    act(() => {
+      result.current.restoreDefaultSelection();
+    });
+
+    expect(result.current.selectedItemId).toBe(mockItem2.id);
+  });
+
   it('uses selected deployment from user config when it exists in the list', async () => {
     contextMocks.selectedDeploymentId = mockItem2.id;
 
