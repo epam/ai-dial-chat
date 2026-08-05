@@ -79,13 +79,24 @@ describe('RefreshService', () => {
     expect(result.rt).toBe('new-rt');
   });
 
-  it('throws UnauthorizedException on invalid_grant', async () => {
-    const payload = makePayload();
+  it('throws UnauthorizedException on invalid_grant when the access token has already expired', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    const payload = makePayload({ at_exp: now - 10 });
     mockClient.refresh.mockRejectedValue({ error: 'invalid_grant' });
 
     await expect(service.refresh(payload)).rejects.toThrow(
       UnauthorizedException,
     );
+  });
+
+  it('absorbs invalid_grant as a lost refresh-token race when the access token is still valid', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    const payload = makePayload({ at_exp: now + 30 });
+    mockClient.refresh.mockRejectedValue({ error: 'invalid_grant' });
+
+    const result = await service.refresh(payload);
+
+    expect(result).toBe(payload);
   });
 
   it('throws UnauthorizedException on other refresh errors', async () => {
