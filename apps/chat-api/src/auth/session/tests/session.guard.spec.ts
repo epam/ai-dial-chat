@@ -159,6 +159,34 @@ describe('SessionGuard', () => {
     );
   });
 
+  it('rethrows a genuine UnauthorizedException from RefreshService as-is', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    const payload = makePayload({ at_exp: now + 30 });
+    sessionService.decryptFromRequest.mockResolvedValue(payload);
+    refreshService.refresh.mockRejectedValue(
+      new UnauthorizedException('Refresh token expired or revoked'),
+    );
+
+    const { context } = makeContext({ cookieValue: 'valid-token' });
+    await expect(guard.canActivate(context)).rejects.toThrow(
+      UnauthorizedException,
+    );
+  });
+
+  it('converts an unexpected error from RefreshService into a clean UnauthorizedException', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    const payload = makePayload({ at_exp: now + 30 });
+    sessionService.decryptFromRequest.mockResolvedValue(payload);
+    refreshService.refresh.mockRejectedValue(
+      new Error('unexpected provider registry failure'),
+    );
+
+    const { context } = makeContext({ cookieValue: 'valid-token' });
+    await expect(guard.canActivate(context)).rejects.toThrow(
+      UnauthorizedException,
+    );
+  });
+
   it('keeps the CSRF token stable when refreshing the session', async () => {
     const now = Math.floor(Date.now() / 1000);
     const payload = makePayload({ at_exp: now + 30 });
@@ -176,6 +204,90 @@ describe('SessionGuard', () => {
 
     expect((req.user as { csrf: string }).csrf).toBe(payload.csrf);
     expect(res.setHeader).toHaveBeenCalledWith('X-CSRF-Token', payload.csrf);
+  });
+
+  describe('cross-pod refresh-token race (issue #8150)', () => {
+    /*
+     * RefreshService's in-flight mutex is per-instance, mirroring how it's
+     * per-pod in production (no shared store). Two separate instances here
+     * simulate two pods receiving near-simultaneous requests for the same
+     * sid, neither aware of the other's in-flight refresh.
+     */
+    const makeGuardWithRealRefreshService = (mockClient: {
+      refresh: ReturnType<typeof vi.fn>;
+    }) => {
+      const realRefreshService = new RefreshService({
+        getProvider: vi.fn().mockReturnValue({ client: mockClient }),
+      } as never);
+      const guardSessionService = {
+        decryptFromRequest: vi.fn(),
+        encrypt: vi.fn().mockResolvedValue('new-encrypted-token'),
+      };
+      const guardBucketService = { getUserBucket: vi.fn() };
+      const guardInstance = new SessionGuard(
+        guardSessionService as never,
+        realRefreshService,
+        guardBucketService as never,
+        {
+          get: (key: string) =>
+            key === 'AUTH_SESSION_COOKIE_NAME' ? COOKIE_NAME : undefined,
+        } as never,
+        { getAllAndOverride: vi.fn().mockReturnValue(false) } as never,
+      );
+      return { guardInstance, guardSessionService };
+    };
+
+    it('authorizes the losing pod instead of 401ing it, when the access token is still valid', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      const payload = makePayload({ at_exp: now + 30, bucket: 'user-bucket' });
+
+      // Pod A: refresh succeeds and rotates the refresh token.
+      const podAClient = {
+        refresh: vi.fn().mockResolvedValue({
+          access_token: 'new-at',
+          expires_at: now + 3600,
+          refresh_token: 'rotated-rt',
+        }),
+      };
+      const { guardInstance: guardA, guardSessionService: sessionA } =
+        makeGuardWithRealRefreshService(podAClient);
+      sessionA.decryptFromRequest.mockResolvedValue(payload);
+      const { context: contextA } = makeContext({ cookieValue: 'cookie-v0' });
+
+      await expect(guardA.canActivate(contextA)).resolves.toBe(true);
+
+      // Pod B: same stale payload/cookie, but the IdP has already consumed
+      // this refresh token via Pod A — it rejects with invalid_grant.
+      const podBClient = {
+        refresh: vi.fn().mockRejectedValue({ error: 'invalid_grant' }),
+      };
+      const { guardInstance: guardB, guardSessionService: sessionB } =
+        makeGuardWithRealRefreshService(podBClient);
+      sessionB.decryptFromRequest.mockResolvedValue(payload);
+      const { context: contextB, req: reqB } = makeContext({
+        cookieValue: 'cookie-v0',
+      });
+
+      await expect(guardB.canActivate(contextB)).resolves.toBe(true);
+      expect(reqB.user).toMatchObject({ sub: payload.sub, sid: payload.sid });
+    });
+
+    it('still 401s the losing pod when the access token has already expired', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      const payload = makePayload({ at_exp: now - 5, bucket: 'user-bucket' });
+
+      const podBClient = {
+        refresh: vi.fn().mockRejectedValue({ error: 'invalid_grant' }),
+      };
+      const { guardInstance: guardB, guardSessionService: sessionB } =
+        makeGuardWithRealRefreshService(podBClient);
+      sessionB.decryptFromRequest.mockResolvedValue(payload);
+      const { context: contextB } = makeContext({ cookieValue: 'cookie-v0' });
+
+      await expect(guardB.canActivate(contextB)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
   });
 
   describe('lazy bucket resolution', () => {

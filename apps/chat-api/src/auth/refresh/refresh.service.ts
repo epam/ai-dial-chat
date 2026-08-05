@@ -33,6 +33,23 @@ export class RefreshService {
     } catch (err: unknown) {
       const oidcErr = err as { error?: string };
       if (oidcErr?.error === 'invalid_grant') {
+        /*
+         * A rotated refresh token that another pod (or another near-
+         * simultaneous request) already exchanged a moment ago also surfaces
+         * as invalid_grant here — there's no shared state to tell the two
+         * apart directly. But if this payload's access token hasn't actually
+         * expired yet, the session is still good; this pod just lost a race
+         * it didn't need to enter. Absorb it and let the next request pick
+         * up whichever cookie the browser currently holds instead of forcing
+         * a false logout.
+         */
+        const now = Math.floor(Date.now() / 1000);
+        if (payload.at_exp > now) {
+          this.logger.log(
+            `Absorbed a lost refresh-token race for sid ${payload.sid}; access token is still valid`,
+          );
+          return payload;
+        }
         throw new UnauthorizedException('Refresh token expired or revoked');
       }
       this.logger.error(
