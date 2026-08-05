@@ -10,7 +10,7 @@ export const SchemaCompareWarning = () => {
   const { t } = useTranslation(Translation.Chat);
 
   return (
-    <div className="flex justify-center">
+    <div className="flex justify-center pb-3 md:pb-5">
       <div className="max-w-2xl">
         <ErrorMessage
           error={t(ChatI18nKeys.CompareModeUnavailable)}

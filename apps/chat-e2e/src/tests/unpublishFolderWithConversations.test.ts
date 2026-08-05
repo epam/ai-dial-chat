@@ -66,7 +66,7 @@ dialAdminTest(
     adminLocalStorageManager,
   }) => {
     dialAdminTest.slow();
-    setTestIds('EPMRTC-3386', 'EPMRTC-3802', 'EPMRTC-3389');
+    setTestIds('EPMDIAL-3178', 'EPMDIAL-3192', 'EPMDIAL-3179');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
     let conversationsFolder: FolderConversation;
@@ -479,7 +479,7 @@ dialAdminTest(
     localStorageManager,
     adminLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-3429', 'EPMRTC-3800', 'EPMRTC-3801');
+    setTestIds('EPMDIAL-3180', 'EPMDIAL-3190', 'EPMDIAL-3196');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
     let conversationsFolder: FolderConversation;
@@ -821,7 +821,7 @@ dialAdminTest(
     localStorageManager,
     adminLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-3808');
+    setTestIds('EPMDIAL-3193');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[];
     const nestedFolderLevel = 2;

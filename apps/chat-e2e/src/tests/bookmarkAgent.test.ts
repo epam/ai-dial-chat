@@ -40,11 +40,11 @@ dialTest(
     fileApiHelper,
   }) => {
     setTestIds(
-      'EPMRTC-4602',
-      'EPMRTC-5937',
-      'EPMRTC-6295',
-      'EPMRTC-4605',
-      'EPMRTC-5929',
+      'EPMDIAL-2569',
+      'EPMDIAL-2573',
+      'EPMDIAL-5857',
+      'EPMDIAL-2570',
+      'EPMDIAL-2572',
     );
     let recentNames: string[];
     let recentVersions: string[];
@@ -372,7 +372,7 @@ dialTest(
     baseAssertion,
     adminCustomApplicationPublishingUtil,
   }) => {
-    setTestIds('EPMRTC-4465');
+    setTestIds('EPMDIAL-2613');
     const appName = GeneratorUtil.randomApplicationName();
     let sortedVersions: string[];
     let agentToAddElement: BaseElement;
@@ -500,7 +500,7 @@ dialTest(
     baseAssertion,
     adminCustomApplicationPublishingUtil,
   }) => {
-    setTestIds('EPMRTC-4603', 'EPMRTC-5930', 'EPMRTC-4606');
+    setTestIds('EPMDIAL-2614', 'EPMDIAL-2617', 'EPMDIAL-2615');
     const appName = GeneratorUtil.randomApplicationName();
     let sortedVersions: string[];
     let agentToAddElement: BaseElement;

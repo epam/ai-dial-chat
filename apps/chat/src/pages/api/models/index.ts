@@ -5,9 +5,11 @@ import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 import { logger } from '@/src/utils/server/logger';
-import { getFullToken } from '@/src/utils/server/server';
+import { ServerUtils, getFullToken } from '@/src/utils/server/server';
+import { setTraceparentHeader } from '@/src/utils/server/traceparent';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  setTraceparentHeader(res);
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
   if (!isSessionValid) {
@@ -36,7 +38,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(200).json(entities);
   } catch (error) {
     logger.error(error);
-    return res.status(500).send('Error');
+    return ServerUtils.sendAPIError(res, error);
   }
 };
 

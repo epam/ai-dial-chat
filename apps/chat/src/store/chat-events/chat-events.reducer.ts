@@ -105,6 +105,9 @@ export const chatEventsSlice = createSlice({
     ) => {
       state.isReporting = false;
     },
+    clearEvents: (state) => {
+      state.events = {};
+    },
   },
 });
 

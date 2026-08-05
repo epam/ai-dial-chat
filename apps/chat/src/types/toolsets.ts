@@ -3,6 +3,7 @@ import { EntityType } from './common';
 import {
   EntityPublicationInfo,
   ShareEntity,
+  TokenEndpointAuthMethod,
   ToolsetAuthStatus,
   ToolsetAuthTypes,
   ToolsetTransportType,
@@ -23,7 +24,7 @@ export interface ToolsetModel extends ShareEntity {
   allowedTools: string[];
   version: string;
   reference: string;
-  description: string;
+  description: string | Record<string, string>;
   topics: string[];
   type: EntityType.Toolset;
 
@@ -48,6 +49,7 @@ export interface ToolsetModel extends ShareEntity {
     redirectUri?: string;
     scopesSupported?: string[];
     tokenEndpoint?: string;
+    tokenEndpointAuthMethod?: TokenEndpointAuthMethod;
     // Authentication status map
     authStatus?: Record<ToolsetCredentialsLevel, ToolsetAuthStatus>;
   };

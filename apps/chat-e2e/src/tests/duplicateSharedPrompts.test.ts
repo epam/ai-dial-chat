@@ -29,7 +29,7 @@ dialSharedWithMeTest(
     additionalShareUserSelectFoldersAssertion,
     additionalShareUserSelectFolderModalAssertion,
   }) => {
-    setTestIds('EPMRTC-1872', 'EPMRTC-2037');
+    setTestIds('EPMDIAL-3820', 'EPMDIAL-3822');
     let folderPrompt: FolderPrompt;
     let promptName: string;
     let shareFolderByLinkResponse: ShareByLinkResponseModel;

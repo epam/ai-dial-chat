@@ -69,7 +69,10 @@ export const applicationSlice = createSlice({
     deleteSuccess: (state) => {
       state.appLoading = UploadStatus.LOADED;
     },
-    deleteFail: (state) => {
+    deleteFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => {
       state.appLoading = UploadStatus.FAILED;
     },
     edit: (
@@ -272,6 +275,12 @@ export const applicationSlice = createSlice({
     initQueryParams: (state) => state,
     setEditorError: (state, { payload }: PayloadAction<string | undefined>) => {
       state.editorError = payload;
+    },
+    setEditorSelectedEntity: (
+      state,
+      { payload }: PayloadAction<ApplicationState['editorSelectedEntity']>,
+    ) => {
+      state.editorSelectedEntity = payload;
     },
   },
 });

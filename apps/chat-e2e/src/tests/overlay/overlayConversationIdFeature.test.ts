@@ -39,7 +39,7 @@ dialOverlayTest(
     overlayChatBar,
     overlayOrganizationConversations,
   }) => {
-    setTestIds('EPMRTC-4835');
+    setTestIds('EPMDIAL-2302');
     let plotlyConversation: Conversation;
     let playbackConversation: Conversation;
     let plotlyImageUrl: string;

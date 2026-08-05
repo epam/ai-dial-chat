@@ -182,6 +182,9 @@ export const TableSelectors = {
   copyAsCsvIcon: '[data-qa="copy-csv-icon"]',
   copyAsTxtIcon: '[data-qa="copy-txt-icon"]',
   copyAsMdIcon: '[data-qa="copy-md-icon"]',
+  downloadCsvIcon: '[data-qa="download-csv"]',
+  headerScrollContainer: '[data-qa="table-header-scroll-container"]',
+  bodyScrollContainer: '[data-qa="table-body-scroll-container"]',
 };
 
 export const PublicationReviewControls = {

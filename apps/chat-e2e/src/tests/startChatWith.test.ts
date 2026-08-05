@@ -39,7 +39,7 @@ dialTest(
     localStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-6436', 'EPMRTC-6444');
+    setTestIds('EPMDIAL-5796', 'EPMDIAL-5805');
     const defaultAgent = ModelsUtil.getDefaultAgent()!;
     const randomModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getModels(),
@@ -119,13 +119,13 @@ dialTest(
     testInfo,
   ) => {
     setTestIds(
-      'EPMRTC-6437',
-      'EPMRTC-6439',
-      'EPMRTC-6440',
-      'EPMRTC-6442',
-      'EPMRTC-6438',
-      'EPMRTC-6441',
-      'EPMRTC-6449',
+      'EPMDIAL-5797',
+      'EPMDIAL-5798',
+      'EPMDIAL-5799',
+      'EPMDIAL-5800',
+      'EPMDIAL-5801',
+      'EPMDIAL-5802',
+      'EPMDIAL-5806',
     );
 
     const commonPart = GeneratorUtil.randomString(7);
@@ -427,7 +427,7 @@ dialTest(
     settingsModalAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-6443');
+    setTestIds('EPMDIAL-5804');
 
     const commonPart = GeneratorUtil.randomApplicationName();
     const firstAppName = `${commonPart}1`;

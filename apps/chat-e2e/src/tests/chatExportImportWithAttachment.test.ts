@@ -38,7 +38,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1980');
+    setTestIds('EPMDIAL-6996');
     let cancelExportConversation: Conversation;
     const filename = GeneratorUtil.randomFilename('jpg');
 
@@ -107,7 +107,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1982');
+    setTestIds('EPMDIAL-7000');
 
     await dialTest.step(
       'Import file, stop import in the middle and verify chat is not imported',
@@ -159,11 +159,11 @@ dialTest(
     localStorageManager,
   }) => {
     setTestIds(
-      'EPMRTC-1975',
-      'EPMRTC-1976',
-      'EPMRTC-1985',
-      'EPMRTC-1983',
-      'EPMRTC-1988',
+      'EPMDIAL-6992',
+      'EPMDIAL-6993',
+      'EPMDIAL-7002',
+      'EPMDIAL-7008',
+      'EPMDIAL-7003',
     );
     let responseImageConversation: Conversation;
     let requestImageConversation: Conversation;
@@ -395,7 +395,7 @@ dialTest(
     localStorageManager,
     chatBarAssertion,
   }) => {
-    setTestIds('EPMRTC-3521');
+    setTestIds('EPMDIAL-7010');
     let responseImageConversation: Conversation;
     let requestImageConversation: Conversation;
     let historyConversation: Conversation;
@@ -565,7 +565,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-914');
+    setTestIds('EPMDIAL-7011');
     let historyConversation: Conversation;
     let replayConversation: Conversation;
     let exportedData: UploadDownloadData;
@@ -710,7 +710,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3942');
+    setTestIds('EPMDIAL-7012');
     let historyConversation: Conversation;
     let replayConversation: Conversation;
     let exportedData: UploadDownloadData;

@@ -449,10 +449,15 @@ const selectAvailableAttachmentsTypes = createSelector(
       return modelsAttachmentsTypes[0];
     }
 
-    // Assume that we have only 2 selected models available
-    const availableModelsAttachmentTypes = (
-      modelsAttachmentsTypes[0] || []
-    ).filter((value) => (modelsAttachmentsTypes[1] ?? []).includes(value));
+    // Intersect the two models' types with wildcard awareness (e.g. `image/*`
+    // matches `*/*`), keeping the narrower type from each list.
+    const [firstTypes = [], secondTypes = []] = modelsAttachmentsTypes;
+    const availableModelsAttachmentTypes = Array.from(
+      new Set([
+        ...firstTypes.filter((value) => isAllowedMimeType(secondTypes, value)),
+        ...secondTypes.filter((value) => isAllowedMimeType(firstTypes, value)),
+      ]),
+    );
 
     return availableModelsAttachmentTypes.length === 0
       ? undefined

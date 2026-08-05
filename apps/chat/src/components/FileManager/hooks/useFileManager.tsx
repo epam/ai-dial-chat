@@ -19,7 +19,11 @@ import {
   filterFoldersByFilters,
 } from '@/src/utils/app/file-manager-adapter';
 import { dispatchOpenFileManagerUnshareDialog } from '@/src/utils/app/file-manager-unshare-dispatch';
-import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import {
+  getFolderIdFromEntityId,
+  getFolderNestingLevel,
+  getFoldersDepth,
+} from '@/src/utils/app/folders';
 import { getFileRootId, getRootId, isRootId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
@@ -41,7 +45,11 @@ import { DialFile as LocalDialFileType } from '@/src/types/files';
 import type { RootState } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
-import { PublicationActions, ShareActions } from '@/src/store/actions';
+import {
+  PublicationActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -52,6 +60,7 @@ import {
   REVIEW_FILES_SECTION,
   SHARED_WITH_ME_FILES_SECTION,
 } from '@/src/constants/fileManager';
+import { MAX_NESTED_FOLDERS } from '@/src/constants/folders';
 import {
   ChatI18nKeys,
   CommonI18nKeys,
@@ -177,6 +186,7 @@ interface UseFileManagerOptions {
     folders?: FolderInterface[];
   };
   gridEditingOptions?: UseGridEditingScrollOptions;
+  folderDepthOffset?: number;
 }
 
 export const useFileManager = ({
@@ -188,6 +198,7 @@ export const useFileManager = ({
   initialPath,
   additionalFilesAndFolders,
   gridEditingOptions: gridEditingOptionsConfig,
+  folderDepthOffset = 0,
 }: UseFileManagerOptions = {}) => {
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -759,6 +770,39 @@ export const useFileManager = ({
     [t, sharedByMeFileNames],
   );
 
+  const isMaxFolderDepthReached = useCallback(
+    (parentFolderId: string | undefined) =>
+      getFolderNestingLevel(parentFolderId) + folderDepthOffset >=
+      MAX_NESTED_FOLDERS,
+    [folderDepthOffset],
+  );
+
+  const showMaxDepthError = useCallback(() => {
+    dispatch(
+      UIActions.showErrorToast({
+        message: translateChat(ChatI18nKeys.NotAllowedMoreNestedFolders),
+      }),
+    );
+  }, [dispatch, translateChat]);
+
+  const exceedsMaxFolderDepth = useCallback(
+    (items: DialCopiedItem[]) =>
+      items.some((item) => {
+        if (item.nodeType !== DialFileNodeType.FOLDER) return false;
+
+        const movedFolder = folders.find((f) => f.id === item.sourceUrl);
+        const subtreeLevels = movedFolder
+          ? getFoldersDepth(movedFolder, folders) - 1
+          : 0;
+
+        return (
+          getFolderNestingLevel(item.destinationUrl) + subtreeLevels >
+          MAX_NESTED_FOLDERS
+        );
+      }),
+    [folders],
+  );
+
   const handleMoveFiles = useCallback(
     (
       movedItems: DialCopiedItem[],
@@ -766,6 +810,11 @@ export const useFileManager = ({
       destinationFolder: string,
     ) => {
       if (movedItems.length === 0) return;
+
+      if (exceedsMaxFolderDepth(movedItems)) {
+        showMaxDepthError();
+        return;
+      }
 
       movingFilesCountRef.current = movedItems.length;
       isRenamingRef.current = sourceFolder === destinationFolder;
@@ -788,7 +837,7 @@ export const useFileManager = ({
         setCurrentPath(movedCurrentOrParent.destinationUrl);
       }
     },
-    [dispatch, currentPath],
+    [dispatch, currentPath, exceedsMaxFolderDepth, showMaxDepthError],
   );
 
   const handleSearchFiles = useCallback(
@@ -1348,12 +1397,18 @@ export const useFileManager = ({
   const handleCopyFiles = useCallback(
     (copiedItems: DialCopiedItem[], destinationFolder: string) => {
       if (copiedItems.length === 0) return;
+
+      if (exceedsMaxFolderDepth(copiedItems)) {
+        showMaxDepthError();
+        return;
+      }
+
       movingFilesCountRef.current = copiedItems.length;
       dispatch(
         FilesActions.copyFiles({ files: copiedItems, destinationFolder }),
       );
     },
-    [dispatch],
+    [dispatch, exceedsMaxFolderDepth, showMaxDepthError],
   );
 
   const handleGetInfo = useCallback(
@@ -1443,6 +1498,12 @@ export const useFileManager = ({
   const handleCreateFolder = useCallback(
     (file: DialUploadFileItem, folderPath: string, fileId: string) => {
       if (deduplicatedFileIdsRef.current.has(fileId)) return;
+
+      if (isMaxFolderDepthReached(getFolderIdFromEntityId(folderPath))) {
+        showMaxDepthError();
+        return;
+      }
+
       deduplicatedFileIdsRef.current.add(fileId);
 
       dispatch(
@@ -1452,12 +1513,18 @@ export const useFileManager = ({
         }),
       );
     },
-    [dispatch],
+    [dispatch, isMaxFolderDepthReached, showMaxDepthError],
   );
 
   const handleUploadArchive = useCallback(
     (archiveFile: File | null, name: string, destinationUrl: string) => {
       if (!archiveFile) return;
+
+      if (isMaxFolderDepthReached(destinationUrl)) {
+        showMaxDepthError();
+        return;
+      }
+
       dispatch(
         FilesActions.uploadArchive({
           archive: archiveFile,
@@ -1466,7 +1533,7 @@ export const useFileManager = ({
         }),
       );
     },
-    [dispatch],
+    [dispatch, isMaxFolderDepthReached, showMaxDepthError],
   );
 
   const handleOpenUnshareFilesDialog = useCallback(
@@ -1519,6 +1586,14 @@ export const useFileManager = ({
       }
     },
     [router.locale, t],
+  );
+
+  const handleCreateFolderValidate = useCallback(
+    (name: string, parentFolder: DialFile) =>
+      isMaxFolderDepthReached(parentFolder.id)
+        ? translateChat(ChatI18nKeys.NotAllowedMoreNestedFolders)
+        : handleRenameValidation(name, parentFolder),
+    [handleRenameValidation, isMaxFolderDepthReached, translateChat],
   );
 
   const emptyStateTitle = useMemo(() => {
@@ -1584,6 +1659,9 @@ export const useFileManager = ({
     handleOpenUnshareFilesDialog,
     handleOpenRemoveFilesAccessDialog,
     handleRenameValidation,
+    handleCreateFolderValidate,
+    isMaxFolderDepthReached,
+    showMaxDepthError,
     sharedWithMeIds,
 
     uploadEnabled,

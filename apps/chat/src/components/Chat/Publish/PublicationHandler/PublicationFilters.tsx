@@ -112,7 +112,9 @@ const view = withErrorMessage(
       (!filteredRuleEntries.length ||
         filteredRuleEntries.every(([_, rules]) => !rules.length)) &&
       !publication.rules?.length;
-    const oldRules = filteredRuleEntries.filter(([_, rules]) => rules.length);
+
+    // filteredRuleEntries already includes all intermediate paths (filled by PublicationHandler)
+    const oldRules = filteredRuleEntries;
     const isNewRules =
       !!publication.rules?.length && !!publication.targetFolder;
 

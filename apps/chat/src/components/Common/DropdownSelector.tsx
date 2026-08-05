@@ -105,7 +105,7 @@ export function DropdownSelector({
           input: (styles) => ({
             ...styles,
             height: '21px',
-            fontSize: '12px',
+            fontSize: '14px',
             padding: 0,
             margin: 0,
             color: 'var(--text-primary)',
@@ -195,7 +195,7 @@ export function DropdownSelector({
           }),
           singleValue: (styles) => ({
             ...styles,
-            fontSize: '12px',
+            fontSize: '14px',
             color: 'var(--text-primary)',
           }),
         }}

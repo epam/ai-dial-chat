@@ -5,8 +5,8 @@ import { GeneratorUtil } from '@/src/utils';
 import { PublishActions, Toolset } from '@epam/ai-dial-shared';
 
 dialTest(
-  '[Quick app 2.0] Context menu is not available for cards for agents and toolsets without login\n' + // EPMRTC-6943
-    '[Quick app 2.0] Context menu with login/logout available for cards for toolsets with login', // EPMRTC-7265
+  '[Quick app 2.0] Context menu is not available for cards for agents and toolsets without login\n' + // EPMDIAL-4878
+    '[Quick app 2.0] Context menu with login/logout available for cards for toolsets with login', // EPMDIAL-4879
   async ({
     marketplacePage,
     entityEditorPage,
@@ -25,7 +25,7 @@ dialTest(
     page,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-6943', 'EPMRTC-7265');
+    setTestIds('EPMDIAL-4878', 'EPMDIAL-4879');
     const loginToolsetName = GeneratorUtil.randomToolsetName();
     const noLoginToolsetName = GeneratorUtil.randomToolsetName();
     const ownAppName = GeneratorUtil.randomApplicationName();

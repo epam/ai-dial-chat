@@ -13,7 +13,7 @@ import {
   SourcesFilterOptions,
 } from '@/src/testData';
 import { BaseElement } from '@/src/ui/webElements';
-import { UserUtil } from '@/src/utils';
+import { GeneratorUtil, UserUtil } from '@/src/utils';
 import { CustomAppAttributes } from '@/src/utils/customApplicationPublishingUtil';
 import { Conversation } from '@epam/ai-dial-shared';
 
@@ -74,20 +74,20 @@ dialSharedWithMeTest(
     testInfo,
   ) => {
     setTestIds(
-      'EPMRTC-5170',
-      'EPMRTC-6057',
-      'EPMRTC-5197',
-      'EPMRTC-5316',
-      'EPMRTC-5192',
-      'EPMRTC-5229',
-      'EPMRTC-5180',
-      'EPMRTC-5181',
-      'EPMRTC-5364',
-      'EPMRTC-6025',
-      'EPMRTC-5329',
-      'EPMRTC-5190',
-      'EPMRTC-5201',
-      'EPMRTC-5366',
+      'EPMDIAL-4354',
+      'EPMDIAL-4371',
+      'EPMDIAL-4343',
+      'EPMDIAL-4362',
+      'EPMDIAL-4342',
+      'EPMDIAL-4350',
+      'EPMDIAL-4340',
+      'EPMDIAL-4341',
+      'EPMDIAL-4378',
+      'EPMDIAL-4387',
+      'EPMDIAL-4383',
+      'EPMDIAL-4357',
+      'EPMDIAL-4344',
+      'EPMDIAL-4380',
     );
     let agentElement: BaseElement;
     let iconName: string;
@@ -403,6 +403,7 @@ dialSharedWithMeTest(
     `[Custom app] App's card pop-up open when receive sharing link for app.\n` +
     '[Custom app]:Context menu for shared with me app with edit option.\n' +
     'Icons from shared app displayed in Manage attachments (sharing with edit permissions).\n' +
+    'Icon located in folder used in shared app is displayed in Shared with me root in File Manager.\n' +
     'Error message for chat when unshare custom app used in chat.\n' +
     'Icon file stay in Manage attachments if recipient Unshare app',
   async ({
@@ -441,25 +442,29 @@ dialSharedWithMeTest(
     additionalShareUserChatAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-5171',
-      'EPMRTC-6058',
-      'EPMRTC-5184',
-      'EPMRTC-5316',
-      'EPMRTC-5198',
-      'EPMRTC-5421',
-      'EPMRTC-5280',
-      'EPMRTC-5365',
+      'EPMDIAL-4356',
+      'EPMDIAL-4372',
+      'EPMDIAL-4355',
+      'EPMDIAL-4362',
+      'EPMDIAL-4360',
+      'EPMDIAL-4384',
+      'EPMDIAL-4385',
+      'EPMDIAL-4361',
+      'EPMDIAL-4379',
     );
     let agentElement: BaseElement;
     let conversation: Conversation;
     let notAvailableAgentElement: BaseElement;
     let iconName: string;
+    const iconFolder1 = GeneratorUtil.randomString(7);
+    const iconFolder2 = GeneratorUtil.randomString(7);
 
     await dialSharedWithMeTest.step(
       'Create a custom app with icon via API',
       async () => {
         appData = await customApplicationPublishingUtil.createCustomApp({
           hasIcon: true,
+          iconParentPath: `${iconFolder1}/${iconFolder2}`,
         });
         iconName = getIconName(appData.iconUrl!);
         await additionalShareUserLocalStorageManager.setShowSideBarPanels();
@@ -578,7 +583,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Open "File manager" page and verify app icon is displayed on "Shared with me" tab',
+      'Open "File manager" page and verify app icon is displayed in "Shared with me" root, no icon folders are displayed',
       async () => {
         await additionalShareUserNavigationPanel.goToFileManager({
           isFilesListingTriggered: false,
@@ -587,6 +592,14 @@ dialSharedWithMeTest(
         await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
           iconName,
           'visible',
+        );
+        await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+          iconFolder1,
+          'hidden',
+        );
+        await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+          iconFolder2,
+          'hidden',
         );
       },
     );
@@ -702,7 +715,7 @@ dialSharedWithMeTest(
     additionalShareUserFileManagerToolbar,
     shareApiAssertion,
   }) => {
-    setTestIds('EPMRTC-5328', 'EPMRTC-5385', 'EPMRTC-5465');
+    setTestIds('EPMDIAL-4386', 'EPMDIAL-4381', 'EPMDIAL-4359');
     let iconName: string;
     let sharedAppElement: BaseElement;
 
@@ -850,7 +863,7 @@ dialSharedWithMeTest(
     additionalShareUserConfirmationDialogAssertion,
     shareApiAssertion,
   }) => {
-    setTestIds('EPMRTC-5173');
+    setTestIds('EPMDIAL-4358');
 
     await dialSharedWithMeTest.step('Share custom app via API', async () => {
       appData = await customApplicationPublishingUtil.createCustomApp();
@@ -934,7 +947,7 @@ dialTest(
     marketplaceFilter,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-8859');
+    setTestIds('EPMDIAL-4365');
 
     let shareByLinkResponse: ShareByLinkResponseModel;
 

@@ -42,7 +42,7 @@ dialTest(
       process.env.E2E_HOST === undefined || entitySimpleRequests.length === 0,
       skipReason,
     );
-    setTestIds('EPMRTC-1803');
+    setTestIds('EPMDIAL-6319');
     const replayEntity = GeneratorUtil.randomArrayElement(
       entitySimpleRequests.filter((e) => e.isAttachmentResponse),
     );

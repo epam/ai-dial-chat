@@ -1,12 +1,21 @@
 import { Publication } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
-import { EntityEditorAppTypes, MenuOptions } from '@/src/testData';
+import dialTest from '@/src/core/dialFixtures';
+import {
+  API,
+  EntityEditorAppTypes,
+  ExpectedConstants,
+  MenuOptions,
+  MockedChatApiResponseBodies,
+} from '@/src/testData';
+import { ApiKeyMockHelper } from '@/src/testData/toolsets/apiKeyMockHelper';
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
+import { ToolsetSignInMockHelper } from '@/src/testData/toolsets/toolsetSignInMockHelper';
 import { GeneratorUtil } from '@/src/utils';
 import { PublishActions, Toolset } from '@epam/ai-dial-shared';
 
 dialAdminTest(
-  '[Quick app 2.0] Manage credentials form is available for public toolsets from Quick app 2.0 editor', // EPMRTC-7997
+  '[Quick app 2.0] Manage credentials form is available for public toolsets from Quick app 2.0 editor', // EPMDIAL-5557
   async ({
     toolsetBuilder,
     toolsetApiHelper,
@@ -25,7 +34,7 @@ dialAdminTest(
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-7997');
+    setTestIds('EPMDIAL-5557');
     const toolsetName = GeneratorUtil.randomToolsetName();
     const toolsetEndpoint = GeneratorUtil.randomUrl();
     const quickAppName = GeneratorUtil.randomApplicationName();
@@ -157,6 +166,379 @@ dialAdminTest(
         await baseAssertion.assertElementState(
           adminEntityDetailsModal.manageCredsButton,
           'visible',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  '[Quick app 2.0] Login form for one not public toolset in App editor - Log in Oauth\n' + // EPMDIAL-5096
+    '[Quick app 2.0] Login form for one not public toolset in App editor - Log in API key\n' + // EPMDIAL-5097
+    '[Quick app 2.0] Login form for more than one not public toolset in App editor - Login for each\n' + // EPMDIAL-5100
+    '[Quick app 2.0] Login form for one not public toolset in App editor - Decline\n' + // EPMDIAL-5098
+    '[Quick app 2.0] Login form for more than one not public toolset in App editor - Decline one', // EPMDIAL-5101
+  async ({
+    page,
+    marketplacePage,
+    entityEditorPage,
+    quickApp2Builder,
+    toolsetBuilder,
+    toolsetApiHelper,
+    applicationApiHelper,
+    modelApiHelper,
+    dialHomePage,
+    sendMessage,
+    toolsetLoginEventsModal,
+    previewToolsetLoginModal,
+    previewToolsetLoginModalAssertion,
+    toolsetSignInMock,
+    toast,
+    baseAssertion,
+    setTestIds,
+  }) => {
+    setTestIds(
+      'EPMDIAL-5096',
+      'EPMDIAL-5097',
+      'EPMDIAL-5100',
+      'EPMDIAL-5098',
+      'EPMDIAL-5101',
+    );
+    const oauthToolsetName = GeneratorUtil.randomToolsetName();
+    const apiKeyToolsetName = GeneratorUtil.randomToolsetName();
+    const declineToolsetName = GeneratorUtil.randomToolsetName();
+    const oauthEndpoint = GeneratorUtil.randomUrl();
+    const apiKeyEndpoint = GeneratorUtil.randomUrl();
+    const quickAppName = GeneratorUtil.randomApplicationName();
+    let oauthToolset: Toolset;
+    let apiKeyToolset: Toolset;
+    let declineToolset: Toolset;
+    let oauthMock: OAuthMockHelper;
+    let apiKeyMock: ApiKeyMockHelper;
+
+    await dialTest.step(
+      'Precondition: create three own toolsets (OAuth to log in / decline, API key to log in), all logged out',
+      async () => {
+        await toolsetApiHelper.createToolset(
+          toolsetBuilder.withDisplayName(oauthToolsetName).build(),
+        );
+        oauthToolset = (await toolsetApiHelper.getToolset(oauthToolsetName))!;
+
+        await toolsetApiHelper.createToolset(
+          toolsetBuilder.withDisplayName(apiKeyToolsetName).build(),
+        );
+        apiKeyToolset = (await toolsetApiHelper.getToolset(apiKeyToolsetName))!;
+
+        await toolsetApiHelper.createToolset(
+          toolsetBuilder.withDisplayName(declineToolsetName).build(),
+        );
+        declineToolset =
+          (await toolsetApiHelper.getToolset(declineToolsetName))!;
+      },
+    );
+
+    await dialTest.step(
+      'Mock the toolsets as logged-out OAuth / API key and serve the enriched listing',
+      async () => {
+        // Real creation with OAuth/API key auth_settings is rejected by the
+        // backend, so set up each auth helper WITHOUT its own listing route —
+        // the single listing route (below) enriches every toolset at once.
+        oauthMock = new OAuthMockHelper(page, oauthToolset, oauthEndpoint);
+        await oauthMock.setupToolsetRoutes();
+        await oauthMock.setupSignInRoute();
+        await oauthMock.setupOAuthRedirectRoute();
+        await oauthMock.setupSignOutRoute();
+        oauthMock.enableMocking();
+
+        apiKeyMock = new ApiKeyMockHelper(page, apiKeyToolset, apiKeyEndpoint);
+        await apiKeyMock.setupToolsetRoutes();
+        await apiKeyMock.setupSignInRoute();
+        await apiKeyMock.setupSignOutRoute();
+        apiKeyMock.enableMocking();
+
+        const oauthSettings = ToolsetSignInMockHelper.loggedOutOAuthSettings(
+          oauthMock.getMockConfig(),
+        );
+        await toolsetSignInMock.setupToolsetsListingRoute(
+          await toolsetApiHelper.listToolsets(),
+          [
+            { toolset: oauthToolset, authSettings: oauthSettings },
+            { toolset: declineToolset, authSettings: oauthSettings },
+            {
+              toolset: apiKeyToolset,
+              authSettings: ToolsetSignInMockHelper.loggedOutApiKeySettings(
+                ExpectedConstants.apiKeyHeaderName,
+              ),
+            },
+          ],
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Precondition: create a Quick app 2.0 via API with a tool-supporting orchestrator and both toolsets attached',
+      async () => {
+        const toolSupportingModel =
+          await modelApiHelper.getToolSupportingModel();
+        await applicationApiHelper.createApplication(
+          quickApp2Builder
+            .withDisplayName(quickAppName)
+            .withOrchestratorModel(toolSupportingModel.id)
+            .addToolset(oauthToolset.id!)
+            .addToolset(apiKeyToolset.id!)
+            .addToolset(declineToolset.id!)
+            .build(),
+        );
+      },
+    );
+
+    await dialTest.step('Open the Quick app 2.0 in edit mode', async () => {
+      const quickApp = await modelApiHelper.getAgentByNameAndVersion({
+        name: quickAppName,
+      });
+      await marketplacePage.openEditQuickApp2Page(quickApp.reference);
+      await entityEditorPage.waitForPageLoadedForEdit(
+        EntityEditorAppTypes.QuickApp2,
+      );
+    });
+
+    await dialTest.step(
+      'Send a message in the preview to trigger the sign-in modal',
+      async () => {
+        await toolsetSignInMock.setupSignInChannel([
+          oauthToolset,
+          apiKeyToolset,
+          declineToolset,
+        ]);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await sendMessage.messageInput.fillInInput(
+          GeneratorUtil.randomString(10),
+        );
+        await sendMessage.sendMessageButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'The login modal lists all toolsets with Login, Decline and Decline all',
+      async () => {
+        await baseAssertion.assertElementState(
+          toolsetLoginEventsModal,
+          'visible',
+        );
+        await baseAssertion.assertElementText(
+          toolsetLoginEventsModal.header,
+          ExpectedConstants.toolsetLoginRequiredTitle,
+        );
+        for (const name of [
+          oauthToolsetName,
+          apiKeyToolsetName,
+          declineToolsetName,
+        ]) {
+          await baseAssertion.assertElementState(
+            toolsetLoginEventsModal.getRowByToolsetName(name),
+            'visible',
+          );
+          await baseAssertion.assertElementState(
+            toolsetLoginEventsModal.getLoginButton(name),
+            'visible',
+          );
+          await baseAssertion.assertElementState(
+            toolsetLoginEventsModal.getDeclineButton(name),
+            'visible',
+          );
+        }
+        await baseAssertion.assertElementState(
+          toolsetLoginEventsModal.declineAllButton,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMDIAL-5098/8564: decline one toolset — its row is removed with a toast, the rest stay',
+      async () => {
+        await toolsetLoginEventsModal
+          .getDeclineButton(declineToolsetName)
+          .click();
+        await baseAssertion.assertElementText(
+          toast,
+          ExpectedConstants.toolsetSignInRequestDeclined,
+        );
+        await toast.closeToast();
+        await baseAssertion.assertElementState(
+          toolsetLoginEventsModal.getRowByToolsetName(declineToolsetName),
+          'hidden',
+        );
+        for (const name of [oauthToolsetName, apiKeyToolsetName]) {
+          await baseAssertion.assertElementState(
+            toolsetLoginEventsModal.getRowByToolsetName(name),
+            'visible',
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'EPMDIAL-5096: log in the OAuth toolset via the popup — its row disappears',
+      async () => {
+        const popupPromise = page.waitForEvent('popup');
+        await toolsetLoginEventsModal.getLoginButton(oauthToolsetName).click();
+        const loginPopup = await popupPromise;
+        await oauthMock.navigateToCallback(loginPopup);
+        await baseAssertion.assertElementState(
+          toolsetLoginEventsModal.getRowByToolsetName(oauthToolsetName),
+          'hidden',
+        );
+        await baseAssertion.assertElementState(
+          toolsetLoginEventsModal.getRowByToolsetName(apiKeyToolsetName),
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMDIAL-5097: log in the API key toolset — its row disappears and the modal closes',
+      async () => {
+        await toolsetLoginEventsModal.getLoginButton(apiKeyToolsetName).click();
+        await previewToolsetLoginModalAssertion.assertElementState(
+          previewToolsetLoginModal,
+          'visible',
+        );
+        await previewToolsetLoginModal.apiKeyMaskedFieldInput.fillInInput(
+          GeneratorUtil.randomString(10),
+        );
+        await previewToolsetLoginModal.loginButton.click();
+        await baseAssertion.assertElementState(
+          toolsetLoginEventsModal,
+          'hidden',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  '[Quick app 2.0] Login form for one not public toolset in App editor - Decline all\n' + // EPMDIAL-5099
+    '[Quick app 2.0] Login form for more than one not public toolset in App editor - Decline all', // EPMDIAL-5102
+  async ({
+    marketplacePage,
+    entityEditorPage,
+    quickApp2Builder,
+    toolsetBuilder,
+    toolsetApiHelper,
+    applicationApiHelper,
+    modelApiHelper,
+    dialHomePage,
+    sendMessage,
+    toolsetLoginEventsModal,
+    toolsetSignInMock,
+    toast,
+    baseAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMDIAL-5099', 'EPMDIAL-5102');
+    const firstToolsetName = GeneratorUtil.randomToolsetName();
+    const secondToolsetName = GeneratorUtil.randomToolsetName();
+    const endpoint = GeneratorUtil.randomUrl();
+    const quickAppName = GeneratorUtil.randomApplicationName();
+    let firstToolset: Toolset;
+    let secondToolset: Toolset;
+
+    await dialTest.step(
+      'Precondition: create two own toolsets (logged out)',
+      async () => {
+        await toolsetApiHelper.createToolset(
+          toolsetBuilder.withDisplayName(firstToolsetName).build(),
+        );
+        firstToolset = (await toolsetApiHelper.getToolset(firstToolsetName))!;
+
+        await toolsetApiHelper.createToolset(
+          toolsetBuilder.withDisplayName(secondToolsetName).build(),
+        );
+        secondToolset = (await toolsetApiHelper.getToolset(secondToolsetName))!;
+      },
+    );
+
+    await dialTest.step(
+      'Make both toolsets appear as logged-out OAuth (mock the listing)',
+      async () => {
+        // No login happens here — decline all only needs the toolsets to show
+        // up as login-requiring.
+        const oauthSettings = ToolsetSignInMockHelper.loggedOutOAuthSettings({
+          authorization_endpoint: API.authorizationEndpoint(endpoint),
+          token_endpoint: API.tokenEndpoint(endpoint),
+        });
+        await toolsetSignInMock.setupToolsetsListingRoute(
+          await toolsetApiHelper.listToolsets(),
+          [
+            { toolset: firstToolset, authSettings: oauthSettings },
+            { toolset: secondToolset, authSettings: oauthSettings },
+          ],
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Precondition: create a Quick app 2.0 with a tool-supporting orchestrator and both toolsets',
+      async () => {
+        const toolSupportingModel =
+          await modelApiHelper.getToolSupportingModel();
+        await applicationApiHelper.createApplication(
+          quickApp2Builder
+            .withDisplayName(quickAppName)
+            .withOrchestratorModel(toolSupportingModel.id)
+            .addToolset(firstToolset.id!)
+            .addToolset(secondToolset.id!)
+            .build(),
+        );
+      },
+    );
+
+    await dialTest.step('Open the Quick app 2.0 in edit mode', async () => {
+      const quickApp = await modelApiHelper.getAgentByNameAndVersion({
+        name: quickAppName,
+      });
+      await marketplacePage.openEditQuickApp2Page(quickApp.reference);
+      await entityEditorPage.waitForPageLoadedForEdit(
+        EntityEditorAppTypes.QuickApp2,
+      );
+    });
+
+    await dialTest.step(
+      'Send a message in the preview to trigger the sign-in modal',
+      async () => {
+        await toolsetSignInMock.setupSignInChannel([
+          firstToolset,
+          secondToolset,
+        ]);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await sendMessage.messageInput.fillInInput(
+          GeneratorUtil.randomString(10),
+        );
+        await sendMessage.sendMessageButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'Click Decline all — a toast is shown and the modal closes',
+      async () => {
+        await baseAssertion.assertElementState(
+          toolsetLoginEventsModal,
+          'visible',
+        );
+        await toolsetLoginEventsModal.declineAllButton.click();
+        await baseAssertion.assertElementText(
+          toast,
+          ExpectedConstants.allToolsetSignInRequestsDeclined,
+        );
+        await toast.closeToast();
+        await baseAssertion.assertElementState(
+          toolsetLoginEventsModal,
+          'hidden',
         );
       },
     );

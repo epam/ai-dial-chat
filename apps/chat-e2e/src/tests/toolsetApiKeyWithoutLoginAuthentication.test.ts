@@ -47,15 +47,15 @@ dialTest(
     page,
   }) => {
     setTestIds(
-      'EPMRTC-7932',
-      'EPMRTC-7930',
-      'EPMRTC-7934',
-      'EPMRTC-8084',
-      'EPMRTC-7937',
-      'EPMRTC-8743',
-      'EPMRTC-8747',
-      'EPMRTC-8749',
-      'EPMRTC-8761',
+      'EPMDIAL-5403',
+      'EPMDIAL-5402',
+      'EPMDIAL-5405',
+      'EPMDIAL-5411',
+      'EPMDIAL-5408',
+      'EPMDIAL-5620',
+      'EPMDIAL-5623',
+      'EPMDIAL-5624',
+      'EPMDIAL-5626',
     );
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
@@ -354,7 +354,7 @@ dialTest(
     setTestIds,
     page,
   }) => {
-    setTestIds('EPMRTC-7933');
+    setTestIds('EPMDIAL-5404');
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       version: GeneratorUtil.randomEntityVersion(),

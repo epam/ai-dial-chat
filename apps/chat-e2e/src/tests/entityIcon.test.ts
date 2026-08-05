@@ -23,7 +23,7 @@ dialTest(
     localStorageManager,
   }) => {
     dialTest.slow();
-    setTestIds('EPMRTC-1036');
+    setTestIds('EPMDIAL-5828');
 
     await dialTest.step(
       'Open "Select an agent for conversation" modal for new conversation',
@@ -66,7 +66,7 @@ dialTest.skip(
     conversations,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
-    setTestIds('EPMRTC-386');
+    setTestIds('EPMDIAL-7282');
 
     await dialTest.step(
       'Create a new conversation based on Gpt model and send a request',

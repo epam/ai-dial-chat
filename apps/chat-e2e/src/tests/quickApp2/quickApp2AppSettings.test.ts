@@ -17,9 +17,9 @@ import {
 import { GeneratorUtil } from '@/src/utils';
 
 dialTest(
-  "[Quick app 2.0] Only Model with the feature 'tools: true' can be set as Orchestrator\n" + // EPMRTC-7271
-    "[Quick app 2.0] Temperature is not shown on App setting if 'temperature: false' and vice versa\n" + // EPMRTC-7092
-    "[Quick app 2.0] 'Selected model does not support tools' error when the preselected model has no tools support", // EPMRTC-8558
+  "[Quick app 2.0] Only Model with the feature 'tools: true' can be set as Orchestrator\n" + // EPMDIAL-4773
+    "[Quick app 2.0] Temperature is not shown on App setting if 'temperature: false' and vice versa\n" + // EPMDIAL-4781
+    "[Quick app 2.0] 'Selected model does not support tools' error when the preselected model has no tools support", // EPMDIAL-4775
   async ({
     marketplacePage,
     entityEditorPage,
@@ -32,7 +32,7 @@ dialTest(
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-7271', 'EPMRTC-7092', 'EPMRTC-8558');
+    setTestIds('EPMDIAL-4773', 'EPMDIAL-4781', 'EPMDIAL-4775');
     const excludedAppName = GeneratorUtil.randomApplicationName();
     const quickAppName = GeneratorUtil.randomApplicationName();
     let modelNoTemperature: DialAIEntityModel;
@@ -56,10 +56,8 @@ dialTest(
         modelWithTemperature = toolModels.find(
           (entity) => entity.features?.temperature,
         )!;
-        toolsUnsupportedModel = allEntities.find(
-          (entity) =>
-            entity.type === EntityType.Model && !entity.features?.tools,
-        )!;
+        toolsUnsupportedModel =
+          await modelApiHelper.getNonToolSupportingModel(allEntities);
         await applicationApiHelper.createApplication(
           quickApp2Builder
             .withDisplayName(quickAppName)
@@ -174,9 +172,9 @@ dialTest(
 );
 
 dialTest(
-  'Code Interpreter text and hint\n' + // EPMRTC-7283
-    '[Quick app 2.0] Support of Code Interpreter tool_set in Quick App 2 editor\n' + // EPMRTC-7018
-    '[Quick app 2.0] Instruction is auto-saved if there is some response in Preview', // EPMRTC-8152
+  'Code Interpreter text and hint\n' + // EPMDIAL-5024
+    '[Quick app 2.0] Support of Code Interpreter tool_set in Quick App 2 editor\n' + // EPMDIAL-5023
+    '[Quick app 2.0] Instruction is auto-saved if there is some response in Preview', // EPMDIAL-4784
   async ({
     marketplacePage,
     entityEditorPage,
@@ -193,7 +191,7 @@ dialTest(
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-7283', 'EPMRTC-7018', 'EPMRTC-8152');
+    setTestIds('EPMDIAL-5024', 'EPMDIAL-5023', 'EPMDIAL-4784');
     const quickAppName = GeneratorUtil.randomApplicationName();
     const instructions = GeneratorUtil.randomString(15);
     const updatedInstructions = GeneratorUtil.randomString(20);
@@ -201,11 +199,8 @@ dialTest(
     await dialTest.step(
       'Precondition: create a Quick app 2.0 via API with a tool-supporting orchestrator model',
       async () => {
-        const allEntities = await modelApiHelper.getModels();
-        const toolSupportingModel = allEntities.find(
-          (entity) =>
-            entity.type === EntityType.Model && entity.features?.tools,
-        )!;
+        const toolSupportingModel =
+          await modelApiHelper.getToolSupportingModel();
         await applicationApiHelper.createApplication(
           quickApp2Builder
             .withDisplayName(quickAppName)
@@ -332,14 +327,14 @@ dialTest(
 );
 
 dialTest(
-  '[Quick app 2.0] Attachments section is collapsed by default\n' + // EPMRTC-8649
-    '[Quick app 2.0] Conversation starters section is collapsed by default\n' + // EPMRTC-8648
-    '[Quick app 2.0] Attachment types and Max attachments number are available\n' + // EPMRTC-7268
-    '[Quick app 2.0] Starters settings are editable only when at least one starter is added\n' + //'EPMRTC-8716
-    '[Quick app 2.0] A conversation starter button appears in the preview\n' + // EPMRTC-8711
-    '[Quick app 2.0] A long starter button title is truncated in the preview\n' + // EPMRTC-8727
-    '[Quick app 2.0] Intro text is shown above the starters in the preview\n' + // EPMRTC-8724
-    '[Quick app 2.0] A removed starter button disappears from the preview', // EPMRTC-8712
+  '[Quick app 2.0] Attachments section is collapsed by default\n' + // EPMDIAL-5073
+    '[Quick app 2.0] Conversation starters section is collapsed by default\n' + // EPMDIAL-5075
+    '[Quick app 2.0] Attachment types and Max attachments number are available\n' + // EPMDIAL-5072
+    '[Quick app 2.0] Starters settings are editable only when at least one starter is added\n' + //'EPMDIAL-5083
+    '[Quick app 2.0] A conversation starter button appears in the preview\n' + // EPMDIAL-5079
+    '[Quick app 2.0] A long starter button title is truncated in the preview\n' + // EPMDIAL-5081
+    '[Quick app 2.0] Intro text is shown above the starters in the preview\n' + // EPMDIAL-5087
+    '[Quick app 2.0] A removed starter button disappears from the preview', // EPMDIAL-5080
   async ({
     marketplacePage,
     entityEditorPage,
@@ -355,7 +350,7 @@ dialTest(
     setTestIds,
     quickApp2EditorAppSettingsPreviewChat,
   }) => {
-    setTestIds('EPMRTC-8649', 'EPMRTC-8648', 'EPMRTC-7268', 'EPMRTC-8716');
+    setTestIds('EPMDIAL-5073', 'EPMDIAL-5075', 'EPMDIAL-5072', 'EPMDIAL-5083');
     const quickAppName = GeneratorUtil.randomApplicationName();
     const maxAttachments = 2;
     const starterTitle = GeneratorUtil.randomString(10);
@@ -365,11 +360,8 @@ dialTest(
     await dialTest.step(
       'Precondition: create a Quick app 2.0 via API with a tool-supporting orchestrator model',
       async () => {
-        const allEntities = await modelApiHelper.getModels();
-        const toolSupportingModel = allEntities.find(
-          (entity) =>
-            entity.type === EntityType.Model && entity.features?.tools,
-        )!;
+        const toolSupportingModel =
+          await modelApiHelper.getToolSupportingModel();
         await applicationApiHelper.createApplication(
           quickApp2Builder
             .withDisplayName(quickAppName)

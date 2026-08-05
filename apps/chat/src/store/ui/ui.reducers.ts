@@ -9,6 +9,7 @@ import { ThemesConfig } from '@/src/types/themes';
 import { ToastType } from '@/src/types/toasts';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
+import { DEFAULT_LOCAL } from '@/src/constants/locale';
 import { FilterTypes } from '@/src/constants/marketplace';
 import { DEFAULT_SIDEBAR_DISPLAY_ITEM_COUNT } from '@/src/constants/sidebars';
 
@@ -26,7 +27,7 @@ const openFoldersInitialState = {
 
 const initialState: UIState = {
   initialized: false,
-  locale: 'en',
+  locale: DEFAULT_LOCAL,
   theme: '',
   availableThemes: [],
   themesImages: {},
@@ -54,11 +55,13 @@ const initialState: UIState = {
     [FilterTypes.ENTITY_TYPE]: true,
     [FilterTypes.TOPICS]: true,
     [FilterTypes.SOURCES]: true,
+    [FilterTypes.AUTH]: true,
   },
   toolsetFilterPanelCollapseState: {
     [FilterTypes.ENTITY_TYPE]: false,
     [FilterTypes.TOPICS]: true,
     [FilterTypes.SOURCES]: true,
+    [FilterTypes.AUTH]: true,
   },
 };
 

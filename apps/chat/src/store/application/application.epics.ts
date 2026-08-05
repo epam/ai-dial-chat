@@ -203,6 +203,7 @@ const createApplicationEpic: AppEpic = (action$) =>
 
         catchError((err) => {
           console.error('Failed to create application:', err);
+          const { traceId } = parseApiError(err);
 
           return concat(
             of(ApplicationActions.createFail()),
@@ -216,6 +217,7 @@ const createApplicationEpic: AppEpic = (action$) =>
                       ns: Translation.Common,
                     },
                   ),
+                  traceId,
                 }),
               ),
               EMPTY,
@@ -258,7 +260,8 @@ const deleteApplicationEpic: AppEpic = (action$) =>
         }),
         catchError((err) => {
           console.error('Failed to delete application:', err);
-          return of(ApplicationActions.deleteFail());
+          const { traceId } = parseApiError(err);
+          return of(ApplicationActions.deleteFail({ traceId }));
         }),
       ),
     ),
@@ -458,6 +461,7 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
               }),
               catchError((err) => {
                 console.error('Failed to update application:', err);
+                const { traceId, message } = parseApiError(err);
                 return concat(
                   of(
                     ApplicationActions.updateFail({
@@ -472,13 +476,14 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
                           ns: Translation.Common,
                         },
                       ),
+                      traceId,
                     }),
                   ),
                   iif(
                     () => !!payload.shouldSetEditorError,
                     of(
                       ApplicationActions.setEditorError(
-                        err.message ??
+                        message ??
                           translate(
                             MarketplaceI18nKeys.AppSettingsNotMatchingSchema,
                             {
@@ -564,6 +569,7 @@ const editApplicationEpic: AppEpic = (action$, state$) =>
         }),
         catchError((err) => {
           console.error('Failed to edit application:', err);
+          const { traceId } = parseApiError(err);
           return of(
             ApplicationActions.editFail({
               oldApplication: payload.oldApplication,
@@ -572,6 +578,7 @@ const editApplicationEpic: AppEpic = (action$, state$) =>
               message: translate(CommonI18nKeys.FailedToUpdateApplication, {
                 ns: Translation.Common,
               }),
+              traceId,
             }),
           );
         }),
@@ -796,11 +803,12 @@ const continueUpdatingApplicationStatusEpic: AppEpic = (action$) =>
 
               return EMPTY;
             }),
-            catchError(() =>
+            catchError((err) =>
               of(
                 ApplicationActions.updateFunctionStatusFail({
                   id: payload.id,
                   status: payload.status,
+                  ...parseApiError(err),
                 }),
               ),
             ),
@@ -966,11 +974,13 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
       return concat(initialAction$, dispatchActions$, waitForData$).pipe(
         catchError((err) => {
           console.error('Failed to enter edit mode:', err);
+          const { traceId } = parseApiError(err);
           return of(
             UIActions.showErrorToast({
               message: translate(CommonI18nKeys.FailedToEnterEditMode, {
                 ns: Translation.Common,
               }),
+              traceId,
             }),
           );
         }),

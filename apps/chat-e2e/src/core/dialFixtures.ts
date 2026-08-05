@@ -22,6 +22,7 @@ import {
   CustomAppEditorAppSettingsPreviewBody,
   CustomAppEditorContainer,
   CustomAppEditorViewForm,
+  DownloadTableCsvModal,
   DragFile,
   Dropdown,
   EntityDetailsModal,
@@ -59,6 +60,7 @@ import {
   ShareAppModal,
   ToolsetEditorContainer,
   ToolsetEditorViewForm,
+  ToolsetLoginEventsModal,
   ToolsetLoginModal,
   TooltipPortal,
   TopicsTooltip,
@@ -146,6 +148,7 @@ import { PublicationApiHelper } from '@/src/testData/api/publicationApiHelper';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
+import { ToolsetSignInMockHelper } from '@/src/testData/toolsets/toolsetSignInMockHelper';
 import { DialErrorPage } from '@/src/ui/pages/dialErrorPage';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
 import { AgentSettings } from '@/src/ui/webElements/agentSettings';
@@ -357,6 +360,7 @@ const dialTest = test.extend<{
   additionalSecondUserItemApiHelper: ItemApiHelper;
   chatNotFound: ChatNotFound;
   uploadFromDeviceModal: UploadFromDeviceModal;
+  downloadTableCsvModal: DownloadTableCsvModal;
   selectFolderModal: SelectFolderModal;
   selectFolderManagerModal: SelectFolderManagerModal;
   selectFolders: Folders;
@@ -498,6 +502,10 @@ const dialTest = test.extend<{
   toolsetApiAuthenticationAssertion: ToolsetApiAuthenticationAssertion;
   toolsetLoginModal: ToolsetLoginModal;
   toolsetLoginModalAssertion: ToolsetLoginModalAssertion;
+  previewToolsetLoginModal: ToolsetLoginModal;
+  previewToolsetLoginModalAssertion: ToolsetLoginModalAssertion;
+  toolsetLoginEventsModal: ToolsetLoginEventsModal;
+  toolsetSignInMock: ToolsetSignInMockHelper;
   connectToolsetModal: ConnectToolsetModal;
 }>({
   beforeTestCleanup: [
@@ -1261,6 +1269,10 @@ const dialTest = test.extend<{
   uploadFromDeviceModal: async ({ page }, use) => {
     const uploadFromDeviceModal = new UploadFromDeviceModal(page);
     await use(uploadFromDeviceModal);
+  },
+  downloadTableCsvModal: async ({ page }, use) => {
+    const downloadTableCsvModal = new DownloadTableCsvModal(page);
+    await use(downloadTableCsvModal);
   },
   selectFolderModal: async ({ page }, use) => {
     const selectFolderModal = new SelectFolderModal(page);
@@ -2074,6 +2086,28 @@ const dialTest = test.extend<{
       toolsetLoginModal,
     );
     await use(toolsetLoginModalAssertion);
+  },
+  previewToolsetLoginModal: async ({ page }, use) => {
+    // App editor renders the sign-in dialog twice; target the interactive one.
+    const previewToolsetLoginModal = new ToolsetLoginModal(page, true);
+    await use(previewToolsetLoginModal);
+  },
+  previewToolsetLoginModalAssertion: async (
+    { previewToolsetLoginModal },
+    use,
+  ) => {
+    const previewToolsetLoginModalAssertion = new ToolsetLoginModalAssertion(
+      previewToolsetLoginModal,
+    );
+    await use(previewToolsetLoginModalAssertion);
+  },
+  toolsetLoginEventsModal: async ({ page }, use) => {
+    const toolsetLoginEventsModal = new ToolsetLoginEventsModal(page);
+    await use(toolsetLoginEventsModal);
+  },
+  toolsetSignInMock: async ({ page }, use) => {
+    const toolsetSignInMock = new ToolsetSignInMockHelper(page);
+    await use(toolsetSignInMock);
   },
   connectToolsetModal: async ({ page }, use) => {
     const connectToolsetModal = new ConnectToolsetModal(page);

@@ -50,7 +50,7 @@ dialTest(
     baseAssertion,
     chatBar,
   }) => {
-    setTestIds('EPMRTC-583', 'EPMRTC-776', 'EPMRTC-2894', 'EPMRTC-2957');
+    setTestIds('EPMDIAL-2800', 'EPMDIAL-2916', 'EPMDIAL-2895', 'EPMDIAL-2899');
     const messageToSend = `.Hi${ExpectedConstants.restrictedNameChars}...`;
     const expectedConversationName = `.Hi${'_'.repeat(ExpectedConstants.restrictedNameChars.length)}`;
 
@@ -115,7 +115,7 @@ dialTest(
     renameConversationModalAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-588', 'EPMRTC-816', 'EPMRTC-1494');
+    setTestIds('EPMDIAL-2801', 'EPMDIAL-2808', 'EPMDIAL-2810');
     const newName = 'new name to cancel';
     let conversation: Conversation;
     const conversationName = GeneratorUtil.randomString(70);
@@ -211,7 +211,7 @@ dialTest(
     renameConversationModal,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-584', 'EPMRTC-819');
+    setTestIds('EPMDIAL-2805', 'EPMDIAL-2809');
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
     await localStorageManager.setShowSideBarPanels();
@@ -263,13 +263,13 @@ dialTest(
     conversationAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-585',
-      'EPMRTC-3084',
-      'EPMRTC-821',
-      'EPMRTC-822',
-      'EPMRTC-818',
-      'EPMRTC-820',
-      'EPMRTC-3188',
+      'EPMDIAL-2806',
+      'EPMDIAL-2903',
+      'EPMDIAL-5934',
+      'EPMDIAL-5936',
+      'EPMDIAL-5933',
+      'EPMDIAL-5935',
+      'EPMDIAL-2909',
     );
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
@@ -359,14 +359,14 @@ dialTest(
     conversationDropdownMenuAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-594',
-      'EPMRTC-3054',
-      'EPMRTC-5548',
-      'EPMRTC-5550',
-      'EPMRTC-5552',
-      'EPMRTC-4734',
-      'EPMRTC-5549',
-      'EPMRTC-4755',
+      'EPMDIAL-2797',
+      'EPMDIAL-6259',
+      'EPMDIAL-3549',
+      'EPMDIAL-3551',
+      'EPMDIAL-3553',
+      'EPMDIAL-5990',
+      'EPMDIAL-3550',
+      'EPMDIAL-6001',
     );
     let conversation: Conversation;
     const currentDate = DateUtil.getCurrentLocalDate();
@@ -487,12 +487,12 @@ dialTest(
     localStorageManager,
   }) => {
     setTestIds(
-      'EPMRTC-595',
-      'EPMRTC-2855',
-      'EPMRTC-2895',
-      'EPMRTC-586',
-      'EPMRTC-1574',
-      'EPMRTC-1276',
+      'EPMDIAL-2804',
+      'EPMDIAL-2893',
+      'EPMDIAL-2897',
+      'EPMDIAL-2901',
+      'EPMDIAL-2902',
+      'EPMDIAL-2896',
     );
     const newNameWithEndDot = 'updated folder name.';
     let conversation: Conversation;
@@ -616,7 +616,7 @@ dialTest(
     confirmationDialog,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-607');
+    setTestIds('EPMDIAL-2815');
     const conversationInFolder =
       conversationData.prepareDefaultConversationInFolder();
     await dataInjector.createConversations(
@@ -658,7 +658,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-608');
+    setTestIds('EPMDIAL-2816');
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
     await localStorageManager.setShowSideBarPanels();
@@ -698,11 +698,11 @@ dialTest.skip(
     localStorageManager,
   }) => {
     setTestIds(
-      'EPMRTC-775',
-      'EPMRTC-796',
-      'EPMRTC-798',
-      'EPMRTC-777',
-      'EPMRTC-780',
+      'EPMDIAL-2919',
+      'EPMDIAL-2920',
+      'EPMDIAL-2922',
+      'EPMDIAL-2927',
+      'EPMDIAL-2928',
     );
     const yesterdayConversation = conversationData.prepareYesterdayConversation(
       defaultModel,
@@ -801,7 +801,7 @@ dialTest(
     selectFolderModalAssertion,
     chatBarFolderAssertion,
   }) => {
-    setTestIds('EPMRTC-864');
+    setTestIds('EPMDIAL-2849');
     const newFolderName = ExpectedConstants.newFolderWithIndexTitle(1);
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
@@ -864,7 +864,7 @@ dialTest(
     selectFolderModalAssertion,
     chatBarFolderAssertion,
   }) => {
-    setTestIds('EPMRTC-863');
+    setTestIds('EPMDIAL-2850');
     const folderName = GeneratorUtil.randomString(70);
     let conversation: Conversation;
 
@@ -949,7 +949,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-610');
+    setTestIds('EPMDIAL-2819');
     conversationData.resetData();
     const singleConversation = conversationData.prepareDefaultConversation();
     conversationData.resetData();
@@ -1017,7 +1017,7 @@ dialTest(
     localStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-611');
+    setTestIds('EPMDIAL-2820');
     const singleConversation = conversationData.prepareDefaultConversation();
     conversationData.resetData();
     const conversationInFolder =
@@ -1180,7 +1180,7 @@ dialTest.skip(
     localStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1313');
+    setTestIds('EPMDIAL-2930');
     await dialTest.step(
       'Prepare conversations for all available chronologies',
       async () => {
@@ -1255,7 +1255,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1188');
+    setTestIds('EPMDIAL-6451');
     const firstSearchTerm = 'EPAM';
     const specialSymbolsSearchTerm = '@';
     const specialSymbolName = 'test' + specialSymbolsSearchTerm + 'chat';
@@ -1345,7 +1345,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1201');
+    setTestIds('EPMDIAL-6452');
 
     let firstFolder: FolderInterface;
     let secondFolder: FolderInterface;
@@ -1468,7 +1468,7 @@ dialTest(
     renameConversationModal,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-2849', 'EPMRTC-2959');
+    setTestIds('EPMDIAL-2904', 'EPMDIAL-2905');
     const updatedConversationName = `😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß`;
     let conversation: Conversation;
 
@@ -1537,7 +1537,7 @@ for (const [request, expectedConversationName] of testRequestMap.entries()) {
       baseAssertion,
       conversationAssertion,
     }) => {
-      setTestIds('EPMRTC-3007', 'EPMRTC-3015', 'EPMRTC-2853');
+      setTestIds('EPMDIAL-2898', 'EPMDIAL-2900', 'EPMDIAL-2906');
 
       await dialTest.step(
         'Send request to chat and verify control chars are replaced with spaces',
@@ -1575,7 +1575,7 @@ dialTest(
     baseAssertion,
     conversationAssertion,
   }) => {
-    setTestIds('EPMRTC-2961');
+    setTestIds('EPMDIAL-2907');
 
     const longRequest =
       'Create a detailed guide on how to start a successful small business from scratch. Starting a small business from scratch can be a daunting task but with the right planning, strategy, and dedication, it is indeed possible to build one successful venture. This comprehensive guide will outline the step-by-step process to help aspiring entrepreneurs kickstart their journey and turn their business ideas into reality';
@@ -1625,7 +1625,7 @@ dialTest(
     conversationAssertion,
     chatHeaderAssertion,
   }) => {
-    setTestIds('EPMRTC-2958');
+    setTestIds('EPMDIAL-2892');
     const updatedRequest = `Chat${ExpectedConstants.restrictedNameChars}name.....`;
     const expectedConversationName = `Chat${'_'.repeat(ExpectedConstants.restrictedNameChars.length)}name`;
     let conversation: Conversation;

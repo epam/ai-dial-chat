@@ -22,3 +22,8 @@ export const parseApiError = (error?: { message?: string }) => {
 
   return { message, traceId };
 };
+
+const RESOURCE_PATH_TOO_LONG_REGEX = /exceeds max allowed size/i;
+
+export const isResourcePathTooLongError = (message?: string | null): boolean =>
+  !!message && RESOURCE_PATH_TOO_LONG_REGEX.test(message);

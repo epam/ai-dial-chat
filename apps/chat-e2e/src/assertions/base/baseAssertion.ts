@@ -220,6 +220,20 @@ export class BaseAssertion {
       .toHaveAttribute(attribute, expectedValue);
   }
 
+  public async assertElementAttributeAbsence(
+    element: BaseElement | Locator,
+    attribute: string,
+    expectedMessage?: string,
+  ) {
+    const elementLocator = BaseElement.getElementLocator(element);
+    await expect
+      .soft(
+        elementLocator,
+        expectedMessage ?? ExpectedMessages.elementAttributeIsAbsent,
+      )
+      .not.toHaveAttribute(attribute);
+  }
+
   public async assertCheckboxState(
     element: BaseElement | Locator,
     expectedState: CheckboxState,
@@ -603,6 +617,19 @@ export class BaseAssertion {
         ExpectedMessages.scrollPositionIsCorrect,
       )
       .toHaveJSProperty(scrollProperty, expectedValue);
+  }
+
+  public async assertCursorPosition(
+    element: BaseElement | Locator,
+    expectedPosition: number,
+    expectedMessage?: string,
+  ) {
+    await expect
+      .soft(
+        BaseElement.getElementLocator(element),
+        expectedMessage ?? ExpectedMessages.cursorPositionIsValid,
+      )
+      .toHaveJSProperty(Properties.selectionStart, expectedPosition);
   }
 
   public assertValueMatchObject(

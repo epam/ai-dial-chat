@@ -14,7 +14,7 @@ import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 
 dialTest(
-  'Create custom app with required fields', // EPMRTC-6262
+  'Create custom app with required fields', // EPMDIAL-4142
   async ({
     marketplacePage,
     marketplaceHeader,

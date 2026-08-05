@@ -20,7 +20,7 @@ for (let i = 0; i < overlayUsernames.length; i++) {
     page,
     setTestIds,
   }, testInfo) => {
-    setTestIds('EPMRTC-3785');
+    setTestIds('EPMDIAL-2300');
     const overlayLoginPage = new OverlayLoginPage(page);
     await overlayLoginPage.navigateToUrl(
       OverlaySandboxUrls.disableAllFeaturesUrl,

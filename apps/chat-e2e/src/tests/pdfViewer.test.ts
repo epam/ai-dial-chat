@@ -28,7 +28,7 @@ dialTest(
     pdfPreviewModalAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-8981');
+    setTestIds('EPMDIAL-6145');
     const requestMessageIndex = 1;
     let conversationWithPdfAttachment: Conversation;
 
@@ -126,7 +126,7 @@ dialTest(
     tooltipAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-8986', 'EPMRTC-8988');
+    setTestIds('EPMDIAL-6146', 'EPMDIAL-6148');
     const pdfName = `${filenamePrefix}${GeneratorUtil.randomString(156 - filenamePrefix.length)}.pdf`;
     const requestMessageIndex = 2;
     const pdfAnswerPageIndex = 2;
@@ -230,7 +230,7 @@ dialTest(
     pdfPreviewModalAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-8983');
+    setTestIds('EPMDIAL-6151');
     const requestMessageIndex = 1;
     const firstPage = 1;
     let conversationWithPdfAttachment: Conversation;

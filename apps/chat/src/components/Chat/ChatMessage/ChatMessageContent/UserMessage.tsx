@@ -223,6 +223,11 @@ export const UserMessage = memo(function UserMessage({
     return mappedUserEditableAttachments.map(({ id }) => id);
   }, [mappedUserEditableAttachments]);
 
+  const mappedUserDialLinks = useMemo(
+    () => getDialLinksFromAttachments(message.custom_content?.attachments),
+    [message.custom_content?.attachments],
+  );
+
   const [newEditableAttachmentsIds, setNewEditableAttachmentsIds] = useState<
     string[]
   >(mappedUserEditableAttachmentsIds);
@@ -284,10 +289,17 @@ export const UserMessage = memo(function UserMessage({
     [newEditableAttachments],
   );
 
+  const isDialLinksChanged = useMemo(
+    () => !isEqual(mappedUserDialLinks, selectedDialLinks),
+    [mappedUserDialLinks, selectedDialLinks],
+  );
+
   const isContentEmptyAndNoAttachments = useMemo(
     () =>
-      messageContent.trim().length <= 0 && newEditableAttachments.length <= 0,
-    [messageContent, newEditableAttachments],
+      messageContent.trim().length <= 0 &&
+      newEditableAttachments.length <= 0 &&
+      !isDialLinksChanged,
+    [messageContent, newEditableAttachments, isDialLinksChanged],
   );
 
   const selectedFileIds = useMemo(
@@ -780,6 +792,11 @@ export const UserMessage = memo(function UserMessage({
               onClick={() => {
                 setMessageContent(message.content);
                 setNewEditableAttachmentsIds(mappedUserEditableAttachmentsIds);
+                setSelectedDialLinks(
+                  getDialLinksFromAttachments(
+                    message.custom_content?.attachments,
+                  ),
+                );
                 if (isRecording) {
                   stopRecording();
                 }

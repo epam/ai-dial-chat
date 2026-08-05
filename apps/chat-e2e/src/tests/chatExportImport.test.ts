@@ -54,7 +54,7 @@ dialTest(
     conversationDropdownMenu,
     confirmationDialog,
   }) => {
-    setTestIds('EPMRTC-908', 'EPMRTC-909');
+    setTestIds('EPMDIAL-6963', 'EPMDIAL-6964');
     let conversationInFolder: FolderConversation;
     let exportedData: UploadDownloadData;
     await dialTest.step(
@@ -168,7 +168,7 @@ dialTest(
     confirmationDialog,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-907');
+    setTestIds('EPMDIAL-6962');
     let nestedFolders: FolderInterface[];
     let conversationOutsideFolder: Conversation;
     let nestedConversations: Conversation[] = [];
@@ -259,7 +259,7 @@ dialTest(
     chatHeader,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-913');
+    setTestIds('EPMDIAL-6966');
     let conversationsInFolder: FolderConversation;
     let conversationOutsideFolder: Conversation;
     let importedFolderConversation: Conversation;
@@ -405,7 +405,7 @@ dialTest(
     localStorageManager,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
-    setTestIds('EPMRTC-923', 'EPMRTC-924', 'EPMRTC-925', 'EPMRTC-3075');
+    setTestIds('EPMDIAL-6972', 'EPMDIAL-6973', 'EPMDIAL-6974', 'EPMDIAL-6432');
     let importedRootConversation: Conversation;
     const requests = ['1+2', '2+3', '3+4'];
 
@@ -527,7 +527,7 @@ dialTest(
       ),
       noImportModelsSkipReason,
     );
-    setTestIds('EPMRTC-906', 'EPMRTC-779');
+    setTestIds('EPMDIAL-6978', 'EPMDIAL-2929');
     const gpt4Model = ModelsUtil.getModel(ImportedModelIds.GPT_4_O)!;
     await dialTest.step(
       'Import conversation from 1.4 app version and verify folder with Gpt-3.5 chat and its history is visible',
@@ -645,7 +645,7 @@ dialTest(
     folderDropdownMenu,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1359', 'EPMRTC-1368', 'EPMRTC-1369');
+    setTestIds('EPMDIAL-6981', 'EPMDIAL-6982', 'EPMDIAL-6983');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
     let exportedData: UploadDownloadData;
@@ -790,7 +790,7 @@ dialTest(
     chatBar,
     conversationDropdownMenu,
   }) => {
-    setTestIds('EPMRTC-1374');
+    setTestIds('EPMDIAL-6984');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
     const updatedConversationNames: string[] = [];
@@ -924,7 +924,7 @@ dialTest(
     chatBarFolderAssertion,
     toast,
   }) => {
-    setTestIds('EPMRTC-1387', 'EPMRTC-1979');
+    setTestIds('EPMDIAL-6985', 'EPMDIAL-6997');
     let nestedFolders: FolderInterface[];
     let thirdLevelFolderConversation: Conversation;
     let exportedData: UploadDownloadData;

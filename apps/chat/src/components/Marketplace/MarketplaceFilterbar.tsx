@@ -157,6 +157,7 @@ interface FiltersRendererProps {
   selectedFilters: MarketplaceFilters;
   topics: string[];
   sourceTypes: SourceType[];
+  authTypes: string[];
   handleToggleFilterSection: (filterType: FilterTypes) => void;
   handleApplyFilter: (type: FilterTypes, value: string) => void;
 }
@@ -167,6 +168,7 @@ function FiltersRenderer({
   selectedFilters,
   topics,
   sourceTypes,
+  authTypes,
   handleToggleFilterSection,
   handleApplyFilter,
 }: FiltersRendererProps) {
@@ -216,6 +218,15 @@ function FiltersRenderer({
           onApplyFilter={handleApplyFilter}
         />
       )}
+      <FilterSection
+        sectionName={t(SideBarI18nKeys.Authentication)}
+        filterValues={authTypes}
+        panelCollapseState={panelCollapseState}
+        selectedFilters={selectedFilters}
+        filterType={FilterTypes.AUTH}
+        onToggleFilterSection={handleToggleFilterSection}
+        onApplyFilter={handleApplyFilter}
+      />
     </div>
   );
 }
@@ -244,6 +255,7 @@ export const MarketplaceFilterbar = memo(() => {
   const {
     topicsFilters,
     sourcesFilters,
+    authFilters,
     selectedFilters,
     showLoader,
     setFilters,
@@ -346,6 +358,7 @@ export const MarketplaceFilterbar = memo(() => {
             selectedFilters={selectedFilters}
             topics={topicsFilters}
             sourceTypes={sourcesFilters}
+            authTypes={authFilters}
             handleToggleFilterSection={handleToggleFilterSection}
             handleApplyFilter={handleApplyFilter}
           />

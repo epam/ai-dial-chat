@@ -84,9 +84,10 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
 
   const isSomeFilterNotEmpty =
     !!searchTerm.length ||
-    !!effectiveFilters[FilterTypes.ENTITY_TYPE].length ||
-    !!effectiveFilters[FilterTypes.TOPICS].length ||
-    !!effectiveFilters[FilterTypes.SOURCES].length;
+    !!selectedFilters[FilterTypes.ENTITY_TYPE].length ||
+    !!selectedFilters[FilterTypes.TOPICS].length ||
+    !!selectedFilters[FilterTypes.SOURCES].length ||
+    !!selectedFilters[FilterTypes.AUTH].length;
 
   const featuredEntities = useMemo<T[]>(() => {
     if (

@@ -40,7 +40,7 @@ dialTest(
     toolsetApiAuthenticationAssertion,
     page,
   }) => {
-    setTestIds('EPMRTC-6969', 'EPMRTC-7107', 'EPMRTC-7027');
+    setTestIds('EPMDIAL-5369', 'EPMDIAL-5382', 'EPMDIAL-5375');
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       version: GeneratorUtil.randomEntityVersion(),
@@ -407,7 +407,7 @@ dialTest(
     confirmationDialog,
     page,
   }) => {
-    setTestIds('EPMRTC-7183', 'EPMRTC-7108', 'EPMRTC-7408', 'EPMRTC-7080');
+    setTestIds('EPMDIAL-5387', 'EPMDIAL-5385', 'EPMDIAL-5388', 'EPMDIAL-5384');
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       version: GeneratorUtil.randomEntityVersion(),

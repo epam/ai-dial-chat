@@ -6,7 +6,10 @@ import { useRouter } from 'next/router';
 import { useEditorSaveLabel } from '@/src/hooks/useEditorSaveLabel';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isApplicationType } from '@/src/utils/app/application';
+import {
+  isApplicationType,
+  isQuickApp2Editor,
+} from '@/src/utils/app/application';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isTruthyQuery } from '@/src/utils/app/route';
 
@@ -99,8 +102,13 @@ export const AppsEditorHeader = ({
           ? MarketplaceI18nKeys.CodeApp
           : MarketplaceI18nKeys.CustomApp,
       );
+
+  const isQuickApp2 = isQuickApp2Editor(
+    decodeURIComponent(schemaId.toString()),
+  );
   const hasCustomEditor =
-    !!schema?.[ApplicationTypeSchemaProperties.applicationTypeEditorUrl];
+    !!schema?.[ApplicationTypeSchemaProperties.applicationTypeEditorUrl] &&
+    !isQuickApp2;
 
   const agent = id ? modelsMap[id.toString()] : undefined;
   const isPublicApp = agent && isEntityIdPublic(agent);

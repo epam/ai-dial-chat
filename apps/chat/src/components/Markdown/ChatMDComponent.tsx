@@ -295,7 +295,7 @@ export const ChatMDComponent = memo(
     if (plainTextMode) {
       return (
         <div className={mdClassNames}>
-          {`${processedContent}${isShowResponseLoader ? modelCursorSignWithBackquote : ''}`}
+          {`${processedContent}${isShowResponseLoader ? modelCursorSign : ''}`}
         </div>
       );
     }

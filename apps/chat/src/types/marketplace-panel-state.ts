@@ -6,4 +6,5 @@ export interface MarketplacePanelState {
   // [FilterTypes.ENVIRONMENT]: boolean;
   [FilterTypes.TOPICS]: boolean;
   [FilterTypes.SOURCES]: boolean;
+  [FilterTypes.AUTH]: boolean;
 }

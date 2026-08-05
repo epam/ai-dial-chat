@@ -218,6 +218,61 @@ export class ChatMessages extends BaseElement {
     );
   }
 
+  public getChatMessageTableDownloadIcon(message: string | number) {
+    return this.getChatMessageTableControls(message).locator(
+      TableSelectors.downloadCsvIcon,
+    );
+  }
+
+  public getChatMessageTableHeaderScrollContainer(message: string | number) {
+    return this.createElementFromLocator(
+      this.getChatMessageTable(message).locator(
+        TableSelectors.headerScrollContainer,
+      ),
+    );
+  }
+
+  public getChatMessageTableBodyScrollContainer(message: string | number) {
+    return this.createElementFromLocator(
+      this.getChatMessageTable(message).locator(
+        TableSelectors.bodyScrollContainer,
+      ),
+    );
+  }
+
+  public getChatMessageDetailsSection(
+    message: string | number,
+    index?: number,
+  ) {
+    const detailsSections = this.createElementFromLocator(
+      this.getChatMessageContent(message).locator(Tags.details),
+    );
+    return index ? detailsSections.getNthElement(index) : detailsSections;
+  }
+
+  public getChatMessageDetailsSummary(
+    message: string | number,
+    index?: number,
+  ) {
+    const detailsSummaries = this.createElementFromLocator(
+      this.getChatMessageContent(message).locator(Tags.summary),
+    );
+    return index ? detailsSummaries.getNthElement(index) : detailsSummaries;
+  }
+
+  public async expandDetailsSummary(message: string | number, index: number) {
+    await this.getChatMessageDetailsSummary(message, index).click();
+  }
+
+  public async getChatMessageContentLines(message: string | number) {
+    const messageContent =
+      await this.getChatMessageContent(message).innerText();
+    return messageContent
+      .split('\n')
+      .map((row) => row.trim())
+      .filter((row) => row.length > 0);
+  }
+
   public getChatMessageTableHeaderColumns(message: string | number) {
     return this.getChatMessageTable(message)
       .locator(Tags.table)

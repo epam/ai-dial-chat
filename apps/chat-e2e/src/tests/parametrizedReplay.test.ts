@@ -64,11 +64,11 @@ dialTest(
     localStorageManager,
   }) => {
     setTestIds(
-      'EPMRTC-3886',
-      'EPMRTC-3888',
-      'EPMRTC-3889',
-      'EPMRTC-3894',
-      'EPMRTC-3887',
+      'EPMDIAL-6329',
+      'EPMDIAL-6331',
+      'EPMDIAL-6332',
+      'EPMDIAL-6336',
+      'EPMDIAL-6330',
     );
     let prompt: Prompt;
     let conversation: Conversation;
@@ -224,7 +224,7 @@ dialTest(
     promptBar,
     confirmationDialog,
   }) => {
-    setTestIds('EPMRTC-3890', 'EPMRTC-3892');
+    setTestIds('EPMDIAL-6333', 'EPMDIAL-6338');
     let prompt: Prompt;
     let conversation: Conversation;
     let replayConversation: Conversation;
@@ -338,7 +338,7 @@ dialSharedWithMeTest(
     localStorageManager,
     additionalShareUserLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-3895', 'EPMRTC-3893');
+    setTestIds('EPMDIAL-6337', 'EPMDIAL-6339');
     let prompt: Prompt;
     let conversation: Conversation;
     let replayConversation: Conversation;
@@ -435,7 +435,7 @@ dialTest(
     apiAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3884');
+    setTestIds('EPMDIAL-6340');
     let firstPrompt: Prompt;
     let secondPrompt: Prompt;
     let thirdPrompt: Prompt;

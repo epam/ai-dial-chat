@@ -1,3 +1,4 @@
+import { parseLocalizedDescription } from '@/src/utils/app/application';
 import {
   getStorageSafeUniqueToolsetName,
   isToolsetSignedIn,
@@ -11,7 +12,11 @@ import { formErrors, urlErrors } from '@/src/constants/form-errors';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 import { MarketplaceEntityBaseSchema } from '@/src/constants/validation-helpers';
 
-import { ToolsetAuthTypes, ToolsetTransportType } from '@epam/ai-dial-shared';
+import {
+  TokenEndpointAuthMethod,
+  ToolsetAuthTypes,
+  ToolsetTransportType,
+} from '@epam/ai-dial-shared';
 
 export const ENDPOINT_PLACEHOLDER = 'ENDPOINT_PLACEHOLDER';
 
@@ -34,6 +39,9 @@ export const ToolsetLoginFormSchema = zodValidation
     clientSecret: zodValidation.string().optional(),
     authorizationEndpoint: zodValidation.string().optional(),
     tokenEndpoint: zodValidation.string().optional(),
+    tokenEndpointAuthMethod: zodValidation
+      .enum(TokenEndpointAuthMethod)
+      .optional(),
     scopes: zodValidation.array(zodValidation.string()).optional(),
   })
   .superRefine((data, ctx) => {
@@ -58,14 +66,14 @@ export const ToolsetLoginFormSchema = zodValidation
       data.authenticationType === ToolsetAuthTypes.OAUTH &&
       data.withLogin === WithLogin.WithConfig
     ) {
-      if (!data.clientId) {
+      if (!data.clientId?.trim()) {
         ctx.addIssue({
           code: 'custom',
           path: ['clientId'],
           message: 'Client ID is required',
         });
       }
-      if (!data.clientSecret) {
+      if (!data.clientSecret?.trim()) {
         ctx.addIssue({
           code: 'custom',
           path: ['clientSecret'],
@@ -146,6 +154,9 @@ export const getDefaultLoginFormData = ({
         authorizationEndpoint:
           toolset?.authSettings?.authorizationEndpoint ?? '',
         tokenEndpoint: toolset?.authSettings?.tokenEndpoint ?? '',
+        tokenEndpointAuthMethod:
+          toolset?.authSettings?.tokenEndpointAuthMethod ??
+          TokenEndpointAuthMethod.ClientSecretPost,
         withLogin:
           !prevData &&
           toolset?.authSettings?.clientSecret &&
@@ -169,11 +180,13 @@ export const getDefaultFormData = ({
   toolsets,
   prevData,
   isAdminReview,
+  locale,
 }: {
   toolset?: ToolsetModel;
   toolsets?: ToolsetModel[];
   prevData?: ToolsetEditorForm;
   isAdminReview?: boolean;
+  locale: string;
 }): ToolsetEditorForm => {
   return {
     name:
@@ -191,7 +204,7 @@ export const getDefaultFormData = ({
       DEFAULT_TOOLSET_NAME,
     endpoint: toolset ? (toolset.endpoint ?? '') : ENDPOINT_PLACEHOLDER,
     protocol: toolset?.transport ?? ToolsetTransportType.HTTP,
-    description: toolset?.description ?? '',
+    description: parseLocalizedDescription(locale, toolset?.description),
     allowedTools: toolset?.allowedTools ?? [],
     iconUrl: toolset?.iconUrl ?? '',
     version: toolset ? (toolset.version ?? '') : DEFAULT_VERSION,

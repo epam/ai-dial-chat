@@ -17,6 +17,7 @@ import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
 import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
+import { isQuickApp2 } from '@/src/utils/app/application';
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
   excludeSystemMessages,
@@ -138,6 +139,9 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
   );
   const isOptimisticDefaultModelLoad = useAppSelector(
     SettingsSelectors.selectIsOptimisticDefaultModelLoad,
+  );
+  const isInstalledModelsInitialized = useAppSelector(
+    ModelsSelectors.selectIsInstalledModelsInitialized,
   );
   const isRegenerateAssistantMessageHided = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(
@@ -589,13 +593,15 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
   const selectedConversationSchemas = useMemo(
     () =>
       selectedConversations
-        .map((conversation) =>
-          configurationSchemas.find(
-            (schema) => schema.modelId === conversation.model.id,
-          ),
-        )
+        .map((conversation) => {
+          const resolvedModelId =
+            modelsMap[conversation.model.id]?.id ?? conversation.model.id;
+          return configurationSchemas.find(
+            (schema) => schema.modelId === resolvedModelId,
+          );
+        })
         .filter((schema) => schema !== undefined),
-    [configurationSchemas, selectedConversations],
+    [configurationSchemas, modelsMap, selectedConversations],
   );
   const isSomeConversationWithSchema = selectedConversations.some(
     (conv) =>
@@ -605,11 +611,15 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
           .some(isFormSchemaValid)) ||
       isConversationWithFormSchema(conv),
   );
+  const isSchemaCompareWarningVisible =
+    isSomeConversationWithSchema && selectedConversations.length > 1;
 
+  const isOptimisticReadyBeforeInstalledModelsLoaded =
+    !isInstalledModelsInitialized && isOptimisticDefaultModelLoad;
   const isChatReadyForInput =
     !isMarketplaceEnabled ||
     areModelsInstalled ||
-    isOptimisticDefaultModelLoad ||
+    isOptimisticReadyBeforeInstalledModelsLoaded ||
     isIsolatedView ||
     isAdminPreview ||
     isApproveRequiredEntity;
@@ -618,12 +628,12 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
       !isReadOnly &&
       !isApproveRequiredEntity &&
       (areModelsInstalled ||
-        isOptimisticDefaultModelLoad ||
+        isOptimisticReadyBeforeInstalledModelsLoaded ||
         isAdminPreview ||
         isReplay ||
         isIsolatedView ||
         !isMarketplaceEnabled) &&
-      !(isSomeConversationWithSchema && selectedConversations.length > 1)) ||
+      !isSchemaCompareWarningVisible) ||
     (isValidApproveRequiredConversation && isApproveRequiredInput);
 
   const shouldShowIntroText =
@@ -699,7 +709,8 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
                   <div
                     className={classNames(
                       'flex h-full flex-col',
-                      areSelectedConversationsEmpty
+                      areSelectedConversationsEmpty &&
+                        !isSchemaCompareWarningVisible
                         ? 'justify-center'
                         : 'justify-between',
                     )}
@@ -930,14 +941,18 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
                       />
                     ) : (
                       <>
-                        {shouldShowIntroText && (
-                          <IntroText
-                            isWideLayout={isWideLayout}
-                            modelId={selectedConversations[0].model.id}
-                          />
-                        )}
+                        {!isWideLayout && (
+                          <>
+                            {shouldShowIntroText && (
+                              <IntroText
+                                isWideLayout={isWideLayout}
+                                modelId={selectedConversations[0].model.id}
+                              />
+                            )}
 
-                        {!isWideLayout && <ChatStarters />}
+                            <ChatStarters />
+                          </>
+                        )}
 
                         {!isPlayback && (
                           <ChatInput
@@ -977,7 +992,18 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
                           />
                         )}
 
-                        {isWideLayout && <ChatStarters />}
+                        {isWideLayout && (
+                          <div className="flex flex-col gap-4">
+                            {shouldShowIntroText && (
+                              <IntroText
+                                isWideLayout={isWideLayout}
+                                modelId={selectedConversations[0].model.id}
+                              />
+                            )}
+
+                            <ChatStarters />
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
@@ -1195,7 +1221,12 @@ export function Chat({ isPreview }: ChatProps) {
 
   useEffect(() => {
     const configurationAppReference = selectedConversations
-      .filter((conv) => doesModelHaveConfiguration(modelsMap[conv.model.id]))
+      .filter((conv) => {
+        const model = modelsMap[conv.model.id];
+        return (
+          doesModelHaveConfiguration(model) || (!!model && isQuickApp2(model))
+        );
+      })
       .map((conv) => conv.model.id);
     const configurationAppIds = configurationAppReference
       .map((reference) => modelsMap[reference]?.id)
