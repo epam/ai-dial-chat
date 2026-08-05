@@ -1,4 +1,5 @@
-import { DialFile, DialFileNodeType } from '@epam/ai-dial-ui-kit';
+import { DialFile, DialFileNodeType } from '@epam/ai-dial-react-file-manager';
+import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
@@ -8,7 +9,7 @@ import { PublishFoldersTree } from '../PublishFoldersTree';
 
 const capturedProps: {
   current: ComponentProps<
-    typeof import('@epam/ai-dial-ui-kit').DialFoldersTree
+    typeof import('@epam/ai-dial-react-file-manager').DialFoldersTree
   > | null;
 } = { current: null };
 
@@ -22,17 +23,16 @@ const renderFileRow = (
   </div>
 );
 
-vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-react-file-manager')>();
   return {
     ...actual,
     DialFoldersTree: (props: ComponentProps<typeof actual.DialFoldersTree>) => {
       capturedProps.current = props;
       return (
         <div role="tree">
-          {props.items.map((file: DialFile) =>
-            renderFileRow(file, props.onItemClick),
-          )}
+          {props.items.map((file) => renderFileRow(file, props.onItemClick))}
           {props.emptyStateDescription && <p>{props.emptyStateDescription}</p>}
         </div>
       );
@@ -112,16 +112,7 @@ describe('PublishFoldersTree', () => {
   });
 
   describe('per-row context menu (add sibling / add child)', () => {
-    const clickMenuItem = (
-      menuItems: ReturnType<
-        NonNullable<
-          ComponentProps<
-            typeof import('@epam/ai-dial-ui-kit').DialFoldersTree
-          >['getContextMenuItems']
-        >
-      >,
-      key: string,
-    ) =>
+    const clickMenuItem = (menuItems: DropdownItem[], key: string) =>
       act(() =>
         menuItems
           .find((item) => item.key === key)

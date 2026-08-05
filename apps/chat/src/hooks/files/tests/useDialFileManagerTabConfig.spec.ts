@@ -1,4 +1,5 @@
-import { DialFileManagerTabs, type TabModel } from '@epam/ai-dial-ui-kit';
+import { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
+import type { TabModel } from '@epam/ai-dial-ui-kit';
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useDialFileManagerTabConfig } from '../useDialFileManagerTabConfig';

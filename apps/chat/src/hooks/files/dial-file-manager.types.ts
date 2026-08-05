@@ -6,8 +6,8 @@ import type {
   DialFileManagerTabs,
   DialUploadFileItem,
   FileManagerColumnKey,
-  NotificationVariant,
-} from '@epam/ai-dial-ui-kit';
+} from '@epam/ai-dial-react-file-manager';
+import type { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FileUploadBatchState } from '../../components/DialFileManagerModal/types/upload';
 import type {
   DialFileManagerActionProfile,

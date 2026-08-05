@@ -63,7 +63,7 @@ The edit-message attach (+) menu (`EditMessageInput`, rendered while a message i
 
 ### Requirement: Open FileManager in modal
 
-The system SHALL open a `DialPopup` modal (title `"Attach files"`, i18n key `basic.attachFiles`) when the user selects "DIAL file system" from the attachment menu. The modal SHALL render `DialFileManager` from `@epam/ai-dial-ui-kit` as its body and use `!h-[min(800px,100dvh)]`, matching the legacy file-manager modal's 800px cap and overriding the ui-kit's desktop auto-height.
+The system SHALL open a `DialPopup` modal (title `"Attach files"`, i18n key `basic.attachFiles`) when the user selects "DIAL file system" from the attachment menu. The modal SHALL render `DialFileManager` from `@epam/ai-dial-react-file-manager` as its body and use `!h-[min(800px,100dvh)]`, matching the legacy file-manager modal's 800px cap and overriding the ui-kit's desktop auto-height.
 
 - Modal state (`isDialFileManagerOpen`) is owned by `ConversationView`.
 - `DialFileManagerModal` is lazy-loaded via `React.lazy` + `Suspense` in `ConversationView`.

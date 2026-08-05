@@ -3,7 +3,7 @@ import { join } from 'path';
 import {
   DialFileManagerActions,
   DialFileManagerTabs,
-} from '@epam/ai-dial-ui-kit';
+} from '@epam/ai-dial-react-file-manager';
 import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { UseDialFileManagerResult } from '../../../hooks/files/useDialFileManager';
@@ -55,8 +55,9 @@ const capturedDialFileManagerProps: {
   } | null;
 } = { current: null };
 
-vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-react-file-manager')>();
   return {
     ...actual,
     DialFileManager: (props: {
