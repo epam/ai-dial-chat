@@ -36,6 +36,19 @@ describe('HealthController', () => {
     expect(res.body.timestamp).toBeDefined();
   });
 
+  it('GET /health includes a non-empty buildId', async () => {
+    const res = await request(app.getHttpServer()).get('/health').expect(200);
+    expect(res.body.buildId).toBeTruthy();
+  });
+
+  it('GET /health returns the same buildId across repeated calls', async () => {
+    const first = await request(app.getHttpServer()).get('/health').expect(200);
+    const second = await request(app.getHttpServer())
+      .get('/health')
+      .expect(200);
+    expect(second.body.buildId).toBe(first.body.buildId);
+  });
+
   describe('with global SessionGuard', () => {
     let guardedApp: INestApplication;
 

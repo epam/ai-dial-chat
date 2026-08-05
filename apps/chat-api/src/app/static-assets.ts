@@ -5,6 +5,8 @@ import type { ServeStaticModuleOptions } from '@nestjs/serve-static';
 const API_ROUTE_EXCLUDE_PATTERN = '/api{/*splat}';
 export const OVERLAY_SANDBOX_ROUTE = '/overlay-sandbox';
 const OVERLAY_SANDBOX_ROUTE_EXCLUDE_PATTERN = `${OVERLAY_SANDBOX_ROUTE}{/*splat}`;
+const ASSETS_ROUTE_EXCLUDE_PATTERN = '/assets{/*splat}';
+const OVERLAY_SANDBOX_ASSETS_ROUTE_EXCLUDE_PATTERN = `${OVERLAY_SANDBOX_ROUTE}/assets{/*splat}`;
 const SPA_RENDER_PATH = '/{*frontendRoute}';
 
 type PathExists = (path: string) => boolean;
@@ -46,7 +48,11 @@ const createFrontendStaticOptions = (
 ): ServeStaticModuleOptions => ({
   rootPath,
   renderPath: SPA_RENDER_PATH,
-  exclude: [API_ROUTE_EXCLUDE_PATTERN, OVERLAY_SANDBOX_ROUTE_EXCLUDE_PATTERN],
+  exclude: [
+    API_ROUTE_EXCLUDE_PATTERN,
+    OVERLAY_SANDBOX_ROUTE_EXCLUDE_PATTERN,
+    ASSETS_ROUTE_EXCLUDE_PATTERN,
+  ],
 });
 
 const createOverlaySandboxStaticOptions = (
@@ -55,7 +61,10 @@ const createOverlaySandboxStaticOptions = (
   rootPath,
   serveRoot: OVERLAY_SANDBOX_ROUTE,
   renderPath: SPA_RENDER_PATH,
-  exclude: [API_ROUTE_EXCLUDE_PATTERN],
+  exclude: [
+    API_ROUTE_EXCLUDE_PATTERN,
+    OVERLAY_SANDBOX_ASSETS_ROUTE_EXCLUDE_PATTERN,
+  ],
 });
 
 export const createServeStaticOptions = ({

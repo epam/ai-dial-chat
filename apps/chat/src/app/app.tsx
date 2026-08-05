@@ -31,6 +31,7 @@ import ConversationSourcesPanel from '../components/ConversationSourcesPanel/Con
 import { RouteErrorBoundary } from '../components/ErrorBoundary/ErrorBoundary';
 import Header from '../components/Header/Header';
 import Navigation from '../components/Navigation/Navigation';
+import NewVersionFallback from '../components/NewVersionFallback/NewVersionFallback';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
 import {
   getConversationRoute,
@@ -47,6 +48,7 @@ import { useSourcesSidebar } from '../context/SourcesSidebarContext';
 import { useTheme } from '../context/ThemeContext';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import { useConversationListBridge } from '../hooks/conversation/useConversationListBridge';
+import { useAppVersionCheck } from '../hooks/useAppVersionCheck/useAppVersionCheck';
 import usePanelMaxWidth, {
   MIN_CONTENT_AREA_WIDTH,
 } from '../hooks/usePanelMaxWidth';
@@ -111,6 +113,7 @@ const App: FC = () => {
   const { currentTheme } = useTheme();
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
+  const { isNewVersionAvailable } = useAppVersionCheck();
 
   /*
    * Registers the overlay's conversation-list bridge. Mounted here (below
@@ -268,6 +271,10 @@ const App: FC = () => {
     }
     navigate(ROUTES.Root);
   }, [navigate, isMobile, closePanel]);
+
+  if (isNewVersionAvailable) {
+    return <NewVersionFallback />;
+  }
 
   return (
     <div className="flex size-full flex-col">
