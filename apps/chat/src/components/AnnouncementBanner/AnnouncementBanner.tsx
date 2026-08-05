@@ -59,7 +59,7 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
       aria-label={t(AnnouncementBannerI18nKeys.RegionAriaLabel)}
       className={mergeClasses(
         styles.root,
-        'flex items-center justify-center gap-3 px-4 py-2',
+        'flex items-center justify-center gap-3 px-4 py-2 text-control-permanent',
         className,
       )}
     >

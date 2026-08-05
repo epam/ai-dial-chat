@@ -109,6 +109,10 @@ module.exports = {
     './node_modules/@epam/ai-dial-ui-kit/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
+    // `outline` utility emits a 1px solid ring, `outline-focus` paints it
+    // with the focus token — see the focus-visible states in buttons.scss
+    outlineWidth: { DEFAULT: '1px' },
+    outlineColor: borderColors,
     backgroundColor: { ...backgroundsColors, ...controlsBgColors },
     borderColor: borderColors,
     stroke: borderColors,

@@ -21,6 +21,7 @@ import {
   IconMarkdown,
 } from '@tabler/icons-react';
 import {
+  type CSSProperties,
   type FC,
   memo,
   useCallback,
@@ -209,6 +210,27 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     [stylesProp],
   );
 
+  /*
+   * The individual typography fields collapse into one inline style. A
+   * `fontClassName` suppresses them entirely, as documented on
+   * `AttachmentCanvasTypography`.
+   */
+  const typographyStyle = useMemo<CSSProperties | undefined>(() => {
+    if (typography?.fontClassName != null) {
+      return undefined;
+    }
+    const { fontFamily, fontSize, fontWeight, lineHeight, letterSpacing } =
+      typography ?? {};
+    const style: CSSProperties = {
+      ...(fontFamily != null && { fontFamily }),
+      ...(fontSize != null && { fontSize }),
+      ...(fontWeight != null && { fontWeight }),
+      ...(lineHeight != null && { lineHeight }),
+      ...(letterSpacing != null && { letterSpacing }),
+    };
+    return Object.keys(style).length > 0 ? style : undefined;
+  }, [typography]);
+
   const showHtmlToggle =
     !isLoading &&
     content.type === AttachmentContentType.Html &&
@@ -254,6 +276,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
       case AttachmentContentType.PlainText:
         return (
           <pre
+            style={typographyStyle}
             className={mergeClasses(
               'whitespace-pre-wrap break-words',
               styles.body,
@@ -405,6 +428,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   }, [
     content,
     typography?.fontClassName,
+    typographyStyle,
     fileName,
     codeBlockTheme,
     unsupportedLabel,

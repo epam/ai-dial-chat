@@ -140,7 +140,7 @@ export interface AttachmentCanvasColors {
   text?: string;
 }
 
-/** Themeable typography overrides for the AttachmentCanvas content body. */
+/** Themeable typography overrides for the AttachmentCanvas plain-text content body. */
 export interface AttachmentCanvasTypography {
   /** CSS font-family value. */
   fontFamily?: string;
@@ -153,9 +153,8 @@ export interface AttachmentCanvasTypography {
   /** CSS letter-spacing value. */
   letterSpacing?: string;
   /**
-   * A single CSS utility class applied to the content body instead of
-   * individual typography vars. When set, individual typography fields
-   * are ignored.
+   * A single CSS utility class applied to the content body instead of the
+   * individual typography fields above. When set, those fields are ignored.
    */
   fontClassName?: string;
 }
