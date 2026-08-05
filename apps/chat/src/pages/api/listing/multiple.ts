@@ -7,18 +7,18 @@ import { validateServerSession } from '@/src/utils/auth/session';
 import { isValidEntityApiType } from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
-import { getToken } from '@/src/utils/server/server';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
+import { setTraceparentHeader } from '@/src/utils/server/traceparent';
 
 import { BackendChatEntity, BackendChatFolder } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
 import { BackendFile, BackendFileFolder } from '@/src/types/files';
 
-import { errorsMessages } from '@/src/constants/errors';
-
 import { sanitizeUri } from 'micromark-util-sanitize-uri';
 import fetch from 'node-fetch';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  setTraceparentHeader(res);
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
   const body = req.body as { urls: string[] };
@@ -90,7 +90,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(200).send(combinedItems);
   } catch (error) {
     logger.error(error);
-    return res.status(500).json(errorsMessages.generalServer);
+    return ServerUtils.sendAPIError(res, error);
   }
 };
 

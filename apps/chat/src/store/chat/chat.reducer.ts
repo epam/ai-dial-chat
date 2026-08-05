@@ -105,7 +105,7 @@ export const chatSlice = createSlice({
     },
     getConfigurationSchemaFailed: (
       state,
-      { payload }: PayloadAction<{ modelId: string }>,
+      { payload }: PayloadAction<{ modelId: string; traceId?: string }>,
     ) => {
       state.configurationSchemasLoadingIds =
         state.configurationSchemasLoadingIds.filter(
@@ -162,8 +162,10 @@ export const chatSlice = createSlice({
       state.selectedEntityInfo = entityInfo;
       state.infoModalState = ModalState.OPENED;
     },
-    getEntityInfoFail: (state, _action: PayloadAction<{ errorText: string }>) =>
+    getEntityInfoFail: (
       state,
+      _action: PayloadAction<{ errorText: string; traceId?: string }>,
+    ) => state,
     resetInfoModal: (state) => {
       state.selectedEntityInfo = undefined;
       state.infoModalState = ModalState.CLOSED;
@@ -210,7 +212,9 @@ export const chatSlice = createSlice({
     },
     userMessageTranscriptionFailed: (
       state,
-      _action: PayloadAction<{ isTooLarge?: boolean } | undefined>,
+      _action: PayloadAction<
+        { isTooLarge?: boolean; traceId?: string } | undefined
+      >,
     ) => {
       state.isUserMessageTranscribing = false;
     },
@@ -229,7 +233,9 @@ export const chatSlice = createSlice({
     },
     transcriptionFailed: (
       state,
-      _action: PayloadAction<{ isTooLarge?: boolean } | undefined>,
+      _action: PayloadAction<
+        { isTooLarge?: boolean; traceId?: string } | undefined
+      >,
     ) => {
       state.isTranscribing = false;
       state.isAsrFlowActive = false;

@@ -6,7 +6,9 @@ import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 import { ServerUtils, getToken } from '@/src/utils/server/server';
+import { setTraceparentHeader } from '@/src/utils/server/traceparent';
 
+import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
 
 import { DIAL_API_HOST } from '@/src/constants/default-server-settings';
@@ -15,6 +17,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import fetch from 'node-fetch';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  setTraceparentHeader(res);
   const session = await getServerSession(req, res, authOptions);
   if (!validateServerSession(session, req, res)) return;
 
@@ -25,7 +28,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     };
 
     if (!deploymentId || !url) {
-      return res.status(400).send(errorsMessages[400]);
+      throw new DialAIError(errorsMessages[400], 400, req);
     }
 
     const jwt = await getToken({ req });
@@ -50,7 +53,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(200).json({ valid: false, message });
   } catch (error) {
     logger.error(error);
-    return res.status(500).send(errorsMessages.generalServer);
+    return ServerUtils.sendAPIError(res, error);
   }
 };
 
