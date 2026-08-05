@@ -25,12 +25,16 @@ interface UpstreamSchedulePayload {
   properties: {
     target_type: 'chat_completion';
     url: string;
+    api_version: string;
+    create_conversation: true;
+    stream: false;
+    extra_headers: Record<string, never>;
+    retry: null;
+    timeout: null;
     payload: {
       messages: { role: 'user'; content: string }[];
       model: string;
-      stream: boolean;
     };
-    api_version: string;
   };
 }
 
@@ -79,6 +83,14 @@ const toUpstreamTrigger = (
   return { cron: { fields: trigger.cron?.fields ?? {} } };
 };
 
+/*
+ * DIAL Core's base URL may or may not carry a trailing slash depending on
+ * how DIAL_CORE_URL is configured — normalize it here so the upstream Scheduler
+ * call never ends up with a double slash before /openai.
+ */
+export const buildScheduledTaskChatCompletionUrl = (baseUrl: string): string =>
+  `${baseUrl.replace(/\/+$/, '')}/openai`;
+
 export const toUpstreamSchedulePayload = (
   body: CreateScheduledTaskBodyDto,
   dialCoreUrl: string,
@@ -90,13 +102,17 @@ export const toUpstreamSchedulePayload = (
   ...(body.description ? { description: body.description } : {}),
   properties: {
     target_type: 'chat_completion',
-    url: `${dialCoreUrl}/openai`,
+    url: buildScheduledTaskChatCompletionUrl(dialCoreUrl),
+    api_version: dialApiVersion,
+    create_conversation: true,
+    stream: false,
+    extra_headers: {},
+    retry: null,
+    timeout: null,
     payload: {
       messages: [{ role: 'user', content: body.prompt }],
       model: body.model,
-      stream: body.stream ?? true,
     },
-    api_version: dialApiVersion,
   },
 });
 

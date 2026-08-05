@@ -1426,12 +1426,6 @@ export interface CreateScheduledTaskBodyDto {
    * @memberof CreateScheduledTaskBodyDto
    */
   description?: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof CreateScheduledTaskBodyDto
-   */
-  stream?: boolean;
 }
 /**
  *
@@ -5813,12 +5807,6 @@ export interface UpdateScheduledTaskBodyDto {
    * @memberof UpdateScheduledTaskBodyDto
    */
   description?: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof UpdateScheduledTaskBodyDto
-   */
-  stream?: boolean;
 }
 /**
  *

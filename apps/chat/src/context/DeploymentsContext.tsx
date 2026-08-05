@@ -40,6 +40,15 @@ export interface DeploymentsContextType {
    * overwriting the user's own model preference for new chats.
    */
   restoreSelectedItemId: (id: string) => void;
+  /**
+   * Re-resolves `selectedItemId` back to the user's own preference (persisted
+   * `selectedDeploymentId`, falling back to the operator default, falling
+   * back to the first item), ignoring whatever the in-memory `selectedItemId`
+   * currently holds. Use when landing on the New Chat screen, so a value left
+   * behind by `restoreSelectedItemId` (from having viewed a different
+   * conversation) never becomes the next new chat's model. Does not persist.
+   */
+  restoreDefaultSelection: () => void;
   /** JSON Schema configuration for the currently selected deployment, or null if none selected or unsupported. */
   selectedDeploymentConfiguration: DeploymentConfigurationSchema | null;
   /** True while deployments are being fetched. */
@@ -395,12 +404,23 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     setSelectedItemIdState(id);
   }, []);
 
+  const restoreDefaultSelection = useCallback(() => {
+    const resolved = resolveInitialSelection(
+      items,
+      null,
+      userConfigSelectedId,
+      appConfig.defaultDeploymentId,
+    );
+    if (resolved != null) setSelectedItemIdState(resolved);
+  }, [items, userConfigSelectedId, appConfig.defaultDeploymentId]);
+
   const contextValue = useMemo(
     () => ({
       items,
       selectedItemId,
       setSelectedItemId,
       restoreSelectedItemId,
+      restoreDefaultSelection,
       selectedDeploymentConfiguration,
       isLoading,
       error,
@@ -415,6 +435,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       selectedItemId,
       setSelectedItemId,
       restoreSelectedItemId,
+      restoreDefaultSelection,
       selectedDeploymentConfiguration,
       isLoading,
       error,
