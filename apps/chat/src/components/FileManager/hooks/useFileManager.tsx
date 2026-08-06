@@ -785,15 +785,9 @@ export const useFileManager = ({
     );
   }, [dispatch, translateChat]);
 
-  const handleMoveFiles = useCallback(
-    (
-      movedItems: DialCopiedItem[],
-      sourceFolder: string,
-      destinationFolder: string,
-    ) => {
-      if (movedItems.length === 0) return;
-
-      const exceedsMaxDepth = movedItems.some((item) => {
+  const exceedsMaxFolderDepth = useCallback(
+    (items: DialCopiedItem[]) =>
+      items.some((item) => {
         if (item.nodeType !== DialFileNodeType.FOLDER) return false;
 
         const movedFolder = folders.find((f) => f.id === item.sourceUrl);
@@ -805,9 +799,22 @@ export const useFileManager = ({
           getFolderNestingLevel(item.destinationUrl) + subtreeLevels >
           MAX_NESTED_FOLDERS
         );
-      });
+      }),
+    [folders],
+  );
 
-      if (exceedsMaxDepth) return;
+  const handleMoveFiles = useCallback(
+    (
+      movedItems: DialCopiedItem[],
+      sourceFolder: string,
+      destinationFolder: string,
+    ) => {
+      if (movedItems.length === 0) return;
+
+      if (exceedsMaxFolderDepth(movedItems)) {
+        showMaxDepthError();
+        return;
+      }
 
       movingFilesCountRef.current = movedItems.length;
       isRenamingRef.current = sourceFolder === destinationFolder;
@@ -830,7 +837,7 @@ export const useFileManager = ({
         setCurrentPath(movedCurrentOrParent.destinationUrl);
       }
     },
-    [dispatch, currentPath, folders],
+    [dispatch, currentPath, exceedsMaxFolderDepth, showMaxDepthError],
   );
 
   const handleSearchFiles = useCallback(
@@ -1390,12 +1397,18 @@ export const useFileManager = ({
   const handleCopyFiles = useCallback(
     (copiedItems: DialCopiedItem[], destinationFolder: string) => {
       if (copiedItems.length === 0) return;
+
+      if (exceedsMaxFolderDepth(copiedItems)) {
+        showMaxDepthError();
+        return;
+      }
+
       movingFilesCountRef.current = copiedItems.length;
       dispatch(
         FilesActions.copyFiles({ files: copiedItems, destinationFolder }),
       );
     },
-    [dispatch],
+    [dispatch, exceedsMaxFolderDepth, showMaxDepthError],
   );
 
   const handleGetInfo = useCallback(
