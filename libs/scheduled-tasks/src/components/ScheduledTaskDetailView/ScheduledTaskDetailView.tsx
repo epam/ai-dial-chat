@@ -373,7 +373,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
           <div className="flex w-full justify-center p-6 desktop:w-auto desktop:items-start">
             <div
               className={mergeClasses(
-                'flex w-full flex-col gap-4 overflow-y-auto rounded-xl px-6 py-5 desktop:max-h-[70vh] desktop:w-[360px]',
+                'flex w-full flex-col gap-4 overflow-y-auto rounded-xl px-6 py-5 shadow-md desktop:max-h-[70vh] desktop:w-[360px]',
                 styles.historyCard,
               )}
             >

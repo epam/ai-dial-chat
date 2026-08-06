@@ -3,20 +3,15 @@ import type {
   CreatedScheduledTaskDto,
   ListScheduledTaskRunsResponseDto,
   ListScheduledTasksResponseDto,
-  ListScheduledTasksSortEnum,
   ScheduledTaskDto,
   UpdateScheduledTaskBodyDto,
   UpdatedScheduledTaskDto,
 } from '@epam/chat-api-client';
+import type {
+  ListScheduledTaskRunsParams,
+  ListScheduledTasksParams,
+} from '../models/scheduled-tasks';
 import { scheduledTasksApi } from './api-client';
-
-export interface ListScheduledTasksParams {
-  limit?: number;
-  offset?: number;
-  search?: string;
-  sort?: ListScheduledTasksSortEnum;
-  signal?: AbortSignal;
-}
 
 export const listScheduledTasks = ({
   limit,
@@ -48,13 +43,6 @@ export const updateScheduledTask = (
     scheduleId,
     updateScheduledTaskBodyDto: body,
   });
-
-export interface ListScheduledTaskRunsParams {
-  scheduleId: string;
-  limit?: number;
-  offset?: number;
-  signal?: AbortSignal;
-}
 
 export const listScheduledTaskRuns = ({
   scheduleId,
