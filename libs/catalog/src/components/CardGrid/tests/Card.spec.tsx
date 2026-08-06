@@ -26,15 +26,14 @@ describe('Card — selected state', () => {
 
     const card = screen.getByRole('article', { hidden: true });
     expect(card.className).toContain('border-transparent');
-    expect(card.className).not.toContain('border-info');
+    expect(card.className).not.toContain('selectedCard');
   });
 
   it('shows the selected border, tint, and checkmark when isSelected is true', () => {
     render(<Card item={makeItem()} isSelected />);
 
     const card = screen.getByRole('article', { hidden: true });
-    expect(card.className).toContain('border-info');
-    expect(card.className).toContain('bg-accent-primary-alpha');
+    expect(card.className).toContain('selectedCard');
     expect(card.querySelector('svg')).toBeTruthy();
   });
 });
