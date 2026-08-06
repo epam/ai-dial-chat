@@ -17,6 +17,7 @@ import * as toolsetsApi from '../../server-api/toolsets';
 import { ROUTES } from '../../types/routes';
 import {
   buildToolsetAuthorizeUrl,
+  decodeToolsetId,
   encodeToolsetId,
   extractToolsetApiErrorMessage,
   fetchToolsetAuthSettings,
@@ -94,6 +95,19 @@ describe('encodeToolsetId', () => {
   it('is a no-op for an id with no reserved characters', () => {
     expect(encodeToolsetId('toolsets/b/my__1.0.0')).toBe(
       'toolsets/b/my__1.0.0',
+    );
+  });
+});
+
+describe('decodeToolsetId', () => {
+  it('round-trips a raw id through encodeToolsetId and back', () => {
+    const raw = 'toolsets/b/My Toolset__1.0.0';
+    expect(decodeToolsetId(encodeToolsetId(raw))).toBe(raw);
+  });
+
+  it('passes a malformed percent-encoded segment through unchanged', () => {
+    expect(decodeToolsetId('toolsets/b/My%2Toolset')).toBe(
+      'toolsets/b/My%2Toolset',
     );
   });
 });

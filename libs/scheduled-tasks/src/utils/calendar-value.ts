@@ -18,6 +18,35 @@ export const calendarValueToRunAt = (value: CalendarValue): string => {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
 
+/*
+ * Constructs the Date from local year/month/day components rather than
+ * `new Date(dateValue)`, since the latter parses a bare `YYYY-MM-DD` string
+ * as UTC midnight per the ECMA-262 date-time string format — which would
+ * shift the displayed calendar day by one in any timezone behind UTC.
+ */
+/** Converts a `YYYY-MM-DD` date-only string (`values.startDate`/`endDate`) to a `Date` for `Calendar`'s controlled value, or `null` when empty. */
+export const dateValueToCalendarValue = (
+  dateValue: string | undefined,
+): Date | null => {
+  if (!dateValue) {
+    return null;
+  }
+  const [year, month, day] = dateValue.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+/** Converts `Calendar`'s `CalendarValue` back to a `YYYY-MM-DD` date-only string, distinct from `calendarValueToRunAt`'s `datetime-local` output. */
+export const calendarValueToDateValue = (value: CalendarValue): string => {
+  if (value == null) {
+    return '';
+  }
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+};
+
 /** Converts `values.dayOfWeek` (`'0'`=Monday..`'6'`=Sunday) to `Calendar`'s `weekday` mode value (ISO `'1'`=Monday..`'7'`=Sunday), or `null` when unset. */
 export const dayOfWeekToCalendarValue = (
   dayOfWeek: string | undefined,

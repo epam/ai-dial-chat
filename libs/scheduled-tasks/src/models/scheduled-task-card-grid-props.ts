@@ -28,6 +28,8 @@ export interface ScheduledTaskCardGridProps {
   onRunNow?: (id: string) => void;
   /** Called with a task id when the user activates "Delete" on a card. Omit to hide the action on every card. */
   onDelete?: (id: string) => void;
+  /** Called with a task id when the user activates a card's body. Omit to render cards with no added interactive root semantics. */
+  onCardClick?: (id: string) => void;
   /** Localized labels forwarded to each card. */
   labels?: ScheduledTaskCardGridLabels;
   /** Style overrides forwarded to each card. */

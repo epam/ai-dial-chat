@@ -90,6 +90,24 @@ export const encodeToolsetId = (id: string): string =>
     .join('/');
 
 /**
+ * Inverse of `encodeToolsetId` — decodes each `/`-separated segment back to
+ * its raw, human-readable form. A segment that isn't valid percent-encoding
+ * is passed through unchanged rather than throwing, since this decodes
+ * externally-sourced ids (broadcast toolset-login events).
+ */
+export const decodeToolsetId = (id: string): string =>
+  id
+    .split('/')
+    .map((segment) => {
+      try {
+        return decodeURIComponent(segment);
+      } catch {
+        return segment;
+      }
+    })
+    .join('/');
+
+/**
  * Builds the OAuth authorize URL for a given, already-generated `state`
  * value. The caller owns what `state` carries — see `initiateOAuthLogin`.
  */

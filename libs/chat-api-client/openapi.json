@@ -4610,6 +4610,85 @@
         "summary": "Update a scheduled task",
         "tags": ["scheduled-tasks"]
       }
+    },
+    "/api/v1/scheduled-tasks/{scheduleId}/runs": {
+      "get": {
+        "description": "Returns the paginated run history for a single DIAL Scheduler schedule, proxying DIAL Scheduler using the session user's access token. Always requests upstream ordering of created_at desc explicitly. Not cached.",
+        "operationId": "listScheduledTaskRuns",
+        "parameters": [
+          {
+            "name": "scheduleId",
+            "required": true,
+            "in": "path",
+            "description": "DIAL Scheduler schedule identifier.",
+            "schema": {
+              "pattern": "^[A-Za-z0-9_-]{1,128}$",
+              "example": "sched_123",
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Maximum number of runs to return.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Offset of the first run to return.",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "example": 0,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the scheduled task run history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListScheduledTaskRunsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid scheduleId, limit, or offset"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The scheduledTasksEnabled feature is not enabled for this user"
+          },
+          "404": {
+            "description": "Scheduled task not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
+          }
+        },
+        "summary": "List a scheduled task run history",
+        "tags": ["scheduled-tasks"]
+      }
     }
   },
   "info": {
@@ -8754,6 +8833,16 @@
               "hour": "9"
             },
             "description": "Cron field map using supported Scheduler keys (year, month, day, week, day_of_week, hour, minute, second)."
+          },
+          "startDate": {
+            "type": "string",
+            "example": "2026-08-01T00:00:00.000Z",
+            "description": "Start of the activity window during which this cron trigger fires. Omitted when unset."
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2026-12-31T23:59:59.999Z",
+            "description": "End of the activity window during which this cron trigger fires. Omitted when unset."
           }
         },
         "required": ["fields"]
@@ -8812,6 +8901,14 @@
           "description": {
             "type": "string",
             "example": "Summarizes unread inbox items every morning"
+          },
+          "model": {
+            "type": "string",
+            "example": "gpt-4.1-mini-2025-04-14"
+          },
+          "prompt": {
+            "type": "string",
+            "example": "Summarize my inbox"
           }
         },
         "required": ["id", "displayName", "trigger"]
@@ -8922,9 +9019,84 @@
           "description": {
             "type": "string",
             "example": "Summarizes unread inbox items every morning"
+          },
+          "model": {
+            "type": "string",
+            "example": "gpt-4.1-mini-2025-04-14"
+          },
+          "prompt": {
+            "type": "string",
+            "example": "Summarize my inbox"
           }
         },
         "required": ["id", "displayName", "trigger"]
+      },
+      "ScheduledTaskRunDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "run_9f2a"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["Success", "Error", "InProgress", "Missed"],
+            "example": "Success"
+          },
+          "startTime": {
+            "type": "string",
+            "example": "2026-07-24T09:00:00.000Z"
+          },
+          "endTime": {
+            "type": "string",
+            "example": "2026-07-24T09:01:39.000Z",
+            "nullable": true
+          },
+          "durationSeconds": {
+            "type": "number",
+            "example": 99
+          }
+        },
+        "required": ["id", "status", "startTime"]
+      },
+      "ListScheduledTaskRunsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduledTaskRunDto"
+            }
+          },
+          "count": {
+            "type": "number",
+            "example": 242,
+            "description": "Total number of runs upstream, across all pages."
+          },
+          "limit": {
+            "type": "number",
+            "example": 20,
+            "description": "Page size used by the upstream DIAL Scheduler response."
+          },
+          "offset": {
+            "type": "number",
+            "example": 40,
+            "description": "Offset of `items` within the full upstream result set."
+          },
+          "next": {
+            "type": "string",
+            "example": "/schedules/sched_123/runs?limit=20&offset=60",
+            "nullable": true,
+            "description": "Upstream URL for the next page, or null if this is the last page."
+          },
+          "previous": {
+            "type": "string",
+            "example": "/schedules/sched_123/runs?limit=20&offset=20",
+            "nullable": true,
+            "description": "Upstream URL for the previous page, or null if this is the first page."
+          }
+        },
+        "required": ["items"]
       },
       "UpdateScheduledTaskBodyDto": {
         "type": "object",
@@ -8993,6 +9165,14 @@
           "description": {
             "type": "string",
             "example": "Summarizes unread inbox items every morning"
+          },
+          "model": {
+            "type": "string",
+            "example": "gpt-4.1-mini-2025-04-14"
+          },
+          "prompt": {
+            "type": "string",
+            "example": "Summarize my inbox"
           }
         },
         "required": ["id", "displayName", "trigger"]
