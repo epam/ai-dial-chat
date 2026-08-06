@@ -1,4 +1,4 @@
-import type { CatalogItem, CreateOption } from '@epam/ai-dial-catalog';
+import type { CatalogItem } from '@epam/ai-dial-catalog';
 import {
   CatalogEntityType,
   CatalogSortKey,
@@ -9,6 +9,7 @@ import {
 } from '@epam/ai-dial-catalog';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
+import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { DialToolsetDto } from '@epam/chat-api-client';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -152,7 +153,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     isMyAppsActive,
     onMyAppsActiveChange,
   }: {
-    createOptions?: CreateOption[];
+    createOptions?: DropdownItem[];
     items?: CatalogItem[];
     favorites?: CatalogItem[];
     onToggleFavorite?: (id: string, isFavorite: boolean) => void;
@@ -333,7 +334,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
           </button>
         ))}
         {(createOptions ?? []).map((option) => (
-          <button key={option.label} type="button" onClick={option.onClick}>
+          <button key={option.key} type="button" onClick={option.onClick}>
             {option.label}
           </button>
         ))}

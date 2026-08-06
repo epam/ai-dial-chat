@@ -1,5 +1,4 @@
 // Types
-export type { CatalogSortOption } from './models/sort';
 export { CodeLanguage } from './types/code-language';
 export { CatalogDetailsTab } from './types/detail-tab';
 export { EntityTag } from './types/entity-tag';
