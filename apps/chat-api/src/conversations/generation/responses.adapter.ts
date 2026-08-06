@@ -3,7 +3,10 @@ import type { Response } from 'express';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
-import { ConversationMessageDto } from '../dto/conversation-message.dto';
+import {
+  ConversationMessageDto,
+  ConversationMessageRole,
+} from '../dto/conversation-message.dto';
 import { applyChunkToMessage } from '../utils/apply-chunk.server';
 import { generationUnknownEventsTotal } from './generation-metrics';
 import type {
@@ -31,9 +34,12 @@ export class ResponsesAdapter {
    * Builds the Responses `input` array from the same history
    * `buildConversationHistory` already produced for Chat Completions — one
    * item per message, in order, with the system/instruction message (if
-   * any) kept first. `store` is always `false` in this iteration;
-   * `previous_response_id`/`conversation` are never set (DIAL Core rejects
-   * the key's mere presence, even as `null`).
+   * any) kept first. Mirrors the Chat Completions adapter by excluding
+   * `ConversationMessageRole.Status` entries (internal bookkeeping markers,
+   * e.g. model-changed) so they never reach DIAL Core/the model. `store` is
+   * always `false` in this iteration; `previous_response_id`/`conversation`
+   * are never set (DIAL Core rejects the key's mere presence, even as
+   * `null`).
    */
   buildRequest(params: {
     model: string;
@@ -48,10 +54,12 @@ export class ResponsesAdapter {
 
     const input = [
       ...systemInput,
-      ...messagesForCompletion.map((m) => ({
-        role: m.role as string,
-        content: m.content,
-      })),
+      ...messagesForCompletion
+        .filter((m) => m.role !== ConversationMessageRole.Status)
+        .map((m) => ({
+          role: m.role as string,
+          content: m.content,
+        })),
     ];
 
     return {

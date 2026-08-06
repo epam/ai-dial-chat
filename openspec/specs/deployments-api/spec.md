@@ -102,7 +102,7 @@ The endpoint:
 - `owner?: string` — `owner` from DIAL Core's `DeploymentBase`; forwarded verbatim; omitted when DIAL Core does not provide it
 - `isMy?: boolean` — `true` when the session `bucket` appears as a path segment of the deployment `id` (e.g. `applications/{bucket}/{name}`); `false` otherwise; computed post-cache and never stored in the cache entry
 - `applicationFolder?: string` — parent directory path of the application derived from `id` (everything before the last `/`); set only for `type === 'application'` items whose `id` contains a `/`; absent for root-level applications and all non-application types
-- `features?: DeploymentFeaturesDto` — feature flags from DIAL Core, including the new `mcp?: boolean` field (see below)
+- `features?: DeploymentFeaturesDto` — feature flags from DIAL Core, including the `mcp?: boolean` field, and the `responsesApi?: boolean` / `chatCompletion?: boolean` fields (see below)
 
 `DeploymentItemDto.conversationStarters?: ConversationStartersDto` SHALL expose Quick Apps conversation starter settings mapped from `application_properties.conversation_starters`. It SHALL be set only for `type === 'application'` items with at least one valid starter.
 
@@ -120,6 +120,8 @@ Invalid or blank starters SHALL be omitted. If no valid starters remain, `conver
 - `interfaces` contains the string `'mcp'` (the same per-item signal DIAL Core's own `interface_type=mcp` list filter relies on).
 
 These three signals are not mutually exclusive but are also not reliably combined — real DIAL Core list responses have been observed reporting MCP support through any one of them alone, with the other two absent, depending on the application's configuration.
+
+`DeploymentFeaturesDto.responsesApi?: boolean` SHALL be `true` when the raw DIAL Core list entry has `features.responses_api === true`, and `undefined` (omitted) otherwise — mirroring how `DeploymentFeaturesDetailsDto.responsesApi` is already populated for the deployment-details endpoint (`mapDeploymentFeatures`). `DeploymentFeaturesDto.chatCompletion?: boolean` SHALL be mapped the same way from `features.chat_completion`. Both fields SHALL be read defensively (absent/non-boolean source values map to `undefined`, never throw). Neither field participates in any deployments-list caching key or filtering behavior; they are additive metadata only.
 
 `DeploymentsResponseDto` SHALL wrap this as `{ deployments: DeploymentItemDto[] }`.
 
@@ -196,6 +198,26 @@ The `DeploymentItem` interface in `libs/chat-shared/src/models/deployment.ts` SH
 
 - **WHEN** an application entry has `application_properties.conversation_starters.starters` with no valid `{ title, text }` pairs
 - **THEN** the mapped `DeploymentItemDto` has `conversationStarters` as `undefined`
+
+#### Scenario: Model item with Responses support maps features.responsesApi true
+
+- **WHEN** a DIAL Core `ModelOpenAi` entry has `features.responses_api: true`
+- **THEN** the mapped `DeploymentItemDto` has `features.responsesApi: true`
+
+#### Scenario: Application item with Responses support maps features.responsesApi true
+
+- **WHEN** a DIAL Core `ApplicationOpenAi` entry has `features.responses_api: true`
+- **THEN** the mapped `DeploymentItemDto` has `features.responsesApi: true`
+
+#### Scenario: Item without Responses support omits features.responsesApi
+
+- **WHEN** a DIAL Core entry has no `features.responses_api` field
+- **THEN** the mapped `DeploymentItemDto`'s `features.responsesApi` is `undefined`
+
+#### Scenario: Item with chat_completion support maps features.chatCompletion true
+
+- **WHEN** a DIAL Core entry has `features.chat_completion: true`
+- **THEN** the mapped `DeploymentItemDto` has `features.chatCompletion: true`
 
 ---
 

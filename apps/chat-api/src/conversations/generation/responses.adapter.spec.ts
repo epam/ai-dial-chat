@@ -77,6 +77,30 @@ describe('ResponsesAdapter', () => {
       ]);
     });
 
+    it('excludes ConversationMessageRole.Status messages from the input array', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '' } as never,
+        messagesForCompletion: [
+          { role: ConversationMessageRole.User, content: 'Hi' } as never,
+          {
+            role: ConversationMessageRole.Status,
+            content: 'Model changed to gpt-4o',
+          } as never,
+          {
+            role: ConversationMessageRole.Assistant,
+            content: 'Hello!',
+          } as never,
+        ],
+      });
+
+      expect(request.input).toEqual([
+        { role: ConversationMessageRole.User, content: 'Hi' },
+        { role: ConversationMessageRole.Assistant, content: 'Hello!' },
+      ]);
+    });
+
     it('always sets store: false', () => {
       const { adapter } = makeAdapter();
       const request = adapter.buildRequest({
