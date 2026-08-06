@@ -84,8 +84,6 @@ const textColorsToRemove = {
   // Catalog tab bar — override via CSS custom properties for dark-theme support
   'catalog-tab-inactive': 'var(--cat-tab-inactive-text, #6B7280)',
   'catalog-tab-hover': 'var(--cat-tab-hover-text, #374151)',
-  'catalog-badge-active': 'var(--cat-badge-active-text, #2764D9)',
-  'catalog-badge-inactive': 'var(--cat-badge-inactive-text, #9CA3AF)',
 };
 
 const bgColorsToRemove = {

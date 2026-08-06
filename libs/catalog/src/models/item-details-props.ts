@@ -61,8 +61,6 @@ export interface ItemDetailsTexts {
   apiSnippetSectionLabel?: string;
   /** "Model ID" row label in the API tab. Default: `'Model ID'`. */
   apiModelIdLabel?: string;
-  /** "Endpoint" section heading in the API tab (multi-endpoint selector). Default: `'Endpoint'`. */
-  apiEndpointSectionLabel?: string;
   /** Title shown in the single-endpoint code block's header in the Connect tab. Default: `'Endpoint'`. */
   apiEndpointLabel?: string;
   /** "Request example" row label in the API tab. Default: `'Request example'`. */
@@ -121,8 +119,6 @@ export interface ItemDetailsTexts {
 export interface ItemDetailsTypography {
   /** Typography class for the entity name. Default: `'dial-body-semi-text text-primary'`. */
   nameClassName?: string;
-  /** Typography class for the provider label below the entity name. Default: `'dial-tiny-text text-secondary'`. */
-  providerClassName?: string;
   /** Typography class for the version string. Default: `'dial-tiny-text'`. */
   versionClassName?: string;
   /** Typography class for section headings inside the description content. Default: `'dial-small-semi-text'`. */

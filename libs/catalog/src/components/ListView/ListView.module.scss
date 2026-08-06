@@ -82,8 +82,7 @@
 }
 
 .selectedRow {
-  border: 2px solid
-    var(--cat-list-selected-border, var(--stroke-info, #124ace)) !important;
+  border: 2px solid var(--cat-list-selected-border, var(--stroke-info, #124ace)) !important;
   background-color: var(
     --cat-list-selected-bg,
     var(--bg-accent-primary-alpha, #7da4ff2e)

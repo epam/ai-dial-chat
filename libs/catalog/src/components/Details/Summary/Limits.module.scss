@@ -1,14 +1,11 @@
 .tag {
   &--FREE {
-    background: var(--bg-accent-secondary, rgba(83, 194, 91, 0.12)) !important;
-    color: var(--text-accent-secondary, #37babc) !important;
+    background: var(--bg-success, #dbf1eb) !important;
+    color: var(--text-success, #007274) !important;
     border-color: transparent !important;
   }
   &--FEATURED {
-    background: var(
-      --bg-warning-secondary,
-      rgba(238, 200, 64, 0.12)
-    ) !important;
+    background: var(--bg-warning, #faf0cf) !important;
     color: var(--text-warning, #7f6300) !important;
     border-color: transparent !important;
   }
@@ -18,10 +15,7 @@
     border-color: transparent !important;
   }
   &--BETA {
-    background: var(
-      --bg-accent-primary-alpha,
-      rgba(99, 116, 255, 0.12)
-    ) !important;
+    background: var(--bg-accent-primary-alpha, #7da4ff2e) !important;
     color: var(--text-accent, #1d4ed8) !important;
     border-color: transparent !important;
   }

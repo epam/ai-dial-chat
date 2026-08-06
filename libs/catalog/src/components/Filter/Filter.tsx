@@ -35,8 +35,6 @@ export interface FilterProps {
   myAppsLabel?: string;
   /** Label for the Topics section heading. Default: 'Topics'. */
   topicsLabel?: string;
-  /** @deprecated No longer applied — section style is set by the DS spec. */
-  topicsSectionClassName?: string;
   /** Button label when nothing is filtered. Default: 'From'. */
   defaultLabel?: string;
   /** Label for the footer Clear button. Default: 'Clear'. */

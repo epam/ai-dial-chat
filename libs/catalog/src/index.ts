@@ -22,6 +22,11 @@ export type {
   CatalogTitles,
   CreateOption,
 } from './models/catalog-props';
+export type {
+  CatalogColors,
+  CatalogStyles,
+  CatalogTypography,
+} from './models/catalog-styles';
 export type { CatalogItemSummary, DailyLimit } from './models/entity-summary';
 export type { EndpointOption } from './models/item-details-data';
 export type {
@@ -65,7 +70,12 @@ export {
 export { Catalog } from './components/Catalog/Catalog';
 
 export { Toolbar } from './components/Toolbar/Toolbar';
-export type { ToolbarProps } from './models/toolbar-props';
+export type {
+  ToolbarColors,
+  ToolbarProps,
+  ToolbarStyles,
+  ToolbarTypography,
+} from './models/toolbar-props';
 
 export { Card } from './components/CardGrid/Card';
 export type {
@@ -84,10 +94,20 @@ export { useScrollVirtualizer } from './utils/use-scroll-virtualizer';
 export type { ScrollVirtualizerResult } from './utils/use-scroll-virtualizer';
 
 export { Favorites } from './components/Favorites/Favorites';
-export type { FavoritesProps } from './models/favorites';
+export type {
+  FavoritesColors,
+  FavoritesProps,
+  FavoritesStyles,
+  FavoritesTypography,
+} from './models/favorites';
 
 export { ListView } from './components/ListView/ListView';
-export type { ListViewProps } from './models/list-props';
+export type {
+  ListViewColors,
+  ListViewProps,
+  ListViewStyles,
+  ListViewTypography,
+} from './models/list-props';
 
 export { EntityTypeLabel } from './components/EntityTypeLabel/EntityTypeLabel';
 export type { EntityTypeLabelProps } from './components/EntityTypeLabel/EntityTypeLabel';

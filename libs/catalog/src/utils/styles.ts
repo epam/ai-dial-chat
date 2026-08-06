@@ -1,9 +1,6 @@
 import { buildCssVars } from '@epam/ai-dial-chat-shared';
 import { CSSProperties } from 'react';
-import {
-  ENTITY_TYPE_COLOR,
-  ENTITY_TYPE_SHADOW,
-} from '../constants/entity-colors';
+import { ENTITY_TYPE_COLOR } from '../constants/entity-colors';
 import { CatalogItem } from '../models/catalog-item';
 import { CatalogStyles } from '../models/catalog-styles';
 
@@ -15,7 +12,6 @@ export const getFeaturedEntityStyle = (
 
   return buildCssVars({
     '--entity-color': ENTITY_TYPE_COLOR[item.type],
-    '--entity-shadow': ENTITY_TYPE_SHADOW[item.type],
   });
 };
 
@@ -25,14 +21,6 @@ export const getStyles = (catalogStyles?: CatalogStyles): CSSProperties => {
 
   return buildCssVars({
     '--cat-bg': colors?.background,
-    '--cat-text-primary': colors?.text,
-    '--cat-text-secondary': colors?.textSecondary,
-    '--cat-heading-border': colors?.headingBorder,
-    '--cat-heading-bg': colors?.headingBackground,
     '--cat-heading-title-text': colors?.headingTitleText,
-    '--cat-content-bg': colors?.contentBackground,
-    '--cat-section-heading-text': colors?.sectionHeadingText,
-    '--cat-no-results-title-text': colors?.noResultsTitleText,
-    '--cat-no-results-description-text': colors?.noResultsDescriptionText,
   });
 };

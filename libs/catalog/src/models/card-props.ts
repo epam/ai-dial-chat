@@ -20,20 +20,10 @@ export interface CardTypography {
 export interface CardColors {
   /** Default card background color. Fallback: `--bg-layer-sunken`. */
   background?: string;
-  /** Hovered card background color. Fallback: `--bg-layer-raised`. */
-  hoverBackground?: string;
   /** Card border color. Fallback: `--stroke-secondary`. */
   border?: string;
-  /** Featured card glow color. */
-  featuredGlow?: string;
-  /** Featured top accent bar color. Fallback: `--stroke-accent-primary`. */
-  featuredBar?: string;
-  /** Item name and description text color. Fallback: `--text-primary`. */
-  textPrimary?: string;
   /** Version text color. Fallback: `--text-secondary`. */
   textSecondary?: string;
-  /** Filled star icon color. Fallback: `--text-warning-icon`. */
-  starFilled?: string;
   /** Border color of a selected card. Fallback: `--stroke-info`. */
   selectedBorder?: string;
   /** Background color (tint) of a selected card. Fallback: `--bg-accent-primary-alpha`. */

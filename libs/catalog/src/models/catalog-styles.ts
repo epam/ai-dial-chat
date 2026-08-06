@@ -5,45 +5,13 @@
 export interface CatalogColors {
   /** Root container background color. Fallback: `--bg-layer-1`. */
   background?: string;
-  /** Primary text color. Fallback: `--text-primary`. */
-  text?: string;
-  /** Secondary text color (dates, metadata). Fallback: `--text-secondary`. */
-  textSecondary?: string;
-  /** Heading container border color. Fallback: `--stroke-secondary`. */
-  headingBorder?: string;
-  /** Heading container background color. Fallback: `--bg-layer-1`. */
-  headingBackground?: string;
   /** Heading title text color. Fallback: `--text-primary`. */
   headingTitleText?: string;
-  /** Content container background color. Fallback: `--bg-layer-1`. */
-  contentBackground?: string;
-  /** Section heading text color (Browse, Favorites titles). Fallback: `--text-primary`. */
-  sectionHeadingText?: string;
-  /** "No results" title text color. Fallback: `--text-primary`. */
-  noResultsTitleText?: string;
-  /** "No results" description text color. Fallback: `--text-secondary`. */
-  noResultsDescriptionText?: string;
-  /** Tab result-count text color. Fallback: `--text-secondary`. */
-  tabCountText?: string;
 }
 
-/**
- * Typography overrides for the Catalog component.
- * When a `fontClassName` is provided, individual font properties are ignored.
- */
+/** Typography overrides for the Catalog component. */
 export interface CatalogTypography {
-  /** Font family applied to the page heading. */
-  pageHeadingFontFamily?: string;
-  /** Font size applied to the page heading. */
-  pageHeadingFontSize?: string;
-  /** Font weight applied to the page heading. */
-  pageHeadingFontWeight?: string | number;
-  /** Line height applied to the page heading. */
-  pageHeadingLineHeight?: string;
-  /**
-   * A single utility class (e.g. `'dial-h2-text'`) applied to the page heading.
-   * When provided, individual font CSS vars are ignored in favour of this class.
-   */
+  /** A single utility class (e.g. `'dial-h2-text'`) applied to the page heading. */
   pageHeadingFontClassName?: string;
   /** Typography class applied to tab text. Defaults to `'dial-body-text'`. */
   tabClassName?: string;

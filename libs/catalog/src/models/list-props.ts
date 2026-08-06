@@ -14,8 +14,6 @@ export interface ListViewTypography {
 
 /** Color overrides for `ListView` cells, applied via CSS custom properties. */
 export interface ListViewColors {
-  /** Color for item name text. Fallback: `--text-primary`. */
-  nameText?: string;
   /** Background color of even-indexed grid rows. Fallback: `--bg-layer-base`. */
   rowEvenBackground?: string;
   /** Border color of the selected row. Fallback: `--stroke-info`. */

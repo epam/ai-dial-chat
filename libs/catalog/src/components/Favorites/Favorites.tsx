@@ -1,7 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import {
-  type CSSProperties,
   FC,
   useEffect,
   useLayoutEffect,
@@ -72,10 +71,6 @@ export const Favorites: FC<FavoritesProps> = ({
 
   const countClassName =
     favoritesStyles?.typography?.countClassName ?? 'dial-tiny-semi-text';
-  const cssVars = {
-    '--cat-favorites-border': favoritesStyles?.colors?.border,
-  } as CSSProperties;
-
   const sortedItems = useMemo(
     () =>
       [...items].sort(
@@ -381,7 +376,7 @@ export const Favorites: FC<FavoritesProps> = ({
           styles.section,
           isLeaving && styles.sectionLeaving,
         )}
-        style={{ ...cssVars, minHeight: lockedSectionHeight }}
+        style={{ minHeight: lockedSectionHeight }}
         onAnimationEnd={(e) => {
           if (e.target === sectionRef.current && isLeaving) onExitComplete?.();
         }}

@@ -2,10 +2,6 @@
   background: var(--cat-bg, #f5f7fa);
 }
 
-.icon {
-  color: var(--cat-browse-icon, var(--text-secondary, #6b7280));
-}
-
 .divider {
   background: var(--cat-browse-divider, var(--stroke-secondary, #d1dbea));
 }
@@ -16,10 +12,7 @@
 }
 
 .viewToggleActive {
-  background: var(
-    --cat-view-toggle-active-bg,
-    var(--bg-layer-raised, #fcfcfc)
-  );
+  background: var(--cat-view-toggle-active-bg, var(--bg-layer-raised, #fcfcfc));
   color: var(--cat-view-toggle-active-text, var(--text-accent, #1d4ed8));
 }
 

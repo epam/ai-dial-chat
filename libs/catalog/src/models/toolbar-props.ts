@@ -22,18 +22,12 @@ export interface ToolbarTypography {
 
 /** Color overrides for `Toolbar`, applied via CSS custom properties. */
 export interface ToolbarColors {
-  /** Section background color. Fallback: `--bg-layer-1`. */
-  background?: string;
   /** Section title text color. Fallback: `--text-primary`. */
   titleText?: string;
   /** Total count text color. Fallback: `--text-secondary`. */
   countText?: string;
-  /** Filter icon color. Fallback: `--text-secondary`. */
-  icon?: string;
   /** Vertical divider color next to sort dropdown. Fallback: `--stroke-secondary`. */
   divider?: string;
-  /** Bottom border color of tabs row. Fallback: `--stroke-secondary`. */
-  tabsBorder?: string;
   /** Background color of the view-toggle wrapper. Fallback: `--bg-layer-sunken`. */
   viewToggleBackground?: string;
   /** Border color of the view-toggle wrapper. Fallback: `--stroke-tertiary`. */

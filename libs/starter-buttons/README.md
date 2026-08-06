@@ -81,5 +81,5 @@ Overrides the size and stroke width of the overflow menu icon.
   labels={labels}
   styles={{ iconSize: 20, iconStrokeWidth: 2 }}
   onSelect={onSelect}
-/>;
+/>
 ```
