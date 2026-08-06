@@ -103,6 +103,7 @@ The endpoint:
 - `isMy?: boolean` — `true` when the session `bucket` appears as a path segment of the deployment `id` (e.g. `applications/{bucket}/{name}`); `false` otherwise; computed post-cache and never stored in the cache entry
 - `applicationFolder?: string` — parent directory path of the application derived from `id` (everything before the last `/`); set only for `type === 'application'` items whose `id` contains a `/`; absent for root-level applications and all non-application types
 - `features?: DeploymentFeaturesDto` — feature flags from DIAL Core, including the new `mcp?: boolean` field (see below)
+- `reference?: string` — `reference` from DIAL Core's raw deployment payload, forwarded verbatim; omitted when DIAL Core does not provide it. Callers MAY receive a deployment `id` elsewhere in the system (e.g. a stored conversation's `model` value) that actually holds this `reference` value instead of `id` — the frontend is responsible for matching against either field (see `deployment-reference-resolution`)
 
 `DeploymentItemDto.conversationStarters?: ConversationStartersDto` SHALL expose Quick Apps conversation starter settings mapped from `application_properties.conversation_starters`. It SHALL be set only for `type === 'application'` items with at least one valid starter.
 
@@ -196,6 +197,21 @@ The `DeploymentItem` interface in `libs/chat-shared/src/models/deployment.ts` SH
 
 - **WHEN** an application entry has `application_properties.conversation_starters.starters` with no valid `{ title, text }` pairs
 - **THEN** the mapped `DeploymentItemDto` has `conversationStarters` as `undefined`
+
+#### Scenario: reference mapped from DIAL Core
+
+- **WHEN** a DIAL Core model entry has `id: 'gemini-3.1-flash-lite'` and `reference: 'ref-gemini-3-1-flash-lite'`
+- **THEN** the mapped `DeploymentItemDto` has `reference: 'ref-gemini-3-1-flash-lite'`
+
+#### Scenario: reference omitted when absent in source
+
+- **WHEN** a DIAL Core deployment entry has no `reference` field
+- **THEN** the mapped `DeploymentItemDto` has `reference` as `undefined`
+
+#### Scenario: Backward compatibility — clients ignoring reference are unaffected
+
+- **WHEN** an existing client calls `GET /api/v1/deployments` and does not read `reference`
+- **THEN** the response is identical to the prior behavior for all pre-existing fields
 
 ---
 
