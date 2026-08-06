@@ -18,7 +18,10 @@
   }
 
   &:focus-visible {
-    outline-color: var(--ai-tile-focus-outline, var(--stroke-focus, #161b2d));
+    outline-color: var(
+      --ai-tile-focus-outline,
+      var(--stroke-focus-black, #161b2d)
+    );
   }
 }
 
@@ -43,7 +46,7 @@
 }
 
 .typeText {
-  color: var(--ai-tile-type-text, var(--text-secondary, #6b7280));
+  color: var(--ai-tile-type-text, var(--text-secondary, #57647a));
 }
 
 .retryIcon {
@@ -65,5 +68,5 @@
 
 .imageActionButton {
   background: var(--ai-tile-hover-icon-bg, var(--bg-layer-base, #f5f7fa));
-  color: var(--ai-tile-hover-icon-color, var(--text-secondary, #6b7280));
+  color: var(--ai-tile-hover-icon-color, var(--text-secondary, #57647a));
 }

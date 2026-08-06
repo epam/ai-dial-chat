@@ -24,6 +24,8 @@ export {
   fromFolderPathKey,
   getSiblingFolderNames,
   getUniqueFolderName,
+  mergeFolderPaths,
+  sortFolderTree,
   toDialFileTree,
   toFolderPathKey,
   validateFolderName,

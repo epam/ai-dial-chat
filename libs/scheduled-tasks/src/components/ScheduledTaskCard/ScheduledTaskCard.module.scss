@@ -3,7 +3,7 @@
 }
 
 .description {
-  color: var(--stc-desc-text, var(--text-control-disable, #6b7280));
+  color: var(--stc-desc-text, var(--text-control-disable, #57647a));
 }
 
 .schedulePill {
@@ -12,15 +12,15 @@
 }
 
 .scheduleLabel {
-  color: var(--stc-schedule-label-text, var(--text-control-disable, #6b7280));
+  color: var(--stc-schedule-label-text, var(--text-control-disable, #57647a));
 }
 
 .locationLabel {
-  color: var(--stc-location-label-text, var(--text-secondary, #6b7280));
+  color: var(--stc-location-label-text, var(--text-secondary, #57647a));
 }
 
 .locationLeaf {
-  color: var(--stc-location-leaf-text, var(--text-secondary, #6b7280));
+  color: var(--stc-location-leaf-text, var(--text-secondary, #57647a));
 }
 
 .newBadge {

@@ -61,11 +61,11 @@ button.accessTriggerBtn {
 }
 
 .anyoneWithLinkSubtitle {
-  color: var(--shp-anyone-subtitle, var(--text-secondary, #6b7280));
+  color: var(--shp-anyone-subtitle, var(--text-secondary, #57647a));
 }
 
 .accessTriggerChevron {
-  color: var(--shp-access-chevron, var(--text-tertiary, #c7cbd4));
+  color: var(--shp-access-chevron, var(--text-tertiary, #848e9c));
   transition: transform 150ms ease;
 
   @media (prefers-reduced-motion: reduce) {
@@ -122,7 +122,7 @@ button.accessTriggerBtn {
 
 .sectionLabel {
   input {
-    color: var(--shp-section-label, var(--text-secondary, #6b7280)) !important;
+    color: var(--shp-section-label, var(--text-secondary, #57647a)) !important;
   }
 }
 
@@ -131,7 +131,7 @@ button.accessTriggerBtn {
 }
 
 .note {
-  color: var(--shp-note-text, var(--text-secondary, #6b7280));
+  color: var(--shp-note-text, var(--text-secondary, #57647a));
 }
 
 .divider {

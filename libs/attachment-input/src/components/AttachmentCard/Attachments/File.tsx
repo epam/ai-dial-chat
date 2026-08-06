@@ -159,10 +159,9 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
 
       {isLoading && (
         <div
-          role="progressbar"
           aria-label={uploadingLabel}
           className={mergeClasses(
-            'absolute inset-x-2 bottom-2 h-[3px] overflow-hidden rounded-full',
+            'absolute left-[-1px] top-[-1px] flex size-full items-center justify-center rounded',
             styles.track,
           )}
         >
@@ -170,44 +169,43 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
         </div>
       )}
 
-      {canDownload && (
-        <DownloadAction
-          ariaLabel={clickLabel}
-          errorTitle={errorTitle}
-          errorDescId={errorDescId}
-          onClick={onDownload}
-          id={id}
-        />
-      )}
-
-      {canRetry && (
-        <ReloadAction
-          ariaLabel={retryLabel}
-          errorTitle={errorTitle}
-          errorDescId={errorDescId}
-          onClick={onRetry}
-          id={id}
-        />
-      )}
-
-      {isLink && (
-        <OpenLinkAction
-          ariaLabel={retryLabel}
-          errorTitle={errorTitle}
-          errorDescId={errorDescId}
-          onClick={onOpenInNewTab}
-        />
-      )}
-
-      {onRemove && (
-        <RemoveAction
-          ariaLabel={retryLabel}
-          errorTitle={errorTitle}
-          errorDescId={errorDescId}
-          onClick={onRemove}
-          id={id}
-        />
-      )}
+      <div className={mergeClasses('absolute right-0 top-0 flex gap-1')}>
+        {canDownload && (
+          <DownloadAction
+            ariaLabel={clickLabel}
+            errorTitle={errorTitle}
+            errorDescId={errorDescId}
+            onClick={onDownload}
+            id={id}
+          />
+        )}
+        {canRetry && (
+          <ReloadAction
+            ariaLabel={retryLabel}
+            errorTitle={errorTitle}
+            errorDescId={errorDescId}
+            onClick={onRetry}
+            id={id}
+          />
+        )}
+        {isLink && (
+          <OpenLinkAction
+            ariaLabel={retryLabel}
+            errorTitle={errorTitle}
+            errorDescId={errorDescId}
+            onClick={onOpenInNewTab}
+          />
+        )}
+        {onRemove && (
+          <RemoveAction
+            ariaLabel={retryLabel}
+            errorTitle={errorTitle}
+            errorDescId={errorDescId}
+            onClick={onRemove}
+            id={id}
+          />
+        )}
+      </div>
 
       {isError && (
         <span

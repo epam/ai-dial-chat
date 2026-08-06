@@ -231,6 +231,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     loadingPaths: publishLoadingPaths,
     onExpandedPathsChange: onPublishExpandedPathsChange,
     onCreatePublishFolder,
+    rememberPublishFolder,
     hasPublishWriteAccess,
   } = usePublishFolders();
 
@@ -574,6 +575,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
 
   const handlePublishSuccess = useCallback(
     (item: CatalogItem, folderPath: string[]) => {
+      rememberPublishFolder(folderPath);
       showNotification({
         variant: NotificationVariant.Success,
         title: t(CatalogI18nKeys.PublishSuccessTitle),
@@ -583,7 +585,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         }),
       });
     },
-    [showNotification, t],
+    [rememberPublishFolder, showNotification, t],
   );
 
   const handlePublishError = useCallback(

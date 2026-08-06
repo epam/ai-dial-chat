@@ -30,7 +30,7 @@
 }
 
 .icon {
-  color: var(--search-bar-icon, var(--text-tertiary, #c7cbd4));
+  color: var(--search-bar-icon, var(--text-tertiary, #848e9c));
 }
 
 .input {
@@ -38,6 +38,6 @@
   color: var(--search-bar-text, var(--text-primary, #161b2d));
 
   &::placeholder {
-    color: var(--search-bar-placeholder, var(--text-tertiary, #c7cbd4));
+    color: var(--search-bar-placeholder, var(--text-tertiary, #848e9c));
   }
 }

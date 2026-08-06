@@ -53,11 +53,11 @@
 }
 
 .filterBtnFunnel {
-  color: var(--cat-filter-btn-funnel, var(--text-secondary, #6b7280));
+  color: var(--cat-filter-btn-funnel, var(--text-secondary, #57647a));
 }
 
 .filterBtnChevron {
-  color: var(--cat-filter-btn-chevron, var(--text-tertiary, #c7cbd4));
+  color: var(--cat-filter-btn-chevron, var(--text-tertiary, #848e9c));
   transition: transform 150ms ease;
 
   @media (prefers-reduced-motion: reduce) {
@@ -156,7 +156,7 @@
 }
 
 .sectionLabel {
-  color: var(--cat-filter-section-label, var(--text-tertiary, #c7cbd4));
+  color: var(--cat-filter-section-label, var(--text-tertiary, #848e9c));
 }
 
 .footer {

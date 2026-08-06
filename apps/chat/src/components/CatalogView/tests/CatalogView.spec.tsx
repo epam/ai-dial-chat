@@ -334,7 +334,13 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
           </button>
         ))}
         {(createOptions ?? []).map((option) => (
-          <button key={option.key} type="button" onClick={option.onClick}>
+          <button
+            key={option.key}
+            type="button"
+            onClick={(domEvent) =>
+              option.onClick?.({ key: option.key, domEvent })
+            }
+          >
             {option.label}
           </button>
         ))}
@@ -493,6 +499,7 @@ describe('CatalogView', () => {
       loadingPaths: new Set(),
       onExpandedPathsChange: vi.fn(),
       onCreatePublishFolder: vi.fn(),
+      rememberPublishFolder: vi.fn(),
       hasPublishWriteAccess: vi.fn().mockReturnValue(true),
     });
     vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
@@ -546,6 +553,7 @@ describe('CatalogView', () => {
       loadingPaths: new Set(),
       onExpandedPathsChange: vi.fn(),
       onCreatePublishFolder: vi.fn(),
+      rememberPublishFolder: vi.fn(),
       hasPublishWriteAccess: vi.fn().mockReturnValue(true),
     });
 
@@ -565,6 +573,7 @@ describe('CatalogView', () => {
       loadingPaths: new Set(),
       onExpandedPathsChange: vi.fn(),
       onCreatePublishFolder,
+      rememberPublishFolder: vi.fn(),
       hasPublishWriteAccess: vi.fn().mockReturnValue(true),
     });
 
@@ -587,6 +596,7 @@ describe('CatalogView', () => {
       loadingPaths,
       onExpandedPathsChange,
       onCreatePublishFolder: vi.fn(),
+      rememberPublishFolder: vi.fn(),
       hasPublishWriteAccess: vi.fn().mockReturnValue(true),
     });
 
