@@ -63,6 +63,8 @@ export interface ItemDetailsTexts {
   apiModelIdLabel?: string;
   /** Title shown in the single-endpoint code block's header in the Connect tab. Default: `'Endpoint'`. */
   apiEndpointLabel?: string;
+  /** "Endpoint" section heading above the multi-endpoint selector in the Connect tab. Default: `'Endpoint'`. */
+  apiEndpointSectionLabel?: string;
   /** "Request example" row label in the API tab. Default: `'Request example'`. */
   apiRequestExampleLabel?: string;
   /** "Response schema" row label in the API tab. Default: `'Response schema'`. */

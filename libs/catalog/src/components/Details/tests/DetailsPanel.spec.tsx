@@ -133,7 +133,13 @@ vi.mock('../TabsContent/Limits', () => ({
 vi.mock('../TabsContent/Tools/Tools', () => ({
   Tools: () => <div>Tools</div>,
 }));
-vi.mock('../ApiDetails', () => ({ ApiDetails: () => <div>Api</div> }));
+vi.mock('../ApiDetails', () => ({
+  ApiDetails: ({ endpointSectionLabel }: { endpointSectionLabel?: string }) => (
+    <div>
+      {endpointSectionLabel != null ? `Api:${endpointSectionLabel}` : 'Api'}
+    </div>
+  ),
+}));
 vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-publish-panel')>();
@@ -269,7 +275,7 @@ describe('DetailsPanel', () => {
     renderPanel({
       item: makeItem({
         details: {
-          api: { resource: { modelId: 'gpt-4o' } },
+          api: { resource: { endpointUrl: 'https://dial.example.com/mcp' } },
         },
       }),
     });
@@ -279,11 +285,26 @@ describe('DetailsPanel', () => {
     expect(screen.getByText('Api')).toBeTruthy();
   });
 
+  it('forwards apiEndpointSectionLabel to the Connect tab content', async () => {
+    renderPanel({
+      item: makeItem({
+        details: {
+          api: { resource: { endpointUrl: 'https://dial.example.com/mcp' } },
+        },
+      }),
+      texts: { apiEndpointSectionLabel: 'Endpoints' },
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Connect' }));
+
+    expect(screen.getByText('Api:Endpoints')).toBeTruthy();
+  });
+
   it('uses tabConnectLabel to override the Connect tab label', () => {
     renderPanel({
       item: makeItem({
         details: {
-          api: { resource: { modelId: 'gpt-4o' } },
+          api: { resource: { endpointUrl: 'https://dial.example.com/mcp' } },
         },
       }),
       texts: { tabConnectLabel: 'Endpoint' },
@@ -294,6 +315,23 @@ describe('DetailsPanel', () => {
 
   it('hides the Connect tab when the item has no API details', () => {
     renderPanel();
+    expect(screen.queryByRole('button', { name: 'Connect' })).toBeNull();
+  });
+
+  it('hides the Connect tab when the api data carries no endpoint URL, as for a model', () => {
+    renderPanel({
+      item: makeItem({
+        details: {
+          api: {
+            resource: { modelId: 'gpt-4o' },
+            endpoints: [
+              { label: 'Azure OpenAI Endpoint', url: 'https://azure.example' },
+            ],
+          },
+        },
+      }),
+    });
+
     expect(screen.queryByRole('button', { name: 'Connect' })).toBeNull();
   });
 
@@ -565,7 +603,7 @@ describe('DetailsPanel', () => {
         item={makeItem({
           details: {
             tools: { tools: [] },
-            api: { resource: { modelId: 'gpt-4o' } },
+            api: { resource: { endpointUrl: 'https://dial.example.com/mcp' } },
           },
         })}
         isOpen
@@ -585,7 +623,7 @@ describe('DetailsPanel', () => {
             overview: { sections: [] },
             pricing: {},
             limits: { rows: [] },
-            api: { resource: { modelId: 'gpt-4o' } },
+            api: { resource: { endpointUrl: 'https://dial.example.com/mcp' } },
           },
         })}
         isOpen

@@ -71,7 +71,10 @@ import {
   mapEntityDetailsToCatalogDetails,
   mapToolsetCredentials,
 } from '../../utils/map-entity-details-to-catalog';
-import { buildConnectApi } from '../../utils/mcp-endpoint-url';
+import {
+  buildConnectApi,
+  resolveMcpResourceKind,
+} from '../../utils/mcp-endpoint-url';
 import { getAccessRulesLabels, toPublishEntityType } from '../../utils/publish';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 
@@ -250,12 +253,19 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         ]);
         const entityDetails = mapDeploymentDetailsDtoToEntityDetails(dto);
         const catalogDetails = mapEntityDetailsToCatalogDetails(entityDetails);
+        const mcpResourceKind = resolveMcpResourceKind(
+          item.type,
+          item.supportsMcp,
+        );
         return {
           ...catalogDetails,
           api:
-            item.type === CatalogEntityType.Toolset ||
-            (item.type === CatalogEntityType.Agent && item.supportsMcp === true)
-              ? buildConnectApi(dialCoreExternalUrl ?? '', item.id)
+            mcpResourceKind != null
+              ? buildConnectApi(
+                  dialCoreExternalUrl ?? '',
+                  item.id,
+                  mcpResourceKind,
+                )
               : catalogDetails.api,
           limits: mapDeploymentLimitsDtoToCatalogLimits(limitsDto, t),
           credentials:
@@ -796,6 +806,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         apiSnippetSectionLabel: t(CatalogI18nKeys.DetailsApiSnippetSection),
         apiModelIdLabel: t(CatalogI18nKeys.DetailsApiModelId),
         apiEndpointLabel: t(ApiI18nKeys.EndpointLabel),
+        apiEndpointSectionLabel: t(ApiI18nKeys.EndpointLabel),
         apiRequestExampleLabel: t(CatalogI18nKeys.DetailsApiRequestExample),
         apiResponseSchemaLabel: t(CatalogI18nKeys.DetailsApiResponseSchema),
         copyCodeAriaLabel: t(ButtonsI18nKeys.Copy),
