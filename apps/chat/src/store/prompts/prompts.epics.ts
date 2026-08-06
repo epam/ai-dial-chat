@@ -977,11 +977,20 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
         ),
       ]);
 
-      if (promptIds.length) {
+      if (deletedPromptIds.length) {
         actions.push(
           of(
             PromptsActions.deletePrompts({
               promptIds: deletedPromptIds,
+            }),
+          ),
+        );
+      } else {
+        // nothing to delete on the server, hide the loader shown on delete start
+        actions.push(
+          of(
+            PromptsActions.deletePromptsComplete({
+              promptIds: new Set([]),
             }),
           ),
         );
