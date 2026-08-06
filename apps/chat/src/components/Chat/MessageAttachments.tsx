@@ -6,6 +6,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
+import { getAttachmentsGroupSpacingClass } from '@/src/utils/app/compact-mode';
 
 import { Translation } from '@/src/types/translation';
 
@@ -27,6 +28,7 @@ interface Props {
   annotations?: MessageAnnotation[];
   isInner?: boolean;
   applicationId?: string;
+  compactMode?: boolean;
 }
 
 export const MessageAttachments = ({
@@ -34,6 +36,7 @@ export const MessageAttachments = ({
   annotations,
   isInner,
   applicationId,
+  compactMode = false,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -156,7 +159,7 @@ export const MessageAttachments = ({
     }
 
     return (
-      <div className="mb-3">
+      <div className={getAttachmentsGroupSpacingClass(compactMode)}>
         <GroupedVisualizerRenderer
           attachments={groupedAttachments.attachments}
           visualizerConfig={groupedAttachments.config}
@@ -201,6 +204,7 @@ export const MessageAttachments = ({
                   attachment={attachment}
                   annotations={getAttachmentAnnotations(attachment)}
                   isInner
+                  compactMode={compactMode}
                 />
               ))}
             </div>
@@ -218,6 +222,7 @@ export const MessageAttachments = ({
             isInner={isInner}
             forceDefaultView={isInner}
             annotations={getAttachmentAnnotations(attachment)}
+            compactMode={compactMode}
           />
         ))}
       </div>

@@ -3,6 +3,11 @@ import { MouseEvent, RefObject, useRef } from 'react';
 
 import classNames from 'classnames';
 
+import {
+  getMessageDesktopGapClass,
+  getMessageDesktopPaddingClass,
+  getMessagePaddingClass,
+} from '@/src/utils/app/compact-mode';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
@@ -88,6 +93,7 @@ export function ChatMessageContent({
   const messageRef = useRef<HTMLDivElement>(null);
 
   const isAssistant = message.role === Role.Assistant;
+  const isCompactMode = !!conversation.compactMode;
   const isShowResponseLoader: boolean =
     !!conversation.isMessageStreaming && isLastMessage;
   const isUser = message.role === Role.User;
@@ -118,9 +124,11 @@ export function ChatMessageContent({
     >
       <div
         className={classNames(
-          'm-auto flex h-full md:gap-6 md:py-6 lg:px-0',
+          'm-auto flex h-full lg:px-0',
+          getMessageDesktopGapClass(isCompactMode),
+          getMessageDesktopPaddingClass(isCompactMode),
           !isChatFullWidth && 'md:max-w-2xl xl:max-w-3xl',
-          isMobileOrOverlay ? 'p-3' : 'p-4',
+          getMessagePaddingClass(isCompactMode, isMobileOrOverlay),
           alignUserMessageEnd && 'flex-row-reverse justify-end',
         )}
       >
