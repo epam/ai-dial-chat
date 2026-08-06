@@ -271,6 +271,7 @@ export interface Conversation extends ShareEntity, ConversationInfo {
   prompt: string;
   temperature: number;
   responseFormat?: ConversationResponseFormat;
+  compactMode?: boolean;
   /**
    * @deprecated but required by core validation
    */
