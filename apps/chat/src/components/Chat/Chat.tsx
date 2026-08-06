@@ -513,6 +513,7 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
               temperature: temporarySettings.temperature,
               isShared: temporarySettings.isShared,
               responseFormat: temporarySettings.responseFormat,
+              compactMode: temporarySettings.compactMode,
             },
           }),
         );

@@ -25,6 +25,12 @@ import {
   hasPdfExtension,
   isDialApiFileUrl,
 } from '@/src/utils/app/attachments';
+import {
+  getAttachmentContentOffsetClass,
+  getAttachmentContentPaddingClass,
+  getAttachmentReferenceOffsetClass,
+  getAttachmentSpacingClass,
+} from '@/src/utils/app/compact-mode';
 import { getFileName, isSafeLinkUrl } from '@/src/utils/app/file';
 
 import { Translation } from '@/src/types/translation';
@@ -71,6 +77,7 @@ interface AttachmentDataRendererProps {
   onFullScreenClick?: () => void;
   isInner?: boolean;
   forceDefaultView?: boolean;
+  compactMode?: boolean;
 }
 
 const getDownloadName = (attachment: Attachment): string => {
@@ -140,6 +147,7 @@ const AttachmentDataRenderer = ({
   attachment,
   isFullScreen,
   isInner,
+  compactMode,
 }: AttachmentDataRendererProps) => {
   if (AUDIO_TYPES_SET.has(attachment.type)) {
     return (
@@ -196,6 +204,7 @@ const AttachmentDataRenderer = ({
         isShowResponseLoader={false}
         content={attachment.data}
         isInner={isInner}
+        compactMode={compactMode}
       />
     );
   }
@@ -265,6 +274,7 @@ interface Props {
   annotations?: MessageAnnotation[];
   isInner?: boolean;
   forceDefaultView?: boolean;
+  compactMode?: boolean;
 }
 
 const AttachmentRendererComponent = withErrorBoundary(
@@ -274,6 +284,7 @@ const AttachmentRendererComponent = withErrorBoundary(
     isFullScreen,
     onFullScreenClick,
     forceDefaultView,
+    compactMode,
   }: AttachmentDataRendererProps) => {
     const attachmentType: MIMEType = attachment.type;
     const mappedAttachmentUrl = useMemo(
@@ -322,6 +333,7 @@ const AttachmentRendererComponent = withErrorBoundary(
         attachment={attachment}
         isInner={isInner}
         isFullScreen={isFullScreen}
+        compactMode={compactMode}
       />
     );
   },
@@ -339,6 +351,7 @@ export const MessageAttachment = ({
   annotations,
   isInner,
   forceDefaultView,
+  compactMode = false,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -493,7 +506,9 @@ export const MessageAttachment = ({
         'flex flex-col rounded',
         isExpanded && 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3',
         !isInner && !isBorderless && 'border border-secondary',
-        !isBorderless ? 'bg-layer-3 px-1 py-2' : 'mb-3 last:mb-0',
+        !isBorderless
+          ? 'bg-layer-3 px-1 py-2'
+          : getAttachmentSpacingClass(compactMode),
         isFullScreen && 'fixed left-0 top-0 z-[9999] size-full bg-layer-3',
         isFullScreen && isBorderless && '!bg-layer-1',
       )}
@@ -682,7 +697,11 @@ export const MessageAttachment = ({
             isFullScreen
               ? 'm-0 flex grow items-center justify-center p-3'
               : 'h-auto w-full',
-            !isBorderless && 'mt-2 border-t border-tertiary p-3 pt-4',
+            !isBorderless && [
+              'border-t border-tertiary',
+              getAttachmentContentOffsetClass(compactMode),
+              getAttachmentContentPaddingClass(compactMode),
+            ],
           )}
           ref={anchorRef}
           data-qa="attachment-content"
@@ -693,6 +712,7 @@ export const MessageAttachment = ({
             isFullScreen={isFullScreen}
             onFullScreenClick={handleToggleFullScreen}
             forceDefaultView={forceDefaultView}
+            compactMode={compactMode}
           />
           {mappedAttachmentReferenceUrl &&
             (isPdfReference ? (
@@ -702,7 +722,10 @@ export const MessageAttachment = ({
                   stopBubbling(e);
                   setOpenPdfUrl(mappedAttachmentReferenceUrl);
                 }}
-                className="mt-3 block text-start text-accent-primary"
+                className={classNames(
+                  'block text-start text-accent-primary',
+                  getAttachmentReferenceOffsetClass(compactMode),
+                )}
                 aria-label="reference"
               >
                 {t(ChatI18nKeys.Reference)}
@@ -712,7 +735,10 @@ export const MessageAttachment = ({
                 href={mappedAttachmentReferenceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 block text-accent-primary"
+                className={classNames(
+                  'block text-accent-primary',
+                  getAttachmentReferenceOffsetClass(compactMode),
+                )}
               >
                 {t(ChatI18nKeys.Reference)}
               </a>

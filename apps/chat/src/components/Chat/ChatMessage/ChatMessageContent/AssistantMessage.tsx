@@ -19,6 +19,7 @@ import {
   isEntityNameOrPathInvalid,
   replaceStringRange,
 } from '@/src/utils/app/common';
+import { getMessageBlockGapClass } from '@/src/utils/app/compact-mode';
 import { isPlaybackConversation } from '@/src/utils/app/conversation';
 import {
   getDialFilesFromAttachments,
@@ -619,6 +620,7 @@ export const AssistantMessage = memo(function AssistantMessage({
 
   const [shouldScroll, setShouldScroll] = useState(false);
 
+  const isCompactMode = !!conversation.compactMode;
   const isShowResponseLoader =
     !!conversation.isMessageStreaming && isLastMessage;
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
@@ -686,11 +688,14 @@ export const AssistantMessage = memo(function AssistantMessage({
           (message.content ||
             message.errorMessage ||
             message.custom_content?.attachments) &&
-            'gap-4',
+            getMessageBlockGapClass(isCompactMode),
         )}
       >
         {!!message.custom_content?.stages?.length && (
-          <MessageStages stages={message.custom_content?.stages} />
+          <MessageStages
+            stages={message.custom_content?.stages}
+            compactMode={isCompactMode}
+          />
         )}
         {!!(message.content || isShowResponseLoader) && (
           <ChatMDComponent
@@ -700,6 +705,7 @@ export const AssistantMessage = memo(function AssistantMessage({
               conversation.responseFormat ===
               ConversationResponseFormat.PlainText
             }
+            compactMode={isCompactMode}
           />
         )}
         {codeWarning &&
