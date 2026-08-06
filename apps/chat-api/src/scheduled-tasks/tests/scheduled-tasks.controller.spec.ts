@@ -35,6 +35,7 @@ interface MockScheduledTasksService {
   createScheduledTask: ReturnType<typeof vi.fn>;
   getScheduledTask: ReturnType<typeof vi.fn>;
   updateScheduledTask: ReturnType<typeof vi.fn>;
+  listScheduledTaskRuns: ReturnType<typeof vi.fn>;
 }
 
 async function buildApp(
@@ -83,6 +84,7 @@ describe('ScheduledTasksController (integration)', () => {
       createScheduledTask: vi.fn(),
       getScheduledTask: vi.fn(),
       updateScheduledTask: vi.fn(),
+      listScheduledTaskRuns: vi.fn(),
     };
     app = await buildApp(service);
   });
@@ -359,6 +361,68 @@ describe('ScheduledTasksController (integration)', () => {
         .expect(400);
     });
 
+    it('accepts a cron trigger with startDate and endDate', async () => {
+      service.createScheduledTask.mockResolvedValue(mockSchedule);
+      const body = {
+        ...validCreateBody,
+        trigger: {
+          cron: {
+            fields: { hour: '9', minute: '0' },
+            startDate: '2026-08-01T00:00:00.000Z',
+            endDate: '2026-12-31T23:59:59.999Z',
+          },
+        },
+      };
+
+      await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks')
+        .send(body)
+        .expect(201);
+
+      expect(service.createScheduledTask).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        expect.objectContaining(body),
+      );
+    });
+
+    it('returns 400 when startDate is not a valid ISO 8601 string', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks')
+        .send({
+          ...validCreateBody,
+          trigger: {
+            cron: {
+              fields: { hour: '9', minute: '0' },
+              startDate: 'not-a-date',
+            },
+          },
+        })
+        .expect(400);
+      expect(service.createScheduledTask).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when the mapper rejects an inverted cron window', async () => {
+      service.createScheduledTask.mockRejectedValue(
+        new BadRequestException(
+          'trigger.cron.endDate must be strictly after trigger.cron.startDate',
+        ),
+      );
+      await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks')
+        .send({
+          ...validCreateBody,
+          trigger: {
+            cron: {
+              fields: { hour: '9', minute: '0' },
+              startDate: '2026-12-31T23:59:59.999Z',
+              endDate: '2026-08-01T00:00:00.000Z',
+            },
+          },
+        })
+        .expect(400);
+    });
+
     it('returns 401 when the service reports the caller is not authenticated', async () => {
       service.createScheduledTask.mockRejectedValue(
         new UnauthorizedException(),
@@ -434,6 +498,112 @@ describe('ScheduledTasksController (integration)', () => {
       );
       await request(app.getHttpServer())
         .get('/api/v1/scheduled-tasks/sched_123')
+        .expect(503);
+    });
+  });
+
+  describe('GET /api/v1/scheduled-tasks/:scheduleId/runs', () => {
+    const mockRuns = {
+      items: [
+        {
+          id: 'run_1',
+          status: 'Success',
+          startTime: '2026-07-24T09:00:00.000Z',
+          endTime: '2026-07-24T09:01:39.000Z',
+          durationSeconds: 99,
+        },
+      ],
+      count: 1,
+      limit: 20,
+      offset: 0,
+      next: null,
+      previous: null,
+    };
+
+    it('returns 200 with the mapped run history', async () => {
+      service.listScheduledTaskRuns.mockResolvedValue(mockRuns);
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/scheduled-tasks/sched_123/runs')
+        .expect(200);
+
+      expect(res.body).toEqual(mockRuns);
+      expect(service.listScheduledTaskRuns).toHaveBeenCalledWith(
+        TEST_USER.at,
+        'sched_123',
+        {},
+      );
+    });
+
+    it('does not cache the response', async () => {
+      service.listScheduledTaskRuns.mockResolvedValue(mockRuns);
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/scheduled-tasks/sched_123/runs')
+        .expect(200);
+
+      expect(res.headers['cache-control']).toBe('private, no-store');
+    });
+
+    it('forwards valid limit/offset query params', async () => {
+      service.listScheduledTaskRuns.mockResolvedValue(mockRuns);
+
+      await request(app.getHttpServer())
+        .get('/api/v1/scheduled-tasks/sched_123/runs?limit=20&offset=40')
+        .expect(200);
+
+      expect(service.listScheduledTaskRuns).toHaveBeenCalledWith(
+        TEST_USER.at,
+        'sched_123',
+        { limit: 20, offset: 40 },
+      );
+    });
+
+    it('returns 400 when limit is out of range', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/scheduled-tasks/sched_123/runs?limit=101')
+        .expect(400);
+      expect(service.listScheduledTaskRuns).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when offset is negative', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/scheduled-tasks/sched_123/runs?offset=-1')
+        .expect(400);
+      expect(service.listScheduledTaskRuns).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 for a path-traversal-shaped scheduleId without calling the service', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/scheduled-tasks/..%2F..%2Fetc%2Fpasswd/runs')
+        .expect(400);
+      expect(service.listScheduledTaskRuns).not.toHaveBeenCalled();
+    });
+
+    it('returns 401 when the service reports the caller is not authenticated', async () => {
+      service.listScheduledTaskRuns.mockRejectedValue(
+        new UnauthorizedException(),
+      );
+      await request(app.getHttpServer())
+        .get('/api/v1/scheduled-tasks/sched_123/runs')
+        .expect(401);
+    });
+
+    it('returns 404 when the schedule does not exist', async () => {
+      service.listScheduledTaskRuns.mockRejectedValue(
+        new NotFoundException('Resource not found'),
+      );
+      await request(app.getHttpServer())
+        .get('/api/v1/scheduled-tasks/sched_missing/runs')
+        .expect(404);
+    });
+
+    it('returns 502/503 on upstream failure', async () => {
+      service.listScheduledTaskRuns.mockRejectedValue(
+        new ServiceUnavailableException('DIAL Core is unreachable'),
+      );
+      await request(app.getHttpServer())
+        .get('/api/v1/scheduled-tasks/sched_123/runs')
         .expect(503);
     });
   });
@@ -528,6 +698,7 @@ describe('ScheduledTasksController — unauthenticated / feature-disabled', () =
       createScheduledTask: vi.fn(),
       getScheduledTask: vi.fn(),
       updateScheduledTask: vi.fn(),
+      listScheduledTaskRuns: vi.fn(),
     };
     const app = await buildApp(service, false);
 
@@ -545,11 +716,15 @@ describe('ScheduledTasksController — unauthenticated / feature-disabled', () =
       .put('/api/v1/scheduled-tasks/sched_123')
       .send(validCreateBody)
       .expect(403);
+    await request(app.getHttpServer())
+      .get('/api/v1/scheduled-tasks/sched_123/runs')
+      .expect(403);
 
     expect(service.listScheduledTasks).not.toHaveBeenCalled();
     expect(service.createScheduledTask).not.toHaveBeenCalled();
     expect(service.getScheduledTask).not.toHaveBeenCalled();
     expect(service.updateScheduledTask).not.toHaveBeenCalled();
+    expect(service.listScheduledTaskRuns).not.toHaveBeenCalled();
 
     await app.close();
   });

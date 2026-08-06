@@ -346,19 +346,13 @@ export const useConversationHandlers = ({
         ? { [propertyKey]: starter.const }
         : undefined;
       const hasToolConfig = hasActiveToolConfig(toolConfigurationValue);
-      const mergedConfigurationValue = {
-        ...(configurationValue ?? {}),
-        ...(hasToolConfig ? toolConfigurationValue : {}),
-      };
-      const hasConfigurationValue =
-        Object.keys(mergedConfigurationValue).length > 0;
 
       const customContent: MessageCustomContent | undefined =
-        configurationValue || hasConfigurationValue
+        configurationValue || hasToolConfig
           ? {
               ...(configurationValue ? { form_value: configurationValue } : {}),
-              ...(hasConfigurationValue
-                ? { configuration_value: mergedConfigurationValue }
+              ...(hasToolConfig
+                ? { configuration_value: toolConfigurationValue }
                 : {}),
             }
           : undefined;

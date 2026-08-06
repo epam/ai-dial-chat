@@ -538,6 +538,11 @@
       "dayOfWeekRequired": "Day of week is required",
       "dayOfMonthLabel": "Day of month",
       "dayOfMonthRequired": "Day of month is required",
+      "startDateLabel": "Start date",
+      "startDatePlaceholder": "Pick start date",
+      "endDateLabel": "End date",
+      "endDatePlaceholder": "Pick end date",
+      "endDateBeforeStartError": "End date must be after start date",
       "modelOrAgentLabel": "Model or Agent",
       "modelPlaceholder": "Select a model",
       "modelRequired": "Model is required",
@@ -547,6 +552,24 @@
       "promptRequired": "Instructions are required",
       "successNotification": "Scheduled task created",
       "errorNotification": "Failed to create the scheduled task"
+    },
+    "detail": {
+      "repeatsLabel": "Repeats",
+      "activeWindowLabel": "Active",
+      "activeWindowValue": "{{startDate}} – {{endDate}}",
+      "nextRunLabel": "Next run: {{value}}",
+      "historyTitle": "History",
+      "historyEmptyLabel": "No runs yet",
+      "historyErrorLabel": "Failed to load history",
+      "historyLoadingMoreLabel": "Loading more runs…",
+      "historyTodayAt": "today at {{time}}",
+      "historyDateAt": "{{date}} at {{time}}",
+      "historyDurationSuffix": "({{seconds}}s)",
+      "statusSuccess": "Succeeded",
+      "statusError": "Failed",
+      "statusInProgress": "Running",
+      "statusMissed": "Missed",
+      "errorLabel": "Failed to load the scheduled task"
     }
   },
   "dialFileManager": {

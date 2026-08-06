@@ -16,6 +16,7 @@ import * as runtime from '../runtime';
 import type {
   CreateScheduledTaskBodyDto,
   CreatedScheduledTaskDto,
+  ListScheduledTaskRunsResponseDto,
   ListScheduledTasksResponseDto,
   ScheduledTaskDto,
   UpdateScheduledTaskBodyDto,
@@ -28,6 +29,12 @@ export interface CreateScheduledTaskRequest {
 
 export interface GetScheduledTaskRequest {
   scheduleId: string;
+}
+
+export interface ListScheduledTaskRunsRequest {
+  scheduleId: string;
+  limit?: number;
+  offset?: number;
 }
 
 export interface ListScheduledTasksRequest {
@@ -145,6 +152,69 @@ export class ScheduledTasksApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ScheduledTaskDto> {
     const response = await this.getScheduledTaskRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns the paginated run history for a single DIAL Scheduler schedule, proxying DIAL Scheduler using the session user\'s access token. Always requests upstream ordering of created_at desc explicitly. Not cached.
+   * List a scheduled task run history
+   */
+  async listScheduledTaskRunsRaw(
+    requestParameters: ListScheduledTaskRunsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ListScheduledTaskRunsResponseDto>> {
+    if (requestParameters['scheduleId'] == null) {
+      throw new runtime.RequiredError(
+        'scheduleId',
+        'Required parameter "scheduleId" was null or undefined when calling listScheduledTaskRuns().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit'];
+    }
+
+    if (requestParameters['offset'] != null) {
+      queryParameters['offset'] = requestParameters['offset'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/scheduled-tasks/{scheduleId}/runs`;
+    urlPath = urlPath.replace(
+      `{${'scheduleId'}}`,
+      encodeURIComponent(String(requestParameters['scheduleId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ListScheduledTaskRunsResponseDto>(
+      response,
+    );
+  }
+
+  /**
+   * Returns the paginated run history for a single DIAL Scheduler schedule, proxying DIAL Scheduler using the session user\'s access token. Always requests upstream ordering of created_at desc explicitly. Not cached.
+   * List a scheduled task run history
+   */
+  async listScheduledTaskRuns(
+    requestParameters: ListScheduledTaskRunsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ListScheduledTaskRunsResponseDto> {
+    const response = await this.listScheduledTaskRunsRaw(
       requestParameters,
       initOverrides,
     );

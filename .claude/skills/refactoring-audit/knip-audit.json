@@ -1,0 +1,14 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreWorkspaces": ["packages/*"],
+  "workspaces": {
+    "apps/*": {
+      "entry": ["src/main.{ts,tsx}!"],
+      "project": ["src/**/*.{ts,tsx}!"]
+    },
+    "libs/*": {
+      "entry": ["src/index.{ts,tsx}!"],
+      "project": ["src/**/*.{ts,tsx}!"]
+    }
+  }
+}

@@ -112,6 +112,25 @@ section "Convention violations — exported string-literal unions (prefer enums)
 rg -n "^export type \w+ = '[^']+' \|" apps/chat/src libs --glob '*.ts' 2>/dev/null \
   | rg -v '\.spec\.' | head -10 || echo "(none)"
 
+section "Dead-code tooling readiness"
+if rg -q '"noUnusedLocals"\s*:\s*true' tsconfig*.json 2>/dev/null; then
+  echo "TypeScript noUnusedLocals: enabled"
+else
+  echo "TypeScript noUnusedLocals: NOT FOUND"
+fi
+
+if [ -x node_modules/.bin/knip ]; then
+  echo "Knip: available locally"
+else
+  echo "Knip: unavailable (dead-code coverage will be Partial)"
+fi
+
+if [ -f .claude/skills/refactoring-audit/knip-audit.json ]; then
+  echo "Knip audit config: present"
+else
+  echo "Knip audit config: MISSING"
+fi
+
 section "Local refactor docs git status"
 for f in refactoring.md refactoring-backend.md refactoring-frontend.md; do
   if git check-ignore -q "$f" 2>/dev/null; then

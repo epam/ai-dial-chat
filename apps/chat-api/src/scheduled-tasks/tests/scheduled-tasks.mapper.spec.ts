@@ -162,6 +162,131 @@ describe('toUpstreamSchedulePayload', () => {
     ).toBeUndefined();
   });
 
+  it('includes start_date/end_date in the upstream cron when both are provided', () => {
+    const body: CreateScheduledTaskBodyDto = {
+      displayName: 'Bounded schedule',
+      trigger: {
+        cron: {
+          fields: { hour: '9', minute: '0' },
+          startDate: '2026-08-01T00:00:00.000Z',
+          endDate: '2026-12-31T23:59:59.999Z',
+        },
+      },
+      model: 'gpt-4.1-mini-2025-04-14',
+      prompt: 'Run health check',
+    };
+
+    const upstream = toUpstreamSchedulePayload(
+      body,
+      DIAL_CORE_URL,
+      DIAL_API_VERSION,
+      SCHEDULER_SERVICE_ID,
+    );
+
+    expect(upstream.trigger).toEqual({
+      cron: {
+        fields: { hour: '9', minute: '0' },
+        start_date: '2026-08-01T00:00:00.000Z',
+        end_date: '2026-12-31T23:59:59.999Z',
+      },
+    });
+  });
+
+  it('omits start_date/end_date from the upstream cron when neither is provided', () => {
+    const body: CreateScheduledTaskBodyDto = {
+      displayName: 'Unbounded schedule',
+      trigger: { cron: { fields: { hour: '9', minute: '0' } } },
+      model: 'gpt-4.1-mini-2025-04-14',
+      prompt: 'Run health check',
+    };
+
+    const upstream = toUpstreamSchedulePayload(
+      body,
+      DIAL_CORE_URL,
+      DIAL_API_VERSION,
+      SCHEDULER_SERVICE_ID,
+    );
+
+    expect(upstream.trigger).toEqual({
+      cron: { fields: { hour: '9', minute: '0' } },
+    });
+    expect(upstream.trigger.cron).not.toHaveProperty('start_date');
+    expect(upstream.trigger.cron).not.toHaveProperty('end_date');
+  });
+
+  it('rejects a cron window where endDate is not after startDate', () => {
+    const body: CreateScheduledTaskBodyDto = {
+      displayName: 'Bad window',
+      trigger: {
+        cron: {
+          fields: { hour: '9', minute: '0' },
+          startDate: '2026-08-01T00:00:00.000Z',
+          endDate: '2026-08-01T00:00:00.000Z',
+        },
+      },
+      model: 'gpt-4.1-mini-2025-04-14',
+      prompt: 'x',
+    };
+
+    expect(() =>
+      toUpstreamSchedulePayload(
+        body,
+        DIAL_CORE_URL,
+        DIAL_API_VERSION,
+        SCHEDULER_SERVICE_ID,
+      ),
+    ).toThrow(BadRequestException);
+  });
+
+  it('rejects a cron window where endDate is before startDate', () => {
+    const body: CreateScheduledTaskBodyDto = {
+      displayName: 'Bad window',
+      trigger: {
+        cron: {
+          fields: { hour: '9', minute: '0' },
+          startDate: '2026-08-31T00:00:00.000Z',
+          endDate: '2026-08-01T00:00:00.000Z',
+        },
+      },
+      model: 'gpt-4.1-mini-2025-04-14',
+      prompt: 'x',
+    };
+
+    expect(() =>
+      toUpstreamSchedulePayload(
+        body,
+        DIAL_CORE_URL,
+        DIAL_API_VERSION,
+        SCHEDULER_SERVICE_ID,
+      ),
+    ).toThrow(BadRequestException);
+  });
+
+  it('rejects startDate/endDate combined with a date trigger', () => {
+    const body: CreateScheduledTaskBodyDto = {
+      displayName: 'Bad trigger',
+      trigger: {
+        date: '2026-07-24T09:00:00.000Z',
+        cron: {
+          fields: {},
+          startDate: '2026-08-01T00:00:00.000Z',
+          endDate: '2026-08-31T00:00:00.000Z',
+        },
+      },
+      model: 'gpt-4.1-mini-2025-04-14',
+      prompt: 'x',
+    };
+
+    expect(() =>
+      toUpstreamSchedulePayload(
+        body,
+        DIAL_CORE_URL,
+        DIAL_API_VERSION,
+        SCHEDULER_SERVICE_ID,
+      ),
+    ).toThrow(BadRequestException);
+  });
+
   it('omits description from the upstream payload when not provided', () => {
     const body: CreateScheduledTaskBodyDto = {
       displayName: 'Daily summary',
@@ -230,6 +355,54 @@ describe('fromUpstreamSchedule', () => {
     expect(result.createdBy).toBe('70e570e9-cc23-4ffd-9182-078d09f116ac');
   });
 
+  it('maps upstream cron start_date/end_date to startDate/endDate', () => {
+    const upstream: UpstreamScheduleResponse = {
+      id: 'sched_901',
+      display_name: 'Bounded schedule',
+      trigger: {
+        cron: {
+          fields: { hour: '9', minute: '0' },
+          start_date: '2026-08-01T00:00:00.000Z',
+          end_date: '2026-12-31T23:59:59.999Z',
+        },
+      },
+    };
+
+    const result = fromUpstreamSchedule(upstream);
+
+    expect(result.trigger.cron).toEqual({
+      fields: { hour: '9', minute: '0' },
+      startDate: '2026-08-01T00:00:00.000Z',
+      endDate: '2026-12-31T23:59:59.999Z',
+    });
+  });
+
+  it('maps a cron trigger with no start_date/end_date to undefined without throwing', () => {
+    const upstream: UpstreamScheduleResponse = {
+      id: 'sched_902',
+      display_name: 'Unbounded schedule',
+      trigger: { cron: { fields: { hour: '9', minute: '0' } } },
+    };
+
+    const result = fromUpstreamSchedule(upstream);
+
+    expect(result.trigger.cron).toEqual({
+      fields: { hour: '9', minute: '0' },
+      startDate: undefined,
+      endDate: undefined,
+    });
+  });
+
+  it('maps a list item with no trigger field to an undefined cron without throwing', () => {
+    const upstream = {
+      id: 'sched_903',
+      display_name: 'List item',
+      trigger_type: 'cron',
+    } as unknown as UpstreamScheduleResponse;
+
+    expect(fromUpstreamSchedule(upstream).trigger.cron).toBeUndefined();
+  });
+
   it('maps a response missing optional trigger fields without throwing', () => {
     const upstream: UpstreamScheduleResponse = {
       id: 'sched_456',
@@ -265,5 +438,51 @@ describe('fromUpstreamSchedule', () => {
     };
 
     expect(fromUpstreamSchedule(upstream).description).toBeUndefined();
+  });
+
+  it('maps model and prompt from properties.payload when present', () => {
+    const upstream: UpstreamScheduleResponse = {
+      id: 'sched_777',
+      display_name: 'Daily summary',
+      trigger: { date: '2026-07-24T09:00:00.000Z' },
+      properties: {
+        payload: {
+          model: 'gpt-4.1-mini-2025-04-14',
+          messages: [{ role: 'user', content: 'Summarize my inbox' }],
+        },
+      },
+    };
+
+    const result = fromUpstreamSchedule(upstream);
+
+    expect(result.model).toBe('gpt-4.1-mini-2025-04-14');
+    expect(result.prompt).toBe('Summarize my inbox');
+  });
+
+  it('maps a response missing properties.payload without throwing', () => {
+    const upstream: UpstreamScheduleResponse = {
+      id: 'sched_778',
+      display_name: 'Daily summary',
+      trigger: { date: '2026-07-24T09:00:00.000Z' },
+    };
+
+    const result = fromUpstreamSchedule(upstream);
+
+    expect(result.model).toBeUndefined();
+    expect(result.prompt).toBeUndefined();
+  });
+
+  it('maps a response with properties.payload but no messages without throwing', () => {
+    const upstream: UpstreamScheduleResponse = {
+      id: 'sched_779',
+      display_name: 'Daily summary',
+      trigger: { date: '2026-07-24T09:00:00.000Z' },
+      properties: { payload: { model: 'gpt-4.1-mini-2025-04-14' } },
+    };
+
+    const result = fromUpstreamSchedule(upstream);
+
+    expect(result.model).toBe('gpt-4.1-mini-2025-04-14');
+    expect(result.prompt).toBeUndefined();
   });
 });
