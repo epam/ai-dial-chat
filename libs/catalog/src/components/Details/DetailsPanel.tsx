@@ -428,7 +428,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                   onTabChange={setActiveTab}
                   styles={{
                     colors: {
-                      activeTabClassName: 'text-catalog-tab-active',
+                      activeTabClassName: 'text-primary',
                       inactiveTabClassName:
                         'text-catalog-tab-inactive hover:text-catalog-tab-hover border-transparent',
                     },
@@ -446,7 +446,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                       showTitle={false}
                       paragraph={{ rows: 1, width: '72px' }}
                       active
-                      color="var(--bg-layer-4)"
+                      color="var(--bg-layer-4, #d1dbea)"
                     />
                   </div>
                 )}

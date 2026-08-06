@@ -2,7 +2,7 @@
 // Layout, spacing, and border-radius live in Tailwind classes in the TSX.
 
 .backdrop {
-  background: var(--bg-blackout, #0c101d4d);
+  background: var(--bg-backdrop, #161b2d4d);
 }
 
 .panel {

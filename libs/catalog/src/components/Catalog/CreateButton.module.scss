@@ -29,7 +29,7 @@
 .menu {
   width: 288px;
   padding: 6px;
-  background: var(--bg-layer-raised);
+  background: var(--bg-layer-raised, #fcfcfc);
   border-radius: 12px;
   animation: menuEnter 120ms ease-out;
 
@@ -59,7 +59,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--text-accent);
+    outline: 2px solid var(--text-accent, #1d4ed8);
     outline-offset: -2px;
     background: var(--bg-layer-raised, #fcfcfc);
   }
@@ -83,11 +83,11 @@
 }
 
 .itemLabel {
-  color: var(--text-primary);
+  color: var(--text-primary, #161b2d);
 }
 
 .itemDescription {
-  color: var(--text-secondary);
+  color: var(--text-secondary, #6b7280);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;

@@ -83,11 +83,11 @@
 }
 
 .rowChecked {
-  background: var(--bg-accent-primary-alpha, rgba(125, 164, 255, 0.15));
+  background: var(--bg-accent-primary-alpha, #7da4ff2e);
 
   @media (hover: hover) {
     &:hover {
-      background: var(--bg-accent-primary-alpha, rgba(125, 164, 255, 0.15));
+      background: var(--bg-accent-primary-alpha, #7da4ff2e);
     }
   }
 }
@@ -99,7 +99,7 @@
 /* Custom 20 × 20 checkbox ------------------------------------ */
 
 .checkbox {
-  border: 1.5px solid rgba(0, 0, 0, 0.12); /* stroke-hover */
+  border: 1.5px solid var(--stroke-tertiary, #e0e6f0);
   background: var(
     --cat-filter-checkbox-bg,
     #ffffff

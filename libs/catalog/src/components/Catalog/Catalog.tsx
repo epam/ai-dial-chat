@@ -431,13 +431,9 @@ export const Catalog: FC<CatalogProps> = ({
               onTabChange={setActiveTab}
               styles={{
                 colors: {
-                  activeTabClassName: 'text-catalog-tab-active',
+                  activeTabClassName: 'text-primary',
                   inactiveTabClassName:
                     'text-catalog-tab-inactive hover:text-catalog-tab-hover border-transparent',
-                  activeBadgeClassName:
-                    'bg-catalog-badge-active text-catalog-badge-active',
-                  inactiveBadgeClassName:
-                    'bg-catalog-badge-inactive text-catalog-badge-inactive',
                 },
               }}
             />

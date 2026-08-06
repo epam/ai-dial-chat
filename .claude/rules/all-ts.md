@@ -58,6 +58,13 @@ models/conversation.ts   ✓
 models/conversation-title.ts   ✗
 ```
 
+**Never place a file and a directory with the same name side by side.** Import specifiers become ambiguous to readers (`'./protocol'` resolves to the file, silently shadowing the directory), and a reader looking for the directory's contents lands in a one-line barrel. Put the barrel inside the directory instead:
+
+```
+protocol.ts + protocol/overlay-protocol.ts   ✗   (`./protocol` hits the file)
+protocol/index.ts + protocol/overlay-protocol.ts   ✓
+```
+
 ## Component folder structure
 
 Component folders under `src/components/` must use PascalCase and match the component name (e.g., `RequireAuth/RequireAuth.tsx`). Tests go in a `tests/` subfolder inside the component folder.

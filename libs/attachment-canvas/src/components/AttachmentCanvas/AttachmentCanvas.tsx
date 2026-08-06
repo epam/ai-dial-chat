@@ -21,7 +21,6 @@ import {
   IconMarkdown,
 } from '@tabler/icons-react';
 import {
-  type CSSProperties,
   type FC,
   memo,
   useCallback,
@@ -199,37 +198,33 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     panelStyles,
   } = stylesProp ?? {};
 
+  /* A `fontClassName` replaces the individual typography fields, so their vars
+   * are skipped entirely when one is supplied. */
+  const hasFontClassName = typography?.fontClassName != null;
+
   const cssVars = useMemo(
     () => ({
       ...buildCssVars({
         '--ac-text': colors?.text,
+        '--ac-font-family': hasFontClassName
+          ? undefined
+          : typography?.fontFamily,
+        '--ac-font-size': hasFontClassName ? undefined : typography?.fontSize,
+        '--ac-font-weight': hasFontClassName
+          ? undefined
+          : typography?.fontWeight,
+        '--ac-line-height': hasFontClassName
+          ? undefined
+          : typography?.lineHeight,
+        '--ac-letter-spacing': hasFontClassName
+          ? undefined
+          : typography?.letterSpacing,
       }),
       ...extraCssVars,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [stylesProp],
   );
-
-  /*
-   * The individual typography fields collapse into one inline style. A
-   * `fontClassName` suppresses them entirely, as documented on
-   * `AttachmentCanvasTypography`.
-   */
-  const typographyStyle = useMemo<CSSProperties | undefined>(() => {
-    if (typography?.fontClassName != null) {
-      return undefined;
-    }
-    const { fontFamily, fontSize, fontWeight, lineHeight, letterSpacing } =
-      typography ?? {};
-    const style: CSSProperties = {
-      ...(fontFamily != null && { fontFamily }),
-      ...(fontSize != null && { fontSize }),
-      ...(fontWeight != null && { fontWeight }),
-      ...(lineHeight != null && { lineHeight }),
-      ...(letterSpacing != null && { letterSpacing }),
-    };
-    return Object.keys(style).length > 0 ? style : undefined;
-  }, [typography]);
 
   const showHtmlToggle =
     !isLoading &&
@@ -276,7 +271,6 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
       case AttachmentContentType.PlainText:
         return (
           <pre
-            style={typographyStyle}
             className={mergeClasses(
               'whitespace-pre-wrap break-words',
               styles.body,
@@ -428,7 +422,6 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   }, [
     content,
     typography?.fontClassName,
-    typographyStyle,
     fileName,
     codeBlockTheme,
     unsupportedLabel,

@@ -1,5 +1,12 @@
+/* No fallbacks on the typography vars — when unset they resolve to `inherit`,
+ * so a `fontClassName` on the same element still wins. */
 .body {
   color: var(--ac-text, var(--text-primary, #161b2d));
+  font-family: var(--ac-font-family);
+  font-size: var(--ac-font-size);
+  font-weight: var(--ac-font-weight);
+  line-height: var(--ac-line-height);
+  letter-spacing: var(--ac-letter-spacing);
 }
 
 .statusLabel {
