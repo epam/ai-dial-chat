@@ -1,5 +1,3 @@
-export { GradientCheckIcon } from './components/GradientCheckIcon/GradientCheckIcon';
-export type { GradientCheckIconProps } from './components/GradientCheckIcon/GradientCheckIcon';
 export { SearchBar } from './components/SearchBar/SearchBar';
 export type {
   SearchBarProps,

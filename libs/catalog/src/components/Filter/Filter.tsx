@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialDropdown,
@@ -20,6 +20,38 @@ import { getFromLabel } from '../../utils/catalog-filter';
 import styles from './Filter.module.scss';
 
 /** Props for Filter. */
+/** Color overrides for `Filter`, applied as CSS custom properties. */
+export interface FilterColors {
+  /** Trigger button background. Fallback: `#ffffff`. */
+  buttonBackground?: string;
+  /** Trigger button border color while the dropdown has focus. Fallback: `--stroke-info`. */
+  buttonBorderFocus?: string;
+  /** Trigger button border color while a filter is applied. Fallback: `--stroke-info`. */
+  buttonBorderActive?: string;
+  /** Trigger button border color while the dropdown is open. Fallback: `--stroke-info`. */
+  buttonBorderOpen?: string;
+  /** Trigger button label color. Fallback: `--text-primary`. */
+  buttonLabel?: string;
+  /** Funnel icon color in the trigger button. Fallback: `--text-secondary`. */
+  buttonFunnel?: string;
+  /** Chevron icon color in the trigger button. Fallback: `--text-tertiary`. */
+  buttonChevron?: string;
+  /** Dropdown overlay background. Fallback: `#ffffff`. */
+  overlayBackground?: string;
+  /** Row background on hover. Fallback: `--bg-layer-raised`. */
+  rowHoverBackground?: string;
+  /** Background of a checked row. Fallback: `--bg-accent-primary-alpha`. */
+  rowCheckedBackground?: string;
+  /** Row label text color. Fallback: `--text-primary`. */
+  rowLabel?: string;
+  /** Checkbox border color in its unchecked state. Fallback: `--stroke-tertiary`. */
+  checkboxBorder?: string;
+  /** Checkbox background in its unchecked state. Fallback: `#ffffff`. */
+  checkboxBackground?: string;
+  /** Section heading ("Topics") text color. Fallback: `--text-tertiary`. */
+  sectionLabel?: string;
+}
+
 export interface FilterProps {
   /** Set of topic strings currently selected for filtering. Empty = no topic filter. */
   checked: Set<string>;
@@ -35,8 +67,6 @@ export interface FilterProps {
   myAppsLabel?: string;
   /** Label for the Topics section heading. Default: 'Topics'. */
   topicsLabel?: string;
-  /** @deprecated No longer applied — section style is set by the DS spec. */
-  topicsSectionClassName?: string;
   /** Button label when nothing is filtered. Default: 'From'. */
   defaultLabel?: string;
   /** Label for the footer Clear button. Default: 'Clear'. */
@@ -45,6 +75,8 @@ export interface FilterProps {
   applyLabel?: string;
   /** Optional typography overrides for the filter button and section label. */
   typography?: ToolbarTypography;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: FilterColors;
 }
 
 const getFilterButtonLabel = (
@@ -84,9 +116,29 @@ export const Filter: FC<FilterProps> = ({
   clearLabel = 'Clear',
   applyLabel = 'Apply',
   typography,
+  colors,
 }) => {
   const isActive = (isMyAppsActive ?? false) || checked.size > 0;
   const [isOpen, setIsOpen] = useState(false);
+
+  /* Applied to the trigger and the overlay separately — the dropdown portals
+   * its overlay, so it is not a DOM descendant of the trigger. */
+  const cssVars = buildCssVars({
+    '--cat-filter-btn-bg': colors?.buttonBackground,
+    '--cat-filter-btn-border-focus': colors?.buttonBorderFocus,
+    '--cat-filter-btn-border-active': colors?.buttonBorderActive,
+    '--cat-filter-btn-border-open': colors?.buttonBorderOpen,
+    '--cat-filter-btn-label': colors?.buttonLabel,
+    '--cat-filter-btn-funnel': colors?.buttonFunnel,
+    '--cat-filter-btn-chevron': colors?.buttonChevron,
+    '--cat-filter-overlay-bg': colors?.overlayBackground,
+    '--cat-filter-row-hover-bg': colors?.rowHoverBackground,
+    '--cat-filter-row-checked-bg': colors?.rowCheckedBackground,
+    '--cat-filter-row-label': colors?.rowLabel,
+    '--cat-filter-checkbox-border': colors?.checkboxBorder,
+    '--cat-filter-checkbox-bg': colors?.checkboxBackground,
+    '--cat-filter-section-label': colors?.sectionLabel,
+  });
 
   const topics = useMemo(
     () => (values != null ? [...values].sort() : []),
@@ -204,6 +256,7 @@ export const Filter: FC<FilterProps> = ({
           role="menu"
           aria-label={defaultLabel}
           tabIndex={-1}
+          style={cssVars}
           className={mergeClasses(
             'min-w-[360px] rounded-xl p-[6px]',
             styles.overlay,
@@ -329,6 +382,7 @@ export const Filter: FC<FilterProps> = ({
         aria-haspopup="menu"
         aria-expanded={isOpen}
         onKeyDown={handleTriggerKeyDown}
+        style={cssVars}
         className={mergeClasses(
           'flex h-[50px] shrink-0 cursor-pointer items-center gap-[7px] whitespace-nowrap rounded-xl px-[18px]',
           styles.filterBtn,

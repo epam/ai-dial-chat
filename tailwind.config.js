@@ -2,7 +2,6 @@
 
 const backgroundsColors = {
   transparent: 'transparent',
-  // COLORS 2.0
   'layer-sunken': 'var(--bg-layer-sunken, #EEF1F7)', // grey-300
   'layer-base': 'var(--bg-layer-base, #F5F7FA)', // grey-200
   'layer-raised': 'var(--bg-layer-raised, #FCFCFC)', // grey-100
@@ -15,21 +14,6 @@ const backgroundsColors = {
   // shadow colors
   'shadow-blue': 'var(--shadow-blue-500, #2764D924)',
   'shadow-grey': 'var(--shadow-grey-1000, #161B2D08)',
-
-  // REMOVED: old names, need to remove
-  'layer-1': 'var(--bg-layer-1, #E0E6F0)',
-  'layer-4': 'var(--bg-layer-4, #D1DBEA)',
-  'layer-6': 'var(--bg-layer-6, #F8FAFC)',
-  'layer-7': 'var(--bg-layer-7, #00000006)',
-  overlay: 'var(--bg-overlay, #FCFCFC80)',
-  inverted: 'var(--bg-inverted, #161B2D)',
-  'accent-primary-alpha': 'var(--bg-accent-primary-alpha, #7DA4FF2E)',
-  // Catalog tab bar — override via CSS custom properties for dark-theme support
-  'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2E)',
-  // New Chat button shadow — blue/purple pair at default, hover, and active alpha levels
-  'mask-opaque': 'var(--bg-mask-opaque, #000)',
-  'hover-alpha': 'var(--bg-hover-alpha, rgba(0, 0, 0, 0.04))',
-  'focus-ring-alpha': 'var(--bg-focus-ring-alpha, rgba(125, 164, 255, 0.5))',
 };
 
 const controlsBgColors = {
@@ -56,7 +40,6 @@ const controlsBgColors = {
 };
 
 const borderColors = {
-  // COLORS 2.0
   transparent: 'transparent',
   primary: 'var(--stroke-primary, #6B7280)', // grey-800
   secondary: 'var(--stroke-secondary, #D1DBEA)', // grey-600
@@ -69,14 +52,9 @@ const borderColors = {
   focus: 'var(--stroke-focus, #161B2D)', // grey-1000
   'accent-alpha': 'var(--stroke-accent-alpha, #2764D933)', // blue-500 alpha-20
   'error-alpha': 'var(--stroke-error-alpha, #AE2F2F73)', // red-800 alpha-45
-
-  // REMOVED: old names, need to remove
-  'hover-tint': 'var(--stroke-hover-tint, #0000001f)',
-  hairline: 'var(--stroke-hairline, #0000000d)',
 };
 
 const textColors = {
-  // COLORS 2.0
   transparent: 'transparent',
   primary: 'var(--text-primary, #161B2D)', // grey-1000
   secondary: 'var(--text-secondary, #6B7280)', // grey-800
@@ -87,14 +65,6 @@ const textColors = {
   'warning-icon': 'var(--text-warning-icon, #EEC840)', // yellow-500
   info: 'var(--text-info, #1D4ED8)', // blue-500
   success: 'var(--text-success, #007274)', // green-800
-
-  // REMOVED: old names, need to remove
-  'accent-secondary': 'var(--text-accent-secondary, #37BABC)',
-  // Catalog tab bar — override via CSS custom properties for dark-theme support
-  'catalog-tab-inactive': 'var(--cat-tab-inactive-text, #6B7280)',
-  'catalog-tab-hover': 'var(--cat-tab-hover-text, #374151)',
-  'catalog-badge-active': 'var(--cat-badge-active-text, #2764D9)',
-  'catalog-badge-inactive': 'var(--cat-badge-inactive-text, #9CA3AF)',
 };
 
 const placeholderColor = {
@@ -108,6 +78,25 @@ const controlsTextColors = {
   'control-blue-active': 'var(--text-control-blue-active, #6785FB)', // blue-200
 };
 
+// remove
+const textColorsToRemove = {
+  'accent-secondary': 'var(--text-accent-secondary, #37BABC)',
+};
+
+const bgColorsToRemove = {
+  'layer-1': 'var(--bg-layer-1, #E0E6F0)',
+  'layer-4': 'var(--bg-layer-4, #D1DBEA)',
+  'layer-6': 'var(--bg-layer-6, #F8FAFC)',
+  'layer-7': 'var(--bg-layer-7, #00000006)',
+  overlay: 'var(--bg-overlay, #FCFCFC80)',
+  inverted: 'var(--bg-inverted, #161B2D)',
+  'accent-primary-alpha': 'var(--bg-accent-primary-alpha, #7DA4FF2E)',
+  // Catalog tab bar — override via CSS custom properties for dark-theme support
+  'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2E)',
+  // New Chat button shadow — blue/purple pair at default, hover, and active alpha levels
+  'mask-opaque': 'var(--bg-mask-opaque, #000)',
+};
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   blocklist: ['[-:=]'],
@@ -116,12 +105,16 @@ module.exports = {
     './node_modules/@epam/ai-dial-ui-kit/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
-    backgroundColor: { ...backgroundsColors, ...controlsBgColors },
+    backgroundColor: {
+      ...backgroundsColors,
+      ...bgColorsToRemove,
+      ...controlsBgColors,
+    },
     borderColor: borderColors,
     stroke: borderColors,
     divideColor: borderColors,
     placeholderColor: placeholderColor,
-    textColor: { ...textColors, ...controlsTextColors },
+    textColor: { ...textColors, ...textColorsToRemove, ...controlsTextColors },
     gradientColorStops: backgroundsColors,
 
     extend: {
@@ -129,6 +122,13 @@ module.exports = {
         mobile: { max: '768px' },
         desktop: { min: '769px' },
       },
+      /*
+       * `outline` emits a 1px solid ring and `outline-focus` paints it with the
+       * focus token — see the focus-visible states in buttons.scss. Kept in
+       * `extend` so the numeric widths (`outline-1`, still used in libs/*) stay.
+       */
+      outlineWidth: { DEFAULT: '1px' },
+      outlineColor: borderColors,
       boxShadow: {
         DEFAULT: '0 0 4px 0 var(--shadow-default, rgba(0, 0, 0, 0.30))',
         'main-inset': 'inset 1px 0 8px rgba(0, 0, 0, 0.04)',

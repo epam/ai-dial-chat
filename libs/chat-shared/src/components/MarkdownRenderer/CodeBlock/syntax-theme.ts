@@ -4,7 +4,7 @@ import type { CSSProperties } from 'react';
 type PrismStyleMap = Record<string, CSSProperties>;
 // TODO: review colors
 const MUTED: CSSProperties = { color: 'var(--text-secondary, #6B7280)' };
-const BLUE: CSSProperties = { color: 'var(--bg-accent-primary, #2764d9)' };
+const BLUE: CSSProperties = { color: 'var(--text-accent, #1d4ed8)' };
 const VIOLET: CSSProperties = {
   color: 'var(--text-accent-tertiary, #7e39ec)',
 };

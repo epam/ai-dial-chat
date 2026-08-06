@@ -1,3 +1,9 @@
+// The `--inp-*` variables below are theme-level hooks, not per-instance props:
+// this is a global stylesheet (not a CSS module) that restyles every
+// `.dial-input` in the app, including the ones rendered inside `Textarea` and
+// `TagInput`. Set them on `:root` or a theme scope; there is no single wrapper
+// element the three components share that a `colors` prop could target.
+//
 // Restyles DialInput's/DialTextarea's shared `.dial-input` box to match the
 // app's rounded, lighter-bordered field language (SearchBar's own treatment):
 // a bigger corner radius, a lighter resting border (matching libs/catalog's
@@ -15,20 +21,27 @@
 // combining the two clips text/cursor near the corners.
 .dial-input:not(.dial-input-error) {
   border-radius: 0.75rem !important; // matches Tailwind's rounded-xl
-  border-color: var(--stroke-tertiary, #e0e6f0) !important;
+  border-color: var(--inp-border, var(--stroke-tertiary, #e0e6f0)) !important;
   transition:
     border-color 150ms ease,
     box-shadow 150ms ease;
 
   &:not(:disabled):hover {
-    border-color: var(--stroke-info, #124ace) !important;
+    border-color: var(
+      --inp-border-hover,
+      var(--stroke-info, #124ace)
+    ) !important;
   }
 
   &:not(:disabled):active,
   &:not(:disabled):focus,
   &:not(:disabled):focus-within {
-    border-color: var(--stroke-info, #124ace) !important;
-    box-shadow: 0 0 0 4px var(--bg-accent-primary-alpha, #7da4ff2e) !important;
+    border-color: var(
+      --inp-border-focus,
+      var(--stroke-info, #124ace)
+    ) !important;
+    box-shadow: 0 0 0 4px
+      var(--inp-shadow-focus, var(--bg-accent-primary-alpha, #7da4ff2e)) !important;
   }
 }
 

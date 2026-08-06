@@ -1,7 +1,6 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import {
-  type CSSProperties,
   FC,
   useEffect,
   useLayoutEffect,
@@ -67,15 +66,20 @@ export const Favorites: FC<FavoritesProps> = ({
   credentialsBadgeLoggedOutLabel,
 }) => {
   const titleClassName =
-    favoritesStyles?.typography?.titleClassName ??
-    'dial-body-semi-text text-primary';
+    favoritesStyles?.typography?.titleClassName ?? 'dial-body-semi-text';
 
   const countClassName =
     favoritesStyles?.typography?.countClassName ?? 'dial-tiny-semi-text';
-  const cssVars = {
-    '--cat-favorites-border': favoritesStyles?.colors?.border,
-  } as CSSProperties;
 
+  const cssVars = buildCssVars({
+    '--cat-fav-title-text': favoritesStyles?.colors?.titleText,
+    '--cat-fav-count-text': favoritesStyles?.colors?.countText,
+    '--cat-fav-selected-check': favoritesStyles?.colors?.selectedCheckIcon,
+    '--cat-fav-selected-border': favoritesStyles?.colors?.selectedCardBorder,
+    '--cat-fav-selected-bg': favoritesStyles?.colors?.selectedCardBackground,
+    '--cat-fav-nav-btn': favoritesStyles?.colors?.navButton,
+    '--cat-fav-nav-btn-disabled': favoritesStyles?.colors?.navButtonDisabled,
+  });
   const sortedItems = useMemo(
     () =>
       [...items].sort(
@@ -389,8 +393,8 @@ export const Favorites: FC<FavoritesProps> = ({
         <ItemHeader
           title={title}
           postfix={displayCount}
-          titleClassName={titleClassName}
-          postfixClassName={countClassName}
+          titleClassName={mergeClasses(titleClassName, styles.titleText)}
+          postfixClassName={mergeClasses(countClassName, styles.countText)}
           trailing={
             favTotalPages > 1 ? (
               <div
@@ -414,7 +418,7 @@ export const Favorites: FC<FavoritesProps> = ({
                   className={mergeClasses(
                     'min-w-[32px] select-none px-1 text-center',
                     countClassName,
-                    styles.pageCounter,
+                    styles.countText,
                   )}
                 >
                   {favPage} / {favTotalPages}

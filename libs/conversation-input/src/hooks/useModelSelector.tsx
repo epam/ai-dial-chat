@@ -1,5 +1,8 @@
-import { type DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { GradientCheckIcon } from '@epam/ai-dial-kit';
+import {
+  buildCssVars,
+  type DeploymentItem,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialSearch,
@@ -7,6 +10,7 @@ import {
   ElementSize,
   Highlight,
 } from '@epam/ai-dial-ui-kit';
+import { IconCheck } from '@tabler/icons-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import {
   MODEL_SELECTOR_SKELETON_ROW_COUNT,
@@ -33,8 +37,26 @@ export interface UseModelSelectorOptions {
   modelSelectorLabels?: ModelSelectorLabels;
   /** Class applied to the sticky search header wrapper for theming. Defaults to a `--bg-layer-raised` background. */
   searchHeaderClassName?: string;
-  /** Class applied to the currently selected menu item. Defaults to a `--bg-accent-primary-alpha` background. */
+  /**
+   * Class applied to the currently selected menu item. Defaults to a
+   * `--bg-accent-primary-alpha` background. The dropdown item is owned by the
+   * ui-kit and takes no `style`, so its background can only be overridden
+   * through this class or by setting `--ms-selected-item-bg` at theme level —
+   * unlike the other two, it has no entry in {@link ModelSelectorColors}.
+   */
   selectedItemClassName?: string;
+  /** Class applied to the checkmark icon on the currently selected menu item. Defaults to a `--text-accent` color. */
+  selectedItemCheckClassName?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: ModelSelectorColors;
+}
+
+/** Color overrides for the model-selector menu, applied as CSS custom properties. */
+export interface ModelSelectorColors {
+  /** Sticky search header background. Fallback: `--bg-layer-raised`. */
+  searchHeaderBackground?: string;
+  /** Checkmark icon color on the selected row. Fallback: `--text-accent`. */
+  selectedItemCheck?: string;
 }
 
 /** Values returned by `useModelSelector`. */
@@ -61,6 +83,8 @@ export const useModelSelector = ({
   modelSelectorLabels,
   searchHeaderClassName = styles.searchHeader,
   selectedItemClassName = styles.selectedItem,
+  selectedItemCheckClassName = styles.selectedItemCheck,
+  colors,
 }: UseModelSelectorOptions): UseModelSelectorResult => {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -122,13 +146,25 @@ export const useModelSelector = ({
       return {
         key: item.id,
         label: (
-          <span className="flex w-full items-center justify-between gap-2">
+          <span
+            className="flex w-full items-center justify-between gap-2"
+            style={buildCssVars({
+              '--ms-selected-item-check': colors?.selectedItemCheck,
+            })}
+          >
             <Highlight
               text={getDeploymentLabel(item)}
               query={searchQuery}
               maxLines={1}
             />
-            {isSelected && <GradientCheckIcon gradientId="ms-check-grad" />}
+            {isSelected && (
+              <IconCheck
+                size={DIAL_ICON_SIZE.SM}
+                stroke={2}
+                className={selectedItemCheckClassName}
+                aria-hidden
+              />
+            )}
           </span>
         ),
         icon: buildDeploymentIcon(
@@ -148,12 +184,17 @@ export const useModelSelector = ({
     modelSelectorLabels,
     onDeploymentChange,
     selectedItemClassName,
+    selectedItemCheckClassName,
+    colors?.selectedItemCheck,
   ]);
 
   const menuHeader: ReactNode = useMemo(
     () =>
       !isLoading && deployments && deployments.length > 0 ? (
         <div
+          style={buildCssVars({
+            '--ms-search-header-bg': colors?.searchHeaderBackground,
+          })}
           className={mergeClasses(
             'sticky top-0 z-10 pb-1 pe-2 pt-2',
             searchHeaderClassName,
@@ -174,6 +215,7 @@ export const useModelSelector = ({
       searchQuery,
       modelSelectorLabels,
       searchHeaderClassName,
+      colors?.searchHeaderBackground,
     ],
   );
 

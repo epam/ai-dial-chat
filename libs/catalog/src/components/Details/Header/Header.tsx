@@ -1,3 +1,4 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialDropdown,
@@ -32,6 +33,7 @@ import {
 } from '../../../types/toolset-auth';
 import { getCredentialsUiState } from '../../../utils/toolset-credentials';
 import { EntityHeader } from '../../EntityHeader/EntityHeader';
+import styles from './Header.module.scss';
 import { ShareButton } from './ShareButton/ShareButton';
 
 interface HeaderProps {
@@ -101,7 +103,7 @@ export const Header: FC<HeaderProps> = ({
   onOpenPublish,
 }) => {
   const {
-    nameClassName = 'dial-body-semi-text text-primary',
+    nameClassName = 'dial-body-semi-text',
     folderLabelClassName = 'dial-tiny-text',
     folderLeafClassName = 'dial-tiny-semi-text',
   } = detailsStyles?.typography ?? {};
@@ -239,7 +241,7 @@ export const Header: FC<HeaderProps> = ({
       <EntityHeader
         item={item}
         iconSize={52}
-        nameClassName={nameClassName}
+        nameClassName={mergeClasses(nameClassName, styles.name)}
         featuredLabel={texts?.featuredLabel ?? 'Featured'}
         footer={
           item.folder.length > 0 ? (

@@ -56,7 +56,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
           tabIndex={-1}
           className={mergeClasses(
             'rounded hover:bg-control-accent-alpha-hover active:bg-control-accent-alpha-active',
-            isActive ? 'text-accent' : undefined,
+            isActive ? 'text-accent' : 'text-secondary',
           )}
         />
       </Link>

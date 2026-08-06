@@ -26,11 +26,16 @@ export const Toolbar: FC<ToolbarProps> = ({
   ...innerProps
 }) => {
   const cssVars = {
-    '--cat-browse-bg': browseStyles?.colors?.background,
     '--cat-browse-title-text': browseStyles?.colors?.titleText,
     '--cat-browse-count-text': browseStyles?.colors?.countText,
-    '--cat-browse-icon': browseStyles?.colors?.icon,
     '--cat-browse-divider': browseStyles?.colors?.divider,
+    '--cat-view-toggle-bg': browseStyles?.colors?.viewToggleBackground,
+    '--cat-view-toggle-border': browseStyles?.colors?.viewToggleBorder,
+    '--cat-view-toggle-active-bg':
+      browseStyles?.colors?.viewToggleActiveBackground,
+    '--cat-view-toggle-active-text': browseStyles?.colors?.viewToggleActiveText,
+    '--cat-view-toggle-text': browseStyles?.colors?.viewToggleText,
+    '--cat-view-toggle-text-hover': browseStyles?.colors?.viewToggleTextHover,
   } as CSSProperties;
 
   return (

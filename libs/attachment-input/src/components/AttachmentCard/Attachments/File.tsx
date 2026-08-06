@@ -102,7 +102,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
     styles.tile,
     (attachment.type === AttachmentType.Prompt ||
       attachment.type === AttachmentType.Pasted) &&
-      'hovered',
+      styles.hovered,
     isSelected && styles.selected,
     isError && styles.tileError,
   );

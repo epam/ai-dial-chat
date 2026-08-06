@@ -25,6 +25,8 @@ export interface ConversationSourcesPanelLabels {
   sourcesSectionTitle: string;
   /** Accessible label for each source's copy-URL button. */
   copySourceLabel: string;
+  /** Status message announced to assistive tech after a source URL is copied. Defaults to `'Link copied to clipboard'`. */
+  sourceCopiedLabel?: string;
   /** Label passed to each attachment card's action button. */
   attachmentClickLabel: string;
 }

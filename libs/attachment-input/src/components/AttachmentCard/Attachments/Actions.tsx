@@ -31,7 +31,7 @@ interface ActionProps {
 }
 
 /** Action button for completed uploads. */
-export const ActionButton: FC<ActionProps> = ({
+const ActionButton: FC<ActionProps> = ({
   ariaLabel,
   errorTitle,
   errorDescId,

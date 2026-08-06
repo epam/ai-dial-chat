@@ -30,6 +30,7 @@ vi.mock('@epam/ai-dial-kit', () => ({
   ),
 }));
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   NeutralButton: ({
     label,
     onClick,

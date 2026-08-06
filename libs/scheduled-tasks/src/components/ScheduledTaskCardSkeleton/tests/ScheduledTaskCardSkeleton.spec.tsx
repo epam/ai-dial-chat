@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { ScheduledTaskCardSkeleton } from '../ScheduledTaskCardSkeleton';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  // Read by @epam/ai-dial-chat-shared at module init, not by the component
+  DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   CardShell: ({
     children,
     ...rest
@@ -31,26 +33,33 @@ describe('ScheduledTaskCardSkeleton', () => {
     expect(container.querySelectorAll('[data-skeleton]')).toHaveLength(5);
   });
 
-  it('defaults every skeleton bar to var(--bg-layer-4) when no color override is given', () => {
+  it('reads every skeleton bar color from the --stcs-skeleton-bg variable', () => {
     const { container } = render(<ScheduledTaskCardSkeleton />);
 
     const bars = container.querySelectorAll('[data-skeleton]');
+    expect(bars.length).toBeGreaterThan(0);
     bars.forEach((bar) => {
-      expect(bar.getAttribute('data-color')).toBe('var(--bg-layer-4)');
+      expect(bar.getAttribute('data-color')).toBe('var(--stcs-skeleton-bg)');
     });
   });
 
-  it('uses the caller-supplied skeletonColor override for every bar', () => {
+  it('leaves --stcs-skeleton-bg unset inline so the module fallback applies', () => {
+    const { container } = render(<ScheduledTaskCardSkeleton />);
+
+    const article = container.querySelector('article');
+    expect(article?.style.getPropertyValue('--stcs-skeleton-bg')).toBe('');
+  });
+
+  it('sets --stcs-skeleton-bg from the caller-supplied skeletonColor override', () => {
     const { container } = render(
       <ScheduledTaskCardSkeleton
         styles={{ colors: { skeletonColor: '#ff00ff' } }}
       />,
     );
 
-    const bars = container.querySelectorAll('[data-skeleton]');
-    expect(bars.length).toBeGreaterThan(0);
-    bars.forEach((bar) => {
-      expect(bar.getAttribute('data-color')).toBe('#ff00ff');
-    });
+    const article = container.querySelector('article');
+    expect(article?.style.getPropertyValue('--stcs-skeleton-bg')).toBe(
+      '#ff00ff',
+    );
   });
 });

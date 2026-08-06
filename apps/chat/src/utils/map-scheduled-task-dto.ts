@@ -145,12 +145,9 @@ const resolveSectionKey = (
  * Maps a `GET /api/v1/scheduled-tasks` DTO to the lib-facing `ScheduledTaskItem`.
  * `sectionKey` is `shared` when the upstream `createdBy` differs from
  * `currentUserSub`, otherwise `myTasks` (also the fallback when either value
- * is missing). `nextRunTime`/`createdAt` come straight from the DIAL
- * Scheduler response; `trigger.date` is kept as a fallback for `nextRunAt`
- * for schedules created before those fields were tracked. `description`
- * maps 1:1 to `descriptionPreview` (undefined when absent) with no
- * truncation — the BFF's 500-char cap bounds the value, and the card's own
- * line-clamp/ellipsis handles presentation-layer truncation.
+ * is missing). `description` maps 1:1 to `descriptionPreview` (undefined when
+ * absent) with no truncation — the BFF's 500-char cap bounds the value, and
+ * the card's own line-clamp/ellipsis handles presentation-layer truncation.
  */
 export const mapScheduledTaskDtoToItem = (
   task: ScheduledTaskDto,
@@ -162,10 +159,6 @@ export const mapScheduledTaskDtoToItem = (
   descriptionPreview: task.description,
   scheduleLabel: buildScheduleLabel(task, t),
   sectionKey: resolveSectionKey(task, currentUserSub),
-  sortValues: {
-    nextRunAt: task.nextRunTime ?? task.trigger.date,
-    createdAt: task.createdAt,
-  },
 });
 
 /** Maps a list of `ScheduledTaskDto` to `ScheduledTaskItem[]`, preserving order. */

@@ -1,6 +1,7 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
 import QRCodeSvg from 'react-qr-code';
+import cssStyles from './QrCode.module.scss';
 
 /** All user-visible strings in {@link QrCodeProps}. */
 export interface QrCodeLabels {
@@ -8,12 +9,20 @@ export interface QrCodeLabels {
   ariaLabel: string;
 }
 
+/** CSS custom-property color overrides for {@link QrCodeProps}. */
+export interface QrCodeColors {
+  /** Outer frame border color. */
+  borderColor?: string;
+  /** Outer frame background color. */
+  backgroundColor?: string;
+  /** QR modules' fill color (drives the SVG's `currentColor`). */
+  fillColor?: string;
+}
+
 /** Typography/color utility-class overrides for {@link QrCodeProps}. */
 export interface QrCodeStyles {
-  /** CSS class applied to the outer frame. Defaults to `'flex size-40 items-center justify-center self-center rounded-lg border border-tertiary bg-layer-sunken p-3'`. */
-  containerClassName?: string;
-  /** Color class driving the QR modules' fill via `currentColor`. Defaults to `'text-primary'`. */
-  colorClassName?: string;
+  /** Color overrides applied as CSS custom properties to the outer frame's border/background and the QR fill. */
+  colors?: QrCodeColors;
 }
 
 /** Props for {@link QrCode}. */
@@ -28,16 +37,23 @@ export interface QrCodeProps {
 
 /** QR code rendering of the share link, scannable to open it on another device. */
 export const QrCode: FC<QrCodeProps> = ({ value, labels, styles }) => {
-  const {
-    containerClassName = 'flex size-40 items-center justify-center self-center rounded-lg border border-tertiary bg-layer-sunken p-3',
-    colorClassName = 'text-primary',
-  } = styles ?? {};
+  const { colors } = styles ?? {};
+
+  const cssVars = buildCssVars({
+    '--qr-border': colors?.borderColor,
+    '--qr-bg': colors?.backgroundColor,
+    '--qr-color': colors?.fillColor,
+  });
 
   return (
     <div
       role="img"
       aria-label={labels.ariaLabel}
-      className={containerClassName}
+      style={cssVars}
+      className={mergeClasses(
+        'flex size-40 items-center justify-center self-center rounded-lg border p-3',
+        cssStyles.container,
+      )}
     >
       <QRCodeSvg
         value={value}
@@ -45,7 +61,7 @@ export const QrCode: FC<QrCodeProps> = ({ value, labels, styles }) => {
         bgColor="transparent"
         fgColor="currentColor"
         aria-hidden
-        className={mergeClasses('size-full', colorClassName)}
+        className={mergeClasses('size-full', cssStyles.qrColor)}
       />
     </div>
   );
