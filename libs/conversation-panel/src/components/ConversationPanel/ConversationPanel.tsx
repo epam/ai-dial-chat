@@ -85,6 +85,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       filterLabels,
       groupLabels,
       actionsLabel,
+      unreadIndicatorLabel,
       closeAriaLabel,
     } = labels;
     const [searchQuery, setSearchQuery] = useState('');
@@ -197,6 +198,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       '--cp-trigger-icon': colors?.triggerIcon,
       '--cp-trigger-icon-idle': colors?.triggerIconIdle,
       '--cp-skeleton-color': colors?.skeletonColor,
+      '--cp-unread-dot': colors?.unreadDot,
     });
 
     const filteredItems = useMemo(
@@ -316,6 +318,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         getActions,
         onActionMenuOpen,
         actionsLabel,
+        unreadIndicatorLabel,
         styles: {
           groupHeaderClassName: typography?.groupHeaderClassName,
           itemTitleClassName: typography?.itemTitleClassName,
@@ -342,6 +345,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         getActions,
         onActionMenuOpen,
         actionsLabel,
+        unreadIndicatorLabel,
         typography?.groupHeaderClassName,
         typography?.itemTitleClassName,
         panelStyles?.itemIconBadgeClassName,

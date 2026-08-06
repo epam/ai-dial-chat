@@ -320,7 +320,8 @@
       "unshareSuccess": "\"{{name}}\" was deleted from your conversations.",
       "unshareError": "Failed to delete \"{{name}}\". Please try again."
     },
-    "taskBadgeLabel": "TASK"
+    "taskBadgeLabel": "TASK",
+    "unreadIndicatorLabel": "Unread"
   },
   "conversationPublish": {
     "panelAriaLabel": "Publish conversation",

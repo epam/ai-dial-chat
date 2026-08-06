@@ -38,6 +38,10 @@
   color: var(--cp-trigger-icon-idle, var(--text-secondary, #6b7280));
 }
 
+.unreadDot {
+  background: var(--cp-unread-dot, var(--text-accent, #1d4ed8));
+}
+
 :export {
   skeletonColor: var(--cp-skeleton-color, var(--bg-layer-4, #d1dbea));
 }

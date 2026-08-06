@@ -18,6 +18,7 @@ export const RowRenderer = ({
   getActions,
   onActionMenuOpen,
   actionsLabel,
+  unreadIndicatorLabel,
   styles,
   draggingId,
   dragOverId,
@@ -64,6 +65,7 @@ export const RowRenderer = ({
         getActions={getActions}
         onActionMenuOpen={onActionMenuOpen}
         actionsLabel={actionsLabel}
+        unreadIndicatorLabel={unreadIndicatorLabel}
         itemTitleClassName={styles?.itemTitleClassName}
         itemIconBadgeClassName={styles?.itemIconBadgeClassName}
         taskBadgeClassName={styles?.taskBadgeClassName}

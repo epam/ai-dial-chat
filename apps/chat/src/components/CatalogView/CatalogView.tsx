@@ -51,7 +51,10 @@ import { getApiErrorDetails } from '../../server-api/api-error';
 import { deleteApplication } from '../../server-api/applications';
 import { getDeploymentLimits } from '../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../server-api/deployments';
-import { getPublishRules } from '../../server-api/publish-rules.api';
+import {
+  getPublishRules,
+  toPublishRuleDto,
+} from '../../server-api/publish-rules.api';
 import { publishCatalogEntity } from '../../server-api/publish.api';
 import { deleteToolset, logoutToolset } from '../../server-api/toolsets';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
@@ -525,7 +528,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       await publishCatalogEntity(entityType, item.id, {
         folderPath: folderPath.join('/'),
         version: item.version,
-        rules,
+        rules: rules.map(toPublishRuleDto),
       });
     },
     [],

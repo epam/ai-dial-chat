@@ -21,6 +21,7 @@ import {
   generateConversationTitle as apiGenerateConversationTitle,
   getConversation,
   listConversations,
+  markConversationViewed as apiMarkConversationViewed,
   renameConversation as apiRenameConversation,
   watchConversation,
 } from '../server-api/conversations.api';
@@ -42,6 +43,13 @@ interface ConversationsContextType {
   error: Error | null;
   /** Toggle the pinned state of a conversation and persist it to the backend. Reverts on failure. */
   pinConversation: (id: string, isPinned: boolean) => Promise<void>;
+  /**
+   * Marks a scheduler-created conversation as viewed, clearing its unread
+   * indicator optimistically and persisting to the backend. Reverts on
+   * failure. No-op for conversations that are not scheduler-created or
+   * already read.
+   */
+  markConversationViewed: (id: string) => Promise<void>;
   /** Delete a conversation by id, removing it from the local list on success. */
   deleteConversation: (id: string) => Promise<void>;
   /** Rename a conversation; optimistically updates title, reverts on failure. The conversation id never changes. */
@@ -280,6 +288,23 @@ export const ConversationsProvider = ({
     [setPinnedConversation],
   );
 
+  const markConversationViewed = useCallback(async (id: string) => {
+    const target = conversationsRef.current.find((c) => c.id === id);
+    if (!target?.isScheduledTask || !target.isUnread) return;
+
+    setConversations((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, isUnread: false } : c)),
+    );
+    try {
+      const conversationPath = getConversationPath(normalizeConversationId(id));
+      await apiMarkConversationViewed(conversationPath);
+    } catch {
+      setConversations((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, isUnread: true } : c)),
+      );
+    }
+  }, []);
+
   const deleteConversation = useCallback(async (id: string) => {
     let snapshot: ConversationListItemDto[] | undefined;
     setConversations((prev) => {
@@ -389,6 +414,7 @@ export const ConversationsProvider = ({
       isLoading,
       error,
       pinConversation,
+      markConversationViewed,
       deleteConversation,
       renameConversation,
       generateConversationTitle,
@@ -403,6 +429,7 @@ export const ConversationsProvider = ({
       isLoading,
       error,
       pinConversation,
+      markConversationViewed,
       deleteConversation,
       renameConversation,
       generateConversationTitle,

@@ -2305,6 +2305,40 @@
         "tags": ["conversations"]
       }
     },
+    "/api/v1/conversations/viewed": {
+      "patch": {
+        "description": "Idempotently records that the authenticated user has opened this conversation. Used to clear the unread indicator for scheduler-created conversations.",
+        "operationId": "markConversationViewed",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "schema": {
+              "example": "gpt-4o__My Conversation__UUID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Conversation marked as viewed"
+          },
+          "400": {
+            "description": "Missing or invalid path"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "Mark a conversation as viewed",
+        "tags": ["conversations"]
+      }
+    },
     "/api/v1/conversations/publish": {
       "post": {
         "description": "Publishes an owned conversation to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The conversation title is re-fetched server-side and used as the publication name.",
@@ -4409,7 +4443,7 @@
         "tags": ["scheduled-tasks"]
       },
       "post": {
-        "description": "Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt, using the authenticated session user's dial-oauth credentials. Invalidates the scheduled tasks list cache on success.",
+        "description": "Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt, using the OAuth external-service id configured via SCHEDULER_SERVICE_ID. Invalidates the scheduled tasks list cache on success.",
         "operationId": "createScheduledTask",
         "parameters": [],
         "requestBody": {
@@ -7170,7 +7204,7 @@
           },
           "isScheduledTask": {
             "type": "boolean",
-            "description": "True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{runId}` reserved segment).",
+            "description": "True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{filename}` reserved segment, with `{filename}` shaped `{deploymentId}__{title}__{runId}`).",
             "example": false
           },
           "scheduleId": {
@@ -7182,6 +7216,11 @@
             "type": "string",
             "description": "DIAL Scheduler run identifier. Present only when `isScheduledTask` is true.",
             "example": "run_001"
+          },
+          "isUnread": {
+            "type": "boolean",
+            "description": "True when this scheduler-created conversation has not yet been opened by the user. Present only when `isScheduledTask` is true.",
+            "example": true
           }
         },
         "required": [

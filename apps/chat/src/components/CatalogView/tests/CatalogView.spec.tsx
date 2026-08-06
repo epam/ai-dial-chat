@@ -110,6 +110,15 @@ vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
 
 vi.mock('../../../server-api/publish-rules.api', () => ({
   getPublishRules: vi.fn().mockResolvedValue([]),
+  toPublishRuleDto: (rule: {
+    source: string;
+    function: string;
+    targets: string[];
+  }) => ({
+    source: rule.source,
+    _function: rule.function,
+    targets: rule.targets,
+  }),
 }));
 
 vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
@@ -670,7 +679,13 @@ describe('CatalogView', () => {
       expect(publishCatalogEntity).toHaveBeenCalledWith(
         'toolset',
         'tool-abc123',
-        { folderPath: 'Organization/Data Science', version: '1.2.0', rules },
+        {
+          folderPath: 'Organization/Data Science',
+          version: '1.2.0',
+          rules: [
+            { source: 'role', _function: 'CONTAIN', targets: ['engineering'] },
+          ],
+        },
       );
     });
 
