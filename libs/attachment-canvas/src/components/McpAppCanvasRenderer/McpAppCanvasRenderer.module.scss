@@ -1,0 +1,11 @@
+.loadingOverlay {
+  background-color: var(--mcp-loading-bg, var(--bg-layer-1, #e0e6f0));
+}
+
+.statusLabel {
+  color: var(--mcp-status-text, var(--text-primary, #161b2d));
+}
+
+.errorIcon {
+  color: var(--mcp-error-icon, var(--text-error, #ae2f2f));
+}

@@ -27,6 +27,7 @@ export interface AppConfigState {
     transcribeSizeLimitBytes: number;
     defaultDeploymentId: string | null;
     dialCoreExternalUrl: string | null;
+    mcpAppSandboxUrl: string | null;
     fileManagerTabs: string[];
     overlayEnabled: boolean;
     overlayAllowedOrigins: string[];
@@ -48,6 +49,7 @@ const INITIAL_STATE: AppConfigState = {
     transcribeSizeLimitBytes: DEFAULT_TRANSCRIBE_SIZE_LIMIT,
     defaultDeploymentId: null,
     dialCoreExternalUrl: null,
+    mcpAppSandboxUrl: null,
     fileManagerTabs: DEFAULT_FILE_MANAGER_TABS,
     overlayEnabled: false,
     overlayAllowedOrigins: [],
@@ -85,6 +87,7 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
               DEFAULT_TRANSCRIBE_SIZE_LIMIT,
             defaultDeploymentId: response.config?.defaultDeploymentId ?? null,
             dialCoreExternalUrl: response.config?.dialCoreExternalUrl ?? null,
+            mcpAppSandboxUrl: response.config?.mcpAppSandboxUrl ?? null,
             fileManagerTabs:
               response.config?.fileManagerTabs ?? DEFAULT_FILE_MANAGER_TABS,
             overlayEnabled: response.config?.overlayEnabled ?? false,

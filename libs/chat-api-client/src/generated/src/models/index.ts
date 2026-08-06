@@ -475,6 +475,12 @@ export interface ClientConfigDto {
    */
   dialCoreExternalUrl?: string | null;
   /**
+   * Isolated-origin URL of the deployed MCP Apps sandbox-proxy app. Null when MCP_APP_SANDBOX_URL is not configured.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  mcpAppSandboxUrl?: string | null;
+  /**
    * Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.
    * @type {Array<string>}
    * @memberof ClientConfigDto
@@ -3673,6 +3679,19 @@ export interface ListFilesResponseDto {
 /**
  *
  * @export
+ * @interface ListMcpAppToolsResponseDto
+ */
+export interface ListMcpAppToolsResponseDto {
+  /**
+   *
+   * @type {Array<McpAppToolSummaryDto>}
+   * @memberof ListMcpAppToolsResponseDto
+   */
+  tools: Array<McpAppToolSummaryDto>;
+}
+/**
+ *
+ * @export
  * @interface ListScheduledTaskRunsResponseDto
  */
 export interface ListScheduledTaskRunsResponseDto {
@@ -3755,6 +3774,57 @@ export interface ListScheduledTasksResponseDto {
    * @memberof ListScheduledTasksResponseDto
    */
   previous?: string | null;
+}
+/**
+ *
+ * @export
+ * @interface McpAppToolCallRequestDto
+ */
+export interface McpAppToolCallRequestDto {
+  /**
+   *
+   * @type {string}
+   * @memberof McpAppToolCallRequestDto
+   */
+  toolName: string;
+  /**
+   *
+   * @type {object}
+   * @memberof McpAppToolCallRequestDto
+   */
+  arguments: object;
+}
+/**
+ *
+ * @export
+ * @interface McpAppToolCallResponseDto
+ */
+export interface McpAppToolCallResponseDto {
+  /**
+   * Unwrapped `result` field of the tool's JSON-RPC response.
+   * @type {object}
+   * @memberof McpAppToolCallResponseDto
+   */
+  result: object;
+}
+/**
+ *
+ * @export
+ * @interface McpAppToolSummaryDto
+ */
+export interface McpAppToolSummaryDto {
+  /**
+   *
+   * @type {string}
+   * @memberof McpAppToolSummaryDto
+   */
+  toolName: string;
+  /**
+   *
+   * @type {string}
+   * @memberof McpAppToolSummaryDto
+   */
+  resourceUri: string;
 }
 /**
  *

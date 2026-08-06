@@ -41,6 +41,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import {
+  AttachmentCanvasI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
@@ -55,10 +56,13 @@ import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
+import { useAutoOpenMcpAppCanvas } from '../../hooks/attachment/useAutoOpenMcpAppCanvas';
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
+import { useOpenMcpAppCanvas } from '../../hooks/attachment/useOpenMcpAppCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useChatSettingsFormConfig } from '../../hooks/conversation/useChatSettingsFormConfig';
 import { useConversationScroll } from '../../hooks/conversation/useConversationScroll';
+import { useMcpAppTools } from '../../hooks/conversation/useMcpAppTools';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
@@ -199,6 +203,7 @@ const ConversationView: FC<Props> = ({
   >([]);
   const [attachmentsAmount, setAttachmentsAmount] = useState(0);
   const { openAttachmentCanvas } = useOpenAttachmentCanvas();
+  const { openMcpAppCanvas } = useOpenMcpAppCanvas();
   const { openCanvas, attachmentId: selectedAttachmentKey } =
     useAttachmentCanvas();
 
@@ -225,6 +230,7 @@ const ConversationView: FC<Props> = ({
     selectedDeploymentConfiguration,
     isLoading,
     error,
+    toolsets,
   } = useDeployments();
   const activeDeploymentId = fixedModel?.id ?? selectedItemId;
 
@@ -232,6 +238,8 @@ const ConversationView: FC<Props> = ({
     () => items.find((item) => item.id === activeDeploymentId),
     [items, activeDeploymentId],
   );
+  const mcpAppTools = useMcpAppTools(selectedDeployment, messages, toolsets);
+  useAutoOpenMcpAppCanvas(messages, mcpAppTools);
 
   const {
     inputAttachmentTypes,
@@ -616,6 +624,12 @@ const ConversationView: FC<Props> = ({
                     thinkingLabel={t(ChatI18nKeys.Thinking)}
                     executedLabel={t(ConversationI18nKeys.StagesExecuted)}
                     stepsLabel={stepsLabel}
+                    onOpenApp={openMcpAppCanvas}
+                    mcpAppTools={mcpAppTools}
+                    openCanvasLabel={t(AttachmentCanvasI18nKeys.OpenAppLabel)}
+                    openedInCanvasLabel={t(
+                      AttachmentCanvasI18nKeys.OpenedInCanvasLabel,
+                    )}
                     onPreviewReference={handlePreviewReference}
                     pendingDropFiles={
                       isEditActive && isThisMessageEditing

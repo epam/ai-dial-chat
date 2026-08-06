@@ -661,6 +661,11 @@ export enum AttachmentCanvasI18nKeys {
   HtmlOpenInNewTab = 'attachmentCanvas.htmlOpenInNewTab',
   HtmlViewSource = 'attachmentCanvas.htmlViewSource',
   HtmlViewRendered = 'attachmentCanvas.htmlViewRendered',
+  OpenAppLabel = 'attachmentCanvas.openAppLabel',
+  OpenedInCanvasLabel = 'attachmentCanvas.openedInCanvasLabel',
+  McpAppTitle = 'attachmentCanvas.mcpAppTitle',
+  McpAppLoadErrorLabel = 'attachmentCanvas.mcpAppLoadErrorLabel',
+  McpAppForbiddenErrorLabel = 'attachmentCanvas.mcpAppForbiddenErrorLabel',
 }
 
 export enum AnnouncementBannerI18nKeys {

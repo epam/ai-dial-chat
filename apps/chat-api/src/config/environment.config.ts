@@ -48,6 +48,10 @@ export class EnvironmentVariables {
   DIAL_CORE_EXTERNAL_URL?: string;
 
   @IsOptional()
+  @IsUrl({ require_tld: false })
+  MCP_APP_SANDBOX_URL?: string;
+
+  @IsOptional()
   @IsString()
   @Matches(/^\d{4}-\d{2}-\d{2}(-preview)?$/, {
     message:

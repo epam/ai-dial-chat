@@ -62,6 +62,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'DIAL_CORE_EXTERNAL_URL',
   },
   {
+    key: 'mcpApps.sandboxUrl',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Isolated-origin URL of the deployed MCP Apps sandbox-proxy app (apps/mcp-app-sandbox). Null when MCP_APP_SANDBOX_URL is not configured — the "Open App" trigger and auto-open simply do not appear.',
+    owner: 'chat-team',
+    envVar: 'MCP_APP_SANDBOX_URL',
+  },
+  {
     key: 'announcement.html',
     type: 'config',
     valueType: 'string',

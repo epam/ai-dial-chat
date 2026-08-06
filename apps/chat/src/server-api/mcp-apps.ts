@@ -1,0 +1,64 @@
+import {
+  ResponseError,
+  type ListMcpAppToolsKindEnum,
+  type McpAppToolSummaryDto,
+} from '@epam/chat-api-client';
+import { safeDecodeURIComponent } from '../utils/string-utils';
+import { toolsetsApi } from './api-client';
+
+/** Which of Core's two MCP proxy route prefixes a deployment id resolves through. */
+export type McpDeploymentKind = ListMcpAppToolsKindEnum;
+
+/** A single MCP tool that declares an MCP Apps UI resource. */
+export type McpAppToolSummary = McpAppToolSummaryDto;
+
+/** Thrown by `fetchMcpAppResourceHtml` on a non-OK response, carrying the HTTP status so callers can distinguish `403` (forbidden) from any other failure. */
+export class McpAppResourceFetchError extends Error {
+  constructor(public readonly status: number) {
+    super(`Failed to fetch MCP app resource: HTTP ${status}`);
+  }
+}
+
+/** Fetches a toolset's MCP Apps `ui://` resource and resolves to its HTML body. Throws `McpAppResourceFetchError` on a non-OK response. */
+export const fetchMcpAppResourceHtml = async (
+  toolsetId: string,
+  resourceUri: string,
+): Promise<string> => {
+  try {
+    const { raw } = await toolsetsApi.getToolsetMcpAppResourceRaw({
+      toolsetName: safeDecodeURIComponent(toolsetId),
+      resourceUri,
+    });
+    return await raw.text();
+  } catch (error) {
+    if (error instanceof ResponseError) {
+      throw new McpAppResourceFetchError(error.response.status);
+    }
+    throw error;
+  }
+};
+
+/** Forwards an MCP App's self-initiated tool call through chat-api. */
+export const callMcpAppTool = async (
+  toolsetId: string,
+  toolName: string,
+  args: unknown,
+): Promise<unknown> => {
+  const { result } = await toolsetsApi.callToolsetMcpAppTool({
+    toolsetName: safeDecodeURIComponent(toolsetId),
+    mcpAppToolCallRequestDto: { toolName, arguments: args as object },
+  });
+  return result;
+};
+
+/** Lists the tools of an MCP-capable deployment that declare an MCP Apps UI resource. */
+export const listMcpAppTools = async (
+  deploymentId: string,
+  kind: McpDeploymentKind,
+): Promise<McpAppToolSummary[]> => {
+  const { tools } = await toolsetsApi.listMcpAppTools({
+    deploymentId: safeDecodeURIComponent(deploymentId),
+    kind,
+  });
+  return tools;
+};

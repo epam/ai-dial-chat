@@ -37,6 +37,8 @@ interface SseDelta {
     attachments?: unknown[];
     stages?: Stage[];
     annotations?: Annotation[];
+    /** Orchestrator-specific execution state; arrives as a single complete snapshot, not accumulated across chunks. */
+    state?: unknown;
   };
 }
 
@@ -194,13 +196,15 @@ export const applyChunkToMessage = (
   const attachments = delta.custom_content?.attachments;
   const stages = delta.custom_content?.stages;
   const annotations = delta.custom_content?.annotations;
+  const state = delta.custom_content?.state;
 
   const hasContentUpdate =
     !!content ||
     !!formSchema ||
     !!attachments?.length ||
     !!stages?.length ||
-    !!annotations?.length;
+    !!annotations?.length ||
+    !!state;
 
   const responseId =
     delta.responseId ?? (hasContentUpdate ? chunk.id : undefined);
@@ -212,7 +216,8 @@ export const applyChunkToMessage = (
     !!formSchema ||
     !!attachments?.length ||
     !!stages?.length ||
-    !!annotations?.length;
+    !!annotations?.length ||
+    !!state;
 
   return {
     ...message,
@@ -240,6 +245,12 @@ export const applyChunkToMessage = (
             annotations,
           ) as never,
         }),
+        /*
+         * Arrives as a single complete snapshot per turn (confirmed via
+         * spike — not token-streamed like content), so it's replaced
+         * wholesale rather than merged/accumulated like stages.
+         */
+        ...(state && { state: state as never }),
       },
     }),
   };

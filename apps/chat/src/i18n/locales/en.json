@@ -732,7 +732,12 @@
     "htmlFrameBlocked": "This page cannot be displayed in preview",
     "htmlOpenInNewTab": "Open in new tab",
     "htmlViewSource": "View source",
-    "htmlViewRendered": "View rendered"
+    "htmlViewRendered": "View rendered",
+    "openAppLabel": "Open App",
+    "openedInCanvasLabel": "Opened in Canvas",
+    "mcpAppTitle": "MCP App",
+    "mcpAppLoadErrorLabel": "Failed to load MCP App",
+    "mcpAppForbiddenErrorLabel": "You don't have permission to access this MCP App"
   },
   "announcementBanner": {
     "regionAriaLabel": "Announcement",

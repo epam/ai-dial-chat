@@ -41,6 +41,17 @@ export class ClientConfigDto {
   @IsString()
   dialCoreExternalUrl!: string | null;
 
+  @ApiPropertyOptional({
+    description:
+      'Isolated-origin URL of the deployed MCP Apps sandbox-proxy app. Null when MCP_APP_SANDBOX_URL is not configured.',
+    example: 'https://mcp-app-sandbox.example.com',
+    nullable: true,
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  mcpAppSandboxUrl!: string | null;
+
   @ApiProperty({
     description:
       'Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.',

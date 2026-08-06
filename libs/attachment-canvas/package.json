@@ -25,6 +25,8 @@
     "@epam/ai-dial-visualizer-connector": "0.48.0",
     "@epam/ai-dial-ui-kit": "^0.13.0-dev.26",
     "@epam/pdf-highlighter-kit": ">=0.0.14",
+    "@mcp-ui/client": "^7.1.1",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "@tabler/icons-react": "^3.44.0",
     "react": "^19.0.0",
     "react-json-view-lite": "^2.5.0",

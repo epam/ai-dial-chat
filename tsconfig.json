@@ -71,6 +71,9 @@
     },
     {
       "path": "./libs/builder-form"
+    },
+    {
+      "path": "./apps/mcp-app-sandbox"
     }
   ]
 }

@@ -121,13 +121,15 @@ export const applyChunkToMessages = (
   const stages = delta?.custom_content?.stages;
   const annotations = delta?.custom_content?.annotations;
   const rawAnnotations = delta?.custom_fields?.annotations;
+  const state = delta?.custom_content?.state;
   const hasContentUpdate =
     !!content ||
     !!formSchema ||
     !!attachments?.length ||
     !!stages?.length ||
     !!annotations?.length ||
-    !!rawAnnotations?.length;
+    !!rawAnnotations?.length ||
+    !!state;
   const responseId =
     delta?.responseId ?? (hasContentUpdate ? chunk.id : undefined);
 
@@ -152,7 +154,8 @@ export const applyChunkToMessages = (
       formSchema ||
       attachments?.length ||
       stages?.length ||
-      incomingAnnotations.length;
+      incomingAnnotations.length ||
+      state;
 
     return {
       ...message,
@@ -174,6 +177,12 @@ export const applyChunkToMessages = (
               incomingAnnotations,
             ),
           }),
+          /*
+           * Arrives as a single complete snapshot per turn (confirmed via
+           * spike — not token-streamed like content), so it's replaced
+           * wholesale rather than merged/accumulated like stages.
+           */
+          ...(state && { state }),
         },
       }),
     };

@@ -93,6 +93,8 @@ export interface MessageCustomContent {
   configuration_value?: Record<string, unknown>;
   /** Accumulated agent execution stages streamed via `custom_content.stages`. */
   stages?: Stage[];
+  /** Orchestrator-specific execution state streamed via `custom_content.state`, when the deployment emits it. */
+  state?: MessageState;
 }
 
 /** A single message in a conversation. */
@@ -148,6 +150,73 @@ export interface Stage {
   tag?: string;
 }
 
+/** A single LangChain-style tool-call request emitted by the model, present on a `ToolStateMessage` with `type: 'ai'`. */
+export interface ToolCallRequest {
+  /** Name of the tool being called. */
+  name: string;
+  /** Arguments passed to the tool call. */
+  args: Record<string, unknown>;
+  /** Correlates this call to its result message via that message's `tool_call_id`. */
+  id: string;
+}
+
+/** One entry in `custom_content.state.tool_messages` — either the model's tool-call request or the tool's result. */
+export interface ToolStateMessage {
+  /** LangChain message type: `'ai'` for the request, `'tool'` for the result. */
+  type: string;
+  /** Present on `type: 'tool'` result messages — the tool's own name. */
+  name?: string;
+  /** Present on `type: 'ai'` messages that requested one or more tool calls. */
+  tool_calls?: ToolCallRequest[];
+  /** Present on `type: 'tool'` result messages — correlates to the request's `id`. */
+  tool_call_id?: string;
+  /** Text content — the tool's result body on `type: 'tool'` messages. */
+  content?: string;
+}
+
+/** A single OpenAI-style tool-call request, present on a `ToolExecutionHistoryMessage` with `role: 'assistant'`. */
+export interface OpenAiToolCall {
+  /** Correlates this call to its result message via that message's `tool_call_id`. */
+  id: string;
+  /** Always `'function'` for a tool call. */
+  type: string;
+  /** The invoked function's name and raw (unparsed) JSON-encoded arguments. */
+  function: {
+    name: string;
+    /** JSON-encoded arguments object — parse before use. */
+    arguments: string;
+  };
+}
+
+/** One entry in `custom_content.state.tool_execution_history` — either the model's tool-call request or the tool's result, in OpenAI chat-completion message shape (as opposed to `ToolStateMessage`'s LangChain shape). */
+export interface ToolExecutionHistoryMessage {
+  /** `'assistant'` for the request, `'tool'` for the result. */
+  role: string;
+  /** Present on `role: 'assistant'` messages that requested one or more tool calls. */
+  tool_calls?: OpenAiToolCall[];
+  /** Present on `role: 'tool'` result messages — correlates to the request's `id`. */
+  tool_call_id?: string;
+  /** Text content — the tool's result body on `role: 'tool'` messages. */
+  content?: string;
+}
+
+/**
+ * Orchestrator-specific execution state, kept wire-verbatim snake_case like
+ * every other pass-through field under `custom_content` (e.g. `stages`) —
+ * not part of any standard DIAL Core contract. Different orchestrators emit
+ * different shapes: `tool_messages` (LangChain-style) is known from the
+ * StatGPT agent, gated behind its own `show_debug_stages` flag;
+ * `tool_execution_history` (OpenAI chat-completion-style) is known from a
+ * different agent. Both are optional and independent — a given orchestrator
+ * emits at most one of them.
+ */
+export interface MessageState {
+  /** The model's tool-call requests and their results for this turn, LangChain-style. */
+  tool_messages?: ToolStateMessage[];
+  /** The model's tool-call requests and their results for this turn, OpenAI chat-completion-style. */
+  tool_execution_history?: ToolExecutionHistoryMessage[];
+}
+
 /** Incremental content delta inside a streaming SSE chunk. */
 export interface StreamChunkDelta {
   /** Partial text token appended to the assistant message. */
@@ -169,6 +238,8 @@ export interface StreamChunkDelta {
     attachments?: MessageAttachment[];
     /** Partial annotation updates; merge by `index` into the accumulating annotation list. */
     annotations?: Annotation[];
+    /** Orchestrator-specific execution state; arrives as a single complete snapshot, not accumulated across chunks. */
+    state?: MessageState;
   };
   /** Raw custom fields in the DIAL wire format. */
   custom_fields?: {

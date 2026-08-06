@@ -35,6 +35,7 @@ import {
 import { isDownloadable } from '../../utils/download';
 import { CodeContent } from '../CodeContent/CodeContent';
 import { HtmlContent } from '../HtmlContent/HtmlContent';
+import { McpAppCanvasRenderer } from '../McpAppCanvasRenderer/McpAppCanvasRenderer';
 import { PdfContent } from '../PdfContent/PdfContent';
 import { VisualizerCanvasRenderer } from '../VisualizerCanvasRenderer/VisualizerCanvasRenderer';
 import styles from './AttachmentCanvas.module.scss';
@@ -270,6 +271,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
         return 'h-full overflow-auto';
       case AttachmentContentType.Pdf:
       case AttachmentContentType.Visualizer:
+      case AttachmentContentType.McpApp:
       case AttachmentContentType.Code:
       case AttachmentContentType.Html:
         return 'h-full overflow-hidden';
@@ -405,6 +407,8 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
             errorLabel={visualizerErrorLabel}
           />
         );
+      case AttachmentContentType.McpApp:
+        return <McpAppCanvasRenderer content={content} />;
       case AttachmentContentType.Unsupported:
         return (
           <p className={mergeClasses('text-center', styles.statusLabel)}>
@@ -425,7 +429,8 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
               />
             )}
             <p className={mergeClasses('text-center', styles.statusLabel)}>
-              {isForbidden ? forbiddenErrorLabel : loadErrorLabel}
+              {content.label ??
+                (isForbidden ? forbiddenErrorLabel : loadErrorLabel)}
             </p>
           </div>
         );

@@ -5,11 +5,7 @@ import {
   MessageRating,
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
-import {
-  DIAL_ICON_SIZE,
-  ElementSize,
-  GhostIconButton,
-} from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, ElementSize, GhostIconButton } from '@epam/ai-dial-ui-kit';
 import {
   IconMarkdown,
   IconPencilMinus,
