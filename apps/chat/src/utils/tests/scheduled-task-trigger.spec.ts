@@ -133,6 +133,31 @@ describe('mapFormValuesToCreateBody', () => {
 
     expect(body.description).toBeUndefined();
   });
+
+  it('omits startDate/endDate from trigger.cron when neither is set', () => {
+    const body = mapFormValuesToCreateBody({
+      ...baseValues,
+      scheduleType: ScheduledTaskScheduleType.Recurring,
+      frequency: ScheduledTaskFrequency.Daily,
+    });
+
+    expect(body.trigger.cron).not.toHaveProperty('startDate');
+    expect(body.trigger.cron).not.toHaveProperty('endDate');
+  });
+
+  it('never includes startDate/endDate for a once schedule even if present in values', () => {
+    const body = mapFormValuesToCreateBody({
+      ...baseValues,
+      scheduleType: ScheduledTaskScheduleType.Once,
+      runAt: '2026-07-24T09:00',
+      startDate: '2026-08-01',
+      endDate: '2026-08-31',
+    });
+
+    expect(body.trigger.cron).toBeUndefined();
+    expect(body.trigger).not.toHaveProperty('startDate');
+    expect(body.trigger).not.toHaveProperty('endDate');
+  });
 });
 
 describe('mapFormValuesToCreateBody — recurring schedule timezone conversion', () => {
@@ -218,5 +243,36 @@ describe('mapFormValuesToCreateBody — recurring schedule timezone conversion',
       minute: '0',
       day: '15',
     });
+  });
+
+  it('converts startDate/endDate to UTC start/end-of-local-day at a non-zero offset', () => {
+    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
+
+    const body = mapFormValuesToCreateBody({
+      ...baseValues,
+      scheduleType: ScheduledTaskScheduleType.Recurring,
+      frequency: ScheduledTaskFrequency.Daily,
+      startDate: '2026-08-01',
+      endDate: '2026-08-31',
+    });
+
+    expect(body.trigger.cron?.startDate).toBe('2026-07-31T22:00:00.000Z');
+    expect(body.trigger.cron?.endDate).toBe('2026-08-31T21:59:59.999Z');
+  });
+
+  it('applies the offset in effect on each boundary day across a DST transition', () => {
+    // Poland's DST ends 2026-10-25: Oct 1 is UTC+2 (CEST), Nov 1 is UTC+1 (CET).
+    vi.stubEnv('TZ', 'Europe/Warsaw');
+
+    const body = mapFormValuesToCreateBody({
+      ...baseValues,
+      scheduleType: ScheduledTaskScheduleType.Recurring,
+      frequency: ScheduledTaskFrequency.Daily,
+      startDate: '2026-10-01',
+      endDate: '2026-11-01',
+    });
+
+    expect(body.trigger.cron?.startDate).toBe('2026-09-30T22:00:00.000Z');
+    expect(body.trigger.cron?.endDate).toBe('2026-11-01T22:59:59.999Z');
   });
 });

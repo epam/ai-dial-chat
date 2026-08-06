@@ -220,8 +220,9 @@ vi.mock('../../../server-api/share.api');
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => ({ items: [] }),
 }));
+const mockUseIsMobile = vi.hoisted(() => vi.fn(() => false));
 vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
-  useIsMobile: () => false,
+  useIsMobile: mockUseIsMobile,
 }));
 vi.mock('../../../hooks/useUiFeature');
 vi.mock('../../../constants/routes', () => ({
@@ -409,6 +410,7 @@ const openDeleteAllPopup = () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockUseIsMobile.mockReturnValue(false);
   vi.mocked(useUiFeature).mockReturnValue(true);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vi.mocked(useConversations).mockReturnValue(baseContextValue as any);
@@ -1256,6 +1258,15 @@ describe('ConversationPanelView — import header action', () => {
     expect(fileInput.accept).toBe(
       '.json,.dial,.zip,application/json,application/zip',
     );
+  });
+
+  it('leaves the import picker unfiltered on mobile', () => {
+    mockUseIsMobile.mockReturnValue(true);
+    render(<ConversationPanelView {...defaultProps} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    expect(fileInput.hasAttribute('accept')).toBe(false);
   });
 
   it('selecting a file calls importConversations with that file', () => {

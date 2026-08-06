@@ -38,6 +38,20 @@ describe('MarkdownCodeBlock', () => {
     expect(container.querySelector('span.opacity-60')).toBeNull();
   });
 
+  it('renders title in place of language in the header, keeping language for highlighting', () => {
+    const { container } = render(
+      <MarkdownCodeBlock
+        language="bash"
+        title="cURL"
+        value="curl https://dial.example.com"
+      />,
+    );
+
+    expect(screen.getByText('cURL')).toBeTruthy();
+    expect(screen.queryByText('bash')).toBeNull();
+    expect(container.querySelector('[data-language="bash"]')).toBeTruthy();
+  });
+
   it('renders no label text when language is empty', () => {
     const { container } = render(
       <MarkdownCodeBlock language="" value="const x = 1;" />,

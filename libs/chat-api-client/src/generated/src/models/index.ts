@@ -1548,6 +1548,18 @@ export interface CreatedScheduledTaskDto {
    * @memberof CreatedScheduledTaskDto
    */
   description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  model?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  prompt?: string;
 }
 
 /**
@@ -3667,6 +3679,49 @@ export interface ListFilesResponseDto {
 /**
  *
  * @export
+ * @interface ListScheduledTaskRunsResponseDto
+ */
+export interface ListScheduledTaskRunsResponseDto {
+  /**
+   *
+   * @type {Array<ScheduledTaskRunDto>}
+   * @memberof ListScheduledTaskRunsResponseDto
+   */
+  items: Array<ScheduledTaskRunDto>;
+  /**
+   * Total number of runs upstream, across all pages.
+   * @type {number}
+   * @memberof ListScheduledTaskRunsResponseDto
+   */
+  count?: number;
+  /**
+   * Page size used by the upstream DIAL Scheduler response.
+   * @type {number}
+   * @memberof ListScheduledTaskRunsResponseDto
+   */
+  limit?: number;
+  /**
+   * Offset of `items` within the full upstream result set.
+   * @type {number}
+   * @memberof ListScheduledTaskRunsResponseDto
+   */
+  offset?: number;
+  /**
+   * Upstream URL for the next page, or null if this is the last page.
+   * @type {string}
+   * @memberof ListScheduledTaskRunsResponseDto
+   */
+  next?: string | null;
+  /**
+   * Upstream URL for the previous page, or null if this is the first page.
+   * @type {string}
+   * @memberof ListScheduledTaskRunsResponseDto
+   */
+  previous?: string | null;
+}
+/**
+ *
+ * @export
  * @interface ListScheduledTasksResponseDto
  */
 export interface ListScheduledTasksResponseDto {
@@ -4736,6 +4791,18 @@ export interface ScheduleCronDto {
    * @memberof ScheduleCronDto
    */
   fields: { [key: string]: string };
+  /**
+   * Start of the activity window during which this cron trigger fires. Omitted when unset.
+   * @type {string}
+   * @memberof ScheduleCronDto
+   */
+  startDate?: string;
+  /**
+   * End of the activity window during which this cron trigger fires. Omitted when unset.
+   * @type {string}
+   * @memberof ScheduleCronDto
+   */
+  endDate?: string;
 }
 /**
  *
@@ -4822,6 +4889,18 @@ export interface ScheduledTaskDto {
    * @memberof ScheduledTaskDto
    */
   description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  model?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  prompt?: string;
 }
 
 /**
@@ -4833,6 +4912,56 @@ export const ScheduledTaskDtoTriggerTypeEnum = {
 } as const;
 export type ScheduledTaskDtoTriggerTypeEnum =
   (typeof ScheduledTaskDtoTriggerTypeEnum)[keyof typeof ScheduledTaskDtoTriggerTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface ScheduledTaskRunDto
+ */
+export interface ScheduledTaskRunDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskRunDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskRunDto
+   */
+  status: ScheduledTaskRunDtoStatusEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskRunDto
+   */
+  startTime: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskRunDto
+   */
+  endTime?: string | null;
+  /**
+   *
+   * @type {number}
+   * @memberof ScheduledTaskRunDto
+   */
+  durationSeconds?: number;
+}
+
+/**
+ * @export
+ */
+export const ScheduledTaskRunDtoStatusEnum = {
+  Success: 'Success',
+  Error: 'Error',
+  InProgress: 'InProgress',
+  Missed: 'Missed',
+} as const;
+export type ScheduledTaskRunDtoStatusEnum =
+  (typeof ScheduledTaskRunDtoStatusEnum)[keyof typeof ScheduledTaskRunDtoStatusEnum];
 
 /**
  *
@@ -5826,6 +5955,18 @@ export interface UpdatedScheduledTaskDto {
    * @memberof UpdatedScheduledTaskDto
    */
   description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  model?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  prompt?: string;
 }
 
 /**

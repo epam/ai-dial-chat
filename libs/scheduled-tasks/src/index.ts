@@ -53,3 +53,13 @@ export {
   ScheduledTaskFrequency,
   ScheduledTaskScheduleType,
 } from './types/scheduled-task-schedule';
+export { ScheduledTaskDetailView } from './components/ScheduledTaskDetailView/ScheduledTaskDetailView';
+export type {
+  ScheduledTaskDetailViewProps,
+  ScheduledTaskDetailViewLabels,
+  ScheduledTaskDetailViewStyles,
+  ScheduledTaskDetailViewColors,
+  ScheduledTaskDetailViewTypography,
+} from './models/scheduled-task-detail-view-props';
+export type { ScheduledTaskRunItem } from './models/scheduled-task-run-item';
+export { ScheduledTaskRunStatus } from './types/scheduled-task-run-status';

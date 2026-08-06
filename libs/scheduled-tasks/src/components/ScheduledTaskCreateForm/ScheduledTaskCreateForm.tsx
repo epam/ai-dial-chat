@@ -20,8 +20,10 @@ import {
   ScheduledTaskScheduleType,
 } from '../../types/scheduled-task-schedule';
 import {
+  calendarValueToDateValue,
   calendarValueToDayOfWeek,
   calendarValueToRunAt,
+  dateValueToCalendarValue,
   dayOfWeekToCalendarValue,
   runAtToCalendarValue,
 } from '../../utils/calendar-value';
@@ -322,6 +324,62 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                     error={errors.dayOfMonth}
                   />
                 )}
+
+                <div className="flex flex-col gap-3 desktop:flex-row">
+                  <div className="flex flex-1 flex-col gap-1">
+                    <Calendar
+                      id="scheduled-task-start-date"
+                      mode={CalendarMode.Date}
+                      value={dateValueToCalendarValue(values.startDate)}
+                      onChange={(value) =>
+                        onFieldChange(
+                          'startDate',
+                          calendarValueToDateValue(value),
+                        )
+                      }
+                      label={labels.startDateLabel}
+                      placeholder={labels.startDatePlaceholder}
+                      invalid={Boolean(errors.startDate)}
+                    />
+                    {errors.startDate && (
+                      <p
+                        className={mergeClasses(
+                          instructionsErrorClassName,
+                          styles.instructionsError,
+                        )}
+                      >
+                        {errors.startDate}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-1 flex-col gap-1">
+                    <Calendar
+                      id="scheduled-task-end-date"
+                      mode={CalendarMode.Date}
+                      value={dateValueToCalendarValue(values.endDate)}
+                      onChange={(value) =>
+                        onFieldChange(
+                          'endDate',
+                          calendarValueToDateValue(value),
+                        )
+                      }
+                      label={labels.endDateLabel}
+                      placeholder={labels.endDatePlaceholder}
+                      invalid={Boolean(errors.endDate)}
+                    />
+                    {errors.endDate && (
+                      <p
+                        className={mergeClasses(
+                          instructionsErrorClassName,
+                          styles.instructionsError,
+                        )}
+                      >
+                        {errors.endDate}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </>
             )}
           </fieldset>

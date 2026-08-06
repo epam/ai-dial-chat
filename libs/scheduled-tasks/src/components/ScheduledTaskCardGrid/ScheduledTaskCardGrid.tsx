@@ -10,6 +10,7 @@ export const ScheduledTaskCardGrid: FC<ScheduledTaskCardGridProps> = ({
   onEdit,
   onRunNow,
   onDelete,
+  onCardClick,
   labels,
   cardStyles,
   trailingSkeletonCount = 0,
@@ -24,6 +25,7 @@ export const ScheduledTaskCardGrid: FC<ScheduledTaskCardGridProps> = ({
         onEdit={onEdit}
         onRunNow={onRunNow}
         onDelete={onDelete}
+        onCardClick={onCardClick}
         labels={labels}
         styles={cardStyles}
       />

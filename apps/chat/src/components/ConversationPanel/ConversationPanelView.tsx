@@ -81,6 +81,16 @@ const PANEL_STYLES: ConversationPanelStyles = {
   itemIconBadgeClassName: 'rounded-lg',
 };
 
+/*
+ * Desktop-only filter. Mobile file pickers match `accept` against the MIME type
+ * the storage provider reports rather than the extension, and exported `.dial`
+ * archives are handed over as `application/octet-stream` — so an accept list
+ * greys out the very archive the user is trying to import. Mobile gets an
+ * unfiltered picker instead; `useConversationImport` validates the file itself
+ * and reports unparsable ones through the import queue.
+ */
+const IMPORT_FILE_ACCEPT = '.json,.dial,.zip,application/json,application/zip';
+
 interface ConversationPanelViewProps {
   isOpen: boolean;
   activeConversationId?: string;
@@ -706,7 +716,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       <input
         ref={importFileInputRef}
         type="file"
-        accept=".json,.dial,.zip,application/json,application/zip"
+        accept={isMobile ? undefined : IMPORT_FILE_ACCEPT}
         className="sr-only"
         aria-hidden
         tabIndex={-1}

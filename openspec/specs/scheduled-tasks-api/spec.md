@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines the BFF layer for DIAL Scheduler scheduled tasks: four versioned, feature-gated, session-authenticated endpoints that proxy the routed deployment API, map snake_case upstream responses to camelCase DTOs, cache the list per user for 30 seconds, and expose the contract through the regenerated `@epam/chat-api-client` for app-level adapters.
+Defines the BFF layer for DIAL Scheduler scheduled tasks: versioned, feature-gated, session-authenticated endpoints that proxy the routed deployment API, map snake_case upstream responses to camelCase DTOs, cache the list per user for 30 seconds, and expose the contract through the regenerated `@epam/chat-api-client` for app-level adapters.
 ## Requirements
 ### Requirement: Scheduled Tasks endpoints are versioned, feature-gated, and session-authenticated
 
@@ -219,7 +219,9 @@ and a top-level `description` field (mapped 1:1, never merged into `properties` 
 
 ### Requirement: Get scheduled task by id
 
-`GET /api/v1/scheduled-tasks/:scheduleId` SHALL validate `scheduleId` against the allowlist `^[A-Za-z0-9_-]{1,128}$` via `@Matches` before use, proxy `GET {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/{scheduleId}` with the session bearer token, and return `ScheduledTaskDto` (`id`, `displayName`, `trigger`, and any additional narrowly-typed fields confirmed against a live upstream response). This endpoint is NOT cached.
+`GET /api/v1/scheduled-tasks/:scheduleId` SHALL validate `scheduleId` against the allowlist `^[A-Za-z0-9_-]{1,128}$` via `@Matches` before use, proxy `GET {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/{scheduleId}` with the session bearer token, and return `ScheduledTaskDto` (`id`, `displayName`, `trigger`, `description`, and any additional narrowly-typed fields confirmed against a live upstream response). This endpoint is NOT cached.
+
+`ScheduledTaskDto` SHALL additionally include optional `model` and `prompt` string fields, mapped from the upstream schedule's `properties.payload.model` and `properties.payload.messages[0].content` (the user message) respectively via `fromUpstreamSchedule` in `apps/chat-api/src/scheduled-tasks/scheduled-tasks.mapper.ts`. Both fields are additive and MUST NOT be required — mapping MUST NOT throw when `properties`, `properties.payload`, `properties.payload.model`, or `properties.payload.messages` is absent or empty (e.g. on a schedule created with a `target_type` other than `chat_completion`, or on list-endpoint responses that omit `properties.payload` entirely).
 
 #### Scenario: Invalid scheduleId is rejected before any upstream call
 
@@ -230,6 +232,137 @@ and a top-level `description` field (mapped 1:1, never merged into `properties` 
 
 - **WHEN** DIAL Core returns 404 for a syntactically valid `scheduleId`
 - **THEN** the response is `404 Not Found`
+
+#### Scenario: model and prompt are mapped from properties.payload
+
+- **WHEN** an upstream schedule response includes `properties.payload.model: "gpt-4.1-mini-2025-04-14"` and `properties.payload.messages: [{ role: "user", content: "Summarize my inbox" }]`
+- **THEN** the mapped `ScheduledTaskDto` includes `model: "gpt-4.1-mini-2025-04-14"` and `prompt: "Summarize my inbox"`
+
+#### Scenario: Missing properties.payload does not throw
+
+- **WHEN** an upstream schedule response omits `properties`, `properties.payload`, `properties.payload.model`, and/or `properties.payload.messages`
+- **THEN** the mapped `ScheduledTaskDto`'s `model`/`prompt` fields are `undefined`, and mapping does not throw
+
+### Requirement: List scheduled task runs
+
+`GET /api/v1/scheduled-tasks/:scheduleId/runs` SHALL be added to `apps/chat-api/src/scheduled-tasks/scheduled-tasks.controller.ts` under `@Controller({ path: 'scheduled-tasks', version: '1' })`, with `operationId: listScheduledTaskRuns`. It SHALL validate `scheduleId` against the same allowlist `^[A-Za-z0-9_-]{1,128}$` via `@Matches` before use, be `@UseGuards(FeatureGuard)` + `@RequireFeature(FeatureKey.ScheduledTasksEnabled)`, read the session `sub`/`at` from `req.user as SessionUser`, carry `@Throttle`, and provide full `@ApiResponse` coverage for 200, 400, 401, 403, 404, 429, 502, and 503.
+
+The endpoint SHALL accept `limit` (`@IsOptional() @IsInt() @Min(1) @Max(100)`, default `20`) and `offset` (`@IsOptional() @IsInt() @Min(0)`, default `0`) query parameters, validated via a `ListScheduledTaskRunsQueryDto` under the global `ValidationPipe`. It SHALL proxy `GET {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/{scheduleId}/runs`, forwarding `limit`/`offset`, and SHALL always additionally send explicit `order_by=created_at&order_dir=desc` query parameters upstream — the BFF never relies on upstream's own default ordering, mirroring the same "always-explicit-default" decision already made for `listScheduledTasks`. This endpoint is NOT cached, since run status transitions (`in_progress` → `success`/`error`) must be observable immediately.
+
+The upstream response is a paginated envelope (`{ count, limit, offset, results, next, previous }`); the service SHALL read runs from the `results` field, using the same envelope-unwrapping helper pattern already used by `listScheduledTasks`. Each upstream run (`{ id, status, start_time, end_time }`) SHALL be mapped to camelCase `ScheduledTaskRunDto`:
+
+```ts
+interface ScheduledTaskRunDto {
+  id: string;
+  status: ScheduledTaskRunStatus; // 'Success' | 'Error' | 'InProgress' | 'Missed'
+  startTime: string; // ISO-8601, from upstream start_time
+  endTime?: string | null; // from upstream end_time; null/omitted while in_progress
+  durationSeconds?: number; // derived from startTime/endTime when both are present
+}
+```
+
+with upstream `status` values mapped `success → Success`, `error → Error`, `in_progress → InProgress`, `missed → Missed`. The response DTO `ListScheduledTaskRunsResponseDto` SHALL be:
+
+```ts
+interface ListScheduledTaskRunsResponseDto {
+  items: ScheduledTaskRunDto[];
+  count?: number;
+  limit?: number;
+  offset?: number;
+  next?: string | null;
+  previous?: string | null;
+}
+```
+
+Example request: `GET /api/v1/scheduled-tasks/sched_123/runs?limit=20&offset=40`. Example response:
+
+```json
+{
+  "items": [
+    {
+      "id": "run_9f2a",
+      "status": "Success",
+      "startTime": "2026-07-24T09:00:00.000Z",
+      "endTime": "2026-07-24T09:01:39.000Z",
+      "durationSeconds": 99
+    }
+  ],
+  "count": 242,
+  "limit": 20,
+  "offset": 40,
+  "next": "/schedules/sched_123/runs?limit=20&offset=60",
+  "previous": "/schedules/sched_123/runs?limit=20&offset=20"
+}
+```
+
+`GET .../runs/{runId}` single-run detail is out of scope for this endpoint.
+
+**Frontend impact:** exposed on the regenerated `@epam/chat-api-client` as `listScheduledTaskRuns`, consumed through a thin wrapper in `apps/chat/src/server-api/scheduled-tasks.api.ts`, using the normal (non-`Raw`) generated method. Consumed by `useScheduledTaskRuns` for the detail page's History panel.
+
+#### Scenario: Feature disabled rejects the route
+
+- **WHEN** `features.scheduledTasksEnabled` resolves to `false` for the session user
+- **THEN** the response is `403 Forbidden` and DIAL Core is never contacted
+
+#### Scenario: Unauthenticated request is rejected
+
+- **WHEN** a request has no valid session cookie
+- **THEN** the response is `401 Unauthorized`
+
+#### Scenario: Invalid scheduleId is rejected before any upstream call
+
+- **WHEN** `scheduleId` contains characters outside `[A-Za-z0-9_-]`
+- **THEN** the response is `400 Bad Request` and DIAL Core is never contacted
+
+#### Scenario: Unknown schedule id returns 404
+
+- **WHEN** DIAL Core returns 404 for a syntactically valid `scheduleId`
+- **THEN** the response is `404 Not Found`
+
+#### Scenario: Valid limit/offset are forwarded with explicit ordering
+
+- **WHEN** a request is made with `limit=20&offset=40`
+- **THEN** the upstream request is made with `limit=20&offset=40&order_by=created_at&order_dir=desc`
+
+#### Scenario: Omitted limit/offset default to 20/0 with explicit ordering
+
+- **WHEN** a request is made with no `limit`/`offset` query parameters
+- **THEN** the upstream request is made with `limit=20&offset=0&order_by=created_at&order_dir=desc`
+
+#### Scenario: Invalid limit/offset are rejected before any upstream call
+
+- **WHEN** `limit` or `offset` is negative, non-integer, or `limit` exceeds 100
+- **THEN** the response is `400 Bad Request` and DIAL Core is never contacted
+
+#### Scenario: Upstream statuses are mapped to the BFF enum
+
+- **WHEN** the upstream `results` include runs with `status` values `success`, `error`, `in_progress`, and `missed`
+- **THEN** the mapped `items` include `status` values `Success`, `Error`, `InProgress`, and `Missed` respectively
+
+#### Scenario: Paginated envelope resolves runs from results
+
+- **WHEN** the upstream response is `{ count, limit, offset, results: [...], next, previous }`
+- **THEN** `listScheduledTaskRuns` resolves the runs from `results` and returns them as `items`, along with `count`/`limit`/`offset`/`next`/`previous`
+
+#### Scenario: Duration is derived when both timestamps are present
+
+- **WHEN** an upstream run has `start_time` and `end_time` 99 seconds apart
+- **THEN** the mapped `ScheduledTaskRunDto.durationSeconds` is `99`
+
+#### Scenario: In-progress run has no end time or duration
+
+- **WHEN** an upstream run has `status: "in_progress"` and `end_time: null`
+- **THEN** the mapped `ScheduledTaskRunDto.endTime` is `null`/`undefined` and `durationSeconds` is `undefined`, and mapping does not throw
+
+#### Scenario: Response is never cached
+
+- **WHEN** `GET /api/v1/scheduled-tasks/:scheduleId/runs` returns a response
+- **THEN** the `Cache-Control` response header is `private, no-store`, and no server-side cache entry is written for this endpoint
+
+#### Scenario: Upstream error maps to 502/503
+
+- **WHEN** DIAL Core returns a 5xx or is unreachable while listing runs
+- **THEN** the endpoint returns `502 Bad Gateway` or `503 Service Unavailable`, never a raw upstream body
 
 ### Requirement: Update scheduled task
 
@@ -334,3 +467,68 @@ and a top-level `description` field (mapped 1:1, never merged into `properties` 
 
 - **WHEN** the upstream response includes a non-null `next` value
 - **THEN** `listScheduledTasks` returns that non-null `next`, signaling to callers that requesting the next `offset` will return additional items
+
+### Requirement: Cron trigger activity window (startDate/endDate)
+
+`ScheduleCronDto` (`apps/chat-api/src/scheduled-tasks/dto/schedule-trigger.dto.ts`) SHALL gain two optional fields, siblings of the existing `fields`:
+
+```json
+{
+  "trigger": {
+    "cron": {
+      "fields": { "hour": "9", "minute": "0" },
+      "startDate": "2026-08-01T00:00:00.000Z",
+      "endDate": "2026-12-31T23:59:59.999Z"
+    }
+  }
+}
+```
+
+- `startDate?: string` — `@IsOptional() @IsISO8601()`
+- `endDate?: string` — `@IsOptional() @IsISO8601()`
+
+Both fields apply only to a `cron` (recurring) trigger and are optional; when unset, the create/update behavior for `POST /api/v1/scheduled-tasks` and `PUT /api/v1/scheduled-tasks/:scheduleId` is unchanged from today.
+
+`scheduled-tasks.mapper.ts` SHALL enforce, alongside the existing `assertExactlyOneTriggerVariant` check (same function, extended — not a new class-validator decorator, since these are cross-field checks over optional sibling fields that class-validator's per-property decorators cannot express):
+
+- **Ordering**: when both `startDate` and `endDate` are present and `endDate` is not strictly after `startDate` → `400 Bad Request`.
+- **One-shot rejection**: when `startDate` and/or `endDate` is present on a request whose `trigger` is `date` (one-shot) rather than `cron` → `400 Bad Request`. `startDate`/`endDate` only exist on `ScheduleCronDto`, so this case only arises if a caller sends both `trigger.date` and `trigger.cron.startDate`/`endDate` in the same malformed request — which the existing "exactly one trigger variant" check independently also rejects, but this check gives a body-mentions-cron-fields-with-a-date-trigger request the same clear rejection even before that check would otherwise run.
+
+`toUpstreamSchedulePayload` SHALL extend the upstream `cron` shape (`UpstreamScheduleTrigger.cron: { fields: Record<string, string>; start_date?: string; end_date?: string }`) and include `start_date`/`end_date` **only when** the corresponding camelCase value is present and non-empty — omitted entirely otherwise, matching the existing `description` omission pattern (`...(body.description ? { description: body.description } : {})`), never sent as `null`. This applies identically to create and update, since `UpdateScheduledTaskBodyDto` reuses the create body shape.
+
+`fromUpstreamSchedule` SHALL map upstream `trigger.cron.start_date` / `trigger.cron.end_date` back to `startDate` / `endDate` on the `cron` object of the response `ScheduleTriggerDto`, defaulting to `undefined` when absent, and MUST NOT throw when the upstream `trigger` object is missing entirely (list items carry only `trigger_type`).
+
+#### Scenario: Recurring create with a bounded window sends both upstream keys
+
+- **WHEN** a create request has `trigger.cron.fields`, `trigger.cron.startDate: "2026-08-01T00:00:00.000Z"`, and `trigger.cron.endDate: "2026-12-31T23:59:59.999Z"`
+- **THEN** the upstream request body's `trigger.cron` includes `start_date: "2026-08-01T00:00:00.000Z"` and `end_date: "2026-12-31T23:59:59.999Z"` alongside `fields`
+
+#### Scenario: Recurring create with no window omits both upstream keys
+
+- **WHEN** a create request has `trigger.cron.fields` and no `startDate`/`endDate`
+- **THEN** the upstream request body's `trigger.cron` contains only `fields` — no `start_date` or `end_date` key, and neither is sent as `null`
+
+#### Scenario: endDate not after startDate is rejected
+
+- **WHEN** a create or update request has `trigger.cron.startDate` and `trigger.cron.endDate` where `endDate` is equal to or earlier than `startDate`
+- **THEN** the response is `400 Bad Request` and DIAL Core is never contacted
+
+#### Scenario: startDate/endDate on a one-shot trigger is rejected
+
+- **WHEN** a create or update request includes `trigger.cron.startDate` and/or `trigger.cron.endDate` together with `trigger.date` set
+- **THEN** the response is `400 Bad Request` and DIAL Core is never contacted
+
+#### Scenario: Update accepts the same window fields as create
+
+- **WHEN** an authenticated, feature-enabled user submits a valid update body with `trigger.cron.startDate`/`endDate` for an existing `scheduleId`
+- **THEN** the upstream `PUT` request body's `trigger.cron` includes `start_date`/`end_date` under the same omission rule as create, and the response is `200 OK`
+
+#### Scenario: Get response round-trips the activity window
+
+- **WHEN** `GET /api/v1/scheduled-tasks/:scheduleId` is called for a schedule whose upstream `trigger.cron` includes `start_date`/`end_date`
+- **THEN** the response `ScheduledTaskDto.trigger.cron` includes `startDate`/`endDate` mapped from those upstream values
+
+#### Scenario: List response mapping does not throw when trigger is absent
+
+- **WHEN** `fromUpstreamSchedule` is called with an upstream object that has no `trigger` field (as returned by the list endpoint for individual items)
+- **THEN** it returns a `ScheduledTaskDto` with `trigger.cron` `undefined`, without throwing

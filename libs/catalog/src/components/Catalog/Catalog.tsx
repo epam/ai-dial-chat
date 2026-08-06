@@ -43,6 +43,7 @@ export const Catalog: FC<CatalogProps> = ({
   hasPublishWriteAccess,
   onPublish,
   onPublishSuccess,
+  onPublishError,
   onCreatePublishFolder,
   publishLabels,
   ruleSourceOptions,
@@ -506,6 +507,7 @@ export const Catalog: FC<CatalogProps> = ({
           hasPublishWriteAccess={hasPublishWriteAccess}
           onPublish={onPublish}
           onPublishSuccess={onPublishSuccess}
+          onPublishError={onPublishError}
           onCreatePublishFolder={onCreatePublishFolder}
           publishLabels={publishLabels}
           ruleSourceOptions={ruleSourceOptions}

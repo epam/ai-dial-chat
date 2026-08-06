@@ -60,6 +60,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   hasPublishWriteAccess,
   onPublish,
   onPublishSuccess,
+  onPublishError,
   onCreatePublishFolder,
   publishLabels,
   ruleSourceOptions = EMPTY_RULE_SOURCE_OPTIONS,
@@ -160,6 +161,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     onCreateFolder: onCreatePublishFolder,
     onPublish: onPublish ?? NO_OP_PUBLISH,
     onPublishSuccess,
+    onPublishError,
     onFetchExistingRules,
   });
 
@@ -278,8 +280,13 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
         label: texts?.tabToolsLabel ?? 'Tools',
       });
     }
-    // Connect is pushed last, after every other tab, regardless of type.
-    if (item.details?.api != null) {
+    /*
+     * Connect is pushed last, after every other tab, regardless of type. It
+     * needs a connectable endpoint URL to be worth showing: items whose api
+     * data is only a resource identifier (a model's `modelId`) have nothing
+     * to connect to.
+     */
+    if (item.details?.api?.resource?.endpointUrl != null) {
       result.push({
         id: CatalogDetailsTab.Api,
         label: texts?.tabConnectLabel ?? 'Connect',
@@ -528,13 +535,14 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                   <LimitsTab limits={item.details?.limits} />
                 )}
                 {activeTab === CatalogDetailsTab.Api &&
-                  item.details?.api != null && (
+                  item.details?.api?.resource?.endpointUrl != null && (
                     <ApiDetails
                       api={item.details.api}
                       resourceSectionLabel={texts?.apiResourceSectionLabel}
                       snippetSectionLabel={texts?.apiSnippetSectionLabel}
                       modelIdLabel={texts?.apiModelIdLabel}
                       endpointLabel={texts?.apiEndpointLabel}
+                      endpointSectionLabel={texts?.apiEndpointSectionLabel}
                       requestExampleLabel={texts?.apiRequestExampleLabel}
                       responseSchemaLabel={texts?.apiResponseSchemaLabel}
                       copyAriaLabel={texts?.copyCodeAriaLabel}

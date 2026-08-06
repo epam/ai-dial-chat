@@ -59,7 +59,9 @@ export interface MarkdownCodeBlockProps {
   codeClassName?: string;
   /** CSS class applied to the language label in the header. Defaults to `'dial-tiny-semi-text uppercase'` plus the module's `.languageLabel` class (`--text-secondary`). */
   languageLabelClassName?: string;
-  /** Custom content rendered in the header in place of the plain `language` label, e.g. a language/endpoint select. Defaults to the plain language text. */
+  /** Header text shown in place of `language`, for blocks whose highlighting id is not the name to display (e.g. `bash` highlighted, `cURL` shown). Defaults to the `language` value. */
+  title?: string;
+  /** Custom content rendered in the header in place of the plain label, e.g. a language/endpoint select. Defaults to the plain label text. */
   titleSlot?: ReactNode;
   /** Color overrides applied as CSS custom properties. */
   colors?: MarkdownCodeBlockColors;
@@ -85,6 +87,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
     headerClassName,
     codeClassName = 'dial-code-text',
     languageLabelClassName = 'dial-tiny-semi-text uppercase',
+    title,
     titleSlot,
     colors,
   }) => {
@@ -127,7 +130,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
                 languageLabelClassName,
               )}
             >
-              {language}
+              {title ?? language}
             </span>
           )}
           {!isStreaming && (

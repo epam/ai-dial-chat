@@ -77,6 +77,8 @@ export interface ScheduledTaskCardProps {
   onRunNow?: (id: string) => void;
   /** Called with the task id when the user activates "Delete". Omit to hide the action. */
   onDelete?: (id: string) => void;
+  /** Called with the task id when the user activates the card body (click or Enter/Space). When omitted, the card renders with no added interactive root semantics. */
+  onCardClick?: (id: string) => void;
   /** Localized labels. */
   labels?: ScheduledTaskCardLabels;
   /** Style overrides. */

@@ -187,10 +187,36 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   useEffect(() => {
     if (!isOpen) return;
 
-    panelRef.current?.focus({ preventScroll: true });
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    const focusPanel = () => panel.focus({ preventScroll: true });
+    focusPanel();
+
+    /*
+     * The control that opens this panel is typically a floating-ui menu item,
+     * and such a menu hands focus back to its own trigger from a microtask
+     * queued while it unmounts — during the same commit that mounts this
+     * panel, so it lands after the synchronous focus above. Guarding the first
+     * frame pulls any such hand-back straight back into the panel. The guard
+     * is torn down on the next frame so that popovers the panel itself renders
+     * through a portal (folder row menus, the rule source picker) keep focus.
+     */
+    const handleFocusIn = (event: FocusEvent) => {
+      if (!panel.contains(event.target as Node)) {
+        focusPanel();
+      }
+    };
+    document.addEventListener('focusin', handleFocusIn);
+    const guardFrameId = requestAnimationFrame(() => {
+      document.removeEventListener('focusin', handleFocusIn);
+    });
+
     const returnFocusTarget = returnFocusRef?.current;
 
     return () => {
+      cancelAnimationFrame(guardFrameId);
+      document.removeEventListener('focusin', handleFocusIn);
       if (returnFocusTarget?.isConnected) {
         returnFocusTarget.focus({ preventScroll: true });
       }

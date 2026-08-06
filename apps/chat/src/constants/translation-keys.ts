@@ -283,6 +283,11 @@ export enum ScheduledTasksI18nKeys {
   CreateDayOfWeekRequired = 'scheduledTasks.create.dayOfWeekRequired',
   CreateDayOfMonthLabel = 'scheduledTasks.create.dayOfMonthLabel',
   CreateDayOfMonthRequired = 'scheduledTasks.create.dayOfMonthRequired',
+  CreateStartDateLabel = 'scheduledTasks.create.startDateLabel',
+  CreateStartDatePlaceholder = 'scheduledTasks.create.startDatePlaceholder',
+  CreateEndDateLabel = 'scheduledTasks.create.endDateLabel',
+  CreateEndDatePlaceholder = 'scheduledTasks.create.endDatePlaceholder',
+  CreateEndDateBeforeStartError = 'scheduledTasks.create.endDateBeforeStartError',
   CreateModelOrAgentLabel = 'scheduledTasks.create.modelOrAgentLabel',
   CreateModelPlaceholder = 'scheduledTasks.create.modelPlaceholder',
   CreateModelRequired = 'scheduledTasks.create.modelRequired',
@@ -292,6 +297,22 @@ export enum ScheduledTasksI18nKeys {
   CreatePromptRequired = 'scheduledTasks.create.promptRequired',
   CreateSuccessNotification = 'scheduledTasks.create.successNotification',
   CreateErrorNotification = 'scheduledTasks.create.errorNotification',
+  DetailRepeatsLabel = 'scheduledTasks.detail.repeatsLabel',
+  DetailActiveWindowLabel = 'scheduledTasks.detail.activeWindowLabel',
+  DetailActiveWindowValue = 'scheduledTasks.detail.activeWindowValue',
+  DetailNextRunLabel = 'scheduledTasks.detail.nextRunLabel',
+  DetailHistoryTitle = 'scheduledTasks.detail.historyTitle',
+  DetailHistoryEmptyLabel = 'scheduledTasks.detail.historyEmptyLabel',
+  DetailHistoryErrorLabel = 'scheduledTasks.detail.historyErrorLabel',
+  DetailHistoryLoadingMoreLabel = 'scheduledTasks.detail.historyLoadingMoreLabel',
+  DetailHistoryTodayAt = 'scheduledTasks.detail.historyTodayAt',
+  DetailHistoryDateAt = 'scheduledTasks.detail.historyDateAt',
+  DetailHistoryDurationSuffix = 'scheduledTasks.detail.historyDurationSuffix',
+  DetailStatusSuccess = 'scheduledTasks.detail.statusSuccess',
+  DetailStatusError = 'scheduledTasks.detail.statusError',
+  DetailStatusInProgress = 'scheduledTasks.detail.statusInProgress',
+  DetailStatusMissed = 'scheduledTasks.detail.statusMissed',
+  DetailErrorLabel = 'scheduledTasks.detail.errorLabel',
 }
 
 export enum ConversationI18nKeys {
@@ -496,6 +517,14 @@ export enum ConversationPublishI18nKeys {
   EmptyFolderNameError = 'conversationPublish.emptyFolderNameError',
   InvalidFolderNameError = 'conversationPublish.invalidFolderNameError',
   DuplicateFolderNameError = 'conversationPublish.duplicateFolderNameError',
+}
+
+/** Strings shared by every publish flow (conversations and catalog entities). */
+export enum PublishI18nKeys {
+  FailedTitle = 'publish.failedTitle',
+  FailedMessage = 'publish.failedMessage',
+  NetworkErrorMessage = 'publish.networkErrorMessage',
+  SubmitErrorCallout = 'publish.submitErrorCallout',
 }
 
 export enum PublishAccessRulesI18nKeys {

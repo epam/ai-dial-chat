@@ -1,4 +1,5 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import {
@@ -74,6 +75,22 @@ describe('ScheduledTaskCardGrid', () => {
     expect(
       container.querySelectorAll('article[aria-hidden="true"]'),
     ).toHaveLength(0);
+  });
+
+  it('forwards onCardClick to each card without transformation', async () => {
+    const onCardClick = vi.fn();
+    render(
+      <ScheduledTaskCardGrid
+        items={[buildItem({ id: '1' })]}
+        onCardClick={onCardClick}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Competitor Updates' }),
+    );
+
+    expect(onCardClick).toHaveBeenCalledWith('1');
   });
 
   it('forwards skeletonStyles to every trailing skeleton card', () => {

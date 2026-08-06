@@ -88,6 +88,11 @@ vi.mock('../../../server-api/conversation-publish.api');
 vi.mock('../../../server-api/publish-rules.api');
 vi.mock('../../../context/NotificationContext');
 
+const mockShowPublishError = vi.fn();
+vi.mock('../../../hooks/publish/usePublishErrorNotification', () => ({
+  usePublishErrorNotification: () => mockShowPublishError,
+}));
+
 const useAppConfigMock = vi.fn();
 vi.mock('../../../context/AppConfigContext', () => ({
   useAppConfig: () => useAppConfigMock(),
@@ -228,9 +233,18 @@ describe('PublishConversationPanelContainer', () => {
     });
   });
 
-  it('keeps the panel open and surfaces an error when publish fails', async () => {
-    vi.mocked(publishConversation).mockRejectedValue(new Error('network'));
-    await renderContainer();
+  it('keeps the panel open, shows the inline callout, and reports an error notification when publish fails', async () => {
+    const rejection = new Error('network');
+    vi.mocked(publishConversation).mockRejectedValue(rejection);
+    const onClose = vi.fn();
+    render(
+      <PublishConversationPanelContainer
+        isOpen
+        conversationPath="my-conversation-abc"
+        conversationTitle="Q3 planning notes"
+        onClose={onClose}
+      />,
+    );
 
     await userEvent.click(
       screen.getByRole('button', { name: 'Select Shared' }),
@@ -240,7 +254,9 @@ describe('PublishConversationPanelContainer', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeTruthy();
     });
+    expect(mockShowPublishError).toHaveBeenCalledWith(rejection);
     expect(mockShowNotification).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('never reports an existing publication in the folder (version history is not fetched, see GH issue #7897)', async () => {

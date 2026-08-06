@@ -68,6 +68,9 @@ const ScheduledTasksPage = lazy(
 const ScheduledTaskCreatePage = lazy(
   () => import('../pages/ScheduledTaskCreatePage/ScheduledTaskCreatePage'),
 );
+const ScheduledTaskDetailPage = lazy(
+  () => import('../pages/ScheduledTaskDetailPage/ScheduledTaskDetailPage'),
+);
 const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
 const ToolsetEditorPage = lazy(
   () => import('../pages/ToolsetEditor/ToolsetEditor'),
@@ -388,6 +391,16 @@ const App: FC = () => {
                 <RouteErrorBoundary>
                   <Suspense fallback={<RouteFallback />}>
                     <ScheduledTaskCreatePage />
+                  </Suspense>
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
+              path={ROUTES.ScheduledTaskDetail}
+              element={
+                <RouteErrorBoundary>
+                  <Suspense fallback={<RouteFallback />}>
+                    <ScheduledTaskDetailPage />
                   </Suspense>
                 </RouteErrorBoundary>
               }
