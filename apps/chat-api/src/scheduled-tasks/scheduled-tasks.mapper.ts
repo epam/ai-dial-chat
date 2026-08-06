@@ -1,6 +1,13 @@
 import { BadRequestException } from '@nestjs/common';
 import type { CreateScheduledTaskBodyDto } from './dto/create-scheduled-task.dto';
-import type { ScheduleTriggerDto } from './dto/schedule-trigger.dto';
+import type {
+  ScheduleCronDto,
+  ScheduleTriggerDto,
+} from './dto/schedule-trigger.dto';
+import {
+  type ScheduledTaskRunDto,
+  ScheduledTaskRunStatus,
+} from './dto/scheduled-task-run.dto';
 import type {
   ScheduledTaskDto,
   ScheduleTriggerType,
@@ -8,7 +15,11 @@ import type {
 
 interface UpstreamScheduleTrigger {
   date?: string;
-  cron?: { fields: Record<string, string> };
+  cron?: {
+    fields: Record<string, string>;
+    start_date?: string;
+    end_date?: string;
+  };
 }
 
 interface UpstreamSchedulePayload {
@@ -54,14 +65,21 @@ export interface UpstreamScheduleResponse {
   service_id?: string;
   created_by?: string;
   description?: string;
+  properties?: {
+    payload?: {
+      model?: string;
+      messages?: { role: string; content: string }[];
+    };
+  };
   [key: string]: unknown;
 }
 
 /*
- * DIAL Scheduler only allows exactly one trigger variant per schedule — this
- * invariant can't be expressed declaratively with class-validator across two
- * optional sibling fields, so it's enforced here and covered by mapper unit
- * tests instead.
+ * DIAL Scheduler only allows exactly one trigger variant per schedule, and the
+ * start_date/end_date activity window only applies to a cron trigger — both
+ * invariants can't be expressed declaratively with class-validator across two
+ * optional sibling fields, so they're enforced here and covered by mapper
+ * unit tests instead.
  */
 const assertExactlyOneTriggerVariant = (trigger: ScheduleTriggerDto): void => {
   const hasDate = trigger.date != null;
@@ -73,6 +91,17 @@ const assertExactlyOneTriggerVariant = (trigger: ScheduleTriggerDto): void => {
   }
 };
 
+const assertValidCronWindow = (cron: ScheduleCronDto | undefined): void => {
+  if (cron?.startDate == null || cron?.endDate == null) {
+    return;
+  }
+  if (new Date(cron.endDate).getTime() <= new Date(cron.startDate).getTime()) {
+    throw new BadRequestException(
+      'trigger.cron.endDate must be strictly after trigger.cron.startDate',
+    );
+  }
+};
+
 const toUpstreamTrigger = (
   trigger: ScheduleTriggerDto,
 ): UpstreamScheduleTrigger => {
@@ -80,7 +109,16 @@ const toUpstreamTrigger = (
   if (trigger.date != null) {
     return { date: trigger.date };
   }
-  return { cron: { fields: trigger.cron?.fields ?? {} } };
+  assertValidCronWindow(trigger.cron);
+  return {
+    cron: {
+      fields: trigger.cron?.fields ?? {},
+      ...(trigger.cron?.startDate
+        ? { start_date: trigger.cron.startDate }
+        : {}),
+      ...(trigger.cron?.endDate ? { end_date: trigger.cron.endDate } : {}),
+    },
+  };
 };
 
 /*
@@ -125,7 +163,11 @@ export const fromUpstreamSchedule = (
   trigger: {
     date: upstream.trigger?.date,
     cron: upstream.trigger?.cron
-      ? { fields: upstream.trigger.cron.fields }
+      ? {
+          fields: upstream.trigger.cron.fields,
+          startDate: upstream.trigger.cron.start_date,
+          endDate: upstream.trigger.cron.end_date,
+        }
       : undefined,
   },
   nextRunTime: upstream.next_run_time,
@@ -135,4 +177,45 @@ export const fromUpstreamSchedule = (
   serviceId: upstream.service_id,
   createdBy: upstream.created_by,
   description: upstream.description,
+  model: upstream.properties?.payload?.model,
+  prompt: upstream.properties?.payload?.messages?.[0]?.content,
+});
+
+export interface UpstreamScheduleRun {
+  id: string;
+  status: 'success' | 'error' | 'in_progress' | 'missed' | string;
+  start_time: string;
+  end_time?: string | null;
+}
+
+const UPSTREAM_RUN_STATUS_MAP: Record<string, ScheduledTaskRunStatus> = {
+  success: ScheduledTaskRunStatus.Success,
+  error: ScheduledTaskRunStatus.Error,
+  in_progress: ScheduledTaskRunStatus.InProgress,
+  missed: ScheduledTaskRunStatus.Missed,
+};
+
+const deriveDurationSeconds = (
+  startTime: string,
+  endTime: string | null | undefined,
+): number | undefined => {
+  if (!endTime) return undefined;
+  const durationMs =
+    new Date(endTime).getTime() - new Date(startTime).getTime();
+  if (!Number.isFinite(durationMs) || durationMs < 0) return undefined;
+  return Math.round(durationMs / 1000);
+};
+
+export const fromUpstreamRun = (
+  upstream: UpstreamScheduleRun,
+): ScheduledTaskRunDto => ({
+  id: upstream.id,
+  status:
+    UPSTREAM_RUN_STATUS_MAP[upstream.status] ?? ScheduledTaskRunStatus.Missed,
+  startTime: upstream.start_time,
+  endTime: upstream.end_time,
+  durationSeconds: deriveDurationSeconds(
+    upstream.start_time,
+    upstream.end_time,
+  ),
 });

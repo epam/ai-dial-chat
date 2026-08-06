@@ -14,7 +14,7 @@ import {
   IconPlayerPlay,
   IconTrash,
 } from '@tabler/icons-react';
-import { type FC } from 'react';
+import type { FC, KeyboardEvent, MouseEvent } from 'react';
 import type { ScheduledTaskCardProps } from '../../models/scheduled-task-card-props';
 import styles from './ScheduledTaskCard.module.scss';
 
@@ -34,6 +34,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
   onEdit,
   onRunNow,
   onDelete,
+  onCardClick,
   labels,
   styles: cardStyles,
   className,
@@ -75,7 +76,10 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
       key: 'edit',
       label: editActionLabel,
       icon: <IconEdit size={DIAL_ICON_SIZE.SM} aria-hidden />,
-      onClick: () => onEdit(item.id),
+      onClick: ({ domEvent }) => {
+        domEvent.stopPropagation();
+        onEdit(item.id);
+      },
     });
   }
   if (onRunNow) {
@@ -83,7 +87,10 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
       key: 'runNow',
       label: runNowActionLabel,
       icon: <IconPlayerPlay size={DIAL_ICON_SIZE.SM} aria-hidden />,
-      onClick: () => onRunNow(item.id),
+      onClick: ({ domEvent }) => {
+        domEvent.stopPropagation();
+        onRunNow(item.id);
+      },
     });
   }
   if (onDelete) {
@@ -92,16 +99,37 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
       label: deleteActionLabel,
       icon: <IconTrash size={DIAL_ICON_SIZE.SM} aria-hidden />,
       danger: true,
-      onClick: () => onDelete(item.id),
+      onClick: ({ domEvent }) => {
+        domEvent.stopPropagation();
+        onDelete(item.id);
+      },
     });
   }
 
+  const cardClickProps = onCardClick
+    ? {
+        tabIndex: 0,
+        onClick: () => onCardClick(item.id),
+        onKeyDown: (event: KeyboardEvent) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onCardClick(item.id);
+          }
+        },
+      }
+    : {};
+
   return (
     <CardShell
-      role="group"
+      role={onCardClick ? 'button' : 'group'}
       aria-label={item.displayName}
       style={cssVars}
-      className={mergeClasses('h-[232px]', className)}
+      className={mergeClasses(
+        'h-[232px]',
+        onCardClick && 'cursor-pointer',
+        className,
+      )}
+      {...cardClickProps}
     >
       <div className="flex shrink-0 items-start justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -134,6 +162,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
               icon={<IconDotsVertical size={DIAL_ICON_SIZE.SM} aria-hidden />}
               aria-label={actionsLabel}
               className="shrink-0"
+              onClick={(event: MouseEvent) => event.stopPropagation()}
             />
           </DialDropdown>
         )}

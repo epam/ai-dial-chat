@@ -1,3 +1,4 @@
+import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import type {
   PublishCatalogEntityDto,
   PublishHistoryEntryDto,
@@ -13,12 +14,19 @@ export const CatalogPublishEntityType = PublishCatalogEntityEntityTypeEnum;
 export const publishCatalogEntity = (
   entityType: CatalogPublishEntityType,
   entityId: string,
-  body: PublishCatalogEntityDto,
+  body: Omit<PublishCatalogEntityDto, 'rules'> & { rules: PublicationRule[] },
 ): Promise<PublishResultDto> =>
   publishApi.publishCatalogEntity({
     entityType,
     entityId,
-    publishCatalogEntityDto: body,
+    publishCatalogEntityDto: {
+      ...body,
+      rules: body.rules.map(({ source, function: fn, targets }) => ({
+        source,
+        _function: fn,
+        targets,
+      })),
+    },
   });
 
 export const getCatalogPublishHistory = (

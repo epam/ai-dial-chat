@@ -105,16 +105,19 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     label,
     value,
     onChange,
+    placeholder,
   }: {
     id?: string;
     label?: string;
     value?: Date | string | null;
     onChange: (value: string | null) => void;
+    placeholder?: string;
   }) => (
     <label htmlFor={id}>
       {label}
       <input
         id={id}
+        placeholder={placeholder}
         value={typeof value === 'string' ? value : (value?.toISOString() ?? '')}
         onChange={(e) => onChange(e.target.value || null)}
       />
@@ -206,6 +209,10 @@ const renderForm = async (
         timeLabel: 'Time',
         dayOfWeekLabel: 'Day of week',
         dayOfMonthLabel: 'Day of month',
+        startDateLabel: 'Start date',
+        startDatePlaceholder: 'Pick start date',
+        endDateLabel: 'End date',
+        endDatePlaceholder: 'Pick end date',
         modelOrAgentLabel: 'Model or Agent',
         modelPlaceholder: 'Select a model',
         descriptionLabel: 'Description',
@@ -438,5 +445,55 @@ describe('ScheduledTaskCreateForm', () => {
     await userEvent.type(screen.getByLabelText('Day of week *'), '1');
 
     expect(onFieldChange).toHaveBeenCalledWith('dayOfWeek', '0');
+  });
+
+  it('does not render start-date/end-date pickers when scheduleType is once', async () => {
+    await renderForm({
+      values: { ...baseValues, scheduleType: ScheduledTaskScheduleType.Once },
+    });
+
+    expect(screen.queryByText('Start date')).toBeNull();
+    expect(screen.queryByText('End date')).toBeNull();
+  });
+
+  it('renders start-date/end-date pickers without a required marker for recurring schedules', async () => {
+    await renderForm();
+
+    expect(screen.getByText('Start date')).toBeTruthy();
+    expect(screen.getByText('End date')).toBeTruthy();
+  });
+
+  it('renders the start/end date placeholders', async () => {
+    await renderForm();
+
+    expect(screen.getByPlaceholderText('Pick start date')).toBeTruthy();
+    expect(screen.getByPlaceholderText('Pick end date')).toBeTruthy();
+  });
+
+  it('calls onFieldChange via calendarValueToDateValue when the start-date calendar changes', async () => {
+    const onFieldChange = vi.fn();
+    await renderForm({ onFieldChange });
+
+    await userEvent.type(screen.getByLabelText('Start date'), 'x');
+
+    expect(onFieldChange).toHaveBeenCalledWith('startDate', '');
+  });
+
+  it('calls onFieldChange via calendarValueToDateValue when the end-date calendar changes', async () => {
+    const onFieldChange = vi.fn();
+    await renderForm({ onFieldChange });
+
+    await userEvent.type(screen.getByLabelText('End date'), 'x');
+
+    expect(onFieldChange).toHaveBeenCalledWith('endDate', '');
+  });
+
+  it('renders errors.startDate and errors.endDate inline', async () => {
+    await renderForm({
+      errors: { startDate: 'Invalid start date', endDate: 'End before start' },
+    });
+
+    expect(screen.getByText('Invalid start date')).toBeTruthy();
+    expect(screen.getByText('End before start')).toBeTruthy();
   });
 });

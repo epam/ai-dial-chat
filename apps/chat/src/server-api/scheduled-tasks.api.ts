@@ -1,6 +1,7 @@
 import type {
   CreateScheduledTaskBodyDto,
   CreatedScheduledTaskDto,
+  ListScheduledTaskRunsResponseDto,
   ListScheduledTasksResponseDto,
   ListScheduledTasksSortEnum,
   ScheduledTaskDto,
@@ -47,3 +48,21 @@ export const updateScheduledTask = (
     scheduleId,
     updateScheduledTaskBodyDto: body,
   });
+
+export interface ListScheduledTaskRunsParams {
+  scheduleId: string;
+  limit?: number;
+  offset?: number;
+  signal?: AbortSignal;
+}
+
+export const listScheduledTaskRuns = ({
+  scheduleId,
+  limit,
+  offset,
+  signal,
+}: ListScheduledTaskRunsParams): Promise<ListScheduledTaskRunsResponseDto> =>
+  scheduledTasksApi.listScheduledTaskRuns(
+    { scheduleId, limit, offset },
+    signal ? { signal } : undefined,
+  );

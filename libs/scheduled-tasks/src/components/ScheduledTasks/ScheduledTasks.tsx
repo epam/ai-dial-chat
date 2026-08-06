@@ -89,6 +89,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
   onEdit,
   onRunNow,
   onDelete,
+  onCardClick,
   styles: scheduledTasksStyles,
 }) => {
   const {
@@ -214,6 +215,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
               onEdit={onEdit}
               onRunNow={onRunNow}
               onDelete={onDelete}
+              onCardClick={onCardClick}
               labels={labels.cardLabels}
               trailingSkeletonCount={
                 isLoadingMore && index === lastSectionIndex ? skeletonCount : 0

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type ReactNode } from 'react';
+import { type MouseEvent, type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import {
   ScheduledTaskSectionKey,
@@ -64,7 +64,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     items: {
       key: string;
       label: ReactNode;
-      onClick: () => void;
+      onClick: (info: { key: string; domEvent: MouseEvent }) => void;
     }[];
   }) => (
     <div>
@@ -72,7 +72,13 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       <ul>
         {items.map((item) => (
           <li key={item.key}>
-            <button onClick={item.onClick}>{item.label}</button>
+            <button
+              onClick={(event) =>
+                item.onClick({ key: item.key, domEvent: event })
+              }
+            >
+              {item.label}
+            </button>
           </li>
         ))}
       </ul>
@@ -164,6 +170,54 @@ describe('ScheduledTaskCard', () => {
     expect(screen.getByText('a'.repeat(600)).className).toContain(
       'line-clamp-4',
     );
+  });
+
+  it('invokes onCardClick with the item id when the card body is clicked', async () => {
+    const onCardClick = vi.fn();
+    render(<ScheduledTaskCard item={buildItem()} onCardClick={onCardClick} />);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Competitor Updates' }),
+    );
+
+    expect(onCardClick).toHaveBeenCalledWith('sched_1');
+  });
+
+  it('invokes onCardClick on Enter/Space keyboard activation', async () => {
+    const onCardClick = vi.fn();
+    render(<ScheduledTaskCard item={buildItem()} onCardClick={onCardClick} />);
+
+    const card = screen.getByRole('button', { name: 'Competitor Updates' });
+    card.focus();
+    await userEvent.keyboard('{Enter}');
+
+    expect(onCardClick).toHaveBeenCalledWith('sched_1');
+  });
+
+  it('does not invoke onCardClick when the overflow-menu trigger or an action is clicked', async () => {
+    const onCardClick = vi.fn();
+    const onDelete = vi.fn();
+    render(
+      <ScheduledTaskCard
+        item={buildItem()}
+        onCardClick={onCardClick}
+        onDelete={onDelete}
+      />,
+    );
+
+    await userEvent.click(screen.getByText('Delete'));
+
+    expect(onDelete).toHaveBeenCalledWith('sched_1');
+    expect(onCardClick).not.toHaveBeenCalled();
+  });
+
+  it('renders no added interactive semantics when onCardClick is omitted', () => {
+    render(<ScheduledTaskCard item={buildItem()} />);
+
+    expect(
+      screen.queryByRole('button', { name: 'Competitor Updates' }),
+    ).toBeNull();
+    expect(screen.getByRole('group')).toBeTruthy();
   });
 
   it('pins the schedule pill to the bottom of the card regardless of description length', () => {

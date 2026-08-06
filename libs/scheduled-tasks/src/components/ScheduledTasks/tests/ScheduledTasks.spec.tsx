@@ -464,4 +464,17 @@ describe('ScheduledTasks', () => {
       restoreStyle();
     });
   });
+
+  describe('card click navigation', () => {
+    it('forwards onCardClick down to the rendered card', async () => {
+      const onCardClick = vi.fn();
+      renderScheduledTasks({ items: [buildItem()], onCardClick });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Competitor Updates' }),
+      );
+
+      expect(onCardClick).toHaveBeenCalledWith('sched_1');
+    });
+  });
 });
