@@ -691,7 +691,7 @@ export interface ConversationListItemDto {
    */
   isReadonly: boolean;
   /**
-   * True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{runId}` reserved segment).
+   * True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{filename}` reserved segment, with `{filename}` shaped `{deploymentId}__{title}__{runId}`).
    * @type {boolean}
    * @memberof ConversationListItemDto
    */
@@ -708,6 +708,12 @@ export interface ConversationListItemDto {
    * @memberof ConversationListItemDto
    */
   runId?: string;
+  /**
+   * True when this scheduler-created conversation has not yet been opened by the user. Present only when `isScheduledTask` is true.
+   * @type {boolean}
+   * @memberof ConversationListItemDto
+   */
+  isUnread?: boolean;
 }
 /**
  *
@@ -4399,7 +4405,7 @@ export interface PublishRuleDto {
    * @type {string}
    * @memberof PublishRuleDto
    */
-  function: PublishRuleDtoFunctionEnum;
+  _function: PublishRuleDtoFunctionEnum;
   /**
    * Values combined with OR; exactly one pattern when function is REGEX.
    * @type {Array<string>}

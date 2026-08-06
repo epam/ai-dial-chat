@@ -65,6 +65,8 @@ export interface RowRendererData {
   ) => void;
   /** Accessible label for the actions trigger button. */
   actionsLabel?: string;
+  /** Accessible (visually hidden) label announced for the unread indicator dot. */
+  unreadIndicatorLabel?: string;
   /** Typography/class overrides applied to virtual row elements. */
   styles?: RowStyles;
   /** Id of the conversation currently being dragged. `null` when no drag is in progress. */

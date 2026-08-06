@@ -75,6 +75,10 @@ export interface ListConversationsRequest {
   nextToken?: string;
 }
 
+export interface MarkConversationViewedRequest {
+  path: string;
+}
+
 export interface PublishConversationRequest {
   path: string;
   publishConversationDto: PublishConversationDto;
@@ -624,6 +628,55 @@ export class ConversationsApi extends runtime.BaseAPI {
       initOverrides,
     );
     return await response.value();
+  }
+
+  /**
+   * Idempotently records that the authenticated user has opened this conversation. Used to clear the unread indicator for scheduler-created conversations.
+   * Mark a conversation as viewed
+   */
+  async markConversationViewedRaw(
+    requestParameters: MarkConversationViewedRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['path'] == null) {
+      throw new runtime.RequiredError(
+        'path',
+        'Required parameter "path" was null or undefined when calling markConversationViewed().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/conversations/viewed`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PATCH',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Idempotently records that the authenticated user has opened this conversation. Used to clear the unread indicator for scheduler-created conversations.
+   * Mark a conversation as viewed
+   */
+  async markConversationViewed(
+    requestParameters: MarkConversationViewedRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.markConversationViewedRaw(requestParameters, initOverrides);
   }
 
   /**

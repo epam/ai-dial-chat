@@ -85,6 +85,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       filterLabels,
       groupLabels,
       actionsLabel,
+      unreadIndicatorLabel,
       closeAriaLabel,
     } = labels;
     const [searchQuery, setSearchQuery] = useState('');
@@ -198,6 +199,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       '--cp-task-badge-border': colors?.taskBadgeBorder,
       '--cp-task-badge-bg': colors?.taskBadgeBackground,
       '--cp-task-badge-text': colors?.taskBadgeText,
+      '--cp-unread-dot': colors?.unreadDot,
     });
 
     const filteredItems = useMemo(
@@ -317,6 +319,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         getActions,
         onActionMenuOpen,
         actionsLabel,
+        unreadIndicatorLabel,
         styles: {
           groupHeaderClassName: typography?.groupHeaderClassName,
           itemTitleClassName: typography?.itemTitleClassName,
@@ -343,6 +346,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         getActions,
         onActionMenuOpen,
         actionsLabel,
+        unreadIndicatorLabel,
         typography?.groupHeaderClassName,
         typography?.itemTitleClassName,
         panelStyles?.itemIconBadgeClassName,
