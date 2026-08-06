@@ -30,6 +30,7 @@ import {
   DialFileManagerI18nKeys,
   FavoritesI18nKeys,
   NavigationI18nKeys,
+  PublishI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
@@ -40,6 +41,7 @@ import {
   useFavoriteApplications,
 } from '../../context/FavoriteApplicationsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import {
   ToolsetLoginOutcomeType,
@@ -71,7 +73,10 @@ import {
   mapEntityDetailsToCatalogDetails,
   mapToolsetCredentials,
 } from '../../utils/map-entity-details-to-catalog';
-import { buildConnectApi } from '../../utils/mcp-endpoint-url';
+import {
+  buildConnectApi,
+  resolveMcpResourceKind,
+} from '../../utils/mcp-endpoint-url';
 import { getAccessRulesLabels, toPublishEntityType } from '../../utils/publish';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 
@@ -230,6 +235,8 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     hasPublishWriteAccess,
   } = usePublishFolders();
 
+  const showPublishError = usePublishErrorNotification();
+
   const favorites = useMemo(
     () => visibleCatalogItems.filter((item) => item.isUserFavorite),
     [visibleCatalogItems],
@@ -250,12 +257,19 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         ]);
         const entityDetails = mapDeploymentDetailsDtoToEntityDetails(dto);
         const catalogDetails = mapEntityDetailsToCatalogDetails(entityDetails);
+        const mcpResourceKind = resolveMcpResourceKind(
+          item.type,
+          item.supportsMcp,
+        );
         return {
           ...catalogDetails,
           api:
-            item.type === CatalogEntityType.Toolset ||
-            (item.type === CatalogEntityType.Agent && item.supportsMcp === true)
-              ? buildConnectApi(dialCoreExternalUrl ?? '', item.id)
+            mcpResourceKind != null
+              ? buildConnectApi(
+                  dialCoreExternalUrl ?? '',
+                  item.id,
+                  mcpResourceKind,
+                )
               : catalogDetails.api,
           limits: mapDeploymentLimitsDtoToCatalogLimits(limitsDto, t),
           credentials:
@@ -573,6 +587,12 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [showNotification, t],
   );
 
+  const handlePublishError = useCallback(
+    (_item: CatalogItem, _folderPath: string[], error: unknown) =>
+      showPublishError(error),
+    [showPublishError],
+  );
+
   const handleEdit = useCallback(
     (item: CatalogItem) => {
       if (item.type === CatalogEntityType.Toolset) {
@@ -746,6 +766,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       hasPublishWriteAccess={hasPublishWriteAccess}
       onPublish={handlePublish}
       onPublishSuccess={handlePublishSuccess}
+      onPublishError={handlePublishError}
       ruleSourceOptions={config.publicationFilterSources}
       onFetchExistingRules={handleFetchExistingRules}
       publishLabels={{
@@ -755,6 +776,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         }),
         historyLoadingLabel: t(CatalogI18nKeys.PublishHistoryLoading),
         historyErrorLabel: t(CatalogI18nKeys.PublishHistoryError),
+        submitError: t(PublishI18nKeys.SubmitErrorCallout),
         accessRulesLabels: getAccessRulesLabels(t),
       }}
       shareOverlay={(item, onClose) => (
@@ -796,6 +818,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         apiSnippetSectionLabel: t(CatalogI18nKeys.DetailsApiSnippetSection),
         apiModelIdLabel: t(CatalogI18nKeys.DetailsApiModelId),
         apiEndpointLabel: t(ApiI18nKeys.EndpointLabel),
+        apiEndpointSectionLabel: t(ApiI18nKeys.EndpointLabel),
         apiRequestExampleLabel: t(CatalogI18nKeys.DetailsApiRequestExample),
         apiResponseSchemaLabel: t(CatalogI18nKeys.DetailsApiResponseSchema),
         copyCodeAriaLabel: t(ButtonsI18nKeys.Copy),

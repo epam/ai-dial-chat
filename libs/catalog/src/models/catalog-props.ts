@@ -123,6 +123,12 @@ export interface CatalogProps {
   ) => Promise<void>;
   /** Called after a successful publish; use this to surface a success notification. */
   onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
+  /** Called with the rejection reason when a publish request fails; use this to surface an error notification. */
+  onPublishError?: (
+    item: CatalogItem,
+    folderPath: string[],
+    error: unknown,
+  ) => void;
   /** Called when the user confirms a new folder name in the publish flow. */
   onCreatePublishFolder?: (parentPath: string[], name: string) => void;
   /** Text overrides forwarded to the publish flow. */

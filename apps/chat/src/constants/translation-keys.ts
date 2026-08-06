@@ -519,6 +519,14 @@ export enum ConversationPublishI18nKeys {
   DuplicateFolderNameError = 'conversationPublish.duplicateFolderNameError',
 }
 
+/** Strings shared by every publish flow (conversations and catalog entities). */
+export enum PublishI18nKeys {
+  FailedTitle = 'publish.failedTitle',
+  FailedMessage = 'publish.failedMessage',
+  NetworkErrorMessage = 'publish.networkErrorMessage',
+  SubmitErrorCallout = 'publish.submitErrorCallout',
+}
+
 export enum PublishAccessRulesI18nKeys {
   Heading = 'publishAccessRules.heading',
   AddRuleLabel = 'publishAccessRules.addRuleLabel',

@@ -98,6 +98,12 @@ export interface UsePublishFlowOptions<TItem extends PublishFlowItem> {
   /** Called after a successful publish; the host surfaces its own success notification. */
   onPublishSuccess?: (item: TItem, folderPath: string[]) => void;
   /**
+   * Called with the rejection reason when `onPublish` fails, before
+   * `handleSubmit` resolves to `false`. The host surfaces its own error
+   * notification; the hook only sets `hasSubmitError` for the inline callout.
+   */
+  onPublishError?: (item: TItem, folderPath: string[], error: unknown) => void;
+  /**
    * Resolves the access rules already configured for a destination folder.
    * Called whenever `selectedFolderPath` changes to a defined folder; the
    * result fully replaces the current `rules` state (never merged). Omit to
@@ -162,6 +168,7 @@ export const usePublishFlow = <
   onCreateFolder,
   onPublish,
   onPublishSuccess,
+  onPublishError,
   onFetchExistingRules,
 }: UsePublishFlowOptions<TItem>): UsePublishFlowResult => {
   const [folderItems, setFolderItems] = useState(initialFolderItems);
@@ -245,13 +252,21 @@ export const usePublishFlow = <
       await onPublish(item, selectedFolderPath, rules);
       onPublishSuccess?.(item, selectedFolderPath);
       return true;
-    } catch {
+    } catch (error) {
       setHasSubmitError(true);
+      onPublishError?.(item, selectedFolderPath, error);
       return false;
     } finally {
       setIsSubmitting(false);
     }
-  }, [item, onPublish, onPublishSuccess, rules, selectedFolderPath]);
+  }, [
+    item,
+    onPublish,
+    onPublishError,
+    onPublishSuccess,
+    rules,
+    selectedFolderPath,
+  ]);
 
   const reset = useCallback(() => {
     setFolderItems(initialFolderItems);

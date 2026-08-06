@@ -48,6 +48,8 @@ export interface ApiDetailsProps {
   valueClassName?: string;
   /** CSS class for code block text. Defaults to `'dial-code-text'`. */
   codeClassName?: string;
+  /** CSS class for the endpoint/language title inside a code block header. Defaults to `'dial-tiny-semi-text'` — unlike a plain code block's label, these titles keep their authored casing. */
+  codeTitleClassName?: string;
   /** CSS class for section headings. Defaults to `'dial-caption-text'`. */
   sectionClassName?: string;
 }
@@ -57,6 +59,7 @@ interface SnippetBlockProps {
   sectionLabel?: string;
   copyAriaLabel?: string;
   codeClassName?: string;
+  codeTitleClassName?: string;
   sectionClassName?: string;
 }
 
@@ -65,6 +68,7 @@ const SnippetBlock: FC<SnippetBlockProps> = ({
   sectionLabel,
   copyAriaLabel = 'Copy',
   codeClassName = 'dial-code-text',
+  codeTitleClassName = 'dial-tiny-semi-text',
   sectionClassName = 'dial-caption-text',
 }) => {
   const [activeSnippet, setActiveSnippet] = useState<string>(
@@ -88,6 +92,13 @@ const SnippetBlock: FC<SnippetBlockProps> = ({
   const activeCode =
     snippets.find((s) => s.language === activeSnippet)?.code ?? '';
 
+  /*
+   * With a single language there is nothing to switch between, and the
+   * select's chevron reads as a broken collapse toggle — fall back to the
+   * code block's plain language label.
+   */
+  const hasLanguageChoice = snippets.length > 1;
+
   return (
     <section>
       {sectionLabel != null && (
@@ -105,19 +116,23 @@ const SnippetBlock: FC<SnippetBlockProps> = ({
         language={
           SYNTAX_LANGUAGES[activeSnippet as CodeLanguage] ?? activeSnippet
         }
+        title={LANGUAGE_LABELS[activeSnippet as CodeLanguage] ?? activeSnippet}
         value={activeCode}
         copyLabel={copyAriaLabel}
         codeClassName={codeClassName}
+        languageLabelClassName={codeTitleClassName}
         hideDownload
         titleSlot={
-          <InlineSelect
-            items={snippetItems}
-            matchReferenceWidth={false}
-            placement="bottom-end"
-            size={ElementSize.Small}
-            selectedKey={activeSnippet}
-            listClassName="cp-dropdown-overlay"
-          />
+          hasLanguageChoice ? (
+            <InlineSelect
+              items={snippetItems}
+              matchReferenceWidth={false}
+              placement="bottom-end"
+              size={ElementSize.Small}
+              selectedKey={activeSnippet}
+              listClassName="cp-dropdown-overlay"
+            />
+          ) : undefined
         }
       />
     </section>
@@ -138,6 +153,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
   labelClassName = 'dial-small-semi-text',
   valueClassName = 'dial-small-text',
   codeClassName = 'dial-code-text',
+  codeTitleClassName = 'dial-tiny-semi-text',
   sectionClassName = 'dial-caption-text',
 }) => {
   const [activeEndpointIdx, setActiveEndpointIdx] = useState(0);
@@ -161,6 +177,8 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
     resourceRows.push({ label: modelIdLabel, value: api.resource.modelId });
   }
 
+  /* Same rule as the snippet select: one option is a label, not a choice. */
+  const hasEndpointChoice = endpoints.length > 1;
   const hasResource = resourceRows.length > 0;
   // Only one of the multi-endpoint selector or this single-endpoint box ever
   // applies to a given item; guarded here in case a caller supplies both.
@@ -187,6 +205,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
           value={singleEndpointUrl}
           copyLabel={copyAriaLabel}
           codeClassName={codeClassName}
+          languageLabelClassName={codeTitleClassName}
           hideDownload
         />
       )}
@@ -210,16 +229,19 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
               value={activeEndpoint.url}
               copyLabel={copyAriaLabel}
               codeClassName={codeClassName}
+              languageLabelClassName={codeTitleClassName}
               hideDownload
               titleSlot={
-                <InlineSelect
-                  items={endpointItems}
-                  matchReferenceWidth={false}
-                  placement="bottom-end"
-                  size={ElementSize.Small}
-                  selectedKey={activeEndpoint.url}
-                  listClassName="cp-dropdown-overlay"
-                />
+                hasEndpointChoice ? (
+                  <InlineSelect
+                    items={endpointItems}
+                    matchReferenceWidth={false}
+                    placement="bottom-end"
+                    size={ElementSize.Small}
+                    selectedKey={activeEndpoint.url}
+                    listClassName="cp-dropdown-overlay"
+                  />
+                ) : undefined
               }
             />
           )}
@@ -232,6 +254,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
                   snippets={activeEndpoint.snippets}
                   copyAriaLabel={copyAriaLabel}
                   codeClassName={codeClassName}
+                  codeTitleClassName={codeTitleClassName}
                   sectionClassName={sectionClassName}
                 />
               </div>
@@ -245,6 +268,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
           sectionLabel={snippetSectionLabel}
           copyAriaLabel={copyAriaLabel}
           codeClassName={codeClassName}
+          codeTitleClassName={codeTitleClassName}
           sectionClassName={sectionClassName}
         />
       )}

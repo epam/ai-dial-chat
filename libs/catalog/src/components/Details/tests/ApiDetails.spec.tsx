@@ -19,17 +19,19 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
       language,
       value,
       copyLabel,
+      title,
       titleSlot,
       hideDownload,
     }: {
       language: string;
       value: string;
       copyLabel?: string;
+      title?: string;
       titleSlot?: ReactNode;
       hideDownload?: boolean;
     }) => (
       <div>
-        {titleSlot ?? <span>{language || 'plain'}</span>}
+        {titleSlot ?? <span>{title ?? (language || 'plain')}</span>}
         <pre data-language={language}>{value}</pre>
         <button onClick={() => void navigator.clipboard.writeText(value)}>
           {copyLabel ?? 'Copy code'}
@@ -120,7 +122,10 @@ describe('ApiDetails', () => {
     render(
       <ApiDetails
         api={{
-          endpoints: [{ label: 'Azure OpenAI Endpoint', url: LONG_MCP_URL }],
+          endpoints: [
+            { label: 'Azure OpenAI Endpoint', url: LONG_MCP_URL },
+            { label: 'Anthropic Endpoint', url: 'https://anthropic.example' },
+          ],
         }}
       />,
     );
@@ -128,6 +133,22 @@ describe('ApiDetails', () => {
     expect(
       screen.getByRole('button', { name: 'Azure OpenAI Endpoint' }),
     ).toBeTruthy();
+    expect(screen.getByText(LONG_MCP_URL)).toBeTruthy();
+  });
+
+  it('renders a plain endpoint title instead of a dropdown trigger when there is only one endpoint', () => {
+    render(
+      <ApiDetails
+        api={{
+          endpoints: [{ label: 'Azure OpenAI Endpoint', url: LONG_MCP_URL }],
+        }}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('button', { name: 'Azure OpenAI Endpoint' }),
+    ).toBeNull();
+    expect(screen.getByText('Azure OpenAI Endpoint')).toBeTruthy();
     expect(screen.getByText(LONG_MCP_URL)).toBeTruthy();
   });
 
@@ -237,6 +258,19 @@ describe('ApiDetails', () => {
 
     expect(container.querySelector('[data-language="bash"]')).toBeTruthy();
     expect(screen.getByText('curl example')).toBeTruthy();
+  });
+
+  it('renders a plain language title instead of a dropdown trigger when there is only one snippet', () => {
+    render(
+      <ApiDetails
+        api={{
+          snippets: [{ language: CodeLanguage.Curl, code: 'curl example' }],
+        }}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'cURL' })).toBeNull();
+    expect(screen.getByText('cURL')).toBeTruthy();
   });
 
   it('switches the displayed snippet when a different language is picked from the dropdown', async () => {

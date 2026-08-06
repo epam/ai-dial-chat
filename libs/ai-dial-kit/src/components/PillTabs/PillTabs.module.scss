@@ -4,9 +4,15 @@
 
   color: var(--pt-tab-text, var(--text-tertiary, #c7cbd4)) !important;
 
-  &:hover {
-    color: var(--pt-tab-text-hover, var(--text-secondary, #6b7280)) !important;
-    background-color: rgba(92, 141, 234, 0.06);
+  /* Touch browsers keep :hover latched on the last-tapped element until the
+     user taps elsewhere. Since the hover background is nearly identical to the
+     active one, an unguarded :hover leaves a previously tapped tab looking
+     selected alongside the real selection. */
+  @media (hover: hover) {
+    &:hover {
+      color: var(--pt-tab-text-hover, var(--text-secondary, #6b7280)) !important;
+      background-color: rgba(92, 141, 234, 0.06);
+    }
   }
 
   > span {
@@ -16,8 +22,11 @@
   &.tabActive {
     background-color: rgba(39, 100, 217, 0.07);
     color: var(--pt-tab-active-text, var(--text-secondary, #6b7280)) !important;
-    &:hover {
-      background-color: rgba(92, 141, 234, 0.06);
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: rgba(92, 141, 234, 0.06);
+      }
     }
   }
 }
