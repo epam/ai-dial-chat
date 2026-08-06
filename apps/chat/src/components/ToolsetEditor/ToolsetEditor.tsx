@@ -4,6 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useRouter } from 'next/router';
 
 import { getValidFormFields } from '@/src/utils/app/forms';
+import { getEntityPayloadFromLocals } from '@/src/utils/app/marketplace-localization';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isTruthyQuery } from '@/src/utils/app/route';
 import { getToolsetPayload, isToolsetSignedIn } from '@/src/utils/app/toolsets';
@@ -75,14 +76,15 @@ export const ToolsetEditor = () => {
 
   const submitHandler = useCallback(
     (data: ToolsetEditorForm) => {
+      const { name, description } = getEntityPayloadFromLocals(data.locales);
       const payloadToolset = getToolsetPayload(
         {
-          name: data.name,
+          name,
           endpoint:
             data.endpoint === ENDPOINT_PLACEHOLDER ? '' : data.endpoint.trim(),
           iconUrl: data.iconUrl,
           transport: data.protocol,
-          description: data.description,
+          description,
           topics: data.topics,
           allowedTools: data.allowedTools,
           version: data.version,

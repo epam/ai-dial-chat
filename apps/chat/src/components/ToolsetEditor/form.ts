@@ -1,4 +1,5 @@
 import {
+  getEntityLocals,
   getLocalizedEntityIdName,
   parseLocalizedField,
 } from '@/src/utils/app/marketplace-localization';
@@ -214,7 +215,7 @@ export const getDefaultFormData = ({
     iconUrl: toolset?.iconUrl ?? '',
     version: toolset ? (toolset.version ?? '') : DEFAULT_VERSION,
     topics: toolset?.topics ?? [],
-    locals: [],
+    locales: getEntityLocals(toolset, true),
 
     ...getDefaultLoginFormData({
       authenticationType:

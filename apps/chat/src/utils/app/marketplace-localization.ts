@@ -1,4 +1,8 @@
+import { MarketplaceEntity } from '@/src/types/marketplace';
+
 import { DEFAULT_LOCAL } from '@/src/constants/locale';
+
+import uniq from 'lodash-es/uniq';
 
 export const parseLocalizedField = (
   locale: string,
@@ -53,3 +57,49 @@ export const withEntityIdName = <
   ...entity,
   name: getLocalizedEntityIdName(entity.name),
 });
+
+export const getEntityLocals = (
+  entity?: MarketplaceEntity,
+  excludeDefault = false,
+): { locale: string; name: string; description: string }[] => {
+  if (!entity) return [];
+
+  const nameLocals =
+    typeof entity.name === 'string'
+      ? [DEFAULT_LOCAL]
+      : Object.keys(entity.name);
+  const descriptionLocals =
+    typeof entity.description === 'string'
+      ? [DEFAULT_LOCAL]
+      : Object.keys(entity.description ?? {});
+  let locals = uniq([...nameLocals, ...descriptionLocals]);
+
+  if (excludeDefault)
+    locals = locals.filter((locale) => locale !== DEFAULT_LOCAL);
+
+  return locals.map((locale) => ({
+    locale,
+    name: parseLocalizedField(locale, entity.name, true),
+    description: parseLocalizedField(locale, entity.description, true),
+  }));
+};
+
+export const getEntityPayloadFromLocals = (
+  locals: { locale: string; name: string; description: string }[],
+): { name: Record<string, string>; description: Record<string, string> } => {
+  return locals.reduce<{
+    name: Record<string, string>;
+    description: Record<string, string>;
+  }>(
+    (acc, { locale, name, description }) => {
+      if (name) {
+        acc.name[locale] = name;
+      }
+      if (description) {
+        acc.description[locale] = description;
+      }
+      return acc;
+    },
+    { name: {}, description: {} },
+  );
+};

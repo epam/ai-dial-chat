@@ -62,6 +62,18 @@ export const getEntityNameSchema = (options: {
       formErrors.noDotInTheStart(options.name),
     );
 
+export const EntityLocalesSchema = zodValidation.array(
+  zodValidation.object({
+    locale: zodValidation.string(),
+    name: getEntityNameSchema({
+      name: 'Name',
+      checkDotsInTheEnd: true,
+      skipMaxBytesCheck: true,
+    }),
+    description: zodValidation.string(),
+  }),
+);
+
 export const MarketplaceEntityBaseSchema = zodValidation
   .object({
     name: getEntityNameSchema({
@@ -77,17 +89,7 @@ export const MarketplaceEntityBaseSchema = zodValidation
     description: zodValidation.string(),
     iconUrl: zodValidation.string(),
     topics: zodValidation.array(zodValidation.string()),
-    locals: zodValidation.array(
-      zodValidation.object({
-        locale: zodValidation.string(),
-        name: getEntityNameSchema({
-          name: 'Name',
-          checkDotsInTheEnd: true,
-          skipMaxBytesCheck: true,
-        }),
-        description: zodValidation.string(),
-      }),
-    ),
+    locales: EntityLocalesSchema,
   })
   .superRefine((data, ctx) => {
     const apiKey = getMarketplaceEntityApiKey({

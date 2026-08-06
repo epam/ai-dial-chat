@@ -18,6 +18,8 @@ import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
 import {
+  getEntityLocals,
+  getEntityPayloadFromLocals,
   getLocalizedEntityIdName,
   parseLocalizedField,
 } from '@/src/utils/app/marketplace-localization';
@@ -430,7 +432,7 @@ const getBaseFormData = ({
   iconUrl: app?.iconUrl ?? '',
   description: parseLocalizedField(locale, app?.description),
   topics: app?.topics ?? [],
-  locals: [],
+  locales: getEntityLocals(app, true),
 });
 
 const getCustomAppFormData = (app?: CustomApplicationModel): CustomAppForm => ({
@@ -943,15 +945,17 @@ export const getApplicationPayload = ({
   currentApp?: CustomApplicationModel;
   keepCurrentToolsets?: boolean;
 }): CustomApplicationModel => {
+  const { name, description } = getEntityPayloadFromLocals(data.locales);
+
   const generalData = fitApplicationNameToStorageLimits({
     id: '',
     reference: '',
     folderId: '',
     ...(currentApp && currentApp),
     type: EntityType.Application,
-    name: data.name,
+    name,
     iconUrl: data.iconUrl,
-    description: data.description,
+    description,
     version: data.version,
     topics: data.topics,
     isDefault: false,
