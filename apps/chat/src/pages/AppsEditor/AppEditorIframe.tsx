@@ -414,11 +414,25 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
      * lifetime — deliberately not gated on preview visibility — since the
      * iframe stays mounted-but-hidden during Preview and must still receive
      * updates then, without being reloaded.
+     *
+     * Not filtered to toolsets this app actually references: the host has no
+     * such list (only the embedded editor's own data model knows which
+     * toolsets an app uses), so every successful login is forwarded and the
+     * embedded editor is contractually responsible for ignoring an
+     * unrecognized `toolsetId` — see the "Settings iframe receives live
+     * updates for toolset logins initiated elsewhere" requirement in the
+     * `quick-app-authoring` spec. The forwarded `credentials` are never more
+     * than the user's own permissions already expose via `getDeploymentDetails`.
      */
     useEffect(() => {
       return subscribeToolsetLoginSuccess(({ toolsetId, credentialsLevel }) => {
         if (!schema.editorUrl) return;
-        const targetOrigin = new URL(schema.editorUrl).origin;
+        let targetOrigin: string;
+        try {
+          targetOrigin = new URL(schema.editorUrl).origin;
+        } catch {
+          return;
+        }
         const rawToolsetId = decodeToolsetId(toolsetId);
         void fetchToolsetCredentials(toolsetId).then((credentials) => {
           postToolsetLoginResult(targetOrigin, {
