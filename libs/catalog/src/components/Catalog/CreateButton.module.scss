@@ -55,13 +55,20 @@
   transition: background 100ms ease;
 
   &:hover {
-    background: var(--cat-create-item-hover-bg, var(--bg-layer-raised, #fcfcfc));
+    background: var(
+      --cat-create-item-hover-bg,
+      var(--bg-layer-raised, #fcfcfc)
+    );
   }
 
   &:focus-visible {
-    outline: 2px solid var(--cat-create-focus-outline, var(--text-accent, #1d4ed8));
+    outline: 2px solid
+      var(--cat-create-focus-outline, var(--text-accent, #1d4ed8));
     outline-offset: -2px;
-    background: var(--cat-create-item-hover-bg, var(--bg-layer-raised, #fcfcfc));
+    background: var(
+      --cat-create-item-hover-bg,
+      var(--bg-layer-raised, #fcfcfc)
+    );
   }
 }
 

@@ -26,7 +26,10 @@
 }
 
 .filterBtnActive {
-  border-color: var(--cat-filter-btn-border-active, var(--stroke-info, #124ace));
+  border-color: var(
+    --cat-filter-btn-border-active,
+    var(--stroke-info, #124ace)
+  );
 }
 
 .filterBtnOpen {
@@ -73,7 +76,10 @@
 .row {
   @media (hover: hover) {
     &:hover {
-      background: var(--cat-filter-row-hover-bg, var(--bg-layer-raised, #fcfcfc));
+      background: var(
+        --cat-filter-row-hover-bg,
+        var(--bg-layer-raised, #fcfcfc)
+      );
     }
   }
 

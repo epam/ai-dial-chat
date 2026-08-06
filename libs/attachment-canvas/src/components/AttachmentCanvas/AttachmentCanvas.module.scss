@@ -96,7 +96,10 @@
 
 .jsonCollapsedContent {
   color: var(--ac-json-collapsed-text, var(--text-secondary, #6b7280));
-  background-color: var(--ac-json-collapsed-bg, var(--bg-layer-raised, #fcfcfc));
+  background-color: var(
+    --ac-json-collapsed-bg,
+    var(--bg-layer-raised, #fcfcfc)
+  );
   font-size: 0.75em; // em-based — cannot be a static Tailwind class
 
   &::after {

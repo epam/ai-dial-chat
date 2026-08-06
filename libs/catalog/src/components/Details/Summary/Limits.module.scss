@@ -1,6 +1,9 @@
 .tag {
   &--FREE {
-    background: var(--cat-limits-free-bg, var(--bg-success, #dbf1eb)) !important;
+    background: var(
+      --cat-limits-free-bg,
+      var(--bg-success, #dbf1eb)
+    ) !important;
     color: var(--cat-limits-free-text, var(--text-success, #007274)) !important;
     border-color: transparent !important;
   }
