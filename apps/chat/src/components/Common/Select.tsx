@@ -58,6 +58,7 @@ export const Select = ({
               )}
               width={18}
               height={18}
+              stroke={2.5}
             />
           </div>
         }
