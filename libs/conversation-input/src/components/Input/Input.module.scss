@@ -2,9 +2,15 @@
   background: var(--ci-bg, var(--bg-control-neutral, #fcfcfc));
   border-color: var(--ci-border, var(--stroke-tertiary, #e0e6f0));
 
+  /* Focus ring is an `outline`, not a `border-color` swap — outline is painted
+   * outside the border box, so it costs no layout and is preserved in
+   * forced-colors mode. `outline-offset: -1px` keeps it in the border's place
+   * (the border itself goes transparent) so nothing grows or jitters. */
   &:focus-within,
   &:active {
-    border-color: var(--ci-border-focus, var(--stroke-info, #124ace));
+    border-color: transparent;
+    outline: 1px solid var(--ci-border-focus, var(--stroke-info, #124ace));
+    outline-offset: -1px;
   }
 
   &.wrapperDisabled {

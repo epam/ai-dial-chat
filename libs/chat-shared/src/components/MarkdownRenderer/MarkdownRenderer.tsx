@@ -188,7 +188,12 @@ const buildMarkdownComponents = (
   h6: ({ children }) => (
     <h6 className={mergeClasses(styles.h6, cn.h6)}>{children}</h6>
   ),
-  p: ({ children }) => <p className={cn.p}>{children}</p>,
+  /* `break-words` is structural rather than typographic: an unbreakable token
+   * (typically a long URL) would otherwise overflow its container and get
+   * clipped by any ancestor that hides overflow, e.g. a line-clamped quote. */
+  p: ({ children }) => (
+    <p className={mergeClasses('break-words', cn.p)}>{children}</p>
+  ),
   ul: ({ children }) => (
     <ul className={mergeClasses('list-disc ps-5', cn.ul)}>{children}</ul>
   ),
@@ -251,7 +256,7 @@ const buildMarkdownComponents = (
       target="_blank"
       rel="noopener noreferrer"
       className={mergeClasses(
-        'decoration-current/60 underline underline-offset-2 hover:decoration-current focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2',
+        'decoration-current/60 break-words underline underline-offset-2 hover:decoration-current focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2',
         styles.link,
         cn.link,
       )}

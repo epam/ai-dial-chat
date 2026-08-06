@@ -302,6 +302,21 @@ describe('MarkdownRenderer', () => {
     expect(container.querySelector('math')).toBeTruthy();
   });
 
+  it('lets a long unbreakable URL wrap so a clipped ancestor cannot cut it off', () => {
+    const longUrl =
+      'https://example.com/very/long/path/segment/that/never/breaks/document-name-with-no-spaces.pdf';
+    const { container } = render(
+      <MarkdownRenderer content={`See ${longUrl} for details.`} />,
+    );
+
+    const paragraph = container.querySelector('p');
+    const link = screen.getByRole('link');
+
+    expect(paragraph?.className).toContain('break-words');
+    expect(link.className).toContain('break-words');
+    expect(link.getAttribute('href')).toBe(longUrl);
+  });
+
   it('does not treat a currency amount as LaTeX', () => {
     const { container } = render(
       <MarkdownRenderer content="Price is $50 and $100" />,

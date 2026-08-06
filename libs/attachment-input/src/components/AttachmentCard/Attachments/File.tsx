@@ -1,6 +1,5 @@
 import {
   AttachmentErrorReason,
-  AttachmentType,
   mergeClasses,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
@@ -100,9 +99,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
     ATTACHMENT_TILE_BASE_CLASS,
     'group/attachment-tile relative flex-col justify-between items-start gap-1 overflow-hidden p-1.5',
     styles.tile,
-    (attachment.type === AttachmentType.Prompt ||
-      attachment.type === AttachmentType.Pasted) &&
-      styles.hovered,
+    !isError && styles.hovered,
     isSelected && styles.selected,
     isError && styles.tileError,
   );
@@ -152,17 +149,8 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
 
   const tileContent = (
     <>
-      {isError ? (
-        <>
-          {typeRow}
-          {nameEl}
-        </>
-      ) : (
-        <>
-          {nameEl}
-          {typeRow}
-        </>
-      )}
+      {nameEl}
+      {typeRow}
 
       {isLoading && (
         <div
