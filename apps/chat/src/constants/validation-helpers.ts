@@ -77,6 +77,11 @@ export const MarketplaceEntityBaseSchema = zodValidation
     description: zodValidation.string(),
     iconUrl: zodValidation.string(),
     topics: zodValidation.array(zodValidation.string()),
+    locals: zodValidation.array(zodValidation.object({
+      local: zodValidation.string(),
+      name: getEntityNameSchema({ name: 'Name', checkDotsInTheEnd: true, skipMaxBytesCheck: true }),
+      description: zodValidation.string(),
+    })),
   })
   .superRefine((data, ctx) => {
     const apiKey = getMarketplaceEntityApiKey({

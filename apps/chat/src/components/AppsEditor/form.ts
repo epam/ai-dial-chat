@@ -428,6 +428,7 @@ const getBaseFormData = ({
   iconUrl: app?.iconUrl ?? '',
   description: parseLocalizedDescription(locale, app?.description),
   topics: app?.topics ?? [],
+  locals: [],
 });
 
 const getCustomAppFormData = (app?: CustomApplicationModel): CustomAppForm => ({

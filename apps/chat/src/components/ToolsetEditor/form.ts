@@ -214,6 +214,7 @@ export const getDefaultFormData = ({
     iconUrl: toolset?.iconUrl ?? '',
     version: toolset ? (toolset.version ?? '') : DEFAULT_VERSION,
     topics: toolset?.topics ?? [],
+    locals: [],
 
     ...getDefaultLoginFormData({
       authenticationType:
