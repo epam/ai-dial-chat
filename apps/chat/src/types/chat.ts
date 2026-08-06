@@ -41,6 +41,7 @@ export interface ConversationsTemporarySettings {
   temperature: number;
   isShared: boolean;
   responseFormat: ConversationResponseFormat;
+  compactMode: boolean;
 }
 
 export interface PrepareNameOptions {

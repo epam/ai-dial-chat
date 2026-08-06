@@ -689,6 +689,24 @@ export const updateChildAndCurrentFoldersIds = (
   });
 };
 
+/**
+ * Folder ids are path based, so renaming or moving a folder changes the ids of
+ * its whole subtree. Maps a path onto its new location, keeping the part below
+ * the moved folder intact. Paths outside the moved folders are returned as is.
+ */
+export const remapMovedPath = (
+  path: string,
+  movedFolders: { sourceUrl: string; destinationUrl: string }[],
+) => {
+  const movedFolder = movedFolders.find(
+    ({ sourceUrl }) => path === sourceUrl || path.startsWith(`${sourceUrl}/`),
+  );
+
+  return movedFolder
+    ? `${movedFolder.destinationUrl}${path.slice(movedFolder.sourceUrl.length)}`
+    : path;
+};
+
 export const updateChildFoldersIds = (
   folders: FolderInterface[],
   oldFolderId: string,

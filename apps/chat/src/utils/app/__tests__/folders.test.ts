@@ -7,6 +7,7 @@ import {
   getFoldersDepth,
   getPartialAndFullyChosenFolders,
   getSelectedEntitiesByFolderId,
+  remapMovedPath,
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
@@ -330,6 +331,57 @@ describe('getFoldersDepth', () => {
 
   it('counts the deepest nested child', () => {
     expect(getFoldersDepth(folders[0], folders)).toBe(2);
+  });
+});
+
+describe('remapMovedPath', () => {
+  const bucket = 'files/bucket';
+  const rename = [
+    { sourceUrl: `${bucket}/parent`, destinationUrl: `${bucket}/renamed` },
+  ];
+
+  it('remaps the moved folder itself', () => {
+    expect(remapMovedPath(`${bucket}/parent`, rename)).toBe(
+      `${bucket}/renamed`,
+    );
+  });
+
+  it('keeps the subtree below the moved folder', () => {
+    expect(remapMovedPath(`${bucket}/parent/child/leaf`, rename)).toBe(
+      `${bucket}/renamed/child/leaf`,
+    );
+  });
+
+  it('leaves unrelated paths untouched', () => {
+    expect(remapMovedPath(`${bucket}/other/child`, rename)).toBe(
+      `${bucket}/other/child`,
+    );
+  });
+
+  it('does not match a sibling sharing the name prefix', () => {
+    expect(remapMovedPath(`${bucket}/parent2/child`, rename)).toBe(
+      `${bucket}/parent2/child`,
+    );
+  });
+
+  it('remaps a path moved to another parent', () => {
+    expect(
+      remapMovedPath(`${bucket}/a/moved/child`, [
+        {
+          sourceUrl: `${bucket}/a/moved`,
+          destinationUrl: `${bucket}/b/moved`,
+        },
+      ]),
+    ).toBe(`${bucket}/b/moved/child`);
+  });
+
+  it('applies a single mapping per path, so a chain does not remap twice', () => {
+    expect(
+      remapMovedPath(`${bucket}/a`, [
+        { sourceUrl: `${bucket}/a`, destinationUrl: `${bucket}/b` },
+        { sourceUrl: `${bucket}/b`, destinationUrl: `${bucket}/c` },
+      ]),
+    ).toBe(`${bucket}/b`);
   });
 });
 

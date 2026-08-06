@@ -114,6 +114,7 @@ export const cleanConversation = (
     customViewState: conversation.customViewState,
     responseFormat:
       conversation.responseFormat ?? ConversationResponseFormat.Markdown,
+    compactMode: conversation.compactMode,
   };
 
   return cleanConversation;
