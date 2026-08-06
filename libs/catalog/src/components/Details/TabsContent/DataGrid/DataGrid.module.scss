@@ -1,19 +1,20 @@
 .container {
-  border: 1px solid var(--stroke-secondary, #d1dbea);
+  border: 1px solid var(--cat-grid-border, var(--stroke-secondary, #d1dbea));
 }
 
 .header {
-  color: var(--text-secondary, #6b7280);
-  background: var(--bg-layer-1, #e0e6f0);
+  color: var(--cat-grid-header-text, var(--text-secondary, #6b7280));
+  background: var(--cat-grid-header-bg, var(--bg-layer-1, #e0e6f0));
   letter-spacing: 0.06em;
   font-weight: 500;
 }
 
 .cell {
-  color: var(--text-primary, #161b2d);
-  border-top: 1px solid var(--stroke-secondary, #d1dbea);
+  color: var(--cat-grid-cell-text, var(--text-primary, #161b2d));
+  border-top: 1px solid
+    var(--cat-grid-cell-divider, var(--stroke-secondary, #d1dbea));
 }
 
 .evenRow {
-  background: var(--bg-layer-7, #00000006);
+  background: var(--cat-grid-row-even-bg, var(--bg-layer-7, #00000006));
 }

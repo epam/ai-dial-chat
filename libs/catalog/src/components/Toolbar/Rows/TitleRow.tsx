@@ -133,8 +133,7 @@ export const TitleRow: FC<TitleRowProps> = ({
             <>
               {/* Vertical divider */}
               <div
-                className="h-4 w-px shrink-0"
-                style={{ background: 'var(--stroke-secondary, #d1dbea)' }}
+                className={mergeClasses('h-4 w-px shrink-0', styles.divider)}
               />
 
               <DialDropdown

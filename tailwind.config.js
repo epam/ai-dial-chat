@@ -81,9 +81,6 @@ const controlsTextColors = {
 // remove
 const textColorsToRemove = {
   'accent-secondary': 'var(--text-accent-secondary, #37BABC)',
-  // Catalog tab bar — override via CSS custom properties for dark-theme support
-  'catalog-tab-inactive': 'var(--cat-tab-inactive-text, #6B7280)',
-  'catalog-tab-hover': 'var(--cat-tab-hover-text, #374151)',
 };
 
 const bgColorsToRemove = {

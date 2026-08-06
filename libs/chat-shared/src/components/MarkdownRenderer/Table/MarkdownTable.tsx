@@ -20,6 +20,12 @@ export interface MarkdownTableColors {
   scrollbar?: string;
   /** Edge-fade mask color. */
   fade?: string;
+  /** Divider color between rows. Defaults to `--stroke-tertiary`. */
+  rowDivider?: string;
+  /** Background of even-indexed body rows. Defaults to `--bg-layer-base`. */
+  rowZebraBackground?: string;
+  /** Background of a body row on hover. Defaults to `--bg-accent-primary-alpha`. */
+  rowHoverBackground?: string;
 }
 
 /** Props for {@link MarkdownTable}. */
@@ -53,6 +59,9 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
       '--cm-markdown-border': colors?.border,
       '--cm-table-scrollbar': colors?.scrollbar,
       '--cm-table-fade': colors?.fade,
+      '--cm-table-row-divider': colors?.rowDivider,
+      '--cm-table-row-zebra-bg': colors?.rowZebraBackground,
+      '--cm-table-row-hover-bg': colors?.rowHoverBackground,
     });
     const isScrollable = hasContentBeyondStart || hasContentBeyondEnd;
 

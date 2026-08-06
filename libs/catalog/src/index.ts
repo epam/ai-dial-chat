@@ -47,6 +47,8 @@ export type {
 } from './models/item-details-data';
 export type {
   DetailsPanelProps,
+  ItemDetailsColors,
+  ItemDetailsLimitColors,
   ItemDetailsStyles,
   ItemDetailsTexts,
   ItemDetailsTypography,
@@ -119,7 +121,7 @@ export { FolderPath } from '@epam/ai-dial-ui-kit';
 export type { FolderPathProps } from '@epam/ai-dial-ui-kit';
 
 export { Filter } from './components/Filter/Filter';
-export type { FilterProps } from './components/Filter/Filter';
+export type { FilterColors, FilterProps } from './components/Filter/Filter';
 
 export { TopicTag } from './components/TopicTag/TopicTag';
 export type { TopicTagProps } from './components/TopicTag/TopicTag';

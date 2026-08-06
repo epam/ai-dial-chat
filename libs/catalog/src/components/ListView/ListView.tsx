@@ -57,9 +57,15 @@ export const ListView: FC<ListViewProps> = ({
   const typography = listStyles?.typography ?? {};
   const colors = listStyles?.colors;
   const cssVars = {
+    '--cat-list-bg': colors?.background,
+    '--cat-list-border': colors?.border,
+    '--cat-list-header-bg': colors?.headerBackground,
+    '--cat-list-row-divider': colors?.rowDivider,
+    '--cat-card-star-filled': colors?.starFilled,
     '--cat-list-row-even-bg': colors?.rowEvenBackground,
     '--cat-list-selected-border': colors?.selectedRowBorder,
     '--cat-list-selected-bg': colors?.selectedRowBackground,
+    '--cat-list-selected-check': colors?.selectedRowCheckIcon,
     ...(stickyHeaderTop != null
       ? { '--list-header-sticky-top': `${stickyHeaderTop}px` }
       : {}),

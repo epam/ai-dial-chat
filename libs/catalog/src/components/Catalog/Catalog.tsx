@@ -365,6 +365,7 @@ export const Catalog: FC<CatalogProps> = ({
             {!hideCreateButton && (
               <CreateButton
                 label={createLabel}
+                colors={catalogStyles?.colors}
                 options={createOptions}
                 onClick={onCreateClick}
               />

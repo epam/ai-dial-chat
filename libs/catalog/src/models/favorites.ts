@@ -14,6 +14,16 @@ export interface FavoritesColors {
   titleText?: string;
   /** Total-count and page-counter text color. Fallback: `--text-secondary`. */
   countText?: string;
+  /** Color of the checkmark icon on the selected favorite card. Fallback: `--text-accent`. */
+  selectedCheckIcon?: string;
+  /** Border color of the selected favorite card. Fallback: `--stroke-info`. */
+  selectedCardBorder?: string;
+  /** Background color (tint) of the selected favorite card. Fallback: `--bg-accent-primary-alpha`. */
+  selectedCardBackground?: string;
+  /** Icon color of the pagination arrows. Fallback: `--text-accent`. */
+  navButton?: string;
+  /** Icon color of a disabled pagination arrow. Fallback: `--stroke-secondary`. */
+  navButtonDisabled?: string;
 }
 
 /** Grouped style overrides for `CatalogFavorites`. */

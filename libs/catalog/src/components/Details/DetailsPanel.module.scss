@@ -2,20 +2,50 @@
 // Layout, spacing, and border-radius live in Tailwind classes in the TSX.
 
 .backdrop {
-  background: var(--bg-backdrop, #161b2d4d);
+  background: var(--cat-details-backdrop, var(--bg-backdrop, #161b2d4d));
 }
 
 .panel {
-  background: var(--bg-layer-raised, #fcfcfc);
-  border-inline-start-color: var(--stroke-secondary, #d1dbea);
+  background: var(--cat-details-bg, var(--bg-layer-raised, #fcfcfc));
+  border-inline-start-color: var(
+    --cat-details-border,
+    var(--stroke-secondary, #d1dbea)
+  );
 }
 
 .divider {
-  border-block-end: 1px solid var(--stroke-tertiary, #e0e6f0);
+  border-block-end: 1px solid
+    var(--cat-details-divider, var(--stroke-tertiary, #e0e6f0));
 }
 
 .content {
   scrollbar-width: thin;
-  scrollbar-color: var(--stroke-secondary, #d1dbea) transparent;
+  scrollbar-color: var(--cat-details-scrollbar, var(--stroke-secondary, #d1dbea))
+    transparent;
+}
+
+.publishTitle {
+  color: var(--cat-details-publish-title-text, var(--text-primary, #161b2d));
+}
+
+/* Read from TSX as `styles.skeletonColor` — DialSkeleton takes a color value, not a class. */
+:export {
+  skeletonColor: var(--cat-details-skeleton, var(--bg-layer-4, #d1dbea));
+}
+
+/* Overrides the tag's own palette, which is why the declarations are !important. */
+.currentVersionTag {
+  border-color: var(
+    --cat-details-version-tag-border,
+    var(--stroke-tertiary, #e0e6f0)
+  ) !important;
+  background: var(
+    --cat-details-version-tag-bg,
+    var(--bg-accent-primary-alpha, #7da4ff2e)
+  ) !important;
+  color: var(
+    --cat-details-version-tag-text,
+    var(--text-accent, #1d4ed8)
+  ) !important;
 }
 

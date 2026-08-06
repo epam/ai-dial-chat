@@ -1,9 +1,6 @@
 .listContainer {
   background: var(--cat-list-bg, var(--bg-layer-raised, #fcfcfc));
-  border-color: var(
-    --cm-markdown-border,
-    var(--cat-list-border, var(--stroke-secondary, #d1dbea))
-  );
+  border-color: var(--cat-list-border, var(--stroke-secondary, #d1dbea));
 }
 
 .gridClip {
@@ -30,14 +27,14 @@
     background: var(--cat-list-header-bg, var(--bg-layer-raised, #fcfcfc));
 
     border-bottom-color: var(
-      --cm-table-row-divider,
+      --cat-list-row-divider,
       var(--stroke-tertiary, #e0e6f0)
     ) !important;
   }
 
   :global(.ag-row) {
     border-bottom-color: var(
-      --cm-table-row-divider,
+      --cat-list-row-divider,
       var(--stroke-tertiary, #e0e6f0)
     ) !important;
   }
@@ -66,6 +63,10 @@
 
 .starFilledIcon {
   color: var(--cat-card-star-filled, var(--text-warning-icon, #eec840));
+}
+
+.selectedCheck {
+  color: var(--cat-list-selected-check, var(--text-accent, #1d4ed8));
 }
 
 .starToggleOff {
