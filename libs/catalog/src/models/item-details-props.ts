@@ -117,7 +117,7 @@ export interface ItemDetailsTexts {
 
 /** Typography class overrides for `DetailsPanel` text elements. */
 export interface ItemDetailsTypography {
-  /** Typography class for the entity name. Default: `'dial-body-semi-text text-primary'`. */
+  /** Typography class for the entity name. Default: `'dial-body-semi-text'`. */
   nameClassName?: string;
   /** Typography class for the version string. Default: `'dial-tiny-text'`. */
   versionClassName?: string;
@@ -137,7 +137,7 @@ export interface ItemDetailsTypography {
   folderLabelClassName?: string;
   /** Typography class applied to the leaf (last) folder path segment. Default: `'dial-tiny-semi-text'`. */
   folderLeafClassName?: string;
-  /** Typography class for the credentials section's signed-in/signed-out status label. Default: `'dial-small-semi-text text-primary'`. */
+  /** Typography class for the credentials section's signed-in/signed-out status label. Default: `'dial-small-semi-text'`. */
   credentialsStatusLabelClassName?: string;
 }
 

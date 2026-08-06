@@ -429,13 +429,6 @@ export const Catalog: FC<CatalogProps> = ({
               }))}
               activeTabId={activeTab}
               onTabChange={setActiveTab}
-              styles={{
-                colors: {
-                  activeTabClassName: 'text-primary',
-                  inactiveTabClassName:
-                    'text-catalog-tab-inactive hover:text-catalog-tab-hover border-transparent',
-                },
-              }}
             />
           </div>
         )}

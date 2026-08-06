@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type FC } from 'react';
 import styles from './TabRow.module.scss';
 
@@ -12,16 +12,26 @@ export interface TabRowTab {
   count?: number;
 }
 
-/** Color overrides for the {@link TabRow} component. */
+/** Color overrides for the {@link TabRow} component, applied as CSS custom properties. */
 export interface TabRowColors {
-  /** Class applied to an active tab button. Defaults to `'text-primary'`. */
-  activeTabClassName?: string;
-  /** Class applied to an inactive tab button. Defaults to `'text-secondary hover:text-primary border-transparent'`. */
-  inactiveTabClassName?: string;
-  /** Class applied to the badge when the tab is active. Defaults to `'bg-accent-primary-alpha text-accent'`. */
-  activeBadgeClassName?: string;
-  /** Class applied to the badge when the tab is inactive. Defaults to `'bg-layer-raised text-tertiary'`. */
-  inactiveBadgeClassName?: string;
+  /** Bottom border color of the tab row. Defaults to `--stroke-tertiary`. */
+  rowBorder?: string;
+  /** Underline color of the active tab. Defaults to `--stroke-info`. */
+  activeTabBorder?: string;
+  /** Label color of the active tab. Defaults to `--text-primary`. */
+  activeTabText?: string;
+  /** Label color of an inactive tab. Defaults to `--text-secondary`. */
+  inactiveTabText?: string;
+  /** Label color of an inactive tab on hover/focus. Defaults to `--text-primary`. */
+  inactiveTabTextHover?: string;
+  /** Background color of the badge on an active tab. Defaults to `--bg-accent-primary-alpha`. */
+  activeBadgeBackground?: string;
+  /** Text color of the badge on an active tab. Defaults to `--text-accent`. */
+  activeBadgeText?: string;
+  /** Background color of the badge on an inactive tab. Defaults to `--bg-layer-raised`. */
+  inactiveBadgeBackground?: string;
+  /** Text color of the badge on an inactive tab. Defaults to `--text-tertiary`. */
+  inactiveBadgeText?: string;
 }
 
 /** Typography overrides for the {@link TabRow} component. */
@@ -63,19 +73,26 @@ export const TabRow: FC<TabRowProps> = ({
 }) => {
   const { className, colors, typography } = tabRowStyles ?? {};
   const {
-    activeTabClassName = 'text-primary',
-    inactiveTabClassName = 'text-secondary hover:text-primary border-transparent',
-    activeBadgeClassName = 'bg-accent-primary-alpha text-accent',
-    inactiveBadgeClassName = 'bg-layer-raised text-tertiary',
-  } = colors ?? {};
-  const {
     tabLabelClassName = 'dial-small-semi-text',
     badgeLabelClassName = 'dial-tiny-semi-text',
   } = typography ?? {};
 
+  const cssVars = buildCssVars({
+    '--tr-row-border': colors?.rowBorder,
+    '--tr-active-tab-border': colors?.activeTabBorder,
+    '--tr-active-tab-text': colors?.activeTabText,
+    '--tr-inactive-tab-text': colors?.inactiveTabText,
+    '--tr-inactive-tab-text-hover': colors?.inactiveTabTextHover,
+    '--tr-active-badge-bg': colors?.activeBadgeBackground,
+    '--tr-active-badge-text': colors?.activeBadgeText,
+    '--tr-inactive-badge-bg': colors?.inactiveBadgeBackground,
+    '--tr-inactive-badge-text': colors?.inactiveBadgeText,
+  });
+
   return (
     <div
       role="tablist"
+      style={cssVars}
       className={mergeClasses(
         'flex justify-start gap-1 border-b',
         styles.tabsRow,
@@ -94,8 +111,8 @@ export const TabRow: FC<TabRowProps> = ({
               tabLabelClassName,
               '-mb-px flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-start transition-colors',
               isActive
-                ? mergeClasses(styles.activeTab, activeTabClassName)
-                : inactiveTabClassName,
+                ? styles.activeTab
+                : mergeClasses('border-transparent', styles.inactiveTab),
             )}
           >
             <span>{tab.label}</span>
@@ -104,7 +121,7 @@ export const TabRow: FC<TabRowProps> = ({
                 className={mergeClasses(
                   badgeLabelClassName,
                   'rounded-full px-1.5 py-0.5',
-                  isActive ? activeBadgeClassName : inactiveBadgeClassName,
+                  isActive ? styles.activeBadge : styles.inactiveBadge,
                 )}
               >
                 {tab.count}

@@ -300,7 +300,12 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 disabled={publishFlow.isSubmitting}
                 onClick={handleClosePublish}
               />
-              <span className="dial-body-semi-text flex-1 text-primary">
+              <span
+                className={mergeClasses(
+                  'dial-body-semi-text flex-1',
+                  styles.publishTitle,
+                )}
+              >
                 {publishTitle}
               </span>
             </>
@@ -344,7 +349,10 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                     />
                     <DialTag
                       label={`Version ${item.version} · current`}
-                      className="shrink-0 whitespace-nowrap !border-tertiary !bg-accent-primary-alpha !text-accent"
+                      className={mergeClasses(
+                        'shrink-0 whitespace-nowrap',
+                        styles.currentVersionTag,
+                      )}
                     />
                   </>
                 )}
@@ -426,13 +434,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                   tabs={tabs}
                   activeTabId={activeTab}
                   onTabChange={setActiveTab}
-                  styles={{
-                    colors: {
-                      activeTabClassName: 'text-primary',
-                      inactiveTabClassName:
-                        'text-catalog-tab-inactive hover:text-catalog-tab-hover border-transparent',
-                    },
-                  }}
                 />
                 {isDetailsLoading && (
                   <div

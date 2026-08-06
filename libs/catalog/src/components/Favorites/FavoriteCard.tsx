@@ -24,9 +24,9 @@ export interface FavoriteCardProps {
   nameClassName?: string;
   /** Color overrides applied as CSS custom properties. */
   colors?: AppIdentityColors;
-  /** CSS class for the version string. Default: 'dial-tiny-text text-secondary'. */
+  /** Typography CSS class for the version string. Default: `'dial-tiny-text'`. */
   versionClassName?: string;
-  /** CSS class for the last-used text. Default: 'dial-tiny-text text-secondary'. */
+  /** Typography CSS class for the last-used text. Default: `'dial-tiny-text'`. */
   lastUsedClassName?: string;
   /** Search query string; matching text in the name is highlighted when provided. */
   query?: string;
@@ -107,7 +107,10 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
       {isSelected && (
         <IconCheck
           size={DIAL_ICON_SIZE.SM}
-          className="absolute end-3 top-3 shrink-0 text-accent"
+          className={mergeClasses(
+            'absolute end-3 top-3 shrink-0',
+            styles.selectedCheck,
+          )}
           aria-hidden
         />
       )}

@@ -3,6 +3,7 @@ import { DialTag } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import type { CatalogItemCredentials } from '../../models/catalog-item-credentials';
 import { getCredentialsBadgeState } from '../../utils/toolset-credentials';
+import styles from './CredentialsBadge.module.scss';
 
 /** Props for `CredentialsBadge`. */
 export interface CredentialsBadgeProps {
@@ -12,7 +13,7 @@ export interface CredentialsBadgeProps {
   loggedOutLabel?: string;
   /** Additional CSS class applied for layout/spacing (e.g. margins). */
   className?: string;
-  /** Typography/color classes for the badge itself. Default: `'bg-error dial-caption-semi-text uppercase tracking-[0.06em] text-error'`. */
+  /** Typography class for the badge itself. Default: `'dial-caption-semi-text uppercase tracking-[0.06em]'`. Colors come from the module stylesheet. */
   badgeClassName?: string;
 }
 
@@ -21,7 +22,7 @@ export const CredentialsBadge: FC<CredentialsBadgeProps> = ({
   credentials,
   loggedOutLabel = 'LOGGED OUT',
   className,
-  badgeClassName = 'bg-error dial-caption-semi-text uppercase tracking-[0.06em] text-error',
+  badgeClassName = 'dial-caption-semi-text uppercase',
 }) => {
   if (credentials == null) return null;
 
@@ -31,7 +32,12 @@ export const CredentialsBadge: FC<CredentialsBadgeProps> = ({
   return (
     <DialTag
       label={loggedOutLabel}
-      className={mergeClasses('border-none', badgeClassName, className)}
+      className={mergeClasses(
+        'border-none tracking-[0.06em]',
+        styles.badge,
+        badgeClassName,
+        className,
+      )}
     />
   );
 };

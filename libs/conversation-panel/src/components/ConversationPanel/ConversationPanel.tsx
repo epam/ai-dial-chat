@@ -195,6 +195,9 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       '--cp-trigger-icon': colors?.triggerIcon,
       '--cp-trigger-icon-idle': colors?.triggerIconIdle,
       '--cp-skeleton-color': colors?.skeletonColor,
+      '--cp-task-badge-border': colors?.taskBadgeBorder,
+      '--cp-task-badge-bg': colors?.taskBadgeBackground,
+      '--cp-task-badge-text': colors?.taskBadgeText,
     });
 
     const filteredItems = useMemo(

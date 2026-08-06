@@ -42,7 +42,7 @@ export interface ConversationRowProps {
   itemTitleClassName?: string;
   /** CSS class applied to the icon badge. Defaults to `'rounded-full'`. */
   itemIconBadgeClassName?: string;
-  /** CSS class applied to the task pill badge (background, border, text color, and typography). Defaults to `'border-tertiary bg-layer-base text-secondary dial-caption-semi-text tracking-[0.6px]'`. */
+  /** Typography class applied to the task pill badge. Defaults to `'dial-caption-semi-text uppercase tracking-[0.6px]'`. Colors come from the module stylesheet. */
   taskBadgeClassName?: string;
   /** Group this row belongs to — required to enable drag-and-drop. */
   rowGroupKey?: FilterTab;
@@ -81,7 +81,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   actionsLabel = 'More actions',
   itemTitleClassName = 'dial-small-text',
   itemIconBadgeClassName,
-  taskBadgeClassName = 'border-tertiary bg-layer-base text-secondary dial-caption-semi-text uppercase tracking-[0.6px]',
+  taskBadgeClassName = 'dial-caption-semi-text uppercase tracking-[0.6px]',
   rowGroupKey,
   rows,
   draggingId,
@@ -133,6 +133,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
     <span
       className={mergeClasses(
         'flex h-5 shrink-0 items-center justify-center gap-0.5 rounded-full border pe-2 ps-1',
+        styles.taskBadge,
         taskBadgeClassName,
       )}
     >

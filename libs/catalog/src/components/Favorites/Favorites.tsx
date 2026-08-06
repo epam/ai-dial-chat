@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import {
   FC,
@@ -66,11 +66,15 @@ export const Favorites: FC<FavoritesProps> = ({
   credentialsBadgeLoggedOutLabel,
 }) => {
   const titleClassName =
-    favoritesStyles?.typography?.titleClassName ??
-    'dial-body-semi-text text-primary';
+    favoritesStyles?.typography?.titleClassName ?? 'dial-body-semi-text';
 
   const countClassName =
     favoritesStyles?.typography?.countClassName ?? 'dial-tiny-semi-text';
+
+  const cssVars = buildCssVars({
+    '--cat-fav-title-text': favoritesStyles?.colors?.titleText,
+    '--cat-fav-count-text': favoritesStyles?.colors?.countText,
+  });
   const sortedItems = useMemo(
     () =>
       [...items].sort(
@@ -376,7 +380,7 @@ export const Favorites: FC<FavoritesProps> = ({
           styles.section,
           isLeaving && styles.sectionLeaving,
         )}
-        style={{ minHeight: lockedSectionHeight }}
+        style={{ ...cssVars, minHeight: lockedSectionHeight }}
         onAnimationEnd={(e) => {
           if (e.target === sectionRef.current && isLeaving) onExitComplete?.();
         }}
@@ -384,8 +388,8 @@ export const Favorites: FC<FavoritesProps> = ({
         <ItemHeader
           title={title}
           postfix={displayCount}
-          titleClassName={titleClassName}
-          postfixClassName={countClassName}
+          titleClassName={mergeClasses(titleClassName, styles.titleText)}
+          postfixClassName={mergeClasses(countClassName, styles.countText)}
           trailing={
             favTotalPages > 1 ? (
               <div
@@ -409,7 +413,7 @@ export const Favorites: FC<FavoritesProps> = ({
                   className={mergeClasses(
                     'min-w-[32px] select-none px-1 text-center',
                     countClassName,
-                    styles.pageCounter,
+                    styles.countText,
                   )}
                 >
                   {favPage} / {favTotalPages}

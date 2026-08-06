@@ -14,9 +14,9 @@ export interface AppIdentityTypography {
   typeClassName?: string;
   /** Typography CSS class for the entity name. Default: `'dial-body-semi-text'`. */
   nameClassName?: string;
-  /** CSS class for the version string. Default: `'dial-tiny-text text-secondary'`. */
+  /** Typography CSS class for the version string. Default: `'dial-tiny-text'`. */
   versionClassName?: string;
-  /** CSS class for the last-used line text and icon. Default: `'dial-tiny-text text-tertiary'`. */
+  /** Typography CSS class for the last-used line text and icon. Default: `'dial-tiny-text'`. */
   lastUsedClassName?: string;
 }
 

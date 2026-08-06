@@ -21,6 +21,15 @@
   animation: cm-shimmer 2s linear infinite;
 }
 
+.h6 {
+  color: var(--cm-h6-text, var(--text-secondary, #6b7280));
+}
+
+.codeInline {
+  background: var(--cm-code-inline-bg, var(--bg-layer-raised, #fcfcfc));
+  color: var(--cm-code-inline-text, var(--text-primary, #161b2d));
+}
+
 .secondaryBorder {
   border-color: var(--cm-markdown-border, var(--stroke-secondary, #d1dbea));
 }

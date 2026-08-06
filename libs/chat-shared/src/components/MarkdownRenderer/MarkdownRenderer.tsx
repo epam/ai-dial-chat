@@ -126,6 +126,12 @@ export interface MarkdownRendererColors {
   linkFocus?: string;
   /** Text color for `<th>` table header cells. Defaults to `--text-secondary`. */
   tableHeaderText?: string;
+  /** Text color for `<h6>` headings. Defaults to `--text-secondary`. */
+  headingSixText?: string;
+  /** Background color for inline `<code>` spans. Defaults to `--bg-layer-raised`. */
+  inlineCodeBackground?: string;
+  /** Text color for inline `<code>` spans. Defaults to `--text-primary`. */
+  inlineCodeText?: string;
 }
 
 /**
@@ -179,7 +185,9 @@ const buildMarkdownComponents = (
   h3: ({ children }) => <h3 className={cn.h3}>{children}</h3>,
   h4: ({ children }) => <h4 className={cn.h4}>{children}</h4>,
   h5: ({ children }) => <h5 className={cn.h5}>{children}</h5>,
-  h6: ({ children }) => <h6 className={cn.h6}>{children}</h6>,
+  h6: ({ children }) => (
+    <h6 className={mergeClasses(styles.h6, cn.h6)}>{children}</h6>
+  ),
   p: ({ children }) => <p className={cn.p}>{children}</p>,
   ul: ({ children }) => (
     <ul className={mergeClasses('list-disc ps-5', cn.ul)}>{children}</ul>
@@ -217,6 +225,7 @@ const buildMarkdownComponents = (
       <code
         className={mergeClasses(
           'rounded px-1 py-0.5',
+          styles.codeInline,
           cn.codeInlineFont ?? 'dial-code-text',
           cn.codeInline,
         )}
@@ -354,6 +363,9 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
       '--cm-link-text': colors?.linkText,
       '--cm-link-focus': colors?.linkFocus,
       '--cm-table-header-text': colors?.tableHeaderText,
+      '--cm-h6-text': colors?.headingSixText,
+      '--cm-code-inline-bg': colors?.inlineCodeBackground,
+      '--cm-code-inline-text': colors?.inlineCodeText,
     });
 
     const mergedComponents = useMemo(
