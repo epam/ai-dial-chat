@@ -332,6 +332,12 @@
     "invalidFolderNameError": "Folder name contains invalid characters.",
     "duplicateFolderNameError": "A folder with this name already exists."
   },
+  "publish": {
+    "failedTitle": "Publish failed",
+    "failedMessage": "The publish request was not submitted. Please try again.",
+    "networkErrorMessage": "The publish request was not submitted because your internet connection was lost. Please check your connection and try again.",
+    "submitErrorCallout": "Publishing failed. Please try again."
+  },
   "publishAccessRules": {
     "heading": "Allow access if all match",
     "addRuleLabel": "Add rule",

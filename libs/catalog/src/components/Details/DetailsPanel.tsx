@@ -60,6 +60,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   hasPublishWriteAccess,
   onPublish,
   onPublishSuccess,
+  onPublishError,
   onCreatePublishFolder,
   publishLabels,
   ruleSourceOptions = EMPTY_RULE_SOURCE_OPTIONS,
@@ -160,6 +161,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     onCreateFolder: onCreatePublishFolder,
     onPublish: onPublish ?? NO_OP_PUBLISH,
     onPublishSuccess,
+    onPublishError,
     onFetchExistingRules,
   });
 

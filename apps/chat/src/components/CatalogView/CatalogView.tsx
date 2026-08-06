@@ -30,6 +30,7 @@ import {
   DialFileManagerI18nKeys,
   FavoritesI18nKeys,
   NavigationI18nKeys,
+  PublishI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
@@ -40,6 +41,7 @@ import {
   useFavoriteApplications,
 } from '../../context/FavoriteApplicationsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import {
   ToolsetLoginOutcomeType,
@@ -232,6 +234,8 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     onCreatePublishFolder,
     hasPublishWriteAccess,
   } = usePublishFolders();
+
+  const showPublishError = usePublishErrorNotification();
 
   const favorites = useMemo(
     () => visibleCatalogItems.filter((item) => item.isUserFavorite),
@@ -583,6 +587,12 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [showNotification, t],
   );
 
+  const handlePublishError = useCallback(
+    (_item: CatalogItem, _folderPath: string[], error: unknown) =>
+      showPublishError(error),
+    [showPublishError],
+  );
+
   const handleEdit = useCallback(
     (item: CatalogItem) => {
       if (item.type === CatalogEntityType.Toolset) {
@@ -756,6 +766,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       hasPublishWriteAccess={hasPublishWriteAccess}
       onPublish={handlePublish}
       onPublishSuccess={handlePublishSuccess}
+      onPublishError={handlePublishError}
       ruleSourceOptions={config.publicationFilterSources}
       onFetchExistingRules={handleFetchExistingRules}
       publishLabels={{
@@ -765,6 +776,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         }),
         historyLoadingLabel: t(CatalogI18nKeys.PublishHistoryLoading),
         historyErrorLabel: t(CatalogI18nKeys.PublishHistoryError),
+        submitError: t(PublishI18nKeys.SubmitErrorCallout),
         accessRulesLabels: getAccessRulesLabels(t),
       }}
       shareOverlay={(item, onClose) => (

@@ -495,6 +495,20 @@ describe('DetailsPanel', () => {
     expect(onPublishSuccess).not.toHaveBeenCalled();
   });
 
+  it('forwards the rejection reason to onPublishError when the publish submit fails', async () => {
+    const rejection = new Error('Failed to fetch');
+    const onPublish = vi.fn().mockRejectedValue(rejection);
+    const onPublishError = vi.fn();
+    renderPanel({ onPublish, onPublishError });
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Shared' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(onPublishError).toHaveBeenCalledWith(item, ['Shared'], rejection);
+  });
+
   it('disables the Back button while a publish request is in flight', async () => {
     let resolvePublish: () => void = () => undefined;
     const onPublish = vi.fn(

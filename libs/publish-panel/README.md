@@ -132,6 +132,12 @@ const publishFlow = usePublishFlow({
   onPublish: async (item, folderPath) => {
     /* ... */
   },
+  onPublishSuccess: (item, folderPath) => {
+    /* host-owned success notification */
+  },
+  onPublishError: (item, folderPath, error) => {
+    /* host-owned error notification; the hook only sets `hasSubmitError` */
+  },
 });
 ```
 
