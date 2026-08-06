@@ -337,7 +337,7 @@ const NewConversationComposer: FC<Props> = ({
           deployments={
             isHideEmptyChatChangeAgentEnabled ? undefined : deployments
           }
-          selectedDeploymentId={selectedDeploymentId}
+          selectedDeploymentId={selectedDeployment?.id ?? selectedDeploymentId}
           onDeploymentChange={onDeploymentChange}
           isInputDisabled={isInputDisabled}
           isModelSelectorDisabled={isModelSelectorDisabled}
@@ -384,7 +384,9 @@ const NewConversationComposer: FC<Props> = ({
           toolsChipLabels={toolsChipLabels}
           usageLimitsSlot={
             <UsageLimitsControl
-              deploymentId={selectedDeploymentId ?? undefined}
+              deploymentId={
+                selectedDeployment?.id ?? selectedDeploymentId ?? undefined
+              }
               labels={usageLimitsLabels}
             />
           }

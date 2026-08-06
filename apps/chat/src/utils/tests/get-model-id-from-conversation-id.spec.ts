@@ -79,4 +79,20 @@ describe('getModelIdFromConversationId', () => {
   it('handles an empty string gracefully', () => {
     expect(getModelIdFromConversationId('')).toBe(undefined);
   });
+
+  it('strips the reserved .scheduler/{scheduleId} prefix for scheduled-task conversations', () => {
+    expect(
+      getModelIdFromConversationId(
+        'conversations/bucket/.scheduler/64bd658b-4258-46bd-b19e-afd9e0f3f254/gemini-3.1-flash-lite__title__run-id',
+      ),
+    ).toBe('gemini-3.1-flash-lite');
+  });
+
+  it('strips the .scheduler prefix for a multi-segment deployment id', () => {
+    expect(
+      getModelIdFromConversationId(
+        'conversations/bucket/.scheduler/schedule-id/anthropic/claude-3__title__run-id',
+      ),
+    ).toBe('anthropic/claude-3');
+  });
 });

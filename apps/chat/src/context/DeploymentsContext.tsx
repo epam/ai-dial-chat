@@ -23,6 +23,7 @@ import { getApplicationSchemas } from '../server-api/application-schemas';
 import { getDeploymentConfiguration } from '../server-api/deployments';
 import { getDeployments } from '../server-api/deployments.api';
 import { listToolsets } from '../server-api/toolsets';
+import { findDeploymentByIdOrReference } from '../utils/deployment-id';
 import { useAppConfig } from './AppConfigContext';
 import { useUser } from './auth/UserContext';
 import { useNotification } from './NotificationContext';
@@ -374,7 +375,10 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
 
     const loadConfiguration = async () => {
       try {
-        const configuration = await getDeploymentConfiguration(selectedItemId);
+        const deploymentId =
+          findDeploymentByIdOrReference(items, selectedItemId)?.id ??
+          selectedItemId;
+        const configuration = await getDeploymentConfiguration(deploymentId);
         if (!signal.isCancelled) {
           setSelectedDeploymentConfiguration(configuration);
         }
@@ -390,7 +394,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       signal.isCancelled = true;
     };
-  }, [selectedItemId]);
+  }, [selectedItemId, items]);
 
   const setSelectedItemId = useCallback(
     (id: string | null) => {

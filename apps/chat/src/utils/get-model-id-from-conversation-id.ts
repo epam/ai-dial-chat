@@ -1,6 +1,15 @@
 const CONVERSATION_NAME_SEPARATOR = '__';
 const VERSION_METADATA_SEPARATOR_REGEX = /[-+]/;
 const VERSION_NUMBER_PART_REGEX = /^\d+$/;
+/*
+ * DIAL Scheduler writes conversations under the reserved
+ * `conversations/{bucket}/.scheduler/{scheduleId}/{filename}` path shape
+ * (see apps/chat-api/src/conversations/utils/parse-scheduled-task-conversation-path.ts).
+ * `.scheduler` and `{scheduleId}` are reserved path segments, not part of the
+ * deployment ID, and must be skipped before the deployment-id extraction
+ * below — otherwise they get treated as deployment ID path prefixes.
+ */
+const SCHEDULER_SEGMENT = '.scheduler';
 
 const isDeploymentVersionSuffix = (value?: string): boolean => {
   if (!value) return false;
@@ -55,7 +64,9 @@ export const getModelIdFromConversationId = (
   if (segments.length < 3) return undefined;
 
   // segments[0] = "conversations", segments[1] = bucket
-  const deploymentSegments = segments.slice(2);
+  const afterBucket = segments.slice(2);
+  const deploymentSegments =
+    afterBucket[0] === SCHEDULER_SEGMENT ? afterBucket.slice(2) : afterBucket;
 
   /*
    * Find the FIRST segment that contains '__'. Everything before it

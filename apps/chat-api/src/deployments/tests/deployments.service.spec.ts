@@ -371,6 +371,36 @@ describe('DeploymentsService', () => {
       expect(result.deployments[0].inputAttachmentTypes).toBeUndefined();
     });
 
+    it('maps reference from DIAL Core', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockModel, reference: 'ref-gpt-4o' }],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].reference).toBe('ref-gpt-4o');
+    });
+
+    it('leaves reference undefined when source field is absent', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [mockModel],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].reference).toBeUndefined();
+    });
+
     it('throws BadGatewayException when DIAL Core returns non-2xx', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({
