@@ -19,6 +19,7 @@ import { ModelsSelectors, OverlaySelectors } from '@/src/store/selectors';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
+import { CompactMode } from '@/src/components/Chat/ChatSettings/CompactMode';
 import { ResponseFormat } from '@/src/components/Chat/ChatSettings/ResponseFormat';
 
 import { SystemPrompt } from './SystemPrompt';
@@ -36,6 +37,8 @@ interface Props {
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
   onChangeResponseFormat: (responseFormat: ConversationResponseFormat) => void;
+  compactMode: boolean;
+  onChangeCompactMode: (compactMode: boolean) => void;
 }
 
 const renderFieldContainer = (children: ReactNode) => {
@@ -73,6 +76,8 @@ export const ConversationSettings = Inversify.register(
     onChangePrompt,
     onChangeTemperature,
     onChangeResponseFormat,
+    compactMode,
+    onChangeCompactMode,
   }: Props) => {
     const { t } = useTranslation(Translation.Chat);
 
@@ -92,13 +97,22 @@ export const ConversationSettings = Inversify.register(
 
     if (!doesModelHaveSettings(model)) {
       return renderSettingContainer(
-        renderFieldContainer(
-          <ResponseFormat
-            value={responseFormat}
-            onChange={onChangeResponseFormat}
-            disabled={isPlayback}
-          />,
-        ),
+        <>
+          {renderFieldContainer(
+            <ResponseFormat
+              value={responseFormat}
+              onChange={onChangeResponseFormat}
+              disabled={isPlayback}
+            />,
+          )}
+          {renderFieldContainer(
+            <CompactMode
+              value={compactMode}
+              onChange={onChangeCompactMode}
+              disabled={isPlayback}
+            />,
+          )}
+        </>,
       );
     }
 
@@ -108,6 +122,13 @@ export const ConversationSettings = Inversify.register(
           <ResponseFormat
             value={responseFormat}
             onChange={onChangeResponseFormat}
+            disabled={isPlayback}
+          />,
+        )}
+        {renderFieldContainer(
+          <CompactMode
+            value={compactMode}
+            onChange={onChangeCompactMode}
             disabled={isPlayback}
           />,
         )}

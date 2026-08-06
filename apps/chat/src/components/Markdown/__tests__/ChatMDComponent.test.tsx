@@ -283,6 +283,123 @@ describe('ChatMDComponent', () => {
     });
   });
 
+  describe('empty paragraphs', () => {
+    const getParagraphs = () => screen.queryAllByRole('paragraph');
+
+    it('drops a paragraph containing only a non-breaking space', () => {
+      renderWithStore(
+        <ChatMDComponent
+          isShowResponseLoader={false}
+          content={'First section\n\n&nbsp;\n\nSecond section'}
+        />,
+      );
+
+      expect(getParagraphs()).toHaveLength(2);
+      expect(screen.getByText('First section')).toBeInTheDocument();
+      expect(screen.getByText('Second section')).toBeInTheDocument();
+    });
+
+    it('drops an empty raw HTML paragraph', () => {
+      renderWithStore(
+        <ChatMDComponent
+          isShowResponseLoader={false}
+          content={'First section\n\n<p></p>\n\nSecond section'}
+        />,
+      );
+
+      expect(getParagraphs()).toHaveLength(2);
+    });
+
+    it('keeps paragraphs that contain only a line break', () => {
+      renderWithStore(
+        <ChatMDComponent
+          isShowResponseLoader={false}
+          content={
+            '**4. To Kill a Mockingbird** by Harper Lee\nNarrated by Scout.'
+          }
+        />,
+      );
+
+      expect(getParagraphs()).toHaveLength(1);
+      expect(screen.getByText('4. To Kill a Mockingbird')).toBeInTheDocument();
+      expect(screen.getByText(/Narrated by Scout/)).toBeInTheDocument();
+    });
+
+    it('preserves normal paragraph structure', () => {
+      renderWithStore(
+        <ChatMDComponent
+          isShowResponseLoader={false}
+          content={'Para one\n\nPara two\n\nPara three'}
+        />,
+      );
+
+      expect(getParagraphs()).toHaveLength(3);
+      expect(screen.getByText('Para one')).toBeInTheDocument();
+      expect(screen.getByText('Para three')).toBeInTheDocument();
+    });
+
+    it('keeps a paragraph whose only content is an image', () => {
+      renderWithStore(
+        <ChatMDComponent
+          isShowResponseLoader={false}
+          content={
+            '![alt text](data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==)'
+          }
+        />,
+      );
+
+      expect(screen.getByAltText('alt text')).toBeInTheDocument();
+      expect(getParagraphs()).toHaveLength(1);
+    });
+  });
+
+  describe('compact mode', () => {
+    const renderWithMode = (compactMode: boolean) => {
+      const { container, unmount } = renderWithStore(
+        <ChatMDComponent
+          isShowResponseLoader={false}
+          content="Some answer"
+          compactMode={compactMode}
+        />,
+      );
+      const className = container.firstElementChild?.className ?? '';
+      unmount();
+
+      return className;
+    };
+
+    it('toggles the compact class with the prop, keeping base prose styling', () => {
+      const compact = renderWithMode(true);
+      const regular = renderWithMode(false);
+
+      expect(compact).toContain('prose-compact');
+      expect(regular).not.toContain('prose-compact');
+      expect(compact).toContain('prose');
+      expect(regular).toContain('prose');
+    });
+
+    it('does not change which elements are rendered', () => {
+      const content = 'First\n\n&nbsp;\n\nSecond';
+
+      const { unmount } = renderWithStore(
+        <ChatMDComponent
+          isShowResponseLoader={false}
+          content={content}
+          compactMode
+        />,
+      );
+      expect(screen.queryAllByRole('paragraph')).toHaveLength(2);
+      expect(screen.getByText('First')).toBeInTheDocument();
+      unmount();
+
+      renderWithStore(
+        <ChatMDComponent isShowResponseLoader={false} content={content} />,
+      );
+      expect(screen.queryAllByRole('paragraph')).toHaveLength(2);
+      expect(screen.getByText('First')).toBeInTheDocument();
+    });
+  });
+
   describe('response loader', () => {
     it('shows response loader cursor when isShowResponseLoader is true', () => {
       renderWithStore(
@@ -290,6 +407,39 @@ describe('ChatMDComponent', () => {
       );
 
       expect(screen.getByText('Loading...')).toBeInTheDocument();
+    });
+
+    it('renders a blinking cursor in plain text mode', () => {
+      renderWithStore(
+        <ChatMDComponent isShowResponseLoader plainTextMode content="Answer" />,
+      );
+
+      expect(screen.getByText('Answer')).toBeInTheDocument();
+
+      const cursor = screen.getByTestId('loading-cursor');
+      expect(cursor).toBeInTheDocument();
+      expect(cursor).toHaveClass('animate-ping');
+    });
+
+    it('renders a blinking cursor in plain text mode before any content arrives', () => {
+      renderWithStore(
+        <ChatMDComponent isShowResponseLoader plainTextMode content="" />,
+      );
+
+      expect(screen.getByTestId('loading-cursor')).toBeInTheDocument();
+    });
+
+    it('does not render a cursor in plain text mode once streaming is over', () => {
+      renderWithStore(
+        <ChatMDComponent
+          isShowResponseLoader={false}
+          plainTextMode
+          content="Answer"
+        />,
+      );
+
+      expect(screen.getByText('Answer')).toBeInTheDocument();
+      expect(screen.queryByTestId('loading-cursor')).not.toBeInTheDocument();
     });
   });
 });
