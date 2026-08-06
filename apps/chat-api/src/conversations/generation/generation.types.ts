@@ -13,14 +13,36 @@ export interface ResponsesInputItem {
 /**
  * First-iteration Responses request body. Always `stream: true` and
  * `store: false` — never carries `previous_response_id` or `conversation`
- * (DIAL Core rejects the key's mere presence, even as `null`).
+ * (DIAL Core rejects the key's mere presence, even as `null`). `temperature`
+ * and `max_output_tokens` are optional Chat-side overrides: `temperature` is
+ * included only when the resolved deployment explicitly supports it,
+ * `max_output_tokens` only when the conversation carries a validated value —
+ * see `ResponsesAdapter.buildRequest` for the omission rules.
  */
 export interface ResponsesApiRequestBody {
   model: string;
   input: ResponsesInputItem[];
   stream: true;
   store: false;
+  temperature?: number;
+  max_output_tokens?: number;
 }
+
+/**
+ * Runtime guard for `Conversation.maxOutputTokens` at the point it crosses
+ * from persisted Chat data into the outbound Responses wire request. A bare
+ * TypeScript type is not enough here — the persisted value may come from an
+ * untrusted import/save payload that was never nested-validated (see
+ * `design.md` Decision 4) — so this checks the actual runtime value: a
+ * positive, finite integer within `Number.isSafeInteger` range. Anything
+ * else (absent, `null`, `0`, negative, fractional, `NaN`, `Infinity`, or an
+ * unsafe integer) must be omitted rather than forwarded.
+ */
+export const isValidMaxOutputTokens = (value: unknown): value is number =>
+  typeof value === 'number' &&
+  Number.isInteger(value) &&
+  Number.isSafeInteger(value) &&
+  value > 0;
 
 /** Responses SSE event types this adapter understands and normalizes. */
 export interface ResponsesCreatedEvent {
@@ -50,6 +72,16 @@ export interface ResponsesErrorEvent {
   code?: string;
 }
 
+/**
+ * Terminal failure event. Unlike `ResponsesErrorEvent` (a top-level `error`
+ * frame), `response.failed` nests its error under `response.error`,
+ * mirroring the OpenAI Responses API's `response.failed` payload shape.
+ */
+export interface ResponsesFailedEvent {
+  type: 'response.failed';
+  response?: { id?: string; error?: { message?: string; code?: string } };
+}
+
 /** Catch-all for event types not in the handled allowlist above. */
 export interface ResponsesUnknownEvent {
   type: string;
@@ -61,7 +93,33 @@ export type ResponsesSseEvent =
   | ResponsesCompletedEvent
   | ResponsesIncompleteEvent
   | ResponsesErrorEvent
+  | ResponsesFailedEvent
   | ResponsesUnknownEvent;
+
+/**
+ * Explicit terminal lifecycle state for a Responses SSE stream, replacing a
+ * `terminalError: string | null` / `isDone: boolean` pair so precedence
+ * between competing terminal signals (`response.failed`, `response.incomplete`,
+ * a top-level `error`, an invalid-status `response.completed`, and the
+ * compatibility `[DONE]` marker) is explicit rather than encoded in loosely
+ * related booleans.
+ */
+export enum ResponsesTerminalState {
+  Success = 'success',
+  Failed = 'failed',
+  Incomplete = 'incomplete',
+  StreamError = 'stream_error',
+}
+
+/**
+ * Once recorded, a non-`Success` signal must never be overwritten by a later
+ * `[DONE]` marker or by reaching end-of-stream — see
+ * `responses.adapter.ts`'s `handleEvent`/post-loop logic.
+ */
+export interface ResponsesTerminalSignal {
+  state: ResponsesTerminalState;
+  message?: string;
+}
 
 /**
  * Normalized chunk shape both adapters emit, identical to the

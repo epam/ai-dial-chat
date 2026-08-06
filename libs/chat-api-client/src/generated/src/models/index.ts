@@ -691,7 +691,7 @@ export interface ConversationListItemDto {
    */
   isReadonly: boolean;
   /**
-   * True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{runId}` reserved segment).
+   * True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{filename}` reserved segment, with `{filename}` shaped `{deploymentId}__{title}__{runId}`).
    * @type {boolean}
    * @memberof ConversationListItemDto
    */
@@ -970,6 +970,12 @@ export interface ConversationResponseDto {
    * @memberof ConversationResponseDto
    */
   temperature: number;
+  /**
+   * Optional Responses-API output-token cap, forwarded verbatim as max_output_tokens. Never derived from deployment limits or Chat Completions defaults. Documentation-only decorator — the actual positive-safe-integer check runs at the Responses request-building boundary (ResponsesAdapter.buildRequest via isValidMaxOutputTokens), not through nested DTO validation on save (see design.md Decision 4 of the support-responses-generation-parameters change).
+   * @type {number}
+   * @memberof ConversationResponseDto
+   */
+  maxOutputTokens?: number;
   /**
    *
    * @type {Array<ConversationMessageDto>}

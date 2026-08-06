@@ -11,13 +11,26 @@ import {
 } from '../dto/conversation-message.dto';
 import { applyChunkToMessage } from '../utils/apply-chunk.server';
 import { generationUnknownEventsTotal } from './generation-metrics';
-import type {
-  GenerationRelayOutcome,
-  GenerationRelayTiming,
-  NormalizedStreamChunk,
-  ResponsesApiRequestBody,
-  ResponsesSseEvent,
+import {
+  isValidMaxOutputTokens,
+  ResponsesTerminalState,
+  type GenerationRelayOutcome,
+  type GenerationRelayTiming,
+  type NormalizedStreamChunk,
+  type ResponsesApiRequestBody,
+  type ResponsesSseEvent,
+  type ResponsesTerminalSignal,
 } from './generation.types';
+
+/*
+ * Fixed, non-content message used whenever a Responses stream ends without
+ * any recognized terminal signal (socket EOF or `[DONE]` with no prior
+ * `response.completed`/`response.failed`/`response.incomplete`/`error`).
+ * Never derived from upstream text so it can never leak prompt/response
+ * content.
+ */
+const GENERIC_TRUNCATED_MESSAGE =
+  'Responses generation ended before completion';
 
 /**
  * Builds the Responses request and normalizes the Responses SSE event
@@ -42,13 +55,29 @@ export class ResponsesAdapter {
    * always `false` in this iteration; `previous_response_id`/`conversation`
    * are never set (DIAL Core rejects the key's mere presence, even as
    * `null`).
+   *
+   * `temperature` is included only when `temperatureSupported` is `true`
+   * (some Responses-capable models reject the field outright — Chat never
+   * substitutes a default of its own) and the conversation carries a usable
+   * value, checked with a nullish check so `temperature: 0` is preserved.
+   * `max_output_tokens` is included only when `startConversation
+   * .maxOutputTokens` is a validated positive safe integer — it is never
+   * gated by a capability flag (no Responses-specific one exists in this
+   * codebase) and never derived from deployment limits or Chat Completions
+   * defaults.
    */
   buildRequest(params: {
     model: string;
     startConversation: ConversationResponseDto;
     messagesForCompletion: ConversationMessageDto[];
+    temperatureSupported: boolean;
   }): ResponsesApiRequestBody {
-    const { model, startConversation, messagesForCompletion } = params;
+    const {
+      model,
+      startConversation,
+      messagesForCompletion,
+      temperatureSupported,
+    } = params;
 
     const systemInput = startConversation.prompt
       ? [{ role: 'system', content: startConversation.prompt }]
@@ -64,11 +93,19 @@ export class ResponsesAdapter {
         })),
     ];
 
+    const maxOutputTokens = startConversation.maxOutputTokens;
+
     return {
       model,
       input,
       stream: true,
       store: false,
+      ...(temperatureSupported && startConversation.temperature != null
+        ? { temperature: startConversation.temperature }
+        : {}),
+      ...(isValidMaxOutputTokens(maxOutputTokens)
+        ? { max_output_tokens: maxOutputTokens }
+        : {}),
     };
   }
 
@@ -108,11 +145,22 @@ export class ResponsesAdapter {
 
         /* 2. Raw body — for cases where SDK didn't parse it */
         if (!errorMessage) {
-          try {
-            const rawBody = await dialResult.response.text();
-            errorMessage = extractDialErrorMessage(JSON.parse(rawBody)) ?? '';
-          } catch {
-            /* non-JSON or empty body */
+          const rawBody = await dialResult.response.text().catch(() => '');
+          if (rawBody) {
+            try {
+              errorMessage = extractDialErrorMessage(JSON.parse(rawBody)) ?? '';
+            } catch {
+              /* not JSON — fall through to plain-text below */
+            }
+            /*
+             * DIAL Core can return a plain-text body (e.g. "Upstream is
+             * missing required id") rather than a JSON error object. Treat
+             * the raw text itself as the error candidate, sanitized before
+             * it can reach a log line.
+             */
+            if (!errorMessage) {
+              errorMessage = StringUtils.sanitizeForLog(rawBody, 500);
+            }
           }
         }
 
@@ -136,7 +184,13 @@ export class ResponsesAdapter {
       upstreamReader = dialResult.response.body.getReader();
       const decoder = new TextDecoder();
       let sseBuffer = '';
-      let terminalError: string | null = null;
+      /*
+       * `terminalSignal` is the single source of truth for how (and whether)
+       * this stream ended. `isDone` only controls when to stop reading the
+       * socket — it never implies success on its own; see the post-loop
+       * check below.
+       */
+      let terminalSignal: ResponsesTerminalSignal | null = null;
       let isDone = false;
 
       const writeChunk = (chunk: NormalizedStreamChunk): void => {
@@ -172,22 +226,52 @@ export class ResponsesAdapter {
              * rather than silently persisted as a successful message.
              */
             if (status != null && status !== 'completed') {
-              terminalError = `Responses generation ended with status "${status}"`;
+              terminalSignal = {
+                state: ResponsesTerminalState.StreamError,
+                message: `Responses generation ended with status "${status}"`,
+              };
+              isDone = true;
               return;
             }
             writeChunk({
               choices: [{ delta: { ...(responseId && { responseId }) } }],
             });
+            terminalSignal = { state: ResponsesTerminalState.Success };
+            isDone = true;
+            return;
+          }
+          case 'response.failed': {
+            /*
+             * Preserve any text already assembled from prior deltas — never
+             * retried through Chat Completions, and never counted as an
+             * unknown event since it is a recognized, handled type.
+             */
+            terminalSignal = {
+              state: ResponsesTerminalState.Failed,
+              message:
+                extractDialErrorMessage(event.response?.error) ??
+                'Responses generation failed',
+            };
             isDone = true;
             return;
           }
           case 'response.incomplete': {
-            terminalError = 'Generation ended incomplete';
+            terminalSignal = {
+              state: ResponsesTerminalState.Incomplete,
+              message: 'Generation ended incomplete',
+            };
+            isDone = true;
             return;
           }
           case 'error': {
-            terminalError =
-              event.error?.message ?? event.message ?? 'Responses stream error';
+            terminalSignal = {
+              state: ResponsesTerminalState.StreamError,
+              message:
+                event.error?.message ??
+                event.message ??
+                'Responses stream error',
+            };
+            isDone = true;
             return;
           }
           default: {
@@ -231,6 +315,16 @@ export class ResponsesAdapter {
           const payload = trimmed.slice(5).trim();
           if (payload === '[DONE]') {
             isDone = true;
+            /*
+             * `[DONE]` is a backward-compatibility signal for legacy/
+             * non-standard upstreams only — it must never override an
+             * already-recorded error/incomplete/stream-error signal (a
+             * canonical Core stream never needs it: `response.completed`
+             * already set `Success` above).
+             */
+            if (!terminalSignal) {
+              terminalSignal = { state: ResponsesTerminalState.Success };
+            }
             continue;
           }
 
@@ -245,19 +339,28 @@ export class ResponsesAdapter {
           }
         }
 
-        if (terminalError || isDone) break;
+        if (terminalSignal || isDone) break;
       }
 
-      if (terminalError) {
-        return {
-          outcome: 'error',
-          error: new Error(terminalError),
-          assembledMessage,
-        };
+      /*
+       * A clean socket close (or a legacy `[DONE]`) does not by itself mean
+       * the generation succeeded — success requires an explicit
+       * `response.completed`/`[DONE]` signal having been recorded above. A
+       * non-`Success` signal (response.failed/incomplete/stream-error) is an
+       * error; no signal at all (stream ended without any recognized
+       * terminal event) is also an error, with a fixed generic message that
+       * never echoes prompt or response content.
+       */
+      if (terminalSignal?.state === ResponsesTerminalState.Success) {
+        res.write('data: [DONE]\n\n');
+        return { outcome: 'completed', assembledMessage };
       }
 
-      res.write('data: [DONE]\n\n');
-      return { outcome: 'completed', assembledMessage };
+      return {
+        outcome: 'error',
+        error: new Error(terminalSignal?.message ?? GENERIC_TRUNCATED_MESSAGE),
+        assembledMessage,
+      };
     } catch (err) {
       const isAbort =
         err instanceof Error &&
