@@ -34,7 +34,7 @@ const UploadProgressModal: FC<Props> = ({
         aria-valuenow={percent}
       >
         <div
-          className="bg-accent-primary h-full rounded-full transition-all duration-300"
+          className="h-full rounded-full bg-control-accent transition-all duration-300"
           style={{ width: `${percent}%` }}
         />
       </div>

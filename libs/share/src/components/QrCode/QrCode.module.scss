@@ -1,0 +1,8 @@
+.container {
+  border-color: var(--qr-border, var(--stroke-tertiary, #e0e6f0));
+  background: var(--qr-bg, var(--bg-layer-sunken, #eef1f7));
+}
+
+.qrColor {
+  color: var(--qr-color, var(--text-primary, #161b2d));
+}

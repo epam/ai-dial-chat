@@ -194,7 +194,7 @@ export const VoiceBar: FC<VoiceBarProps> = ({
       />
       {isRecording && (
         <PrimaryIconButton
-          icon={<IconPlayerStopFilled size={DIAL_ICON_SIZE.LG} />}
+          icon={<IconPlayerStopFilled size={DIAL_ICON_SIZE.LG} aria-hidden />}
           onClick={() => onStop?.()}
           aria-label={stopLabel}
         />

@@ -54,7 +54,6 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
         '--sb-border-inline-end': colors?.borderInlineEnd,
         '--sb-text': colors?.text,
         '--sb-resize-handler': colors?.resizeHandler,
-        '--sb-bg-resize-handler': colors?.resizeHandler,
       }),
     [colors],
   );
@@ -127,7 +126,6 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
     orientation === SidebarOrientation.Right
       ? ResizableContainerSide.Left
       : ResizableContainerSide.Right;
-  // TODO: is Close button
   const closeButton = onClose ? (
     <GhostIconButton
       icon={<IconX size={DIAL_ICON_SIZE.LG} stroke={1.5} aria-hidden />}

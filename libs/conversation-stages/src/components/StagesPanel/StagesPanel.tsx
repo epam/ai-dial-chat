@@ -64,6 +64,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
         aria-expanded={isOpen}
         className={mergeClasses(
           'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-start',
+          styles.collapseButton,
           styles.row,
         )}
       >

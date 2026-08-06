@@ -138,9 +138,41 @@ export type AttachmentCanvasContent =
 export interface AttachmentCanvasColors {
   /** Primary text color for the content body. */
   text?: string;
+  /** Status/summary line text color. Defaults to `--text-secondary`. */
+  statusText?: string;
+  /** Error icon color. Defaults to `--text-error`. */
+  errorIcon?: string;
+  /** "Open in new tab" link color in the blocked-iframe panel. Defaults to `--text-accent`. */
+  openInNewTabText?: string;
+  /** Border color of the JSON viewer wrapper. Defaults to `--stroke-secondary`. */
+  jsonBorder?: string;
+  /** Background color of the JSON viewer wrapper. Defaults to `--bg-layer-1`. */
+  jsonBackground?: string;
+  /** JSON key/label color. Defaults to `--text-primary`. */
+  jsonLabel?: string;
+  /** JSON expandable key/label color. Defaults to `--text-primary`. */
+  jsonClickableLabel?: string;
+  /** JSON punctuation (braces, commas, colons) color. Defaults to `--text-secondary`. */
+  jsonPunctuation?: string;
+  /** JSON string-literal color. Defaults to `--text-success`. */
+  jsonString?: string;
+  /** JSON number-literal color. Defaults to `--text-accent`. */
+  jsonNumber?: string;
+  /** JSON boolean-literal color. Defaults to `--text-warning`. */
+  jsonBoolean?: string;
+  /** JSON `null`-literal color. Defaults to `--text-secondary`. */
+  jsonNull?: string;
+  /** Expand/collapse triangle color. Defaults to `--text-secondary`. */
+  jsonToggleIcon?: string;
+  /** Expand/collapse triangle color on hover. Defaults to `--text-primary`. */
+  jsonToggleIconHover?: string;
+  /** Text color of the collapsed-content ellipsis. Defaults to `--text-secondary`. */
+  jsonCollapsedText?: string;
+  /** Background color of the collapsed-content ellipsis. Defaults to `--bg-layer-raised`. */
+  jsonCollapsedBackground?: string;
 }
 
-/** Themeable typography overrides for the AttachmentCanvas content body. */
+/** Themeable typography overrides for the AttachmentCanvas plain-text content body. */
 export interface AttachmentCanvasTypography {
   /** CSS font-family value. */
   fontFamily?: string;
@@ -153,9 +185,8 @@ export interface AttachmentCanvasTypography {
   /** CSS letter-spacing value. */
   letterSpacing?: string;
   /**
-   * A single CSS utility class applied to the content body instead of
-   * individual typography vars. When set, individual typography fields
-   * are ignored.
+   * A single CSS utility class applied to the content body instead of the
+   * individual typography fields above. When set, those fields are ignored.
    */
   fontClassName?: string;
 }

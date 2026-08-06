@@ -33,10 +33,7 @@ export type {
   ScheduledTaskCardSkeletonStyles,
   ScheduledTaskCardSkeletonColors,
 } from './models/scheduled-task-card-skeleton-props';
-export type {
-  ScheduledTaskItem,
-  ScheduledTaskSortValues,
-} from './models/scheduled-task-item';
+export type { ScheduledTaskItem } from './models/scheduled-task-item';
 export { ScheduledTaskSectionKey } from './models/scheduled-task-item';
 export { ScheduledTasksSortKey } from './types/scheduled-tasks-sort-key';
 export { ScheduledTaskCreateForm } from './components/ScheduledTaskCreateForm/ScheduledTaskCreateForm';

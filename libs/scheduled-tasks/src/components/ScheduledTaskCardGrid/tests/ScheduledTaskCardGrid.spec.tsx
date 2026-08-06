@@ -46,7 +46,6 @@ const buildItem = (
   displayName: 'Competitor Updates',
   scheduleLabel: 'Every Monday 12:00',
   sectionKey: ScheduledTaskSectionKey.MyTasks,
-  sortValues: {},
   ...overrides,
 });
 
@@ -86,10 +85,14 @@ describe('ScheduledTaskCardGrid', () => {
       />,
     );
 
-    const bars = container.querySelectorAll('[data-skeleton]');
-    expect(bars.length).toBeGreaterThan(0);
-    bars.forEach((bar) => {
-      expect(bar.getAttribute('data-color')).toBe('#ff00ff');
+    const skeletonCards = container.querySelectorAll(
+      'article[aria-hidden="true"]',
+    );
+    expect(skeletonCards.length).toBeGreaterThan(0);
+    skeletonCards.forEach((card) => {
+      expect(
+        (card as HTMLElement).style.getPropertyValue('--stcs-skeleton-bg'),
+      ).toBe('#ff00ff');
     });
   });
 });

@@ -185,8 +185,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     );
 
     const cssVars = buildCssVars({
-      '--cp-bg': colors?.background,
-      '--sb-border': colors?.border,
       '--cp-item-hover': colors?.itemHover,
       '--cp-item-active': colors?.itemActive,
       '--cp-text': colors?.text,
@@ -198,6 +196,9 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       '--cp-trigger-icon': colors?.triggerIcon,
       '--cp-trigger-icon-idle': colors?.triggerIconIdle,
       '--cp-skeleton-color': colors?.skeletonColor,
+      '--cp-task-badge-border': colors?.taskBadgeBorder,
+      '--cp-task-badge-bg': colors?.taskBadgeBackground,
+      '--cp-task-badge-text': colors?.taskBadgeText,
       '--cp-unread-dot': colors?.unreadDot,
     });
 

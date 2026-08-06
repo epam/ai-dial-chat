@@ -7,12 +7,16 @@ import {
 import { IconChevronDown, IconPlus } from '@tabler/icons-react';
 import { FC, KeyboardEvent, useCallback, useRef, useState } from 'react';
 import type { CreateOption } from '../../models/catalog-props';
+import type { CatalogColors } from '../../models/catalog-styles';
+import { getCreateMenuStyles } from '../../utils/styles';
 import styles from './CreateButton.module.scss';
 
 /** Props for the catalog Create button. */
 export interface CreateButtonProps {
   /** Button label. */
   label: string;
+  /** Catalog color overrides; the `create*` fields are applied to the portalled menu. */
+  colors?: CatalogColors;
   /**
    * When provided, the button opens a dropdown with these options instead of
    * calling `onClick` directly.
@@ -25,9 +29,11 @@ export interface CreateButtonProps {
 /** Renders either a plain primary button or a split-chevron dropdown. */
 export const CreateButton: FC<CreateButtonProps> = ({
   label,
+  colors,
   options,
   onClick,
 }) => {
+  const menuCssVars = getCreateMenuStyles(colors);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -108,6 +114,7 @@ export const CreateButton: FC<CreateButtonProps> = ({
           <div
             role="menu"
             aria-label={label}
+            style={menuCssVars}
             className={styles.menu}
             onKeyDown={handleMenuKeyDown}
           >

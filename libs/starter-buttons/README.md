@@ -34,23 +34,17 @@ import { StarterButtons } from '@epam/ai-dial-starter-buttons';
 import type { StarterButtonsProps } from '@epam/ai-dial-starter-buttons';
 
 <StarterButtons
-  buttons={[
-    {
-      id: '1',
-      label: 'Summarize a document',
-      onClick: () => handlePrompt('Summarize...'),
-    },
-    {
-      id: '2',
-      label: 'Write a blog post',
-      onClick: () => handlePrompt('Write...'),
-    },
-    {
-      id: '3',
-      label: 'Explain a concept',
-      onClick: () => handlePrompt('Explain...'),
-    },
+  starters={[
+    { const: '1', title: 'Summarize a document' },
+    { const: '2', title: 'Write a blog post' },
+    { const: '3', title: 'Explain a concept' },
   ]}
+  isMobile={isMobile}
+  labels={{
+    list: 'Conversation starters',
+    overflow: 'More starter prompts',
+  }}
+  onSelect={handleStarterSelect}
 />;
 ```
 
@@ -59,19 +53,33 @@ import type { StarterButtonsProps } from '@epam/ai-dial-starter-buttons';
 ```tsx
 import type {
   StarterButtonsProps,
-  StarterButtonsAriaLabels,
+  StarterButtonsLabels,
+  StarterButtonsStyles,
 } from '@epam/ai-dial-starter-buttons';
 ```
 
-### StarterButtonsAriaLabels
+### StarterButtonsLabels
 
 Override the default English ARIA labels with translated values.
 
 ```tsx
-const ariaLabels: StarterButtonsAriaLabels = {
-  moreButton: t('More starter prompts'),
-  dropdownMenu: t('Starter prompts overflow menu'),
+const labels: StarterButtonsLabels = {
+  list: t('Conversation starters'),
+  overflow: t('More starter prompts'),
 };
 
-<StarterButtons buttons={buttons} ariaLabels={ariaLabels} />;
+<StarterButtons starters={starters} labels={labels} onSelect={onSelect} />;
+```
+
+### StarterButtonsStyles
+
+Overrides the size and stroke width of the overflow menu icon.
+
+```tsx
+<StarterButtons
+  starters={starters}
+  labels={labels}
+  styles={{ iconSize: 20, iconStrokeWidth: 2 }}
+  onSelect={onSelect}
+/>
 ```

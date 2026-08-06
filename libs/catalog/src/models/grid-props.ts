@@ -30,4 +30,8 @@ export interface CardGridProps {
   isLoading?: boolean;
   /** ID of an item to visually mark as selected (border, tint, and checkmark). */
   selectedItemId?: string;
+  /** Skeleton bar/shape color while loading. Defaults to `--cg-skeleton-color`. */
+  skeletonColor?: string;
+  /** Background color of a skeleton placeholder card. Fallback: `--bg-layer-raised`. */
+  skeletonCardBackground?: string;
 }

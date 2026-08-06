@@ -1,4 +1,8 @@
-import { mergeClasses, PanelEmptyState } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  mergeClasses,
+  PanelEmptyState,
+} from '@epam/ai-dial-chat-shared';
 import { DialSkeleton, DialSkeletonAvatarShape } from '@epam/ai-dial-ui-kit';
 import { type FC, memo, useMemo } from 'react';
 import { CARD_HEIGHT, SKELETON_ROW_COUNT } from '../../constants/virtual-grid';
@@ -18,6 +22,8 @@ export const CardGrid: FC<CardGridProps> = memo(
     titles,
     isLoading,
     selectedItemId,
+    skeletonColor = styles.skeletonColor,
+    skeletonCardBackground,
   }) => {
     const noResultsTitle = titles?.noResultsTitle ?? 'No results';
     const featuredLabel = titles?.featuredLabel ?? 'Featured';
@@ -64,6 +70,9 @@ export const CardGrid: FC<CardGridProps> = memo(
           className="grid gap-5 p-5"
           style={{
             gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
+            ...buildCssVars({
+              '--cg-skeleton-card-bg': skeletonCardBackground,
+            }),
           }}
         >
           {Array.from({ length: columnCount * SKELETON_ROW_COUNT }, (_, i) => (
@@ -80,7 +89,7 @@ export const CardGrid: FC<CardGridProps> = memo(
                 showTitle={{ width: `${60 + ((i * 17) % 30)}%` }}
                 paragraph={{ rows: 3 }}
                 active
-                color="var(--bg-layer-4)"
+                color={skeletonColor}
               />
             </div>
           ))}

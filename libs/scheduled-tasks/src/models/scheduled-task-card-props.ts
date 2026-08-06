@@ -35,7 +35,7 @@ export interface ScheduledTaskCardColors {
   locationLeafText?: string;
   /** "New" badge background. Fallback: `--controls-bg-accent-primary`. */
   newBadgeBackground?: string;
-  /** "New" badge text color. Fallback: `--controls-text-permanent`. */
+  /** "New" badge text color. Fallback: `--text-control-permanent`. */
   newBadgeText?: string;
   /** Divider border color above the location breadcrumb. Fallback: `--stroke-tertiary`. */
   locationDividerBorder?: string;

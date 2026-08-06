@@ -131,7 +131,7 @@ describe('MarkdownRenderer', () => {
     expect(columnHeader.className).toContain('max-w-96');
     expect(columnHeader.className).toContain('whitespace-normal');
     expect(columnHeader.className).toContain('border-b');
-    expect(columnHeader.className).toContain('text-secondary');
+    expect(columnHeader.className).toContain('tableHeaderCell');
     expect(cell.className).toContain('max-w-96');
     expect(cell.className).toContain('border-b');
     expect(cell.className).toContain('align-top');

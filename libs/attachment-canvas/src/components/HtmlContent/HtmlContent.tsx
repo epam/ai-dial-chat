@@ -16,6 +16,7 @@ import type {
 } from '../../models/attachment-canvas';
 import { AttachmentContentType } from '../../types/attachment-canvas';
 import { CodeContent } from '../CodeContent/CodeContent';
+import styles from './HtmlContent.module.scss';
 
 /** Props for {@link HtmlContent}. */
 export interface HtmlContentProps {
@@ -34,8 +35,6 @@ export interface HtmlContentProps {
   codeBlockTheme?: CodeBlockTheme;
   /** Typography class applied to the "Open in new tab" button in the blocked-state panel. Defaults to `'dial-body-semi-text'`. */
   openInNewTabButtonTypographyClassName?: string;
-  /** Color class applied to the "Open in new tab" button in the blocked-state panel. Defaults to `'text-accent'`. */
-  openInNewTabButtonColorClassName?: string;
 }
 
 /** Renders HTML content inside a sandboxed iframe, or as highlighted source when `isSourceView` is true. */
@@ -47,7 +46,6 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
     title,
     codeBlockTheme,
     openInNewTabButtonTypographyClassName = 'dial-body-semi-text',
-    openInNewTabButtonColorClassName = 'text-accent',
   }) => {
     const {
       htmlFrameBlockedLabel = 'This page cannot be displayed in preview',
@@ -109,8 +107,8 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
               }
               className={mergeClasses(
                 'underline hover:no-underline',
+                styles.openInNewTabButton,
                 openInNewTabButtonTypographyClassName,
-                openInNewTabButtonColorClassName,
               )}
             />
           )}

@@ -576,7 +576,7 @@ const DialFileManagerShell: FC<Props> = ({
           {overlayLabel != null && (
             <div
               aria-live="polite"
-              className="bg-blackout absolute inset-0 z-[52] flex items-center justify-center desktop:p-4"
+              className="absolute inset-0 z-[52] flex items-center justify-center bg-backdrop desktop:p-4"
             >
               <DialSpinner
                 size={32}

@@ -420,7 +420,7 @@ const AppsEditor: FC = () => {
         </div>
         {isSaving && (
           <div
-            className="bg-blackout absolute inset-0 flex items-center justify-center"
+            className="absolute inset-0 flex items-center justify-center bg-backdrop"
             aria-label={t(AppsEditorI18nKeys.SavingOverlayLabel)}
             aria-live="polite"
           >

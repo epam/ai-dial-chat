@@ -38,7 +38,6 @@ describe('mapPublishHistoryEntryDto', () => {
     expect(mapPublishHistoryEntryDto(dto)).toEqual({
       version: '1.2.0',
       publishedAt: Date.parse('2026-07-13T10:00:00.000Z'),
-      publishedBy: 'user@example.com',
       folderPath: ['Organization', 'Data Science', 'Published models'],
     });
   });

@@ -86,6 +86,12 @@ export interface ConversationColors {
   triggerIconIdle?: string;
   /** Shimmer color of the loading skeleton avatar. */
   skeletonColor?: string;
+  /** Border color of the task pill badge. Defaults to `--stroke-tertiary`. */
+  taskBadgeBorder?: string;
+  /** Background color of the task pill badge. Defaults to `--bg-layer-base`. */
+  taskBadgeBackground?: string;
+  /** Text color of the task pill badge. Defaults to `--text-secondary`. */
+  taskBadgeText?: string;
   /** Fill color of the unread indicator dot. Defaults to `--text-accent`. */
   unreadDot?: string;
 }
@@ -100,7 +106,7 @@ export interface ConversationPanelStyles {
   typography?: ConversationPanelTypography;
   /** CSS class applied to the icon badge in each conversation row. Defaults to `'rounded-full'`. */
   itemIconBadgeClassName?: string;
-  /** CSS class applied to the task pill badge in each conversation row (background, border, text color, and typography). Defaults to `'border-tertiary bg-layer-base text-secondary dial-caption-semi-text uppercase tracking-[0.6px]'`. */
+  /** Typography class applied to the task pill badge in each conversation row. Defaults to `'dial-caption-semi-text uppercase tracking-[0.6px]'`. Colors come from the module stylesheet. */
   taskBadgeClassName?: string;
 }
 

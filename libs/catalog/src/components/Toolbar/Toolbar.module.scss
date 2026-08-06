@@ -2,10 +2,26 @@
   background: var(--cat-bg, #f5f7fa);
 }
 
-.icon {
-  color: var(--cat-browse-icon, var(--text-secondary, #6b7280));
-}
-
 .divider {
   background: var(--cat-browse-divider, var(--stroke-secondary, #d1dbea));
+}
+
+.viewToggleWrapper {
+  background: var(--cat-view-toggle-bg, var(--bg-layer-sunken, #eef1f7));
+  border-color: var(--cat-view-toggle-border, var(--stroke-tertiary, #e0e6f0));
+}
+
+.viewToggleActive {
+  background: var(--cat-view-toggle-active-bg, var(--bg-layer-raised, #fcfcfc));
+  color: var(--cat-view-toggle-active-text, var(--text-accent, #1d4ed8));
+}
+
+.viewToggleInactive {
+  color: var(--cat-view-toggle-text, var(--text-secondary, #6b7280));
+
+  @media (hover: hover) {
+    &:hover {
+      color: var(--cat-view-toggle-text-hover, var(--text-primary, #161b2d));
+    }
+  }
 }
