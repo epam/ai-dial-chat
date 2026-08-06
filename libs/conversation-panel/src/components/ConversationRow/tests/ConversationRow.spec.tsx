@@ -256,4 +256,71 @@ describe('ConversationRow', () => {
 
     expect(onSelectConversation).toHaveBeenCalledWith(baseItem.id);
   });
+
+  describe('unread indicator', () => {
+    it('renders the unread dot with an accessible label when isUnread is true', () => {
+      render(
+        <ConversationRow
+          item={{ ...baseItem, isUnread: true }}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+        />,
+      );
+
+      expect(screen.getByText('Unread')).toBeTruthy();
+    });
+
+    it('does not render the unread dot when isUnread is omitted', () => {
+      render(
+        <ConversationRow
+          item={baseItem}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+        />,
+      );
+
+      expect(screen.queryByText('Unread')).toBeNull();
+    });
+
+    it('does not render the unread dot when isUnread is false', () => {
+      render(
+        <ConversationRow
+          item={{ ...baseItem, isUnread: false }}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+        />,
+      );
+
+      expect(screen.queryByText('Unread')).toBeNull();
+    });
+
+    it('uses a custom unreadIndicatorLabel when provided', () => {
+      render(
+        <ConversationRow
+          item={{ ...baseItem, isUnread: true }}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+          unreadIndicatorLabel="New task"
+        />,
+      );
+
+      expect(screen.getByText('New task')).toBeTruthy();
+      expect(screen.queryByText('Unread')).toBeNull();
+    });
+
+    it('clicking the row with an unread dot still selects the conversation', () => {
+      const onSelectConversation = vi.fn();
+      render(
+        <ConversationRow
+          item={{ ...baseItem, isUnread: true }}
+          isActive={false}
+          onSelectConversation={onSelectConversation}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('button'));
+
+      expect(onSelectConversation).toHaveBeenCalledWith(baseItem.id);
+    });
+  });
 });

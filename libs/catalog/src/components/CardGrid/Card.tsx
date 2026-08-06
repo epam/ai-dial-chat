@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   CardShell,
   DIAL_ICON_SIZE,
@@ -35,13 +35,22 @@ export const Card: FC<CardProps> = ({
   const [isStarred, setIsStarred] = useState(initialIsStarred);
 
   const descriptionClassName =
-    cardStyles?.typography?.descriptionClassName ??
-    'dial-small-text text-secondary';
+    cardStyles?.typography?.descriptionClassName ?? 'dial-small-text';
+
   const featuredChipClassName = cardStyles?.typography?.featuredChipClassName;
   const folderLabelClassName =
     cardStyles?.typography?.folderLabelClassName ?? 'dial-tiny-text';
   const folderLeafClassName =
     cardStyles?.typography?.folderLeafClassName ?? 'dial-tiny-semi-text';
+
+  const cssVars = buildCssVars({
+    '--cg-description-text': cardStyles?.colors?.textSecondary,
+    '--cg-selected-border': cardStyles?.colors?.selectedBorder,
+    '--cg-selected-bg': cardStyles?.colors?.selectedBackground,
+    '--cg-check-icon': cardStyles?.colors?.checkIcon,
+    '--cg-footer-border': cardStyles?.colors?.footerBorder,
+  });
+
   const handleClick = onClick ? () => onClick(item) : undefined;
 
   const handleKeyDown = useCallback(
@@ -76,12 +85,12 @@ export const Card: FC<CardProps> = ({
           }
         : {})}
       aria-label={item.name}
-      style={getFeaturedEntityStyle(item)}
+      style={{ ...getFeaturedEntityStyle(item), ...cssVars }}
       className={mergeClasses(
         'box-border cursor-pointer',
         styles.card,
         item.isFeatured ? styles.featuredCard : undefined,
-        isSelected ? 'border-info !bg-accent-primary-alpha' : undefined,
+        isSelected ? styles.selectedCard : undefined,
         className,
       )}
     >
@@ -97,7 +106,10 @@ export const Card: FC<CardProps> = ({
       {isSelected && (
         <IconCheck
           size={DIAL_ICON_SIZE.SM}
-          className="absolute end-3 top-3 shrink-0 text-accent"
+          className={mergeClasses(
+            'absolute end-3 top-3 shrink-0',
+            styles.checkIcon,
+          )}
           aria-hidden
         />
       )}
@@ -132,7 +144,7 @@ export const Card: FC<CardProps> = ({
         />
       </div>
 
-      <div className="mt-auto border-t border-tertiary pt-3">
+      <div className={mergeClasses('mt-auto border-t pt-3', styles.footer)}>
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1">
             {item.folder.length > 0 && (

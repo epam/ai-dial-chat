@@ -1,7 +1,3 @@
-.header {
-  color: var(--cp-text, var(--text-primary, #161b2d));
-}
-
 .item {
   color: var(--cp-text, var(--text-primary, #161b2d));
 
@@ -17,6 +13,12 @@
 
 .groupHeader {
   color: var(--cp-text-secondary, var(--text-tertiary, #c7cbd4));
+}
+
+.taskBadge {
+  border-color: var(--cp-task-badge-border, var(--stroke-tertiary, #e0e6f0));
+  background: var(--cp-task-badge-bg, var(--bg-layer-base, #f5f7fa));
+  color: var(--cp-task-badge-text, var(--text-secondary, #6b7280));
 }
 
 .dropZoneActive {
@@ -36,6 +38,10 @@
 
 .triggerIcon {
   color: var(--cp-trigger-icon-idle, var(--text-secondary, #6b7280));
+}
+
+.unreadDot {
+  background: var(--cp-unread-dot, var(--text-accent, #1d4ed8));
 }
 
 :export {

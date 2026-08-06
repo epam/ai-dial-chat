@@ -60,6 +60,9 @@ const mockDeleteAllConversations = vi.mocked(
   conversationsApi.deleteAllConversations,
 );
 const mockRenameConversation = vi.mocked(conversationsApi.renameConversation);
+const mockMarkConversationViewed = vi.mocked(
+  conversationsApi.markConversationViewed,
+);
 
 const seedConversations = [
   {
@@ -391,6 +394,110 @@ describe('ConversationsContext — renameConversation', () => {
     });
 
     expect(userConfigApi.pinConversation).not.toHaveBeenCalled();
+  });
+});
+
+describe('ConversationsContext — markConversationViewed', () => {
+  const unreadTaskConversations = [
+    {
+      id: 'task1',
+      title: 'Task 1',
+      isPinned: false,
+      updatedAt: 0,
+      sharedWithMe: false,
+      publishedWithMe: false,
+      isReadonly: false,
+      isScheduledTask: true,
+      isUnread: true,
+    },
+    ...seedConversations.slice(1),
+  ];
+
+  it('optimistically clears isUnread before the API resolves', async () => {
+    mockListConversations.mockResolvedValueOnce({
+      items: unreadTaskConversations,
+    });
+    let resolveMark!: () => void;
+    mockMarkConversationViewed.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveMark = () => resolve(undefined);
+      }),
+    );
+
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    let markPromise!: Promise<void>;
+    act(() => {
+      markPromise = result.current.markConversationViewed('task1');
+    });
+
+    expect(
+      result.current.conversations.find((c) => c.id === 'task1')?.isUnread,
+    ).toBe(false);
+
+    resolveMark();
+    await act(async () => {
+      await markPromise;
+    });
+  });
+
+  it('rolls back isUnread to true when the API call fails', async () => {
+    mockListConversations.mockResolvedValueOnce({
+      items: unreadTaskConversations,
+    });
+    mockMarkConversationViewed.mockRejectedValueOnce(new Error('network'));
+
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    await act(async () => {
+      await result.current.markConversationViewed('task1');
+    });
+
+    expect(
+      result.current.conversations.find((c) => c.id === 'task1')?.isUnread,
+    ).toBe(true);
+  });
+
+  it('is a no-op for a conversation that is not scheduler-created', async () => {
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    await act(async () => {
+      await result.current.markConversationViewed('conv1');
+    });
+
+    expect(mockMarkConversationViewed).not.toHaveBeenCalled();
+  });
+
+  it('is a no-op for a scheduler-created conversation that is already read', async () => {
+    mockListConversations.mockResolvedValueOnce({
+      items: [
+        {
+          ...unreadTaskConversations[0],
+          isUnread: false,
+        },
+        ...seedConversations.slice(1),
+      ],
+    });
+
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    await act(async () => {
+      await result.current.markConversationViewed('task1');
+    });
+
+    expect(mockMarkConversationViewed).not.toHaveBeenCalled();
   });
 });
 

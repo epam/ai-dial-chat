@@ -11,11 +11,11 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
 import { memo, useMemo, useState, type FC, type ReactNode } from 'react';
-import type { QuotationSource } from '../../models/quotation-source';
-import {
+import type {
   ConversationSourcesPanelColors,
   ConversationSourcesPanelTypography,
-} from '../ConversationSourcesPanel/ConversationSourcesPanel';
+} from '../../models/conversation-sources-panel-props';
+import type { QuotationSource } from '../../models/quotation-source';
 import styles from './SourcesSection.module.scss';
 
 /** Props for the `SourcesSection` component. */

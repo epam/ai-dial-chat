@@ -486,6 +486,7 @@ export enum ConversationPanelI18nKeys {
   UnshareSuccess = 'conversationPanel.unshare.unshareSuccess',
   UnshareError = 'conversationPanel.unshare.unshareError',
   TaskBadgeLabel = 'conversationPanel.taskBadgeLabel',
+  UnreadIndicatorLabel = 'conversationPanel.unreadIndicatorLabel',
 }
 
 export enum ConversationPublishI18nKeys {

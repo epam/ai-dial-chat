@@ -1,45 +1,63 @@
 .tag {
   &--FREE {
-    background: var(--bg-accent-secondary, rgba(83, 194, 91, 0.12)) !important;
-    color: var(--text-accent-secondary, #53c25b) !important;
+    background: var(
+      --cat-limits-free-bg,
+      var(--bg-success, #dbf1eb)
+    ) !important;
+    color: var(--cat-limits-free-text, var(--text-success, #007274)) !important;
     border-color: transparent !important;
   }
   &--FEATURED {
     background: var(
-      --bg-warning-secondary,
-      rgba(238, 200, 64, 0.12)
+      --cat-limits-featured-bg,
+      var(--bg-warning, #faf0cf)
     ) !important;
-    color: var(--text-warning, #7f6300) !important;
+    color: var(
+      --cat-limits-featured-text,
+      var(--text-warning, #7f6300)
+    ) !important;
     border-color: transparent !important;
   }
   &--BY_REQUEST {
-    background: var(--bg-layer-sunken, #eef1f7) !important;
-    color: var(--text-secondary, #6b7280) !important;
+    background: var(
+      --cat-limits-by-request-bg,
+      var(--bg-layer-sunken, #eef1f7)
+    ) !important;
+    color: var(
+      --cat-limits-by-request-text,
+      var(--text-secondary, #6b7280)
+    ) !important;
     border-color: transparent !important;
   }
   &--BETA {
     background: var(
-      --bg-accent-primary-alpha,
-      rgba(99, 116, 255, 0.12)
+      --cat-limits-beta-bg,
+      var(--bg-accent-primary-alpha, #7da4ff2e)
     ) !important;
-    color: var(--text-accent, #1d4ed8) !important;
+    color: var(--cat-limits-beta-text, var(--text-accent, #1d4ed8)) !important;
     border-color: transparent !important;
   }
   &--DEPRECATED {
-    background: var(--bg-layer-sunken, #eef1f7) !important;
-    color: var(--text-error, #ae2f2f) !important;
+    background: var(
+      --cat-limits-deprecated-bg,
+      var(--bg-layer-sunken, #eef1f7)
+    ) !important;
+    color: var(
+      --cat-limits-deprecated-text,
+      var(--text-error, #ae2f2f)
+    ) !important;
     border-color: transparent !important;
   }
 }
 
 .progressTrack {
-  background: var(--bg-layer-sunken, #eef1f7);
+  background: var(--cat-limits-progress-track, var(--bg-layer-sunken, #eef1f7));
 }
 
 .progressFill {
-  background: var(--text-accent, #1d4ed8);
+  background: var(--cat-limits-progress-fill, var(--text-accent, #1d4ed8));
 }
 
 .resetLabel {
-  color: var(--text-secondary, #6b7280);
+  color: var(--cat-limits-reset-text, var(--text-secondary, #6b7280));
 }

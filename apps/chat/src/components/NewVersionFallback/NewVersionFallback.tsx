@@ -22,7 +22,7 @@ const NewVersionFallback: FC = () => {
           aria-hidden="true"
           size={48}
           stroke={1.5}
-          className="text-accent-primary"
+          className="text-accent"
         />
       }
       heading={t(AppUpdateI18nKeys.Heading)}

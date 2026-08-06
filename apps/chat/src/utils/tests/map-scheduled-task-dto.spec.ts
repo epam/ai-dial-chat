@@ -34,7 +34,6 @@ describe('mapScheduledTaskDtoToItem', () => {
     expect(result.scheduleLabel).toMatch(
       new RegExp(`^${ScheduledTasksI18nKeys.CardScheduleOnceAt}:`),
     );
-    expect(result.sortValues.nextRunAt).toBe('2026-07-24T09:00:00.000Z');
   });
 
   it('formats a weekly cron trigger via the weekly translation key', () => {
@@ -120,19 +119,6 @@ describe('mapScheduledTaskDtoToItem', () => {
     expect(result.scheduleLabel).toBe(
       ScheduledTasksI18nKeys.CardScheduleRecurringFallback,
     );
-  });
-
-  it('prefers nextRunTime/createdAt from the DTO over the create-trigger date', () => {
-    const result = mapScheduledTaskDtoToItem(
-      buildDto({
-        nextRunTime: '2026-07-28T12:00:00.000Z',
-        createdAt: '2026-07-23T21:27:07.000Z',
-      }),
-      fakeT,
-    );
-
-    expect(result.sortValues.nextRunAt).toBe('2026-07-28T12:00:00.000Z');
-    expect(result.sortValues.createdAt).toBe('2026-07-23T21:27:07.000Z');
   });
 
   it('falls back to myTasks with no thrown errors for missing optional fields', () => {

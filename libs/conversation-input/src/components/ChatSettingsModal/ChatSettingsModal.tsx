@@ -50,7 +50,12 @@ export interface ChatSettingsModalProps {
   saveLabel?: string;
   /** Tooltip shown on the save button when it is disabled (e.g. no response format selected). */
   saveDisabledTooltip?: string;
-  /** CSS class applied for the modal background. Defaults to a `--bg-layer-sunken` background. */
+  /**
+   * CSS class applied for the modal background. Defaults to a
+   * `--bg-layer-sunken` background. `DialPopup` renders through a portal and
+   * accepts no `style`, so this class (or setting `--csm-bg` at theme level) is
+   * the only way to override the surface color — there is no `colors` prop.
+   */
   backgroundClassName?: string;
 }
 

@@ -78,7 +78,6 @@ import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
     displayName: 'Competitor Updates',
     scheduleLabel: 'Every Monday 12:00',
     sectionKey: ScheduledTaskSectionKey.MyTasks,
-    sortValues: {},
   }}
   onEdit={(id) => {}}
   onRunNow={(id) => {}}

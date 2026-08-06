@@ -42,8 +42,10 @@ export interface ConversationRowProps {
   itemTitleClassName?: string;
   /** CSS class applied to the icon badge. Defaults to `'rounded-full'`. */
   itemIconBadgeClassName?: string;
-  /** CSS class applied to the task pill badge (background, border, text color, and typography). Defaults to `'border-tertiary bg-layer-base text-secondary dial-caption-semi-text tracking-[0.6px]'`. */
+  /** Typography class applied to the task pill badge. Defaults to `'dial-caption-semi-text uppercase tracking-[0.6px]'`. Colors come from the module stylesheet. */
   taskBadgeClassName?: string;
+  /** Accessible (visually hidden) label announced for the unread indicator dot. Defaults to `"Unread"`. */
+  unreadIndicatorLabel?: string;
   /** Group this row belongs to — required to enable drag-and-drop. */
   rowGroupKey?: FilterTab;
   /** The full virtual rows array — used to compute drop position. */
@@ -81,7 +83,8 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   actionsLabel = 'More actions',
   itemTitleClassName = 'dial-small-text',
   itemIconBadgeClassName,
-  taskBadgeClassName = 'border-tertiary bg-layer-base text-secondary dial-caption-semi-text uppercase tracking-[0.6px]',
+  taskBadgeClassName = 'dial-caption-semi-text uppercase tracking-[0.6px]',
+  unreadIndicatorLabel = 'Unread',
   rowGroupKey,
   rows,
   draggingId,
@@ -127,12 +130,37 @@ export const ConversationRow: FC<ConversationRowProps> = ({
     />
   );
 
+  /*
+   * A fixed 12x12 slot is always reserved before the avatar so the avatar's horizontal position stays identical
+   * across rows whether or not the dot itself is rendered.
+   */
+  const avatarWithUnreadIndicator = (
+    <span className="flex shrink-0 items-center gap-1">
+      <span className="relative flex size-3 shrink-0 items-center justify-center">
+        {item.isUnread && (
+          <>
+            <span
+              className={mergeClasses(
+                'size-[5.33px] rounded-full',
+                styles.unreadDot,
+              )}
+              aria-hidden
+            />
+            <span className="sr-only">{unreadIndicatorLabel}</span>
+          </>
+        )}
+      </span>
+      {avatar}
+    </span>
+  );
+
   const buttonPaddingEnd = getButtonPaddingEnd(hasActions, isMenuOpen);
 
   const taskBadge = item.showTaskBadge ? (
     <span
       className={mergeClasses(
         'flex h-5 shrink-0 items-center justify-center gap-0.5 rounded-full border pe-2 ps-1',
+        styles.taskBadge,
         taskBadgeClassName,
       )}
     >
@@ -203,7 +231,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
         }}
       >
         <Button
-          iconBefore={avatar}
+          iconBefore={avatarWithUnreadIndicator}
           label={
             <Highlight
               text={item.title}

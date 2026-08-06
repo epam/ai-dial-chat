@@ -1,3 +1,4 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { Input } from '@epam/ai-dial-kit';
 import {
   DialAccordion,
@@ -18,6 +19,7 @@ import {
   getCredentialsUiState,
   getSignedInLevel,
 } from '../../../utils/toolset-credentials';
+import styles from './CredentialsSection.module.scss';
 
 interface CredentialsSectionProps {
   item: CatalogItem;
@@ -27,7 +29,7 @@ interface CredentialsSectionProps {
   ) => void;
   onLogout?: (item: CatalogItem, params: { level: CredentialsLevel }) => void;
   texts?: ItemDetailsTexts;
-  /** Typography class for the signed-in/signed-out status label. Default: `'dial-small-semi-text text-primary'`. */
+  /** Typography class for the signed-in/signed-out status label. Default: `'dial-small-semi-text'`. */
   statusLabelClassName?: string;
 }
 
@@ -53,7 +55,7 @@ const LevelForm: FC<LevelFormProps> = ({
   onLogin,
   onLogout,
   texts,
-  statusLabelClassName = 'dial-small-semi-text text-primary',
+  statusLabelClassName = 'dial-small-semi-text',
 }) => {
   const [apiKey, setApiKey] = useState('');
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
@@ -93,7 +95,9 @@ const LevelForm: FC<LevelFormProps> = ({
 
   return (
     <div className="flex flex-col gap-3">
-      <span className={statusLabelClassName}>{statusLabel}</span>
+      <span className={mergeClasses(statusLabelClassName, styles.statusLabel)}>
+        {statusLabel}
+      </span>
 
       {!isSignedIn &&
         authenticationType === ToolsetAuthenticationType.ApiKey && (

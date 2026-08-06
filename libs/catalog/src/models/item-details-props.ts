@@ -61,8 +61,6 @@ export interface ItemDetailsTexts {
   apiSnippetSectionLabel?: string;
   /** "Model ID" row label in the API tab. Default: `'Model ID'`. */
   apiModelIdLabel?: string;
-  /** "Endpoint" section heading in the API tab (multi-endpoint selector). Default: `'Endpoint'`. */
-  apiEndpointSectionLabel?: string;
   /** Title shown in the single-endpoint code block's header in the Connect tab. Default: `'Endpoint'`. */
   apiEndpointLabel?: string;
   /** "Request example" row label in the API tab. Default: `'Request example'`. */
@@ -119,10 +117,8 @@ export interface ItemDetailsTexts {
 
 /** Typography class overrides for `DetailsPanel` text elements. */
 export interface ItemDetailsTypography {
-  /** Typography class for the entity name. Default: `'dial-body-semi-text text-primary'`. */
+  /** Typography class for the entity name. Default: `'dial-body-semi-text'`. */
   nameClassName?: string;
-  /** Typography class for the provider label below the entity name. Default: `'dial-tiny-text text-secondary'`. */
-  providerClassName?: string;
   /** Typography class for the version string. Default: `'dial-tiny-text'`. */
   versionClassName?: string;
   /** Typography class for section headings inside the description content. Default: `'dial-small-semi-text'`. */
@@ -141,14 +137,98 @@ export interface ItemDetailsTypography {
   folderLabelClassName?: string;
   /** Typography class applied to the leaf (last) folder path segment. Default: `'dial-tiny-semi-text'`. */
   folderLeafClassName?: string;
-  /** Typography class for the credentials section's signed-in/signed-out status label. Default: `'dial-small-semi-text text-primary'`. */
+  /** Typography class for the credentials section's signed-in/signed-out status label. Default: `'dial-small-semi-text'`. */
   credentialsStatusLabelClassName?: string;
+}
+
+/**
+ * Color overrides for `DetailsPanel` and everything it renders, applied as CSS
+ * custom properties on the panel root so they cascade into the nested header,
+ * credentials, summary, spec-grid and tools sections.
+ */
+export interface ItemDetailsColors {
+  /** Backdrop overlay color behind the panel. Fallback: `--bg-backdrop`. */
+  backdrop?: string;
+  /** Panel surface background. Fallback: `--bg-layer-raised`. */
+  background?: string;
+  /** Panel's leading-edge border color (desktop only). Fallback: `--stroke-secondary`. */
+  border?: string;
+  /** Horizontal divider color between panel sections. Fallback: `--stroke-tertiary`. */
+  divider?: string;
+  /** Scrollbar thumb color of the scrollable content area. Fallback: `--stroke-secondary`. */
+  scrollbar?: string;
+  /** Shimmer color of the tab-row loading skeleton. Fallback: `--bg-layer-4`. */
+  skeleton?: string;
+  /** Entity name text color in the header. Fallback: `--text-primary`. */
+  nameText?: string;
+  /** Title text color of the publish sub-view. Fallback: `--text-primary`. */
+  publishTitleText?: string;
+  /** Border color of the "current version" tag. Fallback: `--stroke-tertiary`. */
+  versionTagBorder?: string;
+  /** Background color of the "current version" tag. Fallback: `--bg-accent-primary-alpha`. */
+  versionTagBackground?: string;
+  /** Text color of the "current version" tag. Fallback: `--text-accent`. */
+  versionTagText?: string;
+  /** Credentials signed-in/signed-out status label color. Fallback: `--text-primary`. */
+  credentialsStatusText?: string;
+  /** Heading color of the API section. Fallback: `--text-secondary`. */
+  apiHeadingText?: string;
+  /** Divider color between tool entries. Fallback: `--stroke-tertiary`. */
+  toolsDivider?: string;
+  /** Tool description text color. Fallback: `--text-secondary`. */
+  toolsDescriptionText?: string;
+  /** Spec-grid outer border color. Fallback: `--stroke-secondary`. */
+  gridBorder?: string;
+  /** Spec-grid header text color. Fallback: `--text-secondary`. */
+  gridHeaderText?: string;
+  /** Spec-grid header background. Fallback: `--bg-layer-1`. */
+  gridHeaderBackground?: string;
+  /** Spec-grid cell text color. Fallback: `--text-primary`. */
+  gridCellText?: string;
+  /** Spec-grid cell top-border color. Fallback: `--stroke-secondary`. */
+  gridCellDivider?: string;
+  /** Spec-grid even-row background. Fallback: `--bg-layer-7`. */
+  gridRowEvenBackground?: string;
+  /** Limit-tag colors in the summary section, keyed by tag kind. */
+  limits?: ItemDetailsLimitColors;
+}
+
+/** Color overrides for the limit tags and quota bar in the summary section. */
+export interface ItemDetailsLimitColors {
+  /** "FREE" tag background. Fallback: `--bg-success`. */
+  freeBackground?: string;
+  /** "FREE" tag text color. Fallback: `--text-success`. */
+  freeText?: string;
+  /** "FEATURED" tag background. Fallback: `--bg-warning`. */
+  featuredBackground?: string;
+  /** "FEATURED" tag text color. Fallback: `--text-warning`. */
+  featuredText?: string;
+  /** "BY_REQUEST" tag background. Fallback: `--bg-layer-sunken`. */
+  byRequestBackground?: string;
+  /** "BY_REQUEST" tag text color. Fallback: `--text-secondary`. */
+  byRequestText?: string;
+  /** "BETA" tag background. Fallback: `--bg-accent-primary-alpha`. */
+  betaBackground?: string;
+  /** "BETA" tag text color. Fallback: `--text-accent`. */
+  betaText?: string;
+  /** "DEPRECATED" tag background. Fallback: `--bg-layer-sunken`. */
+  deprecatedBackground?: string;
+  /** "DEPRECATED" tag text color. Fallback: `--text-error`. */
+  deprecatedText?: string;
+  /** Quota progress-bar track color. Fallback: `--bg-layer-sunken`. */
+  progressTrack?: string;
+  /** Quota progress-bar fill color. Fallback: `--text-accent`. */
+  progressFill?: string;
+  /** Quota reset-time label color. Fallback: `--text-secondary`. */
+  resetText?: string;
 }
 
 /** Grouped style overrides for `DetailsPanel`. */
 export interface ItemDetailsStyles {
   /** Typography class overrides for text elements. */
   typography?: ItemDetailsTypography;
+  /** Color overrides applied as CSS custom properties on the panel root. */
+  colors?: ItemDetailsColors;
 }
 
 /** Props for `DetailsPanel`. */

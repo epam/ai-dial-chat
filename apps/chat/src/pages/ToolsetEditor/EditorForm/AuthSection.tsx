@@ -524,7 +524,7 @@ const AuthSection: FC<Props> = ({
               type="button"
               className={mergeClasses(
                 'flex w-full items-center gap-3 border-s-2 px-4 py-3',
-                isSelected ? 'border-s-accent-primary' : 'border-s-transparent',
+                isSelected ? 'border-s-info' : 'border-s-transparent',
                 isLocked && 'cursor-not-allowed opacity-50',
               )}
               onClick={() => handleSelectType(type)}

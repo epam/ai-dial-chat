@@ -1,7 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { GradientCheckIcon } from '@epam/ai-dial-kit';
 import { DIAL_ICON_SIZE, DialDropdown } from '@epam/ai-dial-ui-kit';
-import { IconChevronDown, IconWorld } from '@tabler/icons-react';
+import { IconCheck, IconChevronDown, IconWorld } from '@tabler/icons-react';
 import { FC, type KeyboardEvent, type RefObject } from 'react';
 import { ShareLinkAccess } from '../../types/share';
 import styles from '../SharePopover/SharePopover.module.scss';
@@ -12,10 +11,7 @@ interface AccessControlProps {
   anyoneWithLinkTitle: string;
   /** Secondary row text, e.g. "in your organization". */
   anyoneWithLinkSubtitle: string;
-  /**
-   * Current access levels. Edit access implies view access, so this is
-   * `[View, Edit]` rather than `[Edit]` alone.
-   */
+  /** Current access level(s) for the share link. */
   access: ShareLinkAccess[];
   /** True to show an interactive dropdown; false shows a static "Can view" label. */
   canEditAccess: boolean;
@@ -126,7 +122,7 @@ export const AccessControl: FC<AccessControlProps> = ({
                     role="menuitemradio"
                     aria-checked={isChecked}
                     className={mergeClasses(
-                      'flex w-full cursor-pointer select-none items-center gap-2 rounded-lg px-2.5 py-2 text-start outline-none',
+                      'flex w-full cursor-pointer select-none items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-start outline-none',
                       styles.accessMenuItem,
                       isChecked && styles.accessMenuItemChecked,
                     )}
@@ -143,11 +139,12 @@ export const AccessControl: FC<AccessControlProps> = ({
                       {option.label}
                     </span>
                     {isChecked && (
-                      <span className="ms-auto flex shrink-0 items-center">
-                        <GradientCheckIcon
-                          gradientId={`share-access-check-${option.value}`}
-                        />
-                      </span>
+                      <IconCheck
+                        size={DIAL_ICON_SIZE.SM}
+                        stroke={2}
+                        className={styles.accessMenuItemCheck}
+                        aria-hidden
+                      />
                     )}
                   </button>
                 );
@@ -161,7 +158,7 @@ export const AccessControl: FC<AccessControlProps> = ({
             aria-haspopup="menu"
             aria-expanded={isOpen}
             className={mergeClasses(
-              'flex h-9 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 outline-none',
+              'flex h-9 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border px-2.5 outline-none',
               styles.accessTriggerBtn,
               isOpen && styles.accessTriggerBtnOpen,
             )}
@@ -194,7 +191,7 @@ export const AccessControl: FC<AccessControlProps> = ({
           aria-label={accessAriaLabel}
           className={mergeClasses(
             'flex h-9 shrink-0 items-center whitespace-nowrap rounded-lg px-2.5',
-            styles.accessStaticLabel,
+            styles.accessTriggerBtn,
           )}
         >
           <span

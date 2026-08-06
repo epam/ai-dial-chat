@@ -36,6 +36,8 @@ export interface ConversationItem {
   showTaskBadge?: boolean;
   /** Text shown inside the task badge. When `showTaskBadge` is `true` and this is omitted, the badge renders with no text. */
   taskBadgeLabel?: string;
+  /** When `true`, an unread indicator dot is rendered before the row's leading icon. */
+  isUnread?: boolean;
 }
 
 /** Font overrides for the header title in `ConversationPanel`. */
@@ -84,6 +86,14 @@ export interface ConversationColors {
   triggerIconIdle?: string;
   /** Shimmer color of the loading skeleton avatar. */
   skeletonColor?: string;
+  /** Border color of the task pill badge. Defaults to `--stroke-tertiary`. */
+  taskBadgeBorder?: string;
+  /** Background color of the task pill badge. Defaults to `--bg-layer-base`. */
+  taskBadgeBackground?: string;
+  /** Text color of the task pill badge. Defaults to `--text-secondary`. */
+  taskBadgeText?: string;
+  /** Fill color of the unread indicator dot. Defaults to `--text-accent`. */
+  unreadDot?: string;
 }
 
 /** Combined style overrides (colors and typography) for `ConversationPanel`. */
@@ -96,7 +106,7 @@ export interface ConversationPanelStyles {
   typography?: ConversationPanelTypography;
   /** CSS class applied to the icon badge in each conversation row. Defaults to `'rounded-full'`. */
   itemIconBadgeClassName?: string;
-  /** CSS class applied to the task pill badge in each conversation row (background, border, text color, and typography). Defaults to `'border-tertiary bg-layer-base text-secondary dial-caption-semi-text uppercase tracking-[0.6px]'`. */
+  /** Typography class applied to the task pill badge in each conversation row. Defaults to `'dial-caption-semi-text uppercase tracking-[0.6px]'`. Colors come from the module stylesheet. */
   taskBadgeClassName?: string;
 }
 
@@ -131,6 +141,8 @@ export interface ConversationPanelLabels {
   };
   /** Accessible label for the row actions trigger button. Defaults to `"More actions"`. */
   actionsLabel?: string;
+  /** Accessible (visually hidden) label announced for the unread indicator dot. Defaults to `"Unread"`. */
+  unreadIndicatorLabel?: string;
   /** Accessible label for the sidebar toggle icon button. Required when `onToggle` is provided. */
   closeAriaLabel?: string;
 }

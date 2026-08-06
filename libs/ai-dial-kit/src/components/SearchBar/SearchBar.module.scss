@@ -14,7 +14,7 @@
   &:focus-within {
     border-color: color-mix(
       in srgb,
-      var(--stroke-info, #124ace) 50%,
+      var(--search-bar-border-focus, var(--stroke-info, #124ace)) 50%,
       transparent
     );
     box-shadow: none;
@@ -22,14 +22,14 @@
 }
 
 .icon {
-  color: var(--text-tertiary, #c7cbd4);
+  color: var(--search-bar-icon, var(--text-tertiary, #c7cbd4));
 }
 
 .input {
   background-color: transparent;
-  color: var(--text-primary, #161b2d);
+  color: var(--search-bar-text, var(--text-primary, #161b2d));
 
   &::placeholder {
-    color: var(--text-tertiary, #c7cbd4);
+    color: var(--search-bar-placeholder, var(--text-tertiary, #c7cbd4));
   }
 }

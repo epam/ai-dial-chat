@@ -38,7 +38,7 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
       className,
     }: {
       headerActions?: ReactNode;
-      conversations?: Array<{ id: string }>;
+      conversations?: Array<{ id: string; isUnread?: boolean }>;
       getActions?: (item: { id: string }) => Array<{
         key: string;
         label: ReactNode;
@@ -63,6 +63,9 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
               id={`action-trigger-${item.id}`}
               aria-label={`action trigger ${item.id}`}
             />
+            {item.isUnread && (
+              <span aria-label={`unread indicator ${item.id}`} />
+            )}
             {(getActions?.(item) ?? []).map((action) =>
               action.children ? (
                 // Simulates the hover-revealed submenu: children render as sibling buttons.
@@ -379,6 +382,7 @@ const baseContextValue = {
   isLoading: false,
   error: null,
   pinConversation: vi.fn(),
+  markConversationViewed: vi.fn(),
   deleteConversation: vi.fn(),
   renameConversation: vi.fn(),
   duplicateConversation: vi.fn(),
@@ -714,6 +718,109 @@ describe('ConversationPanelView — delete-all header action', () => {
       expect(screen.queryByRole('dialog')).toBeNull();
     });
     expect(mockNavigate).toHaveBeenCalledWith('/');
+  });
+});
+
+describe('ConversationPanelView — mark conversation viewed on open', () => {
+  const unreadTaskConversation = {
+    id: 'task1',
+    title: 'Task 1',
+    isPinned: false,
+    updatedAt: 0,
+    sharedWithMe: false,
+    publishedWithMe: false,
+    isScheduledTask: true,
+    isUnread: true,
+  };
+
+  it('calls markConversationViewed when an unread task conversation becomes active (row click / initial render)', () => {
+    const mockMarkConversationViewed = vi.fn();
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [unreadTaskConversation],
+      markConversationViewed: mockMarkConversationViewed,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(
+      <ConversationPanelView {...defaultProps} activeConversationId="task1" />,
+    );
+
+    expect(mockMarkConversationViewed).toHaveBeenCalledWith('task1');
+  });
+
+  it('calls markConversationViewed again when activeConversationId changes to another unread task conversation (direct navigation)', () => {
+    const secondUnreadTask = {
+      ...unreadTaskConversation,
+      id: 'task2',
+    };
+    const mockMarkConversationViewed = vi.fn();
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [unreadTaskConversation, secondUnreadTask],
+      markConversationViewed: mockMarkConversationViewed,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    const { rerender } = render(
+      <ConversationPanelView {...defaultProps} activeConversationId="task1" />,
+    );
+    expect(mockMarkConversationViewed).toHaveBeenCalledWith('task1');
+
+    rerender(
+      <ConversationPanelView {...defaultProps} activeConversationId="task2" />,
+    );
+
+    expect(mockMarkConversationViewed).toHaveBeenCalledWith('task2');
+  });
+
+  it('does not call markConversationViewed when no conversation is active', () => {
+    const mockMarkConversationViewed = vi.fn();
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      markConversationViewed: mockMarkConversationViewed,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(
+      <ConversationPanelView
+        {...defaultProps}
+        activeConversationId={undefined}
+      />,
+    );
+
+    expect(mockMarkConversationViewed).not.toHaveBeenCalled();
+  });
+
+  it('passes isUnread through to the ConversationPanel item for a scheduler-created, unread conversation', () => {
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [unreadTaskConversation],
+      markConversationViewed: vi.fn(),
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(
+      <ConversationPanelView
+        {...defaultProps}
+        activeConversationId={undefined}
+      />,
+    );
+
+    expect(screen.getByLabelText('unread indicator task1')).toBeTruthy();
+  });
+
+  it('does not pass isUnread through for a read scheduler-created conversation', () => {
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [{ ...unreadTaskConversation, isUnread: false }],
+      markConversationViewed: vi.fn(),
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(
+      <ConversationPanelView
+        {...defaultProps}
+        activeConversationId={undefined}
+      />,
+    );
+
+    expect(screen.queryByLabelText('unread indicator task1')).toBeNull();
   });
 });
 

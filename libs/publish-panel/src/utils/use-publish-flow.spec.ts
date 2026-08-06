@@ -24,7 +24,6 @@ const history: PublishHistoryEntry[] = [
   {
     version: '4.0.1',
     publishedAt: Date.now() - 7 * 24 * 60 * 60 * 1000,
-    publishedBy: 'you',
     folderPath: ['Shared', 'Data Science'],
   },
 ];

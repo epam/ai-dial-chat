@@ -1,6 +1,7 @@
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import type { PublishConversationResultDto } from '@epam/chat-api-client';
 import { conversationsApi } from './api-client';
+import { toPublishRuleDto } from './publish-rules.api';
 
 export const publishConversation = (
   path: string,
@@ -9,7 +10,7 @@ export const publishConversation = (
 ): Promise<PublishConversationResultDto> =>
   conversationsApi.publishConversation({
     path,
-    publishConversationDto: { folderPath, rules },
+    publishConversationDto: { folderPath, rules: rules.map(toPublishRuleDto) },
   });
 
 export const getConversationPublishHistory = (

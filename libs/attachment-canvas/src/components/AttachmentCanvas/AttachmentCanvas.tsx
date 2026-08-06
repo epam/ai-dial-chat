@@ -198,10 +198,43 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     panelStyles,
   } = stylesProp ?? {};
 
+  /* A `fontClassName` replaces the individual typography fields, so their vars
+   * are skipped entirely when one is supplied. */
+  const hasFontClassName = typography?.fontClassName != null;
+
   const cssVars = useMemo(
     () => ({
       ...buildCssVars({
         '--ac-text': colors?.text,
+        '--ac-status-text': colors?.statusText,
+        '--ac-error-icon': colors?.errorIcon,
+        '--ac-open-in-new-tab-text': colors?.openInNewTabText,
+        '--ac-json-border': colors?.jsonBorder,
+        '--ac-json-bg': colors?.jsonBackground,
+        '--ac-json-label': colors?.jsonLabel,
+        '--ac-json-clickable-label': colors?.jsonClickableLabel,
+        '--ac-json-punctuation': colors?.jsonPunctuation,
+        '--ac-json-string': colors?.jsonString,
+        '--ac-json-number': colors?.jsonNumber,
+        '--ac-json-boolean': colors?.jsonBoolean,
+        '--ac-json-null': colors?.jsonNull,
+        '--ac-json-toggle-icon': colors?.jsonToggleIcon,
+        '--ac-json-toggle-icon-hover': colors?.jsonToggleIconHover,
+        '--ac-json-collapsed-text': colors?.jsonCollapsedText,
+        '--ac-json-collapsed-bg': colors?.jsonCollapsedBackground,
+        '--ac-font-family': hasFontClassName
+          ? undefined
+          : typography?.fontFamily,
+        '--ac-font-size': hasFontClassName ? undefined : typography?.fontSize,
+        '--ac-font-weight': hasFontClassName
+          ? undefined
+          : typography?.fontWeight,
+        '--ac-line-height': hasFontClassName
+          ? undefined
+          : typography?.lineHeight,
+        '--ac-letter-spacing': hasFontClassName
+          ? undefined
+          : typography?.letterSpacing,
       }),
       ...extraCssVars,
     }),

@@ -180,15 +180,15 @@ The Responses API returns typed events, while the existing frontend expects Chat
 
 ### Supported events
 
-| Upstream event               | BFF action                                                                    |
-| ----------------------------- | ------------------------------------------------------------------------------ |
-| `response.created`           | Saves the response identifier and sends it in `delta.responseId`              |
-| `response.output_text.delta` | Appends `delta` to the assistant message and sends it as `delta.content`      |
-| `response.completed`         | Validates the final status; a valid status completes the stream and saves `responseId` |
+| Upstream event               | BFF action                                                                                     |
+| ---------------------------- | ---------------------------------------------------------------------------------------------- |
+| `response.created`           | Saves the response identifier and sends it in `delta.responseId`                               |
+| `response.output_text.delta` | Appends `delta` to the assistant message and sends it as `delta.content`                       |
+| `response.completed`         | Validates the final status; a valid status completes the stream and saves `responseId`         |
 | `response.failed`            | Ends generation with an error extracted from `response.error`, preserving text received so far |
-| `response.incomplete`        | Ends generation with an error while preserving text received so far           |
-| `error`                      | Ends generation with the upstream error message                               |
-| unknown event                | Does not send it to the client, writes a debug log, and increments a metric   |
+| `response.incomplete`        | Ends generation with an error while preserving text received so far                            |
+| `error`                      | Ends generation with the upstream error message                                                |
+| unknown event                | Does not send it to the client, writes a debug log, and increments a metric                    |
 
 `event:` lines, empty lines, and SSE comments are ignored. JSON is parsed from `data:` lines. See "Terminal state and `[DONE]`" below for how a stream resolves to success or error — none of `response.failed`, `response.incomplete`, or an in-band `error` ever produce a downstream `data: [DONE]`, and none of them are retried through Chat Completions.
 

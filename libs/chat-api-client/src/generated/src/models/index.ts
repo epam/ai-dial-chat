@@ -708,6 +708,12 @@ export interface ConversationListItemDto {
    * @memberof ConversationListItemDto
    */
   runId?: string;
+  /**
+   * True when this scheduler-created conversation has not yet been opened by the user. Present only when `isScheduledTask` is true.
+   * @type {boolean}
+   * @memberof ConversationListItemDto
+   */
+  isUnread?: boolean;
 }
 /**
  *
@@ -4423,7 +4429,7 @@ export interface PublishRuleDto {
    * @type {string}
    * @memberof PublishRuleDto
    */
-  function: PublishRuleDtoFunctionEnum;
+  _function: PublishRuleDtoFunctionEnum;
   /**
    * Values combined with OR; exactly one pattern when function is REGEX.
    * @type {Array<string>}

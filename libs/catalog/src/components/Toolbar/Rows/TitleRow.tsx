@@ -19,6 +19,7 @@ import { CatalogViewMode } from '../../../types/view-mode';
 import { Filter } from '../../Filter/Filter';
 import { ItemHeader } from '../../ItemHeader/ItemHeader';
 import { SearchBar } from '../../SearchBar/SearchBar';
+import styles from '../Toolbar.module.scss';
 
 interface TitleRowProps {
   totalCount?: number;
@@ -91,11 +92,10 @@ export const TitleRow: FC<TitleRowProps> = ({
         <div className="ms-auto flex items-center gap-2">
           {/* Segmented view toggle */}
           <div
-            className="flex items-center rounded-full border p-[3px]"
-            style={{
-              background: 'var(--bg-layer-sunken, #EEF1F7)',
-              borderColor: 'var(--stroke-tertiary, #e0e6f0)',
-            }}
+            className={mergeClasses(
+              'flex items-center rounded-full border p-[3px]',
+              styles.viewToggleWrapper,
+            )}
           >
             {([CatalogViewMode.Grid, CatalogViewMode.List] as const).map(
               (mode) => {
@@ -114,8 +114,8 @@ export const TitleRow: FC<TitleRowProps> = ({
                     className={mergeClasses(
                       'flex min-h-11 min-w-11 items-center justify-center rounded-full px-3 py-1.5 transition-colors desktop:min-h-8 desktop:min-w-10',
                       isActive
-                        ? 'bg-layer-raised text-accent shadow-sm'
-                        : 'text-secondary hover:text-primary',
+                        ? mergeClasses('shadow-sm', styles.viewToggleActive)
+                        : styles.viewToggleInactive,
                     )}
                   >
                     {mode === CatalogViewMode.Grid ? (
@@ -133,8 +133,7 @@ export const TitleRow: FC<TitleRowProps> = ({
             <>
               {/* Vertical divider */}
               <div
-                className="h-4 w-px shrink-0"
-                style={{ background: 'var(--stroke-secondary, #d1dbea)' }}
+                className={mergeClasses('h-4 w-px shrink-0', styles.divider)}
               />
 
               <DialDropdown

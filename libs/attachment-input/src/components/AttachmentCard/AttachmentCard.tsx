@@ -39,7 +39,6 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     '--ai-tile-hover-icon-bg': colors?.hoverIconBackground,
     '--ai-tile-hover-icon-color': colors?.hoverIconColor,
     '--ai-tile-progress-track': colors?.trackBackground,
-    '--ai-tile-fill-bg': colors?.fillBackground,
   });
 
   const { isImage, isAudio, isLink } = useMemo(

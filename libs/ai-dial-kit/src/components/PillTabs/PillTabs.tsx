@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialTag } from '@epam/ai-dial-ui-kit';
 import { type FC, memo } from 'react';
 import styles from './PillTabs.module.scss';
@@ -17,10 +17,22 @@ export interface PillTabsTypography {
   tabClassName?: string;
 }
 
+/** Color overrides for the {@link PillTabs} component, applied as CSS custom properties. */
+export interface PillTabsColors {
+  /** Label color of an inactive tab. Defaults to `--text-tertiary`. */
+  tabText?: string;
+  /** Label color of a tab on hover. Defaults to `--text-secondary`. */
+  tabTextHover?: string;
+  /** Label color of the active tab. Defaults to `--text-secondary`. */
+  activeTabText?: string;
+}
+
 /** Style overrides for the {@link PillTabs} component. */
 export interface PillTabsStyles {
   /** Typography overrides for the tab label. */
   typography?: PillTabsTypography;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: PillTabsColors;
 }
 
 /** Props for the {@link PillTabs} component. */
@@ -40,9 +52,14 @@ export const PillTabs: FC<PillTabsProps> = memo(
   ({ tabs, activeTabId, onTabChange, styles: pillTabsStyles }) => {
     const { tabClassName = 'dial-tiny-semi-text' } =
       pillTabsStyles?.typography ?? {};
+    const cssVars = buildCssVars({
+      '--pt-tab-text': pillTabsStyles?.colors?.tabText,
+      '--pt-tab-text-hover': pillTabsStyles?.colors?.tabTextHover,
+      '--pt-tab-active-text': pillTabsStyles?.colors?.activeTabText,
+    });
 
     return (
-      <div className="flex flex-nowrap gap-1" role="tablist">
+      <div className="flex flex-nowrap gap-1" role="tablist" style={cssVars}>
         {tabs.map((tab) => {
           const isActive = activeTabId === tab.id;
           return (

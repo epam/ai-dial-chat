@@ -525,4 +525,28 @@ export class ConversationController {
     const { at, bucket } = req.user as SessionUser;
     return this.conversationService.deleteConversation(query.path, at, bucket);
   }
+
+  @Patch('viewed')
+  @HttpCode(204)
+  @ApiOperation({
+    operationId: 'markConversationViewed',
+    summary: 'Mark a conversation as viewed',
+    description:
+      'Idempotently records that the authenticated user has opened this conversation. Used to clear the unread indicator for scheduler-created conversations.',
+  })
+  @ApiResponse({ status: 204, description: 'Conversation marked as viewed' })
+  @ApiResponse({ status: 400, description: 'Missing or invalid path' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 502, description: 'DIAL Core error' })
+  markConversationViewed(
+    @Req() req: Request,
+    @Query() query: ConversationPathDto,
+  ) {
+    const { at, bucket } = req.user as SessionUser;
+    return this.conversationService.markConversationViewed(
+      query.path,
+      at,
+      bucket,
+    );
+  }
 }

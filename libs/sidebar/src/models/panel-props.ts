@@ -17,7 +17,7 @@ export interface SidebarPanelColors {
 
 /** Typography overrides for the `SidebarPanel` component. */
 export interface SidebarPanelTypography {
-  /** CSS class applied to the title element. Defaults to `'dial-body-semi-bold-text'`. */
+  /** CSS class applied to the panel root, inherited by all panel content. */
   fontClassName?: string;
 }
 
@@ -35,7 +35,7 @@ export interface SidebarPanelStyles {
   colors?: SidebarPanelColors;
   /** Typography overrides applied via CSS custom properties. */
   typography?: SidebarPanelTypography;
-  /** CSS class applied to the title element. Defaults to `'dial-body-semi-bold-text'`. */
+  /** CSS class applied to the header title element. Defaults to `'dial-h1-text'`. */
   titleClassName?: string;
   /** Extra class name(s) merged onto the scrollable body `<div>`. */
   bodyClassName?: string;

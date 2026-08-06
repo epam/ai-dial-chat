@@ -240,6 +240,7 @@ class ConversationListItemDto {
   isScheduledTask: boolean; // True when the resource path matches the .scheduler reserved-segment pattern
   scheduleId?: string;      // Present only when isScheduledTask === true; the scheduler task id from the path
   runId?: string;           // Present only when isScheduledTask === true; the scheduler run id from the path
+  isUnread?: boolean;       // Present only when isScheduledTask === true; true when the user has not yet opened this conversation
 }
 
 class ConversationListResponseDto {
@@ -248,32 +249,33 @@ class ConversationListResponseDto {
 }
 ```
 
-**Three-way parallel fetch.** The service issues all of the following in a single `Promise.all`, always against the bucket root (recursive, no folder scoping):
+**Four-way parallel fetch.** The service issues all of the following in a single `Promise.all`, always against the bucket root (recursive, no folder scoping):
 1. `getConversationMetadata(bucket, '', { recursive: true, limit, token: userCursor })` — user's own conversations
 2. `getConversationMetadata('public', '', { recursive: true, limit, token: publicCursor })` — organisation-published conversations
 3. `getSharedResources({ body: { resourceTypes: ['CONVERSATION'], with: 'me' } })` — conversations shared directly with the user
 4. `UserConfigService.getPinnedIds(token, bucket)` — pinned conversation IDs
+5. `ScheduledTaskUnreadService.getViewedIds(token, bucket)` — viewed scheduler-created conversation IDs
 
-Items from all three sources are merged and sorted by `updatedAt` descending. `FOLDER` items are filtered out from bucket results. The `getSharedResources` response does not include `updatedAt`; shared items default to `updatedAt: 0`.
+Items from all three data sources are merged and sorted by `updatedAt` descending. `FOLDER` items are filtered out from bucket results. The `getSharedResources` response does not include `updatedAt`; shared items default to `updatedAt: 0`.
 
 **Ownership flags.** Items from the `'public'` bucket always have `publishedWithMe: true` forced, regardless of the DIAL Core flag value. Items from `getSharedResources` always have `sharedWithMe: true` forced. User-bucket items pass through the DIAL Core `sharedWithMe`/`publishedWithMe` flags unchanged.
 
-**No personal/public merging.** The service SHALL NOT attempt to match or merge a user-bucket item with a public-bucket item, even when a personal conversation has been published and both a personal copy and a public copy exist. Each is returned as its own independent list item with its own `id`: the personal copy keeps its user-bucket `id`, real `isReadonly` (from DIAL Core permissions), and `publishedWithMe: false` (unless DIAL Core itself reports otherwise); the public copy is a separate entry with its own `conversations/public/...` id, `isReadonly: true`, and `publishedWithMe: true`. This guarantees any link built from a returned `id` (conversation open/navigation links, and share links created via `POST /api/v1/share`) always resolves to the bucket that specific item actually represents, and that the personal copy's pin status and permissions are never affected by publishing.
+**No personal/public merging.** The service SHALL NOT attempt to match or merge a user-bucket item with a public-bucket item, even when a personal conversation has been published and both a personal copy and a public copy exist. Each is returned as its own independent list item with its own `id`: the personal copy keeps its user-bucket `id`, real `isReadonly` (from DIAL Core permissions), and `publishedWithMe: false` (unless DIAL Core itself reports otherwise); the public copy is a separate entry with its own `conversations/public/...` id, `isReadonly: true`, and `publishedWithMe: true`. This guarantees any link built from a returned `id` (conversation open/navigation links, and share links created via `POST /api/v1/share`) always resolves to the bucket that specific item actually represents, and that the personal copy's pin status, unread status, and permissions are never affected by publishing.
 
-**Scheduler metadata.** For every merged item (from any of the three sources), the service SHALL call `parseScheduledTaskConversationPath(item.id)` (see the "Scheduler-created conversations are detected from their DIAL Core resource path" requirement above). When it returns a non-null result, the item SHALL have `isScheduledTask: true`, `scheduleId` and `runId` set from the result. When it returns `null`, the item SHALL have `isScheduledTask: false` with `scheduleId`/`runId` omitted. This detection is independent per item — a scheduler-created conversation that also happens to be shared or published is still tagged using its own resource id, not any other copy's id.
+**Scheduler metadata.** For every merged item (from any of the three data sources), the service SHALL call `parseScheduledTaskConversationPath(item.id)` (see the "Scheduler-created conversations are detected from their DIAL Core resource path" requirement above). When it returns a non-null result, the item SHALL have `isScheduledTask: true`, `scheduleId` and `runId` set from the result, and `isUnread` set to `true` unless the item's `id` is present in the viewed-ids set from `ScheduledTaskUnreadService.getViewedIds`, in which case `isUnread: false`. When `parseScheduledTaskConversationPath` returns `null`, the item SHALL have `isScheduledTask: false` with `scheduleId`/`runId`/`isUnread` all omitted. This detection is independent per item — a scheduler-created conversation that also happens to be shared or published is still tagged and marked unread/viewed using its own resource id, not any other copy's id.
 
 **Compound `nextToken`.** Pagination state is tracked independently for the user bucket and public bucket (the `getSharedResources` endpoint returns all results at once and has no cursor). The response `nextToken` format is `ct1.<base64url(JSON)>` where the JSON object has optional fields `u` (user-bucket cursor) and `p` (public-bucket cursor). An incoming token without the `ct1.` prefix is treated as a legacy user-only cursor. The response `nextToken` is omitted when neither paginated source has more results.
 
-**Resilience.** If the public bucket or shared resources call fails (throws or returns an error response), the endpoint logs a warning and continues — it still returns results from the other sources. If the user bucket call fails, the endpoint returns the error to the client.
+**Resilience.** If the public bucket, shared resources, or viewed-ids call fails (throws or returns an error response), the endpoint logs a warning and continues — it still returns results from the other sources, with affected items falling back to `isUnread: true` for scheduler-created items when the viewed-ids fetch failed (fail open, so a transient error never silently hides a genuinely unread task). If the user bucket call fails, the endpoint returns the error to the client.
 
-`isPinned` is populated by `UserConfigService.getPinnedIds` against the user's DIAL Core bucket. See the [user-config-api spec](../user-config-api/spec.md). Errors fall back to `[]`.
+`isPinned` is populated by `UserConfigService.getPinnedIds` against the user's DIAL Core bucket. See the [user-config-api spec](../user-config-api/spec.md). `isUnread` is populated by `ScheduledTaskUnreadService.getViewedIds` against the user's DIAL Core bucket. See the `scheduled-task-unread-tracking` spec. Both fall back to `[]`/`isUnread: true` on error.
 
 Rate limiting: global default applies (no handler-level `@Throttle` override).
 
 Generated-client impact:
 - OpenAPI operationId: `listConversations`
 - SDK method: `ConversationsApi.listConversations({ limit?, nextToken? })`
-- Response type: `ConversationListResponseDto` (regenerated to include `isScheduledTask`/`scheduleId`/`runId` on `ConversationListItemDto`)
+- Response type: `ConversationListResponseDto` (regenerated to include `isScheduledTask`/`scheduleId`/`runId`/`isUnread` on `ConversationListItemDto`)
 - Frontend callers use the normal (non-Raw) generated method via `apps/chat/src/server-api/conversations.api.ts`
 
 Error codes:
@@ -329,36 +331,33 @@ Error codes:
 #### Scenario: FOLDER items are excluded from the response
 
 - **WHEN** DIAL Core returns a mix of file items and items with `nodeType === 'FOLDER'` from either bucket
-- **THEN** only file items appear in the response `items` array
+- **THEN** only non-FOLDER items appear in the response `items`
 
-#### Scenario: Invalid limit returns 400
+#### Scenario: Scheduler-created conversation not yet viewed is marked unread
 
-- **WHEN** `GET /api/v1/conversations/list?limit=1001` is called (exceeds max 1000)
-- **THEN** the response is 400 with a validation error
-
-#### Scenario: Published conversation's personal and public copies both appear as independent items
-
-- **WHEN** a user-bucket item and a public-bucket item — the personal and published copies of the same conversation — are both returned by DIAL Core in the same `listConversations` call, regardless of whether their relative paths coincide
-- **THEN** the response `items` array contains two entries: one with the user-bucket item's own `id`, real `isReadonly`, and `publishedWithMe: false`, and one with the public-bucket item's own `id` (`conversations/public/...`), `isReadonly: true`, and `publishedWithMe: true`
-- **AND** neither item's `id`, `isReadonly`, or `isPinned` is altered because of the other item's existence
-
-#### Scenario: Publishing a pinned personal conversation does not change its pin status
-
-- **WHEN** a user has pinned their own conversation (its user-bucket `id` is in the pinned-ids set) and that same conversation has also been published to the public bucket
-- **THEN** the response item with the user-bucket `id` has `isPinned: true`
-- **AND** the response item with the public-bucket `id` has `isPinned: false` (pins are never applied to a `publishedWithMe: true` item unless its own id was explicitly pinned)
-
-#### Scenario: Scheduler-created conversation is tagged with schedule and run ids
-
-- **GIVEN** a user-bucket item with `id: "conversations/test-bucket/.scheduler/sched_abc/gpt-4o__Morning briefing__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5"`
+- **GIVEN** a conversation whose id matches the `.scheduler/{scheduleId}/{runId}` path pattern
+- **AND** that id is absent from the user's viewed-ids file
 - **WHEN** `GET /api/v1/conversations/list` is called
-- **THEN** the matching response item has `isScheduledTask: true`, `scheduleId: "sched_abc"`, `runId: "c7aeee4c-c01f-41f2-b0db-b8a1a39943f5"`
+- **THEN** that item has `isScheduledTask: true` and `isUnread: true`
 
-#### Scenario: Normal conversation has isScheduledTask false with no ids
+#### Scenario: Scheduler-created conversation already viewed is not marked unread
 
-- **GIVEN** a user-bucket item with `id: "conversations/test-bucket/gpt-4o__Morning briefing__uuid"`
+- **GIVEN** a conversation whose id matches the `.scheduler/{scheduleId}/{runId}` path pattern
+- **AND** that id is present in the user's viewed-ids file
 - **WHEN** `GET /api/v1/conversations/list` is called
-- **THEN** the matching response item has `isScheduledTask: false` and no `scheduleId`/`runId` fields
+- **THEN** that item has `isScheduledTask: true` and `isUnread: false`
+
+#### Scenario: Non-scheduler conversation omits isUnread
+
+- **GIVEN** a conversation whose id does not match the `.scheduler/{scheduleId}/{runId}` path pattern
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** that item has `isScheduledTask: false` and `isUnread` omitted
+
+#### Scenario: Viewed-ids fetch failure falls back to unread for scheduler items
+
+- **GIVEN** the viewed-ids bucket read fails (network error or error response)
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** the response is still 200, a warning is logged, and every scheduler-created item has `isUnread: true`
 
 ---
 

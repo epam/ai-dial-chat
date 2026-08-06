@@ -7,17 +7,17 @@ import {
 } from '@epam/ai-dial-sidebar';
 import { DialNoDataContent, GhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconDownload } from '@tabler/icons-react';
-import { memo, useLayoutEffect, useMemo, useState, type FC } from 'react';
+import {
+  memo,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  type FC,
+  type ReactNode,
+} from 'react';
 import type { ConversationSourcesPanelProps } from '../../models/conversation-sources-panel-props';
 import FilesSection from '../FilesSection/FilesSection';
 import SourcesSection from '../SourcesSection/SourcesSection';
-export type {
-  ConversationSourcesPanelColors,
-  ConversationSourcesPanelLabels,
-  ConversationSourcesPanelProps,
-  ConversationSourcesPanelStyles,
-  ConversationSourcesPanelTypography,
-} from '../../models/conversation-sources-panel-props';
 
 const includesIgnoreCase = (text: string, query: string): boolean =>
   text.toLowerCase().includes(query.toLowerCase());
@@ -85,6 +85,48 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
     filteredGenerated.length === 0 &&
     filteredSources.length === 0;
 
+  let bodyContent: ReactNode;
+  if (isEmpty) {
+    bodyContent = (
+      <div className="flex h-full items-center justify-center">
+        <DialNoDataContent title={labels.noDataLabel} />
+      </div>
+    );
+  } else if (isNoResults) {
+    bodyContent = <PanelNoResults label={labels.noResultsLabel} />;
+  } else {
+    bodyContent = (
+      <>
+        <FilesSection
+          attachments={filteredUploaded}
+          title={labels.uploadedSectionTitle}
+          searchQuery={searchQuery}
+          titleClassName={styles?.typography?.sectionTitleClassName}
+          onAttachmentClick={onAttachmentClick}
+          attachmentClickLabel={labels.attachmentClickLabel}
+        />
+        <FilesSection
+          attachments={filteredGenerated}
+          title={labels.generatedSectionTitle}
+          searchQuery={searchQuery}
+          titleClassName={styles?.typography?.sectionTitleClassName}
+          onAttachmentClick={onAttachmentClick}
+          attachmentClickLabel={labels.attachmentClickLabel}
+        />
+        <SourcesSection
+          sources={filteredSources}
+          title={labels.sourcesSectionTitle}
+          searchQuery={searchQuery}
+          typography={styles?.typography}
+          colors={styles?.colors}
+          copyLabel={labels.copySourceLabel}
+          copiedLabel={labels.sourceCopiedLabel}
+          onSourceClick={onSourceClick}
+        />
+      </>
+    );
+  }
+
   return (
     <SidebarPanel
       isOpen={isOpen}
@@ -125,43 +167,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
       <span role="status" aria-live="polite" className="sr-only">
         {isNoResults ? labels.noResultsLabel : ''}
       </span>
-      <div className="flex-1 overflow-y-auto p-4">
-        {isEmpty ? (
-          <div className="flex h-full items-center justify-center">
-            <DialNoDataContent title={labels.noDataLabel} />
-          </div>
-        ) : isNoResults ? (
-          <PanelNoResults label={labels.noResultsLabel} />
-        ) : (
-          <>
-            <FilesSection
-              attachments={filteredUploaded}
-              title={labels.uploadedSectionTitle}
-              searchQuery={searchQuery}
-              titleClassName={styles?.typography?.sectionTitleClassName}
-              onAttachmentClick={onAttachmentClick}
-              attachmentClickLabel={labels.attachmentClickLabel}
-            />
-            <FilesSection
-              attachments={filteredGenerated}
-              title={labels.generatedSectionTitle}
-              searchQuery={searchQuery}
-              titleClassName={styles?.typography?.sectionTitleClassName}
-              onAttachmentClick={onAttachmentClick}
-              attachmentClickLabel={labels.attachmentClickLabel}
-            />
-            <SourcesSection
-              sources={filteredSources}
-              title={labels.sourcesSectionTitle}
-              searchQuery={searchQuery}
-              typography={styles?.typography}
-              colors={styles?.colors}
-              copyLabel={labels.copySourceLabel}
-              onSourceClick={onSourceClick}
-            />
-          </>
-        )}
-      </div>
+      <div className="flex-1 overflow-y-auto p-4">{bodyContent}</div>
     </SidebarPanel>
   );
 };

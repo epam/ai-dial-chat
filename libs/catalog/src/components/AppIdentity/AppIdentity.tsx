@@ -5,7 +5,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { DialEllipsisTooltip, Highlight } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
-import { AppIdentityColors } from '../../models/app-identity-styles';
+import { AppIdentityStyles } from '../../models/app-identity-styles';
 import { DeploymentSize } from '../../types/deployment-icon-size';
 import { CatalogEntityType } from '../../types/entity-type';
 import { EntityTypeLabel } from '../EntityTypeLabel/EntityTypeLabel';
@@ -32,16 +32,8 @@ export interface AppIdentityProps {
   query?: string;
   /** Additional classes applied to the root element. */
   className?: string;
-  /** CSS class for the type label. Default: 'dial-caption-semi-text'. */
-  typeClassName?: string;
-  /** Typography CSS class for the entity name. Default: 'dial-body-semi-text'. */
-  nameClassName?: string;
-  /** Color overrides applied as CSS custom properties. */
-  colors?: AppIdentityColors;
-  /** CSS class for the version string. Default: 'dial-tiny-text text-secondary'. */
-  versionClassName?: string;
-  /** CSS class for the last-used line text and icon. Default: 'dial-tiny-text text-secondary'. */
-  lastUsedClassName?: string;
+  /** Grouped color and typography overrides. */
+  styles?: AppIdentityStyles;
   /** Element rendered at the end of the last-used row (size 'lg' only). */
   lastUsedTrailing?: ReactNode;
   /** Additional CSS class applied to the icon wrapper div (e.g. for hover-scale animations). */
@@ -58,20 +50,23 @@ export const AppIdentity: FC<AppIdentityProps> = ({
   size,
   query,
   className,
-  typeClassName = 'dial-caption-semi-text',
-  nameClassName = 'dial-body-semi-text',
-  colors,
-  versionClassName = 'dial-tiny-text text-secondary',
-  lastUsedClassName = 'dial-tiny-text text-tertiary',
+  styles: appIdentityStyles,
   lastUsedTrailing,
   iconClassName,
 }) => {
+  const colors = appIdentityStyles?.colors;
+  const typography = appIdentityStyles?.typography ?? {};
+
   const isLg = size === DeploymentSize.LG;
   const logoClass = isLg
     ? 'size-[54px] rounded-[14px]'
     : 'size-[44px] rounded-lg';
   const logoSize = isLg ? 54 : 44;
-  const cssVars = buildCssVars({ '--ai-name-text': colors?.nameColor });
+  const cssVars = buildCssVars({
+    '--ai-name-text': colors?.nameColor,
+    '--ai-last-used-text': colors?.lastUsedColor,
+    '--ai-version-text': colors?.versionColor,
+  });
 
   return (
     <div
@@ -101,14 +96,17 @@ export const AppIdentity: FC<AppIdentityProps> = ({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <EntityTypeLabel type={type} className={typeClassName} />
+        <EntityTypeLabel
+          type={type}
+          className={typography?.typeClassName ?? 'dial-caption-semi-text'}
+        />
 
         <div className="flex min-w-0 flex-col">
           <div className="flex min-w-0 items-start gap-1 overflow-hidden">
             <span
               className={mergeClasses(
                 'flex-3 min-w-0 truncate',
-                nameClassName,
+                typography?.nameClassName ?? 'dial-body-semi-text',
                 styles.name,
               )}
             >
@@ -119,7 +117,8 @@ export const AppIdentity: FC<AppIdentityProps> = ({
                 text={version}
                 className={mergeClasses(
                   'flex-2 tabular-nums',
-                  versionClassName,
+                  typography?.versionClassName ?? 'dial-tiny-text',
+                  styles.version,
                 )}
               />
             )}
@@ -127,7 +126,13 @@ export const AppIdentity: FC<AppIdentityProps> = ({
 
           {isLg && lastUsed != null && (
             <div className="flex items-center gap-2">
-              <span className={mergeClasses('tabular-nums', lastUsedClassName)}>
+              <span
+                className={mergeClasses(
+                  'tabular-nums',
+                  typography?.lastUsedClassName ?? 'dial-tiny-text',
+                  styles.lastUsed,
+                )}
+              >
                 {lastUsed}
               </span>
               {lastUsedTrailing}

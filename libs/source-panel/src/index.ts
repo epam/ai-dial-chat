@@ -5,5 +5,5 @@ export type {
   ConversationSourcesPanelProps,
   ConversationSourcesPanelStyles,
   ConversationSourcesPanelTypography,
-} from './components/ConversationSourcesPanel/ConversationSourcesPanel';
+} from './models/conversation-sources-panel-props';
 export type { QuotationSource } from './models/quotation-source';

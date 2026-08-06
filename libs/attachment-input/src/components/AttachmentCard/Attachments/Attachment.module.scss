@@ -8,6 +8,12 @@
         --ai-tile-bg-hover,
         var(--bg-control-neutral-hover, #e0e6f0)
       );
+      /* Falls back to the base border so the hover state only shifts the
+       * border when a host actually overrides it. */
+      border-color: var(
+        --ai-tile-border-hover,
+        var(--ai-tile-border, var(--stroke-secondary, #d1dbea))
+      );
     }
   }
 

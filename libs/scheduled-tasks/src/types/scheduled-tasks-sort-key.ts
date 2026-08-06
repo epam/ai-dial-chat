@@ -1,11 +1,15 @@
-/** Sort keys supported by the Scheduled Tasks toolbar. */
+/**
+ * Sort keys supported by the Scheduled Tasks toolbar. The lib does not sort —
+ * it reports the active key through `onSortChange` and renders `items` in the
+ * order the host supplies them.
+ */
 export enum ScheduledTasksSortKey {
-  /** Sort by `sortValues.nextRunAt` ascending — earliest next run first. Items with no `nextRunAt` sort last. */
+  /** Earliest next run first. */
   FirstToRun = 'firstToRun',
-  /** Sort by `sortValues.nextRunAt` descending — latest next run first. Items with no `nextRunAt` sort last. */
+  /** Latest next run first. */
   LastToRun = 'lastToRun',
-  /** Sort by `sortValues.createdAt` descending — most recently created first. Items with no `createdAt` sort last. */
+  /** Most recently created first. */
   Newest = 'newest',
-  /** Sort by `item.displayName` ascending, case-insensitive. */
+  /** Task name ascending, case-insensitive. */
   NameAZ = 'nameAZ',
 }

@@ -87,9 +87,13 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
     return () => observer.disconnect();
   }, [computeVisibleCount, starters.length]);
 
+  /* Re-measure once the newly rendered pill set is mounted: the width cache is
+   * only refreshed when every pill up to the cap has a live ref, which is not
+   * the case on the render that collapsed them. Converges because a repeated
+   * count does not re-render. */
   useEffect(() => {
     computeVisibleCount(starters.length);
-  });
+  }, [computeVisibleCount, starters.length, visibleCount]);
 
   const iconProps = useMemo(() => {
     return {
@@ -101,9 +105,8 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
 
   if (starters.length === 0) return null;
 
-  const effectiveVisible = Math.min(visibleCount, MAX_VISIBLE);
-  const visibleStarters = starters.slice(0, effectiveVisible);
-  const overflowStarters = starters.slice(effectiveVisible);
+  const visibleStarters = starters.slice(0, visibleCount);
+  const overflowStarters = starters.slice(visibleCount);
 
   const overflowItems: DropdownItem[] = overflowStarters.map(
     (starter, idx) => ({

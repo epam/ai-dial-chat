@@ -18,7 +18,7 @@
     outline: none;
     border-color: color-mix(
       in srgb,
-      var(--stroke-info, #124ace) 50%,
+      var(--cat-filter-btn-border-focus, var(--stroke-info, #124ace)) 50%,
       transparent
     );
     box-shadow: none;
@@ -26,28 +26,31 @@
 }
 
 .filterBtnActive {
-  border-color: var(--stroke-info, #124ace);
+  border-color: var(
+    --cat-filter-btn-border-active,
+    var(--stroke-info, #124ace)
+  );
 }
 
 .filterBtnOpen {
   border-color: color-mix(
     in srgb,
-    var(--stroke-info, #124ace) 50%,
+    var(--cat-filter-btn-border-open, var(--stroke-info, #124ace)) 50%,
     transparent
   );
 }
 
 /* Matches dial-small-semi-text (14px / 20px, semibold). */
 .filterBtnLabel {
-  color: var(--text-primary, #161b2d);
+  color: var(--cat-filter-btn-label, var(--text-primary, #161b2d));
 }
 
 .filterBtnFunnel {
-  color: var(--text-secondary, #6b7280);
+  color: var(--cat-filter-btn-funnel, var(--text-secondary, #6b7280));
 }
 
 .filterBtnChevron {
-  color: var(--text-tertiary, #c7cbd4);
+  color: var(--cat-filter-btn-chevron, var(--text-tertiary, #c7cbd4));
   transition: transform 150ms ease;
 
   @media (prefers-reduced-motion: reduce) {
@@ -73,7 +76,10 @@
 .row {
   @media (hover: hover) {
     &:hover {
-      background: var(--bg-layer-raised, #fcfcfc);
+      background: var(
+        --cat-filter-row-hover-bg,
+        var(--bg-layer-raised, #fcfcfc)
+      );
     }
   }
 
@@ -83,23 +89,30 @@
 }
 
 .rowChecked {
-  background: var(--bg-accent-primary-alpha, rgba(125, 164, 255, 0.15));
+  background: var(
+    --cat-filter-row-checked-bg,
+    var(--bg-accent-primary-alpha, #7da4ff2e)
+  );
 
   @media (hover: hover) {
     &:hover {
-      background: var(--bg-accent-primary-alpha, rgba(125, 164, 255, 0.15));
+      background: var(
+        --cat-filter-row-checked-bg,
+        var(--bg-accent-primary-alpha, #7da4ff2e)
+      );
     }
   }
 }
 
 .rowLabel {
-  color: var(--text-primary, #161b2d);
+  color: var(--cat-filter-row-label, var(--text-primary, #161b2d));
 }
 
 /* Custom 20 × 20 checkbox ------------------------------------ */
 
 .checkbox {
-  border: 1.5px solid rgba(0, 0, 0, 0.12); /* stroke-hover */
+  border: 1.5px solid
+    var(--cat-filter-checkbox-border, var(--stroke-tertiary, #e0e6f0));
   background: var(
     --cat-filter-checkbox-bg,
     #ffffff
@@ -136,7 +149,7 @@
 }
 
 .sectionLabel {
-  color: var(--text-tertiary, #c7cbd4);
+  color: var(--cat-filter-section-label, var(--text-tertiary, #c7cbd4));
 }
 
 .footer {

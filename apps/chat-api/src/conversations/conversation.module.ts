@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppConfigModule } from '../app-config/app-config.module';
 import { DeploymentsModule } from '../deployments/deployments.module';
+import { ScheduledTaskUnreadModule } from '../scheduled-task-unread/scheduled-task-unread.module';
 import { UserConfigModule } from '../user-config/user-config.module';
 import { ConversationGenerationService } from './conversation-generation.service';
 import { ConversationNamingService } from './conversation-naming.service';
@@ -13,7 +14,12 @@ import { ChatCompletionsAdapter } from './generation/chat-completions.adapter';
 import { ResponsesAdapter } from './generation/responses.adapter';
 
 @Module({
-  imports: [UserConfigModule, AppConfigModule, DeploymentsModule],
+  imports: [
+    UserConfigModule,
+    ScheduledTaskUnreadModule,
+    AppConfigModule,
+    DeploymentsModule,
+  ],
   controllers: [ConversationController, ConversationPublishController],
   providers: [
     ConversationService,

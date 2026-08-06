@@ -59,7 +59,7 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
       aria-label={t(AnnouncementBannerI18nKeys.RegionAriaLabel)}
       className={mergeClasses(
         styles.root,
-        'flex items-center justify-center gap-3 px-4 py-2',
+        'flex items-center justify-center gap-3 px-4 py-2 text-control-permanent',
         className,
       )}
     >
@@ -76,7 +76,7 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
         ariaLabel={t(AnnouncementBannerI18nKeys.CloseLabel)}
         onClose={() => dismiss(announcementHtml ?? '')}
         size={16}
-        className="bg-blackout shrink-0 rounded p-[3px] !text-control-permanent"
+        className="shrink-0 rounded bg-backdrop p-[3px] !text-control-permanent"
       />
     </div>
   );

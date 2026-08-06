@@ -14,8 +14,24 @@ export interface ListViewTypography {
 
 /** Color overrides for `ListView` cells, applied via CSS custom properties. */
 export interface ListViewColors {
-  /** Color for item name text. Fallback: `--text-primary`. */
-  nameText?: string;
+  /** Grid container background. Fallback: `--bg-layer-raised`. */
+  background?: string;
+  /** Grid container border color. Fallback: `--stroke-secondary`. */
+  border?: string;
+  /** Sticky header background. Fallback: `--bg-layer-raised`. */
+  headerBackground?: string;
+  /** Divider color between header and rows. Fallback: `--stroke-tertiary`. */
+  rowDivider?: string;
+  /** Color of the filled star icon in the favorite column. Fallback: `--text-warning-icon`. */
+  starFilled?: string;
+  /** Background color of even-indexed grid rows. Fallback: `--bg-layer-base`. */
+  rowEvenBackground?: string;
+  /** Border color of the selected row. Fallback: `--stroke-info`. */
+  selectedRowBorder?: string;
+  /** Background color (tint) of the selected row. Fallback: `--bg-accent-primary-alpha`. */
+  selectedRowBackground?: string;
+  /** Color of the checkmark icon in the selected row's name cell. Fallback: `--text-accent`. */
+  selectedRowCheckIcon?: string;
 }
 
 /** Combined style overrides for `ListView`. */

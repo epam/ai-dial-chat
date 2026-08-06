@@ -9,13 +9,11 @@ const entries: PublishHistoryEntry[] = [
   {
     version: '4.0.0',
     publishedAt: Date.now() - 3 * DAY_MS,
-    publishedBy: 'you',
     folderPath: ['Shared', 'Data Science', 'Published models'],
   },
   {
     version: '3.9.0',
     publishedAt: Date.now() - 90 * DAY_MS,
-    publishedBy: 'A. Ivanov',
     folderPath: ['Shared', 'Production'],
   },
 ];

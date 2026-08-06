@@ -17,8 +17,6 @@ export interface DailyLimit {
 export interface CatalogItemSummary {
   /** Lifecycle or access-tier tag; renders a colored badge next to the entity type. */
   tag?: EntityTag;
-  /** URL of the provider/publisher badge image shown in the header. */
-  badgeImageUrl?: string;
   /** Daily usage limit; when present renders a labeled progress bar. */
   dailyLimit?: DailyLimit;
 }

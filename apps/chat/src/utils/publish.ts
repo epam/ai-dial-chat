@@ -30,7 +30,6 @@ export const mapPublishHistoryEntryDto = (
 ): PublishHistoryEntry => ({
   version: dto.version,
   publishedAt: Date.parse(dto.publishedAt),
-  publishedBy: dto.publishedBy,
   folderPath: dto.folderPath.split('/').filter(Boolean),
 });
 
