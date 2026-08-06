@@ -5,7 +5,7 @@ import {
   NeutralButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
-import { FC } from 'react';
+import { FC, ReactNode } from 'react';
 
 export interface CopyButtonProps {
   onClick: () => void;
@@ -16,6 +16,8 @@ export interface CopyButtonProps {
   size?: ElementSize;
   /** Accessible label for the button; falls back to `copyLabel` when omitted. */
   ariaLabel?: string;
+  iconSize?: number;
+  iconCopy?: ReactNode;
 }
 export const CopyIconButton: FC<CopyButtonProps> = ({
   onClick,
@@ -24,15 +26,17 @@ export const CopyIconButton: FC<CopyButtonProps> = ({
   copiedLabel,
   size = ElementSize.Standard,
   ariaLabel,
+  iconSize = DIAL_ICON_SIZE.LG,
+  iconCopy,
 }) => {
   return (
     <GhostIconButton
       size={size}
       icon={
         isCopied ? (
-          <IconCheck size={DIAL_ICON_SIZE.LG} stroke={1.5} aria-hidden />
+          <IconCheck size={iconSize} stroke={1.5} aria-hidden />
         ) : (
-          <IconCopy size={DIAL_ICON_SIZE.LG} stroke={1.5} aria-hidden />
+          (iconCopy ?? <IconCopy size={iconSize} stroke={1.5} aria-hidden />)
         )
       }
       aria-label={isCopied ? copiedLabel : (ariaLabel ?? copyLabel)}
