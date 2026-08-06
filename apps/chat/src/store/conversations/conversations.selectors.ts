@@ -1,6 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { getLocalizedEntityIdName } from '@/src/utils/app/application';
 import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
@@ -39,6 +38,7 @@ import {
   isEntityIdLocal,
   isRootId,
 } from '@/src/utils/app/id';
+import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { checkIsNotAllowedModelUtil } from '@/src/utils/app/models';
 import { isEntityReadOnly } from '@/src/utils/app/permissions';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';

@@ -9,7 +9,6 @@ import classNames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { withEntityIdName } from '@/src/utils/app/application';
 import {
   isEntityNameValid,
   isVersionExists,
@@ -28,6 +27,7 @@ import {
   isPromptId,
   isToolsetId,
 } from '@/src/utils/app/id';
+import { withEntityIdName } from '@/src/utils/app/marketplace-localization';
 import {
   allEditedFoldersAreValid,
   getFirstReviewUrl,

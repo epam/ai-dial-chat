@@ -1,9 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import {
-  getLocalizedEntityIdName,
-  withEntityIdName,
-} from '@/src/utils/app/application';
 import { sortItemsVersions } from '@/src/utils/app/common';
 import { withoutFileManagerPlaceholderByName } from '@/src/utils/app/file';
 import {
@@ -14,6 +10,10 @@ import {
   getGroupMarketplaceEntityKey,
   groupMarketplaceEntityAndSaveOrder,
 } from '@/src/utils/app/marketplace';
+import {
+  getLocalizedEntityIdName,
+  withEntityIdName,
+} from '@/src/utils/app/marketplace-localization';
 import {
   filterHiddenEntities,
   shouldShowHiddenEntities,

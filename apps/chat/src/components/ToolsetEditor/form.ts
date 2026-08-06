@@ -1,7 +1,7 @@
 import {
   getLocalizedEntityIdName,
-  parseLocalizedDescription,
-} from '@/src/utils/app/application';
+  parseLocalizedField,
+} from '@/src/utils/app/marketplace-localization';
 import {
   getStorageSafeUniqueToolsetName,
   isToolsetSignedIn,
@@ -209,7 +209,7 @@ export const getDefaultFormData = ({
         DEFAULT_TOOLSET_NAME),
     endpoint: toolset ? (toolset.endpoint ?? '') : ENDPOINT_PLACEHOLDER,
     protocol: toolset?.transport ?? ToolsetTransportType.HTTP,
-    description: parseLocalizedDescription(locale, toolset?.description),
+    description: parseLocalizedField(locale, toolset?.description),
     allowedTools: toolset?.allowedTools ?? [],
     iconUrl: toolset?.iconUrl ?? '',
     version: toolset ? (toolset.version ?? '') : DEFAULT_VERSION,

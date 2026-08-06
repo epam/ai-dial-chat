@@ -3,7 +3,6 @@ import { UseFormClearErrors, UseFormSetError } from 'react-hook-form';
 import {
   fitApplicationNameToStorageLimits,
   getEditorSchemaType,
-  getLocalizedEntityIdName,
   getMcpToolsetStr,
   getQuick2AppDocumentUrl,
   getQuickAppDocumentUrl,
@@ -12,13 +11,16 @@ import {
   getWebAPIToolsetStr,
   isDialAiEntityModel,
   migrateMCPToolsetIdName,
-  parseLocalizedDescription,
   safeStringifyApplicationFeatures,
 } from '@/src/utils/app/application';
 import { getDefaultSchemaModel } from '@/src/utils/app/application-type-schema';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
+import {
+  getLocalizedEntityIdName,
+  parseLocalizedField,
+} from '@/src/utils/app/marketplace-localization';
 import {
   doesAgentSupportMcp,
   doesModelAllowTemperature,
@@ -426,7 +428,7 @@ const getBaseFormData = ({
       DEFAULT_APPLICATION_NAME),
   version: app ? (app.version ?? '') : DEFAULT_VERSION,
   iconUrl: app?.iconUrl ?? '',
-  description: parseLocalizedDescription(locale, app?.description),
+  description: parseLocalizedField(locale, app?.description),
   topics: app?.topics ?? [],
   locals: [],
 });

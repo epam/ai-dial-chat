@@ -17,11 +17,7 @@ import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
 import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
-import {
-  getModelName,
-  isQuickApp2,
-  parseLocalizedName,
-} from '@/src/utils/app/application';
+import { getModelName, isQuickApp2 } from '@/src/utils/app/application';
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
   excludeSystemMessages,
@@ -31,6 +27,7 @@ import {
   isConversationWithFormSchema,
   isFormSchemaValid,
 } from '@/src/utils/app/form-schema';
+import { parseLocalizedField } from '@/src/utils/app/marketplace-localization';
 import { is4XLScreen } from '@/src/utils/app/mobile';
 import { doesModelHaveConfiguration } from '@/src/utils/app/models';
 
@@ -1213,7 +1210,7 @@ export function Chat({ isPreview }: ChatProps) {
       if (schema?.viewerUrl) {
         return {
           viewerUrl: schema.viewerUrl,
-          title: parseLocalizedName(locale, schema.displayName),
+          title: parseLocalizedField(locale, schema.displayName),
           applicationId: model.id,
         };
       }

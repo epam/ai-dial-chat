@@ -10,10 +10,10 @@ import {
   getQuickAppDocumentUrl,
   isApplicationDeployed,
   isApplicationType,
-  withEntityIdName,
 } from '@/src/utils/app/application';
 import { arraysHaveSameElements } from '@/src/utils/app/common';
 import { getValidFormFields } from '@/src/utils/app/forms';
+import { withEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isTruthyQuery } from '@/src/utils/app/route';
 

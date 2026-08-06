@@ -7,13 +7,13 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getApplicationType,
-  getLocalizedEntityIdName,
   getModelDescription,
   getModelName,
   isExecutableApp,
   isQuickApp2,
 } from '@/src/utils/app/application';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
