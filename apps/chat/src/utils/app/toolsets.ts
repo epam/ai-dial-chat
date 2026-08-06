@@ -1,8 +1,4 @@
-import {
-  getLocalizedEntityIdName,
-  isMarketplaceEntityPublic,
-  updateLocalizedEntityIdName,
-} from '@/src/utils/app/application';
+import { isMarketplaceEntityPublic } from '@/src/utils/app/application';
 import {
   EntityStorageLimits,
   buildByteAwareFitBaseName,
@@ -21,6 +17,10 @@ import {
   isEntityIdExternal,
   isMyToolset,
 } from '@/src/utils/app/id';
+import {
+  getLocalizedEntityIdName,
+  updateLocalizedEntityIdName,
+} from '@/src/utils/app/marketplace-localization';
 import { ApiUtils, getMarketplaceEntityApiKey } from '@/src/utils/server/api';
 import { ServerUtils } from '@/src/utils/server/server';
 

@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { getLocalizedEntityIdName } from '@/src/utils/app/application';
+import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 

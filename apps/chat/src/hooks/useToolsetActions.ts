@@ -2,8 +2,8 @@ import React, { useCallback } from 'react';
 
 import { useRouter } from 'next/router';
 
-import { withEntityIdName } from '@/src/utils/app/application';
 import { writeTextToClipboard } from '@/src/utils/app/clipboard';
+import { withEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
 import { getToolsetLink } from '@/src/utils/marketplace';
 

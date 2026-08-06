@@ -3,9 +3,9 @@ import { useCallback, useMemo } from 'react';
 import {
   isExternalApp,
   isMarketplaceEntityPublic,
-  withEntityIdName,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
+import { withEntityIdName } from '@/src/utils/app/marketplace-localization';
 
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';

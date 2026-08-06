@@ -2,12 +2,10 @@ import React, { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import {
-  getApplicationType,
-  withEntityIdName,
-} from '@/src/utils/app/application';
+import { getApplicationType } from '@/src/utils/app/application';
 import { writeTextToClipboard } from '@/src/utils/app/clipboard';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { withEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { getApplicationLink } from '@/src/utils/marketplace';
 
 import { ApplicationStatus } from '@/src/types/applications';

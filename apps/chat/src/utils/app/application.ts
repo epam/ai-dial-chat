@@ -2,6 +2,11 @@ import {
   Defaults,
   DefaultsService,
 } from '@/src/utils/app/data/defaults-service';
+import {
+  getLocalizedEntityIdName,
+  parseLocalizedField,
+  updateLocalizedEntityIdName,
+} from '@/src/utils/app/marketplace-localization';
 import { getTopicColors } from '@/src/utils/app/style-helpers';
 import {
   ApiUtils,
@@ -43,7 +48,6 @@ import {
 } from '@/src/constants/default-ui-settings';
 import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
-import { DEFAULT_LOCAL } from '@/src/constants/locale';
 import { ApplicationTypeToSourceType } from '@/src/constants/marketplace';
 import {
   DEFAULT_QUICK_APPS_MODEL,
@@ -400,74 +404,17 @@ export const isExternalApp = (entity: DialAIEntityModel) =>
   entity.applicationTypeSchemaId ===
   DefaultsService.get('externalAppsSchemaId', DEFAULT_EXTERNAL_APPS_SCHEMA_ID);
 
-export const parseLocalizedDescription = (
-  locale: string,
-  description?: string | Record<string, string>,
-): string => {
-  if (typeof description === 'string') return description;
-
-  return description?.[locale] ?? description?.[DEFAULT_LOCAL] ?? '';
-};
-
 export const getModelDescription = (
   entity: { description?: string | Record<string, string> },
   locale: string,
 ) => {
-  return parseLocalizedDescription(locale, entity.description);
-};
-
-export const parseLocalizedName = (
-  locale: string,
-  name?: string | Record<string, string>,
-): string => {
-  if (typeof name === 'string') return name;
-
-  return name?.[locale] ?? name?.[DEFAULT_LOCAL] ?? '';
-};
-
-export const getLocalizedEntityIdName = (
-  name?: string | Record<string, string>,
-): string => {
-  if (typeof name === 'string') return name;
-
-  return name?.[DEFAULT_LOCAL] ?? '';
-};
-
-export const updateLocalizedEntityIdName = (
-  entity: { name: string | Record<string, string> },
-  newName: string,
-) => {
-  if (typeof entity.name === 'string') return { ...entity, name: newName };
-  else if (typeof entity.name?.[DEFAULT_LOCAL] === 'string') {
-    const updatedLocalizedName = {
-      ...entity.name,
-      [DEFAULT_LOCAL]: newName,
-    };
-
-    return { ...entity, name: updatedLocalizedName };
-  }
-
-  return entity;
+  return parseLocalizedField(locale, entity.description);
 };
 
 export const getModelName = (
   entity: { name?: string | Record<string, string> } | undefined | null,
   locale: string,
-): string => parseLocalizedName(locale, entity?.name);
-
-/**
- * Returns a copy of the entity whose `name` is resolved to the identifier
- * (`en`) value. Use at boundaries where the entity is treated as a plain
- * share/publish resource with a string `name`.
- */
-export const withEntityIdName = <
-  T extends { name?: string | Record<string, string> },
->(
-  entity: T,
-): Omit<T, 'name'> & { name: string } => ({
-  ...entity,
-  name: getLocalizedEntityIdName(entity.name),
-});
+): string => parseLocalizedField(locale, entity?.name);
 
 export const getModelShortDescription = (
   entity: { description?: string | Record<string, string> },
@@ -673,7 +620,7 @@ export const getEntityDisplayName = (
 ): string => {
   const entity = allEntitiesMap[id];
   if (entity?.name) {
-    return parseLocalizedName(locale, entity.name);
+    return parseLocalizedField(locale, entity.name);
   }
 
   return ApiUtils.decodeApiUrl(

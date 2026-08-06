@@ -2,12 +2,9 @@ import { useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import {
-  getLocalizedEntityIdName,
-  getModelDescription,
-  getModelName,
-} from '@/src/utils/app/application';
+import { getModelDescription, getModelName } from '@/src/utils/app/application';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { ToolsetModel } from '@/src/types/toolsets';

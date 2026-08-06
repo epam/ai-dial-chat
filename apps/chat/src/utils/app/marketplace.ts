@@ -1,8 +1,8 @@
 import {
   getApplicationMcpUrl,
-  getLocalizedEntityIdName,
   isDialAiEntityModel,
 } from '@/src/utils/app/application';
+import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { getToolsetMcpUrl } from '@/src/utils/app/toolsets';
 import {
   getModelIdWithoutVersion,

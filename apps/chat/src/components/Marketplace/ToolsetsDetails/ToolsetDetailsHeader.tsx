@@ -1,9 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
-import {
-  isMarketplaceEntityPublic,
-  withEntityIdName,
-} from '@/src/utils/app/application';
+import { isMarketplaceEntityPublic } from '@/src/utils/app/application';
+import { withEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { isMyEntity } from '@/src/utils/app/shared-utils';
 
 import { ToolsetModel } from '@/src/types/toolsets';

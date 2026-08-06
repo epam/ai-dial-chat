@@ -14,8 +14,9 @@ import { useRouter } from 'next/router';
 import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isQuickApp2, withEntityIdName } from '@/src/utils/app/application';
+import { isQuickApp2 } from '@/src/utils/app/application';
 import { constructPath } from '@/src/utils/app/file';
+import { withEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getShareType } from '@/src/utils/app/share';
 import { translateConversationDisplayName } from '@/src/utils/app/translateConversationDisplayName';
