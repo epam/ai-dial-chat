@@ -115,7 +115,11 @@ const formatDateScheduleLabel = (date: string, t: TFunction): string => {
   return t(ScheduledTasksI18nKeys.CardScheduleOnceAt, { date: formattedDate });
 };
 
-const buildScheduleLabel = (task: ScheduledTaskDto, t: TFunction): string => {
+/** Formats a task's schedule (`trigger.date` or `trigger.cron`) as a human-readable label, e.g. "Every Monday 12:00". Shared by the card grid mapper and the detail page's "Repeats" field so the two surfaces never diverge. */
+export const buildScheduleLabel = (
+  task: ScheduledTaskDto,
+  t: TFunction,
+): string => {
   if (task.trigger.date) {
     return formatDateScheduleLabel(task.trigger.date, t);
   }

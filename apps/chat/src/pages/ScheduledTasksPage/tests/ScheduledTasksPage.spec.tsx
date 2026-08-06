@@ -55,6 +55,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     hasMore,
     isLoadingMore,
     onLoadMore,
+    onCardClick,
   }: {
     labels: { title: string; createButtonLabel: string; retryLabel: string };
     onCreateClick: () => void;
@@ -67,6 +68,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     hasMore?: boolean;
     isLoadingMore?: boolean;
     onLoadMore?: () => void;
+    onCardClick?: (id: string) => void;
   }) => (
     <div>
       {labels.title}
@@ -79,6 +81,11 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       <button onClick={onCreateClick}>{labels.createButtonLabel}</button>
       <button onClick={() => onSearchQueryChange('daily')}>set search</button>
       <button onClick={onLoadMore}>load more</button>
+      {items.map((item) => (
+        <button key={item.id} onClick={() => onCardClick?.(item.id)}>
+          card:{item.id}
+        </button>
+      ))}
     </div>
   ),
 }));
@@ -102,12 +109,18 @@ const CreatePageStub = () => {
   );
 };
 
+const DetailPageStub = () => <div>detail page</div>;
+
 const renderScheduledTasksPage = () =>
   render(
     <MemoryRouter initialEntries={['/scheduled-tasks']}>
       <Routes>
         <Route path="/scheduled-tasks" element={<ScheduledTasksPage />} />
         <Route path="/scheduled-tasks/new" element={<CreatePageStub />} />
+        <Route
+          path="/scheduled-tasks/:scheduleId"
+          element={<DetailPageStub />}
+        />
       </Routes>
     </MemoryRouter>,
   );
@@ -267,6 +280,30 @@ describe('ScheduledTasksPage', () => {
     expect(
       screen.getByText('create page returnUrl=/scheduled-tasks'),
     ).toBeTruthy();
+  });
+
+  it('navigates to the detail route when a card is clicked', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    useScheduledTasksMock.mockReturnValue({
+      items: [{ id: 'sched_123', displayName: 'Daily summary', trigger: {} }],
+      searchQuery: '',
+      setSearchQuery: setSearchQueryMock,
+      sortKey: 'firstToRun',
+      setSortKey: setSortKeyMock,
+      isLoading: false,
+      isLoadingMore: false,
+      error: null,
+      hasMore: false,
+      loadMore: loadMoreMock,
+      refetch: refetchMock,
+    });
+    renderScheduledTasksPage();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'card:sched_123' }),
+    );
+
+    expect(screen.getByText('detail page')).toBeTruthy();
   });
 
   it('refetches when returning from the create flow with a refresh navigation state', async () => {

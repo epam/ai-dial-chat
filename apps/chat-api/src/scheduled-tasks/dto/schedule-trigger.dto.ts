@@ -21,6 +21,24 @@ export class ScheduleCronDto {
   @IsObject()
   @IsCronFields()
   fields!: Record<string, string>;
+
+  @ApiPropertyOptional({
+    example: '2026-08-01T00:00:00.000Z',
+    description:
+      'Start of the activity window during which this cron trigger fires. Omitted when unset.',
+  })
+  @IsOptional()
+  @IsISO8601()
+  startDate?: string;
+
+  @ApiPropertyOptional({
+    example: '2026-12-31T23:59:59.999Z',
+    description:
+      'End of the activity window during which this cron trigger fires. Omitted when unset.',
+  })
+  @IsOptional()
+  @IsISO8601()
+  endDate?: string;
 }
 
 export class ScheduleTriggerDto {

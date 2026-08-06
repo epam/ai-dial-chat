@@ -16,15 +16,19 @@ import { EnvironmentVariables } from '../config/environment.config';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import type { CreateScheduledTaskBodyDto } from './dto/create-scheduled-task.dto';
+import type { ListScheduledTaskRunsQueryDto } from './dto/list-scheduled-task-runs-query.dto';
+import type { ListScheduledTaskRunsResponseDto } from './dto/list-scheduled-task-runs.dto';
 import type { ListScheduledTasksQueryDto } from './dto/list-scheduled-tasks-query.dto';
 import { ScheduledTasksSortKey } from './dto/list-scheduled-tasks-query.dto';
 import type { ListScheduledTasksResponseDto } from './dto/list-scheduled-tasks.dto';
 import type { ScheduledTaskDto } from './dto/scheduled-task.dto';
 import type { UpdateScheduledTaskBodyDto } from './dto/update-scheduled-task.dto';
 import {
+  fromUpstreamRun,
   fromUpstreamSchedule,
   toUpstreamSchedulePayload,
   type UpstreamScheduleResponse,
+  type UpstreamScheduleRun,
 } from './scheduled-tasks.mapper';
 
 const LIST_CACHE_TTL_MS = 30 * 1000;
@@ -127,6 +131,24 @@ export class ScheduledTasksService {
   }
 
   /*
+   * The BFF always sends an explicit order_by=created_at&order_dir=desc pair
+   * upstream — mirroring the same "always-explicit-default" decision made for
+   * listScheduledTasks — so the endpoint's documented newest-first order is
+   * the one actually observed, instead of relying on upstream's own default.
+   */
+  private buildRunsUrl(
+    scheduleId: string,
+    query: ListScheduledTaskRunsQueryDto,
+  ): string {
+    const searchParams = new URLSearchParams();
+    searchParams.set('limit', String(query.limit ?? 20));
+    searchParams.set('offset', String(query.offset ?? 0));
+    searchParams.set('order_by', 'created_at');
+    searchParams.set('order_dir', 'desc');
+    return `${this.buildSchedulesUrl(scheduleId)}/runs?${searchParams.toString()}`;
+  }
+
+  /*
    * cache-manager's `Cache` type has no key-enumeration/prefix-delete API, so
    * invalidating "every cached list variant for a user" (one per limit/offset/
    * search combination) can't be done by scanning keys. Instead, each user has
@@ -169,13 +191,13 @@ export class ScheduledTasksService {
     return `scheduled-tasks:list:${userSub}:${epoch}:${this.normalizeListQuery(query)}`;
   }
 
-  private async fetchUpstream(
+  private async fetchUpstream<T = UpstreamScheduleResponse>(
     url: string,
     method: 'GET' | 'POST' | 'PUT',
     accessToken: string,
     context: string,
     body?: unknown,
-  ): Promise<UpstreamScheduleResponse> {
+  ): Promise<T> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -211,10 +233,12 @@ export class ScheduledTasksService {
         );
       }
 
-      const json = (await response.json()) as UpstreamScheduleResponse;
+      const json = (await response.json()) as T;
       this.logger.debug(
         `DIAL Scheduler body for ${context}: keys=${JSON.stringify(
-          Array.isArray(json) ? `array(${json.length})` : Object.keys(json),
+          Array.isArray(json)
+            ? `array(${json.length})`
+            : Object.keys(json as object),
         )}`,
       );
       return json;
@@ -344,6 +368,37 @@ export class ScheduledTasksService {
       `get scheduled task "${scheduleId}"`,
     );
     return fromUpstreamSchedule(result);
+  }
+
+  async listScheduledTaskRuns(
+    accessToken: string,
+    scheduleId: string,
+    query: ListScheduledTaskRunsQueryDto = {},
+  ): Promise<ListScheduledTaskRunsResponseDto> {
+    const result = await this.fetchUpstream<
+      UpstreamScheduleResponse & {
+        results?: UpstreamScheduleRun[];
+        count?: number;
+        limit?: number;
+        offset?: number;
+        next?: string | null;
+        previous?: string | null;
+      }
+    >(
+      this.buildRunsUrl(scheduleId, query),
+      'GET',
+      accessToken,
+      `list scheduled task runs "${scheduleId}"`,
+    );
+    const runs = result.results ?? [];
+    return {
+      items: runs.map(fromUpstreamRun),
+      count: result.count,
+      limit: result.limit,
+      offset: result.offset,
+      next: result.next,
+      previous: result.previous,
+    };
   }
 
   async updateScheduledTask(
