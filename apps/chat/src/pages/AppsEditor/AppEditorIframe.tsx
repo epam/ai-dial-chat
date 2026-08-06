@@ -434,14 +434,15 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
           return;
         }
         const rawToolsetId = decodeToolsetId(toolsetId);
-        void fetchToolsetCredentials(toolsetId).then((credentials) => {
+        void (async () => {
+          const credentials = await fetchToolsetCredentials(toolsetId);
           postToolsetLoginResult(targetOrigin, {
             toolsetId: rawToolsetId,
             success: true,
             credentialsLevel,
             credentials,
           });
-        });
+        })();
       });
     }, [schema.editorUrl, fetchToolsetCredentials]);
 

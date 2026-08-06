@@ -26,7 +26,10 @@ export const emitToolsetLoginSuccess = (
   );
 };
 
-/** Subscribes to successful toolset logins broadcast via `emitToolsetLoginSuccess`. Returns an unsubscribe function. */
+/*
+ * Subscribes to successful toolset logins broadcast via
+ * `emitToolsetLoginSuccess`. Returns an unsubscribe function.
+ */
 export const subscribeToolsetLoginSuccess = (
   listener: (detail: ToolsetLoginSuccessDetail) => void,
 ): (() => void) => {
