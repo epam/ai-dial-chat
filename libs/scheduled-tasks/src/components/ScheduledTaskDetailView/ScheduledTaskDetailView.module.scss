@@ -21,11 +21,11 @@
 }
 
 .successIcon {
-  color: var(--stdv-success-icon, var(--controls-bg-accent-primary, #2ea476));
+  color: var(--stdv-success-icon, var(--text-success, #007274));
 }
 
 .errorIcon {
-  color: var(--stdv-error-icon, var(--controls-bg-error, #ae2f2f));
+  color: var(--stdv-error-icon, var(--text-error, #ae2f2f));
 }
 
 .missedIcon {

@@ -51,9 +51,9 @@ export interface ScheduledTaskDetailViewColors {
   detailsColumnBorder?: string;
   /** Section subtitle and status-message text color. Fallback: `--text-secondary`. */
   subtitleText?: string;
-  /** Success status icon color. Fallback: `--controls-bg-accent-primary` (a green success token). */
+  /** Success status icon color. Fallback: `--text-success`. */
   successIconColor?: string;
-  /** Error status icon color. Fallback: `--controls-bg-error`. */
+  /** Error status icon color. Fallback: `--text-error`. */
   errorIconColor?: string;
   /** Missed status icon color. Fallback: `--text-secondary`. */
   missedIconColor?: string;
@@ -91,9 +91,9 @@ export interface ScheduledTaskDetailViewProps {
   onBack: () => void;
   /** Task title shown in the header and used as the page's accessible name. */
   displayName: string;
-  /** When `true`, the Details/Configuration sections show a loading state instead of the fields below. Defaults to `false`. */
+  /** When `true`, the entire body (Details, Configuration, and History) shows a page-level spinner instead of the fields below. Defaults to `false`. */
   isLoading?: boolean;
-  /** When set, the page shows an error message and retry action instead of the Details/Configuration/History sections. */
+  /** When set, the entire body (Details, Configuration, and History) shows an error message and retry action instead of the fields below. */
   error?: Error | null;
   /** Called when the user activates the retry action shown alongside `error`. */
   onRetry?: () => void;
@@ -105,9 +105,9 @@ export interface ScheduledTaskDetailViewProps {
   repeatsLabel?: string;
   /** Pre-formatted activity-window label, e.g. "Aug 1, 2026 – Dec 31, 2026". Omit to hide (unbounded or one-shot schedule). */
   activeWindowLabel?: string;
-  /** Raw instructions markdown. Used only when `renderInstructions` is not supplied. */
+  /** Raw instructions markdown, passed to `renderInstructions` when supplied, or rendered via the default `MDMessageViewer` otherwise. Omit to hide the field entirely. */
   instructionsMarkdown?: string;
-  /** Renders `instructionsMarkdown` as a ReactNode. When omitted, `instructionsMarkdown` is rendered as plain preformatted text. */
+  /** Renders `instructionsMarkdown` as a ReactNode. When omitted, `instructionsMarkdown` is rendered via `MDMessageViewer` (the same markdown stack chat assistant messages use). */
   renderInstructions?: (markdown: string) => ReactNode;
   /** Pre-formatted "Next run" label shown under the History title, e.g. "Next run: Jul 31 at 9:00 AM". Omit to hide (e.g. when the schedule is paused or inactive). */
   nextRunLabel?: string;
