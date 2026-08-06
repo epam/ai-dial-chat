@@ -346,6 +346,9 @@ const LinkIconComponent = () => (
   />
 );
 
+const attachmentNameClassName =
+  'block max-w-full truncate whitespace-pre text-start text-sm';
+
 export const MessageAttachment = ({
   attachment,
   annotations,
@@ -572,6 +575,7 @@ export const MessageAttachment = ({
                     target="_blank"
                     className="link-icon-button-small"
                     rel="noopener noreferrer"
+                    data-qa="attachment-reference-link"
                   >
                     <LinkIconComponent />
                   </a>
@@ -611,7 +615,11 @@ export const MessageAttachment = ({
                       stopBubbling(e);
                       setOpenPdfUrl(mappedAttachmentReferenceUrl);
                     }}
-                    className="block max-w-full truncate whitespace-pre text-start text-sm hover:text-accent-primary"
+                    className={classNames(
+                      attachmentNameClassName,
+                      'hover:text-accent-primary',
+                    )}
+                    data-qa="attachment-name"
                   >
                     {attachmentName}
                   </button>
@@ -620,13 +628,20 @@ export const MessageAttachment = ({
                     href={mappedAttachmentReferenceUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block max-w-full truncate whitespace-pre text-start text-sm hover:text-accent-primary"
+                    className={classNames(
+                      attachmentNameClassName,
+                      'hover:text-accent-primary',
+                    )}
+                    data-qa="attachment-name"
                   >
                     {attachmentName}
                   </a>
                 )
               ) : (
-                <span className="block max-w-full truncate whitespace-pre text-start text-sm">
+                <span
+                  className={attachmentNameClassName}
+                  data-qa="attachment-name"
+                >
                   {attachmentName}
                 </span>
               )}
