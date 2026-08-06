@@ -89,6 +89,13 @@ export const encodeToolsetId = (id: string): string =>
     .map((segment) => encodeURIComponent(segment))
     .join('/');
 
+/** Inverse of `encodeToolsetId` — decodes each `/`-separated segment back to its raw, human-readable form. */
+export const decodeToolsetId = (id: string): string =>
+  id
+    .split('/')
+    .map((segment) => decodeURIComponent(segment))
+    .join('/');
+
 /**
  * Builds the OAuth authorize URL for a given, already-generated `state`
  * value. The caller owns what `state` carries — see `initiateOAuthLogin`.

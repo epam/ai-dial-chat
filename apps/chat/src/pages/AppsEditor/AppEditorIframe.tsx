@@ -34,7 +34,9 @@ import {
   mapDeploymentDetailsDtoToEntityDetails,
   mapToolsetCredentials,
 } from '../../utils/map-entity-details-to-catalog';
+import { subscribeToolsetLoginSuccess } from '../../utils/toolset-login-events';
 import {
+  decodeToolsetId,
   encodeToolsetId,
   navigateToolsetOAuthPopup,
   openToolsetOAuthPopup,
@@ -404,6 +406,30 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
         window.removeEventListener('message', handleMessage);
       };
     }, [handleMessage]);
+
+    /*
+     * Keeps the iframe's toolset status in sync with logins completed
+     * outside its own RequestToolsetLogin flow (e.g. via the global
+     * SigninInterruptDialog). Subscribes for the component's whole mounted
+     * lifetime — deliberately not gated on preview visibility — since the
+     * iframe stays mounted-but-hidden during Preview and must still receive
+     * updates then, without being reloaded.
+     */
+    useEffect(() => {
+      return subscribeToolsetLoginSuccess(({ toolsetId, credentialsLevel }) => {
+        if (!schema.editorUrl) return;
+        const targetOrigin = new URL(schema.editorUrl).origin;
+        const rawToolsetId = decodeToolsetId(toolsetId);
+        void fetchToolsetCredentials(toolsetId).then((credentials) => {
+          postToolsetLoginResult(targetOrigin, {
+            toolsetId: rawToolsetId,
+            success: true,
+            credentialsLevel,
+            credentials,
+          });
+        });
+      });
+    }, [schema.editorUrl, fetchToolsetCredentials]);
 
     useEffect(() => {
       const iframe = iframeRef.current;
