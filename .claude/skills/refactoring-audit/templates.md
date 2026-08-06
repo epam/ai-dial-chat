@@ -23,14 +23,15 @@ Use these templates when writing/updating local docs. **English only.** Replace 
 
 ## Scorecard (summary)
 
-| Area                               | Status |
-| ---------------------------------- | ------ |
-| Phase 1                            | X/7    |
-| Phase 2.1 DialCoreModule           | ✅/…   |
-| Phase 2.3 Split FilesService       | …      |
-| Phase 2.2 ConversationService      | …      |
-| Phase 3.2 Split useDialFileManager | …      |
-| Phase 4 Platform                   | …      |
+| Area                               | Status         |
+| ---------------------------------- | -------------- |
+| Phase 1                            | X/7            |
+| Phase 2.1 DialCoreModule           | ✅/…           |
+| Phase 2.3 Split FilesService       | …              |
+| Phase 2.2 ConversationService      | …              |
+| Phase 3.2 Split useDialFileManager | …              |
+| Phase 4 Platform                   | …              |
+| Dead-code coverage                 | Full / Partial |
 
 ## Top debt
 
@@ -60,13 +61,14 @@ Required sections:
 6. **New domains** — domains added since last audit
 7. **Structural smells** — dispatch/registry/else-if/switch/nested ternary
 8. **Convention violations** — AGENTS.md / RTL / lib isolation / imports / logging
-9. **Issues** — numbered, prioritized
-10. **Plan** — checkbox phases
-11. **Priority matrix** — P0–P3
-12. **PR order**
-13. **Next OpenSpec prompt**
-14. **Risks**
-15. **Summary**
+9. **Dead code** — coverage, confirmed findings, unverified candidates
+10. **Issues** — numbered, prioritized
+11. **Plan** — checkbox phases
+12. **Priority matrix** — P0–P3
+13. **PR order**
+14. **Next OpenSpec prompt**
+15. **Risks**
+16. **Summary**
 
 ### Structural smells table (populate from metrics)
 
@@ -79,6 +81,18 @@ Required sections:
 | File                  | Rule                   | Detail             | Fix   | P   |
 | --------------------- | ---------------------- | ------------------ | ----- | --- |
 | `{path from metrics}` | `{AGENTS/eslint rule}` | {count or snippet} | {fix} | P2  |
+
+### Dead-code coverage and findings
+
+| Coverage       | Typecheck | Knip comprehensive    | Knip production       | Remaining gaps |
+| -------------- | --------- | --------------------- | --------------------- | -------------- |
+| Full / Partial | pass/fail | pass/fail/unavailable | pass/fail/unavailable | {details}      |
+
+| Path/package              | Kind                        | Signal/mode     | Classification     | Evidence | Action | P   |
+| ------------------------- | --------------------------- | --------------- | ------------------ | -------- | ------ | --- |
+| `{path/package from run}` | file/export/type/dependency | Knip production | Confirmed dead / … | {check}  | {fix}  | P2  |
+
+Keep **Confirmed dead** findings separate from **Reachability/config gap**, **Intentional public API**, **False positive/framework-managed**, and **Needs owner confirmation** candidates. Never describe Partial coverage as “no dead code found.”
 
 ### Reference patterns (not file paths)
 
@@ -101,13 +115,16 @@ Required sections:
 7. **Lib isolation** — ✅ good / ⚠️ issues
 8. **Structural smells**
 9. **Convention violations**
-10. **Remaining duplication**
-11. **Plan**
-12. **Priority matrix**
-13. **PR order**
-14. **Next OpenSpec prompts**
-15. **Risks**
-16. **Summary**
+10. **Dead code** — coverage, confirmed findings, unverified candidates
+11. **Remaining duplication**
+12. **Plan**
+13. **Priority matrix**
+14. **PR order**
+15. **Next OpenSpec prompts**
+16. **Risks**
+17. **Summary**
+
+Use the same **Dead-code coverage and findings** tables as the backend document. For publishable libs, verify package `exports` and possible external consumers before marking an unused export or zero-inbound project as confirmed dead.
 
 ### Reference patterns (not file paths)
 

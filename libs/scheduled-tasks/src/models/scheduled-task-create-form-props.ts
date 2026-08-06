@@ -35,6 +35,10 @@ export interface ScheduledTaskCreateFormValues {
   dayOfWeek?: string;
   /** Day of month (`'1'`-`'31'`) used when `frequency` is `'monthly'`. */
   dayOfMonth?: string;
+  /** Date-only value bounding the start of a recurring schedule's activity window. Ignored when `scheduleType` is `'once'`. */
+  startDate?: string;
+  /** Date-only value bounding the end of a recurring schedule's activity window. Ignored when `scheduleType` is `'once'`. */
+  endDate?: string;
   /** Selected deployment id sent to the BFF as `model` (required). */
   modelId: string;
   /** Optional human-readable summary sent to the BFF as `description` (max 500 characters). */
@@ -55,6 +59,10 @@ export interface ScheduledTaskCreateFormErrors {
   dayOfWeek?: string;
   /** Error shown under the day-of-month field. */
   dayOfMonth?: string;
+  /** Error shown under the start-date field. */
+  startDate?: string;
+  /** Error shown under the end-date field. */
+  endDate?: string;
   /** Error shown under the model field. */
   modelId?: string;
   /** Error shown under the description field. */
@@ -101,6 +109,14 @@ export interface ScheduledTaskCreateFormLabels {
   dayOfWeekLabel: string;
   /** Day-of-month field label (shown when frequency is "monthly"). */
   dayOfMonthLabel: string;
+  /** Start-date field label (shown when schedule type is "recurring"; the field itself is optional, so this label carries no required marker). */
+  startDateLabel: string;
+  /** Placeholder shown in the start-date picker when unset. */
+  startDatePlaceholder: string;
+  /** End-date field label (shown when schedule type is "recurring"; the field itself is optional, so this label carries no required marker). */
+  endDateLabel: string;
+  /** Placeholder shown in the end-date picker when unset. */
+  endDatePlaceholder: string;
   /** Accessible label for the model dropdown. */
   modelOrAgentLabel: string;
   /** Placeholder shown in the model dropdown trigger when no model is selected. */

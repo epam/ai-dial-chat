@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  calendarValueToDateValue,
   calendarValueToDayOfWeek,
   calendarValueToRunAt,
+  dateValueToCalendarValue,
   dayOfWeekToCalendarValue,
   runAtToCalendarValue,
 } from '../calendar-value';
@@ -32,6 +34,43 @@ describe('calendarValueToRunAt', () => {
 
   it('returns an empty string for an invalid date string', () => {
     expect(calendarValueToRunAt('not-a-date')).toBe('');
+  });
+});
+
+describe('dateValueToCalendarValue', () => {
+  it('parses a YYYY-MM-DD string into a Date', () => {
+    const result = dateValueToCalendarValue('2026-08-05');
+
+    expect(result).toBeInstanceOf(Date);
+    expect((result as Date).getFullYear()).toBe(2026);
+  });
+
+  it('returns null when the date value is undefined', () => {
+    expect(dateValueToCalendarValue(undefined)).toBeNull();
+  });
+});
+
+describe('calendarValueToDateValue', () => {
+  it('formats a Date into a YYYY-MM-DD string', () => {
+    const date = new Date(2026, 7, 5, 9, 30);
+
+    expect(calendarValueToDateValue(date)).toBe('2026-08-05');
+  });
+
+  it('returns an empty string for null', () => {
+    expect(calendarValueToDateValue(null)).toBe('');
+  });
+
+  it('returns an empty string for an invalid date string', () => {
+    expect(calendarValueToDateValue('not-a-date')).toBe('');
+  });
+
+  it('round-trips a date value through dateValueToCalendarValue and back', () => {
+    const roundTripped = calendarValueToDateValue(
+      dateValueToCalendarValue('2026-08-05'),
+    );
+
+    expect(roundTripped).toBe('2026-08-05');
   });
 });
 

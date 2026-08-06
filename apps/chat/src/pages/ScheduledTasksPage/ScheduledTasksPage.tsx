@@ -6,6 +6,7 @@ import { memo, useCallback, useEffect, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
+import { getScheduledTaskDetailRoute } from '../../constants/routes';
 import { ScheduledTaskCreateQuery } from '../../constants/scheduled-tasks';
 import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
@@ -56,6 +57,13 @@ const ScheduledTasksPage: FC = () => {
     });
     navigate(`${ROUTES.ScheduledTaskCreate}?${params.toString()}`);
   }, [navigate]);
+
+  const handleCardClick = useCallback(
+    (id: string) => {
+      navigate(getScheduledTaskDetailRoute(id));
+    },
+    [navigate],
+  );
 
   const labels = useMemo(
     () => ({
@@ -131,6 +139,7 @@ const ScheduledTasksPage: FC = () => {
       hasMore={hasMore}
       isLoadingMore={isLoadingMore}
       onLoadMore={loadMore}
+      onCardClick={handleCardClick}
     />
   );
 };

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { getConversationRoute, normalizeConversationId } from '../routes';
+import {
+  getConversationRoute,
+  getScheduledTaskDetailRoute,
+  normalizeConversationId,
+} from '../routes';
 
 describe('normalizeConversationId', () => {
   it('keeps plain conversation id', () => {
@@ -72,5 +76,19 @@ describe('getConversationRoute', () => {
 
   it('falls back to root when a segment is empty (double slash)', () => {
     expect(getConversationRoute('tenant//path')).toBe('/');
+  });
+});
+
+describe('getScheduledTaskDetailRoute', () => {
+  it('builds the detail route for a plain scheduleId', () => {
+    expect(getScheduledTaskDetailRoute('sched_123')).toBe(
+      '/scheduled-tasks/sched_123',
+    );
+  });
+
+  it('percent-encodes a scheduleId that needs encoding', () => {
+    expect(getScheduledTaskDetailRoute('sched 123/x')).toBe(
+      '/scheduled-tasks/sched%20123%2Fx',
+    );
   });
 });

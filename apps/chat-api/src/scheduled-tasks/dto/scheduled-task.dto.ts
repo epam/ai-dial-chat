@@ -62,4 +62,14 @@ export class ScheduledTaskDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @ApiPropertyOptional({ example: 'gpt-4.1-mini-2025-04-14' })
+  @IsOptional()
+  @IsString()
+  model?: string;
+
+  @ApiPropertyOptional({ example: 'Summarize my inbox' })
+  @IsOptional()
+  @IsString()
+  prompt?: string;
 }

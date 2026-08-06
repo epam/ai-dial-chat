@@ -522,6 +522,151 @@ describe('ScheduledTasksService', () => {
     );
   });
 
+  describe('listScheduledTaskRuns', () => {
+    it('forwards limit/offset with explicit created_at desc ordering', async () => {
+      fetchMock.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ results: [] }),
+      });
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        makeCacheManager() as never,
+      );
+
+      await service.listScheduledTaskRuns('token', 'sched_123', {
+        limit: 20,
+        offset: 40,
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://dial-core/v1/deployments/applications/scheduler-app/route/v1/schedules/sched_123/runs?limit=20&offset=40&order_by=created_at&order_dir=desc',
+        expect.objectContaining({ method: 'GET' }),
+      );
+    });
+
+    it('defaults limit/offset to 20/0 when omitted', async () => {
+      fetchMock.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ results: [] }),
+      });
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        makeCacheManager() as never,
+      );
+
+      await service.listScheduledTaskRuns('token', 'sched_123');
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://dial-core/v1/deployments/applications/scheduler-app/route/v1/schedules/sched_123/runs?limit=20&offset=0&order_by=created_at&order_dir=desc',
+        expect.objectContaining({ method: 'GET' }),
+      );
+    });
+
+    it('maps upstream statuses to the BFF enum and resolves runs from results', async () => {
+      fetchMock.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            count: 4,
+            limit: 20,
+            offset: 0,
+            results: [
+              {
+                id: 'run_1',
+                status: 'success',
+                start_time: '2026-07-24T09:00:00.000Z',
+                end_time: '2026-07-24T09:01:39.000Z',
+              },
+              {
+                id: 'run_2',
+                status: 'error',
+                start_time: '2026-07-24T09:00:00.000Z',
+                end_time: '2026-07-24T09:00:05.000Z',
+              },
+              {
+                id: 'run_3',
+                status: 'in_progress',
+                start_time: '2026-07-24T09:00:00.000Z',
+                end_time: null,
+              },
+              {
+                id: 'run_4',
+                status: 'missed',
+                start_time: '2026-07-24T09:00:00.000Z',
+              },
+            ],
+            next: null,
+            previous: null,
+          }),
+      });
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        makeCacheManager() as never,
+      );
+
+      const result = await service.listScheduledTaskRuns('token', 'sched_123');
+
+      expect(result.items.map((item) => item.status)).toEqual([
+        'Success',
+        'Error',
+        'InProgress',
+        'Missed',
+      ]);
+      expect(result.items[0].durationSeconds).toBe(99);
+      expect(result.items[2].durationSeconds).toBeUndefined();
+      expect(result).toMatchObject({ count: 4, limit: 20, offset: 0 });
+    });
+
+    it('resolves an empty items array when results is absent', async () => {
+      fetchMock.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        makeCacheManager() as never,
+      );
+
+      const result = await service.listScheduledTaskRuns('token', 'sched_123');
+
+      expect(result.items).toEqual([]);
+    });
+
+    it('is not cached — repeated calls always hit fetch again', async () => {
+      fetchMock.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ results: [] }),
+      });
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        makeCacheManager() as never,
+      );
+
+      await service.listScheduledTaskRuns('token', 'sched_123');
+      await service.listScheduledTaskRuns('token', 'sched_123');
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('throws ServiceUnavailableException when SCHEDULER_APP_ID is unset', async () => {
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService(undefined) as never,
+        makeCacheManager() as never,
+      );
+
+      await expect(
+        service.listScheduledTaskRuns('token', 'sched_123'),
+      ).rejects.toBeInstanceOf(ServiceUnavailableException);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+  });
+
   it('aborts when reading a successful response body exceeds the timeout', async () => {
     vi.useFakeTimers();
     fetchMock.mockImplementation(

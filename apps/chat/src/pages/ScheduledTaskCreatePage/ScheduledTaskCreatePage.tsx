@@ -39,6 +39,8 @@ const DEFAULT_VALUES: ScheduledTaskCreateFormValues = {
   scheduleType: ScheduledTaskScheduleType.Recurring,
   frequency: ScheduledTaskFrequency.Daily,
   time: '09:00',
+  startDate: undefined,
+  endDate: undefined,
   modelId: '',
   prompt: '',
 };
@@ -143,6 +145,12 @@ const ScheduledTaskCreatePage: FC = () => {
       timeLabel: t(ScheduledTasksI18nKeys.CreateTimeLabel),
       dayOfWeekLabel: t(ScheduledTasksI18nKeys.CreateDayOfWeekLabel),
       dayOfMonthLabel: t(ScheduledTasksI18nKeys.CreateDayOfMonthLabel),
+      startDateLabel: t(ScheduledTasksI18nKeys.CreateStartDateLabel),
+      startDatePlaceholder: t(
+        ScheduledTasksI18nKeys.CreateStartDatePlaceholder,
+      ),
+      endDateLabel: t(ScheduledTasksI18nKeys.CreateEndDateLabel),
+      endDatePlaceholder: t(ScheduledTasksI18nKeys.CreateEndDatePlaceholder),
       modelOrAgentLabel: t(ScheduledTasksI18nKeys.CreateModelOrAgentLabel),
       modelPlaceholder: t(ScheduledTasksI18nKeys.CreateModelPlaceholder),
       descriptionLabel: t(ScheduledTasksI18nKeys.CreateDescriptionLabel),
@@ -223,6 +231,15 @@ const ScheduledTaskCreatePage: FC = () => {
         ) {
           nextErrors.dayOfMonth = t(
             ScheduledTasksI18nKeys.CreateDayOfMonthRequired,
+          );
+        }
+        if (
+          data.startDate &&
+          data.endDate &&
+          new Date(data.endDate).getTime() <= new Date(data.startDate).getTime()
+        ) {
+          nextErrors.endDate = t(
+            ScheduledTasksI18nKeys.CreateEndDateBeforeStartError,
           );
         }
       }
