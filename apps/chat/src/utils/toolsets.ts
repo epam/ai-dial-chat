@@ -89,11 +89,22 @@ export const encodeToolsetId = (id: string): string =>
     .map((segment) => encodeURIComponent(segment))
     .join('/');
 
-/** Inverse of `encodeToolsetId` — decodes each `/`-separated segment back to its raw, human-readable form. */
+/**
+ * Inverse of `encodeToolsetId` — decodes each `/`-separated segment back to
+ * its raw, human-readable form. A segment that isn't valid percent-encoding
+ * is passed through unchanged rather than throwing, since this decodes
+ * externally-sourced ids (broadcast toolset-login events).
+ */
 export const decodeToolsetId = (id: string): string =>
   id
     .split('/')
-    .map((segment) => decodeURIComponent(segment))
+    .map((segment) => {
+      try {
+        return decodeURIComponent(segment);
+      } catch {
+        return segment;
+      }
+    })
     .join('/');
 
 /**
