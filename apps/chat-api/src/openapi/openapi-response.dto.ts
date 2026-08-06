@@ -386,12 +386,6 @@ export class DialToolsetDto {
   @ApiPropertyOptional({ example: 'My toolset description' })
   description?: string;
 
-  @ApiPropertyOptional({
-    example: 'Runs your toolset in one line.',
-    maxLength: 90,
-  })
-  intro?: string;
-
   @ApiPropertyOptional({ example: '' })
   iconUrl?: string;
 

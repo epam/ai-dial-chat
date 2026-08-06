@@ -14,8 +14,6 @@ export interface DeploymentCreationFormErrorCodes {
   name?: DeploymentCreationFieldErrorCode;
   /** Error code for the version field, if invalid. */
   version?: DeploymentCreationFieldErrorCode;
-  /** Error code for the intro field, if invalid. */
-  intro?: DeploymentCreationFieldErrorCode;
 }
 
 /** Optional pattern-check toggles for field validation. */
@@ -24,6 +22,4 @@ export interface DeploymentCreationFormValidationOptions {
   validateNamePattern?: boolean;
   /** Whether to reject a non-empty version containing characters outside `VERSION_PATTERN`. */
   validateVersionPattern?: boolean;
-  /** Maximum character length enforced on the intro field. Defaults to `90`. */
-  introMaxLength?: number;
 }

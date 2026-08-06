@@ -40,7 +40,7 @@ export const Pricing: FC<PricingProps> = ({
     value: row.value,
   }));
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <TableView
         sectionLabel={pricesSectionLabel}
         values={convertedPrices ?? []}

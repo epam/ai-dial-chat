@@ -242,7 +242,8 @@
     "copyUrl": "Copy URL",
     "logIn": "Log in",
     "retry": "Retry",
-    "publish": "Publish"
+    "publish": "Publish",
+    "manage": "Manage"
   },
   "sidebar": {
     "base": {
@@ -719,6 +720,10 @@
     "retryLabel": "Try again",
     "reloadLabel": "Reload the page"
   },
+  "appUpdate": {
+    "heading": "New version available",
+    "message": "Reload the page to get the latest version."
+  },
   "share": {
     "title": "Share",
     "qrButtonLabel": "QR",
@@ -748,10 +753,7 @@
     "versionLabel": "Version",
     "versionPlaceholder": "e.g. 1.0.0",
     "topicsLabel": "Topics",
-    "topicsPlaceholder": "Add a topic",
-    "introLabel": "Intro",
-    "introPlaceholder": "A short one-line pitch",
-    "introTooLong": "Intro must be 90 characters or fewer"
+    "topicsPlaceholder": "Add a topic"
   },
   "appsEditor": {
     "exitPreviewButton": "Exit preview",

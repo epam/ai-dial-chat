@@ -44,7 +44,7 @@ export const LimitsTab: FC<LimitsTabProps> = ({
   }
 
   return (
-    <ul className="m-0 flex list-none flex-col gap-3 p-0">
+    <ul className="m-0 flex list-none flex-col gap-4 p-0">
       {limits.rows.map((row) => {
         const valueLabel = getValueLabel(row);
         const shouldRenderProgress = hasProgress(row);

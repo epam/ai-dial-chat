@@ -106,6 +106,7 @@ export enum ButtonsI18nKeys {
   CopyUrl = 'buttons.copyUrl',
   LogIn = 'buttons.logIn',
   Publish = 'buttons.publish',
+  Manage = 'buttons.manage',
 }
 
 export enum NavigationI18nKeys {
@@ -651,9 +652,6 @@ export enum EditorI18nKeys {
   VersionPlaceholder = 'editor.versionPlaceholder',
   TopicsLabel = 'editor.topicsLabel',
   TopicsPlaceholder = 'editor.topicsPlaceholder',
-  IntroLabel = 'editor.introLabel',
-  IntroPlaceholder = 'editor.introPlaceholder',
-  IntroTooLong = 'editor.introTooLong',
 }
 
 export enum AppsEditorI18nKeys {
@@ -819,4 +817,9 @@ export enum CustomAppI18nKeys {
   SaveConfirmTitle = 'customApp.saveConfirm.title',
   SaveConfirmDescription = 'customApp.saveConfirm.description',
   SaveConfirmLabel = 'customApp.saveConfirm.confirmLabel',
+}
+
+export enum AppUpdateI18nKeys {
+  Heading = 'appUpdate.heading',
+  Message = 'appUpdate.message',
 }

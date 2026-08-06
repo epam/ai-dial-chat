@@ -35,9 +35,9 @@ in the URL via a `step` search param so navigation and reloads preserve the curr
 - **THEN** the editor reopens on the Settings step
 
 ### Requirement: Draft toolset creation on advancing to Settings
-When a user advances from the General step to the Settings step for a toolset that has not
-yet been persisted, the editor SHALL create the toolset via the backend write API using the
-General-step field values (name, version, icon URL, description, topics, intro) and an empty
+The editor SHALL create the toolset via the backend write API when a user advances from the
+General step to the Settings step for a toolset that has not yet been persisted, using the
+General-step field values (name, version, icon URL, description, topics) and an empty
 endpoint, before switching to the Settings step. The returned toolset id SHALL be used for
 the remainder of the session — Settings-step actions, login, the Connect toolset section, and
 the final Save, which SHALL update rather than re-create the toolset.
@@ -76,28 +76,20 @@ editor SHALL NOT send a create or update request and SHALL just switch to the Se
 - **THEN** the editor stays on the General step and shows an error notification
 
 ### Requirement: General step fields
-The General step SHALL allow editing the toolset name, version, icon URL, description,
-topics, and intro. The icon SHALL be entered as a plain URL text field (no file-manager).
-Topics SHALL be entered as free-entry tags sourced from the application config. Intro SHALL
-be a single-line text field limited to 90 characters. These fields SHALL be rendered and
-validated through the shared `deployment-creation-form` library component, the same component
-used by Quick App creation's General step.
+The General step SHALL allow editing the toolset name, version, icon URL, description, and
+topics. The icon SHALL be entered as a plain URL text field (no file-manager). Topics SHALL be
+entered as free-entry tags sourced from the application config. These fields SHALL be
+rendered and validated through the shared `deployment-creation-form` library component, the
+same component used by Quick App creation's General step. The General step SHALL NOT render
+an Intro field.
 
 #### Scenario: Edit general fields
-- **WHEN** a user types a name, version, icon URL, description, intro, and adds topic tags
+- **WHEN** a user types a name, version, icon URL, description, and adds topic tags
 - **THEN** those values are held in component state without saving
 
 #### Scenario: Name is required
 - **WHEN** a user clears the name field and attempts to proceed or save
 - **THEN** the system shows a required-field error for the name and blocks the save
-
-#### Scenario: Intro exceeds the character limit
-- **WHEN** a user enters an intro longer than 90 characters and attempts to save
-- **THEN** the system shows a length-limit error on the intro field and blocks the save
-
-#### Scenario: Intro is optional
-- **WHEN** a user leaves the intro field empty and saves the toolset
-- **THEN** the save proceeds without an intro-related error
 
 ### Requirement: Form-only editor layout
 The editor SHALL render the active step form as the only content pane beneath the editor
@@ -127,12 +119,12 @@ URL to the clipboard.
 
 ### Requirement: Settings step — Connect toolset section
 
-When the toolset being edited has a persisted id — either because the editor was opened in
-edit mode for an existing toolset, or because a draft toolset was already created by
-advancing past the General step — and `config.dialCoreExternalUrl` is configured, the
-Settings step SHALL render a "Connect toolset" section at the bottom of the form, below the
-authentication section. The section SHALL be visually separated from the authentication
-content by a subtle horizontal rule. It SHALL contain:
+The Settings step SHALL render a "Connect toolset" section at the bottom of the form, below the
+authentication section, when the toolset being edited has a persisted id — either because the
+editor was opened in edit mode for an existing toolset, or because a draft toolset was already
+created by advancing past the General step — and `config.dialCoreExternalUrl` is configured.
+The section SHALL be visually separated from the authentication content by a subtle horizontal
+rule. It SHALL contain:
 - A title: "Connect toolset"
 - A description: "Copy endpoint URL to easily integrate toolset into your workflows"
 - A `NeutralButton` labelled "Copy URL" from the shared Connect MCP URL content that,
@@ -208,3 +200,4 @@ keep the user in the editor and show an error.
 #### Scenario: Save failure
 - **WHEN** the backend returns an error during save
 - **THEN** the editor remains open, shows an error, and clears the saving state
+

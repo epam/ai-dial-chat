@@ -19,30 +19,14 @@ async function validateDto(plain: Record<string, unknown>) {
   return validate(instance, { whitelist: true, forbidNonWhitelisted: true });
 }
 
-describe('ToolsetBodyDto — intro', () => {
-  it('passes when intro is omitted', async () => {
+describe('ToolsetBodyDto — intro removal', () => {
+  it('passes when no intro property is present', async () => {
     const errors = await validateDto(BASE_BODY);
     expect(errors).toHaveLength(0);
   });
 
-  it('passes when intro is an empty string', async () => {
-    const errors = await validateDto({ ...BASE_BODY, intro: '' });
-    expect(errors).toHaveLength(0);
-  });
-
-  it('passes when intro is exactly 90 characters', async () => {
-    const errors = await validateDto({
-      ...BASE_BODY,
-      intro: 'a'.repeat(90),
-    });
-    expect(errors).toHaveLength(0);
-  });
-
-  it('rejects intro longer than 90 characters', async () => {
-    const errors = await validateDto({
-      ...BASE_BODY,
-      intro: 'a'.repeat(91),
-    });
+  it('rejects a request body that still includes an intro property', async () => {
+    const errors = await validateDto({ ...BASE_BODY, intro: 'Short intro' });
     expect(errors.some((e) => e.property === 'intro')).toBe(true);
   });
 });

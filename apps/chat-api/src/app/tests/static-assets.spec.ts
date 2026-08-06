@@ -186,4 +186,32 @@ describe('static assets serving', () => {
 
     await request(app.getHttpServer()).get('/api/missing').expect(404);
   });
+
+  it('serves an existing asset with its own content type', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/assets/app.js')
+      .expect(200);
+
+    expect(response.text).toBe('console.log("app");');
+    expect(response.headers['content-type']).toContain('javascript');
+  });
+
+  it('returns 404 instead of index.html for a missing asset', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/assets/missing-BUG96SxZ.js')
+      .expect(404);
+
+    expect(response.text).not.toBe(CHAT_INDEX_HTML);
+  });
+
+  it('returns 404 instead of the sandbox index.html for a missing overlay sandbox asset', async () => {
+    await app.close();
+    app = await createStaticTestApp(staticRoot, overlaySandboxRoot, true);
+
+    const response = await request(app.getHttpServer())
+      .get(`${OVERLAY_SANDBOX_ROUTE}/assets/missing-BUG96SxZ.js`)
+      .expect(404);
+
+    expect(response.text).not.toBe(SANDBOX_INDEX_HTML);
+  });
 });

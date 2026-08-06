@@ -148,12 +148,6 @@ export interface ApplicationDto {
   description?: string;
   /**
    *
-   * @type {string}
-   * @memberof ApplicationDto
-   */
-  intro?: string;
-  /**
-   *
    * @type {Array<string>}
    * @memberof ApplicationDto
    */
@@ -443,6 +437,12 @@ export interface Check200Response {
    * @memberof Check200Response
    */
   version?: string;
+  /**
+   * Stable identifier for the running deployment, derived from a hash of the served frontend build. Changes when a new deployment replaces the frontend static assets, letting long-lived clients detect that a reload will pick up a newer build.
+   * @type {string}
+   * @memberof Check200Response
+   */
+  buildId?: string;
 }
 /**
  *
@@ -1240,12 +1240,6 @@ export interface CreateApplicationBodyDto {
    * @memberof CreateApplicationBodyDto
    */
   topics?: Array<string>;
-  /**
-   *
-   * @type {string}
-   * @memberof CreateApplicationBodyDto
-   */
-  intro?: string;
   /**
    *
    * @type {object}
@@ -2063,12 +2057,6 @@ export interface DeploymentItemDto {
    */
   description?: string;
   /**
-   * Short catalog-friendly intro from DIAL Core
-   * @type {string}
-   * @memberof DeploymentItemDto
-   */
-  intro?: string;
-  /**
    * Interface types supported by this deployment
    * @type {Array<string>}
    * @memberof DeploymentItemDto
@@ -2843,12 +2831,6 @@ export interface DialToolsetDto {
    * @memberof DialToolsetDto
    */
   description?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof DialToolsetDto
-   */
-  intro?: string;
   /**
    *
    * @type {string}
@@ -5328,12 +5310,6 @@ export interface ToolsetBodyDto {
    * @type {string}
    * @memberof ToolsetBodyDto
    */
-  intro?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ToolsetBodyDto
-   */
   endpoint: string;
   /**
    *
@@ -5609,12 +5585,6 @@ export interface UpdateApplicationBodyDto {
    * @memberof UpdateApplicationBodyDto
    */
   topics?: Array<string>;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateApplicationBodyDto
-   */
-  intro?: string;
   /**
    *
    * @type {string}

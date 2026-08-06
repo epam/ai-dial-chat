@@ -61,7 +61,6 @@ export const getDefaultToolsetForm = (
   iconUrl: '',
   description: '',
   topics: [],
-  intro: '',
   endpoint: '',
   protocol: ToolsetTransportType.Http,
   allowedTools: [],
@@ -524,7 +523,6 @@ export const toolsetDtoToForm = (dto: DialToolsetDto): ToolsetFormData => ({
   iconUrl: dto.iconUrl ?? '',
   description: dto.description ?? '',
   topics: dto.descriptionKeywords ?? [],
-  intro: dto.intro ?? '',
   endpoint: normalizeReturnedEndpointUrl(dto.endpoint),
   protocol:
     (dto.transport as ToolsetTransportType) ?? ToolsetTransportType.Http,
@@ -577,7 +575,6 @@ export const formToToolsetBody = (
     description: form.description.trim() || undefined,
     iconUrl: form.iconUrl.trim() || undefined,
     topics: form.topics.length > 0 ? form.topics : undefined,
-    intro: form.intro.trim() || undefined,
     endpoint: normalizeReturnedEndpointUrl(form.endpoint),
     transport: form.protocol,
     allowedTools: form.allowedTools.length > 0 ? form.allowedTools : undefined,
