@@ -139,6 +139,10 @@ const resolveToolsetFolder = (
 
   const segments = stripPrefixSegments(raw, TOOLSETS_PREFIX).slice(0, -1);
 
+  if (toolset.sharedWithMe && t != null) {
+    return [t(CatalogI18nKeys.FolderShared), ...segments.slice(1)];
+  }
+
   if (segments[0]?.toLowerCase() === PUBLIC_SEGMENT && t != null) {
     return [t(CatalogI18nKeys.FolderPublic), ...segments.slice(1)];
   }
@@ -149,8 +153,8 @@ const resolveToolsetFolder = (
 export const mapDeploymentToCatalogItem = (
   deployment: DeploymentItemDto,
   favoriteIds: ReadonlySet<string> = new Set(),
-  entityDetails?: EntitySpecificDetails,
-  t?: TFunction,
+  entityDetails: EntitySpecificDetails | undefined,
+  t: TFunction,
   editableSchemaIds: string[] = [],
   isCustomAppsEditable = false,
 ): CatalogItem => {
@@ -181,10 +185,7 @@ export const mapDeploymentToCatalogItem = (
         (isCustomAppsEditable &&
           !deployment.applicationTypeSchemaId &&
           normalizedType === 'application')),
-    folder:
-      t != null
-        ? resolveDeploymentFolder(deployment, t)
-        : (deployment.applicationFolder?.split('/') ?? []),
+    folder: resolveDeploymentFolder(deployment, t),
     summary: undefined,
     details:
       entityDetails != null

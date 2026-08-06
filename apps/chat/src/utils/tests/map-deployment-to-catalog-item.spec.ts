@@ -14,6 +14,8 @@ import {
 } from '../map-deployment-to-catalog-item';
 
 describe('mapDeploymentToCatalogItem', () => {
+  const t = ((key: string) => key) as TFunction;
+
   const baseDeployment: DeploymentItemDto = {
     id: 'applications/bucket/My App__1.0',
     displayName: 'My App',
@@ -27,7 +29,7 @@ describe('mapDeploymentToCatalogItem', () => {
       baseDeployment,
       undefined,
       undefined,
-      undefined,
+      t,
       ['schemas/quickapps2'],
     );
 
@@ -39,7 +41,7 @@ describe('mapDeploymentToCatalogItem', () => {
       baseDeployment,
       undefined,
       undefined,
-      undefined,
+      t,
       ['schemas/other'],
     );
 
@@ -51,7 +53,7 @@ describe('mapDeploymentToCatalogItem', () => {
       { ...baseDeployment, isMy: false },
       undefined,
       undefined,
-      undefined,
+      t,
       ['schemas/quickapps2'],
     );
 
@@ -59,7 +61,12 @@ describe('mapDeploymentToCatalogItem', () => {
   });
 
   it('is not editable when no editable schema id is supplied', () => {
-    const result = mapDeploymentToCatalogItem(baseDeployment);
+    const result = mapDeploymentToCatalogItem(
+      baseDeployment,
+      undefined,
+      undefined,
+      t,
+    );
 
     expect(result.isEditable).toBe(false);
   });
@@ -69,7 +76,7 @@ describe('mapDeploymentToCatalogItem', () => {
       { ...baseDeployment, isMy: false, canEdit: true },
       undefined,
       undefined,
-      undefined,
+      t,
       ['schemas/quickapps2'],
     );
 
@@ -81,7 +88,7 @@ describe('mapDeploymentToCatalogItem', () => {
       { ...baseDeployment, isMy: false, canEdit: false },
       undefined,
       undefined,
-      undefined,
+      t,
       ['schemas/quickapps2'],
     );
 
@@ -98,7 +105,7 @@ describe('mapDeploymentToCatalogItem', () => {
       },
       undefined,
       undefined,
-      undefined,
+      t,
       [],
       true,
     );
@@ -116,7 +123,7 @@ describe('mapDeploymentToCatalogItem', () => {
       },
       undefined,
       undefined,
-      undefined,
+      t,
       [],
       false,
     );
@@ -134,7 +141,7 @@ describe('mapDeploymentToCatalogItem', () => {
       },
       undefined,
       undefined,
-      undefined,
+      t,
       [],
       true,
     );
@@ -143,24 +150,32 @@ describe('mapDeploymentToCatalogItem', () => {
   });
 
   it('carries sharedWithMe through from the deployment DTO', () => {
-    const result = mapDeploymentToCatalogItem({
-      ...baseDeployment,
-      isMy: false,
-      sharedWithMe: true,
-    });
+    const result = mapDeploymentToCatalogItem(
+      {
+        ...baseDeployment,
+        isMy: false,
+        sharedWithMe: true,
+      },
+      undefined,
+      undefined,
+      t,
+    );
 
     expect(result.sharedWithMe).toBe(true);
   });
 
   it('defaults sharedWithMe to false when the field is absent from the DTO', () => {
-    const result = mapDeploymentToCatalogItem(baseDeployment);
+    const result = mapDeploymentToCatalogItem(
+      baseDeployment,
+      undefined,
+      undefined,
+      t,
+    );
 
     expect(result.sharedWithMe).toBe(false);
   });
 
   it('replaces the owner bucket with the translated shared folder for a shared application', () => {
-    const t = ((key: string) => key) as TFunction;
-
     const result = mapDeploymentToCatalogItem(
       {
         ...baseDeployment,
@@ -178,8 +193,6 @@ describe('mapDeploymentToCatalogItem', () => {
   });
 
   it('uses only the translated shared folder when a shared application has no folder metadata', () => {
-    const t = ((key: string) => key) as TFunction;
-
     const result = mapDeploymentToCatalogItem(
       {
         ...baseDeployment,
@@ -196,8 +209,6 @@ describe('mapDeploymentToCatalogItem', () => {
   });
 
   it('keeps the translated personal folder for an owned application', () => {
-    const t = ((key: string) => key) as TFunction;
-
     const result = mapDeploymentToCatalogItem(
       {
         ...baseDeployment,
@@ -212,8 +223,6 @@ describe('mapDeploymentToCatalogItem', () => {
   });
 
   it('keeps readable nested folders for a public application', () => {
-    const t = ((key: string) => key) as TFunction;
-
     const result = mapDeploymentToCatalogItem(
       {
         ...baseDeployment,
@@ -228,17 +237,51 @@ describe('mapDeploymentToCatalogItem', () => {
     expect(result.folder).toEqual([CatalogI18nKeys.FolderPublic, 'team']);
   });
 
+  it('never exposes the raw bucket ID for a shared application with a nested storage path', () => {
+    const result = mapDeploymentToCatalogItem(
+      {
+        ...baseDeployment,
+        isMy: false,
+        sharedWithMe: true,
+        applicationFolder:
+          'applications/8icWyDTafGxYQfmL4ZdHYbxsDCxTMXjgjFCSW/appdata/quick-apps',
+      },
+      undefined,
+      undefined,
+      t,
+    );
+
+    expect(result.folder).toEqual([
+      CatalogI18nKeys.FolderShared,
+      'appdata',
+      'quick-apps',
+    ]);
+    expect(result.folder).not.toContain(
+      '8icWyDTafGxYQfmL4ZdHYbxsDCxTMXjgjFCSW',
+    );
+  });
+
   it('sets supportsMcp to true when the deployment reports features.mcp true', () => {
-    const result = mapDeploymentToCatalogItem({
-      ...baseDeployment,
-      features: { systemPrompt: false, temperature: false, mcp: true },
-    });
+    const result = mapDeploymentToCatalogItem(
+      {
+        ...baseDeployment,
+        features: { systemPrompt: false, temperature: false, mcp: true },
+      },
+      undefined,
+      undefined,
+      t,
+    );
 
     expect(result.supportsMcp).toBe(true);
   });
 
   it('sets supportsMcp to false when features.mcp is absent', () => {
-    const result = mapDeploymentToCatalogItem(baseDeployment);
+    const result = mapDeploymentToCatalogItem(
+      baseDeployment,
+      undefined,
+      undefined,
+      t,
+    );
 
     expect(result.supportsMcp).toBe(false);
   });
@@ -352,6 +395,47 @@ describe('mapToolsetToCatalogItem', () => {
     );
 
     expect(result.folder).toEqual([CatalogI18nKeys.FolderPersonal]);
+  });
+
+  it('shows the translated Shared folder for a shared toolset with no nested folder', () => {
+    const t = ((key: string) => key) as TFunction;
+
+    const result = mapToolsetToCatalogItem(
+      {
+        id: 'toolsets/8icWyDTafGxYQfmL4ZdHYbxsDCxTMXjgjFCSW/my-toolset__0.0.1',
+        toolset:
+          'toolsets/8icWyDTafGxYQfmL4ZdHYbxsDCxTMXjgjFCSW/my-toolset__0.0.1',
+        isMy: false,
+        sharedWithMe: true,
+      },
+      undefined,
+      false,
+      t,
+    );
+
+    expect(result.folder).toEqual([CatalogI18nKeys.FolderShared]);
+  });
+
+  it('shows the translated Shared folder plus the nested path for a shared toolset', () => {
+    const t = ((key: string) => key) as TFunction;
+
+    const result = mapToolsetToCatalogItem(
+      {
+        id: 'toolsets/8icWyDTafGxYQfmL4ZdHYbxsDCxTMXjgjFCSW/team/my-toolset__0.0.1',
+        toolset:
+          'toolsets/8icWyDTafGxYQfmL4ZdHYbxsDCxTMXjgjFCSW/team/my-toolset__0.0.1',
+        isMy: false,
+        sharedWithMe: true,
+      },
+      undefined,
+      false,
+      t,
+    );
+
+    expect(result.folder).toEqual([CatalogI18nKeys.FolderShared, 'team']);
+    expect(result.folder).not.toContain(
+      '8icWyDTafGxYQfmL4ZdHYbxsDCxTMXjgjFCSW',
+    );
   });
 
   it('marks a public toolset as isPublic and manageable by an admin', () => {

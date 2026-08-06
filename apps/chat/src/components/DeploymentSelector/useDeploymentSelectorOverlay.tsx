@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
@@ -29,6 +30,7 @@ interface UseDeploymentSelectorOverlayResult {
 export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResult {
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
 
+  const { t } = useTranslation();
   const { items, selectedItemId, setSelectedItemId } = useDeployments();
   const { favoriteIds, toggleFavorite } = useFavoriteApplications();
 
@@ -36,8 +38,8 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
     () =>
       items
         .filter((d) => favoriteIds.has(d.id))
-        .map((d) => mapDeploymentToCatalogItem(d, favoriteIds)),
-    [items, favoriteIds],
+        .map((d) => mapDeploymentToCatalogItem(d, favoriteIds, undefined, t)),
+    [items, favoriteIds, t],
   );
 
   const selectedDeployment = useMemo(
@@ -48,9 +50,14 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
   const selectedCatalogItem = useMemo(
     () =>
       selectedDeployment
-        ? mapDeploymentToCatalogItem(selectedDeployment, favoriteIds)
+        ? mapDeploymentToCatalogItem(
+            selectedDeployment,
+            favoriteIds,
+            undefined,
+            t,
+          )
         : undefined,
-    [selectedDeployment, favoriteIds],
+    [selectedDeployment, favoriteIds, t],
   );
 
   const renderOverlay = useCallback(
