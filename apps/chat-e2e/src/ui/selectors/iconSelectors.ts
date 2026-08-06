@@ -37,4 +37,6 @@ export const IconSelectors = {
   sharedEntityIcon: '.tabler-icon-arrow-up-right',
   eyeIcon: '.tabler-icon.tabler-icon-eye',
   eyeOffIcon: '.tabler-icon.tabler-icon-eye-off',
+  chevronDownIcon: '.tabler-icon.tabler-icon-chevron-down',
+  chevronUpIcon: '.tabler-icon.tabler-icon-chevron-up',
 };
