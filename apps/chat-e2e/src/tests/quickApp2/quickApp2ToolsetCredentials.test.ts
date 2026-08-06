@@ -201,6 +201,7 @@ dialTest(
     previewToolsetLoginModalAssertion,
     toolsetSignInMock,
     toast,
+    toastAssertion,
     baseAssertion,
     setTestIds,
   }) => {
@@ -357,8 +358,7 @@ dialTest(
         await toolsetLoginEventsModal
           .getDeclineButton(declineToolsetName)
           .click();
-        await baseAssertion.assertElementText(
-          toast,
+        await toastAssertion.assertToastMessage(
           ExpectedConstants.toolsetSignInRequestDeclined,
         );
         await toast.closeToast();
@@ -430,6 +430,7 @@ dialTest(
     toolsetLoginEventsModal,
     toolsetSignInMock,
     toast,
+    toastAssertion,
     baseAssertion,
     setTestIds,
   }) => {
@@ -525,8 +526,7 @@ dialTest(
           'visible',
         );
         await toolsetLoginEventsModal.declineAllButton.click();
-        await baseAssertion.assertElementText(
-          toast,
+        await toastAssertion.assertToastMessage(
           ExpectedConstants.allToolsetSignInRequestsDeclined,
         );
         await toast.closeToast();
@@ -557,6 +557,7 @@ dialTest(
     toolsetLoginEventsModal,
     toolsetSignInMock,
     toast,
+    toastAssertion,
     baseAssertion,
     setTestIds,
   }) => {
@@ -662,8 +663,7 @@ dialTest(
         await toolsetLoginEventsModal
           .getDeclineButton(declinedToolsetName)
           .click();
-        await baseAssertion.assertElementText(
-          toast,
+        await toastAssertion.assertToastMessage(
           ExpectedConstants.toolsetSignInRequestDeclined,
         );
         await toast.closeToast();
@@ -920,6 +920,7 @@ dialAdminTest(
     adminApplicationApiHelper,
     adminModelApiHelper,
     adminToast,
+    adminToastAssertion,
     quickApp2Builder,
     toolsetBuilder,
     toolsetApiHelper,
@@ -1091,8 +1092,7 @@ dialAdminTest(
         );
         await editorMock.navigateToCallback(await popupPromise);
 
-        await baseAssertion.assertElementText(
-          adminToast,
+        await adminToastAssertion.assertToastMessage(
           ExpectedConstants.personalLoginSuccessfulMessage(
             editorToolsetName,
             version,
@@ -1166,8 +1166,7 @@ dialAdminTest(
         );
         await chatMock.navigateToCallback(await popupPromise);
 
-        await baseAssertion.assertElementText(
-          adminToast,
+        await adminToastAssertion.assertToastMessage(
           ExpectedConstants.personalLoginSuccessfulMessage(
             chatToolsetName,
             version,
@@ -1230,6 +1229,7 @@ dialTest(
     toolsetLoginEventsModal,
     toolsetSignInMock,
     toast,
+    toastAssertion,
     baseAssertion,
     setTestIds,
   }) => {
@@ -1395,8 +1395,7 @@ dialTest(
           );
         }
         await toolsetLoginEventsModal.declineAllButton.click();
-        await baseAssertion.assertElementText(
-          toast,
+        await toastAssertion.assertToastMessage(
           ExpectedConstants.allToolsetSignInRequestsDeclined,
         );
         await toast.closeToast();
@@ -1665,6 +1664,7 @@ dialAdminTest(
     adminToolsetSignInMock,
     adminToolsetApiHelper,
     adminToast,
+    adminToastAssertion,
     quickApp2Builder,
     toolsetBuilder,
     toolsetApiHelper,
@@ -1815,8 +1815,7 @@ dialAdminTest(
           adminToolsetLoginEventsModal,
           'hidden',
         );
-        await baseAssertion.assertElementText(
-          adminToast,
+        await adminToastAssertion.assertToastMessage(
           ExpectedConstants.personalLoginSuccessfulMessage(
             publicToolsetName,
             version,
