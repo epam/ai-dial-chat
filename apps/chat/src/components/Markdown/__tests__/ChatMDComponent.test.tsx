@@ -291,5 +291,38 @@ describe('ChatMDComponent', () => {
 
       expect(screen.getByText('Loading...')).toBeInTheDocument();
     });
+
+    it('renders a blinking cursor in plain text mode', () => {
+      renderWithStore(
+        <ChatMDComponent isShowResponseLoader plainTextMode content="Answer" />,
+      );
+
+      expect(screen.getByText('Answer')).toBeInTheDocument();
+
+      const cursor = screen.getByTestId('loading-cursor');
+      expect(cursor).toBeInTheDocument();
+      expect(cursor).toHaveClass('animate-ping');
+    });
+
+    it('renders a blinking cursor in plain text mode before any content arrives', () => {
+      renderWithStore(
+        <ChatMDComponent isShowResponseLoader plainTextMode content="" />,
+      );
+
+      expect(screen.getByTestId('loading-cursor')).toBeInTheDocument();
+    });
+
+    it('does not render a cursor in plain text mode once streaming is over', () => {
+      renderWithStore(
+        <ChatMDComponent
+          isShowResponseLoader={false}
+          plainTextMode
+          content="Answer"
+        />,
+      );
+
+      expect(screen.getByText('Answer')).toBeInTheDocument();
+      expect(screen.queryByTestId('loading-cursor')).not.toBeInTheDocument();
+    });
   });
 });
