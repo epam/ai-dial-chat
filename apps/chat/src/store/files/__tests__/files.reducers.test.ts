@@ -336,6 +336,56 @@ describe('files.reducers deleteFilesSuccess', () => {
   });
 });
 
+describe('files.reducers moveFiles', () => {
+  const bucket = 'files/bucket';
+  const renamed = `${bucket}/parent`;
+  const sibling = `${bucket}/parent2`;
+
+  it('drops the moved subtree but keeps a sibling sharing the name prefix', () => {
+    const state = {
+      ...filesSlice.getInitialState(),
+      files: [
+        makeFile({
+          id: `${renamed}/child/doc.txt`,
+          folderId: `${renamed}/child`,
+        }),
+        makeFile({
+          id: `${sibling}/child/doc.txt`,
+          folderId: `${sibling}/child`,
+        }),
+      ],
+      folders: [
+        makeFolder({ id: renamed, name: 'parent', folderId: bucket }),
+        makeFolder({ id: `${renamed}/child`, folderId: renamed }),
+        makeFolder({ id: sibling, name: 'parent2', folderId: bucket }),
+        makeFolder({ id: `${sibling}/child`, folderId: sibling }),
+      ],
+    };
+
+    const nextState = filesSlice.reducer(
+      state,
+      FilesActions.moveFiles({
+        files: [
+          {
+            sourceUrl: renamed,
+            destinationUrl: `${bucket}/newName`,
+            nodeType: DialFileNodeType.FOLDER,
+          },
+        ],
+        sourceFolder: bucket,
+        destinationFolder: bucket,
+      }),
+    );
+
+    expect(nextState.folders.map((f) => f.id).sort()).toEqual(
+      [renamed, sibling, `${sibling}/child`].sort(),
+    );
+    expect(nextState.files.map((f) => f.id)).toEqual([
+      `${sibling}/child/doc.txt`,
+    ]);
+  });
+});
+
 describe('files.reducers uploadReplaceDialog', () => {
   const folderId = 'files/test-bucket/uploads';
   const file = new File(['content'], 'sun.jpg', { type: 'image/jpeg' });
