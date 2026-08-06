@@ -45,13 +45,7 @@ describe('publish API', () => {
       publishCatalogEntityDto: {
         folderPath: 'Organization/Data Science',
         version: '1.2.0',
-        rules: [
-          {
-            source: 'roles',
-            _function: PublicationRuleFunction.Contain,
-            targets: ['engineering', 'support'],
-          },
-        ],
+        rules,
       },
     });
   });
