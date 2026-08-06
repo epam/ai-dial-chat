@@ -1,9 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, Matches } from 'class-validator';
-import {
-  DEPLOYMENT_ID_PATTERN,
-  DEPLOYMENT_ID_VALIDATION_MESSAGE,
-} from '../../common/validators/deployment-id.pattern';
+import { IsString } from 'class-validator';
+import { DEPLOYMENT_ID_PATTERN } from '../../common/validators/deployment-id.pattern';
+import { IsSafeToolsetName } from '../../common/validators/safe-toolset-name.validator';
 
 export class GetToolsetDto {
   @ApiProperty({
@@ -13,8 +11,6 @@ export class GetToolsetDto {
     pattern: DEPLOYMENT_ID_PATTERN.source,
   })
   @IsString()
-  @Matches(DEPLOYMENT_ID_PATTERN, {
-    message: DEPLOYMENT_ID_VALIDATION_MESSAGE,
-  })
+  @IsSafeToolsetName()
   toolsetName!: string;
 }

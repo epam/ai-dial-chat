@@ -136,6 +136,13 @@ describe('ToolsetsController (integration)', () => {
         .expect(400);
     });
 
+    it('returns 400 for a percent-encoded path-traversal payload, without calling the service', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/toolsets/..%2Fetc%2Fpasswd')
+        .expect(400);
+      expect(service.getToolset).not.toHaveBeenCalled();
+    });
+
     it('returns 404 when service throws NotFoundException', async () => {
       service.getToolset.mockRejectedValue(
         new NotFoundException('Toolset not found'),
@@ -156,6 +163,26 @@ describe('ToolsetsController (integration)', () => {
       await request(app.getHttpServer())
         .get('/api/v1/toolsets/folder.toolset-v1')
         .expect(200);
+    });
+
+    it('accepts namespaced toolset names with @ and :', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/toolsets/@org%2Ftoolset:tag')
+        .expect(200);
+    });
+
+    it('accepts a percent-encoded custom-toolset path (bucket/path segments)', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/toolsets/toolsets%2Fbucket%2Ffolder%2Ftoolset-name')
+        .expect(200);
+
+      expect(res.body).toEqual(mockToolset);
+      expect(service.getToolset).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        TEST_USER.bucket,
+        'toolsets/bucket/folder/toolset-name',
+      );
     });
   });
 });
