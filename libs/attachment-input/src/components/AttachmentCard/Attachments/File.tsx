@@ -3,7 +3,7 @@ import {
   mergeClasses,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
-import { DialSpinner } from '@epam/ai-dial-ui-kit';
+import { DialSpinner, Highlight } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   type KeyboardEvent,
@@ -34,6 +34,7 @@ const DEFAULT_ERROR_REASON_TEXT: Record<AttachmentErrorReason, string> = {
 /** Non-previewable attachment tile showing a file type glyph, extension label, and filename with upload-state feedback. */
 export const FileAttachment: FC<FileAttachmentProps> = ({
   attachment,
+  searchQuery = '',
   onClick,
   onRetry,
   labels,
@@ -114,7 +115,11 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
         !isError && cornerIconSpacing,
       )}
     >
-      {displayName}
+      {searchQuery ? (
+        <Highlight text={displayName} query={searchQuery} maxLines={2} />
+      ) : (
+        displayName
+      )}
     </div>
   );
 
