@@ -4,6 +4,8 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getStagesToggleOffsetClass } from '@/src/utils/app/compact-mode';
+
 import { Translation } from '@/src/types/translation';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
@@ -16,11 +18,12 @@ import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   stages: Stage[];
+  compactMode?: boolean;
 }
 
 const NUMBER_OF_VISIBLE_STAGES = 3;
 
-export const MessageStages = ({ stages }: Props) => {
+export const MessageStages = ({ stages, compactMode = false }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const [showMore, setShowMore] = useState(false);
 
@@ -38,7 +41,10 @@ export const MessageStages = ({ stages }: Props) => {
         <div>
           <DialButton
             onClick={() => setShowMore(!showMore)}
-            className="mt-2 flex leading-[18px] text-accent-primary"
+            className={classNames(
+              'flex leading-[18px] text-accent-primary',
+              getStagesToggleOffsetClass(compactMode),
+            )}
             textClassName="font-normal"
             data-no-context-menu
             data-qa={showMore ? 'show-less' : 'show-more'}
