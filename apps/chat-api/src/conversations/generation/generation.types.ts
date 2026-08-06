@@ -50,6 +50,16 @@ export interface ResponsesErrorEvent {
   code?: string;
 }
 
+/**
+ * Terminal failure event. Unlike `ResponsesErrorEvent` (a top-level `error`
+ * frame), `response.failed` nests its error under `response.error`,
+ * mirroring the OpenAI Responses API's `response.failed` payload shape.
+ */
+export interface ResponsesFailedEvent {
+  type: 'response.failed';
+  response?: { id?: string; error?: { message?: string; code?: string } };
+}
+
 /** Catch-all for event types not in the handled allowlist above. */
 export interface ResponsesUnknownEvent {
   type: string;
@@ -61,7 +71,33 @@ export type ResponsesSseEvent =
   | ResponsesCompletedEvent
   | ResponsesIncompleteEvent
   | ResponsesErrorEvent
+  | ResponsesFailedEvent
   | ResponsesUnknownEvent;
+
+/**
+ * Explicit terminal lifecycle state for a Responses SSE stream, replacing a
+ * `terminalError: string | null` / `isDone: boolean` pair so precedence
+ * between competing terminal signals (`response.failed`, `response.incomplete`,
+ * a top-level `error`, an invalid-status `response.completed`, and the
+ * compatibility `[DONE]` marker) is explicit rather than encoded in loosely
+ * related booleans.
+ */
+export enum ResponsesTerminalState {
+  Success = 'success',
+  Failed = 'failed',
+  Incomplete = 'incomplete',
+  StreamError = 'stream_error',
+}
+
+/**
+ * Once recorded, a non-`Success` signal must never be overwritten by a later
+ * `[DONE]` marker or by reaching end-of-stream — see
+ * `responses.adapter.ts`'s `handleEvent`/post-loop logic.
+ */
+export interface ResponsesTerminalSignal {
+  state: ResponsesTerminalState;
+  message?: string;
+}
 
 /**
  * Normalized chunk shape both adapters emit, identical to the

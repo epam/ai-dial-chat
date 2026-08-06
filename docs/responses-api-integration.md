@@ -180,16 +180,17 @@ The Responses API returns typed events, while the existing frontend expects Chat
 
 ### Supported events
 
-| Upstream event               | BFF action                                                                  |
-| ---------------------------- | --------------------------------------------------------------------------- |
-| `response.created`           | Saves the response identifier and sends it in `delta.responseId`            |
-| `response.output_text.delta` | Appends `delta` to the assistant message and sends it as `delta.content`    |
-| `response.completed`         | Validates the final status, saves `responseId`, and completes the stream    |
-| `response.incomplete`        | Ends generation with an error while preserving text received so far         |
-| `error`                      | Ends generation with the upstream error message                             |
-| unknown event                | Does not send it to the client, writes a debug log, and increments a metric |
+| Upstream event               | BFF action                                                                    |
+| ----------------------------- | ------------------------------------------------------------------------------ |
+| `response.created`           | Saves the response identifier and sends it in `delta.responseId`              |
+| `response.output_text.delta` | Appends `delta` to the assistant message and sends it as `delta.content`      |
+| `response.completed`         | Validates the final status; a valid status completes the stream and saves `responseId` |
+| `response.failed`            | Ends generation with an error extracted from `response.error`, preserving text received so far |
+| `response.incomplete`        | Ends generation with an error while preserving text received so far           |
+| `error`                      | Ends generation with the upstream error message                               |
+| unknown event                | Does not send it to the client, writes a debug log, and increments a metric   |
 
-`event:` lines, empty lines, and SSE comments are ignored. JSON is parsed from `data:` lines. The `[DONE]` marker is treated as completion of the upstream stream.
+`event:` lines, empty lines, and SSE comments are ignored. JSON is parsed from `data:` lines. See "Terminal state and `[DONE]`" below for how a stream resolves to success or error — none of `response.failed`, `response.incomplete`, or an in-band `error` ever produce a downstream `data: [DONE]`, and none of them are retried through Chat Completions.
 
 ### What the frontend receives
 
@@ -233,9 +234,22 @@ Both adapters return the same result type to `ConversationService`:
 
 Shared logic then sets the message status and saves the conversation state.
 
+### Terminal state and `[DONE]`
+
+The Responses adapter tracks one explicit terminal signal per stream instead of assuming success whenever no error was seen. A stream resolves to `completed` only when it observes a valid `response.completed` (status absent or `"completed"`) or, for legacy/non-standard upstreams only, a `data: [DONE]` marker that no earlier error signal has already claimed.
+
+The DIAL Core Responses contract and the `[DONE]` compatibility path are not the same thing:
+
+- **Canonical DIAL Core streams** end in `response.completed` or `response.incomplete` and do not send `[DONE]`. A canonical stream completes as soon as it sees a valid `response.completed` — it never needs `[DONE]`.
+- **`[DONE]` is a backward-compatibility signal** for legacy or non-standard upstreams that do not send a Responses-native terminal event. Observing `[DONE]` records success only if no terminal signal (success or error) was already recorded; it can never override an earlier `response.failed`, `response.incomplete`, in-band `error`, or an invalid-status `response.completed`.
+- **A `response.completed` with a status other than `"completed"`** remains an error, regardless of anything that follows it, including `[DONE]`.
+- **The upstream socket closing does not by itself mean success.** If the stream ends — by socket EOF or by `[DONE]` — without a previously recorded success or error signal, the adapter returns an error using a fixed, generic message that never echoes prompt or response content, and preserves any partial assistant text assembled so far. No downstream `data: [DONE]` is written in this case.
+
+DIAL Core does not yet recognize `response.failed` as a terminal event on its own side — it can still forward a `response.failed` frame to Chat before the upstream socket closes. Chat's adapter treats `response.failed` as terminal regardless, which is why this defensive handling exists on the Chat side even though Core has not adopted it internally yet.
+
 ### Partial responses
 
-If `response.incomplete`, an `error` event, or an abort occurs after several deltas, the accumulated text is preserved. It is saved together with the error or the indication that the user stopped generation.
+If `response.failed`, `response.incomplete`, an `error` event, an unterminated stream, or an abort occurs after several deltas, the accumulated text is preserved. It is saved together with the error or the indication that the user stopped generation.
 
 ### User-initiated stop
 
@@ -276,6 +290,8 @@ Supported:
 - full stateless history on every turn;
 - system prompts;
 - persistence of complete and partial text in conversation history;
+- explicit `response.failed` handling as a terminal error, with partial-text preservation;
+- an explicit terminal-state model: a canonical DIAL Core stream succeeds on a valid `response.completed` alone; `data: [DONE]` is accepted only as a legacy/non-standard-upstream compatibility signal and never overrides an earlier error signal; an unterminated stream (socket EOF or `[DONE]` with no prior terminal signal) is treated as an error rather than an implicit success;
 - stopping generation through the existing Chat endpoint;
 - diagnostic persistence of `responseId`;
 - safe handling of unknown SSE events;
@@ -297,6 +313,10 @@ Not yet supported in the Responses branch:
 - automatic fallback after a Responses API error.
 
 If a deployment declares `responses_api: true` but requires any capability from this list to work correctly, the capability flag alone is insufficient. The adapter must be extended before that deployment can be included in a production scenario.
+
+### Known Core-side gap
+
+DIAL Core does not currently recognize `response.failed` as a terminal Responses event on its own side, and it can end a proxied stream on upstream socket close even when no recognized terminal event was observed. Chat's adapter defends against both possibilities regardless — `response.failed` is treated as terminal in Chat even though Core has not adopted that terminal state internally yet, and an unterminated stream is never treated as an implicit success. Extending Core's own terminal-event recognition is tracked as a follow-up in the `ai-dial-core` repository and is out of scope for this Chat-side change.
 
 ## Observability
 

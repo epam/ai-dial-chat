@@ -1,60 +1,4 @@
-### Requirement: Generation API resolver
-
-`resolveGenerationApi` (`apps/chat-api/src/conversations/generation/generation-api.ts`) SHALL be a pure function that takes the resolved deployment `features` object (`{ responsesApi?: boolean }`, as produced by `DeploymentsService.getDeploymentDetails`) and returns a `GenerationApi` string enum value: `Responses = 'responses'` when `features.responsesApi === true`, otherwise `ChatCompletions = 'chat_completions'`. A missing `features` object or a missing/`false` `responsesApi` field SHALL resolve to `ChatCompletions`.
-
-#### Scenario: Responses-capable deployment resolves to Responses
-
-- **WHEN** `resolveGenerationApi({ responsesApi: true })` is called
-- **THEN** it returns `GenerationApi.Responses`
-
-#### Scenario: Deployment without the flag resolves to Chat Completions
-
-- **WHEN** `resolveGenerationApi({ responsesApi: false })` or `resolveGenerationApi(undefined)` is called
-- **THEN** it returns `GenerationApi.ChatCompletions`
-
----
-
-### Requirement: ConversationService resolves generation API before opening the upstream stream
-
-`ConversationService.streamCompletion` SHALL call `DeploymentsService.getDeploymentDetails(sub, model, token)` (the existing cached, user-token-scoped lookup already used by the deployment details endpoint) before issuing any upstream generation call, read `features` off the returned `modelDetails`/`applicationDetails` per the resolved `type`, and pass the result through `resolveGenerationApi` to select the adapter. `ConversationModule` SHALL import `DeploymentsModule` to obtain `DeploymentsService`. When `getDeploymentDetails` resolves the target id to `type: 'toolset'`, `streamCompletion` SHALL reject the request with HTTP 400 before any generation call, since a toolset is not a generation deployment.
-
-#### Scenario: Responses-capable model dispatches to the Responses adapter
-
-- **WHEN** a completion request targets a model whose `getDeploymentDetails` result has `features.responsesApi: true`
-- **THEN** `streamCompletion` calls the Responses adapter and does not call `sendChatCompletionRequest`
-
-#### Scenario: Responses-capable application dispatches to the Responses adapter
-
-- **WHEN** a completion request targets an application whose `getDeploymentDetails` result has `features.responsesApi: true`
-- **THEN** `streamCompletion` calls the Responses adapter and does not call `sendChatCompletionRequest`
-
-#### Scenario: Legacy deployment without the flag keeps using Chat Completions
-
-- **WHEN** a completion request targets a deployment whose `getDeploymentDetails` result has no `responsesApi` field (older Core, or capability not declared)
-- **THEN** `streamCompletion` calls `sendChatCompletionRequest` exactly as before this change
-
-#### Scenario: Target resolves to a toolset
-
-- **WHEN** a completion request's `model` resolves via `getDeploymentDetails` to `type: 'toolset'`
-- **THEN** the request is rejected with HTTP 400 and no generation call is made
-
-#### Scenario: Capability lookup fails
-
-- **WHEN** `getDeploymentDetails` rejects with a 401/403/404/5xx-mapped exception
-- **THEN** `streamCompletion` surfaces the corresponding BFF error and does not call either generation adapter
-
----
-
-### Requirement: Chat Completions transport extracted behind the adapter seam
-
-The existing SDK `sendChatCompletionRequest` call, request construction from `buildConversationHistory`'s `messages`, and SSE chunk parsing SHALL be extracted verbatim into `apps/chat-api/src/conversations/generation/chat-completions.adapter.ts`, exposing the same normalized chunk stream contract as the Responses adapter. This extraction SHALL NOT change any request sent to DIAL Core nor any chunk delivered to `apply-chunk.server.ts`.
-
-#### Scenario: Chat Completions behavior is unchanged after extraction
-
-- **WHEN** an existing Chat Completions integration test exercises `streamCompletion` for a non-Responses deployment
-- **THEN** the outbound DIAL Core request and the resulting `StreamChunk` sequence are identical to the pre-change behavior
-
----
+## MODIFIED Requirements
 
 ### Requirement: Responses request built from existing conversation history
 
@@ -74,17 +18,6 @@ The existing SDK `sendChatCompletionRequest` call, request construction from `bu
 
 - **WHEN** the conversation history passed to `buildRequest` contains one or more messages with `role: ConversationMessageRole.Status` interleaved among user/assistant messages
 - **THEN** the built `input` array omits every `Status`-role message, and the remaining user and assistant messages keep their original relative order
-
----
-
-### Requirement: SDK createResponse call and cast isolation
-
-`responses.adapter.ts` SHALL call `this.dialClient.client.createResponse({ body: responsesRequest as never, headers: { ...bearer auth headers, Accept: 'text/event-stream', ...optional X-DIAL-CLIENT-CHANNEL-ID }, parseAs: 'stream', signal })`. The `as never` cast SHALL be confined to this single call site; the function's return value SHALL be converted immediately to the locally defined types in `generation.types.ts` before being passed to any caller.
-
-#### Scenario: Cast does not leak past the adapter
-
-- **WHEN** `ConversationService` or `apply-chunk.server.ts` consumes output from `responses.adapter.ts`
-- **THEN** the consumed value is typed via `generation.types.ts`, with no `as never`/`any` in the calling code
 
 ---
 
@@ -174,7 +107,7 @@ The upstream socket closing (end of stream) SHALL NOT by itself imply successful
 - **WHEN** the upstream socket closes before any SSE event is received
 - **THEN** the adapter returns an error outcome with a stable generic message that does not reference prompt or response content
 
----
+## ADDED Requirements
 
 ### Requirement: Non-2xx Responses request error message preserves DIAL Core's message
 
@@ -206,30 +139,3 @@ Any extracted message used in a log statement SHALL be sanitized per the reposit
 
 - **WHEN** `createResponse` resolves non-2xx with an empty response body and the SDK's parsed `error` value yields no usable message
 - **THEN** `GenerationRelayOutcome.errorMessage` is an empty string
-
----
-
-### Requirement: No automatic fallback after a Responses call has started
-
-Once `responses.adapter.ts` has issued the `createResponse` call, a subsequent 4xx/5xx response or an in-stream error SHALL terminate the attempt as an error through the existing stream-error path. The system SHALL NOT automatically retry the same generation through the Chat Completions adapter.
-
-#### Scenario: Upstream 5xx during a Responses call is not retried via Chat Completions
-
-- **WHEN** `createResponse` returns a 5xx response
-- **THEN** the generation ends with an error, and no Chat Completions request is made for that same generation attempt
-
----
-
-### Requirement: message.responseId carries the DIAL Responses id for diagnostics
-
-`ConversationMessageDto` (or the equivalent assistant message shape saved by `ConversationService`) SHALL accept an optional `responseId: string` field, populated from the DIAL `response.id` on a Responses-routed generation's `response.created`/`response.completed` events, and left unset for Chat Completions-routed generations.
-
-#### Scenario: responseId present only for Responses-routed messages
-
-- **WHEN** a generation is routed through the Responses adapter and completes successfully
-- **THEN** the saved assistant message has `responseId` set to the DIAL `response.id`
-
-#### Scenario: responseId absent for Chat Completions-routed messages
-
-- **WHEN** a generation is routed through the Chat Completions adapter
-- **THEN** the saved assistant message has no `responseId` field set
