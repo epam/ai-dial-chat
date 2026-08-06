@@ -21,6 +21,7 @@ import {
   isEntityNameOrPathInvalid,
   replaceStringRange,
 } from '@/src/utils/app/common';
+import { getUserMessageBlockGapClass } from '@/src/utils/app/compact-mode';
 import {
   getDialFilesFromAttachments,
   getDialFoldersFromAttachments,
@@ -208,6 +209,7 @@ export const UserMessage = memo(function UserMessage({
       !isReplay &&
       !isPlayback &&
       withButtons);
+  const isCompactMode = !!conversation.compactMode;
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
   const mappedUserEditableAttachments = useMemo(() => {
@@ -841,10 +843,14 @@ export const UserMessage = memo(function UserMessage({
   return (
     <>
       <div
-        className={classNames('relative flex w-full flex-col gap-5', {
-          'me-2': isAlignedToEnd,
-          'mr-2': !isAlignedToEnd,
-        })}
+        className={classNames(
+          'relative flex w-full flex-col',
+          getUserMessageBlockGapClass(isCompactMode),
+          {
+            'me-2': isAlignedToEnd,
+            'mr-2': !isAlignedToEnd,
+          },
+        )}
       >
         <UserSchema
           formValue={currentFormValue}
@@ -856,6 +862,7 @@ export const UserMessage = memo(function UserMessage({
           <div
             className={classNames(
               'prose min-w-full flex-1 whitespace-pre-wrap',
+              isCompactMode && 'prose-compact',
               {
                 'max-w-none': isChatFullWidth,
                 'text-sm': isOverlay,
@@ -867,7 +874,10 @@ export const UserMessage = memo(function UserMessage({
           </div>
         )}
 
-        <MessageAttachments attachments={message.custom_content?.attachments} />
+        <MessageAttachments
+          attachments={message.custom_content?.attachments}
+          compactMode={isCompactMode}
+        />
 
         {isOverlay && (
           <OverlayMessageCustomButtons realMessageIndex={realMessageIndex} />
