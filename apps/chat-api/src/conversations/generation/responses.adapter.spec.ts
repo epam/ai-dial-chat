@@ -82,6 +82,7 @@ describe('ResponsesAdapter', () => {
             content: 'How are you?',
           } as never,
         ],
+        temperatureSupported: false,
       });
 
       expect(request.input).toEqual([
@@ -102,6 +103,7 @@ describe('ResponsesAdapter', () => {
         messagesForCompletion: [
           { role: ConversationMessageRole.User, content: 'Hi' } as never,
         ],
+        temperatureSupported: false,
       });
 
       expect(request.input).toEqual([
@@ -125,6 +127,7 @@ describe('ResponsesAdapter', () => {
             content: 'Hello!',
           } as never,
         ],
+        temperatureSupported: false,
       });
 
       expect(request.input).toEqual([
@@ -139,10 +142,146 @@ describe('ResponsesAdapter', () => {
         model: 'gpt-4o',
         startConversation: { prompt: '' } as never,
         messagesForCompletion: [],
+        temperatureSupported: false,
       });
 
       expect(request.store).toBe(false);
       expect(request.stream).toBe(true);
+    });
+
+    it('forwards temperature 0 exactly when the deployment supports it', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '', temperature: 0 } as never,
+        messagesForCompletion: [],
+        temperatureSupported: true,
+      });
+
+      expect(request.temperature).toBe(0);
+    });
+
+    it('forwards a non-zero temperature exactly when the deployment supports it', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '', temperature: 0.7 } as never,
+        messagesForCompletion: [],
+        temperatureSupported: true,
+      });
+
+      expect(request.temperature).toBe(0.7);
+    });
+
+    it('omits temperature when the deployment does not support it', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '', temperature: 0.7 } as never,
+        messagesForCompletion: [],
+        temperatureSupported: false,
+      });
+
+      expect(request).not.toHaveProperty('temperature');
+    });
+
+    it('preserves the minimum valid maxOutputTokens value', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '', maxOutputTokens: 1 } as never,
+        messagesForCompletion: [],
+        temperatureSupported: false,
+      });
+
+      expect(request.max_output_tokens).toBe(1);
+    });
+
+    it('preserves a representative larger maxOutputTokens value', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '', maxOutputTokens: 4096 } as never,
+        messagesForCompletion: [],
+        temperatureSupported: false,
+      });
+
+      expect(request.max_output_tokens).toBe(4096);
+    });
+
+    it('omits max_output_tokens when maxOutputTokens is absent', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '' } as never,
+        messagesForCompletion: [],
+        temperatureSupported: false,
+      });
+
+      expect(request).not.toHaveProperty('max_output_tokens');
+    });
+
+    it.each([0, -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1])(
+      'omits max_output_tokens for the invalid value %s',
+      (invalidValue) => {
+        const { adapter } = makeAdapter();
+        const request = adapter.buildRequest({
+          model: 'gpt-4o',
+          startConversation: {
+            prompt: '',
+            maxOutputTokens: invalidValue,
+          } as never,
+          messagesForCompletion: [],
+          temperatureSupported: false,
+        });
+
+        expect(request).not.toHaveProperty('max_output_tokens');
+      },
+    );
+
+    it('never maps max_output_tokens when Chat Completions capability flags are false', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '', maxOutputTokens: 2048 } as never,
+        messagesForCompletion: [],
+        temperatureSupported: false,
+      });
+
+      /*
+       * max_output_tokens mapping is not gated by any Chat-Completions-scoped
+       * capability flag — this test documents that omission of
+       * maxTokensSupported/maxCompletionTokensSupported has no bearing on it.
+       */
+      expect(request.max_output_tokens).toBe(2048);
+    });
+
+    it('includes both temperature and max_output_tokens alongside the unchanged base body', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: {
+          prompt: '',
+          temperature: 0.4,
+          maxOutputTokens: 2048,
+        } as never,
+        messagesForCompletion: [
+          { role: ConversationMessageRole.User, content: 'Hi' } as never,
+        ],
+        temperatureSupported: true,
+      });
+
+      expect(request).toMatchObject({
+        model: 'gpt-4o',
+        stream: true,
+        store: false,
+        temperature: 0.4,
+        max_output_tokens: 2048,
+      });
+      expect(request).not.toHaveProperty('previous_response_id');
+      expect(request).not.toHaveProperty('conversation');
+      expect(request).not.toHaveProperty('max_tokens');
+      expect(request).not.toHaveProperty('max_completion_tokens');
     });
   });
 

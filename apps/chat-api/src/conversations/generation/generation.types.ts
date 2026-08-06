@@ -13,14 +13,36 @@ export interface ResponsesInputItem {
 /**
  * First-iteration Responses request body. Always `stream: true` and
  * `store: false` — never carries `previous_response_id` or `conversation`
- * (DIAL Core rejects the key's mere presence, even as `null`).
+ * (DIAL Core rejects the key's mere presence, even as `null`). `temperature`
+ * and `max_output_tokens` are optional Chat-side overrides: `temperature` is
+ * included only when the resolved deployment explicitly supports it,
+ * `max_output_tokens` only when the conversation carries a validated value —
+ * see `ResponsesAdapter.buildRequest` for the omission rules.
  */
 export interface ResponsesApiRequestBody {
   model: string;
   input: ResponsesInputItem[];
   stream: true;
   store: false;
+  temperature?: number;
+  max_output_tokens?: number;
 }
+
+/**
+ * Runtime guard for `Conversation.maxOutputTokens` at the point it crosses
+ * from persisted Chat data into the outbound Responses wire request. A bare
+ * TypeScript type is not enough here — the persisted value may come from an
+ * untrusted import/save payload that was never nested-validated (see
+ * `design.md` Decision 4) — so this checks the actual runtime value: a
+ * positive, finite integer within `Number.isSafeInteger` range. Anything
+ * else (absent, `null`, `0`, negative, fractional, `NaN`, `Infinity`, or an
+ * unsafe integer) must be omitted rather than forwarded.
+ */
+export const isValidMaxOutputTokens = (value: unknown): value is number =>
+  typeof value === 'number' &&
+  Number.isInteger(value) &&
+  Number.isSafeInteger(value) &&
+  value > 0;
 
 /** Responses SSE event types this adapter understands and normalizes. */
 export interface ResponsesCreatedEvent {

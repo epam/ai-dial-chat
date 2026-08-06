@@ -1194,12 +1194,17 @@ export class ConversationService {
    * `features` off `DeploymentsService.getDeploymentDetails`'s cached,
    * user-token-scoped result. A toolset target is rejected with 400, since
    * toolsets are not generation deployments.
+   *
+   * Also derives `temperatureSupported` from the same already-fetched
+   * `features` object, so the Responses request builder can capability-gate
+   * `temperature` without a second `getDeploymentDetails` call for the same
+   * generation (see `responses-api-generation` spec).
    */
   private async resolveGenerationApiForDeployment(
     sub: string,
     model: string,
     token: string,
-  ): Promise<GenerationApi> {
+  ): Promise<{ generationApi: GenerationApi; temperatureSupported: boolean }> {
     const details = await this.deploymentsService.getDeploymentDetails(
       sub,
       model,
@@ -1218,7 +1223,10 @@ export class ConversationService {
         ? details.applicationDetails?.features
         : details.modelDetails?.features;
 
-    return resolveGenerationApi(features);
+    return {
+      generationApi: resolveGenerationApi(features),
+      temperatureSupported: features?.temperature === true,
+    };
   }
 
   async streamCompletion(
@@ -1248,12 +1256,10 @@ export class ConversationService {
     );
 
     let generationApi: GenerationApi;
+    let temperatureSupported: boolean;
     try {
-      generationApi = await this.resolveGenerationApiForDeployment(
-        sub,
-        model,
-        token,
-      );
+      ({ generationApi, temperatureSupported } =
+        await this.resolveGenerationApiForDeployment(sub, model, token));
       generationCapabilityResolutionTotal.add(1, {
         outcome: 'resolved',
         'generation.api': generationApi,
@@ -1373,6 +1379,7 @@ export class ConversationService {
               model,
               startConversation,
               messagesForCompletion,
+              temperatureSupported,
             }),
             token,
             abortController.signal,

@@ -1067,7 +1067,7 @@ describe('ConversationService', () => {
       );
     });
 
-    it('preserves temperature and responseFormat from the source conversation', async () => {
+    it('preserves temperature, responseFormat, and maxOutputTokens from the source conversation', async () => {
       vi.spyOn(
         service['dialClient'].client,
         'getConversation',
@@ -1076,6 +1076,7 @@ describe('ConversationService', () => {
           ...SHARED_CONVERSATION,
           temperature: 0.7,
           responseFormat: 'plain_text',
+          maxOutputTokens: 2048,
         },
       } as never);
       const saveSpy = vi
@@ -1094,6 +1095,31 @@ describe('ConversationService', () => {
       >;
       expect(savedBody.temperature).toBe(0.7);
       expect(savedBody.responseFormat).toBe('plain_text');
+      expect(savedBody.maxOutputTokens).toBe(2048);
+    });
+
+    it('leaves maxOutputTokens absent when the source conversation has no such field (legacy conversation)', async () => {
+      vi.spyOn(
+        service['dialClient'].client,
+        'getConversation',
+      ).mockResolvedValue({
+        data: SHARED_CONVERSATION,
+      } as never);
+      const saveSpy = vi
+        .spyOn(service['dialClient'].client, 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+
+      await service.duplicateConversation(
+        'shared-bucket/gpt-4o__New%20chat',
+        'test-token',
+        'test-bucket',
+      );
+
+      const savedBody = saveSpy.mock.calls[0][2].body as Record<
+        string,
+        unknown
+      >;
+      expect(savedBody.maxOutputTokens).toBeUndefined();
     });
   });
 
@@ -1798,6 +1824,85 @@ describe('ConversationService', () => {
 
       expect(createResponseSpy).toHaveBeenCalledOnce();
       expect(sendChatSpy).not.toHaveBeenCalled();
+    });
+
+    it('reuses the deployment-details lookup to forward temperature support to the Responses adapter', async () => {
+      mockDeploymentsService.getDeploymentDetails.mockResolvedValue({
+        id: 'gpt-4o',
+        type: 'model',
+        modelDetails: { features: { responsesApi: true, temperature: true } },
+      });
+      const createResponseSpy = vi
+        .spyOn(service['dialClient'].client, 'createResponse')
+        .mockResolvedValue({
+          response: new Response(emptyStream(), {
+            status: 200,
+            headers: { 'Content-Type': 'text/event-stream' },
+          }),
+        } as never);
+
+      await service.streamCompletion(
+        'test-path',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello again',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        makeMockRes() as never,
+        'test-sub',
+      );
+
+      /* Exactly one deployment-details lookup — no second call for temperature. */
+      expect(
+        mockDeploymentsService.getDeploymentDetails,
+      ).toHaveBeenCalledOnce();
+      const requestBody = createResponseSpy.mock.calls[0][0].body as {
+        temperature?: number;
+      };
+      expect(requestBody.temperature).toBe(conversation.temperature);
+    });
+
+    it('omits temperature from the Responses request when the deployment does not report support', async () => {
+      mockDeploymentsService.getDeploymentDetails.mockResolvedValue({
+        id: 'gpt-4o',
+        type: 'model',
+        modelDetails: { features: { responsesApi: true } },
+      });
+      const createResponseSpy = vi
+        .spyOn(service['dialClient'].client, 'createResponse')
+        .mockResolvedValue({
+          response: new Response(emptyStream(), {
+            status: 200,
+            headers: { 'Content-Type': 'text/event-stream' },
+          }),
+        } as never);
+
+      await service.streamCompletion(
+        'test-path',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello again',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        makeMockRes() as never,
+        'test-sub',
+      );
+
+      expect(
+        mockDeploymentsService.getDeploymentDetails,
+      ).toHaveBeenCalledOnce();
+      const requestBody = createResponseSpy.mock.calls[0][0].body as {
+        temperature?: number;
+      };
+      expect(requestBody.temperature).toBeUndefined();
     });
 
     it('dispatches a deployment without the responsesApi flag to sendChatCompletionRequest only', async () => {

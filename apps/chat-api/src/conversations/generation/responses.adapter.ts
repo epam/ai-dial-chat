@@ -12,6 +12,7 @@ import {
 import { applyChunkToMessage } from '../utils/apply-chunk.server';
 import { generationUnknownEventsTotal } from './generation-metrics';
 import {
+  isValidMaxOutputTokens,
   ResponsesTerminalState,
   type GenerationRelayOutcome,
   type GenerationRelayTiming,
@@ -54,13 +55,29 @@ export class ResponsesAdapter {
    * always `false` in this iteration; `previous_response_id`/`conversation`
    * are never set (DIAL Core rejects the key's mere presence, even as
    * `null`).
+   *
+   * `temperature` is included only when `temperatureSupported` is `true`
+   * (some Responses-capable models reject the field outright — Chat never
+   * substitutes a default of its own) and the conversation carries a usable
+   * value, checked with a nullish check so `temperature: 0` is preserved.
+   * `max_output_tokens` is included only when `startConversation
+   * .maxOutputTokens` is a validated positive safe integer — it is never
+   * gated by a capability flag (no Responses-specific one exists in this
+   * codebase) and never derived from deployment limits or Chat Completions
+   * defaults.
    */
   buildRequest(params: {
     model: string;
     startConversation: ConversationResponseDto;
     messagesForCompletion: ConversationMessageDto[];
+    temperatureSupported: boolean;
   }): ResponsesApiRequestBody {
-    const { model, startConversation, messagesForCompletion } = params;
+    const {
+      model,
+      startConversation,
+      messagesForCompletion,
+      temperatureSupported,
+    } = params;
 
     const systemInput = startConversation.prompt
       ? [{ role: 'system', content: startConversation.prompt }]
@@ -76,11 +93,19 @@ export class ResponsesAdapter {
         })),
     ];
 
+    const maxOutputTokens = startConversation.maxOutputTokens;
+
     return {
       model,
       input,
       stream: true,
       store: false,
+      ...(temperatureSupported && startConversation.temperature != null
+        ? { temperature: startConversation.temperature }
+        : {}),
+      ...(isValidMaxOutputTokens(maxOutputTokens)
+        ? { max_output_tokens: maxOutputTokens }
+        : {}),
     };
   }
 

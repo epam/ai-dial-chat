@@ -279,7 +279,7 @@ If the Responses API has already been selected and returns an error, Chat does n
 | Continuation by ID         | not used                                | not applicable                                  |
 | Final conversation storage | AI DIAL Chat                            | AI DIAL Chat                                    |
 
-The Chat Completions branch retains existing support for DIAL-specific payloads: attachments, `custom_content`, configuration, stages, and temperature. The Responses branch currently sends only text-based `role`/`content` messages and the system prompt.
+The Chat Completions branch retains existing support for DIAL-specific payloads: attachments, `custom_content`, configuration, and stages. The Responses branch sends text-based `role`/`content` messages, the system prompt, and now the two generation parameters described below (`temperature`, `max_output_tokens`); all other DIAL-specific payloads remain Chat-Completions-only.
 
 ## Current Support Scope
 
@@ -295,7 +295,9 @@ Supported:
 - stopping generation through the existing Chat endpoint;
 - diagnostic persistence of `responseId`;
 - safe handling of unknown SSE events;
-- compatibility with older deployments that do not expose the capability flag.
+- compatibility with older deployments that do not expose the capability flag;
+- `temperature`: forwarded from the conversation's persisted value only when the resolved deployment's capabilities explicitly report `features.temperature: true`; omitted (never substituted with a default) when support is `false` or unknown, so a model that rejects the field is never sent one. The value `0` is forwarded, not treated as absent;
+- `max_output_tokens`: forwarded from the conversation's optional `maxOutputTokens` setting whenever it is a valid positive safe integer, independent of any capability flag (no Responses-specific max-output-tokens capability exists in DIAL Core today). Absent or invalid values (zero, negative, fractional, non-finite, or unsafe-integer) omit the field entirely — Chat never derives it from a deployment's `limits.maxCompletionTokens`, the legacy Chat Completions `defaults.max_tokens`, or DIAL Core's own `responsesDefaults`, which keep governing the field's default whenever Chat sends none.
 
 Not yet supported in the Responses branch:
 
@@ -308,7 +310,8 @@ Not yet supported in the Responses branch:
 - image/file input and other multimodal content items;
 - citations, annotations, and rich output;
 - DIAL attachments, `custom_content`, configuration, and stages;
-- temperature and other additional generation parameters;
+- generation parameters other than `temperature` and `max_output_tokens` (e.g. penalties, seed, response format, reasoning effort);
+- a UI control for editing `maxOutputTokens` — the field is settable today only via the persisted conversation model (API, import/export), not through a chat-settings control; a dedicated UI is a follow-up;
 - dedicated handling for every output-item type;
 - automatic fallback after a Responses API error.
 

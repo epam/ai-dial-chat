@@ -282,6 +282,8 @@ export interface Conversation {
   prompt: string;
   /** Sampling temperature passed to the model (0–1). */
   temperature: number;
+  /** Optional Responses-API output-token cap, forwarded as `max_output_tokens`. Never derived from deployment limits or Chat Completions defaults. */
+  maxOutputTokens?: number;
   /** Ordered list of messages in the conversation. */
   messages: Message[];
   /** Unix timestamp (ms) of the most recent activity. */
