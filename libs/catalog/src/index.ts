@@ -17,11 +17,7 @@ export { CatalogViewMode } from './types/view-mode';
 // Models
 export type { CatalogItem } from './models/catalog-item';
 export type { CatalogItemCredentials } from './models/catalog-item-credentials';
-export type {
-  CatalogProps,
-  CatalogTitles,
-  CreateOption,
-} from './models/catalog-props';
+export type { CatalogProps, CatalogTitles } from './models/catalog-props';
 export type {
   CatalogColors,
   CatalogStyles,
