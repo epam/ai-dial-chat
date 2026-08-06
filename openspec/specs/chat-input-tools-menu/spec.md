@@ -134,7 +134,7 @@ When the selected deployment changes, all tool toggle states SHALL be reinitiali
 
 When the user sends a message, the selected tool states SHALL be included in the message's `custom_content.configuration_value` as key-value pairs (e.g. `{ "deep_research": true }`).
 
-The tool configuration values SHALL be merged with any existing `configuration_value` from starters or forms. Tool values take precedence (spread after other values).
+`custom_content.configuration_value` SHALL contain only the active tool toggle states. A submitted starter's or form's own answer (the value tied to the `dial:widget: "buttons"` schema property the user picked) SHALL be sent solely through `custom_content.form_value` and SHALL NOT be merged into `configuration_value` — DIAL Core validates `configuration_value` against the deployment's entry configuration schema, and echoing a mid-conversation form answer through that field fails validation against that schema.
 
 #### Scenario: Tool selected — value sent as true
 - **WHEN** the user sends a message with the Deep Research tool toggled on
@@ -144,9 +144,14 @@ The tool configuration values SHALL be merged with any existing `configuration_v
 - **WHEN** the user sends a message with the Deep Research tool toggled off
 - **THEN** the completion request's `custom_content.configuration_value` includes `{ "deep_research": false }`
 
-#### Scenario: Tool value merged with starter configuration
-- **WHEN** a starter has set `configuration_value: { "starter_key": "value" }` AND the Deep Research tool is toggled on
-- **THEN** the final `custom_content.configuration_value` is `{ "starter_key": "value", "deep_research": true }`
+#### Scenario: Starter configuration is not merged into tool configuration
+- **WHEN** a submitted starter has its own `form_value: { "button": 4 }` AND the Deep Research tool is toggled on
+- **THEN** the completion request's `custom_content.configuration_value` is `{ "deep_research": true }` only
+- **AND** `custom_content.form_value` is `{ "button": 4 }`
+
+#### Scenario: Starter submitted with no active tool config sends no configuration_value
+- **WHEN** a submitted starter has its own `form_value: { "button": 4 }` AND no tool is toggled on
+- **THEN** the completion request's `custom_content` has no `configuration_value` field
 
 #### Scenario: DIAL Core receives configuration in custom_fields
 - **WHEN** the backend processes a message with `custom_content.configuration_value: { "deep_research": true }`
