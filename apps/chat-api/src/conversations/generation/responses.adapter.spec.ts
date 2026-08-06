@@ -223,6 +223,51 @@ describe('ResponsesAdapter', () => {
       expect(result.outcome).toBe('rejected');
     });
 
+    it('extracts the DIAL Core error message from the SDK-parsed error on rejection', async () => {
+      const { adapter, mockDialClient } = makeAdapter();
+      vi.spyOn(mockDialClient.client, 'createResponse').mockResolvedValue({
+        response: new Response(null, { status: 400 }),
+        error: { message: 'Invalid model' },
+      } as never);
+      const res = makeMockRes();
+
+      const result = await adapter.relay(
+        { model: 'gpt-4o', input: [], stream: true, store: false },
+        'test-token',
+        new AbortController().signal,
+        res as never,
+        { role: ConversationMessageRole.Assistant, content: '' } as never,
+      );
+
+      expect(result.outcome).toBe('rejected');
+      if (result.outcome === 'rejected') {
+        expect(result.errorMessage).toBe('Invalid model');
+      }
+    });
+
+    it('extracts the DIAL Core error message from the raw response body when the SDK did not parse it', async () => {
+      const { adapter, mockDialClient } = makeAdapter();
+      vi.spyOn(mockDialClient.client, 'createResponse').mockResolvedValue({
+        response: new Response(JSON.stringify({ message: 'Quota exceeded' }), {
+          status: 429,
+        }),
+      } as never);
+      const res = makeMockRes();
+
+      const result = await adapter.relay(
+        { model: 'gpt-4o', input: [], stream: true, store: false },
+        'test-token',
+        new AbortController().signal,
+        res as never,
+        { role: ConversationMessageRole.Assistant, content: '' } as never,
+      );
+
+      expect(result.outcome).toBe('rejected');
+      if (result.outcome === 'rejected') {
+        expect(result.errorMessage).toBe('Quota exceeded');
+      }
+    });
+
     it('returns aborted when the signal aborts mid-stream', async () => {
       const { adapter, mockDialClient } = makeAdapter();
       vi.spyOn(mockDialClient.client, 'createResponse').mockImplementation(

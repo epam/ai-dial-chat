@@ -1236,8 +1236,9 @@ export class ConversationService {
     sub: string,
     clientChannelId?: string,
   ): Promise<void> {
+    const safeModel = StringUtils.sanitizeForLog(model);
     this.logger.debug(
-      `streamCompletion start — model: ${model}, bucket: ${bucket}, path: ${conversationPath}, mode: ${mode}`,
+      `streamCompletion start — model: ${safeModel}, bucket: ${bucket}, path: ${conversationPath}, mode: ${mode}`,
     );
 
     const abortController = this.generationService.register(
@@ -1315,7 +1316,7 @@ export class ConversationService {
     );
 
     this.logger.debug(
-      `streamCompletion sending ${messagesForCompletion.length} message(s) to model: ${model} via ${generationApi}`,
+      `streamCompletion sending ${messagesForCompletion.length} message(s) to model: ${safeModel} via ${generationApi}`,
     );
 
     res.setHeader('Content-Type', 'text/event-stream');
