@@ -69,6 +69,13 @@ export class ConversationListItemDto {
     example: 'run_001',
   })
   runId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'True when this scheduler-created conversation has not yet been opened by the user. Present only when `isScheduledTask` is true.',
+    example: true,
+  })
+  isUnread?: boolean;
 }
 
 export class ConversationListResponseDto {

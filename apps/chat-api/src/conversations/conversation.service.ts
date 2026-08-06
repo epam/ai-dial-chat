@@ -21,6 +21,7 @@ import {
   ConversationMetadataDto,
   ConversationResponseDto,
 } from '../openapi/openapi-response.dto';
+import { ScheduledTaskUnreadService } from '../scheduled-task-unread/scheduled-task-unread.service';
 import { UserConfigService } from '../user-config/user-config.service';
 import {
   MAX_LIST_DISPLAY_NAME_ENRICHMENTS,
@@ -83,6 +84,7 @@ export class ConversationService {
   constructor(
     private readonly dialClient: DialClientService,
     private readonly userConfigService: UserConfigService,
+    private readonly scheduledTaskUnreadService: ScheduledTaskUnreadService,
     private readonly generationService: ConversationGenerationService,
     @Inject(forwardRef(() => ConversationNamingService))
     private readonly conversationNamingService: ConversationNamingService,
@@ -324,6 +326,18 @@ export class ConversationService {
     return this.userConfigService.updatePin(
       conversationId,
       isPinned,
+      token,
+      bucket,
+    );
+  }
+
+  async markConversationViewed(
+    conversationPath: string,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    return this.scheduledTaskUnreadService.markViewed(
+      buildConversationUrl(bucket, conversationPath),
       token,
       bucket,
     );
@@ -576,7 +590,7 @@ export class ConversationService {
     });
 
     try {
-      const [userResult, publicResult, sharedResult, pinnedIds] =
+      const [userResult, publicResult, sharedResult, pinnedIds, viewedIds] =
         await Promise.all([
           this.dialClient.client.getConversationMetadata(bucket, '', {
             headers: getBearerAuthHeaders(token),
@@ -612,6 +626,7 @@ export class ConversationService {
             } satisfies SharedResourcesResult;
           }),
           this.userConfigService.getPinnedIds(token, bucket),
+          this.scheduledTaskUnreadService.getViewedIds(token, bucket),
         ]);
 
       const {
@@ -653,6 +668,7 @@ export class ConversationService {
       }
 
       const pinnedSet = new Set(pinnedIds.map(safeDecodeURIComponent));
+      const viewedSet = new Set(viewedIds.map(safeDecodeURIComponent));
 
       const mapItems = (
         items: MetadataItem[],
@@ -687,6 +703,7 @@ export class ConversationService {
                 ? {
                     scheduleId: scheduledTask.scheduleId,
                     runId: scheduledTask.runId,
+                    isUnread: !viewedSet.has(decodedId),
                   }
                 : {}),
             };
@@ -735,6 +752,7 @@ export class ConversationService {
                     ? {
                         scheduleId: scheduledTask.scheduleId,
                         runId: scheduledTask.runId,
+                        isUnread: !viewedSet.has(decodedId),
                       }
                     : {}),
                 };

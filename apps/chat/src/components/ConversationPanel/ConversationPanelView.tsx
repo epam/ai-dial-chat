@@ -134,6 +134,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     conversations: items,
     isLoading,
     pinConversation,
+    markConversationViewed,
     deleteConversation,
     renameConversation,
     generateConversationTitle,
@@ -168,6 +169,20 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     if (!isListed) void refreshConversations();
     // Intentionally not including items or refreshConversations in the dependency array to avoid re-triggering on every list update.
   }, [panelActiveConversationId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /*
+   * Single shared entry point for marking a scheduler-created conversation as
+   * viewed — fires whenever the active conversation changes, whether the user
+   * navigated by clicking a history panel row or via direct URL navigation.
+   * markConversationViewed itself no-ops for non-scheduler or already-read items.
+   */
+  useEffect(() => {
+    if (!panelActiveConversationId) return;
+    const activeItem = items.find((item) =>
+      conversationIdsMatch(item.id, panelActiveConversationId),
+    );
+    if (activeItem) void markConversationViewed(activeItem.id);
+  }, [panelActiveConversationId, items, markConversationViewed]);
 
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -231,6 +246,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   );
 
   const taskBadgeLabel = t(ConversationPanelI18nKeys.TaskBadgeLabel);
+  const unreadIndicatorLabel = t(
+    ConversationPanelI18nKeys.UnreadIndicatorLabel,
+  );
 
   const conversations: ConversationItem[] = useMemo(
     () =>
@@ -253,7 +271,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           source: getConversationSource(item),
           href: getConversationRoute(id),
           ...(item.isScheduledTask
-            ? { showTaskBadge: true, taskBadgeLabel }
+            ? { showTaskBadge: true, taskBadgeLabel, isUnread: item.isUnread }
             : {}),
         };
       }),
@@ -667,6 +685,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             filterLabels,
             groupLabels,
             actionsLabel: t(ConversationPanelI18nKeys.ActionsLabel),
+            unreadIndicatorLabel,
             closeAriaLabel: t(ConversationPanelI18nKeys.ToggleAriaLabel),
           }}
           onNewChat={onNewChat}

@@ -41,7 +41,9 @@ describe('conversation-publish API', () => {
       path: 'bucket-123/my-conversation',
       publishConversationDto: {
         folderPath: 'Organization/Data Science',
-        rules,
+        rules: [
+          { source: 'role', _function: 'CONTAIN', targets: ['engineering'] },
+        ],
       },
     });
   });

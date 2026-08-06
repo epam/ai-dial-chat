@@ -83,6 +83,10 @@ describe('ConversationService', () => {
     updatePin: ReturnType<typeof vi.fn>;
     migratePin: ReturnType<typeof vi.fn>;
   };
+  let mockScheduledTaskUnreadService: {
+    getViewedIds: ReturnType<typeof vi.fn>;
+    markViewed: ReturnType<typeof vi.fn>;
+  };
   let mockGenerationService: ConversationGenerationService;
   let mockConversationNamingService: {
     maybeRenameAfterFirstReply: ReturnType<typeof vi.fn>;
@@ -108,6 +112,10 @@ describe('ConversationService', () => {
       updatePin: vi.fn().mockResolvedValue(undefined),
       migratePin: vi.fn().mockResolvedValue(undefined),
     };
+    mockScheduledTaskUnreadService = {
+      getViewedIds: vi.fn().mockResolvedValue([]),
+      markViewed: vi.fn().mockResolvedValue(undefined),
+    };
     mockConversationNamingService = {
       maybeRenameAfterFirstReply: vi.fn(),
     };
@@ -121,6 +129,7 @@ describe('ConversationService', () => {
     service = new ConversationService(
       mockDialClient,
       mockUserConfigService as never,
+      mockScheduledTaskUnreadService as never,
       mockGenerationService,
       mockConversationNamingService as never,
     );
@@ -2078,6 +2087,85 @@ describe('ConversationService', () => {
       expect(result.items[0].isScheduledTask).toBe(false);
       expect(result.items[0].scheduleId).toBeUndefined();
       expect(result.items[0].runId).toBeUndefined();
+    });
+
+    it('sets isUnread: true for a scheduler-created conversation not in the viewed-ids set', async () => {
+      mockMetadata([
+        {
+          url: 'conversations/test-bucket/.scheduler/sched_abc/gpt-4o__Morning briefing__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
+          nodeType: 'FILE',
+          updatedAt: 1000,
+        },
+      ]);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
+      mockScheduledTaskUnreadService.getViewedIds.mockResolvedValue([]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items[0].isUnread).toBe(true);
+    });
+
+    it('sets isUnread: false for a scheduler-created conversation already in the viewed-ids set', async () => {
+      const id =
+        'conversations/test-bucket/.scheduler/sched_abc/gpt-4o__Morning briefing__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5';
+      mockMetadata([
+        {
+          url: id,
+          nodeType: 'FILE',
+          updatedAt: 1000,
+        },
+      ]);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
+      mockScheduledTaskUnreadService.getViewedIds.mockResolvedValue([id]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items[0].isUnread).toBe(false);
+    });
+
+    it('omits isUnread for a normal (non-scheduler) conversation', async () => {
+      mockMetadata([
+        {
+          url: 'conversations/test-bucket/gpt-4o__Morning briefing__uuid',
+          nodeType: 'FILE',
+          updatedAt: 1000,
+        },
+      ]);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
+      mockScheduledTaskUnreadService.getViewedIds.mockResolvedValue([]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items[0].isUnread).toBeUndefined();
+    });
+
+    it('falls back to isUnread: true for scheduler items when the viewed-ids fetch fails open', async () => {
+      mockMetadata([
+        {
+          url: 'conversations/test-bucket/.scheduler/sched_abc/gpt-4o__Morning briefing__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
+          nodeType: 'FILE',
+          updatedAt: 1000,
+        },
+      ]);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
+      // ScheduledTaskUnreadService.getViewedIds never rejects (it falls back to [] internally on error) — verify that fail-open default is respected here too.
+      mockScheduledTaskUnreadService.getViewedIds.mockResolvedValue([]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items[0].isUnread).toBe(true);
     });
 
     it('calls getSharedResources with resourceTypes CONVERSATION and with me', async () => {

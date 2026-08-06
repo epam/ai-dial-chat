@@ -15,6 +15,7 @@ import type {
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DialClientService } from '../../dial/dial-client.service';
+import { ScheduledTaskUnreadService } from '../../scheduled-task-unread/scheduled-task-unread.service';
 import { UserConfigService } from '../../user-config/user-config.service';
 import {
   ConversationGenerationService,
@@ -43,6 +44,7 @@ describe('ConversationController (integration)', () => {
     generateTitle: ReturnType<typeof vi.fn>;
     deleteConversations: ReturnType<typeof vi.fn>;
     deleteAllConversations: ReturnType<typeof vi.fn>;
+    markConversationViewed: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -53,6 +55,7 @@ describe('ConversationController (integration)', () => {
       generateTitle: vi.fn(),
       deleteConversations: vi.fn(),
       deleteAllConversations: vi.fn(),
+      markConversationViewed: vi.fn(),
     };
 
     const mockGenerationService = {
@@ -242,6 +245,7 @@ describe('ConversationController (integration)', () => {
           DialClientService,
           ConversationService,
           UserConfigService,
+          ScheduledTaskUnreadService,
           ConversationGenerationService,
           {
             provide: ConversationNamingService,
@@ -673,6 +677,41 @@ describe('ConversationController (integration)', () => {
         .patch('/conversations?path=gpt-4o__Missing__uuid')
         .send({ newTitle: 'New Title' })
         .expect(404);
+    });
+  });
+
+  describe('PATCH /conversations/viewed', () => {
+    it('returns 204 and marks the conversation viewed for a valid path', async () => {
+      service.markConversationViewed.mockResolvedValue(undefined);
+
+      await request(app.getHttpServer())
+        .patch('/conversations/viewed?path=gpt-4o__My+Task__uuid')
+        .expect(204);
+
+      expect(service.markConversationViewed).toHaveBeenCalledWith(
+        'gpt-4o__My Task__uuid',
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
+    it('returns 204 again when called repeatedly for the same path (idempotent)', async () => {
+      service.markConversationViewed.mockResolvedValue(undefined);
+
+      await request(app.getHttpServer())
+        .patch('/conversations/viewed?path=gpt-4o__My+Task__uuid')
+        .expect(204);
+      await request(app.getHttpServer())
+        .patch('/conversations/viewed?path=gpt-4o__My+Task__uuid')
+        .expect(204);
+
+      expect(service.markConversationViewed).toHaveBeenCalledTimes(2);
+    });
+
+    it('returns 400 when path query param is missing', async () => {
+      await request(app.getHttpServer())
+        .patch('/conversations/viewed')
+        .expect(400);
     });
   });
 
