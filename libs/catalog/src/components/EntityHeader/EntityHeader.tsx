@@ -1,8 +1,8 @@
 import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC, ReactNode } from 'react';
-import { ENTITY_TYPE_COLOR } from '../../constants/entity-colors';
 import { CatalogItem } from '../../models/catalog-item';
 import { getFeaturedEntityStyle } from '../../utils/styles';
+import { EntityTypeLabel } from '../EntityTypeLabel/EntityTypeLabel';
 import { FeaturedChip } from '../FeaturedChip/FeaturedChip';
 import { ItemHeader } from '../ItemHeader/ItemHeader';
 
@@ -67,15 +67,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
         )}
       >
         <div className="relative flex flex-row items-center justify-between">
-          <span
-            className={mergeClasses(
-              'uppercase tracking-[0.06em]',
-              typeClassName,
-            )}
-            style={{ color: ENTITY_TYPE_COLOR[item.type] }}
-          >
-            {item.type}
-          </span>
+          <EntityTypeLabel type={item.type} className={typeClassName} />
           {hasFeaturedTag && item.isFeatured && (
             <div className="absolute end-0 top-[-6px]">
               <FeaturedChip

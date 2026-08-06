@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { TabRow } from '@epam/ai-dial-kit';
 import {
   derivePublishState,
@@ -80,6 +80,46 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     overviewValueTrueClassName = 'dial-small-text',
     credentialsStatusLabelClassName,
   } = detailsStyles?.typography ?? {};
+
+  const detailsColors = detailsStyles?.colors;
+  const limitColors = detailsColors?.limits;
+  /* Set on both the backdrop and the panel — they are siblings, not nested. */
+  const cssVars = buildCssVars({
+    '--cat-details-backdrop': detailsColors?.backdrop,
+    '--cat-details-bg': detailsColors?.background,
+    '--cat-details-border': detailsColors?.border,
+    '--cat-details-divider': detailsColors?.divider,
+    '--cat-details-scrollbar': detailsColors?.scrollbar,
+    '--cat-details-skeleton': detailsColors?.skeleton,
+    '--cat-details-name-text': detailsColors?.nameText,
+    '--cat-details-publish-title-text': detailsColors?.publishTitleText,
+    '--cat-details-version-tag-border': detailsColors?.versionTagBorder,
+    '--cat-details-version-tag-bg': detailsColors?.versionTagBackground,
+    '--cat-details-version-tag-text': detailsColors?.versionTagText,
+    '--cat-credentials-status-text': detailsColors?.credentialsStatusText,
+    '--cat-api-heading-text': detailsColors?.apiHeadingText,
+    '--cat-tools-divider': detailsColors?.toolsDivider,
+    '--cat-tools-description-text': detailsColors?.toolsDescriptionText,
+    '--cat-grid-border': detailsColors?.gridBorder,
+    '--cat-grid-header-text': detailsColors?.gridHeaderText,
+    '--cat-grid-header-bg': detailsColors?.gridHeaderBackground,
+    '--cat-grid-cell-text': detailsColors?.gridCellText,
+    '--cat-grid-cell-divider': detailsColors?.gridCellDivider,
+    '--cat-grid-row-even-bg': detailsColors?.gridRowEvenBackground,
+    '--cat-limits-free-bg': limitColors?.freeBackground,
+    '--cat-limits-free-text': limitColors?.freeText,
+    '--cat-limits-featured-bg': limitColors?.featuredBackground,
+    '--cat-limits-featured-text': limitColors?.featuredText,
+    '--cat-limits-by-request-bg': limitColors?.byRequestBackground,
+    '--cat-limits-by-request-text': limitColors?.byRequestText,
+    '--cat-limits-beta-bg': limitColors?.betaBackground,
+    '--cat-limits-beta-text': limitColors?.betaText,
+    '--cat-limits-deprecated-bg': limitColors?.deprecatedBackground,
+    '--cat-limits-deprecated-text': limitColors?.deprecatedText,
+    '--cat-limits-progress-track': limitColors?.progressTrack,
+    '--cat-limits-progress-fill': limitColors?.progressFill,
+    '--cat-limits-reset-text': limitColors?.resetText,
+  });
 
   const [isStarred, setIsStarred] = useState(initialIsStarred);
   const [activeTab, setActiveTab] = useState<string>('');
@@ -270,6 +310,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   return (
     <>
       <div
+        style={cssVars}
         className={mergeClasses(
           'fixed inset-0 z-40 transition-opacity duration-300',
           styles.backdrop,
@@ -283,6 +324,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
         role="dialog"
         aria-modal="true"
         aria-label={panelAriaLabel}
+        style={cssVars}
         className={mergeClasses(
           'fixed inset-y-0 end-0 z-50 flex w-full flex-col overflow-hidden',
           'desktop:rounded-ts-xl desktop:rounded-bs-xl desktop:w-[540px] desktop:border-s',
@@ -447,7 +489,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                       showTitle={false}
                       paragraph={{ rows: 1, width: '72px' }}
                       active
-                      color="var(--bg-layer-4, #d1dbea)"
+                      color={styles.skeletonColor}
                     />
                   </div>
                 )}
