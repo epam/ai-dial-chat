@@ -84,7 +84,6 @@ const labels: DeploymentCreationFormLabels = {
   iconUrl: { label: 'Icon URL', placeholder: 'https://...' },
   version: { label: 'Version', placeholder: 'e.g. 1.0.0' },
   topics: { label: 'Topics', placeholder: 'Add a topic' },
-  intro: { label: 'Intro', placeholder: 'Short pitch' },
 };
 
 const baseValues: DeploymentCreationFormValues = {
@@ -93,7 +92,6 @@ const baseValues: DeploymentCreationFormValues = {
   iconUrl: '',
   version: '',
   topics: [],
-  intro: '',
 };
 
 const renderComponent = (
@@ -124,7 +122,6 @@ describe('DeploymentCreationForm', () => {
     expect(screen.getByLabelText('Icon URL')).toBeTruthy();
     expect(screen.getByLabelText('Version')).toBeTruthy();
     expect(screen.getByLabelText('Topics')).toBeTruthy();
-    expect(screen.getByLabelText('Intro')).toBeTruthy();
   });
 
   it('calls onChange with a name patch when the name input changes', () => {
@@ -134,15 +131,6 @@ describe('DeploymentCreationForm', () => {
       target: { value: 'Updated' },
     });
     expect(onChange).toHaveBeenCalledWith({ name: 'Updated' });
-  });
-
-  it('calls onChange with an intro patch when the intro input changes', () => {
-    const onChange = vi.fn();
-    renderComponent(undefined, {}, onChange);
-    fireEvent.change(screen.getByLabelText('Intro'), {
-      target: { value: 'A short pitch' },
-    });
-    expect(onChange).toHaveBeenCalledWith({ intro: 'A short pitch' });
   });
 
   it('calls onChange with a description patch when the textarea changes', async () => {
@@ -158,11 +146,6 @@ describe('DeploymentCreationForm', () => {
     renderComponent(undefined, { name: 'Name is required' });
     const alert = screen.getByRole('alert');
     expect(alert.textContent).toBe('Name is required');
-  });
-
-  it('surfaces a passed-in intro error', () => {
-    renderComponent(undefined, { intro: 'Intro is too long' });
-    expect(screen.getByText('Intro is too long')).toBeTruthy();
   });
 
   it('renders no error when none is passed', () => {

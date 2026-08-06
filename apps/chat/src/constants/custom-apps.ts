@@ -9,7 +9,6 @@ export const DEFAULT_CUSTOM_APP_GENERAL_FORM: CustomAppGeneralFormData = {
   iconUrl: '',
   description: '',
   topics: [],
-  intro: '',
 };
 
 export const MIME_TYPE_REGEX =

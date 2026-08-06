@@ -87,7 +87,6 @@ const capturedPublishProps: {
     publishLoadingPaths?: Set<string>;
     ruleSourceOptions?: string[];
     onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
-    isConnectVisible?: (item: CatalogItem) => boolean;
     isShareVisible?: (item: CatalogItem) => boolean;
     sortKey?: string;
     onSortChange?: (key: string) => void;
@@ -136,7 +135,6 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     isPublishVisible,
     ruleSourceOptions,
     onFetchExistingRules,
-    isConnectVisible,
     isShareVisible,
     sortKey,
     onSortChange,
@@ -174,7 +172,6 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     isPublishVisible?: (item: CatalogItem) => boolean;
     ruleSourceOptions?: string[];
     onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
-    isConnectVisible?: (item: CatalogItem) => boolean;
     isShareVisible?: (item: CatalogItem) => boolean;
     sortKey?: string;
     onSortChange?: (key: string) => void;
@@ -193,7 +190,6 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       publishLoadingPaths,
       ruleSourceOptions,
       onFetchExistingRules,
-      isConnectVisible,
       isShareVisible,
       sortKey,
       onSortChange,
@@ -510,8 +506,8 @@ describe('CatalogView', () => {
         overlayAllowedOrigins: [],
         enabledUiFeatures: null,
         announcementHtml: null,
-        deepResearchToolId: null,
         footerHtmlMessage: '',
+        deepResearchToolId: null,
         customVisualizers: [],
         publicationFilterSources: ['title', 'role', 'dial_roles'],
       },
@@ -730,92 +726,6 @@ describe('CatalogView', () => {
       expect(
         capturedPublishProps.current?.isPublishVisible?.(
           makeCatalogItem({ isMyApp: false }),
-        ),
-      ).toBe(false);
-    });
-  });
-
-  describe('connect wiring', () => {
-    it('shows Connect for a toolset item when the external URL is configured', () => {
-      render(<CatalogView />);
-
-      expect(
-        capturedPublishProps.current?.isConnectVisible?.(
-          makeCatalogItem({ type: CatalogEntityType.Toolset }),
-        ),
-      ).toBe(true);
-    });
-
-    it('shows Connect for an MCP-capable application when the external URL is configured', () => {
-      render(<CatalogView />);
-
-      expect(
-        capturedPublishProps.current?.isConnectVisible?.(
-          makeCatalogItem({
-            type: CatalogEntityType.Agent,
-            supportsMcp: true,
-          }),
-        ),
-      ).toBe(true);
-    });
-
-    it('hides Connect for a non-MCP application', () => {
-      render(<CatalogView />);
-
-      expect(
-        capturedPublishProps.current?.isConnectVisible?.(
-          makeCatalogItem({
-            type: CatalogEntityType.Agent,
-            supportsMcp: false,
-          }),
-        ),
-      ).toBe(false);
-    });
-
-    it('hides Connect for a Model item', () => {
-      render(<CatalogView />);
-
-      expect(
-        capturedPublishProps.current?.isConnectVisible?.(
-          makeCatalogItem({ type: CatalogEntityType.Model }),
-        ),
-      ).toBe(false);
-    });
-
-    it('hides Connect for every item when the DIAL Core external URL is not configured', () => {
-      vi.mocked(useAppConfig).mockReturnValue({
-        status: UserConfigStatus.Ready,
-        features: {},
-        config: {
-          asrModelId: null,
-          transcribeSizeLimitBytes: 5 * 1024 * 1024,
-          defaultDeploymentId: null,
-          dialCoreExternalUrl: null,
-          fileManagerTabs: ['my_files', 'shared', 'organization'],
-          overlayEnabled: false,
-          overlayAllowedOrigins: [],
-          enabledUiFeatures: null,
-          announcementHtml: null,
-          deepResearchToolId: null,
-          footerHtmlMessage: '',
-          customVisualizers: [],
-          publicationFilterSources: ['title', 'role', 'dial_roles'],
-        },
-      });
-
-      render(<CatalogView />);
-
-      expect(
-        capturedPublishProps.current?.isConnectVisible?.(
-          makeCatalogItem({ type: CatalogEntityType.Toolset }),
-        ),
-      ).toBe(false);
-      expect(
-        capturedPublishProps.current?.isConnectVisible?.(
-          makeCatalogItem({
-            type: CatalogEntityType.Agent,
-            supportsMcp: true,
-          }),
         ),
       ).toBe(false);
     });
@@ -1390,6 +1300,12 @@ describe('CatalogView', () => {
         ],
       },
     ]);
+    expect(result.api.resource.endpointUrl).toBe(
+      'https://dial.example.com/v1/toolset/search-tool/mcp',
+    );
+    expect(result.api.snippets[0].code).toContain(
+      'https://dial.example.com/v1/toolset/search-tool/mcp',
+    );
   });
 
   it('resolves undefined without throwing when the details fetch fails', async () => {

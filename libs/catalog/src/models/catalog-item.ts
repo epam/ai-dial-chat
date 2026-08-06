@@ -27,8 +27,6 @@ export interface CatalogItem {
   isFeatured?: boolean;
   /** Short description, typically 1–2 lines. */
   description: string;
-  /** Longer-form intro text shown in the details panel's Intro section. Falls back to `description` when absent. */
-  intro?: string;
   /** When true the item is hidden from the main Browse view and only shown in Search results. */
   isHidden?: boolean;
   /** Whether the item is marked as a favorite by the user. */

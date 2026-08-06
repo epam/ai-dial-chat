@@ -108,12 +108,11 @@ describe('GeneralForm', () => {
     vi.clearAllMocks();
   });
 
-  it('renders name, description, icon URL, and intro fields', () => {
+  it('renders name, description, and icon URL fields', () => {
     renderForm();
     expect(screen.getByLabelText(EditorI18nKeys.NameLabel)).toBeTruthy();
     expect(screen.getByLabelText(EditorI18nKeys.DescriptionLabel)).toBeTruthy();
     expect(screen.getByLabelText(EditorI18nKeys.IconUrlLabel)).toBeTruthy();
-    expect(screen.getByLabelText(EditorI18nKeys.IntroLabel)).toBeTruthy();
   });
 
   it('shows required error and does not call API when name is empty', async () => {
@@ -158,23 +157,6 @@ describe('GeneralForm', () => {
     expect(createApplication).not.toHaveBeenCalled();
   });
 
-  it('shows length error and does not call API when intro exceeds 90 characters', async () => {
-    const ref = createRef<GeneralFormHandle>();
-    renderForm({}, ref);
-    await user.type(getNameInput(), 'My App');
-    await user.type(
-      screen.getByLabelText(EditorI18nKeys.IntroLabel) as HTMLInputElement,
-      'a'.repeat(91),
-    );
-    await act(async () => {
-      await ref.current?.submit();
-    });
-    expect(screen.getByRole('alert').textContent).toContain(
-      EditorI18nKeys.IntroTooLong,
-    );
-    expect(createApplication).not.toHaveBeenCalled();
-  });
-
   it('calls createApplication and onCreated on valid submit', async () => {
     const onCreated = vi.fn();
     const ref = createRef<GeneralFormHandle>();
@@ -200,30 +182,8 @@ describe('GeneralForm', () => {
       iconUrl: undefined,
       version: undefined,
       topics: undefined,
-      intro: undefined,
       applicationProperties: undefined,
     });
-  });
-
-  it('includes a trimmed intro in the create call when provided', async () => {
-    const onCreated = vi.fn();
-    const ref = createRef<GeneralFormHandle>();
-    vi.mocked(createApplication).mockResolvedValue({
-      id: 'users/u/apps/new',
-    });
-    renderForm({ onCreated }, ref);
-    await user.type(getNameInput(), 'My App');
-    await user.type(
-      screen.getByLabelText(EditorI18nKeys.IntroLabel) as HTMLInputElement,
-      'A short pitch',
-    );
-    await act(async () => {
-      await ref.current?.submit();
-    });
-    await waitFor(() => expect(createApplication).toHaveBeenCalledOnce());
-    expect(createApplication).toHaveBeenCalledWith(
-      expect.objectContaining({ intro: 'A short pitch' }),
-    );
   });
 
   it('sets applicationProperties defaults for a Quick App schema', async () => {
@@ -305,10 +265,6 @@ describe('GeneralForm', () => {
       screen.getByLabelText(EditorI18nKeys.DescriptionLabel),
       'New description',
     );
-    await user.type(
-      screen.getByLabelText(EditorI18nKeys.IntroLabel) as HTMLInputElement,
-      'New intro',
-    );
 
     await act(async () => {
       await ref.current?.submit();
@@ -339,7 +295,6 @@ describe('GeneralForm', () => {
         description: undefined,
         iconUrl: undefined,
         topics: ['a', 'b'],
-        intro: undefined,
       });
     });
 
@@ -360,10 +315,6 @@ describe('GeneralForm', () => {
         screen.getByLabelText(EditorI18nKeys.DescriptionLabel),
         'New description',
       );
-      await user.type(
-        screen.getByLabelText(EditorI18nKeys.IntroLabel) as HTMLInputElement,
-        'New intro',
-      );
 
       expect(ref.current?.getValues()).toEqual({
         name: 'Renamed App',
@@ -371,7 +322,6 @@ describe('GeneralForm', () => {
         display_version: '1.0.0',
         iconUrl: undefined,
         topics: undefined,
-        intro: 'New intro',
       });
     });
   });

@@ -68,8 +68,8 @@ import {
   mapEntityDetailsToCatalogDetails,
   mapToolsetCredentials,
 } from '../../utils/map-entity-details-to-catalog';
+import { buildConnectApi } from '../../utils/mcp-endpoint-url';
 import { getAccessRulesLabels, toPublishEntityType } from '../../utils/publish';
-import ConnectPopoverContainer from '../ConnectPopoverContainer/ConnectPopoverContainer';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 
 /** Entity types shown in the catalog picker modal: models and agents only. */
@@ -168,8 +168,8 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     OverlayFeature.HideCustomAppCreation,
   );
 
-  const catalogItems = useMemo(
-    () => [
+  const catalogItems = useMemo(() => {
+    return [
       ...deployments.map((d) =>
         mapDeploymentToCatalogItem(
           d,
@@ -185,18 +185,17 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
             mapToolsetToCatalogItem(toolset, favoriteIds, isAdmin, t),
           )
         : []),
-    ],
-    [
-      deployments,
-      favoriteIds,
-      t,
-      toolsets,
-      quickAppSchemaId,
-      isAdmin,
-      isToolsetsEnabled,
-      isCustomAppsEnabled,
-    ],
-  );
+    ];
+  }, [
+    deployments,
+    favoriteIds,
+    t,
+    toolsets,
+    quickAppSchemaId,
+    isAdmin,
+    isToolsetsEnabled,
+    isCustomAppsEnabled,
+  ]);
 
   const visibleCatalogItems = useMemo(() => {
     let result = isSelectorMode
@@ -247,8 +246,14 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
           limitsPromise,
         ]);
         const entityDetails = mapDeploymentDetailsDtoToEntityDetails(dto);
+        const catalogDetails = mapEntityDetailsToCatalogDetails(entityDetails);
         return {
-          ...mapEntityDetailsToCatalogDetails(entityDetails),
+          ...catalogDetails,
+          api:
+            item.type === CatalogEntityType.Toolset ||
+            (item.type === CatalogEntityType.Agent && item.supportsMcp === true)
+              ? buildConnectApi(dialCoreExternalUrl ?? '', item.id)
+              : catalogDetails.api,
           limits: mapDeploymentLimitsDtoToCatalogLimits(limitsDto, t),
           credentials:
             entityDetails.type === 'TOOLSET'
@@ -259,7 +264,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         return undefined;
       }
     },
-    [isAdmin, t],
+    [isAdmin, t, dialCoreExternalUrl],
   );
 
   const getLevelStatus = useCallback(
@@ -481,15 +486,6 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     (item: CatalogItem) =>
       Boolean(item.isMyApp) && toPublishEntityType(item.type) != null,
     [],
-  );
-
-  const isConnectVisible = useCallback(
-    (item: CatalogItem) => {
-      if (!dialCoreExternalUrl) return false;
-      if (item.type === CatalogEntityType.Toolset) return true;
-      return item.type === CatalogEntityType.Agent && item.supportsMcp === true;
-    },
-    [dialCoreExternalUrl],
   );
 
   const isApplicationsSharingEnabled = useUiFeature(
@@ -762,10 +758,6 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         <SharePopoverContainer item={item} onClose={onClose} />
       )}
       isShareVisible={isShareVisible}
-      isConnectVisible={isConnectVisible}
-      connectOverlay={(item, onClose) => (
-        <ConnectPopoverContainer item={item} onClose={onClose} />
-      )}
       styles={{
         typography: { pageHeadingFontClassName: 'dial-h1-text' },
       }}
@@ -829,7 +821,8 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         credentialsBadgeLoggedOutLabel: t(
           CatalogI18nKeys.CredentialsBadgeLoggedOut,
         ),
-        connectLabel: t(ButtonsI18nKeys.Connect),
+        tabConnectLabel: t(ButtonsI18nKeys.Connect),
+        manageActionLabel: t(ButtonsI18nKeys.Manage),
       }}
     />
   );

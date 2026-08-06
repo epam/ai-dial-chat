@@ -13,10 +13,10 @@ import type { CatalogItem } from './catalog-item';
 export interface ItemDetailsTexts {
   /** "Share" action button label. Default: `'Share'`. */
   shareLabel?: string;
-  /** "Connect" action button label, used for every entity type. Default: `'Connect'`. */
-  connectLabel?: string;
-  /** Caption above the intro/description text. Default: `'Intro'`. */
-  introLabel?: string;
+  /** "Connect" tab label (resource ID, endpoint, and code snippets). Default: `'Connect'`. */
+  tabConnectLabel?: string;
+  /** Accessible label for the icon-only "Manage" button (opens the Edit/Publish/Delete menu). Default: `'Manage'`. */
+  manageActionLabel?: string;
   /** "About" tab label. Default: `'About'`. */
   tabAboutLabel?: string;
   /** "Overview" tab label. Default: `'Overview'`. */
@@ -25,8 +25,6 @@ export interface ItemDetailsTexts {
   tabPricingLabel?: string;
   /** "Limits" tab label. Default: `'Limits'`. */
   tabLimitsLabel?: string;
-  /** "API" tab label. Default: `'API'`. */
-  tabApiLabel?: string;
   /** Accessible label for the details panel `role="dialog"`. Default: `'Item details'`. */
   ariaLabel?: string;
   /** Accessible label for the close button. Default: `'Close'`. */
@@ -65,7 +63,7 @@ export interface ItemDetailsTexts {
   apiModelIdLabel?: string;
   /** "Endpoint" section heading in the API tab (multi-endpoint selector). Default: `'Endpoint'`. */
   apiEndpointSectionLabel?: string;
-  /** URL row label inside each endpoint option. Default: `'Endpoint'`. */
+  /** Title shown in the single-endpoint code block's header in the Connect tab. Default: `'Endpoint'`. */
   apiEndpointLabel?: string;
   /** "Request example" row label in the API tab. Default: `'Request example'`. */
   apiRequestExampleLabel?: string;
@@ -127,11 +125,9 @@ export interface ItemDetailsTypography {
   providerClassName?: string;
   /** Typography class for the version string. Default: `'dial-tiny-text'`. */
   versionClassName?: string;
-  /** Typography class for the intro section caption. Default: `'dial-caption-text'`. */
-  introCaptionClassName?: string;
-  /** Typography class for section headings inside the intro/description content. Default: `'dial-small-semi-text'`. */
+  /** Typography class for section headings inside the description content. Default: `'dial-small-semi-text'`. */
   contentHeadingClassName?: string;
-  /** Typography class for the intro/description body text. Default: `'dial-small-text'`. */
+  /** Typography class for the description body text. Default: `'dial-small-text'`. */
   contentClassName?: string;
   /** Typography class for Overview section headings. Default: `'dial-caption-text'`. */
   overviewSectionClassName?: string;
@@ -227,17 +223,6 @@ export interface DetailsPanelProps {
    * Absent means the built-in rule alone decides.
    */
   isShareVisible?: (item: CatalogItem) => boolean;
-  /**
-   * Renders the Connect popover content anchored to the Connect button. When
-   * absent, the Connect button is never shown — there is no non-overlay
-   * fallback action.
-   */
-  connectOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
-  /**
-   * Controls whether the "Connect" action is shown for the item. When
-   * absent, the Connect button is never shown.
-   */
-  isConnectVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Edit" button is clicked. Shown only when the item's `isEditable` is `true`. */
   onEdit?: (item: CatalogItem) => void;
   /**

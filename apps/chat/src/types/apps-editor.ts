@@ -89,7 +89,6 @@ export interface TriggerSaveGeneralPayload {
   description?: string;
   iconUrl?: string;
   topics?: string[];
-  intro?: string;
   display_version?: string;
 }
 

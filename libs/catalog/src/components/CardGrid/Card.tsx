@@ -121,7 +121,7 @@ export const Card: FC<CardProps> = ({
           styles.description,
         )}
       >
-        {item.intro ?? item.description}
+        {item.description}
       </p>
 
       <div className="flex min-h-[28px] items-center justify-between gap-2">

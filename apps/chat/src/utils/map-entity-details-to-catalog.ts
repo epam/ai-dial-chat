@@ -180,6 +180,21 @@ const mapModelPricing = (
   return { prices, limits };
 };
 
+/**
+ * Maps endpoint-type variants (Azure OpenAI / Anthropic / Responses) shared
+ * by models and agents into the lib's endpoint-selector shape.
+ */
+const mapApiEndpoints = (
+  endpoints: ModelEndpoint[] | undefined,
+): EndpointOption[] | undefined =>
+  endpoints != null && endpoints.length > 0
+    ? endpoints.map((e) => ({
+        label: ENDPOINT_LABELS[e.type] ?? e.type,
+        url: e.url,
+        snippets: mapEndpointSnippets(e),
+      }))
+    : undefined;
+
 const mapModelApi = (
   data: ModelEntityDetails,
 ): CatalogItemApiDetails | undefined => {
@@ -187,15 +202,7 @@ const mapModelApi = (
   if (api == null) return undefined;
 
   const resource = api.modelId != null ? { modelId: api.modelId } : undefined;
-
-  const endpoints: EndpointOption[] | undefined =
-    api.endpoints != null && api.endpoints.length > 0
-      ? api.endpoints.map((e) => ({
-          label: ENDPOINT_LABELS[e.type] ?? e.type,
-          url: e.url,
-          snippets: mapEndpointSnippets(e),
-        }))
-      : undefined;
+  const endpoints = mapApiEndpoints(api.endpoints);
 
   if (resource == null && endpoints == null) return undefined;
   return { resource, endpoints };
@@ -299,6 +306,7 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
             data.api.endpointUrl != null
               ? { endpointUrl: data.api.endpointUrl }
               : undefined,
+          endpoints: mapApiEndpoints(data.api.endpoints),
           requestExample: data.api.requestExample,
           responseSchema: data.api.responseSchema,
         }
