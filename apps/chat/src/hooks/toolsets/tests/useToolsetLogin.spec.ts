@@ -11,6 +11,7 @@ import {
   loginToolset,
   logoutToolset,
 } from '../../../server-api/toolsets';
+import { emitToolsetLoginSuccess } from '../../../utils/toolset-login-events';
 import {
   initiateOAuthLogin,
   navigateToolsetOAuthPopup,
@@ -30,6 +31,10 @@ vi.mock('../../../utils/toolsets', () => ({
   navigateToolsetOAuthPopup: vi.fn(),
   openToolsetOAuthPopup: vi.fn(),
   waitForToolsetOAuthResult: vi.fn(),
+}));
+
+vi.mock('../../../utils/toolset-login-events', () => ({
+  emitToolsetLoginSuccess: vi.fn(),
 }));
 
 describe('useToolsetLogin', () => {
@@ -56,6 +61,10 @@ describe('useToolsetLogin', () => {
         credentialsLevel: ToolsetCredentialsLevel.User,
         authenticationType: ToolsetAuthTypes.ApiKey,
         apiKey: 'secret',
+      });
+      expect(emitToolsetLoginSuccess).toHaveBeenCalledWith({
+        toolsetId: 'toolsets/b/my-toolset',
+        credentialsLevel: ToolsetCredentialsLevel.User,
       });
     });
 
@@ -105,6 +114,7 @@ describe('useToolsetLogin', () => {
       });
 
       expect(outcome).toEqual({ type: ToolsetLoginOutcomeType.Failure });
+      expect(emitToolsetLoginSuccess).not.toHaveBeenCalled();
     });
   });
 
@@ -130,6 +140,10 @@ describe('useToolsetLogin', () => {
 
       expect(outcome).toEqual({ type: ToolsetLoginOutcomeType.Success });
       expect(logoutToolset).not.toHaveBeenCalled();
+      expect(emitToolsetLoginSuccess).toHaveBeenCalledWith({
+        toolsetId: 'toolsets/b/my-toolset',
+        credentialsLevel: ToolsetCredentialsLevel.User,
+      });
     });
 
     it('opens the popup synchronously, then logs out, then navigates it when forceStale is set', async () => {
@@ -222,6 +236,10 @@ describe('useToolsetLogin', () => {
       await waitFor(() =>
         expect(outcome).toEqual({ type: ToolsetLoginOutcomeType.Success }),
       );
+      expect(emitToolsetLoginSuccess).toHaveBeenCalledWith({
+        toolsetId: 'toolsets/b/my-toolset',
+        credentialsLevel: ToolsetCredentialsLevel.User,
+      });
     });
 
     it('returns Cancelled when re-verification shows the user is still signed out', async () => {
@@ -247,6 +265,7 @@ describe('useToolsetLogin', () => {
       });
 
       expect(outcome).toEqual({ type: ToolsetLoginOutcomeType.Cancelled });
+      expect(emitToolsetLoginSuccess).not.toHaveBeenCalled();
     });
   });
 });
