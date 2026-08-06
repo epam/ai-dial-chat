@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { Response } from 'express';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
+import { StringUtils } from '../../common/utils/string-utils';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import {
@@ -170,10 +171,15 @@ export class ResponsesAdapter {
              * Never forwarded to the browser and never logged with content —
              * only the event type is recorded, so an unexpected upstream
              * event can't leak prompt/response text into metrics or logs.
+             * The type itself is sanitized/truncated first since it is an
+             * arbitrary upstream-controlled string — otherwise a malicious
+             * or malfunctioning upstream could inject log-control
+             * characters or blow up metrics label cardinality.
              */
-            generationUnknownEventsTotal.add(1, { 'event.type': event.type });
+            const safeType = StringUtils.sanitizeForLog(String(event.type), 64);
+            generationUnknownEventsTotal.add(1, { 'event.type': safeType });
             this.logger.debug(
-              `responses.adapter unhandled event type: ${event.type}`,
+              `responses.adapter unhandled event type: ${safeType}`,
             );
           }
         }

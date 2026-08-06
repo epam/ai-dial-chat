@@ -12,6 +12,7 @@ import type { Response } from 'express';
 import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
+import { StringUtils } from '../common/utils/string-utils';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { HIDDEN_FILE } from '../constants/dial.constants';
 import { DeploymentsService } from '../deployments/deployments.service';
@@ -1206,8 +1207,9 @@ export class ConversationService {
     );
 
     if (details.type === 'toolset') {
+      const safeModel = StringUtils.sanitizeForLog(model);
       throw new BadRequestException(
-        `Deployment "${model}" is a toolset and cannot be used for generation`,
+        `Deployment "${safeModel}" is a toolset and cannot be used for generation`,
       );
     }
 

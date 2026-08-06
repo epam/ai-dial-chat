@@ -16,4 +16,16 @@ export class StringUtils {
     }
     return result;
   }
+
+  /**
+   * Strips control characters (including newlines/carriage returns that
+   * could forge extra log lines) and truncates to a bounded length, so an
+   * untrusted string can be safely embedded in a log line, error message,
+   * or metrics label without enabling log injection or unbounded
+   * cardinality.
+   */
+  static sanitizeForLog(str: string, maxLength = 200): string {
+    // eslint-disable-next-line no-control-regex
+    return str.replace(/[\x00-\x1F\x7F]/g, '').slice(0, maxLength);
+  }
 }
