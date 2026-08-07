@@ -17,6 +17,7 @@ import { UISelectors } from '@/src/store/selectors';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
+import { DEFAULT_LOCAL } from '@/src/constants/locale';
 import { Routes } from '@/src/constants/routes';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
@@ -79,12 +80,12 @@ export const ToolsetEditor = () => {
       const { name, description } = getEntityPayloadFromLocals(data.locales);
       const payloadToolset = getToolsetPayload(
         {
-          name,
+          name: { ...name, [DEFAULT_LOCAL]: data.name },
           endpoint:
             data.endpoint === ENDPOINT_PLACEHOLDER ? '' : data.endpoint.trim(),
           iconUrl: data.iconUrl,
           transport: data.protocol,
-          description,
+          description: { ...description, [DEFAULT_LOCAL]: data.description },
           topics: data.topics,
           allowedTools: data.allowedTools,
           version: data.version,

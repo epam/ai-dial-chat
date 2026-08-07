@@ -72,6 +72,7 @@ import {
 } from '@/src/constants/default-ui-settings';
 import { formErrors } from '@/src/constants/form-errors';
 import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_LOCAL } from '@/src/constants/locale';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 import {
   DEFAULT_QUICK_APPS_MODEL,
@@ -953,9 +954,9 @@ export const getApplicationPayload = ({
     folderId: '',
     ...(currentApp && currentApp),
     type: EntityType.Application,
-    name,
+    name: { ...name, [DEFAULT_LOCAL]: data.name },
     iconUrl: data.iconUrl,
-    description,
+    description: { ...description, [DEFAULT_LOCAL]: data.description },
     version: data.version,
     topics: data.topics,
     isDefault: false,
