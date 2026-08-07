@@ -3,14 +3,21 @@ import {
   ScheduledTaskCreateFormErrors,
   ScheduledTaskCreateFormValues,
   ScheduledTaskFrequency,
-  ScheduledTaskScheduleType,
 } from '@epam/ai-dial-scheduled-tasks';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import { memo, useCallback, useMemo, useState, type FC } from 'react';
+import { GhostButton, NotificationVariant } from '@epam/ai-dial-ui-kit';
+import type { ScheduledTaskDto } from '@epam/chat-api-client';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FC,
+} from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
-import { ScheduledTaskCreateQuery } from '../../constants/scheduled-tasks';
+import { getScheduledTaskDetailRoute } from '../../constants/routes';
 import {
   ButtonsI18nKeys,
   EditorI18nKeys,
@@ -20,57 +27,29 @@ import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
-import { getApiErrorDetails } from '../../server-api/api-error';
-import { createScheduledTask } from '../../server-api/scheduled-tasks.api';
-import { ROUTES } from '../../types/routes';
+import {
+  getApiErrorDetails,
+  getApiErrorStatus,
+} from '../../server-api/api-error';
+import {
+  getScheduledTask,
+  updateScheduledTask,
+} from '../../server-api/scheduled-tasks.api';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { validateScheduledTaskForm } from '../../utils/scheduled-task-form-validation';
-import { mapFormValuesToCreateBody } from '../../utils/scheduled-task-trigger';
+import {
+  mapFormValuesToUpdateBody,
+  mapScheduledTaskDtoToFormValues,
+} from '../../utils/scheduled-task-trigger';
 import NotFoundPage from '../NotFound/NotFound';
 
-const MAX_ASCII_CONTROL_CODE = 31;
-const ASCII_DELETE_CODE = 127;
-
-const DEFAULT_VALUES: ScheduledTaskCreateFormValues = {
-  displayName: '',
-  scheduleType: ScheduledTaskScheduleType.Recurring,
-  frequency: ScheduledTaskFrequency.Daily,
-  time: '09:00',
-  startDate: undefined,
-  endDate: undefined,
-  modelId: '',
-  prompt: '',
-};
-
-const containsControlCharacter = (value: string): boolean =>
-  Array.from(value).some((character) => {
-    const codePoint = character.codePointAt(0);
-    return (
-      codePoint !== undefined &&
-      (codePoint <= MAX_ASCII_CONTROL_CODE || codePoint === ASCII_DELETE_CODE)
-    );
-  });
-
-const resolveReturnUrl = (candidate: string | null): string => {
-  if (
-    candidate === null ||
-    !candidate.startsWith('/') ||
-    candidate.startsWith('//') ||
-    candidate.includes('\\') ||
-    containsControlCharacter(candidate)
-  ) {
-    return ROUTES.ScheduledTasks;
-  }
-  return candidate;
-};
-
-const ScheduledTaskCreatePage: FC = () => {
+const ScheduledTaskEditPage: FC = () => {
   const { t } = useTranslation();
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const { scheduleId = '' } = useParams<{ scheduleId: string }>();
   const { items: deploymentItems } = useDeployments();
   const { showNotification } = useNotification();
   const { currentTheme } = useTheme();
@@ -78,16 +57,74 @@ const ScheduledTaskCreatePage: FC = () => {
   const markdownEditorTheme: 'light' | 'dark' =
     currentTheme === ThemeId.Dark ? 'dark' : 'light';
 
-  const [values, setValues] =
-    useState<ScheduledTaskCreateFormValues>(DEFAULT_VALUES);
+  const [task, setTask] = useState<ScheduledTaskDto | null>(null);
+  const [isTaskLoading, setIsTaskLoading] = useState(true);
+  const [taskError, setTaskError] = useState<Error | null>(null);
+  const [isNotFound, setIsNotFound] = useState(false);
+  const [isUnsupported, setIsUnsupported] = useState(false);
+  const [taskFetchToken, setTaskFetchToken] = useState(0);
+
+  const [values, setValues] = useState<ScheduledTaskCreateFormValues | null>(
+    null,
+  );
   const [errors, setErrors] = useState<ScheduledTaskCreateFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const returnUrl = useMemo(
-    () =>
-      resolveReturnUrl(searchParams.get(ScheduledTaskCreateQuery.ReturnUrl)),
-    [searchParams],
+    () => getScheduledTaskDetailRoute(scheduleId),
+    [scheduleId],
   );
+
+  useEffect(() => {
+    if (!isEnabled || !scheduleId) {
+      setIsTaskLoading(false);
+      return;
+    }
+
+    const cancelled = { value: false };
+
+    const load = async () => {
+      setIsTaskLoading(true);
+      setTaskError(null);
+      setIsNotFound(false);
+      setIsUnsupported(false);
+      try {
+        const result = await getScheduledTask(scheduleId);
+        if (cancelled.value) return;
+
+        const mapped = mapScheduledTaskDtoToFormValues(result);
+        if (!mapped.ok) {
+          setTask(result);
+          setIsUnsupported(true);
+          return;
+        }
+        setTask(result);
+        setValues(mapped.values);
+      } catch (err) {
+        if (!cancelled.value) {
+          if (getApiErrorStatus(err) === 404) {
+            setIsNotFound(true);
+          } else {
+            setTaskError(
+              err instanceof Error
+                ? err
+                : new Error('Failed to load the scheduled task'),
+            );
+          }
+        }
+      } finally {
+        if (!cancelled.value) {
+          setIsTaskLoading(false);
+        }
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled.value = true;
+    };
+  }, [isEnabled, scheduleId, taskFetchToken]);
 
   const modelOptions = useMemo(
     () =>
@@ -100,7 +137,7 @@ const ScheduledTaskCreatePage: FC = () => {
 
   const labels = useMemo(
     () => ({
-      pageTitle: t(ScheduledTasksI18nKeys.CreatePageTitle),
+      pageTitle: t(ScheduledTasksI18nKeys.EditPageTitle),
       backButtonLabel: t(ScheduledTasksI18nKeys.CreateBackButtonLabel),
       detailsSectionTitle: t(ScheduledTasksI18nKeys.CreateDetailsSectionTitle),
       detailsSectionSubtitle: t(
@@ -164,7 +201,7 @@ const ScheduledTaskCreatePage: FC = () => {
       field: K,
       value: ScheduledTaskCreateFormValues[K],
     ) => {
-      setValues((prev) => ({ ...prev, [field]: value }));
+      setValues((prev) => (prev ? { ...prev, [field]: value } : prev));
       setErrors((prev) => {
         if (!(field in prev)) return prev;
         const next = { ...prev };
@@ -183,7 +220,13 @@ const ScheduledTaskCreatePage: FC = () => {
     navigate(returnUrl);
   }, [navigate, returnUrl]);
 
+  const handleRetry = useCallback(() => {
+    setTaskFetchToken((token) => token + 1);
+  }, []);
+
   const handleSubmit = useCallback(async () => {
+    if (!values) return;
+
     const nextErrors = validateScheduledTaskForm(values, t);
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
@@ -192,22 +235,32 @@ const ScheduledTaskCreatePage: FC = () => {
 
     setIsSubmitting(true);
     try {
-      await createScheduledTask(mapFormValuesToCreateBody(values));
+      await updateScheduledTask(scheduleId, mapFormValuesToUpdateBody(values));
       showNotification({
         variant: NotificationVariant.Success,
-        message: t(ScheduledTasksI18nKeys.CreateSuccessNotification),
+        message: t(ScheduledTasksI18nKeys.EditSuccessNotification),
       });
-      navigate(returnUrl, { state: { refresh: true } });
+      navigate(returnUrl);
     } catch (error) {
+      if (getApiErrorStatus(error) === 404) {
+        setIsNotFound(true);
+        setIsSubmitting(false);
+        return;
+      }
       const { traceId } = await getApiErrorDetails(error);
       showNotification({
         variant: NotificationVariant.Error,
-        message: t(ScheduledTasksI18nKeys.CreateErrorNotification),
+        message: t(ScheduledTasksI18nKeys.EditErrorNotification),
         requestId: traceId,
       });
       setIsSubmitting(false);
     }
-  }, [values, showNotification, t, navigate, returnUrl]);
+  }, [values, showNotification, t, navigate, returnUrl, scheduleId]);
+
+  const handleSubmitVoid = useCallback(
+    () => void handleSubmit(),
+    [handleSubmit],
+  );
 
   if (appConfigStatus !== UserConfigStatus.Ready) {
     return <RouteFallback />;
@@ -215,6 +268,44 @@ const ScheduledTaskCreatePage: FC = () => {
 
   if (!isEnabled) {
     return <NotFoundPage />;
+  }
+
+  if (isNotFound) {
+    return <NotFoundPage />;
+  }
+
+  if (isTaskLoading) {
+    return <RouteFallback />;
+  }
+
+  if (taskError) {
+    return (
+      <div
+        role="alert"
+        className="flex size-full flex-col items-center justify-center gap-3"
+      >
+        <p>{t(ScheduledTasksI18nKeys.DetailErrorLabel)}</p>
+        <GhostButton
+          label={t(ScheduledTasksI18nKeys.ListRetryLabel)}
+          onClick={handleRetry}
+        />
+      </div>
+    );
+  }
+
+  if (isUnsupported || !values || !task) {
+    return (
+      <div
+        role="alert"
+        className="flex size-full flex-col items-center justify-center gap-3"
+      >
+        <p>{t(ScheduledTasksI18nKeys.EditUnsupportedTriggerMessage)}</p>
+        <GhostButton
+          label={t(ScheduledTasksI18nKeys.CreateBackButtonLabel)}
+          onClick={handleBack}
+        />
+      </div>
+    );
   }
 
   return (
@@ -226,11 +317,11 @@ const ScheduledTaskCreatePage: FC = () => {
       onFieldChange={handleFieldChange}
       onBack={handleBack}
       onCancel={handleCancel}
-      onSubmit={() => void handleSubmit()}
+      onSubmit={handleSubmitVoid}
       isSubmitting={isSubmitting}
       markdownEditorTheme={markdownEditorTheme}
     />
   );
 };
 
-export default memo(ScheduledTaskCreatePage);
+export default memo(ScheduledTaskEditPage);

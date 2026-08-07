@@ -3,10 +3,18 @@ import {
   type ScheduledTaskRunItem,
 } from '@epam/ai-dial-scheduled-tasks';
 import type { ScheduledTaskDto } from '@epam/chat-api-client';
-import { memo, useEffect, useMemo, useState, type FC } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FC,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
+import { getScheduledTaskEditRoute } from '../../constants/routes';
 import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -135,6 +143,7 @@ const ScheduledTaskDetailPage: FC = () => {
   const labels = useMemo(
     () => ({
       backAriaLabel: t(ScheduledTasksI18nKeys.CreateBackButtonLabel),
+      editButtonLabel: t(ScheduledTasksI18nKeys.CardEditActionLabel),
       errorLabel: t(ScheduledTasksI18nKeys.DetailErrorLabel),
       detailsTitle: t(ScheduledTasksI18nKeys.CreateDetailsSectionTitle),
       descriptionLabel: t(ScheduledTasksI18nKeys.CreateDescriptionLabel),
@@ -167,6 +176,10 @@ const ScheduledTaskDetailPage: FC = () => {
     navigate(ROUTES.ScheduledTasks);
   };
 
+  const handleEdit = useCallback(() => {
+    navigate(getScheduledTaskEditRoute(scheduleId));
+  }, [navigate, scheduleId]);
+
   const handleRetry = () => {
     setTaskFetchToken((token) => token + 1);
   };
@@ -187,6 +200,7 @@ const ScheduledTaskDetailPage: FC = () => {
     <ScheduledTaskDetailView
       labels={labels}
       onBack={handleBack}
+      onEdit={task ? handleEdit : undefined}
       displayName={task?.displayName ?? ''}
       isLoading={isTaskLoading}
       error={taskError}
