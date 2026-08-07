@@ -10,7 +10,7 @@ The DIAL streaming API surfaces agent reasoning as a list of stages inside each 
 - **New `libs/conversation-stages` library** containing all stage UI components:
   - `StagesPanel` — renders accumulated stages as a flat list; themed via CSS custom properties.
   - `StageItem` — a single stage row; collapses/expands its markdown body when `content` is present.
-  - `StageIcon` — maps stage status to the correct icon (`DialSpinner` while live, `IconCircleCheck` on completion, `IconAlertCircle` on failure/unknown).
+  - `StageIcon` — maps stage status to the correct icon (`Spinner` while live, `IconCircleCheck` on completion, `IconAlertCircle` on failure/unknown).
   - `StageMarkdownContent` — renders stage body text as formatted markdown with a copy button on code blocks.
 - **Integrated `StagesPanel`** into `ConversationView` above the assistant message bubble for messages that carry stages.
 

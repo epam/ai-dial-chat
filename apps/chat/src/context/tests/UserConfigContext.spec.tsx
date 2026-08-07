@@ -29,7 +29,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
   return {
     ...actual,
-    DialSpinner: () => <div data-testid="dial-spinner" />,
+    Spinner: () => <div data-testid="dial-spinner" />,
   };
 });
 
@@ -234,7 +234,7 @@ describe('UserConfigContext', () => {
   });
 
   describe('spinner and children rendering', () => {
-    it('renders DialSpinner while loading', () => {
+    it('renders Spinner while loading', () => {
       let resolve: () => void;
       mockGetUserConfig.mockReturnValue(
         new Promise<never>((r) => {

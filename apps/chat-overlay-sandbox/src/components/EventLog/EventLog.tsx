@@ -1,4 +1,4 @@
-import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+import { NeutralButton, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import {
   FC,
   memo,
@@ -69,7 +69,7 @@ const EventLog: FC<EventLogProps> = ({
 
   return (
     <>
-      <DialPrimaryButton
+      <PrimaryButton
         ref={triggerRef}
         className={`fixed bottom-6 z-[9999] min-h-12 rounded-full shadow-md ${triggerClassName}`}
         type="button"
@@ -102,7 +102,7 @@ const EventLog: FC<EventLogProps> = ({
           <h2 className="m-0 text-xl" id={headingId}>
             Event log
           </h2>
-          <DialNeutralButton
+          <NeutralButton
             ref={closeRef}
             className="min-h-11"
             type="button"
@@ -112,14 +112,14 @@ const EventLog: FC<EventLogProps> = ({
         </header>
 
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <DialNeutralButton
+          <NeutralButton
             className="min-h-11"
             type="button"
             label="Copy all"
             disabled={entries.length === 0}
             onClick={handleCopy}
           />
-          <DialNeutralButton
+          <NeutralButton
             className="min-h-11"
             type="button"
             label="Clear"

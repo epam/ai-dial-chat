@@ -29,14 +29,14 @@
 
 ## 5. General step
 
-- [x] 5.1 Create `GeneralForm` with `useState` per field: name, version, icon URL (plain `DialInput`), description (`DialTextarea`), topics (`DialTagInput`, sourced from `AppConfigContext`)
+- [x] 5.1 Create `GeneralForm` with `useState` per field: name, version, icon URL (plain `Input`), description (`Textarea`), topics (`DialTagInput`, sourced from `AppConfigContext`)
 - [x] 5.2 Add manual `if`-guard validation (name required) with per-field error state + i18n keys
 - [x] 5.3 Add `getStorageSafeUniqueToolsetName` to a domain util (e.g. `apps/chat/src/utils/toolsets.ts`) and use it for the default create-mode name
 - [x] 5.4 Add unit tests for `GeneralForm` validation and unique-name generation
 
 ## 6. Settings step (connection fields)
 
-- [x] 6.1 Create `SettingsForm` with endpoint (`DialInput`), protocol (`DialSelect` HTTP/SSE), allowed tools (`DialTagInput`)
+- [x] 6.1 Create `SettingsForm` with endpoint (`Input`), protocol (`DialSelect` HTTP/SSE), allowed tools (`DialTagInput`)
 - [x] 6.2 Add an endpoint-URL validator util (protocol regex, trailing `.`//` guard, `new URL()` parse) with per-field error
 - [x] 6.3 Add a copy-endpoint-URL control (`DialIconButton` + clipboard API)
 - [x] 6.4 Add unit tests for endpoint validation and copy behavior

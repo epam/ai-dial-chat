@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { TabRow } from '@epam/ai-dial-kit';
-import { DialSpinner, DropdownItem } from '@epam/ai-dial-ui-kit';
+import { Spinner, DropdownItem } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
@@ -339,7 +339,7 @@ export const Catalog: FC<CatalogProps> = ({
   if (isLoading) {
     return (
       <div className="flex size-full min-h-0 flex-1 items-center justify-center">
-        <DialSpinner />
+        <Spinner />
       </div>
     );
   }

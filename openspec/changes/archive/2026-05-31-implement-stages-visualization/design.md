@@ -62,7 +62,7 @@ Use `@epam/ai-dial-ui-kit` and `@tabler/icons-react`:
 
 | Condition | Icon | Note |
 |---|---|---|
-| `status === null` AND `isLive` (last running stage during streaming) | `DialSpinner` | Animated; from ui-kit |
+| `status === null` AND `isLive` (last running stage during streaming) | `Spinner` | Animated; from ui-kit |
 | `status === null` AND NOT `isLive` | `IconAlertCircle` | Stage started but not the active one |
 | `status === StageStatus.Completed` | `IconCircleCheck` | Success |
 | Any other non-null status | `IconAlertCircle` | Error / unknown |

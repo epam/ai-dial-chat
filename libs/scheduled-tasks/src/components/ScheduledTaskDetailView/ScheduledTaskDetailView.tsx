@@ -7,7 +7,7 @@ import {
   DIAL_ICON_SIZE,
   DialSkeleton,
   DialSkeletonVariant,
-  DialSpinner,
+  Spinner,
   GhostButton,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
@@ -62,7 +62,7 @@ const RunStatusIcon: FC<{ status: ScheduledTaskRunStatus }> = ({ status }) => {
     case ScheduledTaskRunStatus.InProgress:
       return (
         <span aria-hidden>
-          <DialSpinner size={DIAL_ICON_SIZE.SM} />
+          <Spinner size={DIAL_ICON_SIZE.SM} />
         </span>
       );
     case ScheduledTaskRunStatus.Missed:
@@ -292,7 +292,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
 
       {isLoading && (
         <div className="flex flex-1 items-center justify-center">
-          <DialSpinner />
+          <Spinner />
         </div>
       )}
 

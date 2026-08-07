@@ -5,7 +5,7 @@ import {
   ResponseFormat,
 } from '@epam/ai-dial-chat-shared';
 import {
-  DialInput,
+  Input,
   DialRadioGroup,
   DialSlider,
   RadioGroupOrientation,
@@ -114,7 +114,7 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
         />
       )}
       {features.systemPrompt && (
-        <DialInput
+        <Input
           value={systemPrompt}
           placeholder={systemPromptTooltip}
           labelProps={{

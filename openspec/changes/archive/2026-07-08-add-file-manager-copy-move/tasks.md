@@ -59,7 +59,7 @@
 
 ## 8. OperationLoaderModal component
 
-- [x] 8.1 Create `apps/chat/src/components/DialFileManagerModal/OperationLoaderModal.tsx`: a memoized `FC<Props>` using ui-kit `DialPopup` + `DialSpinner`, props for `title`, `text`, `cancelLabel`, `onCancel` — modeled on the legacy `OperationLoaderModal` visual shape (spinner + title + text + cancel button) but rebuilt with current conventions (no Redux, no legacy `Translation`/`useTranslation` types — labels passed in as pre-translated strings, matching how `UploadProgressModal` receives its labels)
+- [x] 8.1 Create `apps/chat/src/components/DialFileManagerModal/OperationLoaderModal.tsx`: a memoized `FC<Props>` using ui-kit `DialPopup` + `Spinner`, props for `title`, `text`, `cancelLabel`, `onCancel` — modeled on the legacy `OperationLoaderModal` visual shape (spinner + title + text + cancel button) but rebuilt with current conventions (no Redux, no legacy `Translation`/`useTranslation` types — labels passed in as pre-translated strings, matching how `UploadProgressModal` receives its labels)
 - [x] 8.2 Add a `tests/OperationLoaderModal.spec.tsx` covering: renders title/text, cancel button calls `onCancel`, `aria-live="polite"` present
 - [x] 8.3 Run `npm exec nx test chat` and `npm exec nx lint chat` — both must pass
 

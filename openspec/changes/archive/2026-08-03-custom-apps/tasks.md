@@ -12,10 +12,10 @@
 
 - [x] 3.1 Define `CustomAppFormData` and `CustomAppFormErrors` types in `apps/chat/src/types/custom-apps.ts` with fields: `completionUrl`, `featuresData`, `inputAttachmentTypes`, `maxInputAttachments`
 - [x] 3.2 Create `CustomAppSettingsForm` component under `apps/chat/src/pages/ToolsetEditor/EditorForm/` with four fields:
-  - Chat completion URL (`DialInput`, required, absolute URL validation, error on invalid)
-  - Features data (`DialTextarea`, JSON validated on change against `rate_endpoint`/`configuration_endpoint`, error shown inline)
+  - Chat completion URL (`Input`, required, absolute URL validation, error on invalid)
+  - Features data (`Textarea`, JSON validated on change against `rate_endpoint`/`configuration_endpoint`, error shown inline)
   - Input attachment types (`DialTagInput`, MIME type regex validation per tag via `MIME_TYPE_REGEX` in `utils/custom-apps.ts`)
-  - Max attachments (`DialInput type=number`, min 1)
+  - Max attachments (`Input type=number`, min 1)
 - [x] 3.3 Add `CustomAppI18nKeys` enum with keys for all field labels, descriptions, placeholders, validation errors, and save-confirm modal; add all values to `en.json`
 
 ## 4. Custom App Editor page

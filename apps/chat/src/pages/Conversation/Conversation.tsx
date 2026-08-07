@@ -7,7 +7,7 @@ import {
 import {
   ConfirmationPopupVariant,
   DialConfirmationPopup,
-  DialSpinner,
+  Spinner,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import type { ConversationResponseDto } from '@epam/chat-api-client';
@@ -515,7 +515,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   if (isFetching)
     return (
       <div className="flex size-full items-center justify-center">
-        <DialSpinner />
+        <Spinner />
       </div>
     );
 

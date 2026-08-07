@@ -4,10 +4,10 @@ import {
   OverlayEventType,
 } from '@epam/ai-dial-chat-overlay';
 import {
-  DialDangerButton,
-  DialInput,
-  DialNeutralButton,
-  DialPrimaryButton,
+  DangerButton,
+  Input,
+  NeutralButton,
+  PrimaryButton,
   DialSelectField,
 } from '@epam/ai-dial-ui-kit';
 import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
@@ -153,7 +153,7 @@ const AuthUiModeCase: FC = () => {
               key={provider.fieldId}
               className="grid grid-cols-1 gap-2 desktop:grid-cols-[repeat(2,minmax(0,1fr))_auto] desktop:items-end"
             >
-              <DialInput
+              <Input
                 id={`provider-${provider.fieldId}-id`}
                 className="min-h-11"
                 type="text"
@@ -180,7 +180,7 @@ const AuthUiModeCase: FC = () => {
                   updateProviderMode(index, value as OverlayAuthUiMode)
                 }
               />
-              <DialDangerButton
+              <DangerButton
                 className="min-h-11 w-full desktop:w-auto"
                 type="button"
                 label={<span aria-hidden>Remove</span>}
@@ -192,20 +192,20 @@ const AuthUiModeCase: FC = () => {
           ))}
         </div>
         <div className="flex flex-wrap gap-2">
-          <DialNeutralButton
+          <NeutralButton
             className="min-h-11"
             type="button"
             label="Add provider"
             onClick={addProvider}
           />
-          <DialDangerButton
+          <DangerButton
             className="min-h-11"
             type="button"
             label="Clear provider settings"
             disabled={providerModes.length === 0}
             onClick={() => void clearProviderModes()}
           />
-          <DialPrimaryButton
+          <PrimaryButton
             className="min-h-11"
             type="button"
             label="Apply auth settings"

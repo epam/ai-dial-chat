@@ -19,9 +19,5 @@ export type {
   PillTabsTypography,
   PillTabsStyles,
 } from './components/PillTabs/PillTabs';
-export { Input } from './components/Input/Input';
-export type { InputProps } from './components/Input/Input';
-export { Textarea } from './components/Textarea/Textarea';
-export type { TextareaProps } from './components/Textarea/Textarea';
 export { TagInput } from './components/TagInput/TagInput';
 export type { TagInputProps } from './components/TagInput/TagInput';

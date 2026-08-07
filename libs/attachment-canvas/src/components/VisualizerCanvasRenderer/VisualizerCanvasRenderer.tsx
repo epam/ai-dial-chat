@@ -31,7 +31,7 @@ import {
  * 8. Update `openspec/specs/custom-visualizers/spec.md` accordingly.
  */
 import { VisualizerConnectorRequests } from '@epam/ai-dial-shared';
-import { DialSpinner } from '@epam/ai-dial-ui-kit';
+import { Spinner } from '@epam/ai-dial-ui-kit';
 import { VisualizerConnector } from '@epam/ai-dial-visualizer-connector';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { type FC, useEffect, useRef, useState } from 'react';
@@ -156,7 +156,7 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
             styles.loadingOverlay,
           )}
         >
-          <DialSpinner />
+          <Spinner />
           {loadingLabel && (
             <p className={mergeClasses('text-center', styles.statusLabel)}>
               {loadingLabel}
