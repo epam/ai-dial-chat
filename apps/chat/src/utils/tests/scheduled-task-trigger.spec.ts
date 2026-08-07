@@ -5,11 +5,11 @@ import {
 } from '@epam/ai-dial-scheduled-tasks';
 import type { ScheduledTaskDto } from '@epam/chat-api-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { UnsupportedTriggerReason } from '../../types/scheduled-task-mapping';
 import {
   mapFormValuesToCreateBody,
   mapFormValuesToUpdateBody,
   mapScheduledTaskDtoToFormValues,
-  UnsupportedTriggerReason,
 } from '../scheduled-task-trigger';
 
 const baseDto: ScheduledTaskDto = {
