@@ -40,26 +40,26 @@ interface UserConfigContextType {
 
 ## Requirement: App shows the existing loading spinner while user config is loading
 
-`UserConfigProvider` SHALL render `<DialSpinner />` while `status === UserConfigStatus.Loading`. It SHALL render its `children` (wrapped in the context provider) only once `status` is `Ready` or `Error`.
+`UserConfigProvider` SHALL render `<Spinner />` while `status === UserConfigStatus.Loading`. It SHALL render its `children` (wrapped in the context provider) only once `status` is `Ready` or `Error`.
 
 Neither `AppConfigProvider`, `ConversationsProvider`, nor `App` renders until `UserConfigProvider` has exited the `Loading` state.
 
-#### Scenario: DialSpinner is shown during load
+#### Scenario: Spinner is shown during load
 
 - **WHEN** `UserConfigProvider` mounts and `getUserConfig()` is pending
-- **THEN** `<DialSpinner />` is rendered in place of `children`
+- **THEN** `<Spinner />` is rendered in place of `children`
 
 #### Scenario: Children render after load completes successfully
 
 - **WHEN** `getUserConfig()` resolves successfully
 - **THEN** `children` are rendered with `status === Ready`
-- **AND** `<DialSpinner />` is no longer rendered
+- **AND** `<Spinner />` is no longer rendered
 
 #### Scenario: Children render after load fails
 
 - **WHEN** `getUserConfig()` rejects
 - **THEN** `children` are rendered with `status === Error`
-- **AND** `<DialSpinner />` is no longer rendered
+- **AND** `<Spinner />` is no longer rendered
 
 ---
 
@@ -221,7 +221,7 @@ export enum UserConfigI18nKeys {
 
 ### RTL / direction
 
-No new directional UI surfaces are introduced. `<DialSpinner />` is direction-agnostic. No RTL-specific work required.
+No new directional UI surfaces are introduced. `<Spinner />` is direction-agnostic. No RTL-specific work required.
 
 ### Feature flag
 
@@ -229,7 +229,7 @@ Not gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`. User-config init
 
 ### Accessibility
 
-No new interactive UI. `<DialSpinner />` from `@epam/ai-dial-ui-kit` already handles `role="status"` internally. No additional ARIA attributes required.
+No new interactive UI. `<Spinner />` from `@epam/ai-dial-ui-kit` already handles `role="status"` internally. No additional ARIA attributes required.
 
 ### Memoisation
 

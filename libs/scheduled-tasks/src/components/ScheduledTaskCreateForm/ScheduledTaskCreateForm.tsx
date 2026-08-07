@@ -6,7 +6,7 @@ import {
   DIAL_ICON_SIZE,
   GhostIconButton,
   DialSelectField,
-  DialSpinner,
+  Spinner,
   LazyDialMarkdownEditor,
   NeutralButton,
   PrimaryButton,
@@ -412,7 +412,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             <span className={scheduleSectionLabelClassName}>
               {labels.instructionsLabel}
             </span>
-            <Suspense fallback={<DialSpinner />}>
+            <Suspense fallback={<Spinner />}>
               <DialMarkdownEditor
                 value={values.prompt}
                 onChange={(value) => onFieldChange('prompt', value)}

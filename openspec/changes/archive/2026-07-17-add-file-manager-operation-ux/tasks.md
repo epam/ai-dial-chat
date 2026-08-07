@@ -13,7 +13,7 @@
 - [x] 3.1 Add `unsharingLabel`/`removingAccessLabel` fields to `DialFileManagerShellLabels` (`apps/chat/src/components/DialFileManagerShell/types/labels.ts`).
 - [x] 3.2 In `DialFileManagerShell.tsx`, destructure `isUnsharing`/`isRemovingAccess` from `hookResult` (already returned by the hook; not currently destructured in the shell).
 - [x] 3.3 Add a small helper (co-located in the shell file, or in `apps/chat/src/utils/` if it grows beyond a few lines) that resolves the overlay's `ariaLabel` via an if/else chain (not nested ternaries) over the precedence order `isDownloading → isDeleting → (isRenaming && !isMoving) → isUnsharing → isRemovingAccess`, returning `undefined` when none apply.
-- [x] 3.4 Replace the three existing separate overlay blocks (`isDownloading`, `isDeleting`, `isRenaming && !isMoving`) with **one** block: `{overlayLabel != null && <div aria-live="polite" className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout desktop:p-4"><DialSpinner size={32} fullWidth={false} ariaLabel={overlayLabel} /></div>}`.
+- [x] 3.4 Replace the three existing separate overlay blocks (`isDownloading`, `isDeleting`, `isRenaming && !isMoving`) with **one** block: `{overlayLabel != null && <div aria-live="polite" className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout desktop:p-4"><Spinner size={32} fullWidth={false} ariaLabel={overlayLabel} /></div>}`.
 - [x] 3.5 Populate `unsharingLabel: t(DialFileManagerI18nKeys.UnsharingLabel)` and `removingAccessLabel: t(DialFileManagerI18nKeys.RemovingAccessLabel)` in both `DialFileManagerModal.tsx`'s and `DialFileManagerPage.tsx`'s `labels` construction.
 
 ## 4. Modal: consume the shared flag

@@ -1,4 +1,4 @@
-import { DialPopup, NeutralButton, DialSpinner } from '@epam/ai-dial-ui-kit';
+import { DialPopup, NeutralButton, Spinner } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 
 interface Props {
@@ -31,7 +31,7 @@ const OperationLoaderModal: FC<Props> = ({
       aria-live="polite"
       className="flex flex-col items-center gap-4 px-6 py-4 text-center"
     >
-      <DialSpinner size={32} fullWidth={false} ariaLabel={title} />
+      <Spinner size={32} fullWidth={false} ariaLabel={title} />
       <div className="flex flex-col gap-1">
         <div>{title}</div>
         <div className="text-sm text-secondary">{text}</div>

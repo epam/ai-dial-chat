@@ -3,7 +3,7 @@ import {
   mergeClasses,
   StageStatus,
 } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, LinkButton, DialSpinner } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, LinkButton, Spinner } from '@epam/ai-dial-ui-kit';
 import {
   IconCheck,
   IconChevronDown,
@@ -121,7 +121,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         aria-live="polite"
         className="inline-flex items-center gap-2"
       >
-        <DialSpinner size={14} ariaLabel={runningAriaLabel} />
+        <Spinner size={14} ariaLabel={runningAriaLabel} />
         <span
           className={mergeClasses(
             summaryTypography.fontClassName,

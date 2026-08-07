@@ -1,5 +1,5 @@
 import type { CatalogItemCredentials } from '@epam/ai-dial-catalog';
-import { DialSpinner } from '@epam/ai-dial-ui-kit';
+import { Spinner } from '@epam/ai-dial-ui-kit';
 import type { ApplicationSchemaSummaryDto } from '@epam/chat-api-client';
 import {
   forwardRef,
@@ -517,7 +517,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
             aria-label={t(AppsEditorI18nKeys.SettingsStepLoadingLabel)}
             aria-live="polite"
           >
-            <DialSpinner />
+            <Spinner />
           </div>
         )}
         <iframe

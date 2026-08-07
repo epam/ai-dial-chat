@@ -2,7 +2,7 @@ import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   DIAL_ICON_SIZE,
   DialPopup,
-  DialSpinner,
+  Spinner,
   GhostButton,
   NeutralButton,
   PopupSize,
@@ -110,7 +110,7 @@ const SigninRow: FC<SigninRowProps> = ({
           {info.displayVersion ? ` (${info.displayVersion})` : ''}
         </span>
         {isProcessing && (
-          <DialSpinner size={16} ariaLabel={t(ButtonsI18nKeys.LogIn)} />
+          <Spinner size={16} ariaLabel={t(ButtonsI18nKeys.LogIn)} />
         )}
       </div>
 

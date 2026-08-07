@@ -153,7 +153,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {error && <span>{error}</span>}
     </label>
   ),
-  DialSpinner: () => <div>Loading</div>,
+  Spinner: () => <div>Loading</div>,
   LazyDialMarkdownEditor: () =>
     Promise.resolve({
       DialMarkdownEditor: ({
