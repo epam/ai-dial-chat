@@ -154,6 +154,7 @@ export const ChatSelectors = {
   attachmentsGroup: '[data-qa="grouped-attachments"]',
   attachmentTitle: '[data-qa="attachment-title"]',
   attachmentContent: '[data-qa="attachment-content"]',
+  attachmentName: '[data-qa="attachment-name"]',
   entitySpinner: '[data-qa="entity-spinner"]',
   plotlyContainer: '.plot-container',
   maxWidth: '.max-w-none',
