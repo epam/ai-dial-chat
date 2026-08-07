@@ -9,16 +9,24 @@ import { ConversationPublishController } from './conversation-publish.controller
 import { ConversationPublishService } from './conversation-publish.service';
 import { ConversationController } from './conversation.controller';
 import { ConversationService } from './conversation.service';
+import { ConversationLifecycleService } from './lifecycle/conversation-lifecycle.service';
+import { ConversationListingService } from './listing/conversation-listing.service';
+import { ConversationPersistenceService } from './persistence/conversation-persistence.service';
+import { ConversationStreamingService } from './streaming/conversation-streaming.service';
 
 @Module({
   imports: [UserConfigModule, ScheduledTaskUnreadModule, AppConfigModule],
   controllers: [ConversationController, ConversationPublishController],
   providers: [
     ConversationService,
+    ConversationPersistenceService,
+    ConversationListingService,
+    ConversationLifecycleService,
+    ConversationStreamingService,
     ConversationNamingService,
     {
       provide: CONVERSATION_PERSISTENCE,
-      useExisting: ConversationService,
+      useExisting: ConversationPersistenceService,
     },
     ConversationGenerationService,
     ConversationPublishService,
