@@ -415,7 +415,12 @@ export class DeploymentsService {
    * `fetchDeploymentDetails`'s ambiguous-id fallback. `toolsets/`-prefixed
    * ids are not resolved here — callers should use
    * `ToolsetsService.resolveToolsetItem` for those, and for ambiguous ids
-   * that turn out not to be a model or application either.
+   * that turn out not to be a model or application either. `bucket` enriches
+   * the result with `isMy`/`canEdit`/`sharedWithMe`, the same ownership
+   * fields `listDeployments` computes — without this, a just-accepted share
+   * resolves with those flags `undefined` and the UI keeps showing the raw
+   * owner bucket path instead of a "Shared with me" label until the next
+   * full list refresh.
    *
    * Returns `null` (not a thrown exception) when DIAL Core has no match —
    * only a genuine upstream error (5xx, network, timeout) propagates as an
@@ -424,6 +429,7 @@ export class DeploymentsService {
   async resolveDeploymentItem(
     deployment: string,
     accessToken: string,
+    bucket: string,
   ): Promise<DeploymentItemDto | null> {
     if (deployment.startsWith('toolsets/')) return null;
 
@@ -438,7 +444,21 @@ export class DeploymentsService {
         }
       }
       if (raw == null) return null;
-      return mapToDeploymentItem(raw, this.featuredIds, this.hiddenTags);
+      const item = mapToDeploymentItem(raw, this.featuredIds, this.hiddenTags);
+      if (item == null) return null;
+
+      const { writableApplicationUrls, sharedApplicationUrls } =
+        await this.getSharedApplicationUrlSets(accessToken);
+
+      return {
+        ...item,
+        ...this.computeOwnershipFlags(
+          item.id,
+          bucket,
+          writableApplicationUrls,
+          sharedApplicationUrls,
+        ),
+      };
     } catch (err) {
       if (err instanceof NotFoundException) return null;
       return handleDialFetchError(
@@ -482,6 +502,47 @@ export class DeploymentsService {
       this.logger.warn('Failed to resolve shared application resources', err);
       return [];
     }
+  }
+
+  /**
+   * Splits `getSharedApplicationResources`'s flat resource list into the two
+   * URL sets ownership enrichment needs, shared by both the bulk
+   * `listDeployments` path and the single-item `resolveDeploymentItem` path
+   * so a just-accepted share resolves to the same `sharedWithMe`/`canEdit`
+   * flags a subsequent full list refresh would produce.
+   */
+  private async getSharedApplicationUrlSets(accessToken: string): Promise<{
+    writableApplicationUrls: Set<string>;
+    sharedApplicationUrls: Set<string>;
+  }> {
+    const sharedApplicationResources =
+      await this.getSharedApplicationResources(accessToken);
+    const writableApplicationUrls = new Set(
+      sharedApplicationResources
+        .filter((resource) => resource.permissions?.includes('WRITE'))
+        .map((resource) => resource.url)
+        .filter((url): url is string => url != null),
+    );
+    const sharedApplicationUrls = new Set(
+      sharedApplicationResources
+        .map((resource) => resource.url)
+        .filter((url): url is string => url != null),
+    );
+    return { writableApplicationUrls, sharedApplicationUrls };
+  }
+
+  private computeOwnershipFlags(
+    itemId: string,
+    bucket: string,
+    writableApplicationUrls: Set<string>,
+    sharedApplicationUrls: Set<string>,
+  ): Pick<DeploymentItemDto, 'isMy' | 'canEdit' | 'sharedWithMe'> {
+    const isMy = itemId.split('/').includes(bucket);
+    return {
+      isMy,
+      canEdit: isMy || writableApplicationUrls.has(itemId),
+      sharedWithMe: !isMy && sharedApplicationUrls.has(itemId),
+    };
   }
 
   async listDeployments(
@@ -552,33 +613,22 @@ export class DeploymentsService {
       await this.userConfigService.getInstalledIds(accessToken, bucket);
     const toolsetsSet = new Set(toolsetIds);
     const deploymentsSet = new Set(deploymentIds);
-    const sharedApplicationResources =
-      await this.getSharedApplicationResources(accessToken);
-    const writableApplicationUrls = new Set(
-      sharedApplicationResources
-        .filter((resource) => resource.permissions?.includes('WRITE'))
-        .map((resource) => resource.url)
-        .filter((url): url is string => url != null),
-    );
-    const sharedApplicationUrls = new Set(
-      sharedApplicationResources
-        .map((resource) => resource.url)
-        .filter((url): url is string => url != null),
-    );
+    const { writableApplicationUrls, sharedApplicationUrls } =
+      await this.getSharedApplicationUrlSets(accessToken);
 
-    const withInstalled = allItems.map((item) => {
-      const isMy = item.id.split('/').includes(bucket);
-      return {
-        ...item,
-        isInstalled:
-          item.type === 'toolset'
-            ? toolsetsSet.has(item.id)
-            : deploymentsSet.has(item.id),
-        isMy,
-        canEdit: isMy || writableApplicationUrls.has(item.id),
-        sharedWithMe: !isMy && sharedApplicationUrls.has(item.id),
-      };
-    });
+    const withInstalled = allItems.map((item) => ({
+      ...item,
+      isInstalled:
+        item.type === 'toolset'
+          ? toolsetsSet.has(item.id)
+          : deploymentsSet.has(item.id),
+      ...this.computeOwnershipFlags(
+        item.id,
+        bucket,
+        writableApplicationUrls,
+        sharedApplicationUrls,
+      ),
+    }));
 
     if (!interfaceFilter) {
       return { deployments: withInstalled };

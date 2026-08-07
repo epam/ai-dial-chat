@@ -1681,7 +1681,11 @@ describe('DeploymentsService', () => {
       const { service, sdkClient } = makeService();
       sdkClient.getModel.mockResolvedValue(okResponse(mockModel));
 
-      const result = await service.resolveDeploymentItem('gpt-4o', 'token');
+      const result = await service.resolveDeploymentItem(
+        'gpt-4o',
+        'token',
+        'user1',
+      );
 
       expect(result).toMatchObject({
         id: 'gpt-4o',
@@ -1700,6 +1704,7 @@ describe('DeploymentsService', () => {
       const result = await service.resolveDeploymentItem(
         'applications/my-app',
         'token',
+        'user1',
       );
 
       expect(result).toMatchObject({
@@ -1715,7 +1720,11 @@ describe('DeploymentsService', () => {
       sdkClient.getModel.mockResolvedValue(errResponse(404));
       sdkClient.getApplication.mockResolvedValue(okResponse(mockApplication));
 
-      const result = await service.resolveDeploymentItem('my-app', 'token');
+      const result = await service.resolveDeploymentItem(
+        'my-app',
+        'token',
+        'user1',
+      );
 
       expect(result).toMatchObject({ id: 'my-app', type: 'application' });
     });
@@ -1726,6 +1735,7 @@ describe('DeploymentsService', () => {
       const result = await service.resolveDeploymentItem(
         'toolsets/b/search__0.0.1',
         'token',
+        'user1',
       );
 
       expect(result).toBeNull();
@@ -1738,9 +1748,68 @@ describe('DeploymentsService', () => {
       sdkClient.getModel.mockResolvedValue(errResponse(404));
       sdkClient.getApplication.mockResolvedValue(errResponse(404));
 
-      const result = await service.resolveDeploymentItem('unknown-id', 'token');
+      const result = await service.resolveDeploymentItem(
+        'unknown-id',
+        'token',
+        'user1',
+      );
 
       expect(result).toBeNull();
+    });
+
+    it('sets sharedWithMe=true for a just-accepted shared application, matching listDeployments enrichment', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({
+          ...mockApplication,
+          id: 'applications/OTHER_BUCKET/their-app',
+        }),
+      );
+      sdkClient.getSharedResources.mockResolvedValue({
+        data: {
+          resources: [
+            {
+              url: 'applications/OTHER_BUCKET/their-app',
+              permissions: ['READ'],
+            },
+          ],
+        },
+        error: undefined,
+      });
+
+      const result = await service.resolveDeploymentItem(
+        'applications/OTHER_BUCKET/their-app',
+        'token',
+        'BUCKET_HASH',
+      );
+
+      expect(result).toMatchObject({
+        isMy: false,
+        canEdit: false,
+        sharedWithMe: true,
+      });
+    });
+
+    it("sets isMy=true and sharedWithMe=false for an application in the caller's own bucket", async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({
+          ...mockApplication,
+          id: 'applications/BUCKET_HASH/my-app',
+        }),
+      );
+
+      const result = await service.resolveDeploymentItem(
+        'applications/BUCKET_HASH/my-app',
+        'token',
+        'BUCKET_HASH',
+      );
+
+      expect(result).toMatchObject({
+        isMy: true,
+        canEdit: true,
+        sharedWithMe: false,
+      });
     });
 
     it('throws BadGatewayException on a genuine upstream 5xx rather than returning null', async () => {
@@ -1748,7 +1817,7 @@ describe('DeploymentsService', () => {
       sdkClient.getModel.mockResolvedValue(errResponse(502));
 
       await expect(
-        service.resolveDeploymentItem('gpt-4o', 'token'),
+        service.resolveDeploymentItem('gpt-4o', 'token', 'user1'),
       ).rejects.toThrow(BadGatewayException);
     });
   });
