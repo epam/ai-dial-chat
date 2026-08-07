@@ -17,7 +17,11 @@ import {
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { getResourceDisplayNameFallback } from '../common/utils/resource-name';
-import { computeItemOwnershipFlags } from '../common/utils/resource-ownership';
+import {
+  computeItemOwnershipFlags,
+  splitResourcesByPermission,
+  type ResourceOwnershipUrlSets,
+} from '../common/utils/resource-ownership';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { HIDDEN_FILE } from '../constants/dial.constants';
 import { DeploymentsService } from '../deployments/deployments.service';
@@ -498,18 +502,12 @@ export class ToolsetsService {
     toolset: DialToolsetDto,
     installedIdSet: Set<string>,
     bucket: string,
-    writableUrls: Set<string>,
-    sharedUrls: Set<string>,
+    urlSets: ResourceOwnershipUrlSets,
   ): DialToolsetDto {
     return {
       ...toolset,
       isInstalled: installedIdSet.has(toolset.id),
-      ...computeItemOwnershipFlags(
-        toolset.id,
-        bucket,
-        writableUrls,
-        sharedUrls,
-      ),
+      ...computeItemOwnershipFlags(toolset.id, bucket, urlSets),
     };
   }
 
@@ -547,23 +545,6 @@ export class ToolsetsService {
     }
   }
 
-  private toWritableAndSharedUrls(
-    resources: { url?: string; permissions?: string[] }[],
-  ): { writableUrls: Set<string>; sharedUrls: Set<string> } {
-    const writableUrls = new Set(
-      resources
-        .filter((resource) => resource.permissions?.includes('WRITE'))
-        .map((resource) => resource.url)
-        .filter((url): url is string => url != null),
-    );
-    const sharedUrls = new Set(
-      resources
-        .map((resource) => resource.url)
-        .filter((url): url is string => url != null),
-    );
-    return { writableUrls, sharedUrls };
-  }
-
   private async enrichToolsetsOwnership(
     toolsets: DialToolsetDto[],
     accessToken: string,
@@ -574,16 +555,9 @@ export class ToolsetsService {
       this.getSharedToolsetResources(accessToken),
     ]);
     const installedSet = new Set(installedIds);
-    const { writableUrls, sharedUrls } =
-      this.toWritableAndSharedUrls(sharedResources);
+    const urlSets = splitResourcesByPermission(sharedResources);
     return toolsets.map((toolset) =>
-      this.enrichToolsetWithOwnership(
-        toolset,
-        installedSet,
-        bucket,
-        writableUrls,
-        sharedUrls,
-      ),
+      this.enrichToolsetWithOwnership(toolset, installedSet, bucket, urlSets),
     );
   }
 
@@ -736,14 +710,12 @@ export class ToolsetsService {
         this.userConfigService.getInstalledIds(accessToken, bucket),
         this.getSharedToolsetResources(accessToken),
       ]);
-      const { writableUrls, sharedUrls } =
-        this.toWritableAndSharedUrls(sharedResources);
+      const urlSets = splitResourcesByPermission(sharedResources);
       return this.enrichToolsetWithOwnership(
         toolset,
         new Set(installedIds),
         bucket,
-        writableUrls,
-        sharedUrls,
+        urlSets,
       );
     };
 

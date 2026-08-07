@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+export enum DeploymentItemType {
+  Model = 'model',
+  Application = 'application',
+  Toolset = 'toolset',
+}
+
 export class ConversationStarterDto {
   @ApiProperty({ description: 'Starter button label' })
   title!: string;
@@ -63,8 +69,8 @@ export class DeploymentItemDto {
   @ApiProperty({ description: 'Display name, falls back to id when absent' })
   displayName!: string;
 
-  @ApiProperty({ enum: ['model', 'application', 'toolset'] })
-  type!: 'model' | 'application' | 'toolset';
+  @ApiProperty({ enum: DeploymentItemType })
+  type!: DeploymentItemType;
 
   @ApiPropertyOptional({ description: 'Icon URL from DIAL Core' })
   iconUrl?: string;

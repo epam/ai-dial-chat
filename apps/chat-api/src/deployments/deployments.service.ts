@@ -10,7 +10,11 @@ import {
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { getResourceDisplayNameFallback } from '../common/utils/resource-name';
-import { computeItemOwnershipFlags } from '../common/utils/resource-ownership';
+import {
+  computeItemOwnershipFlags,
+  splitResourcesByPermission,
+  type ResourceOwnershipUrlSets,
+} from '../common/utils/resource-ownership';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { HIDDEN_FILE } from '../constants/dial.constants';
 import { DialClientService } from '../dial/dial-client.service';
@@ -22,6 +26,7 @@ import type {
   DeploymentFeaturesDetailsDto,
   ToolsetAuthSettingsDto,
 } from './dto/deployment-details.dto';
+import { DeploymentItemType } from './dto/deployment-item.dto';
 import type {
   ConversationStartersDto,
   DeploymentItemDto,
@@ -219,13 +224,13 @@ const mapToDeploymentItem = (
 ): DeploymentItemDto | null => {
   if (!raw.id) return null;
 
-  let type: 'model' | 'application' | 'toolset';
+  let type: DeploymentItemType;
   if (raw.toolset !== undefined) {
-    type = 'toolset';
+    type = DeploymentItemType.Toolset;
   } else if (raw.object === 'application') {
-    type = 'application';
+    type = DeploymentItemType.Application;
   } else {
-    type = 'model';
+    type = DeploymentItemType.Model;
   }
 
   let interfaces: string[] | undefined;
@@ -449,26 +454,20 @@ export class DeploymentsService {
       if (item == null) return null;
 
       /*
-       * DIAL Core's getSharedResources only ever returns APPLICATION
-       * resources, so a model item can never appear in either URL set —
-       * skip the upstream round-trip entirely for non-application items.
+       * getSharedResources is scoped to one resourceType per call, and
+       * resolveDeploymentItem only ever resolves a model or an application
+       * (never a toolset — see the early `toolsets/` return above), so a
+       * model item can never appear in either URL set — skip the upstream
+       * round-trip entirely for non-application items.
        */
-      const { writableApplicationUrls, sharedApplicationUrls } =
-        item.type === 'application'
-          ? await this.getSharedApplicationUrlSets(accessToken)
-          : {
-              writableApplicationUrls: new Set<string>(),
-              sharedApplicationUrls: new Set<string>(),
-            };
+      const urlSets =
+        item.type === DeploymentItemType.Application
+          ? await this.getSharedResourceUrlSets(accessToken, 'APPLICATION')
+          : { writableUrls: new Set<string>(), sharedUrls: new Set<string>() };
 
       return {
         ...item,
-        ...computeItemOwnershipFlags(
-          item.id,
-          bucket,
-          writableApplicationUrls,
-          sharedApplicationUrls,
-        ),
+        ...computeItemOwnershipFlags(item.id, bucket, urlSets),
       };
     } catch (err) {
       if (err instanceof NotFoundException) return null;
@@ -482,25 +481,25 @@ export class DeploymentsService {
   }
 
   /**
-   * Resolves every application resource shared with the current user
-   * (READ or WRITE), in a single upstream call reused to derive both the
-   * WRITE-only "can edit" set and the unfiltered "shared with me" set —
-   * avoids issuing `getSharedResources` twice per list request. Best-effort:
-   * a DIAL Core error here degrades to "no shared applications" rather than
-   * failing the whole deployments list.
+   * Resolves every resource of the given type shared with the current user
+   * (READ or WRITE) — separate calls for `APPLICATION` and `TOOL_SET` since
+   * `getSharedResources` is scoped to one `resourceTypes` filter per call.
+   * Best-effort: a DIAL Core error here degrades to "nothing shared" rather
+   * than failing the whole deployments list/lookup.
    */
-  private async getSharedApplicationResources(
+  private async getSharedResources(
     accessToken: string,
+    resourceType: 'APPLICATION' | 'TOOL_SET',
   ): Promise<{ url?: string; permissions?: string[] }[]> {
     try {
       const { data, error, response } =
         await this.dialClient.client.getSharedResources({
           headers: getBearerAuthHeaders(accessToken),
-          body: { resourceTypes: ['APPLICATION'], with: 'me' },
+          body: { resourceTypes: [resourceType], with: 'me' },
         });
       if (error) {
         this.logger.warn(
-          `Failed to resolve shared application resources: status=${response.status}`,
+          `Failed to resolve shared ${resourceType} resources: status=${response.status}`,
         );
         return [];
       }
@@ -510,36 +509,27 @@ export class DeploymentsService {
         permissions?: string[];
       }[];
     } catch (err) {
-      this.logger.warn('Failed to resolve shared application resources', err);
+      this.logger.warn(
+        `Failed to resolve shared ${resourceType} resources`,
+        err,
+      );
       return [];
     }
   }
 
   /**
-   * Splits `getSharedApplicationResources`'s flat resource list into the two
-   * URL sets ownership enrichment needs, shared by both the bulk
-   * `listDeployments` path and the single-item `resolveDeploymentItem` path
-   * so a just-accepted share resolves to the same `sharedWithMe`/`canEdit`
-   * flags a subsequent full list refresh would produce.
+   * Splits `getSharedResources`'s flat resource list into the two URL sets
+   * ownership enrichment needs, shared by both the bulk `listDeployments`
+   * path and the single-item `resolveDeploymentItem` path so a just-accepted
+   * share resolves to the same `sharedWithMe`/`canEdit` flags a subsequent
+   * full list refresh would produce.
    */
-  private async getSharedApplicationUrlSets(accessToken: string): Promise<{
-    writableApplicationUrls: Set<string>;
-    sharedApplicationUrls: Set<string>;
-  }> {
-    const sharedApplicationResources =
-      await this.getSharedApplicationResources(accessToken);
-    const writableApplicationUrls = new Set(
-      sharedApplicationResources
-        .filter((resource) => resource.permissions?.includes('WRITE'))
-        .map((resource) => resource.url)
-        .filter((url): url is string => url != null),
-    );
-    const sharedApplicationUrls = new Set(
-      sharedApplicationResources
-        .map((resource) => resource.url)
-        .filter((url): url is string => url != null),
-    );
-    return { writableApplicationUrls, sharedApplicationUrls };
+  private async getSharedResourceUrlSets(
+    accessToken: string,
+    resourceType: 'APPLICATION' | 'TOOL_SET',
+  ): Promise<ResourceOwnershipUrlSets> {
+    const resources = await this.getSharedResources(accessToken, resourceType);
+    return splitResourcesByPermission(resources);
   }
 
   async listDeployments(
@@ -610,20 +600,29 @@ export class DeploymentsService {
       await this.userConfigService.getInstalledIds(accessToken, bucket);
     const toolsetsSet = new Set(toolsetIds);
     const deploymentsSet = new Set(deploymentIds);
-    const { writableApplicationUrls, sharedApplicationUrls } =
-      await this.getSharedApplicationUrlSets(accessToken);
+    /*
+     * Two separate calls: getSharedResources is scoped to one resourceType
+     * per call, and the combined deployments list mixes applications and
+     * toolsets, each needing its own URL sets (a toolset id can never
+     * appear in the APPLICATION-scoped sets, and vice versa).
+     */
+    const [applicationUrlSets, toolsetUrlSets] = await Promise.all([
+      this.getSharedResourceUrlSets(accessToken, 'APPLICATION'),
+      this.getSharedResourceUrlSets(accessToken, 'TOOL_SET'),
+    ]);
 
     const withInstalled = allItems.map((item) => ({
       ...item,
       isInstalled:
-        item.type === 'toolset'
+        item.type === DeploymentItemType.Toolset
           ? toolsetsSet.has(item.id)
           : deploymentsSet.has(item.id),
       ...computeItemOwnershipFlags(
         item.id,
         bucket,
-        writableApplicationUrls,
-        sharedApplicationUrls,
+        item.type === DeploymentItemType.Toolset
+          ? toolsetUrlSets
+          : applicationUrlSets,
       ),
     }));
 
