@@ -15,7 +15,10 @@ export const toBaseLocale = (locale: string): string =>
 /**
  * The fixed content language of the primary Name/Description fields.
  * Independent of the viewer's own UI language — always the first configured
- * supported language. Reordering `SUPPORTED_LANGUAGES` changes this value.
+ * supported language. Reordering `SUPPORTED_LANGUAGES` changes this value,
+ * which would silently change which locale existing backend data is stored
+ * under, so treat any such reorder as a breaking data-migration concern, not
+ * a routine UI tweak.
  */
 export const PRIMARY_LOCALE = SUPPORTED_LANGUAGES[0].code;
 
@@ -101,8 +104,6 @@ export const composeLocalePayload = (
   return byLanguage.size > 0 ? Array.from(byLanguage.values()) : undefined;
 };
 
-let nextDecomposedLocaleRowId = 0;
-
 /**
  * Inverse of {@link composeLocalePayload}: builds the popup's `otherLocales`
  * entries from a `displayName`/`description` pair as read from DIAL Core.
@@ -124,8 +125,9 @@ export const decomposeLocalizedFields = (
   ]);
   languages.delete(primaryLocale);
 
+  let rowId = 0;
   return Array.from(languages, (language) => ({
-    id: `decomposed-locale-${++nextDecomposedLocaleRowId}`,
+    id: `decomposed-locale-${++rowId}`,
     language,
     name: nameMap[language] ?? '',
     description: descriptionMap[language] ?? '',

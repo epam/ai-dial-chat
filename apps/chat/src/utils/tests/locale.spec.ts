@@ -1,15 +1,23 @@
 import type { DeploymentCreationFormLocaleEntry } from '@epam/ai-dial-deployment-creation-form';
 import type { TFunction } from 'i18next';
 import { describe, expect, it, vi } from 'vitest';
+import { SUPPORTED_LANGUAGES } from '../../hooks/language/useLanguage';
 import {
   appendLocaleCode,
   buildAdditionalLocaleOptions,
   buildLocaleFieldLabels,
   composeLocalePayload,
   decomposeLocalizedFields,
+  PRIMARY_LOCALE,
   resolveLocalizedText,
   toBaseLocale,
 } from '../locale';
+
+describe('PRIMARY_LOCALE', () => {
+  it('matches the first configured supported language', () => {
+    expect(PRIMARY_LOCALE).toBe(SUPPORTED_LANGUAGES[0].code);
+  });
+});
 
 describe('toBaseLocale', () => {
   it('strips a region subtag and lowercases the result', () => {

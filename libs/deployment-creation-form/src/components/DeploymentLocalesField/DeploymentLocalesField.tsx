@@ -10,7 +10,7 @@ import {
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconPencil, IconPlus, IconTrashX } from '@tabler/icons-react';
-import { useEffect, useState, type FC } from 'react';
+import { useEffect, useRef, useState, type FC } from 'react';
 import type {
   DeploymentCreationFormLocaleEntry,
   DeploymentCreationFormLocaleLabels,
@@ -37,14 +37,12 @@ export interface DeploymentLocalesFieldProps {
   requiredMarkClassName?: string;
 }
 
-let nextRowId = 0;
-const createRowId = (): string => `locale-row-${++nextRowId}`;
-
 const createEmptyRow = (
+  id: string,
   usedLanguages: ReadonlySet<string>,
   availableLocaleOptions: DeploymentCreationFormLocaleOption[],
 ): DeploymentCreationFormLocaleEntry => ({
-  id: createRowId(),
+  id,
   language:
     availableLocaleOptions.find((option) => !usedLanguages.has(option.code))
       ?.code ?? '',
@@ -84,12 +82,20 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
     DeploymentCreationFormLocaleEntry[]
   >([]);
 
+  const nextRowIdRef = useRef(0);
+
   useEffect(() => {
     if (isOpen) {
       setDraftEntries(
         value.length > 0
           ? value
-          : [createEmptyRow(new Set(), availableLocaleOptions)],
+          : [
+              createEmptyRow(
+                `locale-row-${++nextRowIdRef.current}`,
+                new Set(),
+                availableLocaleOptions,
+              ),
+            ],
       );
     }
   }, [isOpen, value, availableLocaleOptions]);
@@ -108,7 +114,11 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
     );
     setDraftEntries((prev) => [
       ...prev,
-      createEmptyRow(usedLanguages, availableLocaleOptions),
+      createEmptyRow(
+        `locale-row-${++nextRowIdRef.current}`,
+        usedLanguages,
+        availableLocaleOptions,
+      ),
     ]);
   };
 

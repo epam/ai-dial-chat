@@ -204,6 +204,8 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     languageRef.current = language;
+    setRawDeployments((prev) => sortDeployments(prev, language));
+    setToolsets((prev) => sortToolsets(prev, language));
   }, [language]);
 
   useEffect(() => {
