@@ -665,8 +665,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [onRequestedFilterChange, onActiveFilterChange],
   );
 
-  const panelClassName =
-    isMobile && mergeClasses('inset-y-0 start-0', isOpen && 'z-50');
+  const panelClassName = isMobile
+    ? mergeClasses('inset-y-0 start-0', isOpen && 'z-50')
+    : undefined;
 
   return (
     <>
