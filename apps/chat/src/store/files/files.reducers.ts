@@ -1107,18 +1107,18 @@ export const filesSlice = createSlice({
         .filter((f) => f.nodeType === DialFileNodeType.FOLDER)
         .map((f) => f.sourceUrl);
 
-      state.files = state.files.filter(
-        (f) =>
-          !movedFoldersSourceUrls.some((sourceUrl) =>
-            f.folderId.startsWith(sourceUrl),
-          ),
-      );
+      // Compare on path segments, otherwise a sibling sharing the name prefix
+      // ("parent" vs "parent2") is dropped from the store as well. Issue #3325
+      const isInsideMovedFolder = (folderId: string) =>
+        movedFoldersSourceUrls.some(
+          (sourceUrl) =>
+            folderId === sourceUrl || folderId.startsWith(`${sourceUrl}/`),
+        );
+
+      state.files = state.files.filter((f) => !isInsideMovedFolder(f.folderId));
 
       state.folders = state.folders.filter(
-        (f) =>
-          !movedFoldersSourceUrls.some((sourceUrl) =>
-            f.folderId.startsWith(sourceUrl),
-          ),
+        (f) => !isInsideMovedFolder(f.folderId),
       );
     },
     moveFilesSuccess: (
