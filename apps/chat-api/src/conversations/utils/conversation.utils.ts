@@ -1,5 +1,9 @@
 import { StringUtils } from '../../common/utils/string-utils';
-import { COMPOUND_TOKEN_PREFIX } from '../constants/conversation.constants';
+import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
+import {
+  COMPOUND_TOKEN_PREFIX,
+  PUBLIC_BUCKET,
+} from '../constants/conversation.constants';
 import type { CompoundNextToken } from '../types/conversation.types';
 
 /*
@@ -199,4 +203,84 @@ export const decodeNextToken = (token?: string): CompoundNextToken => {
     }
   }
   return { u: token };
+};
+
+/**
+ * Resolves a possibly bucket-qualified conversation path to its owning bucket
+ * and the sub-path relative to that bucket. Shared across the persistence,
+ * lifecycle, and streaming services since each resolves storage location
+ * independently (rename, watch, duplicate all need the same logic).
+ */
+export const resolveConversationLocation = (
+  conversationPath: string,
+  sessionBucket: string,
+): { bucket: string; subPath: string } => {
+  if (
+    conversationPath === sessionBucket ||
+    conversationPath.startsWith(`${sessionBucket}/`)
+  ) {
+    return {
+      bucket: sessionBucket,
+      subPath:
+        conversationPath === sessionBucket
+          ? ''
+          : conversationPath.slice(sessionBucket.length + 1),
+    };
+  }
+
+  if (
+    conversationPath === PUBLIC_BUCKET ||
+    conversationPath.startsWith(`${PUBLIC_BUCKET}/`)
+  ) {
+    return {
+      bucket: PUBLIC_BUCKET,
+      subPath:
+        conversationPath === PUBLIC_BUCKET
+          ? ''
+          : conversationPath.slice(PUBLIC_BUCKET.length + 1),
+    };
+  }
+
+  const slashIndex = conversationPath.indexOf('/');
+  if (slashIndex !== -1) {
+    return {
+      bucket: conversationPath.slice(0, slashIndex),
+      subPath: conversationPath.slice(slashIndex + 1),
+    };
+  }
+  return { bucket: sessionBucket, subPath: conversationPath };
+};
+
+/** Prefixes a bare (session-relative) conversation path with the session bucket. */
+export const qualifySessionConversationPath = (
+  conversationPath: string,
+  sessionBucket: string,
+): string =>
+  conversationPath === sessionBucket ||
+  conversationPath.startsWith(`${sessionBucket}/`)
+    ? conversationPath
+    : `${sessionBucket}/${conversationPath}`;
+
+/**
+ * Resolves the title to display for a list/detail item: the filename-derived
+ * `pathTitle` unless the stored `name` is authoritative (set by LLM naming or
+ * manual rename via `llmNamingDone`).
+ */
+export const resolveListDisplayTitle = (
+  pathTitle: string,
+  conversation: ConversationResponseDto,
+): string => {
+  const storedName = conversation.name?.trim();
+  if (!storedName) {
+    return pathTitle;
+  }
+  if (storedName === pathTitle) {
+    return storedName;
+  }
+
+  /* `llmNamingDone` marks `name` as authoritative — set by LLM naming and by
+   * manual rename, both of which update `name` at the same storage path, so
+   * the filename-derived title may legitimately diverge from it.
+   */
+  return conversation.llmNamingDone === true ? storedName : pathTitle;
 };

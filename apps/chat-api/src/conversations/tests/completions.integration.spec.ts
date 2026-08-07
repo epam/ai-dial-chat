@@ -51,28 +51,23 @@ describe('POST /conversations/completions (integration)', () => {
 
   beforeEach(async () => {
     mockService = {
-      streamCompletion: vi
-        .fn()
-        .mockImplementation(
-          (
-            _path,
-            _at,
-            _bucket,
-            _genId,
-            _mode,
-            _msg,
-            _msgIdx,
-            _model,
-            _cc,
-            _sid,
-            res: ExpressResponse,
-          ) => {
-            res.setHeader('Content-Type', 'text/event-stream');
-            res.write('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
-            res.write('data: [DONE]\n\n');
-            res.end();
-          },
-        ),
+      streamCompletion: vi.fn().mockImplementation(async function* (
+        _path,
+        _at,
+        _bucket,
+        _genId,
+        _mode,
+        _msg,
+        _msgIdx,
+        _model,
+        _cc,
+        _sid,
+        onReadyToStream: () => void,
+      ) {
+        onReadyToStream();
+        yield Buffer.from('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
+        yield Buffer.from('data: [DONE]\n\n');
+      }),
     };
 
     mockGenerationService = {
@@ -137,9 +132,9 @@ describe('POST /conversations/completions (integration)', () => {
   });
 
   it('returns 409 when ConversationService throws ConflictException (duplicate active generation)', async () => {
-    mockService.streamCompletion.mockRejectedValue(
-      new ConflictException('Another generation is already active'),
-    );
+    mockService.streamCompletion.mockImplementation(() => {
+      throw new ConflictException('Another generation is already active');
+    });
 
     await request(app.getHttpServer())
       .post('/conversations/completions')

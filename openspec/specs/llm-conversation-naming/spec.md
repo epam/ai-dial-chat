@@ -126,7 +126,7 @@ The model response `choices[0].message.content` SHALL be passed through `prepare
 
 `ConversationNamingService` SHALL:
 
-- Run asynchronously without blocking the `saveConversation` HTTP response (`void` fire-and-forget from `ConversationService.saveConversation`).
+- Run asynchronously without blocking the `saveConversation` HTTP response (`void` fire-and-forget from `ConversationPersistenceService.saveConversation`).
 - Enforce a configurable timeout (`UTILITY_NAMING_TIMEOUT_MS`, default `10000`) via `AbortController`.
 - On any error (timeout, DIAL error, empty LLM response, or save failure): log at `warn` or `error` and leave `conversation.name` unchanged; MUST NOT throw to the save caller.
 - Track in-flight renames per conversation id to skip duplicate concurrent attempts.
@@ -164,7 +164,7 @@ LLM naming MUST NOT run when `llmNamingDone === true`.
 
 ### Requirement: LLM naming triggers only after the first complete exchange
 
-When `features.llmConversationNaming` is enabled, `ConversationService.saveConversation` SHALL invoke the naming service only when **all** of the following hold:
+When `features.llmConversationNaming` is enabled, `ConversationPersistenceService.saveConversation` SHALL invoke the naming service only when **all** of the following hold:
 
 1. `llmNamingDone` is not `true`
 2. Exactly 2 non-status messages: one `user`, one `assistant`
