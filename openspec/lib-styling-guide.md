@@ -63,10 +63,10 @@ Not allowed in SCSS (use Tailwind instead):
 // ✅ correct — only CSS vars
 .wrapper {
   background: var(--ci-bg, var(--bg-layer-sunken, #EEF1F7));
-  border-color: var(--ci-border, var(--stroke-primary, #6B7280));
+  border-color: var(--ci-border, var(--stroke-primary, #57647A));
 
   &:focus-within {
-    border-color: var(--ci-border-focus, var(--stroke-focus, #161B2D));
+    border-color: var(--ci-border-focus, var(--stroke-focus-black, #161B2D));
   }
 }
 
@@ -74,7 +74,7 @@ Not allowed in SCSS (use Tailwind instead):
   color: var(--ci-text, var(--text-primary, #161B2D));
 
   &::placeholder {
-    color: var(--ci-placeholder, var(--text-secondary, #6B7280));
+    color: var(--ci-placeholder, var(--text-secondary, #57647A));
   }
 }
 

@@ -131,4 +131,63 @@ describe('validate', () => {
       }),
     ).toThrow(/Environment validation failed/);
   });
+
+  describe('header bearer-token auth env vars', () => {
+    it('defaults AUTH_HEADER_TOKEN_ENABLED to false when unset', () => {
+      const config = validate({ ...baseConfig });
+      expect(config.AUTH_HEADER_TOKEN_ENABLED).toBe(false);
+    });
+
+    it.each([
+      ['true', true],
+      ['false', false],
+    ])('parses AUTH_HEADER_TOKEN_ENABLED=%s as %s', (rawValue, expected) => {
+      const config = validate({
+        ...baseConfig,
+        AUTH_HEADER_TOKEN_ENABLED: rawValue,
+      });
+      expect(config.AUTH_HEADER_TOKEN_ENABLED).toBe(expected);
+    });
+
+    it('leaves AUTH_HEADER_TOKEN_ALLOWED_ISSUERS undefined when unset', () => {
+      const config = validate({ ...baseConfig });
+      expect(config.AUTH_HEADER_TOKEN_ALLOWED_ISSUERS).toBeUndefined();
+    });
+
+    it('parses a comma-separated AUTH_HEADER_TOKEN_ALLOWED_ISSUERS list', () => {
+      const config = validate({
+        ...baseConfig,
+        AUTH_HEADER_TOKEN_ALLOWED_ISSUERS:
+          'https://accounts.google.com, https://issuer.example.com',
+      });
+      expect(config.AUTH_HEADER_TOKEN_ALLOWED_ISSUERS).toEqual([
+        'https://accounts.google.com',
+        'https://issuer.example.com',
+      ]);
+    });
+
+    it('defaults AUTH_HEADER_TOKEN_CLOCK_TOLERANCE_SECONDS to 30 when unset', () => {
+      const config = validate({ ...baseConfig });
+      expect(config.AUTH_HEADER_TOKEN_CLOCK_TOLERANCE_SECONDS).toBe(30);
+    });
+
+    it('defaults AUTH_HEADER_TOKEN_JWKS_CACHE_TTL_SECONDS to 600 when unset', () => {
+      const config = validate({ ...baseConfig });
+      expect(config.AUTH_HEADER_TOKEN_JWKS_CACHE_TTL_SECONDS).toBe(600);
+    });
+
+    it('defaults AUTH_HEADER_TOKEN_BUCKET_CACHE_TTL_SECONDS to 60 when unset', () => {
+      const config = validate({ ...baseConfig });
+      expect(config.AUTH_HEADER_TOKEN_BUCKET_CACHE_TTL_SECONDS).toBe(60);
+    });
+
+    it('fails fast when AUTH_HEADER_TOKEN_CLOCK_TOLERANCE_SECONDS is not numeric', () => {
+      expect(() =>
+        validate({
+          ...baseConfig,
+          AUTH_HEADER_TOKEN_CLOCK_TOLERANCE_SECONDS: 'not-a-number',
+        }),
+      ).toThrow(/Environment validation failed/);
+    });
+  });
 });

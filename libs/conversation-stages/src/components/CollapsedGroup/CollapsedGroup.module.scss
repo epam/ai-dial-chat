@@ -1,5 +1,5 @@
 .toggleButton {
-  color: var(--cs-cg-label, var(--text-secondary, #6b7280));
+  color: var(--cs-cg-label, var(--text-secondary, #57647a));
   width: 100%;
   justify-content: flex-start !important;
 
@@ -9,11 +9,11 @@
 }
 
 .executedLabel {
-  color: var(--cs-cg-label, var(--text-secondary, #6b7280));
+  color: var(--cs-cg-label, var(--text-secondary, #57647a));
 }
 
 .stepsCount {
-  color: var(--cs-cg-steps-count, var(--text-tertiary, #c7cbd4));
+  color: var(--cs-cg-steps-count, var(--text-tertiary, #848e9c));
   font-variant-numeric: tabular-nums;
 }
 

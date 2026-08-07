@@ -7,6 +7,8 @@ import {
   fromFolderPathKey,
   getSiblingFolderNames,
   getUniqueFolderName,
+  mergeFolderPaths,
+  sortFolderTree,
   toDialFileTree,
   toFolderPathKey,
   validateFolderName,
@@ -80,6 +82,104 @@ describe('collectFolderKeys', () => {
       'My workspace',
       'My workspace/Drafts',
     ]);
+  });
+});
+
+describe('sortFolderTree', () => {
+  it('orders root nodes by name', () => {
+    expect(sortFolderTree(tree).map((node) => node.name)).toEqual([
+      'My workspace',
+      'Shared',
+    ]);
+  });
+
+  it('orders nested children too', () => {
+    const unsorted: PublishFolderNode[] = [
+      {
+        path: ['Shared'],
+        name: 'Shared',
+        children: [
+          { path: ['Shared', 'Zeta'], name: 'Zeta' },
+          { path: ['Shared', 'alpha'], name: 'alpha' },
+        ],
+      },
+    ];
+    expect(
+      sortFolderTree(unsorted)[0].children?.map((node) => node.name),
+    ).toEqual(['alpha', 'Zeta']);
+  });
+
+  it('compares digits numerically so "Report 2" precedes "Report 10"', () => {
+    const unsorted: PublishFolderNode[] = [
+      { path: ['Report 10'], name: 'Report 10' },
+      { path: ['Report 2'], name: 'Report 2' },
+    ];
+    expect(sortFolderTree(unsorted).map((node) => node.name)).toEqual([
+      'Report 2',
+      'Report 10',
+    ]);
+  });
+
+  it('leaves the input array and its nodes untouched', () => {
+    const input: PublishFolderNode[] = [
+      { path: ['b'], name: 'b' },
+      { path: ['a'], name: 'a' },
+    ];
+    sortFolderTree(input);
+    expect(input.map((node) => node.name)).toEqual(['b', 'a']);
+  });
+
+  it('keeps children undefined for a leaf node', () => {
+    expect(
+      sortFolderTree([{ path: ['a'], name: 'a' }])[0].children,
+    ).toBeUndefined();
+  });
+});
+
+describe('mergeFolderPaths', () => {
+  it('adds a missing root-level folder', () => {
+    const result = mergeFolderPaths(tree, [['Model releases']]);
+    expect(result.map((node) => node.name)).toEqual([
+      'Shared',
+      'My workspace',
+      'Model releases',
+    ]);
+    expect(result[2]).toEqual({
+      path: ['Model releases'],
+      name: 'Model releases',
+      children: undefined,
+    });
+  });
+
+  it('adds a missing folder under an existing parent, keeping its siblings', () => {
+    const result = mergeFolderPaths(tree, [['My workspace', 'Model releases']]);
+    expect(result[1].children?.map((node) => node.name)).toEqual([
+      'Drafts',
+      'Model releases',
+    ]);
+    expect(result[1].children?.[1].path).toEqual([
+      'My workspace',
+      'Model releases',
+    ]);
+  });
+
+  it('creates every missing ancestor of a nested path', () => {
+    const result = mergeFolderPaths([], [['Org', 'Team', 'Q3']]);
+    expect(result[0].children?.[0].children?.[0]).toEqual({
+      path: ['Org', 'Team', 'Q3'],
+      name: 'Q3',
+      children: undefined,
+    });
+  });
+
+  it('leaves the tree unchanged when every path is already present', () => {
+    expect(
+      mergeFolderPaths(tree, [['Shared'], ['Shared', 'Data Science']]),
+    ).toEqual(tree);
+  });
+
+  it('ignores empty paths (the bucket root is not a folder node)', () => {
+    expect(mergeFolderPaths(tree, [[]])).toEqual(tree);
   });
 });
 

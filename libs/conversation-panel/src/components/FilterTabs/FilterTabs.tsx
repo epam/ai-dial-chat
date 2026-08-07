@@ -26,7 +26,7 @@ const TABS: { value: FilterTab; labelKey: keyof FilterLabels }[] = [
 /** Segmented pill-tab control for filtering conversations by source. */
 export const FilterTabs: FC<FilterTabsProps> = memo(
   ({ activeTab, labels, onChange, tabClassName = 'dial-tiny-semi-text' }) => (
-    <div className="mx-3 my-2">
+    <div className="px-3 py-2">
       <PillTabs
         tabs={TABS.map(({ value, labelKey }) => ({
           id: value,

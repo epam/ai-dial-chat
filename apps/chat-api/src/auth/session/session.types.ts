@@ -28,7 +28,8 @@ export interface SessionPayload {
 }
 
 export interface SessionUser {
-  sid: string;
+  /** Present only for cookie-authenticated callers — no session is created for header auth. */
+  sid?: string;
   sub: string;
   providerId: string;
   /**
@@ -42,5 +43,6 @@ export interface SessionUser {
   claims: Record<string, unknown>;
   at: string;
   bucket: string;
-  csrf: string;
+  /** Present only for cookie-authenticated callers — CsrfGuard never checks it for header auth. */
+  csrf?: string;
 }

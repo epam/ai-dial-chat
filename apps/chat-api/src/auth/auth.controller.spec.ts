@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   INestApplication,
   ValidationPipe,
@@ -8,7 +9,14 @@ import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
-import { CompactEncrypt } from 'jose';
+import {
+  CompactEncrypt,
+  createLocalJWKSet,
+  exportJWK,
+  generateKeyPair,
+  SignJWT,
+  type JWTVerifyGetKey,
+} from 'jose';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { AuthController } from './auth.controller';
@@ -19,6 +27,25 @@ import { RefreshService } from './refresh/refresh.service';
 import { SessionGuard } from './session/session.guard';
 import { SessionService } from './session/session.service';
 import type { SessionPayload } from './session/session.types';
+import { AUTH_STRATEGIES } from './strategies/auth-strategies.token';
+import { CookieSessionStrategy } from './strategies/cookie-session.strategy';
+import { HeaderTokenStrategy } from './strategies/header-token.strategy';
+
+const headerJwksRegistry = new Map<string, JWTVerifyGetKey>();
+
+vi.mock('jose', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('jose')>();
+  return {
+    ...actual,
+    createRemoteJWKSet: vi.fn((url: URL) => {
+      const getKey = headerJwksRegistry.get(url.toString());
+      if (!getKey) {
+        throw new Error(`No JWKS registered for ${url.toString()}`);
+      }
+      return getKey;
+    }),
+  };
+});
 
 // supertest is CJS; use require to avoid vite ESM interop issues
 const request = require('supertest') as (
@@ -31,6 +58,8 @@ const COOKIE_NAME = '__Host-chat.sess';
 const TX_COOKIE = '__Host-chat.tx';
 const CALLBACK_BASE = 'http://localhost:5000';
 const APP_BASE = 'http://localhost:4207';
+const PROVIDER_ISSUER = 'https://kc.example.com/realms/chat';
+const JWKS_URI = 'https://kc.example.com/realms/chat/jwks';
 
 const MOCK_CLIENT = {
   authorizationUrl: vi
@@ -43,7 +72,7 @@ const MOCK_CLIENT = {
     .fn()
     .mockReturnValue('https://keycloak.example.com/end-session'),
   issuer: {
-    metadata: {} as Record<string, string | undefined>,
+    metadata: { jwks_uri: JWKS_URI } as Record<string, string | undefined>,
   },
 };
 
@@ -55,8 +84,28 @@ const MOCK_BUCKET_SERVICE = {
   getUserBucket: vi.fn().mockResolvedValue({ bucket: 'test-bucket' }),
 };
 
+const MOCK_CACHE_MANAGER = {
+  get: vi.fn().mockResolvedValue(undefined),
+  set: vi.fn(),
+};
+
 let providerConfigOverride: Record<string, unknown> = {};
 let configOverride: Partial<EnvironmentVariables> = {};
+
+async function makeHeaderToken(): Promise<string> {
+  const { publicKey, privateKey } = await generateKeyPair('RS256');
+  const kid = 'test-kid';
+  const jwk = await exportJWK(publicKey);
+  jwk.kid = kid;
+  headerJwksRegistry.set(JWKS_URI, createLocalJWKSet({ keys: [jwk] }));
+
+  return new SignJWT({ sub: 'header-user-1' })
+    .setProtectedHeader({ alg: 'RS256', kid })
+    .setIssuer(PROVIDER_ISSUER)
+    .setIssuedAt()
+    .setExpirationTime('1h')
+    .sign(privateKey);
+}
 
 async function buildApp(): Promise<INestApplication> {
   const keysServiceMock: Partial<KeysService> = {
@@ -89,7 +138,21 @@ async function buildApp(): Promise<INestApplication> {
         client: MOCK_CLIENT,
         config: {
           id: 'keycloak',
-          issuer: 'https://kc.example.com/realms/chat',
+          issuer: PROVIDER_ISSUER,
+          scope: 'openid email profile',
+          rolesClaim: 'roles',
+          postLogoutRedirectUri: 'https://app.example.com',
+          ...providerConfigOverride,
+        },
+      };
+    }),
+    findByIssuer: vi.fn().mockImplementation((issuer: string) => {
+      if (issuer !== PROVIDER_ISSUER) return undefined;
+      return {
+        client: MOCK_CLIENT,
+        config: {
+          id: 'keycloak',
+          issuer: PROVIDER_ISSUER,
           scope: 'openid email profile',
           rolesClaim: 'roles',
           postLogoutRedirectUri: 'https://app.example.com',
@@ -105,6 +168,11 @@ async function buildApp(): Promise<INestApplication> {
         AUTH_CALLBACK_BASE_URL: CALLBACK_BASE,
         AUTH_SESSION_COOKIE_NAME: COOKIE_NAME,
         CORS_ORIGIN: APP_BASE,
+        AUTH_HEADER_TOKEN_ENABLED: true,
+        AUTH_HEADER_TOKEN_ALLOWED_ISSUERS: [PROVIDER_ISSUER],
+        AUTH_HEADER_TOKEN_CLOCK_TOLERANCE_SECONDS: 30,
+        AUTH_HEADER_TOKEN_JWKS_CACHE_TTL_SECONDS: 600,
+        AUTH_HEADER_TOKEN_BUCKET_CACHE_TTL_SECONDS: 60,
         ...configOverride,
       };
       return map[key as keyof EnvironmentVariables];
@@ -120,6 +188,17 @@ async function buildApp(): Promise<INestApplication> {
       { provide: ConfigService, useValue: configMock },
       { provide: RefreshService, useValue: MOCK_REFRESH_SERVICE },
       { provide: BucketService, useValue: MOCK_BUCKET_SERVICE },
+      { provide: CACHE_MANAGER, useValue: MOCK_CACHE_MANAGER },
+      HeaderTokenStrategy,
+      CookieSessionStrategy,
+      {
+        provide: AUTH_STRATEGIES,
+        useFactory: (
+          headerStrategy: HeaderTokenStrategy,
+          cookieStrategy: CookieSessionStrategy,
+        ) => [headerStrategy, cookieStrategy],
+        inject: [HeaderTokenStrategy, CookieSessionStrategy],
+      },
       { provide: APP_GUARD, useClass: SessionGuard },
     ],
   }).compile();
@@ -662,6 +741,32 @@ describe('AuthController (integration)', () => {
         .set('Cookie', `${COOKIE_NAME}=tampered.value.here`)
         .expect(401);
     });
+
+    it('under header auth: returns the profile with no X-CSRF-Token header', async () => {
+      const token = await makeHeaderToken();
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(res.body.sub).toBe('header-user-1');
+      expect(res.body.providerId).toBe('keycloak');
+      expect(res.headers['x-csrf-token']).toBeUndefined();
+    });
+
+    it('under header auth: header wins when a valid session cookie is also present', async () => {
+      const token = await makeHeaderToken();
+      const sessCookie = await makeSessionCookie(sampleSession);
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+        .set('Cookie', `${COOKIE_NAME}=${sessCookie}`)
+        .expect(200);
+
+      expect(res.body.sub).toBe('header-user-1');
+      expect(res.headers['x-csrf-token']).toBeUndefined();
+    });
   });
 
   describe('POST /api/v1/auth/logout', () => {
@@ -765,6 +870,16 @@ describe('AuthController (integration)', () => {
       expect(cookies.find((c) => c.startsWith(`${COOKIE_NAME}.1=`))).toMatch(
         /Max-Age=0/i,
       );
+    });
+
+    it('under header auth: is a no-op success with no Set-Cookie and no redirect', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/auth/logout')
+        .set('Authorization', 'Bearer some-token')
+        .expect(200);
+
+      expect(res.headers['set-cookie']).toBeUndefined();
+      expect(res.headers.location).toBeUndefined();
     });
   });
 

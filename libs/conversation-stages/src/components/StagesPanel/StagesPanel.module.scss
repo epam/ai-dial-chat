@@ -13,7 +13,7 @@
 }
 
 .stageName {
-  color: var(--cs-stage-text, var(--text-secondary, #6b7280));
+  color: var(--cs-stage-text, var(--text-secondary, #57647a));
 }
 
 .stageNameFailed {
@@ -25,26 +25,26 @@
 }
 
 .tag {
-  color: var(--cs-tag-text, var(--text-tertiary, #c7cbd4));
+  color: var(--cs-tag-text, var(--text-tertiary, #848e9c));
 }
 
 .count {
-  color: var(--cs-count-text, var(--text-tertiary, #c7cbd4));
+  color: var(--cs-count-text, var(--text-tertiary, #848e9c));
   font-variant-numeric: tabular-nums;
 }
 
 .duration {
-  color: var(--cs-duration-text, var(--text-tertiary, #c7cbd4));
+  color: var(--cs-duration-text, var(--text-tertiary, #848e9c));
   font-variant-numeric: tabular-nums;
 }
 
 .iconSecondary {
-  color: var(--cs-icon-secondary, var(--text-secondary, #6b7280));
+  color: var(--cs-icon-secondary, var(--text-secondary, #57647a));
   opacity: 0.7;
 }
 
 .iconCompleted {
-  color: var(--cs-icon-completed, var(--text-tertiary, #c7cbd4));
+  color: var(--cs-icon-completed, var(--text-tertiary, #848e9c));
 }
 
 .iconError {
@@ -52,7 +52,7 @@
 }
 
 .stageContent {
-  color: var(--cs-stage-text, var(--text-secondary, #6b7280));
+  color: var(--cs-stage-text, var(--text-secondary, #57647a));
   line-height: 150% !important;
 }
 
@@ -69,11 +69,11 @@
 }
 
 .blockquote {
-  border-color: var(--cs-stage-text, var(--text-secondary, #6b7280));
-  color: var(--cs-stage-text, var(--text-secondary, #6b7280));
+  border-color: var(--cs-stage-text, var(--text-secondary, #57647a));
+  color: var(--cs-stage-text, var(--text-secondary, #57647a));
 }
 
 .tableCell {
   border-color: var(--cs-border, var(--stroke-secondary, #d1dbea));
-  color: var(--cs-stage-text, var(--text-secondary, #6b7280));
+  color: var(--cs-stage-text, var(--text-secondary, #57647a));
 }

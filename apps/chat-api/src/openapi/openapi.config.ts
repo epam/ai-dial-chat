@@ -19,6 +19,10 @@ export const createOpenApiConfig = (port: string | number) =>
       'List deployments available to the authenticated user',
     )
     .addCookieAuth('session')
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      'bearer',
+    )
     .build();
 
 export const openApiDocumentOptions: SwaggerDocumentOptions = {

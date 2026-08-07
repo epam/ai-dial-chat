@@ -291,7 +291,7 @@ alike; `Input.tsx`/`Textarea.tsx` no longer touch `className` at all.
 (`#696e7c`) to `--stroke-tertiary` (`#e0e6f0`), matching `libs/catalog`'s own divider
 convention (Decision 4's follow-up) — per user review, the field border itself, not just
 page-level dividers, read as mismatched against Catalog. The **focus** border color was
-changed from the ui-kit default `--stroke-focus` (`#eef1f7`, near-white — barely visible
+changed from the ui-kit default `--stroke-focus-black` (`#eef1f7`, near-white — barely visible
 against a light theme, and after the resting-border change above nearly indistinguishable
 from it, so focus stopped reading as a visible state change) to `--stroke-accent-primary`
 plus a soft `box-shadow` focus ring, borrowing `SearchBar`'s own focus treatment

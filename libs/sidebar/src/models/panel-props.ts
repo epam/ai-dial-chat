@@ -7,8 +7,6 @@ export interface SidebarPanelColors {
   background?: string;
   /** Divider border color on the inner edge. */
   border?: string;
-  /** Border color on the outer (inline-end) edge. Defaults to `border`. */
-  borderInlineEnd?: string;
   /** Header text color. */
   text?: string;
   /** Resize handle color (icon and background). */

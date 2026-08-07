@@ -711,6 +711,33 @@ describe('DeploymentsService', () => {
       expect(result.deployments[0].isMy).toBe(false);
     });
 
+    it('sets isMy=false when the bucket hash only matches the app-name segment, not the bucket segment', async () => {
+      /*
+       * Regression: an app at applications/OTHER_BUCKET/BUCKET_HASH must not
+       * be misclassified as owned by BUCKET_HASH just because that value
+       * happens to appear as the app-name segment rather than the bucket
+       * segment (path index 1).
+       */
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          {
+            ...mockApplication,
+            id: 'applications/OTHER_BUCKET/BUCKET_HASH',
+            owner: 'Other User',
+          },
+        ],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'BUCKET_HASH',
+      );
+      expect(result.deployments[0].isMy).toBe(false);
+    });
+
     it('sets isMy=false for root-level app whose id has no path segments matching bucket', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({
@@ -1006,11 +1033,14 @@ describe('DeploymentsService', () => {
 
       expect(result.deployments[0].sharedWithMe).toBe(false);
       expect(warnSpy).toHaveBeenCalledWith(
-        'Failed to resolve shared application resources: status=503',
+        'Failed to resolve shared APPLICATION resources: status=503',
+      );
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Failed to resolve shared TOOL_SET resources: status=503',
       );
     });
 
-    it('resolves canEdit and sharedWithMe from exactly one getSharedResources call', async () => {
+    it('resolves canEdit and sharedWithMe from exactly one getSharedResources call per resource type', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({
         error: false,
@@ -1032,7 +1062,66 @@ describe('DeploymentsService', () => {
       });
 
       await service.listDeployments('user1', 'token', 'BUCKET_HASH');
-      expect(sdkClient.getSharedResources).toHaveBeenCalledOnce();
+      /*
+       * One call for APPLICATION-scoped shared resources, one for
+       * TOOL_SET-scoped — getSharedResources is scoped to a single
+       * resourceTypes filter per call, and the combined list mixes both
+       * item types.
+       */
+      expect(sdkClient.getSharedResources).toHaveBeenCalledTimes(2);
+      expect(sdkClient.getSharedResources).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({ resourceTypes: ['APPLICATION'] }),
+        }),
+      );
+      expect(sdkClient.getSharedResources).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({ resourceTypes: ['TOOL_SET'] }),
+        }),
+      );
+    });
+
+    it('is true for a READ-only shared toolset in the combined list, using TOOL_SET-scoped resources', async () => {
+      /*
+       * Regression: a toolset id can never appear in the APPLICATION-scoped
+       * shared-resource set, so this only passes if listDeployments fetches
+       * (and uses) a separate TOOL_SET-scoped set for toolset items.
+       */
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockToolset, id: 'toolsets/OTHER_BUCKET/their-toolset' }],
+      });
+      sdkClient.getSharedResources.mockImplementation(
+        (opts: { body: { resourceTypes: string[] } }) =>
+          Promise.resolve({
+            data: {
+              resources:
+                opts.body.resourceTypes[0] === 'TOOL_SET'
+                  ? [
+                      {
+                        url: 'toolsets/OTHER_BUCKET/their-toolset',
+                        permissions: ['READ'],
+                      },
+                    ]
+                  : [],
+            },
+            error: undefined,
+          }),
+      );
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'BUCKET_HASH',
+      );
+
+      expect(result.deployments[0]).toMatchObject({
+        isMy: false,
+        sharedWithMe: true,
+        canEdit: false,
+      });
     });
   });
 
@@ -1681,7 +1770,11 @@ describe('DeploymentsService', () => {
       const { service, sdkClient } = makeService();
       sdkClient.getModel.mockResolvedValue(okResponse(mockModel));
 
-      const result = await service.resolveDeploymentItem('gpt-4o', 'token');
+      const result = await service.resolveDeploymentItem(
+        'gpt-4o',
+        'token',
+        'user1',
+      );
 
       expect(result).toMatchObject({
         id: 'gpt-4o',
@@ -1689,6 +1782,24 @@ describe('DeploymentsService', () => {
         type: 'model',
       });
       expect(sdkClient.getApplication).not.toHaveBeenCalled();
+    });
+
+    it('does not call getSharedResources for a model item, since Core never returns model resources there', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockResolvedValue(okResponse(mockModel));
+
+      const result = await service.resolveDeploymentItem(
+        'gpt-4o',
+        'token',
+        'user1',
+      );
+
+      expect(sdkClient.getSharedResources).not.toHaveBeenCalled();
+      expect(result).toMatchObject({
+        isMy: false,
+        canEdit: false,
+        sharedWithMe: false,
+      });
     });
 
     it('resolves an applications/-prefixed id via getApplication directly, skipping getModel', async () => {
@@ -1700,6 +1811,7 @@ describe('DeploymentsService', () => {
       const result = await service.resolveDeploymentItem(
         'applications/my-app',
         'token',
+        'user1',
       );
 
       expect(result).toMatchObject({
@@ -1715,7 +1827,11 @@ describe('DeploymentsService', () => {
       sdkClient.getModel.mockResolvedValue(errResponse(404));
       sdkClient.getApplication.mockResolvedValue(okResponse(mockApplication));
 
-      const result = await service.resolveDeploymentItem('my-app', 'token');
+      const result = await service.resolveDeploymentItem(
+        'my-app',
+        'token',
+        'user1',
+      );
 
       expect(result).toMatchObject({ id: 'my-app', type: 'application' });
     });
@@ -1726,6 +1842,7 @@ describe('DeploymentsService', () => {
       const result = await service.resolveDeploymentItem(
         'toolsets/b/search__0.0.1',
         'token',
+        'user1',
       );
 
       expect(result).toBeNull();
@@ -1738,9 +1855,68 @@ describe('DeploymentsService', () => {
       sdkClient.getModel.mockResolvedValue(errResponse(404));
       sdkClient.getApplication.mockResolvedValue(errResponse(404));
 
-      const result = await service.resolveDeploymentItem('unknown-id', 'token');
+      const result = await service.resolveDeploymentItem(
+        'unknown-id',
+        'token',
+        'user1',
+      );
 
       expect(result).toBeNull();
+    });
+
+    it('sets sharedWithMe=true for a just-accepted shared application, matching listDeployments enrichment', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({
+          ...mockApplication,
+          id: 'applications/OTHER_BUCKET/their-app',
+        }),
+      );
+      sdkClient.getSharedResources.mockResolvedValue({
+        data: {
+          resources: [
+            {
+              url: 'applications/OTHER_BUCKET/their-app',
+              permissions: ['READ'],
+            },
+          ],
+        },
+        error: undefined,
+      });
+
+      const result = await service.resolveDeploymentItem(
+        'applications/OTHER_BUCKET/their-app',
+        'token',
+        'BUCKET_HASH',
+      );
+
+      expect(result).toMatchObject({
+        isMy: false,
+        canEdit: false,
+        sharedWithMe: true,
+      });
+    });
+
+    it("sets isMy=true and sharedWithMe=false for an application in the caller's own bucket", async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({
+          ...mockApplication,
+          id: 'applications/BUCKET_HASH/my-app',
+        }),
+      );
+
+      const result = await service.resolveDeploymentItem(
+        'applications/BUCKET_HASH/my-app',
+        'token',
+        'BUCKET_HASH',
+      );
+
+      expect(result).toMatchObject({
+        isMy: true,
+        canEdit: true,
+        sharedWithMe: false,
+      });
     });
 
     it('throws BadGatewayException on a genuine upstream 5xx rather than returning null', async () => {
@@ -1748,7 +1924,7 @@ describe('DeploymentsService', () => {
       sdkClient.getModel.mockResolvedValue(errResponse(502));
 
       await expect(
-        service.resolveDeploymentItem('gpt-4o', 'token'),
+        service.resolveDeploymentItem('gpt-4o', 'token', 'user1'),
       ).rejects.toThrow(BadGatewayException);
     });
   });

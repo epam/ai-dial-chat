@@ -132,6 +132,9 @@
         "operationId": "logout",
         "parameters": [],
         "responses": {
+          "200": {
+            "description": "No-op success for a header-authenticated caller (no session to clear)"
+          },
           "302": {
             "description": "Redirect after logout"
           }
@@ -160,6 +163,9 @@
           }
         },
         "security": [
+          {
+            "bearer": []
+          },
           {
             "session": []
           }
@@ -4735,6 +4741,11 @@
         "type": "apiKey",
         "in": "cookie",
         "name": "session"
+      },
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
       }
     },
     "schemas": {

@@ -7,7 +7,6 @@
 - **Complete the filter-active state tracking** in `Catalog.tsx`: replace the `// TODO: determine if any filter is active` stub with real logic derived from `filters` and `isMyAppsActive` state.
 - **Implement `clearAllFilters`** in `Catalog.tsx`: replace the no-op stub with a callback that resets `filters` and `isMyAppsActive` to their defaults.
 - **Implement `Filter.tsx`**: My Apps toggle + alphabetically sorted topic checkboxes inside a `DialDropdown`, with an active-state label.
-- **Export `CatalogSortOption`** from `libs/catalog/src/index.ts` — it is defined in `models/sort.ts` but was not re-exported.
 - **Set `isMyApp` in `mapDeploymentToCatalogItem`**: populate `CatalogItem.isMyApp` from `deployment.isMy ?? false` so the My Apps filter reflects the deployment's personal-folder flag.
 - **Add test coverage** for `ListView`, `Toolbar`, `Filter`, `catalog-filter.ts` utility, and `catalog-sort.ts` utility — currently untested.
 
@@ -30,6 +29,5 @@
 - `libs/catalog/src/components/Filter/Filter.tsx` — full implementation.
 - `libs/catalog/src/components/Toolbar/Rows/FilterRow.tsx` — wired to live `Filter`.
 - `libs/catalog/src/components/Catalog/Catalog.tsx` — removes TODO stubs; adds filter pipeline.
-- `libs/catalog/src/index.ts` — adds `CatalogSortOption` to exports.
 - `apps/chat/src/utils/map-deployment-to-catalog-item.ts` — sets `isMyApp` from `deployment.isMy`.
 - No breaking changes; all additions are optional fields.
