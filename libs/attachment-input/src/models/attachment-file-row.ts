@@ -41,6 +41,8 @@ export interface FileAttachmentStyles {
 export interface FileAttachmentProps {
   /** The non-previewable attachment this row represents. */
   attachment: DisplayAttachment;
+  /** Current search query — when set, matches in the file name are highlighted. Defaults to `''`. */
+  searchQuery?: string;
   /** Called when the user clicks the row or its download button. */
   onClick?: (id: string) => void;
   /** Called when the user retries a failed upload. */

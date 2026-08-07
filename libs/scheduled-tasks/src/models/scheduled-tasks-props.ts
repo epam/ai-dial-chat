@@ -1,14 +1,7 @@
+import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { ScheduledTasksSortKey } from '../types/scheduled-tasks-sort-key';
 import type { ScheduledTaskCardGridLabels } from './scheduled-task-card-grid-props';
 import type { ScheduledTaskItem } from './scheduled-task-item';
-
-/** A single sort option shown in the Scheduled Tasks toolbar sort control. */
-export interface ScheduledTasksSortOption {
-  /** Stable identifier for this sort option, passed back via `onSortChange`. */
-  key: ScheduledTasksSortKey;
-  /** Localized display label for this sort option. */
-  label: string;
-}
 
 /** Localized labels used by the {@link ScheduledTasks} component. */
 export interface ScheduledTasksLabels {
@@ -27,7 +20,7 @@ export interface ScheduledTasksLabels {
   /** Accessible label for the toolbar sort control. */
   sortLabel: string;
   /** Options rendered in the sort control's dropdown. */
-  sortOptions: ScheduledTasksSortOption[];
+  sortOptions: DropdownItem[];
   /** Message shown when the fetched task list is empty. */
   emptyStateLabel: string;
   /** Message shown when `searchQuery` filters every task out. */

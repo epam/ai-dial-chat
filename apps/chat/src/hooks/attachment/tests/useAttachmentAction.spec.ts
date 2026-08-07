@@ -4,6 +4,7 @@ import { renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   downloadAttachment,
+  isDownloadableAttachment,
   useAttachmentAction,
 } from '../useAttachmentAction';
 
@@ -29,34 +30,31 @@ const makeAttachment = (
   ...overrides,
 });
 
+/*
+ * `triggerAnchorDownload` appends its temporary anchor to the document and only
+ * removes it on a timer, so with fake timers the anchor is still queryable while
+ * the assertions run.
+ */
+const getDownloadAnchor = (): HTMLAnchorElement | null =>
+  document.body.querySelector('a[download]');
+
 describe('useAttachmentAction', () => {
-  let anchorClickSpy: ReturnType<typeof vi.fn>;
-  let anchorMock: {
-    href: string;
-    download: string;
-    click: ReturnType<typeof vi.fn>;
-  };
-  let createElementSpy: ReturnType<typeof vi.spyOn>;
+  let anchorClickSpy: ReturnType<typeof vi.spyOn>;
   let windowOpenSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    anchorClickSpy = vi.fn();
-    const original = document.createElement.bind(document);
-    anchorMock = { href: '', download: '', click: anchorClickSpy };
-    createElementSpy = vi
-      .spyOn(document, 'createElement')
-      .mockImplementation((tagName: string) => {
-        if (tagName === 'a') {
-          return anchorMock as unknown as HTMLElement;
-        }
-        return original(tagName);
-      });
+    vi.useFakeTimers();
+    document.body.innerHTML = '';
+    anchorClickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
     windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
   });
 
   afterEach(() => {
-    createElementSpy.mockRestore();
+    vi.useRealTimers();
+    anchorClickSpy.mockRestore();
     windowOpenSpy.mockRestore();
   });
 
@@ -69,8 +67,23 @@ describe('useAttachmentAction', () => {
     result.current.handleAttachmentClick(attachment);
 
     expect(anchorClickSpy).toHaveBeenCalledOnce();
-    expect(anchorMock.href).toContain('/api/v1/files/download');
-    expect(anchorMock.download).toBe('file.pdf');
+    expect(getDownloadAnchor()?.href).toContain('/api/v1/files/download');
+    expect(getDownloadAnchor()?.download).toBe('file.pdf');
+  });
+
+  it('downloads an inline attachment that carries its content in data', () => {
+    const { result } = renderHook(() => useAttachmentAction());
+    const attachment = makeAttachment({
+      name: 'report.md',
+      contentType: 'text/markdown',
+      url: undefined,
+      data: btoa('# Report'),
+    });
+
+    result.current.handleAttachmentClick(attachment);
+
+    expect(anchorClickSpy).toHaveBeenCalledOnce();
+    expect(getDownloadAnchor()?.download).toBe('report.md');
   });
 
   it('is a no-op for an attachment without a DIAL file URL', () => {
@@ -152,8 +165,23 @@ describe('useAttachmentAction', () => {
 
       expect(result).toBe(true);
       expect(anchorClickSpy).toHaveBeenCalledOnce();
-      expect(anchorMock.href).toContain('/api/v1/files/download');
-      expect(anchorMock.download).toBe('file.pdf');
+      expect(getDownloadAnchor()?.href).toContain('/api/v1/files/download');
+      expect(getDownloadAnchor()?.download).toBe('file.pdf');
+    });
+
+    it('triggers a blob download and returns true for an inline data attachment', () => {
+      const attachment = makeAttachment({
+        name: 'report.md',
+        contentType: 'text/markdown',
+        url: undefined,
+        data: btoa('# Report'),
+      });
+
+      const result = downloadAttachment(attachment);
+
+      expect(result).toBe(true);
+      expect(anchorClickSpy).toHaveBeenCalledOnce();
+      expect(getDownloadAnchor()?.download).toBe('report.md');
     });
 
     it('returns false and does not download for a non-DIAL file URL', () => {
@@ -174,6 +202,37 @@ describe('useAttachmentAction', () => {
 
       expect(result).toBe(false);
       expect(anchorClickSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('isDownloadableAttachment', () => {
+    it('accepts DIAL-hosted and inline attachments', () => {
+      expect(
+        isDownloadableAttachment(
+          makeAttachment({ url: 'files/my-bucket/file.pdf' }),
+        ),
+      ).toBe(true);
+      expect(
+        isDownloadableAttachment(
+          makeAttachment({ url: undefined, data: btoa('# Report') }),
+        ),
+      ).toBe(true);
+    });
+
+    it('rejects reference-only and external attachments', () => {
+      expect(
+        isDownloadableAttachment(
+          makeAttachment({ url: 'https://external.com/file.pdf' }),
+        ),
+      ).toBe(false);
+      expect(
+        isDownloadableAttachment(
+          makeAttachment({
+            url: undefined,
+            referenceUrl: 'https://example.com/source',
+          }),
+        ),
+      ).toBe(false);
     });
   });
 });

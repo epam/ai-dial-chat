@@ -8,7 +8,6 @@ Three stubs were present at the start of this change:
 2. **`isAnyFilterActive` (Catalog.tsx)** — hardcoded to `false`.
 3. **`Filter.tsx` body** — topic checkboxes were commented out; My Apps toggle was absent.
 
-Additionally `CatalogSortOption` was missing from `index.ts`, and `CatalogItem.isMyApp` was not populated by the app mapper.
 
 ## Goals / Non-Goals
 
@@ -17,7 +16,6 @@ Additionally `CatalogSortOption` was missing from `index.ts`, and `CatalogItem.i
 - Implement `Filter.tsx`: My Apps `DialCheckbox` toggle + alphabetically sorted topic checkboxes inside a `DialDropdown`.
 - Pass all filter props through `Toolbar` → `FilterRow` → `Filter`.
 - Set `isMyApp` in `mapDeploymentToCatalogItem` from `deployment.isMy ?? false`.
-- Export `CatalogSortOption` from `libs/catalog/src/index.ts`.
 - Remove the stale `// TODO: check details` comment from `Catalog.tsx`.
 - Add Vitest unit tests for `catalog-filter.ts`, `catalog-sort.ts`, `Toolbar`, `Filter`, and `ListView`.
 

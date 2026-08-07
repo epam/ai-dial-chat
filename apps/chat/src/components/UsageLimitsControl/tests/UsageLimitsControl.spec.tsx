@@ -116,7 +116,7 @@ describe('UsageLimitsControl', () => {
     expect(trigger.className).toContain('rounded-full');
     expect(trigger.className).toContain('border-transparent');
     expect(trigger.className).toContain('hover:border-primary');
-    expect(trigger.className).toContain('focus-visible:border-primary');
+    expect(trigger.className).toContain('focus-visible:outline-primary');
     expect(screen.getByText('25%').className).toContain(
       'group-hover:opacity-100',
     );

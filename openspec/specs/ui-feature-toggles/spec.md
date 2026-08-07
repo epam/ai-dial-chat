@@ -125,8 +125,6 @@ Each of the 38 transferable `OverlayFeature` values SHALL gate exactly the ownin
 
 **i18n impact:** None — no new user-visible strings are introduced; toggles hide/show or restrict already-translated existing UI.
 
-**RTL impact:** `chat-input-border`/`chat-header-border` SHALL use logical border utilities (`border-s`/`border-e` or the existing `--sb-border` pattern), not `border-l`/`border-r`. No other transferable key has a directional-layout impact.
-
 #### Scenario: Gating one feature does not affect another
 
 - **WHEN** `enabledUiFeatures` omits `'top-settings'` but includes everything else

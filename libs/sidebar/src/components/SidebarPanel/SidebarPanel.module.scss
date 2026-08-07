@@ -7,14 +7,6 @@
   color: var(--sb-text, var(--text-primary, #161b2d));
 }
 
-.panel {
-  border-color: var(--sb-border, var(--stroke-tertiary, #e0e6f0));
-  border-inline-end-color: var(
-    --sb-border-inline-end,
-    var(--sb-border, var(--stroke-tertiary, #e0e6f0))
-  );
-}
-
 @keyframes fadeIn {
   from {
     opacity: 0;

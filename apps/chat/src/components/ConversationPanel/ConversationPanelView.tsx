@@ -665,15 +665,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [onRequestedFilterChange, onActiveFilterChange],
   );
 
-  let panelClassName: string | undefined;
-  if (isMobile) {
-    panelClassName = mergeClasses('inset-y-0 start-0', isOpen && 'z-50');
-  } else if (isOpen) {
-    panelClassName = mergeClasses(
-      '[--sb-border-inline-end:transparent]',
-      '[--sb-bg-resize-handler:transparent]',
-    );
-  }
+  const panelClassName = isMobile
+    ? mergeClasses('inset-y-0 start-0', isOpen && 'z-50')
+    : undefined;
+
   return (
     <>
       {isConversationsSectionEnabled && (

@@ -69,7 +69,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     onMyAppsChange,
     onViewModeChange,
     sortKey,
-    onSortChange,
+    sortOptions = [],
   }: {
     title?: string;
     query: string;
@@ -81,7 +81,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     onMyAppsChange?: (isActive: boolean) => void;
     onViewModeChange?: (mode: string) => void;
     sortKey?: string;
-    onSortChange?: (key: string) => void;
+    sortOptions?: { key: string; label: string; onClick?: () => void }[];
   }) => (
     <div>
       <span>{title ?? 'Browse'}</span>
@@ -109,7 +109,11 @@ vi.mock('../../Toolbar/Toolbar', () => ({
       ))}
       <button onClick={() => onMyAppsChange?.(!isMyAppsActive)}>My Apps</button>
       <button onClick={() => onViewModeChange?.('list')}>List view</button>
-      <button onClick={() => onSortChange?.('newest')}>Sort newest</button>
+      {sortOptions.map((option) => (
+        <button key={option.key} onClick={option.onClick}>
+          Sort {option.label}
+        </button>
+      ))}
     </div>
   ),
 }));
@@ -533,7 +537,7 @@ describe('Catalog', () => {
     const onSortChange = vi.fn();
     render(<Catalog items={[]} favorites={[]} onSortChange={onSortChange} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Sort newest' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Sort Newest' }));
 
     expect(onSortChange).toHaveBeenCalledWith(CatalogSortKey.Newest);
   });

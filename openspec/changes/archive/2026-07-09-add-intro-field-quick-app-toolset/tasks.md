@@ -201,7 +201,7 @@
       in `Input.scss` (reaches the wrapper `<div>` for `Input` and the `<textarea>` for
       `Textarea` uniformly) and removing all `className` manipulation from `Input.tsx`/
       `Textarea.tsx`, which are now pure pass-throughs. Also swapped the focus border color
-      from the ui-kit default `--stroke-focus` (near-white, barely visible on a light theme,
+      from the ui-kit default `--stroke-focus-black` (near-white, barely visible on a light theme,
       and after 9.4.1 nearly identical to the new lighter resting `--stroke-tertiary`) to
       `--stroke-accent-primary` plus a soft focus box-shadow ring, matching `SearchBar`'s own
       focus treatment. Updated `Input.spec.tsx`/`Textarea.spec.tsx` (className is now forwarded

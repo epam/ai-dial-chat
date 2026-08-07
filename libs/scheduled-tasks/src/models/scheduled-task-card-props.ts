@@ -21,13 +21,13 @@ export interface ScheduledTaskCardLabels {
 export interface ScheduledTaskCardColors {
   /** Card title text color. Fallback: `--text-primary`. */
   titleText?: string;
-  /** Description/prompt-preview text color. Fallback: `--text-control-disable`. */
+  /** Description/prompt-preview text color. Fallback: `--text-control-disable-beta`. */
   descriptionText?: string;
   /** Schedule pill background. Fallback: `--bg-layer-sunken`. */
   schedulePillBackground?: string;
   /** Schedule pill border color. Fallback: `--stroke-tertiary`. */
   schedulePillBorder?: string;
-  /** Schedule pill label text color. Fallback: `--text-control-disable`. */
+  /** Schedule pill label text color. Fallback: `--text-control-disable-beta`. */
   scheduleLabelText?: string;
   /** Non-leaf location breadcrumb segment text color. Fallback: `--text-secondary`. */
   locationLabelText?: string;
