@@ -110,8 +110,8 @@ export class ShareController {
     @Req() req: Request,
     @Param() { invitationId }: GetInvitationDto,
   ): Promise<AcceptInvitationResponseDto> {
-    const { at, sub } = req.user as SessionUser;
-    return this.shareService.acceptInvitation(at, invitationId, sub);
+    const { at, sub, bucket } = req.user as SessionUser;
+    return this.shareService.acceptInvitation(at, invitationId, sub, bucket);
   }
 
   @Post('discard')
