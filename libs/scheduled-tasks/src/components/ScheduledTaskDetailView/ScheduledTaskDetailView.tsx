@@ -10,12 +10,14 @@ import {
   Spinner,
   GhostButton,
   GhostIconButton,
+  NeutralButton,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconAlertTriangle,
   IconArrowLeft,
   IconCircleCheck,
   IconCircleX,
+  IconPencilMinus,
 } from '@tabler/icons-react';
 import { type FC, type KeyboardEvent, useEffect, useRef } from 'react';
 import type { ScheduledTaskDetailViewProps } from '../../models/scheduled-task-detail-view-props';
@@ -88,6 +90,7 @@ const RunStatusIcon: FC<{ status: ScheduledTaskRunStatus }> = ({ status }) => {
 export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   labels,
   onBack,
+  onEdit,
   displayName,
   isLoading = false,
   error,
@@ -270,24 +273,37 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
     >
       <div
         className={mergeClasses(
-          'flex h-16 shrink-0 items-center gap-2 border-b px-8',
+          'flex h-16 shrink-0 items-center justify-between gap-2 border-b px-8',
           styles.header,
         )}
       >
-        <GhostIconButton
-          icon={
-            <IconArrowLeft
-              size={DIAL_ICON_SIZE.LG}
-              className="rtl:scale-x-[-1]"
-              aria-hidden
-            />
-          }
-          aria-label={labels.backAriaLabel}
-          onClick={onBack}
-        />
-        <h1 className={mergeClasses('truncate', titleClassName)}>
-          {displayName}
-        </h1>
+        <div className="flex min-w-0 items-center gap-2">
+          <GhostIconButton
+            icon={
+              <IconArrowLeft
+                size={DIAL_ICON_SIZE.LG}
+                className="rtl:scale-x-[-1]"
+                aria-hidden
+              />
+            }
+            aria-label={labels.backAriaLabel}
+            onClick={onBack}
+          />
+          <h1 className={mergeClasses('truncate', titleClassName)}>
+            {displayName}
+          </h1>
+        </div>
+
+        {onEdit && (
+          <NeutralButton
+            label={labels.editButtonLabel}
+            iconBefore={
+              <IconPencilMinus size={DIAL_ICON_SIZE.SM} aria-hidden />
+            }
+            onClick={onEdit}
+            className="shrink-0"
+          />
+        )}
       </div>
 
       {isLoading && (
