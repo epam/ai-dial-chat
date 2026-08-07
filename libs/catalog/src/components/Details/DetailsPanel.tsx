@@ -13,7 +13,7 @@ import type {
 import {
   DialCloseButton,
   DialConfirmationPopup,
-  DialSkeleton,
+  Skeleton,
   DialTag,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
@@ -492,7 +492,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                     }
                     className="shrink-0"
                   >
-                    <DialSkeleton
+                    <Skeleton
                       showTitle={false}
                       paragraph={{ rows: 1, width: '72px' }}
                       active

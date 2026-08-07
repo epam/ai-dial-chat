@@ -144,7 +144,7 @@ The props passed to `ConversationInput` SHALL use `items` from `useDeployments()
 ### Requirement: Deployment selector uses skeleton placeholders while loading
 
 When `useDeployments().isLoading` is `true`, the deployment selector SHALL use
-`DialSkeleton` from `@epam/ai-dial-ui-kit` instead of a visible loading-text
+`Skeleton` from `@epam/ai-dial-ui-kit` instead of a visible loading-text
 row.
 
 The selector trigger SHALL render one circular skeleton in place of the
@@ -157,15 +157,15 @@ available to assistive technology.
 #### Scenario: Desktop selector shows deployment skeletons while loading
 
 - **WHEN** `modelSelectorLabels.loading` is defined, including a reload where `deployments` still contains previously loaded items
-- **THEN** the trigger shows a circular `DialSkeleton`
+- **THEN** the trigger shows a circular `Skeleton`
 - **AND** the dropdown contains exactly seven disabled skeleton rows
-- **AND** every row contains one circular and one text `DialSkeleton`
+- **AND** every row contains one circular and one text `Skeleton`
 
 #### Scenario: Mobile selector shows deployment skeletons while loading
 
 - **WHEN** the mobile selector is opened while deployments are loading
 - **THEN** the bottom sheet contains exactly seven skeleton rows
-- **AND** every row contains one circular and one text `DialSkeleton`
+- **AND** every row contains one circular and one text `Skeleton`
 
 ---
 

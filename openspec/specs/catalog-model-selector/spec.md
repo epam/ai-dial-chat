@@ -105,7 +105,7 @@ Specifically:
 - The send button SHALL be disabled (non-interactive) in this state.
 - Pressing Enter in the textarea SHALL NOT call `onSend` in this state.
 - Loading, error, and empty states SHALL NOT expand the toolbar with long visible text.
-- While loading, the trigger SHALL show a circular `DialSkeleton` from `@epam/ai-dial-ui-kit`. The opened selector SHALL show exactly seven disabled rows, each with a circular icon skeleton and a text skeleton for the item name. The mobile bottom sheet SHALL use the same seven-row loading presentation.
+- While loading, the trigger SHALL show a circular `Skeleton` from `@epam/ai-dial-ui-kit`. The opened selector SHALL show exactly seven disabled rows, each with a circular icon skeleton and a text skeleton for the item name. The mobile bottom sheet SHALL use the same seven-row loading presentation.
 - Error and empty states SHALL be represented by a disabled dropdown menu item with the appropriate accessible label or tooltip.
 
 The `isStreaming === true` stop-button path is unaffected — streaming stop always works regardless of selection state.
@@ -123,7 +123,7 @@ The `isStreaming === true` stop-button path is unaffected — streaming stop alw
 #### Scenario: Loading skeletons displayed
 
 - **WHEN** `modelSelectorLoadingLabel` is set, including a reload where `catalogItems` still contains previously loaded items
-- **THEN** the selector trigger renders a circular `DialSkeleton`
+- **THEN** the selector trigger renders a circular `Skeleton`
 - **AND** the opened selector renders seven disabled rows containing circular icon and text skeletons
 - **AND** the loading label remains exposed to assistive technology
 

@@ -4,8 +4,8 @@ import {
   DIAL_ICON_SIZE,
   DialDropdown,
   GhostIconButton,
-  DialSkeleton,
-  DialSkeletonVariant,
+  Skeleton,
+  SkeletonVariant,
   ElementSize,
   Highlight,
   type DropdownItem,
@@ -113,8 +113,8 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   const hasActions = menuItems.length > 0;
 
   const avatar = item.isIconLoading ? (
-    <DialSkeleton
-      variant={DialSkeletonVariant.Circular}
+    <Skeleton
+      variant={SkeletonVariant.Circular}
       width={DIAL_ICON_SIZE.LG}
       height={DIAL_ICON_SIZE.LG}
       color={styles.skeletonColor}

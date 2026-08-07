@@ -69,8 +69,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     <>{children}</>
   ),
   DialTooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  DialSkeleton: () => null,
-  DialSkeletonVariant: { Circular: 'circular' },
+  Skeleton: () => null,
+  SkeletonVariant: { Circular: 'circular' },
 
   Button: ({
     onClick,

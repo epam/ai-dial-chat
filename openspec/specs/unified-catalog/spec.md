@@ -213,7 +213,7 @@ Required keys (minimum, extend as needed):
 
 #### Scenario: Loading state displays deployment skeletons
 - **WHEN** `isLoading` is `true` in `CatalogContext`
-- **THEN** the selector trigger shows a circular `DialSkeleton` from `@epam/ai-dial-ui-kit`
+- **THEN** the selector trigger shows a circular `Skeleton` from `@epam/ai-dial-ui-kit`
 - **AND** the opened desktop dropdown and mobile bottom sheet each show exactly seven disabled rows
 - **AND** every row contains one circular icon skeleton and one text skeleton
 - **AND** the text resolved from `catalog.loading` remains available to assistive technology without being shown as a visible loading row
