@@ -138,7 +138,7 @@ const UsageLimitsControl: FC<Props> = ({
         type="button"
         className={mergeClasses(
           'group flex min-h-8 min-w-8 items-center justify-center gap-1 rounded-full border border-transparent px-1.5 text-secondary transition-colors',
-          'hover:border-primary hover:bg-layer-sunken focus-visible:border-primary focus-visible:bg-layer-sunken focus-visible:outline-none',
+          'hover:border-primary hover:bg-layer-sunken focus-visible:bg-layer-sunken focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-primary',
           'mobile:min-h-11 mobile:min-w-11',
           isOpen && 'border-primary bg-layer-sunken',
           isThresholdReached && 'text-error',

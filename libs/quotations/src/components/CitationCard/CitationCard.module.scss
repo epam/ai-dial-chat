@@ -1,10 +1,10 @@
 .card {
-  border-color: var(--cc-card-border, var(--stroke-primary, #6b7280));
+  border-color: var(--cc-card-border, var(--stroke-primary, #57647a));
   background: var(--cc-card-bg, var(--bg-layer-raised, #fcfcfc));
 }
 
 .quote {
-  color: var(--cc-quote-text, var(--text-secondary, #6b7280));
+  color: var(--cc-quote-text, var(--text-secondary, #57647a));
 }
 
 .title {
@@ -12,7 +12,7 @@
 }
 
 .switcher {
-  color: var(--cc-switcher-text, var(--text-secondary, #6b7280));
+  color: var(--cc-switcher-text, var(--text-secondary, #57647a));
 }
 
 .sourceName {

@@ -2,7 +2,7 @@
   border-color: transparent !important;
   background-color: transparent;
 
-  color: var(--pt-tab-text, var(--text-tertiary, #c7cbd4)) !important;
+  color: var(--pt-tab-text, var(--text-tertiary, #848e9c)) !important;
 
   /* Touch browsers keep :hover latched on the last-tapped element until the
      user taps elsewhere. Since the hover background is nearly identical to the
@@ -12,7 +12,7 @@
     &:hover {
       color: var(
         --pt-tab-text-hover,
-        var(--text-secondary, #6b7280)
+        var(--text-secondary, #57647a)
       ) !important;
       background-color: rgba(92, 141, 234, 0.06);
     }
@@ -24,7 +24,7 @@
 
   &.tabActive {
     background-color: rgba(39, 100, 217, 0.07);
-    color: var(--pt-tab-active-text, var(--text-secondary, #6b7280)) !important;
+    color: var(--pt-tab-active-text, var(--text-secondary, #57647a)) !important;
 
     @media (hover: hover) {
       &:hover {
