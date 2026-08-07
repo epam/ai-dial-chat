@@ -65,7 +65,7 @@ The Swagger `@ApiResponse({ status: 400 })` annotation on the `createConversatio
 
 ### Requirement: ConversationService uses deploymentId from DTO
 
-`ConversationService.createConversation` SHALL accept a `deploymentId: string` parameter and use it for both `model.id` and `assistantModelId` in the constructed `Conversation` object.
+`ConversationLifecycleService.createConversation` (invoked via the `ConversationService` facade, which keeps the identical signature) SHALL accept a `deploymentId: string` parameter and use it for both `model.id` and `assistantModelId` in the constructed `Conversation` object.
 
 The signature SHALL be:
 
@@ -261,7 +261,7 @@ State ownership: `ConversationRoute` owns the derived starter list, intro text, 
 4. 400 when `deploymentId` exceeds 256 characters.
 5. 400 when `deploymentId` contains disallowed characters (e.g. `"bad id!"`, malformed percent encoding).
 
-`apps/chat-api/src/conversations/tests/conversation.service.spec.ts` SHALL cover:
+`apps/chat-api/src/conversations/lifecycle/tests/conversation-lifecycle.service.spec.ts` SHALL cover:
 
 1. `createConversation` returns a `ConversationResponseDto` with `model.id` equal to the passed `deploymentId`.
 2. `assistantModelId` equals `deploymentId`.
