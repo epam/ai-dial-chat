@@ -63,6 +63,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
     onExpandedPathsChange,
     loadingPaths,
     onCreatePublishFolder,
+    rememberPublishFolder,
     hasPublishWriteAccess,
   } = usePublishFolders();
 
@@ -85,7 +86,8 @@ const PublishConversationPanelContainer: FC<Props> = ({
     onPublish: async (_item, folderPath, rules) => {
       await publishConversation(conversationPath, folderPath.join('/'), rules);
     },
-    onPublishSuccess: () => {
+    onPublishSuccess: (_item, folderPath) => {
+      rememberPublishFolder(folderPath);
       showNotification({
         variant: NotificationVariant.Success,
         message: t(ConversationPublishI18nKeys.SuccessMessage),

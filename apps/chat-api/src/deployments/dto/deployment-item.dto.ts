@@ -2,6 +2,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { LOCALIZED_TEXT_SCHEMA } from '../../common/types/localized-text';
 import type { LocalizedText } from '../../common/types/localized-text';
 
+export enum DeploymentItemType {
+  Model = 'model',
+  Application = 'application',
+  Toolset = 'toolset',
+}
+
 export class ConversationStarterDto {
   @ApiProperty({ description: 'Starter button label' })
   title!: string;
@@ -69,8 +75,8 @@ export class DeploymentItemDto {
   })
   displayName!: LocalizedText;
 
-  @ApiProperty({ enum: ['model', 'application', 'toolset'] })
-  type!: 'model' | 'application' | 'toolset';
+  @ApiProperty({ enum: DeploymentItemType })
+  type!: DeploymentItemType;
 
   @ApiPropertyOptional({ description: 'Icon URL from DIAL Core' })
   iconUrl?: string;

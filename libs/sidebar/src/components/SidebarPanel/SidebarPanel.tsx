@@ -51,7 +51,6 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
       buildCssVars({
         '--sb-bg': colors?.background,
         '--sb-border': colors?.border,
-        '--sb-border-inline-end': colors?.borderInlineEnd,
         '--sb-text': colors?.text,
         '--sb-resize-handler': colors?.resizeHandler,
       }),
@@ -145,7 +144,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
             }
       }
       className={mergeClasses(
-        'h-full flex-shrink-0 overflow-hidden',
+        'h-full flex-shrink-0 gap-3 overflow-hidden shadow-sm',
         !isResizing && 'transition-[width] duration-200 ease-in-out',
         isOpen && 'relative z-50',
         className,
@@ -172,7 +171,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
           style={{ ...cssVars, ...panelCssVars }}
           className={mergeClasses(
             styles.wrapper,
-            'flex h-full w-full flex-col',
+            'flex h-full w-full flex-col gap-3',
             isOpen && styles.appear,
             dividerClass,
             typography?.fontClassName,

@@ -4,7 +4,7 @@
 }
 
 .chipIcon {
-  color: var(--ci-chip-icon, var(--text-secondary, #6b7280));
+  color: var(--ci-chip-icon, var(--text-secondary, #57647a));
 }
 
 .chipText {
@@ -12,7 +12,7 @@
 }
 
 .chipClose {
-  color: var(--ci-chip-close, var(--text-secondary, #6b7280));
+  color: var(--ci-chip-close, var(--text-secondary, #57647a));
 
   &:hover {
     color: var(--ci-chip-close-hover, var(--text-primary, #161b2d));

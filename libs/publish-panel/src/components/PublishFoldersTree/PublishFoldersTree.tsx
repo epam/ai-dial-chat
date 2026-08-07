@@ -18,6 +18,7 @@ import {
   fromFolderPathKey,
   getSiblingFolderNames,
   getUniqueFolderName,
+  sortFolderTree,
   toDialFileTree,
   toFolderPathKey,
   validateFolderName,
@@ -42,7 +43,8 @@ export interface PublishFoldersTreeProps {
   onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
   /**
    * Search query used to filter the tree; owned by the host so it can render
-   * the search input in its own layout (e.g. above other controls).
+   * the search input in its own layout (e.g. above other controls). Filtering
+   * is suspended while the inline create-folder row is open.
    */
   searchQuery: string;
   /** Whether the whole tree is disabled, e.g. while a publish request is in flight. Default: `false`. */
@@ -53,7 +55,7 @@ export interface PublishFoldersTreeProps {
   addSiblingFolderLabel?: string;
   /** Label for the per-row context menu action that creates a folder inside the clicked folder. Default: `'Add child'`. */
   addChildFolderLabel?: string;
-  /** Default name pre-filled for a new folder before the user edits it. Default: `'New folder'`. */
+  /** Default name pre-filled for a new folder before the user edits it, unless `searchQuery` matched no folder and is itself a valid name, in which case the query is used. Default: `'New folder'`. */
   newFolderDefaultName?: string;
   /** Message shown when a search query matches no folders; `{query}` is replaced. Default: `'No folders match "{query}".'`. */
   noResultsLabel?: string;
@@ -82,7 +84,7 @@ export interface PublishFoldersTreeProps {
   loadingPaths?: Set<string>;
 }
 
-/** Destination folder tree for the Publish flow with search, folder creation (trailing button and context menu), and a disabled state. */
+/** Destination folder tree for the Publish flow, ordered by folder name at every level, with search, folder creation (trailing button and context menu), and a disabled state. */
 export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   items,
   selectedPath,
@@ -134,19 +136,35 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   const [creatingFolderName, setCreatingFolderName] =
     useState(newFolderDefaultName);
 
-  const visibleItems = useMemo(
+  const trimmedQuery = searchQuery.trim();
+  const isCreatingFolder = creatingParentPath != null;
+
+  const matchingItems = useMemo(
     () => filterFolderTree(items, searchQuery),
     [items, searchQuery],
   );
-  const isSearching = searchQuery.trim().length > 0;
+  const hasNoSearchMatches =
+    trimmedQuery.length > 0 && matchingItems.length === 0;
+  /*
+   * The filter is suspended while the inline create-folder row is open: the
+   * row is rendered by `DialFoldersTree` underneath its parent node, so a
+   * query that filters that parent out (a query matching nothing at all, in
+   * particular) would otherwise hide the editor the user just opened.
+   */
+  const isFiltering = !isCreatingFolder && trimmedQuery.length > 0;
+
+  const visibleItems = useMemo(
+    () => sortFolderTree(isFiltering ? matchingItems : items),
+    [isFiltering, matchingItems, items],
+  );
 
   const searchExpandedPaths = useMemo(
     () => new Set(['', ...collectFolderKeys(visibleItems)]),
     [visibleItems],
   );
   const treeExpandedPaths = useMemo(
-    () => new Set(['', ...(isSearching ? searchExpandedPaths : expandedPaths)]),
-    [isSearching, searchExpandedPaths, expandedPaths],
+    () => new Set(['', ...(isFiltering ? searchExpandedPaths : expandedPaths)]),
+    [isFiltering, searchExpandedPaths, expandedPaths],
   );
 
   const childFiles = useMemo<DialFile[]>(
@@ -162,7 +180,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
    * nothing so `emptyStateDescription` can render instead.
    */
   const dialFiles = useMemo<DialFile[]>(() => {
-    if (isSearching && childFiles.length === 0) {
+    if (isFiltering && childFiles.length === 0) {
       return [];
     }
     return [
@@ -174,20 +192,36 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
         items: childFiles,
       },
     ];
-  }, [childFiles, rootLabel, isSearching]);
+  }, [childFiles, rootLabel, isFiltering]);
 
   const createdFolderPath = creatingParentPath
     ? toFolderPathKey(creatingParentPath)
     : null;
 
+  const folderNameErrors = {
+    empty: emptyFolderNameError,
+    invalid: invalidFolderNameError,
+    duplicate: duplicateFolderNameError,
+  };
+
+  /*
+   * A query that matched no folder reads as "the folder I want doesn't exist
+   * yet", so creating from that state pre-fills the editor with the query —
+   * which also keeps the confirmed folder visible once the filter resumes.
+   */
+  const resolveNewFolderName = (parentPath: string[]): string => {
+    const isQueryUsableAsName =
+      hasNoSearchMatches &&
+      validateFolderName(trimmedQuery, [], folderNameErrors) == null;
+    return getUniqueFolderName(
+      isQueryUsableAsName ? trimmedQuery : newFolderDefaultName,
+      getSiblingFolderNames(items, parentPath),
+    );
+  };
+
   const beginCreatingFolder = (parentPath: string[]) => {
     setCreatingParentPath(parentPath);
-    setCreatingFolderName(
-      getUniqueFolderName(
-        newFolderDefaultName,
-        getSiblingFolderNames(items, parentPath),
-      ),
-    );
+    setCreatingFolderName(resolveNewFolderName(parentPath));
     const parentKey = toFolderPathKey(parentPath);
     if (parentKey) {
       updateExpandedPaths(new Set(expandedPaths).add(parentKey));
@@ -233,11 +267,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     return validateFolderName(
       rawValue,
       getSiblingFolderNames(items, creatingParentPath),
-      {
-        empty: emptyFolderNameError,
-        invalid: invalidFolderNameError,
-        duplicate: duplicateFolderNameError,
-      },
+      folderNameErrors,
     );
   };
 
@@ -278,8 +308,8 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
         onCreateFolderCancel={() => setCreatingParentPath(null)}
         onRenameValidate={(value) => validateNewFolderName(value)}
         emptyStateTitle={
-          isSearching
-            ? noResultsLabel.replace('{query}', searchQuery.trim())
+          isFiltering
+            ? noResultsLabel.replace('{query}', trimmedQuery)
             : undefined
         }
       />

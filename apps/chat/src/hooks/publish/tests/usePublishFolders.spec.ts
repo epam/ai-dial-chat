@@ -2,6 +2,7 @@ import { ListFilesItemDtoNodeTypeEnum } from '@epam/chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFolder, listPublicFiles } from '../../../server-api/files.api';
+import { StorageKey } from '../../../types/storage-key';
 import { usePublishFolders } from '../usePublishFolders';
 
 vi.mock('../../../server-api/files.api', () => ({
@@ -12,6 +13,7 @@ vi.mock('../../../server-api/files.api', () => ({
 describe('usePublishFolders', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     vi.mocked(listPublicFiles).mockResolvedValue({
       bucket: 'public',
       path: '',
@@ -167,6 +169,108 @@ describe('usePublishFolders', () => {
         children: undefined,
       },
     ]);
+  });
+
+  describe('remembered publish destinations', () => {
+    const readRemembered = () =>
+      JSON.parse(
+        localStorage.getItem(StorageKey.PublishDestinationFolders) ?? '[]',
+      ) as string[];
+
+    it('keeps a published folder in the tree after the panel is reopened', async () => {
+      const first = renderHook(() => usePublishFolders());
+      await waitFor(() => expect(listPublicFiles).toHaveBeenCalled());
+
+      act(() => first.result.current.rememberPublishFolder(['Model releases']));
+      first.unmount();
+
+      const { result } = renderHook(() => usePublishFolders());
+      await waitFor(() =>
+        expect(result.current.folderItems).toEqual([
+          {
+            path: ['Model releases'],
+            name: 'Model releases',
+            children: undefined,
+          },
+        ]),
+      );
+    });
+
+    it('merges a nested published folder under its listed parent', async () => {
+      vi.mocked(listPublicFiles).mockResolvedValue({
+        bucket: 'public',
+        path: '',
+        items: [
+          {
+            name: 'Organization',
+            path: 'Organization/',
+            folderId: 'public:Organization/',
+            nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+            bucket: 'public',
+          },
+        ],
+      });
+      localStorage.setItem(
+        StorageKey.PublishDestinationFolders,
+        JSON.stringify(['Organization/Model releases']),
+      );
+
+      const { result } = renderHook(() => usePublishFolders());
+
+      await waitFor(() =>
+        expect(result.current.folderItems[0]?.children).toEqual([
+          {
+            path: ['Organization', 'Model releases'],
+            name: 'Model releases',
+            children: undefined,
+          },
+        ]),
+      );
+    });
+
+    it('does not duplicate a remembered folder that the public bucket already lists', async () => {
+      vi.mocked(listPublicFiles).mockResolvedValue({
+        bucket: 'public',
+        path: '',
+        items: [
+          {
+            name: 'Organization',
+            path: 'Organization/',
+            folderId: 'public:Organization/',
+            nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+            bucket: 'public',
+          },
+        ],
+      });
+      localStorage.setItem(
+        StorageKey.PublishDestinationFolders,
+        JSON.stringify(['Organization']),
+      );
+
+      const { result } = renderHook(() => usePublishFolders());
+
+      await waitFor(() => expect(result.current.folderItems).toHaveLength(1));
+    });
+
+    it('stores each destination once, most recent first', async () => {
+      const { result } = renderHook(() => usePublishFolders());
+      await waitFor(() => expect(listPublicFiles).toHaveBeenCalled());
+
+      act(() => result.current.rememberPublishFolder(['Alpha']));
+      act(() => result.current.rememberPublishFolder(['Beta', 'Q3']));
+      act(() => result.current.rememberPublishFolder(['Alpha']));
+
+      expect(readRemembered()).toEqual(['Beta/Q3', 'Alpha']);
+    });
+
+    it('ignores the bucket root, which is not a folder node', async () => {
+      const { result } = renderHook(() => usePublishFolders());
+      await waitFor(() => expect(listPublicFiles).toHaveBeenCalled());
+
+      act(() => result.current.rememberPublishFolder([]));
+
+      expect(readRemembered()).toEqual([]);
+    });
   });
 
   it('denies write access under a restricted folder segment', async () => {

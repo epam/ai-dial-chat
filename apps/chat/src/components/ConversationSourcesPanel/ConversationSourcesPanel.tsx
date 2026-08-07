@@ -13,6 +13,7 @@ import {
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import {
   downloadAttachment as triggerAttachmentDownload,
+  isDownloadableAttachment,
   useAttachmentAction,
 } from '../../hooks/attachment/useAttachmentAction';
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
@@ -28,9 +29,6 @@ const MIN_PANEL_WIDTH = 312;
 const DEFAULT_PANEL_WIDTH = 360;
 /** Delay between successive triggered downloads so browsers don't block a burst of anchor clicks. */
 const DOWNLOAD_ALL_STAGGER_MS = 150;
-
-const isDownloadableAttachment = (attachment: DisplayAttachment): boolean =>
-  attachment.url != null && isDialFileId(attachment.url);
 
 const ConversationSourcesPanelContainer: FC = () => {
   const { t } = useTranslation();

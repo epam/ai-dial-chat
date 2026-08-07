@@ -1,5 +1,4 @@
 // Types
-export type { CatalogSortOption } from './models/sort';
 export { CodeLanguage } from './types/code-language';
 export { CatalogDetailsTab } from './types/detail-tab';
 export { EntityTag } from './types/entity-tag';
@@ -17,11 +16,7 @@ export { CatalogViewMode } from './types/view-mode';
 // Models
 export type { CatalogItem } from './models/catalog-item';
 export type { CatalogItemCredentials } from './models/catalog-item-credentials';
-export type {
-  CatalogProps,
-  CatalogTitles,
-  CreateOption,
-} from './models/catalog-props';
+export type { CatalogProps, CatalogTitles } from './models/catalog-props';
 export type {
   CatalogColors,
   CatalogStyles,

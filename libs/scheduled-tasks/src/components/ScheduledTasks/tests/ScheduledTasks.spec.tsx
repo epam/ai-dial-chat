@@ -89,6 +89,24 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       <span>{title}</span>
     </div>
   ),
+  ButtonDropdown: ({
+    label,
+    items,
+  }: {
+    label?: string;
+    items: { key: string; label: string; onClick?: () => void }[];
+  }) => (
+    <div>
+      <button>{label}</button>
+      {items.map((item) => (
+        <button key={item.key} onClick={item.onClick}>
+          {item.label}
+        </button>
+      ))}
+    </div>
+  ),
+  ButtonVariant: { Primary: 'primary', Neutral: 'neutral' },
+  ButtonAppearance: { Ghost: 'ghost', Solid: 'solid' },
 }));
 
 vi.mock('@tabler/icons-react', () => ({

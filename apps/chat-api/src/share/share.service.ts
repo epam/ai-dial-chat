@@ -203,6 +203,7 @@ export class ShareService {
     accessToken: string,
     invitationId: string,
     userSub: string,
+    bucket: string,
   ): Promise<AcceptInvitationResponseDto> {
     this.logger.debug(
       `Peeking invitation from DIAL Core for invitationId=${invitationId}`,
@@ -294,6 +295,7 @@ export class ShareService {
       itemId,
       accessToken,
       userSub,
+      bucket,
     );
 
     return { itemId, ...summary };
@@ -315,6 +317,7 @@ export class ShareService {
     itemId: string,
     accessToken: string,
     userSub: string,
+    bucket: string,
   ): Promise<
     Pick<AcceptInvitationResponseDto, 'sharedDeployment' | 'sharedToolset'>
   > {
@@ -332,6 +335,7 @@ export class ShareService {
         await this.deploymentsService.resolveDeploymentItem(
           itemId,
           accessToken,
+          bucket,
         );
       if (sharedDeployment) return { sharedDeployment };
 
