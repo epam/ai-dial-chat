@@ -279,3 +279,66 @@ dialTest(
     );
   },
 );
+
+dialTest(
+  'Check cursor when agents starts response generation with different Response formats',
+  async ({
+    dialHomePage,
+    setTestIds,
+    localStorageManager,
+    chat,
+    chatHeader,
+    chatMessages,
+    chatMessagesAssertion,
+    conversationSettingsModal,
+    agentSettings,
+  }) => {
+    setTestIds('EPMDIAL-7423');
+    const cursorTextRegexp = new RegExp('^▍$');
+
+    await dialTest.step(
+      'Send a request to the model and verify cursor is blinking while response is loading, no backticks are displayed',
+      async () => {
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          randomModel,
+        );
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.mdTableBody,
+        );
+        await dialHomePage.throttleAPIResponse('**/*');
+        await chat.sendRequestWithButton('test request1', false);
+        await chatMessagesAssertion.assertElementText(
+          chatMessages.loadingCursor,
+          cursorTextRegexp,
+        );
+        await dialHomePage.unRouteAllResponses();
+      },
+    );
+
+    await dialTest.step(
+      'Change response format to Plain text and apply changes',
+      async () => {
+        await chatHeader.openConversationSettingsPopup();
+        await agentSettings.setResponseFormat(
+          ConversationResponseFormat.PlainText,
+        );
+        await conversationSettingsModal.applyNewResponseFormat();
+      },
+    );
+
+    await dialTest.step(
+      'Send one more request and verify cursor is blinking while response is loading, no backticks are displayed',
+      async () => {
+        await dialHomePage.throttleAPIResponse('**/*');
+        await chat.sendRequestWithButton('test request2', false);
+        await chatMessagesAssertion.assertElementText(
+          chatMessages.loadingCursor,
+          cursorTextRegexp,
+        );
+      },
+    );
+  },
+);
