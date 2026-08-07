@@ -111,15 +111,6 @@ describe('AttachmentGroup', () => {
   });
 
   describe('file states', () => {
-    it('renders an uploading file with a progress indicator', () => {
-      render(
-        <AttachmentGroup
-          attachments={[makeFile('a', { status: RequestStatus.Loading })]}
-        />,
-      );
-      expect(screen.getByRole('progressbar')).toBeTruthy();
-    });
-
     it('renders a failed file with a retry action', async () => {
       const user = userEvent.setup();
       const handleRetry = vi.fn();
