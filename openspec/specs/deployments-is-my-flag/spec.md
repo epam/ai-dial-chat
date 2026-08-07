@@ -4,7 +4,7 @@ The `DeploymentItemDto` SHALL include an optional `isMy: boolean` field indicati
 
 The backend SHALL:
 - Add `isMy?: boolean` to `DeploymentItemDto` with `@ApiPropertyOptional({ description: 'True when the deployment owner matches the current session user' })`.
-- Compute `isMy` **post-cache** in `listDeployments` (`apps/chat-api/src/deployments/deployments.service.ts`), in the same pass as `isInstalled`.
+- Compute `isMy` **post-cache** in `listDeployments` (`apps/chat-api/src/deployments/listing/deployments-listing.service.ts`), in the same pass as `isInstalled`.
 - Use the `bucket` value from the authenticated session (`req.user.bucket` via `SessionUser`) as the identity comparator.
 - Set `isMy = item.id.split('/').includes(bucket)` — `true` when the session bucket appears as a path segment of the deployment `id`.
 - Set `isMy = false` when the deployment `id` contains no segment matching the bucket.
