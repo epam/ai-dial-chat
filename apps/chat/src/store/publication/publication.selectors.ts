@@ -8,7 +8,7 @@ import {
   isToolsetId,
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { orderByType } from '@/src/utils/app/publications';
+import { getPublicationId, orderByType } from '@/src/utils/app/publications';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { parseEntityApiKey } from '@/src/utils/server/api';
 
@@ -48,6 +48,13 @@ const selectFilteredPublications = (
   });
 
 /**
+ * Feature types which resources are rendered as items inside the "Approve required" section.
+ * A publication can also contain files, applications or toolsets, but such resources are never
+ * displayed in the chat/prompt panels, so they must not be searchable there.
+ */
+const SIDEBAR_DISPLAYED_FEATURE_TYPES = [FeatureType.Chat, FeatureType.Prompt];
+
+/**
  * Extracts the display name from a publication resource URL.
  * Handles different entity types (conversations, prompts, files, applications, toolsets).
  */
@@ -66,6 +73,27 @@ const getResourceDisplayName = (reviewUrl: string): string => {
   });
 
   return parsed.name;
+};
+
+/**
+ * Keeps only the resources which are actually rendered as items in the panel,
+ * so that the search results match what the user can see.
+ */
+const getDisplayedResources = (
+  resources: PublicationResource[],
+  featureTypes: FeatureType[],
+) => {
+  const displayedFeatureTypes = featureTypes.filter((featureType) =>
+    SIDEBAR_DISPLAYED_FEATURE_TYPES.includes(featureType),
+  );
+
+  return resources.filter((resource) => {
+    const { apiKey } = splitEntityId(resource.reviewUrl);
+
+    return displayedFeatureTypes.includes(
+      EnumMapper.getFeatureTypeByApiKey(apiKey),
+    );
+  });
 };
 
 const selectFilteredPublicationsWithSearch = (
@@ -95,25 +123,30 @@ const selectFilteredPublicationsWithSearch = (
 
       const searchTermLower = searchTerm.toLowerCase().trim();
 
-      // Search in publication resources (items inside the publication)
-      // This matches the behavior of other sections where search works on items, not folders
-      if (publication.resources && publication.resources.length > 0) {
-        return publication.resources.some((resource) => {
-          try {
-            const resourceName = getResourceDisplayName(resource.reviewUrl);
-            return resourceName.toLowerCase().trim().includes(searchTermLower);
-          } catch {
-            // If parsing fails, skip this resource
-            return false;
-          }
-        });
+      // The publication row itself is always rendered, so its displayed name is searchable
+      const publicationName =
+        publication.name || getPublicationId(publication.url) || '';
+
+      if (publicationName.toLowerCase().trim().includes(searchTermLower)) {
+        return true;
       }
 
-      // Fallback: if no resources, search by publication name
-      return (
-        publication.name?.toLowerCase().trim().includes(searchTermLower) ??
-        false
+      // Search only in resources which are displayed inside the publication in this panel
+      // This matches the behavior of other sections where search works on items, not folders
+      const displayedResources = getDisplayedResources(
+        publication.resources ?? [],
+        featureTypes,
       );
+
+      return displayedResources.some((resource) => {
+        try {
+          const resourceName = getResourceDisplayName(resource.reviewUrl);
+          return resourceName.toLowerCase().trim().includes(searchTermLower);
+        } catch {
+          // If parsing fails, skip this resource
+          return false;
+        }
+      });
     });
   });
 
