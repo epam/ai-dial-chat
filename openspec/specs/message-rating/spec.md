@@ -153,7 +153,7 @@ In read-only conversations, the Dislike button is not rendered, so the modal can
   - "Incomplete response"
   - "Should have triggered thinking"
   - "Should have search the web"
-- Optional `DialTextarea` with placeholder **"Type an optional comment to your feedback"**
+- Optional `Textarea` with placeholder **"Type an optional comment to your feedback"**
 - `PrimaryButton` labelled **"Send"** — disabled until a category is selected
 - Close (×) icon button
 

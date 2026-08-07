@@ -12,7 +12,7 @@ import GeneralForm from '../GeneralForm';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialInput: ({
+  Input: ({
     value,
     onChange,
     labelProps,
@@ -37,7 +37,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {error && <p role="alert">{error}</p>}
     </>
   ),
-  DialTextarea: ({
+  Textarea: ({
     value,
     onChange,
     labelProps,

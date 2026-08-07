@@ -4,7 +4,7 @@ import {
   OverlayFeature,
 } from '@epam/ai-dial-chat-overlay';
 import {
-  DialInput,
+  Input,
   DialNeutralButton,
   DialPrimaryButton,
 } from '@epam/ai-dial-ui-kit';
@@ -125,7 +125,7 @@ const EnabledFeaturesCase: FC = () => {
         ))}
       </div>
       <div className="mb-3 flex flex-col items-stretch gap-2 desktop:flex-row desktop:items-end">
-        <DialInput
+        <Input
           id="custom-input"
           containerClassName="min-w-0 flex-1"
           className="min-h-11"

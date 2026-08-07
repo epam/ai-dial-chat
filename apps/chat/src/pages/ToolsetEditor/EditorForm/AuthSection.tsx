@@ -2,7 +2,7 @@ import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
   DialConfirmationPopup,
-  DialInput,
+  Input,
   DialRadioButton,
   DialTagInput,
   ElementSize,
@@ -386,7 +386,7 @@ const AuthSection: FC<Props> = ({
 
       {auth.withLogin === WithLogin.WithConfig && (
         <div className="flex flex-col gap-3">
-          <DialInput
+          <Input
             id="toolset-client-id"
             value={auth.clientId ?? ''}
             onChange={(value) => onAuthChange({ clientId: value ?? '' })}
@@ -398,7 +398,7 @@ const AuthSection: FC<Props> = ({
             invalid={!!errors.clientId}
             disabled={isControlsDisabled}
           />
-          <DialInput
+          <Input
             id="toolset-client-secret"
             value={auth.clientSecret ?? ''}
             onChange={(value) => onAuthChange({ clientSecret: value ?? '' })}
@@ -410,7 +410,7 @@ const AuthSection: FC<Props> = ({
             invalid={!!errors.clientSecret}
             disabled={isControlsDisabled}
           />
-          <DialInput
+          <Input
             id="toolset-authorization-endpoint"
             value={auth.authorizationEndpoint ?? ''}
             onChange={(value) =>
@@ -423,7 +423,7 @@ const AuthSection: FC<Props> = ({
             invalid={!!errors.authorizationEndpoint}
             disabled={isControlsDisabled}
           />
-          <DialInput
+          <Input
             id="toolset-token-endpoint"
             value={auth.tokenEndpoint ?? ''}
             onChange={(value) => onAuthChange({ tokenEndpoint: value ?? '' })}
@@ -473,7 +473,7 @@ const AuthSection: FC<Props> = ({
       </div>
 
       <div className="flex flex-col gap-3">
-        <DialInput
+        <Input
           id="toolset-key-header"
           value={auth.keyHeader ?? ''}
           onChange={(value) => onAuthChange({ keyHeader: value ?? '' })}
@@ -487,7 +487,7 @@ const AuthSection: FC<Props> = ({
         />
 
         {auth.withLogin === WithLogin.WithLogin && (
-          <DialInput
+          <Input
             id="toolset-api-key"
             value={auth.apiKey ?? ''}
             onChange={(value) => onAuthChange({ apiKey: value ?? '' })}

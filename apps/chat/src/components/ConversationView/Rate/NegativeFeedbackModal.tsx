@@ -3,7 +3,7 @@ import {
   DialFormItem,
   DialFormPopup,
   DialSelect,
-  DialTextarea,
+  Textarea,
   PopupSize,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
@@ -77,7 +77,7 @@ const NegativeFeedbackModal: FC<Props> = ({ onClose, onSubmit }) => {
           />
         </DialFormItem>
         {isDislikeCommentEnabled && (
-          <DialTextarea
+          <Textarea
             value={commentText}
             placeholder={t(RateI18nKeys.FeedbackCommentPlaceholder)}
             onChange={(value) => setCommentText(value ?? '')}

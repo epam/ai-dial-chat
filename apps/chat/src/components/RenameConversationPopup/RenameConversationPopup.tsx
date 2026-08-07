@@ -1,8 +1,8 @@
 import {
   DIAL_ICON_SIZE,
   DialFormPopup,
-  DialInput,
-  DialSpinner,
+  Input,
+  Spinner,
   GhostIconButton,
   PopupSize,
 } from '@epam/ai-dial-ui-kit';
@@ -116,7 +116,7 @@ const RenameConversationPopup: FC<Props> = ({
     >
       <div className="flex items-start gap-2 px-6 py-3">
         <div className="min-w-0 flex-1">
-          <DialInput
+          <Input
             inputRef={inputRef}
             value={value}
             placeholder={t(ConversationPanelI18nKeys.RenameInputPlaceholder)}
@@ -132,7 +132,7 @@ const RenameConversationPopup: FC<Props> = ({
           onClick={handleGenerateWithAi}
           icon={
             isGenerating ? (
-              <DialSpinner size={DIAL_ICON_SIZE.MD} />
+              <Spinner size={DIAL_ICON_SIZE.MD} />
             ) : (
               <IconSparkles size={DIAL_ICON_SIZE.MD} stroke={1.5} />
             )

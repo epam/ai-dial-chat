@@ -2,7 +2,7 @@ import { CatalogEntityType } from '@epam/ai-dial-catalog';
 import {
   DIAL_ICON_SIZE,
   GhostIconButton,
-  DialInput,
+  Input,
   DialSelect,
   DialTagInput,
   ElementSize,
@@ -92,7 +92,7 @@ const SettingsForm: FC<Props> = ({
     <div className="flex flex-col gap-4">
       <div className="flex items-end gap-2">
         <div className="flex-1">
-          <DialInput
+          <Input
             id="toolset-endpoint"
             value={form.endpoint}
             onChange={(value) => onChange({ endpoint: value ?? '' })}

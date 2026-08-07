@@ -5,7 +5,7 @@ import {
 } from '@epam/ai-dial-chat-overlay';
 import {
   DialDangerButton,
-  DialInput,
+  Input,
   DialNeutralButton,
   DialPrimaryButton,
   DialSelectField,
@@ -153,7 +153,7 @@ const AuthUiModeCase: FC = () => {
               key={provider.fieldId}
               className="grid grid-cols-1 gap-2 desktop:grid-cols-[repeat(2,minmax(0,1fr))_auto] desktop:items-end"
             >
-              <DialInput
+              <Input
                 id={`provider-${provider.fieldId}-id`}
                 className="min-h-11"
                 type="text"

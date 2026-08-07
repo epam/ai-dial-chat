@@ -8,7 +8,7 @@ These tasks resolve the gaps identified in `design.md` and bring the implementat
 
 ### Fix known gaps
 
-- [x] Investigate `DialTextarea` API for a submit/send callback prop and wire it to `handleSend` in `ConversationInput`
+- [x] Investigate `Textarea` API for a submit/send callback prop and wire it to `handleSend` in `ConversationInput`
 - [x] Decide on welcome text auto-hide behavior: either update implementation to hide heading when `message` is non-empty, or update the existing test to match prop-driven behavior
 
 ### Add missing test coverage

@@ -1,7 +1,7 @@
 import { ChatOverlay } from '@epam/ai-dial-chat-overlay';
 import {
   DialDangerButton,
-  DialInput,
+  Input,
   DialNeutralButton,
   DialSelectField,
 } from '@epam/ai-dial-ui-kit';
@@ -86,14 +86,14 @@ const ConversationListControls: FC<ConversationListControlsProps> = ({
         <fieldset className="m-0 min-w-0 rounded-lg border border-secondary px-3 py-3">
           <legend className="px-1 font-semibold">Create persisted</legend>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,220px),1fr))] items-end gap-2.5">
-            <DialInput
+            <Input
               id="deployment-id"
               className="min-h-11"
               labelProps={{ label: 'Deployment id (optional)' }}
               value={deploymentId}
               onChange={(value) => setDeploymentId(value ?? '')}
             />
-            <DialInput
+            <Input
               id="first-message"
               className="min-h-11"
               labelProps={{ label: 'First message (optional)' }}
@@ -124,7 +124,7 @@ const ConversationListControls: FC<ConversationListControlsProps> = ({
               }))}
               onChange={(value) => setConversationId(value as string)}
             />
-            <DialInput
+            <Input
               id="conversation-id-override"
               className="min-h-11"
               labelProps={{ label: 'Conversation id override' }}
@@ -132,7 +132,7 @@ const ConversationListControls: FC<ConversationListControlsProps> = ({
               value={conversationId}
               onChange={(value) => setConversationId(value ?? '')}
             />
-            <DialInput
+            <Input
               id="new-conversation-name"
               className="min-h-11"
               labelProps={{ label: 'New conversation name' }}

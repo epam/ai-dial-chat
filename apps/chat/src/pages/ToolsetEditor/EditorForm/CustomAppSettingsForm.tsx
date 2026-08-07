@@ -1,4 +1,5 @@
-import { Input, TagInput, Textarea } from '@epam/ai-dial-kit';
+import { TagInput } from '@epam/ai-dial-kit';
+import { Input, Textarea } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';

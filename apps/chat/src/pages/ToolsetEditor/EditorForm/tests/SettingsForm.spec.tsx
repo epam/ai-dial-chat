@@ -76,7 +76,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
-  DialInput: ({
+  Input: ({
     value,
     onChange,
     labelProps,

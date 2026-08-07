@@ -43,8 +43,8 @@
       effects, no i18n, no app imports.
 - [x] 2.3 Implemented the controlled `DeploymentCreationForm` component
       (`libs/deployment-creation-form/src/components/DeploymentCreationForm/DeploymentCreationForm.tsx`)
-      rendering `DialInput` (name), `DialTextarea` (description), `DialInput` (iconUrl),
-      `DialInput` (version), `DialTagInput` (topics), and a new `DialInput` (intro,
+      rendering `Input` (name), `Textarea` (description), `Input` (iconUrl),
+      `Input` (version), `DialTagInput` (topics), and a new `Input` (intro,
       single-line, `maxLength` HTML attribute) from `@epam/ai-dial-ui-kit`, wired to
       `values`/`errors`/`onChange`, with a default `flex flex-col gap-4` layout and an
       optional `classNames.root`/`classNames.field` passthrough.
@@ -64,7 +64,7 @@
 
 - [x] 3.1 Refactored `apps/chat/src/pages/AppsEditor/GeneralForm.tsx` to hold its `useState`
       values in the `DeploymentCreationFormValues` shape (adding `intro`), render
-      `<DeploymentCreationForm>` in place of the inline `DialInput`/`DialTextarea`/`DialTagInput`
+      `<DeploymentCreationForm>` in place of the inline `Input`/`Textarea`/`DialTagInput`
       block, and keep its own two-pane layout, `Card` preview, and Cancel/Next buttons around
       it.
 - [x] 3.2 `handleSubmit` calls `validateDeploymentCreationFields(values, { validateNamePattern:
@@ -174,7 +174,7 @@
       pre-existing, intentional app-shell behavior rather than regressions from this change:
       the chat-history-panel auto-collapsing to an icon rail on non-conversation routes
       (`apps/chat/src/app/app.tsx`'s `isHistoryPanelOpen` effect — also affects Catalog and
-      File Manager), and `DialInput`'s built-in 4px corner radius (used identically
+      File Manager), and `Input`'s built-in 4px corner radius (used identically
       app-wide, not something specific to the new lib).
 - [x] 9.4 Added `Input`, `Textarea`, and `TagInput` wrappers to `libs/ai-dial-kit`
       (`libs/ai-dial-kit/src/components/{Input,Textarea,TagInput}/`), following the
@@ -184,19 +184,19 @@
       (`Input.spec.tsx`, `Textarea.spec.tsx`, 4 tests, passing) and JSDoc per `libs.md`.
 - [x] 9.4.1 Follow-up after further review: the field **border color**, not just page-level
       dividers, was also flagged as mismatched against `libs/catalog`. Added
-      `Input.scss` (imported by both `Input.tsx` and `Textarea.tsx`, since `DialTextarea`
+      `Input.scss` (imported by both `Input.tsx` and `Textarea.tsx`, since `Textarea`
       shares the `.dial-input` class) overriding the resting `border-color` from
       `--stroke-primary` to `--stroke-tertiary`, with explicit `!important` restores for the
       hover/focus/error state colors so those interactions keep working. `TagInput` still has
       no border-color override (same missing-CSS-hook limitation as its radius).
 - [x] 9.4.2 Found and fixed a real bug in 9.4/9.4.1: `Input.tsx` was passing the radius/border
-      overrides through the `className` prop, which `DialInput` forwards to its **inner**,
-      always-borderless `<input>` (`border-0 bg-transparent`) — `DialInput`'s real visible
+      overrides through the `className` prop, which `Input` forwards to its **inner**,
+      always-borderless `<input>` (`border-0 bg-transparent`) — `Input`'s real visible
       border lives on a separate wrapper `<div>` ("input-container"), reachable only via the
       `wrapperClassName` prop. This meant the radius override never reached the real border
       (still square), and forcing `border-radius` onto the inner input — which has
       `overflow: hidden` for text-overflow ellipsis — clipped text/cursor near the corners on
-      focus (`DialTextarea` does put `.dial-input` directly on the `<textarea>`, so it wasn't
+      focus (`Textarea` does put `.dial-input` directly on the `<textarea>`, so it wasn't
       affected). Fixed by moving `border-radius` into the global `.dial-input` class override
       in `Input.scss` (reaches the wrapper `<div>` for `Input` and the `<textarea>` for
       `Textarea` uniformly) and removing all `className` manipulation from `Input.tsx`/
@@ -216,11 +216,11 @@
       `tsconfig.lib.json` project reference; updated `DeploymentCreationForm.spec.tsx` to mock
       `@epam/ai-dial-kit` instead of `@epam/ai-dial-ui-kit` (18/18 tests passing).
 - [x] 9.6 Added a "Text fields" entry to `.claude/rules/all-tsx.md` banning direct
-      `DialInput`/`DialTextarea`/`DialTagInput` imports app-wide, alongside the existing
+      `Input`/`Textarea`/`DialTagInput` imports app-wide, alongside the existing
       Button/SearchBar/Spinner/TabRow entries.
 - [ ] 9.7 Not done (flagged as follow-up, see design.md Open Questions 6–7): no override was
       found/applied for `TagInput`'s own corner radius (no stable CSS class hook located in
-      the shipped ui-kit bundle); other existing `DialInput`/`DialTextarea`/`DialTagInput`
+      the shipped ui-kit bundle); other existing `Input`/`Textarea`/`DialTagInput`
       call sites in the app (Toolset's `SettingsForm.tsx`, `AuthSection.tsx`) were not migrated
       to the new wrappers.
 - [x] 9.8 Re-verified after all 9.x changes: `npm exec nx test/lint/typecheck` clean for

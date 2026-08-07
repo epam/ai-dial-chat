@@ -1,5 +1,5 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Input, Textarea } from '@epam/ai-dial-kit';
+import { Input, Textarea } from '@epam/ai-dial-ui-kit';
 import {
   Calendar,
   CalendarMode,

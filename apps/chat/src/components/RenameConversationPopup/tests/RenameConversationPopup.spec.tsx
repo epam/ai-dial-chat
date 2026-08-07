@@ -50,7 +50,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         </button>
       </div>
     ) : null,
-  DialInput: ({
+  Input: ({
     value,
     placeholder,
     onChange,
@@ -77,7 +77,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {error && <p role="alert">{error}</p>}
     </>
   ),
-  DialSpinner: () => <span role="status">Loading</span>,
+  Spinner: () => <span role="status">Loading</span>,
   DIAL_ICON_SIZE: { SM: 18, MD: 20 },
   GhostIconButton: ({
     icon,
