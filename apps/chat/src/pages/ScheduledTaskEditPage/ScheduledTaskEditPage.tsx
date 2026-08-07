@@ -6,23 +6,33 @@ import {
   ScheduledTaskFrequency,
   ScheduledTaskScheduleType,
 } from '@epam/ai-dial-scheduled-tasks';
-import type { ScheduledTaskDto } from '@epam/chat-api-client';
 import { GhostButton, NotificationVariant } from '@epam/ai-dial-ui-kit';
-import { memo, useCallback, useEffect, useMemo, useState, type FC } from 'react';
+import type { ScheduledTaskDto } from '@epam/chat-api-client';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FC,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
+import { getScheduledTaskDetailRoute } from '../../constants/routes';
 import {
   ButtonsI18nKeys,
   EditorI18nKeys,
   ScheduledTasksI18nKeys,
 } from '../../constants/translation-keys';
-import { getScheduledTaskDetailRoute } from '../../constants/routes';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
-import { getApiErrorDetails, getApiErrorStatus } from '../../server-api/api-error';
+import {
+  getApiErrorDetails,
+  getApiErrorStatus,
+} from '../../server-api/api-error';
 import {
   getScheduledTask,
   updateScheduledTask,

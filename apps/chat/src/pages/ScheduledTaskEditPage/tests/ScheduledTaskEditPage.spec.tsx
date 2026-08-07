@@ -32,8 +32,7 @@ const getScheduledTaskMock = vi.fn();
 const updateScheduledTaskMock = vi.fn();
 vi.mock('../../../server-api/scheduled-tasks.api', () => ({
   getScheduledTask: (scheduleId: string) => getScheduledTaskMock(scheduleId),
-  updateScheduledTask: (...args: unknown[]) =>
-    updateScheduledTaskMock(...args),
+  updateScheduledTask: (...args: unknown[]) => updateScheduledTaskMock(...args),
 }));
 
 const getApiErrorStatusMock = vi.fn();
@@ -96,7 +95,6 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
   ),
 }));
 
-const EditTargetStub = () => <div>scheduled task edit page</div>;
 const DetailTargetStub = () => <div>scheduled task detail page</div>;
 
 const renderEditPage = (scheduleId = 'sched_123') =>
@@ -147,7 +145,7 @@ describe('ScheduledTaskEditPage', () => {
   });
 
   it('fetches the task on mount', () => {
-    getScheduledTaskMock.mockReturnValue(new Promise(() => {}));
+    getScheduledTaskMock.mockReturnValue(new Promise(() => undefined));
     renderEditPage();
 
     expect(getScheduledTaskMock).toHaveBeenCalledWith('sched_123');
@@ -205,9 +203,7 @@ describe('ScheduledTaskEditPage', () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(
-          'scheduledTasks.edit.unsupportedTriggerMessage',
-        ),
+        screen.getByText('scheduledTasks.edit.unsupportedTriggerMessage'),
       ).toBeTruthy(),
     );
     expect(screen.queryByText(/displayName:/)).not.toBeTruthy();
@@ -219,9 +215,7 @@ describe('ScheduledTaskEditPage', () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(
-          'scheduledTasks.edit.unsupportedTriggerMessage',
-        ),
+        screen.getByText('scheduledTasks.edit.unsupportedTriggerMessage'),
       ).toBeTruthy(),
     );
   });
@@ -262,9 +256,7 @@ describe('ScheduledTaskEditPage', () => {
     await waitFor(() =>
       expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
     );
-    await userEvent.click(
-      screen.getByRole('button', { name: 'buttons.save' }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     expect(updateScheduledTaskMock).toHaveBeenCalledOnce();
     expect(updateScheduledTaskMock.mock.calls[0][0]).toBe('sched_123');
@@ -274,7 +266,7 @@ describe('ScheduledTaskEditPage', () => {
 
   it('prevents a second submit while the first call is still pending', async () => {
     getScheduledTaskMock.mockResolvedValue(baseTask);
-    updateScheduledTaskMock.mockReturnValue(new Promise(() => {}));
+    updateScheduledTaskMock.mockReturnValue(new Promise(() => undefined));
     renderEditPage();
 
     await waitFor(() =>
@@ -301,9 +293,7 @@ describe('ScheduledTaskEditPage', () => {
       screen.getByRole('textbox', { name: 'displayName' }),
       ' edited',
     );
-    await userEvent.click(
-      screen.getByRole('button', { name: 'buttons.save' }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     await waitFor(() => expect(showNotificationMock).toHaveBeenCalledOnce());
     expect(showNotificationMock).toHaveBeenCalledWith(
@@ -311,9 +301,9 @@ describe('ScheduledTaskEditPage', () => {
     );
     expect(screen.queryByText('scheduled task detail page')).not.toBeTruthy();
     expect(
-      screen.getByRole('button', { name: 'buttons.save' }).hasAttribute(
-        'disabled',
-      ),
+      screen
+        .getByRole('button', { name: 'buttons.save' })
+        .hasAttribute('disabled'),
     ).toBe(false);
   });
 
@@ -326,9 +316,7 @@ describe('ScheduledTaskEditPage', () => {
     await waitFor(() =>
       expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
     );
-    await userEvent.click(
-      screen.getByRole('button', { name: 'buttons.save' }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     await waitFor(() =>
       expect(

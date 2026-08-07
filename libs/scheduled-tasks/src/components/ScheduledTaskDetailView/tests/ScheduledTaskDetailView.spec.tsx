@@ -17,7 +17,6 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
 });
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
-  ButtonVariant: { Neutral: 'neutral' },
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   DialSpinner: () => <div role="progressbar" />,
   DialSkeleton: (props: Record<string, unknown>) => (
@@ -39,7 +38,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     icon?: ReactNode;
     'aria-label'?: string;
   }) => <button onClick={onClick} aria-label={ariaLabel} />,
-  OutlinedButton: ({
+  NeutralButton: ({
     label,
     onClick,
   }: {
@@ -53,7 +52,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconCircleCheck: () => <svg data-icon="success" />,
   IconCircleX: () => <svg data-icon="error" />,
   IconAlertTriangle: () => <svg data-icon="missed" />,
-  IconEdit: () => <svg data-icon="edit" />,
+  IconPencilMinus: () => <svg data-icon="edit" />,
 }));
 
 const labels: ScheduledTaskDetailViewLabels = {
@@ -131,9 +130,7 @@ describe('ScheduledTaskDetailView', () => {
       />,
     );
 
-    expect(
-      screen.queryByRole('button', { name: 'Edit' }),
-    ).not.toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeTruthy();
   });
 
   it('renders an Edit button when onEdit is supplied', () => {

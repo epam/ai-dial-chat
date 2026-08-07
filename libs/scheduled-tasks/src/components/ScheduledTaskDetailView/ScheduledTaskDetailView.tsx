@@ -4,21 +4,20 @@ import {
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
-  ButtonVariant,
   DIAL_ICON_SIZE,
   DialSkeleton,
   DialSkeletonVariant,
   DialSpinner,
   GhostButton,
   GhostIconButton,
-  OutlinedButton,
+  NeutralButton,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconAlertTriangle,
   IconArrowLeft,
   IconCircleCheck,
   IconCircleX,
-  IconEdit,
+  IconPencilMinus,
 } from '@tabler/icons-react';
 import { type FC, type KeyboardEvent, useEffect, useRef } from 'react';
 import type { ScheduledTaskDetailViewProps } from '../../models/scheduled-task-detail-view-props';
@@ -296,10 +295,11 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
         </div>
 
         {onEdit && (
-          <OutlinedButton
-            variant={ButtonVariant.Neutral}
+          <NeutralButton
             label={labels.editButtonLabel}
-            iconBefore={<IconEdit size={DIAL_ICON_SIZE.SM} aria-hidden />}
+            iconBefore={
+              <IconPencilMinus size={DIAL_ICON_SIZE.SM} aria-hidden />
+            }
             onClick={onEdit}
             className="shrink-0"
           />

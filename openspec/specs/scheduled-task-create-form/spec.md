@@ -329,7 +329,7 @@ The application SHALL expose a lazy-loaded `ScheduledTaskEditPage` at `ROUTES.Sc
 
 ### Requirement: Reverse trigger mapping is fail-closed for unsupported or incomplete tasks
 
-`apps/chat/src/utils/scheduled-task-trigger.ts` SHALL export a reverse mapping function that converts a `ScheduledTaskDto` into `ScheduledTaskCreateFormValues`, inverting `buildCronFields`/`buildCronWindowBoundary`'s UTC→local conversion using the same reference-`Date`-plus-getters technique (browser timezone/DST handling, not manual offset arithmetic). The function SHALL return a discriminated result — success with mapped `values`, or failure with a reason — rather than a value that may itself be invalid. Mapping SHALL fail when: the task's `trigger` shape (cron fields or day-of-week/day-of-month combination) falls outside what `ScheduledTaskCreateFormValues`' schedule-type/frequency fields can express; `triggerType` does not correspond to a schedule type the form supports; or `model`/`prompt` is missing or empty on the DTO. On mapping failure, `ScheduledTaskEditPage` SHALL render a localized, non-destructive error message and SHALL NOT mount `ScheduledTaskCreateForm` in an editable/submittable state — the original task's trigger is never read, coerced, and re-submitted.
+`apps/chat/src/utils/scheduled-task-trigger.ts` SHALL export a reverse mapping function that converts a `ScheduledTaskDto` into `ScheduledTaskCreateFormValues`, inverting `buildCronFields`/`buildCronWindowBoundary`'s UTC→local conversion using the same reference-`Date`-plus-getters technique (browser timezone/DST handling, not manual offset arithmetic). The function SHALL return a discriminated result — success with mapped `values`, or failure with a reason — rather than a value that may itself be invalid. `trigger.cron.fields` MUST be evaluated by presence of a non-`null` value per key, not by key presence alone — DIAL Scheduler always returns every cron field key, using `null` for ones that are not set. Mapping SHALL fail when: the task's `trigger` shape (cron fields with a set, non-`null` value outside `hour`/`minute`/`day`/`day_of_week`, or both `day` and `day_of_week` set) falls outside what `ScheduledTaskCreateFormValues`' schedule-type/frequency fields can express; `triggerType` does not correspond to a schedule type the form supports; or `model`/`prompt` is missing or empty on the DTO. On mapping failure, `ScheduledTaskEditPage` SHALL render a localized, non-destructive error message and SHALL NOT mount `ScheduledTaskCreateForm` in an editable/submittable state — the original task's trigger is never read, coerced, and re-submitted.
 
 #### Scenario: Once-schedule task round-trips through reverse mapping
 
@@ -360,6 +360,11 @@ The application SHALL expose a lazy-loaded `ScheduledTaskEditPage` at `ROUTES.Sc
 
 - **WHEN** a task's `trigger.cron.fields` encodes a shape the create form's schedule-type/frequency controls cannot represent (e.g. multiple `day_of_week` values, or a field the form has no control for)
 - **THEN** the reverse mapper returns a failure result, no `ScheduledTaskCreateFormValues` are produced, and the edit page shows a non-destructive "can't be edited here" message with Save unavailable
+
+#### Scenario: Null-valued cron fields are treated as absent, not as unsupported
+
+- **WHEN** a task's `trigger.cron.fields` is the full DIAL Scheduler shape with every field key present but unset ones set to `null` (e.g. `{ hour: '9', minute: '0', day: null, week: null, year: null, month: null, second: null, day_of_week: null }`)
+- **THEN** the reverse mapper succeeds as a plain daily schedule — the presence of a field key alone (with a `null` value) MUST NOT be treated as an unsupported extra field or as a set `day`/`day_of_week`
 
 #### Scenario: Missing required fields fails closed
 

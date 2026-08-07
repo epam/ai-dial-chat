@@ -297,7 +297,7 @@ describe('ScheduledTaskDetailPage', () => {
 
   it('does not pass onEdit while the task is loading', () => {
     useFeatureFlagMock.mockReturnValue(true);
-    getScheduledTaskMock.mockReturnValue(new Promise(() => {})); // never resolves
+    getScheduledTaskMock.mockReturnValue(new Promise(() => undefined)); // never resolves
     renderDetailPage();
 
     expect(

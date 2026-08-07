@@ -378,6 +378,39 @@ describe('mapScheduledTaskDtoToFormValues', () => {
     });
   });
 
+  it('treats null-valued cron fields as absent, not as unsupported extra keys', () => {
+    // DIAL Scheduler always returns every cron field key, using `null` for
+    // unset ones — this must round-trip like a plain daily schedule.
+    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
+
+    const fields = {
+      day: null,
+      hour: '9',
+      week: null,
+      year: null,
+      month: null,
+      minute: '0',
+      second: null,
+      day_of_week: null,
+    } as unknown as Record<string, string>;
+
+    const result = mapScheduledTaskDtoToFormValues({
+      ...baseDto,
+      trigger: { cron: { fields } },
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.values.scheduleType).toBe(
+        ScheduledTaskScheduleType.Recurring,
+      );
+      expect(result.values.frequency).toBe(ScheduledTaskFrequency.Daily);
+      expect(result.values.time).toBe('11:00');
+      expect(result.values.dayOfWeek).toBeUndefined();
+      expect(result.values.dayOfMonth).toBeUndefined();
+    }
+  });
+
   it('fails closed when both day_of_week and day are present', () => {
     const result = mapScheduledTaskDtoToFormValues({
       ...baseDto,

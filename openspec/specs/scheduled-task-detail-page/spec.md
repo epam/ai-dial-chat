@@ -56,7 +56,7 @@ The application SHALL expose a lazy-loaded Scheduled Task Detail page at `ROUTES
 
 ### Requirement: Detail page header shows back navigation and title, plus an Edit action once loaded
 
-The detail page header SHALL render a back-navigation control and the task's `displayName` as its title on the start side. Activating the back control SHALL navigate to `ROUTES.ScheduledTasks`. Once the task has loaded successfully, the header SHALL additionally render an outlined Edit button with a pencil icon (`IconEdit` from `@tabler/icons-react`) and a localized "Edit" label on the inline-end side. Activating Edit SHALL navigate to `getScheduledTaskEditRoute(scheduleId)` for the task currently being viewed. The header SHALL NOT render Delete, Active-toggle, or Run-now controls in this iteration, and SHALL NOT render the Edit button while the task is loading or failed to load.
+The detail page header SHALL render a back-navigation control and the task's `displayName` as its title on the start side. Activating the back control SHALL navigate to `ROUTES.ScheduledTasks`. Once the task has loaded successfully, the header SHALL additionally render a `NeutralButton` (`@epam/ai-dial-ui-kit`) with a pencil icon (`IconPencilMinus` from `@tabler/icons-react`) and a localized "Edit" label on the inline-end side. Activating Edit SHALL navigate to `getScheduledTaskEditRoute(scheduleId)` for the task currently being viewed. The header SHALL NOT render Delete, Active-toggle, or Run-now controls in this iteration, and SHALL NOT render the Edit button while the task is loading or failed to load.
 
 #### Scenario: Back control returns to the list
 
@@ -66,7 +66,7 @@ The detail page header SHALL render a back-navigation control and the task's `di
 #### Scenario: Header shows back, title, and Edit once the task has loaded
 
 - **WHEN** the detail page renders with a successfully loaded task
-- **THEN** the header contains a back control and the task's `displayName` on the start side, an outlined Edit button with `IconEdit` and a localized "Edit" label on the end side, and no Delete/Active-toggle/Run-now control is present
+- **THEN** the header contains a back control and the task's `displayName` on the start side, a `NeutralButton` with `IconPencilMinus` and a localized "Edit" label on the end side, and no Delete/Active-toggle/Run-now control is present
 
 #### Scenario: Edit button is absent while loading or on error
 

@@ -191,7 +191,7 @@ const isoToLocalDateOnly = (iso: string): string => {
  * getters, mirroring the forward conversion's reference-`Date` technique.
  */
 const parseCronFields = (
-  fields: Record<string, string>,
+  fields: Record<string, string | null | undefined>,
 ):
   | {
       ok: true;
@@ -200,17 +200,23 @@ const parseCronFields = (
       dayOfMonth?: string;
     }
   | { ok: false } => {
-  const extraKeys = Object.keys(fields).filter(
-    (key) => !CRON_FIELD_KEYS.has(key),
+  /* DIAL Scheduler always returns every cron field key, using `null` for
+   * ones that aren't set — so presence-of-key checks (`in`/Object.keys)
+   * must be replaced with presence-of-value checks. */
+  const presentKeys = new Set(
+    Object.entries(fields)
+      .filter(([, value]) => value != null)
+      .map(([key]) => key),
   );
-  const hasDayOfWeek = 'day_of_week' in fields;
-  const hasDayOfMonth = 'day' in fields;
+  const extraKeys = [...presentKeys].filter((key) => !CRON_FIELD_KEYS.has(key));
+  const hasDayOfWeek = presentKeys.has('day_of_week');
+  const hasDayOfMonth = presentKeys.has('day');
 
   if (
     extraKeys.length > 0 ||
     (hasDayOfWeek && hasDayOfMonth) ||
-    !('hour' in fields) ||
-    !('minute' in fields)
+    !presentKeys.has('hour') ||
+    !presentKeys.has('minute')
   ) {
     return { ok: false };
   }
@@ -258,13 +264,20 @@ export const mapScheduledTaskDtoToFormValues = (
   dto: ScheduledTaskDto,
 ): ScheduledTaskDtoMappingResult => {
   if (!dto.model || !dto.prompt) {
-    return { ok: false, reason: UnsupportedTriggerReason.MissingRequiredFields };
+    return {
+      ok: false,
+      reason: UnsupportedTriggerReason.MissingRequiredFields,
+    };
   }
 
-  const hasDate = !!dto.trigger.date;
-  const hasCron = !!dto.trigger.cron;
+  const { date, cron } = dto.trigger;
+  const hasDate = !!date;
+  const hasCron = !!cron;
   if (hasDate === hasCron) {
-    return { ok: false, reason: UnsupportedTriggerReason.UnsupportedTriggerType };
+    return {
+      ok: false,
+      reason: UnsupportedTriggerReason.UnsupportedTriggerType,
+    };
   }
 
   const base: Pick<
@@ -283,13 +296,19 @@ export const mapScheduledTaskDtoToFormValues = (
       values: {
         ...base,
         scheduleType: ScheduledTaskScheduleType.Once,
-        runAt: isoToLocalDateTime(dto.trigger.date as string),
+        runAt: isoToLocalDateTime(date as string),
         time: '00:00',
       },
     };
   }
 
-  const cron = dto.trigger.cron!;
+  if (!cron) {
+    return {
+      ok: false,
+      reason: UnsupportedTriggerReason.UnsupportedTriggerType,
+    };
+  }
+
   const parsed = parseCronFields(cron.fields);
   if (!parsed.ok) {
     return { ok: false, reason: UnsupportedTriggerReason.UnsupportedCronShape };
@@ -311,7 +330,9 @@ export const mapScheduledTaskDtoToFormValues = (
       time: parsed.time,
       ...(parsed.dayOfWeek ? { dayOfWeek: parsed.dayOfWeek } : {}),
       ...(parsed.dayOfMonth ? { dayOfMonth: parsed.dayOfMonth } : {}),
-      ...(cron.startDate ? { startDate: isoToLocalDateOnly(cron.startDate) } : {}),
+      ...(cron.startDate
+        ? { startDate: isoToLocalDateOnly(cron.startDate) }
+        : {}),
       ...(cron.endDate ? { endDate: isoToLocalDateOnly(cron.endDate) } : {}),
     },
   };
