@@ -41,6 +41,7 @@ import {
   useFavoriteApplications,
 } from '../../context/FavoriteApplicationsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import {
@@ -100,6 +101,7 @@ interface Props {
 
 const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const itemIdParam = searchParams.get(CatalogQuery.ItemId) ?? undefined;
@@ -179,18 +181,22 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const catalogItems = useMemo(() => {
     return [
       ...deployments.map((d) =>
-        mapDeploymentToCatalogItem(
-          d,
+        mapDeploymentToCatalogItem(d, {
           favoriteIds,
-          undefined,
           t,
-          quickAppSchemaId ? [quickAppSchemaId] : [],
-          isCustomAppsEnabled,
-        ),
+          editableSchemaIds: quickAppSchemaId ? [quickAppSchemaId] : [],
+          isCustomAppsEditable: isCustomAppsEnabled,
+          activeLocale: language,
+        }),
       ),
       ...(isToolsetsEnabled
         ? toolsets.map((toolset) =>
-            mapToolsetToCatalogItem(toolset, favoriteIds, isAdmin, t),
+            mapToolsetToCatalogItem(toolset, {
+              favoriteIds,
+              isAdmin,
+              t,
+              activeLocale: language,
+            }),
           )
         : []),
     ];
@@ -198,6 +204,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     deployments,
     favoriteIds,
     t,
+    language,
     toolsets,
     quickAppSchemaId,
     isAdmin,

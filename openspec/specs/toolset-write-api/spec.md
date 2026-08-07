@@ -51,6 +51,41 @@ valid.
 - **WHEN** DIAL Core returns an error status during create
 - **THEN** the endpoint maps it to the corresponding typed HTTP error (e.g. 502/503)
 
+### Requirement: Additional-locale translations on create and update
+The create and update request bodies SHALL accept an optional `locales` array of
+`{language, name, description}` entries and an optional `primaryLocale` string. When `locales`
+is non-empty, `primaryLocale` SHALL be required by DTO validation; each entry's `language` SHALL
+be validated against a locale-code pattern, and any unrecognized property on an entry (such as a
+client-side `id`) SHALL be rejected. When `locales` is absent or empty, the service SHALL send
+DIAL Core a plain-string `displayName`/`description`, identical to a request that predates this
+field. When `locales` is non-empty, the service SHALL compose `displayName`/`description` into a
+map keyed by `primaryLocale` (seeded from `name`/`description`) plus one key per `locales` entry.
+
+#### Scenario: Create with additional locales composes a locale map
+- **WHEN** an authenticated user POSTs a toolset body with one `locales` entry and a
+  `primaryLocale`
+- **THEN** the service sends DIAL Core a `displayName`/`description` map keyed by
+  `primaryLocale` and by each entry's `language`
+
+#### Scenario: Create without locales sends a plain string
+- **WHEN** an authenticated user POSTs a toolset body with `locales` omitted
+- **THEN** the service sends DIAL Core a plain-string `displayName`, unchanged from a request
+  that predates additional-locale support
+
+#### Scenario: Non-empty locales without primaryLocale is rejected
+- **WHEN** an authenticated user POSTs a toolset body with a non-empty `locales` array and no
+  `primaryLocale`
+- **THEN** the endpoint responds with a 400 and does not call DIAL Core
+
+#### Scenario: A locale entry with a stray client-side id is rejected
+- **WHEN** an authenticated user POSTs a `locales` entry that includes an `id` property
+- **THEN** the endpoint responds with a 400 and does not call DIAL Core
+
+#### Scenario: Update without locales replaces an existing locale map with a plain string
+- **WHEN** an authenticated user PATCHes an existing toolset whose `displayName` is currently a
+  locale map, omitting `locales` from the request body
+- **THEN** the service sends DIAL Core a plain-string `displayName`, replacing the existing map
+
 ### Requirement: Update and delete toolset endpoints
 The backend SHALL expose `PATCH /api/v1/toolsets/:toolsetName` and
 `DELETE /api/v1/toolsets/:toolsetName` that proxy DIAL Core, validate the toolset name

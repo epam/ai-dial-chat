@@ -782,7 +782,19 @@
     "versionLabel": "Version",
     "versionPlaceholder": "e.g. 1.0.0",
     "topicsLabel": "Topics",
-    "topicsPlaceholder": "Add a topic"
+    "topicsPlaceholder": "Add a topic",
+    "locales": {
+      "summaryLabel": "Locales",
+      "rowLabel": "Locale",
+      "popupTitle": "Add locale",
+      "addLocaleLabel": "Add locale",
+      "languageLabel": "Language",
+      "nameLabel": "Name",
+      "namePlaceholder": "Enter name",
+      "descriptionLabel": "About",
+      "descriptionPlaceholder": "Enter brief description",
+      "deleteAriaLabel": "Delete locale"
+    }
   },
   "appsEditor": {
     "exitPreviewButton": "Exit preview",

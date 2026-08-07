@@ -36,6 +36,7 @@ import {
   updateToolset,
 } from '../../server-api/toolsets';
 import { ROUTES } from '../../types/routes';
+import { PRIMARY_LOCALE, resolveLocalizedText } from '../../utils/locale';
 import {
   extractToolsetApiErrorMessage,
   formToToolsetBody,
@@ -131,7 +132,9 @@ const ToolsetEditor: FC = () => {
         if (!cancelled) {
           setForm(
             getDefaultToolsetForm(
-              (data ?? []).map((item) => item.displayName ?? ''),
+              (data ?? []).map((item) =>
+                resolveLocalizedText(item.displayName, PRIMARY_LOCALE),
+              ),
             ),
           );
         }

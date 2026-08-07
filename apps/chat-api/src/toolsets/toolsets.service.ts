@@ -14,7 +14,9 @@ import {
   handleDialFetchError,
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
+import type { LocalizedText } from '../common/types/localized-text';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import { composeLocalizedFields } from '../common/utils/compose-localized-fields';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { getResourceDisplayNameFallback } from '../common/utils/resource-name';
 import { safeDecodeURIComponent } from '../common/utils/uri';
@@ -74,11 +76,11 @@ interface DialToolsetResource {
 interface RawDialToolset {
   id: string;
   toolset: string;
-  display_name?: string;
-  displayName?: string;
+  display_name?: LocalizedText;
+  displayName?: LocalizedText;
   display_version?: string;
   displayVersion?: string;
-  description?: string;
+  description?: LocalizedText;
   icon_url?: string;
   iconUrl?: string;
   owner?: string;
@@ -102,14 +104,18 @@ interface RawDialToolset {
   authSettings?: RawAuthSettings;
 }
 
+type SaveToolSetBody = Parameters<
+  DialClientService['client']['saveToolSet']
+>[2]['body'];
+
 type DialToolsetSaveBody = {
-  displayName: string;
+  displayName: LocalizedText;
   displayVersion: string;
   endpoint: string;
   transport: ToolsetBodyDto['transport'];
   allowed_tools: string[];
   authSettings: DialAuthSettings;
-  description?: string;
+  description?: LocalizedText;
   iconUrl?: string;
   descriptionKeywords?: string[];
   reference?: string;
@@ -230,15 +236,21 @@ const toDialToolsetBody = (
     toDialAuthSettings(body.authSettings),
     existingAuthSettings,
   );
+  const { displayName, description } = composeLocalizedFields(
+    body.name,
+    body.description,
+    body.locales,
+    body.primaryLocale,
+  );
   const dialBody: DialToolsetSaveBody = {
-    displayName: body.name,
+    displayName,
     displayVersion: version,
     endpoint: body.endpoint.trim(),
     transport: body.transport,
     allowed_tools: body.allowedTools ?? [],
     authSettings,
   };
-  if (body.description != null) dialBody.description = body.description;
+  if (description != null) dialBody.description = description;
   if (body.iconUrl != null) dialBody.iconUrl = body.iconUrl;
   if (body.topics != null) dialBody.descriptionKeywords = body.topics;
   if (body.reference != null) dialBody.reference = body.reference;
@@ -883,7 +895,10 @@ export class ToolsetsService {
 
       const response = await this.dialClient.client.saveToolSet(bucket, path, {
         headers: authHeaders,
-        body: toDialToolsetBody(body, version),
+        // The SDK types `displayName`/`description` as plain `string`; DIAL
+        // Core actually accepts a locale map too. Remove this cast when the
+        // SDK's toolset schema is widened to match.
+        body: toDialToolsetBody(body, version) as unknown as SaveToolSetBody,
       });
       if (response.error) {
         this.logger.warn(
@@ -929,7 +944,12 @@ export class ToolsetsService {
           : undefined;
       const response = await this.dialClient.client.saveToolSet(bucket, path, {
         headers: authHeaders,
-        body: toDialToolsetBody(body, version, existingAuthSettings),
+        // See the create-path comment above on the same SDK/DIAL Core mismatch.
+        body: toDialToolsetBody(
+          body,
+          version,
+          existingAuthSettings,
+        ) as unknown as SaveToolSetBody,
       });
       if (response.error) {
         this.logger.warn(

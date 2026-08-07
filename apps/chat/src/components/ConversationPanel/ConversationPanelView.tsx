@@ -54,6 +54,7 @@ import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import { useConversationExport } from '../../hooks/useConversationExport';
 import { useConversationImport } from '../../hooks/useConversationImport';
 import { useUiFeature } from '../../hooks/useUiFeature';
@@ -68,6 +69,7 @@ import {
 import { getConversationPath } from '../../utils/conversation-path';
 import { getModelIdFromConversationId } from '../../utils/get-model-id-from-conversation-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
+import { resolveLocalizedText } from '../../utils/locale';
 import ImportExportQueue from '../ImportExportQueue/ImportExportQueue';
 import PublishConversationPanelContainer from '../PublishConversationPanelContainer/PublishConversationPanelContainer';
 import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup';
@@ -113,6 +115,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   onDuplicateReadonly,
 }) => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
@@ -159,8 +162,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [deployments],
   );
   const deploymentNameByModelId = useMemo(
-    () => new Map(deployments.map((d) => [d.id, d.displayName ?? d.id])),
-    [deployments],
+    () =>
+      new Map(
+        deployments.map((d) => [
+          d.id,
+          resolveLocalizedText(d.displayName, language) || d.id,
+        ]),
+      ),
+    [deployments, language],
   );
 
   const panelActiveConversationId = useMemo(

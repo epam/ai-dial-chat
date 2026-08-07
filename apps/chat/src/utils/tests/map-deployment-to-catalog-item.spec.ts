@@ -25,25 +25,19 @@ describe('mapDeploymentToCatalogItem', () => {
   };
 
   it('marks a deployment editable when it is the user’s own app built from the given schema', () => {
-    const result = mapDeploymentToCatalogItem(
-      baseDeployment,
-      undefined,
-      undefined,
+    const result = mapDeploymentToCatalogItem(baseDeployment, {
       t,
-      ['schemas/quickapps2'],
-    );
+      editableSchemaIds: ['schemas/quickapps2'],
+    });
 
     expect(result.isEditable).toBe(true);
   });
 
   it('is not editable when the app was built from a different schema', () => {
-    const result = mapDeploymentToCatalogItem(
-      baseDeployment,
-      undefined,
-      undefined,
+    const result = mapDeploymentToCatalogItem(baseDeployment, {
       t,
-      ['schemas/other'],
-    );
+      editableSchemaIds: ['schemas/other'],
+    });
 
     expect(result.isEditable).toBe(false);
   });
@@ -51,22 +45,14 @@ describe('mapDeploymentToCatalogItem', () => {
   it('is not editable when the deployment does not belong to the current user', () => {
     const result = mapDeploymentToCatalogItem(
       { ...baseDeployment, isMy: false },
-      undefined,
-      undefined,
-      t,
-      ['schemas/quickapps2'],
+      { t, editableSchemaIds: ['schemas/quickapps2'] },
     );
 
     expect(result.isEditable).toBe(false);
   });
 
   it('is not editable when no editable schema id is supplied', () => {
-    const result = mapDeploymentToCatalogItem(
-      baseDeployment,
-      undefined,
-      undefined,
-      t,
-    );
+    const result = mapDeploymentToCatalogItem(baseDeployment, { t });
 
     expect(result.isEditable).toBe(false);
   });
@@ -74,10 +60,7 @@ describe('mapDeploymentToCatalogItem', () => {
   it('marks a shared deployment editable when the user has WRITE access', () => {
     const result = mapDeploymentToCatalogItem(
       { ...baseDeployment, isMy: false, canEdit: true },
-      undefined,
-      undefined,
-      t,
-      ['schemas/quickapps2'],
+      { t, editableSchemaIds: ['schemas/quickapps2'] },
     );
 
     expect(result.isEditable).toBe(true);
@@ -86,10 +69,7 @@ describe('mapDeploymentToCatalogItem', () => {
   it('is not editable when shared with only READ access', () => {
     const result = mapDeploymentToCatalogItem(
       { ...baseDeployment, isMy: false, canEdit: false },
-      undefined,
-      undefined,
-      t,
-      ['schemas/quickapps2'],
+      { t, editableSchemaIds: ['schemas/quickapps2'] },
     );
 
     expect(result.isEditable).toBe(false);
@@ -103,11 +83,7 @@ describe('mapDeploymentToCatalogItem', () => {
         type: 'application',
         isMy: true,
       },
-      undefined,
-      undefined,
-      t,
-      [],
-      true,
+      { t, isCustomAppsEditable: true },
     );
 
     expect(result.isEditable).toBe(true);
@@ -121,11 +97,7 @@ describe('mapDeploymentToCatalogItem', () => {
         type: 'application',
         isMy: true,
       },
-      undefined,
-      undefined,
-      t,
-      [],
-      false,
+      { t, isCustomAppsEditable: false },
     );
 
     expect(result.isEditable).toBe(false);
@@ -139,11 +111,7 @@ describe('mapDeploymentToCatalogItem', () => {
         type: 'application',
         isMy: false,
       },
-      undefined,
-      undefined,
-      t,
-      [],
-      true,
+      { t, isCustomAppsEditable: true },
     );
 
     expect(result.isEditable).toBe(false);
@@ -156,21 +124,14 @@ describe('mapDeploymentToCatalogItem', () => {
         isMy: false,
         sharedWithMe: true,
       },
-      undefined,
-      undefined,
-      t,
+      { t },
     );
 
     expect(result.sharedWithMe).toBe(true);
   });
 
   it('defaults sharedWithMe to false when the field is absent from the DTO', () => {
-    const result = mapDeploymentToCatalogItem(
-      baseDeployment,
-      undefined,
-      undefined,
-      t,
-    );
+    const result = mapDeploymentToCatalogItem(baseDeployment, { t });
 
     expect(result.sharedWithMe).toBe(false);
   });
@@ -183,9 +144,7 @@ describe('mapDeploymentToCatalogItem', () => {
         sharedWithMe: true,
         applicationFolder: 'applications/internal-owner-bucket/team',
       },
-      undefined,
-      undefined,
-      t,
+      { t },
     );
 
     expect(result.folder).toEqual([CatalogI18nKeys.FolderShared, 'team']);
@@ -200,9 +159,7 @@ describe('mapDeploymentToCatalogItem', () => {
         sharedWithMe: true,
         applicationFolder: undefined,
       },
-      undefined,
-      undefined,
-      t,
+      { t },
     );
 
     expect(result.folder).toEqual([CatalogI18nKeys.FolderShared]);
@@ -214,9 +171,7 @@ describe('mapDeploymentToCatalogItem', () => {
         ...baseDeployment,
         applicationFolder: 'applications/internal-owner-bucket/team',
       },
-      undefined,
-      undefined,
-      t,
+      { t },
     );
 
     expect(result.folder).toEqual([CatalogI18nKeys.FolderPersonal]);
@@ -229,9 +184,7 @@ describe('mapDeploymentToCatalogItem', () => {
         isMy: false,
         applicationFolder: 'applications/public/team',
       },
-      undefined,
-      undefined,
-      t,
+      { t },
     );
 
     expect(result.folder).toEqual([CatalogI18nKeys.FolderPublic, 'team']);
@@ -246,9 +199,7 @@ describe('mapDeploymentToCatalogItem', () => {
         applicationFolder:
           'applications/8icWyDTafGxYQfmL4ZdHYbxsDCxTMXjgjFCSW/appdata/quick-apps',
       },
-      undefined,
-      undefined,
-      t,
+      { t },
     );
 
     expect(result.folder).toEqual([
@@ -267,21 +218,14 @@ describe('mapDeploymentToCatalogItem', () => {
         ...baseDeployment,
         features: { systemPrompt: false, temperature: false, mcp: true },
       },
-      undefined,
-      undefined,
-      t,
+      { t },
     );
 
     expect(result.supportsMcp).toBe(true);
   });
 
   it('sets supportsMcp to false when features.mcp is absent', () => {
-    const result = mapDeploymentToCatalogItem(
-      baseDeployment,
-      undefined,
-      undefined,
-      t,
-    );
+    const result = mapDeploymentToCatalogItem(baseDeployment, { t });
 
     expect(result.supportsMcp).toBe(false);
   });
@@ -389,9 +333,7 @@ describe('mapToolsetToCatalogItem', () => {
         toolset: 'toolsets/bucket/folder/salesforce',
         isMy: true,
       },
-      undefined,
-      false,
-      t,
+      { t },
     );
 
     expect(result.folder).toEqual([CatalogI18nKeys.FolderPersonal]);
@@ -408,9 +350,7 @@ describe('mapToolsetToCatalogItem', () => {
         isMy: false,
         sharedWithMe: true,
       },
-      undefined,
-      false,
-      t,
+      { isAdmin: false, t },
     );
 
     expect(result.folder).toEqual([CatalogI18nKeys.FolderShared]);
@@ -427,9 +367,7 @@ describe('mapToolsetToCatalogItem', () => {
         isMy: false,
         sharedWithMe: true,
       },
-      undefined,
-      false,
-      t,
+      { isAdmin: false, t },
     );
 
     expect(result.folder).toEqual([CatalogI18nKeys.FolderShared, 'team']);
@@ -445,8 +383,7 @@ describe('mapToolsetToCatalogItem', () => {
         toolset: 'toolsets/public/search__0.0.1',
         authSettings: { authenticationType: 'API_KEY' },
       },
-      undefined,
-      true,
+      { isAdmin: true },
     );
 
     expect(result.credentials).toMatchObject({
@@ -462,8 +399,7 @@ describe('mapToolsetToCatalogItem', () => {
         toolset: 'toolsets/public/search__0.0.1',
         authSettings: { authenticationType: 'API_KEY' },
       },
-      undefined,
-      false,
+      { isAdmin: false },
     );
 
     expect(result.credentials).toMatchObject({
@@ -479,8 +415,7 @@ describe('mapToolsetToCatalogItem', () => {
         toolset: 'toolsets/bucket/search__0.0.1',
         authSettings: { authenticationType: 'API_KEY' },
       },
-      undefined,
-      true,
+      { isAdmin: true },
     );
 
     expect(result.credentials).toMatchObject({

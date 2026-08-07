@@ -28,6 +28,7 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useToolsMenu } from '../../hooks/conversation/useToolsMenu';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import {
   createConversation as apiCreateConversation,
@@ -36,6 +37,7 @@ import {
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { getConversationPath } from '../../utils/conversation-path';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
+import { resolveLocalizedText } from '../../utils/locale';
 import { hasActiveToolConfig } from '../../utils/message-utils';
 import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import {
@@ -49,6 +51,7 @@ import {
  */
 const ConversationRoute: FC = () => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const { state } = useLocation();
   const routeDeploymentId = (state as { deploymentId?: string } | null)
@@ -117,12 +120,12 @@ const ConversationRoute: FC = () => {
     () =>
       items.map(({ id, displayName, iconUrl, type, inputAttachmentTypes }) => ({
         id,
-        displayName,
+        displayName: resolveLocalizedText(displayName, language),
         iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
         type,
         inputAttachmentTypes,
       })),
-    [items],
+    [items, language],
   );
 
   const {
