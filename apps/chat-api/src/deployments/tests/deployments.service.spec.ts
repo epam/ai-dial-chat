@@ -711,6 +711,33 @@ describe('DeploymentsService', () => {
       expect(result.deployments[0].isMy).toBe(false);
     });
 
+    it('sets isMy=false when the bucket hash only matches the app-name segment, not the bucket segment', async () => {
+      /*
+       * Regression: an app at applications/OTHER_BUCKET/BUCKET_HASH must not
+       * be misclassified as owned by BUCKET_HASH just because that value
+       * happens to appear as the app-name segment rather than the bucket
+       * segment (path index 1).
+       */
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          {
+            ...mockApplication,
+            id: 'applications/OTHER_BUCKET/BUCKET_HASH',
+            owner: 'Other User',
+          },
+        ],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'BUCKET_HASH',
+      );
+      expect(result.deployments[0].isMy).toBe(false);
+    });
+
     it('sets isMy=false for root-level app whose id has no path segments matching bucket', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({
@@ -1693,6 +1720,24 @@ describe('DeploymentsService', () => {
         type: 'model',
       });
       expect(sdkClient.getApplication).not.toHaveBeenCalled();
+    });
+
+    it('does not call getSharedResources for a model item, since Core never returns model resources there', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockResolvedValue(okResponse(mockModel));
+
+      const result = await service.resolveDeploymentItem(
+        'gpt-4o',
+        'token',
+        'user1',
+      );
+
+      expect(sdkClient.getSharedResources).not.toHaveBeenCalled();
+      expect(result).toMatchObject({
+        isMy: false,
+        canEdit: false,
+        sharedWithMe: false,
+      });
     });
 
     it('resolves an applications/-prefixed id via getApplication directly, skipping getModel', async () => {

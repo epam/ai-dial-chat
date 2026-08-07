@@ -10,6 +10,7 @@ import {
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { getResourceDisplayNameFallback } from '../common/utils/resource-name';
+import { computeItemOwnershipFlags } from '../common/utils/resource-ownership';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { HIDDEN_FILE } from '../constants/dial.constants';
 import { DialClientService } from '../dial/dial-client.service';
@@ -447,12 +448,22 @@ export class DeploymentsService {
       const item = mapToDeploymentItem(raw, this.featuredIds, this.hiddenTags);
       if (item == null) return null;
 
+      /*
+       * DIAL Core's getSharedResources only ever returns APPLICATION
+       * resources, so a model item can never appear in either URL set —
+       * skip the upstream round-trip entirely for non-application items.
+       */
       const { writableApplicationUrls, sharedApplicationUrls } =
-        await this.getSharedApplicationUrlSets(accessToken);
+        item.type === 'application'
+          ? await this.getSharedApplicationUrlSets(accessToken)
+          : {
+              writableApplicationUrls: new Set<string>(),
+              sharedApplicationUrls: new Set<string>(),
+            };
 
       return {
         ...item,
-        ...this.computeOwnershipFlags(
+        ...computeItemOwnershipFlags(
           item.id,
           bucket,
           writableApplicationUrls,
@@ -529,20 +540,6 @@ export class DeploymentsService {
         .filter((url): url is string => url != null),
     );
     return { writableApplicationUrls, sharedApplicationUrls };
-  }
-
-  private computeOwnershipFlags(
-    itemId: string,
-    bucket: string,
-    writableApplicationUrls: Set<string>,
-    sharedApplicationUrls: Set<string>,
-  ): Pick<DeploymentItemDto, 'isMy' | 'canEdit' | 'sharedWithMe'> {
-    const isMy = itemId.split('/').includes(bucket);
-    return {
-      isMy,
-      canEdit: isMy || writableApplicationUrls.has(itemId),
-      sharedWithMe: !isMy && sharedApplicationUrls.has(itemId),
-    };
   }
 
   async listDeployments(
@@ -622,7 +619,7 @@ export class DeploymentsService {
         item.type === 'toolset'
           ? toolsetsSet.has(item.id)
           : deploymentsSet.has(item.id),
-      ...this.computeOwnershipFlags(
+      ...computeItemOwnershipFlags(
         item.id,
         bucket,
         writableApplicationUrls,

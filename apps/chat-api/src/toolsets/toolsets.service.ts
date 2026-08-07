@@ -17,6 +17,7 @@ import {
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { getResourceDisplayNameFallback } from '../common/utils/resource-name';
+import { computeItemOwnershipFlags } from '../common/utils/resource-ownership';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { HIDDEN_FILE } from '../constants/dial.constants';
 import { DeploymentsService } from '../deployments/deployments.service';
@@ -342,9 +343,6 @@ const getStringArray = (
 const isVisibleToolset = (toolset: RawDialToolset): boolean =>
   Boolean(toolset.id) && !toolset.id.includes(HIDDEN_FILE);
 
-const isMyToolset = (toolset: DialToolsetDto, bucket: string): boolean =>
-  Boolean(bucket) && toolset.id.split('/').includes(bucket);
-
 /*
  * Resolves whichever raw auth settings container the source endpoint used
  * (`authSettings` for the custom toolset resource, `auth_settings` for the
@@ -503,13 +501,15 @@ export class ToolsetsService {
     writableUrls: Set<string>,
     sharedUrls: Set<string>,
   ): DialToolsetDto {
-    const isMy = isMyToolset(toolset, bucket);
     return {
       ...toolset,
       isInstalled: installedIdSet.has(toolset.id),
-      isMy,
-      canEdit: isMy || writableUrls.has(toolset.id),
-      sharedWithMe: !isMy && sharedUrls.has(toolset.id),
+      ...computeItemOwnershipFlags(
+        toolset.id,
+        bucket,
+        writableUrls,
+        sharedUrls,
+      ),
     };
   }
 
