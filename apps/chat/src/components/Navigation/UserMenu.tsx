@@ -222,7 +222,7 @@ export const UserMenu = memo(() => {
           listClassName="cp-dropdown-overlay"
         >
           <button
-            className="focus-visible:outline-focus-black flex size-[44px] items-center justify-center rounded-full border border-transparent hover:bg-control-accent-alpha-hover focus-visible:outline focus-visible:-outline-offset-1"
+            className="flex size-[44px] items-center justify-center rounded-full border border-transparent hover:bg-control-accent-alpha-hover focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-focus-black"
             aria-label={t(AuthI18nKeys.SignedInAs, { email })}
           >
             <DialTooltip tooltip={email} hideTooltip={isMobile}>

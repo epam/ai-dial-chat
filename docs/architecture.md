@@ -482,7 +482,7 @@ Themes are defined in [ai-dial-chat-themes](https://github.com/epam/ai-dial-chat
 | `bg-accent-*`     | `bg-accent-primary`, `bg-accent-secondary`                               | Brand accent fills             |
 | `bg-*`            | `bg-error`, `bg-warning`, `bg-info`, `bg-success`                        | Semantic state backgrounds     |
 | `text-*`          | `text-primary`, `text-secondary`, `text-error`, `text-accent`            | Text colours                   |
-| `stroke-*`        | `stroke-primary`, `stroke-hover`, `stroke-focus-black`, `stroke-info`          | Borders and outlines           |
+| `stroke-*`        | `stroke-primary`, `stroke-hover`, `stroke-focus-black`, `stroke-info`    | Borders and outlines           |
 | `controls-bg-*`   | `controls-bg-accent-primary`, `controls-bg-error`, `controls-bg-disable` | Interactive element fills      |
 | `controls-text-*` | `controls-text-permanent`, `controls-text-neutral`                       | Interactive element text       |
 | `topicColors`     | `bg-topic-*`, `stroke-topic-*`                                           | Application / model topic tags |

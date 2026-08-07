@@ -3,7 +3,7 @@
 }
 
 .description {
-  color: var(--stc-desc-text, var(--text-control-disable, #57647a));
+  color: var(--stc-desc-text, var(--text-control-disable-beta, #848e9c));
 }
 
 .schedulePill {
@@ -12,7 +12,10 @@
 }
 
 .scheduleLabel {
-  color: var(--stc-schedule-label-text, var(--text-control-disable, #57647a));
+  color: var(
+    --stc-schedule-label-text,
+    var(--text-control-disable-beta, #848e9c)
+  );
 }
 
 .locationLabel {
