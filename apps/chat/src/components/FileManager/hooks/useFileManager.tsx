@@ -755,25 +755,26 @@ export const useFileManager = ({
     [t],
   );
 
-  const sharedByMeFileNames = useMemo(
+  const sharedByMeItemNames = useMemo(
     () =>
       new Set(
-        files
-          .filter((file) => file.isShared && !file.sharedWithMe)
-          .map((file) => file.name),
+        [...files, ...folders]
+          .filter((item) => item.isShared && !item.sharedWithMe)
+          .map((item) => item.name),
       ),
-    [files],
+    [files, folders],
   );
 
   const renderDeleteConfirmationContent = useCallback(
     (fileNames: string[]) => {
       const hasSharedItems = fileNames.some((name) =>
-        sharedByMeFileNames.has(name),
+        sharedByMeItemNames.has(name),
       );
+      const isSingleItem = fileNames.length === 1;
       return (
         <div className="px-6 py-3 text-sm">
-          <p className="mb-3 text-secondary">
-            {fileNames.length === 1 ? (
+          <p className="mb-3 whitespace-pre-wrap text-secondary">
+            {isSingleItem ? (
               <>
                 {t(SideBarI18nKeys.AreYouSureDeleteItem)}{' '}
                 <span className="break-all text-primary">
@@ -788,12 +789,17 @@ export const useFileManager = ({
                 </span>
               </>
             )}
-            {hasSharedItems && t(SideBarI18nKeys.DeletingWillStopSharingFile)}
+            {hasSharedItems &&
+              t(
+                isSingleItem
+                  ? SideBarI18nKeys.DeletingWillStopSharingFile
+                  : SideBarI18nKeys.DeletingWillStopSharingItems,
+              )}
           </p>
         </div>
       );
     },
-    [t, sharedByMeFileNames],
+    [t, sharedByMeItemNames],
   );
 
   const isMaxFolderDepthReached = useCallback(
