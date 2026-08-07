@@ -27,7 +27,7 @@ The system SHALL expose one module (`apps/chat-api/src/common/dial/dial-error.ma
 Every `chat-api` service method that calls `handleDialSdkError` after receiving an SDK-shaped `{ data, error, response }` result SHALL pass the raw `response` (or a `{ status }` value derived from it) as the 4th argument, not rely on the parsed error body alone, so `mapDialHttpStatus` throws the exception matching DIAL Core's actual response.
 
 #### Scenario: deleteConversation surfaces 404 for an already-deleted conversation
-- **WHEN** `ConversationService.deleteConversation` calls the DIAL SDK and DIAL Core responds with HTTP 404 and an error body with no `status` field
+- **WHEN** `ConversationLifecycleService.deleteConversation` calls the DIAL SDK and DIAL Core responds with HTTP 404 and an error body with no `status` field
 - **THEN** the method throws `NotFoundException`, not `BadGatewayException`
 
 #### Scenario: getStoredConversation-derived reads surface the real status

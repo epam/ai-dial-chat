@@ -70,7 +70,7 @@ Generated-client impact: both endpoints SHALL be exposed through the generated `
 
 ### Requirement: Channel id propagates into the completion request
 
-`ConversationService.streamCompletion` SHALL accept an optional `clientChannelId` parameter. When the frontend's completion request includes a current channel id, `POST /api/conversations/completions` SHALL accept it (request field or header, backend-defined) and the backend SHALL forward it as the `X-DIAL-CLIENT-CHANNEL-ID` header on the upstream completion call to Core so Core can correlate a `toolset/signin` event to that specific tool invocation. This SHALL be additive and SHALL NOT change any existing documented completion persistence behavior.
+`ConversationStreamingService.streamCompletion` (invoked via the `ConversationService` facade, which keeps the identical signature) SHALL accept an optional `clientChannelId` parameter. When the frontend's completion request includes a current channel id, `POST /api/conversations/completions` SHALL accept it (request field or header, backend-defined) and the backend SHALL forward it as the `X-DIAL-CLIENT-CHANNEL-ID` header on the upstream completion call to Core so Core can correlate a `toolset/signin` event to that specific tool invocation. This SHALL be additive and SHALL NOT change any existing documented completion persistence behavior.
 
 #### Scenario: Completion sent with a known channel id
 - **WHEN** the frontend has an active channel id at the time it calls `streamCompletion`
