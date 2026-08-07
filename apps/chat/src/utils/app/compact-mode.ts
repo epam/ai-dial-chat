@@ -35,7 +35,7 @@ export const getMessageDesktopGapClass = (compactMode: boolean): string =>
 
 /** Top offset of the "Show more"/"Show less" stages toggle. */
 export const getStagesToggleOffsetClass = (compactMode: boolean): string =>
-  compactMode ? 'mt-1' : 'mt-2';
+  compactMode ? 'mt-0.5' : 'mt-1';
 
 /** Bottom margin separating one attachment card from the next. */
 export const getAttachmentSpacingClass = (compactMode: boolean): string =>
@@ -60,3 +60,9 @@ export const getAttachmentReferenceOffsetClass = (
 export const getAttachmentsGroupSpacingClass = (
   compactMode: boolean,
 ): string => (compactMode ? 'mb-1' : 'mb-3');
+
+export const getTableSpacingClass = (compactMode: boolean): string =>
+  compactMode ? 'mt-1' : 'mt-4';
+
+export const getStagePaddingClass = (compactMode: boolean): string =>
+  compactMode ? 'p-1' : 'p-1.5';

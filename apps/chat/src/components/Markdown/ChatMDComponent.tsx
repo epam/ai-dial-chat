@@ -78,6 +78,7 @@ const getMDComponents = (
   isShowResponseLoader: boolean,
   isInner: boolean,
   allowedImageHosts: string[],
+  compactMode: boolean,
 ): Components => {
   return {
     code({ className, children, node, ...props }) {
@@ -116,7 +117,12 @@ const getMDComponents = (
     },
     table({ children }) {
       return (
-        <Table isLastMessageStreaming={isShowResponseLoader}>{children}</Table>
+        <Table
+          isLastMessageStreaming={isShowResponseLoader}
+          compactMode={compactMode}
+        >
+          {children}
+        </Table>
       );
     },
     th({ children }) {
@@ -308,8 +314,14 @@ export const ChatMDComponent = memo(
     );
 
     const components = useMemo(
-      () => getMDComponents(isShowResponseLoader, isInner, allowedImageHosts),
-      [isShowResponseLoader, isInner, allowedImageHosts],
+      () =>
+        getMDComponents(
+          isShowResponseLoader,
+          isInner,
+          allowedImageHosts,
+          compactMode,
+        ),
+      [isShowResponseLoader, isInner, allowedImageHosts, compactMode],
     );
 
     const processedContent = preprocessLaTeX(content);
