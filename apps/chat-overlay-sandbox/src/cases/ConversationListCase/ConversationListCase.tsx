@@ -3,7 +3,7 @@ import {
   DangerButton,
   Input,
   NeutralButton,
-  DialSelectField,
+  Select,
 } from '@epam/ai-dial-ui-kit';
 import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import EventLog from '../../components/EventLog/EventLog';
@@ -112,10 +112,10 @@ const ConversationListControls: FC<ConversationListControlsProps> = ({
         <fieldset className="m-0 min-w-0 rounded-lg border border-secondary px-3 py-3 desktop:col-span-2">
           <legend className="px-1 font-semibold">Mutate by id</legend>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,220px),1fr))] items-end gap-2.5">
-            <DialSelectField
+            <Select
               id="conversation-id-select"
-              label="Conversation id"
-              selectClassName="min-h-11 w-full"
+              labelProps={{ label: 'Select conversation by id' }}
+              listClassName="min-h-11 w-full"
               placeholder="— select from last Get conversations —"
               value={conversationId}
               options={conversations.map((conversation) => ({

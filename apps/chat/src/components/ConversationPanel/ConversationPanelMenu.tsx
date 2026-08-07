@@ -36,12 +36,7 @@ const PanelMenuTrigger: FC<PanelMenuTriggerProps> = ({ items, label }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <Dropdown
-      items={items}
-      placement="bottom-end"
-      listClassName="cp-dropdown-overlay"
-      onOpenChange={setIsOpen}
-    >
+    <Dropdown items={items} placement="bottom-end" onOpenChange={setIsOpen}>
       <GhostIconButton
         aria-label={label}
         size={ElementSize.Small}

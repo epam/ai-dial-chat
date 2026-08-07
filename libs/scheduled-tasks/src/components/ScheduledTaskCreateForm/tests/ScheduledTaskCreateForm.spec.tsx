@@ -120,7 +120,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       />
     </label>
   ),
-  DialSelectField: ({
+  Select: ({
     label,
     value,
     onChange,
@@ -151,9 +151,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </label>
   ),
   Spinner: () => <div>Loading</div>,
-  LazyDialMarkdownEditor: () =>
+  LazyMarkdownEditor: () =>
     Promise.resolve({
-      DialMarkdownEditor: ({
+      MarkdownEditor: ({
         value,
         onChange,
       }: {

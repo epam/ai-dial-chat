@@ -6,11 +6,11 @@ import {
   CalendarMode,
   DIAL_ICON_SIZE,
   GhostIconButton,
-  DialSelectField,
   Spinner,
-  LazyDialMarkdownEditor,
+  LazyMarkdownEditor,
   NeutralButton,
   PrimaryButton,
+  Select,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { lazy, Suspense, type ComponentProps, type FC } from 'react';
@@ -35,14 +35,12 @@ import styles from './ScheduledTaskCreateForm.module.scss';
  * appended to their label text directly. */
 const withRequiredMarker = (label: string): string => `${label} *`;
 
-const DialMarkdownEditor = lazy(async () => {
-  const module = await LazyDialMarkdownEditor();
-  return { default: module.DialMarkdownEditor };
+const MarkdownEditor = lazy(async () => {
+  const module = await LazyMarkdownEditor();
+  return { default: module.MarkdownEditor };
 });
 
-type DialMarkdownEditorTheme = ComponentProps<
-  typeof DialMarkdownEditor
->['theme'];
+type MarkdownEditorTheme = ComponentProps<typeof MarkdownEditor>['theme'];
 
 /**
  * Presentational create-task form: a back-navigable header (Cancel/Save
@@ -181,9 +179,8 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             }
           />
 
-          <DialSelectField
-            label={labels.modelOrAgentLabel}
-            required
+          <Select
+            labelProps={{ label: labels.modelOrAgentLabel, required: true }}
             value={values.modelId}
             placeholder={labels.modelPlaceholder}
             onChange={(next) => onFieldChange('modelId', next as string)}
@@ -199,8 +196,10 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
               {labels.scheduleSectionLabel}
             </legend>
 
-            <DialSelectField
-              label={labels.scheduleTypeAriaLabel}
+            <Select
+              labelProps={{
+                label: labels.scheduleTypeAriaLabel,
+              }}
               value={values.scheduleType}
               onChange={(next) =>
                 onFieldChange('scheduleType', next as ScheduledTaskScheduleType)
@@ -244,8 +243,8 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
 
             {values.scheduleType === ScheduledTaskScheduleType.Recurring && (
               <>
-                <DialSelectField
-                  label={labels.frequencyLabel}
+                <Select
+                  labelProps={{ label: labels.frequencyLabel }}
                   value={values.frequency}
                   onChange={(next) =>
                     onFieldChange('frequency', next as ScheduledTaskFrequency)
@@ -414,11 +413,11 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
               {labels.instructionsLabel}
             </span>
             <Suspense fallback={<Spinner />}>
-              <DialMarkdownEditor
+              <MarkdownEditor
                 value={values.prompt}
                 onChange={(value) => onFieldChange('prompt', value)}
                 height={480}
-                theme={markdownEditorTheme as DialMarkdownEditorTheme}
+                theme={markdownEditorTheme as MarkdownEditorTheme}
               />
             </Suspense>
             {errors.prompt && (
