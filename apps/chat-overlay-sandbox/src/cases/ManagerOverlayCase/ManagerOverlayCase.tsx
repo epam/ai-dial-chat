@@ -3,7 +3,7 @@ import {
   OverlayEventType,
   OverlayPosition,
 } from '@epam/ai-dial-chat-overlay';
-import { DialDangerButton, DialNeutralButton } from '@epam/ai-dial-ui-kit';
+import { DangerButton, NeutralButton } from '@epam/ai-dial-ui-kit';
 import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import EventLog from '../../components/EventLog/EventLog';
 import MissingEnvNotice from '../../components/MissingEnvNotice/MissingEnvNotice';
@@ -211,84 +211,84 @@ const ManagerOverlayCase: FC = () => {
       </p>
       {isHandshakeSlow && !isReady && <p role="alert">{handshakeHint}</p>}
       <div className="my-3 flex flex-wrap gap-2">
-        <DialNeutralButton
+        <NeutralButton
           className="min-h-11"
           type="button"
           label="Show overlay"
           onClick={handleShow}
           disabled={!isCreated}
         />
-        <DialNeutralButton
+        <NeutralButton
           className="min-h-11"
           type="button"
           label="Hide overlay"
           onClick={handleHide}
           disabled={!isCreated}
         />
-        <DialDangerButton
+        <DangerButton
           className="min-h-11"
           type="button"
           label="Remove overlay"
           onClick={handleRemove}
           disabled={!isCreated}
         />
-        <DialNeutralButton
+        <NeutralButton
           className="min-h-11"
           type="button"
           label="Open full screen"
           onClick={handleOpenFullscreen}
           disabled={!isCreated}
         />
-        <DialNeutralButton
+        <NeutralButton
           className="min-h-11"
           type="button"
           label="Get messages"
           onClick={handleGetMessages}
           disabled={!isReady}
         />
-        <DialNeutralButton
+        <NeutralButton
           className="min-h-11"
           type="button"
           label="Send message"
           onClick={handleSendMessage}
           disabled={!isReady}
         />
-        <DialNeutralButton
+        <NeutralButton
           className="min-h-11"
           type="button"
           label="Update theme + model"
           onClick={handleUpdateThemeAndModel}
           disabled={!isReady}
         />
-        <DialNeutralButton
+        <NeutralButton
           className="min-h-11"
           type="button"
           label="Update theme to light"
           onClick={handleUpdateThemeToLight}
           disabled={!isReady}
         />
-        <DialNeutralButton
+        <NeutralButton
           className="min-h-11"
           type="button"
           label="Set input content"
           onClick={handleSetInputContent}
           disabled={!isReady}
         />
-        <DialNeutralButton
+        <NeutralButton
           className="min-h-11"
           type="button"
           label="Clear input content"
           onClick={handleClearInputContent}
           disabled={!isReady}
         />
-        <DialNeutralButton
+        <NeutralButton
           className="min-h-11"
           type="button"
           label="Set system prompt"
           onClick={handleSetSystemPrompt}
           disabled={!isReady}
         />
-        <DialNeutralButton
+        <NeutralButton
           className="min-h-11"
           type="button"
           label="Set temperature"

@@ -3,11 +3,7 @@ import {
   OverlayEventType,
   OverlayFeature,
 } from '@epam/ai-dial-chat-overlay';
-import {
-  Input,
-  DialNeutralButton,
-  DialPrimaryButton,
-} from '@epam/ai-dial-ui-kit';
+import { Input, NeutralButton, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import EventLog from '../../components/EventLog/EventLog';
 import MissingEnvNotice from '../../components/MissingEnvNotice/MissingEnvNotice';
@@ -114,7 +110,7 @@ const EnabledFeaturesCase: FC = () => {
       </p>
       <div className="my-3 flex flex-wrap gap-2">
         {Object.entries(PRESETS).map(([label, features]) => (
-          <DialNeutralButton
+          <NeutralButton
             key={label}
             className="min-h-11"
             type="button"
@@ -134,7 +130,7 @@ const EnabledFeaturesCase: FC = () => {
           value={customInput}
           onChange={(value) => setCustomInput(value ?? '')}
         />
-        <DialPrimaryButton
+        <PrimaryButton
           className="min-h-11"
           type="button"
           label="Apply custom list"

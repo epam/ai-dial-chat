@@ -19,7 +19,6 @@
   },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-kit": "*",
     "@tabler/icons-react": "^3.0.0",
     "react": "^19.0.0",
     "react-qr-code": "^2.2.0",
