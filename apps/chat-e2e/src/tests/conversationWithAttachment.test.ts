@@ -285,7 +285,7 @@ dialTest.skip(
   },
 );
 
-dialTest.only(
+dialTest(
   'Long attachment name is cut with three dots at the end in message box.\n' +
     'Attachment name is shown fully if to click on it. Text attachment.\n' +
     '[Manage attachments] Long file name is cut with three dots at the end.\n' +
