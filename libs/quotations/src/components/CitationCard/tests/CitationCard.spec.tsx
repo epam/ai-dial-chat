@@ -7,13 +7,14 @@ import { CitationCard } from '../CitationCard';
 const makeGroup = (
   count = 1,
   attachmentType = 'application/pdf',
+  title?: string,
 ): AnnotationGroup => ({
   sourceUrl: 'https://files.example.com/report.pdf',
   sourceName: 'report.pdf',
   annotations: Array.from({ length: count }, (_, i) => ({
     index: i,
     body: {
-      title: `Title ${i}`,
+      title: title ?? `Title ${i}`,
       quote: `Quote ${i}`,
       source: {
         type: 'attachment' as const,
@@ -138,5 +139,22 @@ describe('CitationCard', () => {
       screen.getByRole('button', { name: 'Open in browser' }),
     );
     expect(onOpenInBrowser).toHaveBeenCalledWith(group.annotations[0]);
+  });
+
+  /* The quoted excerpt is line-clamped, so its overflow is hidden — an
+   * unbreakable URL that cannot wrap gets cut off at the card's edge. Wrapping
+   * inside the quote comes from `MarkdownRenderer`'s own base classes and is
+   * asserted in its spec; the title below is rendered by this component. */
+  it('keeps a long unbroken title wrappable', () => {
+    const group = makeGroup(
+      1,
+      'application/pdf',
+      'ReallyLongUnbrokenTitleTokenThatWouldOtherwiseOverflowTheFixedWidthCard',
+    );
+
+    const { container } = render(<CitationCard {...defaultProps({ group })} />);
+
+    const title = container.querySelectorAll('p')[0];
+    expect(title.className).toContain('break-words');
   });
 });

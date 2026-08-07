@@ -22,6 +22,7 @@ export const NewChatButton: FC<NewChatButtonProps> = memo(
     const cssVars = buildCssVars({
       '--cp-new-chat-bg': colors?.background,
       '--cp-new-chat-text': colors?.text,
+      '--cp-new-chat-focus-outline': colors?.focusOutline,
     });
 
     return (

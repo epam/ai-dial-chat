@@ -178,6 +178,7 @@ export const CitationCard: FC<CitationCardProps> = ({
               className={mergeClasses(
                 titleClassName,
                 styles.title,
+                'break-words',
                 hasSwitcher && groupHasTitle && 'min-h-[1lh]',
               )}
             >

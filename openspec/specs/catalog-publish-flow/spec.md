@@ -31,11 +31,33 @@ The root node SHALL always render expanded so its children remain visible withou
 ### Requirement: Search filters the folder tree client-side
 The publish panel SHALL keep the existing host-owned `SearchInput` above the folder tree. Typing a query SHALL filter the currently loaded folder tree by folder name (case-insensitive, matching folder name substrings) before the filtered tree is converted to `DialFile[]` and passed to `DialFoldersTree`.
 
+Filtering SHALL be suspended for as long as the inline create-folder row is open, and resume when creation is confirmed or cancelled. `DialFoldersTree` renders that row underneath its parent node, so a query that filters the parent out (in particular a query matching nothing at all, which renders the empty state instead of the tree) would otherwise hide the editor the user just opened.
+
 i18n keys: `CatalogI18nKeys.PublishFolderSearchPlaceholder`, `CatalogI18nKeys.PublishFolderEmptyState`.
 
 #### Scenario: Search query matches no folders
 - **WHEN** the user types a query that matches no loaded folder name
 - **THEN** the tree renders the `DialFoldersTree` empty state using `CatalogI18nKeys.PublishFolderEmptyState`
+
+#### Scenario: User creates a folder from a search that matched nothing
+- **GIVEN** the search query matches no folder, so the empty state is shown
+- **WHEN** the user clicks "Create new folder"
+- **THEN** the tree (with the root node) renders again with the inline create row open under the selected parent — or under the root when nothing is selected — pre-filled with the unmatched query as the new folder's name, falling back to the default name when the query is not a valid folder name
+
+#### Scenario: User cancels folder creation started from a search that matched nothing
+- **WHEN** the user cancels the inline create row
+- **THEN** the filter resumes and the no-results empty state is shown again
+
+### Requirement: Folders are displayed in name order
+`PublishFoldersTree` SHALL order folders by name at every level of the tree before converting them to `DialFile[]`, using a case-insensitive, digit-aware comparison (`localeCompare` with `sensitivity: 'base'` and `numeric: true`), so `"Report 2"` precedes `"Report 10"`. Ordering is a display concern owned by the tree: hosts MAY pass `items` in any order (backend listing order, lazily merged children, locally created folders appended at the end) and the rendered order SHALL be the same either way.
+
+#### Scenario: Backend returns folders in an arbitrary order
+- **WHEN** the host passes folder nodes in listing order
+- **THEN** the tree renders them alphabetically at every level
+
+#### Scenario: A newly created folder keeps its place in the order
+- **WHEN** the user confirms a new folder name
+- **THEN** the folder is rendered in its name-ordered position among its siblings, not appended to the end of the list
 
 ### Requirement: Inline folder creation via the ui-kit tree
 Creating a new folder SHALL use `DialFoldersTree`'s built-in inline create-folder row (`onCreateFolderSave`, `onCreateFolderCancel`, `createdFolderPath`) instead of the bespoke picker's custom create row. `PublishFoldersTree` SHALL pass the target parent folder path through `createdFolderPath` and SHALL NOT insert a synthetic new-folder node into `items`; `DialFoldersTree` owns the temporary editable row beneath that parent. On save, the app-level `onCreatePublishFolder` callback SHALL be invoked with the parent path and new folder name; the new folder SHALL be merged into the in-memory tree and auto-selected immediately.
@@ -50,6 +72,18 @@ Creating a new folder SHALL use `DialFoldersTree`'s built-in inline create-folde
 - **GIVEN** the user created a new folder in the destination picker and selected it
 - **WHEN** the user cancels the Publish panel instead of submitting
 - **THEN** no folder was ever created on the backend — nothing to roll back or clean up
+
+### Requirement: Destinations already published to stay available in the tree
+Publishing creates a DIAL Core publication *request*, so a destination folder picked during publish is not a listable resource in the Organization/public files bucket the tree is built from (and never becomes one, since approved publications land in the resource type's own public namespace). `usePublishFolders` SHALL therefore expose `rememberPublishFolder(folderPath: string[])`, persisting each used destination's path key to `localStorage` under `StorageKey.PublishDestinationFolders` (most recent first, deduplicated, capped at 50 entries; the bucket root — an empty path — is not stored), and SHALL merge every remembered path into `folderItems` via `mergeFolderPaths`, creating any missing ancestor node and never duplicating a folder the public bucket already lists. Both publish hosts (`PublishConversationPanelContainer` and `CatalogView`) SHALL call it from their `onPublishSuccess` handler, so only destinations of a publish that actually succeeded are remembered.
+
+#### Scenario: User publishes a second item to a folder created during the first publish
+- **GIVEN** the user created a folder in the publish panel and published an item to it
+- **WHEN** the user opens the publish panel again for another item
+- **THEN** that folder is still listed in the destination tree and can be selected
+
+#### Scenario: Publish fails
+- **WHEN** `onPublish` rejects
+- **THEN** the destination is not remembered
 
 ### Requirement: Per-row "Add sibling" / "Add child" folder creation
 In addition to the trailing "Create new folder" button, `PublishFoldersTree` SHALL expose a per-row context menu (`DialFoldersTree`'s `getContextMenuItems` prop) with two actions: "Add child" (creates the new folder inside the clicked folder) and "Add sibling" (creates the new folder as a sibling of the clicked folder, one level up). This mirrors the file manager's own "Add sibling"/"Add child" folder-creation actions (`useFolderCreation`'s `startTreeSiblingFolderCreation`/`startTreeChildFolderCreation` internal to `@epam/ai-dial-ui-kit`'s `FileManager`, not exported from the package) — reimplemented against the tree's public context-menu API rather than importing the internal hook. "Add sibling" SHALL be omitted for the root node, which has no parent to create a sibling under. Both actions resolve a unique default name and validate exactly like the trailing button (see the two requirements above) — there is no separate code path.

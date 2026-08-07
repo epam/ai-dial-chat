@@ -36,20 +36,23 @@ const controlsBgColors = {
   'control-error-alpha-active':
     'var(--bg-control-error-alpha-active, #F7646433)', // red-800 alpha-20
 
-  'control-disable': 'var(--bg-control-disable, #C7CBD4)', // grey-700
+  'control-disable': 'var(--bg-control-disable, #848E9C)', // grey-700
 };
 
 const borderColors = {
   transparent: 'transparent',
-  primary: 'var(--stroke-primary, #6B7280)', // grey-800
+  primary: 'var(--stroke-primary, #57647A)', // grey-800
   secondary: 'var(--stroke-secondary, #D1DBEA)', // grey-600
   tertiary: 'var(--stroke-tertiary, #E0E6F0)', // grey-500
   error: 'var(--stroke-error, #AE2F2F)', // red-800
   warning: 'var(--stroke-warning, #EEC840)', // yellow-500
   info: 'var(--stroke-info, #124ACE)', // blue-500
   success: 'var(--stroke-success, #007274)', // green-800
+
   // controls
-  focus: 'var(--stroke-focus, #161B2D)', // grey-1000
+  'hover-alpha': 'var(--stroke-hover-alpha, #2764D933)', // blue-500 alpha-20
+  'focus-black': 'var(--stroke-focus-black, #161B2D)', // grey-1000
+  'focus-blue': 'var(--stroke-focus-blue, #6785FB)', // blue-200
   'accent-alpha': 'var(--stroke-accent-alpha, #2764D933)', // blue-500 alpha-20
   'error-alpha': 'var(--stroke-error-alpha, #AE2F2F73)', // red-800 alpha-45
 };
@@ -57,8 +60,8 @@ const borderColors = {
 const textColors = {
   transparent: 'transparent',
   primary: 'var(--text-primary, #161B2D)', // grey-1000
-  secondary: 'var(--text-secondary, #6B7280)', // grey-800
-  tertiary: 'var(--text-tertiary, #C7CBD4)', // grey-700
+  secondary: 'var(--text-secondary, #57647a)', // grey-800
+  tertiary: 'var(--text-tertiary, #848e9c)', // grey-700
   accent: 'var(--text-accent, #1D4ED8)', // blue-500
   error: 'var(--text-error, #AE2F2F)', // red-500
   warning: 'var(--text-warning, #7F6300)', // yellow-700
@@ -73,7 +76,8 @@ const placeholderColor = {
 
 const controlsTextColors = {
   'control-permanent': 'var(--text-control-permanent, #FCFCFC)', // grey-100
-  'control-disable': 'var(--text-control-disable, #6B7280)', // grey-800
+  'control-disable-alpha': 'var(--text-control-disable-alpha, #DCE0E8)', // grey-550
+  'control-disable-beta': 'var(--text-control-disable-beta, #848E9C)', // grey-700
   'control-blue-hover': 'var(--text-control-blue-hover, #5976E9)', // blue-300
   'control-blue-active': 'var(--text-control-blue-active, #6785FB)', // blue-200
 };
@@ -93,8 +97,6 @@ const bgColorsToRemove = {
   'accent-primary-alpha': 'var(--bg-accent-primary-alpha, #7DA4FF2E)',
   // Catalog tab bar — override via CSS custom properties for dark-theme support
   'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2E)',
-  // New Chat button shadow — blue/purple pair at default, hover, and active alpha levels
-  'mask-opaque': 'var(--bg-mask-opaque, #000)',
 };
 
 /** @type {import('tailwindcss').Config} */
@@ -123,7 +125,7 @@ module.exports = {
         desktop: { min: '769px' },
       },
       /*
-       * `outline` emits a 1px solid ring and `outline-focus` paints it with the
+       * `outline` emits a 1px solid ring and `outline-focus-black` paints it with the
        * focus token — see the focus-visible states in buttons.scss. Kept in
        * `extend` so the numeric widths (`outline-1`, still used in libs/*) stay.
        */
