@@ -3861,11 +3861,20 @@ const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
         ),
       ]);
 
-      if (conversationIds.length) {
+      if (deletedConversationIds.length) {
         actions.push(
           of(
             ConversationsActions.deleteConversations({
               conversationIds: deletedConversationIds,
+            }),
+          ),
+        );
+      } else {
+        // nothing to delete on the server, hide the loader shown on delete start
+        actions.push(
+          of(
+            ConversationsActions.deleteConversationsComplete({
+              conversationIds: new Set([]),
             }),
           ),
         );
