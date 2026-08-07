@@ -4,6 +4,7 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   API,
   Attachment,
+  CheckboxState,
   ConversationData,
   ExpectedConstants,
   ImportResolutionOption,
@@ -389,6 +390,7 @@ dialTest(
     fileManagerModalFoldersTree,
     fileManagerModalGrid,
     fileManagerGridAssertion,
+    fileManagerModalGridAssertion,
     fileDropArea,
     chat,
     toast,
@@ -491,12 +493,23 @@ dialTest(
           { isFilesListingTriggered: false },
           yearMonthSubfolder,
         );
-        await (
-          await fileManagerModalGrid.gridCheckboxByNameCell(file1)
-        ).click();
-        await (
-          await fileManagerModalGrid.gridCheckboxByNameCell(file0)
-        ).click();
+
+        for (const file of [file0, file1]) {
+          const fileRowLocator =
+            await fileManagerModalGrid.goToGridRowByNameCell(file);
+          await fileRowLocator.hover();
+          const fileCheckboxElement =
+            await fileManagerModalGrid.gridCheckboxByNameCell(file);
+          await fileManagerModalGridAssertion.assertGridCheckboxByNameState(
+            file,
+            CheckboxState.unchecked,
+          );
+          await fileCheckboxElement.click();
+          await fileManagerModalGridAssertion.assertGridCheckboxByNameState(
+            file,
+            CheckboxState.checked,
+          );
+        }
         await fileManagerModal.getAttachButton().click();
         await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
           file0,
