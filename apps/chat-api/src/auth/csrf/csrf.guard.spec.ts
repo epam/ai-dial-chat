@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { describe, expect, it, vi } from 'vitest';
 import { EnvironmentVariables } from '../../config/environment.config';
+import { AuthSource } from '../auth-source.enum';
 import { SessionUser } from '../session/session.types';
 import { CsrfErrorCode, CsrfGuard } from './csrf.guard';
 
@@ -37,6 +38,7 @@ function buildContext(options: {
   csrfHeader?: string;
   user?: SessionUser | null;
   isPublic?: boolean;
+  authSource?: AuthSource;
 }): ExecutionContext {
   const req = {
     method: options.method ?? 'POST',
@@ -46,6 +48,7 @@ function buildContext(options: {
       ...(options.csrfHeader ? { 'x-csrf-token': options.csrfHeader } : {}),
     },
     user: options.user != null ? options.user : VALID_USER,
+    authSource: options.authSource ?? AuthSource.Cookie,
   };
 
   return {
@@ -148,5 +151,25 @@ describe('CsrfGuard', () => {
       csrfHeader: VALID_USER.csrf,
     });
     expect(guard.canActivate(ctx)).toBe(true);
+  });
+
+  describe('header-authenticated requests', () => {
+    it('passes a mutating request with no Origin, Referer, or X-CSRF-Token', () => {
+      const guard = buildGuard();
+      const ctx = buildContext({
+        authSource: AuthSource.Header,
+        user: { ...VALID_USER, sid: undefined, csrf: undefined },
+      });
+      expect(guard.canActivate(ctx)).toBe(true);
+    });
+
+    it('still requires a matching X-CSRF-Token for a cookie-authenticated request', () => {
+      const guard = buildGuard();
+      const ctx = buildContext({
+        authSource: AuthSource.Cookie,
+        origin: APP_ORIGIN,
+      });
+      expectInvalidCsrfError(() => guard.canActivate(ctx));
+    });
   });
 });
