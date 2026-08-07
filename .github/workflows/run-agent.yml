@@ -334,17 +334,21 @@ jobs:
             echo "::error::api_key_secret '${SECRET_NAME}' is declared but empty in env — ensure it is listed in this agent's \`secrets:\` field and the corresponding Actions secret exists."
             exit 1
           fi
-          # Inference API keys never contain newlines. Reject any value that does:
-          # a newline in the value would let it inject arbitrary env-var assignments
-          # into GITHUB_ENV (env-file injection), even with the heredoc form below.
-          if printf '%s' "$val" | grep -qP '\n'; then
-            echo "::error::api_key_secret '${SECRET_NAME}' value contains a newline — refusing to write it to GITHUB_ENV."
-            exit 1
-          fi
+          # Inference API keys never contain newlines or carriage returns. Use a
+          # shell-native case test (sees embedded \n/\r in the variable itself,
+          # unlike grep which reads line-by-line and misses them).
+          case "$val" in
+            *$'\n'*|*$'\r'*)
+              echo "::error::api_key_secret '${SECRET_NAME}' value contains a newline/CR — refusing to write it to GITHUB_ENV."
+              exit 1 ;;
+          esac
           # Use the heredoc-delimited multiline form so that special characters
           # (=, <, >) in the value cannot be misinterpreted as new assignments.
-          { printf 'ANTHROPIC_AUTH_TOKEN<<__SDLC_KEY_EOF__\n%s\n__SDLC_KEY_EOF__\n' "$val"
-            printf 'ANTHROPIC_API_KEY<<__SDLC_KEY_EOF__\n%s\n__SDLC_KEY_EOF__\n' "$val"
+          # Randomise the delimiter per-invocation so it cannot be predicted even
+          # if the newline guard above were somehow bypassed.
+          DELIM="__SDLC_KEY_EOF_$(openssl rand -hex 8)__"
+          { printf 'ANTHROPIC_AUTH_TOKEN<<%s\n%s\n%s\n' "$DELIM" "$val" "$DELIM"
+            printf 'ANTHROPIC_API_KEY<<%s\n%s\n%s\n' "$DELIM" "$val" "$DELIM"
           } >> "$GITHUB_ENV"
           echo "Inference key overridden for this agent (secret: ${SECRET_NAME})"
 
