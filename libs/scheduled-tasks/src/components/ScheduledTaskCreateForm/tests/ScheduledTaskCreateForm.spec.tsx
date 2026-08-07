@@ -12,7 +12,7 @@ import {
 } from '../../../types/scheduled-task-schedule';
 import { ScheduledTaskCreateForm } from '../ScheduledTaskCreateForm';
 
-vi.mock('@epam/ai-dial-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', () => ({
   Input: ({
     labelProps,
     value,
@@ -56,9 +56,6 @@ vi.mock('@epam/ai-dial-kit', () => ({
       {caption && <span>{caption}</span>}
     </label>
   ),
-}));
-
-vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   GhostIconButton: ({
     onClick,

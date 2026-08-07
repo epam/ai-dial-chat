@@ -1,8 +1,8 @@
 import { ChatOverlay } from '@epam/ai-dial-chat-overlay';
 import {
-  DialDangerButton,
+  DangerButton,
   Input,
-  DialNeutralButton,
+  NeutralButton,
   DialSelectField,
 } from '@epam/ai-dial-ui-kit';
 import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
@@ -57,25 +57,25 @@ const ConversationListControls: FC<ConversationListControlsProps> = ({
         <fieldset className="m-0 min-w-0 rounded-lg border border-secondary px-3 py-3">
           <legend className="px-1 font-semibold">Read</legend>
           <div className="flex flex-wrap gap-2 [&>*]:min-h-11 [&>*]:min-w-[160px] [&>*]:flex-1">
-            <DialNeutralButton
+            <NeutralButton
               type="button"
               label="Get conversations"
               onClick={onGetConversations}
               disabled={!isReady}
             />
-            <DialNeutralButton
+            <NeutralButton
               type="button"
               label="Get selected conversations"
               onClick={onGetSelectedConversations}
               disabled={!isReady}
             />
-            <DialNeutralButton
+            <NeutralButton
               type="button"
               label="Refresh list"
               onClick={onRefreshList}
               disabled={!isReady}
             />
-            <DialNeutralButton
+            <NeutralButton
               type="button"
               label="Create local conversation"
               onClick={onCreateLocalConversation}
@@ -100,7 +100,7 @@ const ConversationListControls: FC<ConversationListControlsProps> = ({
               value={firstMessage}
               onChange={(value) => setFirstMessage(value ?? '')}
             />
-            <DialNeutralButton
+            <NeutralButton
               className="min-h-11 w-full"
               type="button"
               label="Create conversation"
@@ -141,19 +141,19 @@ const ConversationListControls: FC<ConversationListControlsProps> = ({
               onChange={(value) => setNewName(value ?? '')}
             />
             <div className="col-span-full flex flex-wrap gap-2 self-end [&>*]:min-h-11 [&>*]:min-w-24 [&>*]:flex-1">
-              <DialNeutralButton
+              <NeutralButton
                 type="button"
                 label="Select conversation by id"
                 onClick={() => onSelectConversation(conversationId)}
                 disabled={!isReady || !conversationId}
               />
-              <DialNeutralButton
+              <NeutralButton
                 type="button"
                 label="Rename conversation by id"
                 onClick={() => onRenameConversation(conversationId, newName)}
                 disabled={!isReady || !conversationId}
               />
-              <DialDangerButton
+              <DangerButton
                 type="button"
                 label="Delete conversation by id"
                 onClick={() => onDeleteConversation(conversationId)}
