@@ -22,7 +22,12 @@ import type {
   CustomVisualizer,
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
-import { FileExtension, MIMEType } from '@epam/ai-dial-chat-shared';
+import {
+  base64ToBlob,
+  FileExtension,
+  MIMEType,
+  tryBase64ToBytes,
+} from '@epam/ai-dial-chat-shared';
 import {
   annotationHighlightId,
   annotationsToPdfHighlights,
@@ -37,39 +42,18 @@ import {
 } from './dial-file';
 
 /**
- * Decodes a base64 string into raw bytes, or `undefined` if the string is not
- * valid base64 (some backends put already-decoded plain text in `data` despite
- * the base64 contract, e.g. OCR'd markdown with non-Latin1 characters).
- */
-const tryBase64ToBytes = (base64: string): Uint8Array | undefined => {
-  try {
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    return bytes;
-  } catch {
-    return undefined;
-  }
-};
-
-/**
  * Decodes an inline `data` payload into a Blob object URL of the given MIME
  * type. Falls back to treating `data` as raw (already-decoded) text when it
  * is not valid base64.
  */
-const base64ToBlobUrl = (data: string, mimeType: string): string => {
-  const bytes = tryBase64ToBytes(data) ?? new TextEncoder().encode(data);
-  return URL.createObjectURL(
-    new Blob([bytes.buffer as ArrayBuffer], { type: mimeType }),
-  );
-};
+const base64ToBlobUrl = (data: string, mimeType: string): string =>
+  URL.createObjectURL(base64ToBlob(data, mimeType));
 
 /**
  * Decodes an inline `data` payload into UTF-8 text. Falls back to returning
  * `data` unchanged when it is not valid base64 (some backends send
- * already-decoded plain text, see `tryBase64ToBytes`).
+ * already-decoded plain text despite the base64 contract, e.g. OCR'd markdown
+ * with non-Latin1 characters).
  */
 const base64ToText = (base64: string): string => {
   const bytes = tryBase64ToBytes(base64);

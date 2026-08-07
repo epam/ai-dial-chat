@@ -11,6 +11,7 @@ import { DialClientService } from '../../dial/dial-client.service';
 import type { DeploymentLimitsResponseDto } from '../../openapi/openapi-response.dto';
 import type { DeploymentConfigurationDto } from '../dto/deployment-configuration.dto';
 import type { DeploymentDetailsDto } from '../dto/deployment-details.dto';
+import { DeploymentItemType } from '../dto/deployment-item.dto';
 import {
   getNumber,
   isRecord,
@@ -224,7 +225,7 @@ export class DeploymentsDetailsService {
 
     const data: DeploymentDetailsDto = {
       id: deployment,
-      type: 'model',
+      type: DeploymentItemType.Model,
       modelDetails: {
         capabilities: raw.capabilities
           ? {
@@ -327,7 +328,7 @@ export class DeploymentsDetailsService {
 
     const data: DeploymentDetailsDto = {
       id: deployment,
-      type: 'application',
+      type: DeploymentItemType.Application,
       applicationDetails: {
         displayName: raw.display_name,
         applicationProperties: (() => {
@@ -409,7 +410,7 @@ export class DeploymentsDetailsService {
 
     const data: DeploymentDetailsDto = {
       id: deployment,
-      type: 'toolset',
+      type: DeploymentItemType.Toolset,
       toolsetDetails: {
         transport: raw.transport,
         allowedTools: Array.isArray(raw.allowed_tools)

@@ -695,6 +695,33 @@ describe('DeploymentsListingService', () => {
       expect(result.deployments[0].isMy).toBe(false);
     });
 
+    it('sets isMy=false when the bucket hash only matches the app-name segment, not the bucket segment', async () => {
+      /*
+       * Regression: an app at applications/OTHER_BUCKET/BUCKET_HASH must not
+       * be misclassified as owned by BUCKET_HASH just because that value
+       * happens to appear as the app-name segment rather than the bucket
+       * segment (path index 1).
+       */
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          {
+            ...mockApplication,
+            id: 'applications/OTHER_BUCKET/BUCKET_HASH',
+            owner: 'Other User',
+          },
+        ],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'BUCKET_HASH',
+      );
+      expect(result.deployments[0].isMy).toBe(false);
+    });
+
     it('sets isMy=false for root-level app whose id has no path segments matching bucket', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({
@@ -990,11 +1017,14 @@ describe('DeploymentsListingService', () => {
 
       expect(result.deployments[0].sharedWithMe).toBe(false);
       expect(warnSpy).toHaveBeenCalledWith(
-        'Failed to resolve shared application resources: status=503',
+        'Failed to resolve shared APPLICATION resources: status=503',
+      );
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Failed to resolve shared TOOL_SET resources: status=503',
       );
     });
 
-    it('resolves canEdit and sharedWithMe from exactly one getSharedResources call', async () => {
+    it('resolves canEdit and sharedWithMe from exactly one getSharedResources call per resource type', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({
         error: false,
@@ -1016,7 +1046,66 @@ describe('DeploymentsListingService', () => {
       });
 
       await service.listDeployments('user1', 'token', 'BUCKET_HASH');
-      expect(sdkClient.getSharedResources).toHaveBeenCalledOnce();
+      /*
+       * One call for APPLICATION-scoped shared resources, one for
+       * TOOL_SET-scoped — getSharedResources is scoped to a single
+       * resourceTypes filter per call, and the combined list mixes both
+       * item types.
+       */
+      expect(sdkClient.getSharedResources).toHaveBeenCalledTimes(2);
+      expect(sdkClient.getSharedResources).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({ resourceTypes: ['APPLICATION'] }),
+        }),
+      );
+      expect(sdkClient.getSharedResources).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({ resourceTypes: ['TOOL_SET'] }),
+        }),
+      );
+    });
+
+    it('is true for a READ-only shared toolset in the combined list, using TOOL_SET-scoped resources', async () => {
+      /*
+       * Regression: a toolset id can never appear in the APPLICATION-scoped
+       * shared-resource set, so this only passes if listDeployments fetches
+       * (and uses) a separate TOOL_SET-scoped set for toolset items.
+       */
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockToolset, id: 'toolsets/OTHER_BUCKET/their-toolset' }],
+      });
+      sdkClient.getSharedResources.mockImplementation(
+        (opts: { body: { resourceTypes: string[] } }) =>
+          Promise.resolve({
+            data: {
+              resources:
+                opts.body.resourceTypes[0] === 'TOOL_SET'
+                  ? [
+                      {
+                        url: 'toolsets/OTHER_BUCKET/their-toolset',
+                        permissions: ['READ'],
+                      },
+                    ]
+                  : [],
+            },
+            error: undefined,
+          }),
+      );
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'BUCKET_HASH',
+      );
+
+      expect(result.deployments[0]).toMatchObject({
+        isMy: false,
+        sharedWithMe: true,
+        canEdit: false,
+      });
     });
   });
 });

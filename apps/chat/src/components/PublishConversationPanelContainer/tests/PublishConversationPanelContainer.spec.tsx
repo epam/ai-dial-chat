@@ -104,6 +104,8 @@ vi.mock('react-i18next', () => ({
 
 const mockShowNotification = vi.fn();
 
+const mockRememberPublishFolder = vi.fn();
+
 const baseFoldersResult = {
   folderItems: [{ path: ['Shared'], name: 'Shared' }],
   expandedPaths: new Set<string>(),
@@ -111,6 +113,7 @@ const baseFoldersResult = {
   loadingPaths: new Set<string>(),
   onExpandedPathsChange: vi.fn(),
   onCreatePublishFolder: vi.fn(),
+  rememberPublishFolder: mockRememberPublishFolder,
   hasPublishWriteAccess: () => true,
 };
 
@@ -205,6 +208,40 @@ describe('PublishConversationPanelContainer', () => {
       );
       expect(onClose).toHaveBeenCalled();
     });
+  });
+
+  it('remembers the destination folder after a successful publish so it stays available next time', async () => {
+    vi.mocked(publishConversation).mockResolvedValue({
+      path: 'conversations/bucket-123/my-conversation-abc',
+      folderPath: 'Shared',
+      publishedAt: new Date().toISOString(),
+      publishedBy: 'Test User',
+    });
+    await renderContainer();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Shared' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    await waitFor(() => {
+      expect(mockRememberPublishFolder).toHaveBeenCalledWith(['Shared']);
+    });
+  });
+
+  it('does not remember the destination folder when publish fails', async () => {
+    vi.mocked(publishConversation).mockRejectedValue(new Error('network'));
+    await renderContainer();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Shared' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeTruthy();
+    });
+    expect(mockRememberPublishFolder).not.toHaveBeenCalled();
   });
 
   it('forwards rules added in the panel to publishConversation', async () => {

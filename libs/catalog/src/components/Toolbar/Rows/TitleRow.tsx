@@ -1,20 +1,14 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  ButtonAppearance,
+  ButtonDropdown,
+  ButtonVariant,
   DIAL_ICON_SIZE,
-  DialDropdown,
-  GhostButton,
+  DropdownItem,
 } from '@epam/ai-dial-ui-kit';
-import {
-  IconCheck,
-  IconChevronDown,
-  IconLayoutGrid,
-  IconLayoutList,
-} from '@tabler/icons-react';
+import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
 import { FC } from 'react';
-import {
-  CatalogSortOption,
-  ToolbarStyles,
-} from '../../../models/toolbar-props';
+import { ToolbarStyles } from '../../../models/toolbar-props';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { Filter } from '../../Filter/Filter';
 import { ItemHeader } from '../../ItemHeader/ItemHeader';
@@ -33,8 +27,7 @@ interface TitleRowProps {
   gridViewLabel?: string;
   listViewLabel?: string;
   sortKey?: string;
-  onSortChange?: (key: string) => void;
-  sortOptions?: CatalogSortOption[];
+  sortOptions?: DropdownItem[];
   filters?: Set<string>;
   onFiltersChange?: (filters: Set<string>) => void;
   filterValues?: Set<string>;
@@ -58,7 +51,6 @@ export const TitleRow: FC<TitleRowProps> = ({
   gridViewLabel = 'Grid view',
   listViewLabel = 'List view',
   sortKey,
-  onSortChange,
   sortOptions,
   filters,
   onFiltersChange,
@@ -74,8 +66,7 @@ export const TitleRow: FC<TitleRowProps> = ({
   const countClassName =
     browseStyles?.typography?.countClassName ?? 'dial-tiny-semi-text';
 
-  const activeLabel =
-    sortOptions?.find((o) => o.value === sortKey)?.label ?? '';
+  const activeLabel = sortOptions?.find((o) => o.key === sortKey)?.label ?? '';
 
   return (
     <div className="flex flex-col gap-3">
@@ -131,41 +122,21 @@ export const TitleRow: FC<TitleRowProps> = ({
 
           {sortOptions != null && sortOptions.length > 0 && (
             <>
-              {/* Vertical divider */}
               <div
                 className={mergeClasses('h-4 w-px shrink-0', styles.divider)}
               />
 
-              <DialDropdown
-                matchReferenceWidth={false}
-                placement="bottom-end"
-                listClassName="cp-dropdown-overlay"
-                items={sortOptions.map((o) => ({
-                  key: o.value,
-                  label: (
-                    <span className="flex w-full items-center justify-between gap-2">
-                      {o.label}
-                      {o.value === sortKey && (
-                        <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
-                      )}
-                    </span>
-                  ),
-                  onClick: () => onSortChange?.(o.value),
-                }))}
-              >
-                <GhostButton
-                  label={activeLabel}
-                  iconAfter={
-                    <IconChevronDown size={DIAL_ICON_SIZE.SM} aria-hidden />
-                  }
-                />
-              </DialDropdown>
+              <ButtonDropdown
+                label={activeLabel}
+                variant={ButtonVariant.Primary}
+                appearance={ButtonAppearance.Ghost}
+                items={sortOptions}
+              />
             </>
           )}
         </div>
       </div>
 
-      {/* Row 2: search field + from filter */}
       <div className="mb-5 flex items-center gap-3">
         <SearchBar
           value={query}

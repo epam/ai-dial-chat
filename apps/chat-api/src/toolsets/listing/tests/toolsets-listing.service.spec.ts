@@ -206,6 +206,33 @@ describe('ToolsetsListingService', () => {
       });
     });
 
+    it('sets isMy=false when the bucket only matches the toolset-name segment, not the bucket segment', async () => {
+      /*
+       * Regression: a toolset at toolsets/OTHER_BUCKET/bucket must not be
+       * misclassified as owned by "bucket" just because that value happens
+       * to appear as the toolset-name segment rather than the bucket
+       * segment (path index 1).
+       */
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
+        okResponse({
+          data: [
+            {
+              ...rawMockToolset,
+              id: 'toolsets/OTHER_BUCKET/bucket',
+              toolset: 'toolsets/OTHER_BUCKET/bucket',
+            },
+          ],
+        }),
+      );
+
+      const result = await service.listToolsets('user1', 'token-abc', 'bucket');
+      expect(result.data[0]).toMatchObject({
+        id: 'toolsets/OTHER_BUCKET/bucket',
+        isMy: false,
+      });
+    });
+
     it('sets canEdit=true for a shared toolset with WRITE permission', async () => {
       const { service } = makeService();
       vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(

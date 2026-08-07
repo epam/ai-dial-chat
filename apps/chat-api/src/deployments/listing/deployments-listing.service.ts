@@ -8,10 +8,16 @@ import {
   mapDialHttpStatus,
 } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
+import {
+  computeItemOwnershipFlags,
+  splitResourcesByPermission,
+  type ResourceOwnershipUrlSets,
+} from '../../common/utils/resource-ownership';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { HIDDEN_FILE } from '../../constants/dial.constants';
 import { DialClientService } from '../../dial/dial-client.service';
 import { UserConfigService } from '../../user-config/user-config.service';
+import { DeploymentItemType } from '../dto/deployment-item.dto';
 import type {
   DeploymentItemDto,
   DeploymentsResponseDto,
@@ -66,25 +72,25 @@ export class DeploymentsListingService {
   }
 
   /**
-   * Resolves every application resource shared with the current user
-   * (READ or WRITE), in a single upstream call reused to derive both the
-   * WRITE-only "can edit" set and the unfiltered "shared with me" set —
-   * avoids issuing `getSharedResources` twice per list request. Best-effort:
-   * a DIAL Core error here degrades to "no shared applications" rather than
-   * failing the whole deployments list.
+   * Resolves every resource of the given type shared with the current user
+   * (READ or WRITE) — separate calls for `APPLICATION` and `TOOL_SET` since
+   * `getSharedResources` is scoped to one `resourceTypes` filter per call.
+   * Best-effort: a DIAL Core error here degrades to "nothing shared" rather
+   * than failing the whole deployments list.
    */
-  private async getSharedApplicationResources(
+  private async getSharedResources(
     accessToken: string,
+    resourceType: 'APPLICATION' | 'TOOL_SET',
   ): Promise<{ url?: string; permissions?: string[] }[]> {
     try {
       const { data, error, response } =
         await this.dialClient.client.getSharedResources({
           headers: getBearerAuthHeaders(accessToken),
-          body: { resourceTypes: ['APPLICATION'], with: 'me' },
+          body: { resourceTypes: [resourceType], with: 'me' },
         });
       if (error) {
         this.logger.warn(
-          `Failed to resolve shared application resources: status=${response.status}`,
+          `Failed to resolve shared ${resourceType} resources: status=${response.status}`,
         );
         return [];
       }
@@ -94,9 +100,27 @@ export class DeploymentsListingService {
         permissions?: string[];
       }[];
     } catch (err) {
-      this.logger.warn('Failed to resolve shared application resources', err);
+      this.logger.warn(
+        `Failed to resolve shared ${resourceType} resources`,
+        err,
+      );
       return [];
     }
+  }
+
+  /**
+   * Splits `getSharedResources`'s flat resource list into the two URL sets
+   * ownership enrichment needs, shared by both this service's
+   * `listDeployments` and `DeploymentsLookupService.resolveDeploymentItem` so
+   * a just-accepted share resolves to the same `sharedWithMe`/`canEdit`
+   * flags a subsequent full list refresh would produce.
+   */
+  private async getSharedResourceUrlSets(
+    accessToken: string,
+    resourceType: 'APPLICATION' | 'TOOL_SET',
+  ): Promise<ResourceOwnershipUrlSets> {
+    const resources = await this.getSharedResources(accessToken, resourceType);
+    return splitResourcesByPermission(resources);
   }
 
   async listDeployments(
@@ -167,33 +191,31 @@ export class DeploymentsListingService {
       await this.userConfigService.getInstalledIds(accessToken, bucket);
     const toolsetsSet = new Set(toolsetIds);
     const deploymentsSet = new Set(deploymentIds);
-    const sharedApplicationResources =
-      await this.getSharedApplicationResources(accessToken);
-    const writableApplicationUrls = new Set(
-      sharedApplicationResources
-        .filter((resource) => resource.permissions?.includes('WRITE'))
-        .map((resource) => resource.url)
-        .filter((url): url is string => url != null),
-    );
-    const sharedApplicationUrls = new Set(
-      sharedApplicationResources
-        .map((resource) => resource.url)
-        .filter((url): url is string => url != null),
-    );
+    /*
+     * Two separate calls: getSharedResources is scoped to one resourceType
+     * per call, and the combined deployments list mixes applications and
+     * toolsets, each needing its own URL sets (a toolset id can never
+     * appear in the APPLICATION-scoped sets, and vice versa).
+     */
+    const [applicationUrlSets, toolsetUrlSets] = await Promise.all([
+      this.getSharedResourceUrlSets(accessToken, 'APPLICATION'),
+      this.getSharedResourceUrlSets(accessToken, 'TOOL_SET'),
+    ]);
 
-    const withInstalled = allItems.map((item) => {
-      const isMy = item.id.split('/').includes(bucket);
-      return {
-        ...item,
-        isInstalled:
-          item.type === 'toolset'
-            ? toolsetsSet.has(item.id)
-            : deploymentsSet.has(item.id),
-        isMy,
-        canEdit: isMy || writableApplicationUrls.has(item.id),
-        sharedWithMe: !isMy && sharedApplicationUrls.has(item.id),
-      };
-    });
+    const withInstalled = allItems.map((item) => ({
+      ...item,
+      isInstalled:
+        item.type === DeploymentItemType.Toolset
+          ? toolsetsSet.has(item.id)
+          : deploymentsSet.has(item.id),
+      ...computeItemOwnershipFlags(
+        item.id,
+        bucket,
+        item.type === DeploymentItemType.Toolset
+          ? toolsetUrlSets
+          : applicationUrlSets,
+      ),
+    }));
 
     if (!interfaceFilter) {
       return { deployments: withInstalled };

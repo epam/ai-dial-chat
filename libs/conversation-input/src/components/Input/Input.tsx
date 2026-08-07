@@ -378,6 +378,7 @@ export const Input: FC<InputProps> = ({
         styles.wrapper,
         isInputDisabled && styles.wrapperDisabled,
         'flex min-h-[64px] w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border shadow-md',
+        'focus-within:outline focus-within:-outline-offset-1 active:outline active:-outline-offset-1',
         attachments.length > 6 ? 'py-3 ps-3' : 'p-3',
         className,
       )}

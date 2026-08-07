@@ -3,6 +3,7 @@ import type {
   DeploymentFeaturesDetailsDto,
   ToolsetAuthSettingsDto,
 } from '../dto/deployment-details.dto';
+import { DeploymentItemType } from '../dto/deployment-item.dto';
 import type {
   ConversationStartersDto,
   DeploymentItemDto,
@@ -192,13 +193,13 @@ export const mapToDeploymentItem = (
 ): DeploymentItemDto | null => {
   if (!raw.id) return null;
 
-  let type: 'model' | 'application' | 'toolset';
+  let type: DeploymentItemType;
   if (raw.toolset !== undefined) {
-    type = 'toolset';
+    type = DeploymentItemType.Toolset;
   } else if (raw.object === 'application') {
-    type = 'application';
+    type = DeploymentItemType.Application;
   } else {
-    type = 'model';
+    type = DeploymentItemType.Model;
   }
 
   let interfaces: string[] | undefined;
@@ -228,7 +229,7 @@ export const mapToDeploymentItem = (
     ? raw.application_properties
     : undefined;
   const conversationStarters =
-    type === 'application'
+    type === DeploymentItemType.Application
       ? mapConversationStarters(applicationProperties?.conversation_starters)
       : undefined;
 
@@ -245,7 +246,7 @@ export const mapToDeploymentItem = (
     createdAt: raw.created_at,
     interfaces,
     applicationTypeSchemaId:
-      type === 'application' && raw.application_type_schema_id
+      type === DeploymentItemType.Application && raw.application_type_schema_id
         ? raw.application_type_schema_id
         : undefined,
     inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
@@ -269,7 +270,7 @@ export const mapToDeploymentItem = (
     topics,
     owner: raw.owner,
     applicationFolder:
-      type === 'application' && raw.id.includes('/')
+      type === DeploymentItemType.Application && raw.id.includes('/')
         ? raw.id.substring(0, raw.id.lastIndexOf('/'))
         : undefined,
     conversationStarters,

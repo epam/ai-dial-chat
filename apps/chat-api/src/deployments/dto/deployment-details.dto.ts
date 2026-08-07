@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { DeploymentItemType } from './deployment-item.dto';
 
 export class ModelCapabilitiesDto {
   @ApiPropertyOptional({ description: 'True if the model is a completion' })
@@ -378,8 +379,8 @@ export class DeploymentDetailsDto {
   @ApiProperty({ description: 'The requested deployment id' })
   id!: string;
 
-  @ApiProperty({ enum: ['model', 'application', 'toolset'] })
-  type!: 'model' | 'application' | 'toolset';
+  @ApiProperty({ enum: DeploymentItemType })
+  type!: DeploymentItemType;
 
   @ApiPropertyOptional({ type: ModelDetailsDto })
   modelDetails?: ModelDetailsDto;

@@ -323,9 +323,6 @@ export const getStringArray = (
 export const isVisibleToolset = (toolset: RawDialToolset): boolean =>
   Boolean(toolset.id) && !toolset.id.includes(HIDDEN_FILE);
 
-export const isMyToolset = (toolset: DialToolsetDto, bucket: string): boolean =>
-  Boolean(bucket) && toolset.id.split('/').includes(bucket);
-
 /*
  * Resolves whichever raw auth settings container the source endpoint used
  * (`authSettings` for the custom toolset resource, `auth_settings` for the

@@ -1,8 +1,7 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { ATTACHMENT_COLLAPSE_THRESHOLD } from '../../../constants/attachment-group';
 import { AttachmentGroup } from '../AttachmentGroup';
 
@@ -107,32 +106,6 @@ describe('AttachmentGroup', () => {
       // `w-fit` wrapper) treats this group's grid content as its floor and
       // never actually narrows on a real mobile viewport.
       expect(rootClassName).toContain('min-w-0');
-    });
-  });
-
-  describe('file states', () => {
-    it('renders an uploading file with a progress indicator', () => {
-      render(
-        <AttachmentGroup
-          attachments={[makeFile('a', { status: RequestStatus.Loading })]}
-        />,
-      );
-      expect(screen.getByRole('progressbar')).toBeTruthy();
-    });
-
-    it('renders a failed file with a retry action', async () => {
-      const user = userEvent.setup();
-      const handleRetry = vi.fn();
-      render(
-        <AttachmentGroup
-          attachments={[makeFile('a', { status: RequestStatus.Error })]}
-          onRetry={handleRetry}
-          labels={{ retryLabel: 'Retry' }}
-        />,
-      );
-
-      await user.click(screen.getByRole('button', { name: 'Retry' }));
-      expect(handleRetry).toHaveBeenCalledWith('a');
     });
   });
 

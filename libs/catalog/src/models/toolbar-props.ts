@@ -1,12 +1,5 @@
+import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import { CatalogViewMode } from '../types/view-mode';
-
-/** A single option in the sort dropdown. */
-export interface CatalogSortOption {
-  /** Sort key passed to `onSortChange`. */
-  value: string;
-  /** Display label shown in the dropdown. */
-  label: string;
-}
 
 /** Typography class overrides for `Toolbar`. */
 export interface ToolbarTypography {
@@ -90,8 +83,6 @@ export interface ToolbarProps {
   filterTopicsLabel?: string;
   /** Currently active sort key. */
   sortKey?: string;
-  /** Called when the user selects a different sort option. */
-  onSortChange?: (key: string) => void;
   /** Available sort options shown in the dropdown. */
-  sortOptions?: CatalogSortOption[];
+  sortOptions?: DropdownItem[];
 }

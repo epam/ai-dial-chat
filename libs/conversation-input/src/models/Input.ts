@@ -35,7 +35,7 @@ export interface InputColors {
   modelSelectorCaret?: string;
   /** Model-selector chip hover/active background color. Defaults to `--bg-control-accent-alpha-hover`/`--bg-control-accent-alpha-active`. */
   modelSelectorHoverBg?: string;
-  /** Model-selector chip caret color when disabled. Defaults to `--text-control-disable`. */
+  /** Model-selector chip caret color when disabled. Defaults to `--text-control-disable-beta`. */
   modelSelectorDisabled?: string;
   /** Voice bar error border/icon color. Defaults to `--stroke-error`/`--text-error`. */
   voiceError?: string;
