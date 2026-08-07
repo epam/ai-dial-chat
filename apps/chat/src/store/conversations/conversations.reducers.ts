@@ -811,7 +811,10 @@ export const conversationsSlice = createSlice({
         .map(({ id }) => `${id}/`);
     },
 
-    deleteChosenConversations: (state) => state,
+    deleteChosenConversations: (state) => {
+      // show loader while chosen conversations are being deleted on the server
+      state.conversationsLoaded = false;
+    },
     addToChosenEmptyFolders: (
       state,
       { payload }: PayloadAction<{ ids: string[] }>,
