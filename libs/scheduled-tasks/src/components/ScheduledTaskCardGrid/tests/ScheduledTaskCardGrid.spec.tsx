@@ -24,7 +24,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     <div data-skeleton data-color={color} />
   ),
   SkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
-  DialDropdown: ({ children }: { children: ReactNode }) => <>{children}</>,
+  Dropdown: ({ children }: { children: ReactNode }) => <>{children}</>,
   DialIconButton: ({
     icon,
     ...rest

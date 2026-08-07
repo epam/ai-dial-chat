@@ -149,7 +149,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
-  DialConfirmationPopup: ({
+  ConfirmationPopup: ({
     open,
     confirmLabel,
     cancelLabel,

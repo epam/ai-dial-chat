@@ -12,7 +12,7 @@ import type {
 } from '@epam/ai-dial-publish-panel';
 import {
   DialCloseButton,
-  DialConfirmationPopup,
+  ConfirmationPopup,
   Skeleton,
   DialTag,
   GhostIconButton,
@@ -461,7 +461,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 />
               )}
 
-              <DialConfirmationPopup
+              <ConfirmationPopup
                 open={isDirectLogoutConfirmOpen}
                 header={texts?.logoutActionLabel ?? 'Log out'}
                 description={

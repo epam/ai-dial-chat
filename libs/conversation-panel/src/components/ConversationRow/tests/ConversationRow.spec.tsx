@@ -49,7 +49,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </button>
   ),
   DialEllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
-  DialDropdown: ({
+  Dropdown: ({
     children,
     onOpenChange,
   }: {

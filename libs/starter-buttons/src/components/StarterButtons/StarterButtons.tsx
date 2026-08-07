@@ -1,7 +1,7 @@
 import { BASE_MD_ICON_PROPS } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import {
-  DialDropdown,
+  Dropdown,
   NeutralButton,
   ButtonAppearance,
   NeutralIconButton,
@@ -141,11 +141,10 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
 
         {overflowStarters.length > 0 && (
           <div role="listitem">
-            <DialDropdown
+            <Dropdown
               items={overflowItems}
               placement="bottom-end"
               matchReferenceWidth={false}
-              listClassName="cp-dropdown-overlay"
             >
               <NeutralIconButton
                 appearance={ButtonAppearance.Outlined}
@@ -158,7 +157,7 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
                 }
                 aria-label={labels.overflow}
               />
-            </DialDropdown>
+            </Dropdown>
           </div>
         )}
       </div>

@@ -2,7 +2,7 @@ import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   CardShell,
   DIAL_ICON_SIZE,
-  DialDropdown,
+  Dropdown,
   type DropdownItem,
   FolderPath,
   Highlight,
@@ -153,7 +153,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
         </div>
 
         {menuItems.length > 0 && (
-          <DialDropdown
+          <Dropdown
             items={menuItems}
             matchReferenceWidth={false}
             placement="bottom-end"
@@ -164,7 +164,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
               className="shrink-0"
               onClick={(event: MouseEvent) => event.stopPropagation()}
             />
-          </DialDropdown>
+          </Dropdown>
         )}
       </div>
 

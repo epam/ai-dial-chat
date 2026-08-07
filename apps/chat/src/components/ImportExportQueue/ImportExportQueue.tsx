@@ -2,7 +2,7 @@ import {
   ButtonAppearance,
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
-  DialConfirmationPopup,
+  ConfirmationPopup,
   DialEllipsisTooltip,
   DialIconButton,
   DialProgressBar,
@@ -251,7 +251,7 @@ const ImportExportQueue: FC<Props> = ({
           ))}
         </div>
       )}
-      <DialConfirmationPopup
+      <ConfirmationPopup
         open={isConfirmOpen}
         header={t(ConversationExportI18nKeys.CloseQueueConfirmHeader)}
         description={t(getCloseConfirmDescriptionKey(hasInProgress, hasFailed))}

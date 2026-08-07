@@ -1,8 +1,8 @@
 import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
-  DialConfirmationPopup,
-  DialDropdown,
+  ConfirmationPopup,
+  Dropdown,
   ElementSize,
   GhostIconButton,
   NotificationVariant,
@@ -36,7 +36,7 @@ const PanelMenuTrigger: FC<PanelMenuTriggerProps> = ({ items, label }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <DialDropdown
+    <Dropdown
       items={items}
       placement="bottom-end"
       listClassName="cp-dropdown-overlay"
@@ -53,7 +53,7 @@ const PanelMenuTrigger: FC<PanelMenuTriggerProps> = ({ items, label }) => {
         }
         className={isOpen ? 'bg-control-accent-alpha-hover' : undefined}
       />
-    </DialDropdown>
+    </Dropdown>
   );
 };
 
@@ -176,7 +176,7 @@ const ConversationPanelMenu: FC<Props> = ({
         items={menuItems}
         label={t(ConversationPanelI18nKeys.PanelActionsLabel)}
       />
-      <DialConfirmationPopup
+      <ConfirmationPopup
         open={isPopupOpen}
         header={t(ConversationPanelI18nKeys.DeleteAllConfirmTitle)}
         confirmLabel={t(ButtonsI18nKeys.DeleteAll)}

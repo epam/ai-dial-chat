@@ -1,7 +1,7 @@
 import { DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialDropdown,
+  Dropdown,
   DialDropdownIcon,
   DialTooltip,
   ElementSize,
@@ -34,7 +34,7 @@ interface Props {
   isPickerOpen?: boolean;
   /** Toggles the model picker popover open/closed. */
   onPickerToggle?: () => void;
-  /** Called by DialDropdown when open state changes (e.g. outside click). */
+  /** Called by Dropdown when open state changes (e.g. outside click). */
   onPickerOpenChange?: (open: boolean) => void;
 }
 
@@ -142,7 +142,7 @@ export const ModelSelectorControl: FC<Props> = ({
 
   if (modelPickerOverlay) {
     return (
-      <DialDropdown
+      <Dropdown
         placement="top-end"
         matchReferenceWidth={false}
         open={isPickerOpen}
@@ -177,7 +177,7 @@ export const ModelSelectorControl: FC<Props> = ({
             {caretIcon}
           </button>
         </DialTooltip>
-      </DialDropdown>
+      </Dropdown>
     );
   }
 

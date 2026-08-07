@@ -1,7 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DialAccordion,
-  DialConfirmationPopup,
+  ConfirmationPopup,
   NeutralButton,
   PrimaryButton,
   Input,
@@ -129,7 +129,7 @@ const LevelForm: FC<LevelFormProps> = ({
         <NeutralButton label={logoutActionLabel} onClick={handleLogoutClick} />
       )}
 
-      <DialConfirmationPopup
+      <ConfirmationPopup
         open={isLogoutConfirmOpen}
         header={logoutActionLabel}
         description={

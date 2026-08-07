@@ -54,7 +54,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   }) => <button onClick={onClose}>{ariaLabel}</button>,
   Skeleton: () => <div>skeleton</div>,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialConfirmationPopup: ({
+  ConfirmationPopup: ({
     open,
     header,
     description,

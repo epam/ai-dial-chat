@@ -1,4 +1,4 @@
-import { DialPopup, NeutralButton, Spinner } from '@epam/ai-dial-ui-kit';
+import { Popup, NeutralButton, Spinner } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 
 interface Props {
@@ -14,10 +14,9 @@ const OperationLoaderModal: FC<Props> = ({
   cancelLabel,
   onCancel,
 }) => (
-  <DialPopup
+  <Popup
     className="!h-fit !max-h-full !w-[400px]"
     open
-    dividers={false}
     closeOnOutsideClick={false}
     hideClose
     onClose={onCancel}
@@ -37,7 +36,7 @@ const OperationLoaderModal: FC<Props> = ({
         <div className="text-sm text-secondary">{text}</div>
       </div>
     </div>
-  </DialPopup>
+  </Popup>
 );
 
 export default memo(OperationLoaderModal);
