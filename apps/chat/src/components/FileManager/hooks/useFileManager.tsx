@@ -23,6 +23,7 @@ import {
   getFolderIdFromEntityId,
   getFolderNestingLevel,
   getFoldersDepth,
+  remapMovedPath,
 } from '@/src/utils/app/folders';
 import { getFileRootId, getRootId, isRootId } from '@/src/utils/app/id';
 import {
@@ -294,6 +295,9 @@ export const useFileManager = ({
   const prevIsCopyingRef = useRef(false);
   const prevIsMovingRef = useRef(false);
   const prevIsDeletingRef = useRef(false);
+  // Paths of the branches that have to be listed again once a folder move or
+  // rename settles, collected while the operation is dispatched.
+  const pathsToRelistRef = useRef<string[]>([]);
 
   const fileMetadata = useAppSelector(FilesSelectors.selectFileMetadata);
   const _files = useAppSelector(FilesSelectors.selectFiles);
@@ -507,6 +511,13 @@ export const useFileManager = ({
     if ((copyJustFinished || moveJustFinished) && isSearching && currentPath) {
       dispatch(FilesActions.getFullListing({ folderPath: currentPath }));
     }
+
+    if (moveJustFinished && pathsToRelistRef.current.length) {
+      dispatch(
+        FilesActions.getFoldersList({ paths: pathsToRelistRef.current }),
+      );
+      pathsToRelistRef.current = [];
+    }
   }, [isCopyingFiles, isMovingFiles, isSearching, currentPath, dispatch]);
 
   useEffect(() => {
@@ -523,6 +534,21 @@ export const useFileManager = ({
       const folder = folders.find((folder) => folder.id === currentPath);
       if (!folder) {
         const parentId = getFolderIdFromEntityId(currentPath);
+        const parentFolder = folders.find((folder) => folder.id === parentId);
+
+        // A folder missing while its parent listing has not been fetched yet is
+        // not gone - it just has not arrived. This is the case right after a
+        // rename, when the subtree is re-listed level by level, so pull the
+        // parent listing in instead of sending the user up the tree. Issue #3325
+        if (
+          parentFolder &&
+          parentFolder.status !== UploadStatus.LOADED &&
+          parentFolder.status !== UploadStatus.LOADING
+        ) {
+          dispatch(FilesActions.getFilesWithFolders({ id: parentId }));
+          return;
+        }
+
         setCurrentPath(parentId);
       } else if (
         folder?.status !== UploadStatus.LOADED &&
@@ -833,17 +859,44 @@ export const useFileManager = ({
         }),
       );
 
-      const movedCurrentOrParent = movedItems.find(
-        (item) =>
-          item.sourceUrl === currentPath ||
-          currentPath?.startsWith(item.sourceUrl),
+      const movedFolders = movedItems.filter(
+        (item) => item.nodeType === DialFileNodeType.FOLDER,
       );
 
-      if (movedCurrentOrParent) {
-        setCurrentPath(movedCurrentOrParent.destinationUrl);
+      if (!movedFolders.length) return;
+
+      // The expanded paths have to follow the renamed/moved folders, otherwise
+      // the tree collapses and the user has to walk the structure again to get
+      // back to where they were. Issue #3325
+      const remappedPaths = [...expandedPaths].map((path) => ({
+        path,
+        newPath: remapMovedPath(path, movedFolders),
+      }));
+
+      setExpandedPaths(new Set(remappedPaths.map(({ newPath }) => newPath)));
+
+      // The moved subtree is dropped from the store while the operation is in
+      // flight and only the destination parent gets re-listed, so the expanded
+      // branches have to be listed again to stay browsable.
+      pathsToRelistRef.current = remappedPaths
+        .filter(({ path, newPath }) => path !== newPath)
+        .map(({ newPath }) => newPath);
+
+      if (currentPath) {
+        const newCurrentPath = remapMovedPath(currentPath, movedFolders);
+
+        if (newCurrentPath !== currentPath) {
+          setCurrentPath(newCurrentPath);
+        }
       }
     },
-    [dispatch, currentPath, exceedsMaxFolderDepth, showMaxDepthError],
+    [
+      dispatch,
+      currentPath,
+      expandedPaths,
+      exceedsMaxFolderDepth,
+      showMaxDepthError,
+    ],
   );
 
   const handleSearchFiles = useCallback(
