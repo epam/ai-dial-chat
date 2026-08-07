@@ -79,7 +79,7 @@
     "next-auth": "^4.24.15",
     "next-i18next": "^13.2.2",
     "node-fetch": "^3.3.2",
-    "pdfjs-dist": "^5.4.149",
+    "pdfjs-dist": "^6.2.108",
     "pino": "^9.12.0",
     "pino-opentelemetry-transport": "^1.0.0",
     "pino-pretty": "^10.2.0",
