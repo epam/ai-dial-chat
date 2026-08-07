@@ -8,6 +8,7 @@ import { DEFAULT_RESOURCE_MAX_SEGMENT_BYTES } from '@/src/constants/default-ui-s
 import { SettingsState } from './settings.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
+import { DEFAULT_LOCAL } from '@/src/constants/locale';
 
 const initialState: SettingsState = {
   appName: 'DIAL',
@@ -38,7 +39,7 @@ const initialState: SettingsState = {
   },
   stageContentLimit: 40,
   resourceMaxSegmentBytes: DEFAULT_RESOURCE_MAX_SEGMENT_BYTES,
-  availableLocales: ['en'],
+  availableLocales: [DEFAULT_LOCAL],
   allowedImageSources: '',
 };
 
