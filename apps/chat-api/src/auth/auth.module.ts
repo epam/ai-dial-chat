@@ -9,6 +9,9 @@ import { RefreshService } from './refresh/refresh.service';
 import { OptionalSessionGuard } from './session/optional-session.guard';
 import { SessionGuard } from './session/session.guard';
 import { SessionService } from './session/session.service';
+import { AUTH_STRATEGIES } from './strategies/auth-strategies.token';
+import { CookieSessionStrategy } from './strategies/cookie-session.strategy';
+import { HeaderTokenStrategy } from './strategies/header-token.strategy';
 
 @Module({
   controllers: [AuthController],
@@ -19,6 +22,16 @@ import { SessionService } from './session/session.service';
     RefreshService,
     ProviderRegistryService,
     BucketService,
+    HeaderTokenStrategy,
+    CookieSessionStrategy,
+    {
+      provide: AUTH_STRATEGIES,
+      useFactory: (
+        headerStrategy: HeaderTokenStrategy,
+        cookieStrategy: CookieSessionStrategy,
+      ) => [headerStrategy, cookieStrategy],
+      inject: [HeaderTokenStrategy, CookieSessionStrategy],
+    },
     {
       provide: APP_GUARD,
       useClass: SessionGuard,
@@ -28,6 +41,6 @@ import { SessionService } from './session/session.service';
       useClass: CsrfGuard,
     },
   ],
-  exports: [OptionalSessionGuard, SessionService, KeysService],
+  exports: [OptionalSessionGuard, SessionService, KeysService, AUTH_STRATEGIES],
 })
 export class AuthModule {}
