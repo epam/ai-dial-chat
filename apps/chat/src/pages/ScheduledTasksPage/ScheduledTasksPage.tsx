@@ -6,7 +6,10 @@ import { memo, useCallback, useEffect, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
-import { getScheduledTaskDetailRoute } from '../../constants/routes';
+import {
+  getScheduledTaskDetailRoute,
+  getScheduledTaskEditRoute,
+} from '../../constants/routes';
 import { ScheduledTaskCreateQuery } from '../../constants/scheduled-tasks';
 import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
@@ -61,6 +64,13 @@ const ScheduledTasksPage: FC = () => {
   const handleCardClick = useCallback(
     (id: string) => {
       navigate(getScheduledTaskDetailRoute(id));
+    },
+    [navigate],
+  );
+
+  const handleEdit = useCallback(
+    (id: string) => {
+      navigate(getScheduledTaskEditRoute(id));
     },
     [navigate],
   );
@@ -123,8 +133,8 @@ const ScheduledTasksPage: FC = () => {
   }
 
   return (
-    // onEdit/onRunNow/onDelete are intentionally omitted: the overflow menu,
-    // edit flow, and run-now action are deferred to a future iteration.
+    // onRunNow/onDelete are intentionally omitted: run-now and delete are
+    // deferred to a future iteration.
     <ScheduledTasks
       labels={labels}
       onCreateClick={handleCreateClick}
@@ -140,6 +150,7 @@ const ScheduledTasksPage: FC = () => {
       isLoadingMore={isLoadingMore}
       onLoadMore={loadMore}
       onCardClick={handleCardClick}
+      onEdit={handleEdit}
     />
   );
 };

@@ -43,6 +43,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
   ScheduledTaskDetailView: ({
     labels,
     onBack,
+    onEdit,
     displayName,
     isLoading,
     error,
@@ -62,8 +63,10 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       retryLabel: string;
       historyErrorLabel: string;
       historyRetryLabel: string;
+      editButtonLabel: string;
     };
     onBack: () => void;
+    onEdit?: () => void;
     displayName: string;
     isLoading?: boolean;
     error?: Error | null;
@@ -93,11 +96,13 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       )}
       <button onClick={onRunsLoadMore}>load more runs</button>
       <button onClick={onBack}>back</button>
+      {onEdit && <button onClick={onEdit}>{labels.editButtonLabel}</button>}
     </div>
   ),
 }));
 
 const BackTargetStub = () => <div>scheduled tasks list</div>;
+const EditTargetStub = () => <div>scheduled task edit page</div>;
 
 const renderDetailPage = (scheduleId = 'sched_123') =>
   render(
@@ -108,6 +113,10 @@ const renderDetailPage = (scheduleId = 'sched_123') =>
           element={<ScheduledTaskDetailPage />}
         />
         <Route path="/scheduled-tasks" element={<BackTargetStub />} />
+        <Route
+          path="/scheduled-tasks/:scheduleId/edit"
+          element={<EditTargetStub />}
+        />
       </Routes>
     </MemoryRouter>,
   );
@@ -284,6 +293,78 @@ describe('ScheduledTaskDetailPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'back' }));
 
     expect(screen.getByText('scheduled tasks list')).toBeTruthy();
+  });
+
+  it('does not pass onEdit while the task is loading', () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockReturnValue(new Promise(() => {})); // never resolves
+    renderDetailPage();
+
+    expect(
+      screen.queryByRole('button', {
+        name: 'scheduledTasks.card.editActionLabel',
+      }),
+    ).not.toBeTruthy();
+  });
+
+  it('does not pass onEdit when the task fetch fails', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockRejectedValue(new Error('network down'));
+    getApiErrorStatusMock.mockReturnValue(undefined);
+    renderDetailPage();
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', {
+          name: 'scheduledTasks.list.retryLabel',
+        }),
+      ).toBeTruthy(),
+    );
+
+    expect(
+      screen.queryByRole('button', {
+        name: 'scheduledTasks.card.editActionLabel',
+      }),
+    ).not.toBeTruthy();
+  });
+
+  it('passes onEdit once the task has loaded successfully', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Daily summary',
+      trigger: {},
+    });
+    renderDetailPage();
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', {
+          name: 'scheduledTasks.card.editActionLabel',
+        }),
+      ).toBeTruthy(),
+    );
+  });
+
+  it('navigates to the edit route for the current task when Edit is activated', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Daily summary',
+      trigger: {},
+    });
+    renderDetailPage('sched_123');
+
+    await waitFor(() =>
+      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
+    );
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: 'scheduledTasks.card.editActionLabel',
+      }),
+    );
+
+    expect(screen.getByText('scheduled task edit page')).toBeTruthy();
   });
 
   it('resolves the model display name via deployments, falling back to the raw id', async () => {

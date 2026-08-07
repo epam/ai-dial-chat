@@ -23,4 +23,5 @@ export enum ROUTES {
   ScheduledTasks = '/scheduled-tasks',
   ScheduledTaskCreate = '/scheduled-tasks/new',
   ScheduledTaskDetail = '/scheduled-tasks/:scheduleId',
+  ScheduledTaskEdit = '/scheduled-tasks/:scheduleId/edit',
 }

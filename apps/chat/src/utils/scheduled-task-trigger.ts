@@ -5,7 +5,9 @@ import {
 } from '@epam/ai-dial-scheduled-tasks';
 import type {
   CreateScheduledTaskBodyDto,
+  ScheduledTaskDto,
   ScheduleTriggerDto,
+  UpdateScheduledTaskBodyDto,
 } from '@epam/chat-api-client';
 import { apSchedulerDayToJsDay, jsDayToApSchedulerDay } from './cron-weekday';
 
@@ -14,6 +16,25 @@ enum CronWindowEdge {
   Start = 'start',
   End = 'end',
 }
+
+/** Why a {@link ScheduledTaskDto} could not be mapped back to editable form values. */
+export enum UnsupportedTriggerReason {
+  /** `trigger.cron.fields` uses a shape (extra keys, or both `day_of_week` and `day`) the editor's schedule controls cannot represent. */
+  UnsupportedCronShape = 'unsupportedCronShape',
+  /** Neither or both of `trigger.date`/`trigger.cron` are set, so the schedule type cannot be determined. */
+  UnsupportedTriggerType = 'unsupportedTriggerType',
+  /** The task is missing `model` or `prompt`, so it cannot be represented as a valid update payload. */
+  MissingRequiredFields = 'missingRequiredFields',
+}
+
+/** Result of mapping a {@link ScheduledTaskDto} back to editable form values. */
+export type ScheduledTaskDtoMappingResult =
+  | { ok: true; values: ScheduledTaskCreateFormValues }
+  | { ok: false; reason: UnsupportedTriggerReason };
+
+const CRON_FIELD_KEYS = new Set(['hour', 'minute', 'day_of_week', 'day']);
+
+const pad2 = (value: number): string => String(value).padStart(2, '0');
 
 /**
  * Converts the locally-entered `hour`/`minute` (and, for weekly/monthly
@@ -127,5 +148,171 @@ export const mapFormValuesToCreateBody = (
     model: values.modelId,
     prompt: values.prompt.trim(),
     ...(trimmedDescription ? { description: trimmedDescription } : {}),
+  };
+};
+
+/**
+ * Maps validated edit-form values to the `PUT /api/v1/scheduled-tasks/:scheduleId`
+ * request body. `UpdateScheduledTaskBodyDto` has the same shape as
+ * `CreateScheduledTaskBodyDto`, so this reuses the same trigger-building logic.
+ */
+export const mapFormValuesToUpdateBody = (
+  values: ScheduledTaskCreateFormValues,
+): UpdateScheduledTaskBodyDto => mapFormValuesToCreateBody(values);
+
+/**
+ * Converts a UTC ISO instant to the local `YYYY-MM-DDTHH:mm` string the
+ * "Run at" field expects, using `Date`'s local getters so the browser's own
+ * timezone/DST handling does the conversion.
+ */
+const isoToLocalDateTime = (iso: string): string => {
+  const date = new Date(iso);
+  return (
+    `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}` +
+    `T${pad2(date.getHours())}:${pad2(date.getMinutes())}`
+  );
+};
+
+/**
+ * Converts a UTC ISO instant (an activity-window `startDate`/`endDate`
+ * boundary) to the local `YYYY-MM-DD` date-only value the "Start date"/"End
+ * date" pickers expect.
+ */
+const isoToLocalDateOnly = (iso: string): string => {
+  const date = new Date(iso);
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+};
+
+/**
+ * Inverts {@link buildCronFields}: given the UTC `hour`/`minute` (and,
+ * for weekly/monthly recurrence, the UTC `day_of_week`/`day`) stored on the
+ * task, resolves the local wall-clock `time` and, when applicable, the local
+ * `dayOfWeek`/`dayOfMonth` — using a single reference `Date` and its local
+ * getters, mirroring the forward conversion's reference-`Date` technique.
+ */
+const parseCronFields = (
+  fields: Record<string, string>,
+):
+  | {
+      ok: true;
+      time: string;
+      dayOfWeek?: string;
+      dayOfMonth?: string;
+    }
+  | { ok: false } => {
+  const extraKeys = Object.keys(fields).filter(
+    (key) => !CRON_FIELD_KEYS.has(key),
+  );
+  const hasDayOfWeek = 'day_of_week' in fields;
+  const hasDayOfMonth = 'day' in fields;
+
+  if (
+    extraKeys.length > 0 ||
+    (hasDayOfWeek && hasDayOfMonth) ||
+    !('hour' in fields) ||
+    !('minute' in fields)
+  ) {
+    return { ok: false };
+  }
+
+  const utcHour = Number(fields.hour);
+  const utcMinute = Number(fields.minute);
+  if (Number.isNaN(utcHour) || Number.isNaN(utcMinute)) {
+    return { ok: false };
+  }
+
+  const reference = new Date();
+  reference.setUTCHours(utcHour, utcMinute, 0, 0);
+
+  if (hasDayOfWeek) {
+    const utcDayOfWeek = Number(fields.day_of_week);
+    if (Number.isNaN(utcDayOfWeek)) return { ok: false };
+    const targetUtcDay = apSchedulerDayToJsDay(utcDayOfWeek);
+    const diff = (targetUtcDay - reference.getUTCDay() + 7) % 7;
+    reference.setUTCDate(reference.getUTCDate() + diff);
+  } else if (hasDayOfMonth) {
+    const utcDay = Number(fields.day);
+    if (Number.isNaN(utcDay)) return { ok: false };
+    reference.setUTCDate(utcDay);
+  }
+
+  return {
+    ok: true,
+    time: `${pad2(reference.getHours())}:${pad2(reference.getMinutes())}`,
+    ...(hasDayOfWeek
+      ? { dayOfWeek: String(jsDayToApSchedulerDay(reference.getDay())) }
+      : {}),
+    ...(hasDayOfMonth ? { dayOfMonth: String(reference.getDate()) } : {}),
+  };
+};
+
+/**
+ * Attempts to map a {@link ScheduledTaskDto} back to editable
+ * {@link ScheduledTaskCreateFormValues}, inverting {@link buildCronFields}/
+ * {@link buildCronWindowBoundary}. Fails closed — returning a reason instead
+ * of a value — whenever the task's trigger or required fields cannot be
+ * represented losslessly by the editor, so an unsupported schedule is never
+ * silently coerced and re-submitted.
+ */
+export const mapScheduledTaskDtoToFormValues = (
+  dto: ScheduledTaskDto,
+): ScheduledTaskDtoMappingResult => {
+  if (!dto.model || !dto.prompt) {
+    return { ok: false, reason: UnsupportedTriggerReason.MissingRequiredFields };
+  }
+
+  const hasDate = !!dto.trigger.date;
+  const hasCron = !!dto.trigger.cron;
+  if (hasDate === hasCron) {
+    return { ok: false, reason: UnsupportedTriggerReason.UnsupportedTriggerType };
+  }
+
+  const base: Pick<
+    ScheduledTaskCreateFormValues,
+    'displayName' | 'modelId' | 'prompt' | 'description'
+  > = {
+    displayName: dto.displayName,
+    modelId: dto.model,
+    prompt: dto.prompt,
+    ...(dto.description ? { description: dto.description } : {}),
+  };
+
+  if (hasDate) {
+    return {
+      ok: true,
+      values: {
+        ...base,
+        scheduleType: ScheduledTaskScheduleType.Once,
+        runAt: isoToLocalDateTime(dto.trigger.date as string),
+        time: '00:00',
+      },
+    };
+  }
+
+  const cron = dto.trigger.cron!;
+  const parsed = parseCronFields(cron.fields);
+  if (!parsed.ok) {
+    return { ok: false, reason: UnsupportedTriggerReason.UnsupportedCronShape };
+  }
+
+  let frequency = ScheduledTaskFrequency.Daily;
+  if (parsed.dayOfWeek) {
+    frequency = ScheduledTaskFrequency.Weekly;
+  } else if (parsed.dayOfMonth) {
+    frequency = ScheduledTaskFrequency.Monthly;
+  }
+
+  return {
+    ok: true,
+    values: {
+      ...base,
+      scheduleType: ScheduledTaskScheduleType.Recurring,
+      frequency,
+      time: parsed.time,
+      ...(parsed.dayOfWeek ? { dayOfWeek: parsed.dayOfWeek } : {}),
+      ...(parsed.dayOfMonth ? { dayOfMonth: parsed.dayOfMonth } : {}),
+      ...(cron.startDate ? { startDate: isoToLocalDateOnly(cron.startDate) } : {}),
+      ...(cron.endDate ? { endDate: isoToLocalDateOnly(cron.endDate) } : {}),
+    },
   };
 };
