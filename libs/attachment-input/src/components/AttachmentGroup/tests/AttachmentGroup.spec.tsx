@@ -1,8 +1,7 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { ATTACHMENT_COLLAPSE_THRESHOLD } from '../../../constants/attachment-group';
 import { AttachmentGroup } from '../AttachmentGroup';
 
