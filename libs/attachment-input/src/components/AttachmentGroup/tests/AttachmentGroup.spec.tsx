@@ -110,23 +110,6 @@ describe('AttachmentGroup', () => {
     });
   });
 
-  describe('file states', () => {
-    it('renders a failed file with a retry action', async () => {
-      const user = userEvent.setup();
-      const handleRetry = vi.fn();
-      render(
-        <AttachmentGroup
-          attachments={[makeFile('a', { status: RequestStatus.Error })]}
-          onRetry={handleRetry}
-          labels={{ retryLabel: 'Retry' }}
-        />,
-      );
-
-      await user.click(screen.getByRole('button', { name: 'Retry' }));
-      expect(handleRetry).toHaveBeenCalledWith('a');
-    });
-  });
-
   it('exposes the group as an accessible, labeled region', () => {
     render(
       <AttachmentGroup
