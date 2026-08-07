@@ -1,0 +1,24 @@
+%% Pluggable authentication-strategy chain: SessionGuard dispatches to the first
+%% AuthStrategy that supports the request. Header wins over cookie when both are
+%% present; a supporting strategy that fails throws immediately (no fallback).
+%% CsrfGuard skips its Origin/X-CSRF-Token checks only for header-authenticated requests.
+
+flowchart TD
+    REQ["Incoming request"] --> PUB{"@Public() route?"}
+    PUB -- yes --> ALLOW["Allowed — no strategy consulted"]
+    PUB -- no --> HDR{"Authorization header present<br/>AND AUTH_HEADER_TOKEN_ENABLED?"}
+
+    HDR -- yes --> HTS["HeaderTokenStrategy.authenticate()<br/>verify JWT via provider JWKS<br/>(jose.jwtVerify)"]
+    HTS -- valid --> SETH["req.user, req.authSource = Header"]
+    HTS -- invalid/expired/untrusted issuer --> ERR401["401 Unauthorized<br/>(AUTH_HEADER_TOKEN_* code)<br/>— no fallback to cookie"]
+
+    HDR -- no --> CK{"Session cookie present?"}
+    CK -- yes --> CSS["CookieSessionStrategy.authenticate()<br/>decrypt, refresh if near-expiry,<br/>resolve bucket if empty"]
+    CSS -- valid --> SETC["req.user, req.authSource = Cookie"]
+    CSS -- invalid/expired --> ERR401B["401 Unauthorized<br/>(AUTH_NO_CREDENTIALS)"]
+    CK -- no --> ERR401B
+
+    SETH --> CSRF{"CsrfGuard: authSource == Header?"}
+    SETC --> CSRF
+    CSRF -- yes --> SKIP["Skip Origin/Referer + X-CSRF-Token checks"]
+    CSRF -- no --> CHECK["Enforce Origin/Referer + X-CSRF-Token<br/>(unchanged cookie-path behavior)"]
