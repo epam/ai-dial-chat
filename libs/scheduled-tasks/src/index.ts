@@ -2,7 +2,6 @@ export { ScheduledTasks } from './components/ScheduledTasks/ScheduledTasks';
 export type {
   ScheduledTasksProps,
   ScheduledTasksLabels,
-  ScheduledTasksSortOption,
   ScheduledTasksStyles,
   ScheduledTasksColors,
   ScheduledTasksTypography,

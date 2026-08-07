@@ -191,6 +191,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       '--cp-text-secondary': colors?.textSecondary,
       '--cp-new-chat-bg': newChatButtonColors?.background,
       '--cp-new-chat-text': newChatButtonColors?.text,
+      '--cp-new-chat-focus-outline': newChatButtonColors?.focusOutline,
       '--cp-drop-zone-ring': colors?.dropZoneRing,
       '--cp-trigger-bg': colors?.triggerBackground,
       '--cp-trigger-icon': colors?.triggerIcon,
@@ -385,7 +386,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           titleClassName: typography?.fontClassName,
           headerClassName: 'h-[64px]',
           className: mergeClasses(
-            isOpen ? 'w-[325px] border-s border-e mobile:w-full' : 'w-0',
+            isOpen ? 'w-[324px] mobile:w-full' : 'w-0',
             className,
           ),
         }}

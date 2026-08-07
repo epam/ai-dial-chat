@@ -24,6 +24,7 @@
   border-color: var(--inp-border, var(--stroke-tertiary, #e0e6f0)) !important;
   transition:
     border-color 150ms ease,
+    outline-color 150ms ease,
     box-shadow 150ms ease;
 
   &:not(:disabled):hover {
@@ -33,13 +34,20 @@
     ) !important;
   }
 
+  /*
+   * The focus ring is an `outline`, not a `border-color` swap: outline is
+   * painted outside the border box, so it never contributes to layout and
+   * survives forced-colors/high-contrast mode, where author border colors are
+   * overridden but outlines are preserved. `outline-offset: -1px` keeps the
+   * ring in the border's place (the border itself goes transparent) so nothing
+   * grows or jitters when focus lands.
+   */
   &:not(:disabled):active,
   &:not(:disabled):focus,
   &:not(:disabled):focus-within {
-    border-color: var(
-      --inp-border-focus,
-      var(--stroke-info, #124ace)
-    ) !important;
+    border-color: transparent !important;
+    outline: 1px solid var(--inp-border-focus, var(--stroke-info, #124ace)) !important;
+    outline-offset: -1px;
     box-shadow: 0 0 0 4px
       var(--inp-shadow-focus, var(--bg-accent-primary-alpha, #7da4ff2e)) !important;
   }

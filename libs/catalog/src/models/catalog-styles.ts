@@ -7,16 +7,6 @@ export interface CatalogColors {
   background?: string;
   /** Heading title text color. Fallback: `--text-primary`. */
   headingTitleText?: string;
-  /** "Create" dropdown menu surface color. Fallback: `--bg-layer-raised`. */
-  createMenuBackground?: string;
-  /** "Create" menu item background on hover/focus. Fallback: `--bg-layer-raised`. */
-  createItemHoverBackground?: string;
-  /** "Create" menu item focus-visible outline color. Fallback: `--text-accent`. */
-  createItemFocusOutline?: string;
-  /** "Create" menu item label color. Fallback: `--text-primary`. */
-  createItemLabelText?: string;
-  /** "Create" menu item description color. Fallback: `--text-secondary`. */
-  createItemDescriptionText?: string;
 }
 
 /** Typography overrides for the Catalog component. */

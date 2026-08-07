@@ -34,13 +34,23 @@ vi.mock('../../../context/SourcesSidebarContext', () => ({
   }),
 }));
 
-vi.mock('../../../hooks/attachment/useAttachmentAction', () => ({
-  downloadAttachment: (attachment: DisplayAttachment) =>
-    mockDownloadAttachment(attachment),
-  useAttachmentAction: () => ({
-    handleAttachmentClick: mockHandleAttachmentClick,
-  }),
-}));
+vi.mock(
+  '../../../hooks/attachment/useAttachmentAction',
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import('../../../hooks/attachment/useAttachmentAction')
+      >();
+    return {
+      ...actual,
+      downloadAttachment: (attachment: DisplayAttachment) =>
+        mockDownloadAttachment(attachment),
+      useAttachmentAction: () => ({
+        handleAttachmentClick: mockHandleAttachmentClick,
+      }),
+    };
+  },
+);
 
 vi.mock('../../../hooks/attachment/useOpenAttachmentCanvas', () => ({
   useOpenAttachmentCanvas: () => ({

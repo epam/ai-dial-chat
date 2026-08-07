@@ -1,5 +1,5 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
-import { AttachmentType, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { AttachmentCard } from '@epam/ai-dial-conversation-input';
 import { memo, type FC } from 'react';
 
@@ -40,13 +40,7 @@ const FilesSection: FC<FilesSectionProps> = ({
         className="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-3"
       >
         {attachments.map((att, index) => (
-          <div
-            key={`${att.id}-${index}`}
-            role="listitem"
-            className={
-              att.type === AttachmentType.Audio ? 'col-span-full' : undefined
-            }
-          >
+          <div key={`${att.id}-${index}`} role="listitem">
             <AttachmentCard
               attachment={att}
               searchQuery={searchQuery}
