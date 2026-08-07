@@ -1,8 +1,9 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Input, TagInput } from '@epam/ai-dial-kit';
+import { TagInput } from '@epam/ai-dial-kit';
 import {
   ButtonAppearance,
   ButtonVariant,
+  Input,
   DialButton,
   DialSelect,
 } from '@epam/ai-dial-ui-kit';

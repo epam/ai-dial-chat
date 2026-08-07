@@ -19,7 +19,7 @@
 
 - [x] 3.1 Scaffold library with `package.json` (`"license": "Apache-2.0"`, peer deps including `@epam/ai-dial-conversation-messages`), `vite.config.mts`, `tsconfig.lib.json`
 - [x] 3.2 Create `StagesPanelColors` and `StagesPanelProps` interfaces in `src/models/StagesPanel.ts`
-- [x] 3.3 Implement `StageIcon` — maps `{status, isLive}` to `DialSpinner` / `IconCircleCheck` / `IconAlertCircle`
+- [x] 3.3 Implement `StageIcon` — maps `{status, isLive}` to `Spinner` / `IconCircleCheck` / `IconAlertCircle`
 - [x] 3.4 Implement `StageMarkdownContent` — wraps `MarkdownRenderer` with stage-specific class overrides and `StageCodeBlock` (copy button on code blocks)
 - [x] 3.5 Implement `StageItem` — header row (icon + name); collapses/expands markdown content body when `stage.content` is present; uses CSS grid-rows transition
 - [x] 3.6 Implement `StagesPanel` — flat list of `StageItem`s; computes `lastRunningStageIndex` for `isLive` prop; applies `StagesPanelColors` as CSS custom properties
@@ -38,7 +38,7 @@
 
 - [x] 5.1 Create `libs/conversation-stages/src/components/StagesPanel/StagesPanel.spec.tsx`
 - [x] 5.2 Write test: renders all stage rows when stages are provided
-- [x] 5.3 Write test: `isLive=true` + `status: null` → `DialSpinner`
+- [x] 5.3 Write test: `isLive=true` + `status: null` → `Spinner`
 - [x] 5.4 Write test: `status: StageStatus.Completed` → `IconCircleCheck`
 - [x] 5.5 Write test: non-null non-completed status → `IconAlertCircle`
 - [x] 5.6 Run `npm exec nx test @epam/ai-dial-conversation-stages` and confirm all tests pass

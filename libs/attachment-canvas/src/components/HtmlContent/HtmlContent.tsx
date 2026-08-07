@@ -1,6 +1,6 @@
 import type { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialLinkButton, DialSpinner } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton, Spinner } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   type SyntheticEvent,
@@ -124,7 +124,7 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
       <div className="relative h-full">
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <DialSpinner />
+            <Spinner />
           </div>
         )}
         {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- onLoad/onError are resource events, not mouse/keyboard listeners */}

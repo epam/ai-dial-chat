@@ -4,7 +4,7 @@ import {
   ButtonVariant,
   DIAL_ICON_SIZE,
   DialButton,
-  DialSpinner,
+  Spinner,
   GhostIconButton,
   Notification,
   NotificationType,
@@ -226,7 +226,7 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
             styles.loading,
           )}
         >
-          <DialSpinner size={16} ariaLabel={loadingLabel} />
+          <Spinner size={16} ariaLabel={loadingLabel} />
           <span>{loadingLabel}</span>
         </div>
       )}

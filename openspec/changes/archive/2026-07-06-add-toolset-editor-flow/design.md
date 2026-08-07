@@ -64,7 +64,7 @@ so no separate `isCreating` flag is needed. On mount: `id` present → load tool
 create mode with a default form.
 
 ### D5. UI components — ui-kit first
-Map v1 custom inputs to ui-kit (`DialInput`, `DialTextarea`, `DialTagInput`, `DialSelect`,
+Map v1 custom inputs to ui-kit (`Input`, `Textarea`, `DialTagInput`, `DialSelect`,
 `DialSteps`, `DialConfirmationPopup`, `DialTooltip`) per migration §5. Only two need custom
 work: the auth type **list** single-select (a plain button list, single-open driven by
 `authenticationType` state) and a copy-endpoint-URL button (`DialIconButton` + clipboard).

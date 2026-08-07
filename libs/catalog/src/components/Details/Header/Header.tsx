@@ -2,7 +2,7 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialDropdown,
-  DialSpinner,
+  Spinner,
   FolderPath,
   NeutralButton,
   NeutralIconButton,
@@ -173,7 +173,7 @@ export const Header: FC<HeaderProps> = ({
         label: texts?.deleteActionLabel ?? 'Delete',
         icon: isDeleting ? (
           <span aria-hidden="true">
-            <DialSpinner size={DIAL_ICON_SIZE.SM} />
+            <Spinner size={DIAL_ICON_SIZE.SM} />
           </span>
         ) : (
           <IconTrash size={DIAL_ICON_SIZE.SM} aria-hidden />

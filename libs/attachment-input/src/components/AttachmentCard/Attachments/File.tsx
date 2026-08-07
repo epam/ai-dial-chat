@@ -3,7 +3,7 @@ import {
   mergeClasses,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
-import { DialSpinner, Highlight } from '@epam/ai-dial-ui-kit';
+import { Spinner, Highlight } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   type KeyboardEvent,
@@ -165,7 +165,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
             styles.track,
           )}
         >
-          <DialSpinner size={32} />
+          <Spinner size={32} />
         </div>
       )}
 

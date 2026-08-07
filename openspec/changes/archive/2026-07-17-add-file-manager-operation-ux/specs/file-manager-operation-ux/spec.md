@@ -44,7 +44,7 @@
 
 ### Requirement: Consolidated blackout overlay for download, delete, rename, unshare, and remove-access
 
-`DialFileManagerShell` SHALL render **one** blackout overlay block — replacing the three previously-separate blocks for `isDownloading`/`isDeleting`/`isRenaming && !isMoving` — covering five mutually-exclusive states: `isDownloading`, `isDeleting`, `isRenaming && !isMoving`, `isUnsharing`, `isRemovingAccess`. The overlay SHALL reuse the exact existing markup: `<div aria-live="polite" className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout desktop:p-4"><DialSpinner size={32} fullWidth={false} ariaLabel={...} /></div>`.
+`DialFileManagerShell` SHALL render **one** blackout overlay block — replacing the three previously-separate blocks for `isDownloading`/`isDeleting`/`isRenaming && !isMoving` — covering five mutually-exclusive states: `isDownloading`, `isDeleting`, `isRenaming && !isMoving`, `isUnsharing`, `isRemovingAccess`. The overlay SHALL reuse the exact existing markup: `<div aria-live="polite" className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout desktop:p-4"><Spinner size={32} fullWidth={false} ariaLabel={...} /></div>`.
 
 The `ariaLabel` SHALL be resolved by a dedicated helper using an if/else chain (not nested ternary expressions, per this repo's TypeScript conventions), in this precedence order when more than one flag is unexpectedly `true` simultaneously: `isDownloading` → `isDeleting` → `isRenaming && !isMoving` → `isUnsharing` → `isRemovingAccess`, mapping to `labels.downloadingLabel` / `labels.deletingLabel` / `labels.renamingLabel` / `labels.unsharingLabel` / `labels.removingAccessLabel` respectively. The overlay SHALL NOT render when none of the five flags is `true`.
 
@@ -137,7 +137,7 @@ The keys `dialFileManager.unsharingLabel` and `dialFileManager.removingAccessLab
 
 ### Requirement: RTL and accessibility
 
-The consolidated overlay SHALL reuse the same `aria-live="polite"` + `DialSpinner`/`ariaLabel` pattern already established for the pre-change per-operation overlays. It SHALL NOT introduce any physical-direction Tailwind classes (`absolute inset-0` is direction-agnostic), and SHALL NOT add any new keyboard focus target (the overlay, like its pre-change predecessors, contains no interactive control).
+The consolidated overlay SHALL reuse the same `aria-live="polite"` + `Spinner`/`ariaLabel` pattern already established for the pre-change per-operation overlays. It SHALL NOT introduce any physical-direction Tailwind classes (`absolute inset-0` is direction-agnostic), and SHALL NOT add any new keyboard focus target (the overlay, like its pre-change predecessors, contains no interactive control).
 
 #### Scenario: Overlay is announced via aria-live in any locale
 
