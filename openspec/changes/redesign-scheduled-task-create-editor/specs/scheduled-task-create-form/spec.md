@@ -22,7 +22,7 @@ It SHALL render a full-width header followed by a responsive two-column body:
 **Configuration column** (right on desktop, second in DOM order on mobile)
 
 - Section heading `labels.configurationSectionTitle` and subtitle `labels.configurationSectionSubtitle`.
-- **Instructions** — required `DialMarkdownEditor` (from `@epam/ai-dial-ui-kit`) bound to `values.prompt` via `onFieldChange('prompt', value)`, labeled via `labels.instructionsLabel`
+- **Instructions** — required `MarkdownEditor` (from `@epam/ai-dial-ui-kit`) bound to `values.prompt` via `onFieldChange('prompt', value)`, labeled via `labels.instructionsLabel`
 - **Stream** — toggle (`values.stream`, default `true`), rendered only when the host explicitly supplies stream-related labels/wiring; omitting the visible control MUST NOT change the submitted `stream` value's default
 
 On `desktop` breakpoint, the two columns SHALL render side by side (Details narrower, Configuration wider, e.g. via a `grid-cols-3` split with Details spanning 1 column and Configuration spanning 2). On `mobile`, the columns SHALL stack full-width, Details above Configuration. Only Tailwind logical properties (`ps/pe`, `text-start/end`, etc.) and the project's named breakpoints (`mobile`, `desktop`) MAY be used for this layout — no `sm:`/`md:`/`lg:`/`xl:` prefixes.

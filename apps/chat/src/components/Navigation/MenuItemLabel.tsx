@@ -13,12 +13,14 @@ const MenuItemLabel: FC<Props> = ({ label, isActive, icon }) => (
     {icon ? (
       <span className="flex items-center gap-2">
         {icon}
-        <span className="dial-small-text">{label}</span>
+        <span className="dial-small-text truncate text-primary">{label}</span>
       </span>
     ) : (
-      <span className="dial-small-text">{label}</span>
+      <span className="dial-small-text truncate text-primary">{label}</span>
     )}
-    {isActive && <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />}
+    {isActive && (
+      <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden className="text-accent" />
+    )}
   </span>
 );
 

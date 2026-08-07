@@ -11,7 +11,7 @@ import type {
   PublishHistoryEntry,
 } from '@epam/ai-dial-publish-panel';
 import {
-  DialCloseButton,
+  CloseButton,
   ConfirmationPopup,
   Skeleton,
   DialTag,
@@ -369,7 +369,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             </>
           )}
           {!isPublishOpen && (
-            <DialCloseButton onClose={onClose} ariaLabel={closeAriaLabel} />
+            <CloseButton onClose={onClose} ariaLabel={closeAriaLabel} />
           )}
         </div>
 

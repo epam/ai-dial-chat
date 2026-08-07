@@ -45,7 +45,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       onClick={onClick}
     />
   ),
-  DialCloseButton: ({
+  CloseButton: ({
     onClose,
     ariaLabel,
   }: {

@@ -1,10 +1,9 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { TagInput } from '@epam/ai-dial-kit';
 import {
-  ButtonAppearance,
-  ButtonVariant,
   Input,
-  DialButton,
+  NeutralButton,
+  PrimaryButton,
   Select,
 } from '@epam/ai-dial-ui-kit';
 import {
@@ -319,16 +318,12 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
       )}
 
       <div className="mt-auto flex justify-end gap-2 desktop:mt-2">
-        <DialButton
-          appearance={ButtonAppearance.Ghost}
-          variant={ButtonVariant.Secondary}
+        <NeutralButton
           label={cancelLabel}
           onClick={onCancel}
           disabled={disabled}
         />
-        <DialButton
-          appearance={ButtonAppearance.Solid}
-          variant={ButtonVariant.Primary}
+        <PrimaryButton
           label={saveLabel}
           onClick={handleSave}
           disabled={disabled || !isStructurallyComplete}

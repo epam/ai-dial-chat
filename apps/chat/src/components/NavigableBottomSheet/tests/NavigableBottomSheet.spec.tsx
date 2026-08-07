@@ -13,7 +13,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     'aria-label': string;
     onClick?: () => void;
   }) => <button type="button" aria-label={ariaLabel} onClick={onClick} />,
-  DialCloseButton: ({
+  CloseButton: ({
     ariaLabel,
     onClose,
   }: {
