@@ -114,7 +114,7 @@ const ConversationListControls: FC<ConversationListControlsProps> = ({
           <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,220px),1fr))] items-end gap-2.5">
             <Select
               id="conversation-id-select"
-              labelProps={{ label: 'Select conversation by id' }}
+              labelProps={{ label: 'Conversation id' }}
               listClassName="min-h-11 w-full"
               placeholder="— select from last Get conversations —"
               value={conversationId}
