@@ -149,7 +149,7 @@ dialTest(
           firstAttachmentIndex,
           Attachment.sunImageName,
         );
-        await chatMessagesAssertion.assertElementText(
+        await chatMessagesAssertion.assertElementState(
           attachmentTitle,
           'visible',
         );

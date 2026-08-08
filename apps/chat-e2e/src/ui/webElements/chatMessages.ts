@@ -314,6 +314,10 @@ export class ChatMessages extends BaseElement {
     );
   }
 
+  public getMessageContentLink(message: string | number) {
+    return this.getChatMessageContent(message).locator(Tags.a);
+  }
+
   public getChatMessageMaxWidth(message: string | number) {
     return this.getChatMessage(message).locator(ChatSelectors.maxWidth);
   }
