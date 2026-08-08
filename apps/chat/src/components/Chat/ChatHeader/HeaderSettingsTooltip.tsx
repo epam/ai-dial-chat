@@ -20,6 +20,7 @@ interface Props {
   disallowChangeSettings: boolean;
   responseFormat?: ConversationResponseFormat;
   hasSettings: boolean;
+  compactMode?: boolean;
 }
 
 const SM_HEIGHT_THRESHOLDS = [
@@ -36,6 +37,7 @@ export const HeaderSettingsTooltip = ({
   disallowChangeSettings,
   hasSettings,
   responseFormat,
+  compactMode,
 }: Props) => {
   const router = useRouter();
   const { t } = useTranslation(Translation.Chat);
@@ -102,6 +104,11 @@ export const HeaderSettingsTooltip = ({
             <div data-qa="response-format">{responseFormatLabel}</div>
           </>
         )}
+
+        <span className="text-secondary">{t(ChatI18nKeys.CompactMode)}:</span>
+        <div data-qa="compact-mode-info">
+          {t(compactMode ? ChatI18nKeys.On : ChatI18nKeys.Off)}
+        </div>
       </div>
     </div>
   );

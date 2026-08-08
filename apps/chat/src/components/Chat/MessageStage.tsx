@@ -10,6 +10,7 @@ import classNames from 'classnames';
 import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getStagePaddingClass } from '@/src/utils/app/compact-mode';
 import { getDownLoadCurrentDate } from '@/src/utils/app/import-export';
 
 import { Translation } from '@/src/types/translation';
@@ -121,7 +122,13 @@ const DownloadStageView = ({ content, limit }: DownloadStageViewProps) => {
   );
 };
 
-const StageView = ({ content }: { content: string }) => {
+const StageView = ({
+  content,
+  compactMode,
+}: {
+  content: string;
+  compactMode: boolean;
+}) => {
   // Calculate byte size of the string
   const size = useMemo(() => new Blob([content]).size, [content]);
   const stageContentLimit = useAppSelector(
@@ -134,16 +141,25 @@ const StageView = ({ content }: { content: string }) => {
   }
   return (
     <span className="inline-block overflow-auto">
-      <ChatMDComponent isShowResponseLoader={false} content={content} isInner />
+      <ChatMDComponent
+        isShowResponseLoader={false}
+        content={content}
+        isInner
+        compactMode={compactMode}
+      />
     </span>
   );
 };
 
 interface MessageStageProps {
   stage: Stage;
+  compactMode?: boolean;
 }
 
-export const MessageStage = ({ stage }: MessageStageProps) => {
+export const MessageStage = ({
+  stage,
+  compactMode = false,
+}: MessageStageProps) => {
   const [isOpened, setIsOpened] = useState(false);
   const [hasContent, setHasContent] = useState(
     () => !!(stage?.content || stage?.attachments?.length),
@@ -153,11 +169,16 @@ export const MessageStage = ({ stage }: MessageStageProps) => {
     setHasContent(!!(stage?.content || stage?.attachments?.length));
   }, [stage?.content, stage?.attachments?.length]);
 
+  const stagePaddingClass = getStagePaddingClass(compactMode);
+
   return (
     <div className="block min-w-0 shrink rounded border border-secondary bg-layer-1">
       {hasContent ? (
         <button
-          className="flex w-full min-w-0 shrink items-center justify-between gap-2 p-2"
+          className={classNames(
+            'flex w-full min-w-0 shrink items-center justify-between gap-2',
+            stagePaddingClass,
+          )}
           onClick={() => {
             setIsOpened((opened) => !opened);
           }}
@@ -175,7 +196,7 @@ export const MessageStage = ({ stage }: MessageStageProps) => {
           />
         </button>
       ) : (
-        <div className="flex p-2">
+        <div className={classNames('flex', stagePaddingClass)}>
           <StageTitle isOpened={isOpened} stage={stage} />
         </div>
       )}
@@ -184,12 +205,18 @@ export const MessageStage = ({ stage }: MessageStageProps) => {
         <div
           className={classNames(
             'grid max-w-full grid-flow-row overflow-auto',
-            isOpened ? 'border-t border-secondary p-2' : 'h-0',
+            isOpened ? ['border-t border-secondary', stagePaddingClass] : 'h-0',
           )}
           data-qa="stage-content"
         >
-          {isOpened && stage.content && <StageView content={stage.content} />}
-          <MessageAttachments attachments={stage.attachments} isInner />
+          {isOpened && stage.content && (
+            <StageView content={stage.content} compactMode={compactMode} />
+          )}
+          <MessageAttachments
+            attachments={stage.attachments}
+            isInner
+            compactMode={compactMode}
+          />
         </div>
       )}
     </div>
