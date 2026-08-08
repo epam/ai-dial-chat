@@ -6,10 +6,7 @@ import {
   ScheduledTaskCreateFormProps,
   ScheduledTaskCreateFormValues,
 } from '../../../models/scheduled-task-create-form-props';
-import {
-  ScheduledTaskFrequency,
-  ScheduledTaskScheduleType,
-} from '../../../types/scheduled-task-schedule';
+import { ScheduledTaskRepeat } from '../../../types/scheduled-task-schedule';
 import { ScheduledTaskCreateForm } from '../ScheduledTaskCreateForm';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -27,6 +24,28 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     <label>
       {labelProps?.label}
       <input value={value} onChange={(e) => onChange(e.target.value)} />
+      {error && <span>{error}</span>}
+    </label>
+  ),
+  DialNumberInput: ({
+    labelProps,
+    value,
+    onChange,
+    error,
+  }: {
+    labelProps?: { label: ReactNode; required?: boolean };
+    value: string | number;
+    onChange: (value?: number) => void;
+    error?: string;
+  }) => (
+    <label>
+      {labelProps?.label}
+      <input
+        value={value}
+        onChange={(e) =>
+          onChange(e.target.value === '' ? undefined : Number(e.target.value))
+        }
+      />
       {error && <span>{error}</span>}
     </label>
   ),
@@ -171,8 +190,7 @@ vi.mock('@tabler/icons-react', () => ({
 
 const baseValues: ScheduledTaskCreateFormValues = {
   displayName: '',
-  scheduleType: ScheduledTaskScheduleType.Recurring,
-  frequency: ScheduledTaskFrequency.Daily,
+  repeat: ScheduledTaskRepeat.Daily,
   time: '09:00',
   modelId: '',
   prompt: '',
@@ -192,20 +210,19 @@ const renderForm = async (
         configurationSectionSubtitle: 'Write custom instructions',
         displayNameLabel: 'Name',
         displayNameRequired: 'Name is required',
-        scheduleSectionLabel: 'Schedule',
-        scheduleTypeOnceLabel: 'Once',
-        scheduleTypeRecurringLabel: 'Recurring',
-        scheduleTypeAriaLabel: 'Schedule type',
         runAtLabel: 'Run at',
-        frequencyLabel: 'Frequency',
-        frequencyOptions: [
-          { key: ScheduledTaskFrequency.Daily, label: 'Daily' },
-          { key: ScheduledTaskFrequency.Weekly, label: 'Weekly' },
-          { key: ScheduledTaskFrequency.Monthly, label: 'Monthly' },
+        repeatLabel: 'Repeat',
+        repeatOptions: [
+          { key: ScheduledTaskRepeat.OneTime, label: 'One-time' },
+          { key: ScheduledTaskRepeat.Hourly, label: 'Hourly' },
+          { key: ScheduledTaskRepeat.Daily, label: 'Daily' },
+          { key: ScheduledTaskRepeat.Weekly, label: 'Weekly' },
+          { key: ScheduledTaskRepeat.Monthly, label: 'Monthly' },
         ],
         timeLabel: 'Time',
         dayOfWeekLabel: 'Day of week',
         dayOfMonthLabel: 'Day of month',
+        minuteLabel: 'Minute',
         startDateLabel: 'Start date',
         startDatePlaceholder: 'Pick start date',
         endDateLabel: 'End date',
@@ -393,18 +410,96 @@ describe('ScheduledTaskCreateForm', () => {
     expect(onSubmit).toHaveBeenCalledOnce();
   });
 
-  it('renders run-at instead of frequency/time when scheduleType is once', async () => {
+  it('does not render a Schedule section heading', async () => {
+    await renderForm();
+
+    expect(screen.queryByText('Schedule')).toBeNull();
+  });
+
+  it('renders run-at instead of time/day fields when repeat is oneTime', async () => {
     await renderForm({
-      values: { ...baseValues, scheduleType: ScheduledTaskScheduleType.Once },
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.OneTime },
     });
 
     expect(screen.getByText('Run at *')).toBeTruthy();
     expect(screen.queryByText('Time *')).toBeNull();
   });
 
-  it('renders day-of-week only when frequency is weekly', async () => {
+  it('renders no time, day-of-week, or day-of-month fields when repeat is hourly', async () => {
     await renderForm({
-      values: { ...baseValues, frequency: ScheduledTaskFrequency.Weekly },
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.Hourly },
+    });
+
+    expect(screen.queryByText('Time *')).toBeNull();
+    expect(screen.queryByText('Day of week *')).toBeNull();
+    expect(screen.queryByText('Day of month')).toBeNull();
+    expect(screen.queryByText('Run at *')).toBeNull();
+  });
+
+  it('renders the Minute field only when repeat is hourly', async () => {
+    await renderForm({
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.Hourly },
+    });
+
+    expect(screen.getByText('Minute')).toBeTruthy();
+  });
+
+  it('does not render the Minute field for non-hourly repeats', async () => {
+    await renderForm({
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.Daily },
+    });
+
+    expect(screen.queryByText('Minute')).toBeNull();
+  });
+
+  it('calls onFieldChange when the Minute field changes', async () => {
+    const onFieldChange = vi.fn();
+    await renderForm({
+      onFieldChange,
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.Hourly },
+    });
+
+    await userEvent.type(screen.getByLabelText('Minute'), '5');
+
+    expect(onFieldChange).toHaveBeenCalledWith('minute', '5');
+  });
+
+  it('renders errors.minute inline', async () => {
+    await renderForm({
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.Hourly },
+      errors: { minute: 'Enter a valid minute' },
+    });
+
+    expect(screen.getByText('Enter a valid minute')).toBeTruthy();
+  });
+
+  it('renders start-date/end-date pickers when repeat is hourly', async () => {
+    await renderForm({
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.Hourly },
+    });
+
+    expect(screen.getByText('Start date')).toBeTruthy();
+    expect(screen.getByText('End date')).toBeTruthy();
+  });
+
+  it('renders the Time field when repeat is daily, weekly, or monthly', async () => {
+    for (const repeat of [
+      ScheduledTaskRepeat.Daily,
+      ScheduledTaskRepeat.Weekly,
+      ScheduledTaskRepeat.Monthly,
+    ]) {
+      const { unmount } = await renderForm({
+        values: { ...baseValues, repeat },
+      });
+
+      expect(screen.getByText('Time *')).toBeTruthy();
+      unmount();
+    }
+  });
+
+  it('renders day-of-week only when repeat is weekly', async () => {
+    await renderForm({
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.Weekly },
     });
 
     expect(screen.getByText('Day of week *')).toBeTruthy();
@@ -424,7 +519,7 @@ describe('ScheduledTaskCreateForm', () => {
     const onFieldChange = vi.fn();
     await renderForm({
       onFieldChange,
-      values: { ...baseValues, scheduleType: ScheduledTaskScheduleType.Once },
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.OneTime },
     });
 
     await userEvent.type(screen.getByLabelText('Run at *'), 'x');
@@ -436,7 +531,7 @@ describe('ScheduledTaskCreateForm', () => {
     const onFieldChange = vi.fn();
     await renderForm({
       onFieldChange,
-      values: { ...baseValues, frequency: ScheduledTaskFrequency.Weekly },
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.Weekly },
     });
 
     await userEvent.type(screen.getByLabelText('Day of week *'), '1');
@@ -444,16 +539,16 @@ describe('ScheduledTaskCreateForm', () => {
     expect(onFieldChange).toHaveBeenCalledWith('dayOfWeek', '0');
   });
 
-  it('does not render start-date/end-date pickers when scheduleType is once', async () => {
+  it('does not render start-date/end-date pickers when repeat is oneTime', async () => {
     await renderForm({
-      values: { ...baseValues, scheduleType: ScheduledTaskScheduleType.Once },
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.OneTime },
     });
 
     expect(screen.queryByText('Start date')).toBeNull();
     expect(screen.queryByText('End date')).toBeNull();
   });
 
-  it('renders start-date/end-date pickers without a required marker for recurring schedules', async () => {
+  it('renders start-date/end-date pickers without a required marker for recurring repeats', async () => {
     await renderForm();
 
     expect(screen.getByText('Start date')).toBeTruthy();

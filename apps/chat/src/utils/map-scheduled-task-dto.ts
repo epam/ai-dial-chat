@@ -11,6 +11,23 @@ const padTwoDigits = (value: string): string => value.padStart(2, '0');
 
 const EVERY_N_MINUTES_PATTERN = /^\*\/(\d+)$/;
 
+/** A Sunday (JS `getDay() === 0`), used purely as a weekday-name reference point. */
+const WEEKDAY_REFERENCE_SUNDAY = new Date(2023, 0, 1);
+
+/**
+ * Converts an APScheduler-convention `day_of_week` numeric string
+ * (`"0"`=Monday..`"6"`=Sunday) to a locale-formatted weekday name (e.g.
+ * "Monday"), so the card never shows the raw numeric value to the user.
+ */
+const formatWeekdayName = (apSchedulerDayOfWeek: string): string => {
+  const jsDay = apSchedulerDayToJsDay(Number(apSchedulerDayOfWeek));
+  const reference = new Date(WEEKDAY_REFERENCE_SUNDAY);
+  reference.setDate(reference.getDate() + jsDay);
+  return new Intl.DateTimeFormat(undefined, { weekday: 'long' }).format(
+    reference,
+  );
+};
+
 /**
  * Formats a cron trigger with no fixed `hour` field (i.e. it fires every
  * hour or every N minutes) instead of collapsing it into the generic
@@ -88,8 +105,11 @@ const formatCronScheduleLabel = (
   const time = `${padTwoDigits(localFields.hour)}:${padTwoDigits(localFields.minute)}`;
 
   if (localFields.day_of_week) {
+    const dayLabel = /^\d+$/.test(localFields.day_of_week)
+      ? formatWeekdayName(localFields.day_of_week)
+      : localFields.day_of_week;
     return t(ScheduledTasksI18nKeys.CardScheduleWeeklyAt, {
-      day: localFields.day_of_week,
+      day: dayLabel,
       time,
     });
   }

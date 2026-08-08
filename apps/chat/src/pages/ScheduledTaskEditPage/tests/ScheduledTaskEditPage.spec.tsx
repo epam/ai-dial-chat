@@ -49,7 +49,7 @@ interface FormProps {
     modelId: string;
     prompt: string;
     description?: string;
-    scheduleType: string;
+    repeat: string;
   };
   errors: Record<string, string | undefined>;
   modelOptions: { id: string; label: string }[];
@@ -61,8 +61,9 @@ interface FormProps {
 }
 
 vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
-  ScheduledTaskScheduleType: { Once: 'once', Recurring: 'recurring' },
-  ScheduledTaskFrequency: {
+  ScheduledTaskRepeat: {
+    OneTime: 'oneTime',
+    Hourly: 'hourly',
     Daily: 'daily',
     Weekly: 'weekly',
     Monthly: 'monthly',
