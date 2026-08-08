@@ -310,7 +310,7 @@ export class ChatMessages extends BaseElement {
 
   public getAttachmentLink(message: string | number) {
     return this.getChatMessage(message).locator(
-      `${Tags.a}[${Attributes.href}]`,
+      ChatSelectors.attachmentReferenceLink,
     );
   }
 

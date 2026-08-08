@@ -145,11 +145,13 @@ dialTest(
           firstAttachmentIndex,
         );
 
-        const attachmentTitle =
-          chatMessages.getChatMessageAttachment(firstAttachmentIndex);
+        const attachmentTitle = chatMessages.getChatMessageAttachmentTitle(
+          firstAttachmentIndex,
+          Attachment.sunImageName,
+        );
         await chatMessagesAssertion.assertElementText(
           attachmentTitle,
-          Attachment.sunImageName,
+          'visible',
         );
         await chatMessagesAssertion.assertElementState(
           chatMessages.getChatMessageAttachmentIcon(firstAttachmentIndex),

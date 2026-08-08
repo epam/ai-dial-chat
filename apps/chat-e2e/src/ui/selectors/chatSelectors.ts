@@ -155,6 +155,7 @@ export const ChatSelectors = {
   attachmentTitle: '[data-qa="attachment-title"]',
   attachmentContent: '[data-qa="attachment-content"]',
   attachmentName: '[data-qa="attachment-name"]',
+  attachmentReferenceLink: '[data-qa="attachment-reference-link"]',
   entitySpinner: '[data-qa="entity-spinner"]',
   plotlyContainer: '.plot-container',
   maxWidth: '.max-w-none',

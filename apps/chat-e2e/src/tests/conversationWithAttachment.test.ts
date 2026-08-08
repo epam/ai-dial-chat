@@ -16,7 +16,7 @@ import {
   Cursors,
   ThemeColorAttributes,
 } from '@/src/ui/domData';
-import { BaseElement, Button } from '@/src/ui/webElements';
+import { Button } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Locator } from '@playwright/test';
@@ -325,7 +325,7 @@ dialTest(
     let maximizeButton: Button;
     let minimizeButton: Button;
     let expandedAttachment: Locator;
-    let attachmentTitle: BaseElement;
+    let attachmentTitle: Locator;
     let downloadAttachmentIcon: Locator;
 
     await dialTest.step('Upload file to app', async () => {
@@ -382,7 +382,10 @@ dialTest(
         );
         await chat.sendRequestWithButton(request);
         await chatMessagesAssertion.assertElementTextIsTruncated(
-          chatMessages.getChatMessageAttachment(attachmentIndex),
+          chatMessages.getChatMessageAttachmentTitle(
+            attachmentIndex,
+            Attachment.longImageName,
+          ),
         );
       },
     );
@@ -411,7 +414,10 @@ dialTest(
           Attachment.longImageName,
         );
         await chatMessagesAssertion.assertElementTextIsTruncated(
-          chatMessages.getChatMessageAttachment(attachmentIndex),
+          chatMessages.getChatMessageAttachmentTitle(
+            attachmentIndex,
+            Attachment.longImageName,
+          ),
         );
         expandedAttachment =
           chatMessages.getOpenedChatMessageImageAttachment(attachmentIndex);
@@ -444,11 +450,13 @@ dialTest(
           attachmentIndex,
         );
 
-        attachmentTitle =
-          chatMessages.getChatMessageAttachment(attachmentIndex);
-        await chatMessagesAssertion.assertElementText(
-          attachmentTitle,
+        attachmentTitle = chatMessages.getChatMessageAttachmentTitle(
+          attachmentIndex,
           Attachment.longImageName,
+        );
+        await chatMessagesAssertion.assertElementState(
+          attachmentTitle,
+          'visible',
         );
         await chatMessagesAssertion.assertElementState(
           chatMessages.getChatMessageAttachmentIcon(attachmentIndex),
@@ -509,7 +517,10 @@ dialTest(
           Attachment.longImageName,
         );
         await chatMessagesAssertion.assertElementTextIsTruncated(
-          chatMessages.getChatMessageAttachment(attachmentIndex),
+          chatMessages.getChatMessageAttachmentTitle(
+            attachmentIndex,
+            Attachment.longImageName,
+          ),
         );
         await chatMessagesAssertion.assertMessageImageAttachmentState(
           expandedAttachment,
