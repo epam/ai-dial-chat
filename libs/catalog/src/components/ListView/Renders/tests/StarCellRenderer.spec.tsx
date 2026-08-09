@@ -101,8 +101,10 @@ describe('StarCellRenderer', () => {
       screen.getByRole('button', { name: 'Toggle favorite' }).className,
     ).not.toContain('starToggleOff');
 
-    // Parent's row data optimistically flips to starred, then the update
-    // request fails and it reverts.
+    /*
+     * Parent's favoriteIds optimistically flips to starred, then the update
+     * request fails and it reverts.
+     */
     rerender(
       <StarCellRenderer {...makeParams({ ...item, isStarred: true })} />,
     );
