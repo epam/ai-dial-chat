@@ -56,7 +56,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     text: ReactNode;
     className?: string;
   }) => <span className={className}>{text}</span>,
-  DialDropdown: ({
+  Dropdown: ({
     children,
     items,
   }: {

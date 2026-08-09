@@ -36,7 +36,7 @@
 
 ## 6. Settings step (connection fields)
 
-- [x] 6.1 Create `SettingsForm` with endpoint (`Input`), protocol (`DialSelect` HTTP/SSE), allowed tools (`DialTagInput`)
+- [x] 6.1 Create `SettingsForm` with endpoint (`Input`), protocol (`Select` HTTP/SSE), allowed tools (`DialTagInput`)
 - [x] 6.2 Add an endpoint-URL validator util (protocol regex, trailing `.`//` guard, `new URL()` parse) with per-field error
 - [x] 6.3 Add a copy-endpoint-URL control (`DialIconButton` + clipboard API)
 - [x] 6.4 Add unit tests for endpoint validation and copy behavior

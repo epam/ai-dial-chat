@@ -5,8 +5,8 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialSkeleton,
-  DialSkeletonVariant,
+  Skeleton,
+  SkeletonVariant,
   Spinner,
   GhostButton,
   GhostIconButton,
@@ -212,13 +212,13 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
         aria-hidden="true"
         className="flex h-8 items-center justify-between gap-2 pe-2 ps-5"
       >
-        <DialSkeleton
-          variant={DialSkeletonVariant.Rectangular}
+        <Skeleton
+          variant={SkeletonVariant.Rectangular}
           width="160px"
           height="16px"
         />
-        <DialSkeleton
-          variant={DialSkeletonVariant.Rectangular}
+        <Skeleton
+          variant={SkeletonVariant.Rectangular}
           width="16px"
           height="16px"
           className="shrink-0 rounded-full"

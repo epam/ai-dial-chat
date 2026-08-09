@@ -177,7 +177,7 @@ The page header SHALL be the shared `EditorHeader` component (see "Shared editor
 #### Scenario: Save failure on Settings step shows inline error and stays on the page
 
 - **WHEN** the iframe posts back a `SAVE_ERROR` message (with or without an `error` string)
-- **THEN** `isSaving` becomes false, `saveError` is set to the provided error or `appsEditor.error.saveFailed`, and a `DialNotification` with that message is rendered
+- **THEN** `isSaving` becomes false, `saveError` is set to the provided error or `appsEditor.error.saveFailed`, and a `Notification` with that message is rendered
 - **AND** the page does NOT navigate away
 
 ---

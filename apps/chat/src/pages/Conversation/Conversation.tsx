@@ -6,7 +6,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   ConfirmationPopupVariant,
-  DialConfirmationPopup,
+  ConfirmationPopup,
   Spinner,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
@@ -574,7 +574,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         />
       )}
 
-      <DialConfirmationPopup
+      <ConfirmationPopup
         open={pendingDeleteIndex != null}
         header={t(ChatI18nKeys.DeleteMessageTitle)}
         description={t(ChatI18nKeys.DeleteMessageDescription)}
@@ -585,7 +585,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         onClose={() => setPendingDeleteIndex(null)}
       />
 
-      <DialConfirmationPopup
+      <ConfirmationPopup
         open={pendingStarterContext != null}
         header={t(ChatI18nKeys.StarterConfirmTitle)}
         description={

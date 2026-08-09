@@ -6,7 +6,7 @@ import {
   SidebarOrientation,
   SidebarPanel,
 } from '@epam/ai-dial-sidebar';
-import { DialSkeleton } from '@epam/ai-dial-ui-kit';
+import { Skeleton } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   memo,
@@ -432,7 +432,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           {isLoading ? (
             <div className="flex flex-col gap-3 px-2 py-3">
               {Array.from({ length: SKELETON_ROW_COUNT }, (_, i) => (
-                <DialSkeleton
+                <Skeleton
                   key={i}
                   avatar={{ size: 24 }}
                   showTitle={{ width: getSkeletonWidth(i) }}

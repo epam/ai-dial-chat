@@ -1,7 +1,7 @@
 import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
-  DialConfirmationPopup,
+  ConfirmationPopup,
   Input,
   DialRadioButton,
   DialTagInput,
@@ -555,7 +555,7 @@ const AuthSection: FC<Props> = ({
       })}
 
       {showLogoutConfirm && (
-        <DialConfirmationPopup
+        <ConfirmationPopup
           open={showLogoutConfirm}
           header={t(AuthI18nKeys.LogOutConfirmTitle)}
           description={t(ToolsetEditorI18nKeys.LogoutConfirmDescription)}

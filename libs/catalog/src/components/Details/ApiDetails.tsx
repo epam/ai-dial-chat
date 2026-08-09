@@ -130,7 +130,6 @@ const SnippetBlock: FC<SnippetBlockProps> = ({
               placement="bottom-end"
               size={ElementSize.Small}
               selectedKey={activeSnippet}
-              listClassName="cp-dropdown-overlay"
             />
           ) : undefined
         }
@@ -239,7 +238,6 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
                     placement="bottom-end"
                     size={ElementSize.Small}
                     selectedKey={activeEndpoint.url}
-                    listClassName="cp-dropdown-overlay"
                   />
                 ) : undefined
               }

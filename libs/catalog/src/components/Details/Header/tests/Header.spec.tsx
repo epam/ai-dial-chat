@@ -48,7 +48,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     'aria-label'?: string;
     onClick?: () => void;
   }) => <button aria-label={ariaLabel} onClick={onClick} />,
-  DialDropdown: ({
+  Dropdown: ({
     children,
     items,
   }: {

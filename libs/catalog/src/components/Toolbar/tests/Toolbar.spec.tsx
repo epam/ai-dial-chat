@@ -29,7 +29,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     text: unknown;
     className?: string;
   }) => <span className={className}>{text as string}</span>,
-  DialDropdown: ({
+  Dropdown: ({
     children,
     renderOverlay,
   }: {

@@ -1,4 +1,4 @@
-import { DialFileName, DialPopup, NeutralButton } from '@epam/ai-dial-ui-kit';
+import { DialFileName, Popup, NeutralButton } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, type FC, type ReactNode } from 'react';
 import type { FileUploadBatchState } from './types/upload';
 
@@ -42,10 +42,9 @@ const UploadProgressModal: FC<Props> = ({
   }, []);
 
   return (
-    <DialPopup
+    <Popup
       className="!h-fit !max-h-full !w-[400px] desktop:!max-h-[693px]"
       open={batchState.isOpen}
-      dividers={false}
       closeOnOutsideClick={false}
       hideClose
       onClose={onCancel}
@@ -78,7 +77,7 @@ const UploadProgressModal: FC<Props> = ({
           ))}
         </div>
       </div>
-    </DialPopup>
+    </Popup>
   );
 };
 

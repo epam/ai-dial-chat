@@ -8,7 +8,7 @@ import {
   Input,
   NeutralButton,
   PrimaryButton,
-  DialSelectField,
+  Select,
 } from '@epam/ai-dial-ui-kit';
 import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import EventLog from '../../components/EventLog/EventLog';
@@ -161,10 +161,10 @@ const AuthUiModeCase: FC = () => {
                 value={provider.id}
                 onChange={(value) => updateProviderId(index, value ?? '')}
               />
-              <DialSelectField
+              <Select
                 id={`provider-${provider.fieldId}-mode`}
-                label={`Provider ${index + 1} mode`}
-                selectClassName="min-h-11 w-full"
+                labelProps={{ label: `Provider ${index + 1} mode` }}
+                listClassName="min-h-11 w-full"
                 value={provider.mode}
                 options={[
                   {

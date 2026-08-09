@@ -3,7 +3,7 @@ import {
   mergeClasses,
   PanelEmptyState,
 } from '@epam/ai-dial-chat-shared';
-import { DialSkeleton, DialSkeletonAvatarShape } from '@epam/ai-dial-ui-kit';
+import { Skeleton, SkeletonAvatarShape } from '@epam/ai-dial-ui-kit';
 import { type FC, memo, useMemo } from 'react';
 import { CARD_HEIGHT, SKELETON_ROW_COUNT } from '../../constants/virtual-grid';
 import type { CardRowData } from '../../models/card-row-data';
@@ -84,8 +84,8 @@ export const CardGrid: FC<CardGridProps> = memo(
               )}
               style={{ height: CARD_HEIGHT }}
             >
-              <DialSkeleton
-                avatar={{ size: 48, shape: DialSkeletonAvatarShape.Square }}
+              <Skeleton
+                avatar={{ size: 48, shape: SkeletonAvatarShape.Square }}
                 showTitle={{ width: `${60 + ((i * 17) % 30)}%` }}
                 paragraph={{ rows: 3 }}
                 active

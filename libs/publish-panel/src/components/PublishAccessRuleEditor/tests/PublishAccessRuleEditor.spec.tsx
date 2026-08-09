@@ -13,23 +13,26 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const real = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
   return {
     ...real,
-    DialSelect: ({
+    Select: ({
       options,
       value,
       onChange,
-      elementId,
+      id,
+      labelProps,
       placeholder,
       disabled,
     }: {
       options: { value: string; label: string }[];
       value?: string;
       onChange?: (v: string) => void;
-      elementId?: string;
+      id?: string;
+      labelProps?: { label?: string };
       placeholder?: string;
       disabled?: boolean;
     }) => (
       <select
-        id={elementId}
+        id={id}
+        aria-label={labelProps?.label}
         value={value ?? ''}
         disabled={disabled}
         onChange={(e) => onChange?.(e.target.value)}

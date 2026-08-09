@@ -146,7 +146,7 @@ The Scheduled Tasks list SHALL support loading beyond the first page by scrollin
 
 ### Requirement: Load-more state shows exactly six skeleton cards
 
-While a subsequent page is being fetched (`isLoadingMore === true`), the list SHALL render exactly 6 `ScheduledTaskCardSkeleton` elements in a trailing row below the already-loaded cards, distinct from the initial-load `Spinner` state (which remains reserved for `isLoading === true && items.length === 0`). Each skeleton card SHALL be built on `DialSkeleton` from `@epam/ai-dial-ui-kit`, sized to match `ScheduledTaskCard`'s footprint (title block, optional description lines, schedule pill area), and marked `aria-hidden="true"` so screen readers do not announce placeholder content as real cards.
+While a subsequent page is being fetched (`isLoadingMore === true`), the list SHALL render exactly 6 `ScheduledTaskCardSkeleton` elements in a trailing row below the already-loaded cards, distinct from the initial-load `Spinner` state (which remains reserved for `isLoading === true && items.length === 0`). Each skeleton card SHALL be built on `Skeleton` from `@epam/ai-dial-ui-kit`, sized to match `ScheduledTaskCard`'s footprint (title block, optional description lines, schedule pill area), and marked `aria-hidden="true"` so screen readers do not announce placeholder content as real cards.
 
 #### Scenario: Six skeletons render during load-more
 
