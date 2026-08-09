@@ -1,7 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialDropdown,
+  Dropdown,
   Spinner,
   FolderPath,
   NeutralButton,
@@ -283,18 +283,17 @@ export const Header: FC<HeaderProps> = ({
           />
         )}
         {manageItems.length > 0 && (
-          <DialDropdown
+          <Dropdown
             items={manageItems}
             placement="bottom-end"
             matchReferenceWidth={false}
-            listClassName="cp-dropdown-overlay"
           >
             <NeutralIconButton
               icon={<IconDots size={DIAL_ICON_SIZE.MD} aria-hidden />}
               aria-label={texts?.manageActionLabel ?? 'Manage'}
               aria-haspopup="menu"
             />
-          </DialDropdown>
+          </Dropdown>
         )}
       </div>
       {isDeleting && (

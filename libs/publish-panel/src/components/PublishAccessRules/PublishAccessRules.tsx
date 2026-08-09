@@ -1,14 +1,13 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
-  ButtonAppearance,
-  ButtonVariant,
   DIAL_ICON_SIZE,
-  DialButton,
-  Spinner,
+  GhostButton,
   GhostIconButton,
   Notification,
   NotificationType,
   NotificationVariant,
+  PrimaryButton,
+  Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconPlus, IconX } from '@tabler/icons-react';
 import { FC, useEffect, useRef, useState } from 'react';
@@ -291,18 +290,14 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
       )}
 
       <div className="flex items-center gap-2">
-        <DialButton
-          appearance={ButtonAppearance.Ghost}
-          variant={ButtonVariant.Secondary}
+        <PrimaryButton
           label={addRuleLabel}
           iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} aria-hidden />}
           onClick={openEditor}
           disabled={isAddDisabled}
         />
         {rules.length > 0 && (
-          <DialButton
-            appearance={ButtonAppearance.Ghost}
-            variant={ButtonVariant.Secondary}
+          <GhostButton
             label={clearAllLabel}
             onClick={handleClearAll}
             disabled={disabled}

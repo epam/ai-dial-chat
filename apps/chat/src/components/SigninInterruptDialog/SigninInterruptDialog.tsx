@@ -1,7 +1,7 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   DIAL_ICON_SIZE,
-  DialPopup,
+  Popup,
   Spinner,
   GhostButton,
   NeutralButton,
@@ -547,7 +547,7 @@ const SigninInterruptDialog: FC = () => {
     ) : undefined;
 
   return (
-    <DialPopup
+    <Popup
       open
       hideClose
       closeOnOutsideClick={false}
@@ -583,7 +583,7 @@ const SigninInterruptDialog: FC = () => {
           })}
         </div>
       </div>
-    </DialPopup>
+    </Popup>
   );
 };
 

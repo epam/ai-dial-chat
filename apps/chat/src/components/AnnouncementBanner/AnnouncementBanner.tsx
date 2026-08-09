@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { CloseButton } from '@epam/ai-dial-ui-kit';
 import { IconSpeakerphone } from '@tabler/icons-react';
 import DOMPurify from 'dompurify';
 import type { FC } from 'react';
@@ -72,10 +72,9 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
           dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
         />
       </div>
-      <DialCloseButton
+      <CloseButton
         ariaLabel={t(AnnouncementBannerI18nKeys.CloseLabel)}
         onClose={() => dismiss(announcementHtml ?? '')}
-        size={16}
         className="shrink-0 rounded bg-backdrop p-[3px] !text-control-permanent"
       />
     </div>

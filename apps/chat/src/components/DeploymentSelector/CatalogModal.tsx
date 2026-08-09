@@ -1,4 +1,4 @@
-import { DialPopup, PopupSize } from '@epam/ai-dial-ui-kit';
+import { Popup, PopupSize } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 import { Suspense, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,12 +18,11 @@ const CatalogModal: FC<Props> = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
 
   return (
-    <DialPopup
+    <Popup
       open={isOpen}
       header={t(DeploymentSelectorI18nKeys.Title)}
       size={PopupSize.Lg}
       className="h-[min(90vh,860px)] !max-w-[min(95vw,1200px)] overflow-hidden"
-      dividers={false}
       onClose={onClose}
     >
       <div className="h-[min(80vh,840px)] overflow-auto">
@@ -31,7 +30,7 @@ const CatalogModal: FC<Props> = ({ isOpen, onClose }) => {
           {isOpen && <CatalogView isSelectorMode onClose={onClose} />}
         </Suspense>
       </div>
-    </DialPopup>
+    </Popup>
   );
 };
 

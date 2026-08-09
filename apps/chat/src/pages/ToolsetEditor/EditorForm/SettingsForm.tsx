@@ -1,11 +1,11 @@
 import { CatalogEntityType } from '@epam/ai-dial-catalog';
 import {
   DIAL_ICON_SIZE,
-  GhostIconButton,
-  Input,
-  DialSelect,
   DialTagInput,
   ElementSize,
+  GhostIconButton,
+  Input,
+  Select,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
 import type { FC } from 'react';
@@ -127,17 +127,16 @@ const SettingsForm: FC<Props> = ({
         />
       </div>
 
-      <div className="flex flex-col gap-1">
-        <span className="dial-small-text text-secondary">
-          {t(ToolsetEditorI18nKeys.ProtocolLabel)}
-        </span>
-        <DialSelect
-          elementId="toolset-protocol"
-          options={protocolOptions}
-          value={form.protocol}
-          onChange={handleProtocolChange}
-        />
-      </div>
+      <Select
+        labelProps={{
+          label: t(ToolsetEditorI18nKeys.ProtocolLabel),
+          required: true,
+        }}
+        id="toolset-protocol"
+        options={protocolOptions}
+        value={form.protocol}
+        onChange={handleProtocolChange}
+      />
 
       <DialTagInput
         elementId="toolset-allowed-tools"

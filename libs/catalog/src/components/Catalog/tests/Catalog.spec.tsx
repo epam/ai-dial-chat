@@ -40,10 +40,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       ))}
     </div>
   ),
-  DialDropdown: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
-  DialCloseButton: ({ onClick }: { onClick: () => void }) => (
+  Dropdown: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  CloseButton: ({ onClick }: { onClick: () => void }) => (
     <button aria-label="Close" onClick={onClick} />
   ),
   PrimaryButton: ({

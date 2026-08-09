@@ -1,7 +1,7 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialCloseButton,
+  CloseButton,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowLeft } from '@tabler/icons-react';
@@ -121,11 +121,7 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
                 {title}
               </span>
               <div className="absolute end-4 m-2">
-                <DialCloseButton
-                  ariaLabel={closeLabel}
-                  size={DIAL_ICON_SIZE.LG}
-                  onClose={onClose}
-                />
+                <CloseButton ariaLabel={closeLabel} onClose={onClose} />
               </div>
             </div>
             <div

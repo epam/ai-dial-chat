@@ -16,14 +16,14 @@ interface MockDropdownItem {
   onClick?: (info: { key: string; domEvent: MouseEvent }) => void;
 }
 
-// DialDropdown uses floating-ui which can't position in jsdom — mock it as a
+// Dropdown uses floating-ui which can't position in jsdom — mock it as a
 // plain listbox so option interaction works in tests (matches the convention
 // used in Filter.spec.tsx: render children + a clickable list of items).
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const real = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
   return {
     ...real,
-    DialDropdown: ({
+    Dropdown: ({
       children,
       items,
     }: {

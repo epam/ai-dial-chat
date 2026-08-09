@@ -20,12 +20,12 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     <article {...rest}>{children}</article>
   ),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialSkeleton: ({ color }: { color?: string }) => (
+  Skeleton: ({ color }: { color?: string }) => (
     <div data-skeleton data-color={color} />
   ),
-  DialSkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
-  DialDropdown: ({ children }: { children: ReactNode }) => <>{children}</>,
-  DialIconButton: ({
+  SkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
+  Dropdown: ({ children }: { children: ReactNode }) => <>{children}</>,
+  IconButton: ({
     icon,
     ...rest
   }: { icon: ReactNode } & Record<string, unknown>) => (

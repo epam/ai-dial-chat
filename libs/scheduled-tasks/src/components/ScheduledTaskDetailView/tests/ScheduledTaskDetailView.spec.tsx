@@ -19,10 +19,10 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   Spinner: () => <div role="progressbar" />,
-  DialSkeleton: (props: Record<string, unknown>) => (
+  Skeleton: (props: Record<string, unknown>) => (
     <div data-skeleton {...props} />
   ),
-  DialSkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
+  SkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
   GhostButton: ({
     label,
     onClick,

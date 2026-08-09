@@ -27,7 +27,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {error && <span>{error}</span>}
     </label>
   ),
-  DialNumberInput: ({
+  NumberInput: ({
     labelProps,
     value,
     onChange,
@@ -139,15 +139,15 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       />
     </label>
   ),
-  DialSelectField: ({
-    label,
+  Select: ({
+    labelProps,
     value,
     onChange,
     options,
     error,
     placeholder,
   }: {
-    label?: ReactNode;
+    labelProps?: { label: ReactNode; required?: boolean };
     value?: string;
     onChange: (value: string) => void;
     options: { value: string; label: string }[];
@@ -155,7 +155,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     placeholder?: string;
   }) => (
     <label>
-      {label}
+      {labelProps?.label}
       <select value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
         <option value="" disabled hidden>
           {placeholder}
@@ -170,9 +170,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </label>
   ),
   Spinner: () => <div>Loading</div>,
-  LazyDialMarkdownEditor: () =>
+  LazyMarkdownEditor: () =>
     Promise.resolve({
-      DialMarkdownEditor: ({
+      MarkdownEditor: ({
         value,
         onChange,
       }: {

@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AuthUiModeCase from '../AuthUiModeCase';
@@ -44,8 +44,7 @@ describe('AuthUiModeCase', () => {
     fieldName: string,
     optionName: string,
   ) => {
-    const field = screen.getByRole('group', { name: fieldName });
-    await user.click(within(field).getByRole('button'));
+    await user.click(screen.getByRole('combobox', { name: fieldName }));
     await user.click(await screen.findByRole('option', { name: optionName }));
   };
 

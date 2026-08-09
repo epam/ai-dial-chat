@@ -9,7 +9,7 @@ Product wants the create surface to look like the app's other two-column editors
 **Goals:**
 
 - Introduce a back-navigable header (back control + title on start, Cancel + Save on end) and a two-column Details/Configuration body, responsive per project breakpoints.
-- Swap the prompt `Textarea` for `DialMarkdownEditor` (`@epam/ai-dial-ui-kit`), keeping `values.prompt` / `onFieldChange('prompt', …)` as the binding — no BFF field rename.
+- Swap the prompt `Textarea` for `MarkdownEditor` (`@epam/ai-dial-ui-kit`), keeping `values.prompt` / `onFieldChange('prompt', …)` as the binding — no BFF field rename.
 - Keep every existing field, its validation, and the required-field guard behaviorally identical; only their container/layout and (for the prompt) editor widget change.
 - Keep the lib free of routing/i18n/host imports; `onBack` is a plain callback like `onCancel`.
 
@@ -33,7 +33,7 @@ _Alternative considered:_ keep `promptLabel` and add `instructionsLabel` as an a
 `grid grid-cols-1 desktop:grid-cols-3 gap-6` (Details spans 1 column, Configuration spans 2) matches the "~1/3 + ~2/3" spec without inventing a new shared layout component — this is a single-use page layout, not a reusable pattern yet. `useIsMobile` is only needed if a field must render conditionally different markup (not required here — CSS Grid alone handles the stack-vs-columns switch).
 _Alternative considered:_ a shared `TwoColumnEditorLayout` component in `libs/chat-shared`. Rejected as premature abstraction — no second consumer yet; revisit if a second editor page needs the same shell.
 
-**4. `DialMarkdownEditor` CSS import lives in the app entry, once.**
+**4. `MarkdownEditor` CSS import lives in the app entry, once.**
 Per the ui-kit's own README pattern (`@uiw/react-markdown-preview/markdown.css`, `@uiw/react-md-editor/markdown-editor.css`), these are global stylesheets loaded once for the whole app, added to `apps/chat/src/main.tsx` (co-located with the existing global CSS imports), not per-component — importing per-component would duplicate the stylesheet injection every time the create page mounts.
 
 **5. Schedule fieldset moves into the Details column unchanged.**
@@ -42,8 +42,8 @@ The existing `<fieldset>` (schedule type segmented control, run-at/frequency/tim
 ## Risks / Trade-offs
 
 - **[Risk]** Renaming `promptLabel` → `instructionsLabel` and adding `onBack` are breaking changes to `ScheduledTaskCreateFormProps`/`ScheduledTaskCreateFormLabels`. → **Mitigation**: single in-repo consumer (`ScheduledTaskCreatePage`); update it in the same change, verified by `nx test`/`nx lint` on both `@epam/ai-dial-scheduled-tasks` and `chat`.
-- **[Risk]** `DialMarkdownEditor`'s prop API is unconfirmed at proposal time. → **Mitigation**: tasks.md requires calling ui-kit MCP `getEntityDetails("component", "DialMarkdownEditor")` before wiring it, and checking `CHANGELOG.md`/migration guides if the installed `@epam/ai-dial-ui-kit` version differs from what's assumed.
-- **[Risk]** Global markdown CSS imported at app entry could visually affect other markdown surfaces in the app (e.g. chat message rendering) if class names collide. → **Mitigation**: verify visually (dev server) that existing markdown-rendered chat content is unaffected after the import is added; these are scoped `@uiw/*` stylesheets used elsewhere in the ui-kit already if any other page uses `DialMarkdownEditor` — check for an existing import first to avoid a duplicate.
+- **[Risk]** `MarkdownEditor`'s prop API is unconfirmed at proposal time. → **Mitigation**: tasks.md requires calling ui-kit MCP `getEntityDetails("component", "MarkdownEditor")` before wiring it, and checking `CHANGELOG.md`/migration guides if the installed `@epam/ai-dial-ui-kit` version differs from what's assumed.
+- **[Risk]** Global markdown CSS imported at app entry could visually affect other markdown surfaces in the app (e.g. chat message rendering) if class names collide. → **Mitigation**: verify visually (dev server) that existing markdown-rendered chat content is unaffected after the import is added; these are scoped `@uiw/*` stylesheets used elsewhere in the ui-kit already if any other page uses `MarkdownEditor` — check for an existing import first to avoid a duplicate.
 - **[Trade-off]** Keeping `onCancel` and `onBack` as two separate callbacks (both wired to the same page handler) is slightly redundant at the call site, but keeps the lib's prop contract explicit and avoids the page having to know which UI element triggered "cancel".
 
 ## Migration Plan
