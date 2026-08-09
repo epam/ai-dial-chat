@@ -6,8 +6,7 @@ import type { ScheduledTaskDto } from '@epam/chat-api-client';
 import type { TFunction } from 'i18next';
 import { ScheduledTasksI18nKeys } from '../constants/translation-keys';
 import { apSchedulerDayToJsDay, jsDayToApSchedulerDay } from './cron-weekday';
-
-const padTwoDigits = (value: string): string => value.padStart(2, '0');
+import { padTwoDigits } from './formatting';
 
 const EVERY_N_MINUTES_PATTERN = /^\*\/(\d+)$/;
 

@@ -99,7 +99,7 @@ const ScheduledTaskEditPage: FC = () => {
           return;
         }
         setTask(result);
-        setValues(mapped.values);
+        setValues({ minute: '0', ...mapped.values });
       } catch (err) {
         if (!cancelled.value) {
           if (getApiErrorStatus(err) === 404) {

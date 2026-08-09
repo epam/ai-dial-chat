@@ -229,9 +229,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
 
             {values.repeat !== ScheduledTaskRepeat.OneTime && (
               <>
-                {(values.repeat === ScheduledTaskRepeat.Daily ||
-                  values.repeat === ScheduledTaskRepeat.Weekly ||
-                  values.repeat === ScheduledTaskRepeat.Monthly) && (
+                {values.repeat !== ScheduledTaskRepeat.Hourly && (
                   <div className="flex flex-col gap-1">
                     <Calendar
                       id="scheduled-task-time"

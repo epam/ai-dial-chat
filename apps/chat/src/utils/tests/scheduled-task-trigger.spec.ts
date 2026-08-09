@@ -486,6 +486,9 @@ describe('mapScheduledTaskDtoToFormValues', () => {
     if (result.ok) {
       expect(result.values.repeat).toBe(ScheduledTaskRepeat.OneTime);
       expect(result.values.runAt).toBe('2026-07-24T09:00');
+      // Not '00:00' — switching Repeat to a time-based cadence on the edit
+      // page must not silently start from midnight.
+      expect(result.values.time).toBe('09:00');
     }
   });
 
@@ -501,6 +504,9 @@ describe('mapScheduledTaskDtoToFormValues', () => {
     if (result.ok) {
       expect(result.values.repeat).toBe(ScheduledTaskRepeat.Hourly);
       expect(result.values.minute).toBe('15');
+      // Not '00:00' — switching Repeat to a time-based cadence on the edit
+      // page must not silently start from midnight.
+      expect(result.values.time).toBe('09:00');
       expect(result.values.dayOfWeek).toBeUndefined();
       expect(result.values.dayOfMonth).toBeUndefined();
     }

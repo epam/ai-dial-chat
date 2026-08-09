@@ -13,6 +13,7 @@ import {
   type ScheduledTaskDtoMappingResult,
 } from '../types/scheduled-task-mapping';
 import { apSchedulerDayToJsDay, jsDayToApSchedulerDay } from './cron-weekday';
+import { padTwoDigits } from './formatting';
 
 /** Which boundary of a cron activity window is being computed. */
 enum CronWindowEdge {
@@ -22,7 +23,13 @@ enum CronWindowEdge {
 
 const CRON_FIELD_KEYS = new Set(['hour', 'minute', 'day_of_week', 'day']);
 
-const pad2 = (value: number): string => String(value).padStart(2, '0');
+/**
+ * `values.time` placeholder for repeat values that don't use it (`OneTime`,
+ * `Hourly`). Matches the Create page's `DEFAULT_VALUES.time` so switching
+ * the Repeat dropdown to a time-based cadence (Daily/Weekly/Monthly) on the
+ * edit page starts from a reasonable time instead of a silent midnight.
+ */
+const DEFAULT_TIME_PLACEHOLDER = '09:00';
 
 /**
  * Converts the locally-entered `hour`/`minute` (and, for weekly/monthly
@@ -168,8 +175,8 @@ export const mapFormValuesToUpdateBody = (
 const isoToLocalDateTime = (iso: string): string => {
   const date = new Date(iso);
   return (
-    `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}` +
-    `T${pad2(date.getHours())}:${pad2(date.getMinutes())}`
+    `${date.getFullYear()}-${padTwoDigits(date.getMonth() + 1)}-${padTwoDigits(date.getDate())}` +
+    `T${padTwoDigits(date.getHours())}:${padTwoDigits(date.getMinutes())}`
   );
 };
 
@@ -180,7 +187,7 @@ const isoToLocalDateTime = (iso: string): string => {
  */
 const isoToLocalDateOnly = (iso: string): string => {
   const date = new Date(iso);
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+  return `${date.getFullYear()}-${padTwoDigits(date.getMonth() + 1)}-${padTwoDigits(date.getDate())}`;
 };
 
 /**
@@ -267,7 +274,7 @@ const parseCronFields = (
   return {
     ok: true,
     isHourly: false,
-    time: `${pad2(reference.getHours())}:${pad2(reference.getMinutes())}`,
+    time: `${padTwoDigits(reference.getHours())}:${padTwoDigits(reference.getMinutes())}`,
     ...(hasDayOfWeek
       ? { dayOfWeek: String(jsDayToApSchedulerDay(reference.getDay())) }
       : {}),
@@ -320,7 +327,7 @@ export const mapScheduledTaskDtoToFormValues = (
         ...base,
         repeat: ScheduledTaskRepeat.OneTime,
         runAt: isoToLocalDateTime(date as string),
-        time: '00:00',
+        time: DEFAULT_TIME_PLACEHOLDER,
       },
     };
   }
@@ -343,7 +350,7 @@ export const mapScheduledTaskDtoToFormValues = (
       values: {
         ...base,
         repeat: ScheduledTaskRepeat.Hourly,
-        time: '00:00',
+        time: DEFAULT_TIME_PLACEHOLDER,
         minute: parsed.minute,
         ...(cron.startDate
           ? { startDate: isoToLocalDateOnly(cron.startDate) }
