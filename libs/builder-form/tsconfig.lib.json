@@ -2,8 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "../../dist/libs/scheduled-tasks",
-    "tsBuildInfoFile": "../../dist/libs/scheduled-tasks/tsconfig.lib.tsbuildinfo",
+    "outDir": "../../dist/libs/builder-form",
+    "tsBuildInfoFile": "../../dist/libs/builder-form/tsconfig.lib.tsbuildinfo",
 
     "jsx": "react-jsx",
 
@@ -34,13 +34,7 @@
   ],
   "references": [
     {
-      "path": "../ai-dial-kit/tsconfig.lib.json"
-    },
-    {
       "path": "../chat-shared/tsconfig.lib.json"
-    },
-    {
-      "path": "../builder-form/tsconfig.lib.json"
     }
   ]
 }

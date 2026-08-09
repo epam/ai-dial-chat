@@ -1,18 +1,14 @@
+import { BuilderFormContainer } from '@epam/ai-dial-builder-form';
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   Input,
   Textarea,
   Calendar,
   CalendarMode,
-  DIAL_ICON_SIZE,
-  GhostIconButton,
   Spinner,
   LazyMarkdownEditor,
-  NeutralButton,
-  PrimaryButton,
   Select,
 } from '@epam/ai-dial-ui-kit';
-import { IconArrowLeft } from '@tabler/icons-react';
 import { lazy, Suspense, type ComponentProps, type FC } from 'react';
 import { DESCRIPTION_MAX_LENGTH } from '../../constants/scheduled-task-create-form';
 import { ScheduledTaskCreateFormProps } from '../../models/scheduled-task-create-form-props';
@@ -75,8 +71,6 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   const instructionsErrorClassName =
     typography?.instructionsErrorClassName ?? 'dial-small-text';
   const cssVars = buildCssVars({
-    '--stcf-bg': colors?.background,
-    '--stcf-header-border': colors?.headerBorder,
     '--stcf-details-border': colors?.detailsColumnBorder,
     '--stcf-subtitle-text': colors?.sectionSubtitleText,
     '--stcf-error-text': colors?.instructionsErrorText,
@@ -89,55 +83,32 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     !values.prompt.trim();
 
   return (
-    <div
-      style={cssVars}
-      className={mergeClasses(
-        'flex h-full w-full flex-col overflow-y-auto',
-        styles.container,
-      )}
-    >
-      <div
-        className={mergeClasses(
-          'flex h-16 items-center justify-between gap-6 border-b px-8',
-          styles.header,
-        )}
-      >
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <GhostIconButton
-            icon={
-              <IconArrowLeft
-                size={DIAL_ICON_SIZE.LG}
-                className="rtl:scale-x-[-1]"
-                aria-hidden
-              />
-            }
-            aria-label={labels.backButtonLabel}
-            onClick={onBack}
-          />
-          <h1 className={mergeClasses('truncate', titleClassName)}>
-            {labels.pageTitle}
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <NeutralButton
-            label={labels.cancelButtonLabel}
-            onClick={onCancel}
-            disabled={isSubmitting}
-          />
-          <PrimaryButton
-            label={labels.createButtonLabel}
-            onClick={onSubmit}
-            disabled={isCreateDisabled}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-1 flex-col desktop:flex-row">
+    <BuilderFormContainer
+      labels={{
+        title: labels.pageTitle,
+        backButtonLabel: labels.backButtonLabel,
+        cancelButtonLabel: labels.cancelButtonLabel,
+        submitButtonLabel: labels.createButtonLabel,
+      }}
+      onBack={onBack}
+      onCancel={onCancel}
+      onSubmit={onSubmit}
+      isCancelDisabled={isSubmitting}
+      isSubmitDisabled={isCreateDisabled}
+      styles={{
+        colors: { background: colors?.background },
+        header: {
+          colors: { borderColor: colors?.headerBorder },
+          typography: { fontClassName: titleClassName },
+        },
+        cssVars,
+      }}
+      left={
         <div
           role="group"
           aria-label={labels.detailsSectionTitle}
           className={mergeClasses(
-            'flex w-full flex-col gap-5 border-e px-8 py-6 desktop:w-[360px] desktop:shrink-0',
+            'flex flex-1 flex-col gap-5 border-e px-8 py-6',
             styles.detailsColumn,
           )}
         >
@@ -191,7 +162,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             }))}
           />
 
-          <fieldset className="flex flex-col gap-3">
+          <fieldset className="flex w-full flex-col gap-3">
             <legend className={scheduleSectionLabelClassName}>
               {labels.scheduleSectionLabel}
             </legend>
@@ -384,60 +355,55 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             )}
           </fieldset>
         </div>
-
-        <div
-          role="group"
-          aria-label={labels.configurationSectionTitle}
-          className="flex w-full min-w-0 flex-1 flex-col gap-5 px-8 py-6"
-        >
-          <div className="flex flex-col gap-1">
-            <h2 className={sectionTitleClassName}>
-              {labels.configurationSectionTitle}
-            </h2>
-            <p
-              className={mergeClasses(
-                sectionSubtitleClassName,
-                styles.sectionSubtitle,
-              )}
-            >
-              {labels.configurationSectionSubtitle}
-            </p>
-          </div>
-
-          <div
-            role="group"
-            aria-label={labels.instructionsLabel}
-            className="flex flex-1 flex-col gap-1"
-          >
-            <span className={scheduleSectionLabelClassName}>
-              {labels.instructionsLabel}
-            </span>
-            <Suspense fallback={<Spinner />}>
-              <MarkdownEditor
-                value={values.prompt}
-                onChange={(value) => onFieldChange('prompt', value)}
-                height={480}
-                theme={markdownEditorTheme as MarkdownEditorTheme}
-              />
-            </Suspense>
-            {errors.prompt && (
-              <p
-                className={mergeClasses(
-                  instructionsErrorClassName,
-                  styles.instructionsError,
-                )}
-              >
-                {errors.prompt}
-              </p>
+      }
+    >
+      <div
+        role="group"
+        aria-label={labels.configurationSectionTitle}
+        className="flex flex-1 flex-col gap-5 px-8 py-6"
+      >
+        <div className="flex flex-col gap-1">
+          <h2 className={sectionTitleClassName}>
+            {labels.configurationSectionTitle}
+          </h2>
+          <p
+            className={mergeClasses(
+              sectionSubtitleClassName,
+              styles.sectionSubtitle,
             )}
-          </div>
+          >
+            {labels.configurationSectionSubtitle}
+          </p>
         </div>
 
         <div
-          aria-hidden
-          className="hidden desktop:block desktop:w-[360px] desktop:shrink-0"
-        />
+          role="group"
+          aria-label={labels.instructionsLabel}
+          className="flex flex-1 flex-col gap-1"
+        >
+          <span className={scheduleSectionLabelClassName}>
+            {labels.instructionsLabel}
+          </span>
+          <Suspense fallback={<Spinner />}>
+            <MarkdownEditor
+              value={values.prompt}
+              onChange={(value) => onFieldChange('prompt', value)}
+              height={480}
+              theme={markdownEditorTheme as MarkdownEditorTheme}
+            />
+          </Suspense>
+          {errors.prompt && (
+            <p
+              className={mergeClasses(
+                instructionsErrorClassName,
+                styles.instructionsError,
+              )}
+            >
+              {errors.prompt}
+            </p>
+          )}
+        </div>
       </div>
-    </div>
+    </BuilderFormContainer>
   );
 };

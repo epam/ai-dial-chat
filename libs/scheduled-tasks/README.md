@@ -23,6 +23,7 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 - `@epam/ai-dial-ui-kit`
 - `@epam/ai-dial-kit`
 - `@epam/ai-dial-chat-shared`
+- `@epam/ai-dial-builder-form`
 
 ## Components
 
