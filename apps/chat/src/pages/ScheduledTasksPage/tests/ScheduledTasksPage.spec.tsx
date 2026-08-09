@@ -56,6 +56,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     isLoadingMore,
     onLoadMore,
     onCardClick,
+    onEdit,
   }: {
     labels: { title: string; createButtonLabel: string; retryLabel: string };
     onCreateClick: () => void;
@@ -69,6 +70,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     isLoadingMore?: boolean;
     onLoadMore?: () => void;
     onCardClick?: (id: string) => void;
+    onEdit?: (id: string) => void;
   }) => (
     <div>
       {labels.title}
@@ -84,6 +86,11 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       {items.map((item) => (
         <button key={item.id} onClick={() => onCardClick?.(item.id)}>
           card:{item.id}
+        </button>
+      ))}
+      {items.map((item) => (
+        <button key={item.id} onClick={() => onEdit?.(item.id)}>
+          edit:{item.id}
         </button>
       ))}
     </div>
@@ -110,6 +117,7 @@ const CreatePageStub = () => {
 };
 
 const DetailPageStub = () => <div>detail page</div>;
+const EditPageStub = () => <div>edit page</div>;
 
 const renderScheduledTasksPage = () =>
   render(
@@ -117,6 +125,10 @@ const renderScheduledTasksPage = () =>
       <Routes>
         <Route path="/scheduled-tasks" element={<ScheduledTasksPage />} />
         <Route path="/scheduled-tasks/new" element={<CreatePageStub />} />
+        <Route
+          path="/scheduled-tasks/:scheduleId/edit"
+          element={<EditPageStub />}
+        />
         <Route
           path="/scheduled-tasks/:scheduleId"
           element={<DetailPageStub />}
@@ -304,6 +316,30 @@ describe('ScheduledTasksPage', () => {
     );
 
     expect(screen.getByText('detail page')).toBeTruthy();
+  });
+
+  it('navigates to the edit route when a card overflow-menu Edit action is activated', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    useScheduledTasksMock.mockReturnValue({
+      items: [{ id: 'sched_123', displayName: 'Daily summary', trigger: {} }],
+      searchQuery: '',
+      setSearchQuery: setSearchQueryMock,
+      sortKey: 'firstToRun',
+      setSortKey: setSortKeyMock,
+      isLoading: false,
+      isLoadingMore: false,
+      error: null,
+      hasMore: false,
+      loadMore: loadMoreMock,
+      refetch: refetchMock,
+    });
+    renderScheduledTasksPage();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'edit:sched_123' }),
+    );
+
+    expect(screen.getByText('edit page')).toBeTruthy();
   });
 
   it('refetches when returning from the create flow with a refresh navigation state', async () => {

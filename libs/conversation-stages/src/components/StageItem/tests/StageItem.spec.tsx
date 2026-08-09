@@ -5,7 +5,7 @@ import { StageItem } from '../StageItem';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 14, MD: 16 },
-  DialSpinner: ({ ariaLabel }: { ariaLabel?: string }) => (
+  Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
     <span role="status" aria-label={ariaLabel} />
   ),
   DialEllipsisTooltip: ({ text }: { text: string }) => <>{text}</>,

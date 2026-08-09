@@ -570,6 +570,12 @@
       "statusInProgress": "Running",
       "statusMissed": "Missed",
       "errorLabel": "Failed to load the scheduled task"
+    },
+    "edit": {
+      "pageTitle": "Edit scheduled task",
+      "unsupportedTriggerMessage": "This task's schedule can't be edited here yet.",
+      "successNotification": "Scheduled task updated",
+      "errorNotification": "Failed to update the scheduled task"
     }
   },
   "dialFileManager": {

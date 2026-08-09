@@ -147,13 +147,13 @@ In read-only conversations, the Dislike button is not rendered, so the modal can
 
 **Modal contents:**
 - Title: **"Send negative feedback"**
-- Required `DialSelect` labelled **"What type of feedback you want to give? \*"** with the following options defined in `apps/chat/src/constants/feedback-categories.ts`:
+- Required `Select` labelled **"What type of feedback you want to give? \*"** with the following options defined in `apps/chat/src/constants/feedback-categories.ts`:
   - "UI bug"
   - "Overactive refusal"
   - "Incomplete response"
   - "Should have triggered thinking"
   - "Should have search the web"
-- Optional `DialTextarea` with placeholder **"Type an optional comment to your feedback"**
+- Optional `Textarea` with placeholder **"Type an optional comment to your feedback"**
 - `PrimaryButton` labelled **"Send"** — disabled until a category is selected
 - Close (×) icon button
 

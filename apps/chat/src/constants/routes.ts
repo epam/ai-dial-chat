@@ -48,3 +48,6 @@ export const getConversationRoute = (id: string): string => {
 
 export const getScheduledTaskDetailRoute = (scheduleId: string): string =>
   `${ROUTES.ScheduledTasks}/${encodeURIComponent(scheduleId)}`;
+
+export const getScheduledTaskEditRoute = (scheduleId: string): string =>
+  `${getScheduledTaskDetailRoute(scheduleId)}/edit`;

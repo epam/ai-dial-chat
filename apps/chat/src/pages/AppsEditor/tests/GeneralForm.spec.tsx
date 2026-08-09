@@ -16,51 +16,6 @@ vi.mock('../../../server-api/applications', () => ({
 }));
 
 vi.mock('@epam/ai-dial-kit', () => ({
-  Input: ({
-    value,
-    onChange,
-    labelProps,
-    error,
-    placeholder,
-  }: {
-    value?: string;
-    onChange?: (v?: string) => void;
-    labelProps?: { label?: string; required?: boolean };
-    error?: string;
-    placeholder?: string;
-  }) => (
-    <>
-      <label>
-        {labelProps?.label}
-        <input
-          value={value ?? ''}
-          placeholder={placeholder}
-          onChange={(e) => onChange?.(e.target.value)}
-        />
-      </label>
-      {error && <p role="alert">{error}</p>}
-    </>
-  ),
-  Textarea: ({
-    value,
-    onChange,
-    labelProps,
-    placeholder,
-  }: {
-    value?: string;
-    onChange?: (v: string) => void;
-    labelProps?: { label?: string };
-    placeholder?: string;
-  }) => (
-    <label>
-      {labelProps?.label}
-      <textarea
-        value={value ?? ''}
-        placeholder={placeholder}
-        onChange={(e) => onChange?.(e.target.value)}
-      />
-    </label>
-  ),
   TagInput: ({ label }: { label?: string }) => <span>{label}</span>,
 }));
 
@@ -68,6 +23,51 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
   return {
     ...actual,
+    Input: ({
+      value,
+      onChange,
+      labelProps,
+      error,
+      placeholder,
+    }: {
+      value?: string;
+      onChange?: (v?: string) => void;
+      labelProps?: { label?: string; required?: boolean };
+      error?: string;
+      placeholder?: string;
+    }) => (
+      <>
+        <label>
+          {labelProps?.label}
+          <input
+            value={value ?? ''}
+            placeholder={placeholder}
+            onChange={(e) => onChange?.(e.target.value)}
+          />
+        </label>
+        {error && <p role="alert">{error}</p>}
+      </>
+    ),
+    Textarea: ({
+      value,
+      onChange,
+      labelProps,
+      placeholder,
+    }: {
+      value?: string;
+      onChange?: (v: string) => void;
+      labelProps?: { label?: string };
+      placeholder?: string;
+    }) => (
+      <label>
+        {labelProps?.label}
+        <textarea
+          value={value ?? ''}
+          placeholder={placeholder}
+          onChange={(e) => onChange?.(e.target.value)}
+        />
+      </label>
+    ),
     ErrorMessageNotification: ({
       message,
     }: {

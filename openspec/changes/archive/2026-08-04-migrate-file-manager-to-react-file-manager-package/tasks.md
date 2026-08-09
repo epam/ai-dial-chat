@@ -7,11 +7,11 @@
 ## 2. Migrate apps/chat components
 
 - [x] 2.1 `apps/chat/src/components/DialFileManagerShell/types/labels.ts`: move `DialFileManagerTabs` (type) and `DialFileManager` to `@epam/ai-dial-react-file-manager`.
-- [x] 2.2 `apps/chat/src/components/DialFileManagerShell/DialFileManagerShell.tsx`: move `DialFileManagerActions`, `DialFileManagerTabs`, `GridSelectionMode`, `DialFileAcceptType`, `FileManagerGridRow`, `ToolbarOptions` to `@epam/ai-dial-react-file-manager`; keep `PrimaryButton`, `DialSpinner`, and `NOT_ALLOWED_SYMBOLS_REGEXP` on `@epam/ai-dial-ui-kit` (confirmed via package inspection: the new package does not re-export `NOT_ALLOWED_SYMBOLS_REGEXP`).
+- [x] 2.2 `apps/chat/src/components/DialFileManagerShell/DialFileManagerShell.tsx`: move `DialFileManagerActions`, `DialFileManagerTabs`, `GridSelectionMode`, `DialFileAcceptType`, `FileManagerGridRow`, `ToolbarOptions` to `@epam/ai-dial-react-file-manager`; keep `PrimaryButton`, `Spinner`, and `NOT_ALLOWED_SYMBOLS_REGEXP` on `@epam/ai-dial-ui-kit` (confirmed via package inspection: the new package does not re-export `NOT_ALLOWED_SYMBOLS_REGEXP`).
 - [x] 2.3 `apps/chat/src/components/DialFileManagerModal/DialFileManagerModal.tsx`: move `DialFileManagerTabs`, `DialFileNodeType`, `useDialFileManagerTabs`, `DialFile`, `FileManagerGridRow` to `@epam/ai-dial-react-file-manager`; keep `DialPopup`, `PrimaryButton`, `NotificationVariant`, `PopupSize`, `NOT_ALLOWED_SYMBOLS`, `NOT_ALLOWED_SYMBOLS_REGEXP` on `@epam/ai-dial-ui-kit` (confirmed: `NOT_ALLOWED_SYMBOLS`/`NOT_ALLOWED_SYMBOLS_REGEXP` are not re-exported by the new package).
 - [x] 2.4 `apps/chat/src/components/DialFileManagerModal/types/attach-result.ts`: move `DialFile` (type) to `@epam/ai-dial-react-file-manager`.
 - [x] 2.5 `apps/chat/src/components/DialFileManagerModal/UploadProgressModal.tsx`: verified — `DialFileName` is NOT exported by `@epam/ai-dial-react-file-manager` (confirmed via package inspection); left on `@epam/ai-dial-ui-kit` unchanged.
-- [x] 2.6 Confirmed `apps/chat/src/components/DialFileManagerModal/OperationLoaderModal.tsx` needs no changes (only general ui-kit imports: `DialPopup`, `NeutralButton`, `DialSpinner`).
+- [x] 2.6 Confirmed `apps/chat/src/components/DialFileManagerModal/OperationLoaderModal.tsx` needs no changes (only general ui-kit imports: `DialPopup`, `NeutralButton`, `Spinner`).
 
 ## 3. Migrate apps/chat hooks/files
 

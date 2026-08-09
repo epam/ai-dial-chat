@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, DialDropdown } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, Dropdown } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconChevronDown, IconWorld } from '@tabler/icons-react';
 import { FC, type KeyboardEvent, type RefObject } from 'react';
 import { ShareLinkAccess } from '../../types/share';
@@ -98,12 +98,11 @@ export const AccessControl: FC<AccessControlProps> = ({
         </p>
       </div>
       {canEditAccess ? (
-        <DialDropdown
+        <Dropdown
           matchReferenceWidth={false}
           placement="bottom-end"
           open={isOpen}
           onOpenChange={onOpenChange}
-          listClassName="cp-dropdown-overlay"
           renderOverlay={() => (
             <div
               ref={menuRef}
@@ -185,7 +184,7 @@ export const AccessControl: FC<AccessControlProps> = ({
               aria-hidden
             />
           </button>
-        </DialDropdown>
+        </Dropdown>
       ) : (
         <span
           aria-label={accessAriaLabel}

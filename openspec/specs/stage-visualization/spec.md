@@ -59,14 +59,14 @@ Text token accumulation (`delta.content`) SHALL continue independently.
 ### Requirement: `StageIcon` maps status to the correct icon
 
 The `StageIcon` component SHALL render:
-- `DialSpinner` — when `status === null` AND `isLive === true` (last running stage during streaming)
+- `Spinner` — when `status === null` AND `isLive === true` (last running stage during streaming)
 - `IconAlertCircle` — when `status === null` AND `isLive === false`
 - `IconCircleCheck` — when `status === StageStatus.Completed`
 - `IconAlertCircle` — for any other non-null status
 
 #### Scenario: Live running stage shows spinner
 - **WHEN** `status` is `null` and `isLive` is `true`
-- **THEN** `DialSpinner` is rendered
+- **THEN** `Spinner` is rendered
 
 #### Scenario: Completed stage shows check icon
 - **WHEN** `status` is `StageStatus.Completed`

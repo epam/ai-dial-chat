@@ -313,6 +313,10 @@ export enum ScheduledTasksI18nKeys {
   DetailStatusInProgress = 'scheduledTasks.detail.statusInProgress',
   DetailStatusMissed = 'scheduledTasks.detail.statusMissed',
   DetailErrorLabel = 'scheduledTasks.detail.errorLabel',
+  EditPageTitle = 'scheduledTasks.edit.pageTitle',
+  EditUnsupportedTriggerMessage = 'scheduledTasks.edit.unsupportedTriggerMessage',
+  EditSuccessNotification = 'scheduledTasks.edit.successNotification',
+  EditErrorNotification = 'scheduledTasks.edit.errorNotification',
 }
 
 export enum ConversationI18nKeys {

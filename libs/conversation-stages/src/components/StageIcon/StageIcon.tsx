@@ -1,5 +1,5 @@
 import { StageStatus } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, DialSpinner } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, Spinner } from '@epam/ai-dial-ui-kit';
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { FC } from 'react';
 import styles from '../StagesPanel/StagesPanel.module.scss';
@@ -24,7 +24,7 @@ export const StageIcon: FC<StageIconProps> = ({
   failedLabel = 'Failed',
 }) => {
   if (isLive) {
-    return <DialSpinner size={16} ariaLabel={runningLabel} />;
+    return <Spinner size={16} ariaLabel={runningLabel} />;
   }
 
   if (status === StageStatus.Failed) {

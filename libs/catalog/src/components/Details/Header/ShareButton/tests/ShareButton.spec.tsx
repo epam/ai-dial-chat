@@ -15,7 +15,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     onClick: () => void;
   }) => <button onClick={onClick}>{label}</button>,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialDropdown: ({
+  Dropdown: ({
     children,
     open,
     renderOverlay,

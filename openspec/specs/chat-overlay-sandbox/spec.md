@@ -22,13 +22,13 @@
 
 ### Requirement: Sandbox controls use the shared UI Kit and Tailwind
 
-All sandbox-owned buttons SHALL use button components exported by `@epam/ai-dial-ui-kit`. Text inputs and selectors SHALL use `DialInput` and `DialSelectField` so the developer playground exercises the same controls as the main application. Sandbox layout and presentation SHALL be authored with mobile-first Tailwind utility classes, using the workspace `mobile`/`desktop` breakpoints and logical direction utilities. A CSS entry file MAY remain solely to load the Tailwind layers and the UI Kit's published stylesheet; it SHALL NOT contain sandbox-specific selector rules.
+All sandbox-owned buttons SHALL use button components exported by `@epam/ai-dial-ui-kit`. Text inputs and selectors SHALL use `Input` and `SelectField` so the developer playground exercises the same controls as the main application. Sandbox layout and presentation SHALL be authored with mobile-first Tailwind utility classes, using the workspace `mobile`/`desktop` breakpoints and logical direction utilities. A CSS entry file MAY remain solely to load the Tailwind layers and the UI Kit's published stylesheet; it SHALL NOT contain sandbox-specific selector rules.
 
 #### Scenario: No native sandbox controls remain
 
 - **WHEN** the sandbox source components are inspected
 - **THEN** they contain no native `<button>`, `<input>`, or `<select>` elements owned by the sandbox
-- **AND** actions use UI Kit button components while text and selection fields use `DialInput` and `DialSelectField`
+- **AND** actions use UI Kit button components while text and selection fields use `Input` and `SelectField`
 
 #### Scenario: Presentation is colocated as Tailwind utilities
 

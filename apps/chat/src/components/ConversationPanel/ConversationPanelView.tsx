@@ -10,8 +10,8 @@ import {
 import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
-  DialConfirmationPopup,
-  DialPopup,
+  ConfirmationPopup,
+  Popup,
   NotificationVariant,
   PopupSize,
   type DropdownItem,
@@ -746,7 +746,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         />
       </div>
 
-      <DialConfirmationPopup
+      <ConfirmationPopup
         open={!!pendingDeleteId}
         header={t(ConversationPanelI18nKeys.DeleteConfirmTitle)}
         confirmLabel={t(ButtonsI18nKeys.Delete)}
@@ -772,7 +772,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onClose={handleCloseDeleteDialog}
       />
 
-      <DialConfirmationPopup
+      <ConfirmationPopup
         open={!!pendingUnshareId}
         header={t(ConversationPanelI18nKeys.UnshareConfirmTitle)}
         confirmLabel={t(ButtonsI18nKeys.Delete)}
@@ -809,10 +809,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       />
 
       {isConversationsSharingEnabled && (
-        <DialPopup
+        <Popup
           open={pendingShareConversationPath !== null}
           onClose={handleCloseSharePopover}
-          dividers={false}
           hideClose
           headerClassName="hidden"
           size={PopupSize.Sm}
@@ -821,7 +820,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             conversationPath={pendingShareConversationPath ?? ''}
             onClose={handleCloseSharePopover}
           />
-        </DialPopup>
+        </Popup>
       )}
 
       {isConversationsPublishingEnabled &&

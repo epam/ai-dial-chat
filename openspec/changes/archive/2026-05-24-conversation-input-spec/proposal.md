@@ -28,7 +28,7 @@ Without a spec, future changes risk drifting from the intended behavior, and con
 
 - Redesigning the component API
 - Adding new features to the component
-- Changing the underlying `DialTextarea` integration
+- Changing the underlying `Textarea` integration
 
 ## Success Criteria
 

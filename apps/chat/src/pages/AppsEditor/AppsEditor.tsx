@@ -1,5 +1,5 @@
 import {
-  DialSpinner,
+  Spinner,
   ErrorMessageNotification,
   StepStatus,
 } from '@epam/ai-dial-ui-kit';
@@ -443,7 +443,7 @@ const AppsEditor: FC = () => {
             aria-live="polite"
           >
             <div className="flex items-center gap-3 rounded-lg bg-layer-sunken px-4 py-3 shadow-lg">
-              <DialSpinner />
+              <Spinner />
               <span className="text-sm text-primary">
                 {t(AppsEditorI18nKeys.SavingOverlayLabel)}
               </span>

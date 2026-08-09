@@ -18,11 +18,11 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialSpinner: () => <div role="progressbar" />,
-  DialSkeleton: (props: Record<string, unknown>) => (
+  Spinner: () => <div role="progressbar" />,
+  Skeleton: (props: Record<string, unknown>) => (
     <div data-skeleton {...props} />
   ),
-  DialSkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
+  SkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
   GhostButton: ({
     label,
     onClick,
@@ -38,6 +38,13 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     icon?: ReactNode;
     'aria-label'?: string;
   }) => <button onClick={onClick} aria-label={ariaLabel} />,
+  NeutralButton: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick?: () => void;
+  }) => <button onClick={onClick}>{label}</button>,
 }));
 
 vi.mock('@tabler/icons-react', () => ({
@@ -45,10 +52,12 @@ vi.mock('@tabler/icons-react', () => ({
   IconCircleCheck: () => <svg data-icon="success" />,
   IconCircleX: () => <svg data-icon="error" />,
   IconAlertTriangle: () => <svg data-icon="missed" />,
+  IconPencilMinus: () => <svg data-icon="edit" />,
 }));
 
 const labels: ScheduledTaskDetailViewLabels = {
   backAriaLabel: 'Back',
+  editButtonLabel: 'Edit',
   errorLabel: 'Failed to load the scheduled task',
   detailsTitle: 'Details',
   descriptionLabel: 'Description',
@@ -109,6 +118,50 @@ describe('ScheduledTaskDetailView', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
 
     expect(onBack).toHaveBeenCalledOnce();
+  });
+
+  it('does not render an Edit button when onEdit is omitted', () => {
+    render(
+      <ScheduledTaskDetailView
+        labels={labels}
+        onBack={vi.fn()}
+        displayName="Daily summary"
+        runs={[]}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeTruthy();
+  });
+
+  it('renders an Edit button when onEdit is supplied', () => {
+    render(
+      <ScheduledTaskDetailView
+        labels={labels}
+        onBack={vi.fn()}
+        onEdit={vi.fn()}
+        displayName="Daily summary"
+        runs={[]}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Edit' })).toBeTruthy();
+  });
+
+  it('calls onEdit exactly once when the Edit button is activated', async () => {
+    const onEdit = vi.fn();
+    render(
+      <ScheduledTaskDetailView
+        labels={labels}
+        onBack={vi.fn()}
+        onEdit={onEdit}
+        displayName="Daily summary"
+        runs={[]}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Edit' }));
+
+    expect(onEdit).toHaveBeenCalledOnce();
   });
 
   it('shows a page-level spinner while isLoading', () => {

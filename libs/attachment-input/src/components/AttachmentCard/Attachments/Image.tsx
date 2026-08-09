@@ -5,8 +5,8 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialSkeleton,
-  DialSkeletonVariant,
+  Skeleton,
+  SkeletonVariant,
 } from '@epam/ai-dial-ui-kit';
 import { IconPhoto } from '@tabler/icons-react';
 import { CSSProperties, type FC, type KeyboardEvent, useMemo } from 'react';
@@ -121,8 +121,8 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
           />
         )}
         {imageLoadStatus !== LazyImageLoadStatus.Loaded && (
-          <DialSkeleton
-            variant={DialSkeletonVariant.Rectangular}
+          <Skeleton
+            variant={SkeletonVariant.Rectangular}
             width="100%"
             height="100%"
             active={imageLoadStatus === LazyImageLoadStatus.Loading}

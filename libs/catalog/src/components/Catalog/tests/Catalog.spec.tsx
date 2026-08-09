@@ -10,7 +10,7 @@ import { Catalog } from '../Catalog';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialSpinner: () => <div role="status" aria-label="Loading" />,
+  Spinner: () => <div role="status" aria-label="Loading" />,
   DialEllipsisTooltip: ({
     text,
     className,
@@ -40,10 +40,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       ))}
     </div>
   ),
-  DialDropdown: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
-  DialCloseButton: ({ onClick }: { onClick: () => void }) => (
+  Dropdown: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  CloseButton: ({ onClick }: { onClick: () => void }) => (
     <button aria-label="Close" onClick={onClick} />
   ),
   PrimaryButton: ({

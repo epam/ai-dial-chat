@@ -91,7 +91,7 @@
   - Normalizes missing sections: `config.conversations?.pinnedIds ?? []`, `config.toolsets?.installed ?? []`, `config.deployments?.installed ?? []`
   - On success: set `status = UserConfigStatus.Ready`, populate the three arrays
   - On failure: `console.error('[UserConfigContext] Failed to load user config', err)`, call `showNotification({ variant: 'error', message: t(UserConfigI18nKeys.LoadError) })` via `useNotification()`, set `status = UserConfigStatus.Error` with empty-array fallback
-  - Render `<DialSpinner />` while `status === UserConfigStatus.Loading`; render `children` inside provider once `Ready` or `Error`
+  - Render `<Spinner />` while `status === UserConfigStatus.Loading`; render `children` inside provider once `Ready` or `Error`
   - `useCallback` on `setPinnedConversation`, `setInstalledToolset`, `setInstalledDeployment`; each does optimistic snapshot → API call → revert-and-rethrow on failure
   - Context value wrapped in `useMemo` over all fields
   - `useUserConfig()` guard hook throws `'useUserConfig must be used inside UserConfigProvider'`
@@ -140,7 +140,7 @@
   - Error notification is shown (`showNotification` called with `variant: 'error'`) on fetch failure
   - `console.error` is called on fetch failure
   - `getUserConfig` is called exactly once — no duplicate on re-render
-  - `<DialSpinner />` rendered while loading; absent after load completes
+  - `<Spinner />` rendered while loading; absent after load completes
   - Children not rendered while loading; rendered after load completes (both success and failure)
   - `setPinnedConversation(id, true)` adds `id` to `pinnedConversationIds` on success
   - `setPinnedConversation(id, false)` removes `id` from `pinnedConversationIds` on success

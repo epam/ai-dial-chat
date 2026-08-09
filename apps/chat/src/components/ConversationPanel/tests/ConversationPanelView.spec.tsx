@@ -103,7 +103,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
   return {
     ...actual,
-    DialConfirmationPopup: ({
+    ConfirmationPopup: ({
       open,
       header,
       confirmLabel,
@@ -139,7 +139,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         </div>
       );
     },
-    DialDropdown: ({
+    Dropdown: ({
       children,
       items,
     }: {
@@ -179,13 +179,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         {closable && <button onClick={onClose}>Close notification</button>}
       </div>
     ),
-    DialPopup: ({
-      open,
-      children,
-    }: {
-      open: boolean;
-      children?: ReactNode;
-    }) => {
+    Popup: ({ open, children }: { open: boolean; children?: ReactNode }) => {
       if (!open) return null;
       return <div role="dialog">{children}</div>;
     },

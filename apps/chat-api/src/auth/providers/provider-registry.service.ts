@@ -101,6 +101,8 @@ export class ProviderRegistryService implements OnModuleInit {
   }
 
   async onModuleInit(): Promise<void> {
+    this.validateHeaderTokenConfig();
+
     const env = this.readProviderEnv();
 
     const rawProviderConfigs = buildProviderConfigs(env);
@@ -145,10 +147,50 @@ export class ProviderRegistryService implements OnModuleInit {
     return entry;
   }
 
+  /**
+   * Finds the registered provider whose OIDC issuer matches `issuer` exactly.
+   * Used by header bearer-token verification to resolve the provider whose
+   * JWKS should validate a token's signature (see `HeaderTokenStrategy`).
+   */
+  findByIssuer(
+    issuer: string,
+  ): { client: Client; config: ProviderConfig } | undefined {
+    return Array.from(this.clients.values()).find(
+      (entry) => entry.config.issuer === issuer,
+    );
+  }
+
   listProviders(): Array<{ id: string; label: string }> {
     return Array.from(this.clients.values()).map(({ config }) => ({
       id: config.id,
       label: config.label ?? config.id,
     }));
+  }
+
+  /**
+   * Enabling header bearer-token auth widens the BFF's trust boundary and
+   * bypasses CSRF (see design.md Decision 8) — an explicit issuer allowlist
+   * is mandatory whenever the feature flag is on, so boot fails loudly
+   * instead of silently trusting every registered provider's issuer.
+   */
+  private validateHeaderTokenConfig(): void {
+    const enabled = this.config.get('AUTH_HEADER_TOKEN_ENABLED', {
+      infer: true,
+    });
+    if (!enabled) {
+      return;
+    }
+
+    const allowedIssuers = this.config.get(
+      'AUTH_HEADER_TOKEN_ALLOWED_ISSUERS',
+      {
+        infer: true,
+      },
+    );
+    if (!allowedIssuers || allowedIssuers.length === 0) {
+      throw new Error(
+        'AUTH_HEADER_TOKEN_ALLOWED_ISSUERS must be set to a non-empty, comma-separated list of trusted issuers when AUTH_HEADER_TOKEN_ENABLED=true',
+      );
+    }
   }
 }

@@ -65,12 +65,10 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   DialEllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
   ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
-  DialDropdown: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
+  Dropdown: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   DialTooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  DialSkeleton: () => null,
-  DialSkeletonVariant: { Circular: 'circular' },
+  Skeleton: () => null,
+  SkeletonVariant: { Circular: 'circular' },
 
   Button: ({
     onClick,

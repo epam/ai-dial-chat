@@ -41,7 +41,7 @@ reported symptom.
 
 ## Impact
 
-- `apps/chat/src/pages/ToolsetEditor/EditorForm/AuthSection.tsx` — Client Secret `DialInput`
+- `apps/chat/src/pages/ToolsetEditor/EditorForm/AuthSection.tsx` — Client Secret `Input`
   `required` flag.
 - `apps/chat/src/utils/toolsets.ts` — `isToolsetAuthValid`.
 - `apps/chat/src/pages/ToolsetEditor/EditorForm/tests/AuthSection.spec.tsx` and

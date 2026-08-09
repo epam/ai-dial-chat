@@ -263,4 +263,26 @@ describe('ProviderRegistryService', () => {
       expect(config.rolesClaim).toBe('dial_roles');
     });
   });
+
+  describe('header-token auth config validation', () => {
+    it('boots successfully when the feature is disabled (default) and no allowlist is set', async () => {
+      const module = await buildModule({});
+      await expect(module.init()).resolves.toBeDefined();
+    });
+
+    it('boots successfully when enabled with a non-empty issuer allowlist', async () => {
+      const module = await buildModule({
+        AUTH_HEADER_TOKEN_ENABLED: true,
+        AUTH_HEADER_TOKEN_ALLOWED_ISSUERS: ['https://accounts.google.com'],
+      });
+      await expect(module.init()).resolves.toBeDefined();
+    });
+
+    it('fails boot naming AUTH_HEADER_TOKEN_ALLOWED_ISSUERS when enabled without an allowlist', async () => {
+      const module = await buildModule({ AUTH_HEADER_TOKEN_ENABLED: true });
+      await expect(module.init()).rejects.toThrow(
+        /AUTH_HEADER_TOKEN_ALLOWED_ISSUERS/,
+      );
+    });
+  });
 });

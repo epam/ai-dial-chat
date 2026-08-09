@@ -1,7 +1,4 @@
-import {
-  DialConfirmationPopup,
-  NotificationVariant,
-} from '@epam/ai-dial-ui-kit';
+import { ConfirmationPopup, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { CreateApplicationBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
@@ -365,7 +362,7 @@ const CustomAppEditor: FC = () => {
         onGeneralChange={handleGeneralChange}
         onSettingsChange={handleSettingsChange}
       />
-      <DialConfirmationPopup
+      <ConfirmationPopup
         open={isConfirmSaveOpen}
         header={t(CustomAppI18nKeys.SaveConfirmTitle)}
         description={t(CustomAppI18nKeys.SaveConfirmDescription)}

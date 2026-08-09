@@ -1,13 +1,13 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { Input } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
-  DialPopup,
-  DialSpinner,
+  Popup,
+  Spinner,
   GhostButton,
   NeutralButton,
   PopupSize,
   PrimaryButton,
+  Input,
 } from '@epam/ai-dial-ui-kit';
 import type { DialToolsetDto } from '@epam/chat-api-client';
 import { IconAlertCircleFilled } from '@tabler/icons-react';
@@ -111,7 +111,7 @@ const SigninRow: FC<SigninRowProps> = ({
           {info.displayVersion ? ` (${info.displayVersion})` : ''}
         </span>
         {isProcessing && (
-          <DialSpinner size={16} ariaLabel={t(ButtonsI18nKeys.LogIn)} />
+          <Spinner size={16} ariaLabel={t(ButtonsI18nKeys.LogIn)} />
         )}
       </div>
 
@@ -555,7 +555,7 @@ const SigninInterruptDialog: FC = () => {
     ) : undefined;
 
   return (
-    <DialPopup
+    <Popup
       open
       hideClose
       closeOnOutsideClick={false}
@@ -591,7 +591,7 @@ const SigninInterruptDialog: FC = () => {
           })}
         </div>
       </div>
-    </DialPopup>
+    </Popup>
   );
 };
 
