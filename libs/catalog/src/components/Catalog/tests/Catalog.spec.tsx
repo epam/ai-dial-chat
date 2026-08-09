@@ -285,12 +285,12 @@ describe('Catalog', () => {
     expect(screen.queryByText('Your favorites')).toBeNull();
   });
 
-  it('applies horizontal and top padding to the empty state in the default grid view', () => {
+  it('applies horizontal and vertical padding to the empty state in the default grid view', () => {
     render(<Catalog items={[]} favorites={[]} />);
     const grid = screen.getByRole('grid', { name: 'catalog grid' });
     const wrapper = grid.parentElement?.parentElement;
     expect(wrapper?.className).toContain('px-8');
-    expect(wrapper?.className).toContain('pt-6');
+    expect(wrapper?.className).toContain('py-6');
   });
 
   it('renders items in the card grid', () => {

@@ -22,15 +22,20 @@ export const copyMarkdownAsRichText = (content: string): Promise<boolean> => {
     return copyToClipboard(content);
   }
 
-  const html = DOMPurify.sanitize(
-    unified()
-      .use(remarkParse)
-      .use(remarkGfm)
-      .use(remarkRehype)
-      .use(rehypeStringify)
-      .processSync(content)
-      .toString(),
-  );
+  let html: string;
+  try {
+    html = DOMPurify.sanitize(
+      unified()
+        .use(remarkParse)
+        .use(remarkGfm)
+        .use(remarkRehype)
+        .use(rehypeStringify)
+        .processSync(content)
+        .toString(),
+    );
+  } catch {
+    return copyToClipboard(content);
+  }
 
   /*
    * Clipboard API must be called synchronously within the user-gesture
