@@ -26,7 +26,12 @@
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
     "rehype-katex": "^7.0.1",
+    "rehype-stringify": "^10.0.1",
+    "unified": "^11.0.5",
+    "dompurify": "3.4.12",
     "katex": "^0.16.22",
     "@epam/ai-dial-ui-kit": "^0.13.0-dev.26"
   },

@@ -1,5 +1,5 @@
 import type { ICellRendererParams } from 'ag-grid-community';
-import { FC, MouseEvent, useState } from 'react';
+import { FC, MouseEvent, useEffect, useState } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
 import { GridContext } from '../../../models/grid-context';
 import { StarToggleButton } from '../../StarToggleButton/StarToggleButton';
@@ -10,6 +10,15 @@ export const StarCellRenderer: FC<
   ICellRendererParams<CatalogItem, unknown, GridContext>
 > = ({ data, context }) => {
   const [isStarred, setIsStarred] = useState(data?.isStarred ?? false);
+
+  /*
+   * Resyncs local optimistic state when the caller's `favoriteIds` reverts
+   * after a failed toggle request — without this, the star stays stuck on
+   * whatever the user last clicked (issue #7924).
+   */
+  useEffect(() => {
+    setIsStarred(data?.isStarred ?? false);
+  }, [data?.id, data?.isStarred]);
 
   if (!data) return null;
 

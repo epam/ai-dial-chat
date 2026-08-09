@@ -6,7 +6,14 @@ import {
   FolderPath,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
-import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
+import {
+  FC,
+  KeyboardEvent,
+  MouseEvent,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import type { CardProps } from '../../models/card-props';
 import { DeploymentSize } from '../../types/deployment-icon-size';
 import { getFeaturedEntityStyle } from '../../utils/styles';
@@ -33,6 +40,15 @@ export const Card: FC<CardProps> = ({
   credentialsBadgeLoggedOutLabel,
 }) => {
   const [isStarred, setIsStarred] = useState(initialIsStarred);
+
+  /*
+   * Resyncs local optimistic state when the caller's `favoriteIds` reverts
+   * after a failed toggle request — without this, the star stays stuck on
+   * whatever the user last clicked (issue #7924).
+   */
+  useEffect(() => {
+    setIsStarred(initialIsStarred);
+  }, [item.id, initialIsStarred]);
 
   const descriptionClassName =
     cardStyles?.typography?.descriptionClassName ?? 'dial-small-text';
