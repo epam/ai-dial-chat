@@ -1,13 +1,14 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Input, Textarea } from '@epam/ai-dial-kit';
 import {
   ButtonAppearance,
   DIAL_ICON_SIZE,
   DialDangerIconButton,
   DialFormPopup,
-  DialLinkButton,
   DialSelectField,
   ElementSize,
+  Input,
+  LinkButton,
+  Textarea,
 } from '@epam/ai-dial-ui-kit';
 import { IconPencil, IconPlus, IconTrashX } from '@tabler/icons-react';
 import { useEffect, useRef, useState, type FC } from 'react';
@@ -154,7 +155,7 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
             : '—'
         }`}
       </span>
-      <DialLinkButton
+      <LinkButton
         label={editLabel}
         iconBefore={<IconPencil size={DIAL_ICON_SIZE.SM} aria-hidden />}
         className="!px-0"
@@ -257,7 +258,7 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
               </div>
             );
           })}
-          <DialLinkButton
+          <LinkButton
             label={addLocaleLabel}
             iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} aria-hidden />}
             className="self-start"

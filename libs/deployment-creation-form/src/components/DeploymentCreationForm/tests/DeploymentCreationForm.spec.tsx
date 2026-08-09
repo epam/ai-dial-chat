@@ -8,8 +8,8 @@ import type {
 } from '../../../models/deployment-creation-form';
 import { DeploymentCreationForm } from '../DeploymentCreationForm';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
   Input: ({
     value,
     onChange,
