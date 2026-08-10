@@ -83,9 +83,6 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
   isLoadingMore = false,
   skeletonCount = 6,
   onLoadMore,
-  onEdit,
-  onRunNow,
-  onDelete,
   onCardClick,
   styles: scheduledTasksStyles,
 }) => {
@@ -209,9 +206,6 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
             <ScheduledTaskCardGrid
               items={section.items}
               searchQuery={searchQuery}
-              onEdit={onEdit}
-              onRunNow={onRunNow}
-              onDelete={onDelete}
               onCardClick={onCardClick}
               labels={labels.cardLabels}
               trailingSkeletonCount={

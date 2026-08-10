@@ -10,11 +10,7 @@ import {
 } from '@epam/ai-dial-scheduled-tasks';
 import { ConversationSourcesPanel } from '@epam/ai-dial-source-panel';
 import type { QuotationSource } from '@epam/ai-dial-source-panel';
-import {
-  ButtonVariant,
-  DialAccordion,
-  GhostButton,
-} from '@epam/ai-dial-ui-kit';
+import { ButtonVariant, Accordion, GhostButton } from '@epam/ai-dial-ui-kit';
 import {
   memo,
   useCallback,
@@ -44,6 +40,10 @@ import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useConversationSources } from '../../hooks/conversation-sources/useConversationSources';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import usePanelMaxWidth from '../../hooks/usePanelMaxWidth';
+import {
+  ActiveScheduledTaskDetailState,
+  ActiveScheduledTaskStatus,
+} from '../../types/active-scheduled-task';
 import { StorageKey } from '../../types/storage-key';
 import { isExternalSourcePreviewable } from '../../utils/attachment-canvas';
 import { isDialFileId } from '../../utils/dial-file';
@@ -62,7 +62,8 @@ const ConversationSourcesPanelContainer: FC = () => {
   const { openAttachmentCanvas } = useOpenAttachmentCanvas();
   const activeScheduledTask = useActiveScheduledTask();
   const { items: deploymentItems } = useDeployments();
-  const isTaskConversation = activeScheduledTask.status === 'task-conversation';
+  const isTaskConversation =
+    activeScheduledTask.status === ActiveScheduledTaskStatus.TaskConversation;
 
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(true);
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
@@ -119,13 +120,15 @@ const ConversationSourcesPanelContainer: FC = () => {
     ) : undefined;
 
   const detailsContent =
-    activeScheduledTask.taskState === 'error' ||
-    activeScheduledTask.taskState === 'unavailable' ? (
+    activeScheduledTask.taskState === ActiveScheduledTaskDetailState.Error ||
+    activeScheduledTask.taskState ===
+      ActiveScheduledTaskDetailState.Unavailable ? (
       <div className="flex flex-col items-start gap-2">
         <p role="alert" className="dial-body-text text-secondary">
           {t(ScheduledTasksI18nKeys.ConversationBannerUnavailableLabel)}
         </p>
-        {activeScheduledTask.taskState === 'error' && (
+        {activeScheduledTask.taskState ===
+          ActiveScheduledTaskDetailState.Error && (
           <GhostButton
             label={t(ScheduledTasksI18nKeys.ListRetryLabel)}
             onClick={activeScheduledTask.retryTask}
@@ -146,7 +149,7 @@ const ConversationSourcesPanelContainer: FC = () => {
 
   const additionalSections = isTaskConversation ? (
     <>
-      <DialAccordion
+      <Accordion
         title={t(ScheduledTasksI18nKeys.DetailHistoryTitle)}
         expanded={isHistoryExpanded}
         onToggle={setIsHistoryExpanded}
@@ -163,21 +166,21 @@ const ConversationSourcesPanelContainer: FC = () => {
             footer={historyFooter}
           />
         </div>
-      </DialAccordion>
-      <DialAccordion
+      </Accordion>
+      <Accordion
         title={t(ScheduledTasksI18nKeys.CreateDetailsSectionTitle)}
         expanded={isDetailsExpanded}
         onToggle={setIsDetailsExpanded}
       >
         <div inert={!isDetailsExpanded}>{detailsContent}</div>
-      </DialAccordion>
+      </Accordion>
     </>
   ) : undefined;
 
   let panelTitle: string | undefined;
   if (isTaskConversation) {
     panelTitle =
-      activeScheduledTask.taskState === 'success'
+      activeScheduledTask.taskState === ActiveScheduledTaskDetailState.Success
         ? activeScheduledTask.task?.displayName
         : activeScheduledTask.conversationTitle;
   }

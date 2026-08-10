@@ -502,10 +502,7 @@
     },
     "card": {
       "newBadgeLabel": "NEW",
-      "actionsLabel": "More actions",
       "editActionLabel": "Edit",
-      "runNowActionLabel": "Run now",
-      "deleteActionLabel": "Delete",
       "scheduleDailyAt": "Every day at {{time}}",
       "scheduleWeeklyAt": "Every {{day}} at {{time}}",
       "scheduleMonthlyAt": "Monthly on day {{day}} at {{time}}",

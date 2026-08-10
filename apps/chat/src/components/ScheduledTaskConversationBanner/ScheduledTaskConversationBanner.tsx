@@ -7,6 +7,10 @@ import { getScheduledTaskDetailRoute } from '../../constants/routes';
 import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
 import { useActiveScheduledTask } from '../../context/ActiveScheduledTaskContext';
 import {
+  ActiveScheduledTaskDetailState,
+  ActiveScheduledTaskStatus,
+} from '../../types/active-scheduled-task';
+import {
   formatRunTimestamp,
   mapScheduledTaskRunDtoToItem,
 } from '../../utils/map-scheduled-task-run-dto';
@@ -53,9 +57,13 @@ const ScheduledTaskConversationBanner: FC = () => {
     return undefined;
   }, [history.items, runId, conversationUpdatedAt, t]);
 
-  if (status !== 'task-conversation' || !scheduleId) return null;
+  if (status !== ActiveScheduledTaskStatus.TaskConversation || !scheduleId)
+    return null;
 
-  if (taskState === 'loading' || taskState === 'idle') {
+  if (
+    taskState === ActiveScheduledTaskDetailState.Loading ||
+    taskState === ActiveScheduledTaskDetailState.Idle
+  ) {
     return (
       <div className={CARD_CLASS_NAME}>
         <div
@@ -73,13 +81,16 @@ const ScheduledTaskConversationBanner: FC = () => {
     );
   }
 
-  if (taskState === 'error' || taskState === 'unavailable') {
+  if (
+    taskState === ActiveScheduledTaskDetailState.Error ||
+    taskState === ActiveScheduledTaskDetailState.Unavailable
+  ) {
     return (
       <div className={CARD_CLASS_NAME}>
         <p role="alert" className="dial-small-text text-primary">
           {t(ScheduledTasksI18nKeys.ConversationBannerUnavailableLabel)}
         </p>
-        {taskState === 'error' && (
+        {taskState === ActiveScheduledTaskDetailState.Error && (
           <GhostButton
             label={t(ScheduledTasksI18nKeys.ListRetryLabel)}
             aria-label={t(
@@ -99,7 +110,7 @@ const ScheduledTaskConversationBanner: FC = () => {
       <p className="dial-small-semi-text min-w-0 flex-1 break-words text-primary">
         {displayName}
         {timestampLabel && (
-          <span className="dial-small-text font-normal"> {timestampLabel}</span>
+          <span className="dial-small-text"> {timestampLabel}</span>
         )}
       </p>
       <Link

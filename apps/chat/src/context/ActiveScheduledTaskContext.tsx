@@ -15,24 +15,14 @@ import {
 } from '../hooks/scheduled-tasks/useScheduledTaskRuns';
 import { getApiErrorStatus } from '../server-api/api-error';
 import { getScheduledTask } from '../server-api/scheduled-tasks.api';
+import {
+  ActiveScheduledTaskDetailState,
+  ActiveScheduledTaskStatus,
+} from '../types/active-scheduled-task';
 import { ROUTES } from '../types/routes';
 import { conversationIdsMatch } from '../utils/conversation-id-match';
 import { useFeatureFlag } from './AppConfigContext';
 import { useConversations } from './ConversationsContext';
-
-/** Resolution status of scheduler metadata for the currently routed conversation. */
-type ActiveScheduledTaskStatus =
-  | 'resolving'
-  | 'not-a-task-conversation'
-  | 'task-conversation';
-
-/** Fetch status of the active task's own details (separate from its run history). */
-export type ActiveScheduledTaskDetailState =
-  | 'idle'
-  | 'loading'
-  | 'error'
-  | 'unavailable'
-  | 'success';
 
 interface ActiveScheduledTaskContextType {
   /**
@@ -113,19 +103,21 @@ export const ActiveScheduledTaskProvider = ({
 
   const status: ActiveScheduledTaskStatus = useMemo(() => {
     if (!routeConversationId || !isFeatureEnabled) {
-      return 'not-a-task-conversation';
+      return ActiveScheduledTaskStatus.NotATaskConversation;
     }
     if (!matchedItem) {
-      return isConversationsLoading ? 'resolving' : 'not-a-task-conversation';
+      return isConversationsLoading
+        ? ActiveScheduledTaskStatus.Resolving
+        : ActiveScheduledTaskStatus.NotATaskConversation;
     }
     if (
       matchedItem.isScheduledTask &&
       matchedItem.scheduleId &&
       matchedItem.runId
     ) {
-      return 'task-conversation';
+      return ActiveScheduledTaskStatus.TaskConversation;
     }
-    return 'not-a-task-conversation';
+    return ActiveScheduledTaskStatus.NotATaskConversation;
   }, [
     routeConversationId,
     isFeatureEnabled,
@@ -133,29 +125,31 @@ export const ActiveScheduledTaskProvider = ({
     isConversationsLoading,
   ]);
 
-  const scheduleId =
-    status === 'task-conversation' ? matchedItem?.scheduleId : undefined;
-  const runId = status === 'task-conversation' ? matchedItem?.runId : undefined;
-  const conversationUpdatedAt =
-    status === 'task-conversation' ? matchedItem?.updatedAt : undefined;
-  const conversationTitle =
-    status === 'task-conversation' ? matchedItem?.title : undefined;
+  const isTaskConversation =
+    status === ActiveScheduledTaskStatus.TaskConversation;
+  const scheduleId = isTaskConversation ? matchedItem?.scheduleId : undefined;
+  const runId = isTaskConversation ? matchedItem?.runId : undefined;
+  const conversationUpdatedAt = isTaskConversation
+    ? matchedItem?.updatedAt
+    : undefined;
+  const conversationTitle = isTaskConversation ? matchedItem?.title : undefined;
 
-  const [taskState, setTaskState] =
-    useState<ActiveScheduledTaskDetailState>('idle');
+  const [taskState, setTaskState] = useState<ActiveScheduledTaskDetailState>(
+    ActiveScheduledTaskDetailState.Idle,
+  );
   const [task, setTask] = useState<ScheduledTaskDto | null>(null);
   const [taskError, setTaskError] = useState<Error | null>(null);
   const [taskRetryToken, setTaskRetryToken] = useState(0);
 
   useEffect(() => {
     if (!scheduleId) {
-      setTaskState('idle');
+      setTaskState(ActiveScheduledTaskDetailState.Idle);
       setTask(null);
       setTaskError(null);
       return;
     }
 
-    setTaskState('loading');
+    setTaskState(ActiveScheduledTaskDetailState.Loading);
     setTask(null);
     setTaskError(null);
     const cancelled = { value: false };
@@ -165,18 +159,18 @@ export const ActiveScheduledTaskProvider = ({
         const result = await getScheduledTask(scheduleId);
         if (cancelled.value) return;
         setTask(result);
-        setTaskState('success');
+        setTaskState(ActiveScheduledTaskDetailState.Success);
       } catch (err) {
         if (cancelled.value) return;
         if (getApiErrorStatus(err) === 404) {
-          setTaskState('unavailable');
+          setTaskState(ActiveScheduledTaskDetailState.Unavailable);
         } else {
           setTaskError(
             err instanceof Error
               ? err
               : new Error('Failed to load the scheduled task'),
           );
-          setTaskState('error');
+          setTaskState(ActiveScheduledTaskDetailState.Error);
         }
       }
     };

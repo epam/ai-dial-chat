@@ -78,6 +78,7 @@ export const ScheduledTaskRunHistoryList: FC<
   const { colors, typography } = listStyles ?? {};
   const runTimestampClassName =
     typography?.runTimestampClassName ?? 'dial-small-text';
+  const subtitleClassName = typography?.subtitleClassName ?? 'dial-body-text';
 
   const cssVars = buildCssVars({
     '--strhl-success-icon': colors?.successIconColor,
@@ -164,7 +165,7 @@ export const ScheduledTaskRunHistoryList: FC<
       <div style={cssVars} className="flex flex-col items-start gap-3">
         <p
           role="alert"
-          className={mergeClasses('dial-body-text', styles.subtitleText)}
+          className={mergeClasses(subtitleClassName, styles.subtitleText)}
         >
           {labels.errorLabel}
         </p>
@@ -178,7 +179,7 @@ export const ScheduledTaskRunHistoryList: FC<
       <p
         role="status"
         style={cssVars}
-        className={mergeClasses('dial-body-text', styles.subtitleText)}
+        className={mergeClasses(subtitleClassName, styles.subtitleText)}
       >
         {labels.emptyLabel}
       </p>

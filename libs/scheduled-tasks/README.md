@@ -68,7 +68,7 @@ import {
 
 ### ScheduledTaskCard
 
-A single scheduled task rendered as a card: title, optional description/prompt preview, schedule pill, optional location breadcrumb, optional "new" badge, and an overflow menu for Edit/Run now/Delete (each action shown only when its handler is supplied). When `onCardClick` is supplied, the whole card becomes an activatable element (click or Enter/Space) reporting the task id; the overflow-menu trigger and its actions never bubble a click into it.
+A single scheduled task rendered as a card: title, optional description/prompt preview, schedule pill, and optional location breadcrumb and "new" badge. When `onCardClick` is supplied, the whole card becomes an activatable element (click or Enter/Space) reporting the task id.
 
 ```tsx
 import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
@@ -80,9 +80,6 @@ import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
     scheduleLabel: 'Every Monday 12:00',
     sectionKey: ScheduledTaskSectionKey.MyTasks,
   }}
-  onEdit={(id) => {}}
-  onRunNow={(id) => {}}
-  onDelete={(id) => {}}
   onCardClick={(id) => {}}
 />;
 ```

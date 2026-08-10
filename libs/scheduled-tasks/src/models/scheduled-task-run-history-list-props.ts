@@ -39,6 +39,8 @@ export interface ScheduledTaskRunHistoryListColors {
 export interface ScheduledTaskRunHistoryListTypography {
   /** CSS class applied to each run row's timestamp text. Defaults to `'dial-small-text'`. */
   runTimestampClassName?: string;
+  /** CSS class applied to the error and empty-state messages. Defaults to `'dial-body-text'`. */
+  subtitleClassName?: string;
 }
 
 /** Style overrides for the {@link ScheduledTaskRunHistoryList} component. */

@@ -4,7 +4,6 @@ import {
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
-  ButtonVariant,
   DIAL_ICON_SIZE,
   Spinner,
   GhostButton,
@@ -81,7 +80,6 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
         )}
       >
         <GhostButton
-          variant={ButtonVariant.Primary}
           label={labels.historyShowMoreLabel}
           onClick={onRunsLoadMore}
           disabled={runsIsLoadingMore}
