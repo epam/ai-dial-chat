@@ -438,11 +438,9 @@ export const Catalog: FC<CatalogProps> = ({
         <div
           className={mergeClasses(
             tabFiltered.length > 0
-              ? 'mx-auto min-h-full w-full max-w-[1180px] px-8 pt-6'
-              : 'min-h-0 flex-1',
-            tabFiltered.length === 0 &&
-              viewMode === CatalogViewMode.List &&
-              'px-8 pt-6',
+              ? 'mx-auto min-h-full w-full max-w-[1180px] px-8 py-6'
+              : 'min-h-[180px] flex-1',
+            tabFiltered.length === 0 && 'px-8 py-6',
           )}
         >
           <div
