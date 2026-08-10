@@ -145,18 +145,62 @@ export const useDialFileMutations = ({
   const [isMoving, setIsMoving] = useState(false);
   const copyMoveAbortControllerRef = useRef<AbortController | null>(null);
 
+  const onCreateFolderValidate = useCallback(
+    (name: string, parentFolder: DialFile): string | null => {
+      if (!name || name.trim() === '') {
+        return t('dialFileManager.folderNameEmpty');
+      }
+      if (hasForbiddenNameSymbols(name, forbiddenSymbolsRegExp)) {
+        return t(DialFileManagerI18nKeys.FolderNameInvalidChars, {
+          notAllowedSymbols: NOT_ALLOWED_SYMBOLS,
+        });
+      }
+      if (name.startsWith('.')) {
+        return t('dialFileManager.folderNameHidden');
+      }
+      if (name === RESERVED_MARKER_NAME) {
+        return t('dialFileManager.folderNameReserved');
+      }
+      if (name.length > 255) {
+        return t('dialFileManager.folderNameTooLong');
+      }
+      const siblings = parentFolder.items ?? [];
+      const lowerName = name.toLowerCase();
+      if (siblings.some((s) => s.name.toLowerCase() === lowerName)) {
+        return t('dialFileManager.folderConflict');
+      }
+      return null;
+    },
+    [t, forbiddenSymbolsRegExp],
+  );
+
   const onCreateFolder = useCallback(
     async (
       _file: DialUploadFileItem,
       newFolderPath: string,
       _fileId: string,
     ): Promise<void> => {
-      setIsCreatingFolder(true);
       const { parentVirtualPath, name } = parseNewFolderVirtualPath(
         newFolderPath,
         rootLabel,
       );
       const parentApiPath = virtualPathToApiPath(parentVirtualPath, rootLabel);
+
+      const parentFolder: DialFile =
+        currentFolder && folderPath === parentApiPath
+          ? currentFolder
+          : {
+              id: parentApiPath,
+              path: parentApiPath,
+              name,
+              folderId: parentApiPath,
+              nodeType: DialFileNodeType.FOLDER,
+              items: [],
+            };
+
+      if (onCreateFolderValidate(name, parentFolder)) return;
+
+      setIsCreatingFolder(true);
       const { bucket: targetBucket, path: targetParentPath } =
         activeTab === DialFileManagerTabs.Shared
           ? resolveOwnerCoords(parentApiPath, sharedRootMetaRef.current, bucket)
@@ -185,6 +229,9 @@ export const useDialFileMutations = ({
     [
       activeTab,
       bucket,
+      currentFolder,
+      folderPath,
+      onCreateFolderValidate,
       rootLabel,
       listingPermissionsCache,
       mergeCreatedFolder,
@@ -193,35 +240,6 @@ export const useDialFileMutations = ({
       onNotification,
       t,
     ],
-  );
-
-  const onCreateFolderValidate = useCallback(
-    (name: string, parentFolder: DialFile): string | null => {
-      if (!name || name.trim() === '') {
-        return t('dialFileManager.folderNameEmpty');
-      }
-      if (hasForbiddenNameSymbols(name, forbiddenSymbolsRegExp)) {
-        return t(DialFileManagerI18nKeys.FolderNameInvalidChars, {
-          notAllowedSymbols: NOT_ALLOWED_SYMBOLS,
-        });
-      }
-      if (name.startsWith('.')) {
-        return t('dialFileManager.folderNameHidden');
-      }
-      if (name === RESERVED_MARKER_NAME) {
-        return t('dialFileManager.folderNameReserved');
-      }
-      if (name.length > 255) {
-        return t('dialFileManager.folderNameTooLong');
-      }
-      const siblings = parentFolder.items ?? [];
-      const lowerName = name.toLowerCase();
-      if (siblings.some((s) => s.name.toLowerCase() === lowerName)) {
-        return t('dialFileManager.folderConflict');
-      }
-      return null;
-    },
-    [t, forbiddenSymbolsRegExp],
   );
 
   const onDownloadFiles = useCallback(
