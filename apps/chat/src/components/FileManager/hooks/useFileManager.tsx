@@ -1554,27 +1554,6 @@ export const useFileManager = ({
 
   const deduplicatedFileIdsRef = useRef<Set<string>>(new Set());
 
-  const handleCreateFolder = useCallback(
-    (file: DialUploadFileItem, folderPath: string, fileId: string) => {
-      if (deduplicatedFileIdsRef.current.has(fileId)) return;
-
-      if (isMaxFolderDepthReached(getFolderIdFromEntityId(folderPath))) {
-        showMaxDepthError();
-        return;
-      }
-
-      deduplicatedFileIdsRef.current.add(fileId);
-
-      dispatch(
-        FilesActions.createNewFolder({
-          files: [file],
-          destinationUrl: folderPath,
-        }),
-      );
-    },
-    [dispatch, isMaxFolderDepthReached, showMaxDepthError],
-  );
-
   const handleUploadArchive = useCallback(
     (archiveFile: File | null, name: string, destinationUrl: string) => {
       if (!archiveFile) return;
@@ -1653,6 +1632,47 @@ export const useFileManager = ({
         ? translateChat(ChatI18nKeys.NotAllowedMoreNestedFolders)
         : handleRenameValidation(name, parentFolder),
     [handleRenameValidation, isMaxFolderDepthReached, translateChat],
+  );
+
+  const handleCreateFolder = useCallback(
+    (file: DialUploadFileItem, folderPath: string, fileId: string) => {
+      if (deduplicatedFileIdsRef.current.has(fileId)) return;
+
+      const parentId = getFolderIdFromEntityId(folderPath);
+
+      if (isMaxFolderDepthReached(parentId)) {
+        showMaxDepthError();
+        return;
+      }
+
+      const parentEntity = folders.find((f) => f.id === parentId);
+      const parentFolder: DialFile = {
+        id: parentId,
+        path: parentId,
+        folderId: parentId,
+        name: parentEntity?.name ?? rootFolder.name ?? '',
+        nodeType: DialFileNodeType.FOLDER,
+      };
+
+      if (handleCreateFolderValidate(file.name, parentFolder)) return;
+
+      deduplicatedFileIdsRef.current.add(fileId);
+
+      dispatch(
+        FilesActions.createNewFolder({
+          files: [file],
+          destinationUrl: folderPath,
+        }),
+      );
+    },
+    [
+      dispatch,
+      folders,
+      handleCreateFolderValidate,
+      isMaxFolderDepthReached,
+      rootFolder,
+      showMaxDepthError,
+    ],
   );
 
   const emptyStateTitle = useMemo(() => {

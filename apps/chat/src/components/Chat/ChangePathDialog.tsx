@@ -62,6 +62,7 @@ import {
   DialFileManagerActions,
   type DialFileManagerActionsRef,
   DialFileManagerTabs,
+  DialFileNodeType,
   DialFilePermission,
   DialUploadFileItem,
   FileManagerGridRow,
@@ -593,23 +594,6 @@ export const ChangePathDialog = ({
     }
   }, [dispatch, isOpen, resetGridEditing]);
 
-  const handleCreateOrganizationFolder = useCallback(
-    (_file: DialUploadFileItem, folderPath: string, fileId: string) => {
-      if (deduplicatedFileIdsRef.current.has(fileId)) return;
-      deduplicatedFileIdsRef.current.add(fileId);
-
-      if (filesFoldersRef.current.some((f) => f.id === folderPath)) return;
-
-      const folder = createTemporaryFolder(folderPath);
-      if (!folder.name) return;
-
-      addedTempFolderIdsRef.current.add(folderPath);
-      pendingNewFolderIdRef.current = folderPath;
-      dispatch(FilesActions.addFolders({ folders: [folder] }));
-    },
-    [dispatch],
-  );
-
   const handleCreateFolderValidate = useCallback(
     (name: string, parentFolder: DialFile) => {
       if (isMaxFolderDepthReached(parentFolder.id)) {
@@ -618,6 +602,37 @@ export const ChangePathDialog = ({
       return handleRenameValidation(name, parentFolder);
     },
     [handleRenameValidation, isMaxFolderDepthReached, t],
+  );
+
+  const handleCreateOrganizationFolder = useCallback(
+    (file: DialUploadFileItem, folderPath: string, fileId: string) => {
+      if (deduplicatedFileIdsRef.current.has(fileId)) return;
+
+      if (filesFoldersRef.current.some((f) => f.id === folderPath)) return;
+
+      const folder = createTemporaryFolder(folderPath);
+      if (!folder.name) return;
+
+      const parentId = getFolderIdFromEntityId(folderPath);
+      const parentEntity = filesFoldersRef.current.find(
+        (f) => f.id === parentId,
+      );
+      const parentFolder: DialFile = {
+        id: parentId,
+        path: parentId,
+        folderId: parentId,
+        name: parentEntity?.name ?? rootFolder.name ?? '',
+        nodeType: DialFileNodeType.FOLDER,
+      };
+
+      if (handleCreateFolderValidate(file.name, parentFolder)) return;
+
+      deduplicatedFileIdsRef.current.add(fileId);
+      addedTempFolderIdsRef.current.add(folderPath);
+      pendingNewFolderIdRef.current = folderPath;
+      dispatch(FilesActions.addFolders({ folders: [folder] }));
+    },
+    [dispatch, handleCreateFolderValidate, rootFolder],
   );
 
   const itemsToRender = useMemo(() => {
