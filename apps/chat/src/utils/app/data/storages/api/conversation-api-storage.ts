@@ -59,7 +59,9 @@ export class ConversationApiStorage extends ApiEntityStorage<
   }
 
   parseEntityKey(key: string): Omit<ConversationInfo, 'folderId' | 'id'> {
-    const { modelInfo, name, uuid } = parseEntityApiKey(key, { parseModel: true });
+    const { modelInfo, name, uuid } = parseEntityApiKey(key, {
+      parseModel: true,
+    });
 
     return {
       name,

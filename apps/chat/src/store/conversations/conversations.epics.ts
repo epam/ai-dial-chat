@@ -3697,10 +3697,11 @@ const uploadConversationsWithContentRecursiveEpic: AppEpic = (
               ConversationsActions.addConversations({
                 conversations: conversations.map((conv) => {
                   if (publicConversationIds.includes(conv.id)) {
-                    const { name, version, modelInfo, uuid } = parseEntityApiKey(
-                      splitEntityId(conv.id).name,
-                      { parseVersion: true, parseModel: true },
-                    );
+                    const { name, version, modelInfo, uuid } =
+                      parseEntityApiKey(splitEntityId(conv.id).name, {
+                        parseVersion: true,
+                        parseModel: true,
+                      });
                     return {
                       ...conv,
                       ...modelInfo,
