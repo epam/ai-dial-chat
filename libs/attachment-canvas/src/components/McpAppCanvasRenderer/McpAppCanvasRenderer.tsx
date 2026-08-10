@@ -27,6 +27,7 @@ enum RendererStatus {
  * so the app renders that result immediately rather than an empty initial
  * state, and forwards `tools/call` requests to `content.onToolCall`.
  */
+/** Renders an MCP app in a sandboxed iframe inside the attachment canvas. */
 export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
   content,
   errorLabel = 'Failed to load app',

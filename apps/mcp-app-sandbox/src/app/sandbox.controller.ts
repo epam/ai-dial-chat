@@ -9,7 +9,11 @@ export class SandboxController {
   @Get()
   serveSandbox(@Req() req: Request, @Res() res: Response): void {
     const referer = req.headers.referer;
-    const validatedOrigin = this.sandboxService.validateRefererOrigin(referer);
+    const origin = req.headers.origin;
+    const validatedOrigin = this.sandboxService.validateRefererOrigin(
+      referer,
+      origin,
+    );
     if (validatedOrigin == null) {
       throw new ForbiddenException(
         'Referer header missing or its origin is not allowlisted',

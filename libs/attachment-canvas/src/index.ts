@@ -31,6 +31,7 @@ export type {
   PdfCanvasContent,
   CodeCanvasContent,
   HtmlCanvasContent,
+  McpAppCanvasContent,
   VisualizerCanvasContent,
   UnsupportedCanvasContent,
   ErrorCanvasContent,

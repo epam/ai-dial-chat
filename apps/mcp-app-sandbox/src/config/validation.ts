@@ -1,6 +1,9 @@
+import { Logger } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { EnvironmentVariables } from './environment.config';
+
+const logger = new Logger('Bootstrap');
 
 export const validate = (config: Record<string, unknown>) => {
   const validatedConfig = plainToInstance(EnvironmentVariables, config, {
@@ -20,8 +23,8 @@ export const validate = (config: Record<string, unknown>) => {
   }
 
   if (!validatedConfig.MCP_APP_SANDBOX_ALLOWED_HOST_ORIGINS?.length) {
-    console.warn(
-      '[Config] MCP_APP_SANDBOX_ALLOWED_HOST_ORIGINS is not set — every request will be rejected with 403 until it is configured.',
+    logger.warn(
+      'MCP_APP_SANDBOX_ALLOWED_HOST_ORIGINS is not set — every request will be rejected with 403 until it is configured.',
     );
   }
 

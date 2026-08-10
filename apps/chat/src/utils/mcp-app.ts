@@ -52,11 +52,10 @@ const resolveToolCalls = (
     for (const call of toolMessage.tool_calls ?? []) {
       calls.set(call.id, { name: call.name, args: call.args });
     }
-  }
-  for (const toolMessage of state?.tool_messages ?? []) {
-    if (toolMessage.type !== 'tool' || !toolMessage.tool_call_id) continue;
-    const call = calls.get(toolMessage.tool_call_id);
-    if (call) call.result = toolMessage.content;
+    if (toolMessage.type === 'tool' && toolMessage.tool_call_id) {
+      const call = calls.get(toolMessage.tool_call_id);
+      if (call) call.result = toolMessage.content;
+    }
   }
 
   for (const historyMessage of state?.tool_execution_history ?? []) {
@@ -66,13 +65,10 @@ const resolveToolCalls = (
         args: parseOpenAiToolArgs(call.function.arguments),
       });
     }
-  }
-  for (const historyMessage of state?.tool_execution_history ?? []) {
-    if (historyMessage.role !== 'tool' || !historyMessage.tool_call_id) {
-      continue;
+    if (historyMessage.role === 'tool' && historyMessage.tool_call_id) {
+      const call = calls.get(historyMessage.tool_call_id);
+      if (call) call.result = historyMessage.content;
     }
-    const call = calls.get(historyMessage.tool_call_id);
-    if (call) call.result = historyMessage.content;
   }
 
   return calls;

@@ -86,9 +86,13 @@ export class ListMcpAppToolsQueryDto {
 /** A single MCP tool that declares an MCP Apps UI resource. */
 export class McpAppToolSummaryDto {
   @ApiProperty({ example: 'refresh_data' })
+  @IsString()
+  @IsNotEmpty()
   toolName!: string;
 
   @ApiProperty({ example: 'ui://widget/1' })
+  @IsString()
+  @IsNotEmpty()
   resourceUri!: string;
 }
 

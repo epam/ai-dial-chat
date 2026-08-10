@@ -515,7 +515,7 @@ const ConversationMessageItem: FC<Props> = ({
                     className="bg-layer-2 flex h-[120px] w-[280px] items-center justify-center rounded"
                   >
                     <span className="dial-body-text text-primary">
-                      {openedInCanvasLabel ?? 'Opened in Canvas'}
+                      {openedInCanvasLabel}
                     </span>
                   </div>
                 ) : (

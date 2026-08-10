@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsNumber, IsOptional, IsUrl } from 'class-validator';
 
 /** Validated environment variables for the MCP Apps sandbox-proxy app. */
 export class EnvironmentVariables {
@@ -24,6 +24,6 @@ export class EnvironmentVariables {
       .filter((origin) => origin.length > 0),
   )
   @IsArray()
-  @IsString({ each: true })
+  @IsUrl({ require_tld: false }, { each: true })
   MCP_APP_SANDBOX_ALLOWED_HOST_ORIGINS?: string[];
 }

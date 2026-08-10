@@ -1,6 +1,6 @@
 import type { DeploymentItemDto, DialToolsetDto } from '@epam/chat-api-client';
 import type { Message } from '@epam/ai-dial-chat-shared';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   listMcpAppTools,
   type McpAppToolSummary,
@@ -85,8 +85,12 @@ export const useMcpAppTools = (
     void loadDirectTools();
   }, [deployment?.id, deployment?.type, deployment?.features?.mcp]);
 
+  const toolCallNames = useMemo(
+    () => collectToolCallNames(messages),
+    [messages],
+  );
+
   useEffect(() => {
-    const toolCallNames = collectToolCallNames(messages);
     if (toolCallNames.size === 0) return;
 
     const candidateToolsets = toolsets.filter((toolset) => {
@@ -119,7 +123,7 @@ export const useMcpAppTools = (
       setIndirectTools((prev) => [...prev, ...results.flat()]);
     };
     void loadIndirectTools();
-  }, [messages, toolsets]);
+  }, [toolCallNames, toolsets]);
 
   return [...directTools, ...indirectTools];
 };
