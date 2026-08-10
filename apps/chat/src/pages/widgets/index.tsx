@@ -5,10 +5,14 @@ import { useRouter } from 'next/router';
 import { useTranslation } from '@/src/hooks/useTranslation';
 import { useResetSelectedWidget, useWidgets } from '@/src/hooks/useWidgets';
 
+import { getModelName } from '@/src/utils/app/application';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
 import { Translation } from '@/src/types/translation';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/selectors';
 
 import { SideBarI18nKeys } from '@/src/constants/i18n';
 import { Routes } from '@/src/constants/routes';
@@ -22,6 +26,8 @@ function WidgetsPage() {
   const { t } = useTranslation(Translation.SideBar);
 
   const router = useRouter();
+
+  const locale = useAppSelector(UISelectors.selectLocale);
 
   const { widgetModels, handleWidgetClick } = useWidgets();
 
@@ -51,7 +57,7 @@ function WidgetsPage() {
                 {`${t(SideBarI18nKeys.Version)}: ${model.version}`}
               </span>
               <span className="truncate text-start text-sm font-semibold text-primary">
-                {model.name}
+                {getModelName(model, locale)}
               </span>
             </div>
           </button>

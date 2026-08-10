@@ -25,7 +25,7 @@ export interface Toolset {
   endpoint: string;
   transport: ToolsetTransportType;
   allowed_tools: string[];
-  display_name: string;
+  display_name: string | Record<string, string>;
   display_version: string;
 
   reference?: string;

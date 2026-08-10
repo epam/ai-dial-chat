@@ -11,13 +11,19 @@ import {
   getWebAPIToolsetStr,
   isDialAiEntityModel,
   migrateMCPToolsetIdName,
-  parseLocalizedDescription,
   safeStringifyApplicationFeatures,
 } from '@/src/utils/app/application';
 import { getDefaultSchemaModel } from '@/src/utils/app/application-type-schema';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
+import { LocalesService } from '@/src/utils/app/data/locales-service';
 import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
+import {
+  getEntityLocals,
+  getEntityPayloadFromLocals,
+  getLocalizedEntityIdName,
+  parseLocalizedField,
+} from '@/src/utils/app/marketplace-localization';
 import {
   doesAgentSupportMcp,
   doesModelAllowTemperature,
@@ -404,15 +410,13 @@ export type AppsEditorFormType = (
 const getBaseFormData = ({
   app,
   models,
-  locale,
 }: {
   app?: CustomApplicationModel;
   models?: ShareEntity[];
-  locale: string;
 }): BaseAppForm => ({
   name:
-    app?.name ??
-    getStorageSafeUniqueApplicationName({
+    getLocalizedEntityIdName(app?.name) ||
+    (getStorageSafeUniqueApplicationName({
       application: {
         name: '',
         version: app?.version ?? DEFAULT_VERSION,
@@ -422,11 +426,16 @@ const getBaseFormData = ({
       defaultName: DEFAULT_APPLICATION_NAME,
       existingNames: (models ?? []).map((m) => m.name),
     }) ??
-    DEFAULT_APPLICATION_NAME,
+      DEFAULT_APPLICATION_NAME),
   version: app ? (app.version ?? '') : DEFAULT_VERSION,
   iconUrl: app?.iconUrl ?? '',
-  description: parseLocalizedDescription(locale, app?.description),
+  description: parseLocalizedField(
+    LocalesService.getPrimaryLocale(),
+    app?.description,
+    true,
+  ),
   topics: app?.topics ?? [],
+  locales: getEntityLocals(app, true),
 });
 
 const getCustomAppFormData = (app?: CustomApplicationModel): CustomAppForm => ({
@@ -730,7 +739,6 @@ export const getDefaultFormData = ({
   type,
   toolSupportingModelIds,
   schema,
-  locale,
 }: {
   type: string;
   app?: CustomApplicationModel;
@@ -738,9 +746,8 @@ export const getDefaultFormData = ({
   runtime?: string;
   toolSupportingModelIds?: string[];
   schema?: ApiDetailedApplicationTypeSchema;
-  locale: string;
 }): AppsEditorFormType => ({
-  ...getBaseFormData({ app, models, locale }),
+  ...getBaseFormData({ app, models }),
   ...getSettingsFormData({
     app,
     runtime,
@@ -881,7 +888,7 @@ export const getQuickApp2Toolsets = ({
       ) {
         acc.dialAppToolsets.push({
           ...toolData,
-          name: entity.name,
+          name: getLocalizedEntityIdName(entity.name),
           type: ToolsetTypes.DialApp,
           deployment_id: ApiUtils.encodeApiUrl(entity.id),
           ...(doesAgentSupportMcp(entity) && {
@@ -939,15 +946,18 @@ export const getApplicationPayload = ({
   currentApp?: CustomApplicationModel;
   keepCurrentToolsets?: boolean;
 }): CustomApplicationModel => {
+  const { name, description } = getEntityPayloadFromLocals(data.locales);
+  const primaryLocale = LocalesService.getPrimaryLocale();
+
   const generalData = fitApplicationNameToStorageLimits({
     id: '',
     reference: '',
     folderId: '',
     ...(currentApp && currentApp),
     type: EntityType.Application,
-    name: data.name,
+    name: { ...name, [primaryLocale]: data.name },
     iconUrl: data.iconUrl,
-    description: data.description,
+    description: { ...description, [primaryLocale]: data.description },
     version: data.version,
     topics: data.topics,
     isDefault: false,

@@ -44,6 +44,7 @@ const buildFormData = (temperature: number): AppsEditorFormType =>
     timestamp: false,
     fileTools: false,
     processLargeFiles: false,
+    locales: [],
   }) as unknown as AppsEditorFormType;
 
 const getOrchestratorParameters = (

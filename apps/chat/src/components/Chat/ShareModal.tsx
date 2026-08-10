@@ -16,6 +16,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isQuickApp2 } from '@/src/utils/app/application';
 import { constructPath } from '@/src/utils/app/file';
+import { withEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getShareType } from '@/src/utils/app/share';
 import { translateConversationDisplayName } from '@/src/utils/app/translateConversationDisplayName';
@@ -207,7 +208,7 @@ function ShareModalView() {
 
   const handleOpenUnshare = useCallback(() => {
     handleClose();
-    dispatch(ShareActions.setUnshareEntity(entity));
+    dispatch(ShareActions.setUnshareEntity(entity && withEntityIdName(entity)));
   }, [dispatch, entity, handleClose]);
 
   const handleOpenUnshareResource = useCallback(() => {

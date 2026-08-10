@@ -3,6 +3,7 @@ import React, { useCallback } from 'react';
 import { useRouter } from 'next/router';
 
 import { writeTextToClipboard } from '@/src/utils/app/clipboard';
+import { withEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
 import { getToolsetLink } from '@/src/utils/marketplace';
 
@@ -86,7 +87,7 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
       e.stopPropagation();
       dispatch(
         PublicationActions.setPublishModel({
-          entity: toolset,
+          entity: withEntityIdName(toolset),
           action: PublishActions.ADD,
           publishCredentials: isToolsetSignedIn(toolset),
         }),
@@ -101,7 +102,7 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
       e.stopPropagation();
       dispatch(
         PublicationActions.setPublishModel({
-          entity: toolset,
+          entity: withEntityIdName(toolset),
           action: PublishActions.DELETE,
         }),
       );

@@ -5,6 +5,7 @@ import {
   isMarketplaceEntityPublic,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
+import { withEntityIdName } from '@/src/utils/app/marketplace-localization';
 
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -32,7 +33,7 @@ export const ApplicationDetailsHeader = ({ entity, isPreview }: Props) => {
     dispatch(
       ShareActions.share({
         featureType: FeatureType.Application,
-        entity: entity,
+        entity: withEntityIdName(entity),
       }),
     );
   }, [dispatch, entity]);

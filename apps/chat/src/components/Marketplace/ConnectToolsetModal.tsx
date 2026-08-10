@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isDialAiEntityModel } from '@/src/utils/app/application';
+import { getModelName, isDialAiEntityModel } from '@/src/utils/app/application';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
@@ -10,7 +10,11 @@ import { Translation } from '@/src/types/translation';
 
 import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors, ModelsSelectors } from '@/src/store/selectors';
+import {
+  MarketplaceSelectors,
+  ModelsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
@@ -34,6 +38,7 @@ const view = withRenderWhenEntities<ConnectToolsetModalProps>({
 
   const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
   const allModels = useAppSelector(ModelsSelectors.selectModels);
+  const locale = useAppSelector(UISelectors.selectLocale);
 
   const isApplication = isDialAiEntityModel(entity);
 
@@ -77,7 +82,7 @@ const view = withRenderWhenEntities<ConnectToolsetModalProps>({
 
           <div className="flex flex-col justify-center gap-1">
             <span className="text-sm font-semibold text-primary">
-              {entity.name}
+              {getModelName(entity, locale)}
             </span>
             {entity.version ? (
               <div className="flex items-center gap-1">
