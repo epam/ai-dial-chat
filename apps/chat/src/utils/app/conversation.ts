@@ -15,6 +15,10 @@ import {
   getConfigurationValue,
   isConversationWithFormSchema,
 } from '@/src/utils/app/form-schema';
+import {
+  getLocalizedEntityIdName,
+  parseLocalizedField,
+} from '@/src/utils/app/marketplace-localization';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import {
   ApiUtils,
@@ -244,6 +248,7 @@ export const getConversationInfoFromId = (
   const {
     modelInfo,
     version,
+    uuid,
     name: parsedName,
   } = parseEntityApiKey(name, {
     parseVersion: options?.parseVersion,
@@ -254,6 +259,7 @@ export const getConversationInfoFromId = (
     ...modelInfo,
     name: parsedName,
     folderId: constructPath(apiKey, bucket, parentPath),
+    ...(uuid && { uuid }),
   };
 
   if (version) {
@@ -332,8 +338,19 @@ export const isChosenConversationValidForCompare = (
   return convUserMessages.length === selectedConvUserMessages.length;
 };
 
-export const getOpenAIEntityFullName = (model: { name?: string; id: string }) =>
-  model.name || model.id;
+export const getOpenAIEntityFullName = (
+  model: {
+    name?: string | Record<string, string>;
+    id: string;
+  },
+  locale?: string,
+) => {
+  const name = locale
+    ? parseLocalizedField(locale, model.name)
+    : getLocalizedEntityIdName(model.name);
+
+  return name || model.id;
+};
 
 export const addPausedError = (
   _conversation: Conversation,

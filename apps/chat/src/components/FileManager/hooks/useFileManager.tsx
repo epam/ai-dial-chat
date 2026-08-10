@@ -23,6 +23,7 @@ import {
   getFolderIdFromEntityId,
   getFolderNestingLevel,
   getFoldersDepth,
+  remapMovedPath,
 } from '@/src/utils/app/folders';
 import { getFileRootId, getRootId, isRootId } from '@/src/utils/app/id';
 import {
@@ -294,6 +295,9 @@ export const useFileManager = ({
   const prevIsCopyingRef = useRef(false);
   const prevIsMovingRef = useRef(false);
   const prevIsDeletingRef = useRef(false);
+  // Paths of the branches that have to be listed again once a folder move or
+  // rename settles, collected while the operation is dispatched.
+  const pathsToRelistRef = useRef<string[]>([]);
 
   const fileMetadata = useAppSelector(FilesSelectors.selectFileMetadata);
   const _files = useAppSelector(FilesSelectors.selectFiles);
@@ -507,6 +511,13 @@ export const useFileManager = ({
     if ((copyJustFinished || moveJustFinished) && isSearching && currentPath) {
       dispatch(FilesActions.getFullListing({ folderPath: currentPath }));
     }
+
+    if (moveJustFinished && pathsToRelistRef.current.length) {
+      dispatch(
+        FilesActions.getFoldersList({ paths: pathsToRelistRef.current }),
+      );
+      pathsToRelistRef.current = [];
+    }
   }, [isCopyingFiles, isMovingFiles, isSearching, currentPath, dispatch]);
 
   useEffect(() => {
@@ -523,6 +534,21 @@ export const useFileManager = ({
       const folder = folders.find((folder) => folder.id === currentPath);
       if (!folder) {
         const parentId = getFolderIdFromEntityId(currentPath);
+        const parentFolder = folders.find((folder) => folder.id === parentId);
+
+        // A folder missing while its parent listing has not been fetched yet is
+        // not gone - it just has not arrived. This is the case right after a
+        // rename, when the subtree is re-listed level by level, so pull the
+        // parent listing in instead of sending the user up the tree. Issue #3325
+        if (
+          parentFolder &&
+          parentFolder.status !== UploadStatus.LOADED &&
+          parentFolder.status !== UploadStatus.LOADING
+        ) {
+          dispatch(FilesActions.getFilesWithFolders({ id: parentId }));
+          return;
+        }
+
         setCurrentPath(parentId);
       } else if (
         folder?.status !== UploadStatus.LOADED &&
@@ -729,25 +755,26 @@ export const useFileManager = ({
     [t],
   );
 
-  const sharedByMeFileNames = useMemo(
+  const sharedByMeItemNames = useMemo(
     () =>
       new Set(
-        files
-          .filter((file) => file.isShared && !file.sharedWithMe)
-          .map((file) => file.name),
+        [...files, ...folders]
+          .filter((item) => item.isShared && !item.sharedWithMe)
+          .map((item) => item.name),
       ),
-    [files],
+    [files, folders],
   );
 
   const renderDeleteConfirmationContent = useCallback(
     (fileNames: string[]) => {
       const hasSharedItems = fileNames.some((name) =>
-        sharedByMeFileNames.has(name),
+        sharedByMeItemNames.has(name),
       );
+      const isSingleItem = fileNames.length === 1;
       return (
         <div className="px-6 py-3 text-sm">
-          <p className="mb-3 text-secondary">
-            {fileNames.length === 1 ? (
+          <p className="mb-3 whitespace-pre-wrap text-secondary">
+            {isSingleItem ? (
               <>
                 {t(SideBarI18nKeys.AreYouSureDeleteItem)}{' '}
                 <span className="break-all text-primary">
@@ -762,12 +789,17 @@ export const useFileManager = ({
                 </span>
               </>
             )}
-            {hasSharedItems && t(SideBarI18nKeys.DeletingWillStopSharingFile)}
+            {hasSharedItems &&
+              t(
+                isSingleItem
+                  ? SideBarI18nKeys.DeletingWillStopSharingFile
+                  : SideBarI18nKeys.DeletingWillStopSharingItems,
+              )}
           </p>
         </div>
       );
     },
-    [t, sharedByMeFileNames],
+    [t, sharedByMeItemNames],
   );
 
   const isMaxFolderDepthReached = useCallback(
@@ -785,15 +817,9 @@ export const useFileManager = ({
     );
   }, [dispatch, translateChat]);
 
-  const handleMoveFiles = useCallback(
-    (
-      movedItems: DialCopiedItem[],
-      sourceFolder: string,
-      destinationFolder: string,
-    ) => {
-      if (movedItems.length === 0) return;
-
-      const exceedsMaxDepth = movedItems.some((item) => {
+  const exceedsMaxFolderDepth = useCallback(
+    (items: DialCopiedItem[]) =>
+      items.some((item) => {
         if (item.nodeType !== DialFileNodeType.FOLDER) return false;
 
         const movedFolder = folders.find((f) => f.id === item.sourceUrl);
@@ -805,9 +831,22 @@ export const useFileManager = ({
           getFolderNestingLevel(item.destinationUrl) + subtreeLevels >
           MAX_NESTED_FOLDERS
         );
-      });
+      }),
+    [folders],
+  );
 
-      if (exceedsMaxDepth) return;
+  const handleMoveFiles = useCallback(
+    (
+      movedItems: DialCopiedItem[],
+      sourceFolder: string,
+      destinationFolder: string,
+    ) => {
+      if (movedItems.length === 0) return;
+
+      if (exceedsMaxFolderDepth(movedItems)) {
+        showMaxDepthError();
+        return;
+      }
 
       movingFilesCountRef.current = movedItems.length;
       isRenamingRef.current = sourceFolder === destinationFolder;
@@ -820,17 +859,44 @@ export const useFileManager = ({
         }),
       );
 
-      const movedCurrentOrParent = movedItems.find(
-        (item) =>
-          item.sourceUrl === currentPath ||
-          currentPath?.startsWith(item.sourceUrl),
+      const movedFolders = movedItems.filter(
+        (item) => item.nodeType === DialFileNodeType.FOLDER,
       );
 
-      if (movedCurrentOrParent) {
-        setCurrentPath(movedCurrentOrParent.destinationUrl);
+      if (!movedFolders.length) return;
+
+      // The expanded paths have to follow the renamed/moved folders, otherwise
+      // the tree collapses and the user has to walk the structure again to get
+      // back to where they were. Issue #3325
+      const remappedPaths = [...expandedPaths].map((path) => ({
+        path,
+        newPath: remapMovedPath(path, movedFolders),
+      }));
+
+      setExpandedPaths(new Set(remappedPaths.map(({ newPath }) => newPath)));
+
+      // The moved subtree is dropped from the store while the operation is in
+      // flight and only the destination parent gets re-listed, so the expanded
+      // branches have to be listed again to stay browsable.
+      pathsToRelistRef.current = remappedPaths
+        .filter(({ path, newPath }) => path !== newPath)
+        .map(({ newPath }) => newPath);
+
+      if (currentPath) {
+        const newCurrentPath = remapMovedPath(currentPath, movedFolders);
+
+        if (newCurrentPath !== currentPath) {
+          setCurrentPath(newCurrentPath);
+        }
       }
     },
-    [dispatch, currentPath, folders],
+    [
+      dispatch,
+      currentPath,
+      expandedPaths,
+      exceedsMaxFolderDepth,
+      showMaxDepthError,
+    ],
   );
 
   const handleSearchFiles = useCallback(
@@ -932,14 +998,17 @@ export const useFileManager = ({
     return {
       title: t(SideBarI18nKeys.InformationSidebar),
       nameLabel: t(SideBarI18nKeys.NameLabel),
-      pathLabel: t(SideBarI18nKeys.PathLabel),
+      pathLabel:
+        activeTab === DialFileManagerTabs.Shared
+          ? t(SideBarI18nKeys.OwnersPathLabel)
+          : t(SideBarI18nKeys.PathLabel),
       modifiedDateLabel: t(SideBarI18nKeys.ModifiedLabel),
       sizeLabel: t(SideBarI18nKeys.SizeLabel),
       authorLabel: t(SideBarI18nKeys.AuthorLabel),
       loading: isFileMetadataLoading,
       fileMetadata: adjustedMetadata ?? undefined,
     };
-  }, [t, isFileMetadataLoading, fileMetadata, currentPathRootAlias]);
+  }, [t, isFileMetadataLoading, fileMetadata, currentPathRootAlias, activeTab]);
 
   const fileManagerSearchPlaceholder = useMemo(
     () => translateChrome(SideBarI18nKeys.FileManagerSearchPlaceholder),
@@ -982,13 +1051,16 @@ export const useFileManager = ({
   const gridColumnHeaderLabels = useMemo(
     () => ({
       name: translateChat(ChatI18nKeys.Name),
-      path: translateChat(ChatI18nKeys.Path),
+      path:
+        activeTab === DialFileManagerTabs.Shared
+          ? translateChat(ChatI18nKeys.OwnersPath)
+          : translateChat(ChatI18nKeys.Path),
       updatedAt: translateChat(ChatI18nKeys.ModifiedDate),
       modifiedDate: translateChat(ChatI18nKeys.ModifiedDate),
       size: translateChat(ChatI18nKeys.Size),
       author: translateChat(ChatI18nKeys.Author),
     }),
-    [translateChat],
+    [translateChat, activeTab],
   );
 
   const searchEmptyTitle = useMemo(
@@ -1390,12 +1462,18 @@ export const useFileManager = ({
   const handleCopyFiles = useCallback(
     (copiedItems: DialCopiedItem[], destinationFolder: string) => {
       if (copiedItems.length === 0) return;
+
+      if (exceedsMaxFolderDepth(copiedItems)) {
+        showMaxDepthError();
+        return;
+      }
+
       movingFilesCountRef.current = copiedItems.length;
       dispatch(
         FilesActions.copyFiles({ files: copiedItems, destinationFolder }),
       );
     },
-    [dispatch],
+    [dispatch, exceedsMaxFolderDepth, showMaxDepthError],
   );
 
   const handleGetInfo = useCallback(

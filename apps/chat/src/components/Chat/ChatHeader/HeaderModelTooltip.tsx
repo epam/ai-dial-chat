@@ -5,6 +5,9 @@ import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/selectors';
+
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
 interface Props {
@@ -19,6 +22,7 @@ export const HeaderModelTooltip = ({
   disallowChangeAgent,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+  const locale = useAppSelector(UISelectors.selectLocale);
 
   return (
     <div
@@ -37,7 +41,10 @@ export const HeaderModelTooltip = ({
         <>
           <span className="text-secondary">{t(ChatI18nKeys.Agent)}:</span>
           <div data-qa="entity-info">
-            {getOpenAIEntityFullName(model ?? { id: conversationModelId })}
+            {getOpenAIEntityFullName(
+              model ?? { id: conversationModelId },
+              locale,
+            )}
           </div>
         </>
         {model?.version && (

@@ -1,4 +1,5 @@
 import { BucketService } from '@/src/utils/app/data/bucket-service';
+import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { getResourceMaxSegmentBytes } from '@/src/utils/app/resource-limits';
 import {
   isFolderId,
@@ -219,10 +220,10 @@ const lastSegmentOrWhole = (value: string | undefined): string => {
  * last path segment of `name` and/or `id`.
  */
 export function withoutFileManagerPlaceholderByName<
-  T extends { name?: string; id?: string },
+  T extends { name?: string | Record<string, string>; id?: string },
 >(items: T[]): T[] {
   return items.filter((item) => {
-    const nameTail = lastSegmentOrWhole(item.name);
+    const nameTail = lastSegmentOrWhole(getLocalizedEntityIdName(item.name));
     const idTail = lastSegmentOrWhole(item.id);
     return (
       !isFileManagerPlaceholderLastSegment(nameTail) &&
@@ -525,6 +526,38 @@ export const isAbsoluteUrl = (url: string): boolean => {
     'telnet://',
     'api/files',
   ].some((prefix) => urlLower.startsWith(prefix));
+};
+
+const SAFE_LINK_PROTOCOLS = new Set([
+  'http:',
+  'https:',
+  'mailto:',
+  'ftp:',
+  'ftps:',
+  'tel:',
+]);
+
+const URL_SCHEME_REGEX = /^([a-z][a-z0-9+.-]*):/i;
+
+/**
+ * Tells whether a url is safe to put into an `href`. Relative urls (e.g. the
+ * `api/files` proxy paths) carry no scheme and are safe; anything with a scheme
+ * outside the allow list - `javascript:` above all - is not.
+ */
+export const isSafeLinkUrl = (url: string | undefined): boolean => {
+  if (!url) {
+    return false;
+  }
+
+  // Browsers ignore control characters while resolving a scheme, so drop them
+  // before looking at it - otherwise "java\tscript:" would slip through.
+  const normalizedUrl = Array.from(url)
+    .filter((char) => char.charCodeAt(0) > 0x20)
+    .join('');
+
+  const scheme = URL_SCHEME_REGEX.exec(normalizedUrl);
+
+  return !scheme || SAFE_LINK_PROTOCOLS.has(`${scheme[1].toLowerCase()}:`);
 };
 
 export const getDownloadPath = (file: DialFile) =>

@@ -234,7 +234,7 @@ export class ChatMessagesAssertion extends BaseAssertion {
     expectedLink: string | RegExp,
   ) {
     await this.assertElementAttribute(
-      this.chatMessages.getAttachmentLink(message),
+      this.chatMessages.getMessageContentLink(message),
       Attributes.href,
       expectedLink,
     );
@@ -242,7 +242,7 @@ export class ChatMessagesAssertion extends BaseAssertion {
 
   public async assertMessageImageOpenedInNewTab(message: number) {
     await this.assertElementAttribute(
-      this.chatMessages.getAttachmentLink(message),
+      this.chatMessages.getMessageContentLink(message),
       Attributes.target,
       AttributeValues.blank,
     );
@@ -253,7 +253,7 @@ export class ChatMessagesAssertion extends BaseAssertion {
     expectedName: string,
   ) {
     await this.assertElementAttribute(
-      this.chatMessages.getAttachmentLink(message),
+      this.chatMessages.getMessageContentLink(message),
       Attributes.download,
       expectedName,
     );

@@ -1,6 +1,9 @@
 import { Attachment } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
-import { AddEntityGeneralInfoFormSelector } from '@/src/ui/selectors';
+import {
+  AddEntityGeneralInfoFormSelector,
+  IconSelectors,
+} from '@/src/ui/selectors';
 import { EntityEditorForm } from '@/src/ui/webElements';
 import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
@@ -35,9 +38,13 @@ export class EntityEditorGeneralForm extends EntityEditorForm {
   public topicsDropdownContainer = this.getChildElementBySelector(
     AddEntityGeneralInfoFormSelector.topicsDropdownContainer,
   );
-  public topicsDropdownToggle =
+  public topicsDropdownDownIcon =
     this.topicsDropdownContainer.getChildElementBySelector(
-      AddEntityGeneralInfoFormSelector.topicsDropdownToggle,
+      IconSelectors.chevronDownIcon,
+    );
+  public topicsDropdownUpIcon =
+    this.topicsDropdownContainer.getChildElementBySelector(
+      IconSelectors.chevronUpIcon,
     );
   public selectedTopicPills =
     this.topicsDropdownContainer.getChildElementBySelector(

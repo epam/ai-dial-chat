@@ -1,7 +1,9 @@
 import { Observable, from, switchMap, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
+import { isUuid } from '@/src/utils/app/common';
 import { isConversationId } from '@/src/utils/app/id';
+import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
 import {
   constructPath,
   isPlaybackConversation,
@@ -62,6 +64,7 @@ const getModelApiIdFromConversation = (conversation: Conversation): string => {
 };
 
 // Format key: {modelId}__{name} or {modelId}__{name}__{version} if conversation is public
+// Format key with UUID: {modelId}__{name}__{uuid} or {modelId}__{name}__{version}__{uuid}
 export const getConversationApiKey = (
   conversation: Omit<ConversationInfo, 'id' | 'folderId'>,
 ): string => {
@@ -82,6 +85,11 @@ export const getConversationApiKey = (
     conversation.publicationInfo.version !== NA_VERSION
   ) {
     keyParts.push(conversation.publicationInfo.version);
+  }
+
+  // Append UUID if present (should be at the end)
+  if (conversation.uuid) {
+    keyParts.push(conversation.uuid);
   }
 
   return keyParts.join(pathKeySeparator);
@@ -140,6 +148,10 @@ export const parseEntityApiKey = <T extends ParseEntityApiKeyOptions>(
     parts[parts.length - 1] = `${parts[parts.length - 1]}_`;
   }
 
+  if (isUuid(parts.at(-1))) {
+    result.uuid = parts.pop();
+  }
+
   return {
     ...result,
     name: parts.join(pathKeySeparator),
@@ -150,10 +162,13 @@ export const parseEntityApiKey = <T extends ParseEntityApiKeyOptions>(
 export const getMarketplaceEntityApiKey = (
   entity: Omit<ApplicationInfo | ToolsetInfo, 'folderId' | 'id'>,
 ): string => {
+  // The primary locale (first of `availableLocales`) is the entity identifier.
+  const name = getLocalizedEntityIdName(entity.name);
+
   if (!entity.version || entity.version === NA_VERSION) {
-    return entity.name;
+    return name;
   }
-  return [entity.name, entity.version].join(pathKeySeparator);
+  return [name, entity.version].join(pathKeySeparator);
 };
 
 export class ApiUtils {

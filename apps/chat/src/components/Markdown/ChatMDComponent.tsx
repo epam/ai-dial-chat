@@ -47,11 +47,27 @@ import remarkMath from 'remark-math';
 const replaceCursor = (cursorSign: string) =>
   cursorSign.replace(modelCursorSignWithBackquote, modelCursorSign);
 
+const BLANK_TEXT_REGEXP = /^(?:\s|\u00a0|\u200b|\u200c|\u200d|\ufeff)*$/;
+
+const isBlankNode = (node: ReactNode): boolean => {
+  if (node === null || node === undefined || typeof node === 'boolean') {
+    return true;
+  }
+  if (typeof node === 'string') {
+    return BLANK_TEXT_REGEXP.test(node);
+  }
+  if (Array.isArray(node)) {
+    return node.every(isBlankNode);
+  }
+  return false;
+};
+
 interface ChatMDComponentProps {
   isShowResponseLoader: boolean;
   content: string;
   isInner?: boolean;
   plainTextMode?: boolean;
+  compactMode?: boolean;
 }
 
 const transformUri = (src: string): string => {
@@ -62,6 +78,7 @@ const getMDComponents = (
   isShowResponseLoader: boolean,
   isInner: boolean,
   allowedImageHosts: string[],
+  compactMode: boolean,
 ): Components => {
   return {
     code({ className, children, node, ...props }) {
@@ -100,7 +117,12 @@ const getMDComponents = (
     },
     table({ children }) {
       return (
-        <Table isLastMessageStreaming={isShowResponseLoader}>{children}</Table>
+        <Table
+          isLastMessageStreaming={isShowResponseLoader}
+          compactMode={compactMode}
+        >
+          {children}
+        </Table>
       );
     },
     th({ children }) {
@@ -125,6 +147,10 @@ const getMDComponents = (
         if (children?.[0] == modelCursorSignWithBackquote) {
           children = `${replaceCursor(children[0])}${children.slice(1)}`;
         }
+      }
+
+      if (isBlankNode(children)) {
+        return null;
       }
 
       return (
@@ -264,6 +290,7 @@ export const ChatMDComponent = memo(
     content,
     isInner = false,
     plainTextMode = false,
+    compactMode = false,
   }: ChatMDComponentProps) => {
     const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
@@ -275,6 +302,7 @@ export const ChatMDComponent = memo(
 
     const mdClassNames = classnames(
       'prose min-w-full dark:prose-invert prose-a:text-primary prose-a:underline',
+      compactMode && 'prose-compact',
       isChatFullWidth && 'max-w-none',
       isOverlay && 'text-sm',
       (screenState === ScreenState.SM || isOverlay) && 'leading-[150%]',
@@ -286,8 +314,14 @@ export const ChatMDComponent = memo(
     );
 
     const components = useMemo(
-      () => getMDComponents(isShowResponseLoader, isInner, allowedImageHosts),
-      [isShowResponseLoader, isInner, allowedImageHosts],
+      () =>
+        getMDComponents(
+          isShowResponseLoader,
+          isInner,
+          allowedImageHosts,
+          compactMode,
+        ),
+      [isShowResponseLoader, isInner, allowedImageHosts, compactMode],
     );
 
     const processedContent = preprocessLaTeX(content);
@@ -295,7 +329,8 @@ export const ChatMDComponent = memo(
     if (plainTextMode) {
       return (
         <div className={mdClassNames}>
-          {`${processedContent}${isShowResponseLoader ? modelCursorSignWithBackquote : ''}`}
+          {processedContent}
+          <BlinkingCursor isShowing={isShowResponseLoader} />
         </div>
       );
     }

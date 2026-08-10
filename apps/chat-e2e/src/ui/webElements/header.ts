@@ -23,6 +23,9 @@ export class Header extends BaseElement {
   public rightPanelToggle = this.getChildElementBySelector(
     HeaderSelectors.rightPanelToggle,
   );
+  public leftPanelDotIndicator = this.leftPanelToggle.getChildElementBySelector(
+    HeaderSelectors.dotIndicator,
+  );
 
   public newEntityButton = this.getChildElementBySelector(
     HeaderSelectors.newEntity,

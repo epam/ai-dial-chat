@@ -27,6 +27,7 @@ import {
   isPromptId,
   isToolsetId,
 } from '@/src/utils/app/id';
+import { withEntityIdName } from '@/src/utils/app/marketplace-localization';
 import {
   allEditedFoldersAreValid,
   getFirstReviewUrl,
@@ -210,8 +211,8 @@ export const PublicationHandlerFooter = ({
         ...files,
         ...conversations,
         ...prompts,
-        ...applications,
-        ...toolsets,
+        ...applications.map(withEntityIdName),
+        ...toolsets.map(withEntityIdName),
       ].filter((entity) => entity.publicationInfo?.isNotExist),
     [conversations, files, prompts, applications, toolsets],
   );

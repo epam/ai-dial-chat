@@ -13,6 +13,7 @@ import {
 } from '@/src/utils/app/application';
 import { arraysHaveSameElements } from '@/src/utils/app/common';
 import { getValidFormFields } from '@/src/utils/app/forms';
+import { withEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isTruthyQuery } from '@/src/utils/app/route';
 
@@ -35,7 +36,6 @@ import {
   ModelsSelectors,
   SettingsSelectors,
   ToolsetSelectors,
-  UISelectors,
 } from '@/src/store/selectors';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
@@ -103,7 +103,6 @@ export const AppsEditor = () => {
   const type = decodeURIComponent(typeQuery.toString());
   const isCreatingApp = !idQuery || isTruthyQuery(isCreating);
 
-  const locale = useAppSelector(UISelectors.selectLocale);
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
@@ -133,7 +132,7 @@ export const AppsEditor = () => {
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
 
   const modelsWithFolder = useMemo(
-    () => models.map((m) => ({ ...m, folderId: '' })),
+    () => models.map((m) => withEntityIdName({ ...m, folderId: '' })),
     [models],
   );
 
@@ -150,7 +149,6 @@ export const AppsEditor = () => {
         runtime: pythonVersions[0],
         toolSupportingModelIds,
         schema: schema ?? undefined,
-        locale,
       }),
     [
       appDetails,
@@ -159,7 +157,6 @@ export const AppsEditor = () => {
       pythonVersions,
       toolSupportingModelIds,
       schema,
-      locale,
     ],
   );
 
@@ -287,7 +284,6 @@ export const AppsEditor = () => {
         runtime: pythonVersions[0],
         toolSupportingModelIds,
         schema: schema ?? undefined,
-        locale,
       });
       isSimpleViewSwitchRef.current = false;
       changeEditorTabRef.current = null;
@@ -310,7 +306,6 @@ export const AppsEditor = () => {
       publicationUrl,
       isCreatingApp,
       t,
-      locale,
     ],
   );
 

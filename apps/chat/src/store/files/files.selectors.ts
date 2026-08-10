@@ -23,7 +23,7 @@ const rootSelector = (state: RootState) => state.files;
 const _selectFiles = (state: RootState) => rootSelector(state).files;
 
 const selectFiles = createSelector([_selectFiles], (files) => {
-  return sortByName([...files]);
+  return sortByName(files);
 });
 
 const selectReviewBucketFiles = createSelector(
@@ -66,9 +66,7 @@ const selectSelectedFilesIds = (state: RootState) =>
 const _selectFolders = (state: RootState) => rootSelector(state).folders;
 
 const selectFolders = createSelector([_selectFolders], (folders) => {
-  return [...folders].sort((a, b) =>
-    a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
-  );
+  return sortByName(folders);
 });
 const selectFolderById = createSelector(
   [selectFolders, (_state, folderId: string) => folderId],

@@ -15,12 +15,14 @@ import { useSessionStorageState } from '@/src/hooks/useSessionStorageState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
+  getModelName,
   isDialAiEntityModel,
   isExternalApp,
 } from '@/src/utils/app/application';
 import { getEntityBaseId, sortItemsVersions } from '@/src/utils/app/common';
 import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
+import { getLocalizedEntitySearchOptions } from '@/src/utils/app/search';
 import {
   getNumberFromSearchParams,
   getStringFromSearchParams,
@@ -37,6 +39,7 @@ import {
   ModelsSelectors,
   SettingsSelectors,
   ToolsetSelectors,
+  UISelectors,
   WidgetsSelectors,
 } from '@/src/store/selectors';
 
@@ -48,7 +51,6 @@ import {
 } from '@/src/constants/marketplace';
 import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
-import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
 import { Modal } from '@/src/components/Common/Modal';
@@ -181,6 +183,7 @@ const AgentAndToolsetModalView = ({
     ToolsetSelectors.selectInstalledToolsetsSet,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const locale = useAppSelector(UISelectors.selectLocale);
 
   const currentAppReference =
     router.route === Routes.AppsEditor
@@ -293,11 +296,12 @@ const AgentAndToolsetModalView = ({
     [allAgents, allToolsets],
   );
 
-  const searchedItems = useFuseSearch(
-    allItems,
-    searchTerm,
-    MARKETPLACE_ENTITIES_SEARCH_OPTIONS,
+  const searchOptions = useMemo(
+    () => getLocalizedEntitySearchOptions<MarketplaceEntity>(locale),
+    [locale],
   );
+
+  const searchedItems = useFuseSearch(allItems, searchTerm, searchOptions);
 
   const selectedBaseIdsSet = useMemo(
     () => new Set(selectedIds.map(getEntityBaseId)),
@@ -359,7 +363,7 @@ const AgentAndToolsetModalView = ({
       .filter((item): item is DisplayedMarketplaceEntity => !!item);
 
     const allGroupedItems = sortBy(allGroupedItemsUnsorted, [
-      (item) => item.name.toLowerCase(),
+      (item) => getModelName(item, locale).toLowerCase(),
     ]);
 
     if (!isMyWorkspace) {
@@ -377,6 +381,7 @@ const AgentAndToolsetModalView = ({
     widgetsSchemaIds,
     currentAppReference,
     installedSet,
+    locale,
   ]);
 
   const handleItemClick = useCallback(

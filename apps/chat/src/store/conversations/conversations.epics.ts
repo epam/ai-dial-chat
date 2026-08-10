@@ -387,7 +387,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
                     return conv;
                   }
 
-                  const { name, version, modelInfo } = parseEntityApiKey(
+                  const { name, version, modelInfo, uuid } = parseEntityApiKey(
                     splitEntityId(conv.id).name,
                     { parseVersion: true, parseModel: true },
                   );
@@ -396,6 +396,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
                     ...conv,
                     ...modelInfo,
                     name,
+                    ...(uuid && { uuid }),
                     publicationInfo: {
                       version,
                     },
@@ -3696,14 +3697,16 @@ const uploadConversationsWithContentRecursiveEpic: AppEpic = (
               ConversationsActions.addConversations({
                 conversations: conversations.map((conv) => {
                   if (publicConversationIds.includes(conv.id)) {
-                    const { name, version, modelInfo } = parseEntityApiKey(
-                      splitEntityId(conv.id).name,
-                      { parseVersion: true, parseModel: true },
-                    );
+                    const { name, version, modelInfo, uuid } =
+                      parseEntityApiKey(splitEntityId(conv.id).name, {
+                        parseVersion: true,
+                        parseModel: true,
+                      });
                     return {
                       ...conv,
                       ...modelInfo,
                       name,
+                      ...(uuid && { uuid }),
                       publicationInfo: {
                         version,
                       },
@@ -3861,11 +3864,20 @@ const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
         ),
       ]);
 
-      if (conversationIds.length) {
+      if (deletedConversationIds.length) {
         actions.push(
           of(
             ConversationsActions.deleteConversations({
               conversationIds: deletedConversationIds,
+            }),
+          ),
+        );
+      } else {
+        // nothing to delete on the server, hide the loader shown on delete start
+        actions.push(
+          of(
+            ConversationsActions.deleteConversationsComplete({
+              conversationIds: new Set([]),
             }),
           ),
         );

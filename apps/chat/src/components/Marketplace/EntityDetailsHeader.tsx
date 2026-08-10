@@ -6,9 +6,14 @@ import classNames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getModelName } from '@/src/utils/app/application';
+
 import { ScreenState } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/selectors';
 
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { HeaderIconSizes } from '@/src/constants/marketplace';
@@ -52,6 +57,8 @@ export function EntityHeader<T extends MarketplaceEntity>({
   dataQa = 'entity-header',
 }: EntityHeaderProps<T>) {
   const { t } = useTranslation(Translation.Marketplace);
+
+  const locale = useAppSelector(UISelectors.selectLocale);
 
   const screenState = useScreenState();
   const { iconSize, shareIconSize } = HeaderIconSizes[screenState];
@@ -106,7 +113,10 @@ export function EntityHeader<T extends MarketplaceEntity>({
               )}
               <div className="flex max-w-full items-center gap-[2px] whitespace-nowrap">
                 <div className="w-full shrink text-lg font-semibold leading-6 md:text-xl">
-                  <DialEllipsisTooltip text={entity.name} id="entity-name" />
+                  <DialEllipsisTooltip
+                    text={getModelName(entity, locale)}
+                    id="entity-name"
+                  />
                 </div>
               </div>
             </div>

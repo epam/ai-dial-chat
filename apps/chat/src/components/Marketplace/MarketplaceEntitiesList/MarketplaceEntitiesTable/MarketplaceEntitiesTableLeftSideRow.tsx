@@ -4,7 +4,10 @@ import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 
-import { getModelShortDescription } from '@/src/utils/app/application';
+import {
+  getModelName,
+  getModelShortDescription,
+} from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 
 import { FeatureType, ScreenState } from '@/src/types/common';
@@ -87,7 +90,7 @@ export const MarketplaceEntitiesTableLeftSideRow: React.FC<
           <div className="min-w-0 flex-1">
             <div className="flex">
               <DialEllipsisTooltip
-                text={entity.name}
+                text={getModelName(entity, locale)}
                 className="max-w-screen-sm text-base font-semibold leading-5"
               />
             </div>

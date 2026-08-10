@@ -129,7 +129,7 @@ function ConversationView({
         )}
       >
         <Checkbox
-          className={additionalItemData?.isSidePanelItem && 'mr-0'}
+          className={additionalItemData?.isSidePanelItem && 'me-0'}
           checked={isChosen}
           onChange={handleToggle}
         />

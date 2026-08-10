@@ -4,6 +4,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getMcpToolsetStr,
+  getModelName,
   getQuickAppConfig,
   getWebAPIToolsetStr,
   isQuickApp,
@@ -39,6 +40,7 @@ const ReviewQuickAppSectionView = ({
   const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const theme = useAppSelector(UISelectors.selectThemeState);
+  const locale = useAppSelector(UISelectors.selectLocale);
 
   const editorTabs = useMemo(
     () => [
@@ -66,7 +68,7 @@ const ReviewQuickAppSectionView = ({
     <>
       <MarketplaceEntityInfoRow
         label={t(ChatI18nKeys.Model)}
-        value={modelsMap[config.model]?.name}
+        value={getModelName(modelsMap[config.model], locale)}
         valueClassName="max-w-[414px] break-all text-primary"
       />
       <MarketplaceEntityInfoRow

@@ -50,7 +50,11 @@ import { nanoid } from 'nanoid';
  * @param entities2
  * @returns new array without duplicates
  */
-export const combineEntities = <T extends Entity>(
+export const combineEntities = <
+  T extends {
+    id: string;
+  },
+>(
   entities1: T[],
   entities2: T[],
 ): T[] => {
@@ -244,6 +248,12 @@ export const isVersionPartSizeValid = (version: string | undefined) => {
 
   return version.split('.').every((part) => part.length <= 5);
 };
+
+const uuidRegex =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export const isUuid = (value: string | undefined): boolean =>
+  !!value && uuidRegex.test(value);
 
 export const isVersionExists = (
   versionToTest: string,
