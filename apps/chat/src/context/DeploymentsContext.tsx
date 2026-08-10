@@ -365,8 +365,17 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [rawDeployments, schemas]);
 
+  const resolvedSelectedDeploymentId = useMemo(
+    () =>
+      selectedItemId == null
+        ? null
+        : (findDeploymentByIdOrReference(items, selectedItemId)?.id ??
+          selectedItemId),
+    [items, selectedItemId],
+  );
+
   useEffect(() => {
-    if (!selectedItemId) {
+    if (!resolvedSelectedDeploymentId) {
       setSelectedDeploymentConfiguration(null);
       return;
     }
@@ -375,10 +384,9 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
 
     const loadConfiguration = async () => {
       try {
-        const deploymentId =
-          findDeploymentByIdOrReference(items, selectedItemId)?.id ??
-          selectedItemId;
-        const configuration = await getDeploymentConfiguration(deploymentId);
+        const configuration = await getDeploymentConfiguration(
+          resolvedSelectedDeploymentId,
+        );
         if (!signal.isCancelled) {
           setSelectedDeploymentConfiguration(configuration);
         }
@@ -394,7 +402,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       signal.isCancelled = true;
     };
-  }, [selectedItemId, items]);
+  }, [resolvedSelectedDeploymentId]);
 
   const setSelectedItemId = useCallback(
     (id: string | null) => {
