@@ -755,25 +755,26 @@ export const useFileManager = ({
     [t],
   );
 
-  const sharedByMeFileNames = useMemo(
+  const sharedByMeItemNames = useMemo(
     () =>
       new Set(
-        files
-          .filter((file) => file.isShared && !file.sharedWithMe)
-          .map((file) => file.name),
+        [...files, ...folders]
+          .filter((item) => item.isShared && !item.sharedWithMe)
+          .map((item) => item.name),
       ),
-    [files],
+    [files, folders],
   );
 
   const renderDeleteConfirmationContent = useCallback(
     (fileNames: string[]) => {
       const hasSharedItems = fileNames.some((name) =>
-        sharedByMeFileNames.has(name),
+        sharedByMeItemNames.has(name),
       );
+      const isSingleItem = fileNames.length === 1;
       return (
         <div className="px-6 py-3 text-sm">
-          <p className="mb-3 text-secondary">
-            {fileNames.length === 1 ? (
+          <p className="mb-3 whitespace-pre-wrap text-secondary">
+            {isSingleItem ? (
               <>
                 {t(SideBarI18nKeys.AreYouSureDeleteItem)}{' '}
                 <span className="break-all text-primary">
@@ -788,12 +789,17 @@ export const useFileManager = ({
                 </span>
               </>
             )}
-            {hasSharedItems && t(SideBarI18nKeys.DeletingWillStopSharingFile)}
+            {hasSharedItems &&
+              t(
+                isSingleItem
+                  ? SideBarI18nKeys.DeletingWillStopSharingFile
+                  : SideBarI18nKeys.DeletingWillStopSharingItems,
+              )}
           </p>
         </div>
       );
     },
-    [t, sharedByMeFileNames],
+    [t, sharedByMeItemNames],
   );
 
   const isMaxFolderDepthReached = useCallback(
@@ -992,14 +998,17 @@ export const useFileManager = ({
     return {
       title: t(SideBarI18nKeys.InformationSidebar),
       nameLabel: t(SideBarI18nKeys.NameLabel),
-      pathLabel: t(SideBarI18nKeys.PathLabel),
+      pathLabel:
+        activeTab === DialFileManagerTabs.Shared
+          ? t(SideBarI18nKeys.OwnersPathLabel)
+          : t(SideBarI18nKeys.PathLabel),
       modifiedDateLabel: t(SideBarI18nKeys.ModifiedLabel),
       sizeLabel: t(SideBarI18nKeys.SizeLabel),
       authorLabel: t(SideBarI18nKeys.AuthorLabel),
       loading: isFileMetadataLoading,
       fileMetadata: adjustedMetadata ?? undefined,
     };
-  }, [t, isFileMetadataLoading, fileMetadata, currentPathRootAlias]);
+  }, [t, isFileMetadataLoading, fileMetadata, currentPathRootAlias, activeTab]);
 
   const fileManagerSearchPlaceholder = useMemo(
     () => translateChrome(SideBarI18nKeys.FileManagerSearchPlaceholder),
@@ -1042,13 +1051,16 @@ export const useFileManager = ({
   const gridColumnHeaderLabels = useMemo(
     () => ({
       name: translateChat(ChatI18nKeys.Name),
-      path: translateChat(ChatI18nKeys.Path),
+      path:
+        activeTab === DialFileManagerTabs.Shared
+          ? translateChat(ChatI18nKeys.OwnersPath)
+          : translateChat(ChatI18nKeys.Path),
       updatedAt: translateChat(ChatI18nKeys.ModifiedDate),
       modifiedDate: translateChat(ChatI18nKeys.ModifiedDate),
       size: translateChat(ChatI18nKeys.Size),
       author: translateChat(ChatI18nKeys.Author),
     }),
-    [translateChat],
+    [translateChat, activeTab],
   );
 
   const searchEmptyTitle = useMemo(
