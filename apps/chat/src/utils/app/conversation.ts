@@ -15,6 +15,7 @@ import {
   getConfigurationValue,
   isConversationWithFormSchema,
 } from '@/src/utils/app/form-schema';
+import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import {
   ApiUtils,
@@ -27,7 +28,6 @@ import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-import { DEFAULT_LOCAL } from '@/src/constants/locale';
 
 import { constructPath, isAttachmentLink } from './file';
 import type { FileMovesMap } from './folders';
@@ -337,9 +337,9 @@ export const getOpenAIEntityFullName = (model: {
   name?: string | Record<string, string>;
   id: string;
 }) => {
-  // The required `en` locale is used as the entity identifier / full name.
-  const name =
-    typeof model.name === 'string' ? model.name : model.name?.[DEFAULT_LOCAL];
+  // The primary locale (first of `availableLocales`) is used as the entity
+  // identifier / full name.
+  const name = getLocalizedEntityIdName(model.name);
 
   return name || model.id;
 };

@@ -4,6 +4,8 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { fakeCallback } from '@/src/utils/app/common';
+import { LocalesService } from '@/src/utils/app/data/locales-service';
+import { getEntityPayloadFromLocals } from '@/src/utils/app/marketplace-localization';
 
 import { EntityType } from '@/src/types/common';
 import { PreviewMode } from '@/src/types/marketplace';
@@ -42,6 +44,7 @@ export const ToolsetPreview = ({
     allowedTools,
     transport,
     authenticationType,
+    locales,
   ] = useWatch({
     control,
     name: [
@@ -53,15 +56,24 @@ export const ToolsetPreview = ({
       'allowedTools',
       'protocol',
       'authenticationType',
+      'locales',
     ],
   });
+
+  const { name: nameLocales, description: descriptionLocales } = useMemo(
+    () => getEntityPayloadFromLocals(locales),
+    [locales],
+  );
 
   const cardEntity: ToolsetModel = useMemo(
     () => ({
       type: EntityType.Toolset,
       isDefault: false,
-      name,
-      description,
+      name: { [LocalesService.getPrimaryLocale()]: name, ...nameLocales },
+      description: {
+        [LocalesService.getPrimaryLocale()]: description,
+        ...descriptionLocales,
+      },
       iconUrl,
       topics,
       version,
@@ -94,6 +106,8 @@ export const ToolsetPreview = ({
       topics,
       transport,
       version,
+      nameLocales,
+      descriptionLocales,
     ],
   );
 

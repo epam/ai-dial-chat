@@ -20,7 +20,7 @@ const getLocaleCodesFromPublicDir = (): string[] | null => {
 const normalizeLocales = (locales: string[]): string[] => {
   const unique = [...new Set(locales)];
 
-  return unique.includes(DEFAULT_LOCAL) ? unique : [DEFAULT_LOCAL, ...unique];
+  return unique.includes(DEFAULT_LOCAL) ? unique : [...unique, DEFAULT_LOCAL];
 };
 
 /**

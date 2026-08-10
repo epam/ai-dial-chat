@@ -1,3 +1,5 @@
+import { LocalesService } from '@/src/utils/app/data/locales-service';
+
 import { MarketplaceEntity } from '@/src/types/marketplace';
 
 import { DEFAULT_LOCAL } from '@/src/constants/locale';
@@ -9,14 +11,22 @@ export const parseLocalizedField = (
   field?: string | Record<string, string>,
   strict = false,
 ): string => {
+  const primaryLocale = LocalesService.getPrimaryLocale();
+
   if (typeof field === 'string') {
     if (strict) {
-      return locale === DEFAULT_LOCAL ? field : '';
+      return locale === primaryLocale ? field : '';
     }
     return field;
   }
 
-  return field?.[locale] ?? (strict ? '' : field?.[DEFAULT_LOCAL]) ?? '';
+  if (strict) {
+    return field?.[locale] ?? '';
+  }
+
+  return (
+    field?.[locale] ?? field?.[primaryLocale] ?? field?.[DEFAULT_LOCAL] ?? ''
+  );
 };
 
 export const getLocalizedEntityIdName = (
@@ -24,18 +34,20 @@ export const getLocalizedEntityIdName = (
 ): string => {
   if (typeof name === 'string') return name;
 
-  return name?.[DEFAULT_LOCAL] ?? '';
+  return name?.[LocalesService.getPrimaryLocale()] ?? '';
 };
 
 export const updateLocalizedEntityIdName = (
   entity: { name: string | Record<string, string> },
   newName: string,
 ) => {
+  const primaryLocale = LocalesService.getPrimaryLocale();
+
   if (typeof entity.name === 'string') return { ...entity, name: newName };
-  else if (typeof entity.name?.[DEFAULT_LOCAL] === 'string') {
+  else if (typeof entity.name?.[primaryLocale] === 'string') {
     const updatedLocalizedName = {
       ...entity.name,
-      [DEFAULT_LOCAL]: newName,
+      [primaryLocale]: newName,
     };
 
     return { ...entity, name: updatedLocalizedName };
@@ -46,8 +58,8 @@ export const updateLocalizedEntityIdName = (
 
 /**
  * Returns a copy of the entity whose `name` is resolved to the identifier
- * (`en`) value. Use at boundaries where the entity is treated as a plain
- * share/publish resource with a string `name`.
+ * (primary locale) value. Use at boundaries where the entity is treated as a
+ * plain share/publish resource with a string `name`.
  */
 export const withEntityIdName = <
   T extends { name?: string | Record<string, string> },
@@ -60,22 +72,24 @@ export const withEntityIdName = <
 
 export const getEntityLocals = (
   entity?: MarketplaceEntity,
-  excludeDefault = false,
+  excludePrimary = false,
 ): { locale: string; name: string; description: string }[] => {
   if (!entity) return [];
 
+  const primaryLocale = LocalesService.getPrimaryLocale();
+
   const nameLocals =
     typeof entity.name === 'string'
-      ? [DEFAULT_LOCAL]
+      ? [primaryLocale]
       : Object.keys(entity.name);
   const descriptionLocals =
     typeof entity.description === 'string'
-      ? [DEFAULT_LOCAL]
+      ? [primaryLocale]
       : Object.keys(entity.description ?? {});
   let locals = uniq([...nameLocals, ...descriptionLocals]);
 
-  if (excludeDefault)
-    locals = locals.filter((locale) => locale !== DEFAULT_LOCAL);
+  if (excludePrimary)
+    locals = locals.filter((locale) => locale !== primaryLocale);
 
   return locals.map((locale) => ({
     locale,

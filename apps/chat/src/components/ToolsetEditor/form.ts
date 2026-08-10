@@ -1,3 +1,4 @@
+import { LocalesService } from '@/src/utils/app/data/locales-service';
 import {
   getEntityLocals,
   getLocalizedEntityIdName,
@@ -184,13 +185,11 @@ export const getDefaultFormData = ({
   toolsets,
   prevData,
   isAdminReview,
-  locale,
 }: {
   toolset?: ToolsetModel;
   toolsets?: ToolsetModel[];
   prevData?: ToolsetEditorForm;
   isAdminReview?: boolean;
-  locale: string;
 }): ToolsetEditorForm => {
   return {
     name:
@@ -210,7 +209,11 @@ export const getDefaultFormData = ({
         DEFAULT_TOOLSET_NAME),
     endpoint: toolset ? (toolset.endpoint ?? '') : ENDPOINT_PLACEHOLDER,
     protocol: toolset?.transport ?? ToolsetTransportType.HTTP,
-    description: parseLocalizedField(locale, toolset?.description),
+    description: parseLocalizedField(
+      LocalesService.getPrimaryLocale(),
+      toolset?.description,
+      true,
+    ),
     allowedTools: toolset?.allowedTools ?? [],
     iconUrl: toolset?.iconUrl ?? '',
     version: toolset ? (toolset.version ?? '') : DEFAULT_VERSION,

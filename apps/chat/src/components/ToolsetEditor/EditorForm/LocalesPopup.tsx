@@ -10,6 +10,7 @@ import {
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { LocalesService } from '@/src/utils/app/data/locales-service';
 import { preventEnterDown } from '@/src/utils/app/forms';
 import { getEntityLocals } from '@/src/utils/app/marketplace-localization';
 
@@ -21,7 +22,6 @@ import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
 import { CommonI18nKeys } from '@/src/constants/i18n';
-import { DEFAULT_LOCAL } from '@/src/constants/locale';
 import { EntityLocalesSchema } from '@/src/constants/validation-helpers';
 
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
@@ -84,7 +84,7 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
     SettingsSelectors.selectAvailableLocales,
   );
   const availableLocals = _availableLocals.filter(
-    (local) => local !== DEFAULT_LOCAL,
+    (local) => local !== LocalesService.getPrimaryLocale(),
   );
 
   const { control, handleSubmit, register, trigger } = useForm<LocalsForm>({

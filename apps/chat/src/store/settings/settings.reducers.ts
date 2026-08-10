@@ -4,11 +4,11 @@ import { PageType } from '@/src/types/common';
 import { StorageType } from '@/src/types/storage';
 
 import { DEFAULT_RESOURCE_MAX_SEGMENT_BYTES } from '@/src/constants/default-ui-settings';
+import { DEFAULT_LOCAL } from '@/src/constants/locale';
 
 import { SettingsState } from './settings.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { DEFAULT_LOCAL } from '@/src/constants/locale';
 
 const initialState: SettingsState = {
   appName: 'DIAL',

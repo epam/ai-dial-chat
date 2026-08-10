@@ -19,6 +19,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { topicToOption } from '@/src/utils/app/application';
 import { getLastPathSegment } from '@/src/utils/app/common';
+import { LocalesService } from '@/src/utils/app/data/locales-service';
 import { preventEnterDown } from '@/src/utils/app/forms';
 import { getEntityPayloadFromLocals } from '@/src/utils/app/marketplace-localization';
 
@@ -35,7 +36,6 @@ import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 import { IMAGE_TYPES } from '@/src/constants/chat';
 import { BYTES_IN_KB } from '@/src/constants/file';
 import { CommonI18nKeys } from '@/src/constants/i18n';
-import { DEFAULT_LOCAL } from '@/src/constants/locale';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 import { PUBLIC_TOOLSET_TOOLTIP } from '@/src/constants/toolsets';
 
@@ -81,9 +81,10 @@ export const GeneralForm = ({
   const _availableLocales = useAppSelector(
     SettingsSelectors.selectAvailableLocales,
   );
+  const primaryLocale = LocalesService.getPrimaryLocale();
   const availableLocales = useMemo(
-    () => _availableLocales.filter((locale) => locale !== DEFAULT_LOCAL),
-    [_availableLocales],
+    () => _availableLocales.filter((locale) => locale !== primaryLocale),
+    [_availableLocales, primaryLocale],
   );
 
   const screenState = useScreenState();
@@ -130,7 +131,7 @@ export const GeneralForm = ({
     );
 
   const langPostfix = availableLocales.length
-    ? ` [${DEFAULT_LOCAL.toUpperCase()}]`
+    ? ` [${primaryLocale.toUpperCase()}]`
     : '';
 
   return (

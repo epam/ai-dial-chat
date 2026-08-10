@@ -16,6 +16,7 @@ import {
 import { getDefaultSchemaModel } from '@/src/utils/app/application-type-schema';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
+import { LocalesService } from '@/src/utils/app/data/locales-service';
 import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
 import {
   getEntityLocals,
@@ -72,7 +73,6 @@ import {
 } from '@/src/constants/default-ui-settings';
 import { formErrors } from '@/src/constants/form-errors';
 import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
-import { DEFAULT_LOCAL } from '@/src/constants/locale';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 import {
   DEFAULT_QUICK_APPS_MODEL,
@@ -410,11 +410,9 @@ export type AppsEditorFormType = (
 const getBaseFormData = ({
   app,
   models,
-  locale,
 }: {
   app?: CustomApplicationModel;
   models?: ShareEntity[];
-  locale: string;
 }): BaseAppForm => ({
   name:
     getLocalizedEntityIdName(app?.name) ||
@@ -431,7 +429,11 @@ const getBaseFormData = ({
       DEFAULT_APPLICATION_NAME),
   version: app ? (app.version ?? '') : DEFAULT_VERSION,
   iconUrl: app?.iconUrl ?? '',
-  description: parseLocalizedField(locale, app?.description),
+  description: parseLocalizedField(
+    LocalesService.getPrimaryLocale(),
+    app?.description,
+    true,
+  ),
   topics: app?.topics ?? [],
   locales: getEntityLocals(app, true),
 });
@@ -737,7 +739,6 @@ export const getDefaultFormData = ({
   type,
   toolSupportingModelIds,
   schema,
-  locale,
 }: {
   type: string;
   app?: CustomApplicationModel;
@@ -745,9 +746,8 @@ export const getDefaultFormData = ({
   runtime?: string;
   toolSupportingModelIds?: string[];
   schema?: ApiDetailedApplicationTypeSchema;
-  locale: string;
 }): AppsEditorFormType => ({
-  ...getBaseFormData({ app, models, locale }),
+  ...getBaseFormData({ app, models }),
   ...getSettingsFormData({
     app,
     runtime,
@@ -947,6 +947,7 @@ export const getApplicationPayload = ({
   keepCurrentToolsets?: boolean;
 }): CustomApplicationModel => {
   const { name, description } = getEntityPayloadFromLocals(data.locales);
+  const primaryLocale = LocalesService.getPrimaryLocale();
 
   const generalData = fitApplicationNameToStorageLimits({
     id: '',
@@ -954,9 +955,9 @@ export const getApplicationPayload = ({
     folderId: '',
     ...(currentApp && currentApp),
     type: EntityType.Application,
-    name: { ...name, [DEFAULT_LOCAL]: data.name },
+    name: { ...name, [primaryLocale]: data.name },
     iconUrl: data.iconUrl,
-    description: { ...description, [DEFAULT_LOCAL]: data.description },
+    description: { ...description, [primaryLocale]: data.description },
     version: data.version,
     topics: data.topics,
     isDefault: false,

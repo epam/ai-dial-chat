@@ -2,6 +2,7 @@ import { Observable, from, switchMap, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
 import { isConversationId } from '@/src/utils/app/id';
+import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
 import {
   constructPath,
   isPlaybackConversation,
@@ -24,7 +25,6 @@ import { ServerSlugs } from '@/src/types/slugs-types';
 import { ToolsetInfo } from '@/src/types/toolsets';
 
 import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
-import { DEFAULT_LOCAL } from '@/src/constants/locale';
 import { NA_VERSION } from '@/src/constants/publication';
 import { validVersionRegEx } from '@/src/constants/versions';
 
@@ -151,11 +151,8 @@ export const parseEntityApiKey = <T extends ParseEntityApiKeyOptions>(
 export const getMarketplaceEntityApiKey = (
   entity: Omit<ApplicationInfo | ToolsetInfo, 'folderId' | 'id'>,
 ): string => {
-  // The required `en` locale is used as the entity identifier.
-  const name =
-    typeof entity.name === 'string'
-      ? entity.name
-      : (entity.name?.[DEFAULT_LOCAL] ?? '');
+  // The primary locale (first of `availableLocales`) is the entity identifier.
+  const name = getLocalizedEntityIdName(entity.name);
 
   if (!entity.version || entity.version === NA_VERSION) {
     return name;
