@@ -28,5 +28,5 @@ The user avatar in the navigation sidebar has no interactive menu, making it imp
 - **New**: `apps/chat/src/components/Settings/SettingsModal.tsx` — theme picker modal
 - **New**: `apps/chat/src/components/LogoutConfirmation/LogoutConfirmationModal.tsx` — logout confirm dialog
 - **Modified**: `apps/chat/src/i18n/locales/en.json` — new `auth.*` and `settings.*` keys
-- **Dependencies**: `@epam/ai-dial-ui-kit` (`DialDropdown`, `DialPopup`, `DialSelect`, `PopupSize`), `useTheme()` hook, `ApiEndpoints.AUTH_LOGOUT` constant
+- **Dependencies**: `@epam/ai-dial-ui-kit` (`DialDropdown`, `DialPopup`, `Select`, `PopupSize`), `useTheme()` hook, `ApiEndpoints.AUTH_LOGOUT` constant
 - No new backend endpoints; no breaking API changes

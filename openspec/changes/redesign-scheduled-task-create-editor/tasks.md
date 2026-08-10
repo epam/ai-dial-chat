@@ -1,6 +1,6 @@
 ## 1. Discovery
 
-- [x] 1.1 Call ui-kit MCP `getEntityDetails("component", "DialMarkdownEditor")` and confirm its prop API (value/onChange binding, height/sizing props, label/aria support); check `CHANGELOG.md`/migration guides under `node_modules/@epam/ai-dial-ui-kit/dist/` if the installed version differs from assumptions.
+- [x] 1.1 Call ui-kit MCP `getEntityDetails("component", "MarkdownEditor")` and confirm its prop API (value/onChange binding, height/sizing props, label/aria support); check `CHANGELOG.md`/migration guides under `node_modules/@epam/ai-dial-ui-kit/dist/` if the installed version differs from assumptions.
 - [x] 1.2 Check whether `apps/chat/src/main.tsx` (or another entry file) already imports `@uiw/react-markdown-preview/markdown.css` / `@uiw/react-md-editor/markdown-editor.css` to avoid a duplicate import.
 
 ## 2. Lib: model and props
@@ -14,7 +14,7 @@
 - [x] 3.1 Restructure `ScheduledTaskCreateForm.tsx`: header row with back control (chevron, `rtl:scale-x-[-1]`, calls `onBack`) + title on the start side, Cancel + Save on the end side.
 - [x] 3.2 Build the two-column body with a CSS Grid using `mobile`/`desktop` breakpoints only (no `sm:`/`md:`/`lg:`/`xl:`); Details column narrower, Configuration column wider on desktop; full-width stacked on mobile, Details first.
 - [x] 3.3 Move Display name, Description, the schedule fieldset (unchanged internals), and Model dropdown into the Details column under `labels.detailsSectionTitle` / `detailsSectionSubtitle`.
-- [x] 3.4 Replace the prompt `Textarea` with `DialMarkdownEditor` bound to `values.prompt` via `onFieldChange('prompt', value)`, labeled via `labels.instructionsLabel`, placed in the Configuration column under `labels.configurationSectionTitle` / `configurationSectionSubtitle`.
+- [x] 3.4 Replace the prompt `Textarea` with `MarkdownEditor` bound to `values.prompt` via `onFieldChange('prompt', value)`, labeled via `labels.instructionsLabel`, placed in the Configuration column under `labels.configurationSectionTitle` / `configurationSectionSubtitle`.
 - [x] 3.5 Keep the Save-button required-field guard logic (`displayName`, `modelId`, `prompt`, `isSubmitting`) unchanged; relabel the primary action's text prop usage from Create to Save at the call site in the app (label content, not prop name).
 - [x] 3.6 Ensure focus-visible styling on back control, Cancel, and Save matches hover per `.claude/rules/a11y.md`.
 
@@ -33,7 +33,7 @@
 
 - [x] 6.1 In `ScheduledTaskCreatePage`, add an `onBack` handler that navigates to `returnUrl` identically to the existing Cancel handler; pass it to `ScheduledTaskCreateForm`.
 - [x] 6.2 Update the labels object passed to `ScheduledTaskCreateForm` with the new section/instructions keys and `ButtonsI18nKeys.Save`.
-- [x] 6.3 Add the `DialMarkdownEditor` CSS imports to the app entry file, only if not already present (per task 1.2).
+- [x] 6.3 Add the `MarkdownEditor` CSS imports to the app entry file, only if not already present (per task 1.2).
 
 ## 7. App: tests
 

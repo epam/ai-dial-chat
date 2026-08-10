@@ -1,7 +1,7 @@
 import type { DeploymentFeatures } from '@epam/ai-dial-chat-shared';
 import { ResponseFormat } from '@epam/ai-dial-chat-shared';
 import {
-  DialPopup,
+  Popup,
   DialTooltip,
   PrimaryButton,
   PopupSize,
@@ -52,7 +52,7 @@ export interface ChatSettingsModalProps {
   saveDisabledTooltip?: string;
   /**
    * CSS class applied for the modal background. Defaults to a
-   * `--bg-layer-sunken` background. `DialPopup` renders through a portal and
+   * `--bg-layer-sunken` background. `Popup` renders through a portal and
    * accepts no `style`, so this class (or setting `--csm-bg` at theme level) is
    * the only way to override the surface color — there is no `colors` prop.
    */
@@ -100,7 +100,7 @@ export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
   });
 
   return (
-    <DialPopup
+    <Popup
       open
       header={title}
       size={PopupSize.Sm}
@@ -139,7 +139,7 @@ export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
         temperatureLabels={temperatureLabels}
         temperatureHint={temperatureHint}
       />
-    </DialPopup>
+    </Popup>
   );
 };
 

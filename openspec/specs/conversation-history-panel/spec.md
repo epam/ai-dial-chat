@@ -105,7 +105,7 @@ When `item.iconTooltip` is provided and `item.isIconLoading` is `false` or `unde
 
 ### Requirement: Panel shows a skeleton loader while conversations are loading
 
-`ConversationPanel` SHALL accept an optional `isLoading?: boolean` prop. When `isLoading` is `true`, the panel body SHALL render a column of skeleton placeholder rows instead of the conversation list, empty state, or no-results state. Each skeleton row SHALL display a 24 × 24 px circular avatar placeholder and a title rectangle beside it. Row widths vary deterministically via `60 + (i * 23 % 35)` percent. The skeleton uses `DialSkeleton` from `@epam/ai-dial-ui-kit` with `color="var(--bg-layer-4)"` for contrast against the `bg-layer-raised` panel background. `ConversationPanelView` in `apps/chat` passes `isLoading` from `ConversationsContext`.
+`ConversationPanel` SHALL accept an optional `isLoading?: boolean` prop. When `isLoading` is `true`, the panel body SHALL render a column of skeleton placeholder rows instead of the conversation list, empty state, or no-results state. Each skeleton row SHALL display a 24 × 24 px circular avatar placeholder and a title rectangle beside it. Row widths vary deterministically via `60 + (i * 23 % 35)` percent. The skeleton uses `Skeleton` from `@epam/ai-dial-ui-kit` with `color="var(--bg-layer-4)"` for contrast against the `bg-layer-raised` panel background. `ConversationPanelView` in `apps/chat` passes `isLoading` from `ConversationsContext`.
 
 #### Scenario: Skeleton is shown while loading
 

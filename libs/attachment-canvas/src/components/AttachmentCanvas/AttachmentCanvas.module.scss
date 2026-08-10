@@ -10,7 +10,7 @@
 }
 
 .statusLabel {
-  color: var(--ac-status-text, var(--text-secondary, #6b7280));
+  color: var(--ac-status-text, var(--text-secondary, #57647a));
 }
 
 .errorIcon {
@@ -40,7 +40,7 @@
 }
 
 .jsonPunctuation {
-  color: var(--ac-json-punctuation, var(--text-secondary, #6b7280));
+  color: var(--ac-json-punctuation, var(--text-secondary, #57647a));
 }
 
 .jsonStringValue {
@@ -56,11 +56,11 @@
 }
 
 .jsonNullValue {
-  color: var(--ac-json-null, var(--text-secondary, #6b7280));
+  color: var(--ac-json-null, var(--text-secondary, #57647a));
 }
 
 .jsonExpandIcon {
-  color: var(--ac-json-toggle-icon, var(--text-secondary, #6b7280));
+  color: var(--ac-json-toggle-icon, var(--text-secondary, #57647a));
 
   &:hover {
     color: var(--ac-json-toggle-icon-hover, var(--text-primary, #161b2d));
@@ -74,7 +74,7 @@
 }
 
 .jsonCollapseIcon {
-  color: var(--ac-json-toggle-icon, var(--text-secondary, #6b7280));
+  color: var(--ac-json-toggle-icon, var(--text-secondary, #57647a));
 
   &:hover {
     color: var(--ac-json-toggle-icon-hover, var(--text-primary, #161b2d));
@@ -95,7 +95,7 @@
 }
 
 .jsonCollapsedContent {
-  color: var(--ac-json-collapsed-text, var(--text-secondary, #6b7280));
+  color: var(--ac-json-collapsed-text, var(--text-secondary, #57647a));
   background-color: var(
     --ac-json-collapsed-bg,
     var(--bg-layer-raised, #fcfcfc)

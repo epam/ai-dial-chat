@@ -2,7 +2,7 @@
 
 The current LLM naming flow (`apps/chat-api/src/conversations/conversation-naming.service.ts`) is a fire-and-forget side effect of `saveConversation`: after the first assistant reply it builds a prompt from exactly the first user/assistant exchange, calls the `UTILITY_MODEL` through the DIAL Core client, sanitises the result with `prepareEntityName`, and persists `{ ...conversation, name, llmNamingDone: true }`. The `llmNamingDone` flag then permanently blocks re-runs, and the frontend uses it to stop watching for async name updates (`display-name-watch.ts`, `Conversation.tsx`).
 
-There is no HTTP endpoint that returns a name; naming is entirely internal. The manual rename path is `PATCH /api/v1/conversations` (`renameConversation`) with `RenameConversationBodyDto.newTitle`, wired to the frontend through `server-api/conversations.api.ts` → generated `@epam/chat-api-client`. The rename UI is `RenameConversationPopup.tsx` (a `DialFormPopup` + `DialInput`), hosted by `ConversationPanelView.tsx`, which calls `renameConversation` from `ConversationsContext`.
+There is no HTTP endpoint that returns a name; naming is entirely internal. The manual rename path is `PATCH /api/v1/conversations` (`renameConversation`) with `RenameConversationBodyDto.newTitle`, wired to the frontend through `server-api/conversations.api.ts` → generated `@epam/chat-api-client`. The rename UI is `RenameConversationPopup.tsx` (a `DialFormPopup` + `Input`), hosted by `ConversationPanelView.tsx`, which calls `renameConversation` from `ConversationsContext`.
 
 This change adds an on-demand, synchronous "generate a title now" capability that reuses the naming machinery but decouples it from persistence and the `llmNamingDone` lock.
 

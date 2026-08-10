@@ -187,6 +187,7 @@ describe('ShareService', () => {
         'token-abc',
         'abc123',
         'user-sub-1',
+        'bucket-1',
       );
 
       expect(spy).toHaveBeenNthCalledWith(1, 'abc123', {
@@ -212,7 +213,7 @@ describe('ShareService', () => {
       );
 
       await expect(
-        service.acceptInvitation('token', 'abc123', 'user-sub-1'),
+        service.acceptInvitation('token', 'abc123', 'user-sub-1', 'bucket-1'),
       ).rejects.toThrow(BadGatewayException);
     });
 
@@ -223,7 +224,7 @@ describe('ShareService', () => {
       );
 
       await expect(
-        service.acceptInvitation('token', 'missing', 'user-sub-1'),
+        service.acceptInvitation('token', 'missing', 'user-sub-1', 'bucket-1'),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -234,7 +235,7 @@ describe('ShareService', () => {
       );
 
       await expect(
-        service.acceptInvitation('token', 'abc123', 'user-sub-1'),
+        service.acceptInvitation('token', 'abc123', 'user-sub-1', 'bucket-1'),
       ).rejects.toThrow(ServiceUnavailableException);
     });
 
@@ -253,6 +254,7 @@ describe('ShareService', () => {
         'token',
         'abc123',
         'user-sub-1',
+        'bucket-1',
       );
 
       expect(result).toEqual({ itemId: 'gpt-4o' });
@@ -270,7 +272,7 @@ describe('ShareService', () => {
         } as never);
 
       await expect(
-        service.acceptInvitation('token', 'abc123', 'user-sub-1'),
+        service.acceptInvitation('token', 'abc123', 'user-sub-1', 'bucket-1'),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -291,6 +293,7 @@ describe('ShareService', () => {
         'token-abc',
         'abc123',
         'user-sub-1',
+        'bucket-1',
       );
 
       expect(result).toEqual({
@@ -325,12 +328,18 @@ describe('ShareService', () => {
         'token-abc',
         'abc123',
         'user-sub-1',
+        'bucket-1',
       );
 
       expect(result).toEqual({
         itemId: 'applications/b/my-app__1.0',
         sharedDeployment,
       });
+      expect(deploymentsService.resolveDeploymentItem).toHaveBeenCalledWith(
+        'applications/b/my-app__1.0',
+        'token-abc',
+        'bucket-1',
+      );
     });
 
     it('falls back to resolveToolsetItem for an ambiguous id when resolveDeploymentItem finds nothing', async () => {
@@ -353,6 +362,7 @@ describe('ShareService', () => {
         'token-abc',
         'abc123',
         'user-sub-1',
+        'bucket-1',
       );
 
       expect(result).toEqual({
@@ -371,6 +381,7 @@ describe('ShareService', () => {
         'token-abc',
         'abc123',
         'user-sub-1',
+        'bucket-1',
       );
 
       expect(result).toEqual({ itemId: 'unknown-id' });
@@ -389,6 +400,7 @@ describe('ShareService', () => {
         'token-abc',
         'abc123',
         'user-sub-1',
+        'bucket-1',
       );
 
       expect(result).toEqual({ itemId: 'gpt-4o' });

@@ -10,7 +10,7 @@ fields are already validated in this codebase (e.g. `firstMessage`/`deploymentId
 Today `apps/chat/src/pages/AppsEditor/GeneralForm.tsx` and
 `apps/chat/src/pages/ToolsetEditor/EditorForm/GeneralForm.tsx` independently duplicate the
 same "General step" field set — name, description, icon URL, version, topics — with the same
-`DialInput`/`DialTextarea`/`DialTagInput` components from `@epam/ai-dial-ui-kit`, differing
+`Input`/`Textarea`/`DialTagInput` components from `@epam/ai-dial-ui-kit`, differing
 only in state ownership (Quick App owns local state, validation, and the API call itself;
 Toolset is a pure controlled view driven by its parent `ToolsetEditor.tsx`). Adding `intro` to
 both forms separately would extend that duplication. This change instead extracts the shared
@@ -44,11 +44,11 @@ field set into a library once, and adds `intro` to the extracted form.
     from its parent `ToolsetEditor.tsx`, which keeps owning `validate()` and the
     multi-section editor layout (General/Settings/Auth).
 - New `Input`, `Textarea`, and `TagInput` wrappers are added to `libs/ai-dial-kit` (thin
-  pass-throughs around `DialInput`/`DialTextarea`/`DialTagInput`, following the existing
+  pass-throughs around `Input`/`Textarea`/`DialTagInput`, following the existing
   `PrimaryButton`/`SearchBar`/`TabRow` wrapper convention), so the app's text-field visual
   style (e.g. corner radius) is restyled once and stays consistent everywhere, including
   other `libs/*` consumers such as `libs/catalog`. This supersedes this proposal's original
-  decision to consume `DialInput`/`DialTextarea`/`DialTagInput` directly — reversed after
+  decision to consume `Input`/`Textarea`/`DialTagInput` directly — reversed after
   visual-parity feedback against the Catalog page showed the app needs a single place to
   restyle these fields without diverging per call site. `.claude/rules/all-tsx.md` is updated
   with a new "Text fields" entry alongside the existing Button/SearchBar/Spinner/TabRow rules.
@@ -147,7 +147,7 @@ does not change either creation flow's user-observable behavior beyond adding `i
 - Building a general-purpose theming/design-token system for the new lib beyond the
   `classNames`/CSS-custom-property override pattern already established by
   `libs/catalog`/the archived `add-input-component` change.
-- Migrating other existing `DialInput`/`DialTextarea`/`DialTagInput` call sites in the app
+- Migrating other existing `Input`/`Textarea`/`DialTagInput` call sites in the app
   (e.g. `ToolsetEditor/EditorForm/SettingsForm.tsx`, `AuthSection.tsx`) to the new
   `libs/ai-dial-kit` `Input`/`Textarea`/`TagInput` wrappers — only `deployment-creation-form`'s
   usage is migrated in this change; broader app-wide migration is a follow-up.

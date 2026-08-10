@@ -9,6 +9,7 @@ import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import { IS_PUBLIC_KEY } from '../../common/decorators/public.decorator';
 import type { EnvironmentVariables } from '../../config/environment.config';
+import { AuthSource } from '../auth-source.enum';
 import type { SessionUser } from '../session/session.types';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
@@ -37,6 +38,19 @@ export class CsrfGuard implements CanActivate {
       context.getClass(),
     ]);
     if (isPublic) {
+      return true;
+    }
+
+    /*
+     * Header-authenticated callers explicitly attach the Authorization header
+     * themselves — unlike a cookie, a browser never sends it automatically,
+     * so there is no ambient-credential forgery for CSRF to defend against.
+     * Non-browser callers also have no Origin/Referer and no prior CSRF
+     * handshake, so enforcing the checks below would make every mutating
+     * header-authenticated request fail unconditionally. See design.md
+     * Decision 5 (bff-header-token-auth) for the full reasoning.
+     */
+    if (req.authSource === AuthSource.Header) {
       return true;
     }
 

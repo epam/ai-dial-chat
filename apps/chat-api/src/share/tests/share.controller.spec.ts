@@ -19,7 +19,11 @@ import { ShareLinkResponseDto } from '../dto/share-link-response.dto';
 import { ShareController } from '../share.controller';
 import { ShareService } from '../share.service';
 
-const TEST_USER = { sub: 'user-123', at: 'test-access-token' };
+const TEST_USER = {
+  sub: 'user-123',
+  at: 'test-access-token',
+  bucket: 'bucket-hash-123',
+};
 
 const createdLink: ShareLinkResponseDto = {
   url: 'https://example.com/marketplace/share/gpt-4o',
@@ -179,6 +183,7 @@ describe('ShareController (integration)', () => {
         TEST_USER.at,
         'abc123',
         TEST_USER.sub,
+        TEST_USER.bucket,
       );
     });
 

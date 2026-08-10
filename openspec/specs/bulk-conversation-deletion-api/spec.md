@@ -331,9 +331,9 @@ Tests follow the existing pattern: mock `ConversationService` via `{ provide: Co
 
 ---
 
-### Requirement: ConversationService unit tests cover deletion logic
+### Requirement: ConversationLifecycleService unit tests cover deletion logic
 
-Unit tests in `apps/chat-api/src/conversations/tests/conversation.service.spec.ts` SHALL cover the service deletion methods:
+Unit tests in `apps/chat-api/src/conversations/lifecycle/tests/conversation-lifecycle.service.spec.ts` SHALL cover the service deletion methods:
 
 - `deleteConversations`: deduplication; ownership rejection (FORBIDDEN); DIAL Core 404 → alreadyAbsent; DIAL Core success → deleted; DIAL Core 5xx → UPSTREAM_ERROR in failed; mixed outcomes; fire-and-forget pin cleanup called for deleted IDs only
 - `deleteAllConversations`: empty bucket returns zero counts immediately; non-empty bucket delegates to `deleteConversations`; metadata listing error throws BadGatewayException

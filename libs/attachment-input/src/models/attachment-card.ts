@@ -21,8 +21,6 @@ export interface AttachmentCardState {
   isImage: boolean;
   /** Whether the attachment should render as a link tile. */
   isLink: boolean;
-  /** Whether the attachment should render as an audio player tile. */
-  isAudio: boolean;
   /** Icon component representing the attachment's type. */
   BottomIcon: Icon | null;
   /** Human-readable type/status label rendered next to `BottomIcon`. */

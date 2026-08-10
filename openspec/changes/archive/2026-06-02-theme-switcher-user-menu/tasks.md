@@ -12,10 +12,10 @@
 ## 3. SettingsModal
 
 - [x] 3.1 Create `apps/chat/src/components/Settings/SettingsModal.tsx` — `DialConfirmationPopup` with `header={t('settings.title')}`, `confirmLabel={t('settings.apply')}`
-- [x] 3.2 Add `pendingTheme` local state initialised to `useTheme().currentTheme` on open; wire `DialSelect` value to `pendingTheme`, `onChange` updates `pendingTheme` only
+- [x] 3.2 Add `pendingTheme` local state initialised to `useTheme().currentTheme` on open; wire `Select` value to `pendingTheme`, `onChange` updates `pendingTheme` only
 - [x] 3.3 Map `useTheme().themes` to `{ value: theme.id, label: theme.displayName }` options via `useMemo`
 - [x] 3.4 Wire `onConfirm` to call `setTheme(pendingTheme)` then `onClose`; wire `onCancel`/`onClose` to `onClose` without calling `setTheme`
-- [x] 3.5 Disable `DialSelect` when `useTheme().isLoading` is `true`
+- [x] 3.5 Disable `Select` when `useTheme().isLoading` is `true`
 
 ## 4. UserMenu Dropdown
 

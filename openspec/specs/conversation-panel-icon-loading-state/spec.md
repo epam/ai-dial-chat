@@ -25,11 +25,11 @@ Memoisation: the existing `useMemo` that builds `conversations` already lists `d
 
 ### Requirement: `ConversationRow` renders an icon skeleton when `isIconLoading` is true
 
-`ConversationRow` (in `libs/conversation-panel/src/components/ConversationGroup/ConversationRow.tsx`) SHALL render a `DialSkeleton` (from `@epam/ai-dial-ui-kit`) in place of `DeploymentIcon` when `item.isIconLoading` is `true`. The skeleton MUST be configured as:
+`ConversationRow` (in `libs/conversation-panel/src/components/ConversationGroup/ConversationRow.tsx`) SHALL render a `Skeleton` (from `@epam/ai-dial-ui-kit`) in place of `DeploymentIcon` when `item.isIconLoading` is `true`. The skeleton MUST be configured as:
 
 ```tsx
-<DialSkeleton
-  variant={DialSkeletonVariant.Circular}
+<Skeleton
+  variant={SkeletonVariant.Circular}
   width={DIAL_ICON_SIZE.LG}
   height={DIAL_ICON_SIZE.LG}
   color="var(--bg-layer-4)"

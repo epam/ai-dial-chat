@@ -2,23 +2,21 @@
 
 This guide covers the auth behavior that exists today:
 
-- Implemented: BFF OIDC login, callback, encrypted session cookie, `GET /api/v1/auth/me`, global `SessionGuard`, global `CsrfGuard` on mutating requests, and transparent refresh.
-- Not implemented yet: SPA auth integration, `POST /api/v1/auth/logout`, and multi-provider manual smoke beyond configured local providers.
+- Implemented: BFF OIDC login, callback, encrypted session cookie, `GET /api/v1/auth/me`, `POST /api/v1/auth/logout`, global `SessionGuard`, global `CsrfGuard` on mutating requests, transparent refresh, and an optional header bearer-token authentication path (§7).
+- Not implemented yet: SPA auth integration and multi-provider manual smoke beyond configured local providers.
 
 ## 1. Automated Verification
 
 Run all auth-related backend tests:
 
 ```bash
-npm exec nx run @epam/chat-api:test-ci--src/auth/tests/auth.controller.spec.ts
-npm exec nx run @epam/chat-api:test-ci--src/auth/tests/session/session.guard.spec.ts
-npm exec nx run @epam/chat-api:test-ci--src/auth/tests/session/session.service.spec.ts
-npm exec nx run @epam/chat-api:test-ci--src/auth/tests/keys/keys.service.spec.ts
-npm exec nx run @epam/chat-api:test-ci--src/auth/tests/providers/provider-registry.service.spec.ts
-npm exec nx run @epam/chat-api:test-ci--src/auth/tests/refresh/refresh.service.spec.ts
-npm exec nx run @epam/chat-api:test-ci--src/auth/tests/csrf/csrf.guard.spec.ts
-npm exec nx run @epam/chat-api:test-ci--src/auth/tests/utils/callback-url.util.spec.ts
+npm exec nx test chat-api -- src/auth
 ```
+
+That includes the cookie-session path (`strategies/tests/cookie-session.strategy.spec.ts`,
+`session/tests/session.guard.spec.ts`, `session/tests/optional-session.guard.spec.ts`), the
+header bearer-token path (`strategies/tests/header-token.strategy.spec.ts`), CSRF exemption
+(`csrf/csrf.guard.spec.ts`), and the integration tests in `auth.controller.spec.ts`.
 
 Run the whole API test target when you want the broader regression check:
 
@@ -228,6 +226,56 @@ GET /api/v1/auth/callback/keycloak?code=anything&state=<real-state>&iss=https%3A
 
 Expected: `400` with `Issuer mismatch`. Use the real provider id and a real in-flight transaction cookie when checking this manually.
 
-## 7. Current Known Gaps
+## 7. Header Bearer-Token Authentication (Optional Extension)
+
+This path is off by default (`AUTH_HEADER_TOKEN_ENABLED=false`). To smoke test it locally:
+
+1. Set in `apps/chat-api/.env.local`:
+
+   ```bash
+   AUTH_HEADER_TOKEN_ENABLED=true
+   AUTH_HEADER_TOKEN_ALLOWED_ISSUERS=https://your-idp.example.com/realms/your-realm
+   ```
+
+   (use the exact `issuer` value the configured provider derives — see
+   `apps/chat-api/README.md` "Auth provider environment variables").
+
+2. Obtain a real access token from the same provider (e.g. via a password/client-credentials
+   grant against your IdP, or by extracting `at` from a decrypted session during local
+   testing) and call a protected endpoint directly with it:
+
+   ```bash
+   curl -i http://localhost:5000/api/v1/auth/me \
+     -H "Authorization: Bearer <access_token>"
+   ```
+
+   Expected: `200` with the user profile and **no** `X-CSRF-Token` response header.
+
+3. Confirm precedence: repeat the call with both a valid session cookie (from Section 3) and
+   the `Authorization` header set — the response should reflect the header token's identity,
+   not the cookie's.
+
+4. Confirm no silent fallback: repeat with an expired or tampered bearer token, still with a
+   valid session cookie present. Expected: `401` with a body containing
+   `"code": "AUTH_HEADER_TOKEN_EXPIRED"` or `"code": "AUTH_HEADER_TOKEN_INVALID"` — the cookie
+   must never be consulted.
+
+5. Confirm CSRF exemption: a mutating request authenticated via the header (e.g.
+   `POST /api/v1/auth/logout` or, once header auth is enabled for a mutating business
+   endpoint) succeeds with **no** `Origin`, `Referer`, or `X-CSRF-Token` header:
+
+   ```bash
+   curl -i -X POST http://localhost:5000/api/v1/auth/logout \
+     -H "Authorization: Bearer <access_token>"
+   ```
+
+   Expected: `200`, no `Set-Cookie` header.
+
+6. Confirm the feature stays off unless explicitly enabled: with
+   `AUTH_HEADER_TOKEN_ENABLED=false` (or unset), the same `Authorization` header is ignored
+   entirely — a request with only a valid cookie behaves identically to before this feature
+   existed, and a request with only the header (no cookie) gets `401`.
+
+## 8. Current Known Gaps
 
 - The Swagger setup still needs final cookie-auth documentation cleanup.

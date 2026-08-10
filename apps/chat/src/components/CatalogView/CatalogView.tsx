@@ -4,13 +4,12 @@ import {
   CatalogItem,
   CatalogItemDetailsFetchResult,
   CatalogViewMode,
-  CreateOption,
   CredentialsLevel,
   CredentialStatus,
 } from '@epam/ai-dial-catalog';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
+import { DropdownItem, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { ToolsetLogoutBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo } from 'react';
@@ -233,6 +232,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     loadingPaths: publishLoadingPaths,
     onExpandedPathsChange: onPublishExpandedPathsChange,
     onCreatePublishFolder,
+    rememberPublishFolder,
     hasPublishWriteAccess,
   } = usePublishFolders();
 
@@ -576,6 +576,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
 
   const handlePublishSuccess = useCallback(
     (item: CatalogItem, folderPath: string[]) => {
+      rememberPublishFolder(folderPath);
       showNotification({
         variant: NotificationVariant.Success,
         title: t(CatalogI18nKeys.PublishSuccessTitle),
@@ -585,7 +586,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         }),
       });
     },
-    [showNotification, t],
+    [rememberPublishFolder, showNotification, t],
   );
 
   const handlePublishError = useCallback(
@@ -666,8 +667,8 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [refetchToolsets, refetchDeployments, showNotification, t],
   );
 
-  const createOptions = useMemo<CreateOption[]>(() => {
-    const options: CreateOption[] = [];
+  const createOptions = useMemo<DropdownItem[]>(() => {
+    const options: DropdownItem[] = [];
 
     if (
       quickAppSchemaId &&
@@ -675,6 +676,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       !isHideCustomAppCreationEnabled
     ) {
       options.push({
+        key: 'quick-app',
         label: t(CatalogI18nKeys.CreateQuickApp),
         onClick: () =>
           navigate(
@@ -689,6 +691,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
 
     if (isToolsetsEnabled) {
       options.push({
+        key: 'toolset',
         label: t(CatalogI18nKeys.CreateToolset),
         onClick: () => {
           const params = new URLSearchParams({
@@ -701,6 +704,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
 
     if (isCustomAppsEnabled && !isHideCustomAppCreationEnabled) {
       options.push({
+        key: 'custom-app',
         label: t(CatalogI18nKeys.CreateCustomApp),
         onClick: () => {
           const params = new URLSearchParams({

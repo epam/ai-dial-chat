@@ -33,7 +33,7 @@ export class ModelsService {
         const result = await this.dialClient.client.getModels({
           headers: getBearerAuthHeaders(accessToken),
         });
-        if (result.error) {
+        if (!result.response.ok || result.error != null) {
           return mapDialHttpStatus(
             result.response.status,
             'list models',
@@ -62,7 +62,7 @@ export class ModelsService {
         const result = await this.dialClient.client.getModel(modelName, {
           headers: getBearerAuthHeaders(accessToken),
         });
-        if (result.error) {
+        if (!result.response.ok || result.error != null) {
           return mapDialHttpStatus(
             result.response.status,
             `get model "${modelName}"`,

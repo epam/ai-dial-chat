@@ -56,7 +56,7 @@ The input SHALL store the returned URL on the matching `Attachment.url`.
 
 The image source SHALL prefer `attachment.previewUrl` and fall back to `attachment.url`. The `<img>` SHALL use native lazy-loading (`loading="lazy"`) and asynchronous decoding (`decoding="async"`).
 
-While the image has not loaded, `AttachmentCard` SHALL render a rectangular `DialSkeleton` from `@epam/ai-dial-ui-kit` over the image area. The skeleton SHALL use the ui-kit overlay API to display a centered image icon (`IconPhoto`) and SHALL use theme/ui-kit styling only. The skeleton SHALL remain visible while the image is loading or failed, and SHALL be removed when the image emits a successful load event.
+While the image has not loaded, `AttachmentCard` SHALL render a rectangular `Skeleton` from `@epam/ai-dial-ui-kit` over the image area. The skeleton SHALL use the ui-kit overlay API to display a centered image icon (`IconPhoto`) and SHALL use theme/ui-kit styling only. The skeleton SHALL remain visible while the image is loading or failed, and SHALL be removed when the image emits a successful load event.
 
 The image load tracking SHALL be isolated in a reusable hook owned by `libs/conversation-input` and SHALL not introduce host/application knowledge such as REST paths, generated clients, auth/session state, or file-storage URL rules.
 
@@ -74,7 +74,7 @@ The image load tracking SHALL be isolated in a reusable hook owned by `libs/conv
 #### Scenario: Skeleton is shown until image load completes
 
 - **WHEN** an image attachment thumbnail has not emitted a successful load event
-- **THEN** the card shows a rectangular active `DialSkeleton` with a centered image icon overlay
+- **THEN** the card shows a rectangular active `Skeleton` with a centered image icon overlay
 - **WHEN** the image emits a successful load event
 - **THEN** the skeleton is removed and the image is shown
 

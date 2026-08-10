@@ -38,9 +38,9 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
 });
 
 /*
- * Mirrors the `DialDropdown` mock convention used across this repo — renders
+ * Mirrors the `Dropdown` mock convention used across this repo — renders
  * the trigger and (when open) the overlay content inline, so tests can
- * interact with real button/menu elements instead of DialDropdown's own
+ * interact with real button/menu elements instead of Dropdown's own
  * floating/positioning internals. The child trigger is cloned with a click
  * handler that toggles `open`, standing in for the real component's default
  * click-to-open behavior.
@@ -49,7 +49,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
   return {
     ...actual,
-    DialDropdown: ({
+    Dropdown: ({
       children,
       open,
       onOpenChange,

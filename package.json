@@ -99,11 +99,11 @@
     "yaml": "2.8.3"
   },
   "dependencies": {
-    "@epam/ai-dial-react-file-manager": "0.1.0-dev.18",
+    "@epam/ai-dial-react-file-manager": "0.1.0-dev.19",
     "@epam/ai-dial-react-pdf-highlighter": "0.2.0-dev.22",
     "@epam/ai-dial-shared": "0.48.0",
     "@epam/ai-dial-typescript-sdk": "0.1.0-dev.31",
-    "@epam/ai-dial-ui-kit": "^0.13.0-dev.34",
+    "@epam/ai-dial-ui-kit": "^0.13.0-dev.43",
     "@epam/ai-dial-visualizer-connector": "0.48.0",
     "@epam/pdf-highlighter-kit": "^0.0.18",
     "@nestjs/cache-manager": "^3.1.2",
@@ -161,7 +161,7 @@
     "brace-expansion@1.1.15": "1.1.16",
     "brace-expansion@2.1.1": "2.1.4",
     "brace-expansion@5.0.6": "5.0.9",
-    "js-yaml": "4.3.0"
+    "js-yaml": "4.3.1"
   },
   "workspaces": [
     "packages/*",
