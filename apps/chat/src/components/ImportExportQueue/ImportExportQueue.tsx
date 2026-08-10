@@ -1,15 +1,12 @@
 import {
-  ButtonAppearance,
+  ConfirmationPopup,
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
-  DialConfirmationPopup,
   DialEllipsisTooltip,
-  DialIconButton,
   DialProgressBar,
   DialProgressBarSize,
   ElementSize,
   GhostIconButton,
-  IconButton,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconAlertCircleFilled,
@@ -94,12 +91,10 @@ const JobRow: FC<JobRowProps> = ({ job, onDismiss, onRetry }) => {
         )}
         {job.status === ExportJobStatus.Failed && (
           <>
-            <IconButton
+            <GhostIconButton
               aria-label={t(ConversationExportI18nKeys.RetryJobAriaLabel, {
                 title: job.label,
               })}
-              appearance={ButtonAppearance.Ghost}
-              size={ElementSize.Large}
               icon={
                 <IconRefresh
                   size={DIAL_ICON_SIZE.SM}
@@ -114,11 +109,10 @@ const JobRow: FC<JobRowProps> = ({ job, onDismiss, onRetry }) => {
           </>
         )}
         {job.status === ExportJobStatus.InProgress && (
-          <DialIconButton
+          <GhostIconButton
             aria-label={t(ConversationExportI18nKeys.CloseJobAriaLabel, {
               title: job.label,
             })}
-            appearance={ButtonAppearance.Ghost}
             size={ElementSize.Small}
             icon={<IconX size={DIAL_ICON_SIZE.SM} className="text-secondary" />}
             onClick={() => onDismiss(job.id)}
@@ -198,13 +192,12 @@ const ImportExportQueue: FC<Props> = ({
           )}
         </div>
         <div className="flex items-center gap-1">
-          <IconButton
+          <GhostIconButton
             aria-label={
               isCollapsed
                 ? t(ConversationExportI18nKeys.ExpandQueueAriaLabel)
                 : t(ConversationExportI18nKeys.CollapseQueueAriaLabel)
             }
-            appearance={ButtonAppearance.Ghost}
             size={ElementSize.Small}
             icon={
               isCollapsed ? (
@@ -251,7 +244,7 @@ const ImportExportQueue: FC<Props> = ({
           ))}
         </div>
       )}
-      <DialConfirmationPopup
+      <ConfirmationPopup
         open={isConfirmOpen}
         header={t(ConversationExportI18nKeys.CloseQueueConfirmHeader)}
         description={t(getCloseConfirmDescriptionKey(hasInProgress, hasFailed))}

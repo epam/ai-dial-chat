@@ -15,7 +15,7 @@ There is no destination-folder-picker UI in this change (that is step 10 / `add-
 - `POST /api/v1/files/move` — batch cross-folder move via `moveResource`, same expansion strategy, kept as a **separate endpoint** from `/rename`.
 - `useDialFileManager.onCopyFiles` wired to `/copy`.
 - `useDialFileManager.onMoveToFiles` extended to dispatch same-folder calls to the existing `/rename` path (unchanged behavior) and cross-folder calls to the new `/move` path.
-- An `OperationLoaderModal` shown during copy/move with a cancel affordance, modeled on the legacy component's visual shape (spinner + title + text + cancel) but rebuilt with current conventions (react-i18next, ui-kit `DialSpinner`/`DialPopup`, no Redux).
+- An `OperationLoaderModal` shown during copy/move with a cancel affordance, modeled on the legacy component's visual shape (spinner + title + text + cancel) but rebuilt with current conventions (react-i18next, ui-kit `Spinner`/`DialPopup`, no Redux).
 - Copy/Move rows added to the `my_files`-only, WRITE-gated action-label table alongside the existing Rename row.
 
 **Non-Goals:**
@@ -108,7 +108,7 @@ Folder-level partial failure uses `"Partial copy"` / `"Partial move"` (parallel 
 
 ### D9 — OperationLoaderModal is a new component, not a shared-state overlay
 
-**Decision**: `OperationLoaderModal` lives at `apps/chat/src/components/DialFileManagerModal/OperationLoaderModal.tsx` (co-located with the existing `UploadProgressModal` it's structurally closest to) and is rendered by `DialFileManagerShell` exactly like `UploadProgressModal` — driven by `isCopying`/`isMoving` state and a `cancelCopyMove` callback returned from the hook, not by a new shared "any operation in progress" overlay (that unification is out of scope — tracked separately, matching the #7505 unified-overlay item referenced in the roadmap). It reuses ui-kit's `DialSpinner`/`DialPopup`, not the legacy local `Spinner` component that no longer exists on this branch.
+**Decision**: `OperationLoaderModal` lives at `apps/chat/src/components/DialFileManagerModal/OperationLoaderModal.tsx` (co-located with the existing `UploadProgressModal` it's structurally closest to) and is rendered by `DialFileManagerShell` exactly like `UploadProgressModal` — driven by `isCopying`/`isMoving` state and a `cancelCopyMove` callback returned from the hook, not by a new shared "any operation in progress" overlay (that unification is out of scope — tracked separately, matching the #7505 unified-overlay item referenced in the roadmap). It reuses ui-kit's `Spinner`/`DialPopup`, not the legacy local `Spinner` component that no longer exists on this branch.
 
 **Rationale**: `UploadProgressModal` is the closest existing pattern for "long-running batch operation with per-item state and a cancel button" already reviewed and shipped in this codebase; reusing its shape (not its code — upload tracks per-file progress, copy/move only needs an aggregate count) keeps the new component small and consistent.
 
@@ -135,7 +135,7 @@ All backend implementation follows `apps/chat-api/AGENTS.md` as source of truth 
 5. Extend `useDialFileManager`: add `onCopyFiles`, extend `onMoveToFiles` per D3, add `isCopying`/`isMoving`/`cancelCopyMove` state.
 6. Add `OperationLoaderModal` component; wire into `DialFileManagerShell`.
 7. Extend `DialFileManagerShellLabels` (Copy/Move labels, operation-loader copy) and the shell's `actionLabels` mapping.
-8. Add i18n keys (`en.json` + `DialFileManagerI18nKeys` enum) and confirm RTL is a no-op (ui-kit-owned grid/tree chrome; the new modal reuses `DialPopup`/`DialSpinner` logical layout, same as `UploadProgressModal`).
+8. Add i18n keys (`en.json` + `DialFileManagerI18nKeys` enum) and confirm RTL is a no-op (ui-kit-owned grid/tree chrome; the new modal reuses `DialPopup`/`Spinner` logical layout, same as `UploadProgressModal`).
 9. Update `file-manager-tabs` capability spec (Copy/Move rows).
 
 **Rollback**: remove the two new controller routes and revert the hook/shell changes. No DB or storage migration; DIAL Core resources already copied/moved are not reverted (matches rename/delete rollback posture — this change only adds a transport, it doesn't alter existing data on rollback).

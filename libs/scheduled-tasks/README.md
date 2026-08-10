@@ -97,8 +97,7 @@ Presentational create-task form: a back-navigable header, display name, a one-sh
 ```tsx
 import {
   ScheduledTaskCreateForm,
-  ScheduledTaskFrequency,
-  ScheduledTaskScheduleType,
+  ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
 
 <ScheduledTaskCreateForm
@@ -109,9 +108,9 @@ import {
   }
   values={{
     displayName: '',
-    scheduleType: ScheduledTaskScheduleType.Recurring,
-    frequency: ScheduledTaskFrequency.Daily,
+    repeat: ScheduledTaskRepeat.Daily,
     time: '09:00',
+    minute: '0',
     startDate: '',
     endDate: '',
     modelId: '',
@@ -129,7 +128,7 @@ import {
 
 ### ScheduledTaskDetailView
 
-Presentational detail page for a single scheduled task: a back-navigable header, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated, infinite-scroll History panel listing past runs with a status icon, timestamp, and duration per row. Field values, runs, and markdown rendering are all supplied by the host app; this component holds no state of its own and performs no routing, i18n, or network calls.
+Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated, infinite-scroll History panel listing past runs with a status icon, timestamp, and duration per row. Field values, runs, and markdown rendering are all supplied by the host app; this component holds no state of its own and performs no routing, i18n, or network calls.
 
 ```tsx
 import {
@@ -144,6 +143,7 @@ import {
     }
   }
   onBack={() => {}}
+  onEdit={() => {}}
   displayName="Daily summary"
   description="Summarizes unread inbox items every morning"
   modelLabel="GPT-4.1 mini"

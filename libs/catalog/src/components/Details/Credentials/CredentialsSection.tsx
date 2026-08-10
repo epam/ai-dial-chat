@@ -1,10 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Input } from '@epam/ai-dial-kit';
 import {
   DialAccordion,
-  DialConfirmationPopup,
+  ConfirmationPopup,
   NeutralButton,
   PrimaryButton,
+  Input,
 } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useState } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
@@ -129,7 +129,7 @@ const LevelForm: FC<LevelFormProps> = ({
         <NeutralButton label={logoutActionLabel} onClick={handleLogoutClick} />
       )}
 
-      <DialConfirmationPopup
+      <ConfirmationPopup
         open={isLogoutConfirmOpen}
         header={logoutActionLabel}
         description={

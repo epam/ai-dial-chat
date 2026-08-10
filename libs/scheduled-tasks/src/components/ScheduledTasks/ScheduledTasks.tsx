@@ -9,7 +9,7 @@ import {
   ButtonDropdown,
   ButtonVariant,
   DIAL_ICON_SIZE,
-  DialSpinner,
+  Spinner,
   GhostButton,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
@@ -160,7 +160,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
 
   const renderContent = () => {
     if (isLoading) {
-      return <DialSpinner />;
+      return <Spinner />;
     }
 
     if (error) {

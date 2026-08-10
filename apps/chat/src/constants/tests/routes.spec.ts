@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   getConversationRoute,
   getScheduledTaskDetailRoute,
+  getScheduledTaskEditRoute,
   normalizeConversationId,
 } from '../routes';
 
@@ -89,6 +90,20 @@ describe('getScheduledTaskDetailRoute', () => {
   it('percent-encodes a scheduleId that needs encoding', () => {
     expect(getScheduledTaskDetailRoute('sched 123/x')).toBe(
       '/scheduled-tasks/sched%20123%2Fx',
+    );
+  });
+});
+
+describe('getScheduledTaskEditRoute', () => {
+  it('builds the edit route for a plain scheduleId', () => {
+    expect(getScheduledTaskEditRoute('sched_123')).toBe(
+      '/scheduled-tasks/sched_123/edit',
+    );
+  });
+
+  it('percent-encodes a scheduleId that needs encoding', () => {
+    expect(getScheduledTaskEditRoute('sched 123/x')).toBe(
+      '/scheduled-tasks/sched%20123%2Fx/edit',
     );
   });
 });

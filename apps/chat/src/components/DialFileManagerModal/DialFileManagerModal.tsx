@@ -10,7 +10,7 @@ import {
   type FileManagerGridRow,
 } from '@epam/ai-dial-react-file-manager';
 import {
-  DialPopup,
+  Popup,
   NOT_ALLOWED_SYMBOLS,
   NOT_ALLOWED_SYMBOLS_REGEXP,
   NotificationVariant,
@@ -629,7 +629,7 @@ const DialFileManagerModal: FC<Props> = ({
   );
 
   return (
-    <DialPopup
+    <Popup
       open={isOpen}
       header={
         <div className="flex flex-col gap-1">
@@ -673,7 +673,7 @@ const DialFileManagerModal: FC<Props> = ({
         getDisabledTooltip={getDisabledTooltip}
         unsupportedFileTypeTooltip={unsupportedFileTypeTooltip}
       />
-    </DialPopup>
+    </Popup>
   );
 };
 

@@ -7,8 +7,8 @@ import { ConversationRow } from '../ConversationRow';
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
-  DialSkeletonVariant: { Circular: 'circular' },
-  DialSkeleton: ({
+  SkeletonVariant: { Circular: 'circular' },
+  Skeleton: ({
     variant,
     width,
     height,
@@ -49,7 +49,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </button>
   ),
   DialEllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
-  DialDropdown: ({
+  Dropdown: ({
     children,
     onOpenChange,
   }: {

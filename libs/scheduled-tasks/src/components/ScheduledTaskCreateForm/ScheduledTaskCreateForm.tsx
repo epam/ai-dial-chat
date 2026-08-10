@@ -1,24 +1,23 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Input, Textarea } from '@epam/ai-dial-kit';
 import {
+  Input,
+  Textarea,
   Calendar,
   CalendarMode,
   DIAL_ICON_SIZE,
+  NumberInput,
   GhostIconButton,
-  DialSelectField,
-  DialSpinner,
-  LazyDialMarkdownEditor,
+  Spinner,
+  LazyMarkdownEditor,
   NeutralButton,
   PrimaryButton,
+  Select,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { lazy, Suspense, type ComponentProps, type FC } from 'react';
 import { DESCRIPTION_MAX_LENGTH } from '../../constants/scheduled-task-create-form';
 import { ScheduledTaskCreateFormProps } from '../../models/scheduled-task-create-form-props';
-import {
-  ScheduledTaskFrequency,
-  ScheduledTaskScheduleType,
-} from '../../types/scheduled-task-schedule';
+import { ScheduledTaskRepeat } from '../../types/scheduled-task-schedule';
 import {
   calendarValueToDateValue,
   calendarValueToDayOfWeek,
@@ -34,14 +33,12 @@ import styles from './ScheduledTaskCreateForm.module.scss';
  * appended to their label text directly. */
 const withRequiredMarker = (label: string): string => `${label} *`;
 
-const DialMarkdownEditor = lazy(async () => {
-  const module = await LazyDialMarkdownEditor();
-  return { default: module.DialMarkdownEditor };
+const MarkdownEditor = lazy(async () => {
+  const module = await LazyMarkdownEditor();
+  return { default: module.MarkdownEditor };
 });
 
-type DialMarkdownEditorTheme = ComponentProps<
-  typeof DialMarkdownEditor
->['theme'];
+type MarkdownEditorTheme = ComponentProps<typeof MarkdownEditor>['theme'];
 
 /**
  * Presentational create-task form: a back-navigable header (Cancel/Save
@@ -71,8 +68,8 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     typography?.sectionTitleClassName ?? 'dial-body-semi-text';
   const sectionSubtitleClassName =
     typography?.sectionSubtitleClassName ?? 'dial-tiny-text';
-  const scheduleSectionLabelClassName =
-    typography?.scheduleSectionLabelClassName ?? 'dial-body-semi-text mb-1';
+  const instructionsLabelClassName =
+    typography?.instructionsLabelClassName ?? 'dial-body-semi-text mb-1';
   const instructionsErrorClassName =
     typography?.instructionsErrorClassName ?? 'dial-small-text';
   const cssVars = buildCssVars({
@@ -180,9 +177,8 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             }
           />
 
-          <DialSelectField
-            label={labels.modelOrAgentLabel}
-            required
+          <Select
+            labelProps={{ label: labels.modelOrAgentLabel, required: true }}
             value={values.modelId}
             placeholder={labels.modelPlaceholder}
             onChange={(next) => onFieldChange('modelId', next as string)}
@@ -193,30 +189,20 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             }))}
           />
 
-          <fieldset className="flex flex-col gap-3">
-            <legend className={scheduleSectionLabelClassName}>
-              {labels.scheduleSectionLabel}
-            </legend>
-
-            <DialSelectField
-              label={labels.scheduleTypeAriaLabel}
-              value={values.scheduleType}
+          <div className="flex flex-col gap-3">
+            <Select
+              labelProps={{ label: labels.repeatLabel }}
+              value={values.repeat}
               onChange={(next) =>
-                onFieldChange('scheduleType', next as ScheduledTaskScheduleType)
+                onFieldChange('repeat', next as ScheduledTaskRepeat)
               }
-              options={[
-                {
-                  value: ScheduledTaskScheduleType.Once,
-                  label: labels.scheduleTypeOnceLabel,
-                },
-                {
-                  value: ScheduledTaskScheduleType.Recurring,
-                  label: labels.scheduleTypeRecurringLabel,
-                },
-              ]}
+              options={labels.repeatOptions.map((option) => ({
+                value: option.key,
+                label: option.label,
+              }))}
             />
 
-            {values.scheduleType === ScheduledTaskScheduleType.Once && (
+            {values.repeat === ScheduledTaskRepeat.OneTime && (
               <div className="flex flex-col gap-1">
                 <Calendar
                   id="scheduled-task-run-at"
@@ -241,47 +227,37 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
               </div>
             )}
 
-            {values.scheduleType === ScheduledTaskScheduleType.Recurring && (
+            {values.repeat !== ScheduledTaskRepeat.OneTime && (
               <>
-                <DialSelectField
-                  label={labels.frequencyLabel}
-                  value={values.frequency}
-                  onChange={(next) =>
-                    onFieldChange('frequency', next as ScheduledTaskFrequency)
-                  }
-                  options={labels.frequencyOptions.map((option) => ({
-                    value: option.key,
-                    label: option.label,
-                  }))}
-                />
+                {values.repeat !== ScheduledTaskRepeat.Hourly && (
+                  <div className="flex flex-col gap-1">
+                    <Calendar
+                      id="scheduled-task-time"
+                      mode={CalendarMode.Time}
+                      value={values.time}
+                      onChange={(value) =>
+                        onFieldChange(
+                          'time',
+                          typeof value === 'string' ? value : '',
+                        )
+                      }
+                      label={withRequiredMarker(labels.timeLabel)}
+                      invalid={Boolean(errors.time)}
+                    />
+                    {errors.time && (
+                      <p
+                        className={mergeClasses(
+                          instructionsErrorClassName,
+                          styles.instructionsError,
+                        )}
+                      >
+                        {errors.time}
+                      </p>
+                    )}
+                  </div>
+                )}
 
-                <div className="flex flex-col gap-1">
-                  <Calendar
-                    id="scheduled-task-time"
-                    mode={CalendarMode.Time}
-                    value={values.time}
-                    onChange={(value) =>
-                      onFieldChange(
-                        'time',
-                        typeof value === 'string' ? value : '',
-                      )
-                    }
-                    label={withRequiredMarker(labels.timeLabel)}
-                    invalid={Boolean(errors.time)}
-                  />
-                  {errors.time && (
-                    <p
-                      className={mergeClasses(
-                        instructionsErrorClassName,
-                        styles.instructionsError,
-                      )}
-                    >
-                      {errors.time}
-                    </p>
-                  )}
-                </div>
-
-                {values.frequency === ScheduledTaskFrequency.Weekly && (
+                {values.repeat === ScheduledTaskRepeat.Weekly && (
                   <div className="flex flex-col gap-1">
                     <Calendar
                       id="scheduled-task-day-of-week"
@@ -309,7 +285,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                   </div>
                 )}
 
-                {values.frequency === ScheduledTaskFrequency.Monthly && (
+                {values.repeat === ScheduledTaskRepeat.Monthly && (
                   <Input
                     id="scheduled-task-day-of-month"
                     value={values.dayOfMonth ?? ''}
@@ -322,6 +298,28 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                     }}
                     invalid={Boolean(errors.dayOfMonth)}
                     error={errors.dayOfMonth}
+                  />
+                )}
+
+                {values.repeat === ScheduledTaskRepeat.Hourly && (
+                  <NumberInput
+                    id="scheduled-task-minute"
+                    integer
+                    min={0}
+                    max={59}
+                    value={values.minute ?? ''}
+                    onChange={(value) =>
+                      onFieldChange(
+                        'minute',
+                        value != null ? String(value) : '',
+                      )
+                    }
+                    labelProps={{
+                      label: labels.minuteLabel,
+                      required: true,
+                    }}
+                    invalid={Boolean(errors.minute)}
+                    error={errors.minute}
                   />
                 )}
 
@@ -382,7 +380,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                 </div>
               </>
             )}
-          </fieldset>
+          </div>
         </div>
 
         <div
@@ -409,15 +407,15 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             aria-label={labels.instructionsLabel}
             className="flex flex-1 flex-col gap-1"
           >
-            <span className={scheduleSectionLabelClassName}>
+            <span className={instructionsLabelClassName}>
               {labels.instructionsLabel}
             </span>
-            <Suspense fallback={<DialSpinner />}>
-              <DialMarkdownEditor
+            <Suspense fallback={<Spinner />}>
+              <MarkdownEditor
                 value={values.prompt}
                 onChange={(value) => onFieldChange('prompt', value)}
                 height={480}
-                theme={markdownEditorTheme as DialMarkdownEditorTheme}
+                theme={markdownEditorTheme as MarkdownEditorTheme}
               />
             </Suspense>
             {errors.prompt && (

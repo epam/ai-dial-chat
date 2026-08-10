@@ -1,10 +1,8 @@
 import {
-  DESCRIPTION_MAX_LENGTH,
   ScheduledTaskCreateForm,
   ScheduledTaskCreateFormErrors,
   ScheduledTaskCreateFormValues,
-  ScheduledTaskFrequency,
-  ScheduledTaskScheduleType,
+  ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useMemo, useState, type FC } from 'react';
@@ -26,19 +24,18 @@ import { createScheduledTask } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
+import { validateScheduledTaskForm } from '../../utils/scheduled-task-form-validation';
 import { mapFormValuesToCreateBody } from '../../utils/scheduled-task-trigger';
 import NotFoundPage from '../NotFound/NotFound';
 
-const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const MAX_ASCII_CONTROL_CODE = 31;
 const ASCII_DELETE_CODE = 127;
-const RUN_AT_MIN_LEAD_MS = 60_000;
 
 const DEFAULT_VALUES: ScheduledTaskCreateFormValues = {
   displayName: '',
-  scheduleType: ScheduledTaskScheduleType.Recurring,
-  frequency: ScheduledTaskFrequency.Daily,
+  repeat: ScheduledTaskRepeat.Daily,
   time: '09:00',
+  minute: '0',
   startDate: undefined,
   endDate: undefined,
   modelId: '',
@@ -116,35 +113,34 @@ const ScheduledTaskCreatePage: FC = () => {
       ),
       displayNameLabel: t(EditorI18nKeys.NameLabel),
       displayNameRequired: t(EditorI18nKeys.NameRequired),
-      scheduleSectionLabel: t(
-        ScheduledTasksI18nKeys.CreateScheduleSectionLabel,
-      ),
-      scheduleTypeOnceLabel: t(ScheduledTasksI18nKeys.CreateScheduleTypeOnce),
-      scheduleTypeRecurringLabel: t(
-        ScheduledTasksI18nKeys.CreateScheduleTypeRecurring,
-      ),
-      scheduleTypeAriaLabel: t(
-        ScheduledTasksI18nKeys.CreateScheduleTypeAriaLabel,
-      ),
       runAtLabel: t(ScheduledTasksI18nKeys.CreateRunAtLabel),
-      frequencyLabel: t(ScheduledTasksI18nKeys.CreateFrequencyLabel),
-      frequencyOptions: [
+      repeatLabel: t(ScheduledTasksI18nKeys.CreateRepeatLabel),
+      repeatOptions: [
         {
-          key: ScheduledTaskFrequency.Daily,
-          label: t(ScheduledTasksI18nKeys.CreateFrequencyDaily),
+          key: ScheduledTaskRepeat.OneTime,
+          label: t(ScheduledTasksI18nKeys.CreateRepeatOneTime),
         },
         {
-          key: ScheduledTaskFrequency.Weekly,
-          label: t(ScheduledTasksI18nKeys.CreateFrequencyWeekly),
+          key: ScheduledTaskRepeat.Hourly,
+          label: t(ScheduledTasksI18nKeys.CreateRepeatHourly),
         },
         {
-          key: ScheduledTaskFrequency.Monthly,
-          label: t(ScheduledTasksI18nKeys.CreateFrequencyMonthly),
+          key: ScheduledTaskRepeat.Daily,
+          label: t(ScheduledTasksI18nKeys.CreateRepeatDaily),
+        },
+        {
+          key: ScheduledTaskRepeat.Weekly,
+          label: t(ScheduledTasksI18nKeys.CreateRepeatWeekly),
+        },
+        {
+          key: ScheduledTaskRepeat.Monthly,
+          label: t(ScheduledTasksI18nKeys.CreateRepeatMonthly),
         },
       ],
       timeLabel: t(ScheduledTasksI18nKeys.CreateTimeLabel),
       dayOfWeekLabel: t(ScheduledTasksI18nKeys.CreateDayOfWeekLabel),
       dayOfMonthLabel: t(ScheduledTasksI18nKeys.CreateDayOfMonthLabel),
+      minuteLabel: t(ScheduledTasksI18nKeys.CreateMinuteLabel),
       startDateLabel: t(ScheduledTasksI18nKeys.CreateStartDateLabel),
       startDatePlaceholder: t(
         ScheduledTasksI18nKeys.CreateStartDatePlaceholder,
@@ -185,72 +181,8 @@ const ScheduledTaskCreatePage: FC = () => {
     navigate(returnUrl);
   }, [navigate, returnUrl]);
 
-  const validate = useCallback(
-    (data: ScheduledTaskCreateFormValues): ScheduledTaskCreateFormErrors => {
-      const nextErrors: ScheduledTaskCreateFormErrors = {};
-
-      if (!data.displayName.trim()) {
-        nextErrors.displayName = t(EditorI18nKeys.NameRequired);
-      }
-      if (!data.modelId) {
-        nextErrors.modelId = t(ScheduledTasksI18nKeys.CreateModelRequired);
-      }
-      if (!data.prompt.trim()) {
-        nextErrors.prompt = t(ScheduledTasksI18nKeys.CreatePromptRequired);
-      }
-      if ((data.description?.length ?? 0) > DESCRIPTION_MAX_LENGTH) {
-        nextErrors.description = t(
-          ScheduledTasksI18nKeys.CreateDescriptionMaxLengthError,
-        );
-      }
-
-      if (data.scheduleType === ScheduledTaskScheduleType.Once) {
-        const runAtTime = data.runAt ? new Date(data.runAt).getTime() : NaN;
-        if (
-          !data.runAt ||
-          Number.isNaN(runAtTime) ||
-          runAtTime <= Date.now() + RUN_AT_MIN_LEAD_MS
-        ) {
-          nextErrors.runAt = t(ScheduledTasksI18nKeys.CreateRunAtRequired);
-        }
-      } else {
-        if (!TIME_PATTERN.test(data.time)) {
-          nextErrors.time = t(ScheduledTasksI18nKeys.CreateTimeInvalid);
-        }
-        if (
-          data.frequency === ScheduledTaskFrequency.Weekly &&
-          !data.dayOfWeek?.trim()
-        ) {
-          nextErrors.dayOfWeek = t(
-            ScheduledTasksI18nKeys.CreateDayOfWeekRequired,
-          );
-        }
-        if (
-          data.frequency === ScheduledTaskFrequency.Monthly &&
-          !data.dayOfMonth?.trim()
-        ) {
-          nextErrors.dayOfMonth = t(
-            ScheduledTasksI18nKeys.CreateDayOfMonthRequired,
-          );
-        }
-        if (
-          data.startDate &&
-          data.endDate &&
-          new Date(data.endDate).getTime() <= new Date(data.startDate).getTime()
-        ) {
-          nextErrors.endDate = t(
-            ScheduledTasksI18nKeys.CreateEndDateBeforeStartError,
-          );
-        }
-      }
-
-      return nextErrors;
-    },
-    [t],
-  );
-
   const handleSubmit = useCallback(async () => {
-    const nextErrors = validate(values);
+    const nextErrors = validateScheduledTaskForm(values, t);
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       return;
@@ -273,7 +205,7 @@ const ScheduledTaskCreatePage: FC = () => {
       });
       setIsSubmitting(false);
     }
-  }, [values, validate, showNotification, t, navigate, returnUrl]);
+  }, [values, showNotification, t, navigate, returnUrl]);
 
   if (appConfigStatus !== UserConfigStatus.Ready) {
     return <RouteFallback />;

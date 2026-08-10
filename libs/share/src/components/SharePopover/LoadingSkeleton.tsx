@@ -1,4 +1,4 @@
-import { DialSkeleton, DialSkeletonVariant } from '@epam/ai-dial-ui-kit';
+import { Skeleton, SkeletonVariant } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import styles from './SharePopover.module.scss';
 
@@ -17,57 +17,57 @@ export const LoadingSkeleton: FC<LoadingSkeletonProps> = ({
 }) => (
   <div role="status" aria-label={ariaLabel} className="flex flex-col gap-3">
     <div aria-hidden className="flex items-center gap-2.5">
-      <DialSkeleton
-        variant={DialSkeletonVariant.Circular}
+      <Skeleton
+        variant={SkeletonVariant.Circular}
         width={32}
         height={32}
         color={skeletonColor}
       />
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <DialSkeleton
-          variant={DialSkeletonVariant.Text}
+        <Skeleton
+          variant={SkeletonVariant.Text}
           width="70%"
           height={16}
           color={skeletonColor}
         />
-        <DialSkeleton
-          variant={DialSkeletonVariant.Text}
+        <Skeleton
+          variant={SkeletonVariant.Text}
           width="45%"
           height={12}
           color={skeletonColor}
         />
       </div>
-      <DialSkeleton
-        variant={DialSkeletonVariant.Rectangular}
+      <Skeleton
+        variant={SkeletonVariant.Rectangular}
         width={92}
         height={30}
         color={skeletonColor}
       />
     </div>
     <div aria-hidden className="flex flex-col gap-1.5">
-      <DialSkeleton
-        variant={DialSkeletonVariant.Text}
+      <Skeleton
+        variant={SkeletonVariant.Text}
         width="100%"
         height={12}
         color={skeletonColor}
       />
-      <DialSkeleton
-        variant={DialSkeletonVariant.Text}
+      <Skeleton
+        variant={SkeletonVariant.Text}
         width="60%"
         height={12}
         color={skeletonColor}
       />
     </div>
-    <DialSkeleton
+    <Skeleton
       aria-hidden
-      variant={DialSkeletonVariant.Rectangular}
+      variant={SkeletonVariant.Rectangular}
       width="100%"
       height={40}
       color={skeletonColor}
     />
-    <DialSkeleton
+    <Skeleton
       aria-hidden
-      variant={DialSkeletonVariant.Text}
+      variant={SkeletonVariant.Text}
       width="50%"
       height={12}
       color={skeletonColor}

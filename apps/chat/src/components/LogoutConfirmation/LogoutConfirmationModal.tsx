@@ -1,4 +1,4 @@
-import { DialConfirmationPopup } from '@epam/ai-dial-ui-kit';
+import { ConfirmationPopup } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
@@ -35,7 +35,7 @@ const LogoutConfirmationModal: FC<Props> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <DialConfirmationPopup
+    <ConfirmationPopup
       open={isOpen}
       header={t(AuthI18nKeys.LogOutConfirmTitle)}
       description={t(AuthI18nKeys.LogOutConfirmDescription)}

@@ -6,6 +6,8 @@ import type { ScheduledTaskRunItem } from './scheduled-task-run-item';
 export interface ScheduledTaskDetailViewLabels {
   /** Accessible label for the back-navigation control. */
   backAriaLabel: string;
+  /** Label for the header's Edit action. Shown only when `onEdit` is supplied. */
+  editButtonLabel: string;
   /** Message shown alongside the page-level retry action when `error` is set. */
   errorLabel: string;
   /** Title of the Details section. */
@@ -89,6 +91,8 @@ export interface ScheduledTaskDetailViewProps {
   labels: ScheduledTaskDetailViewLabels;
   /** Called when the user activates the back-navigation control. */
   onBack: () => void;
+  /** Called when the user activates the header's Edit action. When omitted, no Edit action renders. */
+  onEdit?: () => void;
   /** Task title shown in the header and used as the page's accessible name. */
   displayName: string;
   /** When `true`, the entire body (Details, Configuration, and History) shows a page-level spinner instead of the fields below. Defaults to `false`. */

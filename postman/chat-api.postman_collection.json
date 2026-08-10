@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Chat API (1.0.0)",
-    "description": "REST API for the chat application. Provides endpoints for theme configuration, authentication, and management. All endpoints return appropriate HTTP status codes (200, 400, 401, 403, 404, 502, 503) with descriptive error messages.\n\nGenerated from libs/chat-api-client/openapi.json. Contains 96 requests grouped by OpenAPI tag.\n\nAuthentication uses the Postman cookie jar. Start the OIDC flow with the login request, then call “Get current user”; its response supplies the CSRF token used by authenticated write requests.",
+    "description": "REST API for the chat application. Provides endpoints for theme configuration, authentication, and management. All endpoints return appropriate HTTP status codes (200, 400, 401, 403, 404, 502, 503) with descriptive error messages.\n\nGenerated from libs/chat-api-client/openapi.json. Contains 97 requests grouped by OpenAPI tag.\n\nAuthentication uses the Postman cookie jar. Start the OIDC flow with the login request, then call “Get current user”; its response supplies the CSRF token used by authenticated write requests.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
@@ -670,6 +670,30 @@
               "path": ["api", "v1", "conversations", "deletions", "all"]
             },
             "description": "Deletes every conversation in the authenticated user's bucket. Requires { confirm: true } in the request body to prevent accidental deletion. Returns a result counting deleted, already-absent, and failed items.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Mark a conversation as viewed",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations/viewed?path={{path}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "conversations", "viewed"],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "description": "Conversation path (uuid__name). May contain slashes."
+                }
+              ]
+            },
+            "description": "Idempotently records that the authenticated user has opened this conversation. Used to clear the unread indicator for scheduler-created conversations.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
           }
         },
         {
@@ -1764,7 +1788,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"displayName\": \"Daily summary\",\n  \"trigger\": {\n    \"date\": \"2026-07-24T09:00:00.000Z\",\n    \"cron\": {\n      \"fields\": {\n        \"minute\": \"0\",\n        \"hour\": \"9\"\n      }\n    }\n  },\n  \"model\": \"gpt-4.1-mini-2025-04-14\",\n  \"prompt\": \"Summarize my inbox\",\n  \"description\": \"Summarizes unread inbox items every morning\"\n}\n",
+              "raw": "{\n  \"displayName\": \"Daily summary\",\n  \"trigger\": {\n    \"date\": \"2026-07-24T09:00:00.000Z\",\n    \"cron\": {\n      \"fields\": {\n        \"minute\": \"0\",\n        \"hour\": \"9\"\n      },\n      \"startDate\": \"2026-08-01T00:00:00.000Z\",\n      \"endDate\": \"2026-12-31T23:59:59.999Z\"\n    }\n  },\n  \"model\": \"gpt-4.1-mini-2025-04-14\",\n  \"prompt\": \"Summarize my inbox\",\n  \"description\": \"Summarizes unread inbox items every morning\"\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -1773,28 +1797,6 @@
               "path": ["api", "v1", "scheduled-tasks"]
             },
             "description": "Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt, using the OAuth external-service id configured via SCHEDULER_SERVICE_ID. Invalidates the scheduled tasks list cache on success.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
-          }
-        },
-        {
-          "name": "Create a recurring scheduled task with an activity window",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Origin", "value": "{{origin}}" },
-              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"displayName\": \"Q4 morning briefing\",\n  \"trigger\": {\n    \"cron\": {\n      \"fields\": {\n        \"minute\": \"0\",\n        \"hour\": \"9\"\n      },\n      \"startDate\": \"2026-08-01T00:00:00.000Z\",\n      \"endDate\": \"2026-12-31T23:59:59.999Z\"\n    }\n  },\n  \"model\": \"gpt-4.1-mini-2025-04-14\",\n  \"prompt\": \"Summarize my inbox\",\n  \"description\": \"Runs daily at 9am only between August and December\"\n}\n",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/scheduled-tasks",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "scheduled-tasks"]
-            },
-            "description": "Creates a recurring DIAL Scheduler schedule bounded by an activity window: `trigger.cron.startDate`/`endDate` are optional and only valid on a `cron` trigger — the schedule fires on its `fields` cadence only between these two instants. Both are mapped to upstream `trigger.cron.start_date`/`end_date` and omitted entirely from the upstream body when unset.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
           }
         },
         {
@@ -1821,7 +1823,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"displayName\": \"Daily summary\",\n  \"trigger\": {\n    \"date\": \"2026-07-24T09:00:00.000Z\",\n    \"cron\": {\n      \"fields\": {\n        \"minute\": \"0\",\n        \"hour\": \"9\"\n      }\n    }\n  },\n  \"model\": \"gpt-4.1-mini-2025-04-14\",\n  \"prompt\": \"Summarize my inbox\",\n  \"description\": \"Summarizes unread inbox items every morning\"\n}\n",
+              "raw": "{\n  \"displayName\": \"Daily summary\",\n  \"trigger\": {\n    \"date\": \"2026-07-24T09:00:00.000Z\",\n    \"cron\": {\n      \"fields\": {\n        \"minute\": \"0\",\n        \"hour\": \"9\"\n      },\n      \"startDate\": \"2026-08-01T00:00:00.000Z\",\n      \"endDate\": \"2026-12-31T23:59:59.999Z\"\n    }\n  },\n  \"model\": \"gpt-4.1-mini-2025-04-14\",\n  \"prompt\": \"Summarize my inbox\",\n  \"description\": \"Summarizes unread inbox items every morning\"\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {

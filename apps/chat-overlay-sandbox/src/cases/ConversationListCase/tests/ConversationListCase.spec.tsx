@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ConversationListCase from '../ConversationListCase';
@@ -96,10 +96,10 @@ describe('ConversationListCase', () => {
       }),
     );
 
-    const selector = screen.getByRole('group', {
+    const selector = screen.getByRole<HTMLInputElement>('combobox', {
       name: 'Conversation id',
     });
-    await user.click(within(selector).getByRole('button'));
+    await user.click(selector);
 
     const option = await screen.findByRole('option', {
       name: 'Quarterly planning',
@@ -109,9 +109,7 @@ describe('ConversationListCase', () => {
     ).toBeNull();
     await user.click(option);
 
-    expect(within(selector).getByRole('button').textContent).toContain(
-      'Quarterly planning',
-    );
+    expect(selector.value).toContain('Quarterly planning');
 
     await user.click(
       screen.getByRole('button', {

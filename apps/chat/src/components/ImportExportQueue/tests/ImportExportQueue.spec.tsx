@@ -70,7 +70,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ButtonAppearance: { Ghost: 'ghost', Solid: 'solid' },
   ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialConfirmationPopup: ({
+  ConfirmationPopup: ({
     open,
     header,
     description,

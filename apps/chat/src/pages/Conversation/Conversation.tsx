@@ -6,8 +6,8 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   ConfirmationPopupVariant,
-  DialConfirmationPopup,
-  DialSpinner,
+  ConfirmationPopup,
+  Spinner,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import type { ConversationResponseDto } from '@epam/chat-api-client';
@@ -515,7 +515,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   if (isFetching)
     return (
       <div className="flex size-full items-center justify-center">
-        <DialSpinner />
+        <Spinner />
       </div>
     );
 
@@ -574,7 +574,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         />
       )}
 
-      <DialConfirmationPopup
+      <ConfirmationPopup
         open={pendingDeleteIndex != null}
         header={t(ChatI18nKeys.DeleteMessageTitle)}
         description={t(ChatI18nKeys.DeleteMessageDescription)}
@@ -585,7 +585,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         onClose={() => setPendingDeleteIndex(null)}
       />
 
-      <DialConfirmationPopup
+      <ConfirmationPopup
         open={pendingStarterContext != null}
         header={t(ChatI18nKeys.StarterConfirmTitle)}
         description={

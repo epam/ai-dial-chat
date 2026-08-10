@@ -1,7 +1,7 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialSpinner,
+  Spinner,
   GhostButton,
   NeutralButton,
 } from '@epam/ai-dial-ui-kit';
@@ -95,7 +95,7 @@ export const PublishFooter: FC<PublishFooterProps> = ({
         label={submitLabel}
         disabled={isSubmitDisabled}
         iconBefore={
-          isSubmitLoading ? <DialSpinner size={DIAL_ICON_SIZE.SM} /> : undefined
+          isSubmitLoading ? <Spinner size={DIAL_ICON_SIZE.SM} /> : undefined
         }
         onClick={onSubmit}
       />

@@ -1,5 +1,5 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { CloseButton } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode, RefObject, useEffect, useMemo, useRef } from 'react';
 import {
   PublicationRule,
@@ -280,7 +280,7 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
             {title}
           </span>
           <div className="flex flex-1 justify-end">
-            <DialCloseButton
+            <CloseButton
               onClose={onClose}
               ariaLabel={closeAriaLabel}
               disabled={isSubmitting}

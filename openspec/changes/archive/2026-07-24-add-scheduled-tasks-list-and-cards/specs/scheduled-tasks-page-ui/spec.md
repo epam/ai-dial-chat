@@ -4,7 +4,7 @@
 
 `libs/scheduled-tasks` SHALL export a presentational `ScheduledTasks` root component accepting `texts`, `onCreateClick`, `searchQuery`/`onSearchQueryChange`, `sortKey`/`onSortChange`, `items: ScheduledTaskItem[]`, `isLoading` (default `false`), and optional `error`/`onRetry`. It SHALL render, in order: a header (title, subtitle, primary "create" action button), a toolbar (search input, sort control with options), and a content region whose rendering depends on state:
 
-- `isLoading` is `true` → the content region renders a `DialSpinner` and no other content-region markup.
+- `isLoading` is `true` → the content region renders a `Spinner` and no other content-region markup.
 - `error` is set → the content region renders an error message with a retry action that invokes `onRetry`.
 - `isLoading` is `false`, `error` is unset, and `items` (after client-side search filtering) is empty because the source list itself is empty → the content region renders the shared `PanelEmptyState` component (from `@epam/ai-dial-chat-shared`) with `texts.emptyStateLabel`.
 - `isLoading` is `false`, `error` is unset, the source list is non-empty, but `searchQuery` filters every item out → the content region renders a distinct "no results" state (not `PanelEmptyState`, not the card grid) using `texts.noResultsLabel`.
@@ -20,7 +20,7 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 #### Scenario: Loading state shows a spinner
 
 - **WHEN** `ScheduledTasks` renders with `isLoading={true}`
-- **THEN** the content region renders `DialSpinner` and no empty-state, no-results, or card-grid markup
+- **THEN** the content region renders `Spinner` and no empty-state, no-results, or card-grid markup
 
 #### Scenario: Error state shows retry
 

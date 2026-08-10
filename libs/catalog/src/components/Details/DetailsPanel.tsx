@@ -11,9 +11,9 @@ import type {
   PublishHistoryEntry,
 } from '@epam/ai-dial-publish-panel';
 import {
-  DialCloseButton,
-  DialConfirmationPopup,
-  DialSkeleton,
+  CloseButton,
+  ConfirmationPopup,
+  Skeleton,
   DialTag,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
@@ -369,7 +369,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             </>
           )}
           {!isPublishOpen && (
-            <DialCloseButton onClose={onClose} ariaLabel={closeAriaLabel} />
+            <CloseButton onClose={onClose} ariaLabel={closeAriaLabel} />
           )}
         </div>
 
@@ -461,7 +461,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 />
               )}
 
-              <DialConfirmationPopup
+              <ConfirmationPopup
                 open={isDirectLogoutConfirmOpen}
                 header={texts?.logoutActionLabel ?? 'Log out'}
                 description={
@@ -492,7 +492,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                     }
                     className="shrink-0"
                   >
-                    <DialSkeleton
+                    <Skeleton
                       showTitle={false}
                       paragraph={{ rows: 1, width: '72px' }}
                       active

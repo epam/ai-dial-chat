@@ -30,7 +30,7 @@ Search is now server-driven and full-dataset; sort remains a client-side operati
 
 `libs/scheduled-tasks` SHALL export a presentational `ScheduledTasks` root component accepting `texts`, `onCreateClick`, `searchQuery`/`onSearchQueryChange`, `sortKey`/`onSortChange`, `items: ScheduledTaskItem[]`, `isLoading` (default `false`), `hasMore: boolean` (default `false`), `isLoadingMore?: boolean` (default `false`), `skeletonCount?: number` (default `6`), `onLoadMore?: () => void`, and optional `error`/`onRetry`. It SHALL render, in order: a header (title, subtitle, primary "create" action button), a toolbar (search input, sort control with options), and a content region whose rendering depends on state:
 
-- `isLoading` is `true` (initial load) → the content region renders a `DialSpinner` and no other content-region markup.
+- `isLoading` is `true` (initial load) → the content region renders a `Spinner` and no other content-region markup.
 - `error` is set → the content region renders an error message with a retry action that invokes `onRetry`.
 - `isLoading` is `false`, `error` is unset, and `items` is empty because the source list itself is empty (no `searchQuery` in effect) → the content region renders the shared `PanelEmptyState` component (from `@epam/ai-dial-chat-shared`) with `texts.emptyStateLabel`.
 - `isLoading` is `false`, `error` is unset, `items` is empty, and a non-empty `searchQuery` is in effect → the content region renders a distinct "no results" state (not `PanelEmptyState`, not the card grid) using `texts.noResultsLabel`. Because search is now server-driven, this state reflects the server returning zero matches, not a client-side filter reducing a non-empty array to zero.
@@ -47,7 +47,7 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 #### Scenario: Loading state shows a spinner
 
 - **WHEN** `ScheduledTasks` renders with `isLoading={true}`
-- **THEN** the content region renders `DialSpinner` and no empty-state, no-results, card-grid, or skeleton markup
+- **THEN** the content region renders `Spinner` and no empty-state, no-results, card-grid, or skeleton markup
 
 #### Scenario: Error state shows retry
 
@@ -160,7 +160,7 @@ The Scheduled Tasks list SHALL support loading beyond the first page by scrollin
 
 ### Requirement: Load-more state shows exactly six skeleton cards
 
-While a subsequent page is being fetched (`isLoadingMore === true`), the list SHALL render exactly 6 `ScheduledTaskCardSkeleton` elements as trailing children inside the last section's own `ScheduledTaskCardGrid` (continuing that grid's row/column flow rather than starting a new row in a separate container), distinct from the initial-load `DialSpinner` state (which remains reserved for `isLoading === true && items.length === 0`). Each skeleton card SHALL be built on `DialSkeleton` from `@epam/ai-dial-ui-kit` with an explicit `color` override (the default `bg-layer-raised` token is not visibly distinct from the card background in this app), sized to match `ScheduledTaskCard`'s footprint (title block, description lines, schedule pill area), and marked `aria-hidden="true"` so screen readers do not announce placeholder content as real cards.
+While a subsequent page is being fetched (`isLoadingMore === true`), the list SHALL render exactly 6 `ScheduledTaskCardSkeleton` elements as trailing children inside the last section's own `ScheduledTaskCardGrid` (continuing that grid's row/column flow rather than starting a new row in a separate container), distinct from the initial-load `Spinner` state (which remains reserved for `isLoading === true && items.length === 0`). Each skeleton card SHALL be built on `DialSkeleton` from `@epam/ai-dial-ui-kit` with an explicit `color` override (the default `bg-layer-raised` token is not visibly distinct from the card background in this app), sized to match `ScheduledTaskCard`'s footprint (title block, description lines, schedule pill area), and marked `aria-hidden="true"` so screen readers do not announce placeholder content as real cards.
 
 #### Scenario: Six skeletons render during load-more, continuing the grid's current row
 
@@ -175,4 +175,4 @@ While a subsequent page is being fetched (`isLoadingMore === true`), the list SH
 #### Scenario: Initial load never shows load-more skeletons
 
 - **WHEN** the list is in its initial load (`isLoading === true`, no items yet loaded)
-- **THEN** the content region shows the existing `DialSpinner` state, not skeleton cards
+- **THEN** the content region shows the existing `Spinner` state, not skeleton cards

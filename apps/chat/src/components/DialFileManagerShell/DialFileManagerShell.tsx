@@ -10,7 +10,7 @@ import {
 import {
   NOT_ALLOWED_SYMBOLS_REGEXP,
   PrimaryButton,
-  DialSpinner,
+  Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { memo, useEffect, useMemo, useState, type FC } from 'react';
 import OperationLoaderModal from '../../components/DialFileManagerModal/OperationLoaderModal';
@@ -578,11 +578,7 @@ const DialFileManagerShell: FC<Props> = ({
               aria-live="polite"
               className="absolute inset-0 z-[52] flex items-center justify-center bg-backdrop desktop:p-4"
             >
-              <DialSpinner
-                size={32}
-                fullWidth={false}
-                ariaLabel={overlayLabel}
-              />
+              <Spinner size={32} fullWidth={false} ariaLabel={overlayLabel} />
             </div>
           )}
         </div>
