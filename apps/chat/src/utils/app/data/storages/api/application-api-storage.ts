@@ -30,7 +30,7 @@ import { DEFAULT_VERSION } from '@/src/constants/publication';
 
 import { ApiEntityStorage } from './api-entity-storage';
 
-import { Entity, MessageFormSchema } from '@epam/ai-dial-shared';
+import { MessageFormSchema } from '@epam/ai-dial-shared';
 
 export class ApplicationApiStorage extends ApiEntityStorage<
   ApplicationInfo,
@@ -39,7 +39,7 @@ export class ApplicationApiStorage extends ApiEntityStorage<
   ApiApplicationModel
 > {
   mergeGetResult(
-    info: Entity,
+    info: ApplicationInfo,
     entity: ApiApplicationResponse,
   ): CustomApplicationModel {
     return {

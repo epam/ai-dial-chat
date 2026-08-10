@@ -38,6 +38,7 @@ import {
   isEntityIdLocal,
   isRootId,
 } from '@/src/utils/app/id';
+import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { checkIsNotAllowedModelUtil } from '@/src/utils/app/models';
 import { isEntityReadOnly } from '@/src/utils/app/permissions';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
@@ -826,7 +827,8 @@ const selectNotAllowedItemsForDisplay = createSelector(
         const modelDetails = modelsMap[conv.model.id];
         return {
           conversationId: conv.id,
-          agentName: modelDetails?.name ?? conv.model.id,
+          agentName:
+            getLocalizedEntityIdName(modelDetails?.name) || conv.model.id,
         };
       });
   },

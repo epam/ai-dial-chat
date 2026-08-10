@@ -2,10 +2,9 @@ import { NextApiRequest } from 'next';
 
 import { FeatureType } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
-import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 
-import { ShareEntity, SharePermission } from '@epam/ai-dial-shared';
+import { SharePermission } from '@epam/ai-dial-shared';
 
 export const getShareType = (
   featureType?: FeatureType,
@@ -53,5 +52,6 @@ export const hasWritePermission = (
   permissions: SharePermission[] | undefined,
 ) => permissions?.includes(SharePermission.WRITE) || false;
 
-export const canWriteSharedWithMe = (entity: DialAIEntityModel | ShareEntity) =>
-  hasWritePermission(entity?.permissions);
+export const canWriteSharedWithMe = (entity?: {
+  permissions?: SharePermission[];
+}) => hasWritePermission(entity?.permissions);

@@ -15,11 +15,13 @@ export enum ToolsetCredentialsLevel {
   APP = 'APP',
 }
 
-export interface ToolsetInfo extends ShareEntity {
+export interface ToolsetInfo extends Omit<ShareEntity, 'name'> {
+  name: string | Record<string, string>;
   version: string;
 }
 
-export interface ToolsetModel extends ShareEntity {
+export interface ToolsetModel extends Omit<ShareEntity, 'name'> {
+  name: string | Record<string, string>;
   transport: ToolsetTransportType;
   allowedTools: string[];
   version: string;

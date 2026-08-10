@@ -20,7 +20,9 @@ import { EntityStorage } from '@/src/types/storage';
 import { Entity, UploadStatus } from '@epam/ai-dial-shared';
 
 export abstract class ApiEntityStorage<
-  TEntityInfo extends Entity,
+  TEntityInfo extends Omit<Entity, 'name'> & {
+    name: string | Record<string, string>;
+  },
   TEntity extends TEntityInfo,
   APIResponse = TEntity,
   APIModel = APIResponse,

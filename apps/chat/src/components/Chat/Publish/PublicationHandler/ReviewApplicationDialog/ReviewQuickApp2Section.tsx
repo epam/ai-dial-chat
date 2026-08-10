@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
+  getModelName,
   getQuickApp2Config,
   getQuickAppItemNameFromConfig,
   isQuickApp2,
@@ -64,6 +65,7 @@ const ReviewQuickApp2SectionView = ({
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeInterpreter),
   );
   const theme = useAppSelector(UISelectors.selectThemeState);
+  const locale = useAppSelector(UISelectors.selectLocale);
 
   const { agents, toolsets, unknownToolsets, isCodeInterpreter } = useMemo(
     () =>
@@ -133,7 +135,7 @@ const ReviewQuickApp2SectionView = ({
   const orchestratorModel =
     modelsMap[config.orchestrator.deployment.deployment_id];
   const orchestratorName = orchestratorModel
-    ? orchestratorModel.name
+    ? getModelName(orchestratorModel, locale)
     : !isApplicationId(config.orchestrator.deployment.deployment_id)
       ? ApiUtils.decodeApiUrl(
           parseEntityApiKey(

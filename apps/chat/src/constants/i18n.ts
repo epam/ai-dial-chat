@@ -363,6 +363,13 @@ export enum CommonI18nKeys {
   RepairMyDescription = 'Repair will re-register this toolset with the Authorization Server. Continue?',
   ToolsetRepairSuccessMessage = 'Toolset repaired. Users must re-authenticate.',
   ToolsetRepairFailedMessage = 'Authorization server is currently unavailable. Try again once the AS is back.',
+  Language = 'Language',
+  AddLocale = 'Add locale',
+  AddLocales = 'Add locales',
+  Locale = 'Locale',
+  Locales = 'Locales',
+  Apply = 'Apply',
+  Edit = 'Edit',
 }
 
 // errors.json
