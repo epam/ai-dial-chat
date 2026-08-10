@@ -396,7 +396,10 @@ const ConversationMessageItem: FC<Props> = ({
                 ? onStartEdit
                 : undefined,
             onHoverEdit: preloadEditInput,
-            onDelete: isDeleteUserMessageHidden ? undefined : onDeleteMessage,
+            onDelete:
+              !isAssistantTyping && !isDeleteUserMessageHidden
+                ? onDeleteMessage
+                : undefined,
             onRegenerate: isRegenerateAssistantMessageHidden
               ? undefined
               : onRegenerateMessage,
