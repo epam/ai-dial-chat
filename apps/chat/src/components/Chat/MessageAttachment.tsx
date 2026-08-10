@@ -25,7 +25,13 @@ import {
   hasPdfExtension,
   isDialApiFileUrl,
 } from '@/src/utils/app/attachments';
-import { getFileName } from '@/src/utils/app/file';
+import {
+  getAttachmentContentOffsetClass,
+  getAttachmentContentPaddingClass,
+  getAttachmentReferenceOffsetClass,
+  getAttachmentSpacingClass,
+} from '@/src/utils/app/compact-mode';
+import { getFileName, isSafeLinkUrl } from '@/src/utils/app/file';
 
 import { Translation } from '@/src/types/translation';
 
@@ -71,6 +77,7 @@ interface AttachmentDataRendererProps {
   onFullScreenClick?: () => void;
   isInner?: boolean;
   forceDefaultView?: boolean;
+  compactMode?: boolean;
 }
 
 const getDownloadName = (attachment: Attachment): string => {
@@ -140,6 +147,7 @@ const AttachmentDataRenderer = ({
   attachment,
   isFullScreen,
   isInner,
+  compactMode,
 }: AttachmentDataRendererProps) => {
   if (AUDIO_TYPES_SET.has(attachment.type)) {
     return (
@@ -196,6 +204,7 @@ const AttachmentDataRenderer = ({
         isShowResponseLoader={false}
         content={attachment.data}
         isInner={isInner}
+        compactMode={compactMode}
       />
     );
   }
@@ -265,6 +274,7 @@ interface Props {
   annotations?: MessageAnnotation[];
   isInner?: boolean;
   forceDefaultView?: boolean;
+  compactMode?: boolean;
 }
 
 const AttachmentRendererComponent = withErrorBoundary(
@@ -274,6 +284,7 @@ const AttachmentRendererComponent = withErrorBoundary(
     isFullScreen,
     onFullScreenClick,
     forceDefaultView,
+    compactMode,
   }: AttachmentDataRendererProps) => {
     const attachmentType: MIMEType = attachment.type;
     const mappedAttachmentUrl = useMemo(
@@ -322,6 +333,7 @@ const AttachmentRendererComponent = withErrorBoundary(
         attachment={attachment}
         isInner={isInner}
         isFullScreen={isFullScreen}
+        compactMode={compactMode}
       />
     );
   },
@@ -334,11 +346,15 @@ const LinkIconComponent = () => (
   />
 );
 
+const attachmentNameClassName =
+  'block max-w-full truncate whitespace-pre text-start text-sm';
+
 export const MessageAttachment = ({
   attachment,
   annotations,
   isInner,
   forceDefaultView,
+  compactMode = false,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -401,10 +417,13 @@ export const MessageAttachment = ({
     () => getSourceDataUrl(attachment),
     [attachment],
   );
-  const mappedAttachmentReferenceUrl = useMemo(
-    () => getMappedAttachmentUrl(attachment.reference_url),
-    [attachment.reference_url],
-  );
+  const mappedAttachmentReferenceUrl = useMemo(() => {
+    const url = getMappedAttachmentUrl(attachment.reference_url);
+
+    // A reference we cannot safely put into an href is not treated as a link at
+    // all, so the attachment falls back to the plain file card.
+    return isSafeLinkUrl(url) ? url : undefined;
+  }, [attachment.reference_url]);
 
   const isPdfReference =
     !!mappedAttachmentReferenceUrl &&
@@ -416,6 +435,13 @@ export const MessageAttachment = ({
     IMAGE_TYPES_SET.has(attachment.type) ||
     VIDEO_TYPES_SET.has(attachment.type) ||
     AUDIO_TYPES_SET.has(attachment.type);
+
+  // An attached link has nothing to expand, so its name opens the link instead
+  // of toggling the card. Issue #1303
+  const isLinkOnly = !!mappedAttachmentReferenceUrl && !isOpenable && !isFolder;
+
+  const attachmentName =
+    attachment.title || attachment.url || t(ChatI18nKeys.Attachment);
 
   const isFullScreenEnabled =
     IMAGE_TYPES_SET.has(attachment.type) ||
@@ -483,7 +509,9 @@ export const MessageAttachment = ({
         'flex flex-col rounded',
         isExpanded && 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3',
         !isInner && !isBorderless && 'border border-secondary',
-        !isBorderless ? 'bg-layer-3 px-1 py-2' : 'mb-3 last:mb-0',
+        !isBorderless
+          ? 'bg-layer-3 px-1 py-2'
+          : getAttachmentSpacingClass(compactMode),
         isFullScreen && 'fixed left-0 top-0 z-[9999] size-full bg-layer-3',
         isFullScreen && isBorderless && '!bg-layer-1',
       )}
@@ -547,6 +575,7 @@ export const MessageAttachment = ({
                     target="_blank"
                     className="link-icon-button-small"
                     rel="noopener noreferrer"
+                    data-qa="attachment-reference-link"
                   >
                     <LinkIconComponent />
                   </a>
@@ -560,25 +589,63 @@ export const MessageAttachment = ({
             )}
           </div>
           <div
-            onClick={handleDropdownClick}
-            className="flex grow cursor-pointer items-center justify-between overflow-hidden"
+            onClick={isLinkOnly ? undefined : handleDropdownClick}
+            className={classNames(
+              'flex grow items-center justify-between overflow-hidden',
+              !isLinkOnly && 'cursor-pointer',
+            )}
             data-qa={
               isExpanded ? 'attachment-expanded' : 'attachment-collapsed'
             }
           >
-            <span
-              className={classNames(
-                'shrink truncate whitespace-pre pe-2 text-start text-sm',
+            <Tooltip
+              tooltip={attachmentName}
+              triggerClassName={classNames(
+                'shrink truncate pe-2',
                 isExpanded || isFolder || mappedAttachmentReferenceUrl
                   ? 'max-w-full'
                   : 'max-w-[calc(100%-30px)]',
               )}
-              title={
-                attachment.title || attachment.url || t(ChatI18nKeys.Attachment)
-              }
             >
-              {attachment.title || attachment.url || t(ChatI18nKeys.Attachment)}
-            </span>
+              {isLinkOnly ? (
+                isPdfReference ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      stopBubbling(e);
+                      setOpenPdfUrl(mappedAttachmentReferenceUrl);
+                    }}
+                    className={classNames(
+                      attachmentNameClassName,
+                      'hover:text-accent-primary',
+                    )}
+                    data-qa="attachment-name"
+                  >
+                    {attachmentName}
+                  </button>
+                ) : (
+                  <a
+                    href={mappedAttachmentReferenceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={classNames(
+                      attachmentNameClassName,
+                      'hover:text-accent-primary',
+                    )}
+                    data-qa="attachment-name"
+                  >
+                    {attachmentName}
+                  </a>
+                )
+              ) : (
+                <span
+                  className={attachmentNameClassName}
+                  data-qa="attachment-name"
+                >
+                  {attachmentName}
+                </span>
+              )}
+            </Tooltip>
 
             {isOpenable && !isFolder ? (
               <div className="flex gap-2">
@@ -645,7 +712,11 @@ export const MessageAttachment = ({
             isFullScreen
               ? 'm-0 flex grow items-center justify-center p-3'
               : 'h-auto w-full',
-            !isBorderless && 'mt-2 border-t border-tertiary p-3 pt-4',
+            !isBorderless && [
+              'border-t border-tertiary',
+              getAttachmentContentOffsetClass(compactMode),
+              getAttachmentContentPaddingClass(compactMode),
+            ],
           )}
           ref={anchorRef}
           data-qa="attachment-content"
@@ -656,6 +727,7 @@ export const MessageAttachment = ({
             isFullScreen={isFullScreen}
             onFullScreenClick={handleToggleFullScreen}
             forceDefaultView={forceDefaultView}
+            compactMode={compactMode}
           />
           {mappedAttachmentReferenceUrl &&
             (isPdfReference ? (
@@ -665,7 +737,10 @@ export const MessageAttachment = ({
                   stopBubbling(e);
                   setOpenPdfUrl(mappedAttachmentReferenceUrl);
                 }}
-                className="mt-3 block text-start text-accent-primary"
+                className={classNames(
+                  'block text-start text-accent-primary',
+                  getAttachmentReferenceOffsetClass(compactMode),
+                )}
                 aria-label="reference"
               >
                 {t(ChatI18nKeys.Reference)}
@@ -675,7 +750,10 @@ export const MessageAttachment = ({
                 href={mappedAttachmentReferenceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 block text-accent-primary"
+                className={classNames(
+                  'block text-accent-primary',
+                  getAttachmentReferenceOffsetClass(compactMode),
+                )}
               >
                 {t(ChatI18nKeys.Reference)}
               </a>

@@ -126,12 +126,9 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(ChatSelectors.rate(rate));
   }
 
-  public getChatMessageAttachment(
-    message: string | number,
-    attachmentTitle: string,
-  ) {
+  public getChatMessageAttachment(message: string | number) {
     return this.createElementFromLocator(
-      this.getChatMessage(message).getByTitle(attachmentTitle),
+      this.getChatMessage(message).locator(ChatSelectors.attachmentName),
     );
   }
 
@@ -145,7 +142,9 @@ export class ChatMessages extends BaseElement {
     message: string | number,
     title: string,
   ) {
-    return this.getChatMessage(message).getByTitle(title);
+    return this.getChatMessageAttachment(message).getElementLocatorByText(
+      title,
+    );
   }
 
   public getChatMessageAttachmentIcon(message: string | number) {
@@ -311,8 +310,12 @@ export class ChatMessages extends BaseElement {
 
   public getAttachmentLink(message: string | number) {
     return this.getChatMessage(message).locator(
-      `${Tags.a}[${Attributes.href}]`,
+      ChatSelectors.attachmentReferenceLink,
     );
+  }
+
+  public getMessageContentLink(message: string | number) {
+    return this.getChatMessageContent(message).locator(Tags.a);
   }
 
   public getChatMessageMaxWidth(message: string | number) {
@@ -416,7 +419,7 @@ export class ChatMessages extends BaseElement {
     { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     await this.getCollapsedChatMessageAttachment(message).waitFor();
-    const messageAttachment = this.getChatMessageAttachment(
+    const messageAttachment = this.getChatMessageAttachmentTitle(
       message,
       attachmentTitle,
     );
@@ -440,7 +443,7 @@ export class ChatMessages extends BaseElement {
     await this.getChatMessage(message)
       .locator(ChatSelectors.attachmentExpanded)
       .waitFor();
-    await this.getChatMessageAttachment(message, attachmentTitle).click();
+    await this.getChatMessageAttachmentTitle(message, attachmentTitle).click();
   }
 
   public async getChatMessageAttachmentUrl(message: string | number) {

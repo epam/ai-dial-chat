@@ -1,4 +1,63 @@
 const defaultTheme = require('tailwindcss/defaultTheme');
+const typographyStyles = require('@tailwindcss/typography/src/styles');
+const COMPACT_RHYTHM_SCALE = 0.5;
+
+const BASE_RHYTHM_OVERRIDES = {
+  hr: { marginTop: '2em', marginBottom: '2em' },
+  p: { marginTop: '1em', marginBottom: '1em' },
+  ul: { marginTop: '1em', marginBottom: '1em' },
+  ol: { marginTop: '1em', marginBottom: '1em' },
+  h4: { marginTop: '1em' },
+};
+
+const scaleEmValue = (value) => {
+  const match = /^(-?[\d.]+)em$/.exec(String(value));
+
+  if (!match) {
+    return value;
+  }
+
+  const scaled = +(parseFloat(match[1]) * COMPACT_RHYTHM_SCALE).toFixed(4);
+
+  return scaled === 0 ? '0' : `${scaled}em`;
+};
+
+const buildCompactTypographyCss = () => {
+  const base = typographyStyles.default
+    ? typographyStyles.default.base
+    : typographyStyles.base;
+  const pluginDeclarations = Array.isArray(base.css)
+    ? Object.assign({}, ...base.css)
+    : base.css;
+  const declarations = { ...pluginDeclarations };
+
+  Object.entries(BASE_RHYTHM_OVERRIDES).forEach(([selector, rules]) => {
+    declarations[selector] = { ...declarations[selector], ...rules };
+  });
+
+  return Object.entries(declarations).reduce((acc, [selector, rules]) => {
+    if (
+      !rules ||
+      typeof rules !== 'object' ||
+      (rules.marginTop === undefined && rules.marginBottom === undefined)
+    ) {
+      return acc;
+    }
+
+    const scaled = {};
+
+    if (rules.marginTop !== undefined) {
+      scaled.marginTop = scaleEmValue(rules.marginTop);
+    }
+    if (rules.marginBottom !== undefined) {
+      scaled.marginBottom = scaleEmValue(rules.marginBottom);
+    }
+
+    acc[selector] = scaled;
+
+    return acc;
+  }, {});
+};
 
 // Default color palette is black when no themes presented
 const commonBgColors = {
@@ -134,7 +193,11 @@ module.exports = {
               borderRadius: '0',
               backgroundColor: 'transparent',
             },
+            ...BASE_RHYTHM_OVERRIDES,
           },
+        },
+        compact: {
+          css: buildCompactTypographyCss(),
         },
       },
     },

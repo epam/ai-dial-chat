@@ -178,9 +178,6 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
-  const selectedPublicationUrl = useAppSelector(
-    PublicationSelectors.selectSelectedPublicationUrl,
-  );
   const notAvailableEntityType = useAppSelector(
     ChatSelectors.selectNotAvailableEntityType,
   );
@@ -514,6 +511,7 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
               temperature: temporarySettings.temperature,
               isShared: temporarySettings.isShared,
               responseFormat: temporarySettings.responseFormat,
+              compactMode: temporarySettings.compactMode,
             },
           }),
         );
@@ -931,7 +929,7 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
                     )}
 
                     {!isPlayback &&
-                    (!selectedPublicationUrl || isApproveRequiredInput) &&
+                    (!isApproveRequiredEntity || isApproveRequiredInput) &&
                     notAvailableEntityType &&
                     notAllowedItemsForDisplay.length ? (
                       <NotAllowedModel

@@ -1,4 +1,4 @@
-import { IconX } from '@tabler/icons-react';
+import { IconChevronDown, IconChevronUp, IconX } from '@tabler/icons-react';
 import Select, { Props as SelectProps, components } from 'react-select';
 
 import classNames from 'classnames';
@@ -26,6 +26,7 @@ export function DropdownSelector({
   ...selectProps
 }: Props) {
   const { t } = useTranslation(Translation.Common);
+
   return (
     <Tooltip
       triggerClassName={classNames(
@@ -74,6 +75,15 @@ export function DropdownSelector({
               />
             </components.MultiValueRemove>
           ),
+          DropdownIndicator: (props) => (
+            <components.DropdownIndicator {...props}>
+              {props.selectProps.menuIsOpen ? (
+                <IconChevronUp size={18} className="shrink-0 text-primary" />
+              ) : (
+                <IconChevronDown size={18} className="shrink-0 text-primary" />
+              )}
+            </components.DropdownIndicator>
+          ),
         }}
         styles={{
           indicatorsContainer: (styles) => ({
@@ -112,13 +122,10 @@ export function DropdownSelector({
             },
             color: 'var(--text-primary)',
           }),
-          dropdownIndicator: (styles, state) => ({
+          dropdownIndicator: (styles) => ({
             ...styles,
-            transition: 'all',
-            transitionDuration: '200ms',
             color: 'var(--text-primary)',
             cursor: 'pointer',
-            transform: state.selectProps.menuIsOpen ? 'rotate(180deg)' : '',
             ':hover': {
               color: 'var(--text-primary)',
             },

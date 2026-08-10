@@ -58,7 +58,7 @@ export class ReplaceConfirmationModal extends BaseElement {
 
   private dropdownMenu!: DropdownButtonMenu;
 
-  private getDropdownMenu(): DropdownButtonMenu {
+  public getDropdownMenu(): DropdownButtonMenu {
     if (!this.dropdownMenu) {
       this.dropdownMenu = new DropdownButtonMenu(this.page);
     }

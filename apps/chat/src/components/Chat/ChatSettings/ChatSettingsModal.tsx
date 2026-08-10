@@ -50,6 +50,7 @@ const ChatSettingsView = ({
   const [responseFormat, setResponseFormat] = useState(
     conversation.responseFormat ?? ConversationResponseFormat.Markdown,
   );
+  const [compactMode, setCompactMode] = useState(!!conversation.compactMode);
 
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
 
@@ -60,6 +61,7 @@ const ChatSettingsView = ({
       temperature: currentTemperature,
       isShared: !!conversation.isShared,
       responseFormat,
+      compactMode,
     });
   }, [
     conversation,
@@ -67,6 +69,7 @@ const ChatSettingsView = ({
     currentTemperature,
     onChangeSettings,
     responseFormat,
+    compactMode,
   ]);
 
   useEffect(() => {
@@ -83,6 +86,8 @@ const ChatSettingsView = ({
       onChangeTemperature={setCurrentTemperature}
       responseFormat={responseFormat}
       onChangeResponseFormat={setResponseFormat}
+      compactMode={compactMode}
+      onChangeCompactMode={setCompactMode}
     />
   );
 };

@@ -528,6 +528,38 @@ export const isAbsoluteUrl = (url: string): boolean => {
   ].some((prefix) => urlLower.startsWith(prefix));
 };
 
+const SAFE_LINK_PROTOCOLS = new Set([
+  'http:',
+  'https:',
+  'mailto:',
+  'ftp:',
+  'ftps:',
+  'tel:',
+]);
+
+const URL_SCHEME_REGEX = /^([a-z][a-z0-9+.-]*):/i;
+
+/**
+ * Tells whether a url is safe to put into an `href`. Relative urls (e.g. the
+ * `api/files` proxy paths) carry no scheme and are safe; anything with a scheme
+ * outside the allow list - `javascript:` above all - is not.
+ */
+export const isSafeLinkUrl = (url: string | undefined): boolean => {
+  if (!url) {
+    return false;
+  }
+
+  // Browsers ignore control characters while resolving a scheme, so drop them
+  // before looking at it - otherwise "java\tscript:" would slip through.
+  const normalizedUrl = Array.from(url)
+    .filter((char) => char.charCodeAt(0) > 0x20)
+    .join('');
+
+  const scheme = URL_SCHEME_REGEX.exec(normalizedUrl);
+
+  return !scheme || SAFE_LINK_PROTOCOLS.has(`${scheme[1].toLowerCase()}:`);
+};
+
 export const getDownloadPath = (file: DialFile) =>
   file.absolutePath ? constructPath(file.absolutePath, file.name) : file.id;
 

@@ -241,7 +241,7 @@ dialTest(
         description: toolsetEntity.description,
       });
 
-      await entityEditorGeneralForm.topicsDropdownToggle.click();
+      await entityEditorGeneralForm.topicsDropdownDownIcon.click();
       const allTopics = await listboxMenu.getAllOptions();
       topicsToSelect = allTopics
         .sort((a, b) => b.length - a.length)
@@ -249,7 +249,7 @@ dialTest(
       for (const topic of topicsToSelect) {
         await listboxMenu.selectOption(topic);
       }
-      await entityEditorGeneralForm.topicsDropdownToggle.click();
+      await entityEditorGeneralForm.topicsDropdownUpIcon.click();
 
       await entityEditorGeneralForm.addIconButton.click();
       const attachmentCheckbox =
