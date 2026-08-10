@@ -6,7 +6,7 @@ import { PromptsPublicService } from './public/prompts-public.service';
 /*
  * Thin orchestrator for PromptController. Every method here delegates to
  * exactly one of the three focused services below — see
- * openspec/changes/split-prompt-service/design.md for the ownership map and
+ * openspec/changes/archive/2026-08-10-split-prompt-service/design.md for the ownership map and
  * why the split follows this boundary. A fourth service, PromptsResourceService
  * (shared low-level DIAL Core resource I/O), sits beneath these three and is
  * not injected directly here — it has no controller-facing methods of its own.
