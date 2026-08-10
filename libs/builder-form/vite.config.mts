@@ -6,7 +6,7 @@ import * as path from 'path';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
-  cacheDir: '../../node_modules/.vite/libs/scheduled-tasks',
+  cacheDir: '../../node_modules/.vite/libs/builder-form',
   plugins: [
     react(),
     dts({
@@ -23,7 +23,7 @@ export default defineConfig(() => ({
     },
     lib: {
       entry: 'src/index.ts',
-      name: '@epam/ai-dial-scheduled-tasks',
+      name: '@epam/ai-dial-builder-form',
       fileName: 'index',
       formats: ['es' as const],
     },
@@ -32,7 +32,6 @@ export default defineConfig(() => ({
         'react',
         'react-dom',
         'react/jsx-runtime',
-        '@epam/ai-dial-builder-form',
         '@epam/ai-dial-chat-shared',
         '@epam/ai-dial-kit',
         '@epam/ai-dial-ui-kit',
@@ -41,7 +40,7 @@ export default defineConfig(() => ({
     },
   },
   test: {
-    name: '@epam/ai-dial-scheduled-tasks',
+    name: '@epam/ai-dial-builder-form',
     watch: false,
     globals: true,
     environment: 'jsdom',
