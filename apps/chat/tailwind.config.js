@@ -4,6 +4,10 @@ const COMPACT_RHYTHM_SCALE = 0.5;
 
 const BASE_RHYTHM_OVERRIDES = {
   hr: { marginTop: '2em', marginBottom: '2em' },
+  p: { marginTop: '1em', marginBottom: '1em' },
+  ul: { marginTop: '1em', marginBottom: '1em' },
+  ol: { marginTop: '1em', marginBottom: '1em' },
+  h4: { marginTop: '1em' },
 };
 
 const scaleEmValue = (value) => {
