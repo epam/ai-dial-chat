@@ -13,6 +13,7 @@ interface ModelInfo {
 // version will be string if parseVersion is true, modelInfo will be ModelInfo if parseModel is true
 export type ParseEntityApiKeyResult<T extends ParseEntityApiKeyOptions> = {
   name: string;
+  uuid?: string;
 } & (T extends { parseModel: true }
   ? {
       modelInfo: ModelInfo;
