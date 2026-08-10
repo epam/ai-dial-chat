@@ -245,6 +245,12 @@ export const isVersionPartSizeValid = (version: string | undefined) => {
   return version.split('.').every((part) => part.length <= 5);
 };
 
+const uuidRegex =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export const isUuid = (value: string | undefined): boolean =>
+  !!value && uuidRegex.test(value);
+
 export const isVersionExists = (
   versionToTest: string,
   entityId: string,
