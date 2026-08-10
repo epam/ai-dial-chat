@@ -2182,6 +2182,12 @@ export interface DeploymentItemDto {
    * @memberof DeploymentItemDto
    */
   conversationStarters?: ConversationStartersDto;
+  /**
+   * Reference from DIAL Core; some conversations/messages address this deployment by reference instead of id
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  reference?: string;
 }
 
 /**

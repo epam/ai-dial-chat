@@ -68,6 +68,7 @@ import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/use
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
+import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import {
   dialFilesToAttachments,
   dialFolderPathToAttachment,
@@ -235,7 +236,7 @@ const ConversationView: FC<Props> = ({
   const activeDeploymentId = fixedModel?.id ?? selectedItemId;
 
   const selectedDeployment = useMemo(
-    () => items.find((item) => item.id === activeDeploymentId),
+    () => findDeploymentByIdOrReference(items, activeDeploymentId),
     [items, activeDeploymentId],
   );
   const mcpAppTools = useMcpAppTools(selectedDeployment, messages, toolsets);
@@ -736,7 +737,7 @@ const ConversationView: FC<Props> = ({
                   fixedModel ? fixedDeploymentItems : deploymentItems
                 }
                 selectedDeploymentId={
-                  fixedModel ? fixedModel.id : selectedItemId
+                  selectedDeployment?.id ?? activeDeploymentId
                 }
                 onDeploymentChange={fixedModel ? undefined : setSelectedItemId}
                 isModelSelectorDisabled={
@@ -804,7 +805,7 @@ const ConversationView: FC<Props> = ({
                 usageLimitsSlot={
                   <UsageLimitsControl
                     deploymentId={
-                      fixedModel ? fixedModel.id : (selectedItemId ?? undefined)
+                      selectedDeployment?.id ?? activeDeploymentId ?? undefined
                     }
                     isGenerationInProgress={isAssistantTyping}
                     labels={usageLimitsLabels}

@@ -183,6 +183,12 @@ export class DeploymentItemDto {
       'Quick Apps conversation starter settings from application properties',
   })
   conversationStarters?: ConversationStartersDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Reference from DIAL Core; some conversations/messages address this deployment by reference instead of id',
+  })
+  reference?: string;
 }
 
 export class DeploymentsResponseDto {
