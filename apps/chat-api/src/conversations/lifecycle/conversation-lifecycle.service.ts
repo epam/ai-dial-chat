@@ -30,6 +30,7 @@ import {
   getConversationName,
   getConversationTitleFromName,
   getDeploymentKey,
+  isApplicationDeploymentPath,
   prepareEntityName,
   qualifySessionConversationPath,
   resolveConversationLocation,
@@ -291,11 +292,20 @@ export class ConversationLifecycleService {
      * Prefer the stored `name` field (set by LLM naming) over the path-derived
      * title so that conversations renamed by the model keep that name in the copy.
      */
-    const pathTitle = getConversationTitleFromName(decodedFilename);
+    const isApplicationDeployment = isApplicationDeploymentPath(
+      decodedFolderSegments.join('/'),
+    );
+    const pathTitle = getConversationTitleFromName(
+      decodedFilename,
+      isApplicationDeployment,
+    );
     const sourceTitle = sourceData.name?.trim() || pathTitle;
     const uniqueTitle = prepareEntityName(sourceTitle);
 
-    const deploymentKey = getDeploymentKey(decodedFilename);
+    const deploymentKey = getDeploymentKey(
+      decodedFilename,
+      isApplicationDeployment,
+    );
     const decodedRenamedFilename = `${deploymentKey}__${uniqueTitle}`;
     const pathExists = await this.conversationPathExists(
       token,

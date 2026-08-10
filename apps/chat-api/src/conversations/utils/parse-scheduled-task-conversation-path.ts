@@ -38,7 +38,14 @@ export const parseScheduledTaskConversationPath = (
   if (!SCHEDULE_ID_PATTERN.test(scheduleId)) return null;
 
   const filename = safeDecodeURIComponent(rawFilename);
-  const runId = getRunIdFromFilename(filename);
+  /*
+   * This path shape requires the filename to sit directly at
+   * FILENAME_SEGMENT_INDEX, right after {scheduleId} — an
+   * `applications/{bucket}/...`-prefixed deployment would add extra path
+   * segments and already fail the length check above, so a recognized
+   * scheduled-task filename is never an application deployment.
+   */
+  const runId = getRunIdFromFilename(filename, false);
   if (!runId) return null;
 
   return { scheduleId, runId };

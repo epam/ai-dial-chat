@@ -40,6 +40,22 @@ describe('getModelIdFromConversationId', () => {
     ).toBe('applications/catalog/Team%2FApp%20One__0.0.1');
   });
 
+  it('does not mistake a bare-numeric title for a version suffix on a plain model deployment', () => {
+    expect(
+      getModelIdFromConversationId(
+        'conversations/bucket/gemini-3.1-flash-lite__18__0e2c7332-bf11-4026-b729-502b55bbbb77',
+      ),
+    ).toBe('gemini-3.1-flash-lite');
+  });
+
+  it('does not mistake a bare-numeric title for a version suffix on a scheduled-task conversation', () => {
+    expect(
+      getModelIdFromConversationId(
+        'conversations/bucket/.scheduler/schedule-id/gemini-3.1-flash-lite__18__0e2c7332-bf11-4026-b729-502b55bbbb77',
+      ),
+    ).toBe('gemini-3.1-flash-lite');
+  });
+
   it('handles titles that contain double-underscore', () => {
     expect(
       getModelIdFromConversationId(

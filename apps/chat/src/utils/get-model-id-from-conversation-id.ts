@@ -10,6 +10,15 @@ const VERSION_NUMBER_PART_REGEX = /^\d+$/;
  * below — otherwise they get treated as deployment ID path prefixes.
  */
 const SCHEDULER_SEGMENT = '.scheduler';
+/*
+ * DIAL Core only versions the deployment ID itself for custom applications
+ * (`applications/{bucket}/{name}__{version}`) — plain model deployments
+ * never have a version suffix. Without checking for this path prefix, a
+ * purely-numeric conversation TITLE (e.g. "18") is indistinguishable from a
+ * version suffix and gets folded into the deployment ID, breaking
+ * deployment lookup (icon, model info) for that conversation.
+ */
+const APPLICATIONS_PATH_SEGMENT = 'applications';
 
 const isDeploymentVersionSuffix = (value?: string): boolean => {
   if (!value) return false;
@@ -20,12 +29,15 @@ const isDeploymentVersionSuffix = (value?: string): boolean => {
     .every((part) => VERSION_NUMBER_PART_REGEX.test(part));
 };
 
-const getDeploymentIdPartFromFilenamePart = (filenamePart: string): string => {
+const getDeploymentIdPartFromFilenamePart = (
+  filenamePart: string,
+  isApplicationDeployment: boolean,
+): string => {
   const [deploymentName, versionSuffix] = filenamePart.split(
     CONVERSATION_NAME_SEPARATOR,
   );
 
-  return isDeploymentVersionSuffix(versionSuffix)
+  return isApplicationDeployment && isDeploymentVersionSuffix(versionSuffix)
     ? [deploymentName, versionSuffix].join(CONVERSATION_NAME_SEPARATOR)
     : deploymentName;
 };
@@ -80,12 +92,14 @@ export const getModelIdFromConversationId = (
   if (separatorIndex === -1) return undefined;
 
   const separatorSegment = deploymentSegments[separatorIndex];
-  const lastDeploymentPart =
-    getDeploymentIdPartFromFilenamePart(separatorSegment);
-
   const prefixParts = deploymentSegments
     .slice(0, separatorIndex)
     .filter(Boolean);
+  const isApplicationDeployment = prefixParts[0] === APPLICATIONS_PATH_SEGMENT;
+  const lastDeploymentPart = getDeploymentIdPartFromFilenamePart(
+    separatorSegment,
+    isApplicationDeployment,
+  );
 
   const allParts = [...prefixParts, lastDeploymentPart].filter(Boolean);
   return allParts.length > 0 ? allParts.join('/') : undefined;
