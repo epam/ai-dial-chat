@@ -192,7 +192,7 @@ export const useDialFileMutations = ({
           : {
               id: parentApiPath,
               path: parentApiPath,
-              name,
+              name: parentVirtualPath.split('/').filter(Boolean).pop() ?? '',
               folderId: parentApiPath,
               nodeType: DialFileNodeType.FOLDER,
               items: [],

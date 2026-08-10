@@ -157,6 +157,20 @@ describe('useDialFileMutations', () => {
       expect(mockCreateFolder).not.toHaveBeenCalled();
     });
 
+    it('does not call createFolder for a name starting with a dot', async () => {
+      const { result } = renderMutations({ folderPath: '' });
+
+      await act(async () => {
+        await result.current.onCreateFolder(
+          uploadItem('.hidden'),
+          '/My files/.hidden',
+          'file-hidden',
+        );
+      });
+
+      expect(mockCreateFolder).not.toHaveBeenCalled();
+    });
+
     it('does not call createFolder for the reserved marker name', async () => {
       const { result } = renderMutations({ folderPath: '' });
 
