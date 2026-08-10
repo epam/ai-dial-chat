@@ -5481,6 +5481,10 @@
                 "$ref": "#/components/schemas/ConversationStartersDto"
               }
             ]
+          },
+          "reference": {
+            "type": "string",
+            "description": "Reference from DIAL Core; some conversations/messages address this deployment by reference instead of id"
           }
         },
         "required": ["id", "displayName", "type"]

@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
+import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 
 const DeploymentSelectorOverlay = lazy(
@@ -51,7 +52,7 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
   );
 
   const selectedDeployment = useMemo(
-    () => items.find((item) => item.id === selectedItemId),
+    () => findDeploymentByIdOrReference(items, selectedItemId),
     [items, selectedItemId],
   );
 

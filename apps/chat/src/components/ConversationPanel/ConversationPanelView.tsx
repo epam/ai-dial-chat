@@ -67,9 +67,11 @@ import {
   toPanelConversationId,
 } from '../../utils/conversation-id-match';
 import { getConversationPath } from '../../utils/conversation-path';
+import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { getModelIdFromConversationId } from '../../utils/get-model-id-from-conversation-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
+import { safeDecodeURIComponent } from '../../utils/string-utils';
 import ImportExportQueue from '../ImportExportQueue/ImportExportQueue';
 import PublishConversationPanelContainer from '../PublishConversationPanelContainer/PublishConversationPanelContainer';
 import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup';
@@ -157,20 +159,6 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
   const { items: deployments, isLoading: isDeploymentsLoading } =
     useDeployments();
-  const deploymentIconByModelId = useMemo(
-    () => new Map(deployments.map((d) => [d.id, d.iconUrl])),
-    [deployments],
-  );
-  const deploymentNameByModelId = useMemo(
-    () =>
-      new Map(
-        deployments.map((d) => [
-          d.id,
-          resolveLocalizedText(d.displayName, language) || d.id,
-        ]),
-      ),
-    [deployments, language],
-  );
 
   const panelActiveConversationId = useMemo(
     () =>
@@ -274,18 +262,30 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       items.map((item) => {
         const id = toPanelConversationId(item.id);
         const modelId = getModelIdFromConversationId(item.id);
-        const iconUrl = modelId
-          ? deploymentIconByModelId.get(modelId)
+        const deployment = modelId
+          ? findDeploymentByIdOrReference(deployments, modelId)
+          : undefined;
+        /*
+         * modelId is guessed from the conversation's resource path, which
+         * cannot reliably distinguish a real conversation folder from a
+         * multi-segment deployment id when the deployment itself isn't found
+         * in `deployments` (e.g. unavailable/deleted) — so the fallback tooltip
+         * shows only the last path segment, not the full percent-encoded path.
+         */
+        const fallbackTooltip = modelId
+          ? safeDecodeURIComponent(modelId.split('/').pop() ?? modelId)
           : undefined;
 
         return {
           id,
           title: item.title,
           isPinned: item.isPinned ?? false,
-          iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
-          iconTooltip: modelId
-            ? deploymentNameByModelId.get(modelId)
+          iconUrl: deployment?.iconUrl
+            ? resolveCatalogIconUrl(deployment.iconUrl)
             : undefined,
+          iconTooltip: deployment
+            ? resolveLocalizedText(deployment.displayName, language)
+            : fallbackTooltip,
           isIconLoading: isDeploymentsLoading,
           source: getConversationSource(item),
           href: getConversationRoute(id),
@@ -294,13 +294,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             : {}),
         };
       }),
-    [
-      items,
-      deploymentIconByModelId,
-      deploymentNameByModelId,
-      isDeploymentsLoading,
-      taskBadgeLabel,
-    ],
+    [items, deployments, isDeploymentsLoading, taskBadgeLabel, language],
   );
 
   const filterLabels = useMemo(

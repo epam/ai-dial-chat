@@ -37,6 +37,7 @@ import {
   isValidFeaturesData,
   parseFeaturesData,
 } from '../../utils/custom-apps';
+import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import {
   composeLocalePayload,
   decomposeLocalizedFields,
@@ -87,7 +88,10 @@ const CustomAppEditor: FC = () => {
         if (cancelled) return;
         const appProps = (dto.applicationDetails?.applicationProperties ??
           {}) as Record<string, unknown>;
-        const deployment = deployments.find((d) => d.id === customAppId);
+        const deployment = findDeploymentByIdOrReference(
+          deployments,
+          customAppId,
+        );
 
         if (deployment) {
           setGeneralForm({

@@ -19,6 +19,7 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { ROUTES } from '../../types/routes';
+import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import {
   decomposeLocalizedFields,
   PRIMARY_LOCALE,
@@ -117,7 +118,7 @@ const AppsEditor: FC = () => {
   const existingDeployment = useMemo(
     () =>
       isEditingExistingApp
-        ? deployments.find((d) => d.id === existingAppId)
+        ? findDeploymentByIdOrReference(deployments, existingAppId)
         : undefined,
     [deployments, isEditingExistingApp, existingAppId],
   );

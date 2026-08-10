@@ -65,6 +65,7 @@ import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
+import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import {
   dialFilesToAttachments,
   dialFolderPathToAttachment,
@@ -232,7 +233,7 @@ const ConversationView: FC<Props> = ({
   const activeDeploymentId = fixedModel?.id ?? selectedItemId;
 
   const selectedDeployment = useMemo(() => {
-    const deployment = items.find((item) => item.id === activeDeploymentId);
+    const deployment = findDeploymentByIdOrReference(items, activeDeploymentId);
     return deployment
       ? {
           ...deployment,
@@ -731,7 +732,7 @@ const ConversationView: FC<Props> = ({
                   fixedModel ? fixedDeploymentItems : deploymentItems
                 }
                 selectedDeploymentId={
-                  fixedModel ? fixedModel.id : selectedItemId
+                  selectedDeployment?.id ?? activeDeploymentId
                 }
                 onDeploymentChange={fixedModel ? undefined : setSelectedItemId}
                 isModelSelectorDisabled={
@@ -799,7 +800,7 @@ const ConversationView: FC<Props> = ({
                 usageLimitsSlot={
                   <UsageLimitsControl
                     deploymentId={
-                      fixedModel ? fixedModel.id : (selectedItemId ?? undefined)
+                      selectedDeployment?.id ?? activeDeploymentId ?? undefined
                     }
                     isGenerationInProgress={isAssistantTyping}
                     labels={usageLimitsLabels}
