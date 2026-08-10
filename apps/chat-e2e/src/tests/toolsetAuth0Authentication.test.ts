@@ -1,4 +1,4 @@
-import { ToolsetCredentialsLevel } from '@/chat/types/toolsets';
+import { ToolsetCredentialsLevel, ToolsetTool } from '@/chat/types/toolsets';
 import dialTest from '@/src/core/dialFixtures';
 import {
   API,
@@ -18,7 +18,8 @@ import { Page } from '@playwright/test';
 dialTest(
   'Create toolset with OAuth (without configuration).\n' +
     '[Toolset]:Successful OAuth login after updating name and version for toolset (with login).\n' +
-    'Change endpoint with OAuth to another endpoint with OAuth',
+    'Change endpoint with OAuth to another endpoint with OAuth.\n' +
+    "[Toolset]: allowed tools are displayed in Toolset editor after toolset's login",
   async ({
     marketplacePage,
     entityEditorPage,
@@ -40,7 +41,7 @@ dialTest(
     toolsetApiAuthenticationAssertion,
     page,
   }) => {
-    setTestIds('EPMDIAL-5369', 'EPMDIAL-5382', 'EPMDIAL-5375');
+    setTestIds('EPMDIAL-5369', 'EPMDIAL-5382', 'EPMDIAL-5375', 'EPMDIAL-5400');
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       version: GeneratorUtil.randomEntityVersion(),
@@ -54,6 +55,11 @@ dialTest(
     let oauthMockHelper: OAuthMockHelper;
     let initialToolset: Toolset;
     let loginPopup: Page;
+    const toolNames = ['search_pages', 'create_page', 'update_page'];
+    const tools: ToolsetTool[] = toolNames.map((name) => ({
+      name,
+      title: name,
+    }));
 
     await dialTest.step('Open toolset creation page directly', async () => {
       await marketplacePage.openCreateToolsetPage();
@@ -100,6 +106,7 @@ dialTest(
         toolsetEntity.endpoint,
       );
       await oauthMockHelper.setupMocks();
+      await oauthMockHelper.setupToolsetToolsRoute(tools);
     });
 
     await dialTest.step(
@@ -156,6 +163,20 @@ dialTest(
         await toolsetEditorViewFormAssertion.assertElementText(
           toolsetEditorViewForm.logoutButton,
           SignInButtonTitles.logOut,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on Allowed tools drop-down and verify the list of available tools is displayed',
+      async () => {
+        await toolsetEditorViewForm.allowedTools.openMenu();
+        const displayedTools = await toolsetEditorViewForm.allowedTools
+          .getListboxMenu()
+          .getAllOptions();
+        toolsetEditorViewFormAssertion.assertValuesAreEqual(
+          displayedTools,
+          toolNames,
         );
       },
     );
@@ -248,6 +269,18 @@ dialTest(
         authType: ToolsetAuthTypes.OAUTH,
         credentialsLevel: ToolsetCredentialsLevel.GLOBAL,
       });
+    });
+
+    await dialTest.step('Verify Allowed tools field is empty', async () => {
+      await entityEditorPage.reloadPage();
+      await entityEditorPage.waitForPageLoadedForEdit(
+        EntityEditorToolsetTypes.Toolset,
+      );
+      await toolsetEditorViewForm.allowedTools.openMenu();
+      const displayedTools = await toolsetEditorViewForm.allowedTools
+        .getListboxMenu()
+        .getAllOptions();
+      toolsetEditorViewFormAssertion.assertValuesAreEqual(displayedTools, []);
     });
 
     await dialTest.step(

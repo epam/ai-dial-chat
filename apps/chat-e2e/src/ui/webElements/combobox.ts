@@ -1,6 +1,6 @@
 import { Tags } from '@/src/ui/domData';
 import { ComboboxSelectors } from '@/src/ui/selectors';
-import { BaseElement } from '@/src/ui/webElements/index';
+import { BaseElement, ListboxMenu } from '@/src/ui/webElements/index';
 import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
@@ -19,6 +19,14 @@ export class Combobox extends BaseElement {
   public selectedPills = this.getChildElementBySelector(
     ComboboxSelectors.selectedPills,
   );
+  public listboxMenu = new ListboxMenu(this.page);
+
+  getListboxMenu(): ListboxMenu {
+    if (!this.listboxMenu) {
+      this.listboxMenu = new ListboxMenu(this.page);
+    }
+    return this.listboxMenu;
+  }
 
   public getSelectedPill(value: string): BaseElement {
     const escapedType = RegexUtil.escapeRegexChars(value);
@@ -58,5 +66,10 @@ export class Combobox extends BaseElement {
   public async removeSelectedPillValue(value: string) {
     const removeIcon = this.getSelectedPillRemoveIcon(value);
     await removeIcon.click();
+  }
+
+  public async openMenu() {
+    await this.comboboxInput.click();
+    await this.getListboxMenu().waitForState();
   }
 }

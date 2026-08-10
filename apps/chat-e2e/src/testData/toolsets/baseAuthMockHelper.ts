@@ -2,6 +2,7 @@ import { ServerSlugs } from '@/chat/types/slugs-types';
 import {
   ToolsetAuthPayloadBase,
   ToolsetCredentialsLevel,
+  ToolsetTool,
 } from '@/chat/types/toolsets';
 import { API, StatusCodeConfig } from '@/src/testData';
 import {
@@ -139,6 +140,30 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
         default:
           await route.continue();
       }
+    });
+  }
+
+  /**
+   * Mocks the "list tools" call the Allowed tools dropdown fires on focus
+   * (GET /api/toolset/{id}/tools). Returns the given tools only while the
+   * toolset is signed in, mirroring the fact that DIAL Core proxies this
+   * call live to the MCP server using the toolset's stored credentials.
+   */
+  async setupToolsetToolsRoute(tools: ToolsetTool[]): Promise<void> {
+    const id = this.toolset.id ?? this.toolset.name;
+    const decodedToolsetId = decodeURIComponent(id!);
+    const pattern = `**${API.toolsetToolsHost(decodedToolsetId)}`;
+
+    await this.page.context().route(pattern, async (route, request) => {
+      if (!this.state.enableMocking || request.method() !== 'GET') {
+        await route.continue();
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ tools: this.state.isSignedIn ? tools : [] }),
+      });
     });
   }
 

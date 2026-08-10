@@ -676,6 +676,8 @@ export const API = {
   authorizationEndpoint: (endpoint: string) => `${endpoint}/oauth/authorize`,
   tokenEndpoint: (endpoint: string) => `${endpoint}/oauth/token`,
   toolsetSignInHost: () => `${API.api}/ops/${ServerSlugs.TOOLSET_SIGN_IN}`,
+  toolsetToolsHost: (id: string) =>
+    `${API.api}/toolset/${ItemUtil.getEncodedItemId(id)}/tools`,
   subscribeHost: () => `${API.api}/client-channels/subscribe`,
   unsubscribeHost: () => `${API.api}/client-channels/unsubscribe`,
   reportHost: () => `${API.api}/client-channels/report`,
