@@ -1,14 +1,3 @@
-.container {
-  background: var(--stcf-bg, var(--bg-layer-base, #f5f7fa));
-}
-
-.header {
-  border-bottom-color: var(
-    --stcf-header-border,
-    var(--stroke-tertiary, #e0e6f0)
-  );
-}
-
 .detailsColumn {
   border-inline-end-color: var(
     --stcf-details-border,

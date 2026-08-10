@@ -187,6 +187,13 @@ jobs:
           # vars: declared NON-secret config names to inject from the Actions
           # Variables context (operator-tunable knobs, e.g. JIRA_MAX_FINDINGS).
           print(f"vars_json={json.dumps(m.get('vars') or [])}")
+          # api_key_secret: optional per-agent inference key override. The named
+          # secret must also be in `secrets:` so the inject step puts its value
+          # into env before the override step forwards it to ANTHROPIC_AUTH_TOKEN.
+          api_key_secret = m.get('api_key_secret', '')
+          if api_key_secret and api_key_secret not in (m.get('secrets') or []):
+              raise SystemExit(f"::error::api_key_secret '{api_key_secret}' must also appear in manifest `secrets:` so its value is injected into env before the inference-key override step.")
+          print(f"api_key_secret={api_key_secret}")
           # private_output: encrypt this agent's artifact and decrypt encrypted
           # upstream artifacts (public-repo leak protection). See the encrypt
           # step in run-claude-stage and the decrypt step below.
@@ -303,6 +310,47 @@ jobs:
                       injected.append(name)
           print(f"Injected vars: {injected or '(none set; skill defaults apply)'}")
           PY
+
+      - name: Override inference key (per-agent)
+        # When a manifest declares `api_key_secret`, forward that secret's value
+        # to the inference env vars instead of the shared DIAL_API_KEY /
+        # ANTHROPIC_API_KEY. Runs after "Inject declared secrets" so the secret
+        # is already in GITHUB_ENV under its declared name.
+        #
+        # In DIAL mode (DIAL_CORE_URL set) the claude-code-action reads
+        # ANTHROPIC_AUTH_TOKEN from the process env — set via GITHUB_ENV in the
+        # Configure inference route step — so overriding it here is sufficient.
+        # In direct-Anthropic mode ANTHROPIC_API_KEY is written to GITHUB_ENV
+        # as well; whether the composite action's ${{ env.ANTHROPIC_API_KEY }}
+        # expression picks it up depends on GHA's env-context refresh behaviour,
+        # but the CLI process env always does.
+        if: steps.manifest.outputs.api_key_secret != ''
+        env:
+          SECRET_NAME: ${{ steps.manifest.outputs.api_key_secret }}
+        run: |
+          set -euo pipefail
+          val="${!SECRET_NAME:-}"
+          if [ -z "$val" ]; then
+            echo "::error::api_key_secret '${SECRET_NAME}' is declared but empty in env — ensure it is listed in this agent's \`secrets:\` field and the corresponding Actions secret exists."
+            exit 1
+          fi
+          # Inference API keys never contain newlines or carriage returns. Use a
+          # shell-native case test (sees embedded \n/\r in the variable itself,
+          # unlike grep which reads line-by-line and misses them).
+          case "$val" in
+            *$'\n'*|*$'\r'*)
+              echo "::error::api_key_secret '${SECRET_NAME}' value contains a newline/CR — refusing to write it to GITHUB_ENV."
+              exit 1 ;;
+          esac
+          # Use the heredoc-delimited multiline form so that special characters
+          # (=, <, >) in the value cannot be misinterpreted as new assignments.
+          # Randomise the delimiter per-invocation so it cannot be predicted even
+          # if the newline guard above were somehow bypassed.
+          DELIM="__SDLC_KEY_EOF_$(openssl rand -hex 8)__"
+          { printf 'ANTHROPIC_AUTH_TOKEN<<%s\n%s\n%s\n' "$DELIM" "$val" "$DELIM"
+            printf 'ANTHROPIC_API_KEY<<%s\n%s\n%s\n' "$DELIM" "$val" "$DELIM"
+          } >> "$GITHUB_ENV"
+          echo "Inference key overridden for this agent (secret: ${SECRET_NAME})"
 
       - name: Decrypt upstream artifacts
         # Upstream producers flagged `private_output` upload their stage-output
