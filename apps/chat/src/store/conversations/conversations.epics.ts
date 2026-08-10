@@ -387,7 +387,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
                     return conv;
                   }
 
-                  const { name, version, modelInfo } = parseEntityApiKey(
+                  const { name, version, modelInfo, uuid } = parseEntityApiKey(
                     splitEntityId(conv.id).name,
                     { parseVersion: true, parseModel: true },
                   );
@@ -396,6 +396,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
                     ...conv,
                     ...modelInfo,
                     name,
+                    ...(uuid && { uuid }),
                     publicationInfo: {
                       version,
                     },
@@ -3696,7 +3697,7 @@ const uploadConversationsWithContentRecursiveEpic: AppEpic = (
               ConversationsActions.addConversations({
                 conversations: conversations.map((conv) => {
                   if (publicConversationIds.includes(conv.id)) {
-                    const { name, version, modelInfo } = parseEntityApiKey(
+                    const { name, version, modelInfo, uuid } = parseEntityApiKey(
                       splitEntityId(conv.id).name,
                       { parseVersion: true, parseModel: true },
                     );
@@ -3704,6 +3705,7 @@ const uploadConversationsWithContentRecursiveEpic: AppEpic = (
                       ...conv,
                       ...modelInfo,
                       name,
+                      ...(uuid && { uuid }),
                       publicationInfo: {
                         version,
                       },
