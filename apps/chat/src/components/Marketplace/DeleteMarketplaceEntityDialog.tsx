@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { isDialAiEntityModel } from '@/src/utils/app/application';
+import { getModelName, isDialAiEntityModel } from '@/src/utils/app/application';
 import { translate } from '@/src/utils/app/translation';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
@@ -12,8 +12,8 @@ import {
   ModelsActions,
   ToolsetActions,
 } from '@/src/store/actions';
-import { useAppDispatch } from '@/src/store/hooks';
-import { MarketplaceSelectors } from '@/src/store/selectors';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { MarketplaceSelectors, UISelectors } from '@/src/store/selectors';
 
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { DeleteType } from '@/src/constants/marketplace';
@@ -24,9 +24,10 @@ import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 const getDeleteConfirmationText = (
   action: DeleteType,
   entity: MarketplaceEntity,
+  locale: string,
 ) => {
   const translationVariables = {
-    name: entity.name,
+    name: getModelName(entity, locale),
     version: entity.version
       ? translate(MarketplaceI18nKeys.VersionInBrackets, {
           ns: Translation.Marketplace,
@@ -99,6 +100,7 @@ const view = withRenderWhenEntities<DeleteMarketplaceEntityDialogProps>({
   deleteState: MarketplaceSelectors.selectDeleteEntity,
 })(({ deleteState }: DeleteMarketplaceEntityDialogProps) => {
   const dispatch = useAppDispatch();
+  const locale = useAppSelector(UISelectors.selectLocale);
 
   const deleteAction = deleteState.action;
   const deleteEntity = deleteState.entity;
@@ -157,7 +159,7 @@ const view = withRenderWhenEntities<DeleteMarketplaceEntityDialogProps>({
   return (
     <ConfirmDialog
       isOpen
-      {...getDeleteConfirmationText(deleteAction, deleteEntity)}
+      {...getDeleteConfirmationText(deleteAction, deleteEntity, locale)}
       onClose={handleDeleteClose}
     />
   );

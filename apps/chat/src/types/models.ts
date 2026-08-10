@@ -21,7 +21,7 @@ export interface CoreAIEntity<T = EntityType.Model> {
   id: string;
   reference: string;
   object: T;
-  display_name?: string;
+  display_name?: string | Record<string, string>;
   display_version?: string;
   icon_url?: string;
   description?: string | Record<string, string>;
@@ -86,7 +86,7 @@ export interface DialAIEntityFeatures {
 
 export interface DialAIEntity {
   id: string;
-  name: string;
+  name: string | Record<string, string>;
   description?: string | Record<string, string>;
   iconUrl?: string | undefined;
   createdAt?: number;
@@ -105,7 +105,7 @@ export interface DialAIEntity {
 }
 
 export interface DialAIEntityModel
-  extends Omit<ShareEntity, 'folderId'>,
+  extends Omit<ShareEntity, 'folderId' | 'name'>,
     Omit<DialAIEntity, 'type'> {
   limits?: {
     maxTotalTokens: number;

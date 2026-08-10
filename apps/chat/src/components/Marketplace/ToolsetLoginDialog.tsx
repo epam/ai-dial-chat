@@ -5,6 +5,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 
+import { getModelName } from '@/src/utils/app/application';
 import { isPredefinedEntity } from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
@@ -20,6 +21,7 @@ import {
   AuthSelectors,
   MarketplaceSelectors,
   ToolsetSelectors,
+  UISelectors,
 } from '@/src/store/selectors';
 
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
@@ -80,6 +82,7 @@ const view = withRenderWhenEntities<ToolsetLoginDialogProps>({
   const isToolsetLoading = useAppSelector(
     ToolsetSelectors.selectIsToolsetDetailsLoading,
   );
+  const locale = useAppSelector(UISelectors.selectLocale);
   const authType = toolset.authSettings.authenticationType;
   const isPublic = isEntityIdPublic(toolset) || isPredefinedEntity(toolset);
 
@@ -275,7 +278,7 @@ const view = withRenderWhenEntities<ToolsetLoginDialogProps>({
             className="text-sm font-semibold text-primary"
             data-qa="toolset-name"
           >
-            {toolset.name}
+            {getModelName(toolset, locale)}
           </h3>
           <div className="flex items-center gap-1" data-qa="toolset-version">
             <span className="text-xs text-primary">

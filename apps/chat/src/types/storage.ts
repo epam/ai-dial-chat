@@ -70,7 +70,9 @@ export enum MigrationStorageKeys {
 }
 
 export interface EntityStorage<
-  TEntityInfo extends Entity,
+  TEntityInfo extends Omit<Entity, 'name'> & {
+    name: string | Record<string, string>;
+  },
   TEntity extends TEntityInfo,
 > {
   getFolders(path?: string): Observable<FolderInterface[]>; // listing with short information

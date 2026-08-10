@@ -30,7 +30,7 @@ export interface ApiApplicationFunctionType {
 }
 
 export interface ApiApplicationResponseBase {
-  display_name: string;
+  display_name: string | Record<string, string>;
   display_version: string;
   icon_url: string;
   description: string | Record<string, string>;
@@ -68,7 +68,7 @@ export type ApiApplicationResponse =
   | ApiApplicationResponseDefault;
 
 export interface ApiApplicationModelBase {
-  display_name: string;
+  display_name: string | Record<string, string>;
   display_version: string;
   icon_url: string;
   description?: string | Record<string, string>;
@@ -109,7 +109,8 @@ export type ApiApplicationModel =
   | ApiApplicationModelFunction
   | ApiApplicationModelSchema;
 
-export interface ApplicationInfo extends ShareEntity {
+export interface ApplicationInfo extends Omit<ShareEntity, 'name'> {
+  name: string | Record<string, string>;
   version: string;
 }
 
