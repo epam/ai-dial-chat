@@ -8,10 +8,12 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import {
   getApplicationType,
   getModelDescription,
+  getModelName,
   isExecutableApp,
   isQuickApp2,
 } from '@/src/utils/app/application';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
@@ -66,7 +68,7 @@ export function ReviewApplicationDialogView({
   const controlsEntity = useMemo(
     () => ({
       id: ApiUtils.decodeApiUrl(application.id),
-      name: application.name,
+      name: getLocalizedEntityIdName(application.name),
       folderId: getFolderIdFromEntityId(application.id),
     }),
     [application.id, application.name],
@@ -124,7 +126,7 @@ export function ReviewApplicationDialogView({
         <div className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2">
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Name)}
-            value={application.name}
+            value={getModelName(application, locale)}
             dataQa="entity-name"
           />
           <MarketplaceEntityInfoRow

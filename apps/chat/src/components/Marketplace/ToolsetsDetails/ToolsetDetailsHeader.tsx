@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
 import { isMarketplaceEntityPublic } from '@/src/utils/app/application';
+import { withEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { isMyEntity } from '@/src/utils/app/shared-utils';
 
 import { ToolsetModel } from '@/src/types/toolsets';
@@ -28,7 +29,7 @@ export function ToolsetDetailsHeader({ entity, isPreview }: Props) {
     dispatch(
       ShareActions.share({
         featureType: FeatureType.Toolset,
-        entity: entity,
+        entity: withEntityIdName(entity),
       }),
     );
   }, [dispatch, entity]);

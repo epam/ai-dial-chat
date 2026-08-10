@@ -1,9 +1,9 @@
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
 
+import { DEFAULT_LOCAL } from '@/src/constants/locale';
+
 import fs from 'fs';
 import path from 'path';
-
-const DEFAULT_LOCALE = 'en';
 
 const getLocaleCodesFromPublicDir = (): string[] | null => {
   const localesPath = path.resolve(process.cwd(), 'public/locales');
@@ -20,7 +20,7 @@ const getLocaleCodesFromPublicDir = (): string[] | null => {
 const normalizeLocales = (locales: string[]): string[] => {
   const unique = [...new Set(locales)];
 
-  return unique.includes(DEFAULT_LOCALE) ? unique : [DEFAULT_LOCALE, ...unique];
+  return unique.includes(DEFAULT_LOCAL) ? unique : [...unique, DEFAULT_LOCAL];
 };
 
 /**
@@ -35,7 +35,7 @@ export const resolveAvailableLocales = (): string[] => {
     : null;
   const fromPublicDir = getLocaleCodesFromPublicDir();
   const result =
-    fromEnv ?? (fromPublicDir?.length ? fromPublicDir : [DEFAULT_LOCALE]);
+    fromEnv ?? (fromPublicDir?.length ? fromPublicDir : [DEFAULT_LOCAL]);
 
   return normalizeLocales(result);
 };

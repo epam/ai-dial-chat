@@ -55,7 +55,9 @@ interface ModelTooltipProps {
   entity: DialAIEntity | undefined;
 }
 export const ModelTooltip = ({ entity, entityId }: ModelTooltipProps) => {
-  const name = entity ? getOpenAIEntityFullName(entity) : entityId;
+  const locale = useAppSelector(UISelectors.selectLocale);
+
+  const name = entity ? getOpenAIEntityFullName(entity, locale) : entityId;
   return entity?.version ? `${name}\nv. ${entity.version}` : name;
 };
 interface Props extends ModelTooltipProps {
@@ -74,6 +76,7 @@ const ModelIconTemplate = memo(
     entityId,
     enableShrinking,
   }: Omit<Props, 'isCustomTooltip'>) => {
+    const locale = useAppSelector(UISelectors.selectLocale);
     const themesImages = useAppSelector(UISelectors.selectThemesImages);
     const applicationTypeSchemas = useAppSelector(
       ApplicationTypesSchemasSelectors.selectAllSchemas,
@@ -105,7 +108,9 @@ const ModelIconTemplate = memo(
         : null;
     }, [entityTypeForFallback, themesImages]);
 
-    const description = entity ? getOpenAIEntityFullName(entity) : entityId;
+    const description = entity
+      ? getOpenAIEntityFullName(entity, locale)
+      : entityId;
 
     const schemaApplicationFallbackUrl = useMemo(() => {
       const iconUrl = applicationTypeSchemas?.find(

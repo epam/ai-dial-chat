@@ -48,10 +48,16 @@ describe('resolveAvailableLocales', () => {
     expect(resolveAvailableLocales()).toEqual(['ar', 'en']);
   });
 
-  it('ensures en is included when missing from env', () => {
+  it('appends en when missing from env, keeping the configured primary first', () => {
     process.env.AVAILABLE_LOCALES = 'ar';
 
-    expect(resolveAvailableLocales()).toEqual(['en', 'ar']);
+    expect(resolveAvailableLocales()).toEqual(['ar', 'en']);
+  });
+
+  it('keeps the first configured locale first for a multi-locale env', () => {
+    process.env.AVAILABLE_LOCALES = 'ua,fr,fi,lt';
+
+    expect(resolveAvailableLocales()).toEqual(['ua', 'fr', 'fi', 'lt', 'en']);
   });
 
   it('scans public/locales when env is not set', () => {

@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 
 import classNames from 'classnames';
 
-import { isDialAiEntityModel } from '@/src/utils/app/application';
+import { getModelName, isDialAiEntityModel } from '@/src/utils/app/application';
 import {
   getEntityNameFromId,
   isApplicationId,
@@ -14,6 +14,9 @@ import { getEntityStatus } from '@/src/utils/marketplace';
 import { getVersionFromId } from '@/src/utils/server/api';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/selectors';
 
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
@@ -182,9 +185,11 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
 }) => {
   const { isInvalid, isError } = getEntityStatus(item);
 
+  const locale = useAppSelector(UISelectors.selectLocale);
+
   const name = !item
     ? getEntityNameFromId(id, { removeVersion: true })
-    : item.name;
+    : getModelName(item, locale);
   const isCustomTool = !isApplicationId(id) && !isToolsetId(id) && !item;
 
   const version = isCustomTool

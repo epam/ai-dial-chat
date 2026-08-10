@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
+import { LocalesService } from '@/src/utils/app/data/locales-service';
+import { getEntityPayloadFromLocals } from '@/src/utils/app/marketplace-localization';
+
 import { CustomApplicationModel } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { MarketplaceEditorSteps } from '@/src/types/marketplace';
@@ -34,16 +37,24 @@ export const AppEditorPreview = ({ onSave }: AppEditorPreviewProps) => {
   const model = appDetails ? modelsMap[appDetails.reference] : undefined;
 
   const { control } = useFormContext<AppsEditorFormType>();
-  const [name, version, description, iconUrl, topics] = useWatch({
-    name: ['name', 'version', 'description', 'iconUrl', 'topics'],
+  const [name, version, description, iconUrl, topics, locales] = useWatch({
+    name: ['name', 'version', 'description', 'iconUrl', 'topics', 'locales'],
     control,
   });
 
+  const { name: nameLocales, description: descriptionLocales } = useMemo(
+    () => getEntityPayloadFromLocals(locales),
+    [locales],
+  );
+
   const entity: Omit<CustomApplicationModel, 'folderId'> = useMemo(
     () => ({
-      name,
+      name: { [LocalesService.getPrimaryLocale()]: name, ...nameLocales },
+      description: {
+        [LocalesService.getPrimaryLocale()]: description,
+        ...descriptionLocales,
+      },
       version,
-      description,
       iconUrl,
       topics,
       reference: '',
@@ -66,6 +77,8 @@ export const AppEditorPreview = ({ onSave }: AppEditorPreviewProps) => {
       schema?.$id,
       topics,
       version,
+      nameLocales,
+      descriptionLocales,
     ],
   );
 

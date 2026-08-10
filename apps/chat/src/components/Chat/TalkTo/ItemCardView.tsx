@@ -6,6 +6,7 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
+  getModelName,
   getModelShortDescription,
   isDialAiEntityModel,
   isExternalApp,
@@ -250,7 +251,10 @@ export const ItemCardView = <T extends MarketplaceEntity>({
                 isUnavailableModel ? 'text-secondary' : 'text-primary',
               )}
             >
-              <DialEllipsisTooltip text={entity.name} id="entity-name" />
+              <DialEllipsisTooltip
+                text={getModelName(entity, locale)}
+                id="entity-name"
+              />
             </div>
           </div>
           <EntityMarkdownDescription
