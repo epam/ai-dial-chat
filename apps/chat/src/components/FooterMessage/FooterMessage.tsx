@@ -32,7 +32,7 @@ const FooterMessage: FC = () => {
   return (
     <section
       aria-label={t(FooterMessageI18nKeys.RegionAriaLabel)}
-      className="dial-tiny-text w-full px-4 pb-4 pt-1 text-center text-secondary desktop:px-8 [&_a:hover]:opacity-75 [&_a]:underline"
+      className="dial-tiny-text w-full px-4 pb-4 pt-1 text-center leading-5 text-secondary desktop:px-8 [&_a:hover]:opacity-75 [&_a]:text-primary [&_a]:underline"
       // eslint-disable-next-line react/no-danger
       dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
     />
