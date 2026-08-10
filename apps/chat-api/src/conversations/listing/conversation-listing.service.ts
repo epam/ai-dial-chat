@@ -26,6 +26,7 @@ import {
   decodeNextToken,
   encodeCompoundToken,
   getConversationTitleFromName,
+  isApplicationDeploymentPath,
   qualifySessionConversationPath,
   resolveListDisplayTitle,
 } from '../utils/conversation.utils';
@@ -157,7 +158,10 @@ export class ConversationListingService {
             const scheduledTask = parseScheduledTaskConversationPath(id);
             return {
               id,
-              title: getConversationTitleFromName(item.name ?? ''),
+              title: getConversationTitleFromName(
+                item.name ?? '',
+                isApplicationDeploymentPath(item.parentPath),
+              ),
               updatedAt: item.updatedAt ?? 0,
               sharedWithMe:
                 overrides.sharedWithMe ?? item.sharedWithMe ?? false,
@@ -208,7 +212,10 @@ export class ConversationListingService {
                 const scheduledTask = parseScheduledTaskConversationPath(id);
                 return {
                   id,
-                  title: getConversationTitleFromName(r.name ?? ''),
+                  title: getConversationTitleFromName(
+                    r.name ?? '',
+                    isApplicationDeploymentPath(r.parentPath),
+                  ),
                   updatedAt: 0,
                   sharedWithMe: true,
                   publishedWithMe: false,

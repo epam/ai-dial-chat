@@ -1,3 +1,5 @@
+import type { DeploymentItemDto } from '@epam/chat-api-client';
+
 /**
  * Percent-encodes each `/`-separated segment of a deployment/application id
  * so it satisfies the backend's `DEPLOYMENT_ID_PATTERN` (spaces and other
@@ -13,3 +15,21 @@ export const encodeDeploymentId = (id: string): string =>
     .split('/')
     .map((segment) => encodeURIComponent(segment))
     .join('/');
+
+/**
+ * Finds a deployment matching `idOrReference` by `id` first, falling back to
+ * `reference` when no `id` matches. DIAL Core sometimes addresses a
+ * deployment by `reference` in places that store a deployment id (e.g. a
+ * conversation's or message's `model.id`), so lookups against the fetched
+ * deployments list must accept either value.
+ */
+export const findDeploymentByIdOrReference = (
+  deployments: DeploymentItemDto[],
+  idOrReference: string | null | undefined,
+): DeploymentItemDto | undefined => {
+  if (!idOrReference) return undefined;
+  return (
+    deployments.find((deployment) => deployment.id === idOrReference) ??
+    deployments.find((deployment) => deployment.reference === idOrReference)
+  );
+};

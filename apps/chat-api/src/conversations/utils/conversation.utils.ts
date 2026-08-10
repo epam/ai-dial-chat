@@ -19,6 +19,17 @@ const UUID_PART_LENGTHS = [8, 4, 4, 4, 12] as const;
 const VERSION_METADATA_SEPARATOR_REGEX = /[-+]/;
 const HEX_REGEX = /^[\da-f]+$/i;
 const VERSION_NUMBER_PART_REGEX = /^\d+$/;
+/*
+ * DIAL Core only versions the deployment ID itself for custom applications
+ * (`applications/{bucket}/{name}__{version}`) — plain model deployments
+ * never have a version suffix. The functions below take a bare filename
+ * with no path context, so callers MUST tell them whether the filename sits
+ * under an `applications/` folder; otherwise a purely-numeric conversation
+ * TITLE (e.g. "18") is indistinguishable from a version suffix like "1.0.0"
+ * and gets misparsed as part of the deployment ID (breaking title/icon
+ * resolution for that conversation).
+ */
+const APPLICATIONS_PATH_SEGMENT = 'applications';
 
 const isDeploymentVersionSuffix = (value?: string): boolean => {
   if (!value) return false;
@@ -40,9 +51,21 @@ export const isUuid = (value: string): boolean => {
   );
 };
 
-const getDeploymentNameParts = (filenameParts: string[]): string[] => {
+/**
+ * True when the folder path preceding a conversation's filename marks a
+ * custom-application deployment (`applications/{bucket}/...`), the only
+ * DIAL Core resource type whose id carries a `{name}__{version}` suffix.
+ */
+export const isApplicationDeploymentPath = (
+  folderPath: string | undefined,
+): boolean => (folderPath ?? '').split('/')[0] === APPLICATIONS_PATH_SEGMENT;
+
+const getDeploymentNameParts = (
+  filenameParts: string[],
+  isApplicationDeployment: boolean,
+): string[] => {
   const [name = '', versionSuffix] = filenameParts;
-  return isDeploymentVersionSuffix(versionSuffix)
+  return isApplicationDeployment && isDeploymentVersionSuffix(versionSuffix)
     ? [name, versionSuffix]
     : [name];
 };
@@ -51,11 +74,17 @@ const getDeploymentNameParts = (filenameParts: string[]): string[] => {
  * Returns the trailing legacy/run UUID segment of a `{deploymentId}__{title}__{uuid}`
  * conversation filename, or undefined when the filename has no such suffix.
  */
-const getFilenameLegacySuffix = (filename: string): string | undefined => {
+const getFilenameLegacySuffix = (
+  filename: string,
+  isApplicationDeployment: boolean,
+): string | undefined => {
   const parts = filename.split(CONVERSATION_NAME_SEPARATOR);
   if (parts.length < 2) return undefined;
 
-  const deploymentNameParts = getDeploymentNameParts(parts);
+  const deploymentNameParts = getDeploymentNameParts(
+    parts,
+    isApplicationDeployment,
+  );
   const hasVersionedDeployment = deploymentNameParts.length > 1;
   const hasLegacySuffix = hasVersionedDeployment
     ? isUuid(parts[parts.length - 1])
@@ -69,8 +98,11 @@ const getFilenameLegacySuffix = (filename: string): string | undefined => {
  * filename (`{deploymentId}__{title}__{runId}`). Returns undefined unless
  * the trailing suffix is present and is itself a valid UUID.
  */
-export const getRunIdFromFilename = (filename: string): string | undefined => {
-  const suffix = getFilenameLegacySuffix(filename);
+export const getRunIdFromFilename = (
+  filename: string,
+  isApplicationDeployment: boolean,
+): string | undefined => {
+  const suffix = getFilenameLegacySuffix(filename, isApplicationDeployment);
   return suffix != null && isUuid(suffix) ? suffix : undefined;
 };
 
@@ -97,12 +129,22 @@ export const getConversationName = (
  * Supports versioned application deployment IDs and the legacy UUID suffix.
  * The title may itself contain `__`, so we take all segments after the first
  * deployment separator (and before a trailing UUID when present).
+ *
+ * `isApplicationDeployment` must reflect whether `name`'s folder path is
+ * `applications/...` (see `isApplicationDeploymentPath`) — this function
+ * only sees the bare filename, so it cannot determine that itself.
  */
-export const getConversationTitleFromName = (name: string): string => {
+export const getConversationTitleFromName = (
+  name: string,
+  isApplicationDeployment: boolean,
+): string => {
   const parts = name.split(CONVERSATION_NAME_SEPARATOR);
   if (parts.length < 2) return name;
 
-  const deploymentNameParts = getDeploymentNameParts(parts);
+  const deploymentNameParts = getDeploymentNameParts(
+    parts,
+    isApplicationDeployment,
+  );
   const hasVersionedDeployment = deploymentNameParts.length > 1;
   const hasLegacySuffix = hasVersionedDeployment
     ? isUuid(parts[parts.length - 1])
@@ -119,15 +161,22 @@ export const getConversationTitleFromName = (name: string): string => {
  * a versioned application deployment ID prefix and a legacy UUID suffix.
  * Operates on a bare filename (no `/` path separators), so it is safe to use
  * on a decoded filename whose deployment name contains a literal slash.
+ *
+ * See `getConversationTitleFromName` for why `isApplicationDeployment` must
+ * be supplied by the caller.
  */
 export const buildRenamedFilename = (
   filename: string,
   sanitisedTitle: string,
+  isApplicationDeployment: boolean,
 ): string => {
   const parts = filename.split(CONVERSATION_NAME_SEPARATOR);
   if (parts.length < 2) return sanitisedTitle;
 
-  const deploymentNameParts = getDeploymentNameParts(parts);
+  const deploymentNameParts = getDeploymentNameParts(
+    parts,
+    isApplicationDeployment,
+  );
   const hasVersionedDeployment = deploymentNameParts.length > 1;
   const hasLegacySuffix = hasVersionedDeployment
     ? isUuid(parts[parts.length - 1])
@@ -145,15 +194,25 @@ export const buildRenamedFilename = (
  * Returns the deployment key (e.g. `"gpt-4o"` or `"app__1.0.0"`) from a
  * bare conversation filename. Used when building a clean destination path
  * for duplicate (where the legacy UUID suffix must NOT be carried over).
+ *
+ * See `getConversationTitleFromName` for why `isApplicationDeployment` must
+ * be supplied by the caller.
  */
-export const getDeploymentKey = (filename: string): string => {
+export const getDeploymentKey = (
+  filename: string,
+  isApplicationDeployment: boolean,
+): string => {
   const parts = filename.split(CONVERSATION_NAME_SEPARATOR);
-  return getDeploymentNameParts(parts).join(CONVERSATION_NAME_SEPARATOR);
+  return getDeploymentNameParts(parts, isApplicationDeployment).join(
+    CONVERSATION_NAME_SEPARATOR,
+  );
 };
 
 /**
  * Builds the new conversation path by replacing the title segment in the filename.
  * Preserves versioned application deployment IDs and legacy UUID suffixes.
+ * Unlike `buildRenamedFilename`, this operates on the full path, so it can
+ * derive `isApplicationDeployment` itself from the folder segments.
  */
 export const buildRenamedConversationPath = (
   conversationPath: string,
@@ -161,7 +220,14 @@ export const buildRenamedConversationPath = (
 ): string => {
   const segments = conversationPath.split('/');
   const filename = segments[segments.length - 1];
-  const renamedFilename = buildRenamedFilename(filename, sanitisedTitle);
+  const isApplicationDeployment = isApplicationDeploymentPath(
+    segments.slice(0, -1).join('/'),
+  );
+  const renamedFilename = buildRenamedFilename(
+    filename,
+    sanitisedTitle,
+    isApplicationDeployment,
+  );
 
   return segments.length > 1
     ? [...segments.slice(0, -1), renamedFilename].join('/')
