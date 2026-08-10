@@ -157,7 +157,7 @@ describe('ToolsetsMutationService', () => {
       );
       const sentBody = saveSpy.mock.calls[0][2].body as Record<string, unknown>;
       expect(sentBody).toEqual({
-        displayName: 'My toolset',
+        displayName: { plainValue: 'My toolset' },
         displayVersion: '0.0.1',
         endpoint: 'https://my-toolset.example.com/mcp',
         transport: 'HTTP',
@@ -316,7 +316,7 @@ describe('ToolsetsMutationService', () => {
             Authorization: 'Bearer token',
           }),
           body: expect.objectContaining({
-            displayName: 'My toolset',
+            displayName: { plainValue: 'My toolset' },
           }),
         }),
       );

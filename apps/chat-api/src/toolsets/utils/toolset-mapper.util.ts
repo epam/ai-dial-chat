@@ -84,7 +84,7 @@ export interface RawDialToolset {
 }
 
 export type DialToolsetSaveBody = {
-  displayName: string;
+  displayName: { plainValue: string };
   displayVersion: string;
   endpoint: string;
   transport: ToolsetBodyDto['transport'];
@@ -212,7 +212,7 @@ export const toDialToolsetBody = (
     existingAuthSettings,
   );
   const dialBody: DialToolsetSaveBody = {
-    displayName: body.name,
+    displayName: { plainValue: body.name },
     displayVersion: version,
     endpoint: body.endpoint.trim(),
     transport: body.transport,

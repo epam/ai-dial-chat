@@ -80,6 +80,57 @@ describe('PublishService', () => {
       );
     });
 
+    it('publishes a skill entityType, using the leaf name only for targetUrl and the caller-supplied version', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({
+          createdAt: 1_700_000_000_000,
+          author: 'user@example.com',
+        }),
+      );
+
+      const result = await service.publish(
+        'token-abc',
+        CatalogEntityType.Skill,
+        'skills/bucket-123/team-a/docs-helper',
+        'Organization/Data Science',
+        '2.1.0',
+        'Test User',
+      );
+
+      expect(dialClient.client.createPublication).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          /* No {name}__{version} suffix to recover from a skill entityId —
+             the title's "name" segment is the bare leaf path, and "version"
+             is always the caller-supplied value for skills (open question,
+             catalog-publish-api spec). */
+          name: 'docs-helper 2.1.0',
+          targetFolder: 'public/Organization/Data%20Science/',
+          resources: [
+            {
+              action: 'ADD',
+              sourceUrl: 'skills/bucket-123/team-a/docs-helper',
+              /* Leaf name only — the "team-a/" grouping-folder subpath is
+                 not preserved in targetUrl (documented collision risk). */
+              targetUrl:
+                'skills/public/Organization/Data%20Science/docs-helper',
+            },
+          ],
+          displayAuthor: 'Test User',
+          rules: [],
+        },
+      });
+      expect(result).toEqual({
+        entityId: 'skills/bucket-123/team-a/docs-helper',
+        entityType: CatalogEntityType.Skill,
+        folderPath: 'Organization/Data Science',
+        version: '2.1.0',
+        publishedAt: new Date(1_700_000_000_000).toISOString(),
+        publishedBy: 'user@example.com',
+      });
+    });
+
     it('passes the caller-supplied rules through to createPublication unchanged', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(

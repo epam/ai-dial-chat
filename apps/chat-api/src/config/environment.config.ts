@@ -776,4 +776,29 @@ export class EnvironmentVariables {
   @IsString({ each: true })
   @MaxLength(200, { each: true })
   PUBLICATION_FILTER_SOURCES?: string[] = [];
+
+  // Skills domain ingress limits (see openspec/changes/add-skills-bff-api/design.md "Upload Limits")
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  SKILL_UPLOAD_MAX_BYTES?: number = 104_857_600;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  SKILL_UPLOAD_MAX_FILES?: number = 500;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  SKILL_FILE_UPLOAD_MAX_BYTES?: number = 20_971_520;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  SKILL_TRANSFER_TIMEOUT_MS?: number = 60_000;
 }

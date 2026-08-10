@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { DialClientService } from '../../dial/dial-client.service';
@@ -35,8 +35,13 @@ export class BucketService {
         );
       }
 
+      if (data.bucket == null) {
+        this.logger.error('DIAL Core getUserBucket response has no bucket');
+        throw new BadGatewayException('DIAL Core returned no bucket');
+      }
+
       this.logger.debug(`getUserBucket succeeded, bucket=${data.bucket}`);
-      return data;
+      return { bucket: data.bucket, appdata: data.appdata };
     } catch (error) {
       this.logger.error('DIAL Core rejected getUserBucket', error);
       return handleDialSdkError(error, 'bucket.getUserBucket', this.logger);

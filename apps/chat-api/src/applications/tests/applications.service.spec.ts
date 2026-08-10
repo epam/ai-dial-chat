@@ -284,7 +284,7 @@ describe('ApplicationsService', () => {
         expect.anything(),
         expect.objectContaining({
           body: {
-            displayName: 'My App',
+            displayName: { plainValue: 'My App' },
             displayVersion: '1.0',
             application_type_schema_id:
               'https://mydial.epam.com/custom_application_schemas/quickapps2',
@@ -397,7 +397,7 @@ describe('ApplicationsService', () => {
     const id = 'applications/test-bucket/My%20App__0.0.1';
     const updateBody: UpdateApplicationBodyDto = { name: 'Updated App' };
     const existingApp = {
-      displayName: 'My App',
+      displayName: { plainValue: 'My App' },
       displayVersion: '0.0.1',
       application_type_schema_id: 'https://mydial.epam.com/schema',
       application_properties: {
@@ -446,7 +446,7 @@ describe('ApplicationsService', () => {
         'My%20App__0.0.1',
         expect.objectContaining({
           body: {
-            displayName: 'Updated App',
+            displayName: { plainValue: 'Updated App' },
             displayVersion: '0.0.1',
             application_type_schema_id: 'https://mydial.epam.com/schema',
             application_properties: existingApp.application_properties,

@@ -161,7 +161,7 @@ export class ApplicationsService {
       } = (body.applicationProperties ?? {}) as Record<string, unknown>;
 
       const dialBody: DialApplication = {
-        displayName: body.name,
+        displayName: { plainValue: body.name },
         displayVersion: version,
       };
       if (body.type) dialBody.application_type_schema_id = body.type;
@@ -243,7 +243,7 @@ export class ApplicationsService {
        */
       const mergedBody: DialApplication = {
         ...(existingResponse.data as DialApplication),
-        displayName: body.name,
+        displayName: { plainValue: body.name },
       };
       if (body.description != null) mergedBody.description = body.description;
       if (body.iconUrl != null) mergedBody.iconUrl = body.iconUrl;
