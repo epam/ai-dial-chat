@@ -49,7 +49,8 @@ interface FormProps {
     modelId: string;
     prompt: string;
     description?: string;
-    scheduleType: string;
+    repeat: string;
+    minute?: string;
   };
   errors: Record<string, string | undefined>;
   modelOptions: { id: string; label: string }[];
@@ -61,8 +62,9 @@ interface FormProps {
 }
 
 vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
-  ScheduledTaskScheduleType: { Once: 'once', Recurring: 'recurring' },
-  ScheduledTaskFrequency: {
+  ScheduledTaskRepeat: {
+    OneTime: 'oneTime',
+    Hourly: 'hourly',
     Daily: 'daily',
     Weekly: 'weekly',
     Monthly: 'monthly',
@@ -81,6 +83,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       <span>displayName:{values.displayName}</span>
       <span>modelId:{values.modelId}</span>
       <span>prompt:{values.prompt}</span>
+      <span>minute:{values.minute ?? ''}</span>
       <button onClick={onBack}>back</button>
       <input
         aria-label="displayName"
@@ -192,6 +195,16 @@ describe('ScheduledTaskEditPage', () => {
     );
     expect(screen.getByText('modelId:gpt-4o')).toBeTruthy();
     expect(screen.getByText('prompt:Summarize my inbox')).toBeTruthy();
+  });
+
+  it('defaults minute to 0 for a non-hourly task, so switching Repeat to Hourly does not start with an empty field', async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    renderEditPage();
+
+    await waitFor(() =>
+      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
+    );
+    expect(screen.getByText('minute:0')).toBeTruthy();
   });
 
   it('shows a non-destructive message and does not mount the form when the trigger is unsupported', async () => {

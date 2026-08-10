@@ -279,6 +279,11 @@
     "kill_switch_var": {
       "type": "string",
       "description": "Override the derived STAGE_{NAME_UPPER}_ENABLED var name."
+    },
+    "api_key_secret": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]*$",
+      "description": "Name of a secret to use as the inference API key for this agent instead of the shared DIAL_API_KEY / ANTHROPIC_API_KEY. The named secret must also appear in `secrets:` so run-agent.yml injects its value into env. In DIAL mode (DIAL_CORE_URL set) the platform overrides ANTHROPIC_AUTH_TOKEN with the secret's value; in direct-Anthropic mode it overrides ANTHROPIC_API_KEY via process env. Omit to use the shared workspace key."
     }
   }
 }

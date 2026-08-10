@@ -201,7 +201,7 @@ describe('mapScheduledTaskDtoToItem — recurring schedule timezone conversion',
     );
 
     expect(result.scheduleLabel).toBe(
-      `${ScheduledTasksI18nKeys.CardScheduleWeeklyAt}:${JSON.stringify({ day: '0', time: '01:00' })}`, // local Monday 01:00
+      `${ScheduledTasksI18nKeys.CardScheduleWeeklyAt}:${JSON.stringify({ day: 'Monday', time: '01:00' })}`, // local Monday 01:00
     );
   });
 
