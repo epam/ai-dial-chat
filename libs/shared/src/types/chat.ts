@@ -242,6 +242,7 @@ export interface ConversationInfo extends ShareEntity {
   model: ConversationEntityModel;
   isPlayback?: boolean;
   isReplay?: boolean;
+  uuid?: string;
 }
 
 export type TemplateMapping = [string, string];
