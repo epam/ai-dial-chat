@@ -99,6 +99,8 @@ export const ExpectedMessages = {
   sendMessageButtonDisabled: 'Send message button is disabled',
   sendMessageButtonEnabled: 'Send message button is enabled',
   tooltipContentIsValid: 'Tooltip content is valid',
+  tooltipIsVisible: 'Tooltip is visible',
+  tooltipIsHidden: 'Tooltip is hidden',
   headerTitleCorrespondRequest: 'Chat header title correspond sent request',
   headerTitleIsValid: 'Chat header title is valid',
   headerTitleIsFullyVisible: 'Chat header title is fully visible on tooltip',

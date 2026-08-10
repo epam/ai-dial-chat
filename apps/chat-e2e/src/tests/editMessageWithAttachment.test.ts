@@ -381,6 +381,7 @@ dialTest(
     dataInjector,
     chatMessages,
     conversations,
+    chatMessagesAssertion,
     localStorageManager,
   }) => {
     setTestIds('EPMDIAL-6489', 'EPMDIAL-6490');
@@ -424,14 +425,11 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
         for (const file of allAttachedFiles.slice(0, 3)) {
-          await expect
-            .soft(
-              chatMessages
-                .getChatMessageAttachment(1, file)
-                .getElementLocator(),
-              ExpectedMessages.fileIsAttached,
-            )
-            .toBeVisible();
+          await chatMessagesAssertion.assertElementState(
+            chatMessages.getChatMessageAttachmentTitle(1, file),
+            'visible',
+            ExpectedMessages.attachmentIsVisible,
+          );
         }
       },
     );
@@ -463,14 +461,11 @@ dialTest(
       async () => {
         await chatMessages.getChatMessageAttachmentsGroup(1).click();
         for (const file of allAttachedFiles) {
-          await expect
-            .soft(
-              chatMessages
-                .getChatMessageAttachment(1, file)
-                .getElementLocator(),
-              ExpectedMessages.attachmentIsVisible,
-            )
-            .toBeVisible();
+          await chatMessagesAssertion.assertElementState(
+            chatMessages.getChatMessageAttachmentTitle(1, file),
+            'visible',
+            ExpectedMessages.attachmentIsVisible,
+          );
         }
       },
     );
@@ -480,14 +475,11 @@ dialTest(
       async () => {
         await chatMessages.getChatMessageAttachmentsGroup(1).click();
         for (const file of allAttachedFiles) {
-          await expect
-            .soft(
-              chatMessages
-                .getChatMessageAttachment(1, file)
-                .getElementLocator(),
-              ExpectedMessages.attachmentIsHidden,
-            )
-            .toBeHidden();
+          await chatMessagesAssertion.assertElementState(
+            chatMessages.getChatMessageAttachmentTitle(1, file),
+            'hidden',
+            ExpectedMessages.attachmentIsVisible,
+          );
         }
       },
     );

@@ -86,6 +86,7 @@ export const MarketplaceSideBarSelectors = {
   filterPropertyOptions: '[data-qa="filter-property-options"]',
   filterPropertyOption: '[data-qa="filter-option"]',
   optionLabel: '#option-label',
+  filterSelectedCount: '[data-qa="filter-selected-count"]',
 };
 
 export const ToolsetLoginModalSelectors = {

@@ -145,7 +145,7 @@ dialTest(
           if (imgUrl === externalImageUrl) {
             await chatMessagesAssertion.assertMessageImageOpenedInNewTab(2);
             const popupPromise = page.waitForEvent('popup');
-            await chatMessages.getAttachmentLink(2).click();
+            await chatMessages.getMessageContentLink(2).click();
             const popup = await popupPromise;
             await popup.waitForLoadState('domcontentloaded');
             baseAssertion.assertValue(popup.url(), expectedUrl as string);
@@ -156,7 +156,7 @@ dialTest(
               `${imageLinkText}.png`,
             );
           } else {
-            await chatMessages.getAttachmentLink(2).click();
+            await chatMessages.getMessageContentLink(2).click();
             baseAssertion.assertValue(
               page.url(),
               config.use?.baseURL?.concat(expectedUrl as string),
