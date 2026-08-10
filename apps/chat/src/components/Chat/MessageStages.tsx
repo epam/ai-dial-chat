@@ -35,14 +35,19 @@ export const MessageStages = ({ stages, compactMode = false }: Props) => {
   return (
     <div className="flex flex-col gap-1">
       {displayedStages.map((stage) => (
-        <MessageStage key={stage.index} stage={stage} />
+        <MessageStage
+          key={stage.index}
+          stage={stage}
+          compactMode={compactMode}
+        />
       ))}
       {stages.length > NUMBER_OF_VISIBLE_STAGES && (
         <div>
           <DialButton
             onClick={() => setShowMore(!showMore)}
             className={classNames(
-              'flex leading-[18px] text-accent-primary',
+              'flex !h-auto leading-[18px] text-accent-primary',
+              compactMode ? '!px-0 !py-0.5' : '!px-0 !py-1',
               getStagesToggleOffsetClass(compactMode),
             )}
             textClassName="font-normal"

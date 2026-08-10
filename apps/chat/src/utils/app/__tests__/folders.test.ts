@@ -8,6 +8,7 @@ import {
   getPartialAndFullyChosenFolders,
   getSelectedEntitiesByFolderId,
   remapMovedPath,
+  sortByName,
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
@@ -400,5 +401,50 @@ describe('MAX_NEW_FOLDER_PATH_SEGMENTS', () => {
     expect(vetoedByUiKit).toBe(
       getFolderNestingLevel(parentId) >= MAX_NESTED_FOLDERS,
     );
+  });
+});
+
+describe('sortByName', () => {
+  const toEntities = (names: string[]) =>
+    names.map((name, index) => ({
+      id: `folder/id-${index}`,
+      name,
+      folderId: 'folder',
+    }));
+
+  it('orders numeric suffixes naturally instead of lexicographically', () => {
+    const entities = toEntities([
+      'New folder 10',
+      'New folder 2',
+      'New folder 1',
+      'New folder 20',
+      'New folder 3',
+    ]);
+
+    expect(sortByName(entities).map(({ name }) => name)).toEqual([
+      'New folder 1',
+      'New folder 2',
+      'New folder 3',
+      'New folder 10',
+      'New folder 20',
+    ]);
+  });
+
+  it('stays case insensitive', () => {
+    const entities = toEntities(['beta', 'Alpha', 'gamma']);
+
+    expect(sortByName(entities).map(({ name }) => name)).toEqual([
+      'Alpha',
+      'beta',
+      'gamma',
+    ]);
+  });
+
+  it('does not mutate the passed array', () => {
+    const entities = toEntities(['b', 'a']);
+
+    sortByName(entities);
+
+    expect(entities.map(({ name }) => name)).toEqual(['b', 'a']);
   });
 });

@@ -1,5 +1,5 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconCheck, IconFolder, IconMinus } from '@tabler/icons-react';
+import { IconCheck, IconFolder } from '@tabler/icons-react';
 import React, {
   ChangeEvent,
   DragEvent,
@@ -1052,13 +1052,8 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         checked={isSelected}
                         onChange={handleToggleFolder}
                         className={
-                          additionalItemData?.isSidePanelItem && 'mr-0'
+                          additionalItemData?.isSidePanelItem && 'me-0'
                         }
-                      />
-
-                      <IconCheck
-                        size={18}
-                        className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
                       />
                     </div>
                   )}
@@ -1127,23 +1122,10 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         isPartialChecked={isPartialSelected}
                         onChange={handleToggleFolder}
                         className={
-                          additionalItemData?.isSidePanelItem && 'mr-0'
+                          additionalItemData?.isSidePanelItem && 'me-0'
                         }
                         ref={checkboxRef}
                       />
-
-                      {isSelected && (
-                        <IconCheck
-                          size={18}
-                          className="pointer-events-none absolute text-accent-primary"
-                        />
-                      )}
-                      {isPartialSelected && (
-                        <IconMinus
-                          size={18}
-                          className="pointer-events-none absolute text-accent-primary"
-                        />
-                      )}
                     </div>
                   )}
                 {(isSelectAlwaysVisible ||
