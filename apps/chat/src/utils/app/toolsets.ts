@@ -92,6 +92,7 @@ export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
       codeChallengeMethod: data.auth_settings.code_challenge_method,
       scopesSupported: data.auth_settings.scopes_supported,
       tokenEndpoint: data.auth_settings.token_endpoint,
+      tokenEndpointAuthMethod: data.auth_settings.token_endpoint_auth_method,
     },
   };
 };
@@ -119,6 +120,9 @@ const convertToolsetAuthSettingsToApi = (data: ToolsetModel) => {
         }),
         ...(data.authSettings.tokenEndpoint && {
           token_endpoint: data.authSettings.tokenEndpoint,
+        }),
+        ...(data.authSettings.tokenEndpointAuthMethod && {
+          token_endpoint_auth_method: data.authSettings.tokenEndpointAuthMethod,
         }),
         ...(data.authSettings.authorizationEndpoint && {
           authorization_endpoint: data.authSettings.authorizationEndpoint,

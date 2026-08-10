@@ -15,6 +15,12 @@ export enum ToolsetAuthStatus {
   FAILED = 'FAILED',
 }
 
+export enum TokenEndpointAuthMethod {
+  ClientSecretPost = 'client_secret_post',
+  ClientSecretBasic = 'client_secret_basic',
+  None = 'none',
+}
+
 export interface Toolset {
   endpoint: string;
   transport: ToolsetTransportType;
@@ -44,6 +50,7 @@ export interface Toolset {
     redirect_uri?: string;
     api_key_header?: string;
     token_endpoint?: string;
+    token_endpoint_auth_method?: TokenEndpointAuthMethod;
     // get
     client_id?: string;
     client_secret?: string;
