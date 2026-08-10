@@ -248,6 +248,7 @@ export const getConversationInfoFromId = (
   const {
     modelInfo,
     version,
+    uuid,
     name: parsedName,
   } = parseEntityApiKey(name, {
     parseVersion: options?.parseVersion,
@@ -258,6 +259,7 @@ export const getConversationInfoFromId = (
     ...modelInfo,
     name: parsedName,
     folderId: constructPath(apiKey, bucket, parentPath),
+    ...(uuid && { uuid }),
   };
 
   if (version) {
