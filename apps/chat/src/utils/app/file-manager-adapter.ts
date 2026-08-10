@@ -1,3 +1,4 @@
+import { compareEntitiesByName } from '@/src/utils/app/folders';
 import { getEntityBucket, getFileRootId, isRootId } from '@/src/utils/app/id';
 
 import { ApiKeys } from '@/src/types/common';
@@ -13,7 +14,6 @@ import {
   DialFileResourceType,
   DialFile as UIKitDialFile,
 } from '@epam/ai-dial-ui-kit';
-import { sortBy } from 'lodash-es';
 
 export interface DialRootFolder extends UIKitDialFile {
   label: string;
@@ -158,9 +158,11 @@ export const convertToUIKitFolder = (
 };
 
 const sortItemsByName = (items: UIKitDialFile[]): UIKitDialFile[] =>
-  sortBy(items, (item) => item.name.toLowerCase()).map((item) =>
-    item.items ? { ...item, items: sortItemsByName(item.items) } : item,
-  );
+  [...items]
+    .sort(compareEntitiesByName)
+    .map((item) =>
+      item.items ? { ...item, items: sortItemsByName(item.items) } : item,
+    );
 
 const ensureFolderChain = (
   folderMap: Map<string, UIKitDialFile>,

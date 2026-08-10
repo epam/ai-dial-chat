@@ -21,6 +21,7 @@ import {
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { writeTextToClipboard } from '@/src/utils/app/clipboard';
+import { getTableSpacingClass } from '@/src/utils/app/compact-mode';
 import { triggerDownload } from '@/src/utils/app/file';
 import { getDefaultExportFileName } from '@/src/utils/app/import-export';
 
@@ -58,12 +59,17 @@ const buildCsvString = (
 interface Props {
   children: ReactNode[] | ReactNode;
   isLastMessageStreaming: boolean;
+  compactMode?: boolean;
 }
 
 const isThead = (node: ReactNode) =>
   isValidElement(node) && (node as ReactElement).type === 'thead';
 
-export const Table = ({ children, isLastMessageStreaming }: Props) => {
+export const Table = ({
+  children,
+  isLastMessageStreaming,
+  compactMode = false,
+}: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const headerTableRef = useRef<HTMLTableElement | null>(null);
@@ -256,7 +262,10 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
   }, []);
 
   return (
-    <div className="mt-7 max-w-full" data-qa="table">
+    <div
+      className={`${getTableSpacingClass(compactMode)} max-w-full`}
+      data-qa="table"
+    >
       {!isLastMessageStreaming && (
         <div
           className="flex max-w-full justify-end rounded-t border border-b-0 border-tertiary bg-layer-3 px-2 py-1"

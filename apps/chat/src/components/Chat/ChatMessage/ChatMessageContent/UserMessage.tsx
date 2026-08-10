@@ -354,10 +354,12 @@ export const UserMessage = memo(function UserMessage({
     ],
   );
 
-  const textareaRightPaddingClass = canRecordAudio
+  // Reserves space for the absolutely positioned microphone button so it never
+  // overlaps the textarea text or the attachments grid
+  const micPaddingClass = canRecordAudio
     ? isOverlay
-      ? 'pr-[60px]'
-      : 'pr-[72px]'
+      ? 'pe-[60px]'
+      : 'pe-[72px]'
     : '';
 
   const handleInputChange = useCallback(
@@ -705,7 +707,7 @@ export const UserMessage = memo(function UserMessage({
               ref={textareaRef}
               className={classNames(
                 'w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none',
-                textareaRightPaddingClass,
+                micPaddingClass,
               )}
               value={messageContent}
               onChange={handleInputChange}
@@ -745,7 +747,10 @@ export const UserMessage = memo(function UserMessage({
             {(newEditableAttachments.length > 0 ||
               selectedDialLinks.length > 0) && (
               <div
-                className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3"
+                className={classNames(
+                  'mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3',
+                  micPaddingClass,
+                )}
                 data-qa="attachment-container"
               >
                 <ChatInputAttachments

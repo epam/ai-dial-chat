@@ -50,16 +50,11 @@ export const ChatInputAttachments = ({
         />
       ))}
       {links?.map((link, index) => (
-        <Tooltip
+        <ChatInputLinkAttachment
           key={index}
-          tooltip={link.title || link.href}
-          triggerClassName={'truncate text-center shrink-0 min-w-o min-h-0'}
-        >
-          <ChatInputLinkAttachment
-            link={link}
-            onUnselect={onUnselectLink && (() => onUnselectLink(index))}
-          />
-        </Tooltip>
+          link={link}
+          onUnselect={onUnselectLink && (() => onUnselectLink(index))}
+        />
       ))}
     </>
   );

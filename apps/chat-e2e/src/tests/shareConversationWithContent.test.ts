@@ -954,8 +954,11 @@ dialSharedWithMeTest(
           await additionalShareUserPlaybackControl.playbackNextButton.click();
         }
         await additionalShareUserChatMessages
-          .getChatMessageAttachment(chatResponseIndex, Attachment.sunImageName)
-          .waitForState({ state: 'visible' });
+          .getChatMessageAttachmentTitle(
+            chatResponseIndex,
+            Attachment.sunImageName,
+          )
+          .waitFor({ state: 'visible' });
         const expandAttachmentResponse =
           await additionalShareUserChatMessages.expandChatMessageAttachment(
             chatResponseIndex,
@@ -1090,8 +1093,11 @@ dialSharedWithMeTest(
           plotlyConversation.name,
         );
         await additionalShareUserChatMessages
-          .getChatMessageAttachment(chatResponseIndex, Attachment.plotlyName)
-          .waitForState({ state: 'visible' });
+          .getChatMessageAttachmentTitle(
+            chatResponseIndex,
+            Attachment.plotlyName,
+          )
+          .waitFor({ state: 'visible' });
         const expandAttachmentResponse =
           await additionalShareUserChatMessages.expandChatMessageAttachment(
             chatResponseIndex,
