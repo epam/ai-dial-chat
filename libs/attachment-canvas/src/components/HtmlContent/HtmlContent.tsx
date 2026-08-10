@@ -1,6 +1,6 @@
 import type { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { LinkButton, Spinner } from '@epam/ai-dial-ui-kit';
+import { Spinner } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   type SyntheticEvent,
@@ -33,7 +33,7 @@ export interface HtmlContentProps {
   title?: string;
   /** Syntax-highlight color theme forwarded to the source-view `CodeContent`. When omitted, `CodeContent` falls back to `CodeBlockTheme.Light`. */
   codeBlockTheme?: CodeBlockTheme;
-  /** Typography class applied to the "Open in new tab" button in the blocked-state panel. Defaults to `'dial-body-semi-text'`. */
+  /** Typography class applied to the "Open in new tab" link in the blocked-state panel. Defaults to `'dial-body-semi-text'`. */
   openInNewTabButtonTypographyClassName?: string;
 }
 
@@ -100,17 +100,24 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
         <div className="flex h-full flex-col items-center justify-center gap-3 p-4">
           <p className="text-center">{htmlFrameBlockedLabel}</p>
           {content.url != null && (
-            <LinkButton
-              label={htmlOpenInNewTabLabel}
-              onClick={() =>
-                window.open(content.url, '_blank', 'noopener,noreferrer')
-              }
+            /*
+             * A real anchor, not a button: the target is a URL the user must
+             * be able to middle-click, copy, or open in a background tab. The
+             * ui-kit has no anchor-rendering button component (`LinkButton`
+             * renders a `<button>`), so the link styling is applied here.
+             */
+            <a
+              href={content.url}
+              target="_blank"
+              rel="noopener noreferrer"
               className={mergeClasses(
                 'underline hover:no-underline',
                 styles.openInNewTabButton,
                 openInNewTabButtonTypographyClassName,
               )}
-            />
+            >
+              {htmlOpenInNewTabLabel}
+            </a>
           )}
         </div>
       );
