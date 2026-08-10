@@ -308,6 +308,7 @@ export const ChatHeader = Inversify.register(
                         conversation.responseFormat ??
                         ConversationResponseFormat.Markdown
                       }
+                      compactMode={conversation.compactMode}
                       hasSettings={!!doesModelHaveSettings(model)}
                       systemPrompt={
                         model?.type === EntityType.Model &&
