@@ -6,6 +6,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { isExternalApp } from '@/src/utils/app/application';
 import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
+import { getLocalizedEntitySearchOptions } from '@/src/utils/app/search';
 import { PseudoModel } from '@/src/utils/server/api';
 
 import { EntityType } from '@/src/types/common';
@@ -18,6 +19,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { WidgetsSelectors } from '@/src/store/models/widgets.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { ChatI18nKeys } from '@/src/constants/i18n';
@@ -25,7 +27,6 @@ import {
   ChangeMarketplaceTabs,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
-import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 import { SuggestedCard } from '@/src/constants/talkTo';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
@@ -108,12 +109,14 @@ const SelectModelSliderView = <T extends object>({
   );
 
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const locale = useAppSelector(UISelectors.selectLocale);
 
-  const searchedModels = useFuseSearch(
-    models,
-    searchTerm,
-    MARKETPLACE_ENTITIES_SEARCH_OPTIONS,
+  const searchOptions = useMemo(
+    () => getLocalizedEntitySearchOptions<DialAIEntityModel>(locale),
+    [locale],
   );
+
+  const searchedModels = useFuseSearch(models, searchTerm, searchOptions);
 
   useLayoutEffect(() => {
     if (headerRef.current) {

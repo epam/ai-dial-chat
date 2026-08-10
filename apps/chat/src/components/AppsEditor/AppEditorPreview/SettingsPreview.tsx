@@ -15,6 +15,7 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
+  getModelName,
   isApplicationDeployed,
   isApplicationDeploymentInProgress,
   isExternalAppEditor,
@@ -35,6 +36,7 @@ import {
   ConversationsSelectors,
   MarketplaceSelectors,
   ModelsSelectors,
+  UISelectors,
 } from '@/src/store/selectors';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
@@ -171,6 +173,7 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
   const { control } = useFormContext();
   const { isValid: isApplicationValid } = useFormState({ control });
 
+  const locale = useAppSelector(UISelectors.selectLocale);
   const editorStep = useAppSelector(ApplicationSelectors.selectEditorStep);
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
@@ -267,7 +270,7 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
         <div className="me-2 hidden min-w-0 shrink gap-2 text-primary md:flex">
           <span>{t(ChatI18nKeys.Preview)}:</span>
           <span data-qa="preview-app-name" className="min-w-0 shrink truncate">
-            {appDetails?.name}
+            {getModelName(appDetails, locale)}
           </span>
           <span data-qa="preview-app-version" className="text-nowrap">
             {t(ChatI18nKeys.VersionPrefix)} {appDetails?.version}

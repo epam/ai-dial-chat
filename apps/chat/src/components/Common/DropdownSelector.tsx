@@ -42,6 +42,7 @@ export function DropdownSelector({
         closeMenuOnSelect={closeMenuOnSelect}
         name="colors"
         menuPortalTarget={document.body}
+        menuPosition="fixed"
         components={{
           ClearIndicator: (props) => (
             <DialGhostIconButton
@@ -93,6 +94,7 @@ export function DropdownSelector({
             color: 'var(--text-primary)',
           }),
           menu: (styles) => ({ ...styles, margin: 0 }),
+          menuPortal: (styles) => ({ ...styles, zIndex: 60 }),
           menuList: (styles) => ({
             ...styles,
             margin: 0,
@@ -125,7 +127,6 @@ export function DropdownSelector({
           indicatorSeparator: (styles) => ({
             ...styles,
             visibility: 'hidden',
-            backgroundColor: 'var(--text-secondary)',
           }),
           multiValue: (styles, state) => ({
             ...styles,

@@ -2,6 +2,7 @@ import {
   getApplicationMcpUrl,
   isDialAiEntityModel,
 } from '@/src/utils/app/application';
+import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { getToolsetMcpUrl } from '@/src/utils/app/toolsets';
 import {
   getModelIdWithoutVersion,
@@ -45,7 +46,7 @@ const stripNaVersion = (id: string) => {
 
 export const getGroupMarketplaceEntityKey = (entity: MarketplaceEntity) => {
   if (!isCreatedMarketplaceEntity(entity)) {
-    return entity.name;
+    return getLocalizedEntityIdName(entity.name);
   }
   const pathParts = getModelIdWithoutVersion(stripNaVersion(entity.id)).split(
     '/',

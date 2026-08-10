@@ -3,6 +3,7 @@ import { fromFetch } from 'rxjs/fetch';
 
 import { isUuid } from '@/src/utils/app/common';
 import { isConversationId } from '@/src/utils/app/id';
+import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
 import {
   constructPath,
   isPlaybackConversation,
@@ -161,10 +162,13 @@ export const parseEntityApiKey = <T extends ParseEntityApiKeyOptions>(
 export const getMarketplaceEntityApiKey = (
   entity: Omit<ApplicationInfo | ToolsetInfo, 'folderId' | 'id'>,
 ): string => {
+  // The primary locale (first of `availableLocales`) is the entity identifier.
+  const name = getLocalizedEntityIdName(entity.name);
+
   if (!entity.version || entity.version === NA_VERSION) {
-    return entity.name;
+    return name;
   }
-  return [entity.name, entity.version].join(pathKeySeparator);
+  return [name, entity.version].join(pathKeySeparator);
 };
 
 export class ApiUtils {

@@ -1,5 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
+
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { ModelsSelectors } from './models.selectors';
@@ -15,7 +17,11 @@ const selectWidgets = createSelector(
     return models
       .filter((m) => widgetsSchemaIds.has(m.applicationTypeSchemaId ?? ''))
       .toSorted((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+        getLocalizedEntityIdName(a.name).localeCompare(
+          getLocalizedEntityIdName(b.name),
+          undefined,
+          { sensitivity: 'base' },
+        ),
       );
   },
 );

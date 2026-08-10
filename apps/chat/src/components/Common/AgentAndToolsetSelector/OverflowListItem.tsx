@@ -2,12 +2,16 @@ import React, { useCallback, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { getModelName } from '@/src/utils/app/application';
 import { getEntityNameFromId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { getEntityStatus } from '@/src/utils/marketplace';
 import { getVersionFromId } from '@/src/utils/server/api';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/selectors';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
@@ -82,9 +86,10 @@ export const OverflowListItem: React.FC<OverflowListItemProps> = ({
   const { isInvalid, isError } = getEntityStatus(item);
 
   const shouldShowTooltip = !isMobileView || (isMobileView && isInvalid);
+  const locale = useAppSelector(UISelectors.selectLocale);
   const name = !item
     ? getEntityNameFromId(id, { removeVersion: true })
-    : item.name;
+    : getModelName(item, locale);
   const version = !item ? getVersionFromId(id) : item.version;
 
   const handleClick = useCallback(

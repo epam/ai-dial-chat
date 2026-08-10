@@ -11,7 +11,7 @@ import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/selectors';
+import { ModelsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
@@ -35,6 +35,7 @@ const ModelSelectRow = ({
   truncate = true,
 }: ModelSelectRowProps) => {
   const { t } = useTranslation(Translation.Chat);
+  const locale = useAppSelector(UISelectors.selectLocale);
 
   return (
     <div
@@ -59,7 +60,7 @@ const ModelSelectRow = ({
           )}
           data-qa="agent-name"
         >
-          {getOpenAIEntityFullName(item)}
+          {getOpenAIEntityFullName(item, locale)}
         </span>
         {item.version && (
           <span
@@ -111,6 +112,7 @@ export const ModelsSelector = memo(function ModelsSelector({
   showHiddenTagModels,
   hideInlineError,
 }: ModelsSelectorProps) {
+  const locale = useAppSelector(UISelectors.selectLocale);
   const modelTypeAgents = useAppSelector((state) =>
     ModelsSelectors.selectModelTypeAgents(state, showHiddenTagModels),
   );
@@ -141,7 +143,7 @@ export const ModelsSelector = memo(function ModelsSelector({
             }
           }
           getItemLabel={(model: DialAIEntityModel) =>
-            getOpenAIEntityFullName(model)
+            getOpenAIEntityFullName(model, locale)
           }
           getItemValue={(model: DialAIEntityModel) => model.reference}
           itemRow={({ item, truncate }) => (

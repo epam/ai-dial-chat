@@ -27,6 +27,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/applications';
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
@@ -76,6 +77,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
+  const locale = useAppSelector(UISelectors.selectLocale);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
 
@@ -133,7 +135,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
 
     const itemsWithName = ids.map((id) => ({
       id: id,
-      name: getEntityDisplayName(id, allEntitiesMap),
+      name: getEntityDisplayName(id, allEntitiesMap, locale),
     }));
 
     const sortedItems = sortBy(itemsWithName, [
@@ -141,7 +143,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
     ]);
 
     return sortedItems.map((item) => item.id);
-  }, [agentsAndToolsetsOptions, allEntitiesMap]);
+  }, [agentsAndToolsetsOptions, allEntitiesMap, locale]);
 
   const switchToSimpleView = useCallback(() => {
     const toolsets = JSON.parse(agentsAndToolsetsJson) as AnyToolset[];

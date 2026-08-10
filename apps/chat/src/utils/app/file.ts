@@ -1,4 +1,5 @@
 import { BucketService } from '@/src/utils/app/data/bucket-service';
+import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { getResourceMaxSegmentBytes } from '@/src/utils/app/resource-limits';
 import {
   isFolderId,
@@ -219,10 +220,10 @@ const lastSegmentOrWhole = (value: string | undefined): string => {
  * last path segment of `name` and/or `id`.
  */
 export function withoutFileManagerPlaceholderByName<
-  T extends { name?: string; id?: string },
+  T extends { name?: string | Record<string, string>; id?: string },
 >(items: T[]): T[] {
   return items.filter((item) => {
-    const nameTail = lastSegmentOrWhole(item.name);
+    const nameTail = lastSegmentOrWhole(getLocalizedEntityIdName(item.name));
     const idTail = lastSegmentOrWhole(item.id);
     return (
       !isFileManagerPlaceholderLastSegment(nameTail) &&
