@@ -595,8 +595,11 @@ dialAdminTest(
           plotlyConversation.name,
         );
         await adminChatMessages
-          .getChatMessageAttachment(chatResponseIndex, Attachment.plotlyName)
-          .waitForState({ state: 'visible' });
+          .getChatMessageAttachmentTitle(
+            chatResponseIndex,
+            Attachment.plotlyName,
+          )
+          .waitFor({ state: 'visible' });
         const expandAttachmentResponse =
           await adminChatMessages.expandChatMessageAttachment(
             chatResponseIndex,
@@ -628,8 +631,11 @@ dialAdminTest(
           plotlyConversation.name,
         );
         await adminChatMessages
-          .getChatMessageAttachment(chatResponseIndex, Attachment.plotlyName)
-          .waitForState({ state: 'visible' });
+          .getChatMessageAttachmentTitle(
+            chatResponseIndex,
+            Attachment.plotlyName,
+          )
+          .waitFor({ state: 'visible' });
         await adminChatMessages.expandChatMessageAttachment(
           chatResponseIndex,
           Attachment.plotlyName,
@@ -680,8 +686,11 @@ dialAdminTest(
           await adminChat.playNextChatMessage();
         }
         await adminChatMessages
-          .getChatMessageAttachment(chatResponseIndex, Attachment.plotlyName)
-          .waitForState({ state: 'visible' });
+          .getChatMessageAttachmentTitle(
+            chatResponseIndex,
+            Attachment.plotlyName,
+          )
+          .waitFor({ state: 'visible' });
         await adminChatMessages.expandChatMessageAttachment(
           chatResponseIndex,
           Attachment.plotlyName,

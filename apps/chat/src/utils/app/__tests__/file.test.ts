@@ -10,11 +10,43 @@ import {
   getNestedEmptyFolderIdsForChosenParent,
   isAbsoluteUrl,
   isPathUnderPrefix,
+  isSafeLinkUrl,
   prepareFileName,
   withoutFileManagerPlaceholderByName,
 } from '../file';
 
 describe('File utility methods', () => {
+  describe('isSafeLinkUrl', () => {
+    it.each([
+      'https://example.com/a?b=c#d',
+      'http://example.com',
+      'mailto:someone@example.com',
+      'ftp://example.com/file.txt',
+      'tel:+1234567890',
+      '//example.com/path',
+      'api/files/bucket/doc.pdf',
+    ])('allows %s', (url) => {
+      expect(isSafeLinkUrl(url)).toBe(true);
+    });
+
+    it.each([
+      'javascript:alert(1)',
+      'JavaScript:alert(1)',
+      '  javascript:alert(1)',
+      'java\tscript:alert(1)',
+      'java\nscript:alert(1)',
+      'vbscript:msgbox(1)',
+      'data:text/html;base64,PHNjcmlwdD48L3NjcmlwdD4=',
+      'blob:https://example.com/1234',
+    ])('rejects %j', (url) => {
+      expect(isSafeLinkUrl(url)).toBe(false);
+    });
+
+    it.each([undefined, ''])('rejects %j', (url) => {
+      expect(isSafeLinkUrl(url)).toBe(false);
+    });
+  });
+
   describe('isPathUnderPrefix', () => {
     it('returns true for exact match ignoring trailing slashes', () => {
       expect(isPathUnderPrefix('files/bucket/a', 'files/bucket/a')).toBe(true);
