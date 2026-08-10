@@ -98,8 +98,7 @@ Presentational create-task form: a back-navigable header, display name, a one-sh
 ```tsx
 import {
   ScheduledTaskCreateForm,
-  ScheduledTaskFrequency,
-  ScheduledTaskScheduleType,
+  ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
 
 <ScheduledTaskCreateForm
@@ -110,9 +109,9 @@ import {
   }
   values={{
     displayName: '',
-    scheduleType: ScheduledTaskScheduleType.Recurring,
-    frequency: ScheduledTaskFrequency.Daily,
+    repeat: ScheduledTaskRepeat.Daily,
     time: '09:00',
+    minute: '0',
     startDate: '',
     endDate: '',
     modelId: '',
