@@ -1,5 +1,5 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconBulb, IconCheck } from '@tabler/icons-react';
+import { IconBulb } from '@tabler/icons-react';
 import React, {
   DragEvent,
   MouseEventHandler,
@@ -49,6 +49,7 @@ import {
 import { stopBubbling } from '@/src/constants/chat';
 
 import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
+import { Checkbox } from '@/src/components/Common/Checkbox';
 import { ItemContextMenu } from '@/src/components/Common/ItemContextMenu';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -306,19 +307,10 @@ export const PromptComponent = memo(
                 isSelectMode && isChosen && !isExternal ? 'flex' : 'hidden',
               )}
             >
-              <input
-                className={classNames(
-                  'checkbox peer size-[18px] bg-layer-3',
-                  additionalItemData?.isSidePanelItem && 'me-0',
-                )}
-                type="checkbox"
+              <Checkbox
+                className={additionalItemData?.isSidePanelItem && 'me-0'}
                 checked={isChosen}
                 onChange={handleToggle}
-                data-qa={isChosen ? 'checked' : 'unchecked'}
-              />
-              <IconCheck
-                size={18}
-                className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
               />
             </div>
             <ShareIcon
