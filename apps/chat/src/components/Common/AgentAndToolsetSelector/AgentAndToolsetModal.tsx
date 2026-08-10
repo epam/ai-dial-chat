@@ -22,6 +22,7 @@ import {
 import { getEntityBaseId, sortItemsVersions } from '@/src/utils/app/common';
 import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
+import { getLocalizedEntitySearchOptions } from '@/src/utils/app/search';
 import {
   getNumberFromSearchParams,
   getStringFromSearchParams,
@@ -50,7 +51,6 @@ import {
 } from '@/src/constants/marketplace';
 import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
-import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
 import { Modal } from '@/src/components/Common/Modal';
@@ -296,11 +296,12 @@ const AgentAndToolsetModalView = ({
     [allAgents, allToolsets],
   );
 
-  const searchedItems = useFuseSearch(
-    allItems,
-    searchTerm,
-    MARKETPLACE_ENTITIES_SEARCH_OPTIONS,
+  const searchOptions = useMemo(
+    () => getLocalizedEntitySearchOptions<MarketplaceEntity>(locale),
+    [locale],
   );
+
+  const searchedItems = useFuseSearch(allItems, searchTerm, searchOptions);
 
   const selectedBaseIdsSet = useMemo(
     () => new Set(selectedIds.map(getEntityBaseId)),

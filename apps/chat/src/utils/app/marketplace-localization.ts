@@ -29,6 +29,22 @@ export const parseLocalizedField = (
   );
 };
 
+/**
+ * Locale-aware comparator for localized entity names, for sorting lists that
+ * are *displayed* in the current locale. Uses `localeCompare` so non-ASCII
+ * alphabets order correctly for the active locale.
+ */
+export const compareLocalizedNames = (
+  locale: string,
+  a?: string | Record<string, string>,
+  b?: string | Record<string, string>,
+): number =>
+  parseLocalizedField(locale, a).localeCompare(
+    parseLocalizedField(locale, b),
+    locale,
+    { sensitivity: 'base' },
+  );
+
 export const getLocalizedEntityIdName = (
   name?: string | Record<string, string>,
 ): string => {

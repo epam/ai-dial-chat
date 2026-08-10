@@ -1,7 +1,5 @@
 import { useCallback, useMemo } from 'react';
 
-import { useRouter } from 'next/router';
-
 import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
@@ -72,7 +70,7 @@ const getModelName = (
   }
 
   if (model) {
-    return getOpenAIEntityFullName(model);
+    return getOpenAIEntityFullName(model, locale);
   }
 
   return conversation.model.id;
@@ -85,7 +83,6 @@ const EmptyChatDescriptionView = ({
   isApplicationPreviewChat,
 }: EmptyChatDescriptionViewProps) => {
   const dispatch = useAppDispatch();
-  const router = useRouter();
 
   const { t } = useTranslation(Translation.Chat);
 
@@ -155,7 +152,7 @@ const EmptyChatDescriptionView = ({
 
   const isReplayAsIs = isReplayAsIsConversation(conversation);
   const isPlayback = isPlaybackConversation(conversation);
-  const modelName = getModelName(conversation, model, router.locale, t);
+  const modelName = getModelName(conversation, model, locale, t);
   const isEmptyChatChangeAgentHidden =
     enabledFeatures.has(Feature.HideEmptyChatChangeAgent) ||
     isApplicationPreviewChat;

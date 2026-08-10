@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { LocalesService } from '@/src/utils/app/data/locales-service';
 import {
+  compareLocalizedNames,
   getEntityLocals,
   getLocalizedEntityIdName,
   parseLocalizedField,
@@ -132,6 +133,42 @@ describe('marketplace-localization', () => {
 
         expect(parseLocalizedField('de', { en: 'My App' }, true)).toBe('');
       });
+    });
+  });
+
+  describe('compareLocalizedNames', () => {
+    it('orders by the given locale, not the primary one', () => {
+      LocalesService.setAvailableLocales(['en', 'de']);
+      const a = { en: 'Zebra', de: 'Apfel' };
+      const b = { en: 'Alpha', de: 'Zitrone' };
+
+      expect(compareLocalizedNames('en', a, b)).toBeGreaterThan(0);
+      expect(compareLocalizedNames('de', a, b)).toBeLessThan(0);
+    });
+
+    it('is case-insensitive', () => {
+      expect(compareLocalizedNames('en', 'apple', 'APPLE')).toBe(0);
+    });
+
+    it('sorts a list of localized entities by the current locale', () => {
+      LocalesService.setAvailableLocales(['en']);
+      const entities = [
+        { name: { en: 'Charlie', de: 'Anton' } },
+        { name: { en: 'Alpha', de: 'Zeppelin' } },
+      ];
+
+      const byDe = [...entities].sort((x, y) =>
+        compareLocalizedNames('de', x.name, y.name),
+      );
+
+      expect(byDe.map((e) => e.name.de)).toEqual(['Anton', 'Zeppelin']);
+    });
+
+    it('handles missing and undefined names without throwing', () => {
+      expect(compareLocalizedNames('en', undefined, undefined)).toBe(0);
+      expect(compareLocalizedNames('en', 'Alpha', undefined)).toBeGreaterThan(
+        0,
+      );
     });
   });
 

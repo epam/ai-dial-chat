@@ -15,7 +15,10 @@ import {
   getConfigurationValue,
   isConversationWithFormSchema,
 } from '@/src/utils/app/form-schema';
-import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
+import {
+  getLocalizedEntityIdName,
+  parseLocalizedField,
+} from '@/src/utils/app/marketplace-localization';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import {
   ApiUtils,
@@ -333,13 +336,16 @@ export const isChosenConversationValidForCompare = (
   return convUserMessages.length === selectedConvUserMessages.length;
 };
 
-export const getOpenAIEntityFullName = (model: {
-  name?: string | Record<string, string>;
-  id: string;
-}) => {
-  // The primary locale (first of `availableLocales`) is used as the entity
-  // identifier / full name.
-  const name = getLocalizedEntityIdName(model.name);
+export const getOpenAIEntityFullName = (
+  model: {
+    name?: string | Record<string, string>;
+    id: string;
+  },
+  locale?: string,
+) => {
+  const name = locale
+    ? parseLocalizedField(locale, model.name)
+    : getLocalizedEntityIdName(model.name);
 
   return name || model.id;
 };

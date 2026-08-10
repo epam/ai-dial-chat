@@ -36,7 +36,6 @@ import {
   ModelsSelectors,
   SettingsSelectors,
   ToolsetSelectors,
-  UISelectors,
 } from '@/src/store/selectors';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
@@ -104,7 +103,6 @@ export const AppsEditor = () => {
   const type = decodeURIComponent(typeQuery.toString());
   const isCreatingApp = !idQuery || isTruthyQuery(isCreating);
 
-  const locale = useAppSelector(UISelectors.selectLocale);
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
@@ -151,7 +149,6 @@ export const AppsEditor = () => {
         runtime: pythonVersions[0],
         toolSupportingModelIds,
         schema: schema ?? undefined,
-        locale,
       }),
     [
       appDetails,
@@ -160,7 +157,6 @@ export const AppsEditor = () => {
       pythonVersions,
       toolSupportingModelIds,
       schema,
-      locale,
     ],
   );
 
@@ -288,7 +284,6 @@ export const AppsEditor = () => {
         runtime: pythonVersions[0],
         toolSupportingModelIds,
         schema: schema ?? undefined,
-        locale,
       });
       isSimpleViewSwitchRef.current = false;
       changeEditorTabRef.current = null;
@@ -311,7 +306,6 @@ export const AppsEditor = () => {
       publicationUrl,
       isCreatingApp,
       t,
-      locale,
     ],
   );
 

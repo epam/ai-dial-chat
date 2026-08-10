@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace';
+import { getLocalizedEntitySearchOptions } from '@/src/utils/app/search';
 import {
   doesMarketplaceEntityMatchFilters,
   isInstalledEntity,
@@ -14,6 +15,7 @@ import {
   ApplicationTypesSchemasSelectors,
   MarketplaceSelectors,
   SettingsSelectors,
+  UISelectors,
 } from '@/src/store/selectors';
 
 import {
@@ -22,7 +24,6 @@ import {
   MarketplaceTabs,
   ViewTypes,
 } from '@/src/constants/marketplace';
-import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 
 import { useFuseSearch } from './useFuseSearch';
 
@@ -55,12 +56,19 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
     SettingsSelectors.isFeatureEnabled(state, Feature.MarketplaceHideMyApps),
   );
 
+  const locale = useAppSelector(UISelectors.selectLocale);
+
   const [suggestedResults, setSuggestedResults] = useState<T[]>([]);
+
+  const searchOptions = useMemo(
+    () => getLocalizedEntitySearchOptions<T>(locale),
+    [locale],
+  );
 
   const searchedEntities = useFuseSearch<T>(
     allEntities,
     searchTerm,
-    MARKETPLACE_ENTITIES_SEARCH_OPTIONS,
+    searchOptions,
   );
 
   const shouldHidePersonalSources =

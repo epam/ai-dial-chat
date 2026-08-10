@@ -6,10 +6,7 @@ import {
   getGroupMarketplaceEntityKey,
   groupMarketplaceEntityAndSaveOrder,
 } from '@/src/utils/app/marketplace';
-import {
-  getLocalizedEntityIdName,
-  withEntityIdName,
-} from '@/src/utils/app/marketplace-localization';
+import { compareLocalizedNames } from '@/src/utils/app/marketplace-localization';
 import {
   filterHiddenEntities,
   shouldShowHiddenEntities,
@@ -49,21 +46,25 @@ const selectIsRecentModelsLoaded = (state: RootState) =>
 
 const _selectModels = (state: RootState) => rootSelector(state).models;
 
+const _selectCurrentLocale = (state: RootState) => state.ui.locale;
+
 const selectModels = createSelector(
   [
     _selectModels,
     SettingsSelectors.selectHiddenEntityTag,
+    _selectCurrentLocale,
     (_state, showHidden?: boolean) => showHidden,
   ],
-  (models, hiddenEntityTag, showHidden) => {
+  (models, hiddenEntityTag, locale, showHidden) => {
     const filteredHidden = shouldShowHiddenEntities(hiddenEntityTag, showHidden)
       ? models
       : filterHiddenEntities(models, hiddenEntityTag);
-    const withoutPlaceholder = withoutFileManagerPlaceholderByName(
-      filteredHidden.map(withEntityIdName),
-    );
-    const sortedResponse = sortBy(withoutPlaceholder, (model) =>
-      getLocalizedEntityIdName(model.name).toLowerCase(),
+    const withoutPlaceholder =
+      withoutFileManagerPlaceholderByName(filteredHidden);
+    // Sorted by the *displayed* (current locale) name so the list order matches
+    // what the user actually reads.
+    const sortedResponse = [...withoutPlaceholder].sort((a, b) =>
+      compareLocalizedNames(locale, a.name, b.name),
     );
     const sortedAgents = groupMarketplaceEntityAndSaveOrder(
       sortedResponse,
@@ -102,9 +103,8 @@ const selectModelTopics = createSelector(
     const filteredHidden = shouldShowHiddenEntities(hiddenEntityTag, showHidden)
       ? models
       : filterHiddenEntities(models, hiddenEntityTag);
-    const withoutPlaceholder = withoutFileManagerPlaceholderByName(
-      filteredHidden.map(withEntityIdName),
-    );
+    const withoutPlaceholder =
+      withoutFileManagerPlaceholderByName(filteredHidden);
     return sortBy(
       uniq(withoutPlaceholder?.flatMap((model) => model.topics ?? []) ?? []),
       (topic) => topic.toLowerCase(),
