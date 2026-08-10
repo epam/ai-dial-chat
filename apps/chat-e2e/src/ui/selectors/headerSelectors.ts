@@ -2,6 +2,7 @@ export const HeaderSelectors = {
   headerContainer: '[data-qa="header"]',
   leftPanelToggle: '[data-qa="left-panel-toggle"]:visible',
   rightPanelToggle: '[data-qa="right-panel-toggle"]:visible',
+  dotIndicator: '[data-qa="dot-indicator"]',
   banner: '[data-qa="banner"]',
   accountSettings: '[data-qa="account-settings"]:visible',
   newEntity: '[data-qa="new-entity"]',

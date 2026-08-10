@@ -104,7 +104,10 @@ const FilterSection = ({
     <div className="flex items-center gap-1">
       {sectionName}
       {selectedFilters[filterType].length > 0 && (
-        <div className="flex h-[14px] min-w-[14px] items-center justify-center rounded bg-icon-accent-primary px-1 text-xxs font-semibold text-layer-3">
+        <div
+          className="flex h-[14px] min-w-[14px] items-center justify-center rounded bg-icon-accent-primary px-1 text-xxs font-semibold text-layer-3"
+          data-qa="filter-selected-count"
+        >
           <div> {selectedFilters[filterType].length}</div>
         </div>
       )}

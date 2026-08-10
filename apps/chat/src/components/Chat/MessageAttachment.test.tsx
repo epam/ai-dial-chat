@@ -123,6 +123,21 @@ describe('MessageAttachment', () => {
     expect(screen.getByTestId('visualizer-renderer')).toBeInTheDocument();
   });
 
+  it('Marks the name with the attachment-name qa marker the e2e locators rely on', () => {
+    const attachment: Attachment = {
+      title: 'named attachment',
+      type: customType,
+      url: 'http://example.com/data.json',
+    };
+
+    render(<MessageAttachment attachment={attachment} />);
+
+    expect(screen.getByText('named attachment')).toHaveAttribute(
+      'data-qa',
+      'attachment-name',
+    );
+  });
+
   it('Scenario C: Renders nothing specific if both URL and data are missing', () => {
     const attachment: Attachment = {
       title: 'empty attachment',

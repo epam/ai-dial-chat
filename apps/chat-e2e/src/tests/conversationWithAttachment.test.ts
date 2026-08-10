@@ -382,7 +382,7 @@ dialTest(
         );
         await chat.sendRequestWithButton(request);
         await chatMessagesAssertion.assertElementTextIsTruncated(
-          chatMessages.getChatMessageAttachment(
+          chatMessages.getChatMessageAttachmentTitle(
             attachmentIndex,
             Attachment.longImageName,
           ),
@@ -414,7 +414,7 @@ dialTest(
           Attachment.longImageName,
         );
         await chatMessagesAssertion.assertElementTextIsTruncated(
-          chatMessages.getChatMessageAttachment(
+          chatMessages.getChatMessageAttachmentTitle(
             attachmentIndex,
             Attachment.longImageName,
           ),
@@ -517,7 +517,7 @@ dialTest(
           Attachment.longImageName,
         );
         await chatMessagesAssertion.assertElementTextIsTruncated(
-          chatMessages.getChatMessageAttachment(
+          chatMessages.getChatMessageAttachmentTitle(
             attachmentIndex,
             Attachment.longImageName,
           ),

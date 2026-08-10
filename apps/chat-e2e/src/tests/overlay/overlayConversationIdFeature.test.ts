@@ -130,8 +130,8 @@ dialOverlayTest(
         await overlayPlaybackControl.playbackNextButton.click();
         await page.keyboard.press(keys.arrowRight);
         await overlayChatMessages
-          .getChatMessageAttachment(2, Attachment.plotlyName)
-          .waitForState();
+          .getChatMessageAttachmentTitle(2, Attachment.plotlyName)
+          .waitFor({ state: 'visible' });
         const expandAttachmentResponse =
           await overlayChatMessages.expandChatMessageAttachment(
             2,
