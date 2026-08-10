@@ -27,6 +27,7 @@ import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import {
   getApiErrorDetails,
   getApiErrorStatus,
@@ -37,6 +38,7 @@ import {
 } from '../../server-api/scheduled-tasks.api';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
+import { resolveLocalizedText } from '../../utils/locale';
 import { validateScheduledTaskForm } from '../../utils/scheduled-task-form-validation';
 import {
   mapFormValuesToUpdateBody,
@@ -53,6 +55,7 @@ const ScheduledTaskEditPage: FC = () => {
   const { items: deploymentItems } = useDeployments();
   const { showNotification } = useNotification();
   const { currentTheme } = useTheme();
+  const { language } = useLanguage();
 
   const markdownEditorTheme: 'light' | 'dark' =
     currentTheme === ThemeId.Dark ? 'dark' : 'light';
@@ -130,9 +133,9 @@ const ScheduledTaskEditPage: FC = () => {
     () =>
       deploymentItems.map((item) => ({
         id: item.id,
-        label: item.displayName,
+        label: resolveLocalizedText(item.displayName, language),
       })),
-    [deploymentItems],
+    [deploymentItems, language],
   );
 
   const labels = useMemo(
