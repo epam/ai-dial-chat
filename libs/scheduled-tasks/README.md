@@ -23,6 +23,7 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 - `@epam/ai-dial-ui-kit`
 - `@epam/ai-dial-kit`
 - `@epam/ai-dial-chat-shared`
+- `@epam/ai-dial-builder-form`
 
 ## Components
 
@@ -97,8 +98,7 @@ Presentational create-task form: a back-navigable header, display name, a one-sh
 ```tsx
 import {
   ScheduledTaskCreateForm,
-  ScheduledTaskFrequency,
-  ScheduledTaskScheduleType,
+  ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
 
 <ScheduledTaskCreateForm
@@ -109,9 +109,9 @@ import {
   }
   values={{
     displayName: '',
-    scheduleType: ScheduledTaskScheduleType.Recurring,
-    frequency: ScheduledTaskFrequency.Daily,
+    repeat: ScheduledTaskRepeat.Daily,
     time: '09:00',
+    minute: '0',
     startDate: '',
     endDate: '',
     modelId: '',
