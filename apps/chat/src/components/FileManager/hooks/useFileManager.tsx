@@ -998,14 +998,17 @@ export const useFileManager = ({
     return {
       title: t(SideBarI18nKeys.InformationSidebar),
       nameLabel: t(SideBarI18nKeys.NameLabel),
-      pathLabel: t(SideBarI18nKeys.PathLabel),
+      pathLabel:
+        activeTab === DialFileManagerTabs.Shared
+          ? t(SideBarI18nKeys.OwnersPathLabel)
+          : t(SideBarI18nKeys.PathLabel),
       modifiedDateLabel: t(SideBarI18nKeys.ModifiedLabel),
       sizeLabel: t(SideBarI18nKeys.SizeLabel),
       authorLabel: t(SideBarI18nKeys.AuthorLabel),
       loading: isFileMetadataLoading,
       fileMetadata: adjustedMetadata ?? undefined,
     };
-  }, [t, isFileMetadataLoading, fileMetadata, currentPathRootAlias]);
+  }, [t, isFileMetadataLoading, fileMetadata, currentPathRootAlias, activeTab]);
 
   const fileManagerSearchPlaceholder = useMemo(
     () => translateChrome(SideBarI18nKeys.FileManagerSearchPlaceholder),
@@ -1048,13 +1051,16 @@ export const useFileManager = ({
   const gridColumnHeaderLabels = useMemo(
     () => ({
       name: translateChat(ChatI18nKeys.Name),
-      path: translateChat(ChatI18nKeys.Path),
+      path:
+        activeTab === DialFileManagerTabs.Shared
+          ? translateChat(ChatI18nKeys.OwnersPath)
+          : translateChat(ChatI18nKeys.Path),
       updatedAt: translateChat(ChatI18nKeys.ModifiedDate),
       modifiedDate: translateChat(ChatI18nKeys.ModifiedDate),
       size: translateChat(ChatI18nKeys.Size),
       author: translateChat(ChatI18nKeys.Author),
     }),
-    [translateChat],
+    [translateChat, activeTab],
   );
 
   const searchEmptyTitle = useMemo(
