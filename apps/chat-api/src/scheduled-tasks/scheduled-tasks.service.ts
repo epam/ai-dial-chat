@@ -30,6 +30,7 @@ import {
   type UpstreamScheduleResponse,
   type UpstreamScheduleRun,
 } from './scheduled-tasks.mapper';
+import { ScheduleAction } from './types/schedule-action.enum';
 
 const LIST_CACHE_TTL_MS = 30 * 1000;
 const LIST_CACHE_EPOCH_TTL_MS = 24 * 60 * 60 * 1000;
@@ -112,7 +113,7 @@ export class ScheduledTasksService {
 
   private buildScheduleActionUrl(
     scheduleId: string,
-    action: 'pause' | 'resume',
+    action: ScheduleAction,
   ): string {
     return `${this.buildSchedulesUrl(scheduleId)}/${action}`;
   }
@@ -447,7 +448,7 @@ export class ScheduledTasksService {
     userSub: string,
     accessToken: string,
     scheduleId: string,
-    action: 'pause' | 'resume',
+    action: ScheduleAction,
   ): Promise<ScheduledTaskDto> {
     await this.fetchUpstream(
       this.buildScheduleActionUrl(scheduleId, action),
@@ -456,7 +457,7 @@ export class ScheduledTasksService {
       `${action} scheduled task "${scheduleId}"`,
     );
 
-    const requestedIsActive = action === 'resume';
+    const requestedIsActive = action === ScheduleAction.Resume;
     let refreshed: ScheduledTaskDto;
     try {
       refreshed = await this.getScheduledTask(accessToken, scheduleId);
@@ -478,7 +479,12 @@ export class ScheduledTasksService {
     accessToken: string,
     scheduleId: string,
   ): Promise<ScheduledTaskDto> {
-    return this.performScheduleAction(userSub, accessToken, scheduleId, 'pause');
+    return this.performScheduleAction(
+      userSub,
+      accessToken,
+      scheduleId,
+      ScheduleAction.Pause,
+    );
   }
 
   async resumeScheduledTask(
@@ -490,7 +496,7 @@ export class ScheduledTasksService {
       userSub,
       accessToken,
       scheduleId,
-      'resume',
+      ScheduleAction.Resume,
     );
   }
 
