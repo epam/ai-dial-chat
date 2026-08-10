@@ -31,7 +31,7 @@ import {
   getAttachmentReferenceOffsetClass,
   getAttachmentSpacingClass,
 } from '@/src/utils/app/compact-mode';
-import { getFileName } from '@/src/utils/app/file';
+import { getFileName, isSafeLinkUrl } from '@/src/utils/app/file';
 
 import { Translation } from '@/src/types/translation';
 
@@ -346,6 +346,9 @@ const LinkIconComponent = () => (
   />
 );
 
+const attachmentNameClassName =
+  'block max-w-full truncate whitespace-pre text-start text-sm';
+
 export const MessageAttachment = ({
   attachment,
   annotations,
@@ -414,10 +417,13 @@ export const MessageAttachment = ({
     () => getSourceDataUrl(attachment),
     [attachment],
   );
-  const mappedAttachmentReferenceUrl = useMemo(
-    () => getMappedAttachmentUrl(attachment.reference_url),
-    [attachment.reference_url],
-  );
+  const mappedAttachmentReferenceUrl = useMemo(() => {
+    const url = getMappedAttachmentUrl(attachment.reference_url);
+
+    // A reference we cannot safely put into an href is not treated as a link at
+    // all, so the attachment falls back to the plain file card.
+    return isSafeLinkUrl(url) ? url : undefined;
+  }, [attachment.reference_url]);
 
   const isPdfReference =
     !!mappedAttachmentReferenceUrl &&
@@ -429,6 +435,13 @@ export const MessageAttachment = ({
     IMAGE_TYPES_SET.has(attachment.type) ||
     VIDEO_TYPES_SET.has(attachment.type) ||
     AUDIO_TYPES_SET.has(attachment.type);
+
+  // An attached link has nothing to expand, so its name opens the link instead
+  // of toggling the card. Issue #1303
+  const isLinkOnly = !!mappedAttachmentReferenceUrl && !isOpenable && !isFolder;
+
+  const attachmentName =
+    attachment.title || attachment.url || t(ChatI18nKeys.Attachment);
 
   const isFullScreenEnabled =
     IMAGE_TYPES_SET.has(attachment.type) ||
@@ -562,6 +575,7 @@ export const MessageAttachment = ({
                     target="_blank"
                     className="link-icon-button-small"
                     rel="noopener noreferrer"
+                    data-qa="attachment-reference-link"
                   >
                     <LinkIconComponent />
                   </a>
@@ -575,25 +589,63 @@ export const MessageAttachment = ({
             )}
           </div>
           <div
-            onClick={handleDropdownClick}
-            className="flex grow cursor-pointer items-center justify-between overflow-hidden"
+            onClick={isLinkOnly ? undefined : handleDropdownClick}
+            className={classNames(
+              'flex grow items-center justify-between overflow-hidden',
+              !isLinkOnly && 'cursor-pointer',
+            )}
             data-qa={
               isExpanded ? 'attachment-expanded' : 'attachment-collapsed'
             }
           >
-            <span
-              className={classNames(
-                'shrink truncate whitespace-pre pe-2 text-start text-sm',
+            <Tooltip
+              tooltip={attachmentName}
+              triggerClassName={classNames(
+                'shrink truncate pe-2',
                 isExpanded || isFolder || mappedAttachmentReferenceUrl
                   ? 'max-w-full'
                   : 'max-w-[calc(100%-30px)]',
               )}
-              title={
-                attachment.title || attachment.url || t(ChatI18nKeys.Attachment)
-              }
             >
-              {attachment.title || attachment.url || t(ChatI18nKeys.Attachment)}
-            </span>
+              {isLinkOnly ? (
+                isPdfReference ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      stopBubbling(e);
+                      setOpenPdfUrl(mappedAttachmentReferenceUrl);
+                    }}
+                    className={classNames(
+                      attachmentNameClassName,
+                      'hover:text-accent-primary',
+                    )}
+                    data-qa="attachment-name"
+                  >
+                    {attachmentName}
+                  </button>
+                ) : (
+                  <a
+                    href={mappedAttachmentReferenceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={classNames(
+                      attachmentNameClassName,
+                      'hover:text-accent-primary',
+                    )}
+                    data-qa="attachment-name"
+                  >
+                    {attachmentName}
+                  </a>
+                )
+              ) : (
+                <span
+                  className={attachmentNameClassName}
+                  data-qa="attachment-name"
+                >
+                  {attachmentName}
+                </span>
+              )}
+            </Tooltip>
 
             {isOpenable && !isFolder ? (
               <div className="flex gap-2">
