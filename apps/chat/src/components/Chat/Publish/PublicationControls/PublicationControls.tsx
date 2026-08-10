@@ -96,6 +96,24 @@ function PublicationControlsView({
     (offset: number) => {
       const reviewUrl = resourcesToReview[publicationIdx + offset].reviewUrl;
 
+      // A prompt is reviewed in a modal rendered above whatever is currently
+      // in the background, so switching to one must not drop the background
+      // back to the publication request. Conversations, applications and
+      // toolsets do own the main area, so those still need a full reset.
+      if (isPromptId(reviewUrl)) {
+        dispatch(PublicationActions.setIsApplicationReview(false));
+        dispatch(PublicationActions.setIsToolsetReview(false));
+        dispatch(
+          PromptsActions.selectPrompt({
+            promptId: reviewUrl,
+            isApproveRequiredResource: true,
+          }),
+        );
+        dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: true }));
+
+        return;
+      }
+
       handleClearReviewSelection();
 
       if (isConversationId(reviewUrl)) {
@@ -104,14 +122,6 @@ function PublicationControlsView({
             conversationIds: [reviewUrl],
           }),
         );
-      } else if (isPromptId(reviewUrl)) {
-        dispatch(
-          PromptsActions.selectPrompt({
-            promptId: reviewUrl,
-            isApproveRequiredResource: true,
-          }),
-        );
-        dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: true }));
       } else if (isApplicationId(reviewUrl)) {
         dispatch(
           ApplicationActions.get({

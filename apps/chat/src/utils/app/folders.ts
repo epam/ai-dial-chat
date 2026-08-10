@@ -53,7 +53,6 @@ import {
   UploadStatus,
 } from '@epam/ai-dial-shared';
 import escapeRegExp from 'lodash-es/escapeRegExp';
-import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
 export const getFoldersDepth = (
@@ -530,8 +529,22 @@ export const getEntitiesFoldersFromEntities = (
   return featuresFolders;
 };
 
+const naturalNameCollator = new Intl.Collator(undefined, {
+  numeric: true,
+  sensitivity: 'base',
+});
+
+/**
+ * Compares entity names in natural order, so that numeric suffixes are ordered
+ * by value instead of lexicographically ("Folder 2" before "Folder 10").
+ */
+export const compareEntitiesByName = (
+  a: { name: string },
+  b: { name: string },
+): number => naturalNameCollator.compare(a.name, b.name);
+
 export const sortByName = <T extends Entity>(entities: T[]): T[] =>
-  sortBy(entities, (entity: T) => entity.name.toLowerCase());
+  [...entities].sort(compareEntitiesByName);
 
 export const updateMovedFolderId = (
   oldParentFolderId: string,
