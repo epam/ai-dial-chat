@@ -1,9 +1,9 @@
 {
-  "name": "@epam/ai-dial-scheduled-tasks",
-  "description": "Presentational Scheduled Tasks page shell — header, toolbar, and empty state",
+  "name": "@epam/ai-dial-builder-form",
+  "description": "Presentational builder form components for composing and editing DIAL entities",
   "version": "0.0.1",
-  "private": true,
   "license": "Apache-2.0",
+  "private": true,
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -19,9 +19,7 @@
     }
   },
   "peerDependencies": {
-    "@epam/ai-dial-builder-form": "*",
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-kit": "*",
     "@epam/ai-dial-ui-kit": "^0.13.0-dev.26",
     "@tabler/icons-react": "^3.44.0",
     "react": "^19.0.0"
