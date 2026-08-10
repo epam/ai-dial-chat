@@ -9,6 +9,8 @@ import {
   getScheduledTask,
   listScheduledTaskRuns,
   listScheduledTasks,
+  pauseScheduledTask,
+  resumeScheduledTask,
   updateScheduledTask,
 } from '../scheduled-tasks.api';
 
@@ -145,5 +147,33 @@ describe('scheduled-tasks.api', () => {
       { scheduleId: 'sched_123', limit: 20, offset: 40 },
       { signal: controller.signal },
     );
+  });
+
+  it('pauseScheduledTask delegates with the scheduleId', async () => {
+    const pausedSchedule = { ...mockSchedule, isActive: false };
+    const spy = vi
+      .spyOn(scheduledTasksApi, 'pauseScheduledTask')
+      .mockResolvedValue(pausedSchedule);
+
+    const result = await pauseScheduledTask('sched_123');
+
+    expect(spy).toHaveBeenCalledWith({ scheduleId: 'sched_123' });
+    expect(result).toEqual(pausedSchedule);
+  });
+
+  it('resumeScheduledTask delegates with the scheduleId', async () => {
+    const resumedSchedule = {
+      ...mockSchedule,
+      isActive: true,
+      nextRunTime: '2026-07-28T12:00:00.000Z',
+    };
+    const spy = vi
+      .spyOn(scheduledTasksApi, 'resumeScheduledTask')
+      .mockResolvedValue(resumedSchedule);
+
+    const result = await resumeScheduledTask('sched_123');
+
+    expect(spy).toHaveBeenCalledWith({ scheduleId: 'sched_123' });
+    expect(result).toEqual(resumedSchedule);
   });
 });

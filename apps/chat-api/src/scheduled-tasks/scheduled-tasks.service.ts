@@ -110,6 +110,13 @@ export class ScheduledTasksService {
       : `${base}/`;
   }
 
+  private buildScheduleActionUrl(
+    scheduleId: string,
+    action: 'pause' | 'resume',
+  ): string {
+    return `${this.buildSchedulesUrl(scheduleId)}/${action}`;
+  }
+
   private buildSchedulesListUrl(query: ListScheduledTasksQueryDto): string {
     const searchParams = new URLSearchParams();
     if (query.limit != null) {
@@ -424,6 +431,67 @@ export class ScheduledTasksService {
 
     await this.invalidateListCache(userSub);
     return fromUpstreamSchedule(result);
+  }
+
+  /*
+   * The upstream pause/resume action's own response body is not confirmed to
+   * contain the updated schedule (see design.md "Decision 2" for
+   * add-scheduled-task-active-toggle) — a follow-up GET is used instead of
+   * trusting the action response's shape. If that follow-up GET fails after
+   * the action itself already succeeded, per design.md "Decision 5" the
+   * mutation is NOT rolled back: the caller gets isActive reflecting the
+   * action just taken, with the rest of the last-known fields, rather than
+   * an error that would incorrectly suggest the action didn't happen.
+   */
+  private async performScheduleAction(
+    userSub: string,
+    accessToken: string,
+    scheduleId: string,
+    action: 'pause' | 'resume',
+  ): Promise<ScheduledTaskDto> {
+    await this.fetchUpstream(
+      this.buildScheduleActionUrl(scheduleId, action),
+      'POST',
+      accessToken,
+      `${action} scheduled task "${scheduleId}"`,
+    );
+
+    const requestedIsActive = action === 'resume';
+    let refreshed: ScheduledTaskDto;
+    try {
+      refreshed = await this.getScheduledTask(accessToken, scheduleId);
+    } catch (err) {
+      this.logger.warn(
+        `Failed to refresh scheduled task "${scheduleId}" after ${action}; ` +
+          'returning the requested isActive without a recalculated nextRunTime.',
+        err instanceof Error ? err.stack : undefined,
+      );
+      refreshed = { id: scheduleId } as ScheduledTaskDto;
+    }
+
+    await this.invalidateListCache(userSub);
+    return { ...refreshed, isActive: requestedIsActive };
+  }
+
+  async pauseScheduledTask(
+    userSub: string,
+    accessToken: string,
+    scheduleId: string,
+  ): Promise<ScheduledTaskDto> {
+    return this.performScheduleAction(userSub, accessToken, scheduleId, 'pause');
+  }
+
+  async resumeScheduledTask(
+    userSub: string,
+    accessToken: string,
+    scheduleId: string,
+  ): Promise<ScheduledTaskDto> {
+    return this.performScheduleAction(
+      userSub,
+      accessToken,
+      scheduleId,
+      'resume',
+    );
   }
 
   private async invalidateListCache(userSub: string): Promise<void> {

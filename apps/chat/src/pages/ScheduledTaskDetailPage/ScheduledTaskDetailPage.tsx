@@ -2,12 +2,14 @@ import {
   ScheduledTaskDetailView,
   type ScheduledTaskRunItem,
 } from '@epam/ai-dial-scheduled-tasks';
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { ScheduledTaskDto } from '@epam/chat-api-client';
 import {
   memo,
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type FC,
 } from 'react';
@@ -18,9 +20,14 @@ import { getScheduledTaskEditRoute } from '../../constants/routes';
 import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useNotification } from '../../context/NotificationContext';
 import { useScheduledTaskRuns } from '../../hooks/scheduled-tasks/useScheduledTaskRuns';
-import { getApiErrorStatus } from '../../server-api/api-error';
-import { getScheduledTask } from '../../server-api/scheduled-tasks.api';
+import { getApiErrorDetails, getApiErrorStatus } from '../../server-api/api-error';
+import {
+  getScheduledTask,
+  pauseScheduledTask,
+  resumeScheduledTask,
+} from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { buildScheduleLabel } from '../../utils/map-scheduled-task-dto';
@@ -29,6 +36,7 @@ import NotFoundPage from '../NotFound/NotFound';
 
 const ScheduledTaskDetailPage: FC = () => {
   const { t } = useTranslation();
+  const { showNotification } = useNotification();
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
@@ -40,6 +48,27 @@ const ScheduledTaskDetailPage: FC = () => {
   const [taskError, setTaskError] = useState<Error | null>(null);
   const [isNotFound, setIsNotFound] = useState(false);
   const [taskFetchToken, setTaskFetchToken] = useState(0);
+  const [isActiveUpdating, setIsActiveUpdating] = useState(false);
+  const [activeStatusAnnouncement, setActiveStatusAnnouncement] =
+    useState('');
+  const activeChangeRequestRef = useRef(0);
+  /*
+   * Mirrors the latest scheduleId outside of any closure, so an in-flight
+   * pause/resume request started before navigation can detect — on
+   * resolution — that the user has since moved to a different schedule
+   * (its handleActiveChange closure was created with the old scheduleId).
+   */
+  const currentScheduleIdRef = useRef(scheduleId);
+  useEffect(() => {
+    currentScheduleIdRef.current = scheduleId;
+  }, [scheduleId]);
+  const isMountedRef = useRef(true);
+  useEffect(
+    () => () => {
+      isMountedRef.current = false;
+    },
+    [],
+  );
 
   const {
     items: runDtos,
@@ -168,8 +197,10 @@ const ScheduledTaskDetailPage: FC = () => {
         inProgress: t(ScheduledTasksI18nKeys.DetailStatusInProgress),
         missed: t(ScheduledTasksI18nKeys.DetailStatusMissed),
       },
+      activeStatusLabel: t(ScheduledTasksI18nKeys.DetailActiveStatusLabel),
+      activeStatusAnnouncement,
     }),
-    [t],
+    [t, activeStatusAnnouncement],
   );
 
   const handleBack = () => {
@@ -183,6 +214,66 @@ const ScheduledTaskDetailPage: FC = () => {
   const handleRetry = () => {
     setTaskFetchToken((token) => token + 1);
   };
+
+  const isActiveDisabled =
+    task?.triggerType === 'date' && task?.nextRunTime == null;
+
+  const handleActiveChange = useCallback(
+    async (nextActive: boolean) => {
+      const requestScheduleId = scheduleId;
+      const token = ++activeChangeRequestRef.current;
+      const isStale = () =>
+        !isMountedRef.current ||
+        activeChangeRequestRef.current !== token ||
+        requestScheduleId !== currentScheduleIdRef.current;
+
+      setTask((current) =>
+        current ? { ...current, isActive: nextActive } : current,
+      );
+      setIsActiveUpdating(true);
+
+      try {
+        const updated = nextActive
+          ? await resumeScheduledTask(requestScheduleId)
+          : await pauseScheduledTask(requestScheduleId);
+        if (isStale()) return;
+
+        setTask(updated);
+        setActiveStatusAnnouncement(
+          t(
+            nextActive
+              ? ScheduledTasksI18nKeys.DetailResumeSuccess
+              : ScheduledTasksI18nKeys.DetailPauseSuccess,
+          ),
+        );
+        showNotification({
+          variant: NotificationVariant.Success,
+          message: t(
+            nextActive
+              ? ScheduledTasksI18nKeys.DetailResumeSuccess
+              : ScheduledTasksI18nKeys.DetailPauseSuccess,
+          ),
+        });
+      } catch (err) {
+        if (isStale()) return;
+
+        setTask((current) =>
+          current ? { ...current, isActive: !nextActive } : current,
+        );
+        const { traceId } = await getApiErrorDetails(err);
+        showNotification({
+          variant: NotificationVariant.Error,
+          message: t(ScheduledTasksI18nKeys.DetailActiveStatusUpdateError),
+          requestId: traceId,
+        });
+      } finally {
+        if (!isStale()) {
+          setIsActiveUpdating(false);
+        }
+      }
+    },
+    [scheduleId, t, showNotification],
+  );
 
   if (appConfigStatus !== UserConfigStatus.Ready) {
     return <RouteFallback />;
@@ -201,6 +292,10 @@ const ScheduledTaskDetailPage: FC = () => {
       labels={labels}
       onBack={handleBack}
       onEdit={task ? handleEdit : undefined}
+      isActive={task?.isActive}
+      isActiveUpdating={isActiveUpdating}
+      isActiveDisabled={isActiveDisabled}
+      onActiveChange={handleActiveChange}
       displayName={task?.displayName ?? ''}
       isLoading={isTaskLoading}
       error={taskError}

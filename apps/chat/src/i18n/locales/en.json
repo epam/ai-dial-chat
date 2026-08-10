@@ -569,7 +569,11 @@
       "statusError": "Failed",
       "statusInProgress": "Running",
       "statusMissed": "Missed",
-      "errorLabel": "Failed to load the scheduled task"
+      "errorLabel": "Failed to load the scheduled task",
+      "activeStatusLabel": "Active",
+      "pauseSuccess": "Task paused",
+      "resumeSuccess": "Task resumed",
+      "activeStatusUpdateError": "Failed to update the task's active status"
     },
     "edit": {
       "pageTitle": "Edit scheduled task",

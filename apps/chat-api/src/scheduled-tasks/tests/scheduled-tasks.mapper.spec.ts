@@ -320,6 +320,7 @@ describe('fromUpstreamSchedule', () => {
       displayName: 'Daily summary',
       trigger: { date: '2026-07-24T09:00:00.000Z', cron: undefined },
       serviceId: 'dial-oauth',
+      isActive: false,
     });
   });
 
@@ -414,6 +415,7 @@ describe('fromUpstreamSchedule', () => {
       id: 'sched_456',
       displayName: 'Hourly check',
       trigger: { date: undefined, cron: { fields: { minute: '0' } } },
+      isActive: false,
     });
   });
 
@@ -484,5 +486,39 @@ describe('fromUpstreamSchedule', () => {
 
     expect(result.model).toBe('gpt-4.1-mini-2025-04-14');
     expect(result.prompt).toBeUndefined();
+  });
+
+  describe('isActive derivation', () => {
+    it('maps a schedule with a future next run to isActive true', () => {
+      const upstream: UpstreamScheduleResponse = {
+        id: 'sched_901',
+        display_name: 'Daily summary',
+        trigger_type: 'cron',
+        next_run_time: '2026-07-28T12:00:00.000Z',
+      };
+
+      expect(fromUpstreamSchedule(upstream).isActive).toBe(true);
+    });
+
+    it('maps a paused recurring schedule (no next run) to isActive false', () => {
+      const upstream: UpstreamScheduleResponse = {
+        id: 'sched_902',
+        display_name: 'Paused digest',
+        trigger_type: 'cron',
+        next_run_time: undefined,
+      };
+
+      expect(fromUpstreamSchedule(upstream).isActive).toBe(false);
+    });
+
+    it('leaves isActive undefined without throwing when trigger and trigger_type are both absent', () => {
+      const upstream: UpstreamScheduleResponse = {
+        id: 'sched_903',
+        display_name: 'Unknown shape',
+      };
+
+      expect(() => fromUpstreamSchedule(upstream)).not.toThrow();
+      expect(fromUpstreamSchedule(upstream).isActive).toBeUndefined();
+    });
   });
 });

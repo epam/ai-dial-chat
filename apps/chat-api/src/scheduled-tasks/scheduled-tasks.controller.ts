@@ -257,6 +257,96 @@ export class ScheduledTasksController {
     );
   }
 
+  @Post(':scheduleId/pause')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({
+    operationId: 'pauseScheduledTask',
+    summary: 'Pause a scheduled task',
+    description:
+      'Pauses a DIAL Scheduler schedule for the authenticated session user. ' +
+      'Invalidates the scheduled tasks list cache on success.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Scheduled task paused successfully',
+    type: ScheduledTaskDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid scheduleId' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({
+    status: 403,
+    description:
+      'The scheduledTasksEnabled feature is not enabled for this user',
+  })
+  @ApiResponse({ status: 404, description: 'Scheduled task not found' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description:
+      'DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured',
+  })
+  pauseScheduledTask(
+    @Req() req: Request,
+    @Param() params: GetScheduledTaskDto,
+  ): Promise<ScheduledTaskDto> {
+    const { sub, at } = req.user as SessionUser;
+    return this.scheduledTasksService.pauseScheduledTask(
+      sub,
+      at,
+      params.scheduleId,
+    );
+  }
+
+  @Post(':scheduleId/resume')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({
+    operationId: 'resumeScheduledTask',
+    summary: 'Resume a scheduled task',
+    description:
+      'Resumes a paused DIAL Scheduler schedule for the authenticated session ' +
+      'user. Invalidates the scheduled tasks list cache on success.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Scheduled task resumed successfully',
+    type: ScheduledTaskDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid scheduleId' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({
+    status: 403,
+    description:
+      'The scheduledTasksEnabled feature is not enabled for this user',
+  })
+  @ApiResponse({ status: 404, description: 'Scheduled task not found' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description:
+      'DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured',
+  })
+  resumeScheduledTask(
+    @Req() req: Request,
+    @Param() params: GetScheduledTaskDto,
+  ): Promise<ScheduledTaskDto> {
+    const { sub, at } = req.user as SessionUser;
+    return this.scheduledTasksService.resumeScheduledTask(
+      sub,
+      at,
+      params.scheduleId,
+    );
+  }
+
   @Put(':scheduleId')
   @HttpCode(200)
   @Throttle({ default: { limit: 10, ttl: 60000 } })

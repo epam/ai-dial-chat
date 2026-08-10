@@ -18,9 +18,22 @@ vi.mock('../../../context/DeploymentsContext', () => ({
 }));
 
 const getScheduledTaskMock = vi.fn();
+const pauseScheduledTaskMock = vi.fn();
+const resumeScheduledTaskMock = vi.fn();
 vi.mock('../../../server-api/scheduled-tasks.api', () => ({
   getScheduledTask: (scheduleId: string) => getScheduledTaskMock(scheduleId),
+  pauseScheduledTask: (scheduleId: string) =>
+    pauseScheduledTaskMock(scheduleId),
+  resumeScheduledTask: (scheduleId: string) =>
+    resumeScheduledTaskMock(scheduleId),
 }));
+
+const showNotificationMock = vi.fn();
+vi.mock('../../../context/NotificationContext', () => ({
+  useNotification: () => ({ showNotification: showNotificationMock }),
+}));
+
+const getApiErrorDetailsMock = vi.fn();
 
 const useScheduledTaskRunsMock = vi.fn();
 vi.mock('../../../hooks/scheduled-tasks/useScheduledTaskRuns', () => ({
@@ -31,6 +44,7 @@ vi.mock('../../../hooks/scheduled-tasks/useScheduledTaskRuns', () => ({
 const getApiErrorStatusMock = vi.fn();
 vi.mock('../../../server-api/api-error', () => ({
   getApiErrorStatus: (error: unknown) => getApiErrorStatusMock(error),
+  getApiErrorDetails: (error: unknown) => getApiErrorDetailsMock(error),
 }));
 
 vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
@@ -44,6 +58,10 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     labels,
     onBack,
     onEdit,
+    isActive,
+    isActiveUpdating,
+    isActiveDisabled,
+    onActiveChange,
     displayName,
     isLoading,
     error,
@@ -64,9 +82,15 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       historyErrorLabel: string;
       historyRetryLabel: string;
       editButtonLabel: string;
+      activeStatusLabel: string;
+      activeStatusAnnouncement?: string;
     };
     onBack: () => void;
     onEdit?: () => void;
+    isActive?: boolean;
+    isActiveUpdating?: boolean;
+    isActiveDisabled?: boolean;
+    onActiveChange?: (nextActive: boolean) => void;
     displayName: string;
     isLoading?: boolean;
     error?: Error | null;
@@ -97,8 +121,25 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       <button onClick={onRunsLoadMore}>load more runs</button>
       <button onClick={onBack}>back</button>
       {onEdit && <button onClick={onEdit}>{labels.editButtonLabel}</button>}
+      {isActive !== undefined && (
+        <>
+          <input
+            type="checkbox"
+            role="switch"
+            aria-label={labels.activeStatusLabel}
+            checked={isActive}
+            disabled={isActiveUpdating || isActiveDisabled}
+            onChange={(e) => onActiveChange?.(e.target.checked)}
+          />
+          <span role="status">{labels.activeStatusAnnouncement}</span>
+        </>
+      )}
     </div>
   ),
+}));
+
+vi.mock('@epam/ai-dial-ui-kit', () => ({
+  NotificationVariant: { Success: 'success', Error: 'error' },
 }));
 
 const BackTargetStub = () => <div>scheduled tasks list</div>;
@@ -136,6 +177,7 @@ describe('ScheduledTaskDetailPage', () => {
       refetch: vi.fn(),
     });
     getApiErrorStatusMock.mockReturnValue(undefined);
+    getApiErrorDetailsMock.mockResolvedValue({ traceId: undefined });
   });
 
   it('renders NotFound when scheduledTasksEnabled is false, without calling getScheduledTask', () => {
@@ -431,5 +473,179 @@ describe('ScheduledTaskDetailPage', () => {
       expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
     );
     expect(screen.getByText('nextRunLabel:').textContent).toBe('nextRunLabel:');
+  });
+
+  describe('Active switch', () => {
+    const activeTask = {
+      id: 'sched_123',
+      displayName: 'Daily summary',
+      trigger: { cron: { fields: { hour: '9', minute: '0' } } },
+      triggerType: 'cron',
+      isActive: true,
+      nextRunTime: '2026-07-31T09:00:00.000Z',
+    };
+
+    it('toggling off calls pauseScheduledTask exactly once and reflects the paused state on success', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(activeTask);
+      pauseScheduledTaskMock.mockResolvedValue({
+        ...activeTask,
+        isActive: false,
+        nextRunTime: undefined,
+      });
+      renderDetailPage();
+
+      const switchEl = await waitFor(() => screen.getByRole('switch'));
+      expect(switchEl).toHaveProperty('checked', true);
+
+      await userEvent.click(switchEl);
+
+      expect(pauseScheduledTaskMock).toHaveBeenCalledOnce();
+      expect(pauseScheduledTaskMock).toHaveBeenCalledWith('sched_123');
+      expect(resumeScheduledTaskMock).not.toHaveBeenCalled();
+      await waitFor(() =>
+        expect(screen.getByRole('switch')).toHaveProperty('checked', false),
+      );
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
+    });
+
+    it('toggling on calls resumeScheduledTask exactly once and reflects the resumed state on success', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue({
+        ...activeTask,
+        isActive: false,
+        nextRunTime: undefined,
+      });
+      resumeScheduledTaskMock.mockResolvedValue(activeTask);
+      renderDetailPage();
+
+      const switchEl = await waitFor(() => screen.getByRole('switch'));
+      expect(switchEl).toHaveProperty('checked', false);
+
+      await userEvent.click(switchEl);
+
+      expect(resumeScheduledTaskMock).toHaveBeenCalledOnce();
+      expect(resumeScheduledTaskMock).toHaveBeenCalledWith('sched_123');
+      expect(pauseScheduledTaskMock).not.toHaveBeenCalled();
+      await waitFor(() =>
+        expect(screen.getByRole('switch')).toHaveProperty('checked', true),
+      );
+    });
+
+    it('disables the switch while a pause/resume request is in flight', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(activeTask);
+      let resolvePause!: (value: typeof activeTask) => void;
+      pauseScheduledTaskMock.mockReturnValue(
+        new Promise((resolve) => {
+          resolvePause = resolve;
+        }),
+      );
+      renderDetailPage();
+
+      const switchEl = await waitFor(() => screen.getByRole('switch'));
+      await userEvent.click(switchEl);
+
+      expect(screen.getByRole('switch')).toHaveProperty('disabled', true);
+
+      resolvePause({ ...activeTask, isActive: false });
+      await waitFor(() =>
+        expect(screen.getByRole('switch')).toHaveProperty('disabled', false),
+      );
+    });
+
+    it('rolls back to the previous state and shows an error notification with the trace id on failure', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(activeTask);
+      pauseScheduledTaskMock.mockRejectedValue(new Error('upstream error'));
+      getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-abc' });
+      renderDetailPage();
+
+      const switchEl = await waitFor(() => screen.getByRole('switch'));
+      await userEvent.click(switchEl);
+
+      await waitFor(() =>
+        expect(screen.getByRole('switch')).toHaveProperty('checked', true),
+      );
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variant: 'error',
+          requestId: 'trace-abc',
+        }),
+      );
+      // The rest of the page remains visible after a failed toggle.
+      expect(screen.getByText('displayName:Daily summary')).toBeTruthy();
+    });
+
+    it('does not update state when the response resolves after the page has unmounted', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(activeTask);
+      let resolvePause!: (value: typeof activeTask) => void;
+      pauseScheduledTaskMock.mockReturnValue(
+        new Promise((resolve) => {
+          resolvePause = resolve;
+        }),
+      );
+      const { unmount } = renderDetailPage();
+
+      const switchEl = await waitFor(() => screen.getByRole('switch'));
+      await userEvent.click(switchEl);
+
+      unmount();
+
+      // Resolving after unmount must not trigger a setState-on-unmounted-component warning/error.
+      resolvePause({ ...activeTask, isActive: false });
+      await Promise.resolve();
+    });
+
+    it('renders the switch disabled for a completed one-time schedule, without calling pause or resume', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue({
+        id: 'sched_123',
+        displayName: 'Daily summary',
+        trigger: { date: '2026-07-24T09:00:00.000Z' },
+        triggerType: 'date',
+        isActive: false,
+        nextRunTime: undefined,
+      });
+      renderDetailPage();
+
+      const switchEl = await waitFor(() => screen.getByRole('switch'));
+      expect(switchEl).toHaveProperty('checked', false);
+      expect(switchEl).toHaveProperty('disabled', true);
+
+      await userEvent.click(switchEl);
+
+      expect(pauseScheduledTaskMock).not.toHaveBeenCalled();
+      expect(resumeScheduledTaskMock).not.toHaveBeenCalled();
+    });
+
+    it('remains togglable for a recurring schedule with no upcoming run (paused, not completed)', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue({
+        id: 'sched_123',
+        displayName: 'Daily summary',
+        trigger: { cron: { fields: { hour: '9', minute: '0' } } },
+        triggerType: 'cron',
+        isActive: false,
+        nextRunTime: undefined,
+      });
+      resumeScheduledTaskMock.mockResolvedValue({
+        id: 'sched_123',
+        displayName: 'Daily summary',
+        triggerType: 'cron',
+        isActive: true,
+      });
+      renderDetailPage();
+
+      const switchEl = await waitFor(() => screen.getByRole('switch'));
+      expect(switchEl).toHaveProperty('disabled', false);
+
+      await userEvent.click(switchEl);
+
+      expect(resumeScheduledTaskMock).toHaveBeenCalledWith('sched_123');
+    });
   });
 });
