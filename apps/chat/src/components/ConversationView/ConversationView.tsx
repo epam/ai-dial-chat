@@ -33,6 +33,7 @@ import {
   FC,
   lazy,
   memo,
+  type ReactNode,
   Suspense,
   useCallback,
   useMemo,
@@ -140,6 +141,12 @@ interface Props {
   onToolToggle?: (toolId: string) => void;
   toolsMenuTitle?: string;
   toolsChipLabels?: ToolsChipLabels;
+  /**
+   * Neutral content rendered inside the scrollable message container, above
+   * the message list (e.g. the scheduled-task conversation summary banner).
+   * Never persisted as a message.
+   */
+  topContent?: ReactNode;
 }
 
 const ConversationView: FC<Props> = ({
@@ -175,6 +182,7 @@ const ConversationView: FC<Props> = ({
   onToolToggle,
   toolsMenuTitle,
   toolsChipLabels,
+  topContent,
 }) => {
   const isModelFixed = !!fixedModel;
   const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
@@ -566,6 +574,7 @@ const ConversationView: FC<Props> = ({
             ref={contentRef}
             className="mx-auto flex w-full min-w-0 max-w-[760px] shrink-0 flex-col gap-[26px] px-6 pt-7"
           >
+            {topContent}
             {messages.map((msg, index) => {
               const isThisMessageEditing = editingMessageIndexes?.has(index);
               return (

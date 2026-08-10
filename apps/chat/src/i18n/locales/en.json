@@ -576,6 +576,17 @@
       "unsupportedTriggerMessage": "This task's schedule can't be edited here yet.",
       "successNotification": "Scheduled task updated",
       "errorNotification": "Failed to update the scheduled task"
+    },
+    "conversationBanner": {
+      "loadingLabel": "Loading task details…",
+      "unavailableLabel": "Task details are unavailable",
+      "retryAriaLabel": "Retry loading task details",
+      "taskDetailsLabel": "Task details",
+      "taskDetailsAriaLabel": "View task details for {{taskName}}"
+    },
+    "conversationPanel": {
+      "modelLabel": "Model",
+      "currentRunLabel": "Current run"
     }
   },
   "dialFileManager": {

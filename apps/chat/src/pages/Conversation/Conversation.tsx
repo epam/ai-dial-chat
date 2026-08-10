@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router';
 import ConversationView from '../../components/ConversationView/ConversationView';
 import NegativeFeedbackModal from '../../components/ConversationView/Rate/NegativeFeedbackModal';
+import ScheduledTaskConversationBanner from '../../components/ScheduledTaskConversationBanner/ScheduledTaskConversationBanner';
 import { getConversationRoute } from '../../constants/routes';
 import {
   ButtonsI18nKeys,
@@ -24,6 +25,7 @@ import {
   RateI18nKeys,
   ToolsI18nKeys,
 } from '../../constants/translation-keys';
+import { useActiveScheduledTask } from '../../context/ActiveScheduledTaskContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -83,6 +85,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     useSourcesSidebar();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
+  const { status: activeScheduledTaskStatus } = useActiveScheduledTask();
   const {
     conversations,
     duplicateConversation,
@@ -564,6 +567,11 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
             countLabel: (count) => t(ToolsI18nKeys.SelectedCount, { count }),
             removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
           }}
+          topContent={
+            activeScheduledTaskStatus === 'task-conversation' ? (
+              <ScheduledTaskConversationBanner />
+            ) : undefined
+          }
         />
       </div>
 

@@ -5,8 +5,28 @@ import { listScheduledTaskRuns } from '../../server-api/scheduled-tasks.api';
 /** Page size requested from the BFF on each fetch (initial page and every subsequent load-more page). */
 const PAGE_SIZE = 20;
 
+/**
+ * Whether another page likely exists beyond the just-fetched one. Prefers the
+ * server's own signal (`next`, or `count` compared against rows consumed so
+ * far) when present. When the upstream response omits both — which happens
+ * for some DIAL Scheduler deployments — falls back to "the page was full"
+ * (`items.length === PAGE_SIZE`) as a heuristic, so pagination doesn't get
+ * stuck forever after the first page; a subsequent short/empty page then
+ * naturally clears it.
+ */
+const deriveHasMore = (
+  itemsInPage: number,
+  rowsConsumed: number,
+  count: number | null | undefined,
+  next: string | null | undefined,
+): boolean => {
+  if (next != null) return true;
+  if (count != null) return rowsConsumed < count;
+  return itemsInPage === PAGE_SIZE;
+};
+
 /** Result of {@link useScheduledTaskRuns}. */
-interface UseScheduledTaskRunsResult {
+export interface UseScheduledTaskRunsResult {
   /** Accumulated runs across all loaded pages, in server order (newest first). Empty until the first successful fetch resolves. */
   items: ScheduledTaskRunDto[];
   /** Whether the initial fetch (or a fetch triggered by `refetch`) is in flight. */
@@ -72,9 +92,12 @@ export const useScheduledTaskRuns = (
         if (!cancelled.value) {
           setItems(response.items);
           setHasMore(
-            response.next != null ||
-              (response.count != null &&
-                response.items.length < response.count),
+            deriveHasMore(
+              response.items.length,
+              response.items.length,
+              response.count,
+              response.next,
+            ),
           );
           nextOffsetRef.current = response.items.length;
         }
@@ -129,9 +152,12 @@ export const useScheduledTaskRuns = (
             return [...current, ...newItems];
           });
           setHasMore(
-            response.next != null ||
-              (response.count != null &&
-                offset + response.items.length < response.count),
+            deriveHasMore(
+              response.items.length,
+              offset + response.items.length,
+              response.count,
+              response.next,
+            ),
           );
           nextOffsetRef.current = offset + response.items.length;
         }

@@ -15,7 +15,10 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { getScheduledTaskEditRoute } from '../../constants/routes';
-import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
+import {
+  ButtonsI18nKeys,
+  ScheduledTasksI18nKeys,
+} from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useScheduledTaskRuns } from '../../hooks/scheduled-tasks/useScheduledTaskRuns';
@@ -162,6 +165,7 @@ const ScheduledTaskDetailPage: FC = () => {
       historyLoadingMoreLabel: t(
         ScheduledTasksI18nKeys.DetailHistoryLoadingMoreLabel,
       ),
+      historyShowMoreLabel: t(ButtonsI18nKeys.ShowMore),
       runStatusLabels: {
         success: t(ScheduledTasksI18nKeys.DetailStatusSuccess),
         error: t(ScheduledTasksI18nKeys.DetailStatusError),

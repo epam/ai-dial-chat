@@ -1,0 +1,22 @@
+.subtitleText {
+  color: var(--strhl-subtitle-text, var(--text-secondary, #57647a));
+}
+
+.successIcon {
+  color: var(--strhl-success-icon, var(--text-success, #007274));
+}
+
+.errorIcon {
+  color: var(--strhl-error-icon, var(--text-error, #ae2f2f));
+}
+
+.missedIcon {
+  color: var(--strhl-missed-icon, var(--text-secondary, #57647a));
+}
+
+.currentRun {
+  background: var(
+    --strhl-current-run-bg,
+    var(--bg-accent-primary-alpha, rgba(125, 164, 255, 0.18))
+  );
+}

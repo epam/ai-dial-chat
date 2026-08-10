@@ -317,6 +317,13 @@ export enum ScheduledTasksI18nKeys {
   EditUnsupportedTriggerMessage = 'scheduledTasks.edit.unsupportedTriggerMessage',
   EditSuccessNotification = 'scheduledTasks.edit.successNotification',
   EditErrorNotification = 'scheduledTasks.edit.errorNotification',
+  ConversationBannerLoadingLabel = 'scheduledTasks.conversationBanner.loadingLabel',
+  ConversationBannerUnavailableLabel = 'scheduledTasks.conversationBanner.unavailableLabel',
+  ConversationBannerRetryAriaLabel = 'scheduledTasks.conversationBanner.retryAriaLabel',
+  ConversationBannerTaskDetailsLabel = 'scheduledTasks.conversationBanner.taskDetailsLabel',
+  ConversationBannerTaskDetailsAriaLabel = 'scheduledTasks.conversationBanner.taskDetailsAriaLabel',
+  ConversationPanelModelLabel = 'scheduledTasks.conversationPanel.modelLabel',
+  ConversationPanelCurrentRunLabel = 'scheduledTasks.conversationPanel.currentRunLabel',
 }
 
 export enum ConversationI18nKeys {

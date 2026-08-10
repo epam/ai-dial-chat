@@ -178,6 +178,47 @@ describe('useScheduledTaskRuns', () => {
     expect(result.current.hasMore).toBe(true);
   });
 
+  it('falls back to a full-page heuristic for hasMore when both count and next are absent', async () => {
+    vi.mocked(listScheduledTaskRuns).mockResolvedValue({
+      items: Array.from({ length: 20 }, (_, i) => ({
+        id: `r${i}`,
+        status: 'Success',
+        startTime: 't',
+      })),
+    });
+
+    const { result } = renderHook(() => useScheduledTaskRuns('sched_123'));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.hasMore).toBe(true);
+  });
+
+  it('the full-page fallback stops once a short page is returned, even without count/next', async () => {
+    vi.mocked(listScheduledTaskRuns)
+      .mockResolvedValueOnce({
+        items: Array.from({ length: 20 }, (_, i) => ({
+          id: `r${i}`,
+          status: 'Success',
+          startTime: 't',
+        })),
+      })
+      .mockResolvedValueOnce({
+        items: [{ id: 'r20', status: 'Success', startTime: 't' }],
+      });
+
+    const { result } = renderHook(() => useScheduledTaskRuns('sched_123'));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.hasMore).toBe(true);
+
+    act(() => {
+      result.current.loadMore();
+    });
+    await waitFor(() => expect(result.current.isLoadingMore).toBe(false));
+
+    expect(result.current.items).toHaveLength(21);
+    expect(result.current.hasMore).toBe(false);
+  });
+
   it('loadMore deduplicates items by id', async () => {
     vi.mocked(listScheduledTaskRuns)
       .mockResolvedValueOnce({
