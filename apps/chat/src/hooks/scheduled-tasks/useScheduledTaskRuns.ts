@@ -69,7 +69,25 @@ export const useScheduledTaskRuns = (
    */
   const nextOffsetRef = useRef(0);
 
+  /*
+   * Incremented whenever the main effect's deps change (`scheduleId` in
+   * particular). A `loadMore` fetch captures the token in effect at call
+   * time and checks it again on completion — if a `scheduleId` change ran
+   * the main effect in between, the token no longer matches and the stale
+   * `loadMore` result is discarded instead of being appended to the new
+   * schedule's `items`. The `cancelled`/`controller` pattern the main effect
+   * uses for its own cleanup can't reach into an in-flight `loadMore` call,
+   * since that call's locals live outside the effect closure.
+   */
+  const requestTokenRef = useRef(0);
+
   useEffect(() => {
+    const token = ++requestTokenRef.current;
+    // Any loadMore started under the previous token is now stale: its
+    // completion handlers will no-op, so isLoadingMore would otherwise be
+    // stuck at `true` forever. Reset it unconditionally here.
+    setIsLoadingMore(false);
+
     if (!enabled) {
       setIsLoading(false);
       setError(null);
@@ -77,7 +95,6 @@ export const useScheduledTaskRuns = (
     }
 
     const controller = new AbortController();
-    const cancelled = { value: false };
 
     const load = async () => {
       setIsLoading(true);
@@ -89,28 +106,26 @@ export const useScheduledTaskRuns = (
           offset: 0,
           signal: controller.signal,
         });
-        if (!cancelled.value) {
-          setItems(response.items);
-          setHasMore(
-            deriveHasMore(
-              response.items.length,
-              response.items.length,
-              response.count,
-              response.next,
-            ),
-          );
-          nextOffsetRef.current = response.items.length;
-        }
+        if (requestTokenRef.current !== token) return;
+        setItems(response.items);
+        setHasMore(
+          deriveHasMore(
+            response.items.length,
+            response.items.length,
+            response.count,
+            response.next,
+          ),
+        );
+        nextOffsetRef.current = response.items.length;
       } catch (err) {
-        if (!cancelled.value) {
-          setError(
-            err instanceof Error
-              ? err
-              : new Error('Failed to load scheduled task runs'),
-          );
-        }
+        if (requestTokenRef.current !== token) return;
+        setError(
+          err instanceof Error
+            ? err
+            : new Error('Failed to load scheduled task runs'),
+        );
       } finally {
-        if (!cancelled.value) {
+        if (requestTokenRef.current === token) {
           setIsLoading(false);
         }
       }
@@ -119,7 +134,6 @@ export const useScheduledTaskRuns = (
     load();
 
     return () => {
-      cancelled.value = true;
       controller.abort();
     };
   }, [enabled, scheduleId, resetToken]);
@@ -129,8 +143,8 @@ export const useScheduledTaskRuns = (
       return;
     }
 
+    const token = requestTokenRef.current;
     const controller = new AbortController();
-    const cancelled = { value: false };
     const offset = nextOffsetRef.current;
 
     const run = async () => {
@@ -143,34 +157,32 @@ export const useScheduledTaskRuns = (
           offset,
           signal: controller.signal,
         });
-        if (!cancelled.value) {
-          setItems((current) => {
-            const existingIds = new Set(current.map((item) => item.id));
-            const newItems = response.items.filter(
-              (item) => !existingIds.has(item.id),
-            );
-            return [...current, ...newItems];
-          });
-          setHasMore(
-            deriveHasMore(
-              response.items.length,
-              offset + response.items.length,
-              response.count,
-              response.next,
-            ),
+        if (requestTokenRef.current !== token) return;
+        setItems((current) => {
+          const existingIds = new Set(current.map((item) => item.id));
+          const newItems = response.items.filter(
+            (item) => !existingIds.has(item.id),
           );
-          nextOffsetRef.current = offset + response.items.length;
-        }
+          return [...current, ...newItems];
+        });
+        setHasMore(
+          deriveHasMore(
+            response.items.length,
+            offset + response.items.length,
+            response.count,
+            response.next,
+          ),
+        );
+        nextOffsetRef.current = offset + response.items.length;
       } catch (err) {
-        if (!cancelled.value) {
-          setError(
-            err instanceof Error
-              ? err
-              : new Error('Failed to load more scheduled task runs'),
-          );
-        }
+        if (requestTokenRef.current !== token) return;
+        setError(
+          err instanceof Error
+            ? err
+            : new Error('Failed to load more scheduled task runs'),
+        );
       } finally {
-        if (!cancelled.value) {
+        if (requestTokenRef.current === token) {
           setIsLoadingMore(false);
         }
       }

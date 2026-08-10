@@ -258,6 +258,54 @@ describe('useScheduledTaskRuns', () => {
     expect(listScheduledTaskRuns).not.toHaveBeenCalled();
   });
 
+  it('discards a stale loadMore result that resolves after scheduleId has already changed', async () => {
+    let resolveFirstLoadMore: (
+      value: Awaited<ReturnType<typeof listScheduledTaskRuns>>,
+    ) => void = () => {};
+
+    vi.mocked(listScheduledTaskRuns)
+      .mockResolvedValueOnce({
+        items: [{ id: 'a1', status: 'Success', startTime: 't1' }],
+        next: 'cursor-1',
+      }) // sched_a initial load
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveFirstLoadMore = resolve;
+        }),
+      ) // sched_a loadMore — stays pending
+      .mockResolvedValueOnce({
+        items: [{ id: 'b1', status: 'Success', startTime: 't2' }],
+        next: null,
+      }); // sched_b initial load
+
+    const { result, rerender } = renderHook(
+      ({ scheduleId }) => useScheduledTaskRuns(scheduleId),
+      { initialProps: { scheduleId: 'sched_a' } },
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.loadMore();
+    });
+    await waitFor(() => expect(result.current.isLoadingMore).toBe(true));
+
+    rerender({ scheduleId: 'sched_b' });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.items.map((item) => item.id)).toEqual(['b1']);
+
+    await act(async () => {
+      resolveFirstLoadMore({
+        items: [{ id: 'a2', status: 'Success', startTime: 't1b' }],
+        next: null,
+      });
+      await Promise.resolve();
+    });
+
+    // The stale sched_a loadMore result must not be appended to sched_b's items.
+    expect(result.current.items.map((item) => item.id)).toEqual(['b1']);
+    expect(result.current.isLoadingMore).toBe(false);
+  });
+
   it('does not warn about updating state after unmount when a loadMore fetch resolves late', async () => {
     const consoleError = vi
       .spyOn(console, 'error')

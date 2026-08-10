@@ -15,5 +15,8 @@
 }
 
 .currentRun {
-  background: var(--strhl-current-run-bg, var(--bg-accent-primary-alpha, #7da4ff2e));
+  background: var(
+    --strhl-current-run-bg,
+    var(--bg-accent-primary-alpha, #7da4ff2e)
+  );
 }

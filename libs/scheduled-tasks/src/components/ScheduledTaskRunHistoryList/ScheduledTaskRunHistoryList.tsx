@@ -160,7 +160,7 @@ export const ScheduledTaskRunHistoryList: FC<
     );
   }
 
-  if (error) {
+  if (error && items.length === 0) {
     return (
       <div style={cssVars} className="flex flex-col items-start gap-3">
         <p
@@ -190,7 +190,19 @@ export const ScheduledTaskRunHistoryList: FC<
     <ul style={cssVars} aria-label={labels.historyTitle}>
       {items.map(renderRow)}
       {isLoadingMore && renderSkeletons(skeletonCount)}
-      {footer}
+      {error ? (
+        <li className="flex flex-col items-start gap-3 px-5 py-2">
+          <p
+            role="alert"
+            className={mergeClasses(subtitleClassName, styles.subtitleText)}
+          >
+            {labels.errorLabel}
+          </p>
+          <GhostButton label={labels.retryLabel} onClick={onRetry} />
+        </li>
+      ) : (
+        footer
+      )}
     </ul>
   );
 };

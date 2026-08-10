@@ -72,8 +72,8 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   });
 
   const historyFooter =
-    onRunsLoadMore && runsHasMore ? (
-      <div
+    onRunsLoadMore && runsHasMore && labels.historyShowMoreLabel ? (
+      <li
         className={mergeClasses(
           'sticky bottom-0 z-10 rounded-b-xl px-6 pb-5 pt-2',
           styles.historyCard,
@@ -84,7 +84,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
           onClick={onRunsLoadMore}
           disabled={runsIsLoadingMore}
         />
-      </div>
+      </li>
     ) : undefined;
 
   const renderInstructionsContent = (markdown: string) =>
@@ -263,10 +263,17 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
                     retryLabel: labels.historyRetryLabel,
                     runStatusLabels: labels.runStatusLabels,
                   }}
-                  styles={{ typography: { runTimestampClassName } }}
+                  footer={historyFooter}
+                  styles={{
+                    typography: { runTimestampClassName },
+                    colors: {
+                      successIconColor: colors?.successIconColor,
+                      errorIconColor: colors?.errorIconColor,
+                      missedIconColor: colors?.missedIconColor,
+                    },
+                  }}
                 />
               </div>
-              {historyFooter}
             </div>
           </div>
         </div>

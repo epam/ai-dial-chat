@@ -483,6 +483,21 @@ describe('ScheduledTaskDetailView', () => {
           .disabled,
       ).toBe(true);
     });
+
+    it('does not render the "Show more" button when historyShowMoreLabel is omitted', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={{ ...labels, historyShowMoreLabel: undefined }}
+          onBack={vi.fn()}
+          displayName="Daily summary"
+          runs={[buildRun()]}
+          runsHasMore
+          onRunsLoadMore={vi.fn()}
+        />,
+      );
+
+      expect(screen.queryByRole('button', { name: 'Show more' })).toBeNull();
+    });
   });
 
   it('invokes onRunClick with the run id when a row is clicked, when supplied', async () => {

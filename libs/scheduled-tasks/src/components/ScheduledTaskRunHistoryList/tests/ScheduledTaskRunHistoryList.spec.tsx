@@ -186,4 +186,24 @@ describe('ScheduledTaskRunHistoryList', () => {
       container.querySelectorAll('[data-skeleton]').length,
     ).toBeGreaterThan(0);
   });
+
+  it('keeps already-loaded rows visible and shows an inline retry notice when a loadMore fails', async () => {
+    const onRetry = vi.fn();
+    render(
+      <ScheduledTaskRunHistoryList
+        items={[buildRun({ id: 'run_1' })]}
+        error={new Error('failed')}
+        onRetry={onRetry}
+        labels={labels}
+        footer={<li>Show more</li>}
+      />,
+    );
+
+    expect(screen.getByText('today at 9:01 AM (99s)')).toBeTruthy();
+    expect(screen.getByText('Failed to load history')).toBeTruthy();
+    expect(screen.queryByText('Show more')).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(onRetry).toHaveBeenCalledOnce();
+  });
 });
