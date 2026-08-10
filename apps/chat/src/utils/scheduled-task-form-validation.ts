@@ -2,8 +2,7 @@ import {
   DESCRIPTION_MAX_LENGTH,
   ScheduledTaskCreateFormErrors,
   ScheduledTaskCreateFormValues,
-  ScheduledTaskFrequency,
-  ScheduledTaskScheduleType,
+  ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
 import type { TFunction } from 'i18next';
 import {
@@ -13,6 +12,9 @@ import {
 
 /** `HH:mm` 24-hour time-of-day, matching the `Calendar` time control's value shape. */
 export const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+/** Minute-of-hour, `"0"`-`"59"`, matching the Hourly repeat's Minute field. */
+export const MINUTE_PATTERN = /^([0-9]|[1-5]\d)$/;
 
 /** Minimum lead time a one-shot `runAt` must be ahead of "now" to be accepted. */
 export const RUN_AT_MIN_LEAD_MS = 60_000;
@@ -44,7 +46,7 @@ export const validateScheduledTaskForm = (
     );
   }
 
-  if (data.scheduleType === ScheduledTaskScheduleType.Once) {
+  if (data.repeat === ScheduledTaskRepeat.OneTime) {
     const runAtTime = data.runAt ? new Date(data.runAt).getTime() : NaN;
     if (
       !data.runAt ||
@@ -54,17 +56,23 @@ export const validateScheduledTaskForm = (
       nextErrors.runAt = t(ScheduledTasksI18nKeys.CreateRunAtRequired);
     }
   } else {
-    if (!TIME_PATTERN.test(data.time)) {
+    if (
+      data.repeat !== ScheduledTaskRepeat.Hourly &&
+      !TIME_PATTERN.test(data.time)
+    ) {
       nextErrors.time = t(ScheduledTasksI18nKeys.CreateTimeInvalid);
     }
     if (
-      data.frequency === ScheduledTaskFrequency.Weekly &&
-      !data.dayOfWeek?.trim()
+      data.repeat === ScheduledTaskRepeat.Hourly &&
+      !MINUTE_PATTERN.test(data.minute ?? '')
     ) {
+      nextErrors.minute = t(ScheduledTasksI18nKeys.CreateMinuteInvalid);
+    }
+    if (data.repeat === ScheduledTaskRepeat.Weekly && !data.dayOfWeek?.trim()) {
       nextErrors.dayOfWeek = t(ScheduledTasksI18nKeys.CreateDayOfWeekRequired);
     }
     if (
-      data.frequency === ScheduledTaskFrequency.Monthly &&
+      data.repeat === ScheduledTaskRepeat.Monthly &&
       !data.dayOfMonth?.trim()
     ) {
       nextErrors.dayOfMonth = t(
