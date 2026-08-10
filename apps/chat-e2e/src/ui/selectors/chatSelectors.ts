@@ -122,7 +122,7 @@ export const ImportExportSelectors = {
 };
 
 export const ChatSelectors = {
-  fileDropArea: '[data-qa="chat"] #file-drop-area',
+  fileDropArea: '#file-drop-area',
   editMessageFileDropArea: '#edit-message-file-drop-area',
   chat: '[data-qa="chat"]',
   spinner: '[data-qa="spinner"]',
