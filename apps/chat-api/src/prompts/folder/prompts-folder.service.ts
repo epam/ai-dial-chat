@@ -65,11 +65,10 @@ export class PromptsFolderService {
     path: string,
     dto: RenamePromptFolderDto,
   ): Promise<PromptFolderResponseDto> {
-    const folderSubPath = path;
     const allItems = await this.resourceService.listPromptMetadataItems(
       token,
       bucket,
-      folderSubPath,
+      path,
     );
 
     if (allItems.length === 0) {
@@ -78,19 +77,18 @@ export class PromptsFolderService {
 
     const parentPath = folderIdFromId(path);
     const newPath = parentPath ? `${parentPath}/${dto.name}` : dto.name;
-    const newFolderSubPath = newPath;
 
     const targetItems = await this.resourceService.listPromptMetadataItems(
       token,
       bucket,
-      newFolderSubPath,
+      newPath,
     );
     if (targetItems.length > 0) {
       throw new ConflictException(`Folder already exists: ${newPath}`);
     }
 
-    const oldPrefix = `${folderSubPath}/`;
-    const newPrefix = `${newFolderSubPath}/`;
+    const oldPrefix = `${path}/`;
+    const newPrefix = `${newPath}/`;
 
     await Promise.all(
       allItems.map(async (item) => {

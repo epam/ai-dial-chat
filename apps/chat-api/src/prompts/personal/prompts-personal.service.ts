@@ -225,11 +225,14 @@ export class PromptsPersonalService {
     const isRename = newName !== currentName;
 
     const currentFolderId = folderIdFromId(path);
-    const targetId = isRename
-      ? currentFolderId
-        ? `${currentFolderId}/${newName}`
-        : newName
-      : path;
+    let targetId: string;
+    if (!isRename) {
+      targetId = path;
+    } else if (currentFolderId) {
+      targetId = `${currentFolderId}/${newName}`;
+    } else {
+      targetId = newName;
+    }
     const updatedPrompt: PromptPayload = {
       ...existing,
       id: targetId,
