@@ -210,6 +210,65 @@ describe('applyChunkToMessages — stage merging', () => {
     expect(att?.data).toBe('Full markdown');
   });
 
+  it('appends a new reasoning-summary key', () => {
+    const messages = [makeAssistantMessage()];
+    const chunk = makeChunk('', {
+      custom_content: {
+        reasoning_summaries: [
+          { itemId: 'rs_1', outputIndex: 0, summaryIndex: 0, text: 'Checking' },
+        ],
+      },
+    });
+    const result = applyChunkToMessages(messages, 0, chunk)!;
+    expect(result[0].custom_content?.reasoningSummaries).toEqual([
+      { itemId: 'rs_1', outputIndex: 0, summaryIndex: 0, text: 'Checking' },
+    ]);
+  });
+
+  it('concatenates text for an existing reasoning-summary key, matching the server merge', () => {
+    const messages = [
+      makeAssistantMessage({
+        custom_content: {
+          reasoningSummaries: [
+            { itemId: 'rs_1', outputIndex: 0, summaryIndex: 0, text: 'Check' },
+          ],
+        },
+      }),
+    ];
+    const chunk = makeChunk('', {
+      custom_content: {
+        reasoning_summaries: [
+          { itemId: 'rs_1', outputIndex: 0, summaryIndex: 0, text: 'ing' },
+        ],
+      },
+    });
+    const result = applyChunkToMessages(messages, 0, chunk)!;
+    expect(result[0].custom_content?.reasoningSummaries?.[0].text).toBe(
+      'Checking',
+    );
+  });
+
+  it('leaves existing reasoning-summary entries unchanged when a chunk carries none', () => {
+    const messages = [
+      makeAssistantMessage({
+        custom_content: {
+          reasoningSummaries: [
+            {
+              itemId: 'rs_1',
+              outputIndex: 0,
+              summaryIndex: 0,
+              text: 'Checking',
+            },
+          ],
+        },
+      }),
+    ];
+    const result = applyChunkToMessages(messages, 0, makeChunk(' world'))!;
+    expect(result[0].custom_content?.reasoningSummaries).toEqual([
+      { itemId: 'rs_1', outputIndex: 0, summaryIndex: 0, text: 'Checking' },
+    ]);
+  });
+
   it('appends new attachments with a different index', () => {
     const messages = [
       makeAssistantMessage({

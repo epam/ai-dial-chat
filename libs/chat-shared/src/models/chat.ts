@@ -73,6 +73,22 @@ export interface StatusMessageCustomContent {
   new_deployment_id: string;
 }
 
+/**
+ * One reasoning-summary text fragment, keyed by `(itemId, outputIndex,
+ * summaryIndex)`. Distinct from a `Stage` — a reasoning summary is never an
+ * executed action and is never counted toward `Executed in N steps`.
+ */
+export interface ReasoningSummaryPart {
+  /** Upstream reasoning output item id — primary correlation key. */
+  itemId: string;
+  /** Position of the reasoning item in the response's output array. */
+  outputIndex: number;
+  /** Position of this summary part within the reasoning item. */
+  summaryIndex: number;
+  /** Accumulated summary text fragment for this key. */
+  text: string;
+}
+
 /** Extra DIAL API payload attached to a message. */
 export interface MessageCustomContent {
   /** Files or media items associated with this message. */
@@ -93,6 +109,8 @@ export interface MessageCustomContent {
   configuration_value?: Record<string, unknown>;
   /** Accumulated agent execution stages streamed via `custom_content.stages`. */
   stages?: Stage[];
+  /** Accumulated Responses API reasoning-summary fragments, kept separate from `stages`. */
+  reasoningSummaries?: ReasoningSummaryPart[];
 }
 
 /** A single message in a conversation. */
@@ -129,6 +147,16 @@ export interface StatusMessage extends Omit<
   custom_content?: StatusMessageCustomContent;
 }
 
+/**
+ * Provider-neutral tool-stage discriminator, resolved to a localized
+ * `Stage.name`/`tag` only at the `apps/chat` boundary. Never a raw upstream
+ * discriminator (e.g. the Responses API's `web_search_call` item type).
+ */
+export enum ToolStageKind {
+  /** A provider-hosted web search tool execution. */
+  WebSearch = 'web_search',
+}
+
 /** A single agent execution stage produced during a streaming response. */
 export interface Stage {
   /** Zero-based ordering key; used to merge/upsert incoming stage updates. */
@@ -146,6 +174,13 @@ export interface Stage {
    * Rendered only when present — never inferred from `name`.
    */
   tag?: string;
+  /**
+   * Provider-neutral tool-kind marker set on Responses-origin stages.
+   * Absent on Chat-Completions-produced stages. Resolved to a localized
+   * `name`/`tag` only at the `apps/chat` boundary — `libs/conversation-stages`
+   * never reads this field.
+   */
+  toolKind?: ToolStageKind;
 }
 
 /** Incremental content delta inside a streaming SSE chunk. */
@@ -169,6 +204,8 @@ export interface StreamChunkDelta {
     attachments?: MessageAttachment[];
     /** Partial annotation updates; merge by `index` into the accumulating annotation list. */
     annotations?: Annotation[];
+    /** Partial reasoning-summary fragments; merge by `(itemId, outputIndex, summaryIndex)`. */
+    reasoning_summaries?: ReasoningSummaryPart[];
   };
   /** Raw custom fields in the DIAL wire format. */
   custom_fields?: {

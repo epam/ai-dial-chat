@@ -1,7 +1,50 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsObject, IsOptional, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 import { AttachmentDto } from './attachment.dto';
+
+/**
+ * One reasoning-summary text fragment, keyed by `(itemId, outputIndex,
+ * summaryIndex)`. Mirrors the wire shape emitted by
+ * `ResponsesAdapter.relay` and merged by `applyChunkToMessage`.
+ */
+export class ReasoningSummaryPartDto {
+  @ApiProperty({
+    description: 'Upstream reasoning output item id',
+    example: 'rs_1',
+  })
+  @IsString()
+  itemId!: string;
+
+  @ApiProperty({
+    description:
+      "Position of the reasoning item in the response's output array",
+  })
+  @IsInt()
+  @Min(0)
+  outputIndex!: number;
+
+  @ApiProperty({
+    description: 'Position of this summary part within the reasoning item',
+  })
+  @IsInt()
+  @Min(0)
+  summaryIndex!: number;
+
+  @ApiProperty({
+    description: 'Accumulated summary text fragment for this key',
+  })
+  @IsString()
+  text!: string;
+}
 
 /** Optional DIAL extra payload attached to a user message. */
 export class MessageCustomContentDto {

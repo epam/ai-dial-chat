@@ -1,10 +1,13 @@
 import {
   type Attachment,
   type DisplayAttachment,
+  type ReasoningSummaryPart,
+  type Stage,
   Message,
   MessageRole,
   ResponseFormat,
   StatusEvent,
+  ToolStageKind,
   isStatusMessage,
 } from '@epam/ai-dial-chat-shared';
 
@@ -64,6 +67,41 @@ export const isMessageChanged = (
 export const messageHasStages = (message: Message): boolean =>
   message.role === MessageRole.Assistant &&
   (message.custom_content?.stages?.length ?? 0) > 0;
+
+/**
+ * Overwrites `name`/`tag` for any stage with a recognized `toolKind` using
+ * the provided localized labels, leaving stages without a recognized
+ * `toolKind` (e.g. all Chat-Completions-produced stages) unchanged. Keeps
+ * `libs/conversation-stages` free of `ToolStageKind` — it only ever renders
+ * the already-resolved `name`/`tag` strings.
+ */
+export const resolveToolStageLabels = (
+  stages: Stage[],
+  labels: Partial<Record<ToolStageKind, string>>,
+): Stage[] =>
+  stages.map((stage) => {
+    if (stage.toolKind == null) return stage;
+    const label = labels[stage.toolKind];
+    if (label == null) return stage;
+    return { ...stage, name: label, tag: label };
+  });
+
+/**
+ * Concatenates ordered reasoning-summary fragments into a single string,
+ * sorted by `(outputIndex, summaryIndex)` rather than accumulation order —
+ * matches the display-order requirement for out-of-order/multi-part streams.
+ */
+export const getReasoningSummaryText = (
+  parts: ReasoningSummaryPart[] | undefined,
+): string =>
+  (parts ?? [])
+    .slice()
+    .sort(
+      (a, b) =>
+        a.outputIndex - b.outputIndex || a.summaryIndex - b.summaryIndex,
+    )
+    .map((p) => p.text)
+    .join('');
 
 export const hasActiveToolConfig = (
   value: Record<string, boolean> | undefined,

@@ -82,6 +82,76 @@ export interface ResponsesFailedEvent {
   response?: { id?: string; error?: { message?: string; code?: string } };
 }
 
+/**
+ * A new reasoning-summary part has started for the given `(item_id,
+ * output_index, summary_index)` key. Structural marker only — never carries
+ * summary text itself.
+ */
+export interface ResponsesReasoningSummaryPartAddedEvent {
+  type: 'response.reasoning_summary_part.added';
+  item_id?: string;
+  output_index?: number;
+  summary_index?: number;
+}
+
+/** Incremental reasoning-summary text fragment for a given key. */
+export interface ResponsesReasoningSummaryTextDeltaEvent {
+  type: 'response.reasoning_summary_text.delta';
+  item_id?: string;
+  output_index?: number;
+  summary_index?: number;
+  delta?: string;
+}
+
+/**
+ * The full text of a reasoning-summary part, sent once the part is
+ * finished. Used as a fallback when no prior delta was received for the
+ * same key — see `ResponsesAdapter.relay`'s dedup logic.
+ */
+export interface ResponsesReasoningSummaryTextDoneEvent {
+  type: 'response.reasoning_summary_text.done';
+  item_id?: string;
+  output_index?: number;
+  summary_index?: number;
+  text?: string;
+}
+
+/** A single Responses API output item, as carried by `output_item.added`/`.done`. */
+export interface ResponsesOutputItem {
+  id?: string;
+  /** Discriminator, e.g. `'web_search_call'`, `'reasoning'`, `'message'`, `'function_call'`, etc. */
+  type?: string;
+  /** Present on `web_search_call` (and similar) items once settled, e.g. `'completed'`/`'failed'`/`'incomplete'`. */
+  status?: string;
+}
+
+/**
+ * A new output item has appeared in the response's output array. Only
+ * `item.type === 'web_search_call'` is mapped to a `Stage` in this MVP —
+ * `reasoning`/`message`/anything else is intentionally never staged.
+ */
+export interface ResponsesOutputItemAddedEvent {
+  type: 'response.output_item.added';
+  item?: ResponsesOutputItem;
+  output_index?: number;
+}
+
+/** An output item has finished — carries its final `status` for settlement. */
+export interface ResponsesOutputItemDoneEvent {
+  type: 'response.output_item.done';
+  item?: ResponsesOutputItem;
+  output_index?: number;
+}
+
+/** `web_search_call` lifecycle event, keyed only by `item_id` (no `output_index`). */
+export interface ResponsesWebSearchCallEvent {
+  type:
+    | 'response.web_search_call.in_progress'
+    | 'response.web_search_call.searching'
+    | 'response.web_search_call.completed';
+  item_id?: string;
+}
+
 /** Catch-all for event types not in the handled allowlist above. */
 export interface ResponsesUnknownEvent {
   type: string;
@@ -94,6 +164,12 @@ export type ResponsesSseEvent =
   | ResponsesIncompleteEvent
   | ResponsesErrorEvent
   | ResponsesFailedEvent
+  | ResponsesReasoningSummaryPartAddedEvent
+  | ResponsesReasoningSummaryTextDeltaEvent
+  | ResponsesReasoningSummaryTextDoneEvent
+  | ResponsesOutputItemAddedEvent
+  | ResponsesOutputItemDoneEvent
+  | ResponsesWebSearchCallEvent
   | ResponsesUnknownEvent;
 
 /**
@@ -122,6 +198,45 @@ export interface ResponsesTerminalSignal {
 }
 
 /**
+ * One reasoning-summary text fragment, keyed by its upstream identity
+ * (`itemId`/`outputIndex`/`summaryIndex`) so `apply-chunk.server.ts` can
+ * upsert-and-concatenate it into `custom_content.reasoning_summaries`. See
+ * design.md Decision 2.
+ */
+export interface ReasoningSummaryChunk {
+  /** Upstream reasoning output item id — primary correlation key. */
+  itemId: string;
+  /** Position of the reasoning item in the response's output array. */
+  outputIndex: number;
+  /** Position of this summary part within the reasoning item. */
+  summaryIndex: number;
+  /** Incremental or (fallback) complete summary text fragment for this key. */
+  text: string;
+}
+
+/**
+ * Provider-neutral tool-stage discriminator set on a Responses-origin
+ * `Stage` chunk. Never a raw Responses API item-type string — resolved to a
+ * localized label only at the `apps/chat` boundary.
+ */
+export enum ToolStageKind {
+  WebSearch = 'web_search',
+}
+
+/**
+ * Minimal `Stage`-shaped chunk entry the Responses adapter emits — the same
+ * shape `apply-chunk.server.ts`'s existing `mergeStages` already merges by
+ * `index`, with an additional optional `toolKind` marker.
+ */
+export interface NormalizedStageChunk {
+  index: number;
+  name?: string;
+  status?: string | null;
+  tag?: string;
+  toolKind?: ToolStageKind;
+}
+
+/**
  * Normalized chunk shape both adapters emit, identical to the
  * `chat.completion.chunk` shape DIAL Core's Chat Completions endpoint
  * already sends and `apply-chunk.server.ts` already understands — the
@@ -134,6 +249,10 @@ export interface NormalizedStreamChunk {
     delta?: {
       content?: string;
       responseId?: string;
+      custom_content?: {
+        reasoning_summaries?: ReasoningSummaryChunk[];
+        stages?: NormalizedStageChunk[];
+      };
     };
   }>;
 }

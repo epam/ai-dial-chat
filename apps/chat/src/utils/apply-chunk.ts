@@ -2,6 +2,7 @@ import type {
   Annotation,
   Message,
   MessageAttachment,
+  ReasoningSummaryPart,
   Stage,
   StreamChunk,
 } from '@epam/ai-dial-chat-shared';
@@ -96,6 +97,34 @@ const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
 };
 
 /**
+ * Additively merges `reasoning_summaries` entries by the composite key
+ * `(itemId, outputIndex, summaryIndex)`: a new key is appended, an existing
+ * key has its `text` concatenated — the same semantics as the server-side
+ * merge in `apply-chunk.server.ts`, so live-rendered and persisted text
+ * never diverge.
+ */
+const mergeReasoningSummaries = (
+  existing: ReasoningSummaryPart[],
+  incoming: ReasoningSummaryPart[],
+): ReasoningSummaryPart[] => {
+  const result = [...existing];
+  for (const part of incoming) {
+    const idx = result.findIndex(
+      (p) =>
+        p.itemId === part.itemId &&
+        p.outputIndex === part.outputIndex &&
+        p.summaryIndex === part.summaryIndex,
+    );
+    if (idx >= 0) {
+      result[idx] = { ...result[idx], text: result[idx].text + part.text };
+    } else {
+      result.push(part);
+    }
+  }
+  return result;
+};
+
+/**
  * Applies a single SSE stream chunk to the message list.
  *
  *
@@ -121,13 +150,15 @@ export const applyChunkToMessages = (
   const stages = delta?.custom_content?.stages;
   const annotations = delta?.custom_content?.annotations;
   const rawAnnotations = delta?.custom_fields?.annotations;
+  const reasoningSummaries = delta?.custom_content?.reasoning_summaries;
   const hasContentUpdate =
     !!content ||
     !!formSchema ||
     !!attachments?.length ||
     !!stages?.length ||
     !!annotations?.length ||
-    !!rawAnnotations?.length;
+    !!rawAnnotations?.length ||
+    !!reasoningSummaries?.length;
   const responseId =
     delta?.responseId ?? (hasContentUpdate ? chunk.id : undefined);
 
@@ -152,7 +183,8 @@ export const applyChunkToMessages = (
       formSchema ||
       attachments?.length ||
       stages?.length ||
-      incomingAnnotations.length;
+      incomingAnnotations.length ||
+      reasoningSummaries?.length;
 
     return {
       ...message,
@@ -172,6 +204,12 @@ export const applyChunkToMessages = (
             annotations: mergeAnnotations(
               message.custom_content?.annotations ?? [],
               incomingAnnotations,
+            ),
+          }),
+          ...(reasoningSummaries?.length && {
+            reasoningSummaries: mergeReasoningSummaries(
+              message.custom_content?.reasoningSummaries ?? [],
+              reasoningSummaries,
             ),
           }),
         },

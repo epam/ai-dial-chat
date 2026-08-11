@@ -1,0 +1,10 @@
+.toggleButton {
+  color: var(--cs-rs-label, var(--text-secondary, #6b7280));
+  width: 100%;
+  justify-content: flex-start !important;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--cs-rs-label-hover, var(--text-primary, #161b2d));
+  }
+}

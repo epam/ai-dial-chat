@@ -50,6 +50,24 @@ import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
 <CollapsedGroup label="Tool calls" stages={toolCallStages} />;
 ```
 
+### ReasoningSummary
+
+Collapsible section rendering accumulated reasoning-summary text, kept visually and semantically separate from executed stages — it never counts toward "Executed in N steps". Accepts already-normalized, concatenated text and renders it through the same sanitized-markdown path as stage content.
+
+```tsx
+import { ReasoningSummary } from '@epam/ai-dial-conversation-stages';
+
+<ReasoningSummary
+  text="Checking the weather API before answering."
+  isStreaming={isStreaming}
+  labels={{
+    title: 'Reasoning summary',
+    expandAriaLabel: 'Expand reasoning summary',
+    collapseAriaLabel: 'Collapse reasoning summary',
+  }}
+/>;
+```
+
 ## Types
 
 ```tsx
@@ -60,6 +78,10 @@ import type {
   StageType,
   CollapsedGroupProps,
   CollapsedGroupColors,
+  ReasoningSummaryProps,
+  ReasoningSummaryColors,
+  ReasoningSummaryStyles,
+  ReasoningSummaryLabels,
 } from '@epam/ai-dial-conversation-stages';
 ```
 

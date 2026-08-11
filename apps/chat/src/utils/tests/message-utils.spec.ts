@@ -3,17 +3,21 @@ import {
   AttachmentType,
   type DisplayAttachment,
   type Message,
+  type Stage,
   MessageRole,
   RequestStatus,
   StageStatus,
   StatusEvent,
+  ToolStageKind,
 } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import {
   getLastDeploymentId,
+  getReasoningSummaryText,
   isMessageChanged,
   isMessageStreaming,
   messageHasStages,
+  resolveToolStageLabels,
 } from '../message-utils';
 
 /*
@@ -251,5 +255,61 @@ describe('messageHasStages', () => {
       },
     };
     expect(messageHasStages(msg)).toBe(true);
+  });
+});
+
+/*
+ * ---------------------------------------------------------------------------
+ * resolveToolStageLabels
+ * ---------------------------------------------------------------------------
+ */
+
+describe('resolveToolStageLabels', () => {
+  it('overwrites name/tag for a stage with a recognized toolKind', () => {
+    const stages: Stage[] = [
+      {
+        index: 0,
+        name: 'Web Search',
+        status: null,
+        tag: 'Web Search',
+        toolKind: ToolStageKind.WebSearch,
+      },
+    ];
+    const result = resolveToolStageLabels(stages, {
+      [ToolStageKind.WebSearch]: 'Recherche Web',
+    });
+    expect(result[0].name).toBe('Recherche Web');
+    expect(result[0].tag).toBe('Recherche Web');
+  });
+
+  it('leaves a stage without a recognized toolKind unchanged', () => {
+    const stages: Stage[] = [
+      { index: 0, name: 'Custom stage', status: null, tag: 'MCP' },
+    ];
+    const result = resolveToolStageLabels(stages, {
+      [ToolStageKind.WebSearch]: 'Web Search',
+    });
+    expect(result[0]).toEqual(stages[0]);
+  });
+});
+
+/*
+ * ---------------------------------------------------------------------------
+ * getReasoningSummaryText
+ * ---------------------------------------------------------------------------
+ */
+
+describe('getReasoningSummaryText', () => {
+  it('returns an empty string when parts is undefined', () => {
+    expect(getReasoningSummaryText(undefined)).toBe('');
+  });
+
+  it('concatenates parts ordered by outputIndex then summaryIndex, not arrival order', () => {
+    const text = getReasoningSummaryText([
+      { itemId: 'rs_1', outputIndex: 1, summaryIndex: 0, text: 'Second' },
+      { itemId: 'rs_1', outputIndex: 0, summaryIndex: 1, text: 'B' },
+      { itemId: 'rs_1', outputIndex: 0, summaryIndex: 0, text: 'A' },
+    ]);
+    expect(text).toBe('ABSecond');
   });
 });

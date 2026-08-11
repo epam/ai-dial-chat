@@ -776,6 +776,12 @@ export interface ConversationMessageCustomContentDto {
    * @memberof ConversationMessageCustomContentDto
    */
   newDeploymentId?: string;
+  /**
+   * Accumulated Responses API reasoning-summary fragments, distinct from custom_content.stages — never counted as an executed step.
+   * @type {Array<ReasoningSummaryPartDto>}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  reasoningSummaries?: Array<ReasoningSummaryPartDto>;
 }
 
 /**
@@ -4429,7 +4435,7 @@ export interface PublishRuleDto {
    * @type {string}
    * @memberof PublishRuleDto
    */
-  _function: PublishRuleDtoFunctionEnum;
+  function: PublishRuleDtoFunctionEnum;
   /**
    * Values combined with OR; exactly one pattern when function is REGEX.
    * @type {Array<string>}
@@ -4510,6 +4516,37 @@ export const RateMessageDtoRateEnum = {
 export type RateMessageDtoRateEnum =
   (typeof RateMessageDtoRateEnum)[keyof typeof RateMessageDtoRateEnum];
 
+/**
+ *
+ * @export
+ * @interface ReasoningSummaryPartDto
+ */
+export interface ReasoningSummaryPartDto {
+  /**
+   * Upstream reasoning output item id
+   * @type {string}
+   * @memberof ReasoningSummaryPartDto
+   */
+  itemId: string;
+  /**
+   * Position of the reasoning item in the response's output array
+   * @type {number}
+   * @memberof ReasoningSummaryPartDto
+   */
+  outputIndex: number;
+  /**
+   * Position of this summary part within the reasoning item
+   * @type {number}
+   * @memberof ReasoningSummaryPartDto
+   */
+  summaryIndex: number;
+  /**
+   * Accumulated summary text fragment for this key
+   * @type {string}
+   * @memberof ReasoningSummaryPartDto
+   */
+  text: string;
+}
 /**
  *
  * @export

@@ -156,6 +156,114 @@ describe('applyChunkToMessage', () => {
     ).toEqual(schema2);
   });
 
+  it('appends a new reasoning-summary key', () => {
+    const msg = applyChunkToMessage(
+      baseMessage(),
+      makeChunk({
+        custom_content: {
+          reasoning_summaries: [
+            {
+              itemId: 'rs_1',
+              outputIndex: 0,
+              summaryIndex: 0,
+              text: 'Checking',
+            },
+          ],
+        },
+      }),
+    );
+    const summaries = (
+      msg.custom_content as { reasoning_summaries: { text: string }[] }
+    ).reasoning_summaries;
+    expect(summaries).toEqual([
+      { itemId: 'rs_1', outputIndex: 0, summaryIndex: 0, text: 'Checking' },
+    ]);
+  });
+
+  it('concatenates text for an existing reasoning-summary key', () => {
+    const msg1 = applyChunkToMessage(
+      baseMessage(),
+      makeChunk({
+        custom_content: {
+          reasoning_summaries: [
+            { itemId: 'rs_1', outputIndex: 0, summaryIndex: 0, text: 'Check' },
+          ],
+        },
+      }),
+    );
+    const msg2 = applyChunkToMessage(
+      msg1,
+      makeChunk({
+        custom_content: {
+          reasoning_summaries: [
+            { itemId: 'rs_1', outputIndex: 0, summaryIndex: 0, text: 'ing' },
+          ],
+        },
+      }),
+    );
+    const summaries = (
+      msg2.custom_content as { reasoning_summaries: { text: string }[] }
+    ).reasoning_summaries;
+    expect(summaries[0].text).toBe('Checking');
+  });
+
+  it('leaves existing reasoning-summary entries unchanged when a chunk carries none', () => {
+    const msg1 = applyChunkToMessage(
+      baseMessage(),
+      makeChunk({
+        custom_content: {
+          reasoning_summaries: [
+            {
+              itemId: 'rs_1',
+              outputIndex: 0,
+              summaryIndex: 0,
+              text: 'Checking',
+            },
+          ],
+        },
+      }),
+    );
+    const msg2 = applyChunkToMessage(msg1, makeChunk({ content: 'hi' }));
+    const summaries = (
+      msg2.custom_content as { reasoning_summaries: { text: string }[] }
+    ).reasoning_summaries;
+    expect(summaries).toEqual([
+      { itemId: 'rs_1', outputIndex: 0, summaryIndex: 0, text: 'Checking' },
+    ]);
+  });
+
+  it('merges a Responses-origin stage carrying toolKind the same way as any other stage', () => {
+    const msg1 = applyChunkToMessage(
+      baseMessage(),
+      makeChunk({
+        custom_content: {
+          stages: [
+            {
+              index: 0,
+              status: null,
+              name: 'Web Search',
+              tag: 'Web Search',
+              toolKind: 'web_search',
+            },
+          ],
+        },
+      }),
+    );
+    const msg2 = applyChunkToMessage(
+      msg1,
+      makeChunk({
+        custom_content: { stages: [{ index: 0, status: 'completed' }] },
+      }),
+    );
+    const stages = (
+      msg2.custom_content as {
+        stages: { status: string | null; toolKind?: string }[];
+      }
+    ).stages;
+    expect(stages[0].status).toBe('completed');
+    expect(stages[0].toolKind).toBe('web_search');
+  });
+
   it('sets responseId from delta.responseId', () => {
     const result = applyChunkToMessage(
       baseMessage(),

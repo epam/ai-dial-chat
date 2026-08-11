@@ -1,7 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { MessageCustomContentDto } from './message-custom-content.dto';
+import {
+  IsArray,
+  IsEnum,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+import {
+  MessageCustomContentDto,
+  ReasoningSummaryPartDto,
+} from './message-custom-content.dto';
 
 export enum ConversationMessageRole {
   User = 'user',
@@ -39,6 +48,17 @@ export class ConversationMessageCustomContentDto extends MessageCustomContentDto
   @IsOptional()
   @IsString()
   new_deployment_id?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Accumulated Responses API reasoning-summary fragments, distinct from custom_content.stages — never counted as an executed step.',
+    type: [ReasoningSummaryPartDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ReasoningSummaryPartDto)
+  reasoning_summaries?: ReasoningSummaryPartDto[];
 }
 
 export class ConversationMessageDto {

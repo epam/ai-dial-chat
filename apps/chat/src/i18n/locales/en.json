@@ -267,7 +267,15 @@
     "stages": {
       "executed": "Executed",
       "step_one": "step",
-      "step_other": "steps"
+      "step_other": "steps",
+      "toolStage": {
+        "webSearch": "Web Search"
+      }
+    },
+    "reasoningSummary": {
+      "title": "Reasoning summary",
+      "expandAriaLabel": "Expand reasoning summary",
+      "collapseAriaLabel": "Collapse reasoning summary"
     },
     "attachMenuDialFileSystem": "DIAL file system",
     "addMenuTitle": "Add",

@@ -188,6 +188,14 @@ The Responses API returns typed events, while the existing frontend expects Chat
 | `response.failed`            | Ends generation with an error extracted from `response.error`, preserving text received so far |
 | `response.incomplete`        | Ends generation with an error while preserving text received so far                            |
 | `error`                      | Ends generation with the upstream error message                                                |
+| `response.reasoning_summary_part.added` | Structural marker only; initializes per-key dedup state, emits no chunk |
+| `response.reasoning_summary_text.delta` | Appends the fragment to `delta.custom_content.reasoning_summaries`, keyed by `(item_id, output_index, summary_index)`, and marks the key seen |
+| `response.reasoning_summary_text.done` | Emits the full text as a `reasoning_summaries` entry only if no prior delta was seen for that key (fallback path); otherwise a no-op |
+| `response.output_item.added` | Creates one `Stage` (`status: null`) when `item.type === "web_search_call"`; any other item type is recognized but never staged |
+| `response.output_item.done` | Settles the corresponding stage to `completed`/`failed` when `item.type === "web_search_call"`; any other item type is recognized but never staged |
+| `response.web_search_call.in_progress` | Recognized, intentional no-op — the stage is already running |
+| `response.web_search_call.searching` | Recognized, intentional no-op — the stage is already running |
+| `response.web_search_call.completed` | Settles the corresponding stage (looked up by `item_id`) to `completed` |
 | unknown event                | Does not send it to the client, writes a debug log, and increments a metric                    |
 
 `event:` lines, empty lines, and SSE comments are ignored. JSON is parsed from `data:` lines. See "Terminal state and `[DONE]`" below for how a stream resolves to success or error — none of `response.failed`, `response.incomplete`, or an in-band `error` ever produce a downstream `data: [DONE]`, and none of them are retried through Chat Completions.
@@ -215,7 +223,23 @@ data: [DONE]
 
 ```
 
+Reasoning-summary fragment:
+
+```text
+data: {"choices":[{"delta":{"custom_content":{"reasoning_summaries":[{"itemId":"rs_1","outputIndex":0,"summaryIndex":0,"text":"Checking the weather API"}]}}}]}
+
+```
+
+Tool-stage chunk (`web_search_call`):
+
+```text
+data: {"choices":[{"delta":{"custom_content":{"stages":[{"index":0,"status":null,"name":"Web Search","tag":"Web Search","toolKind":"web_search"}]}}}]}
+
+```
+
 Native events such as `response.output_text.delta` are never sent to the browser. This allows the existing frontend parser, text rendering, conversation persistence, and stop flow to work without a separate Responses API branch.
+
+DIAL Core proxies these native reasoning-summary and tool-lifecycle events unchanged — it does not synthesize DIAL stages for Chat on its own. All recognition, deduplication, and stage-mapping described above happens entirely in this BFF adapter.
 
 ### `responseId` in conversation history
 
@@ -297,7 +321,9 @@ Supported:
 - safe handling of unknown SSE events;
 - compatibility with older deployments that do not expose the capability flag;
 - `temperature`: forwarded from the conversation's persisted value only when the resolved deployment's capabilities explicitly report `features.temperature: true`; omitted (never substituted with a default) when support is `false` or unknown, so a model that rejects the field is never sent one. The value `0` is forwarded, not treated as absent;
-- `max_output_tokens`: forwarded from the conversation's optional `maxOutputTokens` setting whenever it is a valid positive safe integer, independent of any capability flag (no Responses-specific max-output-tokens capability exists in DIAL Core today). Absent or invalid values (zero, negative, fractional, non-finite, or unsafe-integer) omit the field entirely — Chat never derives it from a deployment's `limits.maxCompletionTokens`, the legacy Chat Completions `defaults.max_tokens`, or DIAL Core's own `responsesDefaults`, which keep governing the field's default whenever Chat sends none.
+- `max_output_tokens`: forwarded from the conversation's optional `maxOutputTokens` setting whenever it is a valid positive safe integer, independent of any capability flag (no Responses-specific max-output-tokens capability exists in DIAL Core today). Absent or invalid values (zero, negative, fractional, non-finite, or unsafe-integer) omit the field entirely — Chat never derives it from a deployment's `limits.maxCompletionTokens`, the legacy Chat Completions `defaults.max_tokens`, or DIAL Core's own `responsesDefaults`, which keep governing the field's default whenever Chat sends none;
+- reasoning summaries: `response.reasoning_summary_part.added`/`.delta`/`.done` are recognized, deduplicated per `(item_id, output_index, summary_index)`, and surfaced as a distinct `custom_content.reasoning_summaries` field — kept separate from `custom_content.stages` and never counted toward `Executed in N steps`. Chat sends no `reasoning` request parameter of its own; summaries only appear when the deployment's Core-side `responsesDefaults` configures them (e.g. `{"reasoning":{"summary":"auto"}}`). A new host-agnostic, collapsible UI section renders the accumulated text near the message's stages;
+- one provider-hosted tool, `web_search_call`: `response.output_item.added`/`.done` and the `response.web_search_call.in_progress`/`.searching`/`.completed` lifecycle events are mapped to the existing `Stage`/`custom_content.stages` representation, correlated by `item_id`/`output_index` rather than arrival order. A stage still `status: null` when the stream ends (failure, incomplete, abort, or a missing tool-done event) is settled to `StageStatus.Failed` rather than left implying success. Stage content is limited to a human-readable category label — no raw item JSON, arguments, or search query.
 
 Not yet supported in the Responses branch:
 
@@ -305,14 +331,13 @@ Not yet supported in the Responses branch:
 - `store: true`;
 - background mode;
 - Core `GET`, `CANCEL`, and `DELETE /openai/v1/responses/{response_id}` operations;
-- tools and function calling;
-- reasoning items and reasoning summaries;
+- tools other than `web_search_call` and function calling in general — `file_search_call`, `code_interpreter_call`, `image_generation_call`, `mcp_call` and MCP list/approval items, `function_call`, `custom_tool_call`, `computer_call`, and any shell/apply-patch/tool-search call items are recognized as unstaged output items and never crash the stream, but are not mapped to a `Stage`;
+- reasoning effort (`reasoning.effort`) and any reasoning content beyond the summary text described above;
 - image/file input and other multimodal content items;
 - citations, annotations, and rich output;
-- DIAL attachments, `custom_content`, configuration, and stages;
-- generation parameters other than `temperature` and `max_output_tokens` (e.g. penalties, seed, response format, reasoning effort);
+- DIAL attachments, `custom_content` form/configuration payloads (other than `reasoning_summaries` and `stages`);
+- generation parameters other than `temperature` and `max_output_tokens` (e.g. penalties, seed, response format);
 - a UI control for editing `maxOutputTokens` — the field is settable today only via the persisted conversation model (API, import/export), not through a chat-settings control; a dedicated UI is a follow-up;
-- dedicated handling for every output-item type;
 - automatic fallback after a Responses API error.
 
 If a deployment declares `responses_api: true` but requires any capability from this list to work correctly, the capability flag alone is insufficient. The adapter must be extended before that deployment can be included in a production scenario.
@@ -353,6 +378,12 @@ Possible `generation.api` values:
 | Deployment-details retrieval and caching   | `apps/chat-api/src/deployments/deployments.service.ts`                                                                                                                            |
 | Deployment-capability DTOs and mapping     | `apps/chat-api/src/deployments/dto/raw-deployment.dto.ts`, `apps/chat-api/src/deployments/dto/deployment-item.dto.ts`, and `apps/chat-api/src/deployments/deployments.service.ts` |
 | Message DTO containing `responseId`        | `apps/chat-api/src/conversations/dto/conversation-message.dto.ts`                                                                                                                 |
+| `reasoning_summaries` DTO field             | `apps/chat-api/src/conversations/dto/message-custom-content.dto.ts` (`ReasoningSummaryPartDto`), `apps/chat-api/src/conversations/dto/conversation-message.dto.ts`               |
+| Server-side chunk merge (`reasoning_summaries`, tool stages) | `apps/chat-api/src/conversations/utils/apply-chunk.server.ts`                                                                                                   |
+| Shared types (`ReasoningSummaryPart`, `ToolStageKind`, `Stage.toolKind`) | `libs/chat-shared/src/models/chat.ts`                                                                                                             |
+| Frontend chunk merge (`reasoning_summaries`) | `apps/chat/src/utils/apply-chunk.ts`                                                                                                                                             |
+| Reasoning-summary UI component              | `libs/conversation-stages/src/components/ReasoningSummary/ReasoningSummary.tsx`                                                                                                   |
+| Tool-stage label resolution and rendering   | `apps/chat/src/utils/message-utils.ts` (`resolveToolStageLabels`, `getReasoningSummaryText`), `apps/chat/src/components/ConversationView/ConversationMessageItem.tsx`            |
 | API-selection unit tests                   | `apps/chat-api/src/conversations/generation/generation-api.spec.ts`                                                                                                               |
 | Responses-adapter unit tests               | `apps/chat-api/src/conversations/generation/responses.adapter.spec.ts`                                                                                                            |
 | Service-level integration                  | `apps/chat-api/src/conversations/tests/conversation.service.spec.ts`                                                                                                              |

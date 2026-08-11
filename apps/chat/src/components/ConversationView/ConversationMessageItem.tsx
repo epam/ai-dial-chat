@@ -4,6 +4,7 @@ import {
   isStatusMessage,
   mergeClasses,
   MessageRole,
+  ToolStageKind,
   type Annotation,
   type Attachment,
   type AttachmentErrorReason,
@@ -17,7 +18,10 @@ import {
   type MessageActionAriaLabels,
   type MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
-import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
+import {
+  CollapsedGroup,
+  ReasoningSummary,
+} from '@epam/ai-dial-conversation-stages';
 import {
   CitationCardProvider,
   CitationDropdown,
@@ -37,6 +41,7 @@ import {
   ButtonsI18nKeys,
   ChatI18nKeys,
   CitationsI18nKeys,
+  ConversationI18nKeys,
 } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
 import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
@@ -46,7 +51,11 @@ import { ThemeId } from '../../types/theme-id';
 import { openAnnotationAttachment } from '../../utils/annotation';
 import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
-import { messageHasStages } from '../../utils/message-utils';
+import {
+  getReasoningSummaryText,
+  messageHasStages,
+  resolveToolStageLabels,
+} from '../../utils/message-utils';
 import { buildMessageActions } from './utils/build-message-actions';
 import {
   getMessageStarterProps,
@@ -325,6 +334,17 @@ const ConversationMessageItem: FC<Props> = ({
   }
 
   const hasStages = messageHasStages(msg);
+  const resolvedStages = useMemo(
+    () =>
+      resolveToolStageLabels(msg.custom_content?.stages ?? [], {
+        [ToolStageKind.WebSearch]: t(ConversationI18nKeys.ToolStageWebSearch),
+      }),
+    [msg.custom_content?.stages, t],
+  );
+  const reasoningSummaryText = useMemo(
+    () => getReasoningSummaryText(msg.custom_content?.reasoningSummaries),
+    [msg.custom_content?.reasoningSummaries],
+  );
   const { starters: activeStarters, onSelectStarter: handleSelectStarter } =
     getMessageStarterProps(
       msg,
@@ -409,6 +429,7 @@ const ConversationMessageItem: FC<Props> = ({
         afterContent={
           referenceGroups.length > 0 ||
           hasStages ||
+          !!reasoningSummaryText ||
           msg.streamErrorMessage != null ? (
             <>
               {referenceGroups.length > 0 && (
@@ -468,9 +489,25 @@ const ConversationMessageItem: FC<Props> = ({
                   })}
                 </div>
               )}
+              {!!reasoningSummaryText && (
+                <ReasoningSummary
+                  text={reasoningSummaryText}
+                  isStreaming={isStreaming}
+                  labels={{
+                    title: t(ConversationI18nKeys.ReasoningSummaryTitle),
+                    expandAriaLabel: t(
+                      ConversationI18nKeys.ReasoningSummaryExpandAriaLabel,
+                    ),
+                    collapseAriaLabel: t(
+                      ConversationI18nKeys.ReasoningSummaryCollapseAriaLabel,
+                    ),
+                    copyAriaLabel: t(ButtonsI18nKeys.Copy),
+                  }}
+                />
+              )}
               {hasStages && (
                 <CollapsedGroup
-                  stages={msg.custom_content?.stages ?? []}
+                  stages={resolvedStages}
                   isStreaming={isStreaming}
                   labels={{ executedLabel, stepsLabel }}
                 />

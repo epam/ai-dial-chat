@@ -609,6 +609,452 @@ describe('ResponsesAdapter', () => {
       }
     });
 
+    describe('reasoning summaries', () => {
+      it('accumulates delta fragments without duplicating a trailing done event', async () => {
+        const { adapter, mockDialClient } = makeAdapter();
+        const { result } = await relay(adapter, mockDialClient, [
+          'data: {"type":"response.reasoning_summary_part.added","item_id":"rs_1","output_index":0,"summary_index":0}\n\n',
+          'data: {"type":"response.reasoning_summary_text.delta","item_id":"rs_1","output_index":0,"summary_index":0,"delta":"Checking "}\n\n',
+          'data: {"type":"response.reasoning_summary_text.delta","item_id":"rs_1","output_index":0,"summary_index":0,"delta":"sources"}\n\n',
+          'data: {"type":"response.reasoning_summary_text.done","item_id":"rs_1","output_index":0,"summary_index":0,"text":"Checking sources"}\n\n',
+          'data: {"type":"response.completed","response":{"id":"resp-rs1","status":"completed"}}\n\n',
+        ]);
+
+        expect(result.outcome).toBe('completed');
+        if (result.outcome === 'completed') {
+          const summaries = (
+            result.assembledMessage.custom_content as {
+              reasoning_summaries?: { text: string }[];
+            }
+          ).reasoning_summaries;
+          expect(summaries).toEqual([
+            {
+              itemId: 'rs_1',
+              outputIndex: 0,
+              summaryIndex: 0,
+              text: 'Checking sources',
+            },
+          ]);
+        }
+      });
+
+      it('accumulates deltas when delivered over Core-shaped SSE (event: and data: lines)', async () => {
+        const { adapter, mockDialClient } = makeAdapter();
+        const { result } = await relay(adapter, mockDialClient, [
+          'event: response.reasoning_summary_part.added\ndata: {"type":"response.reasoning_summary_part.added","item_id":"rs_core","output_index":0,"summary_index":0}\n\n',
+          'event: response.reasoning_summary_text.delta\ndata: {"type":"response.reasoning_summary_text.delta","item_id":"rs_core","output_index":0,"summary_index":0,"delta":"Core-shaped"}\n\n',
+          'event: response.completed\ndata: {"type":"response.completed","response":{"id":"resp-core","status":"completed"}}\n\n',
+        ]);
+
+        expect(result.outcome).toBe('completed');
+        if (result.outcome === 'completed') {
+          const summaries = (
+            result.assembledMessage.custom_content as {
+              reasoning_summaries?: { text: string }[];
+            }
+          ).reasoning_summaries;
+          expect(summaries).toEqual([
+            {
+              itemId: 'rs_core',
+              outputIndex: 0,
+              summaryIndex: 0,
+              text: 'Core-shaped',
+            },
+          ]);
+        }
+      });
+
+      it('safely ignores a malformed reasoning-summary event missing key fields', async () => {
+        const { adapter, mockDialClient } = makeAdapter();
+        const { result } = await relay(adapter, mockDialClient, [
+          'data: {"type":"response.reasoning_summary_text.delta","delta":"no key fields"}\n\n',
+          'data: {"type":"response.output_text.delta","delta":"still fine"}\n\n',
+          'data: {"type":"response.completed","response":{"id":"resp-malformed-rs","status":"completed"}}\n\n',
+        ]);
+
+        expect(result.outcome).toBe('completed');
+        if (result.outcome === 'completed') {
+          expect(result.assembledMessage.content).toBe('still fine');
+          const summaries = (
+            result.assembledMessage.custom_content as
+              | { reasoning_summaries?: unknown[] }
+              | undefined
+          )?.reasoning_summaries;
+          expect(summaries).toBeUndefined();
+        }
+      });
+
+      it('falls back to the done event text when no delta arrived for that key', async () => {
+        const { adapter, mockDialClient } = makeAdapter();
+        const { result } = await relay(adapter, mockDialClient, [
+          'data: {"type":"response.reasoning_summary_text.done","item_id":"rs_2","output_index":0,"summary_index":0,"text":"Full summary"}\n\n',
+          'data: {"type":"response.completed","response":{"id":"resp-rs2","status":"completed"}}\n\n',
+        ]);
+
+        expect(result.outcome).toBe('completed');
+        if (result.outcome === 'completed') {
+          const summaries = (
+            result.assembledMessage.custom_content as {
+              reasoning_summaries?: { text: string }[];
+            }
+          ).reasoning_summaries;
+          expect(summaries).toEqual([
+            {
+              itemId: 'rs_2',
+              outputIndex: 0,
+              summaryIndex: 0,
+              text: 'Full summary',
+            },
+          ]);
+        }
+      });
+
+      it('emits no chunk entry for empty delta/done text', async () => {
+        const { adapter, mockDialClient } = makeAdapter();
+        const { result } = await relay(adapter, mockDialClient, [
+          'data: {"type":"response.reasoning_summary_text.delta","item_id":"rs_3","output_index":0,"summary_index":0,"delta":""}\n\n',
+          'data: {"type":"response.reasoning_summary_text.done","item_id":"rs_3","output_index":0,"summary_index":0,"text":""}\n\n',
+          'data: {"type":"response.completed","response":{"id":"resp-rs3","status":"completed"}}\n\n',
+        ]);
+
+        expect(result.outcome).toBe('completed');
+        if (result.outcome === 'completed') {
+          const summaries = (
+            result.assembledMessage.custom_content as
+              | { reasoning_summaries?: unknown[] }
+              | undefined
+          )?.reasoning_summaries;
+          expect(summaries).toBeUndefined();
+        }
+      });
+
+      it('preserves distinct summary parts and multiple items keyed by output_index/summary_index', async () => {
+        const { adapter, mockDialClient } = makeAdapter();
+        const { result } = await relay(adapter, mockDialClient, [
+          'data: {"type":"response.reasoning_summary_text.delta","item_id":"rs_4","output_index":0,"summary_index":0,"delta":"Part A"}\n\n',
+          'data: {"type":"response.reasoning_summary_text.delta","item_id":"rs_4","output_index":0,"summary_index":1,"delta":"Part B"}\n\n',
+          'data: {"type":"response.completed","response":{"id":"resp-rs4","status":"completed"}}\n\n',
+        ]);
+
+        expect(result.outcome).toBe('completed');
+        if (result.outcome === 'completed') {
+          const summaries = (
+            result.assembledMessage.custom_content as {
+              reasoning_summaries?: { summaryIndex: number; text: string }[];
+            }
+          ).reasoning_summaries;
+          expect(summaries).toEqual([
+            { itemId: 'rs_4', outputIndex: 0, summaryIndex: 0, text: 'Part A' },
+            { itemId: 'rs_4', outputIndex: 0, summaryIndex: 1, text: 'Part B' },
+          ]);
+        }
+      });
+
+      it('preserves a partial reasoning summary when response.failed terminates the stream', async () => {
+        const { adapter, mockDialClient } = makeAdapter();
+        const { result } = await relay(adapter, mockDialClient, [
+          'data: {"type":"response.reasoning_summary_text.delta","item_id":"rs_5","output_index":0,"summary_index":0,"delta":"Partial thought"}\n\n',
+          'data: {"type":"response.failed","response":{"id":"resp-rs5","error":{"message":"boom"}}}\n\n',
+        ]);
+
+        expect(result.outcome).toBe('error');
+        if (result.outcome === 'error') {
+          const summaries = (
+            result.assembledMessage.custom_content as {
+              reasoning_summaries?: { text: string }[];
+            }
+          ).reasoning_summaries;
+          expect(summaries).toEqual([
+            {
+              itemId: 'rs_5',
+              outputIndex: 0,
+              summaryIndex: 0,
+              text: 'Partial thought',
+            },
+          ]);
+        }
+      });
+
+      it('does not increment the unknown-event metric for any reasoning-summary event', async () => {
+        const { adapter, mockDialClient } = makeAdapter();
+        const addSpy = vi.spyOn(generationUnknownEventsTotal, 'add');
+        await relay(adapter, mockDialClient, [
+          'data: {"type":"response.reasoning_summary_part.added","item_id":"rs_6","output_index":0,"summary_index":0}\n\n',
+          'data: {"type":"response.reasoning_summary_text.delta","item_id":"rs_6","output_index":0,"summary_index":0,"delta":"Hi"}\n\n',
+          'data: {"type":"response.reasoning_summary_text.done","item_id":"rs_6","output_index":0,"summary_index":0,"text":"Hi"}\n\n',
+          'data: {"type":"response.completed","response":{"id":"resp-rs6","status":"completed"}}\n\n',
+        ]);
+
+        expect(addSpy).not.toHaveBeenCalled();
+        addSpy.mockRestore();
+      });
+
+      it('never logs the reasoning-summary text itself', async () => {
+        const { adapter, mockDialClient } = makeAdapter();
+        const debugSpy = vi.spyOn(Logger.prototype, 'debug');
+        await relay(adapter, mockDialClient, [
+          'data: {"type":"response.reasoning_summary_text.delta","item_id":"rs_7","output_index":0,"summary_index":0,"delta":"Secret reasoning text"}\n\n',
+          'data: {"type":"response.completed","response":{"id":"resp-rs7","status":"completed"}}\n\n',
+        ]);
+
+        for (const call of debugSpy.mock.calls) {
+          expect(String(call[0])).not.toContain('Secret reasoning text');
+        }
+        debugSpy.mockRestore();
+      });
+    });
+
+    describe('web_search_call tool stages', () => {
+      it('creates one running stage on output_item.added and settles it on web_search_call.completed', async () => {
+        const { adapter, mockDialClient } = makeAdapter();
+        const { result } = await relay(adapter, mockDialClient, [
+          'data: {"type":"response.output_item.added","output_index":0,"item":{"id":"ws_1","type":"web_search_call"}}\n\n',
+          'data: {"type":"response.web_search_call.in_progress","item_id":"ws_1"}\n\n',
+          'data: {"type":"response.web_search_call.searching","item_id":"ws_1"}\n\n',
+          'data: {"type":"response.web_search_call.completed","item_id":"ws_1"}\n\n',
+          'data: {"type":"response.completed","response":{"id":"resp-ws1","status":"completed"}}\n\n',
+        ]);
+
+        expect(result.outcome).toBe('completed');
+        if (result.outcome === 'completed') {
+          const stages = (
+            result.assembledMessage.custom_content as {
+              stages?: {
+                index: number;
+                status: string | null;
+                toolKind?: string;
+              }[];
+            }
+          ).stages;
+          expect(stages).toHaveLength(1);
+          expect(stages?.[0]).toMatchObject({
+            index: 0,
+            status: 'completed',
+            toolKind: 'web_search',
+          });
+        }
+      });
+
+      it('produces two ordered stages for two web_search_call items', async () => {
+        const { adapter, mockDialClient } = makeAdapter();
+        const { result } = await relay(adapter, mockDialClient, [
+          'data: {"type":"response.output_item.added","output_index":0,"item":{"id":"ws_a","type":"web_search_call"}}\n\n',
+          'data: {"type":"response.output_item.added","output_index":1,"item":{"id":"ws_b","type":"web_search_call"}}\n\n',
+          'data: {"type":"response.output_item.done","output_index":0,"item":{"id":"ws_a","type":"web_search_call","status":"completed"}}\n\n',
+          'data: {"type":"response.output_item.done","output_index":1,"item":{"id":"ws_b","type":"web_search_call","status":"completed"}}\n\n',
+          'data: {"type":"response.completed","response":{"id":"resp-ws2","status":"completed"}}\n\n',
+        ]);
+
+        expect(result.outcome).toBe('completed');
+        if (result.outcome === 'completed') {
+          const stages = (
+            result.assembledMessage.custom_content as {
+              stages?: { index: number }[];
+            }
+          ).stages;
+          expect(stages?.map((s) => s.index)).toEqual([0, 1]);
+        }
+      });
+
+      it('settles a failed output_item.done status to StageStatus.Failed', async () => {
+        const { adapter, mockDialClient } = makeAdapter();
+        const { result } = await relay(adapter, mockDialClient, [
+          'data: {"type":"response.output_item.added","output_index":0,"item":{"id":"ws_3","type":"web_search_call"}}\n\n',
+          'data: {"type":"response.output_item.done","output_index":0,"item":{"id":"ws_3","type":"web_search_call","status":"failed"}}\n\n',
+          'data: {"type":"response.completed","response":{"id":"resp-ws3","status":"completed"}}\n\n',
+        ]);
+
+        expect(result.outcome).toBe('completed');
+        if (result.outcome === 'completed') {
+          const stages = (
+            result.assembledMessage.custom_content as {
+              stages?: { status: string | null }[];
+            }
+          ).stages;
+          expect(stages?.[0].status).toBe('failed');
+        }
+      });
+
+      it('safely ignores an out-of-order web_search_call.completed for an unseen item_id', async () => {
+        const { adapter, mockDialClient } = makeAdapter();
+        const { result } = await relay(adapter, mockDialClient, [
+          'data: {"type":"response.web_search_call.completed","item_id":"ws_unseen"}\n\n',
+          'data: {"type":"response.output_text.delta","delta":"still works"}\n\n',
+          'data: {"type":"response.completed","response":{"id":"resp-ws4","status":"completed"}}\n\n',
+        ]);
+
+        expect(result.outcome).toBe('completed');
+        if (result.outcome === 'completed') {
+          expect(result.assembledMessage.content).toBe('still works');
+          const stages = (
+            result.assembledMessage.custom_content as
+              | { stages?: unknown[] }
+              | undefined
+          )?.stages;
+          expect(stages).toBeUndefined();
+        }
+      });
+
+      it('safely ignores a malformed output_item.done missing item.type/output_index', async () => {
+        const { adapter, mockDialClient } = makeAdapter();
+        const { result } = await relay(adapter, mockDialClient, [
+          'data: {"type":"response.output_item.done","item":{"id":"ws_5"}}\n\n',
+          'data: {"type":"response.output_text.delta","delta":"still fine"}\n\n',
+          'data: {"type":"response.completed","response":{"id":"resp-ws5","status":"completed"}}\n\n',
+        ]);
+
+        expect(result.outcome).toBe('completed');
+        if (result.outcome === 'completed') {
+          expect(result.assembledMessage.content).toBe('still fine');
+        }
+      });
+
+      it('never stages reasoning or message output items', async () => {
+        const { adapter, mockDialClient } = makeAdapter();
+        const { result } = await relay(adapter, mockDialClient, [
+          'data: {"type":"response.output_item.added","output_index":0,"item":{"id":"r_1","type":"reasoning"}}\n\n',
+          'data: {"type":"response.output_item.added","output_index":1,"item":{"id":"m_1","type":"message"}}\n\n',
+          'data: {"type":"response.output_item.done","output_index":0,"item":{"id":"r_1","type":"reasoning"}}\n\n',
+          'data: {"type":"response.output_item.done","output_index":1,"item":{"id":"m_1","type":"message"}}\n\n',
+          'data: {"type":"response.completed","response":{"id":"resp-ws6","status":"completed"}}\n\n',
+        ]);
+
+        expect(result.outcome).toBe('completed');
+        if (result.outcome === 'completed') {
+          const stages = (
+            result.assembledMessage.custom_content as
+              | { stages?: unknown[] }
+              | undefined
+          )?.stages;
+          expect(stages).toBeUndefined();
+        }
+      });
+
+      it('never stages an unsupported output item type (function_call) and does not crash', async () => {
+        const { adapter, mockDialClient } = makeAdapter();
+        const { result } = await relay(adapter, mockDialClient, [
+          'data: {"type":"response.output_item.added","output_index":0,"item":{"id":"fc_1","type":"function_call"}}\n\n',
+          'data: {"type":"response.output_item.done","output_index":0,"item":{"id":"fc_1","type":"function_call"}}\n\n',
+          'data: {"type":"response.output_text.delta","delta":"ok"}\n\n',
+          'data: {"type":"response.completed","response":{"id":"resp-ws7","status":"completed"}}\n\n',
+        ]);
+
+        expect(result.outcome).toBe('completed');
+        if (result.outcome === 'completed') {
+          expect(result.assembledMessage.content).toBe('ok');
+          const stages = (
+            result.assembledMessage.custom_content as
+              | { stages?: unknown[] }
+              | undefined
+          )?.stages;
+          expect(stages).toBeUndefined();
+        }
+      });
+
+      it.each([
+        'file_search_call',
+        'code_interpreter_call',
+        'image_generation_call',
+        'mcp_call',
+        'custom_tool_call',
+        'computer_call',
+        'local_shell_call',
+        'apply_patch_call',
+      ])(
+        'never stages the unsupported output item type %s and does not crash',
+        async (itemType) => {
+          const { adapter, mockDialClient } = makeAdapter();
+          const { result } = await relay(adapter, mockDialClient, [
+            `data: {"type":"response.output_item.added","output_index":0,"item":{"id":"item_1","type":"${itemType}"}}\n\n`,
+            `data: {"type":"response.output_item.done","output_index":0,"item":{"id":"item_1","type":"${itemType}"}}\n\n`,
+            'data: {"type":"response.output_text.delta","delta":"ok"}\n\n',
+            'data: {"type":"response.completed","response":{"id":"resp-unsupported","status":"completed"}}\n\n',
+          ]);
+
+          expect(result.outcome).toBe('completed');
+          if (result.outcome === 'completed') {
+            expect(result.assembledMessage.content).toBe('ok');
+            const stages = (
+              result.assembledMessage.custom_content as
+                | { stages?: unknown[] }
+                | undefined
+            )?.stages;
+            expect(stages).toBeUndefined();
+          }
+        },
+      );
+
+      it('settles a still-running stage to Failed when response.failed terminates the stream', async () => {
+        const { adapter, mockDialClient } = makeAdapter();
+        const { result } = await relay(adapter, mockDialClient, [
+          'data: {"type":"response.output_item.added","output_index":0,"item":{"id":"ws_8","type":"web_search_call"}}\n\n',
+          'data: {"type":"response.failed","response":{"id":"resp-ws8","error":{"message":"boom"}}}\n\n',
+        ]);
+
+        expect(result.outcome).toBe('error');
+        if (result.outcome === 'error') {
+          const stages = (
+            result.assembledMessage.custom_content as {
+              stages?: { status: string | null }[];
+            }
+          ).stages;
+          expect(stages?.[0].status).toBe('failed');
+        }
+      });
+
+      it('settles a still-running stage to Failed even when response.completed succeeds without a tool-done event', async () => {
+        const { adapter, mockDialClient } = makeAdapter();
+        const { result } = await relay(adapter, mockDialClient, [
+          'data: {"type":"response.output_item.added","output_index":0,"item":{"id":"ws_9","type":"web_search_call"}}\n\n',
+          'data: {"type":"response.output_text.delta","delta":"final text"}\n\n',
+          'data: {"type":"response.completed","response":{"id":"resp-ws9","status":"completed"}}\n\n',
+        ]);
+
+        expect(result.outcome).toBe('completed');
+        if (result.outcome === 'completed') {
+          expect(result.assembledMessage.content).toBe('final text');
+          const stages = (
+            result.assembledMessage.custom_content as {
+              stages?: { status: string | null }[];
+            }
+          ).stages;
+          expect(stages?.[0].status).toBe('failed');
+        }
+      });
+
+      it('does not increment the unknown-event metric for output_item/web_search_call events', async () => {
+        const { adapter, mockDialClient } = makeAdapter();
+        const addSpy = vi.spyOn(generationUnknownEventsTotal, 'add');
+        await relay(adapter, mockDialClient, [
+          'data: {"type":"response.output_item.added","output_index":0,"item":{"id":"ws_10","type":"web_search_call"}}\n\n',
+          'data: {"type":"response.web_search_call.in_progress","item_id":"ws_10"}\n\n',
+          'data: {"type":"response.web_search_call.searching","item_id":"ws_10"}\n\n',
+          'data: {"type":"response.web_search_call.completed","item_id":"ws_10"}\n\n',
+          'data: {"type":"response.output_item.done","output_index":0,"item":{"id":"ws_10","type":"web_search_call","status":"completed"}}\n\n',
+          'data: {"type":"response.completed","response":{"id":"resp-ws10","status":"completed"}}\n\n',
+        ]);
+
+        expect(addSpy).not.toHaveBeenCalled();
+        addSpy.mockRestore();
+      });
+    });
+
+    it('produces byte-for-byte-equivalent output for a text-only stream (no reasoning/tool events)', async () => {
+      const { adapter, mockDialClient } = makeAdapter();
+      const { result } = await relay(adapter, mockDialClient, [
+        'data: {"type":"response.created","response":{"id":"resp-plain"}}\n\n',
+        'data: {"type":"response.output_text.delta","delta":"Plain text"}\n\n',
+        'data: {"type":"response.completed","response":{"id":"resp-plain","status":"completed"}}\n\n',
+      ]);
+
+      expect(result.outcome).toBe('completed');
+      if (result.outcome === 'completed') {
+        expect(result.assembledMessage.content).toBe('Plain text');
+        expect(result.assembledMessage.responseId).toBe('resp-plain');
+        expect(result.assembledMessage.custom_content).toBeUndefined();
+      }
+    });
+
     it('returns aborted when the signal aborts mid-stream', async () => {
       const { adapter, mockDialClient } = makeAdapter();
       vi.spyOn(mockDialClient.client, 'createResponse').mockImplementation(

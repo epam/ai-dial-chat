@@ -29,6 +29,14 @@ interface Annotation {
   [key: string]: unknown;
 }
 
+/** One reasoning-summary text fragment, keyed by `(itemId, outputIndex, summaryIndex)`. */
+interface ReasoningSummaryChunk {
+  itemId: string;
+  outputIndex: number;
+  summaryIndex: number;
+  text: string;
+}
+
 interface SseDelta {
   content?: string;
   responseId?: string;
@@ -37,6 +45,7 @@ interface SseDelta {
     attachments?: unknown[];
     stages?: Stage[];
     annotations?: Annotation[];
+    reasoning_summaries?: ReasoningSummaryChunk[];
   };
 }
 
@@ -146,6 +155,34 @@ const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
   return result;
 };
 
+/**
+ * Additively merges `reasoning_summaries` entries by the composite key
+ * `(itemId, outputIndex, summaryIndex)`: a new key is appended, an existing
+ * key has its `text` concatenated. Mirrors the `mergeStages`/`mergeAnnotations`
+ * additive-merge pattern but is independent of the `stages` merge — a
+ * reasoning summary is never a `Stage`.
+ */
+const mergeReasoningSummaries = (
+  existing: ReasoningSummaryChunk[],
+  incoming: ReasoningSummaryChunk[],
+): ReasoningSummaryChunk[] => {
+  const result = [...existing];
+  for (const part of incoming) {
+    const idx = result.findIndex(
+      (p) =>
+        p.itemId === part.itemId &&
+        p.outputIndex === part.outputIndex &&
+        p.summaryIndex === part.summaryIndex,
+    );
+    if (idx >= 0) {
+      result[idx] = { ...result[idx], text: result[idx].text + part.text };
+    } else {
+      result.push(part);
+    }
+  }
+  return result;
+};
+
 const mergeAnnotations = (
   existing: Annotation[],
   incoming: Annotation[],
@@ -194,13 +231,15 @@ export const applyChunkToMessage = (
   const attachments = delta.custom_content?.attachments;
   const stages = delta.custom_content?.stages;
   const annotations = delta.custom_content?.annotations;
+  const reasoningSummaries = delta.custom_content?.reasoning_summaries;
 
   const hasContentUpdate =
     !!content ||
     !!formSchema ||
     !!attachments?.length ||
     !!stages?.length ||
-    !!annotations?.length;
+    !!annotations?.length ||
+    !!reasoningSummaries?.length;
 
   const responseId =
     delta.responseId ?? (hasContentUpdate ? chunk.id : undefined);
@@ -212,7 +251,8 @@ export const applyChunkToMessage = (
     !!formSchema ||
     !!attachments?.length ||
     !!stages?.length ||
-    !!annotations?.length;
+    !!annotations?.length ||
+    !!reasoningSummaries?.length;
 
   return {
     ...message,
@@ -238,6 +278,13 @@ export const applyChunkToMessage = (
           annotations: mergeAnnotations(
             (existing as { annotations?: Annotation[] }).annotations ?? [],
             annotations,
+          ) as never,
+        }),
+        ...(reasoningSummaries?.length && {
+          reasoning_summaries: mergeReasoningSummaries(
+            (existing as { reasoning_summaries?: ReasoningSummaryChunk[] })
+              .reasoning_summaries ?? [],
+            reasoningSummaries,
           ) as never,
         }),
       },

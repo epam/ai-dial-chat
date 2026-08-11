@@ -14,8 +14,10 @@ import { generationUnknownEventsTotal } from './generation-metrics';
 import {
   isValidMaxOutputTokens,
   ResponsesTerminalState,
+  ToolStageKind,
   type GenerationRelayOutcome,
   type GenerationRelayTiming,
+  type NormalizedStageChunk,
   type NormalizedStreamChunk,
   type ResponsesApiRequestBody,
   type ResponsesSseEvent,
@@ -121,6 +123,39 @@ export class ResponsesAdapter {
     let assembledMessage = initialAssembledMessage;
     let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
 
+    /*
+     * Settles any `Stage` still `status: null` in `assembledMessage` to
+     * `StageStatus.Failed` (design.md Decision 5) — called on every return
+     * path (including `catch`) so a stage is never left implying an
+     * unconfirmed success. Never logs stage content.
+     */
+    const settleUnfinishedStages = (): void => {
+      const stages = (
+        assembledMessage.custom_content as
+          | { stages?: NormalizedStageChunk[] }
+          | undefined
+      )?.stages;
+      const unsettled = stages?.filter((s) => s.status === null);
+      if (!unsettled?.length) return;
+
+      const chunk: NormalizedStreamChunk = {
+        choices: [
+          {
+            delta: {
+              custom_content: {
+                stages: unsettled.map((s) => ({
+                  index: s.index,
+                  status: 'failed',
+                })),
+              },
+            },
+          },
+        ],
+      };
+      res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+      assembledMessage = applyChunkToMessage(assembledMessage, chunk);
+    };
+
     try {
       const dialResult = (await this.dialClient.client.createResponse({
         body: requestBody as never,
@@ -173,6 +208,7 @@ export class ResponsesAdapter {
         this.logger.error(
           `DIAL Core rejected Responses request — status: ${dialResult.response.status}${errorMessage ? `: ${errorMessage}` : ''}`,
         );
+        settleUnfinishedStages();
         return {
           outcome: 'rejected',
           status: dialResult.response.status,
@@ -197,6 +233,28 @@ export class ResponsesAdapter {
         res.write(`data: ${JSON.stringify(chunk)}\n\n`);
         assembledMessage = applyChunkToMessage(assembledMessage, chunk);
       };
+
+      /*
+       * Reasoning-summary dedup state (design.md Decision 3): tracks which
+       * (item_id, output_index, summary_index) keys have already received at
+       * least one `.delta`, so a later `.done` for the same key never
+       * duplicates already-streamed text.
+       */
+      const seenReasoningSummaryKeys = new Set<string>();
+      const reasoningSummaryKey = (
+        itemId: string,
+        outputIndex: number,
+        summaryIndex: number,
+      ): string => `${itemId}:${outputIndex}:${summaryIndex}`;
+
+      /*
+       * Tool-stage identity correlation (design.md Decision 4): maps a
+       * `web_search_call` item's `item_id` to the `output_index`/`Stage.index`
+       * it was created with, so item_id-only lifecycle events
+       * (`web_search_call.in_progress`/`.searching`/`.completed`) resolve to
+       * the same stage regardless of arrival order.
+       */
+      const webSearchStageIndexByItemId = new Map<string, number>();
 
       const handleEvent = (event: ResponsesSseEvent): void => {
         switch (event.type) {
@@ -272,6 +330,189 @@ export class ResponsesAdapter {
                 'Responses stream error',
             };
             isDone = true;
+            return;
+          }
+          case 'response.reasoning_summary_part.added': {
+            /*
+             * Structural marker only — a new summary part is starting. No
+             * chunk is emitted; the per-key seen-set is only populated once
+             * a `.delta`/`.done` actually carries text.
+             */
+            return;
+          }
+          case 'response.reasoning_summary_text.delta': {
+            const {
+              item_id: itemId,
+              output_index: outputIndex,
+              summary_index: summaryIndex,
+            } = event;
+            if (itemId == null || outputIndex == null || summaryIndex == null) {
+              this.logger.debug(
+                'responses.adapter malformed reasoning_summary_text.delta — missing key fields',
+              );
+              return;
+            }
+            seenReasoningSummaryKeys.add(
+              reasoningSummaryKey(itemId, outputIndex, summaryIndex),
+            );
+            if (event.delta) {
+              writeChunk({
+                choices: [
+                  {
+                    delta: {
+                      custom_content: {
+                        reasoning_summaries: [
+                          {
+                            itemId,
+                            outputIndex,
+                            summaryIndex,
+                            text: event.delta,
+                          },
+                        ],
+                      },
+                    },
+                  },
+                ],
+              });
+            }
+            return;
+          }
+          case 'response.reasoning_summary_text.done': {
+            const {
+              item_id: itemId,
+              output_index: outputIndex,
+              summary_index: summaryIndex,
+            } = event;
+            if (itemId == null || outputIndex == null || summaryIndex == null) {
+              this.logger.debug(
+                'responses.adapter malformed reasoning_summary_text.done — missing key fields',
+              );
+              return;
+            }
+            const key = reasoningSummaryKey(itemId, outputIndex, summaryIndex);
+            if (seenReasoningSummaryKeys.has(key)) return;
+            if (event.text) {
+              writeChunk({
+                choices: [
+                  {
+                    delta: {
+                      custom_content: {
+                        reasoning_summaries: [
+                          {
+                            itemId,
+                            outputIndex,
+                            summaryIndex,
+                            text: event.text,
+                          },
+                        ],
+                      },
+                    },
+                  },
+                ],
+              });
+            }
+            return;
+          }
+          case 'response.output_item.added': {
+            const item = event.item;
+            if (item?.type === 'web_search_call') {
+              if (item.id == null || event.output_index == null) {
+                this.logger.debug(
+                  'responses.adapter malformed output_item.added (web_search_call) — missing id/output_index',
+                );
+                return;
+              }
+              webSearchStageIndexByItemId.set(item.id, event.output_index);
+              writeChunk({
+                choices: [
+                  {
+                    delta: {
+                      custom_content: {
+                        stages: [
+                          {
+                            index: event.output_index,
+                            status: null,
+                            name: 'Web Search',
+                            tag: 'Web Search',
+                            toolKind: ToolStageKind.WebSearch,
+                          },
+                        ],
+                      },
+                    },
+                  },
+                ],
+              });
+            }
+            /* reasoning/message/other item types are recognized but never staged. */
+            return;
+          }
+          case 'response.output_item.done': {
+            const item = event.item;
+            if (item?.type === 'web_search_call') {
+              const outputIndex =
+                event.output_index ??
+                (item.id != null
+                  ? webSearchStageIndexByItemId.get(item.id)
+                  : undefined);
+              if (outputIndex == null) {
+                this.logger.debug(
+                  'responses.adapter malformed/out-of-order output_item.done (web_search_call) — no resolvable output_index',
+                );
+                return;
+              }
+              writeChunk({
+                choices: [
+                  {
+                    delta: {
+                      custom_content: {
+                        stages: [
+                          {
+                            index: outputIndex,
+                            status:
+                              item.status === 'completed'
+                                ? 'completed'
+                                : 'failed',
+                          },
+                        ],
+                      },
+                    },
+                  },
+                ],
+              });
+            }
+            /* reasoning/message/other item types are recognized but never staged. */
+            return;
+          }
+          case 'response.web_search_call.in_progress':
+          case 'response.web_search_call.searching': {
+            /*
+             * Intentional no-ops — the stage is already running
+             * (`status: null`); nothing new to report, no metric bump.
+             */
+            return;
+          }
+          case 'response.web_search_call.completed': {
+            const outputIndex =
+              event.item_id != null
+                ? webSearchStageIndexByItemId.get(event.item_id)
+                : undefined;
+            if (outputIndex == null) {
+              this.logger.debug(
+                'responses.adapter out-of-order web_search_call.completed — item_id not seen via output_item.added',
+              );
+              return;
+            }
+            writeChunk({
+              choices: [
+                {
+                  delta: {
+                    custom_content: {
+                      stages: [{ index: outputIndex, status: 'completed' }],
+                    },
+                  },
+                },
+              ],
+            });
             return;
           }
           default: {
@@ -351,6 +592,8 @@ export class ResponsesAdapter {
        * terminal event) is also an error, with a fixed generic message that
        * never echoes prompt or response content.
        */
+      settleUnfinishedStages();
+
       if (terminalSignal?.state === ResponsesTerminalState.Success) {
         res.write('data: [DONE]\n\n');
         return { outcome: 'completed', assembledMessage };
@@ -362,6 +605,7 @@ export class ResponsesAdapter {
         assembledMessage,
       };
     } catch (err) {
+      settleUnfinishedStages();
       const isAbort =
         err instanceof Error &&
         (err.name === 'AbortError' || err.name === 'DOMException');
