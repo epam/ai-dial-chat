@@ -99,6 +99,8 @@
     "listViewLabel": "List view",
     "details": {
       "tabTools": "Tools",
+      "tabContent": "Content",
+      "contentCopied": "Copied",
       "tabLimits": "Limits",
       "api": {
         "resourceSection": "Resource",
@@ -187,7 +189,8 @@
     "tab": {
       "models": "Models",
       "applications": "Agents",
-      "toolsets": "Toolsets"
+      "toolsets": "Toolsets",
+      "prompts": "Prompts"
     },
     "folder": {
       "personal": "Personal",
@@ -932,8 +935,7 @@
   "voiceRecording": {
     "micLabel": "Record voice message",
     "stopRecordingLabel": "Stop recording",
-    "discardRecordingLabel": "Discard recording",
-    "timerAriaLabel": "Recording time"
+    "discardRecordingLabel": "Discard recording"
   },
   "tools": {
     "menuTitle": "Tools",

@@ -148,6 +148,8 @@ export enum CatalogI18nKeys {
   ListViewLabel = 'catalog.listViewLabel',
   // Details panel
   DetailsTabTools = 'catalog.details.tabTools',
+  DetailsTabContent = 'catalog.details.tabContent',
+  DetailsContentCopied = 'catalog.details.contentCopied',
   DetailsApiResourceSection = 'catalog.details.api.resourceSection',
   DetailsApiSnippetSection = 'catalog.details.api.snippetSection',
   DetailsApiModelId = 'catalog.details.api.modelId',
@@ -181,6 +183,7 @@ export enum CatalogI18nKeys {
   TabModels = 'catalog.tab.models',
   TabApplications = 'catalog.tab.applications',
   TabToolsets = 'catalog.tab.toolsets',
+  TabPrompts = 'catalog.tab.prompts',
   FolderPersonal = 'catalog.folder.personal',
   FolderPublic = 'catalog.folder.public',
   FolderShared = 'catalog.folder.shared',
@@ -836,7 +839,6 @@ export enum VoiceRecordingI18nKeys {
   MicLabel = 'voiceRecording.micLabel',
   StopRecordingLabel = 'voiceRecording.stopRecordingLabel',
   DiscardRecordingLabel = 'voiceRecording.discardRecordingLabel',
-  TimerAriaLabel = 'voiceRecording.timerAriaLabel',
 }
 
 export enum ToolsI18nKeys {

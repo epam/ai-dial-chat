@@ -6,12 +6,6 @@
   color: var(--ci-voice-waveform, var(--text-primary, #161b2d));
 }
 
-.timer {
-  color: var(--ci-voice-waveform, var(--text-primary, #161b2d));
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
 @keyframes recording-pulse {
   0%,
   100% {
