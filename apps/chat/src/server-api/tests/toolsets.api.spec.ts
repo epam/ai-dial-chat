@@ -1,7 +1,7 @@
 import type {
   DialToolsetDto,
   DialToolsetListResponseDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { toolsetsApi } from '../api-client';
 import { getToolset, listToolsets } from '../toolsets';

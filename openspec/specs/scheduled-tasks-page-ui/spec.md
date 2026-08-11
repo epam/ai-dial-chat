@@ -62,7 +62,7 @@ All directional layout in the Scheduled Tasks header, toolbar, and empty state M
 
 `libs/scheduled-tasks` SHALL export a presentational `ScheduledTasks` root component accepting `texts`, `onCreateClick`, `searchQuery`/`onSearchQueryChange`, `sortKey`/`onSortChange`, `items: ScheduledTaskItem[]`, `isLoading` (default `false`), `hasMore: boolean` (default `false`), `isLoadingMore?: boolean` (default `false`), `skeletonCount?: number` (default `6`), `onLoadMore?: () => void`, and optional `error`/`onRetry`. It SHALL render, in order: a header (title, subtitle, primary "create" action button), a toolbar (search input, sort control with options), and a content region whose rendering depends on state:
 
-- `isLoading` is `true` (initial load) → the content region renders a `DialSpinner` and no other content-region markup.
+- `isLoading` is `true` (initial load) → the content region renders a `Spinner` and no other content-region markup.
 - `error` is set → the content region renders an error message with a retry action that invokes `onRetry`.
 - `isLoading` is `false`, `error` is unset, and `items` is empty because the source list itself is empty (no `searchQuery` in effect) → the content region renders the shared `PanelEmptyState` component (from `@epam/ai-dial-chat-shared`) with `texts.emptyStateLabel`.
 - `isLoading` is `false`, `error` is unset, `items` is empty, and a non-empty `searchQuery` is in effect → the content region renders a distinct "no results" state (not `PanelEmptyState`, not the card grid) using `texts.noResultsLabel`. Because search is server-driven, this state reflects the server returning zero matches, not a client-side filter reducing a non-empty array to zero.
@@ -79,7 +79,7 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 #### Scenario: Loading state shows a spinner
 
 - **WHEN** `ScheduledTasks` renders with `isLoading={true}`
-- **THEN** the content region renders `DialSpinner` and no empty-state, no-results, card-grid, or skeleton markup
+- **THEN** the content region renders `Spinner` and no empty-state, no-results, card-grid, or skeleton markup
 
 #### Scenario: Error state shows retry
 
@@ -130,6 +130,8 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 
 `libs/scheduled-tasks` SHALL export a `ScheduledTaskCard` component rendering: a title (highlighting the current search match via the shared `Highlight` component from `@epam/ai-dial-chat-shared`, per `.claude/rules/search-results-highlight.md`), an optional "N NEW"-style badge when `isNew`/a new-count is set, an optional description/prompt-preview line, a schedule pill showing `scheduleLabel`, and an optional location breadcrumb built from `locationSegments` (outermost segment first, chevron separator between segments). The card exposes an overflow-menu trigger only when at least one action callback is supplied; the menu renders only the actions for which a corresponding callback prop (`onEdit`, `onRunNow`, `onDelete`) was provided by the caller.
 
+`ScheduledTaskCard` SHALL accept an optional `onCardClick?: (id: string) => void` prop. When supplied, the card's root SHALL be an activatable element (clickable and keyboard-operable) that calls `onCardClick(id)` when activated by click or Enter/Space. The overflow-menu trigger button, and every action inside the opened overflow menu, MUST call `event.stopPropagation()` so activating the trigger or any menu action never also invokes `onCardClick`. When `onCardClick` is not supplied, the card renders exactly as before (no added interactive root semantics).
+
 #### Scenario: Title highlights the active search query
 
 - **WHEN** `ScheduledTaskCard` renders with `displayName="Competitor Updates"` and `searchQuery="comp"`
@@ -144,6 +146,40 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 
 - **WHEN** `ScheduledTaskCard` renders with only `onDelete` supplied (no `onEdit`, no `onRunNow`)
 - **THEN** the overflow menu, when opened, shows exactly one action item, and activating it calls `onDelete` with the card's `id`
+
+#### Scenario: Clicking the card body invokes onCardClick
+
+- **WHEN** `onCardClick` is supplied and the user clicks anywhere on the card body outside the overflow-menu trigger
+- **THEN** `onCardClick` is called exactly once with the card's `id`
+
+#### Scenario: Clicking the overflow-menu trigger or an action does not invoke onCardClick
+
+- **WHEN** `onCardClick` and at least one action callback are both supplied, and the user clicks the overflow-menu trigger, or opens the menu and clicks an action item
+- **THEN** `onCardClick` is not called, and only the trigger's open behavior (or the clicked action's own callback) fires
+
+#### Scenario: Card without onCardClick has no added interactive semantics
+
+- **WHEN** `ScheduledTaskCard` renders without `onCardClick`
+- **THEN** the card root is not exposed as a button/clickable element and clicking it invokes no navigation-related callback
+
+### Requirement: Card click navigates to the task detail route
+
+`onCardClick` SHALL be threaded from `ScheduledTasksPage` through `ScheduledTasks` and `ScheduledTaskCardGrid` down to each rendered `ScheduledTaskCard`, without either intermediate component inspecting or transforming the id. `ScheduledTasksPage` SHALL supply an `onCardClick` implementation that calls `navigate(getScheduledTaskDetailRoute(id))` (from `apps/chat/src/constants/routes.ts`). `ScheduledTasks` and `ScheduledTaskCardGrid` remain host-agnostic: they accept and forward the callback as a prop and perform no navigation, routing import, or id transformation themselves.
+
+#### Scenario: Clicking a card navigates to its detail route
+
+- **WHEN** the user clicks a task card's body on `/scheduled-tasks`
+- **THEN** the app navigates to `/scheduled-tasks/{id}` for that card's task id
+
+#### Scenario: Overflow menu actions do not trigger navigation
+
+- **WHEN** the user clicks the overflow-menu trigger on a card, or an action inside the opened menu (Edit/Run/Delete)
+- **THEN** the app does not navigate away from `/scheduled-tasks`, and only the corresponding action callback (if any) is invoked
+
+#### Scenario: Intermediate components forward the callback without transformation
+
+- **WHEN** `ScheduledTasks`/`ScheduledTaskCardGrid` source is statically analyzed
+- **THEN** `onCardClick` is passed through as received, with no routing import, `useNavigate` call, or id transformation present in either component
 
 ### Requirement: List page fetches scheduled tasks and refreshes after create
 
@@ -330,7 +366,7 @@ The Scheduled Tasks list SHALL support loading beyond the first page by scrollin
 
 ### Requirement: Load-more state shows exactly six skeleton cards
 
-While a subsequent page is being fetched (`isLoadingMore === true`), the list SHALL render exactly 6 `ScheduledTaskCardSkeleton` elements as trailing children inside the last section's own `ScheduledTaskCardGrid` (continuing that grid's row/column flow rather than starting a new row in a separate container), distinct from the initial-load `DialSpinner` state (which remains reserved for `isLoading === true && items.length === 0`). Each skeleton card SHALL be built on `DialSkeleton` from `@epam/ai-dial-ui-kit` with an explicit `color` override (the default `bg-layer-raised` token is not visibly distinct from the card background in this app), sized to match `ScheduledTaskCard`'s footprint (title block, description lines, schedule pill area), and marked `aria-hidden="true"` so screen readers do not announce placeholder content as real cards.
+While a subsequent page is being fetched (`isLoadingMore === true`), the list SHALL render exactly 6 `ScheduledTaskCardSkeleton` elements as trailing children inside the last section's own `ScheduledTaskCardGrid` (continuing that grid's row/column flow rather than starting a new row in a separate container), distinct from the initial-load `Spinner` state (which remains reserved for `isLoading === true && items.length === 0`). Each skeleton card SHALL be built on `Skeleton` from `@epam/ai-dial-ui-kit` with an explicit `color` override (the default `bg-layer-raised` token is not visibly distinct from the card background in this app), sized to match `ScheduledTaskCard`'s footprint (title block, description lines, schedule pill area), and marked `aria-hidden="true"` so screen readers do not announce placeholder content as real cards.
 
 #### Scenario: Six skeletons render during load-more, continuing the grid's current row
 
@@ -345,4 +381,4 @@ While a subsequent page is being fetched (`isLoadingMore === true`), the list SH
 #### Scenario: Initial load never shows load-more skeletons
 
 - **WHEN** the list is in its initial load (`isLoading === true`, no items yet loaded)
-- **THEN** the content region shows the existing `DialSpinner` state, not skeleton cards
+- **THEN** the content region shows the existing `Spinner` state, not skeleton cards

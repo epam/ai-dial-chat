@@ -1,4 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { LOCALIZED_TEXT_SCHEMA } from '../common/types/localized-text';
+import type { LocalizedText } from '../common/types/localized-text';
 import { ConversationMessageDto } from '../conversations/dto/conversation-message.dto';
 
 export class ProviderInfoDto {
@@ -160,8 +162,11 @@ export class DialModelDto {
   @ApiPropertyOptional({ example: 'dial.gemini-3-flash-preview' })
   model?: string;
 
-  @ApiPropertyOptional({ example: 'Gemini 3 Flash' })
-  display_name?: string;
+  @ApiPropertyOptional({
+    example: 'Gemini 3 Flash',
+    ...LOCALIZED_TEXT_SCHEMA,
+  })
+  display_name?: LocalizedText;
 
   @ApiPropertyOptional({ example: 'test' })
   display_version?: string;
@@ -171,8 +176,9 @@ export class DialModelDto {
 
   @ApiPropertyOptional({
     example: 'A multimodal model combining reasoning and efficiency.',
+    ...LOCALIZED_TEXT_SCHEMA,
   })
-  description?: string;
+  description?: LocalizedText;
 
   @ApiPropertyOptional({ example: 'dial.gemini-3-flash-preview' })
   reference?: string;
@@ -375,16 +381,20 @@ export class DialToolsetDto {
 
   @ApiPropertyOptional({
     description:
-      'Human-readable name. In `listToolsets` results this is always populated: `displayName` when set, otherwise the last path segment of `id`.',
+      'Human-readable name. In `listToolsets` results this is always populated: `displayName` when set, otherwise the last path segment of `id`. Either a plain string, or a map of locale code to translated value when additional locales are configured.',
     example: 'Toolset display name',
+    ...LOCALIZED_TEXT_SCHEMA,
   })
-  displayName?: string;
+  displayName?: LocalizedText;
 
   @ApiPropertyOptional({ example: '0.0.1' })
   displayVersion?: string;
 
-  @ApiPropertyOptional({ example: 'My toolset description' })
-  description?: string;
+  @ApiPropertyOptional({
+    example: 'My toolset description',
+    ...LOCALIZED_TEXT_SCHEMA,
+  })
+  description?: LocalizedText;
 
   @ApiPropertyOptional({ example: '' })
   iconUrl?: string;

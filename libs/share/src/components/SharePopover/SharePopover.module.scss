@@ -21,11 +21,15 @@ button.accessTriggerBtn {
     }
   }
 
+  /* Focus ring is an `outline`, not a `border-color` swap — outline is painted
+   * outside the border box, so it costs no layout and is preserved in
+   * forced-colors mode. `outline-offset: -1px` keeps it in the border's place
+   * (the border itself goes transparent) so nothing grows or jitters. */
   &:focus-visible {
-    border-color: var(
-      --shp-access-trigger-border-focus,
-      var(--stroke-info, #124ace)
-    );
+    border-color: transparent;
+    outline: 1px solid
+      var(--shp-access-trigger-border-focus, var(--stroke-info, #124ace));
+    outline-offset: -1px;
   }
 }
 
@@ -57,11 +61,11 @@ button.accessTriggerBtn {
 }
 
 .anyoneWithLinkSubtitle {
-  color: var(--shp-anyone-subtitle, var(--text-secondary, #6b7280));
+  color: var(--shp-anyone-subtitle, var(--text-secondary, #57647a));
 }
 
 .accessTriggerChevron {
-  color: var(--shp-access-chevron, var(--text-tertiary, #c7cbd4));
+  color: var(--shp-access-chevron, var(--text-tertiary, #848e9c));
   transition: transform 150ms ease;
 
   @media (prefers-reduced-motion: reduce) {
@@ -118,7 +122,7 @@ button.accessTriggerBtn {
 
 .sectionLabel {
   input {
-    color: var(--shp-section-label, var(--text-secondary, #6b7280)) !important;
+    color: var(--shp-section-label, var(--text-secondary, #57647a)) !important;
   }
 }
 
@@ -127,7 +131,7 @@ button.accessTriggerBtn {
 }
 
 .note {
-  color: var(--shp-note-text, var(--text-secondary, #6b7280));
+  color: var(--shp-note-text, var(--text-secondary, #57647a));
 }
 
 .divider {

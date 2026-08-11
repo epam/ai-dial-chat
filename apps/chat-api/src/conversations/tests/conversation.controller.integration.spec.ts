@@ -27,6 +27,10 @@ import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
 import { ChatCompletionsAdapter } from '../generation/chat-completions.adapter';
 import { ResponsesAdapter } from '../generation/responses.adapter';
+import { ConversationLifecycleService } from '../lifecycle/conversation-lifecycle.service';
+import { ConversationListingService } from '../listing/conversation-listing.service';
+import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
+import { ConversationStreamingService } from '../streaming/conversation-streaming.service';
 
 const TEST_USER = {
   sid: 'test-sid',
@@ -247,6 +251,10 @@ describe('ConversationController (integration)', () => {
           { provide: ConfigService, useValue: configService },
           DialClientService,
           ConversationService,
+          ConversationPersistenceService,
+          ConversationListingService,
+          ConversationLifecycleService,
+          ConversationStreamingService,
           UserConfigService,
           ScheduledTaskUnreadService,
           ConversationGenerationService,

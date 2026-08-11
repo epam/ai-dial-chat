@@ -1,4 +1,4 @@
-import type { CatalogItem, CreateOption } from '@epam/ai-dial-catalog';
+import type { CatalogItem } from '@epam/ai-dial-catalog';
 import {
   CatalogEntityType,
   CatalogSortKey,
@@ -7,9 +7,10 @@ import {
   getCredentialsBadgeState,
   getCredentialsUiState,
 } from '@epam/ai-dial-catalog';
+import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
-import type { DialToolsetDto } from '@epam/chat-api-client';
+import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
@@ -152,7 +153,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     isMyAppsActive,
     onMyAppsActiveChange,
   }: {
-    createOptions?: CreateOption[];
+    createOptions?: DropdownItem[];
     items?: CatalogItem[];
     favorites?: CatalogItem[];
     onToggleFavorite?: (id: string, isFavorite: boolean) => void;
@@ -333,7 +334,13 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
           </button>
         ))}
         {(createOptions ?? []).map((option) => (
-          <button key={option.label} type="button" onClick={option.onClick}>
+          <button
+            key={option.key}
+            type="button"
+            onClick={(domEvent) =>
+              option.onClick?.({ key: option.key, domEvent })
+            }
+          >
             {option.label}
           </button>
         ))}
@@ -492,6 +499,7 @@ describe('CatalogView', () => {
       loadingPaths: new Set(),
       onExpandedPathsChange: vi.fn(),
       onCreatePublishFolder: vi.fn(),
+      rememberPublishFolder: vi.fn(),
       hasPublishWriteAccess: vi.fn().mockReturnValue(true),
     });
     vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
@@ -506,6 +514,7 @@ describe('CatalogView', () => {
       status: UserConfigStatus.Ready,
       features: {},
       config: {
+        appVersion: '0.0.1',
         asrModelId: null,
         transcribeSizeLimitBytes: 5 * 1024 * 1024,
         defaultDeploymentId: null,
@@ -515,6 +524,9 @@ describe('CatalogView', () => {
         overlayAllowedOrigins: [],
         enabledUiFeatures: null,
         announcementHtml: null,
+        announcementTitle: null,
+        announcementDescription: null,
+        announcements: [],
         footerHtmlMessage: '',
         deepResearchToolId: null,
         customVisualizers: [],
@@ -545,6 +557,7 @@ describe('CatalogView', () => {
       loadingPaths: new Set(),
       onExpandedPathsChange: vi.fn(),
       onCreatePublishFolder: vi.fn(),
+      rememberPublishFolder: vi.fn(),
       hasPublishWriteAccess: vi.fn().mockReturnValue(true),
     });
 
@@ -564,6 +577,7 @@ describe('CatalogView', () => {
       loadingPaths: new Set(),
       onExpandedPathsChange: vi.fn(),
       onCreatePublishFolder,
+      rememberPublishFolder: vi.fn(),
       hasPublishWriteAccess: vi.fn().mockReturnValue(true),
     });
 
@@ -586,6 +600,7 @@ describe('CatalogView', () => {
       loadingPaths,
       onExpandedPathsChange,
       onCreatePublishFolder: vi.fn(),
+      rememberPublishFolder: vi.fn(),
       hasPublishWriteAccess: vi.fn().mockReturnValue(true),
     });
 
@@ -1239,7 +1254,7 @@ describe('CatalogView', () => {
     ]);
   });
 
-  it('maps a fetched toolset DeploymentDetailsDto into authentication and permissions', async () => {
+  it('maps a fetched toolset DeploymentDetailsDto into authentication and Tools tab data', async () => {
     vi.mocked(useDeployments).mockReturnValue({
       items: [
         { id: 'search-tool', displayName: 'Search Tool', type: 'toolset' },
@@ -1292,8 +1307,6 @@ describe('CatalogView', () => {
         title: 'Specification',
         specs: [
           { label: 'Authentication', value: 'OAUTH' },
-          { label: 'Allowed tools', value: 'search · fetch' },
-          { label: 'All supported tools', value: 'search · fetch · browse' },
           { label: 'Hosted by', value: 'Anastasiia Harkot' },
           { label: 'OAuth scopes', value: 'read · write' },
           {
@@ -1315,6 +1328,9 @@ describe('CatalogView', () => {
         ],
       },
     ]);
+    expect(result.tools).toEqual({
+      tools: [{ name: 'search' }, { name: 'fetch' }],
+    });
     expect(result.api.resource.endpointUrl).toBe(
       'https://dial.example.com/v1/toolset/search-tool/mcp',
     );

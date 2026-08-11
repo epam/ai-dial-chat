@@ -1,3 +1,7 @@
+import type {
+  ConversationResponseDto,
+  SendCompletionDtoModeEnum,
+} from '@epam/ai-dial-chat-api-client';
 import {
   type Attachment,
   type Conversation,
@@ -7,10 +11,6 @@ import {
   MessageRole,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import type {
-  ConversationResponseDto,
-  SendCompletionDtoModeEnum,
-} from '@epam/chat-api-client';
 import {
   type Dispatch,
   type MutableRefObject,
@@ -346,19 +346,13 @@ export const useConversationHandlers = ({
         ? { [propertyKey]: starter.const }
         : undefined;
       const hasToolConfig = hasActiveToolConfig(toolConfigurationValue);
-      const mergedConfigurationValue = {
-        ...(configurationValue ?? {}),
-        ...(hasToolConfig ? toolConfigurationValue : {}),
-      };
-      const hasConfigurationValue =
-        Object.keys(mergedConfigurationValue).length > 0;
 
       const customContent: MessageCustomContent | undefined =
-        configurationValue || hasConfigurationValue
+        configurationValue || hasToolConfig
           ? {
               ...(configurationValue ? { form_value: configurationValue } : {}),
-              ...(hasConfigurationValue
-                ? { configuration_value: mergedConfigurationValue }
+              ...(hasToolConfig
+                ? { configuration_value: toolConfigurationValue }
                 : {}),
             }
           : undefined;

@@ -332,6 +332,12 @@
     "invalidFolderNameError": "Folder name contains invalid characters.",
     "duplicateFolderNameError": "A folder with this name already exists."
   },
+  "publish": {
+    "failedTitle": "Publish failed",
+    "failedMessage": "The publish request was not submitted. Please try again.",
+    "networkErrorMessage": "The publish request was not submitted because your internet connection was lost. Please check your connection and try again.",
+    "submitErrorCallout": "Publishing failed. Please try again."
+  },
   "publishAccessRules": {
     "heading": "Allow access if all match",
     "addRuleLabel": "Add rule",
@@ -496,10 +502,7 @@
     },
     "card": {
       "newBadgeLabel": "NEW",
-      "actionsLabel": "More actions",
       "editActionLabel": "Edit",
-      "runNowActionLabel": "Run now",
-      "deleteActionLabel": "Delete",
       "scheduleDailyAt": "Every day at {{time}}",
       "scheduleWeeklyAt": "Every {{day}} at {{time}}",
       "scheduleMonthlyAt": "Monthly on day {{day}} at {{time}}",
@@ -516,22 +519,27 @@
       "detailsSectionSubtitle": "Basic info about this scheduled task",
       "configurationSectionTitle": "Configuration",
       "configurationSectionSubtitle": "Write custom instructions for this task",
-      "scheduleSectionLabel": "Schedule",
-      "scheduleTypeOnce": "Once",
-      "scheduleTypeRecurring": "Recurring",
-      "scheduleTypeAriaLabel": "Schedule type",
       "runAtLabel": "Run at",
       "runAtRequired": "Choose a future date and time",
-      "frequencyLabel": "Frequency",
-      "frequencyDaily": "Daily",
-      "frequencyWeekly": "Weekly",
-      "frequencyMonthly": "Monthly",
+      "repeatLabel": "Repeat",
+      "repeatOneTime": "One-time",
+      "repeatHourly": "Hourly",
+      "repeatDaily": "Daily",
+      "repeatWeekly": "Weekly",
+      "repeatMonthly": "Monthly",
       "timeLabel": "Time",
       "timeInvalid": "Enter a valid time",
       "dayOfWeekLabel": "Day of week",
       "dayOfWeekRequired": "Day of week is required",
       "dayOfMonthLabel": "Day of month",
       "dayOfMonthRequired": "Day of month is required",
+      "minuteLabel": "Minute",
+      "minuteInvalid": "Enter a minute between 0 and 59",
+      "startDateLabel": "Start date",
+      "startDatePlaceholder": "Pick start date",
+      "endDateLabel": "End date",
+      "endDatePlaceholder": "Pick end date",
+      "endDateBeforeStartError": "End date must be after start date",
       "modelOrAgentLabel": "Model or Agent",
       "modelPlaceholder": "Select a model",
       "modelRequired": "Model is required",
@@ -541,6 +549,41 @@
       "promptRequired": "Instructions are required",
       "successNotification": "Scheduled task created",
       "errorNotification": "Failed to create the scheduled task"
+    },
+    "detail": {
+      "repeatsLabel": "Repeats",
+      "activeWindowLabel": "Active",
+      "activeWindowValue": "{{startDate}} – {{endDate}}",
+      "nextRunLabel": "Next run: {{value}}",
+      "historyTitle": "History",
+      "historyEmptyLabel": "No runs yet",
+      "historyErrorLabel": "Failed to load history",
+      "historyLoadingMoreLabel": "Loading more runs…",
+      "historyTodayAt": "today at {{time}}",
+      "historyDateAt": "{{date}} at {{time}}",
+      "historyDurationSuffix": "({{seconds}}s)",
+      "statusSuccess": "Succeeded",
+      "statusError": "Failed",
+      "statusInProgress": "Running",
+      "statusMissed": "Missed",
+      "errorLabel": "Failed to load the scheduled task"
+    },
+    "edit": {
+      "pageTitle": "Edit scheduled task",
+      "unsupportedTriggerMessage": "This task's schedule can't be edited here yet.",
+      "successNotification": "Scheduled task updated",
+      "errorNotification": "Failed to update the scheduled task"
+    },
+    "conversationBanner": {
+      "loadingLabel": "Loading task details…",
+      "unavailableLabel": "Task details are unavailable",
+      "retryAriaLabel": "Retry loading task details",
+      "taskDetailsLabel": "Task details",
+      "taskDetailsAriaLabel": "View task details for {{taskName}}"
+    },
+    "conversationPanel": {
+      "modelLabel": "Model",
+      "currentRunLabel": "Current run"
     }
   },
   "dialFileManager": {
@@ -701,7 +744,14 @@
   },
   "announcementBanner": {
     "regionAriaLabel": "Announcement",
+    "regionAriaLabelWithTitle": "Announcement: {{title}}",
     "closeLabel": "Close announcement"
+  },
+  "announcementsPopover": {
+    "pillLabel_one": "+{{count}} announcement",
+    "pillLabel_other": "+{{count}} announcements",
+    "listAriaLabel": "Announcements",
+    "opensInNewTab": "(opens in a new tab)"
   },
   "notification": {
     "requestId": {
@@ -712,7 +762,8 @@
     }
   },
   "footerMessage": {
-    "regionAriaLabel": "Footer"
+    "regionAriaLabel": "Footer",
+    "versionAriaLabel": "Application version {{version}}"
   },
   "errorBoundary": {
     "heading": "Something went wrong",
@@ -753,7 +804,19 @@
     "versionLabel": "Version",
     "versionPlaceholder": "e.g. 1.0.0",
     "topicsLabel": "Topics",
-    "topicsPlaceholder": "Add a topic"
+    "topicsPlaceholder": "Add a topic",
+    "locales": {
+      "summaryLabel": "Locales",
+      "rowLabel": "Locale",
+      "popupTitle": "Add locale",
+      "addLocaleLabel": "Add locale",
+      "languageLabel": "Language",
+      "nameLabel": "Name",
+      "namePlaceholder": "Enter name",
+      "descriptionLabel": "About",
+      "descriptionPlaceholder": "Enter brief description",
+      "deleteAriaLabel": "Delete locale"
+    }
   },
   "appsEditor": {
     "exitPreviewButton": "Exit preview",

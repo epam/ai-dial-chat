@@ -6,7 +6,7 @@
 
 **Goals:**
 - Every file-manager symbol imported from `@epam/ai-dial-ui-kit` today resolves instead from `@epam/ai-dial-react-file-manager`, with identical runtime behavior.
-- Non-file-manager ui-kit imports (`PrimaryButton`, `DialSpinner`, `DialPopup`, `NotificationVariant`, `PopupSize`, `NeutralButton`, `DialFileName` if it stays a general-purpose component) are untouched or verified against the new package's actual export list before moving.
+- Non-file-manager ui-kit imports (`PrimaryButton`, `Spinner`, `DialPopup`, `NotificationVariant`, `PopupSize`, `NeutralButton`, `DialFileName` if it stays a general-purpose component) are untouched or verified against the new package's actual export list before moving.
 - `libs/publish-panel` gains a second peer dependency (`@epam/ai-dial-react-file-manager`) for `DialFile`/`DialFileNodeType`/`DialFoldersTree` only, keeping the lib-isolation boundary intact (no app-owned knowledge enters the lib).
 
 **Non-Goals:**
@@ -23,9 +23,9 @@
 | File | Symbols moving to `@epam/ai-dial-react-file-manager` | Symbols staying on `@epam/ai-dial-ui-kit` |
 |---|---|---|
 | `components/DialFileManagerShell/types/labels.ts` | `DialFileManagerTabs` (type), `DialFileManager` | — |
-| `components/DialFileManagerShell/DialFileManagerShell.tsx` | `DialFileManagerActions`, `DialFileManagerTabs`, `GridSelectionMode`, `NOT_ALLOWED_SYMBOLS_REGEXP`, `DialFileAcceptType`, `FileManagerGridRow` | `PrimaryButton`, `DialSpinner` |
+| `components/DialFileManagerShell/DialFileManagerShell.tsx` | `DialFileManagerActions`, `DialFileManagerTabs`, `GridSelectionMode`, `NOT_ALLOWED_SYMBOLS_REGEXP`, `DialFileAcceptType`, `FileManagerGridRow` | `PrimaryButton`, `Spinner` |
 | `components/DialFileManagerModal/DialFileManagerModal.tsx` | `DialFileManagerTabs`, `DialFileNodeType`, `useDialFileManagerTabs`, `DialFile`, `FileManagerGridRow`, `NOT_ALLOWED_SYMBOLS`, `NOT_ALLOWED_SYMBOLS_REGEXP` | `DialPopup`, `PrimaryButton`, `NotificationVariant`, `PopupSize` |
-| `components/DialFileManagerModal/OperationLoaderModal.tsx` | — | `DialPopup`, `NeutralButton`, `DialSpinner` |
+| `components/DialFileManagerModal/OperationLoaderModal.tsx` | — | `DialPopup`, `NeutralButton`, `Spinner` |
 | `components/DialFileManagerModal/UploadProgressModal.tsx` | — (verify `DialFileName`; if it's file-manager-specific it moves) | `DialPopup`, `NeutralButton` |
 | `components/DialFileManagerModal/types/attach-result.ts` | `DialFile` (type) | — |
 | `hooks/files/dial-file-manager.types.ts` | file-manager types block (verify exact names against package export list) | any residual non-file-manager type, if present |

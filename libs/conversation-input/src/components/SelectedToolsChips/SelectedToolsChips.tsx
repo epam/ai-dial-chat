@@ -35,7 +35,7 @@ export interface SelectedToolsChipsProps {
   onToolToggle: (toolId: string) => void;
   /** Whether to render the mobile (consolidated) chip or desktop (individual) chips. */
   isMobile: boolean;
-  /** Formats the consolidated count label shown in the mobile chip. Defaults to English pluralization. */
+  /** Formats the consolidated count label shown in the mobile chip when two or more tools are selected. Defaults to English pluralization. */
   countLabel?: (count: number) => string;
   /** Returns the accessible label for the close button on a desktop chip. Defaults to `"Remove {toolLabel}"`. */
   removeLabel?: (toolLabel: string) => string;
@@ -74,31 +74,39 @@ export const SelectedToolsChips: FC<SelectedToolsChipsProps> = ({
   });
 
   if (isMobile) {
-    const mobileIcon =
-      selectedItems.length === 1 ? (
-        selectedItems[0].icon
-      ) : (
-        <IconTool size={BASE_ICON_SIZE} aria-hidden />
-      );
+    const isSingleSelection = selectedItems.length === 1;
+    const mobileIcon = isSingleSelection ? (
+      selectedItems[0].icon
+    ) : (
+      <IconTool size={BASE_ICON_SIZE} aria-hidden />
+    );
+    /* A lone selection names the tool; only a multi-selection collapses to a count. */
+    const mobileLabel = isSingleSelection
+      ? selectedItems[0].label
+      : countLabel(selectedItems.length);
 
     return (
       <div className="flex flex-wrap items-center gap-2" style={cssVars}>
         <div
           className={mergeClasses(
             styles.chip,
-            'flex items-center gap-1.5 rounded-full border px-2 py-1',
+            'flex min-w-0 items-center gap-1.5 rounded-full border px-2 py-1',
           )}
         >
-          <span className={styles.chipIcon} aria-hidden>
+          <span
+            className={mergeClasses(styles.chipIcon, 'shrink-0')}
+            aria-hidden
+          >
             {mobileIcon}
           </span>
           <span
             className={mergeClasses(
               styles.chipText,
               typography?.fontClassName || 'dial-small-paragraph-text',
+              'truncate',
             )}
           >
-            {countLabel(selectedItems.length)}
+            {mobileLabel}
           </span>
         </div>
       </div>

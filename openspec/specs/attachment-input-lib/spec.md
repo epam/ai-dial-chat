@@ -98,59 +98,23 @@ All `apps/chat` files that previously imported from `apps/chat/src/utils/attachm
 - **WHEN** `npm exec nx typecheck chat` is executed after the migration
 - **THEN** typecheck completes with zero errors related to attachment-mime imports
 
-### Requirement: AttachmentCard renders an inline audio player for audio attachments
+### Requirement: AttachmentCard renders audio attachments as a standard file tile
 
-When `attachment.type === AttachmentType.Audio`, `AttachmentCard` SHALL render a wide card (minimum `280px`, maximum `300px`) instead of the standard `100×100` square. The card root SHALL have `position: relative` (`relative` Tailwind class) so that absolutely-positioned action buttons resolve correctly. The card SHALL contain:
-- The attachment filename truncated to one line at the top.
-- A native `<audio controls>` element using `attachment.playUrl` as `src` and `preload="metadata"`. The element SHALL span the full card width. Clicks on the `<audio>` element SHALL call `stopPropagation` so they do NOT propagate to the card's own click handler.
-- A `DownloadAction` button (absolutely positioned, `end-1 top-1`) when `onDownload` is provided. Clicking it SHALL call `onDownload(id)` and SHALL NOT bubble to the card's click handler.
-- A `RemoveAction` button (absolutely positioned, `end-1 top-1`) when `onRemove` is provided. Clicking it SHALL call `onRemove(id)` and SHALL NOT bubble to the card's click handler.
+`AttachmentCard` SHALL NOT render an inline `<audio>` player. An attachment with `attachment.type === AttachmentType.Audio` SHALL render through `FileAttachment`, using the same standard square tile, glyph, type label, and action buttons as any other non-previewable attachment. Playback is the host's responsibility, reached through the card's `onClick` (for example by opening the attachment canvas).
 
-When `onClick` is provided, the card root SHALL act as a keyboard-accessible button (`role="button"`, `tabIndex={0}`, `aria-label` from `labels.clickLabel`). Clicking the card body (outside the audio controls and action buttons) SHALL call `onClick(id)`. When either `onDownload` or `onRemove` is provided, the card SHALL apply `pe-8` end padding to prevent content from overlapping the action button area.
+#### Scenario: Audio attachment renders as a file tile
 
-The audio card variant SHALL use the same border and background CSS custom properties as the standard card.
-
-#### Scenario: Audio attachment renders audio player
-
-- **WHEN** `AttachmentCard` is rendered with `attachment.type === AttachmentType.Audio` and a valid `playUrl`
-- **THEN** an `<audio>` element with `controls` is present in the DOM
-- **AND** the `<audio>` element's `src` equals `attachment.playUrl`
-
-#### Scenario: Audio card shows download button when onDownload provided
-
-- **WHEN** `AttachmentCard` is rendered with `type === AttachmentType.Audio` and an `onDownload` prop
-- **THEN** a download icon button is rendered in the top-end corner of the card
-- **AND** clicking it calls `onDownload(id)` without triggering audio playback or the card's click handler
-
-#### Scenario: Audio card shows remove button when onRemove provided
-
-- **WHEN** `AttachmentCard` is rendered with `type === AttachmentType.Audio` and an `onRemove` prop
-- **THEN** a remove icon button is rendered in the top-end corner of the card
-- **AND** clicking it calls `onRemove(id)` without triggering the card's click handler
-
-#### Scenario: Audio card body is clickable when onClick provided
-
-- **WHEN** `AttachmentCard` is rendered with `type === AttachmentType.Audio` and an `onClick` prop
-- **THEN** the card root has `role="button"` and `tabIndex={0}`
-- **AND** clicking the card body (outside the audio controls and action buttons) calls `onClick(id)`
-
-#### Scenario: Audio player interaction does not trigger canvas open
-
-- **WHEN** the user interacts with the `<audio>` controls on an audio card
-- **THEN** the click event does NOT propagate to the card's click handler
-
-#### Scenario: Audio card is wider than standard card
-
-- **WHEN** `AttachmentCard` is rendered with `type === AttachmentType.Audio`
-- **THEN** the card does NOT have the `h-[100px] w-[100px]` classes of a standard card
+- **WHEN** `AttachmentCard` is rendered with `attachment.type === AttachmentType.Audio`
+- **THEN** no `<audio>` element is present in the DOM
+- **AND** the attachment renders as a standard square file tile
 
 ---
 
 ### Requirement: Attachment tile action buttons are hidden until the tile is hovered or focused
 
-Every attachment tile variant (`FileAttachment`, `ImageAttachment`, `AudioAttachment`) SHALL apply the Tailwind named group `group/attachment-tile` to its root element. The shared `ActionButton` in `libs/attachment-input/src/components/AttachmentCard/Attachments/Actions.tsx` (used by `DownloadAction`, `RemoveAction`, `ReloadAction`, `OpenLinkAction`) SHALL render with `opacity-0` by default, becoming fully opaque via `group-hover/attachment-tile:opacity-100`, `group-focus-within/attachment-tile:opacity-100`, and `focus-visible:opacity-100` — the last so a keyboard user tabbing directly to the button also reveals it, per the keyboard-parity rule for hover-only affordances.
+Every attachment tile variant (`FileAttachment`, `ImageAttachment`) SHALL apply the Tailwind named group `group/attachment-tile` to its root element. The shared `ActionButton` in `libs/attachment-input/src/components/AttachmentCard/Attachments/Actions.tsx` (used by `DownloadAction`, `RemoveAction`, `ReloadAction`, `OpenLinkAction`) SHALL render with `opacity-0` by default, becoming fully opaque via `group-hover/attachment-tile:opacity-100`, `group-focus-within/attachment-tile:opacity-100`, and `focus-visible:opacity-100` — the last so a keyboard user tabbing directly to the button also reveals it, per the keyboard-parity rule for hover-only affordances.
 
-`ImageAttachment`'s `DownloadAction`/`RemoveAction` additionally receive `styles.imageActionButton`, which renders a persistent background/icon-color chip (backed by `--ai-tile-hover-icon-bg`/`--ai-tile-hover-icon-color`) so the button stays legible against arbitrary image content once revealed, without depending on the cursor being directly over the small button itself. `FileAttachment` and `AudioAttachment` do not apply this chip.
+`ImageAttachment`'s `DownloadAction`/`RemoveAction` additionally receive `styles.imageActionButton`, which renders a persistent background/icon-color chip (backed by `--ai-tile-hover-icon-bg`/`--ai-tile-hover-icon-color`) so the button stays legible against arbitrary image content once revealed, without depending on the cursor being directly over the small button itself. `FileAttachment` does not apply this chip.
 
 #### Scenario: Action buttons are invisible on an unhovered, unfocused tile
 

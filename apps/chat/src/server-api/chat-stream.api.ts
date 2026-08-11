@@ -1,5 +1,5 @@
+import { SendCompletionDtoModeEnum } from '@epam/ai-dial-chat-api-client';
 import { MessageCustomContent, StreamChunk } from '@epam/ai-dial-chat-shared';
-import { SendCompletionDtoModeEnum } from '@epam/chat-api-client';
 import { JSON_HEADERS } from '../constants/http';
 import { ApiEndpoints, getCsrfToken, setCsrfToken } from './base';
 

@@ -109,15 +109,14 @@ export class ResponsesAdapter {
     };
   }
 
-  async relay(
+  async *stream(
     requestBody: ResponsesApiRequestBody,
     token: string,
     signal: AbortSignal,
-    res: Response,
     initialAssembledMessage: ConversationMessageDto,
     clientChannelId?: string,
     timing?: GenerationRelayTiming,
-  ): Promise<GenerationRelayOutcome> {
+  ): AsyncGenerator<string, GenerationRelayOutcome, void> {
     let assembledMessage = initialAssembledMessage;
     let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
 
@@ -192,33 +191,39 @@ export class ResponsesAdapter {
        */
       let terminalSignal: ResponsesTerminalSignal | null = null;
       let isDone = false;
+      const pendingChunks: string[] = [];
 
       const writeChunk = (chunk: NormalizedStreamChunk): void => {
-        res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+        pendingChunks.push(`data: ${JSON.stringify(chunk)}\n\n`);
         assembledMessage = applyChunkToMessage(assembledMessage, chunk);
       };
 
       const handleEvent = (event: ResponsesSseEvent): void => {
         switch (event.type) {
           case 'response.created': {
-            const responseId = event.response?.id;
+            const responseId = (event as { response?: { id?: string } })
+              .response?.id;
             if (responseId) {
               writeChunk({ choices: [{ delta: { responseId } }] });
             }
             return;
           }
           case 'response.output_text.delta': {
-            if (event.delta) {
+            const delta = (event as { delta?: string }).delta;
+            if (delta) {
               if (timing && timing.firstDeltaAt == null) {
                 timing.firstDeltaAt = Date.now();
               }
-              writeChunk({ choices: [{ delta: { content: event.delta } }] });
+              writeChunk({ choices: [{ delta: { content: delta } }] });
             }
             return;
           }
           case 'response.completed': {
-            const responseId = event.response?.id;
-            const status = event.response?.status;
+            const response = (
+              event as { response?: { id?: string; status?: string } }
+            ).response;
+            const responseId = response?.id;
+            const status = response?.status;
             /*
              * `status` is normally "completed" — anything else present
              * (a status value DIAL Core doesn't guarantee is always
@@ -249,8 +254,9 @@ export class ResponsesAdapter {
             terminalSignal = {
               state: ResponsesTerminalState.Failed,
               message:
-                extractDialErrorMessage(event.response?.error) ??
-                'Responses generation failed',
+                extractDialErrorMessage(
+                  (event as { response?: { error?: unknown } }).response?.error,
+                ) ?? 'Responses generation failed',
             };
             isDone = true;
             return;
@@ -267,8 +273,8 @@ export class ResponsesAdapter {
             terminalSignal = {
               state: ResponsesTerminalState.StreamError,
               message:
-                event.error?.message ??
-                event.message ??
+                (event as { error?: { message?: string } }).error?.message ??
+                (event as { message?: string }).message ??
                 'Responses stream error',
             };
             isDone = true;
@@ -331,6 +337,9 @@ export class ResponsesAdapter {
           try {
             const parsed = JSON.parse(payload) as ResponsesSseEvent;
             handleEvent(parsed);
+            while (pendingChunks.length > 0) {
+              yield pendingChunks.shift() as string;
+            }
           } catch {
             /* Never log the payload itself — may carry response text. */
             this.logger.debug(
@@ -352,7 +361,7 @@ export class ResponsesAdapter {
        * never echoes prompt or response content.
        */
       if (terminalSignal?.state === ResponsesTerminalState.Success) {
-        res.write('data: [DONE]\n\n');
+        yield 'data: [DONE]\n\n';
         return { outcome: 'completed', assembledMessage };
       }
 
@@ -377,5 +386,30 @@ export class ResponsesAdapter {
         }
       }
     }
+  }
+
+  async relay(
+    requestBody: ResponsesApiRequestBody,
+    token: string,
+    signal: AbortSignal,
+    res: Response,
+    initialAssembledMessage: ConversationMessageDto,
+    clientChannelId?: string,
+    timing?: GenerationRelayTiming,
+  ): Promise<GenerationRelayOutcome> {
+    const iterator = this.stream(
+      requestBody,
+      token,
+      signal,
+      initialAssembledMessage,
+      clientChannelId,
+      timing,
+    );
+    let next = await iterator.next();
+    while (!next.done) {
+      res.write(next.value);
+      next = await iterator.next();
+    }
+    return next.value;
   }
 }

@@ -3,6 +3,7 @@
   border: 1px solid rgba(0, 0, 0, 0.05);
   transition:
     border-color 150ms ease,
+    outline-color 150ms ease,
     box-shadow 150ms ease;
 
   @media (hover: hover) {
@@ -11,18 +12,25 @@
     }
   }
 
+  /* Focus ring is an `outline`, not a `border-color` swap — outline is painted
+   * outside the border box, so it costs no layout and is preserved in
+   * forced-colors mode. `outline-offset: -1px` keeps it in the border's place
+   * (the border itself goes transparent) so nothing grows or jitters. */
   &:focus-within {
-    border-color: color-mix(
-      in srgb,
-      var(--search-bar-border-focus, var(--stroke-info, #124ace)) 50%,
-      transparent
-    );
+    border-color: transparent;
+    outline: 1px solid
+      color-mix(
+        in srgb,
+        var(--search-bar-border-focus, var(--stroke-info, #124ace)) 50%,
+        transparent
+      );
+    outline-offset: -1px;
     box-shadow: none;
   }
 }
 
 .icon {
-  color: var(--search-bar-icon, var(--text-tertiary, #c7cbd4));
+  color: var(--search-bar-icon, var(--text-tertiary, #848e9c));
 }
 
 .input {
@@ -30,6 +38,6 @@
   color: var(--search-bar-text, var(--text-primary, #161b2d));
 
   &::placeholder {
-    color: var(--search-bar-placeholder, var(--text-tertiary, #c7cbd4));
+    color: var(--search-bar-placeholder, var(--text-tertiary, #848e9c));
   }
 }

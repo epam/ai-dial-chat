@@ -1,9 +1,9 @@
+import type { ToolsetLoginBodyDto } from '@epam/ai-dial-chat-api-client';
 import {
   DeploymentCreationFieldErrorCode,
   validateDeploymentCreationFields,
 } from '@epam/ai-dial-deployment-creation-form';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import type { ToolsetLoginBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -36,6 +36,7 @@ import {
   updateToolset,
 } from '../../server-api/toolsets';
 import { ROUTES } from '../../types/routes';
+import { PRIMARY_LOCALE, resolveLocalizedText } from '../../utils/locale';
 import {
   extractToolsetApiErrorMessage,
   formToToolsetBody,
@@ -131,7 +132,9 @@ const ToolsetEditor: FC = () => {
         if (!cancelled) {
           setForm(
             getDefaultToolsetForm(
-              (data ?? []).map((item) => item.displayName ?? ''),
+              (data ?? []).map((item) =>
+                resolveLocalizedText(item.displayName, PRIMARY_LOCALE),
+              ),
             ),
           );
         }

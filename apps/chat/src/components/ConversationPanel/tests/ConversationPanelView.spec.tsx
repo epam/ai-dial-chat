@@ -1,8 +1,8 @@
-import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   ConversationDeletionFailureDtoCodeEnum,
   type ConversationDeletionResultDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   act,
   fireEvent,
@@ -103,7 +103,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
   return {
     ...actual,
-    DialConfirmationPopup: ({
+    ConfirmationPopup: ({
       open,
       header,
       confirmLabel,
@@ -139,7 +139,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         </div>
       );
     },
-    DialDropdown: ({
+    Dropdown: ({
       children,
       items,
     }: {
@@ -179,13 +179,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         {closable && <button onClick={onClose}>Close notification</button>}
       </div>
     ),
-    DialPopup: ({
-      open,
-      children,
-    }: {
-      open: boolean;
-      children?: ReactNode;
-    }) => {
+    Popup: ({ open, children }: { open: boolean; children?: ReactNode }) => {
       if (!open) return null;
       return <div role="dialog">{children}</div>;
     },
@@ -207,7 +201,7 @@ vi.mock('@tabler/icons-react', () => ({
 }));
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
 vi.mock('react-router', () => ({
@@ -220,8 +214,9 @@ vi.mock('../../../server-api/share.api');
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => ({ items: [] }),
 }));
+const mockUseIsMobile = vi.hoisted(() => vi.fn(() => false));
 vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
-  useIsMobile: () => false,
+  useIsMobile: mockUseIsMobile,
 }));
 vi.mock('../../../hooks/useUiFeature');
 vi.mock('../../../constants/routes', () => ({
@@ -409,6 +404,7 @@ const openDeleteAllPopup = () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockUseIsMobile.mockReturnValue(false);
   vi.mocked(useUiFeature).mockReturnValue(true);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vi.mocked(useConversations).mockReturnValue(baseContextValue as any);
@@ -1256,6 +1252,15 @@ describe('ConversationPanelView — import header action', () => {
     expect(fileInput.accept).toBe(
       '.json,.dial,.zip,application/json,application/zip',
     );
+  });
+
+  it('leaves the import picker unfiltered on mobile', () => {
+    mockUseIsMobile.mockReturnValue(true);
+    render(<ConversationPanelView {...defaultProps} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    expect(fileInput.hasAttribute('accept')).toBe(false);
   });
 
   it('selecting a file calls importConversations with that file', () => {

@@ -5,11 +5,7 @@ import {
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import { SidebarOrientation, SidebarPanel } from '@epam/ai-dial-sidebar';
-import {
-  DIAL_ICON_SIZE,
-  DialSpinner,
-  GhostIconButton,
-} from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, Spinner, GhostIconButton } from '@epam/ai-dial-ui-kit';
 import {
   IconAlertTriangle,
   IconCheck,
@@ -609,7 +605,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
           bodyClassName,
         )}
       >
-        {isLoading ? <DialSpinner /> : renderedContent}
+        {isLoading ? <Spinner /> : renderedContent}
       </div>
     </SidebarPanel>
   );

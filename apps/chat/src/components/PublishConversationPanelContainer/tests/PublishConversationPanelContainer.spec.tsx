@@ -88,6 +88,11 @@ vi.mock('../../../server-api/conversation-publish.api');
 vi.mock('../../../server-api/publish-rules.api');
 vi.mock('../../../context/NotificationContext');
 
+const mockShowPublishError = vi.fn();
+vi.mock('../../../hooks/publish/usePublishErrorNotification', () => ({
+  usePublishErrorNotification: () => mockShowPublishError,
+}));
+
 const useAppConfigMock = vi.fn();
 vi.mock('../../../context/AppConfigContext', () => ({
   useAppConfig: () => useAppConfigMock(),
@@ -99,6 +104,8 @@ vi.mock('react-i18next', () => ({
 
 const mockShowNotification = vi.fn();
 
+const mockRememberPublishFolder = vi.fn();
+
 const baseFoldersResult = {
   folderItems: [{ path: ['Shared'], name: 'Shared' }],
   expandedPaths: new Set<string>(),
@@ -106,6 +113,7 @@ const baseFoldersResult = {
   loadingPaths: new Set<string>(),
   onExpandedPathsChange: vi.fn(),
   onCreatePublishFolder: vi.fn(),
+  rememberPublishFolder: mockRememberPublishFolder,
   hasPublishWriteAccess: () => true,
 };
 
@@ -202,6 +210,40 @@ describe('PublishConversationPanelContainer', () => {
     });
   });
 
+  it('remembers the destination folder after a successful publish so it stays available next time', async () => {
+    vi.mocked(publishConversation).mockResolvedValue({
+      path: 'conversations/bucket-123/my-conversation-abc',
+      folderPath: 'Shared',
+      publishedAt: new Date().toISOString(),
+      publishedBy: 'Test User',
+    });
+    await renderContainer();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Shared' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    await waitFor(() => {
+      expect(mockRememberPublishFolder).toHaveBeenCalledWith(['Shared']);
+    });
+  });
+
+  it('does not remember the destination folder when publish fails', async () => {
+    vi.mocked(publishConversation).mockRejectedValue(new Error('network'));
+    await renderContainer();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Shared' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeTruthy();
+    });
+    expect(mockRememberPublishFolder).not.toHaveBeenCalled();
+  });
+
   it('forwards rules added in the panel to publishConversation', async () => {
     vi.mocked(publishConversation).mockResolvedValue({
       path: 'conversations/bucket-123/my-conversation-abc',
@@ -228,9 +270,18 @@ describe('PublishConversationPanelContainer', () => {
     });
   });
 
-  it('keeps the panel open and surfaces an error when publish fails', async () => {
-    vi.mocked(publishConversation).mockRejectedValue(new Error('network'));
-    await renderContainer();
+  it('keeps the panel open, shows the inline callout, and reports an error notification when publish fails', async () => {
+    const rejection = new Error('network');
+    vi.mocked(publishConversation).mockRejectedValue(rejection);
+    const onClose = vi.fn();
+    render(
+      <PublishConversationPanelContainer
+        isOpen
+        conversationPath="my-conversation-abc"
+        conversationTitle="Q3 planning notes"
+        onClose={onClose}
+      />,
+    );
 
     await userEvent.click(
       screen.getByRole('button', { name: 'Select Shared' }),
@@ -240,7 +291,9 @@ describe('PublishConversationPanelContainer', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeTruthy();
     });
+    expect(mockShowPublishError).toHaveBeenCalledWith(rejection);
     expect(mockShowNotification).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('never reports an existing publication in the folder (version history is not fetched, see GH issue #7897)', async () => {

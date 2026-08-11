@@ -1,4 +1,4 @@
-import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
+import { NeutralButton } from '@epam/ai-dial-ui-kit';
 import { FC, memo, ReactNode, useState } from 'react';
 import AuthUiModeCase from '../cases/AuthUiModeCase/AuthUiModeCase';
 import ConversationListCase from '../cases/ConversationListCase/ConversationListCase';
@@ -59,7 +59,7 @@ const App: FC = () => {
 
   const renderCasePage = (content: ReactNode) => (
     <main className="mx-auto w-full max-w-[1120px] px-5 py-8 desktop:px-8 desktop:py-16">
-      <DialNeutralButton
+      <NeutralButton
         className="mb-5 min-h-11"
         type="button"
         label="Back to case list"
@@ -120,7 +120,7 @@ const App: FC = () => {
 
             return (
               <li key={id}>
-                <DialNeutralButton
+                <NeutralButton
                   className="focus-visible:outline-offset-3 h-auto min-h-[180px] w-full items-stretch rounded-2xl border border-secondary bg-layer-raised px-5 py-5 text-start text-primary shadow-sm transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-info hover:shadow-md focus-visible:outline focus-visible:outline-2"
                   textClassName="w-full"
                   type="button"

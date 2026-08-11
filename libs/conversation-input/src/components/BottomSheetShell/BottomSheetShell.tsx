@@ -1,8 +1,9 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialCloseButton,
+  CloseButton,
   GhostIconButton,
+  ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowLeft } from '@tabler/icons-react';
 import type { CSSProperties, FC, ReactNode } from 'react';
@@ -94,7 +95,7 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
         style={{ ...cssVars, ...style }}
         className={mergeClasses(
           styles.sheet,
-          'fixed inset-x-0 bottom-0 z-[60] flex max-h-[85dvh] flex-col',
+          'fixed inset-x-0 bottom-0 z-[60] flex max-h-[85dvh] flex-col rounded-t-lg',
           className,
         )}
       >
@@ -121,10 +122,10 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
                 {title}
               </span>
               <div className="absolute end-4 m-2">
-                <DialCloseButton
+                <CloseButton
                   ariaLabel={closeLabel}
-                  size={DIAL_ICON_SIZE.LG}
                   onClose={onClose}
+                  size={ElementSize.Standard}
                 />
               </div>
             </div>

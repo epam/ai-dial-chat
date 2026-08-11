@@ -40,7 +40,10 @@ interface FormProps {
     modelId: string;
     prompt: string;
     description?: string;
-    scheduleType: string;
+    repeat: string;
+    startDate?: string;
+    endDate?: string;
+    runAt?: string;
   };
   errors: Record<string, string | undefined>;
   modelOptions: { id: string; label: string }[];
@@ -52,8 +55,9 @@ interface FormProps {
 }
 
 vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
-  ScheduledTaskScheduleType: { Once: 'once', Recurring: 'recurring' },
-  ScheduledTaskFrequency: {
+  ScheduledTaskRepeat: {
+    OneTime: 'oneTime',
+    Hourly: 'hourly',
     Daily: 'daily',
     Weekly: 'weekly',
     Monthly: 'monthly',
@@ -99,10 +103,37 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
         value={values.description ?? ''}
         onChange={(e) => onFieldChange('description', e.target.value)}
       />
+      <select
+        aria-label="repeat"
+        value={values.repeat}
+        onChange={(e) => onFieldChange('repeat', e.target.value)}
+      >
+        <option value="oneTime">oneTime</option>
+        <option value="hourly">hourly</option>
+        <option value="daily">daily</option>
+        <option value="weekly">weekly</option>
+        <option value="monthly">monthly</option>
+      </select>
+      <input
+        aria-label="startDate"
+        value={values.startDate ?? ''}
+        onChange={(e) => onFieldChange('startDate', e.target.value)}
+      />
+      <input
+        aria-label="endDate"
+        value={values.endDate ?? ''}
+        onChange={(e) => onFieldChange('endDate', e.target.value)}
+      />
+      <input
+        aria-label="runAt"
+        value={values.runAt ?? ''}
+        onChange={(e) => onFieldChange('runAt', e.target.value)}
+      />
       {errors.displayName && <span>{errors.displayName}</span>}
       {errors.modelId && <span>{errors.modelId}</span>}
       {errors.prompt && <span>{errors.prompt}</span>}
       {errors.description && <span>{errors.description}</span>}
+      {errors.endDate && <span>{errors.endDate}</span>}
       <button onClick={onCancel}>{labels.cancelButtonLabel}</button>
       <button onClick={onSubmit} disabled={isSubmitting}>
         {labels.createButtonLabel}
@@ -287,6 +318,66 @@ describe('ScheduledTaskCreatePage', () => {
     expect(
       screen.getByText('scheduledTasks.create.descriptionMaxLengthError'),
     ).toBeTruthy();
+  });
+
+  it('blocks submit with an inline error when endDate is not after startDate', async () => {
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'startDate' }),
+      '2026-08-31',
+    );
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'endDate' }),
+      '2026-08-01',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    expect(createScheduledTaskMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByText('scheduledTasks.create.endDateBeforeStartError'),
+    ).toBeTruthy();
+  });
+
+  it('allows submit when both startDate and endDate are empty', async () => {
+    createScheduledTaskMock.mockResolvedValue({ id: 'sched_1' });
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    expect(createScheduledTaskMock).toHaveBeenCalledOnce();
+  });
+
+  it('does not include startDate/endDate in the submit body after switching repeat to one-time', async () => {
+    createScheduledTaskMock.mockResolvedValue({ id: 'sched_1' });
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'startDate' }),
+      '2026-08-01',
+    );
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'endDate' }),
+      '2026-08-31',
+    );
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: 'repeat' }),
+      'oneTime',
+    );
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'runAt' }),
+      '2099-08-24T09:00',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    expect(createScheduledTaskMock).toHaveBeenCalledOnce();
+    const body = createScheduledTaskMock.mock.calls[0][0];
+    expect(body.trigger.cron).toBeUndefined();
+    expect(body.trigger).not.toHaveProperty('startDate');
+    expect(body.trigger).not.toHaveProperty('endDate');
   });
 
   it('shows an error notification and stays on the form when the API call fails', async () => {

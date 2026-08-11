@@ -216,7 +216,7 @@ export class ConversationController {
     @Body() dto: SendCompletionDto,
   ): Promise<void> {
     const { at, bucket, sid, sub } = req.user as SessionUser;
-    await this.conversationService.streamCompletion(
+    const stream = this.conversationService.streamCompletion(
       dto.path,
       at,
       bucket,
@@ -227,10 +227,21 @@ export class ConversationController {
       dto.model,
       dto.custom_content,
       sid,
-      res,
+      () => {
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.flushHeaders();
+      },
       sub,
       dto.clientChannelId,
     );
+
+    for await (const chunk of stream) {
+      res.write(chunk);
+    }
+
+    if (!res.writableEnded) res.end();
   }
 
   @Post('completions/stop')

@@ -60,6 +60,8 @@ export interface NewChatButtonColors {
   background?: string;
   /** Label and icon color. */
   text?: string;
+  /** Keyboard focus ring color. Defaults to `--stroke-focus-black`. */
+  focusOutline?: string;
 }
 
 /** CSS custom-property overrides for `ConversationPanel`. */

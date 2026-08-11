@@ -12,10 +12,10 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   }: { children: ReactNode } & Record<string, unknown>) => (
     <article {...rest}>{children}</article>
   ),
-  DialSkeleton: ({ color }: { color?: string }) => (
+  Skeleton: ({ color }: { color?: string }) => (
     <div data-skeleton data-color={color} />
   ),
-  DialSkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
+  SkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
 }));
 
 describe('ScheduledTaskCardSkeleton', () => {

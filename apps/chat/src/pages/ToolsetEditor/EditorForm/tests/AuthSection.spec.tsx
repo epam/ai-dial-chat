@@ -57,7 +57,7 @@ vi.mock('../../../../context/NotificationContext');
 const mockShowNotification = vi.fn();
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DialInput: ({
+  Input: ({
     value,
     onChange,
     labelProps,
@@ -149,7 +149,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
-  DialConfirmationPopup: ({
+  ConfirmationPopup: ({
     open,
     confirmLabel,
     cancelLabel,

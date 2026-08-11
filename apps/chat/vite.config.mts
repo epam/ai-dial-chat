@@ -48,7 +48,7 @@ export default defineConfig(() => ({
         __dirname,
         '../../libs/conversation-stages/src/index.ts',
       ),
-      '@epam/chat-api-client': path.resolve(
+      '@epam/ai-dial-chat-api-client': path.resolve(
         __dirname,
         '../../libs/chat-api-client/src/index.ts',
       ),
@@ -103,6 +103,10 @@ export default defineConfig(() => ({
       '@epam/ai-dial-quotations': path.resolve(
         __dirname,
         '../../libs/quotations/src/index.ts',
+      ),
+      '@epam/ai-dial-builder-form': path.resolve(
+        __dirname,
+        '../../libs/builder-form/src/index.ts',
       ),
       '@epam/ai-dial-react-pdf-highlighter/styles.css': path.resolve(
         __dirname,

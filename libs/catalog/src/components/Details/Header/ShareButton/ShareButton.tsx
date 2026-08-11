@@ -1,8 +1,4 @@
-import {
-  DIAL_ICON_SIZE,
-  NeutralButton,
-  DialDropdown,
-} from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, NeutralButton, Dropdown } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconShare } from '@tabler/icons-react';
 import { FC, type ReactNode, useCallback, useState } from 'react';
 import { CatalogItem } from '../../../../models/catalog-item';
@@ -76,17 +72,16 @@ export const ShareButton: FC<ShareButtonProps> = ({
   if (!shareOverlay) return button;
 
   return (
-    <DialDropdown
+    <Dropdown
       placement="bottom-end"
       matchReferenceWidth={false}
       open={isOpen}
       onOpenChange={setIsOpen}
       trigger={[]}
       outsideClosable
-      listClassName="cp-dropdown-overlay"
       renderOverlay={() => shareOverlay(item, () => setIsOpen(false))}
     >
       {button}
-    </DialDropdown>
+    </Dropdown>
   );
 };

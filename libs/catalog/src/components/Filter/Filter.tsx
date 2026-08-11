@@ -1,7 +1,7 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialDropdown,
+  Dropdown,
   PrimaryButton,
   GhostButton,
 } from '@epam/ai-dial-ui-kit';
@@ -245,7 +245,7 @@ export const Filter: FC<FilterProps> = ({
   };
 
   return (
-    <DialDropdown
+    <Dropdown
       matchReferenceWidth={false}
       placement="bottom-start"
       open={isOpen}
@@ -415,6 +415,6 @@ export const Filter: FC<FilterProps> = ({
           aria-hidden
         />
       </button>
-    </DialDropdown>
+    </Dropdown>
   );
 };

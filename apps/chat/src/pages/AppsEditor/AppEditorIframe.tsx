@@ -1,6 +1,6 @@
 import type { CatalogItemCredentials } from '@epam/ai-dial-catalog';
-import { DialSpinner } from '@epam/ai-dial-ui-kit';
-import type { ApplicationSchemaSummaryDto } from '@epam/chat-api-client';
+import type { ApplicationSchemaSummaryDto } from '@epam/ai-dial-chat-api-client';
+import { Spinner } from '@epam/ai-dial-ui-kit';
 import {
   forwardRef,
   memo,
@@ -34,7 +34,9 @@ import {
   mapDeploymentDetailsDtoToEntityDetails,
   mapToolsetCredentials,
 } from '../../utils/map-entity-details-to-catalog';
+import { subscribeToolsetLoginSuccess } from '../../utils/toolset-login-events';
 import {
+  decodeToolsetId,
   encodeToolsetId,
   navigateToolsetOAuthPopup,
   openToolsetOAuthPopup,
@@ -106,11 +108,28 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
       return `${schema.editorUrl}?${params.toString()}`;
     }, [schema.editorUrl, appId, user?.providerId, currentTheme]);
 
+    /*
+     * Single source of truth for the embedded editor's origin — every
+     * postMessage send/receive site below needs the same
+     * guard-then-parse-`schema.editorUrl` logic, so it's computed once here
+     * instead of being repeated (and risking drifting out of sync, e.g. one
+     * site guarding against a malformed URL and another not) at each site.
+     * `null` covers both a missing `editorUrl` and one that fails to parse.
+     */
+    const targetOrigin = useMemo(() => {
+      if (!schema.editorUrl) return null;
+      try {
+        return new URL(schema.editorUrl).origin;
+      } catch {
+        return null;
+      }
+    }, [schema.editorUrl]);
+
     /**
      * Posts the outcome of a `RequestToolsetLogin` back into the iframe.
      * Kept as a plain function (not a hook-tracked callback) since it takes
-     * no closed-over state beyond `schema.editorUrl`, resolved fresh on
-     * every call from the current iframe/schema.
+     * no closed-over state — the caller passes the current `targetOrigin`
+     * explicitly.
      */
     const postToolsetLoginResult = (
       targetOrigin: string,
@@ -185,8 +204,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
      */
     const handleToolsetLoginRequest = useCallback(
       async (toolsetId: string) => {
-        if (!schema.editorUrl) return;
-        const targetOrigin = new URL(schema.editorUrl).origin;
+        if (!targetOrigin) return;
         /*
          * The iframe sends the raw, human-readable id (e.g. contains a real
          * space) — the toolsets API requires the already-percent-encoded
@@ -300,7 +318,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
           reason: 'cancelled',
         });
       },
-      [schema.editorUrl, fetchToolsetCredentials],
+      [targetOrigin, fetchToolsetCredentials],
     );
 
     /**
@@ -313,8 +331,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
      */
     const handleToolsetLogoutRequest = useCallback(
       async (toolsetId: string) => {
-        if (!schema.editorUrl) return;
-        const targetOrigin = new URL(schema.editorUrl).origin;
+        if (!targetOrigin) return;
         const encodedToolsetId = encodeToolsetId(toolsetId);
         const credentialsLevel = ToolsetCredentialsLevel.User;
 
@@ -337,16 +354,12 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
           });
         }
       },
-      [schema.editorUrl, fetchToolsetCredentials],
+      [targetOrigin, fetchToolsetCredentials],
     );
 
     const handleMessage = useCallback(
       (event: MessageEvent) => {
-        if (
-          !schema.editorUrl ||
-          event.origin !== new URL(schema.editorUrl).origin
-        )
-          return;
+        if (!targetOrigin || event.origin !== targetOrigin) return;
         const displayName = schema.displayName ?? '';
         switch (event.data?.type) {
           case `${displayName}/${AppsEditorEvent.ReadyToInteract}`:
@@ -388,7 +401,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
         }
       },
       [
-        schema.editorUrl,
+        targetOrigin,
         schema.displayName,
         onUpdated,
         onSaveSuccess,
@@ -404,6 +417,55 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
         window.removeEventListener('message', handleMessage);
       };
     }, [handleMessage]);
+
+    /*
+     * Keeps the iframe's toolset status in sync with logins completed
+     * outside its own RequestToolsetLogin flow (e.g. via the global
+     * SigninInterruptDialog). Subscribes for the component's whole mounted
+     * lifetime — deliberately not gated on preview visibility — since the
+     * iframe stays mounted-but-hidden during Preview and must still receive
+     * updates then, without being reloaded.
+     *
+     * Not filtered to toolsets this app actually references: the host has no
+     * such list (only the embedded editor's own data model knows which
+     * toolsets an app uses), so every successful login is forwarded and the
+     * embedded editor is contractually responsible for ignoring an
+     * unrecognized `toolsetId` — see the "Settings iframe receives live
+     * updates for toolset logins initiated elsewhere" requirement in the
+     * `quick-app-authoring` spec. The forwarded `credentials` are never more
+     * than the user's own permissions already expose via `getDeploymentDetails`.
+     */
+    useEffect(() => {
+      if (!targetOrigin) return undefined;
+      let isStale = false;
+      const unsubscribe = subscribeToolsetLoginSuccess(
+        ({ toolsetId, credentialsLevel }) => {
+          const rawToolsetId = decodeToolsetId(toolsetId);
+          void (async () => {
+            const credentials = await fetchToolsetCredentials(toolsetId);
+            /*
+             * Re-checked after the await: if `targetOrigin` changed (a
+             * different app/schema loaded) while this fetch was in flight,
+             * this effect has already been cleaned up and the closed-over
+             * `targetOrigin` is stale — posting to it would either hit the
+             * wrong iframe origin or be silently dropped by the browser,
+             * permanently losing the update for the new iframe.
+             */
+            if (isStale) return;
+            postToolsetLoginResult(targetOrigin, {
+              toolsetId: rawToolsetId,
+              success: true,
+              credentialsLevel,
+              credentials,
+            });
+          })();
+        },
+      );
+      return () => {
+        isStale = true;
+        unsubscribe();
+      };
+    }, [targetOrigin, fetchToolsetCredentials]);
 
     useEffect(() => {
       const iframe = iframeRef.current;
@@ -436,18 +498,15 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
       ref,
       () => ({
         triggerSave: (general?: TriggerSaveGeneralPayload) => {
-          if (!schema.editorUrl) return;
+          if (!targetOrigin) return;
           const message: TriggerSaveMessage = {
             type: AppsEditorEvent.TriggerSave,
             general,
           };
-          iframeRef.current?.contentWindow?.postMessage(
-            message,
-            new URL(schema.editorUrl).origin,
-          );
+          iframeRef.current?.contentWindow?.postMessage(message, targetOrigin);
         },
       }),
-      [schema.editorUrl],
+      [targetOrigin],
     );
 
     return (
@@ -458,7 +517,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
             aria-label={t(AppsEditorI18nKeys.SettingsStepLoadingLabel)}
             aria-live="polite"
           >
-            <DialSpinner />
+            <Spinner />
           </div>
         )}
         <iframe

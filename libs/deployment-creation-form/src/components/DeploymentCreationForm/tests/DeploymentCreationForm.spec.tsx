@@ -8,7 +8,8 @@ import type {
 } from '../../../models/deployment-creation-form';
 import { DeploymentCreationForm } from '../DeploymentCreationForm';
 
-vi.mock('@epam/ai-dial-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
   Input: ({
     value,
     onChange,
@@ -54,6 +55,9 @@ vi.mock('@epam/ai-dial-kit', () => ({
       />
     </label>
   ),
+}));
+
+vi.mock('@epam/ai-dial-kit', () => ({
   TagInput: ({
     label,
     placeholder,
@@ -84,6 +88,16 @@ const labels: DeploymentCreationFormLabels = {
   iconUrl: { label: 'Icon URL', placeholder: 'https://...' },
   version: { label: 'Version', placeholder: 'e.g. 1.0.0' },
   topics: { label: 'Topics', placeholder: 'Add a topic' },
+  otherLocales: {
+    summaryLabel: 'Locales',
+    editLabel: 'Edit',
+    popupTitle: 'Add locale',
+    addLocaleLabel: 'Add locale',
+    languageLabel: 'Language',
+    nameLabel: 'Name',
+    descriptionLabel: 'About',
+    deleteAriaLabel: 'Delete locale',
+  },
 };
 
 const baseValues: DeploymentCreationFormValues = {
@@ -92,6 +106,7 @@ const baseValues: DeploymentCreationFormValues = {
   iconUrl: '',
   version: '',
   topics: [],
+  otherLocales: [],
 };
 
 const renderComponent = (

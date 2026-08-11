@@ -1,4 +1,4 @@
-import type { ClientConfigResponseDto } from '@epam/chat-api-client';
+import type { ClientConfigResponseDto } from '@epam/ai-dial-chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createElement, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -179,6 +179,148 @@ describe('AppConfigContext', () => {
     );
 
     expect(result.current.config.announcementHtml).toBeNull();
+  });
+
+  it('defaults the announcement title and description to null before config loads', () => {
+    mockGetClientConfig.mockReturnValue(new Promise(() => undefined));
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+    expect(result.current.config.announcementTitle).toBeNull();
+    expect(result.current.config.announcementDescription).toBeNull();
+  });
+
+  it('populates the announcement title and description from a successful API call', async () => {
+    mockGetClientConfig.mockResolvedValue({
+      appId: 'chat-ui',
+      features: {},
+      config: {
+        announcementTitle: '🎉 Welcome to DIAL! 🎉',
+        announcementDescription: 'Explore our AI offerings with your data.',
+      },
+      metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
+    } as unknown as ClientConfigResponseDto);
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+
+    expect(result.current.config.announcementTitle).toBe(
+      '🎉 Welcome to DIAL! 🎉',
+    );
+    expect(result.current.config.announcementDescription).toBe(
+      'Explore our AI offerings with your data.',
+    );
+  });
+
+  it('keeps the announcement title and description null when the call fails', async () => {
+    mockGetClientConfig.mockRejectedValue(new Error('network error'));
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Error),
+    );
+
+    expect(result.current.config.announcementTitle).toBeNull();
+    expect(result.current.config.announcementDescription).toBeNull();
+  });
+
+  it('keeps the announcement description null when the backend sends only a title', async () => {
+    mockGetClientConfig.mockResolvedValue({
+      appId: 'chat-ui',
+      features: {},
+      config: { announcementTitle: 'Title only' },
+      metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
+    } as unknown as ClientConfigResponseDto);
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+
+    expect(result.current.config.announcementTitle).toBe('Title only');
+    expect(result.current.config.announcementDescription).toBeNull();
+  });
+
+  it('defaults announcements to an empty array before config loads', () => {
+    mockGetClientConfig.mockReturnValue(new Promise(() => undefined));
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+    expect(result.current.config.announcements).toEqual([]);
+  });
+
+  it('populates announcements from a successful API call', async () => {
+    mockGetClientConfig.mockResolvedValue({
+      appId: 'chat-ui',
+      features: {},
+      config: {
+        announcements: [
+          {
+            title: 'Upgraded to DIAL 1.43',
+            description: null,
+            link: { label: 'Changelog', href: 'https://dialx.ai' },
+          },
+        ],
+      },
+      metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
+    } as unknown as ClientConfigResponseDto);
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+
+    expect(result.current.config.announcements).toHaveLength(1);
+    expect(result.current.config.announcements[0].title).toBe(
+      'Upgraded to DIAL 1.43',
+    );
+  });
+
+  it('normalizes a non-array announcements value to an empty array', async () => {
+    mockGetClientConfig.mockResolvedValue({
+      appId: 'chat-ui',
+      features: {},
+      config: { announcements: null },
+      metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
+    } as unknown as ClientConfigResponseDto);
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+
+    expect(result.current.config.announcements).toEqual([]);
+  });
+
+  it('keeps announcements empty when the call fails', async () => {
+    mockGetClientConfig.mockRejectedValue(new Error('network error'));
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Error),
+    );
+
+    expect(result.current.config.announcements).toEqual([]);
+  });
+
+  it('keeps the announcements array reference stable across renders', async () => {
+    mockGetClientConfig.mockResolvedValue({
+      appId: 'chat-ui',
+      features: {},
+      config: {
+        announcements: [{ title: 'One', description: null, link: null }],
+      },
+      metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
+    } as unknown as ClientConfigResponseDto);
+    const { result, rerender } = renderHook(() => useAppConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+    const first = result.current.config.announcements;
+    rerender();
+
+    expect(result.current.config.announcements).toBe(first);
   });
 
   it('keeps dialCoreExternalUrl null when the backend omits it', async () => {

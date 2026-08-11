@@ -115,6 +115,40 @@ describe('StandalonePublishPanel', () => {
     trigger.remove();
   });
 
+  it('keeps focus in the dialog when the opening menu hands focus back to its trigger', async () => {
+    /*
+     * Reproduces the floating-ui dropdown that launches the panel: it restores
+     * focus to its own trigger from a microtask queued as it unmounts, which
+     * runs after the panel's mount effect.
+     */
+    const trigger = document.createElement('button');
+    document.body.append(trigger);
+    trigger.focus();
+
+    renderPanel();
+    queueMicrotask(() => trigger.focus({ preventScroll: true }));
+    await new Promise<void>((resolve) => queueMicrotask(resolve));
+
+    expect(document.activeElement).toBe(
+      screen.getByRole('dialog', { name: 'Publish' }),
+    );
+    trigger.remove();
+  });
+
+  it('leaves focus alone once the opening frame has passed', async () => {
+    const outside = document.createElement('button');
+    document.body.append(outside);
+
+    renderPanel();
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => resolve()),
+    );
+    outside.focus();
+
+    expect(document.activeElement).toBe(outside);
+    outside.remove();
+  });
+
   it('makes the closed panel inert', () => {
     renderPanel({ isOpen: false });
     const dialog = screen.getByRole('dialog', { hidden: true });

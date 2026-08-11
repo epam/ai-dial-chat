@@ -16,7 +16,7 @@ import {
   ShareApi,
   ToolsetsApi,
   UserConfigApi,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import {
   ApiEndpoints,
   CsrfRefreshStatus,

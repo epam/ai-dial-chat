@@ -17,6 +17,8 @@ import { useConversationPanel } from '../../context/ConversationPanelContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useTheme } from '../../context/ThemeContext';
 import {
+  getUrlFileName,
+  hasAttachmentTextSource,
   referenceAttachmentToPdfCanvasContent,
   resolveCodeCanvasContent,
   resolveHtmlCanvasContent,
@@ -146,10 +148,21 @@ export const useOpenAttachmentCanvas = () => {
         }
       }
 
+      /*
+       * A cited source's `name` is its title, which usually carries no file
+       * extension, so the URL's own file name has to be consulted as well —
+       * otherwise an external `.html` source falls into the Unsupported
+       * branch below instead of opening in the iframe.
+       */
+      const isHtmlSource =
+        (attachment.name != null && isHtmlPreviewable(attachment.name)) ||
+        (attachment.url != null &&
+          isHtmlPreviewable(getUrlFileName(attachment.url)));
+
       if (
         attachment.name != null &&
         !isTextPreviewable(attachment.name) &&
-        !isHtmlPreviewable(attachment.name)
+        !isHtmlSource
       ) {
         openCanvas(
           createUnsupportedCanvasContent(resolveDialUrl(attachment)),
@@ -159,14 +172,15 @@ export const useOpenAttachmentCanvas = () => {
         return true;
       }
 
-      if (attachment.name != null && isHtmlPreviewable(attachment.name)) {
+      if (isHtmlSource) {
         const content = await resolveHtmlCanvasContent(attachment);
         if (content != null) {
           openCanvas(content, attachment.name, canvasAttachmentId);
           return true;
         }
-        /* External HTML URL: no DIAL download URL, fall back to url-only HtmlCanvasContent. */
-        if (attachment.url != null) {
+        if (!hasAttachmentTextSource(attachment)) {
+          /* External HTML URL: nothing to fetch, so the iframe loads it directly. */
+          if (attachment.url == null) return false;
           openCanvas(
             { type: AttachmentContentType.Html, url: attachment.url },
             attachment.name,
@@ -174,7 +188,18 @@ export const useOpenAttachmentCanvas = () => {
           );
           return true;
         }
-        return false;
+        /*
+         * The text was fetched and then rejected — currently only by the
+         * srcdoc size gate. That is an unsupported preview, not a page the
+         * browser refused to frame, so it must not fall through to the
+         * url-only branch above.
+         */
+        openCanvas(
+          createUnsupportedCanvasContent(resolveDialUrl(attachment)),
+          attachment.name,
+          canvasAttachmentId,
+        );
+        return true;
       }
 
       const content = await resolveCodeCanvasContent(

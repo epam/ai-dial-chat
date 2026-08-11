@@ -1,10 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Input } from '@epam/ai-dial-kit';
 import {
-  DialAccordion,
-  DialConfirmationPopup,
+  Accordion,
+  ConfirmationPopup,
   NeutralButton,
   PrimaryButton,
+  Input,
 } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useState } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
@@ -129,7 +129,7 @@ const LevelForm: FC<LevelFormProps> = ({
         <NeutralButton label={logoutActionLabel} onClick={handleLogoutClick} />
       )}
 
-      <DialConfirmationPopup
+      <ConfirmationPopup
         open={isLogoutConfirmOpen}
         header={logoutActionLabel}
         description={
@@ -168,7 +168,7 @@ export const CredentialsSection: FC<CredentialsSectionProps> = ({
         aria-label={texts?.manageCredentialsActionLabel ?? 'Manage credentials'}
         className="flex flex-col gap-2 px-6 py-4 ps-[60px]"
       >
-        <DialAccordion
+        <Accordion
           title={texts?.myCredentialsSectionLabel ?? 'My credentials'}
           expanded={openLevel === CredentialsLevel.User}
           onToggle={(expanded) =>
@@ -186,8 +186,8 @@ export const CredentialsSection: FC<CredentialsSectionProps> = ({
             texts={texts}
             statusLabelClassName={statusLabelClassName}
           />
-        </DialAccordion>
-        <DialAccordion
+        </Accordion>
+        <Accordion
           title={
             texts?.organizationCredentialsSectionLabel ??
             'Entire organization credentials'
@@ -208,7 +208,7 @@ export const CredentialsSection: FC<CredentialsSectionProps> = ({
             texts={texts}
             statusLabelClassName={statusLabelClassName}
           />
-        </DialAccordion>
+        </Accordion>
       </div>
     );
   }

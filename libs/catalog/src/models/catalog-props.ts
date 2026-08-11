@@ -5,6 +5,7 @@ import type {
   PublishHistoryEntry,
   PublishPanelLabels,
 } from '@epam/ai-dial-publish-panel';
+import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
 import type { CatalogEntityType } from '../types/entity-type';
 import type { CatalogSortKey } from '../types/sort';
@@ -14,23 +15,6 @@ import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
 import type { CatalogItemDetailsFetchResult } from './item-details-data';
 import type { ItemDetailsTexts } from './item-details-props';
-
-/** A single option in the Create dropdown. */
-export interface CreateOption {
-  /** Display label shown in the dropdown menu. */
-  label: string;
-  /** Short description shown below the label (single line, truncated). */
-  description?: string;
-  /** Leading icon rendered inside a tinted 32 px square. */
-  icon?: ReactNode;
-  /**
-   * Tailwind classes applied to the icon container — controls background tint
-   * and icon color.
-   */
-  iconContainerClassName?: string;
-  /** Called when this option is selected. */
-  onClick: () => void;
-}
 
 /** Text labels used by the `Catalog` surface. */
 export interface CatalogTitles {
@@ -123,6 +107,12 @@ export interface CatalogProps {
   ) => Promise<void>;
   /** Called after a successful publish; use this to surface a success notification. */
   onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
+  /** Called with the rejection reason when a publish request fails; use this to surface an error notification. */
+  onPublishError?: (
+    item: CatalogItem,
+    folderPath: string[],
+    error: unknown,
+  ) => void;
   /** Called when the user confirms a new folder name in the publish flow. */
   onCreatePublishFolder?: (parentPath: string[], name: string) => void;
   /** Text overrides forwarded to the publish flow. */
@@ -188,7 +178,7 @@ export interface CatalogProps {
    * Dropdown options for the Create button. When provided, the button opens a
    * menu instead of calling `onCreateClick` directly.
    */
-  createOptions?: CreateOption[];
+  createOptions?: DropdownItem[];
   /** Called when the Create button is clicked (used when `createOptions` is absent). */
   onCreateClick?: () => void;
   /** Hides the "Create" button entirely, e.g. when rendering as a read-only picker. Default: false. */

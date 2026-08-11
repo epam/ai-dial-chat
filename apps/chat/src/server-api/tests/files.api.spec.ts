@@ -1,7 +1,7 @@
 import type {
   FileMetadataResponseDto,
   ListFilesResponseDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { filesApi } from '../api-client';
 import { downloadFile, getFileMetadata, listFiles } from '../files.api';

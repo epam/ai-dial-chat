@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { TabRow } from '@epam/ai-dial-kit';
-import { DialSpinner } from '@epam/ai-dial-ui-kit';
+import { Spinner, DropdownItem } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
@@ -43,6 +43,7 @@ export const Catalog: FC<CatalogProps> = ({
   hasPublishWriteAccess,
   onPublish,
   onPublishSuccess,
+  onPublishError,
   onCreatePublishFolder,
   publishLabels,
   ruleSourceOptions,
@@ -88,18 +89,21 @@ export const Catalog: FC<CatalogProps> = ({
   const listViewLabel = titles?.listViewLabel ?? 'List view';
   const resolvedAriaLabel = titles?.ariaLabel ?? 'Catalog';
 
-  const sortOptions = [
+  const sortOptions: DropdownItem[] = [
     {
-      value: CatalogSortKey.RecentlyUpdated,
+      key: CatalogSortKey.RecentlyUpdated,
       label: titles?.sortRecentlyUpdatedLabel ?? 'Recently Updated',
+      onClick: () => handleSortChange?.(CatalogSortKey.RecentlyUpdated),
     },
     {
-      value: CatalogSortKey.Newest,
+      key: CatalogSortKey.Newest,
       label: titles?.sortNewestLabel ?? 'Newest',
+      onClick: () => handleSortChange?.(CatalogSortKey.Newest),
     },
     {
-      value: CatalogSortKey.NameAZ,
+      key: CatalogSortKey.NameAZ,
       label: titles?.sortNameAZLabel ?? 'Name A-Z',
+      onClick: () => handleSortChange?.(CatalogSortKey.NameAZ),
     },
   ];
 
@@ -335,7 +339,7 @@ export const Catalog: FC<CatalogProps> = ({
   if (isLoading) {
     return (
       <div className="flex size-full min-h-0 flex-1 items-center justify-center">
-        <DialSpinner />
+        <Spinner />
       </div>
     );
   }
@@ -365,7 +369,6 @@ export const Catalog: FC<CatalogProps> = ({
             {!hideCreateButton && (
               <CreateButton
                 label={createLabel}
-                colors={catalogStyles?.colors}
                 options={createOptions}
                 onClick={onCreateClick}
               />
@@ -399,7 +402,6 @@ export const Catalog: FC<CatalogProps> = ({
             viewMode={viewMode}
             onViewModeChange={handleViewModeChange}
             sortKey={sortKey}
-            onSortChange={handleSortChange}
             query={query}
             onQueryChange={setQuery}
             title={browseTitle}
@@ -436,11 +438,9 @@ export const Catalog: FC<CatalogProps> = ({
         <div
           className={mergeClasses(
             tabFiltered.length > 0
-              ? 'mx-auto min-h-full w-full max-w-[1180px] px-8 pt-6'
-              : 'min-h-0 flex-1',
-            tabFiltered.length === 0 &&
-              viewMode === CatalogViewMode.List &&
-              'px-8 pt-6',
+              ? 'mx-auto min-h-full w-full max-w-[1180px] px-8 py-6'
+              : 'min-h-[180px] flex-1',
+            tabFiltered.length === 0 && 'px-8 py-6',
           )}
         >
           <div
@@ -506,6 +506,7 @@ export const Catalog: FC<CatalogProps> = ({
           hasPublishWriteAccess={hasPublishWriteAccess}
           onPublish={onPublish}
           onPublishSuccess={onPublishSuccess}
+          onPublishError={onPublishError}
           onCreatePublishFolder={onCreatePublishFolder}
           publishLabels={publishLabels}
           ruleSourceOptions={ruleSourceOptions}

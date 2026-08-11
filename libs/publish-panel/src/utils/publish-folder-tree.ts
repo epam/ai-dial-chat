@@ -31,6 +31,76 @@ export const filterFolderTree = (
   }, []);
 };
 
+/*
+ * Case-insensitive, digit-aware name comparison so "Folder 2" precedes
+ * "Folder 10" and casing never splits otherwise-adjacent names.
+ */
+const compareFolderNames = (a: string, b: string): number =>
+  a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true });
+
+/** Returns `items` ordered by folder name at every level; the input array and its nodes are left untouched. */
+export const sortFolderTree = (
+  items: PublishFolderNode[],
+): PublishFolderNode[] =>
+  [...items]
+    .sort((a, b) => compareFolderNames(a.name, b.name))
+    .map((node) =>
+      node.children
+        ? { ...node, children: sortFolderTree(node.children) }
+        : node,
+    );
+
+const withFolderPath = (
+  items: PublishFolderNode[],
+  path: string[],
+  parentPath: string[],
+): PublishFolderNode[] => {
+  const [name, ...rest] = path;
+  if (name == null) {
+    return items;
+  }
+  const nodePath = [...parentPath, name];
+  const existing = items.find((node) => node.name === name);
+  if (!existing) {
+    return [
+      ...items,
+      {
+        path: nodePath,
+        name,
+        children: rest.length
+          ? withFolderPath([], rest, nodePath)
+          : /* Leaf: children are unknown, not empty — same as a folder the host has not listed yet. */
+            undefined,
+      },
+    ];
+  }
+  if (!rest.length) {
+    return items;
+  }
+  return items.map((node) =>
+    node === existing
+      ? {
+          ...node,
+          children: withFolderPath(node.children ?? [], rest, nodePath),
+        }
+      : node,
+  );
+};
+
+/**
+ * Returns `items` with a folder node added for every path in `paths` that is
+ * not already present, creating any missing ancestor along the way. Existing
+ * nodes and their children are preserved as-is.
+ */
+export const mergeFolderPaths = (
+  items: PublishFolderNode[],
+  paths: string[][],
+): PublishFolderNode[] =>
+  paths.reduce(
+    (acc, path) => (path.length ? withFolderPath(acc, path, []) : acc),
+    items,
+  );
+
 /** Returns every folder path (joined by "/") in `items`, recursively. */
 export const collectFolderKeys = (items: PublishFolderNode[]): string[] =>
   items.flatMap((node) => [

@@ -139,16 +139,3 @@ i18n: handled via `CatalogTitles` — no i18n inside the lib. RTL: none. Feature
 
 - **WHEN** a topic filter is active that excludes some items
 - **THEN** entity-type tab counts reflect only items passing the topic+myApps filters, not the raw filtered list
-
----
-
-### Requirement: CatalogSortOption re-exported from index
-
-`libs/catalog/src/index.ts` SHALL export `CatalogSortOption` from `./models/sort`.
-
-`CatalogSortOption` is `{ value: string; label: string }` — represents a single option in the sort dropdown.
-
-#### Scenario: Consumer can import CatalogSortOption from the package root
-
-- **WHEN** a consumer imports `CatalogSortOption` from `@epam/ai-dial-catalog`
-- **THEN** the import resolves without TypeScript errors and the type is available for use

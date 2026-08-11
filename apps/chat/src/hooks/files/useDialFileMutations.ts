@@ -1,4 +1,13 @@
 import type {
+  CreateFolderResponseDto,
+  DeleteItemDto,
+} from '@epam/ai-dial-chat-api-client';
+import {
+  ArchiveItemDtoNodeTypeEnum,
+  DeleteItemDtoNodeTypeEnum,
+  RenameItemDtoNodeTypeEnum,
+} from '@epam/ai-dial-chat-api-client';
+import type {
   DialCopiedItem,
   DialDeletedItem,
   DialFile,
@@ -9,15 +18,6 @@ import {
   DialFileNodeType,
 } from '@epam/ai-dial-react-file-manager';
 import { NOT_ALLOWED_SYMBOLS, NotificationVariant } from '@epam/ai-dial-ui-kit';
-import type {
-  CreateFolderResponseDto,
-  DeleteItemDto,
-} from '@epam/chat-api-client';
-import {
-  ArchiveItemDtoNodeTypeEnum,
-  DeleteItemDtoNodeTypeEnum,
-  RenameItemDtoNodeTypeEnum,
-} from '@epam/chat-api-client';
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DialFileManagerI18nKeys } from '../../constants/translation-keys';
@@ -145,18 +145,77 @@ export const useDialFileMutations = ({
   const [isMoving, setIsMoving] = useState(false);
   const copyMoveAbortControllerRef = useRef<AbortController | null>(null);
 
+  /*
+   * The host `DialFileManager` grid shows this validation result inline
+   * while the user types but does not reliably gate its own `onCreateFolder`
+   * confirm callback on it — and the name it eventually passes to
+   * `onCreateFolder` is derived by splitting a constructed virtual path on
+   * '/', which silently swallows an embedded '/' the user typed as if it
+   * were a path separator (see #7968). Track the last live-typed validation
+   * result here so `onCreateFolder` can refuse even when the value it
+   * receives no longer reflects that error.
+   */
+  const lastLiveValidationErrorRef = useRef<string | null>(null);
+
+  const onCreateFolderValidate = useCallback(
+    (name: string, parentFolder: DialFile): string | null => {
+      let error: string | null = null;
+      if (!name || name.trim() === '') {
+        error = t('dialFileManager.folderNameEmpty');
+      } else if (hasForbiddenNameSymbols(name, forbiddenSymbolsRegExp)) {
+        error = t(DialFileManagerI18nKeys.FolderNameInvalidChars, {
+          notAllowedSymbols: NOT_ALLOWED_SYMBOLS,
+        });
+      } else if (name.startsWith('.')) {
+        error = t('dialFileManager.folderNameHidden');
+      } else if (name === RESERVED_MARKER_NAME) {
+        error = t('dialFileManager.folderNameReserved');
+      } else if (name.length > 255) {
+        error = t('dialFileManager.folderNameTooLong');
+      } else {
+        const siblings = parentFolder.items ?? [];
+        const lowerName = name.toLowerCase();
+        if (siblings.some((s) => s.name.toLowerCase() === lowerName)) {
+          error = t('dialFileManager.folderConflict');
+        }
+      }
+      lastLiveValidationErrorRef.current = error;
+      return error;
+    },
+    [t, forbiddenSymbolsRegExp],
+  );
+
   const onCreateFolder = useCallback(
     async (
       _file: DialUploadFileItem,
       newFolderPath: string,
       _fileId: string,
     ): Promise<void> => {
-      setIsCreatingFolder(true);
       const { parentVirtualPath, name } = parseNewFolderVirtualPath(
         newFolderPath,
         rootLabel,
       );
       const parentApiPath = virtualPathToApiPath(parentVirtualPath, rootLabel);
+
+      const parentFolder: DialFile =
+        currentFolder && folderPath === parentApiPath
+          ? currentFolder
+          : {
+              id: parentApiPath,
+              path: parentApiPath,
+              name: parentVirtualPath.split('/').filter(Boolean).pop() ?? '',
+              folderId: parentApiPath,
+              nodeType: DialFileNodeType.FOLDER,
+              items: [],
+            };
+
+      // Captured before re-validating below, which overwrites the ref.
+      const priorLiveError = lastLiveValidationErrorRef.current;
+      lastLiveValidationErrorRef.current = null;
+
+      if (onCreateFolderValidate(name, parentFolder) || priorLiveError) return;
+
+      setIsCreatingFolder(true);
       const { bucket: targetBucket, path: targetParentPath } =
         activeTab === DialFileManagerTabs.Shared
           ? resolveOwnerCoords(parentApiPath, sharedRootMetaRef.current, bucket)
@@ -185,6 +244,9 @@ export const useDialFileMutations = ({
     [
       activeTab,
       bucket,
+      currentFolder,
+      folderPath,
+      onCreateFolderValidate,
       rootLabel,
       listingPermissionsCache,
       mergeCreatedFolder,
@@ -193,35 +255,6 @@ export const useDialFileMutations = ({
       onNotification,
       t,
     ],
-  );
-
-  const onCreateFolderValidate = useCallback(
-    (name: string, parentFolder: DialFile): string | null => {
-      if (!name || name.trim() === '') {
-        return t('dialFileManager.folderNameEmpty');
-      }
-      if (hasForbiddenNameSymbols(name, forbiddenSymbolsRegExp)) {
-        return t(DialFileManagerI18nKeys.FolderNameInvalidChars, {
-          notAllowedSymbols: NOT_ALLOWED_SYMBOLS,
-        });
-      }
-      if (name.startsWith('.')) {
-        return t('dialFileManager.folderNameHidden');
-      }
-      if (name === RESERVED_MARKER_NAME) {
-        return t('dialFileManager.folderNameReserved');
-      }
-      if (name.length > 255) {
-        return t('dialFileManager.folderNameTooLong');
-      }
-      const siblings = parentFolder.items ?? [];
-      const lowerName = name.toLowerCase();
-      if (siblings.some((s) => s.name.toLowerCase() === lowerName)) {
-        return t('dialFileManager.folderConflict');
-      }
-      return null;
-    },
-    [t, forbiddenSymbolsRegExp],
   );
 
   const onDownloadFiles = useCallback(

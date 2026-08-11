@@ -22,7 +22,12 @@ import type {
   CustomVisualizer,
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
-import { FileExtension, MIMEType } from '@epam/ai-dial-chat-shared';
+import {
+  base64ToBlob,
+  FileExtension,
+  MIMEType,
+  tryBase64ToBytes,
+} from '@epam/ai-dial-chat-shared';
 import {
   annotationHighlightId,
   annotationsToPdfHighlights,
@@ -37,39 +42,18 @@ import {
 } from './dial-file';
 
 /**
- * Decodes a base64 string into raw bytes, or `undefined` if the string is not
- * valid base64 (some backends put already-decoded plain text in `data` despite
- * the base64 contract, e.g. OCR'd markdown with non-Latin1 characters).
- */
-const tryBase64ToBytes = (base64: string): Uint8Array | undefined => {
-  try {
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    return bytes;
-  } catch {
-    return undefined;
-  }
-};
-
-/**
  * Decodes an inline `data` payload into a Blob object URL of the given MIME
  * type. Falls back to treating `data` as raw (already-decoded) text when it
  * is not valid base64.
  */
-const base64ToBlobUrl = (data: string, mimeType: string): string => {
-  const bytes = tryBase64ToBytes(data) ?? new TextEncoder().encode(data);
-  return URL.createObjectURL(
-    new Blob([bytes.buffer as ArrayBuffer], { type: mimeType }),
-  );
-};
+const base64ToBlobUrl = (data: string, mimeType: string): string =>
+  URL.createObjectURL(base64ToBlob(data, mimeType));
 
 /**
  * Decodes an inline `data` payload into UTF-8 text. Falls back to returning
  * `data` unchanged when it is not valid base64 (some backends send
- * already-decoded plain text, see `tryBase64ToBytes`).
+ * already-decoded plain text despite the base64 contract, e.g. OCR'd markdown
+ * with non-Latin1 characters).
  */
 const base64ToText = (base64: string): string => {
   const bytes = tryBase64ToBytes(base64);
@@ -103,6 +87,19 @@ const networkFailureContent = (url: string): ErrorCanvasContent => ({
  * APIs do not mislabel them. For document types we rely solely on the URL path
  * extension — Google's grounding API labels every web reference (YouTube,
  * Forbes, etc.) as 'text/markdown', so content-type alone is unreliable. */
+/**
+ * Returns the last path segment of `url`, or an empty string when `url` is not
+ * absolute. Used to classify a resource by extension when its display name is
+ * a citation title rather than a file name.
+ */
+export const getUrlFileName = (url: string): string => {
+  try {
+    return new URL(url).pathname.split('/').pop() ?? '';
+  } catch {
+    return '';
+  }
+};
+
 export const isExternalSourcePreviewable = (
   contentType: string,
   url: string,
@@ -110,21 +107,16 @@ export const isExternalSourcePreviewable = (
   if (contentType.startsWith('image/') || contentType.startsWith('audio/')) {
     return true;
   }
-  try {
-    const { pathname } = new URL(url);
-    const fileName = pathname.split('/').pop() ?? '';
-    const dot = fileName.lastIndexOf('.');
-    if (dot === -1) return false;
-    const ext = fileName.slice(dot + 1).toLowerCase();
-    /* 'pdf' is not in TEXT_EXTENSIONS; 'html'/'htm' are not in TEXT_EXTENSIONS (they use HtmlContent), so both must be checked explicitly. */
-    return (
-      ext === FileExtension.PDF ||
-      isTextPreviewable(fileName) ||
-      isHtmlPreviewable(fileName)
-    );
-  } catch {
-    return false;
-  }
+  const fileName = getUrlFileName(url);
+  const dot = fileName.lastIndexOf('.');
+  if (dot === -1) return false;
+  const ext = fileName.slice(dot + 1).toLowerCase();
+  /* 'pdf' is not in TEXT_EXTENSIONS; 'html'/'htm' are not in TEXT_EXTENSIONS (they use HtmlContent), so both must be checked explicitly. */
+  return (
+    ext === FileExtension.PDF ||
+    isTextPreviewable(fileName) ||
+    isHtmlPreviewable(fileName)
+  );
 };
 
 /*
@@ -249,6 +241,19 @@ const resolveAttachmentText = async (
   }
   return undefined;
 };
+
+/**
+ * Whether the attachment carries text `resolveAttachmentText` can resolve —
+ * inline data, a DIAL download URL, or a locally-picked file. Mirrors that
+ * function's source list, so a `null` resolver result can be read as "the text
+ * was fetched and rejected" rather than "there was no text to fetch".
+ */
+export const hasAttachmentTextSource = (
+  attachment: DisplayAttachment,
+): boolean =>
+  attachment.data != null ||
+  resolveDialUrl(attachment) != null ||
+  ('file' in attachment && (attachment as Attachment).file.size > 0);
 
 /**
  * Resolves an image canvas content payload from a DisplayAttachment without

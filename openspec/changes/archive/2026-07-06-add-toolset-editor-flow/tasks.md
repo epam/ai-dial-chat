@@ -29,21 +29,21 @@
 
 ## 5. General step
 
-- [x] 5.1 Create `GeneralForm` with `useState` per field: name, version, icon URL (plain `DialInput`), description (`DialTextarea`), topics (`DialTagInput`, sourced from `AppConfigContext`)
+- [x] 5.1 Create `GeneralForm` with `useState` per field: name, version, icon URL (plain `Input`), description (`Textarea`), topics (`DialTagInput`, sourced from `AppConfigContext`)
 - [x] 5.2 Add manual `if`-guard validation (name required) with per-field error state + i18n keys
 - [x] 5.3 Add `getStorageSafeUniqueToolsetName` to a domain util (e.g. `apps/chat/src/utils/toolsets.ts`) and use it for the default create-mode name
 - [x] 5.4 Add unit tests for `GeneralForm` validation and unique-name generation
 
 ## 6. Settings step (connection fields)
 
-- [x] 6.1 Create `SettingsForm` with endpoint (`DialInput`), protocol (`DialSelect` HTTP/SSE), allowed tools (`DialTagInput`)
+- [x] 6.1 Create `SettingsForm` with endpoint (`Input`), protocol (`Select` HTTP/SSE), allowed tools (`DialTagInput`)
 - [x] 6.2 Add an endpoint-URL validator util (protocol regex, trailing `.`//` guard, `new URL()` parse) with per-field error
 - [x] 6.3 Add a copy-endpoint-URL control (`DialIconButton` + clipboard API)
 - [x] 6.4 Add unit tests for endpoint validation and copy behavior
 
 ## 7. Authentication section
 
-- [x] 7.1 Build the auth type single-select as a plain button list, driven by a single `authenticationType` state (only one option expanded at a time; no ui-kit `DialAccordion` component fit the single-external-state-driven-selection shape, so it is hand-rolled)
+- [x] 7.1 Build the auth type single-select as a plain button list, driven by a single `authenticationType` state (only one option expanded at a time; no ui-kit `Accordion` component fit the single-external-state-driven-selection shape, so it is hand-rolled)
 - [x] 7.2 Build the login form with conditional fields by `authenticationType` + `WithLogin` (API Key: key header + key; OAuth: client id/secret, endpoints, scopes) and manual validation
 - [x] 7.3 Wire logout via `DialConfirmationPopup` and an `onLogout` callback prop; disable selector + fields when logged in or while saving
 - [x] 7.4 Implement the OAuth initiate flow: save config, persist `ToolsetRedirectState` to `sessionStorage`, redirect to the provider auth URL

@@ -41,6 +41,7 @@ import {
   AttachmentCanvasI18nKeys,
   ButtonsI18nKeys,
 } from '../constants/translation-keys';
+import { ActiveScheduledTaskProvider } from '../context/ActiveScheduledTaskContext';
 import { useConversationPanel } from '../context/ConversationPanelContext';
 import { useDeployments } from '../context/DeploymentsContext';
 import { useOptionalOverlay } from '../context/overlay/OverlayContext';
@@ -67,6 +68,12 @@ const ScheduledTasksPage = lazy(
 );
 const ScheduledTaskCreatePage = lazy(
   () => import('../pages/ScheduledTaskCreatePage/ScheduledTaskCreatePage'),
+);
+const ScheduledTaskDetailPage = lazy(
+  () => import('../pages/ScheduledTaskDetailPage/ScheduledTaskDetailPage'),
+);
+const ScheduledTaskEditPage = lazy(
+  () => import('../pages/ScheduledTaskEditPage/ScheduledTaskEditPage'),
 );
 const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
 const ToolsetEditorPage = lazy(
@@ -297,164 +304,186 @@ const App: FC = () => {
           onDuplicateReadonly={handleDuplicateReadonly}
         />
 
-        <main
-          id="main-content"
-          role="main"
-          className="relative flex min-h-0 min-w-0 flex-1 flex-col shadow-main-inset"
-        >
-          <Header
-            onMenuToggle={toggleNav}
-            isConversationPanelOpen={isPanelOpen}
-            onConversationPanelToggle={togglePanel}
-            onNewChat={handleNewChat}
-          />
-          <Routes>
-            <Route
-              element={
-                <ChatLayout
-                  isPanelOpen={isPanelOpen}
-                  onTogglePanel={togglePanel}
-                  onNewChat={handleNewChat}
-                />
-              }
-            >
-              <Route path={ROUTES.Root} element={<ConversationRoute />} />
+        <ActiveScheduledTaskProvider>
+          <main
+            id="main-content"
+            role="main"
+            className="relative flex min-h-0 min-w-0 flex-1 flex-col shadow-main-inset"
+          >
+            <Header
+              onMenuToggle={toggleNav}
+              isConversationPanelOpen={isPanelOpen}
+              onConversationPanelToggle={togglePanel}
+              onNewChat={handleNewChat}
+            />
+            <Routes>
               <Route
-                path="/conversations/*"
+                element={
+                  <ChatLayout
+                    isPanelOpen={isPanelOpen}
+                    onTogglePanel={togglePanel}
+                    onNewChat={handleNewChat}
+                  />
+                }
+              >
+                <Route path={ROUTES.Root} element={<ConversationRoute />} />
+                <Route
+                  path="/conversations/*"
+                  element={
+                    <RouteErrorBoundary>
+                      <Suspense fallback={<RouteFallback />}>
+                        <ConversationPage
+                          onDuplicateReadonly={handleDuplicateReadonly}
+                        />
+                      </Suspense>
+                    </RouteErrorBoundary>
+                  }
+                />
+              </Route>
+              <Route
+                path={ROUTES.Catalog}
                 element={
                   <RouteErrorBoundary>
                     <Suspense fallback={<RouteFallback />}>
-                      <ConversationPage
-                        onDuplicateReadonly={handleDuplicateReadonly}
-                      />
+                      <CatalogView />
                     </Suspense>
                   </RouteErrorBoundary>
                 }
               />
-            </Route>
-            <Route
-              path={ROUTES.Catalog}
-              element={
-                <RouteErrorBoundary>
-                  <Suspense fallback={<RouteFallback />}>
-                    <CatalogView />
-                  </Suspense>
-                </RouteErrorBoundary>
-              }
-            />
-            <Route
-              path={ROUTES.SharedInvitation}
-              element={
-                <RouteErrorBoundary>
-                  <Suspense fallback={<RouteFallback />}>
-                    <SharedInvitationPage />
-                  </Suspense>
-                </RouteErrorBoundary>
-              }
-            />
-            <Route
-              path={ROUTES.ConversationSharedInvitation}
-              element={
-                <RouteErrorBoundary>
-                  <Suspense fallback={<RouteFallback />}>
-                    <ConversationSharedInvitationPage />
-                  </Suspense>
-                </RouteErrorBoundary>
-              }
-            />
-            <Route
-              path={ROUTES.FileManager}
-              element={
-                <RouteErrorBoundary>
-                  <Suspense fallback={<RouteFallback />}>
-                    <DialFileManagerPage />
-                  </Suspense>
-                </RouteErrorBoundary>
-              }
-            />
-            <Route
-              path={ROUTES.ScheduledTasks}
-              element={
-                <RouteErrorBoundary>
-                  <Suspense fallback={<RouteFallback />}>
-                    <ScheduledTasksPage />
-                  </Suspense>
-                </RouteErrorBoundary>
-              }
-            />
-            <Route
-              path={ROUTES.ScheduledTaskCreate}
-              element={
-                <RouteErrorBoundary>
-                  <Suspense fallback={<RouteFallback />}>
-                    <ScheduledTaskCreatePage />
-                  </Suspense>
-                </RouteErrorBoundary>
-              }
-            />
-            <Route
-              path={ROUTES.AppsEditor}
-              element={
-                <RouteErrorBoundary>
-                  <Suspense fallback={<RouteFallback />}>
-                    <AppsEditorPage />
-                  </Suspense>
-                </RouteErrorBoundary>
-              }
-            />
-            <Route
-              path={ROUTES.ToolsetEditorCallback}
-              element={
-                <RouteErrorBoundary>
-                  <Suspense fallback={<RouteFallback />}>
-                    <ToolsetAuthCallbackPage />
-                  </Suspense>
-                </RouteErrorBoundary>
-              }
-            />
-            <Route
-              path={ROUTES.ToolsetSignIn}
-              element={
-                <RouteErrorBoundary>
-                  <Suspense fallback={<RouteFallback />}>
-                    <ToolsetAuthCallbackPage />
-                  </Suspense>
-                </RouteErrorBoundary>
-              }
-            />
-            <Route
-              path={ROUTES.ToolsetEditor}
-              element={
-                <RouteErrorBoundary>
-                  <Suspense fallback={<RouteFallback />}>
-                    <ToolsetEditorPage />
-                  </Suspense>
-                </RouteErrorBoundary>
-              }
-            />
-            <Route
-              path={ROUTES.CustomAppEditor}
-              element={
-                <RouteErrorBoundary>
-                  <Suspense fallback={<RouteFallback />}>
-                    <CustomAppEditorPage />
-                  </Suspense>
-                </RouteErrorBoundary>
-              }
-            />
-            <Route
-              path="*"
-              element={
-                <RouteErrorBoundary>
-                  <Suspense fallback={<RouteFallback />}>
-                    <NotFoundPage />
-                  </Suspense>
-                </RouteErrorBoundary>
-              }
-            />
-          </Routes>
-        </main>
-        {isConversationRoute && <ConversationSourcesPanel />}
+              <Route
+                path={ROUTES.SharedInvitation}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <SharedInvitationPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.ConversationSharedInvitation}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ConversationSharedInvitationPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.FileManager}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <DialFileManagerPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.ScheduledTasks}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ScheduledTasksPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.ScheduledTaskCreate}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ScheduledTaskCreatePage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.ScheduledTaskDetail}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ScheduledTaskDetailPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.ScheduledTaskEdit}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ScheduledTaskEditPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.AppsEditor}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <AppsEditorPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.ToolsetEditorCallback}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ToolsetAuthCallbackPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.ToolsetSignIn}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ToolsetAuthCallbackPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.ToolsetEditor}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ToolsetEditorPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.CustomAppEditor}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <CustomAppEditorPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path="*"
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <NotFoundPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+            </Routes>
+          </main>
+          {isConversationRoute && <ConversationSourcesPanel />}
+        </ActiveScheduledTaskProvider>
         {isConversationRoute && isAttachmentsManagerEnabled && (
           <AttachmentCanvasContainer
             labels={{

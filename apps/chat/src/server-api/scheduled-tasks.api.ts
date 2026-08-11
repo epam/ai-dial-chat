@@ -1,21 +1,17 @@
 import type {
   CreateScheduledTaskBodyDto,
   CreatedScheduledTaskDto,
+  ListScheduledTaskRunsResponseDto,
   ListScheduledTasksResponseDto,
-  ListScheduledTasksSortEnum,
   ScheduledTaskDto,
   UpdateScheduledTaskBodyDto,
   UpdatedScheduledTaskDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
+import type {
+  ListScheduledTaskRunsParams,
+  ListScheduledTasksParams,
+} from '../models/scheduled-tasks';
 import { scheduledTasksApi } from './api-client';
-
-export interface ListScheduledTasksParams {
-  limit?: number;
-  offset?: number;
-  search?: string;
-  sort?: ListScheduledTasksSortEnum;
-  signal?: AbortSignal;
-}
 
 export const listScheduledTasks = ({
   limit,
@@ -47,3 +43,14 @@ export const updateScheduledTask = (
     scheduleId,
     updateScheduledTaskBodyDto: body,
   });
+
+export const listScheduledTaskRuns = ({
+  scheduleId,
+  limit,
+  offset,
+  signal,
+}: ListScheduledTaskRunsParams): Promise<ListScheduledTaskRunsResponseDto> =>
+  scheduledTasksApi.listScheduledTaskRuns(
+    { scheduleId, limit, offset },
+    signal ? { signal } : undefined,
+  );

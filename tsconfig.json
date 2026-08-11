@@ -68,6 +68,9 @@
     },
     {
       "path": "./libs/quotations"
+    },
+    {
+      "path": "./libs/builder-form"
     }
   ]
 }

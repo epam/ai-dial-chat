@@ -23,6 +23,7 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 - `@epam/ai-dial-ui-kit`
 - `@epam/ai-dial-kit`
 - `@epam/ai-dial-chat-shared`
+- `@epam/ai-dial-builder-form`
 
 ## Components
 
@@ -67,7 +68,7 @@ import {
 
 ### ScheduledTaskCard
 
-A single scheduled task rendered as a card: title, optional description/prompt preview, schedule pill, optional location breadcrumb, optional "new" badge, and an overflow menu for Edit/Run now/Delete (each action shown only when its handler is supplied).
+A single scheduled task rendered as a card: title, optional description/prompt preview, schedule pill, and optional location breadcrumb and "new" badge. When `onCardClick` is supplied, the whole card becomes an activatable element (click or Enter/Space) reporting the task id.
 
 ```tsx
 import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
@@ -79,9 +80,7 @@ import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
     scheduleLabel: 'Every Monday 12:00',
     sectionKey: ScheduledTaskSectionKey.MyTasks,
   }}
-  onEdit={(id) => {}}
-  onRunNow={(id) => {}}
-  onDelete={(id) => {}}
+  onCardClick={(id) => {}}
 />;
 ```
 
@@ -91,13 +90,12 @@ import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
 
 ### ScheduledTaskCreateForm
 
-Presentational create-task form: display name, a one-shot/recurring schedule section, a model picker, a prompt textarea, a stream toggle, and Cancel/Create actions. Field values, validation errors, and model options are all supplied by the host app; this component holds no state of its own.
+Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a model picker, a description field, and a markdown Instructions editor. Field values, validation errors, and model options are all supplied by the host app; this component holds no state of its own.
 
 ```tsx
 import {
   ScheduledTaskCreateForm,
-  ScheduledTaskFrequency,
-  ScheduledTaskScheduleType,
+  ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
 
 <ScheduledTaskCreateForm
@@ -108,17 +106,55 @@ import {
   }
   values={{
     displayName: '',
-    scheduleType: ScheduledTaskScheduleType.Recurring,
-    frequency: ScheduledTaskFrequency.Daily,
+    repeat: ScheduledTaskRepeat.Daily,
     time: '09:00',
+    minute: '0',
+    startDate: '',
+    endDate: '',
     modelId: '',
     prompt: '',
-    stream: true,
   }}
   errors={{}}
   modelOptions={[{ id: 'gpt-4o', label: 'GPT-4o' }]}
   onFieldChange={(field, value) => {}}
+  onBack={() => {}}
   onCancel={() => {}}
   onSubmit={() => {}}
+  markdownEditorTheme="light"
+/>;
+```
+
+### ScheduledTaskDetailView
+
+Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated History panel listing past runs with a status icon, timestamp, and duration per row, with a "Show more" button (not scroll-triggered) for loading further pages. Field values, runs, and markdown rendering are all supplied by the host app; this component holds no state of its own and performs no routing, i18n, or network calls.
+
+```tsx
+import {
+  ScheduledTaskDetailView,
+  ScheduledTaskRunStatus,
+} from '@epam/ai-dial-scheduled-tasks';
+
+<ScheduledTaskDetailView
+  labels={
+    {
+      /* ... */
+    }
+  }
+  onBack={() => {}}
+  onEdit={() => {}}
+  displayName="Daily summary"
+  description="Summarizes unread inbox items every morning"
+  modelLabel="GPT-4.1 mini"
+  repeatsLabel="Every Monday 12:00"
+  nextRunLabel="Next run: Jul 31 at 9:00 AM"
+  instructionsMarkdown="Summarize my inbox"
+  runs={[
+    {
+      id: 'run_1',
+      status: ScheduledTaskRunStatus.Success,
+      timestampLabel: 'today at 9:01 AM (99s)',
+    },
+  ]}
+  onRunsLoadMore={() => {}}
 />;
 ```

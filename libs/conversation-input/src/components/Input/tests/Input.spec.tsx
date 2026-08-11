@@ -20,15 +20,20 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
   return {
     ...actual,
-    DialDropdown: ({
+    Dropdown: ({
       children,
       items,
+      open,
+      renderOverlay,
     }: {
       children: ReactNode;
       items?: MenuItems;
+      open?: boolean;
+      renderOverlay?: () => ReactNode;
     }) => (
       <div>
         {children}
+        {open && renderOverlay?.()}
         {items?.map((item) => (
           <button
             key={item.key}
@@ -67,7 +72,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         ))}
       </div>
     ),
-    DialSkeleton: ({ variant }: { variant: string }) => (
+    Skeleton: ({ variant }: { variant: string }) => (
       <span data-variant={variant} />
     ),
   };
@@ -769,6 +774,52 @@ describe('Input — isInputDisabled', () => {
       fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
     }
     expect(handleSend).toHaveBeenCalledWith('Hello', []);
+  });
+
+  it('opens the model picker when isInputDisabled is true', () => {
+    render(
+      <Input
+        deployments={mockItems}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={vi.fn()}
+        modelPickerOverlay={() => <div>model picker</div>}
+        isInputDisabled
+      />,
+    );
+    expect(screen.queryByText('model picker')).toBeNull();
+
+    fireEvent.click(screen.getByLabelText(/Select model/));
+
+    expect(screen.getByText('model picker')).toBeTruthy();
+  });
+
+  it('does not dim the model selector when isInputDisabled is true', () => {
+    const { container } = render(
+      <Input
+        deployments={mockItems}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={vi.fn()}
+        isInputDisabled
+      />,
+    );
+    expect(container.querySelector('[aria-disabled="true"]')).toBeNull();
+  });
+
+  it('keeps the model picker closed when the selector is explicitly disabled', () => {
+    render(
+      <Input
+        deployments={mockItems}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={vi.fn()}
+        modelPickerOverlay={() => <div>model picker</div>}
+        isInputDisabled
+        isModelSelectorDisabled
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText(/Select model/));
+
+    expect(screen.queryByText('model picker')).toBeNull();
   });
 });
 

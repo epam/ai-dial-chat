@@ -1,13 +1,9 @@
-/** Whether a scheduled task runs once at a specific time or repeats on a cadence. */
-export enum ScheduledTaskScheduleType {
+/** How often a scheduled task repeats. */
+export enum ScheduledTaskRepeat {
   /** Task runs once at the date/time specified by `runAt`. */
-  Once = 'once',
-  /** Task runs repeatedly on the cadence specified by `frequency`, `time`, `dayOfWeek`, and `dayOfMonth`. */
-  Recurring = 'recurring',
-}
-
-/** Recurrence cadence for a {@link ScheduledTaskScheduleType.Recurring} schedule type. */
-export enum ScheduledTaskFrequency {
+  OneTime = 'oneTime',
+  /** Task runs every hour, at the start of the hour. */
+  Hourly = 'hourly',
   /** Task runs every day at the specified `time`. */
   Daily = 'daily',
   /** Task runs every week on `dayOfWeek` at the specified `time`. */

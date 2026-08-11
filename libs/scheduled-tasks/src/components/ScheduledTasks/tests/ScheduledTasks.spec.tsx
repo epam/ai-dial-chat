@@ -64,12 +64,12 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     <article {...rest}>{children}</article>
   ),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialSpinner: () => <div role="progressbar" />,
-  DialSkeleton: ({ color }: { color?: string }) => (
+  Spinner: () => <div role="progressbar" />,
+  Skeleton: ({ color }: { color?: string }) => (
     <div data-skeleton data-color={color} />
   ),
-  DialSkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
-  DialDropdown: ({ children }: { children: ReactNode }) => <>{children}</>,
+  SkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
+  Dropdown: ({ children }: { children: ReactNode }) => <>{children}</>,
   IconButton: ({
     icon,
     ...rest
@@ -89,6 +89,24 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       <span>{title}</span>
     </div>
   ),
+  ButtonDropdown: ({
+    label,
+    items,
+  }: {
+    label?: string;
+    items: { key: string; label: string; onClick?: () => void }[];
+  }) => (
+    <div>
+      <button>{label}</button>
+      {items.map((item) => (
+        <button key={item.key} onClick={item.onClick}>
+          {item.label}
+        </button>
+      ))}
+    </div>
+  ),
+  ButtonVariant: { Primary: 'primary', Neutral: 'neutral' },
+  ButtonAppearance: { Ghost: 'ghost', Solid: 'solid' },
 }));
 
 vi.mock('@tabler/icons-react', () => ({
@@ -462,6 +480,19 @@ describe('ScheduledTasks', () => {
 
       expect(onLoadMore).not.toHaveBeenCalled();
       restoreStyle();
+    });
+  });
+
+  describe('card click navigation', () => {
+    it('forwards onCardClick down to the rendered card', async () => {
+      const onCardClick = vi.fn();
+      renderScheduledTasks({ items: [buildItem()], onCardClick });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Competitor Updates' }),
+      );
+
+      expect(onCardClick).toHaveBeenCalledWith('sched_1');
     });
   });
 });

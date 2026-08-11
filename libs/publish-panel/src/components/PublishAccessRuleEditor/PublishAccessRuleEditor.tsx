@@ -1,10 +1,10 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Input, TagInput } from '@epam/ai-dial-kit';
+import { TagInput } from '@epam/ai-dial-kit';
 import {
-  ButtonAppearance,
-  ButtonVariant,
-  DialButton,
-  DialSelect,
+  Input,
+  NeutralButton,
+  PrimaryButton,
+  Select,
 } from '@epam/ai-dial-ui-kit';
 import {
   FC,
@@ -20,7 +20,7 @@ import styles from './PublishAccessRuleEditor.module.scss';
 
 const MAX_TARGETS_DEFAULT = 20;
 const MAX_RULE_VALUE_LENGTH = 200;
-/** `DialSelect`'s built-in search is enabled once the source list is long enough to be hard to scan. */
+/** `Select`'s built-in search is enabled once the source list is long enough to be hard to scan. */
 const SEARCHABLE_SOURCE_THRESHOLD = 8;
 
 /** Text overrides for all user-visible strings in {@link PublishAccessRuleEditor}. */
@@ -255,41 +255,27 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
         styles.dialog,
       )}
     >
-      <div>
-        <label
-          htmlFor={sourceElementId}
-          className={mergeClasses('mb-1 block', labelClassName, styles.label)}
-        >
-          {sourceLabel}
-        </label>
-        <DialSelect
-          elementId={sourceElementId}
-          options={sourceSelectOptions}
-          value={source}
-          onChange={(next) => setSource(Array.isArray(next) ? next[0] : next)}
-          placeholder={sourcePlaceholder}
-          searchable={sourceOptions.length > SEARCHABLE_SOURCE_THRESHOLD}
-          searchPlaceholder={sourcePlaceholder}
-          disabled={disabled}
-        />
-      </div>
+      <Select
+        id={sourceElementId}
+        labelProps={{ label: sourceLabel }}
+        options={sourceSelectOptions}
+        value={source}
+        onChange={(next) => setSource(Array.isArray(next) ? next[0] : next)}
+        placeholder={sourcePlaceholder}
+        searchable={sourceOptions.length > SEARCHABLE_SOURCE_THRESHOLD}
+        searchPlaceholder={sourcePlaceholder}
+        disabled={disabled}
+      />
 
-      <div>
-        <label
-          htmlFor={functionElementId}
-          className={mergeClasses('mb-1 block', labelClassName, styles.label)}
-        >
-          {functionLabel}
-        </label>
-        <DialSelect
-          elementId={functionElementId}
-          options={functionOptions}
-          value={ruleFunction}
-          onChange={handleFunctionChange}
-          placeholder={functionLabel}
-          disabled={disabled}
-        />
-      </div>
+      <Select
+        labelProps={{ label: functionLabel }}
+        id={functionElementId}
+        options={functionOptions}
+        value={ruleFunction}
+        onChange={handleFunctionChange}
+        placeholder={functionLabel}
+        disabled={disabled}
+      />
 
       {isRegex ? (
         <div>
@@ -332,16 +318,12 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
       )}
 
       <div className="mt-auto flex justify-end gap-2 desktop:mt-2">
-        <DialButton
-          appearance={ButtonAppearance.Ghost}
-          variant={ButtonVariant.Secondary}
+        <NeutralButton
           label={cancelLabel}
           onClick={onCancel}
           disabled={disabled}
         />
-        <DialButton
-          appearance={ButtonAppearance.Solid}
-          variant={ButtonVariant.Primary}
+        <PrimaryButton
           label={saveLabel}
           onClick={handleSave}
           disabled={disabled || !isStructurallyComplete}

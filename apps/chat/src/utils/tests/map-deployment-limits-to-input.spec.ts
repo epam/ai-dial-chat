@@ -1,4 +1,4 @@
-import type { DeploymentLimitsResponseDto } from '@epam/chat-api-client';
+import type { DeploymentLimitsResponseDto } from '@epam/ai-dial-chat-api-client';
 import { describe, expect, it } from 'vitest';
 import { mapDeploymentLimitsToInput } from '../map-deployment-limits-to-input';
 

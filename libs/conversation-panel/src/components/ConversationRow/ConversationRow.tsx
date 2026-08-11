@@ -2,10 +2,10 @@ import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   Button,
   DIAL_ICON_SIZE,
-  DialDropdown,
+  Dropdown,
   GhostIconButton,
-  DialSkeleton,
-  DialSkeletonVariant,
+  Skeleton,
+  SkeletonVariant,
   ElementSize,
   Highlight,
   type DropdownItem,
@@ -113,8 +113,8 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   const hasActions = menuItems.length > 0;
 
   const avatar = item.isIconLoading ? (
-    <DialSkeleton
-      variant={DialSkeletonVariant.Circular}
+    <Skeleton
+      variant={SkeletonVariant.Circular}
       width={DIAL_ICON_SIZE.LG}
       height={DIAL_ICON_SIZE.LG}
       color={styles.skeletonColor}
@@ -264,11 +264,11 @@ export const ConversationRow: FC<ConversationRowProps> = ({
               : 'opacity-0 group-focus-within/conversation:opacity-100 group-hover/conversation:opacity-100',
           )}
         >
-          <DialDropdown
+          <Dropdown
             items={menuItems}
             onOpenChange={handleMenuOpenChange}
             matchReferenceWidth={false}
-            listClassName="w-[140px] cp-dropdown-overlay"
+            listClassName="w-[140px]"
           >
             <GhostIconButton
               ref={actionTriggerRef}
@@ -283,7 +283,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
               aria-label={actionsLabel}
               className={mergeClasses(isMenuOpen && styles.triggerActive)}
             />
-          </DialDropdown>
+          </Dropdown>
         </div>
       )}
     </li>

@@ -63,6 +63,8 @@ export interface ItemDetailsTexts {
   apiModelIdLabel?: string;
   /** Title shown in the single-endpoint code block's header in the Connect tab. Default: `'Endpoint'`. */
   apiEndpointLabel?: string;
+  /** "Endpoint" section heading above the multi-endpoint selector in the Connect tab. Default: `'Endpoint'`. */
+  apiEndpointSectionLabel?: string;
   /** "Request example" row label in the API tab. Default: `'Request example'`. */
   apiRequestExampleLabel?: string;
   /** "Response schema" row label in the API tab. Default: `'Response schema'`. */
@@ -280,6 +282,12 @@ export interface DetailsPanelProps {
   ) => Promise<void>;
   /** Called after a successful publish; use this to surface a success notification. */
   onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
+  /** Called with the rejection reason when a publish request fails; use this to surface an error notification. */
+  onPublishError?: (
+    item: CatalogItem,
+    folderPath: string[],
+    error: unknown,
+  ) => void;
   /** Called when the user confirms a new folder name in the publish flow. */
   onCreatePublishFolder?: (parentPath: string[], name: string) => void;
   /** Text overrides forwarded to the publish flow. */

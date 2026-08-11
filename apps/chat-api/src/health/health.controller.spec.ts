@@ -7,6 +7,9 @@ import { BucketService } from '../auth/bucket/bucket.service';
 import { RefreshService } from '../auth/refresh/refresh.service';
 import { SessionGuard } from '../auth/session/session.guard';
 import { SessionService } from '../auth/session/session.service';
+import { AUTH_STRATEGIES } from '../auth/strategies/auth-strategies.token';
+import { CookieSessionStrategy } from '../auth/strategies/cookie-session.strategy';
+import { PACKAGE_VERSION } from '../common/utils/app-version';
 import { HealthController } from './health.controller';
 
 // supertest is CJS; use require to avoid vite ESM interop issues
@@ -17,13 +20,24 @@ const request = require('supertest') as (
 describe('HealthController', () => {
   let app: INestApplication;
 
-  beforeEach(async () => {
+  const createApp = async (chatVersion?: string) => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [HealthController],
+      providers: [
+        {
+          provide: ConfigService,
+          useValue: { get: vi.fn().mockReturnValue(chatVersion) },
+        },
+      ],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
-    await app.init();
+    const created = moduleFixture.createNestApplication();
+    await created.init();
+    return created;
+  };
+
+  beforeEach(async () => {
+    app = await createApp();
   });
 
   afterEach(async () => {
@@ -49,6 +63,37 @@ describe('HealthController', () => {
     expect(second.body.buildId).toBe(first.body.buildId);
   });
 
+  describe('version', () => {
+    it('reports the bundled package.json version when CHAT_VERSION is unset', async () => {
+      const res = await request(app.getHttpServer()).get('/health').expect(200);
+      expect(res.body.version).toBe(PACKAGE_VERSION);
+    });
+
+    it('reports CHAT_VERSION when a CI/CD stamp is set', async () => {
+      const stampedApp = await createApp('2026.08.10-a1b2c3d');
+      try {
+        const res = await request(stampedApp.getHttpServer())
+          .get('/health')
+          .expect(200);
+        expect(res.body.version).toBe('2026.08.10-a1b2c3d');
+      } finally {
+        await stampedApp.close();
+      }
+    });
+
+    it('falls back to the package.json version when CHAT_VERSION is blank', async () => {
+      const blankApp = await createApp('   ');
+      try {
+        const res = await request(blankApp.getHttpServer())
+          .get('/health')
+          .expect(200);
+        expect(res.body.version).toBe(PACKAGE_VERSION);
+      } finally {
+        await blankApp.close();
+      }
+    });
+  });
+
   describe('with global SessionGuard', () => {
     let guardedApp: INestApplication;
 
@@ -69,6 +114,14 @@ describe('HealthController', () => {
           { provide: RefreshService, useValue: { refresh: vi.fn() } },
           { provide: BucketService, useValue: { getUserBucket: vi.fn() } },
           { provide: ConfigService, useValue: { get: vi.fn() } },
+          CookieSessionStrategy,
+          {
+            provide: AUTH_STRATEGIES,
+            useFactory: (cookieStrategy: CookieSessionStrategy) => [
+              cookieStrategy,
+            ],
+            inject: [CookieSessionStrategy],
+          },
           { provide: APP_GUARD, useClass: SessionGuard },
         ],
       }).compile();

@@ -92,16 +92,15 @@ export class ChatCompletionsAdapter {
    * Calls the model and relays the SSE response chunks to `res`, writing raw
    * bytes through and building up `assembledMessage` from the parsed chunks.
    */
-  async relay(
+  async *stream(
     model: string,
     requestBody: unknown,
     token: string,
     signal: AbortSignal,
-    res: Response,
     initialAssembledMessage: ConversationMessageDto,
     clientChannelId?: string,
     timing?: GenerationRelayTiming,
-  ): Promise<GenerationRelayOutcome> {
+  ): AsyncGenerator<Uint8Array, GenerationRelayOutcome, void> {
     let assembledMessage = initialAssembledMessage;
     let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
 
@@ -171,7 +170,7 @@ export class ChatCompletionsAdapter {
           break;
         }
 
-        res.write(value);
+        yield value;
 
         sseBuffer += decoder.decode(value, { stream: true });
         const lines = sseBuffer.split('\n');
@@ -280,5 +279,32 @@ export class ChatCompletionsAdapter {
         }
       }
     }
+  }
+
+  async relay(
+    model: string,
+    requestBody: unknown,
+    token: string,
+    signal: AbortSignal,
+    res: Response,
+    initialAssembledMessage: ConversationMessageDto,
+    clientChannelId?: string,
+    timing?: GenerationRelayTiming,
+  ): Promise<GenerationRelayOutcome> {
+    const iterator = this.stream(
+      model,
+      requestBody,
+      token,
+      signal,
+      initialAssembledMessage,
+      clientChannelId,
+      timing,
+    );
+    let next = await iterator.next();
+    while (!next.done) {
+      res.write(next.value);
+      next = await iterator.next();
+    }
+    return next.value;
   }
 }

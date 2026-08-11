@@ -1,6 +1,24 @@
 const CONVERSATION_NAME_SEPARATOR = '__';
 const VERSION_METADATA_SEPARATOR_REGEX = /[-+]/;
 const VERSION_NUMBER_PART_REGEX = /^\d+$/;
+/*
+ * DIAL Scheduler writes conversations under the reserved
+ * `conversations/{bucket}/.scheduler/{scheduleId}/{filename}` path shape
+ * (see apps/chat-api/src/conversations/utils/parse-scheduled-task-conversation-path.ts).
+ * `.scheduler` and `{scheduleId}` are reserved path segments, not part of the
+ * deployment ID, and must be skipped before the deployment-id extraction
+ * below — otherwise they get treated as deployment ID path prefixes.
+ */
+const SCHEDULER_SEGMENT = '.scheduler';
+/*
+ * DIAL Core only versions the deployment ID itself for custom applications
+ * (`applications/{bucket}/{name}__{version}`) — plain model deployments
+ * never have a version suffix. Without checking for this path prefix, a
+ * purely-numeric conversation TITLE (e.g. "18") is indistinguishable from a
+ * version suffix and gets folded into the deployment ID, breaking
+ * deployment lookup (icon, model info) for that conversation.
+ */
+const APPLICATIONS_PATH_SEGMENT = 'applications';
 
 const isDeploymentVersionSuffix = (value?: string): boolean => {
   if (!value) return false;
@@ -11,12 +29,15 @@ const isDeploymentVersionSuffix = (value?: string): boolean => {
     .every((part) => VERSION_NUMBER_PART_REGEX.test(part));
 };
 
-const getDeploymentIdPartFromFilenamePart = (filenamePart: string): string => {
+const getDeploymentIdPartFromFilenamePart = (
+  filenamePart: string,
+  isApplicationDeployment: boolean,
+): string => {
   const [deploymentName, versionSuffix] = filenamePart.split(
     CONVERSATION_NAME_SEPARATOR,
   );
 
-  return isDeploymentVersionSuffix(versionSuffix)
+  return isApplicationDeployment && isDeploymentVersionSuffix(versionSuffix)
     ? [deploymentName, versionSuffix].join(CONVERSATION_NAME_SEPARATOR)
     : deploymentName;
 };
@@ -55,7 +76,9 @@ export const getModelIdFromConversationId = (
   if (segments.length < 3) return undefined;
 
   // segments[0] = "conversations", segments[1] = bucket
-  const deploymentSegments = segments.slice(2);
+  const afterBucket = segments.slice(2);
+  const deploymentSegments =
+    afterBucket[0] === SCHEDULER_SEGMENT ? afterBucket.slice(2) : afterBucket;
 
   /*
    * Find the FIRST segment that contains '__'. Everything before it
@@ -69,12 +92,14 @@ export const getModelIdFromConversationId = (
   if (separatorIndex === -1) return undefined;
 
   const separatorSegment = deploymentSegments[separatorIndex];
-  const lastDeploymentPart =
-    getDeploymentIdPartFromFilenamePart(separatorSegment);
-
   const prefixParts = deploymentSegments
     .slice(0, separatorIndex)
     .filter(Boolean);
+  const isApplicationDeployment = prefixParts[0] === APPLICATIONS_PATH_SEGMENT;
+  const lastDeploymentPart = getDeploymentIdPartFromFilenamePart(
+    separatorSegment,
+    isApplicationDeployment,
+  );
 
   const allParts = [...prefixParts, lastDeploymentPart].filter(Boolean);
   return allParts.length > 0 ? allParts.join('/') : undefined;

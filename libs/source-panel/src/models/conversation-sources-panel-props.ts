@@ -1,4 +1,5 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import type { ReactNode } from 'react';
 import type { QuotationSource } from './quotation-source';
 
 /** User-visible strings passed by the consuming app (via i18n or plain strings). */
@@ -89,4 +90,16 @@ export interface ConversationSourcesPanelProps {
   labels: ConversationSourcesPanelLabels;
   /** Optional typography and color class overrides for inner elements. */
   styles?: ConversationSourcesPanelStyles;
+  /**
+   * Overrides the panel header's title (passed through to the underlying
+   * `SidebarPanel`'s `title`). Omit to keep the panel's default (untitled)
+   * header.
+   */
+  title?: ReactNode;
+  /**
+   * Rendered inside the scrollable body, before the Uploaded Files, Generated
+   * Files, and Sources sections. A plain, host-agnostic slot — this component
+   * has no knowledge of what it contains.
+   */
+  additionalSections?: ReactNode;
 }

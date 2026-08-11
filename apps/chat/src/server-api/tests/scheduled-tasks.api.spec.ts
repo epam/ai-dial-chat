@@ -1,8 +1,13 @@
+import {
+  ScheduledTaskRunDtoStatusEnum,
+  type ListScheduledTaskRunsResponseDto,
+} from '@epam/ai-dial-chat-api-client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { scheduledTasksApi } from '../api-client';
 import {
   createScheduledTask,
   getScheduledTask,
+  listScheduledTaskRuns,
   listScheduledTasks,
   updateScheduledTask,
 } from '../scheduled-tasks.api';
@@ -97,5 +102,48 @@ describe('scheduled-tasks.api', () => {
       updateScheduledTaskBodyDto: createBody,
     });
     expect(result).toEqual(mockSchedule);
+  });
+
+  it('listScheduledTaskRuns delegates to the generated ScheduledTasksApi', async () => {
+    const mockResponse: ListScheduledTaskRunsResponseDto = {
+      items: [
+        {
+          id: 'run_1',
+          status: ScheduledTaskRunDtoStatusEnum.Success,
+          startTime: '2026-07-24T09:00:00.000Z',
+        },
+      ],
+    };
+    const spy = vi
+      .spyOn(scheduledTasksApi, 'listScheduledTaskRuns')
+      .mockResolvedValue(mockResponse);
+
+    const result = await listScheduledTaskRuns({ scheduleId: 'sched_123' });
+
+    expect(spy).toHaveBeenCalledWith(
+      { scheduleId: 'sched_123', limit: undefined, offset: undefined },
+      undefined,
+    );
+    expect(result).toEqual(mockResponse);
+  });
+
+  it('listScheduledTaskRuns forwards limit/offset and an AbortSignal', async () => {
+    const mockResponse = { items: [] };
+    const spy = vi
+      .spyOn(scheduledTasksApi, 'listScheduledTaskRuns')
+      .mockResolvedValue(mockResponse);
+    const controller = new AbortController();
+
+    await listScheduledTaskRuns({
+      scheduleId: 'sched_123',
+      limit: 20,
+      offset: 40,
+      signal: controller.signal,
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      { scheduleId: 'sched_123', limit: 20, offset: 40 },
+      { signal: controller.signal },
+    );
   });
 });

@@ -10,7 +10,8 @@ import {
 } from '../../../../types/toolset-auth';
 import { CredentialsSection } from '../CredentialsSection';
 
-vi.mock('@epam/ai-dial-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   Input: ({
     onChange,
     labelProps,
@@ -28,9 +29,6 @@ vi.mock('@epam/ai-dial-kit', () => ({
       {caption && <span>{caption}</span>}
     </div>
   ),
-}));
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   NeutralButton: ({
     label,
     onClick,
@@ -51,7 +49,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
-  DialConfirmationPopup: ({
+  ConfirmationPopup: ({
     open,
     onConfirm,
     onCancel,
@@ -68,7 +66,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         <button onClick={onCancel}>Cancel</button>
       </div>
     ) : null,
-  DialAccordion: ({
+  Accordion: ({
     title,
     expanded,
     onToggle,

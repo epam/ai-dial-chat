@@ -93,16 +93,17 @@ The endpoint:
 `DeploymentItemDto` SHALL be a strongly typed Swagger DTO that normalises DIAL Core's `ModelOpenAi | ApplicationOpenAi | ToolsetOpenAi` union into a flat structure:
 
 - `id: string` — unique stable identifier from DIAL Core; items without an `id` SHALL be skipped during mapping
-- `displayName: string` — `display_name` from DIAL Core, falling back to `id` when absent
+- `displayName: string | Record<string, string>` — `display_name` from DIAL Core, falling back to `id` when absent; either a plain string or a map of locale code to translated value when the entity has additional locales configured
 - `type: 'model' | 'application' | 'toolset'` — discriminator; derived from DIAL Core `object` field (`"model"` → `'model'`, `"application"` → `'application'`); items with a `toolset` field present SHALL be mapped to `'toolset'`
 - `iconUrl?: string` — `icon_url` from DIAL Core
-- `description?: string` — `description` from DIAL Core
+- `description?: string | Record<string, string>` — `description` from DIAL Core; same plain-string-or-locale-map shape as `displayName`
 - `interfaces?: string[]` — `interfaces` from DIAL Core (list of interface types supported by the deployment)
 - `inputAttachmentTypes?: string[]` — `input_attachment_types` from DIAL Core; omitted when the source field is absent or null
 - `owner?: string` — `owner` from DIAL Core's `DeploymentBase`; forwarded verbatim; omitted when DIAL Core does not provide it
 - `isMy?: boolean` — `true` when the session `bucket` appears as a path segment of the deployment `id` (e.g. `applications/{bucket}/{name}`); `false` otherwise; computed post-cache and never stored in the cache entry
 - `applicationFolder?: string` — parent directory path of the application derived from `id` (everything before the last `/`); set only for `type === 'application'` items whose `id` contains a `/`; absent for root-level applications and all non-application types
 - `features?: DeploymentFeaturesDto` — feature flags from DIAL Core, including the `mcp?: boolean` field, and the `responsesApi?: boolean` / `chatCompletion?: boolean` fields (see below)
+- `reference?: string` — `reference` from DIAL Core's raw deployment payload, forwarded verbatim; omitted when DIAL Core does not provide it. Callers MAY receive a deployment `id` elsewhere in the system (e.g. a stored conversation's `model` value) that actually holds this `reference` value instead of `id` — the frontend is responsible for matching against either field (see `deployment-reference-resolution`)
 
 `DeploymentItemDto.conversationStarters?: ConversationStartersDto` SHALL expose Quick Apps conversation starter settings mapped from `application_properties.conversation_starters`. It SHALL be set only for `type === 'application'` items with at least one valid starter.
 
@@ -153,6 +154,13 @@ The `DeploymentItem` interface in `libs/chat-shared/src/models/deployment.ts` SH
 
 - **WHEN** a source item has no `display_name`
 - **THEN** `DeploymentItemDto.displayName` equals the source `id`
+
+#### Scenario: displayName passes through a locale map unresolved
+
+- **WHEN** a source item's `display_name` from DIAL Core is a map of locale code to translated
+  value rather than a plain string
+- **THEN** `DeploymentItemDto.displayName` carries that map through unchanged — resolving it to
+  a single display string is the frontend's responsibility, not this endpoint's
 
 #### Scenario: inputAttachmentTypes mapped from DIAL Core
 
@@ -219,6 +227,21 @@ The `DeploymentItem` interface in `libs/chat-shared/src/models/deployment.ts` SH
 - **WHEN** a DIAL Core entry has `features.chat_completion: true`
 - **THEN** the mapped `DeploymentItemDto` has `features.chatCompletion: true`
 
+#### Scenario: reference mapped from DIAL Core
+
+- **WHEN** a DIAL Core model entry has `id: 'gemini-3.1-flash-lite'` and `reference: 'ref-gemini-3-1-flash-lite'`
+- **THEN** the mapped `DeploymentItemDto` has `reference: 'ref-gemini-3-1-flash-lite'`
+
+#### Scenario: reference omitted when absent in source
+
+- **WHEN** a DIAL Core deployment entry has no `reference` field
+- **THEN** the mapped `DeploymentItemDto` has `reference` as `undefined`
+
+#### Scenario: Backward compatibility — clients ignoring reference are unaffected
+
+- **WHEN** an existing client calls `GET /api/v1/deployments` and does not read `reference`
+- **THEN** the response is identical to the prior behavior for all pre-existing fields
+
 ---
 
 ### Requirement: Deployments domain structure
@@ -226,8 +249,8 @@ The `DeploymentItem` interface in `libs/chat-shared/src/models/deployment.ts` SH
 The backend SHALL implement the deployments feature in `apps/chat-api/src/deployments/` following the established domain pattern:
 
 - `deployments.controller.ts` — thin controller with `@Get() listDeployments(@Query() query: DeploymentsQueryDto, @Req() req, @Res({ passthrough: true }) res)`
-- `deployments.service.ts` — `DeploymentsService` injects `DialClientService` (`apps/chat-api/src/dial/dial-client.service.ts`) for the shared DIAL SDK client; calls SDK `listDeployments`; maps and caches results
-- `deployments.module.ts` — `DeploymentsModule` providing `DeploymentsService`; no external domain imports needed
+- `deployments.service.ts` — `DeploymentsService`, a thin delegation facade over `DeploymentsListingService`, `DeploymentsLookupService`, and `DeploymentsDetailsService`; `DeploymentsListingService` (`listing/deployments-listing.service.ts`) injects `DialClientService` (`apps/chat-api/src/dial/dial-client.service.ts`) for the shared DIAL SDK client, calls SDK `listDeployments`, and maps/caches results
+- `deployments.module.ts` — `DeploymentsModule` providing `DeploymentsService`, `DeploymentsListingService`, `DeploymentsLookupService`, `DeploymentsDetailsService`; no external domain imports needed
 - `dto/deployment-item.dto.ts` — `DeploymentItemDto` and `DeploymentsResponseDto` with `@ApiProperty` decorators
 - `dto/deployments-query.dto.ts` — `DeploymentsQueryDto` with `interface_type` field: `@IsOptional`, `@IsArray`, `@IsIn([...], { each: true })`, `@Transform` for comma-separated coercion, and `refresh?: boolean` with `@IsBoolean` plus `true`/`false` string coercion
 - `tests/deployments.controller.spec.ts`

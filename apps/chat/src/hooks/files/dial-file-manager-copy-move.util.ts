@@ -1,15 +1,15 @@
-import type { DialCopiedItem } from '@epam/ai-dial-react-file-manager';
-import { DialFileNodeType } from '@epam/ai-dial-react-file-manager';
 import type {
   CopyItemDto,
   MoveItemDto,
   RenameItemDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import {
   CopyItemDtoNodeTypeEnum,
   MoveItemDtoNodeTypeEnum,
   RenameItemDtoNodeTypeEnum,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
+import type { DialCopiedItem } from '@epam/ai-dial-react-file-manager';
+import { DialFileNodeType } from '@epam/ai-dial-react-file-manager';
 import {
   getParentFolderPath,
   virtualPathToApiPath,

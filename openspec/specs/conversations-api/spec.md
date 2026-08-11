@@ -120,7 +120,7 @@ path = "name"                       →  getConversation(sessionBucket, "name") 
 
 DIAL Core's sharing mechanism grants READ access to the resource at its original path using the requesting user's auth token, so no special headers or bucket substitution are needed for shared or public conversations.
 
-`resolveConversationLocation` in `ConversationService` is the single implementation point for this routing logic. It MUST NOT fall back to the session bucket when the first path segment is neither the session bucket nor `public` — it SHALL extract and use that segment as the target bucket.
+`resolveConversationLocation` in `apps/chat-api/src/conversations/utils/conversation.utils.ts` is the single implementation point for this routing logic, shared by `ConversationPersistenceService`, `ConversationLifecycleService`, and `ConversationStreamingService`. It MUST NOT fall back to the session bucket when the first path segment is neither the session bucket nor `public` — it SHALL extract and use that segment as the target bucket.
 
 **Frontend behaviour.** `GET /api/v1/conversations?path=...`'s `path` query param MUST include the bucket — unlike `saveConversation`'s/`streamCompletion`'s `path` body field, which is bucket-stripped and operates on the user's own copy only. Callers MUST apply the normalization matching the target endpoint's contract:
 
@@ -465,7 +465,7 @@ Error codes:
 
 ### Requirement: POST /api/v1/conversations sets unsuffixed message-derived name
 
-On `POST /api/v1/conversations`, `ConversationService.createConversation` SHALL set `conversation.name` to the base name from `getConversationName('New chat', firstMessage)` without calling `resolveUniqueConversationName`.
+On `POST /api/v1/conversations`, `ConversationLifecycleService.createConversation` (invoked via the `ConversationService` facade) SHALL set `conversation.name` to the base name from `getConversationName('New chat', firstMessage)` without calling `resolveUniqueConversationName`.
 
 The service SHALL always persist the conversation at `{deploymentId}__{baseName}__{uuid}`, where `{uuid}` is freshly generated for this conversation, while keeping `conversation.name` as the unsuffixed base name. The UUID segment is unconditional: creation SHALL NOT perform a path-existence check for `{deploymentId}__{baseName}`. For versioned or multi-segment deployment IDs, the invariant is the trailing UUID rather than a fixed total number of `__`-separated segments. See the [auto-index-duplicate-names spec](../auto-index-duplicate-names/spec.md).
 
@@ -494,7 +494,7 @@ The service SHALL always persist the conversation at `{deploymentId}__{baseName}
 
 ### Requirement: saveConversation may trigger backend-only LLM rename after first reply
 
-`ConversationService.saveConversation` SHALL, after a successful DIAL Core persist, optionally invoke LLM conversation naming as defined in the [llm-conversation-naming spec](../llm-conversation-naming/spec.md).
+`ConversationPersistenceService.saveConversation` (invoked via the `ConversationService` facade) SHALL, after a successful DIAL Core persist, optionally invoke LLM conversation naming as defined in the [llm-conversation-naming spec](../llm-conversation-naming/spec.md).
 
 The rename is fire-and-forget: the `saveConversation` response MUST return immediately with the conversation as saved, without waiting for the LLM or rename to complete.
 
@@ -516,7 +516,7 @@ No new HTTP endpoint is added for LLM naming.
 
 ### Requirement: saveConversation preserves LLM display name from stale client saves
 
-Before persisting, `ConversationService.saveConversation` SHALL call `preserveLlmDisplayName`: when the stored conversation already has `llmNamingDone: true` and a non-empty `name`, the save body MUST keep that server `name` and `llmNamingDone: true` even if the client sent a stale message-derived title.
+Before persisting, `ConversationPersistenceService.saveConversation` SHALL call `preserveLlmDisplayName`: when the stored conversation already has `llmNamingDone: true` and a non-empty `name`, the save body MUST keep that server `name` and `llmNamingDone: true` even if the client sent a stale message-derived title.
 
 #### Scenario: Stale client save does not overwrite LLM title
 
@@ -528,7 +528,7 @@ Before persisting, `ConversationService.saveConversation` SHALL call `preserveLl
 
 ### Requirement: Conversation list uses stored display name for writable items
 
-`ConversationService.listConversations` SHALL enrich writable user-owned list items with `conversation.name` from `getConversation` when available, so list `title` reflects the stored display name (including LLM-renamed and manually-renamed titles), not only the filename-derived title.
+`ConversationListingService.listConversations` (invoked via the `ConversationService` facade) SHALL enrich writable user-owned list items with `conversation.name` from `getConversation` when available, so list `title` reflects the stored display name (including LLM-renamed and manually-renamed titles), not only the filename-derived title.
 
 The display-name resolution (`resolveListDisplayTitle`, also used by `getConversation`) SHALL treat a non-empty stored `name` as authoritative for the display title whenever the conversation is finally named (`llmNamingDone === true`), even when the filename-derived title diverges from `name`. A manual rename sets `llmNamingDone: true`, so a manually renamed conversation whose filename still encodes the old title SHALL display the new `name`. The prior heuristic that fell back to the filename-derived title when the stored `name` differed from the message-derived title MUST NOT override an authoritative stored `name`.
 

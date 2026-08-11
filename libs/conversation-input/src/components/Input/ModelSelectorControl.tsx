@@ -1,7 +1,7 @@
 import { DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialDropdown,
+  Dropdown,
   DialDropdownIcon,
   DialTooltip,
   ElementSize,
@@ -22,10 +22,11 @@ interface Props {
   modelSelectorLabels?: ModelSelectorLabels;
   isStreaming: boolean;
   isMobile: boolean;
-  isInputDisabled?: boolean;
   /**
-   * When `true`, the control renders dimmed and does not open, regardless of
-   * `isInputDisabled`/`isStreaming` — the current model stays visible.
+   * When `true`, the control renders dimmed and does not open — the current
+   * model stays visible. Only this prop (and `isStreaming`) blocks the
+   * selector: a disabled composer input never does, so the user can always
+   * switch model.
    */
   isDisabled?: boolean;
   style: CSSProperties;
@@ -34,7 +35,7 @@ interface Props {
   isPickerOpen?: boolean;
   /** Toggles the model picker popover open/closed. */
   onPickerToggle?: () => void;
-  /** Called by DialDropdown when open state changes (e.g. outside click). */
+  /** Called by Dropdown when open state changes (e.g. outside click). */
   onPickerOpenChange?: (open: boolean) => void;
 }
 
@@ -46,7 +47,6 @@ export const ModelSelectorControl: FC<Props> = ({
   modelSelectorLabels,
   isStreaming,
   isMobile,
-  isInputDisabled = false,
   isDisabled = false,
   style,
   modelPickerOverlay,
@@ -142,7 +142,7 @@ export const ModelSelectorControl: FC<Props> = ({
 
   if (modelPickerOverlay) {
     return (
-      <DialDropdown
+      <Dropdown
         placement="top-end"
         matchReferenceWidth={false}
         open={isPickerOpen}
@@ -158,17 +158,15 @@ export const ModelSelectorControl: FC<Props> = ({
           <button
             type="button"
             aria-label={selectorAriaLabel}
+            aria-disabled={isDisabled || undefined}
             className={mergeClasses(
               'flex items-center justify-center gap-1 rounded-full p-2',
               styles.modelSelectorButton,
-              isInputDisabled || isStreaming || isDisabled
-                ? disabledIconClassName
-                : undefined,
-              (isInputDisabled || isDisabled) &&
-                styles.modelSelectorButtonDisabled,
+              disabledIconClassName,
+              isDisabled && styles.modelSelectorButtonDisabled,
             )}
             onClick={() => {
-              if (!isInputDisabled && !isStreaming && !isDisabled) {
+              if (!isStreaming && !isDisabled) {
                 onPickerToggle?.();
               }
             }}
@@ -177,7 +175,7 @@ export const ModelSelectorControl: FC<Props> = ({
             {caretIcon}
           </button>
         </DialTooltip>
-      </DialDropdown>
+      </Dropdown>
     );
   }
 
@@ -198,15 +196,11 @@ export const ModelSelectorControl: FC<Props> = ({
           onOpenChange={isDisabled ? undefined : handleModelSelectorOpenChange}
           size={ElementSize.Standard}
           caretIcon={caretIcon}
-          iconClassName={
-            isInputDisabled || isDisabled ? disabledIconClassName : undefined
-          }
+          iconClassName={isDisabled ? disabledIconClassName : undefined}
           buttonClassName={mergeClasses(
             'bg-transparent',
             styles.modelSelectorButton,
-            (isInputDisabled || isDisabled) &&
-              disabledIconClassName &&
-              styles.modelSelectorButtonDisabled,
+            isDisabled && styles.modelSelectorButtonDisabled,
           )}
         />
       </DialTooltip>

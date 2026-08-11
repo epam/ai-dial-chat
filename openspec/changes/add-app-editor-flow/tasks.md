@@ -45,9 +45,9 @@
 ## 8. Frontend — AppsEditor Page
 
 - [x] 8.1 Create `apps/chat/src/pages/AppsEditor/AppsEditor.tsx` — read search params, resolve schema from `useDeployments().schemas`, own `createdAppId` + `isSubmitting` state, render step indicator and back button, render `<GeneralForm>` or `<SettingsStep>` based on current step
-- [x] 8.2 Create `apps/chat/src/pages/AppsEditor/GeneralForm.tsx` — two-column layout: left column has `DialInput` (name, icon URL, version), `DialTextarea` (description), `DialTagInput` (topics), footer with `NeutralButton` (Cancel) + `PrimaryButton` (Next); right column (`bg-layer-1`) shows a live `<Card>` preview centered in the area, driven by `useMemo`-derived `CatalogItem` from form state; call `createApplication` on submit, invoke `onCreated(appId)` on success, show inline error on failure
+- [x] 8.2 Create `apps/chat/src/pages/AppsEditor/GeneralForm.tsx` — two-column layout: left column has `Input` (name, icon URL, version), `Textarea` (description), `DialTagInput` (topics), footer with `NeutralButton` (Cancel) + `PrimaryButton` (Next); right column (`bg-layer-1`) shows a live `<Card>` preview centered in the area, driven by `useMemo`-derived `CatalogItem` from form state; call `createApplication` on submit, invoke `onCreated(appId)` on success, show inline error on failure
 - [x] 8.3 Create `apps/chat/src/pages/AppsEditor/SettingsStep.tsx` — receive `schema` + `appId` props, render `<AppEditorIframe>` when `schema.editorUrl` is truthy, else render placeholder message
-- [x] 8.4 Create `apps/chat/src/pages/AppsEditor/AppEditorIframe.tsx` — build iframe src with auth params, render `<iframe>` + `<DialSpinner>` overlay, `useEffect` for `message` listener (readyToInteract → hide spinner, updatedApplicationSuccess → call onUpdated), cleanup on unmount
+- [x] 8.4 Create `apps/chat/src/pages/AppsEditor/AppEditorIframe.tsx` — build iframe src with auth params, render `<iframe>` + `<Spinner>` overlay, `useEffect` for `message` listener (readyToInteract → hide spinner, updatedApplicationSuccess → call onUpdated), cleanup on unmount
 
 ## 9. Frontend — Unit Tests
 

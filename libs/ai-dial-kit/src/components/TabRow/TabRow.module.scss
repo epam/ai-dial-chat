@@ -11,7 +11,7 @@
 }
 
 .inactiveTab {
-  color: var(--tr-inactive-tab-text, var(--text-secondary, #6b7280));
+  color: var(--tr-inactive-tab-text, var(--text-secondary, #57647a));
 
   &:hover,
   &:focus-visible {
@@ -29,5 +29,5 @@
 
 .inactiveBadge {
   background: var(--tr-inactive-badge-bg, var(--bg-layer-raised, #fcfcfc));
-  color: var(--tr-inactive-badge-text, var(--text-tertiary, #c7cbd4));
+  color: var(--tr-inactive-badge-text, var(--text-tertiary, #848e9c));
 }

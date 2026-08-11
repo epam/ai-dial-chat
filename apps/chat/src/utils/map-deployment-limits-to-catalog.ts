@@ -5,7 +5,7 @@ import type {
 import type {
   DeploymentLimitsResponseDto,
   LimitStatsDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import type { TFunction } from 'i18next';
 import { CatalogI18nKeys } from '../constants/translation-keys';
 

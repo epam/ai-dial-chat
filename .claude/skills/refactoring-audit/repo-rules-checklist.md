@@ -79,13 +79,46 @@ Spot-check **top god modules from metrics** (not a fixed list):
 - NestJS: thin controllers, validated DTOs, URI versioning
 - Never hand-edit `libs/chat-api-client/**`
 
+## Dead code and unused artifacts
+
+Run both compiler/Nx signals and the dedicated Knip collector. Static-analysis output is a candidate list, not deletion authorization.
+
+| Candidate kind                 | Signal                                                               | Expected / interpretation                                    |
+| ------------------------------ | -------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Unused locals/imports          | `npm exec -- nx run-many --target=typecheck`                         | **0** TypeScript unused diagnostics                          |
+| Unused production files        | Knip production pass: `files`                                        | Manually confirm every hit                                   |
+| Unused exports/types/members   | Knip production + comprehensive passes                               | Confirm public API and external consumers before classifying |
+| Unused dependencies            | Knip production + comprehensive passes: `dependencies`               | Confirm config, scripts, plugins, and runtime loading        |
+| Orphan Nx projects             | Zero inbound edges in `npm exec -- nx graph --print`                 | Candidate only; apps and publishable libs may be valid roots |
+| Graph/configuration blind spot | Knip configuration hints, `unresolved`, generated or dynamic imports | Fix/investigate before claiming Full coverage                |
+
+Run Knip through [scripts/collect-dead-code.sh](scripts/collect-dead-code.sh); do not invoke `--fix`. Review findings in this order because they cascade:
+
+1. Unused production files
+2. Exports, types, enum/namespace members reachable only from those files
+3. Dependencies used only by the dead chain
+4. Default-mode-only test, story, fixture, and tooling candidates
+
+Manual reachability checks for every production candidate:
+
+- direct imports and re-exports, including path aliases;
+- static and variable `import()` / `require()` patterns;
+- NestJS modules, controllers, providers, decorators, and reflection-based loading;
+- Vite/Webpack/Nx configuration, package scripts, and generated entry points;
+- package `exports` and publishable-library consumers outside the repository;
+- tests, stories, fixtures, mocks, and setup files;
+- generated code (exclude `chat-api-client` from actionable findings).
+
+Classify as **Confirmed dead**, **Reachability/config gap**, **Intentional public API**, **False positive/framework-managed**, or **Needs owner confirmation**. Report coverage as **Partial** whenever a required signal fails or remains unconfigured.
+
 ---
 
 ## Documenting findings
 
-Split into two sections in audit output docs:
+Split into three sections in audit output docs:
 
 1. **Structural smells** — complexity patterns
 2. **Convention violations** — repo rule breaches
+3. **Dead code** — confirmed findings and separately listed unverified candidates
 
-Each row: **path from this run**, rule/pattern, count, fix, priority. Drop rows on the next audit if the file no longer appears in metrics.
+Each structural/convention row: **path from this run**, rule/pattern, count, fix, priority. Each dead-code row: path/package, kind, signal/mode, classification, evidence, action, priority. Drop rows on the next audit if the finding no longer appears in current evidence.

@@ -10,9 +10,35 @@ import { EditorI18nKeys } from '../../../../constants/translation-keys';
 import type { ToolsetFormData } from '../../../../models/toolsets';
 import GeneralForm from '../GeneralForm';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
+vi.mock('@epam/ai-dial-kit', () => ({
+  TagInput: ({
+    label,
+    placeholder,
+    onChange,
+    initialTags,
+  }: {
+    label?: string;
+    placeholder?: string;
+    onChange?: (tags: string[]) => void;
+    initialTags?: string[];
+  }) => (
+    <label>
+      {label}
+      <input
+        placeholder={placeholder}
+        defaultValue={(initialTags ?? []).join(',')}
+        onChange={(e) =>
+          onChange?.(e.target.value ? e.target.value.split(',') : [])
+        }
+      />
+    </label>
+  ),
+}));
+
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialInput: ({
+  Input: ({
     value,
     onChange,
     labelProps,
@@ -37,7 +63,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {error && <p role="alert">{error}</p>}
     </>
   ),
-  DialTextarea: ({
+  Textarea: ({
     value,
     onChange,
     labelProps,
@@ -57,28 +83,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       />
     </label>
   ),
-  DialTagInput: ({
-    label,
-    placeholder,
-    onChange,
-    initialTags,
-  }: {
-    label?: string;
-    placeholder?: string;
-    onChange?: (tags: string[]) => void;
-    initialTags?: string[];
-  }) => (
-    <label>
-      {label}
-      <input
-        placeholder={placeholder}
-        defaultValue={(initialTags ?? []).join(',')}
-        onChange={(e) =>
-          onChange?.(e.target.value ? e.target.value.split(',') : [])
-        }
-      />
-    </label>
-  ),
 }));
 
 const makeForm = (overrides?: Partial<ToolsetFormData>): ToolsetFormData => ({
@@ -87,6 +91,7 @@ const makeForm = (overrides?: Partial<ToolsetFormData>): ToolsetFormData => ({
   iconUrl: '',
   description: '',
   topics: [],
+  otherLocales: [],
   endpoint: 'https://example.com/mcp',
   protocol: ToolsetTransportType.Http,
   allowedTools: [],
@@ -124,8 +129,12 @@ describe('GeneralForm', () => {
 
   it('renders name, description, icon URL, version, and topics fields', () => {
     renderForm();
-    expect(screen.getByLabelText(EditorI18nKeys.NameLabel)).toBeTruthy();
-    expect(screen.getByLabelText(EditorI18nKeys.DescriptionLabel)).toBeTruthy();
+    expect(
+      screen.getByLabelText(`${EditorI18nKeys.NameLabel} [EN]`),
+    ).toBeTruthy();
+    expect(
+      screen.getByLabelText(`${EditorI18nKeys.DescriptionLabel} [EN]`),
+    ).toBeTruthy();
     expect(screen.getByLabelText(EditorI18nKeys.IconUrlLabel)).toBeTruthy();
     expect(screen.getByLabelText(EditorI18nKeys.VersionLabel)).toBeTruthy();
     expect(screen.getByLabelText(EditorI18nKeys.TopicsLabel)).toBeTruthy();
@@ -146,7 +155,7 @@ describe('GeneralForm', () => {
     const onChange = vi.fn();
     renderForm({}, {}, onChange);
     const nameInput = screen.getByLabelText(
-      EditorI18nKeys.NameLabel,
+      `${EditorI18nKeys.NameLabel} [EN]`,
     ) as HTMLInputElement;
     fireEvent.change(nameInput, { target: { value: 'Updated' } });
     expect(onChange).toHaveBeenCalledWith(
@@ -158,7 +167,7 @@ describe('GeneralForm', () => {
     const onChange = vi.fn();
     renderForm({}, {}, onChange);
     const textarea = screen.getByLabelText(
-      EditorI18nKeys.DescriptionLabel,
+      `${EditorI18nKeys.DescriptionLabel} [EN]`,
     ) as HTMLTextAreaElement;
     await user.type(textarea, 'A description');
     expect(onChange).toHaveBeenCalledWith(

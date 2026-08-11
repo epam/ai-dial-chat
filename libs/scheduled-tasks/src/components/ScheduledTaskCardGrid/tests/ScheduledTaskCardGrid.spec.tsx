@@ -1,4 +1,5 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import {
@@ -19,12 +20,12 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     <article {...rest}>{children}</article>
   ),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialSkeleton: ({ color }: { color?: string }) => (
+  Skeleton: ({ color }: { color?: string }) => (
     <div data-skeleton data-color={color} />
   ),
-  DialSkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
-  DialDropdown: ({ children }: { children: ReactNode }) => <>{children}</>,
-  DialIconButton: ({
+  SkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
+  Dropdown: ({ children }: { children: ReactNode }) => <>{children}</>,
+  IconButton: ({
     icon,
     ...rest
   }: { icon: ReactNode } & Record<string, unknown>) => (
@@ -74,6 +75,22 @@ describe('ScheduledTaskCardGrid', () => {
     expect(
       container.querySelectorAll('article[aria-hidden="true"]'),
     ).toHaveLength(0);
+  });
+
+  it('forwards onCardClick to each card without transformation', async () => {
+    const onCardClick = vi.fn();
+    render(
+      <ScheduledTaskCardGrid
+        items={[buildItem({ id: '1' })]}
+        onCardClick={onCardClick}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Competitor Updates' }),
+    );
+
+    expect(onCardClick).toHaveBeenCalledWith('1');
   });
 
   it('forwards skeletonStyles to every trailing skeleton card', () => {

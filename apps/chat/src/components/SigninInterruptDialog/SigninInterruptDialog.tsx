@@ -1,15 +1,15 @@
+import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { Input } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
-  DialPopup,
-  DialSpinner,
+  Popup,
+  Spinner,
   GhostButton,
   NeutralButton,
   PopupSize,
   PrimaryButton,
+  Input,
 } from '@epam/ai-dial-ui-kit';
-import type { DialToolsetDto } from '@epam/chat-api-client';
 import { IconAlertCircleFilled } from '@tabler/icons-react';
 import {
   memo,
@@ -36,6 +36,7 @@ import {
   ExternalServiceLoginOutcomeType,
   useExternalServiceLogin,
 } from '../../hooks/externalServices/useExternalServiceLogin';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import {
   ToolsetLoginOutcomeType,
   useToolsetLogin,
@@ -110,7 +111,7 @@ const SigninRow: FC<SigninRowProps> = ({
           {info.displayVersion ? ` (${info.displayVersion})` : ''}
         </span>
         {isProcessing && (
-          <DialSpinner size={16} ariaLabel={t(ButtonsI18nKeys.LogIn)} />
+          <Spinner size={16} ariaLabel={t(ButtonsI18nKeys.LogIn)} />
         )}
       </div>
 
@@ -178,6 +179,7 @@ const getResourceKey = (event: PendingSigninEvent): string =>
  */
 const SigninInterruptDialog: FC = () => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const { pendingEvents, reportEvent } = useClientChannel();
   const { toolsets, refetchToolsets } = useDeployments();
   const { login: loginToolsetResource } = useToolsetLogin();
@@ -303,7 +305,7 @@ const SigninInterruptDialog: FC = () => {
         const toolset =
           toolsets.find((toolsetItem) => toolsetItem.id === event.toolsetId) ??
           resolvedToolsets[event.toolsetId];
-        map.set(key, resolveToolsetInfo(event.toolsetId, toolset));
+        map.set(key, resolveToolsetInfo(event.toolsetId, toolset, language));
       } else {
         map.set(
           key,
@@ -315,7 +317,13 @@ const SigninInterruptDialog: FC = () => {
       }
     }
     return map;
-  }, [pendingEvents, toolsets, resolvedToolsets, resolvedExternalServices]);
+  }, [
+    pendingEvents,
+    toolsets,
+    resolvedToolsets,
+    resolvedExternalServices,
+    language,
+  ]);
 
   const reportSuccessOnce = useCallback(
     async (eventId: string, displayName: string) => {
@@ -547,7 +555,7 @@ const SigninInterruptDialog: FC = () => {
     ) : undefined;
 
   return (
-    <DialPopup
+    <Popup
       open
       hideClose
       closeOnOutsideClick={false}
@@ -583,7 +591,7 @@ const SigninInterruptDialog: FC = () => {
           })}
         </div>
       </div>
-    </DialPopup>
+    </Popup>
   );
 };
 

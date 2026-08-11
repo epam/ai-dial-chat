@@ -1,15 +1,19 @@
-import type { DialToolsetDto } from '@epam/chat-api-client';
+import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps, Ref } from 'react';
 import { createRef } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { TOOLSET_REDIRECT_STATE_KEY } from '../../../constants/toolsets';
+import {
+  TOOLSET_REDIRECT_STATE_KEY,
+  ToolsetCredentialsLevel,
+} from '../../../constants/toolsets';
 import * as UserContextModule from '../../../context/auth/UserContext';
 import * as ThemeContextModule from '../../../context/ThemeContext';
 import * as deploymentsApi from '../../../server-api/deployments';
 import * as toolsetsApi from '../../../server-api/toolsets';
 import { AppsEditorEvent } from '../../../types/apps-editor';
 import { AuthStatus } from '../../../types/auth-status';
+import { emitToolsetLoginSuccess } from '../../../utils/toolset-login-events';
 import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import type { AppEditorIframeHandle } from '../AppEditorIframe';
 import AppEditorIframe from '../AppEditorIframe';
@@ -26,7 +30,7 @@ vi.mock('../../../server-api/deployments', () => ({
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialSpinner: ({ ariaLabel }: { ariaLabel?: string }) => (
+  Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
     <div role="status" aria-label={ariaLabel ?? 'Loading'} />
   ),
 }));
@@ -887,5 +891,106 @@ describe('AppEditorIframe — toolset logout request', () => {
       }),
     );
     expect(toolsetsApi.logoutToolset).not.toHaveBeenCalled();
+  });
+});
+
+describe('AppEditorIframe — toolset login broadcast', () => {
+  const renderAndSpyOnIframe = () => {
+    renderIframe();
+    const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
+    return vi.spyOn(iframe.contentWindow as Window, 'postMessage');
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: { sub: 'u1', providerId: 'local', claims: {}, isAdmin: false },
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+    mockUseTheme.mockReturnValue({
+      currentTheme: 'dark',
+      selectedTheme: 'dark',
+      setTheme: vi.fn(),
+      isLoading: false,
+    });
+    vi.mocked(deploymentsApi.getDeploymentDetails).mockRejectedValue(
+      new Error('not mocked'),
+    );
+  });
+
+  it('posts a ToolsetLoginResult with refreshed credentials when a login succeeds elsewhere in the app', async () => {
+    vi.mocked(deploymentsApi.getDeploymentDetails).mockResolvedValue({
+      id: 'toolsets/b/My%20Toolset__1.0.0',
+      type: 'toolset',
+      toolsetDetails: {
+        authSettings: { userLevelAuthStatus: 'SIGNED_IN' },
+      },
+    } as never);
+    const postMessageSpy = renderAndSpyOnIframe();
+
+    emitToolsetLoginSuccess({
+      toolsetId: 'toolsets/b/My%20Toolset__1.0.0',
+      credentialsLevel: ToolsetCredentialsLevel.User,
+    });
+
+    await waitFor(() =>
+      expect(deploymentsApi.getDeploymentDetails).toHaveBeenCalledWith(
+        'toolsets/b/My%20Toolset__1.0.0',
+      ),
+    );
+    await waitFor(() =>
+      expect(postMessageSpy).toHaveBeenCalledWith(
+        {
+          type: AppsEditorEvent.ToolsetLoginResult,
+          toolsetId: 'toolsets/b/My Toolset__1.0.0',
+          success: true,
+          credentialsLevel: ToolsetCredentialsLevel.User,
+          credentials: expect.objectContaining({ userStatus: 'SIGNED_IN' }),
+        },
+        'https://editor.example.com',
+      ),
+    );
+  });
+
+  it('still posts a success result when the credentials refresh fails', async () => {
+    const postMessageSpy = renderAndSpyOnIframe();
+
+    emitToolsetLoginSuccess({
+      toolsetId: 'toolsets/b/my__1.0.0',
+      credentialsLevel: ToolsetCredentialsLevel.Global,
+    });
+
+    await waitFor(() =>
+      expect(postMessageSpy).toHaveBeenCalledWith(
+        {
+          type: AppsEditorEvent.ToolsetLoginResult,
+          toolsetId: 'toolsets/b/my__1.0.0',
+          success: true,
+          credentialsLevel: ToolsetCredentialsLevel.Global,
+          credentials: undefined,
+        },
+        'https://editor.example.com',
+      ),
+    );
+  });
+
+  it('unsubscribes on unmount and does not post after the iframe is gone', async () => {
+    const { unmount } = renderIframe();
+    const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+    unmount();
+
+    emitToolsetLoginSuccess({
+      toolsetId: 'toolsets/b/my__1.0.0',
+      credentialsLevel: ToolsetCredentialsLevel.User,
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(postMessageSpy).not.toHaveBeenCalled();
   });
 });

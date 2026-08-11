@@ -31,7 +31,7 @@
   color: var(--cat-details-publish-title-text, var(--text-primary, #161b2d));
 }
 
-/* Read from TSX as `styles.skeletonColor` — DialSkeleton takes a color value, not a class. */
+/* Read from TSX as `styles.skeletonColor` — Skeleton takes a color value, not a class. */
 :export {
   skeletonColor: var(--cat-details-skeleton, var(--bg-layer-4, #d1dbea));
 }

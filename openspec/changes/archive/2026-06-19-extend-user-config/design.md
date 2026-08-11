@@ -196,12 +196,12 @@ const useUserConfig = (): UserConfigContextType => {
 
 ### 10. Loading gate — `UserConfigProvider` blocks children during loading
 
-While `status === UserConfigStatus.Loading`, `UserConfigProvider` renders `<DialSpinner />` instead of `children`. Once `status` is `Ready` or `Error`, it renders `children` inside the context provider.
+While `status === UserConfigStatus.Loading`, `UserConfigProvider` renders `<Spinner />` instead of `children`. Once `status` is `Ready` or `Error`, it renders `children` inside the context provider.
 
 ```tsx
 // inside UserConfigProvider render
 if (status === UserConfigStatus.Loading) {
-  return <DialSpinner />;
+  return <Spinner />;
 }
 return (
   <UserConfigContext.Provider value={value}>
@@ -224,11 +224,11 @@ return (
 </RequireAuth>
 ```
 
-**Why:** `RequireAuth` already shows `<DialSpinner />` during user-profile loading; reusing the same component for user-config loading is visually consistent and requires no new UI surface. Placing `UserConfigProvider` inside `RequireAuth` guarantees it only initializes for authenticated users. Placing it outside `ConversationsProvider` and `AppConfigProvider` ensures neither renders until the config is available — satisfying the requirement that dependent features never render with incorrect default values.
+**Why:** `RequireAuth` already shows `<Spinner />` during user-profile loading; reusing the same component for user-config loading is visually consistent and requires no new UI surface. Placing `UserConfigProvider` inside `RequireAuth` guarantees it only initializes for authenticated users. Placing it outside `ConversationsProvider` and `AppConfigProvider` ensures neither renders until the config is available — satisfying the requirement that dependent features never render with incorrect default values.
 
 **Why gate on `Loading` only, not `Error`:** On failure the app falls back to empty arrays and remains usable. Blocking the UI on error would be worse than showing an empty-array state with an error notification. `Error` status is surfaced to consumers through `status` so future features can branch on it if needed.
 
-**Mobile / desktop loading state:** `<DialSpinner />` from `@epam/ai-dial-ui-kit` is a self-centering component with no direction-sensitive layout. It renders identically on mobile and desktop without additional responsive work.
+**Mobile / desktop loading state:** `<Spinner />` from `@epam/ai-dial-ui-kit` is a self-centering component with no direction-sensitive layout. It renders identically on mobile and desktop without additional responsive work.
 
 ### 11. Pin synchronization — `ConversationsContext` routes through `UserConfigContext`
 
@@ -287,7 +287,7 @@ No other user-visible strings are introduced by this change.
 
 ### 15. No RTL impact
 
-`UserConfigContext` and `UserConfigProvider` add no directional UI surfaces. `<DialSpinner />` is symmetric and direction-agnostic. No Tailwind physical-direction classes or directional icons are introduced.
+`UserConfigContext` and `UserConfigProvider` add no directional UI surfaces. `<Spinner />` is symmetric and direction-agnostic. No Tailwind physical-direction classes or directional icons are introduced.
 
 ### 16. No feature flag
 

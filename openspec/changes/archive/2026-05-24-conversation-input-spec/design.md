@@ -2,7 +2,7 @@
 
 ## Overview
 
-`ConversationInput` is a self-contained React component that renders a chat message input area, optionally preceded by a welcome heading. It delegates the textarea UI to `DialTextarea` from `@epam/ai-dial-ui-kit` and owns the message state, keyboard handling, and send-guard logic.
+`ConversationInput` is a self-contained React component that renders a chat message input area, optionally preceded by a welcome heading. It delegates the textarea UI to `Textarea` from `@epam/ai-dial-ui-kit` and owns the message state, keyboard handling, and send-guard logic.
 
 ## Public API
 
@@ -11,7 +11,7 @@
 | Prop             | Type                        | Default                                        | Description                                                           |
 | ---------------- | --------------------------- | ---------------------------------------------- | --------------------------------------------------------------------- |
 | `placeholder`    | `string`                    | `'Type a new prompt or use "/" to select one'` | Placeholder text shown inside the textarea when empty                 |
-| `disabled`       | `boolean`                   | `false`                                        | When true, prevents sending and passes disabled state to DialTextarea |
+| `disabled`       | `boolean`                   | `false`                                        | When true, prevents sending and passes disabled state to Textarea |
 | `initialMessage` | `string`                    | `''`                                           | Seed value for the textarea on first render; not reactive after mount |
 | `welcomeText`    | `string`                    | `'Hello World, good day for prompting!'`       | Heading shown above the input. Pass an empty string to hide it        |
 | `onSend`         | `(message: string) => void` | `undefined`                                    | Called with the trimmed message string when a valid send is triggered |
@@ -32,7 +32,7 @@ import '@epam/ai-dial-conversation-input/styles.css';
 ```
 <div>                          ← root container (Tailwind layout)
   <h1>                         ← welcome heading (conditional on welcomeText)
-  <DialTextarea>               ← delegated textarea + send button UI
+  <Textarea>               ← delegated textarea + send button UI
 ```
 
 ### Root container
@@ -48,11 +48,11 @@ Centers the content column, provides vertical gap between heading and textarea.
 - `dial-h1-text` is a typography token from `@epam/ai-dial-ui-kit`
 - **Note**: The heading is hidden by passing an empty string, not by typing activity. It does not auto-hide while the user is typing.
 
-### DialTextarea
+### Textarea
 
 Receives: `ref`, `value`, `onChange`, `onKeyDown`, `placeholder`, `disabled`.
 
-`DialTextarea` renders an internal send button. To wire the send button to `handleSend`, the component must pass an `onSubmit` (or equivalent) prop supported by `DialTextarea`. See [Known Gaps](#known-gaps) below.
+`Textarea` renders an internal send button. To wire the send button to `handleSend`, the component must pass an `onSubmit` (or equivalent) prop supported by `Textarea`. See [Known Gaps](#known-gaps) below.
 
 ## State & Refs
 
@@ -86,7 +86,7 @@ A send is a no-op when the message is empty/whitespace or when `disabled` is `tr
 When `disabled={true}`:
 
 - `handleSend` returns early without calling `onSend` or clearing the message
-- `DialTextarea` receives `disabled={true}` (UI handles visual feedback)
+- `Textarea` receives `disabled={true}` (UI handles visual feedback)
 
 ### initialMessage
 
@@ -103,9 +103,9 @@ Set as the initial `useState` value. Changing `initialMessage` after mount has n
 
 ### 1. Send button not wired to handleSend
 
-The current implementation does not pass a submit callback to `DialTextarea`, so clicking the internal send button does not invoke `handleSend`. This needs to be resolved by passing the appropriate prop (e.g., `onSubmit` or `onSend`) once the `DialTextarea` API is confirmed.
+The current implementation does not pass a submit callback to `Textarea`, so clicking the internal send button does not invoke `handleSend`. This needs to be resolved by passing the appropriate prop (e.g., `onSubmit` or `onSend`) once the `Textarea` API is confirmed.
 
-**Impact**: Tests that click the send button will fail against the real component unless `DialTextarea` is mocked.
+**Impact**: Tests that click the send button will fail against the real component unless `Textarea` is mocked.
 
 ### 2. Welcome text does not auto-hide on typing
 
@@ -133,4 +133,4 @@ The test `should hide welcome text when typing` asserts `queryByText(...) === nu
 | Does not send when `disabled={true}`                   | Not covered                |
 | `Shift+Enter` does not trigger send                    | Not covered                |
 | `initialMessage` seeds the textarea value              | Not covered                |
-| `placeholder` is passed to DialTextarea                | Not covered                |
+| `placeholder` is passed to Textarea                | Not covered                |

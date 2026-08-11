@@ -5,22 +5,19 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { SearchBar } from '@epam/ai-dial-kit';
 import {
+  ButtonAppearance,
+  ButtonDropdown,
+  ButtonVariant,
   DIAL_ICON_SIZE,
-  DialDropdown,
-  DialSpinner,
+  Spinner,
   GhostButton,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
-import {
-  IconArrowsSort,
-  IconCalendarTime,
-  IconCheck,
-  IconChevronUp,
-  IconPlus,
-} from '@tabler/icons-react';
+import { IconCalendarTime, IconPlus } from '@tabler/icons-react';
 import { FC, useEffect, useMemo, useRef } from 'react';
 import { ScheduledTaskSectionKey } from '../../models/scheduled-task-item';
 import { ScheduledTasksProps } from '../../models/scheduled-tasks-props';
+import { ScheduledTasksSortKey } from '../../types/scheduled-tasks-sort-key';
 import { ScheduledTaskCardGrid } from '../ScheduledTaskCardGrid/ScheduledTaskCardGrid';
 import { ScheduledTaskSection } from '../ScheduledTaskSection/ScheduledTaskSection';
 import styles from './ScheduledTasks.module.scss';
@@ -86,9 +83,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
   isLoadingMore = false,
   skeletonCount = 6,
   onLoadMore,
-  onEdit,
-  onRunNow,
-  onDelete,
+  onCardClick,
   styles: scheduledTasksStyles,
 }) => {
   const {
@@ -162,7 +157,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
 
   const renderContent = () => {
     if (isLoading) {
-      return <DialSpinner />;
+      return <Spinner />;
     }
 
     if (error) {
@@ -211,9 +206,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
             <ScheduledTaskCardGrid
               items={section.items}
               searchQuery={searchQuery}
-              onEdit={onEdit}
-              onRunNow={onRunNow}
-              onDelete={onDelete}
+              onCardClick={onCardClick}
               labels={labels.cardLabels}
               trailingSkeletonCount={
                 isLoadingMore && index === lastSectionIndex ? skeletonCount : 0
@@ -279,33 +272,16 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
             }}
           />
         </div>
-
         {labels.sortOptions.length > 0 && (
-          <DialDropdown
-            matchReferenceWidth={false}
-            placement="bottom-end"
-            listClassName="cp-dropdown-overlay"
+          <ButtonDropdown
+            label={activeSortLabel}
+            variant={ButtonVariant.Primary}
+            appearance={ButtonAppearance.Ghost}
             items={labels.sortOptions.map((option) => ({
-              key: option.key,
-              label: (
-                <span className="flex w-full items-center justify-between gap-2">
-                  {option.label}
-                  {option.key === sortKey && (
-                    <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
-                  )}
-                </span>
-              ),
-              onClick: () => onSortChange(option.key),
+              ...option,
+              onClick: () => onSortChange(option.key as ScheduledTasksSortKey),
             }))}
-          >
-            <GhostButton
-              label={activeSortLabel}
-              aria-label={labels.sortLabel}
-              className={mergeClasses('rounded-[4px]', styles.sortButton)}
-              iconBefore={<IconArrowsSort size={20} aria-hidden />}
-              iconAfter={<IconChevronUp size={20} aria-hidden />}
-            />
-          </DialDropdown>
+          />
         )}
       </div>
 
