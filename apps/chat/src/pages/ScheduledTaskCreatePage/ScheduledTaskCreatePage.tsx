@@ -19,11 +19,13 @@ import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import { createScheduledTask } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
+import { resolveLocalizedText } from '../../utils/locale';
 import { validateScheduledTaskForm } from '../../utils/scheduled-task-form-validation';
 import { mapFormValuesToCreateBody } from '../../utils/scheduled-task-trigger';
 import NotFoundPage from '../NotFound/NotFound';
@@ -66,6 +68,7 @@ const resolveReturnUrl = (candidate: string | null): string => {
 
 const ScheduledTaskCreatePage: FC = () => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
@@ -92,9 +95,9 @@ const ScheduledTaskCreatePage: FC = () => {
     () =>
       deploymentItems.map((item) => ({
         id: item.id,
-        label: item.displayName,
+        label: resolveLocalizedText(item.displayName, language),
       })),
-    [deploymentItems],
+    [deploymentItems, language],
   );
 
   const labels = useMemo(

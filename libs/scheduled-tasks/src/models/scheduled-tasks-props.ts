@@ -100,12 +100,6 @@ export interface ScheduledTasksProps {
   skeletonCount?: number;
   /** Called when the trailing scroll sentinel becomes visible and `hasMore && !isLoadingMore && !isLoading`. */
   onLoadMore?: () => void;
-  /** Called with a task id when the user activates "Edit" on a card. Omit to hide the action on every card. */
-  onEdit?: (id: string) => void;
-  /** Called with a task id when the user activates "Run now" on a card. Omit to hide the action on every card. */
-  onRunNow?: (id: string) => void;
-  /** Called with a task id when the user activates "Delete" on a card. Omit to hide the action on every card. */
-  onDelete?: (id: string) => void;
   /** Called with a task id when the user activates a card's body. Omit to render cards with no added interactive root semantics. */
   onCardClick?: (id: string) => void;
   /** Style overrides. */

@@ -1,4 +1,4 @@
-import type { DeploymentItemDto } from '@epam/chat-api-client';
+import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
 import { act, renderHook } from '@testing-library/react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -82,7 +82,7 @@ describe('useModelSelector — selectorAriaLabel', () => {
       useModelSelector({
         deployments: [
           { id: 'raw-id', type: 'model' as const },
-        ] as unknown as DeploymentItemDto[],
+        ] as unknown as DeploymentItem[],
         selectedDeploymentId: 'raw-id',
       }),
     );

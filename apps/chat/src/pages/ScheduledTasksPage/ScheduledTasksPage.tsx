@@ -6,10 +6,7 @@ import { memo, useCallback, useEffect, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
-import {
-  getScheduledTaskDetailRoute,
-  getScheduledTaskEditRoute,
-} from '../../constants/routes';
+import { getScheduledTaskDetailRoute } from '../../constants/routes';
 import { ScheduledTaskCreateQuery } from '../../constants/scheduled-tasks';
 import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
@@ -68,13 +65,6 @@ const ScheduledTasksPage: FC = () => {
     [navigate],
   );
 
-  const handleEdit = useCallback(
-    (id: string) => {
-      navigate(getScheduledTaskEditRoute(id));
-    },
-    [navigate],
-  );
-
   const labels = useMemo(
     () => ({
       title: t(ScheduledTasksI18nKeys.PageTitle),
@@ -110,10 +100,6 @@ const ScheduledTasksPage: FC = () => {
       loadingMoreLabel: t(ScheduledTasksI18nKeys.ListLoadingMoreLabel),
       cardLabels: {
         newBadgeLabel: t(ScheduledTasksI18nKeys.CardNewBadgeLabel),
-        actionsLabel: t(ScheduledTasksI18nKeys.CardActionsLabel),
-        editActionLabel: t(ScheduledTasksI18nKeys.CardEditActionLabel),
-        runNowActionLabel: t(ScheduledTasksI18nKeys.CardRunNowActionLabel),
-        deleteActionLabel: t(ScheduledTasksI18nKeys.CardDeleteActionLabel),
       },
     }),
     [t],
@@ -133,8 +119,6 @@ const ScheduledTasksPage: FC = () => {
   }
 
   return (
-    // onRunNow/onDelete are intentionally omitted: run-now and delete are
-    // deferred to a future iteration.
     <ScheduledTasks
       labels={labels}
       onCreateClick={handleCreateClick}
@@ -150,7 +134,6 @@ const ScheduledTasksPage: FC = () => {
       isLoadingMore={isLoadingMore}
       onLoadMore={loadMore}
       onCardClick={handleCardClick}
-      onEdit={handleEdit}
     />
   );
 };

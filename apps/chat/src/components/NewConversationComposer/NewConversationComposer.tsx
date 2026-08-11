@@ -38,12 +38,14 @@ import { useChatSettingsFormConfig } from '../../hooks/conversation/useChatSetti
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { getTimeOfDayGreeting } from '../../utils/greeting';
+import { resolveLocalizedText } from '../../utils/locale';
 import FooterMessage from '../FooterMessage/FooterMessage';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 
@@ -119,9 +121,28 @@ const NewConversationComposer: FC<Props> = ({
   children,
 }) => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const { showNotification } = useNotification();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
+
+  const resolvedSelectedDeployment = useMemo(
+    () =>
+      selectedDeployment
+        ? {
+            ...selectedDeployment,
+            displayName: resolveLocalizedText(
+              selectedDeployment.displayName,
+              language,
+            ),
+            description: resolveLocalizedText(
+              selectedDeployment.description,
+              language,
+            ),
+          }
+        : undefined,
+    [selectedDeployment, language],
+  );
 
   const [isSending, setIsSending] = useState(false);
   const [attachmentsAmount, setAttachmentsAmount] = useState(0);
@@ -146,7 +167,7 @@ const NewConversationComposer: FC<Props> = ({
     isAttachmentsAllowed,
     validateAttachment,
     fileAccept,
-  } = useAttachmentValidation(selectedDeployment);
+  } = useAttachmentValidation(resolvedSelectedDeployment);
 
   const handleNetworkUploadError = useCallback(
     (filenames: string[]) => {

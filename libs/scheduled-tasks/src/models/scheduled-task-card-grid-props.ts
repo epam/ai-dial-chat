@@ -6,14 +6,6 @@ import type { ScheduledTaskItem } from './scheduled-task-item';
 export interface ScheduledTaskCardGridLabels {
   /** Label shown in a card's "new" badge. Defaults to `'NEW'`. */
   newBadgeLabel?: string;
-  /** Accessible label for a card's overflow-menu trigger. Defaults to `'More actions'`. */
-  actionsLabel?: string;
-  /** Label for the "Edit" card menu action. Defaults to `'Edit'`. */
-  editActionLabel?: string;
-  /** Label for the "Run now" card menu action. Defaults to `'Run now'`. */
-  runNowActionLabel?: string;
-  /** Label for the "Delete" card menu action. Defaults to `'Delete'`. */
-  deleteActionLabel?: string;
 }
 
 /** Props for the {@link ScheduledTaskCardGrid} component. */
@@ -22,12 +14,6 @@ export interface ScheduledTaskCardGridProps {
   items: ScheduledTaskItem[];
   /** Current search query — forwarded to each card to highlight the matching title substring. */
   searchQuery?: string;
-  /** Called with a task id when the user activates "Edit" on a card. Omit to hide the action on every card. */
-  onEdit?: (id: string) => void;
-  /** Called with a task id when the user activates "Run now" on a card. Omit to hide the action on every card. */
-  onRunNow?: (id: string) => void;
-  /** Called with a task id when the user activates "Delete" on a card. Omit to hide the action on every card. */
-  onDelete?: (id: string) => void;
   /** Called with a task id when the user activates a card's body. Omit to render cards with no added interactive root semantics. */
   onCardClick?: (id: string) => void;
   /** Localized labels forwarded to each card. */

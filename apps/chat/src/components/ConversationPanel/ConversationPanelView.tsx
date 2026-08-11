@@ -54,6 +54,7 @@ import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import { useConversationExport } from '../../hooks/useConversationExport';
 import { useConversationImport } from '../../hooks/useConversationImport';
 import { useUiFeature } from '../../hooks/useUiFeature';
@@ -69,6 +70,7 @@ import { getConversationPath } from '../../utils/conversation-path';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { getModelIdFromConversationId } from '../../utils/get-model-id-from-conversation-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
+import { resolveLocalizedText } from '../../utils/locale';
 import { safeDecodeURIComponent } from '../../utils/string-utils';
 import ImportExportQueue from '../ImportExportQueue/ImportExportQueue';
 import PublishConversationPanelContainer from '../PublishConversationPanelContainer/PublishConversationPanelContainer';
@@ -115,6 +117,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   onDuplicateReadonly,
 }) => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
@@ -280,7 +283,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           iconUrl: deployment?.iconUrl
             ? resolveCatalogIconUrl(deployment.iconUrl)
             : undefined,
-          iconTooltip: deployment?.displayName ?? fallbackTooltip,
+          iconTooltip: deployment
+            ? resolveLocalizedText(deployment.displayName, language)
+            : fallbackTooltip,
           isIconLoading: isDeploymentsLoading,
           source: getConversationSource(item),
           href: getConversationRoute(id),
@@ -289,7 +294,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             : {}),
         };
       }),
-    [items, deployments, isDeploymentsLoading, taskBadgeLabel],
+    [items, deployments, isDeploymentsLoading, taskBadgeLabel, language],
   );
 
   const filterLabels = useMemo(

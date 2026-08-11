@@ -18,12 +18,14 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DeploymentSelectorI18nKeys } from '../constants/translation-keys';
+import { useLanguage } from '../hooks/language/useLanguage';
 import { getApiErrorDetails } from '../server-api/api-error';
 import { getApplicationSchemas } from '../server-api/application-schemas';
 import { getDeploymentConfiguration } from '../server-api/deployments';
 import { getDeployments } from '../server-api/deployments.api';
 import { listToolsets } from '../server-api/toolsets';
 import { findDeploymentByIdOrReference } from '../utils/deployment-id';
+import { resolveLocalizedText } from '../utils/locale';
 import { useAppConfig } from './AppConfigContext';
 import { useUser } from './auth/UserContext';
 import { useNotification } from './NotificationContext';
@@ -93,10 +95,13 @@ export const DeploymentsContext = createContext<
 
 const sortDeployments = (
   deployments: DeploymentItemDto[],
+  activeLocale: string,
 ): DeploymentItemDto[] => {
   return [...deployments].sort((a, b) => {
-    const nameCompare = (a.displayName ?? a.id).localeCompare(
-      b.displayName ?? b.id,
+    const nameCompare = (
+      resolveLocalizedText(a.displayName, activeLocale) || a.id
+    ).localeCompare(
+      resolveLocalizedText(b.displayName, activeLocale) || b.id,
       undefined,
       { sensitivity: 'accent' },
     );
@@ -107,10 +112,15 @@ const sortDeployments = (
   });
 };
 
-const sortToolsets = (toolsets: DialToolsetDto[]): DialToolsetDto[] => {
+const sortToolsets = (
+  toolsets: DialToolsetDto[],
+  activeLocale: string,
+): DialToolsetDto[] => {
   return [...toolsets].sort((a, b) => {
-    const nameCompare = (a.displayName ?? a.id).localeCompare(
-      b.displayName ?? b.id,
+    const nameCompare = (
+      resolveLocalizedText(a.displayName, activeLocale) || a.id
+    ).localeCompare(
+      resolveLocalizedText(b.displayName, activeLocale) || b.id,
       undefined,
       { sensitivity: 'accent' },
     );
@@ -144,6 +154,7 @@ const resolveInitialSelection = (
 
 export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const { showNotification } = useNotification();
   const { selectedDeploymentId: userConfigSelectedId, setSelectedDeployment } =
     useUserConfig();
@@ -186,6 +197,17 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
    */
   const userConfigSelectedIdRef = useRef(userConfigSelectedId);
   const defaultDeploymentIdRef = useRef(appConfig.defaultDeploymentId);
+  /*
+   * Sorting only needs the active locale at sort time, not as a trigger to
+   * re-fetch — read through a ref for the same reason as the refs above.
+   */
+  const languageRef = useRef(language);
+
+  useEffect(() => {
+    languageRef.current = language;
+    setRawDeployments((prev) => sortDeployments(prev, language));
+    setToolsets((prev) => sortToolsets(prev, language));
+  }, [language]);
 
   useEffect(() => {
     userConfigSelectedIdRef.current = userConfigSelectedId;
@@ -227,7 +249,9 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
         toolsetsResult.status !== 'rejected' &&
         toolsetsRequestIdRef.current === toolsetsRequestId
       ) {
-        setToolsets(sortToolsets(toolsetsResult.value.data ?? []));
+        setToolsets(
+          sortToolsets(toolsetsResult.value.data ?? [], languageRef.current),
+        );
       }
 
       if (deploymentsResult.status === 'rejected') {
@@ -240,6 +264,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       if (deploymentsRequestIdRef.current === deploymentsRequestId) {
         const deployments = sortDeployments(
           deploymentsResult.value.deployments ?? [],
+          languageRef.current,
         );
         setRawDeployments(deployments);
         setSelectedItemIdState((prev) =>
@@ -297,7 +322,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data } = await listToolsets();
       if (toolsetsRequestIdRef.current !== requestId) return;
-      setToolsets(sortToolsets(data ?? []));
+      setToolsets(sortToolsets(data ?? [], languageRef.current));
     } catch (error) {
       if (toolsetsRequestIdRef.current !== requestId) return;
       const { traceId } = await getApiErrorDetails(error);
@@ -318,7 +343,9 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
           refresh,
         );
         if (deploymentsRequestIdRef.current !== requestId) return;
-        setRawDeployments(sortDeployments(deployments ?? []));
+        setRawDeployments(
+          sortDeployments(deployments ?? [], languageRef.current),
+        );
       } catch (error) {
         if (deploymentsRequestIdRef.current !== requestId) return;
         const { traceId } = await getApiErrorDetails(error);
@@ -336,12 +363,18 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     (item: DeploymentItemDto | DialToolsetDto) => {
       if (isDialToolsetDto(item)) {
         setToolsets((prev) =>
-          sortToolsets([...prev.filter((t) => t.id !== item.id), item]),
+          sortToolsets(
+            [...prev.filter((t) => t.id !== item.id), item],
+            languageRef.current,
+          ),
         );
         return;
       }
       setRawDeployments((prev) =>
-        sortDeployments([...prev.filter((d) => d.id !== item.id), item]),
+        sortDeployments(
+          [...prev.filter((d) => d.id !== item.id), item],
+          languageRef.current,
+        ),
       );
     },
     [],

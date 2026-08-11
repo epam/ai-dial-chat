@@ -5,8 +5,28 @@ import { listScheduledTaskRuns } from '../../server-api/scheduled-tasks.api';
 /** Page size requested from the BFF on each fetch (initial page and every subsequent load-more page). */
 const PAGE_SIZE = 20;
 
+/**
+ * Whether another page likely exists beyond the just-fetched one. Prefers the
+ * server's own signal (`next`, or `count` compared against rows consumed so
+ * far) when present. When the upstream response omits both — which happens
+ * for some DIAL Scheduler deployments — falls back to "the page was full"
+ * (`items.length === PAGE_SIZE`) as a heuristic, so pagination doesn't get
+ * stuck forever after the first page; a subsequent short/empty page then
+ * naturally clears it.
+ */
+const deriveHasMore = (
+  itemsInPage: number,
+  rowsConsumed: number,
+  count: number | null | undefined,
+  next: string | null | undefined,
+): boolean => {
+  if (next != null) return true;
+  if (count != null) return rowsConsumed < count;
+  return itemsInPage === PAGE_SIZE;
+};
+
 /** Result of {@link useScheduledTaskRuns}. */
-interface UseScheduledTaskRunsResult {
+export interface UseScheduledTaskRunsResult {
   /** Accumulated runs across all loaded pages, in server order (newest first). Empty until the first successful fetch resolves. */
   items: ScheduledTaskRunDto[];
   /** Whether the initial fetch (or a fetch triggered by `refetch`) is in flight. */
@@ -49,7 +69,25 @@ export const useScheduledTaskRuns = (
    */
   const nextOffsetRef = useRef(0);
 
+  /*
+   * Incremented whenever the main effect's deps change (`scheduleId` in
+   * particular). A `loadMore` fetch captures the token in effect at call
+   * time and checks it again on completion — if a `scheduleId` change ran
+   * the main effect in between, the token no longer matches and the stale
+   * `loadMore` result is discarded instead of being appended to the new
+   * schedule's `items`. The `cancelled`/`controller` pattern the main effect
+   * uses for its own cleanup can't reach into an in-flight `loadMore` call,
+   * since that call's locals live outside the effect closure.
+   */
+  const requestTokenRef = useRef(0);
+
   useEffect(() => {
+    const token = ++requestTokenRef.current;
+    // Any loadMore started under the previous token is now stale: its
+    // completion handlers will no-op, so isLoadingMore would otherwise be
+    // stuck at `true` forever. Reset it unconditionally here.
+    setIsLoadingMore(false);
+
     if (!enabled) {
       setIsLoading(false);
       setError(null);
@@ -57,7 +95,6 @@ export const useScheduledTaskRuns = (
     }
 
     const controller = new AbortController();
-    const cancelled = { value: false };
 
     const load = async () => {
       setIsLoading(true);
@@ -69,25 +106,26 @@ export const useScheduledTaskRuns = (
           offset: 0,
           signal: controller.signal,
         });
-        if (!cancelled.value) {
-          setItems(response.items);
-          setHasMore(
-            response.next != null ||
-              (response.count != null &&
-                response.items.length < response.count),
-          );
-          nextOffsetRef.current = response.items.length;
-        }
+        if (requestTokenRef.current !== token) return;
+        setItems(response.items);
+        setHasMore(
+          deriveHasMore(
+            response.items.length,
+            response.items.length,
+            response.count,
+            response.next,
+          ),
+        );
+        nextOffsetRef.current = response.items.length;
       } catch (err) {
-        if (!cancelled.value) {
-          setError(
-            err instanceof Error
-              ? err
-              : new Error('Failed to load scheduled task runs'),
-          );
-        }
+        if (requestTokenRef.current !== token) return;
+        setError(
+          err instanceof Error
+            ? err
+            : new Error('Failed to load scheduled task runs'),
+        );
       } finally {
-        if (!cancelled.value) {
+        if (requestTokenRef.current === token) {
           setIsLoading(false);
         }
       }
@@ -96,7 +134,6 @@ export const useScheduledTaskRuns = (
     load();
 
     return () => {
-      cancelled.value = true;
       controller.abort();
     };
   }, [enabled, scheduleId, resetToken]);
@@ -106,8 +143,8 @@ export const useScheduledTaskRuns = (
       return;
     }
 
+    const token = requestTokenRef.current;
     const controller = new AbortController();
-    const cancelled = { value: false };
     const offset = nextOffsetRef.current;
 
     const run = async () => {
@@ -120,31 +157,32 @@ export const useScheduledTaskRuns = (
           offset,
           signal: controller.signal,
         });
-        if (!cancelled.value) {
-          setItems((current) => {
-            const existingIds = new Set(current.map((item) => item.id));
-            const newItems = response.items.filter(
-              (item) => !existingIds.has(item.id),
-            );
-            return [...current, ...newItems];
-          });
-          setHasMore(
-            response.next != null ||
-              (response.count != null &&
-                offset + response.items.length < response.count),
+        if (requestTokenRef.current !== token) return;
+        setItems((current) => {
+          const existingIds = new Set(current.map((item) => item.id));
+          const newItems = response.items.filter(
+            (item) => !existingIds.has(item.id),
           );
-          nextOffsetRef.current = offset + response.items.length;
-        }
+          return [...current, ...newItems];
+        });
+        setHasMore(
+          deriveHasMore(
+            response.items.length,
+            offset + response.items.length,
+            response.count,
+            response.next,
+          ),
+        );
+        nextOffsetRef.current = offset + response.items.length;
       } catch (err) {
-        if (!cancelled.value) {
-          setError(
-            err instanceof Error
-              ? err
-              : new Error('Failed to load more scheduled task runs'),
-          );
-        }
+        if (requestTokenRef.current !== token) return;
+        setError(
+          err instanceof Error
+            ? err
+            : new Error('Failed to load more scheduled task runs'),
+        );
       } finally {
-        if (!cancelled.value) {
+        if (requestTokenRef.current === token) {
           setIsLoadingMore(false);
         }
       }

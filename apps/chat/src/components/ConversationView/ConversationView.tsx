@@ -33,6 +33,7 @@ import {
   FC,
   lazy,
   memo,
+  type ReactNode,
   Suspense,
   useCallback,
   useMemo,
@@ -61,6 +62,7 @@ import { useChatSettingsFormConfig } from '../../hooks/conversation/useChatSetti
 import { useConversationScroll } from '../../hooks/conversation/useConversationScroll';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
@@ -70,6 +72,7 @@ import {
   dialFolderPathToAttachment,
 } from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
+import { resolveLocalizedText } from '../../utils/locale';
 import { isMessageChanged } from '../../utils/message-utils';
 import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
@@ -141,6 +144,12 @@ interface Props {
   onToolToggle?: (toolId: string) => void;
   toolsMenuTitle?: string;
   toolsChipLabels?: ToolsChipLabels;
+  /**
+   * Neutral content rendered inside the scrollable message container, above
+   * the message list (e.g. the scheduled-task conversation summary banner).
+   * Never persisted as a message.
+   */
+  topContent?: ReactNode;
 }
 
 const ConversationView: FC<Props> = ({
@@ -176,10 +185,12 @@ const ConversationView: FC<Props> = ({
   onToolToggle,
   toolsMenuTitle,
   toolsChipLabels,
+  topContent,
 }) => {
   const isModelFixed = !!fixedModel;
   const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const { showNotification } = useNotification();
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
@@ -229,10 +240,16 @@ const ConversationView: FC<Props> = ({
   } = useDeployments();
   const activeDeploymentId = fixedModel?.id ?? selectedItemId;
 
-  const selectedDeployment = useMemo(
-    () => findDeploymentByIdOrReference(items, activeDeploymentId),
-    [items, activeDeploymentId],
-  );
+  const selectedDeployment = useMemo(() => {
+    const deployment = findDeploymentByIdOrReference(items, activeDeploymentId);
+    return deployment
+      ? {
+          ...deployment,
+          displayName: resolveLocalizedText(deployment.displayName, language),
+          description: resolveLocalizedText(deployment.description, language),
+        }
+      : undefined;
+  }, [items, activeDeploymentId, language]);
 
   const {
     inputAttachmentTypes,
@@ -258,14 +275,14 @@ const ConversationView: FC<Props> = ({
           features,
         }) => ({
           id,
-          displayName,
+          displayName: resolveLocalizedText(displayName, language),
           iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
           type,
           inputAttachmentTypes,
           features,
         }),
       ),
-    [items],
+    [items, language],
   );
 
   const fixedDeploymentItems = useMemo(
@@ -304,12 +321,12 @@ const ConversationView: FC<Props> = ({
         items.map((d) => [
           d.id,
           {
-            displayName: d.displayName,
+            displayName: resolveLocalizedText(d.displayName, language),
             iconUrl: resolveCatalogIconUrl(d.iconUrl),
           },
         ]),
       ),
-    [items],
+    [items, language],
   );
 
   /*
@@ -567,6 +584,7 @@ const ConversationView: FC<Props> = ({
             ref={contentRef}
             className="mx-auto flex w-full min-w-0 max-w-[760px] shrink-0 flex-col gap-[26px] px-6 pt-7"
           >
+            {topContent}
             {messages.map((msg, index) => {
               const isThisMessageEditing = editingMessageIndexes?.has(index);
               return (

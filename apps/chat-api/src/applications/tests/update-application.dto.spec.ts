@@ -76,4 +76,30 @@ describe('UpdateApplicationBodyDto', () => {
     });
     expect(errors).toHaveLength(0);
   });
+
+  it('passes with a valid locale entry and primaryLocale', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      locales: [{ language: 'de', name: 'Meine App' }],
+      primaryLocale: 'en',
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects a locale entry with a stray client-side id field', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      locales: [{ id: 'locale-row-1', language: 'de', name: 'Meine App' }],
+      primaryLocale: 'en',
+    });
+    expect(errors.some((e) => e.property === 'locales')).toBe(true);
+  });
+
+  it('rejects a non-empty locales array without primaryLocale', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      locales: [{ language: 'de', name: 'Meine App' }],
+    });
+    expect(errors.some((e) => e.property === 'primaryLocale')).toBe(true);
+  });
 });

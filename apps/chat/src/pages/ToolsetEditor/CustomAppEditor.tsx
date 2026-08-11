@@ -38,6 +38,12 @@ import {
   parseFeaturesData,
 } from '../../utils/custom-apps';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
+import {
+  composeLocalePayload,
+  decomposeLocalizedFields,
+  PRIMARY_LOCALE,
+  resolveLocalizedText,
+} from '../../utils/locale';
 import CustomAppEditorView from './CustomAppEditorView';
 import ToolsetEditorHeader from './ToolsetEditorHeader';
 
@@ -90,11 +96,19 @@ const CustomAppEditor: FC = () => {
         if (deployment) {
           setGeneralForm({
             ...DEFAULT_CUSTOM_APP_GENERAL_FORM,
-            name: deployment.displayName ?? '',
-            description: deployment.description ?? '',
+            name: resolveLocalizedText(deployment.displayName, PRIMARY_LOCALE),
+            description: resolveLocalizedText(
+              deployment.description,
+              PRIMARY_LOCALE,
+            ),
             iconUrl: deployment.iconUrl ?? '',
             version: deployment.displayVersion ?? '',
             topics: deployment.topics ?? [],
+            otherLocales: decomposeLocalizedFields(
+              deployment.displayName,
+              deployment.description,
+              PRIMARY_LOCALE,
+            ),
           });
         }
 
@@ -202,6 +216,10 @@ const CustomAppEditor: FC = () => {
   const doSave = useCallback(async () => {
     setIsSaving(true);
     try {
+      const locales = composeLocalePayload(
+        generalForm.otherLocales,
+        PRIMARY_LOCALE,
+      );
       if (isEditMode) {
         const parsedFeatures = parseFeaturesData(settingsForm.featuresData);
         await updateApplication(customAppId, {
@@ -220,6 +238,8 @@ const CustomAppEditor: FC = () => {
             typeof settingsForm.maxInputAttachments === 'number'
               ? settingsForm.maxInputAttachments
               : undefined,
+          locales,
+          primaryLocale: locales ? PRIMARY_LOCALE : undefined,
         });
       } else {
         const appProperties: Record<string, unknown> = {
@@ -244,6 +264,8 @@ const CustomAppEditor: FC = () => {
           version: generalForm.version || undefined,
           topics: generalForm.topics,
           applicationProperties: appProperties,
+          locales,
+          primaryLocale: locales ? PRIMARY_LOCALE : undefined,
         };
         await createApplication(body);
       }
