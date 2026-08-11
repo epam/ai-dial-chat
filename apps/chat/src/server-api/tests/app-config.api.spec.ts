@@ -21,6 +21,7 @@ describe('app-config API', () => {
       config: {
         appVersion: '0.0.1',
         asrModelId: null,
+        announcements: [],
         transcribeSizeLimitBytes: 5 * 1024 * 1024,
         fileManagerTabs: ['my_files', 'shared', 'organization'],
         overlayEnabled: false,

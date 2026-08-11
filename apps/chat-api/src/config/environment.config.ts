@@ -563,6 +563,18 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  ANNOUNCEMENT_TITLE?: string;
+
+  @IsOptional()
+  @IsString()
+  ANNOUNCEMENT_DESCRIPTION?: string;
+
+  @IsOptional()
+  @IsString()
+  ANNOUNCEMENTS?: string;
+
+  @IsOptional()
+  @IsString()
   FOOTER_HTML_MESSAGE?: string;
 
   /* Deliberately unconstrained: this is an opaque display string that never

@@ -4791,6 +4791,49 @@
         },
         "required": ["sub", "providerId", "claims", "bucket", "isAdmin"]
       },
+      "AnnouncementLinkDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Visible label of the announcement call to action. Plain text; never interpreted as markup.",
+            "example": "Changelog"
+          },
+          "href": {
+            "type": "string",
+            "description": "Absolute http(s) URL the announcement links to. Opened in a new tab with rel=\"noopener noreferrer\". Entries carrying other schemes are dropped server-side.",
+            "example": "https://dialx.ai/changelog"
+          }
+        },
+        "required": ["label", "href"]
+      },
+      "AnnouncementItemDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Announcement heading. Plain text; never interpreted as markup. Entries without one are dropped server-side.",
+            "example": "We have upgraded to DIAL 1.43 🎉"
+          },
+          "description": {
+            "type": "string",
+            "description": "Supporting copy, sanitized to a safe HTML subset. Null when unset or when sanitization removes everything.",
+            "example": "Check what's new:",
+            "nullable": true
+          },
+          "link": {
+            "description": "Optional call to action. Null when the announcement is informational only. An entry whose link is present but invalid is dropped entirely rather than returned without it.",
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnouncementLinkDto"
+              }
+            ]
+          }
+        },
+        "required": ["title", "description", "link"]
+      },
       "CustomVisualizerDto": {
         "type": "object",
         "properties": {
@@ -4924,6 +4967,25 @@
             "example": "Welcome to <a href=\"https://your-site.example.com\">DIAL</a>!",
             "nullable": true
           },
+          "announcementTitle": {
+            "type": "string",
+            "description": "Plain-text heading shown in bold at the start of the announcement banner line. Never interpreted as markup. Null when ANNOUNCEMENT_TITLE is not configured or is blank.",
+            "example": "🎉 Welcome to DIAL! 🎉",
+            "nullable": true
+          },
+          "announcementDescription": {
+            "type": "string",
+            "description": "Supporting copy shown after the announcement banner title. Sanitized server-side to a safe HTML subset; anchors are forced to target=\"_blank\" with rel=\"noopener noreferrer\". Null when ANNOUNCEMENT_DESCRIPTION is not configured, is blank, or sanitizes away entirely.",
+            "example": "Explore our AI offerings with your data.",
+            "nullable": true
+          },
+          "announcements": {
+            "description": "Announcements listed in the popover behind the banner's \"+N announcements\" pill, in configured order. Empty when ANNOUNCEMENTS is unset or contained no valid entries. Sourced from ANNOUNCEMENTS.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnnouncementItemDto"
+            }
+          },
           "deepResearchToolId": {
             "type": "string",
             "description": "Tool ID for the Deep Research deployment-configuration property. Null when DEEP_RESEARCH_TOOL_ID is not set.",
@@ -4959,6 +5021,7 @@
           "overlayEnabled",
           "overlayAllowedOrigins",
           "enabledUiFeatures",
+          "announcements",
           "footerHtmlMessage",
           "customVisualizers",
           "publicationFilterSources"

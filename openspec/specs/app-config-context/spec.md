@@ -218,3 +218,68 @@ Libs SHALL NOT read `AppConfigContext` for the registry — the app resolves the
 - **WHEN** the config request is in flight
 - **THEN** both `useAppConfig().customVisualizers` and `useCustomVisualizers()` return `[]`
 - **AND** the same holds after the request rejects
+
+---
+
+### Requirement: AppConfigContext exposes the announcement title and description
+
+`AppConfigState.config` SHALL include `announcementTitle: string | null` and `announcementDescription: string | null`.
+
+The initial (loading) value of each SHALL be `null`. On a successful `GET /api/v1/client-config` response, each SHALL be populated from the response's `config.announcementTitle` and `config.announcementDescription` fields. On error, or when the backend omits a field, each SHALL retain the `null` default.
+
+The context SHALL NOT re-sanitize or otherwise transform these values — it surfaces what the backend returned, and the banner component applies its own client-side sanitization pass (see the `announcement-banner` capability).
+
+#### Scenario: Announcement fields are null before config loads
+
+- **WHEN** `AppConfigProvider` has mounted but the API call has not resolved
+- **THEN** `useAppConfig().config.announcementTitle` returns `null` and `.announcementDescription` returns `null`
+
+#### Scenario: Announcement fields are populated from a successful response
+
+- **WHEN** the API call resolves with `config.announcementTitle: "🎉 Welcome to DIAL! 🎉"` and `config.announcementDescription: "Explore our AI offerings with your data."`
+- **THEN** `useAppConfig().config` exposes those exact values
+
+#### Scenario: Announcement fields stay null when the backend omits them or the call fails
+
+- **WHEN** the response omits both fields, or the API call rejects
+- **THEN** `useAppConfig().config.announcementTitle` returns `null` and `.announcementDescription` returns `null`
+
+#### Scenario: One field populated, the other absent
+
+- **WHEN** the response carries `config.announcementTitle` but omits `config.announcementDescription`
+- **THEN** `useAppConfig().config.announcementTitle` returns the response value and `.announcementDescription` returns `null`
+
+---
+
+### Requirement: AppConfigContext exposes the announcements list
+
+`AppConfigState.config` SHALL include an `announcements: AnnouncementItem[]` field.
+
+The initial (loading) value SHALL be `[]`. On a successful `GET /api/v1/client-config` response, it SHALL be populated from the response's `config.announcements` field. On error, or when the backend omits the field, it SHALL retain the `[]` default. A `null` or non-array value SHALL be normalized to `[]`.
+
+The returned array reference SHALL remain stable across renders as long as the underlying config has not changed. The context SHALL NOT re-validate, re-sanitize, or re-order entries — the backend is the authority on which entries are safe to render.
+
+#### Scenario: Announcements default to an empty array before config loads
+
+- **WHEN** `AppConfigProvider` has mounted but the API call has not resolved
+- **THEN** `useAppConfig().config.announcements` returns `[]`
+
+#### Scenario: Announcements are populated from a successful response
+
+- **WHEN** the API call resolves with an entry in `config.announcements`
+- **THEN** `useAppConfig().config.announcements` returns that entry
+
+#### Scenario: Announcements stay empty when the backend omits them or the call fails
+
+- **WHEN** the response omits `config.announcements`, or the API call rejects
+- **THEN** `useAppConfig().config.announcements` returns `[]`
+
+#### Scenario: A non-array announcements value is normalized
+
+- **WHEN** the response carries `config.announcements: null`
+- **THEN** `useAppConfig().config.announcements` returns `[]` rather than `null`
+
+#### Scenario: The announcements array reference is stable across renders
+
+- **WHEN** a consumer re-renders without the underlying config changing
+- **THEN** `useAppConfig().config.announcements` returns the same array reference as the previous render

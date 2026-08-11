@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
+import { AnnouncementItemDto } from './announcement-item.dto';
 import { CustomVisualizerDto } from './custom-visualizer.dto';
 
 export class ClientConfigDto {
@@ -96,6 +97,35 @@ export class ClientConfigDto {
   @IsOptional()
   @IsString()
   announcementHtml!: string | null;
+
+  @ApiPropertyOptional({
+    description:
+      'Plain-text heading shown in bold at the start of the announcement banner line. Never interpreted as markup. Null when ANNOUNCEMENT_TITLE is not configured or is blank.',
+    example: '🎉 Welcome to DIAL! 🎉',
+    nullable: true,
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  announcementTitle!: string | null;
+
+  @ApiPropertyOptional({
+    description:
+      'Supporting copy shown after the announcement banner title. Sanitized server-side to a safe HTML subset; anchors are forced to target="_blank" with rel="noopener noreferrer". Null when ANNOUNCEMENT_DESCRIPTION is not configured, is blank, or sanitizes away entirely.',
+    example: 'Explore our AI offerings with your data.',
+    nullable: true,
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  announcementDescription!: string | null;
+
+  @ApiProperty({
+    description:
+      'Announcements listed in the popover behind the banner\'s "+N announcements" pill, in configured order. Empty when ANNOUNCEMENTS is unset or contained no valid entries. Sourced from ANNOUNCEMENTS.',
+    type: [AnnouncementItemDto],
+  })
+  announcements!: AnnouncementItemDto[];
 
   @ApiPropertyOptional({
     description:
