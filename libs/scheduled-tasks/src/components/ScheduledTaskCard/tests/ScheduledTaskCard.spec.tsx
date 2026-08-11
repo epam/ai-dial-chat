@@ -58,6 +58,10 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   }) => <span className={className}>{text}</span>,
 }));
 
+vi.mock('@tabler/icons-react', () => ({
+  IconPlayerPause: () => <svg />,
+}));
+
 const buildItem = (
   overrides?: Partial<ScheduledTaskItem>,
 ): ScheduledTaskItem => ({
@@ -149,6 +153,23 @@ describe('ScheduledTaskCard', () => {
       screen.queryByRole('button', { name: 'Competitor Updates' }),
     ).toBeNull();
     expect(screen.getByRole('group')).toBeTruthy();
+  });
+
+  it('renders the "Paused" badge instead of the schedule pill when isActive is false', () => {
+    render(<ScheduledTaskCard item={buildItem({ isActive: false })} />);
+
+    expect(screen.getByText('Paused')).toBeTruthy();
+    expect(screen.queryByText('Every Monday 12:00')).toBeNull();
+  });
+
+  it('renders the schedule pill when isActive is true or omitted', () => {
+    render(<ScheduledTaskCard item={buildItem({ isActive: true })} />);
+
+    expect(screen.getByText('Every Monday 12:00')).toBeTruthy();
+    expect(screen.queryByText('Paused')).toBeNull();
+
+    render(<ScheduledTaskCard item={buildItem()} />);
+    expect(screen.getAllByText('Every Monday 12:00').length).toBeGreaterThan(0);
   });
 
   it('pins the schedule pill to the bottom of the card regardless of description length', () => {

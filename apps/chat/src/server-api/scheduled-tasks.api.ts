@@ -44,6 +44,16 @@ export const updateScheduledTask = (
     updateScheduledTaskBodyDto: body,
   });
 
+export const pauseScheduledTask = (
+  scheduleId: string,
+): Promise<ScheduledTaskDto> =>
+  scheduledTasksApi.pauseScheduledTask({ scheduleId });
+
+export const resumeScheduledTask = (
+  scheduleId: string,
+): Promise<ScheduledTaskDto> =>
+  scheduledTasksApi.resumeScheduledTask({ scheduleId });
+
 export const listScheduledTaskRuns = ({
   scheduleId,
   limit,

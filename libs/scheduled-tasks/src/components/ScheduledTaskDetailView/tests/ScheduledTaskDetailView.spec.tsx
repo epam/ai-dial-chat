@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
@@ -19,6 +21,26 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   ButtonVariant: { Primary: 'primary', Neutral: 'neutral' },
+  DialSwitch: ({
+    switchId,
+    isOn,
+    disabled,
+    onChange,
+  }: {
+    switchId: string;
+    isOn?: boolean;
+    disabled?: boolean;
+    onChange?: (value: boolean) => void;
+  }) => (
+    <input
+      type="checkbox"
+      role="switch"
+      id={switchId}
+      checked={!!isOn}
+      disabled={disabled}
+      onChange={(e) => onChange?.(e.target.checked)}
+    />
+  ),
   Spinner: () => <div role="progressbar" />,
   Skeleton: (props: Record<string, unknown>) => (
     <div data-skeleton {...props} />
@@ -71,6 +93,7 @@ const labels: ScheduledTaskDetailViewLabels = {
   modelLabel: 'Model or Agent',
   repeatsLabel: 'Repeats',
   activeWindowLabel: 'Active',
+  activeStatusLabel: 'Active',
   configurationTitle: 'Configuration',
   instructionsLabel: 'Instructions',
   retryLabel: 'Retry',
@@ -95,6 +118,19 @@ const buildRun = (
   status: ScheduledTaskRunStatus.Success,
   timestampLabel: 'today at 9:01 AM (99s)',
   ...overrides,
+});
+
+describe('ScheduledTaskDetailView — library isolation', () => {
+  it('contains no imports of host apps, generated API clients, routing, feature-flag, auth, env, or analytics modules', () => {
+    const source = readFileSync(
+      join(__dirname, '../ScheduledTaskDetailView.tsx'),
+      'utf-8',
+    );
+
+    expect(source).not.toMatch(
+      /from ['"](apps\/chat|@epam\/chat-api-client|react-router|react-i18next)/,
+    );
+  });
 });
 
 describe('ScheduledTaskDetailView', () => {
@@ -497,6 +533,156 @@ describe('ScheduledTaskDetailView', () => {
       );
 
       expect(screen.queryByRole('button', { name: 'Show more' })).toBeNull();
+    });
+  });
+
+  describe('Active switch', () => {
+    it('does not render when isActive is undefined', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          onEdit={vi.fn()}
+          displayName="Daily summary"
+          runs={[]}
+        />,
+      );
+
+      expect(screen.queryByRole('switch')).toBeNull();
+    });
+
+    it('renders checked when isActive is true', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          displayName="Daily summary"
+          isActive={true}
+          runs={[]}
+        />,
+      );
+
+      expect(screen.getByRole('switch')).toHaveProperty('checked', true);
+    });
+
+    it('renders unchecked when isActive is false', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          displayName="Daily summary"
+          isActive={false}
+          runs={[]}
+        />,
+      );
+
+      expect(screen.getByRole('switch')).toHaveProperty('checked', false);
+    });
+
+    it('calls onActiveChange exactly once with the requested value on toggle, with no navigation or network side effects', async () => {
+      const onActiveChange = vi.fn();
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          displayName="Daily summary"
+          isActive={true}
+          onActiveChange={onActiveChange}
+          runs={[]}
+        />,
+      );
+
+      await userEvent.click(screen.getByRole('switch'));
+
+      expect(onActiveChange).toHaveBeenCalledOnce();
+      expect(onActiveChange).toHaveBeenCalledWith(false);
+    });
+
+    it('renders disabled while isActiveUpdating is true', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          displayName="Daily summary"
+          isActive={true}
+          isActiveUpdating
+          runs={[]}
+        />,
+      );
+
+      expect(screen.getByRole('switch')).toHaveProperty('disabled', true);
+    });
+
+    it('renders disabled while isActiveDisabled is true', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          displayName="Daily summary"
+          isActive={false}
+          isActiveDisabled
+          runs={[]}
+        />,
+      );
+
+      expect(screen.getByRole('switch')).toHaveProperty('disabled', true);
+    });
+
+    it('does not call onActiveChange when interacted with while disabled', async () => {
+      const onActiveChange = vi.fn();
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          displayName="Daily summary"
+          isActive={false}
+          isActiveDisabled
+          onActiveChange={onActiveChange}
+          runs={[]}
+        />,
+      );
+
+      await userEvent.click(screen.getByRole('switch'));
+
+      expect(onActiveChange).not.toHaveBeenCalled();
+    });
+
+    it('renders before the Edit button in DOM order', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          onEdit={vi.fn()}
+          displayName="Daily summary"
+          isActive={true}
+          runs={[]}
+        />,
+      );
+
+      const switchEl = screen.getByRole('switch');
+      const editButton = screen.getByRole('button', { name: 'Edit' });
+      expect(
+        switchEl.compareDocumentPosition(editButton) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it('announces a status message via an aria-live region, separate from the switch label', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={{
+            ...labels,
+            activeStatusAnnouncement: 'Task paused',
+          }}
+          onBack={vi.fn()}
+          displayName="Daily summary"
+          isActive={false}
+          runs={[]}
+        />,
+      );
+
+      const announcement = screen.getByText('Task paused');
+      expect(announcement.getAttribute('role')).toBe('status');
     });
   });
 

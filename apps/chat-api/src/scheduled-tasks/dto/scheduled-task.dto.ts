@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsISO8601,
   IsOptional,
@@ -45,6 +46,11 @@ export class ScheduledTaskDto {
   @IsOptional()
   @IsEnum(ScheduleTriggerType)
   triggerType?: ScheduleTriggerType;
+
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 
   @ApiPropertyOptional({ example: 'dial-oauth' })
   @IsOptional()
