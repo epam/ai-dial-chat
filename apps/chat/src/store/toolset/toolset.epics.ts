@@ -38,12 +38,17 @@ import {
   regenerateToolsetId,
 } from '@/src/utils/app/toolsets';
 import { translate } from '@/src/utils/app/translation';
-import { signInToolset } from '@/src/utils/auth/auth-toolset';
+import {
+  isToolsetAuthError,
+  postToolsetAuthResult,
+  signInToolset,
+} from '@/src/utils/auth/auth-toolset';
 import { getVersionFromId } from '@/src/utils/server/api';
 
 import { ChatEventOperations } from '@/src/types/chat-events';
 import { AppAction, AppEpic } from '@/src/types/store';
 import {
+  ToolsetAuthErrorReason,
   ToolsetAuthPayload,
   ToolsetCredentialsLevel,
   ToolsetEditorSteps,
@@ -801,9 +806,13 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
 
             return defer(() =>
               from(signInToolset(url.href)).pipe(
-                switchMap((isPopup) =>
-                  !isPopup
-                    ? of(ToolsetActions.logInToolsetFail())
+                switchMap((isSignedIn) =>
+                  !isSignedIn
+                    ? of(
+                        ToolsetActions.logInToolsetFail({
+                          skipToastMessage: true,
+                        }),
+                      )
                     : refreshToolset$(payload.toolset.id, state$.value).pipe(
                         mergeMap((actions) =>
                           concat(
@@ -817,6 +826,18 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
                           ),
                         ),
                       ),
+                ),
+                catchError((err) =>
+                  of(
+                    ToolsetActions.logInToolsetFail(
+                      isToolsetAuthError(err)
+                        ? err.details
+                        : {
+                            reason: ToolsetAuthErrorReason.UnexpectedError,
+                            ...parseApiError(err),
+                          },
+                    ),
+                  ),
                 ),
               ),
             );
@@ -854,6 +875,7 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
         switchMap(() => {
           if (payload.authType === ToolsetAuthTypes.OAUTH && window) {
             if (payload.isPopup) {
+              postToolsetAuthResult({ ok: true });
               void router.push(
                 {
                   pathname: router.pathname,
@@ -896,26 +918,39 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
           );
         }),
         catchError((err) => {
+          const parsedError = parseApiError(err);
           console.error('Failed to sign in toolset', err);
+
           if (payload.authType === ToolsetAuthTypes.OAUTH) {
             if (payload.isPopup) {
+              postToolsetAuthResult({
+                ok: false,
+                error: {
+                  reason: ToolsetAuthErrorReason.SignInRequestFailed,
+                  ...parsedError,
+                },
+              });
               void router.push(
                 {
                   pathname: router.pathname,
                   query: {
                     [ToolsetLoginQuery.LoginComplete]: QUERY_VALUE_FALSE,
+                    ...(parsedError.traceId && {
+                      [ToolsetLoginQuery.TraceId]: parsedError.traceId,
+                    }),
                   },
                 },
                 undefined,
                 { shallow: true },
               );
             } else {
-              void router.push(new URL(callbackUrl));
+              void router.push(callbackUrl);
             }
           }
           return of(
             ToolsetActions.logInToolsetFail({
-              ...parseApiError(err),
+              ...parsedError,
+              reason: ToolsetAuthErrorReason.SignInRequestFailed,
               skipToastMessage: payload.isPopup,
             }),
           );
@@ -954,14 +989,23 @@ const loginToolsetFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.logInToolsetFail.type),
     filter(({ payload }) => !payload?.skipToastMessage),
-    map(({ payload }) =>
-      UIActions.showErrorToast({
+    map(({ payload }) => {
+      const details =
+        [payload?.code, payload?.message].filter(Boolean).join(': ') ||
+        payload?.reason;
+
+      return UIActions.showErrorToast({
         traceId: payload?.traceId,
-        message: translate(CommonI18nKeys.ToolsetSignInFailed, {
-          ns: Translation.Common,
-        }),
-      }),
-    ),
+        message: details
+          ? translate(CommonI18nKeys.ToolsetSignInFailedWithDetails, {
+              ns: Translation.Common,
+              details,
+            })
+          : translate(CommonI18nKeys.ToolsetSignInFailed, {
+              ns: Translation.Common,
+            }),
+      });
+    }),
   );
 
 const logOutToolsetEpic: AppEpic = (action$, state$) =>
