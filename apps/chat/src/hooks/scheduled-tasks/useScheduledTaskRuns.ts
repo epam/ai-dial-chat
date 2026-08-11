@@ -1,4 +1,4 @@
-import type { ScheduledTaskRunDto } from '@epam/chat-api-client';
+import type { ScheduledTaskRunDto } from '@epam/ai-dial-chat-api-client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { listScheduledTaskRuns } from '../../server-api/scheduled-tasks.api';
 

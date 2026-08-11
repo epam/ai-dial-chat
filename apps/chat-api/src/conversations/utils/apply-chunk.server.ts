@@ -37,6 +37,7 @@ interface SseDelta {
     attachments?: unknown[];
     stages?: Stage[];
     annotations?: Annotation[];
+    state?: Record<string, unknown>;
   };
 }
 
@@ -179,7 +180,9 @@ const mergeAnnotations = (
 /**
  * Applies a single parsed DIAL Core SSE chunk to an assistant message,
  * accumulating text content, attachments, stages, annotations, form_schema,
- * and responseId. Pure function — returns a new message object.
+ * and responseId. `state` is overwritten rather than accumulated, matching
+ * the DIAL stateful-app contract (only the latest value is meaningful).
+ * Pure function — returns a new message object.
  */
 export const applyChunkToMessage = (
   message: ConversationMessageDto,
@@ -194,13 +197,15 @@ export const applyChunkToMessage = (
   const attachments = delta.custom_content?.attachments;
   const stages = delta.custom_content?.stages;
   const annotations = delta.custom_content?.annotations;
+  const state = delta.custom_content?.state;
 
   const hasContentUpdate =
     !!content ||
     !!formSchema ||
     !!attachments?.length ||
     !!stages?.length ||
-    !!annotations?.length;
+    !!annotations?.length ||
+    !!state;
 
   const responseId =
     delta.responseId ?? (hasContentUpdate ? chunk.id : undefined);
@@ -212,7 +217,8 @@ export const applyChunkToMessage = (
     !!formSchema ||
     !!attachments?.length ||
     !!stages?.length ||
-    !!annotations?.length;
+    !!annotations?.length ||
+    !!state;
 
   return {
     ...message,
@@ -240,6 +246,7 @@ export const applyChunkToMessage = (
             annotations,
           ) as never,
         }),
+        ...(state && { state }),
       },
     }),
   };

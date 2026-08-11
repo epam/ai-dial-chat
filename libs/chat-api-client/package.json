@@ -1,5 +1,5 @@
 {
-  "name": "@epam/chat-api-client",
+  "name": "@epam/ai-dial-chat-api-client",
   "description": "Generated OpenAPI client for the AI DIAL Chat API",
   "version": "0.0.1",
   "private": true,
@@ -18,7 +18,13 @@
     }
   },
   "nx": {
-    "name": "chat-api-client"
+    "name": "chat-api-client",
+    "tags": ["publishable"],
+    "targets": {
+      "publish": {
+        "command": "node tools/publish-lib.mjs {projectName} --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
+      }
+    }
   },
   "dependencies": {
     "tslib": "^2.3.0"

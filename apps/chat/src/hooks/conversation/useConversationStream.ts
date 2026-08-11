@@ -1,8 +1,8 @@
+import type { SendCompletionDtoModeEnum } from '@epam/ai-dial-chat-api-client'; // type-only is fine here — used only as a type annotation
 import {
   type Conversation,
   type MessageCustomContent,
 } from '@epam/ai-dial-chat-shared';
-import type { SendCompletionDtoModeEnum } from '@epam/chat-api-client'; // type-only is fine here — used only as a type annotation
 import {
   type Dispatch,
   type MutableRefObject,

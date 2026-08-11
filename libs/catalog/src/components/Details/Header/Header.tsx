@@ -2,7 +2,6 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   Dropdown,
-  Spinner,
   FolderPath,
   NeutralButton,
   NeutralIconButton,
@@ -19,7 +18,7 @@ import {
   IconTrash,
   IconUpload,
 } from '@tabler/icons-react';
-import { FC, useCallback, useMemo, useState, type ReactNode } from 'react';
+import { FC, useCallback, useMemo, type ReactNode } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
 import type {
   ItemDetailsStyles,
@@ -52,9 +51,10 @@ interface HeaderProps {
    */
   isShareVisible?: (item: CatalogItem) => boolean;
   onEdit?: (item: CatalogItem) => void;
-  onDelete?: (item: CatalogItem) => Promise<void> | void;
-  /** Called after a delete confirmed via the Manage menu succeeds, to close the whole details panel. */
-  onCloseDetails?: () => void;
+  /** Called when "Delete" is clicked in the Manage menu. The details panel owns the confirmation step, so this only requests it. */
+  onDelete?: (item: CatalogItem) => void;
+  /** Called when the recipient-side "Remove from My List" action is clicked for an item shared with the current user. The details panel owns the confirmation step. */
+  onUnshare?: (item: CatalogItem) => void;
   onLogin?: (
     item: CatalogItem,
     params: { level: CredentialsLevel; apiKey?: string },
@@ -92,7 +92,7 @@ export const Header: FC<HeaderProps> = ({
   isShareVisible,
   onEdit,
   onDelete,
-  onCloseDetails,
+  onUnshare,
   onLogin,
   onLogout,
   onToggleCredentials,
@@ -108,8 +108,6 @@ export const Header: FC<HeaderProps> = ({
     folderLeafClassName = 'dial-tiny-semi-text',
   } = detailsStyles?.typography ?? {};
 
-  const [isDeleting, setIsDeleting] = useState(false);
-
   const handleUseInChat = useCallback(() => {
     onUseInChat?.(item);
   }, [item, onUseInChat]);
@@ -122,17 +120,13 @@ export const Header: FC<HeaderProps> = ({
     onOpenPublish?.();
   }, [onOpenPublish]);
 
-  const handleDelete = useCallback(async () => {
-    setIsDeleting(true);
-    try {
-      await onDelete?.(item);
-      onCloseDetails?.();
-    } catch {
-      // Failure feedback (e.g. a notification) is the caller's responsibility.
-    } finally {
-      setIsDeleting(false);
-    }
-  }, [item, onDelete, onCloseDetails]);
+  const handleUnshare = useCallback(() => {
+    onUnshare?.(item);
+  }, [item, onUnshare]);
+
+  const handleDelete = useCallback(() => {
+    onDelete?.(item);
+  }, [item, onDelete]);
 
   const shouldShowPrimaryAction =
     texts?.hasPrimaryAction !== false &&
@@ -148,6 +142,15 @@ export const Header: FC<HeaderProps> = ({
 
   const shouldShowEditAction = !!onEdit && !!item.isEditable;
   const shouldShowDeleteAction = item.isMyApp;
+  /*
+   * The recipient-side "Remove from My List" action is the counterpart of
+   * Delete: it discards only the current user's own access, so it shows
+   * exclusively for items shared with them. `isMyApp` and `sharedWithMe` are
+   * mutually exclusive for a given item, so Delete and this action never
+   * render at the same time.
+   */
+  const shouldShowUnshareAction =
+    !!onUnshare && item.isMyApp !== true && item.sharedWithMe === true;
 
   const manageItems = useMemo<DropdownItem[]>(() => {
     const items: DropdownItem[] = [];
@@ -171,16 +174,24 @@ export const Header: FC<HeaderProps> = ({
       items.push({
         key: 'delete',
         label: texts?.deleteActionLabel ?? 'Delete',
-        icon: isDeleting ? (
-          <span aria-hidden="true">
-            <Spinner size={DIAL_ICON_SIZE.SM} />
-          </span>
-        ) : (
-          <IconTrash size={DIAL_ICON_SIZE.SM} aria-hidden />
-        ),
+        icon: <IconTrash size={DIAL_ICON_SIZE.SM} aria-hidden />,
         danger: true,
-        disabled: isDeleting,
         onClick: handleDelete,
+      });
+    }
+    if (shouldShowUnshareAction) {
+      items.push({
+        key: 'unshare',
+        label: texts?.unshareLabel ?? 'Remove from My List',
+        icon: (
+          <IconTrash
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            className="text-error"
+          />
+        ),
+        className: 'text-error',
+        onClick: handleUnshare,
       });
     }
     return items;
@@ -188,11 +199,12 @@ export const Header: FC<HeaderProps> = ({
     shouldShowEditAction,
     shouldShowPublish,
     shouldShowDeleteAction,
-    isDeleting,
+    shouldShowUnshareAction,
     texts,
     handleEdit,
     handleOpenPublish,
     handleDelete,
+    handleUnshare,
   ]);
 
   const credentialsUiState =
@@ -296,11 +308,6 @@ export const Header: FC<HeaderProps> = ({
           </Dropdown>
         )}
       </div>
-      {isDeleting && (
-        <span role="status" aria-live="polite" className="sr-only">
-          {texts?.deletingStatusLabel ?? 'Deleting'}
-        </span>
-      )}
     </div>
   );
 };

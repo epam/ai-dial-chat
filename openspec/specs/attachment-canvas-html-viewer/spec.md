@@ -268,6 +268,8 @@ The function SHALL delegate text resolution to the shared `resolveAttachmentText
 
 **Size gate:** When the resolved text length exceeds 1 048 576 characters (1 MiB), the function SHALL return `null` (falling through to `UnsupportedCanvasContent`). This prevents `srcdoc` truncation in browsers that cap the attribute length.
 
+Because `null` also means "this attachment carries no text at all" (an external HTML URL), the caller SHALL distinguish the two with `hasAttachmentTextSource(attachment)` — see the routing requirement below — so a size-gated file is not re-opened as a url-only iframe and reported as frame-blocked.
+
 #### Scenario: file attachment resolves to srcdoc
 
 - **WHEN** `resolveHtmlCanvasContent` is called with an HTML file attachment that has downloadable text
@@ -289,7 +291,14 @@ The function SHALL delegate text resolution to the shared `resolveAttachmentText
 
 `apps/chat/src/hooks/attachment/useOpenAttachmentCanvas.ts`'s internal `openFileCanvas` SHALL add a branch before the existing `isTextPreviewable` check:
 
-- If `isHtmlPreviewable(attachment.name)` is `true`, call `resolveHtmlCanvasContent(attachment)` and open the canvas with the result.
+- If the attachment is an HTML source, call `resolveHtmlCanvasContent(attachment)` and open the canvas with the result.
+
+An attachment counts as an HTML source when `isHtmlPreviewable(attachment.name)` is `true` **or** `isHtmlPreviewable(getUrlFileName(attachment.url))` is `true`. The URL fallback is required because a cited source's `name` is its citation title, which usually carries no file extension — matching on the name alone routes such a source to the Unsupported branch. The same combined check SHALL gate the Unsupported branch, so the two cannot disagree.
+
+When `resolveHtmlCanvasContent` returns `null`, the fallback SHALL depend on whether the attachment had text to fetch:
+
+- `hasAttachmentTextSource(attachment) === false` — an external HTML URL. Open `HtmlCanvasContent { url }` so the iframe loads it directly, or return `false` when there is no URL either.
+- `hasAttachmentTextSource(attachment) === true` — the text was fetched and rejected by the size gate. Open `UnsupportedCanvasContent`; re-opening it as a url-only iframe would render the frame-blocked panel, telling the user the page refused to be framed when it never was.
 
 `isExternalSourcePreviewable` in `apps/chat/src/utils/attachment-canvas.ts` SHALL be updated to return `true` for `html`/`htm` URL extensions (so external HTML source links open in the canvas rather than a new tab).
 
@@ -312,3 +321,13 @@ For external URL sources (an `AttachmentResource` whose URL path ends in `.html`
 - **WHEN** an `AttachmentResource` URL ends with `.html`
 - **THEN** `openCanvas` is called with `HtmlCanvasContent { url: <resource url> }`
 - **AND** no text fetch is performed
+
+#### Scenario: cited source with an extension-less title opens Html content type
+
+- **WHEN** a cited source's `name` is a title with no file extension and its URL path ends with `.html`
+- **THEN** `openCanvas` is called with `HtmlCanvasContent { url: <resource url> }`, not `UnsupportedCanvasContent`
+
+#### Scenario: oversized html file opens the unsupported panel
+
+- **WHEN** an HTML file attachment's text exceeds the srcdoc size gate, so `resolveHtmlCanvasContent` returns `null`
+- **THEN** `openCanvas` is called with `UnsupportedCanvasContent`, and the frame-blocked panel is not shown

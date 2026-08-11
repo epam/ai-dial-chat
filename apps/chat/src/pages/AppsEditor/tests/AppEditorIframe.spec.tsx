@@ -1,4 +1,4 @@
-import type { DialToolsetDto } from '@epam/chat-api-client';
+import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps, Ref } from 'react';
 import { createRef } from 'react';

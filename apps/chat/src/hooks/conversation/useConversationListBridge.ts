@@ -1,4 +1,8 @@
 import type {
+  ConversationListItemDto,
+  ConversationResponseDto,
+} from '@epam/ai-dial-chat-api-client';
+import type {
   CreateConversationResponse,
   DeleteConversationResponse,
   OverlayConversation,
@@ -6,10 +10,6 @@ import type {
   RenameConversationResponse,
   SelectConversationResponse,
 } from '@epam/ai-dial-chat-overlay';
-import type {
-  ConversationListItemDto,
-  ConversationResponseDto,
-} from '@epam/chat-api-client';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { getConversationRoute } from '../../constants/routes';

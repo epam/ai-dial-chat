@@ -6,7 +6,7 @@ import type {
   ScheduledTaskDto,
   UpdateScheduledTaskBodyDto,
   UpdatedScheduledTaskDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import type {
   ListScheduledTaskRunsParams,
   ListScheduledTasksParams,

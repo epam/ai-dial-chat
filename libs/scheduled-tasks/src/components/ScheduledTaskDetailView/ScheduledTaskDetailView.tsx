@@ -6,8 +6,6 @@ import {
 import {
   DIAL_ICON_SIZE,
   DialSwitch,
-  Skeleton,
-  SkeletonVariant,
   Spinner,
   GhostButton,
   GhostIconButton,

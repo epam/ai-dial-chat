@@ -1,4 +1,4 @@
-import type { ApplicationSchemasResponseDto } from '@epam/chat-api-client';
+import type { ApplicationSchemasResponseDto } from '@epam/ai-dial-chat-api-client';
 import { applicationsApi } from './api-client';
 
 export const getApplicationSchemas =

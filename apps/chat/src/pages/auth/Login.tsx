@@ -1,5 +1,5 @@
+import type { ProviderInfoDto } from '@epam/ai-dial-chat-api-client';
 import { NeutralButton } from '@epam/ai-dial-ui-kit';
-import type { ProviderInfoDto } from '@epam/chat-api-client';
 import {
   memo,
   useCallback,

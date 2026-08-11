@@ -139,7 +139,35 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   NotificationVariant: { Success: 'success', Error: 'error' },
+  PrimaryButton: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick?: () => void;
+  }) => <button onClick={onClick}>{label}</button>,
+  NeutralButton: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick?: () => void;
+  }) => <button onClick={onClick}>{label}</button>,
+  GhostButton: ({
+    label,
+    onClick,
+    className,
+  }: {
+    label: string;
+    onClick?: () => void;
+    className?: string;
+  }) => (
+    <button onClick={onClick} className={className}>
+      {label}
+    </button>
+  ),
 }));
 
 const BackTargetStub = () => <div>scheduled tasks list</div>;
@@ -635,6 +663,7 @@ describe('ScheduledTaskDetailPage', () => {
       resumeScheduledTaskMock.mockResolvedValue({
         id: 'sched_123',
         displayName: 'Daily summary',
+        trigger: { cron: { fields: { hour: '9', minute: '0' } } },
         triggerType: 'cron',
         isActive: true,
       });

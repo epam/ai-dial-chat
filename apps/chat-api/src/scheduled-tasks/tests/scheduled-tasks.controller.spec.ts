@@ -719,9 +719,7 @@ describe('ScheduledTasksController (integration)', () => {
     });
 
     it('returns 401 when the service reports the caller is not authenticated', async () => {
-      service.pauseScheduledTask.mockRejectedValue(
-        new UnauthorizedException(),
-      );
+      service.pauseScheduledTask.mockRejectedValue(new UnauthorizedException());
       await request(app.getHttpServer())
         .post('/api/v1/scheduled-tasks/sched_123/pause')
         .expect(401);

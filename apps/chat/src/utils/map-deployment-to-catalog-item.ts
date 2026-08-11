@@ -5,12 +5,12 @@ import {
   type CatalogItem,
   type CatalogItemCredentials,
 } from '@epam/ai-dial-catalog';
-import { formatLastUsed } from '@epam/ai-dial-chat-shared';
 import type {
   DeploymentItemDto,
   DialToolsetAuthSettingsDto,
   DialToolsetDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
+import { formatLastUsed } from '@epam/ai-dial-chat-shared';
 import type { TFunction } from 'i18next';
 import { CatalogI18nKeys } from '../constants/translation-keys';
 import type { EntitySpecificDetails } from '../types/entity-details';
@@ -200,7 +200,6 @@ export const mapDeploymentToCatalogItem = (
           !deployment.applicationTypeSchemaId &&
           normalizedType === 'application')),
     folder: resolveDeploymentFolder(deployment, t),
-    summary: undefined,
     details:
       entityDetails != null
         ? mapEntityDetailsToCatalogDetails(entityDetails)
@@ -251,7 +250,6 @@ export const mapToolsetToCatalogItem = (
     sharedWithMe: toolset.sharedWithMe ?? false,
     isEditable: !!(toolset.isMy || toolset.canEdit),
     folder: resolveToolsetFolder(toolset, t),
-    summary: undefined,
     credentials: mapToolsetCredentials(
       toolset.id,
       toolset.authSettings,

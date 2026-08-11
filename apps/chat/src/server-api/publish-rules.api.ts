@@ -1,8 +1,8 @@
+import type { PublishRuleDto } from '@epam/ai-dial-chat-api-client';
 import type {
   PublicationRule,
   PublicationRuleFunction,
 } from '@epam/ai-dial-publish-panel';
-import type { PublishRuleDto } from '@epam/chat-api-client';
 import { publishApi } from './api-client';
 
 /** Converts a `PublicationRule` (publish-panel lib model) to the generated client's `PublishRuleDto` shape. */

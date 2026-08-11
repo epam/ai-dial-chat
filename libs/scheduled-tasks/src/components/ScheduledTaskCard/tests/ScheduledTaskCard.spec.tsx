@@ -169,9 +169,7 @@ describe('ScheduledTaskCard', () => {
     expect(screen.queryByText('Paused')).toBeNull();
 
     render(<ScheduledTaskCard item={buildItem()} />);
-    expect(
-      screen.getAllByText('Every Monday 12:00').length,
-    ).toBeGreaterThan(0);
+    expect(screen.getAllByText('Every Monday 12:00').length).toBeGreaterThan(0);
   });
 
   it('pins the schedule pill to the bottom of the card regardless of description length', () => {

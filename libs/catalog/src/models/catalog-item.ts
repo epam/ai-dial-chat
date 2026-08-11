@@ -1,6 +1,5 @@
 import type { CatalogEntityType } from '../types/entity-type';
 import type { CatalogItemCredentials } from './catalog-item-credentials';
-import type { CatalogItemSummary } from './entity-summary';
 import type { CatalogItemTabData } from './item-details-data';
 
 /** Full catalog item shown in the Browse section. */
@@ -43,8 +42,6 @@ export interface CatalogItem {
   folder: string[];
   /** Topics associated with the item. */
   topics: string[];
-  /** Header-level summary metadata (tag, badge image, daily limit). When absent the summary block is hidden. */
-  summary?: CatalogItemSummary;
   /** Tab-specific detail data. A tab is shown only when its field is non-null. */
   details?: CatalogItemTabData;
   /** Credential status for the item's own authentication. Absent when the item requires no authentication. */

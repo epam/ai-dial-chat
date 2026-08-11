@@ -1,9 +1,9 @@
+import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
 import {
   ScheduledTaskDetailView,
   type ScheduledTaskRunItem,
 } from '@epam/ai-dial-scheduled-tasks';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import type { ScheduledTaskDto } from '@epam/chat-api-client';
 import {
   memo,
   useCallback,

@@ -328,19 +328,86 @@ describe('Header', () => {
     expect(onDelete).toHaveBeenCalledWith(item);
   });
 
-  it('calls onCloseDetails after a successful delete from the Manage menu', async () => {
-    const onDelete = vi.fn().mockResolvedValue(undefined);
-    const onCloseDetails = vi.fn();
+  /*
+   * The details panel owns the delete confirmation step, so the menu entry
+   * only requests it — it never performs the delete or shows progress here.
+   */
+  it('leaves Delete enabled after it is clicked, since the panel takes over', async () => {
+    render(
+      <Header item={makeItem(CatalogEntityType.Toolset)} onDelete={vi.fn()} />,
+    );
+    await openManage();
+    const deleteItem = screen.getByRole('button', { name: 'Delete' });
+    await userEvent.click(deleteItem);
+    expect(deleteItem.hasAttribute('disabled')).toBe(false);
+  });
+
+  const makeSharedItem = (type = CatalogEntityType.Toolset): CatalogItem => ({
+    ...makeItem(type),
+    isMyApp: false,
+    sharedWithMe: true,
+  });
+
+  it('renders Remove from My List in the Manage menu for an item shared with the user', async () => {
+    render(<Header item={makeSharedItem()} onUnshare={vi.fn()} />);
+    await openManage();
+    expect(
+      screen.getByRole('button', { name: 'Remove from My List' }),
+    ).toBeTruthy();
+  });
+
+  it('does not render Remove from My List for an item the user owns', async () => {
+    render(
+      <Header item={makeItem(CatalogEntityType.Toolset)} onUnshare={vi.fn()} />,
+    );
+    await openManage();
+    expect(
+      screen.queryByRole('button', { name: 'Remove from My List' }),
+    ).toBeNull();
+  });
+
+  it('does not render Remove from My List when onUnshare is not supplied', async () => {
+    render(<Header item={makeSharedItem()} isPublishVisible={() => true} />);
+    await openManage();
+    expect(
+      screen.queryByRole('button', { name: 'Remove from My List' }),
+    ).toBeNull();
+  });
+
+  it('passes texts.unshareLabel through to the Remove from My List item label', async () => {
     render(
       <Header
-        item={makeItem(CatalogEntityType.Toolset)}
-        onDelete={onDelete}
-        onCloseDetails={onCloseDetails}
+        item={makeSharedItem()}
+        onUnshare={vi.fn()}
+        texts={{ unshareLabel: 'Stop sharing' }}
       />,
     );
     await openManage();
-    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
-    expect(onCloseDetails).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: 'Stop sharing' })).toBeTruthy();
+  });
+
+  it('calls onUnshare with the item when Remove from My List is clicked', async () => {
+    const onUnshare = vi.fn();
+    const item = makeSharedItem();
+    render(<Header item={item} onUnshare={onUnshare} />);
+    await openManage();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Remove from My List' }),
+    );
+    expect(onUnshare).toHaveBeenCalledWith(item);
+  });
+
+  it('renders Remove from My List for a shared Application item', async () => {
+    render(
+      <Header
+        item={makeSharedItem(CatalogEntityType.Agent)}
+        onUnshare={vi.fn()}
+      />,
+    );
+    await openManage();
+    expect(
+      screen.getByRole('button', { name: 'Remove from My List' }),
+    ).toBeTruthy();
   });
 
   it('uses manageActionLabel for the Manage button accessible name', () => {

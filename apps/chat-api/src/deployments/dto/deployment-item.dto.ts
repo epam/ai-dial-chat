@@ -62,6 +62,16 @@ export class DeploymentFeaturesDto {
     description: 'Whether the deployment supports the MCP protocol',
   })
   mcp?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Whether the deployment supports the Responses API',
+  })
+  responsesApi?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Whether the deployment supports chat completion requests',
+  })
+  chatCompletion?: boolean;
 }
 
 export class DeploymentItemDto {

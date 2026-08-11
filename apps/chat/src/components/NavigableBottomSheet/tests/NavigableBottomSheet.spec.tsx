@@ -6,6 +6,7 @@ import NavigableBottomSheet from '../NavigableBottomSheet';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  ElementSize: { Standard: 'standard' },
   GhostIconButton: ({
     'aria-label': ariaLabel,
     onClick,

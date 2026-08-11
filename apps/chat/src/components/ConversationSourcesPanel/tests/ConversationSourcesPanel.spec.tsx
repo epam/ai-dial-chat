@@ -1,9 +1,9 @@
-import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
-import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import type {
   ScheduledTaskDto,
   ScheduledTaskRunDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
+import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';

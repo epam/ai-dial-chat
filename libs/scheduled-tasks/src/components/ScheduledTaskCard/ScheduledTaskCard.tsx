@@ -1,5 +1,10 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { CardShell, DIAL_ICON_SIZE, FolderPath, Highlight } from '@epam/ai-dial-ui-kit';
+import {
+  CardShell,
+  DIAL_ICON_SIZE,
+  FolderPath,
+  Highlight,
+} from '@epam/ai-dial-ui-kit';
 import { IconPlayerPause } from '@tabler/icons-react';
 import type { FC, KeyboardEvent } from 'react';
 import type { ScheduledTaskCardProps } from '../../models/scheduled-task-card-props';

@@ -1,7 +1,7 @@
 import {
   ScheduledTaskRunDtoStatusEnum,
   type ListScheduledTaskRunsResponseDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { scheduledTasksApi } from '../api-client';
 import {

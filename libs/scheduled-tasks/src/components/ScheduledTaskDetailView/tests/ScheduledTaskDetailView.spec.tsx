@@ -1,7 +1,7 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ScheduledTaskDetailViewLabels } from '../../../models/scheduled-task-detail-view-props';
@@ -681,7 +681,8 @@ describe('ScheduledTaskDetailView', () => {
         />,
       );
 
-      expect(screen.getByRole('status')).toHaveTextContent('Task paused');
+      const announcement = screen.getByText('Task paused');
+      expect(announcement.getAttribute('role')).toBe('status');
     });
   });
 

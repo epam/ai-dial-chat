@@ -156,6 +156,20 @@ describe('applyChunkToMessage', () => {
     ).toEqual(schema2);
   });
 
+  it('overwrites state (last wins) rather than merging it', () => {
+    const msg1 = applyChunkToMessage(
+      baseMessage(),
+      makeChunk({ custom_content: { state: { step: 1 } } }),
+    );
+    const msg2 = applyChunkToMessage(
+      msg1,
+      makeChunk({ custom_content: { state: { step: 2 } } }),
+    );
+    expect((msg2.custom_content as { state: unknown }).state).toEqual({
+      step: 2,
+    });
+  });
+
   it('sets responseId from delta.responseId', () => {
     const result = applyChunkToMessage(
       baseMessage(),

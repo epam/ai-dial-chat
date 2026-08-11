@@ -36,7 +36,7 @@ export const Overview: FC<OverviewProps> = ({
     return null;
   }
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mt-4 flex flex-col gap-4">
       {sections.map((section, sIdx) => (
         <div key={sIdx} className="flex flex-col gap-4">
           {sIdx > 0 && (
@@ -44,7 +44,7 @@ export const Overview: FC<OverviewProps> = ({
               className={mergeClasses('shrink-0 border-b', styles.divider)}
             />
           )}
-          <div className="px-[22px]">
+          <div className="px-6">
             <TableView
               sectionLabel={section.title}
               values={section.specs}
