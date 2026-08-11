@@ -1,11 +1,11 @@
-import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import {
   ListDeploymentsInterfaceTypeEnum,
   type ApplicationSchemaSummaryDto,
   type DeploymentItemDto,
   type DialToolsetDto,
 } from '@epam/ai-dial-chat-api-client';
+import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import {
   createContext,
   ReactNode,

@@ -1,4 +1,7 @@
-import type { ProviderInfoDto, UserProfileDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  ProviderInfoDto,
+  UserProfileDto,
+} from '@epam/ai-dial-chat-api-client';
 import { authApi } from './api-client';
 import {
   ApiEndpoints,

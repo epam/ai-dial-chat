@@ -1,3 +1,4 @@
+import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   DIAL_ICON_SIZE,
@@ -9,7 +10,6 @@ import {
   PrimaryButton,
   Input,
 } from '@epam/ai-dial-ui-kit';
-import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import { IconAlertCircleFilled } from '@tabler/icons-react';
 import {
   memo,

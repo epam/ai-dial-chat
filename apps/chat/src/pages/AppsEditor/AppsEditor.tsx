@@ -1,9 +1,9 @@
+import type { ApplicationSchemaSummaryDto } from '@epam/ai-dial-chat-api-client';
 import {
   Spinner,
   ErrorMessageNotification,
   StepStatus,
 } from '@epam/ai-dial-ui-kit';
-import type { ApplicationSchemaSummaryDto } from '@epam/ai-dial-chat-api-client';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

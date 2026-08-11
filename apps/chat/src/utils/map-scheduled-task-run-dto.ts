@@ -1,8 +1,8 @@
+import type { ScheduledTaskRunDto } from '@epam/ai-dial-chat-api-client';
 import {
   ScheduledTaskRunStatus,
   type ScheduledTaskRunItem,
 } from '@epam/ai-dial-scheduled-tasks';
-import type { ScheduledTaskRunDto } from '@epam/ai-dial-chat-api-client';
 import type { TFunction } from 'i18next';
 import { ScheduledTasksI18nKeys } from '../constants/translation-keys';
 

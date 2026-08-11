@@ -1,9 +1,9 @@
 import { CatalogEntityType } from '@epam/ai-dial-catalog';
+import type { PublishHistoryEntryDto } from '@epam/ai-dial-chat-api-client';
 import {
   PublishAccessRulesLabels,
   PublishHistoryEntry,
 } from '@epam/ai-dial-publish-panel';
-import type { PublishHistoryEntryDto } from '@epam/ai-dial-chat-api-client';
 import type { TFunction } from 'i18next';
 import {
   ButtonsI18nKeys,

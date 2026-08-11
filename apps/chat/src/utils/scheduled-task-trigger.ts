@@ -1,13 +1,13 @@
-import {
-  ScheduledTaskCreateFormValues,
-  ScheduledTaskRepeat,
-} from '@epam/ai-dial-scheduled-tasks';
 import type {
   CreateScheduledTaskBodyDto,
   ScheduledTaskDto,
   ScheduleTriggerDto,
   UpdateScheduledTaskBodyDto,
 } from '@epam/ai-dial-chat-api-client';
+import {
+  ScheduledTaskCreateFormValues,
+  ScheduledTaskRepeat,
+} from '@epam/ai-dial-scheduled-tasks';
 import {
   UnsupportedTriggerReason,
   type ScheduledTaskDtoMappingResult,

@@ -1,3 +1,7 @@
+import type {
+  ToolsetLoginBodyDto,
+  ToolsetLogoutBodyDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
@@ -10,10 +14,6 @@ import {
   mergeClasses,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
-import type {
-  ToolsetLoginBodyDto,
-  ToolsetLogoutBodyDto,
-} from '@epam/ai-dial-chat-api-client';
 import type { FC } from 'react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

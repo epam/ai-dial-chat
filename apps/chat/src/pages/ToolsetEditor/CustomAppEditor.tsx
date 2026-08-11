@@ -1,5 +1,5 @@
-import { ConfirmationPopup, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { CreateApplicationBodyDto } from '@epam/ai-dial-chat-api-client';
+import { ConfirmationPopup, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

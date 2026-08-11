@@ -1,3 +1,4 @@
+import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
   MessageRating,
   MessageRole,
@@ -12,7 +13,6 @@ import {
   ConfirmationPopup,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
-import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import type { FC } from 'react';
 import {
   memo,

@@ -1,3 +1,4 @@
+import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
   MessageRating,
   MessageRole,
@@ -10,7 +11,6 @@ import {
   Spinner,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
-import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router';

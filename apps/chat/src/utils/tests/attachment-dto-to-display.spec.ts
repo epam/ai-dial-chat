@@ -1,5 +1,5 @@
-import { AttachmentType } from '@epam/ai-dial-chat-shared';
 import type { AttachmentDto } from '@epam/ai-dial-chat-api-client';
+import { AttachmentType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it, vi } from 'vitest';
 import { attachmentDtoToDisplayAttachment } from '../attachment-dto-to-display';
 

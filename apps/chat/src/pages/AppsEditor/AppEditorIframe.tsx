@@ -1,6 +1,6 @@
 import type { CatalogItemCredentials } from '@epam/ai-dial-catalog';
-import { Spinner } from '@epam/ai-dial-ui-kit';
 import type { ApplicationSchemaSummaryDto } from '@epam/ai-dial-chat-api-client';
+import { Spinner } from '@epam/ai-dial-ui-kit';
 import {
   forwardRef,
   memo,

@@ -1,5 +1,5 @@
-import { OverlayAuthUiMode } from '@epam/ai-dial-chat-overlay';
 import type { ProviderInfoDto } from '@epam/ai-dial-chat-api-client';
+import { OverlayAuthUiMode } from '@epam/ai-dial-chat-overlay';
 import { useCallback, useEffect, useState } from 'react';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { getProviders } from '../../server-api/auth.api';

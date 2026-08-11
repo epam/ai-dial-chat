@@ -1,11 +1,11 @@
+import type { ListFilesItemDto } from '@epam/ai-dial-chat-api-client';
+import { ListFilesItemDtoNodeTypeEnum } from '@epam/ai-dial-chat-api-client';
 import {
   fromFolderPathKey,
   mergeFolderPaths,
   PublishFolderNode,
   toFolderPathKey,
 } from '@epam/ai-dial-publish-panel';
-import type { ListFilesItemDto } from '@epam/ai-dial-chat-api-client';
-import { ListFilesItemDtoNodeTypeEnum } from '@epam/ai-dial-chat-api-client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { listPublicFiles } from '../../server-api/files.api';
 import { StorageKey } from '../../types/storage-key';

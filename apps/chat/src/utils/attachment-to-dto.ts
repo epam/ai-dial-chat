@@ -1,5 +1,5 @@
-import type { Attachment } from '@epam/ai-dial-chat-shared';
 import type { AttachmentDto } from '@epam/ai-dial-chat-api-client';
+import type { Attachment } from '@epam/ai-dial-chat-shared';
 
 export const attachmentToDto = (attachment: Attachment): AttachmentDto => {
   if (!attachment.url) {

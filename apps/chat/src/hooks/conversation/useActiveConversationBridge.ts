@@ -1,5 +1,5 @@
-import type { Conversation } from '@epam/ai-dial-chat-shared';
 import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
+import type { Conversation } from '@epam/ai-dial-chat-shared';
 import { type MutableRefObject, useEffect } from 'react';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { saveConversation } from '../../server-api/conversations.api';

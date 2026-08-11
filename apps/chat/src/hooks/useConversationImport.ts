@@ -1,9 +1,9 @@
-import type { Conversation } from '@epam/ai-dial-chat-shared';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import {
   ResponseError,
   type ConversationResponseDto,
 } from '@epam/ai-dial-chat-api-client';
+import type { Conversation } from '@epam/ai-dial-chat-shared';
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

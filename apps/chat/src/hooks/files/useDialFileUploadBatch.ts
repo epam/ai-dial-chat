@@ -1,13 +1,13 @@
 import type {
+  ListFilesItemDto,
+  UploadArchiveEntryResultDto,
+} from '@epam/ai-dial-chat-api-client';
+import type {
   DialFile,
   DialUploadFileItem,
 } from '@epam/ai-dial-react-file-manager';
 import { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import type {
-  ListFilesItemDto,
-  UploadArchiveEntryResultDto,
-} from '@epam/ai-dial-chat-api-client';
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type {
