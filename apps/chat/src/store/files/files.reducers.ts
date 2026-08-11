@@ -547,6 +547,12 @@ export const filesSlice = createSlice({
       state,
       _action: PayloadAction<{
         paths?: (string | undefined)[];
+        /**
+         * Also list the files of every path. Listing folders alone marks the
+         * path as fully loaded, so without this nothing ever fetches the files
+         * and the branch renders empty. Issue #3325
+         */
+        withFiles?: boolean;
       }>,
     ) => state,
     getFoldersSuccess: (
