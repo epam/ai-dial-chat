@@ -107,12 +107,36 @@ export const MarketplaceEntityBaseSchema = zodValidation
     }
   });
 
+export const MIME_FORMAT_ERROR = 'Please match the MIME format';
+
 export const AttachmentTypesSchema = zodValidation
   .array(zodValidation.string())
   .refine(
     (types) => types.every((t) => MIME_FORMAT_REGEX.test(t)),
-    'Please match the MIME format',
+    MIME_FORMAT_ERROR,
   );
+
+/**
+ * A MIME type typed into the attachment types combobox but not added to the
+ * list yet. It is kept in the form state so that its validation is produced by
+ * the schema and survives both form re-validation and switching editor steps.
+ */
+export const PendingAttachmentTypeSchema = zodValidation.string();
+
+export const refinePendingAttachmentType = (
+  data: { pendingInputAttachmentType?: string },
+  ctx: zodValidation.RefinementCtx,
+) => {
+  const pendingType = data.pendingInputAttachmentType?.trim();
+
+  if (pendingType && !MIME_FORMAT_REGEX.test(pendingType)) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['inputAttachmentTypes'],
+      message: MIME_FORMAT_ERROR,
+    });
+  }
+};
 
 export const MaxInputAttachmentsSchema = zodValidation.coerce
   .number<number>()
