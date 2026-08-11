@@ -2,10 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  ScheduledTaskSectionKey,
-  type ScheduledTaskItem,
-} from '../../../models/scheduled-task-item';
+import type { ScheduledTaskItem } from '../../../models/scheduled-task-item';
 import { ScheduledTasksProps } from '../../../models/scheduled-tasks-props';
 import { ScheduledTasksSortKey } from '../../../types/scheduled-tasks-sort-key';
 import { ScheduledTasks } from '../ScheduledTasks';
@@ -129,7 +126,6 @@ const buildItem = (
   id: 'sched_1',
   displayName: 'Competitor Updates',
   scheduleLabel: 'Every Monday 12:00',
-  sectionKey: ScheduledTaskSectionKey.MyTasks,
   ...overrides,
 });
 
@@ -152,7 +148,6 @@ const renderScheduledTasks = (overrides?: Partial<ScheduledTasksProps>) =>
         noResultsLabel: 'No results',
         errorLabel: 'Something went wrong',
         retryLabel: 'Retry',
-        sharedSectionTitle: 'Shared',
         loadingMoreLabel: 'Loading more scheduled tasks…',
       }}
       onCreateClick={vi.fn()}
@@ -242,7 +237,7 @@ describe('ScheduledTasks', () => {
     expect(screen.getByText('Daily summary')).toBeTruthy();
   });
 
-  it('renders cards for each matching item without a "My tasks" section heading', () => {
+  it('renders cards for each matching item as a flat grid with no section heading', () => {
     renderScheduledTasks({
       items: [
         buildItem({ id: '1', displayName: 'Daily summary' }),
@@ -251,28 +246,9 @@ describe('ScheduledTasks', () => {
     });
 
     expect(screen.queryByRole('heading', { name: 'My tasks' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Shared' })).toBeNull();
     expect(screen.getByText('Daily summary')).toBeTruthy();
     expect(screen.getByText('Weekly digest')).toBeTruthy();
-  });
-
-  it('renders a "Shared" section heading with a count badge for shared items', () => {
-    renderScheduledTasks({
-      items: [
-        buildItem({
-          id: '1',
-          displayName: 'Daily summary',
-          sectionKey: ScheduledTaskSectionKey.Shared,
-        }),
-        buildItem({
-          id: '2',
-          displayName: 'Weekly digest',
-          sectionKey: ScheduledTaskSectionKey.Shared,
-        }),
-      ],
-    });
-
-    expect(screen.getByRole('heading', { name: 'Shared' })).toBeTruthy();
-    expect(screen.getAllByText('2').length).toBeGreaterThan(0);
   });
 
   it('renders cards in the order items are received, regardless of sortKey', () => {

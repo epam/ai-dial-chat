@@ -1,8 +1,5 @@
 import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
-import {
-  ScheduledTaskSectionKey,
-  type ScheduledTaskItem,
-} from '@epam/ai-dial-scheduled-tasks';
+import type { ScheduledTaskItem } from '@epam/ai-dial-scheduled-tasks';
 import type { TFunction } from 'i18next';
 import { ScheduledTasksI18nKeys } from '../constants/translation-keys';
 import { apSchedulerDayToJsDay, jsDayToApSchedulerDay } from './cron-weekday';
@@ -149,48 +146,27 @@ export const buildScheduleLabel = (
 };
 
 /**
- * Resolves the card grid section for a task from `createdBy` vs. the
- * current user's sub. Falls back to `myTasks` when `createdBy` or
- * `currentUserSub` is unavailable (e.g. older upstream responses, or a
- * caller that hasn't wired the current user), matching prior behavior.
- */
-const resolveSectionKey = (
-  task: ScheduledTaskDto,
-  currentUserSub: string | undefined,
-): ScheduledTaskSectionKey => {
-  if (task.createdBy && currentUserSub && task.createdBy !== currentUserSub) {
-    return ScheduledTaskSectionKey.Shared;
-  }
-  return ScheduledTaskSectionKey.MyTasks;
-};
-
-/**
  * Maps a `GET /api/v1/scheduled-tasks` DTO to the lib-facing `ScheduledTaskItem`.
- * `sectionKey` is `shared` when the upstream `createdBy` differs from
- * `currentUserSub`, otherwise `myTasks` (also the fallback when either value
- * is missing). `description` maps 1:1 to `descriptionPreview` (undefined when
- * absent) with no truncation — the BFF's 500-char cap bounds the value, and
- * the card's own line-clamp/ellipsis handles presentation-layer truncation.
+ * `description` maps 1:1 to `descriptionPreview` (undefined when absent)
+ * with no truncation — the BFF's 500-char cap bounds the value, and the
+ * card's own line-clamp/ellipsis handles presentation-layer truncation.
  * `isActive` maps 1:1 from the DTO with no reinterpretation — derivation is
  * owned entirely by the BFF mapper.
  */
 export const mapScheduledTaskDtoToItem = (
   task: ScheduledTaskDto,
   t: TFunction,
-  currentUserSub?: string,
 ): ScheduledTaskItem => ({
   id: task.id,
   displayName: task.displayName,
   descriptionPreview: task.description,
   scheduleLabel: buildScheduleLabel(task, t),
   isActive: task.isActive,
-  sectionKey: resolveSectionKey(task, currentUserSub),
 });
 
 /** Maps a list of `ScheduledTaskDto` to `ScheduledTaskItem[]`, preserving order. */
 export const mapScheduledTaskDtosToItems = (
   tasks: ScheduledTaskDto[],
   t: TFunction,
-  currentUserSub?: string,
 ): ScheduledTaskItem[] =>
-  tasks.map((task) => mapScheduledTaskDtoToItem(task, t, currentUserSub));
+  tasks.map((task) => mapScheduledTaskDtoToItem(task, t));

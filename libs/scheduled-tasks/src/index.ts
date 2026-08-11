@@ -14,13 +14,6 @@ export type {
   ScheduledTaskCardColors,
   ScheduledTaskCardTypography,
 } from './models/scheduled-task-card-props';
-export { ScheduledTaskSection } from './components/ScheduledTaskSection/ScheduledTaskSection';
-export type {
-  ScheduledTaskSectionProps,
-  ScheduledTaskSectionStyles,
-  ScheduledTaskSectionColors,
-  ScheduledTaskSectionTypography,
-} from './models/scheduled-task-section-props';
 export { ScheduledTaskCardGrid } from './components/ScheduledTaskCardGrid/ScheduledTaskCardGrid';
 export type {
   ScheduledTaskCardGridProps,
@@ -33,7 +26,6 @@ export type {
   ScheduledTaskCardSkeletonColors,
 } from './models/scheduled-task-card-skeleton-props';
 export type { ScheduledTaskItem } from './models/scheduled-task-item';
-export { ScheduledTaskSectionKey } from './models/scheduled-task-item';
 export { ScheduledTasksSortKey } from './types/scheduled-tasks-sort-key';
 export { ScheduledTaskCreateForm } from './components/ScheduledTaskCreateForm/ScheduledTaskCreateForm';
 export type {

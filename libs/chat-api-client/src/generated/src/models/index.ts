@@ -4657,7 +4657,7 @@ export interface PublishRuleDto {
    * @type {string}
    * @memberof PublishRuleDto
    */
-  _function: PublishRuleDtoFunctionEnum;
+  function: PublishRuleDtoFunctionEnum;
   /**
    * Values combined with OR; exactly one pattern when function is REGEX.
    * @type {Array<string>}
