@@ -201,6 +201,12 @@ export class DeploymentsListingService {
          * card needs for auth-status display. Toolsets are served
          * exclusively via ToolsetsListingService/`/v1/toolsets`; drop them
          * here rather than surface an incomplete duplicate.
+         *
+         * TODO: revisit once DIAL Core's interface_type filtering lands
+         * (https://github.com/epam/ai-dial-core/issues/1822) — if Core's
+         * /v1/deployments payload for toolsets is enriched with
+         * auth_settings/endpoint at that point, this exclusion may no
+         * longer be necessary.
          */
         allItems = mappedItems.filter(
           (item) => item.type !== DeploymentItemType.Toolset,

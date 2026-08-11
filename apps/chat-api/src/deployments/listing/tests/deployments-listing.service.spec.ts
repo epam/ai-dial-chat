@@ -551,21 +551,6 @@ describe('DeploymentsListingService', () => {
       expect(result.deployments[0].applicationFolder).toBeUndefined();
     });
 
-    it('leaves applicationFolder absent for toolset deployments', async () => {
-      const { service, sdkClient } = makeService();
-      sdkClient.listDeployments.mockResolvedValue({
-        error: false,
-        response: { status: 200 },
-        data: [{ ...mockToolset, id: 'folder/search-tool' }],
-      });
-      const result = await service.listDeployments(
-        'user1',
-        'token',
-        'bucket-1',
-      );
-      expect(result.deployments[0].applicationFolder).toBeUndefined();
-    });
-
     it('maps features.responsesApi true for a model with responses_api support', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({
