@@ -307,6 +307,7 @@ export enum CommonI18nKeys {
   AddToMarketplaceFailed = 'Failed to add {{entityType}} to my workspace',
   ToolsetDeleteFailed = 'Failed to delete toolset',
   ToolsetSignInFailed = 'Failed to sign in toolset',
+  ToolsetSignInFailedWithDetails = 'Failed to sign in toolset: {{details}}',
   ToolsetSignOutFailed = 'Failed to sign out toolset',
   PublicationWithExternalFilesFailed = 'Publishing failed. You are only allowed to publish conversations with attachments from "My files"',
   PublicationRequestCreatedSuccessfully = 'Publication request created successfully',
