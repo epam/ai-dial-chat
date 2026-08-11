@@ -640,13 +640,8 @@ const DialFileManagerModal: FC<Props> = ({
         </div>
       }
       size={PopupSize.Lg}
-      /*
-       * `Popup`'s body wrapper has no distinguishing attribute (ai-dial-ui-kit
-       * PR #812 adds a `bodyClassName` prop for this — switch to it once
-       * released), so target it by its own fixed classes to turn it into a
-       * flex column the grid below can grow to fill.
-       */
-      className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-sunken [&>.overflow-auto]:flex [&>.overflow-auto]:min-h-0 [&>.overflow-auto]:flex-col"
+      className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-sunken"
+      bodyClassName="flex min-h-0 flex-col"
       onClose={onClose}
       footer={
         <div className="flex justify-end px-6 py-4">
