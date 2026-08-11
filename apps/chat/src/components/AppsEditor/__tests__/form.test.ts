@@ -4,6 +4,8 @@ import { MarketplaceEntity } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 import { QuickApp2Config } from '@/src/types/quick-apps';
 
+import { getPendingAttachmentTypeError } from '@/src/constants/validation-helpers';
+
 import {
   AppsEditorFormType,
   AppsEditorSchemaTypes,
@@ -84,6 +86,24 @@ const getAttachmentTypesErrors = (pendingInputAttachmentType: string) => {
         .filter((issue) => issue.path[0] === 'inputAttachmentTypes')
         .map((issue) => issue.message);
 };
+
+describe('getPendingAttachmentTypeError', () => {
+  it('reports an invalid type that is being typed', () => {
+    expect(getPendingAttachmentTypeError('imag')).toBe(
+      'Please match the MIME format',
+    );
+  });
+
+  it('reports nothing for a valid type', () => {
+    expect(getPendingAttachmentTypeError('image/jpeg')).toBeUndefined();
+  });
+
+  it('reports nothing when nothing is being typed', () => {
+    expect(getPendingAttachmentTypeError('')).toBeUndefined();
+    expect(getPendingAttachmentTypeError('   ')).toBeUndefined();
+    expect(getPendingAttachmentTypeError(undefined)).toBeUndefined();
+  });
+});
 
 describe('Custom app schema - attachment type that is not added yet', () => {
   it('reports the MIME error while an invalid type is being typed', () => {
