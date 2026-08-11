@@ -229,7 +229,10 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
 
       const [deploymentsResult, schemasResult, toolsetsResult] =
         await Promise.allSettled([
-          getDeployments([ListDeploymentsInterfaceTypeEnum.Chat]),
+          getDeployments([
+            ListDeploymentsInterfaceTypeEnum.Chat,
+            ListDeploymentsInterfaceTypeEnum.Mcp,
+          ]),
           getApplicationSchemas(),
           listToolsets(),
         ]);
@@ -339,7 +342,10 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       const requestId = ++deploymentsRequestIdRef.current;
       try {
         const { deployments } = await getDeployments(
-          [ListDeploymentsInterfaceTypeEnum.Chat],
+          [
+            ListDeploymentsInterfaceTypeEnum.Chat,
+            ListDeploymentsInterfaceTypeEnum.Mcp,
+          ],
           refresh,
         );
         if (deploymentsRequestIdRef.current !== requestId) return;

@@ -232,6 +232,30 @@ describe('mapDeploymentToCatalogItem', () => {
 
     expect(result.supportsMcp).toBe(false);
   });
+
+  it('sets supportsChat to true when interfaces includes chat', () => {
+    const result = mapDeploymentToCatalogItem(
+      { ...baseDeployment, interfaces: ['chat', 'mcp'] },
+      { t },
+    );
+
+    expect(result.supportsChat).toBe(true);
+  });
+
+  it('sets supportsChat to false when interfaces does not include chat', () => {
+    const result = mapDeploymentToCatalogItem(
+      { ...baseDeployment, interfaces: ['mcp'] },
+      { t },
+    );
+
+    expect(result.supportsChat).toBe(false);
+  });
+
+  it('sets supportsChat to true when interfaces is absent', () => {
+    const result = mapDeploymentToCatalogItem(baseDeployment, { t });
+
+    expect(result.supportsChat).toBe(true);
+  });
 });
 
 describe('mapToolsetToCatalogItem', () => {
