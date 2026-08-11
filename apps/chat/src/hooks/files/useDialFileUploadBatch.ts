@@ -7,7 +7,7 @@ import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type {
   ListFilesItemDto,
   UploadArchiveEntryResultDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type {

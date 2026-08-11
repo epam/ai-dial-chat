@@ -10,7 +10,7 @@ import {
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
-import type { DialToolsetDto } from '@epam/chat-api-client';
+import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';

@@ -1,7 +1,7 @@
 import type {
   DialModelDto,
   DialModelListResponseDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { modelsApi } from './api-client';
 
 export const getModels = (): Promise<DialModelListResponseDto> =>

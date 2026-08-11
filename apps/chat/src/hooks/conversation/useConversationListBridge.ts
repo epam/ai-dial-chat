@@ -9,7 +9,7 @@ import type {
 import type {
   ConversationListItemDto,
   ConversationResponseDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { getConversationRoute } from '../../constants/routes';

@@ -3,7 +3,7 @@ import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type {
   DiscardSharedItemDto,
   RevokeAccessItemDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DialFileManagerI18nKeys } from '../../constants/translation-keys';

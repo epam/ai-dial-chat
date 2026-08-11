@@ -7,8 +7,8 @@ import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type {
   CreateFolderResponseDto,
   ListFilesItemDto,
-} from '@epam/chat-api-client';
-import { ListFilesItemDtoNodeTypeEnum } from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
+import { ListFilesItemDtoNodeTypeEnum } from '@epam/ai-dial-chat-api-client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DialFileManagerI18nKeys } from '../../constants/translation-keys';

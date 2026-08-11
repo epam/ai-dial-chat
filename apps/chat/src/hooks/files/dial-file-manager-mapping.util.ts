@@ -7,8 +7,8 @@ import type {
   CreateFolderResponseDto,
   FileMetadataResponseDto,
   ListFilesItemDto,
-} from '@epam/chat-api-client';
-import { ListFilesItemDtoNodeTypeEnum } from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
+import { ListFilesItemDtoNodeTypeEnum } from '@epam/ai-dial-chat-api-client';
 import type {
   FileUploadBatchState,
   FileUploadEntry,

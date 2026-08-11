@@ -3,7 +3,7 @@ import type {
   DeploymentCreationFormLocaleLabels,
   DeploymentCreationFormLocaleOption,
 } from '@epam/ai-dial-deployment-creation-form';
-import type { LocaleTextEntryDto } from '@epam/chat-api-client';
+import type { LocaleTextEntryDto } from '@epam/ai-dial-chat-api-client';
 import type { TFunction } from 'i18next';
 import { ButtonsI18nKeys, EditorI18nKeys } from '../constants/translation-keys';
 import { SUPPORTED_LANGUAGES } from '../hooks/language/useLanguage';

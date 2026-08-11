@@ -6,7 +6,7 @@ import {
 import {
   ResponseError,
   type ConversationResponseDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { strToU8, zipSync } from 'fflate';
 import {

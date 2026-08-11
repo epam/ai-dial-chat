@@ -9,7 +9,7 @@ import {
   PrimaryButton,
   Input,
 } from '@epam/ai-dial-ui-kit';
-import type { DialToolsetDto } from '@epam/chat-api-client';
+import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import { IconAlertCircleFilled } from '@tabler/icons-react';
 import {
   memo,

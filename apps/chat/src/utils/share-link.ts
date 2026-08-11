@@ -1,5 +1,5 @@
 import { ShareLinkAccess, ShareLinkData } from '@epam/ai-dial-share';
-import { ShareLinkResponseDtoAccessEnum } from '@epam/chat-api-client';
+import { ShareLinkResponseDtoAccessEnum } from '@epam/ai-dial-chat-api-client';
 import { createShareLink as createShareLinkRequest } from '../server-api/share.api';
 
 const toShareLinkAccess = (

@@ -1,4 +1,4 @@
-import type { ClientConfigResponseDto } from '@epam/chat-api-client';
+import type { ClientConfigResponseDto } from '@epam/ai-dial-chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createElement, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

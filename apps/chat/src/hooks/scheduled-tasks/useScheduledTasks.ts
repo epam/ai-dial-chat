@@ -1,5 +1,5 @@
 import { ScheduledTasksSortKey } from '@epam/ai-dial-scheduled-tasks';
-import type { ScheduledTaskDto } from '@epam/chat-api-client';
+import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { listScheduledTasks } from '../../server-api/scheduled-tasks.api';
 

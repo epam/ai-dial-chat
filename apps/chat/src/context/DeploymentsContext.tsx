@@ -5,7 +5,7 @@ import {
   type ApplicationSchemaSummaryDto,
   type DeploymentItemDto,
   type DialToolsetDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import {
   createContext,
   ReactNode,

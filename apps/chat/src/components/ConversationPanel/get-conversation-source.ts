@@ -1,5 +1,5 @@
 import { FilterTab } from '@epam/ai-dial-conversation-panel';
-import { type ConversationListItemDto } from '@epam/chat-api-client';
+import { type ConversationListItemDto } from '@epam/ai-dial-chat-api-client';
 
 export const getConversationSource = (
   item: Pick<ConversationListItemDto, 'sharedWithMe' | 'publishedWithMe'>,

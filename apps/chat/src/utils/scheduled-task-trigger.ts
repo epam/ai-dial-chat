@@ -7,7 +7,7 @@ import type {
   ScheduledTaskDto,
   ScheduleTriggerDto,
   UpdateScheduledTaskBodyDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import {
   UnsupportedTriggerReason,
   type ScheduledTaskDtoMappingResult,

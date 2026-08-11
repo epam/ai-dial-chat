@@ -1,5 +1,5 @@
-import type { DialToolsetDto } from '@epam/chat-api-client';
-import { ResponseError } from '@epam/chat-api-client';
+import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
+import { ResponseError } from '@epam/ai-dial-chat-api-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ToolsetOAuthCallbackQuery,

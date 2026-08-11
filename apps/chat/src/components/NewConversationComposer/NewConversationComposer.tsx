@@ -12,7 +12,7 @@ import {
   type ToolsChipLabels,
 } from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import type { DeploymentItemDto } from '@epam/chat-api-client';
+import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
 import type { FC, ReactNode } from 'react';
 import { lazy, memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

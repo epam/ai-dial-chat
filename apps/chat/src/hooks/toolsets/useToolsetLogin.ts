@@ -1,7 +1,7 @@
 import type {
   ToolsetLoginBodyDto,
   ToolsetLogoutBodyDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { useCallback } from 'react';
 import {
   ToolsetAuthTypes,

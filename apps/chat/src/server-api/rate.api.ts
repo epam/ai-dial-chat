@@ -1,4 +1,4 @@
-import type { RateMessageDto } from '@epam/chat-api-client';
+import type { RateMessageDto } from '@epam/ai-dial-chat-api-client';
 import { rateApi } from './api-client';
 
 /**

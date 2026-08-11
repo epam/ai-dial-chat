@@ -4,12 +4,12 @@ import type {
   CopyItemDto,
   MoveItemDto,
   RenameItemDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import {
   CopyItemDtoNodeTypeEnum,
   MoveItemDtoNodeTypeEnum,
   RenameItemDtoNodeTypeEnum,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import {
   getParentFolderPath,
   virtualPathToApiPath,

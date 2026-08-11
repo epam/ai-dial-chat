@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import type { ApplicationSchemaSummaryDto } from '@epam/chat-api-client';
+import type { ApplicationSchemaSummaryDto } from '@epam/ai-dial-chat-api-client';
 import { forwardRef, memo, useImperativeHandle, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppsEditorI18nKeys } from '../../constants/translation-keys';

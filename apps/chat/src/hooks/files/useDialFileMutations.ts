@@ -12,12 +12,12 @@ import { NOT_ALLOWED_SYMBOLS, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type {
   CreateFolderResponseDto,
   DeleteItemDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import {
   ArchiveItemDtoNodeTypeEnum,
   DeleteItemDtoNodeTypeEnum,
   RenameItemDtoNodeTypeEnum,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DialFileManagerI18nKeys } from '../../constants/translation-keys';

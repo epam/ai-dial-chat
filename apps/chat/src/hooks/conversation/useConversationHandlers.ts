@@ -10,7 +10,7 @@ import {
 import type {
   ConversationResponseDto,
   SendCompletionDtoModeEnum,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import {
   type Dispatch,
   type MutableRefObject,

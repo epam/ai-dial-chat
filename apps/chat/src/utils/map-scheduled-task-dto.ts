@@ -2,7 +2,7 @@ import {
   ScheduledTaskSectionKey,
   type ScheduledTaskItem,
 } from '@epam/ai-dial-scheduled-tasks';
-import type { ScheduledTaskDto } from '@epam/chat-api-client';
+import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
 import type { TFunction } from 'i18next';
 import { ScheduledTasksI18nKeys } from '../constants/translation-keys';
 import { apSchedulerDayToJsDay, jsDayToApSchedulerDay } from './cron-weekday';

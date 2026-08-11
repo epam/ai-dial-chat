@@ -6,7 +6,7 @@ import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import {
   ResponseError,
   type ConversationListItemDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { normalizeConversationId } from '../constants/routes';

@@ -3,7 +3,7 @@ import {
   PublishAccessRulesLabels,
   PublishHistoryEntry,
 } from '@epam/ai-dial-publish-panel';
-import type { PublishHistoryEntryDto } from '@epam/chat-api-client';
+import type { PublishHistoryEntryDto } from '@epam/ai-dial-chat-api-client';
 import type { TFunction } from 'i18next';
 import {
   ButtonsI18nKeys,

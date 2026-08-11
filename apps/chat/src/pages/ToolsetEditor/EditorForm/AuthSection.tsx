@@ -13,7 +13,7 @@ import {
 import type {
   ToolsetLoginBodyDto,
   ToolsetLogoutBodyDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import type { FC } from 'react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

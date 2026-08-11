@@ -1,4 +1,4 @@
-import type { DeploymentItemDto } from '@epam/chat-api-client';
+import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
 import { describe, expect, it } from 'vitest';
 import {
   encodeDeploymentId,

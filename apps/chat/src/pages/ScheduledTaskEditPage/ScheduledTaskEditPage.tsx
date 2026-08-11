@@ -5,7 +5,7 @@ import {
   ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
 import { GhostButton, NotificationVariant } from '@epam/ai-dial-ui-kit';
-import type { ScheduledTaskDto } from '@epam/chat-api-client';
+import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
 import {
   memo,
   useCallback,

@@ -1,5 +1,5 @@
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import { ResponseError } from '@epam/chat-api-client';
+import { ResponseError } from '@epam/ai-dial-chat-api-client';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';

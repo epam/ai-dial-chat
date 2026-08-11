@@ -1,4 +1,4 @@
-import type { ClientConfigResponseDto } from '@epam/chat-api-client';
+import type { ClientConfigResponseDto } from '@epam/ai-dial-chat-api-client';
 import { appConfigApi } from './api-client';
 
 export const getClientConfig = (
