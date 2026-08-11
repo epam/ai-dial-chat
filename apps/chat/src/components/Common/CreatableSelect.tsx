@@ -1,5 +1,5 @@
 import { IconChevronDown, IconX } from '@tabler/icons-react';
-import React, { FC } from 'react';
+import { FC } from 'react';
 import {
   ClearIndicatorProps,
   DropdownIndicatorProps,
@@ -12,11 +12,15 @@ import RSCreatableSelect, { CreatableProps } from 'react-select/creatable';
 
 import classNames from 'classnames';
 
+import { getSelectButtonProps } from '@/src/utils/app/select';
+
 import { DropdownSelectorOption } from '@/src/types/common';
 
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
+
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 const MultiValueContainer = (
   props: MultiValueGenericProps<DropdownSelectorOption>,
@@ -28,28 +32,24 @@ const MultiValueContainer = (
 
 const MultiValueRemove = (
   props: MultiValueRemoveProps<DropdownSelectorOption>,
-) => {
-  const { ref: __ref, ...innerProps } = props.innerProps;
-
-  return (
-    <button
-      type="button"
-      className="flex items-center text-primary hover:text-accent-primary"
-      aria-label={`unselect ${props.data.value}`}
-      {...(innerProps as React.ButtonHTMLAttributes<HTMLButtonElement>)}
-      data-qa={`unselect-item-${props.data.value}`}
-    >
-      <IconX size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />
-    </button>
-  );
-};
+) => (
+  <DialGhostIconButton
+    size={ElementSize.Small}
+    aria-label={`unselect ${props.data.value}`}
+    {...getSelectButtonProps(props.innerProps)}
+    data-qa={`unselect-item-${props.data.value}`}
+    icon={<IconX size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
+  />
+);
 
 const ClearIndicator = (
   props: ClearIndicatorProps<DropdownSelectorOption, true>,
 ) => (
-  <components.ClearIndicator {...props}>
-    <IconX size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />
-  </components.ClearIndicator>
+  <DialGhostIconButton
+    size={ElementSize.Small}
+    {...getSelectButtonProps(props.innerProps)}
+    icon={<IconX size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
+  />
 );
 
 const DropdownIndicator = (
@@ -57,7 +57,7 @@ const DropdownIndicator = (
 ) => (
   <components.DropdownIndicator {...props}>
     <IconChevronDown
-      size={20}
+      size={DEFAULT_ICON_SIZES.SMALL}
       className={classNames(
         'shrink-0 transition-transform',
         props.selectProps.menuIsOpen && 'rotate-180',
@@ -122,10 +122,7 @@ export const CreatableSelect: FC<CreatableSelectProps> = ({
             multiValue: () =>
               'flex h-[31px] items-center gap-2 rounded bg-accent-primary-alpha px-3',
             multiValueLabel: () => 'max-w-[150px] truncate break-all text-xs',
-            multiValueRemove: () => 'hover:text-accent-primary',
             indicatorsContainer: () => 'flex items-center',
-            clearIndicator: () =>
-              'cursor-pointer text-primary hover:text-accent-primary',
             menu: () =>
               'z-10 mt-1 max-h-80 overflow-auto rounded bg-layer-3 shadow',
             option: ({ isFocused }) =>

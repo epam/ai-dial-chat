@@ -319,7 +319,7 @@ export const AddEntityGeneralInfoFormSelector = {
   nextButton: '[data-qa="save-entity-general-info"]',
   selectedTopicPills: '[class*="-multiValue"]', // Selector for the selected topic pills within the container
   selectedTopicPillRemoveIcon: (topicName: string) =>
-    `[role="button"][aria-label="Remove ${topicName}"]`, // Selector for the 'x' icon within the pill
+    `button[aria-label="Remove ${topicName}"]`, // Selector for the 'x' icon within the pill
   clearAllTopicsButton: '[data-qa="clear-dropdown-selection"]', // Selector for the main clear button within the container
 };
 

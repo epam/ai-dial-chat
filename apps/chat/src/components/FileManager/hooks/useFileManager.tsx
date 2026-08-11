@@ -513,8 +513,14 @@ export const useFileManager = ({
     }
 
     if (moveJustFinished && pathsToRelistRef.current.length) {
+      // Files as well as folders: listing folders alone marks each path loaded,
+      // so the files of the renamed subtree would never be fetched and every
+      // branch under it would come back empty. Issue #3325
       dispatch(
-        FilesActions.getFoldersList({ paths: pathsToRelistRef.current }),
+        FilesActions.getFoldersList({
+          paths: pathsToRelistRef.current,
+          withFiles: true,
+        }),
       );
       pathsToRelistRef.current = [];
     }
