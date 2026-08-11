@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { type ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { ScheduledTaskDetailViewLabels } from '../../../models/scheduled-task-detail-view-props';
 import type { ScheduledTaskRunItem } from '../../../models/scheduled-task-run-item';
 import { ScheduledTaskRunStatus } from '../../../types/scheduled-task-run-status';
@@ -20,6 +20,7 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  ButtonVariant: { Primary: 'primary', Neutral: 'neutral' },
   DialSwitch: ({
     switchId,
     isOn,
@@ -48,10 +49,16 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   GhostButton: ({
     label,
     onClick,
+    disabled,
   }: {
     label: string;
     onClick?: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
+    disabled?: boolean;
+  }) => (
+    <button onClick={onClick} disabled={disabled}>
+      {label}
+    </button>
+  ),
   GhostIconButton: ({
     onClick,
     'aria-label': ariaLabel,
@@ -95,6 +102,7 @@ const labels: ScheduledTaskDetailViewLabels = {
   historyErrorLabel: 'Failed to load history',
   historyRetryLabel: 'Retry',
   historyLoadingMoreLabel: 'Loading more…',
+  historyShowMoreLabel: 'Show more',
   runStatusLabels: {
     [ScheduledTaskRunStatus.Success]: 'Succeeded',
     [ScheduledTaskRunStatus.Error]: 'Failed',
@@ -445,42 +453,8 @@ describe('ScheduledTaskDetailView', () => {
     ).toBeNull();
   });
 
-  describe('scroll-sentinel triggered load-more', () => {
-    const mockScrollableAncestor = () => {
-      const getComputedStyleSpy = vi
-        .spyOn(window, 'getComputedStyle')
-        .mockImplementation(
-          (el) =>
-            ({
-              overflow: 'visible',
-              overflowY: el === document.body ? 'visible' : ('auto' as string),
-            }) as CSSStyleDeclaration,
-        );
-      return () => getComputedStyleSpy.mockRestore();
-    };
-
-    const mockIntersecting = (isIntersecting: boolean) => {
-      const rect = (top: number, bottom: number) =>
-        ({ top, bottom }) as DOMRect;
-      const isSentinel = (el: Element) =>
-        el.tagName === 'LI' && el.getAttribute('aria-hidden') === 'true';
-      vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(
-        function (this: Element) {
-          if (isSentinel(this)) {
-            return isIntersecting ? rect(700, 750) : rect(900, 950);
-          }
-          return rect(0, 800);
-        },
-      );
-    };
-
-    afterEach(() => {
-      vi.restoreAllMocks();
-    });
-
-    it('calls onRunsLoadMore when the sentinel intersects and runsHasMore is true', () => {
-      const restoreStyle = mockScrollableAncestor();
-      mockIntersecting(true);
+  describe('"Show more" button triggered load-more', () => {
+    it('renders a "Show more" button and calls onRunsLoadMore when activated, while runsHasMore is true', async () => {
       const onRunsLoadMore = vi.fn();
 
       render(
@@ -494,15 +468,11 @@ describe('ScheduledTaskDetailView', () => {
         />,
       );
 
+      await userEvent.click(screen.getByRole('button', { name: 'Show more' }));
       expect(onRunsLoadMore).toHaveBeenCalledOnce();
-      restoreStyle();
     });
 
-    it('does not call onRunsLoadMore when runsHasMore is false', () => {
-      const restoreStyle = mockScrollableAncestor();
-      mockIntersecting(true);
-      const onRunsLoadMore = vi.fn();
-
+    it('does not render the "Show more" button when runsHasMore is false', () => {
       render(
         <ScheduledTaskDetailView
           labels={labels}
@@ -510,19 +480,28 @@ describe('ScheduledTaskDetailView', () => {
           displayName="Daily summary"
           runs={[buildRun()]}
           runsHasMore={false}
-          onRunsLoadMore={onRunsLoadMore}
+          onRunsLoadMore={vi.fn()}
         />,
       );
 
-      expect(onRunsLoadMore).not.toHaveBeenCalled();
-      restoreStyle();
+      expect(screen.queryByRole('button', { name: 'Show more' })).toBeNull();
     });
 
-    it('does not call onRunsLoadMore while runsIsLoadingMore is true', () => {
-      const restoreStyle = mockScrollableAncestor();
-      mockIntersecting(true);
-      const onRunsLoadMore = vi.fn();
+    it('does not render the "Show more" button when onRunsLoadMore is omitted', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          displayName="Daily summary"
+          runs={[buildRun()]}
+          runsHasMore
+        />,
+      );
 
+      expect(screen.queryByRole('button', { name: 'Show more' })).toBeNull();
+    });
+
+    it('disables the "Show more" button while runsIsLoadingMore is true', () => {
       render(
         <ScheduledTaskDetailView
           labels={labels}
@@ -531,32 +510,29 @@ describe('ScheduledTaskDetailView', () => {
           runs={[buildRun()]}
           runsHasMore
           runsIsLoadingMore
-          onRunsLoadMore={onRunsLoadMore}
+          onRunsLoadMore={vi.fn()}
         />,
       );
 
-      expect(onRunsLoadMore).not.toHaveBeenCalled();
-      restoreStyle();
+      expect(
+        (screen.getByRole('button', { name: 'Show more' }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(true);
     });
 
-    it('does not call onRunsLoadMore when the sentinel is not intersecting', () => {
-      const restoreStyle = mockScrollableAncestor();
-      mockIntersecting(false);
-      const onRunsLoadMore = vi.fn();
-
+    it('does not render the "Show more" button when historyShowMoreLabel is omitted', () => {
       render(
         <ScheduledTaskDetailView
-          labels={labels}
+          labels={{ ...labels, historyShowMoreLabel: undefined }}
           onBack={vi.fn()}
           displayName="Daily summary"
           runs={[buildRun()]}
           runsHasMore
-          onRunsLoadMore={onRunsLoadMore}
+          onRunsLoadMore={vi.fn()}
         />,
       );
 
-      expect(onRunsLoadMore).not.toHaveBeenCalled();
-      restoreStyle();
+      expect(screen.queryByRole('button', { name: 'Show more' })).toBeNull();
     });
   });
 

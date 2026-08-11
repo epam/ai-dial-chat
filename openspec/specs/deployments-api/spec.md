@@ -93,10 +93,10 @@ The endpoint:
 `DeploymentItemDto` SHALL be a strongly typed Swagger DTO that normalises DIAL Core's `ModelOpenAi | ApplicationOpenAi | ToolsetOpenAi` union into a flat structure:
 
 - `id: string` — unique stable identifier from DIAL Core; items without an `id` SHALL be skipped during mapping
-- `displayName: string` — `display_name` from DIAL Core, falling back to `id` when absent
+- `displayName: string | Record<string, string>` — `display_name` from DIAL Core, falling back to `id` when absent; either a plain string or a map of locale code to translated value when the entity has additional locales configured
 - `type: 'model' | 'application' | 'toolset'` — discriminator; derived from DIAL Core `object` field (`"model"` → `'model'`, `"application"` → `'application'`); items with a `toolset` field present SHALL be mapped to `'toolset'`
 - `iconUrl?: string` — `icon_url` from DIAL Core
-- `description?: string` — `description` from DIAL Core
+- `description?: string | Record<string, string>` — `description` from DIAL Core; same plain-string-or-locale-map shape as `displayName`
 - `interfaces?: string[]` — `interfaces` from DIAL Core (list of interface types supported by the deployment)
 - `inputAttachmentTypes?: string[]` — `input_attachment_types` from DIAL Core; omitted when the source field is absent or null
 - `owner?: string` — `owner` from DIAL Core's `DeploymentBase`; forwarded verbatim; omitted when DIAL Core does not provide it
@@ -152,6 +152,13 @@ The `DeploymentItem` interface in `libs/chat-shared/src/models/deployment.ts` SH
 
 - **WHEN** a source item has no `display_name`
 - **THEN** `DeploymentItemDto.displayName` equals the source `id`
+
+#### Scenario: displayName passes through a locale map unresolved
+
+- **WHEN** a source item's `display_name` from DIAL Core is a map of locale code to translated
+  value rather than a plain string
+- **THEN** `DeploymentItemDto.displayName` carries that map through unchanged — resolving it to
+  a single display string is the frontend's responsibility, not this endpoint's
 
 #### Scenario: inputAttachmentTypes mapped from DIAL Core
 

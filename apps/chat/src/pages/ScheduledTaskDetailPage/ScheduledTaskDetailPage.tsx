@@ -17,10 +17,14 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { getScheduledTaskEditRoute } from '../../constants/routes';
-import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
+import {
+  ButtonsI18nKeys,
+  ScheduledTasksI18nKeys,
+} from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import { useScheduledTaskRuns } from '../../hooks/scheduled-tasks/useScheduledTaskRuns';
 import { getApiErrorDetails, getApiErrorStatus } from '../../server-api/api-error';
 import {
@@ -30,6 +34,7 @@ import {
 } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
+import { resolveLocalizedText } from '../../utils/locale';
 import { buildScheduleLabel } from '../../utils/map-scheduled-task-dto';
 import { mapScheduledTaskRunDtosToItems } from '../../utils/map-scheduled-task-run-dto';
 import NotFoundPage from '../NotFound/NotFound';
@@ -42,6 +47,7 @@ const ScheduledTaskDetailPage: FC = () => {
   const navigate = useNavigate();
   const { scheduleId = '' } = useParams<{ scheduleId: string }>();
   const { items: deploymentItems } = useDeployments();
+  const { language } = useLanguage();
 
   const [task, setTask] = useState<ScheduledTaskDto | null>(null);
   const [isTaskLoading, setIsTaskLoading] = useState(true);
@@ -131,11 +137,11 @@ const ScheduledTaskDetailPage: FC = () => {
   const taskModel = task?.model;
   const modelLabel = useMemo(() => {
     if (!taskModel) return undefined;
-    return (
-      deploymentItems.find((item) => item.id === taskModel)?.displayName ??
-      taskModel
-    );
-  }, [taskModel, deploymentItems]);
+    const deployment = deploymentItems.find((item) => item.id === taskModel);
+    return deployment
+      ? resolveLocalizedText(deployment.displayName, language) || taskModel
+      : taskModel;
+  }, [taskModel, deploymentItems, language]);
 
   const repeatsLabel = useMemo(
     () => (task ? buildScheduleLabel(task, t) : undefined),
@@ -191,6 +197,7 @@ const ScheduledTaskDetailPage: FC = () => {
       historyLoadingMoreLabel: t(
         ScheduledTasksI18nKeys.DetailHistoryLoadingMoreLabel,
       ),
+      historyShowMoreLabel: t(ButtonsI18nKeys.ShowMore),
       runStatusLabels: {
         success: t(ScheduledTasksI18nKeys.DetailStatusSuccess),
         error: t(ScheduledTasksI18nKeys.DetailStatusError),

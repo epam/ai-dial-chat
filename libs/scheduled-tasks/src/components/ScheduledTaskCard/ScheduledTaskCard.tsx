@@ -1,29 +1,14 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import {
-  CardShell,
-  DIAL_ICON_SIZE,
-  Dropdown,
-  type DropdownItem,
-  FolderPath,
-  Highlight,
-  IconButton,
-} from '@epam/ai-dial-ui-kit';
-import {
-  IconDotsVertical,
-  IconEdit,
-  IconPlayerPause,
-  IconPlayerPlay,
-  IconTrash,
-} from '@tabler/icons-react';
-import type { FC, KeyboardEvent, MouseEvent } from 'react';
+import { CardShell, DIAL_ICON_SIZE, FolderPath, Highlight } from '@epam/ai-dial-ui-kit';
+import { IconPlayerPause } from '@tabler/icons-react';
+import type { FC, KeyboardEvent } from 'react';
 import type { ScheduledTaskCardProps } from '../../models/scheduled-task-card-props';
 import styles from './ScheduledTaskCard.module.scss';
 
 /**
  * Single scheduled-task card: title, optional "new" badge and description,
  * schedule pill (replaced by a "Paused" badge when `item.isActive` is
- * `false`), location breadcrumb, and an overflow menu limited to the actions
- * the caller wired up. Renders on the shared `CardShell` from
+ * `false`), and location breadcrumb. Renders on the shared `CardShell` from
  * `@epam/ai-dial-ui-kit` (radius, padding, shadow, hover lift), the same shell
  * the Catalog browse card uses. The card has a fixed height; a long
  * description is clamped with an ellipsis, and the schedule pill (plus the
@@ -33,19 +18,12 @@ import styles from './ScheduledTaskCard.module.scss';
 export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
   item,
   searchQuery = '',
-  onEdit,
-  onRunNow,
-  onDelete,
   onCardClick,
   labels,
   styles: cardStyles,
   className,
 }) => {
   const newBadgeLabel = labels?.newBadgeLabel ?? 'NEW';
-  const actionsLabel = labels?.actionsLabel ?? 'More actions';
-  const editActionLabel = labels?.editActionLabel ?? 'Edit';
-  const runNowActionLabel = labels?.runNowActionLabel ?? 'Run now';
-  const deleteActionLabel = labels?.deleteActionLabel ?? 'Delete';
   const pausedBadgeLabel = labels?.pausedBadgeLabel ?? 'Paused';
 
   const { colors, typography } = cardStyles ?? {};
@@ -78,42 +56,6 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
     '--stc-paused-text': colors?.pausedBadgeText,
   });
 
-  const menuItems: DropdownItem[] = [];
-  if (onEdit) {
-    menuItems.push({
-      key: 'edit',
-      label: editActionLabel,
-      icon: <IconEdit size={DIAL_ICON_SIZE.SM} aria-hidden />,
-      onClick: ({ domEvent }) => {
-        domEvent.stopPropagation();
-        onEdit(item.id);
-      },
-    });
-  }
-  if (onRunNow) {
-    menuItems.push({
-      key: 'runNow',
-      label: runNowActionLabel,
-      icon: <IconPlayerPlay size={DIAL_ICON_SIZE.SM} aria-hidden />,
-      onClick: ({ domEvent }) => {
-        domEvent.stopPropagation();
-        onRunNow(item.id);
-      },
-    });
-  }
-  if (onDelete) {
-    menuItems.push({
-      key: 'delete',
-      label: deleteActionLabel,
-      icon: <IconTrash size={DIAL_ICON_SIZE.SM} aria-hidden />,
-      danger: true,
-      onClick: ({ domEvent }) => {
-        domEvent.stopPropagation();
-        onDelete(item.id);
-      },
-    });
-  }
-
   const cardClickProps = onCardClick
     ? {
         tabIndex: 0,
@@ -139,40 +81,23 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
       )}
       {...cardClickProps}
     >
-      <div className="flex shrink-0 items-start justify-between gap-2">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <Highlight
-            text={item.displayName}
-            query={searchQuery}
-            maxLines={1}
-            className={mergeClasses(titleClassName, styles.title)}
-          />
-          {item.isNew && (
-            <span
-              className={mergeClasses(
-                'shrink-0 rounded-full px-2 py-0.5',
-                newBadgeClassName,
-                styles.newBadge,
-              )}
-            >
-              {newBadgeLabel}
-            </span>
-          )}
-        </div>
-
-        {menuItems.length > 0 && (
-          <Dropdown
-            items={menuItems}
-            matchReferenceWidth={false}
-            placement="bottom-end"
+      <div className="flex min-w-0 shrink-0 items-center gap-2">
+        <Highlight
+          text={item.displayName}
+          query={searchQuery}
+          maxLines={1}
+          className={mergeClasses(titleClassName, styles.title)}
+        />
+        {item.isNew && (
+          <span
+            className={mergeClasses(
+              'shrink-0 rounded-full px-2 py-0.5',
+              newBadgeClassName,
+              styles.newBadge,
+            )}
           >
-            <IconButton
-              icon={<IconDotsVertical size={DIAL_ICON_SIZE.SM} aria-hidden />}
-              aria-label={actionsLabel}
-              className="shrink-0"
-              onClick={(event: MouseEvent) => event.stopPropagation()}
-            />
-          </Dropdown>
+            {newBadgeLabel}
+          </span>
         )}
       </div>
 

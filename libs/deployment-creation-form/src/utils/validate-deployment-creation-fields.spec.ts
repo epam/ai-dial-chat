@@ -9,6 +9,7 @@ const baseValues: DeploymentCreationFormValues = {
   iconUrl: '',
   version: '',
   topics: [],
+  otherLocales: [],
 };
 
 describe('validateDeploymentCreationFields', () => {

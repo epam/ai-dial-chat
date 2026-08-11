@@ -28,6 +28,13 @@ import {
 import { createApplication } from '../../server-api/applications';
 import type { TriggerSaveGeneralPayload } from '../../types/apps-editor';
 import { isQuickAppSchema } from '../../utils/application-schema';
+import {
+  appendLocaleCode,
+  buildAdditionalLocaleOptions,
+  buildLocaleFieldLabels,
+  composeLocalePayload,
+  PRIMARY_LOCALE,
+} from '../../utils/locale';
 
 export interface GeneralFormHandle {
   submit: () => Promise<void>;
@@ -44,6 +51,7 @@ export interface GeneralFormInitialValues {
   iconUrl?: string;
   version?: string;
   topics?: string[];
+  otherLocales?: DeploymentCreationFormValues['otherLocales'];
 }
 
 interface Props {
@@ -61,6 +69,7 @@ const EMPTY_VALUES: DeploymentCreationFormValues = {
   iconUrl: '',
   version: '',
   topics: [],
+  otherLocales: [],
 };
 
 const normalizeFormValues = (
@@ -71,6 +80,7 @@ const normalizeFormValues = (
   iconUrl: values.iconUrl ?? '',
   version: values.version ?? '',
   topics: values.topics ?? [],
+  otherLocales: values.otherLocales ?? [],
 });
 
 const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
@@ -92,14 +102,19 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
     setValues(normalizeFormValues(initialValues));
   }, [initialValues]);
 
+  const localeOptions = useMemo(() => buildAdditionalLocaleOptions(), []);
+
   const labels: DeploymentCreationFormLabels = useMemo(
     () => ({
       name: {
-        label: t(EditorI18nKeys.NameLabel),
+        label: appendLocaleCode(t(EditorI18nKeys.NameLabel), PRIMARY_LOCALE),
         placeholder: t(AppsEditorI18nKeys.GeneralFormNamePlaceholder),
       },
       description: {
-        label: t(EditorI18nKeys.DescriptionLabel),
+        label: appendLocaleCode(
+          t(EditorI18nKeys.DescriptionLabel),
+          PRIMARY_LOCALE,
+        ),
         placeholder: t(AppsEditorI18nKeys.GeneralFormDescriptionPlaceholder),
       },
       iconUrl: {
@@ -114,6 +129,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
         label: t(EditorI18nKeys.TopicsLabel),
         placeholder: t(EditorI18nKeys.TopicsPlaceholder),
       },
+      otherLocales: buildLocaleFieldLabels(t),
       ariaLabel: t(EditorI18nKeys.StepGeneral),
     }),
     [t],
@@ -173,6 +189,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
             tool_sets: [],
           }
         : undefined;
+      const locales = composeLocalePayload(values.otherLocales, PRIMARY_LOCALE);
       const result = await createApplication({
         name: values.name.trim(),
         type: schemaId,
@@ -181,6 +198,8 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
         version: values.version.trim() || undefined,
         topics: values.topics.length > 0 ? values.topics : undefined,
         applicationProperties,
+        locales,
+        primaryLocale: locales ? PRIMARY_LOCALE : undefined,
       });
       onCreated(
         result.id,
@@ -241,6 +260,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
             errors={errors}
             onChange={handleChange}
             labels={labels}
+            availableLocaleOptions={localeOptions}
           />
 
           {submitError && <ErrorMessageNotification message={submitError} />}

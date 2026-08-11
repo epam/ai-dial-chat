@@ -83,7 +83,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         <button onClick={onCancel}>{cancelLabel}</button>
       </div>
     ) : null,
-  DialAccordion: ({
+  Accordion: ({
     title,
     children,
   }: {

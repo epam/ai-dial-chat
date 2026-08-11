@@ -40,6 +40,8 @@ export interface ScheduledTaskDetailViewLabels {
   historyRetryLabel: string;
   /** Announced via `aria-live` while a load-more runs fetch is in flight. */
   historyLoadingMoreLabel?: string;
+  /** Label for the "Show more" button rendered below the loaded runs when `runsHasMore` is `true`. Required when `onRunsLoadMore` is supplied. */
+  historyShowMoreLabel?: string;
   /** Per-status label used to build each run row's accessible name, e.g. `{ success: 'Succeeded', ... }`. */
   runStatusLabels: Record<ScheduledTaskRunStatus, string>;
 }
@@ -141,7 +143,7 @@ export interface ScheduledTaskDetailViewProps {
   onRunsRetry?: () => void;
   /** Whether another page of `runs` is available beyond what has been loaded so far. Defaults to `false`. */
   runsHasMore?: boolean;
-  /** Called when the History panel's trailing scroll sentinel becomes visible and `runsHasMore && !runsIsLoadingMore && !runsIsLoading`. */
+  /** Called when the user activates the "Show more" button, rendered below the loaded runs while `runsHasMore` is `true`. Omit to hide the button entirely. */
   onRunsLoadMore?: () => void;
   /** Called with a run's id when the user clicks its row. Omit to render rows with no added interactive semantics. */
   onRunClick?: (id: string) => void;
