@@ -36,6 +36,7 @@ describe('buildConversationHistory', () => {
         'Hello',
         undefined,
         undefined,
+        'gpt-4o',
       );
       expect(conversation.messages).toHaveLength(2);
       expect(conversation.messages[0].role).toBe(ConversationMessageRole.User);
@@ -58,6 +59,7 @@ describe('buildConversationHistory', () => {
         'new',
         undefined,
         undefined,
+        'gpt-4o',
       );
       expect(conversation.messages).toHaveLength(4);
       expect(assistantMessageIndex).toBe(3);
@@ -74,12 +76,30 @@ describe('buildConversationHistory', () => {
           configuration_value: { deep_research: true },
           form_value: { topic: 'testing' },
         },
+        'gpt-4o',
       );
 
       expect(conversation.messages[0].custom_content).toEqual({
         attachments: undefined,
         configuration_value: { deep_research: true },
         form_value: { topic: 'testing' },
+        state: undefined,
+      });
+    });
+
+    it('persists state on the appended user message', () => {
+      const conv = makeConversation([]);
+      const { conversation } = buildConversationHistory(
+        CompletionMode.Append,
+        conv,
+        'continue the workflow',
+        undefined,
+        { state: { step: 2 } },
+        'gpt-4o',
+      );
+
+      expect(conversation.messages[0].custom_content?.state).toEqual({
+        step: 2,
       });
     });
   });
@@ -95,6 +115,7 @@ describe('buildConversationHistory', () => {
         undefined,
         undefined,
         undefined,
+        'gpt-4o',
       );
       expect(conversation.messages).toHaveLength(2);
       expect(conversation.messages[0].content).toBe('question');
@@ -115,6 +136,7 @@ describe('buildConversationHistory', () => {
         'new question',
         undefined,
         undefined,
+        'gpt-4o',
       );
       expect(conversation.messages).toHaveLength(4);
       expect(conversation.messages[2].role).toBe(ConversationMessageRole.User);
@@ -138,6 +160,7 @@ describe('buildConversationHistory', () => {
         undefined,
         1,
         undefined,
+        'gpt-4o',
       );
       expect(conversation.messages).toHaveLength(2);
       expect(conversation.messages[0].content).toBe('q');
@@ -146,6 +169,50 @@ describe('buildConversationHistory', () => {
       );
       expect(conversation.messages[1].content).toBe('');
       expect(assistantMessageIndex).toBe(1);
+    });
+
+    it('preserves custom_content.state across history when regenerating with the same model', () => {
+      const conv = makeConversation([
+        { role: ConversationMessageRole.User, content: 'q' },
+        { role: ConversationMessageRole.Assistant, content: 'old answer' },
+      ]);
+      conv.messages[0].custom_content = { state: { step: 1 } };
+
+      const { conversation } = buildConversationHistory(
+        CompletionMode.Regenerate,
+        conv,
+        undefined,
+        1,
+        undefined,
+        'gpt-4o',
+      );
+
+      expect(conversation.messages[0].custom_content?.state).toEqual({
+        step: 1,
+      });
+    });
+
+    it('clears custom_content.state from the whole history when regenerating with a different model', () => {
+      const conv = makeConversation([
+        { role: ConversationMessageRole.User, content: 'q1' },
+        { role: ConversationMessageRole.Assistant, content: 'a1' },
+        { role: ConversationMessageRole.User, content: 'q2' },
+        { role: ConversationMessageRole.Assistant, content: 'a2' },
+      ]);
+      conv.messages[0].custom_content = { state: { step: 1 } };
+      conv.messages[2].custom_content = { state: { step: 2 } };
+
+      const { conversation } = buildConversationHistory(
+        CompletionMode.Regenerate,
+        conv,
+        undefined,
+        3,
+        undefined,
+        'claude-3',
+      );
+
+      expect(conversation.messages[0].custom_content?.state).toBeUndefined();
+      expect(conversation.messages[2].custom_content?.state).toBeUndefined();
     });
 
     it('throws BadRequestException when messageIndex is missing', () => {
@@ -157,6 +224,7 @@ describe('buildConversationHistory', () => {
           undefined,
           undefined,
           undefined,
+          'gpt-4o',
         ),
       ).toThrow(BadRequestException);
     });
@@ -174,6 +242,7 @@ describe('buildConversationHistory', () => {
           undefined,
           2,
           undefined,
+          'gpt-4o',
         ),
       ).toThrow(BadRequestException);
     });
@@ -191,6 +260,7 @@ describe('buildConversationHistory', () => {
           undefined,
           0,
           undefined,
+          'gpt-4o',
         ),
       ).toThrow(BadRequestException);
     });
@@ -209,6 +279,7 @@ describe('buildConversationHistory', () => {
         'new question',
         0,
         undefined,
+        'gpt-4o',
       );
       expect(conversation.messages).toHaveLength(2);
       expect(conversation.messages[0].role).toBe(ConversationMessageRole.User);
@@ -228,6 +299,7 @@ describe('buildConversationHistory', () => {
           'q',
           undefined,
           undefined,
+          'gpt-4o',
         ),
       ).toThrow(BadRequestException);
     });
@@ -245,6 +317,7 @@ describe('buildConversationHistory', () => {
           'new question',
           2,
           undefined,
+          'gpt-4o',
         ),
       ).toThrow(BadRequestException);
     });
@@ -262,6 +335,7 @@ describe('buildConversationHistory', () => {
           'new question',
           1,
           undefined,
+          'gpt-4o',
         ),
       ).toThrow(BadRequestException);
     });
@@ -276,6 +350,7 @@ describe('buildConversationHistory', () => {
         'q',
         undefined,
         undefined,
+        'gpt-4o',
       ),
     ).toThrow(BadRequestException);
   });

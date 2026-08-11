@@ -93,6 +93,11 @@ export interface MessageCustomContent {
   configuration_value?: Record<string, unknown>;
   /** Accumulated agent execution stages streamed via `custom_content.stages`. */
   stages?: Stage[];
+  /**
+   * Opaque app-managed state echoed back verbatim on the next turn, per the DIAL
+   * stateful-app contract. Overwritten (not merged) by each new streaming delta.
+   */
+  state?: Record<string, unknown>;
 }
 
 /** A single message in a conversation. */
@@ -169,6 +174,8 @@ export interface StreamChunkDelta {
     attachments?: MessageAttachment[];
     /** Partial annotation updates; merge by `index` into the accumulating annotation list. */
     annotations?: Annotation[];
+    /** Opaque app-managed state for the DIAL stateful-app contract; overwrites any previous value. */
+    state?: Record<string, unknown>;
   };
   /** Raw custom fields in the DIAL wire format. */
   custom_fields?: {

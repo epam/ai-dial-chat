@@ -341,6 +341,7 @@ export class ConversationStreamingService {
         message,
         messageIndex,
         customContent,
+        model,
       );
     } catch (err) {
       /*
