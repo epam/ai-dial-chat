@@ -102,11 +102,11 @@
     "yaml": "2.8.3"
   },
   "dependencies": {
-    "@epam/ai-dial-react-file-manager": "0.1.0-dev.19",
+    "@epam/ai-dial-react-file-manager": "0.1.0-dev.21",
     "@epam/ai-dial-react-pdf-highlighter": "0.2.0-dev.22",
     "@epam/ai-dial-shared": "0.48.0",
     "@epam/ai-dial-typescript-sdk": "0.1.0-dev.31",
-    "@epam/ai-dial-ui-kit": "^0.13.0-dev.47",
+    "@epam/ai-dial-ui-kit": "^0.13.0-dev.51",
     "@epam/ai-dial-visualizer-connector": "0.48.0",
     "@epam/pdf-highlighter-kit": "^0.0.18",
     "@mcp-ui/client": "^7.1.1",

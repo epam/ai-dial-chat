@@ -38,6 +38,7 @@ import {
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useConversationSources } from '../../hooks/conversation-sources/useConversationSources';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import usePanelMaxWidth from '../../hooks/usePanelMaxWidth';
 import {
@@ -47,6 +48,7 @@ import {
 import { StorageKey } from '../../types/storage-key';
 import { isExternalSourcePreviewable } from '../../utils/attachment-canvas';
 import { isDialFileId } from '../../utils/dial-file';
+import { resolveLocalizedText } from '../../utils/locale';
 import { mapScheduledTaskRunDtosToItems } from '../../utils/map-scheduled-task-run-dto';
 
 const MIN_PANEL_WIDTH = 312;
@@ -56,6 +58,7 @@ const DOWNLOAD_ALL_STAGGER_MS = 150;
 
 const ConversationSourcesPanelContainer: FC = () => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const { handleClose, isOpen, messages } = useSourcesSidebar();
   const { uploaded, generated, sources } = useConversationSources(messages);
   const { handleAttachmentClick: downloadAttachment } = useAttachmentAction();
@@ -81,11 +84,11 @@ const ConversationSourcesPanelContainer: FC = () => {
   const taskModel = activeScheduledTask.task?.model;
   const modelDisplayName = useMemo(() => {
     if (!taskModel) return undefined;
-    return (
-      deploymentItems.find((item) => item.id === taskModel)?.displayName ??
-      taskModel
-    );
-  }, [taskModel, deploymentItems]);
+    const deployment = deploymentItems.find((item) => item.id === taskModel);
+    return deployment
+      ? resolveLocalizedText(deployment.displayName, language) || taskModel
+      : taskModel;
+  }, [taskModel, deploymentItems, language]);
 
   const historyLabels = useMemo(
     () => ({
