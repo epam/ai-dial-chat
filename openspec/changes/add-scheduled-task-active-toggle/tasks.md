@@ -87,3 +87,10 @@
 - [x] 12.5 `apps/chat/src/utils/map-scheduled-task-dto.ts`'s `mapScheduledTaskDtoToItem` now sets `isActive: task.isActive` (straight passthrough, no re-derivation — the BFF mapper owns that). Extended `map-scheduled-task-dto.spec.ts` with `isActive: false` / `isActive: true` / missing-`isActive` cases.
 - [x] 12.6 Confirmed by reading `ScheduledTaskCardGrid.tsx` and `ScheduledTasks.tsx` that both forward each `ScheduledTaskItem` (including `isActive`) unchanged into `ScheduledTaskCard` — no intermediate layer narrows the item shape, so no changes were needed there.
 - [x] 12.7 Verify: `npx nx run ai-dial-scheduled-tasks:test --skip-nx-cache` (119/119 pass), `npx nx run ai-dial-scheduled-tasks:lint --skip-nx-cache` (0 errors), `npx nx run chat:test --skip-nx-cache -- map-scheduled-task-dto` (18/18 pass), `npx nx run chat:lint --skip-nx-cache` (0 errors, pre-existing warnings only).
+
+## 13. Detail page: disable Active switch for an expired recurring schedule
+
+- [x] 13.1 Extended `isActiveDisabled` in `ScheduledTaskDetailPage.tsx` to also disable when `triggerType === 'cron'` and `trigger.cron.endDate` is a past timestamp (activity window closed) — previously only the completed-one-time-schedule case disabled the switch, leaving an expired recurring schedule's switch togglable even though resuming it can never produce a future run within its closed window.
+- [x] 13.2 Extended `ScheduledTaskDetailPage.spec.tsx` with: expired-cron-window renders disabled+unchecked and calls neither `pauseScheduledTask` nor `resumeScheduledTask` on click; cron window not yet ended (or no `endDate`) remains togglable.
+- [x] 13.3 Updated `specs/scheduled-task-detail-page/spec.md`'s disabled-switch requirement to cover both cases (renamed from "for a completed one-time schedule" to the general "when a schedule can no longer produce a future run").
+- [x] 13.4 Verify: `npx nx run chat:test --skip-nx-cache -- ScheduledTaskDetailPage` (25/25 pass), `npx nx run chat:lint --skip-nx-cache` (0 errors, pre-existing warnings only).

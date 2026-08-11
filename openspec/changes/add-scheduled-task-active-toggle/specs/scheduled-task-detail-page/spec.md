@@ -162,16 +162,26 @@ All directional layout in the detail page header, Details/Configuration sections
 - **WHEN** the user navigates away from `/scheduled-tasks/sched_123` (unmount or `scheduleId` change) while a pause/resume call for `sched_123` is still in flight, and that call later resolves
 - **THEN** no component state is updated as a result of that resolution
 
-### Requirement: Active switch is disabled, not hidden, for a completed one-time schedule
+### Requirement: Active switch is disabled, not hidden, when a schedule can no longer produce a future run
 
-When a loaded task's `triggerType` is `date` (one-time) and its `nextRunTime` is `null` (the schedule has already run and cannot be resumed), `ScheduledTaskDetailPage` SHALL still render the Active switch (since `isActive` is defined — `false`, per the "Scheduled task active state field" requirement in `scheduled-tasks-api`), but SHALL pass `isActiveDisabled={true}` so the switch renders checked=false and disabled, rather than omitting the control or offering a resume action that DIAL Scheduler cannot fulfill.
+`ScheduledTaskDetailPage` SHALL pass `isActiveDisabled={true}` to `ScheduledTaskDetailView` whenever the loaded task has permanently exhausted its ability to produce a future run — the switch still renders (since `isActive` is defined), but disabled, rather than offering a resume action DIAL Scheduler cannot fulfill. Two cases qualify:
+
+- **Completed one-time schedule:** `triggerType` is `date` (one-time) and `nextRunTime` is `null` — the schedule has already run once and a `date` trigger cannot be rescheduled.
+- **Expired recurring schedule:** `triggerType` is `cron` and `trigger.cron.endDate` is a past timestamp — the schedule's activity window has closed, so resuming it cannot produce a future run within that window either.
+
+A recurring (`cron`) schedule with no upcoming run but an `endDate` that has not yet passed (or no `endDate` at all) is merely paused, not exhausted, and MUST remain togglable.
 
 #### Scenario: Completed one-time schedule shows a disabled, unchecked switch
 
 - **WHEN** the loaded task has `triggerType: 'date'` and `nextRunTime: null`
 - **THEN** the Active switch renders unchecked and disabled, and toggling it (via pointer or keyboard) has no effect and calls neither `pauseScheduledTask` nor `resumeScheduledTask`
 
+#### Scenario: Recurring schedule whose activity window has ended shows a disabled, unchecked switch
+
+- **WHEN** the loaded task has `triggerType: 'cron'` and `trigger.cron.endDate` in the past
+- **THEN** the Active switch renders unchecked and disabled, and toggling it (via pointer or keyboard) has no effect and calls neither `pauseScheduledTask` nor `resumeScheduledTask`
+
 #### Scenario: Recurring schedule with no upcoming run remains togglable
 
-- **WHEN** the loaded task has `triggerType: 'cron'` and `nextRunTime: null` (paused, not completed)
+- **WHEN** the loaded task has `triggerType: 'cron'`, `nextRunTime: null` (paused, not completed), and `trigger.cron.endDate` is absent or in the future
 - **THEN** the Active switch renders unchecked but NOT disabled, and toggling it on calls `resumeScheduledTask`
