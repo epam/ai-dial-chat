@@ -689,6 +689,16 @@ export enum EditorI18nKeys {
   VersionPlaceholder = 'editor.versionPlaceholder',
   TopicsLabel = 'editor.topicsLabel',
   TopicsPlaceholder = 'editor.topicsPlaceholder',
+  LocalesSummaryLabel = 'editor.locales.summaryLabel',
+  LocalesRowLabel = 'editor.locales.rowLabel',
+  LocalesPopupTitle = 'editor.locales.popupTitle',
+  LocalesAddLocaleLabel = 'editor.locales.addLocaleLabel',
+  LocalesLanguageLabel = 'editor.locales.languageLabel',
+  LocalesNameLabel = 'editor.locales.nameLabel',
+  LocalesNamePlaceholder = 'editor.locales.namePlaceholder',
+  LocalesDescriptionLabel = 'editor.locales.descriptionLabel',
+  LocalesDescriptionPlaceholder = 'editor.locales.descriptionPlaceholder',
+  LocalesDeleteAriaLabel = 'editor.locales.deleteAriaLabel',
 }
 
 export enum AppsEditorI18nKeys {

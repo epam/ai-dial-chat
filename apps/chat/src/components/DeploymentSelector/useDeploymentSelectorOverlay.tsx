@@ -9,6 +9,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 
@@ -34,13 +35,20 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
   const { t } = useTranslation();
   const { items, selectedItemId, setSelectedItemId } = useDeployments();
   const { favoriteIds, toggleFavorite } = useFavoriteApplications();
+  const { language } = useLanguage();
 
   const favoriteCatalogItems = useMemo(
     () =>
       items
         .filter((d) => favoriteIds.has(d.id))
-        .map((d) => mapDeploymentToCatalogItem(d, favoriteIds, undefined, t)),
-    [items, favoriteIds, t],
+        .map((d) =>
+          mapDeploymentToCatalogItem(d, {
+            favoriteIds,
+            t,
+            activeLocale: language,
+          }),
+        ),
+    [items, favoriteIds, t, language],
   );
 
   const selectedDeployment = useMemo(
@@ -51,14 +59,13 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
   const selectedCatalogItem = useMemo(
     () =>
       selectedDeployment
-        ? mapDeploymentToCatalogItem(
-            selectedDeployment,
+        ? mapDeploymentToCatalogItem(selectedDeployment, {
             favoriteIds,
-            undefined,
             t,
-          )
+            activeLocale: language,
+          })
         : undefined,
-    [selectedDeployment, favoriteIds, t],
+    [selectedDeployment, favoriteIds, t, language],
   );
 
   const renderOverlay = useCallback(

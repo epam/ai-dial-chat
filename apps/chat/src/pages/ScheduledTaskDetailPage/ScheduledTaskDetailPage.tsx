@@ -21,11 +21,13 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import { useScheduledTaskRuns } from '../../hooks/scheduled-tasks/useScheduledTaskRuns';
 import { getApiErrorStatus } from '../../server-api/api-error';
 import { getScheduledTask } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
+import { resolveLocalizedText } from '../../utils/locale';
 import { buildScheduleLabel } from '../../utils/map-scheduled-task-dto';
 import { mapScheduledTaskRunDtosToItems } from '../../utils/map-scheduled-task-run-dto';
 import NotFoundPage from '../NotFound/NotFound';
@@ -37,6 +39,7 @@ const ScheduledTaskDetailPage: FC = () => {
   const navigate = useNavigate();
   const { scheduleId = '' } = useParams<{ scheduleId: string }>();
   const { items: deploymentItems } = useDeployments();
+  const { language } = useLanguage();
 
   const [task, setTask] = useState<ScheduledTaskDto | null>(null);
   const [isTaskLoading, setIsTaskLoading] = useState(true);
@@ -105,11 +108,11 @@ const ScheduledTaskDetailPage: FC = () => {
   const taskModel = task?.model;
   const modelLabel = useMemo(() => {
     if (!taskModel) return undefined;
-    return (
-      deploymentItems.find((item) => item.id === taskModel)?.displayName ??
-      taskModel
-    );
-  }, [taskModel, deploymentItems]);
+    const deployment = deploymentItems.find((item) => item.id === taskModel);
+    return deployment
+      ? resolveLocalizedText(deployment.displayName, language) || taskModel
+      : taskModel;
+  }, [taskModel, deploymentItems, language]);
 
   const repeatsLabel = useMemo(
     () => (task ? buildScheduleLabel(task, t) : undefined),

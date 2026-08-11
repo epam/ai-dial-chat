@@ -3,6 +3,7 @@ import { TagInput } from '@epam/ai-dial-kit';
 import { Input, Textarea } from '@epam/ai-dial-ui-kit';
 import { useEffect, useRef, type FC } from 'react';
 import type { DeploymentCreationFormProps } from '../../models/deployment-creation-form';
+import { DeploymentLocalesField } from '../DeploymentLocalesField/DeploymentLocalesField';
 
 /** Controlled field set for deployment creation: name, description, icon URL, version, and topics. */
 export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
@@ -11,6 +12,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
   onChange,
   labels,
   styles,
+  availableLocaleOptions = [],
 }) => {
   const nameInputRef = useRef<HTMLInputElement>(null);
   const versionInputRef = useRef<HTMLInputElement>(null);
@@ -58,6 +60,14 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
         labelProps={{ label: labels.description.label }}
         placeholder={labels.description.placeholder}
         containerClassName={styles?.field}
+      />
+
+      <DeploymentLocalesField
+        value={values.otherLocales}
+        onChange={(otherLocales) => onChange({ otherLocales })}
+        availableLocaleOptions={availableLocaleOptions}
+        labels={labels.otherLocales}
+        className={styles?.field}
       />
 
       <Input

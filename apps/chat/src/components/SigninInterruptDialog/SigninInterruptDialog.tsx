@@ -36,6 +36,7 @@ import {
   ExternalServiceLoginOutcomeType,
   useExternalServiceLogin,
 } from '../../hooks/externalServices/useExternalServiceLogin';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import {
   ToolsetLoginOutcomeType,
   useToolsetLogin,
@@ -178,6 +179,7 @@ const getResourceKey = (event: PendingSigninEvent): string =>
  */
 const SigninInterruptDialog: FC = () => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const { pendingEvents, reportEvent } = useClientChannel();
   const { toolsets, refetchToolsets } = useDeployments();
   const { login: loginToolsetResource } = useToolsetLogin();
@@ -303,7 +305,7 @@ const SigninInterruptDialog: FC = () => {
         const toolset =
           toolsets.find((toolsetItem) => toolsetItem.id === event.toolsetId) ??
           resolvedToolsets[event.toolsetId];
-        map.set(key, resolveToolsetInfo(event.toolsetId, toolset));
+        map.set(key, resolveToolsetInfo(event.toolsetId, toolset, language));
       } else {
         map.set(
           key,
@@ -315,7 +317,13 @@ const SigninInterruptDialog: FC = () => {
       }
     }
     return map;
-  }, [pendingEvents, toolsets, resolvedToolsets, resolvedExternalServices]);
+  }, [
+    pendingEvents,
+    toolsets,
+    resolvedToolsets,
+    resolvedExternalServices,
+    language,
+  ]);
 
   const reportSuccessOnce = useCallback(
     async (eventId: string, displayName: string) => {
