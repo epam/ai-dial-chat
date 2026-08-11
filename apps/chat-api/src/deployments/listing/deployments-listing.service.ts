@@ -72,25 +72,25 @@ export class DeploymentsListingService {
   }
 
   /**
-   * Resolves every resource of the given type shared with the current user
-   * (READ or WRITE) — separate calls for `APPLICATION` and `TOOL_SET` since
-   * `getSharedResources` is scoped to one `resourceTypes` filter per call.
-   * Best-effort: a DIAL Core error here degrades to "nothing shared" rather
-   * than failing the whole deployments list.
+   * Resolves every APPLICATION-type resource shared with the current user
+   * (READ or WRITE). Toolsets never appear in this list's items (see
+   * `listDeployments`), so only the APPLICATION scope is needed here — a
+   * TOOL_SET-scoped equivalent lives in `DeploymentsLookupService` for
+   * single-toolset lookups. Best-effort: a DIAL Core error here degrades to
+   * "nothing shared" rather than failing the whole deployments list.
    */
   private async getSharedResources(
     accessToken: string,
-    resourceType: 'APPLICATION' | 'TOOL_SET',
   ): Promise<{ url?: string; permissions?: string[] }[]> {
     try {
       const { data, error, response } =
         await this.dialClient.client.getSharedResources({
           headers: getBearerAuthHeaders(accessToken),
-          body: { resourceTypes: [resourceType], with: 'me' },
+          body: { resourceTypes: ['APPLICATION'], with: 'me' },
         });
       if (error) {
         this.logger.warn(
-          `Failed to resolve shared ${resourceType} resources: status=${response.status}`,
+          `Failed to resolve shared APPLICATION resources: status=${response.status}`,
         );
         return [];
       }
@@ -100,26 +100,19 @@ export class DeploymentsListingService {
         permissions?: string[];
       }[];
     } catch (err) {
-      this.logger.warn(
-        `Failed to resolve shared ${resourceType} resources`,
-        err,
-      );
+      this.logger.warn('Failed to resolve shared APPLICATION resources', err);
       return [];
     }
   }
 
   /**
    * Splits `getSharedResources`'s flat resource list into the two URL sets
-   * ownership enrichment needs, shared by both this service's
-   * `listDeployments` and `DeploymentsLookupService.resolveDeploymentItem` so
-   * a just-accepted share resolves to the same `sharedWithMe`/`canEdit`
-   * flags a subsequent full list refresh would produce.
+   * ownership enrichment needs.
    */
   private async getSharedResourceUrlSets(
     accessToken: string,
-    resourceType: 'APPLICATION' | 'TOOL_SET',
   ): Promise<ResourceOwnershipUrlSets> {
-    const resources = await this.getSharedResources(accessToken, resourceType);
+    const resources = await this.getSharedResources(accessToken);
     return splitResourcesByPermission(resources);
   }
 
@@ -130,6 +123,9 @@ export class DeploymentsListingService {
     interfaceType?: DeploymentInterfaceType[],
     refresh = false,
   ): Promise<DeploymentsResponseDto> {
+    this.logger.debug(
+      `listDeployments requested interfaceType=${JSON.stringify(interfaceType)} (sub: ${userSub})`,
+    );
     const baseCacheKey = `deployments:list:${userSub}`;
     const normalizedTypes = interfaceType?.filter(
       (t) => t !== DeploymentInterfaceType.All,
@@ -139,6 +135,9 @@ export class DeploymentsListingService {
         ? normalizedTypes
         : undefined
     ) as DialDeploymentInterfaceType[] | undefined;
+    this.logger.debug(
+      `Normalized interfaceFilter=${JSON.stringify(interfaceFilter)} (sub: ${userSub})`,
+    );
     const cacheKey = interfaceFilter
       ? `${baseCacheKey}:interface:${interfaceFilter.join(',')}`
       : baseCacheKey;
@@ -155,12 +154,25 @@ export class DeploymentsListingService {
       allItems = cached;
     } else {
       try {
+        this.logger.debug(
+          `Requesting deployments from DIAL Core with interface_type=${JSON.stringify(interfaceFilter)} (sub: ${userSub})`,
+        );
         const result = await this.dialClient.client.listDeployments({
           headers: getBearerAuthHeaders(accessToken),
           params: interfaceFilter
             ? { query: { interface_type: interfaceFilter } }
             : undefined,
+          /*
+           * DIAL Core documents `interface_type` as accepting a
+           * comma-separated list; openapi-fetch's default array serialization
+           * sends repeated keys (`interface_type=chat&interface_type=mcp`)
+           * instead, which Core does not parse as multiple values.
+           */
+          querySerializer: { array: { style: 'form', explode: false } },
         });
+        this.logger.debug(
+          `DIAL Core request URL: ${result.response.url} (sub: ${userSub})`,
+        );
         if (result.error) {
           return mapDialHttpStatus(
             result.response.status,
@@ -174,12 +186,34 @@ export class DeploymentsListingService {
           : ((rawData as { deployments?: RawDeploymentDto[] }).deployments ??
             []);
 
-        allItems = rawItems
+        const mappedItems = rawItems
           .filter((item) => item.id && !item.id.includes(HIDDEN_FILE))
           .map((item) =>
             mapToDeploymentItem(item, this.featuredIds, this.hiddenTags),
           )
           .filter((item): item is DeploymentItemDto => item !== null);
+
+        /*
+         * DIAL Core's /v1/deployments can include toolset entries (e.g. when
+         * filtering by the `mcp` interface), but its payload for them is a
+         * thinner subset than the dedicated /v1/toolsets listing — notably
+         * missing `auth_settings`/`endpoint` — which the toolset catalog
+         * card needs for auth-status display. Toolsets are served
+         * exclusively via ToolsetsListingService/`/v1/toolsets`; drop them
+         * here rather than surface an incomplete duplicate.
+         *
+         * TODO: revisit once DIAL Core's interface_type filtering lands
+         * (https://github.com/epam/ai-dial-core/issues/1822) — if Core's
+         * /v1/deployments payload for toolsets is enriched with
+         * auth_settings/endpoint at that point, this exclusion may no
+         * longer be necessary.
+         */
+        allItems = mappedItems.filter(
+          (item) => item.type !== DeploymentItemType.Toolset,
+        );
+        this.logger.debug(
+          `DIAL Core /v1/deployments returned ${mappedItems.length} items (${mappedItems.length - allItems.length} toolsets dropped) (sub: ${userSub})`,
+        );
 
         await this.cacheManager.set(cacheKey, allItems, 30_000);
       } catch (err) {
@@ -187,44 +221,34 @@ export class DeploymentsListingService {
       }
     }
 
-    const { toolsets: toolsetIds, deployments: deploymentIds } =
+    const { deployments: deploymentIds } =
       await this.userConfigService.getInstalledIds(accessToken, bucket);
-    const toolsetsSet = new Set(toolsetIds);
     const deploymentsSet = new Set(deploymentIds);
-    /*
-     * Two separate calls: getSharedResources is scoped to one resourceType
-     * per call, and the combined deployments list mixes applications and
-     * toolsets, each needing its own URL sets (a toolset id can never
-     * appear in the APPLICATION-scoped sets, and vice versa).
-     */
-    const [applicationUrlSets, toolsetUrlSets] = await Promise.all([
-      this.getSharedResourceUrlSets(accessToken, 'APPLICATION'),
-      this.getSharedResourceUrlSets(accessToken, 'TOOL_SET'),
-    ]);
+    const applicationUrlSets = await this.getSharedResourceUrlSets(accessToken);
 
     const withInstalled = allItems.map((item) => ({
       ...item,
-      isInstalled:
-        item.type === DeploymentItemType.Toolset
-          ? toolsetsSet.has(item.id)
-          : deploymentsSet.has(item.id),
-      ...computeItemOwnershipFlags(
-        item.id,
-        bucket,
-        item.type === DeploymentItemType.Toolset
-          ? toolsetUrlSets
-          : applicationUrlSets,
-      ),
+      isInstalled: deploymentsSet.has(item.id),
+      ...computeItemOwnershipFlags(item.id, bucket, applicationUrlSets),
     }));
 
     if (!interfaceFilter) {
       return { deployments: withInstalled };
     }
 
+    /*
+     * TODO: this local re-filter compensates for DIAL Core not reliably
+     * filtering by interface_type server-side. Once Core fixes this
+     * (https://github.com/epam/ai-dial-core/issues/1822), filtering will
+     * happen on Core's side and this step can likely be simplified/removed.
+     */
     const filtered = withInstalled.filter((item) =>
       item.interfaces?.some((iface) =>
         interfaceFilter.includes(iface as DialDeploymentInterfaceType),
       ),
+    );
+    this.logger.debug(
+      `Local interface filter applied: ${withInstalled.length} -> ${filtered.length} items (filter=${JSON.stringify(interfaceFilter)}, sub: ${userSub})`,
     );
     return { deployments: filtered };
   }

@@ -1,14 +1,15 @@
 ### Requirement: GET /api/v1/deployments endpoint
 
-The system SHALL expose `GET /api/v1/deployments` that proxies DIAL Core `GET /v1/deployments` and returns all deployments (models, applications, toolsets) visible to the authenticated session user, optionally filtered by interface type.
+The system SHALL expose `GET /api/v1/deployments` that proxies DIAL Core `GET /v1/deployments` and returns all models and applications (excluding toolsets) visible to the authenticated session user, optionally filtered by interface type.
 
 The endpoint:
 - MUST require authentication via `SessionGuard`; respond 401 when no valid session is present.
 - SHALL accept an optional `interface_type` query parameter as a repeatable string value validated against `('chat' | 'embedding' | 'mcp' | 'custom_ui' | 'all')`; passing an unrecognised value MUST respond 400.
 - SHALL accept an optional `refresh` query parameter validated as a boolean (`true` or `false` after DTO transformation); passing any other value MUST respond 400.
-- SHALL forward the `interface_type` values to DIAL Core `GET /v1/deployments` when provided.
+- SHALL forward the `interface_type` values to DIAL Core `GET /v1/deployments` as a single comma-joined query parameter (e.g. `interface_type=chat,mcp`) when more than one value is provided, not as repeated query keys — DIAL Core only honors the first occurrence of a repeated key.
 - SHALL call DIAL Core using the `@epam/ai-dial-typescript-sdk` client (`listDeployments`), passing the session access token.
 - SHALL map the DIAL Core response `deployments` array to `DeploymentItemDto[]` using the normalisation rules in the `DeploymentItemDto shape` requirement below.
+- SHALL exclude toolset-typed entries (DIAL Core items with a `toolset` field present) from the mapped response, regardless of the `interface_type` filter applied — toolsets are served exclusively by the dedicated `GET /api/v1/toolsets` listing, whose payload carries fields (`auth_settings`, `endpoint`) that DIAL Core's `/v1/deployments` toolset entries do not include.
 - SHALL respond 200 with `{ deployments: DeploymentItemDto[] }` on success.
 - SHALL respond 502 when DIAL Core returns a non-2xx response.
 - SHALL respond 503 when DIAL Core is unreachable or times out.
@@ -23,7 +24,7 @@ The endpoint:
 #### Scenario: Authenticated user receives all deployments without filter
 
 - **WHEN** `GET /api/v1/deployments` is called with a valid session and no `interface_type` parameter
-- **THEN** the endpoint responds 200 with `{ deployments: DeploymentItemDto[] }` containing all models, applications, and toolsets from DIAL Core
+- **THEN** the endpoint responds 200 with `{ deployments: DeploymentItemDto[] }` containing all models and applications from DIAL Core, with no toolset-typed entries
 
 #### Scenario: Authenticated user filters by single interface type
 
@@ -43,7 +44,14 @@ The endpoint:
 #### Scenario: Authenticated user filters by multiple interface types
 
 - **WHEN** `GET /api/v1/deployments?interface_type=chat&interface_type=mcp` is called with a valid session
-- **THEN** the endpoint responds 200 with deployments matching either `'chat'` or `'mcp'` interface types
+- **THEN** the endpoint forwards `interface_type=chat,mcp` to DIAL Core as one comma-joined parameter
+- **AND** the endpoint responds 200 with deployments matching either `'chat'` or `'mcp'` interface types
+
+#### Scenario: MCP-interface applications are included, MCP toolsets are excluded
+
+- **WHEN** `GET /api/v1/deployments?interface_type=mcp` is called and DIAL Core's response includes both an application with `dial:applicationTypeMcp` and a toolset, both exposing the `mcp` interface
+- **THEN** the response includes the MCP-capable application
+- **AND** the response does NOT include the toolset, even though it matches the requested interface
 
 #### Scenario: Invalid interface_type value returns 400
 
