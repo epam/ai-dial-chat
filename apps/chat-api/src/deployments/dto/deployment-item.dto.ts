@@ -1,4 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { LOCALIZED_TEXT_SCHEMA } from '../../common/types/localized-text';
+import type { LocalizedText } from '../../common/types/localized-text';
 
 export enum DeploymentItemType {
   Model = 'model',
@@ -66,8 +68,12 @@ export class DeploymentItemDto {
   @ApiProperty({ description: 'Unique stable identifier from DIAL Core' })
   id!: string;
 
-  @ApiProperty({ description: 'Display name, falls back to id when absent' })
-  displayName!: string;
+  @ApiProperty({
+    description:
+      'Display name, falls back to id when absent. Either a plain string, or a map of locale code to translated value when additional locales are configured.',
+    ...LOCALIZED_TEXT_SCHEMA,
+  })
+  displayName!: LocalizedText;
 
   @ApiProperty({ enum: DeploymentItemType })
   type!: DeploymentItemType;
@@ -75,8 +81,11 @@ export class DeploymentItemDto {
   @ApiPropertyOptional({ description: 'Icon URL from DIAL Core' })
   iconUrl?: string;
 
-  @ApiPropertyOptional({ description: 'Description from DIAL Core' })
-  description?: string;
+  @ApiPropertyOptional({
+    description: 'Description from DIAL Core',
+    ...LOCALIZED_TEXT_SCHEMA,
+  })
+  description?: LocalizedText;
 
   @ApiPropertyOptional({
     description: 'Interface types supported by this deployment',
@@ -183,6 +192,12 @@ export class DeploymentItemDto {
       'Quick Apps conversation starter settings from application properties',
   })
   conversationStarters?: ConversationStartersDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Reference from DIAL Core; some conversations/messages address this deployment by reference instead of id',
+  })
+  reference?: string;
 }
 
 export class DeploymentsResponseDto {

@@ -7,9 +7,6 @@ import { ScheduledTaskCardSkeleton } from '../ScheduledTaskCardSkeleton/Schedule
 export const ScheduledTaskCardGrid: FC<ScheduledTaskCardGridProps> = ({
   items,
   searchQuery,
-  onEdit,
-  onRunNow,
-  onDelete,
   onCardClick,
   labels,
   cardStyles,
@@ -22,9 +19,6 @@ export const ScheduledTaskCardGrid: FC<ScheduledTaskCardGridProps> = ({
         key={item.id}
         item={item}
         searchQuery={searchQuery}
-        onEdit={onEdit}
-        onRunNow={onRunNow}
-        onDelete={onDelete}
         onCardClick={onCardClick}
         labels={labels}
         styles={cardStyles}

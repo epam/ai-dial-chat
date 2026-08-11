@@ -52,6 +52,7 @@ import { ROUTES } from '../../types/routes';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { getConversationPath } from '../../utils/conversation-path';
+import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import { getStarterPopulateText } from '../../utils/starter-option';
@@ -88,7 +89,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
   );
 
   const appDeployment = useMemo(
-    () => items.find((item) => item.id === appId),
+    () => findDeploymentByIdOrReference(items, appId),
     [items, appId],
   );
   const quickAppStarters = useMemo(

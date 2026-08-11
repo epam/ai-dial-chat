@@ -172,6 +172,39 @@ describe('ToolsetsMutationService', () => {
       });
     });
 
+    it('composes displayName/description as locale maps when locales is provided', async () => {
+      const { service } = makeWriteService();
+      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
+        bucketSdkOk,
+      );
+      const saveSpy = vi
+        .spyOn(service['dialClient'].client, 'saveToolSet')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.createToolset('user1', 'token', {
+        ...baseBody,
+        description: 'desc',
+        locales: [
+          {
+            language: 'de',
+            name: 'Mein Toolset',
+            description: 'Eine Beschreibung',
+          },
+        ],
+        primaryLocale: 'en',
+      });
+
+      const sentBody = saveSpy.mock.calls[0][2].body as Record<string, unknown>;
+      expect(sentBody.displayName).toEqual({
+        en: 'My toolset',
+        de: 'Mein Toolset',
+      });
+      expect(sentBody.description).toEqual({
+        en: 'desc',
+        de: 'Eine Beschreibung',
+      });
+    });
+
     it('maps OAuth config fields to the DIAL Core PUT body', async () => {
       const { service } = makeWriteService();
       vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
@@ -324,6 +357,37 @@ describe('ToolsetsMutationService', () => {
       expect(cacheManager.del).toHaveBeenCalledWith(
         `toolsets:single:user1:${id}`,
       );
+    });
+
+    it('replaces a previously plain-string displayName with a locale map when locales is provided', async () => {
+      const { service } = makeWriteService();
+      const saveSpy = vi
+        .spyOn(service['dialClient'].client, 'saveToolSet')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.updateToolset('user1', 'token', id, {
+        ...baseBody,
+        locales: [{ language: 'de', name: 'Mein Toolset' }],
+        primaryLocale: 'en',
+      });
+
+      const sentBody = saveSpy.mock.calls[0][2].body as Record<string, unknown>;
+      expect(sentBody.displayName).toEqual({
+        en: 'My toolset',
+        de: 'Mein Toolset',
+      });
+    });
+
+    it('still produces a plain-string displayName when locales is omitted (regression guard)', async () => {
+      const { service } = makeWriteService();
+      const saveSpy = vi
+        .spyOn(service['dialClient'].client, 'saveToolSet')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.updateToolset('user1', 'token', id, baseBody);
+
+      const sentBody = saveSpy.mock.calls[0][2].body as Record<string, unknown>;
+      expect(sentBody.displayName).toBe('My toolset');
     });
 
     it('preserves hidden OAuth auth settings when update omits a new client secret', async () => {

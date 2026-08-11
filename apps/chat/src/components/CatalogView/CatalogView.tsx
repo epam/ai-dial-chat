@@ -40,6 +40,7 @@ import {
   useFavoriteApplications,
 } from '../../context/FavoriteApplicationsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import {
@@ -62,6 +63,7 @@ import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { CatalogQuery } from '../../types/catalog';
 import { ROUTES } from '../../types/routes';
 import { isQuickAppSchema } from '../../utils/application-schema';
+import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { mapDeploymentLimitsDtoToCatalogLimits } from '../../utils/map-deployment-limits-to-catalog';
 import {
   mapDeploymentToCatalogItem,
@@ -99,6 +101,7 @@ interface Props {
 
 const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const itemIdParam = searchParams.get(CatalogQuery.ItemId) ?? undefined;
@@ -178,18 +181,22 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const catalogItems = useMemo(() => {
     return [
       ...deployments.map((d) =>
-        mapDeploymentToCatalogItem(
-          d,
+        mapDeploymentToCatalogItem(d, {
           favoriteIds,
-          undefined,
           t,
-          quickAppSchemaId ? [quickAppSchemaId] : [],
-          isCustomAppsEnabled,
-        ),
+          editableSchemaIds: quickAppSchemaId ? [quickAppSchemaId] : [],
+          isCustomAppsEditable: isCustomAppsEnabled,
+          activeLocale: language,
+        }),
       ),
       ...(isToolsetsEnabled
         ? toolsets.map((toolset) =>
-            mapToolsetToCatalogItem(toolset, favoriteIds, isAdmin, t),
+            mapToolsetToCatalogItem(toolset, {
+              favoriteIds,
+              isAdmin,
+              t,
+              activeLocale: language,
+            }),
           )
         : []),
     ];
@@ -197,6 +204,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     deployments,
     favoriteIds,
     t,
+    language,
     toolsets,
     quickAppSchemaId,
     isAdmin,
@@ -605,7 +613,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         return;
       }
 
-      const deployment = deployments.find((d) => d.id === item.id);
+      const deployment = findDeploymentByIdOrReference(deployments, item.id);
       if (
         isCustomAppsEnabled &&
         deployment != null &&

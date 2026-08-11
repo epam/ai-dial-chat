@@ -5169,6 +5169,24 @@
         },
         "required": ["data"]
       },
+      "LocaleTextEntryDto": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string",
+            "example": "de"
+          },
+          "name": {
+            "type": "string",
+            "example": "Mein Toolset"
+          },
+          "description": {
+            "type": "string",
+            "example": "Meine Toolset-Beschreibung"
+          }
+        },
+        "required": ["language"]
+      },
       "CreateApplicationBodyDto": {
         "type": "object",
         "properties": {
@@ -5213,6 +5231,16 @@
               "contexts": [],
               "tool_sets": []
             }
+          },
+          "locales": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LocaleTextEntryDto"
+            }
+          },
+          "primaryLocale": {
+            "type": "string",
+            "example": "en"
           }
         },
         "required": ["name"]
@@ -5225,8 +5253,18 @@
             "example": "users/my-user/applications/my-app"
           },
           "displayName": {
-            "type": "string",
-            "example": "My App"
+            "example": "My App",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ]
           },
           "object": {
             "type": "string",
@@ -5278,6 +5316,16 @@
           "maxInputAttachments": {
             "type": "number",
             "example": 5
+          },
+          "locales": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LocaleTextEntryDto"
+            }
+          },
+          "primaryLocale": {
+            "type": "string",
+            "example": "en"
           }
         },
         "required": ["name"]
@@ -5290,8 +5338,18 @@
             "example": "users/my-user/applications/my-app"
           },
           "displayName": {
-            "type": "string",
-            "example": "My App"
+            "example": "My App",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ]
           },
           "object": {
             "type": "string",
@@ -5369,8 +5427,18 @@
             "description": "Unique stable identifier from DIAL Core"
           },
           "displayName": {
-            "type": "string",
-            "description": "Display name, falls back to id when absent"
+            "description": "Display name, falls back to id when absent. Either a plain string, or a map of locale code to translated value when additional locales are configured.",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ]
           },
           "type": {
             "type": "string",
@@ -5381,8 +5449,18 @@
             "description": "Icon URL from DIAL Core"
           },
           "description": {
-            "type": "string",
-            "description": "Description from DIAL Core"
+            "description": "Description from DIAL Core",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ]
           },
           "interfaces": {
             "description": "Interface types supported by this deployment",
@@ -5472,6 +5550,10 @@
                 "$ref": "#/components/schemas/ConversationStartersDto"
               }
             ]
+          },
+          "reference": {
+            "type": "string",
+            "description": "Reference from DIAL Core; some conversations/messages address this deployment by reference instead of id"
           }
         },
         "required": ["id", "displayName", "type"]
@@ -6255,8 +6337,18 @@
             "example": "dial.gemini-3-flash-preview"
           },
           "display_name": {
-            "type": "string",
-            "example": "Gemini 3 Flash"
+            "example": "Gemini 3 Flash",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ]
           },
           "display_version": {
             "type": "string",
@@ -6267,8 +6359,18 @@
             "example": "Gemini.svg"
           },
           "description": {
-            "type": "string",
-            "example": "A multimodal model combining reasoning and efficiency."
+            "example": "A multimodal model combining reasoning and efficiency.",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ]
           },
           "reference": {
             "type": "string",
@@ -6539,17 +6641,37 @@
             "example": "toolsets/encrypted-bucket/folder/toolset-name"
           },
           "displayName": {
-            "type": "string",
-            "description": "Human-readable name. In `listToolsets` results this is always populated: `displayName` when set, otherwise the last path segment of `id`.",
-            "example": "Toolset display name"
+            "description": "Human-readable name. In `listToolsets` results this is always populated: `displayName` when set, otherwise the last path segment of `id`. Either a plain string, or a map of locale code to translated value when additional locales are configured.",
+            "example": "Toolset display name",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ]
           },
           "displayVersion": {
             "type": "string",
             "example": "0.0.1"
           },
           "description": {
-            "type": "string",
-            "example": "My toolset description"
+            "example": "My toolset description",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ]
           },
           "iconUrl": {
             "type": "string",
@@ -6717,6 +6839,16 @@
             "items": {
               "type": "string"
             }
+          },
+          "locales": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LocaleTextEntryDto"
+            }
+          },
+          "primaryLocale": {
+            "type": "string",
+            "example": "en"
           },
           "endpoint": {
             "type": "string",

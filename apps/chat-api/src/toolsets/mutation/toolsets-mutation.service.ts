@@ -23,6 +23,10 @@ import {
   type RawDialToolset,
 } from '../utils/toolset-mapper.util';
 
+type SaveToolSetBody = Parameters<
+  DialClientService['client']['saveToolSet']
+>[2]['body'];
+
 @Injectable()
 export class ToolsetsMutationService {
   private readonly logger = new Logger(ToolsetsMutationService.name);
@@ -72,7 +76,12 @@ export class ToolsetsMutationService {
 
       const response = await this.dialClient.client.saveToolSet(bucket, path, {
         headers: authHeaders,
-        body: toDialToolsetBody(body, version),
+        /*
+         * The SDK types `displayName`/`description` as plain `string`; DIAL
+         * Core actually accepts a locale map too. Remove this cast when the
+         * SDK's toolset schema is widened to match.
+         */
+        body: toDialToolsetBody(body, version) as unknown as SaveToolSetBody,
       });
       if (response.error) {
         this.logger.warn(
@@ -118,7 +127,12 @@ export class ToolsetsMutationService {
           : undefined;
       const response = await this.dialClient.client.saveToolSet(bucket, path, {
         headers: authHeaders,
-        body: toDialToolsetBody(body, version, existingAuthSettings),
+        /* See the create-path comment above on the same SDK/DIAL Core mismatch. */
+        body: toDialToolsetBody(
+          body,
+          version,
+          existingAuthSettings,
+        ) as unknown as SaveToolSetBody,
       });
       if (response.error) {
         this.logger.warn(

@@ -59,3 +59,17 @@ export type {
 } from './models/scheduled-task-detail-view-props';
 export type { ScheduledTaskRunItem } from './models/scheduled-task-run-item';
 export { ScheduledTaskRunStatus } from './types/scheduled-task-run-status';
+export { ScheduledTaskRunHistoryList } from './components/ScheduledTaskRunHistoryList/ScheduledTaskRunHistoryList';
+export type {
+  ScheduledTaskRunHistoryListProps,
+  ScheduledTaskRunHistoryListLabels,
+  ScheduledTaskRunHistoryListStyles,
+  ScheduledTaskRunHistoryListColors,
+  ScheduledTaskRunHistoryListTypography,
+} from './models/scheduled-task-run-history-list-props';
+export { ScheduledTaskDetailsSummary } from './components/ScheduledTaskDetailsSummary/ScheduledTaskDetailsSummary';
+export type {
+  ScheduledTaskDetailsSummaryProps,
+  ScheduledTaskDetailsSummaryStyles,
+  ScheduledTaskDetailsSummaryTypography,
+} from './models/scheduled-task-details-summary-props';

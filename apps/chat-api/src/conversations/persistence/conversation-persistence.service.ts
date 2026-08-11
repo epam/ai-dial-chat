@@ -9,6 +9,7 @@ import { ConversationNamingService } from '../conversation-naming.service';
 import type { ConversationPersistencePort } from '../conversation-persistence.port';
 import {
   getConversationTitleFromName,
+  isApplicationDeploymentPath,
   qualifySessionConversationPath,
   resolveConversationLocation,
   resolveListDisplayTitle,
@@ -35,9 +36,11 @@ export class ConversationPersistenceService implements ConversationPersistencePo
         token,
         sessionBucket,
       );
-      const filename = subPath.split('/').pop() ?? subPath;
+      const subPathSegments = subPath.split('/');
+      const filename = subPathSegments.pop() ?? subPath;
       const pathTitle = getConversationTitleFromName(
         safeDecodeURIComponent(filename),
+        isApplicationDeploymentPath(subPathSegments.join('/')),
       );
       const resolvedName = resolveListDisplayTitle(pathTitle, conversation);
       return resolvedName === conversation.name
