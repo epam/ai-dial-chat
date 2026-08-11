@@ -52,7 +52,26 @@
 - [x] 7.7 Added `AttachmentCanvasI18nKeys.OpenAppLabel` (`"Open App"`) and `AttachmentCanvasI18nKeys.McpAppTitle` (`"MCP App"`) to `apps/chat/src/constants/translation-keys.ts` and `en.json`.
 - [ ] 7.8 Unit tests: `useMcpAppTools` discovery (empty/populated), `findMcpAppForMessage` (real-call match, fallback, non-assistant), `resolveMcpAppToolCallSeed` (matched pair, absent state), `ConversationMessageItem`'s Open-App button rendering (present/absent), `useAutoOpenMcpAppCanvas` (fires once per new message, picks the last message when multiple qualify), `useOpenMcpAppCanvas` success/failure/no-sandbox-configured paths.
 
-## 8. Verification
+## 9. Follow-up: reliable tool-discovery contract from DIAL Core (mcp-app-discovery-contract)
+
+Both current tool-discovery paths in `useMcpAppTools` are workarounds, not a proper contract:
+
+- **Direct discovery** requires an admin to explicitly set `features.mcp: true` on the deployment in DIAL Core config. A quick app that is itself the MCP server (e.g. "NT AWS Explore") will never be discovered unless this flag is set.
+- **Indirect discovery** prefix-matches tool-call names against the `displayName` of toolsets in the catalog. This is a convention, not a spec: it breaks if the orchestrator does not name delegated tool calls `{toolsetDisplayName}_{toolName}`, if the prefix contains underscores, or if the application is its own MCP server (no separate toolset to match against).
+
+**Confirmed failure case**: "NT AWS Explore" — a quick app whose tools (`NT_AWS_Explore_search_amazon`, `NT_AWS_Explore_present_amazon_products`) are prefixed with the application's own name, not a separate toolset. `availableToolsets` is empty, `features.mcp` is unset, so neither path fires. Canvas never opens.
+
+**Immediate workaround**: set `features.mcp: true` on the deployment in Core config; direct discovery then works via the `application` kind path.
+
+**Required long-term fix (Core-side)**:
+
+- [ ] 9.1 Investigate/propose a Core-side contract that lets the host enumerate MCP-Apps-capable tools for any deployment without requiring explicit `features.mcp` config or name-prefix inference. Candidate approaches:
+  - A deployment-agnostic flag or field in `DeploymentItemDto`/`ApplicationDetailsDto` that signals MCP capability without admin configuration.
+  - Core returning `_meta.ui.resourceUri` in a deployment-metadata endpoint rather than only via `tools/list` (which today requires a live MCP session, not just catalog metadata).
+  - Core enriching `tools/list` responses for quick apps to include the delegated toolsets' tool metadata, so the application's own `tools/list` already contains `_meta.ui.resourceUri`-bearing entries.
+- [ ] 9.2 Once Core ships the contract, remove the prefix-guessing path from `useMcpAppTools` and replace both paths with a single reliable lookup. Remove the debug logging added during investigation (`useMcpAppTools.ts` effect log, `listMcpAppTools` log).
+- [ ] 9.3 Update `design.md` D9 to replace the current workaround description with the final contract.
+
 
 - [ ] 8.1 `npm exec nx test chat-api`, `npm exec nx lint chat-api`, `npm exec nx build chat-api`.
 - [ ] 8.2 `npm exec nx test mcp-app-sandbox`, `npm exec nx lint mcp-app-sandbox`, `npm exec nx build mcp-app-sandbox`.
