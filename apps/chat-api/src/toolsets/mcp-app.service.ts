@@ -168,10 +168,16 @@ export class McpAppService {
       );
     }
 
-    return this.rpcRequestForDeployment(deploymentId, kind, token, 'tools/call', {
-      name: toolName,
-      arguments: args,
-    });
+    return this.rpcRequestForDeployment(
+      deploymentId,
+      kind,
+      token,
+      'tools/call',
+      {
+        name: toolName,
+        arguments: args,
+      },
+    );
   }
 
   /**
