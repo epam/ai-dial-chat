@@ -412,7 +412,7 @@ describe('sortByName', () => {
       folderId: 'folder',
     }));
 
-  it('orders numeric suffixes naturally instead of lexicographically', () => {
+  it('orders numeric suffixes character by character', () => {
     const entities = toEntities([
       'New folder 10',
       'New folder 2',
@@ -423,10 +423,20 @@ describe('sortByName', () => {
 
     expect(sortByName(entities).map(({ name }) => name)).toEqual([
       'New folder 1',
-      'New folder 2',
-      'New folder 3',
       'New folder 10',
+      'New folder 2',
       'New folder 20',
+      'New folder 3',
+    ]);
+  });
+
+  it('compares leading digits as characters', () => {
+    const entities = toEntities(['4eQvn2SpLI', '16EgORK_file', '16EgORK_1_2']);
+
+    expect(sortByName(entities).map(({ name }) => name)).toEqual([
+      '16EgORK_1_2',
+      '16EgORK_file',
+      '4eQvn2SpLI',
     ]);
   });
 
