@@ -140,6 +140,30 @@ describe('mapScheduledTaskDtoToItem', () => {
     );
   });
 
+  it('maps isActive false to the item unmodified', () => {
+    const result = mapScheduledTaskDtoToItem(
+      buildDto({ isActive: false }),
+      fakeT,
+    );
+
+    expect(result.isActive).toBe(false);
+  });
+
+  it('maps isActive true to the item unmodified', () => {
+    const result = mapScheduledTaskDtoToItem(
+      buildDto({ isActive: true }),
+      fakeT,
+    );
+
+    expect(result.isActive).toBe(true);
+  });
+
+  it('maps a missing isActive to undefined without throwing', () => {
+    const result = mapScheduledTaskDtoToItem(buildDto(), fakeT);
+
+    expect(result.isActive).toBeUndefined();
+  });
+
   it('places the item under myTasks when createdBy matches currentUserSub', () => {
     const result = mapScheduledTaskDtoToItem(
       buildDto({ createdBy: 'user-1' }),

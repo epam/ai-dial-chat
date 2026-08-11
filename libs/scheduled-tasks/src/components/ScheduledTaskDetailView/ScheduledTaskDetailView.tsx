@@ -5,6 +5,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DialSwitch,
   Spinner,
   GhostButton,
   GhostIconButton,
@@ -27,6 +28,10 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   labels,
   onBack,
   onEdit,
+  isActive,
+  isActiveUpdating = false,
+  isActiveDisabled = false,
+  onActiveChange,
   displayName,
   isLoading = false,
   error,
@@ -125,17 +130,51 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
           </h1>
         </div>
 
-        {onEdit && (
-          <NeutralButton
-            label={labels.editButtonLabel}
-            iconBefore={
-              <IconPencilMinus size={DIAL_ICON_SIZE.SM} aria-hidden />
-            }
-            onClick={onEdit}
-            className="shrink-0"
-          />
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {isActive !== undefined && (
+            <>
+              <span className={fieldValueClassName}>
+                {labels.activeStatusLabel}
+              </span>
+              {/*
+               * DialSwitch's own root already carries role="switch" but no
+               * aria-checked (a UI-kit gap — see AGENTS.md a11y "Scope
+               * boundary"). This wrapper adds the missing checked-state
+               * signal at the group level rather than editing vendor code.
+               */}
+              <div
+                role="group"
+                aria-checked={isActive}
+                aria-label={labels.activeStatusLabel}
+              >
+                <DialSwitch
+                  switchId="scheduled-task-active-switch"
+                  isOn={isActive}
+                  disabled={isActiveUpdating || isActiveDisabled}
+                  onChange={(value) => onActiveChange?.(value)}
+                />
+              </div>
+            </>
+          )}
+
+          {onEdit && (
+            <NeutralButton
+              label={labels.editButtonLabel}
+              iconBefore={
+                <IconPencilMinus size={DIAL_ICON_SIZE.SM} aria-hidden />
+              }
+              onClick={onEdit}
+              className="shrink-0"
+            />
+          )}
+        </div>
       </div>
+
+      {labels.activeStatusAnnouncement != null && (
+        <span role="status" aria-live="polite" className="sr-only">
+          {labels.activeStatusAnnouncement}
+        </span>
+      )}
 
       {isLoading && (
         <div className="flex flex-1 items-center justify-center">

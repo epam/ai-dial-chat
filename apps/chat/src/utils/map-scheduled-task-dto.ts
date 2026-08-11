@@ -171,6 +171,8 @@ const resolveSectionKey = (
  * is missing). `description` maps 1:1 to `descriptionPreview` (undefined when
  * absent) with no truncation — the BFF's 500-char cap bounds the value, and
  * the card's own line-clamp/ellipsis handles presentation-layer truncation.
+ * `isActive` maps 1:1 from the DTO with no reinterpretation — derivation is
+ * owned entirely by the BFF mapper.
  */
 export const mapScheduledTaskDtoToItem = (
   task: ScheduledTaskDto,
@@ -181,6 +183,7 @@ export const mapScheduledTaskDtoToItem = (
   displayName: task.displayName,
   descriptionPreview: task.description,
   scheduleLabel: buildScheduleLabel(task, t),
+  isActive: task.isActive,
   sectionKey: resolveSectionKey(task, currentUserSub),
 });
 

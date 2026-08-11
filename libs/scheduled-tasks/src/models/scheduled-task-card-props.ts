@@ -4,6 +4,8 @@ import type { ScheduledTaskItem } from './scheduled-task-item';
 export interface ScheduledTaskCardLabels {
   /** Label shown in the "new" badge when `item.isNew` is set. Defaults to `'NEW'`. */
   newBadgeLabel?: string;
+  /** Label shown in the "Paused" badge when `item.isActive` is `false`. Defaults to `'Paused'`. */
+  pausedBadgeLabel?: string;
 }
 
 /**
@@ -31,6 +33,12 @@ export interface ScheduledTaskCardColors {
   newBadgeText?: string;
   /** Divider border color above the location breadcrumb. Fallback: `--stroke-tertiary`. */
   locationDividerBorder?: string;
+  /** "Paused" badge background. Fallback: `--bg-layer-sunken`. */
+  pausedBadgeBackground?: string;
+  /** "Paused" badge border color. Fallback: `--stroke-tertiary`. */
+  pausedBadgeBorder?: string;
+  /** "Paused" badge icon and text color. Fallback: `--text-control-disable-beta`. */
+  pausedBadgeText?: string;
 }
 
 /** Typography overrides for the {@link ScheduledTaskCard} component. */
@@ -47,6 +55,8 @@ export interface ScheduledTaskCardTypography {
   locationLeafClassName?: string;
   /** CSS class applied to the "new" badge text. Defaults to `'dial-tiny-semi-text'`. */
   newBadgeClassName?: string;
+  /** CSS class applied to the "Paused" badge's label text. Defaults to `'dial-tiny-text'`. */
+  pausedBadgeClassName?: string;
 }
 
 /** Style overrides for the {@link ScheduledTaskCard} component. */

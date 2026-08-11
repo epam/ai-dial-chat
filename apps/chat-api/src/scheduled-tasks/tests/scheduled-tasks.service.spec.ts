@@ -667,6 +667,202 @@ describe('ScheduledTasksService', () => {
     });
   });
 
+  describe('pauseScheduledTask / resumeScheduledTask', () => {
+    it('pause calls the exact upstream pause URL with the bearer token, then refreshes via getScheduledTask', async () => {
+      fetchMock
+        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              id: 'sched_123',
+              display_name: 'Daily summary',
+              trigger_type: 'cron',
+              next_run_time: null,
+            }),
+        });
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        makeCacheManager() as never,
+      );
+
+      const result = await service.pauseScheduledTask(
+        'user-1',
+        'token',
+        'sched_123',
+      );
+
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        'http://dial-core/v1/deployments/applications/scheduler-app/route/v1/schedules/sched_123/pause',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({ Authorization: 'Bearer token' }),
+        }),
+      );
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        'http://dial-core/v1/deployments/applications/scheduler-app/route/v1/schedules/sched_123',
+        expect.objectContaining({ method: 'GET' }),
+      );
+      expect(result.isActive).toBe(false);
+    });
+
+    it('resume calls the exact upstream resume URL and returns isActive true with the recalculated nextRunTime', async () => {
+      fetchMock
+        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              id: 'sched_123',
+              display_name: 'Daily summary',
+              trigger_type: 'cron',
+              next_run_time: '2026-07-28T12:00:00.000Z',
+            }),
+        });
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        makeCacheManager() as never,
+      );
+
+      const result = await service.resumeScheduledTask(
+        'user-1',
+        'token',
+        'sched_123',
+      );
+
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        'http://dial-core/v1/deployments/applications/scheduler-app/route/v1/schedules/sched_123/resume',
+        expect.objectContaining({ method: 'POST' }),
+      );
+      expect(result.isActive).toBe(true);
+      expect(result.nextRunTime).toBe('2026-07-28T12:00:00.000Z');
+    });
+
+    it('invalidates the list cache only after a successful pause', async () => {
+      fetchMock.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({ id: 'sched_123', display_name: 'Daily summary' }),
+      });
+      const cacheManager = makeCacheManager();
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        cacheManager as never,
+      );
+
+      await service.pauseScheduledTask('user-1', 'token', 'sched_123');
+
+      expect(cacheManager.set).toHaveBeenCalledWith(
+        'scheduled-tasks:list-epoch:user-1',
+        1,
+        24 * 60 * 60 * 1000,
+      );
+    });
+
+    it('does not invalidate the list cache when the pause action itself fails', async () => {
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 404,
+        json: () => Promise.resolve({ message: 'not found' }),
+      });
+      const cacheManager = makeCacheManager();
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        cacheManager as never,
+      );
+
+      await expect(
+        service.pauseScheduledTask('user-1', 'token', 'sched_missing'),
+      ).rejects.toThrow();
+
+      expect(cacheManager.set).not.toHaveBeenCalledWith(
+        'scheduled-tasks:list-epoch:user-1',
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
+    it('does not invalidate the list cache when the resume action itself fails', async () => {
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 502,
+        json: () => Promise.resolve({ message: 'upstream error' }),
+      });
+      const cacheManager = makeCacheManager();
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        cacheManager as never,
+      );
+
+      await expect(
+        service.resumeScheduledTask('user-1', 'token', 'sched_123'),
+      ).rejects.toThrow();
+
+      expect(cacheManager.set).not.toHaveBeenCalledWith(
+        'scheduled-tasks:list-epoch:user-1',
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
+    it('still returns 200 with the requested isActive and still invalidates the cache when the post-mutation refresh fails', async () => {
+      const debugSpy = vi
+        .spyOn(Logger.prototype, 'warn')
+        .mockImplementation(() => undefined);
+      fetchMock
+        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 502,
+          json: () => Promise.resolve({ message: 'upstream error' }),
+        });
+      const cacheManager = makeCacheManager();
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        cacheManager as never,
+      );
+
+      const result = await service.resumeScheduledTask(
+        'user-1',
+        'token',
+        'sched_123',
+      );
+
+      expect(result.isActive).toBe(true);
+      expect(cacheManager.set).toHaveBeenCalledWith(
+        'scheduled-tasks:list-epoch:user-1',
+        1,
+        24 * 60 * 60 * 1000,
+      );
+      debugSpy.mockRestore();
+    });
+
+    it('throws ServiceUnavailableException on pause/resume when SCHEDULER_APP_ID is unset', async () => {
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService(undefined) as never,
+        makeCacheManager() as never,
+      );
+
+      await expect(
+        service.pauseScheduledTask('user-1', 'token', 'sched_123'),
+      ).rejects.toBeInstanceOf(ServiceUnavailableException);
+      await expect(
+        service.resumeScheduledTask('user-1', 'token', 'sched_123'),
+      ).rejects.toBeInstanceOf(ServiceUnavailableException);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+  });
+
   it('aborts when reading a successful response body exceeds the timeout', async () => {
     vi.useFakeTimers();
     fetchMock.mockImplementation(

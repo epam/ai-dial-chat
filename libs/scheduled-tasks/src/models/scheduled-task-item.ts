@@ -20,6 +20,8 @@ export interface ScheduledTaskItem {
   locationSegments?: string[];
   /** When set, the card shows a "new" badge for this task. */
   isNew?: boolean;
+  /** When explicitly `false`, the card shows a "Paused" badge in place of the schedule pill. `true` or `undefined` renders the schedule pill as usual. */
+  isActive?: boolean;
   /** Section this item is grouped under in the card grid. */
   sectionKey: ScheduledTaskSectionKey;
 }
