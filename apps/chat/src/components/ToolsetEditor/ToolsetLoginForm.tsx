@@ -218,7 +218,7 @@ export const ToolsetLoginForm = ({
               control={control}
               render={({ field }) => {
                 const value =
-                  field.value ?? TokenEndpointAuthMethod.ClientSecretPost;
+                  field.value ?? TokenEndpointAuthMethod.ClientSecretBasic;
                 return (
                   <SelectorField
                     label={t(CommonI18nKeys.TokenEndpointAuthMethodLabel)}

@@ -8,6 +8,7 @@ import {
   AppsEditorFormType,
   AppsEditorSchemaTypes,
   getApplicationPayload,
+  getValidationSchema,
 } from '../form';
 
 const MODEL_ID = 'gpt-4';
@@ -57,6 +58,48 @@ const getOrchestratorParameters = (
       allEntitiesMap: buildEntitiesMap(allowsTemperature),
     }).applicationProperties as QuickApp2Config
   ).orchestrator.deployment.parameters;
+
+const buildCustomAppFormData = (pendingInputAttachmentType: string) => ({
+  type: AppsEditorSchemaTypes.CustomApp,
+  inputAttachmentTypes: ['image/png'],
+  pendingInputAttachmentType,
+  completionUrl: 'http://application1/chat',
+  features: null,
+  name: 'Test app',
+  version: '0.0.1',
+  description: '',
+  iconUrl: '',
+  topics: [],
+  locales: [],
+});
+
+const getAttachmentTypesErrors = (pendingInputAttachmentType: string) => {
+  const result = getValidationSchema(AppsEditorSchemaTypes.CustomApp).safeParse(
+    buildCustomAppFormData(pendingInputAttachmentType),
+  );
+
+  return result.success
+    ? []
+    : result.error.issues
+        .filter((issue) => issue.path[0] === 'inputAttachmentTypes')
+        .map((issue) => issue.message);
+};
+
+describe('Custom app schema - attachment type that is not added yet', () => {
+  it('reports the MIME error while an invalid type is being typed', () => {
+    expect(getAttachmentTypesErrors('imag')).toEqual([
+      'Please match the MIME format',
+    ]);
+  });
+
+  it('reports no error for a valid type that is being typed', () => {
+    expect(getAttachmentTypesErrors('image/jpeg')).toEqual([]);
+  });
+
+  it('reports no error when nothing is being typed', () => {
+    expect(getAttachmentTypesErrors('')).toEqual([]);
+  });
+});
 
 describe('getApplicationPayload - Quick App 2.0 orchestrator temperature', () => {
   it('saves a temperature of 0', () => {

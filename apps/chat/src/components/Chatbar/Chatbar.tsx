@@ -98,6 +98,12 @@ export const Chatbar = () => {
           const conversation = JSON.parse(conversationData);
           const folderId = getConversationRootId();
 
+          // Dropping a conversation where it already is must not touch it,
+          // otherwise it is marked as updated and jumps to the Today section
+          if (conversation.folderId === folderId) {
+            return;
+          }
+
           if (
             !isEntityNameOnSameLevelUnique(
               conversation.name,

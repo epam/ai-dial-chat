@@ -2,6 +2,10 @@ import { IconSelectors, ReviewEntityDialog } from '@/src/ui/selectors';
 import { BasePublishedReviewModal } from '@/src/ui/webElements/basePublishedReviewModal';
 
 export class PublishedApplicationReviewModal extends BasePublishedReviewModal {
+  // Opens the app in the editor with the publication under review.
+  public editApplicationButton = this.getChildElementBySelector(
+    ReviewEntityDialog.editApplicationButton,
+  );
   public featuresData = this.getChildElementBySelector(
     ReviewEntityDialog.featuresData,
   );

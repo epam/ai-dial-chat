@@ -86,6 +86,7 @@ export const ReviewEntityDialog = {
   completionUrl: '[data-qa="app-completion-url"]',
   externalUrlLabel: '[data-qa="app-external-url-label"]',
   externalUrl: '[data-qa="app-external-url"]',
+  editApplicationButton: '[data-qa="admin-edit-application"]',
   endpoint: '[data-qa="toolset-endpoint"]',
   transport: '[data-qa="toolset-transport"]',
   authType: '[data-qa="toolset-authentication-type"]',
@@ -387,7 +388,8 @@ export const AddQuickApp2SettingsFormSelector = {
   chipName: '[data-qa="chip-name"]',
   chipVersion: '[data-qa="chip-version"]',
   chipRemoveButtonLabel: 'Remove item', // aria-label of the chip remove button
-  errorChipClass: 'bg-error', // class on a not-available (red) chip
+  errorChipClass: 'bg-error', // class on a not-available or logged-out (red) chip
+  activeChipClass: 'bg-accent-primary-alpha', // class on a healthy (blue) chip
 
   // Code Interpreter toggle
   codeInterpreterToggle: '[data-qa="toggle-switch"]',
