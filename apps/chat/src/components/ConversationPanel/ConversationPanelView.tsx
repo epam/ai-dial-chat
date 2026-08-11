@@ -418,10 +418,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         if (rawItem?.sharedWithMe) {
           readonlyActions.push({
             key: 'unshare',
-            label: t(ButtonsI18nKeys.Delete),
+            label: t(ButtonsI18nKeys.RemoveFromMyList),
             icon: (
-              <IconTrashX size={DIAL_ICON_SIZE.SM} className="text-secondary" />
+              <IconTrashX size={DIAL_ICON_SIZE.SM} className="text-error" />
             ),
+            className: 'text-error',
             onClick: () => setPendingUnshareId(contextId),
           });
         }
@@ -489,9 +490,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         {
           key: 'delete',
           label: t(ButtonsI18nKeys.Delete),
-          icon: (
-            <IconTrashX size={DIAL_ICON_SIZE.SM} className="text-secondary" />
-          ),
+          icon: <IconTrashX size={DIAL_ICON_SIZE.SM} className="text-error" />,
+          className: 'text-error',
           onClick: () => setPendingDeleteId(contextId),
         },
       ];
@@ -569,7 +569,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
   const pendingUnshareTitle = useMemo(() => {
     if (!pendingUnshareId) return '';
-    return items.find((c) => c.id === pendingUnshareId)?.title ?? '';
+    const item = items.find((c) => c.id === pendingUnshareId);
+    return item?.title ?? item?.id ?? '';
   }, [items, pendingUnshareId]);
 
   const handleConfirmUnshare = useCallback(async () => {
@@ -597,7 +598,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     }
 
     showNotification({
-      variant: NotificationVariant.Success,
+      variant: NotificationVariant.Info,
       title: t(ConversationPanelI18nKeys.UnshareSuccessTitle),
       message: t(ConversationPanelI18nKeys.UnshareSuccess, {
         name: pendingUnshareTitle,

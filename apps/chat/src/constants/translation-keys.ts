@@ -107,6 +107,7 @@ export enum ButtonsI18nKeys {
   LogIn = 'buttons.logIn',
   Publish = 'buttons.publish',
   Manage = 'buttons.manage',
+  RemoveFromMyList = 'buttons.removeFromMyList',
 }
 
 export enum NavigationI18nKeys {
@@ -147,7 +148,6 @@ export enum CatalogI18nKeys {
   ListViewLabel = 'catalog.listViewLabel',
   // Details panel
   DetailsTabTools = 'catalog.details.tabTools',
-  DetailsDailyLimit = 'catalog.details.dailyLimit',
   DetailsApiResourceSection = 'catalog.details.api.resourceSection',
   DetailsApiSnippetSection = 'catalog.details.api.snippetSection',
   DetailsApiModelId = 'catalog.details.api.modelId',
@@ -203,6 +203,20 @@ export enum CatalogI18nKeys {
   DetailsDeleteError = 'catalog.details.delete.error',
   DetailsDeleteSuccessTitle = 'catalog.details.delete.successTitle',
   DetailsDeleteSuccess = 'catalog.details.delete.success',
+  DetailsDeleteConfirmTitle = 'catalog.details.delete.confirmTitle',
+  DetailsDeleteConfirmMessage = 'catalog.details.delete.confirmMessage',
+  DetailsDeleteConsequenceSharedConfigurations = 'catalog.details.delete.consequenceSharedConfigurations',
+  DetailsDeleteConsequenceUsersLoseAccess = 'catalog.details.delete.consequenceUsersLoseAccess',
+  DetailsDeleteConsequenceCannotBeUndone = 'catalog.details.delete.consequenceCannotBeUndone',
+  DetailsUnshareConfirmTitle = 'catalog.details.unshare.confirmTitle',
+  DetailsUnshareConfirmMessage = 'catalog.details.unshare.confirmMessage',
+  DetailsUnshareConsequenceYouLoseAccess = 'catalog.details.unshare.consequenceYouLoseAccess',
+  DetailsUnshareConsequenceOthersKeepAccess = 'catalog.details.unshare.consequenceOthersKeepAccess',
+  DetailsUnshareConsequenceNeedNewInvitation = 'catalog.details.unshare.consequenceNeedNewInvitation',
+  DetailsUnshareRemovingStatus = 'catalog.details.unshare.removingStatus',
+  DetailsUnshareErrorTitle = 'catalog.details.unshare.errorTitle',
+  DetailsUnshareError = 'catalog.details.unshare.error',
+  DetailsUnshareSuccess = 'catalog.details.unshare.success',
   ConnectToolsetTitle = 'catalog.details.connect.toolsetTitle',
   ConnectApplicationTitle = 'catalog.details.connect.applicationTitle',
   ConnectToolsetDescription = 'catalog.details.connect.toolsetDescription',
@@ -464,6 +478,7 @@ export enum AuthI18nKeys {
   OverlayProvidersError = 'auth.overlayProvidersError',
   LogOutConfirmTitle = 'auth.logOutConfirmTitle',
   LogOutConfirmDescription = 'auth.logOutConfirmDescription',
+  LoggingOutStatus = 'auth.loggingOutStatus',
   UserAvatar = 'auth.userAvatar',
 }
 

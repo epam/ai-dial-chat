@@ -12,24 +12,36 @@ import type {
 } from '@epam/ai-dial-publish-panel';
 import {
   CloseButton,
-  ConfirmationPopup,
+  ElementSize,
   Skeleton,
   DialTag,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft } from '@tabler/icons-react';
-import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  FC,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import type { CatalogItem } from '../../models/catalog-item';
 import type { DetailsPanelProps } from '../../models/item-details-props';
 import { CatalogDetailsTab } from '../../types/detail-tab';
+import {
+  DetailsConfirmationKind,
+  DetailsConfirmationVariant,
+} from '../../types/details-confirmation';
 import { getSignedInLevel } from '../../utils/toolset-credentials';
 import { EntityHeader } from '../EntityHeader/EntityHeader';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { ApiDetails } from './ApiDetails';
+import { ConfirmationFooter } from './ConfirmationView/ConfirmationFooter';
+import { ConfirmationView } from './ConfirmationView/ConfirmationView';
 import { CredentialsSection } from './Credentials/CredentialsSection';
 import styles from './DetailsPanel.module.scss';
 import { Header } from './Header/Header';
-import { Summary } from './Summary/Summary';
 import { AboutTab } from './TabsContent/About';
 import { LimitsTab } from './TabsContent/Limits';
 import { Overview } from './TabsContent/Overview';
@@ -39,6 +51,34 @@ import { Tools } from './TabsContent/Tools/Tools';
 const NO_OP_PUBLISH = async () => undefined;
 const EMPTY_PUBLISH_FOLDERS: PublishFolderNode[] = [];
 const EMPTY_RULE_SOURCE_OPTIONS: string[] = [];
+
+const DEFAULT_DELETE_CONSEQUENCES = [
+  'All shared configurations will be lost',
+  'Users who rely on it will lose access',
+  'Cannot be undone',
+];
+
+const DEFAULT_UNSHARE_CONSEQUENCES = [
+  'You will lose access to this item',
+  'Other people keep their access',
+  'You will need a new invitation to get it back',
+];
+
+/** Everything the panel needs to render the confirmation step for one {@link DetailsConfirmationKind}. */
+interface ConfirmationContent {
+  /** Sub-view title, shown next to the back button and used as the dialog's accessible name. */
+  title: string;
+  /** Confirmation body copy. */
+  message: ReactNode;
+  /** Consequences listed as bullets under the message. */
+  consequences?: string[];
+  /** Label of the confirming action button. */
+  confirmLabel: string;
+  /** Status text announced to assistive tech while the action is in flight. */
+  loadingStatusLabel: string;
+  /** Palette the step is rendered with. */
+  variant: DetailsConfirmationVariant;
+}
 
 /** Right-side slide-in panel displaying full details for a catalog item. */
 export const DetailsPanel: FC<DetailsPanelProps> = ({
@@ -69,6 +109,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   isShareVisible,
   onEdit,
   onDelete,
+  onUnshare,
   onLogin,
   onLogout,
   texts,
@@ -80,10 +121,10 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     overviewValueClassName = 'dial-small-text',
     overviewValueTrueClassName = 'dial-small-text',
     credentialsStatusLabelClassName,
+    confirmMessageClassName = 'dial-small-text',
   } = detailsStyles?.typography ?? {};
 
   const detailsColors = detailsStyles?.colors;
-  const limitColors = detailsColors?.limits;
   /* Set on both the backdrop and the panel — they are siblings, not nested. */
   const cssVars = buildCssVars({
     '--cat-details-backdrop': detailsColors?.backdrop,
@@ -107,19 +148,11 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-grid-cell-text': detailsColors?.gridCellText,
     '--cat-grid-cell-divider': detailsColors?.gridCellDivider,
     '--cat-grid-row-even-bg': detailsColors?.gridRowEvenBackground,
-    '--cat-limits-free-bg': limitColors?.freeBackground,
-    '--cat-limits-free-text': limitColors?.freeText,
-    '--cat-limits-featured-bg': limitColors?.featuredBackground,
-    '--cat-limits-featured-text': limitColors?.featuredText,
-    '--cat-limits-by-request-bg': limitColors?.byRequestBackground,
-    '--cat-limits-by-request-text': limitColors?.byRequestText,
-    '--cat-limits-beta-bg': limitColors?.betaBackground,
-    '--cat-limits-beta-text': limitColors?.betaText,
-    '--cat-limits-deprecated-bg': limitColors?.deprecatedBackground,
-    '--cat-limits-deprecated-text': limitColors?.deprecatedText,
-    '--cat-limits-progress-track': limitColors?.progressTrack,
-    '--cat-limits-progress-fill': limitColors?.progressFill,
-    '--cat-limits-reset-text': limitColors?.resetText,
+    '--cat-info-card-bg': detailsColors?.infoCardBackground,
+    '--cat-info-card-danger-bg': detailsColors?.infoCardDangerBackground,
+    '--cat-confirm-message-text': detailsColors?.confirmMessageText,
+    '--cat-confirm-consequence-text': detailsColors?.confirmConsequenceText,
+    '--cat-confirm-footer-border': detailsColors?.confirmFooterBorder,
   });
 
   const [isStarred, setIsStarred] = useState(initialIsStarred);
@@ -184,8 +217,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     ],
   );
   const [isCredentialsOpen, setIsCredentialsOpen] = useState(false);
-  const [isDirectLogoutConfirmOpen, setIsDirectLogoutConfirmOpen] =
-    useState(false);
+  const [confirmation, setConfirmation] =
+    useState<DetailsConfirmationKind | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   useEffect(() => {
     setIsStarred(initialIsStarred);
@@ -198,7 +232,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     setPublishHistory([]);
     setHasPublishHistoryError(false);
     setIsCredentialsOpen(false);
-    setIsDirectLogoutConfirmOpen(false);
+    setConfirmation(null);
+    setIsConfirming(false);
     // Reset publish-flow-local state only when the displayed item changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id]);
@@ -207,32 +242,79 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     setIsCredentialsOpen((prev) => !prev);
   }, []);
 
+  const handleRequestDelete = useCallback(() => {
+    setConfirmation(DetailsConfirmationKind.Delete);
+  }, []);
+
   const handleRequestLogout = useCallback(() => {
-    setIsDirectLogoutConfirmOpen(true);
+    setConfirmation(DetailsConfirmationKind.Logout);
   }, []);
 
-  const handleCancelDirectLogout = useCallback(() => {
-    setIsDirectLogoutConfirmOpen(false);
+  const handleRequestUnshare = useCallback(() => {
+    setConfirmation(DetailsConfirmationKind.Unshare);
   }, []);
 
-  const handleConfirmDirectLogout = useCallback(() => {
-    setIsDirectLogoutConfirmOpen(false);
-    if (item.credentials == null) return;
-    onLogout?.(item, { level: getSignedInLevel(item.credentials) });
-  }, [item, onLogout]);
+  const handleCancelConfirmation = useCallback(() => {
+    if (isConfirming) return;
+    setConfirmation(null);
+  }, [isConfirming]);
+
+  const handleConfirm = useCallback(async () => {
+    if (isConfirming || confirmation == null) return;
+    setIsConfirming(true);
+    try {
+      if (confirmation === DetailsConfirmationKind.Logout) {
+        if (item.credentials != null) {
+          await onLogout?.(item, { level: getSignedInLevel(item.credentials) });
+        }
+        /* Logging out leaves the item in the catalog, so the panel stays open. */
+        setConfirmation(null);
+        return;
+      }
+
+      if (confirmation === DetailsConfirmationKind.Delete) {
+        await onDelete?.(item);
+      } else {
+        await onUnshare?.(item);
+      }
+      /* The item is gone from the caller's catalog — close the whole panel. */
+      setConfirmation(null);
+      onClose();
+    } catch {
+      /*
+       * Failure feedback (e.g. a notification) is the caller's
+       * responsibility; the item stays visible and the panel stays open.
+       */
+      setConfirmation(null);
+    } finally {
+      setIsConfirming(false);
+    }
+  }, [
+    isConfirming,
+    confirmation,
+    item,
+    onDelete,
+    onUnshare,
+    onLogout,
+    onClose,
+  ]);
 
   useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
+      if (event.key !== 'Escape') return;
+      /* Escape backs out of an open confirmation before it closes the panel. */
+      if (confirmation != null) {
+        handleCancelConfirmation();
+        return;
       }
+      onClose();
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, confirmation, handleCancelConfirmation]);
 
   const handleOpenPublish = useCallback(() => setIsPublishOpen(true), []);
   const handleClosePublish = useCallback(() => {
@@ -313,6 +395,87 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     : (texts?.addToFavoritesAriaLabel ?? 'Add to favorites');
   const publishTitle = texts?.publishTitle ?? 'Publish';
   const backToDetailsAriaLabel = texts?.backToDetailsAriaLabel ?? 'Back';
+  const cancelLabel = texts?.cancelLabel ?? 'Cancel';
+
+  const confirmationContent = useMemo<ConfirmationContent | null>(() => {
+    switch (confirmation) {
+      case DetailsConfirmationKind.Delete: {
+        const deleteLabel = texts?.deleteActionLabel ?? 'Delete';
+        return {
+          title: texts?.deleteConfirmTitle ?? deleteLabel,
+          message: texts?.deleteConfirmMessage?.(item.name) ?? (
+            <>
+              Are you sure you want to delete <strong>{item.name}</strong>? This
+              action is permanent and cannot be undone.
+            </>
+          ),
+          consequences:
+            texts?.deleteConfirmConsequences ?? DEFAULT_DELETE_CONSEQUENCES,
+          confirmLabel: deleteLabel,
+          loadingStatusLabel: texts?.deletingStatusLabel ?? 'Deleting',
+          variant: DetailsConfirmationVariant.Danger,
+        };
+      }
+      case DetailsConfirmationKind.Unshare: {
+        const unshareLabel = texts?.unshareLabel ?? 'Remove from My List';
+        return {
+          title: texts?.unshareConfirmTitle ?? unshareLabel,
+          message: texts?.unshareConfirmMessage?.(item.name) ?? (
+            <>
+              Remove <strong>{item.name}</strong> from your list? You&apos;ll
+              need a new invitation to access it again.
+            </>
+          ),
+          consequences:
+            texts?.unshareConfirmConsequences ?? DEFAULT_UNSHARE_CONSEQUENCES,
+          confirmLabel: unshareLabel,
+          loadingStatusLabel: texts?.unsharingStatusLabel ?? 'Removing',
+          /* Removal only revokes the caller's own access and is recoverable
+           * with a new invitation, so it is not framed as destructive. */
+          variant: DetailsConfirmationVariant.Info,
+        };
+      }
+      case DetailsConfirmationKind.Logout: {
+        const logoutLabel = texts?.logoutActionLabel ?? 'Log out';
+        return {
+          title: logoutLabel,
+          message:
+            texts?.logoutConfirmMessage ?? 'Are you sure you want to log out?',
+          consequences: undefined,
+          confirmLabel: logoutLabel,
+          loadingStatusLabel: texts?.loggingOutStatusLabel ?? 'Logging out',
+          variant: DetailsConfirmationVariant.Info,
+        };
+      }
+      default:
+        return null;
+    }
+  }, [confirmation, item.name, texts]);
+
+  const isConfirmationOpen = confirmationContent != null;
+  const isSubViewOpen = isConfirmationOpen || isPublishOpen;
+
+  /* A confirmation and the publish flow never share the header; null means the details header. */
+  const subViewHeader = (() => {
+    if (isConfirmationOpen) {
+      return {
+        title: confirmationContent.title,
+        isBackDisabled: isConfirming,
+        onBack: handleCancelConfirmation,
+      };
+    }
+    if (isPublishOpen) {
+      return {
+        title: publishTitle,
+        isBackDisabled: publishFlow.isSubmitting,
+        onBack: handleClosePublish,
+      };
+    }
+    return null;
+  })();
+
+  /* While a sub-view is open the dialog is named after it, not the details. */
+  const dialogAriaLabel = subViewHeader?.title ?? panelAriaLabel;
 
   return (
     <>
@@ -330,7 +493,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={panelAriaLabel}
+        aria-label={dialogAriaLabel}
         style={cssVars}
         className={mergeClasses(
           'fixed inset-y-0 end-0 z-50 flex w-full flex-col overflow-hidden',
@@ -340,14 +503,14 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           isOpen ? 'translate-x-0' : 'translate-x-full rtl:-translate-x-full',
         )}
       >
-        <div className="flex shrink-0 items-center gap-2 px-[22px] py-3">
-          {isPublishOpen ? (
+        <div className="flex shrink-0 items-center gap-2 px-6 py-3">
+          {subViewHeader != null && (
             <>
               <GhostIconButton
                 icon={<IconChevronLeft className="rtl:scale-x-[-1]" />}
                 aria-label={backToDetailsAriaLabel}
-                disabled={publishFlow.isSubmitting}
-                onClick={handleClosePublish}
+                disabled={subViewHeader.isBackDisabled}
+                onClick={subViewHeader.onBack}
               />
               <span
                 className={mergeClasses(
@@ -355,10 +518,11 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                   styles.publishTitle,
                 )}
               >
-                {publishTitle}
+                {subViewHeader.title}
               </span>
             </>
-          ) : (
+          )}
+          {subViewHeader == null && (
             <>
               <div className="flex-1" />
               <StarToggleButton
@@ -366,10 +530,12 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 ariaLabel={starAriaLabel}
                 onClick={handleToggleFavorite}
               />
+              <CloseButton
+                onClose={onClose}
+                size={ElementSize.Standard}
+                ariaLabel={closeAriaLabel}
+              />
             </>
-          )}
-          {!isPublishOpen && (
-            <CloseButton onClose={onClose} ariaLabel={closeAriaLabel} />
           )}
         </div>
 
@@ -381,7 +547,17 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             styles.content,
           )}
         >
-          {isPublishOpen ? (
+          {isConfirmationOpen && (
+            <ConfirmationView
+              item={item}
+              message={confirmationContent.message}
+              consequences={confirmationContent.consequences}
+              variant={confirmationContent.variant}
+              messageClassName={confirmMessageClassName}
+            />
+          )}
+
+          {!isConfirmationOpen && isPublishOpen && (
             <div className="p-[22px]">
               <PublishPanel
                 resource={{
@@ -429,7 +605,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 labels={publishLabels}
               />
             </div>
-          ) : (
+          )}
+
+          {!isSubViewOpen && (
             <>
               <Header
                 item={item}
@@ -441,8 +619,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 isPublishVisible={isPublishVisible}
                 onOpenPublish={handleOpenPublish}
                 onEdit={onEdit}
-                onDelete={onDelete}
-                onCloseDetails={onClose}
+                onDelete={onDelete ? handleRequestDelete : undefined}
+                onUnshare={onUnshare ? handleRequestUnshare : undefined}
                 onLogin={onLogin}
                 onLogout={onLogout}
                 onToggleCredentials={handleToggleCredentials}
@@ -461,24 +639,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 />
               )}
 
-              <ConfirmationPopup
-                open={isDirectLogoutConfirmOpen}
-                header={texts?.logoutActionLabel ?? 'Log out'}
-                description={
-                  texts?.logoutConfirmMessage ??
-                  'Are you sure you want to log out?'
-                }
-                confirmLabel={texts?.logoutActionLabel ?? 'Log out'}
-                onConfirm={handleConfirmDirectLogout}
-                onCancel={handleCancelDirectLogout}
-                onClose={handleCancelDirectLogout}
-              />
-
-              <div className={styles.divider} />
-
-              <Summary item={item} texts={texts} />
-
-              <div className="flex items-center gap-2 px-[22px]">
+              <div className="flex items-center px-6">
                 <TabRow
                   tabs={tabs}
                   activeTabId={activeTab}
@@ -504,12 +665,13 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
               <div
                 className={mergeClasses(
-                  activeTab !== CatalogDetailsTab.Overview && 'px-[22px]',
+                  activeTab !== CatalogDetailsTab.Overview && 'mt-4 px-6',
                 )}
               >
                 {activeTab === CatalogDetailsTab.About && (
                   <AboutTab
                     content={item.description}
+                    topics={item.topics}
                     detailsStyles={detailsStyles}
                   />
                 )}
@@ -556,7 +718,19 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           )}
         </div>
 
-        {isPublishOpen && (
+        {isConfirmationOpen && (
+          <ConfirmationFooter
+            confirmLabel={confirmationContent.confirmLabel}
+            cancelLabel={cancelLabel}
+            variant={confirmationContent.variant}
+            isLoading={isConfirming}
+            loadingStatusLabel={confirmationContent.loadingStatusLabel}
+            onConfirm={handleConfirm}
+            onCancel={handleCancelConfirmation}
+          />
+        )}
+
+        {!isConfirmationOpen && isPublishOpen && (
           <PublishFooter
             version={item.version}
             hasExistingPublicationInFolder={
