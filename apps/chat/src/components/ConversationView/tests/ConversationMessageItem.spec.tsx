@@ -99,6 +99,7 @@ const defaultProps = {
   thinkingLabel: 'Thinking',
   executedLabel: 'Executed',
   stepsLabel: (count: number) => `${count} Steps`,
+  mcpAppTools: [],
 };
 
 beforeEach(() => {

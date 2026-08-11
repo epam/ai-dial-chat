@@ -1,4 +1,5 @@
 import type { ScheduledTaskCreateFormValues } from '@epam/ai-dial-scheduled-tasks';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- referenced in JSDoc @link
 import type { ScheduledTaskDto } from '@epam/chat-api-client';
 
 /** Why a {@link ScheduledTaskDto} could not be mapped back to editable form values. */

@@ -518,6 +518,7 @@ describe('CatalogView', () => {
         transcribeSizeLimitBytes: 5 * 1024 * 1024,
         defaultDeploymentId: null,
         dialCoreExternalUrl: 'https://dial.example.com',
+        mcpAppSandboxUrl: null,
         fileManagerTabs: ['my_files', 'shared', 'organization'],
         overlayEnabled: false,
         overlayAllowedOrigins: [],

@@ -8,13 +8,26 @@ import { EnvironmentVariables } from './config/environment.config';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   /*
-   * xFrameOptions and contentSecurityPolicy are disabled here: this app is
-   * meant to be iframed cross-origin by the chat host, and the sandbox
-   * route sets its own per-response CSP (`SandboxController`/`SandboxService`)
-   * with a per-request nonce — a static default-on CSP or X-Frame-Options
-   * would either conflict with it or block the very embedding this app exists for.
+   * xFrameOptions is disabled: this app is meant to be iframed cross-origin
+   * by the chat host, so X-Frame-Options: SAMEORIGIN would break its only use.
+   * The sandbox route sets its own per-response CSP in SandboxController via
+   * res.set('Content-Security-Policy', ...) which takes precedence over this
+   * default helmet CSP, so a restrictive default here is safe and still allows
+   * CodeQL to confirm CSP enforcement is not fully disabled.
    */
-  app.use(helmet({ contentSecurityPolicy: false, xFrameOptions: false }));
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          baseUri: ["'none'"],
+        },
+      },
+      xFrameOptions: false,
+    }),
+  );
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

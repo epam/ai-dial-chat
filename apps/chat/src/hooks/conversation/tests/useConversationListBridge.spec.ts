@@ -66,7 +66,7 @@ const makeItem = (
 
 /** The overlay protocol does not forward scheduler-only fields — strip them before comparing against bridge output. */
 const makeOverlayItem = (overrides?: Partial<ConversationListItemDto>) => {
-  const { isScheduledTask, scheduleId, runId, ...overlayItem } =
+  const { isScheduledTask: _isScheduledTask, scheduleId: _scheduleId, runId: _runId, ...overlayItem } =
     makeItem(overrides);
   return overlayItem;
 };

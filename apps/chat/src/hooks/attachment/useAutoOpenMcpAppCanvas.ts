@@ -1,11 +1,11 @@
 import type { Message } from '@epam/ai-dial-chat-shared';
 import { useEffect, useRef } from 'react';
-import type { McpAppToolRef } from '../conversation/useMcpAppTools';
 import {
   findLastMcpAppMessage,
   mcpAppCanvasKey,
   resolveMcpAppToolCallSeed,
 } from '../../utils/mcp-app';
+import type { McpAppToolRef } from '../conversation/useMcpAppTools';
 import { useOpenMcpAppCanvas } from './useOpenMcpAppCanvas';
 
 /**
@@ -32,7 +32,10 @@ export const useAutoOpenMcpAppCanvas = (
     void openMcpAppCanvas(
       found.match,
       key,
-      resolveMcpAppToolCallSeed(messages[found.messageIndex], found.match.toolName),
+      resolveMcpAppToolCallSeed(
+        messages[found.messageIndex],
+        found.match.toolName,
+      ),
     );
   }, [messages, mcpAppTools, openMcpAppCanvas]);
 };

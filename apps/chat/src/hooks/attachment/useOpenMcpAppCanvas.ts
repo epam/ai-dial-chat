@@ -108,7 +108,14 @@ export const useOpenMcpAppCanvas = () => {
         return false;
       }
     },
-    [t, openCanvas, openCanvasLoading, closePanel, closeSourcesPanel, mcpAppSandboxUrl],
+    [
+      t,
+      openCanvas,
+      openCanvasLoading,
+      closePanel,
+      closeSourcesPanel,
+      mcpAppSandboxUrl,
+    ],
   );
 
   return { openMcpAppCanvas };

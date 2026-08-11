@@ -41,7 +41,7 @@ vi.mock('@epam/ai-dial-react-pdf-highlighter', () => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, params?: Record<string, string>) => {
+    t: (key: string, _params?: Record<string, string>) => {
       return key;
     },
     i18n: {

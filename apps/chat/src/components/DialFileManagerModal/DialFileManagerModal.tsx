@@ -639,9 +639,9 @@ const DialFileManagerModal: FC<Props> = ({
           )}
         </div>
       }
+      ariaLabel={title}
       size={PopupSize.Lg}
       className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-sunken"
-      bodyClassName="flex min-h-0 flex-col"
       onClose={onClose}
       footer={
         <div className="flex justify-end px-6 py-4">
@@ -657,23 +657,25 @@ const DialFileManagerModal: FC<Props> = ({
         </div>
       }
     >
-      <DialFileManagerShell
-        hookResult={hookResult}
-        labels={labels}
-        activeTab={activeTab}
-        tabs={tabs}
-        onTabChange={handleTabChangeWithReset}
-        selectedPaths={selectedPaths}
-        onSelectedPathsChange={handleSelectedPathsChange}
-        variant={DialFileManagerVariant.Attach}
-        actionProfile={DialFileManagerActionProfile.Attach}
-        autoSelectUploadedItems={autoSelectUploadedItems}
-        allowedFileTypes={allowedFileTypes}
-        maxSelectableFileSize={maxSelectableFileSize}
-        isRowSelectable={isRowSelectable}
-        getDisabledTooltip={getDisabledTooltip}
-        unsupportedFileTypeTooltip={unsupportedFileTypeTooltip}
-      />
+      <div className="flex min-h-0 flex-col">
+        <DialFileManagerShell
+          hookResult={hookResult}
+          labels={labels}
+          activeTab={activeTab}
+          tabs={tabs}
+          onTabChange={handleTabChangeWithReset}
+          selectedPaths={selectedPaths}
+          onSelectedPathsChange={handleSelectedPathsChange}
+          variant={DialFileManagerVariant.Attach}
+          actionProfile={DialFileManagerActionProfile.Attach}
+          autoSelectUploadedItems={autoSelectUploadedItems}
+          allowedFileTypes={allowedFileTypes}
+          maxSelectableFileSize={maxSelectableFileSize}
+          isRowSelectable={isRowSelectable}
+          getDisabledTooltip={getDisabledTooltip}
+          unsupportedFileTypeTooltip={unsupportedFileTypeTooltip}
+        />
+      </div>
     </Popup>
   );
 };

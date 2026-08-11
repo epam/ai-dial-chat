@@ -20,7 +20,7 @@ enum RendererStatus {
   Error = 'error',
 }
 
-/**
+/*
  * Mounts an MCP tool's `ui://` resource via `@mcp-ui/client`'s `AppRenderer`,
  * inside the isolated-origin sandbox proxy at `content.sandboxUrl`, seeded
  * with the original invocation's `content.toolInput`/`content.toolResult`

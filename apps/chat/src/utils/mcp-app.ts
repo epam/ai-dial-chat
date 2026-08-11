@@ -82,7 +82,9 @@ const resolveToolCalls = (
 export const collectToolCallNames = (messages: Message[]): Set<string> => {
   const names = new Set<string>();
   for (const message of messages) {
-    for (const call of resolveToolCalls(message.custom_content?.state).values()) {
+    for (const call of resolveToolCalls(
+      message.custom_content?.state,
+    ).values()) {
       names.add(call.name);
     }
   }

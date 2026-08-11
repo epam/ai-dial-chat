@@ -69,6 +69,7 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
         </span>
         <span
           className="text-center text-sm font-semibold"
+          // eslint-disable-next-line react/no-danger -- HTML is sanitized by DOMPurify before use
           dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
         />
       </div>

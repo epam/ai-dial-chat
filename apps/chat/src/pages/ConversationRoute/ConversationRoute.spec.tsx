@@ -571,7 +571,7 @@ describe('ConversationRoute', () => {
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
       mergeSharedItem: function (
-        item: DeploymentItemDto | DialToolsetDto,
+        _item: DeploymentItemDto | DialToolsetDto,
       ): void {
         throw new Error('Function not implemented.');
       },
@@ -677,7 +677,7 @@ describe('ConversationRoute', () => {
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
       mergeSharedItem: function (
-        item: DeploymentItemDto | DialToolsetDto,
+        _item: DeploymentItemDto | DialToolsetDto,
       ): void {
         throw new Error('Function not implemented.');
       },

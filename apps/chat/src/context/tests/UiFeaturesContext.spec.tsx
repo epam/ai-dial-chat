@@ -21,6 +21,7 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       transcribeSizeLimitBytes: 5 * 1024 * 1024,
       defaultDeploymentId: null,
       dialCoreExternalUrl: null,
+      mcpAppSandboxUrl: null,
       fileManagerTabs: [],
       overlayEnabled: false,
       overlayAllowedOrigins: [],

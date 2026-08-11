@@ -151,7 +151,7 @@ describe('ActiveScheduledTaskContext', () => {
 
   it('ignores a stale response after switching to a different scheduleId', async () => {
     contextMocks.conversations = [taskConversation()];
-    let resolveFirst: (value: typeof scheduledTask) => void;
+    let resolveFirst: ((value: typeof scheduledTask) => void) | undefined;
     const firstPromise = new Promise<typeof scheduledTask>((resolve) => {
       resolveFirst = resolve;
     });
@@ -181,7 +181,7 @@ describe('ActiveScheduledTaskContext', () => {
     await waitFor(() => expect(result.current.taskState).toBe('success'));
     expect(result.current.task).toEqual(secondTask);
 
-    resolveFirst!(scheduledTask);
+    resolveFirst?.(scheduledTask);
     await Promise.resolve();
     expect(result.current.task).toEqual(secondTask);
   });
