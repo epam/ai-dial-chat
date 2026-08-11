@@ -264,23 +264,25 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     PublicationSelectors.selectRulesByPath(state, rulesPath),
   );
 
-  useEffect(() => {
-    if (rules && (!isReview || !isEditMode)) {
-      formMethods.setValue(
-        PublishRequestFieldsNames.RULES,
-        rules[rulesPath] ?? [],
-      );
-    }
-  }, [formMethods, rulesPath, rules, isReview, isEditMode]);
+  // While the request is edited its own rules are shown for the folder it was
+  // requested for, but any other folder must show the rules it already has
+  const shouldKeepRequestedRules =
+    isEditMode && rulesPath === publication.targetFolder;
 
   useEffect(() => {
-    if (isEditMode) {
-      formMethods.setValue(
-        PublishRequestFieldsNames.RULES,
-        publication.rules ?? [],
-      );
-    }
-  }, [formMethods, isEditMode, publication.rules]);
+    formMethods.setValue(
+      PublishRequestFieldsNames.RULES,
+      shouldKeepRequestedRules
+        ? (publication.rules ?? [])
+        : (rules[rulesPath] ?? []),
+    );
+  }, [
+    formMethods,
+    rulesPath,
+    rules,
+    shouldKeepRequestedRules,
+    publication.rules,
+  ]);
 
   useEffect(() => {
     if (!isEditMode) {
