@@ -39,6 +39,8 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
   onResizeStop,
   labels,
   styles,
+  title,
+  additionalSections,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -77,8 +79,15 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
     [sources, searchQuery],
   );
 
-  const isEmpty =
-    uploaded.length === 0 && generated.length === 0 && sources.length === 0;
+  const hasFilesOrSources =
+    uploaded.length > 0 || generated.length > 0 || sources.length > 0;
+  /*
+   * `additionalSections` (e.g. a host's scheduled-task History/Details
+   * accordions) counts as non-empty content even when there are no files or
+   * sources — this component has no knowledge of what it renders, only that
+   * its presence means the panel isn't empty.
+   */
+  const isGloballyEmpty = !hasFilesOrSources && !additionalSections;
   const isNoResults =
     searchQuery !== '' &&
     filteredUploaded.length === 0 &&
@@ -86,43 +95,48 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
     filteredSources.length === 0;
 
   let bodyContent: ReactNode;
-  if (isEmpty) {
+  if (isGloballyEmpty) {
     bodyContent = (
       <div className="flex h-full items-center justify-center">
         <DialNoDataContent title={labels.noDataLabel} />
       </div>
     );
-  } else if (isNoResults) {
-    bodyContent = <PanelNoResults label={labels.noResultsLabel} />;
   } else {
     bodyContent = (
       <>
-        <FilesSection
-          attachments={filteredUploaded}
-          title={labels.uploadedSectionTitle}
-          searchQuery={searchQuery}
-          titleClassName={styles?.typography?.sectionTitleClassName}
-          onAttachmentClick={onAttachmentClick}
-          attachmentClickLabel={labels.attachmentClickLabel}
-        />
-        <FilesSection
-          attachments={filteredGenerated}
-          title={labels.generatedSectionTitle}
-          searchQuery={searchQuery}
-          titleClassName={styles?.typography?.sectionTitleClassName}
-          onAttachmentClick={onAttachmentClick}
-          attachmentClickLabel={labels.attachmentClickLabel}
-        />
-        <SourcesSection
-          sources={filteredSources}
-          title={labels.sourcesSectionTitle}
-          searchQuery={searchQuery}
-          typography={styles?.typography}
-          colors={styles?.colors}
-          copyLabel={labels.copySourceLabel}
-          copiedLabel={labels.sourceCopiedLabel}
-          onSourceClick={onSourceClick}
-        />
+        {additionalSections}
+        {isNoResults ? (
+          <PanelNoResults label={labels.noResultsLabel} />
+        ) : (
+          <>
+            <FilesSection
+              attachments={filteredUploaded}
+              title={labels.uploadedSectionTitle}
+              searchQuery={searchQuery}
+              titleClassName={styles?.typography?.sectionTitleClassName}
+              onAttachmentClick={onAttachmentClick}
+              attachmentClickLabel={labels.attachmentClickLabel}
+            />
+            <FilesSection
+              attachments={filteredGenerated}
+              title={labels.generatedSectionTitle}
+              searchQuery={searchQuery}
+              titleClassName={styles?.typography?.sectionTitleClassName}
+              onAttachmentClick={onAttachmentClick}
+              attachmentClickLabel={labels.attachmentClickLabel}
+            />
+            <SourcesSection
+              sources={filteredSources}
+              title={labels.sourcesSectionTitle}
+              searchQuery={searchQuery}
+              typography={styles?.typography}
+              colors={styles?.colors}
+              copyLabel={labels.copySourceLabel}
+              copiedLabel={labels.sourceCopiedLabel}
+              onSourceClick={onSourceClick}
+            />
+          </>
+        )}
       </>
     );
   }
@@ -134,8 +148,10 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
       styles={{
         className: isMobile && isOpen ? 'w-full' : undefined,
         bodyClassName: 'flex flex-col overflow-hidden p-0',
+        headerClassName: 'border-b border-tertiary',
       }}
       labels={labels}
+      title={title}
       onClose={onClose}
       resizable={!isMobile}
       defaultWidth={defaultWidth}
@@ -143,7 +159,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
       maxWidth={maxWidth}
       onResizeStop={onResizeStop}
       rightActions={
-        !isEmpty && (
+        hasFilesOrSources && (
           <GhostIconButton
             icon={<IconDownload {...BASE_LG_ICON_PROPS} />}
             aria-label={labels.downloadAllLabel}
@@ -154,7 +170,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
         )
       }
     >
-      {!isEmpty && (
+      {hasFilesOrSources && (
         <SearchInput
           value={searchQuery}
           onChange={setSearchQuery}

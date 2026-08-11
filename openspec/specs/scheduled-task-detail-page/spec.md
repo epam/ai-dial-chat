@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines the Scheduled Task Detail page: feature-flag-gated per-task route, concurrent task/runs data fetching with scoped error handling, the read-only Details/Configuration sections (including markdown-rendered instructions), the paginated/infinite-scroll History panel, the host-agnostic `ScheduledTaskDetailView` presentational component, i18n, and RTL/accessibility requirements.
+Defines the Scheduled Task Detail page: feature-flag-gated per-task route, concurrent task/runs data fetching with scoped error handling, the read-only Details/Configuration sections (including markdown-rendered instructions), the paginated History panel (a sticky-positioned header and "Show more" button, not scroll-triggered), the host-agnostic `ScheduledTaskDetailView` presentational component, i18n, and RTL/accessibility requirements.
 
 ## Requirements
 
@@ -102,41 +102,46 @@ The detail page SHALL render a Details section showing the task's description, a
 - **WHEN** the task's `model` id has no matching entry in the deployments context
 - **THEN** the Details section displays the raw model id string as the "Model or Agent" value, without throwing
 
-### Requirement: History panel paginates runs with infinite scroll inside its own scroll container
+### Requirement: History panel paginates runs via a "Show more" button inside its own scroll container
 
-The detail page SHALL render a History panel listing the task's runs, fetched via a `useScheduledTaskRuns(scheduleId, enabled)` hook (`apps/chat/src/hooks/scheduled-tasks/useScheduledTaskRuns.ts`) exposing `{ items, isLoading, isLoadingMore, error, hasMore, loadMore, refetch }`, mirroring the shape of the existing `useScheduledTasks` hook. The hook SHALL call `listScheduledTaskRuns({ scheduleId, limit: 20, offset: 0 })` for the initial page, and `loadMore()` SHALL, only when `hasMore && !isLoadingMore && !isLoading`, fetch the next page at `offset = items.length` and append the results deduplicated by `id`, with no client-side re-sorting (server order is `created_at desc`). `hasMore` SHALL be derived from `items.length < count` when `count` is present in the response, falling back to a non-null `next` field, or to a full-page-size heuristic if neither is present. The hook SHALL use `AbortController` to cancel any in-flight request when `scheduleId` changes or the hook unmounts.
+The detail page SHALL render a History panel listing the task's runs, fetched via a `useScheduledTaskRuns(scheduleId, enabled)` hook (`apps/chat/src/hooks/scheduled-tasks/useScheduledTaskRuns.ts`) exposing `{ items, isLoading, isLoadingMore, error, hasMore, loadMore, refetch }`, mirroring the shape of the existing `useScheduledTasks` hook. The hook SHALL call `listScheduledTaskRuns({ scheduleId, limit: 20, offset: 0 })` for the initial page, and `loadMore()` SHALL, only when `hasMore && !isLoadingMore && !isLoading`, fetch the next page at `offset = items.length` and append the results deduplicated by `id`, with no client-side re-sorting (server order is `created_at desc`). `hasMore` SHALL be derived from `items.length < count` when `count` is present in the response, falling back to a non-null `next` field, or — when the upstream response omits both `count` and `next` — to a full-page-size heuristic (the just-fetched page had exactly `limit` items), so pagination does not permanently stop after the first page purely because upstream didn't echo a total. The hook SHALL use `AbortController` to cancel any in-flight request when `scheduleId` changes or the hook unmounts.
 
-The History panel SHALL be rendered inside a fixed-height, self-scrolling container (`overflow-y-auto`) that does not require scrolling the whole page (except where the responsive-design skill's mobile layout requires stacking instead). A scroll sentinel SHALL sit at the end of the rendered run list, using the same `findScrollParent`-based scroll-parent detection pattern already used by `libs/catalog/src/components/ListView/ListView.tsx`, scoped to the History panel's own scroll container; when the sentinel becomes visible and `hasMore && !isLoadingMore && !isLoading`, `loadMore()` SHALL be invoked.
+The History panel SHALL be rendered inside a fixed-height, self-scrolling container (`max-h-[70vh]` at all breakpoints, `overflow-y-auto`) that does not require scrolling the whole page (except where the responsive-design skill's mobile layout requires stacking instead). Inside that scroll container: the panel title and the "Next run" label (when present) SHALL be pinned with `position: sticky; top: 0` so they stay visible while the run list scrolls beneath them; an explicit **"Show more" button** (not a scroll sentinel) SHALL render pinned with `position: sticky; bottom: 0`, below the loaded rows, only while `hasMore` is `true`. Both sticky regions SHALL use the same background as the History card so scrolled-past rows do not show through underneath them. Activating the button, while `hasMore && !isLoadingMore && !isLoading`, SHALL invoke `loadMore()`.
 
 #### Scenario: Initial history page loads on mount
 
 - **WHEN** `ScheduledTaskDetailPage` mounts with the feature flag enabled
 - **THEN** `listScheduledTaskRuns({ scheduleId, limit: 20, offset: 0 })` is called exactly once and the resolved runs are passed to the History panel
 
-#### Scenario: Scrolling the History container loads the next page
+#### Scenario: Activating "Show more" loads the next page
 
-- **WHEN** the user scrolls the History panel's own scroll container so the trailing sentinel enters the visible area, and `hasMore` is `true`
+- **WHEN** the user activates the "Show more" button and `hasMore` is `true`
 - **THEN** the next page is requested at `offset = items.length`, and once resolved its items are appended (deduplicated by `id`) below the currently rendered rows with no change to the History panel's scroll position
 
-#### Scenario: No further requests once all pages are loaded
+#### Scenario: "Show more" is not rendered once all pages are loaded
 
-- **WHEN** the sentinel enters the visible area but `hasMore` is `false`
-- **THEN** no additional `listScheduledTaskRuns` request is made
+- **WHEN** `hasMore` becomes `false` (after a page response, or via the full-page-size heuristic detecting a short page)
+- **THEN** the "Show more" button is not rendered and no additional `listScheduledTaskRuns` request is made
 
-#### Scenario: Load-more is a no-op while a request is already in flight
+#### Scenario: "Show more" is disabled while a request is already in flight
 
-- **WHEN** `loadMore()` is invoked while `isLoadingMore` or `isLoading` is already `true`
-- **THEN** no additional request is made
+- **WHEN** `isLoadingMore` is `true`
+- **THEN** the "Show more" button is rendered disabled, and `loadMore()` invoked again is a no-op while `isLoadingMore` or `isLoading` is already `true`
 
-#### Scenario: hasMore derives from count when present, else from next
+#### Scenario: hasMore derives from count when present, else from next, else from a full page
 
 - **WHEN** a `listScheduledTaskRuns` response includes `count: 42` and 20 loaded items
-- **THEN** `hasMore` is `true`; when a subsequent response omits `count` but includes a non-null `next`, `hasMore` remains `true` based on `next`
+- **THEN** `hasMore` is `true`; when a subsequent response omits `count` but includes a non-null `next`, `hasMore` remains `true` based on `next`; when a response omits both `count` and `next` and returned exactly `limit` (20) items, `hasMore` is `true`; when such a response returns fewer than `limit` items, `hasMore` is `false`
 
 #### Scenario: Unmount or scheduleId change aborts the in-flight runs request
 
 - **WHEN** the hook unmounts, or `scheduleId` changes, while a runs request is in flight
 - **THEN** the in-flight request is aborted via `AbortController` and its resolution does not update state
+
+#### Scenario: Sticky header and footer stay visible while the run list scrolls
+
+- **WHEN** the History panel has enough rows to overflow its `max-h-[70vh]` scroll container and the user scrolls it
+- **THEN** the panel title (and "Next run" label, when present) remain pinned at the top of the scroll container, and the "Show more" button (when rendered) remains pinned at the bottom, both opaque against the scrolling rows beneath them
 
 ### Requirement: History rows show skeleton loading, status icon, timestamp, and duration
 
@@ -149,7 +154,7 @@ While the initial runs page is loading (`isLoading === true`, no items yet), the
 
 #### Scenario: Load-more shows 6 skeleton rows below existing rows
 
-- **WHEN** `isLoadingMore` becomes `true` after the user triggers a load-more via scroll
+- **WHEN** `isLoadingMore` becomes `true` after the user activates the "Show more" button
 - **THEN** exactly 6 skeleton run rows render below the already-loaded rows, each marked `aria-hidden="true"`, and disappear once the request resolves and are replaced by the newly appended real rows
 
 #### Scenario: Status icon and accessible name reflect each status value
@@ -169,7 +174,7 @@ While the initial runs page is loading (`isLoading === true`, no items yet), the
 
 ### Requirement: Presentational ScheduledTaskDetailView stays host-agnostic
 
-`libs/scheduled-tasks` SHALL export a presentational `ScheduledTaskDetailView` component accepting only props: localized label strings (including an Edit button label), detail field values (`description`, model display value, schedule label), either `instructionsMarkdown: string` or a `renderInstructions: (markdown: string) => ReactNode` callback, a runs list plus `{ runsHasMore, runsIsLoadingMore, runsSkeletonCount, onRunsLoadMore }`, top-level `isLoading`/`error` flags and their History-scoped counterparts, an `onBack` callback, and an optional `onEdit?: () => void` callback. When `onEdit` is supplied, the component SHALL render the Edit button described above in an end-side header slot; when `onEdit` is omitted, no Edit button SHALL render. The component SHALL NOT import `@epam/chat-api-client`, any routing module, i18n, or auth/env/analytics modules — all host/external knowledge, including the `scheduleId`-based navigation target, is resolved by the host page and passed in via the `onEdit` callback per the repo's library-isolation rule.
+`libs/scheduled-tasks` SHALL export a presentational `ScheduledTaskDetailView` component accepting only props: localized label strings (including an Edit button label and a `historyShowMoreLabel` for the "Show more" button), detail field values (`description`, model display value, schedule label), either `instructionsMarkdown: string` or a `renderInstructions: (markdown: string) => ReactNode` callback, a runs list plus `{ runsHasMore, runsIsLoadingMore, runsSkeletonCount, onRunsLoadMore }` (the component renders no "Show more" button when `onRunsLoadMore` is omitted, regardless of `runsHasMore`), top-level `isLoading`/`error` flags and their History-scoped counterparts, an `onBack` callback, and an optional `onEdit?: () => void` callback. When `onEdit` is supplied, the component SHALL render the Edit button described above in an end-side header slot; when `onEdit` is omitted, no Edit button SHALL render. The component SHALL NOT import `@epam/chat-api-client`, any routing module, i18n, or auth/env/analytics modules — all host/external knowledge, including the `scheduleId`-based navigation target, is resolved by the host page and passed in via the `onEdit` callback per the repo's library-isolation rule.
 
 #### Scenario: Lib has no host or integration imports
 
