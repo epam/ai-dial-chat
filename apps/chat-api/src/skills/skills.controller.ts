@@ -1,6 +1,7 @@
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -182,8 +183,24 @@ export class SkillsController {
     @Res() res: Response,
   ): Promise<void> {
     const { at } = req.user as SessionUser;
+    /*
+     * Registered before the await so a client disconnect that happens while
+     * skillsService.downloadSkill() is still resolving isn't missed — the
+     * 'close' listener attached after an await can fire too late to catch a
+     * disconnect that already occurred during that wait.
+     */
+    let clientDisconnected = false;
+    res.on('close', () => {
+      clientDisconnected = true;
+    });
+
     const { stream, headers, abortOnDisconnect } =
       await this.skillsService.downloadSkill(query.bucket, query.path, at);
+
+    if (clientDisconnected) {
+      abortOnDisconnect();
+      return;
+    }
 
     for (const [key, value] of Object.entries(headers)) {
       res.setHeader(key, value);
@@ -237,6 +254,16 @@ export class SkillsController {
     @Res() res: Response,
   ): Promise<void> {
     const { at } = req.user as SessionUser;
+    /*
+     * Registered before the await so a client disconnect that happens while
+     * skillsService.downloadSkillFile() is still resolving isn't missed —
+     * see downloadSkill() above for the full rationale.
+     */
+    let clientDisconnected = false;
+    res.on('close', () => {
+      clientDisconnected = true;
+    });
+
     const { stream, headers, abortOnDisconnect } =
       await this.skillsService.downloadSkillFile(
         query.bucket,
@@ -244,6 +271,11 @@ export class SkillsController {
         query.filePath,
         at,
       );
+
+    if (clientDisconnected) {
+      abortOnDisconnect();
+      return;
+    }
 
     for (const [key, value] of Object.entries(headers)) {
       res.setHeader(key, value);
@@ -314,18 +346,29 @@ export class SkillsController {
     description: 'DIAL Core is unavailable or timed out',
   })
   uploadSkill(
-    @UploadedFile() file: UploadedMulterFile,
+    @UploadedFile() file: UploadedMulterFile | undefined,
     @Body() body: UploadSkillDto,
     @Req() req: Request,
   ): Promise<SkillUploadResponseDto> {
+    if (file == null) {
+      throw new BadRequestException('file is required');
+    }
     const { at } = req.user as SessionUser;
     const ifMatch = req.headers[IF_MATCH_HEADER] as string | undefined;
+    /*
+     * By the time this handler runs, FileInterceptor has already fully
+     * buffered the multipart body — this only cancels the outbound DIAL
+     * Core request if the client disconnects while that call is pending.
+     */
+    const abortController = new AbortController();
+    req.on('close', () => abortController.abort());
     return this.skillsService.uploadSkill(
       body.bucket,
       body.path,
       file,
       at,
       ifMatch,
+      abortController.signal,
     );
   }
 
@@ -377,12 +420,17 @@ export class SkillsController {
     description: 'DIAL Core is unavailable or timed out',
   })
   uploadSkillFile(
-    @UploadedFile() file: UploadedMulterFile,
+    @UploadedFile() file: UploadedMulterFile | undefined,
     @Body() body: UploadSkillFileDto,
     @Req() req: Request,
   ): Promise<SkillFileUploadResponseDto> {
+    if (file == null) {
+      throw new BadRequestException('file is required');
+    }
     const { at } = req.user as SessionUser;
     const ifMatch = req.headers[IF_MATCH_HEADER] as string | undefined;
+    const abortController = new AbortController();
+    req.on('close', () => abortController.abort());
     return this.skillsService.uploadSkillFile(
       body.bucket,
       body.path,
@@ -390,6 +438,7 @@ export class SkillsController {
       file,
       at,
       ifMatch,
+      abortController.signal,
     );
   }
 

@@ -5,6 +5,7 @@ import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
+import { getSkillTransferTimeoutMs } from '../utils/skill-config.util';
 
 export interface SkillDownload {
   stream: ReadableStream;
@@ -38,12 +39,6 @@ export class SkillsDownloadService {
     private readonly configService: ConfigService<EnvironmentVariables>,
   ) {}
 
-  private getTimeoutMs(): number {
-    return (
-      this.configService.get<number>('SKILL_TRANSFER_TIMEOUT_MS') ?? 60_000
-    );
-  }
-
   private extractSafeHeaders(response: Response): Record<string, string> {
     return Object.fromEntries(
       SAFE_SKILL_DOWNLOAD_HEADERS.map(
@@ -68,7 +63,9 @@ export class SkillsDownloadService {
     accessToken: string,
   ): Promise<SkillDownload> {
     const abortController = new AbortController();
-    const timeoutSignal = AbortSignal.timeout(this.getTimeoutMs());
+    const timeoutSignal = AbortSignal.timeout(
+      getSkillTransferTimeoutMs(this.configService),
+    );
 
     try {
       const { error, response } =
@@ -129,7 +126,9 @@ export class SkillsDownloadService {
     accessToken: string,
   ): Promise<SkillDownload> {
     const abortController = new AbortController();
-    const timeoutSignal = AbortSignal.timeout(this.getTimeoutMs());
+    const timeoutSignal = AbortSignal.timeout(
+      getSkillTransferTimeoutMs(this.configService),
+    );
 
     try {
       const { error, response } =

@@ -2,14 +2,12 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
+import { buildIfMatchHeaders } from '../../common/utils/conditional-headers';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
-
-const SKILL_MANIFEST_FILE = 'SKILL.md';
-
-const buildIfMatchHeaders = (ifMatch?: string): Record<string, string> =>
-  ifMatch != null ? { 'If-Match': ifMatch } : {};
+import { getSkillTransferTimeoutMs } from '../utils/skill-config.util';
+import { SKILL_MANIFEST_FILE } from '../utils/skill-path.util';
 
 /**
  * Owns the four structural skill mutations: whole-skill deletion, single-file
@@ -26,12 +24,6 @@ export class SkillsMutationService {
     private readonly dialClient: DialClientService,
     private readonly configService: ConfigService<EnvironmentVariables>,
   ) {}
-
-  private getTimeoutMs(): number {
-    return (
-      this.configService.get<number>('SKILL_TRANSFER_TIMEOUT_MS') ?? 60_000
-    );
-  }
 
   /** Deletes a whole skill. DIAL Core returns no body/ETag on success. */
   async deleteSkill(
@@ -50,7 +42,9 @@ export class SkillsMutationService {
               ...getBearerAuthHeaders(accessToken),
               ...buildIfMatchHeaders(ifMatch),
             },
-            signal: AbortSignal.timeout(this.getTimeoutMs()),
+            signal: AbortSignal.timeout(
+              getSkillTransferTimeoutMs(this.configService),
+            ),
           },
         );
 
@@ -97,7 +91,9 @@ export class SkillsMutationService {
             ...getBearerAuthHeaders(accessToken),
             ...buildIfMatchHeaders(ifMatch),
           },
-          signal: AbortSignal.timeout(this.getTimeoutMs()),
+          signal: AbortSignal.timeout(
+            getSkillTransferTimeoutMs(this.configService),
+          ),
         },
       );
 
@@ -133,7 +129,9 @@ export class SkillsMutationService {
           encodeDialResourcePath(path),
           {
             headers: getBearerAuthHeaders(accessToken),
-            signal: AbortSignal.timeout(this.getTimeoutMs()),
+            signal: AbortSignal.timeout(
+              getSkillTransferTimeoutMs(this.configService),
+            ),
           },
         );
 
@@ -177,7 +175,9 @@ export class SkillsMutationService {
               ...getBearerAuthHeaders(accessToken),
               ...buildIfMatchHeaders(ifMatch),
             },
-            signal: AbortSignal.timeout(this.getTimeoutMs()),
+            signal: AbortSignal.timeout(
+              getSkillTransferTimeoutMs(this.configService),
+            ),
           },
         );
 

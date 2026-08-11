@@ -1,4 +1,3 @@
-import type { components } from '@epam/ai-dial-typescript-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
@@ -7,41 +6,12 @@ import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
 import type { SkillMetadataItemDto } from '../dto/skill-metadata.dto';
-import { SkillNodeType } from '../dto/skill-node-type';
+import { getSkillTransferTimeoutMs } from '../utils/skill-config.util';
+import {
+  type DialMetadataBase,
+  mapToSkillMetadataItem,
+} from '../utils/skill-metadata.util';
 import { parseSkillResourceUrl } from '../utils/skill-path.util';
-
-type DialMetadataBase = components['schemas']['MetadataBase'];
-
-const mapToSkillMetadataItem = (
-  item: DialMetadataBase,
-): SkillMetadataItemDto | null => {
-  const nodeType =
-    item.nodeType === 'FOLDER'
-      ? SkillNodeType.Folder
-      : item.nodeType === 'ITEM'
-        ? SkillNodeType.Item
-        : null;
-  if (nodeType == null || item.bucket == null || item.name == null) {
-    return null;
-  }
-
-  const path =
-    item.parentPath != null ? `${item.parentPath}${item.name}` : item.name;
-
-  return {
-    name: item.name,
-    path: nodeType === SkillNodeType.Folder ? `${path}/` : path,
-    url: item.url ?? `skills/${item.bucket}/${path}`,
-    bucket: item.bucket,
-    nodeType,
-    parentPath: item.parentPath,
-    permissions: item.permissions,
-    etag: 'etag' in item ? item.etag : undefined,
-    author: 'author' in item ? item.author : undefined,
-    createdAt: 'createdAt' in item ? item.createdAt : undefined,
-    updatedAt: 'updatedAt' in item ? item.updatedAt : undefined,
-  };
-};
 
 /**
  * Resolves one skill from a `skills/{bucket}/{path}` resource URL into a
@@ -59,12 +29,6 @@ export class SkillsLookupService {
     private readonly dialClient: DialClientService,
     private readonly configService: ConfigService<EnvironmentVariables>,
   ) {}
-
-  private getTimeoutMs(): number {
-    return (
-      this.configService.get<number>('SKILL_TRANSFER_TIMEOUT_MS') ?? 60_000
-    );
-  }
 
   /**
    * Resolves a single skill by its full `skills/{bucket}/{path}` resource
@@ -101,7 +65,9 @@ export class SkillsLookupService {
           encodeDialResourcePath(parsed.path),
           {
             headers: getBearerAuthHeaders(accessToken),
-            signal: AbortSignal.timeout(this.getTimeoutMs()),
+            signal: AbortSignal.timeout(
+              getSkillTransferTimeoutMs(this.configService),
+            ),
           },
         );
 

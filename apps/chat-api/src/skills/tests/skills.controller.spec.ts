@@ -1,3 +1,4 @@
+import { EventEmitter } from 'node:events';
 import {
   BadGatewayException,
   BadRequestException,
@@ -12,6 +13,7 @@ import {
   VersioningType,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import type { Request, Response } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SkillListResponseDto } from '../dto/skill-metadata.dto';
@@ -335,6 +337,7 @@ describe('SkillsController (integration)', () => {
         expect.objectContaining({ mimetype: expect.any(String) }),
         TEST_USER.at,
         '"prev-etag"',
+        expect.any(AbortSignal),
       );
     });
 
@@ -363,6 +366,15 @@ describe('SkillsController (integration)', () => {
         .put('/api/v1/skills')
         .field('path', 'team-a/docs-helper')
         .attach('file', Buffer.from('zip-bytes'), 'skill.zip')
+        .expect(400);
+      expect(service.uploadSkill).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when no file is attached, without calling the service', async () => {
+      await request(app.getHttpServer())
+        .put('/api/v1/skills')
+        .field('bucket', 'my-bucket')
+        .field('path', 'team-a/docs-helper')
         .expect(400);
       expect(service.uploadSkill).not.toHaveBeenCalled();
     });
@@ -420,6 +432,7 @@ describe('SkillsController (integration)', () => {
         expect.objectContaining({ mimetype: expect.any(String) }),
         TEST_USER.at,
         undefined,
+        expect.any(AbortSignal),
       );
     });
 
@@ -429,6 +442,16 @@ describe('SkillsController (integration)', () => {
         .field('bucket', 'my-bucket')
         .field('path', 'team-a/docs-helper')
         .attach('file', Buffer.from('print(1)'), 'helper.py')
+        .expect(400);
+      expect(service.uploadSkillFile).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when no file is attached, without calling the service', async () => {
+      await request(app.getHttpServer())
+        .put('/api/v1/skills/files')
+        .field('bucket', 'my-bucket')
+        .field('path', 'team-a/docs-helper')
+        .field('filePath', 'scripts/helper.py')
         .expect(400);
       expect(service.uploadSkillFile).not.toHaveBeenCalled();
     });
@@ -544,6 +567,81 @@ describe('SkillsController (integration)', () => {
       await request(app.getHttpServer())
         .delete('/api/v1/skills/grouping-folders?bucket=my-bucket&path=team-a/')
         .expect(409);
+    });
+  });
+
+  /*
+   * Instantiates the controller directly (bypassing supertest/the full Nest
+   * app) so these tests can control the exact timing of a client disconnect
+   * relative to the async service call — something an HTTP-level test
+   * cannot reliably simulate.
+   */
+  describe('SkillsController — cancellation timing', () => {
+    it('downloadSkill calls abortOnDisconnect immediately when the client disconnects while the service call is still pending', async () => {
+      const controller = new SkillsController(service as never);
+      const abortOnDisconnect = vi.fn();
+      let resolveDownload!: (value: unknown) => void;
+      const downloadPromise = new Promise((resolve) => {
+        resolveDownload = resolve;
+      });
+      service.downloadSkill.mockReturnValue(downloadPromise);
+
+      const req = new EventEmitter() as unknown as Request & {
+        user: typeof TEST_USER;
+      };
+      req.user = TEST_USER;
+      const res = new EventEmitter() as unknown as Response;
+
+      const callPromise = controller.downloadSkill(
+        { bucket: 'my-bucket', path: 'team-a/docs-helper' },
+        req,
+        res,
+      );
+
+      // Client disconnects before skillsService.downloadSkill() resolves.
+      res.emit('close');
+      resolveDownload({
+        stream: new ReadableStream(),
+        headers: {},
+        abortOnDisconnect,
+      });
+
+      await callPromise;
+
+      expect(abortOnDisconnect).toHaveBeenCalledOnce();
+    });
+
+    it('uploadSkill aborts the signal passed to the service when the request closes', () => {
+      const controller = new SkillsController(service as never);
+      // Never resolves — this test only cares about the signal, not the response.
+      service.uploadSkill.mockReturnValue(new Promise<never>(() => undefined));
+
+      const req = new EventEmitter() as unknown as Request & {
+        user: typeof TEST_USER;
+        headers: Record<string, string>;
+      };
+      req.user = TEST_USER;
+      req.headers = {};
+
+      controller.uploadSkill(
+        { buffer: Buffer.from('zip-bytes'), mimetype: 'application/zip' },
+        { bucket: 'my-bucket', path: 'team-a/docs-helper' },
+        req,
+      );
+
+      const [, , , , , signal] = service.uploadSkill.mock.calls[0] as [
+        string,
+        string,
+        unknown,
+        string,
+        string | undefined,
+        AbortSignal,
+      ];
+      expect(signal.aborted).toBe(false);
+
+      req.emit('close');
+
+      expect(signal.aborted).toBe(true);
     });
   });
 });

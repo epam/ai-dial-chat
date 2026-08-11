@@ -6,6 +6,9 @@ const WINDOWS_DRIVE_PATTERN = /^[a-zA-Z]:/;
 
 export const SKILL_RESOURCE_PREFIX = 'skills/';
 
+/** Required manifest filename at the root of every skill (design.md D4). Shared by `SkillsUploadService`'s archive validation and `SkillsMutationService`'s delete-protection guard. */
+export const SKILL_MANIFEST_FILE = 'SKILL.md';
+
 export interface ParsedSkillResourceUrl {
   bucket: string;
   path: string;

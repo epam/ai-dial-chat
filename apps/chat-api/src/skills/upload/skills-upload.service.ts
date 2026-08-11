@@ -9,20 +9,20 @@ import { ConfigService } from '@nestjs/config';
 import * as yauzl from 'yauzl';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
+import { buildIfMatchHeaders } from '../../common/utils/conditional-headers';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
-import { isValidSkillRelativePath } from '../utils/skill-path.util';
+import { getSkillTransferTimeoutMs } from '../utils/skill-config.util';
+import {
+  SKILL_MANIFEST_FILE,
+  isValidSkillRelativePath,
+} from '../utils/skill-path.util';
 
 export interface UploadedSkillFile {
   buffer: Buffer;
   mimetype: string;
 }
-
-const SKILL_MANIFEST_FILE = 'SKILL.md';
-
-const buildIfMatchHeaders = (ifMatch?: string): Record<string, string> =>
-  ifMatch != null ? { 'If-Match': ifMatch } : {};
 
 const buildUploadFormData = (
   file: UploadedSkillFile,
@@ -46,12 +46,6 @@ export class SkillsUploadService {
     private readonly configService: ConfigService<EnvironmentVariables>,
   ) {}
 
-  private getTimeoutMs(): number {
-    return (
-      this.configService.get<number>('SKILL_TRANSFER_TIMEOUT_MS') ?? 60_000
-    );
-  }
-
   private getUploadMaxFiles(): number {
     return this.configService.get<number>('SKILL_UPLOAD_MAX_FILES') ?? 500;
   }
@@ -61,6 +55,19 @@ export class SkillsUploadService {
       this.configService.get<number>('SKILL_FILE_UPLOAD_MAX_BYTES') ??
       20_971_520
     );
+  }
+
+  /**
+   * Combines the caller-supplied client-disconnect signal (set by the
+   * controller from the request's own `close` event) with the transfer
+   * timeout, so an abandoned upload's DIAL Core connection is cancelled
+   * promptly instead of running until `SKILL_TRANSFER_TIMEOUT_MS` elapses.
+   */
+  private combineWithTimeoutSignal(signal?: AbortSignal): AbortSignal {
+    const timeoutSignal = AbortSignal.timeout(
+      getSkillTransferTimeoutMs(this.configService),
+    );
+    return signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal;
   }
 
   /**
@@ -77,11 +84,9 @@ export class SkillsUploadService {
     zipFile: UploadedSkillFile,
     accessToken: string,
     ifMatch?: string,
+    signal?: AbortSignal,
   ): Promise<{ etag?: string }> {
     await this.validateSkillArchive(zipFile.buffer);
-
-    const abortController = new AbortController();
-    const timeoutSignal = AbortSignal.timeout(this.getTimeoutMs());
 
     try {
       const { error, response } =
@@ -97,7 +102,7 @@ export class SkillsUploadService {
               zipFile,
               `${path.split('/').filter(Boolean).pop() ?? 'skill'}.zip`,
             ) as unknown as { file: string },
-            signal: AbortSignal.any([abortController.signal, timeoutSignal]),
+            signal: this.combineWithTimeoutSignal(signal),
           },
         );
 
@@ -129,6 +134,7 @@ export class SkillsUploadService {
     file: UploadedSkillFile,
     accessToken: string,
     ifMatch?: string,
+    signal?: AbortSignal,
   ): Promise<{ etag?: string }> {
     if (!isValidSkillRelativePath(filePath)) {
       throw new BadRequestException('Invalid file path');
@@ -138,9 +144,6 @@ export class SkillsUploadService {
     if (file.buffer.length > maxBytes) {
       throw new PayloadTooLargeException('Skill file payload too large');
     }
-
-    const abortController = new AbortController();
-    const timeoutSignal = AbortSignal.timeout(this.getTimeoutMs());
 
     try {
       const { error, response } = await this.dialClient.client.uploadSkillFile(
@@ -156,7 +159,7 @@ export class SkillsUploadService {
             file,
             filePath.split('/').filter(Boolean).pop() ?? 'file',
           ) as unknown as { file: string },
-          signal: AbortSignal.any([abortController.signal, timeoutSignal]),
+          signal: this.combineWithTimeoutSignal(signal),
         },
       );
 
