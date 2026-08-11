@@ -1,0 +1,15 @@
+// Colors are CSS-var-driven so consumers can theme the confirmation sub-view.
+// Layout, spacing, and border-radius live in Tailwind classes in the TSX.
+
+.message {
+  color: var(--cat-confirm-message-text, var(--text-primary, #161b2d));
+}
+
+.consequences {
+  color: var(--cat-confirm-consequence-text, var(--text-secondary, #57647a));
+}
+
+.footer {
+  border-block-start: 1px solid
+    var(--cat-confirm-footer-border, var(--stroke-tertiary, #e0e6f0));
+}

@@ -1,4 +1,4 @@
-import type { ScheduledTaskDto } from '@epam/chat-api-client';
+import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
 import type { TFunction } from 'i18next';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
@@ -140,6 +140,30 @@ describe('mapScheduledTaskDtoToItem', () => {
     );
   });
 
+  it('maps isActive false to the item unmodified', () => {
+    const result = mapScheduledTaskDtoToItem(
+      buildDto({ isActive: false }),
+      fakeT,
+    );
+
+    expect(result.isActive).toBe(false);
+  });
+
+  it('maps isActive true to the item unmodified', () => {
+    const result = mapScheduledTaskDtoToItem(
+      buildDto({ isActive: true }),
+      fakeT,
+    );
+
+    expect(result.isActive).toBe(true);
+  });
+
+  it('maps a missing isActive to undefined without throwing', () => {
+    const result = mapScheduledTaskDtoToItem(buildDto(), fakeT);
+
+    expect(result.isActive).toBeUndefined();
+  });
+
   it('places the item under myTasks when createdBy matches currentUserSub', () => {
     const result = mapScheduledTaskDtoToItem(
       buildDto({ createdBy: 'user-1' }),
@@ -201,7 +225,7 @@ describe('mapScheduledTaskDtoToItem — recurring schedule timezone conversion',
     );
 
     expect(result.scheduleLabel).toBe(
-      `${ScheduledTasksI18nKeys.CardScheduleWeeklyAt}:${JSON.stringify({ day: '0', time: '01:00' })}`, // local Monday 01:00
+      `${ScheduledTasksI18nKeys.CardScheduleWeeklyAt}:${JSON.stringify({ day: 'Monday', time: '01:00' })}`, // local Monday 01:00
     );
   });
 

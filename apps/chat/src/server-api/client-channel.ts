@@ -1,7 +1,7 @@
 import {
   ReportClientChannelDto,
   ReportClientChannelDtoResultEnum,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { JSON_HEADERS } from '../constants/http';
 import { clientChannelApi } from './api-client';
 import { ApiEndpoints, getCsrfToken, setCsrfToken } from './base';

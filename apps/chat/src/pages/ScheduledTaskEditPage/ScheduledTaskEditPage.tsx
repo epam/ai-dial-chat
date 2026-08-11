@@ -1,11 +1,11 @@
+import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
 import {
   ScheduledTaskCreateForm,
   ScheduledTaskCreateFormErrors,
   ScheduledTaskCreateFormValues,
-  ScheduledTaskFrequency,
+  ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
 import { GhostButton, NotificationVariant } from '@epam/ai-dial-ui-kit';
-import type { ScheduledTaskDto } from '@epam/chat-api-client';
 import {
   memo,
   useCallback,
@@ -27,6 +27,7 @@ import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import {
   getApiErrorDetails,
   getApiErrorStatus,
@@ -37,6 +38,7 @@ import {
 } from '../../server-api/scheduled-tasks.api';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
+import { resolveLocalizedText } from '../../utils/locale';
 import { validateScheduledTaskForm } from '../../utils/scheduled-task-form-validation';
 import {
   mapFormValuesToUpdateBody,
@@ -53,6 +55,7 @@ const ScheduledTaskEditPage: FC = () => {
   const { items: deploymentItems } = useDeployments();
   const { showNotification } = useNotification();
   const { currentTheme } = useTheme();
+  const { language } = useLanguage();
 
   const markdownEditorTheme: 'light' | 'dark' =
     currentTheme === ThemeId.Dark ? 'dark' : 'light';
@@ -99,7 +102,7 @@ const ScheduledTaskEditPage: FC = () => {
           return;
         }
         setTask(result);
-        setValues(mapped.values);
+        setValues({ minute: '0', ...mapped.values });
       } catch (err) {
         if (!cancelled.value) {
           if (getApiErrorStatus(err) === 404) {
@@ -130,9 +133,9 @@ const ScheduledTaskEditPage: FC = () => {
     () =>
       deploymentItems.map((item) => ({
         id: item.id,
-        label: item.displayName,
+        label: resolveLocalizedText(item.displayName, language),
       })),
-    [deploymentItems],
+    [deploymentItems, language],
   );
 
   const labels = useMemo(
@@ -151,35 +154,34 @@ const ScheduledTaskEditPage: FC = () => {
       ),
       displayNameLabel: t(EditorI18nKeys.NameLabel),
       displayNameRequired: t(EditorI18nKeys.NameRequired),
-      scheduleSectionLabel: t(
-        ScheduledTasksI18nKeys.CreateScheduleSectionLabel,
-      ),
-      scheduleTypeOnceLabel: t(ScheduledTasksI18nKeys.CreateScheduleTypeOnce),
-      scheduleTypeRecurringLabel: t(
-        ScheduledTasksI18nKeys.CreateScheduleTypeRecurring,
-      ),
-      scheduleTypeAriaLabel: t(
-        ScheduledTasksI18nKeys.CreateScheduleTypeAriaLabel,
-      ),
       runAtLabel: t(ScheduledTasksI18nKeys.CreateRunAtLabel),
-      frequencyLabel: t(ScheduledTasksI18nKeys.CreateFrequencyLabel),
-      frequencyOptions: [
+      repeatLabel: t(ScheduledTasksI18nKeys.CreateRepeatLabel),
+      repeatOptions: [
         {
-          key: ScheduledTaskFrequency.Daily,
-          label: t(ScheduledTasksI18nKeys.CreateFrequencyDaily),
+          key: ScheduledTaskRepeat.OneTime,
+          label: t(ScheduledTasksI18nKeys.CreateRepeatOneTime),
         },
         {
-          key: ScheduledTaskFrequency.Weekly,
-          label: t(ScheduledTasksI18nKeys.CreateFrequencyWeekly),
+          key: ScheduledTaskRepeat.Hourly,
+          label: t(ScheduledTasksI18nKeys.CreateRepeatHourly),
         },
         {
-          key: ScheduledTaskFrequency.Monthly,
-          label: t(ScheduledTasksI18nKeys.CreateFrequencyMonthly),
+          key: ScheduledTaskRepeat.Daily,
+          label: t(ScheduledTasksI18nKeys.CreateRepeatDaily),
+        },
+        {
+          key: ScheduledTaskRepeat.Weekly,
+          label: t(ScheduledTasksI18nKeys.CreateRepeatWeekly),
+        },
+        {
+          key: ScheduledTaskRepeat.Monthly,
+          label: t(ScheduledTasksI18nKeys.CreateRepeatMonthly),
         },
       ],
       timeLabel: t(ScheduledTasksI18nKeys.CreateTimeLabel),
       dayOfWeekLabel: t(ScheduledTasksI18nKeys.CreateDayOfWeekLabel),
       dayOfMonthLabel: t(ScheduledTasksI18nKeys.CreateDayOfMonthLabel),
+      minuteLabel: t(ScheduledTasksI18nKeys.CreateMinuteLabel),
       startDateLabel: t(ScheduledTasksI18nKeys.CreateStartDateLabel),
       startDatePlaceholder: t(
         ScheduledTasksI18nKeys.CreateStartDatePlaceholder,

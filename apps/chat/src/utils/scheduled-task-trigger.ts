@@ -1,19 +1,19 @@
-import {
-  ScheduledTaskCreateFormValues,
-  ScheduledTaskFrequency,
-  ScheduledTaskScheduleType,
-} from '@epam/ai-dial-scheduled-tasks';
 import type {
   CreateScheduledTaskBodyDto,
   ScheduledTaskDto,
   ScheduleTriggerDto,
   UpdateScheduledTaskBodyDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
+import {
+  ScheduledTaskCreateFormValues,
+  ScheduledTaskRepeat,
+} from '@epam/ai-dial-scheduled-tasks';
 import {
   UnsupportedTriggerReason,
   type ScheduledTaskDtoMappingResult,
 } from '../types/scheduled-task-mapping';
 import { apSchedulerDayToJsDay, jsDayToApSchedulerDay } from './cron-weekday';
+import { padTwoDigits } from './formatting';
 
 /** Which boundary of a cron activity window is being computed. */
 enum CronWindowEdge {
@@ -23,7 +23,13 @@ enum CronWindowEdge {
 
 const CRON_FIELD_KEYS = new Set(['hour', 'minute', 'day_of_week', 'day']);
 
-const pad2 = (value: number): string => String(value).padStart(2, '0');
+/**
+ * `values.time` placeholder for repeat values that don't use it (`OneTime`,
+ * `Hourly`). Matches the Create page's `DEFAULT_VALUES.time` so switching
+ * the Repeat dropdown to a time-based cadence (Daily/Weekly/Monthly) on the
+ * edit page starts from a reasonable time instead of a silent midnight.
+ */
+const DEFAULT_TIME_PLACEHOLDER = '09:00';
 
 /**
  * Converts the locally-entered `hour`/`minute` (and, for weekly/monthly
@@ -32,10 +38,22 @@ const pad2 = (value: number): string => String(value).padStart(2, '0');
  * per-schedule timezone field. Uses a single reference `Date` and reads its
  * UTC getters back, so the browser's own timezone/DST handling does the
  * conversion instead of manual offset arithmetic.
+ *
+ * `Hourly` is a partial exception: the `hour` field is always the literal
+ * `'*'` (the hour boundary itself is timezone-invariant), but the
+ * user-selected `minute`-of-hour still needs local→UTC conversion for
+ * sub-hour-offset timezones (e.g. UTC+5:30) — done via a reference `Date`
+ * set to local hour `0`/local `minute`, reading back only `getUTCMinutes()`.
  */
 const buildCronFields = (
   values: ScheduledTaskCreateFormValues,
 ): Record<string, string> => {
+  if (values.repeat === ScheduledTaskRepeat.Hourly) {
+    const reference = new Date();
+    reference.setHours(0, Number(values.minute), 0, 0);
+    return { hour: '*', minute: String(reference.getUTCMinutes()) };
+  }
+
   const [hourStr, minuteStr] = values.time.split(':');
   const hour = Number(hourStr);
   const minute = Number(minuteStr);
@@ -44,9 +62,9 @@ const buildCronFields = (
   reference.setHours(hour, minute, 0, 0);
 
   const hasDayOfWeek =
-    values.frequency === ScheduledTaskFrequency.Weekly && !!values.dayOfWeek;
+    values.repeat === ScheduledTaskRepeat.Weekly && !!values.dayOfWeek;
   const hasDayOfMonth =
-    values.frequency === ScheduledTaskFrequency.Monthly && !!values.dayOfMonth;
+    values.repeat === ScheduledTaskRepeat.Monthly && !!values.dayOfMonth;
 
   if (hasDayOfWeek) {
     const targetLocalDay = apSchedulerDayToJsDay(Number(values.dayOfWeek));
@@ -105,7 +123,7 @@ export const mapFormValuesToCreateBody = (
   values: ScheduledTaskCreateFormValues,
 ): CreateScheduledTaskBodyDto => {
   const trigger: ScheduleTriggerDto =
-    values.scheduleType === ScheduledTaskScheduleType.Once
+    values.repeat === ScheduledTaskRepeat.OneTime
       ? { date: new Date(values.runAt ?? '').toISOString() }
       : {
           cron: {
@@ -157,8 +175,8 @@ export const mapFormValuesToUpdateBody = (
 const isoToLocalDateTime = (iso: string): string => {
   const date = new Date(iso);
   return (
-    `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}` +
-    `T${pad2(date.getHours())}:${pad2(date.getMinutes())}`
+    `${date.getFullYear()}-${padTwoDigits(date.getMonth() + 1)}-${padTwoDigits(date.getDate())}` +
+    `T${padTwoDigits(date.getHours())}:${padTwoDigits(date.getMinutes())}`
   );
 };
 
@@ -169,7 +187,7 @@ const isoToLocalDateTime = (iso: string): string => {
  */
 const isoToLocalDateOnly = (iso: string): string => {
   const date = new Date(iso);
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+  return `${date.getFullYear()}-${padTwoDigits(date.getMonth() + 1)}-${padTwoDigits(date.getDate())}`;
 };
 
 /**
@@ -178,12 +196,19 @@ const isoToLocalDateOnly = (iso: string): string => {
  * task, resolves the local wall-clock `time` and, when applicable, the local
  * `dayOfWeek`/`dayOfMonth` — using a single reference `Date` and its local
  * getters, mirroring the forward conversion's reference-`Date` technique.
+ *
+ * `hour: '*'` (Hourly) is checked first and returns immediately with just
+ * the local `minute` (inverting the forward conversion via
+ * `setUTCHours(0, utcMinute)` → `getMinutes()`) — there is no local hour to
+ * convert, since `hour` is always the literal `'*'`.
  */
 const parseCronFields = (
   fields: Record<string, string | null | undefined>,
 ):
+  | { ok: true; isHourly: true; minute: string }
   | {
       ok: true;
+      isHourly: false;
       time: string;
       dayOfWeek?: string;
       dayOfMonth?: string;
@@ -210,6 +235,21 @@ const parseCronFields = (
     return { ok: false };
   }
 
+  if (
+    fields.hour === '*' &&
+    /^\d+$/.test(String(fields.minute)) &&
+    !hasDayOfWeek &&
+    !hasDayOfMonth
+  ) {
+    const reference = new Date();
+    reference.setUTCHours(0, Number(fields.minute), 0, 0);
+    return {
+      ok: true,
+      isHourly: true,
+      minute: String(reference.getMinutes()),
+    };
+  }
+
   const utcHour = Number(fields.hour);
   const utcMinute = Number(fields.minute);
   if (Number.isNaN(utcHour) || Number.isNaN(utcMinute)) {
@@ -233,7 +273,8 @@ const parseCronFields = (
 
   return {
     ok: true,
-    time: `${pad2(reference.getHours())}:${pad2(reference.getMinutes())}`,
+    isHourly: false,
+    time: `${padTwoDigits(reference.getHours())}:${padTwoDigits(reference.getMinutes())}`,
     ...(hasDayOfWeek
       ? { dayOfWeek: String(jsDayToApSchedulerDay(reference.getDay())) }
       : {}),
@@ -284,9 +325,9 @@ export const mapScheduledTaskDtoToFormValues = (
       ok: true,
       values: {
         ...base,
-        scheduleType: ScheduledTaskScheduleType.Once,
+        repeat: ScheduledTaskRepeat.OneTime,
         runAt: isoToLocalDateTime(date as string),
-        time: '00:00',
+        time: DEFAULT_TIME_PLACEHOLDER,
       },
     };
   }
@@ -303,19 +344,34 @@ export const mapScheduledTaskDtoToFormValues = (
     return { ok: false, reason: UnsupportedTriggerReason.UnsupportedCronShape };
   }
 
-  let frequency = ScheduledTaskFrequency.Daily;
+  if (parsed.isHourly) {
+    return {
+      ok: true,
+      values: {
+        ...base,
+        repeat: ScheduledTaskRepeat.Hourly,
+        time: DEFAULT_TIME_PLACEHOLDER,
+        minute: parsed.minute,
+        ...(cron.startDate
+          ? { startDate: isoToLocalDateOnly(cron.startDate) }
+          : {}),
+        ...(cron.endDate ? { endDate: isoToLocalDateOnly(cron.endDate) } : {}),
+      },
+    };
+  }
+
+  let repeat = ScheduledTaskRepeat.Daily;
   if (parsed.dayOfWeek) {
-    frequency = ScheduledTaskFrequency.Weekly;
+    repeat = ScheduledTaskRepeat.Weekly;
   } else if (parsed.dayOfMonth) {
-    frequency = ScheduledTaskFrequency.Monthly;
+    repeat = ScheduledTaskRepeat.Monthly;
   }
 
   return {
     ok: true,
     values: {
       ...base,
-      scheduleType: ScheduledTaskScheduleType.Recurring,
-      frequency,
+      repeat,
       time: parsed.time,
       ...(parsed.dayOfWeek ? { dayOfWeek: parsed.dayOfWeek } : {}),
       ...(parsed.dayOfMonth ? { dayOfMonth: parsed.dayOfMonth } : {}),

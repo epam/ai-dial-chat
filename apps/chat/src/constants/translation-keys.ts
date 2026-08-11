@@ -107,6 +107,7 @@ export enum ButtonsI18nKeys {
   LogIn = 'buttons.logIn',
   Publish = 'buttons.publish',
   Manage = 'buttons.manage',
+  RemoveFromMyList = 'buttons.removeFromMyList',
 }
 
 export enum NavigationI18nKeys {
@@ -147,7 +148,6 @@ export enum CatalogI18nKeys {
   ListViewLabel = 'catalog.listViewLabel',
   // Details panel
   DetailsTabTools = 'catalog.details.tabTools',
-  DetailsDailyLimit = 'catalog.details.dailyLimit',
   DetailsApiResourceSection = 'catalog.details.api.resourceSection',
   DetailsApiSnippetSection = 'catalog.details.api.snippetSection',
   DetailsApiModelId = 'catalog.details.api.modelId',
@@ -203,6 +203,20 @@ export enum CatalogI18nKeys {
   DetailsDeleteError = 'catalog.details.delete.error',
   DetailsDeleteSuccessTitle = 'catalog.details.delete.successTitle',
   DetailsDeleteSuccess = 'catalog.details.delete.success',
+  DetailsDeleteConfirmTitle = 'catalog.details.delete.confirmTitle',
+  DetailsDeleteConfirmMessage = 'catalog.details.delete.confirmMessage',
+  DetailsDeleteConsequenceSharedConfigurations = 'catalog.details.delete.consequenceSharedConfigurations',
+  DetailsDeleteConsequenceUsersLoseAccess = 'catalog.details.delete.consequenceUsersLoseAccess',
+  DetailsDeleteConsequenceCannotBeUndone = 'catalog.details.delete.consequenceCannotBeUndone',
+  DetailsUnshareConfirmTitle = 'catalog.details.unshare.confirmTitle',
+  DetailsUnshareConfirmMessage = 'catalog.details.unshare.confirmMessage',
+  DetailsUnshareConsequenceYouLoseAccess = 'catalog.details.unshare.consequenceYouLoseAccess',
+  DetailsUnshareConsequenceOthersKeepAccess = 'catalog.details.unshare.consequenceOthersKeepAccess',
+  DetailsUnshareConsequenceNeedNewInvitation = 'catalog.details.unshare.consequenceNeedNewInvitation',
+  DetailsUnshareRemovingStatus = 'catalog.details.unshare.removingStatus',
+  DetailsUnshareErrorTitle = 'catalog.details.unshare.errorTitle',
+  DetailsUnshareError = 'catalog.details.unshare.error',
+  DetailsUnshareSuccess = 'catalog.details.unshare.success',
   ConnectToolsetTitle = 'catalog.details.connect.toolsetTitle',
   ConnectApplicationTitle = 'catalog.details.connect.applicationTitle',
   ConnectToolsetDescription = 'catalog.details.connect.toolsetDescription',
@@ -250,10 +264,7 @@ export enum ScheduledTasksI18nKeys {
   ListSharedSectionTitle = 'scheduledTasks.list.sharedSectionTitle',
   ListLoadingMoreLabel = 'scheduledTasks.list.loadingMoreLabel',
   CardNewBadgeLabel = 'scheduledTasks.card.newBadgeLabel',
-  CardActionsLabel = 'scheduledTasks.card.actionsLabel',
   CardEditActionLabel = 'scheduledTasks.card.editActionLabel',
-  CardRunNowActionLabel = 'scheduledTasks.card.runNowActionLabel',
-  CardDeleteActionLabel = 'scheduledTasks.card.deleteActionLabel',
   CardScheduleDailyAt = 'scheduledTasks.card.scheduleDailyAt',
   CardScheduleWeeklyAt = 'scheduledTasks.card.scheduleWeeklyAt',
   CardScheduleMonthlyAt = 'scheduledTasks.card.scheduleMonthlyAt',
@@ -267,22 +278,22 @@ export enum ScheduledTasksI18nKeys {
   CreateDetailsSectionSubtitle = 'scheduledTasks.create.detailsSectionSubtitle',
   CreateConfigurationSectionTitle = 'scheduledTasks.create.configurationSectionTitle',
   CreateConfigurationSectionSubtitle = 'scheduledTasks.create.configurationSectionSubtitle',
-  CreateScheduleSectionLabel = 'scheduledTasks.create.scheduleSectionLabel',
-  CreateScheduleTypeOnce = 'scheduledTasks.create.scheduleTypeOnce',
-  CreateScheduleTypeRecurring = 'scheduledTasks.create.scheduleTypeRecurring',
-  CreateScheduleTypeAriaLabel = 'scheduledTasks.create.scheduleTypeAriaLabel',
   CreateRunAtLabel = 'scheduledTasks.create.runAtLabel',
   CreateRunAtRequired = 'scheduledTasks.create.runAtRequired',
-  CreateFrequencyLabel = 'scheduledTasks.create.frequencyLabel',
-  CreateFrequencyDaily = 'scheduledTasks.create.frequencyDaily',
-  CreateFrequencyWeekly = 'scheduledTasks.create.frequencyWeekly',
-  CreateFrequencyMonthly = 'scheduledTasks.create.frequencyMonthly',
+  CreateRepeatLabel = 'scheduledTasks.create.repeatLabel',
+  CreateRepeatOneTime = 'scheduledTasks.create.repeatOneTime',
+  CreateRepeatHourly = 'scheduledTasks.create.repeatHourly',
+  CreateRepeatDaily = 'scheduledTasks.create.repeatDaily',
+  CreateRepeatWeekly = 'scheduledTasks.create.repeatWeekly',
+  CreateRepeatMonthly = 'scheduledTasks.create.repeatMonthly',
   CreateTimeLabel = 'scheduledTasks.create.timeLabel',
   CreateTimeInvalid = 'scheduledTasks.create.timeInvalid',
   CreateDayOfWeekLabel = 'scheduledTasks.create.dayOfWeekLabel',
   CreateDayOfWeekRequired = 'scheduledTasks.create.dayOfWeekRequired',
   CreateDayOfMonthLabel = 'scheduledTasks.create.dayOfMonthLabel',
   CreateDayOfMonthRequired = 'scheduledTasks.create.dayOfMonthRequired',
+  CreateMinuteLabel = 'scheduledTasks.create.minuteLabel',
+  CreateMinuteInvalid = 'scheduledTasks.create.minuteInvalid',
   CreateStartDateLabel = 'scheduledTasks.create.startDateLabel',
   CreateStartDatePlaceholder = 'scheduledTasks.create.startDatePlaceholder',
   CreateEndDateLabel = 'scheduledTasks.create.endDateLabel',
@@ -313,10 +324,21 @@ export enum ScheduledTasksI18nKeys {
   DetailStatusInProgress = 'scheduledTasks.detail.statusInProgress',
   DetailStatusMissed = 'scheduledTasks.detail.statusMissed',
   DetailErrorLabel = 'scheduledTasks.detail.errorLabel',
+  DetailActiveStatusLabel = 'scheduledTasks.detail.activeStatusLabel',
+  DetailPauseSuccess = 'scheduledTasks.detail.pauseSuccess',
+  DetailResumeSuccess = 'scheduledTasks.detail.resumeSuccess',
+  DetailActiveStatusUpdateError = 'scheduledTasks.detail.activeStatusUpdateError',
   EditPageTitle = 'scheduledTasks.edit.pageTitle',
   EditUnsupportedTriggerMessage = 'scheduledTasks.edit.unsupportedTriggerMessage',
   EditSuccessNotification = 'scheduledTasks.edit.successNotification',
   EditErrorNotification = 'scheduledTasks.edit.errorNotification',
+  ConversationBannerLoadingLabel = 'scheduledTasks.conversationBanner.loadingLabel',
+  ConversationBannerUnavailableLabel = 'scheduledTasks.conversationBanner.unavailableLabel',
+  ConversationBannerRetryAriaLabel = 'scheduledTasks.conversationBanner.retryAriaLabel',
+  ConversationBannerTaskDetailsLabel = 'scheduledTasks.conversationBanner.taskDetailsLabel',
+  ConversationBannerTaskDetailsAriaLabel = 'scheduledTasks.conversationBanner.taskDetailsAriaLabel',
+  ConversationPanelModelLabel = 'scheduledTasks.conversationPanel.modelLabel',
+  ConversationPanelCurrentRunLabel = 'scheduledTasks.conversationPanel.currentRunLabel',
 }
 
 export enum ConversationI18nKeys {
@@ -460,6 +482,7 @@ export enum AuthI18nKeys {
   OverlayProvidersError = 'auth.overlayProvidersError',
   LogOutConfirmTitle = 'auth.logOutConfirmTitle',
   LogOutConfirmDescription = 'auth.logOutConfirmDescription',
+  LoggingOutStatus = 'auth.loggingOutStatus',
   UserAvatar = 'auth.userAvatar',
 }
 
@@ -665,11 +688,19 @@ export enum AttachmentCanvasI18nKeys {
 
 export enum AnnouncementBannerI18nKeys {
   RegionAriaLabel = 'announcementBanner.regionAriaLabel',
+  RegionAriaLabelWithTitle = 'announcementBanner.regionAriaLabelWithTitle',
   CloseLabel = 'announcementBanner.closeLabel',
+}
+
+export enum AnnouncementsPopoverI18nKeys {
+  PillLabel = 'announcementsPopover.pillLabel',
+  ListAriaLabel = 'announcementsPopover.listAriaLabel',
+  OpensInNewTab = 'announcementsPopover.opensInNewTab',
 }
 
 export enum FooterMessageI18nKeys {
   RegionAriaLabel = 'footerMessage.regionAriaLabel',
+  VersionAriaLabel = 'footerMessage.versionAriaLabel',
 }
 
 export enum EditorI18nKeys {
@@ -685,6 +716,16 @@ export enum EditorI18nKeys {
   VersionPlaceholder = 'editor.versionPlaceholder',
   TopicsLabel = 'editor.topicsLabel',
   TopicsPlaceholder = 'editor.topicsPlaceholder',
+  LocalesSummaryLabel = 'editor.locales.summaryLabel',
+  LocalesRowLabel = 'editor.locales.rowLabel',
+  LocalesPopupTitle = 'editor.locales.popupTitle',
+  LocalesAddLocaleLabel = 'editor.locales.addLocaleLabel',
+  LocalesLanguageLabel = 'editor.locales.languageLabel',
+  LocalesNameLabel = 'editor.locales.nameLabel',
+  LocalesNamePlaceholder = 'editor.locales.namePlaceholder',
+  LocalesDescriptionLabel = 'editor.locales.descriptionLabel',
+  LocalesDescriptionPlaceholder = 'editor.locales.descriptionPlaceholder',
+  LocalesDeleteAriaLabel = 'editor.locales.deleteAriaLabel',
 }
 
 export enum AppsEditorI18nKeys {

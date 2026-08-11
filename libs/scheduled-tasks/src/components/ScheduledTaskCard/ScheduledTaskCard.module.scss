@@ -31,6 +31,15 @@
   color: var(--stc-new-badge-text, var(--text-control-permanent, #fcfcfc));
 }
 
+.pausedPill {
+  background: var(--stc-paused-bg, var(--bg-layer-sunken, #eef1f7));
+  border-color: var(--stc-paused-border, var(--stroke-tertiary, #e0e6f0));
+}
+
+.pausedLabel {
+  color: var(--stc-paused-text, var(--text-control-disable-beta, #848e9c));
+}
+
 .locationDivider {
   border-top: 1px solid
     var(--stc-location-divider-border, var(--stroke-tertiary, #e0e6f0));

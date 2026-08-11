@@ -1,4 +1,4 @@
-import type { DeploymentLimitsResponseDto } from '@epam/chat-api-client';
+import type { DeploymentLimitsResponseDto } from '@epam/ai-dial-chat-api-client';
 
 /** Normalized monthly token usage consumed by the conversation input control. */
 export interface MonthlyUsageLimit {

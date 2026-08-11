@@ -1,7 +1,9 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { ScheduledTaskDetailViewLabels } from '../../../models/scheduled-task-detail-view-props';
 import type { ScheduledTaskRunItem } from '../../../models/scheduled-task-run-item';
 import { ScheduledTaskRunStatus } from '../../../types/scheduled-task-run-status';
@@ -18,6 +20,27 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  ButtonVariant: { Primary: 'primary', Neutral: 'neutral' },
+  DialSwitch: ({
+    switchId,
+    isOn,
+    disabled,
+    onChange,
+  }: {
+    switchId: string;
+    isOn?: boolean;
+    disabled?: boolean;
+    onChange?: (value: boolean) => void;
+  }) => (
+    <input
+      type="checkbox"
+      role="switch"
+      id={switchId}
+      checked={!!isOn}
+      disabled={disabled}
+      onChange={(e) => onChange?.(e.target.checked)}
+    />
+  ),
   Spinner: () => <div role="progressbar" />,
   Skeleton: (props: Record<string, unknown>) => (
     <div data-skeleton {...props} />
@@ -26,10 +49,16 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   GhostButton: ({
     label,
     onClick,
+    disabled,
   }: {
     label: string;
     onClick?: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
+    disabled?: boolean;
+  }) => (
+    <button onClick={onClick} disabled={disabled}>
+      {label}
+    </button>
+  ),
   GhostIconButton: ({
     onClick,
     'aria-label': ariaLabel,
@@ -64,6 +93,7 @@ const labels: ScheduledTaskDetailViewLabels = {
   modelLabel: 'Model or Agent',
   repeatsLabel: 'Repeats',
   activeWindowLabel: 'Active',
+  activeStatusLabel: 'Active',
   configurationTitle: 'Configuration',
   instructionsLabel: 'Instructions',
   retryLabel: 'Retry',
@@ -72,6 +102,7 @@ const labels: ScheduledTaskDetailViewLabels = {
   historyErrorLabel: 'Failed to load history',
   historyRetryLabel: 'Retry',
   historyLoadingMoreLabel: 'Loading more…',
+  historyShowMoreLabel: 'Show more',
   runStatusLabels: {
     [ScheduledTaskRunStatus.Success]: 'Succeeded',
     [ScheduledTaskRunStatus.Error]: 'Failed',
@@ -87,6 +118,19 @@ const buildRun = (
   status: ScheduledTaskRunStatus.Success,
   timestampLabel: 'today at 9:01 AM (99s)',
   ...overrides,
+});
+
+describe('ScheduledTaskDetailView — library isolation', () => {
+  it('contains no imports of host apps, generated API clients, routing, feature-flag, auth, env, or analytics modules', () => {
+    const source = readFileSync(
+      join(__dirname, '../ScheduledTaskDetailView.tsx'),
+      'utf-8',
+    );
+
+    expect(source).not.toMatch(
+      /from ['"](apps\/chat|@epam\/chat-api-client|react-router|react-i18next)/,
+    );
+  });
 });
 
 describe('ScheduledTaskDetailView', () => {
@@ -409,42 +453,8 @@ describe('ScheduledTaskDetailView', () => {
     ).toBeNull();
   });
 
-  describe('scroll-sentinel triggered load-more', () => {
-    const mockScrollableAncestor = () => {
-      const getComputedStyleSpy = vi
-        .spyOn(window, 'getComputedStyle')
-        .mockImplementation(
-          (el) =>
-            ({
-              overflow: 'visible',
-              overflowY: el === document.body ? 'visible' : ('auto' as string),
-            }) as CSSStyleDeclaration,
-        );
-      return () => getComputedStyleSpy.mockRestore();
-    };
-
-    const mockIntersecting = (isIntersecting: boolean) => {
-      const rect = (top: number, bottom: number) =>
-        ({ top, bottom }) as DOMRect;
-      const isSentinel = (el: Element) =>
-        el.tagName === 'LI' && el.getAttribute('aria-hidden') === 'true';
-      vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(
-        function (this: Element) {
-          if (isSentinel(this)) {
-            return isIntersecting ? rect(700, 750) : rect(900, 950);
-          }
-          return rect(0, 800);
-        },
-      );
-    };
-
-    afterEach(() => {
-      vi.restoreAllMocks();
-    });
-
-    it('calls onRunsLoadMore when the sentinel intersects and runsHasMore is true', () => {
-      const restoreStyle = mockScrollableAncestor();
-      mockIntersecting(true);
+  describe('"Show more" button triggered load-more', () => {
+    it('renders a "Show more" button and calls onRunsLoadMore when activated, while runsHasMore is true', async () => {
       const onRunsLoadMore = vi.fn();
 
       render(
@@ -458,15 +468,11 @@ describe('ScheduledTaskDetailView', () => {
         />,
       );
 
+      await userEvent.click(screen.getByRole('button', { name: 'Show more' }));
       expect(onRunsLoadMore).toHaveBeenCalledOnce();
-      restoreStyle();
     });
 
-    it('does not call onRunsLoadMore when runsHasMore is false', () => {
-      const restoreStyle = mockScrollableAncestor();
-      mockIntersecting(true);
-      const onRunsLoadMore = vi.fn();
-
+    it('does not render the "Show more" button when runsHasMore is false', () => {
       render(
         <ScheduledTaskDetailView
           labels={labels}
@@ -474,19 +480,28 @@ describe('ScheduledTaskDetailView', () => {
           displayName="Daily summary"
           runs={[buildRun()]}
           runsHasMore={false}
-          onRunsLoadMore={onRunsLoadMore}
+          onRunsLoadMore={vi.fn()}
         />,
       );
 
-      expect(onRunsLoadMore).not.toHaveBeenCalled();
-      restoreStyle();
+      expect(screen.queryByRole('button', { name: 'Show more' })).toBeNull();
     });
 
-    it('does not call onRunsLoadMore while runsIsLoadingMore is true', () => {
-      const restoreStyle = mockScrollableAncestor();
-      mockIntersecting(true);
-      const onRunsLoadMore = vi.fn();
+    it('does not render the "Show more" button when onRunsLoadMore is omitted', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          displayName="Daily summary"
+          runs={[buildRun()]}
+          runsHasMore
+        />,
+      );
 
+      expect(screen.queryByRole('button', { name: 'Show more' })).toBeNull();
+    });
+
+    it('disables the "Show more" button while runsIsLoadingMore is true', () => {
       render(
         <ScheduledTaskDetailView
           labels={labels}
@@ -495,32 +510,179 @@ describe('ScheduledTaskDetailView', () => {
           runs={[buildRun()]}
           runsHasMore
           runsIsLoadingMore
-          onRunsLoadMore={onRunsLoadMore}
+          onRunsLoadMore={vi.fn()}
         />,
       );
 
-      expect(onRunsLoadMore).not.toHaveBeenCalled();
-      restoreStyle();
+      expect(
+        (screen.getByRole('button', { name: 'Show more' }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(true);
     });
 
-    it('does not call onRunsLoadMore when the sentinel is not intersecting', () => {
-      const restoreStyle = mockScrollableAncestor();
-      mockIntersecting(false);
-      const onRunsLoadMore = vi.fn();
+    it('does not render the "Show more" button when historyShowMoreLabel is omitted', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={{ ...labels, historyShowMoreLabel: undefined }}
+          onBack={vi.fn()}
+          displayName="Daily summary"
+          runs={[buildRun()]}
+          runsHasMore
+          onRunsLoadMore={vi.fn()}
+        />,
+      );
 
+      expect(screen.queryByRole('button', { name: 'Show more' })).toBeNull();
+    });
+  });
+
+  describe('Active switch', () => {
+    it('does not render when isActive is undefined', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          onEdit={vi.fn()}
+          displayName="Daily summary"
+          runs={[]}
+        />,
+      );
+
+      expect(screen.queryByRole('switch')).toBeNull();
+    });
+
+    it('renders checked when isActive is true', () => {
       render(
         <ScheduledTaskDetailView
           labels={labels}
           onBack={vi.fn()}
           displayName="Daily summary"
-          runs={[buildRun()]}
-          runsHasMore
-          onRunsLoadMore={onRunsLoadMore}
+          isActive={true}
+          runs={[]}
         />,
       );
 
-      expect(onRunsLoadMore).not.toHaveBeenCalled();
-      restoreStyle();
+      expect(screen.getByRole('switch')).toHaveProperty('checked', true);
+    });
+
+    it('renders unchecked when isActive is false', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          displayName="Daily summary"
+          isActive={false}
+          runs={[]}
+        />,
+      );
+
+      expect(screen.getByRole('switch')).toHaveProperty('checked', false);
+    });
+
+    it('calls onActiveChange exactly once with the requested value on toggle, with no navigation or network side effects', async () => {
+      const onActiveChange = vi.fn();
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          displayName="Daily summary"
+          isActive={true}
+          onActiveChange={onActiveChange}
+          runs={[]}
+        />,
+      );
+
+      await userEvent.click(screen.getByRole('switch'));
+
+      expect(onActiveChange).toHaveBeenCalledOnce();
+      expect(onActiveChange).toHaveBeenCalledWith(false);
+    });
+
+    it('renders disabled while isActiveUpdating is true', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          displayName="Daily summary"
+          isActive={true}
+          isActiveUpdating
+          runs={[]}
+        />,
+      );
+
+      expect(screen.getByRole('switch')).toHaveProperty('disabled', true);
+    });
+
+    it('renders disabled while isActiveDisabled is true', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          displayName="Daily summary"
+          isActive={false}
+          isActiveDisabled
+          runs={[]}
+        />,
+      );
+
+      expect(screen.getByRole('switch')).toHaveProperty('disabled', true);
+    });
+
+    it('does not call onActiveChange when interacted with while disabled', async () => {
+      const onActiveChange = vi.fn();
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          displayName="Daily summary"
+          isActive={false}
+          isActiveDisabled
+          onActiveChange={onActiveChange}
+          runs={[]}
+        />,
+      );
+
+      await userEvent.click(screen.getByRole('switch'));
+
+      expect(onActiveChange).not.toHaveBeenCalled();
+    });
+
+    it('renders before the Edit button in DOM order', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          onEdit={vi.fn()}
+          displayName="Daily summary"
+          isActive={true}
+          runs={[]}
+        />,
+      );
+
+      const switchEl = screen.getByRole('switch');
+      const editButton = screen.getByRole('button', { name: 'Edit' });
+      expect(
+        switchEl.compareDocumentPosition(editButton) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it('announces a status message via an aria-live region, separate from the switch label', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={{
+            ...labels,
+            activeStatusAnnouncement: 'Task paused',
+          }}
+          onBack={vi.fn()}
+          displayName="Daily summary"
+          isActive={false}
+          runs={[]}
+        />,
+      );
+
+      const announcement = screen.getByText('Task paused');
+      expect(announcement.getAttribute('role')).toBe('status');
     });
   });
 

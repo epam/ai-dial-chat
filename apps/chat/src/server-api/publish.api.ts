@@ -2,8 +2,8 @@ import type {
   PublishCatalogEntityDto,
   PublishHistoryEntryDto,
   PublishResultDto,
-} from '@epam/chat-api-client';
-import { PublishCatalogEntityEntityTypeEnum } from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
+import { PublishCatalogEntityEntityTypeEnum } from '@epam/ai-dial-chat-api-client';
 import { publishApi } from './api-client';
 
 /** Catalog entity kinds that can be published. */

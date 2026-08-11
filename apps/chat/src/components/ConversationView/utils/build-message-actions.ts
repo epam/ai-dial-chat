@@ -1,6 +1,7 @@
 import {
   MessageRating,
   MessageRole,
+  copyMarkdownAsRichText,
   copyToClipboard,
   type Message,
 } from '@epam/ai-dial-chat-shared';
@@ -47,12 +48,13 @@ export const buildMessageActions = (
     return { onRegenerate, labels: { tooltips, ariaLabels } };
   }
 
-  const handleCopy = () => void copyToClipboard(msg.content);
+  const handleCopy = () => void copyMarkdownAsRichText(msg.content);
+  const handleCopyMarkdown = () => void copyToClipboard(msg.content);
 
   return {
     onRegenerate,
     onCopy: handleCopy,
-    onCopyMarkdown: handleCopy,
+    onCopyMarkdown: handleCopyMarkdown,
     onLike: handlers.onRate
       ? () =>
           handlers.onRate?.(

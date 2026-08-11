@@ -40,7 +40,7 @@ interface FormProps {
     modelId: string;
     prompt: string;
     description?: string;
-    scheduleType: string;
+    repeat: string;
     startDate?: string;
     endDate?: string;
     runAt?: string;
@@ -55,8 +55,9 @@ interface FormProps {
 }
 
 vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
-  ScheduledTaskScheduleType: { Once: 'once', Recurring: 'recurring' },
-  ScheduledTaskFrequency: {
+  ScheduledTaskRepeat: {
+    OneTime: 'oneTime',
+    Hourly: 'hourly',
     Daily: 'daily',
     Weekly: 'weekly',
     Monthly: 'monthly',
@@ -103,12 +104,15 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
         onChange={(e) => onFieldChange('description', e.target.value)}
       />
       <select
-        aria-label="scheduleType"
-        value={values.scheduleType}
-        onChange={(e) => onFieldChange('scheduleType', e.target.value)}
+        aria-label="repeat"
+        value={values.repeat}
+        onChange={(e) => onFieldChange('repeat', e.target.value)}
       >
-        <option value="once">once</option>
-        <option value="recurring">recurring</option>
+        <option value="oneTime">oneTime</option>
+        <option value="hourly">hourly</option>
+        <option value="daily">daily</option>
+        <option value="weekly">weekly</option>
+        <option value="monthly">monthly</option>
       </select>
       <input
         aria-label="startDate"
@@ -346,7 +350,7 @@ describe('ScheduledTaskCreatePage', () => {
     expect(createScheduledTaskMock).toHaveBeenCalledOnce();
   });
 
-  it('does not include startDate/endDate in the submit body after switching schedule type to once', async () => {
+  it('does not include startDate/endDate in the submit body after switching repeat to one-time', async () => {
     createScheduledTaskMock.mockResolvedValue({ id: 'sched_1' });
     renderAtRoute('/scheduled-tasks/new');
 
@@ -360,8 +364,8 @@ describe('ScheduledTaskCreatePage', () => {
       '2026-08-31',
     );
     await userEvent.selectOptions(
-      screen.getByRole('combobox', { name: 'scheduleType' }),
-      'once',
+      screen.getByRole('combobox', { name: 'repeat' }),
+      'oneTime',
     );
     await userEvent.type(
       screen.getByRole('textbox', { name: 'runAt' }),

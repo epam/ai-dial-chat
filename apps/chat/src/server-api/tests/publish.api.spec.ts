@@ -1,5 +1,5 @@
-import type { PublishRuleDto } from '@epam/chat-api-client';
-import { PublishRuleDtoFunctionEnum } from '@epam/chat-api-client';
+import type { PublishRuleDto } from '@epam/ai-dial-chat-api-client';
+import { PublishRuleDtoFunctionEnum } from '@epam/ai-dial-chat-api-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { publishApi } from '../api-client';
 import { CatalogPublishEntityType, publishCatalogEntity } from '../publish.api';
@@ -20,7 +20,7 @@ describe('publish API', () => {
     const rules: PublishRuleDto[] = [
       {
         source: 'roles',
-        _function: PublishRuleDtoFunctionEnum.Contain,
+        function: PublishRuleDtoFunctionEnum.Contain,
         targets: ['engineering', 'support'],
       },
     ];

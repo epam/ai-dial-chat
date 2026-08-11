@@ -5,16 +5,17 @@ import {
   type CatalogItem,
   type CatalogItemCredentials,
 } from '@epam/ai-dial-catalog';
-import { formatLastUsed } from '@epam/ai-dial-chat-shared';
 import type {
   DeploymentItemDto,
   DialToolsetAuthSettingsDto,
   DialToolsetDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
+import { formatLastUsed } from '@epam/ai-dial-chat-shared';
 import type { TFunction } from 'i18next';
 import { CatalogI18nKeys } from '../constants/translation-keys';
 import type { EntitySpecificDetails } from '../types/entity-details';
 import { resolveCatalogIconUrl } from './icon-path';
+import { PRIMARY_LOCALE, resolveLocalizedText } from './locale';
 import { mapEntityDetailsToCatalogDetails } from './map-entity-details-to-catalog';
 import { safeDecodeURIComponent } from './string-utils';
 import { isPublicToolsetId } from './toolsets';
@@ -150,22 +151,35 @@ const resolveToolsetFolder = (
   return segments.slice(1);
 };
 
+export interface MapDeploymentToCatalogItemOptions {
+  favoriteIds?: ReadonlySet<string>;
+  entityDetails?: EntitySpecificDetails;
+  t: TFunction;
+  editableSchemaIds?: string[];
+  isCustomAppsEditable?: boolean;
+  activeLocale?: string;
+}
+
 export const mapDeploymentToCatalogItem = (
   deployment: DeploymentItemDto,
-  favoriteIds: ReadonlySet<string> = new Set(),
-  entityDetails: EntitySpecificDetails | undefined,
-  t: TFunction,
-  editableSchemaIds: string[] = [],
-  isCustomAppsEditable = false,
+  {
+    favoriteIds = new Set(),
+    entityDetails,
+    t,
+    editableSchemaIds = [],
+    isCustomAppsEditable = false,
+    activeLocale = PRIMARY_LOCALE,
+  }: MapDeploymentToCatalogItemOptions,
 ): CatalogItem => {
-  const name = deployment.displayName ?? deployment.id;
+  const name =
+    resolveLocalizedText(deployment.displayName, activeLocale) || deployment.id;
   const normalizedType = (deployment.type ?? '').toLowerCase();
 
   return {
     id: deployment.id,
     type: TYPE_MAP[normalizedType] ?? CatalogEntityType.Model,
     name,
-    description: deployment.description ?? '',
+    description: resolveLocalizedText(deployment.description, activeLocale),
     iconUrl: resolveCatalogIconUrl(deployment.iconUrl),
     version: deployment.displayVersion ?? '',
     lastUsed: formatLastUsed(deployment.updatedAt),
@@ -186,30 +200,44 @@ export const mapDeploymentToCatalogItem = (
           !deployment.applicationTypeSchemaId &&
           normalizedType === 'application')),
     folder: resolveDeploymentFolder(deployment, t),
-    summary: undefined,
     details:
       entityDetails != null
         ? mapEntityDetailsToCatalogDetails(entityDetails)
         : undefined,
     supportsMcp: deployment.features?.mcp === true,
+    supportsChat:
+      deployment.interfaces == null || deployment.interfaces.includes('chat'),
   };
 };
 
+export interface MapToolsetToCatalogItemOptions {
+  favoriteIds?: ReadonlySet<string>;
+  isAdmin?: boolean;
+  t?: TFunction;
+  activeLocale?: string;
+}
+
 export const mapToolsetToCatalogItem = (
   toolset: DialToolsetDto,
-  favoriteIds: ReadonlySet<string> = new Set(),
-  isAdmin = false,
-  t?: TFunction,
+  {
+    favoriteIds = new Set(),
+    isAdmin = false,
+    t,
+    activeLocale = PRIMARY_LOCALE,
+  }: MapToolsetToCatalogItemOptions = {},
 ): CatalogItem => {
   const name =
-    toolset.displayName ?? toolset.toolset ?? toolset.reference ?? toolset.id;
+    resolveLocalizedText(toolset.displayName, activeLocale) ||
+    toolset.toolset ||
+    toolset.reference ||
+    toolset.id;
   const allowedTools = toolset.allowedTools ?? [];
 
   return {
     id: toolset.id,
     type: CatalogEntityType.Toolset,
     name,
-    description: toolset.description ?? '',
+    description: resolveLocalizedText(toolset.description, activeLocale),
     iconUrl: resolveCatalogIconUrl(toolset.iconUrl),
     version: toolset.displayVersion ?? '',
     lastUsed: formatLastUsed(toolset.updatedAt),
@@ -224,7 +252,6 @@ export const mapToolsetToCatalogItem = (
     sharedWithMe: toolset.sharedWithMe ?? false,
     isEditable: !!(toolset.isMy || toolset.canEdit),
     folder: resolveToolsetFolder(toolset, t),
-    summary: undefined,
     credentials: mapToolsetCredentials(
       toolset.id,
       toolset.authSettings,

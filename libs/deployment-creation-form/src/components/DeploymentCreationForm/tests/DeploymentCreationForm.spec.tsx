@@ -8,8 +8,8 @@ import type {
 } from '../../../models/deployment-creation-form';
 import { DeploymentCreationForm } from '../DeploymentCreationForm';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
   Input: ({
     value,
     onChange,
@@ -88,6 +88,16 @@ const labels: DeploymentCreationFormLabels = {
   iconUrl: { label: 'Icon URL', placeholder: 'https://...' },
   version: { label: 'Version', placeholder: 'e.g. 1.0.0' },
   topics: { label: 'Topics', placeholder: 'Add a topic' },
+  otherLocales: {
+    summaryLabel: 'Locales',
+    editLabel: 'Edit',
+    popupTitle: 'Add locale',
+    addLocaleLabel: 'Add locale',
+    languageLabel: 'Language',
+    nameLabel: 'Name',
+    descriptionLabel: 'About',
+    deleteAriaLabel: 'Delete locale',
+  },
 };
 
 const baseValues: DeploymentCreationFormValues = {
@@ -96,6 +106,7 @@ const baseValues: DeploymentCreationFormValues = {
   iconUrl: '',
   version: '',
   topics: [],
+  otherLocales: [],
 };
 
 const renderComponent = (

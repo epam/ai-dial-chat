@@ -34,6 +34,50 @@ export interface AcceptInvitationResponseDto {
 /**
  *
  * @export
+ * @interface AnnouncementItemDto
+ */
+export interface AnnouncementItemDto {
+  /**
+   * Announcement heading. Plain text; never interpreted as markup. Entries without one are dropped server-side.
+   * @type {string}
+   * @memberof AnnouncementItemDto
+   */
+  title: string;
+  /**
+   * Supporting copy, sanitized to a safe HTML subset. Null when unset or when sanitization removes everything.
+   * @type {string}
+   * @memberof AnnouncementItemDto
+   */
+  description: string | null;
+  /**
+   * Optional call to action. Null when the announcement is informational only. An entry whose link is present but invalid is dropped entirely rather than returned without it.
+   * @type {AnnouncementLinkDto}
+   * @memberof AnnouncementItemDto
+   */
+  link: AnnouncementLinkDto | null;
+}
+/**
+ *
+ * @export
+ * @interface AnnouncementLinkDto
+ */
+export interface AnnouncementLinkDto {
+  /**
+   * Visible label of the announcement call to action. Plain text; never interpreted as markup.
+   * @type {string}
+   * @memberof AnnouncementLinkDto
+   */
+  label: string;
+  /**
+   * Absolute http(s) URL the announcement links to. Opened in a new tab with rel="noopener noreferrer". Entries carrying other schemes are dropped server-side.
+   * @type {string}
+   * @memberof AnnouncementLinkDto
+   */
+  href: string;
+}
+/**
+ *
+ * @export
  * @interface ApplicationDetailsDto
  */
 export interface ApplicationDetailsDto {
@@ -438,7 +482,7 @@ export interface Check200Response {
    */
   timestamp?: string;
   /**
-   * Application version
+   * Application version. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Matches the appVersion reported by the client config endpoint.
    * @type {string}
    * @memberof Check200Response
    */
@@ -456,6 +500,12 @@ export interface Check200Response {
  * @interface ClientConfigDto
  */
 export interface ClientConfigDto {
+  /**
+   * Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Always a non-empty string.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  appVersion: string;
   /**
    * Deployment ID of the ASR model. Null when ASR is not configured.
    * @type {string}
@@ -510,6 +560,24 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   announcementHtml?: string | null;
+  /**
+   * Plain-text heading shown in bold at the start of the announcement banner line. Never interpreted as markup. Null when ANNOUNCEMENT_TITLE is not configured or is blank.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  announcementTitle?: string | null;
+  /**
+   * Supporting copy shown after the announcement banner title. Sanitized server-side to a safe HTML subset; anchors are forced to target="_blank" with rel="noopener noreferrer". Null when ANNOUNCEMENT_DESCRIPTION is not configured, is blank, or sanitizes away entirely.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  announcementDescription?: string | null;
+  /**
+   * Announcements listed in the popover behind the banner's "+N announcements" pill, in configured order. Empty when ANNOUNCEMENTS is unset or contained no valid entries. Sourced from ANNOUNCEMENTS.
+   * @type {Array<AnnouncementItemDto>}
+   * @memberof ClientConfigDto
+   */
+  announcements: Array<AnnouncementItemDto>;
   /**
    * Tool ID for the Deep Research deployment-configuration property. Null when DEEP_RESEARCH_TOOL_ID is not set.
    * @type {string}
@@ -765,6 +833,12 @@ export interface ConversationMessageCustomContentDto {
    */
   formValue?: object;
   /**
+   * Opaque app-managed state to echo back verbatim on the next turn, per the DIAL stateful-app contract.
+   * @type {object}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  state?: object;
+  /**
    * Status event discriminator when role is status
    * @type {string}
    * @memberof ConversationMessageCustomContentDto
@@ -835,6 +909,12 @@ export interface ConversationMessageDto {
    * @memberof ConversationMessageDto
    */
   streamErrorMessage?: string;
+  /**
+   * DIAL Responses API id for this message, set only when the generation was routed through the Responses adapter. Diagnostic only — never used to resume a generation (previous_response_id/conversation are never sent).
+   * @type {string}
+   * @memberof ConversationMessageDto
+   */
+  responseId?: string;
 }
 
 /**
@@ -976,6 +1056,12 @@ export interface ConversationResponseDto {
    * @memberof ConversationResponseDto
    */
   temperature: number;
+  /**
+   * Optional Responses-API output-token cap, forwarded verbatim as max_output_tokens. Never derived from deployment limits or Chat Completions defaults. Documentation-only decorator — the actual positive-safe-integer check runs at the Responses request-building boundary (ResponsesAdapter.buildRequest via isValidMaxOutputTokens), not through nested DTO validation on save (see design.md Decision 4 of the support-responses-generation-parameters change).
+   * @type {number}
+   * @memberof ConversationResponseDto
+   */
+  maxOutputTokens?: number;
   /**
    *
    * @type {Array<ConversationMessageDto>}
@@ -1252,6 +1338,18 @@ export interface CreateApplicationBodyDto {
    * @memberof CreateApplicationBodyDto
    */
   applicationProperties?: object;
+  /**
+   *
+   * @type {Array<LocaleTextEntryDto>}
+   * @memberof CreateApplicationBodyDto
+   */
+  locales?: Array<LocaleTextEntryDto>;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateApplicationBodyDto
+   */
+  primaryLocale?: string;
 }
 /**
  *
@@ -1477,10 +1575,10 @@ export interface CreatedApplicationDto {
   id: string;
   /**
    *
-   * @type {string}
+   * @type {CreatedApplicationDtoDisplayName}
    * @memberof CreatedApplicationDto
    */
-  displayName?: string;
+  displayName?: CreatedApplicationDtoDisplayName;
   /**
    *
    * @type {string}
@@ -1488,6 +1586,14 @@ export interface CreatedApplicationDto {
    */
   object?: string;
 }
+/**
+ * @type CreatedApplicationDtoDisplayName
+ *
+ * @export
+ */
+export type CreatedApplicationDtoDisplayName =
+  | string
+  | { [key: string]: string };
 /**
  *
  * @export
@@ -1536,6 +1642,12 @@ export interface CreatedScheduledTaskDto {
    * @memberof CreatedScheduledTaskDto
    */
   triggerType?: CreatedScheduledTaskDtoTriggerTypeEnum;
+  /**
+   *
+   * @type {boolean}
+   * @memberof CreatedScheduledTaskDto
+   */
+  isActive?: boolean;
   /**
    *
    * @type {string}
@@ -2037,6 +2149,18 @@ export interface DeploymentFeaturesDto {
    * @memberof DeploymentFeaturesDto
    */
   mcp?: boolean;
+  /**
+   * Whether the deployment supports the Responses API
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  responsesApi?: boolean;
+  /**
+   * Whether the deployment supports chat completion requests
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  chatCompletion?: boolean;
 }
 /**
  *
@@ -2051,11 +2175,11 @@ export interface DeploymentItemDto {
    */
   id: string;
   /**
-   * Display name, falls back to id when absent
-   * @type {string}
+   *
+   * @type {DeploymentItemDtoDisplayName}
    * @memberof DeploymentItemDto
    */
-  displayName: string;
+  displayName: DeploymentItemDtoDisplayName;
   /**
    *
    * @type {string}
@@ -2069,11 +2193,11 @@ export interface DeploymentItemDto {
    */
   iconUrl?: string;
   /**
-   * Description from DIAL Core
-   * @type {string}
+   *
+   * @type {DeploymentItemDtoDescription}
    * @memberof DeploymentItemDto
    */
-  description?: string;
+  description?: DeploymentItemDtoDescription;
   /**
    * Interface types supported by this deployment
    * @type {Array<string>}
@@ -2182,6 +2306,12 @@ export interface DeploymentItemDto {
    * @memberof DeploymentItemDto
    */
   conversationStarters?: ConversationStartersDto;
+  /**
+   * Reference from DIAL Core; some conversations/messages address this deployment by reference instead of id
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  reference?: string;
 }
 
 /**
@@ -2195,6 +2325,18 @@ export const DeploymentItemDtoTypeEnum = {
 export type DeploymentItemDtoTypeEnum =
   (typeof DeploymentItemDtoTypeEnum)[keyof typeof DeploymentItemDtoTypeEnum];
 
+/**
+ * @type DeploymentItemDtoDescription
+ * Description from DIAL Core
+ * @export
+ */
+export type DeploymentItemDtoDescription = string | { [key: string]: string };
+/**
+ * @type DeploymentItemDtoDisplayName
+ * Display name, falls back to id when absent. Either a plain string, or a map of locale code to translated value when additional locales are configured.
+ * @export
+ */
+export type DeploymentItemDtoDisplayName = string | { [key: string]: string };
 /**
  *
  * @export
@@ -2363,10 +2505,10 @@ export interface DialModelDto {
   model?: string;
   /**
    *
-   * @type {string}
+   * @type {DialModelDtoDisplayName}
    * @memberof DialModelDto
    */
-  displayName?: string;
+  displayName?: DialModelDtoDisplayName;
   /**
    *
    * @type {string}
@@ -2381,10 +2523,10 @@ export interface DialModelDto {
   iconUrl?: string;
   /**
    *
-   * @type {string}
+   * @type {DialModelDtoDescription}
    * @memberof DialModelDto
    */
-  description?: string;
+  description?: DialModelDtoDescription;
   /**
    *
    * @type {string}
@@ -2494,6 +2636,18 @@ export interface DialModelDto {
    */
   interfaces?: Array<string>;
 }
+/**
+ * @type DialModelDtoDescription
+ *
+ * @export
+ */
+export type DialModelDtoDescription = string | { [key: string]: string };
+/**
+ * @type DialModelDtoDisplayName
+ *
+ * @export
+ */
+export type DialModelDtoDisplayName = string | { [key: string]: string };
 /**
  *
  * @export
@@ -2832,11 +2986,11 @@ export interface DialToolsetDto {
    */
   toolset: string;
   /**
-   * Human-readable name. In `listToolsets` results this is always populated: `displayName` when set, otherwise the last path segment of `id`.
-   * @type {string}
+   *
+   * @type {DialToolsetDtoDisplayName}
    * @memberof DialToolsetDto
    */
-  displayName?: string;
+  displayName?: DialToolsetDtoDisplayName;
   /**
    *
    * @type {string}
@@ -2845,10 +2999,10 @@ export interface DialToolsetDto {
   displayVersion?: string;
   /**
    *
-   * @type {string}
+   * @type {DialToolsetDtoDescription}
    * @memberof DialToolsetDto
    */
-  description?: string;
+  description?: DialToolsetDtoDescription;
   /**
    *
    * @type {string}
@@ -2958,6 +3112,18 @@ export interface DialToolsetDto {
    */
   sharedWithMe?: boolean;
 }
+/**
+ * @type DialToolsetDtoDescription
+ *
+ * @export
+ */
+export type DialToolsetDtoDescription = string | { [key: string]: string };
+/**
+ * @type DialToolsetDtoDisplayName
+ * Human-readable name. In `listToolsets` results this is always populated: `displayName` when set, otherwise the last path segment of `id`. Either a plain string, or a map of locale code to translated value when additional locales are configured.
+ * @export
+ */
+export type DialToolsetDtoDisplayName = string | { [key: string]: string };
 /**
  *
  * @export
@@ -3765,6 +3931,31 @@ export interface ListScheduledTasksResponseDto {
 /**
  *
  * @export
+ * @interface LocaleTextEntryDto
+ */
+export interface LocaleTextEntryDto {
+  /**
+   *
+   * @type {string}
+   * @memberof LocaleTextEntryDto
+   */
+  language: string;
+  /**
+   *
+   * @type {string}
+   * @memberof LocaleTextEntryDto
+   */
+  name?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof LocaleTextEntryDto
+   */
+  description?: string;
+}
+/**
+ *
+ * @export
  * @interface MessageCustomContentDto
  */
 export interface MessageCustomContentDto {
@@ -3786,6 +3977,12 @@ export interface MessageCustomContentDto {
    * @memberof MessageCustomContentDto
    */
   formValue?: object;
+  /**
+   * Opaque app-managed state to echo back verbatim on the next turn, per the DIAL stateful-app contract.
+   * @type {object}
+   * @memberof MessageCustomContentDto
+   */
+  state?: object;
 }
 /**
  *
@@ -4468,7 +4665,7 @@ export interface PublishRuleDto {
    * @type {string}
    * @memberof PublishRuleDto
    */
-  _function: PublishRuleDtoFunctionEnum;
+  function: PublishRuleDtoFunctionEnum;
   /**
    * Values combined with OR; exactly one pattern when function is REGEX.
    * @type {Array<string>}
@@ -4873,6 +5070,12 @@ export interface ScheduledTaskDto {
    * @memberof ScheduledTaskDto
    */
   triggerType?: ScheduledTaskDtoTriggerTypeEnum;
+  /**
+   *
+   * @type {boolean}
+   * @memberof ScheduledTaskDto
+   */
+  isActive?: boolean;
   /**
    *
    * @type {string}
@@ -5655,6 +5858,18 @@ export interface ToolsetBodyDto {
   topics?: Array<string>;
   /**
    *
+   * @type {Array<LocaleTextEntryDto>}
+   * @memberof ToolsetBodyDto
+   */
+  locales?: Array<LocaleTextEntryDto>;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetBodyDto
+   */
+  primaryLocale?: string;
+  /**
+   *
    * @type {string}
    * @memberof ToolsetBodyDto
    */
@@ -5963,6 +6178,18 @@ export interface UpdateApplicationBodyDto {
    * @memberof UpdateApplicationBodyDto
    */
   maxInputAttachments?: number;
+  /**
+   *
+   * @type {Array<LocaleTextEntryDto>}
+   * @memberof UpdateApplicationBodyDto
+   */
+  locales?: Array<LocaleTextEntryDto>;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateApplicationBodyDto
+   */
+  primaryLocale?: string;
 }
 /**
  *
@@ -6091,10 +6318,10 @@ export interface UpdatedApplicationDto {
   id: string;
   /**
    *
-   * @type {string}
+   * @type {CreatedApplicationDtoDisplayName}
    * @memberof UpdatedApplicationDto
    */
-  displayName?: string;
+  displayName?: CreatedApplicationDtoDisplayName;
   /**
    *
    * @type {string}
@@ -6150,6 +6377,12 @@ export interface UpdatedScheduledTaskDto {
    * @memberof UpdatedScheduledTaskDto
    */
   triggerType?: UpdatedScheduledTaskDtoTriggerTypeEnum;
+  /**
+   *
+   * @type {boolean}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  isActive?: boolean;
   /**
    *
    * @type {string}

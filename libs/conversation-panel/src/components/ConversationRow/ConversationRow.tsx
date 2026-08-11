@@ -132,10 +132,11 @@ export const ConversationRow: FC<ConversationRowProps> = ({
 
   /*
    * A fixed 12x12 slot is always reserved before the avatar so the avatar's horizontal position stays identical
-   * across rows whether or not the dot itself is rendered.
+   * across rows whether or not the dot itself is rendered. The slot doubles as the row's start gutter — the
+   * button drops its own start padding (`ps-0`) so the two do not stack into a double indent.
    */
   const avatarWithUnreadIndicator = (
-    <span className="flex shrink-0 items-center gap-1">
+    <span className="flex shrink-0 items-center">
       <span className="relative flex size-3 shrink-0 items-center justify-center">
         {item.isUnread && (
           <>
@@ -246,7 +247,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
           onClick={item.href ? undefined : () => onSelectConversation(item.id)}
           tabIndex={item.href ? -1 : undefined}
           className={mergeClasses(
-            'h-8 w-full justify-start gap-2 rounded-xl py-2 ps-3',
+            'h-8 w-full justify-start gap-2 rounded-xl py-2 ps-0',
             buttonPaddingEnd,
             styles.item,
             isActive && styles.itemActive,
@@ -268,7 +269,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
             items={menuItems}
             onOpenChange={handleMenuOpenChange}
             matchReferenceWidth={false}
-            listClassName="w-[140px]"
+            listClassName="w-[200px]"
           >
             <GhostIconButton
               ref={actionTriggerRef}

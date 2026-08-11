@@ -20,6 +20,10 @@ export interface ScheduledTaskDetailViewLabels {
   repeatsLabel: string;
   /** Label for the activity-window field, e.g. "Active". Shown only for a recurring task whose window is bounded. */
   activeWindowLabel: string;
+  /** Accessible name and visible label of the header's Active switch. Distinct from `activeWindowLabel`, which describes the cron activity date window. Shown only when `isActive` is defined. */
+  activeStatusLabel: string;
+  /** Announced via `aria-live` after a pause/resume mutation completes, separate from the switch's own accessible name. Empty string announces nothing. */
+  activeStatusAnnouncement?: string;
   /** Title of the Configuration section. */
   configurationTitle: string;
   /** Label for the instructions field. */
@@ -36,6 +40,8 @@ export interface ScheduledTaskDetailViewLabels {
   historyRetryLabel: string;
   /** Announced via `aria-live` while a load-more runs fetch is in flight. */
   historyLoadingMoreLabel?: string;
+  /** Label for the "Show more" button rendered below the loaded runs when `runsHasMore` is `true`. Required when `onRunsLoadMore` is supplied. */
+  historyShowMoreLabel?: string;
   /** Per-status label used to build each run row's accessible name, e.g. `{ success: 'Succeeded', ... }`. */
   runStatusLabels: Record<ScheduledTaskRunStatus, string>;
 }
@@ -93,6 +99,14 @@ export interface ScheduledTaskDetailViewProps {
   onBack: () => void;
   /** Called when the user activates the header's Edit action. When omitted, no Edit action renders. */
   onEdit?: () => void;
+  /** Whether the schedule is currently active (resumed) or paused. When `undefined`, the Active switch does not render. */
+  isActive?: boolean;
+  /** When `true`, the Active switch renders disabled while a pause/resume request is in flight. Defaults to `false`. */
+  isActiveUpdating?: boolean;
+  /** When `true`, the Active switch renders disabled (e.g. a completed one-time schedule that cannot be resumed), independent of `isActiveUpdating`. Defaults to `false`. */
+  isActiveDisabled?: boolean;
+  /** Called with the newly requested value when the user toggles the Active switch. The component performs no network call or optimistic update itself. */
+  onActiveChange?: (nextActive: boolean) => void;
   /** Task title shown in the header and used as the page's accessible name. */
   displayName: string;
   /** When `true`, the entire body (Details, Configuration, and History) shows a page-level spinner instead of the fields below. Defaults to `false`. */
@@ -129,7 +143,7 @@ export interface ScheduledTaskDetailViewProps {
   onRunsRetry?: () => void;
   /** Whether another page of `runs` is available beyond what has been loaded so far. Defaults to `false`. */
   runsHasMore?: boolean;
-  /** Called when the History panel's trailing scroll sentinel becomes visible and `runsHasMore && !runsIsLoadingMore && !runsIsLoading`. */
+  /** Called when the user activates the "Show more" button, rendered below the loaded runs while `runsHasMore` is `true`. Omit to hide the button entirely. */
   onRunsLoadMore?: () => void;
   /** Called with a run's id when the user clicks its row. Omit to render rows with no added interactive semantics. */
   onRunClick?: (id: string) => void;

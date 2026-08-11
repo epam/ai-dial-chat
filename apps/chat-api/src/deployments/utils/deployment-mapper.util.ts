@@ -240,6 +240,7 @@ export const mapToDeploymentItem = (
     iconUrl: raw.icon_url,
     description: raw.description,
     displayVersion: raw.display_version,
+    reference: raw.reference,
     isFeatured: featuredIds.has(raw.id || raw.reference || ''),
     isHidden: topics.some((tag) => hiddenTags.has(tag)),
     updatedAt: raw.updated_at,
@@ -261,6 +262,12 @@ export const mapToDeploymentItem = (
               folderAttachments: raw.features.folder_attachments,
             }),
             ...(hasMcp && { mcp: true }),
+            ...(raw.features?.responses_api === true && {
+              responsesApi: true,
+            }),
+            ...(raw.features?.chat_completion === true && {
+              chatCompletion: true,
+            }),
           }
         : undefined,
     maxInputAttachments:

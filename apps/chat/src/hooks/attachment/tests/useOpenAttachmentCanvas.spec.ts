@@ -20,6 +20,8 @@ const {
   mockResolvePdf,
   mockReferenceToPdf,
   mockResolveVisualizer,
+  mockResolveHtml,
+  mockHasAttachmentTextSource,
   mockFindVisualizerForMime,
   mockCustomVisualizersRef,
 } = vi.hoisted(() => ({
@@ -33,6 +35,8 @@ const {
   mockResolvePdf: vi.fn(),
   mockReferenceToPdf: vi.fn(),
   mockResolveVisualizer: vi.fn(),
+  mockResolveHtml: vi.fn(),
+  mockHasAttachmentTextSource: vi.fn(),
   mockFindVisualizerForMime: vi.fn(),
   /* Mutable so individual tests can populate the registry the real
    * `findVisualizerForMime` reads from. */
@@ -83,7 +87,17 @@ vi.mock('../../../utils/attachment-canvas', () => ({
   resolveJsonCanvasContent: (...args: unknown[]) => mockResolveJson(...args),
   resolveTextCanvasContent: (...args: unknown[]) => mockResolveText(...args),
   resolveCodeCanvasContent: (...args: unknown[]) => mockResolveCode(...args),
-  resolveHtmlCanvasContent: vi.fn(),
+  resolveHtmlCanvasContent: (...args: unknown[]) => mockResolveHtml(...args),
+  hasAttachmentTextSource: (...args: unknown[]) =>
+    mockHasAttachmentTextSource(...args),
+  /* Faithful to the real helper: the URL's own last path segment. */
+  getUrlFileName: (url: string) => {
+    try {
+      return new URL(url).pathname.split('/').pop() ?? '';
+    } catch {
+      return '';
+    }
+  },
   resolvePdfCanvasContent: (...args: unknown[]) => mockResolvePdf(...args),
   referenceAttachmentToPdfCanvasContent: (...args: unknown[]) =>
     mockReferenceToPdf(...args),
@@ -374,6 +388,76 @@ describe('useOpenAttachmentCanvas routing', () => {
       'Revised prompt',
       'Revised prompt',
     );
+  });
+
+  describe('html routing', () => {
+    it('routes a cited source whose title has no extension by its .html URL', async () => {
+      /*
+       * A cited source's name is its title, so the html check must fall back
+       * to the URL's file name — otherwise the canvas opens Unsupported.
+       */
+      mockResolveHtml.mockResolvedValue(null);
+      mockHasAttachmentTextSource.mockReturnValue(false);
+
+      const attachment = {
+        id: 'routed source',
+        name: 'routed source',
+        contentType: 'text/html',
+        type: AttachmentType.File,
+        url: 'https://example.com/docs/page.html',
+      } as DisplayAttachment;
+
+      const { result } = renderHook(() => useOpenAttachmentCanvas());
+      const opened = await result.current.openAttachmentCanvas(attachment);
+
+      expect(opened).toBe(true);
+      expect(mockOpenCanvas).toHaveBeenCalledWith(
+        { type: 'html', url: 'https://example.com/docs/page.html' },
+        'routed source',
+        'routed source',
+      );
+    });
+
+    it('opens unsupported canvas when the html resolver rejects fetched text', async () => {
+      /*
+       * The resolver returns null for text that exceeded the srcdoc size
+       * gate. Re-opening it as a url-only iframe would claim the page was
+       * frame-blocked, which is not what happened.
+       */
+      mockResolveHtml.mockResolvedValue(null);
+      mockHasAttachmentTextSource.mockReturnValue(true);
+
+      const { result } = renderHook(() => useOpenAttachmentCanvas());
+      const opened = await result.current.openAttachmentCanvas(
+        makeAttachment('huge.html', 'text/html'),
+      );
+
+      expect(opened).toBe(true);
+      expect(mockOpenCanvas).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'unsupported' }),
+        'huge.html',
+        'huge.html',
+      );
+    });
+
+    it('opens the resolved srcdoc content for an html file attachment', async () => {
+      mockResolveHtml.mockResolvedValue({
+        type: 'html',
+        srcdoc: '<p>Hello</p>',
+      });
+      mockHasAttachmentTextSource.mockReturnValue(true);
+
+      const { result } = renderHook(() => useOpenAttachmentCanvas());
+      await result.current.openAttachmentCanvas(
+        makeAttachment('page.html', 'text/html'),
+      );
+
+      expect(mockOpenCanvas).toHaveBeenCalledWith(
+        { type: 'html', srcdoc: '<p>Hello</p>' },
+        'page.html',
+        'page.html',
+      );
+    });
   });
 
   it('falls through to extension/unsupported routing when contentType is empty and no data is present', async () => {

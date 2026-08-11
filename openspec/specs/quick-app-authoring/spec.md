@@ -7,13 +7,20 @@ TBD - created by archiving change add-intro-field-quick-app-toolset. Update Purp
 The Quick App editor's General step SHALL allow editing the application name, version, icon
 URL, description, and topics. The icon SHALL be entered as a plain URL text field. Name
 SHALL be required and restricted to letters, digits, spaces, underscores, dots, and dashes.
-These fields SHALL be rendered and validated through the shared `deployment-creation-form`
-library component, the same component used by Toolset creation's General step. The General
-step SHALL NOT render an Intro field.
+The General step SHALL NOT render an Intro field. The name and description fields SHALL also
+allow editing translations for additional locales through the shared `DeploymentLocalesField`
+popup. These fields SHALL be rendered and validated through the shared `deployment-creation-form`
+library component, the same component used by Toolset creation's General step.
 
 #### Scenario: Edit general fields
 - **WHEN** a user types a name, version, icon URL, description, and adds topic tags
 - **THEN** those values are held in component state without saving
+
+#### Scenario: Edit an additional-locale translation
+- **WHEN** a user opens the "Add locale" popup on the General step and adds a translated name
+  and description for another language
+- **THEN** that translation is held in component state, alongside the primary name and
+  description, until the next save
 
 #### Scenario: Name is required
 - **WHEN** a user clears the name field and attempts to save
@@ -23,12 +30,38 @@ step SHALL NOT render an Intro field.
 On save, the editor SHALL submit the General step field values to the create-application
 endpoint via the generated `@epam/chat-api-client` `ApplicationsApi`, through the
 `apps/chat/src/server-api/applications.ts` wrapper. The submitted payload SHALL NOT include an
-`intro` property.
+`intro` property. Any additional-locale translations entered through the "Add locale" popup
+SHALL be composed into the create request's `locales`/`primaryLocale` fields; when no additional
+locales were entered, both fields SHALL be omitted so the request is byte-identical to a save
+made before this feature existed.
 
 #### Scenario: Save sends General step values
 - **WHEN** a user saves a new Quick App with name, description, icon URL, version, and topics
   filled in
 - **THEN** the create request body includes those field values and no `intro` property
+
+#### Scenario: Save sends additional locale translations
+- **WHEN** a user saves a new Quick App with a translation added for another language
+- **THEN** the create request body includes `locales` with that translation and a
+  `primaryLocale` identifying the language the primary name/description are written in
+
+#### Scenario: Save omits locale fields when no translations were added
+- **WHEN** a user saves a new Quick App without opening the "Add locale" popup
+- **THEN** the create request body includes neither `locales` nor `primaryLocale`
+
+### Requirement: Quick App edit forwards additional locales for forward compatibility only
+The `TriggerSave` message's General payload SHALL include `locales`/`primaryLocale` fields
+composed the same way as the create request, even though Quick App editing (as opposed to
+creation) is handled by an embedded QuickApps editor owned by another repository that this
+repository does not control the save for. This repository SHALL NOT assume the embedded editor
+honors those fields — until it does, saving an existing Quick App's General step through the
+embedded editor MAY flatten a previously configured locale map back to a plain string.
+
+#### Scenario: Save & Exit forwards locale fields to the embedded editor
+- **WHEN** an existing Quick App with additional-locale translations advances past the General
+  step via "Next"/"Save & Exit"
+- **THEN** the `TriggerSave` message's `general` payload includes `locales`/`primaryLocale`
+  composed from the current form state, in addition to the existing General-step fields
 
 ### Requirement: Editing General step fields persists the changes on Save & Exit
 

@@ -23,6 +23,7 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 - `@epam/ai-dial-ui-kit`
 - `@epam/ai-dial-kit`
 - `@epam/ai-dial-chat-shared`
+- `@epam/ai-dial-builder-form`
 
 ## Components
 
@@ -67,7 +68,7 @@ import {
 
 ### ScheduledTaskCard
 
-A single scheduled task rendered as a card: title, optional description/prompt preview, schedule pill, optional location breadcrumb, optional "new" badge, and an overflow menu for Edit/Run now/Delete (each action shown only when its handler is supplied). When `onCardClick` is supplied, the whole card becomes an activatable element (click or Enter/Space) reporting the task id; the overflow-menu trigger and its actions never bubble a click into it.
+A single scheduled task rendered as a card: title, optional description/prompt preview, schedule pill, and optional location breadcrumb and "new" badge. When `onCardClick` is supplied, the whole card becomes an activatable element (click or Enter/Space) reporting the task id.
 
 ```tsx
 import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
@@ -79,9 +80,6 @@ import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
     scheduleLabel: 'Every Monday 12:00',
     sectionKey: ScheduledTaskSectionKey.MyTasks,
   }}
-  onEdit={(id) => {}}
-  onRunNow={(id) => {}}
-  onDelete={(id) => {}}
   onCardClick={(id) => {}}
 />;
 ```
@@ -97,8 +95,7 @@ Presentational create-task form: a back-navigable header, display name, a one-sh
 ```tsx
 import {
   ScheduledTaskCreateForm,
-  ScheduledTaskFrequency,
-  ScheduledTaskScheduleType,
+  ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
 
 <ScheduledTaskCreateForm
@@ -109,9 +106,9 @@ import {
   }
   values={{
     displayName: '',
-    scheduleType: ScheduledTaskScheduleType.Recurring,
-    frequency: ScheduledTaskFrequency.Daily,
+    repeat: ScheduledTaskRepeat.Daily,
     time: '09:00',
+    minute: '0',
     startDate: '',
     endDate: '',
     modelId: '',
@@ -129,7 +126,7 @@ import {
 
 ### ScheduledTaskDetailView
 
-Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated, infinite-scroll History panel listing past runs with a status icon, timestamp, and duration per row. Field values, runs, and markdown rendering are all supplied by the host app; this component holds no state of its own and performs no routing, i18n, or network calls.
+Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated History panel listing past runs with a status icon, timestamp, and duration per row, with a "Show more" button (not scroll-triggered) for loading further pages. Field values, runs, and markdown rendering are all supplied by the host app; this component holds no state of its own and performs no routing, i18n, or network calls.
 
 ```tsx
 import {

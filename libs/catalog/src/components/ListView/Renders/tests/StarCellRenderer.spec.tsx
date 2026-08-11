@@ -90,6 +90,33 @@ describe('StarCellRenderer', () => {
     expect(button?.className).not.toContain('starToggleOff');
   });
 
+  it('resyncs the star to data.isStarred when it reverts after a failed toggle', async () => {
+    const item = makeItem({ id: 'abc', isStarred: false });
+    const { rerender } = render(<StarCellRenderer {...makeParams(item)} />);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Toggle favorite' }),
+    );
+    expect(
+      screen.getByRole('button', { name: 'Toggle favorite' }).className,
+    ).not.toContain('starToggleOff');
+
+    /*
+     * Parent's favoriteIds optimistically flips to starred, then the update
+     * request fails and it reverts.
+     */
+    rerender(
+      <StarCellRenderer {...makeParams({ ...item, isStarred: true })} />,
+    );
+    rerender(
+      <StarCellRenderer {...makeParams({ ...item, isStarred: false })} />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Toggle favorite' }).className,
+    ).toContain('starToggleOff');
+  });
+
   it('right-aligns the star within the column', () => {
     const { container } = render(
       <StarCellRenderer {...makeParams(makeItem())} />,

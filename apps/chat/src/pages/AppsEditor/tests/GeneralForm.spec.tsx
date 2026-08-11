@@ -99,7 +99,7 @@ const renderForm = (
 ) => render(<GeneralForm {...DEFAULT_PROPS} {...props} ref={ref} />);
 
 const getNameInput = () =>
-  screen.getByLabelText(EditorI18nKeys.NameLabel) as HTMLInputElement;
+  screen.getByLabelText(`${EditorI18nKeys.NameLabel} [EN]`) as HTMLInputElement;
 
 describe('GeneralForm', () => {
   const user = userEvent.setup({ delay: null });
@@ -110,8 +110,12 @@ describe('GeneralForm', () => {
 
   it('renders name, description, and icon URL fields', () => {
     renderForm();
-    expect(screen.getByLabelText(EditorI18nKeys.NameLabel)).toBeTruthy();
-    expect(screen.getByLabelText(EditorI18nKeys.DescriptionLabel)).toBeTruthy();
+    expect(
+      screen.getByLabelText(`${EditorI18nKeys.NameLabel} [EN]`),
+    ).toBeTruthy();
+    expect(
+      screen.getByLabelText(`${EditorI18nKeys.DescriptionLabel} [EN]`),
+    ).toBeTruthy();
     expect(screen.getByLabelText(EditorI18nKeys.IconUrlLabel)).toBeTruthy();
   });
 
@@ -262,7 +266,7 @@ describe('GeneralForm', () => {
     await user.clear(getNameInput());
     await user.type(getNameInput(), 'Renamed App');
     await user.type(
-      screen.getByLabelText(EditorI18nKeys.DescriptionLabel),
+      screen.getByLabelText(`${EditorI18nKeys.DescriptionLabel} [EN]`),
       'New description',
     );
 
@@ -312,7 +316,7 @@ describe('GeneralForm', () => {
       await user.clear(getNameInput());
       await user.type(getNameInput(), '  Renamed App  ');
       await user.type(
-        screen.getByLabelText(EditorI18nKeys.DescriptionLabel),
+        screen.getByLabelText(`${EditorI18nKeys.DescriptionLabel} [EN]`),
         'New description',
       );
 

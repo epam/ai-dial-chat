@@ -12,6 +12,12 @@ import {
 } from '../../../constants/translation-keys';
 import type { CustomAppGeneralFormData } from '../../../models/custom-apps';
 import type { ToolsetFormErrors } from '../../../models/toolsets';
+import {
+  appendLocaleCode,
+  buildAdditionalLocaleOptions,
+  buildLocaleFieldLabels,
+  PRIMARY_LOCALE,
+} from '../../../utils/locale';
 
 interface Props {
   form: CustomAppGeneralFormData;
@@ -30,14 +36,19 @@ const GeneralForm: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
 
+  const localeOptions = useMemo(() => buildAdditionalLocaleOptions(), []);
+
   const labels: DeploymentCreationFormLabels = useMemo(
     () => ({
       name: {
-        label: t(EditorI18nKeys.NameLabel),
+        label: appendLocaleCode(t(EditorI18nKeys.NameLabel), PRIMARY_LOCALE),
         placeholder: namePlaceholder,
       },
       description: {
-        label: t(EditorI18nKeys.DescriptionLabel),
+        label: appendLocaleCode(
+          t(EditorI18nKeys.DescriptionLabel),
+          PRIMARY_LOCALE,
+        ),
         placeholder: descriptionPlaceholder,
       },
       iconUrl: {
@@ -52,6 +63,7 @@ const GeneralForm: FC<Props> = ({
         label: t(EditorI18nKeys.TopicsLabel),
         placeholder: t(EditorI18nKeys.TopicsPlaceholder),
       },
+      otherLocales: buildLocaleFieldLabels(t),
       ariaLabel: t(EditorI18nKeys.StepGeneral),
     }),
     [t, namePlaceholder, descriptionPlaceholder],
@@ -63,6 +75,7 @@ const GeneralForm: FC<Props> = ({
     iconUrl: form.iconUrl,
     version: form.version,
     topics: form.topics,
+    otherLocales: form.otherLocales,
   };
 
   return (
@@ -71,6 +84,7 @@ const GeneralForm: FC<Props> = ({
       errors={errors}
       onChange={onChange}
       labels={labels}
+      availableLocaleOptions={localeOptions}
     />
   );
 };

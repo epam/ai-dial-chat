@@ -1,7 +1,7 @@
 import type {
   DeploymentsResponseDto,
   ListDeploymentsInterfaceTypeEnum,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { deploymentsApi } from './api-client';
 
 export const getDeployments = (

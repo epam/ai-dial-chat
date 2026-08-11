@@ -1,14 +1,15 @@
 ### Requirement: GET /api/v1/deployments endpoint
 
-The system SHALL expose `GET /api/v1/deployments` that proxies DIAL Core `GET /v1/deployments` and returns all deployments (models, applications, toolsets) visible to the authenticated session user, optionally filtered by interface type.
+The system SHALL expose `GET /api/v1/deployments` that proxies DIAL Core `GET /v1/deployments` and returns all models and applications (excluding toolsets) visible to the authenticated session user, optionally filtered by interface type.
 
 The endpoint:
 - MUST require authentication via `SessionGuard`; respond 401 when no valid session is present.
 - SHALL accept an optional `interface_type` query parameter as a repeatable string value validated against `('chat' | 'embedding' | 'mcp' | 'custom_ui' | 'all')`; passing an unrecognised value MUST respond 400.
 - SHALL accept an optional `refresh` query parameter validated as a boolean (`true` or `false` after DTO transformation); passing any other value MUST respond 400.
-- SHALL forward the `interface_type` values to DIAL Core `GET /v1/deployments` when provided.
+- SHALL forward the `interface_type` values to DIAL Core `GET /v1/deployments` as a single comma-joined query parameter (e.g. `interface_type=chat,mcp`) when more than one value is provided, not as repeated query keys — DIAL Core only honors the first occurrence of a repeated key.
 - SHALL call DIAL Core using the `@epam/ai-dial-typescript-sdk` client (`listDeployments`), passing the session access token.
 - SHALL map the DIAL Core response `deployments` array to `DeploymentItemDto[]` using the normalisation rules in the `DeploymentItemDto shape` requirement below.
+- SHALL exclude toolset-typed entries (DIAL Core items with a `toolset` field present) from the mapped response, regardless of the `interface_type` filter applied — toolsets are served exclusively by the dedicated `GET /api/v1/toolsets` listing, whose payload carries fields (`auth_settings`, `endpoint`) that DIAL Core's `/v1/deployments` toolset entries do not include.
 - SHALL respond 200 with `{ deployments: DeploymentItemDto[] }` on success.
 - SHALL respond 502 when DIAL Core returns a non-2xx response.
 - SHALL respond 503 when DIAL Core is unreachable or times out.
@@ -23,7 +24,7 @@ The endpoint:
 #### Scenario: Authenticated user receives all deployments without filter
 
 - **WHEN** `GET /api/v1/deployments` is called with a valid session and no `interface_type` parameter
-- **THEN** the endpoint responds 200 with `{ deployments: DeploymentItemDto[] }` containing all models, applications, and toolsets from DIAL Core
+- **THEN** the endpoint responds 200 with `{ deployments: DeploymentItemDto[] }` containing all models and applications from DIAL Core, with no toolset-typed entries
 
 #### Scenario: Authenticated user filters by single interface type
 
@@ -43,7 +44,14 @@ The endpoint:
 #### Scenario: Authenticated user filters by multiple interface types
 
 - **WHEN** `GET /api/v1/deployments?interface_type=chat&interface_type=mcp` is called with a valid session
-- **THEN** the endpoint responds 200 with deployments matching either `'chat'` or `'mcp'` interface types
+- **THEN** the endpoint forwards `interface_type=chat,mcp` to DIAL Core as one comma-joined parameter
+- **AND** the endpoint responds 200 with deployments matching either `'chat'` or `'mcp'` interface types
+
+#### Scenario: MCP-interface applications are included, MCP toolsets are excluded
+
+- **WHEN** `GET /api/v1/deployments?interface_type=mcp` is called and DIAL Core's response includes both an application with `dial:applicationTypeMcp` and a toolset, both exposing the `mcp` interface
+- **THEN** the response includes the MCP-capable application
+- **AND** the response does NOT include the toolset, even though it matches the requested interface
 
 #### Scenario: Invalid interface_type value returns 400
 
@@ -93,16 +101,16 @@ The endpoint:
 `DeploymentItemDto` SHALL be a strongly typed Swagger DTO that normalises DIAL Core's `ModelOpenAi | ApplicationOpenAi | ToolsetOpenAi` union into a flat structure:
 
 - `id: string` — unique stable identifier from DIAL Core; items without an `id` SHALL be skipped during mapping
-- `displayName: string` — `display_name` from DIAL Core, falling back to `id` when absent
+- `displayName: string | Record<string, string>` — `display_name` from DIAL Core, falling back to `id` when absent; either a plain string or a map of locale code to translated value when the entity has additional locales configured
 - `type: 'model' | 'application' | 'toolset'` — discriminator; derived from DIAL Core `object` field (`"model"` → `'model'`, `"application"` → `'application'`); items with a `toolset` field present SHALL be mapped to `'toolset'`
 - `iconUrl?: string` — `icon_url` from DIAL Core
-- `description?: string` — `description` from DIAL Core
+- `description?: string | Record<string, string>` — `description` from DIAL Core; same plain-string-or-locale-map shape as `displayName`
 - `interfaces?: string[]` — `interfaces` from DIAL Core (list of interface types supported by the deployment)
 - `inputAttachmentTypes?: string[]` — `input_attachment_types` from DIAL Core; omitted when the source field is absent or null
 - `owner?: string` — `owner` from DIAL Core's `DeploymentBase`; forwarded verbatim; omitted when DIAL Core does not provide it
 - `isMy?: boolean` — `true` when the session `bucket` appears as a path segment of the deployment `id` (e.g. `applications/{bucket}/{name}`); `false` otherwise; computed post-cache and never stored in the cache entry
 - `applicationFolder?: string` — parent directory path of the application derived from `id` (everything before the last `/`); set only for `type === 'application'` items whose `id` contains a `/`; absent for root-level applications and all non-application types
-- `features?: DeploymentFeaturesDto` — feature flags from DIAL Core, including the new `mcp?: boolean` field (see below)
+- `features?: DeploymentFeaturesDto` — feature flags from DIAL Core, including the `mcp?: boolean` field, and the `responsesApi?: boolean` / `chatCompletion?: boolean` fields (see below)
 - `reference?: string` — `reference` from DIAL Core's raw deployment payload, forwarded verbatim; omitted when DIAL Core does not provide it. Callers MAY receive a deployment `id` elsewhere in the system (e.g. a stored conversation's `model` value) that actually holds this `reference` value instead of `id` — the frontend is responsible for matching against either field (see `deployment-reference-resolution`)
 
 `DeploymentItemDto.conversationStarters?: ConversationStartersDto` SHALL expose Quick Apps conversation starter settings mapped from `application_properties.conversation_starters`. It SHALL be set only for `type === 'application'` items with at least one valid starter.
@@ -121,6 +129,8 @@ Invalid or blank starters SHALL be omitted. If no valid starters remain, `conver
 - `interfaces` contains the string `'mcp'` (the same per-item signal DIAL Core's own `interface_type=mcp` list filter relies on).
 
 These three signals are not mutually exclusive but are also not reliably combined — real DIAL Core list responses have been observed reporting MCP support through any one of them alone, with the other two absent, depending on the application's configuration.
+
+`DeploymentFeaturesDto.responsesApi?: boolean` SHALL be `true` when the raw DIAL Core list entry has `features.responses_api === true`, and `undefined` (omitted) otherwise — mirroring how `DeploymentFeaturesDetailsDto.responsesApi` is already populated for the deployment-details endpoint (`mapDeploymentFeatures`). `DeploymentFeaturesDto.chatCompletion?: boolean` SHALL be mapped the same way from `features.chat_completion`. Both fields SHALL be read defensively (absent/non-boolean source values map to `undefined`, never throw). Neither field participates in any deployments-list caching key or filtering behavior; they are additive metadata only.
 
 `DeploymentsResponseDto` SHALL wrap this as `{ deployments: DeploymentItemDto[] }`.
 
@@ -152,6 +162,13 @@ The `DeploymentItem` interface in `libs/chat-shared/src/models/deployment.ts` SH
 
 - **WHEN** a source item has no `display_name`
 - **THEN** `DeploymentItemDto.displayName` equals the source `id`
+
+#### Scenario: displayName passes through a locale map unresolved
+
+- **WHEN** a source item's `display_name` from DIAL Core is a map of locale code to translated
+  value rather than a plain string
+- **THEN** `DeploymentItemDto.displayName` carries that map through unchanged — resolving it to
+  a single display string is the frontend's responsibility, not this endpoint's
 
 #### Scenario: inputAttachmentTypes mapped from DIAL Core
 
@@ -197,6 +214,26 @@ The `DeploymentItem` interface in `libs/chat-shared/src/models/deployment.ts` SH
 
 - **WHEN** an application entry has `application_properties.conversation_starters.starters` with no valid `{ title, text }` pairs
 - **THEN** the mapped `DeploymentItemDto` has `conversationStarters` as `undefined`
+
+#### Scenario: Model item with Responses support maps features.responsesApi true
+
+- **WHEN** a DIAL Core `ModelOpenAi` entry has `features.responses_api: true`
+- **THEN** the mapped `DeploymentItemDto` has `features.responsesApi: true`
+
+#### Scenario: Application item with Responses support maps features.responsesApi true
+
+- **WHEN** a DIAL Core `ApplicationOpenAi` entry has `features.responses_api: true`
+- **THEN** the mapped `DeploymentItemDto` has `features.responsesApi: true`
+
+#### Scenario: Item without Responses support omits features.responsesApi
+
+- **WHEN** a DIAL Core entry has no `features.responses_api` field
+- **THEN** the mapped `DeploymentItemDto`'s `features.responsesApi` is `undefined`
+
+#### Scenario: Item with chat_completion support maps features.chatCompletion true
+
+- **WHEN** a DIAL Core entry has `features.chat_completion: true`
+- **THEN** the mapped `DeploymentItemDto` has `features.chatCompletion: true`
 
 #### Scenario: reference mapped from DIAL Core
 

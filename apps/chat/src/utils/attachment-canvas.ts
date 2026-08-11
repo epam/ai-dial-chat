@@ -87,6 +87,19 @@ const networkFailureContent = (url: string): ErrorCanvasContent => ({
  * APIs do not mislabel them. For document types we rely solely on the URL path
  * extension — Google's grounding API labels every web reference (YouTube,
  * Forbes, etc.) as 'text/markdown', so content-type alone is unreliable. */
+/**
+ * Returns the last path segment of `url`, or an empty string when `url` is not
+ * absolute. Used to classify a resource by extension when its display name is
+ * a citation title rather than a file name.
+ */
+export const getUrlFileName = (url: string): string => {
+  try {
+    return new URL(url).pathname.split('/').pop() ?? '';
+  } catch {
+    return '';
+  }
+};
+
 export const isExternalSourcePreviewable = (
   contentType: string,
   url: string,
@@ -94,21 +107,16 @@ export const isExternalSourcePreviewable = (
   if (contentType.startsWith('image/') || contentType.startsWith('audio/')) {
     return true;
   }
-  try {
-    const { pathname } = new URL(url);
-    const fileName = pathname.split('/').pop() ?? '';
-    const dot = fileName.lastIndexOf('.');
-    if (dot === -1) return false;
-    const ext = fileName.slice(dot + 1).toLowerCase();
-    /* 'pdf' is not in TEXT_EXTENSIONS; 'html'/'htm' are not in TEXT_EXTENSIONS (they use HtmlContent), so both must be checked explicitly. */
-    return (
-      ext === FileExtension.PDF ||
-      isTextPreviewable(fileName) ||
-      isHtmlPreviewable(fileName)
-    );
-  } catch {
-    return false;
-  }
+  const fileName = getUrlFileName(url);
+  const dot = fileName.lastIndexOf('.');
+  if (dot === -1) return false;
+  const ext = fileName.slice(dot + 1).toLowerCase();
+  /* 'pdf' is not in TEXT_EXTENSIONS; 'html'/'htm' are not in TEXT_EXTENSIONS (they use HtmlContent), so both must be checked explicitly. */
+  return (
+    ext === FileExtension.PDF ||
+    isTextPreviewable(fileName) ||
+    isHtmlPreviewable(fileName)
+  );
 };
 
 /*
@@ -233,6 +241,19 @@ const resolveAttachmentText = async (
   }
   return undefined;
 };
+
+/**
+ * Whether the attachment carries text `resolveAttachmentText` can resolve —
+ * inline data, a DIAL download URL, or a locally-picked file. Mirrors that
+ * function's source list, so a `null` resolver result can be read as "the text
+ * was fetched and rejected" rather than "there was no text to fetch".
+ */
+export const hasAttachmentTextSource = (
+  attachment: DisplayAttachment,
+): boolean =>
+  attachment.data != null ||
+  resolveDialUrl(attachment) != null ||
+  ('file' in attachment && (attachment as Attachment).file.size > 0);
 
 /**
  * Resolves an image canvas content payload from a DisplayAttachment without

@@ -106,23 +106,23 @@ describe('DeploymentsListingService', () => {
   });
 
   describe('listDeployments', () => {
-    it('maps model, application, and toolset correctly', async () => {
+    it('maps model and application correctly, excluding toolsets', async () => {
       const { service } = makeService();
       const result = await service.listDeployments(
         'user1',
         'token',
         'bucket-1',
       );
-      expect(result.deployments).toHaveLength(3);
+      expect(result.deployments).toHaveLength(2);
       expect(result.deployments.find((d) => d.id === 'gpt-4o')?.type).toBe(
         'model',
       );
       expect(result.deployments.find((d) => d.id === 'my-app')?.type).toBe(
         'application',
       );
-      expect(result.deployments.find((d) => d.id === 'search-tool')?.type).toBe(
-        'toolset',
-      );
+      expect(
+        result.deployments.find((d) => d.id === 'search-tool'),
+      ).toBeUndefined();
     });
 
     it('skips items without id', async () => {
@@ -355,6 +355,36 @@ describe('DeploymentsListingService', () => {
       expect(result.deployments[0].inputAttachmentTypes).toBeUndefined();
     });
 
+    it('maps reference from DIAL Core', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockModel, reference: 'ref-gpt-4o' }],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].reference).toBe('ref-gpt-4o');
+    });
+
+    it('leaves reference undefined when source field is absent', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [mockModel],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].reference).toBeUndefined();
+    });
+
     it('throws BadGatewayException when DIAL Core returns non-2xx', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({
@@ -392,26 +422,6 @@ describe('DeploymentsListingService', () => {
       expect(
         result.deployments.find((d) => d.id === 'my-app')?.isInstalled,
       ).toBe(true);
-      expect(
-        result.deployments.find((d) => d.id === 'search-tool')?.isInstalled,
-      ).toBe(false);
-    });
-
-    it('sets isInstalled=true for installed toolset', async () => {
-      const { service } = makeService({
-        installedIds: { toolsets: ['search-tool'], deployments: [] },
-      });
-      const result = await service.listDeployments(
-        'user1',
-        'token',
-        'bucket-1',
-      );
-      expect(
-        result.deployments.find((d) => d.id === 'search-tool')?.isInstalled,
-      ).toBe(true);
-      expect(
-        result.deployments.find((d) => d.id === 'gpt-4o')?.isInstalled,
-      ).toBe(false);
     });
 
     it('sets isInstalled=false for all items when nothing is installed', async () => {
@@ -541,21 +551,73 @@ describe('DeploymentsListingService', () => {
       expect(result.deployments[0].applicationFolder).toBeUndefined();
     });
 
-    it('leaves applicationFolder absent for toolset deployments', async () => {
+    it('maps features.responsesApi true for a model with responses_api support', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({
         error: false,
         response: { status: 200 },
-        data: [{ ...mockToolset, id: 'folder/search-tool' }],
+        data: [{ ...mockModel, features: { responses_api: true } }],
       });
+
       const result = await service.listDeployments(
         'user1',
         'token',
         'bucket-1',
       );
-      expect(result.deployments[0].applicationFolder).toBeUndefined();
+
+      expect(result.deployments[0].features?.responsesApi).toBe(true);
     });
 
+    it('maps features.responsesApi true for an application with responses_api support', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockApplication, features: { responses_api: true } }],
+      });
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+
+      expect(result.deployments[0].features?.responsesApi).toBe(true);
+    });
+
+    it('omits features.responsesApi when responses_api is absent', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockModel, features: { system_prompt: true } }],
+      });
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+
+      expect(result.deployments[0].features?.responsesApi).toBeUndefined();
+    });
+
+    it('maps features.chatCompletion true when chat_completion is present', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockModel, features: { chat_completion: true } }],
+      });
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+
+      expect(result.deployments[0].features?.chatCompletion).toBe(true);
+    });
     it('maps features.mcp true for an MCP-capable application', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({
@@ -1019,12 +1081,9 @@ describe('DeploymentsListingService', () => {
       expect(warnSpy).toHaveBeenCalledWith(
         'Failed to resolve shared APPLICATION resources: status=503',
       );
-      expect(warnSpy).toHaveBeenCalledWith(
-        'Failed to resolve shared TOOL_SET resources: status=503',
-      );
     });
 
-    it('resolves canEdit and sharedWithMe from exactly one getSharedResources call per resource type', async () => {
+    it('resolves canEdit and sharedWithMe from exactly one getSharedResources call, scoped to APPLICATION', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({
         error: false,
@@ -1047,65 +1106,15 @@ describe('DeploymentsListingService', () => {
 
       await service.listDeployments('user1', 'token', 'BUCKET_HASH');
       /*
-       * One call for APPLICATION-scoped shared resources, one for
-       * TOOL_SET-scoped — getSharedResources is scoped to a single
-       * resourceTypes filter per call, and the combined list mixes both
-       * item types.
+       * Toolsets are excluded from this listing's items entirely, so only
+       * the APPLICATION-scoped shared resources are ever needed here.
        */
-      expect(sdkClient.getSharedResources).toHaveBeenCalledTimes(2);
+      expect(sdkClient.getSharedResources).toHaveBeenCalledOnce();
       expect(sdkClient.getSharedResources).toHaveBeenCalledWith(
         expect.objectContaining({
           body: expect.objectContaining({ resourceTypes: ['APPLICATION'] }),
         }),
       );
-      expect(sdkClient.getSharedResources).toHaveBeenCalledWith(
-        expect.objectContaining({
-          body: expect.objectContaining({ resourceTypes: ['TOOL_SET'] }),
-        }),
-      );
-    });
-
-    it('is true for a READ-only shared toolset in the combined list, using TOOL_SET-scoped resources', async () => {
-      /*
-       * Regression: a toolset id can never appear in the APPLICATION-scoped
-       * shared-resource set, so this only passes if listDeployments fetches
-       * (and uses) a separate TOOL_SET-scoped set for toolset items.
-       */
-      const { service, sdkClient } = makeService();
-      sdkClient.listDeployments.mockResolvedValue({
-        error: false,
-        response: { status: 200 },
-        data: [{ ...mockToolset, id: 'toolsets/OTHER_BUCKET/their-toolset' }],
-      });
-      sdkClient.getSharedResources.mockImplementation(
-        (opts: { body: { resourceTypes: string[] } }) =>
-          Promise.resolve({
-            data: {
-              resources:
-                opts.body.resourceTypes[0] === 'TOOL_SET'
-                  ? [
-                      {
-                        url: 'toolsets/OTHER_BUCKET/their-toolset',
-                        permissions: ['READ'],
-                      },
-                    ]
-                  : [],
-            },
-            error: undefined,
-          }),
-      );
-
-      const result = await service.listDeployments(
-        'user1',
-        'token',
-        'BUCKET_HASH',
-      );
-
-      expect(result.deployments[0]).toMatchObject({
-        isMy: false,
-        sharedWithMe: true,
-        canEdit: false,
-      });
     });
   });
 });

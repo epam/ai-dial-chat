@@ -1,6 +1,9 @@
+import type {
+  DialToolsetDto,
+  ToolsetBodyDto,
+} from '@epam/ai-dial-chat-api-client';
+import { ResponseError } from '@epam/ai-dial-chat-api-client';
 import { validateDeploymentCreationFields } from '@epam/ai-dial-deployment-creation-form';
-import type { DialToolsetDto, ToolsetBodyDto } from '@epam/chat-api-client';
-import { ResponseError } from '@epam/chat-api-client';
 import {
   DEFAULT_TOOLSET_NAME,
   DEFAULT_TOOLSET_VERSION,
@@ -27,6 +30,12 @@ import type {
 } from '../models/toolsets';
 import { getToolset } from '../server-api/toolsets';
 import { ROUTES } from '../types/routes';
+import {
+  composeLocalePayload,
+  decomposeLocalizedFields,
+  PRIMARY_LOCALE,
+  resolveLocalizedText,
+} from './locale';
 
 /**
  * Returns a storage-safe toolset name that does not collide with any existing
@@ -61,6 +70,7 @@ export const getDefaultToolsetForm = (
   iconUrl: '',
   description: '',
   topics: [],
+  otherLocales: [],
   endpoint: '',
   protocol: ToolsetTransportType.Http,
   allowedTools: [],
@@ -536,11 +546,16 @@ const authSettingsDtoToForm = (
 
 /** Maps a loaded toolset DTO (snake_case) into editor form state. */
 export const toolsetDtoToForm = (dto: DialToolsetDto): ToolsetFormData => ({
-  name: dto.displayName ?? '',
+  name: resolveLocalizedText(dto.displayName, PRIMARY_LOCALE),
   version: dto.displayVersion ?? DEFAULT_TOOLSET_VERSION,
   iconUrl: dto.iconUrl ?? '',
-  description: dto.description ?? '',
+  description: resolveLocalizedText(dto.description, PRIMARY_LOCALE),
   topics: dto.descriptionKeywords ?? [],
+  otherLocales: decomposeLocalizedFields(
+    dto.displayName,
+    dto.description,
+    PRIMARY_LOCALE,
+  ),
   endpoint: normalizeReturnedEndpointUrl(dto.endpoint),
   protocol:
     (dto.transport as ToolsetTransportType) ?? ToolsetTransportType.Http,
@@ -587,6 +602,8 @@ export const formToToolsetBody = (
       auth.scopes && auth.scopes.length > 0 ? auth.scopes : undefined;
   }
 
+  const locales = composeLocalePayload(form.otherLocales, PRIMARY_LOCALE);
+
   return {
     name: form.name.trim(),
     version: form.version.trim() || DEFAULT_TOOLSET_VERSION,
@@ -598,6 +615,8 @@ export const formToToolsetBody = (
     allowedTools: form.allowedTools.length > 0 ? form.allowedTools : undefined,
     reference: form.reference,
     authSettings,
+    locales,
+    primaryLocale: locales ? PRIMARY_LOCALE : undefined,
   };
 };
 

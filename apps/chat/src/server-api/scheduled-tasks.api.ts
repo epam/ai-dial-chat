@@ -6,7 +6,7 @@ import type {
   ScheduledTaskDto,
   UpdateScheduledTaskBodyDto,
   UpdatedScheduledTaskDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import type {
   ListScheduledTaskRunsParams,
   ListScheduledTasksParams,
@@ -43,6 +43,16 @@ export const updateScheduledTask = (
     scheduleId,
     updateScheduledTaskBodyDto: body,
   });
+
+export const pauseScheduledTask = (
+  scheduleId: string,
+): Promise<ScheduledTaskDto> =>
+  scheduledTasksApi.pauseScheduledTask({ scheduleId });
+
+export const resumeScheduledTask = (
+  scheduleId: string,
+): Promise<ScheduledTaskDto> =>
+  scheduledTasksApi.resumeScheduledTask({ scheduleId });
 
 export const listScheduledTaskRuns = ({
   scheduleId,

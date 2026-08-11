@@ -1,5 +1,10 @@
 import type { components, operations } from '@epam/ai-dial-typescript-sdk';
 import { BadRequestException } from '@nestjs/common';
+import type { LocalizedText } from '../../common/types/localized-text';
+import {
+  composeLocalizedFields,
+  toLocalizedValue,
+} from '../../common/utils/compose-localized-fields';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { getResourceDisplayNameFallback } from '../../common/utils/resource-name';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
@@ -55,11 +60,11 @@ export interface DialToolsetResource {
 export interface RawDialToolset {
   id: string;
   toolset: string;
-  display_name?: string;
-  displayName?: string;
+  display_name?: LocalizedText;
+  displayName?: LocalizedText;
   display_version?: string;
   displayVersion?: string;
-  description?: string;
+  description?: LocalizedText;
   icon_url?: string;
   iconUrl?: string;
   owner?: string;
@@ -84,13 +89,13 @@ export interface RawDialToolset {
 }
 
 export type DialToolsetSaveBody = {
-  displayName: { plainValue: string };
+  displayName: components['schemas']['LocalizedValue'];
   displayVersion: string;
   endpoint: string;
   transport: ToolsetBodyDto['transport'];
   allowed_tools: string[];
   authSettings: DialAuthSettings;
-  description?: string;
+  description?: LocalizedText;
   iconUrl?: string;
   descriptionKeywords?: string[];
   reference?: string;
@@ -211,15 +216,21 @@ export const toDialToolsetBody = (
     toDialAuthSettings(body.authSettings),
     existingAuthSettings,
   );
+  const { displayName, description } = composeLocalizedFields(
+    body.name,
+    body.description,
+    body.locales,
+    body.primaryLocale,
+  );
   const dialBody: DialToolsetSaveBody = {
-    displayName: { plainValue: body.name },
+    displayName: toLocalizedValue(displayName),
     displayVersion: version,
     endpoint: body.endpoint.trim(),
     transport: body.transport,
     allowed_tools: body.allowedTools ?? [],
     authSettings,
   };
-  if (body.description != null) dialBody.description = body.description;
+  if (description != null) dialBody.description = description;
   if (body.iconUrl != null) dialBody.iconUrl = body.iconUrl;
   if (body.topics != null) dialBody.descriptionKeywords = body.topics;
   if (body.reference != null) dialBody.reference = body.reference;

@@ -8,7 +8,7 @@
  * provider, then this route exposes success/failure through the popup URL and
  * a flow-scoped `BroadcastChannel`.
  */
-import type { ToolsetLoginBodyDto } from '@epam/chat-api-client';
+import type { ToolsetLoginBodyDto } from '@epam/ai-dial-chat-api-client';
 import type { FC } from 'react';
 import { memo, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router';

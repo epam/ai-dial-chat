@@ -1,8 +1,8 @@
+import type { ScheduledTaskRunDto } from '@epam/ai-dial-chat-api-client';
 import {
   ScheduledTaskRunStatus,
   type ScheduledTaskRunItem,
 } from '@epam/ai-dial-scheduled-tasks';
-import type { ScheduledTaskRunDto } from '@epam/chat-api-client';
 import type { TFunction } from 'i18next';
 import { ScheduledTasksI18nKeys } from '../constants/translation-keys';
 
@@ -23,7 +23,7 @@ const isSameDay = (a: Date, b: Date): boolean =>
  * current calendar day, or "Jul 17 at 9:01 AM" otherwise, then appends a
  * `(99s)` duration suffix when `durationSeconds` is present.
  */
-const formatRunTimestamp = (
+export const formatRunTimestamp = (
   startTime: string,
   durationSeconds: number | undefined,
   t: TFunction,

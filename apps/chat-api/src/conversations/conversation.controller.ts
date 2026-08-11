@@ -215,7 +215,7 @@ export class ConversationController {
     @Res() res: Response,
     @Body() dto: SendCompletionDto,
   ): Promise<void> {
-    const { at, bucket, sid } = req.user as SessionUser;
+    const { at, bucket, sid, sub } = req.user as SessionUser;
     const stream = this.conversationService.streamCompletion(
       dto.path,
       at,
@@ -233,6 +233,7 @@ export class ConversationController {
         res.setHeader('Connection', 'keep-alive');
         res.flushHeaders();
       },
+      sub,
       dto.clientChannelId,
     );
 

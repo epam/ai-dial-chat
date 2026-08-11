@@ -1,8 +1,8 @@
-import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   ConversationDeletionFailureDtoCodeEnum,
   type ConversationDeletionResultDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   act,
   fireEvent,
@@ -201,7 +201,7 @@ vi.mock('@tabler/icons-react', () => ({
 }));
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
 vi.mock('react-router', () => ({
@@ -345,6 +345,7 @@ const DELETE_CONFIRM_BUTTON = 'buttons.delete';
 const SHARE_LABEL = 'share.title';
 const PUBLISH_LABEL = 'buttons.publish';
 
+const UNSHARE_BUTTON = 'buttons.removeFromMyList';
 const UNSHARE_CONFIRM_TITLE = 'conversationPanel.unshare.unshareConfirmTitle';
 const UNSHARE_ERROR = 'conversationPanel.unshare.unshareError';
 
@@ -1422,7 +1423,7 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
   });
 });
 
-describe('ConversationPanelView — unshare (shared-with-me delete)', () => {
+describe('ConversationPanelView — unshare (Remove from My List)', () => {
   const sharedConversation = {
     id: 'conv1',
     title: 'Shared chat',
@@ -1436,16 +1437,14 @@ describe('ConversationPanelView — unshare (shared-with-me delete)', () => {
     vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
   });
 
-  it('shared-with-me row menu includes Delete', () => {
+  it('shared-with-me row menu includes Remove from My List', () => {
     vi.mocked(useConversations).mockReturnValue({
       ...baseContextValue,
       conversations: [sharedConversation],
     } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     render(<ConversationPanelView {...defaultProps} />);
-    expect(
-      screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: UNSHARE_BUTTON })).toBeTruthy();
   });
 
   it('owned row menu renders exactly one Delete action (the owner-delete, not an extra unshare one)', () => {
@@ -1455,7 +1454,7 @@ describe('ConversationPanelView — unshare (shared-with-me delete)', () => {
     ).toHaveLength(1);
   });
 
-  it('published-with-me (not shared-with-me) row menu does not include Delete', () => {
+  it('published-with-me (not shared-with-me) row menu does not include Remove from My List', () => {
     vi.mocked(useConversations).mockReturnValue({
       ...baseContextValue,
       conversations: [
@@ -1464,21 +1463,17 @@ describe('ConversationPanelView — unshare (shared-with-me delete)', () => {
     } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     render(<ConversationPanelView {...defaultProps} />);
-    expect(
-      screen.queryByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-    ).toBeNull();
+    expect(screen.queryByRole('button', { name: UNSHARE_BUTTON })).toBeNull();
   });
 
-  it('clicking Delete opens confirmation without calling the discard API', () => {
+  it('clicking Remove from My List opens confirmation without calling the discard API', () => {
     vi.mocked(useConversations).mockReturnValue({
       ...baseContextValue,
       conversations: [sharedConversation],
     } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(
-      screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
 
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByText(UNSHARE_CONFIRM_TITLE)).toBeTruthy();
@@ -1498,12 +1493,10 @@ describe('ConversationPanelView — unshare (shared-with-me delete)', () => {
     } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(
-      screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
     const dialog = screen.getByRole('dialog');
     const confirmButton = within(dialog).getByRole('button', {
-      name: DELETE_CONFIRM_BUTTON,
+      name: UNSHARE_BUTTON,
     });
 
     fireEvent.click(confirmButton);
@@ -1539,14 +1532,12 @@ describe('ConversationPanelView — unshare (shared-with-me delete)', () => {
     );
     mockRefresh.mockClear();
 
-    /* sharedConversation is listed first, so its unshare-Delete button is the first match. */
-    fireEvent.click(
-      screen.getAllByRole('button', { name: DELETE_CONFIRM_BUTTON })[0],
-    );
+    /* sharedConversation is listed first, so its Remove from My List button is the first match. */
+    fireEvent.click(screen.getAllByRole('button', { name: UNSHARE_BUTTON })[0]);
     const dialog = screen.getByRole('dialog');
     await act(async () => {
       fireEvent.click(
-        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+        within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
       );
     });
 
@@ -1573,13 +1564,11 @@ describe('ConversationPanelView — unshare (shared-with-me delete)', () => {
       <ConversationPanelView {...defaultProps} activeConversationId="conv1" />,
     );
 
-    fireEvent.click(
-      screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
     const dialog = screen.getByRole('dialog');
     await act(async () => {
       fireEvent.click(
-        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+        within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
       );
     });
 
@@ -1598,13 +1587,11 @@ describe('ConversationPanelView — unshare (shared-with-me delete)', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
 
-    fireEvent.click(
-      screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
     const dialog = screen.getByRole('dialog');
     await act(async () => {
       fireEvent.click(
-        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+        within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
       );
     });
 
@@ -1625,13 +1612,11 @@ describe('ConversationPanelView — unshare (shared-with-me delete)', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
 
-    fireEvent.click(
-      screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
     const dialog = screen.getByRole('dialog');
     await act(async () => {
       fireEvent.click(
-        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+        within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
       );
     });
 
@@ -1647,9 +1632,7 @@ describe('ConversationPanelView — unshare (shared-with-me delete)', () => {
     } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(
-      screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
     const dialog = screen.getByRole('dialog');
     fireEvent.click(
       within(dialog).getByRole('button', { name: CANCEL_BUTTON }),

@@ -44,6 +44,14 @@ export interface ListScheduledTasksRequest {
   sort?: ListScheduledTasksSortEnum;
 }
 
+export interface PauseScheduledTaskRequest {
+  scheduleId: string;
+}
+
+export interface ResumeScheduledTaskRequest {
+  scheduleId: string;
+}
+
 export interface UpdateScheduledTaskRequest {
   scheduleId: string;
   updateScheduledTaskBodyDto: UpdateScheduledTaskBodyDto;
@@ -273,6 +281,112 @@ export class ScheduledTasksApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ListScheduledTasksResponseDto> {
     const response = await this.listScheduledTasksRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Pauses a DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.
+   * Pause a scheduled task
+   */
+  async pauseScheduledTaskRaw(
+    requestParameters: PauseScheduledTaskRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ScheduledTaskDto>> {
+    if (requestParameters['scheduleId'] == null) {
+      throw new runtime.RequiredError(
+        'scheduleId',
+        'Required parameter "scheduleId" was null or undefined when calling pauseScheduledTask().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/scheduled-tasks/{scheduleId}/pause`;
+    urlPath = urlPath.replace(
+      `{${'scheduleId'}}`,
+      encodeURIComponent(String(requestParameters['scheduleId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ScheduledTaskDto>(response);
+  }
+
+  /**
+   * Pauses a DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.
+   * Pause a scheduled task
+   */
+  async pauseScheduledTask(
+    requestParameters: PauseScheduledTaskRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ScheduledTaskDto> {
+    const response = await this.pauseScheduledTaskRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Resumes a paused DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.
+   * Resume a scheduled task
+   */
+  async resumeScheduledTaskRaw(
+    requestParameters: ResumeScheduledTaskRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ScheduledTaskDto>> {
+    if (requestParameters['scheduleId'] == null) {
+      throw new runtime.RequiredError(
+        'scheduleId',
+        'Required parameter "scheduleId" was null or undefined when calling resumeScheduledTask().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/scheduled-tasks/{scheduleId}/resume`;
+    urlPath = urlPath.replace(
+      `{${'scheduleId'}}`,
+      encodeURIComponent(String(requestParameters['scheduleId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ScheduledTaskDto>(response);
+  }
+
+  /**
+   * Resumes a paused DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.
+   * Resume a scheduled task
+   */
+  async resumeScheduledTask(
+    requestParameters: ResumeScheduledTaskRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ScheduledTaskDto> {
+    const response = await this.resumeScheduledTaskRaw(
       requestParameters,
       initOverrides,
     );

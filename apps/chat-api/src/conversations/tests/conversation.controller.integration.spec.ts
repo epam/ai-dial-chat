@@ -14,6 +14,7 @@ import type {
 } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ScheduledTaskUnreadService } from '../../scheduled-task-unread/scheduled-task-unread.service';
 import { UserConfigService } from '../../user-config/user-config.service';
@@ -24,6 +25,8 @@ import {
 import { ConversationNamingService } from '../conversation-naming.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
+import { ChatCompletionsAdapter } from '../generation/chat-completions.adapter';
+import { ResponsesAdapter } from '../generation/responses.adapter';
 import { ConversationLifecycleService } from '../lifecycle/conversation-lifecycle.service';
 import { ConversationListingService } from '../listing/conversation-listing.service';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
@@ -255,9 +258,15 @@ describe('ConversationController (integration)', () => {
           UserConfigService,
           ScheduledTaskUnreadService,
           ConversationGenerationService,
+          ChatCompletionsAdapter,
+          ResponsesAdapter,
           {
             provide: ConversationNamingService,
             useValue: { maybeRenameAfterFirstReply: vi.fn() },
+          },
+          {
+            provide: DeploymentsService,
+            useValue: { getDeploymentDetails: vi.fn() },
           },
         ],
       }).compile();

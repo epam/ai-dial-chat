@@ -6,7 +6,7 @@ import type {
   SkillListResponseDto,
   SkillOperationResultDto,
   SkillUploadResponseDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { skillsApi } from './api-client';
 
 export const listSkills = (

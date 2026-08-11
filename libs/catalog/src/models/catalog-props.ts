@@ -135,6 +135,13 @@ export interface CatalogProps {
    */
   onDelete?: (item: CatalogItem) => Promise<void> | void;
   /**
+   * Called when removal is confirmed via the details panel's confirmation
+   * popup, for an item shared with the current user (`sharedWithMe: true`).
+   * May return a promise; the popup shows a loading state and prevents
+   * duplicate submission while pending.
+   */
+  onUnshare?: (item: CatalogItem) => Promise<void> | void;
+  /**
    * Renders the Share popover content anchored to the Share button in the
    * details panel. When provided, clicking Share opens this popover instead
    * of calling `onShare`.

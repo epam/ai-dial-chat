@@ -1,7 +1,10 @@
+import {
+  DeploymentItemDto,
+  DialToolsetDto,
+} from '@epam/ai-dial-chat-api-client';
 import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
 import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import { DeploymentItemDto, DialToolsetDto } from '@epam/chat-api-client';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { ReactNode, useEffect, useState, type Context } from 'react';
 import { MemoryRouter, useNavigate } from 'react-router';

@@ -5,92 +5,33 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  Skeleton,
-  SkeletonVariant,
+  DialSwitch,
   Spinner,
   GhostButton,
   GhostIconButton,
   NeutralButton,
 } from '@epam/ai-dial-ui-kit';
-import {
-  IconAlertTriangle,
-  IconArrowLeft,
-  IconCircleCheck,
-  IconCircleX,
-  IconPencilMinus,
-} from '@tabler/icons-react';
-import { type FC, type KeyboardEvent, useEffect, useRef } from 'react';
+import { IconArrowLeft, IconPencilMinus } from '@tabler/icons-react';
+import { type FC } from 'react';
 import type { ScheduledTaskDetailViewProps } from '../../models/scheduled-task-detail-view-props';
-import { ScheduledTaskRunStatus } from '../../types/scheduled-task-run-status';
+import { ScheduledTaskRunHistoryList } from '../ScheduledTaskRunHistoryList/ScheduledTaskRunHistoryList';
 import styles from './ScheduledTaskDetailView.module.scss';
-
-/* IntersectionObserver against a non-document scroll root is unreliable, so a
- * plain scroll listener on the nearest scrollable ancestor is used instead
- * (same approach as libs/catalog/src/components/ListView/ListView.tsx and
- * ScheduledTasks). Duplicated locally rather than imported cross-lib to keep
- * libs/scheduled-tasks self-contained. */
-const findScrollParent = (el: Element | null): Element | null => {
-  if (!el || el === document.body) return null;
-  const { overflow, overflowY } = getComputedStyle(el);
-  if (
-    overflow === 'auto' ||
-    overflow === 'scroll' ||
-    overflowY === 'auto' ||
-    overflowY === 'scroll'
-  ) {
-    return el;
-  }
-  return findScrollParent(el.parentElement);
-};
-
-const RunStatusIcon: FC<{ status: ScheduledTaskRunStatus }> = ({ status }) => {
-  switch (status) {
-    case ScheduledTaskRunStatus.Success:
-      return (
-        <IconCircleCheck
-          size={DIAL_ICON_SIZE.SM}
-          className={styles.successIcon}
-          aria-hidden
-        />
-      );
-    case ScheduledTaskRunStatus.Error:
-      return (
-        <IconCircleX
-          size={DIAL_ICON_SIZE.SM}
-          className={styles.errorIcon}
-          aria-hidden
-        />
-      );
-    case ScheduledTaskRunStatus.InProgress:
-      return (
-        <span aria-hidden>
-          <Spinner size={DIAL_ICON_SIZE.SM} />
-        </span>
-      );
-    case ScheduledTaskRunStatus.Missed:
-      return (
-        <IconAlertTriangle
-          size={DIAL_ICON_SIZE.SM}
-          className={styles.missedIcon}
-          aria-hidden
-        />
-      );
-    default:
-      return null;
-  }
-};
 
 /**
  * Presentational Scheduled Task detail page: a back-navigable header, a
- * Details/Configuration body, and a paginated, infinite-scroll History
- * panel. Field values, runs, and markdown rendering are all supplied by the
- * host app; this component holds no state of its own and performs no
- * routing, i18n, or network calls.
+ * Details/Configuration body, and a paginated History panel ("Show more"
+ * button, not scroll-triggered). Field values, runs, and markdown rendering
+ * are all supplied by the host app; this component holds no state of its own
+ * and performs no routing, i18n, or network calls.
  */
 export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   labels,
   onBack,
   onEdit,
+  isActive,
+  isActiveUpdating = false,
+  isActiveDisabled = false,
+  onActiveChange,
   displayName,
   isLoading = false,
   error,
@@ -135,31 +76,21 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
     '--stdv-history-bg': colors?.historyCardBackground,
   });
 
-  const historySentinelRef = useRef<HTMLLIElement>(null);
-
-  useEffect(() => {
-    const sentinel = historySentinelRef.current;
-    if (!sentinel || !onRunsLoadMore) return;
-
-    const scrollRoot = findScrollParent(sentinel.parentElement);
-    if (!scrollRoot) return;
-
-    const checkVisibility = () => {
-      if (runsIsLoadingMore || runsIsLoading || !runsHasMore) return;
-      const rootRect = scrollRoot.getBoundingClientRect();
-      const sentinelRect = sentinel.getBoundingClientRect();
-      if (
-        sentinelRect.top < rootRect.bottom &&
-        sentinelRect.bottom > rootRect.top
-      ) {
-        onRunsLoadMore();
-      }
-    };
-
-    scrollRoot.addEventListener('scroll', checkVisibility, { passive: true });
-    checkVisibility();
-    return () => scrollRoot.removeEventListener('scroll', checkVisibility);
-  }, [runsHasMore, runsIsLoadingMore, runsIsLoading, onRunsLoadMore]);
+  const historyFooter =
+    onRunsLoadMore && runsHasMore && labels.historyShowMoreLabel ? (
+      <li
+        className={mergeClasses(
+          'sticky bottom-0 z-10 rounded-b-xl px-6 pb-5 pt-2',
+          styles.historyCard,
+        )}
+      >
+        <GhostButton
+          label={labels.historyShowMoreLabel}
+          onClick={onRunsLoadMore}
+          disabled={runsIsLoadingMore}
+        />
+      </li>
+    ) : undefined;
 
   const renderInstructionsContent = (markdown: string) =>
     renderInstructions ? (
@@ -167,101 +98,6 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
     ) : (
       <MDMessageViewer content={markdown} />
     );
-
-  const renderRunRow = (run: (typeof runs)[number]) => {
-    const statusLabel = labels.runStatusLabels[run.status];
-    const accessibleName = `${statusLabel} ${run.timestampLabel}`;
-    const isClickable = Boolean(onRunClick);
-
-    return (
-      <li
-        key={run.id}
-        {...(isClickable
-          ? {
-              role: 'button',
-              tabIndex: 0,
-              onClick: () => onRunClick?.(run.id),
-              onKeyDown: (event: KeyboardEvent) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  onRunClick?.(run.id);
-                }
-              },
-            }
-          : {})}
-        aria-label={accessibleName}
-        className={mergeClasses(
-          'flex h-8 items-center justify-between gap-2 rounded-full pe-2 ps-5',
-          isClickable && 'cursor-pointer',
-        )}
-      >
-        <span className={mergeClasses(runTimestampClassName, 'truncate')}>
-          {run.timestampLabel}
-        </span>
-        <span className="flex h-8 w-14 shrink-0 items-center justify-end">
-          <RunStatusIcon status={run.status} />
-        </span>
-      </li>
-    );
-  };
-
-  const renderHistorySkeletons = (count: number) =>
-    Array.from({ length: count }, (_, index) => (
-      <li
-        key={`history-skeleton-${index}`}
-        aria-hidden="true"
-        className="flex h-8 items-center justify-between gap-2 pe-2 ps-5"
-      >
-        <Skeleton
-          variant={SkeletonVariant.Rectangular}
-          width="160px"
-          height="16px"
-        />
-        <Skeleton
-          variant={SkeletonVariant.Rectangular}
-          width="16px"
-          height="16px"
-          className="shrink-0 rounded-full"
-        />
-      </li>
-    ));
-
-  const renderHistoryContent = () => {
-    if (runsIsLoading && runs.length === 0) {
-      return (
-        <ul aria-label={labels.historyTitle}>
-          {renderHistorySkeletons(runsSkeletonCount)}
-        </ul>
-      );
-    }
-
-    if (runsError) {
-      return (
-        <div className="flex flex-col items-start gap-3">
-          <p className={mergeClasses(fieldValueClassName, styles.subtitleText)}>
-            {labels.historyErrorLabel}
-          </p>
-          <GhostButton label={labels.historyRetryLabel} onClick={onRunsRetry} />
-        </div>
-      );
-    }
-
-    if (runs.length === 0) {
-      return (
-        <p className={mergeClasses(fieldValueClassName, styles.subtitleText)}>
-          {labels.historyEmptyLabel}
-        </p>
-      );
-    }
-
-    return (
-      <ul aria-label={labels.historyTitle}>
-        {runs.map(renderRunRow)}
-        {runsIsLoadingMore && renderHistorySkeletons(runsSkeletonCount)}
-        <li ref={historySentinelRef} aria-hidden className="h-px w-full" />
-      </ul>
-    );
-  };
 
   return (
     <div
@@ -294,17 +130,51 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
           </h1>
         </div>
 
-        {onEdit && (
-          <NeutralButton
-            label={labels.editButtonLabel}
-            iconBefore={
-              <IconPencilMinus size={DIAL_ICON_SIZE.SM} aria-hidden />
-            }
-            onClick={onEdit}
-            className="shrink-0"
-          />
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {isActive !== undefined && (
+            <>
+              <span className={fieldValueClassName}>
+                {labels.activeStatusLabel}
+              </span>
+              {/*
+               * DialSwitch's own root already carries role="switch" but no
+               * aria-checked (a UI-kit gap — see AGENTS.md a11y "Scope
+               * boundary"). This wrapper adds the missing checked-state
+               * signal at the group level rather than editing vendor code.
+               */}
+              <div
+                role="group"
+                aria-checked={isActive}
+                aria-label={labels.activeStatusLabel}
+              >
+                <DialSwitch
+                  switchId="scheduled-task-active-switch"
+                  isOn={isActive}
+                  disabled={isActiveUpdating || isActiveDisabled}
+                  onChange={(value) => onActiveChange?.(value)}
+                />
+              </div>
+            </>
+          )}
+
+          {onEdit && (
+            <NeutralButton
+              label={labels.editButtonLabel}
+              iconBefore={
+                <IconPencilMinus size={DIAL_ICON_SIZE.SM} aria-hidden />
+              }
+              onClick={onEdit}
+              className="shrink-0"
+            />
+          )}
+        </div>
       </div>
+
+      {labels.activeStatusAnnouncement != null && (
+        <span role="status" aria-live="polite" className="sr-only">
+          {labels.activeStatusAnnouncement}
+        </span>
+      )}
 
       {isLoading && (
         <div className="flex flex-1 items-center justify-center">
@@ -389,27 +259,60 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
           <div className="flex w-full justify-center p-6 desktop:w-auto desktop:items-start">
             <div
               className={mergeClasses(
-                'flex w-full flex-col gap-4 overflow-y-auto rounded-xl px-6 py-5 shadow-md desktop:max-h-[70vh] desktop:w-[360px]',
+                'flex max-h-[70vh] w-full flex-col overflow-y-auto rounded-xl shadow-md desktop:w-[360px]',
                 styles.historyCard,
               )}
             >
-              <h2 className={sectionTitleClassName}>{labels.historyTitle}</h2>
-              {nextRunLabel && (
-                <p
-                  className={mergeClasses(
-                    runTimestampClassName,
-                    styles.subtitleText,
-                  )}
-                >
-                  {nextRunLabel}
-                </p>
-              )}
-              {labels.historyLoadingMoreLabel && (
-                <span role="status" aria-live="polite" className="sr-only">
-                  {runsIsLoadingMore ? labels.historyLoadingMoreLabel : ''}
-                </span>
-              )}
-              {renderHistoryContent()}
+              <div
+                className={mergeClasses(
+                  'sticky top-0 z-10 flex flex-col gap-1 rounded-t-xl px-6 pb-2 pt-5',
+                  styles.historyCard,
+                )}
+              >
+                <h2 className={sectionTitleClassName}>{labels.historyTitle}</h2>
+                {nextRunLabel && (
+                  <p
+                    className={mergeClasses(
+                      runTimestampClassName,
+                      styles.subtitleText,
+                    )}
+                  >
+                    {nextRunLabel}
+                  </p>
+                )}
+                {labels.historyLoadingMoreLabel && (
+                  <span role="status" aria-live="polite" className="sr-only">
+                    {runsIsLoadingMore ? labels.historyLoadingMoreLabel : ''}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-1 flex-col gap-4 px-6 pb-2">
+                <ScheduledTaskRunHistoryList
+                  items={runs}
+                  isLoading={runsIsLoading}
+                  isLoadingMore={runsIsLoadingMore}
+                  skeletonCount={runsSkeletonCount}
+                  error={runsError}
+                  onRetry={onRunsRetry}
+                  onRunClick={onRunClick}
+                  labels={{
+                    historyTitle: labels.historyTitle,
+                    emptyLabel: labels.historyEmptyLabel,
+                    errorLabel: labels.historyErrorLabel,
+                    retryLabel: labels.historyRetryLabel,
+                    runStatusLabels: labels.runStatusLabels,
+                  }}
+                  footer={historyFooter}
+                  styles={{
+                    typography: { runTimestampClassName },
+                    colors: {
+                      successIconColor: colors?.successIconColor,
+                      errorIconColor: colors?.errorIconColor,
+                      missedIconColor: colors?.missedIconColor,
+                    },
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>

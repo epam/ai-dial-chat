@@ -1,14 +1,14 @@
+import type {
+  CreateFolderResponseDto,
+  FileMetadataResponseDto,
+  ListFilesItemDto,
+} from '@epam/ai-dial-chat-api-client';
+import { ListFilesItemDtoNodeTypeEnum } from '@epam/ai-dial-chat-api-client';
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import {
   DialFileManagerTabs,
   DialFileNodeType,
 } from '@epam/ai-dial-react-file-manager';
-import type {
-  CreateFolderResponseDto,
-  FileMetadataResponseDto,
-  ListFilesItemDto,
-} from '@epam/chat-api-client';
-import { ListFilesItemDtoNodeTypeEnum } from '@epam/chat-api-client';
 import type {
   FileUploadBatchState,
   FileUploadEntry,

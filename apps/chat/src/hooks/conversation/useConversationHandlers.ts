@@ -1,3 +1,7 @@
+import type {
+  ConversationResponseDto,
+  SendCompletionDtoModeEnum,
+} from '@epam/ai-dial-chat-api-client';
 import {
   type Attachment,
   type Conversation,
@@ -7,10 +11,6 @@ import {
   MessageRole,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import type {
-  ConversationResponseDto,
-  SendCompletionDtoModeEnum,
-} from '@epam/chat-api-client';
 import {
   type Dispatch,
   type MutableRefObject,

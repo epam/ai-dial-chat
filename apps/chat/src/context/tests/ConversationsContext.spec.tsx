@@ -1,11 +1,11 @@
 import {
+  ConversationDeletionFailureDtoCodeEnum,
+  type ConversationDeletionResultDto,
+} from '@epam/ai-dial-chat-api-client';
+import {
   OverlayEventType,
   OverlayRequestType,
 } from '@epam/ai-dial-chat-overlay';
-import {
-  ConversationDeletionFailureDtoCodeEnum,
-  type ConversationDeletionResultDto,
-} from '@epam/chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
