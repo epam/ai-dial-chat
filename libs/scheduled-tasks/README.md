@@ -90,7 +90,7 @@ import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
 
 ### ScheduledTaskCreateForm
 
-Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a model picker, a description field, and a markdown Instructions editor. Field values, validation errors, and model options are all supplied by the host app; this component holds no state of its own.
+Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a Model or Agent field, a description field, and a markdown Instructions editor. Field values and validation errors are supplied by the host app; the Model or Agent field's control itself is a fully-composed `modelSelector` element the host renders — the lib only wraps it with the field's required label and error message. This component holds no state of its own.
 
 ```tsx
 import {
@@ -115,7 +115,7 @@ import {
     prompt: '',
   }}
   errors={{}}
-  modelOptions={[{ id: 'gpt-4o', label: 'GPT-4o' }]}
+  modelSelector={<button type="button">Select Model or Agent</button>}
   onFieldChange={(field, value) => {}}
   onBack={() => {}}
   onCancel={() => {}}

@@ -558,7 +558,7 @@
       "endDatePlaceholder": "Pick end date",
       "endDateBeforeStartError": "End date must be after start date",
       "modelOrAgentLabel": "Model or Agent",
-      "modelPlaceholder": "Select a model",
+      "modelPlaceholder": "Select Model or Agent",
       "modelRequired": "Model is required",
       "descriptionLabel": "Description",
       "descriptionMaxLengthError": "Description must be 500 characters or fewer",

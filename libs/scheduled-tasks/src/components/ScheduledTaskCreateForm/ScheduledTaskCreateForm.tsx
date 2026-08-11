@@ -5,6 +5,7 @@ import {
   Textarea,
   Calendar,
   CalendarMode,
+  Label,
   NumberInput,
   Spinner,
   LazyMarkdownEditor,
@@ -39,17 +40,18 @@ type MarkdownEditorTheme = ComponentProps<typeof MarkdownEditor>['theme'];
 /**
  * Presentational create-task form: a back-navigable header (Cancel/Save
  * actions) and a two-column Details/Configuration body. Details holds
- * display name, description, the schedule fields, and the model picker;
- * Configuration holds the markdown Instructions editor. Field values,
- * validation errors, and model options are all supplied by the host app;
- * this component holds no state of its own and performs no routing, i18n,
- * or network calls.
+ * display name, description, the schedule fields, and the Model or Agent
+ * field; Configuration holds the markdown Instructions editor. Field values
+ * and validation errors are supplied by the host app, and the Model or
+ * Agent field's control is a fully-composed `modelSelector` element the host
+ * renders; this component holds no state of its own and performs no
+ * routing, i18n, or network calls.
  */
 export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   labels,
   values,
   errors,
-  modelOptions,
+  modelSelector,
   onFieldChange,
   onBack,
   onCancel,
@@ -148,17 +150,24 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             }
           />
 
-          <Select
-            labelProps={{ label: labels.modelOrAgentLabel, required: true }}
-            value={values.modelId}
-            placeholder={labels.modelPlaceholder}
-            onChange={(next) => onFieldChange('modelId', next as string)}
-            error={errors.modelId}
-            options={modelOptions.map((option) => ({
-              value: option.id,
-              label: option.label,
-            }))}
-          />
+          <div className="flex flex-col gap-1">
+            <Label
+              id="scheduled-task-model-label"
+              label={labels.modelOrAgentLabel}
+              required
+            />
+            {modelSelector}
+            {errors.modelId && (
+              <p
+                className={mergeClasses(
+                  instructionsErrorClassName,
+                  styles.instructionsError,
+                )}
+              >
+                {errors.modelId}
+              </p>
+            )}
+          </div>
 
           <div className="flex flex-col gap-3">
             <Select

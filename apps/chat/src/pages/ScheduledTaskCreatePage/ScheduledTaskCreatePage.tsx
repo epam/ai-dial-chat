@@ -8,6 +8,7 @@ import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
+import DeploymentSelectorFieldTrigger from '../../components/DeploymentSelector/DeploymentSelectorFieldTrigger';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { ScheduledTaskCreateQuery } from '../../constants/scheduled-tasks';
 import {
@@ -16,19 +17,18 @@ import {
   ScheduledTasksI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
-import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
-import { useLanguage } from '../../hooks/language/useLanguage';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import { createScheduledTask } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
-import { resolveLocalizedText } from '../../utils/locale';
 import { validateScheduledTaskForm } from '../../utils/scheduled-task-form-validation';
 import { mapFormValuesToCreateBody } from '../../utils/scheduled-task-trigger';
 import NotFoundPage from '../NotFound/NotFound';
+
+const MODEL_FIELD_LABELLED_BY_ID = 'scheduled-task-model-label';
 
 const MAX_ASCII_CONTROL_CODE = 31;
 const ASCII_DELETE_CODE = 127;
@@ -68,12 +68,10 @@ const resolveReturnUrl = (candidate: string | null): string => {
 
 const ScheduledTaskCreatePage: FC = () => {
   const { t } = useTranslation();
-  const { language } = useLanguage();
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { items: deploymentItems } = useDeployments();
   const { showNotification } = useNotification();
   const { currentTheme } = useTheme();
 
@@ -89,15 +87,6 @@ const ScheduledTaskCreatePage: FC = () => {
     () =>
       resolveReturnUrl(searchParams.get(ScheduledTaskCreateQuery.ReturnUrl)),
     [searchParams],
-  );
-
-  const modelOptions = useMemo(
-    () =>
-      deploymentItems.map((item) => ({
-        id: item.id,
-        label: resolveLocalizedText(item.displayName, language),
-      })),
-    [deploymentItems, language],
   );
 
   const labels = useMemo(
@@ -151,7 +140,6 @@ const ScheduledTaskCreatePage: FC = () => {
       endDateLabel: t(ScheduledTasksI18nKeys.CreateEndDateLabel),
       endDatePlaceholder: t(ScheduledTasksI18nKeys.CreateEndDatePlaceholder),
       modelOrAgentLabel: t(ScheduledTasksI18nKeys.CreateModelOrAgentLabel),
-      modelPlaceholder: t(ScheduledTasksI18nKeys.CreateModelPlaceholder),
       descriptionLabel: t(ScheduledTasksI18nKeys.CreateDescriptionLabel),
       instructionsLabel: t(ScheduledTasksI18nKeys.CreateInstructionsLabel),
       cancelButtonLabel: t(ButtonsI18nKeys.Cancel),
@@ -174,6 +162,11 @@ const ScheduledTaskCreatePage: FC = () => {
       });
     },
     [],
+  );
+
+  const handleModelSelect = useCallback(
+    (id: string) => handleFieldChange('modelId', id),
+    [handleFieldChange],
   );
 
   const handleCancel = useCallback(() => {
@@ -223,7 +216,16 @@ const ScheduledTaskCreatePage: FC = () => {
       labels={labels}
       values={values}
       errors={errors}
-      modelOptions={modelOptions}
+      modelSelector={
+        <DeploymentSelectorFieldTrigger
+          selectedId={values.modelId || null}
+          onSelect={handleModelSelect}
+          placeholder={t(ScheduledTasksI18nKeys.CreateModelPlaceholder)}
+          labelledById={MODEL_FIELD_LABELLED_BY_ID}
+          isDisabled={isSubmitting}
+          isInvalid={Boolean(errors.modelId)}
+        />
+      }
       onFieldChange={handleFieldChange}
       onBack={handleBack}
       onCancel={handleCancel}

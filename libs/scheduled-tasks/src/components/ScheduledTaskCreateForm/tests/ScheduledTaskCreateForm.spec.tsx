@@ -170,6 +170,20 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </label>
   ),
   Spinner: () => <div>Loading</div>,
+  Label: ({
+    id,
+    label,
+    required,
+  }: {
+    id?: string;
+    label: ReactNode;
+    required?: boolean;
+  }) => (
+    <span id={id}>
+      {label}
+      {required && ' *'}
+    </span>
+  ),
   LazyMarkdownEditor: () =>
     Promise.resolve({
       MarkdownEditor: ({
@@ -228,7 +242,6 @@ const renderForm = async (
         endDateLabel: 'End date',
         endDatePlaceholder: 'Pick end date',
         modelOrAgentLabel: 'Model or Agent',
-        modelPlaceholder: 'Select a model',
         descriptionLabel: 'Description',
         instructionsLabel: 'Instructions',
         cancelButtonLabel: 'Cancel',
@@ -236,7 +249,7 @@ const renderForm = async (
       }}
       values={baseValues}
       errors={{}}
-      modelOptions={[{ id: 'gpt-4o', label: 'GPT-4o' }]}
+      modelSelector={<button type="button">Select Model or Agent</button>}
       onFieldChange={vi.fn()}
       onBack={vi.fn()}
       onCancel={vi.fn()}
@@ -249,6 +262,28 @@ const renderForm = async (
 };
 
 describe('ScheduledTaskCreateForm', () => {
+  it('renders the host-supplied modelSelector verbatim', async () => {
+    await renderForm({
+      modelSelector: <button type="button">Custom model trigger</button>,
+    });
+
+    expect(
+      screen.getByRole('button', { name: 'Custom model trigger' }),
+    ).toBeTruthy();
+  });
+
+  it('wraps modelSelector with the required Model or Agent label', async () => {
+    await renderForm();
+
+    expect(screen.getByText('Model or Agent *')).toBeTruthy();
+  });
+
+  it('renders errors.modelId below the modelSelector slot', async () => {
+    await renderForm({ errors: { modelId: 'Model is required' } });
+
+    expect(screen.getByText('Model is required')).toBeTruthy();
+  });
+
   it('renders display name field with label', async () => {
     await renderForm();
 

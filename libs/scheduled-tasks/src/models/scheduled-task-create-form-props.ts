@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { ScheduledTaskRepeat } from '../types/scheduled-task-schedule';
 
 /** A single option rendered in the Repeat dropdown. */
@@ -5,14 +6,6 @@ export interface ScheduledTaskRepeatOption {
   /** Stable identifier for this option, passed back via `onFieldChange('repeat', key)`. */
   key: ScheduledTaskRepeat;
   /** Localized display label for this repeat option. */
-  label: string;
-}
-
-/** A single model option rendered in the model dropdown. */
-export interface ScheduledTaskCreateFormModelOption {
-  /** Deployment id sent to the BFF as `model`. */
-  id: string;
-  /** Localized display label shown in the dropdown. */
   label: string;
 }
 
@@ -110,10 +103,8 @@ export interface ScheduledTaskCreateFormLabels {
   endDateLabel: string;
   /** Placeholder shown in the end-date picker when unset. */
   endDatePlaceholder: string;
-  /** Accessible label for the model dropdown. */
+  /** Label for the Model or Agent field, rendered above `modelSelector`. */
   modelOrAgentLabel: string;
-  /** Placeholder shown in the model dropdown trigger when no model is selected. */
-  modelPlaceholder: string;
   /** Description textarea label. */
   descriptionLabel: string;
   /** Accessible label for the Instructions markdown editor. */
@@ -171,8 +162,12 @@ export interface ScheduledTaskCreateFormProps {
   values: ScheduledTaskCreateFormValues;
   /** Current per-field validation errors. */
   errors: ScheduledTaskCreateFormErrors;
-  /** Deployment options rendered in the model dropdown. */
-  modelOptions: ScheduledTaskCreateFormModelOption[];
+  /**
+   * Fully-composed deployment-selector control rendered in the Model or
+   * Agent field, in place of a lib-owned control. Opaque to the lib — it is
+   * rendered verbatim, wrapped by the lib's own required-label/error markup.
+   */
+  modelSelector: ReactNode;
   /** Called with the changed field key and its new value whenever any field is edited. */
   onFieldChange: <K extends keyof ScheduledTaskCreateFormValues>(
     field: K,
