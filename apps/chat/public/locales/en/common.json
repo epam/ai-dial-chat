@@ -201,6 +201,7 @@
   "Failed to add {{entityType}} to my workspace": "Failed to add {{entityType}} to my workspace",
   "Failed to delete toolset": "Failed to delete toolset",
   "Failed to sign in toolset": "Failed to sign in toolset",
+  "Failed to sign in toolset: {{details}}": "Failed to sign in toolset: {{details}}",
   "Failed to sign out toolset": "Failed to sign out toolset",
   "Publishing failed. You are only allowed to publish conversations with attachments from \"My files\"": "Publishing failed. You are only allowed to publish conversations with attachments from \"My files\"",
   "Publication request created successfully": "Publication request created successfully",
