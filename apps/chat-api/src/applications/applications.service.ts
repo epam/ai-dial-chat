@@ -168,9 +168,9 @@ export class ApplicationsService {
         body.primaryLocale,
       );
       const dialBody: DialApplication = {
-        // The SDK types `displayName`/`description` as plain `string`; DIAL
-        // Core actually accepts a locale map too. Remove this cast when the
-        // SDK's `Application` schema is widened to match.
+        // TODO: The SDK types `displayName`/`description` as plain `string`;
+        // DIAL Core actually accepts a locale map too. Remove this cast when
+        // the SDK's `Application` schema is widened to match.
         displayName: displayName as unknown as string,
         displayVersion: version,
       };
@@ -260,9 +260,9 @@ export class ApplicationsService {
       );
       const mergedBody: DialApplication = {
         ...(existingResponse.data as DialApplication),
-        // The SDK types `displayName`/`description` as plain `string`; DIAL
-        // Core actually accepts a locale map too. Remove this cast when the
-        // SDK's `Application` schema is widened to match. This is a full
+        // TODO: The SDK types `displayName`/`description` as plain `string`;
+        // DIAL Core actually accepts a locale map too. Remove this cast when
+        // the SDK's `Application` schema is widened to match. This is a full
         // replacement, not a per-locale merge with whatever the existing
         // resource had — consistent with every other General-step field.
         displayName: displayName as unknown as string,
