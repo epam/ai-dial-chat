@@ -106,6 +106,9 @@ const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
  * strings are concatenated across chunks, matching the same delta-merge
  * semantics used for stages.
  *
+ * `state` is overwritten (not merged) by each chunk that carries one,
+ * matching the DIAL stateful-app contract.
+ *
  * @returns Updated message array, or `null` when the chunk carries no
  *   actionable data (empty content, no form_schema, and no attachments).
  */
@@ -177,11 +180,6 @@ export const applyChunkToMessages = (
               incomingAnnotations,
             ),
           }),
-          /*
-           * Arrives as a single complete snapshot per turn (confirmed via
-           * spike — not token-streamed like content), so it's replaced
-           * wholesale rather than merged/accumulated like stages.
-           */
           ...(state && { state }),
         },
       }),

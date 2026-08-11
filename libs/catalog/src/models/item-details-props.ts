@@ -53,8 +53,6 @@ export interface ItemDetailsTexts {
   hasPrimaryAction?: boolean;
   /** "Edit" action button label. Default: `'Edit'`. */
   editActionLabel?: string;
-  /** Label above the daily-limit progress bar. Default: `'Daily limit'`. */
-  dailyLimitLabel?: string;
   /** "Resource" section heading in the API tab. Default: `'Resource'`. */
   apiResourceSectionLabel?: string;
   /** "Code snippet" section heading in the API tab. Default: `'Code snippet'`. */
@@ -115,6 +113,42 @@ export interface ItemDetailsTexts {
   deleteActionLabel?: string;
   /** Status text announced to assistive tech while a delete is in progress. Default: `'Deleting'`. */
   deletingStatusLabel?: string;
+  /** Title of the delete confirmation step. Default: the `deleteActionLabel` value. */
+  deleteConfirmTitle?: string;
+  /**
+   * Returns the delete confirmation's body copy, given the item's display
+   * name. Default:
+   * `(name) => \`Are you sure you want to delete ${name}? This action is permanent and cannot be undone.\`` (with the name emphasized).
+   */
+  deleteConfirmMessage?: (name: string) => ReactNode;
+  /**
+   * Consequences listed as bullets in the delete confirmation. Default:
+   * `['All shared configurations will be lost', 'Users who rely on it will lose access', 'Cannot be undone']`.
+   * Pass `[]` to render no list.
+   */
+  deleteConfirmConsequences?: string[];
+  /** Recipient-side "Remove from My List" action and confirmation label. Default: `'Remove from My List'`. */
+  unshareLabel?: string;
+  /** Title of the confirmation step shown before removing a shared item. Default: `'Remove from My List'`. */
+  unshareConfirmTitle?: string;
+  /**
+   * Returns the removal confirmation's body copy, given the item's display
+   * name. Default:
+   * `(name) => \`Remove ${name} from your list? You'll need a new invitation to access it again.\`` (with the name emphasized).
+   */
+  unshareConfirmMessage?: (name: string) => ReactNode;
+  /**
+   * Consequences listed as bullets in the removal confirmation. Default:
+   * `['You will lose access to this item', 'Other people keep their access', 'You will need a new invitation to get it back']`.
+   * Pass `[]` to render no list.
+   */
+  unshareConfirmConsequences?: string[];
+  /** Status text announced to assistive tech while a removal is in progress. Default: `'Removing'`. */
+  unsharingStatusLabel?: string;
+  /** Status text announced to assistive tech while a logout is in progress. Default: `'Logging out'`. */
+  loggingOutStatusLabel?: string;
+  /** Generic "Cancel" label, used by every confirmation step. Default: `'Cancel'`. */
+  cancelLabel?: string;
 }
 
 /** Typography class overrides for `DetailsPanel` text elements. */
@@ -141,6 +175,8 @@ export interface ItemDetailsTypography {
   folderLeafClassName?: string;
   /** Typography class for the credentials section's signed-in/signed-out status label. Default: `'dial-small-semi-text'`. */
   credentialsStatusLabelClassName?: string;
+  /** Typography class for a confirmation step's body copy and consequence bullets. Default: `'dial-small-text'`. */
+  confirmMessageClassName?: string;
 }
 
 /**
@@ -163,7 +199,7 @@ export interface ItemDetailsColors {
   skeleton?: string;
   /** Entity name text color in the header. Fallback: `--text-primary`. */
   nameText?: string;
-  /** Title text color of the publish sub-view. Fallback: `--text-primary`. */
+  /** Title text color of a sub-view (publish or a confirmation step). Fallback: `--text-primary`. */
   publishTitleText?: string;
   /** Border color of the "current version" tag. Fallback: `--stroke-tertiary`. */
   versionTagBorder?: string;
@@ -191,38 +227,16 @@ export interface ItemDetailsColors {
   gridCellDivider?: string;
   /** Spec-grid even-row background. Fallback: `--bg-layer-7`. */
   gridRowEvenBackground?: string;
-  /** Limit-tag colors in the summary section, keyed by tag kind. */
-  limits?: ItemDetailsLimitColors;
-}
-
-/** Color overrides for the limit tags and quota bar in the summary section. */
-export interface ItemDetailsLimitColors {
-  /** "FREE" tag background. Fallback: `--bg-success`. */
-  freeBackground?: string;
-  /** "FREE" tag text color. Fallback: `--text-success`. */
-  freeText?: string;
-  /** "FEATURED" tag background. Fallback: `--bg-warning`. */
-  featuredBackground?: string;
-  /** "FEATURED" tag text color. Fallback: `--text-warning`. */
-  featuredText?: string;
-  /** "BY_REQUEST" tag background. Fallback: `--bg-layer-sunken`. */
-  byRequestBackground?: string;
-  /** "BY_REQUEST" tag text color. Fallback: `--text-secondary`. */
-  byRequestText?: string;
-  /** "BETA" tag background. Fallback: `--bg-accent-primary-alpha`. */
-  betaBackground?: string;
-  /** "BETA" tag text color. Fallback: `--text-accent`. */
-  betaText?: string;
-  /** "DEPRECATED" tag background. Fallback: `--bg-layer-sunken`. */
-  deprecatedBackground?: string;
-  /** "DEPRECATED" tag text color. Fallback: `--text-error`. */
-  deprecatedText?: string;
-  /** Quota progress-bar track color. Fallback: `--bg-layer-sunken`. */
-  progressTrack?: string;
-  /** Quota progress-bar fill color. Fallback: `--text-accent`. */
-  progressFill?: string;
-  /** Quota reset-time label color. Fallback: `--text-secondary`. */
-  resetText?: string;
+  /** `InfoCard` surface color in its `Info` variant. Fallback: `--bg-info`. */
+  infoCardBackground?: string;
+  /** `InfoCard` surface color in its `Danger` variant. Fallback: `--bg-error`. */
+  infoCardDangerBackground?: string;
+  /** Confirmation body-copy text color. Fallback: `--text-primary`. */
+  confirmMessageText?: string;
+  /** Confirmation consequence-bullet text color. Fallback: `--text-secondary`. */
+  confirmConsequenceText?: string;
+  /** Top border color of the confirmation action row. Fallback: `--stroke-tertiary`. */
+  confirmFooterBorder?: string;
 }
 
 /** Grouped style overrides for `DetailsPanel`. */
@@ -320,6 +334,13 @@ export interface DetailsPanelProps {
    * button shows a disabled state while pending.
    */
   onDelete?: (item: CatalogItem) => Promise<void> | void;
+  /**
+   * Called when removal is confirmed via the confirmation popup, for an item
+   * shared with the current user (`sharedWithMe: true`). May return a
+   * promise; the popup shows a loading state and prevents duplicate
+   * submission while pending.
+   */
+  onUnshare?: (item: CatalogItem) => Promise<void> | void;
   /**
    * Called when the credentials login form is submitted. `level` identifies
    * which credentials slot the call applies to (`USER` for the current

@@ -100,7 +100,6 @@
     "details": {
       "tabTools": "Tools",
       "tabLimits": "Limits",
-      "dailyLimit": "Daily limit",
       "api": {
         "resourceSection": "Resource",
         "snippetSection": "Code snippet",
@@ -146,9 +145,25 @@
         "logoutSuccessUser": "You have successfully logged out of the \"{{name}}\" version {{version}} using your personal credentials."
       },
       "delete": {
+        "confirmTitle": "Delete",
+        "confirmMessage": "Are you sure you want to delete \"{{name}}\"? This action is permanent and cannot be undone.",
+        "consequenceSharedConfigurations": "All shared configurations will be lost",
+        "consequenceUsersLoseAccess": "Users who rely on it will lose access",
+        "consequenceCannotBeUndone": "Cannot be undone",
         "error": "Failed to delete. Please try again.",
         "successTitle": "Deleted successfully",
         "success": "\"{{name}}\" was deleted."
+      },
+      "unshare": {
+        "confirmTitle": "Remove from My List",
+        "confirmMessage": "Remove \"{{name}}\" from your list? You'll need a new invitation to access it again.",
+        "consequenceYouLoseAccess": "You will lose access to this item",
+        "consequenceOthersKeepAccess": "Other people keep their access",
+        "consequenceNeedNewInvitation": "You will need a new invitation to get it back",
+        "removingStatus": "Removing…",
+        "errorTitle": "Removal failed",
+        "error": "Failed to remove \"{{name}}\". Please try again.",
+        "success": "\"{{name}}\" was removed from your list."
       },
       "connect": {
         "toolsetTitle": "Connect toolset",
@@ -243,7 +258,8 @@
     "logIn": "Log in",
     "retry": "Retry",
     "publish": "Publish",
-    "manage": "Manage"
+    "manage": "Manage",
+    "removeFromMyList": "Remove from My List"
   },
   "sidebar": {
     "base": {
@@ -315,11 +331,11 @@
       "deleteAllSuccess": "All conversations have been deleted successfully."
     },
     "unshare": {
-      "unshareConfirmTitle": "Delete conversation?",
-      "unshareConfirmMessage": "Delete \"{{name}}\" from your conversations? You'll need a new invitation to access it again.",
-      "unshareSuccessTitle": "Deleted",
-      "unshareSuccess": "\"{{name}}\" was deleted from your conversations.",
-      "unshareError": "Failed to delete \"{{name}}\". Please try again."
+      "unshareConfirmTitle": "Remove from My List?",
+      "unshareConfirmMessage": "Remove \"{{name}}\" from your list? You'll need a new invitation to access it again.",
+      "unshareSuccessTitle": "Removed from My List",
+      "unshareSuccess": "\"{{name}}\" was removed from your list.",
+      "unshareError": "Failed to remove \"{{name}}\". Please try again."
     },
     "taskBadgeLabel": "TASK",
     "unreadIndicatorLabel": "Unread"
@@ -411,6 +427,7 @@
     "overlayProvidersError": "Could not load sign-in providers. Please try again.",
     "logOutConfirmTitle": "Log out?",
     "logOutConfirmDescription": "Are you sure you want to log out?",
+    "loggingOutStatus": "Logging out",
     "userAvatar": "User avatar"
   },
   "settings": {

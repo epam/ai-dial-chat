@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AppConfigModule } from '../app-config/app-config.module';
+import { DeploymentsModule } from '../deployments/deployments.module';
 import { ScheduledTaskUnreadModule } from '../scheduled-task-unread/scheduled-task-unread.module';
 import { UserConfigModule } from '../user-config/user-config.module';
 import { ConversationGenerationService } from './conversation-generation.service';
@@ -9,13 +10,20 @@ import { ConversationPublishController } from './conversation-publish.controller
 import { ConversationPublishService } from './conversation-publish.service';
 import { ConversationController } from './conversation.controller';
 import { ConversationService } from './conversation.service';
+import { ChatCompletionsAdapter } from './generation/chat-completions.adapter';
+import { ResponsesAdapter } from './generation/responses.adapter';
 import { ConversationLifecycleService } from './lifecycle/conversation-lifecycle.service';
 import { ConversationListingService } from './listing/conversation-listing.service';
 import { ConversationPersistenceService } from './persistence/conversation-persistence.service';
 import { ConversationStreamingService } from './streaming/conversation-streaming.service';
 
 @Module({
-  imports: [UserConfigModule, ScheduledTaskUnreadModule, AppConfigModule],
+  imports: [
+    UserConfigModule,
+    ScheduledTaskUnreadModule,
+    AppConfigModule,
+    DeploymentsModule,
+  ],
   controllers: [ConversationController, ConversationPublishController],
   providers: [
     ConversationService,
@@ -30,6 +38,8 @@ import { ConversationStreamingService } from './streaming/conversation-streaming
     },
     ConversationGenerationService,
     ConversationPublishService,
+    ChatCompletionsAdapter,
+    ResponsesAdapter,
   ],
 })
 export class ConversationModule {}

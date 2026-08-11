@@ -1,10 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
   extractDialErrorMessage,
   handleDialSdkError,
 } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
+import { StringUtils } from '../../common/utils/string-utils';
+import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
 import {
   ConversationGenerationService,
@@ -16,6 +18,18 @@ import {
 } from '../dto/conversation-message.dto';
 import { MessageCustomContentDto } from '../dto/message-custom-content.dto';
 import { CompletionMode } from '../dto/send-completion.dto';
+import {
+  GenerationApi,
+  resolveGenerationApi,
+} from '../generation/generation-api';
+import {
+  generationCapabilityResolutionTotal,
+  generationRequestsTotal,
+  generationStreamDuration,
+  generationTimeToFirstDelta,
+} from '../generation/generation-metrics';
+import type { GenerationRelayTiming } from '../generation/generation.types';
+import { ResponsesAdapter } from '../generation/responses.adapter';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
 import {
   applyChunkToMessage,
@@ -59,7 +73,38 @@ export class ConversationStreamingService {
     private readonly dialClient: DialClientService,
     private readonly generationService: ConversationGenerationService,
     private readonly persistenceService: ConversationPersistenceService,
+    private readonly deploymentsService: DeploymentsService,
+    private readonly responsesAdapter: ResponsesAdapter,
   ) {}
+
+  private async resolveGenerationApiForDeployment(
+    sub: string,
+    model: string,
+    token: string,
+  ): Promise<{ generationApi: GenerationApi; temperatureSupported: boolean }> {
+    const details = await this.deploymentsService.getDeploymentDetails(
+      sub,
+      model,
+      token,
+    );
+
+    if (details.type === 'toolset') {
+      const safeModel = StringUtils.sanitizeForLog(model);
+      throw new BadRequestException(
+        `Deployment "${safeModel}" is a toolset and cannot be used for generation`,
+      );
+    }
+
+    const features =
+      details.type === 'application'
+        ? details.applicationDetails?.features
+        : details.modelDetails?.features;
+
+    return {
+      generationApi: resolveGenerationApi(features),
+      temperatureSupported: features?.temperature === true,
+    };
+  }
 
   async watchConversation(
     conversationPath: string,
@@ -122,6 +167,7 @@ export class ConversationStreamingService {
     signal: AbortSignal,
     initialAssembledMessage: ConversationMessageDto,
     clientChannelId?: string,
+    timing?: GenerationRelayTiming,
   ): AsyncGenerator<Uint8Array, RelayOutcome, void> {
     let assembledMessage = initialAssembledMessage;
     let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
@@ -224,6 +270,13 @@ export class ConversationStreamingService {
                 streamError = errorPayload;
                 break;
               }
+              const hasContent = Boolean(
+                (parsed as { choices?: { delta?: { content?: string } }[] })
+                  ?.choices?.[0]?.delta?.content,
+              );
+              if (hasContent && timing && timing.firstDeltaAt == null) {
+                timing.firstDeltaAt = Date.now();
+              }
               assembledMessage = applyChunkToMessage(assembledMessage, parsed);
             } catch {
               /*
@@ -316,8 +369,9 @@ export class ConversationStreamingService {
     customContent: MessageCustomContentDto | undefined,
     sessionId: string,
     onReadyToStream: () => void,
+    sub: string,
     clientChannelId?: string,
-  ): AsyncGenerator<Uint8Array, void, void> {
+  ): AsyncGenerator<Uint8Array | string, void, void> {
     this.logger.debug(
       `streamCompletion start — model: ${model}, bucket: ${bucket}, path: ${conversationPath}, mode: ${mode}`,
     );
@@ -327,6 +381,21 @@ export class ConversationStreamingService {
       conversationPath,
       generationId,
     );
+
+    let generationApi: GenerationApi;
+    let temperatureSupported: boolean;
+    try {
+      ({ generationApi, temperatureSupported } =
+        await this.resolveGenerationApiForDeployment(sub, model, token));
+      generationCapabilityResolutionTotal.add(1, {
+        outcome: 'resolved',
+        'generation.api': generationApi,
+      });
+    } catch (err) {
+      generationCapabilityResolutionTotal.add(1, { outcome: 'failed' });
+      this.generationService.error(sessionId, conversationPath, generationId);
+      throw err;
+    }
 
     let startState: ReturnType<typeof buildConversationHistory>;
     try {
@@ -341,6 +410,7 @@ export class ConversationStreamingService {
         message,
         messageIndex,
         customContent,
+        model,
       );
     } catch (err) {
       /*
@@ -459,20 +529,53 @@ export class ConversationStreamingService {
       }
     };
 
-    const relayIterator = this.relayModelCompletion(
-      model,
-      requestBody,
-      token,
-      abortController.signal,
-      assembledMessage,
-      clientChannelId,
-    );
+    const streamStartedAt = Date.now();
+    const timing: GenerationRelayTiming = {};
+    const relayIterator =
+      generationApi === GenerationApi.Responses
+        ? this.responsesAdapter.stream(
+            this.responsesAdapter.buildRequest({
+              model,
+              startConversation,
+              messagesForCompletion,
+              temperatureSupported,
+            }),
+            token,
+            abortController.signal,
+            assembledMessage,
+            clientChannelId,
+            timing,
+          )
+        : this.relayModelCompletion(
+            model,
+            requestBody,
+            token,
+            abortController.signal,
+            assembledMessage,
+            clientChannelId,
+            timing,
+          );
     let next = await relayIterator.next();
     while (!next.done) {
       yield next.value;
       next = await relayIterator.next();
     }
     const relayResult = next.value;
+
+    generationRequestsTotal.add(1, {
+      'generation.api': generationApi,
+      outcome: relayResult.outcome,
+    });
+    if (timing.firstDeltaAt != null) {
+      generationTimeToFirstDelta.record(
+        (timing.firstDeltaAt - streamStartedAt) / 1000,
+        { 'generation.api': generationApi },
+      );
+    }
+    generationStreamDuration.record((Date.now() - streamStartedAt) / 1000, {
+      'generation.api': generationApi,
+      outcome: relayResult.outcome,
+    });
 
     switch (relayResult.outcome) {
       case 'rejected': {

@@ -37,8 +37,7 @@ interface SseDelta {
     attachments?: unknown[];
     stages?: Stage[];
     annotations?: Annotation[];
-    /** Orchestrator-specific execution state; arrives as a single complete snapshot, not accumulated across chunks. */
-    state?: unknown;
+    state?: Record<string, unknown>;
   };
 }
 
@@ -181,7 +180,9 @@ const mergeAnnotations = (
 /**
  * Applies a single parsed DIAL Core SSE chunk to an assistant message,
  * accumulating text content, attachments, stages, annotations, form_schema,
- * and responseId. Pure function — returns a new message object.
+ * and responseId. `state` is overwritten rather than accumulated, matching
+ * the DIAL stateful-app contract (only the latest value is meaningful).
+ * Pure function — returns a new message object.
  */
 export const applyChunkToMessage = (
   message: ConversationMessageDto,
@@ -245,12 +246,7 @@ export const applyChunkToMessage = (
             annotations,
           ) as never,
         }),
-        /*
-         * Arrives as a single complete snapshot per turn (confirmed via
-         * spike — not token-streamed like content), so it's replaced
-         * wholesale rather than merged/accumulated like stages.
-         */
-        ...(state && { state: state as never }),
+        ...(state && { state }),
       },
     }),
   };

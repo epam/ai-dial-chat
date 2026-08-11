@@ -79,6 +79,22 @@ import { Filter, TopicTag, EntityBadge } from '@epam/ai-dial-catalog';
 <TopicTag label="Vision" />
 ```
 
+### InfoCard
+
+Tinted card showing a catalog item's identity, used to anchor a message to the
+item it is about. Defaults to the `Info` surface; pass `Danger` for destructive
+messaging.
+
+```tsx
+import {
+  InfoCard,
+  DetailsConfirmationVariant,
+} from '@epam/ai-dial-catalog';
+
+<InfoCard item={item} />
+<InfoCard item={item} variant={DetailsConfirmationVariant.Danger} />
+```
+
 ## Enums
 
 ```tsx
@@ -88,7 +104,8 @@ import {
   CatalogViewMode,
   CatalogDetailsTab,
   CodeLanguage,
-  EntityTag,
+  DetailsConfirmationKind,
+  DetailsConfirmationVariant,
 } from '@epam/ai-dial-catalog';
 
 CatalogEntityType.Model; // 'model'
@@ -104,7 +121,6 @@ CatalogViewMode.List; // 'list'
 ```tsx
 import type {
   CatalogItem,
-  CatalogItemSummary,
   ApiResource,
   CatalogItemApiDetails,
   ToolDefinition,

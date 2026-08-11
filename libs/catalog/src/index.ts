@@ -1,7 +1,10 @@
 // Types
 export { CodeLanguage } from './types/code-language';
 export { CatalogDetailsTab } from './types/detail-tab';
-export { EntityTag } from './types/entity-tag';
+export {
+  DetailsConfirmationKind,
+  DetailsConfirmationVariant,
+} from './types/details-confirmation';
 export { CatalogEntityType } from './types/entity-type';
 export { CatalogSortKey } from './types/sort';
 export {
@@ -22,7 +25,6 @@ export type {
   CatalogStyles,
   CatalogTypography,
 } from './models/catalog-styles';
-export type { CatalogItemSummary, DailyLimit } from './models/entity-summary';
 export type { EndpointOption } from './models/item-details-data';
 export type {
   ApiResource,
@@ -43,7 +45,6 @@ export type {
 export type {
   DetailsPanelProps,
   ItemDetailsColors,
-  ItemDetailsLimitColors,
   ItemDetailsStyles,
   ItemDetailsTexts,
   ItemDetailsTypography,
@@ -120,6 +121,9 @@ export type { FilterColors, FilterProps } from './components/Filter/Filter';
 
 export { TopicTag } from './components/TopicTag/TopicTag';
 export type { TopicTagProps } from './components/TopicTag/TopicTag';
+
+export { InfoCard } from './components/InfoCard/InfoCard';
+export type { InfoCardProps } from './components/InfoCard/InfoCard';
 
 export { CredentialsBadge } from './components/CredentialsBadge/CredentialsBadge';
 export type { CredentialsBadgeProps } from './components/CredentialsBadge/CredentialsBadge';

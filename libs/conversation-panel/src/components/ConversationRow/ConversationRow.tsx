@@ -268,7 +268,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
             items={menuItems}
             onOpenChange={handleMenuOpenChange}
             matchReferenceWidth={false}
-            listClassName="w-[140px]"
+            listClassName="w-[200px]"
           >
             <GhostIconButton
               ref={actionTriggerRef}

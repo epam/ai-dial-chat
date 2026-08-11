@@ -58,6 +58,7 @@ import {
   toPublishRuleDto,
 } from '../../server-api/publish-rules.api';
 import { publishCatalogEntity } from '../../server-api/publish.api';
+import { discardSharedCatalogItem } from '../../server-api/share.api';
 import { deleteToolset, logoutToolset } from '../../server-api/toolsets';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { CatalogQuery } from '../../types/catalog';
@@ -674,6 +675,55 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [refetchToolsets, refetchDeployments, showNotification, t],
   );
 
+  const handleUnshare = useCallback(
+    async (item: CatalogItem) => {
+      try {
+        await discardSharedCatalogItem(item.id);
+      } catch (err) {
+        const { traceId } = await getApiErrorDetails(err);
+        showNotification({
+          variant: NotificationVariant.Error,
+          title: t(CatalogI18nKeys.DetailsUnshareErrorTitle),
+          message: t(CatalogI18nKeys.DetailsUnshareError, { name: item.name }),
+          requestId: traceId,
+        });
+        throw err;
+      }
+
+      try {
+        if (item.type === CatalogEntityType.Toolset) {
+          await refetchToolsets();
+        } else {
+          await refetchDeployments();
+        }
+      } catch {
+        /*
+         * The discard mutation has already succeeded. A refresh failure must
+         * not turn that irreversible success into an actionable retry error;
+         * the deployments context retains its own fetch error state.
+         */
+      }
+
+      if (item.id === selectedItemId) {
+        setSelectedItemId(null);
+      }
+
+      showNotification({
+        variant: NotificationVariant.Info,
+        title: t(CatalogI18nKeys.DetailsUnshareConfirmTitle),
+        message: t(CatalogI18nKeys.DetailsUnshareSuccess, { name: item.name }),
+      });
+    },
+    [
+      refetchToolsets,
+      refetchDeployments,
+      selectedItemId,
+      setSelectedItemId,
+      showNotification,
+      t,
+    ],
+  );
+
   const createOptions = useMemo<DropdownItem[]>(() => {
     const options: DropdownItem[] = [];
 
@@ -767,6 +817,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       onLogout={handleLogout}
       onEdit={handleEdit}
       onDelete={handleDelete}
+      onUnshare={handleUnshare}
       isPrimaryActionVisible={isPrimaryActionVisible}
       isPublishVisible={isPublishVisible}
       getPublishHistory={getPublishHistory}
@@ -825,7 +876,6 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         editActionLabel: t(ButtonsI18nKeys.Edit),
         deleteActionLabel: t(ButtonsI18nKeys.Delete),
         deletingStatusLabel: t(DialFileManagerI18nKeys.DeletingLabel),
-        dailyLimitLabel: t(CatalogI18nKeys.DetailsDailyLimit),
         apiResourceSectionLabel: t(CatalogI18nKeys.DetailsApiResourceSection),
         apiSnippetSectionLabel: t(CatalogI18nKeys.DetailsApiSnippetSection),
         apiModelIdLabel: t(CatalogI18nKeys.DetailsApiModelId),
@@ -861,6 +911,26 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         ),
         tabConnectLabel: t(ButtonsI18nKeys.Connect),
         manageActionLabel: t(ButtonsI18nKeys.Manage),
+        deleteConfirmTitle: t(CatalogI18nKeys.DetailsDeleteConfirmTitle),
+        deleteConfirmMessage: (name) =>
+          t(CatalogI18nKeys.DetailsDeleteConfirmMessage, { name }),
+        deleteConfirmConsequences: [
+          t(CatalogI18nKeys.DetailsDeleteConsequenceSharedConfigurations),
+          t(CatalogI18nKeys.DetailsDeleteConsequenceUsersLoseAccess),
+          t(CatalogI18nKeys.DetailsDeleteConsequenceCannotBeUndone),
+        ],
+        unshareLabel: t(ButtonsI18nKeys.RemoveFromMyList),
+        unshareConfirmTitle: t(CatalogI18nKeys.DetailsUnshareConfirmTitle),
+        unshareConfirmMessage: (name) =>
+          t(CatalogI18nKeys.DetailsUnshareConfirmMessage, { name }),
+        unshareConfirmConsequences: [
+          t(CatalogI18nKeys.DetailsUnshareConsequenceYouLoseAccess),
+          t(CatalogI18nKeys.DetailsUnshareConsequenceOthersKeepAccess),
+          t(CatalogI18nKeys.DetailsUnshareConsequenceNeedNewInvitation),
+        ],
+        unsharingStatusLabel: t(CatalogI18nKeys.DetailsUnshareRemovingStatus),
+        loggingOutStatusLabel: t(AuthI18nKeys.LoggingOutStatus),
+        cancelLabel: t(ButtonsI18nKeys.Cancel),
       }}
     />
   );

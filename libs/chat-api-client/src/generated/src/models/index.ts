@@ -833,6 +833,12 @@ export interface ConversationMessageCustomContentDto {
    */
   formValue?: object;
   /**
+   * Opaque app-managed state to echo back verbatim on the next turn, per the DIAL stateful-app contract.
+   * @type {object}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  state?: object;
+  /**
    * Status event discriminator when role is status
    * @type {string}
    * @memberof ConversationMessageCustomContentDto
@@ -903,6 +909,12 @@ export interface ConversationMessageDto {
    * @memberof ConversationMessageDto
    */
   streamErrorMessage?: string;
+  /**
+   * DIAL Responses API id for this message, set only when the generation was routed through the Responses adapter. Diagnostic only — never used to resume a generation (previous_response_id/conversation are never sent).
+   * @type {string}
+   * @memberof ConversationMessageDto
+   */
+  responseId?: string;
 }
 
 /**
@@ -1044,6 +1056,12 @@ export interface ConversationResponseDto {
    * @memberof ConversationResponseDto
    */
   temperature: number;
+  /**
+   * Optional Responses-API output-token cap, forwarded verbatim as max_output_tokens. Never derived from deployment limits or Chat Completions defaults. Documentation-only decorator — the actual positive-safe-integer check runs at the Responses request-building boundary (ResponsesAdapter.buildRequest via isValidMaxOutputTokens), not through nested DTO validation on save (see design.md Decision 4 of the support-responses-generation-parameters change).
+   * @type {number}
+   * @memberof ConversationResponseDto
+   */
+  maxOutputTokens?: number;
   /**
    *
    * @type {Array<ConversationMessageDto>}
@@ -2125,6 +2143,18 @@ export interface DeploymentFeaturesDto {
    * @memberof DeploymentFeaturesDto
    */
   mcp?: boolean;
+  /**
+   * Whether the deployment supports the Responses API
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  responsesApi?: boolean;
+  /**
+   * Whether the deployment supports chat completion requests
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  chatCompletion?: boolean;
 }
 /**
  *
@@ -4005,6 +4035,12 @@ export interface MessageCustomContentDto {
    * @memberof MessageCustomContentDto
    */
   formValue?: object;
+  /**
+   * Opaque app-managed state to echo back verbatim on the next turn, per the DIAL stateful-app contract.
+   * @type {object}
+   * @memberof MessageCustomContentDto
+   */
+  state?: object;
 }
 /**
  *

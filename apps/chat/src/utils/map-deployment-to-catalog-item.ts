@@ -200,7 +200,6 @@ export const mapDeploymentToCatalogItem = (
           !deployment.applicationTypeSchemaId &&
           normalizedType === 'application')),
     folder: resolveDeploymentFolder(deployment, t),
-    summary: undefined,
     details:
       entityDetails != null
         ? mapEntityDetailsToCatalogDetails(entityDetails)
@@ -251,7 +250,6 @@ export const mapToolsetToCatalogItem = (
     sharedWithMe: toolset.sharedWithMe ?? false,
     isEditable: !!(toolset.isMy || toolset.canEdit),
     folder: resolveToolsetFolder(toolset, t),
-    summary: undefined,
     credentials: mapToolsetCredentials(
       toolset.id,
       toolset.authSettings,
