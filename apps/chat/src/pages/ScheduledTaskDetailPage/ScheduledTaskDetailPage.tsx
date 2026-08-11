@@ -26,7 +26,10 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useScheduledTaskRuns } from '../../hooks/scheduled-tasks/useScheduledTaskRuns';
-import { getApiErrorDetails, getApiErrorStatus } from '../../server-api/api-error';
+import {
+  getApiErrorDetails,
+  getApiErrorStatus,
+} from '../../server-api/api-error';
 import {
   getScheduledTask,
   pauseScheduledTask,
@@ -55,8 +58,7 @@ const ScheduledTaskDetailPage: FC = () => {
   const [isNotFound, setIsNotFound] = useState(false);
   const [taskFetchToken, setTaskFetchToken] = useState(0);
   const [isActiveUpdating, setIsActiveUpdating] = useState(false);
-  const [activeStatusAnnouncement, setActiveStatusAnnouncement] =
-    useState('');
+  const [activeStatusAnnouncement, setActiveStatusAnnouncement] = useState('');
   const activeChangeRequestRef = useRef(0);
   /*
    * Mirrors the latest scheduleId outside of any closure, so an in-flight
