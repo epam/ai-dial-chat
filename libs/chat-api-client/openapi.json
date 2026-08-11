@@ -41,9 +41,7 @@
           }
         },
         "summary": "Check application health status",
-        "tags": [
-          "health"
-        ]
+        "tags": ["health"]
       }
     },
     "/api/v1/auth/providers": {
@@ -66,9 +64,7 @@
           }
         },
         "summary": "List configured identity providers",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/auth/login/{providerId}": {
@@ -98,9 +94,7 @@
           }
         },
         "summary": "Start OIDC login flow",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/auth/callback/{providerId}": {
@@ -130,9 +124,7 @@
           }
         },
         "summary": "OIDC authorization callback",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/auth/logout": {
@@ -148,9 +140,7 @@
           }
         },
         "summary": "Log out and clear session cookie",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/auth/me": {
@@ -181,9 +171,7 @@
           }
         ],
         "summary": "Get current user profile",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/client-config": {
@@ -220,9 +208,7 @@
           }
         },
         "summary": "Get client-safe application configuration and feature flags",
-        "tags": [
-          "app-config"
-        ]
+        "tags": ["app-config"]
       }
     },
     "/api/v1/application-schemas": {
@@ -258,9 +244,7 @@
           }
         },
         "summary": "List application type schemas",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/application-schemas/{id}": {
@@ -314,9 +298,7 @@
           }
         },
         "summary": "Get application type schema by id",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/applications": {
@@ -352,9 +334,7 @@
           }
         },
         "summary": "List available applications",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       },
       "post": {
         "description": "Creates a new application for the authenticated session user by proxying DIAL Core. Invalidates the applications list cache on success.",
@@ -398,9 +378,7 @@
           }
         },
         "summary": "Create a new application",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/applications/{applicationName}": {
@@ -464,9 +442,7 @@
           }
         },
         "summary": "Update an application",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       },
       "delete": {
         "description": "Deletes an application for the authenticated session user by proxying DIAL Core. Invalidates the applications list cache on success.",
@@ -511,9 +487,7 @@
           }
         },
         "summary": "Delete an application",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/deployments": {
@@ -538,13 +512,7 @@
               "type": "array",
               "items": {
                 "type": "string",
-                "enum": [
-                  "chat",
-                  "embedding",
-                  "mcp",
-                  "custom_ui",
-                  "all"
-                ]
+                "enum": ["chat", "embedding", "mcp", "custom_ui", "all"]
               }
             }
           }
@@ -580,9 +548,7 @@
           }
         },
         "summary": "List deployments by interface type",
-        "tags": [
-          "deployments"
-        ]
+        "tags": ["deployments"]
       }
     },
     "/api/v1/deployments/{deployment}/configuration": {
@@ -630,9 +596,7 @@
           }
         },
         "summary": "Get JSON Schema configuration for a deployment",
-        "tags": [
-          "deployments"
-        ]
+        "tags": ["deployments"]
       }
     },
     "/api/v1/deployments/{deployment}/limits": {
@@ -689,9 +653,7 @@
           }
         },
         "summary": "Get deployment usage limits",
-        "tags": [
-          "deployments"
-        ]
+        "tags": ["deployments"]
       }
     },
     "/api/v1/deployments/{deployment}/details": {
@@ -742,9 +704,7 @@
           }
         },
         "summary": "Get full details for a single deployment",
-        "tags": [
-          "deployments"
-        ]
+        "tags": ["deployments"]
       }
     },
     "/api/v1/user-config": {
@@ -767,9 +727,7 @@
           }
         },
         "summary": "Get current user configuration",
-        "tags": [
-          "user-config"
-        ]
+        "tags": ["user-config"]
       }
     },
     "/api/v1/user-config/pins": {
@@ -798,9 +756,7 @@
           }
         },
         "summary": "Pin or unpin a conversation",
-        "tags": [
-          "user-config"
-        ]
+        "tags": ["user-config"]
       }
     },
     "/api/v1/user-config/toolsets": {
@@ -829,9 +785,7 @@
           }
         },
         "summary": "Install or uninstall a toolset",
-        "tags": [
-          "user-config"
-        ]
+        "tags": ["user-config"]
       }
     },
     "/api/v1/user-config/deployments": {
@@ -860,9 +814,7 @@
           }
         },
         "summary": "Install or uninstall a deployment",
-        "tags": [
-          "user-config"
-        ]
+        "tags": ["user-config"]
       }
     },
     "/api/v1/user-config/deployments/selected": {
@@ -888,9 +840,7 @@
           }
         },
         "summary": "Set the selected deployment",
-        "tags": [
-          "user-config"
-        ]
+        "tags": ["user-config"]
       }
     },
     "/api/v1/models": {
@@ -929,9 +879,7 @@
           }
         },
         "summary": "List available models",
-        "tags": [
-          "models"
-        ]
+        "tags": ["models"]
       }
     },
     "/api/v1/models/{modelName}": {
@@ -987,9 +935,7 @@
           }
         },
         "summary": "Get model by name",
-        "tags": [
-          "models"
-        ]
+        "tags": ["models"]
       }
     },
     "/api/v1/toolsets": {
@@ -1028,9 +974,7 @@
           }
         },
         "summary": "List available toolsets",
-        "tags": [
-          "toolsets"
-        ]
+        "tags": ["toolsets"]
       },
       "post": {
         "description": "Creates a new toolset for the authenticated session user by proxying DIAL Core. Invalidates the toolset list cache on success.",
@@ -1080,9 +1024,7 @@
           }
         },
         "summary": "Create a new toolset",
-        "tags": [
-          "toolsets"
-        ]
+        "tags": ["toolsets"]
       }
     },
     "/api/v1/toolsets/{toolsetName}": {
@@ -1139,9 +1081,7 @@
           }
         },
         "summary": "Get toolset by name",
-        "tags": [
-          "toolsets"
-        ]
+        "tags": ["toolsets"]
       },
       "patch": {
         "description": "Updates an existing toolset for the authenticated session user by proxying DIAL Core. Invalidates the relevant caches on success.",
@@ -1203,9 +1143,7 @@
           }
         },
         "summary": "Update a toolset",
-        "tags": [
-          "toolsets"
-        ]
+        "tags": ["toolsets"]
       },
       "delete": {
         "description": "Deletes a toolset for the authenticated session user by proxying DIAL Core. Invalidates the relevant caches on success.",
@@ -1250,9 +1188,7 @@
           }
         },
         "summary": "Delete a toolset",
-        "tags": [
-          "toolsets"
-        ]
+        "tags": ["toolsets"]
       }
     },
     "/api/v1/toolsets/{toolsetName}/login": {
@@ -1313,9 +1249,7 @@
           }
         },
         "summary": "Submit toolset credentials",
-        "tags": [
-          "toolsets"
-        ]
+        "tags": ["toolsets"]
       }
     },
     "/api/v1/toolsets/{toolsetName}/logout": {
@@ -1379,9 +1313,7 @@
           }
         },
         "summary": "Revoke toolset credentials",
-        "tags": [
-          "toolsets"
-        ]
+        "tags": ["toolsets"]
       }
     },
     "/api/v1/toolsets/{toolsetName}/mcp-app-resource": {
@@ -1434,9 +1366,7 @@
           }
         },
         "summary": "Fetch a toolset's MCP Apps ui:// resource",
-        "tags": [
-          "toolsets"
-        ]
+        "tags": ["toolsets"]
       }
     },
     "/api/v1/toolsets/mcp-apps/tools": {
@@ -1462,10 +1392,7 @@
             "description": "Which of Core's MCP proxy route prefixes to use for this deployment.",
             "schema": {
               "type": "string",
-              "enum": [
-                "toolset",
-                "application"
-              ]
+              "enum": ["toolset", "application"]
             }
           }
         ],
@@ -1497,9 +1424,7 @@
           }
         },
         "summary": "List MCP Apps-capable tools for an MCP-enabled deployment",
-        "tags": [
-          "toolsets"
-        ]
+        "tags": ["toolsets"]
       }
     },
     "/api/v1/toolsets/{toolsetName}/mcp-app-tool-call": {
@@ -1560,9 +1485,7 @@
           }
         },
         "summary": "Forward an MCP App's self-initiated tool call",
-        "tags": [
-          "toolsets"
-        ]
+        "tags": ["toolsets"]
       }
     },
     "/api/v1/chat/completions": {
@@ -1604,9 +1527,7 @@
           }
         },
         "summary": "Send a chat completion request to DIAL Core",
-        "tags": [
-          "chat"
-        ]
+        "tags": ["chat"]
       }
     },
     "/api/v1/client-channel/subscribe": {
@@ -1645,9 +1566,7 @@
           }
         },
         "summary": "Subscribe to the DIAL Core client channel",
-        "tags": [
-          "client-channel"
-        ]
+        "tags": ["client-channel"]
       }
     },
     "/api/v1/client-channel/report": {
@@ -1696,9 +1615,7 @@
           }
         },
         "summary": "Report an RPC response on the client channel",
-        "tags": [
-          "client-channel"
-        ]
+        "tags": ["client-channel"]
       }
     },
     "/api/v1/client-channel/unsubscribe": {
@@ -1728,9 +1645,7 @@
           }
         },
         "summary": "Unsubscribe from the client channel",
-        "tags": [
-          "client-channel"
-        ]
+        "tags": ["client-channel"]
       }
     },
     "/api/v1/external-services/{appId}/{serviceId}": {
@@ -1792,9 +1707,7 @@
           }
         },
         "summary": "Get application external-service metadata",
-        "tags": [
-          "external-services"
-        ]
+        "tags": ["external-services"]
       }
     },
     "/api/v1/external-services/{appId}/{serviceId}/signin": {
@@ -1863,9 +1776,7 @@
           }
         },
         "summary": "Submit external-service credentials",
-        "tags": [
-          "external-services"
-        ]
+        "tags": ["external-services"]
       }
     },
     "/api/v1/external-services/{appId}/{serviceId}/signout": {
@@ -1934,9 +1845,7 @@
           }
         },
         "summary": "Revoke external-service credentials",
-        "tags": [
-          "external-services"
-        ]
+        "tags": ["external-services"]
       }
     },
     "/api/v1/conversations": {
@@ -1973,9 +1882,7 @@
           }
         },
         "summary": "Create a new conversation",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       },
       "get": {
         "operationId": "getConversation",
@@ -2019,9 +1926,7 @@
           }
         },
         "summary": "Get a conversation by path",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       },
       "put": {
         "operationId": "saveConversation",
@@ -2075,9 +1980,7 @@
           }
         },
         "summary": "Save (overwrite) a conversation by path",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       },
       "patch": {
         "operationId": "renameConversation",
@@ -2131,9 +2034,7 @@
           }
         },
         "summary": "Rename a conversation by path",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       },
       "delete": {
         "operationId": "deleteConversation",
@@ -2170,9 +2071,7 @@
           }
         },
         "summary": "Delete a conversation by path",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/list": {
@@ -2229,9 +2128,7 @@
           }
         },
         "summary": "List conversations",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/metadata": {
@@ -2287,9 +2184,7 @@
           }
         },
         "summary": "Get metadata for a conversation",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/completions": {
@@ -2337,9 +2232,7 @@
           }
         },
         "summary": "Stream a chat completion",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/completions/stop": {
@@ -2368,9 +2261,7 @@
           }
         },
         "summary": "Stop an active generation",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/watch": {
@@ -2403,9 +2294,7 @@
           }
         },
         "summary": "Subscribe to conversation resource updates via SSE",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/generate-title": {
@@ -2458,9 +2347,7 @@
           }
         },
         "summary": "Generate an LLM-based title suggestion for a conversation",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/duplicate": {
@@ -2506,9 +2393,7 @@
           }
         },
         "summary": "Duplicate a conversation into the user's own bucket",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/deletions": {
@@ -2551,9 +2436,7 @@
           }
         },
         "summary": "Delete selected conversations",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/deletions/all": {
@@ -2602,9 +2485,7 @@
           }
         },
         "summary": "Delete all conversations in the user bucket",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/viewed": {
@@ -2638,9 +2519,7 @@
           }
         },
         "summary": "Mark a conversation as viewed",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/publish": {
@@ -2703,9 +2582,7 @@
           }
         },
         "summary": "Publish a conversation to an Organization folder",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/publish-history": {
@@ -2755,9 +2632,7 @@
           }
         },
         "summary": "Get publish history for a conversation",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/prompts": {
@@ -2784,9 +2659,7 @@
           }
         },
         "summary": "List personal prompts",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       },
       "post": {
         "operationId": "createPrompt",
@@ -2826,9 +2699,7 @@
           }
         },
         "summary": "Create a personal prompt",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       },
       "put": {
         "operationId": "updatePrompt",
@@ -2883,9 +2754,7 @@
           }
         },
         "summary": "Update a personal prompt",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       },
       "delete": {
         "operationId": "deletePrompt",
@@ -2920,9 +2789,7 @@
           }
         },
         "summary": "Delete a personal prompt",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       }
     },
     "/api/v1/prompts/item": {
@@ -2966,9 +2833,7 @@
           }
         },
         "summary": "Get a personal prompt",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       }
     },
     "/api/v1/prompts/public": {
@@ -2994,9 +2859,7 @@
           }
         },
         "summary": "List organisation prompts",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       }
     },
     "/api/v1/prompts/public/item": {
@@ -3040,9 +2903,7 @@
           }
         },
         "summary": "Get an organisation prompt",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       }
     },
     "/api/v1/prompts/folders": {
@@ -3084,9 +2945,7 @@
           }
         },
         "summary": "Create a prompt folder",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       },
       "put": {
         "operationId": "renamePromptFolder",
@@ -3141,9 +3000,7 @@
           }
         },
         "summary": "Rename a prompt folder",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       },
       "delete": {
         "operationId": "deletePromptFolder",
@@ -3178,9 +3035,7 @@
           }
         },
         "summary": "Delete a prompt folder",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       }
     },
     "/api/v1/prompts/move": {
@@ -3237,9 +3092,7 @@
           }
         },
         "summary": "Move a personal prompt to a different folder",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       }
     },
     "/api/v1/files": {
@@ -3252,11 +3105,7 @@
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "file",
-                  "bucket",
-                  "path"
-                ],
+                "required": ["file", "bucket", "path"],
                 "properties": {
                   "file": {
                     "type": "string",
@@ -3270,10 +3119,7 @@
                   },
                   "uploadMode": {
                     "type": "string",
-                    "enum": [
-                      "overwrite",
-                      "create-only"
-                    ],
+                    "enum": ["overwrite", "create-only"],
                     "description": "Optional upload mode. 'overwrite' (default) overwrites; 'create-only' fails with 409 if file exists."
                   }
                 }
@@ -3317,9 +3163,7 @@
             "description": "DIAL Core unreachable or timed out"
           }
         },
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/upload-archive": {
@@ -3332,11 +3176,7 @@
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "file",
-                  "bucket",
-                  "destinationPath"
-                ],
+                "required": ["file", "bucket", "destinationPath"],
                 "properties": {
                   "file": {
                     "type": "string",
@@ -3387,9 +3227,7 @@
           }
         },
         "summary": "Upload a ZIP archive and extract its contents to a destination folder",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/list": {
@@ -3491,9 +3329,7 @@
           }
         },
         "summary": "List files and folders",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/public": {
@@ -3572,9 +3408,7 @@
           }
         },
         "summary": "List files from the organization (public) bucket",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/shared": {
@@ -3640,9 +3474,7 @@
           }
         },
         "summary": "List files shared with the current user",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/shared-by-me": {
@@ -3688,9 +3520,7 @@
           }
         },
         "summary": "List files and folders shared by the caller with others",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/metadata": {
@@ -3753,9 +3583,7 @@
           }
         },
         "summary": "Get file metadata",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/folders": {
@@ -3809,9 +3637,7 @@
           }
         },
         "summary": "Create a folder",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/download-archive": {
@@ -3866,9 +3692,7 @@
           }
         },
         "summary": "Download files and folders as a ZIP archive",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/delete": {
@@ -3913,9 +3737,7 @@
           }
         },
         "summary": "Delete files and folders",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/rename": {
@@ -3960,9 +3782,7 @@
           }
         },
         "summary": "Rename files and folders",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/copy": {
@@ -4007,9 +3827,7 @@
           }
         },
         "summary": "Copy files and folders",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/move": {
@@ -4054,9 +3872,7 @@
           }
         },
         "summary": "Move files and folders across folders",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/revoke-access": {
@@ -4107,9 +3923,7 @@
           }
         },
         "summary": "Revoke all shared access to files and folders",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/discard-shared": {
@@ -4160,9 +3974,7 @@
           }
         },
         "summary": "Discard resources shared with the caller",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/download": {
@@ -4224,9 +4036,7 @@
             "description": "DIAL Core unreachable or timed out"
           }
         },
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/rate": {
@@ -4265,9 +4075,7 @@
           }
         },
         "summary": "Rate an assistant message",
-        "tags": [
-          "rate"
-        ]
+        "tags": ["rate"]
       }
     },
     "/api/v1/transcription": {
@@ -4313,9 +4121,7 @@
           }
         },
         "summary": "Transcribe audio using the configured ASR model",
-        "tags": [
-          "transcription"
-        ]
+        "tags": ["transcription"]
       }
     },
     "/api/themes": {
@@ -4345,9 +4151,7 @@
           }
         },
         "summary": "Get themes configuration",
-        "tags": [
-          "themes"
-        ]
+        "tags": ["themes"]
       }
     },
     "/api/themes/icon": {
@@ -4405,9 +4209,7 @@
           }
         },
         "summary": "Get theme icon",
-        "tags": [
-          "themes"
-        ]
+        "tags": ["themes"]
       }
     },
     "/api/v1/share": {
@@ -4453,9 +4255,7 @@
           }
         },
         "summary": "Create a share link",
-        "tags": [
-          "share"
-        ]
+        "tags": ["share"]
       }
     },
     "/api/v1/share/invitations/{invitationId}": {
@@ -4506,9 +4306,7 @@
           }
         },
         "summary": "Accept a share invitation",
-        "tags": [
-          "share"
-        ]
+        "tags": ["share"]
       }
     },
     "/api/v1/share/discard": {
@@ -4560,9 +4358,7 @@
           }
         },
         "summary": "Discard a shared catalog resource or conversation",
-        "tags": [
-          "share"
-        ]
+        "tags": ["share"]
       }
     },
     "/api/v1/catalog/{entityType}/{entityId}/publish": {
@@ -4578,11 +4374,7 @@
             "schema": {
               "example": "toolset",
               "type": "string",
-              "enum": [
-                "model",
-                "toolset",
-                "application"
-              ]
+              "enum": ["model", "toolset", "application"]
             }
           },
           {
@@ -4637,9 +4429,7 @@
           }
         },
         "summary": "Publish a catalog entity to an Organization folder",
-        "tags": [
-          "publish"
-        ]
+        "tags": ["publish"]
       }
     },
     "/api/v1/catalog/{entityType}/{entityId}/publish-history": {
@@ -4655,11 +4445,7 @@
             "schema": {
               "example": "toolset",
               "type": "string",
-              "enum": [
-                "model",
-                "toolset",
-                "application"
-              ]
+              "enum": ["model", "toolset", "application"]
             }
           },
           {
@@ -4704,9 +4490,7 @@
           }
         },
         "summary": "Get publish history for a catalog entity",
-        "tags": [
-          "publish"
-        ]
+        "tags": ["publish"]
       }
     },
     "/api/v1/publish/rules": {
@@ -4753,9 +4537,7 @@
           }
         },
         "summary": "Get a destination folder's already-configured access rules",
-        "tags": [
-          "publish"
-        ]
+        "tags": ["publish"]
       }
     },
     "/api/v1/scheduled-tasks": {
@@ -4806,12 +4588,7 @@
             "schema": {
               "example": "firstToRun",
               "type": "string",
-              "enum": [
-                "firstToRun",
-                "lastToRun",
-                "newest",
-                "nameAZ"
-              ]
+              "enum": ["firstToRun", "lastToRun", "newest", "nameAZ"]
             }
           }
         ],
@@ -4846,9 +4623,7 @@
           }
         },
         "summary": "List scheduled tasks",
-        "tags": [
-          "scheduled-tasks"
-        ]
+        "tags": ["scheduled-tasks"]
       },
       "post": {
         "description": "Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt, using the OAuth external-service id configured via SCHEDULER_SERVICE_ID. Invalidates the scheduled tasks list cache on success.",
@@ -4895,9 +4670,7 @@
           }
         },
         "summary": "Create a scheduled task",
-        "tags": [
-          "scheduled-tasks"
-        ]
+        "tags": ["scheduled-tasks"]
       }
     },
     "/api/v1/scheduled-tasks/{scheduleId}": {
@@ -4951,9 +4724,7 @@
           }
         },
         "summary": "Get a scheduled task by id",
-        "tags": [
-          "scheduled-tasks"
-        ]
+        "tags": ["scheduled-tasks"]
       },
       "put": {
         "description": "Updates an existing DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.",
@@ -5015,9 +4786,7 @@
           }
         },
         "summary": "Update a scheduled task",
-        "tags": [
-          "scheduled-tasks"
-        ]
+        "tags": ["scheduled-tasks"]
       }
     },
     "/api/v1/scheduled-tasks/{scheduleId}/runs": {
@@ -5096,9 +4865,7 @@
           }
         },
         "summary": "List a scheduled task run history",
-        "tags": [
-          "scheduled-tasks"
-        ]
+        "tags": ["scheduled-tasks"]
       }
     }
   },
@@ -5166,10 +4933,7 @@
             "example": "Local"
           }
         },
-        "required": [
-          "id",
-          "label"
-        ]
+        "required": ["id", "label"]
       },
       "UserProfileDto": {
         "type": "object",
@@ -5197,13 +4961,7 @@
             "description": "Whether the user's roles claim intersects the provider's configured adminRoles"
           }
         },
-        "required": [
-          "sub",
-          "providerId",
-          "claims",
-          "bucket",
-          "isAdmin"
-        ]
+        "required": ["sub", "providerId", "claims", "bucket", "isAdmin"]
       },
       "AnnouncementLinkDto": {
         "type": "object",
@@ -5219,10 +4977,7 @@
             "example": "https://dialx.ai/changelog"
           }
         },
-        "required": [
-          "label",
-          "href"
-        ]
+        "required": ["label", "href"]
       },
       "AnnouncementItemDto": {
         "type": "object",
@@ -5249,11 +5004,7 @@
             ]
           }
         },
-        "required": [
-          "title",
-          "description",
-          "link"
-        ]
+        "required": ["title", "description", "link"]
       },
       "CustomVisualizerDto": {
         "type": "object",
@@ -5314,11 +5065,7 @@
             "example": false
           }
         },
-        "required": [
-          "title",
-          "contentType",
-          "url"
-        ]
+        "required": ["title", "contentType", "url"]
       },
       "ClientConfigDto": {
         "type": "object",
@@ -5359,11 +5106,7 @@
           },
           "fileManagerTabs": {
             "description": "Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.",
-            "example": [
-              "my_files",
-              "shared",
-              "organization"
-            ],
+            "example": ["my_files", "shared", "organization"],
             "type": "array",
             "items": {
               "type": "string"
@@ -5376,9 +5119,7 @@
           },
           "overlayAllowedOrigins": {
             "description": "Host origins allowed to embed this app. Sourced from ALLOWED_IFRAME_ORIGINS, the same list used for CSP frame-ancestors/frame-src.",
-            "example": [
-              "https://partner.example.com"
-            ],
+            "example": ["https://partner.example.com"],
             "type": "array",
             "items": {
               "type": "string"
@@ -5443,11 +5184,7 @@
           },
           "publicationFilterSources": {
             "description": "Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES; falls back to the legacy default when unset or empty.",
-            "example": [
-              "title",
-              "role",
-              "dial_roles"
-            ],
+            "example": ["title", "role", "dial_roles"],
             "type": "array",
             "items": {
               "type": "string"
@@ -5480,10 +5217,7 @@
             "description": "Cache TTL in seconds applied to this response."
           }
         },
-        "required": [
-          "resolvedAt",
-          "cacheTtlSeconds"
-        ]
+        "required": ["resolvedAt", "cacheTtlSeconds"]
       },
       "ClientConfigResponseDto": {
         "type": "object",
@@ -5517,11 +5251,7 @@
             ]
           }
         },
-        "required": [
-          "appId",
-          "features",
-          "config"
-        ]
+        "required": ["appId", "features", "config"]
       },
       "ApplicationSchemaSummaryDto": {
         "type": "object",
@@ -5562,9 +5292,7 @@
             }
           }
         },
-        "required": [
-          "schemas"
-        ]
+        "required": ["schemas"]
       },
       "ApplicationDto": {
         "type": "object",
@@ -5594,9 +5322,7 @@
             "example": "A custom application."
           },
           "input_attachment_types": {
-            "example": [
-              "image/png"
-            ],
+            "example": ["image/png"],
             "type": "array",
             "items": {
               "type": "string"
@@ -5607,10 +5333,7 @@
             "example": 5
           }
         },
-        "required": [
-          "id",
-          "object"
-        ]
+        "required": ["id", "object"]
       },
       "ApplicationsResponseDto": {
         "type": "object",
@@ -5622,9 +5345,7 @@
             }
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "LocaleTextEntryDto": {
         "type": "object",
@@ -5642,9 +5363,7 @@
             "example": "Meine Toolset-Beschreibung"
           }
         },
-        "required": [
-          "language"
-        ]
+        "required": ["language"]
       },
       "CreateApplicationBodyDto": {
         "type": "object",
@@ -5671,10 +5390,7 @@
             "example": "1.0"
           },
           "topics": {
-            "example": [
-              "nlp",
-              "assistant"
-            ],
+            "example": ["nlp", "assistant"],
             "type": "array",
             "items": {
               "type": "string"
@@ -5705,9 +5421,7 @@
             "example": "en"
           }
         },
-        "required": [
-          "name"
-        ]
+        "required": ["name"]
       },
       "CreatedApplicationDto": {
         "type": "object",
@@ -5735,9 +5449,7 @@
             "example": "application"
           }
         },
-        "required": [
-          "id"
-        ]
+        "required": ["id"]
       },
       "UpdateApplicationBodyDto": {
         "type": "object",
@@ -5755,10 +5467,7 @@
             "example": "https://example.com/icon.svg"
           },
           "topics": {
-            "example": [
-              "nlp",
-              "assistant"
-            ],
+            "example": ["nlp", "assistant"],
             "type": "array",
             "items": {
               "type": "string"
@@ -5776,9 +5485,7 @@
             "type": "object"
           },
           "inputAttachmentTypes": {
-            "example": [
-              "image/png"
-            ],
+            "example": ["image/png"],
             "type": "array",
             "items": {
               "type": "string"
@@ -5799,9 +5506,7 @@
             "example": "en"
           }
         },
-        "required": [
-          "name"
-        ]
+        "required": ["name"]
       },
       "UpdatedApplicationDto": {
         "type": "object",
@@ -5829,9 +5534,7 @@
             "example": "application"
           }
         },
-        "required": [
-          "id"
-        ]
+        "required": ["id"]
       },
       "DeploymentFeaturesDto": {
         "type": "object",
@@ -5853,10 +5556,7 @@
             "description": "Whether the deployment supports the MCP protocol"
           }
         },
-        "required": [
-          "systemPrompt",
-          "temperature"
-        ]
+        "required": ["systemPrompt", "temperature"]
       },
       "ConversationStarterDto": {
         "type": "object",
@@ -5870,10 +5570,7 @@
             "description": "Text inserted into the chat input"
           }
         },
-        "required": [
-          "title",
-          "text"
-        ]
+        "required": ["title", "text"]
       },
       "ConversationStartersDto": {
         "type": "object",
@@ -5898,9 +5595,7 @@
             }
           }
         },
-        "required": [
-          "starters"
-        ]
+        "required": ["starters"]
       },
       "DeploymentItemDto": {
         "type": "object",
@@ -5925,11 +5620,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "model",
-              "application",
-              "toolset"
-            ]
+            "enum": ["model", "application", "toolset"]
           },
           "iconUrl": {
             "type": "string",
@@ -6043,11 +5734,7 @@
             "description": "Reference from DIAL Core; some conversations/messages address this deployment by reference instead of id"
           }
         },
-        "required": [
-          "id",
-          "displayName",
-          "type"
-        ]
+        "required": ["id", "displayName", "type"]
       },
       "DeploymentsResponseDto": {
         "type": "object",
@@ -6059,9 +5746,7 @@
             }
           }
         },
-        "required": [
-          "deployments"
-        ]
+        "required": ["deployments"]
       },
       "DeploymentConfigurationDto": {
         "type": "object",
@@ -6101,10 +5786,7 @@
             "example": 10
           }
         },
-        "required": [
-          "total",
-          "used"
-        ]
+        "required": ["total", "used"]
       },
       "DeploymentLimitsResponseDto": {
         "type": "object",
@@ -6420,11 +6102,7 @@
           "authenticationType": {
             "type": "string",
             "description": "Type of authentication",
-            "enum": [
-              "OAUTH",
-              "API_KEY",
-              "NONE"
-            ]
+            "enum": ["OAUTH", "API_KEY", "NONE"]
           },
           "dynamicallyRegistered": {
             "type": "boolean",
@@ -6434,26 +6112,17 @@
           "globalAuthStatus": {
             "type": "string",
             "description": "Whether the toolset has global (shared) credentials signed in",
-            "enum": [
-              "SIGNED_IN",
-              "SIGNED_OUT"
-            ]
+            "enum": ["SIGNED_IN", "SIGNED_OUT"]
           },
           "appLevelAuthStatus": {
             "type": "string",
             "description": "Whether the toolset has app-level credentials signed in",
-            "enum": [
-              "SIGNED_IN",
-              "SIGNED_OUT"
-            ]
+            "enum": ["SIGNED_IN", "SIGNED_OUT"]
           },
           "userLevelAuthStatus": {
             "type": "string",
             "description": "Whether the current user has user-level credentials signed in",
-            "enum": [
-              "SIGNED_IN",
-              "SIGNED_OUT"
-            ]
+            "enum": ["SIGNED_IN", "SIGNED_OUT"]
           },
           "scopesSupported": {
             "description": "OAuth scopes supported by this toolset",
@@ -6542,11 +6211,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "model",
-              "application",
-              "toolset"
-            ]
+            "enum": ["model", "application", "toolset"]
           },
           "modelDetails": {
             "$ref": "#/components/schemas/ModelDetailsDto"
@@ -6558,55 +6223,42 @@
             "$ref": "#/components/schemas/ToolsetDetailsDto"
           }
         },
-        "required": [
-          "id",
-          "type"
-        ]
+        "required": ["id", "type"]
       },
       "ConversationsConfigDto": {
         "type": "object",
         "properties": {
           "pinnedIds": {
             "description": "Pinned conversation identifiers.",
-            "example": [
-              "conversations/default-bucket/gpt-4__My chat__uuid"
-            ],
+            "example": ["conversations/default-bucket/gpt-4__My chat__uuid"],
             "type": "array",
             "items": {
               "type": "string"
             }
           }
         },
-        "required": [
-          "pinnedIds"
-        ]
+        "required": ["pinnedIds"]
       },
       "ToolsetsConfigDto": {
         "type": "object",
         "properties": {
           "installed": {
             "description": "Installed toolset identifiers.",
-            "example": [
-              "toolset-abc"
-            ],
+            "example": ["toolset-abc"],
             "type": "array",
             "items": {
               "type": "string"
             }
           }
         },
-        "required": [
-          "installed"
-        ]
+        "required": ["installed"]
       },
       "DeploymentsConfigDto": {
         "type": "object",
         "properties": {
           "installed": {
             "description": "Installed deployment identifiers.",
-            "example": [
-              "deployment-xyz"
-            ],
+            "example": ["deployment-xyz"],
             "type": "array",
             "items": {
               "type": "string"
@@ -6617,9 +6269,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "installed"
-        ]
+        "required": ["installed"]
       },
       "UserConfigDto": {
         "type": "object",
@@ -6639,12 +6289,7 @@
             "$ref": "#/components/schemas/DeploymentsConfigDto"
           }
         },
-        "required": [
-          "version",
-          "conversations",
-          "toolsets",
-          "deployments"
-        ]
+        "required": ["version", "conversations", "toolsets", "deployments"]
       },
       "UpdatePinsDto": {
         "type": "object",
@@ -6660,10 +6305,7 @@
             "example": true
           }
         },
-        "required": [
-          "path",
-          "isPinned"
-        ]
+        "required": ["path", "isPinned"]
       },
       "UpdateInstalledDto": {
         "type": "object",
@@ -6679,10 +6321,7 @@
             "example": true
           }
         },
-        "required": [
-          "id",
-          "isInstalled"
-        ]
+        "required": ["id", "isInstalled"]
       },
       "UpdateSelectedDeploymentDto": {
         "type": "object",
@@ -6802,9 +6441,7 @@
         "type": "object",
         "properties": {
           "scale_types": {
-            "example": [
-              "standard"
-            ],
+            "example": ["standard"],
             "type": "array",
             "items": {
               "type": "string"
@@ -6937,10 +6574,7 @@
             "$ref": "#/components/schemas/DialModelFeaturesDto"
           },
           "input_attachment_types": {
-            "example": [
-              "image/png",
-              "application/pdf"
-            ],
+            "example": ["image/png", "application/pdf"],
             "type": "array",
             "items": {
               "type": "string"
@@ -6959,10 +6593,7 @@
             "additionalProperties": true
           },
           "description_keywords": {
-            "example": [
-              "Text Generation",
-              "Image Recognition"
-            ],
+            "example": ["Text Generation", "Image Recognition"],
             "type": "array",
             "items": {
               "type": "string"
@@ -6997,10 +6628,7 @@
             }
           }
         },
-        "required": [
-          "id",
-          "object"
-        ]
+        "required": ["id", "object"]
       },
       "DialModelListResponseDto": {
         "type": "object",
@@ -7012,9 +6640,7 @@
             }
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "DialToolsetFeaturesDto": {
         "type": "object",
@@ -7112,11 +6738,7 @@
             "example": false
           },
           "reasoningEfforts": {
-            "example": [
-              "low",
-              "medium",
-              "high"
-            ],
+            "example": ["low", "medium", "high"],
             "type": "array",
             "items": {
               "type": "string"
@@ -7130,11 +6752,7 @@
           "authenticationType": {
             "type": "string",
             "example": "OAUTH",
-            "enum": [
-              "OAUTH",
-              "API_KEY",
-              "NONE"
-            ]
+            "enum": ["OAUTH", "API_KEY", "NONE"]
           },
           "dynamicallyRegistered": {
             "type": "boolean",
@@ -7170,10 +6788,7 @@
             "example": "S256"
           },
           "scopesSupported": {
-            "example": [
-              "scope1",
-              "scope2"
-            ],
+            "example": ["scope1", "scope2"],
             "type": "array",
             "items": {
               "type": "string"
@@ -7182,23 +6797,15 @@
           "globalAuthStatus": {
             "type": "string",
             "example": "SIGNED_OUT",
-            "enum": [
-              "SIGNED_IN",
-              "SIGNED_OUT"
-            ]
+            "enum": ["SIGNED_IN", "SIGNED_OUT"]
           },
           "userLevelAuthStatus": {
             "type": "string",
             "example": "SIGNED_OUT",
-            "enum": [
-              "SIGNED_IN",
-              "SIGNED_OUT"
-            ]
+            "enum": ["SIGNED_IN", "SIGNED_OUT"]
           }
         },
-        "required": [
-          "authenticationType"
-        ]
+        "required": ["authenticationType"]
       },
       "DialToolsetDto": {
         "type": "object",
@@ -7261,10 +6868,7 @@
             "example": "succeeded"
           },
           "descriptionKeywords": {
-            "example": [
-              "keyword1",
-              "keyword2"
-            ],
+            "example": ["keyword1", "keyword2"],
             "type": "array",
             "items": {
               "type": "string"
@@ -7298,10 +6902,7 @@
             "example": "HTTP"
           },
           "allowedTools": {
-            "example": [
-              "tool1",
-              "tool2"
-            ],
+            "example": ["tool1", "tool2"],
             "type": "array",
             "items": {
               "type": "string"
@@ -7327,10 +6928,7 @@
             "description": "True when this toolset is shared with the current user (READ or WRITE) and not owned by them"
           }
         },
-        "required": [
-          "id",
-          "toolset"
-        ]
+        "required": ["id", "toolset"]
       },
       "DialToolsetListResponseDto": {
         "type": "object",
@@ -7342,20 +6940,14 @@
             }
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "ToolsetAuthSettingsBodyDto": {
         "type": "object",
         "properties": {
           "authenticationType": {
             "type": "string",
-            "enum": [
-              "NONE",
-              "API_KEY",
-              "OAUTH"
-            ],
+            "enum": ["NONE", "API_KEY", "OAUTH"],
             "example": "NONE"
           },
           "apiKeyHeader": {
@@ -7379,10 +6971,7 @@
             "example": "https://auth.example.com/token"
           },
           "scopesSupported": {
-            "example": [
-              "read",
-              "write"
-            ],
+            "example": ["read", "write"],
             "type": "array",
             "items": {
               "type": "string"
@@ -7401,9 +6990,7 @@
             "example": "abc123"
           }
         },
-        "required": [
-          "authenticationType"
-        ]
+        "required": ["authenticationType"]
       },
       "ToolsetBodyDto": {
         "type": "object",
@@ -7425,10 +7012,7 @@
             "example": "https://example.com/icon.svg"
           },
           "topics": {
-            "example": [
-              "keyword1",
-              "keyword2"
-            ],
+            "example": ["keyword1", "keyword2"],
             "type": "array",
             "items": {
               "type": "string"
@@ -7450,17 +7034,11 @@
           },
           "transport": {
             "type": "string",
-            "enum": [
-              "HTTP",
-              "SSE"
-            ],
+            "enum": ["HTTP", "SSE"],
             "example": "HTTP"
           },
           "allowedTools": {
-            "example": [
-              "tool1",
-              "tool2"
-            ],
+            "example": ["tool1", "tool2"],
             "type": "array",
             "items": {
               "type": "string"
@@ -7474,12 +7052,7 @@
             "$ref": "#/components/schemas/ToolsetAuthSettingsBodyDto"
           }
         },
-        "required": [
-          "name",
-          "endpoint",
-          "transport",
-          "authSettings"
-        ]
+        "required": ["name", "endpoint", "transport", "authSettings"]
       },
       "MutatedToolsetDto": {
         "type": "object",
@@ -7489,9 +7062,7 @@
             "example": "toolsets/encrypted-bucket/My%20toolset__0.0.1"
           }
         },
-        "required": [
-          "id"
-        ]
+        "required": ["id"]
       },
       "ToolsetLoginBodyDto": {
         "type": "object",
@@ -7502,20 +7073,12 @@
           },
           "credentialsLevel": {
             "type": "string",
-            "enum": [
-              "GLOBAL",
-              "USER",
-              "APP"
-            ],
+            "enum": ["GLOBAL", "USER", "APP"],
             "example": "USER"
           },
           "authenticationType": {
             "type": "string",
-            "enum": [
-              "NONE",
-              "API_KEY",
-              "OAUTH"
-            ],
+            "enum": ["NONE", "API_KEY", "OAUTH"],
             "example": "API_KEY"
           },
           "apiKey": {
@@ -7531,11 +7094,7 @@
             "description": "OAuth redirect URI used for the code exchange."
           }
         },
-        "required": [
-          "url",
-          "credentialsLevel",
-          "authenticationType"
-        ]
+        "required": ["url", "credentialsLevel", "authenticationType"]
       },
       "ToolsetAuthResultDto": {
         "type": "object",
@@ -7545,9 +7104,7 @@
             "example": true
           }
         },
-        "required": [
-          "success"
-        ]
+        "required": ["success"]
       },
       "ToolsetLogoutBodyDto": {
         "type": "object",
@@ -7558,28 +7115,17 @@
           },
           "credentialsLevel": {
             "type": "string",
-            "enum": [
-              "GLOBAL",
-              "USER",
-              "APP"
-            ],
+            "enum": ["GLOBAL", "USER", "APP"],
             "example": "USER"
           },
           "authenticationType": {
             "type": "string",
-            "enum": [
-              "NONE",
-              "API_KEY",
-              "OAUTH"
-            ],
+            "enum": ["NONE", "API_KEY", "OAUTH"],
             "example": "OAUTH",
             "description": "Authentication type used by the toolset. Optional — a caller that doesn't already have this loaded (e.g. logging out by id alone) can omit it; the server looks up the toolset's own stored authentication type instead."
           }
         },
-        "required": [
-          "url",
-          "credentialsLevel"
-        ]
+        "required": ["url", "credentialsLevel"]
       },
       "McpAppToolSummaryDto": {
         "type": "object",
@@ -7593,10 +7139,7 @@
             "example": "ui://widget/1"
           }
         },
-        "required": [
-          "toolName",
-          "resourceUri"
-        ]
+        "required": ["toolName", "resourceUri"]
       },
       "ListMcpAppToolsResponseDto": {
         "type": "object",
@@ -7608,9 +7151,7 @@
             }
           }
         },
-        "required": [
-          "tools"
-        ]
+        "required": ["tools"]
       },
       "McpAppToolCallRequestDto": {
         "type": "object",
@@ -7626,10 +7167,7 @@
             }
           }
         },
-        "required": [
-          "toolName",
-          "arguments"
-        ]
+        "required": ["toolName", "arguments"]
       },
       "McpAppToolCallResponseDto": {
         "type": "object",
@@ -7639,9 +7177,7 @@
             "description": "Unwrapped `result` field of the tool's JSON-RPC response."
           }
         },
-        "required": [
-          "result"
-        ]
+        "required": ["result"]
       },
       "AttachmentDto": {
         "type": "object",
@@ -7675,10 +7211,7 @@
             "description": "URL of the reference resource"
           }
         },
-        "required": [
-          "type",
-          "title"
-        ]
+        "required": ["type", "title"]
       },
       "MessageCustomContentDto": {
         "type": "object",
@@ -7718,11 +7251,7 @@
           "role": {
             "type": "string",
             "description": "Message author role",
-            "enum": [
-              "system",
-              "user",
-              "assistant"
-            ],
+            "enum": ["system", "user", "assistant"],
             "example": "user"
           },
           "content": {
@@ -7744,10 +7273,7 @@
             ]
           }
         },
-        "required": [
-          "role",
-          "content"
-        ]
+        "required": ["role", "content"]
       },
       "ChatCompletionDto": {
         "type": "object",
@@ -7778,10 +7304,7 @@
             "minimum": 1
           }
         },
-        "required": [
-          "deployment",
-          "messages"
-        ]
+        "required": ["deployment", "messages"]
       },
       "ChatCompletionChoiceDto": {
         "type": "object",
@@ -7804,10 +7327,7 @@
             }
           }
         },
-        "required": [
-          "index",
-          "message"
-        ]
+        "required": ["index", "message"]
       },
       "ChatCompletionResponseDto": {
         "type": "object",
@@ -7827,11 +7347,7 @@
             }
           }
         },
-        "required": [
-          "id",
-          "object",
-          "choices"
-        ]
+        "required": ["id", "object", "choices"]
       },
       "ReportClientChannelDto": {
         "type": "object",
@@ -7843,17 +7359,11 @@
           },
           "result": {
             "type": "string",
-            "enum": [
-              "success",
-              "denied"
-            ],
+            "enum": ["success", "denied"],
             "example": "success"
           }
         },
-        "required": [
-          "id",
-          "result"
-        ]
+        "required": ["id", "result"]
       },
       "GetExternalServiceResponseDto": {
         "type": "object",
@@ -7868,11 +7378,7 @@
           },
           "authenticationType": {
             "type": "string",
-            "enum": [
-              "NONE",
-              "API_KEY",
-              "OAUTH"
-            ],
+            "enum": ["NONE", "API_KEY", "OAUTH"],
             "example": "API_KEY"
           },
           "userLevelAuthStatus": {
@@ -7894,10 +7400,7 @@
             "example": "https://auth.example.com/authorize"
           },
           "scopesSupported": {
-            "example": [
-              "read",
-              "write"
-            ],
+            "example": ["read", "write"],
             "type": "array",
             "items": {
               "type": "string"
@@ -7912,30 +7415,19 @@
             "example": "S256"
           }
         },
-        "required": [
-          "displayName",
-          "authenticationType"
-        ]
+        "required": ["displayName", "authenticationType"]
       },
       "ExternalServiceSigninBodyDto": {
         "type": "object",
         "properties": {
           "credentialsLevel": {
             "type": "string",
-            "enum": [
-              "GLOBAL",
-              "APPLICATION",
-              "USER"
-            ],
+            "enum": ["GLOBAL", "APPLICATION", "USER"],
             "example": "USER"
           },
           "authenticationType": {
             "type": "string",
-            "enum": [
-              "NONE",
-              "API_KEY",
-              "OAUTH"
-            ],
+            "enum": ["NONE", "API_KEY", "OAUTH"],
             "example": "API_KEY"
           },
           "apiKey": {
@@ -7951,10 +7443,7 @@
             "description": "OAuth redirect URI used for the code exchange."
           }
         },
-        "required": [
-          "credentialsLevel",
-          "authenticationType"
-        ]
+        "required": ["credentialsLevel", "authenticationType"]
       },
       "ExternalServiceAuthResultDto": {
         "type": "object",
@@ -7964,36 +7453,23 @@
             "example": true
           }
         },
-        "required": [
-          "success"
-        ]
+        "required": ["success"]
       },
       "ExternalServiceLogoutBodyDto": {
         "type": "object",
         "properties": {
           "credentialsLevel": {
             "type": "string",
-            "enum": [
-              "GLOBAL",
-              "APPLICATION",
-              "USER"
-            ],
+            "enum": ["GLOBAL", "APPLICATION", "USER"],
             "example": "USER"
           },
           "authenticationType": {
             "type": "string",
-            "enum": [
-              "NONE",
-              "API_KEY",
-              "OAUTH"
-            ],
+            "enum": ["NONE", "API_KEY", "OAUTH"],
             "example": "API_KEY"
           }
         },
-        "required": [
-          "credentialsLevel",
-          "authenticationType"
-        ]
+        "required": ["credentialsLevel", "authenticationType"]
       },
       "CreateConversationDto": {
         "type": "object",
@@ -8021,10 +7497,7 @@
             ]
           }
         },
-        "required": [
-          "firstMessage",
-          "deploymentId"
-        ]
+        "required": ["firstMessage", "deploymentId"]
       },
       "ConversationModelDto": {
         "type": "object",
@@ -8034,9 +7507,7 @@
             "example": "anthropic.claude-v3-sonnet"
           }
         },
-        "required": [
-          "id"
-        ]
+        "required": ["id"]
       },
       "ConversationMessageCustomContentDto": {
         "type": "object",
@@ -8065,9 +7536,7 @@
           },
           "event_type": {
             "type": "string",
-            "enum": [
-              "model_changed"
-            ],
+            "enum": ["model_changed"],
             "description": "Status event discriminator when role is status"
           },
           "previous_deployment_id": {
@@ -8093,11 +7562,7 @@
           },
           "role": {
             "type": "string",
-            "enum": [
-              "user",
-              "assistant",
-              "status"
-            ],
+            "enum": ["user", "assistant", "status"],
             "example": "user"
           },
           "content": {
@@ -8117,11 +7582,7 @@
             "example": "You have exceeded your daily token limit."
           }
         },
-        "required": [
-          "role",
-          "content",
-          "timestamp"
-        ]
+        "required": ["role", "content", "timestamp"]
       },
       "ConversationResponseDto": {
         "type": "object",
@@ -8177,10 +7638,7 @@
           "responseFormat": {
             "type": "string",
             "example": "markdown",
-            "enum": [
-              "markdown",
-              "plain_text"
-            ]
+            "enum": ["markdown", "plain_text"]
           },
           "llmNamingDone": {
             "type": "boolean",
@@ -8287,9 +7745,7 @@
             "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"
           }
         },
-        "required": [
-          "items"
-        ]
+        "required": ["items"]
       },
       "ConversationMetadataDto": {
         "type": "object",
@@ -8335,10 +7791,7 @@
             "example": 1779206400000
           },
           "permissions": {
-            "example": [
-              "READ",
-              "WRITE"
-            ],
+            "example": ["READ", "WRITE"],
             "type": "array",
             "items": {
               "type": "string"
@@ -8366,9 +7819,7 @@
             ]
           }
         },
-        "required": [
-          "conversation"
-        ]
+        "required": ["conversation"]
       },
       "SendCompletionDto": {
         "type": "object",
@@ -8392,12 +7843,7 @@
           },
           "mode": {
             "type": "string",
-            "enum": [
-              "append",
-              "continue_last_user",
-              "regenerate",
-              "edit"
-            ],
+            "enum": ["append", "continue_last_user", "regenerate", "edit"],
             "description": "How the message should be inserted into history. append = new user+assistant turn; continue_last_user = conversation already ends with a user message; regenerate = replace assistant at messageIndex; edit = replace user message at messageIndex."
           },
           "message": {
@@ -8425,12 +7871,7 @@
             "example": "a1b2c3d4-e5f6-4789-a012-3456789abcde"
           }
         },
-        "required": [
-          "generationId",
-          "path",
-          "model",
-          "mode"
-        ]
+        "required": ["generationId", "path", "model", "mode"]
       },
       "StopCompletionDto": {
         "type": "object",
@@ -8447,10 +7888,7 @@
             "example": "gpt-4o__My Conversation__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
           }
         },
-        "required": [
-          "generationId",
-          "path"
-        ]
+        "required": ["generationId", "path"]
       },
       "WatchConversationBodyDto": {
         "type": "object",
@@ -8461,9 +7899,7 @@
             "example": "gpt-4o__My Chat"
           }
         },
-        "required": [
-          "path"
-        ]
+        "required": ["path"]
       },
       "RenameConversationBodyDto": {
         "type": "object",
@@ -8474,9 +7910,7 @@
             "example": "My renamed chat"
           }
         },
-        "required": [
-          "newTitle"
-        ]
+        "required": ["newTitle"]
       },
       "RenameConversationResponseDto": {
         "type": "object",
@@ -8487,9 +7921,7 @@
             "example": "My renamed chat"
           }
         },
-        "required": [
-          "name"
-        ]
+        "required": ["name"]
       },
       "GenerateTitleResponseDto": {
         "type": "object",
@@ -8500,9 +7932,7 @@
             "example": "Refactoring the auth module"
           }
         },
-        "required": [
-          "name"
-        ]
+        "required": ["name"]
       },
       "DuplicateConversationResponseDto": {
         "type": "object",
@@ -8513,9 +7943,7 @@
             "example": "conversations/bucket/gpt-4o__My conversation"
           }
         },
-        "required": [
-          "newPath"
-        ]
+        "required": ["newPath"]
       },
       "DeleteConversationsBodyDto": {
         "type": "object",
@@ -8530,9 +7958,7 @@
             }
           }
         },
-        "required": [
-          "ids"
-        ]
+        "required": ["ids"]
       },
       "ConversationDeletionFailureDto": {
         "type": "object",
@@ -8544,18 +7970,10 @@
           "code": {
             "type": "string",
             "description": "Stable application error code",
-            "enum": [
-              "NOT_FOUND",
-              "FORBIDDEN",
-              "UPSTREAM_ERROR",
-              "UNKNOWN"
-            ]
+            "enum": ["NOT_FOUND", "FORBIDDEN", "UPSTREAM_ERROR", "UNKNOWN"]
           }
         },
-        "required": [
-          "id",
-          "code"
-        ]
+        "required": ["id", "code"]
       },
       "ConversationDeletionResultDto": {
         "type": "object",
@@ -8580,12 +7998,7 @@
             }
           }
         },
-        "required": [
-          "requested",
-          "deleted",
-          "alreadyAbsent",
-          "failed"
-        ]
+        "required": ["requested", "deleted", "alreadyAbsent", "failed"]
       },
       "DeleteAllConversationsBodyDto": {
         "type": "object",
@@ -8596,9 +8009,7 @@
             "example": true
           }
         },
-        "required": [
-          "confirm"
-        ]
+        "required": ["confirm"]
       },
       "PublishRuleDto": {
         "type": "object",
@@ -8610,30 +8021,19 @@
           },
           "function": {
             "type": "string",
-            "enum": [
-              "EQUAL",
-              "CONTAIN",
-              "REGEX"
-            ],
+            "enum": ["EQUAL", "CONTAIN", "REGEX"],
             "example": "CONTAIN"
           },
           "targets": {
             "description": "Values combined with OR; exactly one pattern when function is REGEX.",
-            "example": [
-              "engineering",
-              "support"
-            ],
+            "example": ["engineering", "support"],
             "type": "array",
             "items": {
               "type": "string"
             }
           }
         },
-        "required": [
-          "source",
-          "function",
-          "targets"
-        ]
+        "required": ["source", "function", "targets"]
       },
       "PublishConversationDto": {
         "type": "object",
@@ -8652,9 +8052,7 @@
             }
           }
         },
-        "required": [
-          "folderPath"
-        ]
+        "required": ["folderPath"]
       },
       "PublishConversationResultDto": {
         "type": "object",
@@ -8676,12 +8074,7 @@
             "example": "Test User"
           }
         },
-        "required": [
-          "path",
-          "folderPath",
-          "publishedAt",
-          "publishedBy"
-        ]
+        "required": ["path", "folderPath", "publishedAt", "publishedBy"]
       },
       "PromptResponseDto": {
         "type": "object",
@@ -8745,10 +8138,7 @@
             "example": "AI"
           }
         },
-        "required": [
-          "id",
-          "name"
-        ]
+        "required": ["id", "name"]
       },
       "PromptListResponseDto": {
         "type": "object",
@@ -8772,11 +8162,7 @@
             }
           }
         },
-        "required": [
-          "prompts",
-          "folders",
-          "sharedWithMe"
-        ]
+        "required": ["prompts", "folders", "sharedWithMe"]
       },
       "CreatePromptDto": {
         "type": "object",
@@ -8803,10 +8189,7 @@
             "example": "Work/AI"
           }
         },
-        "required": [
-          "name",
-          "content"
-        ]
+        "required": ["name", "content"]
       },
       "UpdatePromptDto": {
         "type": "object",
@@ -8844,10 +8227,7 @@
             }
           }
         },
-        "required": [
-          "prompts",
-          "folders"
-        ]
+        "required": ["prompts", "folders"]
       },
       "CreatePromptFolderDto": {
         "type": "object",
@@ -8864,9 +8244,7 @@
             "example": "Work"
           }
         },
-        "required": [
-          "name"
-        ]
+        "required": ["name"]
       },
       "RenamePromptFolderDto": {
         "type": "object",
@@ -8878,9 +8256,7 @@
             "maxLength": 256
           }
         },
-        "required": [
-          "name"
-        ]
+        "required": ["name"]
       },
       "MovePromptDto": {
         "type": "object",
@@ -8891,9 +8267,7 @@
             "example": "Work/AI"
           }
         },
-        "required": [
-          "targetFolderId"
-        ]
+        "required": ["targetFolderId"]
       },
       "FileUploadResponseDto": {
         "type": "object",
@@ -8904,9 +8278,7 @@
             "example": "files/my-bucket/folder/file.pdf"
           }
         },
-        "required": [
-          "url"
-        ]
+        "required": ["url"]
       },
       "UploadArchiveEntryResultDto": {
         "type": "object",
@@ -8924,10 +8296,7 @@
             "description": "Human-readable error reason when success is false"
           }
         },
-        "required": [
-          "path",
-          "success"
-        ]
+        "required": ["path", "success"]
       },
       "UploadArchiveResponseDto": {
         "type": "object",
@@ -8939,9 +8308,7 @@
             }
           }
         },
-        "required": [
-          "results"
-        ]
+        "required": ["results"]
       },
       "ListFilesItemDto": {
         "type": "object",
@@ -8957,10 +8324,7 @@
           },
           "nodeType": {
             "type": "string",
-            "enum": [
-              "item",
-              "folder"
-            ]
+            "enum": ["item", "folder"]
           },
           "bucket": {
             "type": "string"
@@ -8994,13 +8358,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "path",
-          "folderId",
-          "nodeType",
-          "bucket"
-        ]
+        "required": ["name", "path", "folderId", "nodeType", "bucket"]
       },
       "ListFilesResponseDto": {
         "type": "object",
@@ -9028,11 +8386,7 @@
             }
           }
         },
-        "required": [
-          "bucket",
-          "path",
-          "items"
-        ]
+        "required": ["bucket", "path", "items"]
       },
       "FileMetadataResponseDto": {
         "type": "object",
@@ -9108,10 +8462,7 @@
             "example": "reports"
           }
         },
-        "required": [
-          "bucket",
-          "name"
-        ]
+        "required": ["bucket", "name"]
       },
       "CreateFolderResponseDto": {
         "type": "object",
@@ -9170,18 +8521,10 @@
           },
           "nodeType": {
             "type": "string",
-            "enum": [
-              "item",
-              "folder"
-            ]
+            "enum": ["item", "folder"]
           }
         },
-        "required": [
-          "bucket",
-          "path",
-          "name",
-          "nodeType"
-        ]
+        "required": ["bucket", "path", "name", "nodeType"]
       },
       "DownloadArchiveDto": {
         "type": "object",
@@ -9193,9 +8536,7 @@
             }
           }
         },
-        "required": [
-          "items"
-        ]
+        "required": ["items"]
       },
       "DeleteItemDto": {
         "type": "object",
@@ -9217,18 +8558,10 @@
           },
           "nodeType": {
             "type": "string",
-            "enum": [
-              "item",
-              "folder"
-            ]
+            "enum": ["item", "folder"]
           }
         },
-        "required": [
-          "bucket",
-          "path",
-          "name",
-          "nodeType"
-        ]
+        "required": ["bucket", "path", "name", "nodeType"]
       },
       "DeleteFilesDto": {
         "type": "object",
@@ -9240,9 +8573,7 @@
             }
           }
         },
-        "required": [
-          "items"
-        ]
+        "required": ["items"]
       },
       "DeleteItemResultDto": {
         "type": "object",
@@ -9260,10 +8591,7 @@
             "description": "Human-readable error reason when success is false"
           }
         },
-        "required": [
-          "path",
-          "success"
-        ]
+        "required": ["path", "success"]
       },
       "DeleteFilesResponseDto": {
         "type": "object",
@@ -9275,9 +8603,7 @@
             }
           }
         },
-        "required": [
-          "results"
-        ]
+        "required": ["results"]
       },
       "RenameItemDto": {
         "type": "object",
@@ -9299,10 +8625,7 @@
           },
           "nodeType": {
             "type": "string",
-            "enum": [
-              "item",
-              "folder"
-            ]
+            "enum": ["item", "folder"]
           },
           "name": {
             "type": "string",
@@ -9328,9 +8651,7 @@
             }
           }
         },
-        "required": [
-          "items"
-        ]
+        "required": ["items"]
       },
       "RenameItemResultDto": {
         "type": "object",
@@ -9352,11 +8673,7 @@
             "description": "Human-readable error reason when success is false"
           }
         },
-        "required": [
-          "sourcePath",
-          "destinationPath",
-          "success"
-        ]
+        "required": ["sourcePath", "destinationPath", "success"]
       },
       "RenameFilesResponseDto": {
         "type": "object",
@@ -9368,9 +8685,7 @@
             }
           }
         },
-        "required": [
-          "results"
-        ]
+        "required": ["results"]
       },
       "CopyItemDto": {
         "type": "object",
@@ -9398,10 +8713,7 @@
           },
           "nodeType": {
             "type": "string",
-            "enum": [
-              "item",
-              "folder"
-            ]
+            "enum": ["item", "folder"]
           },
           "name": {
             "type": "string",
@@ -9427,9 +8739,7 @@
             }
           }
         },
-        "required": [
-          "items"
-        ]
+        "required": ["items"]
       },
       "CopyItemResultDto": {
         "type": "object",
@@ -9451,11 +8761,7 @@
             "description": "Human-readable error reason when success is false"
           }
         },
-        "required": [
-          "sourcePath",
-          "destinationPath",
-          "success"
-        ]
+        "required": ["sourcePath", "destinationPath", "success"]
       },
       "CopyFilesResponseDto": {
         "type": "object",
@@ -9467,9 +8773,7 @@
             }
           }
         },
-        "required": [
-          "results"
-        ]
+        "required": ["results"]
       },
       "MoveItemDto": {
         "type": "object",
@@ -9497,10 +8801,7 @@
           },
           "nodeType": {
             "type": "string",
-            "enum": [
-              "item",
-              "folder"
-            ]
+            "enum": ["item", "folder"]
           },
           "name": {
             "type": "string",
@@ -9526,9 +8827,7 @@
             }
           }
         },
-        "required": [
-          "items"
-        ]
+        "required": ["items"]
       },
       "MoveItemResultDto": {
         "type": "object",
@@ -9550,11 +8849,7 @@
             "description": "Human-readable error reason when success is false"
           }
         },
-        "required": [
-          "sourcePath",
-          "destinationPath",
-          "success"
-        ]
+        "required": ["sourcePath", "destinationPath", "success"]
       },
       "MoveFilesResponseDto": {
         "type": "object",
@@ -9566,9 +8861,7 @@
             }
           }
         },
-        "required": [
-          "results"
-        ]
+        "required": ["results"]
       },
       "RevokeAccessItemDto": {
         "type": "object",
@@ -9584,10 +8877,7 @@
             "example": "reports/q1.pdf"
           }
         },
-        "required": [
-          "bucket",
-          "path"
-        ]
+        "required": ["bucket", "path"]
       },
       "RevokeAccessDto": {
         "type": "object",
@@ -9599,9 +8889,7 @@
             }
           }
         },
-        "required": [
-          "items"
-        ]
+        "required": ["items"]
       },
       "RevokeAccessResponseDto": {
         "type": "object",
@@ -9611,9 +8899,7 @@
             "description": "true when the Core revoke call succeeded"
           }
         },
-        "required": [
-          "success"
-        ]
+        "required": ["success"]
       },
       "DiscardSharedItemDto": {
         "type": "object",
@@ -9629,10 +8915,7 @@
             "example": "reports/q1.pdf"
           }
         },
-        "required": [
-          "bucket",
-          "path"
-        ]
+        "required": ["bucket", "path"]
       },
       "DiscardSharedDto": {
         "type": "object",
@@ -9644,9 +8927,7 @@
             }
           }
         },
-        "required": [
-          "items"
-        ]
+        "required": ["items"]
       },
       "DiscardSharedResponseDto": {
         "type": "object",
@@ -9656,9 +8937,7 @@
             "description": "true when the Core discard call succeeded"
           }
         },
-        "required": [
-          "success"
-        ]
+        "required": ["success"]
       },
       "RateMessageDto": {
         "type": "object",
@@ -9681,10 +8960,7 @@
           "rate": {
             "type": "number",
             "description": "Rating value — 1 (like/thumbs-up) or -1 (dislike/thumbs-down). DIAL Core adds this value to the message like count.",
-            "enum": [
-              1,
-              -1
-            ]
+            "enum": [1, -1]
           },
           "comment": {
             "type": "string",
@@ -9692,12 +8968,7 @@
             "example": "The response was too brief"
           }
         },
-        "required": [
-          "conversationId",
-          "responseId",
-          "modelId",
-          "rate"
-        ]
+        "required": ["conversationId", "responseId", "modelId", "rate"]
       },
       "TranscribeAudioDto": {
         "type": "object",
@@ -9711,10 +8982,7 @@
             "description": "MIME type of the audio file (e.g. audio/webm;codecs=opus)."
           }
         },
-        "required": [
-          "audioUrl",
-          "mimeType"
-        ]
+        "required": ["audioUrl", "mimeType"]
       },
       "ThemeDto": {
         "type": "object",
@@ -9741,12 +9009,7 @@
             "example": "https://example.com/logo-light.svg"
           }
         },
-        "required": [
-          "id",
-          "displayName",
-          "colors",
-          "app-logo"
-        ]
+        "required": ["id", "displayName", "colors", "app-logo"]
       },
       "ThemeImagesDto": {
         "type": "object",
@@ -9776,11 +9039,7 @@
             "example": "https://example.com/chat-favicon.png"
           }
         },
-        "required": [
-          "default-addon",
-          "default-model",
-          "favicon"
-        ]
+        "required": ["default-addon", "default-model", "favicon"]
       },
       "ThemeConfigResponseDto": {
         "type": "object",
@@ -9795,10 +9054,7 @@
             "$ref": "#/components/schemas/ThemeImagesDto"
           }
         },
-        "required": [
-          "themes",
-          "images"
-        ]
+        "required": ["themes", "images"]
       },
       "CreateShareLinkDto": {
         "type": "object",
@@ -9811,22 +9067,14 @@
           "access": {
             "type": "array",
             "description": "Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.",
-            "example": [
-              "view"
-            ],
+            "example": ["view"],
             "items": {
               "type": "string",
-              "enum": [
-                "view",
-                "edit"
-              ]
+              "enum": ["view", "edit"]
             }
           }
         },
-        "required": [
-          "itemId",
-          "access"
-        ]
+        "required": ["itemId", "access"]
       },
       "ShareLinkResponseDto": {
         "type": "object",
@@ -9844,23 +9092,14 @@
           "access": {
             "type": "array",
             "description": "Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.",
-            "example": [
-              "view"
-            ],
+            "example": ["view"],
             "items": {
               "type": "string",
-              "enum": [
-                "view",
-                "edit"
-              ]
+              "enum": ["view", "edit"]
             }
           }
         },
-        "required": [
-          "url",
-          "expiresInDays",
-          "access"
-        ]
+        "required": ["url", "expiresInDays", "access"]
       },
       "AcceptInvitationResponseDto": {
         "type": "object",
@@ -9887,9 +9126,7 @@
             ]
           }
         },
-        "required": [
-          "itemId"
-        ]
+        "required": ["itemId"]
       },
       "DiscardSharedCatalogItemDto": {
         "type": "object",
@@ -9900,9 +9137,7 @@
             "example": "applications/owner-bucket/my-app"
           }
         },
-        "required": [
-          "itemId"
-        ]
+        "required": ["itemId"]
       },
       "DiscardSharedCatalogItemResponseDto": {
         "type": "object",
@@ -9912,9 +9147,7 @@
             "description": "true when the discard call succeeded"
           }
         },
-        "required": [
-          "success"
-        ]
+        "required": ["success"]
       },
       "PublishCatalogEntityDto": {
         "type": "object",
@@ -9938,10 +9171,7 @@
             }
           }
         },
-        "required": [
-          "folderPath",
-          "version"
-        ]
+        "required": ["folderPath", "version"]
       },
       "PublishResultDto": {
         "type": "object",
@@ -9952,11 +9182,7 @@
           },
           "entityType": {
             "type": "string",
-            "enum": [
-              "model",
-              "toolset",
-              "application"
-            ],
+            "enum": ["model", "toolset", "application"],
             "example": "toolset"
           },
           "folderPath": {
@@ -9994,11 +9220,7 @@
           },
           "entityType": {
             "type": "string",
-            "enum": [
-              "model",
-              "toolset",
-              "application"
-            ],
+            "enum": ["model", "toolset", "application"],
             "example": "toolset"
           },
           "folderPath": {
@@ -10038,9 +9260,7 @@
             }
           }
         },
-        "required": [
-          "rules"
-        ]
+        "required": ["rules"]
       },
       "ScheduleCronDto": {
         "type": "object",
@@ -10067,9 +9287,7 @@
             "description": "End of the activity window during which this cron trigger fires. Omitted when unset."
           }
         },
-        "required": [
-          "fields"
-        ]
+        "required": ["fields"]
       },
       "ScheduleTriggerDto": {
         "type": "object",
@@ -10111,10 +9329,7 @@
           },
           "triggerType": {
             "type": "string",
-            "enum": [
-              "cron",
-              "date"
-            ],
+            "enum": ["cron", "date"],
             "example": "cron"
           },
           "serviceId": {
@@ -10138,11 +9353,7 @@
             "example": "Summarize my inbox"
           }
         },
-        "required": [
-          "id",
-          "displayName",
-          "trigger"
-        ]
+        "required": ["id", "displayName", "trigger"]
       },
       "ListScheduledTasksResponseDto": {
         "type": "object",
@@ -10181,9 +9392,7 @@
             "description": "Upstream URL for the previous page, or null if this is the first page."
           }
         },
-        "required": [
-          "items"
-        ]
+        "required": ["items"]
       },
       "CreateScheduledTaskBodyDto": {
         "type": "object",
@@ -10208,12 +9417,7 @@
             "example": "Summarizes unread inbox items every morning"
           }
         },
-        "required": [
-          "displayName",
-          "trigger",
-          "model",
-          "prompt"
-        ]
+        "required": ["displayName", "trigger", "model", "prompt"]
       },
       "CreatedScheduledTaskDto": {
         "type": "object",
@@ -10243,10 +9447,7 @@
           },
           "triggerType": {
             "type": "string",
-            "enum": [
-              "cron",
-              "date"
-            ],
+            "enum": ["cron", "date"],
             "example": "cron"
           },
           "serviceId": {
@@ -10270,11 +9471,7 @@
             "example": "Summarize my inbox"
           }
         },
-        "required": [
-          "id",
-          "displayName",
-          "trigger"
-        ]
+        "required": ["id", "displayName", "trigger"]
       },
       "ScheduledTaskRunDto": {
         "type": "object",
@@ -10285,12 +9482,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "Success",
-              "Error",
-              "InProgress",
-              "Missed"
-            ],
+            "enum": ["Success", "Error", "InProgress", "Missed"],
             "example": "Success"
           },
           "startTime": {
@@ -10307,11 +9499,7 @@
             "example": 99
           }
         },
-        "required": [
-          "id",
-          "status",
-          "startTime"
-        ]
+        "required": ["id", "status", "startTime"]
       },
       "ListScheduledTaskRunsResponseDto": {
         "type": "object",
@@ -10350,9 +9538,7 @@
             "description": "Upstream URL for the previous page, or null if this is the first page."
           }
         },
-        "required": [
-          "items"
-        ]
+        "required": ["items"]
       },
       "UpdateScheduledTaskBodyDto": {
         "type": "object",
@@ -10377,12 +9563,7 @@
             "example": "Summarizes unread inbox items every morning"
           }
         },
-        "required": [
-          "displayName",
-          "trigger",
-          "model",
-          "prompt"
-        ]
+        "required": ["displayName", "trigger", "model", "prompt"]
       },
       "UpdatedScheduledTaskDto": {
         "type": "object",
@@ -10412,10 +9593,7 @@
           },
           "triggerType": {
             "type": "string",
-            "enum": [
-              "cron",
-              "date"
-            ],
+            "enum": ["cron", "date"],
             "example": "cron"
           },
           "serviceId": {
@@ -10439,11 +9617,7 @@
             "example": "Summarize my inbox"
           }
         },
-        "required": [
-          "id",
-          "displayName",
-          "trigger"
-        ]
+        "required": ["id", "displayName", "trigger"]
       }
     }
   }

@@ -8,23 +8,11 @@ import { EnvironmentVariables } from './config/environment.config';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   /*
-   * xFrameOptions is disabled: this app is meant to be iframed cross-origin
-   * by the chat host, so X-Frame-Options: SAMEORIGIN would break its only use.
-   * The sandbox route sets its own per-response CSP in SandboxController via
-   * res.set('Content-Security-Policy', ...) which takes precedence over this
-   * default helmet CSP, so a restrictive default here is safe and still allows
-   * CodeQL to confirm CSP enforcement is not fully disabled.
+   * xFrameOptions and CSP are disabled - we don't know what the sandboxed app will need to do, and the sandbox proxy is already isolated from the rest of the system (and the user) by design. The sandbox proxy is not intended to be a general-purpose web server, and is only meant to serve MCP apps in a controlled environment.
    */
   app.use(
     helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          scriptSrc: ["'self'"],
-          objectSrc: ["'none'"],
-          baseUri: ["'none'"],
-        },
-      },
+      contentSecurityPolicy: false,
       xFrameOptions: false,
     }),
   );

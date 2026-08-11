@@ -2,7 +2,7 @@ import {
   ResponseError,
   type ListMcpAppToolsKindEnum,
   type McpAppToolSummaryDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { safeDecodeURIComponent } from '../utils/string-utils';
 import { toolsetsApi } from './api-client';
 
@@ -30,11 +30,11 @@ export const fetchMcpAppResourceHtml = async (
       resourceUri,
     });
     return await raw.text();
-  } catch (error) {
-    if (error instanceof ResponseError) {
-      throw new McpAppResourceFetchError(error.response.status);
+  } catch (err) {
+    if (err instanceof ResponseError) {
+      throw new McpAppResourceFetchError(err.response.status);
     }
-    throw error;
+    throw err;
   }
 };
 

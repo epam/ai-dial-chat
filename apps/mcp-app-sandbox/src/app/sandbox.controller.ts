@@ -26,6 +26,7 @@ export class SandboxController {
     res.set('Content-Type', 'text/html; charset=utf-8');
     res.set('Content-Security-Policy', cspHeader);
     res.set('X-Content-Type-Options', 'nosniff');
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
     res.set('Cache-Control', 'no-store');
     res.send(html);
   }

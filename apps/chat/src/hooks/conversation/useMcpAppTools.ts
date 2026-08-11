@@ -1,5 +1,8 @@
+import type {
+  DeploymentItemDto,
+  DialToolsetDto,
+} from '@epam/ai-dial-chat-api-client';
 import type { Message } from '@epam/ai-dial-chat-shared';
-import type { DeploymentItemDto, DialToolsetDto } from '@epam/chat-api-client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   listMcpAppTools,

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { EnvironmentVariables } from '../config/environment.config';
-import { SANDBOX_CSP_HEADER } from './csp';
+import { buildSandboxCspHeader } from './csp';
 import { buildSandboxPageHtml } from './sandbox-page';
 
 @Injectable()
@@ -50,7 +50,7 @@ export class SandboxService {
   } {
     return {
       html: buildSandboxPageHtml(validatedHostOrigin),
-      cspHeader: SANDBOX_CSP_HEADER,
+      cspHeader: buildSandboxCspHeader(validatedHostOrigin),
     };
   }
 }
