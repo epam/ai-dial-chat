@@ -28,6 +28,50 @@ export interface AcceptInvitationResponseDto {
 /**
  *
  * @export
+ * @interface AnnouncementItemDto
+ */
+export interface AnnouncementItemDto {
+  /**
+   * Announcement heading. Plain text; never interpreted as markup. Entries without one are dropped server-side.
+   * @type {string}
+   * @memberof AnnouncementItemDto
+   */
+  title: string;
+  /**
+   * Supporting copy, sanitized to a safe HTML subset. Null when unset or when sanitization removes everything.
+   * @type {string}
+   * @memberof AnnouncementItemDto
+   */
+  description: string | null;
+  /**
+   * Optional call to action. Null when the announcement is informational only. An entry whose link is present but invalid is dropped entirely rather than returned without it.
+   * @type {AnnouncementLinkDto}
+   * @memberof AnnouncementItemDto
+   */
+  link: AnnouncementLinkDto | null;
+}
+/**
+ *
+ * @export
+ * @interface AnnouncementLinkDto
+ */
+export interface AnnouncementLinkDto {
+  /**
+   * Visible label of the announcement call to action. Plain text; never interpreted as markup.
+   * @type {string}
+   * @memberof AnnouncementLinkDto
+   */
+  label: string;
+  /**
+   * Absolute http(s) URL the announcement links to. Opened in a new tab with rel="noopener noreferrer". Entries carrying other schemes are dropped server-side.
+   * @type {string}
+   * @memberof AnnouncementLinkDto
+   */
+  href: string;
+}
+/**
+ *
+ * @export
  * @interface ApplicationDetailsDto
  */
 export interface ApplicationDetailsDto {
@@ -432,7 +476,7 @@ export interface Check200Response {
    */
   timestamp?: string;
   /**
-   * Application version
+   * Application version. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Matches the appVersion reported by the client config endpoint.
    * @type {string}
    * @memberof Check200Response
    */
@@ -450,6 +494,12 @@ export interface Check200Response {
  * @interface ClientConfigDto
  */
 export interface ClientConfigDto {
+  /**
+   * Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Always a non-empty string.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  appVersion: string;
   /**
    * Deployment ID of the ASR model. Null when ASR is not configured.
    * @type {string}
@@ -504,6 +554,24 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   announcementHtml?: string | null;
+  /**
+   * Plain-text heading shown in bold at the start of the announcement banner line. Never interpreted as markup. Null when ANNOUNCEMENT_TITLE is not configured or is blank.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  announcementTitle?: string | null;
+  /**
+   * Supporting copy shown after the announcement banner title. Sanitized server-side to a safe HTML subset; anchors are forced to target="_blank" with rel="noopener noreferrer". Null when ANNOUNCEMENT_DESCRIPTION is not configured, is blank, or sanitizes away entirely.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  announcementDescription?: string | null;
+  /**
+   * Announcements listed in the popover behind the banner's "+N announcements" pill, in configured order. Empty when ANNOUNCEMENTS is unset or contained no valid entries. Sourced from ANNOUNCEMENTS.
+   * @type {Array<AnnouncementItemDto>}
+   * @memberof ClientConfigDto
+   */
+  announcements: Array<AnnouncementItemDto>;
   /**
    * Tool ID for the Deep Research deployment-configuration property. Null when DEEP_RESEARCH_TOOL_ID is not set.
    * @type {string}

@@ -341,6 +341,51 @@ describe('EnvConfigProvider', () => {
     });
   });
 
+  describe('announcement.items', () => {
+    const ENTRY = {
+      title: 'We have upgraded to DIAL 1.43',
+      description: "Check what's new:",
+      link: { label: 'Changelog', href: 'https://dialx.ai/changelog' },
+    };
+
+    it('returns undefined when ANNOUNCEMENTS is not set', async () => {
+      const { provider } = makeProvider({ ANNOUNCEMENTS: undefined });
+      expect(await provider.resolve('announcement.items', ctx)).toBeUndefined();
+    });
+
+    /* Regression: the generic env path returns the raw string for a 'json'
+     * valueType, which reached the service as a string and silently resolved
+     * to an empty list. */
+    it('parses a JSON array into an array rather than passing the string through', async () => {
+      const { provider } = makeProvider({
+        ANNOUNCEMENTS: JSON.stringify([ENTRY]),
+      });
+
+      const resolved = await provider.resolve('announcement.items', ctx);
+
+      expect(Array.isArray(resolved)).toBe(true);
+      expect(resolved).toEqual([ENTRY]);
+    });
+
+    it('returns undefined and logs an error when ANNOUNCEMENTS is invalid JSON', async () => {
+      const { provider } = makeProvider({ ANNOUNCEMENTS: 'not-json' });
+      const loggerErrorSpy = vi.spyOn(provider['logger'], 'error');
+
+      expect(await provider.resolve('announcement.items', ctx)).toBeUndefined();
+      expect(loggerErrorSpy).toHaveBeenCalled();
+    });
+
+    it('returns undefined and logs an error when ANNOUNCEMENTS is not an array', async () => {
+      const { provider } = makeProvider({
+        ANNOUNCEMENTS: JSON.stringify(ENTRY),
+      });
+      const loggerErrorSpy = vi.spyOn(provider['logger'], 'error');
+
+      expect(await provider.resolve('announcement.items', ctx)).toBeUndefined();
+      expect(loggerErrorSpy).toHaveBeenCalled();
+    });
+  });
+
   describe('customVisualizers', () => {
     it('returns undefined when CUSTOM_VISUALIZERS is not set', async () => {
       const { provider } = makeProvider({ CUSTOM_VISUALIZERS: undefined });

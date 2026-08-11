@@ -43,7 +43,7 @@
 
 ## 7. Authentication section
 
-- [x] 7.1 Build the auth type single-select as a plain button list, driven by a single `authenticationType` state (only one option expanded at a time; no ui-kit `DialAccordion` component fit the single-external-state-driven-selection shape, so it is hand-rolled)
+- [x] 7.1 Build the auth type single-select as a plain button list, driven by a single `authenticationType` state (only one option expanded at a time; no ui-kit `Accordion` component fit the single-external-state-driven-selection shape, so it is hand-rolled)
 - [x] 7.2 Build the login form with conditional fields by `authenticationType` + `WithLogin` (API Key: key header + key; OAuth: client id/secret, endpoints, scopes) and manual validation
 - [x] 7.3 Wire logout via `DialConfirmationPopup` and an `onLogout` callback prop; disable selector + fields when logged in or while saving
 - [x] 7.4 Implement the OAuth initiate flow: save config, persist `ToolsetRedirectState` to `sessionStorage`, redirect to the provider auth URL

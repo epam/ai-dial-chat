@@ -87,4 +87,65 @@ describe('mapEntityDetailsToCatalogDetails', () => {
       ]);
     });
   });
+
+  describe('TOOLSET', () => {
+    it('maps the allow-listed tools into Tools tab data', () => {
+      const result = mapEntityDetailsToCatalogDetails({
+        type: 'TOOLSET',
+        data: {
+          specification: {
+            permissions: ['search', 'fetch'],
+            allTools: ['search', 'fetch', 'browse'],
+          },
+        },
+      });
+
+      expect(result.tools).toEqual({
+        tools: [{ name: 'search' }, { name: 'fetch' }],
+      });
+    });
+
+    it('falls back to every supported tool when no allow-list is set', () => {
+      const result = mapEntityDetailsToCatalogDetails({
+        type: 'TOOLSET',
+        data: {
+          specification: {
+            permissions: [],
+            allTools: ['search', 'fetch', 'browse'],
+          },
+        },
+      });
+
+      expect(result.tools).toEqual({
+        tools: [{ name: 'search' }, { name: 'fetch' }, { name: 'browse' }],
+      });
+    });
+
+    it('omits Tools tab data when the toolset reports no tools', () => {
+      const result = mapEntityDetailsToCatalogDetails({
+        type: 'TOOLSET',
+        data: { specification: { provider: 'Anthropic' } },
+      });
+
+      expect(result.tools).toBeUndefined();
+    });
+
+    it('does not duplicate tool names as Overview specification rows', () => {
+      const result = mapEntityDetailsToCatalogDetails({
+        type: 'TOOLSET',
+        data: {
+          specification: {
+            permissions: ['search'],
+            allTools: ['search', 'browse'],
+          },
+        },
+      });
+
+      const labels = (result.overview?.sections ?? []).flatMap((section) =>
+        section.specs.map((spec) => spec.label),
+      );
+      expect(labels).not.toContain('Allowed tools');
+      expect(labels).not.toContain('All supported tools');
+    });
+  });
 });

@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { AnnouncementItem } from '../../../models/announcement';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import AnnouncementBanner from '../AnnouncementBanner';
 
@@ -8,7 +9,10 @@ const { mockAppConfigState, mockDismiss } = vi.hoisted(() => ({
   mockAppConfigState: {
     status: 'ready' as UserConfigStatus,
     announcementHtml: null as string | null,
-    dismissedText: '',
+    announcementTitle: null as string | null,
+    announcementDescription: null as string | null,
+    announcements: [] as AnnouncementItem[],
+    isDismissed: false,
   },
   mockDismiss: vi.fn(),
 }));
@@ -16,7 +20,12 @@ const { mockAppConfigState, mockDismiss } = vi.hoisted(() => ({
 vi.mock('../../../context/AppConfigContext', () => ({
   useAppConfig: () => ({
     status: mockAppConfigState.status,
-    config: { announcementHtml: mockAppConfigState.announcementHtml },
+    config: {
+      announcementHtml: mockAppConfigState.announcementHtml,
+      announcementTitle: mockAppConfigState.announcementTitle,
+      announcementDescription: mockAppConfigState.announcementDescription,
+      announcements: mockAppConfigState.announcements,
+    },
   }),
 }));
 
@@ -24,7 +33,7 @@ vi.mock(
   '../../../hooks/useAnnouncementDismissal/useAnnouncementDismissal',
   () => ({
     useAnnouncementDismissal: () => ({
-      dismissedText: mockAppConfigState.dismissedText,
+      isDismissed: mockAppConfigState.isDismissed,
       dismiss: mockDismiss,
     }),
   }),
@@ -32,45 +41,297 @@ vi.mock(
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => key,
+    t: (key: string, options?: Record<string, unknown>) =>
+      options?.title ? `${key}:${String(options.title)}` : key,
   }),
 }));
 
-vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
-  return {
-    ...actual,
-    CloseButton: ({
-      ariaLabel,
-      onClose,
-    }: {
-      ariaLabel?: string;
-      onClose: () => void;
-    }) => (
-      <button aria-label={ariaLabel} onClick={onClose}>
-        close
-      </button>
-    ),
-  };
+const resetState = () => {
+  vi.clearAllMocks();
+  mockAppConfigState.status = UserConfigStatus.Ready;
+  mockAppConfigState.announcementHtml = null;
+  mockAppConfigState.announcementTitle = null;
+  mockAppConfigState.announcementDescription = null;
+  mockAppConfigState.announcements = [];
+  mockAppConfigState.isDismissed = false;
+};
+
+const makeAnnouncement = (title: string): AnnouncementItem => ({
+  title,
+  description: null,
+  link: { label: 'Register', href: 'https://dialx.ai' },
 });
 
-describe('AnnouncementBanner', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockAppConfigState.status = UserConfigStatus.Ready;
-    mockAppConfigState.announcementHtml = null;
-    mockAppConfigState.dismissedText = '';
+describe('AnnouncementBanner — visibility', () => {
+  beforeEach(resetState);
+
+  it('renders when only a title is configured', () => {
+    mockAppConfigState.announcementTitle = 'Welcome to DIAL';
+    render(<AnnouncementBanner />);
+
+    expect(screen.getByText('Welcome to DIAL')).toBeTruthy();
   });
 
-  it('renders the sanitized message as HTML when ready with a non-empty, non-dismissed message', () => {
+  it('renders when only a description is configured', () => {
+    mockAppConfigState.announcementDescription = 'Explore our AI offerings.';
+    render(<AnnouncementBanner />);
+
+    expect(screen.getByText('Explore our AI offerings.')).toBeTruthy();
+  });
+
+  it('renders when only the legacy message is configured', () => {
     mockAppConfigState.announcementHtml = 'Welcome to <b>DIAL</b>!';
     render(<AnnouncementBanner />);
 
     expect(screen.getByText('DIAL').tagName).toBe('B');
   });
 
-  it('exposes the banner as a named region', () => {
+  it('renders nothing when every announcement field is empty', () => {
+    render(<AnnouncementBanner />);
+
+    expect(screen.queryByRole('region')).toBeNull();
+  });
+
+  it('renders nothing when the fields are empty strings', () => {
+    mockAppConfigState.announcementTitle = '';
+    mockAppConfigState.announcementDescription = '';
+    mockAppConfigState.announcementHtml = '';
+    render(<AnnouncementBanner />);
+
+    expect(screen.queryByRole('region')).toBeNull();
+  });
+
+  it('renders nothing while app-config is loading', () => {
+    mockAppConfigState.status = UserConfigStatus.Loading;
+    mockAppConfigState.announcementTitle = 'Welcome';
+    render(<AnnouncementBanner />);
+
+    expect(screen.queryByRole('region')).toBeNull();
+  });
+
+  it('renders nothing when app-config errored', () => {
+    mockAppConfigState.status = UserConfigStatus.Error;
+    mockAppConfigState.announcementTitle = 'Welcome';
+    render(<AnnouncementBanner />);
+
+    expect(screen.queryByRole('region')).toBeNull();
+  });
+
+  it('renders nothing when the announcement has been dismissed', () => {
+    mockAppConfigState.announcementTitle = 'Welcome';
+    mockAppConfigState.isDismissed = true;
+    render(<AnnouncementBanner />);
+
+    expect(screen.queryByRole('region')).toBeNull();
+  });
+
+  it('dismisses when the close control is clicked', async () => {
+    mockAppConfigState.announcementTitle = 'Welcome';
+    render(<AnnouncementBanner />);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'announcementBanner.closeLabel' }),
+    );
+
+    expect(mockDismiss).toHaveBeenCalledOnce();
+  });
+});
+
+describe('AnnouncementBanner — structured layout', () => {
+  beforeEach(resetState);
+
+  it('renders the title before the description', () => {
+    mockAppConfigState.announcementTitle = 'Welcome to DIAL';
+    mockAppConfigState.announcementDescription = 'Explore our AI offerings.';
+    render(<AnnouncementBanner />);
+
+    const region = screen.getByRole('region');
+    const text = region.textContent ?? '';
+    expect(text.indexOf('Welcome to DIAL')).toBeLessThan(
+      text.indexOf('Explore our AI offerings.'),
+    );
+  });
+
+  it('emphasizes the title without creating a heading', () => {
+    mockAppConfigState.announcementTitle = 'Welcome to DIAL';
+    render(<AnnouncementBanner />);
+
+    expect(screen.getByText('Welcome to DIAL').className).toContain(
+      'dial-small-paragraph-semi-text',
+    );
+    expect(screen.queryByRole('heading')).toBeNull();
+  });
+
+  it('renders no description element when the description is unset', () => {
+    mockAppConfigState.announcementTitle = 'Welcome to DIAL';
+    render(<AnnouncementBanner />);
+
+    expect(screen.getByRole('region').textContent).toBe('Welcome to DIAL');
+  });
+
+  it('renders no title element when the title is unset', () => {
+    mockAppConfigState.announcementDescription = 'Explore our AI offerings.';
+    render(<AnnouncementBanner />);
+
+    expect(screen.getByRole('region').textContent).toBe(
+      'Explore our AI offerings.',
+    );
+  });
+
+  it('ignores the legacy message when structured content is configured', () => {
+    mockAppConfigState.announcementTitle = 'Welcome to DIAL';
+    mockAppConfigState.announcementHtml = 'Legacy message';
+    render(<AnnouncementBanner />);
+
+    expect(screen.queryByText('Legacy message')).toBeNull();
+    expect(screen.getByText('Welcome to DIAL')).toBeTruthy();
+  });
+
+  it('truncates on one line with the full text left in the DOM', () => {
+    mockAppConfigState.announcementTitle = 'Welcome to DIAL';
+    mockAppConfigState.announcementDescription =
+      'A description long enough that it would overrun the banner width.';
+    render(<AnnouncementBanner />);
+
+    /* Both spans must truncate independently: the parent is a flex container,
+       where text-overflow does nothing, and a flex item without min-w-0 is
+       hard-clipped with no ellipsis. */
+    const title = screen.getByText('Welcome to DIAL');
+    expect(title.className).toContain('truncate');
+    expect(title.className).toContain('min-w-0');
+
+    const paragraph = title.parentElement;
+    expect(paragraph?.className).toContain('min-w-0');
+    expect(paragraph?.textContent).toContain(
+      'A description long enough that it would overrun the banner width.',
+    );
+  });
+
+  it('truncates a long title so it cannot push the description out unclipped', () => {
+    mockAppConfigState.announcementTitle =
+      'A title long enough on its own to consume the entire banner line width';
+    mockAppConfigState.announcementDescription = 'And a description after it.';
+    render(<AnnouncementBanner />);
+
+    const title = screen.getByText(
+      'A title long enough on its own to consume the entire banner line width',
+    );
+    expect(title.className).toContain('truncate');
+    expect(title.className).toContain('min-w-0');
+  });
+
+  it('keeps the close control outside the truncating container', () => {
+    mockAppConfigState.announcementTitle = 'Welcome to DIAL';
+    render(<AnnouncementBanner />);
+
+    const closeButton = screen.getByRole('button', {
+      name: 'announcementBanner.closeLabel',
+    });
+    const paragraph = screen.getByText('Welcome to DIAL').parentElement;
+    expect(paragraph?.contains(closeButton)).toBe(false);
+  });
+
+  it('starts the text at the leading edge rather than centering it', () => {
+    mockAppConfigState.announcementTitle = 'Welcome to DIAL';
+    render(<AnnouncementBanner />);
+
+    const paragraph = screen.getByText('Welcome to DIAL').parentElement;
+    expect(paragraph?.className).toContain('text-start');
+    expect(paragraph?.className).not.toContain('text-center');
+  });
+});
+
+describe('AnnouncementBanner — announcements pill', () => {
+  beforeEach(resetState);
+
+  const PILL_NAME = /announcementsPopover\.pillLabel/;
+
+  it('renders the pill when announcements are configured', () => {
+    mockAppConfigState.announcementTitle = 'Welcome to DIAL';
+    mockAppConfigState.announcements = [
+      makeAnnouncement('Upgraded to 1.43'),
+      makeAnnouncement('AI:Run Mission 2026'),
+    ];
+    render(<AnnouncementBanner />);
+
+    expect(screen.getByRole('button', { name: PILL_NAME })).toBeTruthy();
+  });
+
+  it('renders no pill when there are no announcements', () => {
+    mockAppConfigState.announcementTitle = 'Welcome to DIAL';
+    render(<AnnouncementBanner />);
+
+    expect(screen.queryByRole('button', { name: PILL_NAME })).toBeNull();
+  });
+
+  it('places the pill between the text and the close control', () => {
+    mockAppConfigState.announcementTitle = 'Welcome to DIAL';
+    mockAppConfigState.announcements = [makeAnnouncement('Upgraded to 1.43')];
+    render(<AnnouncementBanner />);
+
+    const region = screen.getByRole('region');
+    const paragraph = screen.getByText('Welcome to DIAL').closest('p');
+    const pill = screen.getByRole('button', { name: PILL_NAME });
+    const closeButton = screen.getByRole('button', {
+      name: 'announcementBanner.closeLabel',
+    });
+
+    const order = Array.from(region.children);
+    expect(order.indexOf(paragraph as Element)).toBeLessThan(
+      order.findIndex((child) => child.contains(pill)),
+    );
+    expect(order.findIndex((child) => child.contains(pill))).toBeLessThan(
+      order.findIndex((child) => child.contains(closeButton)),
+    );
+  });
+
+  it('keeps the pill outside the truncating text container', () => {
+    mockAppConfigState.announcementTitle = 'Welcome to DIAL';
+    mockAppConfigState.announcements = [makeAnnouncement('Upgraded to 1.43')];
+    render(<AnnouncementBanner />);
+
+    const paragraph = screen.getByText('Welcome to DIAL').closest('p');
+    const pill = screen.getByRole('button', { name: PILL_NAME });
+    expect(paragraph?.contains(pill)).toBe(false);
+  });
+
+  it('renders no pill in the legacy layout', () => {
     mockAppConfigState.announcementHtml = 'Welcome!';
+    mockAppConfigState.announcements = [makeAnnouncement('Upgraded to 1.43')];
+    render(<AnnouncementBanner />);
+
+    expect(screen.queryByRole('button', { name: PILL_NAME })).toBeNull();
+  });
+});
+
+describe('AnnouncementBanner — legacy layout', () => {
+  beforeEach(resetState);
+
+  it('keeps the centered layout for a legacy-only announcement', () => {
+    mockAppConfigState.announcementHtml = 'Welcome!';
+    render(<AnnouncementBanner />);
+
+    expect(screen.getByText('Welcome!').className).toContain('text-center');
+    expect(screen.getByRole('region').className).toContain('justify-center');
+  });
+});
+
+describe('AnnouncementBanner — accessibility', () => {
+  beforeEach(resetState);
+
+  it('names the region after the configured title', () => {
+    mockAppConfigState.announcementTitle = 'Welcome to DIAL';
+    render(<AnnouncementBanner />);
+
+    expect(
+      screen.getByRole('region', {
+        name: 'announcementBanner.regionAriaLabelWithTitle:Welcome to DIAL',
+      }),
+    ).toBeTruthy();
+  });
+
+  it('falls back to the generic region name when no title is configured', () => {
+    mockAppConfigState.announcementDescription = 'Explore our AI offerings.';
     render(<AnnouncementBanner />);
 
     expect(
@@ -80,99 +341,93 @@ describe('AnnouncementBanner', () => {
     ).toBeTruthy();
   });
 
-  it('renders nothing when the announcement message is empty', () => {
-    mockAppConfigState.announcementHtml = '';
-    render(<AnnouncementBanner />);
-
-    expect(screen.queryByRole('region')).toBeNull();
-  });
-
-  it('renders nothing when the announcement message is null', () => {
-    mockAppConfigState.announcementHtml = null;
-    render(<AnnouncementBanner />);
-
-    expect(screen.queryByRole('region')).toBeNull();
-  });
-
-  it('renders nothing while app-config is loading', () => {
-    mockAppConfigState.status = UserConfigStatus.Loading;
+  it('exposes the legacy banner as a named region', () => {
     mockAppConfigState.announcementHtml = 'Welcome!';
     render(<AnnouncementBanner />);
 
-    expect(screen.queryByRole('region')).toBeNull();
+    expect(
+      screen.getByRole('region', {
+        name: 'announcementBanner.regionAriaLabel',
+      }),
+    ).toBeTruthy();
+  });
+});
+
+describe('AnnouncementBanner — RTL', () => {
+  beforeEach(resetState);
+
+  /* The banner has no direction-aware JS: it mirrors purely through logical
+   * properties inherited from the `dir` attribute, so a physical-direction
+   * utility sneaking in is the only way it can break under rtl. */
+  const PHYSICAL_CLASS =
+    /\b(ml|mr|pl|pr|left|right|border-l|border-r)-|\btext-(left|right)\b/;
+
+  it('uses only logical direction utilities', () => {
+    mockAppConfigState.announcementTitle = 'Welcome to DIAL';
+    mockAppConfigState.announcementDescription = 'Explore our AI offerings.';
+    const { container } = render(<AnnouncementBanner />);
+
+    const classNames = Array.from(container.querySelectorAll('*'))
+      .map((element) => element.className)
+      .filter((name): name is string => typeof name === 'string');
+
+    classNames.forEach((name) => expect(name).not.toMatch(PHYSICAL_CLASS));
   });
 
-  it('renders nothing when app-config errored', () => {
-    mockAppConfigState.status = UserConfigStatus.Error;
-    mockAppConfigState.announcementHtml = 'Welcome!';
+  it('renders the same markup under dir="rtl"', () => {
+    mockAppConfigState.announcementTitle = 'Welcome to DIAL';
+    document.documentElement.dir = 'rtl';
+
     render(<AnnouncementBanner />);
 
-    expect(screen.queryByRole('region')).toBeNull();
-  });
-
-  it('renders nothing when the message equals the dismissed text', () => {
-    mockAppConfigState.announcementHtml = 'Welcome!';
-    mockAppConfigState.dismissedText = 'Welcome!';
-    render(<AnnouncementBanner />);
-
-    expect(screen.queryByRole('region')).toBeNull();
-  });
-
-  it('renders again when the message changes after a prior dismissal', () => {
-    mockAppConfigState.announcementHtml = 'New message!';
-    mockAppConfigState.dismissedText = 'Old message!';
-    render(<AnnouncementBanner />);
-
-    expect(screen.getByRole('region')).toBeTruthy();
-  });
-
-  it('calls dismiss with the current message when the close button is clicked', async () => {
-    mockAppConfigState.announcementHtml = 'Welcome!';
-    render(<AnnouncementBanner />);
-
-    await userEvent.click(
+    expect(screen.getByText('Welcome to DIAL')).toBeTruthy();
+    expect(
       screen.getByRole('button', { name: 'announcementBanner.closeLabel' }),
-    );
+    ).toBeTruthy();
 
-    expect(mockDismiss).toHaveBeenCalledOnce();
-    expect(mockDismiss).toHaveBeenCalledWith('Welcome!');
+    document.documentElement.dir = '';
   });
 });
 
 describe('AnnouncementBanner — sanitization', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockAppConfigState.status = UserConfigStatus.Ready;
-    mockAppConfigState.dismissedText = '';
+  beforeEach(resetState);
+
+  it('renders the title as text rather than markup', () => {
+    mockAppConfigState.announcementTitle = 'Release <b>3.0</b>';
+    render(<AnnouncementBanner />);
+
+    expect(screen.getByText('Release <b>3.0</b>')).toBeTruthy();
+    expect(screen.getByRole('region').innerHTML).not.toContain('<b>3.0</b>');
   });
 
-  it('strips disallowed elements such as <script>', () => {
-    mockAppConfigState.announcementHtml = '<script>alert(1)</script>Hello';
+  it('preserves safe markup in the description', () => {
+    mockAppConfigState.announcementDescription =
+      'Explore our <strong>AI offerings</strong>.';
+    render(<AnnouncementBanner />);
+
+    expect(screen.getByText('AI offerings').tagName).toBe('STRONG');
+  });
+
+  it('strips disallowed elements such as <script> from the description', () => {
+    mockAppConfigState.announcementDescription =
+      '<script>alert(1)</script>Hello';
     render(<AnnouncementBanner />);
 
     expect(screen.getByRole('region').innerHTML).not.toContain('<script');
     expect(screen.getByText('Hello')).toBeTruthy();
   });
 
-  it('strips disallowed elements carrying inline event handlers', () => {
-    mockAppConfigState.announcementHtml = '<img src=x onerror="alert(1)">Hello';
+  it('strips inline event handlers from the description', () => {
+    mockAppConfigState.announcementDescription =
+      '<img src=x onerror="alert(1)">Hello';
     render(<AnnouncementBanner />);
 
     expect(screen.getByRole('region').innerHTML).not.toContain('onerror');
     expect(screen.getByText('Hello')).toBeTruthy();
   });
 
-  it('strips disallowed attributes from allowed tags', () => {
-    mockAppConfigState.announcementHtml = '<b onclick="alert(1)">test</b>';
-    render(<AnnouncementBanner />);
-
-    const bold = screen.getByText('test');
-    expect(bold.tagName).toBe('B');
-    expect(bold.getAttribute('onclick')).toBeNull();
-  });
-
-  it('neutralizes javascript: URLs in links', () => {
-    mockAppConfigState.announcementHtml =
+  it('neutralizes javascript: URLs in the description', () => {
+    mockAppConfigState.announcementDescription =
       '<a href="javascript:alert(1)">click</a>';
     render(<AnnouncementBanner />);
 
@@ -181,13 +436,42 @@ describe('AnnouncementBanner — sanitization', () => {
     expect(link.getAttribute('href')).toBeNull();
   });
 
-  it('preserves an allowed link with a safe href', () => {
-    mockAppConfigState.announcementHtml =
-      'Welcome to <a href="https://dialx.ai">DIAL</a>!';
+  it('preserves an allowed description link with a safe href', () => {
+    mockAppConfigState.announcementDescription =
+      'Explore <a href="https://dialx.ai">DIAL</a>!';
     render(<AnnouncementBanner />);
 
     const link = screen.getByText('DIAL');
     expect(link.tagName).toBe('A');
     expect(link.getAttribute('href')).toBe('https://dialx.ai');
+  });
+
+  it('strips disallowed elements from the legacy message', () => {
+    mockAppConfigState.announcementHtml = '<script>alert(1)</script>Hello';
+    render(<AnnouncementBanner />);
+
+    expect(screen.getByRole('region').innerHTML).not.toContain('<script');
+    expect(screen.getByText('Hello')).toBeTruthy();
+  });
+
+  it('neutralizes javascript: URLs in the legacy message', () => {
+    mockAppConfigState.announcementHtml = '<a href="javascript:alert(1)">x</a>';
+    render(<AnnouncementBanner />);
+
+    expect(screen.getByText('x').getAttribute('href')).toBeNull();
+  });
+
+  it('renders nothing when the legacy message sanitizes away entirely', () => {
+    mockAppConfigState.announcementHtml = '<script>alert(1)</script>';
+    render(<AnnouncementBanner />);
+
+    expect(screen.queryByRole('region')).toBeNull();
+  });
+
+  it('renders nothing when the description sanitizes away and no title is set', () => {
+    mockAppConfigState.announcementDescription = '<script>alert(1)</script>';
+    render(<AnnouncementBanner />);
+
+    expect(screen.queryByRole('region')).toBeNull();
   });
 });
