@@ -48,7 +48,7 @@ export default defineConfig(() => ({
         __dirname,
         '../../libs/conversation-stages/src/index.ts',
       ),
-      '@epam/chat-api-client': path.resolve(
+      '@epam/ai-dial-chat-api-client': path.resolve(
         __dirname,
         '../../libs/chat-api-client/src/index.ts',
       ),
