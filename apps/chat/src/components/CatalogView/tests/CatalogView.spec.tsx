@@ -1075,6 +1075,68 @@ describe('CatalogView', () => {
     ).toBeNull();
   });
 
+  it('does not render Use in chat for an Application with no chat interface', () => {
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [
+        {
+          id: 'mcp-only-app',
+          displayName: 'MCP Only App',
+          type: 'application',
+          interfaces: ['mcp'],
+        },
+      ],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+      refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
+    });
+
+    render(<CatalogView />);
+
+    expect(
+      screen.queryByRole('button', { name: 'use in chat mcp-only-app' }),
+    ).toBeNull();
+  });
+
+  it('renders Use in chat for an Application supporting both chat and mcp interfaces', () => {
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [
+        {
+          id: 'chat-and-mcp-app',
+          displayName: 'Chat And MCP App',
+          type: 'application',
+          interfaces: ['chat', 'mcp'],
+        },
+      ],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+      refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
+    });
+
+    render(<CatalogView />);
+
+    expect(
+      screen.getByRole('button', { name: 'use in chat chat-and-mcp-app' }),
+    ).toBeTruthy();
+  });
+
   it('updates the selection when Use in chat is clicked on a different deployment', async () => {
     const setSelectedItemId = vi.fn();
     vi.mocked(useDeployments).mockReturnValue({

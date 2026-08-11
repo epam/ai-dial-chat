@@ -770,7 +770,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       <ConfirmationPopup
         open={!!pendingUnshareId}
         header={t(ConversationPanelI18nKeys.UnshareConfirmTitle)}
-        confirmLabel={t(ButtonsI18nKeys.Delete)}
+        confirmLabel={t(ButtonsI18nKeys.RemoveFromMyList)}
         cancelLabel={t(ButtonsI18nKeys.Cancel)}
         variant={ConfirmationPopupVariant.Danger}
         isLoading={isUnsharing}
