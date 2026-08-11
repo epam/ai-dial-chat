@@ -139,7 +139,7 @@ const ConversationSourcesPanelContainer: FC = () => {
       <ScheduledTaskDetailsSummary
         modelLabel={t(ScheduledTasksI18nKeys.ConversationPanelModelLabel)}
         instructionsLabel={t(ScheduledTasksI18nKeys.CreateInstructionsLabel)}
-        modelDisplayName={modelDisplayName}
+        modelDisplayName={modelDisplayName as string}
         instructionsMarkdown={activeScheduledTask.task?.prompt}
         renderInstructions={(markdown) => (
           <MDMessageViewer content={markdown} />
