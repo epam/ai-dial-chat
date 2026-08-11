@@ -60,7 +60,7 @@ export const ChatInputLinkAttachment = ({ link, onUnselect }: Props) => {
         />
       )}
 
-      <div className="flex grow justify-between gap-3 overflow-hidden">
+      <div className="flex grow items-center justify-between gap-3 overflow-hidden">
         <Tooltip
           tooltip={name}
           triggerClassName="truncate text-center flex-1 min-w-0 min-h-0"
