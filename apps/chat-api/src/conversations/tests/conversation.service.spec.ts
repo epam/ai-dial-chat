@@ -262,6 +262,7 @@ describe('ConversationService facade', () => {
       undefined,
       'session-id',
       onReadyToStream,
+      'user-id',
       'channel-id',
     )) {
       chunks.push(chunk);
@@ -279,6 +280,7 @@ describe('ConversationService facade', () => {
       undefined,
       'session-id',
       onReadyToStream,
+      'user-id',
       'channel-id',
     );
     expect(chunks).toHaveLength(1);

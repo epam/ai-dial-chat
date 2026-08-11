@@ -642,6 +642,19 @@ export class ConversationResponseDto {
   @ApiProperty({ example: 1 })
   temperature!: number;
 
+  @ApiPropertyOptional({
+    example: 4096,
+    description:
+      'Optional Responses-API output-token cap, forwarded verbatim as ' +
+      'max_output_tokens. Never derived from deployment limits or Chat ' +
+      'Completions defaults. Documentation-only decorator — the actual ' +
+      'positive-safe-integer check runs at the Responses request-building ' +
+      'boundary (ResponsesAdapter.buildRequest via isValidMaxOutputTokens), ' +
+      'not through nested DTO validation on save (see design.md Decision 4 ' +
+      'of the support-responses-generation-parameters change).',
+  })
+  maxOutputTokens?: number;
+
   @ApiProperty({ type: () => [ConversationMessageDto] })
   messages!: ConversationMessageDto[];
 
