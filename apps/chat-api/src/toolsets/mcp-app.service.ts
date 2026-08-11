@@ -88,12 +88,10 @@ export class McpAppService {
     return `${this.dialClient.baseUrl}/v1/deployments/${encodeURIComponent(toolsetId)}/mcp`;
   }
 
-  /**
-   * Core's generic MCP JSON-RPC proxy, unlike `deploymentMcpUrl` above, is
-   * prefix-specific by deployment kind (`ToolSetMcpProxyController` vs
-   * `ApplicationMcpProxyController`) — confirmed via spike, a toolset id
-   * against `/v1/deployments/{id}/mcp` 404s. This service only ever proxies
-   * toolsets (D4), so `tools/list`/`tools/call` always use `/v1/toolset/`.
+  /*
+   * Core's generic MCP JSON-RPC proxy is prefix-specific by deployment kind:
+   * toolsets use `/v1/toolset/{id}/mcp`, applications use `/v1/deployments/{id}/mcp`.
+   * See `rpcRequestForDeployment` for the selection logic.
    */
   private toolsetMcpProxyUrl(toolsetId: string): string {
     return `${this.dialClient.baseUrl}/v1/toolset/${encodeURIComponent(toolsetId)}/mcp`;
@@ -139,11 +137,13 @@ export class McpAppService {
   }
 
   private async listTools(
-    toolsetId: string,
+    deploymentId: string,
+    kind: McpDeploymentKindDto,
     token: string,
   ): Promise<McpTool[]> {
-    const response = await this.rpcRequest<{ tools: McpTool[] }>(
-      toolsetId,
+    const response = await this.rpcRequestForDeployment<{ tools: McpTool[] }>(
+      deploymentId,
+      kind,
       token,
       'tools/list',
       {},
@@ -152,22 +152,23 @@ export class McpAppService {
   }
 
   async callTool(
-    toolsetId: string,
+    deploymentId: string,
     toolName: string,
     args: Record<string, unknown>,
+    kind: McpDeploymentKindDto,
     token: string,
   ): Promise<unknown> {
-    const tools = await this.listTools(toolsetId, token);
+    const tools = await this.listTools(deploymentId, kind, token);
     if (!tools.some((tool) => tool.name === toolName)) {
       this.logger.warn(
-        `Rejected mcp-app-tool-call: tool "${toolName}" is not exposed by toolset "${toolsetId}"`,
+        `Rejected mcp-app-tool-call: tool "${toolName}" is not exposed by deployment "${deploymentId}"`,
       );
       throw new ForbiddenException(
-        `Tool "${toolName}" is not exposed by this toolset`,
+        `Tool "${toolName}" is not exposed by this deployment`,
       );
     }
 
-    return this.rpcRequest(toolsetId, token, 'tools/call', {
+    return this.rpcRequestForDeployment(deploymentId, kind, token, 'tools/call', {
       name: toolName,
       arguments: args,
     });
@@ -201,28 +202,11 @@ export class McpAppService {
       }));
   }
 
-  private async rpcRequest<T>(
-    toolsetId: string,
-    token: string,
-    method: string,
-    params: Record<string, unknown>,
-  ): Promise<T> {
-    return this.rpcRequestForDeployment<T>(
-      toolsetId,
-      McpDeploymentKindDto.Toolset,
-      token,
-      method,
-      params,
-    );
-  }
-
-  /**
+  /*
    * Core's generic MCP JSON-RPC proxy is prefix-specific by deployment kind
    * (`ToolSetMcpProxyController` vs `ApplicationMcpProxyController`) —
-   * confirmed via spike, a toolset id against `/v1/deployments/{id}/mcp`
-   * 404s. Callers that only ever proxy toolsets (D4) go through the
-   * `rpcRequest` wrapper above; `listAppTools` calls this directly since it
-   * must support either kind.
+   * confirmed via spike: a toolset id against `/v1/deployments/{id}/mcp` 404s.
+   * `kind` selects the correct prefix.
    */
   private async rpcRequestForDeployment<T>(
     deploymentId: string,

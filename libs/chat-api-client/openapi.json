@@ -7173,9 +7173,14 @@
             "example": {
               "range": "7d"
             }
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["toolset", "application"],
+            "description": "Which of Core's MCP proxy route prefixes to use for this deployment."
           }
         },
-        "required": ["toolName", "arguments"]
+        "required": ["toolName", "arguments", "kind"]
       },
       "McpAppToolCallResponseDto": {
         "type": "object",

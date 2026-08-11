@@ -57,13 +57,14 @@ POST /api/v1/toolsets/{toolsetId}/mcp-app-tool-call
 Request body `McpAppToolCallRequestDto`:
 
 ```json
-{ "toolName": "refresh_data", "arguments": { "range": "7d" } }
+{ "toolName": "refresh_data", "arguments": { "range": "7d" }, "kind": "toolset" }
 ```
 
 - `toolName: string` — `@IsNotEmpty()`, `@Matches` against an identifier-safe allowlist regex.
 - `arguments: unknown` — forwarded verbatim to the MCP session; not deep-validated (opaque tool-defined shape), but the DTO SHALL reject non-JSON-serializable payloads (`@IsObject()` or equivalent) before forwarding.
+- `kind: McpDeploymentKindDto` (`'toolset'` | `'application'`) — determines which of Core's two prefix-specific generic MCP proxy routes to target (`/v1/toolset/{id}/mcp` vs `/v1/deployments/{id}/mcp`). Required because a deployment id against the wrong prefix returns `404` from Core. The frontend derives this from `McpAppToolRef.kind`, which mirrors `DeploymentItemDto.type` at discovery time.
 
-`chat-api` forwards this as a `tools/call` JSON-RPC request through DIAL Core's **existing** generic MCP proxy (`POST /v1/deployments/{toolsetId}/mcp`, already used for LLM-driven tool invocation on this toolset — `ApplicationMcpProxyController`/`ToolSetMcpProxyController`, `epam/ai-dial-core` PR #1745 only consolidated their auth injection). This is not a new DIAL Core endpoint or capability — an MCP App's self-initiated tool call is, from Core's perspective, indistinguishable from any other `tools/call` on that toolset's session.
+`chat-api` forwards this as a `tools/call` JSON-RPC request through DIAL Core's **existing** generic MCP proxy (already used for LLM-driven tool invocation — `ApplicationMcpProxyController`/`ToolSetMcpProxyController`, `epam/ai-dial-core` PR #1745 only consolidated their auth injection), selecting the correct proxy URL via `kind`. This is not a new DIAL Core endpoint or capability — an MCP App's self-initiated tool call is, from Core's perspective, indistinguishable from any other `tools/call` on that deployment's session.
 
 Response (`200`) `McpAppToolCallResponseDto { result: unknown }` — unwrapped from the JSON-RPC response's `result` field.
 

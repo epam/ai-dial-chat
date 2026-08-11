@@ -74,6 +74,7 @@ export const useOpenMcpAppCanvas = () => {
                   match.toolsetId,
                   name,
                   args,
+                  match.kind,
                 )) as CallToolResult;
               } catch (error) {
                 throw new Error(

@@ -25,6 +25,8 @@ export interface McpAppToolRef {
   toolName: string;
   /** The tool's real name as declared by its owning toolset's `tools/list` — what must be passed to `AppRenderer`/`onToolCall`, since the mounted app only recognizes its own unprefixed name. */
   mcpToolName: string;
+  /** Deployment kind — determines which Core MCP proxy prefix to use for `tools/list`/`tools/call` (`/v1/toolset/` vs `/v1/deployments/`). */
+  kind: McpDeploymentKind;
 }
 
 /**
@@ -79,6 +81,7 @@ export const useMcpAppTools = (
             resourceUri,
             toolName,
             mcpToolName: toolName,
+            kind,
           })),
         );
       } catch {
@@ -117,6 +120,7 @@ export const useMcpAppTools = (
               resourceUri,
               toolName: `${toolset.displayName ?? toolset.id}_${toolName}`,
               mcpToolName: toolName,
+              kind: 'toolset' as McpDeploymentKind,
             }));
           } catch {
             return [];

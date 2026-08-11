@@ -3978,7 +3978,23 @@ export interface McpAppToolCallRequestDto {
    * @memberof McpAppToolCallRequestDto
    */
   arguments: object;
+  /**
+   * Which of Core's MCP proxy route prefixes to use for this deployment.
+   * @type {string}
+   * @memberof McpAppToolCallRequestDto
+   */
+  kind: McpAppToolCallRequestDtoKindEnum;
 }
+
+/**
+ * @export
+ */
+export const McpAppToolCallRequestDtoKindEnum = {
+  Toolset: 'toolset',
+  Application: 'application',
+} as const;
+export type McpAppToolCallRequestDtoKindEnum =
+  (typeof McpAppToolCallRequestDtoKindEnum)[keyof typeof McpAppToolCallRequestDtoKindEnum];
 /**
  *
  * @export

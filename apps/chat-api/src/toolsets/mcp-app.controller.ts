@@ -150,6 +150,7 @@ export class McpAppController {
       params.toolsetName,
       body.toolName,
       body.arguments,
+      body.kind,
       at,
     );
     return { result };

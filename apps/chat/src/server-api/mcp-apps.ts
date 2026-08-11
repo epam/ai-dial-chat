@@ -1,4 +1,5 @@
 import {
+  McpAppToolCallRequestDtoKindEnum,
   ResponseError,
   type ListMcpAppToolsKindEnum,
   type McpAppToolSummaryDto,
@@ -43,10 +44,15 @@ export const callMcpAppTool = async (
   toolsetId: string,
   toolName: string,
   args: unknown,
+  kind: McpDeploymentKind,
 ): Promise<unknown> => {
   const { result } = await toolsetsApi.callToolsetMcpAppTool({
     toolsetName: safeDecodeURIComponent(toolsetId),
-    mcpAppToolCallRequestDto: { toolName, arguments: args as object },
+    mcpAppToolCallRequestDto: {
+      toolName,
+      arguments: args as object,
+      kind: kind as McpAppToolCallRequestDtoKindEnum,
+    },
   });
   return result;
 };

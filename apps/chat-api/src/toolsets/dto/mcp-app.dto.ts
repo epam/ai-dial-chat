@@ -17,6 +17,12 @@ import { IsSafeDeploymentId } from '../../common/validators/safe-deployment-id.v
 const UI_RESOURCE_URI_PATTERN = /^ui:\/\/[\w.\-~!$&'()*+,;=:@/%]+$/;
 const UI_RESOURCE_URI_MESSAGE = 'Must be a valid ui:// resource URI';
 
+/** Deployment kind, matching which of Core's two MCP proxy route prefixes it resolves through. */
+export enum McpDeploymentKindDto {
+  Toolset = 'toolset',
+  Application = 'application',
+}
+
 /** Query params for `GET /toolsets/{toolsetId}/mcp-app-resource`. */
 export class GetMcpAppResourceDto {
   @ApiProperty({ example: 'ui://widget/1' })
@@ -44,6 +50,14 @@ export class McpAppToolCallRequestDto {
   @ApiProperty({ example: { range: '7d' }, type: Object })
   @IsObject()
   arguments!: Record<string, unknown>;
+
+  @ApiProperty({
+    enum: McpDeploymentKindDto,
+    description:
+      "Which of Core's MCP proxy route prefixes to use for this deployment.",
+  })
+  @IsEnum(McpDeploymentKindDto)
+  kind!: McpDeploymentKindDto;
 }
 
 /** Response body for `POST /toolsets/{toolsetId}/mcp-app-tool-call`. */
@@ -53,12 +67,6 @@ export class McpAppToolCallResponseDto {
     type: Object,
   })
   result!: unknown;
-}
-
-/** Deployment kind, matching which of Core's two MCP proxy route prefixes it resolves through. */
-export enum McpDeploymentKindDto {
-  Toolset = 'toolset',
-  Application = 'application',
 }
 
 /** Query params for `GET /toolsets/mcp-apps/tools`. */
