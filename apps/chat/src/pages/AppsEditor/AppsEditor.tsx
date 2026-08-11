@@ -18,6 +18,7 @@ import {
 import { useDeployments } from '../../context/DeploymentsContext';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { ROUTES } from '../../types/routes';
+import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import type {
   GeneralFormHandle,
   GeneralFormInitialValues,
@@ -110,7 +111,7 @@ const AppsEditor: FC = () => {
   const existingDeployment = useMemo(
     () =>
       isEditingExistingApp
-        ? deployments.find((d) => d.id === existingAppId)
+        ? findDeploymentByIdOrReference(deployments, existingAppId)
         : undefined,
     [deployments, isEditingExistingApp, existingAppId],
   );

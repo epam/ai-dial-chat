@@ -86,7 +86,13 @@ describe('ConversationListingService', () => {
   });
 
   describe('listConversations', () => {
-    type MetadataItem = { url: string; nodeType: string; updatedAt?: number };
+    type MetadataItem = {
+      url: string;
+      nodeType: string;
+      updatedAt?: number;
+      name?: string;
+      parentPath?: string;
+    };
 
     const mockMetadata = (
       userItems: MetadataItem[],
@@ -161,6 +167,42 @@ describe('ConversationListingService', () => {
       await service.listConversations('test-token', 'test-bucket');
 
       expect(getConversationSpy).toHaveBeenCalledTimes(20);
+    });
+
+    it('does not mistake a bare-numeric title for a version suffix on a plain model deployment', async () => {
+      mockMetadata([
+        {
+          url: 'conversations/bucket/.scheduler/schedule-id/gemini-3.1-flash-lite__18__0e2c7332-bf11-4026-b729-502b55bbbb77',
+          nodeType: 'FILE',
+          name: 'gemini-3.1-flash-lite__18__0e2c7332-bf11-4026-b729-502b55bbbb77',
+          parentPath: '.scheduler/schedule-id',
+        },
+      ]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items[0].title).toBe('18');
+    });
+
+    it('extracts the title after a versioned application deployment id', async () => {
+      mockMetadata([
+        {
+          url: 'conversations/bucket/applications/catalog/Team%2FApp%20One__0.0.1__hello',
+          nodeType: 'FILE',
+          name: 'Team%2FApp%20One__0.0.1__hello',
+          parentPath: 'applications/catalog',
+        },
+      ]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items[0].title).toBe('hello');
     });
 
     it('sets isPinned: true on items whose id is in the pins list', async () => {

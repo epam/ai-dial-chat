@@ -35,6 +35,7 @@ import {
 } from '../../server-api/conversations.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { getConversationPath } from '../../utils/conversation-path';
+import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { hasActiveToolConfig } from '../../utils/message-utils';
 import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
@@ -109,7 +110,7 @@ const ConversationRoute: FC = () => {
     useToolsMenu();
 
   const selectedDeployment = useMemo(
-    () => items.find((item) => item.id === selectedItemId),
+    () => findDeploymentByIdOrReference(items, selectedItemId),
     [items, selectedItemId],
   );
 

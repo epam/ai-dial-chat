@@ -62,6 +62,7 @@ import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { CatalogQuery } from '../../types/catalog';
 import { ROUTES } from '../../types/routes';
 import { isQuickAppSchema } from '../../utils/application-schema';
+import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { mapDeploymentLimitsDtoToCatalogLimits } from '../../utils/map-deployment-limits-to-catalog';
 import {
   mapDeploymentToCatalogItem,
@@ -605,7 +606,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         return;
       }
 
-      const deployment = deployments.find((d) => d.id === item.id);
+      const deployment = findDeploymentByIdOrReference(deployments, item.id);
       if (
         isCustomAppsEnabled &&
         deployment != null &&
