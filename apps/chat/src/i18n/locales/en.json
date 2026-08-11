@@ -744,7 +744,14 @@
   },
   "announcementBanner": {
     "regionAriaLabel": "Announcement",
+    "regionAriaLabelWithTitle": "Announcement: {{title}}",
     "closeLabel": "Close announcement"
+  },
+  "announcementsPopover": {
+    "pillLabel_one": "+{{count}} announcement",
+    "pillLabel_other": "+{{count}} announcements",
+    "listAriaLabel": "Announcements",
+    "opensInNewTab": "(opens in a new tab)"
   },
   "notification": {
     "requestId": {
@@ -755,7 +762,8 @@
     }
   },
   "footerMessage": {
-    "regionAriaLabel": "Footer"
+    "regionAriaLabel": "Footer",
+    "versionAriaLabel": "Application version {{version}}"
   },
   "errorBoundary": {
     "heading": "Something went wrong",

@@ -1,4 +1,4 @@
-import type { FileUploadResponseDto } from '@epam/chat-api-client';
+import type { FileUploadResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
   UnauthorizedError,
   getCsrfToken,

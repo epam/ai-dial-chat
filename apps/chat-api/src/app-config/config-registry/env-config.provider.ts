@@ -100,6 +100,18 @@ export class EnvConfigProvider implements ConfigProvider {
       return this.parseCustomVisualizers(raw);
     }
 
+    /* ANNOUNCEMENTS is a JSON array. The generic path below would hand the raw
+     * string straight through — `isValidType` does not check 'json' — so it has
+     * to be parsed here, like customVisualizers. Entry-level validation stays in
+     * AppConfigService. */
+    if (key === 'announcement.items') {
+      const raw = this.configService.get('ANNOUNCEMENTS', { infer: true });
+      if (!raw) {
+        return undefined;
+      }
+      return this.parseAnnouncements(raw);
+    }
+
     if (!definition.envVar) {
       return undefined;
     }
@@ -168,6 +180,32 @@ export class EnvConfigProvider implements ConfigProvider {
       return typeof value === 'string';
     }
     return true;
+  }
+
+  /**
+   * Parses `ANNOUNCEMENTS` fail-open: invalid JSON or a non-array resolves to
+   * `undefined` so the registry default (an empty list) applies and the pill
+   * simply stays hidden. Per-entry validation happens in `AppConfigService`.
+   */
+  private parseAnnouncements(raw: string): unknown[] | undefined {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      this.logger.error(
+        'ANNOUNCEMENTS is not valid JSON; resolving to an empty list',
+      );
+      return undefined;
+    }
+
+    if (!Array.isArray(parsed)) {
+      this.logger.error(
+        'ANNOUNCEMENTS must be a JSON array; resolving to an empty list',
+      );
+      return undefined;
+    }
+
+    return parsed;
   }
 
   /**

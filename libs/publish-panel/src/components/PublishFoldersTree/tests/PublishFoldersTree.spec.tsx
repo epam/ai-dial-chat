@@ -337,6 +337,25 @@ describe('PublishFoldersTree', () => {
     expect(onSelectedPathChange).not.toHaveBeenCalled();
   });
 
+  it('rejects a create-folder confirm whose last live-validated name was invalid, even when the host passes a different value to onCreateFolderSave', async () => {
+    const onCreateFolder = vi.fn();
+    const onSelectedPathChange = vi.fn();
+    renderTree({ onCreateFolder, onSelectedPathChange });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Create new folder' }),
+    );
+    act(() => {
+      // Simulates the host component showing the inline error live while the
+      // user types, then confirming with a different (host-sanitized) value
+      // — see #7968: the host does not reliably gate its own confirm on the
+      // validation result it displayed.
+      capturedProps.current?.onRenameValidate?.('/New folder', {} as never);
+      capturedProps.current?.onCreateFolderSave?.('New folder');
+    });
+    expect(onCreateFolder).not.toHaveBeenCalled();
+    expect(onSelectedPathChange).not.toHaveBeenCalled();
+  });
+
   it('flags a path-traversal name as invalid via onRenameValidate, which also gates the create-folder row', async () => {
     renderTree();
     await userEvent.click(

@@ -1,7 +1,7 @@
 import type {
   AttachmentDto,
   ConversationResponseDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { conversationsApi } from './api-client';
 
 export const createConversation = (

@@ -496,7 +496,6 @@ export const Input: FC<InputProps> = ({
                   modelSelectorLabels={modelSelectorLabels}
                   isStreaming={isStreaming}
                   isMobile={isMobile}
-                  isInputDisabled={isInputDisabled}
                   isDisabled={isModelSelectorDisabled}
                   style={cssVars}
                   modelPickerOverlay={modelPickerOverlay}

@@ -2,7 +2,7 @@ import type {
   ConversationDeletionResultDto,
   ConversationListItemDto,
   ConversationResponseDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import {
   createContext,
   type ReactNode,

@@ -1,6 +1,9 @@
+import type {
+  DialToolsetDto,
+  ToolsetBodyDto,
+} from '@epam/ai-dial-chat-api-client';
+import { ResponseError } from '@epam/ai-dial-chat-api-client';
 import { validateDeploymentCreationFields } from '@epam/ai-dial-deployment-creation-form';
-import type { DialToolsetDto, ToolsetBodyDto } from '@epam/chat-api-client';
-import { ResponseError } from '@epam/chat-api-client';
 import {
   DEFAULT_TOOLSET_NAME,
   DEFAULT_TOOLSET_VERSION,

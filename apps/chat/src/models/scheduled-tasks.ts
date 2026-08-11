@@ -1,4 +1,4 @@
-import type { ListScheduledTasksSortEnum } from '@epam/chat-api-client';
+import type { ListScheduledTasksSortEnum } from '@epam/ai-dial-chat-api-client';
 
 /** Params for `listScheduledTasks`. */
 export interface ListScheduledTasksParams {

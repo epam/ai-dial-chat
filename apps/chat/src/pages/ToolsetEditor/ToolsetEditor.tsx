@@ -1,9 +1,9 @@
+import type { ToolsetLoginBodyDto } from '@epam/ai-dial-chat-api-client';
 import {
   DeploymentCreationFieldErrorCode,
   validateDeploymentCreationFields,
 } from '@epam/ai-dial-deployment-creation-form';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import type { ToolsetLoginBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

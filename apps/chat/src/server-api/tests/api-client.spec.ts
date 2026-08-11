@@ -1,4 +1,4 @@
-import { ConversationsApi, ModelsApi } from '@epam/chat-api-client';
+import { ConversationsApi, ModelsApi } from '@epam/ai-dial-chat-api-client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createApiConfiguration } from '../api-client';
 import {

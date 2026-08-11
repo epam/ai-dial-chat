@@ -1,4 +1,4 @@
-import type { ConversationListItemDto } from '@epam/chat-api-client';
+import type { ConversationListItemDto } from '@epam/ai-dial-chat-api-client';
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
