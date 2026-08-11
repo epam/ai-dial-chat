@@ -9,6 +9,7 @@ import {
   useState,
 } from 'react';
 import { useLocation } from 'react-router';
+import { isSafePathSegment } from '../constants/routes';
 import {
   useScheduledTaskRuns,
   type UseScheduledTaskRunsResult,
@@ -66,7 +67,12 @@ const ActiveScheduledTaskContext = createContext<
   ActiveScheduledTaskContextType | undefined
 >(undefined);
 
-/** Derives the raw conversation id segment from the current route, or `null` outside `/conversations/*`. */
+/**
+ * Derives the raw conversation id segment from the current route, or `null`
+ * outside `/conversations/*` or when a segment is empty/`.`/`..` — the same
+ * traversal guard `getConversationRoute` applies, so a malformed path never
+ * reaches `conversationIdsMatch`.
+ */
 const useRouteConversationId = (): string | null => {
   const { pathname } = useLocation();
 
@@ -74,7 +80,11 @@ const useRouteConversationId = (): string | null => {
     const prefix = `${ROUTES.Conversations}/`;
     if (!pathname.startsWith(prefix)) return null;
     const id = pathname.slice(prefix.length);
-    return id || null;
+    if (!id) return null;
+    if (id.split('/').some((segment) => !isSafePathSegment(segment))) {
+      return null;
+    }
+    return id;
   }, [pathname]);
 };
 

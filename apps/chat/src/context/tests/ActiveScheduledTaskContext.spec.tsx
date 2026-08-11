@@ -110,6 +110,21 @@ describe('ActiveScheduledTaskContext', () => {
     expect(mockGetScheduledTask).not.toHaveBeenCalled();
   });
 
+  it.each(['/conversations/..', '/conversations/.', '/conversations/a/../b'])(
+    'treats a path-traversal-shaped route (%s) as not-a-task-conversation without matching any conversation',
+    async (pathname) => {
+      contextMocks.pathname = pathname;
+      contextMocks.conversations = [taskConversation()];
+
+      const { result } = renderActiveScheduledTask();
+
+      await waitFor(() =>
+        expect(result.current.status).toBe('not-a-task-conversation'),
+      );
+      expect(mockGetScheduledTask).not.toHaveBeenCalled();
+    },
+  );
+
   it('makes no scheduled-task requests when the feature flag is disabled', async () => {
     contextMocks.isFeatureEnabled = false;
     contextMocks.conversations = [taskConversation()];

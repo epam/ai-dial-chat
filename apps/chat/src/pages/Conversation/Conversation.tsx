@@ -48,6 +48,7 @@ import {
   getConversation as apiGetConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
+import { ActiveScheduledTaskStatus } from '../../types/active-scheduled-task';
 import { ROUTES } from '../../types/routes';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { getConversationPath } from '../../utils/conversation-path';
@@ -568,7 +569,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
             removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
           }}
           topContent={
-            activeScheduledTaskStatus === 'task-conversation' ? (
+            activeScheduledTaskStatus ===
+            ActiveScheduledTaskStatus.TaskConversation ? (
               <ScheduledTaskConversationBanner />
             ) : undefined
           }
