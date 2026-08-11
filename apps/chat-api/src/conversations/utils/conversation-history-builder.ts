@@ -21,9 +21,26 @@ const makeUserMessage = (
         attachments: customContent.attachments,
         configuration_value: customContent.configuration_value,
         form_value: customContent.form_value,
+        state: customContent.state,
       },
     }),
 });
+
+/**
+ * Strips `custom_content.state` from every message. A stateful app's `state`
+ * is deployment-specific, so switching the deployment invalidates every
+ * previously accumulated value in the conversation — matching the old UI's
+ * `clearStateForMessages`, which clears the whole message list rather than a
+ * single turn.
+ */
+const clearStateFromMessages = (
+  messages: ConversationMessageDto[],
+): ConversationMessageDto[] =>
+  messages.map((msg) =>
+    msg.custom_content?.state === undefined
+      ? msg
+      : { ...msg, custom_content: { ...msg.custom_content, state: undefined } },
+  );
 
 const makeAssistantPlaceholder = (): ConversationMessageDto => ({
   id: crypto.randomUUID(),
@@ -69,6 +86,7 @@ export const buildConversationHistory = (
   message: string | undefined,
   messageIndex: number | undefined,
   customContent: MessageCustomContentDto | undefined,
+  model: string,
 ): { conversation: ConversationResponseDto; assistantMessageIndex: number } => {
   const messages = [...conversation.messages];
 
@@ -109,7 +127,10 @@ export const buildConversationHistory = (
       mode,
     );
     // Truncate up to (but not including) messageIndex, then append assistant placeholder
-    const truncated = messages.slice(0, messageIndex);
+    const isModelChange = model !== conversation.model.id;
+    const truncated = isModelChange
+      ? clearStateFromMessages(messages.slice(0, messageIndex))
+      : messages.slice(0, messageIndex);
     const assistantPlaceholder = makeAssistantPlaceholder();
     truncated.push(assistantPlaceholder);
     return {

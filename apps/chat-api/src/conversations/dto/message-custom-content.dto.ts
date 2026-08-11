@@ -31,4 +31,12 @@ export class MessageCustomContentDto {
   @IsOptional()
   @IsObject()
   form_value?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    description:
+      'Opaque app-managed state to echo back verbatim on the next turn, per the DIAL stateful-app contract.',
+  })
+  @IsOptional()
+  @IsObject()
+  state?: Record<string, unknown>;
 }

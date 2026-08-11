@@ -827,6 +827,12 @@ export interface ConversationMessageCustomContentDto {
    */
   formValue?: object;
   /**
+   * Opaque app-managed state to echo back verbatim on the next turn, per the DIAL stateful-app contract.
+   * @type {object}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  state?: object;
+  /**
    * Status event discriminator when role is status
    * @type {string}
    * @memberof ConversationMessageCustomContentDto
@@ -3959,6 +3965,12 @@ export interface MessageCustomContentDto {
    * @memberof MessageCustomContentDto
    */
   formValue?: object;
+  /**
+   * Opaque app-managed state to echo back verbatim on the next turn, per the DIAL stateful-app contract.
+   * @type {object}
+   * @memberof MessageCustomContentDto
+   */
+  state?: object;
 }
 /**
  *

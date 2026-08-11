@@ -7015,6 +7015,10 @@
               "field1": "value",
               "field2": 42
             }
+          },
+          "state": {
+            "type": "object",
+            "description": "Opaque app-managed state to echo back verbatim on the next turn, per the DIAL stateful-app contract."
           }
         }
       },
@@ -7311,6 +7315,10 @@
               "field1": "value",
               "field2": 42
             }
+          },
+          "state": {
+            "type": "object",
+            "description": "Opaque app-managed state to echo back verbatim on the next turn, per the DIAL stateful-app contract."
           },
           "event_type": {
             "type": "string",
