@@ -15,7 +15,7 @@ import {
 import type {
   DeploymentDetailsDto,
   DeploymentFeaturesDetailsDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { AuthenticationType, ModelEndpointType } from '../types/entity-details';
 import type {
   AgentEntityDetails,

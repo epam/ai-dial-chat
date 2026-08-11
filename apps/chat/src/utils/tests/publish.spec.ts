@@ -1,5 +1,5 @@
 import { CatalogEntityType } from '@epam/ai-dial-catalog';
-import type { PublishHistoryEntryDto } from '@epam/chat-api-client';
+import type { PublishHistoryEntryDto } from '@epam/ai-dial-chat-api-client';
 import { describe, expect, it } from 'vitest';
 import { CatalogPublishEntityType } from '../../server-api/publish.api';
 import { mapPublishHistoryEntryDto, toPublishEntityType } from '../publish';

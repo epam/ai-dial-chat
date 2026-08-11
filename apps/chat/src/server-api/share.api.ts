@@ -3,7 +3,7 @@ import type {
   CreateShareLinkDto,
   DiscardSharedCatalogItemResponseDto,
   ShareLinkResponseDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { shareApi } from './api-client';
 
 export const createShareLink = (

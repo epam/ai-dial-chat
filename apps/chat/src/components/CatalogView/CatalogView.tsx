@@ -7,10 +7,10 @@ import {
   CredentialsLevel,
   CredentialStatus,
 } from '@epam/ai-dial-catalog';
+import type { ToolsetLogoutBodyDto } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { DropdownItem, NotificationVariant } from '@epam/ai-dial-ui-kit';
-import type { ToolsetLogoutBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';

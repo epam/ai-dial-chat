@@ -1,4 +1,4 @@
-import type { FileUploadResponseDto } from '@epam/chat-api-client';
+import type { FileUploadResponseDto } from '@epam/ai-dial-chat-api-client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { uploadFileWithProgress } from '../upload-file-with-progress';
 

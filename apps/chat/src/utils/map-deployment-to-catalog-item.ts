@@ -5,12 +5,12 @@ import {
   type CatalogItem,
   type CatalogItemCredentials,
 } from '@epam/ai-dial-catalog';
-import { formatLastUsed } from '@epam/ai-dial-chat-shared';
 import type {
   DeploymentItemDto,
   DialToolsetAuthSettingsDto,
   DialToolsetDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
+import { formatLastUsed } from '@epam/ai-dial-chat-shared';
 import type { TFunction } from 'i18next';
 import { CatalogI18nKeys } from '../constants/translation-keys';
 import type { EntitySpecificDetails } from '../types/entity-details';

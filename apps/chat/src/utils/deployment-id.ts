@@ -1,4 +1,4 @@
-import type { DeploymentItemDto } from '@epam/chat-api-client';
+import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
 
 /**
  * Percent-encodes each `/`-separated segment of a deployment/application id

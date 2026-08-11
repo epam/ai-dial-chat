@@ -1,10 +1,10 @@
+import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import type {
   Attachment,
   DeploymentItem,
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import type { ConversationResponseDto } from '@epam/chat-api-client';
 import {
   FC,
   memo,

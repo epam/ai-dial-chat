@@ -6,7 +6,7 @@ import type {
   ToolsetBodyDto,
   ToolsetLoginBodyDto,
   ToolsetLogoutBodyDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { toolsetsApi } from './api-client';
 
 export const listToolsets = (): Promise<DialToolsetListResponseDto> =>
