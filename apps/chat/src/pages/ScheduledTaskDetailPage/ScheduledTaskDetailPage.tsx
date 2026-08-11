@@ -224,8 +224,21 @@ const ScheduledTaskDetailPage: FC = () => {
     setTaskFetchToken((token) => token + 1);
   };
 
+  /*
+   * A one-time (`date`) schedule with no next run has already fired and
+   * can't produce another run by resuming it. A recurring (`cron`) schedule
+   * whose activity window `endDate` has already passed can't produce a
+   * future run either, even though — unlike a one-time schedule — it may
+   * still be actively paused/resumable in principle; both cases disable
+   * (not hide) the switch so the state stays visible without offering a
+   * dead-end toggle.
+   */
+  const cronWindowEndDate = task?.trigger.cron?.endDate;
   const isActiveDisabled =
-    task?.triggerType === 'date' && task?.nextRunTime == null;
+    (task?.triggerType === 'date' && task?.nextRunTime == null) ||
+    (task?.triggerType === 'cron' &&
+      cronWindowEndDate != null &&
+      new Date(cronWindowEndDate).getTime() <= Date.now());
 
   const handleActiveChange = useCallback(
     async (nextActive: boolean) => {
