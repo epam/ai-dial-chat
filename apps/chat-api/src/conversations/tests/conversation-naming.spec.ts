@@ -133,14 +133,24 @@ describe('conversation naming helpers', () => {
       expect(
         getConversationTitleFromName(
           'Team%2FApp%20One__0.0.1__My conversation',
+          true,
         ),
       ).toBe('My conversation');
     });
 
     it('supports the legacy arbitrary suffix format', () => {
-      expect(getConversationTitleFromName('gpt-4__title__legacy-id')).toBe(
-        'title',
-      );
+      expect(
+        getConversationTitleFromName('gpt-4__title__legacy-id', false),
+      ).toBe('title');
+    });
+
+    it('does not mistake a bare-numeric title for a version suffix on a plain model deployment', () => {
+      expect(
+        getConversationTitleFromName(
+          'gemini-3.1-flash-lite__18__0e2c7332-bf11-4026-b729-502b55bbbb77',
+          false,
+        ),
+      ).toBe('18');
     });
 
     it('preserves a versioned deployment ID when renaming', () => {

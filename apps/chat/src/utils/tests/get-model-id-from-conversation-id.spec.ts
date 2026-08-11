@@ -40,6 +40,22 @@ describe('getModelIdFromConversationId', () => {
     ).toBe('applications/catalog/Team%2FApp%20One__0.0.1');
   });
 
+  it('does not mistake a bare-numeric title for a version suffix on a plain model deployment', () => {
+    expect(
+      getModelIdFromConversationId(
+        'conversations/bucket/gemini-3.1-flash-lite__18__0e2c7332-bf11-4026-b729-502b55bbbb77',
+      ),
+    ).toBe('gemini-3.1-flash-lite');
+  });
+
+  it('does not mistake a bare-numeric title for a version suffix on a scheduled-task conversation', () => {
+    expect(
+      getModelIdFromConversationId(
+        'conversations/bucket/.scheduler/schedule-id/gemini-3.1-flash-lite__18__0e2c7332-bf11-4026-b729-502b55bbbb77',
+      ),
+    ).toBe('gemini-3.1-flash-lite');
+  });
+
   it('handles titles that contain double-underscore', () => {
     expect(
       getModelIdFromConversationId(
@@ -78,5 +94,21 @@ describe('getModelIdFromConversationId', () => {
 
   it('handles an empty string gracefully', () => {
     expect(getModelIdFromConversationId('')).toBe(undefined);
+  });
+
+  it('strips the reserved .scheduler/{scheduleId} prefix for scheduled-task conversations', () => {
+    expect(
+      getModelIdFromConversationId(
+        'conversations/bucket/.scheduler/64bd658b-4258-46bd-b19e-afd9e0f3f254/gemini-3.1-flash-lite__title__run-id',
+      ),
+    ).toBe('gemini-3.1-flash-lite');
+  });
+
+  it('strips the .scheduler prefix for a multi-segment deployment id', () => {
+    expect(
+      getModelIdFromConversationId(
+        'conversations/bucket/.scheduler/schedule-id/anthropic/claude-3__title__run-id',
+      ),
+    ).toBe('anthropic/claude-3');
   });
 });
