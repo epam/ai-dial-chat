@@ -18,6 +18,7 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
     onClose,
     leftActions,
     rightActions,
+    title,
   }: {
     children: ReactNode;
     isOpen?: boolean;
@@ -25,8 +26,10 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
     onClose: () => void;
     leftActions?: ReactNode;
     rightActions?: ReactNode;
+    title?: ReactNode;
   }) => (
     <aside aria-label={ariaLabel}>
+      {title && <h1>{title}</h1>}
       {leftActions}
       {rightActions}
       <button aria-label="Close" onClick={onClose} />
@@ -136,6 +139,8 @@ const renderPanel = ({
   onAttachmentClick = vi.fn(),
   onClose = vi.fn(),
   onDownloadAll = undefined as (() => void) | undefined,
+  title = undefined as ReactNode,
+  additionalSections = undefined as ReactNode,
 } = {}) =>
   render(
     <ConversationSourcesPanel
@@ -148,6 +153,8 @@ const renderPanel = ({
       onDownloadAll={onDownloadAll}
       isMobile={false}
       labels={LABELS}
+      title={title}
+      additionalSections={additionalSections}
     />,
   );
 
@@ -291,5 +298,67 @@ describe('ConversationSourcesPanel — search', () => {
 
     expect(screen.getByRole('link', { name: /keep me/i })).toBeTruthy();
     expect(screen.queryByRole('link', { name: /hide me/i })).toBeNull();
+  });
+});
+
+describe('ConversationSourcesPanel — title and additionalSections (optional, additive)', () => {
+  it("omitting title and additionalSections reproduces today's exact empty-state output", () => {
+    renderPanel();
+    expect(screen.getByText('No data')).toBeTruthy();
+    expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
+  });
+
+  it('renders the supplied title in the panel header', () => {
+    renderPanel({ title: 'Weekly AI Research Digest' });
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Weekly AI Research Digest',
+      }),
+    ).toBeTruthy();
+  });
+
+  it('renders additionalSections ahead of the existing file/source sections', () => {
+    renderPanel({
+      uploaded: [makeAttachment('upload.pdf')],
+      additionalSections: <div data-testid="history">History content</div>,
+    });
+
+    const container = screen.getByText('History content').closest('div');
+    expect(container).toBeTruthy();
+    const headings = screen.getAllByRole('heading');
+    expect(headings.map((h) => h.textContent)).toContain('Uploaded files');
+    expect(screen.getByText('History content')).toBeTruthy();
+  });
+
+  it('renders additionalSections instead of the global empty state when there are no files or sources', () => {
+    renderPanel({
+      additionalSections: <div>History content</div>,
+    });
+
+    expect(screen.getByText('History content')).toBeTruthy();
+    expect(screen.queryByText('No data')).toBeNull();
+  });
+
+  it('does not render search or download-all when only additionalSections is present', () => {
+    renderPanel({
+      additionalSections: <div>History content</div>,
+    });
+
+    expect(screen.queryByRole('searchbox')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Download all' })).toBeNull();
+  });
+
+  it('keeps additionalSections visible when a search query matches no files or sources', async () => {
+    const user = userEvent.setup();
+    renderPanel({
+      uploaded: [makeAttachment('upload.pdf')],
+      additionalSections: <div>History content</div>,
+    });
+
+    await user.type(screen.getByRole('searchbox'), 'zzznomatch');
+
+    expect(screen.getByText('History content')).toBeTruthy();
+    expect(screen.getAllByText('No results')).toBeTruthy();
   });
 });

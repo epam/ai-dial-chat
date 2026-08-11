@@ -250,10 +250,7 @@ export enum ScheduledTasksI18nKeys {
   ListSharedSectionTitle = 'scheduledTasks.list.sharedSectionTitle',
   ListLoadingMoreLabel = 'scheduledTasks.list.loadingMoreLabel',
   CardNewBadgeLabel = 'scheduledTasks.card.newBadgeLabel',
-  CardActionsLabel = 'scheduledTasks.card.actionsLabel',
   CardEditActionLabel = 'scheduledTasks.card.editActionLabel',
-  CardRunNowActionLabel = 'scheduledTasks.card.runNowActionLabel',
-  CardDeleteActionLabel = 'scheduledTasks.card.deleteActionLabel',
   CardScheduleDailyAt = 'scheduledTasks.card.scheduleDailyAt',
   CardScheduleWeeklyAt = 'scheduledTasks.card.scheduleWeeklyAt',
   CardScheduleMonthlyAt = 'scheduledTasks.card.scheduleMonthlyAt',
@@ -317,6 +314,13 @@ export enum ScheduledTasksI18nKeys {
   EditUnsupportedTriggerMessage = 'scheduledTasks.edit.unsupportedTriggerMessage',
   EditSuccessNotification = 'scheduledTasks.edit.successNotification',
   EditErrorNotification = 'scheduledTasks.edit.errorNotification',
+  ConversationBannerLoadingLabel = 'scheduledTasks.conversationBanner.loadingLabel',
+  ConversationBannerUnavailableLabel = 'scheduledTasks.conversationBanner.unavailableLabel',
+  ConversationBannerRetryAriaLabel = 'scheduledTasks.conversationBanner.retryAriaLabel',
+  ConversationBannerTaskDetailsLabel = 'scheduledTasks.conversationBanner.taskDetailsLabel',
+  ConversationBannerTaskDetailsAriaLabel = 'scheduledTasks.conversationBanner.taskDetailsAriaLabel',
+  ConversationPanelModelLabel = 'scheduledTasks.conversationPanel.modelLabel',
+  ConversationPanelCurrentRunLabel = 'scheduledTasks.conversationPanel.currentRunLabel',
 }
 
 export enum ConversationI18nKeys {
@@ -690,6 +694,16 @@ export enum EditorI18nKeys {
   VersionPlaceholder = 'editor.versionPlaceholder',
   TopicsLabel = 'editor.topicsLabel',
   TopicsPlaceholder = 'editor.topicsPlaceholder',
+  LocalesSummaryLabel = 'editor.locales.summaryLabel',
+  LocalesRowLabel = 'editor.locales.rowLabel',
+  LocalesPopupTitle = 'editor.locales.popupTitle',
+  LocalesAddLocaleLabel = 'editor.locales.addLocaleLabel',
+  LocalesLanguageLabel = 'editor.locales.languageLabel',
+  LocalesNameLabel = 'editor.locales.nameLabel',
+  LocalesNamePlaceholder = 'editor.locales.namePlaceholder',
+  LocalesDescriptionLabel = 'editor.locales.descriptionLabel',
+  LocalesDescriptionPlaceholder = 'editor.locales.descriptionPlaceholder',
+  LocalesDeleteAriaLabel = 'editor.locales.deleteAriaLabel',
 }
 
 export enum AppsEditorI18nKeys {

@@ -1,3 +1,4 @@
+import type { DeploymentCreationFormLocaleEntry } from '@epam/ai-dial-deployment-creation-form';
 import type {
   OAuthResourceKind,
   ToolsetAuthTypes,
@@ -33,6 +34,8 @@ export interface DeploymentGeneralFormData {
   iconUrl: string;
   description: string;
   topics: string[];
+  /** Additional (non-primary) locale entries for name/description, edited via the "Add locale" popup. */
+  otherLocales: DeploymentCreationFormLocaleEntry[];
 }
 
 export interface ToolsetFormData extends DeploymentGeneralFormData {

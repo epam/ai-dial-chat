@@ -42,7 +42,11 @@ describe('conversation-publish API', () => {
       publishConversationDto: {
         folderPath: 'Organization/Data Science',
         rules: [
-          { source: 'role', _function: 'CONTAIN', targets: ['engineering'] },
+          {
+            source: 'role',
+            _function: PublicationRuleFunction.Contain,
+            targets: ['engineering'],
+          },
         ],
       },
     });

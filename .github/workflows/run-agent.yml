@@ -143,6 +143,8 @@ jobs:
         id: manifest
         env:
           AGENT_NAME: ${{ inputs.agent_name }}
+          AI_SDLC_AGENTS_MAX_TURNS: ${{ vars.AI_SDLC_AGENTS_MAX_TURNS }}
+          ALL_VARS_JSON: ${{ toJSON(vars) }}
         run: |
           set -euo pipefail
           MANIFEST="agents/${AGENT_NAME}/agent.yml"
@@ -181,7 +183,21 @@ jobs:
           print(f"allowed_tools={tools}")
           print(f"agent_version={m.get('agent_version', 'unknown')}")
           print(f"model={m.get('model', '')}")
-          print(f"max_turns={m.get('max_turns', 18)}")
+          # model_override: per-agent DIAL model from an Actions Variable named
+          # AI_SDLC_AGENTS_{NAME_UPPER}_MODEL (e.g. AI_SDLC_AGENTS_CODE_REVIEW_MODEL).
+          # Takes precedence over vars.DIAL_MODEL when set.
+          all_vars = json.loads(os.environ.get('ALL_VARS_JSON', '{}'))
+          name_upper = os.environ['AGENT_NAME'].upper().replace('-', '_')
+          model_override = all_vars.get(f'AI_SDLC_AGENTS_{name_upper}_MODEL', '').strip()
+          if '\n' in model_override or '\r' in model_override:
+              raise SystemExit(f"::error::AI_SDLC_AGENTS_{name_upper}_MODEL value contains a newline — refusing to use it.")
+          print(f"model_override={model_override}")
+          # max_turns: manifest value takes precedence; fall back to the
+          # AGENT_MAX_TURNS Actions Variable (operator-tunable, no PR needed),
+          # then to the hardcoded default of 18.
+          env_max_turns = int(os.environ.get('AI_SDLC_AGENTS_MAX_TURNS') or 0)
+          max_turns = m.get('max_turns') or env_max_turns or 18
+          print(f"max_turns={max_turns}")
           print(f"tools_extra_json={json.dumps(extra)}")
           print(f"secrets_json={json.dumps(secrets)}")
           # vars: declared NON-secret config names to inject from the Actions
@@ -351,6 +367,24 @@ jobs:
             printf 'ANTHROPIC_API_KEY<<%s\n%s\n%s\n' "$DELIM" "$val" "$DELIM"
           } >> "$GITHUB_ENV"
           echo "Inference key overridden for this agent (secret: ${SECRET_NAME})"
+
+      - name: Override model (per-agent)
+        # When AI_SDLC_AGENTS_{NAME_UPPER}_MODEL is set in Actions Variables,
+        # write it to SDLC_DIAL_MODEL so run-claude-stage routes to that
+        # DIAL deployment instead of the global vars.DIAL_MODEL fallback.
+        # Only meaningful in DIAL mode; no-op in direct-Anthropic mode.
+        if: steps.manifest.outputs.model_override != ''
+        env:
+          MODEL_OVERRIDE: ${{ steps.manifest.outputs.model_override }}
+        run: |
+          set -euo pipefail
+          case "$MODEL_OVERRIDE" in
+            *$'\n'*|*$'\r'*)
+              echo "::error::model override value contains a newline/CR — refusing to write it to GITHUB_ENV."
+              exit 1 ;;
+          esac
+          echo "SDLC_DIAL_MODEL=${MODEL_OVERRIDE}" >> "$GITHUB_ENV"
+          echo "Model overridden for this agent: ${MODEL_OVERRIDE}"
 
       - name: Decrypt upstream artifacts
         # Upstream producers flagged `private_output` upload their stage-output

@@ -14,10 +14,12 @@ describe('publish-rules API', () => {
   });
 
   it('forwards folderPath and returns the rules array from the response', async () => {
-    const rules = [
+    const rawRules = [
       { source: 'role', _function: 'CONTAIN', targets: ['engineering'] },
     ];
-    vi.mocked(publishApi.getPublishRules).mockResolvedValue({ rules } as never);
+    vi.mocked(publishApi.getPublishRules).mockResolvedValue({
+      rules: rawRules,
+    } as never);
 
     const result = await getPublishRules('Organization/Data Science');
 

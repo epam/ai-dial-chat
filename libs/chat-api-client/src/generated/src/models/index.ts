@@ -1252,6 +1252,18 @@ export interface CreateApplicationBodyDto {
    * @memberof CreateApplicationBodyDto
    */
   applicationProperties?: object;
+  /**
+   *
+   * @type {Array<LocaleTextEntryDto>}
+   * @memberof CreateApplicationBodyDto
+   */
+  locales?: Array<LocaleTextEntryDto>;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateApplicationBodyDto
+   */
+  primaryLocale?: string;
 }
 /**
  *
@@ -1477,10 +1489,10 @@ export interface CreatedApplicationDto {
   id: string;
   /**
    *
-   * @type {string}
+   * @type {CreatedApplicationDtoDisplayName}
    * @memberof CreatedApplicationDto
    */
-  displayName?: string;
+  displayName?: CreatedApplicationDtoDisplayName;
   /**
    *
    * @type {string}
@@ -1488,6 +1500,14 @@ export interface CreatedApplicationDto {
    */
   object?: string;
 }
+/**
+ * @type CreatedApplicationDtoDisplayName
+ *
+ * @export
+ */
+export type CreatedApplicationDtoDisplayName =
+  | string
+  | { [key: string]: string };
 /**
  *
  * @export
@@ -2051,11 +2071,11 @@ export interface DeploymentItemDto {
    */
   id: string;
   /**
-   * Display name, falls back to id when absent
-   * @type {string}
+   *
+   * @type {DeploymentItemDtoDisplayName}
    * @memberof DeploymentItemDto
    */
-  displayName: string;
+  displayName: DeploymentItemDtoDisplayName;
   /**
    *
    * @type {string}
@@ -2069,11 +2089,11 @@ export interface DeploymentItemDto {
    */
   iconUrl?: string;
   /**
-   * Description from DIAL Core
-   * @type {string}
+   *
+   * @type {DeploymentItemDtoDescription}
    * @memberof DeploymentItemDto
    */
-  description?: string;
+  description?: DeploymentItemDtoDescription;
   /**
    * Interface types supported by this deployment
    * @type {Array<string>}
@@ -2201,6 +2221,18 @@ export const DeploymentItemDtoTypeEnum = {
 export type DeploymentItemDtoTypeEnum =
   (typeof DeploymentItemDtoTypeEnum)[keyof typeof DeploymentItemDtoTypeEnum];
 
+/**
+ * @type DeploymentItemDtoDescription
+ * Description from DIAL Core
+ * @export
+ */
+export type DeploymentItemDtoDescription = string | { [key: string]: string };
+/**
+ * @type DeploymentItemDtoDisplayName
+ * Display name, falls back to id when absent. Either a plain string, or a map of locale code to translated value when additional locales are configured.
+ * @export
+ */
+export type DeploymentItemDtoDisplayName = string | { [key: string]: string };
 /**
  *
  * @export
@@ -2369,10 +2401,10 @@ export interface DialModelDto {
   model?: string;
   /**
    *
-   * @type {string}
+   * @type {DialModelDtoDisplayName}
    * @memberof DialModelDto
    */
-  displayName?: string;
+  displayName?: DialModelDtoDisplayName;
   /**
    *
    * @type {string}
@@ -2387,10 +2419,10 @@ export interface DialModelDto {
   iconUrl?: string;
   /**
    *
-   * @type {string}
+   * @type {DialModelDtoDescription}
    * @memberof DialModelDto
    */
-  description?: string;
+  description?: DialModelDtoDescription;
   /**
    *
    * @type {string}
@@ -2500,6 +2532,18 @@ export interface DialModelDto {
    */
   interfaces?: Array<string>;
 }
+/**
+ * @type DialModelDtoDescription
+ *
+ * @export
+ */
+export type DialModelDtoDescription = string | { [key: string]: string };
+/**
+ * @type DialModelDtoDisplayName
+ *
+ * @export
+ */
+export type DialModelDtoDisplayName = string | { [key: string]: string };
 /**
  *
  * @export
@@ -2838,11 +2882,11 @@ export interface DialToolsetDto {
    */
   toolset: string;
   /**
-   * Human-readable name. In `listToolsets` results this is always populated: `displayName` when set, otherwise the last path segment of `id`.
-   * @type {string}
+   *
+   * @type {DialToolsetDtoDisplayName}
    * @memberof DialToolsetDto
    */
-  displayName?: string;
+  displayName?: DialToolsetDtoDisplayName;
   /**
    *
    * @type {string}
@@ -2851,10 +2895,10 @@ export interface DialToolsetDto {
   displayVersion?: string;
   /**
    *
-   * @type {string}
+   * @type {DialToolsetDtoDescription}
    * @memberof DialToolsetDto
    */
-  description?: string;
+  description?: DialToolsetDtoDescription;
   /**
    *
    * @type {string}
@@ -2964,6 +3008,18 @@ export interface DialToolsetDto {
    */
   sharedWithMe?: boolean;
 }
+/**
+ * @type DialToolsetDtoDescription
+ *
+ * @export
+ */
+export type DialToolsetDtoDescription = string | { [key: string]: string };
+/**
+ * @type DialToolsetDtoDisplayName
+ * Human-readable name. In `listToolsets` results this is always populated: `displayName` when set, otherwise the last path segment of `id`. Either a plain string, or a map of locale code to translated value when additional locales are configured.
+ * @export
+ */
+export type DialToolsetDtoDisplayName = string | { [key: string]: string };
 /**
  *
  * @export
@@ -3831,6 +3887,30 @@ export interface McpAppToolSummaryDto {
    * @memberof McpAppToolSummaryDto
    */
   resourceUri: string;
+}
+/**
+ * @export
+ * @interface LocaleTextEntryDto
+ */
+export interface LocaleTextEntryDto {
+  /**
+   *
+   * @type {string}
+   * @memberof LocaleTextEntryDto
+   */
+  language: string;
+  /**
+   *
+   * @type {string}
+   * @memberof LocaleTextEntryDto
+   */
+  name?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof LocaleTextEntryDto
+   */
+  description?: string;
 }
 /**
  *
@@ -5512,6 +5592,18 @@ export interface ToolsetBodyDto {
   topics?: Array<string>;
   /**
    *
+   * @type {Array<LocaleTextEntryDto>}
+   * @memberof ToolsetBodyDto
+   */
+  locales?: Array<LocaleTextEntryDto>;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetBodyDto
+   */
+  primaryLocale?: string;
+  /**
+   *
    * @type {string}
    * @memberof ToolsetBodyDto
    */
@@ -5820,6 +5912,18 @@ export interface UpdateApplicationBodyDto {
    * @memberof UpdateApplicationBodyDto
    */
   maxInputAttachments?: number;
+  /**
+   *
+   * @type {Array<LocaleTextEntryDto>}
+   * @memberof UpdateApplicationBodyDto
+   */
+  locales?: Array<LocaleTextEntryDto>;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateApplicationBodyDto
+   */
+  primaryLocale?: string;
 }
 /**
  *
@@ -5948,10 +6052,10 @@ export interface UpdatedApplicationDto {
   id: string;
   /**
    *
-   * @type {string}
+   * @type {CreatedApplicationDtoDisplayName}
    * @memberof UpdatedApplicationDto
    */
-  displayName?: string;
+  displayName?: CreatedApplicationDtoDisplayName;
   /**
    *
    * @type {string}

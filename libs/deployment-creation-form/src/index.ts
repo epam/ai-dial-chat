@@ -1,8 +1,13 @@
 export { DeploymentCreationForm } from './components/DeploymentCreationForm/DeploymentCreationForm';
+export { DeploymentLocalesField } from './components/DeploymentLocalesField/DeploymentLocalesField';
+export type { DeploymentLocalesFieldProps } from './components/DeploymentLocalesField/DeploymentLocalesField';
 export type {
   DeploymentCreationFormFieldErrors,
   DeploymentCreationFormFieldLabels,
   DeploymentCreationFormLabels,
+  DeploymentCreationFormLocaleEntry,
+  DeploymentCreationFormLocaleLabels,
+  DeploymentCreationFormLocaleOption,
   DeploymentCreationFormProps,
   DeploymentCreationFormStyles,
   DeploymentCreationFormValues,

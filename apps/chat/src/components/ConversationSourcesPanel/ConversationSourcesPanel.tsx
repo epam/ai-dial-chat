@@ -1,15 +1,34 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
-import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
+import {
+  MDMessageViewer,
+  AttachmentType,
+  RequestStatus,
+} from '@epam/ai-dial-chat-shared';
+import {
+  ScheduledTaskDetailsSummary,
+  ScheduledTaskRunHistoryList,
+} from '@epam/ai-dial-scheduled-tasks';
 import { ConversationSourcesPanel } from '@epam/ai-dial-source-panel';
 import type { QuotationSource } from '@epam/ai-dial-source-panel';
-import { memo, useCallback, useMemo, type FC } from 'react';
+import { ButtonVariant, Accordion, GhostButton } from '@epam/ai-dial-ui-kit';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FC,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AttachmentsI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
+  ScheduledTasksI18nKeys,
   SidebarI18nKeys,
 } from '../../constants/translation-keys';
+import { useActiveScheduledTask } from '../../context/ActiveScheduledTaskContext';
+import { useDeployments } from '../../context/DeploymentsContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import {
   downloadAttachment as triggerAttachmentDownload,
@@ -21,9 +40,14 @@ import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useConversationSources } from '../../hooks/conversation-sources/useConversationSources';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import usePanelMaxWidth from '../../hooks/usePanelMaxWidth';
+import {
+  ActiveScheduledTaskDetailState,
+  ActiveScheduledTaskStatus,
+} from '../../types/active-scheduled-task';
 import { StorageKey } from '../../types/storage-key';
 import { isExternalSourcePreviewable } from '../../utils/attachment-canvas';
 import { isDialFileId } from '../../utils/dial-file';
+import { mapScheduledTaskRunDtosToItems } from '../../utils/map-scheduled-task-run-dto';
 
 const MIN_PANEL_WIDTH = 312;
 const DEFAULT_PANEL_WIDTH = 360;
@@ -36,6 +60,130 @@ const ConversationSourcesPanelContainer: FC = () => {
   const { uploaded, generated, sources } = useConversationSources(messages);
   const { handleAttachmentClick: downloadAttachment } = useAttachmentAction();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas();
+  const activeScheduledTask = useActiveScheduledTask();
+  const { items: deploymentItems } = useDeployments();
+  const isTaskConversation =
+    activeScheduledTask.status === ActiveScheduledTaskStatus.TaskConversation;
+
+  const [isHistoryExpanded, setIsHistoryExpanded] = useState(true);
+  const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
+
+  useEffect(() => {
+    setIsHistoryExpanded(true);
+    setIsDetailsExpanded(false);
+  }, [activeScheduledTask.scheduleId]);
+
+  const runItems = useMemo(
+    () => mapScheduledTaskRunDtosToItems(activeScheduledTask.history.items, t),
+    [activeScheduledTask.history.items, t],
+  );
+
+  const taskModel = activeScheduledTask.task?.model;
+  const modelDisplayName = useMemo(() => {
+    if (!taskModel) return undefined;
+    return (
+      deploymentItems.find((item) => item.id === taskModel)?.displayName ??
+      taskModel
+    );
+  }, [taskModel, deploymentItems]);
+
+  const historyLabels = useMemo(
+    () => ({
+      historyTitle: t(ScheduledTasksI18nKeys.DetailHistoryTitle),
+      emptyLabel: t(ScheduledTasksI18nKeys.DetailHistoryEmptyLabel),
+      errorLabel: t(ScheduledTasksI18nKeys.DetailHistoryErrorLabel),
+      retryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
+      runStatusLabels: {
+        success: t(ScheduledTasksI18nKeys.DetailStatusSuccess),
+        error: t(ScheduledTasksI18nKeys.DetailStatusError),
+        inProgress: t(ScheduledTasksI18nKeys.DetailStatusInProgress),
+        missed: t(ScheduledTasksI18nKeys.DetailStatusMissed),
+      },
+      currentRunLabel: t(
+        ScheduledTasksI18nKeys.ConversationPanelCurrentRunLabel,
+      ),
+    }),
+    [t],
+  );
+
+  const historyFooter =
+    activeScheduledTask.history.hasMore &&
+    !activeScheduledTask.history.isLoading ? (
+      <li className="pt-2">
+        <GhostButton
+          variant={ButtonVariant.Primary}
+          label={t(ButtonsI18nKeys.ShowMore)}
+          onClick={activeScheduledTask.history.loadMore}
+          disabled={activeScheduledTask.history.isLoadingMore}
+        />
+      </li>
+    ) : undefined;
+
+  const detailsContent =
+    activeScheduledTask.taskState === ActiveScheduledTaskDetailState.Error ||
+    activeScheduledTask.taskState ===
+      ActiveScheduledTaskDetailState.Unavailable ? (
+      <div className="flex flex-col items-start gap-2">
+        <p role="alert" className="dial-body-text text-secondary">
+          {t(ScheduledTasksI18nKeys.ConversationBannerUnavailableLabel)}
+        </p>
+        {activeScheduledTask.taskState ===
+          ActiveScheduledTaskDetailState.Error && (
+          <GhostButton
+            label={t(ScheduledTasksI18nKeys.ListRetryLabel)}
+            onClick={activeScheduledTask.retryTask}
+          />
+        )}
+      </div>
+    ) : (
+      <ScheduledTaskDetailsSummary
+        modelLabel={t(ScheduledTasksI18nKeys.ConversationPanelModelLabel)}
+        instructionsLabel={t(ScheduledTasksI18nKeys.CreateInstructionsLabel)}
+        modelDisplayName={modelDisplayName}
+        instructionsMarkdown={activeScheduledTask.task?.prompt}
+        renderInstructions={(markdown) => (
+          <MDMessageViewer content={markdown} />
+        )}
+      />
+    );
+
+  const additionalSections = isTaskConversation ? (
+    <>
+      <Accordion
+        title={t(ScheduledTasksI18nKeys.DetailHistoryTitle)}
+        expanded={isHistoryExpanded}
+        onToggle={setIsHistoryExpanded}
+      >
+        <div inert={!isHistoryExpanded}>
+          <ScheduledTaskRunHistoryList
+            items={runItems}
+            isLoading={activeScheduledTask.history.isLoading}
+            isLoadingMore={activeScheduledTask.history.isLoadingMore}
+            error={activeScheduledTask.history.error}
+            onRetry={activeScheduledTask.history.refetch}
+            currentRunId={activeScheduledTask.runId}
+            labels={historyLabels}
+            footer={historyFooter}
+          />
+        </div>
+      </Accordion>
+      <Accordion
+        title={t(ScheduledTasksI18nKeys.CreateDetailsSectionTitle)}
+        expanded={isDetailsExpanded}
+        onToggle={setIsDetailsExpanded}
+      >
+        <div inert={!isDetailsExpanded}>{detailsContent}</div>
+      </Accordion>
+    </>
+  ) : undefined;
+
+  let panelTitle: string | undefined;
+  if (isTaskConversation) {
+    panelTitle =
+      activeScheduledTask.taskState === ActiveScheduledTaskDetailState.Success
+        ? activeScheduledTask.task?.displayName
+        : activeScheduledTask.conversationTitle;
+  }
 
   const handleAttachmentClick = useCallback(
     (attachment: DisplayAttachment) => {
@@ -146,6 +294,8 @@ const ConversationSourcesPanelContainer: FC = () => {
       maxWidth={maxPanelWidth}
       onResizeStop={setStoredWidth}
       labels={labels}
+      title={panelTitle}
+      additionalSections={additionalSections}
     />
   );
 };
