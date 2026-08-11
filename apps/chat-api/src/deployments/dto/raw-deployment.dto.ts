@@ -3,6 +3,8 @@ export interface RawDeploymentFeaturesDto {
   temperature?: boolean;
   folder_attachments?: boolean;
   mcp?: boolean;
+  responses_api?: boolean;
+  chat_completion?: boolean;
 }
 
 export interface RawDeploymentDto {

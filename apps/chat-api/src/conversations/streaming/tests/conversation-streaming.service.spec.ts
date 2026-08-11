@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
+import type { DeploymentsService } from '../../../deployments/deployments.service';
 import type { DialClientService } from '../../../dial/dial-client.service';
 import {
   ConversationGenerationService,
@@ -9,6 +10,7 @@ import {
   StatusEvent,
 } from '../../dto/conversation-message.dto';
 import { CompletionMode } from '../../dto/send-completion.dto';
+import { ResponsesAdapter } from '../../generation/responses.adapter';
 import { ConversationPersistenceService } from '../../persistence/conversation-persistence.service';
 import { ConversationStreamingService } from '../conversation-streaming.service';
 
@@ -67,6 +69,7 @@ describe('ConversationStreamingService', () => {
   let service: ConversationStreamingService;
   let mockDialClient: DialClientService;
   let mockGenerationService: ConversationGenerationService;
+  let mockDeploymentsService: DeploymentsService;
   let mockConversationNamingService: {
     maybeRenameAfterFirstReply: ReturnType<typeof vi.fn>;
   };
@@ -109,6 +112,7 @@ describe('ConversationStreamingService', () => {
         res.setHeader('Connection', 'keep-alive');
         res.flushHeaders();
       },
+      'user1',
       clientChannelId,
     );
     for await (const chunk of stream) {
@@ -119,6 +123,7 @@ describe('ConversationStreamingService', () => {
   beforeEach(() => {
     mockDialClient = {
       client: {
+        createResponse: vi.fn(),
         deleteConversation: vi.fn(),
         getConversation: vi.fn(),
         getConversationMetadata: vi.fn(),
@@ -141,6 +146,13 @@ describe('ConversationStreamingService', () => {
       error: vi.fn(),
       getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),
     } as unknown as ConversationGenerationService;
+    mockDeploymentsService = {
+      getDeploymentDetails: vi.fn().mockResolvedValue({
+        id: 'gpt-4o',
+        type: 'model',
+        modelDetails: { features: { chatCompletion: true } },
+      }),
+    } as unknown as DeploymentsService;
     persistenceService = new ConversationPersistenceService(
       mockDialClient,
       mockConversationNamingService as never,
@@ -149,6 +161,8 @@ describe('ConversationStreamingService', () => {
       mockDialClient,
       mockGenerationService,
       persistenceService,
+      mockDeploymentsService,
+      new ResponsesAdapter(mockDialClient),
     );
     vi.spyOn(
       service['dialClient'].client,
@@ -274,6 +288,56 @@ describe('ConversationStreamingService', () => {
       expect(sendSpy.mock.calls[0][1].headers).not.toHaveProperty(
         'X-DIAL-CLIENT-CHANNEL-ID',
       );
+    });
+
+    it('uses Responses API when the server-resolved deployment supports it', async () => {
+      vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
+        id: 'gpt-4o',
+        type: 'model',
+        modelDetails: {
+          features: { responsesApi: true, temperature: true },
+        },
+      });
+      const createResponseSpy = vi
+        .spyOn(mockDialClient.client, 'createResponse')
+        .mockResolvedValue({
+          response: new Response(
+            textToStream([
+              'data: {"type":"response.output_text.delta","delta":"Hello"}\n\n',
+              'data: {"type":"response.completed","response":{"id":"resp-1","status":"completed"}}\n\n',
+            ]),
+            { status: 200 },
+          ),
+        } as never);
+
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      const { sendSpy, res } = await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+      );
+
+      expect(createResponseSpy).toHaveBeenCalledOnce();
+      expect(createResponseSpy.mock.calls[0][0].body).toMatchObject({
+        model: 'gpt-4o',
+        stream: true,
+        store: false,
+        temperature: 1,
+      });
+      expect(sendSpy).not.toHaveBeenCalled();
+      expect(res.getWritten()).toContain('Hello');
+      expect(res.getWritten()).toContain('data: [DONE]');
     });
 
     it('excludes ConversationMessageRole.Status messages from the DIAL Core payload', async () => {
