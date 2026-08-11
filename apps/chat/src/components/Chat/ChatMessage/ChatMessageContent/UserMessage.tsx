@@ -354,13 +354,15 @@ export const UserMessage = memo(function UserMessage({
     ],
   );
 
-  // Reserves space for the absolutely positioned microphone button so it never
-  // overlaps the textarea text or the attachments grid
-  const micPaddingClass = canRecordAudio
+  // Horizontal padding lives on the scrollable children instead of their
+  // wrapper, so vertical scrollbars are rendered at the field border the same
+  // way as in the send message input. The end padding additionally reserves
+  // space for the absolutely positioned microphone button.
+  const paddingEndClass = canRecordAudio
     ? isOverlay
       ? 'pe-[60px]'
       : 'pe-[72px]'
-    : '';
+    : 'pe-3';
 
   const handleInputChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -699,15 +701,15 @@ export const UserMessage = memo(function UserMessage({
         {!isInputHidden && (
           <div
             className={classNames(
-              'relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary',
+              'relative min-h-[100px] rounded border border-primary bg-layer-3 py-2 focus-within:border-accent-primary',
               !isOverlay && 'text-base',
             )}
           >
             <AdjustedTextarea
               ref={textareaRef}
               className={classNames(
-                'w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none',
-                micPaddingClass,
+                'w-full grow resize-none whitespace-pre-wrap bg-transparent ps-3 focus-visible:outline-none',
+                paddingEndClass,
               )}
               value={messageContent}
               onChange={handleInputChange}
@@ -748,8 +750,8 @@ export const UserMessage = memo(function UserMessage({
               selectedDialLinks.length > 0) && (
               <div
                 className={classNames(
-                  'mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3',
-                  micPaddingClass,
+                  'mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto ps-3 sm:grid-cols-2 md:grid-cols-3',
+                  paddingEndClass,
                 )}
                 data-qa="attachment-container"
               >
