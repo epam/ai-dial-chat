@@ -476,7 +476,7 @@ export interface Check200Response {
    */
   timestamp?: string;
   /**
-   * Application version
+   * Application version. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Matches the appVersion reported by the client config endpoint.
    * @type {string}
    * @memberof Check200Response
    */

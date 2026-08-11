@@ -27,10 +27,17 @@ The value SHALL be resolved by the existing generic `envVar` branch of `EnvConfi
 key-specific branch SHALL be added. It SHALL NOT be role-gated (`allowedRolesEnvVar` is absent),
 and it SHALL NOT be gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`.
 
-`AppConfigService.getClientConfig` SHALL resolve `app.version` and coalesce it: a resolved
-string that is non-empty after trimming is used as-is (trimmed); otherwise the `APP_VERSION`
-constant derived from `packageJson.version` is used. The result is therefore always a non-empty
-string.
+`AppConfigService.getClientConfig` SHALL resolve `app.version` and coalesce it through the
+shared `resolveAppVersion` helper (`apps/chat-api/src/common/utils/app-version.ts`): a resolved
+string that is non-empty after trimming is used as-is (trimmed); otherwise the `PACKAGE_VERSION`
+constant, statically imported from `apps/chat-api/package.json`, is used. The result is therefore
+always a non-empty string.
+
+`resolveAppVersion` and `PACKAGE_VERSION` SHALL be the only source of a version string in
+`apps/chat-api`. Any other surface that reports a version — currently `GET /api/health` (see the
+`chat-api-backend` capability) — SHALL resolve it through that helper rather than reading
+`package.json` from disk or re-implementing the fallback, so a single deployment cannot report two
+different versions on two endpoints.
 
 - **State ownership**: server-side only — `AppConfigService`; no new NestJS provider or module
 - **Cache**: reuses the existing `app-config` response cache — key

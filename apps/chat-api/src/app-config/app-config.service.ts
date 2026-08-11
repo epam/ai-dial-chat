@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import type { Cache } from 'cache-manager';
-import packageJson from '../../package.json';
+import { resolveAppVersion } from '../common/utils/app-version';
 import type { AppConfigEvalContext } from './app-config.types';
 import { CompositeConfigProvider } from './config-registry/composite-config.provider';
 import { CONFIG_DEFINITIONS } from './config-registry/config-registry.constants';
@@ -24,8 +24,6 @@ const CACHE_TTL_SECONDS = 60;
 const CACHE_TTL_MS = CACHE_TTL_SECONDS * 1000;
 const DEFAULT_FILE_MANAGER_TABS = ['my_files', 'shared', 'organization'];
 const DEFAULT_PUBLICATION_FILTER_SOURCES = ['title', 'role', 'dial_roles'];
-
-const APP_VERSION: string = packageJson?.version;
 
 /* Blank and whitespace-only operator values are treated as "unset" so the
  * banner never reserves space for an empty string. */
@@ -172,7 +170,7 @@ export class AppConfigService {
      * `footer.html` read it, and relying on CONFIG_DEFINITIONS ordering to have
      * it ready would be brittle. It is filtered out below so it is still
      * resolved exactly once per request. */
-    const appVersion = await this.resolveAppVersion(context);
+    const appVersion = await this.resolveConfiguredVersion(context);
 
     const clientDefinitions = CONFIG_DEFINITIONS.filter(
       (d) => d.visibility === 'client' && d.key !== 'app.version',
@@ -328,21 +326,19 @@ export class AppConfigService {
   }
 
   /**
-   * Resolves the version string shown to clients. `CHAT_VERSION` wins so a
-   * CI/CD pipeline can stamp the deployed build; a missing or blank value falls
-   * back to the bundled package.json version, so the result is never empty.
+   * Resolves the version string shown to clients. The `app.version` key reads
+   * `CHAT_VERSION`, so a CI/CD pipeline can stamp the deployed build; the
+   * package.json fallback for a missing or blank value lives in
+   * `resolveAppVersion`, shared with `GET /health`.
    */
-  private async resolveAppVersion(
+  private async resolveConfiguredVersion(
     context: AppConfigEvalContext,
   ): Promise<string> {
     const resolved = await this.compositeProvider.resolve(
       'app.version',
       context,
     );
-    if (typeof resolved === 'string' && resolved.trim().length > 0) {
-      return resolved.trim();
-    }
-    return APP_VERSION;
+    return resolveAppVersion(typeof resolved === 'string' ? resolved : null);
   }
 
   private getClientConfigCacheKey(context: AppConfigEvalContext): string {
