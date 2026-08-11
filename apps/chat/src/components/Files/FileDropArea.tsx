@@ -11,14 +11,13 @@ import { Translation } from '@/src/types/translation';
 
 import { FilesI18nKeys } from '@/src/constants/i18n';
 
-const containerId = 'file-drop-area';
-
 interface FileDropAreaProps {
   children: ReactNode;
   onDrop: (files: File[]) => void;
   droppable?: boolean;
   disabled?: boolean;
   className?: string;
+  id?: string;
 }
 
 export const FileDropArea = ({
@@ -27,6 +26,7 @@ export const FileDropArea = ({
   disabled = false,
   className,
   onDrop,
+  id,
 }: FileDropAreaProps) => {
   const { t } = useTranslation(Translation.Files);
 
@@ -78,7 +78,7 @@ export const FileDropArea = ({
 
   return (
     <div
-      id={containerId}
+      id={id}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       className={classNames('relative', className)}
