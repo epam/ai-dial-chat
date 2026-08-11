@@ -13,10 +13,7 @@
  * surfaces a tool-declared permissions payload, so the inner iframe's
  * `sandbox` attribute is the only thing the relay negotiates.
  */
-export const buildSandboxPageHtml = (
-  expectedHostOrigin: string,
-  scriptNonce: string,
-): string => {
+export const buildSandboxPageHtml = (expectedHostOrigin: string): string => {
   const escapedOrigin = JSON.stringify(expectedHostOrigin);
 
   return `<!doctype html>
@@ -33,7 +30,7 @@ export const buildSandboxPageHtml = (
     </style>
   </head>
   <body>
-    <script nonce="${scriptNonce}">
+    <script>
       (function () {
         if (window.self === window.top) {
           throw new Error('This page is only to be used in an iframe sandbox.');

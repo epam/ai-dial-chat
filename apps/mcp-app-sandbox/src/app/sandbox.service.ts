@@ -1,8 +1,7 @@
-import { randomBytes } from 'crypto';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { EnvironmentVariables } from '../config/environment.config';
-import { buildSandboxCspHeader } from './csp';
+import { SANDBOX_CSP_HEADER } from './csp';
 import { buildSandboxPageHtml } from './sandbox-page';
 
 @Injectable()
@@ -49,10 +48,9 @@ export class SandboxService {
     html: string;
     cspHeader: string;
   } {
-    const scriptNonce = randomBytes(16).toString('base64');
     return {
-      html: buildSandboxPageHtml(validatedHostOrigin, scriptNonce),
-      cspHeader: buildSandboxCspHeader(scriptNonce),
+      html: buildSandboxPageHtml(validatedHostOrigin),
+      cspHeader: SANDBOX_CSP_HEADER,
     };
   }
 }
