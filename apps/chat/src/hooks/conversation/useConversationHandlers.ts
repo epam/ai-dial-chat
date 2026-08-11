@@ -175,6 +175,7 @@ export const useConversationHandlers = ({
           wasStoppedByUser: undefined,
           stoppedWithoutContent: undefined,
           streamErrorMessage: undefined,
+          deploymentId: selectedItemId ?? conversation.model.id,
         };
         const next = {
           ...prev,

@@ -42,11 +42,14 @@ const clearStateFromMessages = (
       : { ...msg, custom_content: { ...msg.custom_content, state: undefined } },
   );
 
-const makeAssistantPlaceholder = (): ConversationMessageDto => ({
+const makeAssistantPlaceholder = (
+  deploymentId: string,
+): ConversationMessageDto => ({
   id: crypto.randomUUID(),
   role: ConversationMessageRole.Assistant,
   content: '',
   timestamp: new Date().toISOString(),
+  deploymentId,
 });
 
 const assertMessageIndexInRange = (
@@ -92,7 +95,7 @@ export const buildConversationHistory = (
 
   if (mode === CompletionMode.Append) {
     const userMessage = makeUserMessage(message ?? '', customContent);
-    const assistantPlaceholder = makeAssistantPlaceholder();
+    const assistantPlaceholder = makeAssistantPlaceholder(model);
     messages.push(userMessage, assistantPlaceholder);
     return {
       conversation: { ...conversation, messages },
@@ -105,7 +108,7 @@ export const buildConversationHistory = (
     if (lastMessage?.role !== ConversationMessageRole.User && message != null) {
       messages.push(makeUserMessage(message, customContent));
     }
-    const assistantPlaceholder = makeAssistantPlaceholder();
+    const assistantPlaceholder = makeAssistantPlaceholder(model);
     messages.push(assistantPlaceholder);
     return {
       conversation: { ...conversation, messages },
@@ -131,7 +134,7 @@ export const buildConversationHistory = (
     const truncated = isModelChange
       ? clearStateFromMessages(messages.slice(0, messageIndex))
       : messages.slice(0, messageIndex);
-    const assistantPlaceholder = makeAssistantPlaceholder();
+    const assistantPlaceholder = makeAssistantPlaceholder(model);
     truncated.push(assistantPlaceholder);
     return {
       conversation: { ...conversation, messages: truncated },
@@ -153,7 +156,7 @@ export const buildConversationHistory = (
     // Truncate up to (but not including) messageIndex, then append new user message + assistant placeholder
     const truncated = messages.slice(0, messageIndex);
     const userMessage = makeUserMessage(message ?? '', customContent);
-    const assistantPlaceholder = makeAssistantPlaceholder();
+    const assistantPlaceholder = makeAssistantPlaceholder(model);
     truncated.push(userMessage, assistantPlaceholder);
     return {
       conversation: { ...conversation, messages: truncated },
