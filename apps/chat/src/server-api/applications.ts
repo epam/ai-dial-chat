@@ -4,7 +4,7 @@ import type {
   CreatedApplicationDto,
   UpdateApplicationBodyDto,
   UpdatedApplicationDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { applicationsApi } from './api-client';
 
 export const getApplications = (): Promise<ApplicationsResponseDto> =>

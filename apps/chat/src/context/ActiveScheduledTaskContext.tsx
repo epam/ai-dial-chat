@@ -1,4 +1,4 @@
-import type { ScheduledTaskDto } from '@epam/chat-api-client';
+import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
 import {
   createContext,
   type ReactNode,

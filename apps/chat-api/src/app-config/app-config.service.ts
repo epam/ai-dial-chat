@@ -6,14 +6,18 @@ import {
   Logger,
 } from '@nestjs/common';
 import type { Cache } from 'cache-manager';
-import sanitizeHtml from 'sanitize-html';
-import packageJson from '../../package.json';
+import { resolveAppVersion } from '../common/utils/app-version';
 import type { AppConfigEvalContext } from './app-config.types';
 import { CompositeConfigProvider } from './config-registry/composite-config.provider';
 import { CONFIG_DEFINITIONS } from './config-registry/config-registry.constants';
+import type {
+  AnnouncementItemDto,
+  AnnouncementLinkDto,
+} from './dto/announcement-item.dto';
 import type { ClientConfigResponseDto } from './dto/client-config-response.dto';
 import type { CustomVisualizerDto } from './dto/custom-visualizer.dto';
 import { FeatureKey } from './feature-flags/feature-key.enum';
+import { sanitizeAnnouncementHtml, sanitizeFooterHtml } from './html-sanitizer';
 import { KNOWN_UI_FEATURES } from './known-ui-features.constants';
 
 const CACHE_TTL_SECONDS = 60;
@@ -21,36 +25,53 @@ const CACHE_TTL_MS = CACHE_TTL_SECONDS * 1000;
 const DEFAULT_FILE_MANAGER_TABS = ['my_files', 'shared', 'organization'];
 const DEFAULT_PUBLICATION_FILTER_SOURCES = ['title', 'role', 'dial_roles'];
 
-const APP_VERSION: string = packageJson?.version;
-
-const FOOTER_ALLOWED_TAGS = ['a', 'span', 'strong', 'u', 'em', 'br', 'p'];
-const FOOTER_ALLOWED_ATTRS: sanitizeHtml.IOptions['allowedAttributes'] = {
-  a: ['href', 'target', 'rel'],
+/* Blank and whitespace-only operator values are treated as "unset" so the
+ * banner never reserves space for an empty string. */
+const toNullableText = (value: unknown): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
 };
 
-const sanitizeFooterHtml = (raw: string): string => {
-  const withVersion = raw.replace(/%%VERSION%%/g, APP_VERSION);
-  return sanitizeHtml(withVersion, {
-    allowedTags: FOOTER_ALLOWED_TAGS,
-    allowedAttributes: FOOTER_ALLOWED_ATTRS,
-    transformTags: {
-      a: (tagName, attribs) => {
-        const href = attribs.href ?? '';
-        /* Hash links stay in-page; don't force external navigation on them. */
-        if (href.startsWith('#')) {
-          return { tagName, attribs };
-        }
-        return {
-          tagName,
-          attribs: {
-            ...attribs,
-            target: '_blank',
-            rel: 'noopener noreferrer',
-          },
-        };
-      },
-    },
-  });
+const MAX_ANNOUNCEMENTS = 10;
+
+/* Parsed rather than prefix-matched, so "JaVaScRiPt:" and whitespace-padded
+ * schemes are caught too. Relative URLs are rejected on purpose: operator
+ * config must not be able to point at an in-app route. */
+const isExternalHttpUrl = (href: string): boolean => {
+  try {
+    const { protocol } = new URL(href);
+    return protocol === 'http:' || protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
+type AnnouncementRejection = { reason: string };
+
+const parseAnnouncementLink = (
+  raw: unknown,
+): AnnouncementLinkDto | null | AnnouncementRejection => {
+  /* No link at all is valid — an announcement may be purely informational. */
+  if (raw == null) {
+    return null;
+  }
+  if (typeof raw !== 'object') {
+    return { reason: 'link is not an object' };
+  }
+
+  const { label, href } = raw as Record<string, unknown>;
+  const parsedLabel = toNullableText(label);
+  if (!parsedLabel) {
+    return { reason: 'link.label is blank or missing' };
+  }
+  if (typeof href !== 'string' || !isExternalHttpUrl(href.trim())) {
+    return { reason: `link.href is not an http(s) URL: ${String(href)}` };
+  }
+
+  return { label: parsedLabel, href: href.trim() };
 };
 
 @Injectable()
@@ -61,6 +82,71 @@ export class AppConfigService {
     private readonly compositeProvider: CompositeConfigProvider,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
+
+  /**
+   * Normalizes the operator-authored announcements list. Bad entries are
+   * dropped with a warning rather than throwing: a typo in a Helm values file
+   * must never take down `/api/v1/client-config`.
+   */
+  private normalizeAnnouncements(resolved: unknown): AnnouncementItemDto[] {
+    if (!Array.isArray(resolved)) {
+      if (resolved != null) {
+        this.logger.warn(
+          'ANNOUNCEMENTS did not resolve to an array; ignoring it',
+        );
+      }
+      return [];
+    }
+
+    const items: AnnouncementItemDto[] = [];
+
+    for (const entry of resolved) {
+      if (entry == null || typeof entry !== 'object') {
+        this.logger.warn('Ignoring announcement entry that is not an object');
+        continue;
+      }
+
+      const { title, description, link } = entry as Record<string, unknown>;
+
+      const parsedTitle = toNullableText(title);
+      if (!parsedTitle) {
+        this.logger.warn(
+          'Ignoring announcement entry with a blank or missing title',
+        );
+        continue;
+      }
+
+      const parsedLink = parseAnnouncementLink(link);
+      if (parsedLink && 'reason' in parsedLink) {
+        /* Dropping the whole entry, not just the link: a row that still looks
+         * right but silently lost its call to action is worse than a missing
+         * row, because nobody notices it. */
+        this.logger.warn(
+          `Ignoring announcement "${parsedTitle}": ${parsedLink.reason}`,
+        );
+        continue;
+      }
+
+      const rawDescription = toNullableText(description);
+
+      items.push({
+        title: parsedTitle,
+        description: rawDescription
+          ? sanitizeAnnouncementHtml(rawDescription)
+          : null,
+        link: parsedLink,
+      });
+    }
+
+    if (items.length > MAX_ANNOUNCEMENTS) {
+      this.logger.warn(
+        `ANNOUNCEMENTS carried ${items.length} entries; keeping the first ${MAX_ANNOUNCEMENTS} and dropping the rest`,
+      );
+      return items.slice(0, MAX_ANNOUNCEMENTS);
+    }
+
+    return items;
+  }
 
   async resolveValue(
     key: string,
@@ -79,8 +165,15 @@ export class AppConfigService {
       return cached;
     }
 
+    /* `app.version` is resolved ahead of the loop instead of inside it: both the
+     * `appVersion` response field and the `%%VERSION%%` token inside
+     * `footer.html` read it, and relying on CONFIG_DEFINITIONS ordering to have
+     * it ready would be brittle. It is filtered out below so it is still
+     * resolved exactly once per request. */
+    const appVersion = await this.resolveConfiguredVersion(context);
+
     const clientDefinitions = CONFIG_DEFINITIONS.filter(
-      (d) => d.visibility === 'client',
+      (d) => d.visibility === 'client' && d.key !== 'app.version',
     );
 
     const features: Record<string, boolean> = {};
@@ -94,6 +187,9 @@ export class AppConfigService {
     let overlayAllowedOrigins: string[] = [];
     let enabledUiFeatures: string[] | null = null;
     let announcementHtml: string | null = null;
+    let announcementTitle: string | null = null;
+    let announcementDescription: string | null = null;
+    let announcements: AnnouncementItemDto[] = [];
     let deepResearchToolId: string | null = null;
     let footerHtmlMessage = '';
     let customVisualizers: CustomVisualizerDto[] = [];
@@ -132,9 +228,20 @@ export class AppConfigService {
         overlayAllowedOrigins = Array.isArray(resolved) ? resolved : [];
       } else if (def.key === 'announcement.html') {
         announcementHtml = typeof resolved === 'string' ? resolved : null;
+      } else if (def.key === 'announcement.title') {
+        /* Plain text by contract: never sanitized, never parsed as markup, so
+         * an operator writing "<b>" sees those characters in the banner. */
+        announcementTitle = toNullableText(resolved);
+      } else if (def.key === 'announcement.description') {
+        const raw = toNullableText(resolved);
+        announcementDescription = raw ? sanitizeAnnouncementHtml(raw) : null;
+      } else if (def.key === 'announcement.items') {
+        announcements = this.normalizeAnnouncements(resolved);
       } else if (def.key === 'footer.html') {
         footerHtmlMessage =
-          typeof resolved === 'string' ? sanitizeFooterHtml(resolved) : '';
+          typeof resolved === 'string'
+            ? sanitizeFooterHtml(resolved, appVersion)
+            : '';
       } else if (def.key === 'uiFeatures.enabledUiFeatures') {
         const rawValue = Array.isArray(resolved) ? resolved : [];
         if (rawValue.length > 0) {
@@ -168,6 +275,7 @@ export class AppConfigService {
       appId: context.appId,
       features,
       config: {
+        appVersion,
         asrModelId,
         transcribeSizeLimitBytes,
         defaultDeploymentId,
@@ -177,6 +285,9 @@ export class AppConfigService {
         overlayEnabled,
         overlayAllowedOrigins,
         announcementHtml,
+        announcementTitle,
+        announcementDescription,
+        announcements,
         footerHtmlMessage,
         enabledUiFeatures,
         deepResearchToolId,
@@ -216,6 +327,22 @@ export class AppConfigService {
       );
       return false;
     }
+  }
+
+  /**
+   * Resolves the version string shown to clients. The `app.version` key reads
+   * `CHAT_VERSION`, so a CI/CD pipeline can stamp the deployed build; the
+   * package.json fallback for a missing or blank value lives in
+   * `resolveAppVersion`, shared with `GET /health`.
+   */
+  private async resolveConfiguredVersion(
+    context: AppConfigEvalContext,
+  ): Promise<string> {
+    const resolved = await this.compositeProvider.resolve(
+      'app.version',
+      context,
+    );
+    return resolveAppVersion(typeof resolved === 'string' ? resolved : null);
   }
 
   private getClientConfigCacheKey(context: AppConfigEvalContext): string {

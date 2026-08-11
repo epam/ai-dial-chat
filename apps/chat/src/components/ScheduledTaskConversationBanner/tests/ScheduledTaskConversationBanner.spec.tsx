@@ -1,4 +1,4 @@
-import type { ScheduledTaskRunDto } from '@epam/chat-api-client';
+import type { ScheduledTaskRunDto } from '@epam/ai-dial-chat-api-client';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

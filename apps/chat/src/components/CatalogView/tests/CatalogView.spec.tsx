@@ -7,10 +7,10 @@ import {
   getCredentialsBadgeState,
   getCredentialsUiState,
 } from '@epam/ai-dial-catalog';
+import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
-import type { DialToolsetDto } from '@epam/chat-api-client';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
@@ -514,6 +514,7 @@ describe('CatalogView', () => {
       status: UserConfigStatus.Ready,
       features: {},
       config: {
+        appVersion: '0.0.1',
         asrModelId: null,
         transcribeSizeLimitBytes: 5 * 1024 * 1024,
         defaultDeploymentId: null,
@@ -524,6 +525,9 @@ describe('CatalogView', () => {
         overlayAllowedOrigins: [],
         enabledUiFeatures: null,
         announcementHtml: null,
+        announcementTitle: null,
+        announcementDescription: null,
+        announcements: [],
         footerHtmlMessage: '',
         deepResearchToolId: null,
         customVisualizers: [],
@@ -1251,7 +1255,7 @@ describe('CatalogView', () => {
     ]);
   });
 
-  it('maps a fetched toolset DeploymentDetailsDto into authentication and permissions', async () => {
+  it('maps a fetched toolset DeploymentDetailsDto into authentication and Tools tab data', async () => {
     vi.mocked(useDeployments).mockReturnValue({
       items: [
         { id: 'search-tool', displayName: 'Search Tool', type: 'toolset' },
@@ -1304,8 +1308,6 @@ describe('CatalogView', () => {
         title: 'Specification',
         specs: [
           { label: 'Authentication', value: 'OAUTH' },
-          { label: 'Allowed tools', value: 'search · fetch' },
-          { label: 'All supported tools', value: 'search · fetch · browse' },
           { label: 'Hosted by', value: 'Anastasiia Harkot' },
           { label: 'OAuth scopes', value: 'read · write' },
           {
@@ -1327,6 +1329,9 @@ describe('CatalogView', () => {
         ],
       },
     ]);
+    expect(result.tools).toEqual({
+      tools: [{ name: 'search' }, { name: 'fetch' }],
+    });
     expect(result.api.resource.endpointUrl).toBe(
       'https://dial.example.com/v1/toolset/search-tool/mcp',
     );

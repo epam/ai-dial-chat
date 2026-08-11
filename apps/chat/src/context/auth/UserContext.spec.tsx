@@ -1,4 +1,4 @@
-import type { UserProfileDto } from '@epam/chat-api-client';
+import type { UserProfileDto } from '@epam/ai-dial-chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';

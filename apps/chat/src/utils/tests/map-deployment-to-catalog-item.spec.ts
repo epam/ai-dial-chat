@@ -3,7 +3,10 @@ import {
   CredentialStatus,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
-import type { DeploymentItemDto, DialToolsetDto } from '@epam/chat-api-client';
+import type {
+  DeploymentItemDto,
+  DialToolsetDto,
+} from '@epam/ai-dial-chat-api-client';
 import type { TFunction } from 'i18next';
 import { describe, expect, it } from 'vitest';
 import { CatalogI18nKeys } from '../../constants/translation-keys';

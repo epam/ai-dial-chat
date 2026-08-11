@@ -1,12 +1,12 @@
 import {
+  ResponseError,
+  type ConversationResponseDto,
+} from '@epam/ai-dial-chat-api-client';
+import {
   MessageRole,
   type Conversation,
   type ExportFormat,
 } from '@epam/ai-dial-chat-shared';
-import {
-  ResponseError,
-  type ConversationResponseDto,
-} from '@epam/chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { strToU8, zipSync } from 'fflate';
 import {

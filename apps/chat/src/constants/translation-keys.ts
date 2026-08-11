@@ -674,11 +674,19 @@ export enum AttachmentCanvasI18nKeys {
 
 export enum AnnouncementBannerI18nKeys {
   RegionAriaLabel = 'announcementBanner.regionAriaLabel',
+  RegionAriaLabelWithTitle = 'announcementBanner.regionAriaLabelWithTitle',
   CloseLabel = 'announcementBanner.closeLabel',
+}
+
+export enum AnnouncementsPopoverI18nKeys {
+  PillLabel = 'announcementsPopover.pillLabel',
+  ListAriaLabel = 'announcementsPopover.listAriaLabel',
+  OpensInNewTab = 'announcementsPopover.opensInNewTab',
 }
 
 export enum FooterMessageI18nKeys {
   RegionAriaLabel = 'footerMessage.regionAriaLabel',
+  VersionAriaLabel = 'footerMessage.versionAriaLabel',
 }
 
 export enum EditorI18nKeys {

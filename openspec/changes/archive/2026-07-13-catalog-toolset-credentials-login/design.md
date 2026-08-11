@@ -31,7 +31,7 @@ The Catalog Details Panel (`libs/catalog/src/components/Details/DetailsPanel.tsx
 
 ### 1. Credentials UI stays a lib component below `Header`, extended with an admin accordion (carried over)
 
-`libs/catalog/src/components/Details/Credentials/CredentialsSection.tsx` (rendered by `DetailsPanel.tsx`) now branches on `credentials.isManageableByAdmin`: when true, it renders two `DialAccordion` sections ("My credentials" / "Entire organization credentials"), each with an independent `LevelForm` (status, API-key/OAuth input, logout confirm) bound to `USER`/`GLOBAL` respectively; when false, it renders a single `LevelForm` at the level resolved by `getCredentialsUiState` (see Decision 4).
+`libs/catalog/src/components/Details/Credentials/CredentialsSection.tsx` (rendered by `DetailsPanel.tsx`) now branches on `credentials.isManageableByAdmin`: when true, it renders two `Accordion` sections ("My credentials" / "Entire organization credentials"), each with an independent `LevelForm` (status, API-key/OAuth input, logout confirm) bound to `USER`/`GLOBAL` respectively; when false, it renders a single `LevelForm` at the level resolved by `getCredentialsUiState` (see Decision 4).
 - **Why**: keeps the two-level admin case visually and structurally close to the legacy `ToolsetLoginDialog`'s `credsTabs` accordion, without introducing a modal.
 - **Alternative considered**: two separate top-level toggle buttons (one per level) instead of one "Manage credentials" trigger + accordion. Rejected — the legacy UX (and the acceptance criteria) expects one entry point, matching `LoginButton.tsx`'s `isOrganizationView` gate.
 

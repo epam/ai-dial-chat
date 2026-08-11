@@ -8,7 +8,7 @@ import { get, post, ApiEndpoints } from './base';
  * `GetExternalServiceResponseDto`/`ExternalServiceSigninBodyDto`/
  * `ExternalServiceLogoutBodyDto` in
  * `apps/chat-api/src/external-services/dto/external-service.dto.ts` exactly;
- * replace this file's request plumbing with generated `@epam/chat-api-client`
+ * replace this file's request plumbing with generated `@epam/ai-dial-chat-api-client`
  * wrappers once that bug is fixed and the client is regenerated.
  */
 

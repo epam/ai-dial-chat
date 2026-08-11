@@ -1,4 +1,4 @@
-import type { DialToolsetDto } from '@epam/chat-api-client';
+import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import { ToolsetCredentialsLevel } from '../constants/toolsets';
 import type { ResolvedRowInfo } from '../models/signin-interrupt';
 import type { GetExternalServiceResponseDto } from '../server-api/external-services';

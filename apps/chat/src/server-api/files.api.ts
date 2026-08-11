@@ -20,7 +20,7 @@ import type {
   RevokeAccessItemDto,
   RevokeAccessResponseDto,
   UploadArchiveResponseDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { filesApi } from './api-client';
 import {
   type UploadFileWithProgressOptions,

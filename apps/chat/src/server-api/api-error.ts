@@ -108,7 +108,7 @@ export const getApiErrorMessage = async (
 };
 
 /*
- * Normalizes any API error — a generated `@epam/chat-api-client` `ResponseError` or a raw
+ * Normalizes any API error — a generated `@epam/ai-dial-chat-api-client` `ResponseError` or a raw
  * `base.ts` `ApiRequestError`, both of which retain the source `Response` — into one
  * `{ status?, message, traceId? }` shape.
  *

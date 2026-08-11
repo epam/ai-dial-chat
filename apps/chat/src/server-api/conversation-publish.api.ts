@@ -1,5 +1,5 @@
+import type { PublishConversationResultDto } from '@epam/ai-dial-chat-api-client';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
-import type { PublishConversationResultDto } from '@epam/chat-api-client';
 import { conversationsApi } from './api-client';
 import { toPublishRuleDto } from './publish-rules.api';
 
