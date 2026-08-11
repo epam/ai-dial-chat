@@ -125,6 +125,38 @@ describe('useDialFileMutations', () => {
       fileContent: new File([], name),
     });
 
+    it('does not call createFolder when the last live-validated name was invalid, even if the path-derived name is clean', async () => {
+      const { result } = renderMutations({ folderPath: '' });
+      const parentFolder: DialFile = {
+        id: 'root',
+        name: 'My files',
+        path: '/My files',
+        parentPath: '',
+        nodeType: DialFileNodeType.FOLDER,
+        folderId: BUCKET,
+        bucket: BUCKET,
+        items: [],
+      };
+
+      // Simulates the host grid showing an inline error while the user
+      // types "/New folder", then confirming with a path where the leading
+      // "/" got absorbed as a path separator, leaving a clean derived name
+      // — see #7968.
+      act(() => {
+        result.current.onCreateFolderValidate('/New folder', parentFolder);
+      });
+
+      await act(async () => {
+        await result.current.onCreateFolder(
+          uploadItem('New folder'),
+          '/My files/New folder',
+          'file-slash',
+        );
+      });
+
+      expect(mockCreateFolder).not.toHaveBeenCalled();
+    });
+
     it('does not call createFolder for a name containing a forbidden symbol', async () => {
       const { result } = renderMutations({
         folderPath: '',

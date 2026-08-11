@@ -145,31 +145,42 @@ export const useDialFileMutations = ({
   const [isMoving, setIsMoving] = useState(false);
   const copyMoveAbortControllerRef = useRef<AbortController | null>(null);
 
+  /*
+   * The host `DialFileManager` grid shows this validation result inline
+   * while the user types but does not reliably gate its own `onCreateFolder`
+   * confirm callback on it — and the name it eventually passes to
+   * `onCreateFolder` is derived by splitting a constructed virtual path on
+   * '/', which silently swallows an embedded '/' the user typed as if it
+   * were a path separator (see #7968). Track the last live-typed validation
+   * result here so `onCreateFolder` can refuse even when the value it
+   * receives no longer reflects that error.
+   */
+  const lastLiveValidationErrorRef = useRef<string | null>(null);
+
   const onCreateFolderValidate = useCallback(
     (name: string, parentFolder: DialFile): string | null => {
+      let error: string | null = null;
       if (!name || name.trim() === '') {
-        return t('dialFileManager.folderNameEmpty');
-      }
-      if (hasForbiddenNameSymbols(name, forbiddenSymbolsRegExp)) {
-        return t(DialFileManagerI18nKeys.FolderNameInvalidChars, {
+        error = t('dialFileManager.folderNameEmpty');
+      } else if (hasForbiddenNameSymbols(name, forbiddenSymbolsRegExp)) {
+        error = t(DialFileManagerI18nKeys.FolderNameInvalidChars, {
           notAllowedSymbols: NOT_ALLOWED_SYMBOLS,
         });
+      } else if (name.startsWith('.')) {
+        error = t('dialFileManager.folderNameHidden');
+      } else if (name === RESERVED_MARKER_NAME) {
+        error = t('dialFileManager.folderNameReserved');
+      } else if (name.length > 255) {
+        error = t('dialFileManager.folderNameTooLong');
+      } else {
+        const siblings = parentFolder.items ?? [];
+        const lowerName = name.toLowerCase();
+        if (siblings.some((s) => s.name.toLowerCase() === lowerName)) {
+          error = t('dialFileManager.folderConflict');
+        }
       }
-      if (name.startsWith('.')) {
-        return t('dialFileManager.folderNameHidden');
-      }
-      if (name === RESERVED_MARKER_NAME) {
-        return t('dialFileManager.folderNameReserved');
-      }
-      if (name.length > 255) {
-        return t('dialFileManager.folderNameTooLong');
-      }
-      const siblings = parentFolder.items ?? [];
-      const lowerName = name.toLowerCase();
-      if (siblings.some((s) => s.name.toLowerCase() === lowerName)) {
-        return t('dialFileManager.folderConflict');
-      }
-      return null;
+      lastLiveValidationErrorRef.current = error;
+      return error;
     },
     [t, forbiddenSymbolsRegExp],
   );
@@ -198,7 +209,11 @@ export const useDialFileMutations = ({
               items: [],
             };
 
-      if (onCreateFolderValidate(name, parentFolder)) return;
+      // Captured before re-validating below, which overwrites the ref.
+      const priorLiveError = lastLiveValidationErrorRef.current;
+      lastLiveValidationErrorRef.current = null;
+
+      if (onCreateFolderValidate(name, parentFolder) || priorLiveError) return;
 
       setIsCreatingFolder(true);
       const { bucket: targetBucket, path: targetParentPath } =
