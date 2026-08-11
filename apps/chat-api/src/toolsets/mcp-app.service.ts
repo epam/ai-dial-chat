@@ -13,10 +13,7 @@ import {
 } from '../common/dial/dial-error.mapper';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
-import {
-  McpAppToolSummaryDto,
-  McpDeploymentKindDto,
-} from './dto/mcp-app.dto';
+import { McpAppToolSummaryDto, McpDeploymentKindDto } from './dto/mcp-app.dto';
 
 /** Response headers DIAL Core's `mcp/resources` endpoint sets and this service forwards verbatim. */
 const FORWARDED_RESOURCE_HEADERS = [
@@ -141,7 +138,10 @@ export class McpAppService {
     });
   }
 
-  private async listTools(toolsetId: string, token: string): Promise<McpTool[]> {
+  private async listTools(
+    toolsetId: string,
+    token: string,
+  ): Promise<McpTool[]> {
     const response = await this.rpcRequest<{ tools: McpTool[] }>(
       toolsetId,
       token,

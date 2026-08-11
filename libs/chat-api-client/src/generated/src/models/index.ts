@@ -3840,6 +3840,31 @@ export interface ListScheduledTasksResponseDto {
 /**
  *
  * @export
+ * @interface LocaleTextEntryDto
+ */
+export interface LocaleTextEntryDto {
+  /**
+   *
+   * @type {string}
+   * @memberof LocaleTextEntryDto
+   */
+  language: string;
+  /**
+   *
+   * @type {string}
+   * @memberof LocaleTextEntryDto
+   */
+  name?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof LocaleTextEntryDto
+   */
+  description?: string;
+}
+/**
+ *
+ * @export
  * @interface McpAppToolCallRequestDto
  */
 export interface McpAppToolCallRequestDto {
@@ -3887,30 +3912,6 @@ export interface McpAppToolSummaryDto {
    * @memberof McpAppToolSummaryDto
    */
   resourceUri: string;
-}
-/**
- * @export
- * @interface LocaleTextEntryDto
- */
-export interface LocaleTextEntryDto {
-  /**
-   *
-   * @type {string}
-   * @memberof LocaleTextEntryDto
-   */
-  language: string;
-  /**
-   *
-   * @type {string}
-   * @memberof LocaleTextEntryDto
-   */
-  name?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof LocaleTextEntryDto
-   */
-  description?: string;
 }
 /**
  *

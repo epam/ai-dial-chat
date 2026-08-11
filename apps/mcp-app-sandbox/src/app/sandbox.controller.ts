@@ -20,7 +20,8 @@ export class SandboxController {
       );
     }
 
-    const { html, cspHeader } = this.sandboxService.buildResponse(validatedOrigin);
+    const { html, cspHeader } =
+      this.sandboxService.buildResponse(validatedOrigin);
 
     res.set('Content-Type', 'text/html; charset=utf-8');
     res.set('Content-Security-Policy', cspHeader);

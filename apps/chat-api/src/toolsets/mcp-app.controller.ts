@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Post, Query, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
@@ -107,7 +116,7 @@ export class McpAppController {
     summary: "Forward an MCP App's self-initiated tool call",
     description:
       'Validates toolName against the tools the MCP session currently ' +
-      "exposes, then forwards a tools/call JSON-RPC request through DIAL " +
+      'exposes, then forwards a tools/call JSON-RPC request through DIAL ' +
       "Core's existing generic MCP proxy for this toolset. Not cached — " +
       'every call is a live, potentially side-effecting tool invocation.',
   })

@@ -5566,7 +5566,9 @@
             "example": "Meine Toolset-Beschreibung"
           }
         },
-        "required": ["language"]
+        "required": [
+          "language"
+        ]
       },
       "CreateApplicationBodyDto": {
         "type": "object",
