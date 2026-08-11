@@ -11,6 +11,7 @@ import {
 import {
   IconDotsVertical,
   IconEdit,
+  IconPlayerPause,
   IconPlayerPlay,
   IconTrash,
 } from '@tabler/icons-react';
@@ -20,8 +21,9 @@ import styles from './ScheduledTaskCard.module.scss';
 
 /**
  * Single scheduled-task card: title, optional "new" badge and description,
- * schedule pill, location breadcrumb, and an overflow menu limited to the
- * actions the caller wired up. Renders on the shared `CardShell` from
+ * schedule pill (replaced by a "Paused" badge when `item.isActive` is
+ * `false`), location breadcrumb, and an overflow menu limited to the actions
+ * the caller wired up. Renders on the shared `CardShell` from
  * `@epam/ai-dial-ui-kit` (radius, padding, shadow, hover lift), the same shell
  * the Catalog browse card uses. The card has a fixed height; a long
  * description is clamped with an ellipsis, and the schedule pill (plus the
@@ -44,6 +46,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
   const editActionLabel = labels?.editActionLabel ?? 'Edit';
   const runNowActionLabel = labels?.runNowActionLabel ?? 'Run now';
   const deleteActionLabel = labels?.deleteActionLabel ?? 'Delete';
+  const pausedBadgeLabel = labels?.pausedBadgeLabel ?? 'Paused';
 
   const { colors, typography } = cardStyles ?? {};
   const titleClassName = typography?.titleClassName ?? 'dial-body-semi-text';
@@ -57,6 +60,8 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
     typography?.locationLeafClassName ?? 'dial-tiny-semi-text';
   const newBadgeClassName =
     typography?.newBadgeClassName ?? 'dial-tiny-semi-text';
+  const pausedBadgeClassName =
+    typography?.pausedBadgeClassName ?? 'dial-tiny-text';
   const cssVars = buildCssVars({
     '--stc-title-text': colors?.titleText,
     '--stc-desc-text': colors?.descriptionText,
@@ -68,6 +73,9 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
     '--stc-new-badge-bg': colors?.newBadgeBackground,
     '--stc-new-badge-text': colors?.newBadgeText,
     '--stc-location-divider-border': colors?.locationDividerBorder,
+    '--stc-paused-bg': colors?.pausedBadgeBackground,
+    '--stc-paused-border': colors?.pausedBadgeBorder,
+    '--stc-paused-text': colors?.pausedBadgeText,
   });
 
   const menuItems: DropdownItem[] = [];
@@ -182,16 +190,30 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
 
       <div className="mt-auto flex shrink-0 flex-col gap-3">
         <div className="flex min-h-[28px] items-center">
-          <span
-            className={mergeClasses(
-              'inline-block rounded-lg border px-2 py-1',
-              styles.schedulePill,
-              scheduleLabelClassName,
-              styles.scheduleLabel,
-            )}
-          >
-            {item.scheduleLabel}
-          </span>
+          {item.isActive === false ? (
+            <span
+              className={mergeClasses(
+                'inline-flex items-center gap-1.5 rounded-full border px-2 py-1',
+                styles.pausedPill,
+                pausedBadgeClassName,
+                styles.pausedLabel,
+              )}
+            >
+              <IconPlayerPause size={DIAL_ICON_SIZE.SM} aria-hidden />
+              {pausedBadgeLabel}
+            </span>
+          ) : (
+            <span
+              className={mergeClasses(
+                'inline-block rounded-lg border px-2 py-1',
+                styles.schedulePill,
+                scheduleLabelClassName,
+                styles.scheduleLabel,
+              )}
+            >
+              {item.scheduleLabel}
+            </span>
+          )}
         </div>
 
         {item.locationSegments && item.locationSegments.length > 0 && (
