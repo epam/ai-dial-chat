@@ -1083,7 +1083,7 @@ describe('DeploymentsListingService', () => {
       );
     });
 
-    it('resolves canEdit and sharedWithMe from exactly one getSharedResources call, scoped to APPLICATION', async () => {
+    it('resolves canEdit, sharedWithMe and recipientsCount from exactly two getSharedResources calls, both scoped to APPLICATION', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({
         error: false,
@@ -1107,14 +1107,115 @@ describe('DeploymentsListingService', () => {
       await service.listDeployments('user1', 'token', 'BUCKET_HASH');
       /*
        * Toolsets are excluded from this listing's items entirely, so only
-       * the APPLICATION-scoped shared resources are ever needed here.
+       * the APPLICATION-scoped shared resources are ever needed here. Two
+       * calls, not one: `with: 'me'` derives canEdit/sharedWithMe, and the
+       * mirror-image `with: 'others'` derives recipientsCount. They run in
+       * parallel, and neither is issued per item.
        */
-      expect(sdkClient.getSharedResources).toHaveBeenCalledOnce();
+      expect(sdkClient.getSharedResources).toHaveBeenCalledTimes(2);
       expect(sdkClient.getSharedResources).toHaveBeenCalledWith(
         expect.objectContaining({
-          body: expect.objectContaining({ resourceTypes: ['APPLICATION'] }),
+          body: expect.objectContaining({
+            resourceTypes: ['APPLICATION'],
+            with: 'me',
+          }),
         }),
       );
+      expect(sdkClient.getSharedResources).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            resourceTypes: ['APPLICATION'],
+            with: 'others',
+            includeUserInfo: true,
+          }),
+        }),
+      );
+    });
+
+    it('maps the recipient count from the shared-with-others call onto owned items', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockApplication, id: 'applications/BUCKET_HASH/my-app' }],
+      });
+      sdkClient.getSharedResources.mockImplementation(
+        ({ body }: { body: { with?: string } }) =>
+          Promise.resolve(
+            body.with === 'others'
+              ? {
+                  data: {
+                    resources: [
+                      {
+                        url: 'applications/BUCKET_HASH/my-app',
+                        sharedWith: [{ user: 'a' }, { user: 'b' }],
+                      },
+                    ],
+                  },
+                  error: undefined,
+                }
+              : { data: { resources: [] }, error: undefined },
+          ),
+      );
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'BUCKET_HASH',
+      );
+
+      expect(result.deployments[0].recipientsCount).toBe(2);
+    });
+
+    it('reports recipientsCount 0 for an owned item the successful response does not mention', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockApplication, id: 'applications/BUCKET_HASH/my-app' }],
+      });
+      /*
+       * DIAL Core omits resources nobody holds from a `with: 'others'`
+       * response, so "not in the result" is a genuine zero — not the
+       * "unknown" the failure path below reports.
+       */
+      sdkClient.getSharedResources.mockResolvedValue({
+        data: { resources: [] },
+        error: undefined,
+      });
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'BUCKET_HASH',
+      );
+
+      expect(result.deployments[0].recipientsCount).toBe(0);
+    });
+
+    it('leaves recipientsCount absent when the shared-with-others call fails', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockApplication, id: 'applications/BUCKET_HASH/my-app' }],
+      });
+      sdkClient.getSharedResources.mockImplementation(
+        ({ body }: { body: { with?: string } }) =>
+          Promise.resolve(
+            body.with === 'others'
+              ? { data: undefined, error: {}, response: { status: 500 } }
+              : { data: { resources: [] }, error: undefined },
+          ),
+      );
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'BUCKET_HASH',
+      );
+
+      expect(result.deployments[0].recipientsCount).toBeUndefined();
     });
   });
 });

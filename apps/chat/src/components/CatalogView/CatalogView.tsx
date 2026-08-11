@@ -58,7 +58,10 @@ import {
   toPublishRuleDto,
 } from '../../server-api/publish-rules.api';
 import { publishCatalogEntity } from '../../server-api/publish.api';
-import { discardSharedCatalogItem } from '../../server-api/share.api';
+import {
+  discardSharedCatalogItem,
+  revokeSharedAccess,
+} from '../../server-api/share.api';
 import { deleteToolset, logoutToolset } from '../../server-api/toolsets';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { CatalogQuery } from '../../types/catalog';
@@ -725,6 +728,39 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     ],
   );
 
+  /*
+   * Revoking removes every *recipient's* access; the item itself stays in the
+   * owner's catalog, so — unlike `handleUnshare` — there is nothing to refetch
+   * and no selection to clear.
+   */
+  const handleRevokeShare = useCallback(
+    async (item: CatalogItem) => {
+      try {
+        await revokeSharedAccess(item.id);
+      } catch (err) {
+        const { traceId } = await getApiErrorDetails(err);
+        showNotification({
+          variant: NotificationVariant.Error,
+          title: t(CatalogI18nKeys.DetailsRevokeShareErrorTitle),
+          message: t(CatalogI18nKeys.DetailsRevokeShareError, {
+            name: item.name,
+          }),
+          requestId: traceId,
+        });
+        throw err;
+      }
+
+      showNotification({
+        variant: NotificationVariant.Success,
+        title: t(CatalogI18nKeys.DetailsRevokeShareSuccessTitle),
+        message: t(CatalogI18nKeys.DetailsRevokeShareSuccess, {
+          name: item.name,
+        }),
+      });
+    },
+    [showNotification, t],
+  );
+
   const createOptions = useMemo<DropdownItem[]>(() => {
     const options: DropdownItem[] = [];
 
@@ -819,6 +855,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       onEdit={handleEdit}
       onDelete={handleDelete}
       onUnshare={handleUnshare}
+      onRevokeShare={handleRevokeShare}
       isPrimaryActionVisible={isPrimaryActionVisible}
       isPublishVisible={isPublishVisible}
       getPublishHistory={getPublishHistory}
@@ -930,6 +967,22 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
           t(CatalogI18nKeys.DetailsUnshareConsequenceNeedNewInvitation),
         ],
         unsharingStatusLabel: t(CatalogI18nKeys.DetailsUnshareRemovingStatus),
+        revokeShareLabel: t(ButtonsI18nKeys.RevokeAccess),
+        revokeShareLabelWithCount: (count) =>
+          t(ButtonsI18nKeys.RevokeAccessWithCount, { count }),
+        revokeShareConfirmTitle: t(
+          CatalogI18nKeys.DetailsRevokeShareConfirmTitle,
+        ),
+        revokeShareConfirmMessage: (name) =>
+          t(CatalogI18nKeys.DetailsRevokeShareConfirmMessage, { name }),
+        revokeShareConfirmConsequences: [
+          t(CatalogI18nKeys.DetailsRevokeShareConsequenceOthersLoseAccess),
+          t(CatalogI18nKeys.DetailsRevokeShareConsequenceLinksStopWorking),
+          t(CatalogI18nKeys.DetailsRevokeShareConsequenceKeepsYourCopy),
+        ],
+        revokingShareStatusLabel: t(
+          CatalogI18nKeys.DetailsRevokeShareRevokingStatus,
+        ),
         loggingOutStatusLabel: t(AuthI18nKeys.LoggingOutStatus),
         cancelLabel: t(ButtonsI18nKeys.Cancel),
       }}

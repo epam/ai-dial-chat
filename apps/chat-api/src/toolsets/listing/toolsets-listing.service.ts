@@ -15,6 +15,8 @@ import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import {
   computeItemOwnershipFlags,
+  countRecipientsByUrl,
+  resolveRecipientsCount,
   splitResourcesByPermission,
   type ResourceOwnershipUrlSets,
 } from '../../common/utils/resource-ownership';
@@ -50,11 +52,13 @@ export class ToolsetsListingService {
     installedIdSet: Set<string>,
     bucket: string,
     urlSets: ResourceOwnershipUrlSets,
+    recipientCounts: Map<string, number> | null,
   ): DialToolsetDto {
     return {
       ...toolset,
       isInstalled: installedIdSet.has(toolset.id),
       ...computeItemOwnershipFlags(toolset.id, bucket, urlSets),
+      recipientsCount: resolveRecipientsCount(recipientCounts, toolset.id),
     };
   }
 
@@ -92,19 +96,71 @@ export class ToolsetsListingService {
     }
   }
 
+  /**
+   * Resolves how many users each toolset the caller owns is currently shared
+   * with — the mirror image of `getSharedToolsetResources` above (`with:
+   * 'others'` instead of `'me'`), which is what lets the frontend hide a
+   * "Revoke access" action for a toolset nobody holds. One call covers the
+   * whole list.
+   *
+   * Returns `null` — not an empty map — when the call fails: a successful
+   * response omits toolsets nobody holds, so "absent from the map" is a real
+   * zero, while a failure means the count is unknown (see
+   * {@link resolveRecipientsCount}).
+   */
+  private async getToolsetRecipientCounts(
+    accessToken: string,
+  ): Promise<Map<string, number> | null> {
+    try {
+      const { data, error, response } =
+        await this.dialClient.client.getSharedResources({
+          headers: getBearerAuthHeaders(accessToken),
+          body: {
+            resourceTypes: ['TOOL_SET'],
+            with: 'others',
+            includeUserInfo: true,
+          },
+        });
+      if (error) {
+        this.logger.warn(
+          `Failed to resolve toolset resources shared with others: status=${response.status}`,
+        );
+        return null;
+      }
+
+      return countRecipientsByUrl(
+        (data?.resources ?? []) as { url?: string; sharedWith?: unknown[] }[],
+      );
+    } catch (err) {
+      this.logger.warn(
+        'Failed to resolve toolset resources shared with others',
+        err,
+      );
+      return null;
+    }
+  }
+
   private async enrichToolsetsOwnership(
     toolsets: DialToolsetDto[],
     accessToken: string,
     bucket: string,
   ): Promise<DialToolsetDto[]> {
-    const [{ toolsets: installedIds }, sharedResources] = await Promise.all([
-      this.userConfigService.getInstalledIds(accessToken, bucket),
-      this.getSharedToolsetResources(accessToken),
-    ]);
+    const [{ toolsets: installedIds }, sharedResources, recipientCounts] =
+      await Promise.all([
+        this.userConfigService.getInstalledIds(accessToken, bucket),
+        this.getSharedToolsetResources(accessToken),
+        this.getToolsetRecipientCounts(accessToken),
+      ]);
     const installedSet = new Set(installedIds);
     const urlSets = splitResourcesByPermission(sharedResources);
     return toolsets.map((toolset) =>
-      this.enrichToolsetWithOwnership(toolset, installedSet, bucket, urlSets),
+      this.enrichToolsetWithOwnership(
+        toolset,
+        installedSet,
+        bucket,
+        urlSets,
+        recipientCounts,
+      ),
     );
   }
 
@@ -233,16 +289,19 @@ export class ToolsetsListingService {
     const cacheKey = `toolsets:single:${userSub}:${toolsetName}`;
 
     const enrich = async (toolset: DialToolsetDto): Promise<DialToolsetDto> => {
-      const [{ toolsets: installedIds }, sharedResources] = await Promise.all([
-        this.userConfigService.getInstalledIds(accessToken, bucket),
-        this.getSharedToolsetResources(accessToken),
-      ]);
+      const [{ toolsets: installedIds }, sharedResources, recipientCounts] =
+        await Promise.all([
+          this.userConfigService.getInstalledIds(accessToken, bucket),
+          this.getSharedToolsetResources(accessToken),
+          this.getToolsetRecipientCounts(accessToken),
+        ]);
       const urlSets = splitResourcesByPermission(sharedResources);
       return this.enrichToolsetWithOwnership(
         toolset,
         new Set(installedIds),
         bucket,
         urlSets,
+        recipientCounts,
       );
     };
 

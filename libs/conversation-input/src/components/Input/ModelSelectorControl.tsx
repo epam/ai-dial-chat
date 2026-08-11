@@ -103,6 +103,7 @@ export const ModelSelectorControl: FC<Props> = ({
               if (!isDisabled) setIsModelSheetOpen(true);
             }}
             className={mergeClasses(
+              'w-[50px]',
               styles.modelSelectorButton,
               disabledIconClassName,
             )}

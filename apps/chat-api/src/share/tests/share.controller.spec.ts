@@ -15,6 +15,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AcceptInvitationResponseDto } from '../dto/accept-invitation-response.dto';
 import { ShareAccess } from '../dto/create-share-link.dto';
 import type { DiscardSharedCatalogItemResponseDto } from '../dto/discard-shared-catalog-item.dto';
+import type { RevokeSharedAccessResponseDto } from '../dto/revoke-shared-access.dto';
 import { ShareLinkResponseDto } from '../dto/share-link-response.dto';
 import { ShareController } from '../share.controller';
 import { ShareService } from '../share.service';
@@ -70,6 +71,9 @@ const acceptedInvitation: AcceptInvitationResponseDto = { itemId: 'gpt-4o' };
 const discardedSuccess: DiscardSharedCatalogItemResponseDto = {
   success: true,
 };
+const revokedSuccess: RevokeSharedAccessResponseDto = {
+  success: true,
+};
 
 describe('ShareController (integration)', () => {
   let app: INestApplication;
@@ -77,6 +81,7 @@ describe('ShareController (integration)', () => {
     createShareLink: ReturnType<typeof vi.fn>;
     acceptInvitation: ReturnType<typeof vi.fn>;
     discardShared: ReturnType<typeof vi.fn>;
+    revokeShared: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -84,6 +89,7 @@ describe('ShareController (integration)', () => {
       createShareLink: vi.fn().mockResolvedValue(createdLink),
       acceptInvitation: vi.fn().mockResolvedValue(acceptedInvitation),
       discardShared: vi.fn().mockResolvedValue(discardedSuccess),
+      revokeShared: vi.fn().mockResolvedValue(revokedSuccess),
     };
     app = await buildApp(service);
   });
@@ -365,6 +371,164 @@ describe('ShareController (integration)', () => {
       );
       await request(app.getHttpServer())
         .post('/api/v1/share/discard')
+        .send(validBody)
+        .expect(503);
+    });
+  });
+
+  describe('POST /api/v1/share/revoke', () => {
+    const validBody = { itemId: 'applications/owner-bucket/my-app' };
+
+    it('delegates to the service and returns 200 on success', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/share/revoke')
+        .send(validBody)
+        .expect(200);
+
+      expect(res.body).toEqual(revokedSuccess);
+      expect(service.revokeShared).toHaveBeenCalledWith(
+        validBody.itemId,
+        TEST_USER.at,
+        TEST_USER.sub,
+      );
+    });
+
+    it('returns 400 when itemId is missing', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/share/revoke')
+        .send({})
+        .expect(400);
+
+      expect(service.revokeShared).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when itemId is empty', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/share/revoke')
+        .send({ itemId: '' })
+        .expect(400);
+
+      expect(service.revokeShared).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when itemId exceeds the maximum length', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/share/revoke')
+        .send({ itemId: `applications/owner-bucket/${'a'.repeat(2048)}` })
+        .expect(400);
+
+      expect(service.revokeShared).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      'files/owner-bucket/report.pdf',
+      'prompts/owner-bucket/my-prompt',
+      'gpt-4o',
+      'applications/owner-bucket',
+    ])(
+      'returns 400 when itemId is not a catalog or conversation resource: %s',
+      async (itemId) => {
+        await request(app.getHttpServer())
+          .post('/api/v1/share/revoke')
+          .send({ itemId })
+          .expect(400);
+
+        expect(service.revokeShared).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([
+      '../etc/passwd',
+      'conversations/owner-bucket/../../etc/passwd',
+      'applications/owner-bucket/../../etc/passwd',
+    ])(
+      'returns 400 when itemId contains a path traversal attempt: %s',
+      async (itemId) => {
+        await request(app.getHttpServer())
+          .post('/api/v1/share/revoke')
+          .send({ itemId })
+          .expect(400);
+
+        expect(service.revokeShared).not.toHaveBeenCalled();
+      },
+    );
+
+    it('accepts a nested toolset resource path', async () => {
+      const itemId = 'toolsets/owner-bucket/folder/my-toolset';
+
+      await request(app.getHttpServer())
+        .post('/api/v1/share/revoke')
+        .send({ itemId })
+        .expect(200);
+
+      expect(service.revokeShared).toHaveBeenCalledWith(
+        itemId,
+        TEST_USER.at,
+        TEST_USER.sub,
+      );
+    });
+
+    it('accepts a conversation resource path', async () => {
+      const itemId = 'conversations/owner-bucket/my-chat';
+
+      await request(app.getHttpServer())
+        .post('/api/v1/share/revoke')
+        .send({ itemId })
+        .expect(200);
+
+      expect(service.revokeShared).toHaveBeenCalledWith(
+        itemId,
+        TEST_USER.at,
+        TEST_USER.sub,
+      );
+    });
+
+    it('returns 401 when the service throws UnauthorizedException', async () => {
+      service.revokeShared.mockRejectedValue(new UnauthorizedException());
+      await request(app.getHttpServer())
+        .post('/api/v1/share/revoke')
+        .send(validBody)
+        .expect(401);
+    });
+
+    it('returns 403 when the caller does not own the resource', async () => {
+      service.revokeShared.mockRejectedValue(new ForbiddenException());
+      await request(app.getHttpServer())
+        .post('/api/v1/share/revoke')
+        .send(validBody)
+        .expect(403);
+    });
+
+    it('returns 404 when the service throws NotFoundException', async () => {
+      service.revokeShared.mockRejectedValue(new NotFoundException());
+      await request(app.getHttpServer())
+        .post('/api/v1/share/revoke')
+        .send(validBody)
+        .expect(404);
+    });
+
+    it('returns 429 when the service throws a 429 HttpException', async () => {
+      service.revokeShared.mockRejectedValue(
+        new HttpException('Too Many Requests', 429),
+      );
+      await request(app.getHttpServer())
+        .post('/api/v1/share/revoke')
+        .send(validBody)
+        .expect(429);
+    });
+
+    it('returns 502 when the service throws BadGatewayException', async () => {
+      service.revokeShared.mockRejectedValue(new BadGatewayException());
+      await request(app.getHttpServer())
+        .post('/api/v1/share/revoke')
+        .send(validBody)
+        .expect(502);
+    });
+
+    it('returns 503 when the service throws ServiceUnavailableException', async () => {
+      service.revokeShared.mockRejectedValue(new ServiceUnavailableException());
+      await request(app.getHttpServer())
+        .post('/api/v1/share/revoke')
         .send(validBody)
         .expect(503);
     });

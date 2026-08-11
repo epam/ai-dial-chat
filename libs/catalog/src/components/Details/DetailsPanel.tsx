@@ -64,6 +64,24 @@ const DEFAULT_UNSHARE_CONSEQUENCES = [
   'You will need a new invitation to get it back',
 ];
 
+const DEFAULT_REVOKE_SHARE_CONSEQUENCES = [
+  'Everyone you shared it with loses access',
+  'Existing share links stop working',
+  'You keep full access — nothing is deleted',
+];
+
+/*
+ * Whether confirming a given step takes the item out of the caller's own
+ * view. `Delete` destroys it and `Unshare` drops the caller's own grant, so
+ * both close the whole panel; `Logout` and `RevokeAccess` leave the item
+ * exactly where it was for the caller — revoking removes *other people's*
+ * access — so those return to the details content instead.
+ */
+const CONFIRMATIONS_REMOVING_ITEM_FROM_VIEW = new Set<DetailsConfirmationKind>([
+  DetailsConfirmationKind.Delete,
+  DetailsConfirmationKind.Unshare,
+]);
+
 /** Everything the panel needs to render the confirmation step for one {@link DetailsConfirmationKind}. */
 interface ConfirmationContent {
   /** Sub-view title, shown next to the back button and used as the dialog's accessible name. */
@@ -110,6 +128,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onEdit,
   onDelete,
   onUnshare,
+  onRevokeShare,
   onLogin,
   onLogout,
   texts,
@@ -254,6 +273,10 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     setConfirmation(DetailsConfirmationKind.Unshare);
   }, []);
 
+  const handleRequestRevokeShare = useCallback(() => {
+    setConfirmation(DetailsConfirmationKind.RevokeAccess);
+  }, []);
+
   const handleCancelConfirmation = useCallback(() => {
     if (isConfirming) return;
     setConfirmation(null);
@@ -263,23 +286,28 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     if (isConfirming || confirmation == null) return;
     setIsConfirming(true);
     try {
-      if (confirmation === DetailsConfirmationKind.Logout) {
-        if (item.credentials != null) {
-          await onLogout?.(item, { level: getSignedInLevel(item.credentials) });
-        }
-        /* Logging out leaves the item in the catalog, so the panel stays open. */
-        setConfirmation(null);
-        return;
+      switch (confirmation) {
+        case DetailsConfirmationKind.Delete:
+          await onDelete?.(item);
+          break;
+        case DetailsConfirmationKind.Unshare:
+          await onUnshare?.(item);
+          break;
+        case DetailsConfirmationKind.RevokeAccess:
+          await onRevokeShare?.(item);
+          break;
+        case DetailsConfirmationKind.Logout:
+          if (item.credentials != null) {
+            await onLogout?.(item, {
+              level: getSignedInLevel(item.credentials),
+            });
+          }
+          break;
       }
-
-      if (confirmation === DetailsConfirmationKind.Delete) {
-        await onDelete?.(item);
-      } else {
-        await onUnshare?.(item);
-      }
-      /* The item is gone from the caller's catalog — close the whole panel. */
       setConfirmation(null);
-      onClose();
+      if (CONFIRMATIONS_REMOVING_ITEM_FROM_VIEW.has(confirmation)) {
+        onClose();
+      }
     } catch {
       /*
        * Failure feedback (e.g. a notification) is the caller's
@@ -295,6 +323,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     item,
     onDelete,
     onUnshare,
+    onRevokeShare,
     onLogout,
     onClose,
   ]);
@@ -433,6 +462,28 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           /* Removal only revokes the caller's own access and is recoverable
            * with a new invitation, so it is not framed as destructive. */
           variant: DetailsConfirmationVariant.Info,
+        };
+      }
+      case DetailsConfirmationKind.RevokeAccess: {
+        const revokeShareLabel = texts?.revokeShareLabel ?? 'Revoke access';
+        return {
+          title: texts?.revokeShareConfirmTitle ?? revokeShareLabel,
+          message: texts?.revokeShareConfirmMessage?.(item.name) ?? (
+            <>
+              Revoke shared access to <strong>{item.name}</strong>? Anyone you
+              shared it with will lose access.
+            </>
+          ),
+          consequences:
+            texts?.revokeShareConfirmConsequences ??
+            DEFAULT_REVOKE_SHARE_CONSEQUENCES,
+          confirmLabel: revokeShareLabel,
+          loadingStatusLabel:
+            texts?.revokingShareStatusLabel ?? 'Revoking access',
+          /* Other people irreversibly lose access and the owner must re-share
+           * to restore it, so this is framed as destructive — even though the
+           * item itself survives untouched for its owner. */
+          variant: DetailsConfirmationVariant.Danger,
         };
       }
       case DetailsConfirmationKind.Logout: {
@@ -621,6 +672,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onEdit={onEdit}
                 onDelete={onDelete ? handleRequestDelete : undefined}
                 onUnshare={onUnshare ? handleRequestUnshare : undefined}
+                onRevokeShare={
+                  onRevokeShare ? handleRequestRevokeShare : undefined
+                }
                 onLogin={onLogin}
                 onLogout={onLogout}
                 onToggleCredentials={handleToggleCredentials}
