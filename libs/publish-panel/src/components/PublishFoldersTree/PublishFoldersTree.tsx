@@ -10,7 +10,7 @@ import {
   NeutralButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconFolderPlus, IconPlus } from '@tabler/icons-react';
-import { FC, useMemo, useState } from 'react';
+import { FC, useMemo, useRef, useState } from 'react';
 import { PublishFolderNode } from '../../models/publish';
 import {
   collectFolderKeys,
@@ -135,6 +135,15 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   // an already-existing sibling name such as "New folder".
   const [creatingFolderName, setCreatingFolderName] =
     useState(newFolderDefaultName);
+  /*
+   * The host `DialFoldersTree` component shows `onRenameValidate`'s result
+   * inline but does not reliably block its own confirm callback on it (the
+   * error can still be visible when the folder gets created — see #7968).
+   * Track the last live-typed validation result ourselves so `confirmCreatingFolder`
+   * can refuse to create even when the value it receives no longer reflects
+   * that error.
+   */
+  const lastLiveValidationErrorRef = useRef<string | null>(null);
 
   const trimmedQuery = searchQuery.trim();
   const isCreatingFolder = creatingParentPath != null;
@@ -222,6 +231,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   const beginCreatingFolder = (parentPath: string[]) => {
     setCreatingParentPath(parentPath);
     setCreatingFolderName(resolveNewFolderName(parentPath));
+    lastLiveValidationErrorRef.current = null;
     const parentKey = toFolderPathKey(parentPath);
     if (parentKey) {
       updateExpandedPaths(new Set(expandedPaths).add(parentKey));
@@ -264,11 +274,13 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     if (!creatingParentPath) {
       return null;
     }
-    return validateFolderName(
+    const error = validateFolderName(
       rawValue,
       getSiblingFolderNames(items, creatingParentPath),
       folderNameErrors,
     );
+    lastLiveValidationErrorRef.current = error;
+    return error;
   };
 
   const confirmCreatingFolder = (rawValue: string) => {
@@ -276,7 +288,9 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
       return;
     }
     const trimmed = rawValue.trim();
-    if (!validateNewFolderName(rawValue)) {
+    const priorLiveError = lastLiveValidationErrorRef.current;
+    const error = validateNewFolderName(rawValue) ?? priorLiveError;
+    if (!error) {
       void onCreateFolder(creatingParentPath, trimmed);
       onSelectedPathChange([...creatingParentPath, trimmed]);
     }

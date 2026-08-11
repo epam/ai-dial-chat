@@ -28,6 +28,7 @@ vi.mock('../../../../utils/file-download', () => ({
 const mockRenameFiles = vi.mocked(filesApi.renameFiles);
 const mockMoveFiles = vi.mocked(filesApi.moveFiles);
 const mockCopyFiles = vi.mocked(filesApi.copyFiles);
+const mockCreateFolder = vi.mocked(filesApi.createFolder);
 
 const BUCKET = 'test-bucket';
 
@@ -115,6 +116,205 @@ describe('useDialFileMutations', () => {
         parentFolder,
       );
       expect(msg).toBe(DialFileManagerI18nKeys.FolderNameInvalidChars);
+    });
+  });
+
+  describe('onCreateFolder', () => {
+    const uploadItem = (name: string) => ({
+      name,
+      fileContent: new File([], name),
+    });
+
+    it('does not call createFolder when the last live-validated name was invalid, even if the path-derived name is clean', async () => {
+      const { result } = renderMutations({ folderPath: '' });
+      const parentFolder: DialFile = {
+        id: 'root',
+        name: 'My files',
+        path: '/My files',
+        parentPath: '',
+        nodeType: DialFileNodeType.FOLDER,
+        folderId: BUCKET,
+        bucket: BUCKET,
+        items: [],
+      };
+
+      // Simulates the host grid showing an inline error while the user
+      // types "/New folder", then confirming with a path where the leading
+      // "/" got absorbed as a path separator, leaving a clean derived name
+      // — see #7968.
+      act(() => {
+        result.current.onCreateFolderValidate('/New folder', parentFolder);
+      });
+
+      await act(async () => {
+        await result.current.onCreateFolder(
+          uploadItem('New folder'),
+          '/My files/New folder',
+          'file-slash',
+        );
+      });
+
+      expect(mockCreateFolder).not.toHaveBeenCalled();
+    });
+
+    it('does not call createFolder for a name containing a forbidden symbol', async () => {
+      const { result } = renderMutations({
+        folderPath: '',
+        forbiddenSymbolsRegExp: /[:]/,
+      });
+
+      await act(async () => {
+        await result.current.onCreateFolder(
+          uploadItem('reports:2026'),
+          '/My files/reports:2026',
+          'file-1',
+        );
+      });
+
+      expect(mockCreateFolder).not.toHaveBeenCalled();
+    });
+
+    it('does not call createFolder for an empty name', async () => {
+      const { result } = renderMutations({ folderPath: '' });
+
+      await act(async () => {
+        // Trailing double slash parses to an empty final name segment.
+        await result.current.onCreateFolder(
+          uploadItem(''),
+          '/My files//',
+          'file-2',
+        );
+      });
+
+      expect(mockCreateFolder).not.toHaveBeenCalled();
+    });
+
+    it('does not call createFolder for a name starting with a dot', async () => {
+      const { result } = renderMutations({ folderPath: '' });
+
+      await act(async () => {
+        await result.current.onCreateFolder(
+          uploadItem('.hidden'),
+          '/My files/.hidden',
+          'file-hidden',
+        );
+      });
+
+      expect(mockCreateFolder).not.toHaveBeenCalled();
+    });
+
+    it('does not call createFolder for the reserved marker name', async () => {
+      const { result } = renderMutations({ folderPath: '' });
+
+      await act(async () => {
+        await result.current.onCreateFolder(
+          uploadItem(HIDDEN_FILE),
+          `/My files/${HIDDEN_FILE}`,
+          'file-3',
+        );
+      });
+
+      expect(mockCreateFolder).not.toHaveBeenCalled();
+    });
+
+    it('calls createFolder for a valid name at the current folder', async () => {
+      mockCreateFolder.mockResolvedValue({
+        name: 'reports',
+        path: `files/${BUCKET}/reports/`,
+        parentPath: '',
+        bucket: BUCKET,
+        nodeType: 'folder',
+        folderId: `${BUCKET}:files/${BUCKET}/reports/`,
+      });
+
+      const rootFolder: DialFile = {
+        id: 'root',
+        name: 'My files',
+        path: '/My files',
+        parentPath: '',
+        nodeType: DialFileNodeType.FOLDER,
+        folderId: BUCKET,
+        bucket: BUCKET,
+        items: [],
+      };
+
+      const { result, mergeCreatedFolder, bumpRetry } = renderMutations({
+        folderPath: '',
+        currentFolder: rootFolder,
+      });
+
+      await act(async () => {
+        await result.current.onCreateFolder(
+          uploadItem('reports'),
+          '/My files/reports',
+          'file-4',
+        );
+      });
+
+      expect(mockCreateFolder).toHaveBeenCalledWith({
+        bucket: BUCKET,
+        parentPath: undefined,
+        name: 'reports',
+      });
+      expect(mergeCreatedFolder).toHaveBeenCalled();
+      expect(bumpRetry).toHaveBeenCalled();
+    });
+
+    it('does not call createFolder for a name matching an existing sibling in the current folder', async () => {
+      const rootFolder: DialFile = {
+        id: 'root',
+        name: 'My files',
+        path: '/My files',
+        parentPath: '',
+        nodeType: DialFileNodeType.FOLDER,
+        folderId: BUCKET,
+        bucket: BUCKET,
+        items: [
+          {
+            id: 'reports',
+            name: 'reports',
+            path: '/My files/reports',
+            parentPath: '/My files',
+            nodeType: DialFileNodeType.FOLDER,
+            folderId: BUCKET,
+            bucket: BUCKET,
+          },
+        ],
+      };
+
+      const { result } = renderMutations({
+        folderPath: '',
+        currentFolder: rootFolder,
+      });
+
+      await act(async () => {
+        await result.current.onCreateFolder(
+          uploadItem('REPORTS'),
+          '/My files/REPORTS',
+          'file-6',
+        );
+      });
+
+      expect(mockCreateFolder).not.toHaveBeenCalled();
+    });
+
+    it('rejects an invalid name without erroring when creating outside the currently browsed folder', async () => {
+      // currentFolder/folderPath reflect "reports/", but the new folder is
+      // being created under a different parent (e.g. a destination-folder
+      // popup) — parentFolder falls back to the minimal shim with no items.
+      const { result } = renderMutations({ folderPath: 'reports/' });
+
+      await act(async () => {
+        // Trailing double slash parses to an empty final name segment,
+        // under a parent ("archive/") different from folderPath ("reports/").
+        await result.current.onCreateFolder(
+          uploadItem(''),
+          '/My files/archive//',
+          'file-5',
+        );
+      });
+
+      expect(mockCreateFolder).not.toHaveBeenCalled();
     });
   });
 
