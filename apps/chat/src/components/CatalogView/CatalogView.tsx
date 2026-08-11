@@ -503,8 +503,9 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
 
   const isPrimaryActionVisible = useCallback(
     (item: CatalogItem) =>
-      item.type === CatalogEntityType.Model ||
-      item.type === CatalogEntityType.Agent,
+      (item.type === CatalogEntityType.Model ||
+        item.type === CatalogEntityType.Agent) &&
+      item.supportsChat !== false,
     [],
   );
 
