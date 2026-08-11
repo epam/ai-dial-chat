@@ -48,4 +48,6 @@ export interface CatalogItem {
   credentials?: CatalogItemCredentials;
   /** Whether this application supports the MCP protocol; only meaningful for `Application` items. */
   supportsMcp?: boolean;
+  /** Whether this item can be used in chat. Default: true. Set to false to hide the "Use in chat" primary action for a Model or Application that does not expose a chat interface. */
+  supportsChat?: boolean;
 }

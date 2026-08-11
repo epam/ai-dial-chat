@@ -106,23 +106,23 @@ describe('DeploymentsListingService', () => {
   });
 
   describe('listDeployments', () => {
-    it('maps model, application, and toolset correctly', async () => {
+    it('maps model and application correctly, excluding toolsets', async () => {
       const { service } = makeService();
       const result = await service.listDeployments(
         'user1',
         'token',
         'bucket-1',
       );
-      expect(result.deployments).toHaveLength(3);
+      expect(result.deployments).toHaveLength(2);
       expect(result.deployments.find((d) => d.id === 'gpt-4o')?.type).toBe(
         'model',
       );
       expect(result.deployments.find((d) => d.id === 'my-app')?.type).toBe(
         'application',
       );
-      expect(result.deployments.find((d) => d.id === 'search-tool')?.type).toBe(
-        'toolset',
-      );
+      expect(
+        result.deployments.find((d) => d.id === 'search-tool'),
+      ).toBeUndefined();
     });
 
     it('skips items without id', async () => {
@@ -422,26 +422,6 @@ describe('DeploymentsListingService', () => {
       expect(
         result.deployments.find((d) => d.id === 'my-app')?.isInstalled,
       ).toBe(true);
-      expect(
-        result.deployments.find((d) => d.id === 'search-tool')?.isInstalled,
-      ).toBe(false);
-    });
-
-    it('sets isInstalled=true for installed toolset', async () => {
-      const { service } = makeService({
-        installedIds: { toolsets: ['search-tool'], deployments: [] },
-      });
-      const result = await service.listDeployments(
-        'user1',
-        'token',
-        'bucket-1',
-      );
-      expect(
-        result.deployments.find((d) => d.id === 'search-tool')?.isInstalled,
-      ).toBe(true);
-      expect(
-        result.deployments.find((d) => d.id === 'gpt-4o')?.isInstalled,
-      ).toBe(false);
     });
 
     it('sets isInstalled=false for all items when nothing is installed', async () => {
@@ -653,7 +633,6 @@ describe('DeploymentsListingService', () => {
 
       expect(result.deployments[0].features?.chatCompletion).toBe(true);
     });
-
     it('maps features.mcp true for an MCP-capable application', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({
@@ -1117,12 +1096,9 @@ describe('DeploymentsListingService', () => {
       expect(warnSpy).toHaveBeenCalledWith(
         'Failed to resolve shared APPLICATION resources: status=503',
       );
-      expect(warnSpy).toHaveBeenCalledWith(
-        'Failed to resolve shared TOOL_SET resources: status=503',
-      );
     });
 
-    it('resolves canEdit and sharedWithMe from exactly one getSharedResources call per resource type', async () => {
+    it('resolves canEdit and sharedWithMe from exactly one getSharedResources call, scoped to APPLICATION', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({
         error: false,
@@ -1145,65 +1121,15 @@ describe('DeploymentsListingService', () => {
 
       await service.listDeployments('user1', 'token', 'BUCKET_HASH');
       /*
-       * One call for APPLICATION-scoped shared resources, one for
-       * TOOL_SET-scoped — getSharedResources is scoped to a single
-       * resourceTypes filter per call, and the combined list mixes both
-       * item types.
+       * Toolsets are excluded from this listing's items entirely, so only
+       * the APPLICATION-scoped shared resources are ever needed here.
        */
-      expect(sdkClient.getSharedResources).toHaveBeenCalledTimes(2);
+      expect(sdkClient.getSharedResources).toHaveBeenCalledOnce();
       expect(sdkClient.getSharedResources).toHaveBeenCalledWith(
         expect.objectContaining({
           body: expect.objectContaining({ resourceTypes: ['APPLICATION'] }),
         }),
       );
-      expect(sdkClient.getSharedResources).toHaveBeenCalledWith(
-        expect.objectContaining({
-          body: expect.objectContaining({ resourceTypes: ['TOOL_SET'] }),
-        }),
-      );
-    });
-
-    it('is true for a READ-only shared toolset in the combined list, using TOOL_SET-scoped resources', async () => {
-      /*
-       * Regression: a toolset id can never appear in the APPLICATION-scoped
-       * shared-resource set, so this only passes if listDeployments fetches
-       * (and uses) a separate TOOL_SET-scoped set for toolset items.
-       */
-      const { service, sdkClient } = makeService();
-      sdkClient.listDeployments.mockResolvedValue({
-        error: false,
-        response: { status: 200 },
-        data: [{ ...mockToolset, id: 'toolsets/OTHER_BUCKET/their-toolset' }],
-      });
-      sdkClient.getSharedResources.mockImplementation(
-        (opts: { body: { resourceTypes: string[] } }) =>
-          Promise.resolve({
-            data: {
-              resources:
-                opts.body.resourceTypes[0] === 'TOOL_SET'
-                  ? [
-                      {
-                        url: 'toolsets/OTHER_BUCKET/their-toolset',
-                        permissions: ['READ'],
-                      },
-                    ]
-                  : [],
-            },
-            error: undefined,
-          }),
-      );
-
-      const result = await service.listDeployments(
-        'user1',
-        'token',
-        'BUCKET_HASH',
-      );
-
-      expect(result.deployments[0]).toMatchObject({
-        isMy: false,
-        sharedWithMe: true,
-        canEdit: false,
-      });
     });
   });
 });

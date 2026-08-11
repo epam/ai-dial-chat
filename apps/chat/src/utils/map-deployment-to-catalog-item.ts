@@ -205,6 +205,8 @@ export const mapDeploymentToCatalogItem = (
         ? mapEntityDetailsToCatalogDetails(entityDetails)
         : undefined,
     supportsMcp: deployment.features?.mcp === true,
+    supportsChat:
+      deployment.interfaces == null || deployment.interfaces.includes('chat'),
   };
 };
 
