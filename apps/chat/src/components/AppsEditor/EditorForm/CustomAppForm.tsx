@@ -25,7 +25,7 @@ import { CommonI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
 import {
   CustomAppForm as CustomAppFormType,
   MANDATORY_FIELD_PLACEHOLDER,
-  getAttachmentTypeErrorHandlers,
+  getPendingAttachmentTypeProps,
 } from '@/src/components/AppsEditor/form';
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
 import { Field } from '@/src/components/Common/Forms/Field';
@@ -48,11 +48,15 @@ export const CustomAppForm = () => {
     ApplicationSelectors.selectApplicationDetail,
   );
 
-  const { control, register, setError, clearErrors, setValue } =
+  const { control, register, clearErrors, setValue } =
     useFormContext<CustomAppFormType>();
   const { errors } = useFormState<CustomAppFormType>({ control });
   const completionUrl = useWatch({
     name: 'completionUrl',
+    control,
+  });
+  const pendingAttachmentType = useWatch({
+    name: 'pendingInputAttachmentType',
     control,
   });
 
@@ -110,7 +114,7 @@ export const CustomAppForm = () => {
             disabled={isAppPublic}
             tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
             dataQa="combobox"
-            {...getAttachmentTypeErrorHandlers(setError, clearErrors)}
+            {...getPendingAttachmentTypeProps(pendingAttachmentType, setValue)}
           />
         )}
       />

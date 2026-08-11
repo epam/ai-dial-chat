@@ -155,7 +155,7 @@ const ChatFolderTemplate = ({
             }),
           );
         }
-      } else if (entity) {
+      } else if (entity && entity.folderId !== currentFolder.id) {
         dispatch(
           ConversationsActions.updateConversation({
             id: entity.id,

@@ -1,4 +1,4 @@
-import { UseFormClearErrors, UseFormSetError } from 'react-hook-form';
+import { FieldValues, Path, PathValue, UseFormSetValue } from 'react-hook-form';
 
 import {
   fitApplicationNameToStorageLimits,
@@ -71,6 +71,7 @@ import {
   DEFAULT_APPLICATION_NAME,
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
+import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 import { formErrors } from '@/src/constants/form-errors';
 import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
@@ -89,6 +90,8 @@ import {
   DynamicFieldSchema,
   MarketplaceEntityBaseSchema,
   MaxInputAttachmentsSchema,
+  PendingAttachmentTypeSchema,
+  refinePendingAttachmentType,
 } from '@/src/constants/validation-helpers';
 
 import { ShareEntity } from '@epam/ai-dial-shared';
@@ -113,69 +116,77 @@ export type BaseAppForm = zodValidation.infer<
   typeof MarketplaceEntityBaseSchema
 >;
 
-const CustomAppSchema = zodValidation.object({
-  type: zodValidation.literal(AppsEditorSchemaTypes.CustomApp),
-  inputAttachmentTypes: AttachmentTypesSchema,
-  completionUrl: CompletionUrlSchema.nonempty(formErrors.required).or(
-    zodValidation.literal(MANDATORY_FIELD_PLACEHOLDER),
-  ),
-  features: zodValidation
-    .string()
-    .nullable()
-    .superRefine((data, ctx) => {
-      if (!data?.trim()) return;
-      try {
-        const object = JSON.parse(data);
-        if (typeof object === 'object' && !!object && !Array.isArray(object)) {
-          for (const [key, value] of Object.entries(object)) {
-            if (!key.trim()) {
-              ctx.addIssue({
-                code: 'custom',
-                path: ['features'],
-                message: 'Keys should not be empty',
-              });
-              return;
-            }
-            const valueType = typeof value;
-            if (
-              !(['boolean', 'number'].includes(valueType) || value === null)
-            ) {
-              if (typeof value === 'string' && !value.trim()) {
+const CustomAppSchema = zodValidation
+  .object({
+    type: zodValidation.literal(AppsEditorSchemaTypes.CustomApp),
+    inputAttachmentTypes: AttachmentTypesSchema,
+    pendingInputAttachmentType: PendingAttachmentTypeSchema,
+    completionUrl: CompletionUrlSchema.nonempty(formErrors.required).or(
+      zodValidation.literal(MANDATORY_FIELD_PLACEHOLDER),
+    ),
+    features: zodValidation
+      .string()
+      .nullable()
+      .superRefine((data, ctx) => {
+        if (!data?.trim()) return;
+        try {
+          const object = JSON.parse(data);
+          if (
+            typeof object === 'object' &&
+            !!object &&
+            !Array.isArray(object)
+          ) {
+            for (const [key, value] of Object.entries(object)) {
+              if (!key.trim()) {
                 ctx.addIssue({
                   code: 'custom',
                   path: ['features'],
-                  message: 'String values should not be empty',
+                  message: 'Keys should not be empty',
                 });
                 return;
               }
-              if (!['boolean', 'number', 'string'].includes(valueType)) {
-                ctx.addIssue({
-                  code: 'custom',
-                  path: ['features'],
-                  message: 'Values should be a string, number, boolean or null',
-                });
-                return;
+              const valueType = typeof value;
+              if (
+                !(['boolean', 'number'].includes(valueType) || value === null)
+              ) {
+                if (typeof value === 'string' && !value.trim()) {
+                  ctx.addIssue({
+                    code: 'custom',
+                    path: ['features'],
+                    message: 'String values should not be empty',
+                  });
+                  return;
+                }
+                if (!['boolean', 'number', 'string'].includes(valueType)) {
+                  ctx.addIssue({
+                    code: 'custom',
+                    path: ['features'],
+                    message:
+                      'Values should be a string, number, boolean or null',
+                  });
+                  return;
+                }
               }
             }
+          } else {
+            ctx.addIssue({
+              code: 'custom',
+              path: ['features'],
+              message: 'Data is not a valid JSON object',
+            });
+            return;
           }
-        } else {
+        } catch {
           ctx.addIssue({
             code: 'custom',
             path: ['features'],
-            message: 'Data is not a valid JSON object',
+            message: 'Invalid JSON string',
           });
-          return;
         }
-      } catch {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['features'],
-          message: 'Invalid JSON string',
-        });
-      }
-    }),
-  maxInputAttachments: MaxInputAttachmentsSchema.optional(),
-});
+      }),
+    maxInputAttachments: MaxInputAttachmentsSchema.optional(),
+  })
+  .superRefine(refinePendingAttachmentType);
 export type CustomAppForm = zodValidation.infer<typeof CustomAppSchema>;
 
 const ExternalAppSchema = zodValidation.object({
@@ -270,6 +281,7 @@ export const QuickApp2Schema = zodValidation
     agentsAndToolsets: zodValidation.array(AgentOrToolsetSchema),
     codeInterpreter: zodValidation.boolean(),
     inputAttachmentTypes: AttachmentTypesSchema,
+    pendingInputAttachmentType: PendingAttachmentTypeSchema,
     maxInputAttachments: MaxInputAttachmentsSchema.optional(),
     isJsonView: zodValidation.boolean(),
     agentsAndToolsetsJson: zodValidation.string(),
@@ -295,6 +307,8 @@ export const QuickApp2Schema = zodValidation
     webFetch: zodValidation.boolean(),
   })
   .superRefine((data, ctx) => {
+    refinePendingAttachmentType(data, ctx);
+
     if (data.isJsonView) {
       try {
         const parsed: unknown[] = JSON.parse(data.agentsAndToolsetsJson);
@@ -342,6 +356,7 @@ const CodeAppSchema = zodValidation
   .object({
     type: zodValidation.literal(AppsEditorSchemaTypes.CodeApp),
     inputAttachmentTypes: AttachmentTypesSchema,
+    pendingInputAttachmentType: PendingAttachmentTypeSchema,
     filesLoaded: zodValidation.boolean(),
     sources: zodValidation
       .string()
@@ -372,6 +387,8 @@ const CodeAppSchema = zodValidation
     env: zodValidation.array(DynamicFieldSchema).optional(),
   })
   .superRefine((data, ctx) => {
+    refinePendingAttachmentType(data, ctx);
+
     if (
       data.sources === MANDATORY_FIELD_PLACEHOLDER ||
       !data.sources ||
@@ -441,6 +458,7 @@ const getBaseFormData = ({
 const getCustomAppFormData = (app?: CustomApplicationModel): CustomAppForm => ({
   type: AppsEditorSchemaTypes.CustomApp,
   inputAttachmentTypes: app?.inputAttachmentTypes ?? [],
+  pendingInputAttachmentType: '',
   maxInputAttachments: app?.maxInputAttachments ?? undefined,
   completionUrl:
     app && !app.applicationTypeSchemaId
@@ -583,6 +601,7 @@ const getQuickApp2FormData = (
         (toolset) => toolset.type === ToolsetTypes.CodeInterpreter,
       ) ?? false,
     inputAttachmentTypes: app?.inputAttachmentTypes ?? [],
+    pendingInputAttachmentType: '',
     maxInputAttachments: app?.maxInputAttachments ?? undefined,
     agentsAndToolsetsJson: JSON.stringify(
       appProperties?.tool_sets ?? [],
@@ -631,6 +650,7 @@ const getCodeAppFormData = ({
 }): CodeAppForm => ({
   type: AppsEditorSchemaTypes.CodeApp,
   inputAttachmentTypes: app?.inputAttachmentTypes ?? [],
+  pendingInputAttachmentType: '',
   maxInputAttachments: app?.maxInputAttachments ?? undefined,
   filesLoaded: false,
   sources: getFormSourceFolder(app?.function?.sourceFolder),
@@ -780,25 +800,27 @@ export const getValidationSchema = (
   }
 };
 
-export const getAttachmentTypeErrorHandlers = (
-  setError: UseFormSetError<{ inputAttachmentTypes: string[] }>,
-  clearErrors: UseFormClearErrors<{ inputAttachmentTypes: string[] }>,
-) => {
-  const validationRegExp = new RegExp(
-    '^([a-zA-Z0-9!*\\-.+]+|\\*)\\/([a-zA-Z0-9!*\\-.+]+|\\*)$',
-  );
-  const handleError = () => {
-    setError('inputAttachmentTypes', {
-      type: 'manual',
-      message: 'Please match the MIME format',
-    });
-  };
-  const handleClearError = () => {
-    clearErrors('inputAttachmentTypes');
-  };
-
-  return { validationRegExp, handleError, handleClearError };
-};
+/**
+ * Keeps the not yet added attachment type in the form state, so the schema
+ * reports the MIME error instead of it being set manually. A manual error is
+ * wiped by every form re-validation, which happens on saving and on switching
+ * between the editor steps.
+ */
+export const getPendingAttachmentTypeProps = <
+  T extends FieldValues & { pendingInputAttachmentType: string },
+>(
+  pendingInputAttachmentType: string | undefined,
+  setValue: UseFormSetValue<T>,
+) => ({
+  validationRegExp: MIME_FORMAT_REGEX,
+  inputValue: pendingInputAttachmentType ?? '',
+  onInputValueChange: (value: string) =>
+    setValue(
+      'pendingInputAttachmentType' as Path<T>,
+      value as PathValue<T, Path<T>>,
+      { shouldValidate: true },
+    ),
+});
 
 const getActualSourceFolder = (formSources?: string) => {
   const bucket = BucketService.getBucket();
