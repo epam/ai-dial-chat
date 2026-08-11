@@ -5,6 +5,14 @@ import { CustomVisualizerDto } from './custom-visualizer.dto';
 export class ClientConfigDto {
   @ApiProperty({
     description:
+      'Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Always a non-empty string.',
+    type: String,
+    example: '0.45.0',
+  })
+  appVersion!: string;
+
+  @ApiProperty({
+    description:
       'Deployment ID of the ASR model. Null when ASR is not configured.',
     type: String,
     nullable: true,

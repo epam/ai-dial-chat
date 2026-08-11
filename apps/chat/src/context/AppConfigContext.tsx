@@ -23,6 +23,7 @@ export interface AppConfigState {
   status: UserConfigStatus;
   features: Record<string, boolean>;
   config: {
+    appVersion: string;
     asrModelId: string | null;
     transcribeSizeLimitBytes: number;
     defaultDeploymentId: string | null;
@@ -44,6 +45,7 @@ const INITIAL_STATE: AppConfigState = {
   status: UserConfigStatus.Loading,
   features: {},
   config: {
+    appVersion: '',
     asrModelId: null,
     transcribeSizeLimitBytes: DEFAULT_TRANSCRIBE_SIZE_LIMIT,
     defaultDeploymentId: null,
@@ -79,6 +81,7 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
           status: UserConfigStatus.Ready,
           features: (response.features ?? {}) as Record<string, boolean>,
           config: {
+            appVersion: response.config?.appVersion ?? '',
             asrModelId: response.config?.asrModelId ?? null,
             transcribeSizeLimitBytes:
               response.config?.transcribeSizeLimitBytes ??

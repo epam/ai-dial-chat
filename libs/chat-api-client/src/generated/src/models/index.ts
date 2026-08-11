@@ -451,6 +451,12 @@ export interface Check200Response {
  */
 export interface ClientConfigDto {
   /**
+   * Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Always a non-empty string.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  appVersion: string;
+  /**
    * Deployment ID of the ASR model. Null when ASR is not configured.
    * @type {string}
    * @memberof ClientConfigDto

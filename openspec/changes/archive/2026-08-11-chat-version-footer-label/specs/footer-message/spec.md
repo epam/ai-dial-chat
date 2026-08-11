@@ -1,9 +1,5 @@
-# footer-message Specification
+## MODIFIED Requirements
 
-## Purpose
-Show user useful information in the footer.
-
-## Requirements
 ### Requirement: Operator-supplied footer HTML is sanitized server-side before use
 
 The NestJS `app-config` service SHALL read `FOOTER_HTML_MESSAGE` from `ConfigService`, replace
@@ -52,19 +48,6 @@ so a footer authored with `%%VERSION%%` can never disagree with the version labe
 
 - **WHEN** `FOOTER_HTML_MESSAGE` is not set
 - **THEN** `footerHtmlMessage` is an empty string and no footer message content renders
-
----
-
-### Requirement: Footer HTML is sanitized client-side before rendering
-
-The `FooterMessage` component SHALL apply DOMPurify to `footerHtmlMessage` immediately before passing it to `dangerouslySetInnerHTML`. If `window` is unavailable (SSR context), the raw value SHALL be used unchanged (server-side pass already ran).
-
-- **Memoisation**: `useMemo` on the DOMPurify result, keyed on `footerHtmlMessage`
-
-#### Scenario: Client-side sanitization runs in browser
-
-- **WHEN** the `FooterMessage` component renders in a browser environment
-- **THEN** the HTML passed to `dangerouslySetInnerHTML` is the DOMPurify-cleaned value, not the raw store value
 
 ---
 
@@ -147,4 +130,3 @@ an out-of-flow label would paint outside it.
 - **WHEN** both the sanitized footer message and the version label render
 - **THEN** the message element remains centred against the region's full width and is not offset
   by the label
-

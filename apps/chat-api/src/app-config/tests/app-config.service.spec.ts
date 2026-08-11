@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import packageJson from '../../../package.json';
 import { AppConfigService } from '../app-config.service';
 import type { AppConfigEvalContext } from '../app-config.types';
 import type { CompositeConfigProvider } from '../config-registry/composite-config.provider';
@@ -7,6 +8,8 @@ import { CONFIG_DEFINITIONS } from '../config-registry/config-registry.constants
 import { FeatureKey } from '../feature-flags/feature-key.enum';
 
 const ctx: AppConfigEvalContext = { appId: 'chat-ui' };
+
+const PACKAGE_VERSION: string = packageJson.version;
 
 // getClientConfig resolves exactly one definition per client-visible config key.
 const CLIENT_DEFINITIONS_COUNT = CONFIG_DEFINITIONS.filter(
@@ -57,6 +60,7 @@ describe('AppConfigService', () => {
       const result = await service.getClientConfig(ctx);
 
       expect(result.features['asrEnabled']).toBe(false);
+      expect(result.config.appVersion).toBe(PACKAGE_VERSION);
       expect(result.config.asrModelId).toBeNull();
       expect(result.config.transcribeSizeLimitBytes).toBe(5 * 1024 * 1024);
       expect(result.config.defaultDeploymentId).toBeNull();
@@ -269,8 +273,77 @@ describe('AppConfigService', () => {
         key === 'footer.html' ? 'Version: %%VERSION%%' : undefined,
       );
       const result = await service.getClientConfig(ctx);
-      expect(result.config.footerHtmlMessage).toMatch(/Version: \S+/);
+      expect(result.config.footerHtmlMessage).toBe(
+        `Version: ${PACKAGE_VERSION}`,
+      );
       expect(result.config.footerHtmlMessage).not.toContain('%%VERSION%%');
+    });
+
+    it('substitutes %%VERSION%% with the operator-configured version', async () => {
+      const { service } = makeService(async (key: string) => {
+        if (key === 'footer.html') return 'Version: %%VERSION%%';
+        if (key === 'app.version') return '2026.08.10-a1b2c3d';
+        return undefined;
+      });
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.footerHtmlMessage).toBe(
+        'Version: 2026.08.10-a1b2c3d',
+      );
+      expect(result.config.appVersion).toBe('2026.08.10-a1b2c3d');
+    });
+
+    it('returns the operator-configured appVersion', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'app.version' ? '2026.08.10-a1b2c3d' : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.appVersion).toBe('2026.08.10-a1b2c3d');
+    });
+
+    it('falls back to the package version when appVersion is unset', async () => {
+      const { service } = makeService(async () => undefined);
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.appVersion).toBe(PACKAGE_VERSION);
+    });
+
+    it('falls back to the package version when appVersion is blank', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'app.version' ? '   ' : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.appVersion).toBe(PACKAGE_VERSION);
+    });
+
+    it('trims surrounding whitespace from appVersion', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'app.version' ? '  0.45.0  ' : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.appVersion).toBe('0.45.0');
+    });
+
+    it('returns the same appVersion regardless of user roles', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'app.version' ? '0.45.0' : undefined,
+      );
+
+      const roleless = await service.getClientConfig({
+        appId: 'chat-ui',
+        userId: 'user-1',
+      });
+      const admin = await service.getClientConfig({
+        appId: 'chat-ui',
+        userId: 'user-2',
+        roles: ['admin'],
+      });
+
+      expect(roleless.config.appVersion).toBe('0.45.0');
+      expect(admin.config.appVersion).toBe('0.45.0');
     });
 
     it('never leaks the internal DIAL_CORE_URL value under any key', async () => {

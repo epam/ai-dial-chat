@@ -670,6 +670,7 @@ export enum AnnouncementBannerI18nKeys {
 
 export enum FooterMessageI18nKeys {
   RegionAriaLabel = 'footerMessage.regionAriaLabel',
+  VersionAriaLabel = 'footerMessage.versionAriaLabel',
 }
 
 export enum EditorI18nKeys {

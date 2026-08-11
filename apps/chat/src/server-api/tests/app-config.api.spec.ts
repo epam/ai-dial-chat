@@ -19,6 +19,7 @@ describe('app-config API', () => {
       appId: 'chat-ui',
       features: {},
       config: {
+        appVersion: '0.0.1',
         asrModelId: null,
         transcribeSizeLimitBytes: 5 * 1024 * 1024,
         fileManagerTabs: ['my_files', 'shared', 'organization'],

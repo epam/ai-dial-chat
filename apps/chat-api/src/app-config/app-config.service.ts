@@ -28,8 +28,8 @@ const FOOTER_ALLOWED_ATTRS: sanitizeHtml.IOptions['allowedAttributes'] = {
   a: ['href', 'target', 'rel'],
 };
 
-const sanitizeFooterHtml = (raw: string): string => {
-  const withVersion = raw.replace(/%%VERSION%%/g, APP_VERSION);
+const sanitizeFooterHtml = (raw: string, version: string): string => {
+  const withVersion = raw.replace(/%%VERSION%%/g, version);
   return sanitizeHtml(withVersion, {
     allowedTags: FOOTER_ALLOWED_TAGS,
     allowedAttributes: FOOTER_ALLOWED_ATTRS,
@@ -79,8 +79,15 @@ export class AppConfigService {
       return cached;
     }
 
+    /* `app.version` is resolved ahead of the loop instead of inside it: both the
+     * `appVersion` response field and the `%%VERSION%%` token inside
+     * `footer.html` read it, and relying on CONFIG_DEFINITIONS ordering to have
+     * it ready would be brittle. It is filtered out below so it is still
+     * resolved exactly once per request. */
+    const appVersion = await this.resolveAppVersion(context);
+
     const clientDefinitions = CONFIG_DEFINITIONS.filter(
-      (d) => d.visibility === 'client',
+      (d) => d.visibility === 'client' && d.key !== 'app.version',
     );
 
     const features: Record<string, boolean> = {};
@@ -131,7 +138,9 @@ export class AppConfigService {
         announcementHtml = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'footer.html') {
         footerHtmlMessage =
-          typeof resolved === 'string' ? sanitizeFooterHtml(resolved) : '';
+          typeof resolved === 'string'
+            ? sanitizeFooterHtml(resolved, appVersion)
+            : '';
       } else if (def.key === 'uiFeatures.enabledUiFeatures') {
         const rawValue = Array.isArray(resolved) ? resolved : [];
         if (rawValue.length > 0) {
@@ -165,6 +174,7 @@ export class AppConfigService {
       appId: context.appId,
       features,
       config: {
+        appVersion,
         asrModelId,
         transcribeSizeLimitBytes,
         defaultDeploymentId,
@@ -212,6 +222,24 @@ export class AppConfigService {
       );
       return false;
     }
+  }
+
+  /**
+   * Resolves the version string shown to clients. `CHAT_VERSION` wins so a
+   * CI/CD pipeline can stamp the deployed build; a missing or blank value falls
+   * back to the bundled package.json version, so the result is never empty.
+   */
+  private async resolveAppVersion(
+    context: AppConfigEvalContext,
+  ): Promise<string> {
+    const resolved = await this.compositeProvider.resolve(
+      'app.version',
+      context,
+    );
+    if (typeof resolved === 'string' && resolved.trim().length > 0) {
+      return resolved.trim();
+    }
+    return APP_VERSION;
   }
 
   private getClientConfigCacheKey(context: AppConfigEvalContext): string {

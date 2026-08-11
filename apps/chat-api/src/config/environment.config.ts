@@ -565,6 +565,13 @@ export class EnvironmentVariables {
   @IsString()
   FOOTER_HTML_MESSAGE?: string;
 
+  /* Deliberately unconstrained: this is an opaque display string that never
+   * reaches a filesystem path, an outbound URL, or a log line, and CI stamps
+   * take many shapes (0.45.0, 0.45.0-rc.3, 2026.08.10+a1b2c3d). */
+  @IsOptional()
+  @IsString()
+  CHAT_VERSION?: string;
+
   @IsOptional()
   @IsString()
   ASR_MODEL?: string;

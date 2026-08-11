@@ -747,7 +747,8 @@
     }
   },
   "footerMessage": {
-    "regionAriaLabel": "Footer"
+    "regionAriaLabel": "Footer",
+    "versionAriaLabel": "Application version {{version}}"
   },
   "errorBoundary": {
     "heading": "Something went wrong",
