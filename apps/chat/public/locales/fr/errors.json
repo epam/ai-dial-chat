@@ -1,0 +1,19 @@
+{
+  "This field is required": "Ce champ est obligatoire",
+  "{{name}} should be {{minLength}} to {{maxLength}} characters long and should not contain special characters": "{{name}} doit contenir entre {{minLength}} et {{maxLength}} caractères et ne doit pas contenir de caractères spéciaux",
+  "{{name}} should not contain special symbols {{notAllowedSymbols}}": "{{name}} ne doit pas contenir les symboles spéciaux {{notAllowedSymbols}}",
+  "{{name}} should be at least {{minLength}} characters long": "{{name}} doit contenir au moins {{minLength}} caractères",
+  "{{name}} should be at most {{maxLength}} characters long": "{{name}} doit contenir au maximum {{maxLength}} caractères",
+  "Using a dot at the end of a {{name}} is not permitted.": "L'utilisation d'un point à la fin d'un {{name}} n'est pas autorisée.",
+  "{{name}} \"{{newName}}\" already exists in this folder.": "{{name}} \"{{newName}}\" existe déjà dans ce dossier.",
+  "URL is not correct": "L'URL n'est pas correcte",
+  "URL must start with a valid protocol": "L'URL doit commencer par un protocole valide",
+  "Endpoint cannot end with . or //": "Le point de terminaison ne peut pas se terminer par . ou //",
+  "The image has been deleted, does not exist, or you do not have access to it.": "L'image a été supprimée, n'existe pas ou vous n'y avez pas accès.",
+  "The {{name}} is too long. Please shorten it and try again.": "Le {{name}} est trop long. Veuillez le raccourcir et réessayer.",
+  "Using a dot at the start of a {{name}} is not permitted.": "L'utilisation d'un point au début d'un {{name}} n'est pas autorisée.",
+  "Version is required": "La version est obligatoire",
+  "Version format is invalid (example: 0.0.1)": "Le format de la version est invalide (exemple : 0.0.1)",
+  "This version already exists": "Cette version existe déjà",
+  "Each part of the version should contain no more than five numbers.": "Chaque partie de la version ne doit pas contenir plus de cinq chiffres."
+}

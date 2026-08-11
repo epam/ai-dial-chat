@@ -1,0 +1,17 @@
+{
+  "Login": "Giriş yap",
+  "Log out": "Çıkış yap",
+  "Confirm logging out": "Çıkış işlemini onaylayın",
+  "Are you sure that you want to log out?": "Çıkış yapmak istediğinizden emin misiniz?",
+  "Cancel": "İptal",
+  "User": "Kullanıcı",
+  "User profile": "Kullanıcı profili",
+  "Settings": "Ayarlar",
+  "User avatar": "Kullanıcı avatarı",
+  "Account settings": "Hesap ayarları",
+  "New conversation": "Yeni sohbet",
+  "New prompt": "Yeni prompt",
+  "Filters": "Filtreler",
+  "Prompts": "Promptlar",
+  "Conversations": "Sohbetler"
+}
