@@ -161,7 +161,7 @@ export const getDefaultLoginFormData = ({
         tokenEndpoint: toolset?.authSettings?.tokenEndpoint ?? '',
         tokenEndpointAuthMethod:
           toolset?.authSettings?.tokenEndpointAuthMethod ??
-          TokenEndpointAuthMethod.ClientSecretPost,
+          TokenEndpointAuthMethod.ClientSecretBasic,
         withLogin:
           !prevData &&
           toolset?.authSettings?.clientSecret &&
