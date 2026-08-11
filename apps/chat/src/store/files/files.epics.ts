@@ -510,15 +510,15 @@ const getFoldersListEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.getFoldersList.type),
     switchMap(({ payload }) => {
-      if (payload.paths) {
-        return concat(
-          ...payload.paths.map((path) =>
-            of(FilesActions.getFolders({ id: path })),
-          ),
-        );
-      }
+      const listPath = (path?: string) =>
+        payload.withFiles
+          ? [
+              FilesActions.getFolders({ id: path }),
+              FilesActions.getFiles({ id: path }),
+            ]
+          : [FilesActions.getFolders({ id: path })];
 
-      return of(FilesActions.getFolders({}));
+      return from((payload.paths ?? [undefined]).flatMap((p) => listPath(p)));
     }),
   );
 
