@@ -3,7 +3,11 @@ import {
   ScheduledTaskDetailView,
   type ScheduledTaskRunItem,
 } from '@epam/ai-dial-scheduled-tasks';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
+import {
+  ConfirmationPopup,
+  ConfirmationPopupVariant,
+  NotificationVariant,
+} from '@epam/ai-dial-ui-kit';
 import {
   memo,
   useCallback,
@@ -31,6 +35,7 @@ import {
   getApiErrorStatus,
 } from '../../server-api/api-error';
 import {
+  deleteScheduledTask,
   getScheduledTask,
   pauseScheduledTask,
   resumeScheduledTask,
@@ -59,6 +64,8 @@ const ScheduledTaskDetailPage: FC = () => {
   const [taskFetchToken, setTaskFetchToken] = useState(0);
   const [isActiveUpdating, setIsActiveUpdating] = useState(false);
   const [activeStatusAnnouncement, setActiveStatusAnnouncement] = useState('');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const activeChangeRequestRef = useRef(0);
   /*
    * Mirrors the latest scheduleId outside of any closure, so an in-flight
@@ -181,6 +188,8 @@ const ScheduledTaskDetailPage: FC = () => {
     () => ({
       backAriaLabel: t(ScheduledTasksI18nKeys.CreateBackButtonLabel),
       editButtonLabel: t(ScheduledTasksI18nKeys.CardEditActionLabel),
+      deleteButtonLabel: t(ButtonsI18nKeys.Delete),
+      deletedStateLabel: t(ScheduledTasksI18nKeys.DetailDeletedStateLabel),
       errorLabel: t(ScheduledTasksI18nKeys.DetailErrorLabel),
       detailsTitle: t(ScheduledTasksI18nKeys.CreateDetailsSectionTitle),
       descriptionLabel: t(ScheduledTasksI18nKeys.CreateDescriptionLabel),
@@ -297,6 +306,44 @@ const ScheduledTaskDetailPage: FC = () => {
     [scheduleId, t, showNotification],
   );
 
+  const handleDeleteClick = useCallback(() => {
+    setIsDeleteDialogOpen(true);
+  }, []);
+
+  const handleDeleteDialogClose = useCallback(() => {
+    if (isDeleting) return;
+    setIsDeleteDialogOpen(false);
+  }, [isDeleting]);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (isDeleting) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteScheduledTask(scheduleId);
+      setIsDeleteDialogOpen(false);
+      showNotification({
+        variant: NotificationVariant.Success,
+        message: t(ScheduledTasksI18nKeys.DetailDeleteSuccess),
+      });
+      navigate(ROUTES.ScheduledTasks);
+    } catch (err) {
+      const { status, traceId } = await getApiErrorDetails(err);
+      const messageKey =
+        status === 404 || status === 409
+          ? ScheduledTasksI18nKeys.DetailDeleteNotFoundError
+          : status === 502
+            ? ScheduledTasksI18nKeys.DetailDeleteRetryableError
+            : ScheduledTasksI18nKeys.DetailDeleteGenericError;
+      showNotification({
+        variant: NotificationVariant.Error,
+        message: t(messageKey),
+        requestId: traceId,
+      });
+      setIsDeleting(false);
+    }
+  }, [scheduleId, t, showNotification, navigate, isDeleting]);
+
   if (appConfigStatus !== UserConfigStatus.Ready) {
     return <RouteFallback />;
   }
@@ -309,33 +356,59 @@ const ScheduledTaskDetailPage: FC = () => {
     return <NotFoundPage />;
   }
 
+  const isTaskDeleted = task?.isDeleted === true;
+
   return (
-    <ScheduledTaskDetailView
-      labels={labels}
-      onBack={handleBack}
-      onEdit={task ? handleEdit : undefined}
-      isActive={task?.isActive}
-      isActiveUpdating={isActiveUpdating}
-      isActiveDisabled={isActiveDisabled}
-      onActiveChange={handleActiveChange}
-      displayName={task?.displayName ?? ''}
-      isLoading={isTaskLoading}
-      error={taskError}
-      onRetry={handleRetry}
-      description={task?.description}
-      modelLabel={modelLabel}
-      repeatsLabel={repeatsLabel}
-      activeWindowLabel={activeWindowLabel}
-      nextRunLabel={nextRunLabel}
-      instructionsMarkdown={task?.prompt}
-      runs={runItems}
-      runsIsLoading={runsIsLoading}
-      runsIsLoadingMore={runsIsLoadingMore}
-      runsError={runsError}
-      onRunsRetry={refetchRuns}
-      runsHasMore={runsHasMore}
-      onRunsLoadMore={onRunsLoadMore}
-    />
+    <>
+      <ScheduledTaskDetailView
+        labels={labels}
+        onBack={handleBack}
+        onEdit={task && !isTaskDeleted ? handleEdit : undefined}
+        onDelete={task && !isTaskDeleted ? handleDeleteClick : undefined}
+        isDeleting={isDeleting}
+        isDeleted={isTaskDeleted}
+        isActive={isTaskDeleted ? undefined : task?.isActive}
+        isActiveUpdating={isActiveUpdating}
+        isActiveDisabled={isActiveDisabled}
+        onActiveChange={isTaskDeleted ? undefined : handleActiveChange}
+        displayName={task?.displayName ?? ''}
+        isLoading={isTaskLoading}
+        error={taskError}
+        onRetry={handleRetry}
+        description={task?.description}
+        modelLabel={modelLabel}
+        repeatsLabel={repeatsLabel}
+        activeWindowLabel={activeWindowLabel}
+        nextRunLabel={nextRunLabel}
+        instructionsMarkdown={task?.prompt}
+        runs={runItems}
+        runsIsLoading={runsIsLoading}
+        runsIsLoadingMore={runsIsLoadingMore}
+        runsError={runsError}
+        onRunsRetry={refetchRuns}
+        runsHasMore={runsHasMore}
+        onRunsLoadMore={onRunsLoadMore}
+      />
+      <ConfirmationPopup
+        open={isDeleteDialogOpen}
+        header={t(ScheduledTasksI18nKeys.DetailDeleteConfirmTitle)}
+        description={t(ScheduledTasksI18nKeys.DetailDeleteConfirmDescription, {
+          taskName: task?.displayName ?? '',
+        })}
+        variant={ConfirmationPopupVariant.Danger}
+        confirmLabel={
+          isDeleting
+            ? t(ScheduledTasksI18nKeys.DetailDeleteConfirmingLabel)
+            : t(ButtonsI18nKeys.Delete)
+        }
+        cancelLabel={t(ButtonsI18nKeys.Cancel)}
+        isLoading={isDeleting}
+        disableConfirmButton={isDeleting}
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteDialogClose}
+        onClose={handleDeleteDialogClose}
+      />
+    </>
   );
 };
 

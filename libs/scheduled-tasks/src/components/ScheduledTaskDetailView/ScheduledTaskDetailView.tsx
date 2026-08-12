@@ -7,11 +7,16 @@ import {
   DIAL_ICON_SIZE,
   DialSwitch,
   Spinner,
+  DangerButton,
   GhostButton,
   GhostIconButton,
   NeutralButton,
 } from '@epam/ai-dial-ui-kit';
-import { IconArrowLeft, IconPencilMinus } from '@tabler/icons-react';
+import {
+  IconArrowLeft,
+  IconPencilMinus,
+  IconTrashX,
+} from '@tabler/icons-react';
 import { type FC } from 'react';
 import type { ScheduledTaskDetailViewProps } from '../../models/scheduled-task-detail-view-props';
 import { ScheduledTaskRunHistoryList } from '../ScheduledTaskRunHistoryList/ScheduledTaskRunHistoryList';
@@ -28,6 +33,9 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   labels,
   onBack,
   onEdit,
+  onDelete,
+  isDeleting = false,
+  isDeleted = false,
   isActive,
   isActiveUpdating = false,
   isActiveDisabled = false,
@@ -128,10 +136,21 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
           <h1 className={mergeClasses('truncate', titleClassName)}>
             {displayName}
           </h1>
+          {isDeleted && (
+            <span
+              className={mergeClasses(
+                'shrink-0',
+                fieldValueClassName,
+                styles.subtitleText,
+              )}
+            >
+              {labels.deletedStateLabel}
+            </span>
+          )}
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          {isActive !== undefined && (
+          {!isDeleted && isActive !== undefined && (
             <>
               <span className={fieldValueClassName}>
                 {labels.activeStatusLabel}
@@ -150,20 +169,31 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
                 <DialSwitch
                   switchId="scheduled-task-active-switch"
                   isOn={isActive}
-                  disabled={isActiveUpdating || isActiveDisabled}
+                  disabled={isActiveUpdating || isActiveDisabled || isDeleting}
                   onChange={(value) => onActiveChange?.(value)}
                 />
               </div>
             </>
           )}
 
-          {onEdit && (
+          {!isDeleted && onDelete && (
+            <DangerButton
+              label={labels.deleteButtonLabel}
+              iconBefore={<IconTrashX size={DIAL_ICON_SIZE.SM} aria-hidden />}
+              onClick={onDelete}
+              disabled={isDeleting}
+              className="shrink-0"
+            />
+          )}
+
+          {!isDeleted && onEdit && (
             <NeutralButton
               label={labels.editButtonLabel}
               iconBefore={
                 <IconPencilMinus size={DIAL_ICON_SIZE.SM} aria-hidden />
               }
               onClick={onEdit}
+              disabled={isDeleting}
               className="shrink-0"
             />
           )}

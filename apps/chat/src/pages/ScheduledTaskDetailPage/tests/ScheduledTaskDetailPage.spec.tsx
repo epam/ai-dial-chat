@@ -1,4 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -20,12 +26,15 @@ vi.mock('../../../context/DeploymentsContext', () => ({
 const getScheduledTaskMock = vi.fn();
 const pauseScheduledTaskMock = vi.fn();
 const resumeScheduledTaskMock = vi.fn();
+const deleteScheduledTaskMock = vi.fn();
 vi.mock('../../../server-api/scheduled-tasks.api', () => ({
   getScheduledTask: (scheduleId: string) => getScheduledTaskMock(scheduleId),
   pauseScheduledTask: (scheduleId: string) =>
     pauseScheduledTaskMock(scheduleId),
   resumeScheduledTask: (scheduleId: string) =>
     resumeScheduledTaskMock(scheduleId),
+  deleteScheduledTask: (scheduleId: string) =>
+    deleteScheduledTaskMock(scheduleId),
 }));
 
 const showNotificationMock = vi.fn();
@@ -58,6 +67,9 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     labels,
     onBack,
     onEdit,
+    onDelete,
+    isDeleting,
+    isDeleted,
     isActive,
     isActiveUpdating,
     isActiveDisabled,
@@ -82,11 +94,16 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       historyErrorLabel: string;
       historyRetryLabel: string;
       editButtonLabel: string;
+      deleteButtonLabel: string;
+      deletedStateLabel: string;
       activeStatusLabel: string;
       activeStatusAnnouncement?: string;
     };
     onBack: () => void;
     onEdit?: () => void;
+    onDelete?: () => void;
+    isDeleting?: boolean;
+    isDeleted?: boolean;
     isActive?: boolean;
     isActiveUpdating?: boolean;
     isActiveDisabled?: boolean;
@@ -108,6 +125,9 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     <div>
       <span>displayName:{displayName}</span>
       <span>isLoading:{String(isLoading)}</span>
+      <span>isDeleting:{String(isDeleting)}</span>
+      <span>isDeleted:{String(isDeleted)}</span>
+      {isDeleted && <span>{labels.deletedStateLabel}</span>}
       <span>description:{description}</span>
       <span>modelLabel:{modelLabel}</span>
       <span>repeatsLabel:{repeatsLabel}</span>
@@ -120,7 +140,16 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       )}
       <button onClick={onRunsLoadMore}>load more runs</button>
       <button onClick={onBack}>back</button>
-      {onEdit && <button onClick={onEdit}>{labels.editButtonLabel}</button>}
+      {onDelete && (
+        <button onClick={onDelete} disabled={isDeleting}>
+          {labels.deleteButtonLabel}
+        </button>
+      )}
+      {onEdit && (
+        <button onClick={onEdit} disabled={isDeleting}>
+          {labels.editButtonLabel}
+        </button>
+      )}
       {isActive !== undefined && (
         <>
           <input
@@ -128,7 +157,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
             role="switch"
             aria-label={labels.activeStatusLabel}
             checked={isActive}
-            disabled={isActiveUpdating || isActiveDisabled}
+            disabled={isActiveUpdating || isActiveDisabled || isDeleting}
             onChange={(e) => onActiveChange?.(e.target.checked)}
           />
           <span role="status">{labels.activeStatusAnnouncement}</span>
@@ -168,6 +197,56 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
+  DangerButton: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick?: () => void;
+  }) => <button onClick={onClick}>{label}</button>,
+  ConfirmationPopupVariant: { Info: 'info', Danger: 'danger' },
+  ConfirmationPopup: ({
+    open,
+    header,
+    description,
+    confirmLabel,
+    cancelLabel,
+    isLoading,
+    disableConfirmButton,
+    onConfirm,
+    onCancel,
+    onClose,
+  }: {
+    open: boolean;
+    header: string;
+    description?: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    isLoading?: boolean;
+    disableConfirmButton?: boolean;
+    onConfirm: () => void;
+    onCancel?: () => void;
+    onClose?: () => void;
+  }) =>
+    open ? (
+      <div
+        role="dialog"
+        aria-label={header}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') onClose?.();
+        }}
+      >
+        <p>{description}</p>
+        <span>dialogIsLoading:{String(isLoading)}</span>
+        <button onClick={() => onClose?.()} aria-label="Close dialog">
+          x
+        </button>
+        <button onClick={() => onCancel?.()}>{cancelLabel}</button>
+        <button onClick={onConfirm} disabled={disableConfirmButton}>
+          {confirmLabel}
+        </button>
+      </div>
+    ) : null,
 }));
 
 const BackTargetStub = () => <div>scheduled tasks list</div>;
@@ -723,6 +802,285 @@ describe('ScheduledTaskDetailPage', () => {
       await userEvent.click(switchEl);
 
       expect(resumeScheduledTaskMock).toHaveBeenCalledWith('sched_123');
+    });
+  });
+
+  describe('Delete action', () => {
+    const loadedTask = {
+      id: 'sched_123',
+      displayName: 'Daily summary',
+      trigger: {},
+    };
+
+    /** Clicks the header Delete action and returns the now-open dialog element. */
+    const openDeleteDialog = async () => {
+      const deleteButton = await waitFor(() =>
+        screen.getByRole('button', { name: 'buttons.delete' }),
+      );
+      await userEvent.click(deleteButton);
+      return screen.getByRole('dialog');
+    };
+
+    it('renders Delete once the task has loaded, and opens the confirmation dialog without calling deleteScheduledTask', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(loadedTask);
+      renderDetailPage();
+
+      const dialog = await openDeleteDialog();
+
+      expect(dialog).toBeTruthy();
+      expect(deleteScheduledTaskMock).not.toHaveBeenCalled();
+    });
+
+    it('does not render Delete while the task is loading or on error', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockReturnValue(new Promise(() => undefined));
+      renderDetailPage();
+
+      expect(
+        screen.queryByRole('button', { name: 'buttons.delete' }),
+      ).not.toBeTruthy();
+    });
+
+    it('Cancel closes the dialog and makes no API call', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(loadedTask);
+      renderDetailPage();
+
+      const dialog = await openDeleteDialog();
+      await userEvent.click(
+        within(dialog).getByRole('button', { name: 'buttons.cancel' }),
+      );
+
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(deleteScheduledTaskMock).not.toHaveBeenCalled();
+    });
+
+    it('Escape closes the dialog and makes no API call', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(loadedTask);
+      renderDetailPage();
+
+      const dialog = await openDeleteDialog();
+      fireEvent.keyDown(dialog, { key: 'Escape' });
+
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(deleteScheduledTaskMock).not.toHaveBeenCalled();
+    });
+
+    it('closing via the dialog close control makes no API call', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(loadedTask);
+      renderDetailPage();
+
+      const dialog = await openDeleteDialog();
+      await userEvent.click(
+        within(dialog).getByRole('button', { name: 'Close dialog' }),
+      );
+
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(deleteScheduledTaskMock).not.toHaveBeenCalled();
+    });
+
+    it('confirming calls deleteScheduledTask exactly once with the current scheduleId', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(loadedTask);
+      deleteScheduledTaskMock.mockResolvedValue(undefined);
+      renderDetailPage('sched_123');
+
+      const dialog = await openDeleteDialog();
+      await userEvent.click(
+        within(dialog).getByRole('button', { name: 'buttons.delete' }),
+      );
+
+      await waitFor(() =>
+        expect(deleteScheduledTaskMock).toHaveBeenCalledOnce(),
+      );
+      expect(deleteScheduledTaskMock).toHaveBeenCalledWith('sched_123');
+    });
+
+    it('disables Active/Edit/Delete while a delete request is in flight, and prevents a second confirm', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue({
+        ...loadedTask,
+        triggerType: 'cron',
+        isActive: true,
+      });
+      let resolveDelete!: () => void;
+      deleteScheduledTaskMock.mockReturnValue(
+        new Promise<void>((resolve) => {
+          resolveDelete = resolve;
+        }),
+      );
+      renderDetailPage();
+
+      const dialog = await openDeleteDialog();
+      const confirmButton = within(dialog).getByRole('button', {
+        name: 'buttons.delete',
+      });
+      await userEvent.click(confirmButton);
+
+      expect(deleteScheduledTaskMock).toHaveBeenCalledOnce();
+      expect(screen.getByRole('switch')).toHaveProperty('disabled', true);
+      expect(
+        screen.getByRole('button', {
+          name: 'scheduledTasks.card.editActionLabel',
+        }),
+      ).toHaveProperty('disabled', true);
+
+      // A second confirm activation while pending must not issue a second call.
+      await userEvent.click(confirmButton);
+      expect(deleteScheduledTaskMock).toHaveBeenCalledOnce();
+
+      resolveDelete();
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    });
+
+    it('on success: closes the dialog, shows a success notification, and navigates to the list', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(loadedTask);
+      deleteScheduledTaskMock.mockResolvedValue(undefined);
+      renderDetailPage();
+
+      const dialog = await openDeleteDialog();
+      await userEvent.click(
+        within(dialog).getByRole('button', { name: 'buttons.delete' }),
+      );
+
+      await waitFor(() =>
+        expect(screen.getByText('scheduled tasks list')).toBeTruthy(),
+      );
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
+    });
+
+    it('a 404/409 failure keeps the user on the page with the not-found error message', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(loadedTask);
+      deleteScheduledTaskMock.mockRejectedValue(new Error('not found'));
+      getApiErrorDetailsMock.mockResolvedValue({
+        status: 404,
+        traceId: undefined,
+      });
+      renderDetailPage();
+
+      const dialog = await openDeleteDialog();
+      await userEvent.click(
+        within(dialog).getByRole('button', { name: 'buttons.delete' }),
+      );
+
+      await waitFor(() =>
+        expect(showNotificationMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: 'error',
+            message: 'scheduledTasks.detail.deleteNotFoundError',
+          }),
+        ),
+      );
+      expect(screen.getByText('displayName:Daily summary')).toBeTruthy();
+      expect(screen.queryByText('scheduled tasks list')).toBeNull();
+    });
+
+    it('a 502 failure keeps the user on the page with the retryable error message', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(loadedTask);
+      deleteScheduledTaskMock.mockRejectedValue(new Error('upstream'));
+      getApiErrorDetailsMock.mockResolvedValue({
+        status: 502,
+        traceId: 'trace-xyz',
+      });
+      renderDetailPage();
+
+      const dialog = await openDeleteDialog();
+      await userEvent.click(
+        within(dialog).getByRole('button', { name: 'buttons.delete' }),
+      );
+
+      await waitFor(() =>
+        expect(showNotificationMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: 'error',
+            message: 'scheduledTasks.detail.deleteRetryableError',
+            requestId: 'trace-xyz',
+          }),
+        ),
+      );
+      expect(screen.getByText('displayName:Daily summary')).toBeTruthy();
+    });
+
+    it('a generic failure keeps the user on the page with the generic error message and re-enables retry', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(loadedTask);
+      deleteScheduledTaskMock.mockRejectedValue(new Error('boom'));
+      getApiErrorDetailsMock.mockResolvedValue({
+        status: undefined,
+        traceId: undefined,
+      });
+      renderDetailPage();
+
+      const dialog = await openDeleteDialog();
+      await userEvent.click(
+        within(dialog).getByRole('button', { name: 'buttons.delete' }),
+      );
+
+      await waitFor(() =>
+        expect(showNotificationMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: 'error',
+            message: 'scheduledTasks.detail.deleteGenericError',
+          }),
+        ),
+      );
+      expect(screen.getByText('isDeleting:false')).toBeTruthy();
+      expect(screen.getByRole('dialog')).toBeTruthy();
+    });
+  });
+
+  describe('Deleted-state task', () => {
+    it('renders isDeleted read-only without enabled Delete/Edit/Active controls, while History still renders', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue({
+        id: 'sched_123',
+        displayName: 'Daily summary',
+        trigger: {},
+        isDeleted: true,
+        isActive: true,
+      });
+      useScheduledTaskRunsMock.mockReturnValue({
+        items: [
+          {
+            id: 'run_1',
+            status: 'Success',
+            startTime: '2026-07-24T09:00:00.000Z',
+            endTime: '2026-07-24T09:01:00.000Z',
+          },
+        ],
+        isLoading: false,
+        isLoadingMore: false,
+        error: null,
+        hasMore: false,
+        loadMore: vi.fn(),
+        refetch: vi.fn(),
+      });
+      renderDetailPage();
+
+      await waitFor(() =>
+        expect(screen.getByText('isDeleted:true')).toBeTruthy(),
+      );
+      expect(
+        screen.getByText('scheduledTasks.detail.deletedStateLabel'),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole('button', { name: 'buttons.delete' }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole('button', {
+          name: 'scheduledTasks.card.editActionLabel',
+        }),
+      ).toBeNull();
+      expect(screen.queryByRole('switch')).toBeNull();
+      expect(screen.getByText('runs:1')).toBeTruthy();
     });
   });
 });

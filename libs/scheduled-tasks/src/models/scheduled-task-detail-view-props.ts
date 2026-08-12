@@ -8,6 +8,10 @@ export interface ScheduledTaskDetailViewLabels {
   backAriaLabel: string;
   /** Label for the header's Edit action. Shown only when `onEdit` is supplied. */
   editButtonLabel: string;
+  /** Label for the header's destructive Delete action. Shown only when `onDelete` is supplied. */
+  deleteButtonLabel: string;
+  /** Label of the read-only indicator shown next to the title when `isDeleted` is `true`. */
+  deletedStateLabel: string;
   /** Message shown alongside the page-level retry action when `error` is set. */
   errorLabel: string;
   /** Title of the Details section. */
@@ -97,9 +101,15 @@ export interface ScheduledTaskDetailViewProps {
   labels: ScheduledTaskDetailViewLabels;
   /** Called when the user activates the back-navigation control. */
   onBack: () => void;
-  /** Called when the user activates the header's Edit action. When omitted, no Edit action renders. */
+  /** Called when the user activates the header's Edit action. When omitted, no Edit action renders. Suppressed while `isDeleted` is `true`. */
   onEdit?: () => void;
-  /** Whether the schedule is currently active (resumed) or paused. When `undefined`, the Active switch does not render. */
+  /** Called when the user activates the header's destructive Delete action. When omitted, no Delete action renders. Suppressed while `isDeleted` is `true`. The component opens no dialog and performs no network call itself. */
+  onDelete?: () => void;
+  /** When `true`, the Delete action, Edit action, and Active switch render disabled rather than being removed. Defaults to `false`. */
+  isDeleting?: boolean;
+  /** When `true`, the header renders a read-only deleted-state indicator instead of the Delete, Edit, and Active controls, regardless of whether `onDelete`/`onEdit`/`isActive` are supplied. Defaults to `false`. */
+  isDeleted?: boolean;
+  /** Whether the schedule is currently active (resumed) or paused. When `undefined`, the Active switch does not render. Suppressed while `isDeleted` is `true`. */
   isActive?: boolean;
   /** When `true`, the Active switch renders disabled while a pause/resume request is in flight. Defaults to `false`. */
   isActiveUpdating?: boolean;
