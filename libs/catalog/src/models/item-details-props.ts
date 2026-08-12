@@ -240,6 +240,8 @@ export interface ItemDetailsColors {
   credentialsStatusText?: string;
   /** Body text color of the Content tab. Fallback: `--text-primary`. */
   contentText?: string;
+  /** Text color of a `{{placeholder}}` token in the Content tab's body. Fallback: `--text-prompt-parameter`. */
+  variableText?: string;
   /** Heading color of the API section. Fallback: `--text-secondary`. */
   apiHeadingText?: string;
   /** Divider color between tool entries. Fallback: `--stroke-tertiary`. */

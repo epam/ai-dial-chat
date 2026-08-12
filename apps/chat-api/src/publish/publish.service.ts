@@ -14,6 +14,7 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
+import { toPromptResourceUrl } from '../prompts/utils/prompt-mapper.util';
 import { CatalogEntityType } from './dto/catalog-entity-params.dto';
 import { PublishHistoryEntryDto } from './dto/publish-history-entry.dto';
 import { PublishResultDto } from './dto/publish-result.dto';
@@ -25,7 +26,6 @@ import {
   getResourceName,
   getResourceTypePrefix,
   stripPublicTargetFolder,
-  toPromptResourceUrl,
 } from './publish-target.util';
 
 /*

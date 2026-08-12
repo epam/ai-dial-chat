@@ -15,6 +15,10 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { EnvironmentVariables } from '../config/environment.config';
 import { DeploymentsService } from '../deployments/deployments.service';
 import { DialClientService } from '../dial/dial-client.service';
+import {
+  isPromptResourceUrl,
+  toPromptResourceUrl,
+} from '../prompts/utils/prompt-mapper.util';
 import { SkillsLookupService } from '../skills/lookup/skills-lookup.service';
 import { ToolsetsService } from '../toolsets/toolsets.service';
 import { AcceptInvitationResponseDto } from './dto/accept-invitation-response.dto';
@@ -80,19 +84,6 @@ const CONVERSATION_SHARE_INVITATION_ROUTE_PATH = '/conversations/shared';
 
 /** DIAL Core conversation resource paths always start with this prefix. */
 const CONVERSATION_RESOURCE_PREFIX = 'conversations/';
-
-/** DIAL Core prompt resource paths always start with this prefix. */
-const PROMPT_RESOURCE_PREFIX = 'prompts/';
-
-/*
- * The prompts endpoints address a prompt by a bucket-relative path
- * (`Work/AI/summarize`), because every one of them already scopes to the
- * caller's bucket. DIAL Core's sharing API instead wants the fully-qualified
- * resource url, so the bucket is re-attached here rather than being leaked
- * into the frontend, which never sees it.
- */
-const toPromptResourceUrl = (promptPath: string, bucket: string): string =>
-  `${PROMPT_RESOURCE_PREFIX}${bucket}/${promptPath}`;
 
 const getInvitationRoutePath = (itemId: string): string =>
   itemId.startsWith(CONVERSATION_RESOURCE_PREFIX)
@@ -364,7 +355,7 @@ export class ShareService {
        * A prompt has no deployments/toolsets list entry to summarise — the
        * frontend picks it up from its own prompts refetch instead.
        */
-      if (itemId.startsWith(PROMPT_RESOURCE_PREFIX)) return {};
+      if (isPromptResourceUrl(itemId)) return {};
 
       if (itemId.startsWith('toolsets/')) {
         const sharedToolset = await this.toolsetsService.resolveToolsetItem(

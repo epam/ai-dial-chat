@@ -316,6 +316,22 @@ describe('DetailsPanel — Content tab', () => {
     expect(tabLabels).toEqual(['Details', 'Overview']);
   });
 
+  /* Without this the stylesheet reads a variable nothing ever sets, so the host override is silently inert. */
+  it('sets the placeholder colour variable on the panel root from styles.colors.variableText', () => {
+    const { container } = renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Prompt,
+        details: { promptContent: { content: 'Hi {{name}}' } },
+      }),
+      styles: { colors: { variableText: '#3730b7' } },
+    });
+
+    const panel = container.querySelector('[role="dialog"]') as HTMLElement;
+    expect(panel.style.getPropertyValue('--cat-details-variable-text')).toBe(
+      '#3730b7',
+    );
+  });
+
   it('keeps the About tab for non-prompt entity types', () => {
     renderPanel({
       item: makeItem({ type: CatalogEntityType.Model, description: 'A model' }),

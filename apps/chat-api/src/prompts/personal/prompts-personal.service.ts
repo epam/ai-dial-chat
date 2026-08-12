@@ -18,6 +18,7 @@ import {
   mapPromptToResponse,
   metadataItemToPromptPath,
   nameFromId,
+  PROMPT_RESOURCE_PREFIX,
   type PromptMetadataItem,
   type PromptPayload,
   type PromptReadResult,
@@ -115,7 +116,7 @@ export class PromptsPersonalService {
           /* URL format: 'prompts/{ownerBucket}/{path}' */
           const decoded = safeDecodeURIComponent(raw);
           const parts = decoded.split('/');
-          if (parts.length < 3 || parts[0] !== 'prompts')
+          if (parts.length < 3 || parts[0] !== PROMPT_RESOURCE_PREFIX)
             return Promise.resolve(null);
 
           const ownerBucket = parts[1];

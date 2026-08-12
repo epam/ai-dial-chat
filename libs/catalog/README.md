@@ -155,8 +155,22 @@ hidden, exactly as with `overview`, `pricing`, `limits`, `api`, and `tools`.
 The body is rendered as markdown, and each `{{placeholder}}` token is wrapped in
 a `span.cat-prompt-variable` so a template can read apart from its prose.
 Placeholders inside fenced code are left alone, since there they are being shown
-as literal syntax. The lib ships no colour for that class — style it from the
-host stylesheet, or the tokens render like the surrounding text.
+as literal syntax. The lib colours the class itself, from
+`--cat-details-variable-text` with a `--text-prompt-parameter` theme fallback.
+Override it through `DetailsPanel`'s `styles.colors.variableText`:
+
+```tsx
+<DetailsPanel
+  item={promptItem}
+  isOpen
+  onClose={handleClose}
+  styles={{ colors: { variableText: '#7c3aed' } }}
+/>
+```
+
+Note that `Catalog` forwards only `detailsTexts` to the panel, not styles, so
+every `ItemDetailsColors` field — this one included — is reachable only when a
+host renders `DetailsPanel` itself.
 
 ```tsx
 const promptItem: CatalogItem = {

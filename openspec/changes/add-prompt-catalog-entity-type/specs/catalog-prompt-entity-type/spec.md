@@ -206,7 +206,9 @@ The body SHALL be rendered as markdown through the shared `MarkdownRenderer`, no
 - skip `code` and `pre` subtrees, where a placeholder is being shown as literal syntax
 - require a non-empty inner run that contains no braces, so `{{}}` and an unclosed `{{` stay plain text and one stray brace pair cannot swallow the rest of the document
 
-The lib SHALL provide the class name only, not a colour for it. Styling `.cat-prompt-variable` is the host's, so no `*Colors` field is declared for it — a CSS variable no stylesheet reads would be dead API.
+`Content.module.scss` SHALL colour `.cat-prompt-variable` from `var(--cat-details-variable-text, var(--text-prompt-parameter, #3730b7))`, and `ItemDetailsColors` SHALL declare a matching `variableText` field that `DetailsPanel`'s `buildCssVars` maps to `--cat-details-variable-text`. Both halves are required by the lib-styling contract: a stylesheet reading a variable nothing sets makes a host override silently inert, and a `buildCssVars` entry no stylesheet reads is dead API.
+
+An earlier revision shipped the class name without a colour, on the reasoning that styling belonged to the host. That left placeholders indistinguishable from the surrounding prose in every host that did not know to add the rule, so the lib now carries the default and the host overrides it.
 
 #### Scenario: A placeholder is highlighted
 

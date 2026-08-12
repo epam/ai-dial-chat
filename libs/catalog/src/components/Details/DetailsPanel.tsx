@@ -166,6 +166,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-details-version-tag-text': detailsColors?.versionTagText,
     '--cat-credentials-status-text': detailsColors?.credentialsStatusText,
     '--cat-details-content-text': detailsColors?.contentText,
+    '--cat-details-variable-text': detailsColors?.variableText,
     '--cat-api-heading-text': detailsColors?.apiHeadingText,
     '--cat-tools-divider': detailsColors?.toolsDivider,
     '--cat-tools-description-text': detailsColors?.toolsDescriptionText,
