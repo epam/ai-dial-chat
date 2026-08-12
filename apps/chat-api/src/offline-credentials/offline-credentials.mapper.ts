@@ -16,11 +16,17 @@ export const mapDialOfflineCredentialsToDto = (
   const connected = data.connected ?? false;
   const connect = data.connect;
 
+  /*
+   * `redirect_uri` is intentionally not required here: the OAuth popup flow
+   * never uses Core's echoed value — it always builds its own redirect URI
+   * from `window.location.origin` + the app's fixed callback route (mirrors
+   * the toolset OAuth flow, see `useOfflineCredentialsLogin.ts`), so Core
+   * omitting it must not invalidate an otherwise-usable `connect`.
+   */
   if (
     !connect ||
     connect.authorization_endpoint == null ||
-    connect.client_id == null ||
-    connect.redirect_uri == null
+    connect.client_id == null
   ) {
     return { available, connected };
   }
@@ -31,7 +37,9 @@ export const mapDialOfflineCredentialsToDto = (
     connect: {
       authorizationEndpoint: connect.authorization_endpoint,
       clientId: connect.client_id,
-      redirectUri: connect.redirect_uri,
+      ...(connect.redirect_uri != null && {
+        redirectUri: connect.redirect_uri,
+      }),
       scopes: connect.scopes ?? [],
     },
   };
