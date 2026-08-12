@@ -96,10 +96,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <EntityTypeLabel
-          type={type}
-          className={typography?.typeClassName ?? 'dial-caption-semi-text'}
-        />
+        <EntityTypeLabel type={type} className={typography?.typeClassName} />
 
         <div className="flex min-w-0 flex-col">
           <div className="flex min-w-0 items-start gap-1 overflow-hidden">

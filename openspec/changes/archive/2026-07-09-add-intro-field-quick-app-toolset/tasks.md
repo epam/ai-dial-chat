@@ -217,7 +217,7 @@
       `@epam/ai-dial-kit` instead of `@epam/ai-dial-ui-kit` (18/18 tests passing).
 - [x] 9.6 Added a "Text fields" entry to `.claude/rules/all-tsx.md` banning direct
       `Input`/`Textarea`/`DialTagInput` imports app-wide, alongside the existing
-      Button/SearchBar/Spinner/TabRow entries.
+      Button/SearchBar/Spinner/Tabs entries.
 - [ ] 9.7 Not done (flagged as follow-up, see design.md Open Questions 6–7): no override was
       found/applied for `TagInput`'s own corner radius (no stable CSS class hook located in
       the shipped ui-kit bundle); other existing `Input`/`Textarea`/`DialTagInput`

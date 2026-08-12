@@ -1,5 +1,4 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { TabRow } from '@epam/ai-dial-kit';
 import {
   derivePublishState,
   PublishFooter,
@@ -15,6 +14,7 @@ import {
   ElementSize,
   Skeleton,
   DialTag,
+  Tabs,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft } from '@tabler/icons-react';
@@ -741,7 +741,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
               )}
 
               <div className="flex items-center px-6">
-                <TabRow
+                <Tabs
                   tabs={tabs}
                   activeTabId={activeTab}
                   onTabChange={setActiveTab}

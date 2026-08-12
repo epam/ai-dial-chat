@@ -16,7 +16,6 @@ import {
 } from 'react';
 import type { CardProps } from '../../models/card-props';
 import { DeploymentSize } from '../../types/deployment-icon-size';
-import { getFeaturedEntityStyle } from '../../utils/styles';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
 import { CredentialsBadge } from '../CredentialsBadge/CredentialsBadge';
 import { FeaturedChip } from '../FeaturedChip/FeaturedChip';
@@ -101,7 +100,7 @@ export const Card: FC<CardProps> = ({
           }
         : {})}
       aria-label={item.name}
-      style={{ ...getFeaturedEntityStyle(item), ...cssVars }}
+      style={cssVars}
       className={mergeClasses(
         'box-border cursor-pointer',
         styles.card,
@@ -114,6 +113,7 @@ export const Card: FC<CardProps> = ({
         <div className="absolute end-[22px] top-0 -translate-y-1/2">
           <FeaturedChip
             label={featuredLabel}
+            type={item.type}
             className={featuredChipClassName}
           />
         </div>

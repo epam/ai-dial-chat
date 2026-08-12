@@ -64,7 +64,7 @@ interface Props {
 }
 
 const SECTION_HEADING_CLASS_NAME =
-  'dial-tiny-semi-text px-3 pb-0.5 pt-2 uppercase text-tertiary';
+  'dial-tiny-lead-semi-text px-3 pb-0.5 pt-2 text-tertiary';
 
 // Must match the .rowLeaving exit-animation duration in DeploymentSelectorPanel.module.scss.
 const ROW_LEAVE_ANIMATION_MS = 180;

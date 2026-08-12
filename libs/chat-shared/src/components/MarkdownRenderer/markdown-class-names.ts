@@ -7,7 +7,7 @@ export const DEFAULT_MARKDOWN_CLASS_NAMES: MarkdownRendererClassNames = {
   h3: 'dial-h3-text mb-2 mt-4 first:mt-0 [text-wrap:balance]',
   h4: 'mb-2 mt-4 dial-body-semi-text first:mt-0 [text-wrap:balance]',
   h5: 'mb-2 mt-4 dial-small-semi-text first:mt-0 [text-wrap:balance]',
-  h6: 'mb-2 mt-4 text-sm font-medium first:mt-0 [text-wrap:balance]',
+  h6: 'mb-2 mt-4 dial-tiny-text first:mt-0 [text-wrap:balance]',
   p: 'dial-body-paragraph-text mb-3 break-words [overflow-wrap:anywhere] [text-wrap:pretty] last:mb-0',
   ul: 'mb-3 space-y-1',
   ol: 'mb-3 space-y-1',

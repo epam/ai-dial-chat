@@ -8,7 +8,7 @@ import {
   ConfirmationPopup,
   Input,
   DialRadioButton,
-  DialTagInput,
+  TagInput,
   ElementSize,
   NotificationVariant,
   mergeClasses,
@@ -434,11 +434,13 @@ const AuthSection: FC<Props> = ({
             invalid={!!errors.tokenEndpoint}
             disabled={isControlsDisabled}
           />
-          <DialTagInput
-            elementId="toolset-scopes"
-            label={t(ToolsetEditorI18nKeys.ScopesLabel)}
+          <TagInput
+            id="toolset-scopes"
+            labelProps={{
+              label: t(ToolsetEditorI18nKeys.ScopesLabel),
+            }}
             placeholder={t(ToolsetEditorI18nKeys.ScopesPlaceholder)}
-            initialTags={auth.scopes ?? []}
+            value={auth.scopes ?? []}
             onChange={(scopes) => onAuthChange({ scopes })}
             disabled={isControlsDisabled}
           />

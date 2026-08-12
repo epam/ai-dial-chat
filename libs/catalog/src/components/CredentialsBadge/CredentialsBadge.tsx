@@ -13,7 +13,7 @@ export interface CredentialsBadgeProps {
   loggedOutLabel?: string;
   /** Additional CSS class applied for layout/spacing (e.g. margins). */
   className?: string;
-  /** Typography class for the badge itself. Default: `'dial-caption-semi-text uppercase'`. Colors come from the module stylesheet. */
+  /** Typography class for the badge itself. Default: `'dial-caption-lead-semi-text'`. Colors come from the module stylesheet. */
   badgeClassName?: string;
   /** Color overrides applied as CSS custom properties. */
   colors?: CredentialsBadgeColors;
@@ -32,7 +32,7 @@ export const CredentialsBadge: FC<CredentialsBadgeProps> = ({
   credentials,
   loggedOutLabel = 'LOGGED OUT',
   className,
-  badgeClassName = 'dial-caption-semi-text uppercase',
+  badgeClassName = 'dial-caption-lead-semi-text',
   colors,
 }) => {
   if (credentials == null) return null;
@@ -53,7 +53,7 @@ export const CredentialsBadge: FC<CredentialsBadgeProps> = ({
       <DialTag
         label={loggedOutLabel}
         className={mergeClasses(
-          'border-none tracking-[0.06em]',
+          'border-none',
           styles.badge,
           badgeClassName,
           className,

@@ -269,12 +269,12 @@ return (
 
 ## Typography and color utility classes as props
 
-**Never hardcode typography or color utility classes** (e.g. `dial-body-semi-text`, `dial-small-text`, `text-sm`, `font-bold`, `text-primary`, `text-secondary`, `text-accent`) directly in lib component JSX. The consuming app decides which type scale and color tokens to use. Instead, accept an optional prop and use a sensible default:
+**Never hardcode typography or color utility classes** directly in lib component JSX. The consuming app decides which type scale step and color tokens to use. Instead, accept an optional `<element>ClassName` prop (e.g. `titleClassName`, `labelClassName`, `placeholderIconClassName`) and give it a sensible default:
 
 ```tsx
 // Correct — configurable with a sensible default
 interface MyProps {
-  /** CSS class applied to the title. Defaults to `'dial-body-semi-bold-text'`. */
+  /** CSS class applied to the title. Defaults to `'dial-body-semi-text'`. */
   titleClassName?: string;
   /** Color class applied to the placeholder icon. Defaults to `'text-secondary'`. */
   placeholderIconClassName?: string;
@@ -294,4 +294,36 @@ export const MyComponent: FC<MyProps> = ({
 <Icon className="text-secondary" />
 ```
 
-Name the prop `<element>ClassName` (e.g. `titleClassName`, `labelClassName`, `placeholderIconClassName`). Layout helpers (`truncate`, `min-w-0`, `flex-1`) and structural color-independent utilities that do not vary by theme may remain hardcoded.
+Layout helpers (`truncate`, `min-w-0`, `flex-1`) and structural color-independent utilities that do not vary by theme may remain hardcoded.
+
+### The default must be a real class from the kit's type scale
+
+Every typography default — and every value an app passes in — is a `dial-*-text` class from `@epam/ai-dial-ui-kit`. Nothing else is a valid font size in a lib:
+
+- **Never** a raw Tailwind size utility (`text-xs`, `text-sm`, `text-base`, `text-lg`, `text-[13px]`) or weight utility (`font-bold`, `font-semibold`) — those carry no line-height from the scale.
+- **Never** a `font-size` / `line-height` / `font-weight` declaration in the lib's `.module.scss`. Only `em`-relative sizing that genuinely cannot be a static class is exempt, and it needs a comment saying why.
+- **Never** a locally defined or re-declared `.dial-*-text` rule in lib CSS — that shadows the kit and drifts on the next upgrade. If a step you need does not exist in the scale, that is a gap to raise in the kit, not to patch locally.
+
+### Verify the class name before you write it
+
+**Look the name up with the MCP server** — `getEntityDetails("typography")` returns the full scale and is the only source of truth. Do not write a `dial-*-text` name from memory.
+
+This is not pedantry: a misspelled or removed class **compiles to nothing at all**. `typecheck` and `test` never see Tailwind class strings, so the build stays green and the text silently falls back to whatever size it inherits. `dial-body-semi-bold-text` does not exist and never did; `dial-caption-semi-text` was removed in kit 0.13.0. Both read as plausible and both render as unstyled text.
+
+The same applies to renames and rescales in a kit upgrade — the heading scale shifted one step in 0.13.0 with no TypeScript signal. After bumping `@epam/ai-dial-ui-kit`, sweep `libs/*` for `dial-*-text` and check the classes still mean what the component intended (see the migration-guide workflow in `AGENTS.md`).
+
+### `*-lead-*` classes uppercase themselves
+
+`dial-tiny-lead-text`, `dial-tiny-lead-semi-text`, and `dial-caption-lead-semi-text` apply `text-transform: uppercase` and their own `letter-spacing`. Pass them the sentence-case string and drop any `uppercase` utility, `tracking-[…]` utility, or `.toUpperCase()` call at the same spot — the CSS transform keeps the accessible name readable, while a pre-uppercased string makes screen readers spell short labels out letter by letter.
+
+```tsx
+// Correct
+badgeClassName = 'dial-caption-lead-semi-text',
+
+// Wrong — redundant tracking and a class the kit no longer ships
+badgeClassName = 'dial-caption-semi-text uppercase tracking-[0.6px]',
+```
+
+### Keep the doc comment and the default in sync
+
+The doc comment must quote the default **verbatim** (see _JSDoc on all exported symbols_ above). A comment that names a different class than the destructuring default is worse than no comment: it is the string a caller copies into their own override, which is exactly how `dial-body-semi-bold-text` spread through `libs/conversation-input`.
