@@ -1,64 +1,61 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, GhostIconButton } from '@epam/ai-dial-ui-kit';
-import { IconCopy } from '@tabler/icons-react';
-import { FC, useCallback, useState } from 'react';
+import { MarkdownRenderer, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { FC } from 'react';
 import type { ItemDetailsStyles } from '../../../models/item-details-props';
+import { rehypePromptVariables } from '../../../utils/prompt-variables';
 import styles from './Content.module.scss';
 
+/* Stable identity so the renderer's plugin array does not change every render. */
+const REHYPE_PLUGINS = [rehypePromptVariables];
+
 interface ContentTabProps {
-  /** The item's full text body, rendered read-only with whitespace preserved. */
+  /** The item's full text body, rendered read-only as markdown. */
   content: string;
-  /** Accessible label for the copy button. Defaults to `'Copy content'`. */
-  copyAriaLabel?: string;
-  /** Status text announced after a successful copy. Defaults to `'Copied'`. */
-  copiedStatusLabel?: string;
+  /** Short summary shown above the body. Omitted when empty. */
+  description?: string;
   detailsStyles?: ItemDetailsStyles;
 }
 
-/** Renders a catalog item's long-form text body read-only, with a copy-to-clipboard control. */
+/**
+ * Renders a catalog item's summary and its long-form body as read-only
+ * markdown, with `{{placeholder}}` tokens highlighted.
+ */
 export const ContentTab: FC<ContentTabProps> = ({
   content,
-  copyAriaLabel = 'Copy content',
-  copiedStatusLabel = 'Copied',
+  description,
   detailsStyles,
 }) => {
-  const [copyStatus, setCopyStatus] = useState('');
-
-  const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(content);
-      setCopyStatus(copiedStatusLabel);
-    } catch {
-      /*
-       * A denied clipboard permission is not actionable here: the body stays
-       * selectable so the user can copy it manually. Announcing nothing is
-       * preferable to announcing a success that did not happen.
-       */
-      setCopyStatus('');
-    }
-  }, [content, copiedStatusLabel]);
+  const bodyClassName =
+    detailsStyles?.typography?.contentClassName ?? 'dial-small-text';
+  const headingClassName =
+    detailsStyles?.typography?.contentHeadingClassName ??
+    'dial-small-semi-text';
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex justify-end">
-        <GhostIconButton
-          icon={<IconCopy size={DIAL_ICON_SIZE.SM} aria-hidden />}
-          aria-label={copyAriaLabel}
-          onClick={handleCopy}
-        />
-      </div>
-      <pre
+    <div className="flex h-full flex-col gap-4">
+      {description != null && description !== '' && (
+        <p className={mergeClasses('m-0', bodyClassName)}>{description}</p>
+      )}
+
+      <div
         className={mergeClasses(
-          'm-0 max-h-[60vh] overflow-auto whitespace-pre-wrap break-words text-start',
-          styles.content,
-          detailsStyles?.typography?.contentClassName ?? 'dial-small-text',
+          'min-h-0 flex-1 overflow-auto break-words text-start',
+          styles.body,
+          bodyClassName,
         )}
       >
-        {content}
-      </pre>
-      <span role="status" aria-live="polite" className="sr-only">
-        {copyStatus}
-      </span>
+        <MarkdownRenderer
+          content={content}
+          rehypePlugins={REHYPE_PLUGINS}
+          classNames={{
+            h1: headingClassName,
+            h2: headingClassName,
+            h3: headingClassName,
+            h4: headingClassName,
+            h5: headingClassName,
+            h6: headingClassName,
+          }}
+        />
+      </div>
     </div>
   );
 };

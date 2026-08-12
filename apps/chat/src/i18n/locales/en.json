@@ -99,8 +99,7 @@
     "listViewLabel": "List view",
     "details": {
       "tabTools": "Tools",
-      "tabContent": "Content",
-      "contentCopied": "Copied",
+      "tabContent": "Details",
       "promptLoadError": "Couldn't load this prompt. Please try again.",
       "tabLimits": "Limits",
       "api": {
@@ -176,7 +175,6 @@
       },
       "prompt": {
         "section": "Prompt",
-        "description": "Description",
         "folder": "Folder",
         "folderRoot": "Root",
         "source": "Source",

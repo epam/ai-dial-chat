@@ -149,10 +149,8 @@ export enum CatalogI18nKeys {
   // Details panel
   DetailsTabTools = 'catalog.details.tabTools',
   DetailsTabContent = 'catalog.details.tabContent',
-  DetailsContentCopied = 'catalog.details.contentCopied',
   DetailsPromptLoadError = 'catalog.details.promptLoadError',
   DetailsPromptSection = 'catalog.details.prompt.section',
-  DetailsPromptDescription = 'catalog.details.prompt.description',
   DetailsPromptFolder = 'catalog.details.prompt.folder',
   DetailsPromptFolderRoot = 'catalog.details.prompt.folderRoot',
   DetailsPromptSource = 'catalog.details.prompt.source',

@@ -91,6 +91,8 @@ export interface MarkdownRendererProps {
    * Use for elements not covered by `classNames`.
    */
   components?: Components;
+  /** Extra rehype plugins, applied after the built-in KaTeX pass. Defaults to none. */
+  rehypePlugins?: NonNullable<Options['rehypePlugins']>;
   /**
    * Label shown with a shimmer animation while `isStreaming` is true and no content has arrived yet.
    * Defaults to `'Thinking'`. Pass a translated string from the consuming app.
@@ -146,9 +148,12 @@ const remarkPlugins: Options['remarkPlugins'] = [
 ];
 
 /** KaTeX rehype plugin list, shared across all markdown instances. */
-const rehypePlugins: Options['rehypePlugins'] = [
+const baseRehypePlugins: NonNullable<Options['rehypePlugins']> = [
   [rehypeKatex, { output: 'mathml', strict: false }],
 ];
+
+/** Stable empty plugin list used as the default when no extra plugins are passed. */
+const EMPTY_REHYPE_PLUGINS: NonNullable<Options['rehypePlugins']> = [];
 
 /** Stable empty classNames object used as the default when no `classNames` prop is passed. */
 const EMPTY_CLASS_NAMES: MarkdownRendererClassNames = {};
@@ -342,6 +347,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     streamCharactersPerSecond,
     classNames = EMPTY_CLASS_NAMES,
     components,
+    rehypePlugins = EMPTY_REHYPE_PLUGINS,
     thinkingLabel = 'Thinking',
     codeBlockCopyLabel,
     codeBlockCopiedLabel,
@@ -409,7 +415,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
       <div style={cssVars}>
         <ReactMarkdown
           remarkPlugins={remarkPlugins}
-          rehypePlugins={rehypePlugins}
+          rehypePlugins={[...baseRehypePlugins, ...rehypePlugins]}
           components={mergedComponents}
         >
           {processedContent}

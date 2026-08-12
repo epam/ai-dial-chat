@@ -143,7 +143,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-details-version-tag-text': detailsColors?.versionTagText,
     '--cat-credentials-status-text': detailsColors?.credentialsStatusText,
     '--cat-details-content-text': detailsColors?.contentText,
-    '--cat-details-content-bg': detailsColors?.contentBackground,
     '--cat-api-heading-text': detailsColors?.apiHeadingText,
     '--cat-tools-divider': detailsColors?.toolsDivider,
     '--cat-tools-description-text': detailsColors?.toolsDescriptionText,
@@ -231,7 +230,13 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   }, [item.id, initialIsStarred]);
 
   useEffect(() => {
-    setActiveTab(CatalogDetailsTab.About);
+    /*
+     * Cleared rather than set to a named tab: `About` is not in every item's
+     * tab set (a prompt has none), so naming it here would select a tab that
+     * does not exist. The reconciliation effect below picks whichever tab is
+     * actually first for this item.
+     */
+    setActiveTab('');
     setIsPublishOpen(false);
     publishFlow.reset();
     setPublishHistory([]);
@@ -342,8 +347,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   const tabs = useMemo(() => {
     const result: { id: string; label: string }[] = [];
     /*
-     * A prompt's description and metadata live in its Overview tab, so an
-     * About tab would only repeat them: prompts show Content + Overview only.
+     * A prompt leads with its body: the Content tab is first and already
+     * carries the description, so an About tab would only repeat it. Prompts
+     * therefore show Content then Overview, and nothing else.
      */
     if (item.type !== CatalogEntityType.Prompt) {
       result.push({
@@ -354,7 +360,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     if (item.details?.promptContent != null) {
       result.push({
         id: CatalogDetailsTab.Content,
-        label: texts?.tabContentLabel ?? 'Content',
+        label: texts?.tabContentLabel ?? 'Details',
       });
     }
     if (item.details?.overview != null) {
@@ -685,6 +691,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
               <div
                 className={mergeClasses(
+                  'min-h-0 flex-1 overflow-y-auto',
                   activeTab !== CatalogDetailsTab.Overview && 'mt-4 px-6',
                 )}
               >
@@ -699,8 +706,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                   item.details?.promptContent != null && (
                     <ContentTab
                       content={item.details.promptContent.content}
-                      copyAriaLabel={texts?.copyContentAriaLabel}
-                      copiedStatusLabel={texts?.contentCopiedStatusLabel}
+                      description={item.description}
                       detailsStyles={detailsStyles}
                     />
                   )}

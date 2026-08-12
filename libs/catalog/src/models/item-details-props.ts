@@ -19,12 +19,8 @@ export interface ItemDetailsTexts {
   manageActionLabel?: string;
   /** "About" tab label. Default: `'About'`. */
   tabAboutLabel?: string;
-  /** "Content" tab label, shown for items carrying a text body. Default: `'Content'`. */
+  /** Content tab label, shown for items carrying a text body. Default: `'Details'`. */
   tabContentLabel?: string;
-  /** Accessible label for the Content tab's copy-to-clipboard button. Default: `'Copy content'`. */
-  copyContentAriaLabel?: string;
-  /** Status text announced after the Content tab's body is copied. Default: `'Copied'`. */
-  contentCopiedStatusLabel?: string;
   /** "Overview" tab label. Default: `'Overview'`. */
   tabOverviewLabel?: string;
   /** "Pricing" tab label. Default: `'Pricing'`. */
@@ -217,8 +213,6 @@ export interface ItemDetailsColors {
   credentialsStatusText?: string;
   /** Body text color of the Content tab. Fallback: `--text-primary`. */
   contentText?: string;
-  /** Surface color behind the Content tab's body. Fallback: `--bg-layer-1`. */
-  contentBackground?: string;
   /** Heading color of the API section. Fallback: `--text-secondary`. */
   apiHeadingText?: string;
   /** Divider color between tool entries. Fallback: `--stroke-tertiary`. */

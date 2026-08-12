@@ -66,28 +66,29 @@ export interface CatalogItemPromptContent {
 
 and an optional `promptContent?: CatalogItemPromptContent` field on `CatalogItemTabData`. `CatalogItemPromptContent` SHALL be exported from `index.ts`, since it is reachable through the public `CatalogItemTabData` / `CatalogItemDetailsFetchResult` types.
 
-`DetailsPanel` SHALL render a `Content` tab positioned immediately after `About` when `details.promptContent` is non-null, and hide it when absent — the same gating rule already applied to `overview`, `pricing`, `limits`, `api`, and `tools`. The tab body SHALL render the text read-only in a scrollable container (`overflow` on its own element, never on the page body), preserving whitespace and line breaks, with a copy-to-clipboard control.
+`DetailsPanel` SHALL render a `Content` tab when `details.promptContent` is non-null, and hide it when absent — the same gating rule already applied to `overview`, `pricing`, `limits`, `api`, and `tools`. It is positioned after `About` for types that have one, and **first** for a prompt, which has none. The tab body SHALL render the text read-only as markdown in a scrollable container (`overflow` on its own element, never on the page body). It carries no copy control: the body is selectable text, and a copy affordance duplicated what the platform already offers.
 
-`ItemDetailsTexts` SHALL gain `tabContentLabel?: string` (default `'Content'`), `copyContentAriaLabel?: string` (default `'Copy content'`), and `contentCopiedStatusLabel?: string` (default `'Copied'`). The copy confirmation SHALL be announced through a `role="status" aria-live="polite"` region separate from the button's own stable `aria-label`.
+`ItemDetailsTexts` SHALL gain `tabContentLabel?: string` (default `'Details'`). No copy-related label is declared — an earlier revision added `copyContentAriaLabel` and `contentCopiedStatusLabel` for a copy button that has since been removed, and a label nothing reads is dead public API.
 
-The tab body MUST use logical CSS properties (`ps-*`/`pe-*`, `text-start`) so it flips under `dir="rtl"`. The copy icon is symmetric and MUST NOT be mirrored.
+The panel SHALL open on whichever tab is first for the displayed item, resolved from the item's own tab set rather than from a hardcoded tab id — `About` does not exist for every type, so naming it as the initial tab would select a tab that is not there.
+
+The tab body MUST use logical CSS properties (`ps-*`/`pe-*`, `text-start`) so it flips under `dir="rtl"`.
 
 #### Scenario: Content tab is shown when promptContent is present
 
 - **WHEN** the details panel opens for an item whose `details.promptContent` is `{ content: 'Summarize {{text}}' }`
-- **THEN** the tab row contains a `Content` tab positioned immediately after `About`
-- **AND** selecting it renders `Summarize {{text}}` as read-only text with whitespace preserved
+- **THEN** the tab row contains a `Content` tab, after `About` for a type that has one and first for a prompt
+- **AND** selecting it renders `Summarize {{text}}` read-only, with `{{text}}` highlighted
 
 #### Scenario: Content tab is hidden when promptContent is absent
 
 - **WHEN** the details panel opens for an item whose `details.promptContent` is `undefined`
 - **THEN** the tab row contains no `Content` tab
 
-#### Scenario: Copying the content announces confirmation
+#### Scenario: The Content tab offers no copy control
 
-- **WHEN** the user activates the copy control in the Content tab
-- **THEN** the prompt body is written to the clipboard
-- **AND** the copy button's `aria-label` stays unchanged
+- **WHEN** the Content tab renders a body
+- **THEN** no button is rendered inside it
 - **AND** an `aria-live="polite"` status region announces the `contentCopiedStatusLabel` text
 
 #### Scenario: Long content scrolls inside its own container
@@ -154,14 +155,17 @@ No revoke-access predicate is added either: this branch's `libs/catalog` has no 
 
 `DetailsPanel` currently pushes the `About` tab unconditionally as the first tab. For `CatalogEntityType.Prompt` it SHALL be omitted, leaving `Content` (the body) followed by `Overview`, in that order.
 
-The rationale is non-duplication, not capability: a prompt's description and its storage metadata are carried by the Overview tab, so an About tab would repeat them. Because this is a display rule rather than a host capability, it SHALL be a type check inside the lib — consistent with `ENTITY_TYPE_COLOR`, `TAB_ORDER`, and `Header`'s primary-action rule — and SHALL NOT add a host predicate.
+The rationale is non-duplication, not capability: the `Content` tab renders the item's `description` above the body, and the storage metadata is carried by `Overview`, so an About tab would repeat them. Because this is a display rule rather than a host capability, it SHALL be a type check inside the lib — consistent with `ENTITY_TYPE_COLOR`, `TAB_ORDER`, and `Header`'s primary-action rule — and SHALL NOT add a host predicate.
+
+The `Content` tab SHALL be labelled **Details** by default (`tabContentLabel`). Because it shows the description, `buildPromptOverview` MUST NOT also emit a description row.
 
 Every other entity type SHALL keep the `About` tab exactly as before.
 
-#### Scenario: A prompt with a body and overview data shows Content then Overview
+#### Scenario: A prompt with a body and overview data shows Details then Overview
 
 - **WHEN** the details panel opens for a Prompt item whose `details` carry both `promptContent` and `overview`
-- **THEN** the tab row contains exactly `Content` and `Overview`, in that order
+- **THEN** the tab row contains exactly `Details` and `Overview`, in that order
+- **AND** `Details` is the active tab, so the body is visible without a click
 - **AND** no `About` tab is rendered
 - **AND** the prompt body is shown by default, because `Content` is the first tab
 
@@ -174,6 +178,38 @@ Every other entity type SHALL keep the `About` tab exactly as before.
 
 - **WHEN** the details panel opens for a Model item
 - **THEN** the `About` tab is rendered first, as before this change
+
+---
+
+### Requirement: The Content tab renders markdown with highlighted placeholders
+
+The body SHALL be rendered as markdown through the shared `MarkdownRenderer`, not as preformatted text — a prompt body is authored with headings and lists, and rendering it verbatim loses that structure.
+
+`MarkdownRenderer` SHALL gain an optional `rehypePlugins` prop, appended after its built-in KaTeX pass, mirroring the `components` escape hatch it already exposes. Consumers that pass nothing keep today's behaviour.
+
+`rehypePromptVariables` (`libs/catalog/src/utils/prompt-variables.ts`) SHALL wrap every `{{name}}` token in a span so it can be coloured apart from the surrounding prose. It MUST:
+
+- build hast element nodes directly rather than injecting raw HTML, so a token containing markup cannot escape into the document
+- skip `code` and `pre` subtrees, where a placeholder is being shown as literal syntax
+- require a non-empty inner run that contains no braces, so `{{}}` and an unclosed `{{` stay plain text and one stray brace pair cannot swallow the rest of the document
+
+The lib SHALL provide the class name only, not a colour for it. Styling `.cat-prompt-variable` is the host's, so no `*Colors` field is declared for it — a CSS variable no stylesheet reads would be dead API.
+
+#### Scenario: A placeholder is highlighted
+
+- **WHEN** the body contains `Reply to {{original_email}} politely.`
+- **THEN** `{{original_email}}` is rendered in its own span carrying the placeholder class
+- **AND** the surrounding text is unchanged
+
+#### Scenario: A placeholder inside a code fence is left alone
+
+- **WHEN** the body contains a fenced block whose content is `{{original_email}}`
+- **THEN** no placeholder span is rendered
+
+#### Scenario: Markdown structure is preserved
+
+- **WHEN** the body contains a `##` heading and a bullet list
+- **THEN** they render as a heading element and list items, not as literal `##` and `-` characters
 
 ---
 

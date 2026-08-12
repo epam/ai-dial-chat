@@ -283,7 +283,7 @@ describe('DetailsPanel — Content tab', () => {
     ],
   };
 
-  it('gives a prompt exactly two tabs — Content then Overview, never About', () => {
+  it('gives a prompt exactly two tabs — Details then Overview, never About', () => {
     renderPanel({
       item: makeItem({
         type: CatalogEntityType.Prompt,
@@ -297,7 +297,7 @@ describe('DetailsPanel — Content tab', () => {
     const tabLabels = Array.from(
       screen.getByRole('tablist').querySelectorAll('button'),
     ).map((button) => button.textContent);
-    expect(tabLabels).toEqual(['Content', 'Overview']);
+    expect(tabLabels).toEqual(['Details', 'Overview']);
   });
 
   it('keeps the About tab for non-prompt entity types', () => {
@@ -306,6 +306,28 @@ describe('DetailsPanel — Content tab', () => {
     });
 
     expect(screen.getByRole('button', { name: 'About' })).toBeTruthy();
+  });
+
+  it('opens on the Details tab, not Overview', () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Prompt,
+        details: {
+          promptContent: { content: 'Summarize:' },
+          overview: promptOverview,
+        },
+      }),
+    });
+
+    /*
+     * The body renders, and "Overview" appears once — as its tab button only,
+     * not as the mocked Overview panel — so Details is the active tab.
+     */
+    expect(screen.getByText('Summarize:')).toBeTruthy();
+    expect(screen.getAllByText('Overview')).toHaveLength(1);
+    expect(
+      screen.getByRole('tablist').querySelector('button')?.textContent,
+    ).toBe('Details');
   });
 
   it('renders the prompt body in the Content tab by default', () => {
@@ -330,7 +352,7 @@ describe('DetailsPanel — Content tab', () => {
       }),
     });
 
-    expect(screen.queryByRole('button', { name: 'Content' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Details' })).toBeNull();
   });
 });
 

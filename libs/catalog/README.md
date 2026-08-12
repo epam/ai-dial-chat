@@ -125,10 +125,22 @@ CatalogDetailsTab.Content; // 'content' — long-form text body (prompts)
 
 `CatalogEntityType.Prompt` is a display category for reusable text prompts.
 Prompt items carry a body rather than a runtime, so the host supplies the text
-through `details.promptContent` and the details panel renders it in a read-only,
-copyable `Content` tab placed immediately after `About`. Omit the field and the
-tab is hidden, exactly as with `overview`, `pricing`, `limits`, `api`, and
-`tools`.
+through `details.promptContent`. The details panel renders it read-only in the
+`Content` tab — labelled **Details** by default, overridable through
+`detailsTexts.tabContentLabel` — with the item's `description` above it. The
+body is selectable text and carries no copy control of its own.
+
+A prompt shows exactly two tabs, `Content` then `Overview`, and never `About`:
+its description is already in the Content tab, and its storage metadata belongs
+in `overview`, so an About tab would only repeat them. Every other entity type
+keeps `About` as its first tab. Omit `promptContent` and the Content tab is
+hidden, exactly as with `overview`, `pricing`, `limits`, `api`, and `tools`.
+
+The body is rendered as markdown, and each `{{placeholder}}` token is wrapped in
+a `span.cat-prompt-variable` so a template can read apart from its prose.
+Placeholders inside fenced code are left alone, since there they are being shown
+as literal syntax. The lib ships no colour for that class — style it from the
+host stylesheet, or the tokens render like the surrounding text.
 
 ```tsx
 const promptItem: CatalogItem = {
@@ -140,7 +152,14 @@ const promptItem: CatalogItem = {
   description: 'Summarize a document',
   folder: ['Personal', 'Work', 'AI'],
   topics: [],
-  details: { promptContent: { content: 'Summarize the following text:' } },
+  details: {
+    promptContent: { content: '## Original\n\n{{original_email}}' },
+    overview: {
+      sections: [
+        { title: 'Prompt', specs: [{ label: 'Folder', value: 'Work / AI' }] },
+      ],
+    },
+  },
 };
 ```
 

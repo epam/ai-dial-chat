@@ -1026,8 +1026,6 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       detailsTexts={{
         tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
         tabContentLabel: t(CatalogI18nKeys.DetailsTabContent),
-        copyContentAriaLabel: t(ButtonsI18nKeys.Copy),
-        contentCopiedStatusLabel: t(CatalogI18nKeys.DetailsContentCopied),
         tabLimitsLabel: t(CatalogI18nKeys.DetailsTabLimits),
         primaryActionLabel: t(ButtonsI18nKeys.UseInChat),
         editActionLabel: t(ButtonsI18nKeys.Edit),

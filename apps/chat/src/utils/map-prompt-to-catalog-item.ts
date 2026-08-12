@@ -33,8 +33,9 @@ export const resolvePromptSource = (item: CatalogItem): PromptSource => {
 };
 
 /**
- * Builds the Overview tab data for a prompt. Prompts have no About tab, so the
- * description and its storage metadata are carried here instead.
+ * Builds the Overview tab data for a prompt: where it is stored, which
+ * namespace it came from, and when it last changed. The description is not
+ * repeated here — the Details tab already shows it above the body.
  */
 export const buildPromptOverview = (
   prompt: PromptResponseDto,
@@ -45,27 +46,23 @@ export const buildPromptOverview = (
     ? prompt.folderId.split('/').map(safeDecodeURIComponent).join(' / ')
     : t(CatalogI18nKeys.DetailsPromptFolderRoot);
 
-  const specs = [
-    { label: t(CatalogI18nKeys.DetailsPromptFolder), value: folderLabel },
-    {
-      label: t(CatalogI18nKeys.DetailsPromptSource),
-      value: t(SOURCE_FOLDER_KEY[source]),
-    },
-    {
-      label: t(CatalogI18nKeys.DetailsPromptUpdated),
-      value: formatLastUsed(prompt.updatedAt),
-    },
-  ];
-
-  if (prompt.description) {
-    specs.unshift({
-      label: t(CatalogI18nKeys.DetailsPromptDescription),
-      value: prompt.description,
-    });
-  }
-
   return {
-    sections: [{ title: t(CatalogI18nKeys.DetailsPromptSection), specs }],
+    sections: [
+      {
+        title: t(CatalogI18nKeys.DetailsPromptSection),
+        specs: [
+          { label: t(CatalogI18nKeys.DetailsPromptFolder), value: folderLabel },
+          {
+            label: t(CatalogI18nKeys.DetailsPromptSource),
+            value: t(SOURCE_FOLDER_KEY[source]),
+          },
+          {
+            label: t(CatalogI18nKeys.DetailsPromptUpdated),
+            value: formatLastUsed(prompt.updatedAt),
+          },
+        ],
+      },
+    ],
   };
 };
 

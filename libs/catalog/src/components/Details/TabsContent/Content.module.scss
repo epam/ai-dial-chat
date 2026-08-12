@@ -1,7 +1,3 @@
-.content {
+.body {
   color: var(--cat-details-content-text, var(--text-primary, #161b2d));
-  background: var(--cat-details-content-bg, var(--bg-layer-1, #f3f4f6));
-  border-radius: 4px;
-  padding: 12px;
-  font-family: inherit;
 }
