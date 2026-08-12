@@ -44,7 +44,7 @@ describe('conversation-publish API', () => {
         rules: [
           {
             source: 'role',
-            _function: PublicationRuleFunction.Contain,
+            function: PublicationRuleFunction.Contain,
             targets: ['engineering'],
           },
         ],

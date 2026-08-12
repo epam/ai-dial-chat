@@ -20,7 +20,7 @@ describe('publish API', () => {
     const rules: PublishRuleDto[] = [
       {
         source: 'roles',
-        _function: PublishRuleDtoFunctionEnum.Contain,
+        function: PublishRuleDtoFunctionEnum.Contain,
         targets: ['engineering', 'support'],
       },
     ];

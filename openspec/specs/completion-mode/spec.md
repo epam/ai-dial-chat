@@ -22,6 +22,8 @@ The completion request contract (CompletionMode, generationId, messageIndex) and
 
 `buildConversationHistory` (`apps/chat-api/src/conversations/utils/conversation-history-builder.ts`) SHALL return `{ conversation, assistantMessageIndex }` and build history as: `Append` appends a user message + empty assistant placeholder; `ContinueLastUser` appends only a placeholder when the last message is already a user message; `Regenerate` truncates at `messageIndex` (exclusive) then appends a placeholder; `Edit` truncates at `messageIndex` (the user message), appends the edited user message + placeholder.
 
+`buildConversationHistory` SHALL also accept the `model` deployment id for the request. For `Regenerate`, when `model` differs from `conversation.model.id`, every message in the truncated history SHALL have `custom_content.state` cleared before the placeholder is appended — a stateful app's `state` is deployment-specific and is not valid once the deployment changes.
+
 #### Scenario: Append adds a new turn
 
 - **WHEN** mode is `append`
@@ -31,6 +33,16 @@ The completion request contract (CompletionMode, generationId, messageIndex) and
 
 - **WHEN** mode is `regenerate` with the assistant index
 - **THEN** the old assistant message (and anything after it) is removed and a fresh placeholder is appended at that index
+
+#### Scenario: Regenerate with the same model preserves state
+
+- **WHEN** mode is `regenerate` and `model` equals `conversation.model.id`
+- **THEN** `custom_content.state` on messages before `messageIndex` is left untouched
+
+#### Scenario: Regenerate with a different model clears state
+
+- **WHEN** mode is `regenerate` and `model` differs from `conversation.model.id`
+- **THEN** `custom_content.state` is cleared from every message before `messageIndex`
 
 ### Requirement: Frontend forwards the correct truncation index per mode
 
