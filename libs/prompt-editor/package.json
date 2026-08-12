@@ -24,6 +24,8 @@
     "react": "^19.0.0"
   },
   "nx": {
-    "tags": ["type:ui"]
+    "tags": [
+      "type:ui"
+    ]
   }
 }
