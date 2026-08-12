@@ -396,7 +396,7 @@ describe('DeploymentsDetailsService', () => {
       sdkClient.getApplication.mockResolvedValue(
         okResponse({
           id: 'applications/public/finhub-via-openapi__1.0.0',
-          display_name: 'finhub-via-openapi',
+          display_name: { plainValue: 'finhub-via-openapi' },
         }),
       );
 
@@ -417,7 +417,7 @@ describe('DeploymentsDetailsService', () => {
       sdkClient.getApplication.mockResolvedValue(
         okResponse({
           id: 'applications/public/finhub-via-openapi__1.0.0',
-          display_name: 'finhub-via-openapi',
+          display_name: { plainValue: 'finhub-via-openapi' },
         }),
       );
 

@@ -7,6 +7,7 @@ import {
 } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
+import { resolveLocalizedValue } from '../../common/utils/localized-value';
 import { DialClientService } from '../../dial/dial-client.service';
 import type { DeploymentLimitsResponseDto } from '../../openapi/openapi-response.dto';
 import type { DeploymentConfigurationDto } from '../dto/deployment-configuration.dto';
@@ -330,7 +331,7 @@ export class DeploymentsDetailsService {
       id: deployment,
       type: DeploymentItemType.Application,
       applicationDetails: {
-        displayName: raw.display_name,
+        displayName: resolveLocalizedValue(raw.display_name),
         applicationProperties: (() => {
           const base = isRecord(raw.application_properties)
             ? raw.application_properties

@@ -15,6 +15,7 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { EnvironmentVariables } from '../config/environment.config';
 import { DeploymentsService } from '../deployments/deployments.service';
 import { DialClientService } from '../dial/dial-client.service';
+import { SkillsLookupService } from '../skills/lookup/skills-lookup.service';
 import { ToolsetsService } from '../toolsets/toolsets.service';
 import { AcceptInvitationResponseDto } from './dto/accept-invitation-response.dto';
 import {
@@ -39,6 +40,7 @@ const RESOURCE_KIND_BY_PREFIX: [prefix: string, kind: ResourceKind][] = [
   ['applications/', 'APPLICATION'],
   ['toolsets/', 'TOOL_SET'],
   ['conversations/', 'CONVERSATION'],
+  ['skills/', 'SKILL'],
 ];
 
 const resolveResourceKind = (itemId: string): ResourceKind =>
@@ -122,6 +124,7 @@ export class ShareService {
     private readonly configService: ConfigService<EnvironmentVariables>,
     private readonly deploymentsService: DeploymentsService,
     private readonly toolsetsService: ToolsetsService,
+    private readonly skillsLookupService: SkillsLookupService,
   ) {
     const callbackBaseUrl = this.configService.get('AUTH_CALLBACK_BASE_URL', {
       infer: true,
@@ -342,9 +345,21 @@ export class ShareService {
     userSub: string,
     bucket: string,
   ): Promise<
-    Pick<AcceptInvitationResponseDto, 'sharedDeployment' | 'sharedToolset'>
+    Pick<
+      AcceptInvitationResponseDto,
+      'sharedDeployment' | 'sharedToolset' | 'sharedSkill'
+    >
   > {
     try {
+      if (itemId.startsWith('skills/')) {
+        const sharedSkill = await this.skillsLookupService.resolveSkillItem(
+          itemId,
+          accessToken,
+          bucket,
+        );
+        return sharedSkill ? { sharedSkill } : {};
+      }
+
       /*
        * A prompt has no deployments/toolsets list entry to summarise — the
        * frontend picks it up from its own prompts refetch instead.

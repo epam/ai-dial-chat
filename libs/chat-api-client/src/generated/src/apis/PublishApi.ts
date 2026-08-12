@@ -239,6 +239,7 @@ export const GetCatalogPublishHistoryEntityTypeEnum = {
   Toolset: 'toolset',
   Application: 'application',
   Prompt: 'prompt',
+  Skill: 'skill',
 } as const;
 export type GetCatalogPublishHistoryEntityTypeEnum =
   (typeof GetCatalogPublishHistoryEntityTypeEnum)[keyof typeof GetCatalogPublishHistoryEntityTypeEnum];
@@ -250,6 +251,7 @@ export const PublishCatalogEntityEntityTypeEnum = {
   Toolset: 'toolset',
   Application: 'application',
   Prompt: 'prompt',
+  Skill: 'skill',
 } as const;
 export type PublishCatalogEntityEntityTypeEnum =
   (typeof PublishCatalogEntityEntityTypeEnum)[keyof typeof PublishCatalogEntityEntityTypeEnum];

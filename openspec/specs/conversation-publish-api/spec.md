@@ -97,6 +97,10 @@ Authorization: caller SHALL be authenticated (existing session guard). The servi
 - **WHEN** the Core `createPublication` call fails unexpectedly (network error, 5xx, timeout)
 - **THEN** the service throws `BadGatewayException` or `ServiceUnavailableException` (per `handleDialSdkError`) and logs the failure without logging request bodies containing tokens
 
+#### Scenario: Core rejects the request with a structured error
+- **WHEN** `createPublication` resolves with a structured error response (`result.error`), e.g. a 400 for an invalid destination
+- **THEN** the service calls `mapDialHttpStatus` with `result.error` as `errorBody` and `extractDialErrorMessage(result.error)` as `upstreamMessage`, so the thrown exception's `message` is Core's own reason instead of a generic placeholder — matching `catalog-publish-api`'s equivalent behavior for `PublishService.publish`
+
 #### Scenario: Request omitting rules behaves exactly as before this change
 - **WHEN** a request body has no `rules` field at all (an older client, or a client not using the new UI)
 - **THEN** the DTO normalizes the missing field to `rules: []`, Core receives `rules: []`, and the request succeeds exactly as it did before this change
@@ -142,6 +146,10 @@ Rate limiting: default global throttle (read endpoint, no stricter override).
 #### Scenario: Upstream failure
 - **WHEN** the Core `getPublications` call fails unexpectedly
 - **THEN** the service throws `BadGatewayException` or `ServiceUnavailableException` (per `handleDialSdkError`)
+
+#### Scenario: Core rejects the history request with a structured error
+- **WHEN** `getPublications` resolves with a structured error response (`result.error`)
+- **THEN** the service calls `mapDialHttpStatus` with `result.error` and `extractDialErrorMessage(result.error)`, so the thrown exception's `message` is Core's own reason instead of a generic placeholder
 
 ### Requirement: Shared publish-target utilities are extracted, not duplicated, between catalog and conversation publish services
 

@@ -6,7 +6,10 @@ import {
   Logger,
 } from '@nestjs/common';
 import type { Cache } from 'cache-manager';
-import { mapDialHttpStatus } from '../common/dial/dial-error.mapper';
+import {
+  extractDialErrorMessage,
+  mapDialHttpStatus,
+} from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
@@ -25,6 +28,16 @@ import {
   toPromptResourceUrl,
 } from './publish-target.util';
 
+/*
+ * This service does NOT inject SkillsLookupService (design.md D9 in
+ * openspec/changes/add-skills-bff-api). `splitEntityNameAndVersion` below
+ * already degrades gracefully for a skill entityId with no `{name}__{version}`
+ * suffix (empty version string), and no verified consumer of this service
+ * currently needs a resolved skill name/version beyond that — see the open
+ * questions in the `catalog-publish-api` delta spec (skill publish-history
+ * version recovery, nested-grouping-folder targetUrl collision) before
+ * adding one. Re-read that rationale before "fixing" this.
+ */
 const historyCacheKey = (entityType: CatalogEntityType, entityId: string) =>
   `publish-history:${entityType}:${entityId}`;
 
@@ -138,6 +151,8 @@ export class PublishService {
         result.response.status,
         `publish ${entityType} "${entityId}"`,
         this.logger,
+        result.error,
+        extractDialErrorMessage(result.error),
       );
     }
 
@@ -194,6 +209,8 @@ export class PublishService {
             result.response.status,
             `get publish history for ${entityType} "${entityId}"`,
             this.logger,
+            result.error,
+            extractDialErrorMessage(result.error),
           );
         }
         const { version } = splitEntityNameAndVersion(sourceUrl);

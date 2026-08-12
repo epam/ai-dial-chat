@@ -4270,6 +4270,806 @@
         "tags": ["share"]
       }
     },
+    "/api/v1/skills": {
+      "get": {
+        "description": "Proxies DIAL Core listSkillMetadata to list the grouping folders and skills at or under the given path.",
+        "operationId": "listSkills",
+        "parameters": [
+          {
+            "name": "bucket",
+            "required": true,
+            "in": "query",
+            "description": "DIAL Core bucket name",
+            "schema": {
+              "example": "my-bucket",
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "required": false,
+            "in": "query",
+            "description": "Grouping folder path within the bucket (no leading slash, no ..); empty lists the bucket root",
+            "schema": {
+              "example": "team-a/",
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "required": false,
+            "in": "query",
+            "description": "Pagination token from a previous response",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Max items to return (0-1000, default 100)",
+            "schema": {
+              "example": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "recursive",
+            "required": false,
+            "in": "query",
+            "description": "If true, lists the whole subtree; otherwise only immediate children",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid bucket, path, or limit"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Grouping folder not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "List skills and grouping folders",
+        "tags": ["skills"]
+      },
+      "put": {
+        "description": "Validates the uploaded ZIP (path safety, reserved markers, duplicate paths, a root SKILL.md) then forwards it unchanged to DIAL Core uploadSkillFolder.",
+        "operationId": "uploadSkill",
+        "parameters": [
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "ETag of the resource version to operate on, for optimistic concurrency control",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file", "bucket", "path"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "bucket": {
+                    "type": "string"
+                  },
+                  "path": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillUploadResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid bucket/path, malformed ZIP, unsafe/reserved entry path, duplicate entry path, or missing SKILL.md"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "405": {
+            "description": "Method not allowed"
+          },
+          "412": {
+            "description": "If-Match precondition failed"
+          },
+          "413": {
+            "description": "Upload payload too large"
+          },
+          "422": {
+            "description": "Archive exceeds SKILL_UPLOAD_MAX_FILES or fails Core validation"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Create or replace a whole skill from a ZIP archive",
+        "tags": ["skills"]
+      },
+      "delete": {
+        "description": "Proxies DIAL Core deleteSkillFolder.",
+        "operationId": "deleteSkill",
+        "parameters": [
+          {
+            "name": "bucket",
+            "required": true,
+            "in": "query",
+            "description": "DIAL Core bucket name",
+            "schema": {
+              "example": "my-bucket",
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "The skill's resource path within the bucket",
+            "schema": {
+              "example": "team-a/docs-helper",
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "ETag of the resource version to operate on, for optimistic concurrency control",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillOperationResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid bucket or path"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Skill not found"
+          },
+          "412": {
+            "description": "If-Match precondition failed"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Delete a whole skill",
+        "tags": ["skills"]
+      }
+    },
+    "/api/v1/skills/files": {
+      "get": {
+        "description": "Proxies DIAL Core listSkillFileMetadata.",
+        "operationId": "listSkillFiles",
+        "parameters": [
+          {
+            "name": "bucket",
+            "required": true,
+            "in": "query",
+            "description": "DIAL Core bucket name",
+            "schema": {
+              "example": "my-bucket",
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "required": false,
+            "in": "query",
+            "description": "Grouping folder path within the bucket (no leading slash, no ..); empty lists the bucket root",
+            "schema": {
+              "example": "team-a/",
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "required": false,
+            "in": "query",
+            "description": "Pagination token from a previous response",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Max items to return (0-1000, default 100)",
+            "schema": {
+              "example": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "recursive",
+            "required": false,
+            "in": "query",
+            "description": "If true, lists the whole subtree; otherwise only immediate children",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "filePath",
+            "required": true,
+            "in": "query",
+            "description": "The relative path of a subfolder inside the skill to scope the listing (empty string for the skill's root)",
+            "schema": {
+              "example": "",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillFileListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid bucket, path, or limit"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Skill not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "List files inside a skill",
+        "tags": ["skills"]
+      },
+      "put": {
+        "description": "Proxies DIAL Core uploadSkillFile.",
+        "operationId": "uploadSkillFile",
+        "parameters": [
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "ETag of the resource version to operate on, for optimistic concurrency control",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file", "bucket", "path", "filePath"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "bucket": {
+                    "type": "string"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "filePath": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillFileUploadResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid bucket/path/filePath, or unsafe/reserved filePath"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Skill not found"
+          },
+          "405": {
+            "description": "Method not allowed"
+          },
+          "412": {
+            "description": "If-Match precondition failed"
+          },
+          "413": {
+            "description": "Upload payload too large"
+          },
+          "422": {
+            "description": "Core resource validation failure"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Add or replace one file in a skill",
+        "tags": ["skills"]
+      },
+      "delete": {
+        "description": "Proxies DIAL Core deleteSkillFile. Rejects deleting SKILL.md.",
+        "operationId": "deleteSkillFile",
+        "parameters": [
+          {
+            "name": "bucket",
+            "required": true,
+            "in": "query",
+            "description": "DIAL Core bucket name",
+            "schema": {
+              "example": "my-bucket",
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "The skill's resource path within the bucket",
+            "schema": {
+              "example": "team-a/docs-helper",
+              "type": "string"
+            }
+          },
+          {
+            "name": "filePath",
+            "required": true,
+            "in": "query",
+            "description": "Relative path of the file within the skill",
+            "schema": {
+              "example": "scripts/helper.py",
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "ETag of the resource version to operate on, for optimistic concurrency control",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillFileDeleteResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid bucket/path/filePath, or filePath is SKILL.md"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "File or skill not found"
+          },
+          "412": {
+            "description": "If-Match precondition failed"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Delete one file from a skill",
+        "tags": ["skills"]
+      }
+    },
+    "/api/v1/skills/download": {
+      "get": {
+        "description": "Proxies DIAL Core downloadSkillFolder and streams the response. Returns 400 when the path resolves to a grouping folder instead of a skill.",
+        "operationId": "downloadSkill",
+        "parameters": [
+          {
+            "name": "bucket",
+            "required": true,
+            "in": "query",
+            "description": "DIAL Core bucket name",
+            "schema": {
+              "example": "my-bucket",
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "The skill's resource path within the bucket",
+            "schema": {
+              "example": "team-a/docs-helper",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Streamed application/zip archive",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid path, or the path is a grouping folder"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Skill not found"
+          },
+          "405": {
+            "description": "Method not allowed"
+          },
+          "422": {
+            "description": "Unprocessable entity"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Download a whole skill as a ZIP archive",
+        "tags": ["skills"]
+      }
+    },
+    "/api/v1/skills/files/download": {
+      "get": {
+        "description": "Proxies DIAL Core downloadSkillFile and streams the response.",
+        "operationId": "downloadSkillFile",
+        "parameters": [
+          {
+            "name": "bucket",
+            "required": true,
+            "in": "query",
+            "description": "DIAL Core bucket name",
+            "schema": {
+              "example": "my-bucket",
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "The skill's resource path within the bucket",
+            "schema": {
+              "example": "team-a/docs-helper",
+              "type": "string"
+            }
+          },
+          {
+            "name": "filePath",
+            "required": true,
+            "in": "query",
+            "description": "Relative path of the file within the skill",
+            "schema": {
+              "example": "scripts/helper.py",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Streamed binary file content",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "File or skill not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Download one file from a skill",
+        "tags": ["skills"]
+      }
+    },
+    "/api/v1/skills/grouping-folders": {
+      "post": {
+        "description": "Proxies DIAL Core createSkillGroupingFolder. Accepts no conditional request headers — the verified SDK schema declares none for this operation.",
+        "operationId": "createSkillGroupingFolder",
+        "parameters": [
+          {
+            "name": "bucket",
+            "required": true,
+            "in": "query",
+            "description": "DIAL Core bucket name",
+            "schema": {
+              "example": "my-bucket",
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "The skill's resource path within the bucket",
+            "schema": {
+              "example": "team-a/docs-helper",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillGroupingFolderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid bucket/path, or the folder already exists (collision)"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Parent path not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Create a grouping folder",
+        "tags": ["skills"]
+      },
+      "delete": {
+        "description": "Proxies DIAL Core deleteSkillGroupingFolder.",
+        "operationId": "deleteSkillGroupingFolder",
+        "parameters": [
+          {
+            "name": "bucket",
+            "required": true,
+            "in": "query",
+            "description": "DIAL Core bucket name",
+            "schema": {
+              "example": "my-bucket",
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "The skill's resource path within the bucket",
+            "schema": {
+              "example": "team-a/docs-helper",
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "ETag of the resource version to operate on, for optimistic concurrency control",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillOperationResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid bucket or path"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Grouping folder not found"
+          },
+          "409": {
+            "description": "Grouping folder is not empty"
+          },
+          "412": {
+            "description": "If-Match precondition failed"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Delete an empty grouping folder",
+        "tags": ["skills"]
+      }
+    },
     "/api/v1/catalog/{entityType}/{entityId}/publish": {
       "post": {
         "description": "Publishes a catalog entity (Toolset, Application, or Prompt) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.",
@@ -4283,7 +5083,7 @@
             "schema": {
               "example": "toolset",
               "type": "string",
-              "enum": ["model", "toolset", "application", "prompt"]
+              "enum": ["model", "toolset", "application", "skill", "prompt"]
             }
           },
           {
@@ -4354,7 +5154,7 @@
             "schema": {
               "example": "toolset",
               "type": "string",
-              "enum": ["model", "toolset", "application", "prompt"]
+              "enum": ["model", "toolset", "application", "skill", "prompt"]
             }
           },
           {
@@ -9157,6 +9957,59 @@
         },
         "required": ["url", "expiresInDays", "access"]
       },
+      "SkillMetadataItemDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Resource name (last path segment)"
+          },
+          "path": {
+            "type": "string",
+            "description": "Relative path within the bucket"
+          },
+          "url": {
+            "type": "string",
+            "description": "Full DIAL Core resource URL (skills/{bucket}/{path})"
+          },
+          "bucket": {
+            "type": "string",
+            "description": "DIAL Core bucket name"
+          },
+          "nodeType": {
+            "type": "string",
+            "enum": ["folder", "item"]
+          },
+          "parentPath": {
+            "type": "string",
+            "description": "Parent grouping-folder path"
+          },
+          "permissions": {
+            "description": "READ/WRITE/SHARE permissions on this resource",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "etag": {
+            "type": "string",
+            "description": "Resource version ETag (item only)"
+          },
+          "author": {
+            "type": "string",
+            "description": "Author (item only)"
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "Unix timestamp ms (item only)"
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Unix timestamp ms (item only)"
+          }
+        },
+        "required": ["name", "path", "url", "bucket", "nodeType"]
+      },
       "AcceptInvitationResponseDto": {
         "type": "object",
         "properties": {
@@ -9180,6 +10033,14 @@
                 "$ref": "#/components/schemas/DialToolsetDto"
               }
             ]
+          },
+          "sharedSkill": {
+            "description": "List-item summary of the shared skill, resolved by id at accept time so the frontend can show its details panel without waiting on a bulk skills list refresh. Omitted when itemId is not a skill, or when resolution failed (a best-effort step that never fails the accept call itself).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SkillMetadataItemDto"
+              }
+            ]
           }
         },
         "required": ["itemId"]
@@ -9189,7 +10050,7 @@
         "properties": {
           "itemId": {
             "type": "string",
-            "description": "Identifier (DIAL Core resource path) of the catalog item or conversation to discard access to.",
+            "description": "Identifier (DIAL Core resource path) of the catalog item, skill, or conversation to discard access to.",
             "example": "applications/owner-bucket/my-app"
           }
         },
@@ -9226,6 +10087,104 @@
         },
         "required": ["success"]
       },
+      "SkillListResponseDto": {
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "description": "DIAL Core bucket name"
+          },
+          "path": {
+            "type": "string",
+            "description": "The listed grouping-folder path"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkillMetadataItemDto"
+            }
+          },
+          "nextToken": {
+            "type": "string",
+            "description": "Pagination continuation token"
+          }
+        },
+        "required": ["bucket", "path", "items"]
+      },
+      "SkillFileListResponseDto": {
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "description": "DIAL Core bucket name"
+          },
+          "path": {
+            "type": "string",
+            "description": "The listed grouping-folder path"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkillMetadataItemDto"
+            }
+          },
+          "nextToken": {
+            "type": "string",
+            "description": "Pagination continuation token"
+          }
+        },
+        "required": ["bucket", "path", "items"]
+      },
+      "SkillUploadResponseDto": {
+        "type": "object",
+        "properties": {
+          "etag": {
+            "type": "string",
+            "description": "New aggregate ETag of the uploaded skill, when DIAL Core returns one",
+            "example": "\"abc123\""
+          }
+        }
+      },
+      "SkillFileUploadResponseDto": {
+        "type": "object",
+        "properties": {
+          "etag": {
+            "type": "string",
+            "description": "New ETag of the uploaded file, when DIAL Core returns one",
+            "example": "\"def456\""
+          }
+        }
+      },
+      "SkillOperationResultDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Always true on success",
+            "example": true
+          }
+        }
+      },
+      "SkillFileDeleteResponseDto": {
+        "type": "object",
+        "properties": {
+          "etag": {
+            "type": "string",
+            "description": "New ETag of the skill after file deletion, when DIAL Core returns one",
+            "example": "\"ghi789\""
+          }
+        }
+      },
+      "SkillGroupingFolderResponseDto": {
+        "type": "object",
+        "properties": {
+          "etag": {
+            "type": "string",
+            "description": "ETag of the created grouping folder, when DIAL Core returns one",
+            "example": "\"jkl012\""
+          }
+        }
+      },
       "PublishCatalogEntityDto": {
         "type": "object",
         "properties": {
@@ -9259,7 +10218,7 @@
           },
           "entityType": {
             "type": "string",
-            "enum": ["model", "toolset", "application", "prompt"],
+            "enum": ["model", "toolset", "application", "prompt", "skill"],
             "example": "toolset"
           },
           "folderPath": {
@@ -9297,7 +10256,7 @@
           },
           "entityType": {
             "type": "string",
-            "enum": ["model", "toolset", "application", "prompt"],
+            "enum": ["model", "toolset", "prompt", "application", "skill"],
             "example": "toolset"
           },
           "folderPath": {

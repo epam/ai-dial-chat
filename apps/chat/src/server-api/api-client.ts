@@ -15,6 +15,7 @@ import {
   RateApi,
   ScheduledTasksApi,
   ShareApi,
+  SkillsApi,
   ToolsetsApi,
   UserConfigApi,
 } from '@epam/ai-dial-chat-api-client';
@@ -180,6 +181,7 @@ export const authApi = new AuthApi(config);
 export const rateApi = new RateApi(config);
 export const toolsetsApi = new ToolsetsApi(config);
 export const shareApi = new ShareApi(config);
+export const skillsApi = new SkillsApi(config);
 export const publishApi = new PublishApi(config);
 export const promptsApi = new PromptsApi(config);
 export const clientChannelApi = new ClientChannelApi(config);
