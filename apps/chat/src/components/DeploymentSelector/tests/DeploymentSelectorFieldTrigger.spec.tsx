@@ -44,14 +44,14 @@ describe('DeploymentSelectorFieldTrigger', () => {
     mockOverlay();
     renderTrigger();
 
-    expect(screen.getByText('Select Model or Agent')).toBeTruthy();
+    expect(screen.getByPlaceholderText('Select Model or Agent')).toBeTruthy();
   });
 
   it('shows the resolved deployment name when selected', () => {
     mockOverlay({ resolvedLabel: 'GPT-4o' });
     renderTrigger({ selectedId: 'gpt-4o' });
 
-    expect(screen.getByText('GPT-4o')).toBeTruthy();
+    expect(screen.getByDisplayValue('GPT-4o')).toBeTruthy();
   });
 
   it('opens the overlay content when activated', async () => {
@@ -61,7 +61,21 @@ describe('DeploymentSelectorFieldTrigger', () => {
 
     expect(screen.queryByText('overlay content')).toBeNull();
 
-    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('combobox'));
+
+    expect(await screen.findByText('overlay content')).toBeTruthy();
+  });
+
+  it('opens when the trailing chevron icon is clicked, not just the input area', async () => {
+    mockOverlay();
+    const user = userEvent.setup({ delay: null });
+    const { container } = renderTrigger();
+
+    expect(screen.queryByText('overlay content')).toBeNull();
+
+    const chevron = container.querySelector('svg');
+    expect(chevron).toBeTruthy();
+    await user.click(chevron as SVGElement);
 
     expect(await screen.findByText('overlay content')).toBeTruthy();
   });
@@ -72,9 +86,7 @@ describe('DeploymentSelectorFieldTrigger', () => {
     const user = userEvent.setup({ delay: null });
     renderTrigger({ onSelect });
 
-    await user.click(
-      screen.getByRole('button', { name: /Select Model or Agent/ }),
-    );
+    await user.click(screen.getByRole('combobox'));
     await user.click(await screen.findByText('overlay content'));
 
     expect(screen.queryByText('overlay content')).toBeNull();
@@ -91,15 +103,17 @@ describe('DeploymentSelectorFieldTrigger', () => {
     mockOverlay({ isLoading: true, resolvedLabel: 'GPT-4o' });
     renderTrigger({ selectedId: 'gpt-4o' });
 
-    expect(screen.getByText('GPT-4o')).toBeTruthy();
-    expect(screen.queryByText('deploymentSelector.loading')).toBeNull();
+    expect(screen.getByDisplayValue('GPT-4o')).toBeTruthy();
+    expect(
+      screen.queryByPlaceholderText('deploymentSelector.loading'),
+    ).toBeNull();
   });
 
   it('shows an error affordance and stays focusable when the fetch fails', () => {
     mockOverlay({ error: new Error('failed') });
     renderTrigger();
 
-    const trigger = screen.getByRole('button');
+    const trigger = screen.getByRole('combobox');
     expect(trigger).toBeTruthy();
     expect(trigger.hasAttribute('disabled')).toBe(false);
   });
@@ -108,7 +122,7 @@ describe('DeploymentSelectorFieldTrigger', () => {
     mockOverlay({ resolvedLabel: 'unknown-id' });
     renderTrigger({ selectedId: 'unknown-id' });
 
-    expect(screen.getByText('unknown-id')).toBeTruthy();
+    expect(screen.getByDisplayValue('unknown-id')).toBeTruthy();
   });
 
   it('does not open when isDisabled is true', async () => {
@@ -116,7 +130,7 @@ describe('DeploymentSelectorFieldTrigger', () => {
     const user = userEvent.setup({ delay: null });
     renderTrigger({ isDisabled: true });
 
-    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('combobox'));
 
     expect(screen.queryByText('overlay content')).toBeNull();
   });
@@ -126,19 +140,12 @@ describe('DeploymentSelectorFieldTrigger', () => {
     const user = userEvent.setup({ delay: null });
     renderTrigger({ labelledById: 'model-label' });
 
-    const trigger = screen.getByRole('button');
+    const trigger = screen.getByRole('combobox');
     expect(trigger.getAttribute('aria-labelledby')).toBe('model-label');
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
 
     await user.click(trigger);
 
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
-  });
-
-  it('meets the minimum 44px interactive target size', () => {
-    mockOverlay();
-    renderTrigger();
-
-    expect(screen.getByRole('button').className).toContain('h-11');
   });
 });

@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, Dropdown, Spinner } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, Dropdown, Input, Spinner } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown } from '@tabler/icons-react';
 import {
   memo,
@@ -61,12 +61,8 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
     [isDisabled],
   );
 
-  const handleTriggerClick = useCallback(() => {
-    handleOpenChange(!isOpen);
-  }, [handleOpenChange, isOpen]);
-
   const handleTriggerKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLButtonElement>) => {
+    (event: KeyboardEvent<HTMLInputElement>) => {
       if (event.key === 'Escape') {
         setIsOpen(false);
       }
@@ -75,17 +71,18 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
   );
 
   /*
-   * `resolvedLabel` takes precedence once known — including its raw-id
-   * fallback for an unresolved deployment — so a background refetch never
-   * blanks out an already-displayed selection with the loading/error copy.
-   * Loading/error text is shown only while nothing has resolved yet.
+   * `resolvedLabel` (including its raw-id fallback for an unresolved
+   * deployment) is rendered as the field's `value`, exactly like a real
+   * selection would be — so a background refetch never blanks out an
+   * already-displayed selection with loading/error copy. Loading/error text
+   * only replaces the placeholder while nothing has resolved yet.
    */
-  let displayLabel = resolvedLabel ?? placeholder;
+  let effectivePlaceholder = placeholder;
   if (resolvedLabel == null) {
     if (isLoading) {
-      displayLabel = t(DeploymentSelectorI18nKeys.Loading);
+      effectivePlaceholder = t(DeploymentSelectorI18nKeys.Loading);
     } else if (error) {
-      displayLabel = t(DeploymentSelectorI18nKeys.Error);
+      effectivePlaceholder = t(DeploymentSelectorI18nKeys.Error);
     }
   }
 
@@ -94,57 +91,57 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
       <Dropdown
         open={isOpen}
         onOpenChange={handleOpenChange}
-        trigger={[]}
         outsideClosable
         disabled={isDisabled}
         renderOverlay={() => renderOverlay(() => setIsOpen(false))}
         listClassName="cp-dropdown-overlay"
+        className="w-full"
       >
-        <button
-          type="button"
+        {/*
+         * Built on the same `Input` component `Select` wraps in a `readOnly`
+         * combobox (see `@epam/ai-dial-ui-kit` Select.tsx), so this trigger's
+         * chrome (border, radius, height, focus/hover, colors) always stays
+         * pixel-identical to every other field/dropdown in the app instead
+         * of duplicating those styles by hand. Opening is handled by
+         * `Dropdown`'s default click trigger (a click anywhere in the field,
+         * including the chevron, toggles it via `onOpenChange`) — the same
+         * way `Select` opens, rather than a manual `onClick` scoped to just
+         * the `<input>` element, which the icon sits outside of.
+         */}
+        <Input
+          readOnly
+          role="combobox"
           aria-haspopup="listbox"
           aria-expanded={isOpen}
           aria-labelledby={labelledById}
-          aria-invalid={isInvalid || undefined}
           disabled={isDisabled}
-          onClick={handleTriggerClick}
+          invalid={isInvalid || Boolean(error)}
+          value={resolvedLabel ?? ''}
+          placeholder={effectivePlaceholder}
           onKeyDown={handleTriggerKeyDown}
-          className={mergeClasses(
-            'flex h-11 w-full min-w-0 items-center justify-between gap-2 rounded-md border border-primary bg-layer-base px-3 text-start text-primary',
-            'hover:border-primary focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-focus-black',
-            'disabled:cursor-not-allowed disabled:opacity-50',
-            isInvalid && 'border-error',
-            className,
-          )}
-        >
-          <span
-            className={mergeClasses(
-              'dial-small-text min-w-0 flex-1 truncate text-start',
-              resolvedLabel == null && !isLoading && !error && 'text-secondary',
-              error != null && 'text-error',
-            )}
-          >
-            {displayLabel}
-          </span>
-          {isLoading ? (
-            <Spinner
-              size={DIAL_ICON_SIZE.SM}
-              className="shrink-0"
-              ariaLabel={t(DeploymentSelectorI18nKeys.Loading)}
-            />
-          ) : (
-            // A vertical rotation is direction-agnostic (up/down does not
-            // flip under RTL), so no `rtl:` mirroring class is needed here.
-            <IconChevronDown
-              size={DIAL_ICON_SIZE.SM}
-              className={mergeClasses(
-                'shrink-0 text-secondary transition-transform',
-                isOpen && 'rotate-180',
-              )}
-              aria-hidden
-            />
-          )}
-        </button>
+          containerClassName="w-full"
+          wrapperClassName={mergeClasses('cursor-pointer', className)}
+          className="cursor-pointer"
+          iconAfter={
+            isLoading ? (
+              <Spinner
+                size={DIAL_ICON_SIZE.SM}
+                ariaLabel={t(DeploymentSelectorI18nKeys.Loading)}
+              />
+            ) : (
+              // A vertical rotation is direction-agnostic (up/down does not
+              // flip under RTL), so no `rtl:` mirroring class is needed here.
+              <IconChevronDown
+                size={DIAL_ICON_SIZE.MD}
+                className={mergeClasses(
+                  'transition-transform',
+                  isOpen && 'rotate-180',
+                )}
+                aria-hidden
+              />
+            )
+          }
+        />
       </Dropdown>
       {catalogModal}
     </>
