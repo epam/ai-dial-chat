@@ -59,7 +59,7 @@ const RequestIdRow: FC<RequestIdRowProps> = ({ requestId }) => {
   }
 
   return (
-    <div className="mt-1 flex min-w-0 items-center gap-1 text-xs">
+    <div className="dial-tiny-text mt-1 flex min-w-0 items-center gap-1">
       <span className="text-start">
         {t(NotificationI18nKeys.RequestIdLabel)}:
       </span>

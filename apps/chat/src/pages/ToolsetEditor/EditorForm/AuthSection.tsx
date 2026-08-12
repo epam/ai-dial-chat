@@ -538,7 +538,7 @@ const AuthSection: FC<Props> = ({
               />
               <span
                 className={mergeClasses(
-                  'text-sm',
+                  'dial-small-text',
                   isSelected ? 'text-accent' : 'text-primary',
                 )}
               >

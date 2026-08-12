@@ -39,7 +39,7 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
   ul?: string;
   /** Extra classes on `<ol>` (base: `list-decimal ps-5`). */
   ol?: string;
-  /** Typography class for `<strong>`. Defaults to `'font-semibold'`. */
+  /** Typography class for `<strong>`. Defaults to `'dial-body-paragraph-semi-text'` — the semibold step matching the default `p` class. */
   strong?: string;
   /** Typography class for `<em>`. Defaults to `'italic'`. */
   em?: string;
@@ -206,7 +206,9 @@ const buildMarkdownComponents = (
     <ol className={mergeClasses('list-decimal ps-5', cn.ol)}>{children}</ol>
   ),
   strong: ({ children }) => (
-    <strong className={cn.strong ?? 'font-semibold'}>{children}</strong>
+    <strong className={cn.strong ?? 'dial-body-paragraph-semi-text'}>
+      {children}
+    </strong>
   ),
   em: ({ children }) => <em className={cn.em ?? 'italic'}>{children}</em>,
   pre: ({ children }) => <>{children}</>,

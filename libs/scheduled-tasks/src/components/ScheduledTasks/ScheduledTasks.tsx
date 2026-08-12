@@ -237,7 +237,6 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
             iconStrokeWidth={1.8}
             styles={{
               containerClassName: 'h-[50px] w-full rounded-xl px-[18px]',
-              inputClassName: 'text-[15px]',
               clearButtonClassName: 'size-11 desktop:size-auto',
             }}
           />

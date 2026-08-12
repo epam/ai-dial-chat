@@ -11,6 +11,12 @@ export interface InitialsAvatarProps {
   size: number;
   /** Extra classes applied to the root element (e.g. `'shrink-0'`). */
   className?: string;
+  /**
+   * Typography class applied to the initials. Defaults to `'dial-h3-text'`.
+   * Only its weight, line-height, and tracking take effect — `font-size` is
+   * computed from `size` and set inline, so it wins over the class.
+   */
+  textClassName?: string;
 }
 
 /** A square badge showing 1–2 initials derived from `name` on a deterministic colour background. */
@@ -18,6 +24,7 @@ export const InitialsAvatar: FC<InitialsAvatarProps> = ({
   name,
   size,
   className,
+  textClassName = 'dial-h3-text',
 }) => {
   const { background, foreground } = pickAvatarColor(name);
   const initials = extractInitials(name);
@@ -32,12 +39,9 @@ export const InitialsAvatar: FC<InitialsAvatarProps> = ({
       )}
       style={{ width: size, height: size, backgroundColor: background }}
     >
-      <span
-        className="font-semibold leading-none"
-        style={{ fontSize, color: foreground }}
-      >
+      <h3 className={textClassName} style={{ fontSize, color: foreground }}>
         {initials}
-      </span>
+      </h3>
     </div>
   );
 };

@@ -1,8 +1,8 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialTag } from '@epam/ai-dial-ui-kit';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
 import type { CatalogItemCredentials } from '../../models/catalog-item-credentials';
 import { getCredentialsBadgeState } from '../../utils/toolset-credentials';
+import { CardTag } from '../CardTag/CardTag';
 import styles from './CredentialsBadge.module.scss';
 
 /** Props for `CredentialsBadge`. */
@@ -30,7 +30,7 @@ export interface CredentialsBadgeColors {
 /** Credential-status badge shown on toolset cards — only rendered when signed out. */
 export const CredentialsBadge: FC<CredentialsBadgeProps> = ({
   credentials,
-  loggedOutLabel = 'LOGGED OUT',
+  loggedOutLabel = 'Logged Out',
   className,
   badgeClassName = 'dial-caption-lead-semi-text',
   colors,
@@ -41,24 +41,11 @@ export const CredentialsBadge: FC<CredentialsBadgeProps> = ({
   if (state == null) return null;
 
   return (
-    /* `DialTag` takes no `style`, so the variables go on a `display: contents`
-     * wrapper — it generates no box and leaves layout untouched. */
-    <span
-      className="contents"
-      style={buildCssVars({
-        '--cat-credentials-badge-bg': colors?.background,
-        '--cat-credentials-badge-text': colors?.text,
-      })}
-    >
-      <DialTag
-        label={loggedOutLabel}
-        className={mergeClasses(
-          'border-none',
-          styles.badge,
-          badgeClassName,
-          className,
-        )}
-      />
-    </span>
+    <CardTag
+      label={loggedOutLabel}
+      className={mergeClasses(styles.badge, className)}
+      badgeClassName={badgeClassName}
+      colors={colors}
+    />
   );
 };

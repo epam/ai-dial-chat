@@ -445,7 +445,7 @@ const AppsEditor: FC = () => {
           >
             <div className="flex items-center gap-3 rounded-lg bg-layer-sunken px-4 py-3 shadow-lg">
               <Spinner />
-              <span className="text-sm text-primary">
+              <span className="dial-small-text text-primary">
                 {t(AppsEditorI18nKeys.SavingOverlayLabel)}
               </span>
             </div>

@@ -5,8 +5,6 @@
 .header {
   color: var(--cat-grid-header-text, var(--text-secondary, #57647a));
   background: var(--cat-grid-header-bg, var(--bg-layer-1, #e0e6f0));
-  letter-spacing: 0.06em;
-  font-weight: 500;
 }
 
 .cell {

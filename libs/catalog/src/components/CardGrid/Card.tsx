@@ -51,6 +51,8 @@ export const Card: FC<CardProps> = ({
 
   const descriptionClassName =
     cardStyles?.typography?.descriptionClassName ?? 'dial-small-text';
+  const descriptionSizeClassName =
+    cardStyles?.typography?.descriptionSizeClassName ?? 'dial-tiny-text';
 
   const featuredChipClassName = cardStyles?.typography?.featuredChipClassName;
   const folderLabelClassName =
@@ -145,7 +147,8 @@ export const Card: FC<CardProps> = ({
       <p
         className={mergeClasses(
           descriptionClassName,
-          'line-clamp-2 min-h-[44px] !leading-[22px]',
+          'line-clamp-2 min-h-[44px]',
+          descriptionSizeClassName,
           styles.description,
         )}
       >

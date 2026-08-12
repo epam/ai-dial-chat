@@ -43,7 +43,7 @@ const FooterMessage: FC = () => {
   return (
     <section
       aria-label={t(FooterMessageI18nKeys.RegionAriaLabel)}
-      className="dial-tiny-text relative w-full px-4 pb-4 pt-1 text-center leading-5 text-secondary desktop:px-8"
+      className="dial-tiny-text relative w-full px-4 pb-4 pt-1 text-center text-secondary desktop:px-8"
     >
       {isMessageVisible && (
         <div

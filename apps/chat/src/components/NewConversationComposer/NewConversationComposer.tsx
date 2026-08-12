@@ -454,7 +454,7 @@ const NewConversationComposer: FC<Props> = ({
               : t(DialFileManagerI18nKeys.DeleteConfirmTitleMultiple)
           }
           deleteConfirmBody={(names) => (
-            <div className="px-6 py-3 text-sm">
+            <div className="dial-small-text px-6 py-3">
               <p className="mb-3 text-secondary">
                 {names.length === 1 ? (
                   <>

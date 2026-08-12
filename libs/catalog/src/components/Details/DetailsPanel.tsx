@@ -142,6 +142,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   styles: detailsStyles,
 }) => {
   const {
+    subViewTitleClassName = 'dial-body-semi-text',
     overviewSectionClassName = 'dial-caption-text',
     overviewLabelClassName = 'dial-small-semi-text',
     overviewValueClassName = 'dial-small-text',
@@ -606,7 +607,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
               />
               <span
                 className={mergeClasses(
-                  'dial-body-semi-text flex-1',
+                  'flex-1',
+                  subViewTitleClassName,
                   styles.publishTitle,
                 )}
               >

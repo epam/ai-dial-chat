@@ -49,4 +49,3 @@ import { SearchBar } from '@epam/ai-dial-kit';
   labels={{ placeholder: 'Search...' }}
 />;
 ```
-

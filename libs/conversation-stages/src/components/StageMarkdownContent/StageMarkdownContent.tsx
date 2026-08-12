@@ -97,6 +97,7 @@ export const StageMarkdownContent: FC<Props> = memo(
             return (
               <StageCodeBlock
                 codeClassName={className}
+                blockClassName={typography?.codeBlockClassName}
                 copyAriaLabel={copyAriaLabel}
               >
                 {children}

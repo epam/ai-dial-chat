@@ -184,6 +184,8 @@ export interface ItemDetailsTexts {
 export interface ItemDetailsTypography {
   /** Typography class for the entity name. Default: `'dial-body-semi-text'`. */
   nameClassName?: string;
+  /** Typography class for a sub-view header title (publish, share, credentials). Default: `'dial-body-semi-text'`. */
+  subViewTitleClassName?: string;
   /** Typography class for the version string. Default: `'dial-tiny-text'`. */
   versionClassName?: string;
   /** Typography class for section headings inside the description content. Default: `'dial-small-semi-text'`. */

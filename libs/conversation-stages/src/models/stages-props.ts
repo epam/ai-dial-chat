@@ -2,18 +2,22 @@ import type { Stage } from '@epam/ai-dial-chat-shared';
 
 /** Typography class overrides for stage name and expanded content elements in `StagesPanel`. */
 export interface StageTypography {
-  /** CSS utility class applied to the stage/step name. */
+  /** CSS utility class applied to the stage/step name. Defaults to `'dial-small-text'`. */
   fontClassName?: string;
-  /** CSS utility class applied to expanded content text elements (paragraphs, lists, blockquotes, links, table cells). */
+  /** CSS utility class applied to expanded content text elements (paragraphs, lists, blockquotes, links, table cells). Defaults to `'dial-tiny-text'`. */
   contentClassName?: string;
-  /** CSS utility class applied to `<strong>` (bold markdown) inside expanded content. */
+  /** CSS utility class applied to `<strong>` (bold markdown) inside expanded content. Falls back to `contentClassName`, then `'dial-tiny-text'`. */
   strongClassName?: string;
-  /** CSS utility class applied to every heading level (`h1`–`h6`) inside expanded content. */
+  /** CSS utility class applied to every heading level (`h1`–`h6`) inside expanded content. Defaults to `'dial-small-semi-text'`. */
   headingClassName?: string;
-  /** CSS utility class applied to inline code elements. */
+  /** CSS utility class applied to inline code elements. Defaults to `'dial-small-text rounded-md font-mono'`. */
   codeClassName?: string;
-  /** CSS utility class applied to count badges (e.g. `×N` collapsed group). */
+  /** CSS utility class applied to fenced code blocks (`<pre>`). Defaults to `'dial-small-text'`. */
+  codeBlockClassName?: string;
+  /** CSS utility class applied to count badges (e.g. `×N` collapsed group). Defaults to `'dial-tiny-text'`. */
   countFontClassName?: string;
+  /** CSS utility class applied to a stage's tag label. Defaults to `'dial-tiny-lead-text'`, which uppercases the label itself. */
+  tagClassName?: string;
 }
 
 /** CSS custom property color overrides for the `StagesPanel` component. */

@@ -11,8 +11,7 @@ export const DEFAULT_MARKDOWN_CLASS_NAMES: MarkdownRendererClassNames = {
   p: 'dial-body-paragraph-text mb-3 break-words [overflow-wrap:anywhere] [text-wrap:pretty] last:mb-0',
   ul: 'mb-3 space-y-1',
   ol: 'mb-3 space-y-1',
-  codeInline:
-    'mx-0.5 px-1.5 text-[0.875em] break-words [overflow-wrap:anywhere]',
+  codeInline: 'mx-0.5 px-1.5 break-words [overflow-wrap:anywhere]',
   blockquote: 'my-4',
   link: 'break-words [overflow-wrap:anywhere]',
   tableWrapper: 'my-4',

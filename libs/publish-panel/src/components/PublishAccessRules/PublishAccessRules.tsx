@@ -80,6 +80,8 @@ export interface PublishAccessRulesProps {
   loadingClassName?: string;
   /** Typography class for each rule chip's text. Default: `'dial-small-text'`. */
   ruleTextClassName?: string;
+  /** Typography class for the emphasised rule source inside each chip. Default: `'dial-small-semi-text'`. */
+  ruleSourceClassName?: string;
   /** Color overrides. */
   colors?: PublishAccessRulesColors;
 }
@@ -127,6 +129,7 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
   headingClassName = 'dial-body-semi-text',
   loadingClassName = 'dial-small-text',
   ruleTextClassName = 'dial-small-text',
+  ruleSourceClassName = 'dial-small-semi-text',
   colors,
 }) => {
   const cssVars = buildCssVars({
@@ -263,7 +266,7 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
                     styles.ruleText,
                   )}
                 >
-                  <span className="font-semibold">{rule.source}</span>{' '}
+                  <span className={ruleSourceClassName}>{rule.source}</span>{' '}
                   {functionLabel(rule.function, functionLabels)}: {targetsText}
                 </span>
                 <GhostIconButton

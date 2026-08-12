@@ -60,7 +60,7 @@ const EditorHeader: FC<Props> = ({
       <nav
         role="navigation"
         aria-label={navAriaLabel}
-        className="flex items-center gap-2 text-sm"
+        className="dial-small-text flex items-center gap-2"
       >
         <DialSteps
           steps={steps}

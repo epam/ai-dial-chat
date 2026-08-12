@@ -303,6 +303,12 @@ Every typography default — and every value an app passes in — is a `dial-*-t
 - **Never** a raw Tailwind size utility (`text-xs`, `text-sm`, `text-base`, `text-lg`, `text-[13px]`) or weight utility (`font-bold`, `font-semibold`) — those carry no line-height from the scale.
 - **Never** a `font-size` / `line-height` / `font-weight` declaration in the lib's `.module.scss`. Only `em`-relative sizing that genuinely cannot be a static class is exempt, and it needs a comment saying why.
 - **Never** a locally defined or re-declared `.dial-*-text` rule in lib CSS — that shadows the kit and drifts on the next upgrade. If a step you need does not exist in the scale, that is a gap to raise in the kit, not to patch locally.
+- **Never** `!important` on a `line-height` (or any other typography property) in lib CSS. It silently overrides whatever scale class the app passed, leaving the typography prop half-effective.
+
+Two narrow exceptions, both requiring a comment that states the reason:
+
+- **Pseudo-element glyphs** (`::before` / `::after` content) take no class, so their sizing has to live in CSS. Keep it `em`-relative so it tracks the class on the host element.
+- **A caller-driven CSS-var channel** — a lib may accept raw `fontFamily` / `fontSize` / `lineHeight` / `letterSpacing` values and forward them through `buildCssVars`, as `AttachmentCanvas` does, when it renders into a surface that cannot take a class (a third-party viewer's inline style API, a canvas, an iframe). Declare the vars **without fallbacks** so an unset var resolves to `inherit` and a `fontClassName` on the same element still wins, and document that precedence on the props. This is a second channel, not a replacement: the lib must still expose the `<element>ClassName` prop and default it to a scale class.
 
 ### Verify the class name before you write it
 
