@@ -4,7 +4,10 @@ import type { TFunction } from 'i18next';
 import { describe, expect, it } from 'vitest';
 import { CatalogI18nKeys } from '../../constants/translation-keys';
 import { PromptSource } from '../../types/prompt';
-import { mapPromptToCatalogItem } from '../map-prompt-to-catalog-item';
+import {
+  buildPromptOverview,
+  mapPromptToCatalogItem,
+} from '../map-prompt-to-catalog-item';
 
 const LABELS: Record<string, string> = {
   [CatalogI18nKeys.FolderPersonal]: 'Personal',
@@ -146,5 +149,37 @@ describe('mapPromptToCatalogItem', () => {
     );
 
     expect(item.folder).toEqual(['Personal', 'My Work', 'AI']);
+  });
+});
+
+describe('buildPromptOverview', () => {
+  it('lists the author above the last-updated row', () => {
+    const { specs } = buildPromptOverview(
+      makePrompt({ author: 'john.doe@example.com' }),
+      t,
+    ).sections[0];
+
+    expect(specs.map((spec) => spec.label)).toEqual([
+      CatalogI18nKeys.DetailsPromptAuthor,
+      CatalogI18nKeys.DetailsPromptUpdated,
+    ]);
+    expect(specs[0].value).toBe('john.doe@example.com');
+  });
+
+  it('omits the author row when the prompt has no author', () => {
+    const { specs } = buildPromptOverview(makePrompt(), t).sections[0];
+
+    expect(specs.map((spec) => spec.label)).toEqual([
+      CatalogI18nKeys.DetailsPromptUpdated,
+    ]);
+  });
+
+  it('shows neither a folder nor a source row', () => {
+    const { specs } = buildPromptOverview(
+      makePrompt({ author: 'john.doe@example.com' }),
+      t,
+    ).sections[0];
+
+    expect(specs).toHaveLength(2);
   });
 });

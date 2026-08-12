@@ -4538,6 +4538,12 @@ export interface PromptResponseDto {
    */
   folderId: string;
   /**
+   * Resource author reported by DIAL Core, when it is known
+   * @type {string}
+   * @memberof PromptResponseDto
+   */
+  author?: string;
+  /**
    * Creation timestamp (Unix ms)
    * @type {number}
    * @memberof PromptResponseDto
@@ -4727,6 +4733,7 @@ export const PublishHistoryEntryDtoEntityTypeEnum = {
   Model: 'model',
   Toolset: 'toolset',
   Application: 'application',
+  Prompt: 'prompt',
   Skill: 'skill',
 } as const;
 export type PublishHistoryEntryDtoEntityTypeEnum =
@@ -4783,6 +4790,7 @@ export const PublishResultDtoEntityTypeEnum = {
   Model: 'model',
   Toolset: 'toolset',
   Application: 'application',
+  Prompt: 'prompt',
   Skill: 'skill',
 } as const;
 export type PublishResultDtoEntityTypeEnum =

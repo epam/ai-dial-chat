@@ -17,6 +17,7 @@ const PUBLISHABLE_ENTITY_TYPES: Partial<
   [CatalogEntityType.Model]: CatalogPublishEntityType.Model,
   [CatalogEntityType.Toolset]: CatalogPublishEntityType.Toolset,
   [CatalogEntityType.Agent]: CatalogPublishEntityType.Application,
+  [CatalogEntityType.Prompt]: CatalogPublishEntityType.Prompt,
 };
 
 /** Maps a catalog item's entity type to the publish API's entity-type path param, or `undefined` if that type is not publishable. */

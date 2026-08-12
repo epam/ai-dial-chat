@@ -30,10 +30,15 @@ export const ContentTab: FC<ContentTabProps> = ({
     detailsStyles?.typography?.contentHeadingClassName ??
     'dial-small-semi-text';
 
+  const hasDescription = description != null && description !== '';
+
   return (
     <div className="flex h-full flex-col gap-4">
-      {description != null && description !== '' && (
-        <p className={mergeClasses('m-0', bodyClassName)}>{description}</p>
+      {hasDescription && (
+        <>
+          <p className={mergeClasses('m-0', bodyClassName)}>{description}</p>
+          <div className={mergeClasses('shrink-0', styles.divider)} />
+        </>
       )}
 
       <div

@@ -101,6 +101,7 @@
       "tabTools": "Tools",
       "tabContent": "Details",
       "promptLoadError": "Couldn't load this prompt. Please try again.",
+      "promptDownloadError": "Couldn't download this prompt. Please try again.",
       "tabLimits": "Limits",
       "api": {
         "resourceSection": "Resource",
@@ -188,9 +189,7 @@
       },
       "prompt": {
         "section": "Prompt",
-        "folder": "Folder",
-        "folderRoot": "Root",
-        "source": "Source",
+        "author": "Author",
         "updated": "Last updated"
       }
     },

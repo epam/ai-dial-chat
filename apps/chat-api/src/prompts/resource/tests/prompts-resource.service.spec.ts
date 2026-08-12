@@ -182,6 +182,41 @@ describe('PromptsResourceService', () => {
       expect(metadataSpy).not.toHaveBeenCalled();
     });
 
+    it('carries the author reported in the resource metadata', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getPrompt').mockResolvedValue(
+        okResponse(storedPrompt),
+      );
+
+      const result = await service.readPromptByPath(
+        TOKEN,
+        BUCKET,
+        'my-prompt',
+        {
+          ...metaItem('my-prompt'),
+          author: 'john.doe@example.com',
+        },
+      );
+
+      expect(result?.author).toBe('john.doe@example.com');
+    });
+
+    it('leaves the author undefined when the metadata omits one', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getPrompt').mockResolvedValue(
+        okResponse(storedPrompt),
+      );
+
+      const result = await service.readPromptByPath(
+        TOKEN,
+        BUCKET,
+        'my-prompt',
+        metaItem('my-prompt'),
+      );
+
+      expect(result?.author).toBeUndefined();
+    });
+
     it('fetches metadata when knownMetadata is not provided', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'getPrompt').mockResolvedValue(
