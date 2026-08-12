@@ -21,6 +21,7 @@ import { ApplicationSelectors } from '@/src/store/selectors';
 
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/applications';
 import { CommonI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
+import { getPendingAttachmentTypeError } from '@/src/constants/validation-helpers';
 
 import {
   CustomAppForm as CustomAppFormType,
@@ -110,7 +111,10 @@ export const CustomAppForm = () => {
             hasDeleteAll
             hideSuggestions
             itemHeightClassName="h-[31px]"
-            error={errors.inputAttachmentTypes?.message}
+            error={
+              errors.inputAttachmentTypes?.message ??
+              getPendingAttachmentTypeError(pendingAttachmentType)
+            }
             disabled={isAppPublic}
             tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
             dataQa="combobox"
