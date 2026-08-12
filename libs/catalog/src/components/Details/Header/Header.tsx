@@ -10,6 +10,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import {
   IconDots,
+  IconDownload,
   IconKey,
   IconLogin,
   IconLogout,
@@ -52,6 +53,10 @@ interface HeaderProps {
    */
   isShareVisible?: (item: CatalogItem) => boolean;
   onEdit?: (item: CatalogItem) => void;
+  /** Called when "Download" is clicked in the Manage menu. Fire-and-forget: the result is not awaited and no pending state is shown. */
+  onDownload?: (item: CatalogItem) => Promise<void> | void;
+  /** Additional caller-supplied rule for whether "Download" is shown. Defaults to `true` when absent. */
+  isDownloadVisible?: (item: CatalogItem) => boolean;
   /** Called when "Delete" is clicked in the Manage menu. The details panel owns the confirmation step, so this only requests it. */
   onDelete?: (item: CatalogItem) => void;
   /** Called when the recipient-side "Remove from My List" action is clicked for an item shared with the current user. The details panel owns the confirmation step. */
@@ -96,6 +101,8 @@ export const Header: FC<HeaderProps> = ({
   shareOverlay,
   isShareVisible,
   onEdit,
+  onDownload,
+  isDownloadVisible,
   onDelete,
   onUnshare,
   isUnshareVisible,
@@ -127,6 +134,11 @@ export const Header: FC<HeaderProps> = ({
     onOpenPublish?.();
   }, [onOpenPublish]);
 
+  /* Fire-and-forget by contract: the host reports its own failures. */
+  const handleDownload = useCallback(() => {
+    void onDownload?.(item);
+  }, [item, onDownload]);
+
   const handleUnshare = useCallback(() => {
     onUnshare?.(item);
   }, [item, onUnshare]);
@@ -153,6 +165,8 @@ export const Header: FC<HeaderProps> = ({
       item.type === CatalogEntityType.Agent);
 
   const shouldShowEditAction = !!onEdit && !!item.isEditable;
+  const shouldShowDownloadAction =
+    !!onDownload && (isDownloadVisible?.(item) ?? true);
   const shouldShowDeleteAction = item.isMyApp;
   /*
    * The recipient-side "Remove from My List" action is the counterpart of
@@ -188,6 +202,14 @@ export const Header: FC<HeaderProps> = ({
         label: texts?.editActionLabel ?? 'Edit',
         icon: <IconPencil size={DIAL_ICON_SIZE.SM} aria-hidden />,
         onClick: handleEdit,
+      });
+    }
+    if (shouldShowDownloadAction) {
+      items.push({
+        key: 'download',
+        label: texts?.downloadActionLabel ?? 'Download',
+        icon: <IconDownload size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        onClick: handleDownload,
       });
     }
     if (shouldShowPublish) {
@@ -241,6 +263,7 @@ export const Header: FC<HeaderProps> = ({
     return items;
   }, [
     shouldShowEditAction,
+    shouldShowDownloadAction,
     shouldShowPublish,
     shouldShowDeleteAction,
     shouldShowRevokeShareAction,
@@ -248,6 +271,7 @@ export const Header: FC<HeaderProps> = ({
     shouldShowUnshareAction,
     texts,
     handleEdit,
+    handleDownload,
     handleOpenPublish,
     handleDelete,
     handleRevokeShare,

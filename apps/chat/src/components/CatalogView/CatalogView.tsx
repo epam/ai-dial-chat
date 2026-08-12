@@ -9,6 +9,7 @@ import {
 } from '@epam/ai-dial-catalog';
 import type { ToolsetLogoutBodyDto } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import { triggerBlobDownload } from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { DropdownItem, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
@@ -73,6 +74,12 @@ import { PromptEditorQuery } from '../../types/prompt-editor';
 import { ROUTES } from '../../types/routes';
 import { isQuickAppSchema } from '../../utils/application-schema';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
+import { EXPORT_APP_NAME } from '../../utils/export-conversation';
+import {
+  buildPromptExportEnvelope,
+  buildPromptExportFileName,
+  serializePromptExport,
+} from '../../utils/export-prompt';
 import { resolveFavoriteEntityType } from '../../utils/favorites';
 import { mapDeploymentLimitsDtoToCatalogLimits } from '../../utils/map-deployment-limits-to-catalog';
 import {
@@ -86,6 +93,7 @@ import {
 } from '../../utils/map-entity-details-to-catalog';
 import {
   buildPromptOverview,
+  isOrganisationPromptItem,
   mapPromptToCatalogItem,
 } from '../../utils/map-prompt-to-catalog-item';
 import {
@@ -323,8 +331,7 @@ const CatalogView: FC<Props> = ({
        */
       if (item.type === CatalogEntityType.Prompt) {
         try {
-          const isOrganisationPrompt = !item.isMyApp && !item.sharedWithMe;
-          const dto = isOrganisationPrompt
+          const dto = isOrganisationPromptItem(item)
             ? await getPublicPrompt(item.id)
             : await getPrompt(item.id);
           /*
@@ -579,8 +586,7 @@ const CatalogView: FC<Props> = ({
         let promptContent = item.details?.promptContent?.content;
         if (promptContent == null) {
           try {
-            const isOrganisationPrompt = !item.isMyApp && !item.sharedWithMe;
-            const dto = isOrganisationPrompt
+            const dto = isOrganisationPromptItem(item)
               ? await getPublicPrompt(item.id)
               : await getPrompt(item.id);
             promptContent = dto.content;
@@ -618,6 +624,41 @@ const CatalogView: FC<Props> = ({
       onClose?.();
     },
     [onSelect, setSelectedItemId, onClose],
+  );
+
+  /*
+   * The body is re-fetched rather than taken from `item.details.promptContent`:
+   * the listing seeds that field, so a prompt edited in another tab would be
+   * written to disk stale. Organisation prompts download through the public
+   * endpoint, exactly as their details do.
+   */
+  const handleDownload = useCallback(
+    async (item: CatalogItem) => {
+      if (item.type !== CatalogEntityType.Prompt) return;
+      try {
+        const dto = isOrganisationPromptItem(item)
+          ? await getPublicPrompt(item.id)
+          : await getPrompt(item.id);
+        triggerBlobDownload(
+          serializePromptExport(buildPromptExportEnvelope(dto)),
+          buildPromptExportFileName(dto.name, EXPORT_APP_NAME),
+        );
+      } catch (err) {
+        const { traceId } = await getApiErrorDetails(err);
+        showNotification({
+          variant: NotificationVariant.Error,
+          message: t(CatalogI18nKeys.DetailsPromptDownloadError),
+          requestId: traceId,
+        });
+      }
+    },
+    [showNotification, t],
+  );
+
+  /* Only a prompt has a downloadable body; every other type is backed by config the catalog does not export. */
+  const isDownloadVisible = useCallback(
+    (item: CatalogItem) => item.type === CatalogEntityType.Prompt,
+    [],
   );
 
   const isPrimaryActionVisible = useCallback((item: CatalogItem) => {
@@ -1020,6 +1061,8 @@ const CatalogView: FC<Props> = ({
       onLogin={handleLogin}
       onLogout={handleLogout}
       onEdit={handleEdit}
+      onDownload={handleDownload}
+      isDownloadVisible={isDownloadVisible}
       onDelete={handleDelete}
       onUnshare={handleUnshare}
       isUnshareVisible={isUnshareVisible}
@@ -1082,6 +1125,7 @@ const CatalogView: FC<Props> = ({
         tabLimitsLabel: t(CatalogI18nKeys.DetailsTabLimits),
         primaryActionLabel: t(ButtonsI18nKeys.UseInChat),
         editActionLabel: t(ButtonsI18nKeys.Edit),
+        downloadActionLabel: t(ButtonsI18nKeys.Download),
         deleteActionLabel: t(ButtonsI18nKeys.Delete),
         deletingStatusLabel: t(DialFileManagerI18nKeys.DeletingLabel),
         apiResourceSectionLabel: t(CatalogI18nKeys.DetailsApiResourceSection),

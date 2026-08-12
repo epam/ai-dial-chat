@@ -152,6 +152,7 @@ export enum CatalogI18nKeys {
   DetailsTabTools = 'catalog.details.tabTools',
   DetailsTabContent = 'catalog.details.tabContent',
   DetailsPromptLoadError = 'catalog.details.promptLoadError',
+  DetailsPromptDownloadError = 'catalog.details.promptDownloadError',
   DetailsPromptSection = 'catalog.details.prompt.section',
   DetailsPromptAuthor = 'catalog.details.prompt.author',
   DetailsPromptUpdated = 'catalog.details.prompt.updated',

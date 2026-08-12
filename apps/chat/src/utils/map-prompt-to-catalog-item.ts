@@ -54,6 +54,14 @@ export const buildPromptOverview = (
   };
 };
 
+/**
+ * Whether a prompt item came from the organisation namespace, which the public
+ * prompt endpoints serve. Personal and shared-with-me prompts both resolve
+ * through the caller's own bucket instead.
+ */
+export const isOrganisationPromptItem = (item: CatalogItem): boolean =>
+  !item.isMyApp && !item.sharedWithMe;
+
 export interface MapPromptToCatalogItemOptions {
   /** Resolves the Personal/Shared/Public folder label; i18n stays at the app edge. */
   t: TFunction;

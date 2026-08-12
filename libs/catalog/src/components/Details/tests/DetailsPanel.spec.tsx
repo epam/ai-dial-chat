@@ -132,13 +132,19 @@ vi.mock('../../StarToggleButton/StarToggleButton', () => ({
 }));
 vi.mock('../Header/Header', () => ({
   Header: ({
+    item,
     onOpenPublish,
+    onDownload,
+    isDownloadVisible,
     onDelete,
     onUnshare,
     onRevokeShare,
     onRequestLogout,
   }: {
+    item: CatalogItem;
     onOpenPublish?: () => void;
+    onDownload?: (item: CatalogItem) => void;
+    isDownloadVisible?: (item: CatalogItem) => boolean;
     onDelete?: () => void;
     onUnshare?: () => void;
     onRevokeShare?: () => void;
@@ -146,6 +152,9 @@ vi.mock('../Header/Header', () => ({
   }) => (
     <>
       <button onClick={onOpenPublish}>Publish</button>
+      {onDownload && (isDownloadVisible?.(item) ?? true) && (
+        <button onClick={() => onDownload(item)}>DownloadTrigger</button>
+      )}
       {onDelete && <button onClick={onDelete}>DeleteTrigger</button>}
       {onUnshare && <button onClick={onUnshare}>UnshareTrigger</button>}
       {onRevokeShare && (
@@ -778,6 +787,46 @@ describe('DetailsPanel', () => {
 
     const tablist = screen.getByRole('tablist');
     expect(tablist.textContent).toBe('AboutOverviewPricingLimitsConnect');
+  });
+
+  describe('Download action', () => {
+    const DOWNLOAD_TRIGGER = 'DownloadTrigger';
+
+    it('forwards onDownload to the header', async () => {
+      const onDownload = vi.fn();
+      renderPanel({ onDownload });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: DOWNLOAD_TRIGGER }),
+      );
+
+      expect(onDownload).toHaveBeenCalledWith(item);
+    });
+
+    it('exposes no download action when onDownload is absent', () => {
+      renderPanel();
+      expect(
+        screen.queryByRole('button', { name: DOWNLOAD_TRIGGER }),
+      ).toBeNull();
+    });
+
+    it('forwards isDownloadVisible so the header can hide the action', () => {
+      renderPanel({ onDownload: vi.fn(), isDownloadVisible: () => false });
+      expect(
+        screen.queryByRole('button', { name: DOWNLOAD_TRIGGER }),
+      ).toBeNull();
+    });
+
+    it('keeps the details content in place after a download, with no confirmation step', async () => {
+      renderPanel({ onDownload: vi.fn() });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: DOWNLOAD_TRIGGER }),
+      );
+
+      expect(screen.getByRole('tablist')).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
+    });
   });
 
   describe('Confirmation sub-view', () => {

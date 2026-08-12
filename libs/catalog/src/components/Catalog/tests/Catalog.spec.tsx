@@ -188,15 +188,22 @@ vi.mock('../../Details/DetailsPanel', () => ({
     isPrimaryActionVisible,
     shareOverlay,
     isDetailsLoading,
+    onDownload,
+    isDownloadVisible,
   }: {
     item: CatalogItem;
     isPrimaryActionVisible?: (item: CatalogItem) => boolean;
     shareOverlay?: (item: CatalogItem, onClose: () => void) => React.ReactNode;
     isDetailsLoading?: boolean;
+    onDownload?: (item: CatalogItem) => void;
+    isDownloadVisible?: (item: CatalogItem) => boolean;
   }) => (
     <div>
       <span>{item.name}</span>
       <span>{String(isPrimaryActionVisible?.(item))}</span>
+      {onDownload && (isDownloadVisible?.(item) ?? true) && (
+        <button onClick={() => onDownload(item)}>DownloadTrigger</button>
+      )}
       {shareOverlay?.(item, () => undefined)}
       <span>{`details:${JSON.stringify(item.details ?? null)}`}</span>
       <span>{`isDetailsLoading:${String(isDetailsLoading)}`}</span>
@@ -384,6 +391,43 @@ describe('Catalog', () => {
     expect(onFetchDetails).toHaveBeenCalledWith(
       expect.objectContaining({ id: '1' }),
     );
+  });
+
+  it('forwards onDownload and isDownloadVisible to the details panel', async () => {
+    const onDownload = vi.fn();
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        onDownload={onDownload}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'DownloadTrigger' }),
+    );
+
+    expect(onDownload).toHaveBeenCalledWith(
+      expect.objectContaining({ id: '1' }),
+    );
+  });
+
+  it('lets isDownloadVisible hide the download action in the details panel', async () => {
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        onDownload={vi.fn()}
+        isDownloadVisible={() => false}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+
+    expect(
+      screen.queryByRole('button', { name: 'DownloadTrigger' }),
+    ).toBeNull();
   });
 
   it('renders fetched details, overriding static item.details, once resolved', async () => {

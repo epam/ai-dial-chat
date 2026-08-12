@@ -9,6 +9,7 @@ import {
 } from '@epam/ai-dial-catalog';
 import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import { triggerBlobDownload } from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -142,6 +143,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onCardClick,
     isPrimaryActionVisible,
     onEdit,
+    onDownload,
+    isDownloadVisible,
     onDelete,
     onUnshare,
     isUnshareVisible,
@@ -176,6 +179,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onCardClick?: (item: CatalogItem) => void;
     isPrimaryActionVisible?: (item: CatalogItem) => boolean;
     onEdit?: (item: CatalogItem) => void;
+    onDownload?: (item: CatalogItem) => Promise<void>;
+    isDownloadVisible?: (item: CatalogItem) => boolean;
     onDelete?: (item: CatalogItem) => Promise<void>;
     onUnshare?: (item: CatalogItem) => Promise<void>;
     isUnshareVisible?: (item: CatalogItem) => boolean;
@@ -299,6 +304,17 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
             edit {item.id}
           </button>
         ))}
+        {(items ?? [])
+          .filter((item) => isDownloadVisible?.(item) ?? true)
+          .map((item) => (
+            <button
+              key={`download-${item.id}`}
+              type="button"
+              onClick={() => onDownload?.(item)}
+            >
+              download {item.id}
+            </button>
+          ))}
         {(items ?? []).map((item) => (
           <button
             key={`delete-${item.id}`}
@@ -467,6 +483,12 @@ vi.mock('../../../server-api/prompts.api', () => ({
   getPrompt: vi.fn(),
   getPublicPrompt: vi.fn(),
   deletePrompt: vi.fn(),
+}));
+
+/* Only the download trigger is stubbed; the mappers still need the real helpers. */
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
+  triggerBlobDownload: vi.fn(),
 }));
 
 vi.mock('../../../context/NotificationContext', () => ({
@@ -3166,6 +3188,171 @@ describe('CatalogView', () => {
       expect(showNotification).not.toHaveBeenCalledWith(
         expect.objectContaining({ variant: 'success' }),
       );
+    });
+  });
+
+  describe('prompt download', () => {
+    const personalPrompt = {
+      id: 'Work/AI/summarize',
+      name: 'summarize',
+      description: 'Summarize a document',
+      content: 'Summarize:\n\n{{document}}',
+      folderId: 'Work/AI',
+      createdAt: 1,
+      updatedAt: 2,
+    };
+
+    const organisationPrompt = {
+      ...personalPrompt,
+      id: 'Public/translate',
+      name: 'translate',
+      folderId: 'Public',
+    };
+
+    const enablePrompts = () => {
+      vi.mocked(useUiFeature).mockReset();
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) =>
+          feature === OverlayFeature.Prompts ||
+          DEFAULT_ENABLED_UI_FEATURES.has(feature),
+      );
+    };
+
+    const mockPrompts = () =>
+      vi.mocked(usePrompts).mockReturnValue({
+        prompts: [personalPrompt],
+        folders: [],
+        sharedWithMe: [],
+        publicPrompts: [organisationPrompt],
+        publicFolders: [],
+        isLoading: false,
+        error: null,
+        refetchPrompts: vi.fn().mockResolvedValue(undefined),
+        refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
+      });
+
+    /* jsdom's Blob has no `text()`, so the written file is read through FileReader. */
+    const readDownloadedFile = async (): Promise<{
+      fileName: string;
+      envelope: {
+        version: number;
+        prompts: { id: string; content: string; folderId?: string }[];
+        folders: { id: string; name: string; folderId?: string }[];
+      };
+    }> => {
+      const [blob, fileName] = vi.mocked(triggerBlobDownload).mock.calls[0];
+      const text = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsText(blob);
+      });
+      return { fileName, envelope: JSON.parse(text) };
+    };
+
+    it('writes a personal prompt as a version 5 envelope fetched through getPrompt', async () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(getPrompt).mockResolvedValue(personalPrompt);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+      );
+
+      expect(getPrompt).toHaveBeenCalledWith('Work/AI/summarize');
+      await waitFor(() => expect(triggerBlobDownload).toHaveBeenCalledOnce());
+
+      const { fileName, envelope } = await readDownloadedFile();
+      expect(fileName).toMatch(/^\d{4}-\d{2}-\d{2}_ai_dial_prompt_summarize\.json$/);
+      expect(envelope.version).toBe(5);
+      expect(envelope.prompts[0]).toMatchObject({
+        id: 'Work/AI/summarize',
+        content: 'Summarize:\n\n{{document}}',
+        folderId: 'Work/AI',
+      });
+      expect(envelope.folders).toEqual([
+        { id: 'Work', name: 'Work' },
+        { id: 'Work/AI', name: 'AI', folderId: 'Work' },
+      ]);
+    });
+
+    it('fetches an organisation prompt through the public endpoint', async () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(getPublicPrompt).mockResolvedValue(organisationPrompt);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'download Public/translate' }),
+      );
+
+      expect(getPublicPrompt).toHaveBeenCalledWith('Public/translate');
+      expect(getPrompt).not.toHaveBeenCalled();
+      await waitFor(() => expect(triggerBlobDownload).toHaveBeenCalledOnce());
+    });
+
+    it('re-fetches the body instead of writing the content seeded by the listing', async () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(getPrompt).mockResolvedValue({
+        ...personalPrompt,
+        content: 'Edited elsewhere',
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+      );
+      await waitFor(() => expect(triggerBlobDownload).toHaveBeenCalledOnce());
+
+      const { envelope } = await readDownloadedFile();
+      expect(envelope.prompts[0].content).toBe('Edited elsewhere');
+    });
+
+    it('offers no download for an item that is not a prompt', () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(useDeployments).mockReturnValue({
+        ...vi.mocked(useDeployments)(),
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+      });
+
+      render(<CatalogView />);
+
+      expect(
+        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole('button', { name: 'download gpt-4o' }),
+      ).toBeNull();
+    });
+
+    it('reports a failed download and writes no file', async () => {
+      enablePrompts();
+      mockPrompts();
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue({
+        notifications: [],
+        showNotification,
+        dismissNotification: vi.fn(),
+      });
+      vi.mocked(getPrompt).mockRejectedValue(new Error('502'));
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+      );
+
+      await waitFor(() =>
+        expect(showNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: 'error',
+            message: CatalogI18nKeys.DetailsPromptDownloadError,
+          }),
+        ),
+      );
+      expect(triggerBlobDownload).not.toHaveBeenCalled();
     });
   });
 });

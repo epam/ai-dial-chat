@@ -129,6 +129,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   shareOverlay,
   isShareVisible,
   onEdit,
+  onDownload,
+  isDownloadVisible,
   onDelete,
   onUnshare,
   isUnshareVisible,
@@ -709,6 +711,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 isPublishVisible={isPublishVisible}
                 onOpenPublish={handleOpenPublish}
                 onEdit={onEdit}
+                onDownload={onDownload}
+                isDownloadVisible={isDownloadVisible}
                 onDelete={onDelete ? handleRequestDelete : undefined}
                 onUnshare={onUnshare ? handleRequestUnshare : undefined}
                 isUnshareVisible={isUnshareVisible}

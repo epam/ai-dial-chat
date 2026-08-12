@@ -128,6 +128,17 @@ export interface CatalogProps {
   /** Called when the "Edit" button is clicked in the details panel. Shown only when the item's `isEditable` is `true`. */
   onEdit?: (item: CatalogItem) => void;
   /**
+   * Called when the "Download" action is clicked in the details panel, with no
+   * confirmation step. The panel does not await the result or show a pending
+   * state, so the host owns any progress and failure feedback.
+   */
+  onDownload?: (item: CatalogItem) => Promise<void> | void;
+  /**
+   * Narrows which items offer the "Download" action. Defaults to `true`
+   * (visible for every item) whenever `onDownload` is supplied.
+   */
+  isDownloadVisible?: (item: CatalogItem) => boolean;
+  /**
    * Called immediately when the "Delete" button in the details panel is
    * clicked, with no confirmation step. Shown only when the item's `isMyApp`
    * is `true` and its `type` is `Application` or `Toolset`. May return a

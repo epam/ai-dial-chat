@@ -32,6 +32,7 @@ import {
 } from '../utils/attachment-refs';
 import { resolveDialFileBucketAndPath } from '../utils/dial-file';
 import {
+  EXPORT_APP_NAME,
   buildExportEnvelope,
   buildExportFileName,
   serializeExportEnvelope,
@@ -39,8 +40,6 @@ import {
 import { safeDecodeURIComponent } from '../utils/string-utils';
 import { buildDialArchive, type ZipAttachmentEntry } from '../utils/zip-export';
 
-/** Placeholder app name used in export file names — this branch has no app display-name config yet. */
-const EXPORT_APP_NAME = 'ai_dial';
 /** Maximum number of concurrent attachment download requests during a ZIP export. */
 const ATTACHMENT_CONCURRENCY = 5;
 

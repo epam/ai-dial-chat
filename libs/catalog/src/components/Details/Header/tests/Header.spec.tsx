@@ -82,6 +82,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 vi.mock('@tabler/icons-react', () => ({
   IconDots: () => <svg />,
+  IconDownload: () => <svg />,
   IconKey: () => <svg />,
   IconLogin: () => <svg />,
   IconLogout: () => <svg />,
@@ -302,6 +303,53 @@ describe('Header', () => {
     await openManage();
     await userEvent.click(screen.getByRole('button', { name: 'Edit' }));
     expect(onEdit).toHaveBeenCalledWith(item);
+  });
+
+  it('renders Download in the Manage menu when onDownload is supplied', async () => {
+    render(
+      <Header item={makeItem(CatalogEntityType.Prompt)} onDownload={vi.fn()} />,
+    );
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Download' })).toBeTruthy();
+  });
+
+  it('does not render Download when onDownload is absent', async () => {
+    render(<Header item={makeItem(CatalogEntityType.Prompt)} />);
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Download' })).toBeNull();
+  });
+
+  it('does not render Download when isDownloadVisible returns false', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onDownload={vi.fn()}
+        isDownloadVisible={() => false}
+      />,
+    );
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Download' })).toBeNull();
+  });
+
+  it('passes texts.downloadActionLabel through to the Download item label', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Prompt)}
+        onDownload={vi.fn()}
+        texts={{ downloadActionLabel: 'Export' }}
+      />,
+    );
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Export' })).toBeTruthy();
+  });
+
+  it('calls onDownload with the item when Download is clicked', async () => {
+    const onDownload = vi.fn();
+    const item = makeItem(CatalogEntityType.Prompt);
+    render(<Header item={item} onDownload={onDownload} />);
+    await openManage();
+    await userEvent.click(screen.getByRole('button', { name: 'Download' }));
+    expect(onDownload).toHaveBeenCalledWith(item);
   });
 
   it('renders Delete in the Manage menu', async () => {

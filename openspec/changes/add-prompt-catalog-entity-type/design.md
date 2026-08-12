@@ -23,10 +23,9 @@ Constraints that shape every decision below:
 **Non-Goals:**
 
 - **Prompt unshare.** `discard-shared-catalog-item.dto.ts:6` `@Matches(/^(?:applications|toolsets|conversations)\/…/)`, so a prompt path is rejected with 400 before reaching the service. Worse, `listPrompts` returns a shared prompt under a bucket-relative path with the *owner's* bucket stripped, so the frontend cannot reconstruct the resource url the discard call needs. See D7.
-- **Prompt publishing.** No publish route accepts a prompt resource kind.
 - Prompt variables/templating (`{{placeholder}}` substitution at insert time), a prompt picker inside the composer, prompt versioning, and prompt folder navigation inside the catalog grid.
 
-**Scope revision (post-review):** the change originally forbade any edit under `apps/chat-api/**`. Three of the follow-ups the first pass documented as backend-capability limitations were subsequently pulled into scope — prompt favourites (D6), prompt share links (D7), and dropping DIAL folder markers from the prompt listings (D14) — so the backend, `openapi.json`, and the generated client are now part of this change. `npm run openapi:check` staying green is still the proof that spec and client agree.
+**Scope revision (post-review):** the change originally forbade any edit under `apps/chat-api/**`. Four of the follow-ups the first pass documented as backend-capability limitations were subsequently pulled into scope — prompt favourites (D6), prompt share links (D7), dropping DIAL folder markers from the prompt listings (D14), and publishing a prompt to an Organization folder (`CatalogEntityType.Prompt` on the publish DTO plus bucket qualification in `publish.service.ts`) — so the backend, `openapi.json`, and the generated client are now part of this change. Download (D15) was added last and needed no backend change at all. `npm run openapi:check` staying green is still the proof that spec and client agree.
 
 ## Decisions
 
@@ -139,6 +138,20 @@ The lib deliberately **does not validate**. Length limits and the name pattern a
 
 This matches the existing precedent in `conversation-listing.service.ts:240`, `deployments-listing.service.ts:190`, and `toolset-mapper.util.ts:332`. The prompts module's own `.folder` sentinel is unaffected — it is still used to derive empty folders.
 
+### D15 — A prompt downloads as the conversation export's envelope, and the lib never learns the format
+
+**Added.** Download is split at the same seam as every other prompt action: `libs/catalog` contributes only a Manage-menu entry (`onDownload` + `isDownloadVisible`), and `apps/chat` owns the fetch, the payload, and the file name. A lib that serialized a prompt would embed a host-owned wire contract, which the library-isolation rule forbids.
+
+*Why the `version: 5` envelope rather than a bare `.md` of the body:* the repo already downloads a conversation as `{ version: 5, history, folders }`, and a prompt is the same kind of resource. Reusing the shape — `{ version: 5, prompts, folders }`, with `ExportFolder` taken from `@epam/ai-dial-chat-shared` rather than redeclared — keeps one format family, matches what DIAL's prompt importer expects, and means the file round-trips instead of being read-only prose. The cost is that a user who wants just the text gets JSON; the Details tab already shows selectable text for that case.
+
+*Why the folder chain is expanded:* a bare `folderId` string would force an importer to invent folder records. Emitting each ancestor with its own full path as `id` makes the nesting reproducible from the file alone.
+
+*Why timestamps and `author` are excluded:* they describe the source resource in one bucket, not the exported prompt, and would be actively wrong once the file is imported somewhere else.
+
+*Why the body is re-fetched:* the listing seeds `details.promptContent`, so writing that field would silently save a stale body if the prompt was edited in another tab. The fetch reuses the details path's `getPublicPrompt` / `getPrompt` dispatch, extracted as `isOrganisationPromptItem` so all three call sites share one predicate.
+
+*Why there is no success toast:* the browser's own download UI already confirms it. Only failure notifies, carrying the trace id.
+
 ### D10 — Details fetch dispatches on type inside the app adapter
 
 `handleFetchDetails` (`CatalogView.tsx:257-297`) currently always calls `getDeploymentDetails`. It gains an early branch: a `Prompt` item resolves through `getPrompt` (personal/shared) or `getPublicPrompt` (public folder), returning `{ promptContent: { content } }`. Existing behaviour for every other type is byte-identical.
@@ -155,7 +168,8 @@ This matches the existing precedent in `conversation-listing.service.ts:240`, `d
 
 - **Two new optional props on `libs/catalog`'s public surface (`isUnshareVisible`, plus the `promptContent` model field)** → Both default to today's behaviour when absent, so no existing host is affected. `isUnshareVisible` is threaded `Catalog` → `DetailsPanel` → `Header` and combined (AND) with the built-in ownership rule, per `.claude/rules/libs.md` "every declared prop must be read". `isFavoriteVisible` was added by the first pass and then removed once prompts became favouritable (D6) — a lib prop with no caller is dead public API.
 - **A new lib (`libs/prompt-editor`) for a single consumer** → Accepted (D13). The split is where the isolation rule draws it, and the lib's 27 tests exercise the form directly instead of through the app's API mocks. Cost: the app's vitest run resolves the lib from its build output, so a lib change needs `nx build @epam/ai-dial-prompt-editor` before app tests see it.
-- **Prompt actions are still asymmetric with deployments** — no Remove-from-My-List, no Publish → Accepted and documented as a backend-capability limitation with the exact blocking DTO regex cited. Favourites and share links were the other two and are now implemented (D6, D7).
+- **Prompt actions are still asymmetric with deployments** — no Remove-from-My-List → Accepted and documented as a backend-capability limitation with the exact blocking DTO regex cited. Favourites, share links, publishing, and download are all implemented (D6, D7, D15).
+- **Revoke access is offered on prompts but always fails** → **Open defect, not accepted.** `RevokeSharedAccessDto` carries the same `applications|toolsets|conversations` regex as the discard DTO, and `Header`'s built-in rule keeps the action visible while `recipientsCount` is `undefined`, which is what `mapPromptToCatalogItem` leaves it as. The action therefore renders on every personal prompt and 400s. `onRevokeShare` arrived from `development-1.0` after this change was drafted, which is why no predicate gates it. Closing it needs an `isRevokeShareVisible` predicate mirroring `isUnshareVisible`, or backend support for prompt resource paths — see tasks 10.7.
 - **A user-config schema bump (3 → 4) on a shape every session reads** → `migrateConfig` already tolerates missing sections and is exercised by 54 unit tests covering the v1, v2, v3, and corrupt-input paths; the new section is purely additive, so a v3 file read by new code and a v4 file read by old code both degrade to an empty favourites list rather than an error.
 - **Refetch-after-mutation costs a round trip and can flash a stale list** → Accepted for correctness (D4): a folder rename rewrites every descendant id, and a client-side patch would diverge from the backend's own path arithmetic. `isLoading` covers the window; the editor navigates back only after the refetch settles.
 - **A 50 000-character prompt body in a details tab and a textarea** → Render the content block with `overflow` scroll inside its own container and no syntax highlighting; the editor's textarea is plain. Character counters announce only near the limit (last 10 chars) per `.claude/rules/a11y.md`, not on every keystroke.
@@ -168,7 +182,7 @@ This matches the existing precedent in `conversation-listing.service.ts:240`, `d
 
 One persisted-shape change: user-config `version` 3 → 4, gaining `prompts: { installed: [] }`. It is forward- and backward-tolerant (see Risks), so no migration step is needed — `readConfig` rewrites the file on first read.
 
-1. Ship `libs/catalog` (enum member, colour, tab, content tab, `isUnshareVisible`, prompt tab set) and `libs/chat-overlay` (feature key). Inert on their own: no host passes the new props yet, and `buildCatalogTabs` only renders a tab for a type present in `items`.
+1. Ship `libs/catalog` (enum member, colour, tab, content tab, `isUnshareVisible`, `onDownload`/`isDownloadVisible`, prompt tab set) and `libs/chat-overlay` (feature key). Inert on their own: no host passes the new props yet, and `buildCatalogTabs` only renders a tab for a type present in `items`.
 2. Ship the backend slice — `.dial_folder` filtering, the user-config prompts section, and the share `resourceKind` — plus the regenerated client. All three are additive; existing callers are unaffected.
 3. Ship `prompts.api.ts` + `promptsApi` registration. Inert: no caller yet.
 4. Ship `PromptsContext` and `mapPromptToCatalogItem` behind `OverlayFeature.Prompts`. Zero user-visible change while the key is off.
@@ -182,7 +196,8 @@ One persisted-shape change: user-config `version` 3 → 4, gaining `prompts: { i
 ## Open Questions
 
 1. **Should organisation (public) prompts be visible when `OverlayFeature.Prompts` is on but the user has no personal prompts?** Assumed yes — the Public folder is how a user discovers prompts worth copying. Revisit only if a stakeholder wants the tab hidden until the user owns a prompt.
-2. **Should a prompt shared with the user be removable from their list?** Blocked on two backend facts, not on a product decision: the discard DTO rejects prompt paths, and `listPrompts` strips the owner bucket a discard call needs. Both are fixable; neither is in this change.
+2. **Should a prompt shared with the user be removable from their list?** Blocked on two backend facts, not on a product decision: the discard DTO rejects prompt paths, and `getSharedPrompts` strips the owner bucket a discard call needs. Both are fixable; neither is in this change.
+3. **Should a downloaded prompt be re-importable?** The file is shaped for it (`version: 5` with the folder chain), but this change ships no importer, so nothing verifies the round trip end to end. Decide whether prompt import belongs in a follow-up before the format is treated as a contract.
 
 **Resolved since the first pass:**
 

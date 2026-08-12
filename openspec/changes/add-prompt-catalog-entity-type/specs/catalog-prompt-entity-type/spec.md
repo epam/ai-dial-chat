@@ -89,7 +89,7 @@ The tab body MUST use logical CSS properties (`ps-*`/`pe-*`, `text-start`) so it
 
 - **WHEN** the Content tab renders a body
 - **THEN** no button is rendered inside it
-- **AND** an `aria-live="polite"` status region announces the `contentCopiedStatusLabel` text
+- **AND** no `aria-live` region is rendered, since there is no transient status left to announce
 
 #### Scenario: Long content scrolls inside its own container
 
@@ -132,7 +132,7 @@ It SHALL default to "visible" when absent, so every existing host renders identi
 
 No favourite-visibility predicate is added. An earlier revision of this change added `isFavoriteVisible` to hide the star for prompts; prompts are favouritable now (see `prompt-catalog-integration`), which left the predicate with no caller. A lib prop that no host passes is dead public API and SHALL NOT be retained: the star renders for every entity type, prompts included.
 
-No revoke-access predicate is added either: this branch's `libs/catalog` has no `onRevokeShare` callback and no owner-side revoke action, so a predicate gating it would be a prop nothing reads.
+No revoke-access predicate is added by this change. `libs/catalog` gained an owner-side `onRevokeShare` action from `development-1.0` after this change was drafted, and that action is offered on personal prompts even though the backend rejects prompt resource paths — see the Revoke access bullet in `prompt-catalog-integration` for the resulting defect and the `isRevokeShareVisible` predicate that would close it.
 
 #### Scenario: Unshare action is hidden by predicate
 
@@ -245,7 +245,7 @@ Prompt body text is NOT searchable: `filterCatalogItems` matches `name`, `descri
 
 ### Requirement: Lib documentation covers the new surface
 
-`libs/catalog/README.md` SHALL document the `Prompt` entity type, the `promptContent` details field with the `Content` tab, and the `isUnshareVisible` predicate. Every component name, prop name, and type name in a README example MUST exist with that exact spelling and shape — in particular, the README MUST NOT document `isFavoriteVisible`, which this change removes.
+`libs/catalog/README.md` SHALL document the `Prompt` entity type, the `promptContent` details field with the `Content` tab, the `isUnshareVisible` predicate, and the `onDownload` / `isDownloadVisible` pair — including that the lib never learns the downloaded file's format. Every component name, prop name, and type name in a README example MUST exist with that exact spelling and shape — in particular, the README MUST NOT document `isFavoriteVisible`, which this change removes.
 
 #### Scenario: README examples compile against the shipped API
 

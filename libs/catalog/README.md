@@ -183,6 +183,27 @@ The lib never learns where a prompt comes from: the body arrives already
 resolved, and the host decides every prompt-specific action through the
 existing `onFetchDetails` / `onEdit` / `onUseInChat` props.
 
+### Download
+
+`onDownload` adds a "Download" entry to the details panel's Manage menu. The lib
+neither builds the file nor knows its format — it only reports the click, so the
+host fetches whatever it needs and writes the file itself. The call is
+fire-and-forget: the panel does not await the result and shows no pending state,
+so failures are the host's to surface.
+
+Scope it with `isDownloadVisible`, which defaults to **visible for every item**
+whenever `onDownload` is supplied.
+
+```tsx
+<Catalog
+  items={items}
+  favorites={favorites}
+  // Only prompts carry a downloadable body.
+  isDownloadVisible={(item) => item.type === CatalogEntityType.Prompt}
+  onDownload={handleDownload}
+/>
+```
+
 ### Declaring unsupported per-item capabilities
 
 `isUnshareVisible` lets a host hide "Remove from My List" for items whose

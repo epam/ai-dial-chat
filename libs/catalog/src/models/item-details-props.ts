@@ -55,6 +55,8 @@ export interface ItemDetailsTexts {
   hasPrimaryAction?: boolean;
   /** "Edit" action button label. Default: `'Edit'`. */
   editActionLabel?: string;
+  /** "Download" action button label. Default: `'Download'`. */
+  downloadActionLabel?: string;
   /** "Resource" section heading in the API tab. Default: `'Resource'`. */
   apiResourceSectionLabel?: string;
   /** "Code snippet" section heading in the API tab. Default: `'Code snippet'`. */
@@ -362,6 +364,17 @@ export interface DetailsPanelProps {
   isShareVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Edit" button is clicked. Shown only when the item's `isEditable` is `true`. */
   onEdit?: (item: CatalogItem) => void;
+  /**
+   * Called when the "Download" action is clicked, with no confirmation step.
+   * The panel does not await the result or show a pending state, so the host
+   * owns any progress and failure feedback.
+   */
+  onDownload?: (item: CatalogItem) => Promise<void> | void;
+  /**
+   * Narrows which items offer the "Download" action. Defaults to `true`
+   * (visible for every item) whenever `onDownload` is supplied.
+   */
+  isDownloadVisible?: (item: CatalogItem) => boolean;
   /**
    * Called immediately when the "Delete" button is clicked, with no
    * confirmation step. Shown only when the item's `isMyApp` is `true` and

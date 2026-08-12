@@ -10,7 +10,7 @@ Not one of those endpoints has a frontend caller. There is no `apps/chat/src/ser
 
 - **`libs/catalog`: new `CatalogEntityType.Prompt` member**, with its entity colour (`libs/catalog/src/constants/entity-colors.ts`), tab label and canonical tab position (`libs/catalog/src/utils/catalog-tabs.ts:10-23`), and list-view Folder-column visibility. The type flows automatically into `EntityTypeLabel`, `AppIdentity`, cards, `ListView`, search (`filterCatalogItems` already matches on `item.type`), sort, and favourites with no per-type branching.
 - **`libs/catalog`: a Prompt content details tab.** A new `CatalogItemPromptContent` entry on `CatalogItemTabData` plus a `CatalogDetailsTab.Content` tab renders the prompt body in a read-only, copyable block. Absent field ⇒ tab hidden, matching how `tools`, `limits`, `pricing` and `api` already gate their tabs (`libs/catalog/src/models/item-details-data.ts`).
-- **`libs/catalog`: Prompt-aware built-in action defaults.** `Header.tsx:139-152` currently defaults the primary action to Model/Agent and Publish to Model/Agent/Toolset. Prompt joins the primary-action default; it stays out of the Publish default (the backend has no prompt publish endpoint). Every host-owned decision still arrives through the existing `isPrimaryActionVisible` / `isPublishVisible` / `isShareVisible` predicates — no new host knowledge enters the lib.
+- **`libs/catalog`: Prompt-aware built-in action defaults.** `Header.tsx:139-152` currently defaults the primary action to Model/Agent and Publish to Model/Agent/Toolset. Prompt joins the primary-action default; it stays out of the Publish default, which is inert because `CatalogView` always supplies `isPublishVisible`. Every host-owned decision still arrives through the existing `isPrimaryActionVisible` / `isPublishVisible` / `isShareVisible` predicates plus the new `isDownloadVisible` — no new host knowledge enters the lib.
 - **`apps/chat`: `server-api/prompts.api.ts` covering all ten generated methods** — `listPrompts`, `getPrompt`, `createPrompt`, `updatePrompt`, `deletePrompt`, `listPublicPrompts`, `getPublicPrompt`, `createPromptFolder`, `renamePromptFolder`, `deletePromptFolder`, `movePrompt` — as thin wrappers in the shape of `apps/chat/src/server-api/toolsets.ts:11-40`, with `promptsApi` registered in `api-client.ts`.
 - **`apps/chat`: `PromptsContext`** owning prompt/folder state and exposing `prompts`, `publicPrompts`, `sharedWithMe`, `folders`, `isLoading`, `error`, `refetch*`, following the `DeploymentsContext` + `ThemeContext` pattern (`useMemo`'d value, guard hook that throws outside the provider, cancelled-flag fetches).
 - **`apps/chat`: prompts merged into `CatalogView`.** `mapPromptToCatalogItem` (personal ⇒ `isMyApp`, `sharedWithMe` ⇒ Shared folder, public ⇒ Public folder) joins the `catalogItems` memo at `CatalogView.tsx:185-217`, gated on a new `OverlayFeature.Prompts` key exactly as toolsets are gated today.
@@ -30,10 +30,12 @@ The change originally forbade any backend edit. Three follow-ups the first pass 
 
 Two further UI revisions came with them: a prompt's details panel shows exactly two tabs (Content, Overview) rather than About + Content, and the editor's form moved into a new `libs/prompt-editor`.
 
+A third round added publishing a prompt to an Organization folder (backend `CatalogEntityType.Prompt` plus bucket qualification in `publish.service.ts`) and downloading a prompt as a `version: 5` JSON envelope (D15) through a new `onDownload` / `isDownloadVisible` pair on `CatalogProps`.
+
 ### Non-goals
 
-- No prompt **unshare** — the discard DTO rejects prompt paths, and `listPrompts` strips the owner bucket such a call would need.
-- No prompt **publishing** — `apps/chat-api` exposes no publish route for prompts, so `toPublishEntityType` deliberately returns `undefined` for Prompt.
+- No prompt **unshare** — the discard DTO rejects prompt paths, and `getSharedPrompts` strips the owner bucket such a call would need.
+- No prompt **import** — download writes a re-importable envelope, but nothing in this change reads one back.
 - No prompt variables/templating (`{{placeholder}}` substitution), no prompt-picker inside the chat composer, and no prompt versioning. All are separate features on top of this one.
 - No prompt folder tree UI inside the catalog itself; folder management lives in the editor page.
 
