@@ -1388,9 +1388,12 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
       actions.push(
         of(OverlayActions.setOverlayOptionsSuccess(options)),
         iif(
-          () =>
-            !shouldLogIn &&
-            (!isOverlayOptionsReceived || isOptionChanged('modelId')),
+          // Only the very first options delivery initializes the selection.
+          // Initialization starts a fresh conversation when the selected one
+          // has history, so repeating it on a later options update would throw
+          // away the conversation the user is in. A model set at that point
+          // applies to the conversations created afterwards.
+          () => !shouldLogIn && !isOverlayOptionsReceived,
           of(ConversationsActions.initSelectedConversations()),
           EMPTY,
         ),

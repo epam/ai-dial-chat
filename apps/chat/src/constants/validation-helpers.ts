@@ -118,18 +118,33 @@ export const AttachmentTypesSchema = zodValidation
 
 /**
  * A MIME type typed into the attachment types combobox but not added to the
- * list yet. It is kept in the form state so that its validation is produced by
- * the schema and survives both form re-validation and switching editor steps.
+ * list yet. It is kept in the form state so that it survives switching editor
+ * steps and so that the form stays invalid while it cannot be added.
  */
 export const PendingAttachmentTypeSchema = zodValidation.string();
+
+/**
+ * The error of the attachment type that is being typed. The field shows it
+ * directly instead of reading it from the form errors: the value is validated
+ * by a cross field rule, and react-hook-form only refreshes the errors of the
+ * field being changed, so a rule reported on another field would stay hidden
+ * until the whole form is validated.
+ */
+export const getPendingAttachmentTypeError = (
+  pendingInputAttachmentType?: string,
+) => {
+  const pendingType = pendingInputAttachmentType?.trim();
+
+  return pendingType && !MIME_FORMAT_REGEX.test(pendingType)
+    ? MIME_FORMAT_ERROR
+    : undefined;
+};
 
 export const refinePendingAttachmentType = (
   data: { pendingInputAttachmentType?: string },
   ctx: zodValidation.RefinementCtx,
 ) => {
-  const pendingType = data.pendingInputAttachmentType?.trim();
-
-  if (pendingType && !MIME_FORMAT_REGEX.test(pendingType)) {
+  if (getPendingAttachmentTypeError(data.pendingInputAttachmentType)) {
     ctx.addIssue({
       code: 'custom',
       path: ['inputAttachmentTypes'],

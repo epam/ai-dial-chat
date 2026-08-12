@@ -1,4 +1,3 @@
-import { API } from '@/src/testData';
 import { EventSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { Page } from '@playwright/test';
@@ -12,14 +11,10 @@ export class Configuration extends BaseElement {
     EventSelectors.setConfigurationButton,
   );
 
+  // Setting overlay options no longer re-reads the selected conversation, so
+  // there is no response to wait for; the assertions that follow retry on their
+  // own until the options are applied.
   public async clickSetConfigurationButton() {
-    const respPromise = this.page.waitForResponse(
-      (response) =>
-        response.request().method() === 'GET' &&
-        response.status() === 200 &&
-        response.url().includes(API.conversationHost),
-    );
     await this.setConfigurationButton.click();
-    await respPromise;
   }
 }
