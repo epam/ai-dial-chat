@@ -163,6 +163,7 @@
         "removingStatus": "Removing…",
         "errorTitle": "Removal failed",
         "error": "Failed to remove \"{{name}}\". Please try again.",
+        "successTitle": "Removed from My List",
         "success": "\"{{name}}\" was removed from your list."
       },
       "connect": {
