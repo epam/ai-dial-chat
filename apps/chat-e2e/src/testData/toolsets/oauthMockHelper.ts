@@ -92,20 +92,27 @@ export class OAuthMockHelper extends BaseAuthMockHelper<ToolsetOAuthSignInReques
       const signInResponsePromise = popup.waitForResponse((resp) =>
         resp.url().includes(API.toolsetSignInHost()),
       );
-      try {
-        await popup.goto(this.oauthState.callbackUrl, {
-          waitUntil: 'domcontentloaded',
-        });
-      } catch (e) {
-        // Race: the mocked auth redirect can drive the popup through the
-        // whole sign-in flow before/during our goto(), aborting it or
-        // tearing the popup down as a side effect. Only rethrow if that's
-        // not what happened.
-        if (
-          !this.isFlowAlreadyDone(popup) &&
-          !popup.url().includes(Routes.ToolsetSignIn)
-        ) {
-          throw e;
+
+      // If the mocked auth redirect already landed the popup on the callback
+      // page, navigating it there again would cancel its in-flight sign-in
+      // request (a new navigation aborts the old document's pending
+      // fetches) — let it finish the flow on its own instead.
+      if (!popup.url().includes(Routes.ToolsetSignIn)) {
+        try {
+          await popup.goto(this.oauthState.callbackUrl, {
+            waitUntil: 'domcontentloaded',
+          });
+        } catch (e) {
+          // Race: the mocked auth redirect can drive the popup through the
+          // whole sign-in flow before/during our goto(), aborting it or
+          // tearing the popup down as a side effect. Only rethrow if that's
+          // not what happened.
+          if (
+            !this.isFlowAlreadyDone(popup) &&
+            !popup.url().includes(Routes.ToolsetSignIn)
+          ) {
+            throw e;
+          }
         }
       }
 
