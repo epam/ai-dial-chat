@@ -12,9 +12,15 @@ const CatalogView = lazy(async () => {
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  /**
+   * Called with the selected deployment's id when a card is picked, instead
+   * of committing the pick to `DeploymentsContext`. Omit to keep the
+   * default behavior (updates the chat input's own selected deployment).
+   */
+  onSelect?: (id: string) => void;
 }
 
-const CatalogModal: FC<Props> = ({ isOpen, onClose }) => {
+const CatalogModal: FC<Props> = ({ isOpen, onClose, onSelect }) => {
   const { t } = useTranslation();
 
   return (
@@ -27,7 +33,9 @@ const CatalogModal: FC<Props> = ({ isOpen, onClose }) => {
     >
       <div className="h-[min(80vh,840px)] overflow-auto">
         <Suspense fallback={null}>
-          {isOpen && <CatalogView isSelectorMode onClose={onClose} />}
+          {isOpen && (
+            <CatalogView isSelectorMode onClose={onClose} onSelect={onSelect} />
+          )}
         </Suspense>
       </div>
     </Popup>

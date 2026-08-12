@@ -32,7 +32,7 @@ The application SHALL expose a lazy-loaded Scheduled Task Detail page at `ROUTES
 #### Scenario: Task and runs fetch concurrently on mount
 
 - **WHEN** `ScheduledTaskDetailPage` mounts with a valid `scheduleId` and the feature flag enabled
-- **THEN** `getScheduledTask(scheduleId)` and the first `listScheduledTaskRuns({ scheduleId, limit: 20, offset: 0 })` call are both initiated without either awaiting the other's resolution
+- **THEN** `getScheduledTask(scheduleId)` and the first `listScheduledTaskRuns({ scheduleId, limit: 10, offset: 0 })` call are both initiated without either awaiting the other's resolution
 
 #### Scenario: Unknown schedule id renders NotFoundPage
 
@@ -125,14 +125,14 @@ The detail page SHALL render a Details section showing the task's description, a
 
 ### Requirement: History panel paginates runs via a "Show more" button inside its own scroll container
 
-The detail page SHALL render a History panel listing the task's runs, fetched via a `useScheduledTaskRuns(scheduleId, enabled)` hook (`apps/chat/src/hooks/scheduled-tasks/useScheduledTaskRuns.ts`) exposing `{ items, isLoading, isLoadingMore, error, hasMore, loadMore, refetch }`, mirroring the shape of the existing `useScheduledTasks` hook. The hook SHALL call `listScheduledTaskRuns({ scheduleId, limit: 20, offset: 0 })` for the initial page, and `loadMore()` SHALL, only when `hasMore && !isLoadingMore && !isLoading`, fetch the next page at `offset = items.length` and append the results deduplicated by `id`, with no client-side re-sorting (server order is `created_at desc`). `hasMore` SHALL be derived from `items.length < count` when `count` is present in the response, falling back to a non-null `next` field, or — when the upstream response omits both `count` and `next` — to a full-page-size heuristic (the just-fetched page had exactly `limit` items), so pagination does not permanently stop after the first page purely because upstream didn't echo a total. The hook SHALL use `AbortController` to cancel any in-flight request when `scheduleId` changes or the hook unmounts.
+The detail page SHALL render a History panel listing the task's runs, fetched via a `useScheduledTaskRuns(scheduleId, enabled)` hook (`apps/chat/src/hooks/scheduled-tasks/useScheduledTaskRuns.ts`) exposing `{ items, isLoading, isLoadingMore, error, hasMore, loadMore, refetch }`, mirroring the shape of the existing `useScheduledTasks` hook. The hook SHALL call `listScheduledTaskRuns({ scheduleId, limit: 10, offset: 0 })` for the initial page, and `loadMore()` SHALL, only when `hasMore && !isLoadingMore && !isLoading`, fetch the next page at `offset = items.length` and append the results deduplicated by `id`, with no client-side re-sorting (server order is `created_at desc`). `hasMore` SHALL be derived from `items.length < count` when `count` is present in the response, falling back to a non-null `next` field, or — when the upstream response omits both `count` and `next` — to a full-page-size heuristic (the just-fetched page had exactly `limit` items), so pagination does not permanently stop after the first page purely because upstream didn't echo a total. The hook SHALL use `AbortController` to cancel any in-flight request when `scheduleId` changes or the hook unmounts.
 
 The History panel SHALL be rendered inside a fixed-height, self-scrolling container (`max-h-[70vh]` at all breakpoints, `overflow-y-auto`) that does not require scrolling the whole page (except where the responsive-design skill's mobile layout requires stacking instead). Inside that scroll container: the panel title and the "Next run" label (when present) SHALL be pinned with `position: sticky; top: 0` so they stay visible while the run list scrolls beneath them; an explicit **"Show more" button** (not a scroll sentinel) SHALL render pinned with `position: sticky; bottom: 0`, below the loaded rows, only while `hasMore` is `true`. Both sticky regions SHALL use the same background as the History card so scrolled-past rows do not show through underneath them. Activating the button, while `hasMore && !isLoadingMore && !isLoading`, SHALL invoke `loadMore()`.
 
 #### Scenario: Initial history page loads on mount
 
 - **WHEN** `ScheduledTaskDetailPage` mounts with the feature flag enabled
-- **THEN** `listScheduledTaskRuns({ scheduleId, limit: 20, offset: 0 })` is called exactly once and the resolved runs are passed to the History panel
+- **THEN** `listScheduledTaskRuns({ scheduleId, limit: 10, offset: 0 })` is called exactly once and the resolved runs are passed to the History panel
 
 #### Scenario: Activating "Show more" loads the next page
 
@@ -151,8 +151,8 @@ The History panel SHALL be rendered inside a fixed-height, self-scrolling contai
 
 #### Scenario: hasMore derives from count when present, else from next, else from a full page
 
-- **WHEN** a `listScheduledTaskRuns` response includes `count: 42` and 20 loaded items
-- **THEN** `hasMore` is `true`; when a subsequent response omits `count` but includes a non-null `next`, `hasMore` remains `true` based on `next`; when a response omits both `count` and `next` and returned exactly `limit` (20) items, `hasMore` is `true`; when such a response returns fewer than `limit` items, `hasMore` is `false`
+- **WHEN** a `listScheduledTaskRuns` response includes `count: 42` and 10 loaded items
+- **THEN** `hasMore` is `true`; when a subsequent response omits `count` but includes a non-null `next`, `hasMore` remains `true` based on `next`; when a response omits both `count` and `next` and returned exactly `limit` (10) items, `hasMore` is `true`; when such a response returns fewer than `limit` items, `hasMore` is `false`
 
 #### Scenario: Unmount or scheduleId change aborts the in-flight runs request
 
