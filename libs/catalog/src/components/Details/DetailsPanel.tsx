@@ -566,12 +566,14 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 }}
                 renderSummary={() => (
                   <>
-                    <EntityHeader
-                      item={item}
-                      iconSize={40}
-                      hasFeaturedTag={false}
-                      showVersion={false}
-                    />
+                    <div className="min-w-0 flex-1">
+                      <EntityHeader
+                        item={item}
+                        iconSize={40}
+                        hasFeaturedTag={false}
+                        showVersion={false}
+                      />
+                    </div>
                     <DialTag
                       label={`Version ${item.version} · current`}
                       className={mergeClasses(
