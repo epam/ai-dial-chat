@@ -42,6 +42,7 @@ Apply in order, stop at the first match:
 | `conversation-stages`   | Stage / step rendering inside a conversation                  |
 | `scheduled-tasks`       | Scheduled tasks UI (detail view, cards, runs history)         |
 | `sidebar`               | Sidebar navigation                                            |
+| `skill-editor`          | Skill editor UI and authoring components                      |
 | `source-panel`          | Sources panel                                                 |
 | `starter-buttons`       | Starter prompt buttons                                        |
 

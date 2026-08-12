@@ -71,6 +71,7 @@ import { CatalogQuery } from '../../types/catalog';
 import { PromptSource } from '../../types/prompt';
 import { PromptEditorQuery } from '../../types/prompt-editor';
 import { ROUTES } from '../../types/routes';
+import { SkillEditorQuery } from '../../types/skill-editor';
 import { isQuickAppSchema } from '../../utils/application-schema';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { resolveFavoriteEntityType } from '../../utils/favorites';
@@ -975,6 +976,17 @@ const CatalogView: FC<Props> = ({
         },
       });
     }
+
+    options.push({
+      key: 'skill',
+      label: t(CatalogI18nKeys.CreateSkill),
+      onClick: () => {
+        const params = new URLSearchParams({
+          [SkillEditorQuery.ReturnUrl]: ROUTES.Catalog,
+        });
+        navigate(`${ROUTES.SkillEditor}?${params.toString()}`);
+      },
+    });
 
     return options;
   }, [

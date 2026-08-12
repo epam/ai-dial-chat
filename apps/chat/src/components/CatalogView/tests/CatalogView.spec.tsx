@@ -3076,6 +3076,27 @@ describe('CatalogView', () => {
       expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o');
       expect(mockNavigate).toHaveBeenCalledWith('/');
     });
+
+    it('offers the Skill create option regardless of the prompts feature flag', async () => {
+      disablePrompts();
+
+      render(<CatalogView />);
+
+      expect(
+        screen.getByRole('button', { name: 'catalog.create.skill' }),
+      ).toBeTruthy();
+    });
+
+    it('navigates to the skill editor with the catalog return url from the Skill create option', async () => {
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'catalog.create.skill' }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/skill-editor?returnUrl=%2Fcatalog',
+      );
+    });
   });
   describe('revoke access', () => {
     const ownedApplication = {
