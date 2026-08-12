@@ -128,6 +128,17 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
     });
   }, [append, localOptions]);
 
+  const isAddLocaleDisabled = !localOptions.length;
+  const isApplyDisabled = !isDirty || !isValid;
+
+  const applyTooltip = useMemo(
+    () =>
+      !isValid
+        ? t(CommonI18nKeys.FillInAllRequiredFields)
+        : t(CommonI18nKeys.NoChangesToApply),
+    [isValid, t],
+  );
+
   const handleApply = useCallback(() => {
     trigger().then((valid) => {
       if (valid) handleSubmit(onSubmit)();
@@ -152,7 +163,11 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
             />
             <DialPrimaryButton
               label={t(CommonI18nKeys.Apply)}
-              disabled={!isDirty || !isValid}
+              disabled={isApplyDisabled}
+              tooltipProps={{
+                tooltip: applyTooltip,
+                hideTooltip: !isApplyDisabled,
+              }}
               onClick={handleApply}
             />
           </div>
@@ -222,7 +237,12 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
             label={t(CommonI18nKeys.AddLocale)}
             iconBefore={<IconPlus />}
             onClick={handleAppend}
-            disabled={!localOptions.length}
+            disabled={isAddLocaleDisabled}
+            tooltipProps={{
+              tooltip: t(CommonI18nKeys.AllAvailableLocalesAdded),
+              hideTooltip: !isAddLocaleDisabled,
+              triggerClassName: 'w-fit',
+            }}
             className="w-fit"
           />
         </div>
