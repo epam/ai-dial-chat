@@ -181,7 +181,6 @@
     "nx": "22.5.1",
     "patch-package": "^8.0.0",
     "playwright-chromium": "^1.60.0",
-    "postcss": "^8.5.18",
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^3.0.3",
     "prettier-plugin-tailwindcss": "^0.5.7",
@@ -193,6 +192,7 @@
     "vitest": "4.1.8"
   },
   "overrides": {
+    "postcss": "^8.5.18",
     "koa": "3.1.2",
     "glob": "13.0.6",
     "prismjs": "1.30.0",
