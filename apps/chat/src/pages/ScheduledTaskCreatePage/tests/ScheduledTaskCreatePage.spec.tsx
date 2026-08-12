@@ -39,18 +39,23 @@ vi.mock(
     default: ({
       selectedId,
       onSelect,
+      labelledById,
     }: {
       selectedId: string | null;
       onSelect: (id: string) => void;
+      labelledById?: string;
     }) => (
-      <select
-        aria-label="modelId"
-        value={selectedId ?? ''}
-        onChange={(e) => onSelect(e.target.value)}
-      >
-        <option value="" />
-        <option value="gpt-4o">GPT-4o</option>
-      </select>
+      <>
+        <select
+          aria-label="modelId"
+          value={selectedId ?? ''}
+          onChange={(e) => onSelect(e.target.value)}
+        >
+          <option value="" />
+          <option value="gpt-4o">GPT-4o</option>
+        </select>
+        <output aria-label="triggerLabelledById">{labelledById}</output>
+      </>
     ),
   }),
 );
@@ -69,6 +74,7 @@ interface FormProps {
   };
   errors: Record<string, string | undefined>;
   modelSelector: ReactNode;
+  modelLabelId: string;
   onFieldChange: (field: string, value: unknown) => void;
   onBack: () => void;
   onCancel: () => void;
@@ -90,6 +96,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     values,
     errors,
     modelSelector,
+    modelLabelId,
     onFieldChange,
     onBack,
     onCancel,
@@ -103,6 +110,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
         value={values.displayName}
         onChange={(e) => onFieldChange('displayName', e.target.value)}
       />
+      <output aria-label="modelLabelId">{modelLabelId}</output>
       {modelSelector}
       <textarea
         aria-label="prompt"
@@ -210,6 +218,18 @@ describe('ScheduledTaskCreatePage', () => {
     expect(
       screen.getByRole('region', { name: NotFoundI18nKeys.Title }),
     ).toBeTruthy();
+  });
+
+  it('links the model field label to the trigger via a generated id, not a hardcoded literal', () => {
+    renderAtRoute('/scheduled-tasks/new');
+
+    const modelLabelId = screen.getByLabelText('modelLabelId').textContent;
+    const triggerLabelledById = screen.getByLabelText(
+      'triggerLabelledById',
+    ).textContent;
+
+    expect(modelLabelId).toBeTruthy();
+    expect(triggerLabelledById).toBe(modelLabelId);
   });
 
   it('navigates to the default list route on Cancel when returnUrl is absent', async () => {

@@ -5,7 +5,7 @@ import {
   ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import { memo, useCallback, useMemo, useState, type FC } from 'react';
+import { memo, useCallback, useId, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import DeploymentSelectorFieldTrigger from '../../components/DeploymentSelector/DeploymentSelectorFieldTrigger';
@@ -27,8 +27,6 @@ import { UserConfigStatus } from '../../types/user-config-status';
 import { validateScheduledTaskForm } from '../../utils/scheduled-task-form-validation';
 import { mapFormValuesToCreateBody } from '../../utils/scheduled-task-trigger';
 import NotFoundPage from '../NotFound/NotFound';
-
-const MODEL_FIELD_LABELLED_BY_ID = 'scheduled-task-model-label';
 
 const MAX_ASCII_CONTROL_CODE = 31;
 const ASCII_DELETE_CODE = 127;
@@ -74,6 +72,7 @@ const ScheduledTaskCreatePage: FC = () => {
   const [searchParams] = useSearchParams();
   const { showNotification } = useNotification();
   const { currentTheme } = useTheme();
+  const modelLabelId = useId();
 
   const markdownEditorTheme: 'light' | 'dark' =
     currentTheme === ThemeId.Dark ? 'dark' : 'light';
@@ -221,11 +220,12 @@ const ScheduledTaskCreatePage: FC = () => {
           selectedId={values.modelId || null}
           onSelect={handleModelSelect}
           placeholder={t(ScheduledTasksI18nKeys.CreateModelPlaceholder)}
-          labelledById={MODEL_FIELD_LABELLED_BY_ID}
+          labelledById={modelLabelId}
           isDisabled={isSubmitting}
           isInvalid={Boolean(errors.modelId)}
         />
       }
+      modelLabelId={modelLabelId}
       onFieldChange={handleFieldChange}
       onBack={handleBack}
       onCancel={handleCancel}

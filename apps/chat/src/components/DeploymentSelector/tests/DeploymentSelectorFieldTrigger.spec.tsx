@@ -87,6 +87,14 @@ describe('DeploymentSelectorFieldTrigger', () => {
     expect(screen.getByLabelText('deploymentSelector.loading')).toBeTruthy();
   });
 
+  it('keeps showing the resolved label during a background refetch instead of flickering to the loading text', () => {
+    mockOverlay({ isLoading: true, resolvedLabel: 'GPT-4o' });
+    renderTrigger({ selectedId: 'gpt-4o' });
+
+    expect(screen.getByText('GPT-4o')).toBeTruthy();
+    expect(screen.queryByText('deploymentSelector.loading')).toBeNull();
+  });
+
   it('shows an error affordance and stays focusable when the fetch fails', () => {
     mockOverlay({ error: new Error('failed') });
     renderTrigger();

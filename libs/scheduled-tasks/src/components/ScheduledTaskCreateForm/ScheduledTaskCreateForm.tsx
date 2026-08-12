@@ -52,6 +52,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   values,
   errors,
   modelSelector,
+  modelLabelId,
   onFieldChange,
   onBack,
   onCancel,
@@ -152,7 +153,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
 
           <div className="flex flex-col gap-1">
             <Label
-              id="scheduled-task-model-label"
+              id={modelLabelId}
               label={labels.modelOrAgentLabel}
               required
             />

@@ -98,9 +98,20 @@ interface Props {
   isSelectorMode?: boolean;
   /** Called after a card selection commits in picker mode, so the host can close the modal. */
   onClose?: () => void;
+  /**
+   * Called with the selected deployment's id when a card is picked in
+   * selector mode, instead of committing the pick to `DeploymentsContext`.
+   * Omit to keep the default behavior (updates the chat input's own
+   * selected deployment via `setSelectedItemId`).
+   */
+  onSelect?: (id: string) => void;
 }
 
-const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
+const CatalogView: FC<Props> = ({
+  isSelectorMode = false,
+  onClose,
+  onSelect,
+}) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const navigate = useNavigate();
@@ -492,13 +503,19 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   );
 
   /* Picker mode: a card click selects it and closes the modal immediately,
-   * without opening its details. */
+   * without opening its details. When `onSelect` is supplied (a form-owned
+   * selection, decoupled from the chat input's active deployment), the pick
+   * is routed there instead of committing to `DeploymentsContext`. */
   const handleCardSelect = useCallback(
     (item: CatalogItem) => {
-      setSelectedItemId(item.id);
+      if (onSelect) {
+        onSelect(item.id);
+      } else {
+        setSelectedItemId(item.id);
+      }
       onClose?.();
     },
-    [setSelectedItemId, onClose],
+    [onSelect, setSelectedItemId, onClose],
   );
 
   const isPrimaryActionVisible = useCallback(

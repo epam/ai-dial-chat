@@ -250,6 +250,7 @@ const renderForm = async (
       values={baseValues}
       errors={{}}
       modelSelector={<button type="button">Select Model or Agent</button>}
+      modelLabelId="scheduled-task-model-label"
       onFieldChange={vi.fn()}
       onBack={vi.fn()}
       onCancel={vi.fn()}

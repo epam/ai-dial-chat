@@ -116,6 +116,7 @@ import {
   }}
   errors={{}}
   modelSelector={<button type="button">Select Model or Agent</button>}
+  modelLabelId="model-label"
   onFieldChange={(field, value) => {}}
   onBack={() => {}}
   onCancel={() => {}}

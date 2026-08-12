@@ -6,7 +6,7 @@
 
 `apps/chat/src/components/DeploymentSelector/DeploymentSelectorFieldTrigger.tsx` SHALL render a full-width outlined form control (matching the visual chrome of `Input`/`Select`) that opens the existing `DeploymentSelectorOverlay`/`DeploymentSelectorPanel` content — search, "Currently selected" row, Favorites list with star toggles, and the "Browse" footer action — via the ui-kit `Dropdown` component, the same primitive `ModelSelectorControl` already uses for the chat input's `modelPickerOverlay` case. The component SHALL NOT introduce a second implementation of search, favorites, grouping, or Browse behavior; it SHALL consume the same mapping utilities `useDeploymentSelectorOverlay` uses (`mapDeploymentToCatalogItem`, `findDeploymentByIdOrReference`) so a deployment's display name, icon, and type render identically to the chat selector.
 
-`DeploymentSelectorFieldTrigger` SHALL accept `selectedId: string | null`, `onSelect: (id: string) => void`, and SHALL NOT read or write `DeploymentsContext.selectedItemId`/`setSelectedItemId` — its selection is independent of the chat input's currently active deployment. It SHALL accept the deployment list and favorites via `useDeployments()`/`useFavoriteApplications()` internally (same context providers the chat input uses), not via props duplicating that data.
+`DeploymentSelectorFieldTrigger` SHALL accept `selectedId: string | null`, `onSelect: (id: string) => void`, and SHALL NOT read or write `DeploymentsContext.selectedItemId`/`setSelectedItemId` — its selection is independent of the chat input's currently active deployment. It SHALL accept the deployment list and favorites via `useDeployments()`/`useFavoriteApplications()` internally (same context providers the chat input uses), not via props duplicating that data. This independence SHALL hold for every pick path, including a pick made through the "Browse" catalog: `CatalogView` (`apps/chat/src/components/CatalogView/CatalogView.tsx`) SHALL accept an optional `onSelect?: (id: string) => void` prop and, when supplied, route a selector-mode card pick through it instead of `DeploymentsContext.setSelectedItemId`; `CatalogModal` SHALL forward its own optional `onSelect` prop to `CatalogView`; and `useDeploymentSelectorFieldOverlay`'s `catalogModal` SHALL pass its `onSelect` argument through to `CatalogModal`, so a Browse pick from the Scheduled Task form updates the form's `values.modelId` and never the chat input's active deployment. The chat input's own `useDeploymentSelectorOverlay` continues to render `CatalogModal` without an `onSelect` prop, preserving its existing behavior of committing a Browse pick directly to `DeploymentsContext`.
 
 The trigger SHALL render:
 - The selected deployment's display name (resolved via `findDeploymentByIdOrReference`/`mapDeploymentToCatalogItem`) when `selectedId` is set, truncated consistently with other form field values.
@@ -40,6 +40,16 @@ Opening the trigger SHALL render the panel with `matchReferenceWidth` left at th
 - **WHEN** the user selects a different deployment via `DeploymentSelectorFieldTrigger`
 - **THEN** `DeploymentsContext.selectedItemId` (the chat input's active model) is unchanged
 
+#### Scenario: A Browse-catalog pick also routes through onSelect, not DeploymentsContext
+
+- **WHEN** the user activates "Browse" from the form trigger's opened panel and picks a card inside the catalog
+- **THEN** `onSelect` is called with that deployment's id, `DeploymentsContext.setSelectedItemId` is NOT called, and the catalog modal closes
+
+#### Scenario: The chat input's own Browse flow is unaffected
+
+- **WHEN** the user activates "Browse" from the chat input's icon trigger and picks a card inside the catalog
+- **THEN** `DeploymentsContext.setSelectedItemId` is called with that deployment's id, exactly as before this change
+
 #### Scenario: Search matches are highlighted with the shared Highlight component
 
 - **WHEN** the user types a query that matches part of a deployment or agent name in the opened panel
@@ -54,16 +64,21 @@ Opening the trigger SHALL render the panel with `matchReferenceWidth` left at th
 
 `DeploymentSelectorFieldTrigger` SHALL reflect `useDeployments()`'s `isLoading`/`error` state and an explicit `isDisabled` prop:
 
-- **Loading:** the trigger SHALL render a disabled/busy affordance while deployments are loading.
+- **Loading:** the trigger SHALL render a busy affordance (a spinner replacing the trailing chevron) while deployments are loading. The loading placeholder text SHALL only replace the displayed label when nothing has resolved yet (`selectedId` is `null`, or set but not yet resolvable); once a `resolvedLabel` is available — including its raw-id fallback for an unresolved deployment — a subsequent background refetch (`isLoading` becoming `true` again) SHALL NOT blank out or replace that already-displayed label with loading text.
 - **Empty:** when the deployment list has loaded with zero items, the trigger SHALL remain interactive; the opened panel SHALL show its existing empty-favorites hint, and "Browse" SHALL remain available.
 - **Error:** when `useDeployments().error` is set, the trigger SHALL render an error affordance while remaining keyboard-reachable.
 - **Disabled:** when `isDisabled` is `true` (e.g. while the host form is submitting), the trigger SHALL NOT open and SHALL render dimmed, matching the chat input's `ModelSelectorControl` `isDisabled` behavior.
 - **Unavailable selected deployment:** when `selectedId` is set but does not resolve via `findDeploymentByIdOrReference` (e.g. a deleted/renamed deployment referenced by an existing Scheduled Task), the trigger SHALL display a fallback label (the raw stored id) instead of silently clearing `selectedId` or calling `onSelect` on the host's behalf.
 
-#### Scenario: Loading state disables the trigger without clearing selection
+#### Scenario: Loading state shows a busy affordance without clearing selection
 
-- **WHEN** `useDeployments().isLoading` is `true`
-- **THEN** the trigger renders a busy/disabled affordance and `selectedId` is not altered
+- **WHEN** `useDeployments().isLoading` is `true` and nothing has resolved yet
+- **THEN** the trigger renders a busy affordance and loading placeholder text, and `selectedId` is not altered
+
+#### Scenario: A background refetch does not blank out an already-resolved label
+
+- **WHEN** `useDeployments().isLoading` becomes `true` again (a background refetch) while `resolvedLabel` is already non-null for the current `selectedId`
+- **THEN** the trigger continues displaying `resolvedLabel`, not the loading placeholder text
 
 #### Scenario: Empty deployment list still allows Browse
 

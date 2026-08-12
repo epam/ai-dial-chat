@@ -74,11 +74,19 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
     [],
   );
 
+  /*
+   * `resolvedLabel` takes precedence once known — including its raw-id
+   * fallback for an unresolved deployment — so a background refetch never
+   * blanks out an already-displayed selection with the loading/error copy.
+   * Loading/error text is shown only while nothing has resolved yet.
+   */
   let displayLabel = resolvedLabel ?? placeholder;
-  if (isLoading) {
-    displayLabel = t(DeploymentSelectorI18nKeys.Loading);
-  } else if (error) {
-    displayLabel = t(DeploymentSelectorI18nKeys.Error);
+  if (resolvedLabel == null) {
+    if (isLoading) {
+      displayLabel = t(DeploymentSelectorI18nKeys.Loading);
+    } else if (error) {
+      displayLabel = t(DeploymentSelectorI18nKeys.Error);
+    }
   }
 
   return (

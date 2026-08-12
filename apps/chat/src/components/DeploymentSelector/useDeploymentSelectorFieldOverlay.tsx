@@ -122,6 +122,7 @@ export function useDeploymentSelectorFieldOverlay(
       <CatalogModal
         isOpen={isCatalogOpen}
         onClose={() => setIsCatalogOpen(false)}
+        onSelect={onSelect}
       />
     </Suspense>
   );

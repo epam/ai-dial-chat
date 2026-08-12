@@ -48,19 +48,24 @@ vi.mock(
     default: ({
       selectedId,
       onSelect,
+      labelledById,
     }: {
       selectedId: string | null;
       onSelect: (id: string) => void;
+      labelledById?: string;
     }) => (
-      <select
-        aria-label="modelId"
-        value={selectedId ?? ''}
-        onChange={(e) => onSelect(e.target.value)}
-      >
-        <option value="" />
-        <option value="gpt-4o">GPT-4o</option>
-        <option value="claude-3">Claude 3</option>
-      </select>
+      <>
+        <select
+          aria-label="modelId"
+          value={selectedId ?? ''}
+          onChange={(e) => onSelect(e.target.value)}
+        >
+          <option value="" />
+          <option value="gpt-4o">GPT-4o</option>
+          <option value="claude-3">Claude 3</option>
+        </select>
+        <output aria-label="triggerLabelledById">{labelledById}</output>
+      </>
     ),
   }),
 );
@@ -77,6 +82,7 @@ interface FormProps {
   };
   errors: Record<string, string | undefined>;
   modelSelector: ReactNode;
+  modelLabelId: string;
   onFieldChange: (field: string, value: unknown) => void;
   onBack: () => void;
   onCancel: () => void;
@@ -97,6 +103,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     labels,
     values,
     modelSelector,
+    modelLabelId,
     onFieldChange,
     onBack,
     onCancel,
@@ -114,6 +121,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
         value={values.displayName}
         onChange={(e) => onFieldChange('displayName', e.target.value)}
       />
+      <output aria-label="modelLabelId">{modelLabelId}</output>
       {modelSelector}
       <button onClick={onCancel}>{labels.cancelButtonLabel}</button>
       <button onClick={onSubmit} disabled={isSubmitting}>
@@ -220,6 +228,23 @@ describe('ScheduledTaskEditPage', () => {
     );
     expect(screen.getByText('modelId:gpt-4o')).toBeTruthy();
     expect(screen.getByText('prompt:Summarize my inbox')).toBeTruthy();
+  });
+
+  it('links the model field label to the trigger via a generated id, not a hardcoded literal', async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    renderEditPage();
+
+    await waitFor(() =>
+      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
+    );
+
+    const modelLabelId = screen.getByLabelText('modelLabelId').textContent;
+    const triggerLabelledById = screen.getByLabelText(
+      'triggerLabelledById',
+    ).textContent;
+
+    expect(modelLabelId).toBeTruthy();
+    expect(triggerLabelledById).toBe(modelLabelId);
   });
 
   it('preselects the task current deployment in the model selector', async () => {

@@ -168,6 +168,13 @@ export interface ScheduledTaskCreateFormProps {
    * rendered verbatim, wrapped by the lib's own required-label/error markup.
    */
   modelSelector: ReactNode;
+  /**
+   * Id applied to the Model or Agent field's `Label` element. The host
+   * generates this (e.g. via React `useId()`) and must pass the same value
+   * as `modelSelector`'s own `aria-labelledby` target, so the two stay
+   * linked without a literal id that could collide across form instances.
+   */
+  modelLabelId: string;
   /** Called with the changed field key and its new value whenever any field is edited. */
   onFieldChange: <K extends keyof ScheduledTaskCreateFormValues>(
     field: K,

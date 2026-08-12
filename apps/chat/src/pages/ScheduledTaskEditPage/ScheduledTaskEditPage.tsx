@@ -10,6 +10,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useState,
   type FC,
@@ -44,8 +45,6 @@ import {
 } from '../../utils/scheduled-task-trigger';
 import NotFoundPage from '../NotFound/NotFound';
 
-const MODEL_FIELD_LABELLED_BY_ID = 'scheduled-task-model-label';
-
 const ScheduledTaskEditPage: FC = () => {
   const { t } = useTranslation();
   const { status: appConfigStatus } = useAppConfig();
@@ -54,6 +53,7 @@ const ScheduledTaskEditPage: FC = () => {
   const { scheduleId = '' } = useParams<{ scheduleId: string }>();
   const { showNotification } = useNotification();
   const { currentTheme } = useTheme();
+  const modelLabelId = useId();
 
   const markdownEditorTheme: 'light' | 'dark' =
     currentTheme === ThemeId.Dark ? 'dark' : 'light';
@@ -313,11 +313,12 @@ const ScheduledTaskEditPage: FC = () => {
           selectedId={values.modelId || null}
           onSelect={handleModelSelect}
           placeholder={t(ScheduledTasksI18nKeys.CreateModelPlaceholder)}
-          labelledById={MODEL_FIELD_LABELLED_BY_ID}
+          labelledById={modelLabelId}
           isDisabled={isSubmitting}
           isInvalid={Boolean(errors.modelId)}
         />
       }
+      modelLabelId={modelLabelId}
       onFieldChange={handleFieldChange}
       onBack={handleBack}
       onCancel={handleCancel}
