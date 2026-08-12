@@ -106,6 +106,10 @@ Authorization: caller SHALL be authenticated (existing session guard). Write acc
 - **WHEN** the Core `createPublication` call fails unexpectedly (network error, 5xx, timeout)
 - **THEN** the service throws `BadGatewayException` or `ServiceUnavailableException` (per `handleDialSdkError`) and logs the failure without logging request bodies containing tokens
 
+#### Scenario: Core rejects the request with a structured error (e.g. the "Bad resource url" 400)
+- **WHEN** `createPublication` resolves with a structured error response (`result.error`), such as the `Bad resource url: public/{folderPath}/` 400 described above
+- **THEN** the service calls `mapDialHttpStatus` with `result.error` as `errorBody` and `extractDialErrorMessage(result.error)` as `upstreamMessage`, so the thrown exception's `message` is Core's own reason instead of a generic placeholder — the client-facing error response reflects why Core rejected the request
+
 #### Scenario: Request omitting rules behaves exactly as before this change
 - **WHEN** a request body has no `rules` field at all (an older client, or a client not using the new UI)
 - **THEN** the DTO normalizes the missing field to `rules: []`, Core receives `rules: []`, and the request succeeds exactly as it did before this change
@@ -231,6 +235,10 @@ Rate limiting: default global throttle applies (read endpoint, no stricter overr
 - **WHEN** the Core `getPublications` call fails unexpectedly
 - **THEN** the service throws `BadGatewayException` or `ServiceUnavailableException` (per `handleDialSdkError`)
 
+#### Scenario: Core rejects the history request with a structured error
+- **WHEN** `getPublications` resolves with a structured error response (`result.error`)
+- **THEN** the service calls `mapDialHttpStatus` with `result.error` and `extractDialErrorMessage(result.error)`, so the thrown exception's `message` is Core's own reason instead of a generic placeholder
+
 ### Requirement: Skill publication uses the whole-skill resource URL; version recovery is an open question
 Skill publication SHALL always target the whole skill (`skills/{bucket}/{path}`) — no per-file skill publish path exists, matching the whole-resource-unit rule sharing already follows for skills (see `catalog-unshare`). The service SHALL NOT assume a skill `entityId` ends in `{name}__{version}`; that convention is specific to how `applications.service.ts`/`toolsets.service.ts` name resources and does not apply to skills.
 
@@ -243,4 +251,3 @@ This change does **not** invent a replacement version-recovery strategy for skil
 #### Scenario: Skill publish still records the caller-supplied version for the publish call itself
 - **WHEN** a skill publish request supplies `version: "2.1.0"`
 - **THEN** the immediate `PublishResultDto` response for that call echoes `version: "2.1.0"` correctly (this value comes from the request body, not from `entityId` parsing, so it is unaffected by the open question above)
-

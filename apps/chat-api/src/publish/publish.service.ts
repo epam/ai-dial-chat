@@ -6,7 +6,10 @@ import {
   Logger,
 } from '@nestjs/common';
 import type { Cache } from 'cache-manager';
-import { mapDialHttpStatus } from '../common/dial/dial-error.mapper';
+import {
+  extractDialErrorMessage,
+  mapDialHttpStatus,
+} from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
@@ -129,6 +132,8 @@ export class PublishService {
         result.response.status,
         `publish ${entityType} "${entityId}"`,
         this.logger,
+        result.error,
+        extractDialErrorMessage(result.error),
       );
     }
 
@@ -183,6 +188,8 @@ export class PublishService {
             result.response.status,
             `get publish history for ${entityType} "${entityId}"`,
             this.logger,
+            result.error,
+            extractDialErrorMessage(result.error),
           );
         }
         const { version } = splitEntityNameAndVersion(entityId);
