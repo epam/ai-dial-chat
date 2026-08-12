@@ -46,7 +46,6 @@ import {
 } from '@/src/utils/app/folders';
 import {
   filterIdsByFeatureType,
-  getIdWithoutRootPathSegments,
   isApplicationId,
   isConversationId,
   isFileId,
@@ -58,6 +57,7 @@ import {
 } from '@/src/utils/app/id';
 import { getPromptInfoFromId } from '@/src/utils/app/prompts';
 import {
+  createPublicationIconTargetUrl,
   getItemsIdsToRemoveAndHide,
   isEntityIdPublic,
   mapPublishedItems,
@@ -1736,19 +1736,15 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
           sourceUrl: resource.sourceUrl ?? '',
         })) ?? [];
 
-      const newIconUrl = newApplication.iconUrl.split('/');
       resources.push({
         action: PublishActions.ADD_IF_ABSENT,
         sourceUrl: newApplication.iconUrl,
         targetUrl: ApiUtils.decodeApiUrl(
-          constructPath(
-            newIconUrl[0],
-            publication.targetFolder,
-            getFolderIdFromEntityId(
-              getIdWithoutRootPathSegments(newApplication.id),
-            ),
-            newIconUrl.at(-1),
-          ),
+          createPublicationIconTargetUrl({
+            entityId: newApplication.id,
+            iconUrl: newApplication.iconUrl,
+            targetFolder: publication.targetFolder,
+          }),
         ),
       });
 
