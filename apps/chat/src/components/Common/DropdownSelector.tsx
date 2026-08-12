@@ -1,9 +1,11 @@
-import { IconX } from '@tabler/icons-react';
+import { IconChevronDown, IconChevronUp, IconX } from '@tabler/icons-react';
 import Select, { Props as SelectProps, components } from 'react-select';
 
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { getSelectButtonProps } from '@/src/utils/app/select';
 
 import { DropdownSelectorOption } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
@@ -13,7 +15,7 @@ import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { Tooltip } from './Tooltip';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 type Props = SelectProps<DropdownSelectorOption, true> & {
   tooltip?: string;
@@ -26,6 +28,7 @@ export function DropdownSelector({
   ...selectProps
 }: Props) {
   const { t } = useTranslation(Translation.Common);
+
   return (
     <Tooltip
       triggerClassName={classNames(
@@ -39,39 +42,41 @@ export function DropdownSelector({
         closeMenuOnSelect={closeMenuOnSelect}
         name="colors"
         menuPortalTarget={document.body}
+        menuPosition="fixed"
         components={{
           ClearIndicator: (props) => (
-            <DialButton
-              className="group p-2"
+            <DialGhostIconButton
+              size={ElementSize.Small}
+              data-qa="clear-dropdown-selection"
               onClick={() => props.clearValue()}
               onTouchEnd={() => props.clearValue()}
-              iconBefore={
-                <IconX
-                  className="shrink-0 text-secondary group-hover:text-accent-primary"
-                  data-qa="clear-dropdown-selection"
-                  size={18}
-                />
+              icon={
+                <IconX className="shrink-0" size={DEFAULT_ICON_SIZES.SMALL} />
               }
             />
           ),
           MultiValueRemove: (props) => (
-            <components.MultiValueRemove
-              {...props}
-              innerProps={{
-                ...props.innerProps,
-                style: {
-                  ...props.innerProps.style,
-                  backgroundColor: 'transparent',
-                  alignItems: 'center',
-                },
-                className: 'group',
-              }}
-            >
-              <IconX
-                className="cursor-pointer text-secondary group-hover:text-accent-primary"
-                size={DEFAULT_ICON_SIZES.SMALL}
-              />
-            </components.MultiValueRemove>
+            <DialGhostIconButton
+              size={ElementSize.Small}
+              {...getSelectButtonProps(props.innerProps)}
+              data-qa={`unselect-item-${props.data.value}`}
+              icon={<IconX size={DEFAULT_ICON_SIZES.SMALL} />}
+            />
+          ),
+          DropdownIndicator: (props) => (
+            <components.DropdownIndicator {...props}>
+              {props.selectProps.menuIsOpen ? (
+                <IconChevronUp
+                  size={DEFAULT_ICON_SIZES.SMALL}
+                  className="shrink-0 text-primary"
+                />
+              ) : (
+                <IconChevronDown
+                  size={DEFAULT_ICON_SIZES.SMALL}
+                  className="shrink-0 text-primary"
+                />
+              )}
+            </components.DropdownIndicator>
           ),
         }}
         styles={{
@@ -83,11 +88,13 @@ export function DropdownSelector({
           input: (styles) => ({
             ...styles,
             height: '21px',
+            fontSize: '14px',
             padding: 0,
             margin: 0,
             color: 'var(--text-primary)',
           }),
           menu: (styles) => ({ ...styles, margin: 0 }),
+          menuPortal: (styles) => ({ ...styles, zIndex: 60 }),
           menuList: (styles) => ({
             ...styles,
             margin: 0,
@@ -109,21 +116,17 @@ export function DropdownSelector({
             },
             color: 'var(--text-primary)',
           }),
-          dropdownIndicator: (styles, state) => ({
+          dropdownIndicator: (styles) => ({
             ...styles,
-            transition: 'all',
-            transitionDuration: '200ms',
             color: 'var(--text-primary)',
             cursor: 'pointer',
-            transform: state.selectProps.menuIsOpen ? 'rotate(180deg)' : '',
             ':hover': {
               color: 'var(--text-primary)',
             },
           }),
-          indicatorSeparator: (styles, state) => ({
+          indicatorSeparator: (styles) => ({
             ...styles,
-            visibility: state.hasValue ? 'visible' : 'hidden',
-            backgroundColor: 'var(--text-secondary)',
+            visibility: 'hidden',
           }),
           multiValue: (styles, state) => ({
             ...styles,
@@ -139,6 +142,7 @@ export function DropdownSelector({
             display: 'flex',
             alignItems: 'center',
             padding: '0 4px',
+            fontSize: '12px',
             color: 'var(--text-primary)',
           }),
           valueContainer: (styles) => ({
@@ -164,12 +168,14 @@ export function DropdownSelector({
             border: '1px solid var(--stroke-primary)',
             boxShadow: 'none',
             transition: 'all 0',
+            fontSize: '12px !important',
             ':hover': {
               border: '1px solid var(--stroke-accent-primary)',
             },
           }),
           singleValue: (styles) => ({
             ...styles,
+            fontSize: '14px',
             color: 'var(--text-primary)',
           }),
         }}
