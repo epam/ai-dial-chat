@@ -149,6 +149,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onUnshare,
     isUnshareVisible,
     onRevokeShare,
+    isRevokeShareVisible,
     onFetchDetails,
     onLogin,
     onLogout,
@@ -185,6 +186,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onUnshare?: (item: CatalogItem) => Promise<void>;
     isUnshareVisible?: (item: CatalogItem) => boolean;
     onRevokeShare?: (item: CatalogItem) => Promise<void>;
+    isRevokeShareVisible?: (item: CatalogItem) => boolean;
     onFetchDetails?: (item: CatalogItem) => Promise<unknown>;
     onLogin?: (
       item: CatalogItem,
@@ -349,22 +351,24 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
               unshare {item.id}
             </button>
           ))}
-        {(items ?? []).map((item) => (
-          <button
-            key={`revoke-share-${item.id}`}
-            type="button"
-            onClick={async () => {
-              try {
-                await onRevokeShare?.(item);
-              } catch {
-                // Swallowed here the same way the real DetailsPanel's
-                // confirmation step catches a rejected onRevokeShare.
-              }
-            }}
-          >
-            revoke {item.id}
-          </button>
-        ))}
+        {(items ?? [])
+          .filter((item) => isRevokeShareVisible?.(item) ?? true)
+          .map((item) => (
+            <button
+              key={`revoke-share-${item.id}`}
+              type="button"
+              onClick={async () => {
+                try {
+                  await onRevokeShare?.(item);
+                } catch {
+                  // Swallowed here the same way the real DetailsPanel's
+                  // confirmation step catches a rejected onRevokeShare.
+                }
+              }}
+            >
+              revoke {item.id}
+            </button>
+          ))}
         {(items ?? []).map((item) => (
           <button
             key={`fetch-details-${item.id}`}
@@ -3264,7 +3268,9 @@ describe('CatalogView', () => {
       await waitFor(() => expect(triggerBlobDownload).toHaveBeenCalledOnce());
 
       const { fileName, envelope } = await readDownloadedFile();
-      expect(fileName).toMatch(/^\d{4}-\d{2}-\d{2}_ai_dial_prompt_summarize\.json$/);
+      expect(fileName).toMatch(
+        /^\d{4}-\d{2}-\d{2}_ai_dial_prompt_summarize\.json$/,
+      );
       expect(envelope.version).toBe(5);
       expect(envelope.prompts[0]).toMatchObject({
         id: 'Work/AI/summarize',
@@ -3308,6 +3314,29 @@ describe('CatalogView', () => {
 
       const { envelope } = await readDownloadedFile();
       expect(envelope.prompts[0].content).toBe('Edited elsewhere');
+    });
+
+    /*
+     * Lives here rather than in the revoke describe because it needs the prompt
+     * fixtures: `RevokeSharedAccessDto` rejects prompt paths, so the action must
+     * not reach the user even though the item is one they own.
+     */
+    it('offers no revoke access on a personal prompt', () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(useDeployments).mockReturnValue({
+        ...vi.mocked(useDeployments)(),
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+      });
+
+      render(<CatalogView />);
+
+      expect(
+        screen.queryByRole('button', { name: 'revoke Work/AI/summarize' }),
+      ).toBeNull();
+      expect(
+        screen.getByRole('button', { name: 'revoke gpt-4o' }),
+      ).toBeTruthy();
     });
 
     it('offers no download for an item that is not a prompt', () => {

@@ -89,8 +89,8 @@ vi.mock('@tabler/icons-react', () => ({
   IconPencil: () => <svg />,
   IconPlayerPlayFilled: () => <svg />,
   IconTrash: () => <svg />,
-  IconUpload: () => <svg />,
   IconUserOff: () => <svg />,
+  IconWorldShare: () => <svg />,
 }));
 vi.mock('../../../EntityHeader/EntityHeader', () => ({
   EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
@@ -517,6 +517,43 @@ describe('Header', () => {
 
   it('does not render Revoke access when onRevokeShare is not supplied', async () => {
     render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Revoke access' })).toBeNull();
+  });
+
+  it('does not render Revoke access when isRevokeShareVisible returns false', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Prompt)}
+        onRevokeShare={vi.fn()}
+        isRevokeShareVisible={() => false}
+      />,
+    );
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Revoke access' })).toBeNull();
+  });
+
+  it('still renders Revoke access when isRevokeShareVisible returns true', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onRevokeShare={vi.fn()}
+        isRevokeShareVisible={() => true}
+      />,
+    );
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Revoke access' })).toBeTruthy();
+  });
+
+  /* The predicate narrows the built-in rule; it must not resurrect a hidden action. */
+  it('does not render Revoke access for a shared item even when isRevokeShareVisible returns true', async () => {
+    render(
+      <Header
+        item={makeSharedItem()}
+        onRevokeShare={vi.fn()}
+        isRevokeShareVisible={() => true}
+      />,
+    );
     await openManage();
     expect(screen.queryByRole('button', { name: 'Revoke access' })).toBeNull();
   });

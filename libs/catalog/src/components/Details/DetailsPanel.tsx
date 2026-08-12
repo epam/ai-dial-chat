@@ -135,6 +135,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onUnshare,
   isUnshareVisible,
   onRevokeShare,
+  isRevokeShareVisible,
   onLogin,
   onLogout,
   texts,
@@ -719,6 +720,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onRevokeShare={
                   onRevokeShare ? handleRequestRevokeShare : undefined
                 }
+                isRevokeShareVisible={isRevokeShareVisible}
                 onLogin={onLogin}
                 onLogout={onLogout}
                 onToggleCredentials={handleToggleCredentials}

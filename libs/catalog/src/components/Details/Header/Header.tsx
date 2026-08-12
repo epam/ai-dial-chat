@@ -17,8 +17,8 @@ import {
   IconPencil,
   IconPlayerPlayFilled,
   IconTrash,
-  IconUpload,
   IconUserOff,
+  IconWorldShare,
 } from '@tabler/icons-react';
 import { FC, useCallback, useMemo, type ReactNode } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
@@ -65,6 +65,8 @@ interface HeaderProps {
   isUnshareVisible?: (item: CatalogItem) => boolean;
   /** Called when the owner-side "Revoke access" action is clicked for an item the current user owns. The details panel owns the confirmation step. */
   onRevokeShare?: (item: CatalogItem) => void;
+  /** Additional caller-supplied rule for whether "Revoke access" is shown, combined (AND) with the built-in `isMyApp`/`recipientsCount` rule. Defaults to `true` when absent. */
+  isRevokeShareVisible?: (item: CatalogItem) => boolean;
   onLogin?: (
     item: CatalogItem,
     params: { level: CredentialsLevel; apiKey?: string },
@@ -107,6 +109,7 @@ export const Header: FC<HeaderProps> = ({
   onUnshare,
   isUnshareVisible,
   onRevokeShare,
+  isRevokeShareVisible,
   onLogin,
   onLogout,
   onToggleCredentials,
@@ -192,7 +195,8 @@ export const Header: FC<HeaderProps> = ({
   const shouldShowRevokeShareAction =
     !!onRevokeShare &&
     item.isMyApp === true &&
-    (recipientsCount == null || recipientsCount > 0);
+    (recipientsCount == null || recipientsCount > 0) &&
+    (isRevokeShareVisible?.(item) ?? true);
 
   const manageItems = useMemo<DropdownItem[]>(() => {
     const items: DropdownItem[] = [];
@@ -216,7 +220,7 @@ export const Header: FC<HeaderProps> = ({
       items.push({
         key: 'publish',
         label: texts?.publishLabel ?? 'Publish',
-        icon: <IconUpload size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        icon: <IconWorldShare size={DIAL_ICON_SIZE.SM} aria-hidden />,
         onClick: handleOpenPublish,
       });
     }

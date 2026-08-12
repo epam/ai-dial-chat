@@ -130,7 +130,11 @@ describe('buildPromptExportFileName', () => {
 
   it('keeps dots, dashes, and underscores from the prompt name', () => {
     expect(
-      buildPromptExportFileName('v1.2-final_x', 'ai_dial', new Date(2026, 7, 12)),
+      buildPromptExportFileName(
+        'v1.2-final_x',
+        'ai_dial',
+        new Date(2026, 7, 12),
+      ),
     ).toBe('2026-08-12_ai_dial_prompt_v1.2-final_x.json');
   });
 });

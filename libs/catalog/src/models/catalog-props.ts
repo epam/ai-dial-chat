@@ -167,6 +167,13 @@ export interface CatalogProps {
    */
   onRevokeShare?: (item: CatalogItem) => Promise<void> | void;
   /**
+   * Narrows where the "Revoke access" action is offered, on top of the
+   * built-in `isMyApp`/`recipientsCount` rule. Use it to declare that
+   * revoking is unsupported for a kind of item. Defaults to `true` (visible)
+   * when absent.
+   */
+  isRevokeShareVisible?: (item: CatalogItem) => boolean;
+  /**
    * Renders the Share popover content anchored to the Share button in the
    * details panel. When provided, clicking Share opens this popover instead
    * of calling `onShare`.

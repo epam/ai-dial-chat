@@ -206,22 +206,26 @@ whenever `onDownload` is supplied.
 
 ### Declaring unsupported per-item capabilities
 
-`isUnshareVisible` lets a host hide "Remove from My List" for items whose
-backing capability does not exist, without the lib knowing why. It defaults to
+`isUnshareVisible` and `isRevokeShareVisible` let a host hide the recipient-side
+"Remove from My List" and the owner-side "Revoke access" for items whose backing
+capability does not exist, without the lib knowing why. Both default to
 **visible** when omitted.
 
 ```tsx
 <Catalog
   items={items}
   favorites={favorites}
-  // Hide "Remove from My List" on prompts — the host's API rejects prompt paths.
+  // Hide both on prompts — the host's API rejects prompt paths.
   isUnshareVisible={(item) => item.type !== CatalogEntityType.Prompt}
+  isRevokeShareVisible={(item) => item.type !== CatalogEntityType.Prompt}
   onUnshare={handleUnshare}
+  onRevokeShare={handleRevokeShare}
 />
 ```
 
-`isUnshareVisible` is combined (AND) with the built-in `sharedWithMe`/`isMyApp`
-rule, so it can only ever narrow visibility.
+Each is combined (AND) with its built-in rule — `sharedWithMe`/`isMyApp` for
+unshare, `isMyApp`/`recipientsCount` for revoke — so a predicate can only ever
+narrow visibility, never widen it.
 
 ## Types
 

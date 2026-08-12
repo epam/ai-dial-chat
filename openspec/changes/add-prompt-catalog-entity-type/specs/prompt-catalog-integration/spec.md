@@ -157,9 +157,9 @@ Failures SHALL resolve `undefined` exactly as the existing deployment path does,
 - **Download** — enabled for every prompt source. See `prompt-download` for the file format and the wiring.
 - **Unshare (Remove from My List)** — unsupported. `isUnshareVisible` returns `false` for Prompt, for two independent reasons: `DiscardSharedCatalogItemDto` (`apps/chat-api/src/share/dto/discard-shared-catalog-item.dto.ts:6`) restricts `itemId` to `applications|toolsets|conversations` paths and rejects a prompt path with 400; and `getSharedPrompts` strips the owner bucket from the resource URL before mapping, so the frontend could not build the qualified path a discard call needs even if the regex admitted prompts.
 - **Publish** — supported. `PUBLISHABLE_ENTITY_TYPES` (`apps/chat/src/utils/publish.ts`) maps Prompt to `CatalogPublishEntityType.Prompt`, so the existing `Boolean(item.isMyApp) && toPublishEntityType(item.type) != null` rule offers it on personal prompts only. Server-side, `publish.service.ts` qualifies a prompt's bucket-relative id with the caller's own bucket via `toPromptResourceUrl`, since the caller is by definition the owner; a prompt carries no version, so the publication title is trimmed. `libs/catalog`'s built-in publish default still excludes Prompt, which is inert here because `CatalogView` always supplies `isPublishVisible`.
-- **Revoke access** — NOT supported, and currently offered in error. `RevokeSharedAccessDto` carries the same `applications|toolsets|conversations` regex as the discard DTO, so a prompt path is rejected with 400. `Header`'s built-in rule is `!!onRevokeShare && item.isMyApp === true && (recipientsCount == null || recipientsCount > 0)`, and `mapPromptToCatalogItem` never sets `recipientsCount`, so `undefined == null` leaves the action **visible** on every personal prompt. Closing this requires the same treatment `isUnshareVisible` already gets: an `isRevokeShareVisible` predicate on `CatalogProps`/`DetailsPanelProps` returning `false` for Prompt, or backend support for prompt resource paths. Until then it is a known defect, not a documented limitation.
+- **Revoke access** — unsupported, and suppressed. `RevokeSharedAccessDto` carries the same `applications|toolsets|conversations` regex as the discard DTO, so a prompt path is rejected with 400. `Header`'s built-in rule (`!!onRevokeShare && item.isMyApp === true && (recipientsCount == null || recipientsCount > 0)`) would otherwise leave it visible, because `mapPromptToCatalogItem` never sets `recipientsCount` and `undefined == null` reads as "count unknown". `CatalogView` therefore passes `isRevokeShareVisible` returning `false` for Prompt, mirroring `isUnshareVisible`.
 
-Every other unsupported action's absence is a documented backend-capability limitation, not a defect.
+Each unsupported action's absence is a documented backend-capability limitation, not a defect.
 
 #### Scenario: Deleting a prompt removes it from the catalog
 
@@ -198,6 +198,12 @@ Every other unsupported action's absence is a documented backend-capability limi
 - **WHEN** the details panel opens for a prompt shared with the current user
 - **THEN** no "Remove from My List" action is rendered
 - **AND** the Content tab and primary action are still available
+
+#### Scenario: No revoke-access control on a personal prompt
+
+- **WHEN** the details panel opens for a prompt the user owns
+- **THEN** no "Revoke access" action is rendered
+- **AND** the same action is still rendered for an owned Model, Agent, or Toolset
 
 #### Scenario: Publishing a personal prompt qualifies the caller's bucket
 

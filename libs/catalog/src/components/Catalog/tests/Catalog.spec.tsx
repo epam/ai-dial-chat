@@ -190,6 +190,8 @@ vi.mock('../../Details/DetailsPanel', () => ({
     isDetailsLoading,
     onDownload,
     isDownloadVisible,
+    onRevokeShare,
+    isRevokeShareVisible,
   }: {
     item: CatalogItem;
     isPrimaryActionVisible?: (item: CatalogItem) => boolean;
@@ -197,12 +199,17 @@ vi.mock('../../Details/DetailsPanel', () => ({
     isDetailsLoading?: boolean;
     onDownload?: (item: CatalogItem) => void;
     isDownloadVisible?: (item: CatalogItem) => boolean;
+    onRevokeShare?: (item: CatalogItem) => void;
+    isRevokeShareVisible?: (item: CatalogItem) => boolean;
   }) => (
     <div>
       <span>{item.name}</span>
       <span>{String(isPrimaryActionVisible?.(item))}</span>
       {onDownload && (isDownloadVisible?.(item) ?? true) && (
         <button onClick={() => onDownload(item)}>DownloadTrigger</button>
+      )}
+      {onRevokeShare && (isRevokeShareVisible?.(item) ?? true) && (
+        <button onClick={() => onRevokeShare(item)}>RevokeShareTrigger</button>
       )}
       {shareOverlay?.(item, () => undefined)}
       <span>{`details:${JSON.stringify(item.details ?? null)}`}</span>
@@ -411,6 +418,23 @@ describe('Catalog', () => {
     expect(onDownload).toHaveBeenCalledWith(
       expect.objectContaining({ id: '1' }),
     );
+  });
+
+  it('lets isRevokeShareVisible hide the revoke action in the details panel', async () => {
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        onRevokeShare={vi.fn()}
+        isRevokeShareVisible={() => false}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+
+    expect(
+      screen.queryByRole('button', { name: 'RevokeShareTrigger' }),
+    ).toBeNull();
   });
 
   it('lets isDownloadVisible hide the download action in the details panel', async () => {

@@ -686,6 +686,17 @@ const CatalogView: FC<Props> = ({
     [],
   );
 
+  /*
+   * `RevokeSharedAccessDto` carries the same `applications|toolsets|conversations`
+   * restriction as the discard DTO, so a prompt path is rejected with 400. The
+   * built-in rule would otherwise keep the action visible, since prompt items
+   * carry no `recipientsCount`.
+   */
+  const isRevokeShareVisible = useCallback(
+    (item: CatalogItem) => item.type !== CatalogEntityType.Prompt,
+    [],
+  );
+
   const isPublishVisible = useCallback(
     (item: CatalogItem) =>
       Boolean(item.isMyApp) && toPublishEntityType(item.type) != null,
@@ -1067,6 +1078,7 @@ const CatalogView: FC<Props> = ({
       onUnshare={handleUnshare}
       isUnshareVisible={isUnshareVisible}
       onRevokeShare={handleRevokeShare}
+      isRevokeShareVisible={isRevokeShareVisible}
       isPrimaryActionVisible={isPrimaryActionVisible}
       isPublishVisible={isPublishVisible}
       getPublishHistory={getPublishHistory}

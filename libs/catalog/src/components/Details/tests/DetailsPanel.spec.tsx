@@ -139,6 +139,7 @@ vi.mock('../Header/Header', () => ({
     onDelete,
     onUnshare,
     onRevokeShare,
+    isRevokeShareVisible,
     onRequestLogout,
   }: {
     item: CatalogItem;
@@ -148,6 +149,7 @@ vi.mock('../Header/Header', () => ({
     onDelete?: () => void;
     onUnshare?: () => void;
     onRevokeShare?: () => void;
+    isRevokeShareVisible?: (item: CatalogItem) => boolean;
     onRequestLogout?: () => void;
   }) => (
     <>
@@ -157,7 +159,7 @@ vi.mock('../Header/Header', () => ({
       )}
       {onDelete && <button onClick={onDelete}>DeleteTrigger</button>}
       {onUnshare && <button onClick={onUnshare}>UnshareTrigger</button>}
-      {onRevokeShare && (
+      {onRevokeShare && (isRevokeShareVisible?.(item) ?? true) && (
         <button onClick={onRevokeShare}>RevokeShareTrigger</button>
       )}
       {onRequestLogout && (
@@ -861,6 +863,14 @@ describe('DetailsPanel', () => {
     it('does not expose the delete action when onDelete is absent', () => {
       renderPanel();
       expect(screen.queryByRole('button', { name: DELETE_TRIGGER })).toBeNull();
+    });
+
+    it('forwards isRevokeShareVisible so the header can hide the revoke action', () => {
+      renderPanel({
+        onRevokeShare: vi.fn(),
+        isRevokeShareVisible: () => false,
+      });
+      expect(screen.queryByRole('button', { name: REVOKE_TRIGGER })).toBeNull();
     });
 
     it('replaces the details content with the confirmation instead of overlaying a popup', async () => {

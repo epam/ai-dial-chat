@@ -398,6 +398,12 @@ export interface DetailsPanelProps {
    */
   onRevokeShare?: (item: CatalogItem) => Promise<void> | void;
   /**
+   * Additional caller-supplied rule for whether "Revoke access" is shown,
+   * combined (AND) with the built-in `isMyApp`/`recipientsCount` rule.
+   * Defaults to `true` when absent.
+   */
+  isRevokeShareVisible?: (item: CatalogItem) => boolean;
+  /**
    * Called when the credentials login form is submitted. `level` identifies
    * which credentials slot the call applies to (`USER` for the current
    * user's own credentials; `GLOBAL` for organization-wide credentials,
