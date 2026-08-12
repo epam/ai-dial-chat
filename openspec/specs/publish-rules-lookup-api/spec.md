@@ -70,6 +70,10 @@ Authorization: caller SHALL be authenticated (existing session guard). No additi
 - **WHEN** the Core `getPublicationRules` call fails unexpectedly (network error, 5xx, timeout)
 - **THEN** the service throws `BadGatewayException` or `ServiceUnavailableException` (per `handleDialSdkError`) and logs the failure without logging request bodies containing tokens
 
+#### Scenario: Core rejects the request with a structured error
+- **WHEN** `getPublicationRules` resolves with a structured error response (`result.error`)
+- **THEN** the service calls `mapDialHttpStatus` with `result.error` and `extractDialErrorMessage(result.error)`, so the thrown exception's `message` is Core's own reason instead of a generic placeholder
+
 #### Scenario: Unauthenticated request is rejected
 - **WHEN** the endpoint is called without a valid session
 - **THEN** the request is rejected with 401 before reaching the service or Core
