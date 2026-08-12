@@ -89,6 +89,21 @@ import { PublishFooter } from '@epam/ai-dial-publish-panel';
 />;
 ```
 
+### PublishAccessRules
+
+Access-rules section of the Publish flow: one removable chip per rule, an "Add rule" trigger opening `PublishAccessRuleEditor`, and a "Clear all" control shown only when rules exist. Pass `folderName` so the section states which destination folder the rules apply to; leave it `undefined` while no folder is selected and the section prompts the user to pick one instead, warning when rules already exist without a destination.
+
+```tsx
+import { PublishAccessRules } from '@epam/ai-dial-publish-panel';
+
+<PublishAccessRules
+  rules={rules}
+  onRulesChange={setRules}
+  sourceOptions={['title', 'roles', 'dial_roles']}
+  folderName={selectedFolderName}
+/>;
+```
+
 ### PublishFoldersTree
 
 Destination folder tree with search, lazy expansion, and inline folder creation (trailing button and per-row context menu). Folders are displayed in name order at every level, and filtering is suspended while the inline create row is open so creating a folder from a search that matched nothing works (the unmatched query becomes the pre-filled name).

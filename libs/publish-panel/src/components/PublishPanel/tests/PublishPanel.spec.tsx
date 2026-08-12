@@ -129,6 +129,25 @@ describe('PublishPanel', () => {
     expect(screen.getByText('Allow access if all match')).toBeTruthy();
   });
 
+  it('scopes the access-rules hint to the selected folder', () => {
+    renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
+    expect(
+      screen.getByText(/These rules apply to "Data Science"/),
+    ).toBeTruthy();
+  });
+
+  it('uses the root folder label in the access-rules hint when the root is selected', () => {
+    renderPanel({ selectedFolderPath: [] });
+    expect(screen.getByText(/These rules apply to "Organization"/)).toBeTruthy();
+  });
+
+  it('prompts for a destination folder in the access-rules hint when none is selected', () => {
+    renderPanel();
+    expect(
+      screen.getByText(/pick a folder above to set its rules/),
+    ).toBeTruthy();
+  });
+
   it('renders existing rules as chips and forwards removals via onRulesChange', async () => {
     const onRulesChange = vi.fn();
     renderPanel({

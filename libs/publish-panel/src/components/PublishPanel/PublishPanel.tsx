@@ -325,17 +325,23 @@ export const PublishPanel: FC<PublishPanelProps> = ({
               />
             </div>
           )}
-      </div>
 
-      <PublishAccessRules
-        rules={rules}
-        onRulesChange={onRulesChange}
-        sourceOptions={ruleSourceOptions}
-        disabled={isSubmitting}
-        isLoading={isRulesLoading}
-        hasLoadError={hasRulesLoadError}
-        labels={accessRulesLabels}
-      />
+        {/* Nested inside the destination-folder block, and tighter than the
+            inter-section gap, so the rules read as scoped to the selection
+            above rather than as an independent control. */}
+        <div className="mt-4">
+          <PublishAccessRules
+            rules={rules}
+            onRulesChange={onRulesChange}
+            sourceOptions={ruleSourceOptions}
+            folderName={isFolderSelected ? folderName : undefined}
+            disabled={isSubmitting}
+            isLoading={isRulesLoading}
+            hasLoadError={hasRulesLoadError}
+            labels={accessRulesLabels}
+          />
+        </div>
+      </div>
 
       {isFolderSelected && resource?.version != null && (
         <div>
