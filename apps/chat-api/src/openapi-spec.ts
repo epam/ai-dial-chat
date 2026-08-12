@@ -12,6 +12,9 @@ import {
 
 const workspaceRoot = join(__dirname, '..', '..', '..');
 const outputPath = join(workspaceRoot, 'libs/chat-api-client/openapi.json');
+console.error('DEBUG __dirname=', __dirname);
+console.error('DEBUG workspaceRoot=', workspaceRoot);
+console.error('DEBUG outputPath=', outputPath);
 
 const ensureOpenApiEnv = () => {
   process.env['DIAL_CORE_URL'] ??= 'http://localhost:8080';

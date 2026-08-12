@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import type { DeploymentsService } from '../../deployments/deployments.service';
 import type { DialClientService } from '../../dial/dial-client.service';
+import type { SkillsLookupService } from '../../skills/lookup/skills-lookup.service';
 import type { ToolsetsService } from '../../toolsets/toolsets.service';
 import { ShareAccess, ShareResourceKind } from '../dto/create-share-link.dto';
 import { ShareService } from '../share.service';
@@ -51,13 +52,24 @@ function makeService(callbackBaseUrl = 'https://example.com/callback') {
     resolveToolsetItem: vi.fn().mockResolvedValue(null),
   } as unknown as ToolsetsService;
 
+  const skillsLookupService = {
+    resolveSkillItem: vi.fn().mockResolvedValue(null),
+  } as unknown as SkillsLookupService;
+
   const service = new ShareService(
     dialClient,
     configService,
     deploymentsService,
     toolsetsService,
+    skillsLookupService,
   );
-  return { service, dialClient, deploymentsService, toolsetsService };
+  return {
+    service,
+    dialClient,
+    deploymentsService,
+    toolsetsService,
+    skillsLookupService,
+  };
 }
 
 describe('ShareService', () => {
@@ -132,6 +144,34 @@ describe('ShareService', () => {
       expect(result.url).toBe(
         'https://example.com/conversations/shared/conv-abc',
       );
+    });
+
+    it('creates a share link for a skills/{bucket}/{path} itemId', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'shareResource')
+        .mockResolvedValue(
+          okResponse({ invitationLink: '/v1/invitations/skill-abc' }),
+        );
+
+      const result = await service.createShareLink('token-abc', 'my-bucket', {
+        itemId: 'skills/owner-bucket/team-a/docs-helper',
+        access: [ShareAccess.View],
+      });
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'skills/owner-bucket/team-a/docs-helper',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+      expect(result.url).toBe('https://example.com/catalog/shared/skill-abc');
     });
 
     it("qualifies a prompt itemId with the caller's bucket", async () => {
@@ -364,6 +404,50 @@ describe('ShareService', () => {
       expect(deploymentsService.resolveDeploymentItem).not.toHaveBeenCalled();
     });
 
+    it('returns sharedSkill for a skills/-prefixed itemId, without calling resolveDeploymentItem or resolveToolsetItem', async () => {
+      const {
+        service,
+        deploymentsService,
+        toolsetsService,
+        skillsLookupService,
+      } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+        okResponse({
+          id: 'abc123',
+          resources: [{ url: 'skills/owner-bucket/team-a/docs-helper' }],
+        }),
+      );
+      const sharedSkill = {
+        name: 'docs-helper',
+        path: 'team-a/docs-helper',
+        url: 'skills/owner-bucket/team-a/docs-helper',
+        bucket: 'owner-bucket',
+        nodeType: 'item',
+      };
+      vi.mocked(skillsLookupService.resolveSkillItem).mockResolvedValue(
+        sharedSkill as never,
+      );
+
+      const result = await service.acceptInvitation(
+        'token-abc',
+        'abc123',
+        'user-sub-1',
+        'bucket-1',
+      );
+
+      expect(result).toEqual({
+        itemId: 'skills/owner-bucket/team-a/docs-helper',
+        sharedSkill,
+      });
+      expect(skillsLookupService.resolveSkillItem).toHaveBeenCalledWith(
+        'skills/owner-bucket/team-a/docs-helper',
+        'token-abc',
+        'bucket-1',
+      );
+      expect(deploymentsService.resolveDeploymentItem).not.toHaveBeenCalled();
+      expect(toolsetsService.resolveToolsetItem).not.toHaveBeenCalled();
+    });
+
     it('returns sharedDeployment for an applications/-prefixed itemId', async () => {
       const { service, deploymentsService } = makeService();
       vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
@@ -520,6 +604,43 @@ describe('ShareService', () => {
         headers: { Authorization: 'Bearer token-abc' },
         body: { resourceTypes: ['TOOL_SET'], with: 'me' },
       });
+    });
+
+    it('checks getSharedResources with the resource kind derived from a skills/ itemId and discards the whole skill', async () => {
+      const { service, deploymentsService, toolsetsService } = makeService();
+      const sharedSpy = mockSharedResources(service, [
+        { url: 'skills/owner-bucket/team-a/docs-helper' },
+      ]);
+      const discardSpy = vi
+        .spyOn(service['dialClient'].client, 'discardSharedResources')
+        .mockResolvedValue(okResponse(undefined));
+
+      const result = await service.discardShared(
+        'skills/owner-bucket/team-a/docs-helper',
+        'token-abc',
+        'user-sub-1',
+      );
+
+      expect(sharedSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: { resourceTypes: ['SKILL'], with: 'me' },
+      });
+      expect(discardSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          resources: [{ url: 'skills/owner-bucket/team-a/docs-helper' }],
+        },
+      });
+      expect(result).toEqual({ success: true });
+      /* Skills have no server-side list cache to invalidate (skills-bff-api
+         cache decision), so this invalidation is a harmless no-op for a
+         skill itemId — matching the conversation case below. */
+      expect(deploymentsService.invalidateListCache).toHaveBeenCalledWith(
+        'user-sub-1',
+      );
+      expect(toolsetsService.invalidateListCache).toHaveBeenCalledWith(
+        'user-sub-1',
+      );
     });
 
     it('calls DIAL Core discardSharedResources with a conversation resource url unchanged', async () => {

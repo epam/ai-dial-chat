@@ -27,6 +27,16 @@ import {
   stripPublicTargetFolder,
 } from './publish-target.util';
 
+/*
+ * This service does NOT inject SkillsLookupService (design.md D9 in
+ * openspec/changes/add-skills-bff-api). `splitEntityNameAndVersion` below
+ * already degrades gracefully for a skill entityId with no `{name}__{version}`
+ * suffix (empty version string), and no verified consumer of this service
+ * currently needs a resolved skill name/version beyond that — see the open
+ * questions in the `catalog-publish-api` delta spec (skill publish-history
+ * version recovery, nested-grouping-folder targetUrl collision) before
+ * adding one. Re-read that rationale before "fixing" this.
+ */
 const historyCacheKey = (entityType: CatalogEntityType, entityId: string) =>
   `publish-history:${entityType}:${entityId}`;
 

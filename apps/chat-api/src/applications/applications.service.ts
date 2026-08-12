@@ -12,7 +12,10 @@ import {
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
-import { composeLocalizedFields } from '../common/utils/compose-localized-fields';
+import {
+  composeLocalizedFields,
+  toLocalizedValue,
+} from '../common/utils/compose-localized-fields';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { DeploymentsService } from '../deployments/deployments.service';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
@@ -168,10 +171,7 @@ export class ApplicationsService {
         body.primaryLocale,
       );
       const dialBody: DialApplication = {
-        // The SDK types `displayName`/`description` as plain `string`; DIAL
-        // Core actually accepts a locale map too. Remove this cast when the
-        // SDK's `Application` schema is widened to match.
-        displayName: displayName as unknown as string,
+        displayName: toLocalizedValue(displayName),
         displayVersion: version,
       };
       if (body.type) dialBody.application_type_schema_id = body.type;
@@ -260,12 +260,12 @@ export class ApplicationsService {
       );
       const mergedBody: DialApplication = {
         ...(existingResponse.data as DialApplication),
-        // The SDK types `displayName`/`description` as plain `string`; DIAL
-        // Core actually accepts a locale map too. Remove this cast when the
-        // SDK's `Application` schema is widened to match. This is a full
-        // replacement, not a per-locale merge with whatever the existing
-        // resource had — consistent with every other General-step field.
-        displayName: displayName as unknown as string,
+        /*
+         * This is a full replacement, not a per-locale merge with whatever
+         * the existing resource had — consistent with every other
+         * General-step field.
+         */
+        displayName: toLocalizedValue(displayName),
       };
       if (description != null)
         mergedBody.description = description as unknown as string;
