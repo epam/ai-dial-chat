@@ -61,6 +61,7 @@ export const FileManager: React.FC = () => {
     fileMetadataPopupOptions,
     navigationPanelOptions,
     gridOptions,
+    gridPathColumnLabel,
     toolbarOptions,
     destinationFolderPopupOptions,
     deleteConfirmationOptions,
@@ -95,6 +96,14 @@ export const FileManager: React.FC = () => {
 
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
 
+  const gridPathColumnLabelStyle = useMemo(
+    () =>
+      ({
+        '--grid-path-column-label': `"${gridPathColumnLabel.replace(/["\\]/g, '\\$&')}"`,
+      }) as React.CSSProperties,
+    [gridPathColumnLabel],
+  );
+
   const allSelectedItemsShared = useMemo(() => {
     if (selectedPaths.size === 0) return false;
     for (const path of selectedPaths) {
@@ -128,7 +137,11 @@ export const FileManager: React.FC = () => {
   }, [initialDataStatus, dispatch]);
 
   return (
-    <div className="flex w-full grow overflow-auto" data-qa="file-manager">
+    <div
+      className="flex w-full grow overflow-auto"
+      data-qa="file-manager"
+      style={gridPathColumnLabelStyle}
+    >
       {initialDataStatus !== UploadStatus.LOADED ? (
         <DialLoader size={45} />
       ) : (
