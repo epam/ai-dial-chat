@@ -32,6 +32,7 @@ import {
 } from '@/src/constants/applications';
 import { CODE_APPS_ENDPOINTS } from '@/src/constants/code-apps';
 import { CommonI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
+import { getPendingAttachmentTypeError } from '@/src/constants/validation-helpers';
 
 import {
   CodeAppForm as CodeAppFormType,
@@ -149,7 +150,10 @@ export const CodeAppForm = () => {
             hasDeleteAll
             hideSuggestions
             itemHeightClassName="h-[31px]"
-            error={errors.inputAttachmentTypes?.message}
+            error={
+              errors.inputAttachmentTypes?.message ??
+              getPendingAttachmentTypeError(pendingAttachmentType)
+            }
             disabled={isAppPublic}
             tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
             {...getPendingAttachmentTypeProps(pendingAttachmentType, setValue)}

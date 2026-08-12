@@ -215,17 +215,17 @@ const view = withRenderWhen((state) => {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="flex flex-col w-[400px] overflow-y-auto px-3 py-4 align-bottom transition-all md:max-h-[531px] md:p-6"
+      containerClassName="flex flex-col w-[400px] overflow-hidden px-3 py-4 align-bottom transition-all md:max-h-[531px] md:p-6"
       dataQa="settings-modal"
       state={ModalState.OPENED}
       onClose={handleClose}
       initialFocus={saveBtnRef}
       dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
-      <div className="mb-4 text-base font-bold">
+      <div className="shrink-0 pb-4 text-base font-bold">
         {t(SettingsI18nKeys.Settings)}
       </div>
-      <div className="mb-4 flex min-h-0 flex-1 flex-col gap-4">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
         <ThemeSelect
           localTheme={localTheme}
           onThemeChangeHandler={onThemeChangeHandler}
@@ -277,7 +277,7 @@ const view = withRenderWhen((state) => {
         )}
       </div>
 
-      <div className="mt-4 flex justify-end">
+      <div className="flex shrink-0 justify-end pt-4">
         <DialPrimaryButton
           label={t(SettingsI18nKeys.Save)}
           onClick={handleSave}

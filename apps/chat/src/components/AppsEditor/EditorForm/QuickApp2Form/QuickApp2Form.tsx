@@ -44,6 +44,7 @@ import {
   MarketplaceI18nKeys,
   SettingsI18nKeys,
 } from '@/src/constants/i18n';
+import { getPendingAttachmentTypeError } from '@/src/constants/validation-helpers';
 
 import { FormCollapsibleSection } from '@/src/components/AppsEditor/EditorForm/FormCollapsibleSection';
 import { AgentSkillsField } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/AgentSkillsField';
@@ -491,7 +492,10 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               hasDeleteAll
               hideSuggestions
               itemHeightClassName="h-[31px]"
-              error={errors.inputAttachmentTypes?.message}
+              error={
+                errors.inputAttachmentTypes?.message ??
+                getPendingAttachmentTypeError(pendingAttachmentType)
+              }
               disabled={isAppPublic}
               tooltip={isAppPublicTooltip}
               dataQa="attachment-types-field"

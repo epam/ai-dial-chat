@@ -38,7 +38,7 @@ export const ChatInputFileAttachment = ({
         <IconExclamationCircle className="shrink-0 text-error" size={18} />
       )}
 
-      <div className="flex grow justify-between gap-3 overflow-hidden">
+      <div className="flex grow items-center justify-between gap-3 overflow-hidden">
         <Tooltip
           key={file.id}
           tooltip={file.name}
