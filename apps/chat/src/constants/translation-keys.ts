@@ -262,7 +262,6 @@ export enum ScheduledTasksI18nKeys {
   ListNoResultsLabel = 'scheduledTasks.list.noResultsLabel',
   ListErrorLabel = 'scheduledTasks.list.errorLabel',
   ListRetryLabel = 'scheduledTasks.list.retryLabel',
-  ListSharedSectionTitle = 'scheduledTasks.list.sharedSectionTitle',
   ListLoadingMoreLabel = 'scheduledTasks.list.loadingMoreLabel',
   CardNewBadgeLabel = 'scheduledTasks.card.newBadgeLabel',
   CardEditActionLabel = 'scheduledTasks.card.editActionLabel',

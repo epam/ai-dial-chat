@@ -2,7 +2,7 @@
 
 ## Overview
 
-Presentational components for a host app's Scheduled Tasks feature: a page shell (`ScheduledTasks`) with a header, search/sort toolbar, and a section-grouped grid of task cards (`ScheduledTaskCardGrid`, `ScheduledTaskSection`, `ScheduledTaskCard`), plus a create-task form (`ScheduledTaskCreateForm`). All user-visible strings, callbacks, and state (loading, error, search query, sort key, form values, validation errors) are provided by the consuming app via props; this lib has no knowledge of routing, feature flags, i18n, or any backend API — it performs no date/locale formatting or data fetching of its own.
+Presentational components for a host app's Scheduled Tasks feature: a page shell (`ScheduledTasks`) with a header, search/sort toolbar, and a flat grid of task cards (`ScheduledTaskCardGrid`, `ScheduledTaskCard`), plus a create-task form (`ScheduledTaskCreateForm`). All user-visible strings, callbacks, and state (loading, error, search query, sort key, form values, validation errors) are provided by the consuming app via props; this lib has no knowledge of routing, feature flags, i18n, or any backend API — it performs no date/locale formatting or data fetching of its own.
 
 Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, feature-flag gating, data fetching, and local UI state (search query, sort key, form values) at the app level, then render `<ScheduledTasks />` for the list page and `<ScheduledTaskCreateForm />` for the create page with the resolved strings, items, and handlers.
 
@@ -55,7 +55,6 @@ import {
     noResultsLabel: 'No results',
     errorLabel: 'Something went wrong',
     retryLabel: 'Retry',
-    sharedSectionTitle: 'Shared',
   }}
   onCreateClick={() => {}}
   searchQuery=""
@@ -78,15 +77,14 @@ import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
     id: 'sched_1',
     displayName: 'Competitor Updates',
     scheduleLabel: 'Every Monday 12:00',
-    sectionKey: ScheduledTaskSectionKey.MyTasks,
   }}
   onCardClick={(id) => {}}
 />;
 ```
 
-### ScheduledTaskCardGrid / ScheduledTaskSection
+### ScheduledTaskCardGrid
 
-`ScheduledTaskCardGrid` renders a responsive grid of `ScheduledTaskCard`s for a list of items. `ScheduledTaskSection` wraps a grid (or any content) with a named section heading and item count badge — used by `ScheduledTasks` to group items into "Shared" and "My tasks" sections.
+`ScheduledTaskCardGrid` renders a responsive grid of `ScheduledTaskCard`s for a list of items, in the order received — no grouping or client-side sorting.
 
 ### ScheduledTaskCreateForm
 

@@ -10,7 +10,6 @@ import { getScheduledTaskDetailRoute } from '../../constants/routes';
 import { ScheduledTaskCreateQuery } from '../../constants/scheduled-tasks';
 import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
-import { useUser } from '../../context/auth/UserContext';
 import { useScheduledTasks } from '../../hooks/scheduled-tasks/useScheduledTasks';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
@@ -27,7 +26,6 @@ const ScheduledTasksPage: FC = () => {
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useUser();
 
   const {
     items: taskDtos,
@@ -96,7 +94,6 @@ const ScheduledTasksPage: FC = () => {
       noResultsLabel: t(ScheduledTasksI18nKeys.ListNoResultsLabel),
       errorLabel: t(ScheduledTasksI18nKeys.ListErrorLabel),
       retryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
-      sharedSectionTitle: t(ScheduledTasksI18nKeys.ListSharedSectionTitle),
       loadingMoreLabel: t(ScheduledTasksI18nKeys.ListLoadingMoreLabel),
       cardLabels: {
         newBadgeLabel: t(ScheduledTasksI18nKeys.CardNewBadgeLabel),
@@ -106,8 +103,8 @@ const ScheduledTasksPage: FC = () => {
   );
 
   const items = useMemo(
-    () => mapScheduledTaskDtosToItems(taskDtos, t, user?.sub),
-    [taskDtos, t, user?.sub],
+    () => mapScheduledTaskDtosToItems(taskDtos, t),
+    [taskDtos, t],
   );
 
   if (appConfigStatus !== UserConfigStatus.Ready) {

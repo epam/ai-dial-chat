@@ -515,7 +515,6 @@
       "noResultsLabel": "No results",
       "errorLabel": "Failed to load scheduled tasks",
       "retryLabel": "Retry",
-      "sharedSectionTitle": "Shared",
       "loadingMoreLabel": "Loading more scheduled tasks…"
     },
     "card": {
