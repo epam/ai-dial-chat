@@ -7,6 +7,7 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
 import { ReplaceOptions } from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
 
 import { FilesActions } from '@/src/store/actions';
 import { filesSlice } from '@/src/store/files/files.reducers';
@@ -87,7 +88,9 @@ const createStore = () =>
             id: `${folderId}/sun.jpg`,
             name: 'sun.jpg',
             folderId,
-          },
+            contentLength: 7,
+            contentType: 'image/jpeg',
+          } as DialFile,
         ],
       },
     },

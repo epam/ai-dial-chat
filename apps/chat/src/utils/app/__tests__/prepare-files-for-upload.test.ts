@@ -7,9 +7,17 @@ import {
 } from '@/src/utils/app/prepare-files-for-upload';
 
 import { ReplaceOptions } from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
 import { HTTPMethod } from '@/src/types/http';
 
 import { FilesActions } from '@/src/store/actions';
+
+const makeFile = (partial: Partial<DialFile>): DialFile =>
+  ({
+    contentLength: 7,
+    contentType: 'image/jpeg',
+    ...partial,
+  }) as DialFile;
 
 describe('detectUploadFileConflicts', () => {
   const folderId = 'files/test-bucket/uploads';
@@ -21,11 +29,11 @@ describe('detectUploadFileConflicts', () => {
       files: [file],
       folderId,
       existingFiles: [
-        {
+        makeFile({
           id: `${folderId}/sun.jpg`,
           name: 'sun.jpg',
           folderId,
-        },
+        }),
       ],
       bucket: 'test-bucket',
       allowedTypes: ['*/*'],
@@ -59,23 +67,23 @@ describe('applyUploadReplaceActions', () => {
 
   it('applies postfix strategy to conflicting files', () => {
     const file = new File(['content'], 'sun.jpg', { type: 'image/jpeg' });
-    const duplicatedFile = {
+    const duplicatedFile = makeFile({
       id: `${folderId}/sun.jpg`,
       name: 'sun.jpg',
       folderId,
       fileContent: file,
-    };
+    });
 
     const resolved = applyUploadReplaceActions({
       duplicatedFiles: [duplicatedFile],
       nonDuplicatedFiles: [],
       mappedActions: { [duplicatedFile.id]: ReplaceOptions.Postfix },
       existingFiles: [
-        {
+        makeFile({
           id: `${folderId}/sun.jpg`,
           name: 'sun.jpg',
           folderId,
-        },
+        }),
       ],
       folderId,
       bucket: 'test-bucket',
@@ -88,23 +96,23 @@ describe('applyUploadReplaceActions', () => {
 
   it('applies replace strategy with PUT method', () => {
     const file = new File(['content'], 'sun.jpg', { type: 'image/jpeg' });
-    const duplicatedFile = {
+    const duplicatedFile = makeFile({
       id: `${folderId}/sun.jpg`,
       name: 'sun.jpg',
       folderId,
       fileContent: file,
-    };
+    });
 
     const resolved = applyUploadReplaceActions({
       duplicatedFiles: [duplicatedFile],
       nonDuplicatedFiles: [],
       mappedActions: { [duplicatedFile.id]: ReplaceOptions.Replace },
       existingFiles: [
-        {
+        makeFile({
           id: `${folderId}/sun.jpg`,
           name: 'sun.jpg',
           folderId,
-        },
+        }),
       ],
       folderId,
       bucket: 'test-bucket',
@@ -117,23 +125,23 @@ describe('applyUploadReplaceActions', () => {
 
   it('skips ignored files', () => {
     const file = new File(['content'], 'sun.jpg', { type: 'image/jpeg' });
-    const duplicatedFile = {
+    const duplicatedFile = makeFile({
       id: `${folderId}/sun.jpg`,
       name: 'sun.jpg',
       folderId,
       fileContent: file,
-    };
+    });
 
     const resolved = applyUploadReplaceActions({
       duplicatedFiles: [duplicatedFile],
       nonDuplicatedFiles: [],
       mappedActions: { [duplicatedFile.id]: ReplaceOptions.Ignore },
       existingFiles: [
-        {
+        makeFile({
           id: `${folderId}/sun.jpg`,
           name: 'sun.jpg',
           folderId,
-        },
+        }),
       ],
       folderId,
       bucket: 'test-bucket',
