@@ -15,6 +15,7 @@ interface ConfigDefinition {
   description: string;
   owner: string;
   envVar?: keyof EnvironmentVariables;
+  allowedRolesEnvVar?: keyof EnvironmentVariables;
   expiresAt?: string;
 }
 ```
@@ -23,7 +24,9 @@ Every key with `visibility='client'` MUST have a `defaultValue` that is safe to 
 
 The registry SHALL include a `dialCore.externalUrl` entry: `type='config'`, `valueType='string'`, `visibility='client'`, `defaultValue=null`, `critical=false`, `envVar='DIAL_CORE_EXTERNAL_URL'`. This is a distinct environment variable from `DIAL_CORE_URL` (the existing internal-only DIAL Core base URL used for server-to-server calls); `DIAL_CORE_URL` SHALL NOT be added to the registry and SHALL NOT become client-visible through this or any other entry.
 
-**Feature flag:** Not gated. The registry is a backend implementation detail with no user-visible flag.
+The registry SHALL include a `features.responsesApiEnabled` entry: `type='feature'`, `valueType='boolean'`, `visibility='server'`, `defaultValue=false`, `critical=false`, `envVar='RESPONSES_API_ENABLED'`, and no `allowedRolesEnvVar` (role-based rollout via `RESPONSES_API_ENABLED_ROLES` is explicitly out of scope for this entry). This flag SHALL NOT be included in `AppConfigService.getClientConfig`'s response under any circumstance, by virtue of its `visibility='server'` classification — the same mechanism that already excludes `features.llmConversationNaming`.
+
+**Feature flag:** Not gated. The registry entry itself has no user-visible flag; it declares the `features.responsesApiEnabled` key consumed elsewhere.
 
 **RTL impact:** None.
 
@@ -53,6 +56,16 @@ The registry SHALL include a `dialCore.externalUrl` entry: `type='config'`, `val
 
 - **WHEN** the registry is imported
 - **THEN** no entry has `envVar='DIAL_CORE_URL'`
+
+#### Scenario: Registry contains the responsesApiEnabled feature key with server-only visibility
+
+- **WHEN** the registry is imported
+- **THEN** it MUST contain an entry with `key='features.responsesApiEnabled'`, `type='feature'`, `valueType='boolean'`, `visibility='server'`, `critical=false`, `envVar='RESPONSES_API_ENABLED'`, `defaultValue=false`, and no `allowedRolesEnvVar`
+
+#### Scenario: responsesApiEnabled is excluded from the client-config response
+
+- **WHEN** `AppConfigService.getClientConfig(context)` is called, in any state of `RESPONSES_API_ENABLED`
+- **THEN** the returned DTO's `features` map does not contain a `responsesApiEnabled` (or `features.responsesApiEnabled`) key
 
 ---
 
