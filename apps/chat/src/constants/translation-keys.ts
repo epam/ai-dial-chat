@@ -108,6 +108,8 @@ export enum ButtonsI18nKeys {
   Publish = 'buttons.publish',
   Manage = 'buttons.manage',
   RemoveFromMyList = 'buttons.removeFromMyList',
+  RevokeAccess = 'buttons.revokeAccess',
+  RevokeAccessWithCount = 'buttons.revokeAccessWithCount',
 }
 
 export enum NavigationI18nKeys {
@@ -218,6 +220,16 @@ export enum CatalogI18nKeys {
   DetailsUnshareError = 'catalog.details.unshare.error',
   DetailsUnshareSuccessTitle = 'catalog.details.unshare.successTitle',
   DetailsUnshareSuccess = 'catalog.details.unshare.success',
+  DetailsRevokeShareConfirmTitle = 'catalog.details.revokeShare.confirmTitle',
+  DetailsRevokeShareConfirmMessage = 'catalog.details.revokeShare.confirmMessage',
+  DetailsRevokeShareConsequenceOthersLoseAccess = 'catalog.details.revokeShare.consequenceOthersLoseAccess',
+  DetailsRevokeShareConsequenceLinksStopWorking = 'catalog.details.revokeShare.consequenceLinksStopWorking',
+  DetailsRevokeShareConsequenceKeepsYourCopy = 'catalog.details.revokeShare.consequenceKeepsYourCopy',
+  DetailsRevokeShareRevokingStatus = 'catalog.details.revokeShare.revokingStatus',
+  DetailsRevokeShareSuccessTitle = 'catalog.details.revokeShare.successTitle',
+  DetailsRevokeShareSuccess = 'catalog.details.revokeShare.success',
+  DetailsRevokeShareErrorTitle = 'catalog.details.revokeShare.errorTitle',
+  DetailsRevokeShareError = 'catalog.details.revokeShare.error',
   ConnectToolsetTitle = 'catalog.details.connect.toolsetTitle',
   ConnectApplicationTitle = 'catalog.details.connect.applicationTitle',
   ConnectToolsetDescription = 'catalog.details.connect.toolsetDescription',
@@ -533,6 +545,11 @@ export enum ConversationPanelI18nKeys {
   UnshareSuccessTitle = 'conversationPanel.unshare.unshareSuccessTitle',
   UnshareSuccess = 'conversationPanel.unshare.unshareSuccess',
   UnshareError = 'conversationPanel.unshare.unshareError',
+  RevokeConfirmTitle = 'conversationPanel.revoke.revokeConfirmTitle',
+  RevokeConfirmMessage = 'conversationPanel.revoke.revokeConfirmMessage',
+  RevokeSuccessTitle = 'conversationPanel.revoke.revokeSuccessTitle',
+  RevokeSuccess = 'conversationPanel.revoke.revokeSuccess',
+  RevokeError = 'conversationPanel.revoke.revokeError',
   TaskBadgeLabel = 'conversationPanel.taskBadgeLabel',
   UnreadIndicatorLabel = 'conversationPanel.unreadIndicatorLabel',
 }

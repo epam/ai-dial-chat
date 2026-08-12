@@ -74,3 +74,47 @@ export const splitResourcesByPermission = (
   );
   return { writableUrls, sharedUrls };
 };
+
+/**
+ * Maps each resource url from a `getSharedResources({ with: 'others' })`
+ * result to the number of users currently holding access to it.
+ *
+ * DIAL Core populates `sharedWith` only when the request sets
+ * `includeUserInfo: true`, and only with users who have *accepted* an
+ * invitation — an issued-but-unopened share link contributes nothing, so a
+ * count of `0` means "nobody holds access", not "no link exists".
+ */
+export const countRecipientsByUrl = (
+  resources: { url?: string; sharedWith?: unknown[] }[],
+): Map<string, number> =>
+  new Map(
+    resources
+      .filter((resource) => resource.url != null)
+      .map((resource) => [
+        resource.url as string,
+        resource.sharedWith?.length ?? 0,
+      ]),
+  );
+
+/**
+ * Reads one resource's recipient count out of a {@link countRecipientsByUrl}
+ * map, trying each candidate url in turn (list ids and share urls differ in
+ * percent-encoding for some resource types).
+ *
+ * The two "no entry" cases mean opposite things and must not be conflated:
+ * `counts === null` — the upstream call failed — yields `undefined`
+ * ("unknown", so the UI keeps the revoke action reachable), while a lookup
+ * that simply finds nothing in a *successful* response yields `0`, because
+ * DIAL Core omits resources nobody currently holds.
+ */
+export const resolveRecipientsCount = (
+  counts: Map<string, number> | null,
+  ...urls: (string | undefined)[]
+): number | undefined => {
+  if (counts === null) return undefined;
+  for (const url of urls) {
+    const count = url == null ? undefined : counts.get(url);
+    if (count != null) return count;
+  }
+  return 0;
+};

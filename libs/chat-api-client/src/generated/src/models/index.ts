@@ -747,6 +747,12 @@ export interface ConversationListItemDto {
    */
   publishedWithMe: boolean;
   /**
+   * How many other users currently hold shared access to this conversation, for conversations the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.
+   * @type {number}
+   * @memberof ConversationListItemDto
+   */
+  recipientsCount?: number;
+  /**
    * True when the user has pinned this conversation.
    * @type {boolean}
    * @memberof ConversationListItemDto
@@ -2295,6 +2301,12 @@ export interface DeploymentItemDto {
    */
   sharedWithMe?: boolean;
   /**
+   * How many other users currently hold shared access to this deployment, for deployments the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.
+   * @type {number}
+   * @memberof DeploymentItemDto
+   */
+  recipientsCount?: number;
+  /**
    * Parent folder path for application-type deployments (absent for root-level or non-application items)
    * @type {string}
    * @memberof DeploymentItemDto
@@ -3111,6 +3123,12 @@ export interface DialToolsetDto {
    * @memberof DialToolsetDto
    */
   sharedWithMe?: boolean;
+  /**
+   * How many other users currently hold shared access to this toolset, for toolsets the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.
+   * @type {number}
+   * @memberof DialToolsetDto
+   */
+  recipientsCount?: number;
 }
 /**
  * @type DialToolsetDtoDescription
@@ -4960,6 +4978,32 @@ export interface RevokeAccessResponseDto {
    * true when the Core revoke call succeeded
    * @type {boolean}
    * @memberof RevokeAccessResponseDto
+   */
+  success: boolean;
+}
+/**
+ *
+ * @export
+ * @interface RevokeSharedAccessDto
+ */
+export interface RevokeSharedAccessDto {
+  /**
+   * Identifier (DIAL Core resource path) of the owned catalog item or conversation to revoke all shared access to.
+   * @type {string}
+   * @memberof RevokeSharedAccessDto
+   */
+  itemId: string;
+}
+/**
+ *
+ * @export
+ * @interface RevokeSharedAccessResponseDto
+ */
+export interface RevokeSharedAccessResponseDto {
+  /**
+   * true when the revoke call succeeded
+   * @type {boolean}
+   * @memberof RevokeSharedAccessResponseDto
    */
   success: boolean;
 }

@@ -4384,6 +4384,58 @@
         ]
       }
     },
+    "/api/v1/share/revoke": {
+      "post": {
+        "description": "Revokes every outstanding share grant on a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core's revokeSharedResources operation. Affects all recipients at once — DIAL Core cannot target a single recipient. Discarding only the caller's own access to a resource shared with them is a separate operation.",
+        "operationId": "revokeSharedAccess",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeSharedAccessDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Shared access revoked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevokeSharedAccessResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid itemId"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller does not own the resource"
+          },
+          "404": {
+            "description": "Resource does not exist"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Revoke all shared access to an owned resource",
+        "tags": ["share"]
+      }
+    },
     "/api/v1/catalog/{entityType}/{entityId}/publish": {
       "post": {
         "description": "Publishes a catalog entity (Toolset or Application) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.",
@@ -5959,6 +6011,11 @@
             "type": "boolean",
             "description": "True when this deployment is shared with the current user (READ or WRITE) and not owned by them"
           },
+          "recipientsCount": {
+            "type": "number",
+            "description": "How many other users currently hold shared access to this deployment, for deployments the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.",
+            "example": 3
+          },
           "applicationFolder": {
             "type": "string",
             "description": "Parent folder path for application-type deployments (absent for root-level or non-application items)"
@@ -7258,6 +7315,11 @@
           "sharedWithMe": {
             "type": "boolean",
             "description": "True when this toolset is shared with the current user (READ or WRITE) and not owned by them"
+          },
+          "recipientsCount": {
+            "type": "number",
+            "description": "How many other users currently hold shared access to this toolset, for toolsets the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.",
+            "example": 3
           }
         },
         "required": [
@@ -8123,6 +8185,11 @@
             "type": "boolean",
             "description": "True when this conversation was published to the organisation and is visible to the current user.",
             "example": false
+          },
+          "recipientsCount": {
+            "type": "number",
+            "description": "How many other users currently hold shared access to this conversation, for conversations the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.",
+            "example": 3
           },
           "isPinned": {
             "type": "boolean",
@@ -9809,6 +9876,27 @@
         "required": [
           "success"
         ]
+      },
+      "RevokeSharedAccessDto": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "description": "Identifier (DIAL Core resource path) of the owned catalog item or conversation to revoke all shared access to.",
+            "example": "applications/owner-bucket/my-app"
+          }
+        },
+        "required": ["itemId"]
+      },
+      "RevokeSharedAccessResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "true when the revoke call succeeded"
+          }
+        },
+        "required": ["success"]
       },
       "PublishCatalogEntityDto": {
         "type": "object",

@@ -24,6 +24,7 @@ import {
   IconPinnedFilled,
   IconShare,
   IconTrashX,
+  IconUserOff,
   IconWorldShare,
 } from '@tabler/icons-react';
 import {
@@ -59,7 +60,10 @@ import { useConversationExport } from '../../hooks/useConversationExport';
 import { useConversationImport } from '../../hooks/useConversationImport';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { getApiErrorDetails } from '../../server-api/api-error';
-import { discardSharedCatalogItem } from '../../server-api/share.api';
+import {
+  discardSharedCatalogItem,
+  revokeSharedAccess,
+} from '../../server-api/share.api';
 import { ConversationExportMode } from '../../types/conversation-export';
 import { ROUTES } from '../../types/routes';
 import {
@@ -198,6 +202,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const [pendingUnshareId, setPendingUnshareId] = useState<string | null>(null);
   const [isUnsharing, setIsUnsharing] = useState(false);
   const [unshareError, setUnshareError] = useState<string | null>(null);
+
+  const [pendingRevokeId, setPendingRevokeId] = useState<string | null>(null);
+  const [isRevoking, setIsRevoking] = useState(false);
+  const [revokeError, setRevokeError] = useState<string | null>(null);
 
   const [pendingRenameItem, setPendingRenameItem] = useState<{
     id: string;
@@ -487,6 +495,35 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
               },
             ]
           : []),
+        /*
+         * Revoking cuts off every recipient of an owned conversation. It rides
+         * the same feature flag as Share: with sharing disabled there is no way
+         * to grant access, so offering to revoke it would be incoherent. It is
+         * hidden again once nobody holds access (`recipientsCount === 0`); an
+         * absent count means the backend could not determine it, and the action
+         * stays visible rather than becoming unreachable.
+         */
+        ...(isConversationsSharingEnabled &&
+        (rawItem?.recipientsCount == null || rawItem.recipientsCount > 0)
+          ? [
+              {
+                key: 'revoke-access',
+                label:
+                  rawItem?.recipientsCount == null
+                    ? t(ButtonsI18nKeys.RevokeAccess)
+                    : t(ButtonsI18nKeys.RevokeAccessWithCount, {
+                        count: rawItem.recipientsCount,
+                      }),
+                icon: (
+                  <IconUserOff
+                    size={DIAL_ICON_SIZE.SM}
+                    className="text-secondary"
+                  />
+                ),
+                onClick: () => setPendingRevokeId(contextId),
+              },
+            ]
+          : []),
         {
           key: 'delete',
           label: t(ButtonsI18nKeys.Delete),
@@ -629,6 +666,65 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     setPendingUnshareId(null);
     setUnshareError(null);
   }, [isUnsharing]);
+
+  const pendingRevokeTitle = useMemo(() => {
+    if (!pendingRevokeId) return '';
+    const item = items.find((c) => c.id === pendingRevokeId);
+    return item?.title ?? item?.id ?? '';
+  }, [items, pendingRevokeId]);
+
+  /*
+   * Unlike unshare, revoking leaves the conversation in the owner's own list —
+   * only other people lose access — so there is nothing to navigate away from.
+   * `refreshConversations` runs purely so any share-derived indicator settles.
+   */
+  const handleConfirmRevoke = useCallback(async () => {
+    if (!pendingRevokeId) return;
+    const idToRevoke = pendingRevokeId;
+
+    setIsRevoking(true);
+    setRevokeError(null);
+    try {
+      await revokeSharedAccess(idToRevoke);
+    } catch {
+      setRevokeError(
+        t(ConversationPanelI18nKeys.RevokeError, {
+          name: pendingRevokeTitle,
+        }),
+      );
+      setIsRevoking(false);
+      return;
+    }
+
+    try {
+      await refreshConversations();
+    } catch {
+      /* The revoke already succeeded; a refresh failure must not undo that success. */
+    }
+
+    showNotification({
+      variant: NotificationVariant.Success,
+      title: t(ConversationPanelI18nKeys.RevokeSuccessTitle),
+      message: t(ConversationPanelI18nKeys.RevokeSuccess, {
+        name: pendingRevokeTitle,
+      }),
+    });
+
+    setIsRevoking(false);
+    setPendingRevokeId(null);
+  }, [
+    pendingRevokeId,
+    pendingRevokeTitle,
+    refreshConversations,
+    showNotification,
+    t,
+  ]);
+
+  const handleCloseRevokeDialog = useCallback(() => {
+    if (isRevoking) return;
+    setPendingRevokeId(null);
+    setRevokeError(null);
+  }, [isRevoking]);
 
   const handleConfirmRename = useCallback(
     async (newTitle: string) => {
@@ -791,6 +887,32 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onConfirm={handleConfirmUnshare}
         onCancel={handleCloseUnshareDialog}
         onClose={handleCloseUnshareDialog}
+      />
+
+      <ConfirmationPopup
+        open={!!pendingRevokeId}
+        header={t(ConversationPanelI18nKeys.RevokeConfirmTitle)}
+        confirmLabel={t(ButtonsI18nKeys.RevokeAccess)}
+        cancelLabel={t(ButtonsI18nKeys.Cancel)}
+        variant={ConfirmationPopupVariant.Danger}
+        isLoading={isRevoking}
+        description={
+          <>
+            <span className="break-all">
+              {t(ConversationPanelI18nKeys.RevokeConfirmMessage, {
+                name: pendingRevokeTitle,
+              })}
+            </span>
+            {revokeError && (
+              <span role="alert" className="mt-1 block text-error">
+                {revokeError}
+              </span>
+            )}
+          </>
+        }
+        onConfirm={handleConfirmRevoke}
+        onCancel={handleCloseRevokeDialog}
+        onClose={handleCloseRevokeDialog}
       />
 
       <RenameConversationPopup
