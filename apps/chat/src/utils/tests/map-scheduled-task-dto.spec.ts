@@ -121,10 +121,9 @@ describe('mapScheduledTaskDtoToItem', () => {
     );
   });
 
-  it('falls back to myTasks with no thrown errors for missing optional fields', () => {
+  it('leaves missing optional fields undefined with no thrown errors', () => {
     const result = mapScheduledTaskDtoToItem(buildDto(), fakeT);
 
-    expect(result.sectionKey).toBe('myTasks');
     expect(result.descriptionPreview).toBeUndefined();
     expect(result.locationSegments).toBeUndefined();
   });
@@ -162,35 +161,6 @@ describe('mapScheduledTaskDtoToItem', () => {
     const result = mapScheduledTaskDtoToItem(buildDto(), fakeT);
 
     expect(result.isActive).toBeUndefined();
-  });
-
-  it('places the item under myTasks when createdBy matches currentUserSub', () => {
-    const result = mapScheduledTaskDtoToItem(
-      buildDto({ createdBy: 'user-1' }),
-      fakeT,
-      'user-1',
-    );
-
-    expect(result.sectionKey).toBe('myTasks');
-  });
-
-  it('places the item under shared when createdBy differs from currentUserSub', () => {
-    const result = mapScheduledTaskDtoToItem(
-      buildDto({ createdBy: 'user-2' }),
-      fakeT,
-      'user-1',
-    );
-
-    expect(result.sectionKey).toBe('shared');
-  });
-
-  it('falls back to myTasks when createdBy is present but currentUserSub is not supplied', () => {
-    const result = mapScheduledTaskDtoToItem(
-      buildDto({ createdBy: 'user-2' }),
-      fakeT,
-    );
-
-    expect(result.sectionKey).toBe('myTasks');
   });
 });
 

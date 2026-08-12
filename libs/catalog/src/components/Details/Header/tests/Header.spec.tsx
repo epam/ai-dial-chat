@@ -89,6 +89,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconPlayerPlayFilled: () => <svg />,
   IconTrash: () => <svg />,
   IconUpload: () => <svg />,
+  IconUserOff: () => <svg />,
 }));
 vi.mock('../../../EntityHeader/EntityHeader', () => ({
   EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
@@ -408,6 +409,139 @@ describe('Header', () => {
     expect(
       screen.getByRole('button', { name: 'Remove from My List' }),
     ).toBeTruthy();
+  });
+
+  it('renders Revoke access in the Manage menu for an item the user owns', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onRevokeShare={vi.fn()}
+      />,
+    );
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Revoke access' })).toBeTruthy();
+  });
+
+  it('does not render Revoke access for an item shared with the user', async () => {
+    render(<Header item={makeSharedItem()} onRevokeShare={vi.fn()} />);
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Revoke access' })).toBeNull();
+  });
+
+  it('does not render Revoke access when onRevokeShare is not supplied', async () => {
+    render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Revoke access' })).toBeNull();
+  });
+
+  it('passes texts.revokeShareLabel through to the Revoke access item label', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onRevokeShare={vi.fn()}
+        texts={{ revokeShareLabel: 'Stop sharing with everyone' }}
+      />,
+    );
+    await openManage();
+    expect(
+      screen.getByRole('button', { name: 'Stop sharing with everyone' }),
+    ).toBeTruthy();
+  });
+
+  it('calls onRevokeShare with the item when Revoke access is clicked', async () => {
+    const onRevokeShare = vi.fn();
+    const item = makeItem(CatalogEntityType.Toolset);
+    render(<Header item={item} onRevokeShare={onRevokeShare} />);
+    await openManage();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Revoke access' }),
+    );
+    expect(onRevokeShare).toHaveBeenCalledWith(item);
+  });
+
+  it('hides Revoke access for an owned item nobody currently holds access to', async () => {
+    render(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Toolset), recipientsCount: 0 }}
+        onRevokeShare={vi.fn()}
+      />,
+    );
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Revoke access' })).toBeNull();
+  });
+
+  it('shows the recipient count in the Revoke access label when it is known', async () => {
+    render(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Toolset), recipientsCount: 3 }}
+        onRevokeShare={vi.fn()}
+      />,
+    );
+    await openManage();
+    expect(
+      screen.getByRole('button', { name: 'Revoke access (3)' }),
+    ).toBeTruthy();
+  });
+
+  it('uses texts.revokeShareLabelWithCount to format the counted label', async () => {
+    render(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Toolset), recipientsCount: 2 }}
+        onRevokeShare={vi.fn()}
+        texts={{
+          revokeShareLabelWithCount: (count) => `Отозвать у ${count} человек`,
+        }}
+      />,
+    );
+    await openManage();
+    expect(
+      screen.getByRole('button', { name: 'Отозвать у 2 человек' }),
+    ).toBeTruthy();
+  });
+
+  it('keeps Revoke access visible with an uncounted label when the count is unknown', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onRevokeShare={vi.fn()}
+      />,
+    );
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Revoke access' })).toBeTruthy();
+  });
+
+  it('keeps Revoke access in the Manage menu under dir="rtl"', async () => {
+    document.documentElement.dir = 'rtl';
+    try {
+      render(
+        <Header
+          item={makeItem(CatalogEntityType.Toolset)}
+          onRevokeShare={vi.fn()}
+        />,
+      );
+      await openManage();
+      expect(
+        screen.getByRole('button', { name: 'Revoke access' }),
+      ).toBeTruthy();
+    } finally {
+      document.documentElement.dir = 'ltr';
+    }
+  });
+
+  it('renders Revoke access alongside Delete for an owned item', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onDelete={vi.fn()}
+        onRevokeShare={vi.fn()}
+      />,
+    );
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Revoke access' })).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'Remove from My List' }),
+    ).toBeNull();
   });
 
   it('uses manageActionLabel for the Manage button accessible name', () => {

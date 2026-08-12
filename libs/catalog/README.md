@@ -37,6 +37,22 @@ import { Catalog } from '@epam/ai-dial-catalog';
 <Catalog items={catalogItems} onSelect={handleSelect} />;
 ```
 
+Sharing-related details-panel actions are opt-in callbacks — the panel owns the
+confirmation step and calls them only once the user confirms:
+
+```tsx
+<Catalog
+  items={catalogItems}
+  onSelect={handleSelect}
+  // Owner-side: revokes every recipient's access to an `isMyApp` item.
+  // The item stays in the owner's catalog, so the panel stays open.
+  onRevokeShare={handleRevokeShare}
+  // Recipient-side: drops the caller's own access to a `sharedWithMe` item.
+  // The item leaves the caller's catalog, so the panel closes.
+  onUnshare={handleUnshare}
+/>
+```
+
 ### CardGrid
 
 Virtualized grid view of catalog cards.

@@ -18,6 +18,8 @@ import type {
   CreateShareLinkDto,
   DiscardSharedCatalogItemDto,
   DiscardSharedCatalogItemResponseDto,
+  RevokeSharedAccessDto,
+  RevokeSharedAccessResponseDto,
   ShareLinkResponseDto,
 } from '../models/index';
 
@@ -31,6 +33,10 @@ export interface CreateShareLinkRequest {
 
 export interface DiscardSharedCatalogItemRequest {
   discardSharedCatalogItemDto: DiscardSharedCatalogItemDto;
+}
+
+export interface RevokeSharedAccessRequest {
+  revokeSharedAccessDto: RevokeSharedAccessDto;
 }
 
 /**
@@ -190,6 +196,58 @@ export class ShareApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<DiscardSharedCatalogItemResponseDto> {
     const response = await this.discardSharedCatalogItemRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Revokes every outstanding share grant on a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core\'s revokeSharedResources operation. Affects all recipients at once — DIAL Core cannot target a single recipient. Discarding only the caller\'s own access to a resource shared with them is a separate operation.
+   * Revoke all shared access to an owned resource
+   */
+  async revokeSharedAccessRaw(
+    requestParameters: RevokeSharedAccessRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<RevokeSharedAccessResponseDto>> {
+    if (requestParameters['revokeSharedAccessDto'] == null) {
+      throw new runtime.RequiredError(
+        'revokeSharedAccessDto',
+        'Required parameter "revokeSharedAccessDto" was null or undefined when calling revokeSharedAccess().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/share/revoke`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['revokeSharedAccessDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<RevokeSharedAccessResponseDto>(response);
+  }
+
+  /**
+   * Revokes every outstanding share grant on a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core\'s revokeSharedResources operation. Affects all recipients at once — DIAL Core cannot target a single recipient. Discarding only the caller\'s own access to a resource shared with them is a separate operation.
+   * Revoke all shared access to an owned resource
+   */
+  async revokeSharedAccess(
+    requestParameters: RevokeSharedAccessRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<RevokeSharedAccessResponseDto> {
+    const response = await this.revokeSharedAccessRaw(
       requestParameters,
       initOverrides,
     );

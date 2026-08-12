@@ -2,6 +2,7 @@ import type {
   AcceptInvitationResponseDto,
   CreateShareLinkDto,
   DiscardSharedCatalogItemResponseDto,
+  RevokeSharedAccessResponseDto,
   ShareLinkResponseDto,
 } from '@epam/ai-dial-chat-api-client';
 import { shareApi } from './api-client';
@@ -21,4 +22,11 @@ export const discardSharedCatalogItem = (
 ): Promise<DiscardSharedCatalogItemResponseDto> =>
   shareApi.discardSharedCatalogItem({
     discardSharedCatalogItemDto: { itemId },
+  });
+
+export const revokeSharedAccess = (
+  itemId: string,
+): Promise<RevokeSharedAccessResponseDto> =>
+  shareApi.revokeSharedAccess({
+    revokeSharedAccessDto: { itemId },
   });

@@ -163,7 +163,20 @@
         "removingStatus": "Removing…",
         "errorTitle": "Removal failed",
         "error": "Failed to remove \"{{name}}\". Please try again.",
+        "successTitle": "Removed from My List",
         "success": "\"{{name}}\" was removed from your list."
+      },
+      "revokeShare": {
+        "confirmTitle": "Revoke access?",
+        "confirmMessage": "Revoke shared access to \"{{name}}\"? Anyone you shared it with will lose access.",
+        "consequenceOthersLoseAccess": "Everyone you shared it with loses access",
+        "consequenceLinksStopWorking": "Existing share links stop working",
+        "consequenceKeepsYourCopy": "You keep full access — nothing is deleted",
+        "revokingStatus": "Revoking access…",
+        "successTitle": "Access revoked",
+        "success": "Shared access to \"{{name}}\" was revoked.",
+        "errorTitle": "Revoke failed",
+        "error": "Failed to revoke access to \"{{name}}\". Please try again."
       },
       "connect": {
         "toolsetTitle": "Connect toolset",
@@ -259,7 +272,9 @@
     "retry": "Retry",
     "publish": "Publish",
     "manage": "Manage",
-    "removeFromMyList": "Remove from My List"
+    "removeFromMyList": "Remove from My List",
+    "revokeAccess": "Revoke access",
+    "revokeAccessWithCount": "Revoke access ({{count}})"
   },
   "sidebar": {
     "base": {
@@ -336,6 +351,13 @@
       "unshareSuccessTitle": "Removed from My List",
       "unshareSuccess": "\"{{name}}\" was removed from your list.",
       "unshareError": "Failed to remove \"{{name}}\". Please try again."
+    },
+    "revoke": {
+      "revokeConfirmTitle": "Revoke access?",
+      "revokeConfirmMessage": "Revoke shared access to \"{{name}}\"? Anyone you shared it with will lose access. Your conversation is not deleted.",
+      "revokeSuccessTitle": "Access revoked",
+      "revokeSuccess": "Shared access to \"{{name}}\" was revoked.",
+      "revokeError": "Failed to revoke access to \"{{name}}\". Please try again."
     },
     "taskBadgeLabel": "TASK",
     "unreadIndicatorLabel": "Unread"
@@ -514,7 +536,6 @@
       "noResultsLabel": "No results",
       "errorLabel": "Failed to load scheduled tasks",
       "retryLabel": "Retry",
-      "sharedSectionTitle": "Shared",
       "loadingMoreLabel": "Loading more scheduled tasks…"
     },
     "card": {

@@ -14,18 +14,11 @@ import {
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconCalendarTime, IconPlus } from '@tabler/icons-react';
-import { FC, useEffect, useMemo, useRef } from 'react';
-import { ScheduledTaskSectionKey } from '../../models/scheduled-task-item';
+import { FC, useEffect, useRef } from 'react';
 import { ScheduledTasksProps } from '../../models/scheduled-tasks-props';
 import { ScheduledTasksSortKey } from '../../types/scheduled-tasks-sort-key';
 import { ScheduledTaskCardGrid } from '../ScheduledTaskCardGrid/ScheduledTaskCardGrid';
-import { ScheduledTaskSection } from '../ScheduledTaskSection/ScheduledTaskSection';
 import styles from './ScheduledTasks.module.scss';
-
-const SECTION_ORDER: ScheduledTaskSectionKey[] = [
-  ScheduledTaskSectionKey.Shared,
-  ScheduledTaskSectionKey.MyTasks,
-];
 
 const getStatusMessage = (
   isLoading: boolean,
@@ -65,8 +58,8 @@ const findScrollParent = (el: Element | null): Element | null => {
 /**
  * Scheduled Tasks page shell: header with title/subtitle/create action, a
  * search + sort toolbar, and a content region that shows a loading spinner,
- * an error with retry, the empty state, a no-results state, or a
- * section-grouped card grid, depending on `isLoading`/`error`/`items`.
+ * an error with retry, the empty state, a no-results state, or a flat card
+ * grid, depending on `isLoading`/`error`/`items`.
  */
 export const ScheduledTasks: FC<ScheduledTasksProps> = ({
   labels,
@@ -101,17 +94,6 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
 
   const activeSortLabel =
     labels.sortOptions.find((option) => option.key === sortKey)?.label ?? '';
-
-  const sections = useMemo(() => {
-    const sectionTitles: Partial<Record<ScheduledTaskSectionKey, string>> = {
-      [ScheduledTaskSectionKey.Shared]: labels.sharedSectionTitle,
-    };
-    return SECTION_ORDER.map((key) => ({
-      key,
-      title: sectionTitles[key],
-      items: items.filter((item) => item.sectionKey === key),
-    })).filter((section) => section.items.length > 0);
-  }, [items, labels.sharedSectionTitle]);
 
   const statusMessage = getStatusMessage(
     isLoading,
@@ -193,30 +175,18 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
       );
     }
 
-    const lastSectionIndex = sections.length - 1;
-
     return (
       <div className="flex w-full flex-col gap-6">
-        {sections.map((section, index) => (
-          <ScheduledTaskSection
-            key={section.key}
-            title={section.title}
-            count={section.items.length}
-          >
-            <ScheduledTaskCardGrid
-              items={section.items}
-              searchQuery={searchQuery}
-              onCardClick={onCardClick}
-              labels={labels.cardLabels}
-              trailingSkeletonCount={
-                isLoadingMore && index === lastSectionIndex ? skeletonCount : 0
-              }
-              skeletonStyles={{
-                colors: { skeletonColor: colors?.skeletonColor },
-              }}
-            />
-          </ScheduledTaskSection>
-        ))}
+        <ScheduledTaskCardGrid
+          items={items}
+          searchQuery={searchQuery}
+          onCardClick={onCardClick}
+          labels={labels.cardLabels}
+          trailingSkeletonCount={isLoadingMore ? skeletonCount : 0}
+          skeletonStyles={{
+            colors: { skeletonColor: colors?.skeletonColor },
+          }}
+        />
 
         <div ref={sentinelRef} aria-hidden className="h-px w-full" />
       </div>

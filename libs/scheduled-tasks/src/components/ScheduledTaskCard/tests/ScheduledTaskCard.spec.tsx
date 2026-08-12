@@ -2,10 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  ScheduledTaskSectionKey,
-  type ScheduledTaskItem,
-} from '../../../models/scheduled-task-item';
+import type { ScheduledTaskItem } from '../../../models/scheduled-task-item';
 import { ScheduledTaskCard } from '../ScheduledTaskCard';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -68,7 +65,6 @@ const buildItem = (
   id: 'sched_1',
   displayName: 'Competitor Updates',
   scheduleLabel: 'Every Monday 12:00',
-  sectionKey: ScheduledTaskSectionKey.MyTasks,
   ...overrides,
 });
 
