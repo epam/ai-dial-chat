@@ -9,7 +9,8 @@ import { getApiErrorDetails } from '../../server-api/api-error';
  * Returns a handler that surfaces a failed publish request as an error
  * notification. Wire it to `usePublishFlow`'s `onPublishError` so a rejected
  * publish is reported outside the panel too, not only through the panel's
- * inline callout.
+ * inline callout. Shows the server-provided error message when the response
+ * carries one, falling back to a generic message otherwise.
  */
 export const usePublishErrorNotification = (): ((error: unknown) => void) => {
   const { t } = useTranslation();
@@ -34,11 +35,11 @@ export const usePublishErrorNotification = (): ((error: unknown) => void) => {
       }
 
       const notify = async () => {
-        const { traceId } = await getApiErrorDetails(error);
+        const { message, traceId } = await getApiErrorDetails(error);
         showNotification({
           variant: NotificationVariant.Error,
           title: t(PublishI18nKeys.FailedTitle),
-          message: t(PublishI18nKeys.FailedMessage),
+          message: message ?? t(PublishI18nKeys.FailedMessage),
           requestId: traceId,
         });
       };

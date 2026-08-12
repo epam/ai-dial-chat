@@ -1,5 +1,8 @@
+import type { components } from '@epam/ai-dial-typescript-sdk';
 import type { LocaleTextEntryDto } from '../dto/locale-text-entry.dto';
 import type { LocalizedText } from '../types/localized-text';
+
+type LocalizedValue = components['schemas']['LocalizedValue'];
 
 const DEFAULT_PRIMARY_LOCALE = 'en';
 
@@ -43,3 +46,12 @@ export const composeLocalizedFields = (
       Object.keys(descriptionMap).length > 0 ? descriptionMap : undefined,
   };
 };
+
+/**
+ * Converts a {@link LocalizedText} (plain string or locale map) into the
+ * verified SDK's `LocalizedValue` shape (`{ plainValue?, localeMap? }`) —
+ * the wire format `Application.displayName`/`ToolSet.displayName` require
+ * since the `@epam/ai-dial-typescript-sdk` upgrade to `0.1.0-dev.35`.
+ */
+export const toLocalizedValue = (text: LocalizedText): LocalizedValue =>
+  typeof text === 'string' ? { plainValue: text } : { localeMap: text };
