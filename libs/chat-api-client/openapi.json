@@ -5083,7 +5083,7 @@
             "schema": {
               "example": "toolset",
               "type": "string",
-              "enum": ["model", "toolset", "application", "skill", "prompt"]
+              "enum": ["model", "toolset", "application", "prompt", "skill"]
             }
           },
           {
@@ -5154,7 +5154,7 @@
             "schema": {
               "example": "toolset",
               "type": "string",
-              "enum": ["model", "toolset", "application", "skill", "prompt"]
+              "enum": ["model", "toolset", "application", "prompt", "skill"]
             }
           },
           {
@@ -10256,7 +10256,7 @@
           },
           "entityType": {
             "type": "string",
-            "enum": ["model", "toolset", "prompt", "application", "skill"],
+            "enum": ["model", "toolset", "application", "prompt", "skill"],
             "example": "toolset"
           },
           "folderPath": {
