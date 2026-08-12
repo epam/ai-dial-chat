@@ -4,7 +4,6 @@ import {
   StandalonePublishPanel,
   usePublishFlow,
 } from '@epam/ai-dial-publish-panel';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC, RefObject } from 'react';
 import { memo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -51,7 +50,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
   returnFocusRef,
 }) => {
   const { t } = useTranslation();
-  const { showNotification } = useNotification();
+  const { showSuccessNotification } = useNotification();
   const showPublishError = usePublishErrorNotification();
   const {
     config: { publicationFilterSources },
@@ -88,8 +87,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
     },
     onPublishSuccess: (_item, folderPath) => {
       rememberPublishFolder(folderPath);
-      showNotification({
-        variant: NotificationVariant.Success,
+      showSuccessNotification({
         message: t(ConversationPublishI18nKeys.SuccessMessage),
       });
     },

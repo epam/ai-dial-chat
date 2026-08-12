@@ -3,7 +3,6 @@ import {
   DeploymentCreationFieldErrorCode,
   validateDeploymentCreationFields,
 } from '@epam/ai-dial-deployment-creation-form';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -81,7 +80,7 @@ const getDirtyFieldsFromPatch = (patch: object): ToolsetDirtyFields => {
 
 const ToolsetEditor: FC = () => {
   const { t } = useTranslation();
-  const { showNotification } = useNotification();
+  const { showErrorNotification } = useNotification();
   const { refetchToolsets } = useDeployments();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -250,8 +249,7 @@ const ToolsetEditor: FC = () => {
     } catch (err) {
       const { traceId } = await getApiErrorDetails(err);
       const upstreamMessage = await extractToolsetApiErrorMessage(err);
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message:
           upstreamMessage ??
           t(
@@ -265,7 +263,7 @@ const ToolsetEditor: FC = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [form, persistedToolsetId, t, showNotification, refetchToolsets]);
+  }, [form, persistedToolsetId, t, showErrorNotification, refetchToolsets]);
 
   const handleNext = useCallback(async () => {
     if (!form) return;
@@ -418,8 +416,7 @@ const ToolsetEditor: FC = () => {
         navigate(returnUrl);
       } catch (error) {
         const { traceId } = await getApiErrorDetails(error);
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
           requestId: traceId,
         });
@@ -427,8 +424,7 @@ const ToolsetEditor: FC = () => {
     } catch (err) {
       const { traceId } = await getApiErrorDetails(err);
       const upstreamMessage = await extractToolsetApiErrorMessage(err);
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message:
           upstreamMessage ??
           t(
@@ -448,7 +444,7 @@ const ToolsetEditor: FC = () => {
     navigate,
     returnUrl,
     t,
-    showNotification,
+    showErrorNotification,
     setEditorStep,
     runPostSaveAuth,
     refetchToolsets,

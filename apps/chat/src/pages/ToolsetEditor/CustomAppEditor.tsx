@@ -6,11 +6,7 @@ import {
   DeploymentCreationFieldErrorCode,
   validateDeploymentCreationFields,
 } from '@epam/ai-dial-deployment-creation-form';
-import {
-  ConfirmationPopup,
-  NotificationVariant,
-  Spinner,
-} from '@epam/ai-dial-ui-kit';
+import { ConfirmationPopup, Spinner } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -69,7 +65,7 @@ const CustomAppEditor: FC = () => {
     refetchDeployments,
     isLoading: isDeploymentsLoading,
   } = useDeployments();
-  const { showNotification } = useNotification();
+  const { showErrorNotification } = useNotification();
 
   const step =
     (searchParams.get(ToolsetEditorQuery.Step) as ToolsetEditorSteps) ??
@@ -109,8 +105,7 @@ const CustomAppEditor: FC = () => {
       })
       .catch(() => {
         if (!cancelled) {
-          showNotification({
-            variant: NotificationVariant.Error,
+          showErrorNotification({
             message: t(CustomAppI18nKeys.ErrorLoadFailed),
           });
           navigate(returnUrl, { replace: true });
@@ -367,8 +362,7 @@ const CustomAppEditor: FC = () => {
       navigate(returnUrl);
     } catch (err) {
       const { message, traceId } = await getApiErrorDetails(err);
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message:
           message ??
           t(
@@ -389,7 +383,7 @@ const CustomAppEditor: FC = () => {
     refetchDeployments,
     navigate,
     returnUrl,
-    showNotification,
+    showErrorNotification,
     t,
   ]);
 

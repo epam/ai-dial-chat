@@ -4,10 +4,10 @@ import {
   DangerIconButton,
   DIAL_ICON_SIZE,
   DialFormPopup,
-  DialSelectField,
   ElementSize,
   Input,
   LinkButton,
+  Select,
   Textarea,
 } from '@epam/ai-dial-ui-kit';
 import { IconPencil, IconPlus, IconTrashX } from '@tabler/icons-react';
@@ -203,10 +203,10 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
                   className="flex flex-col gap-5"
                 >
                   <div className="flex items-start gap-5">
-                    <DialSelectField
+                    <Select
                       id={`${entry.id}-language`}
-                      label={languageLabel}
-                      containerClassName="w-20 shrink-0"
+                      labelProps={{ label: languageLabel }}
+                      className="shrink-0 basis-20"
                       options={availableLocaleOptions.map((option) => ({
                         value: option.code,
                         label: option.label,

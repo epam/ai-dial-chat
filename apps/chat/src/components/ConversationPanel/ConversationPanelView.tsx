@@ -12,7 +12,6 @@ import {
   DIAL_ICON_SIZE,
   ConfirmationPopup,
   Popup,
-  NotificationVariant,
   PopupSize,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
@@ -124,7 +123,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const { language } = useLanguage();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const { showNotification } = useNotification();
+  const {
+    showInfoNotification,
+    showSuccessNotification,
+    showErrorNotification,
+  } = useNotification();
   const isConversationsSectionEnabled = useUiFeature(
     OverlayFeature.ConversationsSection,
   );
@@ -387,8 +390,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             navigate(getConversationRoute(newPath));
           } catch (error) {
             const { traceId } = await getApiErrorDetails(error);
-            showNotification({
-              variant: NotificationVariant.Error,
+            showErrorNotification({
               message: t(ConversationPanelI18nKeys.DuplicateError),
               requestId: traceId,
             });
@@ -544,7 +546,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       isConversationsPublishingEnabled,
       navigate,
       onDuplicateReadonly,
-      showNotification,
+      showErrorNotification,
       exportSingle,
     ],
   );
@@ -570,8 +572,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     setDeleteError(null);
     try {
       await deleteConversation(idToDelete);
-      showNotification({
-        variant: NotificationVariant.Success,
+      showSuccessNotification({
         message: t(ConversationPanelI18nKeys.DeleteSuccess),
         title: t(ConversationPanelI18nKeys.DeleteSuccessTitle),
       });
@@ -591,7 +592,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     }
   }, [
     pendingDeleteId,
-    showNotification,
+    showSuccessNotification,
     deleteConversation,
     panelActiveConversationId,
     navigate,
@@ -634,8 +635,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       /* The discard already succeeded; a refresh failure must not undo that success. */
     }
 
-    showNotification({
-      variant: NotificationVariant.Info,
+    showInfoNotification({
       title: t(ConversationPanelI18nKeys.UnshareSuccessTitle),
       message: t(ConversationPanelI18nKeys.UnshareSuccess, {
         name: pendingUnshareTitle,
@@ -655,7 +655,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     pendingUnshareId,
     pendingUnshareTitle,
     refreshConversations,
-    showNotification,
+    showInfoNotification,
     panelActiveConversationId,
     navigate,
     t,
@@ -702,8 +702,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       /* The revoke already succeeded; a refresh failure must not undo that success. */
     }
 
-    showNotification({
-      variant: NotificationVariant.Success,
+    showSuccessNotification({
       title: t(ConversationPanelI18nKeys.RevokeSuccessTitle),
       message: t(ConversationPanelI18nKeys.RevokeSuccess, {
         name: pendingRevokeTitle,
@@ -716,7 +715,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     pendingRevokeId,
     pendingRevokeTitle,
     refreshConversations,
-    showNotification,
+    showSuccessNotification,
     t,
   ]);
 

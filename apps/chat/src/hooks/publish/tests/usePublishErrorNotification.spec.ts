@@ -2,6 +2,7 @@ import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNotification } from '../../../context/NotificationContext';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { usePublishErrorNotification } from '../usePublishErrorNotification';
 
 vi.mock('../../../context/NotificationContext');
@@ -30,11 +31,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
   setOnLine(true);
-  vi.mocked(useNotification).mockReturnValue({
-    notifications: [],
-    showNotification: mockShowNotification,
-    dismissNotification: vi.fn(),
-  });
+  vi.mocked(useNotification).mockReturnValue(
+    createNotificationContextValue(mockShowNotification),
+  );
 });
 
 afterEach(() => {

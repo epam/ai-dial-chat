@@ -3,7 +3,6 @@ import {
   ScheduledTaskDetailView,
   type ScheduledTaskRunItem,
 } from '@epam/ai-dial-scheduled-tasks';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import {
   memo,
   useCallback,
@@ -44,7 +43,7 @@ import NotFoundPage from '../NotFound/NotFound';
 
 const ScheduledTaskDetailPage: FC = () => {
   const { t } = useTranslation();
-  const { showNotification } = useNotification();
+  const { showSuccessNotification, showErrorNotification } = useNotification();
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
@@ -268,8 +267,7 @@ const ScheduledTaskDetailPage: FC = () => {
               : ScheduledTasksI18nKeys.DetailPauseSuccess,
           ),
         );
-        showNotification({
-          variant: NotificationVariant.Success,
+        showSuccessNotification({
           message: t(
             nextActive
               ? ScheduledTasksI18nKeys.DetailResumeSuccess
@@ -283,8 +281,7 @@ const ScheduledTaskDetailPage: FC = () => {
           current ? { ...current, isActive: !nextActive } : current,
         );
         const { traceId } = await getApiErrorDetails(err);
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           message: t(ScheduledTasksI18nKeys.DetailActiveStatusUpdateError),
           requestId: traceId,
         });
@@ -294,7 +291,7 @@ const ScheduledTaskDetailPage: FC = () => {
         }
       }
     },
-    [scheduleId, t, showNotification],
+    [scheduleId, t, showSuccessNotification, showErrorNotification],
   );
 
   if (appConfigStatus !== UserConfigStatus.Ready) {

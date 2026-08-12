@@ -10,7 +10,6 @@ import {
   DialRadioButton,
   TagInput,
   ElementSize,
-  NotificationVariant,
   mergeClasses,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
@@ -95,7 +94,7 @@ const AuthSection: FC<Props> = ({
   onEnsureSaved,
 }) => {
   const { t } = useTranslation();
-  const { showNotification } = useNotification();
+  const { showSuccessNotification, showErrorNotification } = useNotification();
   const [isAuthBusy, setIsAuthBusy] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -140,8 +139,7 @@ const AuthSection: FC<Props> = ({
         initiation.type === ToolsetOAuthInitiationResultType.Blocked
           ? ToolsetEditorI18nKeys.ErrorPopupBlocked
           : ToolsetEditorI18nKeys.ErrorOAuthConfigMissing;
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(errorKey),
       });
       return;
@@ -160,13 +158,11 @@ const AuthSection: FC<Props> = ({
 
     if (result.type === ToolsetOAuthResultType.Success) {
       onAuthChange({ isLoggedIn: true });
-      showNotification({
-        variant: NotificationVariant.Success,
+      showSuccessNotification({
         message: t(ToolsetEditorI18nKeys.LoginSuccess),
       });
     } else if (result.type === ToolsetOAuthResultType.Failure) {
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
       });
     } else if (result.type === ToolsetOAuthResultType.Cancelled) {
@@ -180,8 +176,7 @@ const AuthSection: FC<Props> = ({
         const refreshedAuth = await fetchToolsetAuthSettings(savedToolsetId);
         if (refreshedAuth.isLoggedIn) {
           onAuthChange({ isLoggedIn: true });
-          showNotification({
-            variant: NotificationVariant.Success,
+          showSuccessNotification({
             message: t(ToolsetEditorI18nKeys.LoginSuccess),
           });
         }
@@ -210,8 +205,7 @@ const AuthSection: FC<Props> = ({
       if (needsDynamicRegistration) {
         const popup = openToolsetOAuthPopup();
         if (!popup) {
-          showNotification({
-            variant: NotificationVariant.Error,
+          showErrorNotification({
             message: t(ToolsetEditorI18nKeys.ErrorPopupBlocked),
           });
           return;
@@ -243,8 +237,7 @@ const AuthSection: FC<Props> = ({
           } catch (error) {
             popup.close();
             const { traceId } = await getApiErrorDetails(error);
-            showNotification({
-              variant: NotificationVariant.Error,
+            showErrorNotification({
               message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
               requestId: traceId,
             });
@@ -288,14 +281,12 @@ const AuthSection: FC<Props> = ({
       };
       await loginToolset(savedToolsetId, body);
       onAuthChange({ isLoggedIn: true });
-      showNotification({
-        variant: NotificationVariant.Success,
+      showSuccessNotification({
         message: t(ToolsetEditorI18nKeys.LoginSuccess),
       });
     } catch (error) {
       const { traceId } = await getApiErrorDetails(error);
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
         requestId: traceId,
       });
@@ -317,14 +308,12 @@ const AuthSection: FC<Props> = ({
       await logoutToolset(toolsetId, body);
       onAuthChange({ isLoggedIn: false });
       setShowLogoutConfirm(false);
-      showNotification({
-        variant: NotificationVariant.Success,
+      showSuccessNotification({
         message: t(ToolsetEditorI18nKeys.LogoutSuccess),
       });
     } catch (error) {
       const { traceId } = await getApiErrorDetails(error);
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(ToolsetEditorI18nKeys.ErrorLogoutFailed),
         requestId: traceId,
       });

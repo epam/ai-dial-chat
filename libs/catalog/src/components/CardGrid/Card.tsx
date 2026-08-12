@@ -145,7 +145,13 @@ export const Card: FC<CardProps> = ({
       <p
         className={mergeClasses(
           descriptionClassName,
-          'line-clamp-2 min-h-[50px] flex-1 break-words',
+          /*
+           * `min-h` is two line-heights, not a fixed px value: `line-clamp-2`
+           * limits the text to 2 lines but `overflow: hidden` clips at the box
+           * height, so any box taller than 2 lines paints the clamped-away
+           * lines. `2lh` tracks whichever typography class is applied.
+           */
+          'line-clamp-2 min-h-[2lh] break-words',
           descriptionSizeClassName,
           styles.description,
         )}
@@ -153,7 +159,9 @@ export const Card: FC<CardProps> = ({
         {item.description}
       </p>
 
-      <div className="flex items-center justify-between gap-2">
+      {/* `mt-auto` pins the topics row and footer to the card bottom — the job
+       * `flex-1` on the description used to do before it broke the clamp. */}
+      <div className="mt-auto flex items-center justify-between gap-2">
         <TopicsLine topics={item.topics} />
         <CredentialsBadge
           credentials={item.credentials}

@@ -16,6 +16,7 @@ import {
   ToolsetEditorI18nKeys,
 } from '../../../../constants/translation-keys';
 import { useNotification } from '../../../../context/NotificationContext';
+import { createNotificationContextValue } from '../../../../context/tests/notification-context-mock';
 import type {
   ToolsetAuthFormData,
   ToolsetFormErrors,
@@ -257,11 +258,9 @@ describe('AuthSection', () => {
         return capturedPopup;
       }),
     });
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification: mockShowNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(mockShowNotification),
+    );
   });
 
   describe('type selection', () => {

@@ -8,6 +8,7 @@ import {
   useDeployments,
 } from '../../context/DeploymentsContext';
 import * as NotificationContextModule from '../../context/NotificationContext';
+import { createNotificationContextValue } from '../../context/tests/notification-context-mock';
 import * as ToolsMenuModule from '../../hooks/conversation/useToolsMenu';
 import * as KeyboardShortcutModule from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import * as applicationSchemasApi from '../../server-api/application-schemas';
@@ -225,11 +226,9 @@ describe('ConversationRoute — new chat model inheritance (issue #8150 Case 3)'
       refresh: vi.fn(),
       reset: vi.fn(),
     });
-    mockUseNotification.mockReturnValue({
-      notifications: [],
-      showNotification: vi.fn(),
-      dismissNotification: vi.fn(),
-    });
+    mockUseNotification.mockReturnValue(
+      createNotificationContextValue(vi.fn()),
+    );
     mockUseKeyboardShortcutPreference.mockReturnValue({
       preference: 'enter' as never,
       setPreference: vi.fn(),

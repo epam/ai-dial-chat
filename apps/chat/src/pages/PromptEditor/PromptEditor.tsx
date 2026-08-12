@@ -6,7 +6,6 @@ import {
   type PromptEditorValues,
   type PromptFolderActions,
 } from '@epam/ai-dial-prompt-editor';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -53,7 +52,7 @@ const PromptEditorPage: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { showNotification } = useNotification();
+  const { showSuccessNotification, showErrorNotification } = useNotification();
   const isPromptsEnabled = useUiFeature(OverlayFeature.Prompts);
   const { folders, refetchPrompts } = usePrompts();
 
@@ -212,8 +211,7 @@ const PromptEditorPage: FC = () => {
               const { traceId } = await getApiErrorDetails(moveErr);
               await refetchPrompts();
               setErrors({ folder: PromptFieldError.Conflict });
-              showNotification({
-                variant: NotificationVariant.Error,
+              showErrorNotification({
                 message: t(PromptEditorI18nKeys.MoveError),
                 requestId: traceId,
               });
@@ -223,8 +221,7 @@ const PromptEditorPage: FC = () => {
         }
 
         await refetchPrompts();
-        showNotification({
-          variant: NotificationVariant.Success,
+        showSuccessNotification({
           title: t(PromptEditorI18nKeys.SaveSuccessTitle),
           message: t(
             isEditMode
@@ -240,8 +237,7 @@ const PromptEditorPage: FC = () => {
           setErrors({ name: PromptFieldError.Conflict });
           return;
         }
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           message: t(PromptEditorI18nKeys.SaveError),
           requestId: traceId,
         });
@@ -255,7 +251,8 @@ const PromptEditorPage: FC = () => {
       promptId,
       initialFolderId,
       refetchPrompts,
-      showNotification,
+      showSuccessNotification,
+      showErrorNotification,
       t,
       navigate,
       returnUrl,
@@ -269,13 +266,12 @@ const PromptEditorPage: FC = () => {
         setFolderNameError(PromptFieldError.Conflict);
         return;
       }
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(PromptEditorI18nKeys.FolderError),
         requestId: traceId,
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const folderActions = useMemo<PromptFolderActions>(

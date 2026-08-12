@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNotification } from '../../../context/NotificationContext';
 import { usePrompts } from '../../../context/PromptsContext';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import {
   createPrompt,
@@ -85,11 +86,9 @@ describe('PromptEditor', () => {
       refetchPrompts,
       refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
     });
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
     vi.mocked(createPrompt).mockResolvedValue(promptDto);
     vi.mocked(updatePrompt).mockResolvedValue(promptDto);
     vi.mocked(movePrompt).mockResolvedValue(promptDto);

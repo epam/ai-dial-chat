@@ -5,7 +5,6 @@ import {
   Dropdown,
   ElementSize,
   GhostIconButton,
-  NotificationVariant,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import {
@@ -66,7 +65,7 @@ const ConversationPanelMenu: FC<Props> = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { deleteAllConversations } = useConversations();
-  const { showNotification } = useNotification();
+  const { showSuccessNotification, showErrorNotification } = useNotification();
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -131,8 +130,7 @@ const ConversationPanelMenu: FC<Props> = ({
       setIsPopupOpen(false);
 
       if (deletionResult.failed.length > 0) {
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           message: t(ConversationPanelI18nKeys.DeleteAllPartialError),
         });
       }
@@ -141,8 +139,7 @@ const ConversationPanelMenu: FC<Props> = ({
         navigate(ROUTES.Root);
       }
 
-      showNotification({
-        variant: NotificationVariant.Success,
+      showSuccessNotification({
         title: t(ConversationPanelI18nKeys.DeleteAllSuccessTitle),
         message: t(ConversationPanelI18nKeys.DeleteAllSuccess),
       });
@@ -154,8 +151,9 @@ const ConversationPanelMenu: FC<Props> = ({
   }, [
     activeConversationId,
     deleteAllConversations,
+    showErrorNotification,
     navigate,
-    showNotification,
+    showSuccessNotification,
     t,
   ]);
 

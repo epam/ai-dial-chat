@@ -4,7 +4,6 @@ import type {
   DeploymentItem,
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import {
   FC,
   memo,
@@ -60,7 +59,7 @@ const ConversationRoute: FC = () => {
   const routePromptContent = (state as { promptContent?: string } | null)
     ?.promptContent;
   const [inputMessage, setInputMessage] = useState<string | undefined>();
-  const { showNotification } = useNotification();
+  const { showErrorNotification } = useNotification();
   const overlay = useOptionalOverlay();
   const {
     items,
@@ -238,8 +237,7 @@ const ConversationRoute: FC = () => {
           } catch (err) {
             const { message: errorMessage, traceId } =
               await getApiErrorDetails(err);
-            showNotification({
-              variant: NotificationVariant.Error,
+            showErrorNotification({
               message: errorMessage ?? t(ChatI18nKeys.CreateConversationError),
               requestId: traceId,
             });
@@ -257,7 +255,7 @@ const ConversationRoute: FC = () => {
       propertyKey,
       selectedItemId,
       navigate,
-      showNotification,
+      showErrorNotification,
       t,
       toolConfigurationValue,
     ],

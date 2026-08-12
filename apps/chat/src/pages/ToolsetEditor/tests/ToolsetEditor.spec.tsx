@@ -9,6 +9,7 @@ import { ToolsetAuthTypes, WithLogin } from '../../../constants/toolsets';
 import { ToolsetEditorI18nKeys } from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as toolsetsApi from '../../../server-api/toolsets';
 import { ROUTES } from '../../../types/routes';
 import ToolsetEditor from '../ToolsetEditor';
@@ -235,11 +236,9 @@ describe('ToolsetEditor', () => {
       id: 'toolsets/b/my__0.0.1',
     });
     vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification: mockShowNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(mockShowNotification),
+    );
     mockRefetchToolsets.mockResolvedValue(undefined);
     vi.mocked(useDeployments).mockReturnValue({
       refetchToolsets: mockRefetchToolsets,

@@ -4,6 +4,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNotification } from '../../../context/NotificationContext';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { publishConversation } from '../../../server-api/conversation-publish.api';
 import { getPublishRules } from '../../../server-api/publish-rules.api';
@@ -131,11 +132,9 @@ const renderContainer = (props?: Partial<{ isOpen: boolean }>) =>
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(usePublishFolders).mockReturnValue(baseFoldersResult);
-  vi.mocked(useNotification).mockReturnValue({
-    notifications: [],
-    showNotification: mockShowNotification,
-    dismissNotification: vi.fn(),
-  });
+  vi.mocked(useNotification).mockReturnValue(
+    createNotificationContextValue(mockShowNotification),
+  );
   useAppConfigMock.mockReturnValue({
     config: { publicationFilterSources: ['title', 'role', 'dial_roles'] },
   });
