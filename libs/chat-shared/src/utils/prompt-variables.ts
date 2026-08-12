@@ -3,7 +3,7 @@
  * `{{` cannot swallow the rest of the document, and it must be non-empty so a
  * literal `{{}}` stays plain text.
  */
-const PROMPT_VARIABLE_PATTERN = /\{\{([^{}]+)\}\}/g;
+export const PROMPT_PARAM_PATTERN = /\{\{([^{}]+)\}\}/g;
 
 /** Class applied to each highlighted placeholder. The host owns its styling. */
 export const PROMPT_VARIABLE_CLASS_NAME = 'cat-prompt-variable';
@@ -24,10 +24,10 @@ interface HastNode {
 const OPAQUE_TAG_NAMES = new Set(['code', 'pre']);
 
 const splitTextNode = (value: string): HastNode[] | null => {
-  PROMPT_VARIABLE_PATTERN.lastIndex = 0;
+  PROMPT_PARAM_PATTERN.lastIndex = 0;
   const parts: HastNode[] = [];
   let lastIndex = 0;
-  let match = PROMPT_VARIABLE_PATTERN.exec(value);
+  let match = PROMPT_PARAM_PATTERN.exec(value);
 
   while (match != null) {
     if (match.index > lastIndex) {
@@ -40,7 +40,7 @@ const splitTextNode = (value: string): HastNode[] | null => {
       children: [{ type: 'text', value: match[0] }],
     });
     lastIndex = match.index + match[0].length;
-    match = PROMPT_VARIABLE_PATTERN.exec(value);
+    match = PROMPT_PARAM_PATTERN.exec(value);
   }
 
   if (parts.length === 0) return null;
@@ -78,3 +78,31 @@ const visit = (node: HastNode): void => {
 export const rehypePromptVariables = () => (tree: HastNode) => {
   visit(tree);
 };
+
+/**
+ * Returns the distinct `{{param}}` names found in `content`, in first-occurrence
+ * order. Single-brace sequences (e.g. `{name}`) are not parameters.
+ */
+export const extractPromptParams = (content: string): string[] => {
+  PROMPT_PARAM_PATTERN.lastIndex = 0;
+  const seen = new Set<string>();
+  let match = PROMPT_PARAM_PATTERN.exec(content);
+
+  while (match != null) {
+    seen.add(match[1]);
+    match = PROMPT_PARAM_PATTERN.exec(content);
+  }
+
+  return Array.from(seen);
+};
+
+/**
+ * Replaces every `{{param}}` occurrence in `content` with the matching entry
+ * in `values` (keyed by parameter name). A token whose name is missing from
+ * `values` is left unchanged.
+ */
+export const resolvePromptParams = (
+  content: string,
+  values: Record<string, string>,
+): string =>
+  content.replace(PROMPT_PARAM_PATTERN, (match, name) => values[name] ?? match);

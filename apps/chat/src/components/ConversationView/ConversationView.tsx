@@ -50,6 +50,7 @@ import {
   ConversationPanelI18nKeys,
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
+  PromptSelectorI18nKeys,
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
@@ -78,6 +79,7 @@ import { getQuickAppConversationStarters } from '../../utils/quick-app-conversat
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import FooterMessage from '../FooterMessage/FooterMessage';
+import { usePromptSelectorOverlay } from '../PromptSelector/usePromptSelectorOverlay';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 import ConversationMessageItem from './ConversationMessageItem';
 
@@ -135,6 +137,12 @@ interface Props {
   /** Token that forces `inputContent` to re-apply even if its string is unchanged. */
   inputContentRevision?: number;
   /**
+   * Called with resolved text (e.g. a picked prompt, params substituted) that
+   * should be seeded into the composer via the same `inputContent`/
+   * `inputContentRevision` channel. Required for the Prompts picker to work.
+   */
+  onInsertText?: (text: string) => void;
+  /**
    * When provided, the model selector shows this model only and renders
    * disabled (dimmed, does not open) instead of allowing a different model
    * to be picked. The chip stays visible — it is not hidden.
@@ -181,6 +189,7 @@ const ConversationView: FC<Props> = ({
   fixedModel,
   inputContent,
   inputContentRevision,
+  onInsertText,
   toolsMenuItems,
   onToolToggle,
   toolsMenuTitle,
@@ -189,6 +198,13 @@ const ConversationView: FC<Props> = ({
 }) => {
   const isModelFixed = !!fixedModel;
   const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
+  const {
+    renderOverlay: renderPromptsOverlay,
+    promptCatalogModal,
+    parametersPopup: promptParametersPopup,
+  } = usePromptSelectorOverlay({
+    onInsertText: onInsertText ?? (() => undefined),
+  });
   const { t } = useTranslation();
   const { language } = useLanguage();
   const { showNotification } = useNotification();
@@ -804,6 +820,10 @@ const ConversationView: FC<Props> = ({
                 fileAccept={fileAccept}
                 onAttachmentClick={handleInputAttachmentClick}
                 modelPickerOverlay={isModelFixed ? undefined : renderOverlay}
+                promptsMenuOverlay={
+                  onInsertText ? renderPromptsOverlay : undefined
+                }
+                promptsMenuTitle={t(PromptSelectorI18nKeys.AddMenuLabel)}
                 onMessageTooLong={handleMessageTooLong}
                 usageLimitsSlot={
                   <UsageLimitsControl
@@ -907,6 +927,8 @@ const ConversationView: FC<Props> = ({
        */}
       <FooterMessage />
       {catalogModal}
+      {promptCatalogModal}
+      {promptParametersPopup}
     </>
   );
 };

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  extractPromptParams,
   PROMPT_VARIABLE_CLASS_NAME,
   rehypePromptVariables,
-} from './prompt-variables';
+  resolvePromptParams,
+} from '../prompt-variables';
 
 interface TestNode {
   type: string;
@@ -111,5 +113,57 @@ describe('rehypePromptVariables', () => {
     );
 
     expect(variableValues(tree)).toEqual(['{{tone}}']);
+  });
+});
+
+describe('extractPromptParams', () => {
+  it('returns an empty array when there are no tokens', () => {
+    expect(extractPromptParams('plain prose with no params')).toEqual([]);
+  });
+
+  it('returns one entry for a token repeated multiple times', () => {
+    expect(extractPromptParams('{{name}}, meet {{name}} again.')).toEqual([
+      'name',
+    ]);
+  });
+
+  it('returns distinct tokens in first-occurrence order', () => {
+    expect(
+      extractPromptParams('{{b}} first, then {{a}}, then {{b}} again'),
+    ).toEqual(['b', 'a']);
+  });
+
+  it('ignores single-brace sequences and only matches double braces', () => {
+    expect(extractPromptParams('tes test {name} prompt {{test}}')).toEqual([
+      'test',
+    ]);
+  });
+});
+
+describe('resolvePromptParams', () => {
+  it('leaves content unchanged when there are no tokens', () => {
+    expect(resolvePromptParams('plain prose', {})).toBe('plain prose');
+  });
+
+  it('replaces every occurrence of a repeated token', () => {
+    expect(
+      resolvePromptParams('{{name}}, meet {{name}} again.', {
+        name: 'Alex',
+      }),
+    ).toBe('Alex, meet Alex again.');
+  });
+
+  it('substitutes only double-brace tokens, leaving single-brace text literal', () => {
+    expect(
+      resolvePromptParams('tes test {name} prompt {{test}}', {
+        test: 'value',
+      }),
+    ).toBe('tes test {name} prompt value');
+  });
+
+  it('leaves a token unchanged when no matching value is provided', () => {
+    expect(resolvePromptParams('hello {{missing}}', {})).toBe(
+      'hello {{missing}}',
+    );
   });
 });

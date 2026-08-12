@@ -1,17 +1,18 @@
-import { MarkdownRenderer, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  MarkdownWithPlaceholders,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
 import type { ItemDetailsStyles } from '../../../models/item-details-props';
-import { rehypePromptVariables } from '../../../utils/prompt-variables';
 import styles from './Content.module.scss';
 
-/* Stable identity so the renderer's plugin array does not change every render. */
-const REHYPE_PLUGINS = [rehypePromptVariables];
-
-interface ContentTabProps {
+/** Props for ContentTab. */
+export interface ContentTabProps {
   /** The item's full text body, rendered read-only as markdown. */
   content: string;
   /** Short summary shown above the body. Omitted when empty. */
   description?: string;
+  /** Color and typography overrides for the body text, headings, and placeholder highlights. */
   detailsStyles?: ItemDetailsStyles;
 }
 
@@ -48,17 +49,9 @@ export const ContentTab: FC<ContentTabProps> = ({
           bodyClassName,
         )}
       >
-        <MarkdownRenderer
+        <MarkdownWithPlaceholders
           content={content}
-          rehypePlugins={REHYPE_PLUGINS}
-          classNames={{
-            h1: headingClassName,
-            h2: headingClassName,
-            h3: headingClassName,
-            h4: headingClassName,
-            h5: headingClassName,
-            h6: headingClassName,
-          }}
+          headingClassName={headingClassName}
         />
       </div>
     </div>

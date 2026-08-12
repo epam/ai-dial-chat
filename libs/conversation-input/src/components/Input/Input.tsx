@@ -95,6 +95,9 @@ export const Input: FC<InputProps> = ({
   toolsMenuTitle,
   toolsBackLabel,
   toolsChipLabels,
+  promptsMenuOverlay,
+  promptsMenuTitle,
+  promptsBackLabel,
   autoFocus = false,
   messageHistory,
   onDialFileSystemClick,
@@ -449,6 +452,9 @@ export const Input: FC<InputProps> = ({
                 onToolToggle={onToolToggle}
                 toolsMenuTitle={toolsMenuTitle}
                 toolsBackLabel={toolsBackLabel}
+                promptsMenuOverlay={promptsMenuOverlay}
+                promptsMenuTitle={promptsMenuTitle}
+                promptsBackLabel={promptsBackLabel}
               />
             </div>
           )}

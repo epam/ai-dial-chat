@@ -95,7 +95,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   } = useConversations();
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const overlay = useOptionalOverlay();
-  const [overlayInputContent, setOverlayInputContent] = useState({
+  /*
+   * One-shot text hand-off into the composer's textarea: the overlay bridge
+   * and prompt insertion both write here rather than each owning a separate
+   * revision-token channel.
+   */
+  const [pendingInputContent, setPendingInputContent] = useState({
     revision: 0,
     value: '',
   });
@@ -457,8 +462,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     overlay.notifyConversationLoaded();
   }, [overlay, isFetching, conversation, conversationId]);
 
-  const handleOverlayInputContent = useCallback((content: string) => {
-    setOverlayInputContent((prev) => ({
+  const handleSetPendingInputContent = useCallback((content: string) => {
+    setPendingInputContent((prev) => ({
       revision: prev.revision + 1,
       value: content,
     }));
@@ -470,7 +475,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     conversationRef,
     setConversation,
     handleSend,
-    setOverlayInputContent: handleOverlayInputContent,
+    setOverlayInputContent: handleSetPendingInputContent,
   });
 
   const handleLike = useCallback(
@@ -557,10 +562,9 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           isAudioMessageSupported={isAudioMessageSupported}
           conversation={conversation}
           onConversationChange={handleConversationChange}
-          inputContent={overlay ? overlayInputContent.value : undefined}
-          inputContentRevision={
-            overlay ? overlayInputContent.revision : undefined
-          }
+          inputContent={pendingInputContent.value}
+          inputContentRevision={pendingInputContent.revision}
+          onInsertText={handleSetPendingInputContent}
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}
           toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}
