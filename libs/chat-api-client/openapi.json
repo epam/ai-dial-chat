@@ -4617,6 +4617,114 @@
         "tags": ["scheduled-tasks"]
       }
     },
+    "/api/v1/scheduled-tasks/{scheduleId}/pause": {
+      "post": {
+        "description": "Pauses a DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.",
+        "operationId": "pauseScheduledTask",
+        "parameters": [
+          {
+            "name": "scheduleId",
+            "required": true,
+            "in": "path",
+            "description": "DIAL Scheduler schedule identifier.",
+            "schema": {
+              "pattern": "^[A-Za-z0-9_-]{1,128}$",
+              "example": "sched_123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Scheduled task paused successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid scheduleId"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The scheduledTasksEnabled feature is not enabled for this user"
+          },
+          "404": {
+            "description": "Scheduled task not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
+          }
+        },
+        "summary": "Pause a scheduled task",
+        "tags": ["scheduled-tasks"]
+      }
+    },
+    "/api/v1/scheduled-tasks/{scheduleId}/resume": {
+      "post": {
+        "description": "Resumes a paused DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.",
+        "operationId": "resumeScheduledTask",
+        "parameters": [
+          {
+            "name": "scheduleId",
+            "required": true,
+            "in": "path",
+            "description": "DIAL Scheduler schedule identifier.",
+            "schema": {
+              "pattern": "^[A-Za-z0-9_-]{1,128}$",
+              "example": "sched_123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Scheduled task resumed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid scheduleId"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The scheduledTasksEnabled feature is not enabled for this user"
+          },
+          "404": {
+            "description": "Scheduled task not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
+          }
+        },
+        "summary": "Resume a scheduled task",
+        "tags": ["scheduled-tasks"]
+      }
+    },
     "/api/v1/scheduled-tasks/{scheduleId}/runs": {
       "get": {
         "description": "Returns the paginated run history for a single DIAL Scheduler schedule, proxying DIAL Scheduler using the session user's access token. Always requests upstream ordering of created_at desc explicitly. Not cached.",
@@ -9128,6 +9236,10 @@
             "enum": ["cron", "date"],
             "example": "cron"
           },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
           "serviceId": {
             "type": "string",
             "example": "dial-oauth"
@@ -9245,6 +9357,10 @@
             "type": "string",
             "enum": ["cron", "date"],
             "example": "cron"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
           },
           "serviceId": {
             "type": "string",
@@ -9391,6 +9507,10 @@
             "type": "string",
             "enum": ["cron", "date"],
             "example": "cron"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
           },
           "serviceId": {
             "type": "string",

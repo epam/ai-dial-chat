@@ -1638,6 +1638,12 @@ export interface CreatedScheduledTaskDto {
   triggerType?: CreatedScheduledTaskDtoTriggerTypeEnum;
   /**
    *
+   * @type {boolean}
+   * @memberof CreatedScheduledTaskDto
+   */
+  isActive?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof CreatedScheduledTaskDto
    */
@@ -5058,6 +5064,12 @@ export interface ScheduledTaskDto {
   triggerType?: ScheduledTaskDtoTriggerTypeEnum;
   /**
    *
+   * @type {boolean}
+   * @memberof ScheduledTaskDto
+   */
+  isActive?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof ScheduledTaskDto
    */
@@ -6146,6 +6158,12 @@ export interface UpdatedScheduledTaskDto {
    * @memberof UpdatedScheduledTaskDto
    */
   triggerType?: UpdatedScheduledTaskDtoTriggerTypeEnum;
+  /**
+   *
+   * @type {boolean}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  isActive?: boolean;
   /**
    *
    * @type {string}

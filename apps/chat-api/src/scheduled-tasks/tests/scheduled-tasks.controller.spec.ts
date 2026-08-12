@@ -1,6 +1,7 @@
 import {
   BadGatewayException,
   BadRequestException,
+  HttpException,
   INestApplication,
   NotFoundException,
   ServiceUnavailableException,
@@ -36,6 +37,8 @@ interface MockScheduledTasksService {
   getScheduledTask: ReturnType<typeof vi.fn>;
   updateScheduledTask: ReturnType<typeof vi.fn>;
   listScheduledTaskRuns: ReturnType<typeof vi.fn>;
+  pauseScheduledTask: ReturnType<typeof vi.fn>;
+  resumeScheduledTask: ReturnType<typeof vi.fn>;
 }
 
 async function buildApp(
@@ -85,6 +88,8 @@ describe('ScheduledTasksController (integration)', () => {
       getScheduledTask: vi.fn(),
       updateScheduledTask: vi.fn(),
       listScheduledTaskRuns: vi.fn(),
+      pauseScheduledTask: vi.fn(),
+      resumeScheduledTask: vi.fn(),
     };
     app = await buildApp(service);
   });
@@ -689,6 +694,129 @@ describe('ScheduledTasksController (integration)', () => {
         .expect(502);
     });
   });
+  describe('POST /api/v1/scheduled-tasks/:scheduleId/pause', () => {
+    it('returns 200 with the paused schedule', async () => {
+      const pausedSchedule = { ...mockSchedule, isActive: false };
+      service.pauseScheduledTask.mockResolvedValue(pausedSchedule);
+
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks/sched_123/pause')
+        .expect(200);
+
+      expect(res.body).toEqual(pausedSchedule);
+      expect(service.pauseScheduledTask).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        'sched_123',
+      );
+    });
+
+    it('returns 400 for a path-traversal-shaped scheduleId without calling the service', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks/..%2F..%2Fetc%2Fpasswd/pause')
+        .expect(400);
+      expect(service.pauseScheduledTask).not.toHaveBeenCalled();
+    });
+
+    it('returns 401 when the service reports the caller is not authenticated', async () => {
+      service.pauseScheduledTask.mockRejectedValue(new UnauthorizedException());
+      await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks/sched_123/pause')
+        .expect(401);
+    });
+
+    it('returns 404 when the schedule does not exist', async () => {
+      service.pauseScheduledTask.mockRejectedValue(
+        new NotFoundException('Resource not found'),
+      );
+      await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks/sched_missing/pause')
+        .expect(404);
+    });
+
+    it('returns 429 when the service reports a rate limit', async () => {
+      service.pauseScheduledTask.mockRejectedValue(
+        new HttpException('Too many requests', 429),
+      );
+      await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks/sched_123/pause')
+        .expect(429);
+    });
+
+    it('returns 502/503 on upstream failure', async () => {
+      service.pauseScheduledTask.mockRejectedValue(
+        new BadGatewayException('DIAL Core returned an error response'),
+      );
+      await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks/sched_123/pause')
+        .expect(502);
+    });
+  });
+
+  describe('POST /api/v1/scheduled-tasks/:scheduleId/resume', () => {
+    it('returns 200 with the resumed schedule', async () => {
+      const resumedSchedule = {
+        ...mockSchedule,
+        isActive: true,
+        nextRunTime: '2026-07-28T12:00:00.000Z',
+      };
+      service.resumeScheduledTask.mockResolvedValue(resumedSchedule);
+
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks/sched_123/resume')
+        .expect(200);
+
+      expect(res.body).toEqual(resumedSchedule);
+      expect(service.resumeScheduledTask).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        'sched_123',
+      );
+    });
+
+    it('returns 400 for a path-traversal-shaped scheduleId without calling the service', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks/..%2F..%2Fetc%2Fpasswd/resume')
+        .expect(400);
+      expect(service.resumeScheduledTask).not.toHaveBeenCalled();
+    });
+
+    it('returns 401 when the service reports the caller is not authenticated', async () => {
+      service.resumeScheduledTask.mockRejectedValue(
+        new UnauthorizedException(),
+      );
+      await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks/sched_123/resume')
+        .expect(401);
+    });
+
+    it('returns 404 when the schedule does not exist', async () => {
+      service.resumeScheduledTask.mockRejectedValue(
+        new NotFoundException('Resource not found'),
+      );
+      await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks/sched_missing/resume')
+        .expect(404);
+    });
+
+    it('returns 429 when the service reports a rate limit', async () => {
+      service.resumeScheduledTask.mockRejectedValue(
+        new HttpException('Too many requests', 429),
+      );
+      await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks/sched_123/resume')
+        .expect(429);
+    });
+
+    it('returns 502/503 on upstream failure', async () => {
+      service.resumeScheduledTask.mockRejectedValue(
+        new ServiceUnavailableException('DIAL Core is unreachable'),
+      );
+      await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks/sched_123/resume')
+        .expect(503);
+    });
+  });
 });
 
 describe('ScheduledTasksController — unauthenticated / feature-disabled', () => {
@@ -699,6 +827,8 @@ describe('ScheduledTasksController — unauthenticated / feature-disabled', () =
       getScheduledTask: vi.fn(),
       updateScheduledTask: vi.fn(),
       listScheduledTaskRuns: vi.fn(),
+      pauseScheduledTask: vi.fn(),
+      resumeScheduledTask: vi.fn(),
     };
     const app = await buildApp(service, false);
 
@@ -719,12 +849,20 @@ describe('ScheduledTasksController — unauthenticated / feature-disabled', () =
     await request(app.getHttpServer())
       .get('/api/v1/scheduled-tasks/sched_123/runs')
       .expect(403);
+    await request(app.getHttpServer())
+      .post('/api/v1/scheduled-tasks/sched_123/pause')
+      .expect(403);
+    await request(app.getHttpServer())
+      .post('/api/v1/scheduled-tasks/sched_123/resume')
+      .expect(403);
 
     expect(service.listScheduledTasks).not.toHaveBeenCalled();
     expect(service.createScheduledTask).not.toHaveBeenCalled();
     expect(service.getScheduledTask).not.toHaveBeenCalled();
     expect(service.updateScheduledTask).not.toHaveBeenCalled();
     expect(service.listScheduledTaskRuns).not.toHaveBeenCalled();
+    expect(service.pauseScheduledTask).not.toHaveBeenCalled();
+    expect(service.resumeScheduledTask).not.toHaveBeenCalled();
 
     await app.close();
   });

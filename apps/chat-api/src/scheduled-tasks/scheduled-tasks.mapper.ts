@@ -155,6 +155,24 @@ export const toUpstreamSchedulePayload = (
   },
 });
 
+/*
+ * No upstream field documenting an explicit active/paused state has been
+ * confirmed against a live DIAL Scheduler response or its OpenAPI spec (see
+ * design.md "Decision 1" / "Open Questions" for add-scheduled-task-active-toggle).
+ * This derives isActive from the only currently observed signal —
+ * next_run_time — as a documented assumption, not a confirmed contract.
+ * Replace with an authoritative upstream field here (and only here) once
+ * confirmed; do not silently swap in a different undocumented heuristic.
+ */
+const deriveIsActive = (
+  upstream: UpstreamScheduleResponse,
+): boolean | undefined => {
+  if (upstream.trigger == null && upstream.trigger_type == null) {
+    return undefined;
+  }
+  return upstream.next_run_time != null;
+};
+
 export const fromUpstreamSchedule = (
   upstream: UpstreamScheduleResponse,
 ): ScheduledTaskDto => ({
@@ -174,6 +192,7 @@ export const fromUpstreamSchedule = (
   createdAt: upstream.created_at,
   updatedAt: upstream.updated_at,
   triggerType: upstream.trigger_type as ScheduleTriggerType | undefined,
+  isActive: deriveIsActive(upstream),
   serviceId: upstream.service_id,
   createdBy: upstream.created_by,
   description: upstream.description,
