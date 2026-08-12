@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Chat API (1.0.0)",
-    "description": "REST API for the chat application. Provides endpoints for theme configuration, authentication, and management. All endpoints return appropriate HTTP status codes (200, 400, 401, 403, 404, 502, 503) with descriptive error messages.\n\nGenerated from libs/chat-api-client/openapi.json. Contains 110 requests grouped by OpenAPI tag.\n\nAuthentication uses the Postman cookie jar. Start the OIDC flow with the login request, then call “Get current user”; its response supplies the CSRF token used by authenticated write requests.",
+    "description": "REST API for the chat application. Provides endpoints for theme configuration, authentication, and management. All endpoints return appropriate HTTP status codes (200, 400, 401, 403, 404, 502, 503) with descriptive error messages.\n\nGenerated from libs/chat-api-client/openapi.json. Contains 111 requests grouped by OpenAPI tag.\n\nAuthentication uses the Postman cookie jar. Start the OIDC flow with the login request, then call “Get current user”; its response supplies the CSRF token used by authenticated write requests.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
@@ -1929,7 +1929,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"itemId\": \"gpt-4o\",\n  \"access\": [\n    \"view\"\n  ]\n}\n",
+              "raw": "{\n  \"itemId\": \"gpt-4o\",\n  \"resourceKind\": \"prompt\",\n  \"access\": [\n    \"view\"\n  ]\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -2609,6 +2609,28 @@
               "raw": "{{baseUrl}}/api/v1/user-config/deployments",
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "user-config", "deployments"]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Add or remove a prompt from favorites",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"Work/AI/summarize\",\n  \"isInstalled\": true\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user-config/prompts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user-config", "prompts"]
             },
             "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
           }

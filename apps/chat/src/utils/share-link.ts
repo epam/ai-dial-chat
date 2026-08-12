@@ -1,4 +1,7 @@
-import { ShareLinkResponseDtoAccessEnum } from '@epam/ai-dial-chat-api-client';
+import {
+  CreateShareLinkDtoResourceKindEnum,
+  ShareLinkResponseDtoAccessEnum,
+} from '@epam/ai-dial-chat-api-client';
 import { ShareLinkAccess, ShareLinkData } from '@epam/ai-dial-share';
 import { createShareLink as createShareLinkRequest } from '../server-api/share.api';
 
@@ -26,13 +29,21 @@ const withCurrentOrigin = (url: string, origin: string): string => {
 /**
  * Resolves share-link data for a catalog entity by calling the backend
  * `POST /api/v1/share` endpoint through the generated API client.
+ *
+ * `resourceKind` is required only for prompts, whose ids are bucket-relative
+ * paths the backend has to qualify before handing them to DIAL Core.
  */
 export const getShareLink = async (
   itemId: string,
   access: ShareLinkAccess[] = [ShareLinkAccess.View],
   origin: string = window.location.origin,
+  resourceKind?: CreateShareLinkDtoResourceKindEnum,
 ): Promise<ShareLinkData> => {
-  const response = await createShareLinkRequest({ itemId, access });
+  const response = await createShareLinkRequest({
+    itemId,
+    access,
+    resourceKind,
+  });
   return {
     url: withCurrentOrigin(response.url, origin),
     expiresInDays: response.expiresInDays,

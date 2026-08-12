@@ -9,6 +9,7 @@ import type { PublicPromptListResponseDto } from '../dto/public-prompt-list-resp
 import { PromptsResourceService } from '../resource/prompts-resource.service';
 import {
   deriveFolders,
+  isHiddenPromptPath,
   isSentinelPath,
   mapPromptToResponse,
   metadataItemToPromptPath,
@@ -41,7 +42,9 @@ export class PromptsPublicService {
         }))
         .filter(
           (entry): entry is { item: PromptMetadataItem; path: string } =>
-            entry.path != null && !isSentinelPath(entry.path),
+            entry.path != null &&
+            !isSentinelPath(entry.path) &&
+            !isHiddenPromptPath(entry.path),
         );
       const sentinelFolderIds = items
         .map((item) => metadataItemToPromptPath(item, PUBLIC_BUCKET))

@@ -36,7 +36,6 @@ export type {
   ScheduledTaskCreateFormStyles,
   ScheduledTaskCreateFormColors,
   ScheduledTaskCreateFormTypography,
-  ScheduledTaskCreateFormModelOption,
   ScheduledTaskRepeatOption,
 } from './models/scheduled-task-create-form-props';
 export { DESCRIPTION_MAX_LENGTH } from './constants/scheduled-task-create-form';

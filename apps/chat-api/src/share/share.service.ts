@@ -18,7 +18,11 @@ import { DialClientService } from '../dial/dial-client.service';
 import { SkillsLookupService } from '../skills/lookup/skills-lookup.service';
 import { ToolsetsService } from '../toolsets/toolsets.service';
 import { AcceptInvitationResponseDto } from './dto/accept-invitation-response.dto';
-import { CreateShareLinkDto, ShareAccess } from './dto/create-share-link.dto';
+import {
+  CreateShareLinkDto,
+  ShareAccess,
+  ShareResourceKind,
+} from './dto/create-share-link.dto';
 import { DiscardSharedCatalogItemResponseDto } from './dto/discard-shared-catalog-item.dto';
 import { RevokeSharedAccessResponseDto } from './dto/revoke-shared-access.dto';
 import { ShareLinkResponseDto } from './dto/share-link-response.dto';
@@ -77,6 +81,19 @@ const CONVERSATION_SHARE_INVITATION_ROUTE_PATH = '/conversations/shared';
 /** DIAL Core conversation resource paths always start with this prefix. */
 const CONVERSATION_RESOURCE_PREFIX = 'conversations/';
 
+/** DIAL Core prompt resource paths always start with this prefix. */
+const PROMPT_RESOURCE_PREFIX = 'prompts/';
+
+/*
+ * The prompts endpoints address a prompt by a bucket-relative path
+ * (`Work/AI/summarize`), because every one of them already scopes to the
+ * caller's bucket. DIAL Core's sharing API instead wants the fully-qualified
+ * resource url, so the bucket is re-attached here rather than being leaked
+ * into the frontend, which never sees it.
+ */
+const toPromptResourceUrl = (promptPath: string, bucket: string): string =>
+  `${PROMPT_RESOURCE_PREFIX}${bucket}/${promptPath}`;
+
 const getInvitationRoutePath = (itemId: string): string =>
   itemId.startsWith(CONVERSATION_RESOURCE_PREFIX)
     ? CONVERSATION_SHARE_INVITATION_ROUTE_PATH
@@ -134,21 +151,26 @@ export class ShareService {
   }
 
   /**
-   * Creates a share link for a DIAL Core resource (catalog entity or conversation).
+   * Creates a share link for a DIAL Core resource (catalog entity, prompt, or conversation).
    *
    * @throws {BadGatewayException} When DIAL Core returns an error response
    * @throws {ServiceUnavailableException} When DIAL Core is unreachable or times out
    */
   async createShareLink(
     accessToken: string,
-    { itemId, access }: CreateShareLinkDto,
+    bucket: string,
+    { itemId, access, resourceKind }: CreateShareLinkDto,
   ): Promise<ShareLinkResponseDto> {
+    const resourceUrl =
+      resourceKind === ShareResourceKind.Prompt
+        ? toPromptResourceUrl(itemId, bucket)
+        : itemId;
     const permissions = Array.from(
       new Set(access.flatMap((level) => ACCESS_PERMISSIONS[level])),
     );
     const requestBody = {
       invitationType: 'LINK' as const,
-      resources: [{ url: itemId, permissions }],
+      resources: [{ url: resourceUrl, permissions }],
     };
     this.logger.debug(
       `Requesting share link from DIAL Core: ${JSON.stringify(requestBody)}`,
@@ -174,23 +196,23 @@ export class ShareService {
     }
 
     this.logger.debug(
-      `DIAL Core share link response for itemId=${itemId}: ${JSON.stringify(result.data)}`,
+      `DIAL Core share link response for itemId=${resourceUrl}: ${JSON.stringify(result.data)}`,
     );
 
     const invitationLink = result.data?.invitationLink;
     if (invitationLink == null) {
       this.logger.error(
-        `DIAL Core returned an empty invitation link for itemId=${itemId}`,
+        `DIAL Core returned an empty invitation link for itemId=${resourceUrl}`,
       );
       throw new BadGatewayException(
         'DIAL Core returned an empty invitation link',
       );
     }
 
-    this.logger.debug(`Created share link for itemId=${itemId}`);
+    this.logger.debug(`Created share link for itemId=${resourceUrl}`);
 
     return {
-      url: this.buildInvitationUrl(invitationLink, itemId),
+      url: this.buildInvitationUrl(invitationLink, resourceUrl),
       expiresInDays: SHARE_LINK_EXPIRES_IN_DAYS,
       access,
     };
@@ -337,6 +359,12 @@ export class ShareService {
         );
         return sharedSkill ? { sharedSkill } : {};
       }
+
+      /*
+       * A prompt has no deployments/toolsets list entry to summarise — the
+       * frontend picks it up from its own prompts refetch instead.
+       */
+      if (itemId.startsWith(PROMPT_RESOURCE_PREFIX)) return {};
 
       if (itemId.startsWith('toolsets/')) {
         const sharedToolset = await this.toolsetsService.resolveToolsetItem(

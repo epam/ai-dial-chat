@@ -33,6 +33,7 @@ import {
   DetailsConfirmationKind,
   DetailsConfirmationVariant,
 } from '../../types/details-confirmation';
+import { CatalogEntityType } from '../../types/entity-type';
 import { getSignedInLevel } from '../../utils/toolset-credentials';
 import { EntityHeader } from '../EntityHeader/EntityHeader';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
@@ -43,6 +44,7 @@ import { CredentialsSection } from './Credentials/CredentialsSection';
 import styles from './DetailsPanel.module.scss';
 import { Header } from './Header/Header';
 import { AboutTab } from './TabsContent/About';
+import { ContentTab } from './TabsContent/Content';
 import { LimitsTab } from './TabsContent/Limits';
 import { Overview } from './TabsContent/Overview';
 import { Pricing } from './TabsContent/Pricing';
@@ -128,6 +130,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onEdit,
   onDelete,
   onUnshare,
+  isUnshareVisible,
   onRevokeShare,
   onLogin,
   onLogout,
@@ -158,6 +161,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-details-version-tag-bg': detailsColors?.versionTagBackground,
     '--cat-details-version-tag-text': detailsColors?.versionTagText,
     '--cat-credentials-status-text': detailsColors?.credentialsStatusText,
+    '--cat-details-content-text': detailsColors?.contentText,
     '--cat-api-heading-text': detailsColors?.apiHeadingText,
     '--cat-tools-divider': detailsColors?.toolsDivider,
     '--cat-tools-description-text': detailsColors?.toolsDescriptionText,
@@ -245,7 +249,13 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   }, [item.id, initialIsStarred]);
 
   useEffect(() => {
-    setActiveTab(CatalogDetailsTab.About);
+    /*
+     * Cleared rather than set to a named tab: `About` is not in every item's
+     * tab set (a prompt has none), so naming it here would select a tab that
+     * does not exist. The reconciliation effect below picks whichever tab is
+     * actually first for this item.
+     */
+    setActiveTab('');
     setIsPublishOpen(false);
     publishFlow.reset();
     setPublishHistory([]);
@@ -364,9 +374,24 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   }, [isStarred, item.id, onToggleFavorite]);
 
   const tabs = useMemo(() => {
-    const result: { id: string; label: string }[] = [
-      { id: CatalogDetailsTab.About, label: texts?.tabAboutLabel ?? 'About' },
-    ];
+    const result: { id: string; label: string }[] = [];
+    /*
+     * A prompt leads with its body: the Content tab is first and already
+     * carries the description, so an About tab would only repeat it. Prompts
+     * therefore show Content then Overview, and nothing else.
+     */
+    if (item.type !== CatalogEntityType.Prompt) {
+      result.push({
+        id: CatalogDetailsTab.About,
+        label: texts?.tabAboutLabel ?? 'About',
+      });
+    }
+    if (item.details?.promptContent != null) {
+      result.push({
+        id: CatalogDetailsTab.Content,
+        label: texts?.tabContentLabel ?? 'Details',
+      });
+    }
     if (item.details?.overview != null) {
       result.push({
         id: CatalogDetailsTab.Overview,
@@ -674,6 +699,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onEdit={onEdit}
                 onDelete={onDelete ? handleRequestDelete : undefined}
                 onUnshare={onUnshare ? handleRequestUnshare : undefined}
+                isUnshareVisible={isUnshareVisible}
                 onRevokeShare={
                   onRevokeShare ? handleRequestRevokeShare : undefined
                 }
@@ -721,6 +747,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
               <div
                 className={mergeClasses(
+                  'min-h-0 flex-1 overflow-y-auto',
                   activeTab !== CatalogDetailsTab.Overview && 'mt-4 px-6',
                 )}
               >
@@ -731,6 +758,14 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                     detailsStyles={detailsStyles}
                   />
                 )}
+                {activeTab === CatalogDetailsTab.Content &&
+                  item.details?.promptContent != null && (
+                    <ContentTab
+                      content={item.details.promptContent.content}
+                      description={item.description}
+                      detailsStyles={detailsStyles}
+                    />
+                  )}
                 {activeTab === CatalogDetailsTab.Overview && (
                   <Overview
                     sections={item.details?.overview?.sections}

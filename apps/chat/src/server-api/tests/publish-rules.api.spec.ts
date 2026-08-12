@@ -14,6 +14,7 @@ describe('publish-rules API', () => {
   });
 
   it('forwards folderPath and returns the rules array from the response', async () => {
+    /* The wire (and the generated DTO) name the discriminator `function`. */
     const rawRules = [
       { source: 'role', function: 'CONTAIN', targets: ['engineering'] },
     ];

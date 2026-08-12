@@ -32,6 +32,7 @@ export type {
   CatalogItemDetailsFetchResult,
   CatalogItemLimits,
   CatalogItemPricing,
+  CatalogItemPromptContent,
   CatalogItemTabData,
   CatalogItemTools,
   CodeSnippet,

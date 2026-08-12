@@ -33,4 +33,21 @@ describe('CONFIG_DEFINITIONS', () => {
       envVar: 'PUBLICATION_FILTER_SOURCES',
     });
   });
+
+  it('contains the features.responsesApiEnabled entry with server-only visibility and no role gating', () => {
+    const entry = CONFIG_DEFINITIONS.find(
+      (definition) => definition.key === 'features.responsesApiEnabled',
+    );
+
+    expect(entry).toMatchObject({
+      key: 'features.responsesApiEnabled',
+      type: 'feature',
+      valueType: 'boolean',
+      visibility: 'server',
+      defaultValue: false,
+      critical: false,
+      envVar: 'RESPONSES_API_ENABLED',
+    });
+    expect(entry).not.toHaveProperty('allowedRolesEnvVar');
+  });
 });

@@ -54,6 +54,7 @@ export const Catalog: FC<CatalogProps> = ({
   onEdit,
   onDelete,
   onUnshare,
+  isUnshareVisible,
   onRevokeShare,
   onLogin,
   onLogout,
@@ -244,6 +245,24 @@ export const Catalog: FC<CatalogProps> = ({
     appliedInitialDetailsItemIdRef.current = initialDetailsItemId;
     void handleOpenDetails(item);
   }, [initialDetailsItemId, items, handleOpenDetails]);
+
+  /*
+   * Keeps the open details panel in sync with later corrections to `items`
+   * (e.g. share-invitation resolution upgrading isMy/canEdit/sharedWithMe
+   * from the owner-context placeholder to the real shared-context values).
+   * Without this, selectedItem stays frozen on whatever snapshot was current
+   * when the panel first opened, so the Edit button and bucket label never
+   * update until the page is refreshed.
+   */
+  useEffect(() => {
+    if (selectedItem == null) return;
+    const updated = items.find(
+      (catalogItem) => catalogItem.id === selectedItem.id,
+    );
+    if (updated && updated !== selectedItem) {
+      setSelectedItem(updated);
+    }
+  }, [items, selectedItem]);
 
   const handleLogin = useCallback(
     async (
@@ -518,6 +537,7 @@ export const Catalog: FC<CatalogProps> = ({
           onEdit={onEdit}
           onDelete={onDelete}
           onUnshare={onUnshare}
+          isUnshareVisible={isUnshareVisible}
           onRevokeShare={onRevokeShare}
           onLogin={handleLogin}
           onLogout={handleLogout}

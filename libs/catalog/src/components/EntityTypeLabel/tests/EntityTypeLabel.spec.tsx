@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { ENTITY_TYPE_COLOR } from '../../../constants/entity-colors';
 import { CatalogEntityType } from '../../../types/entity-type';
 import { EntityTypeLabel } from '../EntityTypeLabel';
 
@@ -13,6 +14,17 @@ describe('EntityTypeLabel', () => {
     expect(container.querySelector('span')?.className).toContain('uppercase');
     expect(container.querySelector('span')?.className).not.toMatch(
       /bg-|background/,
+    );
+  });
+
+  it('renders PROMPT with the prompt entry of the entity colour map', () => {
+    const { container } = render(
+      <EntityTypeLabel type={CatalogEntityType.Prompt} />,
+    );
+
+    expect(screen.getByText('PROMPT')).toBeTruthy();
+    expect(container.querySelector('span')?.getAttribute('style')).toContain(
+      ENTITY_TYPE_COLOR[CatalogEntityType.Prompt],
     );
   });
 

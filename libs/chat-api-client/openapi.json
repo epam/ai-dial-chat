@@ -865,6 +865,37 @@
         ]
       }
     },
+    "/api/v1/user-config/prompts": {
+      "patch": {
+        "operationId": "updateInstalledPrompt",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInstalledPromptDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Prompt favorite state updated"
+          },
+          "400": {
+            "description": "Missing or invalid body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "summary": "Add or remove a prompt from favorites",
+        "tags": [
+          "user-config"
+        ]
+      }
+    },
     "/api/v1/user-config/deployments/selected": {
       "patch": {
         "operationId": "updateSelectedDeployment",
@@ -7444,6 +7475,24 @@
           "installed"
         ]
       },
+      "PromptsConfigDto": {
+        "type": "object",
+        "properties": {
+          "installed": {
+            "description": "Favorited prompt paths.",
+            "example": [
+              "Work/AI/summarize"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "installed"
+        ]
+      },
       "UserConfigDto": {
         "type": "object",
         "properties": {
@@ -7460,13 +7509,17 @@
           },
           "deployments": {
             "$ref": "#/components/schemas/DeploymentsConfigDto"
+          },
+          "prompts": {
+            "$ref": "#/components/schemas/PromptsConfigDto"
           }
         },
         "required": [
           "version",
           "conversations",
           "toolsets",
-          "deployments"
+          "deployments",
+          "prompts"
         ]
       },
       "UpdatePinsDto": {
@@ -7499,6 +7552,26 @@
           "isInstalled": {
             "type": "boolean",
             "description": "Pass `true` to install the resource, `false` to uninstall.",
+            "example": true
+          }
+        },
+        "required": [
+          "id",
+          "isInstalled"
+        ]
+      },
+      "UpdateInstalledPromptDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Prompt path within the prompts namespace.",
+            "example": "Work/AI/summarize",
+            "maxLength": 2048
+          },
+          "isInstalled": {
+            "type": "boolean",
+            "description": "Pass `true` to favorite the prompt, `false` to unfavorite it.",
             "example": true
           }
         },
@@ -10601,6 +10674,14 @@
             "type": "string",
             "description": "Identifier (DIAL Core resource path) of the entity to share.",
             "example": "gpt-4o"
+          },
+          "resourceKind": {
+            "type": "string",
+            "description": "Set to `prompt` when `itemId` is a bucket-relative prompt path (as returned by the prompts endpoints) rather than a full DIAL Core resource path. The caller's own bucket is then used to qualify it.",
+            "enum": [
+              "prompt"
+            ],
+            "example": "prompt"
           },
           "access": {
             "type": "array",

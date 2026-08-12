@@ -14,7 +14,7 @@ import type { DeploymentsService } from '../../deployments/deployments.service';
 import type { DialClientService } from '../../dial/dial-client.service';
 import type { SkillsLookupService } from '../../skills/lookup/skills-lookup.service';
 import type { ToolsetsService } from '../../toolsets/toolsets.service';
-import { ShareAccess } from '../dto/create-share-link.dto';
+import { ShareAccess, ShareResourceKind } from '../dto/create-share-link.dto';
 import { ShareService } from '../share.service';
 
 const okResponse = (data: unknown) =>
@@ -84,7 +84,7 @@ describe('ShareService', () => {
         okResponse({ invitationLink: '/v1/invitations/abc123' }),
       );
 
-      const result = await service.createShareLink('token-abc', {
+      const result = await service.createShareLink('token-abc', 'my-bucket', {
         itemId: 'gpt-4o',
         access: [ShareAccess.View],
       });
@@ -102,7 +102,7 @@ describe('ShareService', () => {
         okResponse({ invitationLink: 'https://dial-core/invite/abc' }),
       );
 
-      const result = await service.createShareLink('token-abc', {
+      const result = await service.createShareLink('token-abc', 'my-bucket', {
         itemId: 'gpt-4o',
         access: [ShareAccess.View],
       });
@@ -116,7 +116,7 @@ describe('ShareService', () => {
         .spyOn(service['dialClient'].client, 'shareResource')
         .mockResolvedValue(okResponse({ invitationLink: '/invite/abc' }));
 
-      await service.createShareLink('my-token', {
+      await service.createShareLink('my-token', 'my-bucket', {
         itemId: 'my-app-id',
         access: [ShareAccess.View, ShareAccess.Edit],
       });
@@ -136,7 +136,7 @@ describe('ShareService', () => {
         okResponse({ invitationLink: '/v1/invitations/conv-abc' }),
       );
 
-      const result = await service.createShareLink('token-abc', {
+      const result = await service.createShareLink('token-abc', 'my-bucket', {
         itemId: 'conversations/bucket/my-chat.json',
         access: [ShareAccess.View],
       });
@@ -154,7 +154,7 @@ describe('ShareService', () => {
           okResponse({ invitationLink: '/v1/invitations/skill-abc' }),
         );
 
-      const result = await service.createShareLink('token-abc', {
+      const result = await service.createShareLink('token-abc', 'my-bucket', {
         itemId: 'skills/owner-bucket/team-a/docs-helper',
         access: [ShareAccess.View],
       });
@@ -174,6 +174,59 @@ describe('ShareService', () => {
       expect(result.url).toBe('https://example.com/catalog/shared/skill-abc');
     });
 
+    it("qualifies a prompt itemId with the caller's bucket", async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/p1' }));
+
+      const result = await service.createShareLink('token-abc', 'my-bucket', {
+        itemId: 'Work/AI/summarize',
+        access: [ShareAccess.View],
+        resourceKind: ShareResourceKind.Prompt,
+      });
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'prompts/my-bucket/Work/AI/summarize',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+      /* Prompts live in the catalog, so they use the catalog accept route. */
+      expect(result.url).toBe('https://example.com/catalog/shared/p1');
+    });
+
+    it('leaves itemId untouched when no resourceKind is given', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/abc' }));
+
+      await service.createShareLink('token-abc', 'my-bucket', {
+        itemId: 'applications/other-bucket/my-app',
+        access: [ShareAccess.View],
+      });
+
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            resources: [
+              {
+                url: 'applications/other-bucket/my-app',
+                permissions: ['READ'],
+              },
+            ],
+          }),
+        }),
+      );
+    });
+
     it('throws BadGatewayException when DIAL Core returns an empty invitation link', async () => {
       const { service } = makeService();
       vi.spyOn(service['dialClient'].client, 'shareResource').mockResolvedValue(
@@ -181,7 +234,7 @@ describe('ShareService', () => {
       );
 
       await expect(
-        service.createShareLink('token', {
+        service.createShareLink('token', 'my-bucket', {
           itemId: 'gpt-4o',
           access: [ShareAccess.View],
         }),
@@ -195,7 +248,7 @@ describe('ShareService', () => {
       );
 
       await expect(
-        service.createShareLink('token', {
+        service.createShareLink('token', 'my-bucket', {
           itemId: 'gpt-4o',
           access: [ShareAccess.View],
         }),
@@ -209,7 +262,7 @@ describe('ShareService', () => {
       );
 
       await expect(
-        service.createShareLink('token', {
+        service.createShareLink('token', 'my-bucket', {
           itemId: 'gpt-4o',
           access: [ShareAccess.View],
         }),

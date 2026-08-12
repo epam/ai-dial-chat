@@ -150,6 +150,13 @@ export enum CatalogI18nKeys {
   ListViewLabel = 'catalog.listViewLabel',
   // Details panel
   DetailsTabTools = 'catalog.details.tabTools',
+  DetailsTabContent = 'catalog.details.tabContent',
+  DetailsPromptLoadError = 'catalog.details.promptLoadError',
+  DetailsPromptSection = 'catalog.details.prompt.section',
+  DetailsPromptFolder = 'catalog.details.prompt.folder',
+  DetailsPromptFolderRoot = 'catalog.details.prompt.folderRoot',
+  DetailsPromptSource = 'catalog.details.prompt.source',
+  DetailsPromptUpdated = 'catalog.details.prompt.updated',
   DetailsApiResourceSection = 'catalog.details.api.resourceSection',
   DetailsApiSnippetSection = 'catalog.details.api.snippetSection',
   DetailsApiModelId = 'catalog.details.api.modelId',
@@ -183,6 +190,8 @@ export enum CatalogI18nKeys {
   TabModels = 'catalog.tab.models',
   TabApplications = 'catalog.tab.applications',
   TabToolsets = 'catalog.tab.toolsets',
+  TabPrompts = 'catalog.tab.prompts',
+  CreatePrompt = 'catalog.create.prompt',
   FolderPersonal = 'catalog.folder.personal',
   FolderPublic = 'catalog.folder.public',
   FolderShared = 'catalog.folder.shared',
@@ -745,6 +754,44 @@ export enum EditorI18nKeys {
   LocalesDeleteAriaLabel = 'editor.locales.deleteAriaLabel',
 }
 
+export enum PromptEditorI18nKeys {
+  CreateTitle = 'promptEditor.createTitle',
+  EditTitle = 'promptEditor.editTitle',
+  NameLabel = 'promptEditor.nameLabel',
+  NamePlaceholder = 'promptEditor.namePlaceholder',
+  DescriptionLabel = 'promptEditor.descriptionLabel',
+  DescriptionPlaceholder = 'promptEditor.descriptionPlaceholder',
+  ContentLabel = 'promptEditor.contentLabel',
+  ContentPlaceholder = 'promptEditor.contentPlaceholder',
+  FolderLabel = 'promptEditor.folderLabel',
+  FolderRootOption = 'promptEditor.folderRootOption',
+  FolderEmptyState = 'promptEditor.folderEmptyState',
+  ErrorRequired = 'promptEditor.error.required',
+  ErrorNameTooLong = 'promptEditor.error.nameTooLong',
+  ErrorNameInvalid = 'promptEditor.error.nameInvalid',
+  ErrorDescriptionTooLong = 'promptEditor.error.descriptionTooLong',
+  ErrorContentTooLong = 'promptEditor.error.contentTooLong',
+  ErrorNameConflict = 'promptEditor.error.nameConflict',
+  ErrorFolderConflict = 'promptEditor.error.folderConflict',
+  CharactersRemaining = 'promptEditor.charactersRemaining',
+  LoadError = 'promptEditor.loadError',
+  RetryLabel = 'promptEditor.retryLabel',
+  SavingStatus = 'promptEditor.savingStatus',
+  SaveSuccessTitle = 'promptEditor.saveSuccessTitle',
+  CreateSuccess = 'promptEditor.createSuccess',
+  UpdateSuccess = 'promptEditor.updateSuccess',
+  SaveError = 'promptEditor.saveError',
+  MoveError = 'promptEditor.moveError',
+  FolderCreateLabel = 'promptEditor.folderCreateLabel',
+  FolderRenameLabel = 'promptEditor.folderRenameLabel',
+  FolderDeleteLabel = 'promptEditor.folderDeleteLabel',
+  FolderNameLabel = 'promptEditor.folderNameLabel',
+  FolderDeleteConfirmTitle = 'promptEditor.folderDeleteConfirmTitle',
+  FolderDeleteConfirmMessage = 'promptEditor.folderDeleteConfirmMessage',
+  FolderError = 'promptEditor.folderError',
+  LoadingAriaLabel = 'promptEditor.loadingAriaLabel',
+}
+
 export enum AppsEditorI18nKeys {
   GeneralFormNamePlaceholder = 'appsEditor.generalForm.namePlaceholder',
   GeneralFormDescriptionPlaceholder = 'appsEditor.generalForm.descriptionPlaceholder',
@@ -853,7 +900,6 @@ export enum VoiceRecordingI18nKeys {
   MicLabel = 'voiceRecording.micLabel',
   StopRecordingLabel = 'voiceRecording.stopRecordingLabel',
   DiscardRecordingLabel = 'voiceRecording.discardRecordingLabel',
-  TimerAriaLabel = 'voiceRecording.timerAriaLabel',
 }
 
 export enum ToolsI18nKeys {
@@ -908,6 +954,8 @@ export enum CustomAppI18nKeys {
   SaveConfirmTitle = 'customApp.saveConfirm.title',
   SaveConfirmDescription = 'customApp.saveConfirm.description',
   SaveConfirmLabel = 'customApp.saveConfirm.confirmLabel',
+  SavingOverlayLabel = 'customApp.savingOverlay',
+  LoadingOverlayLabel = 'customApp.loadingOverlay',
 }
 
 export enum AppUpdateI18nKeys {

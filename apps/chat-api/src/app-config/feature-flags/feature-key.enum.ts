@@ -4,4 +4,5 @@ export enum FeatureKey {
   LiveChatInteraction = 'features.liveChatInteraction',
   ScheduledTasksEnabled = 'features.scheduledTasksEnabled',
   Footer = 'features.footer',
+  ResponsesApiEnabled = 'features.responsesApiEnabled',
 }

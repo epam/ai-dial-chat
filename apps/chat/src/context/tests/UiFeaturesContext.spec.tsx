@@ -47,16 +47,17 @@ describe('UiFeaturesContext', () => {
   });
 
   describe('default baseline', () => {
-    it('enables exactly the 20 default-on features', () => {
+    it('enables exactly the 21 default-on features', () => {
       mockAppConfig();
       const { result } = renderHook(() => useUiFeatures(), { wrapper });
 
-      expect(result.current.enabledFeatures.size).toBe(20);
+      expect(result.current.enabledFeatures.size).toBe(21);
       expect(result.current.isEnabled(OverlayFeature.Header)).toBe(true);
       expect(
         result.current.isEnabled(OverlayFeature.ConversationsSection),
       ).toBe(true);
       expect(result.current.isEnabled(OverlayFeature.Likes)).toBe(true);
+      expect(result.current.isEnabled(OverlayFeature.Prompts)).toBe(true);
       expect(
         result.current.isEnabled(OverlayFeature.ConversationsSharing),
       ).toBe(true);
@@ -100,7 +101,7 @@ describe('UiFeaturesContext', () => {
       mockAppConfig(null);
       const { result } = renderHook(() => useUiFeatures(), { wrapper });
 
-      expect(result.current.enabledFeatures.size).toBe(20);
+      expect(result.current.enabledFeatures.size).toBe(21);
       expect(result.current.isEnabled(OverlayFeature.Header)).toBe(true);
     });
   });
