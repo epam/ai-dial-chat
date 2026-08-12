@@ -7,6 +7,7 @@ export enum CatalogEntityType {
   Model = 'model',
   Toolset = 'toolset',
   Application = 'application',
+  Prompt = 'prompt',
 }
 
 /** Path params shared by both publish endpoints. */

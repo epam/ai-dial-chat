@@ -4272,7 +4272,7 @@
     },
     "/api/v1/catalog/{entityType}/{entityId}/publish": {
       "post": {
-        "description": "Publishes a catalog entity (Toolset or Application) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.",
+        "description": "Publishes a catalog entity (Toolset, Application, or Prompt) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.",
         "operationId": "publishCatalogEntity",
         "parameters": [
           {
@@ -4283,7 +4283,7 @@
             "schema": {
               "example": "toolset",
               "type": "string",
-              "enum": ["model", "toolset", "application"]
+              "enum": ["model", "toolset", "application", "prompt"]
             }
           },
           {
@@ -4354,7 +4354,7 @@
             "schema": {
               "example": "toolset",
               "type": "string",
-              "enum": ["model", "toolset", "application"]
+              "enum": ["model", "toolset", "application", "prompt"]
             }
           },
           {
@@ -9259,7 +9259,7 @@
           },
           "entityType": {
             "type": "string",
-            "enum": ["model", "toolset", "application"],
+            "enum": ["model", "toolset", "application", "prompt"],
             "example": "toolset"
           },
           "folderPath": {
@@ -9297,7 +9297,7 @@
           },
           "entityType": {
             "type": "string",
-            "enum": ["model", "toolset", "application"],
+            "enum": ["model", "toolset", "application", "prompt"],
             "example": "toolset"
           },
           "folderPath": {

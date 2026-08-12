@@ -157,7 +157,7 @@ export class PublishApi extends runtime.BaseAPI {
   }
 
   /**
-   * Publishes a catalog entity (Toolset or Application) to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.
+   * Publishes a catalog entity (Toolset, Application, or Prompt) to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.
    * Publish a catalog entity to an Organization folder
    */
   async publishCatalogEntityRaw(
@@ -216,7 +216,7 @@ export class PublishApi extends runtime.BaseAPI {
   }
 
   /**
-   * Publishes a catalog entity (Toolset or Application) to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.
+   * Publishes a catalog entity (Toolset, Application, or Prompt) to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.
    * Publish a catalog entity to an Organization folder
    */
   async publishCatalogEntity(
@@ -238,6 +238,7 @@ export const GetCatalogPublishHistoryEntityTypeEnum = {
   Model: 'model',
   Toolset: 'toolset',
   Application: 'application',
+  Prompt: 'prompt',
 } as const;
 export type GetCatalogPublishHistoryEntityTypeEnum =
   (typeof GetCatalogPublishHistoryEntityTypeEnum)[keyof typeof GetCatalogPublishHistoryEntityTypeEnum];
@@ -248,6 +249,7 @@ export const PublishCatalogEntityEntityTypeEnum = {
   Model: 'model',
   Toolset: 'toolset',
   Application: 'application',
+  Prompt: 'prompt',
 } as const;
 export type PublishCatalogEntityEntityTypeEnum =
   (typeof PublishCatalogEntityEntityTypeEnum)[keyof typeof PublishCatalogEntityEntityTypeEnum];

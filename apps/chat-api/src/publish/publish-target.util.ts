@@ -27,6 +27,19 @@ import { safeDecodeURIComponent } from '../common/utils/uri';
  */
 export const PUBLIC_URL_PREFIX = 'public';
 
+/** DIAL Core prompt resource paths always start with this prefix. */
+export const PROMPT_RESOURCE_PREFIX = 'prompts';
+
+/**
+ * `prompts/{bucket}/{promptPath}`. The prompts endpoints address a prompt by a
+ * bucket-relative path because they already scope to the caller's bucket, so
+ * the bucket is re-attached here rather than being leaked to the frontend.
+ */
+export const toPromptResourceUrl = (
+  promptPath: string,
+  bucket: string,
+): string => `${PROMPT_RESOURCE_PREFIX}/${bucket}/${promptPath}`;
+
 /** `entityId`'s first path segment, e.g. `applications` in `applications/{bucket}/{name}`. */
 export const getResourceTypePrefix = (entityId: string): string =>
   entityId.split('/')[0];
