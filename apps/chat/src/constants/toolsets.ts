@@ -70,6 +70,15 @@ export enum ToolsetOAuthChannelControlType {
 export enum OAuthResourceKind {
   Toolset = 'toolset',
   ExternalService = 'external-service',
+  /**
+   * Proactive Scheduled Tasks offline-credentials consent (see
+   * `useOfflineCredentialsLogin`/`ScheduledTasksRouteGate`). Unlike `Toolset`/
+   * `ExternalService`, this kind has no natural per-resource id — the shared
+   * `ToolsetRedirectState.toolsetId` slot is repurposed as a fixed sentinel
+   * correlation id (`'offline-credentials'`) purely for the popup/
+   * `BroadcastChannel` handshake, never as a real toolset/external-service id.
+   */
+  OfflineCredentials = 'offline-credentials',
 }
 
 export enum ToolsetEditorQuery {

@@ -626,6 +626,18 @@
     "conversationPanel": {
       "modelLabel": "Model",
       "currentRunLabel": "Current run"
+    },
+    "offlineCredentialsModal": {
+      "title": "Log in required for scheduled tasks",
+      "body": "To run your scheduled tasks automatically, you need to log in once so they can keep running without you present.",
+      "dismissButtonLabel": "Not now",
+      "closeAriaLabel": "Close login required dialog",
+      "popupBlockedMessage": "The login popup was blocked by your browser. Please allow popups and try again.",
+      "cancelledMessage": "Login was cancelled.",
+      "timeoutMessage": "The login attempt timed out. Please try again.",
+      "failedMessage": "Login failed. Please try again.",
+      "successAnnouncement": "You're logged in. Scheduled tasks can now run automatically.",
+      "loggingInAriaLabel": "Logging in…"
     }
   },
   "dialFileManager": {

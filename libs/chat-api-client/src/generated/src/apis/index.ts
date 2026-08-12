@@ -11,6 +11,7 @@ export * from './ExternalServicesApi';
 export * from './FilesApi';
 export * from './HealthApi';
 export * from './ModelsApi';
+export * from './OfflineCredentialsApi';
 export * from './PromptsApi';
 export * from './PublishApi';
 export * from './RateApi';

@@ -10,6 +10,7 @@ import {
   HealthApi,
   Middleware,
   ModelsApi,
+  OfflineCredentialsApi,
   PublishApi,
   RateApi,
   ScheduledTasksApi,
@@ -182,4 +183,5 @@ export const shareApi = new ShareApi(config);
 export const publishApi = new PublishApi(config);
 export const clientChannelApi = new ClientChannelApi(config);
 export const scheduledTasksApi = new ScheduledTasksApi(config);
+export const offlineCredentialsApi = new OfflineCredentialsApi(config);
 export const healthApi = new HealthApi(config);

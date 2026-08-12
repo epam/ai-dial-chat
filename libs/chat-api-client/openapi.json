@@ -4433,7 +4433,9 @@
           }
         },
         "summary": "Revoke all shared access to an owned resource",
-        "tags": ["share"]
+        "tags": [
+          "share"
+        ]
       }
     },
     "/api/v1/catalog/{entityType}/{entityId}/publish": {
@@ -5083,6 +5085,95 @@
           "scheduled-tasks"
         ]
       }
+    },
+    "/api/v1/offline-credentials": {
+      "get": {
+        "description": "Returns the session user's offline-credentials consent status by proxying DIAL Core (GET /v1/user/offline-credentials). Never cached.",
+        "operationId": "getOfflineCredentials",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved offline-credentials status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetOfflineCredentialsResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission, or the scheduledTasksEnabled feature is not enabled"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable"
+          }
+        },
+        "summary": "Get offline-credentials status",
+        "tags": [
+          "offline-credentials"
+        ]
+      }
+    },
+    "/api/v1/offline-credentials/signin": {
+      "post": {
+        "description": "Submits the OAuth authorization code obtained from the offline-credentials consent popup by proxying DIAL Core (POST /v1/user/offline-credentials/signin). The authorization code is never logged.",
+        "operationId": "signInOfflineCredentials",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfflineCredentialsSigninBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed in successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfflineCredentialsAuthResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body, or redirectUri is not allowlisted"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission, or the scheduledTasksEnabled feature is not enabled"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response or rejected sign-in"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable"
+          }
+        },
+        "summary": "Submit offline-credentials OAuth authorization code",
+        "tags": [
+          "offline-credentials"
+        ]
+      }
     }
   },
   "info": {
@@ -5119,7 +5210,7 @@
   ],
   "servers": [
     {
-      "url": "http://localhost:5000",
+      "url": "http://localhost:3005",
       "description": "Local development"
     }
   ],
@@ -9886,7 +9977,9 @@
             "example": "applications/owner-bucket/my-app"
           }
         },
-        "required": ["itemId"]
+        "required": [
+          "itemId"
+        ]
       },
       "RevokeSharedAccessResponseDto": {
         "type": "object",
@@ -9896,7 +9989,9 @@
             "description": "true when the revoke call succeeded"
           }
         },
-        "required": ["success"]
+        "required": [
+          "success"
+        ]
       },
       "PublishCatalogEntityDto": {
         "type": "object",
@@ -10437,6 +10532,89 @@
           "id",
           "displayName",
           "trigger"
+        ]
+      },
+      "OfflineCredentialsConnectDto": {
+        "type": "object",
+        "properties": {
+          "authorizationEndpoint": {
+            "type": "string",
+            "example": "https://identity.example.com/authorize"
+          },
+          "clientId": {
+            "type": "string",
+            "example": "dial-chat"
+          },
+          "redirectUri": {
+            "type": "string",
+            "example": "https://chat.example.com/auth/toolset-signin"
+          },
+          "scopes": {
+            "example": [
+              "openid",
+              "offline_access"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "authorizationEndpoint",
+          "clientId",
+          "redirectUri",
+          "scopes"
+        ]
+      },
+      "GetOfflineCredentialsResponseDto": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "example": true
+          },
+          "connected": {
+            "type": "boolean",
+            "example": false
+          },
+          "connect": {
+            "$ref": "#/components/schemas/OfflineCredentialsConnectDto"
+          }
+        },
+        "required": [
+          "available",
+          "connected"
+        ]
+      },
+      "OfflineCredentialsSigninBodyDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "OAuth authorization code."
+          },
+          "redirectUri": {
+            "type": "string",
+            "description": "OAuth redirect URI used for the code exchange. Must resolve to the configured AUTH_CALLBACK_BASE_URL origin and one of the app's own callback paths.",
+            "example": "https://chat.example.com/auth/toolset-signin"
+          }
+        },
+        "required": [
+          "code",
+          "redirectUri"
+        ]
+      },
+      "OfflineCredentialsAuthResultDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "success"
         ]
       }
     }
