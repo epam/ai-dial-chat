@@ -49,6 +49,9 @@ const mockEnrichedToolset: DialToolsetDto = {
   isMy: false,
   canEdit: false,
   sharedWithMe: false,
+  /* The default `getSharedResources` mock resolves successfully with no
+   * resources, so every toolset is known to have no recipients. */
+  recipientsCount: 0,
 };
 const mockEnrichedList: DialToolsetListResponseDto = {
   data: [mockEnrichedToolset],
@@ -403,7 +406,13 @@ describe('ToolsetsListingService', () => {
       );
     });
 
-    it('resolves canEdit and sharedWithMe from exactly one getSharedResources call', async () => {
+    /*
+     * Two calls, not one: `with: 'me'` still derives canEdit/sharedWithMe in a
+     * single upstream call, and the mirror-image `with: 'others'` derives
+     * recipientsCount. Both are list-wide and run in parallel — neither is
+     * issued per toolset.
+     */
+    it('resolves canEdit, sharedWithMe and recipientsCount from exactly two getSharedResources calls', async () => {
       const { service } = makeService();
       vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
         okResponse(mockList),
@@ -417,7 +426,45 @@ describe('ToolsetsListingService', () => {
         );
 
       await service.listToolsets('user1', 'token-abc', 'bucket');
-      expect(sharedResourcesSpy).toHaveBeenCalledOnce();
+      expect(sharedResourcesSpy).toHaveBeenCalledTimes(2);
+      expect(sharedResourcesSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            resourceTypes: ['TOOL_SET'],
+            with: 'others',
+            includeUserInfo: true,
+          }),
+        }),
+      );
+    });
+
+    it('maps the recipient count from the shared-with-others call onto listed toolsets', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
+        okResponse(mockList),
+      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockImplementation(({ body }: { body: { with?: string } }) =>
+        Promise.resolve(
+          okResponse({
+            resources:
+              body.with === 'others'
+                ? [
+                    {
+                      url: 'my-toolset',
+                      sharedWith: [{ user: 'a' }, { user: 'b' }, { user: 'c' }],
+                    },
+                  ]
+                : [],
+          }),
+        ),
+      );
+
+      const result = await service.listToolsets('user1', 'token-abc', 'bucket');
+      const listed = result.data.find((item) => item.id === 'my-toolset');
+      expect(listed?.recipientsCount).toBe(3);
     });
 
     it('uses per-user cache keys — different users get different cache entries', async () => {

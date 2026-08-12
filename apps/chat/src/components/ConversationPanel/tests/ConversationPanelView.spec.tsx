@@ -18,7 +18,10 @@ import { useNotification } from '../../../context/NotificationContext';
 import { useConversationExport } from '../../../hooks/useConversationExport';
 import { useConversationImport } from '../../../hooks/useConversationImport';
 import { useUiFeature } from '../../../hooks/useUiFeature';
-import { discardSharedCatalogItem } from '../../../server-api/share.api';
+import {
+  discardSharedCatalogItem,
+  revokeSharedAccess,
+} from '../../../server-api/share.api';
 import {
   ConversationExportMode,
   ExportJobStatus,
@@ -197,6 +200,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconPinnedFilled: () => null,
   IconShare: () => null,
   IconTrashX: () => null,
+  IconUserOff: () => null,
   IconWorldShare: () => null,
 }));
 
@@ -348,6 +352,11 @@ const PUBLISH_LABEL = 'buttons.publish';
 const UNSHARE_BUTTON = 'buttons.removeFromMyList';
 const UNSHARE_CONFIRM_TITLE = 'conversationPanel.unshare.unshareConfirmTitle';
 const UNSHARE_ERROR = 'conversationPanel.unshare.unshareError';
+
+const REVOKE_BUTTON = 'buttons.revokeAccess';
+const REVOKE_BUTTON_WITH_COUNT = 'buttons.revokeAccessWithCount';
+const REVOKE_CONFIRM_TITLE = 'conversationPanel.revoke.revokeConfirmTitle';
+const REVOKE_ERROR = 'conversationPanel.revoke.revokeError';
 
 const mockDeleteAllConversations =
   vi.fn<() => Promise<ConversationDeletionResultDto>>();
@@ -1640,6 +1649,204 @@ describe('ConversationPanelView — unshare (Remove from My List)', () => {
 
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(discardSharedCatalogItem).not.toHaveBeenCalled();
+  });
+});
+
+describe('ConversationPanelView — revoke access', () => {
+  const sharedWithMeConversation = {
+    id: 'conv1',
+    title: 'Shared chat',
+    isPinned: false,
+    updatedAt: 0,
+    sharedWithMe: true,
+    publishedWithMe: false,
+  };
+
+  beforeEach(() => {
+    vi.mocked(revokeSharedAccess).mockResolvedValue({ success: true });
+  });
+
+  const openRevokeConfirmation = () => {
+    fireEvent.click(screen.getByRole('button', { name: REVOKE_BUTTON }));
+    return screen.getByRole('dialog');
+  };
+
+  it('owned row menu includes Revoke access', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    expect(screen.getByRole('button', { name: REVOKE_BUTTON })).toBeTruthy();
+  });
+
+  it('shared-with-me row menu does not include Revoke access', () => {
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [sharedWithMeConversation],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    expect(screen.queryByRole('button', { name: REVOKE_BUTTON })).toBeNull();
+    expect(screen.getByRole('button', { name: UNSHARE_BUTTON })).toBeTruthy();
+  });
+
+  it('published-with-me row menu does not include Revoke access', () => {
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [
+        {
+          ...sharedWithMeConversation,
+          sharedWithMe: false,
+          publishedWithMe: true,
+        },
+      ],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    expect(screen.queryByRole('button', { name: REVOKE_BUTTON })).toBeNull();
+  });
+
+  it('hides Revoke access for an owned conversation nobody currently holds access to', () => {
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [
+        { ...baseContextValue.conversations[0], recipientsCount: 0 },
+      ],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    expect(screen.queryByRole('button', { name: REVOKE_BUTTON })).toBeNull();
+  });
+
+  it('shows the recipient count in the Revoke access label when it is known', () => {
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [
+        { ...baseContextValue.conversations[0], recipientsCount: 2 },
+      ],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    expect(
+      screen.getByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
+    ).toBeTruthy();
+  });
+
+  it('clicking Revoke access opens confirmation without calling the revoke API', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    const dialog = openRevokeConfirmation();
+
+    expect(within(dialog).getByText(REVOKE_CONFIRM_TITLE)).toBeTruthy();
+    expect(revokeSharedAccess).not.toHaveBeenCalled();
+  });
+
+  it('confirm calls revokeSharedAccess exactly once and disables the button while pending', async () => {
+    let resolveRevoke: (value: { success: boolean }) => void = () => undefined;
+    vi.mocked(revokeSharedAccess).mockReturnValue(
+      new Promise((resolve) => {
+        resolveRevoke = resolve;
+      }),
+    );
+
+    render(<ConversationPanelView {...defaultProps} />);
+    const dialog = openRevokeConfirmation();
+    const confirmButton = within(dialog).getByRole('button', {
+      name: REVOKE_BUTTON,
+    });
+
+    fireEvent.click(confirmButton);
+    expect(confirmButton.hasAttribute('disabled')).toBe(true);
+    fireEvent.click(confirmButton);
+
+    await act(async () => {
+      resolveRevoke({ success: true });
+    });
+
+    expect(revokeSharedAccess).toHaveBeenCalledOnce();
+    expect(revokeSharedAccess).toHaveBeenCalledWith('conv1');
+  });
+
+  it('successful revoke of the active conversation refreshes, notifies, and does not navigate', async () => {
+    const mockRefresh = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      refreshConversations: mockRefresh,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    const dialog = openRevokeConfirmation();
+    await act(async () => {
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
+      );
+    });
+
+    expect(mockRefresh).toHaveBeenCalledOnce();
+    expect(mockShowNotification).toHaveBeenCalledOnce();
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('a refresh failure after a successful revoke still notifies success', async () => {
+    const mockRefresh = vi.fn().mockRejectedValue(new Error('offline'));
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      refreshConversations: mockRefresh,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    const dialog = openRevokeConfirmation();
+    await act(async () => {
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
+      );
+    });
+
+    expect(mockShowNotification).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('failed revoke keeps the popup open with an inline error and does not refresh', async () => {
+    vi.mocked(revokeSharedAccess).mockRejectedValue(new Error('403'));
+    const mockRefresh = vi.fn();
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      refreshConversations: mockRefresh,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    const dialog = openRevokeConfirmation();
+    await act(async () => {
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
+      );
+    });
+
+    expect(within(dialog).getByText(REVOKE_ERROR)).toBeTruthy();
+    expect(mockRefresh).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('cancel closes the popup without calling the revoke API', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    const dialog = openRevokeConfirmation();
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: CANCEL_BUTTON }),
+    );
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(revokeSharedAccess).not.toHaveBeenCalled();
+  });
+
+  it('keeps the action and its confirmation reachable under dir="rtl"', () => {
+    document.documentElement.dir = 'rtl';
+    try {
+      render(<ConversationPanelView {...defaultProps} />);
+      const dialog = openRevokeConfirmation();
+      expect(within(dialog).getByText(REVOKE_CONFIRM_TITLE)).toBeTruthy();
+      expect(
+        within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
+      ).toBeTruthy();
+    } finally {
+      document.documentElement.dir = 'ltr';
+    }
   });
 });
 

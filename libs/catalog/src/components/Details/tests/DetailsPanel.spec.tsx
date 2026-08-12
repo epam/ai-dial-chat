@@ -135,17 +135,22 @@ vi.mock('../Header/Header', () => ({
     onOpenPublish,
     onDelete,
     onUnshare,
+    onRevokeShare,
     onRequestLogout,
   }: {
     onOpenPublish?: () => void;
     onDelete?: () => void;
     onUnshare?: () => void;
+    onRevokeShare?: () => void;
     onRequestLogout?: () => void;
   }) => (
     <>
       <button onClick={onOpenPublish}>Publish</button>
       {onDelete && <button onClick={onDelete}>DeleteTrigger</button>}
       {onUnshare && <button onClick={onUnshare}>UnshareTrigger</button>}
+      {onRevokeShare && (
+        <button onClick={onRevokeShare}>RevokeShareTrigger</button>
+      )}
       {onRequestLogout && (
         <button onClick={onRequestLogout}>LogoutTrigger</button>
       )}
@@ -775,13 +780,21 @@ describe('DetailsPanel', () => {
     const UNSHARE_TRIGGER = 'UnshareTrigger';
     const DELETE_TRIGGER = 'DeleteTrigger';
     const LOGOUT_TRIGGER = 'LogoutTrigger';
+    const REVOKE_TRIGGER = 'RevokeShareTrigger';
     const UNSHARE_CONFIRM = 'Remove from My List';
     const DELETE_CONFIRM = 'Delete';
     const LOGOUT_CONFIRM = 'Log out';
+    const REVOKE_CONFIRM = 'Revoke access';
 
     const openUnshare = async () => {
       await userEvent.click(
         screen.getByRole('button', { name: UNSHARE_TRIGGER }),
+      );
+    };
+
+    const openRevokeShare = async () => {
+      await userEvent.click(
+        screen.getByRole('button', { name: REVOKE_TRIGGER }),
       );
     };
 
@@ -964,6 +977,91 @@ describe('DetailsPanel', () => {
       expect(onLogout).toHaveBeenCalledOnce();
       expect(onClose).not.toHaveBeenCalled();
       expect(screen.getByRole('tablist')).toBeTruthy();
+    });
+
+    it('does not expose the revoke action when onRevokeShare is absent', () => {
+      renderPanel();
+      expect(screen.queryByRole('button', { name: REVOKE_TRIGGER })).toBeNull();
+    });
+
+    it('opens the revoke confirmation without calling onRevokeShare', async () => {
+      const onRevokeShare = vi.fn();
+      renderPanel({ onRevokeShare });
+      await openRevokeShare();
+      expect(onRevokeShare).not.toHaveBeenCalled();
+      expect(screen.queryByRole('tablist')).toBeNull();
+    });
+
+    it('names the dialog after the revoke confirmation and lists its consequences', async () => {
+      renderPanel({
+        onRevokeShare: vi.fn(),
+        texts: {
+          revokeShareConfirmConsequences: ['Others lose access', 'Links die'],
+        },
+      });
+      await openRevokeShare();
+      expect(screen.getByRole('dialog', { name: REVOKE_CONFIRM })).toBeTruthy();
+      expect(screen.getByText('Others lose access')).toBeTruthy();
+      expect(screen.getByText('Links die')).toBeTruthy();
+    });
+
+    it('confirms a revoke with the danger palette', async () => {
+      renderPanel({ onRevokeShare: vi.fn() });
+      await openRevokeShare();
+      expect(
+        screen.getByRole('button', { name: REVOKE_CONFIRM }).className,
+      ).toContain('danger');
+    });
+
+    it('calls onRevokeShare exactly once and keeps the panel open on success', async () => {
+      const onRevokeShare = vi.fn().mockResolvedValue(undefined);
+      const onClose = vi.fn();
+      renderPanel({ onRevokeShare, onClose });
+      await openRevokeShare();
+      await userEvent.click(
+        screen.getByRole('button', { name: REVOKE_CONFIRM }),
+      );
+      expect(onRevokeShare).toHaveBeenCalledOnce();
+      expect(onRevokeShare).toHaveBeenCalledWith(item);
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByRole('tablist')).toBeTruthy();
+    });
+
+    it('returns to the details content and keeps the panel open when the revoke fails', async () => {
+      const onRevokeShare = vi
+        .fn()
+        .mockRejectedValue(new Error('network error'));
+      const onClose = vi.fn();
+      renderPanel({ onRevokeShare, onClose });
+      await openRevokeShare();
+      await userEvent.click(
+        screen.getByRole('button', { name: REVOKE_CONFIRM }),
+      );
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByRole('tablist')).toBeTruthy();
+    });
+
+    it('prevents a second revoke confirm call while the first is still pending', async () => {
+      let resolveRevoke: () => void = () => undefined;
+      const onRevokeShare = vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveRevoke = resolve;
+          }),
+      );
+      renderPanel({ onRevokeShare });
+      await openRevokeShare();
+      const confirmButton = screen.getByRole('button', {
+        name: REVOKE_CONFIRM,
+      });
+      await userEvent.click(confirmButton);
+      expect(confirmButton.hasAttribute('disabled')).toBe(true);
+
+      await act(async () => {
+        resolveRevoke();
+        await Promise.resolve();
+      });
+      expect(onRevokeShare).toHaveBeenCalledOnce();
     });
 
     it('uses the supplied text overrides for the confirmation', async () => {

@@ -6,6 +6,8 @@ export enum DetailsConfirmationKind {
   Logout = 'logout',
   /** Recipient-side removal of the caller's own shared access. */
   Unshare = 'unshare',
+  /** Owner-side revocation of everyone else's shared access. */
+  RevokeAccess = 'revokeAccess',
 }
 
 /** Palette a confirmation step is rendered with. */

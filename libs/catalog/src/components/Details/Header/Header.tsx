@@ -17,6 +17,7 @@ import {
   IconPlayerPlayFilled,
   IconTrash,
   IconUpload,
+  IconUserOff,
 } from '@tabler/icons-react';
 import { FC, useCallback, useMemo, type ReactNode } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
@@ -57,6 +58,8 @@ interface HeaderProps {
   onUnshare?: (item: CatalogItem) => void;
   /** Additional caller-supplied rule for whether "Remove from My List" is shown, combined (AND) with the built-in `sharedWithMe`/`isMyApp` rule. Defaults to `true` when absent. */
   isUnshareVisible?: (item: CatalogItem) => boolean;
+  /** Called when the owner-side "Revoke access" action is clicked for an item the current user owns. The details panel owns the confirmation step. */
+  onRevokeShare?: (item: CatalogItem) => void;
   onLogin?: (
     item: CatalogItem,
     params: { level: CredentialsLevel; apiKey?: string },
@@ -96,6 +99,7 @@ export const Header: FC<HeaderProps> = ({
   onDelete,
   onUnshare,
   isUnshareVisible,
+  onRevokeShare,
   onLogin,
   onLogout,
   onToggleCredentials,
@@ -131,6 +135,10 @@ export const Header: FC<HeaderProps> = ({
     onDelete?.(item);
   }, [item, onDelete]);
 
+  const handleRevokeShare = useCallback(() => {
+    onRevokeShare?.(item);
+  }, [item, onRevokeShare]);
+
   const shouldShowPrimaryAction =
     texts?.hasPrimaryAction !== false &&
     (isPrimaryActionVisible?.(item) ??
@@ -158,6 +166,19 @@ export const Header: FC<HeaderProps> = ({
     item.isMyApp !== true &&
     item.sharedWithMe === true &&
     (isUnshareVisible?.(item) ?? true);
+  /*
+   * The owner-side counterpart: revoking removes *other people's* access to
+   * an item the caller owns, so it renders alongside Delete and never with
+   * "Remove from My List". It also stays hidden while nobody holds access —
+   * an action that would be a no-op is noise. `undefined` (host could not
+   * determine the count) keeps the action visible rather than silently
+   * removing the only way to revoke.
+   */
+  const recipientsCount = item.recipientsCount;
+  const shouldShowRevokeShareAction =
+    !!onRevokeShare &&
+    item.isMyApp === true &&
+    (recipientsCount == null || recipientsCount > 0);
 
   const manageItems = useMemo<DropdownItem[]>(() => {
     const items: DropdownItem[] = [];
@@ -186,6 +207,22 @@ export const Header: FC<HeaderProps> = ({
         onClick: handleDelete,
       });
     }
+    if (shouldShowRevokeShareAction) {
+      const revokeShareLabel = texts?.revokeShareLabel ?? 'Revoke access';
+      const formatWithCount =
+        texts?.revokeShareLabelWithCount ??
+        ((count: number) => `${revokeShareLabel} (${count})`);
+      items.push({
+        key: 'revoke-share',
+        label:
+          recipientsCount == null
+            ? revokeShareLabel
+            : formatWithCount(recipientsCount),
+        icon: <IconUserOff size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        danger: true,
+        onClick: handleRevokeShare,
+      });
+    }
     if (shouldShowUnshareAction) {
       items.push({
         key: 'unshare',
@@ -206,11 +243,14 @@ export const Header: FC<HeaderProps> = ({
     shouldShowEditAction,
     shouldShowPublish,
     shouldShowDeleteAction,
+    shouldShowRevokeShareAction,
+    recipientsCount,
     shouldShowUnshareAction,
     texts,
     handleEdit,
     handleOpenPublish,
     handleDelete,
+    handleRevokeShare,
     handleUnshare,
   ]);
 

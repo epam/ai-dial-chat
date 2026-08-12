@@ -6,5 +6,5 @@ export const ENTITY_TYPE_COLOR: Record<CatalogEntityType, string> = {
   [CatalogEntityType.Agent]: '#059669',
   [CatalogEntityType.Skill]: '#0E7490',
   [CatalogEntityType.Toolset]: '#B45309',
-  [CatalogEntityType.Prompt]: '#7C3AED',
+  [CatalogEntityType.Prompt]: '#3730B7',
 };

@@ -32,6 +32,18 @@ describe('publish-rules API', () => {
     ]);
   });
 
+  it('returns exactly source, function, and targets on each rule', async () => {
+    vi.mocked(publishApi.getPublishRules).mockResolvedValue({
+      rules: [
+        { source: 'role', function: 'CONTAIN', targets: ['engineering'] },
+      ],
+    } as never);
+
+    const result = await getPublishRules('Organization/Data Science');
+
+    expect(Object.keys(result[0])).toEqual(['source', 'targets', 'function']);
+  });
+
   it('returns an empty array when the folder has no rules', async () => {
     vi.mocked(publishApi.getPublishRules).mockResolvedValue({
       rules: [],

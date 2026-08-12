@@ -18,11 +18,6 @@ vi.mock('../../../context/AppConfigContext', () => ({
   useAppConfig: () => useAppConfigMock(),
 }));
 
-const useUserMock = vi.fn();
-vi.mock('../../../context/auth/UserContext', () => ({
-  useUser: () => useUserMock(),
-}));
-
 const refetchMock = vi.fn();
 const setSearchQueryMock = vi.fn();
 const setSortKeyMock = vi.fn();
@@ -38,10 +33,6 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     LastToRun: 'lastToRun',
     Newest: 'newest',
     NameAZ: 'nameAZ',
-  },
-  ScheduledTaskSectionKey: {
-    Shared: 'shared',
-    MyTasks: 'myTasks',
   },
   ScheduledTasks: ({
     labels,
@@ -146,7 +137,6 @@ describe('ScheduledTasksPage', () => {
       loadMore: loadMoreMock,
       refetch: refetchMock,
     });
-    useUserMock.mockReturnValue({ user: { sub: 'user-1' } });
     useAppConfigMock.mockReturnValue({ status: 'ready' });
   });
 

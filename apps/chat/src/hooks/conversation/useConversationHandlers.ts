@@ -120,7 +120,7 @@ export const useConversationHandlers = ({
       const { userMessage, assistantMessage } = createMessagePair(
         message,
         customContent,
-        selectedItemId,
+        selectedItemId ?? conversation.model.id,
       );
       setConversation((prev) => {
         if (!prev) return prev;
@@ -175,6 +175,7 @@ export const useConversationHandlers = ({
           wasStoppedByUser: undefined,
           stoppedWithoutContent: undefined,
           streamErrorMessage: undefined,
+          deploymentId: selectedItemId ?? conversation.model.id,
         };
         const next = {
           ...prev,
@@ -360,7 +361,7 @@ export const useConversationHandlers = ({
       const { userMessage, assistantMessage } = createMessagePair(
         displayText,
         customContent,
-        selectedItemId,
+        selectedItemId ?? conversation.model.id,
       );
       setConversation((prev) => {
         if (!prev) return prev;

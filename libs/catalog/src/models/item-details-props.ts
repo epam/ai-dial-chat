@@ -147,6 +147,31 @@ export interface ItemDetailsTexts {
   unshareConfirmConsequences?: string[];
   /** Status text announced to assistive tech while a removal is in progress. Default: `'Removing'`. */
   unsharingStatusLabel?: string;
+  /** Owner-side "Revoke access" action and confirmation label. Default: `'Revoke access'`. */
+  revokeShareLabel?: string;
+  /**
+   * Returns the "Revoke access" menu label when the number of users holding
+   * access is known, so the owner can see the blast radius before opening the
+   * confirmation. Falls back to `revokeShareLabel` when the count is unknown.
+   * Default: `(count) => \`Revoke access (${count})\``.
+   */
+  revokeShareLabelWithCount?: (count: number) => string;
+  /** Title of the confirmation step shown before revoking everyone's shared access. Default: `'Revoke access'`. */
+  revokeShareConfirmTitle?: string;
+  /**
+   * Returns the revoke confirmation's body copy, given the item's display
+   * name. Default:
+   * `(name) => \`Revoke shared access to ${name}? Anyone you shared it with will lose access.\`` (with the name emphasized).
+   */
+  revokeShareConfirmMessage?: (name: string) => ReactNode;
+  /**
+   * Consequences listed as bullets in the revoke confirmation. Default:
+   * `['Everyone you shared it with loses access', 'Existing share links stop working', 'You keep full access — nothing is deleted']`.
+   * Pass `[]` to render no list.
+   */
+  revokeShareConfirmConsequences?: string[];
+  /** Status text announced to assistive tech while a revoke is in progress. Default: `'Revoking access'`. */
+  revokingShareStatusLabel?: string;
   /** Status text announced to assistive tech while a logout is in progress. Default: `'Logging out'`. */
   loggingOutStatusLabel?: string;
   /** Generic "Cancel" label, used by every confirmation step. Default: `'Cancel'`. */
@@ -351,6 +376,14 @@ export interface DetailsPanelProps {
    * submission while pending.
    */
   onUnshare?: (item: CatalogItem) => Promise<void> | void;
+  /**
+   * Called when revocation is confirmed for an item the current user owns
+   * (`isMyApp: true`), removing every recipient's shared access at once. May
+   * return a promise; the confirmation shows a loading state and prevents
+   * duplicate submission while pending. The item stays in the owner's
+   * catalog, so the panel returns to its details content on success.
+   */
+  onRevokeShare?: (item: CatalogItem) => Promise<void> | void;
   /**
    * Called when the credentials login form is submitted. `level` identifies
    * which credentials slot the call applies to (`USER` for the current

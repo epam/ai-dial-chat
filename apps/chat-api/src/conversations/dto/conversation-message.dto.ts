@@ -88,4 +88,13 @@ export class ConversationMessageDto {
   @IsOptional()
   @IsString()
   responseId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Deployment that produced this message. Present on assistant and status messages.',
+    example: 'gpt-4o',
+  })
+  @IsOptional()
+  @IsString()
+  deploymentId?: string;
 }
