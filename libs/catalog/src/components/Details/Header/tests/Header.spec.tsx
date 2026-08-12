@@ -123,6 +123,17 @@ describe('Header', () => {
     expect(screen.getByRole('button', { name: 'Use in chat' })).toBeTruthy();
   });
 
+  it('renders Use in chat for a Prompt item', () => {
+    render(<Header item={makeItem(CatalogEntityType.Prompt)} />);
+    expect(screen.getByRole('button', { name: 'Use in chat' })).toBeTruthy();
+  });
+
+  it('does not render Publish for a Prompt item by default', async () => {
+    render(<Header item={makeItem(CatalogEntityType.Prompt)} />);
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+  });
+
   it('does not render Use in chat for a Toolset item', () => {
     render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
     expect(screen.queryByRole('button', { name: 'Use in chat' })).toBeNull();
@@ -351,6 +362,34 @@ describe('Header', () => {
 
   it('renders Remove from My List in the Manage menu for an item shared with the user', async () => {
     render(<Header item={makeSharedItem()} onUnshare={vi.fn()} />);
+    await openManage();
+    expect(
+      screen.getByRole('button', { name: 'Remove from My List' }),
+    ).toBeTruthy();
+  });
+
+  it('does not render Remove from My List when isUnshareVisible returns false', async () => {
+    render(
+      <Header
+        item={makeSharedItem()}
+        onUnshare={vi.fn()}
+        isUnshareVisible={() => false}
+      />,
+    );
+    await openManage();
+    expect(
+      screen.queryByRole('button', { name: 'Remove from My List' }),
+    ).toBeNull();
+  });
+
+  it('still renders Remove from My List when isUnshareVisible returns true', async () => {
+    render(
+      <Header
+        item={makeSharedItem()}
+        onUnshare={vi.fn()}
+        isUnshareVisible={() => true}
+      />,
+    );
     await openManage();
     expect(
       screen.getByRole('button', { name: 'Remove from My List' }),

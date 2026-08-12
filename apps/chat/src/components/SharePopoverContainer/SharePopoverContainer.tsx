@@ -1,4 +1,5 @@
 import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
+import { CreateShareLinkDtoResourceKindEnum } from '@epam/ai-dial-chat-api-client';
 import { ShareLinkAccess, SharePopover } from '@epam/ai-dial-share';
 import type { FC } from 'react';
 import { memo } from 'react';
@@ -37,7 +38,18 @@ interface Props {
  */
 const SharePopoverContainer: FC<Props> = ({ item, onClose }) => {
   const { t } = useTranslation();
-  const { data, isLoading, error, setAccess } = useShareLink(item.id);
+  /*
+   * A prompt's `item.id` is a bucket-relative path, so the backend has to be
+   * told which namespace to qualify it against.
+   */
+  const resourceKind =
+    item.type === CatalogEntityType.Prompt
+      ? CreateShareLinkDtoResourceKindEnum.Prompt
+      : undefined;
+  const { data, isLoading, error, setAccess } = useShareLink(
+    item.id,
+    resourceKind,
+  );
   const canEditAccess = EDITABLE_ACCESS_TYPES.has(item.type);
 
   return (

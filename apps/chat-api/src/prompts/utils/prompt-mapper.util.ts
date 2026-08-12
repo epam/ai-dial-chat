@@ -1,5 +1,6 @@
 import type { components } from '@epam/ai-dial-typescript-sdk';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
+import { HIDDEN_FILE } from '../../constants/dial.constants';
 import { FOLDER_SENTINEL } from '../constants/prompt.constants';
 import type { PromptFolderResponseDto } from '../dto/prompt-folder-response.dto';
 import type { PromptResponseDto } from '../dto/prompt-response.dto';
@@ -60,6 +61,14 @@ export const nameFromId = (id: string): string => {
 
 export const isSentinelPath = (path: string): boolean =>
   path === FOLDER_SENTINEL || path.endsWith(`/${FOLDER_SENTINEL}`);
+
+/*
+ * DIAL Core writes a `.dial_folder` marker to keep an otherwise-empty folder
+ * alive. It is a storage artefact, not a prompt: reading it as one yields a
+ * broken entry in every listing, so it is dropped before any prompt is read.
+ */
+export const isHiddenPromptPath = (path: string): boolean =>
+  path.split('/').includes(HIDDEN_FILE);
 
 /* Parses a full DIAL resource URL back to the SDK-relative prompt path. */
 export const urlToPromptPath = (url: string, bucket: string): string | null => {

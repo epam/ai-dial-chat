@@ -14,11 +14,16 @@ export interface DeploymentsConfig {
   selectedId: string | null;
 }
 
+export interface PromptsConfig {
+  installed: string[];
+}
+
 export interface UserConfig {
   version: number;
   conversations: ConversationsConfig;
   toolsets: ToolsetsConfig;
   deployments: DeploymentsConfig;
+  prompts: PromptsConfig;
   /** Internal flag: set after legacy installation files have been consolidated once. */
   legacyMigrationDone?: boolean;
 }
@@ -55,6 +60,15 @@ export class DeploymentsConfigDto implements DeploymentsConfig {
   selectedId!: string | null;
 }
 
+export class PromptsConfigDto implements PromptsConfig {
+  @ApiProperty({
+    description: 'Favorited prompt paths.',
+    example: ['Work/AI/summarize'],
+    type: [String],
+  })
+  installed!: string[];
+}
+
 export class UserConfigDto implements UserConfig {
   @ApiProperty({
     description: 'User configuration schema version.',
@@ -70,25 +84,47 @@ export class UserConfigDto implements UserConfig {
 
   @ApiProperty({ type: DeploymentsConfigDto })
   deployments!: DeploymentsConfigDto;
+
+  @ApiProperty({ type: PromptsConfigDto })
+  prompts!: PromptsConfigDto;
 }
 
-export const CURRENT_CONFIG_VERSION = 3;
+export const CURRENT_CONFIG_VERSION = 4;
 
 export const DEFAULT_USER_CONFIG: UserConfig = {
   version: CURRENT_CONFIG_VERSION,
   conversations: { pinnedIds: [] },
   toolsets: { installed: [] },
   deployments: { installed: [], selectedId: null },
+  prompts: { installed: [] },
+};
+
+/*
+ * `DEFAULT_USER_CONFIG` must never be handed out directly: the service mutates
+ * the installed/pinned arrays in place, which would leak between requests.
+ */
+export const createDefaultUserConfig = (): UserConfig => ({
+  version: CURRENT_CONFIG_VERSION,
+  conversations: { pinnedIds: [] },
+  toolsets: { installed: [] },
+  deployments: { installed: [], selectedId: null },
+  prompts: { installed: [] },
+});
+
+/** Returns the string entries of a stored `installed` array, dropping anything else. */
+const readInstalledIds = (
+  section: Record<string, unknown> | undefined,
+): string[] => {
+  const raw = section?.['installed'];
+  if (!Array.isArray(raw)) return [];
+  return (raw as unknown[]).filter(
+    (id): id is string => typeof id === 'string',
+  );
 };
 
 export const migrateConfig = (raw: unknown): UserConfig => {
   if (raw == null || typeof raw !== 'object') {
-    return {
-      ...DEFAULT_USER_CONFIG,
-      conversations: { pinnedIds: [] },
-      toolsets: { installed: [] },
-      deployments: { installed: [], selectedId: null },
-    };
+    return createDefaultUserConfig();
   }
   const obj = raw as Record<string, unknown>;
 
@@ -99,12 +135,7 @@ export const migrateConfig = (raw: unknown): UserConfig => {
           (id): id is string => typeof id === 'string',
         )
       : [];
-    return {
-      version: CURRENT_CONFIG_VERSION,
-      conversations: { pinnedIds },
-      toolsets: { installed: [] },
-      deployments: { installed: [], selectedId: null },
-    };
+    return { ...createDefaultUserConfig(), conversations: { pinnedIds } };
   }
 
   // v2+ shape
@@ -117,22 +148,16 @@ export const migrateConfig = (raw: unknown): UserConfig => {
     : [];
 
   const toolsetsObj = obj['toolsets'] as Record<string, unknown> | undefined;
-  const toolsetsInstalledRaw = toolsetsObj?.['installed'];
-  const toolsetsInstalled = Array.isArray(toolsetsInstalledRaw)
-    ? (toolsetsInstalledRaw as unknown[]).filter(
-        (id): id is string => typeof id === 'string',
-      )
-    : [];
+  const toolsetsInstalled = readInstalledIds(toolsetsObj);
 
   const deploymentsObj = obj['deployments'] as
     | Record<string, unknown>
     | undefined;
-  const deploymentsInstalledRaw = deploymentsObj?.['installed'];
-  const deploymentsInstalled = Array.isArray(deploymentsInstalledRaw)
-    ? (deploymentsInstalledRaw as unknown[]).filter(
-        (id): id is string => typeof id === 'string',
-      )
-    : [];
+  const deploymentsInstalled = readInstalledIds(deploymentsObj);
+
+  /* v3→v4: prompts favorites. Absent in every earlier shape. */
+  const promptsObj = obj['prompts'] as Record<string, unknown> | undefined;
+  const promptsInstalled = readInstalledIds(promptsObj);
 
   // v2→v3: extract selectedId if present, default to null
   const deploymentsSelectedIdRaw = deploymentsObj?.['selectedId'];
@@ -152,6 +177,7 @@ export const migrateConfig = (raw: unknown): UserConfig => {
       installed: deploymentsInstalled,
       selectedId: deploymentsSelectedId,
     },
+    prompts: { installed: promptsInstalled },
     legacyMigrationDone,
   };
 };

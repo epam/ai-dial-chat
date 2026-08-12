@@ -46,21 +46,21 @@ The voice bar SHALL have: height 40 px inner + `py-2` vertical padding (56 px to
 
 ---
 
-### Requirement: Recording state — elapsed timer, live scrolling waveform, and red controls
+### Requirement: Recording state — live scrolling waveform and red controls
 
 During recording the voice bar SHALL display:
-- A `MM:SS` elapsed-time text on the left of the waveform. The counter increments every second via a `setInterval` timer started when recording begins and reset to `0:00` on idle. The text uses `font-variant-numeric: tabular-nums` so the layout width stays stable. Colour matches the waveform (`--ci-voice-waveform`, fallback `--text-primary`).
+- A pulsing red recording dot on the left of the waveform (`--ci-voice-accent`, fallback `--text-error`). No elapsed-time counter is shown.
 - A live animated bar-histogram waveform rendered on a `<canvas>` element. A fixed-length ring buffer (200 slots) holds one RMS amplitude sample per `requestAnimationFrame` tick at ~60 fps. Each tick overwrites the oldest slot, advancing the write index, so the oldest bars scroll off the left edge and new bars appear on the right — giving a smooth scrolling effect. The canvas renders all 200 slots as narrow vertical bars (3 px wide, 1 px gap) spanning the canvas width. Bar heights are scaled by ×6 (clamped to canvas height) with a minimum height of 3 px. Bar colour is `--ci-voice-waveform` (fallback `--text-primary`).
 - A red mic icon button on the right. Clicking it stops recording, immediately attaches the audio blob as a `File` attachment, and returns to idle.
 - An X (discard) button on the right. Clicking it discards the recording without attaching anything and returns to idle.
 
 The RAF loop runs only while `state === 'recording'` and is cancelled when recording stops or the component unmounts.
 
-#### Scenario: Recording timer visible during recording
+#### Scenario: No elapsed-time counter during recording
 
 - **WHEN** recording is active
-- **THEN** an elapsed time in `MM:SS` format is visible to the left of the waveform
-- **THEN** the counter increments by 1 every second
+- **THEN** no elapsed-time text is rendered
+- **THEN** a pulsing red recording dot is visible to the left of the waveform
 
 #### Scenario: Waveform scrolls during recording
 
@@ -99,10 +99,10 @@ A `ResizeObserver` SHALL be attached to the canvas so that the histogram redraws
 
 ---
 
-### Requirement: Mobile layout — timer + waveform full-width, buttons on separate line
+### Requirement: Mobile layout — waveform full-width, buttons on separate line
 
 On mobile breakpoints the voice bar SHALL use a two-row layout:
-- **Row 1**: the elapsed timer on the left (during recording) followed by the waveform canvas filling the remaining width.
+- **Row 1**: the recording dot on the left (during recording) followed by the waveform canvas filling the remaining width.
 - **Row 2**: buttons right-aligned. During recording: X button then red mic button.
 
 This two-row layout SHALL apply in both recording and error states.
@@ -110,7 +110,7 @@ This two-row layout SHALL apply in both recording and error states.
 #### Scenario: Mobile recording layout
 
 - **WHEN** the viewport is at mobile breakpoint and recording is active
-- **THEN** the timer and waveform occupy the full row width
+- **THEN** the recording dot and waveform occupy the full row width
 - **THEN** the X and red mic buttons appear on a separate row, right-aligned
 
 ---

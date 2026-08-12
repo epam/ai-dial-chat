@@ -64,7 +64,6 @@ export const Input: FC<InputProps> = ({
   micLabel = 'Record voice message',
   stopRecordingLabel,
   discardRecordingLabel,
-  timerAriaLabel,
   colors,
   typography,
   className,
@@ -193,7 +192,6 @@ export const Input: FC<InputProps> = ({
   const {
     state: voiceState,
     analyserNodeRef,
-    elapsedSeconds,
     errorMessage: voiceError,
     startRecording,
     stopRecording,
@@ -333,13 +331,11 @@ export const Input: FC<InputProps> = ({
       <VoiceBar
         state={voiceState}
         analyserNodeRef={analyserNodeRef}
-        elapsedSeconds={elapsedSeconds}
         errorMessage={voiceError}
         onStop={stopRecording}
         onDiscard={discardRecording}
         stopLabel={stopRecordingLabel}
         discardLabel={discardRecordingLabel}
-        timerLabel={timerAriaLabel}
         style={cssVars}
         className={className}
       />

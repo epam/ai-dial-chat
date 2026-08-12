@@ -762,7 +762,6 @@ const ConversationView: FC<Props> = ({
                 discardRecordingLabel={t(
                   VoiceRecordingI18nKeys.DiscardRecordingLabel,
                 )}
-                timerAriaLabel={t(VoiceRecordingI18nKeys.TimerAriaLabel)}
                 messageHistory={messageHistory}
                 sendOnEnter={sendOnEnter}
                 chatSettings={chatSettings}

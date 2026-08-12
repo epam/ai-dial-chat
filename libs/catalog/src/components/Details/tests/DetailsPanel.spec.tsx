@@ -115,6 +115,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 vi.mock('@tabler/icons-react', () => ({
   IconChevronLeft: () => <svg />,
   IconChevronDown: () => <svg />,
+  IconCopy: () => <svg />,
   IconKey: () => <svg />,
   IconLogin: () => <svg />,
   IconLogout: () => <svg />,
@@ -279,6 +280,94 @@ const renderPanel = (props?: Partial<ComponentProps<typeof DetailsPanel>>) =>
       {...props}
     />,
   );
+
+describe('DetailsPanel — Content tab', () => {
+  const promptOverview = {
+    sections: [
+      { title: 'Prompt', specs: [{ label: 'Folder', value: 'Work' }] },
+    ],
+  };
+
+  it('gives a prompt exactly two tabs — Details then Overview, never About', () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Prompt,
+        details: {
+          promptContent: { content: 'Summarize:' },
+          overview: promptOverview,
+        },
+      }),
+    });
+
+    const tabLabels = Array.from(
+      screen.getByRole('tablist').querySelectorAll('button'),
+    ).map((button) => button.textContent);
+    expect(tabLabels).toEqual(['Details', 'Overview']);
+  });
+
+  it('keeps the About tab for non-prompt entity types', () => {
+    renderPanel({
+      item: makeItem({ type: CatalogEntityType.Model, description: 'A model' }),
+    });
+
+    expect(screen.getByRole('button', { name: 'About' })).toBeTruthy();
+  });
+
+  it('opens on the Details tab, not Overview', () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Prompt,
+        details: {
+          promptContent: { content: 'Summarize:' },
+          overview: promptOverview,
+        },
+      }),
+    });
+
+    /*
+     * The body renders, and "Overview" appears once — as its tab button only,
+     * not as the mocked Overview panel — so Details is the active tab.
+     */
+    expect(screen.getByText('Summarize:')).toBeTruthy();
+    expect(screen.getAllByText('Overview')).toHaveLength(1);
+    expect(
+      screen.getByRole('tablist').querySelector('button')?.textContent,
+    ).toBe('Details');
+  });
+
+  it('renders the prompt body in the Content tab by default', () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Prompt,
+        details: {
+          promptContent: { content: 'Summarize:' },
+          overview: promptOverview,
+        },
+      }),
+    });
+
+    expect(screen.getByText('Summarize:')).toBeTruthy();
+  });
+
+  it('does not render a Content tab when promptContent is absent', () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Prompt,
+        details: { overview: promptOverview },
+      }),
+    });
+
+    expect(screen.queryByRole('button', { name: 'Details' })).toBeNull();
+  });
+});
+
+describe('DetailsPanel — favourite visibility', () => {
+  it('renders the star control for every entity type, prompts included', () => {
+    renderPanel({ item: makeItem({ type: CatalogEntityType.Prompt }) });
+
+    expect(screen.getByText('Star')).toBeTruthy();
+  });
+});
 
 describe('DetailsPanel', () => {
   it('renders the details content by default', () => {

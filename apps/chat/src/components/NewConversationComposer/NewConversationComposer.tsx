@@ -374,7 +374,6 @@ const NewConversationComposer: FC<Props> = ({
           discardRecordingLabel={t(
             VoiceRecordingI18nKeys.DiscardRecordingLabel,
           )}
-          timerAriaLabel={t(VoiceRecordingI18nKeys.TimerAriaLabel)}
           sendOnEnter={sendOnEnter}
           chatSettings={isEmptyChatSettingsEnabled ? chatSettings : undefined}
           pendingDropFiles={pendingFiles}

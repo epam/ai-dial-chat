@@ -1065,4 +1065,52 @@ describe('ConversationRoute', () => {
       );
     });
   });
+
+  describe('prompt content from router state', () => {
+    it('seeds the composer with the prompt body passed as router state', async () => {
+      render(
+        <MemoryRouter
+          initialEntries={[
+            { pathname: '/', state: { promptContent: 'Summarize:' } },
+          ]}
+        >
+          <ConversationRoute />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Input message').textContent).toBe(
+          'Summarize:',
+        );
+      });
+    });
+
+    it('leaves the composer empty when no prompt content is passed', async () => {
+      renderRoute();
+
+      await waitFor(() => {
+        expect(mockRestoreDefaultSelection).toHaveBeenCalled();
+      });
+      expect(screen.getByLabelText('Input message').textContent).toBe('');
+    });
+
+    it('does not select a deployment when seeding from prompt content', async () => {
+      render(
+        <MemoryRouter
+          initialEntries={[
+            { pathname: '/', state: { promptContent: 'Summarize:' } },
+          ]}
+        >
+          <ConversationRoute />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Input message').textContent).toBe(
+          'Summarize:',
+        );
+      });
+      expect(mockRestoreSelectedItemId).not.toHaveBeenCalled();
+    });
+  });
 });

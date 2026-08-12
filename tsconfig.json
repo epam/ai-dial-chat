@@ -71,6 +71,9 @@
     },
     {
       "path": "./libs/builder-form"
+    },
+    {
+      "path": "./libs/prompt-editor"
     }
   ]
 }
