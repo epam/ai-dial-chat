@@ -85,7 +85,14 @@ export class OAuthMockHelper extends BaseAuthMockHelper<ToolsetOAuthSignInReques
     if (!this.oauthState.callbackUrl) {
       throw new Error('Callback URL has not been captured yet');
     }
-    if (popup.isClosed()) return;
+    // The mocked authorization endpoint's 302 already sends the popup toward
+    // the callback URL the moment it opens, so the whole flow (sign-in, then
+    // the main page closing the popup) can complete entirely on its own
+    // before we ever get here — this is only more likely on slower/remote
+    // environments (CI). getSignInRequest() is the one thing that can't lie
+    // about whether that already happened, unlike popup.isClosed()/url(),
+    // which can lag behind or throw during the browser/context teardown.
+    if (popup.isClosed() || this.getSignInRequest() !== null) return;
 
     // Set up the response waiter before navigating so we don't miss it
     const signInResponsePromise = popup.waitForResponse((resp) =>
@@ -96,17 +103,18 @@ export class OAuthMockHelper extends BaseAuthMockHelper<ToolsetOAuthSignInReques
         waitUntil: 'domcontentloaded',
       });
     } catch (e) {
-      // Race condition: setupOAuthRedirectRoute's 302 already sent the popup
-      // toward the callback URL on its own before we got here, so our
-      // explicit goto() above gets aborted as redundant (net::ERR_ABORTED).
-      // The sign-in flow still completes on its own in that case — only bail
-      // out for real if the popup isn't even heading to the callback page.
+      // Race condition: the auto-redirect above already carried the popup
+      // through (part of) the callback flow before we got here, so our
+      // explicit goto() gets aborted, or the popup/its context torn down, as
+      // a side effect. Only bail out for real if sign-in never actually
+      // happened AND the popup isn't even heading to the callback page.
+      if (this.getSignInRequest() !== null) return;
       const isHeadingToCallback =
         popup.isClosed() || popup.url().includes(Routes.ToolsetSignIn);
       if (!isHeadingToCallback) throw e;
     }
 
-    if (popup.isClosed()) return;
+    if (popup.isClosed() || this.getSignInRequest() !== null) return;
 
     try {
       await signInResponsePromise;
