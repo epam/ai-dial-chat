@@ -4444,6 +4444,12 @@ export interface PromptResponseDto {
    */
   folderId: string;
   /**
+   * Resource author reported by DIAL Core, when it is known
+   * @type {string}
+   * @memberof PromptResponseDto
+   */
+  author?: string;
+  /**
    * Creation timestamp (Unix ms)
    * @type {number}
    * @memberof PromptResponseDto

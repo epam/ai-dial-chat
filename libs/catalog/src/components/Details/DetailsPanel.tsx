@@ -23,6 +23,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -380,13 +381,18 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
      * carries the description, so an About tab would only repeat it. Prompts
      * therefore show Content then Overview, and nothing else.
      */
-    if (item.type !== CatalogEntityType.Prompt) {
+    const isPrompt = item.type === CatalogEntityType.Prompt;
+    if (!isPrompt) {
       result.push({
         id: CatalogDetailsTab.About,
         label: texts?.tabAboutLabel ?? 'About',
       });
     }
-    if (item.details?.promptContent != null) {
+    /*
+     * A prompt keeps its Content tab even before a body arrives (or when it
+     * has none), so the tab it opens on never shifts as details resolve.
+     */
+    if (isPrompt || item.details?.promptContent != null) {
       result.push({
         id: CatalogDetailsTab.Content,
         label: texts?.tabContentLabel ?? 'Details',
@@ -431,10 +437,16 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     return result;
   }, [item, texts]);
 
-  // Reset to the first available tab when the item changes or the active
-  // tab is no longer in the (possibly newly-fetched) available list.
+  /*
+   * Every item opens on its first tab: a tab the previous item happened to
+   * share must not carry over. Within one item the selection is kept, unless
+   * a newly-fetched details payload dropped the active tab from the list.
+   */
+  const shownItemId = useRef<string | null>(null);
   useEffect(() => {
-    if (!tabs.some((t) => t.id === activeTab)) {
+    const isNewItem = shownItemId.current !== item.id;
+    shownItemId.current = item.id;
+    if (isNewItem || !tabs.some((t) => t.id === activeTab)) {
       setActiveTab(tabs[0]?.id ?? '');
     }
   }, [item.id, tabs, activeTab]);
@@ -748,7 +760,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
               <div
                 className={mergeClasses(
                   'min-h-0 flex-1 overflow-y-auto',
-                  activeTab !== CatalogDetailsTab.Overview && 'mt-4 px-6',
+                  activeTab !== CatalogDetailsTab.Overview && 'px-6',
                 )}
               >
                 {activeTab === CatalogDetailsTab.About && (
@@ -758,14 +770,13 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                     detailsStyles={detailsStyles}
                   />
                 )}
-                {activeTab === CatalogDetailsTab.Content &&
-                  item.details?.promptContent != null && (
-                    <ContentTab
-                      content={item.details.promptContent.content}
-                      description={item.description}
-                      detailsStyles={detailsStyles}
-                    />
-                  )}
+                {activeTab === CatalogDetailsTab.Content && (
+                  <ContentTab
+                    content={item.details?.promptContent?.content ?? ''}
+                    description={item.description}
+                    detailsStyles={detailsStyles}
+                  />
+                )}
                 {activeTab === CatalogDetailsTab.Overview && (
                   <Overview
                     sections={item.details?.overview?.sections}

@@ -188,9 +188,7 @@
       },
       "prompt": {
         "section": "Prompt",
-        "folder": "Folder",
-        "folderRoot": "Root",
-        "source": "Source",
+        "author": "Author",
         "updated": "Last updated"
       }
     },

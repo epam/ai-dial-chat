@@ -87,7 +87,6 @@ import {
 import {
   buildPromptOverview,
   mapPromptToCatalogItem,
-  resolvePromptSource,
 } from '../../utils/map-prompt-to-catalog-item';
 import {
   buildConnectApi,
@@ -334,7 +333,7 @@ const CatalogView: FC<Props> = ({
            */
           return {
             promptContent: { content: dto.content },
-            overview: buildPromptOverview(dto, resolvePromptSource(item), t),
+            overview: buildPromptOverview(dto, t),
           };
         } catch {
           return undefined;

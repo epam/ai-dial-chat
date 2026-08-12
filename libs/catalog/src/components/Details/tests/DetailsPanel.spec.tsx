@@ -349,7 +349,7 @@ describe('DetailsPanel — Content tab', () => {
     expect(screen.getByText('Summarize:')).toBeTruthy();
   });
 
-  it('does not render a Content tab when promptContent is absent', () => {
+  it('keeps the Details tab first and active for a prompt whose body has not arrived', () => {
     renderPanel({
       item: makeItem({
         type: CatalogEntityType.Prompt,
@@ -357,7 +357,11 @@ describe('DetailsPanel — Content tab', () => {
       }),
     });
 
-    expect(screen.queryByRole('button', { name: 'Details' })).toBeNull();
+    expect(
+      screen.getByRole('tablist').querySelector('button')?.textContent,
+    ).toBe('Details');
+    /* Overview shows only as a tab button, so Details is still the active tab. */
+    expect(screen.getAllByText('Overview')).toHaveLength(1);
   });
 });
 

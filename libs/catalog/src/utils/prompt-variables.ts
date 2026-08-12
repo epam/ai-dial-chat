@@ -5,7 +5,7 @@
  */
 const PROMPT_VARIABLE_PATTERN = /\{\{([^{}]+)\}\}/g;
 
-/** Class applied to each highlighted placeholder, styled by the Content tab's stylesheet. */
+/** Class applied to each highlighted placeholder. The host owns its styling. */
 export const PROMPT_VARIABLE_CLASS_NAME = 'cat-prompt-variable';
 
 /** Minimal hast shapes this plugin reads and writes. */

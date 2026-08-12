@@ -8149,6 +8149,11 @@
             "description": "Parent folder path; empty string means root",
             "example": "Work/AI"
           },
+          "author": {
+            "type": "string",
+            "description": "Resource author reported by DIAL Core, when it is known",
+            "example": "john.doe@example.com"
+          },
           "createdAt": {
             "type": "number",
             "description": "Creation timestamp (Unix ms)",

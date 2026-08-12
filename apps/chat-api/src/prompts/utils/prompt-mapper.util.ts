@@ -99,6 +99,7 @@ export const mapPromptToResponse = (
   description: prompt.description,
   content: prompt.content ?? '',
   folderId: prompt.folderId ?? folderIdFromId(id),
+  author: metadata.author,
   createdAt: metadata.createdAt ?? 0,
   updatedAt: metadata.updatedAt ?? 0,
 });

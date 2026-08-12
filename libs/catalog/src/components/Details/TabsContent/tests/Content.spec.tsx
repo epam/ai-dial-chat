@@ -20,10 +20,19 @@ describe('ContentTab', () => {
     expect(screen.getByText('Writes a short summary.')).toBeTruthy();
   });
 
+  it('separates the description from the body with a divider', () => {
+    const { container } = render(
+      <ContentTab content="Summarize:" description="Writes a short summary." />,
+    );
+
+    expect(container.querySelector('[class*="divider"]')).toBeTruthy();
+  });
+
   it('omits the description block when it is empty', () => {
     const { container } = render(<ContentTab content="Summarize:" />);
 
     expect(container.querySelectorAll('p')).toHaveLength(1);
+    expect(container.querySelector('[class*="divider"]')).toBeNull();
   });
 
   it('highlights a {{placeholder}} apart from the surrounding prose', () => {
