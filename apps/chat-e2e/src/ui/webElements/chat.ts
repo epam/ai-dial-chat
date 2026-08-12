@@ -16,7 +16,7 @@ import { Compare } from '@/src/ui/webElements/compare';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PublicationReviewControl } from '@/src/ui/webElements/publicationReviewControl';
 import { Locator, Page } from '@playwright/test';
-import { Request, Response } from 'playwright-core';
+import { Request } from 'playwright-core';
 
 export const PROMPT_APPLY_DELAY = 500;
 export const SCROLL_MOVING_DELAY = 100;
@@ -261,32 +261,25 @@ export class Chat extends BaseElement {
     waitForAnswer = true,
   ) {
     await this.addModelToWorkspace();
-    const apiPromises = [];
     const requestPromise = this.waitForRequestSent(message);
-    apiPromises.push(requestPromise);
-    if (waitForAnswer) {
-      const conversRespPromise = this.page.waitForResponse(
-        (resp) =>
-          resp.request().method() === 'PUT' &&
-          resp.url().includes(API.conversationHost),
-      );
-      const unsubscrRespPromise = this.page.waitForResponse(
-        (r) => r.url().includes(API.unsubscribeHost()) && r.ok(),
-      );
-      apiPromises.push(conversRespPromise);
-      apiPromises.push(unsubscrRespPromise);
-    }
+    const conversRespPromise = waitForAnswer
+      ? this.page.waitForResponse(
+          (resp) =>
+            resp.request().method() === 'PUT' &&
+            resp.url().includes(API.conversationHost),
+        )
+      : undefined;
+    const unsubscrRespPromise = waitForAnswer
+      ? this.page.waitForResponse(
+          (r) => r.url().includes(API.unsubscribeHost()) && r.ok(),
+        )
+      : undefined;
+
     await sendMethod();
-    let completionRequest: Request | undefined;
-    let conversationUpdateRequest: Request | undefined;
-    for (let i = 0; i < apiPromises.length; i++) {
-      const resolvedPromise = await apiPromises[i];
-      if (i === 0) {
-        completionRequest = resolvedPromise as Request;
-      } else if (i === 1) {
-        conversationUpdateRequest = (resolvedPromise as Response).request();
-      }
-    }
+    const completionRequest = await requestPromise;
+    const conversationUpdateRequest = (await conversRespPromise)?.request();
+    await unsubscrRespPromise;
+
     await this.waitForResponse(waitForAnswer);
     return {
       completionRequest: completionRequest?.postDataJSON(),

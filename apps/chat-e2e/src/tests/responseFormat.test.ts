@@ -1,3 +1,4 @@
+import { modelCursorSign } from '@/chat/constants/chat';
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
@@ -44,9 +45,9 @@ dialTest(
     setTestIds('EPMDIAL-5985', 'EPMDIAL-5984', 'EPMDIAL-5983', 'EPMDIAL-5986');
     const request = 'Generate one MD table';
     const tableInPlainText = `| Country | Capital |
-       | --- | --- |
-       | Canada | Ottawa |
-       | United States | Washington, D.C. |`;
+| --- | --- |
+| Canada | Ottawa |
+| United States | Washington, D.C. |`;
 
     await dialTest.step(
       'Send a request that generates a table and verify the default value of responseFormat field',
@@ -119,7 +120,7 @@ dialTest(
         await agentSettings.setResponseFormat(
           ConversationResponseFormat.PlainText,
         );
-        await conversationSettingsModal.applyNewResponseFormat();
+        await conversationSettingsModal.applyChanges();
       },
     );
 
@@ -205,7 +206,7 @@ dialTest(
         await agentSettings.setResponseFormat(
           ConversationResponseFormat.Markdown,
         );
-        await conversationSettingsModal.applyNewResponseFormat();
+        await conversationSettingsModal.applyChanges();
       },
     );
 
@@ -294,7 +295,7 @@ dialTest(
     agentSettings,
   }) => {
     setTestIds('EPMDIAL-7423');
-    const cursorTextRegexp = new RegExp('^▍$');
+    const cursorTextRegexp = new RegExp(`^${modelCursorSign}$`);
 
     await dialTest.step(
       'Send a request to the model and verify cursor is blinking while response is loading, no backticks are displayed',
@@ -325,13 +326,16 @@ dialTest(
         await agentSettings.setResponseFormat(
           ConversationResponseFormat.PlainText,
         );
-        await conversationSettingsModal.applyNewResponseFormat();
+        await conversationSettingsModal.applyChanges();
       },
     );
 
     await dialTest.step(
       'Send one more request and verify cursor is blinking while response is loading, no backticks are displayed',
       async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.mdTableBody,
+        );
         await dialHomePage.throttleAPIResponse('**/*');
         await chat.sendRequestWithButton('test request2', false);
         await chatMessagesAssertion.assertElementText(

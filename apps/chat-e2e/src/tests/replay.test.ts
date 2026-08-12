@@ -156,7 +156,11 @@ dialTest(
         expect
           .soft(newModelTemperature, ExpectedMessages.temperatureIsValid)
           .toBe(replayTemp.toString());
-        await conversationSettingsModal.applyChangesButton.click();
+        // settings above are only verified, not changed — no PUT is
+        // guaranteed to fire
+        await conversationSettingsModal.applyChanges({
+          waitForUpdate: false,
+        });
       },
     );
 
@@ -301,7 +305,7 @@ dialTest(
         await chat.configureSettingsButton.click();
         await agentSettings.setSystemPrompt(replayPrompt);
         await temperatureSlider.setTemperature(replayTemp);
-        await conversationSettingsModal.applyChangesButton.click();
+        await conversationSettingsModal.applyChanges();
         await dialHomePage.throttleAPIResponse(API.chatHost);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,

@@ -369,7 +369,10 @@ dialTest.skip(
         await talkToAgentDialog.selectAgent(simpleRequestModel!);
         await chat.configureSettingsButton.click();
         await agentSettings.setSystemPrompt(promptContent);
-        await conversationSettingsModal.applyChangesButton.click();
+        // no conversation exists yet — no PUT is guaranteed to fire
+        await conversationSettingsModal.applyChanges({
+          waitForUpdate: false,
+        });
         await chat.sendRequestWithButton(requestTerm);
       },
     );
@@ -597,7 +600,11 @@ dialTest(
           triggeredHttpMethod: 'GET',
         });
         await agentSettingAssertion.assertSystemPromptValue(prompt.content!);
-        await conversationSettingsModal.applyChangesButton.click();
+        // "New Conversation" screen — no conversation exists yet, so no PUT
+        // is guaranteed to fire
+        await conversationSettingsModal.applyChanges({
+          waitForUpdate: false,
+        });
       },
     );
 

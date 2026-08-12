@@ -594,7 +594,10 @@ dialTest(
         await agentSettingAssertion.assertSystemPromptValue(
           promptTemplate(aVarValue, bVarDefaultValue),
         );
-        await conversationSettingsModal.applyChangesButton.click();
+        // no conversation exists yet — no PUT is guaranteed to fire
+        await conversationSettingsModal.applyChanges({
+          waitForUpdate: false,
+        });
       },
     );
 
@@ -738,7 +741,10 @@ dialSharedWithMeTest(
         await additionalShareUserAgentSettingAssertion.assertSystemPromptValue(
           promptTemplate(promptParamValue) + promptInFolder.content,
         );
-        await additionalShareUserConversationSettingsModal.applyChangesButton.click();
+        // no conversation exists yet — no PUT is guaranteed to fire
+        await additionalShareUserConversationSettingsModal.applyChanges({
+          waitForUpdate: false,
+        });
       },
     );
 

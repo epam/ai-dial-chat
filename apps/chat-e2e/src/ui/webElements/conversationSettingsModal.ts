@@ -49,13 +49,19 @@ export class ConversationSettingsModal extends BaseElement {
     return this.rightAgentSettings;
   }
 
-  public async applyNewResponseFormat() {
-    const conversRespPromise = this.page.waitForResponse(
-      (resp) =>
-        resp.request().method() === 'PUT' &&
-        resp.url().includes(API.conversationHost),
-    );
-    await this.applyChangesButton.click();
-    await conversRespPromise;
+  // The conversation PUT only fires when a setting actually changed AND a
+  // real (non-empty) conversation already exists
+  public async applyChanges({ waitForUpdate = true } = {}) {
+    if (waitForUpdate) {
+      const conversRespPromise = this.page.waitForResponse(
+        (resp) =>
+          resp.request().method() === 'PUT' &&
+          resp.url().includes(API.conversationHost),
+      );
+      await this.applyChangesButton.click();
+      await conversRespPromise;
+    } else {
+      await this.applyChangesButton.click();
+    }
   }
 }
