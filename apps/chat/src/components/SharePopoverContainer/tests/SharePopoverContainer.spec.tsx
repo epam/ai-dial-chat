@@ -65,7 +65,10 @@ describe('SharePopoverContainer', () => {
       />,
     );
 
-    expect(useShareLinkModule.useShareLink).toHaveBeenCalledWith('item-1');
+    expect(useShareLinkModule.useShareLink).toHaveBeenCalledWith(
+      'item-1',
+      undefined,
+    );
 
     expect(mockSharePopover).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -101,6 +104,36 @@ describe('SharePopoverContainer', () => {
     render(
       <SharePopoverContainer
         item={makeItem(CatalogEntityType.Model)}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(mockSharePopover).toHaveBeenCalledWith(
+      expect.objectContaining({ canEditAccess: false }),
+      undefined,
+    );
+  });
+
+  it('tags a prompt with the prompt resource kind so the backend can qualify its path', () => {
+    mockUseShareLink();
+    render(
+      <SharePopoverContainer
+        item={makeItem(CatalogEntityType.Prompt)}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(useShareLinkModule.useShareLink).toHaveBeenCalledWith(
+      'item-1',
+      'prompt',
+    );
+  });
+
+  it('passes canEditAccess false for a prompt', () => {
+    mockUseShareLink();
+    render(
+      <SharePopoverContainer
+        item={makeItem(CatalogEntityType.Prompt)}
         onClose={vi.fn()}
       />,
     );

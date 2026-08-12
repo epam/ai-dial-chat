@@ -180,6 +180,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     owner: 'chat-team',
   },
   {
+    key: 'features.responsesApiEnabled',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'server',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Server-side kill switch for routing eligible generations through the OpenAI Responses API. Even when a deployment reports features.responsesApi=true, Responses is only used when this flag is also true. Defaults to false. Not exposed to the frontend client-config endpoint (visibility: server). Role-based rollout (RESPONSES_API_ENABLED_ROLES) is not implemented — out of scope.',
+    owner: 'chat-team',
+    envVar: 'RESPONSES_API_ENABLED',
+  },
+  {
     key: 'overlay.enabled',
     type: 'config',
     valueType: 'boolean',

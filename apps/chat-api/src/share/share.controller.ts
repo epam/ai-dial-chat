@@ -70,8 +70,8 @@ export class ShareController {
     @Req() req: Request,
     @Body() body: CreateShareLinkDto,
   ): Promise<ShareLinkResponseDto> {
-    const { at } = req.user as SessionUser;
-    return this.shareService.createShareLink(at, body);
+    const { at, bucket } = req.user as SessionUser;
+    return this.shareService.createShareLink(at, bucket, body);
   }
 
   @Get('invitations/:invitationId')

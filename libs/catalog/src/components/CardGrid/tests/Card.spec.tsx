@@ -39,6 +39,16 @@ describe('Card — selected state', () => {
   });
 });
 
+describe('Card — favorite visibility', () => {
+  it('renders the star button for every entity type, prompts included', () => {
+    render(<Card item={makeItem({ type: CatalogEntityType.Prompt })} />);
+
+    expect(
+      screen.getByRole('button', { name: 'Add to favorites' }),
+    ).toBeTruthy();
+  });
+});
+
 describe('Card — favorite revert', () => {
   it('resyncs the star to initialIsStarred when it reverts after a failed toggle', async () => {
     const item = makeItem();

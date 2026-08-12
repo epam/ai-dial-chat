@@ -220,8 +220,6 @@ export interface ConversationInputProps {
   stopRecordingLabel?: string;
   /** Accessible label for the discard / X button inside the voice bar. Defaults to `'Discard recording'`. */
   discardRecordingLabel?: string;
-  /** `aria-label` for the elapsed-time region inside the voice bar. Defaults to `'Recording time'`. */
-  timerAriaLabel?: string;
   /**
    * Controls which key combination submits the message.
    * - `SendOnEnter.Enter` (default): Enter submits; Shift+Enter inserts a newline.

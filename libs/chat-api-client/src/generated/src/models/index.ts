@@ -24,6 +24,12 @@ export interface AcceptInvitationResponseDto {
    * @memberof AcceptInvitationResponseDto
    */
   sharedToolset?: DialToolsetDto;
+  /**
+   * List-item summary of the shared skill, resolved by id at accept time so the frontend can show its details panel without waiting on a bulk skills list refresh. Omitted when itemId is not a skill, or when resolution failed (a best-effort step that never fails the accept call itself).
+   * @type {SkillMetadataItemDto}
+   * @memberof AcceptInvitationResponseDto
+   */
+  sharedSkill?: SkillMetadataItemDto;
 }
 /**
  *
@@ -1550,12 +1556,27 @@ export interface CreateShareLinkDto {
    */
   itemId: string;
   /**
+   * Set to `prompt` when `itemId` is a bucket-relative prompt path (as returned by the prompts endpoints) rather than a full DIAL Core resource path. The caller's own bucket is then used to qualify it.
+   * @type {string}
+   * @memberof CreateShareLinkDto
+   */
+  resourceKind?: CreateShareLinkDtoResourceKindEnum;
+  /**
    * Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.
    * @type {Array<string>}
    * @memberof CreateShareLinkDto
    */
   access: Array<CreateShareLinkDtoAccessEnum>;
 }
+
+/**
+ * @export
+ */
+export const CreateShareLinkDtoResourceKindEnum = {
+  Prompt: 'prompt',
+} as const;
+export type CreateShareLinkDtoResourceKindEnum =
+  (typeof CreateShareLinkDtoResourceKindEnum)[keyof typeof CreateShareLinkDtoResourceKindEnum];
 
 /**
  * @export
@@ -3313,7 +3334,7 @@ export interface DialToolsetListResponseDto {
  */
 export interface DiscardSharedCatalogItemDto {
   /**
-   * Identifier (DIAL Core resource path) of the catalog item or conversation to discard access to.
+   * Identifier (DIAL Core resource path) of the catalog item, skill, or conversation to discard access to.
    * @type {string}
    * @memberof DiscardSharedCatalogItemDto
    */
@@ -4532,6 +4553,19 @@ export interface PromptResponseDto {
 /**
  *
  * @export
+ * @interface PromptsConfigDto
+ */
+export interface PromptsConfigDto {
+  /**
+   * Favorited prompt paths.
+   * @type {Array<string>}
+   * @memberof PromptsConfigDto
+   */
+  installed: Array<string>;
+}
+/**
+ *
+ * @export
  * @interface ProviderInfoDto
  */
 export interface ProviderInfoDto {
@@ -4693,6 +4727,7 @@ export const PublishHistoryEntryDtoEntityTypeEnum = {
   Model: 'model',
   Toolset: 'toolset',
   Application: 'application',
+  Skill: 'skill',
 } as const;
 export type PublishHistoryEntryDtoEntityTypeEnum =
   (typeof PublishHistoryEntryDtoEntityTypeEnum)[keyof typeof PublishHistoryEntryDtoEntityTypeEnum];
@@ -4748,6 +4783,7 @@ export const PublishResultDtoEntityTypeEnum = {
   Model: 'model',
   Toolset: 'toolset',
   Application: 'application',
+  Skill: 'skill',
 } as const;
 export type PublishResultDtoEntityTypeEnum =
   (typeof PublishResultDtoEntityTypeEnum)[keyof typeof PublishResultDtoEntityTypeEnum];
@@ -5402,6 +5438,217 @@ export const ShareLinkResponseDtoAccessEnum = {
 export type ShareLinkResponseDtoAccessEnum =
   (typeof ShareLinkResponseDtoAccessEnum)[keyof typeof ShareLinkResponseDtoAccessEnum];
 
+/**
+ *
+ * @export
+ * @interface SkillFileDeleteResponseDto
+ */
+export interface SkillFileDeleteResponseDto {
+  /**
+   * New ETag of the skill after file deletion, when DIAL Core returns one
+   * @type {string}
+   * @memberof SkillFileDeleteResponseDto
+   */
+  etag?: string;
+}
+/**
+ *
+ * @export
+ * @interface SkillFileListResponseDto
+ */
+export interface SkillFileListResponseDto {
+  /**
+   * DIAL Core bucket name
+   * @type {string}
+   * @memberof SkillFileListResponseDto
+   */
+  bucket: string;
+  /**
+   * The listed grouping-folder path
+   * @type {string}
+   * @memberof SkillFileListResponseDto
+   */
+  path: string;
+  /**
+   *
+   * @type {Array<SkillMetadataItemDto>}
+   * @memberof SkillFileListResponseDto
+   */
+  items: Array<SkillMetadataItemDto>;
+  /**
+   * Pagination continuation token
+   * @type {string}
+   * @memberof SkillFileListResponseDto
+   */
+  nextToken?: string;
+}
+/**
+ *
+ * @export
+ * @interface SkillFileUploadResponseDto
+ */
+export interface SkillFileUploadResponseDto {
+  /**
+   * New ETag of the uploaded file, when DIAL Core returns one
+   * @type {string}
+   * @memberof SkillFileUploadResponseDto
+   */
+  etag?: string;
+}
+/**
+ *
+ * @export
+ * @interface SkillGroupingFolderResponseDto
+ */
+export interface SkillGroupingFolderResponseDto {
+  /**
+   * ETag of the created grouping folder, when DIAL Core returns one
+   * @type {string}
+   * @memberof SkillGroupingFolderResponseDto
+   */
+  etag?: string;
+}
+/**
+ *
+ * @export
+ * @interface SkillListResponseDto
+ */
+export interface SkillListResponseDto {
+  /**
+   * DIAL Core bucket name
+   * @type {string}
+   * @memberof SkillListResponseDto
+   */
+  bucket: string;
+  /**
+   * The listed grouping-folder path
+   * @type {string}
+   * @memberof SkillListResponseDto
+   */
+  path: string;
+  /**
+   *
+   * @type {Array<SkillMetadataItemDto>}
+   * @memberof SkillListResponseDto
+   */
+  items: Array<SkillMetadataItemDto>;
+  /**
+   * Pagination continuation token
+   * @type {string}
+   * @memberof SkillListResponseDto
+   */
+  nextToken?: string;
+}
+/**
+ *
+ * @export
+ * @interface SkillMetadataItemDto
+ */
+export interface SkillMetadataItemDto {
+  /**
+   * Resource name (last path segment)
+   * @type {string}
+   * @memberof SkillMetadataItemDto
+   */
+  name: string;
+  /**
+   * Relative path within the bucket
+   * @type {string}
+   * @memberof SkillMetadataItemDto
+   */
+  path: string;
+  /**
+   * Full DIAL Core resource URL (skills/{bucket}/{path})
+   * @type {string}
+   * @memberof SkillMetadataItemDto
+   */
+  url: string;
+  /**
+   * DIAL Core bucket name
+   * @type {string}
+   * @memberof SkillMetadataItemDto
+   */
+  bucket: string;
+  /**
+   *
+   * @type {string}
+   * @memberof SkillMetadataItemDto
+   */
+  nodeType: SkillMetadataItemDtoNodeTypeEnum;
+  /**
+   * Parent grouping-folder path
+   * @type {string}
+   * @memberof SkillMetadataItemDto
+   */
+  parentPath?: string;
+  /**
+   * READ/WRITE/SHARE permissions on this resource
+   * @type {Array<string>}
+   * @memberof SkillMetadataItemDto
+   */
+  permissions?: Array<string>;
+  /**
+   * Resource version ETag (item only)
+   * @type {string}
+   * @memberof SkillMetadataItemDto
+   */
+  etag?: string;
+  /**
+   * Author (item only)
+   * @type {string}
+   * @memberof SkillMetadataItemDto
+   */
+  author?: string;
+  /**
+   * Unix timestamp ms (item only)
+   * @type {number}
+   * @memberof SkillMetadataItemDto
+   */
+  createdAt?: number;
+  /**
+   * Unix timestamp ms (item only)
+   * @type {number}
+   * @memberof SkillMetadataItemDto
+   */
+  updatedAt?: number;
+}
+
+/**
+ * @export
+ */
+export const SkillMetadataItemDtoNodeTypeEnum = {
+  Folder: 'folder',
+  Item: 'item',
+} as const;
+export type SkillMetadataItemDtoNodeTypeEnum =
+  (typeof SkillMetadataItemDtoNodeTypeEnum)[keyof typeof SkillMetadataItemDtoNodeTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface SkillOperationResultDto
+ */
+export interface SkillOperationResultDto {
+  /**
+   * Always true on success
+   * @type {boolean}
+   * @memberof SkillOperationResultDto
+   */
+  success?: boolean;
+}
+/**
+ *
+ * @export
+ * @interface SkillUploadResponseDto
+ */
+export interface SkillUploadResponseDto {
+  /**
+   * New aggregate ETag of the uploaded skill, when DIAL Core returns one
+   * @type {string}
+   * @memberof SkillUploadResponseDto
+   */
+  etag?: string;
+}
 /**
  *
  * @export
@@ -6132,6 +6379,25 @@ export interface UpdateInstalledDto {
 /**
  *
  * @export
+ * @interface UpdateInstalledPromptDto
+ */
+export interface UpdateInstalledPromptDto {
+  /**
+   * Prompt path within the prompts namespace.
+   * @type {string}
+   * @memberof UpdateInstalledPromptDto
+   */
+  id: string;
+  /**
+   * Pass `true` to favorite the prompt, `false` to unfavorite it.
+   * @type {boolean}
+   * @memberof UpdateInstalledPromptDto
+   */
+  isInstalled: boolean;
+}
+/**
+ *
+ * @export
  * @interface UpdatePinsDto
  */
 export interface UpdatePinsDto {
@@ -6412,6 +6678,12 @@ export interface UserConfigDto {
    * @memberof UserConfigDto
    */
   deployments: DeploymentsConfigDto;
+  /**
+   *
+   * @type {PromptsConfigDto}
+   * @memberof UserConfigDto
+   */
+  prompts: PromptsConfigDto;
 }
 /**
  *

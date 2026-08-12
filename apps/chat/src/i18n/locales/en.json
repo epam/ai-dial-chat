@@ -99,6 +99,8 @@
     "listViewLabel": "List view",
     "details": {
       "tabTools": "Tools",
+      "tabContent": "Details",
+      "promptLoadError": "Couldn't load this prompt. Please try again.",
       "tabLimits": "Limits",
       "api": {
         "resourceSection": "Resource",
@@ -183,13 +185,21 @@
         "applicationTitle": "Connect Application",
         "toolsetDescription": "Copy endpoint URL to easily integrate toolset into your workflows",
         "applicationDescription": "Copy endpoint URL to easily integrate application into your workflows"
+      },
+      "prompt": {
+        "section": "Prompt",
+        "folder": "Folder",
+        "folderRoot": "Root",
+        "source": "Source",
+        "updated": "Last updated"
       }
     },
     "create": {
       "menuCaption": "Create new",
       "quickApp": "QuickApp",
       "toolset": "Toolset",
-      "customApp": "Custom App"
+      "customApp": "Custom App",
+      "prompt": "Prompt"
     },
     "publishSuccessTitle": "Published",
     "publishSuccess": "\"{{name}}\" published to {{folder}}",
@@ -200,7 +210,8 @@
     "tab": {
       "models": "Models",
       "applications": "Agents",
-      "toolsets": "Toolsets"
+      "toolsets": "Toolsets",
+      "prompts": "Prompts"
     },
     "folder": {
       "personal": "Personal",
@@ -445,7 +456,7 @@
     "overlayLoginDescription": "Choose a sign-in option to use DIAL Chat in this embedded view.",
     "overlayExternalLoginBlocked": "The sign-in tab was blocked. Allow popups for this site and try again.",
     "overlayLoginTakingLonger": "Sign-in is taking longer than expected. Finish it in the opened tab, or try again.",
-    "overlayProviderPickerLoading": "Loading sign-in providers\u2026",
+    "overlayProviderPickerLoading": "Loading sign-in providers…",
     "overlayProvidersError": "Could not load sign-in providers. Please try again.",
     "logOutConfirmTitle": "Log out?",
     "logOutConfirmDescription": "Are you sure you want to log out?",
@@ -544,7 +555,7 @@
       "scheduleDailyAt": "Every day at {{time}}",
       "scheduleWeeklyAt": "Every {{day}} at {{time}}",
       "scheduleMonthlyAt": "Monthly on day {{day}} at {{time}}",
-      "scheduleHourlyAt": "Hourly at :{{minute}}",
+      "scheduleHourlyAt": "Hourly, {{minute}} min past the hour",
       "scheduleEveryNMinutes_one": "Every minute",
       "scheduleEveryNMinutes_other": "Every {{count}} minutes",
       "scheduleOnceAt": "Once on {{date}}",
@@ -571,7 +582,7 @@
       "dayOfWeekRequired": "Day of week is required",
       "dayOfMonthLabel": "Day of month",
       "dayOfMonthRequired": "Day of month is required",
-      "minuteLabel": "Minute",
+      "minuteLabel": "Minutes past the hour",
       "minuteInvalid": "Enter a minute between 0 and 59",
       "startDateLabel": "Start date",
       "startDatePlaceholder": "Pick start date",
@@ -579,7 +590,7 @@
       "endDatePlaceholder": "Pick end date",
       "endDateBeforeStartError": "End date must be after start date",
       "modelOrAgentLabel": "Model or Agent",
-      "modelPlaceholder": "Select a model",
+      "modelPlaceholder": "Select Model or Agent",
       "modelRequired": "Model is required",
       "descriptionLabel": "Description",
       "descriptionMaxLengthError": "Description must be 500 characters or fewer",
@@ -965,8 +976,7 @@
   "voiceRecording": {
     "micLabel": "Record voice message",
     "stopRecordingLabel": "Stop recording",
-    "discardRecordingLabel": "Discard recording",
-    "timerAriaLabel": "Recording time"
+    "discardRecordingLabel": "Discard recording"
   },
   "tools": {
     "menuTitle": "Tools",
@@ -1015,10 +1025,51 @@
       "description": "Some fields are invalid or required fields are missing. Changes in those fields will not be saved. Exit and save only valid information?",
       "confirmLabel": "Save"
     },
+    "savingOverlay": "Saving in progress…",
+    "loadingOverlay": "Loading…",
     "error": {
       "createFailed": "Failed to create custom app. Please try again.",
       "saveFailed": "Failed to save custom app. Please try again.",
       "loadFailed": "Failed to load custom app. Please try again."
     }
+  },
+  "promptEditor": {
+    "createTitle": "New prompt",
+    "editTitle": "Edit prompt",
+    "nameLabel": "Name",
+    "namePlaceholder": "Give your prompt a short name",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "What is this prompt for?",
+    "contentLabel": "Prompt",
+    "contentPlaceholder": "Write the prompt text you want to reuse",
+    "folderLabel": "Folder",
+    "folderRootOption": "No folder",
+    "folderEmptyState": "You have no folders yet.",
+    "error": {
+      "required": "This field is required.",
+      "nameTooLong": "Use 256 characters or fewer.",
+      "nameInvalid": "Use only letters, digits, spaces, and _ . -",
+      "descriptionTooLong": "Use 2000 characters or fewer.",
+      "contentTooLong": "Use 50000 characters or fewer.",
+      "nameConflict": "A prompt with this name already exists in this folder.",
+      "folderConflict": "A folder with this name already exists here."
+    },
+    "charactersRemaining": "{{count}} characters left",
+    "loadError": "Couldn't load this prompt.",
+    "retryLabel": "Try again",
+    "savingStatus": "Saving",
+    "saveSuccessTitle": "Prompt saved",
+    "createSuccess": "\"{{name}}\" has been created.",
+    "updateSuccess": "\"{{name}}\" has been updated.",
+    "saveError": "Couldn't save this prompt. Please try again.",
+    "moveError": "The prompt was saved but couldn't be moved to the selected folder.",
+    "folderCreateLabel": "New folder",
+    "folderRenameLabel": "Rename folder",
+    "folderDeleteLabel": "Delete folder",
+    "folderNameLabel": "Folder name",
+    "folderDeleteConfirmTitle": "Delete folder",
+    "folderDeleteConfirmMessage": "Delete \"{{name}}\" and every prompt inside it? This cannot be undone.",
+    "folderError": "Couldn't update folders. Please try again.",
+    "loadingAriaLabel": "Loading prompt"
   }
 }

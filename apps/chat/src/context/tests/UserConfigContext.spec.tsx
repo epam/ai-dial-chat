@@ -51,10 +51,11 @@ const mockUpdateSelectedDeployment = vi.mocked(
 );
 
 const fullConfig = {
-  version: 2,
+  version: 4,
   conversations: { pinnedIds: ['conv-1'] },
   toolsets: { installed: ['ts-a'] },
   deployments: { installed: ['dep-1'] },
+  prompts: { installed: ['Work/AI/summarize'] },
 };
 
 const wrapper = ({ children }: { children: ReactNode }) => (
@@ -207,10 +208,11 @@ describe('UserConfigContext', () => {
 
       await act(async () => {
         resolveRefetch({
-          version: 2,
+          version: 4,
           conversations: { pinnedIds: ['conv-2'] },
           toolsets: { installed: [] },
           deployments: { installed: [] },
+          prompts: { installed: [] },
         });
         await refetchPromise;
       });

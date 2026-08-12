@@ -112,8 +112,8 @@ On failure, the panel SHALL remain open, the submit-error callout (existing `der
 
 The failure notification SHALL:
 
-- use the shared `publish.failedTitle` title and the shared `publish.failedMessage` body, and carry `requestId` set to the trace ID resolved from the failed response via `getApiErrorDetails` when one is available (see `notification-request-id` and `api-error-trace-correlation`);
-- use the connection-specific `publish.networkErrorMessage` body and omit `requestId` when the failure occurred while `navigator.onLine` is `false`, because the request never reached the backend and therefore has no trace ID;
+- use the shared `publish.failedTitle` title, and a body resolved from the failed response's `message` (via `getApiErrorDetails`) when the response carries one — surfacing the backend/DIAL Core reason (e.g. a validation message for a 400) instead of always showing generic copy — falling back to the shared `publish.failedMessage` body only when the response carries no message; it SHALL carry `requestId` set to the trace ID resolved from the same call when one is available (see `notification-request-id` and `api-error-trace-correlation`);
+- use the connection-specific `publish.networkErrorMessage` body and omit `requestId` when the failure occurred while `navigator.onLine` is `false`, because the request never reached the backend and therefore has no trace ID or message;
 - be additive to the inline callout, never a replacement for it — the callout remains the in-context explanation next to the destination picker.
 
 The submit-error callout text SHALL be supplied by the host as `PublishPanelLabels.submitError` (`publish.submitErrorCallout`) rather than left to the library's hardcoded English default, since libraries carry no i18n.
@@ -127,7 +127,7 @@ The failure-notification strings SHALL live in one shared `publish.*` namespace 
 #### Scenario: Publish fails with a backend error
 - **WHEN** the backend returns an error for the publish request
 - **THEN** the panel stays open, the submit-error callout is shown, and no success notification or list refresh occurs
-- **AND** an error notification appears with the `publish.failedTitle` title and `publish.failedMessage` body
+- **AND** an error notification appears with the `publish.failedTitle` title and a body showing the response's own `message` (e.g. the DIAL Core reason for a 400) when the response carries one, or the shared `publish.failedMessage` body otherwise
 - **AND** the notification shows the request ID when the failed response carried a valid `traceparent`
 
 #### Scenario: Publish fails because the connection was lost

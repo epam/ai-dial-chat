@@ -736,6 +736,20 @@ export class EnvironmentVariables {
   LIVE_CHAT_INTERACTION_ENABLED?: boolean = false;
 
   @IsOptional()
+  @Transform(({ obj, key }) => {
+    /* Reads the raw source value (not `value`, which class-transformer's
+     * enableImplicitConversion may have already coerced to `true` for any
+     * non-empty string, including the literal string "false") so an env var
+     * explicitly set to "false"/"0"/"no" parses to `false` as intended. */
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  })
+  @IsBoolean()
+  RESPONSES_API_ENABLED?: boolean = false;
+
+  @IsOptional()
   @Transform(({ value }) => {
     if (value == null || value === '') return [];
     return String(value)
@@ -795,4 +809,29 @@ export class EnvironmentVariables {
   @IsString({ each: true })
   @MaxLength(200, { each: true })
   PUBLICATION_FILTER_SOURCES?: string[] = [];
+
+  // Skills domain ingress limits (see openspec/changes/add-skills-bff-api/design.md "Upload Limits")
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  SKILL_UPLOAD_MAX_BYTES?: number = 104_857_600;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  SKILL_UPLOAD_MAX_FILES?: number = 500;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  SKILL_FILE_UPLOAD_MAX_BYTES?: number = 20_971_520;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  SKILL_TRANSFER_TIMEOUT_MS?: number = 60_000;
 }

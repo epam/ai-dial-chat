@@ -34,6 +34,17 @@ describe('StarCellRenderer', () => {
     expect(container.firstChild).toBeNull();
   });
 
+  it('renders the toggle for a prompt row like any other entity type', () => {
+    render(
+      <StarCellRenderer
+        {...makeParams(makeItem({ type: CatalogEntityType.Prompt }))}
+      />,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Toggle favorite' }),
+    ).toBeTruthy();
+  });
+
   it('renders an accessible, labelled toggle reflecting the starred state', () => {
     render(<StarCellRenderer {...makeParams(makeItem({ isStarred: true }))} />);
     expect(

@@ -19,6 +19,8 @@ export interface ItemDetailsTexts {
   manageActionLabel?: string;
   /** "About" tab label. Default: `'About'`. */
   tabAboutLabel?: string;
+  /** Content tab label, shown for items carrying a text body. Default: `'Details'`. */
+  tabContentLabel?: string;
   /** "Overview" tab label. Default: `'Overview'`. */
   tabOverviewLabel?: string;
   /** "Pricing" tab label. Default: `'Pricing'`. */
@@ -234,6 +236,8 @@ export interface ItemDetailsColors {
   versionTagText?: string;
   /** Credentials signed-in/signed-out status label color. Fallback: `--text-primary`. */
   credentialsStatusText?: string;
+  /** Body text color of the Content tab. Fallback: `--text-primary`. */
+  contentText?: string;
   /** Heading color of the API section. Fallback: `--text-secondary`. */
   apiHeadingText?: string;
   /** Divider color between tool entries. Fallback: `--stroke-tertiary`. */
@@ -289,6 +293,12 @@ export interface DetailsPanelProps {
   onClose: () => void;
   /** Called when the star/favorite button is toggled. */
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
+  /**
+   * Additional caller-supplied rule for whether the "Remove from My List"
+   * action is shown, combined (AND) with the built-in
+   * `sharedWithMe`/`isMyApp` rule. Defaults to `true` when absent.
+   */
+  isUnshareVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Use in chat" button is clicked. */
   onUseInChat?: (item: CatalogItem) => void;
   /** Controls whether the primary action button is shown for the item. */

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { listScheduledTaskRuns } from '../../server-api/scheduled-tasks.api';
 
 /** Page size requested from the BFF on each fetch (initial page and every subsequent load-more page). */
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 /**
  * Whether another page likely exists beyond the just-fetched one. Prefers the

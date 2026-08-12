@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, Patch, Req } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { UpdateInstalledPromptDto } from './dto/update-installed-prompt.dto';
 import { UpdateInstalledDto } from './dto/update-installed.dto';
 import { UpdatePinsDto } from './dto/update-pins.dto';
 import { UpdateSelectedDeploymentDto } from './dto/update-selected-deployment.dto';
@@ -65,6 +66,26 @@ export class UserConfigController {
   ) {
     const { at, bucket } = req.user as SessionUser;
     return this.userConfigService.updateInstalledDeployment(
+      dto.id,
+      dto.isInstalled,
+      at,
+      bucket,
+    );
+  }
+
+  @Patch('prompts')
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Add or remove a prompt from favorites' })
+  @ApiBody({ type: UpdateInstalledPromptDto })
+  @ApiResponse({ status: 204, description: 'Prompt favorite state updated' })
+  @ApiResponse({ status: 400, description: 'Missing or invalid body' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  updateInstalledPrompt(
+    @Req() req: Request,
+    @Body() dto: UpdateInstalledPromptDto,
+  ) {
+    const { at, bucket } = req.user as SessionUser;
+    return this.userConfigService.updateInstalledPrompt(
       dto.id,
       dto.isInstalled,
       at,

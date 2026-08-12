@@ -14,6 +14,8 @@ import type {
 } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { FeatureFlagsService } from '../../app-config/feature-flags/feature-flags.service';
+import { FEATURE_KEY_METADATA } from '../../app-config/feature-flags/require-feature.decorator';
 import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ScheduledTaskUnreadService } from '../../scheduled-task-unread/scheduled-task-unread.service';
@@ -268,6 +270,10 @@ describe('ConversationController (integration)', () => {
           {
             provide: DeploymentsService,
             useValue: { getDeploymentDetails: vi.fn() },
+          },
+          {
+            provide: FeatureFlagsService,
+            useValue: { isEnabled: vi.fn().mockResolvedValue(false) },
           },
         ],
       }).compile();
@@ -879,6 +885,24 @@ describe('ConversationController (integration)', () => {
         .post('/conversations/deletions/all')
         .send({})
         .expect(400);
+    });
+  });
+
+  describe('POST /conversations/completions', () => {
+    it('carries no @RequireFeature/FeatureGuard metadata tied to ResponsesApiEnabled', () => {
+      /*
+       * The Responses-vs-Chat-Completions selection is an internal routing
+       * decision (ConversationStreamingService.resolveGenerationApiForDeployment),
+       * not a per-route feature gate — a disabled flag must select Chat
+       * Completions, never 403 the whole endpoint. Asserted via reflection
+       * rather than an HTTP call so it fails fast on either an accidental
+       * `@UseGuards(FeatureGuard)` or `@RequireFeature(...)` addition.
+       */
+      const metadata = Reflect.getMetadata(
+        FEATURE_KEY_METADATA,
+        ConversationController.prototype.streamCompletion,
+      );
+      expect(metadata).toBeUndefined();
     });
   });
 });

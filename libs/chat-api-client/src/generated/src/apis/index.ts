@@ -17,6 +17,7 @@ export * from './PublishApi';
 export * from './RateApi';
 export * from './ScheduledTasksApi';
 export * from './ShareApi';
+export * from './SkillsApi';
 export * from './ThemesApi';
 export * from './ToolsetsApi';
 export * from './TranscriptionApi';

@@ -29,5 +29,6 @@ export const DEFAULT_ENABLED_UI_FEATURES: ReadonlySet<OverlayFeature> = new Set(
     OverlayFeature.Toolsets,
     OverlayFeature.CustomApps,
     OverlayFeature.VoiceInput,
+    OverlayFeature.Prompts,
   ],
 );

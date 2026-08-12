@@ -124,11 +124,19 @@ export interface CatalogItemTools {
   tools: ToolDefinition[];
 }
 
+/** Complete data for the Content tab (long-form text entities such as prompts). */
+export interface CatalogItemPromptContent {
+  /** The item's full text body, already resolved by the host. */
+  content: string;
+}
+
 /**
  * All tab-specific detail data for a catalog item.
  * A tab is shown only when its corresponding field is non-null.
  */
 export interface CatalogItemTabData {
+  /** Content tab data. When absent the Content tab is hidden. */
+  promptContent?: CatalogItemPromptContent;
   /** Overview tab data. When absent the Overview tab is hidden. */
   overview?: CatalogItemOverview;
   /** Pricing tab data. When absent the Pricing tab is hidden. */

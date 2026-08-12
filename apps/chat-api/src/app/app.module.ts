@@ -26,6 +26,7 @@ import { PublishModule } from '../publish/publish.module';
 import { RateModule } from '../rate/rate.module';
 import { ScheduledTasksModule } from '../scheduled-tasks/scheduled-tasks.module';
 import { ShareModule } from '../share/share.module';
+import { SkillsModule } from '../skills/skills.module';
 import { TelemetryShutdownService } from '../telemetry/telemetry-shutdown.service';
 import { ThemesModule } from '../themes/themes.module';
 import { ToolsetsModule } from '../toolsets/toolsets.module';
@@ -83,6 +84,7 @@ import { createServeStaticOptions } from './static-assets';
     PublishModule,
     ScheduledTasksModule,
     OfflineCredentialsModule,
+    SkillsModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

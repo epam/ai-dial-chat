@@ -35,11 +35,9 @@ import {
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
-import {
-  FavoriteEntityType,
-  useFavoriteApplications,
-} from '../../context/FavoriteApplicationsContext';
+import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { usePrompts } from '../../context/PromptsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
@@ -54,6 +52,11 @@ import { deleteApplication } from '../../server-api/applications';
 import { getDeploymentLimits } from '../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../server-api/deployments';
 import {
+  deletePrompt,
+  getPrompt,
+  getPublicPrompt,
+} from '../../server-api/prompts.api';
+import {
   getPublishRules,
   toPublishRuleDto,
 } from '../../server-api/publish-rules.api';
@@ -65,9 +68,12 @@ import {
 import { deleteToolset, logoutToolset } from '../../server-api/toolsets';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { CatalogQuery } from '../../types/catalog';
+import { PromptSource } from '../../types/prompt';
+import { PromptEditorQuery } from '../../types/prompt-editor';
 import { ROUTES } from '../../types/routes';
 import { isQuickAppSchema } from '../../utils/application-schema';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
+import { resolveFavoriteEntityType } from '../../utils/favorites';
 import { mapDeploymentLimitsDtoToCatalogLimits } from '../../utils/map-deployment-limits-to-catalog';
 import {
   mapDeploymentToCatalogItem,
@@ -78,6 +84,11 @@ import {
   mapEntityDetailsToCatalogDetails,
   mapToolsetCredentials,
 } from '../../utils/map-entity-details-to-catalog';
+import {
+  buildPromptOverview,
+  mapPromptToCatalogItem,
+  resolvePromptSource,
+} from '../../utils/map-prompt-to-catalog-item';
 import {
   buildConnectApi,
   resolveMcpResourceKind,
@@ -101,9 +112,20 @@ interface Props {
   isSelectorMode?: boolean;
   /** Called after a card selection commits in picker mode, so the host can close the modal. */
   onClose?: () => void;
+  /**
+   * Called with the selected deployment's id when a card is picked in
+   * selector mode, instead of committing the pick to `DeploymentsContext`.
+   * Omit to keep the default behavior (updates the chat input's own
+   * selected deployment via `setSelectedItemId`).
+   */
+  onSelect?: (id: string) => void;
 }
 
-const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
+const CatalogView: FC<Props> = ({
+  isSelectorMode = false,
+  onClose,
+  onSelect,
+}) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const navigate = useNavigate();
@@ -181,6 +203,14 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const isHideCustomAppCreationEnabled = useUiFeature(
     OverlayFeature.HideCustomAppCreation,
   );
+  const isPromptsEnabled = useUiFeature(OverlayFeature.Prompts);
+
+  const {
+    prompts,
+    sharedWithMe: sharedPrompts,
+    publicPrompts,
+    refetchPrompts,
+  } = usePrompts();
 
   const catalogItems = useMemo(() => {
     return [
@@ -203,6 +233,31 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
             }),
           )
         : []),
+      ...(isPromptsEnabled
+        ? [
+            ...prompts.map((prompt) =>
+              mapPromptToCatalogItem(prompt, {
+                t,
+                source: PromptSource.Personal,
+                favoriteIds,
+              }),
+            ),
+            ...sharedPrompts.map((prompt) =>
+              mapPromptToCatalogItem(prompt, {
+                t,
+                source: PromptSource.SharedWithMe,
+                favoriteIds,
+              }),
+            ),
+            ...publicPrompts.map((prompt) =>
+              mapPromptToCatalogItem(prompt, {
+                t,
+                source: PromptSource.Public,
+                favoriteIds,
+              }),
+            ),
+          ]
+        : []),
     ];
   }, [
     deployments,
@@ -214,6 +269,10 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     isAdmin,
     isToolsetsEnabled,
     isCustomAppsEnabled,
+    isPromptsEnabled,
+    prompts,
+    sharedPrompts,
+    publicPrompts,
   ]);
 
   const visibleCatalogItems = useMemo(() => {
@@ -258,6 +317,30 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     async (
       item: CatalogItem,
     ): Promise<CatalogItemDetailsFetchResult | undefined> => {
+      /*
+       * Prompts resolve through the prompts endpoints; neither deployment
+       * endpoint accepts a prompt path. A failure here resolves `undefined`,
+       * so the panel keeps the body the list mapper already seeded.
+       */
+      if (item.type === CatalogEntityType.Prompt) {
+        try {
+          const isOrganisationPrompt = !item.isMyApp && !item.sharedWithMe;
+          const dto = isOrganisationPrompt
+            ? await getPublicPrompt(item.id)
+            : await getPrompt(item.id);
+          /*
+           * The fetch result replaces `item.details` wholesale, so the
+           * Overview tab has to be rebuilt here too or it would disappear.
+           */
+          return {
+            promptContent: { content: dto.content },
+            overview: buildPromptOverview(dto, resolvePromptSource(item), t),
+          };
+        } catch {
+          return undefined;
+        }
+      }
+
       try {
         const limitsPromise =
           item.type === CatalogEntityType.Model
@@ -445,9 +528,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         await toggleFavorite(
           id,
           isFavorite,
-          item?.type === CatalogEntityType.Toolset
-            ? FavoriteEntityType.Toolset
-            : FavoriteEntityType.Deployment,
+          resolveFavoriteEntityType(item?.type),
         );
 
         showNotification({
@@ -487,28 +568,81 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   );
 
   const handleUseInChat = useCallback(
-    (item: CatalogItem) => {
+    async (item: CatalogItem) => {
+      /*
+       * A prompt contributes text, not a runtime: it seeds the composer and
+       * leaves the user's selected deployment untouched. The body travels as
+       * router state rather than a query param — it can run to 50 000
+       * characters, which would blow the URL length limit and leak content
+       * into browser history.
+       */
+      if (item.type === CatalogEntityType.Prompt) {
+        let promptContent = item.details?.promptContent?.content;
+        if (promptContent == null) {
+          try {
+            const isOrganisationPrompt = !item.isMyApp && !item.sharedWithMe;
+            const dto = isOrganisationPrompt
+              ? await getPublicPrompt(item.id)
+              : await getPrompt(item.id);
+            promptContent = dto.content;
+          } catch (err) {
+            const { traceId } = await getApiErrorDetails(err);
+            showNotification({
+              variant: NotificationVariant.Error,
+              message: t(CatalogI18nKeys.DetailsPromptLoadError),
+              requestId: traceId,
+            });
+            return;
+          }
+        }
+        navigate(ROUTES.Root, { state: { promptContent } });
+        return;
+      }
+
       setSelectedItemId(item.id);
       navigate(ROUTES.Root);
     },
-    [setSelectedItemId, navigate],
+    [setSelectedItemId, navigate, showNotification, t],
   );
 
   /* Picker mode: a card click selects it and closes the modal immediately,
-   * without opening its details. */
+   * without opening its details. When `onSelect` is supplied (a form-owned
+   * selection, decoupled from the chat input's active deployment), the pick
+   * is routed there instead of committing to `DeploymentsContext`. */
   const handleCardSelect = useCallback(
     (item: CatalogItem) => {
-      setSelectedItemId(item.id);
+      if (onSelect) {
+        onSelect(item.id);
+      } else {
+        setSelectedItemId(item.id);
+      }
       onClose?.();
     },
-    [setSelectedItemId, onClose],
+    [onSelect, setSelectedItemId, onClose],
   );
 
-  const isPrimaryActionVisible = useCallback(
-    (item: CatalogItem) =>
+  const isPrimaryActionVisible = useCallback((item: CatalogItem) => {
+    /*
+     * A prompt contributes text rather than a runtime, so it is always
+     * usable in chat; `supportsChat` describes a deployment's interfaces
+     * and is absent on prompt items.
+     */
+    if (item.type === CatalogEntityType.Prompt) return true;
+    return (
       (item.type === CatalogEntityType.Model ||
         item.type === CatalogEntityType.Agent) &&
-      item.supportsChat !== false,
+      item.supportsChat !== false
+    );
+  }, []);
+
+  /*
+   * `DiscardSharedCatalogItemDto` restricts `itemId` to
+   * `applications|toolsets|conversations` paths, so a prompt path is rejected
+   * with 400 before reaching the service. Hide the action until the backend
+   * accepts prompts.
+   */
+  const isUnshareVisible = useCallback(
+    (item: CatalogItem) => item.type !== CatalogEntityType.Prompt,
     [],
   );
 
@@ -523,10 +657,18 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   );
   const isToolsetsSharingEnabled = useUiFeature(OverlayFeature.ToolsetsSharing);
   const isShareVisible = useCallback(
-    (item: CatalogItem) =>
-      item.type === CatalogEntityType.Toolset
-        ? isToolsetsSharingEnabled
-        : isApplicationsSharingEnabled,
+    (item: CatalogItem) => {
+      /*
+       * Only your own prompts can be shared: DIAL Core grants access from the
+       * owner's bucket, which is the only one the backend can qualify a
+       * bucket-relative prompt path against.
+       */
+      if (item.type === CatalogEntityType.Prompt) return Boolean(item.isMyApp);
+      if (item.type === CatalogEntityType.Toolset) {
+        return isToolsetsSharingEnabled;
+      }
+      return isApplicationsSharingEnabled;
+    },
     [isApplicationsSharingEnabled, isToolsetsSharingEnabled],
   );
 
@@ -609,6 +751,15 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
 
   const handleEdit = useCallback(
     (item: CatalogItem) => {
+      if (item.type === CatalogEntityType.Prompt) {
+        const params = new URLSearchParams({
+          [PromptEditorQuery.Id]: item.id,
+          [PromptEditorQuery.ReturnUrl]: ROUTES.Catalog,
+        });
+        navigate(`${ROUTES.PromptEditor}?${params.toString()}`);
+        return;
+      }
+
       if (item.type === CatalogEntityType.Toolset) {
         const params = new URLSearchParams({
           [ToolsetEditorQuery.Id]: item.id,
@@ -653,7 +804,10 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const handleDelete = useCallback(
     async (item: CatalogItem) => {
       try {
-        if (item.type === CatalogEntityType.Toolset) {
+        if (item.type === CatalogEntityType.Prompt) {
+          await deletePrompt(item.id);
+          await refetchPrompts();
+        } else if (item.type === CatalogEntityType.Toolset) {
           await deleteToolset(item.id);
           await refetchToolsets();
         } else {
@@ -676,7 +830,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         throw err;
       }
     },
-    [refetchToolsets, refetchDeployments, showNotification, t],
+    [refetchToolsets, refetchDeployments, refetchPrompts, showNotification, t],
   );
 
   const handleUnshare = useCallback(
@@ -809,10 +963,24 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       });
     }
 
+    if (isPromptsEnabled) {
+      options.push({
+        key: 'prompt',
+        label: t(CatalogI18nKeys.CreatePrompt),
+        onClick: () => {
+          const params = new URLSearchParams({
+            [PromptEditorQuery.ReturnUrl]: ROUTES.Catalog,
+          });
+          navigate(`${ROUTES.PromptEditor}?${params.toString()}`);
+        },
+      });
+    }
+
     return options;
   }, [
     quickAppSchemaId,
     navigate,
+    isPromptsEnabled,
     t,
     buildEditorUrl,
     isCustomApplicationsEnabled,
@@ -855,6 +1023,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       onEdit={handleEdit}
       onDelete={handleDelete}
       onUnshare={handleUnshare}
+      isUnshareVisible={isUnshareVisible}
       onRevokeShare={handleRevokeShare}
       isPrimaryActionVisible={isPrimaryActionVisible}
       isPublishVisible={isPublishVisible}
@@ -905,10 +1074,12 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
           [CatalogEntityType.Model]: t(CatalogI18nKeys.TabModels),
           [CatalogEntityType.Agent]: t(CatalogI18nKeys.TabApplications),
           [CatalogEntityType.Toolset]: t(CatalogI18nKeys.TabToolsets),
+          [CatalogEntityType.Prompt]: t(CatalogI18nKeys.TabPrompts),
         },
       }}
       detailsTexts={{
         tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
+        tabContentLabel: t(CatalogI18nKeys.DetailsTabContent),
         tabLimitsLabel: t(CatalogI18nKeys.DetailsTabLimits),
         primaryActionLabel: t(ButtonsI18nKeys.UseInChat),
         editActionLabel: t(ButtonsI18nKeys.Edit),
