@@ -70,8 +70,15 @@ export class OfflineCredentialsConnectDto {
   @ApiProperty({ example: 'dial-chat' })
   clientId!: string;
 
-  @ApiProperty({ example: 'https://chat.example.com/auth/toolset-signin' })
-  redirectUri!: string;
+  /*
+   * Optional: Core does not reliably echo this back, and the OAuth popup
+   * flow never uses it (it always builds its own redirect URI locally —
+   * see `mapDialOfflineCredentialsToDto`).
+   */
+  @ApiPropertyOptional({
+    example: 'https://chat.example.com/auth/toolset-signin',
+  })
+  redirectUri?: string;
 
   @ApiProperty({ type: [String], example: ['openid', 'offline_access'] })
   scopes!: string[];

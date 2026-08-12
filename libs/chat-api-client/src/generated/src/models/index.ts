@@ -4430,7 +4430,7 @@ export interface OfflineCredentialsConnectDto {
    * @type {string}
    * @memberof OfflineCredentialsConnectDto
    */
-  redirectUri: string;
+  redirectUri?: string;
   /**
    *
    * @type {Array<string>}

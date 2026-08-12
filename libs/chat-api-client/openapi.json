@@ -10778,7 +10778,6 @@
         "required": [
           "authorizationEndpoint",
           "clientId",
-          "redirectUri",
           "scopes"
         ]
       },

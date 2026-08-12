@@ -52,6 +52,28 @@ describe('mapDialOfflineCredentialsToDto', () => {
     ).toEqual({ available: true, connected: false });
   });
 
+  it('keeps connect when Core omits redirect_uri (not required — the OAuth flow always builds its own redirect URI locally)', () => {
+    expect(
+      mapDialOfflineCredentialsToDto({
+        available: true,
+        connected: false,
+        connect: {
+          authorization_endpoint: 'https://identity.example.com/authorize',
+          client_id: 'dial-chat',
+          scopes: ['openid', 'offline_access'],
+        },
+      }),
+    ).toEqual({
+      available: true,
+      connected: false,
+      connect: {
+        authorizationEndpoint: 'https://identity.example.com/authorize',
+        clientId: 'dial-chat',
+        scopes: ['openid', 'offline_access'],
+      },
+    });
+  });
+
   it('defaults scopes to an empty array when Core omits them', () => {
     expect(
       mapDialOfflineCredentialsToDto({
