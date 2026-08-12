@@ -909,6 +909,12 @@ export interface ConversationMessageDto {
    * @memberof ConversationMessageDto
    */
   responseId?: string;
+  /**
+   * Deployment that produced this message. Present on assistant and status messages.
+   * @type {string}
+   * @memberof ConversationMessageDto
+   */
+  deploymentId?: string;
 }
 
 /**

@@ -99,6 +99,7 @@ describe('ConversationController (integration)', () => {
       }),
     );
     await app.init();
+    await app.listen(0, '127.0.0.1');
   });
 
   afterEach(async () => {
