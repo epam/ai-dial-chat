@@ -1710,6 +1710,7 @@ export const useFileManager = ({
     fileMetadataPopupOptions,
     navigationPanelOptions,
     gridOptions,
+    gridPathColumnLabel: gridColumnHeaderLabels.path,
     toolbarOptions,
     destinationFolderPopupOptions,
     deleteConfirmationOptions,

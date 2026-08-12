@@ -232,3 +232,14 @@ span.katex-mathml {
     @apply flex size-[24px] shrink-0 items-center justify-center rounded-[4px] text-secondary outline-offset-0 hover:bg-accent-primary-alpha hover:text-accent-primary focus-visible:outline;
   }
 }
+
+[data-qa='file-manager'] .ag-header-cell[col-id='path'] .ag-header-cell-text {
+  font-size: 0;
+}
+
+[data-qa='file-manager']
+  .ag-header-cell[col-id='path']
+  .ag-header-cell-text::after {
+  content: var(--grid-path-column-label);
+  font-size: var(--ag-header-font-size);
+}
