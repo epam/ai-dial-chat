@@ -9,7 +9,10 @@ import type {
   CustomAppFormData,
   CustomAppFormErrors,
 } from '../../../models/custom-apps';
-import { isValidFeaturesData } from '../../../utils/custom-apps';
+import {
+  isValidAbsoluteUrl,
+  isValidFeaturesData,
+} from '../../../utils/custom-apps';
 
 interface Props {
   form: CustomAppFormData;
@@ -21,6 +24,9 @@ const CustomAppSettingsForm: FC<Props> = ({ form, errors, onChange }) => {
   const { t } = useTranslation();
   const [mimeError, setMimeError] = useState<string | undefined>(undefined);
   const [featuresDataError, setFeaturesDataError] = useState<
+    string | undefined
+  >(undefined);
+  const [completionUrlError, setCompletionUrlError] = useState<
     string | undefined
   >(undefined);
 
@@ -48,6 +54,25 @@ const CustomAppSettingsForm: FC<Props> = ({ form, errors, onChange }) => {
     },
     [onChange, t],
   );
+
+  const handleCompletionUrlChange = useCallback(
+    (value?: string) => {
+      onChange({ completionUrl: value ?? '' });
+      setCompletionUrlError(undefined);
+    },
+    [onChange],
+  );
+
+  const handleCompletionUrlBlur = useCallback(() => {
+    const trimmed = form.completionUrl.trim();
+    if (!trimmed) {
+      setCompletionUrlError(t(CustomAppI18nKeys.CompletionUrlRequired));
+    } else if (!isValidAbsoluteUrl(trimmed)) {
+      setCompletionUrlError(t(CustomAppI18nKeys.CompletionUrlInvalid));
+    } else {
+      setCompletionUrlError(undefined);
+    }
+  }, [form.completionUrl, t]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -99,14 +124,15 @@ const CustomAppSettingsForm: FC<Props> = ({ form, errors, onChange }) => {
       <Input
         id="custom-app-completion-url"
         value={form.completionUrl}
-        onChange={(value) => onChange({ completionUrl: value ?? '' })}
+        onChange={handleCompletionUrlChange}
+        onBlur={handleCompletionUrlBlur}
         labelProps={{
           label: t(CustomAppI18nKeys.CompletionUrlLabel),
           required: true,
         }}
         placeholder={t(CustomAppI18nKeys.TypeChatCompletionURL)}
-        error={errors.completionUrl || undefined}
-        invalid={!!errors.completionUrl || undefined}
+        error={completionUrlError ?? errors.completionUrl ?? undefined}
+        invalid={!!completionUrlError || !!errors.completionUrl || undefined}
       />
     </div>
   );
