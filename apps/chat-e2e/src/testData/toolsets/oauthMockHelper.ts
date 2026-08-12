@@ -96,17 +96,26 @@ export class OAuthMockHelper extends BaseAuthMockHelper<ToolsetOAuthSignInReques
         waitUntil: 'domcontentloaded',
       });
     } catch (e) {
-      // Race condition: the 302 redirect completed the sign-in flow before we
-      // got here, so the main page already closed the popup. Nothing left to do.
-      if (!popup.isClosed()) throw e;
-      signInResponsePromise.catch(() => {
-        console.error(
-          'Expected sign-in response was not received, likely due to the popup being closed before navigation.',
-        );
-      });
+      // Race condition: setupOAuthRedirectRoute's 302 already sent the popup
+      // toward the callback URL on its own before we got here, so our
+      // explicit goto() above gets aborted as redundant (net::ERR_ABORTED).
+      // The sign-in flow still completes on its own in that case — only bail
+      // out for real if the popup isn't even heading to the callback page.
+      const isHeadingToCallback =
+        popup.isClosed() || popup.url().includes(Routes.ToolsetSignIn);
+      if (!isHeadingToCallback) throw e;
+    }
+
+    if (popup.isClosed()) return;
+
+    try {
+      await signInResponsePromise;
+    } catch {
+      console.error(
+        'Expected sign-in response was not received, likely due to the popup being closed before navigation.',
+      );
       return;
     }
-    await signInResponsePromise;
 
     // The main page closes the popup once it detects login-complete=1
     if (!popup.isClosed()) {

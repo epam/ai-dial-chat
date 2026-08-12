@@ -195,9 +195,7 @@ dialTest(
     );
 
     await dialTest.step('Update toolset name and click Next', async () => {
-      //get real toolset object from BE
       const toolsetId = oauthMockHelper.getToolset().id!;
-      realToolset = await itemApiHelper.getItem<Toolset>(toolsetId);
 
       //intercept toolset routes with a new name
       updatedId = toolsetId.replace(toolsetEntity.name, updatedName);
@@ -216,10 +214,7 @@ dialTest(
       await entityEditorPage.waitForPageLoadedForEdit(
         EntityEditorToolsetTypes.Toolset,
       );
-
-      //update real toolset name
-      realToolset.display_name = updatedName;
-      await toolsetApiHelper.createToolset(realToolset);
+      realToolset = await itemApiHelper.getItem<Toolset>(updatedId);
     });
 
     await dialTest.step(
@@ -293,9 +288,6 @@ dialTest(
     );
 
     await dialTest.step('Update toolset version and click Next', async () => {
-      //get real toolset object from BE
-      realToolset = await itemApiHelper.getItem<Toolset>(updatedId);
-
       //intercept toolset routes with a new version
       updatedId = updatedId.replace(toolsetEntity.version, updatedVersion);
       await oauthMockHelper.setupUpdatedToolsetRoutes({
@@ -313,10 +305,7 @@ dialTest(
       await entityEditorPage.waitForPageLoadedForEdit(
         EntityEditorToolsetTypes.Toolset,
       );
-
-      //update real toolset version
-      realToolset.display_version = updatedVersion;
-      await toolsetApiHelper.createToolset(realToolset);
+      realToolset = await itemApiHelper.getItem<Toolset>(updatedId);
     });
 
     await dialTest.step(
