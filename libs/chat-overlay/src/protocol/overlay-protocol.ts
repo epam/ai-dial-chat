@@ -111,6 +111,8 @@ export enum OverlayFeature {
   ToolsetsSharing = 'toolsets-sharing',
   /** Enables toolsets functionality. */
   Toolsets = 'toolsets',
+  /** Enables prompts: the catalog's Prompts tab, its create option, and the prompt editor route. */
+  Prompts = 'prompts',
   /** Enables the custom-app creation entry in the catalog. */
   CustomApps = 'custom-apps',
   /** Hides the user avatar/menu button in the header. */

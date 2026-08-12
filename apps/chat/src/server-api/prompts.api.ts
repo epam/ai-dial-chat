@@ -1,0 +1,70 @@
+import type {
+  CreatePromptDto,
+  CreatePromptFolderDto,
+  MovePromptDto,
+  PromptFolderResponseDto,
+  PromptListResponseDto,
+  PromptResponseDto,
+  PublicPromptListResponseDto,
+  RenamePromptFolderDto,
+  UpdatePromptDto,
+} from '@epam/ai-dial-chat-api-client';
+import { promptsApi } from './api-client';
+
+/* ------------------------------------------------------------------ */
+/* Personal prompts                                                     */
+/* ------------------------------------------------------------------ */
+
+export const listPrompts = (): Promise<PromptListResponseDto> =>
+  promptsApi.listPrompts();
+
+export const getPrompt = (path: string): Promise<PromptResponseDto> =>
+  promptsApi.getPrompt({ path });
+
+export const createPrompt = (
+  body: CreatePromptDto,
+): Promise<PromptResponseDto> =>
+  promptsApi.createPrompt({ createPromptDto: body });
+
+export const updatePrompt = (
+  path: string,
+  body: UpdatePromptDto,
+): Promise<PromptResponseDto> =>
+  promptsApi.updatePrompt({ path, updatePromptDto: body });
+
+export const deletePrompt = (path: string): Promise<void> =>
+  promptsApi.deletePrompt({ path });
+
+export const movePrompt = (
+  path: string,
+  body: MovePromptDto,
+): Promise<PromptResponseDto> =>
+  promptsApi.movePrompt({ path, movePromptDto: body });
+
+/* ------------------------------------------------------------------ */
+/* Organisation (public) prompts                                        */
+/* ------------------------------------------------------------------ */
+
+export const listPublicPrompts = (): Promise<PublicPromptListResponseDto> =>
+  promptsApi.listPublicPrompts();
+
+export const getPublicPrompt = (path: string): Promise<PromptResponseDto> =>
+  promptsApi.getPublicPrompt({ path });
+
+/* ------------------------------------------------------------------ */
+/* Folders                                                              */
+/* ------------------------------------------------------------------ */
+
+export const createPromptFolder = (
+  body: CreatePromptFolderDto,
+): Promise<PromptFolderResponseDto> =>
+  promptsApi.createPromptFolder({ createPromptFolderDto: body });
+
+export const renamePromptFolder = (
+  path: string,
+  body: RenamePromptFolderDto,
+): Promise<PromptFolderResponseDto> =>
+  promptsApi.renamePromptFolder({ path, renamePromptFolderDto: body });
+
+export const deletePromptFolder = (path: string): Promise<void> =>
+  promptsApi.deletePromptFolder({ path });

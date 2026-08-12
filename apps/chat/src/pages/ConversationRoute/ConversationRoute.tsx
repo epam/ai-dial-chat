@@ -54,9 +54,11 @@ const ConversationRoute: FC = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const navigate = useNavigate();
-  const { state } = useLocation();
+  const { pathname, state } = useLocation();
   const routeDeploymentId = (state as { deploymentId?: string } | null)
     ?.deploymentId;
+  const routePromptContent = (state as { promptContent?: string } | null)
+    ?.promptContent;
   const [inputMessage, setInputMessage] = useState<string | undefined>();
   const { showNotification } = useNotification();
   const overlay = useOptionalOverlay();
@@ -97,6 +99,18 @@ const ConversationRoute: FC = () => {
     routeDeploymentId,
     overlay?.pendingModelId,
   ]);
+
+  /*
+   * Seeds the composer from a prompt the user picked in the catalog. The state
+   * is one-shot: clearing it here keeps a later back-navigation to `/` from
+   * silently re-injecting stale text, the same reason CatalogView clears its
+   * own one-shot `itemId` param.
+   */
+  useEffect(() => {
+    if (routePromptContent == null) return;
+    setInputMessage(routePromptContent);
+    navigate(pathname, { replace: true, state: null });
+  }, [routePromptContent, navigate, pathname]);
 
   /*
    * This is the "no conversation selected" empty state. Overlay mode must

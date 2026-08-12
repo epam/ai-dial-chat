@@ -13,6 +13,7 @@ import { PromptsResourceService } from '../resource/prompts-resource.service';
 import {
   deriveFolders,
   folderIdFromId,
+  isHiddenPromptPath,
   isSentinelPath,
   mapPromptToResponse,
   metadataItemToPromptPath,
@@ -51,7 +52,9 @@ export class PromptsPersonalService {
         }))
         .filter(
           (entry): entry is { item: PromptMetadataItem; path: string } =>
-            entry.path != null && !isSentinelPath(entry.path),
+            entry.path != null &&
+            !isSentinelPath(entry.path) &&
+            !isHiddenPromptPath(entry.path),
         );
       const sentinelFolderIds = items
         .map((item) => metadataItemToPromptPath(item, bucket))
@@ -117,6 +120,8 @@ export class PromptsPersonalService {
 
           const ownerBucket = parts[1];
           const path = parts.slice(2).join('/');
+
+          if (isHiddenPromptPath(path)) return Promise.resolve(null);
 
           return this.resourceService.readPromptByPath(
             token,

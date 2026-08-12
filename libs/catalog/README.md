@@ -108,13 +108,64 @@ import {
   DetailsConfirmationVariant,
 } from '@epam/ai-dial-catalog';
 
-CatalogEntityType.Model; // 'model'
-CatalogEntityType.Tool; // 'tool'
-CatalogEntityType.Assistant; // 'assistant'
+CatalogEntityType.Model; // 'MODEL'
+CatalogEntityType.Agent; // 'AGENT'
+CatalogEntityType.Toolset; // 'TOOLSET'
+CatalogEntityType.Prompt; // 'PROMPT'
+CatalogEntityType.Skill; // 'SKILL'
 
 CatalogViewMode.Grid; // 'grid'
 CatalogViewMode.List; // 'list'
+
+CatalogDetailsTab.About; // 'about'
+CatalogDetailsTab.Content; // 'content' — long-form text body (prompts)
 ```
+
+### Prompt entities
+
+`CatalogEntityType.Prompt` is a display category for reusable text prompts.
+Prompt items carry a body rather than a runtime, so the host supplies the text
+through `details.promptContent` and the details panel renders it in a read-only,
+copyable `Content` tab placed immediately after `About`. Omit the field and the
+tab is hidden, exactly as with `overview`, `pricing`, `limits`, `api`, and
+`tools`.
+
+```tsx
+const promptItem: CatalogItem = {
+  id: 'Work/AI/summarize',
+  type: CatalogEntityType.Prompt,
+  name: 'summarize',
+  version: '',
+  lastUsed: '2 days ago',
+  description: 'Summarize a document',
+  folder: ['Personal', 'Work', 'AI'],
+  topics: [],
+  details: { promptContent: { content: 'Summarize the following text:' } },
+};
+```
+
+The lib never learns where a prompt comes from: the body arrives already
+resolved, and the host decides every prompt-specific action through the
+existing `onFetchDetails` / `onEdit` / `onUseInChat` props.
+
+### Declaring unsupported per-item capabilities
+
+`isUnshareVisible` lets a host hide "Remove from My List" for items whose
+backing capability does not exist, without the lib knowing why. It defaults to
+**visible** when omitted.
+
+```tsx
+<Catalog
+  items={items}
+  favorites={favorites}
+  // Hide "Remove from My List" on prompts — the host's API rejects prompt paths.
+  isUnshareVisible={(item) => item.type !== CatalogEntityType.Prompt}
+  onUnshare={handleUnshare}
+/>
+```
+
+`isUnshareVisible` is combined (AND) with the built-in `sharedWithMe`/`isMyApp`
+rule, so it can only ever narrow visibility.
 
 ## Types
 
@@ -123,6 +174,7 @@ import type {
   CatalogItem,
   ApiResource,
   CatalogItemApiDetails,
+  CatalogItemPromptContent,
   ToolDefinition,
   PricingRow,
   UsageLimitRow,
@@ -134,9 +186,11 @@ import type {
 ```tsx
 import { filterCatalogItems, sortCatalogItems } from '@epam/ai-dial-catalog';
 
-const filtered = filterCatalogItems(items, {
-  search: 'gpt',
-  types: [CatalogEntityType.Model],
-});
-const sorted = sortCatalogItems(filtered, CatalogSortKey.Name);
+/*
+ * Matches an item's `name`, `description`, or `type` — case-insensitive.
+ * Note that a prompt's body is not searched: `details.promptContent` is
+ * resolved lazily and is not part of the search index.
+ */
+const filtered = filterCatalogItems(items, 'gpt');
+const sorted = sortCatalogItems(filtered, CatalogSortKey.NameAZ);
 ```

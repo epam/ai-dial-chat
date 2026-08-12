@@ -142,6 +142,13 @@ export interface CatalogProps {
    */
   onUnshare?: (item: CatalogItem) => Promise<void> | void;
   /**
+   * Narrows where the "Remove from My List" action is offered, on top of the
+   * built-in `sharedWithMe`/`isMyApp` rule. Use it to declare that unsharing
+   * is unsupported for a kind of item. Defaults to `true` (visible) when
+   * absent.
+   */
+  isUnshareVisible?: (item: CatalogItem) => boolean;
+  /**
    * Renders the Share popover content anchored to the Share button in the
    * details panel. When provided, clicking Share opens this popover instead
    * of calling `onShare`.

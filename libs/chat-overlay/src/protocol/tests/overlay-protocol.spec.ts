@@ -114,10 +114,14 @@ describe('isOverlayMessageResponse', () => {
 });
 
 describe('OverlayFeature', () => {
-  it('has exactly 33 unique members', () => {
+  it('has exactly 34 unique members', () => {
     const values = Object.values(OverlayFeature);
-    expect(values).toHaveLength(33);
-    expect(new Set(values).size).toBe(33);
+    expect(values).toHaveLength(34);
+    expect(new Set(values).size).toBe(34);
+  });
+
+  it('includes the prompts feature key', () => {
+    expect(Object.values(OverlayFeature)).toContain('prompts');
   });
 
   it('includes the pre-existing and newly-added transferable keys', () => {

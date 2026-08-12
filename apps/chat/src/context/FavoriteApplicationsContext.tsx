@@ -10,13 +10,24 @@ import {
 import {
   getUserConfig,
   updateInstalledDeployment,
+  updateInstalledPrompt,
   updateInstalledToolset,
 } from '../server-api/user-config.api';
 
 export enum FavoriteEntityType {
   Deployment = 'deployment',
   Toolset = 'toolset',
+  Prompt = 'prompt',
 }
+
+const INSTALL_BY_ENTITY_TYPE: Record<
+  FavoriteEntityType,
+  (id: string, isInstalled: boolean) => Promise<void>
+> = {
+  [FavoriteEntityType.Deployment]: updateInstalledDeployment,
+  [FavoriteEntityType.Toolset]: updateInstalledToolset,
+  [FavoriteEntityType.Prompt]: updateInstalledPrompt,
+};
 
 export interface FavoriteApplicationsContextType {
   favoriteIds: ReadonlySet<string>;
@@ -59,6 +70,7 @@ export const FavoriteApplicationsProvider = ({
             new Set([
               ...(config.deployments?.installed ?? []),
               ...(config.toolsets?.installed ?? []),
+              ...(config.prompts?.installed ?? []),
             ]),
           );
         }
@@ -94,10 +106,7 @@ export const FavoriteApplicationsProvider = ({
         return next;
       });
 
-      const updateInstalled =
-        entityType === FavoriteEntityType.Toolset
-          ? updateInstalledToolset
-          : updateInstalledDeployment;
+      const updateInstalled = INSTALL_BY_ENTITY_TYPE[entityType];
 
       try {
         await updateInstalled(id, isFavorite);

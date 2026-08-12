@@ -33,6 +33,7 @@ import {
   DetailsConfirmationKind,
   DetailsConfirmationVariant,
 } from '../../types/details-confirmation';
+import { CatalogEntityType } from '../../types/entity-type';
 import { getSignedInLevel } from '../../utils/toolset-credentials';
 import { EntityHeader } from '../EntityHeader/EntityHeader';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
@@ -43,6 +44,7 @@ import { CredentialsSection } from './Credentials/CredentialsSection';
 import styles from './DetailsPanel.module.scss';
 import { Header } from './Header/Header';
 import { AboutTab } from './TabsContent/About';
+import { ContentTab } from './TabsContent/Content';
 import { LimitsTab } from './TabsContent/Limits';
 import { Overview } from './TabsContent/Overview';
 import { Pricing } from './TabsContent/Pricing';
@@ -110,6 +112,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onEdit,
   onDelete,
   onUnshare,
+  isUnshareVisible,
   onLogin,
   onLogout,
   texts,
@@ -139,6 +142,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-details-version-tag-bg': detailsColors?.versionTagBackground,
     '--cat-details-version-tag-text': detailsColors?.versionTagText,
     '--cat-credentials-status-text': detailsColors?.credentialsStatusText,
+    '--cat-details-content-text': detailsColors?.contentText,
+    '--cat-details-content-bg': detailsColors?.contentBackground,
     '--cat-api-heading-text': detailsColors?.apiHeadingText,
     '--cat-tools-divider': detailsColors?.toolsDivider,
     '--cat-tools-description-text': detailsColors?.toolsDescriptionText,
@@ -335,9 +340,23 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   }, [isStarred, item.id, onToggleFavorite]);
 
   const tabs = useMemo(() => {
-    const result: { id: string; label: string }[] = [
-      { id: CatalogDetailsTab.About, label: texts?.tabAboutLabel ?? 'About' },
-    ];
+    const result: { id: string; label: string }[] = [];
+    /*
+     * A prompt's description and metadata live in its Overview tab, so an
+     * About tab would only repeat them: prompts show Content + Overview only.
+     */
+    if (item.type !== CatalogEntityType.Prompt) {
+      result.push({
+        id: CatalogDetailsTab.About,
+        label: texts?.tabAboutLabel ?? 'About',
+      });
+    }
+    if (item.details?.promptContent != null) {
+      result.push({
+        id: CatalogDetailsTab.Content,
+        label: texts?.tabContentLabel ?? 'Content',
+      });
+    }
     if (item.details?.overview != null) {
       result.push({
         id: CatalogDetailsTab.Overview,
@@ -621,6 +640,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onEdit={onEdit}
                 onDelete={onDelete ? handleRequestDelete : undefined}
                 onUnshare={onUnshare ? handleRequestUnshare : undefined}
+                isUnshareVisible={isUnshareVisible}
                 onLogin={onLogin}
                 onLogout={onLogout}
                 onToggleCredentials={handleToggleCredentials}
@@ -675,6 +695,15 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                     detailsStyles={detailsStyles}
                   />
                 )}
+                {activeTab === CatalogDetailsTab.Content &&
+                  item.details?.promptContent != null && (
+                    <ContentTab
+                      content={item.details.promptContent.content}
+                      copyAriaLabel={texts?.copyContentAriaLabel}
+                      copiedStatusLabel={texts?.contentCopiedStatusLabel}
+                      detailsStyles={detailsStyles}
+                    />
+                  )}
                 {activeTab === CatalogDetailsTab.Overview && (
                   <Overview
                     sections={item.details?.overview?.sections}

@@ -55,6 +55,8 @@ interface HeaderProps {
   onDelete?: (item: CatalogItem) => void;
   /** Called when the recipient-side "Remove from My List" action is clicked for an item shared with the current user. The details panel owns the confirmation step. */
   onUnshare?: (item: CatalogItem) => void;
+  /** Additional caller-supplied rule for whether "Remove from My List" is shown, combined (AND) with the built-in `sharedWithMe`/`isMyApp` rule. Defaults to `true` when absent. */
+  isUnshareVisible?: (item: CatalogItem) => boolean;
   onLogin?: (
     item: CatalogItem,
     params: { level: CredentialsLevel; apiKey?: string },
@@ -93,6 +95,7 @@ export const Header: FC<HeaderProps> = ({
   onEdit,
   onDelete,
   onUnshare,
+  isUnshareVisible,
   onLogin,
   onLogout,
   onToggleCredentials,
@@ -132,7 +135,8 @@ export const Header: FC<HeaderProps> = ({
     texts?.hasPrimaryAction !== false &&
     (isPrimaryActionVisible?.(item) ??
       (item.type === CatalogEntityType.Model ||
-        item.type === CatalogEntityType.Agent));
+        item.type === CatalogEntityType.Agent ||
+        item.type === CatalogEntityType.Prompt));
 
   const shouldShowPublish =
     isPublishVisible?.(item) ??
@@ -150,7 +154,10 @@ export const Header: FC<HeaderProps> = ({
    * render at the same time.
    */
   const shouldShowUnshareAction =
-    !!onUnshare && item.isMyApp !== true && item.sharedWithMe === true;
+    !!onUnshare &&
+    item.isMyApp !== true &&
+    item.sharedWithMe === true &&
+    (isUnshareVisible?.(item) ?? true);
 
   const manageItems = useMemo<DropdownItem[]>(() => {
     const items: DropdownItem[] = [];

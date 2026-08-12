@@ -29,12 +29,18 @@ import {
   useFavoriteApplications,
 } from '../../../context/FavoriteApplicationsContext';
 import { useNotification } from '../../../context/NotificationContext';
+import { usePrompts } from '../../../context/PromptsContext';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { useCatalogSortFilterPreference } from '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import { deleteApplication } from '../../../server-api/applications';
 import { getDeploymentLimits } from '../../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../../server-api/deployments';
+import {
+  deletePrompt,
+  getPrompt,
+  getPublicPrompt,
+} from '../../../server-api/prompts.api';
 import { getPublishRules } from '../../../server-api/publish-rules.api';
 import { publishCatalogEntity } from '../../../server-api/publish.api';
 import { discardSharedCatalogItem } from '../../../server-api/share.api';
@@ -117,7 +123,7 @@ vi.mock('../../../server-api/publish-rules.api', () => ({
     targets: string[];
   }) => ({
     source: rule.source,
-    _function: rule.function,
+    function: rule.function,
     targets: rule.targets,
   }),
 }));
@@ -127,12 +133,14 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
   Catalog: ({
     createOptions,
     items,
+    favorites,
     onToggleFavorite,
     onUseInChat,
     isPrimaryActionVisible,
     onEdit,
     onDelete,
     onUnshare,
+    isUnshareVisible,
     onFetchDetails,
     onLogin,
     onLogout,
@@ -164,6 +172,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onEdit?: (item: CatalogItem) => void;
     onDelete?: (item: CatalogItem) => Promise<void>;
     onUnshare?: (item: CatalogItem) => Promise<void>;
+    isUnshareVisible?: (item: CatalogItem) => boolean;
     onFetchDetails?: (item: CatalogItem) => Promise<unknown>;
     onLogin?: (
       item: CatalogItem,
@@ -242,6 +251,9 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
         <output aria-label="Initial details item id">
           {initialDetailsItemId ?? ''}
         </output>
+        <output aria-label="Favorite item ids">
+          {(favorites ?? []).map((item) => item.id).join(',')}
+        </output>
         {(items ?? []).map((item) => (
           <button
             key={`favorite-${item.id}`}
@@ -287,22 +299,24 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
             delete {item.id}
           </button>
         ))}
-        {(items ?? []).map((item) => (
-          <button
-            key={`unshare-${item.id}`}
-            type="button"
-            onClick={async () => {
-              try {
-                await onUnshare?.(item);
-              } catch {
-                // Swallowed here the same way the real DetailsPanel's
-                // confirmation popup catches a rejected onUnshare.
-              }
-            }}
-          >
-            unshare {item.id}
-          </button>
-        ))}
+        {(items ?? [])
+          .filter((item) => isUnshareVisible?.(item) ?? true)
+          .map((item) => (
+            <button
+              key={`unshare-${item.id}`}
+              type="button"
+              onClick={async () => {
+                try {
+                  await onUnshare?.(item);
+                } catch {
+                  // Swallowed here the same way the real DetailsPanel's
+                  // confirmation popup catches a rejected onUnshare.
+                }
+              }}
+            >
+              unshare {item.id}
+            </button>
+          ))}
         {(items ?? []).map((item) => (
           <button
             key={`fetch-details-${item.id}`}
@@ -412,6 +426,16 @@ vi.mock('../../../server-api/share.api', () => ({
   discardSharedCatalogItem: vi.fn(),
 }));
 
+vi.mock('../../../context/PromptsContext', () => ({
+  usePrompts: vi.fn(),
+}));
+
+vi.mock('../../../server-api/prompts.api', () => ({
+  getPrompt: vi.fn(),
+  getPublicPrompt: vi.fn(),
+  deletePrompt: vi.fn(),
+}));
+
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: vi.fn(),
 }));
@@ -420,6 +444,7 @@ vi.mock('../../../context/FavoriteApplicationsContext', () => ({
   FavoriteEntityType: {
     Deployment: 'deployment',
     Toolset: 'toolset',
+    Prompt: 'prompt',
   },
   useFavoriteApplications: vi.fn(),
 }));
@@ -514,6 +539,17 @@ describe('CatalogView', () => {
       favoriteIds: new Set(),
       isLoading: false,
       toggleFavorite: vi.fn(),
+    });
+    vi.mocked(usePrompts).mockReturnValue({
+      prompts: [],
+      folders: [],
+      sharedWithMe: [],
+      publicPrompts: [],
+      publicFolders: [],
+      isLoading: false,
+      error: null,
+      refetchPrompts: vi.fn().mockResolvedValue(undefined),
+      refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
     });
     vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [],
@@ -717,7 +753,7 @@ describe('CatalogView', () => {
           folderPath: 'Organization/Data Science',
           version: '1.2.0',
           rules: [
-            { source: 'role', _function: 'CONTAIN', targets: ['engineering'] },
+            { source: 'role', function: 'CONTAIN', targets: ['engineering'] },
           ],
         },
       );
@@ -825,6 +861,26 @@ describe('CatalogView', () => {
           makeCatalogItem({ type: CatalogEntityType.Toolset }),
         ),
       ).toBe(true);
+    });
+
+    it('shows Share for a prompt the user owns', () => {
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.isShareVisible?.(
+          makeCatalogItem({ type: CatalogEntityType.Prompt, isMyApp: true }),
+        ),
+      ).toBe(true);
+    });
+
+    it('hides Share for a prompt the user does not own', () => {
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.isShareVisible?.(
+          makeCatalogItem({ type: CatalogEntityType.Prompt, isMyApp: false }),
+        ),
+      ).toBe(false);
     });
   });
 
@@ -2490,6 +2546,440 @@ describe('CatalogView', () => {
       expect(showNotification).not.toHaveBeenCalledWith(
         expect.objectContaining({ variant: 'error' }),
       );
+    });
+  });
+
+  describe('prompt wiring', () => {
+    const personalPrompt = {
+      id: 'Work/AI/summarize',
+      name: 'summarize',
+      description: 'Summarize a document',
+      content: 'Summarize the following text:',
+      folderId: 'Work/AI',
+      createdAt: 1,
+      updatedAt: 2,
+    };
+
+    const organisationPrompt = {
+      ...personalPrompt,
+      id: 'Public/translate',
+      name: 'translate',
+      folderId: 'Public',
+    };
+
+    /*
+     * Resets before setting the implementation: an earlier test in this file
+     * uses `mockReturnValue`, which takes precedence over an implementation
+     * set afterwards and would otherwise leak "every feature enabled" here.
+     */
+    const setFeatures = (
+      extra: OverlayFeature[] = [],
+      disabled: OverlayFeature[] = [],
+    ) => {
+      vi.mocked(useUiFeature).mockReset();
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) =>
+          !disabled.includes(feature) &&
+          (extra.includes(feature) || DEFAULT_ENABLED_UI_FEATURES.has(feature)),
+      );
+    };
+
+    const enablePrompts = () => setFeatures([OverlayFeature.Prompts]);
+    /* Explicitly opted out: `prompts` is in the default-enabled set. */
+    const disablePrompts = () => setFeatures([], [OverlayFeature.Prompts]);
+
+    const mockPrompts = (
+      overrides: Partial<ReturnType<typeof usePrompts>> = {},
+    ) =>
+      vi.mocked(usePrompts).mockReturnValue({
+        prompts: [personalPrompt],
+        folders: [],
+        sharedWithMe: [],
+        publicPrompts: [organisationPrompt],
+        publicFolders: [],
+        isLoading: false,
+        error: null,
+        refetchPrompts: vi.fn().mockResolvedValue(undefined),
+        refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
+        ...overrides,
+      });
+
+    it('adds prompt items to the catalog when the feature is enabled', () => {
+      enablePrompts();
+      mockPrompts();
+
+      render(<CatalogView />);
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).toContain('Work/AI/summarize:PROMPT');
+      expect(ids).toContain('Public/translate:PROMPT');
+    });
+
+    it('adds no prompt items when the feature is disabled', () => {
+      disablePrompts();
+      mockPrompts();
+
+      render(<CatalogView />);
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).not.toContain('PROMPT');
+    });
+
+    it('excludes prompts from the model picker in selector mode', () => {
+      enablePrompts();
+      mockPrompts();
+
+      render(<CatalogView isSelectorMode />);
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).not.toContain('PROMPT');
+    });
+
+    it('filters personal prompts out when catalog-hide-my-apps is enabled', () => {
+      setFeatures([OverlayFeature.Prompts, OverlayFeature.CatalogHideMyApps]);
+      mockPrompts();
+
+      render(<CatalogView />);
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).not.toContain('Work/AI/summarize');
+      expect(ids).toContain('Public/translate:PROMPT');
+    });
+
+    it('fetches a personal prompt through getPrompt and never the deployment endpoints', async () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(getPrompt).mockResolvedValue(personalPrompt);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'fetch details Work/AI/summarize' }),
+      );
+
+      expect(getPrompt).toHaveBeenCalledWith('Work/AI/summarize');
+      expect(getPublicPrompt).not.toHaveBeenCalled();
+      expect(getDeploymentDetails).not.toHaveBeenCalled();
+      expect(getDeploymentLimits).not.toHaveBeenCalled();
+      await waitFor(() =>
+        expect(
+          screen.getByLabelText('Fetch details result').textContent,
+        ).toContain('Summarize the following text:'),
+      );
+    });
+
+    it('fetches an organisation prompt through getPublicPrompt', async () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(getPublicPrompt).mockResolvedValue(organisationPrompt);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'fetch details Public/translate' }),
+      );
+
+      expect(getPublicPrompt).toHaveBeenCalledWith('Public/translate');
+      expect(getPrompt).not.toHaveBeenCalled();
+    });
+
+    it('resolves undefined when the prompt fetch fails', async () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(getPrompt).mockRejectedValue(new Error('502'));
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'fetch details Work/AI/summarize' }),
+      );
+
+      await waitFor(() =>
+        expect(screen.getByLabelText('Fetch details result').textContent).toBe(
+          'null',
+        ),
+      );
+    });
+
+    it('deletes a prompt through deletePrompt and refetches', async () => {
+      enablePrompts();
+      const refetchPrompts = vi.fn().mockResolvedValue(undefined);
+      mockPrompts({ refetchPrompts });
+      vi.mocked(deletePrompt).mockResolvedValue(undefined);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'delete Work/AI/summarize' }),
+      );
+
+      expect(deletePrompt).toHaveBeenCalledWith('Work/AI/summarize');
+      expect(refetchPrompts).toHaveBeenCalledOnce();
+      expect(deleteApplication).not.toHaveBeenCalled();
+    });
+
+    it('surfaces an error notification when deleting a prompt fails', async () => {
+      enablePrompts();
+      mockPrompts();
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue({
+        notifications: [],
+        showNotification,
+        dismissNotification: vi.fn(),
+      });
+      vi.mocked(deletePrompt).mockRejectedValue(new Error('502'));
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'delete Work/AI/summarize' }),
+      );
+
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'error' }),
+      );
+    });
+
+    it('offers a favourite control but no unshare control for a prompt', () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(useDeployments).mockReturnValue({
+        ...vi.mocked(useDeployments)(),
+        items: [
+          {
+            id: 'shared-model',
+            displayName: 'Shared model',
+            type: 'model',
+            isMy: false,
+            sharedWithMe: true,
+          },
+        ],
+      } as ReturnType<typeof useDeployments>);
+
+      render(<CatalogView />);
+
+      expect(
+        screen.getByRole('button', { name: 'favorite Work/AI/summarize' }),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole('button', { name: 'unshare Work/AI/summarize' }),
+      ).toBeNull();
+      expect(
+        screen.getByRole('button', { name: 'favorite shared-model' }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole('button', { name: 'unshare shared-model' }),
+      ).toBeTruthy();
+    });
+
+    it('toggles a prompt favourite through the prompts user-config section', async () => {
+      enablePrompts();
+      mockPrompts();
+      const toggleFavorite = vi.fn();
+      vi.mocked(useFavoriteApplications).mockReturnValue({
+        favoriteIds: new Set(),
+        isLoading: false,
+        toggleFavorite,
+      });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', { name: 'favorite Work/AI/summarize' }),
+      );
+
+      expect(toggleFavorite).toHaveBeenCalledWith(
+        'Work/AI/summarize',
+        true,
+        FavoriteEntityType.Prompt,
+      );
+    });
+
+    it('marks a prompt whose path is in favoriteIds as starred', () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(useFavoriteApplications).mockReturnValue({
+        favoriteIds: new Set(['Work/AI/summarize']),
+        isLoading: false,
+        toggleFavorite: vi.fn(),
+      });
+
+      render(<CatalogView />);
+
+      expect(screen.getByLabelText('Favorite item ids').textContent).toContain(
+        'Work/AI/summarize',
+      );
+    });
+
+    it('shows the primary action for a prompt', () => {
+      enablePrompts();
+      mockPrompts();
+
+      render(<CatalogView />);
+
+      expect(
+        screen.getByRole('button', { name: 'use in chat Work/AI/summarize' }),
+      ).toBeTruthy();
+    });
+  });
+
+  describe('prompt use in chat', () => {
+    const personalPrompt = {
+      id: 'Work/AI/summarize',
+      name: 'summarize',
+      content: 'Summarize the following text:',
+      folderId: 'Work/AI',
+      createdAt: 1,
+      updatedAt: 2,
+    };
+
+    /*
+     * Resets before setting the implementation: an earlier test in this file
+     * uses `mockReturnValue`, which takes precedence over an implementation
+     * set afterwards and would otherwise leak "every feature enabled" here.
+     */
+    const setFeatures = (
+      extra: OverlayFeature[] = [],
+      disabled: OverlayFeature[] = [],
+    ) => {
+      vi.mocked(useUiFeature).mockReset();
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) =>
+          !disabled.includes(feature) &&
+          (extra.includes(feature) || DEFAULT_ENABLED_UI_FEATURES.has(feature)),
+      );
+    };
+
+    const enablePrompts = () => setFeatures([OverlayFeature.Prompts]);
+    /* Explicitly opted out: `prompts` is in the default-enabled set. */
+    const disablePrompts = () => setFeatures([], [OverlayFeature.Prompts]);
+
+    const mockPrompts = (prompts = [personalPrompt]) =>
+      vi.mocked(usePrompts).mockReturnValue({
+        prompts,
+        folders: [],
+        sharedWithMe: [],
+        publicPrompts: [],
+        publicFolders: [],
+        isLoading: false,
+        error: null,
+        refetchPrompts: vi.fn().mockResolvedValue(undefined),
+        refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
+      });
+
+    it('navigates to the composer with the body in router state, leaving the deployment selection alone', async () => {
+      enablePrompts();
+      mockPrompts();
+      const setSelectedItemId = vi.fn();
+      vi.mocked(useDeployments).mockReturnValue({
+        ...vi.mocked(useDeployments)(),
+        setSelectedItemId,
+      } as ReturnType<typeof useDeployments>);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'use in chat Work/AI/summarize' }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith('/', {
+        state: { promptContent: 'Summarize the following text:' },
+      });
+      expect(setSelectedItemId).not.toHaveBeenCalled();
+    });
+
+    it('resolves the body through getPrompt when the list did not carry it', async () => {
+      enablePrompts();
+      mockPrompts([{ ...personalPrompt, content: '' }]);
+      vi.mocked(getPrompt).mockResolvedValue(personalPrompt);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'use in chat Work/AI/summarize' }),
+      );
+
+      expect(getPrompt).toHaveBeenCalledWith('Work/AI/summarize');
+      expect(mockNavigate).toHaveBeenCalledWith('/', {
+        state: { promptContent: 'Summarize the following text:' },
+      });
+    });
+
+    it('stays on the catalog and notifies when the body cannot be resolved', async () => {
+      enablePrompts();
+      mockPrompts([{ ...personalPrompt, content: '' }]);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue({
+        notifications: [],
+        showNotification,
+        dismissNotification: vi.fn(),
+      });
+      vi.mocked(getPrompt).mockRejectedValue(new Error('502'));
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'use in chat Work/AI/summarize' }),
+      );
+
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'error' }),
+      );
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('opens the prompt editor with the prompt id when Edit is activated', async () => {
+      enablePrompts();
+      mockPrompts();
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'edit Work/AI/summarize' }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/prompt-editor?id=Work%2FAI%2Fsummarize&returnUrl=%2Fcatalog',
+      );
+    });
+
+    it('offers a Prompt create option only when the feature is enabled', async () => {
+      enablePrompts();
+      mockPrompts();
+
+      const { unmount } = render(<CatalogView />);
+      expect(
+        screen.getByRole('button', { name: 'catalog.create.prompt' }),
+      ).toBeTruthy();
+      unmount();
+
+      disablePrompts();
+      render(<CatalogView />);
+      expect(
+        screen.queryByRole('button', { name: 'catalog.create.prompt' }),
+      ).toBeNull();
+    });
+
+    it('navigates to the editor in create mode from the Prompt create option', async () => {
+      enablePrompts();
+      mockPrompts();
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'catalog.create.prompt' }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/prompt-editor?returnUrl=%2Fcatalog',
+      );
+    });
+
+    it('still selects the deployment and navigates for a model item', async () => {
+      const setSelectedItemId = vi.fn();
+      vi.mocked(useDeployments).mockReturnValue({
+        ...vi.mocked(useDeployments)(),
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+        setSelectedItemId,
+      } as ReturnType<typeof useDeployments>);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'use in chat gpt-4o' }),
+      );
+
+      expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o');
+      expect(mockNavigate).toHaveBeenCalledWith('/');
     });
   });
 });

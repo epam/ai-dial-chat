@@ -17,6 +17,7 @@ import type { RenamePromptFolderDto } from '../dto/rename-prompt-folder.dto';
 import { PromptsResourceService } from '../resource/prompts-resource.service';
 import {
   folderIdFromId,
+  isHiddenPromptPath,
   isSentinelPath,
   mapPromptToResponse,
   metadataItemToPromptPath,
@@ -94,6 +95,8 @@ export class PromptsFolderService {
       allItems.map(async (item) => {
         const oldSubPath = metadataItemToPromptPath(item, bucket);
         if (oldSubPath == null || !oldSubPath.startsWith(oldPrefix)) return;
+        /* A storage marker cannot be read as a prompt, so it is left behind. */
+        if (isHiddenPromptPath(oldSubPath)) return;
 
         const relative = oldSubPath.slice(oldPrefix.length);
         const newSubPath = `${newPrefix}${relative}`;

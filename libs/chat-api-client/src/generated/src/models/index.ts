@@ -1538,12 +1538,27 @@ export interface CreateShareLinkDto {
    */
   itemId: string;
   /**
+   * Set to `prompt` when `itemId` is a bucket-relative prompt path (as returned by the prompts endpoints) rather than a full DIAL Core resource path. The caller's own bucket is then used to qualify it.
+   * @type {string}
+   * @memberof CreateShareLinkDto
+   */
+  resourceKind?: CreateShareLinkDtoResourceKindEnum;
+  /**
    * Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.
    * @type {Array<string>}
    * @memberof CreateShareLinkDto
    */
   access: Array<CreateShareLinkDtoAccessEnum>;
 }
+
+/**
+ * @export
+ */
+export const CreateShareLinkDtoResourceKindEnum = {
+  Prompt: 'prompt',
+} as const;
+export type CreateShareLinkDtoResourceKindEnum =
+  (typeof CreateShareLinkDtoResourceKindEnum)[keyof typeof CreateShareLinkDtoResourceKindEnum];
 
 /**
  * @export
@@ -4420,6 +4435,19 @@ export interface PromptResponseDto {
 /**
  *
  * @export
+ * @interface PromptsConfigDto
+ */
+export interface PromptsConfigDto {
+  /**
+   * Favorited prompt paths.
+   * @type {Array<string>}
+   * @memberof PromptsConfigDto
+   */
+  installed: Array<string>;
+}
+/**
+ *
+ * @export
  * @interface ProviderInfoDto
  */
 export interface ProviderInfoDto {
@@ -4657,7 +4685,7 @@ export interface PublishRuleDto {
    * @type {string}
    * @memberof PublishRuleDto
    */
-  _function: PublishRuleDtoFunctionEnum;
+  function: PublishRuleDtoFunctionEnum;
   /**
    * Values combined with OR; exactly one pattern when function is REGEX.
    * @type {Array<string>}
@@ -5994,6 +6022,25 @@ export interface UpdateInstalledDto {
 /**
  *
  * @export
+ * @interface UpdateInstalledPromptDto
+ */
+export interface UpdateInstalledPromptDto {
+  /**
+   * Prompt path within the prompts namespace.
+   * @type {string}
+   * @memberof UpdateInstalledPromptDto
+   */
+  id: string;
+  /**
+   * Pass `true` to favorite the prompt, `false` to unfavorite it.
+   * @type {boolean}
+   * @memberof UpdateInstalledPromptDto
+   */
+  isInstalled: boolean;
+}
+/**
+ *
+ * @export
  * @interface UpdatePinsDto
  */
 export interface UpdatePinsDto {
@@ -6274,6 +6321,12 @@ export interface UserConfigDto {
    * @memberof UserConfigDto
    */
   deployments: DeploymentsConfigDto;
+  /**
+   *
+   * @type {PromptsConfigDto}
+   * @memberof UserConfigDto
+   */
+  prompts: PromptsConfigDto;
 }
 /**
  *

@@ -105,8 +105,41 @@ describe('ShareController (integration)', () => {
       expect(res.body).toEqual(createdLink);
       expect(service.createShareLink).toHaveBeenCalledWith(
         TEST_USER.at,
+        TEST_USER.bucket,
         validBody,
       );
+    });
+
+    it('forwards resourceKind for a bucket-relative prompt path', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/share')
+        .send({
+          itemId: 'Work/AI/summarize',
+          access: [ShareAccess.View],
+          resourceKind: 'prompt',
+        })
+        .expect(201);
+
+      expect(service.createShareLink).toHaveBeenCalledWith(
+        TEST_USER.at,
+        TEST_USER.bucket,
+        {
+          itemId: 'Work/AI/summarize',
+          access: [ShareAccess.View],
+          resourceKind: 'prompt',
+        },
+      );
+    });
+
+    it('returns 400 for an unknown resourceKind', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/share')
+        .send({
+          itemId: 'Work/AI/summarize',
+          access: [ShareAccess.View],
+          resourceKind: 'conversation',
+        })
+        .expect(400);
     });
 
     it('returns 400 when access is invalid', async () => {

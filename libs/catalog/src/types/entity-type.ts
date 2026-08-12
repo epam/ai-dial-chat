@@ -4,4 +4,6 @@ export enum CatalogEntityType {
   Agent = 'AGENT',
   Toolset = 'TOOLSET',
   Skill = 'SKILL',
+  /** Reusable text prompt. Carries a body instead of a runtime. */
+  Prompt = 'PROMPT',
 }
