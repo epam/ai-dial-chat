@@ -1,8 +1,8 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
+  DangerIconButton,
   DIAL_ICON_SIZE,
-  DialDangerIconButton,
   DialFormPopup,
   DialSelectField,
   ElementSize,
@@ -188,7 +188,7 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
                   <span className={rowLabelClassName}>
                     {localeRowLabel} {index + 1}
                   </span>
-                  <DialDangerIconButton
+                  <DangerIconButton
                     appearance={ButtonAppearance.Ghost}
                     size={ElementSize.Small}
                     icon={<IconTrashX size={DIAL_ICON_SIZE.SM} aria-hidden />}

@@ -104,7 +104,7 @@ export const Card: FC<CardProps> = ({
       aria-label={item.name}
       style={cssVars}
       className={mergeClasses(
-        'box-border cursor-pointer',
+        'box-border cursor-pointer gap-3',
         styles.card,
         item.isFeatured ? styles.featuredCard : undefined,
         isSelected ? styles.selectedCard : undefined,
@@ -139,15 +139,13 @@ export const Card: FC<CardProps> = ({
         version={item.version}
         size={DeploymentSize.SM}
         query={query}
-        className="min-w-0 flex-1"
         iconClassName={styles.cardIcon}
       />
 
-      {/* Description */}
       <p
         className={mergeClasses(
           descriptionClassName,
-          'line-clamp-2 min-h-[44px]',
+          'line-clamp-2 min-h-[50px] flex-1 break-words',
           descriptionSizeClassName,
           styles.description,
         )}
@@ -155,7 +153,7 @@ export const Card: FC<CardProps> = ({
         {item.description}
       </p>
 
-      <div className="flex min-h-[28px] items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2">
         <TopicsLine topics={item.topics} />
         <CredentialsBadge
           credentials={item.credentials}
@@ -163,7 +161,7 @@ export const Card: FC<CardProps> = ({
         />
       </div>
 
-      <div className={mergeClasses('mt-auto border-t pt-3', styles.footer)}>
+      <div className={mergeClasses('border-t pt-3', styles.footer)}>
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1">
             {item.folder.length > 0 && (

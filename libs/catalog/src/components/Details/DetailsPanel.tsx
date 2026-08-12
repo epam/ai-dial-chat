@@ -13,7 +13,7 @@ import {
   CloseButton,
   ElementSize,
   Skeleton,
-  DialTag,
+  Tag,
   Tabs,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
@@ -668,7 +668,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                         showVersion={false}
                       />
                     </div>
-                    <DialTag
+                    <Tag
                       label={`Version ${item.version} · current`}
                       className={mergeClasses(
                         'shrink-0 whitespace-nowrap',
