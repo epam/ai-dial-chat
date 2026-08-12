@@ -120,7 +120,7 @@ export const useConversationHandlers = ({
       const { userMessage, assistantMessage } = createMessagePair(
         message,
         customContent,
-        selectedItemId,
+        selectedItemId ?? conversation.model.id,
       );
       setConversation((prev) => {
         if (!prev) return prev;
@@ -361,7 +361,7 @@ export const useConversationHandlers = ({
       const { userMessage, assistantMessage } = createMessagePair(
         displayText,
         customContent,
-        selectedItemId,
+        selectedItemId ?? conversation.model.id,
       );
       setConversation((prev) => {
         if (!prev) return prev;

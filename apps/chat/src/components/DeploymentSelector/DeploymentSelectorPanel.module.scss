@@ -33,10 +33,21 @@
   }
 }
 
+/* Animates the scrollable list's own height across structural changes
+   (a row moving to/from the "Currently selected" section); see
+   listContentRef/listHeight in DeploymentSelectorPanel.tsx. */
+.listContent {
+  transition: height 200ms ease;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rowEnter,
   .rowLeaving {
     animation: none;
+  }
+
+  .listContent {
+    transition: none;
   }
 }
 
