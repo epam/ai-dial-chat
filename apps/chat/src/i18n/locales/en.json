@@ -1003,6 +1003,8 @@
       "description": "Some fields are invalid or required fields are missing. Changes in those fields will not be saved. Exit and save only valid information?",
       "confirmLabel": "Save"
     },
+    "savingOverlay": "Saving in progress…",
+    "loadingOverlay": "Loading…",
     "error": {
       "createFailed": "Failed to create custom app. Please try again.",
       "saveFailed": "Failed to save custom app. Please try again.",
