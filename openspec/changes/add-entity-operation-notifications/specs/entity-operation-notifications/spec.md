@@ -7,12 +7,12 @@ A user-initiated operation that mutates or exports an entity SHALL raise exactly
 | Entity | Created | Edited / saved | Deleted | Downloaded | Publish requested | Unpublished | Other |
 |---|---|---|---|---|---|---|---|
 | Prompt (`PromptEditor`, catalog details) | required | required | required | **new** | required | specified only (see below) | — |
-| Agent — quick app (`AppsEditor`) | **new** | **new** | required (catalog) | — | required (catalog) | specified only | — |
-| Agent — custom app (`CustomAppEditor`) | **new** | **new** | required (catalog) | — | required (catalog) | specified only | — |
+| Quick app (`AppsEditor`) | **new** | **new** | required (catalog) | — | required (catalog) | specified only | — |
+| Custom app (`CustomAppEditor`) | **new** | **new** | required (catalog) | — | required (catalog) | specified only | — |
 | Toolset (`ToolsetEditor`) | **new** | **new** | required (catalog) | — | required (catalog) | specified only | — |
 | Model / Skill (catalog details) | — | — | required | — | required | specified only | — |
 | Conversation | not notified (see exclusions) | **new** (rename), **new** (duplicate) | required | required (export) | required | specified only | import, delete-all, unshare, revoke: required |
-| File | — | **new** (rename) | required | **new** | — | — | upload, copy, move: required |
+| File | — | **new** (rename) | required | **new** (single, and a plural count for a multi-item selection) | — | — | upload, copy, move: required |
 | Folder | **new** | **new** (rename) | required | **new** (archive) | — | — | copy, move: required |
 
 `required` = already implemented, copy realigned by this change. `**new**` = added by this change.
@@ -99,9 +99,13 @@ English copy per operation, where `<Entity>` / `<entity>` is the entity label fr
 | Publish requested | `<Entity> publish requested` | `Publish request for <entity> "{{name}}" was submitted to folder "{{folder}}". It will appear there once an admin approves it.` |
 | Unpublished | `<Entity> unpublished successfully` | `<Entity> "{{name}}" is unpublished from folder "{{folder}}".` |
 
-Entity labels: `Prompt`, `Agent`, `Toolset`, `Model`, `Skill`, `Conversation`, `File`, `Folder`. A quick app and a custom app both resolve to `Agent`, matching `CatalogEntityType.Agent`.
+Entity labels: `Prompt`, `Quick app`, `Custom app`, `Agent`, `Toolset`, `Model`, `Skill`, `Conversation`, `File`, `Folder`.
+
+An application is named by its concrete kind, not by the generic `Agent`: the editors know which one they are (`AppsEditor` → `Quick app`, `CustomAppEditor` → `Custom app`), and catalog-level operations resolve it from the item's deployment — a deployment carrying an `applicationTypeSchemaId` is a quick app, one without is a custom app. `Agent` is used only as the fallback when the item's deployment cannot be resolved from the loaded list, so the copy never guesses a kind.
 
 Batch operations (export all, import, multi-item delete/copy/move/rename) keep their existing plural copy and their existing keys; only their titles are realigned to the `<Entity> <operation> successfully` form.
+
+A pair whose copy has to count items declares `_one` / `_other` variants and receives `count`, which the helper interpolates into **both** the title and the body. The multi-item file download is the one such pair today: `File downloaded successfully` / `File "X" is saved on your device.` for a single file, `Files downloaded successfully` / `{{count}} files are saved on your device.` for a selection.
 
 #### Scenario: Created copy names the entity and where to find it
 

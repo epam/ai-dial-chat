@@ -52,15 +52,18 @@ describe('useOperationNotification', () => {
     (entity, operation, keys) => {
       const result = renderNotifier();
 
-      result.current.notifyOperationSuccess(entity, operation as never, {
+      const params = {
         name: 'Meeting Notes Summarizer',
         folder: 'Folder name',
-      });
+      };
+      const interpolated = JSON.stringify(params);
+
+      result.current.notifyOperationSuccess(entity, operation as never, params);
 
       expect(mockShowNotification).toHaveBeenCalledWith({
         variant: NotificationVariant.Success,
-        title: keys.titleKey,
-        message: `${keys.messageKey}|{"name":"Meeting Notes Summarizer","folder":"Folder name"}`,
+        title: `${keys.titleKey}|${interpolated}`,
+        message: `${keys.messageKey}|${interpolated}`,
       });
     },
   );
@@ -76,7 +79,8 @@ describe('useOperationNotification', () => {
 
     expect(mockShowNotification).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: 'entityNotifications.prompt.downloadedTitle',
+        title:
+          'entityNotifications.prompt.downloadedTitle|{"name":"Weekly digest"}',
         message:
           'entityNotifications.prompt.downloaded|{"name":"Weekly digest"}',
       }),
@@ -96,6 +100,25 @@ describe('useOperationNotification', () => {
       expect.objectContaining({
         message:
           'entityNotifications.toolset.publishRequested|{"name":"Jira tools","folder":"Shared/Ops"}',
+      }),
+    );
+  });
+
+  it('passes the item count so a plural pair can pick its variant', () => {
+    const result = renderNotifier();
+
+    result.current.notifyOperationSuccess(
+      NotifiableEntity.File,
+      EntityOperation.Downloaded,
+      { name: 'files.zip', count: 3 },
+    );
+
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title:
+          'entityNotifications.file.downloadedTitle|{"name":"files.zip","count":3}',
+        message:
+          'entityNotifications.file.downloaded|{"name":"files.zip","count":3}',
       }),
     );
   });

@@ -60,6 +60,42 @@ export const ENTITY_OPERATION_NOTIFICATIONS = {
       messageKey: EntityNotificationsI18nKeys.AgentPublishRequested,
     },
   },
+  [NotifiableEntity.QuickApp]: {
+    [EntityOperation.Created]: {
+      titleKey: EntityNotificationsI18nKeys.QuickAppCreatedTitle,
+      messageKey: EntityNotificationsI18nKeys.QuickAppCreated,
+    },
+    [EntityOperation.Edited]: {
+      titleKey: EntityNotificationsI18nKeys.QuickAppEditedTitle,
+      messageKey: EntityNotificationsI18nKeys.QuickAppEdited,
+    },
+    [EntityOperation.Deleted]: {
+      titleKey: EntityNotificationsI18nKeys.QuickAppDeletedTitle,
+      messageKey: EntityNotificationsI18nKeys.QuickAppDeleted,
+    },
+    [EntityOperation.PublishRequested]: {
+      titleKey: EntityNotificationsI18nKeys.QuickAppPublishRequestedTitle,
+      messageKey: EntityNotificationsI18nKeys.QuickAppPublishRequested,
+    },
+  },
+  [NotifiableEntity.CustomApp]: {
+    [EntityOperation.Created]: {
+      titleKey: EntityNotificationsI18nKeys.CustomAppCreatedTitle,
+      messageKey: EntityNotificationsI18nKeys.CustomAppCreated,
+    },
+    [EntityOperation.Edited]: {
+      titleKey: EntityNotificationsI18nKeys.CustomAppEditedTitle,
+      messageKey: EntityNotificationsI18nKeys.CustomAppEdited,
+    },
+    [EntityOperation.Deleted]: {
+      titleKey: EntityNotificationsI18nKeys.CustomAppDeletedTitle,
+      messageKey: EntityNotificationsI18nKeys.CustomAppDeleted,
+    },
+    [EntityOperation.PublishRequested]: {
+      titleKey: EntityNotificationsI18nKeys.CustomAppPublishRequestedTitle,
+      messageKey: EntityNotificationsI18nKeys.CustomAppPublishRequested,
+    },
+  },
   [NotifiableEntity.Toolset]: {
     [EntityOperation.Created]: {
       titleKey: EntityNotificationsI18nKeys.ToolsetCreatedTitle,
@@ -163,6 +199,8 @@ export type NotifiableOperation<TEntity extends NotifiableEntity> =
 export type CatalogNotifiableEntity =
   | NotifiableEntity.Prompt
   | NotifiableEntity.Agent
+  | NotifiableEntity.QuickApp
+  | NotifiableEntity.CustomApp
   | NotifiableEntity.Toolset
   | NotifiableEntity.Model
   | NotifiableEntity.Skill;
@@ -178,7 +216,26 @@ const CATALOG_ENTITY_TO_NOTIFIABLE: Record<
   [CatalogEntityType.Prompt]: NotifiableEntity.Prompt,
 };
 
-/** Returns the notification entity kind for a catalog item type. */
-export const resolveNotifiableEntity = (
+/** Minimal deployment shape needed to tell a quick app from a custom app. */
+interface AgentDeployment {
+  /** Set when the application is driven by an application schema, i.e. a quick app. */
+  applicationTypeSchemaId?: string | null;
+}
+
+/**
+ * Returns the notification entity kind for a catalog item. An `Agent` item is a
+ * quick app when its deployment carries an application schema and a custom app
+ * when it does not; without a resolved deployment the kind is unknown, so the
+ * generic `Agent` copy is used rather than guessing.
+ */
+export const resolveCatalogItemEntity = (
   type: CatalogEntityType,
-): CatalogNotifiableEntity => CATALOG_ENTITY_TO_NOTIFIABLE[type];
+  deployment?: AgentDeployment,
+): CatalogNotifiableEntity => {
+  if (type !== CatalogEntityType.Agent)
+    return CATALOG_ENTITY_TO_NOTIFIABLE[type];
+  if (deployment == null) return NotifiableEntity.Agent;
+  return deployment.applicationTypeSchemaId
+    ? NotifiableEntity.QuickApp
+    : NotifiableEntity.CustomApp;
+};

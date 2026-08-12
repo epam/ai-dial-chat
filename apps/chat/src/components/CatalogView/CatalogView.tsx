@@ -79,7 +79,7 @@ import { PromptEditorQuery } from '../../types/prompt-editor';
 import { ROUTES } from '../../types/routes';
 import { isQuickAppSchema } from '../../utils/application-schema';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
-import { resolveNotifiableEntity } from '../../utils/entity-notification';
+import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import { EXPORT_APP_NAME } from '../../utils/export-conversation';
 import {
   buildPromptExportEnvelope,
@@ -792,7 +792,10 @@ const CatalogView: FC<Props> = ({
     (item: CatalogItem, folderPath: string[]) => {
       rememberPublishFolder(folderPath);
       notifyOperationSuccess(
-        resolveNotifiableEntity(item.type),
+        resolveCatalogItemEntity(
+          item.type,
+          findDeploymentByIdOrReference(deployments, item.id),
+        ),
         EntityOperation.PublishRequested,
         {
           name: item.name,
@@ -800,7 +803,7 @@ const CatalogView: FC<Props> = ({
         },
       );
     },
-    [rememberPublishFolder, notifyOperationSuccess],
+    [deployments, rememberPublishFolder, notifyOperationSuccess],
   );
 
   const handlePublishError = useCallback(
@@ -876,7 +879,10 @@ const CatalogView: FC<Props> = ({
         }
 
         notifyOperationSuccess(
-          resolveNotifiableEntity(item.type),
+          resolveCatalogItemEntity(
+            item.type,
+            findDeploymentByIdOrReference(deployments, item.id),
+          ),
           EntityOperation.Deleted,
           { name: item.name },
         );
@@ -890,6 +896,7 @@ const CatalogView: FC<Props> = ({
       }
     },
     [
+      deployments,
       refetchToolsets,
       refetchDeployments,
       refetchPrompts,

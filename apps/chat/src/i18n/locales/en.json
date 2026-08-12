@@ -1084,6 +1084,26 @@
       "publishRequestedTitle": "Agent publish requested",
       "publishRequested": "Publish request for agent \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
     },
+    "quickApp": {
+      "createdTitle": "Quick app created successfully",
+      "created": "You can now see quick app \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "Quick app edited successfully",
+      "edited": "Changes for quick app \"{{name}}\" are saved.",
+      "deletedTitle": "Quick app deleted successfully",
+      "deleted": "Quick app \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "Quick app publish requested",
+      "publishRequested": "Publish request for quick app \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+    },
+    "customApp": {
+      "createdTitle": "Custom app created successfully",
+      "created": "You can now see custom app \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "Custom app edited successfully",
+      "edited": "Changes for custom app \"{{name}}\" are saved.",
+      "deletedTitle": "Custom app deleted successfully",
+      "deleted": "Custom app \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "Custom app publish requested",
+      "publishRequested": "Publish request for custom app \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+    },
     "toolset": {
       "createdTitle": "Toolset created successfully",
       "created": "You can now see toolset \"{{name}}\" in the catalog and My collection.",
@@ -1119,8 +1139,10 @@
     "file": {
       "renamedTitle": "File renamed successfully",
       "renamed": "File \"{{name}}\" is renamed.",
-      "downloadedTitle": "File downloaded successfully",
-      "downloaded": "File \"{{name}}\" is saved on your device."
+      "downloadedTitle_one": "File downloaded successfully",
+      "downloadedTitle_other": "Files downloaded successfully",
+      "downloaded_one": "File \"{{name}}\" is saved on your device.",
+      "downloaded_other": "{{count}} files are saved on your device."
     },
     "folder": {
       "createdTitle": "Folder created successfully",

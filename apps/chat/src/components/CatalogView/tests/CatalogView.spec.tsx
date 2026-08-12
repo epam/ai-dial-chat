@@ -2083,8 +2083,44 @@ describe('CatalogView', () => {
     expect(showNotification).toHaveBeenCalledWith(
       expect.objectContaining({
         variant: 'success',
-        title: 'entityNotifications.agent.deletedTitle',
-        message: 'entityNotifications.agent.deleted',
+        title: 'entityNotifications.customApp.deletedTitle',
+        message: 'entityNotifications.customApp.deleted',
+      }),
+    );
+  });
+
+  it('names a schema-driven application a quick app when deleting it', async () => {
+    const showNotification = vi.fn();
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
+    vi.mocked(useDeployments).mockReturnValue({
+      ...vi.mocked(useDeployments)(),
+      items: [
+        {
+          id: 'applications/b/Quick One__1.0',
+          displayName: 'Quick One',
+          type: 'application',
+          isMy: true,
+          applicationTypeSchemaId: 'quickapps2-schema',
+        },
+      ],
+      refetchDeployments: vi.fn().mockResolvedValue(undefined),
+    });
+    vi.mocked(deleteApplication).mockResolvedValue(undefined);
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'delete applications/b/Quick One__1.0',
+      }),
+    );
+
+    expect(showNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'entityNotifications.quickApp.deletedTitle',
+        message: 'entityNotifications.quickApp.deleted',
       }),
     );
   });

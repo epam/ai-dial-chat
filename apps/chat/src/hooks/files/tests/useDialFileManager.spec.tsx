@@ -856,8 +856,8 @@ describe('useDialFileManager', () => {
     ]);
     expect(mockOperationNotification).toHaveBeenCalledWith({
       variant: NotificationVariant.Success,
-      title: 'entityNotifications.folder.downloadedTitle',
-      message: 'entityNotifications.folder.downloaded',
+      title: 'entityNotifications.file.downloadedTitle',
+      message: 'entityNotifications.file.downloaded',
     });
   });
 

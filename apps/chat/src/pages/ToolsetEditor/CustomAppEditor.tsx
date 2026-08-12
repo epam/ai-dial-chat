@@ -366,7 +366,7 @@ const CustomAppEditor: FC = () => {
       }
       await refetchDeployments();
       notifyOperationSuccess(
-        NotifiableEntity.Agent,
+        NotifiableEntity.CustomApp,
         isEditMode ? EntityOperation.Edited : EntityOperation.Created,
         { name: generalForm.name },
       );

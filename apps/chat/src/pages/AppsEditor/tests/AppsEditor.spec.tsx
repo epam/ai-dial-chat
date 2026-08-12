@@ -277,8 +277,8 @@ describe('AppsEditor', () => {
     ).toBeNull();
     expect(mockShowNotification).toHaveBeenCalledWith({
       variant: 'success',
-      title: 'entityNotifications.agent.editedTitle',
-      message: 'entityNotifications.agent.edited',
+      title: 'entityNotifications.quickApp.editedTitle',
+      message: 'entityNotifications.quickApp.edited',
     });
   });
 

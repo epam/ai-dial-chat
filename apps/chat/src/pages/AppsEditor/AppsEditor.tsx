@@ -298,7 +298,7 @@ const AppsEditor: FC = () => {
          * side effect of opening the pane, not something the user asked about.
          */
         notifyOperationSuccess(
-          NotifiableEntity.Agent,
+          NotifiableEntity.QuickApp,
           isEditingExistingApp
             ? EntityOperation.Edited
             : EntityOperation.Created,

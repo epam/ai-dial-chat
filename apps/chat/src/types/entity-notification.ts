@@ -2,6 +2,8 @@
 export enum NotifiableEntity {
   Prompt = 'prompt',
   Agent = 'agent',
+  QuickApp = 'quickApp',
+  CustomApp = 'customApp',
   Toolset = 'toolset',
   Model = 'model',
   Skill = 'skill',

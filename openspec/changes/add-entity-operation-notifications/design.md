@@ -44,13 +44,15 @@ notifyOperationSuccess(NotifiableEntity.Prompt, EntityOperation.Downloaded, { na
 
 ### 2. Entity resolution from `CatalogEntityType` in the app, once
 
-`resolveNotifiableEntity(type: CatalogEntityType): NotifiableEntity` lives next to the map. Generic catalog handlers (`handleDelete`, `onPublishSuccess`) call it with `item.type`; the file manager resolves `File` vs `Folder` from `nodeType`.
+`resolveCatalogItemEntity(type, deployment?)` lives next to the map. Generic catalog handlers (`handleDelete`, `onPublishSuccess`) call it with the item type and the item's deployment; the file manager resolves `File` vs `Folder` from `nodeType`.
 
-*Why:* it keeps the "which noun" decision in one function rather than repeated ternaries, and it is the only place that needs updating when a new `CatalogEntityType` appears. A quick app and a custom app both map to `Agent`, matching the catalog badge.
+*Why:* it keeps the "which noun" decision in one function rather than repeated ternaries, and it is the only place that needs updating when a new `CatalogEntityType` appears. An application is named by its concrete kind — a deployment with an `applicationTypeSchemaId` is a **quick app**, one without is a **custom app** — because "Agent created successfully" tells the user less than the kind they just built. The generic `Agent` copy survives only as the fallback for an item whose deployment is not in the loaded list, so the resolver never guesses.
 
 ### 3. Complete sentences per pair — no runtime composition
 
 Each `(entity, operation)` pair owns two full-sentence keys (`…Title`, `…`), with only `name` and `folder` interpolated. No `"{{entity}} created successfully"`.
+
+*Plural pairs* declare `_one`/`_other` variants and take `count`, interpolated into both title and body — used today by the multi-item file download, where the confirmation counts items instead of naming an archive the user never picked.
 
 *Why:* Arabic support is mandated repo-wide. Interpolating a noun into a sentence frame produces wrong agreement in Arabic, Russian, German and many others; translators cannot fix it because the frame is shared. The cost is more keys (~40), which is mechanical, versus copy that cannot be translated correctly, which is not fixable later without redoing this work.
 
@@ -104,6 +106,6 @@ Frontend-only, no data or API migration. Order of work: the hook + enums + keys 
 ## Open Questions
 
 1. **Publish copy** — does design accept `"<Entity> publish requested"` + the pending-approval sentence instead of the mockup's `"published successfully"` wording, given publication is admin-gated? (Decision 5.)
-2. **Noun for quick and custom apps** — `"Agent"` (matches `CatalogEntityType.Agent` and the catalog badge) or `"App"`?
-3. **Created copy for catalog entities** — the mockup's `"You can now see prompt \"X\" in the catalog and My collection."` mentions *My collection*; does that phrasing hold for agents and toolsets, or should they use a shorter `"… is created."`?
-4. **File download of a multi-item selection** — one `"Folder downloaded successfully"` notification for the archive, or a `File`-scoped plural sentence naming the item count?
+2. ~~Noun for quick and custom apps~~ — **resolved**: name the concrete kind. `Quick app …` / `Custom app …`; catalog-level operations resolve the kind from the deployment schema, with the generic `Agent` copy only when the deployment is unresolved.
+3. ~~Created copy for catalog entities~~ — **skipped**: the mockup phrasing ("… in the catalog and My collection.") stays for every catalog entity.
+4. ~~File download of a multi-item selection~~ — **resolved**: a `File`-scoped plural sentence naming the item count (`Files downloaded successfully` / `{{count}} files are saved on your device.`). A lone folder keeps the folder-scoped copy.

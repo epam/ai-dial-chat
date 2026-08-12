@@ -17,6 +17,11 @@ export interface OperationNotificationParams {
   name: string;
   /** Target folder, required for `EntityOperation.PublishRequested`. */
   folder?: string;
+  /**
+   * Number of items the operation covered. Selects the plural form for the
+   * pairs whose copy has `_one`/`_other` variants, e.g. a multi-file download.
+   */
+  count?: number;
 }
 
 interface UseOperationNotificationResult {
@@ -58,8 +63,10 @@ export const useOperationNotification = (): UseOperationNotificationResult => {
 
       const { titleKey, messageKey } = keys;
 
+      /* The title is interpolated too: a plural pair (e.g. a multi-file download)
+       * needs `count` to pick between its `_one` and `_other` variants. */
       showSuccessNotification({
-        title: t(titleKey),
+        title: t(titleKey, { ...params }),
         message: t(messageKey, { ...params }),
       });
     },

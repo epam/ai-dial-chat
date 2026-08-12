@@ -314,7 +314,7 @@ export const useDialFileMutations = ({
             notifyOperationSuccess(
               NotifiableEntity.File,
               EntityOperation.Downloaded,
-              { name: savedName },
+              { name: savedName, count: 1 },
             );
           } else {
             const archiveItems = dialFiles.map((f) => ({
@@ -335,11 +335,24 @@ export const useDialFileMutations = ({
               filename,
               destination,
             );
-            notifyOperationSuccess(
-              NotifiableEntity.Folder,
-              EntityOperation.Downloaded,
-              { name: savedName },
-            );
+            /*
+             * A lone folder is reported as a folder; a multi-item selection is
+             * reported as a count of files, since the archive itself is not an
+             * entity the user picked.
+             */
+            if (dialFiles.length === 1) {
+              notifyOperationSuccess(
+                NotifiableEntity.Folder,
+                EntityOperation.Downloaded,
+                { name: savedName },
+              );
+            } else {
+              notifyOperationSuccess(
+                NotifiableEntity.File,
+                EntityOperation.Downloaded,
+                { name: savedName, count: dialFiles.length },
+              );
+            }
           }
         } catch {
           onNotification?.({
