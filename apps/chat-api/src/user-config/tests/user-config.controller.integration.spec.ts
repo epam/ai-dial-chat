@@ -108,6 +108,7 @@ describe('UserConfigController (integration)', () => {
       }),
     );
     await app.init();
+    await app.listen(0, '127.0.0.1');
   });
 
   afterEach(async () => {
@@ -390,6 +391,7 @@ describe('PATCH /api/v1/user-config/toolsets — real service', () => {
       }),
     );
     await app.init();
+    await app.listen(0, '127.0.0.1');
   });
 
   afterEach(async () => {

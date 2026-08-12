@@ -713,8 +713,8 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       }
 
       showNotification({
-        variant: NotificationVariant.Info,
-        title: t(CatalogI18nKeys.DetailsUnshareConfirmTitle),
+        variant: NotificationVariant.Success,
+        title: t(CatalogI18nKeys.DetailsUnshareSuccessTitle),
         message: t(CatalogI18nKeys.DetailsUnshareSuccess, { name: item.name }),
       });
     },
