@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
   FavoritesI18nKeys,
+  NavigationI18nKeys,
   PromptSelectorI18nKeys,
 } from '../../constants/translation-keys';
 
@@ -38,7 +39,7 @@ const PromptSelectorOverlay: FC<Props> = ({
     emptyHintLabel: t(PromptSelectorI18nKeys.EmptyHint),
     browseLabel: t(ButtonsI18nKeys.Browse),
     removeFromFavoritesLabel: t(FavoritesI18nKeys.RemoveFromFavorites),
-    backLabel: t(PromptSelectorI18nKeys.BackLabel),
+    backLabel: t(NavigationI18nKeys.Back),
   };
 
   return (

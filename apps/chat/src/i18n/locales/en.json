@@ -237,8 +237,6 @@
     "emptyHint": "Star a prompt to pin it here",
     "modalTitle": "Use prompt",
     "parametersTitle": "Prompt parameters",
-    "closeLabel": "Close",
-    "backLabel": "Back",
     "parametersLabel": "Parameters",
     "detailsLabel": "Details",
     "enterValuePlaceholder": "Enter value"

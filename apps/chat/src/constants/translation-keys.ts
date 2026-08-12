@@ -264,8 +264,6 @@ export enum PromptSelectorI18nKeys {
   EmptyHint = 'promptSelector.emptyHint',
   ModalTitle = 'promptSelector.modalTitle',
   ParametersTitle = 'promptSelector.parametersTitle',
-  CloseLabel = 'promptSelector.closeLabel',
-  BackLabel = 'promptSelector.backLabel',
   ParametersLabel = 'promptSelector.parametersLabel',
   DetailsLabel = 'promptSelector.detailsLabel',
   EnterValuePlaceholder = 'promptSelector.enterValuePlaceholder',

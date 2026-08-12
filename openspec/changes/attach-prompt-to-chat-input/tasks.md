@@ -50,7 +50,7 @@
 
 ## 8. Verification
 
-- [ ] 8.1 `npm exec nx lint conversation-input && npm exec nx lint chat-shared && npm exec nx lint chat` (add `prompts` once scaffolded) — fix any `@nx/enforce-module-boundaries` violations.
-- [ ] 8.2 `npm exec nx test conversation-input && npm exec nx test chat-shared && npm exec nx test chat` (add `prompts`).
-- [ ] 8.3 `npm exec nx build chat` to confirm the new lib and lazy-loaded overlay/modal components bundle correctly.
-- [ ] 8.4 Manual verification in the running app (`npm start`): Add → Prompts with favorites empty/populated, star toggle, Browse → Use prompt modal (Prompts-only), param-less prompt inserts immediately, parameterized prompt opens popup with/without back button per entry point, submit substitutes values into the textarea, cancel leaves textarea untouched, RTL (`ar` locale) check on the back chevron and panel layout.
+- [x] 8.1 `npm exec nx lint conversation-input && npm exec nx lint chat-shared && npm exec nx lint chat` (add `prompts` once scaffolded) — fix any `@nx/enforce-module-boundaries` violations.
+- [x] 8.2 `npm exec nx test conversation-input && npm exec nx test chat-shared && npm exec nx test chat` (add `prompts`).
+- [x] 8.3 `npm exec nx build chat` to confirm the new lib and lazy-loaded overlay/modal components bundle correctly.
+- [x] 8.4 Manual verification in the running app (`npm start`): Add → Prompts with favorites empty/populated, star toggle, Browse → Use prompt modal (Prompts-only), param-less prompt inserts immediately, parameterized prompt opens popup with/without back button per entry point, submit substitutes values into the textarea, cancel leaves textarea untouched, RTL (`ar` locale) check on the back chevron and panel layout.

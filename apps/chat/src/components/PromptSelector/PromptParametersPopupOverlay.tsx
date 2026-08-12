@@ -3,6 +3,7 @@ import { lazy, memo, Suspense, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
+  NavigationI18nKeys,
   PromptSelectorI18nKeys,
 } from '../../constants/translation-keys';
 
@@ -39,8 +40,8 @@ const PromptParametersPopupOverlay: FC<Props> = ({
 
   const labels: PromptParametersPopupLabels = {
     title: t(PromptSelectorI18nKeys.ParametersTitle),
-    closeLabel: t(PromptSelectorI18nKeys.CloseLabel),
-    backLabel: t(PromptSelectorI18nKeys.BackLabel),
+    closeLabel: t(ButtonsI18nKeys.Close),
+    backLabel: t(NavigationI18nKeys.Back),
     parametersLabel: t(PromptSelectorI18nKeys.ParametersLabel),
     detailsLabel: t(PromptSelectorI18nKeys.DetailsLabel),
     enterValuePlaceholder: t(PromptSelectorI18nKeys.EnterValuePlaceholder),
