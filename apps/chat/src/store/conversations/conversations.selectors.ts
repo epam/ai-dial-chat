@@ -56,6 +56,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 import { RootState } from '@/src/types/store';
 
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
 import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
@@ -842,6 +843,7 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     selectAreSelectedConversationsReadOnly,
     AuthSelectors.selectIsAdmin,
     ChatSelectors.selectUploadedConfigurationSchemas,
+    ApplicationTypesSchemasSelectors.selectAllSchemas,
     (state: RootState) => state,
   ],
   (
@@ -851,6 +853,7 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     areReadOnly,
     isAdmin,
     uploadedConfigurationSchemas,
+    applicationTypeSchemas,
     state,
   ) => {
     const conversationsModelsIds = conversations.map(
@@ -875,9 +878,25 @@ const selectIsSelectedConversationBlocksInput = createSelector(
       ),
     )?.schema;
 
+    const isCustomViewerConversation = conversations.some((conversation) => {
+      const model = modelsMap[conversation.model.id];
+
+      if (!model) {
+        return false;
+      }
+
+      return (
+        !!model.viewerUrl ||
+        !!applicationTypeSchemas.find(
+          (schema) => schema.id === model.applicationTypeSchemaId,
+        )?.viewerUrl
+      );
+    });
+
     return conversations.some(
       (conversation) =>
         conversation.sharedWithMe ||
+        isCustomViewerConversation ||
         (!conversation.messages?.length &&
           (isConfigurationBlocksInput || isReplayConversation(conversation))) ||
         isNotAllowedModels ||
