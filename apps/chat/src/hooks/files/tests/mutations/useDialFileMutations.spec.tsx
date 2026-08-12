@@ -9,13 +9,13 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DialFileManagerI18nKeys } from '../../../../constants/translation-keys';
+import { useNotification } from '../../../../context/NotificationContext';
+import { createNotificationContextValue } from '../../../../context/tests/notification-context-mock';
 import * as filesApi from '../../../../server-api/files.api';
 import type { SharedRootMeta } from '../../dial-file-manager.model';
 import type { UseDialFileMutationsOptions } from '../../useDialFileMutations';
 import { useDialFileMutations } from '../../useDialFileMutations';
 
-import { useNotification } from '../../../../context/NotificationContext';
-import { createNotificationContextValue } from '../../../../context/tests/notification-context-mock';
 vi.mock('../../../../server-api/files.api');
 vi.mock('../../../../context/NotificationContext');
 vi.mock('../../../../utils/file-download', () => ({

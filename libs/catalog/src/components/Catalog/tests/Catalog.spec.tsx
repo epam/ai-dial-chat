@@ -18,22 +18,22 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     text: unknown;
     className?: string;
   }) => <span className={className}>{text as string}</span>,
-  DialTabs: ({
+  Tabs: ({
     tabs,
-    activeTab,
-    onClick,
+    activeTabId,
+    onTabChange,
   }: {
     tabs: { id: string; label: React.ReactNode }[];
-    activeTab: string;
-    onClick: (id: string) => void;
+    activeTabId: string;
+    onTabChange: (id: string) => void;
   }) => (
     <div role="tablist">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           role="tab"
-          aria-selected={tab.id === activeTab}
-          onClick={() => onClick(tab.id)}
+          aria-selected={tab.id === activeTabId}
+          onClick={() => onTabChange(tab.id)}
         >
           {tab.label}
         </button>

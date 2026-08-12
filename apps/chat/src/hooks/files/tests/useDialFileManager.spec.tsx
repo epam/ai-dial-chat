@@ -11,6 +11,8 @@ import {
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useNotification } from '../../../context/NotificationContext';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as filesApi from '../../../server-api/files.api';
 import {
   DialFileManagerActionProfile,
@@ -18,8 +20,6 @@ import {
 } from '../../../types/file-manager-variant';
 import { useDialFileManager } from '../useDialFileManager';
 
-import { useNotification } from '../../../context/NotificationContext';
-import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 vi.mock('../../../server-api/files.api');
 vi.mock('../../../context/NotificationContext');
 vi.mock('../../../utils/file-name', () => ({
