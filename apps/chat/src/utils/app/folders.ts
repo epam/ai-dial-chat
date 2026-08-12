@@ -529,19 +529,24 @@ export const getEntitiesFoldersFromEntities = (
   return featuresFolders;
 };
 
-const naturalNameCollator = new Intl.Collator(undefined, {
-  numeric: true,
-  sensitivity: 'base',
-});
-
 /**
- * Compares entity names in natural order, so that numeric suffixes are ordered
- * by value instead of lexicographically ("Folder 2" before "Folder 10").
+ * Compares entity names character by character, case insensitively. Digits are
+ * compared as characters and not as numbers, so "Folder 10" comes before
+ * "Folder 2" and "16Folder" before "4Folder".
  */
 export const compareEntitiesByName = (
   a: { name: string },
   b: { name: string },
-): number => naturalNameCollator.compare(a.name, b.name);
+): number => {
+  const aName = a.name.toLowerCase();
+  const bName = b.name.toLowerCase();
+
+  if (aName === bName) {
+    return 0;
+  }
+
+  return aName < bName ? -1 : 1;
+};
 
 export const sortByName = <T extends Entity>(entities: T[]): T[] =>
   [...entities].sort(compareEntitiesByName);
