@@ -954,6 +954,8 @@ export enum CustomAppI18nKeys {
   SaveConfirmTitle = 'customApp.saveConfirm.title',
   SaveConfirmDescription = 'customApp.saveConfirm.description',
   SaveConfirmLabel = 'customApp.saveConfirm.confirmLabel',
+  SavingOverlayLabel = 'customApp.savingOverlay',
+  LoadingOverlayLabel = 'customApp.loadingOverlay',
 }
 
 export enum AppUpdateI18nKeys {

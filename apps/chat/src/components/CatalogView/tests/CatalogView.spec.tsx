@@ -139,6 +139,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     favorites,
     onToggleFavorite,
     onUseInChat,
+    onCardClick,
     isPrimaryActionVisible,
     onEdit,
     onDelete,
@@ -172,6 +173,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     favorites?: CatalogItem[];
     onToggleFavorite?: (id: string, isFavorite: boolean) => void;
     onUseInChat?: (item: CatalogItem) => void;
+    onCardClick?: (item: CatalogItem) => void;
     isPrimaryActionVisible?: (item: CatalogItem) => boolean;
     onEdit?: (item: CatalogItem) => void;
     onDelete?: (item: CatalogItem) => Promise<void>;
@@ -279,6 +281,15 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
               use in chat {item.id}
             </button>
           ))}
+        {(items ?? []).map((item) => (
+          <button
+            key={`card-select-${item.id}`}
+            type="button"
+            onClick={() => onCardClick?.(item)}
+          >
+            card select {item.id}
+          </button>
+        ))}
         {(items ?? []).map((item) => (
           <button
             key={`edit-${item.id}`}
@@ -2182,6 +2193,68 @@ describe('CatalogView', () => {
       expect(
         capturedPublishProps.current?.onMyAppsActiveChange,
       ).toBeUndefined();
+    });
+  });
+
+  describe('selector mode card pick', () => {
+    it('commits the pick to DeploymentsContext when no onSelect is supplied (chat input default)', async () => {
+      const setSelectedItemId = vi.fn();
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+        selectedItemId: null,
+        setSelectedItemId,
+        restoreSelectedItemId: vi.fn(),
+        restoreDefaultSelection: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn(),
+        mergeSharedItem: vi.fn(),
+      });
+      const onClose = vi.fn();
+
+      render(<CatalogView isSelectorMode onClose={onClose} />);
+      await user.click(
+        screen.getByRole('button', { name: 'card select gpt-4o' }),
+      );
+
+      expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o');
+      expect(onClose).toHaveBeenCalledOnce();
+    });
+
+    it('routes the pick through onSelect instead of DeploymentsContext when onSelect is supplied', async () => {
+      const setSelectedItemId = vi.fn();
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+        selectedItemId: null,
+        setSelectedItemId,
+        restoreSelectedItemId: vi.fn(),
+        restoreDefaultSelection: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn(),
+        mergeSharedItem: vi.fn(),
+      });
+      const onClose = vi.fn();
+      const onSelect = vi.fn();
+
+      render(
+        <CatalogView isSelectorMode onClose={onClose} onSelect={onSelect} />,
+      );
+      await user.click(
+        screen.getByRole('button', { name: 'card select gpt-4o' }),
+      );
+
+      expect(onSelect).toHaveBeenCalledWith('gpt-4o');
+      expect(setSelectedItemId).not.toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalledOnce();
     });
   });
 
