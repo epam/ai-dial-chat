@@ -216,6 +216,7 @@ export enum CatalogI18nKeys {
   DetailsUnshareRemovingStatus = 'catalog.details.unshare.removingStatus',
   DetailsUnshareErrorTitle = 'catalog.details.unshare.errorTitle',
   DetailsUnshareError = 'catalog.details.unshare.error',
+  DetailsUnshareSuccessTitle = 'catalog.details.unshare.successTitle',
   DetailsUnshareSuccess = 'catalog.details.unshare.success',
   ConnectToolsetTitle = 'catalog.details.connect.toolsetTitle',
   ConnectApplicationTitle = 'catalog.details.connect.applicationTitle',
