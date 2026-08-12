@@ -909,6 +909,12 @@ export interface ConversationMessageDto {
    * @memberof ConversationMessageDto
    */
   responseId?: string;
+  /**
+   * Deployment that produced this message. Present on assistant and status messages.
+   * @type {string}
+   * @memberof ConversationMessageDto
+   */
+  deploymentId?: string;
 }
 
 /**
@@ -4657,7 +4663,7 @@ export interface PublishRuleDto {
    * @type {string}
    * @memberof PublishRuleDto
    */
-  _function: PublishRuleDtoFunctionEnum;
+  function: PublishRuleDtoFunctionEnum;
   /**
    * Values combined with OR; exactly one pattern when function is REGEX.
    * @type {Array<string>}

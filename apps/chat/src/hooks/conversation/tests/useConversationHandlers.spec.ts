@@ -429,6 +429,7 @@ describe('useConversationHandlers — handleRegenerateMessage', () => {
         wasStoppedByUser: undefined,
         stoppedWithoutContent: undefined,
         streamErrorMessage: undefined,
+        deploymentId: 'selected-deployment',
       },
     ]);
     expect(conversationRef.current).toBe(updated);

@@ -117,7 +117,7 @@ vi.mock('../../../server-api/publish-rules.api', () => ({
     targets: string[];
   }) => ({
     source: rule.source,
-    _function: rule.function,
+    function: rule.function,
     targets: rule.targets,
   }),
 }));
@@ -728,7 +728,7 @@ describe('CatalogView', () => {
           folderPath: 'Organization/Data Science',
           version: '1.2.0',
           rules: [
-            { source: 'role', _function: 'CONTAIN', targets: ['engineering'] },
+            { source: 'role', function: 'CONTAIN', targets: ['engineering'] },
           ],
         },
       );
