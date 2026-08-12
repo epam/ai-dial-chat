@@ -250,14 +250,12 @@ export const getAttachmentCardState = (
   const isError = status === RequestStatus.Error;
   const isImage =
     type === AttachmentType.Image && !!(previewUrl ?? url) && !isError;
-  const isAudio = type === AttachmentType.Audio && !isError;
   const isLink = type === AttachmentType.Link && !isError;
 
   return {
     isLoading,
     isError,
     isImage,
-    isAudio,
     isLink,
     BottomIcon: isLink ? null : getBottomIcon(attachment),
     typeLabel: isLink ? null : getBottomLabel(attachment, typeLabels),

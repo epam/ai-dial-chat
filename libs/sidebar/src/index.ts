@@ -15,5 +15,6 @@ export type {
   SidebarPanelProps,
   SidebarPanelStyles,
   SidebarPanelColors,
+  SidebarPanelLabels,
   SidebarPanelTypography,
 } from './models/panel-props';

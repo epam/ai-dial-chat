@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialTag, DialTooltip } from '@epam/ai-dial-ui-kit';
 import {
   FC,
@@ -10,19 +10,45 @@ import {
 } from 'react';
 import styles from './TopicTag.module.scss';
 
+/** Color overrides for `TopicTag`, applied as CSS custom properties. */
+export interface TopicTagColors {
+  /** Tag text color. Fallback: `--text-secondary`. */
+  text?: string;
+  /** Tag border color. Fallback: `--stroke-secondary`. */
+  border?: string;
+  /** Tag background color. Fallback: `--bg-layer-sunken`. */
+  background?: string;
+}
+
 /** Props for TopicTag. */
 export interface TopicTagProps {
   /** Text to display inside the tag, e.g. 'Free' or 'Pay-as-you-go'. */
   label: string;
   /** CSS class for the tag text. Default: 'dial-tiny-text'. */
   className?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: TopicTagColors;
 }
 
 /** Simple tag component for displaying item topics or pricing tiers. */
 export const TopicTag: FC<TopicTagProps> = ({
   label,
   className = 'dial-tiny-text',
-}) => <DialTag label={label} className={mergeClasses(className, styles.tag)} />;
+  colors,
+}) => (
+  /* `DialTag` takes no `style`, so the variables go on a `display: contents`
+   * wrapper — it generates no box, leaving layout and width measurement intact. */
+  <span
+    className="contents"
+    style={buildCssVars({
+      '--cat-pricing-tag-text': colors?.text,
+      '--cat-pricing-tag-border': colors?.border,
+      '--cat-pricing-tag-bg': colors?.background,
+    })}
+  >
+    <DialTag label={label} className={mergeClasses(className, styles.tag)} />
+  </span>
+);
 
 /** Props for TopicsLine. */
 export interface TopicsLineProps {

@@ -1,0 +1,37 @@
+.container {
+  background: var(--stdv-bg, var(--bg-layer-base, #f5f7fa));
+}
+
+.header {
+  border-bottom-color: var(
+    --stdv-header-border,
+    var(--stroke-tertiary, #e0e6f0)
+  );
+}
+
+.detailsColumn {
+  border-inline-end-color: var(
+    --stdv-details-border,
+    var(--stroke-tertiary, #e0e6f0)
+  );
+}
+
+.subtitleText {
+  color: var(--stdv-subtitle-text, var(--text-secondary, #57647a));
+}
+
+.successIcon {
+  color: var(--stdv-success-icon, var(--text-success, #007274));
+}
+
+.errorIcon {
+  color: var(--stdv-error-icon, var(--text-error, #ae2f2f));
+}
+
+.missedIcon {
+  color: var(--stdv-missed-icon, var(--text-secondary, #57647a));
+}
+
+.historyCard {
+  background: var(--stdv-history-bg, var(--bg-layer-raised, #fcfcfc));
+}

@@ -1,8 +1,9 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialTag } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import type { CatalogItemCredentials } from '../../models/catalog-item-credentials';
 import { getCredentialsBadgeState } from '../../utils/toolset-credentials';
+import styles from './CredentialsBadge.module.scss';
 
 /** Props for `CredentialsBadge`. */
 export interface CredentialsBadgeProps {
@@ -12,8 +13,18 @@ export interface CredentialsBadgeProps {
   loggedOutLabel?: string;
   /** Additional CSS class applied for layout/spacing (e.g. margins). */
   className?: string;
-  /** Typography/color classes for the badge itself. Default: `'bg-error dial-caption-semi-text uppercase tracking-[0.06em] text-error'`. */
+  /** Typography class for the badge itself. Default: `'dial-caption-semi-text uppercase'`. Colors come from the module stylesheet. */
   badgeClassName?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: CredentialsBadgeColors;
+}
+
+/** Color overrides for `CredentialsBadge`, applied as CSS custom properties. */
+export interface CredentialsBadgeColors {
+  /** Badge background color. Fallback: `--bg-error`. */
+  background?: string;
+  /** Badge text color. Fallback: `--text-error`. */
+  text?: string;
 }
 
 /** Credential-status badge shown on toolset cards — only rendered when signed out. */
@@ -21,7 +32,8 @@ export const CredentialsBadge: FC<CredentialsBadgeProps> = ({
   credentials,
   loggedOutLabel = 'LOGGED OUT',
   className,
-  badgeClassName = 'bg-error dial-caption-semi-text uppercase tracking-[0.06em] text-error',
+  badgeClassName = 'dial-caption-semi-text uppercase',
+  colors,
 }) => {
   if (credentials == null) return null;
 
@@ -29,9 +41,24 @@ export const CredentialsBadge: FC<CredentialsBadgeProps> = ({
   if (state == null) return null;
 
   return (
-    <DialTag
-      label={loggedOutLabel}
-      className={mergeClasses('border-none', badgeClassName, className)}
-    />
+    /* `DialTag` takes no `style`, so the variables go on a `display: contents`
+     * wrapper — it generates no box and leaves layout untouched. */
+    <span
+      className="contents"
+      style={buildCssVars({
+        '--cat-credentials-badge-bg': colors?.background,
+        '--cat-credentials-badge-text': colors?.text,
+      })}
+    >
+      <DialTag
+        label={loggedOutLabel}
+        className={mergeClasses(
+          'border-none tracking-[0.06em]',
+          styles.badge,
+          badgeClassName,
+          className,
+        )}
+      />
+    </span>
   );
 };

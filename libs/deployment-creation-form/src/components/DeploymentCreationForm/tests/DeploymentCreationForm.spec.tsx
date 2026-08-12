@@ -8,7 +8,8 @@ import type {
 } from '../../../models/deployment-creation-form';
 import { DeploymentCreationForm } from '../DeploymentCreationForm';
 
-vi.mock('@epam/ai-dial-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
   Input: ({
     value,
     onChange,
@@ -54,6 +55,9 @@ vi.mock('@epam/ai-dial-kit', () => ({
       />
     </label>
   ),
+}));
+
+vi.mock('@epam/ai-dial-kit', () => ({
   TagInput: ({
     label,
     placeholder,
@@ -84,7 +88,16 @@ const labels: DeploymentCreationFormLabels = {
   iconUrl: { label: 'Icon URL', placeholder: 'https://...' },
   version: { label: 'Version', placeholder: 'e.g. 1.0.0' },
   topics: { label: 'Topics', placeholder: 'Add a topic' },
-  intro: { label: 'Intro', placeholder: 'Short pitch' },
+  otherLocales: {
+    summaryLabel: 'Locales',
+    editLabel: 'Edit',
+    popupTitle: 'Add locale',
+    addLocaleLabel: 'Add locale',
+    languageLabel: 'Language',
+    nameLabel: 'Name',
+    descriptionLabel: 'About',
+    deleteAriaLabel: 'Delete locale',
+  },
 };
 
 const baseValues: DeploymentCreationFormValues = {
@@ -93,7 +106,7 @@ const baseValues: DeploymentCreationFormValues = {
   iconUrl: '',
   version: '',
   topics: [],
-  intro: '',
+  otherLocales: [],
 };
 
 const renderComponent = (
@@ -124,7 +137,6 @@ describe('DeploymentCreationForm', () => {
     expect(screen.getByLabelText('Icon URL')).toBeTruthy();
     expect(screen.getByLabelText('Version')).toBeTruthy();
     expect(screen.getByLabelText('Topics')).toBeTruthy();
-    expect(screen.getByLabelText('Intro')).toBeTruthy();
   });
 
   it('calls onChange with a name patch when the name input changes', () => {
@@ -134,15 +146,6 @@ describe('DeploymentCreationForm', () => {
       target: { value: 'Updated' },
     });
     expect(onChange).toHaveBeenCalledWith({ name: 'Updated' });
-  });
-
-  it('calls onChange with an intro patch when the intro input changes', () => {
-    const onChange = vi.fn();
-    renderComponent(undefined, {}, onChange);
-    fireEvent.change(screen.getByLabelText('Intro'), {
-      target: { value: 'A short pitch' },
-    });
-    expect(onChange).toHaveBeenCalledWith({ intro: 'A short pitch' });
   });
 
   it('calls onChange with a description patch when the textarea changes', async () => {
@@ -158,11 +161,6 @@ describe('DeploymentCreationForm', () => {
     renderComponent(undefined, { name: 'Name is required' });
     const alert = screen.getByRole('alert');
     expect(alert.textContent).toBe('Name is required');
-  });
-
-  it('surfaces a passed-in intro error', () => {
-    renderComponent(undefined, { intro: 'Intro is too long' });
-    expect(screen.getByText('Intro is too long')).toBeTruthy();
   });
 
   it('renders no error when none is passed', () => {

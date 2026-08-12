@@ -12,7 +12,7 @@
 
 .scrollContainer {
   scrollbar-width: thin;
-  scrollbar-color: var(--cm-table-scrollbar, var(--stroke-primary, #6b7280))
+  scrollbar-color: var(--cm-table-scrollbar, var(--stroke-primary, #57647a))
     transparent;
 
   &::-webkit-scrollbar {
@@ -24,13 +24,14 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: var(--cm-table-scrollbar, var(--stroke-primary, #6b7280));
+    background-color: var(--cm-table-scrollbar, var(--stroke-primary, #57647a));
     border-radius: 4px;
   }
 }
 
 .tableHeaderCell {
   background: var(--cm-code-block-header-bg, var(--bg-layer-raised, #fcfcfc));
+  color: var(--cm-table-header-text, var(--text-secondary, #57647a));
 }
 
 .sectionRow td {
@@ -55,8 +56,8 @@ tbody .row:hover td {
 .tableScrollFadeEnd {
   mask-image: linear-gradient(
     to right,
-    var(--cm-table-fade, var(--bg-mask-opaque, #000)) 0,
-    var(--cm-table-fade, var(--bg-mask-opaque, #000)) calc(100% - 1rem),
+    var(--cm-table-fade, var(--stroke-focus-black, #161b2d)) 0,
+    var(--cm-table-fade, var(--stroke-focus-black, #161b2d)) calc(100% - 1rem),
     transparent 100%
   );
 }
@@ -64,8 +65,8 @@ tbody .row:hover td {
 :global([dir='rtl']) .tableScrollFadeEnd {
   mask-image: linear-gradient(
     to left,
-    var(--cm-table-fade, var(--bg-mask-opaque, #000)) 0,
-    var(--cm-table-fade, var(--bg-mask-opaque, #000)) calc(100% - 1rem),
+    var(--cm-table-fade, var(--stroke-focus-black, #161b2d)) 0,
+    var(--cm-table-fade, var(--stroke-focus-black, #161b2d)) calc(100% - 1rem),
     transparent 100%
   );
 }
@@ -74,8 +75,8 @@ tbody .row:hover td {
   mask-image: linear-gradient(
     to right,
     transparent 0,
-    var(--cm-table-fade, var(--bg-mask-opaque, #000)) 1rem,
-    var(--cm-table-fade, var(--bg-mask-opaque, #000)) 100%
+    var(--cm-table-fade, var(--stroke-focus-black, #161b2d)) 1rem,
+    var(--cm-table-fade, var(--stroke-focus-black, #161b2d)) 100%
   );
 }
 
@@ -83,8 +84,8 @@ tbody .row:hover td {
   mask-image: linear-gradient(
     to left,
     transparent 0,
-    var(--cm-table-fade, var(--bg-mask-opaque, #000)) 1rem,
-    var(--cm-table-fade, var(--bg-mask-opaque, #000)) 100%
+    var(--cm-table-fade, var(--stroke-focus-black, #161b2d)) 1rem,
+    var(--cm-table-fade, var(--stroke-focus-black, #161b2d)) 100%
   );
 }
 
@@ -92,8 +93,8 @@ tbody .row:hover td {
   mask-image: linear-gradient(
     to right,
     transparent 0,
-    var(--cm-table-fade, var(--bg-mask-opaque, #000)) 1rem,
-    var(--cm-table-fade, var(--bg-mask-opaque, #000)) calc(100% - 1rem),
+    var(--cm-table-fade, var(--stroke-focus-black, #161b2d)) 1rem,
+    var(--cm-table-fade, var(--stroke-focus-black, #161b2d)) calc(100% - 1rem),
     transparent 100%
   );
 }

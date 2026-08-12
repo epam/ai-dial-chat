@@ -1,4 +1,5 @@
 import {
+  buildCssVars,
   type CustomVisualizerData,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
@@ -30,7 +31,7 @@ import {
  * 8. Update `openspec/specs/custom-visualizers/spec.md` accordingly.
  */
 import { VisualizerConnectorRequests } from '@epam/ai-dial-shared';
-import { DialSpinner } from '@epam/ai-dial-ui-kit';
+import { Spinner } from '@epam/ai-dial-ui-kit';
 import { VisualizerConnector } from '@epam/ai-dial-visualizer-connector';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { type FC, useEffect, useRef, useState } from 'react';
@@ -45,6 +46,18 @@ export interface VisualizerCanvasRendererProps {
   loadingLabel?: string;
   /** Message shown when the visualizer fails to receive its data. Defaults to `'Failed to load visualizer'`. */
   errorLabel?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: VisualizerCanvasRendererColors;
+}
+
+/** Color overrides for `VisualizerCanvasRenderer`, applied as CSS custom properties. */
+export interface VisualizerCanvasRendererColors {
+  /** Background of the loading overlay. Defaults to `--bg-layer-1`. */
+  loadingBackground?: string;
+  /** Loading/error message text color. Defaults to `--text-primary`. */
+  statusText?: string;
+  /** Error icon color. Defaults to `--text-error`. */
+  errorIcon?: string;
 }
 
 enum RendererStatus {
@@ -58,6 +71,7 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
   content,
   loadingLabel,
   errorLabel = 'Failed to load visualizer',
+  colors,
 }) => {
   const hostRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<RendererStatus>(RendererStatus.Loading);
@@ -126,7 +140,14 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
   }, [url, visualizerName, requestTimeout]);
 
   return (
-    <div className="relative h-full w-full">
+    <div
+      className="relative h-full w-full"
+      style={buildCssVars({
+        '--vs-loading-bg': colors?.loadingBackground,
+        '--vs-status-text': colors?.statusText,
+        '--vs-error-icon': colors?.errorIcon,
+      })}
+    >
       <div ref={hostRef} className="h-full w-full" />
       {status === RendererStatus.Loading && (
         <div
@@ -135,7 +156,7 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
             styles.loadingOverlay,
           )}
         >
-          <DialSpinner />
+          <Spinner />
           {loadingLabel && (
             <p className={mergeClasses('text-center', styles.statusLabel)}>
               {loadingLabel}

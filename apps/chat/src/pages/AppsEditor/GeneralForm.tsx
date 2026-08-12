@@ -28,6 +28,13 @@ import {
 import { createApplication } from '../../server-api/applications';
 import type { TriggerSaveGeneralPayload } from '../../types/apps-editor';
 import { isQuickAppSchema } from '../../utils/application-schema';
+import {
+  appendLocaleCode,
+  buildAdditionalLocaleOptions,
+  buildLocaleFieldLabels,
+  composeLocalePayload,
+  PRIMARY_LOCALE,
+} from '../../utils/locale';
 
 export interface GeneralFormHandle {
   submit: () => Promise<void>;
@@ -44,7 +51,7 @@ export interface GeneralFormInitialValues {
   iconUrl?: string;
   version?: string;
   topics?: string[];
-  intro?: string;
+  otherLocales?: DeploymentCreationFormValues['otherLocales'];
 }
 
 interface Props {
@@ -62,7 +69,7 @@ const EMPTY_VALUES: DeploymentCreationFormValues = {
   iconUrl: '',
   version: '',
   topics: [],
-  intro: '',
+  otherLocales: [],
 };
 
 const normalizeFormValues = (
@@ -73,7 +80,7 @@ const normalizeFormValues = (
   iconUrl: values.iconUrl ?? '',
   version: values.version ?? '',
   topics: values.topics ?? [],
-  intro: values.intro ?? '',
+  otherLocales: values.otherLocales ?? [],
 });
 
 const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
@@ -95,14 +102,19 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
     setValues(normalizeFormValues(initialValues));
   }, [initialValues]);
 
+  const localeOptions = useMemo(() => buildAdditionalLocaleOptions(), []);
+
   const labels: DeploymentCreationFormLabels = useMemo(
     () => ({
       name: {
-        label: t(EditorI18nKeys.NameLabel),
+        label: appendLocaleCode(t(EditorI18nKeys.NameLabel), PRIMARY_LOCALE),
         placeholder: t(AppsEditorI18nKeys.GeneralFormNamePlaceholder),
       },
       description: {
-        label: t(EditorI18nKeys.DescriptionLabel),
+        label: appendLocaleCode(
+          t(EditorI18nKeys.DescriptionLabel),
+          PRIMARY_LOCALE,
+        ),
         placeholder: t(AppsEditorI18nKeys.GeneralFormDescriptionPlaceholder),
       },
       iconUrl: {
@@ -117,10 +129,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
         label: t(EditorI18nKeys.TopicsLabel),
         placeholder: t(EditorI18nKeys.TopicsPlaceholder),
       },
-      intro: {
-        label: t(EditorI18nKeys.IntroLabel),
-        placeholder: t(EditorI18nKeys.IntroPlaceholder),
-      },
+      otherLocales: buildLocaleFieldLabels(t),
       ariaLabel: t(EditorI18nKeys.StepGeneral),
     }),
     [t],
@@ -144,7 +153,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
       validateNamePattern: true,
       validateVersionPattern: true,
     });
-    if (codes.name || codes.version || codes.intro) {
+    if (codes.name || codes.version) {
       let nameError: string | undefined;
       if (codes.name === DeploymentCreationFieldErrorCode.Required) {
         nameError = t(EditorI18nKeys.NameRequired);
@@ -159,7 +168,6 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
         version: codes.version
           ? t(AppsEditorI18nKeys.GeneralFormVersionInvalid)
           : undefined,
-        intro: codes.intro ? t(EditorI18nKeys.IntroTooLong) : undefined,
       });
       return;
     }
@@ -181,6 +189,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
             tool_sets: [],
           }
         : undefined;
+      const locales = composeLocalePayload(values.otherLocales, PRIMARY_LOCALE);
       const result = await createApplication({
         name: values.name.trim(),
         type: schemaId,
@@ -188,8 +197,9 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
         iconUrl: values.iconUrl.trim() || undefined,
         version: values.version.trim() || undefined,
         topics: values.topics.length > 0 ? values.topics : undefined,
-        intro: values.intro.trim() || undefined,
         applicationProperties,
+        locales,
+        primaryLocale: locales ? PRIMARY_LOCALE : undefined,
       });
       onCreated(
         result.id,
@@ -209,7 +219,6 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
       description: values.description.trim() || undefined,
       iconUrl: values.iconUrl.trim() || undefined,
       topics: values.topics.length > 0 ? values.topics : undefined,
-      intro: values.intro.trim() || undefined,
       display_version: values.version.trim() || undefined,
     }),
     [values],
@@ -228,7 +237,6 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
       version: values.version,
       lastUsed: '',
       description: values.description,
-      intro: values.intro,
       folder: [],
       topics: values.topics,
       iconUrl: values.iconUrl.trim() || undefined,
@@ -252,6 +260,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
             errors={errors}
             onChange={handleChange}
             labels={labels}
+            availableLocaleOptions={localeOptions}
           />
 
           {submitError && <ErrorMessageNotification message={submitError} />}

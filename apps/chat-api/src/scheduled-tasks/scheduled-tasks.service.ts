@@ -16,16 +16,21 @@ import { EnvironmentVariables } from '../config/environment.config';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import type { CreateScheduledTaskBodyDto } from './dto/create-scheduled-task.dto';
+import type { ListScheduledTaskRunsQueryDto } from './dto/list-scheduled-task-runs-query.dto';
+import type { ListScheduledTaskRunsResponseDto } from './dto/list-scheduled-task-runs.dto';
 import type { ListScheduledTasksQueryDto } from './dto/list-scheduled-tasks-query.dto';
 import { ScheduledTasksSortKey } from './dto/list-scheduled-tasks-query.dto';
 import type { ListScheduledTasksResponseDto } from './dto/list-scheduled-tasks.dto';
 import type { ScheduledTaskDto } from './dto/scheduled-task.dto';
 import type { UpdateScheduledTaskBodyDto } from './dto/update-scheduled-task.dto';
 import {
+  fromUpstreamRun,
   fromUpstreamSchedule,
   toUpstreamSchedulePayload,
   type UpstreamScheduleResponse,
+  type UpstreamScheduleRun,
 } from './scheduled-tasks.mapper';
+import { ScheduleAction } from './types/schedule-action.enum';
 
 const LIST_CACHE_TTL_MS = 30 * 1000;
 const LIST_CACHE_EPOCH_TTL_MS = 24 * 60 * 60 * 1000;
@@ -56,6 +61,7 @@ const SORT_ORDER_MAP: Record<
 export class ScheduledTasksService {
   private readonly logger = new Logger(ScheduledTasksService.name);
   private readonly schedulerAppId: string | undefined;
+  private readonly schedulerServiceId: string | undefined;
   private readonly timeoutMs: number;
 
   constructor(
@@ -64,6 +70,9 @@ export class ScheduledTasksService {
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {
     this.schedulerAppId = configService.get('SCHEDULER_APP_ID', {
+      infer: true,
+    });
+    this.schedulerServiceId = configService.get('SCHEDULER_SERVICE_ID', {
       infer: true,
     });
     this.timeoutMs =
@@ -83,11 +92,30 @@ export class ScheduledTasksService {
     return this.schedulerAppId;
   }
 
+  private getSchedulerServiceId(): string {
+    if (!this.schedulerServiceId) {
+      this.logger.error(
+        'SCHEDULER_SERVICE_ID is not configured — cannot build DIAL Scheduler upstream payload',
+      );
+      throw new ServiceUnavailableException(
+        'Scheduled tasks are not configured (SCHEDULER_SERVICE_ID is missing)',
+      );
+    }
+    return this.schedulerServiceId;
+  }
+
   private buildSchedulesUrl(scheduleId?: string): string {
     const base = `${this.dialClient.baseUrl}/v1/deployments/applications/${encodeURIComponent(this.getSchedulerAppId())}/route/v1/schedules`;
     return scheduleId
       ? `${base}/${encodeURIComponent(scheduleId)}`
       : `${base}/`;
+  }
+
+  private buildScheduleActionUrl(
+    scheduleId: string,
+    action: ScheduleAction,
+  ): string {
+    return `${this.buildSchedulesUrl(scheduleId)}/${action}`;
   }
 
   private buildSchedulesListUrl(query: ListScheduledTasksQueryDto): string {
@@ -108,6 +136,24 @@ export class ScheduledTasksService {
     const queryString = searchParams.toString();
     const url = this.buildSchedulesUrl();
     return queryString ? `${url}?${queryString}` : url;
+  }
+
+  /*
+   * The BFF always sends an explicit order_by=created_at&order_dir=desc pair
+   * upstream — mirroring the same "always-explicit-default" decision made for
+   * listScheduledTasks — so the endpoint's documented newest-first order is
+   * the one actually observed, instead of relying on upstream's own default.
+   */
+  private buildRunsUrl(
+    scheduleId: string,
+    query: ListScheduledTaskRunsQueryDto,
+  ): string {
+    const searchParams = new URLSearchParams();
+    searchParams.set('limit', String(query.limit ?? 20));
+    searchParams.set('offset', String(query.offset ?? 0));
+    searchParams.set('order_by', 'created_at');
+    searchParams.set('order_dir', 'desc');
+    return `${this.buildSchedulesUrl(scheduleId)}/runs?${searchParams.toString()}`;
   }
 
   /*
@@ -153,13 +199,13 @@ export class ScheduledTasksService {
     return `scheduled-tasks:list:${userSub}:${epoch}:${this.normalizeListQuery(query)}`;
   }
 
-  private async fetchUpstream(
+  private async fetchUpstream<T = UpstreamScheduleResponse>(
     url: string,
     method: 'GET' | 'POST' | 'PUT',
     accessToken: string,
     context: string,
     body?: unknown,
-  ): Promise<UpstreamScheduleResponse> {
+  ): Promise<T> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -195,10 +241,12 @@ export class ScheduledTasksService {
         );
       }
 
-      const json = (await response.json()) as UpstreamScheduleResponse;
+      const json = (await response.json()) as T;
       this.logger.debug(
         `DIAL Scheduler body for ${context}: keys=${JSON.stringify(
-          Array.isArray(json) ? `array(${json.length})` : Object.keys(json),
+          Array.isArray(json)
+            ? `array(${json.length})`
+            : Object.keys(json as object),
         )}`,
       );
       return json;
@@ -302,6 +350,7 @@ export class ScheduledTasksService {
       body,
       this.dialClient.baseUrl,
       this.dialClient.dialApiVersion,
+      this.getSchedulerServiceId(),
     );
 
     const result = await this.fetchUpstream(
@@ -329,6 +378,37 @@ export class ScheduledTasksService {
     return fromUpstreamSchedule(result);
   }
 
+  async listScheduledTaskRuns(
+    accessToken: string,
+    scheduleId: string,
+    query: ListScheduledTaskRunsQueryDto = {},
+  ): Promise<ListScheduledTaskRunsResponseDto> {
+    const result = await this.fetchUpstream<
+      UpstreamScheduleResponse & {
+        results?: UpstreamScheduleRun[];
+        count?: number;
+        limit?: number;
+        offset?: number;
+        next?: string | null;
+        previous?: string | null;
+      }
+    >(
+      this.buildRunsUrl(scheduleId, query),
+      'GET',
+      accessToken,
+      `list scheduled task runs "${scheduleId}"`,
+    );
+    const runs = result.results ?? [];
+    return {
+      items: runs.map(fromUpstreamRun),
+      count: result.count,
+      limit: result.limit,
+      offset: result.offset,
+      next: result.next,
+      previous: result.previous,
+    };
+  }
+
   async updateScheduledTask(
     userSub: string,
     accessToken: string,
@@ -339,6 +419,7 @@ export class ScheduledTasksService {
       body,
       this.dialClient.baseUrl,
       this.dialClient.dialApiVersion,
+      this.getSchedulerServiceId(),
     );
 
     const result = await this.fetchUpstream(
@@ -351,6 +432,72 @@ export class ScheduledTasksService {
 
     await this.invalidateListCache(userSub);
     return fromUpstreamSchedule(result);
+  }
+
+  /*
+   * The upstream pause/resume action's own response body is not confirmed to
+   * contain the updated schedule (see design.md "Decision 2" for
+   * add-scheduled-task-active-toggle) — a follow-up GET is used instead of
+   * trusting the action response's shape. If that follow-up GET fails after
+   * the action itself already succeeded, per design.md "Decision 5" the
+   * mutation is NOT rolled back: the caller gets isActive reflecting the
+   * action just taken, with the rest of the last-known fields, rather than
+   * an error that would incorrectly suggest the action didn't happen.
+   */
+  private async performScheduleAction(
+    userSub: string,
+    accessToken: string,
+    scheduleId: string,
+    action: ScheduleAction,
+  ): Promise<ScheduledTaskDto> {
+    await this.fetchUpstream(
+      this.buildScheduleActionUrl(scheduleId, action),
+      'POST',
+      accessToken,
+      `${action} scheduled task "${scheduleId}"`,
+    );
+
+    const requestedIsActive = action === ScheduleAction.Resume;
+    let refreshed: ScheduledTaskDto;
+    try {
+      refreshed = await this.getScheduledTask(accessToken, scheduleId);
+    } catch (err) {
+      this.logger.warn(
+        `Failed to refresh scheduled task "${scheduleId}" after ${action}; ` +
+          'returning the requested isActive without a recalculated nextRunTime.',
+        err instanceof Error ? err.stack : undefined,
+      );
+      refreshed = { id: scheduleId } as ScheduledTaskDto;
+    }
+
+    await this.invalidateListCache(userSub);
+    return { ...refreshed, isActive: requestedIsActive };
+  }
+
+  async pauseScheduledTask(
+    userSub: string,
+    accessToken: string,
+    scheduleId: string,
+  ): Promise<ScheduledTaskDto> {
+    return this.performScheduleAction(
+      userSub,
+      accessToken,
+      scheduleId,
+      ScheduleAction.Pause,
+    );
+  }
+
+  async resumeScheduledTask(
+    userSub: string,
+    accessToken: string,
+    scheduleId: string,
+  ): Promise<ScheduledTaskDto> {
+    return this.performScheduleAction(
+      userSub,
+      accessToken,
+      scheduleId,
+      ScheduleAction.Resume,
+    );
   }
 
   private async invalidateListCache(userSub: string): Promise<void> {

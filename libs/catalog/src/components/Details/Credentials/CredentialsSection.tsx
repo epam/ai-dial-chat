@@ -1,9 +1,10 @@
-import { Input } from '@epam/ai-dial-kit';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
-  DialAccordion,
-  DialConfirmationPopup,
+  Accordion,
+  ConfirmationPopup,
   NeutralButton,
   PrimaryButton,
+  Input,
 } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useState } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
@@ -18,6 +19,7 @@ import {
   getCredentialsUiState,
   getSignedInLevel,
 } from '../../../utils/toolset-credentials';
+import styles from './CredentialsSection.module.scss';
 
 interface CredentialsSectionProps {
   item: CatalogItem;
@@ -27,7 +29,7 @@ interface CredentialsSectionProps {
   ) => void;
   onLogout?: (item: CatalogItem, params: { level: CredentialsLevel }) => void;
   texts?: ItemDetailsTexts;
-  /** Typography class for the signed-in/signed-out status label. Default: `'dial-small-semi-text text-primary'`. */
+  /** Typography class for the signed-in/signed-out status label. Default: `'dial-small-semi-text'`. */
   statusLabelClassName?: string;
 }
 
@@ -53,7 +55,7 @@ const LevelForm: FC<LevelFormProps> = ({
   onLogin,
   onLogout,
   texts,
-  statusLabelClassName = 'dial-small-semi-text text-primary',
+  statusLabelClassName = 'dial-small-semi-text',
 }) => {
   const [apiKey, setApiKey] = useState('');
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
@@ -93,7 +95,9 @@ const LevelForm: FC<LevelFormProps> = ({
 
   return (
     <div className="flex flex-col gap-3">
-      <span className={statusLabelClassName}>{statusLabel}</span>
+      <span className={mergeClasses(statusLabelClassName, styles.statusLabel)}>
+        {statusLabel}
+      </span>
 
       {!isSignedIn &&
         authenticationType === ToolsetAuthenticationType.ApiKey && (
@@ -125,7 +129,7 @@ const LevelForm: FC<LevelFormProps> = ({
         <NeutralButton label={logoutActionLabel} onClick={handleLogoutClick} />
       )}
 
-      <DialConfirmationPopup
+      <ConfirmationPopup
         open={isLogoutConfirmOpen}
         header={logoutActionLabel}
         description={
@@ -164,7 +168,7 @@ export const CredentialsSection: FC<CredentialsSectionProps> = ({
         aria-label={texts?.manageCredentialsActionLabel ?? 'Manage credentials'}
         className="flex flex-col gap-2 px-6 py-4 ps-[60px]"
       >
-        <DialAccordion
+        <Accordion
           title={texts?.myCredentialsSectionLabel ?? 'My credentials'}
           expanded={openLevel === CredentialsLevel.User}
           onToggle={(expanded) =>
@@ -182,8 +186,8 @@ export const CredentialsSection: FC<CredentialsSectionProps> = ({
             texts={texts}
             statusLabelClassName={statusLabelClassName}
           />
-        </DialAccordion>
-        <DialAccordion
+        </Accordion>
+        <Accordion
           title={
             texts?.organizationCredentialsSectionLabel ??
             'Entire organization credentials'
@@ -204,7 +208,7 @@ export const CredentialsSection: FC<CredentialsSectionProps> = ({
             texts={texts}
             statusLabelClassName={statusLabelClassName}
           />
-        </DialAccordion>
+        </Accordion>
       </div>
     );
   }

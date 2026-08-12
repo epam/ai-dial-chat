@@ -1,4 +1,4 @@
-import type { DeploymentLimitsResponseDto } from '@epam/chat-api-client';
+import type { DeploymentLimitsResponseDto } from '@epam/ai-dial-chat-api-client';
 import type { TFunction } from 'i18next';
 import { describe, expect, it } from 'vitest';
 import { CatalogI18nKeys } from '../../constants/translation-keys';

@@ -6,8 +6,11 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
+import { useLanguage } from '../../hooks/language/useLanguage';
+import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 
 const DeploymentSelectorOverlay = lazy(
@@ -29,28 +32,40 @@ interface UseDeploymentSelectorOverlayResult {
 export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResult {
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
 
+  const { t } = useTranslation();
   const { items, selectedItemId, setSelectedItemId } = useDeployments();
   const { favoriteIds, toggleFavorite } = useFavoriteApplications();
+  const { language } = useLanguage();
 
   const favoriteCatalogItems = useMemo(
     () =>
       items
         .filter((d) => favoriteIds.has(d.id))
-        .map((d) => mapDeploymentToCatalogItem(d, favoriteIds)),
-    [items, favoriteIds],
+        .map((d) =>
+          mapDeploymentToCatalogItem(d, {
+            favoriteIds,
+            t,
+            activeLocale: language,
+          }),
+        ),
+    [items, favoriteIds, t, language],
   );
 
   const selectedDeployment = useMemo(
-    () => items.find((item) => item.id === selectedItemId),
+    () => findDeploymentByIdOrReference(items, selectedItemId),
     [items, selectedItemId],
   );
 
   const selectedCatalogItem = useMemo(
     () =>
       selectedDeployment
-        ? mapDeploymentToCatalogItem(selectedDeployment, favoriteIds)
+        ? mapDeploymentToCatalogItem(selectedDeployment, {
+            favoriteIds,
+            t,
+            activeLocale: language,
+          })
         : undefined,
-    [selectedDeployment, favoriteIds],
+    [selectedDeployment, favoriteIds, t, language],
   );
 
   const renderOverlay = useCallback(

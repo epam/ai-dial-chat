@@ -10,8 +10,8 @@ import {
 import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
-  DialConfirmationPopup,
-  DialPopup,
+  ConfirmationPopup,
+  Popup,
   NotificationVariant,
   PopupSize,
   type DropdownItem,
@@ -24,6 +24,7 @@ import {
   IconPinnedFilled,
   IconShare,
   IconTrashX,
+  IconUserOff,
   IconWorldShare,
 } from '@tabler/icons-react';
 import {
@@ -54,11 +55,15 @@ import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import { useConversationExport } from '../../hooks/useConversationExport';
 import { useConversationImport } from '../../hooks/useConversationImport';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { getApiErrorDetails } from '../../server-api/api-error';
-import { discardSharedCatalogItem } from '../../server-api/share.api';
+import {
+  discardSharedCatalogItem,
+  revokeSharedAccess,
+} from '../../server-api/share.api';
 import { ConversationExportMode } from '../../types/conversation-export';
 import { ROUTES } from '../../types/routes';
 import {
@@ -66,8 +71,11 @@ import {
   toPanelConversationId,
 } from '../../utils/conversation-id-match';
 import { getConversationPath } from '../../utils/conversation-path';
+import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { getModelIdFromConversationId } from '../../utils/get-model-id-from-conversation-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
+import { resolveLocalizedText } from '../../utils/locale';
+import { safeDecodeURIComponent } from '../../utils/string-utils';
 import ImportExportQueue from '../ImportExportQueue/ImportExportQueue';
 import PublishConversationPanelContainer from '../PublishConversationPanelContainer/PublishConversationPanelContainer';
 import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup';
@@ -78,6 +86,16 @@ import { getConversationSource } from './get-conversation-source';
 const PANEL_STYLES: ConversationPanelStyles = {
   itemIconBadgeClassName: 'rounded-lg',
 };
+
+/*
+ * Desktop-only filter. Mobile file pickers match `accept` against the MIME type
+ * the storage provider reports rather than the extension, and exported `.dial`
+ * archives are handed over as `application/octet-stream` — so an accept list
+ * greys out the very archive the user is trying to import. Mobile gets an
+ * unfiltered picker instead; `useConversationImport` validates the file itself
+ * and reports unparsable ones through the import queue.
+ */
+const IMPORT_FILE_ACCEPT = '.json,.dial,.zip,application/json,application/zip';
 
 interface ConversationPanelViewProps {
   isOpen: boolean;
@@ -103,6 +121,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   onDuplicateReadonly,
 }) => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
@@ -134,6 +153,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     conversations: items,
     isLoading,
     pinConversation,
+    markConversationViewed,
     deleteConversation,
     renameConversation,
     generateConversationTitle,
@@ -143,14 +163,6 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
   const { items: deployments, isLoading: isDeploymentsLoading } =
     useDeployments();
-  const deploymentIconByModelId = useMemo(
-    () => new Map(deployments.map((d) => [d.id, d.iconUrl])),
-    [deployments],
-  );
-  const deploymentNameByModelId = useMemo(
-    () => new Map(deployments.map((d) => [d.id, d.displayName ?? d.id])),
-    [deployments],
-  );
 
   const panelActiveConversationId = useMemo(
     () =>
@@ -169,6 +181,20 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     // Intentionally not including items or refreshConversations in the dependency array to avoid re-triggering on every list update.
   }, [panelActiveConversationId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /*
+   * Single shared entry point for marking a scheduler-created conversation as
+   * viewed — fires whenever the active conversation changes, whether the user
+   * navigated by clicking a history panel row or via direct URL navigation.
+   * markConversationViewed itself no-ops for non-scheduler or already-read items.
+   */
+  useEffect(() => {
+    if (!panelActiveConversationId) return;
+    const activeItem = items.find((item) =>
+      conversationIdsMatch(item.id, panelActiveConversationId),
+    );
+    if (activeItem) void markConversationViewed(activeItem.id);
+  }, [panelActiveConversationId, items, markConversationViewed]);
+
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -176,6 +202,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const [pendingUnshareId, setPendingUnshareId] = useState<string | null>(null);
   const [isUnsharing, setIsUnsharing] = useState(false);
   const [unshareError, setUnshareError] = useState<string | null>(null);
+
+  const [pendingRevokeId, setPendingRevokeId] = useState<string | null>(null);
+  const [isRevoking, setIsRevoking] = useState(false);
+  const [revokeError, setRevokeError] = useState<string | null>(null);
 
   const [pendingRenameItem, setPendingRenameItem] = useState<{
     id: string;
@@ -231,39 +261,48 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   );
 
   const taskBadgeLabel = t(ConversationPanelI18nKeys.TaskBadgeLabel);
+  const unreadIndicatorLabel = t(
+    ConversationPanelI18nKeys.UnreadIndicatorLabel,
+  );
 
   const conversations: ConversationItem[] = useMemo(
     () =>
       items.map((item) => {
         const id = toPanelConversationId(item.id);
         const modelId = getModelIdFromConversationId(item.id);
-        const iconUrl = modelId
-          ? deploymentIconByModelId.get(modelId)
+        const deployment = modelId
+          ? findDeploymentByIdOrReference(deployments, modelId)
+          : undefined;
+        /*
+         * modelId is guessed from the conversation's resource path, which
+         * cannot reliably distinguish a real conversation folder from a
+         * multi-segment deployment id when the deployment itself isn't found
+         * in `deployments` (e.g. unavailable/deleted) — so the fallback tooltip
+         * shows only the last path segment, not the full percent-encoded path.
+         */
+        const fallbackTooltip = modelId
+          ? safeDecodeURIComponent(modelId.split('/').pop() ?? modelId)
           : undefined;
 
         return {
           id,
           title: item.title,
           isPinned: item.isPinned ?? false,
-          iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
-          iconTooltip: modelId
-            ? deploymentNameByModelId.get(modelId)
+          iconUrl: deployment?.iconUrl
+            ? resolveCatalogIconUrl(deployment.iconUrl)
             : undefined,
+          iconTooltip: deployment
+            ? resolveLocalizedText(deployment.displayName, language)
+            : fallbackTooltip,
           isIconLoading: isDeploymentsLoading,
           source: getConversationSource(item),
           href: getConversationRoute(id),
           ...(item.isScheduledTask
-            ? { showTaskBadge: true, taskBadgeLabel }
+            ? { showTaskBadge: true, taskBadgeLabel, isUnread: item.isUnread }
             : {}),
         };
       }),
-    [
-      items,
-      deploymentIconByModelId,
-      deploymentNameByModelId,
-      isDeploymentsLoading,
-      taskBadgeLabel,
-    ],
+    [items, deployments, isDeploymentsLoading, taskBadgeLabel, language],
   );
 
   const filterLabels = useMemo(
@@ -387,10 +426,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         if (rawItem?.sharedWithMe) {
           readonlyActions.push({
             key: 'unshare',
-            label: t(ButtonsI18nKeys.Delete),
+            label: t(ButtonsI18nKeys.RemoveFromMyList),
             icon: (
-              <IconTrashX size={DIAL_ICON_SIZE.SM} className="text-secondary" />
+              <IconTrashX size={DIAL_ICON_SIZE.SM} className="text-error" />
             ),
+            className: 'text-error',
             onClick: () => setPendingUnshareId(contextId),
           });
         }
@@ -455,12 +495,40 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
               },
             ]
           : []),
+        /*
+         * Revoking cuts off every recipient of an owned conversation. It rides
+         * the same feature flag as Share: with sharing disabled there is no way
+         * to grant access, so offering to revoke it would be incoherent. It is
+         * hidden again once nobody holds access (`recipientsCount === 0`); an
+         * absent count means the backend could not determine it, and the action
+         * stays visible rather than becoming unreachable.
+         */
+        ...(isConversationsSharingEnabled &&
+        (rawItem?.recipientsCount == null || rawItem.recipientsCount > 0)
+          ? [
+              {
+                key: 'revoke-access',
+                label:
+                  rawItem?.recipientsCount == null
+                    ? t(ButtonsI18nKeys.RevokeAccess)
+                    : t(ButtonsI18nKeys.RevokeAccessWithCount, {
+                        count: rawItem.recipientsCount,
+                      }),
+                icon: (
+                  <IconUserOff
+                    size={DIAL_ICON_SIZE.SM}
+                    className="text-secondary"
+                  />
+                ),
+                onClick: () => setPendingRevokeId(contextId),
+              },
+            ]
+          : []),
         {
           key: 'delete',
           label: t(ButtonsI18nKeys.Delete),
-          icon: (
-            <IconTrashX size={DIAL_ICON_SIZE.SM} className="text-secondary" />
-          ),
+          icon: <IconTrashX size={DIAL_ICON_SIZE.SM} className="text-error" />,
+          className: 'text-error',
           onClick: () => setPendingDeleteId(contextId),
         },
       ];
@@ -538,7 +606,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
   const pendingUnshareTitle = useMemo(() => {
     if (!pendingUnshareId) return '';
-    return items.find((c) => c.id === pendingUnshareId)?.title ?? '';
+    const item = items.find((c) => c.id === pendingUnshareId);
+    return item?.title ?? item?.id ?? '';
   }, [items, pendingUnshareId]);
 
   const handleConfirmUnshare = useCallback(async () => {
@@ -566,7 +635,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     }
 
     showNotification({
-      variant: NotificationVariant.Success,
+      variant: NotificationVariant.Info,
       title: t(ConversationPanelI18nKeys.UnshareSuccessTitle),
       message: t(ConversationPanelI18nKeys.UnshareSuccess, {
         name: pendingUnshareTitle,
@@ -597,6 +666,65 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     setPendingUnshareId(null);
     setUnshareError(null);
   }, [isUnsharing]);
+
+  const pendingRevokeTitle = useMemo(() => {
+    if (!pendingRevokeId) return '';
+    const item = items.find((c) => c.id === pendingRevokeId);
+    return item?.title ?? item?.id ?? '';
+  }, [items, pendingRevokeId]);
+
+  /*
+   * Unlike unshare, revoking leaves the conversation in the owner's own list —
+   * only other people lose access — so there is nothing to navigate away from.
+   * `refreshConversations` runs purely so any share-derived indicator settles.
+   */
+  const handleConfirmRevoke = useCallback(async () => {
+    if (!pendingRevokeId) return;
+    const idToRevoke = pendingRevokeId;
+
+    setIsRevoking(true);
+    setRevokeError(null);
+    try {
+      await revokeSharedAccess(idToRevoke);
+    } catch {
+      setRevokeError(
+        t(ConversationPanelI18nKeys.RevokeError, {
+          name: pendingRevokeTitle,
+        }),
+      );
+      setIsRevoking(false);
+      return;
+    }
+
+    try {
+      await refreshConversations();
+    } catch {
+      /* The revoke already succeeded; a refresh failure must not undo that success. */
+    }
+
+    showNotification({
+      variant: NotificationVariant.Success,
+      title: t(ConversationPanelI18nKeys.RevokeSuccessTitle),
+      message: t(ConversationPanelI18nKeys.RevokeSuccess, {
+        name: pendingRevokeTitle,
+      }),
+    });
+
+    setIsRevoking(false);
+    setPendingRevokeId(null);
+  }, [
+    pendingRevokeId,
+    pendingRevokeTitle,
+    refreshConversations,
+    showNotification,
+    t,
+  ]);
+
+  const handleCloseRevokeDialog = useCallback(() => {
+    if (isRevoking) return;
+    setPendingRevokeId(null);
+    setRevokeError(null);
+  }, [isRevoking]);
 
   const handleConfirmRename = useCallback(
     async (newTitle: string) => {
@@ -637,15 +765,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [onRequestedFilterChange, onActiveFilterChange],
   );
 
-  let panelClassName: string | undefined;
-  if (isMobile) {
-    panelClassName = mergeClasses('inset-y-0 start-0', isOpen && 'z-50');
-  } else if (isOpen) {
-    panelClassName = mergeClasses(
-      '[--sb-border-inline-end:transparent]',
-      '[--sb-bg-resize-handler:transparent]',
-    );
-  }
+  const panelClassName = isMobile
+    ? mergeClasses('inset-y-0 start-0', isOpen && 'z-50')
+    : undefined;
+
   return (
     <>
       {isConversationsSectionEnabled && (
@@ -667,6 +790,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             filterLabels,
             groupLabels,
             actionsLabel: t(ConversationPanelI18nKeys.ActionsLabel),
+            unreadIndicatorLabel,
             closeAriaLabel: t(ConversationPanelI18nKeys.ToggleAriaLabel),
           }}
           onNewChat={onNewChat}
@@ -689,7 +813,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       <input
         ref={importFileInputRef}
         type="file"
-        accept=".json,.dial,.zip,application/json,application/zip"
+        accept={isMobile ? undefined : IMPORT_FILE_ACCEPT}
         className="sr-only"
         aria-hidden
         tabIndex={-1}
@@ -713,7 +837,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         />
       </div>
 
-      <DialConfirmationPopup
+      <ConfirmationPopup
         open={!!pendingDeleteId}
         header={t(ConversationPanelI18nKeys.DeleteConfirmTitle)}
         confirmLabel={t(ButtonsI18nKeys.Delete)}
@@ -739,10 +863,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onClose={handleCloseDeleteDialog}
       />
 
-      <DialConfirmationPopup
+      <ConfirmationPopup
         open={!!pendingUnshareId}
         header={t(ConversationPanelI18nKeys.UnshareConfirmTitle)}
-        confirmLabel={t(ButtonsI18nKeys.Delete)}
+        confirmLabel={t(ButtonsI18nKeys.RemoveFromMyList)}
         cancelLabel={t(ButtonsI18nKeys.Cancel)}
         variant={ConfirmationPopupVariant.Danger}
         isLoading={isUnsharing}
@@ -765,6 +889,32 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onClose={handleCloseUnshareDialog}
       />
 
+      <ConfirmationPopup
+        open={!!pendingRevokeId}
+        header={t(ConversationPanelI18nKeys.RevokeConfirmTitle)}
+        confirmLabel={t(ButtonsI18nKeys.RevokeAccess)}
+        cancelLabel={t(ButtonsI18nKeys.Cancel)}
+        variant={ConfirmationPopupVariant.Danger}
+        isLoading={isRevoking}
+        description={
+          <>
+            <span className="break-all">
+              {t(ConversationPanelI18nKeys.RevokeConfirmMessage, {
+                name: pendingRevokeTitle,
+              })}
+            </span>
+            {revokeError && (
+              <span role="alert" className="mt-1 block text-error">
+                {revokeError}
+              </span>
+            )}
+          </>
+        }
+        onConfirm={handleConfirmRevoke}
+        onCancel={handleCloseRevokeDialog}
+        onClose={handleCloseRevokeDialog}
+      />
+
       <RenameConversationPopup
         isOpen={pendingRenameItem !== null}
         currentTitle={pendingRenameItem?.title ?? ''}
@@ -776,10 +926,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       />
 
       {isConversationsSharingEnabled && (
-        <DialPopup
+        <Popup
           open={pendingShareConversationPath !== null}
           onClose={handleCloseSharePopover}
-          dividers={false}
           hideClose
           headerClassName="hidden"
           size={PopupSize.Sm}
@@ -788,7 +937,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             conversationPath={pendingShareConversationPath ?? ''}
             onClose={handleCloseSharePopover}
           />
-        </DialPopup>
+        </Popup>
       )}
 
       {isConversationsPublishingEnabled &&

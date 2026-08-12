@@ -1,9 +1,10 @@
 .divider {
-  border-top: 1px solid var(--stroke-tertiary, #e0e6f0);
+  border-top: 1px solid
+    var(--cat-tools-divider, var(--stroke-tertiary, #e0e6f0));
 }
 
 .description {
-  color: var(--text-secondary, #6b7280);
+  color: var(--cat-tools-description-text, var(--text-secondary, #57647a));
 }
 
 .code {

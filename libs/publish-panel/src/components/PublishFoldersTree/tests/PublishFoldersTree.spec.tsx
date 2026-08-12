@@ -68,8 +68,35 @@ describe('PublishFoldersTree', () => {
     expect(capturedProps.current?.showFiles).toBe(false);
     expect(capturedProps.current?.items.map((f) => f.path)).toEqual(['']);
     expect(capturedProps.current?.items[0]?.items?.map((f) => f.path)).toEqual([
-      'Shared',
       'My workspace',
+      'Shared',
+    ]);
+  });
+
+  it('orders folders by name at every level, regardless of the order given', () => {
+    renderTree({
+      items: [
+        { path: ['zeta'], name: 'zeta' },
+        {
+          path: ['Alpha'],
+          name: 'Alpha',
+          children: [
+            { path: ['Alpha', 'Report 10'], name: 'Report 10' },
+            { path: ['Alpha', 'Report 2'], name: 'Report 2' },
+          ],
+        },
+        { path: ['beta'], name: 'beta' },
+      ],
+    });
+    const rootChildren = capturedProps.current?.items[0]?.items;
+    expect(rootChildren?.map((file) => file.name)).toEqual([
+      'Alpha',
+      'beta',
+      'zeta',
+    ]);
+    expect(rootChildren?.[0]?.items?.map((file) => file.name)).toEqual([
+      'Report 2',
+      'Report 10',
     ]);
   });
 
@@ -109,6 +136,70 @@ describe('PublishFoldersTree', () => {
       'No folders match "zzz_nonexistent_zzz".',
     );
     expect(capturedProps.current?.items).toEqual([]);
+  });
+
+  describe('creating a folder from a search that matched nothing', () => {
+    const startCreatingFromSearch = async (searchQuery: string) => {
+      renderTree({ searchQuery });
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Create new folder' }),
+      );
+    };
+
+    it('renders the tree with the inline create row instead of the empty state', async () => {
+      await startCreatingFromSearch('Model releases');
+      expect(capturedProps.current?.createdFolderPath).toBe('');
+      expect(capturedProps.current?.items.map((file) => file.path)).toEqual([
+        '',
+      ]);
+      expect(capturedProps.current?.emptyStateTitle).toBeUndefined();
+    });
+
+    it('pre-fills the new folder name with the unmatched query', async () => {
+      await startCreatingFromSearch('  Model releases  ');
+      expect(capturedProps.current?.newFolderDefaultName).toBe(
+        'Model releases',
+      );
+    });
+
+    it('falls back to the default name when the query is not a valid folder name', async () => {
+      await startCreatingFromSearch('nested/name');
+      expect(capturedProps.current?.newFolderDefaultName).toBe('New folder');
+    });
+
+    it('keeps the default name when the query did match a folder', async () => {
+      await startCreatingFromSearch('Shared');
+      expect(capturedProps.current?.newFolderDefaultName).toBe('New folder');
+    });
+
+    it('creates the folder under the selected parent and selects it', async () => {
+      const onCreateFolder = vi.fn();
+      const onSelectedPathChange = vi.fn();
+      renderTree({
+        searchQuery: 'Model releases',
+        selectedPath: ['Shared'],
+        onCreateFolder,
+        onSelectedPathChange,
+      });
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Create new folder' }),
+      );
+      act(() => capturedProps.current?.onCreateFolderSave?.('Model releases'));
+      expect(onCreateFolder).toHaveBeenCalledWith(['Shared'], 'Model releases');
+      expect(onSelectedPathChange).toHaveBeenCalledWith([
+        'Shared',
+        'Model releases',
+      ]);
+    });
+
+    it('restores the filtered empty state when creation is cancelled', async () => {
+      await startCreatingFromSearch('Model releases');
+      act(() => capturedProps.current?.onCreateFolderCancel?.());
+      expect(capturedProps.current?.items).toEqual([]);
+      expect(capturedProps.current?.emptyStateTitle).toBe(
+        'No folders match "Model releases".',
+      );
+    });
   });
 
   describe('per-row context menu (add sibling / add child)', () => {
@@ -183,9 +274,9 @@ describe('PublishFoldersTree', () => {
     );
     expect(capturedProps.current?.createdFolderPath).toBe('Shared');
     expect(
-      capturedProps.current?.items[0]?.items?.[0]?.items?.map(
-        (file) => file.name,
-      ),
+      capturedProps.current?.items[0]?.items
+        ?.find((file) => file.name === 'Shared')
+        ?.items?.map((file) => file.name),
     ).toEqual(['Data Science']);
   });
 
@@ -202,7 +293,7 @@ describe('PublishFoldersTree', () => {
     expect(capturedProps.current?.newFolderDefaultName).toBe('New folder 2');
     expect(
       capturedProps.current?.items[0]?.items?.map((file) => file.name),
-    ).toEqual(['Shared', 'My workspace', 'New folder']);
+    ).toEqual(['My workspace', 'New folder', 'Shared']);
   });
 
   it('confirms a new folder and selects it', async () => {
@@ -242,6 +333,25 @@ describe('PublishFoldersTree', () => {
       screen.getByRole('button', { name: 'Create new folder' }),
     );
     act(() => capturedProps.current?.onCreateFolderSave?.('../EscapeFolder'));
+    expect(onCreateFolder).not.toHaveBeenCalled();
+    expect(onSelectedPathChange).not.toHaveBeenCalled();
+  });
+
+  it('rejects a create-folder confirm whose last live-validated name was invalid, even when the host passes a different value to onCreateFolderSave', async () => {
+    const onCreateFolder = vi.fn();
+    const onSelectedPathChange = vi.fn();
+    renderTree({ onCreateFolder, onSelectedPathChange });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Create new folder' }),
+    );
+    act(() => {
+      // Simulates the host component showing the inline error live while the
+      // user types, then confirming with a different (host-sanitized) value
+      // — see #7968: the host does not reliably gate its own confirm on the
+      // validation result it displayed.
+      capturedProps.current?.onRenameValidate?.('/New folder', {} as never);
+      capturedProps.current?.onCreateFolderSave?.('New folder');
+    });
     expect(onCreateFolder).not.toHaveBeenCalled();
     expect(onSelectedPathChange).not.toHaveBeenCalled();
   });

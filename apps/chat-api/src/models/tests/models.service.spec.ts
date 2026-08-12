@@ -21,10 +21,26 @@ const mockModel: DialModelDto = {
 const mockList: DialModelListResponseDto = { data: [mockModel] };
 
 const okResponse = (data: unknown) =>
-  ({ data, response: {} as Response }) as never;
+  ({ data, response: { ok: true, status: 200 } as Response }) as never;
 
 const errResponse = (status: number) =>
-  ({ error: {}, response: { status } as Response }) as never;
+  ({
+    error: {},
+    response: { ok: false, status } as Response,
+  }) as never;
+
+/*
+ * Mirrors openapi-fetch's real behavior for a non-2xx response with an empty
+ * body (e.g. DIAL Core's 404 for an unknown model has Content-Length: 0):
+ * it returns `{ error: undefined, response }`, never populating `error`.
+ * Regression coverage for https://github.com/epam/ai-dial-chat/issues/7926.
+ */
+const emptyBodyErrResponse = (status: number) =>
+  ({
+    error: undefined,
+    data: undefined,
+    response: { ok: false, status } as Response,
+  }) as never;
 
 function makeDeps() {
   const dialClient = {
@@ -156,6 +172,16 @@ describe('ModelsService', () => {
       );
     });
 
+    it('throws BadGatewayException on upstream 5xx with an empty body', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getModels').mockResolvedValue(
+        emptyBodyErrResponse(500),
+      );
+      await expect(service.listModels('u', 't')).rejects.toThrow(
+        BadGatewayException,
+      );
+    });
+
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
       vi.spyOn(service['dialClient'].client, 'getModels').mockRejectedValue(
@@ -227,6 +253,16 @@ describe('ModelsService', () => {
       const { service } = makeService();
       vi.spyOn(service['dialClient'].client, 'getModel').mockResolvedValue(
         errResponse(404),
+      );
+      await expect(service.getModel('u', 't', 'unknown')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws NotFoundException on upstream 404 with an empty body', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getModel').mockResolvedValue(
+        emptyBodyErrResponse(404),
       );
       await expect(service.getModel('u', 't', 'unknown')).rejects.toThrow(
         NotFoundException,

@@ -1,7 +1,33 @@
 .tabsRow {
-  border-bottom-color: var(--stroke-tertiary, #e0e6f0);
+  border-bottom-color: var(--tr-row-border, var(--stroke-tertiary, #e0e6f0));
 }
 
 .activeTab {
-  border-color: var(--stroke-info, #124ace) !important;
+  border-color: var(
+    --tr-active-tab-border,
+    var(--stroke-info, #124ace)
+  ) !important;
+  color: var(--tr-active-tab-text, var(--text-primary, #161b2d));
+}
+
+.inactiveTab {
+  color: var(--tr-inactive-tab-text, var(--text-secondary, #57647a));
+
+  &:hover,
+  &:focus-visible {
+    color: var(--tr-inactive-tab-text-hover, var(--text-primary, #161b2d));
+  }
+}
+
+.activeBadge {
+  background: var(
+    --tr-active-badge-bg,
+    var(--bg-accent-primary-alpha, #7da4ff2e)
+  );
+  color: var(--tr-active-badge-text, var(--text-accent, #1d4ed8));
+}
+
+.inactiveBadge {
+  background: var(--tr-inactive-badge-bg, var(--bg-layer-raised, #fcfcfc));
+  color: var(--tr-inactive-badge-text, var(--text-tertiary, #848e9c));
 }

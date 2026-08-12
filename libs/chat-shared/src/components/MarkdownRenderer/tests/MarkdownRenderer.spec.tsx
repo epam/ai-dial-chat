@@ -131,7 +131,7 @@ describe('MarkdownRenderer', () => {
     expect(columnHeader.className).toContain('max-w-96');
     expect(columnHeader.className).toContain('whitespace-normal');
     expect(columnHeader.className).toContain('border-b');
-    expect(columnHeader.className).toContain('text-secondary');
+    expect(columnHeader.className).toContain('tableHeaderCell');
     expect(cell.className).toContain('max-w-96');
     expect(cell.className).toContain('border-b');
     expect(cell.className).toContain('align-top');
@@ -300,6 +300,21 @@ describe('MarkdownRenderer', () => {
     const { container } = render(<MarkdownRenderer content="Cost: $x + y$" />);
 
     expect(container.querySelector('math')).toBeTruthy();
+  });
+
+  it('lets a long unbreakable URL wrap so a clipped ancestor cannot cut it off', () => {
+    const longUrl =
+      'https://example.com/very/long/path/segment/that/never/breaks/document-name-with-no-spaces.pdf';
+    const { container } = render(
+      <MarkdownRenderer content={`See ${longUrl} for details.`} />,
+    );
+
+    const paragraph = container.querySelector('p');
+    const link = screen.getByRole('link');
+
+    expect(paragraph?.className).toContain('break-words');
+    expect(link.className).toContain('break-words');
+    expect(link.getAttribute('href')).toBe(longUrl);
   });
 
   it('does not treat a currency amount as LaTeX', () => {

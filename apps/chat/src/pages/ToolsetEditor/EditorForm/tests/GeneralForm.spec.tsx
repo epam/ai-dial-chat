@@ -10,9 +10,35 @@ import { EditorI18nKeys } from '../../../../constants/translation-keys';
 import type { ToolsetFormData } from '../../../../models/toolsets';
 import GeneralForm from '../GeneralForm';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
+vi.mock('@epam/ai-dial-kit', () => ({
+  TagInput: ({
+    label,
+    placeholder,
+    onChange,
+    initialTags,
+  }: {
+    label?: string;
+    placeholder?: string;
+    onChange?: (tags: string[]) => void;
+    initialTags?: string[];
+  }) => (
+    <label>
+      {label}
+      <input
+        placeholder={placeholder}
+        defaultValue={(initialTags ?? []).join(',')}
+        onChange={(e) =>
+          onChange?.(e.target.value ? e.target.value.split(',') : [])
+        }
+      />
+    </label>
+  ),
+}));
+
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialInput: ({
+  Input: ({
     value,
     onChange,
     labelProps,
@@ -37,7 +63,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {error && <p role="alert">{error}</p>}
     </>
   ),
-  DialTextarea: ({
+  Textarea: ({
     value,
     onChange,
     labelProps,
@@ -57,28 +83,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       />
     </label>
   ),
-  DialTagInput: ({
-    label,
-    placeholder,
-    onChange,
-    initialTags,
-  }: {
-    label?: string;
-    placeholder?: string;
-    onChange?: (tags: string[]) => void;
-    initialTags?: string[];
-  }) => (
-    <label>
-      {label}
-      <input
-        placeholder={placeholder}
-        defaultValue={(initialTags ?? []).join(',')}
-        onChange={(e) =>
-          onChange?.(e.target.value ? e.target.value.split(',') : [])
-        }
-      />
-    </label>
-  ),
 }));
 
 const makeForm = (overrides?: Partial<ToolsetFormData>): ToolsetFormData => ({
@@ -87,7 +91,7 @@ const makeForm = (overrides?: Partial<ToolsetFormData>): ToolsetFormData => ({
   iconUrl: '',
   description: '',
   topics: [],
-  intro: '',
+  otherLocales: [],
   endpoint: 'https://example.com/mcp',
   protocol: ToolsetTransportType.Http,
   allowedTools: [],
@@ -101,7 +105,7 @@ const makeForm = (overrides?: Partial<ToolsetFormData>): ToolsetFormData => ({
 
 const renderForm = (
   overrides?: Partial<ToolsetFormData>,
-  errors: { name?: string; intro?: string } = {},
+  errors: { name?: string } = {},
   onChange = vi.fn(),
 ) => {
   const form = makeForm(overrides);
@@ -123,14 +127,17 @@ describe('GeneralForm', () => {
     vi.clearAllMocks();
   });
 
-  it('renders name, description, icon URL, version, topics, and intro fields', () => {
+  it('renders name, description, icon URL, version, and topics fields', () => {
     renderForm();
-    expect(screen.getByLabelText(EditorI18nKeys.NameLabel)).toBeTruthy();
-    expect(screen.getByLabelText(EditorI18nKeys.DescriptionLabel)).toBeTruthy();
+    expect(
+      screen.getByLabelText(`${EditorI18nKeys.NameLabel} [EN]`),
+    ).toBeTruthy();
+    expect(
+      screen.getByLabelText(`${EditorI18nKeys.DescriptionLabel} [EN]`),
+    ).toBeTruthy();
     expect(screen.getByLabelText(EditorI18nKeys.IconUrlLabel)).toBeTruthy();
     expect(screen.getByLabelText(EditorI18nKeys.VersionLabel)).toBeTruthy();
     expect(screen.getByLabelText(EditorI18nKeys.TopicsLabel)).toBeTruthy();
-    expect(screen.getByLabelText(EditorI18nKeys.IntroLabel)).toBeTruthy();
   });
 
   it('displays the name error message when errors.name is provided', () => {
@@ -148,7 +155,7 @@ describe('GeneralForm', () => {
     const onChange = vi.fn();
     renderForm({}, {}, onChange);
     const nameInput = screen.getByLabelText(
-      EditorI18nKeys.NameLabel,
+      `${EditorI18nKeys.NameLabel} [EN]`,
     ) as HTMLInputElement;
     fireEvent.change(nameInput, { target: { value: 'Updated' } });
     expect(onChange).toHaveBeenCalledWith(
@@ -160,28 +167,11 @@ describe('GeneralForm', () => {
     const onChange = vi.fn();
     renderForm({}, {}, onChange);
     const textarea = screen.getByLabelText(
-      EditorI18nKeys.DescriptionLabel,
+      `${EditorI18nKeys.DescriptionLabel} [EN]`,
     ) as HTMLTextAreaElement;
     await user.type(textarea, 'A description');
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ description: expect.any(String) }),
-    );
-  });
-
-  it('displays the intro error message when errors.intro is provided', () => {
-    renderForm(undefined, { intro: EditorI18nKeys.IntroTooLong });
-    expect(screen.getByText(EditorI18nKeys.IntroTooLong)).toBeTruthy();
-  });
-
-  it('calls onChange with updated intro when the intro input changes', () => {
-    const onChange = vi.fn();
-    renderForm({}, {}, onChange);
-    const introInput = screen.getByLabelText(
-      EditorI18nKeys.IntroLabel,
-    ) as HTMLInputElement;
-    fireEvent.change(introInput, { target: { value: 'A short pitch' } });
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ intro: 'A short pitch' }),
     );
   });
 });

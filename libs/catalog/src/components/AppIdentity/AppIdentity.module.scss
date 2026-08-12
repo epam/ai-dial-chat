@@ -1,3 +1,11 @@
 .name {
   color: var(--ai-name-text, var(--text-primary, #161b2d));
 }
+
+.lastUsed {
+  color: var(--ai-last-used-text, var(--text-tertiary, #848e9c));
+}
+
+.version {
+  color: var(--ai-version-text, var(--text-secondary, #57647a));
+}

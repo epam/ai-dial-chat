@@ -1,10 +1,8 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  ScheduledTaskSectionKey,
-  type ScheduledTaskItem,
-} from '../../../models/scheduled-task-item';
+import type { ScheduledTaskItem } from '../../../models/scheduled-task-item';
 import { ScheduledTaskCardGrid } from '../ScheduledTaskCardGrid';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -19,12 +17,12 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     <article {...rest}>{children}</article>
   ),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialSkeleton: ({ color }: { color?: string }) => (
+  Skeleton: ({ color }: { color?: string }) => (
     <div data-skeleton data-color={color} />
   ),
-  DialSkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
-  DialDropdown: ({ children }: { children: ReactNode }) => <>{children}</>,
-  DialIconButton: ({
+  SkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
+  Dropdown: ({ children }: { children: ReactNode }) => <>{children}</>,
+  IconButton: ({
     icon,
     ...rest
   }: { icon: ReactNode } & Record<string, unknown>) => (
@@ -45,8 +43,6 @@ const buildItem = (
   id: 'sched_1',
   displayName: 'Competitor Updates',
   scheduleLabel: 'Every Monday 12:00',
-  sectionKey: ScheduledTaskSectionKey.MyTasks,
-  sortValues: {},
   ...overrides,
 });
 
@@ -77,6 +73,22 @@ describe('ScheduledTaskCardGrid', () => {
     ).toHaveLength(0);
   });
 
+  it('forwards onCardClick to each card without transformation', async () => {
+    const onCardClick = vi.fn();
+    render(
+      <ScheduledTaskCardGrid
+        items={[buildItem({ id: '1' })]}
+        onCardClick={onCardClick}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Competitor Updates' }),
+    );
+
+    expect(onCardClick).toHaveBeenCalledWith('1');
+  });
+
   it('forwards skeletonStyles to every trailing skeleton card', () => {
     const { container } = render(
       <ScheduledTaskCardGrid
@@ -86,10 +98,14 @@ describe('ScheduledTaskCardGrid', () => {
       />,
     );
 
-    const bars = container.querySelectorAll('[data-skeleton]');
-    expect(bars.length).toBeGreaterThan(0);
-    bars.forEach((bar) => {
-      expect(bar.getAttribute('data-color')).toBe('#ff00ff');
+    const skeletonCards = container.querySelectorAll(
+      'article[aria-hidden="true"]',
+    );
+    expect(skeletonCards.length).toBeGreaterThan(0);
+    skeletonCards.forEach((card) => {
+      expect(
+        (card as HTMLElement).style.getPropertyValue('--stcs-skeleton-bg'),
+      ).toBe('#ff00ff');
     });
   });
 });

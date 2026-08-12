@@ -62,13 +62,8 @@ describe('UpdateApplicationBodyDto', () => {
     expect(errors.some((e) => e.property === 'maxInputAttachments')).toBe(true);
   });
 
-  it('passes when intro is exactly 90 characters', async () => {
-    const errors = await validateDto({ ...BASE_BODY, intro: 'a'.repeat(90) });
-    expect(errors).toHaveLength(0);
-  });
-
-  it('rejects intro longer than 90 characters', async () => {
-    const errors = await validateDto({ ...BASE_BODY, intro: 'a'.repeat(91) });
+  it('rejects a request body that still includes an intro property', async () => {
+    const errors = await validateDto({ ...BASE_BODY, intro: 'Short intro' });
     expect(errors.some((e) => e.property === 'intro')).toBe(true);
   });
 
@@ -80,5 +75,31 @@ describe('UpdateApplicationBodyDto', () => {
       topics: ['nlp'],
     });
     expect(errors).toHaveLength(0);
+  });
+
+  it('passes with a valid locale entry and primaryLocale', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      locales: [{ language: 'de', name: 'Meine App' }],
+      primaryLocale: 'en',
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects a locale entry with a stray client-side id field', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      locales: [{ id: 'locale-row-1', language: 'de', name: 'Meine App' }],
+      primaryLocale: 'en',
+    });
+    expect(errors.some((e) => e.property === 'locales')).toBe(true);
+  });
+
+  it('rejects a non-empty locales array without primaryLocale', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      locales: [{ language: 'de', name: 'Meine App' }],
+    });
+    expect(errors.some((e) => e.property === 'primaryLocale')).toBe(true);
   });
 });

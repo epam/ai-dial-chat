@@ -20,7 +20,7 @@ the `DeploymentData` union) also carry `intro`, so it round-trips through `GET` 
 On the frontend, `apps/chat/src/pages/AppsEditor/GeneralForm.tsx` and
 `apps/chat/src/pages/ToolsetEditor/EditorForm/GeneralForm.tsx` render the same field set
 (name, description, icon URL, version, topics) with the same `@epam/ai-dial-ui-kit` inputs
-(`DialInput`, `DialTextarea`, `DialTagInput`), but with different ownership shapes:
+(`Input`, `Textarea`, `DialTagInput`), but with different ownership shapes:
 
 - `AppsEditor/GeneralForm.tsx` is **self-contained**: it owns `useState` for every field and
   every error, validates inline inside `handleSubmit` (`NAME_PATTERN`/`VERSION_PATTERN`
@@ -43,8 +43,8 @@ therefore consumed from exactly one visual context today.
 
 `libs/ai-dial-kit` already wraps a handful of `@epam/ai-dial-ui-kit` primitives
 (`Button`, `SearchBar`, `TabRow`, `GhostIconButton`) at the app level, per the
-"Component-First Development" convention in `.claude/rules/all-tsx.md`; `DialInput` /
-`DialTextarea` / `DialTagInput` are not in that wrapped set and both existing forms already
+"Component-First Development" convention in `.claude/rules/all-tsx.md`; `Input` /
+`Textarea` / `DialTagInput` are not in that wrapped set and both existing forms already
 import them directly from `@epam/ai-dial-ui-kit`.
 
 `libs/catalog/src/models/catalog-styles.ts` establishes a precedent for letting an app re-skin
@@ -82,7 +82,7 @@ variables).
   `add-input-component` change.
 - Extracting the Quick App live preview panel (`Card` from `@epam/ai-dial-catalog`) or either
   form's surrounding page layout/navigation — neither is shared with Toolset creation.
-- Migrating other existing `DialInput`/`DialTextarea`/`DialTagInput` call sites in the app
+- Migrating other existing `Input`/`Textarea`/`DialTagInput` call sites in the app
   (e.g. Toolset's `SettingsForm.tsx`/`AuthSection.tsx`) to the new `libs/ai-dial-kit`
   `Input`/`Textarea`/`TagInput` wrappers (see Decision 8) — only `deployment-creation-form`'s own
   usage is migrated here.
@@ -157,7 +157,7 @@ function validateDeploymentCreationFields(
 `AppsEditor/GeneralForm.tsx` is refactored to hold its existing `useState` values in the new
 shape, call `validateDeploymentCreationFields` inside `handleSubmit` before its existing
 `createApplication` call, and render `<DeploymentCreationForm>` in place of its inline
-`DialInput`/`DialTextarea`/`DialTagInput` block — it keeps its own two-pane layout, the `Card`
+`Input`/`Textarea`/`DialTagInput` block — it keeps its own two-pane layout, the `Card`
 preview, and the Cancel/Next buttons around the shared component.
 `ToolsetEditor/EditorForm/GeneralForm.tsx` becomes a thin pass-through of
 `form`/`errors`/`onChange` into `<DeploymentCreationForm>`, kept as a separate file for
@@ -261,8 +261,8 @@ chat-api OpenAPI spec using the repository's existing `openapi` / `openapi:check
 of the existing `PrimaryButton`/`NeutralButton`/`GhostButton` wrappers in
 `libs/ai-dial-kit/src/components/Button/Buttons.tsx`: a `ComponentPropsWithoutRef`-typed prop
 alias plus a pass-through `FC`. `Input.tsx`/`Textarea.tsx` import a shared `Input.scss` that
-globally overrides the ui-kit's own `.dial-input` class (used by both `DialInput` and
-`DialTextarea`) rather than passing a `className`/style prop from the wrapper component
+globally overrides the ui-kit's own `.dial-input` class (used by both `Input` and
+`Textarea`) rather than passing a `className`/style prop from the wrapper component
 itself — see the corrected sub-decision below for why. `TagInput` is a pure pass-through for
 now — no stable CSS class hook for its outer field border was found in the shipped ui-kit
 bundle to safely target. `libs/deployment-creation-form` imports `Input`/`Textarea`/`TagInput`
@@ -270,18 +270,18 @@ from `@epam/ai-dial-kit` instead of the primitives directly from `@epam/ai-dial-
 (`libs/deployment-creation-form`'s `package.json`/`vite.config.mts` no longer list
 `@epam/ai-dial-ui-kit` at all, since it is now only a transitive dependency through
 `ai-dial-kit`). `.claude/rules/all-tsx.md` gained a "Text fields" entry alongside the existing
-Button/SearchBar/Spinner/TabRow rules, banning direct `DialInput`/`DialTextarea`/`DialTagInput`
+Button/SearchBar/Spinner/TabRow rules, banning direct `Input`/`Textarea`/`DialTagInput`
 imports app-wide going forward.
 
 **Corrected sub-decision (bug found in the first pass)**: the first version of `Input.tsx`
 passed the radius override through the wrapper's own `className` prop, merged via
-`mergeClasses`. This was wrong for `Input` specifically: `DialInput` renders its real, visibly
+`mergeClasses`. This was wrong for `Input` specifically: `Input` renders its real, visibly
 bordered box as a wrapper `<div>` ("input-container", carrying the `.dial-input` class) around
 a separate, always-borderless inner `<input>` (`border-0 bg-transparent`) that receives the
 `className` prop — so the override never reached the actual border (it stayed square), and
 forcing a `border-radius` onto that inner input — which also has `overflow: hidden` for
 text-overflow ellipsis — clipped text and the text cursor near the corners once it did have a
-radius. (`DialTextarea` does put `.dial-input` directly on the `<textarea>` element, so it
+radius. (`Textarea` does put `.dial-input` directly on the `<textarea>` element, so it
 wasn't affected by this specific bug — only `Input` was.) Fixed by moving `border-radius` (and
 the border-color overrides below) into the global `.dial-input` class rule in `Input.scss`,
 which correctly reaches the wrapper `<div>` for `Input` and the `<textarea>` for `Textarea`
@@ -291,7 +291,7 @@ alike; `Input.tsx`/`Textarea.tsx` no longer touch `className` at all.
 (`#696e7c`) to `--stroke-tertiary` (`#e0e6f0`), matching `libs/catalog`'s own divider
 convention (Decision 4's follow-up) — per user review, the field border itself, not just
 page-level dividers, read as mismatched against Catalog. The **focus** border color was
-changed from the ui-kit default `--stroke-focus` (`#eef1f7`, near-white — barely visible
+changed from the ui-kit default `--stroke-focus-black` (`#eef1f7`, near-white — barely visible
 against a light theme, and after the resting-border change above nearly indistinguishable
 from it, so focus stopped reading as a visible state change) to `--stroke-accent-primary`
 plus a soft `box-shadow` focus ring, borrowing `SearchBar`'s own focus treatment
@@ -302,29 +302,29 @@ base `.dial-input` rule with `!important` would otherwise block the ui-kit's own
 non-`!important` state rules for those pseudo-classes.
 
 **This reverses this proposal's original Decision (see the removed "No new UI-kit primitive"
-bullet in `proposal.md`)**, which held that `DialInput`/`DialTextarea`/`DialTagInput` were
+bullet in `proposal.md`)**, which held that `Input`/`Textarea`/`DialTagInput` were
 already the correct shared destination. That was correct as far as it went — the primitives
 *are* the shared destination for behavior (label, error, validation states) — but it didn't
 account for needing a single seam to *restyle* them consistently once a real visual-parity gap
 against `libs/catalog` was identified (see Decision 4's follow-up and the border-color fix).
 Without this wrapper, restyling only inside `deployment-creation-form` would have made its fields
-diverge from every other `DialInput` usage in the app (Toolset's `SettingsForm.tsx`,
+diverge from every other `Input` usage in the app (Toolset's `SettingsForm.tsx`,
 `AuthSection.tsx`, etc.) rather than converge with Catalog.
 
 **Alternatives considered**:
 - *Restyle only inside `libs/deployment-creation-form`* (e.g. a local `className` override just
-  on this lib's own `DialInput` usages): rejected — would make this form's fields look
+  on this lib's own `Input` usages): rejected — would make this form's fields look
   different from every other text field in the app, the opposite of the stated goal.
 - *Rebuild a fully custom input from raw HTML*, the way `SearchBar` does (custom `<input>` +
-  `.module.scss` with CSS-var theming): rejected for `Input`/`Textarea` — `DialInput`/
-  `DialTextarea` already implement label, required/optional indicator, error/invalid state,
+  `.module.scss` with CSS-var theming): rejected for `Input`/`Textarea` — `Input`/
+  `Textarea` already implement label, required/optional indicator, error/invalid state,
   and caption text correctly; reimplementing that from scratch to change one CSS property
   would duplicate significant, already-correct behavior for no benefit. `SearchBar`'s
   from-scratch approach makes sense there because `DialSearch` is a narrow, single-purpose
   component being replaced with a differently-scoped one, not a general-purpose field.
 
 **Scope note**: only `libs/deployment-creation-form`'s own field usage is migrated to the new
-wrappers in this change. Other existing `DialInput`/`DialTextarea`/`DialTagInput` call sites
+wrappers in this change. Other existing `Input`/`Textarea`/`DialTagInput` call sites
 in the app are not touched here (see Non-Goals) — migrating them is a natural, low-risk
 follow-up now that the wrapper exists, but is a separate, broader change.
 
@@ -389,7 +389,7 @@ follow-up now that the wrapper exists, but is a separate, broader change.
    no stable CSS class hook was found in the shipped `@epam/ai-dial-ui-kit` bundle. Confirm
    with the ui-kit maintainers whether one exists (or can be added) so `TagInput`'s corner
    radius can match `Input`/`Textarea`.
-7. Should the other existing `DialInput`/`DialTextarea`/`DialTagInput` call sites in the app
+7. Should the other existing `Input`/`Textarea`/`DialTagInput` call sites in the app
    (Toolset's `SettingsForm.tsx`, `AuthSection.tsx`) be migrated to the new `libs/ai-dial-kit`
    wrappers as a follow-up, so the whole app converges on one restyled field look rather than
    only the General step?

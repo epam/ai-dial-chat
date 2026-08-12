@@ -1,9 +1,9 @@
+import type { ApplicationSchemaSummaryDto } from '@epam/ai-dial-chat-api-client';
 import {
-  DialSpinner,
+  Spinner,
   ErrorMessageNotification,
   StepStatus,
 } from '@epam/ai-dial-ui-kit';
-import type { ApplicationSchemaSummaryDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -16,8 +16,15 @@ import {
   EditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { ROUTES } from '../../types/routes';
+import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
+import {
+  decomposeLocalizedFields,
+  PRIMARY_LOCALE,
+  resolveLocalizedText,
+} from '../../utils/locale';
 import type {
   GeneralFormHandle,
   GeneralFormInitialValues,
@@ -45,6 +52,7 @@ const SETTINGS_READY_TIMEOUT_MS = 60000;
 
 const AppsEditor: FC = () => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { schemas, items: deployments, refetchDeployments } = useDeployments();
@@ -110,7 +118,7 @@ const AppsEditor: FC = () => {
   const existingDeployment = useMemo(
     () =>
       isEditingExistingApp
-        ? deployments.find((d) => d.id === existingAppId)
+        ? findDeploymentByIdOrReference(deployments, existingAppId)
         : undefined,
     [deployments, isEditingExistingApp, existingAppId],
   );
@@ -121,12 +129,22 @@ const AppsEditor: FC = () => {
     () =>
       existingDeployment
         ? {
-            name: existingDeployment.displayName,
-            description: existingDeployment.description,
+            name: resolveLocalizedText(
+              existingDeployment.displayName,
+              PRIMARY_LOCALE,
+            ),
+            description: resolveLocalizedText(
+              existingDeployment.description,
+              PRIMARY_LOCALE,
+            ),
             iconUrl: existingDeployment.iconUrl,
             version: existingDeployment.displayVersion,
             topics: existingDeployment.topics,
-            intro: existingDeployment.intro,
+            otherLocales: decomposeLocalizedFields(
+              existingDeployment.displayName,
+              existingDeployment.description,
+              PRIMARY_LOCALE,
+            ),
           }
         : undefined,
     [existingDeployment],
@@ -332,8 +350,8 @@ const AppsEditor: FC = () => {
     : t(EditorI18nKeys.SaveButton);
 
   const appDisplayName =
-    submittedAppInfo?.displayName ??
-    existingDeployment?.displayName ??
+    submittedAppInfo?.displayName ||
+    resolveLocalizedText(existingDeployment?.displayName, language) ||
     schema?.displayName;
   const appIconUrl =
     submittedAppInfo?.iconUrl ?? existingDeployment?.iconUrl ?? schema?.iconUrl;
@@ -421,12 +439,12 @@ const AppsEditor: FC = () => {
         </div>
         {isSaving && (
           <div
-            className="bg-blackout absolute inset-0 flex items-center justify-center"
+            className="absolute inset-0 flex items-center justify-center bg-backdrop"
             aria-label={t(AppsEditorI18nKeys.SavingOverlayLabel)}
             aria-live="polite"
           >
             <div className="flex items-center gap-3 rounded-lg bg-layer-sunken px-4 py-3 shadow-lg">
-              <DialSpinner />
+              <Spinner />
               <span className="text-sm text-primary">
                 {t(AppsEditorI18nKeys.SavingOverlayLabel)}
               </span>

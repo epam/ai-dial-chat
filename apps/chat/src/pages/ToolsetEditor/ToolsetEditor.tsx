@@ -1,9 +1,9 @@
+import type { ToolsetLoginBodyDto } from '@epam/ai-dial-chat-api-client';
 import {
   DeploymentCreationFieldErrorCode,
   validateDeploymentCreationFields,
 } from '@epam/ai-dial-deployment-creation-form';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import type { ToolsetLoginBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -36,6 +36,7 @@ import {
   updateToolset,
 } from '../../server-api/toolsets';
 import { ROUTES } from '../../types/routes';
+import { PRIMARY_LOCALE, resolveLocalizedText } from '../../utils/locale';
 import {
   extractToolsetApiErrorMessage,
   formToToolsetBody,
@@ -60,7 +61,6 @@ const AUTH_ERROR_FIELDS: (keyof ToolsetFormErrors)[] = [
 const ERROR_FIELDS: (keyof ToolsetFormErrors)[] = [
   'name',
   'version',
-  'intro',
   'endpoint',
   ...AUTH_ERROR_FIELDS,
 ];
@@ -132,7 +132,9 @@ const ToolsetEditor: FC = () => {
         if (!cancelled) {
           setForm(
             getDefaultToolsetForm(
-              (data ?? []).map((item) => item.displayName ?? ''),
+              (data ?? []).map((item) =>
+                resolveLocalizedText(item.displayName, PRIMARY_LOCALE),
+              ),
             ),
           );
         }
@@ -309,9 +311,6 @@ const ToolsetEditor: FC = () => {
       if (generalCodes.name === DeploymentCreationFieldErrorCode.Required) {
         nextErrors.name = t(EditorI18nKeys.NameRequired);
       }
-      if (generalCodes.intro === DeploymentCreationFieldErrorCode.TooLong) {
-        nextErrors.intro = t(EditorI18nKeys.IntroTooLong);
-      }
       if (!data.endpoint.trim()) {
         nextErrors.endpoint = t(ToolsetEditorI18nKeys.EndpointRequired);
       } else if (!isValidEndpointUrl(data.endpoint)) {
@@ -390,7 +389,7 @@ const ToolsetEditor: FC = () => {
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       // Surface the General-step error first by switching to it when needed.
-      if (nextErrors.name || nextErrors.intro) {
+      if (nextErrors.name) {
         setEditorStep(ToolsetEditorSteps.General);
       } else if (
         nextErrors.endpoint ||

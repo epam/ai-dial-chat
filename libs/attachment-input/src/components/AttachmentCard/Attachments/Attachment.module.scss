@@ -8,11 +8,20 @@
         --ai-tile-bg-hover,
         var(--bg-control-neutral-hover, #e0e6f0)
       );
+      /* Falls back to the base border so the hover state only shifts the
+       * border when a host actually overrides it. */
+      border-color: var(
+        --ai-tile-border-hover,
+        var(--ai-tile-border, var(--stroke-secondary, #d1dbea))
+      );
     }
   }
 
   &:focus-visible {
-    outline-color: var(--ai-tile-focus-outline, var(--stroke-focus, #161b2d));
+    outline-color: var(
+      --ai-tile-focus-outline,
+      var(--stroke-focus-black, #161b2d)
+    );
   }
 }
 
@@ -37,7 +46,7 @@
 }
 
 .typeText {
-  color: var(--ai-tile-type-text, var(--text-secondary, #6b7280));
+  color: var(--ai-tile-type-text, var(--text-secondary, #57647a));
 }
 
 .retryIcon {
@@ -48,7 +57,16 @@
   background: var(--ai-tile-progress-track, var(--bg-backdrop, #161b2d4d));
 }
 
+/* Corner action buttons are only revealed while the tile is hovered or focused,
+ * so they render with the button hover background already applied. */
+.actionButton {
+  background: var(
+    --ai-tile-hover-icon-bg,
+    var(--bg-control-neutral-hover, #e0e6f0)
+  );
+}
+
 .imageActionButton {
   background: var(--ai-tile-hover-icon-bg, var(--bg-layer-base, #f5f7fa));
-  color: var(--ai-tile-hover-icon-color, var(--text-secondary, #6b7280));
+  color: var(--ai-tile-hover-icon-color, var(--text-secondary, #57647a));
 }

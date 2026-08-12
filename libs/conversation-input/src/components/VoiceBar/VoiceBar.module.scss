@@ -12,10 +12,6 @@
   white-space: nowrap;
 }
 
-.stopRecordingIcon {
-  color: var(--ci-voice-accent, var(--text-error, #ae2f2f));
-}
-
 @keyframes recording-pulse {
   0%,
   100% {

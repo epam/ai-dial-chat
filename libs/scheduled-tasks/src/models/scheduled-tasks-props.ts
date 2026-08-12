@@ -1,14 +1,7 @@
+import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { ScheduledTasksSortKey } from '../types/scheduled-tasks-sort-key';
 import type { ScheduledTaskCardGridLabels } from './scheduled-task-card-grid-props';
 import type { ScheduledTaskItem } from './scheduled-task-item';
-
-/** A single sort option shown in the Scheduled Tasks toolbar sort control. */
-export interface ScheduledTasksSortOption {
-  /** Stable identifier for this sort option, passed back via `onSortChange`. */
-  key: ScheduledTasksSortKey;
-  /** Localized display label for this sort option. */
-  label: string;
-}
 
 /** Localized labels used by the {@link ScheduledTasks} component. */
 export interface ScheduledTasksLabels {
@@ -27,7 +20,7 @@ export interface ScheduledTasksLabels {
   /** Accessible label for the toolbar sort control. */
   sortLabel: string;
   /** Options rendered in the sort control's dropdown. */
-  sortOptions: ScheduledTasksSortOption[];
+  sortOptions: DropdownItem[];
   /** Message shown when the fetched task list is empty. */
   emptyStateLabel: string;
   /** Message shown when `searchQuery` filters every task out. */
@@ -36,8 +29,6 @@ export interface ScheduledTasksLabels {
   errorLabel: string;
   /** Label for the retry action shown when `error` is set. */
   retryLabel: string;
-  /** Title for the section grouping items with `sectionKey: 'shared'`. */
-  sharedSectionTitle: string;
   /** Announced via `aria-live` while a load-more fetch is in flight (`isLoadingMore`). Optional — no announcement is made when omitted. */
   loadingMoreLabel?: string;
   /** Localized labels forwarded as-is to every card in the grid. */
@@ -91,7 +82,7 @@ export interface ScheduledTasksProps {
   sortKey: ScheduledTasksSortKey;
   /** Called when the user selects a different sort option. */
   onSortChange: (key: ScheduledTasksSortKey) => void;
-  /** Tasks to render as cards, already search-matched server-side; grouped by `sectionKey` and sorted client-side by `sortKey`. */
+  /** Tasks to render as cards, already search-matched and sorted server-side; rendered in the order received. */
   items: ScheduledTaskItem[];
   /** When `true`, the content region shows a loading spinner instead of `items`. Defaults to `false`. */
   isLoading?: boolean;
@@ -107,12 +98,8 @@ export interface ScheduledTasksProps {
   skeletonCount?: number;
   /** Called when the trailing scroll sentinel becomes visible and `hasMore && !isLoadingMore && !isLoading`. */
   onLoadMore?: () => void;
-  /** Called with a task id when the user activates "Edit" on a card. Omit to hide the action on every card. */
-  onEdit?: (id: string) => void;
-  /** Called with a task id when the user activates "Run now" on a card. Omit to hide the action on every card. */
-  onRunNow?: (id: string) => void;
-  /** Called with a task id when the user activates "Delete" on a card. Omit to hide the action on every card. */
-  onDelete?: (id: string) => void;
+  /** Called with a task id when the user activates a card's body. Omit to render cards with no added interactive root semantics. */
+  onCardClick?: (id: string) => void;
   /** Style overrides. */
   styles?: ScheduledTasksStyles;
 }

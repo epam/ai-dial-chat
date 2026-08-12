@@ -1,18 +1,25 @@
+/* No fallbacks on the typography vars — when unset they resolve to `inherit`,
+ * so a `fontClassName` on the same element still wins. */
 .body {
   color: var(--ac-text, var(--text-primary, #161b2d));
+  font-family: var(--ac-font-family);
+  font-size: var(--ac-font-size);
+  font-weight: var(--ac-font-weight);
+  line-height: var(--ac-line-height);
+  letter-spacing: var(--ac-letter-spacing);
 }
 
 .statusLabel {
-  color: var(--text-secondary, #6b7280);
+  color: var(--ac-status-text, var(--text-secondary, #57647a));
 }
 
 .errorIcon {
-  color: var(--text-error, #ae2f2f);
+  color: var(--ac-error-icon, var(--text-error, #ae2f2f));
 }
 
 .jsonWrapper {
-  border-color: var(--stroke-secondary, #d1dbea);
-  background-color: var(--bg-layer-1, #e0e6f0);
+  border-color: var(--ac-json-border, var(--stroke-secondary, #d1dbea));
+  background-color: var(--ac-json-bg, var(--bg-layer-1, #e0e6f0));
 }
 
 // Custom monospace stack and em-based sizing cannot be expressed as static Tailwind classes.
@@ -25,38 +32,38 @@
 }
 
 .jsonLabel {
-  color: var(--text-primary, #161b2d);
+  color: var(--ac-json-label, var(--text-primary, #161b2d));
 }
 
 .jsonClickableLabel {
-  color: var(--text-primary, #161b2d);
+  color: var(--ac-json-clickable-label, var(--text-primary, #161b2d));
 }
 
 .jsonPunctuation {
-  color: var(--text-secondary, #6b7280);
+  color: var(--ac-json-punctuation, var(--text-secondary, #57647a));
 }
 
 .jsonStringValue {
-  color: var(--text-success, #007274);
+  color: var(--ac-json-string, var(--text-success, #007274));
 }
 
 .jsonNumberValue {
-  color: var(--text-accent, #1d4ed8);
+  color: var(--ac-json-number, var(--text-accent, #1d4ed8));
 }
 
 .jsonBooleanValue {
-  color: var(--text-warning, #7f6300);
+  color: var(--ac-json-boolean, var(--text-warning, #7f6300));
 }
 
 .jsonNullValue {
-  color: var(--text-secondary, #6b7280);
+  color: var(--ac-json-null, var(--text-secondary, #57647a));
 }
 
 .jsonExpandIcon {
-  color: var(--text-secondary, #6b7280);
+  color: var(--ac-json-toggle-icon, var(--text-secondary, #57647a));
 
   &:hover {
-    color: var(--text-primary, #161b2d);
+    color: var(--ac-json-toggle-icon-hover, var(--text-primary, #161b2d));
   }
 
   &::after {
@@ -67,10 +74,10 @@
 }
 
 .jsonCollapseIcon {
-  color: var(--text-secondary, #6b7280);
+  color: var(--ac-json-toggle-icon, var(--text-secondary, #57647a));
 
   &:hover {
-    color: var(--text-primary, #161b2d);
+    color: var(--ac-json-toggle-icon-hover, var(--text-primary, #161b2d));
   }
 
   &::after {
@@ -88,8 +95,11 @@
 }
 
 .jsonCollapsedContent {
-  color: var(--text-secondary, #6b7280);
-  background-color: var(--bg-layer-raised, #fcfcfc);
+  color: var(--ac-json-collapsed-text, var(--text-secondary, #57647a));
+  background-color: var(
+    --ac-json-collapsed-bg,
+    var(--bg-layer-raised, #fcfcfc)
+  );
   font-size: 0.75em; // em-based — cannot be a static Tailwind class
 
   &::after {

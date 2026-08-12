@@ -1,6 +1,6 @@
 {
   "name": "ai-dial-chat",
-  "version": "1.0.0-rc.3",
+  "version": "0.0.0",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
@@ -99,11 +99,11 @@
     "yaml": "2.8.3"
   },
   "dependencies": {
-    "@epam/ai-dial-react-file-manager": "0.1.0-dev.17",
+    "@epam/ai-dial-react-file-manager": "0.1.0-dev.21",
     "@epam/ai-dial-react-pdf-highlighter": "0.2.0-dev.22",
     "@epam/ai-dial-shared": "0.48.0",
     "@epam/ai-dial-typescript-sdk": "0.1.0-dev.31",
-    "@epam/ai-dial-ui-kit": "^0.13.0-dev.26",
+    "@epam/ai-dial-ui-kit": "^0.13.0-dev.51",
     "@epam/ai-dial-visualizer-connector": "0.48.0",
     "@epam/pdf-highlighter-kit": "^0.0.18",
     "@nestjs/cache-manager": "^3.1.2",
@@ -142,12 +142,16 @@
     "react-syntax-highlighter": "^16.1.1",
     "reflect-metadata": "^0.2.2",
     "rehype-katex": "^7.0.1",
+    "rehype-stringify": "^10.0.1",
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
     "rxjs": "^7.8.2",
     "swagger-ui-express": "^5.0.1",
-    "tailwind-merge": "^3.6.0"
+    "tailwind-merge": "^3.6.0",
+    "unified": "^11.0.5"
   },
   "overrides": {
     "dompurify": "3.4.12",
@@ -161,7 +165,7 @@
     "brace-expansion@1.1.15": "1.1.16",
     "brace-expansion@2.1.1": "2.1.4",
     "brace-expansion@5.0.6": "5.0.9",
-    "js-yaml": "4.3.0"
+    "js-yaml": "4.3.1"
   },
   "workspaces": [
     "packages/*",

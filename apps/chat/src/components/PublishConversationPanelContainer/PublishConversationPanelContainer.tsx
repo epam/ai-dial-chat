@@ -11,9 +11,11 @@ import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
   ConversationPublishI18nKeys,
+  PublishI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
+import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import { publishConversation } from '../../server-api/conversation-publish.api';
 import { getPublishRules } from '../../server-api/publish-rules.api';
@@ -50,6 +52,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { showNotification } = useNotification();
+  const showPublishError = usePublishErrorNotification();
   const {
     config: { publicationFilterSources },
   } = useAppConfig();
@@ -60,6 +63,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
     onExpandedPathsChange,
     loadingPaths,
     onCreatePublishFolder,
+    rememberPublishFolder,
     hasPublishWriteAccess,
   } = usePublishFolders();
 
@@ -82,12 +86,14 @@ const PublishConversationPanelContainer: FC<Props> = ({
     onPublish: async (_item, folderPath, rules) => {
       await publishConversation(conversationPath, folderPath.join('/'), rules);
     },
-    onPublishSuccess: () => {
+    onPublishSuccess: (_item, folderPath) => {
+      rememberPublishFolder(folderPath);
       showNotification({
         variant: NotificationVariant.Success,
         message: t(ConversationPublishI18nKeys.SuccessMessage),
       });
     },
+    onPublishError: (_item, _folderPath, error) => showPublishError(error),
     onFetchExistingRules: (folderPath) => getPublishRules(folderPath.join('/')),
   });
 
@@ -151,6 +157,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
         createFolderDuplicateNameError: t(
           ConversationPublishI18nKeys.DuplicateFolderNameError,
         ),
+        submitError: t(PublishI18nKeys.SubmitErrorCallout),
         accessRulesLabels: getAccessRulesLabels(t),
       }}
       labels={{

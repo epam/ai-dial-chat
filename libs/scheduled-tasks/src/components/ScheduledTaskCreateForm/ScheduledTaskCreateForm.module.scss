@@ -1,14 +1,3 @@
-.container {
-  background: var(--stcf-bg, var(--bg-layer-base, #f5f7fa));
-}
-
-.header {
-  border-bottom-color: var(
-    --stcf-header-border,
-    var(--stroke-tertiary, #e0e6f0)
-  );
-}
-
 .detailsColumn {
   border-inline-end-color: var(
     --stcf-details-border,
@@ -17,7 +6,7 @@
 }
 
 .sectionSubtitle {
-  color: var(--stcf-subtitle-text, var(--text-secondary, #6b7280));
+  color: var(--stcf-subtitle-text, var(--text-secondary, #57647a));
 }
 
 .instructionsError {

@@ -16,7 +16,7 @@ Owns the deployments (models/applications), toolsets, and selected-deployment st
 - `error: Error | null`
 
 The provider SHALL:
-- Fetch deployments on mount using `getDeployments()` from `server-api/deployments.api.ts` with no `interface_type` filter (all deployments).
+- Fetch deployments on mount using `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat, ListDeploymentsInterfaceTypeEnum.Mcp])` from `server-api/deployments.api.ts`, so `items` includes both chat-capable and MCP-capable models/applications.
 - Use a `cancelled` flag inside `useEffect` to guard against setState-on-unmount.
 - Use `useMemo` to memoize the context value.
 - Determine the initial `selectedItemId` using the following precedence (evaluated in order after both deployments and user config are available):
@@ -43,7 +43,7 @@ The state management pattern SHALL follow `ThemeContext.tsx` as the reference im
 #### Scenario: DeploymentsProvider loads items on mount
 
 - **WHEN** `DeploymentsProvider` mounts
-- **THEN** it calls `getDeployments()`, sets `isLoading: true` during fetch, sets `items` on success, sets `error` on failure, and sets `isLoading: false` when done
+- **THEN** it calls `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat, ListDeploymentsInterfaceTypeEnum.Mcp])`, sets `isLoading: true` during fetch, sets `items` on success, sets `error` on failure, and sets `isLoading: false` when done
 
 #### Scenario: Initial selectedItemId follows user config preference
 
@@ -144,7 +144,7 @@ The props passed to `ConversationInput` SHALL use `items` from `useDeployments()
 ### Requirement: Deployment selector uses skeleton placeholders while loading
 
 When `useDeployments().isLoading` is `true`, the deployment selector SHALL use
-`DialSkeleton` from `@epam/ai-dial-ui-kit` instead of a visible loading-text
+`Skeleton` from `@epam/ai-dial-ui-kit` instead of a visible loading-text
 row.
 
 The selector trigger SHALL render one circular skeleton in place of the
@@ -157,15 +157,15 @@ available to assistive technology.
 #### Scenario: Desktop selector shows deployment skeletons while loading
 
 - **WHEN** `modelSelectorLabels.loading` is defined, including a reload where `deployments` still contains previously loaded items
-- **THEN** the trigger shows a circular `DialSkeleton`
+- **THEN** the trigger shows a circular `Skeleton`
 - **AND** the dropdown contains exactly seven disabled skeleton rows
-- **AND** every row contains one circular and one text `DialSkeleton`
+- **AND** every row contains one circular and one text `Skeleton`
 
 #### Scenario: Mobile selector shows deployment skeletons while loading
 
 - **WHEN** the mobile selector is opened while deployments are loading
 - **THEN** the bottom sheet contains exactly seven skeleton rows
-- **AND** every row contains one circular and one text `DialSkeleton`
+- **AND** every row contains one circular and one text `Skeleton`
 
 ---
 
@@ -286,7 +286,7 @@ The raw `'dial:chatMessageInputDisabled'` field SHALL be removed — the backend
 
 This prevents a race where the initial mount-time list fetch (unavoidably in flight before any resource could have been shared to the user) resolves *after* a later, deliberate `refetchDeployments()`/`refetchToolsets()` call (e.g. one triggered right after accepting a share invitation) and overwrites its fresher result with the stale pre-share snapshot.
 
-`refetchDeployments()` SHALL call `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat], true)` so app create/delete/share/save flows that need a just-written Quick App deployment bypass the deployments endpoint's 30-second browser/server cache window.
+`refetchDeployments()` SHALL call `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat, ListDeploymentsInterfaceTypeEnum.Mcp], true)` so app create/delete/share/save flows that need a just-written Quick App deployment bypass the deployments endpoint's 30-second browser/server cache window.
 
 #### Scenario: A later refetch's result is not clobbered by a slower initial load
 
@@ -308,7 +308,7 @@ This prevents a race where the initial mount-time list fetch (unavoidably in fli
 #### Scenario: Explicit deployments refetch requests a fresh backend list
 
 - **WHEN** `refetchDeployments()` is called after a Quick App save or other deployment-mutating flow
-- **THEN** it calls `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat], true)` so the backend receives `refresh=true`
+- **THEN** it calls `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat, ListDeploymentsInterfaceTypeEnum.Mcp], true)` so the backend receives `refresh=true`
 
 #### Scenario: A superseded response does not trigger an error notification
 

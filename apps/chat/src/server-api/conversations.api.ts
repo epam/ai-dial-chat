@@ -1,7 +1,7 @@
 import type {
   AttachmentDto,
   ConversationResponseDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { conversationsApi } from './api-client';
 
 export const createConversation = (
@@ -53,6 +53,9 @@ export const saveConversation = (
 
 export const deleteConversation = (conversationPath: string) =>
   conversationsApi.deleteConversation({ path: conversationPath });
+
+export const markConversationViewed = (conversationPath: string) =>
+  conversationsApi.markConversationViewed({ path: conversationPath });
 
 export const getConversationMetadata = (
   conversationPath: string,

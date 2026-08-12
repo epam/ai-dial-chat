@@ -2,10 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  ScheduledTaskSectionKey,
-  type ScheduledTaskItem,
-} from '../../../models/scheduled-task-item';
+import type { ScheduledTaskItem } from '../../../models/scheduled-task-item';
 import { ScheduledTasksProps } from '../../../models/scheduled-tasks-props';
 import { ScheduledTasksSortKey } from '../../../types/scheduled-tasks-sort-key';
 import { ScheduledTasks } from '../ScheduledTasks';
@@ -64,12 +61,12 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     <article {...rest}>{children}</article>
   ),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialSpinner: () => <div role="progressbar" />,
-  DialSkeleton: ({ color }: { color?: string }) => (
+  Spinner: () => <div role="progressbar" />,
+  Skeleton: ({ color }: { color?: string }) => (
     <div data-skeleton data-color={color} />
   ),
-  DialSkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
-  DialDropdown: ({ children }: { children: ReactNode }) => <>{children}</>,
+  SkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
+  Dropdown: ({ children }: { children: ReactNode }) => <>{children}</>,
   IconButton: ({
     icon,
     ...rest
@@ -89,6 +86,24 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       <span>{title}</span>
     </div>
   ),
+  ButtonDropdown: ({
+    label,
+    items,
+  }: {
+    label?: string;
+    items: { key: string; label: string; onClick?: () => void }[];
+  }) => (
+    <div>
+      <button>{label}</button>
+      {items.map((item) => (
+        <button key={item.key} onClick={item.onClick}>
+          {item.label}
+        </button>
+      ))}
+    </div>
+  ),
+  ButtonVariant: { Primary: 'primary', Neutral: 'neutral' },
+  ButtonAppearance: { Ghost: 'ghost', Solid: 'solid' },
 }));
 
 vi.mock('@tabler/icons-react', () => ({
@@ -111,8 +126,6 @@ const buildItem = (
   id: 'sched_1',
   displayName: 'Competitor Updates',
   scheduleLabel: 'Every Monday 12:00',
-  sectionKey: ScheduledTaskSectionKey.MyTasks,
-  sortValues: {},
   ...overrides,
 });
 
@@ -135,7 +148,6 @@ const renderScheduledTasks = (overrides?: Partial<ScheduledTasksProps>) =>
         noResultsLabel: 'No results',
         errorLabel: 'Something went wrong',
         retryLabel: 'Retry',
-        sharedSectionTitle: 'Shared',
         loadingMoreLabel: 'Loading more scheduled tasks…',
       }}
       onCreateClick={vi.fn()}
@@ -225,7 +237,7 @@ describe('ScheduledTasks', () => {
     expect(screen.getByText('Daily summary')).toBeTruthy();
   });
 
-  it('renders cards for each matching item without a "My tasks" section heading', () => {
+  it('renders cards for each matching item as a flat grid with no section heading', () => {
     renderScheduledTasks({
       items: [
         buildItem({ id: '1', displayName: 'Daily summary' }),
@@ -234,28 +246,9 @@ describe('ScheduledTasks', () => {
     });
 
     expect(screen.queryByRole('heading', { name: 'My tasks' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Shared' })).toBeNull();
     expect(screen.getByText('Daily summary')).toBeTruthy();
     expect(screen.getByText('Weekly digest')).toBeTruthy();
-  });
-
-  it('renders a "Shared" section heading with a count badge for shared items', () => {
-    renderScheduledTasks({
-      items: [
-        buildItem({
-          id: '1',
-          displayName: 'Daily summary',
-          sectionKey: ScheduledTaskSectionKey.Shared,
-        }),
-        buildItem({
-          id: '2',
-          displayName: 'Weekly digest',
-          sectionKey: ScheduledTaskSectionKey.Shared,
-        }),
-      ],
-    });
-
-    expect(screen.getByRole('heading', { name: 'Shared' })).toBeTruthy();
-    expect(screen.getAllByText('2').length).toBeGreaterThan(0);
   });
 
   it('renders cards in the order items are received, regardless of sortKey', () => {
@@ -315,10 +308,14 @@ describe('ScheduledTasks', () => {
       styles: { colors: { skeletonColor: '#ff00ff' } },
     });
 
-    const bars = container.querySelectorAll('[data-skeleton]');
-    expect(bars.length).toBeGreaterThan(0);
-    bars.forEach((bar) => {
-      expect(bar.getAttribute('data-color')).toBe('#ff00ff');
+    const skeletonCards = container.querySelectorAll(
+      'article[aria-hidden="true"]',
+    );
+    expect(skeletonCards.length).toBeGreaterThan(0);
+    skeletonCards.forEach((card) => {
+      expect(
+        (card as HTMLElement).style.getPropertyValue('--stcs-skeleton-bg'),
+      ).toBe('#ff00ff');
     });
   });
 
@@ -459,6 +456,19 @@ describe('ScheduledTasks', () => {
 
       expect(onLoadMore).not.toHaveBeenCalled();
       restoreStyle();
+    });
+  });
+
+  describe('card click navigation', () => {
+    it('forwards onCardClick down to the rendered card', async () => {
+      const onCardClick = vi.fn();
+      renderScheduledTasks({ items: [buildItem()], onCardClick });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Competitor Updates' }),
+      );
+
+      expect(onCardClick).toHaveBeenCalledWith('sched_1');
     });
   });
 });

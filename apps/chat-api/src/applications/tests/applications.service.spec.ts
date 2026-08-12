@@ -295,6 +295,40 @@ describe('ApplicationsService', () => {
       );
     });
 
+    it('composes displayName/description as locale maps when locales is provided', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+
+      await service.createApplication('user1', 'token', {
+        ...body,
+        description: 'A description',
+        locales: [
+          {
+            language: 'de',
+            name: 'Meine App',
+            description: 'Eine Beschreibung',
+          },
+        ],
+        primaryLocale: 'en',
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).toMatchObject({
+        displayName: { en: 'My App', de: 'Meine App' },
+        description: { en: 'A description', de: 'Eine Beschreibung' },
+      });
+    });
+
+    it('still produces a plain-string displayName when locales is omitted (regression guard)', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+
+      await service.createApplication('user1', 'token', body);
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).toMatchObject({ displayName: 'My App' });
+    });
+
     it('maps topics to descriptionKeywords in SDK body', async () => {
       const { service } = makeService();
       const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
@@ -315,36 +349,6 @@ describe('ApplicationsService', () => {
       );
       const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
       expect(sentBody).not.toHaveProperty('topics');
-    });
-
-    it('maps intro to the top-level intro field in SDK body', async () => {
-      const { service } = makeService();
-      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
-
-      await service.createApplication('user1', 'token', {
-        ...body,
-        intro: 'A short pitch',
-      });
-
-      expect(saveCustomApplicationSpy).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.anything(),
-        expect.objectContaining({
-          body: expect.objectContaining({
-            intro: 'A short pitch',
-          }),
-        }),
-      );
-    });
-
-    it('does not set intro when it is omitted', async () => {
-      const { service } = makeService();
-      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
-
-      await service.createApplication('user1', 'token', body);
-
-      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
-      expect(sentBody).not.toHaveProperty('intro');
     });
 
     it('forwards Authorization header to bucket and save application SDK calls', async () => {
@@ -462,7 +466,6 @@ describe('ApplicationsService', () => {
         description: 'New description',
         iconUrl: 'https://example.com/icon.svg',
         topics: ['nlp'],
-        intro: 'New intro',
       });
 
       expect(getCustomApplicationSpy).toHaveBeenCalledWith(
@@ -484,7 +487,6 @@ describe('ApplicationsService', () => {
             description: 'New description',
             iconUrl: 'https://example.com/icon.svg',
             descriptionKeywords: ['nlp'],
-            intro: 'New intro',
           },
         }),
       );
@@ -517,6 +519,38 @@ describe('ApplicationsService', () => {
 
       const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
       expect(sentBody).not.toHaveProperty('descriptionKeywords');
+    });
+
+    it('replaces a previously plain-string displayName with a locale map when locales is provided', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(service);
+
+      await service.updateApplication('user1', 'token', id, {
+        ...updateBody,
+        locales: [{ language: 'de', name: 'Aktualisierte App' }],
+        primaryLocale: 'en',
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).toMatchObject({
+        displayName: { en: 'Updated App', de: 'Aktualisierte App' },
+      });
+    });
+
+    it('drops a previously configured locale map when an update omits locales (full-replacement semantics)', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+        service,
+        okResponse({
+          ...existingApp,
+          displayName: { en: 'My App', de: 'Meine App' },
+        }),
+      );
+
+      await service.updateApplication('user1', 'token', id, updateBody);
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).toMatchObject({ displayName: 'Updated App' });
     });
 
     it('throws NotFoundException when the existing application fetch returns 404', async () => {

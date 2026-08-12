@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { TabRow } from '@epam/ai-dial-kit';
-import { DialSpinner } from '@epam/ai-dial-ui-kit';
+import { Spinner, DropdownItem } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
@@ -43,17 +43,18 @@ export const Catalog: FC<CatalogProps> = ({
   hasPublishWriteAccess,
   onPublish,
   onPublishSuccess,
+  onPublishError,
   onCreatePublishFolder,
   publishLabels,
   ruleSourceOptions,
   onFetchExistingRules,
   shareOverlay,
   isShareVisible,
-  connectOverlay,
-  isConnectVisible,
   onFetchDetails,
   onEdit,
   onDelete,
+  onUnshare,
+  onRevokeShare,
   onLogin,
   onLogout,
   onCreateClick,
@@ -90,18 +91,21 @@ export const Catalog: FC<CatalogProps> = ({
   const listViewLabel = titles?.listViewLabel ?? 'List view';
   const resolvedAriaLabel = titles?.ariaLabel ?? 'Catalog';
 
-  const sortOptions = [
+  const sortOptions: DropdownItem[] = [
     {
-      value: CatalogSortKey.RecentlyUpdated,
+      key: CatalogSortKey.RecentlyUpdated,
       label: titles?.sortRecentlyUpdatedLabel ?? 'Recently Updated',
+      onClick: () => handleSortChange?.(CatalogSortKey.RecentlyUpdated),
     },
     {
-      value: CatalogSortKey.Newest,
+      key: CatalogSortKey.Newest,
       label: titles?.sortNewestLabel ?? 'Newest',
+      onClick: () => handleSortChange?.(CatalogSortKey.Newest),
     },
     {
-      value: CatalogSortKey.NameAZ,
+      key: CatalogSortKey.NameAZ,
       label: titles?.sortNameAZLabel ?? 'Name A-Z',
+      onClick: () => handleSortChange?.(CatalogSortKey.NameAZ),
     },
   ];
 
@@ -241,6 +245,24 @@ export const Catalog: FC<CatalogProps> = ({
     void handleOpenDetails(item);
   }, [initialDetailsItemId, items, handleOpenDetails]);
 
+  /*
+   * Keeps the open details panel in sync with later corrections to `items`
+   * (e.g. share-invitation resolution upgrading isMy/canEdit/sharedWithMe
+   * from the owner-context placeholder to the real shared-context values).
+   * Without this, selectedItem stays frozen on whatever snapshot was current
+   * when the panel first opened, so the Edit button and bucket label never
+   * update until the page is refreshed.
+   */
+  useEffect(() => {
+    if (selectedItem == null) return;
+    const updated = items.find(
+      (catalogItem) => catalogItem.id === selectedItem.id,
+    );
+    if (updated && updated !== selectedItem) {
+      setSelectedItem(updated);
+    }
+  }, [items, selectedItem]);
+
   const handleLogin = useCallback(
     async (
       item: CatalogItem,
@@ -337,7 +359,7 @@ export const Catalog: FC<CatalogProps> = ({
   if (isLoading) {
     return (
       <div className="flex size-full min-h-0 flex-1 items-center justify-center">
-        <DialSpinner />
+        <Spinner />
       </div>
     );
   }
@@ -400,7 +422,6 @@ export const Catalog: FC<CatalogProps> = ({
             viewMode={viewMode}
             onViewModeChange={handleViewModeChange}
             sortKey={sortKey}
-            onSortChange={handleSortChange}
             query={query}
             onQueryChange={setQuery}
             title={browseTitle}
@@ -431,28 +452,15 @@ export const Catalog: FC<CatalogProps> = ({
               }))}
               activeTabId={activeTab}
               onTabChange={setActiveTab}
-              styles={{
-                colors: {
-                  activeTabClassName: 'text-catalog-tab-active',
-                  inactiveTabClassName:
-                    'text-catalog-tab-inactive hover:text-catalog-tab-hover border-transparent',
-                  activeBadgeClassName:
-                    'bg-catalog-badge-active text-catalog-badge-active',
-                  inactiveBadgeClassName:
-                    'bg-catalog-badge-inactive text-catalog-badge-inactive',
-                },
-              }}
             />
           </div>
         )}
         <div
           className={mergeClasses(
             tabFiltered.length > 0
-              ? 'mx-auto min-h-full w-full max-w-[1180px] px-8 pt-6'
-              : 'min-h-0 flex-1',
-            tabFiltered.length === 0 &&
-              viewMode === CatalogViewMode.List &&
-              'px-8 pt-6',
+              ? 'mx-auto min-h-full w-full max-w-[1180px] px-8 py-6'
+              : 'min-h-[180px] flex-1',
+            tabFiltered.length === 0 && 'px-8 py-6',
           )}
         >
           <div
@@ -518,16 +526,17 @@ export const Catalog: FC<CatalogProps> = ({
           hasPublishWriteAccess={hasPublishWriteAccess}
           onPublish={onPublish}
           onPublishSuccess={onPublishSuccess}
+          onPublishError={onPublishError}
           onCreatePublishFolder={onCreatePublishFolder}
           publishLabels={publishLabels}
           ruleSourceOptions={ruleSourceOptions}
           onFetchExistingRules={onFetchExistingRules}
           shareOverlay={shareOverlay}
           isShareVisible={isShareVisible}
-          connectOverlay={connectOverlay}
-          isConnectVisible={isConnectVisible}
           onEdit={onEdit}
           onDelete={onDelete}
+          onUnshare={onUnshare}
+          onRevokeShare={onRevokeShare}
           onLogin={handleLogin}
           onLogout={handleLogout}
           texts={detailsTexts}

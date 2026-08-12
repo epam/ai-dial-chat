@@ -4,7 +4,7 @@
 }
 
 .navBtn {
-  color: var(--text-accent, #1d4ed8);
+  color: var(--cat-fav-nav-btn, var(--text-accent, #1d4ed8));
   transition: background-color 150ms ease;
 
   @media (hover: hover) {
@@ -18,13 +18,29 @@
   }
 
   &:disabled {
-    color: var(--stroke-secondary, #d1dbea);
+    color: var(--cat-fav-nav-btn-disabled, var(--stroke-secondary, #d1dbea));
     cursor: default;
   }
 }
 
-.pageCounter {
-  color: var(--text-secondary, #6b7280);
+.titleText {
+  color: var(--cat-fav-title-text, var(--text-primary, #161b2d));
+}
+
+.countText {
+  color: var(--cat-fav-count-text, var(--text-secondary, #57647a));
+}
+
+.selectedCheck {
+  color: var(--cat-fav-selected-check, var(--text-accent, #1d4ed8));
+}
+
+.selectedCard {
+  border-color: var(--cat-fav-selected-border, var(--stroke-info, #124ace));
+  background-color: var(
+    --cat-fav-selected-bg,
+    var(--bg-accent-primary-alpha, #7da4ff2e)
+  ) !important;
 }
 
 .section {

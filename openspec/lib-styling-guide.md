@@ -63,10 +63,10 @@ Not allowed in SCSS (use Tailwind instead):
 // ✅ correct — only CSS vars
 .wrapper {
   background: var(--ci-bg, var(--bg-layer-sunken, #EEF1F7));
-  border-color: var(--ci-border, var(--stroke-primary, #6B7280));
+  border-color: var(--ci-border, var(--stroke-primary, #57647A));
 
   &:focus-within {
-    border-color: var(--ci-border-focus, var(--stroke-focus, #161B2D));
+    border-color: var(--ci-border-focus, var(--stroke-focus-black, #161B2D));
   }
 }
 
@@ -74,7 +74,7 @@ Not allowed in SCSS (use Tailwind instead):
   color: var(--ci-text, var(--text-primary, #161B2D));
 
   &::placeholder {
-    color: var(--ci-placeholder, var(--text-secondary, #6B7280));
+    color: var(--ci-placeholder, var(--text-secondary, #57647A));
   }
 }
 
@@ -189,6 +189,69 @@ Typography var naming follows the same `--<lib-prefix>-` convention as color var
 conversation-input   → --ci-font-size, --ci-font-weight, …
 conversation-stages  → --cs-font-size, --cs-font-weight, …
 ```
+
+---
+
+## Dead-style checks
+
+Every one of these fails silently — the build passes, types pass, lint passes, and the styling simply does nothing. Check all four whenever you add or edit a `.module.scss` or a `buildCssVars` call.
+
+### 1. Each var must be wired at both ends
+
+A `buildCssVars` entry needs a stylesheet that reads it, and every `var(--<prefix>-*)` in the SCSS needs an entry. Grep the var name across the lib before you finish: two hits (one TS, one SCSS) is correct, one hit means the prop does nothing.
+
+```tsx
+// Wrong — nothing reads --ci-fill-bg, so `colors.fillBackground` is inert
+const cssVars = buildCssVars({ '--ci-fill-bg': colors?.fillBackground });
+```
+
+When the var is missing because the *style* was never written (a documented `borderHover` with no `:hover` rule), prefer adding the rule with a fallback to the base value — the prop starts working and nothing changes visually by default:
+
+```scss
+// Correct — resolves to the base border until a host overrides it
+&:hover {
+  border-color: var(--ci-border-hover, var(--ci-border, var(--stroke-secondary, #D1DBEA)));
+}
+```
+
+### 2. Each class must be applied
+
+A class declared in a `.module.scss` that no TSX references via `styles.<name>` is dead. Deleting it is correct only when the element it targeted is gone; if the element exists and simply lost its class, apply the class instead — that is the case whenever the class is the sole consumer of a themeable var.
+
+Exception: `:global(...)` selectors targeting third-party class names (e.g. `.pdf-container` from the PDF viewer) are referenced by the vendor's markup, not by `styles.*`.
+
+### 3. Never apply a module class as a raw string
+
+CSS-module class names are hashed at build time, so a string literal can never match. This is the worst of the four failure modes: it looks correct in review and in the DOM the class is simply absent from the stylesheet.
+
+```tsx
+// Wrong — `.hovered` in the module is hashed; the literal never matches it
+className={mergeClasses(styles.tile, isPasted && 'hovered')}
+
+// Correct
+className={mergeClasses(styles.tile, isPasted && styles.hovered)}
+```
+
+Raw strings are only for Tailwind utilities and app-global classes that no `.module.scss` in the lib declares.
+
+### 4. One prop, one var
+
+Do not bind two var names to the same prop, and do not set a var both directly and through a nested component's `styles` prop — the duplicate is dead weight that reads as intentional.
+
+```tsx
+// Wrong — one prop, two vars
+buildCssVars({
+  '--sb-resize-handler': colors?.resizeHandler,
+  '--sb-bg-resize-handler': colors?.resizeHandler,
+});
+
+// Wrong — `--sb-border` is already forwarded via <SidebarPanel styles={{ colors }} />
+buildCssVars({ '--sb-border': colors?.border });
+```
+
+### Typography fields are subject to all four
+
+The six-field `*Typography` shape above is a template, not a licence to declare fields the component ignores. A declared `fontFamily` / `fontSize` / `fontWeight` / `lineHeight` / `letterSpacing` must be wired as a CSS var on the element where font styles apply (see *SCSS wiring for typography CSS vars*). If the component only ever applies `fontClassName`, declare only `fontClassName`.
 
 ---
 

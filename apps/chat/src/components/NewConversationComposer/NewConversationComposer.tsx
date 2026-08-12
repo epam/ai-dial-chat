@@ -1,3 +1,4 @@
+import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   ResponseFormat,
@@ -12,7 +13,6 @@ import {
   type ToolsChipLabels,
 } from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import type { DeploymentItemDto } from '@epam/chat-api-client';
 import type { FC, ReactNode } from 'react';
 import { lazy, memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -38,13 +38,15 @@ import { useChatSettingsFormConfig } from '../../hooks/conversation/useChatSetti
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { getTimeOfDayGreeting } from '../../utils/greeting';
-import FooterContainer from '../FooterDialogs/FooterContainer';
+import { resolveLocalizedText } from '../../utils/locale';
+import FooterMessage from '../FooterMessage/FooterMessage';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 
 const ConversationInput = lazy(async () => {
@@ -119,9 +121,28 @@ const NewConversationComposer: FC<Props> = ({
   children,
 }) => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const { showNotification } = useNotification();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
+
+  const resolvedSelectedDeployment = useMemo(
+    () =>
+      selectedDeployment
+        ? {
+            ...selectedDeployment,
+            displayName: resolveLocalizedText(
+              selectedDeployment.displayName,
+              language,
+            ),
+            description: resolveLocalizedText(
+              selectedDeployment.description,
+              language,
+            ),
+          }
+        : undefined,
+    [selectedDeployment, language],
+  );
 
   const [isSending, setIsSending] = useState(false);
   const [attachmentsAmount, setAttachmentsAmount] = useState(0);
@@ -146,7 +167,7 @@ const NewConversationComposer: FC<Props> = ({
     isAttachmentsAllowed,
     validateAttachment,
     fileAccept,
-  } = useAttachmentValidation(selectedDeployment);
+  } = useAttachmentValidation(resolvedSelectedDeployment);
 
   const handleNetworkUploadError = useCallback(
     (filenames: string[]) => {
@@ -337,7 +358,7 @@ const NewConversationComposer: FC<Props> = ({
           deployments={
             isHideEmptyChatChangeAgentEnabled ? undefined : deployments
           }
-          selectedDeploymentId={selectedDeploymentId}
+          selectedDeploymentId={selectedDeployment?.id ?? selectedDeploymentId}
           onDeploymentChange={onDeploymentChange}
           isInputDisabled={isInputDisabled}
           isModelSelectorDisabled={isModelSelectorDisabled}
@@ -384,7 +405,9 @@ const NewConversationComposer: FC<Props> = ({
           toolsChipLabels={toolsChipLabels}
           usageLimitsSlot={
             <UsageLimitsControl
-              deploymentId={selectedDeploymentId ?? undefined}
+              deploymentId={
+                selectedDeployment?.id ?? selectedDeploymentId ?? undefined
+              }
               labels={usageLimitsLabels}
             />
           }
@@ -396,7 +419,7 @@ const NewConversationComposer: FC<Props> = ({
         )}
         {children}
       </div>
-      <FooterContainer />
+      <FooterMessage />
       {isDialFileManagerOpen && (
         <DialFileManagerModal
           isOpen={isDialFileManagerOpen}

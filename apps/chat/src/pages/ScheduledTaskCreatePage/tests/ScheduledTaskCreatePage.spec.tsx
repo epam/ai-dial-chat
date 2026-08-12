@@ -33,6 +33,33 @@ vi.mock('../../../server-api/scheduled-tasks.api', () => ({
   createScheduledTask: (...args: unknown[]) => createScheduledTaskMock(...args),
 }));
 
+vi.mock(
+  '../../../components/DeploymentSelector/DeploymentSelectorFieldTrigger',
+  () => ({
+    default: ({
+      selectedId,
+      onSelect,
+      labelledById,
+    }: {
+      selectedId: string | null;
+      onSelect: (id: string) => void;
+      labelledById?: string;
+    }) => (
+      <>
+        <select
+          aria-label="modelId"
+          value={selectedId ?? ''}
+          onChange={(e) => onSelect(e.target.value)}
+        >
+          <option value="" />
+          <option value="gpt-4o">GPT-4o</option>
+        </select>
+        <output aria-label="triggerLabelledById">{labelledById}</output>
+      </>
+    ),
+  }),
+);
+
 interface FormProps {
   labels: { cancelButtonLabel: string; createButtonLabel: string };
   values: {
@@ -40,10 +67,14 @@ interface FormProps {
     modelId: string;
     prompt: string;
     description?: string;
-    scheduleType: string;
+    repeat: string;
+    startDate?: string;
+    endDate?: string;
+    runAt?: string;
   };
   errors: Record<string, string | undefined>;
-  modelOptions: { id: string; label: string }[];
+  modelSelector: ReactNode;
+  modelLabelId: string;
   onFieldChange: (field: string, value: unknown) => void;
   onBack: () => void;
   onCancel: () => void;
@@ -52,8 +83,9 @@ interface FormProps {
 }
 
 vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
-  ScheduledTaskScheduleType: { Once: 'once', Recurring: 'recurring' },
-  ScheduledTaskFrequency: {
+  ScheduledTaskRepeat: {
+    OneTime: 'oneTime',
+    Hourly: 'hourly',
     Daily: 'daily',
     Weekly: 'weekly',
     Monthly: 'monthly',
@@ -63,7 +95,8 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     labels,
     values,
     errors,
-    modelOptions,
+    modelSelector,
+    modelLabelId,
     onFieldChange,
     onBack,
     onCancel,
@@ -77,18 +110,8 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
         value={values.displayName}
         onChange={(e) => onFieldChange('displayName', e.target.value)}
       />
-      <select
-        aria-label="modelId"
-        value={values.modelId}
-        onChange={(e) => onFieldChange('modelId', e.target.value)}
-      >
-        <option value="" />
-        {modelOptions.map((option) => (
-          <option key={option.id} value={option.id}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      <output aria-label="modelLabelId">{modelLabelId}</output>
+      {modelSelector}
       <textarea
         aria-label="prompt"
         value={values.prompt}
@@ -99,10 +122,37 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
         value={values.description ?? ''}
         onChange={(e) => onFieldChange('description', e.target.value)}
       />
+      <select
+        aria-label="repeat"
+        value={values.repeat}
+        onChange={(e) => onFieldChange('repeat', e.target.value)}
+      >
+        <option value="oneTime">oneTime</option>
+        <option value="hourly">hourly</option>
+        <option value="daily">daily</option>
+        <option value="weekly">weekly</option>
+        <option value="monthly">monthly</option>
+      </select>
+      <input
+        aria-label="startDate"
+        value={values.startDate ?? ''}
+        onChange={(e) => onFieldChange('startDate', e.target.value)}
+      />
+      <input
+        aria-label="endDate"
+        value={values.endDate ?? ''}
+        onChange={(e) => onFieldChange('endDate', e.target.value)}
+      />
+      <input
+        aria-label="runAt"
+        value={values.runAt ?? ''}
+        onChange={(e) => onFieldChange('runAt', e.target.value)}
+      />
       {errors.displayName && <span>{errors.displayName}</span>}
       {errors.modelId && <span>{errors.modelId}</span>}
       {errors.prompt && <span>{errors.prompt}</span>}
       {errors.description && <span>{errors.description}</span>}
+      {errors.endDate && <span>{errors.endDate}</span>}
       <button onClick={onCancel}>{labels.cancelButtonLabel}</button>
       <button onClick={onSubmit} disabled={isSubmitting}>
         {labels.createButtonLabel}
@@ -170,6 +220,18 @@ describe('ScheduledTaskCreatePage', () => {
     ).toBeTruthy();
   });
 
+  it('links the model field label to the trigger via a generated id, not a hardcoded literal', () => {
+    renderAtRoute('/scheduled-tasks/new');
+
+    const modelLabelId = screen.getByLabelText('modelLabelId').textContent;
+    const triggerLabelledById = screen.getByLabelText(
+      'triggerLabelledById',
+    ).textContent;
+
+    expect(modelLabelId).toBeTruthy();
+    expect(triggerLabelledById).toBe(modelLabelId);
+  });
+
   it('navigates to the default list route on Cancel when returnUrl is absent', async () => {
     renderAtRoute('/scheduled-tasks/new');
 
@@ -226,6 +288,19 @@ describe('ScheduledTaskCreatePage', () => {
 
     expect(createScheduledTaskMock).not.toHaveBeenCalled();
     expect(screen.getByText('editor.nameRequired')).toBeTruthy();
+  });
+
+  it('binds the model selector to values.modelId and updates it on selection', async () => {
+    renderAtRoute('/scheduled-tasks/new');
+
+    const select = screen.getByRole('combobox', {
+      name: 'modelId',
+    }) as HTMLSelectElement;
+    expect(select.value).toBe('');
+
+    await userEvent.selectOptions(select, 'gpt-4o');
+
+    expect(select.value).toBe('gpt-4o');
   });
 
   it('submits the mapped body and navigates to returnUrl on success', async () => {
@@ -287,6 +362,66 @@ describe('ScheduledTaskCreatePage', () => {
     expect(
       screen.getByText('scheduledTasks.create.descriptionMaxLengthError'),
     ).toBeTruthy();
+  });
+
+  it('blocks submit with an inline error when endDate is not after startDate', async () => {
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'startDate' }),
+      '2026-08-31',
+    );
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'endDate' }),
+      '2026-08-01',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    expect(createScheduledTaskMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByText('scheduledTasks.create.endDateBeforeStartError'),
+    ).toBeTruthy();
+  });
+
+  it('allows submit when both startDate and endDate are empty', async () => {
+    createScheduledTaskMock.mockResolvedValue({ id: 'sched_1' });
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    expect(createScheduledTaskMock).toHaveBeenCalledOnce();
+  });
+
+  it('does not include startDate/endDate in the submit body after switching repeat to one-time', async () => {
+    createScheduledTaskMock.mockResolvedValue({ id: 'sched_1' });
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'startDate' }),
+      '2026-08-01',
+    );
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'endDate' }),
+      '2026-08-31',
+    );
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: 'repeat' }),
+      'oneTime',
+    );
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'runAt' }),
+      '2099-08-24T09:00',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    expect(createScheduledTaskMock).toHaveBeenCalledOnce();
+    const body = createScheduledTaskMock.mock.calls[0][0];
+    expect(body.trigger.cron).toBeUndefined();
+    expect(body.trigger).not.toHaveProperty('startDate');
+    expect(body.trigger).not.toHaveProperty('endDate');
   });
 
   it('shows an error notification and stays on the form when the API call fails', async () => {

@@ -1,8 +1,3 @@
-/*
- * The base elevated-card shadow/hover/reduced-motion treatment now lives in
- * `CardShell` (@epam/ai-dial-kit). This block only adds the star-button
- * hover reveal and reduced-motion overrides that are specific to this card.
- */
 .card {
   @media (hover: hover) {
     &:hover .emptyStarHidden {
@@ -37,9 +32,29 @@
 }
 
 .description {
-  color: var(--text-secondary, #6b7280);
+  color: var(--cg-description-text, var(--text-secondary, #57647a));
 }
 
 .skeletonCard {
-  background: var(--bg-layer-raised, #fcfcfc);
+  background: var(--cg-skeleton-card-bg, var(--bg-layer-raised, #fcfcfc));
+}
+
+.selectedCard {
+  border-color: var(--cg-selected-border, var(--stroke-info, #124ace));
+  background-color: var(
+    --cg-selected-bg,
+    var(--bg-accent-primary-alpha, #7da4ff2e)
+  ) !important;
+}
+
+.checkIcon {
+  color: var(--cg-check-icon, var(--text-accent, #1d4ed8));
+}
+
+.footer {
+  border-top-color: var(--cg-footer-border, var(--stroke-tertiary, #e0e6f0));
+}
+
+:export {
+  skeletonColor: var(--cg-skeleton-color, var(--bg-layer-4, #d1dbea));
 }

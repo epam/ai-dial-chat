@@ -38,6 +38,20 @@ describe('MarkdownCodeBlock', () => {
     expect(container.querySelector('span.opacity-60')).toBeNull();
   });
 
+  it('renders title in place of language in the header, keeping language for highlighting', () => {
+    const { container } = render(
+      <MarkdownCodeBlock
+        language="bash"
+        title="cURL"
+        value="curl https://dial.example.com"
+      />,
+    );
+
+    expect(screen.getByText('cURL')).toBeTruthy();
+    expect(screen.queryByText('bash')).toBeNull();
+    expect(container.querySelector('[data-language="bash"]')).toBeTruthy();
+  });
+
   it('renders no label text when language is empty', () => {
     const { container } = render(
       <MarkdownCodeBlock language="" value="const x = 1;" />,
@@ -139,6 +153,21 @@ describe('MarkdownCodeBlock', () => {
     expect(screen.queryByRole('button', { name: 'Download code' })).toBeNull();
   });
 
+  it('does not render the download button when hideDownload is true, but still shows copy', () => {
+    render(
+      <MarkdownCodeBlock
+        language="typescript"
+        value="const x = 1;"
+        hideDownload
+        downloadLabel="Download code"
+        copyLabel="Copy code"
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Download code' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Copy code' })).toBeTruthy();
+  });
+
   it('sets dir="ltr" on the scroll container', () => {
     const { container } = render(
       <MarkdownCodeBlock language="typescript" value="const x = 1;" />,
@@ -213,6 +242,57 @@ describe('MarkdownCodeBlock', () => {
     ) as HTMLElement;
     expect(scrollContainer.className).toContain('overflow-auto');
     expect(scrollContainer.textContent).toContain(longLine);
+  });
+
+  it('renders titleSlot in place of the plain language label when provided', () => {
+    render(
+      <MarkdownCodeBlock
+        language="typescript"
+        value="const x = 1;"
+        titleSlot={<button>Pick language</button>}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Pick language' })).toBeTruthy();
+    expect(screen.queryByText('typescript')).toBeNull();
+  });
+
+  it('removes the header vertical padding when a custom titleSlot is provided', () => {
+    const { container } = render(
+      <MarkdownCodeBlock
+        language="typescript"
+        value="const x = 1;"
+        titleSlot={<button>Pick language</button>}
+      />,
+    );
+
+    const header = container.querySelector('.border-b') as HTMLElement;
+    expect(header.className).toContain('py-0');
+    expect(header.className).not.toContain('py-2');
+  });
+
+  it('keeps the header default vertical padding for the plain language label', () => {
+    const { container } = render(
+      <MarkdownCodeBlock language="typescript" value="const x = 1;" />,
+    );
+
+    const header = container.querySelector('.border-b') as HTMLElement;
+    expect(header.className).toContain('py-2');
+  });
+
+  it('still shows the download and copy buttons alongside a custom titleSlot', () => {
+    render(
+      <MarkdownCodeBlock
+        language="typescript"
+        value="const x = 1;"
+        titleSlot={<button>Pick language</button>}
+        copyLabel="Copy code"
+        downloadLabel="Download code"
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Copy code' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Download code' })).toBeTruthy();
   });
 
   it('preserves <pre>/<code> semantics for a language-less block', () => {

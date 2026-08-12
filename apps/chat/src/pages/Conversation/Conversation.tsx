@@ -1,3 +1,4 @@
+import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
   MessageRating,
   MessageRole,
@@ -6,16 +7,16 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   ConfirmationPopupVariant,
-  DialConfirmationPopup,
-  DialSpinner,
+  ConfirmationPopup,
+  Spinner,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
-import type { ConversationResponseDto } from '@epam/chat-api-client';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router';
 import ConversationView from '../../components/ConversationView/ConversationView';
 import NegativeFeedbackModal from '../../components/ConversationView/Rate/NegativeFeedbackModal';
+import ScheduledTaskConversationBanner from '../../components/ScheduledTaskConversationBanner/ScheduledTaskConversationBanner';
 import { getConversationRoute } from '../../constants/routes';
 import {
   ButtonsI18nKeys,
@@ -24,6 +25,7 @@ import {
   RateI18nKeys,
   ToolsI18nKeys,
 } from '../../constants/translation-keys';
+import { useActiveScheduledTask } from '../../context/ActiveScheduledTaskContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -46,6 +48,7 @@ import {
   getConversation as apiGetConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
+import { ActiveScheduledTaskStatus } from '../../types/active-scheduled-task';
 import { ROUTES } from '../../types/routes';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { getConversationPath } from '../../utils/conversation-path';
@@ -83,6 +86,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     useSourcesSidebar();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
+  const { status: activeScheduledTaskStatus } = useActiveScheduledTask();
   const {
     conversations,
     duplicateConversation,
@@ -515,7 +519,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   if (isFetching)
     return (
       <div className="flex size-full items-center justify-center">
-        <DialSpinner />
+        <Spinner />
       </div>
     );
 
@@ -564,6 +568,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
             countLabel: (count) => t(ToolsI18nKeys.SelectedCount, { count }),
             removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
           }}
+          topContent={
+            activeScheduledTaskStatus ===
+            ActiveScheduledTaskStatus.TaskConversation ? (
+              <ScheduledTaskConversationBanner />
+            ) : undefined
+          }
         />
       </div>
 
@@ -574,7 +584,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         />
       )}
 
-      <DialConfirmationPopup
+      <ConfirmationPopup
         open={pendingDeleteIndex != null}
         header={t(ChatI18nKeys.DeleteMessageTitle)}
         description={t(ChatI18nKeys.DeleteMessageDescription)}
@@ -585,7 +595,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         onClose={() => setPendingDeleteIndex(null)}
       />
 
-      <DialConfirmationPopup
+      <ConfirmationPopup
         open={pendingStarterContext != null}
         header={t(ChatI18nKeys.StarterConfirmTitle)}
         description={

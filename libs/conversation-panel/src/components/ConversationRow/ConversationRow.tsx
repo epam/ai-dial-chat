@@ -2,10 +2,10 @@ import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   Button,
   DIAL_ICON_SIZE,
-  DialDropdown,
+  Dropdown,
   GhostIconButton,
-  DialSkeleton,
-  DialSkeletonVariant,
+  Skeleton,
+  SkeletonVariant,
   ElementSize,
   Highlight,
   type DropdownItem,
@@ -42,8 +42,10 @@ export interface ConversationRowProps {
   itemTitleClassName?: string;
   /** CSS class applied to the icon badge. Defaults to `'rounded-full'`. */
   itemIconBadgeClassName?: string;
-  /** CSS class applied to the task pill badge (background, border, text color, and typography). Defaults to `'border-tertiary bg-layer-base text-secondary dial-caption-semi-text tracking-[0.6px]'`. */
+  /** Typography class applied to the task pill badge. Defaults to `'dial-caption-semi-text uppercase tracking-[0.6px]'`. Colors come from the module stylesheet. */
   taskBadgeClassName?: string;
+  /** Accessible (visually hidden) label announced for the unread indicator dot. Defaults to `"Unread"`. */
+  unreadIndicatorLabel?: string;
   /** Group this row belongs to — required to enable drag-and-drop. */
   rowGroupKey?: FilterTab;
   /** The full virtual rows array — used to compute drop position. */
@@ -81,7 +83,8 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   actionsLabel = 'More actions',
   itemTitleClassName = 'dial-small-text',
   itemIconBadgeClassName,
-  taskBadgeClassName = 'border-tertiary bg-layer-base text-secondary dial-caption-semi-text uppercase tracking-[0.6px]',
+  taskBadgeClassName = 'dial-caption-semi-text uppercase tracking-[0.6px]',
+  unreadIndicatorLabel = 'Unread',
   rowGroupKey,
   rows,
   draggingId,
@@ -110,8 +113,8 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   const hasActions = menuItems.length > 0;
 
   const avatar = item.isIconLoading ? (
-    <DialSkeleton
-      variant={DialSkeletonVariant.Circular}
+    <Skeleton
+      variant={SkeletonVariant.Circular}
       width={DIAL_ICON_SIZE.LG}
       height={DIAL_ICON_SIZE.LG}
       color={styles.skeletonColor}
@@ -127,12 +130,38 @@ export const ConversationRow: FC<ConversationRowProps> = ({
     />
   );
 
+  /*
+   * A fixed 12x12 slot is always reserved before the avatar so the avatar's horizontal position stays identical
+   * across rows whether or not the dot itself is rendered. The slot doubles as the row's start gutter — the
+   * button drops its own start padding (`ps-0`) so the two do not stack into a double indent.
+   */
+  const avatarWithUnreadIndicator = (
+    <span className="flex shrink-0 items-center">
+      <span className="relative flex size-3 shrink-0 items-center justify-center">
+        {item.isUnread && (
+          <>
+            <span
+              className={mergeClasses(
+                'size-[5.33px] rounded-full',
+                styles.unreadDot,
+              )}
+              aria-hidden
+            />
+            <span className="sr-only">{unreadIndicatorLabel}</span>
+          </>
+        )}
+      </span>
+      {avatar}
+    </span>
+  );
+
   const buttonPaddingEnd = getButtonPaddingEnd(hasActions, isMenuOpen);
 
   const taskBadge = item.showTaskBadge ? (
     <span
       className={mergeClasses(
         'flex h-5 shrink-0 items-center justify-center gap-0.5 rounded-full border pe-2 ps-1',
+        styles.taskBadge,
         taskBadgeClassName,
       )}
     >
@@ -203,7 +232,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
         }}
       >
         <Button
-          iconBefore={avatar}
+          iconBefore={avatarWithUnreadIndicator}
           label={
             <Highlight
               text={item.title}
@@ -218,7 +247,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
           onClick={item.href ? undefined : () => onSelectConversation(item.id)}
           tabIndex={item.href ? -1 : undefined}
           className={mergeClasses(
-            'h-8 w-full justify-start gap-2 rounded-xl py-2 ps-3',
+            'h-8 w-full justify-start gap-2 rounded-xl py-2 ps-0',
             buttonPaddingEnd,
             styles.item,
             isActive && styles.itemActive,
@@ -236,11 +265,11 @@ export const ConversationRow: FC<ConversationRowProps> = ({
               : 'opacity-0 group-focus-within/conversation:opacity-100 group-hover/conversation:opacity-100',
           )}
         >
-          <DialDropdown
+          <Dropdown
             items={menuItems}
             onOpenChange={handleMenuOpenChange}
             matchReferenceWidth={false}
-            listClassName="w-[140px] cp-dropdown-overlay"
+            listClassName="w-[200px]"
           >
             <GhostIconButton
               ref={actionTriggerRef}
@@ -255,7 +284,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
               aria-label={actionsLabel}
               className={mergeClasses(isMenuOpen && styles.triggerActive)}
             />
-          </DialDropdown>
+          </Dropdown>
         </div>
       )}
     </li>

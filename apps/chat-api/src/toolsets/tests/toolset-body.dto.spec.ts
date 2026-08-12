@@ -19,30 +19,14 @@ async function validateDto(plain: Record<string, unknown>) {
   return validate(instance, { whitelist: true, forbidNonWhitelisted: true });
 }
 
-describe('ToolsetBodyDto — intro', () => {
-  it('passes when intro is omitted', async () => {
+describe('ToolsetBodyDto — intro removal', () => {
+  it('passes when no intro property is present', async () => {
     const errors = await validateDto(BASE_BODY);
     expect(errors).toHaveLength(0);
   });
 
-  it('passes when intro is an empty string', async () => {
-    const errors = await validateDto({ ...BASE_BODY, intro: '' });
-    expect(errors).toHaveLength(0);
-  });
-
-  it('passes when intro is exactly 90 characters', async () => {
-    const errors = await validateDto({
-      ...BASE_BODY,
-      intro: 'a'.repeat(90),
-    });
-    expect(errors).toHaveLength(0);
-  });
-
-  it('rejects intro longer than 90 characters', async () => {
-    const errors = await validateDto({
-      ...BASE_BODY,
-      intro: 'a'.repeat(91),
-    });
+  it('rejects a request body that still includes an intro property', async () => {
+    const errors = await validateDto({ ...BASE_BODY, intro: 'Short intro' });
     expect(errors.some((e) => e.property === 'intro')).toBe(true);
   });
 });
@@ -62,6 +46,60 @@ describe('ToolsetBodyDto — endpoint', () => {
   it('rejects a non-empty endpoint with an invalid protocol', async () => {
     const errors = await validateDto({ ...BASE_BODY, endpoint: 'ftp://nope' });
     expect(errors.some((e) => e.property === 'endpoint')).toBe(true);
+  });
+});
+
+describe('ToolsetBodyDto — locales', () => {
+  it('passes when locales is omitted', async () => {
+    const errors = await validateDto(BASE_BODY);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('passes with a valid locale entry and primaryLocale', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      locales: [{ language: 'de', name: 'Mein Toolset' }],
+      primaryLocale: 'en',
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects a locale entry with a stray client-side id field', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      locales: [{ id: 'locale-row-1', language: 'de', name: 'Mein Toolset' }],
+      primaryLocale: 'en',
+    });
+    expect(errors.some((e) => e.property === 'locales')).toBe(true);
+  });
+
+  it('rejects a locale entry with an invalid language code', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      locales: [{ language: 'not-a-locale!', name: 'Mein Toolset' }],
+      primaryLocale: 'en',
+    });
+    expect(errors.some((e) => e.property === 'locales')).toBe(true);
+  });
+
+  it('rejects a non-empty locales array without primaryLocale', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      locales: [{ language: 'de', name: 'Mein Toolset' }],
+    });
+    expect(errors.some((e) => e.property === 'primaryLocale')).toBe(true);
+  });
+
+  it('rejects more than 20 locale entries', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      locales: Array.from({ length: 21 }, (_, i) => ({
+        language: 'de',
+        name: `Locale ${i}`,
+      })),
+      primaryLocale: 'en',
+    });
+    expect(errors.some((e) => e.property === 'locales')).toBe(true);
   });
 });
 

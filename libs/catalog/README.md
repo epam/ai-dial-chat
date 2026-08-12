@@ -37,6 +37,22 @@ import { Catalog } from '@epam/ai-dial-catalog';
 <Catalog items={catalogItems} onSelect={handleSelect} />;
 ```
 
+Sharing-related details-panel actions are opt-in callbacks — the panel owns the
+confirmation step and calls them only once the user confirms:
+
+```tsx
+<Catalog
+  items={catalogItems}
+  onSelect={handleSelect}
+  // Owner-side: revokes every recipient's access to an `isMyApp` item.
+  // The item stays in the owner's catalog, so the panel stays open.
+  onRevokeShare={handleRevokeShare}
+  // Recipient-side: drops the caller's own access to a `sharedWithMe` item.
+  // The item leaves the caller's catalog, so the panel closes.
+  onUnshare={handleUnshare}
+/>
+```
+
 ### CardGrid
 
 Virtualized grid view of catalog cards.
@@ -79,6 +95,22 @@ import { Filter, TopicTag, EntityBadge } from '@epam/ai-dial-catalog';
 <TopicTag label="Vision" />
 ```
 
+### InfoCard
+
+Tinted card showing a catalog item's identity, used to anchor a message to the
+item it is about. Defaults to the `Info` surface; pass `Danger` for destructive
+messaging.
+
+```tsx
+import {
+  InfoCard,
+  DetailsConfirmationVariant,
+} from '@epam/ai-dial-catalog';
+
+<InfoCard item={item} />
+<InfoCard item={item} variant={DetailsConfirmationVariant.Danger} />
+```
+
 ## Enums
 
 ```tsx
@@ -88,7 +120,8 @@ import {
   CatalogViewMode,
   CatalogDetailsTab,
   CodeLanguage,
-  EntityTag,
+  DetailsConfirmationKind,
+  DetailsConfirmationVariant,
 } from '@epam/ai-dial-catalog';
 
 CatalogEntityType.Model; // 'model'
@@ -104,7 +137,6 @@ CatalogViewMode.List; // 'list'
 ```tsx
 import type {
   CatalogItem,
-  CatalogItemSummary,
   ApiResource,
   CatalogItemApiDetails,
   ToolDefinition,

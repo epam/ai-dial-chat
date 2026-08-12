@@ -32,6 +32,7 @@ Apply in order, stop at the first match:
 | ----------------------- | ------------------------------------------------------------- |
 | `attachment-canvas`     | Side canvas / attachment preview (PDF, JSON, MD rendering)    |
 | `attachment-input`      | Attachment upload input and file handling UI                  |
+| `builder-form`          | Shared builder/editor form page shell (header, column layout) |
 | `catalog`               | Model/agent catalog UI (cards, favorites, browse)             |
 | `chat-api-client`       | **Generated** OpenAPI client — regenerated, never hand-edited |
 | `chat-shared`           | Shared types, utils, and components reused across libs        |
@@ -39,6 +40,7 @@ Apply in order, stop at the first match:
 | `conversation-messages` | Message list and message rendering                            |
 | `conversation-panel`    | Conversation panel container and layout                       |
 | `conversation-stages`   | Stage / step rendering inside a conversation                  |
+| `scheduled-tasks`       | Scheduled tasks UI (detail view, cards, runs history)         |
 | `sidebar`               | Sidebar navigation                                            |
 | `source-panel`          | Sources panel                                                 |
 | `starter-buttons`       | Starter prompt buttons                                        |

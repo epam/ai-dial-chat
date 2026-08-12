@@ -7,6 +7,7 @@ import {
   ConversationsApi,
   DeploymentsApi,
   FilesApi,
+  HealthApi,
   Middleware,
   ModelsApi,
   PublishApi,
@@ -15,7 +16,7 @@ import {
   ShareApi,
   ToolsetsApi,
   UserConfigApi,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import {
   ApiEndpoints,
   CsrfRefreshStatus,
@@ -181,3 +182,4 @@ export const shareApi = new ShareApi(config);
 export const publishApi = new PublishApi(config);
 export const clientChannelApi = new ClientChannelApi(config);
 export const scheduledTasksApi = new ScheduledTasksApi(config);
+export const healthApi = new HealthApi(config);

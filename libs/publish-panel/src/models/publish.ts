@@ -21,8 +21,6 @@ export interface PublishHistoryEntry {
   version?: string;
   /** Unix timestamp (ms) when this version was published. */
   publishedAt: number;
-  /** Display name of the user who published this version. */
-  publishedBy: string;
   /** Folder path segments this version was published to, outermost first. */
   folderPath: string[];
 }
@@ -38,8 +36,6 @@ export interface PublishHistoryEntry {
 export interface PublishResourceSummary {
   /** Display title/name shown in the summary row. */
   title: string;
-  /** Icon URL, if any. */
-  iconUrl?: string;
   /** Version, when the resource is versioned. `undefined` for conversations. */
   version?: string;
 }

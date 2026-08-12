@@ -14,17 +14,33 @@ describe('publish-rules API', () => {
   });
 
   it('forwards folderPath and returns the rules array from the response', async () => {
-    const rules = [
+    const rawRules = [
       { source: 'role', function: 'CONTAIN', targets: ['engineering'] },
     ];
-    vi.mocked(publishApi.getPublishRules).mockResolvedValue({ rules } as never);
+    vi.mocked(publishApi.getPublishRules).mockResolvedValue({
+      rules: rawRules,
+    } as never);
 
     const result = await getPublishRules('Organization/Data Science');
 
     expect(publishApi.getPublishRules).toHaveBeenCalledWith({
       folderPath: 'Organization/Data Science',
     });
-    expect(result).toEqual(rules);
+    expect(result).toEqual([
+      { source: 'role', function: 'CONTAIN', targets: ['engineering'] },
+    ]);
+  });
+
+  it('returns exactly source, function, and targets on each rule', async () => {
+    vi.mocked(publishApi.getPublishRules).mockResolvedValue({
+      rules: [
+        { source: 'role', function: 'CONTAIN', targets: ['engineering'] },
+      ],
+    } as never);
+
+    const result = await getPublishRules('Organization/Data Science');
+
+    expect(Object.keys(result[0])).toEqual(['source', 'targets', 'function']);
   });
 
   it('returns an empty array when the folder has no rules', async () => {

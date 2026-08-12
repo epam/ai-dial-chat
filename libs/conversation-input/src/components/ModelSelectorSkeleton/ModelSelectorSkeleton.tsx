@@ -1,4 +1,4 @@
-import { DialSkeleton, DialSkeletonVariant } from '@epam/ai-dial-ui-kit';
+import { Skeleton, SkeletonVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 
 /** Number of skeleton rows rendered while deployments are loading. */
@@ -12,8 +12,8 @@ interface ModelSelectorSkeletonIconProps {
 export const ModelSelectorSkeletonIcon: FC<ModelSelectorSkeletonIconProps> = ({
   size = 20,
 }) => (
-  <DialSkeleton
-    variant={DialSkeletonVariant.Circular}
+  <Skeleton
+    variant={SkeletonVariant.Circular}
     width={size}
     height={size}
     active
@@ -29,12 +29,7 @@ export const ModelSelectorSkeletonLabel: FC<
   ModelSelectorSkeletonLabelProps
 > = ({ loadingLabel }) => (
   <span className="flex min-w-0 flex-1 items-center">
-    <DialSkeleton
-      variant={DialSkeletonVariant.Text}
-      width="100%"
-      height={16}
-      active
-    />
+    <Skeleton variant={SkeletonVariant.Text} width="100%" height={16} active />
     {loadingLabel && <span className="sr-only">{loadingLabel}</span>}
   </span>
 );

@@ -21,15 +21,35 @@ const makeUserMessage = (
         attachments: customContent.attachments,
         configuration_value: customContent.configuration_value,
         form_value: customContent.form_value,
+        state: customContent.state,
       },
     }),
 });
 
-const makeAssistantPlaceholder = (): ConversationMessageDto => ({
+/**
+ * Strips `custom_content.state` from every message. A stateful app's `state`
+ * is deployment-specific, so switching the deployment invalidates every
+ * previously accumulated value in the conversation — matching the old UI's
+ * `clearStateForMessages`, which clears the whole message list rather than a
+ * single turn.
+ */
+const clearStateFromMessages = (
+  messages: ConversationMessageDto[],
+): ConversationMessageDto[] =>
+  messages.map((msg) =>
+    msg.custom_content?.state === undefined
+      ? msg
+      : { ...msg, custom_content: { ...msg.custom_content, state: undefined } },
+  );
+
+const makeAssistantPlaceholder = (
+  deploymentId: string,
+): ConversationMessageDto => ({
   id: crypto.randomUUID(),
   role: ConversationMessageRole.Assistant,
   content: '',
   timestamp: new Date().toISOString(),
+  deploymentId,
 });
 
 const assertMessageIndexInRange = (
@@ -69,12 +89,13 @@ export const buildConversationHistory = (
   message: string | undefined,
   messageIndex: number | undefined,
   customContent: MessageCustomContentDto | undefined,
+  model: string,
 ): { conversation: ConversationResponseDto; assistantMessageIndex: number } => {
   const messages = [...conversation.messages];
 
   if (mode === CompletionMode.Append) {
     const userMessage = makeUserMessage(message ?? '', customContent);
-    const assistantPlaceholder = makeAssistantPlaceholder();
+    const assistantPlaceholder = makeAssistantPlaceholder(model);
     messages.push(userMessage, assistantPlaceholder);
     return {
       conversation: { ...conversation, messages },
@@ -87,7 +108,7 @@ export const buildConversationHistory = (
     if (lastMessage?.role !== ConversationMessageRole.User && message != null) {
       messages.push(makeUserMessage(message, customContent));
     }
-    const assistantPlaceholder = makeAssistantPlaceholder();
+    const assistantPlaceholder = makeAssistantPlaceholder(model);
     messages.push(assistantPlaceholder);
     return {
       conversation: { ...conversation, messages },
@@ -109,8 +130,11 @@ export const buildConversationHistory = (
       mode,
     );
     // Truncate up to (but not including) messageIndex, then append assistant placeholder
-    const truncated = messages.slice(0, messageIndex);
-    const assistantPlaceholder = makeAssistantPlaceholder();
+    const isModelChange = model !== conversation.model.id;
+    const truncated = isModelChange
+      ? clearStateFromMessages(messages.slice(0, messageIndex))
+      : messages.slice(0, messageIndex);
+    const assistantPlaceholder = makeAssistantPlaceholder(model);
     truncated.push(assistantPlaceholder);
     return {
       conversation: { ...conversation, messages: truncated },
@@ -132,7 +156,7 @@ export const buildConversationHistory = (
     // Truncate up to (but not including) messageIndex, then append new user message + assistant placeholder
     const truncated = messages.slice(0, messageIndex);
     const userMessage = makeUserMessage(message ?? '', customContent);
-    const assistantPlaceholder = makeAssistantPlaceholder();
+    const assistantPlaceholder = makeAssistantPlaceholder(model);
     truncated.push(userMessage, assistantPlaceholder);
     return {
       conversation: { ...conversation, messages: truncated },

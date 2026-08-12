@@ -1,5 +1,5 @@
 import { CatalogEntityType } from '@epam/ai-dial-catalog';
-import type { PublishHistoryEntryDto } from '@epam/chat-api-client';
+import type { PublishHistoryEntryDto } from '@epam/ai-dial-chat-api-client';
 import { describe, expect, it } from 'vitest';
 import { CatalogPublishEntityType } from '../../server-api/publish.api';
 import { mapPublishHistoryEntryDto, toPublishEntityType } from '../publish';
@@ -38,7 +38,6 @@ describe('mapPublishHistoryEntryDto', () => {
     expect(mapPublishHistoryEntryDto(dto)).toEqual({
       version: '1.2.0',
       publishedAt: Date.parse('2026-07-13T10:00:00.000Z'),
-      publishedBy: 'user@example.com',
       folderPath: ['Organization', 'Data Science', 'Published models'],
     });
   });

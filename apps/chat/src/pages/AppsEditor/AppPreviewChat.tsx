@@ -1,3 +1,4 @@
+import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
   MessageRating,
   MessageRole,
@@ -9,10 +10,9 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   ConfirmationPopupVariant,
-  DialConfirmationPopup,
+  ConfirmationPopup,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
-import type { ConversationResponseDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import {
   memo,
@@ -52,6 +52,7 @@ import { ROUTES } from '../../types/routes';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { getConversationPath } from '../../utils/conversation-path';
+import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import { getStarterPopulateText } from '../../utils/starter-option';
@@ -88,7 +89,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
   );
 
   const appDeployment = useMemo(
-    () => items.find((item) => item.id === appId),
+    () => findDeploymentByIdOrReference(items, appId),
     [items, appId],
   );
   const quickAppStarters = useMemo(
@@ -357,7 +358,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         onConversationChange={handleConversationChange}
       />
 
-      <DialConfirmationPopup
+      <ConfirmationPopup
         open={pendingDeleteIndex != null}
         header={t(ChatI18nKeys.DeleteMessageTitle)}
         description={t(ChatI18nKeys.DeleteMessageDescription)}

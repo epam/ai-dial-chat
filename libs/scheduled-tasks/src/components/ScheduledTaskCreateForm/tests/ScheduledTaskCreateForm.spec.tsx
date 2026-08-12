@@ -6,13 +6,10 @@ import {
   ScheduledTaskCreateFormProps,
   ScheduledTaskCreateFormValues,
 } from '../../../models/scheduled-task-create-form-props';
-import {
-  ScheduledTaskFrequency,
-  ScheduledTaskScheduleType,
-} from '../../../types/scheduled-task-schedule';
+import { ScheduledTaskRepeat } from '../../../types/scheduled-task-schedule';
 import { ScheduledTaskCreateForm } from '../ScheduledTaskCreateForm';
 
-vi.mock('@epam/ai-dial-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', () => ({
   Input: ({
     labelProps,
     value,
@@ -27,6 +24,28 @@ vi.mock('@epam/ai-dial-kit', () => ({
     <label>
       {labelProps?.label}
       <input value={value} onChange={(e) => onChange(e.target.value)} />
+      {error && <span>{error}</span>}
+    </label>
+  ),
+  NumberInput: ({
+    labelProps,
+    value,
+    onChange,
+    error,
+  }: {
+    labelProps?: { label: ReactNode; required?: boolean };
+    value: string | number;
+    onChange: (value?: number) => void;
+    error?: string;
+  }) => (
+    <label>
+      {labelProps?.label}
+      <input
+        value={value}
+        onChange={(e) =>
+          onChange(e.target.value === '' ? undefined : Number(e.target.value))
+        }
+      />
       {error && <span>{error}</span>}
     </label>
   ),
@@ -56,9 +75,6 @@ vi.mock('@epam/ai-dial-kit', () => ({
       {caption && <span>{caption}</span>}
     </label>
   ),
-}));
-
-vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   GhostIconButton: ({
     onClick,
@@ -105,30 +121,33 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     label,
     value,
     onChange,
+    placeholder,
   }: {
     id?: string;
     label?: string;
     value?: Date | string | null;
     onChange: (value: string | null) => void;
+    placeholder?: string;
   }) => (
     <label htmlFor={id}>
       {label}
       <input
         id={id}
+        placeholder={placeholder}
         value={typeof value === 'string' ? value : (value?.toISOString() ?? '')}
         onChange={(e) => onChange(e.target.value || null)}
       />
     </label>
   ),
-  DialSelectField: ({
-    label,
+  Select: ({
+    labelProps,
     value,
     onChange,
     options,
     error,
     placeholder,
   }: {
-    label?: ReactNode;
+    labelProps?: { label: ReactNode; required?: boolean };
     value?: string;
     onChange: (value: string) => void;
     options: { value: string; label: string }[];
@@ -136,7 +155,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     placeholder?: string;
   }) => (
     <label>
-      {label}
+      {labelProps?.label}
       <select value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
         <option value="" disabled hidden>
           {placeholder}
@@ -150,10 +169,24 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {error && <span>{error}</span>}
     </label>
   ),
-  DialSpinner: () => <div>Loading</div>,
-  LazyDialMarkdownEditor: () =>
+  Spinner: () => <div>Loading</div>,
+  Label: ({
+    id,
+    label,
+    required,
+  }: {
+    id?: string;
+    label: ReactNode;
+    required?: boolean;
+  }) => (
+    <span id={id}>
+      {label}
+      {required && ' *'}
+    </span>
+  ),
+  LazyMarkdownEditor: () =>
     Promise.resolve({
-      DialMarkdownEditor: ({
+      MarkdownEditor: ({
         value,
         onChange,
       }: {
@@ -171,8 +204,7 @@ vi.mock('@tabler/icons-react', () => ({
 
 const baseValues: ScheduledTaskCreateFormValues = {
   displayName: '',
-  scheduleType: ScheduledTaskScheduleType.Recurring,
-  frequency: ScheduledTaskFrequency.Daily,
+  repeat: ScheduledTaskRepeat.Daily,
   time: '09:00',
   modelId: '',
   prompt: '',
@@ -192,22 +224,24 @@ const renderForm = async (
         configurationSectionSubtitle: 'Write custom instructions',
         displayNameLabel: 'Name',
         displayNameRequired: 'Name is required',
-        scheduleSectionLabel: 'Schedule',
-        scheduleTypeOnceLabel: 'Once',
-        scheduleTypeRecurringLabel: 'Recurring',
-        scheduleTypeAriaLabel: 'Schedule type',
         runAtLabel: 'Run at',
-        frequencyLabel: 'Frequency',
-        frequencyOptions: [
-          { key: ScheduledTaskFrequency.Daily, label: 'Daily' },
-          { key: ScheduledTaskFrequency.Weekly, label: 'Weekly' },
-          { key: ScheduledTaskFrequency.Monthly, label: 'Monthly' },
+        repeatLabel: 'Repeat',
+        repeatOptions: [
+          { key: ScheduledTaskRepeat.OneTime, label: 'One-time' },
+          { key: ScheduledTaskRepeat.Hourly, label: 'Hourly' },
+          { key: ScheduledTaskRepeat.Daily, label: 'Daily' },
+          { key: ScheduledTaskRepeat.Weekly, label: 'Weekly' },
+          { key: ScheduledTaskRepeat.Monthly, label: 'Monthly' },
         ],
         timeLabel: 'Time',
         dayOfWeekLabel: 'Day of week',
         dayOfMonthLabel: 'Day of month',
+        minuteLabel: 'Minute',
+        startDateLabel: 'Start date',
+        startDatePlaceholder: 'Pick start date',
+        endDateLabel: 'End date',
+        endDatePlaceholder: 'Pick end date',
         modelOrAgentLabel: 'Model or Agent',
-        modelPlaceholder: 'Select a model',
         descriptionLabel: 'Description',
         instructionsLabel: 'Instructions',
         cancelButtonLabel: 'Cancel',
@@ -215,7 +249,8 @@ const renderForm = async (
       }}
       values={baseValues}
       errors={{}}
-      modelOptions={[{ id: 'gpt-4o', label: 'GPT-4o' }]}
+      modelSelector={<button type="button">Select Model or Agent</button>}
+      modelLabelId="scheduled-task-model-label"
       onFieldChange={vi.fn()}
       onBack={vi.fn()}
       onCancel={vi.fn()}
@@ -228,6 +263,28 @@ const renderForm = async (
 };
 
 describe('ScheduledTaskCreateForm', () => {
+  it('renders the host-supplied modelSelector verbatim', async () => {
+    await renderForm({
+      modelSelector: <button type="button">Custom model trigger</button>,
+    });
+
+    expect(
+      screen.getByRole('button', { name: 'Custom model trigger' }),
+    ).toBeTruthy();
+  });
+
+  it('wraps modelSelector with the required Model or Agent label', async () => {
+    await renderForm();
+
+    expect(screen.getByText('Model or Agent *')).toBeTruthy();
+  });
+
+  it('renders errors.modelId below the modelSelector slot', async () => {
+    await renderForm({ errors: { modelId: 'Model is required' } });
+
+    expect(screen.getByText('Model is required')).toBeTruthy();
+  });
+
   it('renders display name field with label', async () => {
     await renderForm();
 
@@ -389,18 +446,96 @@ describe('ScheduledTaskCreateForm', () => {
     expect(onSubmit).toHaveBeenCalledOnce();
   });
 
-  it('renders run-at instead of frequency/time when scheduleType is once', async () => {
+  it('does not render a Schedule section heading', async () => {
+    await renderForm();
+
+    expect(screen.queryByText('Schedule')).toBeNull();
+  });
+
+  it('renders run-at instead of time/day fields when repeat is oneTime', async () => {
     await renderForm({
-      values: { ...baseValues, scheduleType: ScheduledTaskScheduleType.Once },
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.OneTime },
     });
 
     expect(screen.getByText('Run at *')).toBeTruthy();
     expect(screen.queryByText('Time *')).toBeNull();
   });
 
-  it('renders day-of-week only when frequency is weekly', async () => {
+  it('renders no time, day-of-week, or day-of-month fields when repeat is hourly', async () => {
     await renderForm({
-      values: { ...baseValues, frequency: ScheduledTaskFrequency.Weekly },
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.Hourly },
+    });
+
+    expect(screen.queryByText('Time *')).toBeNull();
+    expect(screen.queryByText('Day of week *')).toBeNull();
+    expect(screen.queryByText('Day of month')).toBeNull();
+    expect(screen.queryByText('Run at *')).toBeNull();
+  });
+
+  it('renders the Minute field only when repeat is hourly', async () => {
+    await renderForm({
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.Hourly },
+    });
+
+    expect(screen.getByText('Minute')).toBeTruthy();
+  });
+
+  it('does not render the Minute field for non-hourly repeats', async () => {
+    await renderForm({
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.Daily },
+    });
+
+    expect(screen.queryByText('Minute')).toBeNull();
+  });
+
+  it('calls onFieldChange when the Minute field changes', async () => {
+    const onFieldChange = vi.fn();
+    await renderForm({
+      onFieldChange,
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.Hourly },
+    });
+
+    await userEvent.type(screen.getByLabelText('Minute'), '5');
+
+    expect(onFieldChange).toHaveBeenCalledWith('minute', '5');
+  });
+
+  it('renders errors.minute inline', async () => {
+    await renderForm({
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.Hourly },
+      errors: { minute: 'Enter a valid minute' },
+    });
+
+    expect(screen.getByText('Enter a valid minute')).toBeTruthy();
+  });
+
+  it('renders start-date/end-date pickers when repeat is hourly', async () => {
+    await renderForm({
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.Hourly },
+    });
+
+    expect(screen.getByText('Start date')).toBeTruthy();
+    expect(screen.getByText('End date')).toBeTruthy();
+  });
+
+  it('renders the Time field when repeat is daily, weekly, or monthly', async () => {
+    for (const repeat of [
+      ScheduledTaskRepeat.Daily,
+      ScheduledTaskRepeat.Weekly,
+      ScheduledTaskRepeat.Monthly,
+    ]) {
+      const { unmount } = await renderForm({
+        values: { ...baseValues, repeat },
+      });
+
+      expect(screen.getByText('Time *')).toBeTruthy();
+      unmount();
+    }
+  });
+
+  it('renders day-of-week only when repeat is weekly', async () => {
+    await renderForm({
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.Weekly },
     });
 
     expect(screen.getByText('Day of week *')).toBeTruthy();
@@ -420,7 +555,7 @@ describe('ScheduledTaskCreateForm', () => {
     const onFieldChange = vi.fn();
     await renderForm({
       onFieldChange,
-      values: { ...baseValues, scheduleType: ScheduledTaskScheduleType.Once },
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.OneTime },
     });
 
     await userEvent.type(screen.getByLabelText('Run at *'), 'x');
@@ -432,11 +567,61 @@ describe('ScheduledTaskCreateForm', () => {
     const onFieldChange = vi.fn();
     await renderForm({
       onFieldChange,
-      values: { ...baseValues, frequency: ScheduledTaskFrequency.Weekly },
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.Weekly },
     });
 
     await userEvent.type(screen.getByLabelText('Day of week *'), '1');
 
     expect(onFieldChange).toHaveBeenCalledWith('dayOfWeek', '0');
+  });
+
+  it('does not render start-date/end-date pickers when repeat is oneTime', async () => {
+    await renderForm({
+      values: { ...baseValues, repeat: ScheduledTaskRepeat.OneTime },
+    });
+
+    expect(screen.queryByText('Start date')).toBeNull();
+    expect(screen.queryByText('End date')).toBeNull();
+  });
+
+  it('renders start-date/end-date pickers without a required marker for recurring repeats', async () => {
+    await renderForm();
+
+    expect(screen.getByText('Start date')).toBeTruthy();
+    expect(screen.getByText('End date')).toBeTruthy();
+  });
+
+  it('renders the start/end date placeholders', async () => {
+    await renderForm();
+
+    expect(screen.getByPlaceholderText('Pick start date')).toBeTruthy();
+    expect(screen.getByPlaceholderText('Pick end date')).toBeTruthy();
+  });
+
+  it('calls onFieldChange via calendarValueToDateValue when the start-date calendar changes', async () => {
+    const onFieldChange = vi.fn();
+    await renderForm({ onFieldChange });
+
+    await userEvent.type(screen.getByLabelText('Start date'), 'x');
+
+    expect(onFieldChange).toHaveBeenCalledWith('startDate', '');
+  });
+
+  it('calls onFieldChange via calendarValueToDateValue when the end-date calendar changes', async () => {
+    const onFieldChange = vi.fn();
+    await renderForm({ onFieldChange });
+
+    await userEvent.type(screen.getByLabelText('End date'), 'x');
+
+    expect(onFieldChange).toHaveBeenCalledWith('endDate', '');
+  });
+
+  it('renders errors.startDate and errors.endDate inline', async () => {
+    await renderForm({
+      errors: { startDate: 'Invalid start date', endDate: 'End before start' },
+    });
+
+    expect(screen.getByText('Invalid start date')).toBeTruthy();
+    expect(screen.getByText('End before start')).toBeTruthy();
   });
 });

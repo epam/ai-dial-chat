@@ -1,24 +1,26 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Input, TagInput, Textarea } from '@epam/ai-dial-kit';
+import { TagInput } from '@epam/ai-dial-kit';
+import { Input, Textarea } from '@epam/ai-dial-ui-kit';
 import { useEffect, useRef, type FC } from 'react';
 import type { DeploymentCreationFormProps } from '../../models/deployment-creation-form';
-import { DEFAULT_INTRO_MAX_LENGTH } from '../../utils/validate-deployment-creation-fields';
+import { DeploymentLocalesField } from '../DeploymentLocalesField/DeploymentLocalesField';
 
-/** Controlled field set for deployment creation: name, description, icon URL, version, topics, and intro. */
+/** Controlled field set for deployment creation: name, description, icon URL, version, and topics. */
 export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
   values,
   errors,
   onChange,
+  onNameBlur,
+  onVersionBlur,
   labels,
-  introMaxLength = DEFAULT_INTRO_MAX_LENGTH,
   styles,
+  availableLocaleOptions = [],
 }) => {
   const nameInputRef = useRef<HTMLInputElement>(null);
-  const introInputRef = useRef<HTMLInputElement>(null);
   const versionInputRef = useRef<HTMLInputElement>(null);
   const hadErrorsRef = useRef(false);
 
-  const hasErrors = !!(errors.name || errors.intro || errors.version);
+  const hasErrors = !!(errors.name || errors.version);
 
   /*
    * Only steal focus on the transition from no errors to some errors (a
@@ -27,17 +29,13 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
    */
   useEffect(() => {
     if (hasErrors && !hadErrorsRef.current) {
-      const firstInvalidRef = errors.name
-        ? nameInputRef
-        : errors.intro
-          ? introInputRef
-          : versionInputRef;
+      const firstInvalidRef = errors.name ? nameInputRef : versionInputRef;
 
       firstInvalidRef.current?.focus();
     }
 
     hadErrorsRef.current = hasErrors;
-  }, [hasErrors, errors.name, errors.intro, errors.version]);
+  }, [hasErrors, errors.name, errors.version]);
 
   return (
     <div
@@ -50,6 +48,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
         inputRef={nameInputRef}
         value={values.name}
         onChange={(value) => onChange({ name: value ?? '' })}
+        onBlur={onNameBlur}
         labelProps={{ label: labels.name.label, required: true }}
         placeholder={labels.name.placeholder}
         error={errors.name || undefined}
@@ -66,22 +65,13 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
         containerClassName={styles?.field}
       />
 
-      <Input
-        id="deployment-creation-form-intro"
-        inputRef={introInputRef}
-        value={values.intro}
-        onChange={(value) => onChange({ intro: value ?? '' })}
-        labelProps={{ label: labels.intro.label }}
-        placeholder={labels.intro.placeholder}
-        error={errors.intro || undefined}
-        invalid={!!errors.intro}
-        maxLength={introMaxLength}
-        containerClassName={styles?.field}
+      <DeploymentLocalesField
+        value={values.otherLocales}
+        onChange={(otherLocales) => onChange({ otherLocales })}
+        availableLocaleOptions={availableLocaleOptions}
+        labels={labels.otherLocales}
+        className={styles?.field}
       />
-      <span role="status" aria-live="polite" className="sr-only">
-        {values.intro.length >= introMaxLength - 10 &&
-          `${values.intro.length}/${introMaxLength}`}
-      </span>
 
       <Input
         id="deployment-creation-form-icon-url"
@@ -97,6 +87,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
         inputRef={versionInputRef}
         value={values.version}
         onChange={(value) => onChange({ version: value ?? '' })}
+        onBlur={onVersionBlur}
         labelProps={{ label: labels.version.label }}
         placeholder={labels.version.placeholder}
         error={errors.version || undefined}

@@ -39,7 +39,7 @@ export const ConversationGroupHeader: FC<ConversationGroupHeaderProps> = ({
   isExpanded,
   onToggle,
   listId,
-  className = 'dial-tiny-semi-text uppercase',
+  className = 'dial-tiny-lead-text',
   dropZoneGroupKey,
   isDragOver,
   onDragOver,

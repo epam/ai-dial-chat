@@ -106,6 +106,9 @@ const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
  * strings are concatenated across chunks, matching the same delta-merge
  * semantics used for stages.
  *
+ * `state` is overwritten (not merged) by each chunk that carries one,
+ * matching the DIAL stateful-app contract.
+ *
  * @returns Updated message array, or `null` when the chunk carries no
  *   actionable data (empty content, no form_schema, and no attachments).
  */
@@ -121,13 +124,15 @@ export const applyChunkToMessages = (
   const stages = delta?.custom_content?.stages;
   const annotations = delta?.custom_content?.annotations;
   const rawAnnotations = delta?.custom_fields?.annotations;
+  const state = delta?.custom_content?.state;
   const hasContentUpdate =
     !!content ||
     !!formSchema ||
     !!attachments?.length ||
     !!stages?.length ||
     !!annotations?.length ||
-    !!rawAnnotations?.length;
+    !!rawAnnotations?.length ||
+    !!state;
   const responseId =
     delta?.responseId ?? (hasContentUpdate ? chunk.id : undefined);
 
@@ -152,7 +157,8 @@ export const applyChunkToMessages = (
       formSchema ||
       attachments?.length ||
       stages?.length ||
-      incomingAnnotations.length;
+      incomingAnnotations.length ||
+      state;
 
     return {
       ...message,
@@ -174,6 +180,7 @@ export const applyChunkToMessages = (
               incomingAnnotations,
             ),
           }),
+          ...(state && { state }),
         },
       }),
     };

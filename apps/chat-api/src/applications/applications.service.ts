@@ -12,6 +12,7 @@ import {
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import { composeLocalizedFields } from '../common/utils/compose-localized-fields';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { DeploymentsService } from '../deployments/deployments.service';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
@@ -160,18 +161,27 @@ export class ApplicationsService {
         ...remainingProps
       } = (body.applicationProperties ?? {}) as Record<string, unknown>;
 
+      const { displayName, description } = composeLocalizedFields(
+        body.name,
+        body.description,
+        body.locales,
+        body.primaryLocale,
+      );
       const dialBody: DialApplication = {
-        displayName: body.name,
+        // The SDK types `displayName`/`description` as plain `string`; DIAL
+        // Core actually accepts a locale map too. Remove this cast when the
+        // SDK's `Application` schema is widened to match.
+        displayName: displayName as unknown as string,
         displayVersion: version,
       };
       if (body.type) dialBody.application_type_schema_id = body.type;
       if (Object.keys(remainingProps).length > 0)
         dialBody.application_properties = remainingProps;
-      if (body.description != null) dialBody.description = body.description;
+      if (description != null)
+        dialBody.description = description as unknown as string;
       if (body.iconUrl != null) dialBody.iconUrl = body.iconUrl;
       if (body.topics != null && body.topics.length > 0)
         dialBody.descriptionKeywords = body.topics;
-      if (body.intro != null) dialBody.intro = body.intro;
       if (typeof endpoint === 'string') dialBody.endpoint = endpoint;
       if (features != null)
         dialBody.features = features as (typeof dialBody)['features'];
@@ -242,16 +252,27 @@ export class ApplicationsService {
        * state) — is carried through unchanged so this update can never
        * affect the Settings step.
        */
+      const { displayName, description } = composeLocalizedFields(
+        body.name,
+        body.description,
+        body.locales,
+        body.primaryLocale,
+      );
       const mergedBody: DialApplication = {
         ...(existingResponse.data as DialApplication),
-        displayName: body.name,
+        // The SDK types `displayName`/`description` as plain `string`; DIAL
+        // Core actually accepts a locale map too. Remove this cast when the
+        // SDK's `Application` schema is widened to match. This is a full
+        // replacement, not a per-locale merge with whatever the existing
+        // resource had — consistent with every other General-step field.
+        displayName: displayName as unknown as string,
       };
-      if (body.description != null) mergedBody.description = body.description;
+      if (description != null)
+        mergedBody.description = description as unknown as string;
       if (body.iconUrl != null) mergedBody.iconUrl = body.iconUrl;
       if (body.topics != null && body.topics.length > 0) {
         mergedBody.descriptionKeywords = body.topics;
       }
-      if (body.intro != null) mergedBody.intro = body.intro;
       if (body.version != null) mergedBody.displayVersion = body.version;
       if (body.endpoint != null) mergedBody.endpoint = body.endpoint;
       if (body.features != null)

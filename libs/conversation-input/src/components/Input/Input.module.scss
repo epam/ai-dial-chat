@@ -4,11 +4,11 @@
 
   &:focus-within,
   &:active {
-    border-color: var(--ci-border-focus, var(--stroke-info, #124ace));
+    outline-color: var(--ci-border-focus, var(--stroke-focus-blue, #6785fb));
   }
 
   &.wrapperDisabled {
-    color: var(--ci-text-disabled, var(--text-control-disable, #6b7280));
+    color: var(--ci-text-disabled, var(--text-control-disable-beta, #848e9c));
     @apply cursor-not-allowed;
   }
 }
@@ -17,11 +17,11 @@
   color: var(--ci-text, var(--text-primary, #161b2d));
 
   &::placeholder {
-    color: var(--ci-placeholder, var(--text-secondary, #6b7280));
+    color: var(--ci-placeholder, var(--text-secondary, #57647a));
   }
 
   &:disabled {
-    color: var(--ci-text-disabled, var(--text-control-disable, #6b7280));
+    color: var(--ci-text-disabled, var(--text-control-disable-beta, #848e9c));
     @apply cursor-not-allowed;
   }
 }
@@ -50,7 +50,7 @@
     .modelSelectorCaret {
       color: var(
         --ci-model-selector-disabled-color,
-        var(--text-control-disable, #6b7280)
+        var(--text-control-disable-beta, #848e9c)
       );
     }
   }

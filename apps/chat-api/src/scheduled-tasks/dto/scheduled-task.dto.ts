@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsISO8601,
   IsOptional,
@@ -46,6 +47,11 @@ export class ScheduledTaskDto {
   @IsEnum(ScheduleTriggerType)
   triggerType?: ScheduleTriggerType;
 
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+
   @ApiPropertyOptional({ example: 'dial-oauth' })
   @IsOptional()
   @IsString()
@@ -62,4 +68,14 @@ export class ScheduledTaskDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @ApiPropertyOptional({ example: 'gpt-4.1-mini-2025-04-14' })
+  @IsOptional()
+  @IsString()
+  model?: string;
+
+  @ApiPropertyOptional({ example: 'Summarize my inbox' })
+  @IsOptional()
+  @IsString()
+  prompt?: string;
 }

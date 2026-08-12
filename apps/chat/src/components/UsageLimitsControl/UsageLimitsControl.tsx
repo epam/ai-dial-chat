@@ -28,6 +28,8 @@ export interface UsageLimitsLabels {
 interface Props {
   /** ID of the currently selected deployment. */
   deploymentId: string | undefined;
+  /** Whether the selected deployment is currently generating a response. */
+  isGenerationInProgress?: boolean;
   /** Localized strings for the trigger and popover. */
   labels: UsageLimitsLabels;
 }
@@ -38,13 +40,32 @@ const numberFormatter = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: 6,
 });
 
-const UsageLimitsControl: FC<Props> = ({ deploymentId, labels }) => {
-  const { limit, hasError, refresh } = useDeploymentUsageLimits(deploymentId);
+const UsageLimitsControl: FC<Props> = ({
+  deploymentId,
+  isGenerationInProgress = false,
+  labels,
+}) => {
+  const { limit, isLoading, hasError, refresh } =
+    useDeploymentUsageLimits(deploymentId);
   const [isOpen, setIsOpen] = useState(false);
   const titleId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const wasGenerationInProgressRef = useRef(isGenerationInProgress);
+  const hasPendingGenerationRefreshRef = useRef(false);
+
+  useEffect(() => {
+    if (wasGenerationInProgressRef.current && !isGenerationInProgress) {
+      hasPendingGenerationRefreshRef.current = true;
+    }
+    wasGenerationInProgressRef.current = isGenerationInProgress;
+
+    if (hasPendingGenerationRefreshRef.current && !isLoading) {
+      hasPendingGenerationRefreshRef.current = false;
+      refresh();
+    }
+  }, [isGenerationInProgress, isLoading, refresh]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -117,7 +138,7 @@ const UsageLimitsControl: FC<Props> = ({ deploymentId, labels }) => {
         type="button"
         className={mergeClasses(
           'group flex min-h-8 min-w-8 items-center justify-center gap-1 rounded-full border border-transparent px-1.5 text-secondary transition-colors',
-          'hover:border-primary hover:bg-layer-sunken focus-visible:border-primary focus-visible:bg-layer-sunken focus-visible:outline-none',
+          'hover:border-primary hover:bg-layer-sunken focus-visible:bg-layer-sunken focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-primary',
           'mobile:min-h-11 mobile:min-w-11',
           isOpen && 'border-primary bg-layer-sunken',
           isThresholdReached && 'text-error',

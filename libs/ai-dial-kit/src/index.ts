@@ -1,5 +1,3 @@
-export { GradientCheckIcon } from './components/GradientCheckIcon/GradientCheckIcon';
-export type { GradientCheckIconProps } from './components/GradientCheckIcon/GradientCheckIcon';
 export { SearchBar } from './components/SearchBar/SearchBar';
 export type {
   SearchBarProps,
@@ -21,9 +19,5 @@ export type {
   PillTabsTypography,
   PillTabsStyles,
 } from './components/PillTabs/PillTabs';
-export { Input } from './components/Input/Input';
-export type { InputProps } from './components/Input/Input';
-export { Textarea } from './components/Textarea/Textarea';
-export type { TextareaProps } from './components/Textarea/Textarea';
 export { TagInput } from './components/TagInput/TagInput';
 export type { TagInputProps } from './components/TagInput/TagInput';

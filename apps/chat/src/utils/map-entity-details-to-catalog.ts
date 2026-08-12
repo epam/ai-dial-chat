@@ -3,6 +3,7 @@ import type {
   CatalogItemCredentials,
   CatalogItemPricing,
   CatalogItemTabData,
+  CatalogItemTools,
   CodeSnippet,
   EndpointOption,
   OverviewSection,
@@ -15,7 +16,7 @@ import {
 import type {
   DeploymentDetailsDto,
   DeploymentFeaturesDetailsDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { AuthenticationType, ModelEndpointType } from '../types/entity-details';
 import type {
   AgentEntityDetails,
@@ -27,6 +28,7 @@ import type {
   SkillEntityDetails,
   ToolsetAuthStatus,
   ToolsetEntityDetails,
+  ToolsetSpecification,
 } from '../types/entity-details';
 import { isPublicToolsetId } from './toolsets';
 
@@ -180,6 +182,21 @@ const mapModelPricing = (
   return { prices, limits };
 };
 
+/**
+ * Maps endpoint-type variants (Azure OpenAI / Anthropic / Responses) shared
+ * by models and agents into the lib's endpoint-selector shape.
+ */
+const mapApiEndpoints = (
+  endpoints: ModelEndpoint[] | undefined,
+): EndpointOption[] | undefined =>
+  endpoints != null && endpoints.length > 0
+    ? endpoints.map((e) => ({
+        label: ENDPOINT_LABELS[e.type] ?? e.type,
+        url: e.url,
+        snippets: mapEndpointSnippets(e),
+      }))
+    : undefined;
+
 const mapModelApi = (
   data: ModelEntityDetails,
 ): CatalogItemApiDetails | undefined => {
@@ -187,15 +204,7 @@ const mapModelApi = (
   if (api == null) return undefined;
 
   const resource = api.modelId != null ? { modelId: api.modelId } : undefined;
-
-  const endpoints: EndpointOption[] | undefined =
-    api.endpoints != null && api.endpoints.length > 0
-      ? api.endpoints.map((e) => ({
-          label: ENDPOINT_LABELS[e.type] ?? e.type,
-          url: e.url,
-          snippets: mapEndpointSnippets(e),
-        }))
-      : undefined;
+  const endpoints = mapApiEndpoints(api.endpoints);
 
   if (resource == null && endpoints == null) return undefined;
   return { resource, endpoints };
@@ -299,6 +308,7 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
             data.api.endpointUrl != null
               ? { endpointUrl: data.api.endpointUrl }
               : undefined,
+          endpoints: mapApiEndpoints(data.api.endpoints),
           requestExample: data.api.requestExample,
           responseSchema: data.api.responseSchema,
         }
@@ -354,6 +364,27 @@ export const mapToolsetCredentials = (
   };
 };
 
+/*
+ * Tool names come from the allow-listed subset when the toolset restricts
+ * them, and from every tool the MCP server reports otherwise (an empty or
+ * absent allow-list means all tools are permitted). DIAL Core exposes names
+ * only — descriptions and input schemas are not part of the details response,
+ * so `ToolDefinition` carries just `name`.
+ */
+const mapToolsetTools = (
+  specification: ToolsetSpecification | undefined,
+): CatalogItemTools | undefined => {
+  const names = specification?.permissions?.length
+    ? specification.permissions
+    : specification?.allTools;
+
+  if (!names?.length) {
+    return undefined;
+  }
+
+  return { tools: names.map((name) => ({ name })) };
+};
+
 const mapToolsetDetails = (data: ToolsetEntityDetails): CatalogItemTabData => {
   const sections: OverviewSection[] = [];
 
@@ -365,13 +396,6 @@ const mapToolsetDetails = (data: ToolsetEntityDetails): CatalogItemTabData => {
       specs.push({ label: 'Provider', value: s.provider });
     if (s.authentication != null)
       specs.push({ label: 'Authentication', value: s.authentication });
-    if (s.permissions?.length)
-      specs.push({ label: 'Allowed tools', value: s.permissions.join(' · ') });
-    if (s.allTools?.length)
-      specs.push({
-        label: 'All supported tools',
-        value: s.allTools.join(' · '),
-      });
     if (s.hostedBy != null)
       specs.push({ label: 'Hosted by', value: s.hostedBy });
     if (s.createdAt != null)
@@ -415,6 +439,7 @@ const mapToolsetDetails = (data: ToolsetEntityDetails): CatalogItemTabData => {
 
   return {
     overview: sections.length > 0 ? { sections } : undefined,
+    tools: mapToolsetTools(data.specification),
   };
 };
 

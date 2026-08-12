@@ -21,8 +21,6 @@ export interface AttachmentCardState {
   isImage: boolean;
   /** Whether the attachment should render as a link tile. */
   isLink: boolean;
-  /** Whether the attachment should render as an audio player tile. */
-  isAudio: boolean;
   /** Icon component representing the attachment's type. */
   BottomIcon: Icon | null;
   /** Human-readable type/status label rendered next to `BottomIcon`. */
@@ -61,8 +59,6 @@ export interface AttachmentCardColors {
   hoverIconColor?: string;
   /** Upload progress track background color. */
   trackBackground?: string;
-  /** Upload progress indeterminate fill color. */
-  fillBackground?: string;
 }
 
 /** Typography overrides for the `AttachmentCard` component. */
@@ -95,8 +91,6 @@ export interface AttachmentCardLabels extends AttachmentTypeLabels {
   expandLabel?: string;
   /** Accessible label for the loading spinner shown while the attachment is uploading. Defaults to `'Loading attachment'`. */
   loadingLabel?: string;
-  /** Status message announced to assistive tech when the upload fails. Defaults to `'Upload failed'`. */
-  uploadFailedStatusLabel?: string;
   /** Accessible label for the download button. Defaults to `'Download attachment'`. */
   downloadLabel?: string;
   /** Accessible label for the open-in-new-tab button. Defaults to `'Open in new tab'`. */

@@ -21,16 +21,20 @@ export const Toolbar: FC<ToolbarProps> = ({
   gridViewLabel,
   listViewLabel,
   sortKey,
-  onSortChange,
   sortOptions,
   ...innerProps
 }) => {
   const cssVars = {
-    '--cat-browse-bg': browseStyles?.colors?.background,
     '--cat-browse-title-text': browseStyles?.colors?.titleText,
     '--cat-browse-count-text': browseStyles?.colors?.countText,
-    '--cat-browse-icon': browseStyles?.colors?.icon,
     '--cat-browse-divider': browseStyles?.colors?.divider,
+    '--cat-view-toggle-bg': browseStyles?.colors?.viewToggleBackground,
+    '--cat-view-toggle-border': browseStyles?.colors?.viewToggleBorder,
+    '--cat-view-toggle-active-bg':
+      browseStyles?.colors?.viewToggleActiveBackground,
+    '--cat-view-toggle-active-text': browseStyles?.colors?.viewToggleActiveText,
+    '--cat-view-toggle-text': browseStyles?.colors?.viewToggleText,
+    '--cat-view-toggle-text-hover': browseStyles?.colors?.viewToggleTextHover,
   } as CSSProperties;
 
   return (
@@ -38,7 +42,6 @@ export const Toolbar: FC<ToolbarProps> = ({
       className={mergeClasses('flex-shrink-0 px-4', styles.section)}
       style={cssVars}
     >
-      {/* Title row with search, filter, and sort */}
       <TitleRow
         styles={browseStyles}
         query={query}
@@ -47,7 +50,6 @@ export const Toolbar: FC<ToolbarProps> = ({
         gridViewLabel={gridViewLabel}
         listViewLabel={listViewLabel}
         sortKey={sortKey}
-        onSortChange={onSortChange}
         sortOptions={sortOptions}
         filters={filters}
         onFiltersChange={onFiltersChange}

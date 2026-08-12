@@ -1,3 +1,23 @@
+/** One additional (non-primary) locale's name/description translation, edited via the "Add locale" popup. */
+export interface DeploymentCreationFormLocaleEntry {
+  /** Stable client-side id for list rendering; not part of the persisted locale map. */
+  id: string;
+  /** Locale code this entry translates into (e.g. `'de'`). */
+  language: string;
+  /** Translated name for this locale. */
+  name: string;
+  /** Translated description for this locale. */
+  description: string;
+}
+
+/** A selectable language option for an additional-locale row. */
+export interface DeploymentCreationFormLocaleOption {
+  /** Locale code (e.g. `'de'`). */
+  code: string;
+  /** Display label for the option (e.g. `'DE'`). */
+  label: string;
+}
+
 /** Field values shared by Quick App and Toolset creation's General step. */
 export interface DeploymentCreationFormValues {
   /** Display name of the entity being created. */
@@ -10,8 +30,8 @@ export interface DeploymentCreationFormValues {
   version: string;
   /** Free-entry topic tags. */
   topics: string[];
-  /** Short catalog-friendly summary, limited to `introMaxLength` characters. */
-  intro: string;
+  /** Additional (non-primary) locale entries for name/description, edited via the "Add locale" popup. */
+  otherLocales: DeploymentCreationFormLocaleEntry[];
 }
 
 /** Translated, display-ready field errors for the shared form. */
@@ -20,8 +40,6 @@ export interface DeploymentCreationFormFieldErrors {
   name?: string;
   /** Error message for the version field. */
   version?: string;
-  /** Error message for the intro field. */
-  intro?: string;
 }
 
 /** Label and placeholder text for a single field, supplied by the host app. */
@@ -30,6 +48,36 @@ export interface DeploymentCreationFormFieldLabels {
   label: string;
   /** Placeholder text shown when the field is empty. */
   placeholder?: string;
+}
+
+/** Pre-translated labels/placeholders for the "Add locale" summary row and popup, supplied by the host app. */
+export interface DeploymentCreationFormLocaleLabels {
+  /** Text preceding the list of configured locale codes, e.g. `'Locales'`. */
+  summaryLabel: string;
+  /** Label for the link that opens the "Add locale" popup. */
+  editLabel: string;
+  /** Title of the "Add locale" popup. */
+  popupTitle: string;
+  /** Label for the button that adds a new locale row. */
+  addLocaleLabel: string;
+  /** Label prefix for each row's heading (e.g. `'Locale'` -> `'Locale 1'`). Defaults to `'Locale'`. */
+  localeRowLabel?: string;
+  /** Label for the language select field. */
+  languageLabel: string;
+  /** Label for the per-locale name field. */
+  nameLabel: string;
+  /** Placeholder for the per-locale name field. */
+  namePlaceholder?: string;
+  /** Label for the per-locale description field. */
+  descriptionLabel: string;
+  /** Placeholder for the per-locale description field. */
+  descriptionPlaceholder?: string;
+  /** Accessible name for a row's delete button. */
+  deleteAriaLabel: string;
+  /** Label for the popup's cancel button. */
+  cancelLabel?: string;
+  /** Label for the popup's save button. */
+  saveLabel?: string;
 }
 
 /** Pre-translated labels/placeholders for every field, supplied by the host app. */
@@ -44,8 +92,8 @@ export interface DeploymentCreationFormLabels {
   version: DeploymentCreationFormFieldLabels;
   /** Labels for the topics field. */
   topics: DeploymentCreationFormFieldLabels;
-  /** Labels for the intro field. */
-  intro: DeploymentCreationFormFieldLabels;
+  /** Labels for the additional-locales summary row and popup. */
+  otherLocales: DeploymentCreationFormLocaleLabels;
   /** Accessible name for the field set group. */
   ariaLabel?: string;
 }
@@ -66,10 +114,14 @@ export interface DeploymentCreationFormProps {
   errors: DeploymentCreationFormFieldErrors;
   /** Called with a partial patch whenever a field value changes. */
   onChange: (patch: Partial<DeploymentCreationFormValues>) => void;
+  /** Called when the name field loses focus, so the host can run on-blur validation. */
+  onNameBlur?: () => void;
+  /** Called when the version field loses focus, so the host can run on-blur validation. */
+  onVersionBlur?: () => void;
   /** Pre-translated labels/placeholders for every field. */
   labels: DeploymentCreationFormLabels;
-  /** Maximum character length enforced on the intro field. Defaults to `90`. */
-  introMaxLength?: number;
   /** Optional per-slot class name overrides. */
   styles?: DeploymentCreationFormStyles;
+  /** Selectable language options for additional-locale rows. Defaults to an empty list (no locales addable). */
+  availableLocaleOptions?: DeploymentCreationFormLocaleOption[];
 }

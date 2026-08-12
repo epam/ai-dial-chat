@@ -24,7 +24,6 @@ const history: PublishHistoryEntry[] = [
   {
     version: '4.0.1',
     publishedAt: Date.now() - 7 * 24 * 60 * 60 * 1000,
-    publishedBy: 'you',
     folderPath: ['Shared', 'Data Science'],
   },
 ];
@@ -272,6 +271,55 @@ describe('usePublishFlow', () => {
     expect(result.current.hasSubmitError).toBe(true);
     expect(result.current.isSubmitting).toBe(false);
     expect(onPublishSuccess).not.toHaveBeenCalled();
+  });
+
+  it('calls onPublishError with the item, folder path, and rejection reason when onPublish rejects', async () => {
+    const rejection = new Error('Failed to fetch');
+    const onPublish = vi.fn().mockRejectedValue(rejection);
+    const onPublishError = vi.fn();
+    const { result } = renderHook(() =>
+      usePublishFlow({
+        item,
+        history,
+        folderItems,
+        onPublish,
+        onPublishError,
+      }),
+    );
+
+    act(() => {
+      result.current.setSelectedFolderPath(['Shared']);
+    });
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(onPublishError).toHaveBeenCalledOnce();
+    expect(onPublishError).toHaveBeenCalledWith(item, ['Shared'], rejection);
+  });
+
+  it('does not call onPublishError when the publish request succeeds', async () => {
+    const onPublishError = vi.fn();
+    const { result } = renderHook(() =>
+      usePublishFlow({
+        item,
+        history,
+        folderItems,
+        onPublish: vi.fn().mockResolvedValue(undefined),
+        onPublishError,
+      }),
+    );
+
+    act(() => {
+      result.current.setSelectedFolderPath(['Shared']);
+    });
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(onPublishError).not.toHaveBeenCalled();
   });
 
   it('clears hasSubmitError on reset', async () => {

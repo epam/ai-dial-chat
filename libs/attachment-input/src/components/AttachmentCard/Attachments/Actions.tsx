@@ -2,7 +2,7 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   ElementSize,
-  GhostIconButton,
+  StaticIconButton,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconDownload,
@@ -31,7 +31,7 @@ interface ActionProps {
 }
 
 /** Action button for completed uploads. */
-export const ActionButton: FC<ActionProps> = ({
+const ActionButton: FC<ActionProps> = ({
   ariaLabel,
   errorTitle,
   errorDescId,
@@ -41,11 +41,12 @@ export const ActionButton: FC<ActionProps> = ({
   className,
 }) => {
   return (
-    <GhostIconButton
+    <StaticIconButton
       icon={icon}
       size={ElementSize.Small}
       className={mergeClasses(
         'absolute end-1 top-1 opacity-0 focus-visible:opacity-100 group-focus-within/attachment-tile:opacity-100 group-hover/attachment-tile:opacity-100',
+        styles.actionButton,
         className,
       )}
       aria-label={ariaLabel}
@@ -94,7 +95,6 @@ export const RemoveAction: FC<Omit<ActionProps, 'icon'>> = ({ ...props }) => {
   return (
     <ActionButton
       icon={<IconX size={DIAL_ICON_SIZE.SM} aria-hidden />}
-      className={styles.hoverIcon}
       {...props}
     />
   );

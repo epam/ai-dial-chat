@@ -28,7 +28,7 @@ vi.mock('../Filter.module.scss', () => ({
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16 },
-  DialDropdown: ({
+  Dropdown: ({
     children,
     renderOverlay,
   }: {
@@ -93,6 +93,10 @@ vi.mock('@tabler/icons-react', () => ({
 vi.mock('@epam/ai-dial-chat-shared', () => ({
   mergeClasses: (...args: (string | undefined)[]) =>
     args.filter(Boolean).join(' '),
+  buildCssVars: (vars: Record<string, string | undefined>) =>
+    Object.fromEntries(
+      Object.entries(vars).filter(([, v]) => v !== undefined),
+    ) as React.CSSProperties,
 }));
 
 const renderFilter = (props?: Partial<React.ComponentProps<typeof Filter>>) =>

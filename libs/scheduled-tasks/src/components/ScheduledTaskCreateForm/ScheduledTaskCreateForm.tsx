@@ -1,27 +1,25 @@
+import { BuilderFormContainer } from '@epam/ai-dial-builder-form';
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Input, Textarea } from '@epam/ai-dial-kit';
 import {
+  Input,
+  Textarea,
   Calendar,
   CalendarMode,
-  DIAL_ICON_SIZE,
-  GhostIconButton,
-  DialSelectField,
-  DialSpinner,
-  LazyDialMarkdownEditor,
-  NeutralButton,
-  PrimaryButton,
+  Label,
+  NumberInput,
+  Spinner,
+  LazyMarkdownEditor,
+  Select,
 } from '@epam/ai-dial-ui-kit';
-import { IconArrowLeft } from '@tabler/icons-react';
 import { lazy, Suspense, type ComponentProps, type FC } from 'react';
 import { DESCRIPTION_MAX_LENGTH } from '../../constants/scheduled-task-create-form';
 import { ScheduledTaskCreateFormProps } from '../../models/scheduled-task-create-form-props';
+import { ScheduledTaskRepeat } from '../../types/scheduled-task-schedule';
 import {
-  ScheduledTaskFrequency,
-  ScheduledTaskScheduleType,
-} from '../../types/scheduled-task-schedule';
-import {
+  calendarValueToDateValue,
   calendarValueToDayOfWeek,
   calendarValueToRunAt,
+  dateValueToCalendarValue,
   dayOfWeekToCalendarValue,
   runAtToCalendarValue,
 } from '../../utils/calendar-value';
@@ -32,29 +30,29 @@ import styles from './ScheduledTaskCreateForm.module.scss';
  * appended to their label text directly. */
 const withRequiredMarker = (label: string): string => `${label} *`;
 
-const DialMarkdownEditor = lazy(async () => {
-  const module = await LazyDialMarkdownEditor();
-  return { default: module.DialMarkdownEditor };
+const MarkdownEditor = lazy(async () => {
+  const module = await LazyMarkdownEditor();
+  return { default: module.MarkdownEditor };
 });
 
-type DialMarkdownEditorTheme = ComponentProps<
-  typeof DialMarkdownEditor
->['theme'];
+type MarkdownEditorTheme = ComponentProps<typeof MarkdownEditor>['theme'];
 
 /**
  * Presentational create-task form: a back-navigable header (Cancel/Save
  * actions) and a two-column Details/Configuration body. Details holds
- * display name, description, the schedule fields, and the model picker;
- * Configuration holds the markdown Instructions editor. Field values,
- * validation errors, and model options are all supplied by the host app;
- * this component holds no state of its own and performs no routing, i18n,
- * or network calls.
+ * display name, description, the schedule fields, and the Model or Agent
+ * field; Configuration holds the markdown Instructions editor. Field values
+ * and validation errors are supplied by the host app, and the Model or
+ * Agent field's control is a fully-composed `modelSelector` element the host
+ * renders; this component holds no state of its own and performs no
+ * routing, i18n, or network calls.
  */
 export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   labels,
   values,
   errors,
-  modelOptions,
+  modelSelector,
+  modelLabelId,
   onFieldChange,
   onBack,
   onCancel,
@@ -69,13 +67,11 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     typography?.sectionTitleClassName ?? 'dial-body-semi-text';
   const sectionSubtitleClassName =
     typography?.sectionSubtitleClassName ?? 'dial-tiny-text';
-  const scheduleSectionLabelClassName =
-    typography?.scheduleSectionLabelClassName ?? 'dial-body-semi-text mb-1';
+  const instructionsLabelClassName =
+    typography?.instructionsLabelClassName ?? 'dial-body-semi-text mb-1';
   const instructionsErrorClassName =
     typography?.instructionsErrorClassName ?? 'dial-small-text';
   const cssVars = buildCssVars({
-    '--stcf-bg': colors?.background,
-    '--stcf-header-border': colors?.headerBorder,
     '--stcf-details-border': colors?.detailsColumnBorder,
     '--stcf-subtitle-text': colors?.sectionSubtitleText,
     '--stcf-error-text': colors?.instructionsErrorText,
@@ -88,55 +84,32 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     !values.prompt.trim();
 
   return (
-    <div
-      style={cssVars}
-      className={mergeClasses(
-        'flex h-full w-full flex-col overflow-y-auto',
-        styles.container,
-      )}
-    >
-      <div
-        className={mergeClasses(
-          'flex h-16 items-center justify-between gap-6 border-b px-8',
-          styles.header,
-        )}
-      >
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <GhostIconButton
-            icon={
-              <IconArrowLeft
-                size={DIAL_ICON_SIZE.LG}
-                className="rtl:scale-x-[-1]"
-                aria-hidden
-              />
-            }
-            aria-label={labels.backButtonLabel}
-            onClick={onBack}
-          />
-          <h1 className={mergeClasses('truncate', titleClassName)}>
-            {labels.pageTitle}
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <NeutralButton
-            label={labels.cancelButtonLabel}
-            onClick={onCancel}
-            disabled={isSubmitting}
-          />
-          <PrimaryButton
-            label={labels.createButtonLabel}
-            onClick={onSubmit}
-            disabled={isCreateDisabled}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-1 flex-col desktop:flex-row">
+    <BuilderFormContainer
+      labels={{
+        title: labels.pageTitle,
+        backButtonLabel: labels.backButtonLabel,
+        cancelButtonLabel: labels.cancelButtonLabel,
+        submitButtonLabel: labels.createButtonLabel,
+      }}
+      onBack={onBack}
+      onCancel={onCancel}
+      onSubmit={onSubmit}
+      isCancelDisabled={isSubmitting}
+      isSubmitDisabled={isCreateDisabled}
+      styles={{
+        colors: { background: colors?.background },
+        header: {
+          colors: { borderColor: colors?.headerBorder },
+          typography: { fontClassName: titleClassName },
+        },
+        cssVars,
+      }}
+      left={
         <div
           role="group"
           aria-label={labels.detailsSectionTitle}
           className={mergeClasses(
-            'flex w-full flex-col gap-5 border-e px-8 py-6 desktop:w-[360px] desktop:shrink-0',
+            'flex flex-1 flex-col gap-5 border-e px-8 py-6',
             styles.detailsColumn,
           )}
         >
@@ -178,43 +151,39 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             }
           />
 
-          <DialSelectField
-            label={labels.modelOrAgentLabel}
-            required
-            value={values.modelId}
-            placeholder={labels.modelPlaceholder}
-            onChange={(next) => onFieldChange('modelId', next as string)}
-            error={errors.modelId}
-            options={modelOptions.map((option) => ({
-              value: option.id,
-              label: option.label,
-            }))}
-          />
+          <div className="flex flex-col gap-1">
+            <Label
+              id={modelLabelId}
+              label={labels.modelOrAgentLabel}
+              required
+            />
+            {modelSelector}
+            {errors.modelId && (
+              <p
+                className={mergeClasses(
+                  instructionsErrorClassName,
+                  styles.instructionsError,
+                )}
+              >
+                {errors.modelId}
+              </p>
+            )}
+          </div>
 
-          <fieldset className="flex flex-col gap-3">
-            <legend className={scheduleSectionLabelClassName}>
-              {labels.scheduleSectionLabel}
-            </legend>
-
-            <DialSelectField
-              label={labels.scheduleTypeAriaLabel}
-              value={values.scheduleType}
+          <div className="flex flex-col gap-3">
+            <Select
+              labelProps={{ label: labels.repeatLabel }}
+              value={values.repeat}
               onChange={(next) =>
-                onFieldChange('scheduleType', next as ScheduledTaskScheduleType)
+                onFieldChange('repeat', next as ScheduledTaskRepeat)
               }
-              options={[
-                {
-                  value: ScheduledTaskScheduleType.Once,
-                  label: labels.scheduleTypeOnceLabel,
-                },
-                {
-                  value: ScheduledTaskScheduleType.Recurring,
-                  label: labels.scheduleTypeRecurringLabel,
-                },
-              ]}
+              options={labels.repeatOptions.map((option) => ({
+                value: option.key,
+                label: option.label,
+              }))}
             />
 
-            {values.scheduleType === ScheduledTaskScheduleType.Once && (
+            {values.repeat === ScheduledTaskRepeat.OneTime && (
               <div className="flex flex-col gap-1">
                 <Calendar
                   id="scheduled-task-run-at"
@@ -239,47 +208,37 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
               </div>
             )}
 
-            {values.scheduleType === ScheduledTaskScheduleType.Recurring && (
+            {values.repeat !== ScheduledTaskRepeat.OneTime && (
               <>
-                <DialSelectField
-                  label={labels.frequencyLabel}
-                  value={values.frequency}
-                  onChange={(next) =>
-                    onFieldChange('frequency', next as ScheduledTaskFrequency)
-                  }
-                  options={labels.frequencyOptions.map((option) => ({
-                    value: option.key,
-                    label: option.label,
-                  }))}
-                />
+                {values.repeat !== ScheduledTaskRepeat.Hourly && (
+                  <div className="flex flex-col gap-1">
+                    <Calendar
+                      id="scheduled-task-time"
+                      mode={CalendarMode.Time}
+                      value={values.time}
+                      onChange={(value) =>
+                        onFieldChange(
+                          'time',
+                          typeof value === 'string' ? value : '',
+                        )
+                      }
+                      label={withRequiredMarker(labels.timeLabel)}
+                      invalid={Boolean(errors.time)}
+                    />
+                    {errors.time && (
+                      <p
+                        className={mergeClasses(
+                          instructionsErrorClassName,
+                          styles.instructionsError,
+                        )}
+                      >
+                        {errors.time}
+                      </p>
+                    )}
+                  </div>
+                )}
 
-                <div className="flex flex-col gap-1">
-                  <Calendar
-                    id="scheduled-task-time"
-                    mode={CalendarMode.Time}
-                    value={values.time}
-                    onChange={(value) =>
-                      onFieldChange(
-                        'time',
-                        typeof value === 'string' ? value : '',
-                      )
-                    }
-                    label={withRequiredMarker(labels.timeLabel)}
-                    invalid={Boolean(errors.time)}
-                  />
-                  {errors.time && (
-                    <p
-                      className={mergeClasses(
-                        instructionsErrorClassName,
-                        styles.instructionsError,
-                      )}
-                    >
-                      {errors.time}
-                    </p>
-                  )}
-                </div>
-
-                {values.frequency === ScheduledTaskFrequency.Weekly && (
+                {values.repeat === ScheduledTaskRepeat.Weekly && (
                   <div className="flex flex-col gap-1">
                     <Calendar
                       id="scheduled-task-day-of-week"
@@ -307,7 +266,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                   </div>
                 )}
 
-                {values.frequency === ScheduledTaskFrequency.Monthly && (
+                {values.repeat === ScheduledTaskRepeat.Monthly && (
                   <Input
                     id="scheduled-task-day-of-month"
                     value={values.dayOfMonth ?? ''}
@@ -322,64 +281,137 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                     error={errors.dayOfMonth}
                   />
                 )}
+
+                {values.repeat === ScheduledTaskRepeat.Hourly && (
+                  <NumberInput
+                    id="scheduled-task-minute"
+                    integer
+                    min={0}
+                    max={59}
+                    value={values.minute ?? ''}
+                    onChange={(value) =>
+                      onFieldChange(
+                        'minute',
+                        value != null ? String(value) : '',
+                      )
+                    }
+                    labelProps={{
+                      label: labels.minuteLabel,
+                      required: true,
+                    }}
+                    invalid={Boolean(errors.minute)}
+                    error={errors.minute}
+                  />
+                )}
+
+                <div className="flex flex-col gap-3 desktop:flex-row">
+                  <div className="flex flex-1 flex-col gap-1">
+                    <Calendar
+                      id="scheduled-task-start-date"
+                      mode={CalendarMode.Date}
+                      value={dateValueToCalendarValue(values.startDate)}
+                      onChange={(value) =>
+                        onFieldChange(
+                          'startDate',
+                          calendarValueToDateValue(value),
+                        )
+                      }
+                      label={labels.startDateLabel}
+                      placeholder={labels.startDatePlaceholder}
+                      invalid={Boolean(errors.startDate)}
+                    />
+                    {errors.startDate && (
+                      <p
+                        className={mergeClasses(
+                          instructionsErrorClassName,
+                          styles.instructionsError,
+                        )}
+                      >
+                        {errors.startDate}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-1 flex-col gap-1">
+                    <Calendar
+                      id="scheduled-task-end-date"
+                      mode={CalendarMode.Date}
+                      value={dateValueToCalendarValue(values.endDate)}
+                      onChange={(value) =>
+                        onFieldChange(
+                          'endDate',
+                          calendarValueToDateValue(value),
+                        )
+                      }
+                      label={labels.endDateLabel}
+                      placeholder={labels.endDatePlaceholder}
+                      invalid={Boolean(errors.endDate)}
+                    />
+                    {errors.endDate && (
+                      <p
+                        className={mergeClasses(
+                          instructionsErrorClassName,
+                          styles.instructionsError,
+                        )}
+                      >
+                        {errors.endDate}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </>
             )}
-          </fieldset>
+          </div>
+        </div>
+      }
+    >
+      <div
+        role="group"
+        aria-label={labels.configurationSectionTitle}
+        className="flex flex-1 flex-col gap-5 px-8 py-6"
+      >
+        <div className="flex flex-col gap-1">
+          <h2 className={sectionTitleClassName}>
+            {labels.configurationSectionTitle}
+          </h2>
+          <p
+            className={mergeClasses(
+              sectionSubtitleClassName,
+              styles.sectionSubtitle,
+            )}
+          >
+            {labels.configurationSectionSubtitle}
+          </p>
         </div>
 
         <div
           role="group"
-          aria-label={labels.configurationSectionTitle}
-          className="flex w-full min-w-0 flex-1 flex-col gap-5 px-8 py-6"
+          aria-label={labels.instructionsLabel}
+          className="flex flex-1 flex-col gap-1"
         >
-          <div className="flex flex-col gap-1">
-            <h2 className={sectionTitleClassName}>
-              {labels.configurationSectionTitle}
-            </h2>
+          <span className={instructionsLabelClassName}>
+            {labels.instructionsLabel}
+          </span>
+          <Suspense fallback={<Spinner />}>
+            <MarkdownEditor
+              value={values.prompt}
+              onChange={(value) => onFieldChange('prompt', value)}
+              height={480}
+              theme={markdownEditorTheme as MarkdownEditorTheme}
+            />
+          </Suspense>
+          {errors.prompt && (
             <p
               className={mergeClasses(
-                sectionSubtitleClassName,
-                styles.sectionSubtitle,
+                instructionsErrorClassName,
+                styles.instructionsError,
               )}
             >
-              {labels.configurationSectionSubtitle}
+              {errors.prompt}
             </p>
-          </div>
-
-          <div
-            role="group"
-            aria-label={labels.instructionsLabel}
-            className="flex flex-1 flex-col gap-1"
-          >
-            <span className={scheduleSectionLabelClassName}>
-              {labels.instructionsLabel}
-            </span>
-            <Suspense fallback={<DialSpinner />}>
-              <DialMarkdownEditor
-                value={values.prompt}
-                onChange={(value) => onFieldChange('prompt', value)}
-                height={480}
-                theme={markdownEditorTheme as DialMarkdownEditorTheme}
-              />
-            </Suspense>
-            {errors.prompt && (
-              <p
-                className={mergeClasses(
-                  instructionsErrorClassName,
-                  styles.instructionsError,
-                )}
-              >
-                {errors.prompt}
-              </p>
-            )}
-          </div>
+          )}
         </div>
-
-        <div
-          aria-hidden
-          className="hidden desktop:block desktop:w-[360px] desktop:shrink-0"
-        />
       </div>
-    </div>
+    </BuilderFormContainer>
   );
 };

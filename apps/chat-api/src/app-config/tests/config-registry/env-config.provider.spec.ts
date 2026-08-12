@@ -286,6 +286,29 @@ describe('EnvConfigProvider', () => {
     });
   });
 
+  describe('features.responsesApiEnabled', () => {
+    it('returns true when RESPONSES_API_ENABLED is true', async () => {
+      const { provider } = makeProvider({ RESPONSES_API_ENABLED: true });
+      expect(await provider.resolve('features.responsesApiEnabled', ctx)).toBe(
+        true,
+      );
+    });
+
+    it('returns false when RESPONSES_API_ENABLED is false', async () => {
+      const { provider } = makeProvider({ RESPONSES_API_ENABLED: false });
+      expect(await provider.resolve('features.responsesApiEnabled', ctx)).toBe(
+        false,
+      );
+    });
+
+    it('returns undefined when RESPONSES_API_ENABLED is absent (falls through to the registry default of false)', async () => {
+      const { provider } = makeProvider({ RESPONSES_API_ENABLED: undefined });
+      expect(
+        await provider.resolve('features.responsesApiEnabled', ctx),
+      ).toBeUndefined();
+    });
+  });
+
   describe('dialCore.externalUrl', () => {
     it('returns the external URL when DIAL_CORE_EXTERNAL_URL is set', async () => {
       const { provider } = makeProvider({
@@ -338,6 +361,51 @@ describe('EnvConfigProvider', () => {
       expect(
         await provider.resolve('fileManager.availableTabs', ctx),
       ).toBeUndefined();
+    });
+  });
+
+  describe('announcement.items', () => {
+    const ENTRY = {
+      title: 'We have upgraded to DIAL 1.43',
+      description: "Check what's new:",
+      link: { label: 'Changelog', href: 'https://dialx.ai/changelog' },
+    };
+
+    it('returns undefined when ANNOUNCEMENTS is not set', async () => {
+      const { provider } = makeProvider({ ANNOUNCEMENTS: undefined });
+      expect(await provider.resolve('announcement.items', ctx)).toBeUndefined();
+    });
+
+    /* Regression: the generic env path returns the raw string for a 'json'
+     * valueType, which reached the service as a string and silently resolved
+     * to an empty list. */
+    it('parses a JSON array into an array rather than passing the string through', async () => {
+      const { provider } = makeProvider({
+        ANNOUNCEMENTS: JSON.stringify([ENTRY]),
+      });
+
+      const resolved = await provider.resolve('announcement.items', ctx);
+
+      expect(Array.isArray(resolved)).toBe(true);
+      expect(resolved).toEqual([ENTRY]);
+    });
+
+    it('returns undefined and logs an error when ANNOUNCEMENTS is invalid JSON', async () => {
+      const { provider } = makeProvider({ ANNOUNCEMENTS: 'not-json' });
+      const loggerErrorSpy = vi.spyOn(provider['logger'], 'error');
+
+      expect(await provider.resolve('announcement.items', ctx)).toBeUndefined();
+      expect(loggerErrorSpy).toHaveBeenCalled();
+    });
+
+    it('returns undefined and logs an error when ANNOUNCEMENTS is not an array', async () => {
+      const { provider } = makeProvider({
+        ANNOUNCEMENTS: JSON.stringify(ENTRY),
+      });
+      const loggerErrorSpy = vi.spyOn(provider['logger'], 'error');
+
+      expect(await provider.resolve('announcement.items', ctx)).toBeUndefined();
+      expect(loggerErrorSpy).toHaveBeenCalled();
     });
   });
 

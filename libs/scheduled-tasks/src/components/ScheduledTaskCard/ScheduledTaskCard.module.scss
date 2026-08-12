@@ -3,7 +3,7 @@
 }
 
 .description {
-  color: var(--stc-desc-text, var(--text-control-disable, #6b7280));
+  color: var(--stc-desc-text, var(--text-control-disable-beta, #848e9c));
 }
 
 .schedulePill {
@@ -12,20 +12,32 @@
 }
 
 .scheduleLabel {
-  color: var(--stc-schedule-label-text, var(--text-control-disable, #6b7280));
+  color: var(
+    --stc-schedule-label-text,
+    var(--text-control-disable-beta, #848e9c)
+  );
 }
 
 .locationLabel {
-  color: var(--stc-location-label-text, var(--text-secondary, #6b7280));
+  color: var(--stc-location-label-text, var(--text-secondary, #57647a));
 }
 
 .locationLeaf {
-  color: var(--stc-location-leaf-text, var(--text-secondary, #6b7280));
+  color: var(--stc-location-leaf-text, var(--text-secondary, #57647a));
 }
 
 .newBadge {
   background: var(--stc-new-badge-bg, var(--bg-control-accent, #124ace));
   color: var(--stc-new-badge-text, var(--text-control-permanent, #fcfcfc));
+}
+
+.pausedPill {
+  background: var(--stc-paused-bg, var(--bg-layer-sunken, #eef1f7));
+  border-color: var(--stc-paused-border, var(--stroke-tertiary, #e0e6f0));
+}
+
+.pausedLabel {
+  color: var(--stc-paused-text, var(--text-control-disable-beta, #848e9c));
 }
 
 .locationDivider {

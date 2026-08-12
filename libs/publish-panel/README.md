@@ -92,7 +92,7 @@ import { PublishFooter } from '@epam/ai-dial-publish-panel';
 
 ### PublishFoldersTree
 
-Destination folder tree with search, lazy expansion, and inline folder creation (trailing button and per-row context menu).
+Destination folder tree with search, lazy expansion, and inline folder creation (trailing button and per-row context menu). Folders are displayed in name order at every level, and filtering is suspended while the inline create row is open so creating a folder from a search that matched nothing works (the unmatched query becomes the pre-filled name).
 
 ```tsx
 import { PublishFoldersTree } from '@epam/ai-dial-publish-panel';
@@ -132,6 +132,12 @@ const publishFlow = usePublishFlow({
   onPublish: async (item, folderPath) => {
     /* ... */
   },
+  onPublishSuccess: (item, folderPath) => {
+    /* host-owned success notification */
+  },
+  onPublishError: (item, folderPath, error) => {
+    /* host-owned error notification; the hook only sets `hasSubmitError` */
+  },
 });
 ```
 
@@ -142,6 +148,8 @@ import {
   derivePublishState,
   formatPublishedDate,
   filterFolderTree,
+  sortFolderTree,
+  mergeFolderPaths,
   collectFolderKeys,
   toFolderPathKey,
   fromFolderPathKey,

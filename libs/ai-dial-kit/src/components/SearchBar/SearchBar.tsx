@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconSearch, IconX } from '@tabler/icons-react';
 import { type FC } from 'react';
@@ -14,8 +14,24 @@ export interface SearchBarLabels {
   clearLabel?: string;
 }
 
+/** Color overrides for the {@link SearchBar} component, applied as CSS custom properties. */
+export interface SearchBarColors {
+  /** Container background color. Defaults to `#ffffff`. */
+  background?: string;
+  /** Container border color while focused. Defaults to `--stroke-info`. */
+  borderFocus?: string;
+  /** Search and clear icon color. Defaults to `--text-tertiary`. */
+  icon?: string;
+  /** Input text color. Defaults to `--text-primary`. */
+  text?: string;
+  /** Input placeholder color. Defaults to `--text-tertiary`. */
+  placeholder?: string;
+}
+
 /** Style overrides for the {@link SearchBar} component. */
 export interface SearchBarStyles {
+  /** Color overrides applied as CSS custom properties. */
+  colors?: SearchBarColors;
   /** Extra CSS class applied to the inner container div (border, background, radius, shadow). */
   containerClassName?: string;
   /** Extra CSS class applied to the search and clear icons. */
@@ -57,6 +73,7 @@ export const SearchBar: FC<SearchBarProps> = ({
     clearLabel = 'Clear search',
   } = labels ?? {};
   const {
+    colors,
     containerClassName,
     iconClassName,
     inputClassName,
@@ -64,8 +81,16 @@ export const SearchBar: FC<SearchBarProps> = ({
   } = searchBarStyles ?? {};
   const resolvedAriaLabel = ariaLabel ?? placeholder;
 
+  const cssVars = buildCssVars({
+    '--search-bar-bg': colors?.background,
+    '--search-bar-border-focus': colors?.borderFocus,
+    '--search-bar-icon': colors?.icon,
+    '--search-bar-text': colors?.text,
+    '--search-bar-placeholder': colors?.placeholder,
+  });
+
   return (
-    <div role="search">
+    <div role="search" style={cssVars}>
       <div
         className={mergeClasses(
           styles.container,

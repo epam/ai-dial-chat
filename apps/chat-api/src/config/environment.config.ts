@@ -442,6 +442,46 @@ export class EnvironmentVariables {
   @IsString()
   AUTH_OKTA_DIAL_ROLES_FIELD?: string;
 
+  // Header bearer-token authentication (off by default; see auth-provider-env-config spec)
+  @IsOptional()
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  })
+  @IsBoolean()
+  AUTH_HEADER_TOKEN_ENABLED?: boolean = false;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return undefined;
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  AUTH_HEADER_TOKEN_ALLOWED_ISSUERS?: string[];
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(0)
+  AUTH_HEADER_TOKEN_CLOCK_TOLERANCE_SECONDS?: number = 30;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  AUTH_HEADER_TOKEN_JWKS_CACHE_TTL_SECONDS?: number = 600;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  AUTH_HEADER_TOKEN_BUCKET_CACHE_TTL_SECONDS?: number = 60;
+
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))
   @IsInt()
@@ -523,23 +563,26 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  ANNOUNCEMENT_TITLE?: string;
+
+  @IsOptional()
+  @IsString()
+  ANNOUNCEMENT_DESCRIPTION?: string;
+
+  @IsOptional()
+  @IsString()
+  ANNOUNCEMENTS?: string;
+
+  @IsOptional()
+  @IsString()
   FOOTER_HTML_MESSAGE?: string;
 
-  @IsOptional()
-  @IsUrl({
-    require_tld: false,
-    require_protocol: true,
-    protocols: ['https', 'http'],
-  })
-  AZURE_FUNCTIONS_API_HOST?: string;
-
+  /* Deliberately unconstrained: this is an opaque display string that never
+   * reaches a filesystem path, an outbound URL, or a log line, and CI stamps
+   * take many shapes (0.45.0, 0.45.0-rc.3, 2026.08.10+a1b2c3d). */
   @IsOptional()
   @IsString()
-  REQUEST_API_KEY_CODE?: string;
-
-  @IsOptional()
-  @IsString()
-  REPORT_ISSUE_CODE?: string;
+  CHAT_VERSION?: string;
 
   @IsOptional()
   @IsString()
@@ -693,6 +736,20 @@ export class EnvironmentVariables {
   LIVE_CHAT_INTERACTION_ENABLED?: boolean = false;
 
   @IsOptional()
+  @Transform(({ obj, key }) => {
+    /* Reads the raw source value (not `value`, which class-transformer's
+     * enableImplicitConversion may have already coerced to `true` for any
+     * non-empty string, including the literal string "false") so an env var
+     * explicitly set to "false"/"0"/"no" parses to `false` as intended. */
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  })
+  @IsBoolean()
+  RESPONSES_API_ENABLED?: boolean = false;
+
+  @IsOptional()
   @Transform(({ value }) => {
     if (value == null || value === '') return [];
     return String(value)
@@ -726,6 +783,10 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   SCHEDULER_APP_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  SCHEDULER_SERVICE_ID?: string;
 
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))

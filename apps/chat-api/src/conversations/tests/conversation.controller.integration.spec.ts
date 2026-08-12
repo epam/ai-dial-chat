@@ -14,7 +14,11 @@ import type {
 } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { FeatureFlagsService } from '../../app-config/feature-flags/feature-flags.service';
+import { FEATURE_KEY_METADATA } from '../../app-config/feature-flags/require-feature.decorator';
+import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
+import { ScheduledTaskUnreadService } from '../../scheduled-task-unread/scheduled-task-unread.service';
 import { UserConfigService } from '../../user-config/user-config.service';
 import {
   ConversationGenerationService,
@@ -23,6 +27,12 @@ import {
 import { ConversationNamingService } from '../conversation-naming.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
+import { ChatCompletionsAdapter } from '../generation/chat-completions.adapter';
+import { ResponsesAdapter } from '../generation/responses.adapter';
+import { ConversationLifecycleService } from '../lifecycle/conversation-lifecycle.service';
+import { ConversationListingService } from '../listing/conversation-listing.service';
+import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
+import { ConversationStreamingService } from '../streaming/conversation-streaming.service';
 
 const TEST_USER = {
   sid: 'test-sid',
@@ -43,6 +53,7 @@ describe('ConversationController (integration)', () => {
     generateTitle: ReturnType<typeof vi.fn>;
     deleteConversations: ReturnType<typeof vi.fn>;
     deleteAllConversations: ReturnType<typeof vi.fn>;
+    markConversationViewed: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -53,6 +64,7 @@ describe('ConversationController (integration)', () => {
       generateTitle: vi.fn(),
       deleteConversations: vi.fn(),
       deleteAllConversations: vi.fn(),
+      markConversationViewed: vi.fn(),
     };
 
     const mockGenerationService = {
@@ -89,6 +101,7 @@ describe('ConversationController (integration)', () => {
       }),
     );
     await app.init();
+    await app.listen(0, '127.0.0.1');
   });
 
   afterEach(async () => {
@@ -241,11 +254,26 @@ describe('ConversationController (integration)', () => {
           { provide: ConfigService, useValue: configService },
           DialClientService,
           ConversationService,
+          ConversationPersistenceService,
+          ConversationListingService,
+          ConversationLifecycleService,
+          ConversationStreamingService,
           UserConfigService,
+          ScheduledTaskUnreadService,
           ConversationGenerationService,
+          ChatCompletionsAdapter,
+          ResponsesAdapter,
           {
             provide: ConversationNamingService,
             useValue: { maybeRenameAfterFirstReply: vi.fn() },
+          },
+          {
+            provide: DeploymentsService,
+            useValue: { getDeploymentDetails: vi.fn() },
+          },
+          {
+            provide: FeatureFlagsService,
+            useValue: { isEnabled: vi.fn().mockResolvedValue(false) },
           },
         ],
       }).compile();
@@ -583,7 +611,7 @@ describe('ConversationController (integration)', () => {
       const response = {
         items: [
           {
-            id: 'conversations/test-bucket/.scheduler/sched_abc/run_001/gpt-4o__Morning briefing',
+            id: 'conversations/test-bucket/.scheduler/sched_abc/gpt-4o__Morning briefing__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
             title: 'Morning briefing',
             updatedAt: 2000,
             sharedWithMe: false,
@@ -592,7 +620,7 @@ describe('ConversationController (integration)', () => {
             isReadonly: false,
             isScheduledTask: true,
             scheduleId: 'sched_abc',
-            runId: 'run_001',
+            runId: 'c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
           },
           {
             id: 'conversations/test-bucket/gpt-4o__Regular chat__uuid',
@@ -616,7 +644,7 @@ describe('ConversationController (integration)', () => {
       expect(body.items[0]).toMatchObject({
         isScheduledTask: true,
         scheduleId: 'sched_abc',
-        runId: 'run_001',
+        runId: 'c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
       });
       expect(body.items[1].isScheduledTask).toBe(false);
       expect(body.items[1].scheduleId).toBeUndefined();
@@ -673,6 +701,41 @@ describe('ConversationController (integration)', () => {
         .patch('/conversations?path=gpt-4o__Missing__uuid')
         .send({ newTitle: 'New Title' })
         .expect(404);
+    });
+  });
+
+  describe('PATCH /conversations/viewed', () => {
+    it('returns 204 and marks the conversation viewed for a valid path', async () => {
+      service.markConversationViewed.mockResolvedValue(undefined);
+
+      await request(app.getHttpServer())
+        .patch('/conversations/viewed?path=gpt-4o__My+Task__uuid')
+        .expect(204);
+
+      expect(service.markConversationViewed).toHaveBeenCalledWith(
+        'gpt-4o__My Task__uuid',
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
+    it('returns 204 again when called repeatedly for the same path (idempotent)', async () => {
+      service.markConversationViewed.mockResolvedValue(undefined);
+
+      await request(app.getHttpServer())
+        .patch('/conversations/viewed?path=gpt-4o__My+Task__uuid')
+        .expect(204);
+      await request(app.getHttpServer())
+        .patch('/conversations/viewed?path=gpt-4o__My+Task__uuid')
+        .expect(204);
+
+      expect(service.markConversationViewed).toHaveBeenCalledTimes(2);
+    });
+
+    it('returns 400 when path query param is missing', async () => {
+      await request(app.getHttpServer())
+        .patch('/conversations/viewed')
+        .expect(400);
     });
   });
 
@@ -822,6 +885,24 @@ describe('ConversationController (integration)', () => {
         .post('/conversations/deletions/all')
         .send({})
         .expect(400);
+    });
+  });
+
+  describe('POST /conversations/completions', () => {
+    it('carries no @RequireFeature/FeatureGuard metadata tied to ResponsesApiEnabled', () => {
+      /*
+       * The Responses-vs-Chat-Completions selection is an internal routing
+       * decision (ConversationStreamingService.resolveGenerationApiForDeployment),
+       * not a per-route feature gate — a disabled flag must select Chat
+       * Completions, never 403 the whole endpoint. Asserted via reflection
+       * rather than an HTTP call so it fails fast on either an accidental
+       * `@UseGuards(FeatureGuard)` or `@RequireFeature(...)` addition.
+       */
+      const metadata = Reflect.getMetadata(
+        FEATURE_KEY_METADATA,
+        ConversationController.prototype.streamCompletion,
+      );
+      expect(metadata).toBeUndefined();
     });
   });
 });

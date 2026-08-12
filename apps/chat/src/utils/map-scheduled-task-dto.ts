@@ -1,15 +1,28 @@
-import {
-  ScheduledTaskSectionKey,
-  type ScheduledTaskItem,
-} from '@epam/ai-dial-scheduled-tasks';
-import type { ScheduledTaskDto } from '@epam/chat-api-client';
+import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
+import type { ScheduledTaskItem } from '@epam/ai-dial-scheduled-tasks';
 import type { TFunction } from 'i18next';
 import { ScheduledTasksI18nKeys } from '../constants/translation-keys';
 import { apSchedulerDayToJsDay, jsDayToApSchedulerDay } from './cron-weekday';
-
-const padTwoDigits = (value: string): string => value.padStart(2, '0');
+import { padTwoDigits } from './formatting';
 
 const EVERY_N_MINUTES_PATTERN = /^\*\/(\d+)$/;
+
+/** A Sunday (JS `getDay() === 0`), used purely as a weekday-name reference point. */
+const WEEKDAY_REFERENCE_SUNDAY = new Date(2023, 0, 1);
+
+/**
+ * Converts an APScheduler-convention `day_of_week` numeric string
+ * (`"0"`=Monday..`"6"`=Sunday) to a locale-formatted weekday name (e.g.
+ * "Monday"), so the card never shows the raw numeric value to the user.
+ */
+const formatWeekdayName = (apSchedulerDayOfWeek: string): string => {
+  const jsDay = apSchedulerDayToJsDay(Number(apSchedulerDayOfWeek));
+  const reference = new Date(WEEKDAY_REFERENCE_SUNDAY);
+  reference.setDate(reference.getDate() + jsDay);
+  return new Intl.DateTimeFormat(undefined, { weekday: 'long' }).format(
+    reference,
+  );
+};
 
 /**
  * Formats a cron trigger with no fixed `hour` field (i.e. it fires every
@@ -88,8 +101,11 @@ const formatCronScheduleLabel = (
   const time = `${padTwoDigits(localFields.hour)}:${padTwoDigits(localFields.minute)}`;
 
   if (localFields.day_of_week) {
+    const dayLabel = /^\d+$/.test(localFields.day_of_week)
+      ? formatWeekdayName(localFields.day_of_week)
+      : localFields.day_of_week;
     return t(ScheduledTasksI18nKeys.CardScheduleWeeklyAt, {
-      day: localFields.day_of_week,
+      day: dayLabel,
       time,
     });
   }
@@ -115,7 +131,11 @@ const formatDateScheduleLabel = (date: string, t: TFunction): string => {
   return t(ScheduledTasksI18nKeys.CardScheduleOnceAt, { date: formattedDate });
 };
 
-const buildScheduleLabel = (task: ScheduledTaskDto, t: TFunction): string => {
+/** Formats a task's schedule (`trigger.date` or `trigger.cron`) as a human-readable label, e.g. "Every Monday 12:00". Shared by the card grid mapper and the detail page's "Repeats" field so the two surfaces never diverge. */
+export const buildScheduleLabel = (
+  task: ScheduledTaskDto,
+  t: TFunction,
+): string => {
   if (task.trigger.date) {
     return formatDateScheduleLabel(task.trigger.date, t);
   }
@@ -126,52 +146,27 @@ const buildScheduleLabel = (task: ScheduledTaskDto, t: TFunction): string => {
 };
 
 /**
- * Resolves the card grid section for a task from `createdBy` vs. the
- * current user's sub. Falls back to `myTasks` when `createdBy` or
- * `currentUserSub` is unavailable (e.g. older upstream responses, or a
- * caller that hasn't wired the current user), matching prior behavior.
- */
-const resolveSectionKey = (
-  task: ScheduledTaskDto,
-  currentUserSub: string | undefined,
-): ScheduledTaskSectionKey => {
-  if (task.createdBy && currentUserSub && task.createdBy !== currentUserSub) {
-    return ScheduledTaskSectionKey.Shared;
-  }
-  return ScheduledTaskSectionKey.MyTasks;
-};
-
-/**
  * Maps a `GET /api/v1/scheduled-tasks` DTO to the lib-facing `ScheduledTaskItem`.
- * `sectionKey` is `shared` when the upstream `createdBy` differs from
- * `currentUserSub`, otherwise `myTasks` (also the fallback when either value
- * is missing). `nextRunTime`/`createdAt` come straight from the DIAL
- * Scheduler response; `trigger.date` is kept as a fallback for `nextRunAt`
- * for schedules created before those fields were tracked. `description`
- * maps 1:1 to `descriptionPreview` (undefined when absent) with no
- * truncation — the BFF's 500-char cap bounds the value, and the card's own
- * line-clamp/ellipsis handles presentation-layer truncation.
+ * `description` maps 1:1 to `descriptionPreview` (undefined when absent)
+ * with no truncation — the BFF's 500-char cap bounds the value, and the
+ * card's own line-clamp/ellipsis handles presentation-layer truncation.
+ * `isActive` maps 1:1 from the DTO with no reinterpretation — derivation is
+ * owned entirely by the BFF mapper.
  */
 export const mapScheduledTaskDtoToItem = (
   task: ScheduledTaskDto,
   t: TFunction,
-  currentUserSub?: string,
 ): ScheduledTaskItem => ({
   id: task.id,
   displayName: task.displayName,
   descriptionPreview: task.description,
   scheduleLabel: buildScheduleLabel(task, t),
-  sectionKey: resolveSectionKey(task, currentUserSub),
-  sortValues: {
-    nextRunAt: task.nextRunTime ?? task.trigger.date,
-    createdAt: task.createdAt,
-  },
+  isActive: task.isActive,
 });
 
 /** Maps a list of `ScheduledTaskDto` to `ScheduledTaskItem[]`, preserving order. */
 export const mapScheduledTaskDtosToItems = (
   tasks: ScheduledTaskDto[],
   t: TFunction,
-  currentUserSub?: string,
 ): ScheduledTaskItem[] =>
-  tasks.map((task) => mapScheduledTaskDtoToItem(task, t, currentUserSub));
+  tasks.map((task) => mapScheduledTaskDtoToItem(task, t));

@@ -150,6 +150,22 @@ Starter buttons (rendered via `renderFooterActions` or the starters bar), form b
 
 ---
 
+### Requirement: Model selector stays interactive when isInputDisabled is true
+
+`ModelSelectorControl` SHALL NOT read `isInputDisabled` at all. Only `isDisabled` (fed from `InputProps.isModelSelectorDisabled`) and `isStreaming` gate the selector — a composer whose free-text path is blocked MUST still let the user open the picker and change the deployment, since a Quick App with `isChatMessageInputDisabled` would otherwise lock the user into its pre-set model with no way out.
+
+#### Scenario: Picker opens while the input is disabled
+
+- **WHEN** `Input` is rendered with `isInputDisabled={true}`, a `modelPickerOverlay`, and `isModelSelectorDisabled` absent, and the user clicks the model selector
+- **THEN** the picker overlay opens and the selector is not dimmed
+
+#### Scenario: Explicitly disabled selector stays closed
+
+- **WHEN** `Input` is rendered with `isInputDisabled={true}` and `isModelSelectorDisabled={true}` and the user clicks the model selector
+- **THEN** the picker overlay does not open and the selector renders dimmed
+
+---
+
 ### Requirement: isInputDisabled tested in Input unit tests
 
 `libs/conversation-input/src/components/Input/tests/Input.spec.tsx` SHALL include test cases covering:

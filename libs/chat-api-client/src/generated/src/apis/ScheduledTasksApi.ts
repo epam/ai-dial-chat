@@ -16,6 +16,7 @@ import * as runtime from '../runtime';
 import type {
   CreateScheduledTaskBodyDto,
   CreatedScheduledTaskDto,
+  ListScheduledTaskRunsResponseDto,
   ListScheduledTasksResponseDto,
   ScheduledTaskDto,
   UpdateScheduledTaskBodyDto,
@@ -30,11 +31,25 @@ export interface GetScheduledTaskRequest {
   scheduleId: string;
 }
 
+export interface ListScheduledTaskRunsRequest {
+  scheduleId: string;
+  limit?: number;
+  offset?: number;
+}
+
 export interface ListScheduledTasksRequest {
   limit?: number;
   offset?: number;
   search?: string;
   sort?: ListScheduledTasksSortEnum;
+}
+
+export interface PauseScheduledTaskRequest {
+  scheduleId: string;
+}
+
+export interface ResumeScheduledTaskRequest {
+  scheduleId: string;
 }
 
 export interface UpdateScheduledTaskRequest {
@@ -47,7 +62,7 @@ export interface UpdateScheduledTaskRequest {
  */
 export class ScheduledTasksApi extends runtime.BaseAPI {
   /**
-   * Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt, using the authenticated session user\'s dial-oauth credentials. Invalidates the scheduled tasks list cache on success.
+   * Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt, using the OAuth external-service id configured via SCHEDULER_SERVICE_ID. Invalidates the scheduled tasks list cache on success.
    * Create a scheduled task
    */
   async createScheduledTaskRaw(
@@ -84,7 +99,7 @@ export class ScheduledTasksApi extends runtime.BaseAPI {
   }
 
   /**
-   * Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt, using the authenticated session user\'s dial-oauth credentials. Invalidates the scheduled tasks list cache on success.
+   * Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt, using the OAuth external-service id configured via SCHEDULER_SERVICE_ID. Invalidates the scheduled tasks list cache on success.
    * Create a scheduled task
    */
   async createScheduledTask(
@@ -152,6 +167,69 @@ export class ScheduledTasksApi extends runtime.BaseAPI {
   }
 
   /**
+   * Returns the paginated run history for a single DIAL Scheduler schedule, proxying DIAL Scheduler using the session user\'s access token. Always requests upstream ordering of created_at desc explicitly. Not cached.
+   * List a scheduled task run history
+   */
+  async listScheduledTaskRunsRaw(
+    requestParameters: ListScheduledTaskRunsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ListScheduledTaskRunsResponseDto>> {
+    if (requestParameters['scheduleId'] == null) {
+      throw new runtime.RequiredError(
+        'scheduleId',
+        'Required parameter "scheduleId" was null or undefined when calling listScheduledTaskRuns().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit'];
+    }
+
+    if (requestParameters['offset'] != null) {
+      queryParameters['offset'] = requestParameters['offset'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/scheduled-tasks/{scheduleId}/runs`;
+    urlPath = urlPath.replace(
+      `{${'scheduleId'}}`,
+      encodeURIComponent(String(requestParameters['scheduleId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ListScheduledTaskRunsResponseDto>(
+      response,
+    );
+  }
+
+  /**
+   * Returns the paginated run history for a single DIAL Scheduler schedule, proxying DIAL Scheduler using the session user\'s access token. Always requests upstream ordering of created_at desc explicitly. Not cached.
+   * List a scheduled task run history
+   */
+  async listScheduledTaskRuns(
+    requestParameters: ListScheduledTaskRunsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ListScheduledTaskRunsResponseDto> {
+    const response = await this.listScheduledTaskRunsRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
    * Returns the DIAL Scheduler schedules visible to the authenticated session user. Proxies the DIAL Scheduler routed-deployment API using the session access token. Results are cached server-side for 30 seconds per user.
    * List scheduled tasks
    */
@@ -203,6 +281,112 @@ export class ScheduledTasksApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ListScheduledTasksResponseDto> {
     const response = await this.listScheduledTasksRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Pauses a DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.
+   * Pause a scheduled task
+   */
+  async pauseScheduledTaskRaw(
+    requestParameters: PauseScheduledTaskRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ScheduledTaskDto>> {
+    if (requestParameters['scheduleId'] == null) {
+      throw new runtime.RequiredError(
+        'scheduleId',
+        'Required parameter "scheduleId" was null or undefined when calling pauseScheduledTask().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/scheduled-tasks/{scheduleId}/pause`;
+    urlPath = urlPath.replace(
+      `{${'scheduleId'}}`,
+      encodeURIComponent(String(requestParameters['scheduleId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ScheduledTaskDto>(response);
+  }
+
+  /**
+   * Pauses a DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.
+   * Pause a scheduled task
+   */
+  async pauseScheduledTask(
+    requestParameters: PauseScheduledTaskRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ScheduledTaskDto> {
+    const response = await this.pauseScheduledTaskRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Resumes a paused DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.
+   * Resume a scheduled task
+   */
+  async resumeScheduledTaskRaw(
+    requestParameters: ResumeScheduledTaskRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ScheduledTaskDto>> {
+    if (requestParameters['scheduleId'] == null) {
+      throw new runtime.RequiredError(
+        'scheduleId',
+        'Required parameter "scheduleId" was null or undefined when calling resumeScheduledTask().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/scheduled-tasks/{scheduleId}/resume`;
+    urlPath = urlPath.replace(
+      `{${'scheduleId'}}`,
+      encodeURIComponent(String(requestParameters['scheduleId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ScheduledTaskDto>(response);
+  }
+
+  /**
+   * Resumes a paused DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.
+   * Resume a scheduled task
+   */
+  async resumeScheduledTask(
+    requestParameters: ResumeScheduledTaskRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ScheduledTaskDto> {
+    const response = await this.resumeScheduledTaskRaw(
       requestParameters,
       initOverrides,
     );

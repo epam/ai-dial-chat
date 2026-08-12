@@ -1,7 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialErrorText,
+  ErrorText,
   GhostIconButton,
   PrimaryIconButton,
 } from '@epam/ai-dial-ui-kit';
@@ -194,7 +194,7 @@ export const VoiceBar: FC<VoiceBarProps> = ({
       />
       {isRecording && (
         <PrimaryIconButton
-          icon={<IconPlayerStopFilled size={DIAL_ICON_SIZE.LG} />}
+          icon={<IconPlayerStopFilled size={DIAL_ICON_SIZE.LG} aria-hidden />}
           onClick={() => onStop?.()}
           aria-label={stopLabel}
         />
@@ -241,12 +241,11 @@ export const VoiceBar: FC<VoiceBarProps> = ({
           />
         </div>
 
-        {/* Row 2 on mobile / inline on desktop: state-based controls */}
         {controls}
       </div>
 
       {isError && errorMessage && (
-        <DialErrorText text={errorMessage} className="mt-1 px-1" />
+        <ErrorText text={errorMessage} className="mt-1 px-1" />
       )}
     </div>
   );

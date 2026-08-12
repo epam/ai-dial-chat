@@ -120,7 +120,7 @@ path = "name"                       →  getConversation(sessionBucket, "name") 
 
 DIAL Core's sharing mechanism grants READ access to the resource at its original path using the requesting user's auth token, so no special headers or bucket substitution are needed for shared or public conversations.
 
-`resolveConversationLocation` in `ConversationService` is the single implementation point for this routing logic. It MUST NOT fall back to the session bucket when the first path segment is neither the session bucket nor `public` — it SHALL extract and use that segment as the target bucket.
+`resolveConversationLocation` in `apps/chat-api/src/conversations/utils/conversation.utils.ts` is the single implementation point for this routing logic, shared by `ConversationPersistenceService`, `ConversationLifecycleService`, and `ConversationStreamingService`. It MUST NOT fall back to the session bucket when the first path segment is neither the session bucket nor `public` — it SHALL extract and use that segment as the target bucket.
 
 **Frontend behaviour.** `GET /api/v1/conversations?path=...`'s `path` query param MUST include the bucket — unlike `saveConversation`'s/`streamCompletion`'s `path` body field, which is bucket-stripped and operates on the user's own copy only. Callers MUST apply the normalization matching the target endpoint's contract:
 
@@ -177,40 +177,45 @@ DIAL Core's sharing mechanism grants READ access to the resource at its original
 
 `apps/chat-api/src/conversations/utils/parse-scheduled-task-conversation-path.ts` SHALL export a pure function `parseScheduledTaskConversationPath(resourceId: string): { scheduleId: string; runId: string } | null` with no dependency injection, logging, or DIAL Core client access.
 
-A conversation resource id matches the scheduler pattern **iff** the `/`-delimited segment immediately following the bucket segment is the literal `.scheduler`, followed by exactly two further segments read as `scheduleId` and `runId` (an optional filename segment may follow and is ignored by this function).
+A conversation resource id matches the scheduler pattern **iff** the `/`-delimited segment immediately following the bucket segment is the literal `.scheduler`, followed by exactly one further `scheduleId` segment and then the conversation's own filename segment (`{deploymentId}__{title}__{runId}`) — no other segments may follow.
 
 The function SHALL:
 1. Split the id into `/`-delimited segments.
 2. Return `null` if the segment after the bucket is not exactly `.scheduler`.
-3. Read the next two segments as candidate `scheduleId` and `runId`.
-4. Decode each candidate with the existing `safeDecodeURIComponent` helper (`apps/chat-api` equivalent used elsewhere in this spec for path segments).
-5. Validate each decoded candidate against `^[A-Za-z0-9_-]{1,128}$` (the same allowlist used by the scheduled-tasks BFF routes — see the [scheduled-tasks-api spec](../scheduled-tasks-api/spec.md)).
-6. Return `{ scheduleId, runId }` only when both candidates pass validation; return `null` in every other case (missing segments, empty segments, decode failure, validation failure). The function MUST NOT throw.
+3. Return `null` unless exactly two further segments follow `.scheduler`: a candidate `scheduleId` and the conversation filename.
+4. Decode the candidate `scheduleId` with the existing `safeDecodeURIComponent` helper (`apps/chat-api` equivalent used elsewhere in this spec for path segments) and validate it against `^[A-Za-z0-9_-]{1,128}$` (the same allowlist used by the scheduled-tasks BFF routes — see the [scheduled-tasks-api spec](../scheduled-tasks-api/spec.md)).
+5. Decode the filename segment and extract `runId` as its trailing UUID suffix (`{deploymentId}__{title}__{runId}`), using the same UUID-suffix detection as `getConversationTitleFromName`.
+6. Return `{ scheduleId, runId }` only when `scheduleId` passes the allowlist and the filename has a trailing UUID `runId`; return `null` in every other case (missing/extra segments, empty segments, decode failure, validation failure, no UUID suffix). The function MUST NOT throw.
 
 #### Scenario: Valid scheduler path returns scheduleId and runId
 
-- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched_abc/run_001/gpt-4o__Morning briefing__uuid")` is called
-- **THEN** it returns `{ scheduleId: "sched_abc", runId: "run_001" }`
+- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched_abc/gpt-4o__Morning briefing__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5")` is called
+- **THEN** it returns `{ scheduleId: "sched_abc", runId: "c7aeee4c-c01f-41f2-b0db-b8a1a39943f5" }`
 
 #### Scenario: Normal conversation path returns null
 
 - **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/gpt-4o__Morning briefing__uuid")` is called
 - **THEN** it returns `null`
 
-#### Scenario: Missing runId segment returns null
+#### Scenario: Missing filename segment returns null
 
 - **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched_abc")` is called
 - **THEN** it returns `null`
 
-#### Scenario: scheduleId or runId failing the allowlist returns null
+#### Scenario: scheduleId failing the allowlist returns null
 
-- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched abc!/run_001/title")` is called (scheduleId contains a space and `!`, outside `^[A-Za-z0-9_-]{1,128}$`)
+- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched abc!/gpt-4o__title__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5")` is called (scheduleId contains a space and `!`, outside `^[A-Za-z0-9_-]{1,128}$`)
 - **THEN** it returns `null`
 
-#### Scenario: URL-encoded ids are decoded before validation
+#### Scenario: URL-encoded scheduleId is decoded before validation
 
-- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched%5Fabc/run%5F001/title")` is called
-- **THEN** it returns `{ scheduleId: "sched_abc", runId: "run_001" }`
+- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched%5Fabc/gpt-4o__title__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5")` is called
+- **THEN** it returns `{ scheduleId: "sched_abc", runId: "c7aeee4c-c01f-41f2-b0db-b8a1a39943f5" }`
+
+#### Scenario: Filename without a trailing run UUID returns null
+
+- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched_abc/gpt-4o__Morning briefing")` is called
+- **THEN** it returns `null`
 
 ---
 
@@ -235,6 +240,7 @@ class ConversationListItemDto {
   isScheduledTask: boolean; // True when the resource path matches the .scheduler reserved-segment pattern
   scheduleId?: string;      // Present only when isScheduledTask === true; the scheduler task id from the path
   runId?: string;           // Present only when isScheduledTask === true; the scheduler run id from the path
+  isUnread?: boolean;       // Present only when isScheduledTask === true; true when the user has not yet opened this conversation
 }
 
 class ConversationListResponseDto {
@@ -243,32 +249,33 @@ class ConversationListResponseDto {
 }
 ```
 
-**Three-way parallel fetch.** The service issues all of the following in a single `Promise.all`, always against the bucket root (recursive, no folder scoping):
+**Four-way parallel fetch.** The service issues all of the following in a single `Promise.all`, always against the bucket root (recursive, no folder scoping):
 1. `getConversationMetadata(bucket, '', { recursive: true, limit, token: userCursor })` — user's own conversations
 2. `getConversationMetadata('public', '', { recursive: true, limit, token: publicCursor })` — organisation-published conversations
 3. `getSharedResources({ body: { resourceTypes: ['CONVERSATION'], with: 'me' } })` — conversations shared directly with the user
 4. `UserConfigService.getPinnedIds(token, bucket)` — pinned conversation IDs
+5. `ScheduledTaskUnreadService.getViewedIds(token, bucket)` — viewed scheduler-created conversation IDs
 
-Items from all three sources are merged and sorted by `updatedAt` descending. `FOLDER` items are filtered out from bucket results. The `getSharedResources` response does not include `updatedAt`; shared items default to `updatedAt: 0`.
+Items from all three data sources are merged and sorted by `updatedAt` descending. `FOLDER` items are filtered out from bucket results. The `getSharedResources` response does not include `updatedAt`; shared items default to `updatedAt: 0`.
 
 **Ownership flags.** Items from the `'public'` bucket always have `publishedWithMe: true` forced, regardless of the DIAL Core flag value. Items from `getSharedResources` always have `sharedWithMe: true` forced. User-bucket items pass through the DIAL Core `sharedWithMe`/`publishedWithMe` flags unchanged.
 
-**No personal/public merging.** The service SHALL NOT attempt to match or merge a user-bucket item with a public-bucket item, even when a personal conversation has been published and both a personal copy and a public copy exist. Each is returned as its own independent list item with its own `id`: the personal copy keeps its user-bucket `id`, real `isReadonly` (from DIAL Core permissions), and `publishedWithMe: false` (unless DIAL Core itself reports otherwise); the public copy is a separate entry with its own `conversations/public/...` id, `isReadonly: true`, and `publishedWithMe: true`. This guarantees any link built from a returned `id` (conversation open/navigation links, and share links created via `POST /api/v1/share`) always resolves to the bucket that specific item actually represents, and that the personal copy's pin status and permissions are never affected by publishing.
+**No personal/public merging.** The service SHALL NOT attempt to match or merge a user-bucket item with a public-bucket item, even when a personal conversation has been published and both a personal copy and a public copy exist. Each is returned as its own independent list item with its own `id`: the personal copy keeps its user-bucket `id`, real `isReadonly` (from DIAL Core permissions), and `publishedWithMe: false` (unless DIAL Core itself reports otherwise); the public copy is a separate entry with its own `conversations/public/...` id, `isReadonly: true`, and `publishedWithMe: true`. This guarantees any link built from a returned `id` (conversation open/navigation links, and share links created via `POST /api/v1/share`) always resolves to the bucket that specific item actually represents, and that the personal copy's pin status, unread status, and permissions are never affected by publishing.
 
-**Scheduler metadata.** For every merged item (from any of the three sources), the service SHALL call `parseScheduledTaskConversationPath(item.id)` (see the "Scheduler-created conversations are detected from their DIAL Core resource path" requirement above). When it returns a non-null result, the item SHALL have `isScheduledTask: true`, `scheduleId` and `runId` set from the result. When it returns `null`, the item SHALL have `isScheduledTask: false` with `scheduleId`/`runId` omitted. This detection is independent per item — a scheduler-created conversation that also happens to be shared or published is still tagged using its own resource id, not any other copy's id.
+**Scheduler metadata.** For every merged item (from any of the three data sources), the service SHALL call `parseScheduledTaskConversationPath(item.id)` (see the "Scheduler-created conversations are detected from their DIAL Core resource path" requirement above). When it returns a non-null result, the item SHALL have `isScheduledTask: true`, `scheduleId` and `runId` set from the result, and `isUnread` set to `true` unless the item's `id` is present in the viewed-ids set from `ScheduledTaskUnreadService.getViewedIds`, in which case `isUnread: false`. When `parseScheduledTaskConversationPath` returns `null`, the item SHALL have `isScheduledTask: false` with `scheduleId`/`runId`/`isUnread` all omitted. This detection is independent per item — a scheduler-created conversation that also happens to be shared or published is still tagged and marked unread/viewed using its own resource id, not any other copy's id.
 
 **Compound `nextToken`.** Pagination state is tracked independently for the user bucket and public bucket (the `getSharedResources` endpoint returns all results at once and has no cursor). The response `nextToken` format is `ct1.<base64url(JSON)>` where the JSON object has optional fields `u` (user-bucket cursor) and `p` (public-bucket cursor). An incoming token without the `ct1.` prefix is treated as a legacy user-only cursor. The response `nextToken` is omitted when neither paginated source has more results.
 
-**Resilience.** If the public bucket or shared resources call fails (throws or returns an error response), the endpoint logs a warning and continues — it still returns results from the other sources. If the user bucket call fails, the endpoint returns the error to the client.
+**Resilience.** If the public bucket, shared resources, or viewed-ids call fails (throws or returns an error response), the endpoint logs a warning and continues — it still returns results from the other sources, with affected items falling back to `isUnread: true` for scheduler-created items when the viewed-ids fetch failed (fail open, so a transient error never silently hides a genuinely unread task). If the user bucket call fails, the endpoint returns the error to the client.
 
-`isPinned` is populated by `UserConfigService.getPinnedIds` against the user's DIAL Core bucket. See the [user-config-api spec](../user-config-api/spec.md). Errors fall back to `[]`.
+`isPinned` is populated by `UserConfigService.getPinnedIds` against the user's DIAL Core bucket. See the [user-config-api spec](../user-config-api/spec.md). `isUnread` is populated by `ScheduledTaskUnreadService.getViewedIds` against the user's DIAL Core bucket. See the `scheduled-task-unread-tracking` spec. Both fall back to `[]`/`isUnread: true` on error.
 
 Rate limiting: global default applies (no handler-level `@Throttle` override).
 
 Generated-client impact:
 - OpenAPI operationId: `listConversations`
 - SDK method: `ConversationsApi.listConversations({ limit?, nextToken? })`
-- Response type: `ConversationListResponseDto` (regenerated to include `isScheduledTask`/`scheduleId`/`runId` on `ConversationListItemDto`)
+- Response type: `ConversationListResponseDto` (regenerated to include `isScheduledTask`/`scheduleId`/`runId`/`isUnread` on `ConversationListItemDto`)
 - Frontend callers use the normal (non-Raw) generated method via `apps/chat/src/server-api/conversations.api.ts`
 
 Error codes:
@@ -324,36 +331,33 @@ Error codes:
 #### Scenario: FOLDER items are excluded from the response
 
 - **WHEN** DIAL Core returns a mix of file items and items with `nodeType === 'FOLDER'` from either bucket
-- **THEN** only file items appear in the response `items` array
+- **THEN** only non-FOLDER items appear in the response `items`
 
-#### Scenario: Invalid limit returns 400
+#### Scenario: Scheduler-created conversation not yet viewed is marked unread
 
-- **WHEN** `GET /api/v1/conversations/list?limit=1001` is called (exceeds max 1000)
-- **THEN** the response is 400 with a validation error
-
-#### Scenario: Published conversation's personal and public copies both appear as independent items
-
-- **WHEN** a user-bucket item and a public-bucket item — the personal and published copies of the same conversation — are both returned by DIAL Core in the same `listConversations` call, regardless of whether their relative paths coincide
-- **THEN** the response `items` array contains two entries: one with the user-bucket item's own `id`, real `isReadonly`, and `publishedWithMe: false`, and one with the public-bucket item's own `id` (`conversations/public/...`), `isReadonly: true`, and `publishedWithMe: true`
-- **AND** neither item's `id`, `isReadonly`, or `isPinned` is altered because of the other item's existence
-
-#### Scenario: Publishing a pinned personal conversation does not change its pin status
-
-- **WHEN** a user has pinned their own conversation (its user-bucket `id` is in the pinned-ids set) and that same conversation has also been published to the public bucket
-- **THEN** the response item with the user-bucket `id` has `isPinned: true`
-- **AND** the response item with the public-bucket `id` has `isPinned: false` (pins are never applied to a `publishedWithMe: true` item unless its own id was explicitly pinned)
-
-#### Scenario: Scheduler-created conversation is tagged with schedule and run ids
-
-- **GIVEN** a user-bucket item with `id: "conversations/test-bucket/.scheduler/sched_abc/run_001/gpt-4o__Morning briefing__uuid"`
+- **GIVEN** a conversation whose id matches the `.scheduler/{scheduleId}/{runId}` path pattern
+- **AND** that id is absent from the user's viewed-ids file
 - **WHEN** `GET /api/v1/conversations/list` is called
-- **THEN** the matching response item has `isScheduledTask: true`, `scheduleId: "sched_abc"`, `runId: "run_001"`
+- **THEN** that item has `isScheduledTask: true` and `isUnread: true`
 
-#### Scenario: Normal conversation has isScheduledTask false with no ids
+#### Scenario: Scheduler-created conversation already viewed is not marked unread
 
-- **GIVEN** a user-bucket item with `id: "conversations/test-bucket/gpt-4o__Morning briefing__uuid"`
+- **GIVEN** a conversation whose id matches the `.scheduler/{scheduleId}/{runId}` path pattern
+- **AND** that id is present in the user's viewed-ids file
 - **WHEN** `GET /api/v1/conversations/list` is called
-- **THEN** the matching response item has `isScheduledTask: false` and no `scheduleId`/`runId` fields
+- **THEN** that item has `isScheduledTask: true` and `isUnread: false`
+
+#### Scenario: Non-scheduler conversation omits isUnread
+
+- **GIVEN** a conversation whose id does not match the `.scheduler/{scheduleId}/{runId}` path pattern
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** that item has `isScheduledTask: false` and `isUnread` omitted
+
+#### Scenario: Viewed-ids fetch failure falls back to unread for scheduler items
+
+- **GIVEN** the viewed-ids bucket read fails (network error or error response)
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** the response is still 200, a warning is logged, and every scheduler-created item has `isUnread: true`
 
 ---
 
@@ -461,7 +465,7 @@ Error codes:
 
 ### Requirement: POST /api/v1/conversations sets unsuffixed message-derived name
 
-On `POST /api/v1/conversations`, `ConversationService.createConversation` SHALL set `conversation.name` to the base name from `getConversationName('New chat', firstMessage)` without calling `resolveUniqueConversationName`.
+On `POST /api/v1/conversations`, `ConversationLifecycleService.createConversation` (invoked via the `ConversationService` facade) SHALL set `conversation.name` to the base name from `getConversationName('New chat', firstMessage)` without calling `resolveUniqueConversationName`.
 
 The service SHALL always persist the conversation at `{deploymentId}__{baseName}__{uuid}`, where `{uuid}` is freshly generated for this conversation, while keeping `conversation.name` as the unsuffixed base name. The UUID segment is unconditional: creation SHALL NOT perform a path-existence check for `{deploymentId}__{baseName}`. For versioned or multi-segment deployment IDs, the invariant is the trailing UUID rather than a fixed total number of `__`-separated segments. See the [auto-index-duplicate-names spec](../auto-index-duplicate-names/spec.md).
 
@@ -490,7 +494,7 @@ The service SHALL always persist the conversation at `{deploymentId}__{baseName}
 
 ### Requirement: saveConversation may trigger backend-only LLM rename after first reply
 
-`ConversationService.saveConversation` SHALL, after a successful DIAL Core persist, optionally invoke LLM conversation naming as defined in the [llm-conversation-naming spec](../llm-conversation-naming/spec.md).
+`ConversationPersistenceService.saveConversation` (invoked via the `ConversationService` facade) SHALL, after a successful DIAL Core persist, optionally invoke LLM conversation naming as defined in the [llm-conversation-naming spec](../llm-conversation-naming/spec.md).
 
 The rename is fire-and-forget: the `saveConversation` response MUST return immediately with the conversation as saved, without waiting for the LLM or rename to complete.
 
@@ -512,7 +516,7 @@ No new HTTP endpoint is added for LLM naming.
 
 ### Requirement: saveConversation preserves LLM display name from stale client saves
 
-Before persisting, `ConversationService.saveConversation` SHALL call `preserveLlmDisplayName`: when the stored conversation already has `llmNamingDone: true` and a non-empty `name`, the save body MUST keep that server `name` and `llmNamingDone: true` even if the client sent a stale message-derived title.
+Before persisting, `ConversationPersistenceService.saveConversation` SHALL call `preserveLlmDisplayName`: when the stored conversation already has `llmNamingDone: true` and a non-empty `name`, the save body MUST keep that server `name` and `llmNamingDone: true` even if the client sent a stale message-derived title.
 
 #### Scenario: Stale client save does not overwrite LLM title
 
@@ -524,7 +528,7 @@ Before persisting, `ConversationService.saveConversation` SHALL call `preserveLl
 
 ### Requirement: Conversation list uses stored display name for writable items
 
-`ConversationService.listConversations` SHALL enrich writable user-owned list items with `conversation.name` from `getConversation` when available, so list `title` reflects the stored display name (including LLM-renamed and manually-renamed titles), not only the filename-derived title.
+`ConversationListingService.listConversations` (invoked via the `ConversationService` facade) SHALL enrich writable user-owned list items with `conversation.name` from `getConversation` when available, so list `title` reflects the stored display name (including LLM-renamed and manually-renamed titles), not only the filename-derived title.
 
 The display-name resolution (`resolveListDisplayTitle`, also used by `getConversation`) SHALL treat a non-empty stored `name` as authoritative for the display title whenever the conversation is finally named (`llmNamingDone === true`), even when the filename-derived title diverges from `name`. A manual rename sets `llmNamingDone: true`, so a manually renamed conversation whose filename still encodes the old title SHALL display the new `name`. The prior heuristic that fell back to the filename-derived title when the stored `name` differed from the message-derived title MUST NOT override an authoritative stored `name`.
 

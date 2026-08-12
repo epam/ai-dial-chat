@@ -408,7 +408,7 @@ Successful cross-folder moves SHALL surface a success notification via `onNotifi
 
 **Accessibility**: the modal container SHALL use `aria-live="polite"` for the status text, matching the existing download/delete/rename overlay pattern in `DialFileManagerShell`. The cancel control SHALL be reachable via keyboard (native button, no custom tabindex handling needed).
 
-**RTL**: the modal reuses ui-kit's `DialPopup`/`DialSpinner` layout and the existing i18n-driven text; no physical-direction Tailwind classes are introduced, so no RTL-specific handling is required beyond inheriting `dir` from `<html>`.
+**RTL**: the modal reuses ui-kit's `DialPopup`/`Spinner` layout and the existing i18n-driven text; no physical-direction Tailwind classes are introduced, so no RTL-specific handling is required beyond inheriting `dir` from `<html>`.
 
 #### Scenario: Operation loader shown during copy
 

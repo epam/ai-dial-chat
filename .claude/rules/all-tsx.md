@@ -45,11 +45,11 @@ import { DialSearch } from '@epam/ai-dial-ui-kit';
 
 ### Spinner / loader
 
-**Never** use `DialLoader`. Use `DialSpinner` from `@epam/ai-dial-ui-kit` instead.
+**Never** use `DialLoader`. Use `Spinner` from `@epam/ai-dial-ui-kit` instead.
 
 ```tsx
 // Correct
-import { DialSpinner } from '@epam/ai-dial-ui-kit';
+import { Spinner } from '@epam/ai-dial-ui-kit';
 
 // Wrong
 import { DialLoader } from '@epam/ai-dial-ui-kit';
@@ -69,20 +69,18 @@ import { DialTab } from '@epam/ai-dial-ui-kit';
 
 ### Text fields (input, textarea, tag input)
 
-**Never** import `DialInput`, `DialTextarea`, or `DialTagInput` directly from `@epam/ai-dial-ui-kit`. Use the app-level wrappers from `libs/ai-dial-kit/src/components/{Input,Textarea,TagInput}/` instead, so the field's visual style (e.g. corner radius) is restyled once and stays consistent everywhere it's used, including in other `libs/*`:
+**Never** import `DialTagInput` directly from `@epam/ai-dial-ui-kit`. Use the app-level wrappers from `libs/ai-dial-kit/src/components/{Input,TagInput}/` instead, so the field's visual style (e.g. corner radius) is restyled once and stays consistent everywhere it's used, including in other `libs/*`:
 
-| Use case         | Component  |
-| ---------------- | ---------- |
-| Single-line text | `Input`    |
-| Multi-line text  | `Textarea` |
-| Free-entry tags  | `TagInput` |
+| Use case        | Component  |
+| --------------- | ---------- |
+| Free-entry tags | `TagInput` |
 
 ```tsx
 // Correct
-import { Input, Textarea, TagInput } from '@epam/ai-dial-kit';
+import { TagInput } from '@epam/ai-dial-kit';
 
 // Wrong — do not import directly from ui-kit
-import { DialInput, DialTextarea, DialTagInput } from '@epam/ai-dial-ui-kit';
+import { DialTagInput } from '@epam/ai-dial-ui-kit';
 ```
 
 ## Semantic HTML

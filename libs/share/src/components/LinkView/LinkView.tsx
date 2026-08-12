@@ -1,5 +1,5 @@
 import { CopyButton, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Input } from '@epam/ai-dial-kit';
+import { Input } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import styles from '../SharePopover/SharePopover.module.scss';
 

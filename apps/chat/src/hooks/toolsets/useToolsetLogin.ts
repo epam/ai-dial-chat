@@ -1,7 +1,7 @@
 import type {
   ToolsetLoginBodyDto,
   ToolsetLogoutBodyDto,
-} from '@epam/chat-api-client';
+} from '@epam/ai-dial-chat-api-client';
 import { useCallback } from 'react';
 import {
   ToolsetAuthTypes,
@@ -15,6 +15,7 @@ import {
   loginToolset,
   logoutToolset,
 } from '../../server-api/toolsets';
+import { emitToolsetLoginSuccess } from '../../utils/toolset-login-events';
 import {
   initiateOAuthLogin,
   navigateToolsetOAuthPopup,
@@ -157,6 +158,7 @@ export const useToolsetLogin = (): {
       );
 
       if (result.type === ToolsetOAuthResultType.Success) {
+        emitToolsetLoginSuccess({ toolsetId, credentialsLevel });
         return { type: ToolsetLoginOutcomeType.Success };
       }
       if (result.type === ToolsetOAuthResultType.Failure) {
@@ -176,6 +178,7 @@ export const useToolsetLogin = (): {
             ? refreshed.authSettings?.userLevelAuthStatus
             : refreshed.authSettings?.globalAuthStatus;
         if (statusField === 'SIGNED_IN') {
+          emitToolsetLoginSuccess({ toolsetId, credentialsLevel });
           return { type: ToolsetLoginOutcomeType.Success };
         }
       } catch {
@@ -210,6 +213,7 @@ export const useToolsetLogin = (): {
           apiKey: apiKey?.trim(),
         };
         await loginToolset(toolsetId, body);
+        emitToolsetLoginSuccess({ toolsetId, credentialsLevel });
         return { type: ToolsetLoginOutcomeType.Success };
       } catch {
         return { type: ToolsetLoginOutcomeType.Failure };

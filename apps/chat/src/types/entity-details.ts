@@ -148,6 +148,8 @@ export interface AgentCapabilityLink {
 
 export interface AgentApiDetails {
   endpointUrl?: string;
+  /** Endpoint-type variants (Azure OpenAI / Anthropic / Responses), same shape as `ModelApiDetails.endpoints`. */
+  endpoints?: ModelEndpoint[];
   requestExample?: string;
   responseSchema?: string;
 }

@@ -100,7 +100,6 @@
     "details": {
       "tabTools": "Tools",
       "tabLimits": "Limits",
-      "dailyLimit": "Daily limit",
       "api": {
         "resourceSection": "Resource",
         "snippetSection": "Code snippet",
@@ -146,9 +145,38 @@
         "logoutSuccessUser": "You have successfully logged out of the \"{{name}}\" version {{version}} using your personal credentials."
       },
       "delete": {
+        "confirmTitle": "Delete",
+        "confirmMessage": "Are you sure you want to delete \"{{name}}\"? This action is permanent and cannot be undone.",
+        "consequenceSharedConfigurations": "All shared configurations will be lost",
+        "consequenceUsersLoseAccess": "Users who rely on it will lose access",
+        "consequenceCannotBeUndone": "Cannot be undone",
         "error": "Failed to delete. Please try again.",
         "successTitle": "Deleted successfully",
         "success": "\"{{name}}\" was deleted."
+      },
+      "unshare": {
+        "confirmTitle": "Remove from My List",
+        "confirmMessage": "Remove \"{{name}}\" from your list? You'll need a new invitation to access it again.",
+        "consequenceYouLoseAccess": "You will lose access to this item",
+        "consequenceOthersKeepAccess": "Other people keep their access",
+        "consequenceNeedNewInvitation": "You will need a new invitation to get it back",
+        "removingStatus": "Removing…",
+        "errorTitle": "Removal failed",
+        "error": "Failed to remove \"{{name}}\". Please try again.",
+        "successTitle": "Removed from My List",
+        "success": "\"{{name}}\" was removed from your list."
+      },
+      "revokeShare": {
+        "confirmTitle": "Revoke access?",
+        "confirmMessage": "Revoke shared access to \"{{name}}\"? Anyone you shared it with will lose access.",
+        "consequenceOthersLoseAccess": "Everyone you shared it with loses access",
+        "consequenceLinksStopWorking": "Existing share links stop working",
+        "consequenceKeepsYourCopy": "You keep full access — nothing is deleted",
+        "revokingStatus": "Revoking access…",
+        "successTitle": "Access revoked",
+        "success": "Shared access to \"{{name}}\" was revoked.",
+        "errorTitle": "Revoke failed",
+        "error": "Failed to revoke access to \"{{name}}\". Please try again."
       },
       "connect": {
         "toolsetTitle": "Connect toolset",
@@ -242,7 +270,11 @@
     "copyUrl": "Copy URL",
     "logIn": "Log in",
     "retry": "Retry",
-    "publish": "Publish"
+    "publish": "Publish",
+    "manage": "Manage",
+    "removeFromMyList": "Remove from My List",
+    "revokeAccess": "Revoke access",
+    "revokeAccessWithCount": "Revoke access ({{count}})"
   },
   "sidebar": {
     "base": {
@@ -314,13 +346,21 @@
       "deleteAllSuccess": "All conversations have been deleted successfully."
     },
     "unshare": {
-      "unshareConfirmTitle": "Delete conversation?",
-      "unshareConfirmMessage": "Delete \"{{name}}\" from your conversations? You'll need a new invitation to access it again.",
-      "unshareSuccessTitle": "Deleted",
-      "unshareSuccess": "\"{{name}}\" was deleted from your conversations.",
-      "unshareError": "Failed to delete \"{{name}}\". Please try again."
+      "unshareConfirmTitle": "Remove from My List?",
+      "unshareConfirmMessage": "Remove \"{{name}}\" from your list? You'll need a new invitation to access it again.",
+      "unshareSuccessTitle": "Removed from My List",
+      "unshareSuccess": "\"{{name}}\" was removed from your list.",
+      "unshareError": "Failed to remove \"{{name}}\". Please try again."
     },
-    "taskBadgeLabel": "TASK"
+    "revoke": {
+      "revokeConfirmTitle": "Revoke access?",
+      "revokeConfirmMessage": "Revoke shared access to \"{{name}}\"? Anyone you shared it with will lose access. Your conversation is not deleted.",
+      "revokeSuccessTitle": "Access revoked",
+      "revokeSuccess": "Shared access to \"{{name}}\" was revoked.",
+      "revokeError": "Failed to revoke access to \"{{name}}\". Please try again."
+    },
+    "taskBadgeLabel": "TASK",
+    "unreadIndicatorLabel": "Unread"
   },
   "conversationPublish": {
     "panelAriaLabel": "Publish conversation",
@@ -329,6 +369,12 @@
     "emptyFolderNameError": "Folder name cannot be empty.",
     "invalidFolderNameError": "Folder name contains invalid characters.",
     "duplicateFolderNameError": "A folder with this name already exists."
+  },
+  "publish": {
+    "failedTitle": "Publish failed",
+    "failedMessage": "The publish request was not submitted. Please try again.",
+    "networkErrorMessage": "The publish request was not submitted because your internet connection was lost. Please check your connection and try again.",
+    "submitErrorCallout": "Publishing failed. Please try again."
   },
   "publishAccessRules": {
     "heading": "Allow access if all match",
@@ -403,6 +449,7 @@
     "overlayProvidersError": "Could not load sign-in providers. Please try again.",
     "logOutConfirmTitle": "Log out?",
     "logOutConfirmDescription": "Are you sure you want to log out?",
+    "loggingOutStatus": "Logging out",
     "userAvatar": "User avatar"
   },
   "settings": {
@@ -489,19 +536,15 @@
       "noResultsLabel": "No results",
       "errorLabel": "Failed to load scheduled tasks",
       "retryLabel": "Retry",
-      "sharedSectionTitle": "Shared",
       "loadingMoreLabel": "Loading more scheduled tasks…"
     },
     "card": {
       "newBadgeLabel": "NEW",
-      "actionsLabel": "More actions",
       "editActionLabel": "Edit",
-      "runNowActionLabel": "Run now",
-      "deleteActionLabel": "Delete",
       "scheduleDailyAt": "Every day at {{time}}",
       "scheduleWeeklyAt": "Every {{day}} at {{time}}",
       "scheduleMonthlyAt": "Monthly on day {{day}} at {{time}}",
-      "scheduleHourlyAt": "Hourly at :{{minute}}",
+      "scheduleHourlyAt": "Hourly, {{minute}} min past the hour",
       "scheduleEveryNMinutes_one": "Every minute",
       "scheduleEveryNMinutes_other": "Every {{count}} minutes",
       "scheduleOnceAt": "Once on {{date}}",
@@ -514,24 +557,29 @@
       "detailsSectionSubtitle": "Basic info about this scheduled task",
       "configurationSectionTitle": "Configuration",
       "configurationSectionSubtitle": "Write custom instructions for this task",
-      "scheduleSectionLabel": "Schedule",
-      "scheduleTypeOnce": "Once",
-      "scheduleTypeRecurring": "Recurring",
-      "scheduleTypeAriaLabel": "Schedule type",
       "runAtLabel": "Run at",
       "runAtRequired": "Choose a future date and time",
-      "frequencyLabel": "Frequency",
-      "frequencyDaily": "Daily",
-      "frequencyWeekly": "Weekly",
-      "frequencyMonthly": "Monthly",
+      "repeatLabel": "Repeat",
+      "repeatOneTime": "One-time",
+      "repeatHourly": "Hourly",
+      "repeatDaily": "Daily",
+      "repeatWeekly": "Weekly",
+      "repeatMonthly": "Monthly",
       "timeLabel": "Time",
       "timeInvalid": "Enter a valid time",
       "dayOfWeekLabel": "Day of week",
       "dayOfWeekRequired": "Day of week is required",
       "dayOfMonthLabel": "Day of month",
       "dayOfMonthRequired": "Day of month is required",
+      "minuteLabel": "Minutes past the hour",
+      "minuteInvalid": "Enter a minute between 0 and 59",
+      "startDateLabel": "Start date",
+      "startDatePlaceholder": "Pick start date",
+      "endDateLabel": "End date",
+      "endDatePlaceholder": "Pick end date",
+      "endDateBeforeStartError": "End date must be after start date",
       "modelOrAgentLabel": "Model or Agent",
-      "modelPlaceholder": "Select a model",
+      "modelPlaceholder": "Select Model or Agent",
       "modelRequired": "Model is required",
       "descriptionLabel": "Description",
       "descriptionMaxLengthError": "Description must be 500 characters or fewer",
@@ -539,6 +587,45 @@
       "promptRequired": "Instructions are required",
       "successNotification": "Scheduled task created",
       "errorNotification": "Failed to create the scheduled task"
+    },
+    "detail": {
+      "repeatsLabel": "Repeats",
+      "activeWindowLabel": "Active",
+      "activeWindowValue": "{{startDate}} – {{endDate}}",
+      "nextRunLabel": "Next run: {{value}}",
+      "historyTitle": "History",
+      "historyEmptyLabel": "No runs yet",
+      "historyErrorLabel": "Failed to load history",
+      "historyLoadingMoreLabel": "Loading more runs…",
+      "historyTodayAt": "today at {{time}}",
+      "historyDateAt": "{{date}} at {{time}}",
+      "historyDurationSuffix": "({{seconds}}s)",
+      "statusSuccess": "Succeeded",
+      "statusError": "Failed",
+      "statusInProgress": "Running",
+      "statusMissed": "Missed",
+      "errorLabel": "Failed to load the scheduled task",
+      "activeStatusLabel": "Active",
+      "pauseSuccess": "Task paused",
+      "resumeSuccess": "Task resumed",
+      "activeStatusUpdateError": "Failed to update the task's active status"
+    },
+    "edit": {
+      "pageTitle": "Edit scheduled task",
+      "unsupportedTriggerMessage": "This task's schedule can't be edited here yet.",
+      "successNotification": "Scheduled task updated",
+      "errorNotification": "Failed to update the scheduled task"
+    },
+    "conversationBanner": {
+      "loadingLabel": "Loading task details…",
+      "unavailableLabel": "Task details are unavailable",
+      "retryAriaLabel": "Retry loading task details",
+      "taskDetailsLabel": "Task details",
+      "taskDetailsAriaLabel": "View task details for {{taskName}}"
+    },
+    "conversationPanel": {
+      "modelLabel": "Model",
+      "currentRunLabel": "Current run"
     }
   },
   "dialFileManager": {
@@ -699,7 +786,14 @@
   },
   "announcementBanner": {
     "regionAriaLabel": "Announcement",
+    "regionAriaLabelWithTitle": "Announcement: {{title}}",
     "closeLabel": "Close announcement"
+  },
+  "announcementsPopover": {
+    "pillLabel_one": "+{{count}} announcement",
+    "pillLabel_other": "+{{count}} announcements",
+    "listAriaLabel": "Announcements",
+    "opensInNewTab": "(opens in a new tab)"
   },
   "notification": {
     "requestId": {
@@ -710,61 +804,18 @@
     }
   },
   "footerMessage": {
-    "regionAriaLabel": "Footer"
-  },
-  "footer": {
-    "requestApiKey": {
-      "title": "Request API Key",
-      "descriptionPrefix": "We are glad to provide API access for PoC, research, accelerators development purposes, and internal projects. It is also possible to use this as a very short-term solution for early development stages while you are spinning up your dedicated environment. Any kind of client external must use their own dedicated infrastructure, not this API - you can install DIAL there, see instructions at ",
-      "projectNameLabel": "Project name",
-      "projectNamePlaceholder": "Enter project name",
-      "projectNameDescription": "Use one from Delivery Central",
-      "streamNameLabel": "Stream Name",
-      "streamNamePlaceholder": "Enter stream name",
-      "streamNameDescription": "Use one from Delivery Central. Must be unique per key request.",
-      "projectLeadLabel": "Project Tech Lead responsible for API token usage",
-      "projectLeadPlaceholder": "lead@example.com",
-      "projectLeadDescription": "Please provide email",
-      "businessReasonLabel": "Business justification",
-      "businessReasonPlaceholder": "Describe the business justification",
-      "projectEndLabel": "End date of the project",
-      "accessScenarioLabel": "Access scenario description",
-      "accessScenarioPlaceholder": "Describe the access scenario",
-      "accessScenarioDescription": "By default, access to the model is available from EPAM VPN only. If you want to deploy your solution anywhere beyond your personal laptop, please describe your scenario.",
-      "workloadPatternLabel": "Cost and workload description",
-      "workloadPatternPlaceholder": "Describe the expected costs and workload",
-      "workloadPatternDescriptionPrefix": "We need to understand how much cost your solution will generate monthly, and your workload pattern in terms of requests quantity and tokens usage during standard and peak workloads. Please describe this.",
-      "workloadPatternCaptionPrefix": "Ensure you provided a \"max X USD/month\" metric. More information is available at ",
-      "checkboxGroupTitle": "Please acknowledge that your API usage should comply with:",
-      "checkboxGroupRequired": "Please acknowledge all items above",
-      "checkboxAzureLabel": "Azure Cognitive Service Terms and Conditions",
-      "checkboxEpamLabel": "Usage is compliant to EPAM company policies",
-      "checkboxClientLabel": "This key will not be used for client project production load",
-      "checkboxLocalLabel": "Local law regulations (if some)",
-      "fieldRequired": "This field is required",
-      "fieldTooLong": "Must be {{max}} characters or fewer",
-      "emailInvalid": "Please enter a valid email address",
-      "dateInvalid": "Must be a valid date",
-      "successTitle": "API Key requested successfully",
-      "errorTitle": "Failed to submit the request. Please try again."
-    },
-    "reportIssue": {
-      "title": "Report an Issue",
-      "issueTitleLabel": "Title",
-      "issueTitlePlaceholder": "Briefly describe the issue",
-      "descriptionLabel": "Description",
-      "descriptionPlaceholder": "Provide details about the issue",
-      "fieldRequired": "This field is required",
-      "fieldTooLong": "Must be {{max}} characters or fewer",
-      "successTitle": "Issue reported successfully",
-      "errorTitle": "Failed to report the issue. Please try again."
-    }
+    "regionAriaLabel": "Footer",
+    "versionAriaLabel": "Application version {{version}}"
   },
   "errorBoundary": {
     "heading": "Something went wrong",
     "description": "An unexpected error occurred. You can try again or reload the page.",
     "retryLabel": "Try again",
     "reloadLabel": "Reload the page"
+  },
+  "appUpdate": {
+    "heading": "New version available",
+    "message": "Reload the page to get the latest version."
   },
   "share": {
     "title": "Share",
@@ -796,9 +847,18 @@
     "versionPlaceholder": "e.g. 1.0.0",
     "topicsLabel": "Topics",
     "topicsPlaceholder": "Add a topic",
-    "introLabel": "Intro",
-    "introPlaceholder": "A short one-line pitch",
-    "introTooLong": "Intro must be 90 characters or fewer"
+    "locales": {
+      "summaryLabel": "Locales",
+      "rowLabel": "Locale",
+      "popupTitle": "Add locale",
+      "addLocaleLabel": "Add locale",
+      "languageLabel": "Language",
+      "nameLabel": "Name",
+      "namePlaceholder": "Enter name",
+      "descriptionLabel": "About",
+      "descriptionPlaceholder": "Enter brief description",
+      "deleteAriaLabel": "Delete locale"
+    }
   },
   "appsEditor": {
     "exitPreviewButton": "Exit preview",
@@ -943,6 +1003,8 @@
       "description": "Some fields are invalid or required fields are missing. Changes in those fields will not be saved. Exit and save only valid information?",
       "confirmLabel": "Save"
     },
+    "savingOverlay": "Saving in progress…",
+    "loadingOverlay": "Loading…",
     "error": {
       "createFailed": "Failed to create custom app. Please try again.",
       "saveFailed": "Failed to save custom app. Please try again.",

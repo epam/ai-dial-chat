@@ -1,6 +1,6 @@
 import type { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialLinkButton, DialSpinner } from '@epam/ai-dial-ui-kit';
+import { Spinner } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   type SyntheticEvent,
@@ -16,6 +16,7 @@ import type {
 } from '../../models/attachment-canvas';
 import { AttachmentContentType } from '../../types/attachment-canvas';
 import { CodeContent } from '../CodeContent/CodeContent';
+import styles from './HtmlContent.module.scss';
 
 /** Props for {@link HtmlContent}. */
 export interface HtmlContentProps {
@@ -32,10 +33,8 @@ export interface HtmlContentProps {
   title?: string;
   /** Syntax-highlight color theme forwarded to the source-view `CodeContent`. When omitted, `CodeContent` falls back to `CodeBlockTheme.Light`. */
   codeBlockTheme?: CodeBlockTheme;
-  /** Typography class applied to the "Open in new tab" button in the blocked-state panel. Defaults to `'dial-body-semi-text'`. */
+  /** Typography class applied to the "Open in new tab" link in the blocked-state panel. Defaults to `'dial-body-semi-text'`. */
   openInNewTabButtonTypographyClassName?: string;
-  /** Color class applied to the "Open in new tab" button in the blocked-state panel. Defaults to `'text-accent'`. */
-  openInNewTabButtonColorClassName?: string;
 }
 
 /** Renders HTML content inside a sandboxed iframe, or as highlighted source when `isSourceView` is true. */
@@ -47,7 +46,6 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
     title,
     codeBlockTheme,
     openInNewTabButtonTypographyClassName = 'dial-body-semi-text',
-    openInNewTabButtonColorClassName = 'text-accent',
   }) => {
     const {
       htmlFrameBlockedLabel = 'This page cannot be displayed in preview',
@@ -102,17 +100,24 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
         <div className="flex h-full flex-col items-center justify-center gap-3 p-4">
           <p className="text-center">{htmlFrameBlockedLabel}</p>
           {content.url != null && (
-            <DialLinkButton
-              label={htmlOpenInNewTabLabel}
-              onClick={() =>
-                window.open(content.url, '_blank', 'noopener,noreferrer')
-              }
+            /*
+             * A real anchor, not a button: the target is a URL the user must
+             * be able to middle-click, copy, or open in a background tab. The
+             * ui-kit has no anchor-rendering button component (`LinkButton`
+             * renders a `<button>`), so the link styling is applied here.
+             */
+            <a
+              href={content.url}
+              target="_blank"
+              rel="noopener noreferrer"
               className={mergeClasses(
                 'underline hover:no-underline',
+                styles.openInNewTabButton,
                 openInNewTabButtonTypographyClassName,
-                openInNewTabButtonColorClassName,
               )}
-            />
+            >
+              {htmlOpenInNewTabLabel}
+            </a>
           )}
         </div>
       );
@@ -126,7 +131,7 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
       <div className="relative h-full">
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <DialSpinner />
+            <Spinner />
           </div>
         )}
         {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- onLoad/onError are resource events, not mouse/keyboard listeners */}

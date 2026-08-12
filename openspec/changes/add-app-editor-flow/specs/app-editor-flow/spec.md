@@ -177,7 +177,7 @@ The page header SHALL be the shared `EditorHeader` component (see "Shared editor
 #### Scenario: Save failure on Settings step shows inline error and stays on the page
 
 - **WHEN** the iframe posts back a `SAVE_ERROR` message (with or without an `error` string)
-- **THEN** `isSaving` becomes false, `saveError` is set to the provided error or `appsEditor.error.saveFailed`, and a `DialNotification` with that message is rendered
+- **THEN** `isSaving` becomes false, `saveError` is set to the provided error or `appsEditor.error.saveFailed`, and a `Notification` with that message is rendered
 - **AND** the page does NOT navigate away
 
 ---
@@ -234,10 +234,10 @@ It SHALL render:
 
 **Left column** — form fields (scrollable, `w-1/2`, `border-e`):
 
-- **Name** (`DialInput`, required): maps to `CreateApplicationBodyDto.name`.
-- **Description** (`DialTextarea`, optional): maps to `CreateApplicationBodyDto.description`.
-- **Icon URL** (`DialInput`, optional): maps to `CreateApplicationBodyDto.iconUrl`.
-- **Version** (`DialInput`, optional): maps to `CreateApplicationBodyDto.version`.
+- **Name** (`Input`, required): maps to `CreateApplicationBodyDto.name`.
+- **Description** (`Textarea`, optional): maps to `CreateApplicationBodyDto.description`.
+- **Icon URL** (`Input`, optional): maps to `CreateApplicationBodyDto.iconUrl`.
+- **Version** (`Input`, optional): maps to `CreateApplicationBodyDto.version`.
 - **Topics** (`DialTagInput`, optional): maps to `CreateApplicationBodyDto.topics`.
 
 `GeneralForm` no longer renders its own Cancel/Next footer buttons — those live in the shared `EditorHeader` (see "Shared editor header component"). Instead, `GeneralForm` SHALL be wrapped in `forwardRef<GeneralFormHandle, Props>` and expose, via `useImperativeHandle`:
@@ -279,7 +279,7 @@ interface Props {
 }
 ```
 
-**Accessibility**: Each input uses `DialInput`/`DialTextarea`/`DialTagInput` label props for associated labels.
+**Accessibility**: Each input uses `Input`/`Textarea`/`DialTagInput` label props for associated labels.
 
 #### Scenario: Empty name prevents submission
 
@@ -363,7 +363,7 @@ interface Props {
   - `providerId` from `useUser().user?.providerId`
   - `themeId` from `useTheme().currentTheme`
 - Render a full-height `<iframe>` (`className="size-full border-none"`).
-- Show a `<DialSpinner />` overlay until the iframe dispatches `load` or fires a `readyToInteract` postMessage event; after either, hide the spinner.
+- Show a `<Spinner />` overlay until the iframe dispatches `load` or fires a `readyToInteract` postMessage event; after either, hide the spinner.
 - Add a `window.addEventListener('message', handleMessage)` listener on mount and remove it on unmount (`useEffect` cleanup).
 - In `handleMessage`, after verifying `event.origin` matches `schema.editorUrl`'s origin:
   - `event.data.type === \`${displayName}/${AppsEditorEvent.ReadyToInteract}\`` → set loading=false
@@ -404,17 +404,17 @@ interface Props {
 #### Scenario: Spinner shown until iframe loads
 
 - **WHEN** `AppEditorIframe` mounts
-- **THEN** the `DialSpinner` is visible
+- **THEN** the `Spinner` is visible
 
 #### Scenario: Spinner hidden after iframe load event
 
 - **WHEN** the iframe fires the `load` event
-- **THEN** the `DialSpinner` is no longer rendered
+- **THEN** the `Spinner` is no longer rendered
 
 #### Scenario: Spinner hidden after readyToInteract postMessage
 
 - **WHEN** a `message` event arrives with `data.type = "<displayName>/readyToInteract"`
-- **THEN** the `DialSpinner` is no longer rendered
+- **THEN** the `Spinner` is no longer rendered
 
 #### Scenario: onUpdated called on updatedApplicationSuccess
 

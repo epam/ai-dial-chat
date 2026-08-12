@@ -40,6 +40,14 @@ Every lib under `libs/` must have a `README.md` at its root. The README must inc
 
 Do not copy Nx scaffold content (`This library was generated with Nx`) into the README — replace it entirely.
 
+**Usage examples must compile against the current API.** Every component name, prop name, and type name in a README example must exist with that exact spelling and shape. When a prop is renamed, removed, or a required prop is added, update the README in the same change. A README that documents a prop the component never had is worse than no README — treat it as part of the public contract, not prose.
+
+```tsx
+// Wrong — `buttons` and `StarterButtonsAriaLabels` do not exist; the real API is
+// `starters` / `onSelect` / `StarterButtonsLabels`
+<StarterButtons buttons={buttons} ariaLabels={ariaLabels} />
+```
+
 ## No i18n inside libs
 
 **Never** use `useTranslation` or `t()` from `react-i18next` in `libs/`. Pass all user-visible strings as props with English default values instead. i18n is the responsibility of the consuming app, not the lib.
@@ -72,6 +80,22 @@ export const StarterButtons: FC<StarterButtonsProps> = ({ ... }) => { ... };
 ```
 
 When a prop has a default value (via destructuring default or `defaultProps`), its doc comment must state the default, e.g. `/** CSS class applied to the title. Defaults to \`'dial-h1-text'\`. \*/`. A doc that describes the prop's purpose but omits its default is incomplete.
+
+**The doc must match what the code does.** Read the implementation before writing or editing a doc — a stated default, target element, or behaviour that the code does not implement is a defect, not a wording nit, because callers act on it. When you change behaviour, update the doc in the same edit.
+
+```ts
+// Wrong — the class is applied to the panel root, not the title, and has no default
+/** CSS class applied to the title element. Defaults to `'dial-body-semi-bold-text'`. */
+fontClassName?: string;
+
+// Wrong — nothing in the lib sorts; the host sorts and passes `items` pre-ordered
+/** Sort by `sortValues.nextRunAt` ascending — earliest next run first. */
+FirstToRun = 'firstToRun',
+
+// Wrong — the individual fields are ignored *always*, not only when `fontClassName` is set
+/** A single class applied instead of individual typography fields. When set, those fields are ignored. */
+fontClassName?: string;
+```
 
 ### JSDoc brevity rules
 
@@ -126,13 +150,66 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ...
 export const CollapsedGroup: FC<CollapsedGroupProps> = ...
 ```
 
+## Every declared prop must be read
+
+A prop, label, or model field that nothing reads is a silent lie in the public API: hosts populate it, translators translate it, and it changes nothing. Before adding a field — and before finishing a change that renames one — confirm something consumes it. When a parent passes labels down to a child, thread the field through every intermediate layer; a label declared on the parent's `*Labels` but never forwarded leaves the child on its hardcoded English default, defeating the no-i18n-in-libs rule.
+
+```tsx
+// Wrong — declared, hosts must populate it, nothing ever reads it
+export interface ScheduledTaskItem {
+  /** Values used to sort this item. */
+  sortValues: ScheduledTaskSortValues; // the lib never sorts
+}
+
+// Wrong — `copiedLabel` exists on the child but the parent never forwards it,
+// so the child always announces its hardcoded English default
+<SourcesSection copyLabel={labels.copySourceLabel} />
+
+// Correct — the parent's labels reach the child
+<SourcesSection
+  copyLabel={labels.copySourceLabel}
+  copiedLabel={labels.sourceCopiedLabel}
+/>
+```
+
+The same applies to a `*Colors` field whose CSS variable no stylesheet reads, and to a `*Typography` field the component never applies — see the dead-style checks in `openspec/lib-styling-guide.md`.
+
+## Public API surface
+
+**Every type reachable through a public prop must itself be exported from `index.ts`.** If `FooProps.labels` is typed `FooLabels`, a consumer building that object needs to name the type. Exporting the props interface but not its nested `*Labels` / `*Colors` / `*Typography` / `*Styles` types forces callers into `Parameters<>` gymnastics or untyped literals.
+
+```ts
+// Wrong — SidebarPanelProps.labels is required, but its type cannot be named
+export type {
+  SidebarPanelProps,
+  SidebarPanelStyles,
+} from './models/panel-props';
+
+// Correct
+export type {
+  SidebarPanelProps,
+  SidebarPanelStyles,
+  SidebarPanelLabels,
+} from './models/panel-props';
+```
+
+**Do not `export` a symbol used only inside its own file.** An `export` that no other module imports and `index.ts` does not re-export widens the apparent API for nothing and hides genuinely dead code from review.
+
+```tsx
+// Wrong — only used by the three call sites in this same file
+export const ActionButton: FC<ActionProps> = ({ ... }) => { ... };
+
+// Correct
+const ActionButton: FC<ActionProps> = ({ ... }) => { ... };
+```
+
 ## CSS custom property theming with `buildCssVars`
 
 Lib components expose color overrides as CSS custom properties set via `buildCssVars` from `@epam/ai-dial-chat-shared`. The pattern has three parts.
 
 ### Colors interface
 
-Define a `*Colors` interface whose properties map one-to-one to the CSS vars used in the component's `.module.scss`. Every `--var-name` in the SCSS must have a corresponding entry — no orphaned vars.
+Define a `*Colors` interface whose properties map one-to-one to the CSS vars used in the component's `.module.scss`. The mapping must hold in **both** directions: every `--var-name` read in the SCSS needs an interface entry, and every entry passed to `buildCssVars` needs a stylesheet that reads it. A var set from TypeScript that no SCSS consumes is a prop that silently does nothing — see the dead-style checks in `openspec/lib-styling-guide.md`.
 
 ```ts
 export interface StagesPanelColors {

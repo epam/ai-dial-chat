@@ -13,10 +13,10 @@ import type { CatalogItem } from './catalog-item';
 export interface ItemDetailsTexts {
   /** "Share" action button label. Default: `'Share'`. */
   shareLabel?: string;
-  /** "Connect" action button label, used for every entity type. Default: `'Connect'`. */
-  connectLabel?: string;
-  /** Caption above the intro/description text. Default: `'Intro'`. */
-  introLabel?: string;
+  /** "Connect" tab label (resource ID, endpoint, and code snippets). Default: `'Connect'`. */
+  tabConnectLabel?: string;
+  /** Accessible label for the icon-only "Manage" button (opens the Edit/Publish/Delete menu). Default: `'Manage'`. */
+  manageActionLabel?: string;
   /** "About" tab label. Default: `'About'`. */
   tabAboutLabel?: string;
   /** "Overview" tab label. Default: `'Overview'`. */
@@ -25,8 +25,6 @@ export interface ItemDetailsTexts {
   tabPricingLabel?: string;
   /** "Limits" tab label. Default: `'Limits'`. */
   tabLimitsLabel?: string;
-  /** "API" tab label. Default: `'API'`. */
-  tabApiLabel?: string;
   /** Accessible label for the details panel `role="dialog"`. Default: `'Item details'`. */
   ariaLabel?: string;
   /** Accessible label for the close button. Default: `'Close'`. */
@@ -55,18 +53,16 @@ export interface ItemDetailsTexts {
   hasPrimaryAction?: boolean;
   /** "Edit" action button label. Default: `'Edit'`. */
   editActionLabel?: string;
-  /** Label above the daily-limit progress bar. Default: `'Daily limit'`. */
-  dailyLimitLabel?: string;
   /** "Resource" section heading in the API tab. Default: `'Resource'`. */
   apiResourceSectionLabel?: string;
   /** "Code snippet" section heading in the API tab. Default: `'Code snippet'`. */
   apiSnippetSectionLabel?: string;
   /** "Model ID" row label in the API tab. Default: `'Model ID'`. */
   apiModelIdLabel?: string;
-  /** "Endpoint" section heading in the API tab (multi-endpoint selector). Default: `'Endpoint'`. */
-  apiEndpointSectionLabel?: string;
-  /** URL row label inside each endpoint option. Default: `'Endpoint'`. */
+  /** Title shown in the single-endpoint code block's header in the Connect tab. Default: `'Endpoint'`. */
   apiEndpointLabel?: string;
+  /** "Endpoint" section heading above the multi-endpoint selector in the Connect tab. Default: `'Endpoint'`. */
+  apiEndpointSectionLabel?: string;
   /** "Request example" row label in the API tab. Default: `'Request example'`. */
   apiRequestExampleLabel?: string;
   /** "Response schema" row label in the API tab. Default: `'Response schema'`. */
@@ -117,21 +113,78 @@ export interface ItemDetailsTexts {
   deleteActionLabel?: string;
   /** Status text announced to assistive tech while a delete is in progress. Default: `'Deleting'`. */
   deletingStatusLabel?: string;
+  /** Title of the delete confirmation step. Default: the `deleteActionLabel` value. */
+  deleteConfirmTitle?: string;
+  /**
+   * Returns the delete confirmation's body copy, given the item's display
+   * name. Default:
+   * `(name) => \`Are you sure you want to delete ${name}? This action is permanent and cannot be undone.\`` (with the name emphasized).
+   */
+  deleteConfirmMessage?: (name: string) => ReactNode;
+  /**
+   * Consequences listed as bullets in the delete confirmation. Default:
+   * `['All shared configurations will be lost', 'Users who rely on it will lose access', 'Cannot be undone']`.
+   * Pass `[]` to render no list.
+   */
+  deleteConfirmConsequences?: string[];
+  /** Recipient-side "Remove from My List" action and confirmation label. Default: `'Remove from My List'`. */
+  unshareLabel?: string;
+  /** Title of the confirmation step shown before removing a shared item. Default: `'Remove from My List'`. */
+  unshareConfirmTitle?: string;
+  /**
+   * Returns the removal confirmation's body copy, given the item's display
+   * name. Default:
+   * `(name) => \`Remove ${name} from your list? You'll need a new invitation to access it again.\`` (with the name emphasized).
+   */
+  unshareConfirmMessage?: (name: string) => ReactNode;
+  /**
+   * Consequences listed as bullets in the removal confirmation. Default:
+   * `['You will lose access to this item', 'Other people keep their access', 'You will need a new invitation to get it back']`.
+   * Pass `[]` to render no list.
+   */
+  unshareConfirmConsequences?: string[];
+  /** Status text announced to assistive tech while a removal is in progress. Default: `'Removing'`. */
+  unsharingStatusLabel?: string;
+  /** Owner-side "Revoke access" action and confirmation label. Default: `'Revoke access'`. */
+  revokeShareLabel?: string;
+  /**
+   * Returns the "Revoke access" menu label when the number of users holding
+   * access is known, so the owner can see the blast radius before opening the
+   * confirmation. Falls back to `revokeShareLabel` when the count is unknown.
+   * Default: `(count) => \`Revoke access (${count})\``.
+   */
+  revokeShareLabelWithCount?: (count: number) => string;
+  /** Title of the confirmation step shown before revoking everyone's shared access. Default: `'Revoke access'`. */
+  revokeShareConfirmTitle?: string;
+  /**
+   * Returns the revoke confirmation's body copy, given the item's display
+   * name. Default:
+   * `(name) => \`Revoke shared access to ${name}? Anyone you shared it with will lose access.\`` (with the name emphasized).
+   */
+  revokeShareConfirmMessage?: (name: string) => ReactNode;
+  /**
+   * Consequences listed as bullets in the revoke confirmation. Default:
+   * `['Everyone you shared it with loses access', 'Existing share links stop working', 'You keep full access — nothing is deleted']`.
+   * Pass `[]` to render no list.
+   */
+  revokeShareConfirmConsequences?: string[];
+  /** Status text announced to assistive tech while a revoke is in progress. Default: `'Revoking access'`. */
+  revokingShareStatusLabel?: string;
+  /** Status text announced to assistive tech while a logout is in progress. Default: `'Logging out'`. */
+  loggingOutStatusLabel?: string;
+  /** Generic "Cancel" label, used by every confirmation step. Default: `'Cancel'`. */
+  cancelLabel?: string;
 }
 
 /** Typography class overrides for `DetailsPanel` text elements. */
 export interface ItemDetailsTypography {
-  /** Typography class for the entity name. Default: `'dial-body-semi-text text-primary'`. */
+  /** Typography class for the entity name. Default: `'dial-body-semi-text'`. */
   nameClassName?: string;
-  /** Typography class for the provider label below the entity name. Default: `'dial-tiny-text text-secondary'`. */
-  providerClassName?: string;
   /** Typography class for the version string. Default: `'dial-tiny-text'`. */
   versionClassName?: string;
-  /** Typography class for the intro section caption. Default: `'dial-caption-text'`. */
-  introCaptionClassName?: string;
-  /** Typography class for section headings inside the intro/description content. Default: `'dial-small-semi-text'`. */
+  /** Typography class for section headings inside the description content. Default: `'dial-small-semi-text'`. */
   contentHeadingClassName?: string;
-  /** Typography class for the intro/description body text. Default: `'dial-small-text'`. */
+  /** Typography class for the description body text. Default: `'dial-small-text'`. */
   contentClassName?: string;
   /** Typography class for Overview section headings. Default: `'dial-caption-text'`. */
   overviewSectionClassName?: string;
@@ -145,14 +198,78 @@ export interface ItemDetailsTypography {
   folderLabelClassName?: string;
   /** Typography class applied to the leaf (last) folder path segment. Default: `'dial-tiny-semi-text'`. */
   folderLeafClassName?: string;
-  /** Typography class for the credentials section's signed-in/signed-out status label. Default: `'dial-small-semi-text text-primary'`. */
+  /** Typography class for the credentials section's signed-in/signed-out status label. Default: `'dial-small-semi-text'`. */
   credentialsStatusLabelClassName?: string;
+  /** Typography class for a confirmation step's body copy and consequence bullets. Default: `'dial-small-text'`. */
+  confirmMessageClassName?: string;
+}
+
+/**
+ * Color overrides for `DetailsPanel` and everything it renders, applied as CSS
+ * custom properties on the panel root so they cascade into the nested header,
+ * credentials, summary, spec-grid and tools sections.
+ */
+export interface ItemDetailsColors {
+  /** Backdrop overlay color behind the panel. Fallback: `--bg-backdrop`. */
+  backdrop?: string;
+  /** Panel surface background. Fallback: `--bg-layer-raised`. */
+  background?: string;
+  /** Panel's leading-edge border color (desktop only). Fallback: `--stroke-secondary`. */
+  border?: string;
+  /** Horizontal divider color between panel sections. Fallback: `--stroke-tertiary`. */
+  divider?: string;
+  /** Scrollbar thumb color of the scrollable content area. Fallback: `--stroke-secondary`. */
+  scrollbar?: string;
+  /** Shimmer color of the tab-row loading skeleton. Fallback: `--bg-layer-4`. */
+  skeleton?: string;
+  /** Entity name text color in the header. Fallback: `--text-primary`. */
+  nameText?: string;
+  /** Title text color of a sub-view (publish or a confirmation step). Fallback: `--text-primary`. */
+  publishTitleText?: string;
+  /** Border color of the "current version" tag. Fallback: `--stroke-tertiary`. */
+  versionTagBorder?: string;
+  /** Background color of the "current version" tag. Fallback: `--bg-accent-primary-alpha`. */
+  versionTagBackground?: string;
+  /** Text color of the "current version" tag. Fallback: `--text-accent`. */
+  versionTagText?: string;
+  /** Credentials signed-in/signed-out status label color. Fallback: `--text-primary`. */
+  credentialsStatusText?: string;
+  /** Heading color of the API section. Fallback: `--text-secondary`. */
+  apiHeadingText?: string;
+  /** Divider color between tool entries. Fallback: `--stroke-tertiary`. */
+  toolsDivider?: string;
+  /** Tool description text color. Fallback: `--text-secondary`. */
+  toolsDescriptionText?: string;
+  /** Spec-grid outer border color. Fallback: `--stroke-secondary`. */
+  gridBorder?: string;
+  /** Spec-grid header text color. Fallback: `--text-secondary`. */
+  gridHeaderText?: string;
+  /** Spec-grid header background. Fallback: `--bg-layer-1`. */
+  gridHeaderBackground?: string;
+  /** Spec-grid cell text color. Fallback: `--text-primary`. */
+  gridCellText?: string;
+  /** Spec-grid cell top-border color. Fallback: `--stroke-secondary`. */
+  gridCellDivider?: string;
+  /** Spec-grid even-row background. Fallback: `--bg-layer-7`. */
+  gridRowEvenBackground?: string;
+  /** `InfoCard` surface color in its `Info` variant. Fallback: `--bg-info`. */
+  infoCardBackground?: string;
+  /** `InfoCard` surface color in its `Danger` variant. Fallback: `--bg-error`. */
+  infoCardDangerBackground?: string;
+  /** Confirmation body-copy text color. Fallback: `--text-primary`. */
+  confirmMessageText?: string;
+  /** Confirmation consequence-bullet text color. Fallback: `--text-secondary`. */
+  confirmConsequenceText?: string;
+  /** Top border color of the confirmation action row. Fallback: `--stroke-tertiary`. */
+  confirmFooterBorder?: string;
 }
 
 /** Grouped style overrides for `DetailsPanel`. */
 export interface ItemDetailsStyles {
   /** Typography class overrides for text elements. */
   typography?: ItemDetailsTypography;
+  /** Color overrides applied as CSS custom properties on the panel root. */
+  colors?: ItemDetailsColors;
 }
 
 /** Props for `DetailsPanel`. */
@@ -204,6 +321,12 @@ export interface DetailsPanelProps {
   ) => Promise<void>;
   /** Called after a successful publish; use this to surface a success notification. */
   onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
+  /** Called with the rejection reason when a publish request fails; use this to surface an error notification. */
+  onPublishError?: (
+    item: CatalogItem,
+    folderPath: string[],
+    error: unknown,
+  ) => void;
   /** Called when the user confirms a new folder name in the publish flow. */
   onCreatePublishFolder?: (parentPath: string[], name: string) => void;
   /** Text overrides forwarded to the publish flow. */
@@ -227,17 +350,6 @@ export interface DetailsPanelProps {
    * Absent means the built-in rule alone decides.
    */
   isShareVisible?: (item: CatalogItem) => boolean;
-  /**
-   * Renders the Connect popover content anchored to the Connect button. When
-   * absent, the Connect button is never shown — there is no non-overlay
-   * fallback action.
-   */
-  connectOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
-  /**
-   * Controls whether the "Connect" action is shown for the item. When
-   * absent, the Connect button is never shown.
-   */
-  isConnectVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Edit" button is clicked. Shown only when the item's `isEditable` is `true`. */
   onEdit?: (item: CatalogItem) => void;
   /**
@@ -247,6 +359,21 @@ export interface DetailsPanelProps {
    * button shows a disabled state while pending.
    */
   onDelete?: (item: CatalogItem) => Promise<void> | void;
+  /**
+   * Called when removal is confirmed via the confirmation popup, for an item
+   * shared with the current user (`sharedWithMe: true`). May return a
+   * promise; the popup shows a loading state and prevents duplicate
+   * submission while pending.
+   */
+  onUnshare?: (item: CatalogItem) => Promise<void> | void;
+  /**
+   * Called when revocation is confirmed for an item the current user owns
+   * (`isMyApp: true`), removing every recipient's shared access at once. May
+   * return a promise; the confirmation shows a loading state and prevents
+   * duplicate submission while pending. The item stays in the owner's
+   * catalog, so the panel returns to its details content on success.
+   */
+  onRevokeShare?: (item: CatalogItem) => Promise<void> | void;
   /**
    * Called when the credentials login form is submitted. `level` identifies
    * which credentials slot the call applies to (`USER` for the current

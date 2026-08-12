@@ -28,6 +28,50 @@ export interface AcceptInvitationResponseDto {
 /**
  *
  * @export
+ * @interface AnnouncementItemDto
+ */
+export interface AnnouncementItemDto {
+  /**
+   * Announcement heading. Plain text; never interpreted as markup. Entries without one are dropped server-side.
+   * @type {string}
+   * @memberof AnnouncementItemDto
+   */
+  title: string;
+  /**
+   * Supporting copy, sanitized to a safe HTML subset. Null when unset or when sanitization removes everything.
+   * @type {string}
+   * @memberof AnnouncementItemDto
+   */
+  description: string | null;
+  /**
+   * Optional call to action. Null when the announcement is informational only. An entry whose link is present but invalid is dropped entirely rather than returned without it.
+   * @type {AnnouncementLinkDto}
+   * @memberof AnnouncementItemDto
+   */
+  link: AnnouncementLinkDto | null;
+}
+/**
+ *
+ * @export
+ * @interface AnnouncementLinkDto
+ */
+export interface AnnouncementLinkDto {
+  /**
+   * Visible label of the announcement call to action. Plain text; never interpreted as markup.
+   * @type {string}
+   * @memberof AnnouncementLinkDto
+   */
+  label: string;
+  /**
+   * Absolute http(s) URL the announcement links to. Opened in a new tab with rel="noopener noreferrer". Entries carrying other schemes are dropped server-side.
+   * @type {string}
+   * @memberof AnnouncementLinkDto
+   */
+  href: string;
+}
+/**
+ *
+ * @export
  * @interface ApplicationDetailsDto
  */
 export interface ApplicationDetailsDto {
@@ -146,12 +190,6 @@ export interface ApplicationDto {
    * @memberof ApplicationDto
    */
   description?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationDto
-   */
-  intro?: string;
   /**
    *
    * @type {Array<string>}
@@ -438,11 +476,17 @@ export interface Check200Response {
    */
   timestamp?: string;
   /**
-   * Application version
+   * Application version. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Matches the appVersion reported by the client config endpoint.
    * @type {string}
    * @memberof Check200Response
    */
   version?: string;
+  /**
+   * Stable identifier for the running deployment, derived from a hash of the served frontend build. Changes when a new deployment replaces the frontend static assets, letting long-lived clients detect that a reload will pick up a newer build.
+   * @type {string}
+   * @memberof Check200Response
+   */
+  buildId?: string;
 }
 /**
  *
@@ -450,6 +494,12 @@ export interface Check200Response {
  * @interface ClientConfigDto
  */
 export interface ClientConfigDto {
+  /**
+   * Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Always a non-empty string.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  appVersion: string;
   /**
    * Deployment ID of the ASR model. Null when ASR is not configured.
    * @type {string}
@@ -504,6 +554,24 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   announcementHtml?: string | null;
+  /**
+   * Plain-text heading shown in bold at the start of the announcement banner line. Never interpreted as markup. Null when ANNOUNCEMENT_TITLE is not configured or is blank.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  announcementTitle?: string | null;
+  /**
+   * Supporting copy shown after the announcement banner title. Sanitized server-side to a safe HTML subset; anchors are forced to target="_blank" with rel="noopener noreferrer". Null when ANNOUNCEMENT_DESCRIPTION is not configured, is blank, or sanitizes away entirely.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  announcementDescription?: string | null;
+  /**
+   * Announcements listed in the popover behind the banner's "+N announcements" pill, in configured order. Empty when ANNOUNCEMENTS is unset or contained no valid entries. Sourced from ANNOUNCEMENTS.
+   * @type {Array<AnnouncementItemDto>}
+   * @memberof ClientConfigDto
+   */
+  announcements: Array<AnnouncementItemDto>;
   /**
    * Tool ID for the Deep Research deployment-configuration property. Null when DEEP_RESEARCH_TOOL_ID is not set.
    * @type {string}
@@ -679,6 +747,12 @@ export interface ConversationListItemDto {
    */
   publishedWithMe: boolean;
   /**
+   * How many other users currently hold shared access to this conversation, for conversations the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.
+   * @type {number}
+   * @memberof ConversationListItemDto
+   */
+  recipientsCount?: number;
+  /**
    * True when the user has pinned this conversation.
    * @type {boolean}
    * @memberof ConversationListItemDto
@@ -691,7 +765,7 @@ export interface ConversationListItemDto {
    */
   isReadonly: boolean;
   /**
-   * True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{runId}` reserved segment).
+   * True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{filename}` reserved segment, with `{filename}` shaped `{deploymentId}__{title}__{runId}`).
    * @type {boolean}
    * @memberof ConversationListItemDto
    */
@@ -708,6 +782,12 @@ export interface ConversationListItemDto {
    * @memberof ConversationListItemDto
    */
   runId?: string;
+  /**
+   * True when this scheduler-created conversation has not yet been opened by the user. Present only when `isScheduledTask` is true.
+   * @type {boolean}
+   * @memberof ConversationListItemDto
+   */
+  isUnread?: boolean;
 }
 /**
  *
@@ -752,6 +832,12 @@ export interface ConversationMessageCustomContentDto {
    * @memberof ConversationMessageCustomContentDto
    */
   formValue?: object;
+  /**
+   * Opaque app-managed state to echo back verbatim on the next turn, per the DIAL stateful-app contract.
+   * @type {object}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  state?: object;
   /**
    * Status event discriminator when role is status
    * @type {string}
@@ -823,6 +909,18 @@ export interface ConversationMessageDto {
    * @memberof ConversationMessageDto
    */
   streamErrorMessage?: string;
+  /**
+   * DIAL Responses API id for this message, set only when the generation was routed through the Responses adapter. Diagnostic only — never used to resume a generation (previous_response_id/conversation are never sent).
+   * @type {string}
+   * @memberof ConversationMessageDto
+   */
+  responseId?: string;
+  /**
+   * Deployment that produced this message. Present on assistant and status messages.
+   * @type {string}
+   * @memberof ConversationMessageDto
+   */
+  deploymentId?: string;
 }
 
 /**
@@ -964,6 +1062,12 @@ export interface ConversationResponseDto {
    * @memberof ConversationResponseDto
    */
   temperature: number;
+  /**
+   * Optional Responses-API output-token cap, forwarded verbatim as max_output_tokens. Never derived from deployment limits or Chat Completions defaults. Documentation-only decorator — the actual positive-safe-integer check runs at the Responses request-building boundary (ResponsesAdapter.buildRequest via isValidMaxOutputTokens), not through nested DTO validation on save (see design.md Decision 4 of the support-responses-generation-parameters change).
+   * @type {number}
+   * @memberof ConversationResponseDto
+   */
+  maxOutputTokens?: number;
   /**
    *
    * @type {Array<ConversationMessageDto>}
@@ -1236,16 +1340,22 @@ export interface CreateApplicationBodyDto {
   topics?: Array<string>;
   /**
    *
-   * @type {string}
-   * @memberof CreateApplicationBodyDto
-   */
-  intro?: string;
-  /**
-   *
    * @type {object}
    * @memberof CreateApplicationBodyDto
    */
   applicationProperties?: object;
+  /**
+   *
+   * @type {Array<LocaleTextEntryDto>}
+   * @memberof CreateApplicationBodyDto
+   */
+  locales?: Array<LocaleTextEntryDto>;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateApplicationBodyDto
+   */
+  primaryLocale?: string;
 }
 /**
  *
@@ -1471,10 +1581,10 @@ export interface CreatedApplicationDto {
   id: string;
   /**
    *
-   * @type {string}
+   * @type {CreatedApplicationDtoDisplayName}
    * @memberof CreatedApplicationDto
    */
-  displayName?: string;
+  displayName?: CreatedApplicationDtoDisplayName;
   /**
    *
    * @type {string}
@@ -1482,6 +1592,14 @@ export interface CreatedApplicationDto {
    */
   object?: string;
 }
+/**
+ * @type CreatedApplicationDtoDisplayName
+ *
+ * @export
+ */
+export type CreatedApplicationDtoDisplayName =
+  | string
+  | { [key: string]: string };
 /**
  *
  * @export
@@ -1532,6 +1650,12 @@ export interface CreatedScheduledTaskDto {
   triggerType?: CreatedScheduledTaskDtoTriggerTypeEnum;
   /**
    *
+   * @type {boolean}
+   * @memberof CreatedScheduledTaskDto
+   */
+  isActive?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof CreatedScheduledTaskDto
    */
@@ -1548,6 +1672,18 @@ export interface CreatedScheduledTaskDto {
    * @memberof CreatedScheduledTaskDto
    */
   description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  model?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  prompt?: string;
 }
 
 /**
@@ -2019,6 +2155,18 @@ export interface DeploymentFeaturesDto {
    * @memberof DeploymentFeaturesDto
    */
   mcp?: boolean;
+  /**
+   * Whether the deployment supports the Responses API
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  responsesApi?: boolean;
+  /**
+   * Whether the deployment supports chat completion requests
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  chatCompletion?: boolean;
 }
 /**
  *
@@ -2033,11 +2181,11 @@ export interface DeploymentItemDto {
    */
   id: string;
   /**
-   * Display name, falls back to id when absent
-   * @type {string}
+   *
+   * @type {DeploymentItemDtoDisplayName}
    * @memberof DeploymentItemDto
    */
-  displayName: string;
+  displayName: DeploymentItemDtoDisplayName;
   /**
    *
    * @type {string}
@@ -2051,17 +2199,11 @@ export interface DeploymentItemDto {
    */
   iconUrl?: string;
   /**
-   * Description from DIAL Core
-   * @type {string}
+   *
+   * @type {DeploymentItemDtoDescription}
    * @memberof DeploymentItemDto
    */
-  description?: string;
-  /**
-   * Short catalog-friendly intro from DIAL Core
-   * @type {string}
-   * @memberof DeploymentItemDto
-   */
-  intro?: string;
+  description?: DeploymentItemDtoDescription;
   /**
    * Interface types supported by this deployment
    * @type {Array<string>}
@@ -2159,6 +2301,12 @@ export interface DeploymentItemDto {
    */
   sharedWithMe?: boolean;
   /**
+   * How many other users currently hold shared access to this deployment, for deployments the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.
+   * @type {number}
+   * @memberof DeploymentItemDto
+   */
+  recipientsCount?: number;
+  /**
    * Parent folder path for application-type deployments (absent for root-level or non-application items)
    * @type {string}
    * @memberof DeploymentItemDto
@@ -2170,6 +2318,12 @@ export interface DeploymentItemDto {
    * @memberof DeploymentItemDto
    */
   conversationStarters?: ConversationStartersDto;
+  /**
+   * Reference from DIAL Core; some conversations/messages address this deployment by reference instead of id
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  reference?: string;
 }
 
 /**
@@ -2183,6 +2337,18 @@ export const DeploymentItemDtoTypeEnum = {
 export type DeploymentItemDtoTypeEnum =
   (typeof DeploymentItemDtoTypeEnum)[keyof typeof DeploymentItemDtoTypeEnum];
 
+/**
+ * @type DeploymentItemDtoDescription
+ * Description from DIAL Core
+ * @export
+ */
+export type DeploymentItemDtoDescription = string | { [key: string]: string };
+/**
+ * @type DeploymentItemDtoDisplayName
+ * Display name, falls back to id when absent. Either a plain string, or a map of locale code to translated value when additional locales are configured.
+ * @export
+ */
+export type DeploymentItemDtoDisplayName = string | { [key: string]: string };
 /**
  *
  * @export
@@ -2351,10 +2517,10 @@ export interface DialModelDto {
   model?: string;
   /**
    *
-   * @type {string}
+   * @type {DialModelDtoDisplayName}
    * @memberof DialModelDto
    */
-  displayName?: string;
+  displayName?: DialModelDtoDisplayName;
   /**
    *
    * @type {string}
@@ -2369,10 +2535,10 @@ export interface DialModelDto {
   iconUrl?: string;
   /**
    *
-   * @type {string}
+   * @type {DialModelDtoDescription}
    * @memberof DialModelDto
    */
-  description?: string;
+  description?: DialModelDtoDescription;
   /**
    *
    * @type {string}
@@ -2482,6 +2648,18 @@ export interface DialModelDto {
    */
   interfaces?: Array<string>;
 }
+/**
+ * @type DialModelDtoDescription
+ *
+ * @export
+ */
+export type DialModelDtoDescription = string | { [key: string]: string };
+/**
+ * @type DialModelDtoDisplayName
+ *
+ * @export
+ */
+export type DialModelDtoDisplayName = string | { [key: string]: string };
 /**
  *
  * @export
@@ -2820,11 +2998,11 @@ export interface DialToolsetDto {
    */
   toolset: string;
   /**
-   * Human-readable name. In `listToolsets` results this is always populated: `displayName` when set, otherwise the last path segment of `id`.
-   * @type {string}
+   *
+   * @type {DialToolsetDtoDisplayName}
    * @memberof DialToolsetDto
    */
-  displayName?: string;
+  displayName?: DialToolsetDtoDisplayName;
   /**
    *
    * @type {string}
@@ -2833,16 +3011,10 @@ export interface DialToolsetDto {
   displayVersion?: string;
   /**
    *
-   * @type {string}
+   * @type {DialToolsetDtoDescription}
    * @memberof DialToolsetDto
    */
-  description?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof DialToolsetDto
-   */
-  intro?: string;
+  description?: DialToolsetDtoDescription;
   /**
    *
    * @type {string}
@@ -2951,7 +3123,25 @@ export interface DialToolsetDto {
    * @memberof DialToolsetDto
    */
   sharedWithMe?: boolean;
+  /**
+   * How many other users currently hold shared access to this toolset, for toolsets the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.
+   * @type {number}
+   * @memberof DialToolsetDto
+   */
+  recipientsCount?: number;
 }
+/**
+ * @type DialToolsetDtoDescription
+ *
+ * @export
+ */
+export type DialToolsetDtoDescription = string | { [key: string]: string };
+/**
+ * @type DialToolsetDtoDisplayName
+ * Human-readable name. In `listToolsets` results this is always populated: `displayName` when set, otherwise the last path segment of `id`. Either a plain string, or a map of locale code to translated value when additional locales are configured.
+ * @export
+ */
+export type DialToolsetDtoDisplayName = string | { [key: string]: string };
 /**
  *
  * @export
@@ -3673,6 +3863,49 @@ export interface ListFilesResponseDto {
 /**
  *
  * @export
+ * @interface ListScheduledTaskRunsResponseDto
+ */
+export interface ListScheduledTaskRunsResponseDto {
+  /**
+   *
+   * @type {Array<ScheduledTaskRunDto>}
+   * @memberof ListScheduledTaskRunsResponseDto
+   */
+  items: Array<ScheduledTaskRunDto>;
+  /**
+   * Total number of runs upstream, across all pages.
+   * @type {number}
+   * @memberof ListScheduledTaskRunsResponseDto
+   */
+  count?: number;
+  /**
+   * Page size used by the upstream DIAL Scheduler response.
+   * @type {number}
+   * @memberof ListScheduledTaskRunsResponseDto
+   */
+  limit?: number;
+  /**
+   * Offset of `items` within the full upstream result set.
+   * @type {number}
+   * @memberof ListScheduledTaskRunsResponseDto
+   */
+  offset?: number;
+  /**
+   * Upstream URL for the next page, or null if this is the last page.
+   * @type {string}
+   * @memberof ListScheduledTaskRunsResponseDto
+   */
+  next?: string | null;
+  /**
+   * Upstream URL for the previous page, or null if this is the first page.
+   * @type {string}
+   * @memberof ListScheduledTaskRunsResponseDto
+   */
+  previous?: string | null;
+}
+/**
+ *
+ * @export
  * @interface ListScheduledTasksResponseDto
  */
 export interface ListScheduledTasksResponseDto {
@@ -3716,6 +3949,31 @@ export interface ListScheduledTasksResponseDto {
 /**
  *
  * @export
+ * @interface LocaleTextEntryDto
+ */
+export interface LocaleTextEntryDto {
+  /**
+   *
+   * @type {string}
+   * @memberof LocaleTextEntryDto
+   */
+  language: string;
+  /**
+   *
+   * @type {string}
+   * @memberof LocaleTextEntryDto
+   */
+  name?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof LocaleTextEntryDto
+   */
+  description?: string;
+}
+/**
+ *
+ * @export
  * @interface MessageCustomContentDto
  */
 export interface MessageCustomContentDto {
@@ -3737,6 +3995,12 @@ export interface MessageCustomContentDto {
    * @memberof MessageCustomContentDto
    */
   formValue?: object;
+  /**
+   * Opaque app-managed state to echo back verbatim on the next turn, per the DIAL stateful-app contract.
+   * @type {object}
+   * @memberof MessageCustomContentDto
+   */
+  state?: object;
 }
 /**
  *
@@ -4675,74 +4939,6 @@ export type ReportClientChannelDtoResultEnum =
 /**
  *
  * @export
- * @interface ReportIssueDto
- */
-export interface ReportIssueDto {
-  /**
-   * Short title describing the issue.
-   * @type {string}
-   * @memberof ReportIssueDto
-   */
-  title: string;
-  /**
-   * Detailed description of the issue.
-   * @type {string}
-   * @memberof ReportIssueDto
-   */
-  description: string;
-}
-/**
- *
- * @export
- * @interface RequestApiKeyDto
- */
-export interface RequestApiKeyDto {
-  /**
-   * Project name.
-   * @type {string}
-   * @memberof RequestApiKeyDto
-   */
-  projectId: string;
-  /**
-   * Stream name.
-   * @type {string}
-   * @memberof RequestApiKeyDto
-   */
-  projectStream: string;
-  /**
-   * Email of the project tech lead.
-   * @type {string}
-   * @memberof RequestApiKeyDto
-   */
-  projectLead: string;
-  /**
-   * Business justification for the access request.
-   * @type {string}
-   * @memberof RequestApiKeyDto
-   */
-  businessReason: string;
-  /**
-   * Project end date in DD/MM/YYYY format.
-   * @type {string}
-   * @memberof RequestApiKeyDto
-   */
-  projectEnd: string;
-  /**
-   * Description of the access scenario.
-   * @type {string}
-   * @memberof RequestApiKeyDto
-   */
-  accessScenario: string;
-  /**
-   * Cost and workload description.
-   * @type {string}
-   * @memberof RequestApiKeyDto
-   */
-  workloadPattern: string;
-}
-/**
- *
- * @export
  * @interface RevokeAccessDto
  */
 export interface RevokeAccessDto {
@@ -4788,6 +4984,32 @@ export interface RevokeAccessResponseDto {
 /**
  *
  * @export
+ * @interface RevokeSharedAccessDto
+ */
+export interface RevokeSharedAccessDto {
+  /**
+   * Identifier (DIAL Core resource path) of the owned catalog item or conversation to revoke all shared access to.
+   * @type {string}
+   * @memberof RevokeSharedAccessDto
+   */
+  itemId: string;
+}
+/**
+ *
+ * @export
+ * @interface RevokeSharedAccessResponseDto
+ */
+export interface RevokeSharedAccessResponseDto {
+  /**
+   * true when the revoke call succeeded
+   * @type {boolean}
+   * @memberof RevokeSharedAccessResponseDto
+   */
+  success: boolean;
+}
+/**
+ *
+ * @export
  * @interface SaveConversationBodyDto
  */
 export interface SaveConversationBodyDto {
@@ -4810,6 +5032,18 @@ export interface ScheduleCronDto {
    * @memberof ScheduleCronDto
    */
   fields: { [key: string]: string };
+  /**
+   * Start of the activity window during which this cron trigger fires. Omitted when unset.
+   * @type {string}
+   * @memberof ScheduleCronDto
+   */
+  startDate?: string;
+  /**
+   * End of the activity window during which this cron trigger fires. Omitted when unset.
+   * @type {string}
+   * @memberof ScheduleCronDto
+   */
+  endDate?: string;
 }
 /**
  *
@@ -4880,6 +5114,12 @@ export interface ScheduledTaskDto {
   triggerType?: ScheduledTaskDtoTriggerTypeEnum;
   /**
    *
+   * @type {boolean}
+   * @memberof ScheduledTaskDto
+   */
+  isActive?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof ScheduledTaskDto
    */
@@ -4896,6 +5136,18 @@ export interface ScheduledTaskDto {
    * @memberof ScheduledTaskDto
    */
   description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  model?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  prompt?: string;
 }
 
 /**
@@ -4907,6 +5159,56 @@ export const ScheduledTaskDtoTriggerTypeEnum = {
 } as const;
 export type ScheduledTaskDtoTriggerTypeEnum =
   (typeof ScheduledTaskDtoTriggerTypeEnum)[keyof typeof ScheduledTaskDtoTriggerTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface ScheduledTaskRunDto
+ */
+export interface ScheduledTaskRunDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskRunDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskRunDto
+   */
+  status: ScheduledTaskRunDtoStatusEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskRunDto
+   */
+  startTime: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskRunDto
+   */
+  endTime?: string | null;
+  /**
+   *
+   * @type {number}
+   * @memberof ScheduledTaskRunDto
+   */
+  durationSeconds?: number;
+}
+
+/**
+ * @export
+ */
+export const ScheduledTaskRunDtoStatusEnum = {
+  Success: 'Success',
+  Error: 'Error',
+  InProgress: 'InProgress',
+  Missed: 'Missed',
+} as const;
+export type ScheduledTaskRunDtoStatusEnum =
+  (typeof ScheduledTaskRunDtoStatusEnum)[keyof typeof ScheduledTaskRunDtoStatusEnum];
 
 /**
  *
@@ -5387,10 +5689,16 @@ export interface ToolsetBodyDto {
   topics?: Array<string>;
   /**
    *
+   * @type {Array<LocaleTextEntryDto>}
+   * @memberof ToolsetBodyDto
+   */
+  locales?: Array<LocaleTextEntryDto>;
+  /**
+   *
    * @type {string}
    * @memberof ToolsetBodyDto
    */
-  intro?: string;
+  primaryLocale?: string;
   /**
    *
    * @type {string}
@@ -5676,12 +5984,6 @@ export interface UpdateApplicationBodyDto {
    * @type {string}
    * @memberof UpdateApplicationBodyDto
    */
-  intro?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateApplicationBodyDto
-   */
   version?: string;
   /**
    *
@@ -5707,6 +6009,18 @@ export interface UpdateApplicationBodyDto {
    * @memberof UpdateApplicationBodyDto
    */
   maxInputAttachments?: number;
+  /**
+   *
+   * @type {Array<LocaleTextEntryDto>}
+   * @memberof UpdateApplicationBodyDto
+   */
+  locales?: Array<LocaleTextEntryDto>;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateApplicationBodyDto
+   */
+  primaryLocale?: string;
 }
 /**
  *
@@ -5835,10 +6149,10 @@ export interface UpdatedApplicationDto {
   id: string;
   /**
    *
-   * @type {string}
+   * @type {CreatedApplicationDtoDisplayName}
    * @memberof UpdatedApplicationDto
    */
-  displayName?: string;
+  displayName?: CreatedApplicationDtoDisplayName;
   /**
    *
    * @type {string}
@@ -5896,6 +6210,12 @@ export interface UpdatedScheduledTaskDto {
   triggerType?: UpdatedScheduledTaskDtoTriggerTypeEnum;
   /**
    *
+   * @type {boolean}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  isActive?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof UpdatedScheduledTaskDto
    */
@@ -5912,6 +6232,18 @@ export interface UpdatedScheduledTaskDto {
    * @memberof UpdatedScheduledTaskDto
    */
   description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  model?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  prompt?: string;
 }
 
 /**

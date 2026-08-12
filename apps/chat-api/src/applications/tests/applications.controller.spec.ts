@@ -58,6 +58,7 @@ async function buildApp(
     }),
   );
   await app.init();
+  await app.listen(0, '127.0.0.1');
   return app;
 }
 
@@ -216,10 +217,10 @@ describe('ApplicationsController (integration)', () => {
       expect(service.updateApplication).not.toHaveBeenCalled();
     });
 
-    it('returns 400 when intro exceeds 90 characters', async () => {
+    it('returns 400 when the request body still includes an intro property', async () => {
       await request(app.getHttpServer())
         .patch('/api/v1/applications/my-app')
-        .send({ ...validBody, intro: 'a'.repeat(91) })
+        .send({ ...validBody, intro: 'Short intro' })
         .expect(400);
 
       expect(service.updateApplication).not.toHaveBeenCalled();

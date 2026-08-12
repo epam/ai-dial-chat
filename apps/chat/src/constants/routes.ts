@@ -17,7 +17,8 @@ export const normalizeConversationId = (id: string): string => {
   return id;
 };
 
-const isSafePathSegment = (segment: string): boolean =>
+/** Rejects an empty, `.`, or `..` path segment — guards against traversal in a route-derived id. */
+export const isSafePathSegment = (segment: string): boolean =>
   segment !== '' && segment !== '.' && segment !== '..';
 
 /*
@@ -45,3 +46,9 @@ export const getConversationRoute = (id: string): string => {
     .join('/');
   return `${ROUTES.Conversations}/${encoded}`;
 };
+
+export const getScheduledTaskDetailRoute = (scheduleId: string): string =>
+  `${ROUTES.ScheduledTasks}/${encodeURIComponent(scheduleId)}`;
+
+export const getScheduledTaskEditRoute = (scheduleId: string): string =>
+  `${getScheduledTaskDetailRoute(scheduleId)}/edit`;

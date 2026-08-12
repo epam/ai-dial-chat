@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { CatalogEntityType } from '../../../types/entity-type';
@@ -26,16 +27,37 @@ describe('Card — selected state', () => {
 
     const card = screen.getByRole('article', { hidden: true });
     expect(card.className).toContain('border-transparent');
-    expect(card.className).not.toContain('border-info');
+    expect(card.className).not.toContain('selectedCard');
   });
 
   it('shows the selected border, tint, and checkmark when isSelected is true', () => {
     render(<Card item={makeItem()} isSelected />);
 
     const card = screen.getByRole('article', { hidden: true });
-    expect(card.className).toContain('border-info');
-    expect(card.className).toContain('bg-accent-primary-alpha');
+    expect(card.className).toContain('selectedCard');
     expect(card.querySelector('svg')).toBeTruthy();
+  });
+});
+
+describe('Card — favorite revert', () => {
+  it('resyncs the star to initialIsStarred when it reverts after a failed toggle', async () => {
+    const item = makeItem();
+    const { rerender } = render(<Card item={item} initialIsStarred={false} />);
+
+    const star = screen.getByRole('button', { name: 'Add to favorites' });
+    await userEvent.click(star);
+    expect(
+      screen.getByRole('button', { name: 'Remove from favorites' }),
+    ).toBeTruthy();
+
+    // Parent's favoriteIds optimistically flips to starred, then the update
+    // request fails and it reverts.
+    rerender(<Card item={item} initialIsStarred />);
+    rerender(<Card item={item} initialIsStarred={false} />);
+
+    expect(
+      screen.getByRole('button', { name: 'Add to favorites' }),
+    ).toBeTruthy();
   });
 });
 

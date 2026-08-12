@@ -1,27 +1,27 @@
 .sectionHeading {
-  color: var(--text-secondary, #6b7280);
+  color: var(--tv-section-heading, var(--text-secondary, #57647a));
 }
 
 .rowAlt {
-  background: var(--bg-layer-sunken, #eef1f7);
+  background: var(--tv-row-alt-bg, var(--bg-layer-sunken, #eef1f7));
 }
 
 .label {
-  color: var(--text-secondary, #6b7280);
+  color: var(--tv-label, var(--text-secondary, #57647a));
 }
 
 .checkIcon {
-  color: var(--text-accent-secondary, #37babc);
+  color: var(--tv-check-icon, var(--text-accent-secondary, #37babc));
 }
 
 .valueTrue {
-  color: var(--text-primary, #161b2d);
+  color: var(--tv-value-true, var(--text-primary, #161b2d));
 }
 
 .valueFalse {
-  color: var(--text-secondary, #6b7280);
+  color: var(--tv-value-false, var(--text-secondary, #57647a));
 }
 
 .valueText {
-  color: var(--text-primary, #161b2d);
+  color: var(--tv-value-text, var(--text-primary, #161b2d));
 }

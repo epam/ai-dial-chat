@@ -9,7 +9,7 @@ const baseValues: DeploymentCreationFormValues = {
   iconUrl: '',
   version: '',
   topics: [],
-  intro: '',
+  otherLocales: [],
 };
 
 describe('validateDeploymentCreationFields', () => {
@@ -63,37 +63,5 @@ describe('validateDeploymentCreationFields', () => {
       version: 'bad version!',
     });
     expect(errors.version).toBeUndefined();
-  });
-
-  it('returns no error when intro is empty', () => {
-    const errors = validateDeploymentCreationFields({
-      ...baseValues,
-      intro: '',
-    });
-    expect(errors.intro).toBeUndefined();
-  });
-
-  it('returns no error when intro is exactly 90 characters', () => {
-    const errors = validateDeploymentCreationFields({
-      ...baseValues,
-      intro: 'a'.repeat(90),
-    });
-    expect(errors.intro).toBeUndefined();
-  });
-
-  it('returns a too-long error when intro exceeds 90 characters', () => {
-    const errors = validateDeploymentCreationFields({
-      ...baseValues,
-      intro: 'a'.repeat(91),
-    });
-    expect(errors.intro).toBe(DeploymentCreationFieldErrorCode.TooLong);
-  });
-
-  it('respects a custom introMaxLength', () => {
-    const errors = validateDeploymentCreationFields(
-      { ...baseValues, intro: 'a'.repeat(11) },
-      { introMaxLength: 10 },
-    );
-    expect(errors.intro).toBe(DeploymentCreationFieldErrorCode.TooLong);
   });
 });

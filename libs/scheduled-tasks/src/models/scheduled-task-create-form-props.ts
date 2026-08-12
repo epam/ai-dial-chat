@@ -1,21 +1,11 @@
-import type {
-  ScheduledTaskFrequency,
-  ScheduledTaskScheduleType,
-} from '../types/scheduled-task-schedule';
+import type { ReactNode } from 'react';
+import type { ScheduledTaskRepeat } from '../types/scheduled-task-schedule';
 
-/** A single option rendered in the frequency dropdown. */
-export interface ScheduledTaskFrequencyOption {
-  /** Stable identifier for this option, passed back via `onFieldChange('frequency', key)`. */
-  key: ScheduledTaskFrequency;
-  /** Localized display label for this frequency option. */
-  label: string;
-}
-
-/** A single model option rendered in the model dropdown. */
-export interface ScheduledTaskCreateFormModelOption {
-  /** Deployment id sent to the BFF as `model`. */
-  id: string;
-  /** Localized display label shown in the dropdown. */
+/** A single option rendered in the Repeat dropdown. */
+export interface ScheduledTaskRepeatOption {
+  /** Stable identifier for this option, passed back via `onFieldChange('repeat', key)`. */
+  key: ScheduledTaskRepeat;
+  /** Localized display label for this repeat option. */
   label: string;
 }
 
@@ -23,18 +13,22 @@ export interface ScheduledTaskCreateFormModelOption {
 export interface ScheduledTaskCreateFormValues {
   /** The scheduled task's display name (required). */
   displayName: string;
-  /** Whether the task runs once or repeats. */
-  scheduleType: ScheduledTaskScheduleType;
-  /** Local datetime-local input value used when `scheduleType` is `'once'`. */
+  /** How often the task repeats. */
+  repeat: ScheduledTaskRepeat;
+  /** Local datetime-local input value used when `repeat` is `'oneTime'`. */
   runAt?: string;
-  /** Recurrence cadence used when `scheduleType` is `'recurring'`. */
-  frequency?: ScheduledTaskFrequency;
-  /** `HH:mm` time-of-day used when `scheduleType` is `'recurring'`. */
+  /** `HH:mm` time-of-day used when `repeat` is `'daily'`, `'weekly'`, or `'monthly'`. */
   time: string;
-  /** Day of week (`'0'`-`'6'`) used when `frequency` is `'weekly'`. */
+  /** Day of week (`'0'`-`'6'`) used when `repeat` is `'weekly'`. */
   dayOfWeek?: string;
-  /** Day of month (`'1'`-`'31'`) used when `frequency` is `'monthly'`. */
+  /** Day of month (`'1'`-`'31'`) used when `repeat` is `'monthly'`. */
   dayOfMonth?: string;
+  /** Minute of the hour (`'0'`-`'59'`) used when `repeat` is `'hourly'`. */
+  minute?: string;
+  /** Date-only value bounding the start of a recurring schedule's activity window. Ignored when `repeat` is `'oneTime'`. */
+  startDate?: string;
+  /** Date-only value bounding the end of a recurring schedule's activity window. Ignored when `repeat` is `'oneTime'`. */
+  endDate?: string;
   /** Selected deployment id sent to the BFF as `model` (required). */
   modelId: string;
   /** Optional human-readable summary sent to the BFF as `description` (max 500 characters). */
@@ -55,6 +49,12 @@ export interface ScheduledTaskCreateFormErrors {
   dayOfWeek?: string;
   /** Error shown under the day-of-month field. */
   dayOfMonth?: string;
+  /** Error shown under the minute field. */
+  minute?: string;
+  /** Error shown under the start-date field. */
+  startDate?: string;
+  /** Error shown under the end-date field. */
+  endDate?: string;
   /** Error shown under the model field. */
   modelId?: string;
   /** Error shown under the description field. */
@@ -81,30 +81,30 @@ export interface ScheduledTaskCreateFormLabels {
   displayNameLabel: string;
   /** Display name required-field validation message. */
   displayNameRequired: string;
-  /** Label for the schedule section. */
-  scheduleSectionLabel: string;
-  /** Label for the "once" schedule type option. */
-  scheduleTypeOnceLabel: string;
-  /** Label for the "recurring" schedule type option. */
-  scheduleTypeRecurringLabel: string;
-  /** Accessible label for the schedule type control. */
-  scheduleTypeAriaLabel: string;
-  /** Run-at field label (shown when schedule type is "once"). */
+  /** Run-at field label (shown when `repeat` is "oneTime"). */
   runAtLabel: string;
-  /** Accessible label for the frequency dropdown. */
-  frequencyLabel: string;
-  /** Options rendered in the frequency dropdown. */
-  frequencyOptions: ScheduledTaskFrequencyOption[];
-  /** Time field label (shown when schedule type is "recurring"). */
+  /** Accessible label for the Repeat dropdown. */
+  repeatLabel: string;
+  /** Options rendered in the Repeat dropdown. */
+  repeatOptions: ScheduledTaskRepeatOption[];
+  /** Time field label (shown when `repeat` is "daily", "weekly", or "monthly"). */
   timeLabel: string;
-  /** Day-of-week field label (shown when frequency is "weekly"). */
+  /** Day-of-week field label (shown when `repeat` is "weekly"). */
   dayOfWeekLabel: string;
-  /** Day-of-month field label (shown when frequency is "monthly"). */
+  /** Day-of-month field label (shown when `repeat` is "monthly"). */
   dayOfMonthLabel: string;
-  /** Accessible label for the model dropdown. */
+  /** Minute field label (shown when `repeat` is "hourly"). */
+  minuteLabel: string;
+  /** Start-date field label (shown when `repeat` is not "oneTime"; the field itself is optional, so this label carries no required marker). */
+  startDateLabel: string;
+  /** Placeholder shown in the start-date picker when unset. */
+  startDatePlaceholder: string;
+  /** End-date field label (shown when `repeat` is not "oneTime"; the field itself is optional, so this label carries no required marker). */
+  endDateLabel: string;
+  /** Placeholder shown in the end-date picker when unset. */
+  endDatePlaceholder: string;
+  /** Label for the Model or Agent field, rendered above `modelSelector`. */
   modelOrAgentLabel: string;
-  /** Placeholder shown in the model dropdown trigger when no model is selected. */
-  modelPlaceholder: string;
   /** Description textarea label. */
   descriptionLabel: string;
   /** Accessible label for the Instructions markdown editor. */
@@ -140,8 +140,8 @@ export interface ScheduledTaskCreateFormTypography {
   sectionTitleClassName?: string;
   /** CSS class applied to a section subtitle. Defaults to `'dial-tiny-text'`. */
   sectionSubtitleClassName?: string;
-  /** CSS class applied to the schedule section's legend and the Instructions label. Defaults to `'dial-body-semi-text mb-1'`. */
-  scheduleSectionLabelClassName?: string;
+  /** CSS class applied to the Instructions label. Defaults to `'dial-body-semi-text mb-1'`. */
+  instructionsLabelClassName?: string;
   /** CSS class applied to the Instructions editor's validation error text. Defaults to `'dial-small-text'`. */
   instructionsErrorClassName?: string;
 }
@@ -162,8 +162,19 @@ export interface ScheduledTaskCreateFormProps {
   values: ScheduledTaskCreateFormValues;
   /** Current per-field validation errors. */
   errors: ScheduledTaskCreateFormErrors;
-  /** Deployment options rendered in the model dropdown. */
-  modelOptions: ScheduledTaskCreateFormModelOption[];
+  /**
+   * Fully-composed deployment-selector control rendered in the Model or
+   * Agent field, in place of a lib-owned control. Opaque to the lib — it is
+   * rendered verbatim, wrapped by the lib's own required-label/error markup.
+   */
+  modelSelector: ReactNode;
+  /**
+   * Id applied to the Model or Agent field's `Label` element. The host
+   * generates this (e.g. via React `useId()`) and must pass the same value
+   * as `modelSelector`'s own `aria-labelledby` target, so the two stay
+   * linked without a literal id that could collide across form instances.
+   */
+  modelLabelId: string;
   /** Called with the changed field key and its new value whenever any field is edited. */
   onFieldChange: <K extends keyof ScheduledTaskCreateFormValues>(
     field: K,

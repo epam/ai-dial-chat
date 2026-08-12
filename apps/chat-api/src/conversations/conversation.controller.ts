@@ -215,8 +215,8 @@ export class ConversationController {
     @Res() res: Response,
     @Body() dto: SendCompletionDto,
   ): Promise<void> {
-    const { at, bucket, sid } = req.user as SessionUser;
-    await this.conversationService.streamCompletion(
+    const { at, bucket, sid, sub } = req.user as SessionUser;
+    const stream = this.conversationService.streamCompletion(
       dto.path,
       at,
       bucket,
@@ -227,9 +227,21 @@ export class ConversationController {
       dto.model,
       dto.custom_content,
       sid,
-      res,
+      () => {
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.flushHeaders();
+      },
+      sub,
       dto.clientChannelId,
     );
+
+    for await (const chunk of stream) {
+      res.write(chunk);
+    }
+
+    if (!res.writableEnded) res.end();
   }
 
   @Post('completions/stop')
@@ -523,5 +535,29 @@ export class ConversationController {
   deleteConversation(@Req() req: Request, @Query() query: ConversationPathDto) {
     const { at, bucket } = req.user as SessionUser;
     return this.conversationService.deleteConversation(query.path, at, bucket);
+  }
+
+  @Patch('viewed')
+  @HttpCode(204)
+  @ApiOperation({
+    operationId: 'markConversationViewed',
+    summary: 'Mark a conversation as viewed',
+    description:
+      'Idempotently records that the authenticated user has opened this conversation. Used to clear the unread indicator for scheduler-created conversations.',
+  })
+  @ApiResponse({ status: 204, description: 'Conversation marked as viewed' })
+  @ApiResponse({ status: 400, description: 'Missing or invalid path' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 502, description: 'DIAL Core error' })
+  markConversationViewed(
+    @Req() req: Request,
+    @Query() query: ConversationPathDto,
+  ) {
+    const { at, bucket } = req.user as SessionUser;
+    return this.conversationService.markConversationViewed(
+      query.path,
+      at,
+      bucket,
+    );
   }
 }

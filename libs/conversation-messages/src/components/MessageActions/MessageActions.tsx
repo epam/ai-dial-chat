@@ -11,6 +11,7 @@ import {
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import {
+  IconMarkdown,
   IconPencilMinus,
   IconRefresh,
   IconThumbDown,
@@ -116,6 +117,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
           )}
           {onCopy && (
             <CopyIconButton
+              iconSize={DIAL_ICON_SIZE.SM}
               onClick={handleCopy}
               size={ElementSize.Small}
               isCopied={copied === 'copy'}
@@ -126,9 +128,11 @@ export const MessageActions: FC<MessageActionsProps> = ({
           )}
           {onCopyMarkdown && (
             <CopyIconButton
+              iconSize={DIAL_ICON_SIZE.SM}
               onClick={handleCopyMarkdown}
               size={ElementSize.Small}
               isCopied={copied === 'markdown'}
+              iconCopy={<IconMarkdown size={DIAL_ICON_SIZE.SM} aria-hidden />}
               copyLabel={tooltips?.copyMarkdown ?? 'Copy as Markdown'}
               copiedLabel={tooltips?.copiedMarkdown ?? 'Copied!'}
               ariaLabel={ariaLabels?.copyAsMarkdown ?? 'Copy as markdown'}

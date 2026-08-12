@@ -1,6 +1,6 @@
+import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import type { Conversation } from '@epam/ai-dial-chat-shared';
 import { MessageRole } from '@epam/ai-dial-chat-shared';
-import type { ConversationResponseDto } from '@epam/chat-api-client';
 import { describe, expect, it } from 'vitest';
 import { shouldWatchForDisplayNameUpdate } from '../display-name-watch';
 

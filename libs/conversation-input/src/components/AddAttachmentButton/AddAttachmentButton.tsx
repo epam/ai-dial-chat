@@ -8,7 +8,7 @@ import {
 import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
-  DialDropdown,
+  Dropdown,
   ElementSize,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
@@ -98,7 +98,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   menuTitle,
   menuCloseLabel,
   style,
-  listClassName = 'cp-dropdown-overlay !w-[240px]',
+  listClassName = 'w-[240px]',
   isDisabled = false,
   chatSettings,
   extraMenuItems,
@@ -316,7 +316,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
         </>
       ) : (
         <>
-          <DialDropdown
+          <Dropdown
             matchReferenceWidth={false}
             placement="bottom-start"
             listClassName={listClassName}
@@ -328,7 +328,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
               tooltipProps={{ tooltip: addMenuTitle }}
               disabled={isDisabled}
             />
-          </DialDropdown>
+          </Dropdown>
 
           {chatSettings != null && isChatSettingsOpen && (
             <ChatSettingsModal

@@ -552,9 +552,11 @@ describe('DialFileManagerModal', () => {
     const dialog = screen.getByRole('dialog');
     expect(dialog.classList.contains('!h-[min(800px,100dvh)]')).toBe(true);
     expect(dialog.classList.contains('!bg-layer-sunken')).toBe(true);
-    expect(
-      dialog.classList.contains("[&>[aria-label='popup-description']]:min-h-0"),
-    ).toBe(true);
+
+    const body = dialog.querySelector('.overflow-auto');
+    expect(body?.classList.contains('flex')).toBe(true);
+    expect(body?.classList.contains('min-h-0')).toBe(true);
+    expect(body?.classList.contains('flex-col')).toBe(true);
 
     const footer = screen.getByRole('button', { name: 'Attach' }).parentElement;
     expect(footer?.classList.contains('px-6')).toBe(true);

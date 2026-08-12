@@ -1,6 +1,9 @@
+import type {
+  DialToolsetDto,
+  ToolsetBodyDto,
+} from '@epam/ai-dial-chat-api-client';
+import { ResponseError } from '@epam/ai-dial-chat-api-client';
 import { validateDeploymentCreationFields } from '@epam/ai-dial-deployment-creation-form';
-import type { DialToolsetDto, ToolsetBodyDto } from '@epam/chat-api-client';
-import { ResponseError } from '@epam/chat-api-client';
 import {
   DEFAULT_TOOLSET_NAME,
   DEFAULT_TOOLSET_VERSION,
@@ -27,6 +30,12 @@ import type {
 } from '../models/toolsets';
 import { getToolset } from '../server-api/toolsets';
 import { ROUTES } from '../types/routes';
+import {
+  composeLocalePayload,
+  decomposeLocalizedFields,
+  PRIMARY_LOCALE,
+  resolveLocalizedText,
+} from './locale';
 
 /**
  * Returns a storage-safe toolset name that does not collide with any existing
@@ -61,7 +70,7 @@ export const getDefaultToolsetForm = (
   iconUrl: '',
   description: '',
   topics: [],
-  intro: '',
+  otherLocales: [],
   endpoint: '',
   protocol: ToolsetTransportType.Http,
   allowedTools: [],
@@ -88,6 +97,24 @@ export const encodeToolsetId = (id: string): string =>
   id
     .split('/')
     .map((segment) => encodeURIComponent(segment))
+    .join('/');
+
+/**
+ * Inverse of `encodeToolsetId` — decodes each `/`-separated segment back to
+ * its raw, human-readable form. A segment that isn't valid percent-encoding
+ * is passed through unchanged rather than throwing, since this decodes
+ * externally-sourced ids (broadcast toolset-login events).
+ */
+export const decodeToolsetId = (id: string): string =>
+  id
+    .split('/')
+    .map((segment) => {
+      try {
+        return decodeURIComponent(segment);
+      } catch {
+        return segment;
+      }
+    })
     .join('/');
 
 /**
@@ -519,12 +546,16 @@ const authSettingsDtoToForm = (
 
 /** Maps a loaded toolset DTO (snake_case) into editor form state. */
 export const toolsetDtoToForm = (dto: DialToolsetDto): ToolsetFormData => ({
-  name: dto.displayName ?? '',
+  name: resolveLocalizedText(dto.displayName, PRIMARY_LOCALE),
   version: dto.displayVersion ?? DEFAULT_TOOLSET_VERSION,
   iconUrl: dto.iconUrl ?? '',
-  description: dto.description ?? '',
+  description: resolveLocalizedText(dto.description, PRIMARY_LOCALE),
   topics: dto.descriptionKeywords ?? [],
-  intro: dto.intro ?? '',
+  otherLocales: decomposeLocalizedFields(
+    dto.displayName,
+    dto.description,
+    PRIMARY_LOCALE,
+  ),
   endpoint: normalizeReturnedEndpointUrl(dto.endpoint),
   protocol:
     (dto.transport as ToolsetTransportType) ?? ToolsetTransportType.Http,
@@ -571,18 +602,21 @@ export const formToToolsetBody = (
       auth.scopes && auth.scopes.length > 0 ? auth.scopes : undefined;
   }
 
+  const locales = composeLocalePayload(form.otherLocales, PRIMARY_LOCALE);
+
   return {
     name: form.name.trim(),
     version: form.version.trim() || DEFAULT_TOOLSET_VERSION,
     description: form.description.trim() || undefined,
     iconUrl: form.iconUrl.trim() || undefined,
     topics: form.topics.length > 0 ? form.topics : undefined,
-    intro: form.intro.trim() || undefined,
     endpoint: normalizeReturnedEndpointUrl(form.endpoint),
     transport: form.protocol,
     allowedTools: form.allowedTools.length > 0 ? form.allowedTools : undefined,
     reference: form.reference,
     authSettings,
+    locales,
+    primaryLocale: locales ? PRIMARY_LOCALE : undefined,
   };
 };
 

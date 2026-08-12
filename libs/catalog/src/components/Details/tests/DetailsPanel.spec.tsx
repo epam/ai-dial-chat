@@ -9,6 +9,10 @@ import { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { CatalogEntityType } from '../../../types/entity-type';
+import {
+  CredentialStatus,
+  ToolsetAuthenticationType,
+} from '../../../types/toolset-auth';
 import { DetailsPanel } from '../DetailsPanel';
 
 vi.mock('@epam/ai-dial-kit', () => ({
@@ -45,45 +49,57 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       onClick={onClick}
     />
   ),
-  DialCloseButton: ({
+  CloseButton: ({
     onClose,
     ariaLabel,
   }: {
     onClose: () => void;
     ariaLabel: string;
   }) => <button onClick={onClose}>{ariaLabel}</button>,
-  DialSkeleton: () => <div>skeleton</div>,
+  Skeleton: () => <div>skeleton</div>,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialConfirmationPopup: ({
-    open,
-    header,
-    description,
-    confirmLabel,
-    cancelLabel,
-    isLoading,
-    onConfirm,
-    onCancel,
+  ElementSize: { Standard: 'standard' },
+  Spinner: () => <svg />,
+  DangerButton: ({
+    label,
+    disabled,
+    onClick,
   }: {
-    open: boolean;
-    header?: string;
-    description?: string;
-    confirmLabel?: string;
-    cancelLabel?: string;
-    isLoading?: boolean;
-    onConfirm?: () => void;
-    onCancel?: () => void;
-  }) =>
-    open ? (
-      <div role="dialog">
-        <span>{header}</span>
-        <span>{description}</span>
-        <button disabled={isLoading} onClick={onConfirm}>
-          {confirmLabel}
-        </button>
-        <button onClick={onCancel}>{cancelLabel}</button>
-      </div>
-    ) : null,
-  DialAccordion: ({
+    label: string;
+    disabled?: boolean;
+    onClick?: () => void;
+  }) => (
+    <button className="danger" disabled={disabled} onClick={onClick}>
+      {label}
+    </button>
+  ),
+  NeutralButton: ({
+    label,
+    disabled,
+    onClick,
+  }: {
+    label: string;
+    disabled?: boolean;
+    onClick?: () => void;
+  }) => (
+    <button className="neutral" disabled={disabled} onClick={onClick}>
+      {label}
+    </button>
+  ),
+  GhostButton: ({
+    label,
+    disabled,
+    onClick,
+  }: {
+    label: string;
+    disabled?: boolean;
+    onClick?: () => void;
+  }) => (
+    <button className="ghost" disabled={disabled} onClick={onClick}>
+      {label}
+    </button>
+  ),
+  Accordion: ({
     title,
     children,
   }: {
@@ -105,6 +121,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconPencil: () => <svg />,
   IconPlayerPlayFilled: () => <svg />,
   IconShare: () => <svg />,
+  IconTrashX: () => <svg />,
 }));
 vi.mock('../../EntityHeader/EntityHeader', () => ({
   EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
@@ -113,11 +130,32 @@ vi.mock('../../StarToggleButton/StarToggleButton', () => ({
   StarToggleButton: () => <div>Star</div>,
 }));
 vi.mock('../Header/Header', () => ({
-  Header: ({ onOpenPublish }: { onOpenPublish?: () => void }) => (
-    <button onClick={onOpenPublish}>Publish</button>
+  Header: ({
+    onOpenPublish,
+    onDelete,
+    onUnshare,
+    onRevokeShare,
+    onRequestLogout,
+  }: {
+    onOpenPublish?: () => void;
+    onDelete?: () => void;
+    onUnshare?: () => void;
+    onRevokeShare?: () => void;
+    onRequestLogout?: () => void;
+  }) => (
+    <>
+      <button onClick={onOpenPublish}>Publish</button>
+      {onDelete && <button onClick={onDelete}>DeleteTrigger</button>}
+      {onUnshare && <button onClick={onUnshare}>UnshareTrigger</button>}
+      {onRevokeShare && (
+        <button onClick={onRevokeShare}>RevokeShareTrigger</button>
+      )}
+      {onRequestLogout && (
+        <button onClick={onRequestLogout}>LogoutTrigger</button>
+      )}
+    </>
   ),
 }));
-vi.mock('../Summary/Summary', () => ({ Summary: () => <div>Summary</div> }));
 vi.mock('../TabsContent/About', () => ({
   AboutTab: () => <div>about content</div>,
 }));
@@ -133,7 +171,13 @@ vi.mock('../TabsContent/Limits', () => ({
 vi.mock('../TabsContent/Tools/Tools', () => ({
   Tools: () => <div>Tools</div>,
 }));
-vi.mock('../ApiDetails', () => ({ ApiDetails: () => <div>Api</div> }));
+vi.mock('../ApiDetails', () => ({
+  ApiDetails: ({ endpointSectionLabel }: { endpointSectionLabel?: string }) => (
+    <div>
+      {endpointSectionLabel != null ? `Api:${endpointSectionLabel}` : 'Api'}
+    </div>
+  ),
+}));
 vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-publish-panel')>();
@@ -239,7 +283,7 @@ const renderPanel = (props?: Partial<ComponentProps<typeof DetailsPanel>>) =>
 describe('DetailsPanel', () => {
   it('renders the details content by default', () => {
     renderPanel();
-    expect(screen.getByText('Summary')).toBeTruthy();
+    expect(screen.getByRole('tablist')).toBeTruthy();
     expect(screen.queryByText('Publish panel')).toBeNull();
   });
 
@@ -265,11 +309,75 @@ describe('DetailsPanel', () => {
     expect(screen.getByText('Limits content')).toBeTruthy();
   });
 
+  it('labels the resource/endpoint tab "Connect" when API details are available', async () => {
+    renderPanel({
+      item: makeItem({
+        details: {
+          api: { resource: { endpointUrl: 'https://dial.example.com/mcp' } },
+        },
+      }),
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Connect' }));
+
+    expect(screen.getByText('Api')).toBeTruthy();
+  });
+
+  it('forwards apiEndpointSectionLabel to the Connect tab content', async () => {
+    renderPanel({
+      item: makeItem({
+        details: {
+          api: { resource: { endpointUrl: 'https://dial.example.com/mcp' } },
+        },
+      }),
+      texts: { apiEndpointSectionLabel: 'Endpoints' },
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Connect' }));
+
+    expect(screen.getByText('Api:Endpoints')).toBeTruthy();
+  });
+
+  it('uses tabConnectLabel to override the Connect tab label', () => {
+    renderPanel({
+      item: makeItem({
+        details: {
+          api: { resource: { endpointUrl: 'https://dial.example.com/mcp' } },
+        },
+      }),
+      texts: { tabConnectLabel: 'Endpoint' },
+    });
+
+    expect(screen.getByRole('button', { name: 'Endpoint' })).toBeTruthy();
+  });
+
+  it('hides the Connect tab when the item has no API details', () => {
+    renderPanel();
+    expect(screen.queryByRole('button', { name: 'Connect' })).toBeNull();
+  });
+
+  it('hides the Connect tab when the api data carries no endpoint URL, as for a model', () => {
+    renderPanel({
+      item: makeItem({
+        details: {
+          api: {
+            resource: { modelId: 'gpt-4o' },
+            endpoints: [
+              { label: 'Azure OpenAI Endpoint', url: 'https://azure.example' },
+            ],
+          },
+        },
+      }),
+    });
+
+    expect(screen.queryByRole('button', { name: 'Connect' })).toBeNull();
+  });
+
   it('replaces the details content with the publish panel when Publish is clicked', async () => {
     renderPanel();
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
     expect(screen.getByText('Publish panel')).toBeTruthy();
-    expect(screen.queryByText('Summary')).toBeNull();
+    expect(screen.queryByRole('tablist')).toBeNull();
   });
 
   it('shows the back button and hides Star while publishing', async () => {
@@ -294,7 +402,7 @@ describe('DetailsPanel', () => {
     renderPanel();
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
-    expect(screen.getByText('Summary')).toBeTruthy();
+    expect(screen.getByRole('tablist')).toBeTruthy();
     expect(screen.queryByText('Publish panel')).toBeNull();
   });
 
@@ -302,7 +410,7 @@ describe('DetailsPanel', () => {
     renderPanel();
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    expect(screen.getByText('Summary')).toBeTruthy();
+    expect(screen.getByRole('tablist')).toBeTruthy();
   });
 
   it('creates publish folders through the shared publish flow', async () => {
@@ -407,7 +515,7 @@ describe('DetailsPanel', () => {
       screen.getByRole('button', { name: 'Select Shared' }),
     );
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
-    expect(screen.getByText('Summary')).toBeTruthy();
+    expect(screen.getByRole('tablist')).toBeTruthy();
     expect(screen.queryByText('Publish panel')).toBeNull();
   });
 
@@ -421,8 +529,22 @@ describe('DetailsPanel', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
     expect(screen.getByText('Publish panel')).toBeTruthy();
-    expect(screen.queryByText('Summary')).toBeNull();
+    expect(screen.queryByRole('tablist')).toBeNull();
     expect(onPublishSuccess).not.toHaveBeenCalled();
+  });
+
+  it('forwards the rejection reason to onPublishError when the publish submit fails', async () => {
+    const rejection = new Error('Failed to fetch');
+    const onPublish = vi.fn().mockRejectedValue(rejection);
+    const onPublishError = vi.fn();
+    renderPanel({ onPublish, onPublishError });
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Shared' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(onPublishError).toHaveBeenCalledWith(item, ['Shared'], rejection);
   });
 
   it('disables the Back button while a publish request is in flight', async () => {
@@ -491,7 +613,7 @@ describe('DetailsPanel', () => {
     ).toBeTruthy();
   });
 
-  it('renders the description inline in the intro section', () => {
+  it('renders the description on the About tab, not in the summary section', () => {
     render(
       <DetailsPanel
         item={makeItem({
@@ -502,7 +624,7 @@ describe('DetailsPanel', () => {
       />,
     );
 
-    expect(screen.getAllByText('about content').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('about content')).toHaveLength(1);
   });
 
   it('includes About as the first tab, ahead of the other available tabs', () => {
@@ -525,5 +647,364 @@ describe('DetailsPanel', () => {
 
     const tablist = screen.getByRole('tablist');
     expect(tablist.textContent).toBe('About');
+  });
+
+  it('places Connect last even when a Tools tab is also available', () => {
+    render(
+      <DetailsPanel
+        item={makeItem({
+          details: {
+            tools: { tools: [] },
+            api: { resource: { endpointUrl: 'https://dial.example.com/mcp' } },
+          },
+        })}
+        isOpen
+        onClose={vi.fn()}
+      />,
+    );
+
+    const tablist = screen.getByRole('tablist');
+    expect(tablist.textContent).toBe('AboutToolsConnect');
+  });
+
+  it('places Connect last among every other available tab', () => {
+    render(
+      <DetailsPanel
+        item={makeItem({
+          details: {
+            overview: { sections: [] },
+            pricing: {},
+            limits: { rows: [] },
+            api: { resource: { endpointUrl: 'https://dial.example.com/mcp' } },
+          },
+        })}
+        isOpen
+        onClose={vi.fn()}
+      />,
+    );
+
+    const tablist = screen.getByRole('tablist');
+    expect(tablist.textContent).toBe('AboutOverviewPricingLimitsConnect');
+  });
+
+  describe('Confirmation sub-view', () => {
+    const UNSHARE_TRIGGER = 'UnshareTrigger';
+    const DELETE_TRIGGER = 'DeleteTrigger';
+    const LOGOUT_TRIGGER = 'LogoutTrigger';
+    const REVOKE_TRIGGER = 'RevokeShareTrigger';
+    const UNSHARE_CONFIRM = 'Remove from My List';
+    const DELETE_CONFIRM = 'Delete';
+    const LOGOUT_CONFIRM = 'Log out';
+    const REVOKE_CONFIRM = 'Revoke access';
+
+    const openUnshare = async () => {
+      await userEvent.click(
+        screen.getByRole('button', { name: UNSHARE_TRIGGER }),
+      );
+    };
+
+    const openRevokeShare = async () => {
+      await userEvent.click(
+        screen.getByRole('button', { name: REVOKE_TRIGGER }),
+      );
+    };
+
+    it('does not expose the removal action when onUnshare is absent', () => {
+      renderPanel();
+      expect(
+        screen.queryByRole('button', { name: UNSHARE_TRIGGER }),
+      ).toBeNull();
+    });
+
+    it('does not expose the delete action when onDelete is absent', () => {
+      renderPanel();
+      expect(screen.queryByRole('button', { name: DELETE_TRIGGER })).toBeNull();
+    });
+
+    it('replaces the details content with the confirmation instead of overlaying a popup', async () => {
+      renderPanel({ onUnshare: vi.fn() });
+      expect(screen.getByRole('tablist')).toBeTruthy();
+
+      await openUnshare();
+
+      expect(screen.queryByRole('tablist')).toBeNull();
+      expect(
+        screen.queryByRole('button', { name: UNSHARE_TRIGGER }),
+      ).toBeNull();
+      expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
+    });
+
+    it('names the dialog after the open confirmation', async () => {
+      renderPanel({ onUnshare: vi.fn() });
+      await openUnshare();
+      expect(
+        screen.getByRole('dialog', { name: UNSHARE_CONFIRM }),
+      ).toBeTruthy();
+    });
+
+    it('confirms a removal with the info palette, not the danger one', async () => {
+      renderPanel({ onUnshare: vi.fn() });
+      await openUnshare();
+      expect(
+        screen.getByRole('button', { name: UNSHARE_CONFIRM }).className,
+      ).toContain('neutral');
+    });
+
+    it('confirms a delete with the danger palette', async () => {
+      renderPanel({ onDelete: vi.fn() });
+      await userEvent.click(
+        screen.getByRole('button', { name: DELETE_TRIGGER }),
+      );
+      expect(
+        screen.getByRole('button', { name: DELETE_CONFIRM }).className,
+      ).toContain('danger');
+    });
+
+    it('lists the confirmation consequences', async () => {
+      renderPanel({
+        onUnshare: vi.fn(),
+        texts: { unshareConfirmConsequences: ['First', 'Second'] },
+      });
+      await openUnshare();
+      expect(screen.getByText('First')).toBeTruthy();
+      expect(screen.getByText('Second')).toBeTruthy();
+    });
+
+    it('opens the confirmation without calling onUnshare', async () => {
+      const onUnshare = vi.fn();
+      renderPanel({ onUnshare });
+      await openUnshare();
+      expect(onUnshare).not.toHaveBeenCalled();
+    });
+
+    it('calls onUnshare exactly once when confirmed', async () => {
+      const onUnshare = vi.fn().mockResolvedValue(undefined);
+      renderPanel({ onUnshare });
+      await openUnshare();
+      await userEvent.click(
+        screen.getByRole('button', { name: UNSHARE_CONFIRM }),
+      );
+      expect(onUnshare).toHaveBeenCalledOnce();
+      expect(onUnshare).toHaveBeenCalledWith(item);
+    });
+
+    it('calls onDelete exactly once when the delete confirmation is confirmed', async () => {
+      const onDelete = vi.fn().mockResolvedValue(undefined);
+      renderPanel({ onDelete });
+      await userEvent.click(
+        screen.getByRole('button', { name: DELETE_TRIGGER }),
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: DELETE_CONFIRM }),
+      );
+      expect(onDelete).toHaveBeenCalledOnce();
+      expect(onDelete).toHaveBeenCalledWith(item);
+    });
+
+    it('closes the whole details panel after a successful removal', async () => {
+      const onUnshare = vi.fn().mockResolvedValue(undefined);
+      const onClose = vi.fn();
+      renderPanel({ onUnshare, onClose });
+      await openUnshare();
+      await userEvent.click(
+        screen.getByRole('button', { name: UNSHARE_CONFIRM }),
+      );
+      expect(onClose).toHaveBeenCalledOnce();
+    });
+
+    it('keeps the details panel open when the removal fails', async () => {
+      const onUnshare = vi.fn().mockRejectedValue(new Error('network error'));
+      const onClose = vi.fn();
+      renderPanel({ onUnshare, onClose });
+      await openUnshare();
+      await userEvent.click(
+        screen.getByRole('button', { name: UNSHARE_CONFIRM }),
+      );
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByRole('tablist')).toBeTruthy();
+    });
+
+    it('prevents a second confirm call while the first is still pending', async () => {
+      let resolveUnshare: () => void = () => undefined;
+      const onUnshare = vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveUnshare = resolve;
+          }),
+      );
+      renderPanel({ onUnshare });
+      await openUnshare();
+      const confirmButton = screen.getByRole('button', {
+        name: UNSHARE_CONFIRM,
+      });
+      await userEvent.click(confirmButton);
+      expect(confirmButton.hasAttribute('disabled')).toBe(true);
+
+      await act(async () => {
+        resolveUnshare();
+        await Promise.resolve();
+      });
+      expect(onUnshare).toHaveBeenCalledOnce();
+    });
+
+    it('returns to the details content without calling onUnshare when Cancel is clicked', async () => {
+      const onUnshare = vi.fn();
+      renderPanel({ onUnshare });
+      await openUnshare();
+      await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+      expect(screen.getByRole('tablist')).toBeTruthy();
+      expect(onUnshare).not.toHaveBeenCalled();
+    });
+
+    it('returns to the details content when the back button is clicked', async () => {
+      const onUnshare = vi.fn();
+      const onClose = vi.fn();
+      renderPanel({ onUnshare, onClose });
+      await openUnshare();
+      await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+      expect(screen.getByRole('tablist')).toBeTruthy();
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it('keeps the panel open and calls onLogout when the logout confirmation is confirmed', async () => {
+      const onLogout = vi.fn().mockResolvedValue(undefined);
+      const onClose = vi.fn();
+      renderPanel({
+        item: makeItem({
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.ApiKey,
+            userStatus: CredentialStatus.SignedIn,
+          },
+        }),
+        onLogout,
+        onClose,
+      });
+      await userEvent.click(
+        screen.getByRole('button', { name: LOGOUT_TRIGGER }),
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: LOGOUT_CONFIRM }),
+      );
+      expect(onLogout).toHaveBeenCalledOnce();
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByRole('tablist')).toBeTruthy();
+    });
+
+    it('does not expose the revoke action when onRevokeShare is absent', () => {
+      renderPanel();
+      expect(screen.queryByRole('button', { name: REVOKE_TRIGGER })).toBeNull();
+    });
+
+    it('opens the revoke confirmation without calling onRevokeShare', async () => {
+      const onRevokeShare = vi.fn();
+      renderPanel({ onRevokeShare });
+      await openRevokeShare();
+      expect(onRevokeShare).not.toHaveBeenCalled();
+      expect(screen.queryByRole('tablist')).toBeNull();
+    });
+
+    it('names the dialog after the revoke confirmation and lists its consequences', async () => {
+      renderPanel({
+        onRevokeShare: vi.fn(),
+        texts: {
+          revokeShareConfirmConsequences: ['Others lose access', 'Links die'],
+        },
+      });
+      await openRevokeShare();
+      expect(screen.getByRole('dialog', { name: REVOKE_CONFIRM })).toBeTruthy();
+      expect(screen.getByText('Others lose access')).toBeTruthy();
+      expect(screen.getByText('Links die')).toBeTruthy();
+    });
+
+    it('confirms a revoke with the danger palette', async () => {
+      renderPanel({ onRevokeShare: vi.fn() });
+      await openRevokeShare();
+      expect(
+        screen.getByRole('button', { name: REVOKE_CONFIRM }).className,
+      ).toContain('danger');
+    });
+
+    it('calls onRevokeShare exactly once and keeps the panel open on success', async () => {
+      const onRevokeShare = vi.fn().mockResolvedValue(undefined);
+      const onClose = vi.fn();
+      renderPanel({ onRevokeShare, onClose });
+      await openRevokeShare();
+      await userEvent.click(
+        screen.getByRole('button', { name: REVOKE_CONFIRM }),
+      );
+      expect(onRevokeShare).toHaveBeenCalledOnce();
+      expect(onRevokeShare).toHaveBeenCalledWith(item);
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByRole('tablist')).toBeTruthy();
+    });
+
+    it('returns to the details content and keeps the panel open when the revoke fails', async () => {
+      const onRevokeShare = vi
+        .fn()
+        .mockRejectedValue(new Error('network error'));
+      const onClose = vi.fn();
+      renderPanel({ onRevokeShare, onClose });
+      await openRevokeShare();
+      await userEvent.click(
+        screen.getByRole('button', { name: REVOKE_CONFIRM }),
+      );
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByRole('tablist')).toBeTruthy();
+    });
+
+    it('prevents a second revoke confirm call while the first is still pending', async () => {
+      let resolveRevoke: () => void = () => undefined;
+      const onRevokeShare = vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveRevoke = resolve;
+          }),
+      );
+      renderPanel({ onRevokeShare });
+      await openRevokeShare();
+      const confirmButton = screen.getByRole('button', {
+        name: REVOKE_CONFIRM,
+      });
+      await userEvent.click(confirmButton);
+      expect(confirmButton.hasAttribute('disabled')).toBe(true);
+
+      await act(async () => {
+        resolveRevoke();
+        await Promise.resolve();
+      });
+      expect(onRevokeShare).toHaveBeenCalledOnce();
+    });
+
+    it('uses the supplied text overrides for the confirmation', async () => {
+      renderPanel({
+        onUnshare: vi.fn(),
+        texts: {
+          unshareLabel: 'Stop sharing',
+          unshareConfirmTitle: 'Stop sharing?',
+          unshareConfirmMessage: (name) => `Drop ${name}?`,
+        },
+      });
+      await openUnshare();
+      expect(screen.getByText('Stop sharing?')).toBeTruthy();
+      expect(screen.getByText('Drop GPT-4o?')).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Stop sharing' })).toBeTruthy();
+    });
+
+    it('returns to the details content when the item changes', async () => {
+      const onUnshare = vi.fn();
+      const { rerender } = renderPanel({ onUnshare });
+      await openUnshare();
+      expect(screen.queryByRole('tablist')).toBeNull();
+
+      rerender(
+        <DetailsPanel
+          item={{ ...item, id: '2' }}
+          isOpen
+          onClose={vi.fn()}
+          onUnshare={onUnshare}
+        />,
+      );
+      expect(screen.getByRole('tablist')).toBeTruthy();
+    });
   });
 });

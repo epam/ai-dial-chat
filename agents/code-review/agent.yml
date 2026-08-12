@@ -10,3 +10,5 @@ phase: pilot
 cost_class: light
 publish_inline_comments: true
 diff_mode: incremental
+secrets: [AI_SDLC_AGENTS_CODE_REVIEW_API_KEY]
+api_key_secret: AI_SDLC_AGENTS_CODE_REVIEW_API_KEY

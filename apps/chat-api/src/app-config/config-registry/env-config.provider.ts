@@ -64,22 +64,6 @@ export class EnvConfigProvider implements ConfigProvider {
       return true;
     }
 
-    // features.requestApiKey is derived from REQUEST_API_KEY_CODE presence
-    if (key === 'features.requestApiKey') {
-      const code = this.configService.get('REQUEST_API_KEY_CODE', {
-        infer: true,
-      });
-      if (code == null) return undefined;
-      return true;
-    }
-
-    // features.reportAnIssue is derived from REPORT_ISSUE_CODE presence
-    if (key === 'features.reportAnIssue') {
-      const code = this.configService.get('REPORT_ISSUE_CODE', { infer: true });
-      if (code == null) return undefined;
-      return true;
-    }
-
     // fileManager.availableTabs is validated against a fixed allow-list, dropping unknown ids
     if (key === 'fileManager.availableTabs') {
       const availableTabs = this.configService.get(
@@ -114,6 +98,18 @@ export class EnvConfigProvider implements ConfigProvider {
         return undefined;
       }
       return this.parseCustomVisualizers(raw);
+    }
+
+    /* ANNOUNCEMENTS is a JSON array. The generic path below would hand the raw
+     * string straight through — `isValidType` does not check 'json' — so it has
+     * to be parsed here, like customVisualizers. Entry-level validation stays in
+     * AppConfigService. */
+    if (key === 'announcement.items') {
+      const raw = this.configService.get('ANNOUNCEMENTS', { infer: true });
+      if (!raw) {
+        return undefined;
+      }
+      return this.parseAnnouncements(raw);
     }
 
     if (!definition.envVar) {
@@ -184,6 +180,32 @@ export class EnvConfigProvider implements ConfigProvider {
       return typeof value === 'string';
     }
     return true;
+  }
+
+  /**
+   * Parses `ANNOUNCEMENTS` fail-open: invalid JSON or a non-array resolves to
+   * `undefined` so the registry default (an empty list) applies and the pill
+   * simply stays hidden. Per-entry validation happens in `AppConfigService`.
+   */
+  private parseAnnouncements(raw: string): unknown[] | undefined {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      this.logger.error(
+        'ANNOUNCEMENTS is not valid JSON; resolving to an empty list',
+      );
+      return undefined;
+    }
+
+    if (!Array.isArray(parsed)) {
+      this.logger.error(
+        'ANNOUNCEMENTS must be a JSON array; resolving to an empty list',
+      );
+      return undefined;
+    }
+
+    return parsed;
   }
 
   /**

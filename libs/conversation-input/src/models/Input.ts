@@ -35,7 +35,7 @@ export interface InputColors {
   modelSelectorCaret?: string;
   /** Model-selector chip hover/active background color. Defaults to `--bg-control-accent-alpha-hover`/`--bg-control-accent-alpha-active`. */
   modelSelectorHoverBg?: string;
-  /** Model-selector chip caret color when disabled. Defaults to `--text-control-disable`. */
+  /** Model-selector chip caret color when disabled. Defaults to `--text-control-disable-beta`. */
   modelSelectorDisabled?: string;
   /** Voice bar error border/icon color. Defaults to `--stroke-error`/`--text-error`. */
   voiceError?: string;
@@ -202,7 +202,7 @@ export interface InputProps {
     canSend: boolean;
     onSend: () => void;
   }) => ReactNode;
-  /** When `true`, blocks all text input, send, attach, and drop interactions. Starter/action buttons remain usable. Defaults to `false`. */
+  /** When `true`, blocks all text input, send, attach, and drop interactions. Starter/action buttons and the model selector remain usable. Defaults to `false`. */
   isInputDisabled?: boolean;
   /**
    * When `true`, the model selector renders in a disabled, non-interactive

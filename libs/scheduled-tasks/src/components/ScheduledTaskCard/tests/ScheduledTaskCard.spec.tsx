@@ -2,10 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  ScheduledTaskSectionKey,
-  type ScheduledTaskItem,
-} from '../../../models/scheduled-task-item';
+import type { ScheduledTaskItem } from '../../../models/scheduled-task-item';
 import { ScheduledTaskCard } from '../ScheduledTaskCard';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -56,41 +53,10 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     text: ReactNode;
     className?: string;
   }) => <span className={className}>{text}</span>,
-  DialDropdown: ({
-    children,
-    items,
-  }: {
-    children: ReactNode;
-    items: {
-      key: string;
-      label: ReactNode;
-      onClick: () => void;
-    }[];
-  }) => (
-    <div>
-      {children}
-      <ul>
-        {items.map((item) => (
-          <li key={item.key}>
-            <button onClick={item.onClick}>{item.label}</button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  ),
-  IconButton: ({
-    icon,
-    ...rest
-  }: { icon: ReactNode } & Record<string, unknown>) => (
-    <button {...rest}>{icon}</button>
-  ),
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconDotsVertical: () => <svg />,
-  IconEdit: () => <svg />,
-  IconPlayerPlay: () => <svg />,
-  IconTrash: () => <svg />,
+  IconPlayerPause: () => <svg />,
 }));
 
 const buildItem = (
@@ -99,8 +65,6 @@ const buildItem = (
   id: 'sched_1',
   displayName: 'Competitor Updates',
   scheduleLabel: 'Every Monday 12:00',
-  sectionKey: ScheduledTaskSectionKey.MyTasks,
-  sortValues: {},
   ...overrides,
 });
 
@@ -124,21 +88,10 @@ describe('ScheduledTaskCard', () => {
     expect(screen.getByText('Project folder')).toBeTruthy();
   });
 
-  it('does not render an overflow trigger when no action handlers are supplied', () => {
+  it('renders no interactive control when onCardClick is omitted', () => {
     render(<ScheduledTaskCard item={buildItem()} />);
 
     expect(screen.queryByRole('button')).toBeNull();
-  });
-
-  it('shows exactly one menu action when only onDelete is supplied and calls it with the item id', async () => {
-    const onDelete = vi.fn();
-    render(<ScheduledTaskCard item={buildItem()} onDelete={onDelete} />);
-
-    const menuButtons = screen.getAllByRole('button');
-    expect(menuButtons).toHaveLength(2); // trigger + single action
-    await userEvent.click(screen.getByText('Delete'));
-
-    expect(onDelete).toHaveBeenCalledWith('sched_1');
   });
 
   it('renders the "new" badge when isNew is set', () => {
@@ -165,6 +118,54 @@ describe('ScheduledTaskCard', () => {
     expect(screen.getByText('a'.repeat(600)).className).toContain(
       'line-clamp-4',
     );
+  });
+
+  it('invokes onCardClick with the item id when the card body is clicked', async () => {
+    const onCardClick = vi.fn();
+    render(<ScheduledTaskCard item={buildItem()} onCardClick={onCardClick} />);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Competitor Updates' }),
+    );
+
+    expect(onCardClick).toHaveBeenCalledWith('sched_1');
+  });
+
+  it('invokes onCardClick on Enter/Space keyboard activation', async () => {
+    const onCardClick = vi.fn();
+    render(<ScheduledTaskCard item={buildItem()} onCardClick={onCardClick} />);
+
+    const card = screen.getByRole('button', { name: 'Competitor Updates' });
+    card.focus();
+    await userEvent.keyboard('{Enter}');
+
+    expect(onCardClick).toHaveBeenCalledWith('sched_1');
+  });
+
+  it('renders no added interactive semantics when onCardClick is omitted', () => {
+    render(<ScheduledTaskCard item={buildItem()} />);
+
+    expect(
+      screen.queryByRole('button', { name: 'Competitor Updates' }),
+    ).toBeNull();
+    expect(screen.getByRole('group')).toBeTruthy();
+  });
+
+  it('renders the "Paused" badge instead of the schedule pill when isActive is false', () => {
+    render(<ScheduledTaskCard item={buildItem({ isActive: false })} />);
+
+    expect(screen.getByText('Paused')).toBeTruthy();
+    expect(screen.queryByText('Every Monday 12:00')).toBeNull();
+  });
+
+  it('renders the schedule pill when isActive is true or omitted', () => {
+    render(<ScheduledTaskCard item={buildItem({ isActive: true })} />);
+
+    expect(screen.getByText('Every Monday 12:00')).toBeTruthy();
+    expect(screen.queryByText('Paused')).toBeNull();
+
+    render(<ScheduledTaskCard item={buildItem()} />);
+    expect(screen.getAllByText('Every Monday 12:00').length).toBeGreaterThan(0);
   });
 
   it('pins the schedule pill to the bottom of the card regardless of description length', () => {

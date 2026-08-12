@@ -1,17 +1,25 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  Dropdown,
   FolderPath,
-  PrimaryButton,
   NeutralButton,
+  NeutralIconButton,
+  PrimaryButton,
+  type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import {
+  IconDots,
   IconKey,
   IconLogin,
   IconLogout,
   IconPencil,
   IconPlayerPlayFilled,
+  IconTrash,
+  IconUpload,
+  IconUserOff,
 } from '@tabler/icons-react';
-import { FC, useCallback, type ReactNode } from 'react';
+import { FC, useCallback, useMemo, type ReactNode } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
 import type {
   ItemDetailsStyles,
@@ -25,8 +33,7 @@ import {
 } from '../../../types/toolset-auth';
 import { getCredentialsUiState } from '../../../utils/toolset-credentials';
 import { EntityHeader } from '../../EntityHeader/EntityHeader';
-import { ConnectButton } from './ConnectButton/ConnectButton';
-import { DeleteButton } from './DeleteButton/DeleteButton';
+import styles from './Header.module.scss';
 import { ShareButton } from './ShareButton/ShareButton';
 
 interface HeaderProps {
@@ -44,17 +51,13 @@ interface HeaderProps {
    * (AND) with the built-in ownership/type rule.
    */
   isShareVisible?: (item: CatalogItem) => boolean;
-  /**
-   * Renders the Connect popover content anchored to the Connect button. When
-   * absent, the Connect button is never shown.
-   */
-  connectOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
-  /** Controls whether the "Connect" action is shown for the item. When absent, the Connect button is never shown. */
-  isConnectVisible?: (item: CatalogItem) => boolean;
   onEdit?: (item: CatalogItem) => void;
-  onDelete?: (item: CatalogItem) => Promise<void> | void;
-  /** Called after a delete confirmed via the Delete button succeeds, to close the whole details panel. */
-  onCloseDetails?: () => void;
+  /** Called when "Delete" is clicked in the Manage menu. The details panel owns the confirmation step, so this only requests it. */
+  onDelete?: (item: CatalogItem) => void;
+  /** Called when the recipient-side "Remove from My List" action is clicked for an item shared with the current user. The details panel owns the confirmation step. */
+  onUnshare?: (item: CatalogItem) => void;
+  /** Called when the owner-side "Revoke access" action is clicked for an item the current user owns. The details panel owns the confirmation step. */
+  onRevokeShare?: (item: CatalogItem) => void;
   onLogin?: (
     item: CatalogItem,
     params: { level: CredentialsLevel; apiKey?: string },
@@ -82,7 +85,7 @@ interface HeaderProps {
   /** Called when the "Publish" button is clicked; the host swaps this panel's content to the publish view. */
   onOpenPublish?: () => void;
 }
-/** Details panel header bar: entity identity (icon + name + version), action buttons (Share, Connect, Edit, Delete, Publish), and inline credentials section. */
+/** Details panel header bar: entity identity (icon + name + version), action buttons (primary action, Share, a "Manage" menu for Edit/Publish/Delete), and inline credentials section. For Toolsets, the credentials action (Log in / Log out / manage) renders first and styled as the primary action, since Toolsets have no "Use in chat" action. */
 export const Header: FC<HeaderProps> = ({
   item,
   onUseInChat,
@@ -90,11 +93,10 @@ export const Header: FC<HeaderProps> = ({
   onShare,
   shareOverlay,
   isShareVisible,
-  connectOverlay,
-  isConnectVisible,
   onEdit,
   onDelete,
-  onCloseDetails,
+  onUnshare,
+  onRevokeShare,
   onLogin,
   onLogout,
   onToggleCredentials,
@@ -105,7 +107,7 @@ export const Header: FC<HeaderProps> = ({
   onOpenPublish,
 }) => {
   const {
-    nameClassName = 'dial-body-semi-text text-primary',
+    nameClassName = 'dial-body-semi-text',
     folderLabelClassName = 'dial-tiny-text',
     folderLeafClassName = 'dial-tiny-semi-text',
   } = detailsStyles?.typography ?? {};
@@ -117,6 +119,22 @@ export const Header: FC<HeaderProps> = ({
   const handleEdit = useCallback(() => {
     onEdit?.(item);
   }, [item, onEdit]);
+
+  const handleOpenPublish = useCallback(() => {
+    onOpenPublish?.();
+  }, [onOpenPublish]);
+
+  const handleUnshare = useCallback(() => {
+    onUnshare?.(item);
+  }, [item, onUnshare]);
+
+  const handleDelete = useCallback(() => {
+    onDelete?.(item);
+  }, [item, onDelete]);
+
+  const handleRevokeShare = useCallback(() => {
+    onRevokeShare?.(item);
+  }, [item, onRevokeShare]);
 
   const shouldShowPrimaryAction =
     texts?.hasPrimaryAction !== false &&
@@ -131,6 +149,103 @@ export const Header: FC<HeaderProps> = ({
       item.type === CatalogEntityType.Agent);
 
   const shouldShowEditAction = !!onEdit && !!item.isEditable;
+  const shouldShowDeleteAction = item.isMyApp;
+  /*
+   * The recipient-side "Remove from My List" action is the counterpart of
+   * Delete: it discards only the current user's own access, so it shows
+   * exclusively for items shared with them. `isMyApp` and `sharedWithMe` are
+   * mutually exclusive for a given item, so Delete and this action never
+   * render at the same time.
+   */
+  const shouldShowUnshareAction =
+    !!onUnshare && item.isMyApp !== true && item.sharedWithMe === true;
+  /*
+   * The owner-side counterpart: revoking removes *other people's* access to
+   * an item the caller owns, so it renders alongside Delete and never with
+   * "Remove from My List". It also stays hidden while nobody holds access —
+   * an action that would be a no-op is noise. `undefined` (host could not
+   * determine the count) keeps the action visible rather than silently
+   * removing the only way to revoke.
+   */
+  const recipientsCount = item.recipientsCount;
+  const shouldShowRevokeShareAction =
+    !!onRevokeShare &&
+    item.isMyApp === true &&
+    (recipientsCount == null || recipientsCount > 0);
+
+  const manageItems = useMemo<DropdownItem[]>(() => {
+    const items: DropdownItem[] = [];
+    if (shouldShowEditAction) {
+      items.push({
+        key: 'edit',
+        label: texts?.editActionLabel ?? 'Edit',
+        icon: <IconPencil size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        onClick: handleEdit,
+      });
+    }
+    if (shouldShowPublish) {
+      items.push({
+        key: 'publish',
+        label: texts?.publishLabel ?? 'Publish',
+        icon: <IconUpload size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        onClick: handleOpenPublish,
+      });
+    }
+    if (shouldShowDeleteAction) {
+      items.push({
+        key: 'delete',
+        label: texts?.deleteActionLabel ?? 'Delete',
+        icon: <IconTrash size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        danger: true,
+        onClick: handleDelete,
+      });
+    }
+    if (shouldShowRevokeShareAction) {
+      const revokeShareLabel = texts?.revokeShareLabel ?? 'Revoke access';
+      const formatWithCount =
+        texts?.revokeShareLabelWithCount ??
+        ((count: number) => `${revokeShareLabel} (${count})`);
+      items.push({
+        key: 'revoke-share',
+        label:
+          recipientsCount == null
+            ? revokeShareLabel
+            : formatWithCount(recipientsCount),
+        icon: <IconUserOff size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        danger: true,
+        onClick: handleRevokeShare,
+      });
+    }
+    if (shouldShowUnshareAction) {
+      items.push({
+        key: 'unshare',
+        label: texts?.unshareLabel ?? 'Remove from My List',
+        icon: (
+          <IconTrash
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            className="text-error"
+          />
+        ),
+        className: 'text-error',
+        onClick: handleUnshare,
+      });
+    }
+    return items;
+  }, [
+    shouldShowEditAction,
+    shouldShowPublish,
+    shouldShowDeleteAction,
+    shouldShowRevokeShareAction,
+    recipientsCount,
+    shouldShowUnshareAction,
+    texts,
+    handleEdit,
+    handleOpenPublish,
+    handleDelete,
+    handleRevokeShare,
+    handleUnshare,
+  ]);
 
   const credentialsUiState =
     item.credentials != null &&
@@ -139,6 +254,11 @@ export const Header: FC<HeaderProps> = ({
       : undefined;
   const shouldShowCredentialsAction =
     credentialsUiState != null && (!!onLogin || !!onLogout);
+  /* Toolsets have no "Use in chat" primary action, so the credentials
+   * button (Log in / Log out / manage) takes over as their primary,
+   * leading action instead. */
+  const isCredentialsActionPrimary =
+    item.type === CatalogEntityType.Toolset && shouldShowCredentialsAction;
 
   const handleCredentialsClick = useCallback(() => {
     if (credentialsUiState === CredentialsUiState.LogOut) {
@@ -173,7 +293,7 @@ export const Header: FC<HeaderProps> = ({
       <EntityHeader
         item={item}
         iconSize={52}
-        nameClassName={nameClassName}
+        nameClassName={mergeClasses(nameClassName, styles.name)}
         featuredLabel={texts?.featuredLabel ?? 'Featured'}
         footer={
           item.folder.length > 0 ? (
@@ -186,18 +306,18 @@ export const Header: FC<HeaderProps> = ({
         }
       />
       <div className="flex flex-wrap items-center gap-2 ps-[60px]">
+        {isCredentialsActionPrimary && (
+          <PrimaryButton
+            label={credentialsLabel}
+            iconBefore={credentialsIcon}
+            onClick={handleCredentialsClick}
+          />
+        )}
         {shouldShowPrimaryAction && (
           <PrimaryButton
             label={texts?.primaryActionLabel ?? 'Use in chat'}
             iconBefore={<IconPlayerPlayFilled size={DIAL_ICON_SIZE.MD} />}
             onClick={handleUseInChat}
-          />
-        )}
-        {shouldShowEditAction && (
-          <NeutralButton
-            label={texts?.editActionLabel ?? 'Edit'}
-            iconBefore={<IconPencil size={DIAL_ICON_SIZE.MD} />}
-            onClick={handleEdit}
           />
         )}
         <ShareButton
@@ -207,31 +327,26 @@ export const Header: FC<HeaderProps> = ({
           isShareVisible={isShareVisible}
           label={texts?.shareLabel}
         />
-        <DeleteButton
-          item={item}
-          onDelete={onDelete}
-          onDeleted={onCloseDetails}
-          texts={texts}
-        />
-        {shouldShowPublish && (
-          <NeutralButton
-            label={texts?.publishLabel ?? 'Publish'}
-            onClick={onOpenPublish}
-          />
-        )}
-        {shouldShowCredentialsAction && (
+        {shouldShowCredentialsAction && !isCredentialsActionPrimary && (
           <NeutralButton
             label={credentialsLabel}
             iconBefore={credentialsIcon}
             onClick={handleCredentialsClick}
           />
         )}
-        <ConnectButton
-          item={item}
-          connectOverlay={connectOverlay}
-          isConnectVisible={isConnectVisible}
-          label={texts?.connectLabel}
-        />
+        {manageItems.length > 0 && (
+          <Dropdown
+            items={manageItems}
+            placement="bottom-end"
+            matchReferenceWidth={false}
+          >
+            <NeutralIconButton
+              icon={<IconDots size={DIAL_ICON_SIZE.MD} aria-hidden />}
+              aria-label={texts?.manageActionLabel ?? 'Manage'}
+              aria-haspopup="menu"
+            />
+          </Dropdown>
+        )}
       </div>
     </div>
   );

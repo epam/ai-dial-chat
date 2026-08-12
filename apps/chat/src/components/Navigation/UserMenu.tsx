@@ -3,7 +3,7 @@ import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import {
   DIAL_ICON_SIZE,
-  DialDropdown,
+  Dropdown,
   DialEllipsisTooltip,
   DialTooltip,
   DropdownItem,
@@ -215,21 +215,20 @@ export const UserMenu = memo(() => {
   return (
     <>
       <div className="flex size-[60px] items-center justify-center">
-        <DialDropdown
+        <Dropdown
           placement="top-end"
           matchReferenceWidth={false}
           items={menuItems}
-          listClassName="cp-dropdown-overlay"
         >
           <button
-            className="flex size-[44px] items-center justify-center rounded-full border border-transparent focus-within:border-focus hover:bg-control-accent-alpha-hover focus:border-transparent"
+            className="flex size-[44px] items-center justify-center rounded-full border border-transparent hover:bg-control-accent-alpha-hover focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-focus-black"
             aria-label={t(AuthI18nKeys.SignedInAs, { email })}
           >
             <DialTooltip tooltip={email} hideTooltip={isMobile}>
               {avatar}
             </DialTooltip>
           </button>
-        </DialDropdown>
+        </Dropdown>
       </div>
       <LogoutConfirmationModal isOpen={isLogoutOpen} onClose={closeLogout} />
     </>

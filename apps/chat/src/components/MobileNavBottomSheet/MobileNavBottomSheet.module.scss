@@ -4,15 +4,15 @@
   &:hover {
     background: var(
       --ci-sheet-item-hover,
-      var(--controls-accent-primary-alpha-hover, #7da4ff2e)
+      var(--bg-accent-primary-alpha, #7da4ff2e)
     );
   }
 
   &:active {
-    background: var(--ci-sheet-item-active, var(--bg-layer-4, #242c42));
+    background: var(--ci-sheet-item-active, var(--bg-layer-4, #d1dbea));
   }
 }
 
 .itemIcon {
-  color: var(--ci-sheet-icon, var(--text-secondary, #6b7280));
+  color: var(--ci-sheet-icon, var(--text-secondary, #57647a));
 }

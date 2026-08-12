@@ -1,4 +1,4 @@
-import type { ScheduledTaskDto } from '@epam/chat-api-client';
+import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
 import type { TFunction } from 'i18next';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
@@ -34,7 +34,6 @@ describe('mapScheduledTaskDtoToItem', () => {
     expect(result.scheduleLabel).toMatch(
       new RegExp(`^${ScheduledTasksI18nKeys.CardScheduleOnceAt}:`),
     );
-    expect(result.sortValues.nextRunAt).toBe('2026-07-24T09:00:00.000Z');
   });
 
   it('formats a weekly cron trigger via the weekly translation key', () => {
@@ -122,23 +121,9 @@ describe('mapScheduledTaskDtoToItem', () => {
     );
   });
 
-  it('prefers nextRunTime/createdAt from the DTO over the create-trigger date', () => {
-    const result = mapScheduledTaskDtoToItem(
-      buildDto({
-        nextRunTime: '2026-07-28T12:00:00.000Z',
-        createdAt: '2026-07-23T21:27:07.000Z',
-      }),
-      fakeT,
-    );
-
-    expect(result.sortValues.nextRunAt).toBe('2026-07-28T12:00:00.000Z');
-    expect(result.sortValues.createdAt).toBe('2026-07-23T21:27:07.000Z');
-  });
-
-  it('falls back to myTasks with no thrown errors for missing optional fields', () => {
+  it('leaves missing optional fields undefined with no thrown errors', () => {
     const result = mapScheduledTaskDtoToItem(buildDto(), fakeT);
 
-    expect(result.sectionKey).toBe('myTasks');
     expect(result.descriptionPreview).toBeUndefined();
     expect(result.locationSegments).toBeUndefined();
   });
@@ -154,33 +139,28 @@ describe('mapScheduledTaskDtoToItem', () => {
     );
   });
 
-  it('places the item under myTasks when createdBy matches currentUserSub', () => {
+  it('maps isActive false to the item unmodified', () => {
     const result = mapScheduledTaskDtoToItem(
-      buildDto({ createdBy: 'user-1' }),
+      buildDto({ isActive: false }),
       fakeT,
-      'user-1',
     );
 
-    expect(result.sectionKey).toBe('myTasks');
+    expect(result.isActive).toBe(false);
   });
 
-  it('places the item under shared when createdBy differs from currentUserSub', () => {
+  it('maps isActive true to the item unmodified', () => {
     const result = mapScheduledTaskDtoToItem(
-      buildDto({ createdBy: 'user-2' }),
+      buildDto({ isActive: true }),
       fakeT,
-      'user-1',
     );
 
-    expect(result.sectionKey).toBe('shared');
+    expect(result.isActive).toBe(true);
   });
 
-  it('falls back to myTasks when createdBy is present but currentUserSub is not supplied', () => {
-    const result = mapScheduledTaskDtoToItem(
-      buildDto({ createdBy: 'user-2' }),
-      fakeT,
-    );
+  it('maps a missing isActive to undefined without throwing', () => {
+    const result = mapScheduledTaskDtoToItem(buildDto(), fakeT);
 
-    expect(result.sectionKey).toBe('myTasks');
+    expect(result.isActive).toBeUndefined();
   });
 });
 
@@ -215,7 +195,7 @@ describe('mapScheduledTaskDtoToItem — recurring schedule timezone conversion',
     );
 
     expect(result.scheduleLabel).toBe(
-      `${ScheduledTasksI18nKeys.CardScheduleWeeklyAt}:${JSON.stringify({ day: '0', time: '01:00' })}`, // local Monday 01:00
+      `${ScheduledTasksI18nKeys.CardScheduleWeeklyAt}:${JSON.stringify({ day: 'Monday', time: '01:00' })}`, // local Monday 01:00
     );
   });
 

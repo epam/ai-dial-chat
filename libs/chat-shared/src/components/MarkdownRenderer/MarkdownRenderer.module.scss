@@ -11,7 +11,7 @@
   background: linear-gradient(
     270deg,
     var(--cm-thinking-inverted, var(--bg-inverted, #161b2d)) 0%,
-    var(--cm-thinking-secondary, var(--text-secondary, #6b7280)) 40%,
+    var(--cm-thinking-secondary, var(--text-secondary, #57647a)) 40%,
     var(--cm-thinking-inverted, var(--bg-inverted, #161b2d)) 80%
   );
   background-size: 200% auto;
@@ -21,6 +21,28 @@
   animation: cm-shimmer 2s linear infinite;
 }
 
+.h6 {
+  color: var(--cm-h6-text, var(--text-secondary, #57647a));
+}
+
+.codeInline {
+  background: var(--cm-code-inline-bg, var(--bg-layer-raised, #fcfcfc));
+  color: var(--cm-code-inline-text, var(--text-primary, #161b2d));
+}
+
 .secondaryBorder {
   border-color: var(--cm-markdown-border, var(--stroke-secondary, #d1dbea));
+}
+
+.blockquote {
+  border-color: var(--cm-blockquote-border, var(--stroke-primary, #57647a));
+  color: var(--cm-blockquote-text, var(--text-secondary, #57647a));
+}
+
+.link {
+  color: var(--cm-link-text, var(--text-accent, #1d4ed8));
+
+  &:focus-visible {
+    outline-color: var(--cm-link-focus, var(--stroke-focus-black, #161b2d));
+  }
 }

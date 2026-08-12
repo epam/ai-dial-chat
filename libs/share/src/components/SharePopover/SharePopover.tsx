@@ -43,10 +43,8 @@ const SharePopover: FC<SharePopoverProps> = ({
   styles: stylesProp,
 }) => {
   const colors = stylesProp?.colors;
-  const {
-    errorClassName = 'dial-tiny-text',
-    noteClassName = 'dial-tiny-text',
-  } = stylesProp?.typography ?? {};
+  const typography = stylesProp?.typography;
+
   const cssVars = buildCssVars({
     '--shp-access-trigger-bg': colors?.accessTriggerBackground,
     '--shp-access-trigger-border': colors?.accessTriggerBorder,
@@ -63,10 +61,12 @@ const SharePopover: FC<SharePopoverProps> = ({
     '--shp-menu-item-focus-shadow': colors?.menuItemFocusShadow,
     '--shp-menu-item-checked-bg': colors?.menuItemCheckedBackground,
     '--shp-menu-item-label': colors?.menuItemLabel,
+    '--shp-menu-item-check': colors?.menuItemCheck,
     '--shp-section-label': colors?.sectionLabel,
     '--shp-error-text': colors?.errorText,
     '--shp-note-text': colors?.noteText,
     '--shp-divider': colors?.divider,
+    '--shp-skeleton-color': colors?.skeletonColor,
   });
   const {
     title = 'Share',
@@ -227,13 +227,18 @@ const SharePopover: FC<SharePopoverProps> = ({
       <div className={mergeClasses('mx-4 h-px', styles.divider)} />
 
       <div className="flex flex-col gap-3 px-4 py-3.5">
-        {isLoading && <LoadingSkeleton ariaLabel={loadingLabel} />}
+        {isLoading && (
+          <LoadingSkeleton
+            ariaLabel={loadingLabel}
+            skeletonColor={colors?.skeletonColor}
+          />
+        )}
 
         {!isLoading && error != null && (
           <p
             role="alert"
             className={mergeClasses(
-              errorClassName,
+              typography?.errorClassName ?? 'dial-tiny-text',
               'py-6 text-center',
               styles.errorText,
             )}
@@ -258,8 +263,18 @@ const SharePopover: FC<SharePopoverProps> = ({
               onMenuKeyDown={handleAccessMenuKeyDown}
               triggerRef={accessTriggerRef}
               menuRef={accessMenuRef}
+              titleClassName={typography?.anyoneTitleClassName}
+              subtitleClassName={typography?.anyoneSubtitleClassName}
+              accessTriggerLabelClassName={
+                typography?.accessTriggerLabelClassName
+              }
             />
-            <p className={mergeClasses(noteClassName, styles.note)}>
+            <p
+              className={mergeClasses(
+                typography?.noteClassName ?? 'dial-tiny-text',
+                styles.note,
+              )}
+            >
               {canEditAccess && access.includes(ShareLinkAccess.Edit)
                 ? visibilityNoteEdit
                 : visibilityNote}
@@ -279,7 +294,12 @@ const SharePopover: FC<SharePopoverProps> = ({
               />
             )}
             {expiryNote != null && (
-              <p className={mergeClasses(noteClassName, styles.note)}>
+              <p
+                className={mergeClasses(
+                  typography?.noteClassName ?? 'dial-tiny-text',
+                  styles.note,
+                )}
+              >
                 {expiryNote}
               </p>
             )}

@@ -1,4 +1,4 @@
-import { DialSpinner, NotificationVariant } from '@epam/ai-dial-ui-kit';
+import { Spinner, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import {
   createContext,
   type ReactNode,
@@ -203,7 +203,7 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
   if (status === UserConfigStatus.Loading) {
     return (
       <div className="flex size-full items-center justify-center">
-        <DialSpinner />
+        <Spinner />
       </div>
     );
   }

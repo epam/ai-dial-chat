@@ -143,6 +143,8 @@ jobs:
         id: manifest
         env:
           AGENT_NAME: ${{ inputs.agent_name }}
+          AI_SDLC_AGENTS_MAX_TURNS: ${{ vars.AI_SDLC_AGENTS_MAX_TURNS }}
+          ALL_VARS_JSON: ${{ toJSON(vars) }}
         run: |
           set -euo pipefail
           MANIFEST="agents/${AGENT_NAME}/agent.yml"
@@ -181,12 +183,33 @@ jobs:
           print(f"allowed_tools={tools}")
           print(f"agent_version={m.get('agent_version', 'unknown')}")
           print(f"model={m.get('model', '')}")
-          print(f"max_turns={m.get('max_turns', 18)}")
+          # model_override: per-agent DIAL model from an Actions Variable named
+          # AI_SDLC_AGENTS_{NAME_UPPER}_MODEL (e.g. AI_SDLC_AGENTS_CODE_REVIEW_MODEL).
+          # Takes precedence over vars.DIAL_MODEL when set.
+          all_vars = json.loads(os.environ.get('ALL_VARS_JSON', '{}'))
+          name_upper = os.environ['AGENT_NAME'].upper().replace('-', '_')
+          model_override = all_vars.get(f'AI_SDLC_AGENTS_{name_upper}_MODEL', '').strip()
+          if '\n' in model_override or '\r' in model_override:
+              raise SystemExit(f"::error::AI_SDLC_AGENTS_{name_upper}_MODEL value contains a newline — refusing to use it.")
+          print(f"model_override={model_override}")
+          # max_turns: manifest value takes precedence; fall back to the
+          # AGENT_MAX_TURNS Actions Variable (operator-tunable, no PR needed),
+          # then to the hardcoded default of 18.
+          env_max_turns = int(os.environ.get('AI_SDLC_AGENTS_MAX_TURNS') or 0)
+          max_turns = m.get('max_turns') or env_max_turns or 18
+          print(f"max_turns={max_turns}")
           print(f"tools_extra_json={json.dumps(extra)}")
           print(f"secrets_json={json.dumps(secrets)}")
           # vars: declared NON-secret config names to inject from the Actions
           # Variables context (operator-tunable knobs, e.g. JIRA_MAX_FINDINGS).
           print(f"vars_json={json.dumps(m.get('vars') or [])}")
+          # api_key_secret: optional per-agent inference key override. The named
+          # secret must also be in `secrets:` so the inject step puts its value
+          # into env before the override step forwards it to ANTHROPIC_AUTH_TOKEN.
+          api_key_secret = m.get('api_key_secret', '')
+          if api_key_secret and api_key_secret not in (m.get('secrets') or []):
+              raise SystemExit(f"::error::api_key_secret '{api_key_secret}' must also appear in manifest `secrets:` so its value is injected into env before the inference-key override step.")
+          print(f"api_key_secret={api_key_secret}")
           # private_output: encrypt this agent's artifact and decrypt encrypted
           # upstream artifacts (public-repo leak protection). See the encrypt
           # step in run-claude-stage and the decrypt step below.
@@ -303,6 +326,65 @@ jobs:
                       injected.append(name)
           print(f"Injected vars: {injected or '(none set; skill defaults apply)'}")
           PY
+
+      - name: Override inference key (per-agent)
+        # When a manifest declares `api_key_secret`, forward that secret's value
+        # to the inference env vars instead of the shared DIAL_API_KEY /
+        # ANTHROPIC_API_KEY. Runs after "Inject declared secrets" so the secret
+        # is already in GITHUB_ENV under its declared name.
+        #
+        # In DIAL mode (DIAL_CORE_URL set) the claude-code-action reads
+        # ANTHROPIC_AUTH_TOKEN from the process env — set via GITHUB_ENV in the
+        # Configure inference route step — so overriding it here is sufficient.
+        # In direct-Anthropic mode ANTHROPIC_API_KEY is written to GITHUB_ENV
+        # as well; whether the composite action's ${{ env.ANTHROPIC_API_KEY }}
+        # expression picks it up depends on GHA's env-context refresh behaviour,
+        # but the CLI process env always does.
+        if: steps.manifest.outputs.api_key_secret != ''
+        env:
+          SECRET_NAME: ${{ steps.manifest.outputs.api_key_secret }}
+        run: |
+          set -euo pipefail
+          val="${!SECRET_NAME:-}"
+          if [ -z "$val" ]; then
+            echo "::error::api_key_secret '${SECRET_NAME}' is declared but empty in env — ensure it is listed in this agent's \`secrets:\` field and the corresponding Actions secret exists."
+            exit 1
+          fi
+          # Inference API keys never contain newlines or carriage returns. Use a
+          # shell-native case test (sees embedded \n/\r in the variable itself,
+          # unlike grep which reads line-by-line and misses them).
+          case "$val" in
+            *$'\n'*|*$'\r'*)
+              echo "::error::api_key_secret '${SECRET_NAME}' value contains a newline/CR — refusing to write it to GITHUB_ENV."
+              exit 1 ;;
+          esac
+          # Use the heredoc-delimited multiline form so that special characters
+          # (=, <, >) in the value cannot be misinterpreted as new assignments.
+          # Randomise the delimiter per-invocation so it cannot be predicted even
+          # if the newline guard above were somehow bypassed.
+          DELIM="__SDLC_KEY_EOF_$(openssl rand -hex 8)__"
+          { printf 'ANTHROPIC_AUTH_TOKEN<<%s\n%s\n%s\n' "$DELIM" "$val" "$DELIM"
+            printf 'ANTHROPIC_API_KEY<<%s\n%s\n%s\n' "$DELIM" "$val" "$DELIM"
+          } >> "$GITHUB_ENV"
+          echo "Inference key overridden for this agent (secret: ${SECRET_NAME})"
+
+      - name: Override model (per-agent)
+        # When AI_SDLC_AGENTS_{NAME_UPPER}_MODEL is set in Actions Variables,
+        # write it to SDLC_DIAL_MODEL so run-claude-stage routes to that
+        # DIAL deployment instead of the global vars.DIAL_MODEL fallback.
+        # Only meaningful in DIAL mode; no-op in direct-Anthropic mode.
+        if: steps.manifest.outputs.model_override != ''
+        env:
+          MODEL_OVERRIDE: ${{ steps.manifest.outputs.model_override }}
+        run: |
+          set -euo pipefail
+          case "$MODEL_OVERRIDE" in
+            *$'\n'*|*$'\r'*)
+              echo "::error::model override value contains a newline/CR — refusing to write it to GITHUB_ENV."
+              exit 1 ;;
+          esac
+          echo "SDLC_DIAL_MODEL=${MODEL_OVERRIDE}" >> "$GITHUB_ENV"
+          echo "Model overridden for this agent: ${MODEL_OVERRIDE}"
 
       - name: Decrypt upstream artifacts
         # Upstream producers flagged `private_output` upload their stage-output

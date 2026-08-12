@@ -2,7 +2,6 @@ export { ScheduledTasks } from './components/ScheduledTasks/ScheduledTasks';
 export type {
   ScheduledTasksProps,
   ScheduledTasksLabels,
-  ScheduledTasksSortOption,
   ScheduledTasksStyles,
   ScheduledTasksColors,
   ScheduledTasksTypography,
@@ -15,13 +14,6 @@ export type {
   ScheduledTaskCardColors,
   ScheduledTaskCardTypography,
 } from './models/scheduled-task-card-props';
-export { ScheduledTaskSection } from './components/ScheduledTaskSection/ScheduledTaskSection';
-export type {
-  ScheduledTaskSectionProps,
-  ScheduledTaskSectionStyles,
-  ScheduledTaskSectionColors,
-  ScheduledTaskSectionTypography,
-} from './models/scheduled-task-section-props';
 export { ScheduledTaskCardGrid } from './components/ScheduledTaskCardGrid/ScheduledTaskCardGrid';
 export type {
   ScheduledTaskCardGridProps,
@@ -33,11 +25,7 @@ export type {
   ScheduledTaskCardSkeletonStyles,
   ScheduledTaskCardSkeletonColors,
 } from './models/scheduled-task-card-skeleton-props';
-export type {
-  ScheduledTaskItem,
-  ScheduledTaskSortValues,
-} from './models/scheduled-task-item';
-export { ScheduledTaskSectionKey } from './models/scheduled-task-item';
+export type { ScheduledTaskItem } from './models/scheduled-task-item';
 export { ScheduledTasksSortKey } from './types/scheduled-tasks-sort-key';
 export { ScheduledTaskCreateForm } from './components/ScheduledTaskCreateForm/ScheduledTaskCreateForm';
 export type {
@@ -48,11 +36,31 @@ export type {
   ScheduledTaskCreateFormStyles,
   ScheduledTaskCreateFormColors,
   ScheduledTaskCreateFormTypography,
-  ScheduledTaskCreateFormModelOption,
-  ScheduledTaskFrequencyOption,
+  ScheduledTaskRepeatOption,
 } from './models/scheduled-task-create-form-props';
 export { DESCRIPTION_MAX_LENGTH } from './constants/scheduled-task-create-form';
-export {
-  ScheduledTaskFrequency,
-  ScheduledTaskScheduleType,
-} from './types/scheduled-task-schedule';
+export { ScheduledTaskRepeat } from './types/scheduled-task-schedule';
+export { ScheduledTaskDetailView } from './components/ScheduledTaskDetailView/ScheduledTaskDetailView';
+export type {
+  ScheduledTaskDetailViewProps,
+  ScheduledTaskDetailViewLabels,
+  ScheduledTaskDetailViewStyles,
+  ScheduledTaskDetailViewColors,
+  ScheduledTaskDetailViewTypography,
+} from './models/scheduled-task-detail-view-props';
+export type { ScheduledTaskRunItem } from './models/scheduled-task-run-item';
+export { ScheduledTaskRunStatus } from './types/scheduled-task-run-status';
+export { ScheduledTaskRunHistoryList } from './components/ScheduledTaskRunHistoryList/ScheduledTaskRunHistoryList';
+export type {
+  ScheduledTaskRunHistoryListProps,
+  ScheduledTaskRunHistoryListLabels,
+  ScheduledTaskRunHistoryListStyles,
+  ScheduledTaskRunHistoryListColors,
+  ScheduledTaskRunHistoryListTypography,
+} from './models/scheduled-task-run-history-list-props';
+export { ScheduledTaskDetailsSummary } from './components/ScheduledTaskDetailsSummary/ScheduledTaskDetailsSummary';
+export type {
+  ScheduledTaskDetailsSummaryProps,
+  ScheduledTaskDetailsSummaryStyles,
+  ScheduledTaskDetailsSummaryTypography,
+} from './models/scheduled-task-details-summary-props';

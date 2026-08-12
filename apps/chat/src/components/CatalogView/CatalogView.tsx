@@ -4,14 +4,13 @@ import {
   CatalogItem,
   CatalogItemDetailsFetchResult,
   CatalogViewMode,
-  CreateOption,
   CredentialsLevel,
   CredentialStatus,
 } from '@epam/ai-dial-catalog';
+import type { ToolsetLogoutBodyDto } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import type { ToolsetLogoutBodyDto } from '@epam/chat-api-client';
+import { DropdownItem, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +29,7 @@ import {
   DialFileManagerI18nKeys,
   FavoritesI18nKeys,
   NavigationI18nKeys,
+  PublishI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
@@ -40,6 +40,8 @@ import {
   useFavoriteApplications,
 } from '../../context/FavoriteApplicationsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useLanguage } from '../../hooks/language/useLanguage';
+import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import {
   ToolsetLoginOutcomeType,
@@ -51,13 +53,21 @@ import { getApiErrorDetails } from '../../server-api/api-error';
 import { deleteApplication } from '../../server-api/applications';
 import { getDeploymentLimits } from '../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../server-api/deployments';
-import { getPublishRules } from '../../server-api/publish-rules.api';
+import {
+  getPublishRules,
+  toPublishRuleDto,
+} from '../../server-api/publish-rules.api';
 import { publishCatalogEntity } from '../../server-api/publish.api';
+import {
+  discardSharedCatalogItem,
+  revokeSharedAccess,
+} from '../../server-api/share.api';
 import { deleteToolset, logoutToolset } from '../../server-api/toolsets';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { CatalogQuery } from '../../types/catalog';
 import { ROUTES } from '../../types/routes';
 import { isQuickAppSchema } from '../../utils/application-schema';
+import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { mapDeploymentLimitsDtoToCatalogLimits } from '../../utils/map-deployment-limits-to-catalog';
 import {
   mapDeploymentToCatalogItem,
@@ -68,8 +78,11 @@ import {
   mapEntityDetailsToCatalogDetails,
   mapToolsetCredentials,
 } from '../../utils/map-entity-details-to-catalog';
+import {
+  buildConnectApi,
+  resolveMcpResourceKind,
+} from '../../utils/mcp-endpoint-url';
 import { getAccessRulesLabels, toPublishEntityType } from '../../utils/publish';
-import ConnectPopoverContainer from '../ConnectPopoverContainer/ConnectPopoverContainer';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 
 /** Entity types shown in the catalog picker modal: models and agents only. */
@@ -88,10 +101,22 @@ interface Props {
   isSelectorMode?: boolean;
   /** Called after a card selection commits in picker mode, so the host can close the modal. */
   onClose?: () => void;
+  /**
+   * Called with the selected deployment's id when a card is picked in
+   * selector mode, instead of committing the pick to `DeploymentsContext`.
+   * Omit to keep the default behavior (updates the chat input's own
+   * selected deployment via `setSelectedItemId`).
+   */
+  onSelect?: (id: string) => void;
 }
 
-const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
+const CatalogView: FC<Props> = ({
+  isSelectorMode = false,
+  onClose,
+  onSelect,
+}) => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const itemIdParam = searchParams.get(CatalogQuery.ItemId) ?? undefined;
@@ -168,35 +193,39 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     OverlayFeature.HideCustomAppCreation,
   );
 
-  const catalogItems = useMemo(
-    () => [
+  const catalogItems = useMemo(() => {
+    return [
       ...deployments.map((d) =>
-        mapDeploymentToCatalogItem(
-          d,
+        mapDeploymentToCatalogItem(d, {
           favoriteIds,
-          undefined,
           t,
-          quickAppSchemaId ? [quickAppSchemaId] : [],
-          isCustomAppsEnabled,
-        ),
+          editableSchemaIds: quickAppSchemaId ? [quickAppSchemaId] : [],
+          isCustomAppsEditable: isCustomAppsEnabled,
+          activeLocale: language,
+        }),
       ),
       ...(isToolsetsEnabled
         ? toolsets.map((toolset) =>
-            mapToolsetToCatalogItem(toolset, favoriteIds, isAdmin, t),
+            mapToolsetToCatalogItem(toolset, {
+              favoriteIds,
+              isAdmin,
+              t,
+              activeLocale: language,
+            }),
           )
         : []),
-    ],
-    [
-      deployments,
-      favoriteIds,
-      t,
-      toolsets,
-      quickAppSchemaId,
-      isAdmin,
-      isToolsetsEnabled,
-      isCustomAppsEnabled,
-    ],
-  );
+    ];
+  }, [
+    deployments,
+    favoriteIds,
+    t,
+    language,
+    toolsets,
+    quickAppSchemaId,
+    isAdmin,
+    isToolsetsEnabled,
+    isCustomAppsEnabled,
+  ]);
 
   const visibleCatalogItems = useMemo(() => {
     let result = isSelectorMode
@@ -225,8 +254,11 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     loadingPaths: publishLoadingPaths,
     onExpandedPathsChange: onPublishExpandedPathsChange,
     onCreatePublishFolder,
+    rememberPublishFolder,
     hasPublishWriteAccess,
   } = usePublishFolders();
+
+  const showPublishError = usePublishErrorNotification();
 
   const favorites = useMemo(
     () => visibleCatalogItems.filter((item) => item.isUserFavorite),
@@ -247,8 +279,21 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
           limitsPromise,
         ]);
         const entityDetails = mapDeploymentDetailsDtoToEntityDetails(dto);
+        const catalogDetails = mapEntityDetailsToCatalogDetails(entityDetails);
+        const mcpResourceKind = resolveMcpResourceKind(
+          item.type,
+          item.supportsMcp,
+        );
         return {
-          ...mapEntityDetailsToCatalogDetails(entityDetails),
+          ...catalogDetails,
+          api:
+            mcpResourceKind != null
+              ? buildConnectApi(
+                  dialCoreExternalUrl ?? '',
+                  item.id,
+                  mcpResourceKind,
+                )
+              : catalogDetails.api,
           limits: mapDeploymentLimitsDtoToCatalogLimits(limitsDto, t),
           credentials:
             entityDetails.type === 'TOOLSET'
@@ -259,7 +304,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         return undefined;
       }
     },
-    [isAdmin, t],
+    [isAdmin, t, dialCoreExternalUrl],
   );
 
   const getLevelStatus = useCallback(
@@ -461,19 +506,26 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   );
 
   /* Picker mode: a card click selects it and closes the modal immediately,
-   * without opening its details. */
+   * without opening its details. When `onSelect` is supplied (a form-owned
+   * selection, decoupled from the chat input's active deployment), the pick
+   * is routed there instead of committing to `DeploymentsContext`. */
   const handleCardSelect = useCallback(
     (item: CatalogItem) => {
-      setSelectedItemId(item.id);
+      if (onSelect) {
+        onSelect(item.id);
+      } else {
+        setSelectedItemId(item.id);
+      }
       onClose?.();
     },
-    [setSelectedItemId, onClose],
+    [onSelect, setSelectedItemId, onClose],
   );
 
   const isPrimaryActionVisible = useCallback(
     (item: CatalogItem) =>
-      item.type === CatalogEntityType.Model ||
-      item.type === CatalogEntityType.Agent,
+      (item.type === CatalogEntityType.Model ||
+        item.type === CatalogEntityType.Agent) &&
+      item.supportsChat !== false,
     [],
   );
 
@@ -481,15 +533,6 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     (item: CatalogItem) =>
       Boolean(item.isMyApp) && toPublishEntityType(item.type) != null,
     [],
-  );
-
-  const isConnectVisible = useCallback(
-    (item: CatalogItem) => {
-      if (!dialCoreExternalUrl) return false;
-      if (item.type === CatalogEntityType.Toolset) return true;
-      return item.type === CatalogEntityType.Agent && item.supportsMcp === true;
-    },
-    [dialCoreExternalUrl],
   );
 
   const isApplicationsSharingEnabled = useUiFeature(
@@ -525,7 +568,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       await publishCatalogEntity(entityType, item.id, {
         folderPath: folderPath.join('/'),
         version: item.version,
-        rules,
+        rules: rules.map(toPublishRuleDto),
       });
     },
     [],
@@ -562,6 +605,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
 
   const handlePublishSuccess = useCallback(
     (item: CatalogItem, folderPath: string[]) => {
+      rememberPublishFolder(folderPath);
       showNotification({
         variant: NotificationVariant.Success,
         title: t(CatalogI18nKeys.PublishSuccessTitle),
@@ -571,7 +615,13 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         }),
       });
     },
-    [showNotification, t],
+    [rememberPublishFolder, showNotification, t],
+  );
+
+  const handlePublishError = useCallback(
+    (_item: CatalogItem, _folderPath: string[], error: unknown) =>
+      showPublishError(error),
+    [showPublishError],
   );
 
   const handleEdit = useCallback(
@@ -585,7 +635,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         return;
       }
 
-      const deployment = deployments.find((d) => d.id === item.id);
+      const deployment = findDeploymentByIdOrReference(deployments, item.id);
       if (
         isCustomAppsEnabled &&
         deployment != null &&
@@ -646,8 +696,90 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [refetchToolsets, refetchDeployments, showNotification, t],
   );
 
-  const createOptions = useMemo<CreateOption[]>(() => {
-    const options: CreateOption[] = [];
+  const handleUnshare = useCallback(
+    async (item: CatalogItem) => {
+      try {
+        await discardSharedCatalogItem(item.id);
+      } catch (err) {
+        const { traceId } = await getApiErrorDetails(err);
+        showNotification({
+          variant: NotificationVariant.Error,
+          title: t(CatalogI18nKeys.DetailsUnshareErrorTitle),
+          message: t(CatalogI18nKeys.DetailsUnshareError, { name: item.name }),
+          requestId: traceId,
+        });
+        throw err;
+      }
+
+      try {
+        if (item.type === CatalogEntityType.Toolset) {
+          await refetchToolsets();
+        } else {
+          await refetchDeployments();
+        }
+      } catch {
+        /*
+         * The discard mutation has already succeeded. A refresh failure must
+         * not turn that irreversible success into an actionable retry error;
+         * the deployments context retains its own fetch error state.
+         */
+      }
+
+      if (item.id === selectedItemId) {
+        setSelectedItemId(null);
+      }
+
+      showNotification({
+        variant: NotificationVariant.Success,
+        title: t(CatalogI18nKeys.DetailsUnshareSuccessTitle),
+        message: t(CatalogI18nKeys.DetailsUnshareSuccess, { name: item.name }),
+      });
+    },
+    [
+      refetchToolsets,
+      refetchDeployments,
+      selectedItemId,
+      setSelectedItemId,
+      showNotification,
+      t,
+    ],
+  );
+
+  /*
+   * Revoking removes every *recipient's* access; the item itself stays in the
+   * owner's catalog, so — unlike `handleUnshare` — there is nothing to refetch
+   * and no selection to clear.
+   */
+  const handleRevokeShare = useCallback(
+    async (item: CatalogItem) => {
+      try {
+        await revokeSharedAccess(item.id);
+      } catch (err) {
+        const { traceId } = await getApiErrorDetails(err);
+        showNotification({
+          variant: NotificationVariant.Error,
+          title: t(CatalogI18nKeys.DetailsRevokeShareErrorTitle),
+          message: t(CatalogI18nKeys.DetailsRevokeShareError, {
+            name: item.name,
+          }),
+          requestId: traceId,
+        });
+        throw err;
+      }
+
+      showNotification({
+        variant: NotificationVariant.Success,
+        title: t(CatalogI18nKeys.DetailsRevokeShareSuccessTitle),
+        message: t(CatalogI18nKeys.DetailsRevokeShareSuccess, {
+          name: item.name,
+        }),
+      });
+    },
+    [showNotification, t],
+  );
+
+  const createOptions = useMemo<DropdownItem[]>(() => {
+    const options: DropdownItem[] = [];
 
     if (
       quickAppSchemaId &&
@@ -655,6 +787,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       !isHideCustomAppCreationEnabled
     ) {
       options.push({
+        key: 'quick-app',
         label: t(CatalogI18nKeys.CreateQuickApp),
         onClick: () =>
           navigate(
@@ -669,6 +802,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
 
     if (isToolsetsEnabled) {
       options.push({
+        key: 'toolset',
         label: t(CatalogI18nKeys.CreateToolset),
         onClick: () => {
           const params = new URLSearchParams({
@@ -681,6 +815,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
 
     if (isCustomAppsEnabled && !isHideCustomAppCreationEnabled) {
       options.push({
+        key: 'custom-app',
         label: t(CatalogI18nKeys.CreateCustomApp),
         onClick: () => {
           const params = new URLSearchParams({
@@ -736,6 +871,8 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       onLogout={handleLogout}
       onEdit={handleEdit}
       onDelete={handleDelete}
+      onUnshare={handleUnshare}
+      onRevokeShare={handleRevokeShare}
       isPrimaryActionVisible={isPrimaryActionVisible}
       isPublishVisible={isPublishVisible}
       getPublishHistory={getPublishHistory}
@@ -747,6 +884,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       hasPublishWriteAccess={hasPublishWriteAccess}
       onPublish={handlePublish}
       onPublishSuccess={handlePublishSuccess}
+      onPublishError={handlePublishError}
       ruleSourceOptions={config.publicationFilterSources}
       onFetchExistingRules={handleFetchExistingRules}
       publishLabels={{
@@ -756,16 +894,13 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         }),
         historyLoadingLabel: t(CatalogI18nKeys.PublishHistoryLoading),
         historyErrorLabel: t(CatalogI18nKeys.PublishHistoryError),
+        submitError: t(PublishI18nKeys.SubmitErrorCallout),
         accessRulesLabels: getAccessRulesLabels(t),
       }}
       shareOverlay={(item, onClose) => (
         <SharePopoverContainer item={item} onClose={onClose} />
       )}
       isShareVisible={isShareVisible}
-      isConnectVisible={isConnectVisible}
-      connectOverlay={(item, onClose) => (
-        <ConnectPopoverContainer item={item} onClose={onClose} />
-      )}
       styles={{
         typography: { pageHeadingFontClassName: 'dial-h1-text' },
       }}
@@ -796,11 +931,11 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         editActionLabel: t(ButtonsI18nKeys.Edit),
         deleteActionLabel: t(ButtonsI18nKeys.Delete),
         deletingStatusLabel: t(DialFileManagerI18nKeys.DeletingLabel),
-        dailyLimitLabel: t(CatalogI18nKeys.DetailsDailyLimit),
         apiResourceSectionLabel: t(CatalogI18nKeys.DetailsApiResourceSection),
         apiSnippetSectionLabel: t(CatalogI18nKeys.DetailsApiSnippetSection),
         apiModelIdLabel: t(CatalogI18nKeys.DetailsApiModelId),
         apiEndpointLabel: t(ApiI18nKeys.EndpointLabel),
+        apiEndpointSectionLabel: t(ApiI18nKeys.EndpointLabel),
         apiRequestExampleLabel: t(CatalogI18nKeys.DetailsApiRequestExample),
         apiResponseSchemaLabel: t(CatalogI18nKeys.DetailsApiResponseSchema),
         copyCodeAriaLabel: t(ButtonsI18nKeys.Copy),
@@ -829,7 +964,44 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         credentialsBadgeLoggedOutLabel: t(
           CatalogI18nKeys.CredentialsBadgeLoggedOut,
         ),
-        connectLabel: t(ButtonsI18nKeys.Connect),
+        tabConnectLabel: t(ButtonsI18nKeys.Connect),
+        manageActionLabel: t(ButtonsI18nKeys.Manage),
+        deleteConfirmTitle: t(CatalogI18nKeys.DetailsDeleteConfirmTitle),
+        deleteConfirmMessage: (name) =>
+          t(CatalogI18nKeys.DetailsDeleteConfirmMessage, { name }),
+        deleteConfirmConsequences: [
+          t(CatalogI18nKeys.DetailsDeleteConsequenceSharedConfigurations),
+          t(CatalogI18nKeys.DetailsDeleteConsequenceUsersLoseAccess),
+          t(CatalogI18nKeys.DetailsDeleteConsequenceCannotBeUndone),
+        ],
+        unshareLabel: t(ButtonsI18nKeys.RemoveFromMyList),
+        unshareConfirmTitle: t(CatalogI18nKeys.DetailsUnshareConfirmTitle),
+        unshareConfirmMessage: (name) =>
+          t(CatalogI18nKeys.DetailsUnshareConfirmMessage, { name }),
+        unshareConfirmConsequences: [
+          t(CatalogI18nKeys.DetailsUnshareConsequenceYouLoseAccess),
+          t(CatalogI18nKeys.DetailsUnshareConsequenceOthersKeepAccess),
+          t(CatalogI18nKeys.DetailsUnshareConsequenceNeedNewInvitation),
+        ],
+        unsharingStatusLabel: t(CatalogI18nKeys.DetailsUnshareRemovingStatus),
+        revokeShareLabel: t(ButtonsI18nKeys.RevokeAccess),
+        revokeShareLabelWithCount: (count) =>
+          t(ButtonsI18nKeys.RevokeAccessWithCount, { count }),
+        revokeShareConfirmTitle: t(
+          CatalogI18nKeys.DetailsRevokeShareConfirmTitle,
+        ),
+        revokeShareConfirmMessage: (name) =>
+          t(CatalogI18nKeys.DetailsRevokeShareConfirmMessage, { name }),
+        revokeShareConfirmConsequences: [
+          t(CatalogI18nKeys.DetailsRevokeShareConsequenceOthersLoseAccess),
+          t(CatalogI18nKeys.DetailsRevokeShareConsequenceLinksStopWorking),
+          t(CatalogI18nKeys.DetailsRevokeShareConsequenceKeepsYourCopy),
+        ],
+        revokingShareStatusLabel: t(
+          CatalogI18nKeys.DetailsRevokeShareRevokingStatus,
+        ),
+        loggingOutStatusLabel: t(AuthI18nKeys.LoggingOutStatus),
+        cancelLabel: t(ButtonsI18nKeys.Cancel),
       }}
     />
   );

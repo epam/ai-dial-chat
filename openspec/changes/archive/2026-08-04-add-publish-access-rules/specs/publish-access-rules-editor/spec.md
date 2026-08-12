@@ -240,7 +240,7 @@ The single-rule editor SHALL render inline within the section on desktop and as 
 
 ### Requirement: Source options support search with shared highlighting
 
-When `ruleSourceOptions` exceeds a length where a plain dropdown becomes hard to scan, the source control SHALL enable its built-in search (matching the existing `DialSelect`'s `searchable` mode). Matched text in filtered source options SHALL be rendered using the shared `Highlight` component exported from `@epam/ai-dial-ui-kit`, per the project's search-result-highlighting convention — never a bespoke regex/`<mark>` highlighter.
+When `ruleSourceOptions` exceeds a length where a plain dropdown becomes hard to scan, the source control SHALL enable its built-in search (matching the existing `Select`'s `searchable` mode). Matched text in filtered source options SHALL be rendered using the shared `Highlight` component exported from `@epam/ai-dial-ui-kit`, per the project's search-result-highlighting convention — never a bespoke regex/`<mark>` highlighter.
 
 #### Scenario: Typing in the source search highlights matched text
 - **GIVEN** `ruleSourceOptions` includes `dial_roles` and the user types `role` in the source search field

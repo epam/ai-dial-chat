@@ -106,6 +106,10 @@ export enum ButtonsI18nKeys {
   CopyUrl = 'buttons.copyUrl',
   LogIn = 'buttons.logIn',
   Publish = 'buttons.publish',
+  Manage = 'buttons.manage',
+  RemoveFromMyList = 'buttons.removeFromMyList',
+  RevokeAccess = 'buttons.revokeAccess',
+  RevokeAccessWithCount = 'buttons.revokeAccessWithCount',
 }
 
 export enum NavigationI18nKeys {
@@ -146,7 +150,6 @@ export enum CatalogI18nKeys {
   ListViewLabel = 'catalog.listViewLabel',
   // Details panel
   DetailsTabTools = 'catalog.details.tabTools',
-  DetailsDailyLimit = 'catalog.details.dailyLimit',
   DetailsApiResourceSection = 'catalog.details.api.resourceSection',
   DetailsApiSnippetSection = 'catalog.details.api.snippetSection',
   DetailsApiModelId = 'catalog.details.api.modelId',
@@ -202,6 +205,31 @@ export enum CatalogI18nKeys {
   DetailsDeleteError = 'catalog.details.delete.error',
   DetailsDeleteSuccessTitle = 'catalog.details.delete.successTitle',
   DetailsDeleteSuccess = 'catalog.details.delete.success',
+  DetailsDeleteConfirmTitle = 'catalog.details.delete.confirmTitle',
+  DetailsDeleteConfirmMessage = 'catalog.details.delete.confirmMessage',
+  DetailsDeleteConsequenceSharedConfigurations = 'catalog.details.delete.consequenceSharedConfigurations',
+  DetailsDeleteConsequenceUsersLoseAccess = 'catalog.details.delete.consequenceUsersLoseAccess',
+  DetailsDeleteConsequenceCannotBeUndone = 'catalog.details.delete.consequenceCannotBeUndone',
+  DetailsUnshareConfirmTitle = 'catalog.details.unshare.confirmTitle',
+  DetailsUnshareConfirmMessage = 'catalog.details.unshare.confirmMessage',
+  DetailsUnshareConsequenceYouLoseAccess = 'catalog.details.unshare.consequenceYouLoseAccess',
+  DetailsUnshareConsequenceOthersKeepAccess = 'catalog.details.unshare.consequenceOthersKeepAccess',
+  DetailsUnshareConsequenceNeedNewInvitation = 'catalog.details.unshare.consequenceNeedNewInvitation',
+  DetailsUnshareRemovingStatus = 'catalog.details.unshare.removingStatus',
+  DetailsUnshareErrorTitle = 'catalog.details.unshare.errorTitle',
+  DetailsUnshareError = 'catalog.details.unshare.error',
+  DetailsUnshareSuccessTitle = 'catalog.details.unshare.successTitle',
+  DetailsUnshareSuccess = 'catalog.details.unshare.success',
+  DetailsRevokeShareConfirmTitle = 'catalog.details.revokeShare.confirmTitle',
+  DetailsRevokeShareConfirmMessage = 'catalog.details.revokeShare.confirmMessage',
+  DetailsRevokeShareConsequenceOthersLoseAccess = 'catalog.details.revokeShare.consequenceOthersLoseAccess',
+  DetailsRevokeShareConsequenceLinksStopWorking = 'catalog.details.revokeShare.consequenceLinksStopWorking',
+  DetailsRevokeShareConsequenceKeepsYourCopy = 'catalog.details.revokeShare.consequenceKeepsYourCopy',
+  DetailsRevokeShareRevokingStatus = 'catalog.details.revokeShare.revokingStatus',
+  DetailsRevokeShareSuccessTitle = 'catalog.details.revokeShare.successTitle',
+  DetailsRevokeShareSuccess = 'catalog.details.revokeShare.success',
+  DetailsRevokeShareErrorTitle = 'catalog.details.revokeShare.errorTitle',
+  DetailsRevokeShareError = 'catalog.details.revokeShare.error',
   ConnectToolsetTitle = 'catalog.details.connect.toolsetTitle',
   ConnectApplicationTitle = 'catalog.details.connect.applicationTitle',
   ConnectToolsetDescription = 'catalog.details.connect.toolsetDescription',
@@ -246,13 +274,9 @@ export enum ScheduledTasksI18nKeys {
   ListNoResultsLabel = 'scheduledTasks.list.noResultsLabel',
   ListErrorLabel = 'scheduledTasks.list.errorLabel',
   ListRetryLabel = 'scheduledTasks.list.retryLabel',
-  ListSharedSectionTitle = 'scheduledTasks.list.sharedSectionTitle',
   ListLoadingMoreLabel = 'scheduledTasks.list.loadingMoreLabel',
   CardNewBadgeLabel = 'scheduledTasks.card.newBadgeLabel',
-  CardActionsLabel = 'scheduledTasks.card.actionsLabel',
   CardEditActionLabel = 'scheduledTasks.card.editActionLabel',
-  CardRunNowActionLabel = 'scheduledTasks.card.runNowActionLabel',
-  CardDeleteActionLabel = 'scheduledTasks.card.deleteActionLabel',
   CardScheduleDailyAt = 'scheduledTasks.card.scheduleDailyAt',
   CardScheduleWeeklyAt = 'scheduledTasks.card.scheduleWeeklyAt',
   CardScheduleMonthlyAt = 'scheduledTasks.card.scheduleMonthlyAt',
@@ -266,22 +290,27 @@ export enum ScheduledTasksI18nKeys {
   CreateDetailsSectionSubtitle = 'scheduledTasks.create.detailsSectionSubtitle',
   CreateConfigurationSectionTitle = 'scheduledTasks.create.configurationSectionTitle',
   CreateConfigurationSectionSubtitle = 'scheduledTasks.create.configurationSectionSubtitle',
-  CreateScheduleSectionLabel = 'scheduledTasks.create.scheduleSectionLabel',
-  CreateScheduleTypeOnce = 'scheduledTasks.create.scheduleTypeOnce',
-  CreateScheduleTypeRecurring = 'scheduledTasks.create.scheduleTypeRecurring',
-  CreateScheduleTypeAriaLabel = 'scheduledTasks.create.scheduleTypeAriaLabel',
   CreateRunAtLabel = 'scheduledTasks.create.runAtLabel',
   CreateRunAtRequired = 'scheduledTasks.create.runAtRequired',
-  CreateFrequencyLabel = 'scheduledTasks.create.frequencyLabel',
-  CreateFrequencyDaily = 'scheduledTasks.create.frequencyDaily',
-  CreateFrequencyWeekly = 'scheduledTasks.create.frequencyWeekly',
-  CreateFrequencyMonthly = 'scheduledTasks.create.frequencyMonthly',
+  CreateRepeatLabel = 'scheduledTasks.create.repeatLabel',
+  CreateRepeatOneTime = 'scheduledTasks.create.repeatOneTime',
+  CreateRepeatHourly = 'scheduledTasks.create.repeatHourly',
+  CreateRepeatDaily = 'scheduledTasks.create.repeatDaily',
+  CreateRepeatWeekly = 'scheduledTasks.create.repeatWeekly',
+  CreateRepeatMonthly = 'scheduledTasks.create.repeatMonthly',
   CreateTimeLabel = 'scheduledTasks.create.timeLabel',
   CreateTimeInvalid = 'scheduledTasks.create.timeInvalid',
   CreateDayOfWeekLabel = 'scheduledTasks.create.dayOfWeekLabel',
   CreateDayOfWeekRequired = 'scheduledTasks.create.dayOfWeekRequired',
   CreateDayOfMonthLabel = 'scheduledTasks.create.dayOfMonthLabel',
   CreateDayOfMonthRequired = 'scheduledTasks.create.dayOfMonthRequired',
+  CreateMinuteLabel = 'scheduledTasks.create.minuteLabel',
+  CreateMinuteInvalid = 'scheduledTasks.create.minuteInvalid',
+  CreateStartDateLabel = 'scheduledTasks.create.startDateLabel',
+  CreateStartDatePlaceholder = 'scheduledTasks.create.startDatePlaceholder',
+  CreateEndDateLabel = 'scheduledTasks.create.endDateLabel',
+  CreateEndDatePlaceholder = 'scheduledTasks.create.endDatePlaceholder',
+  CreateEndDateBeforeStartError = 'scheduledTasks.create.endDateBeforeStartError',
   CreateModelOrAgentLabel = 'scheduledTasks.create.modelOrAgentLabel',
   CreateModelPlaceholder = 'scheduledTasks.create.modelPlaceholder',
   CreateModelRequired = 'scheduledTasks.create.modelRequired',
@@ -291,6 +320,37 @@ export enum ScheduledTasksI18nKeys {
   CreatePromptRequired = 'scheduledTasks.create.promptRequired',
   CreateSuccessNotification = 'scheduledTasks.create.successNotification',
   CreateErrorNotification = 'scheduledTasks.create.errorNotification',
+  DetailRepeatsLabel = 'scheduledTasks.detail.repeatsLabel',
+  DetailActiveWindowLabel = 'scheduledTasks.detail.activeWindowLabel',
+  DetailActiveWindowValue = 'scheduledTasks.detail.activeWindowValue',
+  DetailNextRunLabel = 'scheduledTasks.detail.nextRunLabel',
+  DetailHistoryTitle = 'scheduledTasks.detail.historyTitle',
+  DetailHistoryEmptyLabel = 'scheduledTasks.detail.historyEmptyLabel',
+  DetailHistoryErrorLabel = 'scheduledTasks.detail.historyErrorLabel',
+  DetailHistoryLoadingMoreLabel = 'scheduledTasks.detail.historyLoadingMoreLabel',
+  DetailHistoryTodayAt = 'scheduledTasks.detail.historyTodayAt',
+  DetailHistoryDateAt = 'scheduledTasks.detail.historyDateAt',
+  DetailHistoryDurationSuffix = 'scheduledTasks.detail.historyDurationSuffix',
+  DetailStatusSuccess = 'scheduledTasks.detail.statusSuccess',
+  DetailStatusError = 'scheduledTasks.detail.statusError',
+  DetailStatusInProgress = 'scheduledTasks.detail.statusInProgress',
+  DetailStatusMissed = 'scheduledTasks.detail.statusMissed',
+  DetailErrorLabel = 'scheduledTasks.detail.errorLabel',
+  DetailActiveStatusLabel = 'scheduledTasks.detail.activeStatusLabel',
+  DetailPauseSuccess = 'scheduledTasks.detail.pauseSuccess',
+  DetailResumeSuccess = 'scheduledTasks.detail.resumeSuccess',
+  DetailActiveStatusUpdateError = 'scheduledTasks.detail.activeStatusUpdateError',
+  EditPageTitle = 'scheduledTasks.edit.pageTitle',
+  EditUnsupportedTriggerMessage = 'scheduledTasks.edit.unsupportedTriggerMessage',
+  EditSuccessNotification = 'scheduledTasks.edit.successNotification',
+  EditErrorNotification = 'scheduledTasks.edit.errorNotification',
+  ConversationBannerLoadingLabel = 'scheduledTasks.conversationBanner.loadingLabel',
+  ConversationBannerUnavailableLabel = 'scheduledTasks.conversationBanner.unavailableLabel',
+  ConversationBannerRetryAriaLabel = 'scheduledTasks.conversationBanner.retryAriaLabel',
+  ConversationBannerTaskDetailsLabel = 'scheduledTasks.conversationBanner.taskDetailsLabel',
+  ConversationBannerTaskDetailsAriaLabel = 'scheduledTasks.conversationBanner.taskDetailsAriaLabel',
+  ConversationPanelModelLabel = 'scheduledTasks.conversationPanel.modelLabel',
+  ConversationPanelCurrentRunLabel = 'scheduledTasks.conversationPanel.currentRunLabel',
 }
 
 export enum ConversationI18nKeys {
@@ -434,6 +494,7 @@ export enum AuthI18nKeys {
   OverlayProvidersError = 'auth.overlayProvidersError',
   LogOutConfirmTitle = 'auth.logOutConfirmTitle',
   LogOutConfirmDescription = 'auth.logOutConfirmDescription',
+  LoggingOutStatus = 'auth.loggingOutStatus',
   UserAvatar = 'auth.userAvatar',
 }
 
@@ -484,7 +545,13 @@ export enum ConversationPanelI18nKeys {
   UnshareSuccessTitle = 'conversationPanel.unshare.unshareSuccessTitle',
   UnshareSuccess = 'conversationPanel.unshare.unshareSuccess',
   UnshareError = 'conversationPanel.unshare.unshareError',
+  RevokeConfirmTitle = 'conversationPanel.revoke.revokeConfirmTitle',
+  RevokeConfirmMessage = 'conversationPanel.revoke.revokeConfirmMessage',
+  RevokeSuccessTitle = 'conversationPanel.revoke.revokeSuccessTitle',
+  RevokeSuccess = 'conversationPanel.revoke.revokeSuccess',
+  RevokeError = 'conversationPanel.revoke.revokeError',
   TaskBadgeLabel = 'conversationPanel.taskBadgeLabel',
+  UnreadIndicatorLabel = 'conversationPanel.unreadIndicatorLabel',
 }
 
 export enum ConversationPublishI18nKeys {
@@ -494,6 +561,14 @@ export enum ConversationPublishI18nKeys {
   EmptyFolderNameError = 'conversationPublish.emptyFolderNameError',
   InvalidFolderNameError = 'conversationPublish.invalidFolderNameError',
   DuplicateFolderNameError = 'conversationPublish.duplicateFolderNameError',
+}
+
+/** Strings shared by every publish flow (conversations and catalog entities). */
+export enum PublishI18nKeys {
+  FailedTitle = 'publish.failedTitle',
+  FailedMessage = 'publish.failedMessage',
+  NetworkErrorMessage = 'publish.networkErrorMessage',
+  SubmitErrorCallout = 'publish.submitErrorCallout',
 }
 
 export enum PublishAccessRulesI18nKeys {
@@ -630,59 +705,19 @@ export enum AttachmentCanvasI18nKeys {
 
 export enum AnnouncementBannerI18nKeys {
   RegionAriaLabel = 'announcementBanner.regionAriaLabel',
+  RegionAriaLabelWithTitle = 'announcementBanner.regionAriaLabelWithTitle',
   CloseLabel = 'announcementBanner.closeLabel',
+}
+
+export enum AnnouncementsPopoverI18nKeys {
+  PillLabel = 'announcementsPopover.pillLabel',
+  ListAriaLabel = 'announcementsPopover.listAriaLabel',
+  OpensInNewTab = 'announcementsPopover.opensInNewTab',
 }
 
 export enum FooterMessageI18nKeys {
   RegionAriaLabel = 'footerMessage.regionAriaLabel',
-}
-
-export enum FooterRequestApiKeyI18nKeys {
-  Title = 'footer.requestApiKey.title',
-  DescriptionPrefix = 'footer.requestApiKey.descriptionPrefix',
-  ProjectNameDescription = 'footer.requestApiKey.projectNameDescription',
-  StreamNameDescription = 'footer.requestApiKey.streamNameDescription',
-  ProjectLeadDescription = 'footer.requestApiKey.projectLeadDescription',
-  AccessScenarioDescription = 'footer.requestApiKey.accessScenarioDescription',
-  WorkloadPatternDescriptionPrefix = 'footer.requestApiKey.workloadPatternDescriptionPrefix',
-  WorkloadPatternCaptionPrefix = 'footer.requestApiKey.workloadPatternCaptionPrefix',
-  CheckboxGroupTitle = 'footer.requestApiKey.checkboxGroupTitle',
-  ProjectNameLabel = 'footer.requestApiKey.projectNameLabel',
-  ProjectNamePlaceholder = 'footer.requestApiKey.projectNamePlaceholder',
-  StreamNameLabel = 'footer.requestApiKey.streamNameLabel',
-  StreamNamePlaceholder = 'footer.requestApiKey.streamNamePlaceholder',
-  ProjectLeadLabel = 'footer.requestApiKey.projectLeadLabel',
-  ProjectLeadPlaceholder = 'footer.requestApiKey.projectLeadPlaceholder',
-  BusinessReasonLabel = 'footer.requestApiKey.businessReasonLabel',
-  BusinessReasonPlaceholder = 'footer.requestApiKey.businessReasonPlaceholder',
-  ProjectEndLabel = 'footer.requestApiKey.projectEndLabel',
-  AccessScenarioLabel = 'footer.requestApiKey.accessScenarioLabel',
-  AccessScenarioPlaceholder = 'footer.requestApiKey.accessScenarioPlaceholder',
-  WorkloadPatternLabel = 'footer.requestApiKey.workloadPatternLabel',
-  WorkloadPatternPlaceholder = 'footer.requestApiKey.workloadPatternPlaceholder',
-  CheckboxAzureLabel = 'footer.requestApiKey.checkboxAzureLabel',
-  CheckboxEpamLabel = 'footer.requestApiKey.checkboxEpamLabel',
-  CheckboxClientLabel = 'footer.requestApiKey.checkboxClientLabel',
-  CheckboxLocalLabel = 'footer.requestApiKey.checkboxLocalLabel',
-  CheckboxGroupRequired = 'footer.requestApiKey.checkboxGroupRequired',
-  FieldRequired = 'footer.requestApiKey.fieldRequired',
-  FieldTooLong = 'footer.requestApiKey.fieldTooLong',
-  EmailInvalid = 'footer.requestApiKey.emailInvalid',
-  DateInvalid = 'footer.requestApiKey.dateInvalid',
-  SuccessTitle = 'footer.requestApiKey.successTitle',
-  ErrorTitle = 'footer.requestApiKey.errorTitle',
-}
-
-export enum FooterReportIssueI18nKeys {
-  Title = 'footer.reportIssue.title',
-  IssueTitleLabel = 'footer.reportIssue.issueTitleLabel',
-  IssueTitlePlaceholder = 'footer.reportIssue.issueTitlePlaceholder',
-  DescriptionLabel = 'footer.reportIssue.descriptionLabel',
-  DescriptionPlaceholder = 'footer.reportIssue.descriptionPlaceholder',
-  FieldRequired = 'footer.reportIssue.fieldRequired',
-  FieldTooLong = 'footer.reportIssue.fieldTooLong',
-  SuccessTitle = 'footer.reportIssue.successTitle',
-  ErrorTitle = 'footer.reportIssue.errorTitle',
+  VersionAriaLabel = 'footerMessage.versionAriaLabel',
 }
 
 export enum EditorI18nKeys {
@@ -698,9 +733,16 @@ export enum EditorI18nKeys {
   VersionPlaceholder = 'editor.versionPlaceholder',
   TopicsLabel = 'editor.topicsLabel',
   TopicsPlaceholder = 'editor.topicsPlaceholder',
-  IntroLabel = 'editor.introLabel',
-  IntroPlaceholder = 'editor.introPlaceholder',
-  IntroTooLong = 'editor.introTooLong',
+  LocalesSummaryLabel = 'editor.locales.summaryLabel',
+  LocalesRowLabel = 'editor.locales.rowLabel',
+  LocalesPopupTitle = 'editor.locales.popupTitle',
+  LocalesAddLocaleLabel = 'editor.locales.addLocaleLabel',
+  LocalesLanguageLabel = 'editor.locales.languageLabel',
+  LocalesNameLabel = 'editor.locales.nameLabel',
+  LocalesNamePlaceholder = 'editor.locales.namePlaceholder',
+  LocalesDescriptionLabel = 'editor.locales.descriptionLabel',
+  LocalesDescriptionPlaceholder = 'editor.locales.descriptionPlaceholder',
+  LocalesDeleteAriaLabel = 'editor.locales.deleteAriaLabel',
 }
 
 export enum AppsEditorI18nKeys {
@@ -866,4 +908,11 @@ export enum CustomAppI18nKeys {
   SaveConfirmTitle = 'customApp.saveConfirm.title',
   SaveConfirmDescription = 'customApp.saveConfirm.description',
   SaveConfirmLabel = 'customApp.saveConfirm.confirmLabel',
+  SavingOverlayLabel = 'customApp.savingOverlay',
+  LoadingOverlayLabel = 'customApp.loadingOverlay',
+}
+
+export enum AppUpdateI18nKeys {
+  Heading = 'appUpdate.heading',
+  Message = 'appUpdate.message',
 }

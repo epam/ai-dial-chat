@@ -1,4 +1,10 @@
 .button {
   background: var(--cp-new-chat-bg, var(--bg-control-neutral, #fcfcfc));
   color: var(--cp-new-chat-text, var(--text-accent, #1d4ed8));
+
+  &:focus-visible {
+    outline: 1px solid
+      var(--cp-new-chat-focus-outline, var(--stroke-focus-black, #161b2d));
+    outline-offset: 0;
+  }
 }

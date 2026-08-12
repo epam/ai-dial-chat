@@ -18,11 +18,6 @@ vi.mock('../../../context/AppConfigContext', () => ({
   useAppConfig: () => useAppConfigMock(),
 }));
 
-const useUserMock = vi.fn();
-vi.mock('../../../context/auth/UserContext', () => ({
-  useUser: () => useUserMock(),
-}));
-
 const refetchMock = vi.fn();
 const setSearchQueryMock = vi.fn();
 const setSortKeyMock = vi.fn();
@@ -39,10 +34,6 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     Newest: 'newest',
     NameAZ: 'nameAZ',
   },
-  ScheduledTaskSectionKey: {
-    Shared: 'shared',
-    MyTasks: 'myTasks',
-  },
   ScheduledTasks: ({
     labels,
     onCreateClick,
@@ -55,6 +46,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     hasMore,
     isLoadingMore,
     onLoadMore,
+    onCardClick,
   }: {
     labels: { title: string; createButtonLabel: string; retryLabel: string };
     onCreateClick: () => void;
@@ -67,6 +59,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     hasMore?: boolean;
     isLoadingMore?: boolean;
     onLoadMore?: () => void;
+    onCardClick?: (id: string) => void;
   }) => (
     <div>
       {labels.title}
@@ -79,6 +72,11 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       <button onClick={onCreateClick}>{labels.createButtonLabel}</button>
       <button onClick={() => onSearchQueryChange('daily')}>set search</button>
       <button onClick={onLoadMore}>load more</button>
+      {items.map((item) => (
+        <button key={item.id} onClick={() => onCardClick?.(item.id)}>
+          card:{item.id}
+        </button>
+      ))}
     </div>
   ),
 }));
@@ -102,12 +100,23 @@ const CreatePageStub = () => {
   );
 };
 
+const DetailPageStub = () => <div>detail page</div>;
+const EditPageStub = () => <div>edit page</div>;
+
 const renderScheduledTasksPage = () =>
   render(
     <MemoryRouter initialEntries={['/scheduled-tasks']}>
       <Routes>
         <Route path="/scheduled-tasks" element={<ScheduledTasksPage />} />
         <Route path="/scheduled-tasks/new" element={<CreatePageStub />} />
+        <Route
+          path="/scheduled-tasks/:scheduleId/edit"
+          element={<EditPageStub />}
+        />
+        <Route
+          path="/scheduled-tasks/:scheduleId"
+          element={<DetailPageStub />}
+        />
       </Routes>
     </MemoryRouter>,
   );
@@ -128,7 +137,6 @@ describe('ScheduledTasksPage', () => {
       loadMore: loadMoreMock,
       refetch: refetchMock,
     });
-    useUserMock.mockReturnValue({ user: { sub: 'user-1' } });
     useAppConfigMock.mockReturnValue({ status: 'ready' });
   });
 
@@ -267,6 +275,30 @@ describe('ScheduledTasksPage', () => {
     expect(
       screen.getByText('create page returnUrl=/scheduled-tasks'),
     ).toBeTruthy();
+  });
+
+  it('navigates to the detail route when a card is clicked', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    useScheduledTasksMock.mockReturnValue({
+      items: [{ id: 'sched_123', displayName: 'Daily summary', trigger: {} }],
+      searchQuery: '',
+      setSearchQuery: setSearchQueryMock,
+      sortKey: 'firstToRun',
+      setSortKey: setSortKeyMock,
+      isLoading: false,
+      isLoadingMore: false,
+      error: null,
+      hasMore: false,
+      loadMore: loadMoreMock,
+      refetch: refetchMock,
+    });
+    renderScheduledTasksPage();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'card:sched_123' }),
+    );
+
+    expect(screen.getByText('detail page')).toBeTruthy();
   });
 
   it('refetches when returning from the create flow with a refresh navigation state', async () => {

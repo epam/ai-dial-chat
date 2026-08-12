@@ -3,6 +3,7 @@ import { FC, useMemo } from 'react';
 import type { ItemDetailsStyles } from '../../../models/item-details-props';
 import type { AboutRun } from '../../../utils/parse-about-content';
 import { parseAboutContent } from '../../../utils/parse-about-content';
+import { TopicTag } from '../../TopicTag/TopicTag';
 
 interface AboutRunViewProps {
   run: AboutRun;
@@ -26,18 +27,18 @@ const AboutRunView: FC<AboutRunViewProps> = ({ run, contentClassName }) => {
 };
 
 interface AboutTabProps {
-  /** Raw text to render (bullets/headings are parsed from it). The caller decides whether this is `intro`, `description`, or a fallback between the two. */
+  topics?: string[];
+  /** Raw text to render (bullets/headings are parsed from it), typically `item.description`. */
   content: string;
   detailsStyles?: ItemDetailsStyles;
 }
 
 /** Renders parsed about-style content (headings/bullets) for a catalog item. */
-export const AboutTab: FC<AboutTabProps> = ({ content, detailsStyles }) => {
-  const {
-    contentHeadingClassName = 'dial-small-semi-text',
-    contentClassName = 'dial-small-text',
-  } = detailsStyles?.typography ?? {};
-
+export const AboutTab: FC<AboutTabProps> = ({
+  topics,
+  content,
+  detailsStyles,
+}) => {
   const parsedAboutBlocks = useMemo(
     () => parseAboutContent(content),
     [content],
@@ -48,17 +49,33 @@ export const AboutTab: FC<AboutTabProps> = ({ content, detailsStyles }) => {
       {parsedAboutBlocks.map((block, blockIdx) => (
         <div key={blockIdx} className="flex flex-col gap-2">
           {block.heading != null && (
-            <span className={contentHeadingClassName}>{block.heading}</span>
+            <span
+              className={
+                detailsStyles?.typography?.contentHeadingClassName ??
+                'dial-small-semi-text'
+              }
+            >
+              {block.heading}
+            </span>
           )}
           {block.runs.map((run, runIdx) => (
             <AboutRunView
               key={runIdx}
               run={run}
-              contentClassName={contentClassName}
+              contentClassName={
+                detailsStyles?.typography?.contentClassName ?? 'dial-small-text'
+              }
             />
           ))}
         </div>
       ))}
+      {topics && topics.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {topics.map((p) => (
+            <TopicTag key={p} label={p} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

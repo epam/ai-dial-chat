@@ -36,6 +36,13 @@ export class ConversationListItemDto {
   })
   publishedWithMe!: boolean;
 
+  @ApiPropertyOptional({
+    description:
+      'How many other users currently hold shared access to this conversation, for conversations the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.',
+    example: 3,
+  })
+  recipientsCount?: number;
+
   @ApiProperty({
     description: 'True when the user has pinned this conversation.',
     example: false,
@@ -51,7 +58,7 @@ export class ConversationListItemDto {
 
   @ApiProperty({
     description:
-      'True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{runId}` reserved segment).',
+      'True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{filename}` reserved segment, with `{filename}` shaped `{deploymentId}__{title}__{runId}`).',
     example: false,
   })
   isScheduledTask!: boolean;
@@ -69,6 +76,13 @@ export class ConversationListItemDto {
     example: 'run_001',
   })
   runId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'True when this scheduler-created conversation has not yet been opened by the user. Present only when `isScheduledTask` is true.',
+    example: true,
+  })
+  isUnread?: boolean;
 }
 
 export class ConversationListResponseDto {

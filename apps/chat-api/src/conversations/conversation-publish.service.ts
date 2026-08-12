@@ -40,12 +40,13 @@ const historyCacheKey = (sourceUrl: string) =>
  * The conversation path is always resolved against the caller's own session
  * `bucket` — deliberately calling `DialClientService.client.getConversation`
  * directly (bucket, path) rather than going through
- * `ConversationService.getConversation`, whose cross-bucket path resolution
- * (`resolveConversationLocation`) exists to support reading a *shared*
- * conversation from another user's bucket. Publish has no such cross-bucket
- * case — the title fetched here and the `sourceUrl` built below must always
- * refer to the exact same own-bucket resource, so there is no window where
- * they could resolve to different buckets.
+ * `ConversationPersistenceService.getConversation`, whose cross-bucket path
+ * resolution (`resolveConversationLocation` in `utils/conversation.utils.ts`)
+ * exists to support reading a *shared* conversation from another user's
+ * bucket. Publish has no such cross-bucket case — the title fetched here and
+ * the `sourceUrl` built below must always refer to the exact same own-bucket
+ * resource, so there is no window where they could resolve to different
+ * buckets.
  */
 @Injectable()
 export class ConversationPublishService {

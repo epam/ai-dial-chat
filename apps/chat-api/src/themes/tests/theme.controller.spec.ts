@@ -12,6 +12,8 @@ import { BucketService } from '../../auth/bucket/bucket.service';
 import { RefreshService } from '../../auth/refresh/refresh.service';
 import { SessionGuard } from '../../auth/session/session.guard';
 import { SessionService } from '../../auth/session/session.service';
+import { AUTH_STRATEGIES } from '../../auth/strategies/auth-strategies.token';
+import { CookieSessionStrategy } from '../../auth/strategies/cookie-session.strategy';
 import { ThemeController } from '../theme.controller';
 import { ThemeService } from '../theme.service';
 
@@ -53,6 +55,7 @@ describe('ThemeController (integration)', () => {
     );
 
     await app.init();
+    await app.listen(0, '127.0.0.1');
     themeService = moduleFixture.get<ThemeService>(ThemeService);
   });
 
@@ -204,6 +207,14 @@ describe('ThemeController (integration)', () => {
           { provide: RefreshService, useValue: { refresh: vi.fn() } },
           { provide: BucketService, useValue: { getUserBucket: vi.fn() } },
           { provide: ConfigService, useValue: { get: vi.fn() } },
+          CookieSessionStrategy,
+          {
+            provide: AUTH_STRATEGIES,
+            useFactory: (cookieStrategy: CookieSessionStrategy) => [
+              cookieStrategy,
+            ],
+            inject: [CookieSessionStrategy],
+          },
           { provide: APP_GUARD, useClass: SessionGuard },
         ],
       }).compile();

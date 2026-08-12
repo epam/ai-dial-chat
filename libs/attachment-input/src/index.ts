@@ -31,6 +31,11 @@ export type {
   FileDndOverlayTypography,
   FileDndOverlayStyles,
 } from './models/file-dnd-overlay';
+export type {
+  FileAttachmentLabels,
+  FileAttachmentTypography,
+  FileAttachmentStyles,
+} from './models/attachment-file-row';
 
 export {
   useClipboardPaste,

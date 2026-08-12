@@ -325,6 +325,8 @@ One folder per domain. **No `modules/` wrapper** — `{domain}.module.ts` sits d
 | `POST`   | `/api/v1/conversations/completions`    | SSE chat completion stream    | 10/min     |
 | `DELETE` | `/api/v1/conversations?path=`          | Delete conversation           | —          |
 
+`POST /api/v1/conversations/completions` routes to one of two upstream generation APIs per request — `ConversationService.streamCompletion` resolves `features.responsesApi` off `DeploymentsService.getDeploymentDetails` (under the caller's own token, before opening the upstream stream) and dispatches to `chat-completions.adapter.ts` or `responses.adapter.ts` (`apps/chat-api/src/conversations/generation/`) accordingly. Both adapters normalize their upstream SSE events into the same `chat.completion.chunk` shape, so the wire contract to the browser, `apply-chunk.server.ts`, and the persistence lifecycle are unchanged regardless of which API served the request. Deployments that don't declare `responses_api: true` keep using Chat Completions exactly as before.
+
 #### Models & Deployments
 
 | Method | Path                                       | Description                                              |
@@ -482,7 +484,7 @@ Themes are defined in [ai-dial-chat-themes](https://github.com/epam/ai-dial-chat
 | `bg-accent-*`     | `bg-accent-primary`, `bg-accent-secondary`                               | Brand accent fills             |
 | `bg-*`            | `bg-error`, `bg-warning`, `bg-info`, `bg-success`                        | Semantic state backgrounds     |
 | `text-*`          | `text-primary`, `text-secondary`, `text-error`, `text-accent`            | Text colours                   |
-| `stroke-*`        | `stroke-primary`, `stroke-hover`, `stroke-focus`, `stroke-info`          | Borders and outlines           |
+| `stroke-*`        | `stroke-primary`, `stroke-hover`, `stroke-focus-black`, `stroke-info`    | Borders and outlines           |
 | `controls-bg-*`   | `controls-bg-accent-primary`, `controls-bg-error`, `controls-bg-disable` | Interactive element fills      |
 | `controls-text-*` | `controls-text-permanent`, `controls-text-neutral`                       | Interactive element text       |
 | `topicColors`     | `bg-topic-*`, `stroke-topic-*`                                           | Application / model topic tags |

@@ -6,7 +6,7 @@ import {
   SidebarOrientation,
   SidebarPanel,
 } from '@epam/ai-dial-sidebar';
-import { DialSkeleton } from '@epam/ai-dial-ui-kit';
+import { Skeleton } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   memo,
@@ -85,6 +85,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       filterLabels,
       groupLabels,
       actionsLabel,
+      unreadIndicatorLabel,
       closeAriaLabel,
     } = labels;
     const [searchQuery, setSearchQuery] = useState('');
@@ -184,19 +185,22 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     );
 
     const cssVars = buildCssVars({
-      '--cp-bg': colors?.background,
-      '--sb-border': colors?.border,
       '--cp-item-hover': colors?.itemHover,
       '--cp-item-active': colors?.itemActive,
       '--cp-text': colors?.text,
       '--cp-text-secondary': colors?.textSecondary,
       '--cp-new-chat-bg': newChatButtonColors?.background,
       '--cp-new-chat-text': newChatButtonColors?.text,
+      '--cp-new-chat-focus-outline': newChatButtonColors?.focusOutline,
       '--cp-drop-zone-ring': colors?.dropZoneRing,
       '--cp-trigger-bg': colors?.triggerBackground,
       '--cp-trigger-icon': colors?.triggerIcon,
       '--cp-trigger-icon-idle': colors?.triggerIconIdle,
       '--cp-skeleton-color': colors?.skeletonColor,
+      '--cp-task-badge-border': colors?.taskBadgeBorder,
+      '--cp-task-badge-bg': colors?.taskBadgeBackground,
+      '--cp-task-badge-text': colors?.taskBadgeText,
+      '--cp-unread-dot': colors?.unreadDot,
     });
 
     const filteredItems = useMemo(
@@ -316,6 +320,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         getActions,
         onActionMenuOpen,
         actionsLabel,
+        unreadIndicatorLabel,
         styles: {
           groupHeaderClassName: typography?.groupHeaderClassName,
           itemTitleClassName: typography?.itemTitleClassName,
@@ -342,6 +347,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         getActions,
         onActionMenuOpen,
         actionsLabel,
+        unreadIndicatorLabel,
         typography?.groupHeaderClassName,
         typography?.itemTitleClassName,
         panelStyles?.itemIconBadgeClassName,
@@ -380,7 +386,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           titleClassName: typography?.fontClassName,
           headerClassName: 'h-[64px]',
           className: mergeClasses(
-            isOpen ? 'w-[325px] border-s border-e mobile:w-full' : 'w-0',
+            isOpen ? 'w-[324px] mobile:w-full' : 'w-0',
             className,
           ),
         }}
@@ -426,7 +432,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           {isLoading ? (
             <div className="flex flex-col gap-3 px-2 py-3">
               {Array.from({ length: SKELETON_ROW_COUNT }, (_, i) => (
-                <DialSkeleton
+                <Skeleton
                   key={i}
                   avatar={{ size: 24 }}
                   showTitle={{ width: getSkeletonWidth(i) }}

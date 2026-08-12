@@ -18,6 +18,7 @@ import {
   ApiOperation,
   ApiParam,
   ApiResponse,
+  ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -30,6 +31,7 @@ import {
   ProviderInfoDto,
   UserProfileDto,
 } from '../openapi/openapi-response.dto';
+import { AuthSource } from './auth-source.enum';
 import { BucketService } from './bucket/bucket.service';
 import {
   clearCookieValue,
@@ -405,8 +407,25 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Log out and clear session cookie' })
   @ApiResponse({ status: 302, description: 'Redirect after logout' })
+  @ApiResponse({
+    status: 200,
+    description:
+      'No-op success for a header-authenticated caller (no session to clear)',
+  })
   async logout(@Req() req: Request, @Res() res: Response): Promise<void> {
     this.logger.debug('logout() start');
+
+    /*
+     * A header-authenticated caller never had a session created for it — no
+     * cookie to clear, no RP-initiated logout flow tied to a stored ID token.
+     * Respond as a plain no-op success rather than the CSRF-protected
+     * cookie/redirect flow below, which assumes a browser caller.
+     */
+    if (req.headers['authorization']) {
+      res.status(200).send();
+      return;
+    }
+
     /*
      * Protect against CSRF logout even though this route is @Public().
      * Native HTML form POSTs always carry an Origin header the browser sets.
@@ -483,6 +502,7 @@ export class AuthController {
 
   @Get('me')
   @ApiCookieAuth('session')
+  @ApiSecurity('bearer')
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({
@@ -496,7 +516,9 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const user = req.user as SessionUser;
-    res.setHeader('X-CSRF-Token', user.csrf);
+    if (req.authSource === AuthSource.Cookie && user.csrf) {
+      res.setHeader('X-CSRF-Token', user.csrf);
+    }
     return {
       sub: user.sub,
       providerId: user.providerId,

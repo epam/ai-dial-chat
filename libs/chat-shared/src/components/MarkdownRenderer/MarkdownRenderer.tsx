@@ -72,7 +72,7 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
   tableBodyCell?: string;
   /** Extra classes on `<th>` only (applied alongside `tableCell`). */
   tableHeader?: string;
-  /** Typography class for `<th>` cells. Defaults to `'font-semibold'`. */
+  /** Typography class for `<th>` cells. Defaults to `'dial-tiny-semi-text uppercase tracking-wider'`. Text color is set separately via `colors.tableHeaderText`. */
   tableHeaderFont?: string;
 }
 
@@ -116,6 +116,22 @@ export interface MarkdownRendererColors {
   thinkingSecondary?: string;
   /** Border color for `<hr>` separators and table cell borders. */
   border?: string;
+  /** Border color for the `<blockquote>` start border. Defaults to `--stroke-primary`. */
+  blockquoteBorder?: string;
+  /** Text color for `<blockquote>` content. Defaults to `--text-secondary`. */
+  blockquoteText?: string;
+  /** Text color for `<a>` links. Defaults to `--text-accent`. */
+  linkText?: string;
+  /** Focus-visible outline color for `<a>` links. Defaults to `--stroke-focus-black`. */
+  linkFocus?: string;
+  /** Text color for `<th>` table header cells. Defaults to `--text-secondary`. */
+  tableHeaderText?: string;
+  /** Text color for `<h6>` headings. Defaults to `--text-secondary`. */
+  headingSixText?: string;
+  /** Background color for inline `<code>` spans. Defaults to `--bg-layer-raised`. */
+  inlineCodeBackground?: string;
+  /** Text color for inline `<code>` spans. Defaults to `--text-primary`. */
+  inlineCodeText?: string;
 }
 
 /**
@@ -169,8 +185,15 @@ const buildMarkdownComponents = (
   h3: ({ children }) => <h3 className={cn.h3}>{children}</h3>,
   h4: ({ children }) => <h4 className={cn.h4}>{children}</h4>,
   h5: ({ children }) => <h5 className={cn.h5}>{children}</h5>,
-  h6: ({ children }) => <h6 className={cn.h6}>{children}</h6>,
-  p: ({ children }) => <p className={cn.p}>{children}</p>,
+  h6: ({ children }) => (
+    <h6 className={mergeClasses(styles.h6, cn.h6)}>{children}</h6>
+  ),
+  /* `break-words` is structural rather than typographic: an unbreakable token
+   * (typically a long URL) would otherwise overflow its container and get
+   * clipped by any ancestor that hides overflow, e.g. a line-clamped quote. */
+  p: ({ children }) => (
+    <p className={mergeClasses('break-words', cn.p)}>{children}</p>
+  ),
   ul: ({ children }) => (
     <ul className={mergeClasses('list-disc ps-5', cn.ul)}>{children}</ul>
   ),
@@ -207,6 +230,7 @@ const buildMarkdownComponents = (
       <code
         className={mergeClasses(
           'rounded px-1 py-0.5',
+          styles.codeInline,
           cn.codeInlineFont ?? 'dial-code-text',
           cn.codeInline,
         )}
@@ -218,7 +242,8 @@ const buildMarkdownComponents = (
   blockquote: ({ children }) => (
     <blockquote
       className={mergeClasses(
-        'border-s-2 border-primary py-1 ps-4 text-secondary',
+        'border-s-2 py-1 ps-4',
+        styles.blockquote,
         cn.blockquote,
       )}
     >
@@ -231,7 +256,8 @@ const buildMarkdownComponents = (
       target="_blank"
       rel="noopener noreferrer"
       className={mergeClasses(
-        'decoration-current/60 text-accent underline underline-offset-2 hover:decoration-current focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[var(--stroke-focus,#EEF1F7)]',
+        'decoration-current/60 break-words underline underline-offset-2 hover:decoration-current focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2',
+        styles.link,
         cn.link,
       )}
     >
@@ -286,8 +312,7 @@ const buildMarkdownComponents = (
         'sticky top-0 z-[2] max-w-96 whitespace-normal break-words border-b px-3 py-2.5 text-start [overflow-wrap:anywhere]',
         tableStyles.rowDivider,
         tableStyles.tableHeaderCell,
-        cn.tableHeaderFont ??
-          'dial-tiny-semi-text uppercase tracking-wider text-secondary',
+        cn.tableHeaderFont ?? 'dial-tiny-semi-text uppercase tracking-wider',
         cn.tableCell,
         cn.tableHeader,
       )}
@@ -338,6 +363,14 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
       '--cm-thinking-inverted': colors?.thinkingPrimary,
       '--cm-thinking-secondary': colors?.thinkingSecondary,
       '--cm-markdown-border': colors?.border,
+      '--cm-blockquote-border': colors?.blockquoteBorder,
+      '--cm-blockquote-text': colors?.blockquoteText,
+      '--cm-link-text': colors?.linkText,
+      '--cm-link-focus': colors?.linkFocus,
+      '--cm-table-header-text': colors?.tableHeaderText,
+      '--cm-h6-text': colors?.headingSixText,
+      '--cm-code-inline-bg': colors?.inlineCodeBackground,
+      '--cm-code-inline-text': colors?.inlineCodeText,
     });
 
     const mergedComponents = useMemo(

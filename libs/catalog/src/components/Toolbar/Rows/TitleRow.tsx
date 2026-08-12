@@ -1,24 +1,19 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  ButtonAppearance,
+  ButtonDropdown,
+  ButtonVariant,
   DIAL_ICON_SIZE,
-  DialDropdown,
-  GhostButton,
+  DropdownItem,
 } from '@epam/ai-dial-ui-kit';
-import {
-  IconCheck,
-  IconChevronDown,
-  IconLayoutGrid,
-  IconLayoutList,
-} from '@tabler/icons-react';
+import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
 import { FC } from 'react';
-import {
-  CatalogSortOption,
-  ToolbarStyles,
-} from '../../../models/toolbar-props';
+import { ToolbarStyles } from '../../../models/toolbar-props';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { Filter } from '../../Filter/Filter';
 import { ItemHeader } from '../../ItemHeader/ItemHeader';
 import { SearchBar } from '../../SearchBar/SearchBar';
+import styles from '../Toolbar.module.scss';
 
 interface TitleRowProps {
   totalCount?: number;
@@ -32,8 +27,7 @@ interface TitleRowProps {
   gridViewLabel?: string;
   listViewLabel?: string;
   sortKey?: string;
-  onSortChange?: (key: string) => void;
-  sortOptions?: CatalogSortOption[];
+  sortOptions?: DropdownItem[];
   filters?: Set<string>;
   onFiltersChange?: (filters: Set<string>) => void;
   filterValues?: Set<string>;
@@ -57,7 +51,6 @@ export const TitleRow: FC<TitleRowProps> = ({
   gridViewLabel = 'Grid view',
   listViewLabel = 'List view',
   sortKey,
-  onSortChange,
   sortOptions,
   filters,
   onFiltersChange,
@@ -73,8 +66,7 @@ export const TitleRow: FC<TitleRowProps> = ({
   const countClassName =
     browseStyles?.typography?.countClassName ?? 'dial-tiny-semi-text';
 
-  const activeLabel =
-    sortOptions?.find((o) => o.value === sortKey)?.label ?? '';
+  const activeLabel = sortOptions?.find((o) => o.key === sortKey)?.label ?? '';
 
   return (
     <div className="flex flex-col gap-3">
@@ -91,11 +83,10 @@ export const TitleRow: FC<TitleRowProps> = ({
         <div className="ms-auto flex items-center gap-2">
           {/* Segmented view toggle */}
           <div
-            className="flex items-center rounded-full border p-[3px]"
-            style={{
-              background: 'var(--bg-layer-sunken, #EEF1F7)',
-              borderColor: 'var(--stroke-tertiary, #e0e6f0)',
-            }}
+            className={mergeClasses(
+              'flex items-center rounded-full border p-[3px]',
+              styles.viewToggleWrapper,
+            )}
           >
             {([CatalogViewMode.Grid, CatalogViewMode.List] as const).map(
               (mode) => {
@@ -114,8 +105,8 @@ export const TitleRow: FC<TitleRowProps> = ({
                     className={mergeClasses(
                       'flex min-h-11 min-w-11 items-center justify-center rounded-full px-3 py-1.5 transition-colors desktop:min-h-8 desktop:min-w-10',
                       isActive
-                        ? 'bg-layer-raised text-accent shadow-sm'
-                        : 'text-secondary hover:text-primary',
+                        ? mergeClasses('shadow-sm', styles.viewToggleActive)
+                        : styles.viewToggleInactive,
                     )}
                   >
                     {mode === CatalogViewMode.Grid ? (
@@ -131,42 +122,21 @@ export const TitleRow: FC<TitleRowProps> = ({
 
           {sortOptions != null && sortOptions.length > 0 && (
             <>
-              {/* Vertical divider */}
               <div
-                className="h-4 w-px shrink-0"
-                style={{ background: 'var(--stroke-secondary, #d1dbea)' }}
+                className={mergeClasses('h-4 w-px shrink-0', styles.divider)}
               />
 
-              <DialDropdown
-                matchReferenceWidth={false}
-                placement="bottom-end"
-                listClassName="cp-dropdown-overlay"
-                items={sortOptions.map((o) => ({
-                  key: o.value,
-                  label: (
-                    <span className="flex w-full items-center justify-between gap-2">
-                      {o.label}
-                      {o.value === sortKey && (
-                        <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
-                      )}
-                    </span>
-                  ),
-                  onClick: () => onSortChange?.(o.value),
-                }))}
-              >
-                <GhostButton
-                  label={activeLabel}
-                  iconAfter={
-                    <IconChevronDown size={DIAL_ICON_SIZE.SM} aria-hidden />
-                  }
-                />
-              </DialDropdown>
+              <ButtonDropdown
+                label={activeLabel}
+                variant={ButtonVariant.Primary}
+                appearance={ButtonAppearance.Ghost}
+                items={sortOptions}
+              />
             </>
           )}
         </div>
       </div>
 
-      {/* Row 2: search field + from filter */}
       <div className="mb-5 flex items-center gap-3">
         <SearchBar
           value={query}

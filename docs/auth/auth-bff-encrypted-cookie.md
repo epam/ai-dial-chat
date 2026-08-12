@@ -204,16 +204,23 @@ Both kinds share the exact same channel plumbing:
 ## 6. NestJS Module Layout (Shipped)
 
 The auth domain keeps its public NestJS entrypoints at `auth/` root and groups internal
-implementation by concern. Tests live under `auth/tests/`, mirroring the source concern folders.
+implementation by concern. Tests are co-located next to the source they cover (a `tests/`
+subfolder inside each concern folder, or a sibling `*.spec.ts` file).
 
 ```
 apps/chat-api/src/auth/
 ├── auth.module.ts                      # wires controllers + services; SessionGuard + CsrfGuard as APP_GUARDs
 ├── auth.controller.ts                  # /api/v1/auth/* endpoints
+├── auth-source.enum.ts                 # AuthSource: Header | Cookie — which strategy authenticated the request
+├── strategies/
+│   ├── auth-strategy.interface.ts      # AuthStrategy: supports()/authenticate()/authenticateOptional()
+│   ├── auth-strategies.token.ts        # AUTH_STRATEGIES DI token (ordered array, header before cookie)
+│   ├── header-token.strategy.ts        # verifies Authorization: Bearer <token> against provider JWKS (jose)
+│   └── cookie-session.strategy.ts      # today's cookie decrypt → refresh → lazy bucket resolution, unchanged
 ├── cookies/
 │   └── cookie-options.ts               # cookie names, chunking, read/write helpers
 ├── csrf/
-│   └── csrf.guard.ts                   # double-submit CSRF guard (Origin check + X-CSRF-Token header)
+│   └── csrf.guard.ts                   # double-submit CSRF guard; skipped entirely for header-authenticated requests
 ├── dto/
 │   ├── provider-id-param.dto.ts        # :providerId with @Matches allowlist
 │   ├── auth-callback.query.dto.ts      # code, state, iss, session_state, error, error_description, scope, authuser, hd, prompt (Google appends these)
@@ -221,24 +228,17 @@ apps/chat-api/src/auth/
 ├── keys/
 │   └── keys.service.ts                 # active + previous keys from env (hex, validated on init)
 ├── providers/
-│   ├── provider-registry.service.ts    # per-provider env assembly + struct-validate + Issuer.discover
+│   ├── provider-registry.service.ts    # per-provider env assembly + struct-validate + Issuer.discover; findByIssuer() for header-token lookup
 │   └── provider.types.ts               # ProviderConfig with class-validator decorators
 ├── refresh/
-│   └── refresh.service.ts              # server-side token refresh + per-pod sid-keyed mutex
+│   └── refresh.service.ts              # server-side token refresh + per-pod sid-keyed mutex (cookie path only)
 ├── session/
-│   ├── express.d.ts                    # Request.user augmentation
-│   ├── session.guard.ts                # global APP_GUARD; isPublic skip, refresh on near-expiry
+│   ├── express.d.ts                    # Request.user / Request.authSource augmentation
+│   ├── session.guard.ts                # global APP_GUARD; isPublic skip, iterates AUTH_STRATEGIES in order
+│   ├── optional-session.guard.ts       # no-throw variant using authenticateOptional() where available
 │   ├── session.service.ts              # JWE encrypt/decrypt (jose A256GCM)
-│   └── session.types.ts                # SessionPayload, SessionUser
-├── tests/
-│   ├── auth.controller.spec.ts         # supertest integration
-│   ├── csrf/csrf.guard.spec.ts
-│   ├── keys/keys.service.spec.ts
-│   ├── providers/provider-registry.service.spec.ts
-│   ├── refresh/refresh.service.spec.ts
-│   ├── session/session.guard.spec.ts
-│   ├── session/session.service.spec.ts
-│   └── utils/callback-url.util.spec.ts
+│   ├── session.types.ts                # SessionPayload, SessionUser (sid/csrf optional — absent for header auth)
+│   └── auth-error-code.enum.ts         # AUTH_HEADER_TOKEN_* / AUTH_NO_CREDENTIALS machine-readable error codes
 └── utils/
     └── callback-url.util.ts            # validates and normalizes callbackUrl
 ```
@@ -254,7 +254,51 @@ Public endpoints:
 | POST   | `/auth/logout`                                  | Revoke + clear cookie + federated logout                                       |
 | POST   | `/auth/refresh`                                 | Optional explicit refresh (also done implicitly)                               |
 
-The session guard is applied globally to `/api/*` routes; everything except `/auth/*` requires a valid decrypted cookie.
+The session guard is applied globally to `/api/*` routes; everything except `/auth/*` requires a valid decrypted cookie or a valid header bearer token (§6.1).
+
+---
+
+## 6.1 Header Bearer-Token Authentication (Optional Extension)
+
+![Header bearer-token auth strategy chain](./auth-diagrams/09-header-token-auth-chain.svg)
+
+_Source: [`auth-diagrams/09-header-token-auth-chain.mmd`](./auth-diagrams/09-header-token-auth-chain.mmd)_
+
+Alongside the encrypted session cookie, the BFF can authenticate a request whose
+`Authorization: Bearer <token>` header carries a valid access token issued by one of the
+registered OIDC providers. This is a general, pluggable authentication-source chain
+(`AuthStrategy` interface, `AUTH_STRATEGIES` DI-ordered array) rather than a branch bolted
+onto `SessionGuard` — `SessionGuard` iterates the chain and uses the first strategy whose
+credential is present.
+
+Key properties:
+
+- **Off by default.** Gated behind `AUTH_HEADER_TOKEN_ENABLED` (default `false`); when off,
+  any `Authorization` header is ignored entirely and only the cookie is consulted. Enabling
+  it requires an explicit `AUTH_HEADER_TOKEN_ALLOWED_ISSUERS` allowlist or the app fails to
+  boot — see `apps/chat-api/README.md` "Header bearer-token authentication".
+- **Header wins, no silent fallback.** When both an `Authorization` header and a session
+  cookie are present, the header is used. If the header token is present but
+  invalid/expired/untrusted, the request is rejected with `401` and a machine-readable
+  `AUTH_HEADER_TOKEN_*` error code (`session/auth-error-code.enum.ts`) — it never falls
+  back to the cookie.
+- **Local JWKS verification, not pass-through trust.** The token's `iss` claim is matched
+  against a registered provider (`ProviderRegistryService.findByIssuer`), and its signature
+  is verified against that provider's JWKS via `jose.createRemoteJWKSet` +
+  `jose.jwtVerify` (cached per provider, not fetched per request). DIAL Core still
+  independently validates the token when the BFF calls it downstream.
+- **No refresh, no cookie mutation.** A header-authenticated request never triggers a
+  refresh and never sets/rotates a session cookie — the caller owns its own token
+  lifecycle.
+- **Per-request bucket resolution, cached.** There is no cookie to persist a resolved
+  bucket into, so `HeaderTokenStrategy` resolves it via `BucketService.getUserBucket` and
+  caches the result under a key derived from a hash of the token (never the raw token),
+  with a configurable TTL.
+- **CSRF is exempt for header-authenticated requests only** (see the CSRF row below and
+  the diagram above) — cookie-authenticated requests are completely unaffected.
+- **`SessionUser.sid`/`csrf` are optional** — absent for a header-authenticated caller,
+  since no session was created for it. `GET /auth/me` omits `X-CSRF-Token` for such
+  callers; `POST /auth/logout` is a no-op success (no session to clear).
 
 ---
 
@@ -263,18 +307,19 @@ The session guard is applied globally to `/api/*` routes; everything except `/au
 Testing instructions for the currently implemented slices live in
 [`testing-current-auth-implementation.md`](./testing-current-auth-implementation.md).
 
-| Risk                         | Mitigation                                                                                                                                 |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| XSS reads tokens             | `HttpOnly` cookie + AEAD encryption; tokens never in JS                                                                                    |
-| CSRF on mutating endpoints   | Double-submit CSRF token + default `SameSite=Lax` + `Origin/Sec-Fetch-Site` checks; overlay `SameSite=None` still requires CSRF validation |
-| Refresh token replay         | Refresh token rotation; `sid`/`jti` in payload; reject reused token                                                                        |
-| Cookie tampering             | AES-GCM authenticated tag; decryption fails on any byte change                                                                             |
-| Key compromise               | Key rotation with `kid` header; previous keys for grace period                                                                             |
-| Session fixation             | New `sid` generated on every login                                                                                                         |
-| Open redirect on callback    | Strict IdP `redirect_uri` allow-list plus BFF-side `callbackUrl` validation against allowed application origins                            |
-| Token in URL fragment        | Not used — Authorization Code only, never implicit                                                                                         |
-| Cookie size overflow (Entra) | Split encrypted session value across numbered cookie chunks                                                                                |
-| Multi-tab refresh race       | Per-pod in-memory mutex on `sid`; idempotent refresh; cross-pod collisions absorbed via `at_exp` check (§5.2.1) plus a frontend self-heal probe |
+| Risk                         | Mitigation                                                                                                                                                                                                                                                                                                    |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| XSS reads tokens             | `HttpOnly` cookie + AEAD encryption; tokens never in JS                                                                                                                                                                                                                                                       |
+| CSRF on mutating endpoints   | Double-submit CSRF token + default `SameSite=Lax` + `Origin/Sec-Fetch-Site` checks; overlay `SameSite=None` still requires CSRF validation. Exempt only for header-authenticated requests (§6.1) — a header token is never sent ambiently by a browser, so there is no forged-request risk to mitigate there. |
+| Header-token trust widening  | `AUTH_HEADER_TOKEN_ENABLED` off by default; enabling it requires an explicit `AUTH_HEADER_TOKEN_ALLOWED_ISSUERS` allowlist (boot fails otherwise); tokens verified locally against provider JWKS, never trusted unverified (§6.1)                                                                             |
+| Refresh token replay         | Refresh token rotation; `sid`/`jti` in payload; reject reused token                                                                                                                                                                                                                                           |
+| Cookie tampering             | AES-GCM authenticated tag; decryption fails on any byte change                                                                                                                                                                                                                                                |
+| Key compromise               | Key rotation with `kid` header; previous keys for grace period                                                                                                                                                                                                                                                |
+| Session fixation             | New `sid` generated on every login                                                                                                                                                                                                                                                                            |
+| Open redirect on callback    | Strict IdP `redirect_uri` allow-list plus BFF-side `callbackUrl` validation against allowed application origins                                                                                                                                                                                               |
+| Token in URL fragment        | Not used — Authorization Code only, never implicit                                                                                                                                                                                                                                                            |
+| Cookie size overflow (Entra) | Split encrypted session value across numbered cookie chunks                                                                                                                                                                                                                                                   |
+| Multi-tab refresh race       | Per-pod in-memory mutex on `sid`; idempotent refresh; cross-pod collisions absorbed via `at_exp` check (§5.2.1) plus a frontend self-heal probe                                                                                                                                                               |
 
 Mandatory transport: HTTPS everywhere, HSTS, `Secure` cookies, strict CSP (`script-src 'self'`).
 

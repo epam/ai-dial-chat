@@ -7,18 +7,6 @@
   color: var(--sb-text, var(--text-primary, #161b2d));
 }
 
-.divider {
-  border-color: var(--sb-border, var(--stroke-tertiary, #e0e6f0));
-}
-
-.panel {
-  border-color: var(--sb-border, var(--stroke-tertiary, #e0e6f0));
-  border-inline-end-color: var(
-    --sb-border-inline-end,
-    var(--sb-border, var(--stroke-tertiary, #e0e6f0))
-  );
-}
-
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -35,5 +23,5 @@
 .resizeHandler {
   width: 4px !important;
   color: var(--sb-resize-handler, var(--text-info, #1d4ed8)) !important;
-  background: var(--sb-bg-resize-handler, var(--text-info, #1d4ed8));
+  background: var(--sb-resize-handler, var(--text-info, #1d4ed8));
 }

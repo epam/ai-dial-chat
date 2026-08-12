@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Chat API (1.0.0)",
-    "description": "REST API for the chat application. Provides endpoints for theme configuration, authentication, and management. All endpoints return appropriate HTTP status codes (200, 400, 401, 403, 404, 502, 503) with descriptive error messages.\n\nGenerated from libs/chat-api-client/openapi.json. Contains 93 requests grouped by OpenAPI tag.\n\nAuthentication uses the Postman cookie jar. Start the OIDC flow with the login request, then call “Get current user”; its response supplies the CSRF token used by authenticated write requests.",
+    "description": "REST API for the chat application. Provides endpoints for theme configuration, authentication, and management. All endpoints return appropriate HTTP status codes (200, 400, 401, 403, 404, 502, 503) with descriptive error messages.\n\nGenerated from libs/chat-api-client/openapi.json. Contains 97 requests grouped by OpenAPI tag.\n\nAuthentication uses the Postman cookie jar. Start the OIDC flow with the login request, then call “Get current user”; its response supplies the CSRF token used by authenticated write requests.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
@@ -112,7 +112,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"My App\",\n  \"type\": \"https://mydial.epam.com/custom_application_schemas/quickapps2\",\n  \"description\": \"A custom application.\",\n  \"iconUrl\": \"https://example.com/icon.svg\",\n  \"version\": \"1.0\",\n  \"topics\": [\n    \"nlp\",\n    \"assistant\"\n  ],\n  \"intro\": \"Summarizes long documents in one line.\",\n  \"applicationProperties\": {\n    \"orchestrator\": {\n      \"system_prompt\": {\n        \"type\": \"custom\",\n        \"variables\": {},\n        \"content\": \"\"\n      }\n    },\n    \"contexts\": [],\n    \"tool_sets\": []\n  }\n}\n",
+              "raw": "{\n  \"name\": \"My App\",\n  \"type\": \"https://mydial.epam.com/custom_application_schemas/quickapps2\",\n  \"description\": \"A custom application.\",\n  \"iconUrl\": \"https://example.com/icon.svg\",\n  \"version\": \"1.0\",\n  \"topics\": [\n    \"nlp\",\n    \"assistant\"\n  ],\n  \"applicationProperties\": {\n    \"orchestrator\": {\n      \"system_prompt\": {\n        \"type\": \"custom\",\n        \"variables\": {},\n        \"content\": \"\"\n      }\n    },\n    \"contexts\": [],\n    \"tool_sets\": []\n  }\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -134,7 +134,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"My App\",\n  \"description\": \"A custom application.\",\n  \"iconUrl\": \"https://example.com/icon.svg\",\n  \"topics\": [\n    \"nlp\",\n    \"assistant\"\n  ],\n  \"intro\": \"Summarizes long documents in one line.\"\n}\n",
+              "raw": "{\n  \"name\": \"My App\",\n  \"description\": \"A custom application.\",\n  \"iconUrl\": \"https://example.com/icon.svg\",\n  \"topics\": [\n    \"nlp\",\n    \"assistant\"\n  ],\n  \"version\": \"1.0.0\",\n  \"endpoint\": \"https://api.example.com/chat\",\n  \"features\": {},\n  \"inputAttachmentTypes\": [\n    \"image/png\"\n  ],\n  \"maxInputAttachments\": 5\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -142,7 +142,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "applications", "{{applicationName}}"]
             },
-            "description": "Updates the General-step fields (name, description, iconUrl, topics, intro) of an existing application for the authenticated session user, by proxying DIAL Core. Settings-step configuration (application_properties, version) is preserved untouched. Invalidates the applications and deployments list caches on success.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+            "description": "Updates the General-step fields (name, description, iconUrl, topics) of an existing application for the authenticated session user, by proxying DIAL Core. Settings-step configuration (application_properties, version) is preserved untouched. Invalidates the applications and deployments list caches on success.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
           }
         },
         {
@@ -673,6 +673,30 @@
           }
         },
         {
+          "name": "Mark a conversation as viewed",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations/viewed?path={{path}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "conversations", "viewed"],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "description": "Conversation path (uuid__name). May contain slashes."
+                }
+              ]
+            },
+            "description": "Idempotently records that the authenticated user has opened this conversation. Used to clear the unread indicator for scheduler-created conversations.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
           "name": "Publish a conversation to an Organization folder",
           "request": {
             "method": "POST",
@@ -683,7 +707,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"folderPath\": \"Organization/Data Science/Shared chats\"\n}\n",
+              "raw": "{\n  \"folderPath\": \"Organization/Data Science/Shared chats\",\n  \"rules\": []\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -795,6 +819,88 @@
               "path": ["api", "v1", "deployments", "{{deployment}}", "details"]
             },
             "description": "Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core's getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Results are cached server-side for 60 seconds per user; the response carries no client-facing Cache-Control so a browser never serves a stale copy of another user's cache window or of credentials that changed since the last fetch."
+          }
+        }
+      ]
+    },
+    {
+      "name": "external-services",
+      "item": [
+        {
+          "name": "Get application external-service metadata",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/external-services/{{appId}}/{{serviceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "v1",
+                "external-services",
+                "{{appId}}",
+                "{{serviceId}}"
+              ]
+            },
+            "description": "Returns an application external service's display metadata and authentication type by proxying DIAL Core (GET /v1/applications/{appId}/external-services/{id}) using the caller's session access token."
+          }
+        },
+        {
+          "name": "Submit external-service credentials",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"credentialsLevel\": \"USER\",\n  \"authenticationType\": \"API_KEY\",\n  \"apiKey\": \"apiKey\",\n  \"code\": \"code\",\n  \"redirectUri\": \"redirectUri\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/external-services/{{appId}}/{{serviceId}}/signin",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "v1",
+                "external-services",
+                "{{appId}}",
+                "{{serviceId}}",
+                "signin"
+              ]
+            },
+            "description": "Submits API key or OAuth authorization-code credentials for an application external service by proxying DIAL Core (POST /v1/ops/external-service/signin). Credential payloads are never logged.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Revoke external-service credentials",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"credentialsLevel\": \"USER\",\n  \"authenticationType\": \"API_KEY\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/external-services/{{appId}}/{{serviceId}}/signout",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "v1",
+                "external-services",
+                "{{appId}}",
+                "{{serviceId}}",
+                "signout"
+              ]
+            },
+            "description": "Revokes an application external service's credentials by proxying DIAL Core (POST /v1/ops/external-service/signout). A Core 404 (nothing to revoke) is treated as idempotent success.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
           }
         }
       ]
@@ -1233,55 +1339,6 @@
       ]
     },
     {
-      "name": "footer",
-      "item": [
-        {
-          "name": "Submit a Request API Key form",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Origin", "value": "{{origin}}" },
-              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"project_id\": \"My AI Project\",\n  \"project_stream\": \"Stream A\",\n  \"project_lead\": \"lead@example.com\",\n  \"business_reason\": \"We need access for automated document processing.\",\n  \"project_end\": \"31/12/2025\",\n  \"access_scenario\": \"Daily batch processing of documents.\",\n  \"workload_pattern\": \"Estimated 10k tokens per day.\"\n}\n",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/footer/request-api-key",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "footer", "request-api-key"]
-            },
-            "description": "Proxies the form submission to the configured Azure Function. The requester email is injected server-side from the authenticated session.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
-          }
-        },
-        {
-          "name": "Submit a Report an Issue form",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Origin", "value": "{{origin}}" },
-              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Something is broken\",\n  \"description\": \"When I click the button, nothing happens.\"\n}\n",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/footer/report-issue",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "footer", "report-issue"]
-            },
-            "description": "Proxies the form submission to the configured Azure Function. The reporter email is injected server-side from the authenticated session.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
-          }
-        }
-      ]
-    },
-    {
       "name": "health",
       "item": [
         {
@@ -1591,7 +1648,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"folderPath\": \"Organization/Data Science/Published models\",\n  \"version\": \"1.2.0\"\n}\n",
+              "raw": "{\n  \"folderPath\": \"Organization/Data Science/Published models\",\n  \"version\": \"1.2.0\",\n  \"rules\": []\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -1627,6 +1684,26 @@
               ]
             },
             "description": "Returns every folder this catalog entity has been published to, most recent first, derived from DIAL Core's Publication API (`getPublications`) — never from chat-api-side storage."
+          }
+        },
+        {
+          "name": "Get a destination folder's already-configured access rules",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/publish/rules?folderPath=Organization/Data Science/Shared chats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "publish", "rules"],
+              "query": [
+                {
+                  "key": "folderPath",
+                  "value": "Organization/Data Science/Shared chats",
+                  "description": "Destination folder under the Organization/public bucket to look up existing access rules for."
+                }
+              ]
+            },
+            "description": "Returns the exact requested folder's own access-restriction rules by proxying DIAL Core's `getPublicationRules` — ancestor-folder rules in the underlying response are discarded, never returned."
           }
         }
       ]
@@ -1669,7 +1746,33 @@
             "url": {
               "raw": "{{baseUrl}}/api/v1/scheduled-tasks",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "scheduled-tasks"]
+              "path": ["api", "v1", "scheduled-tasks"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": true,
+                  "description": "Maximum number of scheduled tasks to return."
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "disabled": true,
+                  "description": "Offset of the first scheduled task to return."
+                },
+                {
+                  "key": "search",
+                  "value": "daily",
+                  "disabled": true,
+                  "description": "Case-insensitive substring match against the scheduled task display name."
+                },
+                {
+                  "key": "sort",
+                  "value": "firstToRun",
+                  "disabled": true,
+                  "description": "Sort order for the returned scheduled tasks. Defaults to `firstToRun`."
+                }
+              ]
             },
             "description": "Returns the DIAL Scheduler schedules visible to the authenticated session user. Proxies the DIAL Scheduler routed-deployment API using the session access token. Results are cached server-side for 30 seconds per user."
           }
@@ -1685,7 +1788,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"displayName\": \"Daily summary\",\n  \"trigger\": {\n    \"date\": \"2026-07-24T09:00:00.000Z\",\n    \"cron\": {\n      \"fields\": {\n        \"minute\": \"0\",\n        \"hour\": \"9\"\n      }\n    }\n  },\n  \"model\": \"gpt-4.1-mini-2025-04-14\",\n  \"prompt\": \"Summarize my inbox\",\n  \"description\": \"Summarizes unread inbox items every morning\",\n  \"stream\": true\n}\n",
+              "raw": "{\n  \"displayName\": \"Daily summary\",\n  \"trigger\": {\n    \"date\": \"2026-07-24T09:00:00.000Z\",\n    \"cron\": {\n      \"fields\": {\n        \"minute\": \"0\",\n        \"hour\": \"9\"\n      },\n      \"startDate\": \"2026-08-01T00:00:00.000Z\",\n      \"endDate\": \"2026-12-31T23:59:59.999Z\"\n    }\n  },\n  \"model\": \"gpt-4.1-mini-2025-04-14\",\n  \"prompt\": \"Summarize my inbox\",\n  \"description\": \"Summarizes unread inbox items every morning\"\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -1693,7 +1796,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "scheduled-tasks"]
             },
-            "description": "Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt, using the authenticated session user's dial-oauth credentials. Invalidates the scheduled tasks list cache on success.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+            "description": "Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt, using the OAuth external-service id configured via SCHEDULER_SERVICE_ID. Invalidates the scheduled tasks list cache on success.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
           }
         },
         {
@@ -1720,7 +1823,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"displayName\": \"Daily summary\",\n  \"trigger\": {\n    \"date\": \"2026-07-24T09:00:00.000Z\",\n    \"cron\": {\n      \"fields\": {\n        \"minute\": \"0\",\n        \"hour\": \"9\"\n      }\n    }\n  },\n  \"model\": \"gpt-4.1-mini-2025-04-14\",\n  \"prompt\": \"Summarize my inbox\",\n  \"description\": \"Summarizes unread inbox items every morning\",\n  \"stream\": true\n}\n",
+              "raw": "{\n  \"displayName\": \"Daily summary\",\n  \"trigger\": {\n    \"date\": \"2026-07-24T09:00:00.000Z\",\n    \"cron\": {\n      \"fields\": {\n        \"minute\": \"0\",\n        \"hour\": \"9\"\n      },\n      \"startDate\": \"2026-08-01T00:00:00.000Z\",\n      \"endDate\": \"2026-12-31T23:59:59.999Z\"\n    }\n  },\n  \"model\": \"gpt-4.1-mini-2025-04-14\",\n  \"prompt\": \"Summarize my inbox\",\n  \"description\": \"Summarizes unread inbox items every morning\"\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -1729,6 +1832,39 @@
               "path": ["api", "v1", "scheduled-tasks", "{{scheduleId}}"]
             },
             "description": "Updates an existing DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "List a scheduled task run history",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scheduled-tasks/{{scheduleId}}/runs",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "v1",
+                "scheduled-tasks",
+                "{{scheduleId}}",
+                "runs"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": true,
+                  "description": "Maximum number of runs to return."
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "disabled": true,
+                  "description": "Offset of the first run to return."
+                }
+              ]
+            },
+            "description": "Returns the paginated run history for a single DIAL Scheduler schedule, proxying DIAL Scheduler using the session user's access token. Always requests upstream ordering of created_at desc explicitly. Not cached."
           }
         }
       ]
@@ -1860,7 +1996,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"My toolset\",\n  \"version\": \"0.0.1\",\n  \"description\": \"My toolset description\",\n  \"iconUrl\": \"https://example.com/icon.svg\",\n  \"topics\": [\n    \"keyword1\",\n    \"keyword2\"\n  ],\n  \"intro\": \"Runs your toolset in one line.\",\n  \"endpoint\": \"https://my-toolset.example.com/mcp\",\n  \"transport\": \"HTTP\",\n  \"allowedTools\": [\n    \"tool1\",\n    \"tool2\"\n  ],\n  \"reference\": \"ff5584b7-a82b-4f4f-bf42-5bf74a3893d6\",\n  \"authSettings\": {\n    \"authenticationType\": \"NONE\",\n    \"apiKeyHeader\": \"X-Api-Key\",\n    \"clientId\": \"my-client-id\",\n    \"clientSecret\": \"my-client-secret\",\n    \"authorizationEndpoint\": \"https://auth.example.com/authorize\",\n    \"tokenEndpoint\": \"https://auth.example.com/token\",\n    \"scopesSupported\": [\n      \"read\",\n      \"write\"\n    ],\n    \"redirectUri\": \"https://chat.example.com/auth/toolset-signin\",\n    \"codeChallengeMethod\": \"S256\",\n    \"codeChallenge\": \"abc123\"\n  }\n}\n",
+              "raw": "{\n  \"name\": \"My toolset\",\n  \"version\": \"0.0.1\",\n  \"description\": \"My toolset description\",\n  \"iconUrl\": \"https://example.com/icon.svg\",\n  \"topics\": [\n    \"keyword1\",\n    \"keyword2\"\n  ],\n  \"endpoint\": \"https://my-toolset.example.com/mcp\",\n  \"transport\": \"HTTP\",\n  \"allowedTools\": [\n    \"tool1\",\n    \"tool2\"\n  ],\n  \"reference\": \"ff5584b7-a82b-4f4f-bf42-5bf74a3893d6\",\n  \"authSettings\": {\n    \"authenticationType\": \"NONE\",\n    \"apiKeyHeader\": \"X-Api-Key\",\n    \"clientId\": \"my-client-id\",\n    \"clientSecret\": \"my-client-secret\",\n    \"authorizationEndpoint\": \"https://auth.example.com/authorize\",\n    \"tokenEndpoint\": \"https://auth.example.com/token\",\n    \"scopesSupported\": [\n      \"read\",\n      \"write\"\n    ],\n    \"redirectUri\": \"https://chat.example.com/auth/toolset-signin\",\n    \"codeChallengeMethod\": \"S256\",\n    \"codeChallenge\": \"abc123\"\n  }\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -1895,7 +2031,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"My toolset\",\n  \"version\": \"0.0.1\",\n  \"description\": \"My toolset description\",\n  \"iconUrl\": \"https://example.com/icon.svg\",\n  \"topics\": [\n    \"keyword1\",\n    \"keyword2\"\n  ],\n  \"intro\": \"Runs your toolset in one line.\",\n  \"endpoint\": \"https://my-toolset.example.com/mcp\",\n  \"transport\": \"HTTP\",\n  \"allowedTools\": [\n    \"tool1\",\n    \"tool2\"\n  ],\n  \"reference\": \"ff5584b7-a82b-4f4f-bf42-5bf74a3893d6\",\n  \"authSettings\": {\n    \"authenticationType\": \"NONE\",\n    \"apiKeyHeader\": \"X-Api-Key\",\n    \"clientId\": \"my-client-id\",\n    \"clientSecret\": \"my-client-secret\",\n    \"authorizationEndpoint\": \"https://auth.example.com/authorize\",\n    \"tokenEndpoint\": \"https://auth.example.com/token\",\n    \"scopesSupported\": [\n      \"read\",\n      \"write\"\n    ],\n    \"redirectUri\": \"https://chat.example.com/auth/toolset-signin\",\n    \"codeChallengeMethod\": \"S256\",\n    \"codeChallenge\": \"abc123\"\n  }\n}\n",
+              "raw": "{\n  \"name\": \"My toolset\",\n  \"version\": \"0.0.1\",\n  \"description\": \"My toolset description\",\n  \"iconUrl\": \"https://example.com/icon.svg\",\n  \"topics\": [\n    \"keyword1\",\n    \"keyword2\"\n  ],\n  \"endpoint\": \"https://my-toolset.example.com/mcp\",\n  \"transport\": \"HTTP\",\n  \"allowedTools\": [\n    \"tool1\",\n    \"tool2\"\n  ],\n  \"reference\": \"ff5584b7-a82b-4f4f-bf42-5bf74a3893d6\",\n  \"authSettings\": {\n    \"authenticationType\": \"NONE\",\n    \"apiKeyHeader\": \"X-Api-Key\",\n    \"clientId\": \"my-client-id\",\n    \"clientSecret\": \"my-client-secret\",\n    \"authorizationEndpoint\": \"https://auth.example.com/authorize\",\n    \"tokenEndpoint\": \"https://auth.example.com/token\",\n    \"scopesSupported\": [\n      \"read\",\n      \"write\"\n    ],\n    \"redirectUri\": \"https://chat.example.com/auth/toolset-signin\",\n    \"codeChallengeMethod\": \"S256\",\n    \"codeChallenge\": \"abc123\"\n  }\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {

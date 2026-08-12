@@ -62,6 +62,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'DIAL_CORE_EXTERNAL_URL',
   },
   {
+    key: 'app.version',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Version string shown in the footer version label and substituted for the %%VERSION%% footer token. Sourced from CHAT_VERSION so CI/CD can stamp the deployed build; falls back to the application package.json version when unset or blank.',
+    owner: 'chat-team',
+    envVar: 'CHAT_VERSION',
+  },
+  {
     key: 'announcement.html',
     type: 'config',
     valueType: 'string',
@@ -72,6 +84,42 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Null/empty hides the banner. Sourced from ANNOUNCEMENT_HTML_MESSAGE.',
     owner: 'chat-team',
     envVar: 'ANNOUNCEMENT_HTML_MESSAGE',
+  },
+  {
+    key: 'announcement.title',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Operator-authored plain-text heading shown in bold at the start of the announcement banner line. Rendered as text, never as markup. Null/blank omits the heading. Sourced from ANNOUNCEMENT_TITLE.',
+    owner: 'chat-team',
+    envVar: 'ANNOUNCEMENT_TITLE',
+  },
+  {
+    key: 'announcement.description',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Operator-authored supporting copy shown after the announcement banner title. Sanitized server-side to a safe HTML subset. Null/blank omits the description. Sourced from ANNOUNCEMENT_DESCRIPTION.',
+    owner: 'chat-team',
+    envVar: 'ANNOUNCEMENT_DESCRIPTION',
+  },
+  {
+    key: 'announcement.items',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: [],
+    critical: false,
+    description:
+      'List of announcements shown in the popover behind the banner\'s "+N announcements" pill. JSON array of { title, description?, link?: { label, href } }. Entries with a blank title, or with a link whose label is blank or whose href is not http/https, are dropped with a warning. Empty (pill hidden) when ANNOUNCEMENTS is unset or malformed; boot never fails on bad config.',
+    owner: 'chat-team',
+    envVar: 'ANNOUNCEMENTS',
   },
   {
     key: 'footer.html',
@@ -94,28 +142,6 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     critical: false,
     description:
       'Whether the footer HTML message area is shown. Automatically enabled when FOOTER_HTML_MESSAGE is set.',
-    owner: 'chat-team',
-  },
-  {
-    key: 'features.requestApiKey',
-    type: 'feature',
-    valueType: 'boolean',
-    visibility: 'client',
-    defaultValue: false,
-    critical: false,
-    description:
-      'Whether the Request API Key dialog is available via the footer data-dial-action trigger. Automatically enabled when REQUEST_API_KEY_CODE is set.',
-    owner: 'chat-team',
-  },
-  {
-    key: 'features.reportAnIssue',
-    type: 'feature',
-    valueType: 'boolean',
-    visibility: 'client',
-    defaultValue: false,
-    critical: false,
-    description:
-      'Whether the Report an Issue dialog is available via the footer data-dial-action trigger. Automatically enabled when REPORT_ISSUE_CODE is set.',
     owner: 'chat-team',
   },
   {
@@ -152,6 +178,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     description:
       'Whether LLM-based conversation naming runs after the first assistant reply. Derived from UTILITY_MODEL and DIAL_API_KEY presence plus LLM_CONVERSATION_NAMING_ENABLED=true.',
     owner: 'chat-team',
+  },
+  {
+    key: 'features.responsesApiEnabled',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'server',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Server-side kill switch for routing eligible generations through the OpenAI Responses API. Even when a deployment reports features.responsesApi=true, Responses is only used when this flag is also true. Defaults to false. Not exposed to the frontend client-config endpoint (visibility: server). Role-based rollout (RESPONSES_API_ENABLED_ROLES) is not implemented — out of scope.',
+    owner: 'chat-team',
+    envVar: 'RESPONSES_API_ENABLED',
   },
   {
     key: 'overlay.enabled',

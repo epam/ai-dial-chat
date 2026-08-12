@@ -1,4 +1,4 @@
-import { DialSpinner } from '@epam/ai-dial-ui-kit';
+import { Spinner } from '@epam/ai-dial-ui-kit';
 import { memo, type FC, type ReactNode } from 'react';
 import { useUser } from '../../context/auth/UserContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
@@ -30,7 +30,7 @@ const RequireAuth: FC<Props> = ({ children }) => {
     }
     return (
       <div className="flex size-full items-center justify-center">
-        <DialSpinner />
+        <Spinner />
       </div>
     );
   }

@@ -3,155 +3,141 @@
     --shp-access-trigger-bg,
     var(--bg-layer-raised, #fcfcfc)
   );
-  border: 1px solid
-    var(
-      --shp-access-trigger-border,
-      var(--stroke-hairline, rgba(0, 0, 0, 0.05))
-    );
-  transition:
-    border-color 150ms ease,
-    box-shadow 150ms ease;
+  border-color: var(
+    --shp-access-trigger-border,
+    var(--stroke-secondary, #d1dbea)
+  );
+}
 
+/* Interactive states apply only to the dropdown trigger; the same class also
+ * styles the read-only access label, which must not react to pointer or focus. */
+button.accessTriggerBtn {
   @media (hover: hover) {
-    &:hover:not(:focus-visible) {
+    &:hover {
       border-color: var(
         --shp-access-trigger-border-hover,
-        var(--stroke-hover-tint, rgba(0, 0, 0, 0.12))
+        var(--stroke-info, #124ace)
       );
     }
   }
 
+  /* Focus ring is an `outline`, not a `border-color` swap — outline is painted
+   * outside the border box, so it costs no layout and is preserved in
+   * forced-colors mode. `outline-offset: -1px` keeps it in the border's place
+   * (the border itself goes transparent) so nothing grows or jitters. */
   &:focus-visible {
-    outline: none;
-    border-color: color-mix(
-      in srgb,
-      var(--shp-access-trigger-border-focus, var(--stroke-info, #124ace)) 50%,
-      transparent
-    );
-    box-shadow: none;
+    border-color: transparent;
+    outline: 1px solid
+      var(--shp-access-trigger-border-focus, var(--stroke-info, #124ace));
+    outline-offset: -1px;
   }
 }
 
 .accessTriggerBtnOpen {
-  border-color: color-mix(
-    in srgb,
-    var(--shp-access-trigger-border-focus, var(--stroke-info, #124ace)) 50%,
-    transparent
+  border-color: var(
+    --shp-access-trigger-border-focus,
+    var(--stroke-info, #124ace)
   );
-}
-
-/*
- * Non-interactive stand-in for `.accessTriggerBtn`, used when the item type
- * only ever supports view access (Model) — same resting look, no
- * hover/focus/open states or chevron, since there is nothing to open.
- */
-.accessStaticLabel {
-  background-color: var(
-    --shp-access-trigger-bg,
-    var(--bg-layer-raised, #fcfcfc)
-  );
-  border: 1px solid
-    var(
-      --shp-access-trigger-border,
-      var(--stroke-hairline, rgba(0, 0, 0, 0.05))
-    );
 }
 
 .accessTriggerLabel {
   color: var(--shp-access-trigger-text, var(--text-primary, #161b2d));
 }
 
-/* Popover title in the header bar. */
 .title {
   color: var(--shp-title-text, var(--text-primary, #161b2d));
 }
 
-/* Icon badge at the start of the "Anyone with the link" row. */
 .linkIconBadge {
   background: var(
     --shp-link-icon-bg,
-    var(--bg-accent-primary-alpha, #7da4ff2e)
+    var(--bg-control-accent-alpha-active, #2764d933)
   );
   color: var(--shp-link-icon-text, var(--text-accent, #1d4ed8));
 }
 
-/* Primary text of the "Anyone with the link" row. */
 .anyoneWithLinkTitle {
   color: var(--shp-anyone-title, var(--text-primary, #161b2d));
 }
 
-/* Secondary text of the "Anyone with the link" row. */
 .anyoneWithLinkSubtitle {
-  color: var(--shp-anyone-subtitle, var(--text-secondary, #6b7280));
+  color: var(--shp-anyone-subtitle, var(--text-secondary, #57647a));
 }
 
 .accessTriggerChevron {
-  color: var(--shp-access-chevron, var(--text-tertiary, #c7cbd4));
+  color: var(--shp-access-chevron, var(--text-tertiary, #848e9c));
   transition: transform 150ms ease;
 
   @media (prefers-reduced-motion: reduce) {
     transition: none;
   }
 }
-
+// TODO: replace after implementing the new design for the access control popover
 .accessMenuItem {
   @media (hover: hover) {
     &:hover {
       background: var(
         --shp-menu-item-hover,
-        var(--bg-hover-alpha, rgba(0, 0, 0, 0.04))
+        var(--bg-control-accent-alpha-hover, #2764d924)
       );
     }
   }
 
+  /* The item clears its outline via Tailwind, so keyboard focus needs the hover
+   * background plus an inset ring that the dropdown's overflow cannot clip. */
   &:focus-visible {
-    box-shadow: 0 0 0 2px
-      var(
-        --shp-menu-item-focus-shadow,
-        var(--bg-focus-ring-alpha, rgba(125, 164, 255, 0.5))
-      );
+    background: var(
+      --shp-menu-item-hover,
+      var(--bg-control-accent-alpha-hover, #2764d924)
+    );
+    box-shadow: inset 0 0 0 2px
+      var(--shp-menu-item-focus-shadow, var(--stroke-info, #124ace));
   }
 }
 
 .accessMenuItemChecked {
   background: var(
     --shp-menu-item-checked-bg,
-    var(--bg-accent-primary-alpha, #7da4ff2e)
+    var(--bg-control-accent-alpha-hover, #2764d924)
   );
 
   @media (hover: hover) {
     &:hover {
       background: var(
         --shp-menu-item-checked-bg,
-        var(--bg-accent-primary-alpha, #7da4ff2e)
+        var(--bg-control-accent-alpha-hover, #2764d924)
       );
     }
   }
 }
-
+// TODO: replace after implementing the new design for the access control popover
 .accessMenuItemLabel {
   font-size: 14px;
   color: var(--shp-menu-item-label, var(--text-primary, #161b2d));
 }
 
-/* Section heading above the link input, e.g. "Link". */
+.accessMenuItemCheck {
+  color: var(--shp-menu-item-check, var(--text-accent, #1d4ed8));
+}
+
 .sectionLabel {
-  color: var(--shp-section-label, var(--text-secondary, #6b7280)) !important;
   input {
-    color: var(--shp-section-label, var(--text-secondary, #6b7280)) !important;
+    color: var(--shp-section-label, var(--text-secondary, #57647a)) !important;
   }
 }
 
-/* Error message shown when share-link creation fails. */
 .errorText {
   color: var(--shp-error-text, var(--text-error, #ae2f2f));
 }
 
-/* Visibility and expiry notes below the access control. */
 .note {
-  color: var(--shp-note-text, var(--text-secondary, #6b7280));
+  color: var(--shp-note-text, var(--text-secondary, #57647a));
 }
 
 .divider {
   background: var(--shp-divider, var(--stroke-tertiary, #e0e6f0));
+}
+
+:export {
+  skeletonColor: var(--shp-skeleton-color, var(--bg-layer-sunken, #eef1f7));
 }
