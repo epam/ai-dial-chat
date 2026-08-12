@@ -68,6 +68,7 @@ const textColors = {
   'warning-icon': 'var(--text-warning-icon, #EEC840)', // yellow-500
   info: 'var(--text-info, #1D4ED8)', // blue-500
   success: 'var(--text-success, #007274)', // green-800
+  'prompt-parameter': 'var(--text-prompt-parameter, #3730B7)', // violet
 };
 
 const placeholderColor = {

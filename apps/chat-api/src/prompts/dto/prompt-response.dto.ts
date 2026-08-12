@@ -22,6 +22,12 @@ export class PromptResponseDto {
   })
   folderId!: string;
 
+  @ApiPropertyOptional({
+    description: 'Resource author reported by DIAL Core, when it is known',
+    example: 'john.doe@example.com',
+  })
+  author?: string;
+
   @ApiProperty({
     description: 'Creation timestamp (Unix ms)',
     example: 1700000000000,

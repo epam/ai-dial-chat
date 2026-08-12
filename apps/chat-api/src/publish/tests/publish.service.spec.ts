@@ -5,6 +5,9 @@ import { CatalogEntityType } from '../dto/catalog-entity-params.dto';
 import { PublishRuleFunction } from '../dto/publish-rule.dto';
 import { PublishService } from '../publish.service';
 
+/* The caller's own bucket, which `toSourceUrl` uses to qualify a prompt's bucket-relative id. */
+const TEST_BUCKET = 'bucket-123';
+
 const okResponse = (data: unknown) =>
   ({ data, response: {} as Response }) as never;
 
@@ -43,6 +46,7 @@ describe('PublishService', () => {
 
       const result = await service.publish(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/tool-abc123__1.2.0',
         'Organization/Data Science',
@@ -91,6 +95,7 @@ describe('PublishService', () => {
 
       const result = await service.publish(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Skill,
         'skills/bucket-123/team-a/docs-helper',
         'Organization/Data Science',
@@ -147,6 +152,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/tool-abc123__1.2.0',
         'Organization/Data Science',
@@ -168,6 +174,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/tool-abc123__1.2.0',
         'Organization/Data Science',
@@ -190,6 +197,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Application,
         'applications/bucket-123/My App Name__0.0.1',
         'DK Test with nested/Level 1',
@@ -224,6 +232,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Application,
         'applications/bucket-123/My App Name__0.0.1',
         '',
@@ -253,6 +262,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Application,
         'applications/bucket-123/Untitled%20app123123123123__0.0.1',
         'test 14.04',
@@ -283,6 +293,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/tool-abc123__1.2.0',
         'Organization/Data Science',
@@ -309,6 +320,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Application,
         'applications/bucket-123/Untitled%20app%202222232__0.0.1',
         'folder02',
@@ -334,6 +346,7 @@ describe('PublishService', () => {
       await expect(
         service.publish(
           'token-abc',
+          TEST_BUCKET,
           CatalogEntityType.Toolset,
           'toolsets/bucket-123/tool-abc123__1.2.0',
           'Organization/Production',
@@ -352,6 +365,7 @@ describe('PublishService', () => {
       await expect(
         service.publish(
           'token-abc',
+          TEST_BUCKET,
           CatalogEntityType.Toolset,
           'toolsets/bucket-123/tool-abc123__1.2.0',
           'Organization/Data Science',
@@ -393,6 +407,7 @@ describe('PublishService', () => {
 
       const result = await service.getPublishHistory(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/tool-abc123__1.2.0',
       );
@@ -431,6 +446,7 @@ describe('PublishService', () => {
 
       const result = await service.getPublishHistory(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/legacy-entity-without-version',
       );
@@ -454,6 +470,7 @@ describe('PublishService', () => {
 
       const result = await service.getPublishHistory(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/tool-abc123__1.0.0',
       );
@@ -477,6 +494,7 @@ describe('PublishService', () => {
 
       const result = await service.getPublishHistory(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/tool-abc123__1.0.0',
       );
@@ -493,6 +511,7 @@ describe('PublishService', () => {
 
       const result = await service.getPublishHistory(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/tool-abc123__1.2.0',
       );
@@ -506,6 +525,7 @@ describe('PublishService', () => {
 
       const result = await service.getPublishHistory(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/tool-abc123__1.2.0',
       );
@@ -524,6 +544,7 @@ describe('PublishService', () => {
       await expect(
         service.getPublishHistory(
           'token-abc',
+          TEST_BUCKET,
           CatalogEntityType.Toolset,
           'toolsets/bucket-123/tool-abc123__1.2.0',
         ),

@@ -2,6 +2,7 @@ import {
   CatalogEntityType,
   type CatalogItemOverview,
   type CatalogItem,
+  type OverviewSpec,
 } from '@epam/ai-dial-catalog';
 import type { PromptResponseDto } from '@epam/ai-dial-chat-api-client';
 import { formatLastUsed } from '@epam/ai-dial-chat-shared';
@@ -25,46 +26,41 @@ const resolvePromptFolder = (
   ...folderId.split('/').filter(Boolean).map(safeDecodeURIComponent),
 ];
 
-/** Recovers the namespace a prompt catalog item came from, from its ownership flags. */
-export const resolvePromptSource = (item: CatalogItem): PromptSource => {
-  if (item.isMyApp) return PromptSource.Personal;
-  if (item.sharedWithMe) return PromptSource.SharedWithMe;
-  return PromptSource.Public;
-};
-
 /**
- * Builds the Overview tab data for a prompt: where it is stored, which
- * namespace it came from, and when it last changed. The description is not
- * repeated here — the Details tab already shows it above the body.
+ * Builds the Overview tab data for a prompt: who authored it and when it last
+ * changed. The description is not repeated here — the Details tab already
+ * shows it above the body.
  */
 export const buildPromptOverview = (
   prompt: PromptResponseDto,
-  source: PromptSource,
   t: TFunction,
 ): CatalogItemOverview => {
-  const folderLabel = prompt.folderId
-    ? prompt.folderId.split('/').map(safeDecodeURIComponent).join(' / ')
-    : t(CatalogI18nKeys.DetailsPromptFolderRoot);
+  const specs: OverviewSpec[] = [];
+
+  /* DIAL Core omits the author on resources written before it tracked one. */
+  if (prompt.author) {
+    specs.push({
+      label: t(CatalogI18nKeys.DetailsPromptAuthor),
+      value: prompt.author,
+    });
+  }
+  specs.push({
+    label: t(CatalogI18nKeys.DetailsPromptUpdated),
+    value: formatLastUsed(prompt.updatedAt),
+  });
 
   return {
-    sections: [
-      {
-        title: t(CatalogI18nKeys.DetailsPromptSection),
-        specs: [
-          { label: t(CatalogI18nKeys.DetailsPromptFolder), value: folderLabel },
-          {
-            label: t(CatalogI18nKeys.DetailsPromptSource),
-            value: t(SOURCE_FOLDER_KEY[source]),
-          },
-          {
-            label: t(CatalogI18nKeys.DetailsPromptUpdated),
-            value: formatLastUsed(prompt.updatedAt),
-          },
-        ],
-      },
-    ],
+    sections: [{ title: t(CatalogI18nKeys.DetailsPromptSection), specs }],
   };
 };
+
+/**
+ * Whether a prompt item came from the organisation namespace, which the public
+ * prompt endpoints serve. Personal and shared-with-me prompts both resolve
+ * through the caller's own bucket instead.
+ */
+export const isOrganisationPromptItem = (item: CatalogItem): boolean =>
+  !item.isMyApp && !item.sharedWithMe;
 
 export interface MapPromptToCatalogItemOptions {
   /** Resolves the Personal/Shared/Public folder label; i18n stays at the app edge. */
@@ -116,7 +112,7 @@ export const mapPromptToCatalogItem = (
       ...(prompt.content
         ? { promptContent: { content: prompt.content } }
         : undefined),
-      overview: buildPromptOverview(prompt, source, t),
+      overview: buildPromptOverview(prompt, t),
     },
   };
 };
