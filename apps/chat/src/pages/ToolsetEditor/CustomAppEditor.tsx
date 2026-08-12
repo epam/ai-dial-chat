@@ -29,6 +29,7 @@ import {
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useOperationNotification } from '../../hooks/useOperationNotification';
 import type {
   CustomAppFormData,
   CustomAppFormErrors,
@@ -40,6 +41,10 @@ import {
   updateApplication,
 } from '../../server-api/applications';
 import { getDeploymentDetails } from '../../server-api/deployments';
+import {
+  EntityOperation,
+  NotifiableEntity,
+} from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import {
   isValidAbsoluteUrl,
@@ -66,6 +71,7 @@ const CustomAppEditor: FC = () => {
     isLoading: isDeploymentsLoading,
   } = useDeployments();
   const { showErrorNotification } = useNotification();
+  const { notifyOperationSuccess } = useOperationNotification();
 
   const step =
     (searchParams.get(ToolsetEditorQuery.Step) as ToolsetEditorSteps) ??
@@ -359,6 +365,11 @@ const CustomAppEditor: FC = () => {
         await createApplication(body);
       }
       await refetchDeployments();
+      notifyOperationSuccess(
+        NotifiableEntity.Agent,
+        isEditMode ? EntityOperation.Edited : EntityOperation.Created,
+        { name: generalForm.name },
+      );
       navigate(returnUrl);
     } catch (err) {
       const { message, traceId } = await getApiErrorDetails(err);
@@ -384,6 +395,7 @@ const CustomAppEditor: FC = () => {
     navigate,
     returnUrl,
     showErrorNotification,
+    notifyOperationSuccess,
     t,
   ]);
 

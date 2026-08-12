@@ -13,11 +13,15 @@ import {
   PublishI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
-import { useNotification } from '../../context/NotificationContext';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
+import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { publishConversation } from '../../server-api/conversation-publish.api';
 import { getPublishRules } from '../../server-api/publish-rules.api';
+import {
+  EntityOperation,
+  NotifiableEntity,
+} from '../../types/entity-notification';
 import { getAccessRulesLabels } from '../../utils/publish';
 
 /** Props for `PublishConversationPanelContainer`. */
@@ -50,7 +54,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
   returnFocusRef,
 }) => {
   const { t } = useTranslation();
-  const { showSuccessNotification } = useNotification();
+  const { notifyOperationSuccess } = useOperationNotification();
   const showPublishError = usePublishErrorNotification();
   const {
     config: { publicationFilterSources },
@@ -87,9 +91,14 @@ const PublishConversationPanelContainer: FC<Props> = ({
     },
     onPublishSuccess: (_item, folderPath) => {
       rememberPublishFolder(folderPath);
-      showSuccessNotification({
-        message: t(ConversationPublishI18nKeys.SuccessMessage),
-      });
+      notifyOperationSuccess(
+        NotifiableEntity.Conversation,
+        EntityOperation.PublishRequested,
+        {
+          name: conversationTitle,
+          folder: folderPath[folderPath.length - 1],
+        },
+      );
     },
     onPublishError: (_item, _folderPath, error) => showPublishError(error),
     onFetchExistingRules: (folderPath) => getPublishRules(folderPath.join('/')),

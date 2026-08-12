@@ -16,6 +16,7 @@ import {
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { usePrompts } from '../../context/PromptsContext';
+import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import {
@@ -27,6 +28,10 @@ import {
   renamePromptFolder,
   updatePrompt,
 } from '../../server-api/prompts.api';
+import {
+  EntityOperation,
+  NotifiableEntity,
+} from '../../types/entity-notification';
 import { PromptFieldError } from '../../types/prompt';
 import { PromptEditorQuery } from '../../types/prompt-editor';
 import { ROUTES } from '../../types/routes';
@@ -52,7 +57,8 @@ const PromptEditorPage: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { showSuccessNotification, showErrorNotification } = useNotification();
+  const { showErrorNotification } = useNotification();
+  const { notifyOperationSuccess } = useOperationNotification();
   const isPromptsEnabled = useUiFeature(OverlayFeature.Prompts);
   const { folders, refetchPrompts } = usePrompts();
 
@@ -221,15 +227,11 @@ const PromptEditorPage: FC = () => {
         }
 
         await refetchPrompts();
-        showSuccessNotification({
-          title: t(PromptEditorI18nKeys.SaveSuccessTitle),
-          message: t(
-            isEditMode
-              ? PromptEditorI18nKeys.UpdateSuccess
-              : PromptEditorI18nKeys.CreateSuccess,
-            { name: trimmedName },
-          ),
-        });
+        notifyOperationSuccess(
+          NotifiableEntity.Prompt,
+          isEditMode ? EntityOperation.Edited : EntityOperation.Created,
+          { name: trimmedName },
+        );
         navigate(returnUrl);
       } catch (err) {
         const { status, traceId } = await getApiErrorDetails(err);
@@ -251,7 +253,7 @@ const PromptEditorPage: FC = () => {
       promptId,
       initialFolderId,
       refetchPrompts,
-      showSuccessNotification,
+      notifyOperationSuccess,
       showErrorNotification,
       t,
       navigate,

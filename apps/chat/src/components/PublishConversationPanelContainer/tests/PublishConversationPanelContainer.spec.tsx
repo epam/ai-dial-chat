@@ -200,11 +200,11 @@ describe('PublishConversationPanelContainer', () => {
       );
     });
     await waitFor(() => {
-      expect(mockShowNotification).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'conversationPublish.successMessage',
-        }),
-      );
+      expect(mockShowNotification).toHaveBeenCalledWith({
+        variant: 'success',
+        title: 'entityNotifications.conversation.publishRequestedTitle',
+        message: 'entityNotifications.conversation.publishRequested',
+      });
       expect(onClose).toHaveBeenCalled();
     });
   });

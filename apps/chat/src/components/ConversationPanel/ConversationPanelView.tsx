@@ -57,6 +57,7 @@ import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useConversationExport } from '../../hooks/useConversationExport';
 import { useConversationImport } from '../../hooks/useConversationImport';
+import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import {
@@ -64,6 +65,10 @@ import {
   revokeSharedAccess,
 } from '../../server-api/share.api';
 import { ConversationExportMode } from '../../types/conversation-export';
+import {
+  EntityOperation,
+  NotifiableEntity,
+} from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import {
   conversationIdsMatch,
@@ -123,11 +128,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const { language } = useLanguage();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const {
-    showInfoNotification,
-    showSuccessNotification,
-    showErrorNotification,
-  } = useNotification();
+  const { showSuccessNotification, showErrorNotification } = useNotification();
+  const { notifyOperationSuccess } = useOperationNotification();
   const isConversationsSectionEnabled = useUiFeature(
     OverlayFeature.ConversationsSection,
   );
@@ -387,6 +389,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             ) {
               onDuplicateReadonly?.();
             }
+            notifyOperationSuccess(
+              NotifiableEntity.Conversation,
+              EntityOperation.Duplicated,
+              { name: panelItem.title },
+            );
             navigate(getConversationRoute(newPath));
           } catch (error) {
             const { traceId } = await getApiErrorDetails(error);
@@ -546,6 +553,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       isConversationsPublishingEnabled,
       navigate,
       onDuplicateReadonly,
+      notifyOperationSuccess,
       showErrorNotification,
       exportSingle,
     ],
@@ -572,10 +580,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     setDeleteError(null);
     try {
       await deleteConversation(idToDelete);
-      showSuccessNotification({
-        message: t(ConversationPanelI18nKeys.DeleteSuccess),
-        title: t(ConversationPanelI18nKeys.DeleteSuccessTitle),
-      });
+      notifyOperationSuccess(
+        NotifiableEntity.Conversation,
+        EntityOperation.Deleted,
+        { name: pendingDeleteTitle },
+      );
     } catch {
       setDeleteError(t(ConversationPanelI18nKeys.DeleteError));
       setIsDeleting(false);
@@ -592,7 +601,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     }
   }, [
     pendingDeleteId,
-    showSuccessNotification,
+    pendingDeleteTitle,
+    notifyOperationSuccess,
     deleteConversation,
     panelActiveConversationId,
     navigate,
@@ -635,7 +645,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       /* The discard already succeeded; a refresh failure must not undo that success. */
     }
 
-    showInfoNotification({
+    showSuccessNotification({
       title: t(ConversationPanelI18nKeys.UnshareSuccessTitle),
       message: t(ConversationPanelI18nKeys.UnshareSuccess, {
         name: pendingUnshareTitle,
@@ -655,7 +665,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     pendingUnshareId,
     pendingUnshareTitle,
     refreshConversations,
-    showInfoNotification,
+    showSuccessNotification,
     panelActiveConversationId,
     navigate,
     t,
@@ -741,8 +751,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       }
       setIsRenaming(false);
       setPendingRenameItem(null);
+      notifyOperationSuccess(
+        NotifiableEntity.Conversation,
+        EntityOperation.Renamed,
+        { name: newTitle },
+      );
     },
-    [pendingRenameItem, renameConversation, t],
+    [pendingRenameItem, renameConversation, notifyOperationSuccess, t],
   );
 
   const handleGenerateRenameWithAi = useCallback(async () => {

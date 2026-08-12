@@ -933,6 +933,30 @@ describe('ConversationPanelView — single-conversation delete navigation', () =
 describe('ConversationPanelView — rename', () => {
   const RENAME_LABEL = 'buttons.rename';
 
+  it('confirms a duplicated conversation and navigates to the copy', async () => {
+    const mockDuplicateConversation = vi
+      .fn()
+      .mockResolvedValue('conversations/bucket/conv1-copy');
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      duplicateConversation: mockDuplicateConversation,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: 'buttons.duplicate' }),
+      );
+    });
+
+    expect(mockDuplicateConversation).toHaveBeenCalled();
+    expect(mockShowNotification).toHaveBeenCalledWith({
+      variant: 'success',
+      title: 'entityNotifications.conversation.duplicatedTitle',
+      message: 'entityNotifications.conversation.duplicated',
+    });
+  });
+
   it('clicking rename opens the popup with the current title', () => {
     render(<ConversationPanelView {...defaultProps} />);
 
@@ -966,6 +990,33 @@ describe('ConversationPanelView — rename', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
     });
+    expect(mockShowNotification).toHaveBeenCalledWith({
+      variant: 'success',
+      title: 'entityNotifications.conversation.renamedTitle',
+      message: 'entityNotifications.conversation.renamed',
+    });
+  });
+
+  it('a failed rename keeps the popup open and raises no success notification', async () => {
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      renameConversation: vi.fn().mockRejectedValue(new Error('boom')),
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(screen.getByRole('button', { name: RENAME_LABEL }));
+
+    const dialog = screen.getByRole('dialog', {
+      name: 'rename conversation',
+    });
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    });
+
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(mockShowNotification).not.toHaveBeenCalledWith(
+      expect.objectContaining({ variant: 'success' }),
+    );
   });
 });
 

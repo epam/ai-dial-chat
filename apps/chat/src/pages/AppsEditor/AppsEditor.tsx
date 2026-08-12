@@ -17,7 +17,12 @@ import {
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
+import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
+import {
+  EntityOperation,
+  NotifiableEntity,
+} from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import {
@@ -53,6 +58,7 @@ const SETTINGS_READY_TIMEOUT_MS = 60000;
 const AppsEditor: FC = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const { notifyOperationSuccess } = useOperationNotification();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { schemas, items: deployments, refetchDeployments } = useDeployments();
@@ -256,6 +262,11 @@ const AppsEditor: FC = () => {
     void refetchDeployments(false);
   }, [refetchDeployments]);
 
+  const appDisplayName =
+    submittedAppInfo?.displayName ||
+    resolveLocalizedText(existingDeployment?.displayName, language) ||
+    schema?.displayName;
+
   const handleSaveSuccess = useCallback(
     async (hasChanges: boolean) => {
       clearSaveTimeout();
@@ -282,6 +293,17 @@ const AppsEditor: FC = () => {
         } finally {
           setIsSaving(false);
         }
+        /*
+         * Only Save & Exit reports an outcome: a preview-triggered save is a
+         * side effect of opening the pane, not something the user asked about.
+         */
+        notifyOperationSuccess(
+          NotifiableEntity.Agent,
+          isEditingExistingApp
+            ? EntityOperation.Edited
+            : EntityOperation.Created,
+          { name: appDisplayName ?? '' },
+        );
         navigate(returnUrl);
       }
 
@@ -292,6 +314,9 @@ const AppsEditor: FC = () => {
       isPreviewing,
       pendingSaveAction,
       refetchDeployments,
+      notifyOperationSuccess,
+      isEditingExistingApp,
+      appDisplayName,
       navigate,
       returnUrl,
     ],
@@ -349,10 +374,6 @@ const AppsEditor: FC = () => {
     ? t(EditorI18nKeys.NextButton)
     : t(EditorI18nKeys.SaveButton);
 
-  const appDisplayName =
-    submittedAppInfo?.displayName ||
-    resolveLocalizedText(existingDeployment?.displayName, language) ||
-    schema?.displayName;
   const appIconUrl =
     submittedAppInfo?.iconUrl ?? existingDeployment?.iconUrl ?? schema?.iconUrl;
 

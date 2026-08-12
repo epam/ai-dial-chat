@@ -379,6 +379,10 @@ describe('ToolsetEditor', () => {
       await screen.findByText('ensure-saved-result-toolsets/b/my__0.0.1'),
     ).toBeTruthy();
     expect(toolsetsApi.createToolset).toHaveBeenCalledOnce();
+    /* Persisting the draft to advance a step is not an outcome the user asked about. */
+    expect(mockShowNotification).not.toHaveBeenCalledWith(
+      expect.objectContaining({ variant: 'success' }),
+    );
   });
 
   it('resolves onEnsureSaved to the already-persisted id without another request when nothing changed', async () => {
@@ -431,6 +435,11 @@ describe('ToolsetEditor', () => {
       ),
     );
     expect(toolsetsApi.loginToolset).not.toHaveBeenCalled();
+    expect(mockShowNotification).toHaveBeenCalledWith({
+      variant: 'success',
+      title: 'entityNotifications.toolset.createdTitle',
+      message: 'entityNotifications.toolset.created',
+    });
   });
 
   it('returns to the requested screen after saving a new OAuth toolset without starting login', async () => {

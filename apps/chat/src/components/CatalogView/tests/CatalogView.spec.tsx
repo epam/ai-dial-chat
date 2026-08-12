@@ -93,6 +93,7 @@ const capturedPublishProps: {
       folderPath: string[],
       rules: PublicationRule[],
     ) => Promise<void>;
+    onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
     isPublishVisible?: (item: CatalogItem) => boolean;
     publishExpandedPaths?: Set<string>;
@@ -161,6 +162,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     publishLoadingPaths,
     onCreatePublishFolder,
     onPublish,
+    onPublishSuccess,
     getPublishHistory,
     isPublishVisible,
     ruleSourceOptions,
@@ -205,6 +207,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       folderPath: string[],
       rules: PublicationRule[],
     ) => Promise<void>;
+    onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
     isPublishVisible?: (item: CatalogItem) => boolean;
     ruleSourceOptions?: string[];
@@ -220,6 +223,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     const [fetchResult, setFetchResult] = useState<string>('');
     capturedPublishProps.current = {
       onPublish,
+      onPublishSuccess,
       getPublishHistory,
       isPublishVisible,
       publishExpandedPaths,
@@ -779,6 +783,34 @@ describe('CatalogView', () => {
         },
       );
     });
+
+    it.each([
+      [CatalogEntityType.Toolset, 'toolset'],
+      [CatalogEntityType.Prompt, 'prompt'],
+      [CatalogEntityType.Agent, 'agent'],
+      [CatalogEntityType.Model, 'model'],
+      [CatalogEntityType.Skill, 'skill'],
+    ])(
+      'reports a submitted publish request naming the %s kind',
+      (type, entity) => {
+        const showNotification = vi.fn();
+        vi.mocked(useNotification).mockReturnValue(
+          createNotificationContextValue(showNotification),
+        );
+
+        render(<CatalogView />);
+        capturedPublishProps.current?.onPublishSuccess?.(
+          makeCatalogItem({ type }),
+          ['Organization', 'Data Science'],
+        );
+
+        expect(showNotification).toHaveBeenCalledWith({
+          variant: 'success',
+          title: `entityNotifications.${entity}.publishRequestedTitle`,
+          message: `entityNotifications.${entity}.publishRequested`,
+        });
+      },
+    );
 
     it('forwards rules added in the panel to publishCatalogEntity', async () => {
       vi.mocked(publishCatalogEntity).mockResolvedValue({
@@ -1997,7 +2029,11 @@ describe('CatalogView', () => {
     expect(refetchToolsets).toHaveBeenCalledOnce();
     expect(deleteApplication).not.toHaveBeenCalled();
     expect(showNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ variant: 'success' }),
+      expect.objectContaining({
+        variant: 'success',
+        title: 'entityNotifications.toolset.deletedTitle',
+        message: 'entityNotifications.toolset.deleted',
+      }),
     );
   });
 
@@ -2045,7 +2081,11 @@ describe('CatalogView', () => {
     expect(refetchDeployments).toHaveBeenCalledOnce();
     expect(deleteToolset).not.toHaveBeenCalled();
     expect(showNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ variant: 'success' }),
+      expect.objectContaining({
+        variant: 'success',
+        title: 'entityNotifications.agent.deletedTitle',
+        message: 'entityNotifications.agent.deleted',
+      }),
     );
   });
 
@@ -3302,6 +3342,53 @@ describe('CatalogView', () => {
       expect(
         screen.getByRole('button', { name: 'revoke gpt-4o' }),
       ).toBeTruthy();
+    });
+
+    it('confirms a completed download with a success notification', async () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(getPrompt).mockResolvedValue(personalPrompt);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+      );
+      await waitFor(() => expect(triggerBlobDownload).toHaveBeenCalledOnce());
+
+      expect(showNotification).toHaveBeenCalledWith({
+        variant: 'success',
+        title: 'entityNotifications.prompt.downloadedTitle',
+        message: 'entityNotifications.prompt.downloaded',
+      });
+    });
+
+    it('raises no success notification when the download fails', async () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(getPrompt).mockRejectedValue(new Error('boom'));
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+      );
+
+      await waitFor(() =>
+        expect(showNotification).toHaveBeenCalledWith(
+          expect.objectContaining({ variant: 'error' }),
+        ),
+      );
+      expect(triggerBlobDownload).not.toHaveBeenCalled();
+      expect(showNotification).not.toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
     });
 
     it('offers no download for an item that is not a prompt', () => {

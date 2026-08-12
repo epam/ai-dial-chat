@@ -10,6 +10,8 @@ import {
   EditorI18nKeys,
 } from '../../../constants/translation-keys';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
+import { useNotification } from '../../../context/NotificationContext';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import type { TriggerSaveGeneralPayload } from '../../../types/apps-editor';
 import AppsEditor from '../AppsEditor';
 
@@ -92,9 +94,11 @@ vi.mock('../GeneralForm', () => ({
 }));
 
 vi.mock('../../../context/DeploymentsContext');
+vi.mock('../../../context/NotificationContext');
 
 const mockUseDeployments = vi.mocked(DeploymentsContextModule.useDeployments);
 const refetchDeployments = vi.fn();
+const mockShowNotification = vi.fn();
 
 const SCHEMA = {
   id: 'quickapps2-schema',
@@ -118,6 +122,9 @@ describe('AppsEditor', () => {
     latestGeneralFormProps = null;
     shouldSettingsAutoReady = true;
     generalFormGetValues.mockReset().mockReturnValue({ name: 'My App' });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(mockShowNotification),
+    );
     mockUseDeployments.mockReturnValue({
       schemas: [SCHEMA],
       items: [],
@@ -268,6 +275,27 @@ describe('AppsEditor', () => {
         name: AppsEditorI18nKeys.ExitPreviewButton,
       }),
     ).toBeNull();
+    expect(mockShowNotification).toHaveBeenCalledWith({
+      variant: 'success',
+      title: 'entityNotifications.agent.editedTitle',
+      message: 'entityNotifications.agent.edited',
+    });
+  });
+
+  it('raises no notification when the save was triggered by Preview', async () => {
+    renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+    act(() => {
+      latestSettingsStepProps.onSaveSuccess?.(true);
+    });
+
+    await screen.findByRole('button', {
+      name: AppsEditorI18nKeys.ExitPreviewButton,
+    });
+    expect(mockShowNotification).not.toHaveBeenCalled();
   });
 
   it('hides Cancel and Save while previewing', async () => {

@@ -14,7 +14,10 @@ import type { SharedRootMeta } from '../../dial-file-manager.model';
 import type { UseDialFileMutationsOptions } from '../../useDialFileMutations';
 import { useDialFileMutations } from '../../useDialFileMutations';
 
+import { useNotification } from '../../../../context/NotificationContext';
+import { createNotificationContextValue } from '../../../../context/tests/notification-context-mock';
 vi.mock('../../../../server-api/files.api');
+vi.mock('../../../../context/NotificationContext');
 vi.mock('../../../../utils/file-download', () => ({
   DownloadDestinationType: {
     Blob: 'blob',
@@ -22,13 +25,26 @@ vi.mock('../../../../utils/file-download', () => ({
     Cancelled: 'cancelled',
   },
   prepareDownloadDestination: vi.fn().mockResolvedValue({ type: 'blob' }),
-  triggerBrowserDownload: vi.fn().mockResolvedValue(undefined),
+  /* Mirrors the real helper: resolves to the name the file was saved under. */
+  triggerBrowserDownload: vi
+    .fn()
+    .mockImplementation((_response: Response, fallbackName: string) =>
+      Promise.resolve(fallbackName),
+    ),
 }));
 
 const mockRenameFiles = vi.mocked(filesApi.renameFiles);
 const mockMoveFiles = vi.mocked(filesApi.moveFiles);
 const mockCopyFiles = vi.mocked(filesApi.copyFiles);
 const mockCreateFolder = vi.mocked(filesApi.createFolder);
+
+const mockOperationNotification = vi.fn();
+
+beforeEach(() => {
+  vi.mocked(useNotification).mockReturnValue(
+    createNotificationContextValue(mockOperationNotification),
+  );
+});
 
 const BUCKET = 'test-bucket';
 
@@ -258,6 +274,11 @@ describe('useDialFileMutations', () => {
       });
       expect(mergeCreatedFolder).toHaveBeenCalled();
       expect(bumpRetry).toHaveBeenCalled();
+      expect(mockOperationNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Success,
+        title: 'entityNotifications.folder.createdTitle',
+        message: 'entityNotifications.folder.created',
+      });
     });
 
     it('does not call createFolder for a name matching an existing sibling in the current folder', async () => {
@@ -470,6 +491,11 @@ describe('useDialFileMutations', () => {
       await waitFor(() => expect(mockRenameFiles).toHaveBeenCalledOnce());
       await waitFor(() => expect(bumpRetry).toHaveBeenCalled());
       expect(invalidateFolders).toHaveBeenCalledWith(['']);
+      expect(mockOperationNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Success,
+        title: 'entityNotifications.file.renamedTitle',
+        message: 'entityNotifications.file.renamed',
+      });
     });
 
     it('shows partial error toast when some items fail', async () => {
