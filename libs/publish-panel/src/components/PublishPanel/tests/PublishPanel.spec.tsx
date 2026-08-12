@@ -138,7 +138,9 @@ describe('PublishPanel', () => {
 
   it('uses the root folder label in the access-rules hint when the root is selected', () => {
     renderPanel({ selectedFolderPath: [] });
-    expect(screen.getByText(/These rules apply to "Organization"/)).toBeTruthy();
+    expect(
+      screen.getByText(/These rules apply to "Organization"/),
+    ).toBeTruthy();
   });
 
   it('prompts for a destination folder in the access-rules hint when none is selected', () => {

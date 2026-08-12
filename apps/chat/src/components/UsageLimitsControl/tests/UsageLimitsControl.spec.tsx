@@ -12,14 +12,14 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
 
   return {
     ...actual,
-    DialProgressBar: ({
+    ProgressBar: ({
       value,
       max,
-      ariaLabel,
+      'aria-label': ariaLabel,
     }: {
       value: number;
       max: number;
-      ariaLabel: string;
+      'aria-label': string;
     }) => (
       <div
         role="progressbar"
@@ -28,7 +28,6 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         aria-valuemax={max}
       />
     ),
-    DialProgressBarSize: { Small: 'small' },
   };
 });
 

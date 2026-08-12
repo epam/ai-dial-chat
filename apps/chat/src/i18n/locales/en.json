@@ -381,6 +381,10 @@
   },
   "publishAccessRules": {
     "heading": "Allow access if all match",
+    "folderScopeHint": "These rules apply to \"{folder}\". Selecting another folder loads that folder's own rules instead.",
+    "noFolderScopeHint": "Access rules apply to the destination folder — pick a folder above to set its rules.",
+    "rulesWithoutFolderWarning": "These rules have no destination yet. Select a folder above to apply them.",
+    "maxRulesReachedLabel": "Rule limit reached ({max}). Remove a rule to add another.",
     "addRuleLabel": "Add rule",
     "clearAllLabel": "Clear all",
     "orSeparatorLabel": "Or",

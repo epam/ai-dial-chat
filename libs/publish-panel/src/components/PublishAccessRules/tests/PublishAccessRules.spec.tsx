@@ -145,7 +145,9 @@ describe('PublishAccessRules', () => {
     renderRules({ rules: buildRules(20) });
 
     expect(
-      screen.getByText('Rule limit reached (20). Remove a rule to add another.'),
+      screen.getByText(
+        'Rule limit reached (20). Remove a rule to add another.',
+      ),
     ).toBeTruthy();
   });
 

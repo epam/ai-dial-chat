@@ -584,6 +584,10 @@ export enum PublishI18nKeys {
 
 export enum PublishAccessRulesI18nKeys {
   Heading = 'publishAccessRules.heading',
+  FolderScopeHint = 'publishAccessRules.folderScopeHint',
+  NoFolderScopeHint = 'publishAccessRules.noFolderScopeHint',
+  RulesWithoutFolderWarning = 'publishAccessRules.rulesWithoutFolderWarning',
+  MaxRulesReachedLabel = 'publishAccessRules.maxRulesReachedLabel',
   AddRuleLabel = 'publishAccessRules.addRuleLabel',
   ClearAllLabel = 'publishAccessRules.clearAllLabel',
   OrSeparatorLabel = 'publishAccessRules.orSeparatorLabel',

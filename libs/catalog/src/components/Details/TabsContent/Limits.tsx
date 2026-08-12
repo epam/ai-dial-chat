@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialProgressBar, DialProgressBarSize } from '@epam/ai-dial-ui-kit';
+import { ElementSize, ProgressBar } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import type {
   CatalogItemLimits,
@@ -67,12 +67,12 @@ export const LimitsTab: FC<LimitsTabProps> = ({
               </span>
             </div>
             {shouldRenderProgress && (
-              <DialProgressBar
+              <ProgressBar
                 value={getProgressValue(row)}
                 max={getProgressMax(row.total)}
-                size={DialProgressBarSize.Medium}
+                size={ElementSize.Standard}
                 className="w-full"
-                ariaLabel={row.ariaLabel ?? `${row.label}: ${valueLabel}`}
+                aria-label={row.ariaLabel ?? `${row.label}: ${valueLabel}`}
               />
             )}
           </li>
