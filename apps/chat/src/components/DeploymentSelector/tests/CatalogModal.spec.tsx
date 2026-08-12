@@ -8,14 +8,19 @@ vi.mock('../../CatalogView/CatalogView', () => ({
   default: ({
     isSelectorMode,
     onClose,
+    onSelect,
   }: {
     isSelectorMode?: boolean;
     onClose?: () => void;
+    onSelect?: (id: string) => void;
   }) => (
     <div>
       <output aria-label="isSelectorMode">{String(!!isSelectorMode)}</output>
       <button type="button" onClick={onClose}>
         close from catalog view
+      </button>
+      <button type="button" onClick={() => onSelect?.('gpt-4o')}>
+        pick from catalog view
       </button>
     </div>
   ),
@@ -51,5 +56,17 @@ describe('CatalogModal', () => {
     );
 
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('forwards onSelect to CatalogView when supplied', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onSelect = vi.fn();
+    render(<CatalogModal isOpen onClose={vi.fn()} onSelect={onSelect} />);
+
+    await user.click(
+      await screen.findByRole('button', { name: 'pick from catalog view' }),
+    );
+
+    expect(onSelect).toHaveBeenCalledWith('gpt-4o');
   });
 });
