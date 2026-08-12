@@ -1,6 +1,6 @@
 import { FloatingOverlay } from '@floating-ui/react';
 import { SessionContextValue, signIn, useSession } from 'next-auth/react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useRouter } from 'next/router';
 
@@ -73,6 +73,8 @@ export function Layout({
   );
   const [loading, setLoading] = useState(isApplyingModel);
 
+  const initializedRouteRef = useRef<string | null>(null);
+
   const showFloatingOverlay = isAnyMenuOpen && !isIsolatedView;
 
   const handleCloseOverlay = useCallback(() => {
@@ -129,10 +131,18 @@ export function Layout({
     };
 
     handleResize();
-    dispatch(SettingsActions.initApp(getPageType(router.route)));
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (initializedRouteRef.current === router.route) {
+      return;
+    }
+
+    initializedRouteRef.current = router.route;
+    dispatch(SettingsActions.initApp(getPageType(router.route)));
   }, [dispatch, settings, router.route]);
 
   const handleOverlayAuth = async () => {
