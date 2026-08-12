@@ -142,6 +142,13 @@ export interface CatalogProps {
    */
   onUnshare?: (item: CatalogItem) => Promise<void> | void;
   /**
+   * Called when revocation is confirmed via the details panel's confirmation
+   * step, for an item the current user owns (`isMyApp: true`), removing every
+   * recipient's shared access at once. May return a promise; the confirmation
+   * shows a loading state and prevents duplicate submission while pending.
+   */
+  onRevokeShare?: (item: CatalogItem) => Promise<void> | void;
+  /**
    * Renders the Share popover content anchored to the Share button in the
    * details panel. When provided, clicking Share opens this popover instead
    * of calling `onShare`.

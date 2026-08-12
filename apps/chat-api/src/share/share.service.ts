@@ -19,6 +19,7 @@ import { ToolsetsService } from '../toolsets/toolsets.service';
 import { AcceptInvitationResponseDto } from './dto/accept-invitation-response.dto';
 import { CreateShareLinkDto, ShareAccess } from './dto/create-share-link.dto';
 import { DiscardSharedCatalogItemResponseDto } from './dto/discard-shared-catalog-item.dto';
+import { RevokeSharedAccessResponseDto } from './dto/revoke-shared-access.dto';
 import { ShareLinkResponseDto } from './dto/share-link-response.dto';
 
 type ResourceAccessType = components['schemas']['ResourceAccessType'];
@@ -404,8 +405,8 @@ export class ShareService {
   /**
    * Discards the calling user's own access to a catalog resource shared with
    * them, via DIAL Core `discardSharedResources`. This only affects the
-   * caller — removing access for everyone else is the separate, out-of-scope
-   * `revokeSharedResources` operation.
+   * caller — removing access for everyone else is the owner-side
+   * {@link ShareService.revokeShared} operation.
    *
    * @throws {ForbiddenException} When the resource is not shared with the caller
    * @throws {NotFoundException} When the resource does not exist
@@ -474,6 +475,68 @@ export class ShareService {
     ]);
 
     this.logger.log('Discard shared resource completed: success=true');
+    return { success: true };
+  }
+
+  /**
+   * Revokes every outstanding share grant on a resource the caller owns, via
+   * DIAL Core `revokeSharedResources`. This affects all recipients at once —
+   * DIAL Core's request carries no subject field, so a single recipient
+   * cannot be targeted. Discarding only the caller's own access is the
+   * recipient-side {@link ShareService.discardShared} operation.
+   *
+   * Unlike `discardShared` there is no pre-flight `getSharedResources` check:
+   * for an owner, a resource that currently has no recipients already has the
+   * requested outcome, so DIAL Core's no-op success is the correct answer
+   * rather than something to surface as an error. Ownership itself is
+   * enforced by DIAL Core, which answers `403` for a non-owner.
+   *
+   * @throws {NotFoundException} When the resource does not exist
+   * @throws {BadGatewayException} When DIAL Core returns an error response
+   * @throws {ServiceUnavailableException} When DIAL Core is unreachable or times out
+   */
+  async revokeShared(
+    itemId: string,
+    accessToken: string,
+    userSub: string,
+  ): Promise<RevokeSharedAccessResponseDto> {
+    this.logger.log('Revoke shared access started');
+
+    let result;
+    try {
+      result = await this.dialClient.client.revokeSharedResources({
+        headers: getBearerAuthHeaders(accessToken),
+        body: { resources: [{ url: itemId }] },
+      });
+    } catch (err) {
+      return handleDialFetchError(err, 'share.revokeShared', this.logger, 0);
+    }
+
+    if (result.error) {
+      /*
+       * Same reasoning as `discardShared`: DIAL Core has no dedicated status
+       * for "itemId is well-formed but resolves to no resource" and answers a
+       * generic `400`. `RevokeSharedAccessDto` already rejects malformed
+       * itemIds before this method runs, so any `400` reaching here can only
+       * be the not-found case.
+       */
+      if (result.response.status === 400) {
+        throw new NotFoundException('Resource does not exist');
+      }
+      return mapDialHttpStatus(
+        result.response.status,
+        'share.revokeShared',
+        this.logger,
+        result.error,
+      );
+    }
+
+    await Promise.all([
+      this.deploymentsService.invalidateListCache(userSub),
+      this.toolsetsService.invalidateListCache(userSub),
+    ]);
+
+    this.logger.log('Revoke shared access completed: success=true');
     return { success: true };
   }
 }

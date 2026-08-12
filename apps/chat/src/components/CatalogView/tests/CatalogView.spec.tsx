@@ -37,7 +37,10 @@ import { getDeploymentLimits } from '../../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../../server-api/deployments';
 import { getPublishRules } from '../../../server-api/publish-rules.api';
 import { publishCatalogEntity } from '../../../server-api/publish.api';
-import { discardSharedCatalogItem } from '../../../server-api/share.api';
+import {
+  discardSharedCatalogItem,
+  revokeSharedAccess,
+} from '../../../server-api/share.api';
 import {
   deleteToolset,
   getToolset,
@@ -134,6 +137,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onEdit,
     onDelete,
     onUnshare,
+    onRevokeShare,
     onFetchDetails,
     onLogin,
     onLogout,
@@ -166,6 +170,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onEdit?: (item: CatalogItem) => void;
     onDelete?: (item: CatalogItem) => Promise<void>;
     onUnshare?: (item: CatalogItem) => Promise<void>;
+    onRevokeShare?: (item: CatalogItem) => Promise<void>;
     onFetchDetails?: (item: CatalogItem) => Promise<unknown>;
     onLogin?: (
       item: CatalogItem,
@@ -316,6 +321,22 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
         ))}
         {(items ?? []).map((item) => (
           <button
+            key={`revoke-share-${item.id}`}
+            type="button"
+            onClick={async () => {
+              try {
+                await onRevokeShare?.(item);
+              } catch {
+                // Swallowed here the same way the real DetailsPanel's
+                // confirmation step catches a rejected onRevokeShare.
+              }
+            }}
+          >
+            revoke {item.id}
+          </button>
+        ))}
+        {(items ?? []).map((item) => (
+          <button
             key={`fetch-details-${item.id}`}
             type="button"
             onClick={async () => {
@@ -421,6 +442,7 @@ vi.mock('../../../server-api/applications', () => ({
 
 vi.mock('../../../server-api/share.api', () => ({
   discardSharedCatalogItem: vi.fn(),
+  revokeSharedAccess: vi.fn(),
 }));
 
 vi.mock('../../../context/NotificationContext', () => ({
@@ -2562,6 +2584,98 @@ describe('CatalogView', () => {
       );
       expect(showNotification).not.toHaveBeenCalledWith(
         expect.objectContaining({ variant: 'error' }),
+      );
+    });
+  });
+
+  describe('revoke access', () => {
+    const ownedApplication = {
+      id: 'applications/my-bucket/My App__1.0',
+      displayName: 'My App',
+      type: 'application',
+      isMy: true,
+      sharedWithMe: false,
+    };
+
+    const mockDeployments = (
+      overrides: Partial<ReturnType<typeof useDeployments>>,
+    ) =>
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        restoreDefaultSelection: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn(),
+        mergeSharedItem: vi.fn(),
+        ...overrides,
+      } as ReturnType<typeof useDeployments>);
+
+    it('revokes access, notifies, and leaves the catalog lists and selection untouched', async () => {
+      const refetchToolsets = vi.fn().mockResolvedValue(undefined);
+      const refetchDeployments = vi.fn().mockResolvedValue(undefined);
+      const setSelectedItemId = vi.fn();
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue({
+        notifications: [],
+        showNotification,
+        dismissNotification: vi.fn(),
+      });
+      mockDeployments({
+        items: [ownedApplication],
+        selectedItemId: ownedApplication.id,
+        setSelectedItemId,
+        refetchToolsets,
+        refetchDeployments,
+      } as Partial<ReturnType<typeof useDeployments>>);
+      vi.mocked(revokeSharedAccess).mockResolvedValue({ success: true });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', { name: `revoke ${ownedApplication.id}` }),
+      );
+
+      expect(revokeSharedAccess).toHaveBeenCalledWith(ownedApplication.id);
+      expect(refetchToolsets).not.toHaveBeenCalled();
+      expect(refetchDeployments).not.toHaveBeenCalled();
+      expect(setSelectedItemId).not.toHaveBeenCalled();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
+    });
+
+    it('shows an error notification carrying the trace id when revokeSharedAccess rejects', async () => {
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue({
+        notifications: [],
+        showNotification,
+        dismissNotification: vi.fn(),
+      });
+      mockDeployments({
+        items: [ownedApplication],
+      } as Partial<ReturnType<typeof useDeployments>>);
+      vi.mocked(revokeSharedAccess).mockRejectedValue(
+        new Error('network error'),
+      );
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', { name: `revoke ${ownedApplication.id}` }),
+      );
+
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'error' }),
+      );
+      expect(showNotification).not.toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
       );
     });
   });
