@@ -162,6 +162,30 @@ export const createFoldersFilesTargetUrl = (id: string) => {
 };
 
 /**
+ * Target path for the icon of a published application or toolset. The icon is
+ * put into a folder named after the published entity, because the source
+ * folder of the icon is not a part of the target path: two entities, for
+ * instance two versions of the same app, can use different icon files sharing
+ * a file name, and a common target would make the second publication silently
+ * reuse the icon of the first one.
+ */
+export const createPublicationIconTargetUrl = ({
+  entityId,
+  iconUrl,
+  targetFolder,
+}: {
+  entityId: string;
+  iconUrl: string;
+  targetFolder: string;
+}) =>
+  constructPath(
+    ApiKeys.Files,
+    targetFolder,
+    splitEntityId(entityId).name,
+    splitEntityId(iconUrl).name,
+  );
+
+/**
  * Target paths for file attachments when publishing conversations. De-duplicates
  * by decoded storage URL; when the same file appears in multiple chats, the
  * shortest target path is used.
