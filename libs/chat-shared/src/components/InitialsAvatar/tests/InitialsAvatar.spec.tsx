@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { pickAvatarColor } from '../../../utils/avatar-color';
 import { InitialsAvatar } from '../InitialsAvatar';
 
 const renderAvatar = (
@@ -24,11 +25,12 @@ describe('InitialsAvatar', () => {
     ).toBe('true');
   });
 
-  it('applies a non-empty background colour as an inline style', () => {
+  it('applies the palette colours as CSS custom properties', () => {
     const { container } = renderAvatar({ name: 'Alpha' });
-    expect(
-      (container.firstChild as HTMLElement).style.backgroundColor,
-    ).not.toBe('');
+    const { background, foreground } = pickAvatarColor('Alpha');
+    const el = container.firstChild as HTMLElement;
+    expect(el.style.getPropertyValue('--ia-bg')).toBe(background);
+    expect(el.style.getPropertyValue('--ia-fg')).toBe(foreground);
   });
 
   it('applies size as width and height', () => {

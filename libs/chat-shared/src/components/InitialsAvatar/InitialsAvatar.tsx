@@ -1,7 +1,9 @@
 import { type FC } from 'react';
 import { pickAvatarColor } from '../../utils/avatar-color';
+import { buildCssVars } from '../../utils/build-css-vars';
 import { extractInitials } from '../../utils/initials';
 import { mergeClasses } from '../../utils/merge-class';
+import styles from './InitialsAvatar.module.scss';
 
 /** Props for `InitialsAvatar`. */
 export interface InitialsAvatarProps {
@@ -11,11 +13,7 @@ export interface InitialsAvatarProps {
   size: number;
   /** Extra classes applied to the root element (e.g. `'shrink-0'`). */
   className?: string;
-  /**
-   * Typography class applied to the initials. Defaults to `'dial-h3-text'`.
-   * Only its weight, line-height, and tracking take effect — `font-size` is
-   * computed from `size` and set inline, so it wins over the class.
-   */
+  /** Extra classes applied to the initials text element (e.g. `'dial-h3-text'`). */
   textClassName?: string;
 }
 
@@ -30,16 +28,25 @@ export const InitialsAvatar: FC<InitialsAvatarProps> = ({
   const initials = extractInitials(name);
   const fontSize = Math.round(size * 0.4);
 
+  const cssVars = buildCssVars({
+    '--ia-bg': background,
+    '--ia-fg': foreground,
+  });
+
   return (
     <div
       aria-hidden="true"
       className={mergeClasses(
         'flex select-none items-center justify-center rounded-md',
+        styles.badge,
         className,
       )}
-      style={{ width: size, height: size, backgroundColor: background }}
+      style={{ ...cssVars, width: size, height: size }}
     >
-      <h3 className={textClassName} style={{ fontSize, color: foreground }}>
+      <h3
+        className={mergeClasses(styles.initials, textClassName)}
+        style={{ fontSize }}
+      >
         {initials}
       </h3>
     </div>

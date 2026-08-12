@@ -10,9 +10,9 @@ export interface StageTypography {
   strongClassName?: string;
   /** CSS utility class applied to every heading level (`h1`–`h6`) inside expanded content. Defaults to `'dial-small-semi-text'`. */
   headingClassName?: string;
-  /** CSS utility class applied to inline code elements. Defaults to `'dial-small-text rounded-md font-mono'`. */
+  /** CSS utility class applied to inline code elements. Defaults to `'dial-code-text rounded-md'`. */
   codeClassName?: string;
-  /** CSS utility class applied to fenced code blocks (`<pre>`). Defaults to `'dial-small-text'`. */
+  /** CSS utility class applied to fenced code blocks (`<pre>`). Defaults to `'dial-code-text'`. */
   codeBlockClassName?: string;
   /** CSS utility class applied to count badges (e.g. `×N` collapsed group). Defaults to `'dial-tiny-text'`. */
   countFontClassName?: string;
