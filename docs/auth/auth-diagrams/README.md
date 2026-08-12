@@ -15,6 +15,7 @@ Each `.mmd` file is a standalone Mermaid source. SVG versions (committed next to
 | [`07-cookie-structure.mmd`](./07-cookie-structure.mmd)                 | Encrypted cookie payload structure                                                      |
 | [`08-toolset-signin-interrupt.mmd`](./08-toolset-signin-interrupt.mmd) | Mid-completion toolset **and application external-service** sign-in via client-channel  |
 | [`09-header-token-auth-chain.mmd`](./09-header-token-auth-chain.mmd)   | Pluggable auth-strategy chain (header bearer token vs. session cookie) + CSRF exemption |
+| [`10-offline-credentials-consent.mmd`](./10-offline-credentials-consent.mmd) | Proactive Scheduled Tasks offline-credentials consent (route entry -> status check -> modal -> popup -> authoritative refetch) |
 
 ---
 

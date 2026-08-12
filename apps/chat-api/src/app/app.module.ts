@@ -20,6 +20,7 @@ import { ExternalServicesModule } from '../external-services/external-services.m
 import { FilesModule } from '../files/files.module';
 import { HealthController } from '../health/health.controller';
 import { ModelsModule } from '../models/models.module';
+import { OfflineCredentialsModule } from '../offline-credentials/offline-credentials.module';
 import { PromptModule } from '../prompts/prompt.module';
 import { PublishModule } from '../publish/publish.module';
 import { RateModule } from '../rate/rate.module';
@@ -82,6 +83,7 @@ import { createServeStaticOptions } from './static-assets';
     ShareModule,
     PublishModule,
     ScheduledTasksModule,
+    OfflineCredentialsModule,
     SkillsModule,
   ],
   controllers: [AppController, HealthController],

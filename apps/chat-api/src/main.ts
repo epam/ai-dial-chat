@@ -16,6 +16,7 @@ import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule } from '@nestjs/swagger';
 import type { ValidationError } from 'class-validator';
+import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import 'reflect-metadata';
@@ -66,6 +67,15 @@ async function bootstrap() {
   });
 
   app.enableShutdownHooks();
+
+  /*
+   * Lets class-validator resolve custom `@ValidatorConstraint` classes (e.g.
+   * `IsAllowedRedirectUriConstraint`) through Nest's DI container, so they
+   * can inject `ConfigService` instead of reading `process.env` directly.
+   * `fallbackOnErrors` keeps constraints with no DI needs working via plain
+   * `new` construction.
+   */
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   app.use(cookieParser());
   app.use(traceparentMiddleware);

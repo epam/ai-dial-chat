@@ -3732,6 +3732,31 @@ export type GetExternalServiceResponseDtoAuthenticationTypeEnum =
 /**
  *
  * @export
+ * @interface GetOfflineCredentialsResponseDto
+ */
+export interface GetOfflineCredentialsResponseDto {
+  /**
+   *
+   * @type {boolean}
+   * @memberof GetOfflineCredentialsResponseDto
+   */
+  available: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof GetOfflineCredentialsResponseDto
+   */
+  connected: boolean;
+  /**
+   *
+   * @type {OfflineCredentialsConnectDto}
+   * @memberof GetOfflineCredentialsResponseDto
+   */
+  connect?: OfflineCredentialsConnectDto;
+}
+/**
+ *
+ * @export
  * @interface LimitStatsDto
  */
 export interface LimitStatsDto {
@@ -4368,6 +4393,69 @@ export interface MutatedToolsetDto {
    * @memberof MutatedToolsetDto
    */
   id: string;
+}
+/**
+ *
+ * @export
+ * @interface OfflineCredentialsAuthResultDto
+ */
+export interface OfflineCredentialsAuthResultDto {
+  /**
+   *
+   * @type {boolean}
+   * @memberof OfflineCredentialsAuthResultDto
+   */
+  success: boolean;
+}
+/**
+ *
+ * @export
+ * @interface OfflineCredentialsConnectDto
+ */
+export interface OfflineCredentialsConnectDto {
+  /**
+   *
+   * @type {string}
+   * @memberof OfflineCredentialsConnectDto
+   */
+  authorizationEndpoint: string;
+  /**
+   *
+   * @type {string}
+   * @memberof OfflineCredentialsConnectDto
+   */
+  clientId: string;
+  /**
+   *
+   * @type {string}
+   * @memberof OfflineCredentialsConnectDto
+   */
+  redirectUri: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof OfflineCredentialsConnectDto
+   */
+  scopes: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface OfflineCredentialsSigninBodyDto
+ */
+export interface OfflineCredentialsSigninBodyDto {
+  /**
+   * OAuth authorization code.
+   * @type {string}
+   * @memberof OfflineCredentialsSigninBodyDto
+   */
+  code: string;
+  /**
+   * OAuth redirect URI used for the code exchange. Must resolve to the configured AUTH_CALLBACK_BASE_URL origin and one of the app's own callback paths.
+   * @type {string}
+   * @memberof OfflineCredentialsSigninBodyDto
+   */
+  redirectUri: string;
 }
 /**
  *

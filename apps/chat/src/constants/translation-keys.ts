@@ -359,6 +359,16 @@ export enum ScheduledTasksI18nKeys {
   ConversationBannerTaskDetailsAriaLabel = 'scheduledTasks.conversationBanner.taskDetailsAriaLabel',
   ConversationPanelModelLabel = 'scheduledTasks.conversationPanel.modelLabel',
   ConversationPanelCurrentRunLabel = 'scheduledTasks.conversationPanel.currentRunLabel',
+  OfflineCredentialsModalTitle = 'scheduledTasks.offlineCredentialsModal.title',
+  OfflineCredentialsModalBody = 'scheduledTasks.offlineCredentialsModal.body',
+  OfflineCredentialsModalDismissButtonLabel = 'scheduledTasks.offlineCredentialsModal.dismissButtonLabel',
+  OfflineCredentialsModalCloseAriaLabel = 'scheduledTasks.offlineCredentialsModal.closeAriaLabel',
+  OfflineCredentialsModalPopupBlockedMessage = 'scheduledTasks.offlineCredentialsModal.popupBlockedMessage',
+  OfflineCredentialsModalCancelledMessage = 'scheduledTasks.offlineCredentialsModal.cancelledMessage',
+  OfflineCredentialsModalTimeoutMessage = 'scheduledTasks.offlineCredentialsModal.timeoutMessage',
+  OfflineCredentialsModalFailedMessage = 'scheduledTasks.offlineCredentialsModal.failedMessage',
+  OfflineCredentialsModalSuccessAnnouncement = 'scheduledTasks.offlineCredentialsModal.successAnnouncement',
+  OfflineCredentialsModalLoggingInAriaLabel = 'scheduledTasks.offlineCredentialsModal.loggingInAriaLabel',
 }
 
 export enum ConversationI18nKeys {
