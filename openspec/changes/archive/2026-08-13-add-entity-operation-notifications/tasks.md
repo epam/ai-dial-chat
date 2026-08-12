@@ -56,4 +56,4 @@
 - [x] 7.2 Confirm no orphaned i18n keys remain (every superseded key deleted, every `entityNotifications` key referenced) and no raw key literal is passed to `t()`
 - [x] 7.3 Confirm nothing under `libs/` gained a notification string, an i18n import, or a notification decision
 - [x] 7.4 Full verification: `tsc` app + spec configs clean, `eslint` on every changed file clean, full `vitest` run 2664 passed / 1 failed — the failure is the pre-existing `AnnouncementBanner — legacy layout` typography assertion from commit b0756dfd7, untouched by this change
-- [ ] 7.5 Resolve the four `design.md` open questions with design/PO and fold any wording change into the key map before merge
+- [x] 7.5 All four `design.md` questions resolved: publish copy stays as implemented (no change), applications are named by their concrete kind (quick app / custom app), the created-copy question was skipped, and a multi-item download reports a file count

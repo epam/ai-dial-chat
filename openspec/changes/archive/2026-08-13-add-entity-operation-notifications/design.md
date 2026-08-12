@@ -70,7 +70,7 @@ Both `publishCatalogEntity` and `publishConversation` create an admin-pending DI
 
 *Why:* the current catalog copy (`"Published"` / `"published to {{folder}}"`) tells the user the entity is live when it is queued for approval — the conversation flow already spells this out and has a spec requirement demanding it. Unifying toward the *inaccurate* variant would spread a bug; unifying toward the accurate one fixes it.
 
-*Trade-off:* this deviates from the mockup, which shows `"Prompt published successfully"` / `"is published to folder"`. Flagged as an open question rather than silently overridden.
+*Trade-off:* this deviates from the mockup, which shows `"Prompt published successfully"` / `"is published to folder"`. Raised with the requester and confirmed: keep the accurate wording, leave the publish case as implemented.
 
 ### 6. Notify and navigate in the same tick
 
@@ -103,9 +103,9 @@ Frontend-only, no data or API migration. Order of work: the hook + enums + keys 
 - **Flow-specific titles were left alone** where the `<Entity> <operation> successfully` frame cannot express the outcome: catalog and conversation unshare/revoke ("Removed from My List", "Access revoked"), delete-all, export/import (one title key serves both the single and the all-conversations flow), and the file manager's `Item(s) …` plural copy, which covers mixed file+folder selections.
 - **Conversation publish copy was merged into the shared namespace**: `conversationPublish.successMessage` is gone and both publish flows now resolve `entityNotifications.<entity>.publishRequested`, which carries the same pending-approval meaning plus the entity name and target folder.
 
-## Open Questions
+## Resolved Questions
 
-1. **Publish copy** — does design accept `"<Entity> publish requested"` + the pending-approval sentence instead of the mockup's `"published successfully"` wording, given publication is admin-gated? (Decision 5.)
+1. ~~Publish copy~~ — **closed with no change**: the pending-approval wording (`"<Entity> publish requested"` + "…once an admin approves it.") stands for both flows, matching what the backend actually does (Decision 5). Deliberately not aligned to the mockup's `"published successfully"`.
 2. ~~Noun for quick and custom apps~~ — **resolved**: name the concrete kind. `Quick app …` / `Custom app …`; catalog-level operations resolve the kind from the deployment schema, with the generic `Agent` copy only when the deployment is unresolved.
 3. ~~Created copy for catalog entities~~ — **skipped**: the mockup phrasing ("… in the catalog and My collection.") stays for every catalog entity.
 4. ~~File download of a multi-item selection~~ — **resolved**: a `File`-scoped plural sentence naming the item count (`Files downloaded successfully` / `{{count}} files are saved on your device.`). A lone folder keeps the folder-scoped copy.
