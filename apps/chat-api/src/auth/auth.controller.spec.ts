@@ -215,6 +215,7 @@ async function buildApp(): Promise<INestApplication> {
   app.enableVersioning({ type: VersioningType.URI });
   app.setGlobalPrefix('api');
   await app.init();
+  await app.listen(0, '127.0.0.1');
   return app;
 }
 

@@ -18,6 +18,10 @@ import {
   DiscardSharedCatalogItemResponseDto,
 } from './dto/discard-shared-catalog-item.dto';
 import { GetInvitationDto } from './dto/get-invitation.dto';
+import {
+  RevokeSharedAccessDto,
+  RevokeSharedAccessResponseDto,
+} from './dto/revoke-shared-access.dto';
 import { ShareLinkResponseDto } from './dto/share-link-response.dto';
 import { ShareService } from './share.service';
 
@@ -160,5 +164,52 @@ export class ShareController {
   ): Promise<DiscardSharedCatalogItemResponseDto> {
     const { at, sub } = req.user as SessionUser;
     return this.shareService.discardShared(body.itemId, at, sub);
+  }
+
+  @Post('revoke')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({
+    operationId: 'revokeSharedAccess',
+    summary: 'Revoke all shared access to an owned resource',
+    description:
+      "Revokes every outstanding share grant on a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core's " +
+      'revokeSharedResources operation. Affects all recipients at once — DIAL Core cannot target a single recipient. Discarding only the ' +
+      "caller's own access to a resource shared with them is a separate operation.",
+  })
+  @ApiBody({ type: RevokeSharedAccessDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Shared access revoked successfully',
+    type: RevokeSharedAccessResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error — invalid itemId',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Caller does not own the resource',
+  })
+  @ApiResponse({ status: 404, description: 'Resource does not exist' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  revokeSharedAccess(
+    @Req() req: Request,
+    @Body() body: RevokeSharedAccessDto,
+  ): Promise<RevokeSharedAccessResponseDto> {
+    const { at, sub } = req.user as SessionUser;
+    return this.shareService.revokeShared(body.itemId, at, sub);
   }
 }

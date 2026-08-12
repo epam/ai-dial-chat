@@ -650,6 +650,54 @@ describe('ScheduledTaskDetailPage', () => {
       expect(resumeScheduledTaskMock).not.toHaveBeenCalled();
     });
 
+    it('renders the switch disabled for a recurring schedule whose activity window has already ended, without calling pause or resume', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue({
+        id: 'sched_123',
+        displayName: 'Daily summary',
+        trigger: {
+          cron: {
+            fields: { hour: '9', minute: '0' },
+            endDate: '2020-01-01T00:00:00.000Z',
+          },
+        },
+        triggerType: 'cron',
+        isActive: false,
+        nextRunTime: undefined,
+      });
+      renderDetailPage();
+
+      const switchEl = await waitFor(() => screen.getByRole('switch'));
+      expect(switchEl).toHaveProperty('checked', false);
+      expect(switchEl).toHaveProperty('disabled', true);
+
+      await userEvent.click(switchEl);
+
+      expect(pauseScheduledTaskMock).not.toHaveBeenCalled();
+      expect(resumeScheduledTaskMock).not.toHaveBeenCalled();
+    });
+
+    it('remains togglable for a recurring schedule whose activity window has not ended yet', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue({
+        id: 'sched_123',
+        displayName: 'Daily summary',
+        trigger: {
+          cron: {
+            fields: { hour: '9', minute: '0' },
+            endDate: '2099-01-01T00:00:00.000Z',
+          },
+        },
+        triggerType: 'cron',
+        isActive: false,
+        nextRunTime: undefined,
+      });
+      renderDetailPage();
+
+      const switchEl = await waitFor(() => screen.getByRole('switch'));
+      expect(switchEl).toHaveProperty('disabled', false);
+    });
+
     it('remains togglable for a recurring schedule with no upcoming run (paused, not completed)', async () => {
       useFeatureFlagMock.mockReturnValue(true);
       getScheduledTaskMock.mockResolvedValue({

@@ -17,8 +17,8 @@ export const getPublishRules = async (
   folderPath: string,
 ): Promise<PublicationRule[]> => {
   const response = await publishApi.getPublishRules({ folderPath });
-  return response.rules.map((rule) => ({
+  return response.rules.map(({ function: ruleFunction, ...rule }) => ({
     ...rule,
-    function: rule.function as unknown as PublicationRuleFunction,
+    function: ruleFunction as unknown as PublicationRuleFunction,
   }));
 };

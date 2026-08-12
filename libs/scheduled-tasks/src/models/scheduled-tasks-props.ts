@@ -29,8 +29,6 @@ export interface ScheduledTasksLabels {
   errorLabel: string;
   /** Label for the retry action shown when `error` is set. */
   retryLabel: string;
-  /** Title for the section grouping items with `sectionKey: 'shared'`. */
-  sharedSectionTitle: string;
   /** Announced via `aria-live` while a load-more fetch is in flight (`isLoadingMore`). Optional — no announcement is made when omitted. */
   loadingMoreLabel?: string;
   /** Localized labels forwarded as-is to every card in the grid. */
@@ -84,7 +82,7 @@ export interface ScheduledTasksProps {
   sortKey: ScheduledTasksSortKey;
   /** Called when the user selects a different sort option. */
   onSortChange: (key: ScheduledTasksSortKey) => void;
-  /** Tasks to render as cards, already search-matched server-side; grouped by `sectionKey` and sorted client-side by `sortKey`. */
+  /** Tasks to render as cards, already search-matched and sorted server-side; rendered in the order received. */
   items: ScheduledTaskItem[];
   /** When `true`, the content region shows a loading spinner instead of `items`. Defaults to `false`. */
   isLoading?: boolean;

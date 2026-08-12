@@ -66,7 +66,7 @@ All directional layout in the Scheduled Tasks header, toolbar, and empty state M
 - `error` is set → the content region renders an error message with a retry action that invokes `onRetry`.
 - `isLoading` is `false`, `error` is unset, and `items` is empty because the source list itself is empty (no `searchQuery` in effect) → the content region renders the shared `PanelEmptyState` component (from `@epam/ai-dial-chat-shared`) with `texts.emptyStateLabel`.
 - `isLoading` is `false`, `error` is unset, `items` is empty, and a non-empty `searchQuery` is in effect → the content region renders a distinct "no results" state (not `PanelEmptyState`, not the card grid) using `texts.noResultsLabel`. Because search is server-driven, this state reflects the server returning zero matches, not a client-side filter reducing a non-empty array to zero.
-- `isLoading` is `false`, `error` is unset, and `items` is non-empty → the content region renders the card grid: `items` are grouped by `sectionKey` **in the order they were received** (no client-side reordering by `sortKey` — sort order is now applied server-side, see the "Server-driven search and sort over the full remote dataset" requirement), each group rendered as a `ScheduledTaskSection` containing a `ScheduledTaskCardGrid` of `ScheduledTaskCard`s. The `'shared'` group renders with a title + count badge (`texts.sharedSectionTitle`); the `'myTasks'` group renders with no title/count row, just its card grid. When `isLoadingMore` is `true`, exactly `skeletonCount` `ScheduledTaskCardSkeleton` elements render as **trailing children inside the last rendered section's own `ScheduledTaskCardGrid`** (via that grid's `trailingSkeletonCount` prop) — not in a separate grid container below all sections — so they continue filling the current CSS grid row (via `grid-auto-flow`) instead of unconditionally starting a new row and leaving a gap in a partially-filled last row.
+- `isLoading` is `false`, `error` is unset, and `items` is non-empty → the content region renders a single flat `ScheduledTaskCardGrid` of `ScheduledTaskCard`s, **in the order they were received** (no client-side reordering by `sortKey` — sort order is now applied server-side, see the "Server-driven search and sort over the full remote dataset" requirement). There is no grouping/sectioning of any kind — no section heading, no count badge — regardless of task ownership. When `isLoadingMore` is `true`, exactly `skeletonCount` `ScheduledTaskCardSkeleton` elements render as **trailing children inside that same `ScheduledTaskCardGrid`** (via its `trailingSkeletonCount` prop) — not in a separate grid container — so they continue filling the current CSS grid row (via `grid-auto-flow`) instead of unconditionally starting a new row and leaving a gap in a partially-filled last row.
 - A scroll sentinel is rendered at the end of the content region's scrollable area; when it becomes visible and `hasMore && !isLoadingMore && !isLoading`, `onLoadMore` is invoked (if provided).
 
 The component MUST NOT import from `apps/chat`, `server-api`, any generated API client, routing, feature-flag context, auth, env, or analytics — all such knowledge is passed in via props. Fetching, pagination-state management, sort-state management, and DTO mapping happen in the app; the lib performs no sorting of `items` itself — `sortKey`/`onSortChange` are used only to drive the toolbar control's UI state (selected option, `aria-selected`), not to reorder rendered cards.
@@ -96,15 +96,15 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 - **WHEN** `ScheduledTasks` renders with `items = []` and a non-empty `searchQuery`
 - **THEN** the content region renders the no-results state with `texts.noResultsLabel`, distinct from `PanelEmptyState`
 
-#### Scenario: Non-empty items render grouped card grid in received order
+#### Scenario: Non-empty items render a flat card grid in received order
 
-- **WHEN** `items` contains entries with `sectionKey: 'shared'` and `sectionKey: 'myTasks'`, already ordered by the caller
-- **THEN** the content region renders one `ScheduledTaskSection` per distinct `sectionKey` present, each containing that section's `ScheduledTaskCardGrid` with items in the same order they appear in `items` (no reordering by `sortKey` inside the lib); the `'shared'` section shows a title and a count badge equal to the number of items in that section, while the `'myTasks'` section shows neither a title nor a count badge
+- **WHEN** `items` contains entries for tasks owned by the current user and entries for tasks created by other users, already ordered by the caller
+- **THEN** the content region renders a single `ScheduledTaskCardGrid` with items in the same order they appear in `items` (no reordering by `sortKey` inside the lib), with no section heading or count badge of any kind
 
-#### Scenario: Loading-more state appends trailing skeletons inside the last section's grid
+#### Scenario: Loading-more state appends trailing skeletons inside the same grid
 
 - **WHEN** `ScheduledTasks` renders with non-empty `items`, `hasMore={true}`, and `isLoadingMore={true}`
-- **THEN** exactly `skeletonCount` (default 6) `ScheduledTaskCardSkeleton` elements render as additional children of the last rendered `ScheduledTaskSection`'s own `ScheduledTaskCardGrid` — not inside a separate grid container — each marked `aria-hidden="true"`, so they continue filling the grid's current row instead of starting a new one
+- **THEN** exactly `skeletonCount` (default 6) `ScheduledTaskCardSkeleton` elements render as additional children of the same `ScheduledTaskCardGrid` — not inside a separate grid container — each marked `aria-hidden="true"`, so they continue filling the grid's current row instead of starting a new one
 
 #### Scenario: Reaching the scroll sentinel triggers onLoadMore
 
@@ -128,7 +128,9 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 
 ### Requirement: ScheduledTaskCard renders a single task with highlighted search matches
 
-`libs/scheduled-tasks` SHALL export a `ScheduledTaskCard` component rendering: a title (highlighting the current search match via the shared `Highlight` component from `@epam/ai-dial-chat-shared`, per `.claude/rules/search-results-highlight.md`), an optional "N NEW"-style badge when `isNew`/a new-count is set, an optional description/prompt-preview line, a schedule pill showing `scheduleLabel`, and an optional location breadcrumb built from `locationSegments` (outermost segment first, chevron separator between segments). The card exposes an overflow-menu trigger only when at least one action callback is supplied; the menu renders only the actions for which a corresponding callback prop (`onEdit`, `onRunNow`, `onDelete`) was provided by the caller.
+`libs/scheduled-tasks` SHALL export a `ScheduledTaskCard` component rendering: a title (highlighting the current search match via the shared `Highlight` component from `@epam/ai-dial-chat-shared`, per `.claude/rules/search-results-highlight.md`), an optional "N NEW"-style badge when `isNew`/a new-count is set, an optional description/prompt-preview line, a schedule/status pill, and an optional location breadcrumb built from `locationSegments` (outermost segment first, chevron separator between segments). The card exposes an overflow-menu trigger only when at least one action callback is supplied; the menu renders only the actions for which a corresponding callback prop (`onEdit`, `onRunNow`, `onDelete`) was provided by the caller.
+
+The schedule/status pill SHALL render the schedule pill showing `scheduleLabel` when `item.isActive` is `true` or `undefined`, and a "Paused" badge (with a pause icon) in that same position when `item.isActive` is explicitly `false`. The two are mutually exclusive — the card never renders both at once. This is a display-only distinction; the card issues no pause/resume request and takes no other action based on `isActive` (the mutating pause/resume switch is confined to the detail page — see `scheduled-task-detail-page`).
 
 `ScheduledTaskCard` SHALL accept an optional `onCardClick?: (id: string) => void` prop. When supplied, the card's root SHALL be an activatable element (clickable and keyboard-operable) that calls `onCardClick(id)` when activated by click or Enter/Space. The overflow-menu trigger button, and every action inside the opened overflow menu, MUST call `event.stopPropagation()` so activating the trigger or any menu action never also invokes `onCardClick`. When `onCardClick` is not supplied, the card renders exactly as before (no added interactive root semantics).
 
@@ -139,8 +141,18 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 
 #### Scenario: Schedule pill and location breadcrumb render from pre-formatted values
 
-- **WHEN** `ScheduledTaskCard` renders with `scheduleLabel="Every Monday 12:00"` and `locationSegments=["Public", "Project folder"]`
+- **WHEN** `ScheduledTaskCard` renders with `scheduleLabel="Every Monday 12:00"`, `isActive` omitted, and `locationSegments=["Public", "Project folder"]`
 - **THEN** the schedule pill renders the label verbatim and the breadcrumb renders each segment in order with a chevron separator between them; the component performs no date formatting or trigger-shape parsing itself
+
+#### Scenario: Paused badge replaces the schedule pill when isActive is false
+
+- **WHEN** `ScheduledTaskCard` renders with `isActive: false`
+- **THEN** a "Paused" badge renders in place of the schedule pill, and the schedule pill's own text (`scheduleLabel`) is not rendered anywhere on the card
+
+#### Scenario: Schedule pill renders when isActive is true
+
+- **WHEN** `ScheduledTaskCard` renders with `isActive: true`
+- **THEN** the schedule pill renders as usual and no "Paused" badge is shown
 
 #### Scenario: Overflow menu only shows actions with a supplied handler
 
@@ -215,25 +227,6 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 - **WHEN** `loadMore()` is called while `hasMore` is `false`, or while `isLoadingMore`/`isLoading` is already `true`
 - **THEN** no additional request is made
 
-### Requirement: Card grouping reflects real ownership via createdBy
-
-`map-scheduled-task-dto.ts` SHALL assign each mapped `ScheduledTaskItem`'s `sectionKey` to `'shared'` when the upstream `createdBy` differs from the current session user's sub, and `'myTasks'` otherwise — including when `createdBy` or the current user's sub is unavailable, which falls back to `'myTasks'` to match prior behavior. `ScheduledTasksPage` SHALL resolve the current user's sub from `useUser()` (`apps/chat/src/context/auth/UserContext.tsx`) and pass it into the mapper.
-
-#### Scenario: Own task groups under My tasks
-
-- **WHEN** a mapped task's `createdBy` equals the current user's sub
-- **THEN** its `sectionKey` is `'myTasks'`
-
-#### Scenario: Task created by another user groups under Shared
-
-- **WHEN** a mapped task's `createdBy` differs from the current user's sub
-- **THEN** its `sectionKey` is `'shared'`
-
-#### Scenario: Missing createdBy or current-user sub falls back to My tasks
-
-- **WHEN** the upstream task omits `createdBy`, or the current user's sub isn't available yet
-- **THEN** the mapped item's `sectionKey` is `'myTasks'`
-
 ### Requirement: Card description is populated from the BFF description field
 
 `map-scheduled-task-dto.ts` SHALL map `ScheduledTaskDto.description` to `ScheduledTaskItem.descriptionPreview` in `mapScheduledTaskDtoToItem`, with no truncation or reformatting applied in the mapper (the 500-character BFF limit already bounds the value; `ScheduledTaskCard`'s existing line-clamp/ellipsis handling is the presentation-layer truncation boundary). When `ScheduledTaskDto.description` is `undefined`, `descriptionPreview` SHALL be `undefined`, matching the card's existing optional-description rendering and the client-side search behavior already speced against `descriptionPreview`.
@@ -253,11 +246,30 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 - **WHEN** a task is created with a `description`, and the list is refetched afterward
 - **THEN** searching by a substring of that description matches the task's card, consistent with the existing `descriptionPreview` search-matching behavior
 
+### Requirement: Card active state is populated from the BFF isActive field
+
+`map-scheduled-task-dto.ts` SHALL map `ScheduledTaskDto.isActive` to `ScheduledTaskItem.isActive` in `mapScheduledTaskDtoToItem`, with no reinterpretation of the value — the frontend SHALL NOT re-derive active/paused state from `nextRunTime`, `triggerType`, or any other field itself; that derivation is owned entirely by the BFF mapper (see `scheduled-tasks-api`'s "Scheduled task active-state field"). When `ScheduledTaskDto.isActive` is `undefined`, `ScheduledTaskItem.isActive` SHALL be `undefined`, which `ScheduledTaskCard` renders identically to `true` (schedule pill shown, no "Paused" badge).
+
+#### Scenario: isActive false maps through to the card
+
+- **WHEN** a `ScheduledTaskDto` with `isActive: false` is mapped and rendered
+- **THEN** the resulting `ScheduledTaskItem.isActive` is `false`, and the card shows the "Paused" badge
+
+#### Scenario: isActive true maps through to the card
+
+- **WHEN** a `ScheduledTaskDto` with `isActive: true` is mapped and rendered
+- **THEN** the resulting `ScheduledTaskItem.isActive` is `true`, and the card shows the schedule pill
+
+#### Scenario: Missing isActive does not throw and shows the schedule pill
+
+- **WHEN** a `ScheduledTaskDto` omits `isActive`
+- **THEN** the resulting `ScheduledTaskItem.isActive` is `undefined`, mapping does not throw, and the card shows the schedule pill (not the "Paused" badge)
+
 ### Requirement: Server-driven search and sort over the full remote dataset
 
 Both search and sort SHALL be server-driven and SHALL apply to the full remote dataset, not just loaded pages — the upstream DIAL Scheduler list endpoint supports `order_by`/`order_dir` in addition to pagination and the name filter (see the modified `scheduled-tasks-api` "List scheduled tasks" requirement), superseding the prior design decision that treated sort as a client-side-only, loaded-pages-only concern.
 
-`ScheduledTasksPage` SHALL send `searchQuery` as the `search` query parameter and `sortKey` as the `sort` query parameter on every `listScheduledTasks` call (initial load, sort change, debounced search, load-more) instead of filtering or reordering the fetched array locally. `filterScheduledTaskItems` and `sortScheduledTaskItems` are both removed from `libs/scheduled-tasks/src/utils/filter-sort.ts` — `ScheduledTasks`/`ScheduledTasksPage` render `items` exactly in the order the server returned them, for both grouping and ordering within each `sectionKey` group. `ScheduledTasksSortKey` (the enum type) is retained: it remains the shared contract name for the toolbar's selected option and is now also the literal shape of the BFF's `sort` query parameter.
+`ScheduledTasksPage` SHALL send `searchQuery` as the `search` query parameter and `sortKey` as the `sort` query parameter on every `listScheduledTasks` call (initial load, sort change, debounced search, load-more) instead of filtering or reordering the fetched array locally. `filterScheduledTaskItems` and `sortScheduledTaskItems` are both removed from `libs/scheduled-tasks/src/utils/filter-sort.ts` — `ScheduledTasks`/`ScheduledTasksPage` render `items` exactly in the order the server returned them, with no grouping of any kind. `ScheduledTasksSortKey` (the enum type) is retained: it remains the shared contract name for the toolbar's selected option and is now also the literal shape of the BFF's `sort` query parameter.
 
 The frontend SHALL NOT reimplement "missing `nextRunAt` sorts last" logic — when `sortKey` is `firstToRun` or `lastToRun`, the upstream service already places schedules with no next run time (paused/inactive) last, and the frontend trusts the server-returned order as-is.
 
@@ -305,7 +317,7 @@ New user-visible strings introduced for card/grid/loading/error/no-results state
 #### Scenario: New keys are present in en.json
 
 - **WHEN** the change is applied
-- **THEN** `en.json` contains `scheduledTasks.list.noResultsLabel`, `scheduledTasks.list.errorLabel`, `scheduledTasks.list.retryLabel`, and card-facing keys for section titles and menu action labels
+- **THEN** `en.json` contains `scheduledTasks.list.noResultsLabel`, `scheduledTasks.list.errorLabel`, `scheduledTasks.list.retryLabel`, and card-facing keys for menu action labels
 
 #### Scenario: Lib receives strings, not translation keys
 
@@ -314,12 +326,12 @@ New user-visible strings introduced for card/grid/loading/error/no-results state
 
 ### Requirement: Card grid and states support RTL and meet AAA accessibility defaults
 
-All directional layout in the card, section, grid, loading, error, and no-results surfaces MUST use Tailwind logical properties per `.claude/rules/rtl.md`. The location breadcrumb's chevron separator MUST be mirrored in RTL via `rtl:scale-x-[-1]` or an equivalent. Each card's root MUST expose `role="group"` with an accessible name derived from its title (per `.claude/rules/a11y.md` author/role identification pattern). The overflow-menu trigger MUST have an accessible name and expose `aria-expanded`; the retry action in the error state MUST be a real, keyboard-activatable control (not a non-interactive element with a click handler). Dynamic transitions between loading/error/empty/no-results/grid states MUST be announced via an `aria-live="polite"` status region so screen-reader users are notified when results appear or change.
+All directional layout in the card, grid, loading, error, and no-results surfaces MUST use Tailwind logical properties per `.claude/rules/rtl.md`. The location breadcrumb's chevron separator MUST be mirrored in RTL via `rtl:scale-x-[-1]` or an equivalent. Each card's root MUST expose `role="group"` with an accessible name derived from its title (per `.claude/rules/a11y.md` author/role identification pattern). The overflow-menu trigger MUST have an accessible name and expose `aria-expanded`; the retry action in the error state MUST be a real, keyboard-activatable control (not a non-interactive element with a click handler). Dynamic transitions between loading/error/empty/no-results/grid states MUST be announced via an `aria-live="polite"` status region so screen-reader users are notified when results appear or change.
 
 #### Scenario: Card grid mirrors under RTL
 
 - **WHEN** `document.documentElement.dir` is `rtl`
-- **THEN** cards, sections, and the grid lay out mirrored, and the breadcrumb chevron is flipped
+- **THEN** cards and the grid lay out mirrored, and the breadcrumb chevron is flipped
 
 #### Scenario: State transitions are announced
 
@@ -366,7 +378,7 @@ The Scheduled Tasks list SHALL support loading beyond the first page by scrollin
 
 ### Requirement: Load-more state shows exactly six skeleton cards
 
-While a subsequent page is being fetched (`isLoadingMore === true`), the list SHALL render exactly 6 `ScheduledTaskCardSkeleton` elements as trailing children inside the last section's own `ScheduledTaskCardGrid` (continuing that grid's row/column flow rather than starting a new row in a separate container), distinct from the initial-load `Spinner` state (which remains reserved for `isLoading === true && items.length === 0`). Each skeleton card SHALL be built on `Skeleton` from `@epam/ai-dial-ui-kit` with an explicit `color` override (the default `bg-layer-raised` token is not visibly distinct from the card background in this app), sized to match `ScheduledTaskCard`'s footprint (title block, description lines, schedule pill area), and marked `aria-hidden="true"` so screen readers do not announce placeholder content as real cards.
+While a subsequent page is being fetched (`isLoadingMore === true`), the list SHALL render exactly 6 `ScheduledTaskCardSkeleton` elements as trailing children inside the same flat `ScheduledTaskCardGrid` (continuing that grid's row/column flow rather than starting a new row in a separate container), distinct from the initial-load `Spinner` state (which remains reserved for `isLoading === true && items.length === 0`). Each skeleton card SHALL be built on `Skeleton` from `@epam/ai-dial-ui-kit` with an explicit `color` override (the default `bg-layer-raised` token is not visibly distinct from the card background in this app), sized to match `ScheduledTaskCard`'s footprint (title block, description lines, schedule pill area), and marked `aria-hidden="true"` so screen readers do not announce placeholder content as real cards.
 
 #### Scenario: Six skeletons render during load-more, continuing the grid's current row
 
