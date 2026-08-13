@@ -4,7 +4,7 @@
 
 Carrying a request/trace ID on error notifications, and the copy control that surfaces it accessibly.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Notification model carries an optional request ID
 `NotificationItem` and `ShowNotificationOptions` in

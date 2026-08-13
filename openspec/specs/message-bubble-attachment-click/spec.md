@@ -4,7 +4,7 @@
 
 Forwarding an attachment-click callback from `ConversationMessageItem` down through `MessageBubble` to `UserMessageBubble`.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: `UserMessageBubble` accepts and forwards an attachment click callback
 

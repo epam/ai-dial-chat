@@ -4,7 +4,7 @@
 
 SPA session bootstrap, cookie-backed API requests, 401 handling, and the routing gates around a resolved session.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: SPA session bootstrap on application mount
 

@@ -4,6 +4,8 @@
 
 Client-side rename validation and the rename save flow in the file-manager shell.
 
+## Requirements
+
 ### Requirement: onRenameValidate — client-side inline validation
 
 `useDialFileManager` SHALL expose `onRenameValidate(value: string, item: DialFile): string | null`, which validates a proposed new name before the rename is submitted.

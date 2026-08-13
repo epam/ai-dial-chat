@@ -4,6 +4,8 @@
 
 The ownership map for the split files-domain services, and the contracts that split must preserve.
 
+## Requirements
+
 ### Requirement: Files domain service ownership map
 
 The backend SHALL implement the files feature's business logic in `apps/chat-api/src/files/` as seven single-concern injectable services, each constructor-injecting `DialClientService` (`apps/chat-api/src/dial/dial-client.service.ts`) directly — never extending a base class:

@@ -4,7 +4,7 @@
 
 A Connect tab in the catalog details panel exposing MCP endpoint details for toolsets and MCP-capable applications.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: `libs/catalog` renders Connect as a details-panel tab
 

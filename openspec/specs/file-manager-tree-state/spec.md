@@ -4,7 +4,7 @@
 
 Ownership of `expandedPaths` and `loadedPaths` in `useDialFileManager`, and the tree header i18n it passes down.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: useDialFileManager owns expandedPaths and loadedPaths
 

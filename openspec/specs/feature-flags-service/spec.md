@@ -4,7 +4,7 @@
 
 Backend feature keys, `FeatureFlagsService.isEnabled`, and the route guard built on them.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: FeatureKey enum enumerates all feature keys
 

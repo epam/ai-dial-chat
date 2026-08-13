@@ -4,6 +4,8 @@
 
 The `applicationFolder` value derived from an application deployment's `id`.
 
+## Requirements
+
 ### Requirement: `applicationFolder` derived from application deployment `id`
 
 The `DeploymentItemDto` SHALL include an optional `applicationFolder?: string` field representing the parent directory path of the application within the DIAL Core storage, derived from the deployment `id`.

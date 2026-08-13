@@ -12,7 +12,7 @@ Adds a syntax-highlighted code viewer to `AttachmentCanvas` as a new `Code` cont
 
 ---
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: `AttachmentContentType.Code` enum member
 

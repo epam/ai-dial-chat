@@ -4,6 +4,8 @@
 
 The revoke-access, discard-shared, and shared-by-me endpoints, and their wiring into the file manager.
 
+## Requirements
+
 ### Requirement: POST /api/v1/files/revoke-access endpoint
 
 The BFF SHALL expose `POST /api/v1/files/revoke-access` that accepts a batch of file/folder paths owned and previously shared by the caller, and revokes access for **all** users the resources were shared with, via DIAL Core `revokeSharedResources`. This is distinct from `discard-shared` below: revoke is an owner action affecting every recipient; it does not accept or require a permission level (revoking removes all granted permissions).

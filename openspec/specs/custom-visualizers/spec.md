@@ -4,7 +4,7 @@
 
 The registry, postMessage protocol, and connectors behind operator-configured custom attachment visualizers.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: CustomVisualizer registry entry shape
 

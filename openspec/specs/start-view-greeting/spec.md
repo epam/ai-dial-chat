@@ -4,6 +4,8 @@
 
 The time-of-day greeting with the user's first name on the start view.
 
+## Requirements
+
 ### Requirement: Time-of-day greeting with user first name
 The start screen SHALL display a personalized greeting that reflects the current local time of day and the authenticated user's first name.
 

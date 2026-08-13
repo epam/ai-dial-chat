@@ -4,7 +4,7 @@
 
 Retrieving single-file metadata through the Chat API.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Retrieve single-file metadata through Chat API
 

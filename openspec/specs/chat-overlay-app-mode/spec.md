@@ -4,7 +4,7 @@
 
 Overlay-mode behavior inside the chat app: `OverlayContext` as the sole owner of overlay state, runtime mode detection, and the bridges backing the overlay API.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: OverlayContext is the sole owner of overlay-mode state
 

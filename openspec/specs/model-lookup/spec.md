@@ -4,7 +4,7 @@
 
 The authenticated model lookup endpoint, its path-parameter validation, and the frontend server-api helper.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Authenticated model lookup endpoint
 

@@ -4,7 +4,7 @@
 
 Carrying the active trace context in JSON error responses, without fabricating or duplicating it.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: JSON error responses carry the active trace context
 When a traced `chat-api` route throws and the response is serialized as a JSON error body, the

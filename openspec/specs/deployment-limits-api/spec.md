@@ -4,7 +4,7 @@
 
 The authenticated deployment-limits endpoint, its path-parameter validation, and the frontend server-api helper.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Authenticated deployment limits endpoint
 

@@ -4,7 +4,7 @@
 
 The file Info action and the metadata popup behind it.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: onGetInfo wired on useDialFileManager
 

@@ -4,7 +4,7 @@
 
 Full-width, operator-configured announcement banner at the top of the app chrome, with sanitization, content-keyed dismissal, and responsive RTL-correct layout.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Full-width announcement banner renders the operator message at the top of the app
 

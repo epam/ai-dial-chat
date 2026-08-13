@@ -4,6 +4,8 @@
 
 `useGridEditingScroll`: scrolling inline renames and new-row placeholders into view in both file-manager hosts.
 
+## Requirements
+
 ### Requirement: useGridEditingScroll hook contract
 
 `apps/chat/src/hooks/files/useGridEditingScroll.ts` SHALL export a `useGridEditingScroll(options?: UseGridEditingScrollOptions)` hook returning `{ handleGridApiChange: (api: GridApi<FileManagerGridRow>) => void; reset: () => void }`. `UseGridEditingScrollOptions` SHALL accept an optional `resolveTargetNode?: (newNodes: IRowNode<FileManagerGridRow>[]) => IRowNode<FileManagerGridRow> | null`, defaulting to preferring the first node whose `data?.isTemporary` is `true`, falling back to the first entry of `newNodes`, matching the legacy `defaultResolveTargetNode` heuristic (`development:apps/chat/src/components/FileManager/hooks/useGridEditingScroll.ts`).

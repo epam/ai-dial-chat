@@ -4,7 +4,7 @@
 
 A single helper that normalizes any API error into a message and trace ID, so a failure the user sees can be correlated with a backend trace.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: One normalization helper resolves message and trace ID from any API error
 `apps/chat/src/server-api/api-error.ts` SHALL export an async `getApiErrorDetails(error: unknown)`

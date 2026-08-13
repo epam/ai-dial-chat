@@ -4,7 +4,7 @@
 
 Embedding security for overlay mode: CSP `frame-ancestors`, the overlay-eligibility flag, and validation of incoming overlay options.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: CSP frame-ancestors gates embedding, defaulting to deny
 

@@ -4,7 +4,7 @@
 
 Completing authentication outside the iframe when the overlay is embedded and unauthenticated.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Overlay login gate renders when unauthenticated in overlay mode
 

@@ -4,6 +4,8 @@
 
 The destination-folder popup opened from the Copy and Move actions.
 
+## Requirements
+
 ### Requirement: Destination-folder popup opens from Copy/Move actions
 
 Clicking a `DialFileManagerActions.Copy` or `.Move` action (grid row menu, tree row menu, or bulk actions toolbar — wherever the action is present per `file-manager-tabs`) SHALL open ui-kit's built-in destination-folder popup (`DialDestinationFolderPopup`, mounted internally by `DialFileManager`'s `FileManagerContext`). No app-level component owns this popup's mount/unmount lifecycle — it is entirely ui-kit-internal state (`openDestinationFolderPopup`, `handleOpenDestinationFolderPopup`, `handleCloseDestinationFolderPopup`).

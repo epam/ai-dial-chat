@@ -4,7 +4,7 @@
 
 One DIAL resource-path encoder shared by every chat-api domain.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Single DIAL resource-path encoder for all chat-api domains
 The system SHALL expose one function, `encodeDialResourcePath(path: string): string` in `apps/chat-api/src/common/utils/encode-dial-path.ts`, used by conversations, files, and toolsets to build DIAL Core resource URLs, replacing the three previously separate per-domain encoders and the inline duplicate in `conversation.service.ts`.

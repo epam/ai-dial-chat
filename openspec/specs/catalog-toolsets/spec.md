@@ -4,7 +4,7 @@
 
 Loading toolsets from the dedicated toolsets API and combining them with deployments at the app edge.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Catalog toolsets are loaded from the dedicated toolsets API
 

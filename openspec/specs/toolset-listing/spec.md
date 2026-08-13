@@ -4,7 +4,7 @@
 
 The authenticated toolset list endpoint and the frontend server-api helper.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Authenticated toolset list endpoint
 

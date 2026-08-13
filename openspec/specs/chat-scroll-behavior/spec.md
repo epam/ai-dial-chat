@@ -15,6 +15,8 @@ Scroll behavior during a chat: where a sent message lands, why streaming never f
 
 ---
 
+## Requirements
+
 ### Requirement: Sent Message Scrolls Near Top of Viewport
 
 When the user sends a message, the conversation view SHALL scroll so the top of the newly sent user message is positioned near the top of the visible viewport, rather than scrolling the container to its absolute bottom.

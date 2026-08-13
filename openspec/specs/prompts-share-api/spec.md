@@ -4,7 +4,7 @@
 
 Sharing personal prompts through the existing share endpoint.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Personal prompts are shareable via the existing share endpoint
 

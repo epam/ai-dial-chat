@@ -10,7 +10,7 @@ Attaching files from the DIAL file system through the file-manager modal, both i
 > and permission-management actions are excluded. The requirements below were
 > rewritten to match this actual, intended behavior.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Show DIAL file system button in attachment menu
 
@@ -332,8 +332,6 @@ All `aria-label` values in `DialFileManagerModal` go through `t()`. No English s
 **Rate limiting**: `GET /api/v1/files/list` uses `@Throttle({ default: { limit: 60, ttl: 60000 } })` (defined in `add-files-list-api`). The frontend does not add extra throttling.
 
 ---
-
-## MODIFIED Requirements
 
 ### Requirement: DialFileManagerModal attach callback
 

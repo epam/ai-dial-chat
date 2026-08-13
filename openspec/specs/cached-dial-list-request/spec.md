@@ -4,6 +4,8 @@
 
 A shared cache-hit / cache-miss / error-map / cache-set helper for DIAL list requests, adopted without changing existing cache keys, TTLs, or log messages.
 
+## Requirements
+
 ### Requirement: Shared cache-hit/cache-miss/error-map/cache-set flow
 The system SHALL provide a reusable `withCachedDialRequest` helper implementing: on cache hit, return the cached value without calling DIAL Core; on cache miss, invoke the provided fetch function, map any thrown error via the existing `mapDialHttpStatus`/`handleDialFetchError` from `common/dial/dial-error.mapper.ts`, store the successful result in cache with the configured TTL, and return it.
 

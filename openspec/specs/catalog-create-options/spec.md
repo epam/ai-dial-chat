@@ -4,7 +4,7 @@
 
 The create options offered in the catalog, including the Custom App entry and the feature flag that hides it.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Custom App create option in catalog
 The system SHALL add a "Custom App" option to the `CatalogView` create button when `OverlayFeature.CustomApps` is enabled. The option SHALL be absent when the feature flag is disabled. The option is additionally suppressed by `OverlayFeature.HideCustomAppCreation`.

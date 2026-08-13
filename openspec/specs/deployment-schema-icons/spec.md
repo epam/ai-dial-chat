@@ -4,6 +4,8 @@
 
 Falling back to the application type schema's icon when an application deployment carries none of its own.
 
+## Requirements
+
 ### Requirement: DeploymentItemDto exposes applicationTypeSchemaId
 
 `DeploymentItemDto` (in `apps/chat-api/src/deployments/dto/deployment-item.dto.ts`) SHALL include an optional `applicationTypeSchemaId` string field annotated with `@ApiPropertyOptional`. `DeploymentsService.mapToDeploymentItem` SHALL read the upstream DIAL Core deployment field and map it to `applicationTypeSchemaId` when the field is present and non-empty.

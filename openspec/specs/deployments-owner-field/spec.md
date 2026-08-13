@@ -4,6 +4,8 @@
 
 The `owner` field forwarded from DIAL Core into `DeploymentItemDto`.
 
+## Requirements
+
 ### Requirement: `owner` field forwarded from DIAL Core to DeploymentItemDto
 
 The `DeploymentItemDto` SHALL include an optional `owner` field that carries the ownership string returned by DIAL Core for each deployment item.

@@ -4,7 +4,7 @@
 
 The backend configuration registry and the provider chain — env, static defaults, composite — that resolves every declared key.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: ConfigDefinition registry declares all known keys
 

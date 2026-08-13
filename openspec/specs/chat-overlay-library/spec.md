@@ -4,7 +4,7 @@
 
 The publishable `chat-overlay` package: iframe lifecycle management, the v1 method surface, structured request errors, and `ChatOverlayManager`.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Publishable package metadata
 

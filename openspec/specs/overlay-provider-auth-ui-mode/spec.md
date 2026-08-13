@@ -4,7 +4,7 @@
 
 Per-provider auth UI modes for the overlay and the provider-picker login gate they drive.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: `OverlayAuthUiMode` enum and `auth` option on `ChatOverlayOptions`
 

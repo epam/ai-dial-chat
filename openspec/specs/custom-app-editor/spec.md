@@ -4,7 +4,7 @@
 
 The Custom App editor page: its settings form, create and edit flows, validation, and the loading and saving overlays.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Custom App editor page
 The system SHALL provide a `CustomAppEditor` page that reuses `ToolsetEditorHeader` and a new `CustomAppEditorView`. The editor has two steps: General and Settings. The General step reuses `GeneralForm`. The Settings step renders `CustomAppSettingsForm`. The editor supports both **create** and **edit** modes; edit mode is entered when `ToolsetEditorQuery.Id` is present in the URL.

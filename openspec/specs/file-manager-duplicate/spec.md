@@ -4,7 +4,7 @@
 
 The Duplicate action on writable files and folders, dispatched through the existing copy handler.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Duplicate action available on my_files with WRITE
 

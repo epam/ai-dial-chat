@@ -4,7 +4,7 @@
 
 Fenced code blocks in rendered markdown: language detection, the copy action, theming, internal scrolling, RTL, and accessibility.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Render fenced code blocks with polished layout
 

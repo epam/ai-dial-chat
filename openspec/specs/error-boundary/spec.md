@@ -4,7 +4,7 @@
 
 The React error boundary: its accessible fallback, recovery paths, placement in the application tree, and what it must never disclose.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: ErrorBoundary catches descendant render and lifecycle errors
 The root and route wrappers SHALL use `react-error-boundary` to catch descendant errors thrown during render, construction, or React lifecycle methods.

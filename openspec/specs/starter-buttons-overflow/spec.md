@@ -4,7 +4,7 @@
 
 Capping the number of visible conversation-starter pills and moving the rest into an accessible overflow menu.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Visible pill count is capped at four
 When a deployment provides more than 4 starter options, the `StarterButtons` component SHALL display at most 4 pill buttons and collapse the remaining options into an overflow menu button.

@@ -12,7 +12,7 @@ Adds an HTML viewer to `AttachmentCanvas` as a new `Html` content type. HTML fil
 
 ---
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: `HTML_EXTENSIONS` constant and `isHtmlPreviewable` utility
 

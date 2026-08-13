@@ -4,7 +4,7 @@
 
 File-manager tabs: per-tab visible columns, action labels, upload rules, and selection behavior.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Tab navigation in DialFileManagerModal
 

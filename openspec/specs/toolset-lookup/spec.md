@@ -4,7 +4,7 @@
 
 The authenticated toolset lookup endpoint, its path-parameter validation, and the frontend server-api helper.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Authenticated toolset lookup endpoint
 
