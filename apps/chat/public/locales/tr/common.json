@@ -291,5 +291,7 @@
   "Toolset repaired. Users must re-authenticate.": "Araç seti onarıldı. Kullanıcıların kimlik doğrulamasını yeniden yapması gerekir.",
   "Authorization server is currently unavailable. Try again once the AS is back.": "Yetkilendirme sunucusu şu anda kullanılamıyor. Sunucu tekrar erişilebilir olduğunda yeniden deneyin.",
   "Repair will re-register this toolset with the Authorization Server. Continue?": "Onarma işlemi bu araç setini Yetkilendirme Sunucusuna yeniden kaydeder. Devam edilsin mi?",
-  "The list of tools will be available after filling in the definition and authentication sections": "Araç listesi, tanım ve kimlik doğrulama bölümleri doldurulduktan sonra kullanılabilir olacak"
+  "The list of tools will be available after filling in the definition and authentication sections": "Araç listesi, tanım ve kimlik doğrulama bölümleri doldurulduktan sonra kullanılabilir olacak",
+  "All available locales are already added": "Mevcut tüm diller zaten eklendi",
+  "No changes to apply": "Uygulanacak değişiklik yok"
 }

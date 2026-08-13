@@ -8,7 +8,7 @@ import {
   vi,
 } from 'vitest';
 
-import type { TokenEndpointHandler } from 'next-auth/providers';
+import type { OAuthConfig, TokenEndpointHandler } from 'next-auth/providers';
 
 const {
   mockAuth0Provider,
@@ -78,11 +78,13 @@ describe('auth-providers tokenConfig.request', () => {
   );
 
   let tokenRequest: TokenEndpointRequest;
+  let configuredAuth0Provider: OAuthConfig<Record<string, unknown>> | undefined;
 
   beforeAll(async () => {
     mockAuth0Provider.mockImplementation((options) => ({
       id: options.id ?? 'auth0',
       type: 'oauth',
+      wellKnown: `${options.issuer}/.well-known/openid-configuration`,
       options,
     }));
 
@@ -94,10 +96,14 @@ describe('auth-providers tokenConfig.request', () => {
 
     process.env.AUTH_AUTH0_CLIENT_ID = 'test-client';
     process.env.AUTH_AUTH0_SECRET = 'test-secret';
-    process.env.AUTH_AUTH0_HOST = 'https://example.auth0.com';
+    process.env.AUTH_AUTH0_HOST = 'https://example.auth0.com/';
 
     vi.resetModules();
-    await import('../auth-providers');
+    const { authProviders } = await import('../auth-providers');
+    configuredAuth0Provider = authProviders.find(
+      (provider): provider is OAuthConfig<Record<string, unknown>> =>
+        provider.id === 'auth0' && provider.type === 'oauth',
+    );
 
     const auth0Options = mockAuth0Provider.mock.calls[0]?.[0] as
       | { token?: TokenEndpointHandler }
@@ -123,6 +129,15 @@ describe('auth-providers tokenConfig.request', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetAuthAdditionalParamsExchangeBody.mockReturnValue(undefined);
+  });
+
+  it('normalizes the discovery URL without changing the exact issuer', () => {
+    expect(configuredAuth0Provider?.options?.issuer).toBe(
+      'https://example.auth0.com/',
+    );
+    expect(configuredAuth0Provider?.wellKnown).toBe(
+      'https://example.auth0.com/.well-known/openid-configuration',
+    );
   });
 
   it('calls callback without extras when idToken is set and no additional params', async () => {
