@@ -1740,7 +1740,6 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
         action: PublishActions.ADD_IF_ABSENT,
         sourceUrl: newApplication.iconUrl,
         targetUrl: createPublicationIconTargetUrl({
-          entityId: newApplication.id,
           iconUrl: ApiUtils.decodeApiUrl(newApplication.iconUrl),
           targetFolder: publication.targetFolder,
         }),

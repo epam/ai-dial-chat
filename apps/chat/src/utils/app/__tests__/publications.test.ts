@@ -8,64 +8,38 @@ import {
 } from '@/src/utils/app/publications';
 import { ApiUtils } from '@/src/utils/server/api';
 
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
+
 import { Conversation } from '@epam/ai-dial-shared';
 
 describe('createPublicationIconTargetUrl', () => {
   const targetFolder = 'public/Organization';
 
-  it('puts the icon next to the published entity and names it after the entity', () => {
+  it('publishes the icon to the same path as its entity, keeping the file name', () => {
     expect(
       createPublicationIconTargetUrl({
-        entityId: 'applications/mybucket/myapp__0.0.1',
         iconUrl: 'files/mybucket/folder1/icon.svg',
         targetFolder,
       }),
-    ).toBe('files/public/Organization/myapp__0.0.1.svg');
-  });
-
-  it('keeps icons of two app versions apart when the file names match', () => {
-    const first = createPublicationIconTargetUrl({
-      entityId: 'applications/mybucket/myapp__0.0.1',
-      iconUrl: 'files/mybucket/folder1/icon.svg',
-      targetFolder,
-    });
-    const second = createPublicationIconTargetUrl({
-      entityId: 'applications/mybucket/myapp__0.0.2',
-      iconUrl: 'files/mybucket/folder2/icon.svg',
-      targetFolder,
-    });
-
-    expect(first).not.toBe(second);
+    ).toBe('files/public/Organization/icon.svg');
   });
 
   it('drops the source folder of the icon and creates no folder of its own', () => {
     expect(
       createPublicationIconTargetUrl({
-        entityId: 'toolsets/mybucket/folder/mytoolset__1.0.0',
         iconUrl: 'files/mybucket/deeply/nested/folder/icon.svg',
         targetFolder,
       }),
-    ).toBe('files/public/Organization/mytoolset__1.0.0.svg');
+    ).toBe('files/public/Organization/icon.svg');
   });
 
-  it('keeps the icon extension when the entity has no version', () => {
+  it('publishes to the root public folder when nothing else is selected', () => {
     expect(
       createPublicationIconTargetUrl({
-        entityId: 'applications/mybucket/myapp',
-        iconUrl: 'files/mybucket/folder1/icon.PNG',
-        targetFolder,
+        iconUrl: 'files/mybucket/folder1/icon.svg',
+        targetFolder: PUBLIC_URL_PREFIX,
       }),
-    ).toBe('files/public/Organization/myapp.png');
-  });
-
-  it('publishes an icon without an extension under the entity name', () => {
-    expect(
-      createPublicationIconTargetUrl({
-        entityId: 'applications/mybucket/myapp__0.0.1',
-        iconUrl: 'files/mybucket/folder1/icon',
-        targetFolder,
-      }),
-    ).toBe('files/public/Organization/myapp__0.0.1');
+    ).toBe('files/public/icon.svg');
   });
 });
 

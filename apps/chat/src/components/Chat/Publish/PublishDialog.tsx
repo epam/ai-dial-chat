@@ -186,7 +186,6 @@ const PublishDialogContainer = ({
         sourceUrl: decodedIconUrl,
         reviewUrl: decodedIconUrl,
         targetUrl: createPublicationIconTargetUrl({
-          entityId: entity.id,
           iconUrl: decodedIconUrl,
           targetFolder: PUBLIC_URL_PREFIX,
         }),
