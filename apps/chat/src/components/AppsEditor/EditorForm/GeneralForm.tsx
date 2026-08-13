@@ -53,8 +53,8 @@ import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
+import { LocalesPopup } from '@/src/components/Common/Forms/LocalesPopup';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
-import { LocalesPopup } from '@/src/components/ToolsetEditor/EditorForm/LocalesPopup';
 
 import {
   DialLinkButton,
@@ -337,6 +337,7 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
           onSubmit={handleLocalsChange}
           onClose={() => setLocalsPopup(false)}
           entity={getEntityPayloadFromLocals(locales) as MarketplaceEntity}
+          descriptionPlaceholder={t(CommonI18nKeys.ApplicationDescription)}
         />
       )}
     </>

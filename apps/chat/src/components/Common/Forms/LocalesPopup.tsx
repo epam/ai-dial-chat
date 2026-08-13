@@ -71,12 +71,14 @@ interface LocalsPopupProps<T extends MarketplaceEntity> {
   entity?: T;
   onSubmit: (value: LocalsForm) => void;
   onClose: () => void;
+  descriptionPlaceholder?: string;
 }
 
 export const LocalesPopup = <T extends MarketplaceEntity>({
   entity,
   onSubmit,
   onClose,
+  descriptionPlaceholder,
 }: LocalsPopupProps<T>) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -221,7 +223,7 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
                     <FieldTextArea
                       {...register(`locales.${index}.description`)}
                       label={t(CommonI18nKeys.Description)}
-                      placeholder={t(CommonI18nKeys.ToolsetDescription)}
+                      placeholder={descriptionPlaceholder}
                       info={t(CommonI18nKeys.DescriptionInfo)}
                       rows={3}
                       className="resize-none"
