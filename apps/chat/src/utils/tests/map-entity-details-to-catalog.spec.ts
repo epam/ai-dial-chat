@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { ModelEndpointType } from '../../types/entity-details';
-import { mapEntityDetailsToCatalogDetails } from '../map-entity-details-to-catalog';
+import {
+  mapDeploymentDetailsDtoToEntityDetails,
+  mapEntityDetailsToCatalogDetails,
+} from '../map-entity-details-to-catalog';
 
 describe('mapEntityDetailsToCatalogDetails', () => {
   describe('AGENT', () => {
@@ -85,6 +88,74 @@ describe('mapEntityDetailsToCatalogDetails', () => {
           snippets: [],
         },
       ]);
+    });
+  });
+
+  describe('MODEL pricing', () => {
+    const mapPricingRows = (pricing: {
+      unit?: string;
+      prompt?: string;
+      completion?: string;
+    }) => {
+      const dto: Parameters<typeof mapDeploymentDetailsDtoToEntityDetails>[0] =
+        {
+          id: 'gpt-4o',
+          type: 'model',
+          modelDetails: { pricing },
+        };
+
+      return mapEntityDetailsToCatalogDetails(
+        mapDeploymentDetailsDtoToEntityDetails(dto),
+      ).pricing?.prices;
+    };
+
+    it('quotes token prices per 1M tokens', () => {
+      expect(
+        mapPricingRows({
+          unit: 'token',
+          prompt: '0.000003',
+          completion: '0.000015',
+        }),
+      ).toEqual([
+        { label: 'Input tokens', price: '$3/M tokens' },
+        { label: 'Output tokens', price: '$15/M tokens' },
+      ]);
+    });
+
+    it('keeps sub-dollar per-1M prices readable', () => {
+      expect(mapPricingRows({ unit: 'token', prompt: '0.00000005' })).toEqual([
+        { label: 'Input tokens', price: '$0.05/M tokens' },
+      ]);
+    });
+
+    it('treats a missing unit as token pricing', () => {
+      expect(mapPricingRows({ prompt: '0.0000025' })).toEqual([
+        { label: 'Input tokens', price: '$2.5/M tokens' },
+      ]);
+    });
+
+    it('names non-token units instead of re-quoting them per 1M tokens', () => {
+      expect(
+        mapPricingRows({
+          unit: 'char_without_whitespace',
+          prompt: '0.000002',
+        }),
+      ).toEqual([
+        {
+          label: 'Input tokens',
+          price: '$0.000002/char without whitespace',
+        },
+      ]);
+    });
+
+    it('passes a non-numeric price through unchanged', () => {
+      expect(mapPricingRows({ unit: 'token', prompt: 'Free' })).toEqual([
+        { label: 'Input tokens', price: 'Free' },
+      ]);
+    });
+
+    it('omits the Pricing tab when the deployment reports no pricing', () => {
+      expect(mapPricingRows({})).toBeUndefined();
     });
   });
 
