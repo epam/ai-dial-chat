@@ -114,14 +114,18 @@ describe('isOverlayMessageResponse', () => {
 });
 
 describe('OverlayFeature', () => {
-  it('has exactly 34 unique members', () => {
+  it('has exactly 35 unique members', () => {
     const values = Object.values(OverlayFeature);
-    expect(values).toHaveLength(34);
-    expect(new Set(values).size).toBe(34);
+    expect(values).toHaveLength(35);
+    expect(new Set(values).size).toBe(35);
   });
 
   it('includes the prompts feature key', () => {
     expect(Object.values(OverlayFeature)).toContain('prompts');
+  });
+
+  it('includes the file-manager feature key', () => {
+    expect(Object.values(OverlayFeature)).toContain('file-manager');
   });
 
   it('includes the pre-existing and newly-added transferable keys', () => {

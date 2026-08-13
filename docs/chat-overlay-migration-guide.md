@@ -480,7 +480,7 @@ integrations from typos and removed keys.
 
 ### Supported flags and defaults
 
-The new chat supports 32 flags.
+The new chat supports 35 flags.
 
 Enabled by default:
 
@@ -502,7 +502,10 @@ conversations-publishing
 custom-applications
 code-apps
 catalog
+file-manager
 toolsets
+custom-apps
+prompts
 voice-input
 ```
 
@@ -537,7 +540,7 @@ ENABLED_UI_FEATURES=header,conversations-section,likes,input-files
 ```
 
 This is also a complete replacement set, not an addition to the defaults. If
-the variable is absent or empty, the built-in baseline containing 19
+the variable is absent or empty, the built-in baseline containing 22
 default-on flags is used. An overlay host may replace the server baseline with
 its own `enabledFeatures`; the server baseline is not a security ceiling.
 

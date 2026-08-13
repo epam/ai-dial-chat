@@ -163,7 +163,7 @@ describe('PublishAccessRules', () => {
     expect(
       screen
         .getByRole('button', { name: 'Clear all' })
-        .classList.contains('dial-primary-ghost-button'),
+        .classList.contains('dial-kit-primary-ghost-button'),
     ).toBe(true);
   });
 

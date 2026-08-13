@@ -1,17 +1,12 @@
-import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { BASE_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconUser } from '@tabler/icons-react';
 import { type FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
-import { NAVIGATION_CONFIG } from '../../constants/navigation';
 import { NavigationI18nKeys } from '../../constants/translation-keys';
-import { useAppConfig } from '../../context/AppConfigContext';
 import { useSheetNavigation } from '../../hooks/useSheetNavigation';
-import { useUiFeature } from '../../hooks/useUiFeature';
-import { ROUTES } from '../../types/routes';
-import { UserConfigStatus } from '../../types/user-config-status';
+import { useVisibleNavItems } from '../../hooks/useVisibleNavItems';
 import FooterMessage from '../FooterMessage/FooterMessage';
 import styles from './MobileNavBottomSheet.module.scss';
 import ProfilePageContent from './ProfilePageContent';
@@ -24,15 +19,7 @@ const NavPageContent: FC<Props> = ({ onLogoutRequest }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { push, close } = useSheetNavigation();
-  const { status, features } = useAppConfig();
-  const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
-
-  const visibleNavItems = NAVIGATION_CONFIG.filter(
-    ({ path, featureFlag }) =>
-      (path !== ROUTES.Catalog || isCatalogEnabled) &&
-      (featureFlag == null ||
-        (status === UserConfigStatus.Ready && features[featureFlag] === true)),
-  );
+  const visibleNavItems = useVisibleNavItems();
 
   const handleNavItem = (path: string) => {
     close();

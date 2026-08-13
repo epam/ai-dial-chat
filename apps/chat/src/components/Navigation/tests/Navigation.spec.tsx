@@ -173,6 +173,35 @@ describe('Navigation', () => {
     ).toBeNull();
   });
 
+  it('hides the File Manager nav item when file-manager is disabled', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature !== OverlayFeature.FileManager,
+    );
+    const { container } = renderNavigation();
+    expect(container.querySelector('a[href="/files"]')).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: NavigationI18nKeys.FileManager }),
+    ).toBeNull();
+  });
+
+  it('shows the File Manager nav item when file-manager is enabled', () => {
+    const { container } = renderNavigation();
+    expect(container.querySelector('a[href="/files"]')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: NavigationI18nKeys.FileManager }),
+    ).toBeTruthy();
+  });
+
+  it('keeps other nav items when file-manager is disabled', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature !== OverlayFeature.FileManager,
+    );
+    renderNavigation();
+    expect(
+      screen.getByRole('button', { name: NavigationI18nKeys.Catalog }),
+    ).toBeTruthy();
+  });
+
   it('keeps other nav items when catalog is disabled', () => {
     mockUseUiFeature.mockImplementation(
       (feature) => feature !== OverlayFeature.Catalog,
