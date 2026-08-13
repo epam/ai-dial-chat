@@ -28,6 +28,7 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
   protected isSignedInUser = false;
   protected orgSignInRequest: T | null = null;
   protected userSignInRequest: T | null = null;
+  private signInCount = 0;
 
   protected constructor(
     page: Page,
@@ -89,6 +90,10 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
 
   getSignInRequest(): T | null {
     return this.state.signInRequest;
+  }
+
+  getSignInCount(): number {
+    return this.signInCount;
   }
 
   getSignOutRequest(): ToolsetAuthPayloadBase | null {
@@ -190,6 +195,7 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
           }
           this.state.isSignedIn = true;
           this.state.signInRequest = body;
+          this.signInCount++;
           await route.fulfill({
             status: 200,
             contentType: 'application/json',
