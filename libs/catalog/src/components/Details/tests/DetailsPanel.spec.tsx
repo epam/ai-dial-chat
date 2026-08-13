@@ -15,7 +15,8 @@ import {
 } from '../../../types/toolset-auth';
 import { DetailsPanel } from '../DetailsPanel';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
   Tabs: ({
     tabs,
     onTabChange,

@@ -69,15 +69,6 @@ vi.mock('@tabler/icons-react', () => ({
   IconSearch: () => null,
 }));
 
-vi.mock('@epam/ai-dial-chat-shared', () => ({
-  mergeClasses: (...args: (string | undefined)[]) =>
-    args.filter(Boolean).join(' '),
-  buildCssVars: (vars: Record<string, string | undefined>) =>
-    Object.fromEntries(
-      Object.entries(vars).filter(([, v]) => v !== undefined),
-    ) as React.CSSProperties,
-}));
-
 const renderToolbar = (props?: Partial<React.ComponentProps<typeof Toolbar>>) =>
   render(
     <Toolbar
