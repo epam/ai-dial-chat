@@ -1,14 +1,14 @@
 import { extractPromptParams } from '@epam/ai-dial-chat-shared';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { PromptParametersPopup } from '../PromptParametersPopup';
 
-const renderPopup = (
+const renderPopup = async (
   props?: Partial<ComponentProps<typeof PromptParametersPopup>>,
-) =>
-  render(
+) => {
+  const result = render(
     <PromptParametersPopup
       open
       promptName="Summarizer"
@@ -21,37 +21,50 @@ const renderPopup = (
     />,
   );
 
+  /*
+   * The Popup's FloatingFocusManager moves focus to the dialog container in a
+   * passive effect that lands shortly after mount. Waiting for it here avoids
+   * a race where interacting with a field immediately after render loses that
+   * field's focus (and its first keystrokes) once the effect finally fires.
+   */
+  await waitFor(() => {
+    expect(document.activeElement?.getAttribute('role')).toBe('dialog');
+  });
+
+  return result;
+};
+
 describe('PromptParametersPopup', () => {
-  it('renders the title and one field per parameter', () => {
-    renderPopup();
+  it('renders the title and one field per parameter', async () => {
+    await renderPopup();
 
     expect(screen.getByText('Prompt parameters')).toBeTruthy();
     expect(screen.getByRole('textbox', { name: 'text' })).toBeTruthy();
     expect(screen.getByRole('textbox', { name: 'tone' })).toBeTruthy();
   });
 
-  it('renders one field for a token repeated in the content, via extractPromptParams', () => {
+  it('renders one field for a token repeated in the content, via extractPromptParams', async () => {
     const content = '{{name}}, meet {{name}} again.';
-    renderPopup({ content, parameters: extractPromptParams(content) });
+    await renderPopup({ content, parameters: extractPromptParams(content) });
 
     expect(screen.getAllByRole('textbox', { name: 'name' })).toHaveLength(1);
   });
 
-  it('does not render a back chevron when onBack is omitted', () => {
-    renderPopup();
+  it('does not render a back chevron when onBack is omitted', async () => {
+    await renderPopup();
 
     expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
   });
 
-  it('renders a back chevron when onBack is provided', () => {
-    renderPopup({ onBack: vi.fn() });
+  it('renders a back chevron when onBack is provided', async () => {
+    await renderPopup({ onBack: vi.fn() });
 
     expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
   });
 
   it('calls onBack when the back chevron is clicked', async () => {
     const onBack = vi.fn();
-    renderPopup({ onBack });
+    await renderPopup({ onBack });
 
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
 
@@ -60,7 +73,7 @@ describe('PromptParametersPopup', () => {
 
   it('disables Submit until every parameter field is filled', async () => {
     const user = userEvent.setup();
-    renderPopup();
+    await renderPopup();
 
     const submit = screen.getByRole('button', { name: 'Confirm' });
     expect(submit.hasAttribute('disabled')).toBe(true);
@@ -77,7 +90,7 @@ describe('PromptParametersPopup', () => {
   it('calls onSubmit with the entered values when Submit is clicked', async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
-    renderPopup({ onSubmit });
+    await renderPopup({ onSubmit });
 
     await user.click(screen.getByRole('textbox', { name: 'text' }));
     await user.type(screen.getByRole('textbox', { name: 'text' }), 'hello');
@@ -90,7 +103,7 @@ describe('PromptParametersPopup', () => {
 
   it('calls onCancel when Cancel is clicked', async () => {
     const onCancel = vi.fn();
-    renderPopup({ onCancel });
+    await renderPopup({ onCancel });
 
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
