@@ -23,7 +23,6 @@ Message input component for conversations, supporting model selection, chat sett
 - `@epam/ai-dial-attachment-input`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-ui-kit`
-- `@epam/ai-dial-kit`
 - `@tabler/icons-react`
 
 ## Components

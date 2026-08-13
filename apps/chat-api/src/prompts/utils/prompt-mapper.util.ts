@@ -79,9 +79,10 @@ export const PROMPT_RESOURCE_PREFIX = 'prompts';
 
 /**
  * Qualifies a bucket-relative prompt path into a full DIAL Core resource url.
- * The prompts endpoints address a prompt by a bucket-relative path because they
- * already scope to the caller's bucket, so the bucket is re-attached here
- * rather than being leaked to the frontend, which never sees it.
+ * The prompts endpoints address a prompt by a bucket-relative path, so the
+ * bucket is re-attached here. Which bucket that is comes from
+ * `PromptResponseDto.bucket`: for a prompt shared with the caller it is the
+ * owner's, and a path alone would resolve against the caller's own bucket.
  */
 export const toPromptResourceUrl = (
   promptPath: string,
@@ -115,8 +116,10 @@ export const mapPromptToResponse = (
   prompt: PromptPayload,
   id: string,
   metadata: PromptMetadataItem,
+  bucket: string,
 ): PromptResponseDto => ({
   id,
+  bucket,
   name: prompt.name ?? nameFromId(id),
   description: prompt.description,
   content: prompt.content ?? '',

@@ -36,7 +36,6 @@
       "@epam/ai-dial-source-panel/*": ["./libs/source-panel/*"],
       "@epam/ai-dial-attachment-canvas/*": ["./libs/attachment-canvas/*"],
       "@epam/ai-dial-attachment-input/*": ["./libs/attachment-input/*"],
-      "@epam/ai-dial-kit/*": ["./libs/ai-dial-kit/*"],
       "@epam/ai-dial-deployment-creation-form/*": [
         "./libs/deployment-creation-form/*"
       ],

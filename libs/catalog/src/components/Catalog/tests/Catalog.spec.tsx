@@ -1,9 +1,9 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
-import { CatalogEntityType } from '../../../types/entity-type';
 import { CatalogSortKey } from '../../../types/sort';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { Catalog } from '../Catalog';

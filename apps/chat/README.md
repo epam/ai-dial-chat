@@ -143,8 +143,13 @@ The application supports multiple languages using `i18next`:
 
 ### Supported Languages
 
-- English (`en`) - Default
-- Ukrainian (`uk`)
+- English (`en`) — the default, and the only locale shipped today
+
+Adding one is a code change, not deployment configuration: create
+`src/i18n/locales/<lang>.json` with every key from `en.json`, register it in
+`src/i18n/config.ts`, add it to the language selector, and — for a right-to-left
+language — add its code to `RTL_LANGUAGES` so `document.documentElement.dir`
+flips.
 
 ### Language Detection
 
@@ -155,7 +160,7 @@ The app automatically detects the user's language from:
 
 ### Adding Translations
 
-1. Add translation keys to `src/i18n/locales/en.json` and `uk.json`
+1. Add translation keys to `src/i18n/locales/en.json` and every other locale file, and declare each key in `src/constants/translation-keys.ts`
 2. Use the `useTranslation` hook in components:
 
 ```typescript

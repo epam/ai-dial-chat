@@ -1,14 +1,14 @@
 import {
   buildCssVars,
+  CatalogEntityType,
   DeploymentIcon,
+  EntityTypeLabel,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import { DialEllipsisTooltip, Highlight } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
 import { AppIdentityStyles } from '../../models/app-identity-styles';
 import { DeploymentSize } from '../../types/deployment-icon-size';
-import { CatalogEntityType } from '../../types/entity-type';
-import { EntityTypeLabel } from '../EntityTypeLabel/EntityTypeLabel';
 import styles from './AppIdentity.module.scss';
 
 /** Props for the shared AppIdentity block used in browse and favorite cards. */
@@ -99,18 +99,20 @@ export const AppIdentity: FC<AppIdentityProps> = ({
           <div className="flex min-w-0 items-start gap-1 overflow-hidden">
             <span
               className={mergeClasses(
-                'flex-3 min-w-0 truncate',
+                'min-w-0 flex-1 truncate',
                 typography?.nameClassName ?? 'dial-body-semi-text',
                 styles.name,
               )}
             >
               {query ? <Highlight text={name} query={query} /> : name}
             </span>
-            {version != null && (
+            {version && (
+              /* Capped at 30% of the row so a long version truncates instead of
+                 squeezing the name out of the card. */
               <DialEllipsisTooltip
                 text={version}
                 className={mergeClasses(
-                  'flex-2 tabular-nums',
+                  'max-w-[30%] shrink-0 tabular-nums',
                   typography?.versionClassName ?? 'dial-tiny-text',
                   styles.version,
                 )}

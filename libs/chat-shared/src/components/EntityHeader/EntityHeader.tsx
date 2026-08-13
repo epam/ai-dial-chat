@@ -1,14 +1,15 @@
-import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC, ReactNode } from 'react';
-import { CatalogItem } from '../../models/catalog-item';
+import type { EntityHeaderItem } from '../../models/entity';
+import { mergeClasses } from '../../utils/merge-class';
+import { DeploymentIcon } from '../DeploymentIcon/DeploymentIcon';
 import { EntityTypeLabel } from '../EntityTypeLabel/EntityTypeLabel';
 import { FeaturedChip } from '../FeaturedChip/FeaturedChip';
 import { ItemHeader } from '../ItemHeader/ItemHeader';
 
 /** Props for EntityHeader. */
 export interface EntityHeaderProps {
-  /** The favorite item to display. */
-  item: CatalogItem;
+  /** The entity to display. */
+  item: EntityHeaderItem;
   /** Typography CSS class for the item name. Falls back to `ItemHeader`'s own default when omitted. */
   nameClassName?: string;
   /** CSS class for the entity type label. Default: 'dial-caption-lead-semi-text'. */

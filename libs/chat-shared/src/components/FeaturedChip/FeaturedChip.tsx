@@ -1,10 +1,10 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
 import {
   ENTITY_TYPE_BG_COLOR,
   ENTITY_TYPE_COLOR,
 } from '../../constants/entity-colors';
 import { CatalogEntityType } from '../../types/entity-type';
+import { mergeClasses } from '../../utils/merge-class';
 
 /** Props for `FeaturedChip`. */
 export interface FeaturedChipProps {

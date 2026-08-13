@@ -1,6 +1,6 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { TabModel } from '@epam/ai-dial-ui-kit';
 import type { CatalogItem } from '../models/catalog-item';
-import { CatalogEntityType } from '../types/entity-type';
 
 /**
  * English-language fallback labels for each known entity type.

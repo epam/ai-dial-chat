@@ -170,7 +170,7 @@ export class PromptsPersonalService {
     if (metadata == null) {
       throw new NotFoundException(`Prompt metadata not found: ${path}`);
     }
-    return mapPromptToResponse(data, path, metadata);
+    return mapPromptToResponse(data, path, metadata, bucket);
   }
 
   async createPrompt(
@@ -195,7 +195,7 @@ export class PromptsPersonalService {
       'prompts.createPrompt',
       true,
     );
-    return mapPromptToResponse(prompt, id, metadata);
+    return mapPromptToResponse(prompt, id, metadata, bucket);
   }
 
   async updatePrompt(
@@ -276,7 +276,7 @@ export class PromptsPersonalService {
       }
     }
 
-    return mapPromptToResponse(updatedPrompt, targetId, metadata);
+    return mapPromptToResponse(updatedPrompt, targetId, metadata, bucket);
   }
 
   async deletePrompt(

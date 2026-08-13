@@ -2,7 +2,7 @@ import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ReactNode } from 'react';
+import { MouseEventHandler, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ConversationSourcesPanelLabels } from '../../../models/conversation-sources-panel-props';
 import type { QuotationSource } from '../../../models/quotation-source';
@@ -36,22 +36,6 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
       {isOpen ? <div>{children}</div> : null}
     </aside>
   ),
-  SearchInput: ({
-    placeholder,
-    value,
-    onChange,
-  }: {
-    placeholder: string;
-    value: string;
-    onChange: (v: string) => void;
-  }) => (
-    <input
-      type="search"
-      placeholder={placeholder}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-    />
-  ),
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -77,7 +61,38 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   DialNoDataContent: ({ title }: { title: string }) => <div>{title}</div>,
   DialEllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
+  Search: ({
+    placeholder,
+    value,
+    onChange,
+  }: {
+    placeholder?: string;
+    value?: string;
+    onChange?: (v?: string) => void;
+  }) => (
+    <input
+      type="search"
+      placeholder={placeholder}
+      value={value}
+      onChange={(e) => onChange?.(e.target.value)}
+    />
+  ),
   Highlight: ({ text }: { text: string }) => <span>{text}</span>,
+  LinkButton: ({
+    href,
+    target,
+    label,
+    onClick,
+  }: {
+    href?: string;
+    target?: string;
+    label?: ReactNode;
+    onClick?: MouseEventHandler<HTMLAnchorElement>;
+  }) => (
+    <a href={href} target={target} onClick={onClick}>
+      {label}
+    </a>
+  ),
 }));
 
 vi.mock('@epam/ai-dial-conversation-input', () => ({

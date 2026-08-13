@@ -1,4 +1,5 @@
-import { CatalogEntityType, CodeLanguage } from '@epam/ai-dial-catalog';
+import { CodeLanguage } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import { McpResourceKind } from '../../types/mcp';
 import {
