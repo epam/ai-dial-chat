@@ -554,6 +554,9 @@ const SkillEditorPage: FC = () => {
             : t(SkillEditorI18nKeys.LoadError),
       savingStatusLabel: t(SkillEditorI18nKeys.SavingStatus),
       loadingAriaLabel: t(SkillEditorI18nKeys.LoadingAriaLabel),
+      instructionsLoadingAriaLabel: t(
+        SkillEditorI18nKeys.InstructionsLoadingAriaLabel,
+      ),
       supportingFileNote: t(SkillEditorI18nKeys.SupportingFileNote),
       reloadLatestLabel: t(SkillEditorI18nKeys.ReloadLatestLabel),
     }),

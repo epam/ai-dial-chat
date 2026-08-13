@@ -108,11 +108,13 @@ export interface SkillEditorLabels {
   loadErrorMessage?: string;
   /** Status announced while a save is in flight. Defaults to `'Saving'`. */
   savingStatusLabel?: string;
-  /** Accessible label of the loading spinner. Defaults to `'Loading skill'`. */
+  /** Accessible label of the top-level loading spinner shown while `isLoading` is `true`. Defaults to `'Loading skill'`. */
   loadingAriaLabel?: string;
+  /** Accessible label of the spinner shown while the Instructions Markdown editor's chunk is loading. Defaults to `'Loading'`. */
+  instructionsLoadingAriaLabel?: string;
   /** Note shown in the main pane when a supporting file (not `SKILL.md` or a folder) is selected. Defaults to a sentence explaining content isn't editable here. */
   supportingFileNote?: string;
-  /** Message shown alongside the conflict state's "Reload latest" control, prefixed to the host-supplied `conflict.message`. Defaults to `'Reload latest'`. */
+  /** Label of the "Reload latest" button rendered next to the host-supplied `conflict.message` in the conflict state. Defaults to `'Reload latest'`. */
   reloadLatestLabel?: string;
 }
 
@@ -133,7 +135,7 @@ export interface SkillEditorColors {
   title?: string;
   /** Color of the hand-rendered Instructions field label. Defaults to `--text-secondary`. */
   helperText?: string;
-  /** Border color of the desktop header row and the Files sidebar divider. Defaults to `--stroke-tertiary`. */
+  /** Border color of the desktop header row, the Files sidebar divider, and the mobile sticky action bar. Defaults to `--stroke-tertiary`. */
   border?: string;
 }
 

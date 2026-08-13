@@ -824,6 +824,7 @@ export enum SkillEditorI18nKeys {
   LoadError = 'skillEditor.loadError',
   SavingStatus = 'skillEditor.savingStatus',
   LoadingAriaLabel = 'skillEditor.loadingAriaLabel',
+  InstructionsLoadingAriaLabel = 'skillEditor.instructionsLoadingAriaLabel',
   SupportingFileNote = 'skillEditor.supportingFileNote',
   BucketMissingTitle = 'skillEditor.bucketMissingTitle',
   BucketMissingMessage = 'skillEditor.bucketMissingMessage',

@@ -430,7 +430,9 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                 </span>
                 <Suspense
                   fallback={
-                    <Spinner ariaLabel={t.loadingAriaLabel ?? 'Loading'} />
+                    <Spinner
+                      ariaLabel={t.instructionsLoadingAriaLabel ?? 'Loading'}
+                    />
                   }
                 >
                   <LazyMarkdown
@@ -464,7 +466,12 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       </div>
 
       {/* Mobile: sticky action bar, always reachable without scrolling. */}
-      <div className="fixed inset-x-0 bottom-0 flex items-center gap-2 border-t p-3 desktop:hidden">
+      <div
+        className={mergeClasses(
+          'fixed inset-x-0 bottom-0 flex items-center gap-2 border-t p-3 desktop:hidden',
+          styles.border,
+        )}
+      >
         {actions}
       </div>
 

@@ -1096,6 +1096,7 @@
     "loadError": "Couldn't load this skill. Please try again.",
     "savingStatus": "Saving",
     "loadingAriaLabel": "Loading skill",
+    "instructionsLoadingAriaLabel": "Loading",
     "supportingFileNote": "This supporting file is included in the skill package as-is. Remove it from the Files panel to replace its content.",
     "bucketMissingTitle": "Can't create a skill right now",
     "bucketMissingMessage": "We couldn't determine your storage location. Please sign in again or try later.",
