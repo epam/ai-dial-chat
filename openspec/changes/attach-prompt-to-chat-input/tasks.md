@@ -45,7 +45,7 @@
 
 ## 7. i18n
 
-- [x] 7.1 Added `PromptSelectorI18nKeys` to `apps/chat/src/constants/translation-keys.ts` (`addMenuLabel`, `myCollectionLabel`, `emptyHint`, `modalTitle`, `parametersTitle`, `closeLabel`, `backLabel`, `promptLabel`, `parametersLabel`, `detailsLabel`, `enterValuePlaceholder`) with matching `promptSelector` block in `apps/chat/src/i18n/locales/en.json` (the only locale file in the repo).
+- [x] 7.1 Added `PromptSelectorI18nKeys` to `apps/chat/src/constants/translation-keys.ts` (`addMenuLabel`, `myCollectionLabel`, `emptyHint`, `modalTitle`, `parametersTitle`, `promptLabel`, `parametersLabel`, `detailsLabel`, `enterValuePlaceholder`) with matching `promptSelector` block in `apps/chat/src/i18n/locales/en.json` (the only locale file in the repo).
 - [x] 7.2 Reused `ButtonsI18nKeys.Browse`, `ButtonsI18nKeys.Cancel`, `ButtonsI18nKeys.Confirm` (as the popup's Submit label), and `FavoritesI18nKeys.RemoveFromFavorites` rather than duplicating them.
 
 ## 8. Verification
