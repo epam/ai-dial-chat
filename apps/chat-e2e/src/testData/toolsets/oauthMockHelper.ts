@@ -70,18 +70,10 @@ export class OAuthMockHelper extends BaseAuthMockHelper<ToolsetOAuthSignInReques
     await this.setupSignOutRoute();
   }
 
-  // Navigate the popup to the callback URL and wait for the flow to complete.
-  //
-  // We navigate explicitly instead of relying on the automatic 302 redirect
-  // because after a cross-origin navigation (random OAuth URL → localhost),
-  // Playwright's context-level route handlers may not intercept the popup's
-  // fetch requests. Driving the popup ourselves keeps everything same-origin
-  // from the start, so the sign-in mock fires reliably.
-  //
-  // After the popup loads /auth/toolset-signin, it calls the sign-in API,
-  // then adds login-complete=1 to its URL. The main page detects that and
-  // closes the popup. If the popup is already closed (the flow finished
-  // during an earlier step), we return immediately.
+  // Drives the popup through the OAuth callback and waits for it to close —
+  // the signal that sign-in fully landed. We navigate there ourselves unless
+  // the mocked auth redirect already got it there first, or the flow is
+  // already done.
   async navigateToCallback(popup: Page): Promise<void> {
     if (!this.oauthState.callbackUrl) {
       throw new Error('Callback URL has not been captured yet');
@@ -120,11 +112,9 @@ export class OAuthMockHelper extends BaseAuthMockHelper<ToolsetOAuthSignInReques
         try {
           await signInResponsePromise;
         } catch {
-          console.error(
-            'Expected sign-in response was not received, likely due to the popup being closed before navigation.',
+          throw new Error(
+            `Expected sign-in response was not received for toolset "${this.getToolset().id}". Popup URL: "${popup.isClosed() ? '<closed>' : popup.url()}"`,
           );
-          this.handledSignInCount = this.getSignInCount();
-          return;
         }
       }
     }
