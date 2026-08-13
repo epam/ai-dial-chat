@@ -19,10 +19,15 @@ import { useDeploymentSelectorOverlay } from '../../components/DeploymentSelecto
 import NewConversationComposer, {
   type NewConversationChatSettings,
 } from '../../components/NewConversationComposer/NewConversationComposer';
+import { usePromptSelectorOverlay } from '../../components/PromptSelector/usePromptSelectorOverlay';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { getConversationRoute } from '../../constants/routes';
-import { ChatI18nKeys, ToolsI18nKeys } from '../../constants/translation-keys';
+import {
+  ChatI18nKeys,
+  PromptSelectorI18nKeys,
+  ToolsI18nKeys,
+} from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
@@ -59,6 +64,12 @@ const ConversationRoute: FC = () => {
   const routePromptContent = (state as { promptContent?: string } | null)
     ?.promptContent;
   const [inputMessage, setInputMessage] = useState<string | undefined>();
+  const [inputMessageRevision, setInputMessageRevision] = useState(0);
+
+  const handleInsertText = useCallback((text: string) => {
+    setInputMessage(text);
+    setInputMessageRevision((prev) => prev + 1);
+  }, []);
   const { showErrorNotification } = useNotification();
   const overlay = useOptionalOverlay();
   const {
@@ -262,6 +273,11 @@ const ConversationRoute: FC = () => {
   );
 
   const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
+  const {
+    renderOverlay: renderPromptsOverlay,
+    promptCatalogModal,
+    parametersPopup: promptParametersPopup,
+  } = usePromptSelectorOverlay({ onInsertText: handleInsertText });
 
   return (
     <Suspense fallback={<RouteFallback />}>
@@ -276,8 +292,11 @@ const ConversationRoute: FC = () => {
         placeholder={t(ChatI18nKeys.Placeholder)}
         introText={starterIntroText}
         message={inputMessage}
+        messageRevision={inputMessageRevision}
         onCreateConversation={handleCreateConversation}
         modelPickerOverlay={renderOverlay}
+        promptsMenuOverlay={renderPromptsOverlay}
+        promptsMenuTitle={t(PromptSelectorI18nKeys.AddMenuLabel)}
         toolsMenuItems={toolsMenuItems}
         onToolToggle={onToolToggle}
         toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}
@@ -292,6 +311,8 @@ const ConversationRoute: FC = () => {
         />
       </NewConversationComposer>
       {catalogModal}
+      {promptCatalogModal}
+      {promptParametersPopup}
     </Suspense>
   );
 };

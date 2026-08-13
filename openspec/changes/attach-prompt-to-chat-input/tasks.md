@@ -1,0 +1,56 @@
+## 1. Relocate the existing `{{param}}` grammar + shared rendering to chat-shared
+
+- [x] 1.1 Move `PROMPT_VARIABLE_PATTERN` (rename `PROMPT_PARAM_PATTERN`), `PROMPT_VARIABLE_CLASS_NAME`, and `rehypePromptVariables` out of `libs/catalog/src/utils/prompt-variables.ts` into `libs/chat-shared` verbatim (same regex, same hast-node logic) — do not rewrite the token grammar.
+- [x] 1.2 Extract the markdown-body + placeholder-highlighting rendering logic out of `libs/catalog/src/components/Details/TabsContent/Content.tsx` (`ContentTab`) into a new shared component in `libs/chat-shared` (e.g. `MarkdownWithPlaceholders`), built on the relocated `rehypePromptVariables`, taking `content: string` and typography class overrides, with no `CatalogItem`/`ItemDetailsStyles` coupling.
+- [x] 1.3 Update `libs/catalog`'s `prompt-variables.ts` and `ContentTab` to import the relocated pieces from `chat-shared` instead of owning them; confirm existing `ContentTab`/Catalog Details tests still pass unchanged (behavior-preserving refactor).
+- [x] 1.4 Export `PROMPT_PARAM_PATTERN`, `rehypePromptVariables`, `PROMPT_VARIABLE_CLASS_NAME`, and `MarkdownWithPlaceholders` from `libs/chat-shared`'s public entry point.
+
+## 2. `{{param}}` extraction/substitution utilities (chat-shared, consumed by libs/prompts)
+
+- [x] 2.1 Scaffold new `libs/prompts` lib (package.json with `license`/`description`, README per `.claude/rules/libs.md`, `src/index.ts`).
+- [x] 2.2 In `libs/chat-shared`, implement `extractPromptParams(content: string): string[]` built on the relocated `PROMPT_PARAM_PATTERN` — first-occurrence order, de-duplicated by name; single-brace sequences (e.g. `{name}`) are ignored (same grammar the highlighter already uses).
+- [x] 2.3 In `libs/chat-shared`, implement `resolvePromptParams(content: string, values: Record<string, string>): string` — replaces every occurrence of each `{{param}}` token with its value, using the same pattern.
+- [x] 2.4 Unit tests (in `chat-shared`) covering: no tokens, single token repeated, multiple distinct tokens, mixed single/double braces using the real sample payload (`"tes test {name} prompt {{test}}"`), and substitution correctness; `libs/prompts` re-exports or calls these directly rather than duplicating logic.
+
+## 3. `libs/prompts` UI components
+
+- [x] 3.1 `FavoritePromptsPanel`: header ("My Collection"), favorite rows (icon, name, filled star with `aria-pressed`, description tooltip on hover), empty-state text, "Browse" button — all strings as props with English defaults (no i18n in the lib).
+- [x] 3.2 `PromptParametersPopup`: header (title, close button, optional `onBack` chevron mirrored `rtl:scale-x-[-1]`), full-width 72px prompt-summary card (using `--bg-layer-sunken`/`--stroke-tertiary` fallbacks) — **updated 2026-08-12**: reuses `libs/catalog`'s `AppIdentity`/`CatalogEntityType.Prompt` (now exported from `libs/catalog`'s public API) instead of a bespoke icon+label layout, so the card's identity block matches every other catalog surface; two-column Parameters (`Textarea` per param, required, placeholder prop)/Details (`MarkdownWithPlaceholders`) headed with `dial-h2-text` headings, Cancel/Submit footer with Submit disabled until all fields are filled.
+- [x] 3.3 JSDoc on all exported symbols/props per `libs.md`; export all public prop/labels/colors types from `index.ts`.
+- [x] 3.4 Component tests for `FavoritePromptsPanel` (empty vs populated, star toggle callback, tooltip) and `PromptParametersPopup` (back button present/absent, submit disabled/enabled, cancel/submit callbacks, duplicate-token dedup rendering one input).
+
+## 4. `CatalogView` selector-mode type filter
+
+- [x] 4.1 Added `visibleTypes?: Set<CatalogEntityType>` prop to `CatalogView` (default: `PICKER_VISIBLE_TYPES` = Model/Agent), replacing the hardcoded constant usage in the selector-mode filter.
+- [x] 4.2 Left `apps/chat/src/components/DeploymentSelector/CatalogModal.tsx`'s call site on the default (no `visibleTypes` passed) — no behavior change for the existing model/agent picker.
+- [x] 4.3 Added `CatalogView.spec.tsx` coverage: "shows only prompts in selector mode when visibleTypes is set to Prompt".
+
+## 5. `libs/conversation-input` menu injection
+
+- [x] 5.1 Add `promptsMenuOverlay?: (onClose: () => void) => ReactNode` and `promptsMenuTitle?: string` (default "Prompts") props to `AddAttachmentButton`, inserting a menu item with `IconPrompt` above "Chat settings" when `promptsMenuOverlay` is provided.
+- [x] 5.2 Desktop: **superseded 2026-08-12** — the nested-`children`/single-item `label` approach clipped the overlay (the ui-kit renders each nested `DropdownItem` inside a fixed `h-[40px] truncate` button, so the panel's header/list/Browse button were cut off). Replaced with a top-level, controlled `Dropdown` (`isPromptsOverlayOpen`) wrapping the main "+" `Dropdown` as its trigger and using `renderOverlay` — the same mechanism `ModelSelectorControl` uses for `modelPickerOverlay` — which gets the standard rounded/background/shadow chrome applied to every top-level Dropdown flyout, unlike the nested-item flyout. Clicking "Prompts" now closes the main menu (`isDesktopMenuOpen=false`) and opens this overlay Dropdown (`isPromptsOverlayOpen=true`); its `onClose` closes it again. **Updated 2026-08-12**: since replacing the main menu leaves no way back to it, `promptsMenuOverlay` now also receives an `onBack` callback (`() => { setIsPromptsOverlayOpen(false); setIsDesktopMenuOpen(true); }`), which `FavoritePromptsPanel` renders as an optional back chevron in its header (same pattern as `PromptParametersPopup`'s `onBack`). Mobile is unaffected — it still calls `promptsMenuOverlay` with only `onClose`, since `BottomSheetShell` already renders its own back arrow.
+- [x] 5.3 Mobile: reused the existing generic `BottomSheetShell` (already used by `ModelSelectorControl` for `modelPickerOverlay`) instead of a new bespoke `PromptsBottomSheet`, since it already provides the same back-navigation shell (`onBack` returns to the main Add sheet) — avoids duplicating `ToolsBottomSheet`'s shell for a second host-owned overlay.
+- [x] 5.4 Thread `promptsMenuOverlay`/`promptsMenuTitle`/`promptsBackLabel` through `Input.tsx` to `AddAttachmentButton` alongside the existing `extraMenuItems`/`toolsMenuItems` props.
+- [x] 5.5 Added `AddAttachmentButton.prompts.spec.tsx` (mirrors `AddAttachmentButton.tools.spec.tsx`: absent/present item, desktop flyout content, mobile sheet + back navigation) and two `Input.spec.tsx` cases for `promptsMenuOverlay` presence/absence. `README.md` was left unchanged — it documents components at a high level and never enumerated `modelPickerOverlay`/`toolsMenuItems`-style props, so there was nothing to correct.
+
+## 6. `apps/chat` wiring (data + selection flow)
+
+- [x] 6.1 New `apps/chat/src/components/PromptSelector/usePromptSelectorOverlay.ts`: build `favoritePromptItems` directly from `usePrompts()` (personal + sharedWithMe + publicPrompts) filtered by `useFavoriteApplications().favoriteIds`, memoized — mapped straight to the lib's `FavoritePromptItem` shape (`id`/`name`/`description`/`content`) rather than through `mapPromptToCatalogItem`/`CatalogItem`, since the favorites panel needs none of the Catalog-specific fields and `libs/prompts` cannot import `libs/catalog` under the module-boundary rule.
+- [x] 6.2 New `apps/chat/src/components/PromptSelector/PromptSelectorOverlay.tsx` (lazy-loaded, mirroring `DeploymentSelectorOverlay.tsx`) wiring i18n labels into `FavoritePromptsPanel`.
+- [x] 6.3 New `apps/chat/src/components/PromptSelector/PromptCatalogModal.tsx` (mirroring `CatalogModal.tsx`) wrapping `CatalogView` with `visibleTypes={new Set([CatalogEntityType.Prompt])}` and "Use prompt" title/labels.
+- [x] 6.4 Implemented the selection branch in `usePromptSelectorOverlay`: on prompt pick, runs `extractPromptParams`; if empty, calls the host's `onInsertText` immediately; if non-empty, opens `PromptParametersPopupOverlay` (`onBack` wired only when the pick came from the browse modal) and calls `onInsertText` with `resolvePromptParams(...)` on submit.
+- [x] 6.5 Gated the whole hook's rendered surface behind `useUiFeature(OverlayFeature.Prompts)`, matching `CatalogView`.
+- [x] 6.6 Wired `onInsertText` per composer host, matching each host's *existing* model-picker-overlay placement rather than a uniform rule: `ConversationView.tsx` calls `usePromptSelectorOverlay` itself (mirroring its own existing `useDeploymentSelectorOverlay()` call) via a new `onInsertText` prop from `Conversation.tsx`, which now generalizes its one-shot `overlayInputContent`/`setOverlayInputContent` state (previously overlay-mode-only) into `pendingInputContent`/`handleSetPendingInputContent` fed by both the overlay bridge and prompt insertion. `ConversationRoute.tsx` calls `usePromptSelectorOverlay` itself (mirroring its own existing `useDeploymentSelectorOverlay()` call there, one level above `NewConversationComposer.tsx`) via a new `inputMessageRevision` state + `handleInsertText`, and threads `promptsMenuOverlay`/`promptsMenuTitle`/`messageRevision` down through `NewConversationComposer`'s existing `modelPickerOverlay`-style prop-forwarding.
+- [x] 6.7 Passed `renderOverlay` as `promptsMenuOverlay` into the `ConversationInput`/`Input` usage in both composer hosts; `promptCatalogModal`/`parametersPopup` render at a stable level outside the popover next to each host's existing `{catalogModal}`, matching the `useDeploymentSelectorOverlay` pattern. In `ConversationView.tsx`, the Prompts menu item itself is only shown when the host actually supplied `onInsertText` (e.g. not from `AppPreviewChat.tsx`, which doesn't wire it), avoiding a picker that silently no-ops on selection.
+
+## 7. i18n
+
+- [x] 7.1 Added `PromptSelectorI18nKeys` to `apps/chat/src/constants/translation-keys.ts` (`addMenuLabel`, `myCollectionLabel`, `emptyHint`, `modalTitle`, `parametersTitle`, `parametersLabel`, `detailsLabel`, `enterValuePlaceholder`) with matching `promptSelector` block in `apps/chat/src/i18n/locales/en.json` (the only locale file in the repo). No separate `promptLabel` key exists — the summary card's "PROMPT" type text comes from `libs/catalog`'s reused `AppIdentity`, not from app i18n.
+- [x] 7.2 Reused `ButtonsI18nKeys.Browse`, `ButtonsI18nKeys.Cancel`, `ButtonsI18nKeys.Confirm` (as the popup's Submit label), and `FavoritesI18nKeys.RemoveFromFavorites` rather than duplicating them.
+
+## 8. Verification
+
+- [x] 8.1 `npm exec nx lint conversation-input && npm exec nx lint chat-shared && npm exec nx lint chat` (add `prompts` once scaffolded) — fix any `@nx/enforce-module-boundaries` violations.
+- [x] 8.2 `npm exec nx test conversation-input && npm exec nx test chat-shared && npm exec nx test chat` (add `prompts`).
+- [x] 8.3 `npm exec nx build chat` to confirm the new lib and lazy-loaded overlay/modal components bundle correctly.
+- [x] 8.4 Manual verification in the running app (`npm start`): Add → Prompts with favorites empty/populated, star toggle, Browse → Use prompt modal (Prompts-only), param-less prompt inserts immediately, parameterized prompt opens popup with/without back button per entry point, submit substitutes values into the textarea, cancel leaves textarea untouched, RTL (`ar` locale) check on the back chevron and panel layout.

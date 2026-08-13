@@ -821,6 +821,27 @@ describe('Input — isInputDisabled', () => {
 
     expect(screen.queryByText('model picker')).toBeNull();
   });
+
+  it('shows a Prompts item in the Add menu when promptsMenuOverlay is provided', () => {
+    render(
+      <Input
+        promptsMenuOverlay={() => <div>prompts overlay</div>}
+        promptsMenuTitle="Prompts"
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText('Add'));
+
+    expect(screen.getByText('Prompts')).toBeTruthy();
+  });
+
+  it('does not show a Prompts item in the Add menu when promptsMenuOverlay is absent', () => {
+    render(<Input />);
+
+    fireEvent.click(screen.getByLabelText('Add'));
+
+    expect(screen.queryByText('Prompts')).toBeNull();
+  });
 });
 
 describe('Input — attachment status transitions', () => {

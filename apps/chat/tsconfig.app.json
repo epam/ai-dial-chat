@@ -103,6 +103,9 @@
     },
     {
       "path": "../../libs/attachment-canvas/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/prompts/tsconfig.lib.json"
     }
   ]
 }

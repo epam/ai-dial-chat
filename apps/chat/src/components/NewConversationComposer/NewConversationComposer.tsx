@@ -83,6 +83,15 @@ interface Props {
   introText?: string;
   /** Initial textarea content (e.g. populated by a starter selection). */
   message?: string;
+  /** Token that forces `message` to re-apply even if its string is unchanged. */
+  messageRevision?: number;
+  /**
+   * When provided, adds a "Prompts" item to the `+` menu whose submenu
+   * renders this host-owned overlay, mirroring `modelPickerOverlay`.
+   */
+  promptsMenuOverlay?: (onClose: () => void) => ReactNode;
+  /** Label for the "Prompts" menu item and mobile sheet title. */
+  promptsMenuTitle?: string;
   inputStyles?: ConversationInputStyles;
   /** Called on first send. Rejecting shows the standard create-conversation error notification. */
   onCreateConversation: (
@@ -111,6 +120,9 @@ const NewConversationComposer: FC<Props> = ({
   placeholder,
   introText,
   message,
+  messageRevision,
+  promptsMenuOverlay,
+  promptsMenuTitle,
   inputStyles,
   onCreateConversation,
   toolsMenuItems,
@@ -326,6 +338,7 @@ const NewConversationComposer: FC<Props> = ({
           onUploadAttachment={handleUploadAttachment}
           onAttachmentsChange={handleAttachmentsChange}
           message={message}
+          messageRevision={messageRevision}
           welcomeText={getTimeOfDayGreeting(
             new Date().getHours(),
             {
@@ -393,6 +406,8 @@ const NewConversationComposer: FC<Props> = ({
           onAttachmentClick={handleAttachmentClick}
           onMessageTooLong={handleMessageTooLong}
           modelPickerOverlay={modelPickerOverlay}
+          promptsMenuOverlay={promptsMenuOverlay}
+          promptsMenuTitle={promptsMenuTitle}
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}
           toolsMenuTitle={toolsMenuTitle}
