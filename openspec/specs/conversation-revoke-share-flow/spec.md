@@ -1,4 +1,10 @@
-## ADDED Requirements
+# conversation-revoke-share-flow Specification
+
+## Purpose
+
+The conversation-panel surface of owner-side revoke: the row action menu entry, its confirmation popup, and the success/failure handling that keeps the conversation in the owner's own list.
+
+## Requirements
 
 ### Requirement: Row action menu exposes Revoke access only for owned conversations
 
@@ -6,13 +12,18 @@
 
 - the row is **not** readonly — the underlying `ConversationListItemDto` has `isReadonly`, `sharedWithMe`, and `publishedWithMe` all falsy, the same `isReadonlyItem` condition that already gates the owner-side Rename / Share / Delete actions in that file; **and**
 - `isConversationsSharingEnabled` is true — the same `useUiFeature` gate the Share action already rides. With conversation sharing disabled a user cannot grant access at all, so offering to revoke it would be incoherent; revoke appears exactly where Share does; **and**
-- the row's `recipientsCount` is not `0` — an action that could only be a no-op is noise. An absent `recipientsCount` (the backend could not determine it) keeps the action visible, so a transient upstream failure never removes the owner's only way to revoke.
+- the row's recipient count, resolved **when that row's action menu opens**, is a positive number — an action that could only be a no-op is noise.
 
-When `recipientsCount` is a positive number the action's label SHALL be `t(ButtonsI18nKeys.RevokeAccessWithCount, { count })` (English `Revoke access ({{count}})`); when it is absent the plain `t(ButtonsI18nKeys.RevokeAccess)` is used.
+The count SHALL come from `useShareRecipientsCount` (`apps/chat/src/hooks/useShareRecipientsCount/useShareRecipientsCount.ts`), which calls `GET /api/v1/share/recipients` per conversation id and caches the result until invalidated. `handleActionMenuOpen` — already wired to the panel's `onActionMenuOpen` for publish focus return — SHALL start the lookup, and only for a row that could offer the action (sharing enabled, row not readonly). Resolution states map to the action as follows:
+
+- **in flight** — the action is withheld, so a count never appears and then contradicts itself,
+- **`0`** — the action stays hidden,
+- **positive number** — the action is shown, labelled `t(ButtonsI18nKeys.RevokeAccessWithCount, { count })` (English `Revoke access ({{count}})`),
+- **failed lookup** — the action is shown with the plain `t(ButtonsI18nKeys.RevokeAccess)`, so a transient upstream failure never removes the owner's only way to revoke.
+
+A successful revoke SHALL call `invalidateRecipientsCount(id)`, so reopening the menu asks again instead of replaying the pre-revoke count.
 
 For owned rows the action menu SHALL therefore contain Pin, Rename, Duplicate, Export, Share, Publish, Revoke access, Delete — adding Revoke access immediately before Delete and leaving every existing action unchanged. Readonly rows (shared-with-me or published-with-me) keep their existing sets exactly as they are today.
-
-The action SHALL NOT be gated on whether the conversation currently has recipients: no conversation list field carries that signal, and revoking a conversation nobody holds is a successful upstream no-op.
 
 State owned by this requirement: `pendingRevokeId: string | null`, `isRevoking: boolean`, and `revokeError: string | null` in `ConversationPanelView` — a new triple parallel to the existing `pendingUnshareId` / `isUnsharing` / `unshareError` set, deliberately not shared with either the unshare or the owner-delete flow.
 
@@ -40,17 +51,35 @@ State owned by this requirement: `pendingRevokeId: string | null`, `isRevoking: 
 - **WHEN** an owned row's action menu is opened
 - **THEN** neither Share nor Revoke access is rendered
 
+#### Scenario: Count is requested on menu open, not on list render
+
+- **GIVEN** an owned conversation in the panel
+- **WHEN** the panel renders
+- **THEN** `GET /api/v1/share/recipients` has not been called and no Revoke access action is rendered; opening the row's menu calls it once for that conversation id, and reopening does not call it again
+
 #### Scenario: Conversation nobody holds access to does not expose the action
 
-- **GIVEN** an owned conversation with `recipientsCount: 0`
+- **GIVEN** an owned conversation whose recipient count resolves `0`
 - **WHEN** the row's action menu is opened
 - **THEN** no Revoke access action is rendered
 
 #### Scenario: Known recipient count is shown in the label
 
-- **GIVEN** an owned conversation with `recipientsCount: 2`
+- **GIVEN** an owned conversation whose recipient count resolves `2`
 - **WHEN** the row's action menu is opened
 - **THEN** the action's label is rendered from `buttons.revokeAccessWithCount`
+
+#### Scenario: Failed lookup keeps the action reachable
+
+- **GIVEN** an owned conversation whose recipient-count lookup rejects
+- **WHEN** the row's action menu is opened
+- **THEN** the action is rendered with the plain `buttons.revokeAccess` label
+
+#### Scenario: Readonly rows cost no lookup
+
+- **GIVEN** a shared-with-me or published-with-me conversation
+- **WHEN** the row's action menu is opened
+- **THEN** `GET /api/v1/share/recipients` is not called
 
 ### Requirement: Revoke access action label and icon
 

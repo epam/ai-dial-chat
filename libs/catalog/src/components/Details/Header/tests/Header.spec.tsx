@@ -44,13 +44,25 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   NeutralIconButton: ({
     'aria-label': ariaLabel,
     onClick,
+    onMouseEnter,
+    onFocus,
   }: {
     'aria-label'?: string;
     onClick?: () => void;
-  }) => <button aria-label={ariaLabel} onClick={onClick} />,
+    onMouseEnter?: () => void;
+    onFocus?: () => void;
+  }) => (
+    <button
+      aria-label={ariaLabel}
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onFocus={onFocus}
+    />
+  ),
   Dropdown: ({
     children,
     items,
+    onOpenChange,
   }: {
     children: ReactElement<{ onClick?: () => void }>;
     items: Array<{
@@ -59,12 +71,16 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       disabled?: boolean;
       onClick?: () => void;
     }>;
+    onOpenChange?: (isOpen: boolean) => void;
   }) => {
     const [isOpen, setIsOpen] = useState(false);
     return (
       <div>
         {cloneElement(children, {
-          onClick: () => setIsOpen((value) => !value),
+          onClick: () => {
+            setIsOpen(!isOpen);
+            onOpenChange?.(!isOpen);
+          },
         })}
         {isOpen &&
           items.map((item) => (
@@ -586,8 +602,9 @@ describe('Header', () => {
   it('hides Revoke access for an owned item nobody currently holds access to', async () => {
     render(
       <Header
-        item={{ ...makeItem(CatalogEntityType.Toolset), recipientsCount: 0 }}
+        item={makeItem(CatalogEntityType.Toolset)}
         onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={vi.fn().mockResolvedValue(0)}
       />,
     );
     await openManage();
@@ -597,21 +614,23 @@ describe('Header', () => {
   it('shows the recipient count in the Revoke access label when it is known', async () => {
     render(
       <Header
-        item={{ ...makeItem(CatalogEntityType.Toolset), recipientsCount: 3 }}
+        item={makeItem(CatalogEntityType.Toolset)}
         onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={vi.fn().mockResolvedValue(3)}
       />,
     );
     await openManage();
     expect(
-      screen.getByRole('button', { name: 'Revoke access (3)' }),
+      await screen.findByRole('button', { name: 'Revoke access (3)' }),
     ).toBeTruthy();
   });
 
   it('uses texts.revokeShareLabelWithCount to format the counted label', async () => {
     render(
       <Header
-        item={{ ...makeItem(CatalogEntityType.Toolset), recipientsCount: 2 }}
+        item={makeItem(CatalogEntityType.Toolset)}
         onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={vi.fn().mockResolvedValue(2)}
         texts={{
           revokeShareLabelWithCount: (count) => `Отозвать у ${count} человек`,
         }}
@@ -619,7 +638,7 @@ describe('Header', () => {
     );
     await openManage();
     expect(
-      screen.getByRole('button', { name: 'Отозвать у 2 человек' }),
+      await screen.findByRole('button', { name: 'Отозвать у 2 человек' }),
     ).toBeTruthy();
   });
 
@@ -628,10 +647,116 @@ describe('Header', () => {
       <Header
         item={makeItem(CatalogEntityType.Toolset)}
         onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+    await openManage();
+    expect(
+      await screen.findByRole('button', { name: 'Revoke access' }),
+    ).toBeTruthy();
+  });
+
+  it('keeps Revoke access reachable when the recipient-count lookup rejects', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={vi.fn().mockRejectedValue(new Error('boom'))}
+      />,
+    );
+    await openManage();
+    expect(
+      await screen.findByRole('button', { name: 'Revoke access' }),
+    ).toBeTruthy();
+  });
+
+  it('requests the recipient count when the Manage menu opens, not on render', async () => {
+    const onFetchRecipientsCount = vi.fn().mockResolvedValue(1);
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={onFetchRecipientsCount}
+      />,
+    );
+
+    expect(onFetchRecipientsCount).not.toHaveBeenCalled();
+
+    await openManage();
+    expect(onFetchRecipientsCount).toHaveBeenCalledWith(
+      makeItem(CatalogEntityType.Toolset),
+    );
+  });
+
+  /* Hovering starts the lookup early; the subsequent click must not repeat it. */
+  it('requests the recipient count once when the Manage button is hovered and then clicked', async () => {
+    const onFetchRecipientsCount = vi.fn().mockResolvedValue(1);
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={onFetchRecipientsCount}
+      />,
+    );
+
+    await userEvent.hover(screen.getByRole('button', { name: 'Manage' }));
+    await openManage();
+
+    expect(onFetchRecipientsCount).toHaveBeenCalledOnce();
+  });
+
+  it('withholds Revoke access while the recipient count is still loading', async () => {
+    /* Never settles, so the entry is observed mid-flight. */
+    const pendingLookup = new Promise<number>(() => undefined);
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={vi.fn().mockReturnValue(pendingLookup)}
+      />,
+    );
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Revoke access' })).toBeNull();
+  });
+
+  it('offers Revoke access for every owned item when no count resolver is supplied', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onRevokeShare={vi.fn()}
       />,
     );
     await openManage();
     expect(screen.getByRole('button', { name: 'Revoke access' })).toBeTruthy();
+  });
+
+  it('re-requests the recipient count for a newly displayed item', async () => {
+    const onFetchRecipientsCount = vi.fn().mockResolvedValue(1);
+    const { rerender } = render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={onFetchRecipientsCount}
+      />,
+    );
+    await openManage();
+    /* Close it again so the next click reopens rather than dismisses. */
+    await openManage();
+
+    onFetchRecipientsCount.mockResolvedValue(5);
+    rerender(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Toolset), id: '2' }}
+        onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={onFetchRecipientsCount}
+      />,
+    );
+    await openManage();
+
+    expect(onFetchRecipientsCount).toHaveBeenCalledTimes(2);
+    expect(
+      await screen.findByRole('button', { name: 'Revoke access (5)' }),
+    ).toBeTruthy();
   });
 
   it('keeps Revoke access in the Manage menu under dir="rtl"', async () => {

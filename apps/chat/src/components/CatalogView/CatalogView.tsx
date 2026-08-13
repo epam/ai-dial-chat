@@ -39,6 +39,7 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { usePrompts } from '../../context/PromptsContext';
+import { useSkills } from '../../context/SkillsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
@@ -65,8 +66,10 @@ import {
 import { publishCatalogEntity } from '../../server-api/publish.api';
 import {
   discardSharedCatalogItem,
+  getShareRecipientsCount,
   revokeSharedAccess,
 } from '../../server-api/share.api';
+import { downloadSkillFile, listSkillFiles } from '../../server-api/skills.api';
 import { deleteToolset, logoutToolset } from '../../server-api/toolsets';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { CatalogQuery } from '../../types/catalog';
@@ -77,6 +80,11 @@ import {
 import { PromptSource } from '../../types/prompt';
 import { PromptEditorQuery } from '../../types/prompt-editor';
 import { ROUTES } from '../../types/routes';
+import {
+  parseSkillResourceUrl,
+  SKILL_MANIFEST_FILE,
+  SkillSource,
+} from '../../types/skill';
 import { isQuickAppSchema } from '../../utils/application-schema';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
@@ -102,6 +110,11 @@ import {
   isOrganisationPromptItem,
   mapPromptToCatalogItem,
 } from '../../utils/map-prompt-to-catalog-item';
+import {
+  buildSkillOverview,
+  mapSkillToCatalogItem,
+  readSkillManifest,
+} from '../../utils/map-skill-to-catalog-item';
 import {
   buildConnectApi,
   resolveMcpResourceKind,
@@ -195,8 +208,6 @@ const CatalogView: FC<Props> = ({
     setIsMyAppsActive,
   } = useCatalogSortFilterPreference();
 
-  const isLoading = isDeploymentsLoading || isFavoritesLoading;
-
   const quickAppSchemaId = useMemo(
     () => schemas.find((s) => isQuickAppSchema(s))?.id,
     [schemas],
@@ -218,6 +229,7 @@ const CatalogView: FC<Props> = ({
     OverlayFeature.HideCustomAppCreation,
   );
   const isPromptsEnabled = useUiFeature(OverlayFeature.Prompts);
+  const isSkillsEnabled = useUiFeature(OverlayFeature.Skills);
 
   const {
     prompts,
@@ -225,6 +237,25 @@ const CatalogView: FC<Props> = ({
     publicPrompts,
     refetchPrompts,
   } = usePrompts();
+
+  const {
+    skills,
+    publicSkills,
+    isLoading: isSkillsLoading,
+    error: skillsError,
+  } = useSkills();
+
+  const isLoading =
+    isDeploymentsLoading || isFavoritesLoading || isSkillsLoading;
+
+  /*
+   * A skill-listing failure is reported once and leaves the rest of the
+   * catalog usable — deployments, toolsets, and prompts load independently.
+   */
+  useEffect(() => {
+    if (skillsError == null) return;
+    showErrorNotification({ message: t(CatalogI18nKeys.SkillsLoadError) });
+  }, [skillsError, showErrorNotification, t]);
 
   const catalogItems = useMemo(() => {
     return [
@@ -272,6 +303,24 @@ const CatalogView: FC<Props> = ({
             ),
           ]
         : []),
+      ...(isSkillsEnabled
+        ? [
+            ...skills.map((skill) =>
+              mapSkillToCatalogItem(skill, {
+                t,
+                source: SkillSource.Personal,
+                favoriteIds,
+              }),
+            ),
+            ...publicSkills.map((skill) =>
+              mapSkillToCatalogItem(skill, {
+                t,
+                source: SkillSource.Public,
+                favoriteIds,
+              }),
+            ),
+          ]
+        : []),
     ];
   }, [
     deployments,
@@ -287,6 +336,9 @@ const CatalogView: FC<Props> = ({
     prompts,
     sharedPrompts,
     publicPrompts,
+    isSkillsEnabled,
+    skills,
+    publicSkills,
   ]);
 
   const visibleCatalogItems = useMemo(() => {
@@ -354,6 +406,43 @@ const CatalogView: FC<Props> = ({
         }
       }
 
+      /*
+       * A skill resolves through the skills endpoints: its manifest text and
+       * its file inventory, read in parallel. Each half is optional — a skill
+       * with no readable `SKILL.md` still gets its Overview, and a failed file
+       * listing still gets its Content.
+       */
+      if (item.type === CatalogEntityType.Skill) {
+        const parsed = parseSkillResourceUrl(item.id);
+        if (parsed == null) return undefined;
+
+        const { bucket, path } = parsed;
+        const [manifest, files] = await Promise.allSettled([
+          downloadSkillFile(bucket, path, SKILL_MANIFEST_FILE).then(
+            readSkillManifest,
+          ),
+          listSkillFiles({ bucket, path, filePath: '', recursive: true }),
+        ]);
+
+        const content =
+          manifest.status === 'fulfilled' && manifest.value != null
+            ? manifest.value
+            : undefined;
+        const skill = [...skills, ...publicSkills].find(
+          (candidate) => candidate.url === item.id,
+        );
+        const overview =
+          files.status === 'fulfilled'
+            ? buildSkillOverview(skill, files.value.items, t)
+            : undefined;
+
+        if (content == null && overview == null) return undefined;
+        return {
+          ...(content != null ? { promptContent: { content } } : {}),
+          ...(overview != null ? { overview } : {}),
+        };
+      }
+
       try {
         const limitsPromise =
           item.type === CatalogEntityType.Model
@@ -389,7 +478,7 @@ const CatalogView: FC<Props> = ({
         return undefined;
       }
     },
-    [isAdmin, t, dialCoreExternalUrl],
+    [isAdmin, t, dialCoreExternalUrl, skills, publicSkills],
   );
 
   const getLevelStatus = useCallback(
@@ -691,18 +780,21 @@ const CatalogView: FC<Props> = ({
    * accepts prompts.
    */
   const isUnshareVisible = useCallback(
-    (item: CatalogItem) => item.type !== CatalogEntityType.Prompt,
+    (item: CatalogItem) =>
+      item.type !== CatalogEntityType.Prompt &&
+      item.type !== CatalogEntityType.Skill,
     [],
   );
 
   /*
    * `RevokeSharedAccessDto` carries the same `applications|toolsets|conversations`
-   * restriction as the discard DTO, so a prompt path is rejected with 400. The
-   * built-in rule would otherwise keep the action visible, since prompt items
-   * carry no `recipientsCount`.
+   * restriction as the discard DTO, so a prompt path is rejected with 400 —
+   * both by the revoke call and by the recipient-count lookup that gates it.
    */
   const isRevokeShareVisible = useCallback(
-    (item: CatalogItem) => item.type !== CatalogEntityType.Prompt,
+    (item: CatalogItem) =>
+      item.type !== CatalogEntityType.Prompt &&
+      item.type !== CatalogEntityType.Skill,
     [],
   );
 
@@ -724,6 +816,8 @@ const CatalogView: FC<Props> = ({
        * bucket-relative prompt path against.
        */
       if (item.type === CatalogEntityType.Prompt) return Boolean(item.isMyApp);
+      /* Skills are read-only here: no skill share/publish path exists yet. */
+      if (item.type === CatalogEntityType.Skill) return false;
       if (item.type === CatalogEntityType.Toolset) {
         return isToolsetsSharingEnabled;
       }
@@ -985,6 +1079,19 @@ const CatalogView: FC<Props> = ({
     [showErrorNotification, showSuccessNotification, t],
   );
 
+  /*
+   * Resolved per item when the details panel's Manage menu opens, rather than
+   * carried on the list items: the count only matters at the moment the owner
+   * is about to act on it, and a snapshot taken at list-fetch time would still
+   * offer "Revoke access (3)" right after those three grants were revoked.
+   * A failure resolves to `undefined`, which keeps the action reachable
+   * without a count instead of hiding the only way to revoke.
+   */
+  const handleFetchRecipientsCount = useCallback(async (item: CatalogItem) => {
+    const { recipientsCount } = await getShareRecipientsCount(item.id);
+    return recipientsCount;
+  }, []);
+
   const createOptions = useMemo<DropdownItem[]>(() => {
     const options: DropdownItem[] = [];
 
@@ -1097,6 +1204,7 @@ const CatalogView: FC<Props> = ({
       onUnshare={handleUnshare}
       isUnshareVisible={isUnshareVisible}
       onRevokeShare={handleRevokeShare}
+      onFetchRecipientsCount={handleFetchRecipientsCount}
       isRevokeShareVisible={isRevokeShareVisible}
       isPrimaryActionVisible={isPrimaryActionVisible}
       isPublishVisible={isPublishVisible}
@@ -1148,6 +1256,7 @@ const CatalogView: FC<Props> = ({
           [CatalogEntityType.Agent]: t(CatalogI18nKeys.TabApplications),
           [CatalogEntityType.Toolset]: t(CatalogI18nKeys.TabToolsets),
           [CatalogEntityType.Prompt]: t(CatalogI18nKeys.TabPrompts),
+          [CatalogEntityType.Skill]: t(CatalogI18nKeys.TabSkills),
         },
       }}
       detailsTexts={{

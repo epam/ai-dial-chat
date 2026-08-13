@@ -1,5 +1,9 @@
 # Spec: bulk-conversation-deletion-api
 
+## Purpose
+
+Endpoints for deleting selected conversations and for clearing the entire user bucket, with typed partial-failure results.
+
 ## Requirements
 
 ---

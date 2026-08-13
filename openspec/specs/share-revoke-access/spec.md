@@ -1,4 +1,10 @@
-## ADDED Requirements
+# share-revoke-access Specification
+
+## Purpose
+
+An owner takes back every recipient's access to a resource they own — a catalog entity (application or toolset) or a conversation — without deleting it. Covers the BFF revoke endpoint, the on-demand recipient-count lookup that gates the action, and the catalog details-panel surface that offers it.
+
+## Requirements
 
 ### Requirement: BFF revoke-shared-access endpoint
 
@@ -85,39 +91,46 @@ Observability: no new metrics. The endpoint is covered by the existing global `M
 - **WHEN** the call to DIAL Core times out or the connection fails
 - **THEN** the endpoint responds `503 Service Unavailable`
 
-### Requirement: List endpoints report how many users hold shared access
+### Requirement: `GET /api/v1/share/recipients` reports how many users hold shared access
 
-`DeploymentsListingService`, `ToolsetsListingService`, and `ConversationListingService` SHALL each issue a second `getSharedResources` call with `{ with: 'others', includeUserInfo: true }` alongside their existing `{ with: 'me' }` call, and map each returned resource's `sharedWith.length` onto a new optional `recipientsCount` field on `DeploymentItemDto`, `DialToolsetDto`, and `ConversationListItemDto`.
+`ShareController` SHALL expose `GET /api/v1/share/recipients?itemId=...`, throttled at 60 requests per minute (it fires whenever an owner opens a menu offering revoke), answering `ShareRecipientsResponseDto { itemId, recipientsCount }`.
 
-The two calls SHALL run in parallel (`Promise.all`) and SHALL be issued **once per list request**, never per item — one call returns the caller's whole shared-with-others set, which is then keyed by resource url. Both remain behind the existing 30-second per-user list caches.
+`GetShareRecipientsDto` SHALL validate `itemId` with the same allowlist as `RevokeSharedAccessDto` (`applications|toolsets|conversations` prefix, `IsValidFilePath`, `@MaxLength(2048)`): a resource revoke cannot act on has no count worth answering.
 
-The second call SHALL be best-effort, matching its `with: 'me'` sibling: a DIAL Core error or network failure SHALL be logged and leave `recipientsCount` absent rather than failing the list.
+`ShareService.getRecipientsCount` SHALL call `getSharedResources({ resourceTypes: [kind(itemId)], with: 'others', includeUserInfo: true })` and pick the one resource out of that set with `countRecipientsByUrl` + `resolveRecipientsCount(counts, itemId, decode(itemId))` — both encodings are tried because list ids and DIAL Core share urls differ in percent-encoding for some resource types. DIAL Core has no single-resource variant of this query.
 
-`recipientsCount` is three-valued to consumers — a positive number, `0`, or absent-meaning-unknown — and the two "no data" cases MUST NOT be conflated. DIAL Core omits resources nobody currently holds from a **successful** `with: 'others'` response, so a resource missing from a successful result SHALL yield `0`, not absent. Only a **failed** call SHALL yield absent. Conflating them makes every never-shared resource read as "unknown", which defeats the gating entirely. Enforced by the shared `resolveRecipientsCount(counts, ...urls)` helper, which takes `null` for the failure case and returns `0` for a successful miss.
+DIAL Core omits resources nobody currently holds from a **successful** response, so a resource missing from a successful result SHALL answer `0`. An upstream failure SHALL surface as `502`/`503` rather than as a count, leaving the caller to decide how to degrade — a fabricated `0` would silently remove the owner's only way to revoke.
 
 `ShareMetadata` entries are only produced for users who **accepted** an invitation, so `recipientsCount` counts accepted grants. An issued-but-unopened share link contributes nothing and reads as `0`.
 
-Shared helper: `countRecipientsByUrl` in `apps/chat-api/src/common/utils/resource-ownership.ts`, alongside the existing `splitResourcesByPermission`.
+**No count is carried on list items.** `DeploymentItemDto`, `DialToolsetDto`, and `ConversationListItemDto` SHALL NOT expose a `recipientsCount` field, and `DeploymentsListingService`, `ToolsetsListingService`, and `ConversationListingService` SHALL each issue exactly one `getSharedResources` call (`with: 'me'`, for ownership flags). A count taken at list-fetch time and cached for 30 seconds outlives the fact it describes — after a successful revoke the list still reported the pre-revoke recipients, so the Manage menu went on offering "Revoke access (3)" until a full page reload.
 
-#### Scenario: Count is mapped onto an owned item
+Shared helpers: `countRecipientsByUrl` and `resolveRecipientsCount` in `apps/chat-api/src/common/utils/resource-ownership.ts`.
 
-- **WHEN** the shared-with-others call returns `{ url: 'applications/BUCKET/my-app', sharedWith: [a, b] }`
-- **THEN** that deployment's `recipientsCount` is `2`
+#### Scenario: Count is read for the requested resource
 
-#### Scenario: One call per list request, not per item
-
-- **WHEN** a deployments list containing many items is requested
-- **THEN** `getSharedResources` is called exactly twice — once with `with: 'me'`, once with `with: 'others'` and `includeUserInfo: true` — both scoped to `APPLICATION`
+- **WHEN** the shared-with-others set contains `{ url: 'applications/BUCKET/my-app', sharedWith: [a, b] }`
+- **THEN** `GET /api/v1/share/recipients?itemId=applications/BUCKET/my-app` answers `{ itemId, recipientsCount: 2 }`
 
 #### Scenario: Resource absent from a successful response counts as zero
 
-- **WHEN** the `with: 'others'` call succeeds and does not mention an owned resource
-- **THEN** that item's `recipientsCount` is `0`, so the UI hides its revoke action
+- **WHEN** the upstream call succeeds and does not mention the requested resource
+- **THEN** the endpoint answers `recipientsCount: 0`, so the UI hides the revoke action
 
-#### Scenario: Upstream failure leaves the count unknown
+#### Scenario: Upstream failure is surfaced, not smoothed over
 
-- **WHEN** the `with: 'others'` call returns an error status
-- **THEN** the list still resolves, every item's `recipientsCount` is absent (not `0`), and a warning is logged
+- **WHEN** DIAL Core returns an error status or is unreachable
+- **THEN** the endpoint responds `502`/`503`, and no count is invented
+
+#### Scenario: Non-revocable resource is rejected
+
+- **WHEN** `itemId` names a prompt, a file, or a traversal path
+- **THEN** the endpoint responds `400` and DIAL Core is never called
+
+#### Scenario: List endpoints no longer pay for the count
+
+- **WHEN** a deployments list containing many items is requested
+- **THEN** `getSharedResources` is called exactly once, with `with: 'me'`, and no item carries a `recipientsCount`
 
 ### Requirement: Owner-side "Revoke access" action in the catalog details panel
 
@@ -130,9 +143,18 @@ The entry SHALL render after the owner-side Delete entry, use the label `texts.r
 
 Clicking it SHALL only request confirmation — it SHALL NOT call the host's `onRevokeShare` directly.
 
-Additionally, the entry SHALL be hidden when `item.recipientsCount === 0` — an action that could only be a no-op is noise. When `recipientsCount` is `undefined` (the host could not determine it, e.g. DIAL Core was unreachable) the entry SHALL remain visible, so a transient upstream failure never removes the owner's only way to revoke.
+Additionally, the entry SHALL be gated on a recipient count resolved **when the Manage menu opens**, via the host-supplied `onFetchRecipientsCount(item): Promise<number | undefined>`. `Header` SHALL call it from the dropdown's `onOpenChange`, and also from the trigger's `onMouseEnter`/`onFocus` so the lookup is usually settled before the click lands — at most once per displayed item, reset whenever `item.id` changes. It SHALL NOT be called for an item that could never offer the action (no `onRevokeShare`, `isMyApp !== true`, or `isRevokeShareVisible` returning `false`).
 
-When `recipientsCount` is a positive number the label SHALL come from `texts.revokeShareLabelWithCount(count)` (English default `` (count) => `Revoke access (${count})` ``), so the owner sees the blast radius before opening the confirmation; when it is `undefined` the plain `texts.revokeShareLabel` is used.
+Resolution states map to the entry as follows:
+
+- **in flight** — the entry is withheld, so a count never appears and then contradicts itself,
+- **`0`** — the entry stays hidden; an action that could only be a no-op is noise,
+- **positive number** — the entry is shown, labelled `texts.revokeShareLabelWithCount(count)` (English default `` (count) => `Revoke access (${count})` ``) so the owner sees the blast radius before confirming,
+- **`undefined` or a rejection** — the entry is shown with the plain `texts.revokeShareLabel`, so a transient upstream failure never removes the owner's only way to revoke.
+
+When the host supplies no `onFetchRecipientsCount`, the entry is offered for every owned item.
+
+Resolving on menu open, rather than reading a value carried on the item, is what keeps the entry honest after a revoke: the confirmation sub-view unmounts `Header`, so the next menu open asks again instead of replaying a pre-revoke count.
 
 #### Scenario: Owned item exposes the action
 
@@ -157,23 +179,41 @@ When `recipientsCount` is a positive number the label SHALL come from `texts.rev
 - **WHEN** the user activates "Revoke access"
 - **THEN** the confirmation sub-view opens and `onRevokeShare` has not been called
 
+#### Scenario: Count is requested on menu open, not on render
+
+- **GIVEN** an owned catalog item and a host-supplied `onFetchRecipientsCount`
+- **WHEN** the details panel renders
+- **THEN** `onFetchRecipientsCount` has not been called; it is called once the Manage menu is opened (or its trigger hovered or focused), and not a second time for the same item
+
 #### Scenario: Item nobody holds access to does not expose the action
 
-- **GIVEN** a catalog item with `isMyApp: true` and `recipientsCount: 0`
+- **GIVEN** an owned catalog item whose `onFetchRecipientsCount` resolves `0`
 - **WHEN** the Manage menu is opened
 - **THEN** no "Revoke access" entry is rendered
 
 #### Scenario: Known recipient count is shown in the label
 
-- **GIVEN** a catalog item with `isMyApp: true` and `recipientsCount: 3`
+- **GIVEN** an owned catalog item whose `onFetchRecipientsCount` resolves `3`
 - **WHEN** the Manage menu is opened
 - **THEN** the entry's label reads "Revoke access (3)"
 
-#### Scenario: Unknown recipient count keeps the action reachable
+#### Scenario: Failed lookup keeps the action reachable
 
-- **GIVEN** a catalog item with `isMyApp: true` and no `recipientsCount`
+- **GIVEN** an owned catalog item whose `onFetchRecipientsCount` rejects or resolves `undefined`
 - **WHEN** the Manage menu is opened
 - **THEN** the entry is rendered with the plain "Revoke access" label
+
+#### Scenario: Entry is withheld while the count is in flight
+
+- **GIVEN** an owned catalog item whose `onFetchRecipientsCount` has not settled
+- **WHEN** the Manage menu is opened
+- **THEN** no "Revoke access" entry is rendered yet
+
+#### Scenario: A revoked item stops offering the action without a reload
+
+- **GIVEN** an owner who has just confirmed "Revoke access (3)" successfully
+- **WHEN** the Manage menu is opened again
+- **THEN** the count is fetched again, now answers `0`, and no "Revoke access" entry is rendered
 
 ### Requirement: `CatalogView` wires revoke to the BFF endpoint
 
@@ -186,6 +226,8 @@ When `recipientsCount` is a positive number the label SHALL come from `texts.rev
 Unlike `handleUnshare`, it SHALL NOT refetch deployments or toolsets and SHALL NOT clear `selectedItemId`: revoking does not change what the owner can see, so neither list membership nor the current selection is affected.
 
 `CatalogView` SHALL pass the corresponding `texts` entries through to the catalog, alongside the existing `unshare*` entries.
+
+`CatalogView` SHALL also implement `onFetchRecipientsCount` as `handleFetchRecipientsCount`: call `getShareRecipientsCount(item.id)` and return its `recipientsCount`. A rejection SHALL propagate untouched — the details panel degrades to an uncounted, still-reachable entry, and a failed count is not something to interrupt the user with a notification about.
 
 #### Scenario: Successful revoke notifies and leaves the catalog untouched
 

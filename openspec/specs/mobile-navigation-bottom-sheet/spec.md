@@ -1,14 +1,20 @@
 # Mobile Navigation Bottom Sheet
 
+## Purpose
+
+The mobile navigation bottom sheet: its shell primitive, the generic stack navigator, and each page it can show.
+
 ## Overview
 
 On mobile viewports the hamburger button opens a multi-page bottom sheet anchored to the bottom of the screen. The sheet provides navigation items (Home, Catalog) and a Profile entry point that leads to user identity, theme selection, keyboard shortcut preference, and logout. Desktop layout and the `DialDropdown`-based `UserMenu` are unchanged.
 
 ---
 
-## Requirement: BottomSheetShell primitive (lib)
+## Requirements
 
-`BottomSheetShell` from `@epam/ai-dial-conversation-input` is the generic portal primitive used by this feature.
+### Requirement: BottomSheetShell primitive (lib)
+
+`BottomSheetShell` from `@epam/ai-dial-conversation-input` SHALL be the generic portal primitive used by this feature.
 
 ```ts
 interface BottomSheetShellProps {
@@ -26,11 +32,24 @@ interface BottomSheetShellProps {
 
 The component renders via `createPortal`, shows a semi-transparent backdrop, locks body scroll while open, closes on Escape and backdrop click, and renders an optional header (back button · centred title · close button) when `title` is provided.
 
+#### Scenario: An open sheet locks the page behind it
+- **WHEN** `BottomSheetShell` is rendered with `isOpen`
+- **THEN** it is portalled above the page with a semi-transparent backdrop and body scroll is locked until it closes
+
+#### Scenario: Escape and backdrop both dismiss
+- **WHEN** the user presses Escape or taps the backdrop
+- **THEN** `onClose` fires
+
+#### Scenario: The header appears only with a title
+- **WHEN** `title` is provided together with `onBack`
+- **THEN** the header renders the back button, the centred title, and the close button, each labelled by `backLabel` / `closeLabel`
+- **AND** omitting `title` renders no header, with the sheet named by its `aria-label`
+
 ---
 
-## Requirement: NavigableBottomSheet — generic stack navigator
+### Requirement: NavigableBottomSheet — generic stack navigator
 
-`NavigableBottomSheet` at `apps/chat/src/components/NavigableBottomSheet/NavigableBottomSheet.tsx` wraps `BottomSheetShell` and manages a `SheetPage[]` stack, exposing navigation to all descendants via `SheetNavigationContext`.
+`NavigableBottomSheet` at `apps/chat/src/components/NavigableBottomSheet/NavigableBottomSheet.tsx` SHALL wrap `BottomSheetShell` and manage a `SheetPage[]` stack, exposing navigation to all descendants via `SheetNavigationContext`.
 
 Interfaces at `apps/chat/src/models/sheet-navigation.ts`:
 
@@ -94,7 +113,7 @@ i18n keys: `navigation.back`, `navigation.close`.
 
 ---
 
-## Requirement: Hamburger button opens the sheet on mobile
+### Requirement: Hamburger button opens the sheet on mobile
 
 On mobile the hamburger button SHALL open `NavigableBottomSheet` (rendered in `Navigation.tsx`) with `NavPageContent` as its root child. `isNavOpen` state remains in `app.tsx`.
 
@@ -110,21 +129,29 @@ i18n keys: `navigation.menu` (root title), `navigation.mobileMenu` (hamburger ar
 
 ---
 
-## Requirement: NavPageContent
+### Requirement: NavPageContent
 
-`apps/chat/src/components/MobileNavBottomSheet/NavPageContent.tsx`
+The navigation root page SHALL live at `apps/chat/src/components/MobileNavBottomSheet/NavPageContent.tsx`.
 
-Props: `{ onLogoutRequest: () => void }`. Lists navigation items from `NAVIGATION_CONFIG` then a Profile row (`IconUser`, `IconChevronRight rtl:scale-x-[-1]`). Nav item tap: `close()` + `useNavigate`. Profile tap: `push({ title: t(NavigationI18nKeys.Profile), content: <ProfilePageContent onLogoutRequest={onLogoutRequest} /> })`.
+Props: `{ onLogoutRequest: () => void }`. It SHALL list navigation items from `NAVIGATION_CONFIG` followed by a Profile row (`IconUser`, `IconChevronRight rtl:scale-x-[-1]`). Nav item tap: `close()` + `useNavigate`. Profile tap: `push({ title: t(NavigationI18nKeys.Profile), content: <ProfilePageContent onLogoutRequest={onLogoutRequest} /> })`.
 
 i18n: `navigation.profile`
 
+#### Scenario: Tapping a navigation item closes the sheet and navigates
+- **WHEN** the user taps a row backed by `NAVIGATION_CONFIG`
+- **THEN** the sheet closes and the app navigates to that route
+
+#### Scenario: Tapping Profile pushes the profile page
+- **WHEN** the user taps the Profile row
+- **THEN** `ProfilePageContent` is pushed onto the stack under the Profile title, and the sheet stays open
+
 ---
 
-## Requirement: ProfilePageContent
+### Requirement: ProfilePageContent
 
-`apps/chat/src/components/MobileNavBottomSheet/ProfilePageContent.tsx`
+The profile page SHALL live at `apps/chat/src/components/MobileNavBottomSheet/ProfilePageContent.tsx`.
 
-Props: `{ onLogoutRequest: () => void }`. Uses `useUserProfile()` for identity data; `useTheme()` for `themes`.
+Props: `{ onLogoutRequest: () => void }`. It SHALL read identity data from `useUserProfile()` and available themes from `useTheme()`.
 
 Body:
 1. Avatar (40 × 40 px image or `AvatarInitials` fallback) + `DialEllipsisTooltip` display name.
@@ -143,19 +170,31 @@ Body:
 
 ---
 
-## Requirement: ThemePageContent
+### Requirement: ThemePageContent
 
-`apps/chat/src/components/MobileNavBottomSheet/ThemePageContent.tsx`
+The theme page SHALL live at `apps/chat/src/components/MobileNavBottomSheet/ThemePageContent.tsx`.
 
-Uses `useThemeOptions()` → `{ hasDark, hasLight, selectedTheme, setTheme }`. One row per available theme: `IconMoon` (Dark), `IconSun` (Light), `IconDeviceDesktop` (System, only when both dark and light available). Active selection shows `IconCheck` (`DIAL_ICON_SIZE.SM`). All other icons use `BASE_ICON_SIZE`. Tap: `setTheme(id)` then `pop()`.
+It SHALL read `{ hasDark, hasLight, selectedTheme, setTheme }` from `useThemeOptions()` and render one row per available theme: `IconMoon` (Dark), `IconSun` (Light), `IconDeviceDesktop` (System, only when both dark and light are available). Active selection shows `IconCheck` (`DIAL_ICON_SIZE.SM`). All other icons use `BASE_ICON_SIZE`. Tap: `setTheme(id)` then `pop()`.
+
+#### Scenario: Selecting a theme applies it and returns
+- **WHEN** the user taps a theme row
+- **THEN** `setTheme` is called with that theme and the sheet pops back to the profile page
+
+#### Scenario: System is offered only when both variants exist
+- **WHEN** only a dark theme is available
+- **THEN** no System row is rendered
 
 ---
 
-## Requirement: KeyboardPageContent
+### Requirement: KeyboardPageContent
 
-`apps/chat/src/components/MobileNavBottomSheet/KeyboardPageContent.tsx`
+The keyboard-shortcut page SHALL live at `apps/chat/src/components/MobileNavBottomSheet/KeyboardPageContent.tsx`.
 
-Uses `useKeyboardShortcutPreference()`. Two rows mirroring the desktop options; active shows `IconCheck` (`DIAL_ICON_SIZE.SM`). Tap: `setPreference(value)` then `pop()`.
+It SHALL read the current preference from `useKeyboardShortcutPreference()` and render two rows mirroring the desktop options; the active one shows `IconCheck` (`DIAL_ICON_SIZE.SM`). Tap: `setPreference(value)` then `pop()`.
+
+#### Scenario: Selecting a shortcut persists it and returns
+- **WHEN** the user taps the non-active shortcut row
+- **THEN** `setPreference` is called with that value and the sheet pops back to the profile page
 
 ---
 

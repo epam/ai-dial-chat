@@ -1,5 +1,9 @@
 # Spec: catalog-model-selector
 
+## Purpose
+
+The model selector rendered inside the catalog's conversation input, and the send gating it implies.
+
 ## Requirements
 
 ### Requirement: InputProps extended with model selector props

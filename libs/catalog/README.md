@@ -47,6 +47,10 @@ confirmation step and calls them only once the user confirms:
   // Owner-side: revokes every recipient's access to an `isMyApp` item.
   // The item stays in the owner's catalog, so the panel stays open.
   onRevokeShare={handleRevokeShare}
+  // Resolves the current recipient count when the Manage menu opens. `0`
+  // hides "Revoke access"; `undefined` or a rejection leaves it reachable
+  // without a count. Omit to offer it for every owned item.
+  onFetchRecipientsCount={fetchRecipientsCount}
   // Recipient-side: drops the caller's own access to a `sharedWithMe` item.
   // The item leaves the caller's catalog, so the panel closes.
   onUnshare={handleUnshare}
@@ -238,8 +242,9 @@ capability does not exist, without the lib knowing why. Both default to
 ```
 
 Each is combined (AND) with its built-in rule — `sharedWithMe`/`isMyApp` for
-unshare, `isMyApp`/`recipientsCount` for revoke — so a predicate can only ever
-narrow visibility, never widen it.
+unshare, `isMyApp` plus the recipient count resolved by
+`onFetchRecipientsCount` for revoke — so a predicate can only ever narrow
+visibility, never widen it.
 
 ## Types
 

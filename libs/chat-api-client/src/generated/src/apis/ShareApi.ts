@@ -21,6 +21,7 @@ import type {
   RevokeSharedAccessDto,
   RevokeSharedAccessResponseDto,
   ShareLinkResponseDto,
+  ShareRecipientsResponseDto,
 } from '../models/index';
 
 export interface AcceptInvitationRequest {
@@ -33,6 +34,10 @@ export interface CreateShareLinkRequest {
 
 export interface DiscardSharedCatalogItemRequest {
   discardSharedCatalogItemDto: DiscardSharedCatalogItemDto;
+}
+
+export interface GetShareRecipientsCountRequest {
+  itemId: string;
 }
 
 export interface RevokeSharedAccessRequest {
@@ -196,6 +201,59 @@ export class ShareApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<DiscardSharedCatalogItemResponseDto> {
     const response = await this.discardSharedCatalogItemRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns how many users currently hold shared access to a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core\'s getSharedResources operation. Intended to be called when an owner opens the menu offering \"Revoke access\", so the count is never stale. Counts accepted invitations only — an issued but unopened share link is not counted.
+   * Count current recipients of an owned resource
+   */
+  async getShareRecipientsCountRaw(
+    requestParameters: GetShareRecipientsCountRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ShareRecipientsResponseDto>> {
+    if (requestParameters['itemId'] == null) {
+      throw new runtime.RequiredError(
+        'itemId',
+        'Required parameter "itemId" was null or undefined when calling getShareRecipientsCount().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['itemId'] != null) {
+      queryParameters['itemId'] = requestParameters['itemId'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/share/recipients`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ShareRecipientsResponseDto>(response);
+  }
+
+  /**
+   * Returns how many users currently hold shared access to a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core\'s getSharedResources operation. Intended to be called when an owner opens the menu offering \"Revoke access\", so the count is never stale. Counts accepted invitations only — an issued but unopened share link is not counted.
+   * Count current recipients of an owned resource
+   */
+  async getShareRecipientsCount(
+    requestParameters: GetShareRecipientsCountRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ShareRecipientsResponseDto> {
+    const response = await this.getShareRecipientsCountRaw(
       requestParameters,
       initOverrides,
     );

@@ -1,6 +1,10 @@
 # Spec: auth-provider-env-config
 
-## ADDED Requirements
+## Purpose
+
+Per-provider environment-variable configuration of the fixed set of auth providers, including fail-fast boot validation and header-token authentication.
+
+## Requirements
 
 ### Requirement: Fixed, hardcoded provider ids
 

@@ -1,3 +1,4 @@
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -205,5 +206,47 @@ describe('UserMenu', () => {
     fireEvent.click(screen.getByRole('button'));
 
     expect(screen.queryByText(SettingsI18nKeys.KeyboardShortcuts)).toBeNull();
+  });
+
+  it('hides the keyboard-shortcuts settings item when hide-keyboard-shortcuts is enabled', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.HideKeyboardShortcuts,
+    );
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: mockUser,
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter>
+        <UserMenu />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole('button'));
+
+    expect(screen.queryByText(SettingsI18nKeys.KeyboardShortcuts)).toBeNull();
+  });
+
+  it('keeps the language settings item when only hide-keyboard-shortcuts is enabled', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.HideKeyboardShortcuts,
+    );
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: mockUser,
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter>
+        <UserMenu />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole('button'));
+
+    expect(screen.getByText(SettingsI18nKeys.Language)).toBeTruthy();
   });
 });

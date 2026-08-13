@@ -1,5 +1,9 @@
 # Spec: catalog-favorites-persistence
 
+## Purpose
+
+Persisting a user's catalog favorites and wiring the toggle through `CatalogView`.
+
 ## Requirements
 
 ### Requirement: useFavoriteApplications hook loads and persists favorites
@@ -86,9 +90,9 @@ RTL impact: none.
 
 ### Requirement: UpdateInstalledDto accepts any non-whitespace deployment ID
 
-See also: `user-config-deployment-management/spec.md` (the DTO and endpoint are defined there; this requirement records the constraint change that unblocked catalog favorites).
-
 `UpdateInstalledDto.id` in `apps/chat-api/src/user-config/dto/update-installed.dto.ts` SHALL be validated with `@Matches(/^\S+$/)`. Real deployment IDs can contain `:` and other characters outside the previous `/^[\w\-./@]+$/` allowlist (e.g. `anthropic.claude-opus-4:0`). The only structural constraint on a deployment ID is that it contains no whitespace.
+
+See also: `user-config-deployment-management/spec.md` — the DTO and endpoint are defined there; this requirement records the constraint change that unblocked catalog favorites.
 
 #### Scenario: ID with colon is accepted
 

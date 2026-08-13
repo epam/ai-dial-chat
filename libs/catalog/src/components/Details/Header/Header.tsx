@@ -20,13 +20,22 @@ import {
   IconUserOff,
   IconWorldShare,
 } from '@tabler/icons-react';
-import { FC, useCallback, useMemo, type ReactNode } from 'react';
+import {
+  FC,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
 import type {
   ItemDetailsStyles,
   ItemDetailsTexts,
 } from '../../../models/item-details-props';
 import { CatalogEntityType } from '../../../types/entity-type';
+import { RecipientsCountStatus } from '../../../types/recipients-count';
 import {
   CredentialsUiState,
   ToolsetAuthenticationType,
@@ -65,7 +74,9 @@ interface HeaderProps {
   isUnshareVisible?: (item: CatalogItem) => boolean;
   /** Called when the owner-side "Revoke access" action is clicked for an item the current user owns. The details panel owns the confirmation step. */
   onRevokeShare?: (item: CatalogItem) => void;
-  /** Additional caller-supplied rule for whether "Revoke access" is shown, combined (AND) with the built-in `isMyApp`/`recipientsCount` rule. Defaults to `true` when absent. */
+  /** Resolves how many users currently hold shared access to an owned item, called when the Manage menu is opened or focused. `0` hides "Revoke access"; `undefined` or a rejection leaves it reachable without a count. */
+  onFetchRecipientsCount?: (item: CatalogItem) => Promise<number | undefined>;
+  /** Additional caller-supplied rule for whether "Revoke access" is shown, combined (AND) with the built-in `isMyApp` rule and the recipient count. Defaults to `true` when absent. */
   isRevokeShareVisible?: (item: CatalogItem) => boolean;
   onLogin?: (
     item: CatalogItem,
@@ -109,6 +120,7 @@ export const Header: FC<HeaderProps> = ({
   onUnshare,
   isUnshareVisible,
   onRevokeShare,
+  onFetchRecipientsCount,
   isRevokeShareVisible,
   onLogin,
   onLogout,
@@ -154,6 +166,68 @@ export const Header: FC<HeaderProps> = ({
     onRevokeShare?.(item);
   }, [item, onRevokeShare]);
 
+  const [recipientsCountStatus, setRecipientsCountStatus] = useState(
+    RecipientsCountStatus.Idle,
+  );
+  const [recipientsCount, setRecipientsCount] = useState<number | undefined>(
+    undefined,
+  );
+  /* The item whose lookup has already been started, so hovering and then
+   * opening the menu does not issue the same request twice, and a response
+   * that arrives after the panel moved on is discarded. */
+  const requestedItemIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    requestedItemIdRef.current = null;
+    setRecipientsCountStatus(RecipientsCountStatus.Idle);
+    setRecipientsCount(undefined);
+  }, [item.id]);
+
+  const requestRecipientsCount = useCallback(() => {
+    if (!onFetchRecipientsCount || requestedItemIdRef.current === item.id) {
+      return;
+    }
+    /* Nothing to gate: an item that could never offer the action needs no
+     * count, so no request is made for one. */
+    if (
+      !onRevokeShare ||
+      item.isMyApp !== true ||
+      isRevokeShareVisible?.(item) === false
+    ) {
+      return;
+    }
+    const requestedItemId = item.id;
+    requestedItemIdRef.current = requestedItemId;
+    setRecipientsCountStatus(RecipientsCountStatus.Loading);
+
+    const resolve = async () => {
+      try {
+        const count = await onFetchRecipientsCount(item);
+        if (requestedItemIdRef.current !== requestedItemId) return;
+        setRecipientsCount(count);
+        setRecipientsCountStatus(
+          count == null
+            ? RecipientsCountStatus.Unknown
+            : RecipientsCountStatus.Resolved,
+        );
+      } catch {
+        /* An unresolved count must not remove the only way to revoke, so the
+         * action stays reachable — just without a number. */
+        if (requestedItemIdRef.current !== requestedItemId) return;
+        setRecipientsCount(undefined);
+        setRecipientsCountStatus(RecipientsCountStatus.Unknown);
+      }
+    };
+    void resolve();
+  }, [item, onFetchRecipientsCount, onRevokeShare, isRevokeShareVisible]);
+
+  const handleManageOpenChange = useCallback(
+    (isOpen: boolean) => {
+      if (isOpen) requestRecipientsCount();
+    },
+    [requestRecipientsCount],
+  );
+
   const shouldShowPrimaryAction =
     texts?.hasPrimaryAction !== false &&
     (isPrimaryActionVisible?.(item) ??
@@ -187,15 +261,22 @@ export const Header: FC<HeaderProps> = ({
    * The owner-side counterpart: revoking removes *other people's* access to
    * an item the caller owns, so it renders alongside Delete and never with
    * "Remove from My List". It also stays hidden while nobody holds access —
-   * an action that would be a no-op is noise. `undefined` (host could not
-   * determine the count) keeps the action visible rather than silently
-   * removing the only way to revoke.
+   * an action that would be a no-op is noise.
+   *
+   * The count is resolved when this menu opens rather than carried on the
+   * item, so it is never a stale snapshot from a list fetch (revoking once
+   * would otherwise leave the action offering to revoke again). Until it
+   * settles the entry is withheld; a lookup that cannot produce a number
+   * still shows it, so a transient failure never removes the only way to
+   * revoke.
    */
-  const recipientsCount = item.recipientsCount;
   const shouldShowRevokeShareAction =
     !!onRevokeShare &&
     item.isMyApp === true &&
-    (recipientsCount == null || recipientsCount > 0) &&
+    (!onFetchRecipientsCount ||
+      recipientsCountStatus === RecipientsCountStatus.Unknown ||
+      (recipientsCountStatus === RecipientsCountStatus.Resolved &&
+        (recipientsCount ?? 0) > 0)) &&
     (isRevokeShareVisible?.(item) ?? true);
 
   const manageItems = useMemo<DropdownItem[]>(() => {
@@ -392,11 +473,17 @@ export const Header: FC<HeaderProps> = ({
             items={manageItems}
             placement="bottom-end"
             matchReferenceWidth={false}
+            onOpenChange={handleManageOpenChange}
           >
+            {/* Hover and focus start the recipient-count lookup before the
+             * click lands, so the "Revoke access" entry is usually already
+             * settled by the time the menu opens. */}
             <NeutralIconButton
               icon={<IconDots size={DIAL_ICON_SIZE.MD} aria-hidden />}
               aria-label={texts?.manageActionLabel ?? 'Manage'}
               aria-haspopup="menu"
+              onMouseEnter={requestRecipientsCount}
+              onFocus={requestRecipientsCount}
             />
           </Dropdown>
         )}

@@ -1,4 +1,10 @@
-## ADDED Requirements
+# catalog-publish-flow Specification
+
+## Purpose
+
+Publishing a catalog entity: folder-tree destination picking, inline folder creation, access rules, and submission against real backend data.
+
+## Requirements
 
 ### Requirement: Folder selection uses the ui-kit folder tree
 The catalog publish panel SHALL present the destination-folder picker using ui-kit's `DialFoldersTree` component (`showFiles={false}`, no context menu) rendered inside the shared `PublishFoldersTree` wrapper (exported from `@epam/ai-dial-publish-panel`), instead of the bespoke `PublishFolderPicker` tree. Selection SHALL remain single-folder: selecting a new folder replaces the prior selection.

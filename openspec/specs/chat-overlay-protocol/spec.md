@@ -1,4 +1,10 @@
-## ADDED Requirements
+# chat-overlay-protocol Specification
+
+## Purpose
+
+The pure postMessage protocol types in `chat-shared`: message envelopes, handshake sequencing, request/response matching, events, and origin validation.
+
+## Requirements
 
 ### Requirement: Protocol types are pure and live in libs/chat-shared
 
@@ -270,18 +276,18 @@ The library SHALL remove its `window` `message` listener and reject/clear all pe
 - **AND** it receives `RENAME_CONVERSATION` from `https://other.example.com`
 - **THEN** the app does not execute the request and sends no response for its `requestId`
 
-### Requirement: OverlayFeature enum covers the 35 transferable UI-section toggle keys
+### Requirement: OverlayFeature enum covers the 39 transferable UI-section toggle keys
 
-`libs/chat-overlay/src/protocol/overlay-protocol.ts`'s `OverlayFeature` enum SHALL have exactly 35 members, covering the groups: applications (`code-apps`, `custom-applications`, `hide-custom-app-creation`, `custom-apps`), chat input (`disabled-send`, `skip-focus-chat-input-onload`), conversation functions (`dislike-comment`, `input-files`, `likes`, `live-chat-interaction`), conversation header (`disallow-change-agent`, `hide-new-conversation`), empty chat (`empty-chat-settings`, `hide-empty-chat-change-agent`), layout (`attachments-manager`, `conversations-panel-toggle`, `conversations-section`, `header`, `showConversationsSectionByDefault`), catalog (`catalog`, `catalog-hide-my-apps`, `catalog-table-view`), file manager (`file-manager`), message editing (`hide-delete-user-message`, `hide-edit-user-message`, `hide-regenerate-assistant-message`), publishing (`conversations-publishing`), sharing (`applications-sharing`, `conversations-sharing`, `toolsets-sharing`), toolsets (`toolsets`), prompts (`prompts`), user settings (`hide-user-menu`, `hide-user-settings`), and voice input (`voice-input`). This module SHALL remain import-free (no imports from `apps/*` or app-owned code), consistent with its existing "pure types only" requirement.
+`libs/chat-overlay/src/protocol/overlay-protocol.ts`'s `OverlayFeature` enum SHALL have exactly 39 members, covering the groups: applications (`code-apps`, `custom-applications`, `hide-custom-app-creation`, `custom-apps`), chat input (`disabled-send`, `skip-focus-chat-input-onload`), conversation functions (`dislike-comment`, `input-files`, `likes`, `live-chat-interaction`), conversation header (`disallow-change-agent`, `hide-change-agent`, `hide-new-conversation`), empty chat (`empty-chat-settings`, `hide-empty-chat-change-agent`), layout (`attachments-manager`, `conversations-panel-toggle`, `conversations-section`, `header`, `showConversationsSectionByDefault`, `hide-conversations-filter`), catalog (`catalog`, `catalog-hide-my-apps`, `catalog-table-view`), file manager (`file-manager`), message editing (`hide-delete-user-message`, `hide-edit-user-message`, `hide-regenerate-assistant-message`), publishing (`conversations-publishing`), sharing (`applications-sharing`, `conversations-sharing`, `toolsets-sharing`), toolsets (`toolsets`), prompts (`prompts`), skills (`skills`), user settings (`hide-user-menu`, `hide-user-settings`, `hide-keyboard-shortcuts`), and voice input (`voice-input`). This module SHALL remain import-free (no imports from `apps/*` or app-owned code), consistent with its existing "pure types only" requirement.
 
 `apps/chat-api`'s `KNOWN_UI_FEATURES` SHALL mirror this membership one-to-one. It is duplicated rather than imported so the Node-only service stays independent of the browser-facing overlay package, and it SHALL be updated in the same change as any addition, removal, or rename here — a key present in only one of the two is silently unusable through `ENABLED_UI_FEATURES`.
 
 **Feature flag:** N/A — this is the enum definition itself, not a gated feature. This repo has no `ENABLED_FEATURES`/`ENABLED_FEATURES_ROLES` mechanism to gate it behind.
 
-#### Scenario: OverlayFeature has exactly 35 members
+#### Scenario: OverlayFeature has exactly 39 members
 
 - **WHEN** `Object.values(OverlayFeature)` is inspected
-- **THEN** it has exactly 35 unique string values, including `'voice-input'`, `'header'`, `'likes'`, `'hide-new-conversation'`, `'live-chat-interaction'`, `'prompts'`, and `'file-manager'`
+- **THEN** it has exactly 39 unique string values, including `'voice-input'`, `'header'`, `'likes'`, `'hide-new-conversation'`, `'live-chat-interaction'`, `'prompts'`, `'skills'`, `'file-manager'`, `'hide-change-agent'`, `'hide-conversations-filter'`, and `'hide-keyboard-shortcuts'`
 
 #### Scenario: The renamed marketplace keys are not in the enum
 

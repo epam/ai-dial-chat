@@ -1,3 +1,9 @@
+# message-annotations Specification
+
+## Purpose
+
+Annotation types, delta accumulation during streaming, and the filtering `useAnnotations` applies.
+
 ## Requirements
 
 ---

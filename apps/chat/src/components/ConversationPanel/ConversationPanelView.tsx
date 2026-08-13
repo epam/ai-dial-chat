@@ -58,6 +58,7 @@ import { useLanguage } from '../../hooks/language/useLanguage';
 import { useConversationExport } from '../../hooks/useConversationExport';
 import { useConversationImport } from '../../hooks/useConversationImport';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
+import { useShareRecipientsCount } from '../../hooks/useShareRecipientsCount/useShareRecipientsCount';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import {
@@ -70,6 +71,7 @@ import {
   NotifiableEntity,
 } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
+import { RecipientsCountStatus } from '../../types/share-recipients';
 import {
   conversationIdsMatch,
   toPanelConversationId,
@@ -138,6 +140,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   );
   const isConversationsPublishingEnabled = useUiFeature(
     OverlayFeature.ConversationsPublishing,
+  );
+  const isConversationsFilterHidden = useUiFeature(
+    OverlayFeature.HideConversationsFilter,
   );
   const {
     jobs: exportJobs,
@@ -228,12 +233,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   } | null>(null);
   const publishReturnFocusRef = useRef<HTMLButtonElement | null>(null);
 
-  const handleActionMenuOpen = useCallback(
-    (_item: ConversationItem, trigger: HTMLButtonElement) => {
-      publishReturnFocusRef.current = trigger;
-    },
-    [],
-  );
+  const {
+    requestRecipientsCount,
+    getRecipientsCount,
+    invalidateRecipientsCount,
+  } = useShareRecipientsCount();
 
   const handleExportAll = useCallback(() => {
     void exportAll();
@@ -348,6 +352,40 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [panelToContextId, conversations, pinConversation],
   );
 
+  /*
+   * The row's recipient count is fetched here rather than carried on the list
+   * items: it only matters at the moment the owner is about to act on it, and a
+   * snapshot from the list fetch would still offer "Revoke access (3)" right
+   * after those three grants were revoked.
+   */
+  const handleActionMenuOpen = useCallback(
+    (item: ConversationItem, trigger: HTMLButtonElement) => {
+      publishReturnFocusRef.current = trigger;
+      if (!isConversationsSharingEnabled) return;
+
+      const contextId = panelToContextId.get(item.id);
+      if (!contextId) return;
+
+      /* Only an owned, writable row can offer revoking, so only those need a
+       * count. */
+      const rawItem = items.find((c) => c.id === contextId);
+      if (
+        rawItem?.isReadonly ||
+        rawItem?.sharedWithMe ||
+        rawItem?.publishedWithMe
+      ) {
+        return;
+      }
+      requestRecipientsCount(contextId);
+    },
+    [
+      panelToContextId,
+      items,
+      isConversationsSharingEnabled,
+      requestRecipientsCount,
+    ],
+  );
+
   const getActions = useCallback(
     (panelItem: ConversationItem): DropdownItem[] => {
       const contextId = panelToContextId.get(panelItem.id);
@@ -358,6 +396,12 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         rawItem?.isReadonly ||
         rawItem?.sharedWithMe ||
         rawItem?.publishedWithMe;
+
+      const recipients = getRecipientsCount(contextId);
+      const isRevokeVisible =
+        recipients.status === RecipientsCountStatus.Unknown ||
+        (recipients.status === RecipientsCountStatus.Resolved &&
+          (recipients.count ?? 0) > 0);
 
       const pinAction: DropdownItem = {
         key: 'pin',
@@ -507,21 +551,23 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         /*
          * Revoking cuts off every recipient of an owned conversation. It rides
          * the same feature flag as Share: with sharing disabled there is no way
-         * to grant access, so offering to revoke it would be incoherent. It is
-         * hidden again once nobody holds access (`recipientsCount === 0`); an
-         * absent count means the backend could not determine it, and the action
-         * stays visible rather than becoming unreachable.
+         * to grant access, so offering to revoke it would be incoherent.
+         *
+         * The recipient count is requested when this menu opens, so it is never
+         * a stale list snapshot. The entry is withheld until the lookup settles
+         * and stays hidden once nobody holds access; a lookup that could not
+         * produce a number still shows it, so a transient failure never removes
+         * the only way to revoke.
          */
-        ...(isConversationsSharingEnabled &&
-        (rawItem?.recipientsCount == null || rawItem.recipientsCount > 0)
+        ...(isConversationsSharingEnabled && isRevokeVisible
           ? [
               {
                 key: 'revoke-access',
                 label:
-                  rawItem?.recipientsCount == null
+                  recipients.count == null
                     ? t(ButtonsI18nKeys.RevokeAccess)
                     : t(ButtonsI18nKeys.RevokeAccessWithCount, {
-                        count: rawItem.recipientsCount,
+                        count: recipients.count,
                       }),
                 icon: (
                   <IconUserOff
@@ -556,6 +602,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       notifyOperationSuccess,
       showErrorNotification,
       exportSingle,
+      getRecipientsCount,
     ],
   );
 
@@ -706,6 +753,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       return;
     }
 
+    /* Nobody holds access any more, so the cached count is spent: dropping it
+     * makes the next menu open re-ask instead of offering to revoke again. */
+    invalidateRecipientsCount(idToRevoke);
+
     try {
       await refreshConversations();
     } catch {
@@ -725,6 +776,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     pendingRevokeId,
     pendingRevokeTitle,
     refreshConversations,
+    invalidateRecipientsCount,
     showSuccessNotification,
     t,
   ]);
@@ -794,6 +846,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           activeConversationId={panelActiveConversationId}
           activeFilter={requestedFilter}
           onActiveFilterChange={handleActiveFilterChange}
+          isFilterTabsHidden={isConversationsFilterHidden}
           labels={{
             title: t(ConversationPanelI18nKeys.Title),
             emptyLabel: t(ConversationPanelI18nKeys.Empty),

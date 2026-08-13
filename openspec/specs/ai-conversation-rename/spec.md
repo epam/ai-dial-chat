@@ -1,3 +1,9 @@
+# ai-conversation-rename Specification
+
+## Purpose
+
+LLM-generated conversation titles: a synchronous generate-title endpoint and the AI rename control in the rename modal.
+
 ## Requirements
 
 ### Requirement: Generate-title endpoint

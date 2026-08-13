@@ -51,6 +51,17 @@ import { Overview } from './TabsContent/Overview';
 import { Pricing } from './TabsContent/Pricing';
 import { Tools } from './TabsContent/Tools/Tools';
 
+/*
+ * Entity types that lead with their body instead of a description. A prompt's
+ * content already carries its description, so an About tab would only repeat
+ * it; a skill has no description at all in its metadata, so an About tab would
+ * always render empty. Both open on Content, followed by Overview.
+ */
+const CONTENT_FIRST_ENTITY_TYPES = new Set<CatalogEntityType>([
+  CatalogEntityType.Prompt,
+  CatalogEntityType.Skill,
+]);
+
 const NO_OP_PUBLISH = async () => undefined;
 const EMPTY_PUBLISH_FOLDERS: PublishFolderNode[] = [];
 const EMPTY_RULE_SOURCE_OPTIONS: string[] = [];
@@ -135,6 +146,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onUnshare,
   isUnshareVisible,
   onRevokeShare,
+  onFetchRecipientsCount,
   isRevokeShareVisible,
   onLogin,
   onLogout,
@@ -381,23 +393,19 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
   const tabs = useMemo(() => {
     const result: { id: string; label: string }[] = [];
-    /*
-     * A prompt leads with its body: the Content tab is first and already
-     * carries the description, so an About tab would only repeat it. Prompts
-     * therefore show Content then Overview, and nothing else.
-     */
-    const isPrompt = item.type === CatalogEntityType.Prompt;
-    if (!isPrompt) {
+    const isContentFirst = CONTENT_FIRST_ENTITY_TYPES.has(item.type);
+    if (!isContentFirst) {
       result.push({
         id: CatalogDetailsTab.About,
         label: texts?.tabAboutLabel ?? 'About',
       });
     }
     /*
-     * A prompt keeps its Content tab even before a body arrives (or when it
-     * has none), so the tab it opens on never shifts as details resolve.
+     * A content-first entity keeps its Content tab even before a body arrives
+     * (or when it has none), so the tab it opens on never shifts as details
+     * resolve.
      */
-    if (isPrompt || item.details?.promptContent != null) {
+    if (isContentFirst || item.details?.promptContent != null) {
       result.push({
         id: CatalogDetailsTab.Content,
         label: texts?.tabContentLabel ?? 'Details',
@@ -723,6 +731,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onRevokeShare={
                   onRevokeShare ? handleRequestRevokeShare : undefined
                 }
+                onFetchRecipientsCount={onFetchRecipientsCount}
                 isRevokeShareVisible={isRevokeShareVisible}
                 onLogin={onLogin}
                 onLogout={onLogout}

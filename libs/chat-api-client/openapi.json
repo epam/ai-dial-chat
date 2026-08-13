@@ -846,6 +846,35 @@
         "tags": ["user-config"]
       }
     },
+    "/api/v1/user-config/skills": {
+      "patch": {
+        "operationId": "updateInstalledSkill",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInstalledSkillDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Skill favorite state updated"
+          },
+          "400": {
+            "description": "Missing or invalid body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "summary": "Add or remove a skill from favorites",
+        "tags": ["user-config"]
+      }
+    },
     "/api/v1/user-config/deployments/selected": {
       "patch": {
         "operationId": "updateSelectedDeployment",
@@ -4218,6 +4247,53 @@
         "tags": ["share"]
       }
     },
+    "/api/v1/share/recipients": {
+      "get": {
+        "description": "Returns how many users currently hold shared access to a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core's getSharedResources operation. Intended to be called when an owner opens the menu offering \"Revoke access\", so the count is never stale. Counts accepted invitations only — an issued but unopened share link is not counted.",
+        "operationId": "getShareRecipientsCount",
+        "parameters": [
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "query",
+            "description": "Identifier (DIAL Core resource path) of the owned catalog item or conversation to count current recipients for.",
+            "schema": {
+              "example": "applications/owner-bucket/my-app",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recipient count resolved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareRecipientsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid itemId"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Count current recipients of an owned resource",
+        "tags": ["share"]
+      }
+    },
     "/api/v1/share/revoke": {
       "post": {
         "description": "Revokes every outstanding share grant on a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core's revokeSharedResources operation. Affects all recipients at once — DIAL Core cannot target a single recipient. Discarding only the caller's own access to a resource shared with them is a separate operation.",
@@ -6621,11 +6697,6 @@
             "type": "boolean",
             "description": "True when this deployment is shared with the current user (READ or WRITE) and not owned by them"
           },
-          "recipientsCount": {
-            "type": "number",
-            "description": "How many other users currently hold shared access to this deployment, for deployments the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.",
-            "example": 3
-          },
           "applicationFolder": {
             "type": "string",
             "description": "Parent folder path for application-type deployments (absent for root-level or non-application items)"
@@ -7194,6 +7265,20 @@
         },
         "required": ["installed"]
       },
+      "SkillsConfigDto": {
+        "type": "object",
+        "properties": {
+          "installed": {
+            "description": "Favorited skill resource URLs.",
+            "example": ["skills/my-bucket/analysis/revenue-skill"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["installed"]
+      },
       "UserConfigDto": {
         "type": "object",
         "properties": {
@@ -7213,6 +7298,9 @@
           },
           "prompts": {
             "$ref": "#/components/schemas/PromptsConfigDto"
+          },
+          "skills": {
+            "$ref": "#/components/schemas/SkillsConfigDto"
           }
         },
         "required": [
@@ -7220,7 +7308,8 @@
           "conversations",
           "toolsets",
           "deployments",
-          "prompts"
+          "prompts",
+          "skills"
         ]
       },
       "UpdatePinsDto": {
@@ -7267,6 +7356,23 @@
           "isInstalled": {
             "type": "boolean",
             "description": "Pass `true` to favorite the prompt, `false` to unfavorite it.",
+            "example": true
+          }
+        },
+        "required": ["id", "isInstalled"]
+      },
+      "UpdateInstalledSkillDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Full skill resource URL.",
+            "example": "skills/my-bucket/analysis/revenue-skill",
+            "maxLength": 2048
+          },
+          "isInstalled": {
+            "type": "boolean",
+            "description": "Pass `true` to favorite the skill, `false` to unfavorite it.",
             "example": true
           }
         },
@@ -7875,11 +7981,6 @@
           "sharedWithMe": {
             "type": "boolean",
             "description": "True when this toolset is shared with the current user (READ or WRITE) and not owned by them"
-          },
-          "recipientsCount": {
-            "type": "number",
-            "description": "How many other users currently hold shared access to this toolset, for toolsets the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.",
-            "example": 3
           }
         },
         "required": ["id", "toolset"]
@@ -8612,11 +8713,6 @@
             "type": "boolean",
             "description": "True when this conversation was published to the organisation and is visible to the current user.",
             "example": false
-          },
-          "recipientsCount": {
-            "type": "number",
-            "description": "How many other users currently hold shared access to this conversation, for conversations the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.",
-            "example": 3
           },
           "isPinned": {
             "type": "boolean",
@@ -10151,6 +10247,22 @@
         },
         "required": ["success"]
       },
+      "ShareRecipientsResponseDto": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "description": "The resource the count belongs to, echoed from the request.",
+            "example": "applications/owner-bucket/my-app"
+          },
+          "recipientsCount": {
+            "type": "number",
+            "description": "How many users currently hold shared access to the resource. Counts accepted invitations only — an issued but unopened share link is not counted, so `0` means \"nobody holds access\", not \"never shared\".",
+            "example": 3
+          }
+        },
+        "required": ["itemId", "recipientsCount"]
+      },
       "RevokeSharedAccessDto": {
         "type": "object",
         "properties": {
@@ -10775,11 +10887,7 @@
             }
           }
         },
-        "required": [
-          "authorizationEndpoint",
-          "clientId",
-          "scopes"
-        ]
+        "required": ["authorizationEndpoint", "clientId", "scopes"]
       },
       "GetOfflineCredentialsResponseDto": {
         "type": "object",

@@ -312,6 +312,34 @@ describe('ConversationPanel', () => {
     expect(onNewChat).toHaveBeenCalledTimes(1);
   });
 
+  it('renders the filter tabs by default', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
+    expect(screen.getByText('All')).toBeTruthy();
+  });
+
+  it('does not render the filter tabs when isFilterTabsHidden is true', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={items}
+        isFilterTabsHidden
+      />,
+    );
+    expect(screen.queryByText('All')).toBeNull();
+  });
+
+  it('still lists every conversation group when the filter tabs are hidden', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={items}
+        isFilterTabsHidden
+      />,
+    );
+    expect(screen.getByText('Pinned chat')).toBeTruthy();
+    expect(screen.getByText('First chat')).toBeTruthy();
+  });
+
   it('puts isPinned items in Pinned group and others in My chats group', () => {
     render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
     expect(screen.getByText('Pinned')).toBeTruthy();

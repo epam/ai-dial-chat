@@ -16,10 +16,7 @@ export interface MetadataResult {
 export interface SharedResourcesResult {
   data?: {
     resources?: Array<
-      Pick<MetadataItem, 'nodeType' | 'name' | 'url' | 'parentPath'> & {
-        /** Users currently holding access. Populated only when the request sets `includeUserInfo: true`. */
-        sharedWith?: unknown[];
-      }
+      Pick<MetadataItem, 'nodeType' | 'name' | 'url' | 'parentPath'>
     >;
   };
   error?: unknown;

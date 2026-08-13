@@ -4,7 +4,7 @@
 
 ### Requirement: Prompt listings drop `.dial_folder` markers
 
-DIAL Core writes a `.dial_folder` marker file to keep an otherwise-empty folder alive. It is a storage artefact, not a prompt, so reading it as one yields a broken entry in every listing.
+Prompt listings SHALL exclude `.dial_folder` marker paths. DIAL Core writes a `.dial_folder` marker file to keep an otherwise-empty folder alive; it is a storage artefact, not a prompt, so reading it as one yields a broken entry in every listing.
 
 `isHiddenPromptPath` (`apps/chat-api/src/prompts/utils/prompt-mapper.util.ts`) SHALL report whether any segment of a path equals `HIDDEN_FILE` (`.dial_folder`). The check MUST be segment-exact, not a substring test, so a prompt legitimately named `my.dial_folder-notes` survives.
 

@@ -169,6 +169,8 @@ Selecting a starter with submit enabled SHALL create or append to the preview co
 
 ### Requirement: Preview session resets when the saved configuration actually changed
 
+`AppsEditor` SHALL discard the current preview session whenever a Settings-step save reports that the persisted configuration actually changed.
+
 A Settings-step save (triggered either by "Save & Exit" or by "Preview") completes with a
 `SaveSuccess` postMessage from the embedded Quick Apps editor. That message MAY carry a
 `hasChanges: boolean` field — see the `quick-app-authoring` spec's "SaveSuccess reports
