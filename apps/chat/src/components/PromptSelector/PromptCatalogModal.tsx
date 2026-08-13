@@ -1,4 +1,4 @@
-import { CatalogEntityType } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { Popup, PopupSize } from '@epam/ai-dial-ui-kit';
 import { Suspense, lazy, memo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
