@@ -10,6 +10,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { CatalogEntityType } from '../../../types/entity-type';
 import {
+  CredentialsLevel,
   CredentialStatus,
   ToolsetAuthenticationType,
 } from '../../../types/toolset-auth';
@@ -139,6 +140,7 @@ vi.mock('../Header/Header', () => ({
     onRevokeShare,
     isRevokeShareVisible,
     onRequestLogout,
+    onOpenCredentialsManagement,
   }: {
     item: CatalogItem;
     onOpenPublish?: () => void;
@@ -149,6 +151,7 @@ vi.mock('../Header/Header', () => ({
     onRevokeShare?: () => void;
     isRevokeShareVisible?: (item: CatalogItem) => boolean;
     onRequestLogout?: () => void;
+    onOpenCredentialsManagement?: () => void;
   }) => (
     <>
       <button onClick={onOpenPublish}>Publish</button>
@@ -163,9 +166,47 @@ vi.mock('../Header/Header', () => ({
       {onRequestLogout && (
         <button onClick={onRequestLogout}>LogoutTrigger</button>
       )}
+      {onOpenCredentialsManagement && (
+        <button onClick={onOpenCredentialsManagement}>
+          ManageCredentialsTrigger
+        </button>
+      )}
     </>
   ),
 }));
+vi.mock('../Credentials/CredentialsBanner/CredentialsBanner', () => ({
+  CredentialsBanner: ({ state }: { state: string }) => (
+    <div>CredentialsBanner:{state}</div>
+  ),
+}));
+vi.mock(
+  '../Credentials/CredentialsManagementPanel/CredentialsManagementPanel',
+  () => ({
+    CredentialsManagementPanel: ({
+      onRequestDeleteApiKey,
+      onRequestLogout,
+    }: {
+      onRequestDeleteApiKey?: (level: CredentialsLevel) => void;
+      onRequestLogout?: (level: CredentialsLevel) => void;
+    }) => (
+      <div>
+        CredentialsManagementPanel
+        {onRequestDeleteApiKey && (
+          <button
+            onClick={() => onRequestDeleteApiKey(CredentialsLevel.Global)}
+          >
+            DeleteApiKeyTrigger
+          </button>
+        )}
+        {onRequestLogout && (
+          <button onClick={() => onRequestLogout(CredentialsLevel.Global)}>
+            ManagementLogoutTrigger
+          </button>
+        )}
+      </div>
+    ),
+  }),
+);
 vi.mock('../TabsContent/About', () => ({
   AboutTab: () => <div>about content</div>,
 }));
@@ -458,6 +499,60 @@ describe('DetailsPanel', () => {
     renderPanel();
     expect(screen.getByRole('tablist')).toBeTruthy();
     expect(screen.queryByText('Publish panel')).toBeNull();
+  });
+
+  it('shows the org-credentials banner for a non-admin using org fallback credentials', () => {
+    renderPanel({
+      item: makeItem({
+        credentials: {
+          authenticationType: ToolsetAuthenticationType.OAuth,
+          isPublic: true,
+          globalStatus: CredentialStatus.SignedIn,
+        },
+      }),
+    });
+    expect(
+      screen.getByText('CredentialsBanner:USING_ORG_CREDENTIALS'),
+    ).toBeTruthy();
+  });
+
+  it('shows the org-credentials-active banner for an admin once org credentials are set', () => {
+    renderPanel({
+      item: makeItem({
+        credentials: {
+          authenticationType: ToolsetAuthenticationType.OAuth,
+          isManageableByAdmin: true,
+          globalStatus: CredentialStatus.SignedIn,
+        },
+      }),
+    });
+    expect(
+      screen.getByText('CredentialsBanner:ORG_CREDENTIALS_ACTIVE'),
+    ).toBeTruthy();
+  });
+
+  it('shows the personal-credentials-active banner for an admin once personal credentials are set', () => {
+    renderPanel({
+      item: makeItem({
+        credentials: {
+          authenticationType: ToolsetAuthenticationType.OAuth,
+          isManageableByAdmin: true,
+          userStatus: CredentialStatus.SignedIn,
+        },
+      }),
+    });
+    expect(
+      screen.getByText('CredentialsBanner:PERSONAL_CREDENTIALS_ACTIVE'),
+    ).toBeTruthy();
+  });
+
+  it('omits the banner when no organization credentials are active', () => {
+    renderPanel({
+      item: makeItem({
+        credentials: { authenticationType: ToolsetAuthenticationType.OAuth },
+      }),
+    });
+    expect(screen.queryByText(/^CredentialsBanner:/)).toBeNull();
   });
 
   it('shows the Star toggle and hides the back button by default', () => {
@@ -1226,6 +1321,247 @@ describe('DetailsPanel', () => {
         />,
       );
       expect(screen.getByRole('tablist')).toBeTruthy();
+    });
+  });
+
+  describe('Credentials management sub-view', () => {
+    const MANAGE_TRIGGER = 'ManageCredentialsTrigger';
+
+    const openCredentialsManagement = async () => {
+      await userEvent.click(
+        screen.getByRole('button', { name: MANAGE_TRIGGER }),
+      );
+    };
+
+    it('replaces the details content with the credentials management panel', async () => {
+      renderPanel({
+        item: makeItem({
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.OAuth,
+            isManageableByAdmin: true,
+          },
+        }),
+      });
+      await openCredentialsManagement();
+      expect(screen.queryByRole('tablist')).toBeNull();
+      expect(screen.getByText('CredentialsManagementPanel')).toBeTruthy();
+    });
+
+    it('titles the sub-view "Toolset credentials" for OAuth authentication', async () => {
+      renderPanel({
+        item: makeItem({
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.OAuth,
+            isManageableByAdmin: true,
+          },
+        }),
+      });
+      await openCredentialsManagement();
+      expect(
+        screen.getByRole('dialog', { name: 'Toolset credentials' }),
+      ).toBeTruthy();
+    });
+
+    it('titles the sub-view "Toolset API keys" for API-key authentication', async () => {
+      renderPanel({
+        item: makeItem({
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.ApiKey,
+            isManageableByAdmin: true,
+          },
+        }),
+      });
+      await openCredentialsManagement();
+      expect(
+        screen.getByRole('dialog', { name: 'Toolset API keys' }),
+      ).toBeTruthy();
+    });
+
+    it('returns to the details content when the back button is clicked', async () => {
+      renderPanel({
+        item: makeItem({
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.OAuth,
+            isManageableByAdmin: true,
+          },
+        }),
+      });
+      await openCredentialsManagement();
+      await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+      expect(screen.getByRole('tablist')).toBeTruthy();
+      expect(screen.queryByText('CredentialsManagementPanel')).toBeNull();
+    });
+
+    it('uses texts.credentialsManagementTitle when provided', async () => {
+      renderPanel({
+        item: makeItem({
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.OAuth,
+            isManageableByAdmin: true,
+          },
+        }),
+        texts: { credentialsManagementTitle: () => 'Custom title' },
+      });
+      await openCredentialsManagement();
+      expect(screen.getByRole('dialog', { name: 'Custom title' })).toBeTruthy();
+    });
+  });
+
+  describe('Delete API key sub-view', () => {
+    const MANAGE_TRIGGER = 'ManageCredentialsTrigger';
+    const DELETE_API_KEY_TRIGGER = 'DeleteApiKeyTrigger';
+    const DELETE_CONFIRM = 'Delete';
+
+    const apiKeyItem = () =>
+      makeItem({
+        credentials: {
+          authenticationType: ToolsetAuthenticationType.ApiKey,
+          isManageableByAdmin: true,
+          globalStatus: CredentialStatus.SignedIn,
+        },
+      });
+
+    const openDeleteApiKeyConfirmation = async () => {
+      await userEvent.click(
+        screen.getByRole('button', { name: MANAGE_TRIGGER }),
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: DELETE_API_KEY_TRIGGER }),
+      );
+    };
+
+    it('replaces the credentials management panel with a full-page confirmation', async () => {
+      renderPanel({ item: apiKeyItem() });
+      await openDeleteApiKeyConfirmation();
+      expect(screen.queryByText('CredentialsManagementPanel')).toBeNull();
+      expect(screen.getByRole('dialog', { name: DELETE_CONFIRM })).toBeTruthy();
+    });
+
+    it('keeps the toolset card in the default palette even though Delete stays danger', async () => {
+      const item = apiKeyItem();
+      renderPanel({ item });
+      await openDeleteApiKeyConfirmation();
+
+      const card = screen.getByText(item.name).parentElement;
+      expect(card?.className).not.toContain('danger');
+      expect(
+        screen.getByRole('button', { name: DELETE_CONFIRM }).className,
+      ).toContain('danger');
+    });
+
+    it('calls onLogout with the requested level and returns to the management panel on confirm', async () => {
+      const onLogout = vi.fn().mockResolvedValue(undefined);
+      const onClose = vi.fn();
+      renderPanel({ item: apiKeyItem(), onLogout, onClose });
+      await openDeleteApiKeyConfirmation();
+
+      await userEvent.click(
+        screen.getByRole('button', { name: DELETE_CONFIRM }),
+      );
+
+      expect(onLogout).toHaveBeenCalledWith(apiKeyItem(), {
+        level: CredentialsLevel.Global,
+      });
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByText('CredentialsManagementPanel')).toBeTruthy();
+    });
+
+    it('returns to the management panel without calling onLogout when Cancel is clicked', async () => {
+      const onLogout = vi.fn();
+      renderPanel({ item: apiKeyItem(), onLogout });
+      await openDeleteApiKeyConfirmation();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+      expect(onLogout).not.toHaveBeenCalled();
+      expect(screen.getByText('CredentialsManagementPanel')).toBeTruthy();
+    });
+
+    it('returns to the management panel without calling onLogout when the back button is clicked', async () => {
+      const onLogout = vi.fn();
+      renderPanel({ item: apiKeyItem(), onLogout });
+      await openDeleteApiKeyConfirmation();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+
+      expect(onLogout).not.toHaveBeenCalled();
+      expect(screen.getByText('CredentialsManagementPanel')).toBeTruthy();
+    });
+
+    it('names the organization key in the confirmation message, since the trigger requests the Global level', async () => {
+      renderPanel({ item: apiKeyItem() });
+      await openDeleteApiKeyConfirmation();
+
+      expect(
+        screen.getByText(
+          'Are you sure you want to delete the organization API key?',
+        ),
+      ).toBeTruthy();
+    });
+  });
+
+  describe('Logout sub-view (admin)', () => {
+    const MANAGE_TRIGGER = 'ManageCredentialsTrigger';
+    const MANAGEMENT_LOGOUT_TRIGGER = 'ManagementLogoutTrigger';
+    const LOGOUT_CONFIRM = 'Log out';
+
+    const oauthItem = () =>
+      makeItem({
+        credentials: {
+          authenticationType: ToolsetAuthenticationType.OAuth,
+          isManageableByAdmin: true,
+          userStatus: CredentialStatus.SignedIn,
+          globalStatus: CredentialStatus.SignedIn,
+        },
+      });
+
+    const openManagementLogoutConfirmation = async () => {
+      await userEvent.click(
+        screen.getByRole('button', { name: MANAGE_TRIGGER }),
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: MANAGEMENT_LOGOUT_TRIGGER }),
+      );
+    };
+
+    it('replaces the credentials management panel with a full-page confirmation', async () => {
+      renderPanel({ item: oauthItem() });
+      await openManagementLogoutConfirmation();
+      expect(screen.queryByText('CredentialsManagementPanel')).toBeNull();
+      expect(screen.getByRole('dialog', { name: LOGOUT_CONFIRM })).toBeTruthy();
+    });
+
+    it('calls onLogout with the requested level (not getSignedInLevel) and returns to the management panel', async () => {
+      const onLogout = vi.fn().mockResolvedValue(undefined);
+      const onClose = vi.fn();
+      renderPanel({ item: oauthItem(), onLogout, onClose });
+      await openManagementLogoutConfirmation();
+
+      await userEvent.click(
+        screen.getByRole('button', { name: LOGOUT_CONFIRM }),
+      );
+
+      /*
+       * The mock trigger requests Global specifically. getSignedInLevel would
+       * have picked User (it is checked first), so this proves the panel's
+       * own request — not the top-level fallback — decided the level.
+       */
+      expect(onLogout).toHaveBeenCalledWith(oauthItem(), {
+        level: CredentialsLevel.Global,
+      });
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByText('CredentialsManagementPanel')).toBeTruthy();
+    });
+
+    it('returns to the management panel without calling onLogout when Cancel is clicked', async () => {
+      const onLogout = vi.fn();
+      renderPanel({ item: oauthItem(), onLogout });
+      await openManagementLogoutConfirmation();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+      expect(onLogout).not.toHaveBeenCalled();
+      expect(screen.getByText('CredentialsManagementPanel')).toBeTruthy();
     });
   });
 });

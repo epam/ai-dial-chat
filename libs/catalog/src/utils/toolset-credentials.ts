@@ -1,6 +1,7 @@
 import type { CatalogItemCredentials } from '../models/catalog-item-credentials';
 import {
   CredentialsBadgeState,
+  CredentialsBannerState,
   CredentialsLevel,
   CredentialsUiState,
   CredentialStatus,
@@ -52,3 +53,26 @@ export const getSignedInLevel = (
   isSignedIn(credentials.userStatus)
     ? CredentialsLevel.User
     : CredentialsLevel.Global;
+
+/** Resolves which credentials banner, if any, the Details Panel should show below the header. */
+export const getCredentialsBannerState = (
+  credentials: CatalogItemCredentials,
+): CredentialsBannerState | undefined => {
+  if (credentials.isManageableByAdmin) {
+    if (isSignedIn(credentials.userStatus)) {
+      return CredentialsBannerState.PersonalCredentialsActive;
+    }
+    if (isSignedIn(credentials.globalStatus)) {
+      return CredentialsBannerState.OrgCredentialsActive;
+    }
+    return undefined;
+  }
+  if (
+    isSignedIn(credentials.globalStatus) &&
+    credentials.isPublic &&
+    !isSignedIn(credentials.userStatus)
+  ) {
+    return CredentialsBannerState.UsingOrgCredentials;
+  }
+  return undefined;
+};

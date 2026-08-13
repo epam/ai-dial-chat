@@ -69,16 +69,32 @@ export const mapToolsetCredentials = (
     isPublic &&
     userStatus !== CredentialStatus.SignedIn &&
     globalStatus === CredentialStatus.SignedIn;
+  const authenticationType = isCoveredByGlobalAuth
+    ? ToolsetAuthenticationType.None
+    : AUTHENTICATION_TYPE_MAP[authSettings.authenticationType];
+  const isApiKey = authenticationType === ToolsetAuthenticationType.ApiKey;
 
   return {
-    authenticationType: isCoveredByGlobalAuth
-      ? ToolsetAuthenticationType.None
-      : AUTHENTICATION_TYPE_MAP[authSettings.authenticationType],
+    authenticationType,
     userStatus,
     globalStatus,
     isPublic,
     isManageableByAdmin: isAdmin && isPublic,
     apiKeyHeader: authSettings.apiKeyHeader,
+    /*
+     * MOCK DATA: the backend does not yet expose when an API key was added
+     * (`DialToolsetAuthSettingsDto` has no timestamp field). Hardcoded here
+     * so the "Added X ago" support text has something to show in the
+     * details panel; replace with the real value once the API adds one.
+     */
+    userApiKeyAddedWhen:
+      isApiKey && userStatus === CredentialStatus.SignedIn
+        ? '3 weeks ago'
+        : undefined,
+    globalApiKeyAddedWhen:
+      isApiKey && globalStatus === CredentialStatus.SignedIn
+        ? '1 week ago'
+        : undefined,
   };
 };
 

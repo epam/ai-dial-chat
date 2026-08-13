@@ -353,14 +353,31 @@ export const mapToolsetCredentials = (
 
   const { userLevel, global } = data.specification?.authStatus ?? {};
   const isPublic = isPublicToolsetId(toolsetId);
+  const userStatus = userLevel ? TOOLSET_AUTH_STATUS_MAP[userLevel] : undefined;
+  const globalStatus = global ? TOOLSET_AUTH_STATUS_MAP[global] : undefined;
+  const isApiKey = authenticationType === ToolsetAuthenticationType.ApiKey;
 
   return {
     authenticationType,
-    userStatus: userLevel ? TOOLSET_AUTH_STATUS_MAP[userLevel] : undefined,
-    globalStatus: global ? TOOLSET_AUTH_STATUS_MAP[global] : undefined,
+    userStatus,
+    globalStatus,
     isPublic,
     isManageableByAdmin: isAdmin && isPublic,
     apiKeyHeader: data.specification?.authStatus?.apiKeyHeader,
+    /*
+     * MOCK DATA: the backend does not yet expose when an API key was added
+     * (`ToolsetAuthSettingsDto` has no timestamp field). Hardcoded here so
+     * the "Added X ago" support text has something to show in the details
+     * panel; replace with the real value once the API adds one.
+     */
+    userApiKeyAddedWhen:
+      isApiKey && userStatus === CredentialStatus.SignedIn
+        ? '3 weeks ago'
+        : undefined,
+    globalApiKeyAddedWhen:
+      isApiKey && globalStatus === CredentialStatus.SignedIn
+        ? '1 week ago'
+        : undefined,
   };
 };
 

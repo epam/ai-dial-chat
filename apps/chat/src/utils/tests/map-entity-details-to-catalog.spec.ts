@@ -1,6 +1,18 @@
+import {
+  CredentialStatus,
+  ToolsetAuthenticationType,
+} from '@epam/ai-dial-catalog';
 import { describe, expect, it } from 'vitest';
-import { ModelEndpointType } from '../../types/entity-details';
-import { mapEntityDetailsToCatalogDetails } from '../map-entity-details-to-catalog';
+import {
+  AuthenticationType,
+  ModelEndpointType,
+  type ToolsetAuthStatus,
+  type ToolsetEntityDetails,
+} from '../../types/entity-details';
+import {
+  mapEntityDetailsToCatalogDetails,
+  mapToolsetCredentials,
+} from '../map-entity-details-to-catalog';
 
 describe('mapEntityDetailsToCatalogDetails', () => {
   describe('AGENT', () => {
@@ -146,6 +158,71 @@ describe('mapEntityDetailsToCatalogDetails', () => {
       );
       expect(labels).not.toContain('Allowed tools');
       expect(labels).not.toContain('All supported tools');
+    });
+  });
+});
+
+describe('mapToolsetCredentials', () => {
+  const makeData = (authStatus: ToolsetAuthStatus): ToolsetEntityDetails => ({
+    specification: {
+      authentication: AuthenticationType.ApiKey,
+      authStatus,
+    },
+  });
+
+  it('mocks userApiKeyAddedWhen/globalApiKeyAddedWhen for a signed-in API-key toolset', () => {
+    const result = mapToolsetCredentials(
+      'toolsets/public/x__1.0',
+      makeData({ userLevel: 'SIGNED_IN', global: 'SIGNED_IN' }),
+      true,
+    );
+
+    expect(result).toMatchObject({
+      authenticationType: ToolsetAuthenticationType.ApiKey,
+      userApiKeyAddedWhen: '3 weeks ago',
+      globalApiKeyAddedWhen: '1 week ago',
+    });
+  });
+
+  it('omits userApiKeyAddedWhen/globalApiKeyAddedWhen when signed out', () => {
+    const result = mapToolsetCredentials(
+      'toolsets/public/x__1.0',
+      makeData({ userLevel: 'SIGNED_OUT', global: 'SIGNED_OUT' }),
+      true,
+    );
+
+    expect(result?.userApiKeyAddedWhen).toBeUndefined();
+    expect(result?.globalApiKeyAddedWhen).toBeUndefined();
+  });
+
+  it('omits userApiKeyAddedWhen/globalApiKeyAddedWhen for OAuth toolsets', () => {
+    const result = mapToolsetCredentials(
+      'toolsets/public/x__1.0',
+      {
+        specification: {
+          authentication: AuthenticationType.OAuth,
+          authStatus: { userLevel: 'SIGNED_IN', global: 'SIGNED_IN' },
+        },
+      },
+      true,
+    );
+
+    expect(result?.userApiKeyAddedWhen).toBeUndefined();
+    expect(result?.globalApiKeyAddedWhen).toBeUndefined();
+  });
+
+  it('maps status levels as before', () => {
+    const result = mapToolsetCredentials(
+      'toolsets/public/x__1.0',
+      makeData({ userLevel: 'SIGNED_IN', global: 'SIGNED_OUT' }),
+      true,
+    );
+
+    expect(result).toMatchObject({
+      userStatus: CredentialStatus.SignedIn,
+      globalStatus: CredentialStatus.SignedOut,
+      isPublic: true,
+      isManageableByAdmin: true,
     });
   });
 });

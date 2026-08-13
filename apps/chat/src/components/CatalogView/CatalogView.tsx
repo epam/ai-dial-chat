@@ -6,6 +6,7 @@ import {
   CatalogViewMode,
   CredentialsLevel,
   CredentialStatus,
+  ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
 import type { ToolsetLogoutBodyDto } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
@@ -505,6 +506,22 @@ const CatalogView: FC<Props> = ({
   const showLoginSuccess = useCallback(
     (item: CatalogItem, level: CredentialsLevel) => {
       const isAdminAndPublic = isAdmin && !!item.credentials?.isPublic;
+      const isApiKey =
+        item.credentials?.authenticationType ===
+        ToolsetAuthenticationType.ApiKey;
+      if (isApiKey) {
+        const messageKey =
+          level === CredentialsLevel.User
+            ? CatalogI18nKeys.CredentialsApiKeyAddedSuccessUser
+            : isAdminAndPublic
+              ? CatalogI18nKeys.CredentialsApiKeyAddedSuccessOrg
+              : CatalogI18nKeys.CredentialsApiKeyAddedSuccessGlobal;
+        showSuccessNotification({
+          title: t(CatalogI18nKeys.CredentialsApiKeyAddedSuccessTitle),
+          message: t(messageKey, { name: item.name, version: item.version }),
+        });
+        return;
+      }
       const messageKey =
         level === CredentialsLevel.User
           ? CatalogI18nKeys.CredentialsLoginSuccessUser
@@ -522,6 +539,22 @@ const CatalogView: FC<Props> = ({
   const showLogoutSuccess = useCallback(
     (item: CatalogItem, level: CredentialsLevel) => {
       const isAdminAndPublic = isAdmin && !!item.credentials?.isPublic;
+      const isApiKey =
+        item.credentials?.authenticationType ===
+        ToolsetAuthenticationType.ApiKey;
+      if (isApiKey) {
+        const messageKey =
+          level === CredentialsLevel.User
+            ? CatalogI18nKeys.CredentialsApiKeyDeletedSuccessUser
+            : isAdminAndPublic
+              ? CatalogI18nKeys.CredentialsApiKeyDeletedSuccessOrg
+              : CatalogI18nKeys.CredentialsApiKeyDeletedSuccessGlobal;
+        showSuccessNotification({
+          title: t(CatalogI18nKeys.CredentialsApiKeyDeletedSuccessTitle),
+          message: t(messageKey, { name: item.name, version: item.version }),
+        });
+        return;
+      }
       const messageKey =
         level === CredentialsLevel.User
           ? CatalogI18nKeys.CredentialsLogoutSuccessUser
@@ -1320,20 +1353,78 @@ const CatalogView: FC<Props> = ({
         ),
         loginActionLabel: t(ButtonsI18nKeys.LogIn),
         logoutActionLabel: t(ButtonsI18nKeys.LogOut),
-        loginWithMyCredsActionLabel: t(
-          CatalogI18nKeys.CredentialsLoginWithMyCredsLabel,
-        ),
-        manageCredentialsActionLabel: t(CatalogI18nKeys.CredentialsManageLabel),
-        myCredentialsSectionLabel: t(CatalogI18nKeys.CredentialsMySectionLabel),
-        organizationCredentialsSectionLabel: t(
-          CatalogI18nKeys.CredentialsOrgSectionLabel,
-        ),
+        manageCredentialsActionLabel: (authenticationType) =>
+          authenticationType === ToolsetAuthenticationType.ApiKey
+            ? t(CatalogI18nKeys.CredentialsManageApiKeysLabel)
+            : t(CatalogI18nKeys.CredentialsManageLabel),
         credentialsSignedInLabel: t(CatalogI18nKeys.CredentialsSignedInLabel),
         credentialsSignedOutLabel: t(CatalogI18nKeys.CredentialsSignedOutLabel),
         logoutConfirmMessage: t(AuthI18nKeys.LogOutConfirmDescription),
+        deleteApiKeyConfirmMessage: (level) =>
+          level === CredentialsLevel.Global
+            ? t(CatalogI18nKeys.CredentialsDeleteApiKeyConfirmMessageOrg)
+            : t(CatalogI18nKeys.CredentialsDeleteApiKeyConfirmMessagePersonal),
         apiKeyFieldLabel: t(ApiI18nKeys.ApiKey),
-        apiKeyFieldHint: (header) =>
-          t(CatalogI18nKeys.CredentialsApiKeyFieldHint, { header }),
+        apiKeyRequiredErrorMessage: t(
+          CatalogI18nKeys.CredentialsApiKeyRequiredErrorMessage,
+        ),
+        apiKeyActionLabel: t(ApiI18nKeys.ApiKey),
+        changeApiKeyActionLabel: t(
+          CatalogI18nKeys.CredentialsChangeApiKeyActionLabel,
+        ),
+        personalApiKeyPanelTitle: t(
+          CatalogI18nKeys.CredentialsPersonalApiKeyPanelTitle,
+        ),
+        personalApiKeyAddedMessage: t(
+          CatalogI18nKeys.CredentialsPersonalApiKeyAddedMessage,
+        ),
+        apiKeyConfiguredMessage: t(
+          CatalogI18nKeys.CredentialsApiKeyConfiguredMessage,
+        ),
+        addApiKeyActionLabel: t(ButtonsI18nKeys.Add),
+        addingApiKeyStatusLabel: t(
+          CatalogI18nKeys.CredentialsAddingApiKeyStatusLabel,
+        ),
+        apiKeyAddedLabel: (when) =>
+          t(CatalogI18nKeys.CredentialsApiKeyAddedLabel, { when }),
+        orgFallbackBannerTitle: (authenticationType) =>
+          authenticationType === ToolsetAuthenticationType.ApiKey
+            ? t(CatalogI18nKeys.CredentialsOrgFallbackBannerTitleApiKey)
+            : t(CatalogI18nKeys.CredentialsOrgFallbackBannerTitleCredentials),
+        orgFallbackBannerDescription: (authenticationType) =>
+          authenticationType === ToolsetAuthenticationType.ApiKey
+            ? t(CatalogI18nKeys.CredentialsOrgFallbackBannerDescriptionApiKey)
+            : t(
+                CatalogI18nKeys.CredentialsOrgFallbackBannerDescriptionCredentials,
+              ),
+        orgCredentialsActiveBannerTitle: (authenticationType) =>
+          authenticationType === ToolsetAuthenticationType.ApiKey
+            ? t(CatalogI18nKeys.CredentialsOrgActiveBannerTitleApiKey)
+            : t(CatalogI18nKeys.CredentialsOrgActiveBannerTitleCredentials),
+        personalCredentialsActiveBannerTitle: (authenticationType) =>
+          authenticationType === ToolsetAuthenticationType.ApiKey
+            ? t(CatalogI18nKeys.CredentialsPersonalActiveBannerTitleApiKey)
+            : t(
+                CatalogI18nKeys.CredentialsPersonalActiveBannerTitleCredentials,
+              ),
+        credentialsManagementTitle: (authenticationType) =>
+          authenticationType === ToolsetAuthenticationType.ApiKey
+            ? t(CatalogI18nKeys.CredentialsManagementTitleApiKey)
+            : t(CatalogI18nKeys.CredentialsManagementTitleCredentials),
+        credentialsManagementDescription: (authenticationType) =>
+          authenticationType === ToolsetAuthenticationType.ApiKey
+            ? t(CatalogI18nKeys.CredentialsManagementDescriptionApiKey)
+            : t(CatalogI18nKeys.CredentialsManagementDescriptionCredentials),
+        personalCredentialsLabel: t(CatalogI18nKeys.CredentialsPersonalLabel),
+        personalCredentialsDescription: t(
+          CatalogI18nKeys.CredentialsPersonalDescription,
+        ),
+        organizationCredentialsLabel: t(
+          CatalogI18nKeys.CredentialsOrganizationLabel,
+        ),
+        organizationCredentialsDescription: t(
+          CatalogI18nKeys.CredentialsOrganizationDescription,
+        ),
         credentialsBadgeLoggedOutLabel: t(
           CatalogI18nKeys.CredentialsBadgeLoggedOut,
         ),

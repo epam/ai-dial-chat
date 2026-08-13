@@ -17,4 +17,8 @@ export interface CatalogItemCredentials {
   isManageableByAdmin?: boolean;
   /** Name of the API key header, shown as a hint in the login form. Only set for `API_KEY` authentication. */
   apiKeyHeader?: string;
+  /** Already-formatted relative time (e.g. `'3 weeks ago'`) since the personal API key was added. Only set for `API_KEY` authentication when `userStatus` is `SIGNED_IN`. Omit to hide the "Added …" caption. */
+  userApiKeyAddedWhen?: string;
+  /** Already-formatted relative time since the organization-wide API key was added. Only set for `API_KEY` authentication when `globalStatus` is `SIGNED_IN`. Omit to hide the "Added …" caption. */
+  globalApiKeyAddedWhen?: string;
 }

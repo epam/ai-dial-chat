@@ -6,7 +6,10 @@ import type {
   PublishPanelLabels,
 } from '@epam/ai-dial-publish-panel';
 import type { ReactNode } from 'react';
-import type { CredentialsLevel } from '../types/toolset-auth';
+import type {
+  CredentialsLevel,
+  ToolsetAuthenticationType,
+} from '../types/toolset-auth';
 import type { CatalogItem } from './catalog-item';
 
 /** Text overrides for all user-visible strings in `DetailsPanel`. */
@@ -84,35 +87,115 @@ export interface ItemDetailsTexts {
   /** "Log out" action button label, shown when the item's credentials are signed in. Default: `'Log out'`. */
   logoutActionLabel?: string;
   /**
-   * "Login with my creds" action button label, shown to a non-admin user on
-   * a public item they are not personally signed into (organization-wide
-   * credentials may already be active). Default: `'Login with my creds'`.
+   * Returns the "Manage credentials"/"Manage API keys" action button label
+   * for an admin managing a public item, given its authentication type.
+   * Default: `(type) => type === ToolsetAuthenticationType.ApiKey ? 'Manage API keys' : 'Manage credentials'`.
    */
-  loginWithMyCredsActionLabel?: string;
-  /**
-   * "Manage credentials" action button label, shown to an admin on a public
-   * item — expands both the `USER` and `GLOBAL` sections. Default: `'Manage credentials'`.
-   */
-  manageCredentialsActionLabel?: string;
-  /** Heading for the personal-credentials section when both levels are shown. Default: `'My credentials'`. */
-  myCredentialsSectionLabel?: string;
-  /** Heading for the organization-wide-credentials section when both levels are shown. Default: `'Entire organization credentials'`. */
-  organizationCredentialsSectionLabel?: string;
-  /** Status label shown in the credentials section when signed in. Default: `'Signed in'`. */
+  manageCredentialsActionLabel?: (
+    authenticationType: ToolsetAuthenticationType,
+  ) => string;
+  /** Status label shown next to a signed-in row, and as the accessible name of its checkmark indicator. Default: `'Signed in'`. */
   credentialsSignedInLabel?: string;
-  /** Status label shown in the credentials section when signed out. Default: `'Signed out'`. */
+  /** Status label shown next to a signed-out row. Default: `'Signed out'`. */
   credentialsSignedOutLabel?: string;
   /** Confirmation dialog message shown before logging out. Default: `'Are you sure you want to log out?'`. */
   logoutConfirmMessage?: string;
-  /** Label for the API key input field in the credentials section. Default: `'API key'`. */
-  apiKeyFieldLabel?: string;
   /**
-   * Returns the API-key field hint naming the required header. Default:
-   * `(header) => \`Enter your API key value for "${header}" header\``.
+   * Returns the confirmation dialog message shown before deleting an API
+   * key, given which level's key is being deleted. Default:
+   * `(level) => level === CredentialsLevel.Global ? 'Are you sure you want to delete the organization API key?' : 'Are you sure you want to delete your personal API key?'`.
    */
-  apiKeyFieldHint?: (apiKeyHeader: string) => string;
+  deleteApiKeyConfirmMessage?: (level: CredentialsLevel) => string;
+  /** Label for the API key input field. Default: `'API key'`. */
+  apiKeyFieldLabel?: string;
+  /** Validation error shown under the API key input when "Add" is submitted with an empty value. Default: `'API key is required.'`. */
+  apiKeyRequiredErrorMessage?: string;
   /** Credentials-status badge label shown on catalog cards when signed out. Default: `'LOGGED OUT'`. */
   credentialsBadgeLoggedOutLabel?: string;
+  /**
+   * Top action button label when the item requires an API key and the
+   * current user has not added their personal key yet. Default: `'API key'`.
+   */
+  apiKeyActionLabel?: string;
+  /**
+   * Top action button label when the item requires an API key and the
+   * current user already has a personal key on file. Default: `'Change API key'`.
+   */
+  changeApiKeyActionLabel?: string;
+  /** Title of the personal API-key popover opened from the top action button. Default: `'Personal API key'`. */
+  personalApiKeyPanelTitle?: string;
+  /** Confirmation line shown in the personal API-key popover once a key is on file. Default: `'Personal key has been added'`. */
+  personalApiKeyAddedMessage?: string;
+  /** Confirmation line shown in the admin credentials-management row once that level's API key is on file. Default: `'Key has been configured'`. */
+  apiKeyConfiguredMessage?: string;
+  /** "Add" action label for submitting a new API key. Default: `'Add'`. */
+  addApiKeyActionLabel?: string;
+  /** Status text announced to assistive tech while an API key is being added. Default: `'Adding'`. */
+  addingApiKeyStatusLabel?: string;
+  /**
+   * Returns the caption shown under an on-file API key, given an
+   * already-formatted relative time. Default: `(when) => \`Added ${when}\``.
+   */
+  apiKeyAddedLabel?: (when: string) => string;
+  /**
+   * Returns the banner title shown when the current user is not signed in
+   * personally but organization-wide credentials keep the item usable,
+   * given the item's authentication type. Default:
+   * `(type) => type === ToolsetAuthenticationType.ApiKey ? 'You are currently using organization API key to access this toolset.' : 'You are currently using organization credentials to access this toolset.'`.
+   */
+  orgFallbackBannerTitle?: (
+    authenticationType: ToolsetAuthenticationType,
+  ) => string;
+  /**
+   * Returns the banner description paired with `orgFallbackBannerTitle`,
+   * given the item's authentication type. Default:
+   * `(type) => type === ToolsetAuthenticationType.ApiKey ? 'Configure your personal API key to have access to your data.' : 'Login using personal account to have access to your data.'`.
+   */
+  orgFallbackBannerDescription?: (
+    authenticationType: ToolsetAuthenticationType,
+  ) => string;
+  /**
+   * Returns the banner title shown to an admin when organization-wide
+   * credentials are active, given the item's authentication type. Default:
+   * `(type) => type === ToolsetAuthenticationType.ApiKey ? 'Signed in with organization API key.' : 'Signed in with organization credentials.'`.
+   */
+  orgCredentialsActiveBannerTitle?: (
+    authenticationType: ToolsetAuthenticationType,
+  ) => string;
+  /**
+   * Returns the banner title shown to an admin when their own personal
+   * credentials are active (and take precedence over any organization-wide
+   * credentials), given the item's authentication type. Default:
+   * `(type) => type === ToolsetAuthenticationType.ApiKey ? 'Signed in with personal API key.' : 'Signed in with personal credentials.'`.
+   */
+  personalCredentialsActiveBannerTitle?: (
+    authenticationType: ToolsetAuthenticationType,
+  ) => string;
+  /**
+   * Returns the title of the admin credentials-management sub-screen, given
+   * the item's authentication type. Default:
+   * `(type) => type === ToolsetAuthenticationType.ApiKey ? 'Toolset API keys' : 'Toolset credentials'`.
+   */
+  credentialsManagementTitle?: (
+    authenticationType: ToolsetAuthenticationType,
+  ) => string;
+  /**
+   * Returns the description shown under the identity chip in the admin
+   * credentials-management sub-screen, given the item's authentication
+   * type. Default:
+   * `(type) => 'Select which account to use with this toolset — personal or organization. If both are configured, personal credentials will be used by default' + (type === ToolsetAuthenticationType.ApiKey ? ' for toolset access.' : '.')`.
+   */
+  credentialsManagementDescription?: (
+    authenticationType: ToolsetAuthenticationType,
+  ) => string;
+  /** Row label for the current user's own credentials in the admin management sub-screen. Default: `'Personal credentials'`. */
+  personalCredentialsLabel?: string;
+  /** Row description for the current user's own credentials in the admin management sub-screen. Default: `'These credentials apply only to your account.'`. */
+  personalCredentialsDescription?: string;
+  /** Row label for organization-wide credentials in the admin management sub-screen. Default: `'Organization credentials'`. */
+  organizationCredentialsLabel?: string;
+  /** Row description for organization-wide credentials in the admin management sub-screen. Default: `'Once added, these credentials will grant all users in your organization access to this toolset.'`. */
+  organizationCredentialsDescription?: string;
   /** "Delete" action button label. Default: `'Delete'`. */
   deleteActionLabel?: string;
   /** Status text announced to assistive tech while a delete is in progress. Default: `'Deleting'`. */
@@ -204,8 +287,6 @@ export interface ItemDetailsTypography {
   folderLabelClassName?: string;
   /** Typography class applied to the leaf (last) folder path segment. Default: `'dial-tiny-semi-text'`. */
   folderLeafClassName?: string;
-  /** Typography class for the credentials section's signed-in/signed-out status label. Default: `'dial-small-semi-text'`. */
-  credentialsStatusLabelClassName?: string;
   /** Typography class for a confirmation step's body copy and consequence bullets. Default: `'dial-small-text'`. */
   confirmMessageClassName?: string;
 }
@@ -238,8 +319,6 @@ export interface ItemDetailsColors {
   versionTagBackground?: string;
   /** Text color of the "current version" tag. Fallback: `--text-accent`. */
   versionTagText?: string;
-  /** Credentials signed-in/signed-out status label color. Fallback: `--text-primary`. */
-  credentialsStatusText?: string;
   /** Body text color of the Content tab. Fallback: `--text-primary`. */
   contentText?: string;
   /** Text color of a `{{placeholder}}` token in the Content tab's body. Fallback: `--text-prompt-parameter`. */

@@ -35,13 +35,21 @@ import {
   DetailsConfirmationVariant,
 } from '../../types/details-confirmation';
 import { CatalogEntityType } from '../../types/entity-type';
-import { getSignedInLevel } from '../../utils/toolset-credentials';
+import {
+  CredentialsLevel,
+  ToolsetAuthenticationType,
+} from '../../types/toolset-auth';
+import {
+  getCredentialsBannerState,
+  getSignedInLevel,
+} from '../../utils/toolset-credentials';
 import { EntityHeader } from '../EntityHeader/EntityHeader';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { ApiDetails } from './ApiDetails';
 import { ConfirmationFooter } from './ConfirmationView/ConfirmationFooter';
 import { ConfirmationView } from './ConfirmationView/ConfirmationView';
-import { CredentialsSection } from './Credentials/CredentialsSection';
+import { CredentialsBanner } from './Credentials/CredentialsBanner/CredentialsBanner';
+import { CredentialsManagementPanel } from './Credentials/CredentialsManagementPanel/CredentialsManagementPanel';
 import styles from './DetailsPanel.module.scss';
 import { Header } from './Header/Header';
 import { AboutTab } from './TabsContent/About';
@@ -84,6 +92,18 @@ const DEFAULT_REVOKE_SHARE_CONSEQUENCES = [
   'You keep full access — nothing is deleted',
 ];
 
+const defaultCredentialsManagementTitle = (
+  authenticationType: ToolsetAuthenticationType,
+): string =>
+  authenticationType === ToolsetAuthenticationType.ApiKey
+    ? 'Toolset API keys'
+    : 'Toolset credentials';
+
+const defaultDeleteApiKeyConfirmMessage = (level: CredentialsLevel): string =>
+  level === CredentialsLevel.Global
+    ? 'Are you sure you want to delete the organization API key?'
+    : 'Are you sure you want to delete your personal API key?';
+
 /*
  * Whether confirming a given step takes the item out of the caller's own
  * view. `Delete` destroys it and `Unshare` drops the caller's own grant, so
@@ -108,8 +128,14 @@ interface ConfirmationContent {
   confirmLabel: string;
   /** Status text announced to assistive tech while the action is in flight. */
   loadingStatusLabel: string;
-  /** Palette the step is rendered with. */
+  /** Palette the confirm button (and its icon) is rendered with. */
   variant: DetailsConfirmationVariant;
+  /**
+   * Palette of the item identity card. Defaults to `variant` when absent —
+   * only `DeleteApiKey` diverges, since removing one credential is far less
+   * consequential than the whole-item actions that share the danger button.
+   */
+  cardVariant?: DetailsConfirmationVariant;
 }
 
 /** Right-side slide-in panel displaying full details for a catalog item. */
@@ -159,7 +185,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     overviewLabelClassName = 'dial-small-semi-text',
     overviewValueClassName = 'dial-small-text',
     overviewValueTrueClassName = 'dial-small-text',
-    credentialsStatusLabelClassName,
     confirmMessageClassName = 'dial-small-text',
   } = detailsStyles?.typography ?? {};
 
@@ -177,7 +202,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-details-version-tag-border': detailsColors?.versionTagBorder,
     '--cat-details-version-tag-bg': detailsColors?.versionTagBackground,
     '--cat-details-version-tag-text': detailsColors?.versionTagText,
-    '--cat-credentials-status-text': detailsColors?.credentialsStatusText,
     '--cat-details-content-text': detailsColors?.contentText,
     '--cat-details-variable-text': detailsColors?.variableText,
     '--cat-api-heading-text': detailsColors?.apiHeadingText,
@@ -257,10 +281,22 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
       publishFlow.hasSubmitError,
     ],
   );
-  const [isCredentialsOpen, setIsCredentialsOpen] = useState(false);
+  const [isCredentialsManagementOpen, setIsCredentialsManagementOpen] =
+    useState(false);
   const [confirmation, setConfirmation] =
     useState<DetailsConfirmationKind | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
+  /* Set alongside `confirmation` only for `DeleteApiKey`, since that step can apply to either credentials slot on the same item. */
+  const [pendingApiKeyDeleteLevel, setPendingApiKeyDeleteLevel] =
+    useState<CredentialsLevel | null>(null);
+  /*
+   * Set alongside `confirmation` for `Logout`. The top-level header action
+   * has only one signed-in level to log out of, resolved via
+   * `getSignedInLevel`; the admin management panel can request either level
+   * explicitly since both may be independently signed in.
+   */
+  const [pendingLogoutLevel, setPendingLogoutLevel] =
+    useState<CredentialsLevel | null>(null);
 
   useEffect(() => {
     setIsStarred(initialIsStarred);
@@ -278,24 +314,40 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     publishFlow.reset();
     setPublishHistory([]);
     setHasPublishHistoryError(false);
-    setIsCredentialsOpen(false);
+    setIsCredentialsManagementOpen(false);
     setConfirmation(null);
     setIsConfirming(false);
+    setPendingApiKeyDeleteLevel(null);
+    setPendingLogoutLevel(null);
     // Reset publish-flow-local state only when the displayed item changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id]);
 
-  const handleToggleCredentials = useCallback(() => {
-    setIsCredentialsOpen((prev) => !prev);
-  }, []);
+  const handleOpenCredentialsManagement = useCallback(
+    () => setIsCredentialsManagementOpen(true),
+    [],
+  );
+  const handleCloseCredentialsManagement = useCallback(
+    () => setIsCredentialsManagementOpen(false),
+    [],
+  );
 
   const handleRequestDelete = useCallback(() => {
     setConfirmation(DetailsConfirmationKind.Delete);
   }, []);
 
-  const handleRequestLogout = useCallback(() => {
-    setConfirmation(DetailsConfirmationKind.Logout);
-  }, []);
+  const handleRequestLogout = useCallback(
+    (level?: CredentialsLevel) => {
+      setPendingLogoutLevel(
+        level ??
+          (item.credentials != null
+            ? getSignedInLevel(item.credentials)
+            : null),
+      );
+      setConfirmation(DetailsConfirmationKind.Logout);
+    },
+    [item.credentials],
+  );
 
   const handleRequestUnshare = useCallback(() => {
     setConfirmation(DetailsConfirmationKind.Unshare);
@@ -305,9 +357,16 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     setConfirmation(DetailsConfirmationKind.RevokeAccess);
   }, []);
 
+  const handleRequestDeleteApiKey = useCallback((level: CredentialsLevel) => {
+    setPendingApiKeyDeleteLevel(level);
+    setConfirmation(DetailsConfirmationKind.DeleteApiKey);
+  }, []);
+
   const handleCancelConfirmation = useCallback(() => {
     if (isConfirming) return;
     setConfirmation(null);
+    setPendingApiKeyDeleteLevel(null);
+    setPendingLogoutLevel(null);
   }, [isConfirming]);
 
   const handleConfirm = useCallback(async () => {
@@ -325,14 +384,19 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           await onRevokeShare?.(item);
           break;
         case DetailsConfirmationKind.Logout:
-          if (item.credentials != null) {
-            await onLogout?.(item, {
-              level: getSignedInLevel(item.credentials),
-            });
+          if (pendingLogoutLevel != null) {
+            await onLogout?.(item, { level: pendingLogoutLevel });
+          }
+          break;
+        case DetailsConfirmationKind.DeleteApiKey:
+          if (pendingApiKeyDeleteLevel != null) {
+            await onLogout?.(item, { level: pendingApiKeyDeleteLevel });
           }
           break;
       }
       setConfirmation(null);
+      setPendingApiKeyDeleteLevel(null);
+      setPendingLogoutLevel(null);
       if (CONFIRMATIONS_REMOVING_ITEM_FROM_VIEW.has(confirmation)) {
         onClose();
       }
@@ -342,12 +406,16 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
        * responsibility; the item stays visible and the panel stays open.
        */
       setConfirmation(null);
+      setPendingApiKeyDeleteLevel(null);
+      setPendingLogoutLevel(null);
     } finally {
       setIsConfirming(false);
     }
   }, [
     isConfirming,
     confirmation,
+    pendingApiKeyDeleteLevel,
+    pendingLogoutLevel,
     item,
     onDelete,
     onUnshare,
@@ -548,15 +616,41 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           variant: DetailsConfirmationVariant.Info,
         };
       }
+      case DetailsConfirmationKind.DeleteApiKey: {
+        const deleteLabel = texts?.deleteActionLabel ?? 'Delete';
+        const level = pendingApiKeyDeleteLevel ?? CredentialsLevel.User;
+        return {
+          title: deleteLabel,
+          message: (
+            texts?.deleteApiKeyConfirmMessage ??
+            defaultDeleteApiKeyConfirmMessage
+          )(level),
+          consequences: undefined,
+          confirmLabel: deleteLabel,
+          loadingStatusLabel: texts?.deletingStatusLabel ?? 'Deleting',
+          variant: DetailsConfirmationVariant.Danger,
+          /* Removing one credential doesn't warrant a red toolset card — the
+           * item itself is unaffected, only the confirm button stays danger. */
+          cardVariant: DetailsConfirmationVariant.Info,
+        };
+      }
       default:
         return null;
     }
-  }, [confirmation, item.name, texts]);
+  }, [confirmation, item.name, pendingApiKeyDeleteLevel, texts]);
 
   const isConfirmationOpen = confirmationContent != null;
-  const isSubViewOpen = isConfirmationOpen || isPublishOpen;
+  const isSubViewOpen =
+    isConfirmationOpen || isPublishOpen || isCredentialsManagementOpen;
 
-  /* A confirmation and the publish flow never share the header; null means the details header. */
+  const credentialsManagementTitle =
+    item.credentials != null
+      ? (
+          texts?.credentialsManagementTitle ?? defaultCredentialsManagementTitle
+        )(item.credentials.authenticationType)
+      : '';
+
+  /* A confirmation, the publish flow, and credentials management never share the header; null means the details header. */
   const subViewHeader = (() => {
     if (isConfirmationOpen) {
       return {
@@ -570,6 +664,13 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
         title: publishTitle,
         isBackDisabled: publishFlow.isSubmitting,
         onBack: handleClosePublish,
+      };
+    }
+    if (isCredentialsManagementOpen) {
+      return {
+        title: credentialsManagementTitle,
+        isBackDisabled: false,
+        onBack: handleCloseCredentialsManagement,
       };
     }
     return null;
@@ -654,10 +755,24 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
               item={item}
               message={confirmationContent.message}
               consequences={confirmationContent.consequences}
-              variant={confirmationContent.variant}
+              variant={
+                confirmationContent.cardVariant ?? confirmationContent.variant
+              }
               messageClassName={confirmMessageClassName}
             />
           )}
+
+          {!isConfirmationOpen &&
+            !isPublishOpen &&
+            isCredentialsManagementOpen && (
+              <CredentialsManagementPanel
+                item={item}
+                onLogin={onLogin}
+                onRequestLogout={handleRequestLogout}
+                onRequestDeleteApiKey={handleRequestDeleteApiKey}
+                texts={texts}
+              />
+            )}
 
           {!isConfirmationOpen && isPublishOpen && (
             <div className="p-[22px]">
@@ -735,21 +850,31 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 isRevokeShareVisible={isRevokeShareVisible}
                 onLogin={onLogin}
                 onLogout={onLogout}
-                onToggleCredentials={handleToggleCredentials}
+                onOpenCredentialsManagement={handleOpenCredentialsManagement}
                 onRequestLogout={handleRequestLogout}
                 texts={texts}
                 detailsStyles={detailsStyles}
               />
 
-              {isCredentialsOpen && (
-                <CredentialsSection
-                  item={item}
-                  onLogin={onLogin}
-                  onLogout={onLogout}
-                  texts={texts}
-                  statusLabelClassName={credentialsStatusLabelClassName}
-                />
-              )}
+              {item.credentials != null &&
+                (() => {
+                  const bannerState = getCredentialsBannerState(
+                    item.credentials,
+                  );
+                  return (
+                    bannerState != null && (
+                      <div className="px-6">
+                        <CredentialsBanner
+                          state={bannerState}
+                          authenticationType={
+                            item.credentials.authenticationType
+                          }
+                          texts={texts}
+                        />
+                      </div>
+                    )
+                  );
+                })()}
 
               <div className="flex items-center px-6">
                 <Tabs
