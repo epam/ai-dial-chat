@@ -23,6 +23,7 @@ import {
 } from '@/src/types/auth';
 
 import { getAuthAdditionalParamsExchangeBody } from './auth-additional-params';
+import { normalizeOidcWellKnownUrl } from './auth-oidc-utils';
 import { GitLab } from './custom-gitlab';
 import NextClient from './nextauth-client';
 import PingId from './ping-identity';
@@ -315,7 +316,16 @@ const providerConfigMethods = {
 };
 
 const getProviderFromConfig = (config: ProviderConfig) => {
-  return providerConfigMethods[config.provider]?.(config);
+  const provider = providerConfigMethods[config.provider]?.(config);
+
+  if (provider?.type !== 'oauth' || !provider.wellKnown) {
+    return provider;
+  }
+
+  return {
+    ...provider,
+    wellKnown: normalizeOidcWellKnownUrl(provider.wellKnown),
+  };
 };
 
 const getProviderEnv = (
