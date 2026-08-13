@@ -506,7 +506,6 @@ file-manager
 toolsets
 custom-apps
 prompts
-skills
 voice-input
 ```
 
@@ -526,6 +525,7 @@ catalog-table-view
 hide-delete-user-message
 hide-edit-user-message
 hide-regenerate-assistant-message
+skills
 hide-user-menu
 hide-user-settings
 hide-keyboard-shortcuts
@@ -541,8 +541,10 @@ is the point. The empty-chat composer has its own key,
 
 `hide-conversations-filter` removes the conversations panel's source filter
 row (All / My chats / Shared / Organization). The list keeps every group, so
-nothing becomes unreachable — only the control is gone. Use it for embeds
-where one source is the whole story.
+nothing becomes unreachable — only the control is gone. Because the row is
+today the only thing that ever moves the list off the All tab, hiding it
+leaves the panel permanently showing all sources. Use it for embeds where one
+source is the whole story.
 
 `hide-keyboard-shortcuts` removes the Keyboard shortcuts entry from the user
 menu and from the mobile profile sheet. The preference it edits (Enter vs
@@ -565,8 +567,8 @@ ENABLED_UI_FEATURES=header,conversations-section,likes,input-files
 ```
 
 This is also a complete replacement set, not an addition to the defaults. If
-the variable is absent or empty, the built-in baseline containing 23
-default-on flags (of 39) is used. Entries the server does not recognize — including
+the variable is absent or empty, the built-in baseline of 22 default-on flags
+out of the 39 supported is used. Entries the server does not recognize — including
 the renamed and retired legacy strings listed above — are logged and dropped;
 if every entry is unrecognized, the built-in baseline is used instead. An overlay host may replace the server baseline with
 its own `enabledFeatures`; the server baseline is not a security ceiling.

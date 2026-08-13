@@ -89,10 +89,10 @@ const getUploadedConfig = async (uploadSpy: ReturnType<typeof vi.spyOn>) => {
   return JSON.parse(await file.text()) as unknown;
 };
 
-/* Stored v2 shape — predates the `prompts` section entirely. */
+/* Stored v2 shape — predates the `prompts` and `skills` sections entirely. */
 const v2Config = (
   overrides?: Partial<UserConfig>,
-): Omit<UserConfig, 'prompts'> => ({
+): Omit<UserConfig, 'prompts' | 'skills'> => ({
   version: 2,
   conversations: { pinnedIds: [] },
   toolsets: { installed: [] },
@@ -100,12 +100,13 @@ const v2Config = (
   ...overrides,
 });
 
-const v4Config = (overrides?: Partial<UserConfig>): UserConfig => ({
-  version: 4,
+const v5Config = (overrides?: Partial<UserConfig>): UserConfig => ({
+  version: 5,
   conversations: { pinnedIds: [] },
   toolsets: { installed: [] },
   deployments: { installed: [], selectedId: null },
   prompts: { installed: [] },
+  skills: { installed: [] },
   legacyMigrationDone: true,
   ...overrides,
 });
@@ -120,47 +121,50 @@ describe('migrateConfig', () => {
     expect(migrateConfig(42)).toEqual(DEFAULT_USER_CONFIG);
   });
 
-  it('lifts v1 flat shape into v4 with selectedId null', () => {
+  it('lifts v1 flat shape into v5 with selectedId null', () => {
     const v1 = { version: 1, pinnedConversationIds: ['conv-1', 'conv-2'] };
     expect(migrateConfig(v1)).toEqual({
-      version: 4,
+      version: 5,
       conversations: { pinnedIds: ['conv-1', 'conv-2'] },
       toolsets: { installed: [] },
       deployments: { installed: [], selectedId: null },
       prompts: { installed: [] },
+      skills: { installed: [] },
     });
   });
 
   it('lifts v1 shape without version field', () => {
     const v1 = { pinnedConversationIds: ['conv-1'] };
     expect(migrateConfig(v1)).toEqual({
-      version: 4,
+      version: 5,
       conversations: { pinnedIds: ['conv-1'] },
       toolsets: { installed: [] },
       deployments: { installed: [], selectedId: null },
       prompts: { installed: [] },
+      skills: { installed: [] },
     });
   });
 
-  it('filters non-string entries in pinnedConversationIds during v1→v4 lift', () => {
+  it('filters non-string entries in pinnedConversationIds during v1→v5 lift', () => {
     const v1 = { pinnedConversationIds: ['valid', 42, null, 'also-valid'] };
     const result = migrateConfig(v1);
     expect(result.conversations.pinnedIds).toEqual(['valid', 'also-valid']);
   });
 
-  it('migrates v2 shape to v4 adding selectedId null and empty prompts', () => {
+  it('migrates v2 shape to v5 adding selectedId null and empty prompts and skills', () => {
     const stored = v2Config({ conversations: { pinnedIds: ['conv-1'] } });
     expect(migrateConfig(stored)).toEqual({
-      version: 4,
+      version: 5,
       conversations: { pinnedIds: ['conv-1'] },
       toolsets: { installed: [] },
       deployments: { installed: [], selectedId: null },
       prompts: { installed: [] },
+      skills: { installed: [] },
     });
   });
 
-  it('passes through v4 shape with selectedId preserved', () => {
-    const stored = v4Config({
+  it('passes through v5 shape with selectedId preserved', () => {
+    const stored = v5Config({
       conversations: { pinnedIds: ['conv-1'] },
       deployments: { installed: ['dep-a'], selectedId: 'gpt-4o' },
     });
@@ -168,7 +172,7 @@ describe('migrateConfig', () => {
   });
 
   it('preserves favorited prompt paths', () => {
-    const stored = v4Config({
+    const stored = v5Config({
       prompts: { installed: ['Work/AI/summarize', 'tone of voice'] },
     });
     expect(migrateConfig(stored).prompts.installed).toEqual([
@@ -182,7 +186,41 @@ describe('migrateConfig', () => {
     expect(migrateConfig(corrupt).prompts.installed).toEqual(['ok']);
   });
 
-  it('sanitises non-string entries in v2 arrays and migrates to v4', () => {
+  it('adds an empty skills section when reading a v4 document', () => {
+    const v4 = {
+      version: 4,
+      conversations: { pinnedIds: [] },
+      toolsets: { installed: [] },
+      deployments: { installed: [], selectedId: null },
+      prompts: { installed: ['Work/AI/summarize'] },
+    };
+    const result = migrateConfig(v4);
+    expect(result.version).toBe(5);
+    expect(result.skills.installed).toEqual([]);
+    expect(result.prompts.installed).toEqual(['Work/AI/summarize']);
+  });
+
+  it('preserves favorited skill resource URLs', () => {
+    const stored = v5Config({
+      skills: {
+        installed: ['skills/my-bucket/revenue-skill', 'skills/public/shared'],
+      },
+    });
+    expect(migrateConfig(stored).skills.installed).toEqual([
+      'skills/my-bucket/revenue-skill',
+      'skills/public/shared',
+    ]);
+  });
+
+  it('sanitises non-string entries in skills.installed', () => {
+    const corrupt = {
+      version: 4,
+      skills: { installed: ['skills/b/ok', 7, null] },
+    };
+    expect(migrateConfig(corrupt).skills.installed).toEqual(['skills/b/ok']);
+  });
+
+  it('sanitises non-string entries in v2 arrays and migrates to v5', () => {
     const corrupt = {
       version: 2,
       conversations: { pinnedIds: ['valid', 42, null] },
@@ -191,7 +229,7 @@ describe('migrateConfig', () => {
     };
     const result = migrateConfig(corrupt);
     expect(result.conversations.pinnedIds).toEqual(['valid']);
-    expect(result.version).toBe(4);
+    expect(result.version).toBe(5);
     expect(result.deployments.selectedId).toBeNull();
   });
 
@@ -202,6 +240,7 @@ describe('migrateConfig', () => {
     expect(result.deployments.installed).toEqual([]);
     expect(result.deployments.selectedId).toBeNull();
     expect(result.prompts.installed).toEqual([]);
+    expect(result.skills.installed).toEqual([]);
   });
 });
 
@@ -223,7 +262,7 @@ describe('UserConfigService', () => {
       expect(result).toEqual(DEFAULT_USER_CONFIG);
     });
 
-    it('migrates stored v2 config to v4 when reading from new path', async () => {
+    it('migrates stored v2 config to v5 when reading from new path', async () => {
       const stored = v2Config({ conversations: { pinnedIds: ['conv-1'] } });
       makeDownloadSpy(service, [
         {
@@ -237,7 +276,7 @@ describe('UserConfigService', () => {
       makeUploadSpy(service);
       const result = await service.readConfig('token', 'bucket');
       expect(result).toEqual(
-        v4Config({ conversations: { pinnedIds: ['conv-1'] } }),
+        v5Config({ conversations: { pinnedIds: ['conv-1'] } }),
       );
     });
 
@@ -254,7 +293,7 @@ describe('UserConfigService', () => {
 
       const result = await service.readConfig('token', 'bucket');
       expect(result.conversations.pinnedIds).toEqual(['conv-1']);
-      expect(result.version).toBe(4);
+      expect(result.version).toBe(5);
       expect(uploadSpy).toHaveBeenCalled();
     });
 
@@ -718,7 +757,7 @@ describe('UserConfigService', () => {
     it('adds a new id when pinning', async () => {
       makeSingleDownloadSpy(service, {
         ok: true,
-        body: JSON.stringify(v4Config()),
+        body: JSON.stringify(v5Config()),
       });
       const uploadSpy = makeUploadSpy(service);
       await service.updatePin(
@@ -760,7 +799,7 @@ describe('UserConfigService', () => {
       makeSingleDownloadSpy(service, {
         ok: true,
         body: JSON.stringify(
-          v4Config({
+          v5Config({
             conversations: { pinnedIds: ['conversations/bucket/id'] },
           }),
         ),
@@ -799,7 +838,7 @@ describe('UserConfigService', () => {
     it('adds a toolset id when installing', async () => {
       makeSingleDownloadSpy(service, {
         ok: true,
-        body: JSON.stringify(v4Config()),
+        body: JSON.stringify(v5Config()),
       });
       const uploadSpy = makeUploadSpy(service);
       await service.updateInstalledToolset(
@@ -837,7 +876,7 @@ describe('UserConfigService', () => {
       makeSingleDownloadSpy(service, {
         ok: true,
         body: JSON.stringify(
-          v4Config({ toolsets: { installed: ['toolset-abc'] } }),
+          v5Config({ toolsets: { installed: ['toolset-abc'] } }),
         ),
       });
       const uploadSpy = makeUploadSpy(service);
@@ -874,7 +913,7 @@ describe('UserConfigService', () => {
     it('adds a deployment id when installing', async () => {
       makeSingleDownloadSpy(service, {
         ok: true,
-        body: JSON.stringify(v4Config()),
+        body: JSON.stringify(v5Config()),
       });
       const uploadSpy = makeUploadSpy(service);
       await service.updateInstalledDeployment(
@@ -912,7 +951,7 @@ describe('UserConfigService', () => {
       makeSingleDownloadSpy(service, {
         ok: true,
         body: JSON.stringify(
-          v4Config({
+          v5Config({
             deployments: { installed: ['dep-xyz'], selectedId: null },
           }),
         ),
@@ -951,7 +990,7 @@ describe('UserConfigService', () => {
     it('adds a prompt path when favoriting', async () => {
       makeSingleDownloadSpy(service, {
         ok: true,
-        body: JSON.stringify(v4Config()),
+        body: JSON.stringify(v5Config()),
       });
       const uploadSpy = makeUploadSpy(service);
       await service.updateInstalledPrompt(
@@ -970,7 +1009,7 @@ describe('UserConfigService', () => {
       makeSingleDownloadSpy(service, {
         ok: true,
         body: JSON.stringify(
-          v4Config({ prompts: { installed: ['Work/AI/summarize'] } }),
+          v5Config({ prompts: { installed: ['Work/AI/summarize'] } }),
         ),
       });
       const uploadSpy = makeUploadSpy(service);
@@ -988,7 +1027,7 @@ describe('UserConfigService', () => {
       makeSingleDownloadSpy(service, {
         ok: true,
         body: JSON.stringify(
-          v4Config({ prompts: { installed: ['Work/AI/summarize'] } }),
+          v5Config({ prompts: { installed: ['Work/AI/summarize'] } }),
         ),
       });
       const uploadSpy = makeUploadSpy(service);
@@ -1006,7 +1045,7 @@ describe('UserConfigService', () => {
       makeSingleDownloadSpy(service, {
         ok: true,
         body: JSON.stringify(
-          v4Config({
+          v5Config({
             deployments: { installed: ['dep-a'], selectedId: 'gpt-4o' },
             conversations: { pinnedIds: ['conv-1'] },
           }),
@@ -1023,11 +1062,68 @@ describe('UserConfigService', () => {
     });
   });
 
+  describe('updateInstalledSkill', () => {
+    const SKILL_URL = 'skills/my-bucket/analysis/revenue-skill';
+
+    it('adds a skill resource URL when favoriting', async () => {
+      makeSingleDownloadSpy(service, {
+        ok: true,
+        body: JSON.stringify(v5Config()),
+      });
+      const uploadSpy = makeUploadSpy(service);
+      await service.updateInstalledSkill(SKILL_URL, true, 'token', 'bucket');
+      const uploaded = await getUploadedConfig(uploadSpy);
+      expect((uploaded as UserConfig).skills.installed).toEqual([SKILL_URL]);
+    });
+
+    it('removes a skill resource URL when unfavoriting', async () => {
+      makeSingleDownloadSpy(service, {
+        ok: true,
+        body: JSON.stringify(v5Config({ skills: { installed: [SKILL_URL] } })),
+      });
+      const uploadSpy = makeUploadSpy(service);
+      await service.updateInstalledSkill(SKILL_URL, false, 'token', 'bucket');
+      const uploaded = await getUploadedConfig(uploadSpy);
+      expect((uploaded as UserConfig).skills.installed).toHaveLength(0);
+    });
+
+    it('does not duplicate an already favorited skill', async () => {
+      makeSingleDownloadSpy(service, {
+        ok: true,
+        body: JSON.stringify(v5Config({ skills: { installed: [SKILL_URL] } })),
+      });
+      const uploadSpy = makeUploadSpy(service);
+      await service.updateInstalledSkill(SKILL_URL, true, 'token', 'bucket');
+      const uploaded = await getUploadedConfig(uploadSpy);
+      expect((uploaded as UserConfig).skills.installed).toHaveLength(1);
+    });
+
+    it('leaves the prompts and deployments sections untouched', async () => {
+      makeSingleDownloadSpy(service, {
+        ok: true,
+        body: JSON.stringify(
+          v5Config({
+            deployments: { installed: ['dep-a'], selectedId: 'gpt-4o' },
+            prompts: { installed: ['Work/AI/summarize'] },
+          }),
+        ),
+      });
+      const uploadSpy = makeUploadSpy(service);
+      await service.updateInstalledSkill(SKILL_URL, true, 'token', 'bucket');
+      const uploaded = (await getUploadedConfig(uploadSpy)) as UserConfig;
+      expect(uploaded.deployments).toEqual({
+        installed: ['dep-a'],
+        selectedId: 'gpt-4o',
+      });
+      expect(uploaded.prompts.installed).toEqual(['Work/AI/summarize']);
+    });
+  });
+
   describe('updateSelectedDeployment', () => {
     it('sets selectedId to the given id', async () => {
       makeSingleDownloadSpy(service, {
         ok: true,
-        body: JSON.stringify(v4Config()),
+        body: JSON.stringify(v5Config()),
       });
       const uploadSpy = makeUploadSpy(service);
       await service.updateSelectedDeployment('gpt-4o', 'token', 'bucket');
@@ -1039,7 +1135,7 @@ describe('UserConfigService', () => {
       makeSingleDownloadSpy(service, {
         ok: true,
         body: JSON.stringify(
-          v4Config({ deployments: { installed: [], selectedId: 'old-dep' } }),
+          v5Config({ deployments: { installed: [], selectedId: 'old-dep' } }),
         ),
       });
       const uploadSpy = makeUploadSpy(service);
@@ -1052,7 +1148,7 @@ describe('UserConfigService', () => {
       makeSingleDownloadSpy(service, {
         ok: true,
         body: JSON.stringify(
-          v4Config({
+          v5Config({
             deployments: { installed: ['dep-a', 'dep-b'], selectedId: null },
           }),
         ),

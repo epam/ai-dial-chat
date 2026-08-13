@@ -33,7 +33,7 @@
 
 ### Requirement: Default baseline preserves current unconditional behavior
 
-`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 23 default-on keys and exclude the 16 default-off (`Hide*`/restrictive modifier) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `file-manager`, `prompts`... are default-on; `hide-edit-user-message`, `disabled-send`, `catalog-table-view`, `hide-change-agent`... are default-off — the full 39-key membership is the `OverlayFeature` enum itself, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 39 keys, matching each surface's current unconditional behavior.
+`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 22 default-on keys and exclude the 17 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `file-manager`, `prompts`... are default-on; `hide-edit-user-message`, `disabled-send`, `catalog-table-view`, `hide-change-agent`, `skills`... are default-off — the full 39-key membership is the `OverlayFeature` enum itself, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 39 keys, matching each surface's current unconditional behavior.
 
 **RTL impact:** None for this requirement itself — individual owning-surface gates state their own RTL impact where relevant (see per-surface requirements below).
 
@@ -172,7 +172,7 @@ Hiding the entry SHALL NOT change send behavior: the `SendOnEnter` preference is
 
 `isEnabled('hide-conversations-filter')` SHALL remove the conversations panel's `FilterTabs` row (All / My chats / Shared / Organization). `ConversationPanelView` SHALL express this by passing `isFilterTabsHidden` to `ConversationPanel`; the lib SHALL take that decision as a boolean prop and SHALL NOT read the feature set itself, per the library-isolation rule.
 
-Hiding the control SHALL NOT filter the list: the active tab stays whatever it was (`FilterTab.All` unless `activeFilter` overrides it), so every group — Pinned, My chats, Shared, Organization — remains reachable. `labels.filterLabels` stays a required prop whether or not the row renders.
+Hiding the control SHALL NOT filter the list: the active tab stays `FilterTab.All`, so every group — Pinned, My chats, Shared, Organization — remains listed. The row is currently the only surface that moves the list off `All` — no route, URL, or host message sets `activeFilter` to anything else — so with the row hidden the panel shows all sources permanently. `labels.filterLabels` stays a required prop whether or not the row renders.
 
 **Accessibility:** The row is not rendered, so it leaves neither an accessibility-tree node nor a tab stop.
 

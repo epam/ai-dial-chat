@@ -11,6 +11,7 @@ const FAVORITE_ENTITY_TYPE_BY_CATALOG_TYPE: Partial<
 > = {
   [CatalogEntityType.Toolset]: FavoriteEntityType.Toolset,
   [CatalogEntityType.Prompt]: FavoriteEntityType.Prompt,
+  [CatalogEntityType.Skill]: FavoriteEntityType.Skill,
 };
 
 /** Returns the user-config section a catalog item's favorite state is stored in. */

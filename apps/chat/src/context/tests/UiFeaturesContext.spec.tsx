@@ -51,7 +51,7 @@ describe('UiFeaturesContext', () => {
       mockAppConfig();
       const { result } = renderHook(() => useUiFeatures(), { wrapper });
 
-      expect(result.current.enabledFeatures.size).toBe(22);
+      expect(result.current.enabledFeatures.size).toBe(23);
       expect(result.current.isEnabled(OverlayFeature.Header)).toBe(true);
       expect(
         result.current.isEnabled(OverlayFeature.ConversationsSection),
@@ -102,7 +102,7 @@ describe('UiFeaturesContext', () => {
       mockAppConfig(null);
       const { result } = renderHook(() => useUiFeatures(), { wrapper });
 
-      expect(result.current.enabledFeatures.size).toBe(22);
+      expect(result.current.enabledFeatures.size).toBe(23);
       expect(result.current.isEnabled(OverlayFeature.Header)).toBe(true);
     });
   });

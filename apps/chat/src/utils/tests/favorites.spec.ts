@@ -10,6 +10,16 @@ describe('resolveFavoriteEntityType', () => {
     );
   });
 
+  /*
+   * Without its own entry a skill would fall through to the deployments
+   * section, writing skill resource URLs into `deployments.installed`.
+   */
+  it('maps a skill to the skills config section', () => {
+    expect(resolveFavoriteEntityType(CatalogEntityType.Skill)).toBe(
+      FavoriteEntityType.Skill,
+    );
+  });
+
   it('maps a toolset to the toolsets config section', () => {
     expect(resolveFavoriteEntityType(CatalogEntityType.Toolset)).toBe(
       FavoriteEntityType.Toolset,

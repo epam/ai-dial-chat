@@ -189,6 +189,12 @@
         "section": "Prompt",
         "author": "Author",
         "updated": "Last updated"
+      },
+      "skill": {
+        "section": "Skill",
+        "author": "Author",
+        "updated": "Last updated",
+        "fileCount": "Files"
       }
     },
     "create": {
@@ -202,11 +208,13 @@
     "publishFolderEmptyState": "No folders match \"{{query}}\".",
     "publishHistoryLoading": "Loading history…",
     "publishHistoryError": "Failed to load publish history.",
+    "skillsLoadError": "Failed to load skills",
     "tab": {
       "models": "Models",
       "applications": "Agents",
       "toolsets": "Toolsets",
-      "prompts": "Prompts"
+      "prompts": "Prompts",
+      "skills": "Skills"
     },
     "folder": {
       "personal": "Personal",

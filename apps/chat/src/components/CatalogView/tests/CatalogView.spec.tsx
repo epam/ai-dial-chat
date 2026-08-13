@@ -31,6 +31,7 @@ import {
 } from '../../../context/FavoriteApplicationsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { usePrompts } from '../../../context/PromptsContext';
+import { useSkills } from '../../../context/SkillsContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { useCatalogSortFilterPreference } from '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
@@ -51,6 +52,10 @@ import {
   revokeSharedAccess,
 } from '../../../server-api/share.api';
 import {
+  downloadSkillFile,
+  listSkillFiles,
+} from '../../../server-api/skills.api';
+import {
   deleteToolset,
   getToolset,
   loginToolset,
@@ -58,6 +63,7 @@ import {
 } from '../../../server-api/toolsets';
 import { AuthStatus } from '../../../types/auth-status';
 import { ROUTES } from '../../../types/routes';
+import { SKILL_MANIFEST_MAX_BYTES } from '../../../types/skill';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import CatalogView from '../CatalogView';
@@ -519,6 +525,15 @@ vi.mock('../../../server-api/prompts.api', () => ({
   deletePrompt: vi.fn(),
 }));
 
+vi.mock('../../../context/SkillsContext', () => ({
+  useSkills: vi.fn(),
+}));
+
+vi.mock('../../../server-api/skills.api', () => ({
+  downloadSkillFile: vi.fn(),
+  listSkillFiles: vi.fn(),
+}));
+
 /* Only the download trigger is stubbed; the mappers still need the real helpers. */
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
@@ -534,6 +549,7 @@ vi.mock('../../../context/FavoriteApplicationsContext', () => ({
     Deployment: 'deployment',
     Toolset: 'toolset',
     Prompt: 'prompt',
+    Skill: 'skill',
   },
   useFavoriteApplications: vi.fn(),
 }));
@@ -637,6 +653,12 @@ describe('CatalogView', () => {
       error: null,
       refetchPrompts: vi.fn().mockResolvedValue(undefined),
       refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
+    });
+    vi.mocked(useSkills).mockReturnValue({
+      skills: [],
+      publicSkills: [],
+      isLoading: false,
+      error: null,
     });
     vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [],
@@ -3278,9 +3300,9 @@ describe('CatalogView', () => {
       );
 
       expect(getShareRecipientsCount).toHaveBeenCalledWith(ownedApplication.id);
-      expect(
-        screen.getByLabelText('Recipients count result').textContent,
-      ).toBe('4');
+      expect(screen.getByLabelText('Recipients count result').textContent).toBe(
+        '4',
+      );
     });
 
     it('propagates a failed recipient-count lookup without notifying', async () => {
@@ -3542,6 +3564,329 @@ describe('CatalogView', () => {
         ),
       );
       expect(triggerBlobDownload).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('skill wiring', () => {
+    const personalSkill = {
+      name: 'revenue-skill',
+      path: 'analysis/revenue-skill',
+      url: 'skills/my-bucket/analysis/revenue-skill',
+      bucket: 'my-bucket',
+      nodeType: 'item' as const,
+      parentPath: 'analysis/',
+      author: 'alice',
+      updatedAt: 2,
+    };
+
+    const organisationSkill = {
+      ...personalSkill,
+      name: 'shared-skill',
+      path: 'shared-skill',
+      url: 'skills/public/shared-skill',
+      bucket: 'public',
+      parentPath: undefined,
+    };
+
+    const setFeatures = (
+      extra: OverlayFeature[] = [],
+      disabled: OverlayFeature[] = [],
+    ) => {
+      vi.mocked(useUiFeature).mockReset();
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) =>
+          !disabled.includes(feature) &&
+          (extra.includes(feature) || DEFAULT_ENABLED_UI_FEATURES.has(feature)),
+      );
+    };
+
+    const enableSkills = () => setFeatures([OverlayFeature.Skills]);
+    /* Explicitly opted out: `skills` is in the default-enabled set. */
+    const disableSkills = () => setFeatures([], [OverlayFeature.Skills]);
+
+    const mockSkills = (
+      overrides: Partial<ReturnType<typeof useSkills>> = {},
+    ) =>
+      vi.mocked(useSkills).mockReturnValue({
+        skills: [personalSkill],
+        publicSkills: [organisationSkill],
+        isLoading: false,
+        error: null,
+        ...overrides,
+      });
+
+    const makeManifestResponse = (body: string) =>
+      new Response(body, {
+        headers: { 'content-length': String(body.length) },
+      });
+
+    it('adds skill items to the catalog when the feature is enabled', () => {
+      enableSkills();
+      mockSkills();
+
+      render(<CatalogView />);
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).toContain('skills/my-bucket/analysis/revenue-skill:SKILL');
+      expect(ids).toContain('skills/public/shared-skill:SKILL');
+    });
+
+    it('adds no skill items when the feature is disabled', () => {
+      disableSkills();
+      mockSkills();
+
+      render(<CatalogView />);
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).not.toContain('SKILL');
+    });
+
+    it('excludes skills from the model picker in selector mode', () => {
+      enableSkills();
+      mockSkills();
+
+      render(<CatalogView isSelectorMode />);
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).not.toContain('SKILL');
+    });
+
+    it('hides every mutating and runtime action for a skill', () => {
+      enableSkills();
+      mockSkills();
+
+      render(<CatalogView />);
+
+      const skillId = 'skills/my-bucket/analysis/revenue-skill';
+      expect(
+        screen.queryByRole('button', { name: `use in chat ${skillId}` }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole('button', { name: `download ${skillId}` }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole('button', { name: `unshare ${skillId}` }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole('button', { name: `revoke ${skillId}` }),
+      ).toBeNull();
+    });
+
+    it('hides Share and Publish for a skill regardless of ownership', () => {
+      enableSkills();
+      mockSkills();
+
+      render(<CatalogView />);
+
+      const ownedSkill = makeCatalogItem({
+        type: CatalogEntityType.Skill,
+        isMyApp: true,
+      });
+      expect(capturedPublishProps.current?.isShareVisible?.(ownedSkill)).toBe(
+        false,
+      );
+      expect(capturedPublishProps.current?.isPublishVisible?.(ownedSkill)).toBe(
+        false,
+      );
+    });
+
+    it('leaves the Create dropdown without a skill entry', () => {
+      enableSkills();
+      mockSkills();
+
+      render(<CatalogView />);
+
+      /* Create options render as buttons labelled with the option's own label. */
+      expect(screen.queryByRole('button', { name: 'Skill' })).toBeNull();
+    });
+
+    it('notifies once when the skill listing fails and still renders the catalog', async () => {
+      enableSkills();
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      mockSkills({ skills: [], publicSkills: [], error: new Error('down') });
+
+      render(<CatalogView />);
+
+      await waitFor(() =>
+        expect(showNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: 'error',
+            message: CatalogI18nKeys.SkillsLoadError,
+          }),
+        ),
+      );
+      expect(showNotification).toHaveBeenCalledOnce();
+      expect(screen.getByLabelText('Catalog item ids')).toBeTruthy();
+    });
+
+    it('resolves a skill through the skills endpoints, never the deployment ones', async () => {
+      enableSkills();
+      mockSkills();
+      vi.mocked(downloadSkillFile).mockResolvedValue(
+        makeManifestResponse('Revenue skill manifest'),
+      );
+      vi.mocked(listSkillFiles).mockResolvedValue({
+        bucket: 'my-bucket',
+        path: 'analysis/revenue-skill',
+        items: [
+          {
+            name: 'SKILL.md',
+            path: 'SKILL.md',
+            url: 'skills/my-bucket/analysis/revenue-skill/SKILL.md',
+            bucket: 'my-bucket',
+            nodeType: 'item',
+            updatedAt: 3,
+          },
+        ],
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'fetch details skills/my-bucket/analysis/revenue-skill',
+        }),
+      );
+
+      expect(downloadSkillFile).toHaveBeenCalledWith(
+        'my-bucket',
+        'analysis/revenue-skill',
+        'SKILL.md',
+      );
+      expect(listSkillFiles).toHaveBeenCalledWith({
+        bucket: 'my-bucket',
+        path: 'analysis/revenue-skill',
+        filePath: '',
+        recursive: true,
+      });
+      expect(getDeploymentDetails).not.toHaveBeenCalled();
+      expect(getDeploymentLimits).not.toHaveBeenCalled();
+      await waitFor(() =>
+        expect(
+          screen.getByLabelText('Fetch details result').textContent,
+        ).toContain('Revenue skill manifest'),
+      );
+    });
+
+    it('keeps the file overview when the manifest read fails', async () => {
+      enableSkills();
+      mockSkills();
+      vi.mocked(downloadSkillFile).mockRejectedValue(new Error('404'));
+      vi.mocked(listSkillFiles).mockResolvedValue({
+        bucket: 'my-bucket',
+        path: 'analysis/revenue-skill',
+        items: [],
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'fetch details skills/my-bucket/analysis/revenue-skill',
+        }),
+      );
+
+      await waitFor(() => {
+        const result =
+          screen.getByLabelText('Fetch details result').textContent ?? '';
+        expect(result).toContain('overview');
+        expect(result).not.toContain('promptContent');
+      });
+    });
+
+    it('keeps the manifest when the file listing fails', async () => {
+      enableSkills();
+      mockSkills();
+      vi.mocked(downloadSkillFile).mockResolvedValue(
+        makeManifestResponse('Revenue skill manifest'),
+      );
+      vi.mocked(listSkillFiles).mockRejectedValue(new Error('502'));
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'fetch details skills/my-bucket/analysis/revenue-skill',
+        }),
+      );
+
+      await waitFor(() => {
+        const result =
+          screen.getByLabelText('Fetch details result').textContent ?? '';
+        expect(result).toContain('Revenue skill manifest');
+        expect(result).not.toContain('overview');
+      });
+    });
+
+    it('resolves null when both skill requests fail', async () => {
+      enableSkills();
+      mockSkills();
+      vi.mocked(downloadSkillFile).mockRejectedValue(new Error('404'));
+      vi.mocked(listSkillFiles).mockRejectedValue(new Error('502'));
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'fetch details skills/my-bucket/analysis/revenue-skill',
+        }),
+      );
+
+      await waitFor(() =>
+        expect(screen.getByLabelText('Fetch details result').textContent).toBe(
+          'null',
+        ),
+      );
+    });
+
+    it('drops an oversized manifest but keeps the overview', async () => {
+      enableSkills();
+      mockSkills();
+      const oversized = 'x'.repeat(SKILL_MANIFEST_MAX_BYTES + 1);
+      vi.mocked(downloadSkillFile).mockResolvedValue(
+        makeManifestResponse(oversized),
+      );
+      vi.mocked(listSkillFiles).mockResolvedValue({
+        bucket: 'my-bucket',
+        path: 'analysis/revenue-skill',
+        items: [],
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'fetch details skills/my-bucket/analysis/revenue-skill',
+        }),
+      );
+
+      await waitFor(() => {
+        const result =
+          screen.getByLabelText('Fetch details result').textContent ?? '';
+        expect(result).toContain('overview');
+        expect(result).not.toContain('promptContent');
+      });
+    });
+
+    it('issues no request for a skill whose id is not a skill resource URL', async () => {
+      enableSkills();
+      mockSkills({
+        skills: [{ ...personalSkill, url: 'files/my-bucket/report.pdf' }],
+        publicSkills: [],
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'fetch details files/my-bucket/report.pdf',
+        }),
+      );
+
+      expect(downloadSkillFile).not.toHaveBeenCalled();
+      expect(listSkillFiles).not.toHaveBeenCalled();
+      await waitFor(() =>
+        expect(screen.getByLabelText('Fetch details result').textContent).toBe(
+          'null',
+        ),
+      );
     });
   });
 });
