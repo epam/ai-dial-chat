@@ -154,10 +154,10 @@ describe('ConversationController (integration)', () => {
         .expect(400);
     });
 
-    it('returns 400 when firstMessage exceeds 4000 characters', async () => {
+    it('returns 400 when firstMessage exceeds 50000 characters', async () => {
       await request(app.getHttpServer())
         .post('/conversations')
-        .send({ firstMessage: 'a'.repeat(4001), deploymentId: 'gpt-4o' })
+        .send({ firstMessage: 'a'.repeat(50001), deploymentId: 'gpt-4o' })
         .expect(400);
     });
 

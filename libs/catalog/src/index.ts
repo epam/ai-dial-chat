@@ -5,7 +5,7 @@ export {
   DetailsConfirmationKind,
   DetailsConfirmationVariant,
 } from './types/details-confirmation';
-export { CatalogSortKey } from './types/sort';
+export { DeploymentSize } from './types/deployment-icon-size';
 export {
   CredentialsBadgeState,
   CredentialsLevel,
@@ -124,3 +124,14 @@ export type { InfoCardProps } from './components/InfoCard/InfoCard';
 
 export { CredentialsBadge } from './components/CredentialsBadge/CredentialsBadge';
 export type { CredentialsBadgeProps } from './components/CredentialsBadge/CredentialsBadge';
+
+export { ContentTab } from './components/Details/TabsContent/Content';
+export type { ContentTabProps } from './components/Details/TabsContent/Content';
+
+export { AppIdentity } from './components/AppIdentity/AppIdentity';
+export type { AppIdentityProps } from './components/AppIdentity/AppIdentity';
+export type {
+  AppIdentityColors,
+  AppIdentityStyles,
+  AppIdentityTypography,
+} from './models/app-identity-styles';

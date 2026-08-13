@@ -19,10 +19,18 @@ import { useDeploymentSelectorOverlay } from '../../components/DeploymentSelecto
 import NewConversationComposer, {
   type NewConversationChatSettings,
 } from '../../components/NewConversationComposer/NewConversationComposer';
+import {
+  PendingParametersPrompt,
+  usePromptSelectorOverlay,
+} from '../../components/PromptSelector/usePromptSelectorOverlay';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { getConversationRoute } from '../../constants/routes';
-import { ChatI18nKeys, ToolsI18nKeys } from '../../constants/translation-keys';
+import {
+  ChatI18nKeys,
+  PromptSelectorI18nKeys,
+  ToolsI18nKeys,
+} from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
@@ -58,7 +66,22 @@ const ConversationRoute: FC = () => {
     ?.deploymentId;
   const routePromptContent = (state as { promptContent?: string } | null)
     ?.promptContent;
+  const routePendingPrompt = (
+    state as { pendingPrompt?: PendingParametersPrompt } | null
+  )?.pendingPrompt;
   const [inputMessage, setInputMessage] = useState<string | undefined>();
+  const [inputMessageRevision, setInputMessageRevision] = useState(0);
+
+  const handleInsertText = useCallback((text: string) => {
+    setInputMessage(text);
+    setInputMessageRevision((prev) => prev + 1);
+  }, []);
+  const {
+    renderOverlay: renderPromptsOverlay,
+    promptCatalogModal,
+    parametersPopup: promptParametersPopup,
+    openParametersPopup,
+  } = usePromptSelectorOverlay({ onInsertText: handleInsertText });
   const { showErrorNotification } = useNotification();
   const overlay = useOptionalOverlay();
   const {
@@ -110,6 +133,17 @@ const ConversationRoute: FC = () => {
     setInputMessage(routePromptContent);
     navigate(pathname, { replace: true, state: null });
   }, [routePromptContent, navigate, pathname]);
+
+  /*
+   * Seeds the "Prompt parameters" popup from a parameterized prompt the user
+   * picked via the Catalog page's "Use in chat" action. Same one-shot state
+   * clearing as the plain-text case above.
+   */
+  useEffect(() => {
+    if (routePendingPrompt == null) return;
+    openParametersPopup(routePendingPrompt);
+    navigate(pathname, { replace: true, state: null });
+  }, [routePendingPrompt, openParametersPopup, navigate, pathname]);
 
   /*
    * This is the "no conversation selected" empty state. Overlay mode must
@@ -276,8 +310,11 @@ const ConversationRoute: FC = () => {
         placeholder={t(ChatI18nKeys.Placeholder)}
         introText={starterIntroText}
         message={inputMessage}
+        messageRevision={inputMessageRevision}
         onCreateConversation={handleCreateConversation}
         modelPickerOverlay={renderOverlay}
+        promptsMenuOverlay={renderPromptsOverlay}
+        promptsMenuTitle={t(PromptSelectorI18nKeys.AddMenuLabel)}
         toolsMenuItems={toolsMenuItems}
         onToolToggle={onToolToggle}
         toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}
@@ -292,6 +329,8 @@ const ConversationRoute: FC = () => {
         />
       </NewConversationComposer>
       {catalogModal}
+      {promptCatalogModal}
+      {promptParametersPopup}
     </Suspense>
   );
 };

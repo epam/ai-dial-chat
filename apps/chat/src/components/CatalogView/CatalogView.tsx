@@ -13,6 +13,7 @@ import type {
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   CatalogEntityType,
+  extractPromptParams,
   triggerBlobDownload,
 } from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
@@ -78,12 +79,12 @@ import { downloadSkillFile, listSkillFiles } from '../../server-api/skills.api';
 import { deleteToolset, logoutToolset } from '../../server-api/toolsets';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { CatalogQuery } from '../../types/catalog';
+import { EditorQuery } from '../../types/editor-query';
 import {
   EntityOperation,
   NotifiableEntity,
 } from '../../types/entity-notification';
 import { parsePromptResourceUrl, PromptSource } from '../../types/prompt';
-import { PromptEditorQuery } from '../../types/prompt-editor';
 import { ROUTES } from '../../types/routes';
 import {
   parseSkillResourceUrl,
@@ -150,12 +151,19 @@ interface Props {
    * selected deployment via `setSelectedItemId`).
    */
   onSelect?: (id: string) => void;
+  /**
+   * Entity types shown while `isSelectorMode` is true. Defaults to
+   * `PICKER_VISIBLE_TYPES` (models and agents only), matching the existing
+   * model/agent picker.
+   */
+  visibleTypes?: Set<CatalogEntityType>;
 }
 
 const CatalogView: FC<Props> = ({
   isSelectorMode = false,
   onClose,
   onSelect,
+  visibleTypes = PICKER_VISIBLE_TYPES,
 }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
@@ -348,13 +356,13 @@ const CatalogView: FC<Props> = ({
 
   const visibleCatalogItems = useMemo(() => {
     let result = isSelectorMode
-      ? catalogItems.filter((item) => PICKER_VISIBLE_TYPES.has(item.type))
+      ? catalogItems.filter((item) => visibleTypes.has(item.type))
       : catalogItems;
     if (isCatalogHideMyAppsEnabled) {
       result = result.filter((item) => !item.isMyApp);
     }
     return result;
-  }, [catalogItems, isSelectorMode, isCatalogHideMyAppsEnabled]);
+  }, [catalogItems, isSelectorMode, isCatalogHideMyAppsEnabled, visibleTypes]);
 
   const reconciledFilterTopics = useMemo(() => {
     const availableTopics = new Set(
@@ -712,6 +720,21 @@ const CatalogView: FC<Props> = ({
             return;
           }
         }
+
+        if (extractPromptParams(promptContent).length > 0) {
+          navigate(ROUTES.Root, {
+            state: {
+              pendingPrompt: {
+                id: item.id,
+                name: item.name,
+                content: promptContent,
+                description: item.description,
+              },
+            },
+          });
+          return;
+        }
+
         navigate(ROUTES.Root, { state: { promptContent } });
         return;
       }
@@ -926,8 +949,8 @@ const CatalogView: FC<Props> = ({
     (item: CatalogItem) => {
       if (item.type === CatalogEntityType.Prompt) {
         const params = new URLSearchParams({
-          [PromptEditorQuery.Id]: item.id,
-          [PromptEditorQuery.ReturnUrl]: ROUTES.Catalog,
+          [EditorQuery.Id]: item.id,
+          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
         });
         navigate(`${ROUTES.PromptEditor}?${params.toString()}`);
         return;
@@ -1162,12 +1185,23 @@ const CatalogView: FC<Props> = ({
         label: t(CatalogI18nKeys.CreatePrompt),
         onClick: () => {
           const params = new URLSearchParams({
-            [PromptEditorQuery.ReturnUrl]: ROUTES.Catalog,
+            [EditorQuery.ReturnUrl]: ROUTES.Catalog,
           });
           navigate(`${ROUTES.PromptEditor}?${params.toString()}`);
         },
       });
     }
+
+    options.push({
+      key: 'skill',
+      label: t(CatalogI18nKeys.CreateSkill),
+      onClick: () => {
+        const params = new URLSearchParams({
+          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
+        });
+        navigate(`${ROUTES.SkillEditor}?${params.toString()}`);
+      },
+    });
 
     return options;
   }, [

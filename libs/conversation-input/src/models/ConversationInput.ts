@@ -121,11 +121,17 @@ export interface EditMessageInputProps {
    * When absent the cards are not rendered as interactive.
    */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
-  /** Character count above which pasted plain-text triggers `onMessageTooLong` when attachments are disabled. Defaults to `4000`. */
+  /** Character count above which pasted plain-text is converted to a text attachment. Defaults to `4000`. */
   pasteTextThreshold?: number;
   /**
-   * Called when the user pastes text whose length is ≥ `pasteTextThreshold` while
-   * `isAttachmentsEnabled` is `false`. The text is still inserted inline — the
+   * Maximum character count for the message text. When `isAttachmentsEnabled`
+   * is `false`, pasting or sending text at or above this length triggers
+   * `onMessageTooLong` instead of being accepted. Defaults to `50000`.
+   */
+  maxMessageLength?: number;
+  /**
+   * Called when the user pastes or sends text whose length is ≥ `maxMessageLength`
+   * while `isAttachmentsEnabled` is `false`. The text is still inserted inline — the
    * host is responsible for surfacing the error to the user.
    */
   onMessageTooLong?: (length: number, max: number) => void;
@@ -171,6 +177,12 @@ export interface ConversationInputProps {
   onPendingAttachmentsConsumed?: () => void;
   /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `4000`. Pass `Infinity` to disable. */
   pasteTextThreshold?: number;
+  /**
+   * Maximum character count for the message text. When `isAttachmentsEnabled`
+   * is `false`, pasting or sending text at or above this length triggers
+   * `onMessageTooLong` instead of being accepted. Defaults to `50000`.
+   */
+  maxMessageLength?: number;
   /**
    * List of deployment items to populate the model selector menu. When `undefined`, the selector is not rendered.
    * `iconUrl` on each item must already be a fully resolved URL usable in `<img src>`.
@@ -308,11 +320,21 @@ export interface ConversationInputProps {
   toolsBackLabel?: string;
   /** Labels for the selected-tools chip row shown in the input when tools are active. */
   toolsChipLabels?: ToolsChipLabels;
+  /**
+   * When provided, a "Prompts" item is added to the `+` menu above "Chat
+   * settings". Its submenu (desktop flyout / mobile bottom sheet) renders
+   * this host-owned overlay, mirroring `modelPickerOverlay`.
+   */
+  promptsMenuOverlay?: (onClose: () => void) => ReactNode;
+  /** Label for the "Prompts" menu item and mobile sheet title. Defaults to `'Prompts'`. */
+  promptsMenuTitle?: string;
+  /** Accessible label for the back arrow in the mobile prompts bottom sheet. Defaults to `'Back'`. */
+  promptsBackLabel?: string;
   /** Arbitrary slot rendered in the action row before the model selector. Use to inject app-level controls (e.g. a token-usage indicator). */
   usageLimitsSlot?: ReactNode;
   /**
-   * Called when the user pastes text whose length is ≥ `pasteTextThreshold` while
-   * `isAttachmentsEnabled` is `false`. The text is still inserted inline — the
+   * Called when the user pastes or sends text whose length is ≥ `maxMessageLength`
+   * while `isAttachmentsEnabled` is `false`. The text is still inserted inline — the
    * host is responsible for surfacing the error to the user.
    */
   onMessageTooLong?: (length: number, max: number) => void;

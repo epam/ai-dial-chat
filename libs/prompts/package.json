@@ -1,0 +1,32 @@
+{
+  "name": "@epam/ai-dial-prompts",
+  "description": "Host-agnostic UI for picking a favorite prompt and resolving its {{parameter}} placeholders before it is inserted into a chat message",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@epam/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "peerDependencies": {
+    "@epam/ai-dial-catalog": "*",
+    "@epam/ai-dial-chat-shared": "*",
+    "@epam/ai-dial-ui-kit": "^0.13.0-dev.26",
+    "@tabler/icons-react": "^3.0.0",
+    "react": "^19.0.0"
+  },
+  "nx": {
+    "tags": [
+      "type:ui"
+    ]
+  }
+}

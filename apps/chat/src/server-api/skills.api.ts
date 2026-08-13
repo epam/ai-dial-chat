@@ -74,17 +74,48 @@ export const downloadSkillFile = async (
  * (SkillUploadResponseDto.etag), not as an HTTP response header on the BFF's
  * own response, so the plain (non-Raw) generated method is sufficient here —
  * unlike the binary download methods above, there's no stream/header
- * semantics to preserve.
+ * semantics to preserve. No ZIP is built or sent — skillManifest is the raw
+ * SKILL.md text, filePaths is a JSON-encoded array of supporting-file
+ * relative paths positionally paired with files.
  */
-export const uploadSkill = (
+export const createSkill = (
   bucket: string,
   path: string,
-  file: Blob,
-  ifMatch?: string,
+  skillManifest: string,
+  filePaths: string[],
+  files: Blob[],
   signal?: AbortSignal,
 ): Promise<SkillUploadResponseDto> =>
-  skillsApi.uploadSkill(
-    { bucket, path, file, ifMatch },
+  skillsApi.createSkill(
+    {
+      bucket,
+      path,
+      skillManifest,
+      filePaths: JSON.stringify(filePaths),
+      files,
+    },
+    signal ? { signal } : undefined,
+  );
+
+/** Same request shape as `createSkill`, plus a required `ifMatch` (the BFF returns `428` without it). */
+export const updateSkill = (
+  bucket: string,
+  path: string,
+  skillManifest: string,
+  filePaths: string[],
+  files: Blob[],
+  ifMatch: string,
+  signal?: AbortSignal,
+): Promise<SkillUploadResponseDto> =>
+  skillsApi.updateSkill(
+    {
+      bucket,
+      path,
+      skillManifest,
+      filePaths: JSON.stringify(filePaths),
+      files,
+      ifMatch,
+    },
     signal ? { signal } : undefined,
   );
 

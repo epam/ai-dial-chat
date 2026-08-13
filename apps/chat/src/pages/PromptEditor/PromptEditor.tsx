@@ -28,12 +28,12 @@ import {
   renamePromptFolder,
   updatePrompt,
 } from '../../server-api/prompts.api';
+import { EditorQuery } from '../../types/editor-query';
 import {
   EntityOperation,
   NotifiableEntity,
 } from '../../types/entity-notification';
 import { PromptFieldError } from '../../types/prompt';
-import { PromptEditorQuery } from '../../types/prompt-editor';
 import { ROUTES } from '../../types/routes';
 import {
   PROMPT_CONTENT_MAX_LENGTH,
@@ -62,9 +62,8 @@ const PromptEditorPage: FC = () => {
   const isPromptsEnabled = useUiFeature(OverlayFeature.Prompts);
   const { folders, refetchPrompts } = usePrompts();
 
-  const promptId = searchParams.get(PromptEditorQuery.Id) ?? undefined;
-  const returnUrl =
-    searchParams.get(PromptEditorQuery.ReturnUrl) ?? ROUTES.Catalog;
+  const promptId = searchParams.get(EditorQuery.Id) ?? undefined;
+  const returnUrl = searchParams.get(EditorQuery.ReturnUrl) ?? ROUTES.Catalog;
   const isEditMode = promptId != null;
 
   const [loadedValues, setLoadedValues] = useState<PromptEditorValues>();

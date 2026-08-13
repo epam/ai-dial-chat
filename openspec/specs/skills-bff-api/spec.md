@@ -84,66 +84,68 @@ The system SHALL NOT forward an `If-None-Match` request header on this operation
 - **WHEN** DIAL Core returns `422 Unprocessable Entity`
 - **THEN** the system returns `422 Unprocessable Entity`
 
-### Requirement: Create or replace a whole skill from a ZIP archive
-The system SHALL expose `PUT /api/v1/skills` accepting `bucket`, `path` (form fields), a single binary `file` field (the whole-skill ZIP archive), and an optional `If-Match` request header, and proxy to DIAL Core `uploadSkillFolder` (`PUT /v2/skills/{bucket}/{path}`). The endpoint SHALL return `200 OK` with a `SkillUploadResponseDto { etag }` when DIAL Core returns an `ETag`.
+### Requirement: Create a new skill atomically
+The system SHALL expose `POST /api/v1/skills` (`operationId: createSkill`) accepting `bucket`, `path`, `skillManifest` (the complete `SKILL.md` text), `filePaths` (a JSON-encoded array of supporting-file relative paths), and zero or more repeated `files` binary parts paired 1:1 by array index with `filePaths`. The system SHALL send `If-None-Match: '*'` to DIAL Core's `uploadSkillFolder` (`PUT /v2/skills/{bucket}/{path}`) and SHALL NOT send `If-Match`. On success, it SHALL return `201 Created` with a `SkillWriteResponseDto { etag }`.
 
-The system SHALL NOT accept a `files[]`/`relativePaths[]` multipart array shape — the verified DIAL Core schema for `uploadSkillFolder` accepts exactly one binary `file` field (a ZIP archive), symmetric with `downloadSkillFolder`'s single `application/zip` response body.
+When DIAL Core responds `412 Precondition Failed` to this create request (its real signal, per `EtagHeader.validateIfNoneMatch`, that a resource already exists at the target path), the system SHALL return `409 Conflict`, not `412`.
 
-Before forwarding the archive, the system SHALL open it and validate every entry's relative path, rejecting the request with `400 Bad Request` (and not calling DIAL Core) if any entry:
-- Is an absolute path, contains an empty segment, a `.` or `..` segment, or NUL/control characters
-- Is named `.dial-resource` or `.dial-folder`
-- Has `files` or `v` as its first path segment
-- Duplicates another entry's relative path within the same archive
-
-The system SHALL require a `SKILL.md` entry at the archive root; its absence SHALL return `400 Bad Request` without calling DIAL Core. DIAL Core remains authoritative for validating `SKILL.md`'s YAML frontmatter (`name`, `description`).
+Before forwarding to DIAL Core, the system SHALL validate the request per the `skills-multipart-processing` capability (`filePaths`/`files` parity, path safety, `SKILL.md` collision, duplicates, file-count/size/total-size limits against real received bytes) and SHALL NOT construct or forward a ZIP at any point.
 
 - **Rate limit**: `@Throttle({ default: { limit: 5, ttl: 60000 } })`.
-- **operationId**: `uploadSkill`.
-- **BFF ingress limits**: `SKILL_UPLOAD_MAX_BYTES` (multer `limits.fileSize`), `SKILL_UPLOAD_MAX_FILES` (max ZIP entries), `SKILL_TRANSFER_TIMEOUT_MS` (upstream call timeout) — validated `EnvironmentVariables` fields with documented defaults.
+- **operationId**: `createSkill`.
 
-#### Scenario: Successful whole-skill create
-- **WHEN** an authenticated user uploads a valid ZIP containing `SKILL.md` and supporting files to a new skill path
-- **THEN** the system forwards the archive to DIAL Core and returns `200 OK` with the new `ETag`
+#### Scenario: Successful create
+- **WHEN** an authenticated user submits a valid `skillManifest` plus supporting files to a new skill path
+- **THEN** the system sends `If-None-Match: '*'` to DIAL Core, and on success returns `201 Created` with the new `ETag`
 
-#### Scenario: Successful whole-skill replace with If-Match
-- **WHEN** the request includes `If-Match: "<current-etag>"` matching the skill's current version
-- **THEN** the system forwards the header to DIAL Core, which replaces the skill, and the response returns the new `ETag`
+#### Scenario: Create collision maps to 409
+- **WHEN** DIAL Core responds `412 Precondition Failed` because a skill already exists at the target path
+- **THEN** the system returns `409 Conflict`, not `412`
 
-#### Scenario: Missing SKILL.md rejected
-- **WHEN** the uploaded ZIP has no `SKILL.md` entry at its root
+#### Scenario: Missing SKILL.md content rejected
+- **WHEN** `skillManifest` is empty or absent
 - **THEN** the system returns `400 Bad Request` and does not call DIAL Core
 
-#### Scenario: Path traversal entry rejected
-- **WHEN** any ZIP entry's relative path contains a `..` segment or an absolute path
-- **THEN** the system returns `400 Bad Request` and does not call DIAL Core
+#### Scenario: DIAL Core rejects invalid SKILL.md frontmatter
+- **WHEN** DIAL Core's own frontmatter validation of `skillManifest` (parsed as `SKILL.md`) fails — e.g. missing `name`/`description` or unparseable YAML
+- **THEN** DIAL Core returns `400 Bad Request` with a descriptive message, and the system returns `400 Bad Request` carrying that same message
 
-#### Scenario: Duplicate relative path rejected
-- **WHEN** two ZIP entries resolve to the same relative path
-- **THEN** the system returns `400 Bad Request` and does not call DIAL Core
-
-#### Scenario: Reserved marker entry rejected
-- **WHEN** a ZIP entry is named `.dial-resource` or `.dial-folder`, or has `files` or `v` as its first path segment
-- **THEN** the system returns `400 Bad Request` and does not call DIAL Core
-
-#### Scenario: Upload exceeds BFF size limit
-- **WHEN** the uploaded ZIP exceeds `SKILL_UPLOAD_MAX_BYTES`
-- **THEN** multer rejects the request and the system returns `413 Payload Too Large`
-
-#### Scenario: Upload exceeds BFF file-count limit
-- **WHEN** the ZIP contains more entries than `SKILL_UPLOAD_MAX_FILES`
-- **THEN** the system returns `422 Unprocessable Entity` before calling DIAL Core
-
-#### Scenario: If-Match precondition mismatch
-- **WHEN** the supplied `If-Match` does not match the skill's current `ETag`
-- **THEN** DIAL Core returns `412 Precondition Failed` and the system returns `412 Precondition Failed`
-
-#### Scenario: DIAL Core rejects invalid SKILL.md content
-- **WHEN** DIAL Core's own YAML-frontmatter validation of `SKILL.md` fails
-- **THEN** DIAL Core returns `422 Unprocessable Entity` and the system returns `422 Unprocessable Entity`
-
-#### Scenario: Upload transfer times out
+#### Scenario: Create transfer times out
 - **WHEN** the upstream call to DIAL Core exceeds `SKILL_TRANSFER_TIMEOUT_MS`
 - **THEN** the system returns `503 Service Unavailable`
+
+### Requirement: Update an existing skill, requiring a concrete If-Match
+The system SHALL expose `PUT /api/v1/skills` (`operationId: updateSkill`) accepting the same `bucket`/`path`/`skillManifest`/`filePaths`/`files` shape as `createSkill`, plus a **required** `If-Match` request header carrying the skill's current concrete `ETag`. If `If-Match` is absent, the system SHALL return `428 Precondition Required` without calling DIAL Core — this is a BFF-only safety rail (DIAL Core itself would treat a request with neither conditional header as an unconditional overwrite; the BFF never sends such a request through this endpoint). If `If-Match` is present, the system SHALL forward it unchanged to DIAL Core's `uploadSkillFolder` and SHALL NOT send `If-None-Match`. On success, it SHALL return `200 OK` with a `SkillWriteResponseDto { etag }` — the new aggregate ETag.
+
+A DIAL Core `412 Precondition Failed` response (the supplied `If-Match` no longer matches the skill's current version) SHALL be surfaced unchanged as `412 Precondition Failed`.
+
+- **Rate limit**: `@Throttle({ default: { limit: 5, ttl: 60000 } })`.
+- **operationId**: `updateSkill`.
+
+#### Scenario: Successful update
+- **WHEN** an authenticated user submits `If-Match: "<current-etag>"` matching the skill's current version, with valid `skillManifest`/supporting files
+- **THEN** the system forwards the request and header to DIAL Core, which replaces the skill, and the response is `200 OK` with the new `ETag`
+
+#### Scenario: Missing If-Match rejected before calling Core
+- **WHEN** a `PUT /api/v1/skills` request carries no `If-Match` header
+- **THEN** the system returns `428 Precondition Required` and does not call DIAL Core
+
+#### Scenario: Stale If-Match stays 412
+- **WHEN** the supplied `If-Match` does not match the skill's current `ETag`
+- **THEN** DIAL Core returns `412 Precondition Failed` and the system returns `412 Precondition Failed` unchanged
+
+### Requirement: Whole-skill write limits match DIAL Core's real defaults
+The system SHALL enforce, before calling DIAL Core, the same limits DIAL Core itself enforces (`ComplexResourceService.Settings`, verified in source): at most 100 files total (manifest included), at most 1 MiB per file, at most 16 MiB total content across all files — using the same status codes Core itself uses for these cases (`400` for file-count exceeded, `413` for any per-file or total-size limit exceeded), configurable via validated `EnvironmentVariables` fields with these exact defaults.
+
+The system SHALL NOT rely on the previous `SKILL_UPLOAD_MAX_BYTES` (a compressed-ZIP-ingress Multer limit) for any of these checks — it has no remaining meaning once no ZIP is ever uploaded, and is retired.
+
+#### Scenario: File-count limit maps to 400, matching Core
+- **WHEN** the manifest plus supporting files together exceed the configured file-count limit
+- **THEN** the system returns `400 Bad Request`
+
+#### Scenario: Size limit maps to 413, matching Core
+- **WHEN** any single file or the total content exceeds its configured byte limit
+- **THEN** the system returns `413 Payload Too Large`
 
 ### Requirement: Delete a whole skill
 The system SHALL expose `DELETE /api/v1/skills` accepting `bucket`, `path`, and an optional `If-Match` header, and proxy to DIAL Core `deleteSkillFolder` (`DELETE /v2/skills/{bucket}/{path}`). The endpoint SHALL return `200 OK` with `{ success: true }`.

@@ -2855,6 +2855,23 @@ describe('CatalogView', () => {
       expect(ids).not.toContain('PROMPT');
     });
 
+    it('shows only prompts in selector mode when visibleTypes is set to Prompt', () => {
+      enablePrompts();
+      mockPrompts();
+
+      render(
+        <CatalogView
+          isSelectorMode
+          visibleTypes={new Set([CatalogEntityType.Prompt])}
+        />,
+      );
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).toContain('PROMPT');
+      expect(ids).not.toContain(':MODEL');
+      expect(ids).not.toContain(':AGENT');
+    });
+
     it('filters personal prompts out when catalog-hide-my-apps is enabled', () => {
       setFeatures([OverlayFeature.Prompts, OverlayFeature.CatalogHideMyApps]);
       mockPrompts();
@@ -3073,6 +3090,7 @@ describe('CatalogView', () => {
       id: 'Work/AI/summarize',
       bucket: 'my-bucket',
       name: 'summarize',
+      description: '',
       content: 'Summarize the following text:',
       folderId: 'Work/AI',
       createdAt: 1,
@@ -3146,6 +3164,33 @@ describe('CatalogView', () => {
       expect(getPrompt).toHaveBeenCalledWith('Work/AI/summarize');
       expect(mockNavigate).toHaveBeenCalledWith('/', {
         state: { promptContent: 'Summarize the following text:' },
+      });
+    });
+
+    it('navigates with a pendingPrompt payload instead of raw content when the prompt has parameters', async () => {
+      enablePrompts();
+      mockPrompts([
+        {
+          ...personalPrompt,
+          content: 'Summarize {{text}} in {{tone}} tone',
+          description: 'A summarizer prompt',
+        },
+      ]);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'use in chat Work/AI/summarize' }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith('/', {
+        state: {
+          pendingPrompt: {
+            id: 'Work/AI/summarize',
+            name: 'summarize',
+            content: 'Summarize {{text}} in {{tone}} tone',
+            description: 'A summarizer prompt',
+          },
+        },
       });
     });
 
@@ -3229,6 +3274,27 @@ describe('CatalogView', () => {
 
       expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o');
       expect(mockNavigate).toHaveBeenCalledWith('/');
+    });
+
+    it('offers the Skill create option regardless of the prompts feature flag', async () => {
+      disablePrompts();
+
+      render(<CatalogView />);
+
+      expect(
+        screen.getByRole('button', { name: 'catalog.create.skill' }),
+      ).toBeTruthy();
+    });
+
+    it('navigates to the skill editor with the catalog return url from the Skill create option', async () => {
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'catalog.create.skill' }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/skill-editor?returnUrl=%2Fcatalog',
+      );
     });
   });
   describe('revoke access', () => {

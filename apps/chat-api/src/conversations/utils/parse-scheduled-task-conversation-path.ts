@@ -48,9 +48,8 @@ export const parseScheduledTaskConversationPath = (
   const deploymentFolderPath = segments
     .slice(SCHEDULE_ID_SEGMENT_INDEX + 1, -1)
     .join('/');
-  const isApplicationDeployment = isApplicationDeploymentPath(
-    deploymentFolderPath,
-  );
+  const isApplicationDeployment =
+    isApplicationDeploymentPath(deploymentFolderPath);
   const runId = getRunIdFromFilename(filename, isApplicationDeployment);
   if (!runId) return null;
 

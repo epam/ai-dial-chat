@@ -7,30 +7,39 @@ import { SkillsDownloadService } from './download/skills-download.service';
 import { SkillsListingService } from './listing/skills-listing.service';
 import { SkillsLookupService } from './lookup/skills-lookup.service';
 import { SkillsMutationService } from './mutation/skills-mutation.service';
+import { SkillsPackageService } from './package/skills-package.service';
 import { SkillsController } from './skills.controller';
 import { SkillsService } from './skills.service';
 import { SkillsUploadService } from './upload/skills-upload.service';
 
 /*
- * MulterModule is bound to SKILL_UPLOAD_MAX_BYTES (the larger of the two
- * upload limits, since it must cover the whole-skill ZIP upload route);
- * SkillsUploadService additionally enforces the smaller
- * SKILL_FILE_UPLOAD_MAX_BYTES cap for the single-file upload route at the
- * application level, mirroring how FilesModule's ArchiveUploadInterceptor
- * enforces a second, differently-sized limit alongside its module-level
- * MulterModule registration.
+ * MulterModule's ingress limits now bound discrete multipart parts (no ZIP
+ * is ever uploaded on the create/update path — see design.md): `fileSize`
+ * caps each individual `files` part at the per-file limit, `fieldSize`
+ * covers the `skillManifest` text field at the same limit (SKILL.md is
+ * subject to the same per-file cap), and `files` bounds the number of
+ * repeated file parts at the file-count limit. SkillsPackageService
+ * re-enforces all of these against the actually-received bytes/count, since
+ * Multer's own limits reject mid-stream with a generic error rather than the
+ * BFF's typed exceptions.
  */
 @Module({
   imports: [
     MulterModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService<EnvironmentVariables>) => ({
-        storage: memoryStorage(),
-        limits: {
-          fileSize: config.get<number>('SKILL_UPLOAD_MAX_BYTES') ?? 104_857_600,
-        },
-      }),
+      useFactory: (config: ConfigService<EnvironmentVariables>) => {
+        const maxFileBytes =
+          config.get<number>('SKILL_FILE_UPLOAD_MAX_BYTES') ?? 1_048_576;
+        return {
+          storage: memoryStorage(),
+          limits: {
+            fileSize: maxFileBytes,
+            fieldSize: maxFileBytes,
+            files: config.get<number>('SKILL_UPLOAD_MAX_FILES') ?? 100,
+          },
+        };
+      },
     }),
   ],
   controllers: [SkillsController],
@@ -38,6 +47,7 @@ import { SkillsUploadService } from './upload/skills-upload.service';
     SkillsService,
     SkillsListingService,
     SkillsLookupService,
+    SkillsPackageService,
     SkillsDownloadService,
     SkillsUploadService,
     SkillsMutationService,

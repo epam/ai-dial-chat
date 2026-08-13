@@ -22,7 +22,8 @@ describe('SkillsService', () => {
       downloadSkillFile: vi.fn().mockResolvedValue('downloadSkillFile-result'),
     } as unknown as SkillsDownloadService;
     const uploadService = {
-      uploadSkill: vi.fn().mockResolvedValue('uploadSkill-result'),
+      createSkill: vi.fn().mockResolvedValue('createSkill-result'),
+      updateSkill: vi.fn().mockResolvedValue('updateSkill-result'),
       uploadSkillFile: vi.fn().mockResolvedValue('uploadSkillFile-result'),
     } as unknown as SkillsUploadService;
     const mutationService = {
@@ -111,24 +112,48 @@ describe('SkillsService', () => {
     expect(result).toBe('downloadSkillFile-result');
   });
 
-  it('delegates uploadSkill to SkillsUploadService', async () => {
+  it('delegates createSkill to SkillsUploadService', async () => {
     const { service, uploadService } = makeService();
-    const file = { buffer: Buffer.from(''), mimetype: 'application/zip' };
-    const result = await service.uploadSkill(
+    const result = await service.createSkill(
       'bucket',
       'path',
-      file,
+      'manifest',
+      '[]',
+      [],
       'token',
-      '"etag"',
     );
-    expect(uploadService.uploadSkill).toHaveBeenCalledWith(
+    expect(uploadService.createSkill).toHaveBeenCalledWith(
       'bucket',
       'path',
-      file,
+      'manifest',
+      '[]',
+      [],
       'token',
-      '"etag"',
     );
-    expect(result).toBe('uploadSkill-result');
+    expect(result).toBe('createSkill-result');
+  });
+
+  it('delegates updateSkill to SkillsUploadService', async () => {
+    const { service, uploadService } = makeService();
+    const result = await service.updateSkill(
+      'bucket',
+      'path',
+      'manifest',
+      '[]',
+      [],
+      '"etag"',
+      'token',
+    );
+    expect(uploadService.updateSkill).toHaveBeenCalledWith(
+      'bucket',
+      'path',
+      'manifest',
+      '[]',
+      [],
+      '"etag"',
+      'token',
+    );
+    expect(result).toBe('updateSkill-result');
   });
 
   it('delegates uploadSkillFile to SkillsUploadService', async () => {
