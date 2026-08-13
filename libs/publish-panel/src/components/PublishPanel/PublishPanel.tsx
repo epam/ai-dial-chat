@@ -1,4 +1,8 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  mergeClasses,
+  ResourceSummary,
+} from '@epam/ai-dial-chat-shared';
 import { SearchInput } from '@epam/ai-dial-sidebar';
 import {
   Notification,
@@ -56,6 +60,8 @@ export interface PublishPanelLabels {
   historyErrorLabel?: string;
   /** Label used for the bucket root as a destination and as `{folder}` in callouts when it is selected. Default: `'Organization'`. */
   rootFolderLabel?: string;
+  /** Version tag text in the entity-header summary row; `{version}` is replaced. Default: `'Version {version} · current'`. */
+  summaryVersionLabel?: string;
   /** Text overrides for the access-rules section. */
   accessRulesLabels?: PublishAccessRulesLabels;
 }
@@ -66,14 +72,15 @@ export interface PublishPanelProps {
    * Display metadata for the summary row and for version-derived behavior:
    * the replace-warning callout's version substitution, and whether the
    * publish-history section is shown at all (only when `version` is set).
-   * Title-only rendering applies when `renderSummary` is absent.
+   * A `type` renders the entity-header row; otherwise the row is title-only,
+   * unless `renderSummary` replaces it.
    */
   resource?: PublishResourceSummary;
   /**
-   * Renders a custom summary row (e.g. a full entity header with icon and
-   * type badge) in place of the default title-only row built from
-   * `resource.title`. Pass `resource` alongside this so version-derived
-   * behavior (callout, history section) keeps working.
+   * Renders a custom summary row in place of the default title-only row built
+   * from `resource.title`. Ignored when `resource.type` is set. Pass
+   * `resource` alongside this so version-derived behavior (callout, history
+   * section) keeps working.
    */
   renderSummary?: () => ReactNode;
   /** Previously published entries for this item. */
@@ -134,7 +141,7 @@ export interface PublishPanelProps {
   hasRulesLoadError?: boolean;
   /** Text overrides for all user-visible strings. */
   labels?: PublishPanelLabels;
-  /** Typography class for the default summary title (unused when `renderSummary` is passed). Default: `'dial-body-semi-text'`. */
+  /** Typography class for the default summary title (unused when `renderSummary` or `resource.type` is passed). Default: `'dial-body-semi-text'`. */
   summaryTitleClassName?: string;
   /** Typography class for the "Publish to folder" and "Versions history" section headings. Default: `'dial-body-semi-text'`. */
   headingClassName?: string;
@@ -148,6 +155,12 @@ export interface PublishPanelColors {
   summaryBorder?: string;
   /** Summary row background color. Fallback: `--bg-layer-sunken`. */
   summaryBackground?: string;
+  /** Version tag border color in the entity-header summary row. Fallback: `--stroke-tertiary`. */
+  summaryVersionTagBorder?: string;
+  /** Version tag background color in the entity-header summary row. Fallback: `--bg-accent-primary-alpha`. */
+  summaryVersionTagBackground?: string;
+  /** Version tag text color in the entity-header summary row. Fallback: `--text-accent`. */
+  summaryVersionTagText?: string;
   /** Default summary title text color. Fallback: `--text-primary`. */
   summaryTitleText?: string;
   /** Section heading text color. Fallback: `--text-primary`. */
@@ -184,11 +197,19 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   colors,
 }) => {
   const cssVars = buildCssVars({
-    '--pp-summary-border': colors?.summaryBorder,
-    '--pp-summary-bg': colors?.summaryBackground,
     '--pp-summary-title-text': colors?.summaryTitleText,
     '--pp-heading-text': colors?.headingText,
   });
+
+  /* Border and background belong to `ResourceSummary`'s own row, so they are
+     forwarded as colors instead of being set as vars on an ancestor. */
+  const summaryColors = {
+    border: colors?.summaryBorder,
+    background: colors?.summaryBackground,
+    versionTagBorder: colors?.summaryVersionTagBorder,
+    versionTagBackground: colors?.summaryVersionTagBackground,
+    versionTagText: colors?.summaryVersionTagText,
+  };
 
   const {
     folderLabel = 'Publish to folder',
@@ -207,6 +228,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     historyLoadingLabel,
     historyErrorLabel,
     rootFolderLabel = 'Organization',
+    summaryVersionLabel,
     accessRulesLabels,
   } = labels;
 
@@ -246,29 +268,38 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     return history.filter((entry) => entry.folderPath.join('/') === key);
   }, [history, selectedFolderPath, isFolderSelected]);
 
+  const defaultSummary = renderSummary ? (
+    renderSummary()
+  ) : (
+    <span
+      className={mergeClasses(
+        'truncate',
+        summaryTitleClassName,
+        styles.summaryTitle,
+      )}
+    >
+      {resource?.title}
+    </span>
+  );
+
   return (
-    <div className="flex flex-col gap-5">
-      <div
-        style={cssVars}
-        className={mergeClasses(
-          'flex items-center justify-between gap-3 rounded-xl border px-3.5 py-3',
-          styles.summaryRow,
-        )}
-      >
-        {renderSummary ? (
-          renderSummary()
-        ) : (
-          <span
-            className={mergeClasses(
-              'truncate',
-              summaryTitleClassName,
-              styles.summaryTitle,
-            )}
-          >
-            {resource?.title}
-          </span>
-        )}
-      </div>
+    <div className="flex flex-col gap-5" style={cssVars}>
+      {resource?.type != null ? (
+        <ResourceSummary
+          item={{
+            type: resource.type,
+            name: resource.title,
+            version: resource.version ?? '',
+            iconUrl: resource.iconUrl,
+          }}
+          versionLabel={summaryVersionLabel}
+          colors={summaryColors}
+        />
+      ) : (
+        <ResourceSummary colors={summaryColors}>
+          {defaultSummary}
+        </ResourceSummary>
+      )}
 
       <div>
         <div

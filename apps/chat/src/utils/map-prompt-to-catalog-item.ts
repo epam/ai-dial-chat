@@ -1,11 +1,10 @@
 import {
-  CatalogEntityType,
   type CatalogItemOverview,
   type CatalogItem,
   type OverviewSpec,
 } from '@epam/ai-dial-catalog';
 import type { PromptResponseDto } from '@epam/ai-dial-chat-api-client';
-import { formatLastUsed } from '@epam/ai-dial-chat-shared';
+import { CatalogEntityType, formatLastUsed } from '@epam/ai-dial-chat-shared';
 import type { TFunction } from 'i18next';
 import { CatalogI18nKeys } from '../constants/translation-keys';
 import { buildPromptResourceUrl, PromptSource } from '../types/prompt';

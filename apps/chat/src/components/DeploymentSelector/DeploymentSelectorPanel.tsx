@@ -1,5 +1,9 @@
-import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
-import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { type CatalogItem } from '@epam/ai-dial-catalog';
+import {
+  CatalogEntityType,
+  DeploymentIcon,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import { SearchBar } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,

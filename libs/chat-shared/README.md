@@ -31,7 +31,13 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 import type { Chat, Message, Annotation } from '@epam/ai-dial-chat-shared';
 import type { Deployment, DeploymentFeatures } from '@epam/ai-dial-chat-shared';
 import type { Theme, AuthSession, DialModel } from '@epam/ai-dial-chat-shared';
+import type { EntityHeaderItem } from '@epam/ai-dial-chat-shared';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 ```
+
+`CatalogEntityType` is the entity taxonomy (`MODEL`, `AGENT`, `TOOLSET`,
+`SKILL`, `PROMPT`) shared by the catalog UI. `ENTITY_TYPE_COLOR` and
+`ENTITY_TYPE_BG_COLOR` map each type to its text and surface color.
 
 ## Components
 
@@ -90,11 +96,84 @@ Generic empty-state placeholder used inside panels.
 ```tsx
 import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
 
-<PanelEmptyState
-  title="No conversations"
-  description="Start a new chat to get going."
+<PanelEmptyState icon={<IconMessage />} label="No conversations" />;
+```
+
+### ItemHeader
+
+Item title row with an optional postfix (version, count) and a trailing slot.
+The title is highlighted when a search `query` is supplied and truncates with a
+tooltip on overflow.
+
+```tsx
+import { ItemHeader } from '@epam/ai-dial-chat-shared';
+
+<ItemHeader
+  title={item.name}
+  postfix={item.version}
+  query={searchQuery}
+  titleClassName="dial-small-semi-text"
+  postfixClassName="dial-tiny-text"
+  colors={{ title: 'var(--text-primary)', count: 'var(--text-secondary)' }}
 />;
 ```
+
+### EntityTypeLabel
+
+Entity type rendered as plain uppercase text, colored per type.
+
+```tsx
+import { CatalogEntityType, EntityTypeLabel } from '@epam/ai-dial-chat-shared';
+
+<EntityTypeLabel type={CatalogEntityType.Model} />;
+```
+
+### FeaturedChip
+
+Featured badge whose text and background colors follow the entity type.
+
+```tsx
+import { CatalogEntityType, FeaturedChip } from '@epam/ai-dial-chat-shared';
+
+<FeaturedChip type={CatalogEntityType.Agent} label="Featured" />;
+```
+
+### EntityHeader
+
+Entity identity block: deployment icon, type label, name, version, and an
+optional featured chip. `item` needs only the `EntityHeaderItem` fields, so any
+richer catalog model can be passed directly.
+
+```tsx
+import { EntityHeader } from '@epam/ai-dial-chat-shared';
+
+<EntityHeader
+  item={item}
+  iconSize={48}
+  query={searchQuery}
+  featuredLabel="Featured"
+  footer={<span>{item.lastUsed}</span>}
+/>;
+```
+
+### ResourceSummary
+
+Bordered row pairing an entity's identity block with its current-version tag.
+Used as the summary row of the Publish flow.
+
+```tsx
+import { ResourceSummary } from '@epam/ai-dial-chat-shared';
+
+<ResourceSummary
+  item={item}
+  versionLabel="Version {version} · current"
+  colors={{ versionTagText: 'var(--text-accent)' }}
+/>;
+```
+
+Pass `hasVersionTag={false}` to drop the trailing tag and show the version
+inline after the name instead, or pass `children` to render arbitrary content
+in the row instead of the entity header.
 
 ## Hooks
 

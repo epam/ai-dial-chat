@@ -1,14 +1,14 @@
 import {
   buildCssVars,
+  CatalogEntityType,
   DeploymentIcon,
+  EntityTypeLabel,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import { DialEllipsisTooltip, Highlight } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
 import { AppIdentityStyles } from '../../models/app-identity-styles';
 import { DeploymentSize } from '../../types/deployment-icon-size';
-import { CatalogEntityType } from '../../types/entity-type';
-import { EntityTypeLabel } from '../EntityTypeLabel/EntityTypeLabel';
 import styles from './AppIdentity.module.scss';
 
 /** Props for the shared AppIdentity block used in browse and favorite cards. */

@@ -5,7 +5,6 @@ export {
   DetailsConfirmationKind,
   DetailsConfirmationVariant,
 } from './types/details-confirmation';
-export { CatalogEntityType } from './types/entity-type';
 export { CatalogSortKey } from './types/sort';
 export {
   CredentialsBadgeState,
@@ -107,9 +106,6 @@ export type {
   ListViewStyles,
   ListViewTypography,
 } from './models/list-props';
-
-export { EntityTypeLabel } from './components/EntityTypeLabel/EntityTypeLabel';
-export type { EntityTypeLabelProps } from './components/EntityTypeLabel/EntityTypeLabel';
 
 export { FavoriteCard } from './components/Favorites/FavoriteCard';
 export type { FavoriteCardProps } from './components/Favorites/FavoriteCard';

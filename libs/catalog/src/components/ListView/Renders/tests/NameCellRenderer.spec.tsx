@@ -1,9 +1,9 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import type { ICellRendererParams } from 'ag-grid-community';
 import { describe, expect, it } from 'vitest';
 import type { CatalogItem } from '../../../../models/catalog-item';
 import type { GridContext } from '../../../../models/grid-context';
-import { CatalogEntityType } from '../../../../types/entity-type';
 import { NameCellRenderer } from '../NameCellRenderer';
 
 const makeItem = (overrides: Partial<CatalogItem> = {}): CatalogItem => ({

@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { ItemHeader, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
   ButtonDropdown,
@@ -11,7 +11,6 @@ import { FC } from 'react';
 import { ToolbarStyles } from '../../../models/toolbar-props';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { Filter } from '../../Filter/Filter';
-import { ItemHeader } from '../../ItemHeader/ItemHeader';
 import { SearchBar } from '../../SearchBar/SearchBar';
 import styles from '../Toolbar.module.scss';
 
@@ -78,6 +77,10 @@ export const TitleRow: FC<TitleRowProps> = ({
           titleClassName={titleClassName}
           postfixClassName={countClassName}
           className="shrink-0"
+          colors={{
+            title: browseStyles?.colors?.titleText,
+            count: browseStyles?.colors?.countText,
+          }}
         />
 
         <div className="ms-auto flex items-center gap-2">

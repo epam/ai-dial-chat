@@ -1,4 +1,5 @@
-import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
+import { type CatalogItem } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';

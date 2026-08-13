@@ -1,6 +1,5 @@
 import {
   Catalog,
-  CatalogEntityType,
   CatalogItem,
   CatalogItemDetailsFetchResult,
   CatalogViewMode,
@@ -12,7 +11,10 @@ import type {
   ToolsetLogoutBodyDto,
 } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { triggerBlobDownload } from '@epam/ai-dial-chat-shared';
+import {
+  CatalogEntityType,
+  triggerBlobDownload,
+} from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';

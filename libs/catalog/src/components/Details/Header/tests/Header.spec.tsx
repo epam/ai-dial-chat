@@ -1,3 +1,4 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -8,7 +9,6 @@ import {
 } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../../models/catalog-item';
-import { CatalogEntityType } from '../../../../types/entity-type';
 import {
   CredentialStatus,
   ToolsetAuthenticationType,
@@ -108,7 +108,8 @@ vi.mock('@tabler/icons-react', () => ({
   IconUserOff: () => <svg />,
   IconWorldShare: () => <svg />,
 }));
-vi.mock('../../../EntityHeader/EntityHeader', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
 }));
 vi.mock('../ShareButton/ShareButton', () => ({

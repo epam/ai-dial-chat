@@ -1,6 +1,5 @@
 import type { CatalogItem } from '@epam/ai-dial-catalog';
 import {
-  CatalogEntityType,
   CatalogSortKey,
   CredentialsBadgeState,
   CredentialsUiState,
@@ -9,7 +8,10 @@ import {
 } from '@epam/ai-dial-catalog';
 import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { triggerBlobDownload } from '@epam/ai-dial-chat-shared';
+import {
+  CatalogEntityType,
+  triggerBlobDownload,
+} from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import { render, screen, waitFor } from '@testing-library/react';
