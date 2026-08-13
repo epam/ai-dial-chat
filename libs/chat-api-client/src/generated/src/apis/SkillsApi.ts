@@ -23,6 +23,14 @@ import type {
   SkillUploadResponseDto,
 } from '../models/index';
 
+export interface CreateSkillRequest {
+  bucket: string;
+  path: string;
+  skillManifest: string;
+  filePaths: string;
+  files?: Array<Blob>;
+}
+
 export interface CreateSkillGroupingFolderRequest {
   bucket: string;
   path: string;
@@ -75,11 +83,13 @@ export interface ListSkillsRequest {
   recursive?: boolean;
 }
 
-export interface UploadSkillRequest {
-  file: Blob;
+export interface UpdateSkillRequest {
+  ifMatch: string;
   bucket: string;
   path: string;
-  ifMatch?: string;
+  skillManifest: string;
+  filePaths: string;
+  files?: Array<Blob>;
 }
 
 export interface UploadSkillFileRequest {
@@ -94,6 +104,115 @@ export interface UploadSkillFileRequest {
  *
  */
 export class SkillsApi extends runtime.BaseAPI {
+  /**
+   * Validates skillManifest/filePaths/files (path safety, reserved markers, duplicates, limits), builds one multipart part per file, and sends If-None-Match: * to DIAL Core uploadSkillFolder — no ZIP is ever constructed or forwarded.
+   * Create a new skill atomically
+   */
+  async createSkillRaw(
+    requestParameters: CreateSkillRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<SkillUploadResponseDto>> {
+    if (requestParameters['bucket'] == null) {
+      throw new runtime.RequiredError(
+        'bucket',
+        'Required parameter "bucket" was null or undefined when calling createSkill().',
+      );
+    }
+
+    if (requestParameters['path'] == null) {
+      throw new runtime.RequiredError(
+        'path',
+        'Required parameter "path" was null or undefined when calling createSkill().',
+      );
+    }
+
+    if (requestParameters['skillManifest'] == null) {
+      throw new runtime.RequiredError(
+        'skillManifest',
+        'Required parameter "skillManifest" was null or undefined when calling createSkill().',
+      );
+    }
+
+    if (requestParameters['filePaths'] == null) {
+      throw new runtime.RequiredError(
+        'filePaths',
+        'Required parameter "filePaths" was null or undefined when calling createSkill().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    const consumes: runtime.Consume[] = [
+      { contentType: 'multipart/form-data' },
+    ];
+    // @ts-ignore: canConsumeForm may be unused
+    const canConsumeForm = runtime.canConsumeForm(consumes);
+
+    let formParams: { append(name: string, value: string | Blob): void };
+    let useForm = false;
+    // use FormData to transmit files using content-type "multipart/form-data"
+    useForm = canConsumeForm;
+    if (useForm) {
+      formParams = new FormData();
+    } else {
+      formParams = new URLSearchParams();
+    }
+
+    if (requestParameters['bucket'] != null) {
+      formParams.append('bucket', requestParameters['bucket']);
+    }
+
+    if (requestParameters['path'] != null) {
+      formParams.append('path', requestParameters['path']);
+    }
+
+    if (requestParameters['skillManifest'] != null) {
+      formParams.append('skillManifest', requestParameters['skillManifest']);
+    }
+
+    if (requestParameters['filePaths'] != null) {
+      formParams.append('filePaths', requestParameters['filePaths']);
+    }
+
+    if (requestParameters['files'] != null) {
+      requestParameters['files'].forEach((element) => {
+        formParams.append('files', element);
+      });
+    }
+
+    let urlPath = `/api/v1/skills`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: formParams,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<SkillUploadResponseDto>(response);
+  }
+
+  /**
+   * Validates skillManifest/filePaths/files (path safety, reserved markers, duplicates, limits), builds one multipart part per file, and sends If-None-Match: * to DIAL Core uploadSkillFolder — no ZIP is ever constructed or forwarded.
+   * Create a new skill atomically
+   */
+  async createSkill(
+    requestParameters: CreateSkillRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<SkillUploadResponseDto> {
+    const response = await this.createSkillRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
   /**
    * Proxies DIAL Core createSkillGroupingFolder. Accepts no conditional request headers — the verified SDK schema declares none for this operation.
    * Create a grouping folder
@@ -661,31 +780,45 @@ export class SkillsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Validates the uploaded ZIP (path safety, reserved markers, duplicate paths, a root SKILL.md) then forwards it unchanged to DIAL Core uploadSkillFolder.
-   * Create or replace a whole skill from a ZIP archive
+   * Validates skillManifest/filePaths/files, builds one multipart part per file, and forwards the required If-Match to DIAL Core uploadSkillFolder — no ZIP is ever constructed or forwarded.
+   * Update an existing skill, requiring a concrete If-Match
    */
-  async uploadSkillRaw(
-    requestParameters: UploadSkillRequest,
+  async updateSkillRaw(
+    requestParameters: UpdateSkillRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<SkillUploadResponseDto>> {
-    if (requestParameters['file'] == null) {
+    if (requestParameters['ifMatch'] == null) {
       throw new runtime.RequiredError(
-        'file',
-        'Required parameter "file" was null or undefined when calling uploadSkill().',
+        'ifMatch',
+        'Required parameter "ifMatch" was null or undefined when calling updateSkill().',
       );
     }
 
     if (requestParameters['bucket'] == null) {
       throw new runtime.RequiredError(
         'bucket',
-        'Required parameter "bucket" was null or undefined when calling uploadSkill().',
+        'Required parameter "bucket" was null or undefined when calling updateSkill().',
       );
     }
 
     if (requestParameters['path'] == null) {
       throw new runtime.RequiredError(
         'path',
-        'Required parameter "path" was null or undefined when calling uploadSkill().',
+        'Required parameter "path" was null or undefined when calling updateSkill().',
+      );
+    }
+
+    if (requestParameters['skillManifest'] == null) {
+      throw new runtime.RequiredError(
+        'skillManifest',
+        'Required parameter "skillManifest" was null or undefined when calling updateSkill().',
+      );
+    }
+
+    if (requestParameters['filePaths'] == null) {
+      throw new runtime.RequiredError(
+        'filePaths',
+        'Required parameter "filePaths" was null or undefined when calling updateSkill().',
       );
     }
 
@@ -713,16 +846,26 @@ export class SkillsApi extends runtime.BaseAPI {
       formParams = new URLSearchParams();
     }
 
-    if (requestParameters['file'] != null) {
-      formParams.append('file', requestParameters['file']);
-    }
-
     if (requestParameters['bucket'] != null) {
       formParams.append('bucket', requestParameters['bucket']);
     }
 
     if (requestParameters['path'] != null) {
       formParams.append('path', requestParameters['path']);
+    }
+
+    if (requestParameters['skillManifest'] != null) {
+      formParams.append('skillManifest', requestParameters['skillManifest']);
+    }
+
+    if (requestParameters['filePaths'] != null) {
+      formParams.append('filePaths', requestParameters['filePaths']);
+    }
+
+    if (requestParameters['files'] != null) {
+      requestParameters['files'].forEach((element) => {
+        formParams.append('files', element);
+      });
     }
 
     let urlPath = `/api/v1/skills`;
@@ -742,14 +885,14 @@ export class SkillsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Validates the uploaded ZIP (path safety, reserved markers, duplicate paths, a root SKILL.md) then forwards it unchanged to DIAL Core uploadSkillFolder.
-   * Create or replace a whole skill from a ZIP archive
+   * Validates skillManifest/filePaths/files, builds one multipart part per file, and forwards the required If-Match to DIAL Core uploadSkillFolder — no ZIP is ever constructed or forwarded.
+   * Update an existing skill, requiring a concrete If-Match
    */
-  async uploadSkill(
-    requestParameters: UploadSkillRequest,
+  async updateSkill(
+    requestParameters: UpdateSkillRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<SkillUploadResponseDto> {
-    const response = await this.uploadSkillRaw(
+    const response = await this.updateSkillRaw(
       requestParameters,
       initOverrides,
     );

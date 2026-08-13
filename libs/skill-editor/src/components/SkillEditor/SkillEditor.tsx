@@ -5,13 +5,13 @@ import {
   CaptionText,
   ConfirmationPopup,
   ConfirmationPopupVariant,
-  Dropdown,
   type DropdownItem,
   type EditorThemes,
   ErrorText,
   GhostButton,
   Input,
   LazyMarkdownEditor,
+  NeutralButton,
   PrimaryButton,
   Spinner,
   Textarea,
@@ -32,6 +32,7 @@ import {
 import type {
   SkillEditorProps,
   SkillEditorValues,
+  SkillFileTreeNode,
 } from '../../models/skill-editor-props';
 import { SKILL_MANIFEST_PATH } from '../../types/skill-editor-defaults';
 import { SkillFileNodeKind } from '../../types/skill-file-node-kind';
@@ -50,8 +51,6 @@ const LazyMarkdown = lazy(async () => {
   return { default: MarkdownEditor as MarkdownEditorComponent };
 });
 
-type PendingAdd = { parentPath: string | null; kind: SkillFileNodeKind };
-
 /** Host-agnostic form for authoring a DIAL Skill's manifest and supporting files. */
 export const SkillEditor: FC<SkillEditorProps> = ({
   initialValues,
@@ -65,7 +64,12 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   isSubmitting = false,
   errors,
   submitError,
+  conflict,
+  onReloadLatest,
+  isNameReadOnly = false,
+  onDirtyChange,
   fileActions,
+  headerContent,
   onSubmit,
   onCancel,
   onRetry,
@@ -79,13 +83,35 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     description: initialValues?.description ?? '',
     instructions: initialValues?.instructions ?? '',
   });
+  const seededFilesRef = useRef<SkillFileTreeNode[]>(files);
   useEffect(() => {
     setValues({
       name: initialValues?.name ?? '',
       description: initialValues?.description ?? '',
       instructions: initialValues?.instructions ?? '',
     });
+    seededFilesRef.current = files;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-seeding is keyed on `initialValues` identity only, per this component's documented contract
   }, [initialValues]);
+
+  const sortedFilesKey = (nodes: SkillFileTreeNode[]): string =>
+    JSON.stringify([...nodes].sort((a, b) => a.path.localeCompare(b.path)));
+
+  const isDirtyRef = useRef(false);
+  useEffect(() => {
+    const seededValues: SkillEditorValues = {
+      name: initialValues?.name ?? '',
+      description: initialValues?.description ?? '',
+      instructions: initialValues?.instructions ?? '',
+    };
+    const isDirty =
+      JSON.stringify(values) !== JSON.stringify(seededValues) ||
+      sortedFilesKey(files) !== sortedFilesKey(seededFilesRef.current);
+    if (isDirty !== isDirtyRef.current) {
+      isDirtyRef.current = isDirty;
+      onDirtyChange?.(isDirty);
+    }
+  }, [values, files, initialValues, onDirtyChange]);
 
   const [internalSelectedPath, setInternalSelectedPath] =
     useState(SKILL_MANIFEST_PATH);
@@ -115,20 +141,19 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     [onExpandedPathsChange],
   );
 
-  const [pendingAdd, setPendingAdd] = useState<PendingAdd | null>(null);
-  const [pendingAddValue, setPendingAddValue] = useState('');
-  const [pendingAddError, setPendingAddError] = useState<string | undefined>();
   const [pendingRemovePath, setPendingRemovePath] = useState<string | null>(
     null,
   );
+  const [uploadError, setUploadError] = useState<string | undefined>();
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const [isFilesExpanded, setIsFilesExpanded] = useState(true);
 
   const t = labels ?? {};
   const typography = styles?.typography ?? {};
-  const titleClassName = typography.titleClassName ?? 'dial-h1-text';
+  const titleClassName =
+    typography.titleClassName ?? 'dial-body-semi-text text-primary';
   const helperTextClassName =
-    typography.helperTextClassName ?? 'dial-small-text';
+    typography.helperTextClassName ?? 'dial-tiny-semi-text text-secondary';
 
   const treeItems: DialFile[] = useMemo(
     () =>
@@ -171,32 +196,6 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     [t.removeLabel],
   );
 
-  const startPendingAdd = (kind: SkillFileNodeKind) => {
-    setPendingAdd({ parentPath: null, kind });
-    setPendingAddValue('');
-    setPendingAddError(undefined);
-  };
-
-  const confirmPendingAdd = () => {
-    if (!pendingAdd) return;
-    const path = pendingAddValue.trim();
-    const validationError = fileActions.validatePath(path);
-    if (validationError) {
-      setPendingAddError(validationError);
-      return;
-    }
-    fileActions.onAddNode(path, pendingAdd.kind);
-    setPendingAdd(null);
-    setPendingAddValue('');
-    setPendingAddError(undefined);
-  };
-
-  const cancelPendingAdd = () => {
-    setPendingAdd(null);
-    setPendingAddValue('');
-    setPendingAddError(undefined);
-  };
-
   const handleUploadInputChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -205,45 +204,29 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     if (!file) return;
     const validationError = fileActions.validatePath(file.name);
     if (validationError) {
-      setPendingAddError(validationError);
+      setUploadError(validationError);
       return;
     }
-    await fileActions.onUploadFile(file, file.name);
+    setUploadError(undefined);
+    try {
+      await fileActions.onUploadFile(file, file.name);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : String(err));
+    }
   };
-
-  const addMenuItems: DropdownItem[] = [
-    {
-      key: 'new-file',
-      label: t.addFileLabel ?? 'New file',
-      onClick: () => startPendingAdd(SkillFileNodeKind.File),
-    },
-    {
-      key: 'new-folder',
-      label: t.addFolderLabel ?? 'New folder',
-      onClick: () => startPendingAdd(SkillFileNodeKind.Folder),
-    },
-    {
-      key: 'upload',
-      label: t.addUploadLabel ?? 'Upload from device',
-      onClick: () => uploadInputRef.current?.click(),
-    },
-  ];
 
   const filesTreeId = useId();
   const savingStatusId = useId();
 
   const renderFilesPane = () => (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 desktop:gap-5">
       <div className="flex items-center justify-between">
         <span className={titleClassName}>{t.filesHeading ?? 'Files'}</span>
-        <Dropdown items={addMenuItems}>
-          <GhostButton
-            label={t.addLabel ?? 'Add'}
-            iconBefore={<IconPlus size={16} aria-hidden />}
-            aria-controls={filesTreeId}
-            aria-haspopup="menu"
-          />
-        </Dropdown>
+        <NeutralButton
+          label={t.addUploadLabel ?? 'Upload from device'}
+          iconBefore={<IconPlus size={16} aria-hidden />}
+          onClick={() => uploadInputRef.current?.click()}
+        />
       </div>
       <input
         ref={uploadInputRef}
@@ -251,26 +234,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         className="hidden"
         onChange={handleUploadInputChange}
       />
-      {pendingAdd && (
-        <div className="flex items-center gap-2">
-          <Input
-            labelProps={{ label: t.newPathLabel ?? 'Path' }}
-            placeholder={t.newPathPlaceholder ?? 'path/to/file.md'}
-            value={pendingAddValue}
-            onChange={(value) => setPendingAddValue(value ?? '')}
-            error={pendingAddError}
-            invalid={!!pendingAddError}
-          />
-          <PrimaryButton
-            label={t.addLabel ?? 'Add'}
-            onClick={confirmPendingAdd}
-          />
-          <GhostButton
-            label={t.cancelLabel ?? 'Cancel'}
-            onClick={cancelPendingAdd}
-          />
-        </div>
-      )}
+      {uploadError && <ErrorText text={uploadError} />}
       <div
         id={filesTreeId}
         role="tree"
@@ -350,13 +314,25 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           <ErrorText text={submitError} />
         </div>
       )}
+      {conflict && (
+        <div role="alert" className="flex items-center gap-2 px-4 pt-2">
+          <ErrorText text={conflict.message} />
+          <GhostButton
+            label={t.reloadLatestLabel ?? 'Reload latest'}
+            onClick={onReloadLatest}
+          />
+        </div>
+      )}
 
-      {/* Desktop: static Files sidebar + main pane, actions inline in this header row. */}
-      <div className="hidden items-start justify-end gap-2 px-4 py-2 desktop:flex">
-        {actions}
+      {/* Desktop: static Files sidebar + main pane; host header content + actions share this row. */}
+      <div className="hidden items-center justify-between gap-2 border-b border-tertiary px-4 py-2 desktop:flex desktop:px-8 desktop:pb-3 desktop:pt-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          {headerContent}
+        </div>
+        <div className="flex shrink-0 items-center gap-2">{actions}</div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 pb-20 desktop:flex-row desktop:pb-4">
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 pb-20 desktop:flex-row desktop:gap-0 desktop:px-0 desktop:pb-0">
         {/* Mobile: collapsible "Editing file" summary, defaults expanded. */}
         <div className="desktop:hidden">
           <Accordion
@@ -371,11 +347,11 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         </div>
 
         {/* Desktop: always-visible Files sidebar. */}
-        <div className="hidden desktop:block desktop:w-[280px] desktop:shrink-0">
+        <div className="hidden border-e border-tertiary desktop:block desktop:w-[360px] desktop:shrink-0 desktop:px-8 desktop:py-6">
           {filesPaneContent}
         </div>
 
-        <div className="flex flex-1 flex-col gap-4">
+        <div className="flex flex-1 flex-col gap-4 desktop:gap-5 desktop:px-8 desktop:py-6">
           <h2 className={titleClassName}>
             {selectedPath === SKILL_MANIFEST_PATH
               ? SKILL_MANIFEST_PATH
@@ -401,6 +377,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                 }
                 error={errors?.name}
                 invalid={!!errors?.name}
+                disabled={isNameReadOnly}
               />
               <Textarea
                 labelProps={{
@@ -418,9 +395,12 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                 error={errors?.description}
                 invalid={!!errors?.description}
               />
-              <div className="flex flex-1 flex-col gap-1">
-                <span className={helperTextClassName}>
-                  {t.instructionsLabel ?? 'Instructions'}
+              <div className="flex flex-1 flex-col gap-2">
+                <span className="flex items-center gap-0.5">
+                  <span className={helperTextClassName}>
+                    {t.instructionsLabel ?? 'Instructions'}
+                  </span>
+                  <span className="dial-tiny-text text-error">*</span>
                 </span>
                 <Suspense
                   fallback={

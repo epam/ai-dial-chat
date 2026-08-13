@@ -1,8 +1,5 @@
-# skills-service-decomposition Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change add-skills-bff-api. Update Purpose after archive.
-## Requirements
 ### Requirement: Skills domain service ownership map
 The skills domain SHALL be decomposed into focused injectable services plus a thin facade, each owning a disjoint set of responsibilities, mirroring `deployments-toolsets-service-decomposition`.
 
@@ -42,28 +39,6 @@ The skills domain SHALL be decomposed into focused injectable services plus a th
 - **WHEN** any code needs `filePaths`/`files` validation or outbound multipart construction
 - **THEN** only `SkillsUploadService` injects `SkillsPackageService` — it is not bound on the `SkillsService` facade and no other domain injects it
 
-### Requirement: No dedicated grouping-folder service
-Grouping-folder creation and deletion SHALL be owned by `SkillsMutationService`, not a separate service, because they share no state, cache, or additional dependency with the domain's other structural mutations.
-
-#### Scenario: Grouping-folder mutations live in SkillsMutationService
-- **WHEN** `createSkillGroupingFolder` or `deleteSkillGroupingFolder` is implemented
-- **THEN** the implementation lives in `apps/chat-api/src/skills/mutation/skills-mutation.service.ts`, not a separate `skills/grouping-folder/` sub-service
-
-### Requirement: Cross-domain dependencies use the narrowest exported service
-Other domains that need a skills capability SHALL inject the narrowest focused skills service that satisfies their need, never the full `SkillsService` facade, mirroring `ToolsetsListingService`'s direct dependency on `DeploymentsDetailsService`.
-
-`SkillsModule` SHALL export `SkillsService` and `SkillsLookupService` only — not `SkillsListingService`, `SkillsUploadService`, `SkillsDownloadService`, or `SkillsMutationService` — since no verified cross-domain consumer needs them directly.
-
-No skills sub-service SHALL inject `ShareService` or `PublishService`. No `forwardRef` SHALL be introduced between the skills domain and any other domain.
-
-#### Scenario: ShareService depends on SkillsLookupService directly
-- **WHEN** `ShareService.acceptInvitation` needs to resolve a just-accepted shared skill into a summary DTO
-- **THEN** `ShareModule` imports `SkillsModule` and `ShareService` injects `SkillsLookupService` directly, not `SkillsService`
-
-#### Scenario: PublishService has no skills dependency
-- **WHEN** `PublishService` is constructed
-- **THEN** it does not inject any skills service — no verified consumer need exists for publish to look up skill details in this change
-
 ### Requirement: Module composition
 `SkillsModule` SHALL explicitly register `SkillsController`, `SkillsService`, `SkillsListingService`, `SkillsLookupService`, `SkillsPackageService`, `SkillsUploadService`, `SkillsDownloadService`, and `SkillsMutationService` as providers, and SHALL be registered in `apps/chat-api/src/app/app.module.ts`.
 
@@ -74,11 +49,3 @@ No skills sub-service SHALL inject `ShareService` or `PublishService`. No `forwa
 #### Scenario: SkillsPackageService is registered but not exported
 - **WHEN** `SkillsModule`'s provider/export lists are inspected
 - **THEN** `SkillsPackageService` is a provider but is absent from `SkillsModule`'s `exports` array
-
-### Requirement: Skills domain has no pre-split baseline to preserve
-Unlike `deployments-toolsets-service-decomposition` (a refactor of an existing monolithic service with a pre-split baseline to preserve), the skills domain SHALL be authored directly as a facade-plus-focused-services domain with no pre-existing monolithic implementation to compare against.
-
-#### Scenario: No pre-split baseline exists
-- **WHEN** this change is implemented
-- **THEN** `SkillsService` is authored directly as a facade from the first commit — there is no intermediate monolithic `SkillsService` that is later split
-

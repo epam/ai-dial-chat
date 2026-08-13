@@ -7,15 +7,18 @@ import {
   Delete,
   Get,
   HttpCode,
+  HttpException,
+  HttpStatus,
   Post,
   Put,
   Query,
   Req,
   Res,
   UploadedFile,
+  UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBody,
   ApiConsumes,
@@ -27,6 +30,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { CreateSkillDto } from './dto/create-skill.dto';
 import { ApiIfMatchHeader, IF_MATCH_HEADER } from './dto/skill-file-path.dto';
 import {
   SkillFileListQueryDto,
@@ -52,8 +56,8 @@ import {
   SkillFileUploadResponseDto,
   SkillUploadResponseDto,
 } from './dto/skill-upload-response.dto';
+import { UpdateSkillDto } from './dto/update-skill.dto';
 import { UploadSkillFileDto } from './dto/upload-skill-file.dto';
-import { UploadSkillDto } from './dto/upload-skill.dto';
 import { SkillsService } from './skills.service';
 
 interface UploadedMulterFile {
@@ -294,47 +298,58 @@ export class SkillsController {
     );
   }
 
-  @Put()
-  @HttpCode(200)
+  @Post()
+  @HttpCode(201)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(AnyFilesInterceptor())
   @ApiConsumes('multipart/form-data')
-  @ApiIfMatchHeader()
   @ApiBody({
     schema: {
       type: 'object',
-      required: ['file', 'bucket', 'path'],
+      required: ['bucket', 'path', 'skillManifest', 'filePaths'],
       properties: {
-        file: { type: 'string', format: 'binary' },
-        bucket: { type: 'string' },
-        path: { type: 'string' },
+        bucket: { type: 'string', example: 'my-bucket' },
+        path: { type: 'string', example: 'team-a/docs-helper' },
+        skillManifest: {
+          type: 'string',
+          example:
+            '---\nname: docs-helper\ndescription: Explains our docs\n---\n\n...',
+        },
+        filePaths: {
+          type: 'string',
+          example: '["scripts/run.sh","assets/icon.png"]',
+        },
+        files: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' },
+        },
       },
     },
   })
   @ApiOperation({
-    operationId: 'uploadSkill',
-    summary: 'Create or replace a whole skill from a ZIP archive',
+    operationId: 'createSkill',
+    summary: 'Create a new skill atomically',
     description:
-      'Validates the uploaded ZIP (path safety, reserved markers, duplicate paths, a root SKILL.md) then forwards it unchanged to DIAL Core uploadSkillFolder.',
+      'Validates skillManifest/filePaths/files (path safety, reserved markers, duplicates, limits), builds one multipart part per file, and sends If-None-Match: * to DIAL Core uploadSkillFolder — no ZIP is ever constructed or forwarded.',
   })
-  @ApiResponse({ status: 200, type: SkillUploadResponseDto })
+  @ApiResponse({ status: 201, type: SkillUploadResponseDto })
   @ApiResponse({
     status: 400,
     description:
-      'Invalid bucket/path, malformed ZIP, unsafe/reserved entry path, duplicate entry path, or missing SKILL.md',
+      'Invalid bucket/path, malformed filePaths, unsafe/reserved/duplicate supporting path, or DIAL Core rejected the manifest',
   })
   @ApiResponse({
     status: 401,
     description: 'Not authenticated — valid session cookie required',
   })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  @ApiResponse({ status: 405, description: 'Method not allowed' })
-  @ApiResponse({ status: 412, description: 'If-Match precondition failed' })
-  @ApiResponse({ status: 413, description: 'Upload payload too large' })
   @ApiResponse({
-    status: 422,
-    description:
-      'Archive exceeds SKILL_UPLOAD_MAX_FILES or fails Core validation',
+    status: 409,
+    description: 'A skill already exists at this path',
+  })
+  @ApiResponse({
+    status: 413,
+    description: 'A file or the total content is too large',
   })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
@@ -345,29 +360,116 @@ export class SkillsController {
     status: 503,
     description: 'DIAL Core is unavailable or timed out',
   })
-  uploadSkill(
-    @UploadedFile() file: UploadedMulterFile | undefined,
-    @Body() body: UploadSkillDto,
+  createSkill(
+    @UploadedFiles() files: UploadedMulterFile[],
+    @Body() body: CreateSkillDto,
     @Req() req: Request,
   ): Promise<SkillUploadResponseDto> {
-    if (file == null) {
-      throw new BadRequestException('file is required');
-    }
     const { at } = req.user as SessionUser;
-    const ifMatch = req.headers[IF_MATCH_HEADER] as string | undefined;
-    /*
-     * By the time this handler runs, FileInterceptor has already fully
-     * buffered the multipart body — this only cancels the outbound DIAL
-     * Core request if the client disconnects while that call is pending.
-     */
     const abortController = new AbortController();
     req.on('close', () => abortController.abort());
-    return this.skillsService.uploadSkill(
+    return this.skillsService.createSkill(
       body.bucket,
       body.path,
-      file,
+      body.skillManifest,
+      body.filePaths,
+      files,
       at,
+      abortController.signal,
+    );
+  }
+
+  @Put()
+  @HttpCode(200)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @UseInterceptors(AnyFilesInterceptor())
+  @ApiConsumes('multipart/form-data')
+  @ApiIfMatchHeader({ required: true })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['bucket', 'path', 'skillManifest', 'filePaths'],
+      properties: {
+        bucket: { type: 'string', example: 'my-bucket' },
+        path: { type: 'string', example: 'team-a/docs-helper' },
+        skillManifest: {
+          type: 'string',
+          example:
+            '---\nname: docs-helper\ndescription: Explains our docs\n---\n\n...',
+        },
+        filePaths: {
+          type: 'string',
+          example: '["scripts/run.sh","assets/icon.png"]',
+        },
+        files: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' },
+        },
+      },
+    },
+  })
+  @ApiOperation({
+    operationId: 'updateSkill',
+    summary: 'Update an existing skill, requiring a concrete If-Match',
+    description:
+      'Validates skillManifest/filePaths/files, builds one multipart part per file, and forwards the required If-Match to DIAL Core uploadSkillFolder — no ZIP is ever constructed or forwarded.',
+  })
+  @ApiResponse({ status: 200, type: SkillUploadResponseDto })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Invalid bucket/path, malformed filePaths, unsafe/reserved/duplicate supporting path, or DIAL Core rejected the manifest',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Skill not found' })
+  @ApiResponse({
+    status: 412,
+    description: 'If-Match precondition failed — stale edit',
+  })
+  @ApiResponse({
+    status: 413,
+    description: 'A file or the total content is too large',
+  })
+  @ApiResponse({
+    status: 428,
+    description: 'If-Match header is required for update',
+  })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  updateSkill(
+    @UploadedFiles() files: UploadedMulterFile[],
+    @Body() body: UpdateSkillDto,
+    @Req() req: Request,
+  ): Promise<SkillUploadResponseDto> {
+    const ifMatch = req.headers[IF_MATCH_HEADER] as string | undefined;
+    if (ifMatch == null) {
+      throw new HttpException(
+        'If-Match header is required',
+        HttpStatus.PRECONDITION_REQUIRED,
+      );
+    }
+    const { at } = req.user as SessionUser;
+    const abortController = new AbortController();
+    req.on('close', () => abortController.abort());
+    return this.skillsService.updateSkill(
+      body.bucket,
+      body.path,
+      body.skillManifest,
+      body.filePaths,
+      files,
       ifMatch,
+      at,
       abortController.signal,
     );
   }

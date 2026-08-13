@@ -9,6 +9,8 @@ import {
   type SkillFileTreeNode,
 } from '@epam/ai-dial-skill-editor';
 import {
+  ConfirmationPopup,
+  ConfirmationPopupVariant,
   ErrorText,
   GhostIconButton,
   NotificationVariant,
@@ -16,7 +18,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowLeft } from '@tabler/icons-react';
 import type { FC } from 'react';
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { isSafeReturnUrl } from '../../constants/routes';
@@ -31,37 +33,47 @@ import {
   getApiErrorDetails,
   getApiErrorStatus,
 } from '../../server-api/api-error';
-import { listSkills, uploadSkill } from '../../server-api/skills.api';
+import {
+  createSkill,
+  downloadSkill,
+  updateSkill,
+} from '../../server-api/skills.api';
 import { ROUTES } from '../../types/routes';
 import { SkillEditorQuery } from '../../types/skill-editor';
 import { ThemeId } from '../../types/theme-id';
 import {
-  buildSkillArchive,
   buildSkillManifest,
+  buildSkillManifestFromFrontmatter,
   isValidSkillRelativePath,
   normalizeSkillName,
+  parseSkillManifest,
+  SKILL_FILE_UPLOAD_MAX_BYTES,
+  unpackSkillArchive,
 } from '../../utils/skill';
+import { formatFileSize } from '../../utils/string-utils';
 
 /*
  * Phase names collapse the tasks.md-specified `initial`/`dirty` distinction
- * into a single `idle` phase: the presentational `SkillEditor` form owns
- * every keystroke internally and only calls back into this page on submit,
- * so the page has no signal to distinguish "untouched" from "edited but not
- * yet submitted" — both render identically here (Cancel always navigates
- * immediately, no API call). See tasks.md section 12 for this documented
- * deviation.
+ * into a single `idle` phase for submit purposes — dirty tracking for
+ * navigation guards is handled separately via `isDirty` (from the library's
+ * `onDirtyChange`), not folded into this enum.
  */
 type SubmitPhase = 'idle' | 'submitting' | 'success' | 'failure';
+
+/** Edit-mode load state; create mode never leaves `'loaded'`. */
+type LoadState = 'loading' | 'loaded' | 'error' | 'forbidden' | 'not-found';
 
 const nameFromPath = (path: string): string => {
   const lastSlash = path.lastIndexOf('/');
   return lastSlash === -1 ? path : path.slice(lastSlash + 1);
 };
 
+const toBlob = (bytes: Uint8Array): Blob => new Blob([new Uint8Array(bytes)]);
+
 /*
  * Fingerprints the in-memory package (form values + supporting-file paths) so
- * a retried submission after a 503 can detect "nothing changed" and reuse the
- * already-built archive instead of rebuilding it (tasks.md 11.2/11.3).
+ * a retried submission after a 503 resubmits the exact same request payload
+ * rather than re-deriving it from (possibly since-edited) current form state.
  */
 const fingerprintAttempt = (
   values: SkillEditorValues,
@@ -76,7 +88,9 @@ interface LastAttempt {
   fingerprint: string;
   bucket: string;
   path: string;
-  archive: Blob;
+  skillManifest: string;
+  filePaths: string[];
+  files: Blob[];
 }
 
 const SkillEditorPage: FC = () => {
@@ -95,17 +109,144 @@ const SkillEditorPage: FC = () => {
 
   const bucket = user?.bucket;
 
+  const rawId = searchParams.get(SkillEditorQuery.Id);
+  const isEditMode = rawId != null && rawId !== '';
+  /*
+   * A skill's `id` is its relative path within the *current user's own*
+   * bucket — there is no Catalog entry point yet to reach another user's
+   * shared skill (see design.md Non-Goals), so bucket is always the current
+   * user's, never decoded from `id`.
+   */
+  const skillPath = useMemo(() => {
+    if (!isEditMode) return undefined;
+    try {
+      const decoded = decodeURIComponent(rawId);
+      return isValidSkillRelativePath(decoded) ? decoded : null;
+    } catch {
+      return null;
+    }
+  }, [isEditMode, rawId]);
+
+  const [loadState, setLoadState] = useState<LoadState>(
+    isEditMode ? 'loading' : 'loaded',
+  );
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const [loadedValues, setLoadedValues] = useState<
+    SkillEditorValues | undefined
+  >();
+  const etagRef = useRef<string | undefined>(undefined);
+  const frontmatterRef = useRef<Record<string, unknown>>({});
+  const loadedPathRef = useRef<string | undefined>(undefined);
+
   const [files, setFiles] = useState<SkillFileTreeNode[]>([]);
   const filesContentRef = useRef<Map<string, Uint8Array>>(new Map());
   const lastAttemptRef = useRef<LastAttempt | null>(null);
 
   const [errors, setErrors] = useState<SkillEditorErrors>({});
   const [submitError, setSubmitError] = useState<string | undefined>();
+  const [conflict, setConflict] = useState<{ message: string } | undefined>();
   const [phase, setPhase] = useState<SubmitPhase>('idle');
 
-  const handleCancel = useCallback(() => {
+  const [isDirty, setIsDirty] = useState(false);
+  const [pendingCancel, setPendingCancel] = useState(false);
+  const [pendingReload, setPendingReload] = useState(false);
+
+  // Edit-mode load.
+  useEffect(() => {
+    if (!isEditMode || !bucket) return;
+    if (skillPath == null) {
+      setLoadState('error');
+      return;
+    }
+
+    let cancelled = false;
+    setLoadState('loading');
+
+    (async () => {
+      try {
+        const response = await downloadSkill(bucket, skillPath);
+        const etag = response.headers.get('etag');
+        if (!etag) {
+          if (!cancelled) setLoadState('error');
+          return;
+        }
+        const buffer = await response.arrayBuffer();
+        const { manifestText, files: unpackedFiles } = unpackSkillArchive(
+          new Uint8Array(buffer),
+        );
+        const { frontmatter, instructions } = parseSkillManifest(manifestText);
+        if (cancelled) return;
+
+        etagRef.current = etag;
+        frontmatterRef.current = frontmatter;
+        loadedPathRef.current = skillPath;
+        filesContentRef.current = unpackedFiles;
+        setFiles(
+          [...unpackedFiles.keys()].map((path) => ({
+            path,
+            name: nameFromPath(path),
+            kind: SkillFileNodeKind.File,
+          })),
+        );
+        setLoadedValues({
+          name: typeof frontmatter.name === 'string' ? frontmatter.name : '',
+          description:
+            typeof frontmatter.description === 'string'
+              ? frontmatter.description
+              : '',
+          instructions,
+        });
+        setLoadState('loaded');
+      } catch (err) {
+        if (cancelled) return;
+        const status = getApiErrorStatus(err);
+        if (status === 403) setLoadState('forbidden');
+        else if (status === 404) setLoadState('not-found');
+        else setLoadState('error');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isEditMode, bucket, skillPath, loadAttempt]);
+
+  // Warn on a full page unload while there are unsaved changes — the
+  // in-app Cancel/Back guards below cover in-app navigation.
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
+
+  const handleRetryLoad = useCallback(() => {
+    setLoadAttempt((attempt) => attempt + 1);
+  }, []);
+
+  const navigateAway = useCallback(() => {
     navigate(returnUrl);
   }, [navigate, returnUrl]);
+
+  const handleCancel = useCallback(() => {
+    if (isDirty) {
+      setPendingCancel(true);
+      return;
+    }
+    navigateAway();
+  }, [isDirty, navigateAway]);
+
+  const handleReloadLatestClick = useCallback(() => {
+    setPendingReload(true);
+  }, []);
+
+  const confirmReloadLatest = useCallback(() => {
+    setPendingReload(false);
+    setConflict(undefined);
+    setLoadAttempt((attempt) => attempt + 1);
+  }, []);
 
   const validatePath = useCallback(
     (path: string): string | undefined => {
@@ -127,13 +268,16 @@ const SkillEditorPage: FC = () => {
   const fileActions = useMemo<SkillEditorFileActions>(
     () => ({
       validatePath,
-      onAddNode: (path, kind) => {
-        if (kind === SkillFileNodeKind.File) {
-          filesContentRef.current.set(path, new Uint8Array(0));
-        }
-        setFiles((prev) => [...prev, { path, name: nameFromPath(path), kind }]);
-      },
       onUploadFile: async (file, path) => {
+        if (file.size > SKILL_FILE_UPLOAD_MAX_BYTES) {
+          showNotification({
+            variant: NotificationVariant.Error,
+            message: t(SkillEditorI18nKeys.ErrorFileTooLarge, {
+              maxSize: formatFileSize(SKILL_FILE_UPLOAD_MAX_BYTES),
+            }),
+          });
+          return;
+        }
         const buffer = await file.arrayBuffer();
         filesContentRef.current.set(path, new Uint8Array(buffer));
         setFiles((prev) => [
@@ -154,7 +298,7 @@ const SkillEditorPage: FC = () => {
         }
       },
     }),
-    [validatePath],
+    [validatePath, t, showNotification],
   );
 
   const applyUploadErrorStatus = useCallback(
@@ -162,14 +306,20 @@ const SkillEditorPage: FC = () => {
       const status = getApiErrorStatus(err);
       switch (status) {
         case 409:
+          setErrors({ name: t(SkillEditorI18nKeys.ErrorNameConflict) });
+          return;
         case 412:
+          /*
+           * In edit mode this is a genuine stale-edit conflict, handled
+           * separately by `handleSubmit` before this function is ever
+           * called. In create mode it is unreachable (create never sends
+           * `If-Match`) — treated defensively the same as `409` should it
+           * ever occur, which would indicate an unexpected upstream change.
+           */
           setErrors({ name: t(SkillEditorI18nKeys.ErrorNameConflict) });
           return;
         case 413:
           setSubmitError(t(SkillEditorI18nKeys.ErrorArchiveTooLarge));
-          return;
-        case 422:
-          setSubmitError(t(SkillEditorI18nKeys.ErrorTooManyFiles));
           return;
         case 503:
           setSubmitError(t(SkillEditorI18nKeys.ErrorServiceUnavailable));
@@ -199,6 +349,148 @@ const SkillEditorPage: FC = () => {
     [showNotification, t],
   );
 
+  const handleSubmitCreate = useCallback(
+    async (values: SkillEditorValues) => {
+      const normalizedName = normalizeSkillName(values.name);
+      if (!normalizedName || !isValidSkillRelativePath(normalizedName)) {
+        setErrors({ name: t(SkillEditorI18nKeys.ErrorNameInvalid) });
+        return;
+      }
+
+      const fingerprint = fingerprintAttempt(values, files);
+      const cached = lastAttemptRef.current;
+      const canReuse = cached != null && cached.fingerprint === fingerprint;
+
+      const path = normalizedName;
+      let skillManifest: string;
+      let filePaths: string[];
+      let fileBlobs: Blob[];
+      if (canReuse) {
+        ({ skillManifest, filePaths, files: fileBlobs } = cached);
+      } else {
+        skillManifest = buildSkillManifest({
+          name: normalizedName,
+          description: values.description,
+          instructions: values.instructions,
+        });
+        const fileNodes = files.filter(
+          (node) => node.kind === SkillFileNodeKind.File,
+        );
+        filePaths = fileNodes.map((node) => node.path);
+        fileBlobs = fileNodes.map((node) =>
+          toBlob(filesContentRef.current.get(node.path) ?? new Uint8Array(0)),
+        );
+      }
+
+      setPhase('submitting');
+      lastAttemptRef.current = {
+        fingerprint,
+        bucket: bucket as string,
+        path,
+        skillManifest,
+        filePaths,
+        files: fileBlobs,
+      };
+
+      try {
+        await createSkill(
+          bucket as string,
+          path,
+          skillManifest,
+          filePaths,
+          fileBlobs,
+        );
+
+        setPhase('success');
+        showNotification({
+          variant: NotificationVariant.Success,
+          title: t(SkillEditorI18nKeys.SaveSuccessTitle),
+          message: t(SkillEditorI18nKeys.CreateSuccess, {
+            name: normalizedName,
+          }),
+        });
+        navigate(returnUrl);
+      } catch (err) {
+        setPhase('failure');
+        await applyUploadErrorStatus(err);
+      }
+    },
+    [
+      bucket,
+      files,
+      t,
+      showNotification,
+      navigate,
+      returnUrl,
+      applyUploadErrorStatus,
+    ],
+  );
+
+  const handleSubmitEdit = useCallback(
+    async (values: SkillEditorValues) => {
+      const path = loadedPathRef.current;
+      const etag = etagRef.current;
+      if (!path || !etag) {
+        setSubmitError(t(SkillEditorI18nKeys.ErrorSave));
+        return;
+      }
+
+      const skillManifest = buildSkillManifestFromFrontmatter(
+        frontmatterRef.current,
+        values.name,
+        values.description,
+        values.instructions,
+      );
+      const fileNodes = files.filter(
+        (node) => node.kind === SkillFileNodeKind.File,
+      );
+      const filePaths = fileNodes.map((node) => node.path);
+      const fileBlobs = fileNodes.map((node) =>
+        toBlob(filesContentRef.current.get(node.path) ?? new Uint8Array(0)),
+      );
+
+      setPhase('submitting');
+      try {
+        const result = await updateSkill(
+          bucket as string,
+          path,
+          skillManifest,
+          filePaths,
+          fileBlobs,
+          etag,
+        );
+        etagRef.current = result.etag ?? etag;
+
+        setPhase('success');
+        showNotification({
+          variant: NotificationVariant.Success,
+          title: t(SkillEditorI18nKeys.SaveSuccessTitle),
+          message: t(SkillEditorI18nKeys.UpdateSuccess, {
+            name: values.name,
+          }),
+        });
+        navigate(returnUrl);
+      } catch (err) {
+        setPhase('failure');
+        const status = getApiErrorStatus(err);
+        if (status === 412) {
+          setConflict({ message: t(SkillEditorI18nKeys.ConflictMessage) });
+          return;
+        }
+        await applyUploadErrorStatus(err);
+      }
+    },
+    [
+      bucket,
+      files,
+      t,
+      showNotification,
+      navigate,
+      returnUrl,
+      applyUploadErrorStatus,
+    ],
+  );
+
   const handleSubmit = useCallback(
     async (values: SkillEditorValues) => {
       if (phase === 'submitting' || !bucket) return;
@@ -217,98 +509,24 @@ const SkillEditorPage: FC = () => {
         return;
       }
 
-      const normalizedName = normalizeSkillName(values.name);
-      if (!normalizedName || !isValidSkillRelativePath(normalizedName)) {
-        setErrors({ name: t(SkillEditorI18nKeys.ErrorNameInvalid) });
-        return;
-      }
-
       setErrors({});
       setSubmitError(undefined);
+      setConflict(undefined);
 
-      const fingerprint = fingerprintAttempt(values, files);
-      const cached = lastAttemptRef.current;
-      const canReuse = cached != null && cached.fingerprint === fingerprint;
-
-      let archive: Blob;
-      const path = normalizedName;
-      if (canReuse) {
-        archive = cached.archive;
+      if (isEditMode) {
+        await handleSubmitEdit(values);
       } else {
-        const manifest = buildSkillManifest({
-          name: normalizedName,
-          description: values.description,
-          instructions: values.instructions,
-        });
-        try {
-          archive = buildSkillArchive(
-            manifest,
-            files
-              .filter((node) => node.kind === SkillFileNodeKind.File)
-              .map((node) => ({
-                path: node.path,
-                data:
-                  filesContentRef.current.get(node.path) ?? new Uint8Array(0),
-              })),
-          );
-        } catch {
-          setSubmitError(t(SkillEditorI18nKeys.ErrorArchiveBuildFailed));
-          return;
-        }
-      }
-
-      setPhase('submitting');
-      try {
-        const listing = await listSkills({ bucket, path: '' });
-        const conflict = listing.items?.some(
-          (item) => item.name === normalizedName,
-        );
-        if (conflict) {
-          setPhase('failure');
-          setErrors({ name: t(SkillEditorI18nKeys.ErrorNameConflict) });
-          return;
-        }
-
-        lastAttemptRef.current = { fingerprint, bucket, path, archive };
-
-        await uploadSkill(bucket, path, archive);
-
-        setPhase('success');
-        showNotification({
-          variant: NotificationVariant.Success,
-          title: t(SkillEditorI18nKeys.SaveSuccessTitle),
-          message: t(SkillEditorI18nKeys.CreateSuccess, {
-            name: normalizedName,
-          }),
-        });
-        navigate(returnUrl);
-      } catch (err) {
-        setPhase('failure');
-        await applyUploadErrorStatus(err);
+        await handleSubmitCreate(values);
       }
     },
-    [
-      phase,
-      bucket,
-      files,
-      t,
-      showNotification,
-      navigate,
-      returnUrl,
-      applyUploadErrorStatus,
-    ],
+    [phase, bucket, t, isEditMode, handleSubmitEdit, handleSubmitCreate],
   );
 
   const labels = useMemo<SkillEditorLabels>(
     () => ({
       filesHeading: t(SkillEditorI18nKeys.FilesHeading),
       filesTreeAriaLabel: t(SkillEditorI18nKeys.FilesTreeAriaLabel),
-      addLabel: t(SkillEditorI18nKeys.AddLabel),
-      addFileLabel: t(SkillEditorI18nKeys.AddFileLabel),
-      addFolderLabel: t(SkillEditorI18nKeys.AddFolderLabel),
       addUploadLabel: t(SkillEditorI18nKeys.AddUploadLabel),
-      newPathLabel: t(SkillEditorI18nKeys.NewPathLabel),
-      newPathPlaceholder: t(SkillEditorI18nKeys.NewPathPlaceholder),
       removeLabel: t(SkillEditorI18nKeys.RemoveLabel),
       removeConfirmTitle: t(SkillEditorI18nKeys.RemoveConfirmTitle),
       removeConfirmMessage: (path) =>
@@ -323,15 +541,23 @@ const SkillEditorPage: FC = () => {
       descriptionPlaceholder: t(SkillEditorI18nKeys.DescriptionPlaceholder),
       instructionsLabel: t(SkillEditorI18nKeys.InstructionsLabel),
       instructionsPlaceholder: t(SkillEditorI18nKeys.InstructionsPlaceholder),
-      createLabel: t(ButtonsI18nKeys.Create),
+      createLabel: isEditMode
+        ? t(SkillEditorI18nKeys.SaveLabel)
+        : t(ButtonsI18nKeys.Create),
       cancelLabel: t(ButtonsI18nKeys.Cancel),
       retryLabel: t(ButtonsI18nKeys.Retry),
-      loadErrorMessage: t(SkillEditorI18nKeys.LoadError),
+      loadErrorMessage:
+        loadState === 'forbidden'
+          ? t(SkillEditorI18nKeys.LoadErrorForbidden)
+          : loadState === 'not-found'
+            ? t(SkillEditorI18nKeys.LoadErrorNotFound)
+            : t(SkillEditorI18nKeys.LoadError),
       savingStatusLabel: t(SkillEditorI18nKeys.SavingStatus),
       loadingAriaLabel: t(SkillEditorI18nKeys.LoadingAriaLabel),
       supportingFileNote: t(SkillEditorI18nKeys.SupportingFileNote),
+      reloadLatestLabel: t(SkillEditorI18nKeys.ReloadLatestLabel),
     }),
-    [t],
+    [t, isEditMode, loadState],
   );
 
   if (!bucket) {
@@ -352,35 +578,83 @@ const SkillEditorPage: FC = () => {
     );
   }
 
+  const headerRow = (
+    <>
+      <GhostIconButton
+        icon={
+          <IconArrowLeft size={20} className="rtl:scale-x-[-1]" aria-hidden />
+        }
+        aria-label={t(SkillEditorI18nKeys.BackAriaLabel)}
+        onClick={handleCancel}
+      />
+      <h1 className={mergeClasses('dial-h2-text')}>
+        {isEditMode
+          ? t(SkillEditorI18nKeys.EditTitle)
+          : t(SkillEditorI18nKeys.Title)}
+      </h1>
+    </>
+  );
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-center gap-2 border-b border-tertiary p-4 desktop:hidden">
-        <GhostIconButton
-          icon={
-            <IconArrowLeft size={20} className="rtl:scale-x-[-1]" aria-hidden />
-          }
-          aria-label={t(SkillEditorI18nKeys.BackAriaLabel)}
-          onClick={handleCancel}
-        />
-        <h1 className={mergeClasses('dial-h1-text')}>
-          {t(SkillEditorI18nKeys.Title)}
-        </h1>
+        {headerRow}
       </div>
       <div className="min-h-0 flex-1">
         <SkillEditorForm
+          initialValues={isEditMode ? loadedValues : undefined}
           files={files}
+          isLoading={loadState === 'loading'}
+          hasLoadError={
+            loadState === 'error' ||
+            loadState === 'forbidden' ||
+            loadState === 'not-found'
+          }
           isSubmitting={phase === 'submitting'}
           errors={errors}
           submitError={submitError}
+          conflict={conflict}
+          onReloadLatest={handleReloadLatestClick}
+          isNameReadOnly={isEditMode}
+          onDirtyChange={setIsDirty}
           fileActions={fileActions}
+          headerContent={headerRow}
           labels={labels}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
+          onRetry={handleRetryLoad}
           instructionsEditorTheme={
             currentTheme === ThemeId.Dark ? 'dark' : 'light'
           }
         />
       </div>
+
+      <ConfirmationPopup
+        open={pendingCancel}
+        header={t(SkillEditorI18nKeys.UnsavedChangesTitle)}
+        description={t(SkillEditorI18nKeys.UnsavedChangesMessage)}
+        confirmLabel={t(SkillEditorI18nKeys.UnsavedChangesConfirmLabel)}
+        cancelLabel={t(SkillEditorI18nKeys.UnsavedChangesCancelLabel)}
+        variant={ConfirmationPopupVariant.Danger}
+        onConfirm={() => {
+          setPendingCancel(false);
+          navigateAway();
+        }}
+        onCancel={() => setPendingCancel(false)}
+        onClose={() => setPendingCancel(false)}
+      />
+
+      <ConfirmationPopup
+        open={pendingReload}
+        header={t(SkillEditorI18nKeys.ReloadConfirmTitle)}
+        description={t(SkillEditorI18nKeys.ReloadConfirmMessage)}
+        confirmLabel={t(SkillEditorI18nKeys.ReloadConfirmLabel)}
+        cancelLabel={t(SkillEditorI18nKeys.ReloadCancelLabel)}
+        variant={ConfirmationPopupVariant.Danger}
+        onConfirm={confirmReloadLatest}
+        onCancel={() => setPendingReload(false)}
+        onClose={() => setPendingReload(false)}
+      />
     </div>
   );
 };

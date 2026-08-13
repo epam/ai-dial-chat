@@ -4562,15 +4562,101 @@
           "skills"
         ]
       },
+      "post": {
+        "description": "Validates skillManifest/filePaths/files (path safety, reserved markers, duplicates, limits), builds one multipart part per file, and sends If-None-Match: * to DIAL Core uploadSkillFolder — no ZIP is ever constructed or forwarded.",
+        "operationId": "createSkill",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "bucket",
+                  "path",
+                  "skillManifest",
+                  "filePaths"
+                ],
+                "properties": {
+                  "bucket": {
+                    "type": "string",
+                    "example": "my-bucket"
+                  },
+                  "path": {
+                    "type": "string",
+                    "example": "team-a/docs-helper"
+                  },
+                  "skillManifest": {
+                    "type": "string",
+                    "example": "---\nname: docs-helper\ndescription: Explains our docs\n---\n\n..."
+                  },
+                  "filePaths": {
+                    "type": "string",
+                    "example": "[\"scripts/run.sh\",\"assets/icon.png\"]"
+                  },
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillUploadResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid bucket/path, malformed filePaths, unsafe/reserved/duplicate supporting path, or DIAL Core rejected the manifest"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "409": {
+            "description": "A skill already exists at this path"
+          },
+          "413": {
+            "description": "A file or the total content is too large"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Create a new skill atomically",
+        "tags": [
+          "skills"
+        ]
+      },
       "put": {
-        "description": "Validates the uploaded ZIP (path safety, reserved markers, duplicate paths, a root SKILL.md) then forwards it unchanged to DIAL Core uploadSkillFolder.",
-        "operationId": "uploadSkill",
+        "description": "Validates skillManifest/filePaths/files, builds one multipart part per file, and forwards the required If-Match to DIAL Core uploadSkillFolder — no ZIP is ever constructed or forwarded.",
+        "operationId": "updateSkill",
         "parameters": [
           {
             "name": "If-Match",
             "in": "header",
             "description": "ETag of the resource version to operate on, for optimistic concurrency control",
-            "required": false,
+            "required": true,
             "schema": {
               "type": "string"
             }
@@ -4583,20 +4669,34 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "file",
                   "bucket",
-                  "path"
+                  "path",
+                  "skillManifest",
+                  "filePaths"
                 ],
                 "properties": {
-                  "file": {
-                    "type": "string",
-                    "format": "binary"
-                  },
                   "bucket": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "my-bucket"
                   },
                   "path": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "team-a/docs-helper"
+                  },
+                  "skillManifest": {
+                    "type": "string",
+                    "example": "---\nname: docs-helper\ndescription: Explains our docs\n---\n\n..."
+                  },
+                  "filePaths": {
+                    "type": "string",
+                    "example": "[\"scripts/run.sh\",\"assets/icon.png\"]"
+                  },
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
                   }
                 }
               }
@@ -4615,7 +4715,7 @@
             }
           },
           "400": {
-            "description": "Invalid bucket/path, malformed ZIP, unsafe/reserved entry path, duplicate entry path, or missing SKILL.md"
+            "description": "Invalid bucket/path, malformed filePaths, unsafe/reserved/duplicate supporting path, or DIAL Core rejected the manifest"
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
@@ -4623,17 +4723,17 @@
           "403": {
             "description": "Forbidden"
           },
-          "405": {
-            "description": "Method not allowed"
+          "404": {
+            "description": "Skill not found"
           },
           "412": {
-            "description": "If-Match precondition failed"
+            "description": "If-Match precondition failed — stale edit"
           },
           "413": {
-            "description": "Upload payload too large"
+            "description": "A file or the total content is too large"
           },
-          "422": {
-            "description": "Archive exceeds SKILL_UPLOAD_MAX_FILES or fails Core validation"
+          "428": {
+            "description": "If-Match header is required for update"
           },
           "429": {
             "description": "Rate limit exceeded"
@@ -4645,7 +4745,7 @@
             "description": "DIAL Core is unavailable or timed out"
           }
         },
-        "summary": "Create or replace a whole skill from a ZIP archive",
+        "summary": "Update an existing skill, requiring a concrete If-Match",
         "tags": [
           "skills"
         ]

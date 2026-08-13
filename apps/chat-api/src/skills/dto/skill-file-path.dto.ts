@@ -33,16 +33,20 @@ export const SkillFilePathField = () =>
   );
 
 /**
- * Shared `@ApiHeader` decorator documenting the optional conditional
- * `If-Match` request header for skill mutation endpoints. The verified SDK
- * schema declares this header per-operation, not per-DTO (see design.md
- * D2), so it's applied to controller methods rather than modeled as a
- * validated DTO field.
+ * Shared `@ApiHeader` decorator documenting the conditional `If-Match`
+ * request header for skill mutation endpoints. The verified SDK schema
+ * declares this header per-operation, not per-DTO (see design.md D2), so
+ * it's applied to controller methods rather than modeled as a validated DTO
+ * field. `updateSkill` passes `{ required: true }` — DIAL Core itself
+ * doesn't require it (it would just be an unconditional overwrite), but this
+ * BFF does, as a deliberate safety rail (design.md's `428` decision).
  */
-export const ApiIfMatchHeader = (): MethodDecorator =>
+export const ApiIfMatchHeader = (
+  options: { required?: boolean } = {},
+): MethodDecorator =>
   ApiHeader({
     name: 'If-Match',
-    required: false,
+    required: options.required ?? false,
     description:
       'ETag of the resource version to operate on, for optimistic concurrency control',
   });

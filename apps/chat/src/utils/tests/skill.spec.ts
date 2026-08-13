@@ -1,23 +1,14 @@
-import { strFromU8, unzipSync } from 'fflate';
+import { strToU8, zipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 import {
-  SKILL_MANIFEST_FILE,
-  buildSkillArchive,
   buildSkillManifest,
+  buildSkillManifestFromFrontmatter,
   isValidSkillRelativePath,
   normalizeSkillName,
+  parseSkillManifest,
+  unpackSkillArchive,
 } from '../skill';
-
-const encode = (text: string): Uint8Array => new TextEncoder().encode(text);
-
-const readBlobAsBytes = (blob: Blob): Promise<Uint8Array> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(new Uint8Array(reader.result as ArrayBuffer));
-    reader.onerror = () => reject(reader.error);
-    reader.readAsArrayBuffer(blob);
-  });
 
 describe('normalizeSkillName', () => {
   it('lowercases and hyphenates a name with spaces and mixed case', () => {
@@ -86,21 +77,117 @@ describe('buildSkillManifest', () => {
   });
 });
 
-describe('buildSkillArchive', () => {
-  it('contains exactly the manifest and supporting files, with SKILL.md at the root', async () => {
-    const manifest = '---\nname: x\ndescription: y\n---\n\nz';
-    const blob = buildSkillArchive(manifest, [
-      { path: 'agents/analyzer.md', data: encode('analyzer') },
-      { path: 'assets/logo.png', data: encode('logo') },
-    ]);
+describe('parseSkillManifest', () => {
+  it('recovers name/description/instructions from a buildSkillManifest output', () => {
+    const manifest = buildSkillManifest({
+      name: 'good-morning-breakfast',
+      description: 'Says good morning',
+      instructions: '# Instructions\n\nDo the thing.',
+    });
 
-    const bytes = await readBlobAsBytes(blob);
-    const unzipped = unzipSync(bytes);
+    const { frontmatter, instructions } = parseSkillManifest(manifest);
 
-    expect(Object.keys(unzipped).sort()).toEqual(
-      ['SKILL.md', 'agents/analyzer.md', 'assets/logo.png'].sort(),
+    expect(frontmatter.name).toBe('good-morning-breakfast');
+    expect(frontmatter.description).toBe('Says good morning');
+    expect(instructions).toBe('# Instructions\n\nDo the thing.');
+  });
+
+  it('preserves an extra field the app never writes', () => {
+    const manifest =
+      '---\nname: x\ndescription: y\nversion: "1.2.0"\n---\n\nbody';
+
+    const { frontmatter } = parseSkillManifest(manifest);
+
+    expect(frontmatter.version).toBe('1.2.0');
+  });
+
+  it('parses a manifest with CRLF line endings', () => {
+    const manifest = '---\r\nname: x\r\ndescription: y\r\n---\r\n\r\nbody text';
+
+    const { frontmatter, instructions } = parseSkillManifest(manifest);
+
+    expect(frontmatter.name).toBe('x');
+    expect(instructions).toBe('body text');
+  });
+
+  it('throws when there is no frontmatter block', () => {
+    expect(() => parseSkillManifest('no frontmatter here')).toThrow();
+  });
+});
+
+describe('buildSkillManifestFromFrontmatter', () => {
+  it('reassigns only name/description, preserving other fields', () => {
+    const base = { name: 'old-name', description: 'old', version: '2.0.0' };
+
+    const manifest = buildSkillManifestFromFrontmatter(
+      base,
+      'new-name',
+      'new description',
+      'instructions body',
     );
-    expect(strFromU8(unzipped[SKILL_MANIFEST_FILE])).toBe(manifest);
-    expect(strFromU8(unzipped['agents/analyzer.md'])).toBe('analyzer');
+    const { frontmatter, instructions } = parseSkillManifest(manifest);
+
+    expect(frontmatter.name).toBe('new-name');
+    expect(frontmatter.description).toBe('new description');
+    expect(frontmatter.version).toBe('2.0.0');
+    expect(instructions).toBe('instructions body');
+  });
+
+  it('does not mutate the original frontmatter object', () => {
+    const base = { name: 'old-name', description: 'old' };
+
+    buildSkillManifestFromFrontmatter(base, 'new-name', 'new', 'body');
+
+    expect(base.name).toBe('old-name');
+  });
+});
+
+describe('unpackSkillArchive', () => {
+  it('separates the manifest from every other entry', () => {
+    const manifest = '---\nname: x\ndescription: y\n---\n\nbody';
+    const zipped = zipSync({
+      'SKILL.md': strToU8(manifest),
+      'agents/analyzer.md': strToU8('analyzer'),
+    });
+
+    const { manifestText, files } = unpackSkillArchive(new Uint8Array(zipped));
+
+    expect(manifestText).toBe(manifest);
+    expect(files.size).toBe(1);
+    expect(new TextDecoder().decode(files.get('agents/analyzer.md'))).toBe(
+      'analyzer',
+    );
+  });
+
+  it('ignores directory-only entries', () => {
+    const manifest = '---\nname: x\ndescription: y\n---\n\nbody';
+    const zipped = zipSync({
+      'SKILL.md': strToU8(manifest),
+      'agents/': new Uint8Array(0),
+      'agents/analyzer.md': strToU8('analyzer'),
+    });
+
+    const { files } = unpackSkillArchive(new Uint8Array(zipped));
+
+    expect([...files.keys()]).toEqual(['agents/analyzer.md']);
+  });
+
+  it('throws when there is no root SKILL.md entry', () => {
+    const zipped = zipSync({ 'notes.md': strToU8('notes') });
+
+    expect(() => unpackSkillArchive(new Uint8Array(zipped))).toThrow();
+  });
+
+  it('round-trips a create-mode-built manifest', () => {
+    const manifest = buildSkillManifest({
+      name: 'x',
+      description: 'y',
+      instructions: 'z',
+    });
+    const zipped = zipSync({ 'SKILL.md': strToU8(manifest) });
+
+    const { manifestText } = unpackSkillArchive(new Uint8Array(zipped));
+
+    expect(manifestText).toBe(manifest);
   });
 });

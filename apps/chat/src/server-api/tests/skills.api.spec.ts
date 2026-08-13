@@ -10,6 +10,7 @@ import type {
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { skillsApi } from '../api-client';
 import {
+  createSkill,
   createSkillGroupingFolder,
   deleteSkill,
   deleteSkillFile,
@@ -18,7 +19,7 @@ import {
   downloadSkillFile,
   listSkillFiles,
   listSkills,
-  uploadSkill,
+  updateSkill,
   uploadSkillFile,
 } from '../skills.api';
 
@@ -213,58 +214,107 @@ describe('downloadSkillFile', () => {
 
 const MOCK_UPLOAD_RESPONSE: SkillUploadResponseDto = { etag: '"abc123"' };
 
-describe('uploadSkill', () => {
+describe('createSkill', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('delegates to the generated SkillsApi with the file and returns the ETag', async () => {
+  it('delegates to the generated SkillsApi with skillManifest/filePaths/files, no ifMatch', async () => {
     const spy = vi
-      .spyOn(skillsApi, 'uploadSkill')
+      .spyOn(skillsApi, 'createSkill')
       .mockResolvedValue(MOCK_UPLOAD_RESPONSE);
-    const file = new Blob(['zip-bytes']);
+    const file = new Blob(['echo hi']);
 
-    const result = await uploadSkill('my-bucket', 'my-skill/', file);
-
-    expect(spy).toHaveBeenCalledWith(
-      { bucket: 'my-bucket', path: 'my-skill/', file, ifMatch: undefined },
-      undefined,
-    );
-    expect(result).toEqual(MOCK_UPLOAD_RESPONSE);
-  });
-
-  it('forwards ifMatch and an AbortSignal when provided', async () => {
-    const spy = vi
-      .spyOn(skillsApi, 'uploadSkill')
-      .mockResolvedValue(MOCK_UPLOAD_RESPONSE);
-    const file = new Blob(['zip-bytes']);
-    const controller = new AbortController();
-
-    await uploadSkill(
+    const result = await createSkill(
       'my-bucket',
-      'my-skill/',
-      file,
-      '"prev-etag"',
-      controller.signal,
+      'my-skill',
+      'manifest',
+      ['scripts/run.sh'],
+      [file],
     );
 
     expect(spy).toHaveBeenCalledWith(
       {
         bucket: 'my-bucket',
-        path: 'my-skill/',
-        file,
-        ifMatch: '"prev-etag"',
+        path: 'my-skill',
+        skillManifest: 'manifest',
+        filePaths: JSON.stringify(['scripts/run.sh']),
+        files: [file],
       },
-      { signal: controller.signal },
+      undefined,
     );
+    expect(result).toEqual(MOCK_UPLOAD_RESPONSE);
+  });
+
+  it('forwards an AbortSignal when provided', async () => {
+    const spy = vi
+      .spyOn(skillsApi, 'createSkill')
+      .mockResolvedValue(MOCK_UPLOAD_RESPONSE);
+    const controller = new AbortController();
+
+    await createSkill(
+      'my-bucket',
+      'my-skill',
+      'manifest',
+      [],
+      [],
+      controller.signal,
+    );
+
+    expect(spy).toHaveBeenCalledWith(expect.anything(), {
+      signal: controller.signal,
+    });
   });
 
   it('propagates rejection from the generated client', async () => {
-    const error = new Response(null, { status: 400 });
-    vi.spyOn(skillsApi, 'uploadSkill').mockRejectedValue(error);
+    const error = new Response(null, { status: 409 });
+    vi.spyOn(skillsApi, 'createSkill').mockRejectedValue(error);
 
     await expect(
-      uploadSkill('my-bucket', 'my-skill/', new Blob(['zip-bytes'])),
+      createSkill('my-bucket', 'my-skill', 'manifest', [], []),
+    ).rejects.toBe(error);
+  });
+});
+
+describe('updateSkill', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('delegates to the generated SkillsApi with skillManifest/filePaths/files and ifMatch', async () => {
+    const spy = vi
+      .spyOn(skillsApi, 'updateSkill')
+      .mockResolvedValue(MOCK_UPLOAD_RESPONSE);
+
+    const result = await updateSkill(
+      'my-bucket',
+      'my-skill',
+      'manifest',
+      [],
+      [],
+      '"prev-etag"',
+    );
+
+    expect(spy).toHaveBeenCalledWith(
+      {
+        bucket: 'my-bucket',
+        path: 'my-skill',
+        skillManifest: 'manifest',
+        filePaths: '[]',
+        files: [],
+        ifMatch: '"prev-etag"',
+      },
+      undefined,
+    );
+    expect(result).toEqual(MOCK_UPLOAD_RESPONSE);
+  });
+
+  it('propagates rejection from the generated client', async () => {
+    const error = new Response(null, { status: 412 });
+    vi.spyOn(skillsApi, 'updateSkill').mockRejectedValue(error);
+
+    await expect(
+      updateSkill('my-bucket', 'my-skill', 'manifest', [], [], '"etag"'),
     ).rejects.toBe(error);
   });
 });

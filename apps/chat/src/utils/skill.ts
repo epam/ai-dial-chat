@@ -1,8 +1,16 @@
-import { strToU8, zipSync } from 'fflate';
-import { stringify } from 'yaml';
+import { unzipSync } from 'fflate';
+import { parse, stringify } from 'yaml';
 
 /** Root manifest filename required at the top of every skill archive (mirrors `SKILL_MANIFEST_FILE` in `apps/chat-api/src/skills/utils/skill-path.util.ts`). */
 export const SKILL_MANIFEST_FILE = 'SKILL.md';
+
+/**
+ * Client-side mirror of the backend's default `SKILL_FILE_UPLOAD_MAX_BYTES`
+ * (`apps/chat-api/src/config/environment.config.ts`), used only for
+ * immediate inline feedback when a user picks a file to upload — the server
+ * remains authoritative and enforces its own configured limit regardless.
+ */
+export const SKILL_FILE_UPLOAD_MAX_BYTES = 1_048_576;
 
 const RESERVED_ENTRY_NAMES = new Set(['.dial-resource', '.dial-folder']);
 const RESERVED_FIRST_SEGMENTS = new Set(['files', 'v']);
@@ -76,38 +84,85 @@ export const buildSkillManifest = ({
   return `---\n${frontmatter}\n---\n\n${instructions}`;
 };
 
-/*
- * fflate identifies file entries with instanceof against its own Uint8Array
- * constructor, so normalize bytes from other realms before calling zipSync.
+/**
+ * Builds `SKILL.md`'s content for an edit save: reassigns only `name`/
+ * `description` onto the *loaded* frontmatter object (mutating a shallow
+ * copy, never the original) so unrecognized fields (e.g. `version`) survive
+ * re-serialization unchanged, then appends the (possibly edited)
+ * instructions body.
  */
-const FflateUint8Array = strToU8('', true).constructor as Uint8ArrayConstructor;
+export const buildSkillManifestFromFrontmatter = (
+  baseFrontmatter: Record<string, unknown>,
+  name: string,
+  description: string,
+  instructions: string,
+): string => {
+  const merged = { ...baseFrontmatter, name, description };
+  const frontmatter = stringify(merged).trimEnd();
+  return `---\n${frontmatter}\n---\n\n${instructions}`;
+};
 
-const toZipUint8Array = (data: Uint8Array): Uint8Array =>
-  data instanceof FflateUint8Array ? data : new FflateUint8Array(data);
+/** A skill's `SKILL.md` split into its parsed frontmatter object and the raw instructions body. */
+export interface ParsedSkillManifest {
+  /** The full parsed frontmatter object, including fields this app never renders. */
+  frontmatter: Record<string, unknown>;
+  /** The instructions body following the closing `---` delimiter. */
+  instructions: string;
+}
 
-/** A supporting file already fetched into memory, ready to be written into the skill archive. */
-export interface SkillArchiveFileEntry {
-  /** Relative path under which the file is stored, validated by `isValidSkillRelativePath`. */
-  path: string;
-  /** File content. */
-  data: Uint8Array;
+// Matches a leading `---` frontmatter block (LF or CRLF line endings) and
+// captures the YAML body plus everything after the closing `---`.
+const FRONTMATTER_PATTERN = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
+
+/**
+ * Parses a `SKILL.md`'s YAML frontmatter and instructions body — the inverse
+ * of `buildSkillManifest`/`buildSkillManifestFromFrontmatter`. Throws if the
+ * manifest has no `---`-delimited frontmatter block.
+ */
+export const parseSkillManifest = (
+  manifestText: string,
+): ParsedSkillManifest => {
+  const match = FRONTMATTER_PATTERN.exec(manifestText);
+  if (!match) {
+    throw new Error('SKILL.md is missing its YAML frontmatter block');
+  }
+  const [, frontmatterText, rest] = match;
+  const frontmatter = (parse(frontmatterText) ?? {}) as Record<string, unknown>;
+  const instructions = rest.replace(/^\r?\n/, '');
+  return { frontmatter, instructions };
+};
+
+/** A skill archive unpacked into its manifest text and a relative-path → bytes map of every other entry. */
+export interface UnpackedSkillArchive {
+  /** The root `SKILL.md` entry's decoded text content. */
+  manifestText: string;
+  /** Every non-manifest entry, keyed by relative path. */
+  files: Map<string, Uint8Array>;
 }
 
 /**
- * Builds the whole-skill ZIP archive: the manifest at the root `SKILL.md`
- * entry, plus every supporting file at its given relative path.
+ * Unpacks a whole-skill ZIP (as downloaded from `GET /api/v1/skills/download`
+ * — DIAL Core's whole-resource `GET` is the one place this contract still
+ * uses a ZIP, per design.md) into its manifest text and every other entry's
+ * bytes. Throws if the archive has no root `SKILL.md` entry.
  */
-export const buildSkillArchive = (
-  manifest: string,
-  files: SkillArchiveFileEntry[],
-): Blob => {
-  const entries: Record<string, Uint8Array> = {
-    [SKILL_MANIFEST_FILE]: toZipUint8Array(strToU8(manifest)),
-  };
-  for (const file of files) {
-    entries[file.path] = toZipUint8Array(file.data);
+export const unpackSkillArchive = (bytes: Uint8Array): UnpackedSkillArchive => {
+  const entries = unzipSync(bytes);
+  const manifestBytes = entries[SKILL_MANIFEST_FILE];
+  if (manifestBytes == null) {
+    throw new Error(
+      `Skill archive is missing a root ${SKILL_MANIFEST_FILE} file`,
+    );
   }
 
-  const zipped = zipSync(entries);
-  return new Blob([new Uint8Array(zipped)], { type: 'application/zip' });
+  const files = new Map<string, Uint8Array>();
+  for (const [path, content] of Object.entries(entries)) {
+    if (path === SKILL_MANIFEST_FILE || path.endsWith('/')) continue;
+    files.set(path, content);
+  }
+
+  return {
+    manifestText: new TextDecoder().decode(manifestBytes),
+    files,
+  };
 };

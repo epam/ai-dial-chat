@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { SkillFileNodeKind } from '../types/skill-file-node-kind';
 
 /**
@@ -38,19 +39,16 @@ export interface SkillEditorErrors {
 }
 
 /**
- * Host-owned operations on the in-memory supporting-file/folder set. The
- * library calls these when the user interacts with the Add control or removes
- * an entry; it never mutates `files` itself.
+ * Host-owned operations on the in-memory supporting-file set. The library
+ * calls these when the user uploads a file from their device or removes an
+ * entry; it never mutates `files` itself.
  */
 export interface SkillEditorFileActions {
   /**
-   * Validates a candidate relative path before it is added to the tree
-   * (new file, new folder, or an uploaded file's chosen path). Return an
-   * error message to block the addition, or `undefined` to accept it.
+   * Validates an uploaded file's path before it is added to the tree. Return
+   * an error message to block the addition, or `undefined` to accept it.
    */
   validatePath: (path: string) => string | undefined;
-  /** Called after a new file or folder node is added to the tree via "New file"/"New folder". */
-  onAddNode: (path: string, kind: SkillFileNodeKind) => void;
   /**
    * Called when the user picks a local file to upload as a supporting file.
    * Resolves once the host has read and stored its content; rejects to
@@ -67,18 +65,11 @@ export interface SkillEditorLabels {
   filesHeading?: string;
   /** Accessible name of the file tree region. Defaults to `'Skill files'`. */
   filesTreeAriaLabel?: string;
-  /** Add-control trigger label. Defaults to `'Add'`. */
-  addLabel?: string;
-  /** "New file" add action. Defaults to `'New file'`. */
-  addFileLabel?: string;
-  /** "New folder" add action. Defaults to `'New folder'`. */
-  addFolderLabel?: string;
-  /** "Upload from device" add action. Defaults to `'Upload from device'`. */
+  /**
+   * Label of the control that opens the device file picker to add a
+   * supporting file. Defaults to `'Upload from device'`.
+   */
   addUploadLabel?: string;
-  /** Label of the new file/folder path input. Defaults to `'Path'`. */
-  newPathLabel?: string;
-  /** Placeholder for the new file/folder path input. Defaults to `'path/to/file.md'`. */
-  newPathPlaceholder?: string;
   /** Accessible label of a node's remove action. Defaults to `'Remove'`. */
   removeLabel?: string;
   /** Title of the remove-confirmation prompt. Defaults to `'Remove file'`. */
@@ -121,13 +112,26 @@ export interface SkillEditorLabels {
   loadingAriaLabel?: string;
   /** Note shown in the main pane when a supporting file (not `SKILL.md` or a folder) is selected. Defaults to a sentence explaining content isn't editable here. */
   supportingFileNote?: string;
+  /** Message shown alongside the conflict state's "Reload latest" control, prefixed to the host-supplied `conflict.message`. Defaults to `'Reload latest'`. */
+  reloadLatestLabel?: string;
+}
+
+/**
+ * Describes a save-time conflict (e.g. a stale ETag) distinct from
+ * `submitError` (an unrecoverable submit failure). When present, `SkillEditor`
+ * renders `conflict.message` plus a "Reload latest" control that calls
+ * `onReloadLatest` — the control never clears any field itself.
+ */
+export interface SkillEditorConflict {
+  /** Host-resolved, already-translated conflict message. */
+  message: string;
 }
 
 /** Typography class overrides for `SkillEditor`. */
 export interface SkillEditorTypography {
-  /** Class applied to the heading. Defaults to `'dial-h1-text'`. */
+  /** Class applied to the "Files" and selected-file section headings. Defaults to `'dial-body-semi-text text-primary'`. */
   titleClassName?: string;
-  /** Class applied to helper, error, and confirmation text. Defaults to `'dial-small-text'`. */
+  /** Class applied to the hand-rendered Instructions field label. Defaults to `'dial-tiny-semi-text text-secondary'`. */
   helperTextClassName?: string;
 }
 
@@ -165,8 +169,36 @@ export interface SkillEditorProps {
   errors?: SkillEditorErrors;
   /** General submit-time error (e.g. a naming conflict or a server error) rendered in a `role="alert"` region. */
   submitError?: string;
+  /**
+   * A save-time conflict (e.g. a stale ETag), distinct from `submitError`.
+   * When present, renders `conflict.message` plus a "Reload latest" control
+   * calling `onReloadLatest`. Omit when there is no conflict.
+   */
+  conflict?: SkillEditorConflict;
+  /** Called when the conflict state's "Reload latest" control is activated. Required when `conflict` can be set. */
+  onReloadLatest?: () => void;
+  /**
+   * When `true`, the Name field renders read-only — its value is still
+   * included in submitted values unchanged. The host sets this in edit mode,
+   * since DIAL Core has no rename/move operation for a skill; the library
+   * itself has no notion of "edit mode" and infers no policy from this flag
+   * beyond disabling the field.
+   */
+  isNameReadOnly?: boolean;
+  /**
+   * Called whenever any field value or the file-tree state diverges from its
+   * most recently seeded `initialValues`/`files` (`true`), and again once it
+   * returns to exactly that seeded state (`false`).
+   */
+  onDirtyChange?: (isDirty: boolean) => void;
   /** File-tree mutation operations. */
   fileActions: SkillEditorFileActions;
+  /**
+   * Host-rendered content (e.g. a back button and page title) placed at the
+   * start of the desktop header row, before the Cancel/Create actions. The
+   * library renders it verbatim with no knowledge of what it contains.
+   */
+  headerContent?: ReactNode;
   /** Called with the current values when the form is submitted. */
   onSubmit: (values: SkillEditorValues) => void;
   /** Called when the form is dismissed without saving. */

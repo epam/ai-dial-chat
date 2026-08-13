@@ -1,22 +1,13 @@
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
-import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type {
-  ComponentProps,
-  MouseEvent as ReactMouseEvent,
-  ReactNode,
-} from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type {
   SkillEditorFileActions,
   SkillEditorProps,
 } from '../../../models/skill-editor-props';
 import { SkillEditor } from '../SkillEditor';
-
-// Dropdown/context-menu mocks below only need a stand-in event object — its
-// fields are never read by the code under test.
-const fakeMouseEvent = new MouseEvent('click') as unknown as ReactMouseEvent;
 
 const renderFileNode = (
   file: DialFile,
@@ -76,28 +67,20 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       <button onClick={onCancel}>{cancelLabel ?? 'Cancel'}</button>
     </div>
   ),
-  Dropdown: ({
-    items,
-    children,
-  }: {
-    items?: DropdownItem[];
-    children: ReactNode;
-  }) => (
-    <div>
-      {children}
-      {items?.map((item) => (
-        <button
-          key={item.key}
-          onClick={() =>
-            item.onClick?.({ key: item.key, domEvent: fakeMouseEvent })
-          }
-        >
-          {item.label}
-        </button>
-      ))}
-    </div>
-  ),
   GhostButton: ({
+    label,
+    onClick,
+    disabled,
+  }: {
+    label: ReactNode;
+    onClick?: () => void;
+    disabled?: boolean;
+  }) => (
+    <button onClick={onClick} disabled={disabled}>
+      {label}
+    </button>
+  ),
+  NeutralButton: ({
     label,
     onClick,
     disabled,
@@ -128,16 +111,22 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     value,
     onChange,
     error,
+    disabled,
   }: {
     labelProps?: { label: ReactNode; required?: boolean };
     value?: string;
     onChange?: (value: string) => void;
     error?: string;
+    disabled?: boolean;
   }) => (
     <label>
       {labelProps?.label}
       {labelProps?.required && ' *'}
-      <input value={value ?? ''} onChange={(e) => onChange?.(e.target.value)} />
+      <input
+        value={value ?? ''}
+        disabled={disabled}
+        onChange={(e) => onChange?.(e.target.value)}
+      />
       {error && <span>{error}</span>}
     </label>
   ),
@@ -190,7 +179,6 @@ vi.mock('@tabler/icons-react', () => ({
 
 const fileActions: SkillEditorFileActions = {
   validatePath: () => undefined,
-  onAddNode: vi.fn(),
   onUploadFile: vi.fn(async () => undefined),
   onRemoveNode: vi.fn(),
 };
@@ -319,5 +307,56 @@ describe('SkillEditor', () => {
     // A field reachable only via getByRole (not getByTestId/querySelector)
     // confirms it carries a real accessible name for keyboard/AT users.
     expect(screen.getByRole('textbox', { name: /Name/ })).toBeTruthy();
+  });
+
+  it('disables the Name field when isNameReadOnly is set', () => {
+    renderEditor({
+      isNameReadOnly: true,
+      initialValues: { name: 'good-morning-breakfast' },
+    });
+
+    expect(
+      (screen.getByDisplayValue('good-morning-breakfast') as HTMLInputElement)
+        .disabled,
+    ).toBe(true);
+  });
+
+  it('calls onDirtyChange(true) on the first edit and onDirtyChange(false) when reverted', async () => {
+    const onDirtyChange = vi.fn();
+    const user = userEvent.setup({ delay: null });
+    renderEditor({
+      onDirtyChange,
+      initialValues: { name: 'good-morning-breakfast' },
+    });
+
+    const nameField = screen.getByDisplayValue('good-morning-breakfast');
+    await user.type(nameField, '-v2');
+    expect(onDirtyChange).toHaveBeenCalledWith(true);
+
+    onDirtyChange.mockClear();
+    await user.clear(nameField);
+    await user.type(nameField, 'good-morning-breakfast');
+    expect(onDirtyChange).toHaveBeenCalledWith(false);
+  });
+
+  it('renders a conflict message with a working Reload latest control', async () => {
+    const onReloadLatest = vi.fn();
+    const user = userEvent.setup({ delay: null });
+    renderEditor({
+      conflict: { message: 'Someone else changed this skill' },
+      onReloadLatest,
+    });
+
+    expect(screen.getByText('Someone else changed this skill')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Reload latest' }));
+    expect(onReloadLatest).toHaveBeenCalledOnce();
+  });
+
+  it('renders headerContent in the desktop header row alongside the actions', () => {
+    renderEditor({
+      headerContent: <span>Back + Create skill</span>,
+    });
+
+    expect(screen.getByText('Back + Create skill')).toBeTruthy();
   });
 });

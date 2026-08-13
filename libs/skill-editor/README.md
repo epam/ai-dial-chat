@@ -63,10 +63,14 @@ const CreateSkillPage = () => {
       errors={errors}
       onSubmit={handleSubmit}
       onCancel={goBack}
+      headerContent={
+        <>
+          <BackButton onClick={goBack} />
+          <h1>{isEditMode ? 'Edit skill' : 'Create skill'}</h1>
+        </>
+      }
       fileActions={{
         validatePath: (path) => validateSkillRelativePath(path),
-        onAddNode: (path, kind) =>
-          setFiles((prev) => [...prev, { path, name: baseName(path), kind }]),
         onUploadFile: async (file, path) => {
           const blob = await file.arrayBuffer();
           setSupportingFileContent(path, blob);
@@ -87,10 +91,19 @@ once the data has arrived. The root `SKILL.md` node is synthesised internally
 and is always present, first, and selected by default — it never appears in
 the `files` prop and never exposes a rename/move/delete affordance.
 
-`fileActions.validatePath` runs before a "New file"/"New folder" addition or a
-device upload is accepted — returning a message blocks it and shows the
-message inline. Removing any other node requires the user to confirm a popup
-before `fileActions.onRemoveNode` is called.
+`fileActions.validatePath` runs before a device upload is accepted —
+returning a message blocks it and shows the message inline. Removing any
+other node requires the user to confirm a popup before
+`fileActions.onRemoveNode` is called. The library currently offers only
+"Upload from device" as an Add action; it does not support creating an empty
+file or folder.
+
+`headerContent` is rendered verbatim at the start of the desktop header row,
+before the Cancel/Create actions — typically a back button and page title
+supplied by the host, since the library has no navigation or i18n knowledge
+of its own. It is only shown at the `desktop` breakpoint; on narrower
+viewports the host is expected to render its own equivalent header above the
+`SkillEditor` component.
 
 ## Types
 

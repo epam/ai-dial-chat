@@ -31,7 +31,8 @@ export class SkillsService {
   );
 
   // Upload
-  uploadSkill = this.uploadService.uploadSkill.bind(this.uploadService);
+  createSkill = this.uploadService.createSkill.bind(this.uploadService);
+  updateSkill = this.uploadService.updateSkill.bind(this.uploadService);
   uploadSkillFile = this.uploadService.uploadSkillFile.bind(this.uploadService);
 
   // Mutation

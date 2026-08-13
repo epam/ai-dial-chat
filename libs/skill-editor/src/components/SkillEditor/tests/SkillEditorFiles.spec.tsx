@@ -1,6 +1,6 @@
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type {
   ComponentProps,
@@ -92,31 +92,20 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       <button onClick={onCancel}>{cancelLabel ?? 'Cancel'}</button>
     </div>
   ),
-  Dropdown: ({
-    items,
-    children,
-  }: {
-    items?: DropdownItem[];
-    children: ReactNode;
-  }) => (
-    <div>
-      {children}
-      {items?.map((item) => (
-        <button
-          key={item.key}
-          onClick={() =>
-            item.onClick?.({
-              key: item.key,
-              domEvent: fakeMouseEvent,
-            })
-          }
-        >
-          {item.label}
-        </button>
-      ))}
-    </div>
-  ),
   GhostButton: ({
+    label,
+    onClick,
+    disabled,
+  }: {
+    label: ReactNode;
+    onClick?: () => void;
+    disabled?: boolean;
+  }) => (
+    <button onClick={onClick} disabled={disabled}>
+      {label}
+    </button>
+  ),
+  NeutralButton: ({
     label,
     onClick,
     disabled,
@@ -206,11 +195,15 @@ const buildFileActions = (
   overrides?: Partial<SkillEditorFileActions>,
 ): SkillEditorFileActions => ({
   validatePath: () => undefined,
-  onAddNode: vi.fn(),
   onUploadFile: vi.fn(async () => undefined),
   onRemoveNode: vi.fn(),
   ...overrides,
 });
+
+const uploadFile = (file: File) => {
+  const input = document.querySelector('input[type="file"]');
+  fireEvent.change(input as Element, { target: { files: [file] } });
+};
 
 const renderEditor = (
   props?: Partial<SkillEditorProps>,
@@ -245,42 +238,49 @@ describe('SkillEditor — files pane', () => {
     expect(screen.getAllByRole('button', { name: 'Remove' })).toHaveLength(2);
   });
 
-  it('adds a new file when the path is accepted by validatePath', async () => {
-    const user = userEvent.setup({ delay: null });
-    const onAddNode = vi.fn();
-    renderEditor({}, buildFileActions({ onAddNode }));
+  it('uploads a file when its name is accepted by validatePath', () => {
+    const onUploadFile = vi.fn(async () => undefined);
+    renderEditor({}, buildFileActions({ onUploadFile }));
+    const file = new File(['content'], 'analyzer.md');
 
-    await user.click(screen.getAllByRole('button', { name: 'New file' })[0]);
-    const input = screen.getAllByRole('textbox', { name: 'Path' })[0];
-    await user.type(input, 'agents/analyzer.md');
-    await user.click(screen.getAllByRole('button', { name: 'Add' })[1]);
+    uploadFile(file);
 
-    expect(onAddNode).toHaveBeenCalledWith(
-      'agents/analyzer.md',
-      SkillFileNodeKind.File,
-    );
+    expect(onUploadFile).toHaveBeenCalledWith(file, 'analyzer.md');
   });
 
-  it('shows the validation error and adds nothing for a rejected path', async () => {
-    const user = userEvent.setup({ delay: null });
-    const onAddNode = vi.fn();
+  it('shows the validation error and uploads nothing for a rejected file name', () => {
+    const onUploadFile = vi.fn(async () => undefined);
     renderEditor(
       {},
       buildFileActions({
         validatePath: () => 'A file already exists at this path',
-        onAddNode,
+        onUploadFile,
       }),
     );
 
-    await user.click(screen.getAllByRole('button', { name: 'New file' })[0]);
-    const input = screen.getAllByRole('textbox', { name: 'Path' })[0];
-    await user.type(input, 'notes.md');
-    await user.click(screen.getAllByRole('button', { name: 'Add' })[1]);
+    uploadFile(new File(['content'], 'notes.md'));
 
     expect(
       screen.getAllByText('A file already exists at this path')[0],
     ).toBeTruthy();
-    expect(onAddNode).not.toHaveBeenCalled();
+    expect(onUploadFile).not.toHaveBeenCalled();
+  });
+
+  it('shows a rejected onUploadFile error inline instead of an unhandled rejection', async () => {
+    const onUploadFile = vi.fn(async () => {
+      throw new Error('This file exceeds the maximum size of 1 MB.');
+    });
+    renderEditor({}, buildFileActions({ onUploadFile }));
+
+    uploadFile(new File(['content'], 'huge.md'));
+
+    expect(
+      (
+        await screen.findAllByText(
+          'This file exceeds the maximum size of 1 MB.',
+        )
+      )[0],
+    ).toBeTruthy();
   });
 
   it('requires confirmation before removing a supporting entry', async () => {
