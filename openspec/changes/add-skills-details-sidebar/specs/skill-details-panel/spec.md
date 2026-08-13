@@ -37,37 +37,37 @@ No `About` tab SHALL be restored for skills. `CatalogEntityType.Skill` stays in 
 
 ---
 
-### Requirement: The skill's file inventory populates the Files tab
+### Requirement: The skill's files populate the Content tab's picker
 
-The Skill branch SHALL build a `CatalogItemFiles` from the file listing through a new `buildSkillFiles(files, t)` in `apps/chat/src/utils/map-skill-to-catalog-item.ts`, and return it as `files` on the fetch result.
+The Skill branch SHALL build the picker's options from the file listing through a new `buildSkillContentFiles(files)` in `apps/chat/src/utils/map-skill-to-catalog-item.ts`, and return them as `promptContent.files` with `promptContent.selectedFileId` set to `SKILL_MANIFEST_FILE`.
 
-Each row SHALL carry:
+Each option SHALL carry the listing entry's file path as **both** `id` and `name`: the path round-trips to `downloadSkillFile` without re-derivation, and it disambiguates same-named files in different folders, which a bare filename would not.
 
-- `id` — the listing entry's file path, built from the same entry the row is built from, so the value round-trips to `onDownloadFile` without re-derivation.
-- `name` — the entry's file name, its path's last segment.
-- `folder` — the entry's parent path within the skill, omitted for a root-level file.
-- `updatedLabel` — `formatLastUsed(file.updatedAt)`.
+Options SHALL be ordered with the manifest first — it is the file the panel opens on — and the remainder alphabetically. Entries with `nodeType: 'folder'` SHALL be excluded, applying the same filter the file count uses.
 
-Entries with `nodeType: 'folder'` SHALL be excluded, applying the same filter the file count already uses.
+A failed file listing SHALL yield an empty option array, so no picker renders and the manifest body still shows.
 
-`CatalogView` SHALL supply `onDownloadFile` to the details panel, resolving it through the existing `downloadSkillFile` wrapper with the opened skill's `{ bucket, path }` and the row's `id` as the file path. No new endpoint, generated-client method, or `base.ts` helper is introduced.
+`CatalogView` SHALL supply `onLoadContentFile`, resolving it through the existing `downloadSkillFile` wrapper with the opened skill's `{ bucket, path }` and the picked option's `id` as the file path, then reading the response through `readSkillManifest` so the same size cap applies to every file. `SKILL_MANIFEST_FILE` SHALL be returned frontmatter-stripped via `parseSkillManifest`; every other file SHALL be returned as written. No new endpoint, generated-client method, or `base.ts` helper is introduced.
 
-A rejected download SHALL surface exactly one notification through `useOperationNotification` — the path the catalog already uses for its skill-listing error — and SHALL leave the panel open and the row unchanged.
-
-#### Scenario: Files tab populated from the listing
+#### Scenario: Options built from the listing
 
 - **WHEN** the file listing resolves two files and one grouping folder
-- **THEN** the fetch result's `files.rows` has two entries and the grouping folder is absent
+- **THEN** `promptContent.files` has two entries, the grouping folder is absent, and `selectedFileId` is `'SKILL.md'`
 
-#### Scenario: Download round-trips the row id
+#### Scenario: Manifest heads the list
 
-- **WHEN** a user clicks a file row's download button
-- **THEN** `downloadSkillFile` is called with the opened skill's bucket and path and that row's `id` as the file path
+- **WHEN** the listing returns `scripts/run.py`, `analyzer.md`, and `SKILL.md` in that order
+- **THEN** the options are ordered `SKILL.md`, `analyzer.md`, `scripts/run.py`
 
-#### Scenario: Download failure notifies once
+#### Scenario: Listing failure yields no picker
 
-- **WHEN** `downloadSkillFile` rejects for a row
-- **THEN** one notification is shown, the details panel stays open, and the row renders unchanged
+- **WHEN** `listSkillFiles` rejects and the manifest read resolves
+- **THEN** `promptContent.files` is empty and the manifest body still renders
+
+#### Scenario: Loading a picked file
+
+- **WHEN** the user picks `scripts/run.py`
+- **THEN** `downloadSkillFile` is called with the opened skill's bucket and path and `'scripts/run.py'` as the file path, and the file's text is rendered as written
 
 ---
 
@@ -84,7 +84,7 @@ Both wrappers are the existing ones in `apps/chat/src/server-api/skills.api.ts`,
 
 A manifest that reads successfully SHALL then be passed through `parseSkillManifest`, whose output feeds three parts of the result: `promptContent.content` from the body, `promptContent.description` from the frontmatter `description`, and the Overview's Specification section from `about`.
 
-A file listing that resolves SHALL feed two parts of the result: the Overview's Details section (the file count) and the `files` rows.
+A file listing that resolves SHALL feed two parts of the result: the Overview's Details section (the file count) and the Content tab's picker options.
 
 The branch SHALL return early, before any deployment path: a skill MUST NOT trigger `getDeploymentDetails` or `getDeploymentLimits`, since neither endpoint accepts a skill resource URL.
 
@@ -95,7 +95,7 @@ An unparseable `item.id` SHALL resolve `undefined` without issuing any request.
 #### Scenario: Both requests succeed
 
 - **WHEN** a user opens a skill's details panel, the manifest read resolves text with frontmatter, and the file listing resolves three files
-- **THEN** `onFetchDetails` resolves `promptContent` carrying the body and the frontmatter description, an `overview` with a Specification section and a Details section, and `files` with three rows
+- **THEN** `onFetchDetails` resolves `promptContent` carrying the body, the frontmatter description, and three picker options, plus an `overview` with a Specification section and a Details section
 
 #### Scenario: Skill fetch never reaches the deployment endpoints
 
@@ -118,8 +118,8 @@ An unparseable `item.id` SHALL resolve `undefined` without issuing any request.
 
 Each of the two results SHALL be optional in the returned `CatalogItemTabData`:
 
-- A missing, oversized, or failed `SKILL.md` read SHALL omit `promptContent` and still return the `overview` built from the file listing and the `files` rows. The `Content` tab is still present (per the content-first requirement) and renders the panel's existing empty state.
-- A failed file listing SHALL omit both `overview`'s Details section and `files` — so no Files tab is derived — and still return `promptContent` and, when the frontmatter resolved, the Specification section.
+- A missing, oversized, or failed `SKILL.md` read SHALL omit `promptContent` entirely — and with it the picker, which lives on `promptContent` — and still return the `overview` built from the file listing. The `Content` tab is still present (per the content-first requirement) and renders the panel's existing empty state.
+- A failed file listing SHALL omit `overview` and leave `promptContent.files` empty — so no picker renders — while still returning the manifest body and, when the frontmatter resolved, its description.
 - Both failing SHALL resolve `undefined`, leaving the panel's existing error/empty handling in place.
 
 A manifest that downloads but fails to parse is **not** a failure of either half: the raw text SHALL still be returned as `promptContent.content`, with no `description` and no Specification section. Parse failure SHALL NOT be escalated to fetch failure and SHALL NOT surface a notification.
@@ -129,17 +129,17 @@ A manifest that downloads but fails to parse is **not** a failure of either half
 #### Scenario: Skill with no readable manifest
 
 - **WHEN** `downloadSkillFile` rejects with a 404 and the file listing resolves
-- **THEN** the panel renders the Overview tab, the Files tab, the Content tab's empty state, and nothing throws
+- **THEN** the panel renders the Overview tab, the Content tab's empty state, and nothing throws
 
 #### Scenario: Oversized manifest
 
 - **WHEN** the manifest response exceeds `SKILL_MANIFEST_MAX_BYTES`
-- **THEN** the text is not decoded, `parseSkillManifest` is not called, `promptContent` is omitted, and the Overview and Files tabs still render
+- **THEN** the text is not decoded, `parseSkillManifest` is not called, `promptContent` is omitted, and the Overview still renders
 
 #### Scenario: File listing fails
 
 - **WHEN** `listSkillFiles` rejects and the manifest read resolves
-- **THEN** the panel renders the Content tab with the manifest body and no Files tab
+- **THEN** the panel renders the Content tab with the manifest body and no file picker
 
 #### Scenario: Malformed frontmatter
 
@@ -171,7 +171,7 @@ The `overview` returned for a skill SHALL be up to two `CatalogItemOverview` sec
 2. `catalog.details.skill.updated` → `formatLastUsed(skill.updatedAt)`.
 3. `catalog.details.skill.fileCount` → the number of `nodeType: 'item'` entries returned by the file listing.
 
-Per-file rows SHALL NOT appear in the Overview. The file inventory lives in the Files tab, where a row can carry an action; an Overview spec is a `{ label, value }` pair with nowhere to put one.
+Per-file rows SHALL NOT appear in the Overview. The files are enumerated by the Content tab's picker, where selecting one shows it; repeating them as inert `{ label, value }` rows would be the same list twice, once without an action.
 
 File-listing entries with `nodeType: 'folder'` SHALL be excluded from the count. Sizes are not shown: `SkillMetadataItemDto` exposes no content-length field.
 
@@ -204,16 +204,16 @@ File-listing entries with `nodeType: 'folder'` SHALL be excluded from the count.
 
 ### Requirement: i18n, RTL, accessibility, and caching contract for the skill details panel
 
-- **i18n keys**: the existing `catalog.details.skill.section` (`'Skill'`, now the Details section title), `catalog.details.skill.author` (`'Author'`), `catalog.details.skill.updated` (`'Last updated'`), `catalog.details.skill.fileCount` (`'Files'`); plus `catalog.details.skill.specificationSection` (`'Specification'`), `catalog.details.skill.whenToUse` (`'When to use'`), `catalog.details.skill.allowedTools` (`'Allowed tools'`), `catalog.details.skill.bundledResources` (`'Bundled resources'`), `catalog.details.tabFiles` (`'Files'`), `catalog.details.downloadFileAriaLabel` (`'Download file'`), `catalog.details.filesEmptyState` (`'No files'`), and `catalog.details.skill.fileDownloadError`. All declared in `apps/chat/src/constants/translation-keys.ts` and `en.json`. `catalog.details.skill.file` becomes unused when the per-file Overview rows are removed and SHALL be deleted from both. Before adding any key, its English value SHALL be checked against `en.json` for an existing equivalent, per the duplicate-value rule. The lib receives resolved strings only — `libs/catalog` SHALL NOT call `useTranslation`.
-- **App-level adapter contract**: `libs/catalog` receives the manifest body as an already-resolved `string` on `CatalogItemTabData.promptContent.content`, its summary on `promptContent.description`, the Specification and Details rows as resolved label/value pairs on `overview`, and the file inventory as resolved rows on `files`. Bucket names, the `SKILL.md` filename, the frontmatter key table, the YAML parser, the skills endpoints, the generated client, and the size cap all stay in `apps/chat`. The lib SHALL NOT gain a skill branch: the content-first set and the generic `files` field are its entire knowledge of the type.
-- **RTL / direction impact**: the Files tab SHALL use logical Tailwind utilities only and SHALL NOT mirror its download icon. The Content and Overview tabs gain no new directional layout.
+- **i18n keys**: the existing `catalog.details.skill.section` (`'Skill'`, now the Details section title), `catalog.details.skill.author` (`'Author'`), `catalog.details.skill.updated` (`'Last updated'`), `catalog.details.skill.fileCount` (`'Files'`); plus `catalog.details.skill.specificationSection` (`'Specification'`), `catalog.details.skill.whenToUse` (`'When to use'`), `catalog.details.skill.allowedTools` (`'Allowed tools'`), `catalog.details.skill.bundledResources` (`'Bundled resources'`), `catalog.details.contentFileSelectorAriaLabel` (`'Select file'`), `catalog.details.contentFileCount` (`'{{count}} files'`), `catalog.details.contentFileLoading` (`'Loading file'`), and `catalog.details.contentFileError` (`'Failed to load this file.'`). All declared in `apps/chat/src/constants/translation-keys.ts` and `en.json`. Before adding any key, its English value SHALL be checked against `en.json` for an existing equivalent, per the duplicate-value rule. The lib receives resolved strings only — `libs/catalog` SHALL NOT call `useTranslation`.
+- **App-level adapter contract**: `libs/catalog` receives the manifest body as an already-resolved `string` on `CatalogItemTabData.promptContent.content`, its summary on `promptContent.description`, the picker's options as resolved `{ id, name }` pairs on `promptContent.files`, and the Specification and Details rows as resolved label/value pairs on `overview`. Bucket names, the `SKILL.md` filename, the frontmatter key table, the YAML parser, the skills endpoints, the generated client, and the size cap all stay in `apps/chat`. The lib SHALL NOT gain a skill branch: the content-first set and the generic `files`/`onLoadContentFile` pair are its entire knowledge of the type.
+- **RTL / direction impact**: the picker row SHALL use logical Tailwind utilities only. The Overview tab gains no new directional layout.
 - **Accessibility**: the panel's existing `role="status"` loading indicator covers the fetch. Each file row's download control SHALL be a real `button` with an `aria-label` and an `aria-hidden` icon, and folder headings SHALL be exposed as headings for their row groups rather than as styled text alone.
 - **Caching**: no new cache. Details are re-fetched each time the panel opens for a skill, and the manifest is re-parsed on each fetch; the parse is synchronous and bounded by `SKILL_MANIFEST_MAX_BYTES`.
 - **Content safety**: `SKILL.md` and its frontmatter are arbitrary user-authored text. The body SHALL be rendered through the existing read-only markdown block, which does not execute or interpret markup; frontmatter values SHALL be rendered as plain text spec values, never as markdown or HTML.
 
 #### Scenario: No hardcoded English in the lib
 
-- **WHEN** the skill details and Files tab code in `libs/catalog` is inspected
+- **WHEN** the skill details and Content tab code in `libs/catalog` is inspected
 - **THEN** it contains no `useTranslation` call and no skill-specific English label beyond the tab-label and aria-label defaults
 
 #### Scenario: Frontmatter values are not interpreted
