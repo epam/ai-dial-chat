@@ -19,7 +19,6 @@ Provides the `SharePopover` UI component and associated share-link types for sha
 - `react` ^19.0.0
 - `@tabler/icons-react` ^3.0.0
 - `@epam/ai-dial-ui-kit`
-- `@epam/ai-dial-kit`
 - `@epam/ai-dial-chat-shared`
 
 ## Components

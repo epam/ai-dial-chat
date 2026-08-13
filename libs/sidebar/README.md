@@ -20,7 +20,6 @@ Resizable sidebar panel container with a header, search input, and empty/no-resu
 
 - `react`
 - `@epam/ai-dial-chat-shared`
-- `@epam/ai-dial-kit`
 - `@epam/ai-dial-ui-kit`
 - `@tabler/icons-react`
 
@@ -45,23 +44,6 @@ import type { SidebarPanelProps } from '@epam/ai-dial-sidebar';
 >
   {children}
 </SidebarPanel>;
-```
-
-### SearchInput
-
-Standalone search field used inside sidebars.
-
-```tsx
-import { SearchInput } from '@epam/ai-dial-sidebar';
-
-<SearchInput
-  value={query}
-  onChange={setQuery}
-  labels={{
-    placeholder: 'Search conversations...',
-    clearLabel: 'Clear search',
-  }}
-/>;
 ```
 
 ### PanelEmpty
@@ -102,10 +84,6 @@ import type {
   SidebarPanelColors,
   SidebarPanelLabels,
   SidebarPanelTypography,
-  SearchInputProps,
-  SearchInputLabels,
-  SearchInputColors,
-  SearchInputStyles,
   PanelEmptyProps,
   PanelNoResultsProps,
 } from '@epam/ai-dial-sidebar';

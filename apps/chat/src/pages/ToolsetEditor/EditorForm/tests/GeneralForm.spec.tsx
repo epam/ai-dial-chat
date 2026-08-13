@@ -10,31 +10,6 @@ import { EditorI18nKeys } from '../../../../constants/translation-keys';
 import type { ToolsetFormData } from '../../../../models/toolsets';
 import GeneralForm from '../GeneralForm';
 
-vi.mock('@epam/ai-dial-kit', () => ({
-  TagInput: ({
-    label,
-    placeholder,
-    onChange,
-    initialTags,
-  }: {
-    label?: string;
-    placeholder?: string;
-    onChange?: (tags: string[]) => void;
-    initialTags?: string[];
-  }) => (
-    <label>
-      {label}
-      <input
-        placeholder={placeholder}
-        defaultValue={(initialTags ?? []).join(',')}
-        onChange={(e) =>
-          onChange?.(e.target.value ? e.target.value.split(',') : [])
-        }
-      />
-    </label>
-  ),
-}));
-
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },

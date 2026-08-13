@@ -7,35 +7,32 @@ import { ScheduledTasksProps } from '../../../models/scheduled-tasks-props';
 import { ScheduledTasksSortKey } from '../../../types/scheduled-tasks-sort-key';
 import { ScheduledTasks } from '../ScheduledTasks';
 
-vi.mock('@epam/ai-dial-kit', () => ({
-  SearchBar: ({
+vi.mock('@epam/ai-dial-ui-kit', () => ({
+  Search: ({
     value,
     onChange,
-    labels,
+    placeholder,
+    clearLabel,
+    'aria-label': ariaLabel,
   }: {
-    value: string;
-    onChange: (v: string) => void;
-    labels?: {
-      placeholder?: string;
-      ariaLabel?: string;
-      clearLabel?: string;
-    };
+    value?: string;
+    onChange?: (v?: string) => void;
+    placeholder?: string;
+    clearLabel?: string;
+    'aria-label'?: string;
   }) => (
     <>
       <input
         value={value}
-        placeholder={labels?.placeholder}
-        aria-label={labels?.ariaLabel}
-        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        aria-label={ariaLabel}
+        onChange={(e) => onChange?.(e.target.value)}
       />
       {value && (
-        <button aria-label={labels?.clearLabel} onClick={() => onChange('')} />
+        <button aria-label={clearLabel} onClick={() => onChange?.(undefined)} />
       )}
     </>
   ),
-}));
-
-vi.mock('@epam/ai-dial-ui-kit', () => ({
   GhostButton: ({
     label,
     onClick,

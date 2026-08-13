@@ -3,15 +3,15 @@ import {
   mergeClasses,
   PanelEmptyState,
 } from '@epam/ai-dial-chat-shared';
-import { SearchBar } from '@epam/ai-dial-kit';
 import {
   ButtonAppearance,
   ButtonDropdown,
   ButtonVariant,
   DIAL_ICON_SIZE,
-  Spinner,
   GhostButton,
   PrimaryButton,
+  Search,
+  Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconCalendarTime, IconPlus } from '@tabler/icons-react';
 import { FC, useEffect, useRef } from 'react';
@@ -91,6 +91,10 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
     '--st-subtitle-text': colors?.subtitleText,
     '--st-sort-text': colors?.sortButtonText,
   });
+
+  const handleSearchChange = (value?: string) => {
+    onSearchQueryChange(value ?? '');
+  };
 
   const activeSortLabel =
     labels.sortOptions.find((option) => option.key === sortKey)?.label ?? '';
@@ -224,21 +228,14 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex-1">
-          <SearchBar
+        <div role="search" className="flex-1">
+          <Search
             value={searchQuery}
-            onChange={onSearchQueryChange}
-            labels={{
-              placeholder: labels.searchPlaceholder,
-              ariaLabel: labels.searchAriaLabel,
-              clearLabel: labels.clearSearchLabel,
-            }}
-            iconSize={18}
-            iconStrokeWidth={1.8}
-            styles={{
-              containerClassName: 'h-[50px] w-full rounded-xl px-[18px]',
-              clearButtonClassName: 'size-11 desktop:size-auto',
-            }}
+            onChange={handleSearchChange}
+            placeholder={labels.searchPlaceholder}
+            clearLabel={labels.clearSearchLabel}
+            aria-label={labels.searchAriaLabel}
+            wrapperClassName="!h-[50px] rounded-xl"
           />
         </div>
         {labels.sortOptions.length > 0 && (

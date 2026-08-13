@@ -4,13 +4,13 @@ import {
   DeploymentIcon,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import { SearchBar } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
   GhostButton,
   GhostIconButton,
   DialEllipsisTooltip,
   Highlight,
+  Search,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconStar, IconStarFilled } from '@tabler/icons-react';
 import {
@@ -30,6 +30,8 @@ import styles from './DeploymentSelectorPanel.module.scss';
 export interface DeploymentSelectorLabels {
   /** Placeholder and accessible label for the search input. Default: `'Search models, agents…'`. */
   searchPlaceholder?: string;
+  /** Accessible label for the clear-search button. Default: `'Clear search'`. */
+  clearSearchLabel?: string;
   /** Heading above the favorites list. Default: `'Favorites'`. */
   favoritesLabel?: string;
   /** Hint shown when Favorites is empty. Default: `'Star a model or agent to pin it here.'`. */
@@ -97,6 +99,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
 }) => {
   const {
     searchPlaceholder = 'Search models, agents…',
+    clearSearchLabel = 'Clear search',
     favoritesLabel = 'Favorites',
     emptyHint = 'Star a model or agent to pin it here.',
     browseCatalogLabel = 'Browse',
@@ -106,6 +109,9 @@ const DeploymentSelectorPanel: FC<Props> = ({
   } = labels;
 
   const [query, setQuery] = useState('');
+  const handleSearchChange = (value?: string) => {
+    setQuery(value ?? '');
+  };
   const [leavingIds, setLeavingIds] = useState<Set<string>>(new Set());
   const leaveTimeoutsRef = useRef(
     new Map<string, ReturnType<typeof setTimeout>>(),
@@ -297,20 +303,16 @@ const DeploymentSelectorPanel: FC<Props> = ({
   return (
     <div className="flex min-w-[240px] flex-col">
       {/* Sticky search header */}
-      <div className="sticky top-0 z-10 bg-layer-raised px-1 pb-3 pt-2">
-        <SearchBar
+      <div
+        role="search"
+        className="sticky top-0 z-10 bg-layer-raised px-1 pb-3 pt-2"
+      >
+        <Search
           value={query}
-          labels={{
-            placeholder: searchPlaceholder,
-            ariaLabel: searchPlaceholder,
-          }}
-          onChange={setQuery}
-          styles={{
-            containerClassName: mergeClasses(
-              styles.searchBar,
-              '!bg-transparent !rounded-full !shadow-none',
-            ),
-          }}
+          onChange={handleSearchChange}
+          placeholder={searchPlaceholder}
+          clearLabel={clearSearchLabel}
+          aria-label={searchPlaceholder}
         />
       </div>
 

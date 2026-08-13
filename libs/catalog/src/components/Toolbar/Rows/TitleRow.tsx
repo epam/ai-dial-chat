@@ -5,13 +5,13 @@ import {
   ButtonVariant,
   DIAL_ICON_SIZE,
   DropdownItem,
+  Search,
 } from '@epam/ai-dial-ui-kit';
 import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
 import { FC } from 'react';
 import { ToolbarStyles } from '../../../models/toolbar-props';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { Filter } from '../../Filter/Filter';
-import { SearchBar } from '../../SearchBar/SearchBar';
 import styles from '../Toolbar.module.scss';
 
 interface TitleRowProps {
@@ -66,6 +66,10 @@ export const TitleRow: FC<TitleRowProps> = ({
     browseStyles?.typography?.countClassName ?? 'dial-tiny-semi-text';
 
   const activeLabel = sortOptions?.find((o) => o.key === sortKey)?.label ?? '';
+
+  const handleChange = (nextValue?: string) => {
+    onQueryChange(nextValue ?? '');
+  };
 
   return (
     <div className="flex flex-col gap-3">
@@ -141,12 +145,14 @@ export const TitleRow: FC<TitleRowProps> = ({
       </div>
 
       <div className="mb-5 flex items-center gap-3">
-        <SearchBar
-          value={query}
-          onChange={onQueryChange}
-          placeholder={searchPlaceholder}
-          className="flex-1"
-        />
+        <div role="search" className="flex-1">
+          <Search
+            value={query}
+            onChange={handleChange}
+            placeholder={searchPlaceholder}
+            aria-label={searchPlaceholder}
+          />
+        </div>
         <Filter
           checked={filters ?? new Set()}
           onChange={onFiltersChange ?? (() => undefined)}

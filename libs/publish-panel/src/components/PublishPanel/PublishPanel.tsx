@@ -3,11 +3,11 @@ import {
   mergeClasses,
   ResourceSummary,
 } from '@epam/ai-dial-chat-shared';
-import { SearchInput } from '@epam/ai-dial-sidebar';
 import {
   Notification,
   NotificationType,
   NotificationVariant,
+  Search,
 } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode, useMemo, useState } from 'react';
 import {
@@ -213,8 +213,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
 
   const {
     folderLabel = 'Publish to folder',
-    searchPlaceholder = 'Search folders',
-    clearSearchAriaLabel = 'Clear search',
     historyLabel = 'Versions history',
     replaceWarning = 'Version {version} is already published in {folder}. Publishing will replace it.',
     noAccessError = "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
@@ -230,9 +228,15 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     rootFolderLabel = 'Organization',
     summaryVersionLabel,
     accessRulesLabels,
+    searchPlaceholder,
+    clearSearchAriaLabel,
   } = labels;
 
   const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearchChange = (value?: string) => {
+    setSearchQuery(value ?? '');
+  };
 
   const isFolderSelected = selectedFolderPath != null;
 
@@ -311,15 +315,13 @@ export const PublishPanel: FC<PublishPanelProps> = ({
         >
           {folderLabel}
         </div>
-        <div className="mb-3">
-          <SearchInput
+        <div role="search" className="mb-3">
+          <Search
             value={searchQuery}
-            onChange={setSearchQuery}
-            labels={{
-              placeholder: searchPlaceholder,
-              clearLabel: clearSearchAriaLabel,
-            }}
-            styles={{ wrapperClassName: 'px-0', rowClassName: '!rounded-lg' }}
+            onChange={handleSearchChange}
+            placeholder={searchPlaceholder}
+            clearLabel={clearSearchAriaLabel}
+            aria-label={searchPlaceholder}
           />
         </div>
         <PublishFoldersTree

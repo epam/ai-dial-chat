@@ -36,22 +36,6 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
       {isOpen ? <div>{children}</div> : null}
     </aside>
   ),
-  SearchInput: ({
-    placeholder,
-    value,
-    onChange,
-  }: {
-    placeholder: string;
-    value: string;
-    onChange: (v: string) => void;
-  }) => (
-    <input
-      type="search"
-      placeholder={placeholder}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-    />
-  ),
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -77,6 +61,22 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   DialNoDataContent: ({ title }: { title: string }) => <div>{title}</div>,
   DialEllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
+  Search: ({
+    placeholder,
+    value,
+    onChange,
+  }: {
+    placeholder?: string;
+    value?: string;
+    onChange?: (v?: string) => void;
+  }) => (
+    <input
+      type="search"
+      placeholder={placeholder}
+      value={value}
+      onChange={(e) => onChange?.(e.target.value)}
+    />
+  ),
   Highlight: ({ text }: { text: string }) => <span>{text}</span>,
   LinkButton: ({
     href,

@@ -1,11 +1,14 @@
 import { BASE_LG_ICON_PROPS } from '@epam/ai-dial-chat-shared';
 import {
   PanelNoResults,
-  SearchInput,
   SidebarOrientation,
   SidebarPanel,
 } from '@epam/ai-dial-sidebar';
-import { DialNoDataContent, GhostIconButton } from '@epam/ai-dial-ui-kit';
+import {
+  DialNoDataContent,
+  GhostIconButton,
+  Search,
+} from '@epam/ai-dial-ui-kit';
 import { IconDownload } from '@tabler/icons-react';
 import {
   memo,
@@ -43,6 +46,10 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
   additionalSections,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearchChange = (value?: string) => {
+    setSearchQuery(value ?? '');
+  };
 
   useLayoutEffect(() => {
     if (!isOpen) {
@@ -171,14 +178,15 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
       }
     >
       {hasFilesOrSources && (
-        <SearchInput
-          value={searchQuery}
-          onChange={setSearchQuery}
-          labels={{
-            placeholder: labels.searchPlaceholder,
-            clearLabel: labels.searchClearLabel,
-          }}
-        />
+        <div role="search">
+          <Search
+            value={searchQuery}
+            onChange={handleSearchChange}
+            placeholder={labels.searchPlaceholder}
+            clearLabel={labels.searchClearLabel}
+            aria-label={labels.searchPlaceholder}
+          />
+        </div>
       )}
       <span role="status" aria-live="polite" className="sr-only">
         {isNoResults ? labels.noResultsLabel : ''}
