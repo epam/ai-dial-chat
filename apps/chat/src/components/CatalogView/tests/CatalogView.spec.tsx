@@ -1383,7 +1383,12 @@ describe('CatalogView', () => {
       type: 'model',
       modelDetails: {
         limits: { maxTotalTokens: 128000 },
-        pricing: { unit: 'token', prompt: '0.01', completion: '0.03' },
+        pricing: {
+          unit: 'token',
+          prompt: '0.000003',
+          completion: '0.000015',
+          cache_read: '0.0000003',
+        },
         features: {
           tools: true,
           mcp: false,
@@ -1420,8 +1425,9 @@ describe('CatalogView', () => {
     );
     expect(result.pricing).toEqual({
       prices: [
-        { label: 'Input tokens', price: '0.01' },
-        { label: 'Output tokens', price: '0.03' },
+        { label: 'Input tokens', price: '$3/M tokens' },
+        { label: 'Output tokens', price: '$15/M tokens' },
+        { label: 'Cached input', price: '$0.3/M tokens' },
       ],
       limits: [],
     });
