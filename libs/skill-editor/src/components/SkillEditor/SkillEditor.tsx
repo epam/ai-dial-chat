@@ -1,3 +1,4 @@
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import { DialFoldersTree } from '@epam/ai-dial-react-file-manager';
 import {
@@ -37,6 +38,7 @@ import type {
 import { SKILL_MANIFEST_PATH } from '../../types/skill-editor-defaults';
 import { SkillFileNodeKind } from '../../types/skill-file-node-kind';
 import { buildDialFileTree } from '../../utils/file-tree';
+import styles from './SkillEditor.module.scss';
 
 type MarkdownEditorComponent = ComponentType<{
   value: string;
@@ -74,7 +76,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   onCancel,
   onRetry,
   labels,
-  styles,
+  styles: stylesProp,
   dir,
   instructionsEditorTheme = 'light',
 }) => {
@@ -149,11 +151,16 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   const [isFilesExpanded, setIsFilesExpanded] = useState(true);
 
   const t = labels ?? {};
-  const typography = styles?.typography ?? {};
-  const titleClassName =
-    typography.titleClassName ?? 'dial-body-semi-text text-primary';
+  const colors = stylesProp?.colors;
+  const typography = stylesProp?.typography ?? {};
+  const titleClassName = typography.titleClassName ?? 'dial-body-semi-text';
   const helperTextClassName =
-    typography.helperTextClassName ?? 'dial-tiny-semi-text text-secondary';
+    typography.helperTextClassName ?? 'dial-tiny-semi-text';
+  const cssVars = buildCssVars({
+    '--se-title-color': colors?.title,
+    '--se-helper-text-color': colors?.helperText,
+    '--se-border-color': colors?.border,
+  });
 
   const treeItems: DialFile[] = useMemo(
     () =>
@@ -186,9 +193,11 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       return [
         {
           key: 'remove',
-          label: t.removeLabel ?? 'Remove',
+          label: (
+            <span className="text-error">{t.removeLabel ?? 'Remove'}</span>
+          ),
           danger: true,
-          icon: <IconTrashX size={16} aria-hidden />,
+          icon: <IconTrashX size={16} className="text-error" aria-hidden />,
           onClick: () => setPendingRemovePath(item.path),
         },
       ];
@@ -221,7 +230,9 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   const renderFilesPane = () => (
     <div className="flex flex-col gap-2 desktop:gap-5">
       <div className="flex items-center justify-between">
-        <span className={titleClassName}>{t.filesHeading ?? 'Files'}</span>
+        <span className={mergeClasses(styles.title, titleClassName)}>
+          {t.filesHeading ?? 'Files'}
+        </span>
         <NeutralButton
           label={t.addUploadLabel ?? 'Upload from device'}
           iconBefore={<IconPlus size={16} aria-hidden />}
@@ -300,7 +311,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   }
 
   return (
-    <div dir={dir} className="flex h-full flex-col">
+    <div dir={dir} className="flex h-full flex-col" style={cssVars}>
       <span
         role="status"
         aria-live="polite"
@@ -325,7 +336,12 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       )}
 
       {/* Desktop: static Files sidebar + main pane; host header content + actions share this row. */}
-      <div className="hidden items-center justify-between gap-2 border-b border-tertiary px-4 py-2 desktop:flex desktop:px-8 desktop:pb-3 desktop:pt-3">
+      <div
+        className={mergeClasses(
+          'hidden items-center justify-between gap-2 border-b px-4 py-2 desktop:flex desktop:px-8 desktop:pb-3 desktop:pt-3',
+          styles.border,
+        )}
+      >
         <div className="flex min-w-0 flex-1 items-center gap-2">
           {headerContent}
         </div>
@@ -347,12 +363,17 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         </div>
 
         {/* Desktop: always-visible Files sidebar. */}
-        <div className="hidden border-e border-tertiary desktop:block desktop:w-[360px] desktop:shrink-0 desktop:px-8 desktop:py-6">
+        <div
+          className={mergeClasses(
+            'hidden border-e desktop:block desktop:w-[360px] desktop:shrink-0 desktop:px-8 desktop:py-6',
+            styles.border,
+          )}
+        >
           {filesPaneContent}
         </div>
 
         <div className="flex flex-1 flex-col gap-4 desktop:gap-5 desktop:px-8 desktop:py-6">
-          <h2 className={titleClassName}>
+          <h2 className={mergeClasses(styles.title, titleClassName)}>
             {selectedPath === SKILL_MANIFEST_PATH
               ? SKILL_MANIFEST_PATH
               : (t.selectedFileHeading?.(selectedNode?.name ?? selectedPath) ??
@@ -397,7 +418,12 @@ export const SkillEditor: FC<SkillEditorProps> = ({
               />
               <div className="flex flex-1 flex-col gap-2">
                 <span className="flex items-center gap-0.5">
-                  <span className={helperTextClassName}>
+                  <span
+                    className={mergeClasses(
+                      styles.helperText,
+                      helperTextClassName,
+                    )}
+                  >
                     {t.instructionsLabel ?? 'Instructions'}
                   </span>
                   <span className="dial-tiny-text text-error">*</span>

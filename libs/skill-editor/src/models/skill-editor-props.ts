@@ -127,16 +127,28 @@ export interface SkillEditorConflict {
   message: string;
 }
 
+/** CSS custom-property color overrides for `SkillEditor`. */
+export interface SkillEditorColors {
+  /** Color of the "Files" and selected-file section headings. Defaults to `--text-primary`. */
+  title?: string;
+  /** Color of the hand-rendered Instructions field label. Defaults to `--text-secondary`. */
+  helperText?: string;
+  /** Border color of the desktop header row and the Files sidebar divider. Defaults to `--stroke-tertiary`. */
+  border?: string;
+}
+
 /** Typography class overrides for `SkillEditor`. */
 export interface SkillEditorTypography {
-  /** Class applied to the "Files" and selected-file section headings. Defaults to `'dial-body-semi-text text-primary'`. */
+  /** Typography class applied to the "Files" and selected-file section headings. Defaults to `'dial-body-semi-text'`. */
   titleClassName?: string;
-  /** Class applied to the hand-rendered Instructions field label. Defaults to `'dial-tiny-semi-text text-secondary'`. */
+  /** Typography class applied to the hand-rendered Instructions field label. Defaults to `'dial-tiny-semi-text'`. */
   helperTextClassName?: string;
 }
 
 /** Grouped style overrides for `SkillEditor`. */
 export interface SkillEditorStyles {
+  /** Color overrides, applied as CSS custom properties. */
+  colors?: SkillEditorColors;
   /** Typography class overrides. */
   typography?: SkillEditorTypography;
 }

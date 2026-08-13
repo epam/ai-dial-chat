@@ -109,6 +109,7 @@ viewports the host is expected to render its own equivalent header above the
 
 ```tsx
 import type {
+  SkillEditorColors,
   SkillEditorErrors,
   SkillEditorFileActions,
   SkillEditorLabels,
@@ -119,4 +120,16 @@ import type {
   SkillFileTreeNode,
 } from '@epam/ai-dial-skill-editor';
 import { SkillFileNodeKind } from '@epam/ai-dial-skill-editor';
+```
+
+`styles.colors` (`SkillEditorColors`) overrides the section-heading, Instructions-label, and border colors as CSS custom properties, falling back to this app's theme tokens (`--text-primary`, `--text-secondary`, `--stroke-tertiary`) and then to a hard-coded hex when no theme is present:
+
+```tsx
+<SkillEditor
+  // ...
+  styles={{
+    colors: { title: '#161b2d', helperText: '#57647a', border: '#e0e6f0' },
+    typography: { titleClassName: 'dial-body-semi-text' },
+  }}
+/>
 ```

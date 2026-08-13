@@ -1,5 +1,6 @@
 export { SkillEditor } from './components/SkillEditor/SkillEditor';
 export type {
+  SkillEditorColors,
   SkillEditorConflict,
   SkillEditorErrors,
   SkillEditorFileActions,

@@ -33,6 +33,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
 });
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_ICON_SIZE: { LG: 24, MD: 20, SM: 16 },
   Accordion: ({
     title,
     children,
