@@ -3054,6 +3054,7 @@ describe('CatalogView', () => {
     const personalPrompt = {
       id: 'Work/AI/summarize',
       name: 'summarize',
+      description: '',
       content: 'Summarize the following text:',
       folderId: 'Work/AI',
       createdAt: 1,
@@ -3127,6 +3128,33 @@ describe('CatalogView', () => {
       expect(getPrompt).toHaveBeenCalledWith('Work/AI/summarize');
       expect(mockNavigate).toHaveBeenCalledWith('/', {
         state: { promptContent: 'Summarize the following text:' },
+      });
+    });
+
+    it('navigates with a pendingPrompt payload instead of raw content when the prompt has parameters', async () => {
+      enablePrompts();
+      mockPrompts([
+        {
+          ...personalPrompt,
+          content: 'Summarize {{text}} in {{tone}} tone',
+          description: 'A summarizer prompt',
+        },
+      ]);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'use in chat Work/AI/summarize' }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith('/', {
+        state: {
+          pendingPrompt: {
+            id: 'Work/AI/summarize',
+            name: 'summarize',
+            content: 'Summarize {{text}} in {{tone}} tone',
+            description: 'A summarizer prompt',
+          },
+        },
       });
     });
 

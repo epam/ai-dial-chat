@@ -40,6 +40,12 @@ const buildFavoritePromptItem = (
   content: prompt.content,
 });
 
+/** Minimal prompt shape the "Prompt parameters" popup needs — satisfied by a full `PromptResponseDto` or a lighter object built from a `CatalogItem`. */
+export type PendingParametersPrompt = Pick<
+  PromptResponseDto,
+  'id' | 'name' | 'content' | 'description'
+>;
+
 interface UsePromptSelectorOverlayOptions {
   /** Called with the resolved prompt text (parameters already substituted, if any). */
   onInsertText: (text: string) => void;
@@ -47,11 +53,17 @@ interface UsePromptSelectorOverlayOptions {
 
 interface UsePromptSelectorOverlayResult {
   /** Pass directly as the `promptsMenuOverlay` prop of `ConversationInput`/`Input`. */
-  renderOverlay: (onClose: () => void, onBack?: () => void) => ReactNode;
+  renderOverlay: (onClose: () => void) => ReactNode;
   /** Render this element at a stable level outside the popover (e.g. next to the input). */
   promptCatalogModal: ReactNode;
   /** Render this element at a stable level outside the popover (e.g. next to the input). */
   parametersPopup: ReactNode;
+  /**
+   * Opens the "Prompt parameters" popup directly for a prompt that already
+   * came from outside the Add-menu flow (e.g. the Catalog page's "Use in
+   * chat" action). No back chevron is shown — there is no modal to return to.
+   */
+  openParametersPopup: (prompt: PendingParametersPrompt) => void;
 }
 
 /**
@@ -67,9 +79,8 @@ export function usePromptSelectorOverlay({
   const { favoriteIds, toggleFavorite } = useFavoriteApplications();
 
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
-  const [pendingPrompt, setPendingPrompt] = useState<PromptResponseDto | null>(
-    null,
-  );
+  const [pendingPrompt, setPendingPrompt] =
+    useState<PendingParametersPrompt | null>(null);
   const [openedFromBrowse, setOpenedFromBrowse] = useState(false);
 
   const allPrompts = useMemo(
@@ -100,7 +111,7 @@ export function usePromptSelectorOverlay({
   );
 
   const renderOverlay = useCallback(
-    (onClose: () => void, onBack?: () => void): ReactNode => (
+    (onClose: () => void): ReactNode => (
       <Suspense fallback={null}>
         <PromptSelectorOverlay
           favorites={favoritePromptItems}
@@ -116,7 +127,6 @@ export function usePromptSelectorOverlay({
             onClose();
             setIsCatalogOpen(true);
           }}
-          onBack={onBack}
         />
       </Suspense>
     ),
@@ -135,6 +145,11 @@ export function usePromptSelectorOverlay({
       />
     </Suspense>
   );
+
+  const openParametersPopup = useCallback((prompt: PendingParametersPrompt) => {
+    setOpenedFromBrowse(false);
+    setPendingPrompt(prompt);
+  }, []);
 
   const handleClosePopup = useCallback(() => {
     setPendingPrompt(null);
@@ -177,8 +192,14 @@ export function usePromptSelectorOverlay({
       renderOverlay: () => null,
       promptCatalogModal: null,
       parametersPopup: null,
+      openParametersPopup: () => undefined,
     };
   }
 
-  return { renderOverlay, promptCatalogModal, parametersPopup };
+  return {
+    renderOverlay,
+    promptCatalogModal,
+    parametersPopup,
+    openParametersPopup,
+  };
 }

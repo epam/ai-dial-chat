@@ -81,11 +81,12 @@ interface AddAttachmentButtonProps {
   /**
    * When provided, adds a "Prompts" item above "Chat settings" whose submenu
    * (desktop flyout / mobile bottom sheet) renders this host-owned overlay.
-   * Receives a callback the overlay calls to close its own submenu, and, on
-   * desktop only, a second callback to return to the main attachment menu
-   * (the overlay replaces it there, so it needs its own back affordance).
+   * On desktop this is a real nested `Dropdown` submenu (via `renderSubMenu`)
+   * that stays open alongside the main attachment menu, mirroring how the
+   * "Tools" item's submenu behaves. Receives a callback the overlay calls to
+   * close the whole menu once selection is complete.
    */
-  promptsMenuOverlay?: (onClose: () => void, onBack?: () => void) => ReactNode;
+  promptsMenuOverlay?: (onClose: () => void) => ReactNode;
   /** Label for the "Prompts" menu item and mobile sheet title. Defaults to `'Prompts'`. */
   promptsMenuTitle?: string;
   /** Accessible label for the back arrow in the mobile prompts bottom sheet. Defaults to `'Back'`. */
@@ -131,7 +132,6 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   const [isToolsSheetOpen, setIsToolsSheetOpen] = useState(false);
   const [isPromptsSheetOpen, setIsPromptsSheetOpen] = useState(false);
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
-  const [isPromptsOverlayOpen, setIsPromptsOverlayOpen] = useState(false);
 
   const cssVars = useMemo(
     () =>
@@ -232,22 +232,35 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
                     setIsPromptsSheetOpen(true);
                     setIsSheetOpen(false);
                   }
-                : () => {
-                    setIsDesktopMenuOpen(false);
-                    setIsPromptsOverlayOpen(true);
-                  },
-              iconAfter: isMobile ? (
-                <IconChevronRight
-                  size={BASE_ICON_SIZE}
-                  stroke={1.5}
-                  style={cssVars}
-                  className={mergeClasses(
-                    'rtl:scale-x-[-1]',
-                    styles.chevronIcon,
-                  )}
-                  aria-hidden
-                />
-              ) : null,
+                : () => undefined,
+              ...(isMobile
+                ? {
+                    iconAfter: (
+                      <IconChevronRight
+                        size={BASE_ICON_SIZE}
+                        stroke={1.5}
+                        style={cssVars}
+                        className={mergeClasses(
+                          'rtl:scale-x-[-1]',
+                          styles.chevronIcon,
+                        )}
+                        aria-hidden
+                      />
+                    ),
+                  }
+                : {
+                    /*
+                     * The ui-kit only treats an item as submenu-capable (caret,
+                     * hover/keyboard open, floating panel) when `children` is a
+                     * non-empty array; `renderSubMenu` alone does not open a
+                     * submenu, it only overrides what's rendered *inside* one
+                     * once that gate passes. This placeholder is never rendered
+                     * (renderSubMenu fully replaces the submenu content).
+                     */
+                    children: [{ key: 'prompts-panel', label: '' }],
+                    renderSubMenu: () =>
+                      promptsMenuOverlay(() => setIsDesktopMenuOpen(false)),
+                  }),
             },
           ]
         : []),
@@ -310,39 +323,6 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
       />
     </Dropdown>
   );
-
-  /*
-   * `promptsMenuOverlay` renders rich, multi-row content, which does not fit
-   * inside the main Dropdown's per-item `children` flyout (each nested item
-   * is forced into a fixed-height, truncating button by the ui-kit).
-   * Instead it opens as its own top-level `Dropdown` — the same
-   * `renderOverlay` mechanism `ModelSelectorControl` uses for
-   * `modelPickerOverlay` — anchored around the same trigger, which gets the
-   * standard rounded/background/shadow chrome for free.
-   */
-  const desktopMenu =
-    promptsMenuOverlay != null ? (
-      <Dropdown
-        matchReferenceWidth={false}
-        placement="bottom-start"
-        trigger={[]}
-        open={isPromptsOverlayOpen}
-        onOpenChange={setIsPromptsOverlayOpen}
-        renderOverlay={() =>
-          promptsMenuOverlay(
-            () => setIsPromptsOverlayOpen(false),
-            () => {
-              setIsPromptsOverlayOpen(false);
-              setIsDesktopMenuOpen(true);
-            },
-          )
-        }
-      >
-        {desktopTrigger}
-      </Dropdown>
-    ) : (
-      desktopTrigger
-    );
 
   return (
     <>
@@ -437,7 +417,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
         </>
       ) : (
         <>
-          {desktopMenu}
+          {desktopTrigger}
 
           {chatSettings != null && isChatSettingsOpen && (
             <ChatSettingsModal

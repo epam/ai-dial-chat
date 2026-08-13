@@ -49,11 +49,13 @@ vi.mock(
     }),
   }),
 );
+const mockOpenParametersPopup = vi.fn();
 vi.mock('../../components/PromptSelector/usePromptSelectorOverlay', () => ({
   usePromptSelectorOverlay: () => ({
     renderOverlay: vi.fn(),
     promptCatalogModal: null,
     parametersPopup: null,
+    openParametersPopup: mockOpenParametersPopup,
   }),
 }));
 vi.mock('../../context/AppConfigContext', () => ({
@@ -1117,6 +1119,30 @@ describe('ConversationRoute', () => {
         );
       });
       expect(mockRestoreSelectedItemId).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('pending parameterized prompt from router state', () => {
+    it('opens the parameters popup for a pendingPrompt passed as router state', async () => {
+      const pendingPrompt = {
+        id: 'Work/AI/summarize',
+        name: 'summarize',
+        content: 'Summarize {{text}}',
+        description: 'A summarizer prompt',
+      };
+
+      render(
+        <MemoryRouter
+          initialEntries={[{ pathname: '/', state: { pendingPrompt } }]}
+        >
+          <ConversationRoute />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() => {
+        expect(mockOpenParametersPopup).toHaveBeenCalledWith(pendingPrompt);
+      });
+      expect(screen.getByLabelText('Input message').textContent).toBe('');
     });
   });
 });
