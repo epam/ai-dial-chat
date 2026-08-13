@@ -67,9 +67,7 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
             <button
               id={`action-trigger-${item.id}`}
               aria-label={`action trigger ${item.id}`}
-              onClick={(event) =>
-                onActionMenuOpen?.(item, event.currentTarget)
-              }
+              onClick={(event) => onActionMenuOpen?.(item, event.currentTarget)}
             />
             {item.isUnread && (
               <span aria-label={`unread indicator ${item.id}`} />

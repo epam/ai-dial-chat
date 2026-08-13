@@ -51,9 +51,7 @@ describe('useShareRecipientsCount', () => {
       result.current.requestRecipientsCount('conversations/bucket/chat');
     });
 
-    await waitFor(() =>
-      expect(getShareRecipientsCount).toHaveBeenCalledOnce(),
-    );
+    await waitFor(() => expect(getShareRecipientsCount).toHaveBeenCalledOnce());
   });
 
   it('keeps resources independent of one another', async () => {

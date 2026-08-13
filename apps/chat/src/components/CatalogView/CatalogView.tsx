@@ -80,12 +80,12 @@ import {
 import { PromptSource } from '../../types/prompt';
 import { PromptEditorQuery } from '../../types/prompt-editor';
 import { ROUTES } from '../../types/routes';
-import { SkillEditorQuery } from '../../types/skill-editor';
 import {
   parseSkillResourceUrl,
   SKILL_MANIFEST_FILE,
   SkillSource,
 } from '../../types/skill';
+import { SkillEditorQuery } from '../../types/skill-editor';
 import { isQuickAppSchema } from '../../utils/application-schema';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';

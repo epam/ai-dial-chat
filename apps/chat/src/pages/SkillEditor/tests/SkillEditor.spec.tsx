@@ -4,6 +4,7 @@ import { strToU8, zipSync } from 'fflate';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useUser } from '../../../context/auth/UserContext';
 import { useNotification } from '../../../context/NotificationContext';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import {
   createSkill,
   downloadSkill,
@@ -143,11 +144,9 @@ describe('SkillEditor page', () => {
     vi.mocked(useUser).mockReturnValue({
       user: { bucket: 'my-bucket' },
     } as unknown as ReturnType<typeof useUser>);
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
     vi.mocked(createSkill).mockResolvedValue({
       etag: 'etag-1',
     } as unknown as Awaited<ReturnType<typeof createSkill>>);
@@ -234,9 +233,7 @@ describe('SkillEditor page', () => {
     await user.click(getCreateButton());
 
     await waitFor(() =>
-      expect(
-        screen.getAllByText('skillEditor.error.required')[0],
-      ).toBeTruthy(),
+      expect(screen.getAllByText('skillEditor.error.required')[0]).toBeTruthy(),
     );
     expect(createSkill).not.toHaveBeenCalled();
   });
@@ -415,11 +412,9 @@ describe('SkillEditor page — edit mode', () => {
     vi.mocked(useUser).mockReturnValue({
       user: { bucket: 'my-bucket' },
     } as unknown as ReturnType<typeof useUser>);
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
   });
 
   it('downloads and populates the form when id is present', async () => {

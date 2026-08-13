@@ -54,7 +54,9 @@ if (!Blob.prototype.text) {
   };
 }
 if (!Blob.prototype.stream) {
-  Blob.prototype.stream = function (this: Blob): ReadableStream<Uint8Array> {
+  Blob.prototype.stream = function (
+    this: Blob,
+  ): ReadableStream<Uint8Array<ArrayBuffer>> {
     return new ReadableStream({
       start: async (controller) => {
         controller.enqueue(new Uint8Array(await this.arrayBuffer()));
