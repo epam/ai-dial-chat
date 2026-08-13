@@ -30,6 +30,12 @@ export interface ItemHeaderProps {
   trailing?: ReactNode;
   /** Color overrides applied as CSS custom properties. */
   colors?: ItemHeaderColors;
+  /**
+   * Whether the title shrinks and truncates with an ellipsis. When `false` the
+   * title keeps its full width and the rest of the row gives way instead.
+   * Defaults to `true`.
+   */
+  shouldTruncateTitle?: boolean;
 }
 
 /** Item title header with optional numeric or string postfix and trailing slot. */
@@ -42,11 +48,22 @@ export const ItemHeader: FC<ItemHeaderProps> = ({
   query,
   trailing,
   colors,
+  shouldTruncateTitle = true,
 }) => {
   const cssVars = buildCssVars({
     '--ih-title-color': colors?.title,
     '--ih-count-color': colors?.count,
   });
+
+  const renderTitle = () => {
+    if (query) {
+      return <Highlight text={title} query={query} />;
+    }
+    if (!shouldTruncateTitle) {
+      return title;
+    }
+    return <DialEllipsisTooltip text={title} />;
+  };
 
   return (
     <div
@@ -54,13 +71,13 @@ export const ItemHeader: FC<ItemHeaderProps> = ({
       style={cssVars}
     >
       <h3
-        className={mergeClasses('min-w-0 flex-1', titleClassName, styles.title)}
-      >
-        {query ? (
-          <Highlight text={title} query={query} />
-        ) : (
-          <DialEllipsisTooltip text={title} />
+        className={mergeClasses(
+          shouldTruncateTitle ? 'min-w-0 flex-1' : 'shrink-0 whitespace-nowrap',
+          titleClassName,
+          styles.title,
         )}
+      >
+        {renderTitle()}
       </h3>
       {postfix != null && (
         /* Capped at 30% of the row so a long version truncates instead of

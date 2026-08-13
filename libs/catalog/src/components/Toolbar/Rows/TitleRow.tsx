@@ -82,6 +82,7 @@ export const TitleRow: FC<TitleRowProps> = ({
           titleClassName={titleClassName}
           postfixClassName={countClassName}
           className="shrink-0"
+          shouldTruncateTitle={false}
           colors={{
             title: browseStyles?.colors?.titleText,
             count: browseStyles?.colors?.countText,
