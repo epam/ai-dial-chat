@@ -61,11 +61,11 @@ Every piece is additive and independently revertible. Reverting the `libs/catalo
 
 **Libraries**
 
-- `libs/catalog`: `models/item-details-data.ts` (`CatalogItemPromptContent.description`, `CatalogItemFiles`), `models/item-details-props.ts` (`onDownloadFile`, Files tab texts), `types/detail-tab.ts` (`CatalogDetailsTab.Files`), `components/Details/DetailsPanel.tsx` (tab derivation + render), new `components/Details/TabsContent/Files.tsx`.
+- `libs/catalog`: `models/item-details-data.ts` (`CatalogItemPromptContent.description`/`.files`/`.selectedFileId`, `CatalogContentFile`), `models/item-details-props.ts` and `models/catalog-props.ts` (`onLoadContentFile`, picker texts, typography and color tokens), `components/Details/DetailsPanel.tsx` (picked-file state), `components/Details/TabsContent/Content.tsx` (the picker), `components/Catalog/Catalog.tsx` (forwarding). No new tab and no new component file.
 
 **Application**
 
-- `apps/chat/src/utils/skill-manifest.ts` (new), `apps/chat/src/utils/map-skill-to-catalog-item.ts` (`buildSkillOverview` split, new `buildSkillFiles`), `apps/chat/src/utils/map-entity-details-to-catalog.ts` (`mapSkillDetails` removed), `apps/chat/src/types/entity-details.ts` (`SKILL` union member removed), `apps/chat/src/types/skill.ts` (manifest types), `apps/chat/src/components/CatalogView/CatalogView.tsx` (skill branch, `onDownloadFile`, details texts), `apps/chat/src/constants/translation-keys.ts` + `i18n/locales/en.json`.
+- `apps/chat/src/utils/skill-manifest.ts` (new), `apps/chat/src/utils/map-skill-to-catalog-item.ts` (`buildSkillOverview` split, new `buildSkillContentFiles`), `apps/chat/src/utils/map-entity-details-to-catalog.ts` (`mapSkillDetails` removed), `apps/chat/src/types/entity-details.ts` (`SKILL` union member removed), `apps/chat/src/types/skill.ts` (manifest types), `apps/chat/src/components/CatalogView/CatalogView.tsx` (skill branch, `onLoadContentFile`, details texts), `apps/chat/src/constants/translation-keys.ts` + `i18n/locales/en.json`.
 
 **Dependencies**
 
@@ -81,7 +81,7 @@ Every piece is additive and independently revertible. Reverting the `libs/catalo
 2. Opening a skill whose `SKILL.md` has no frontmatter shows the whole file as the body and no summary line — unchanged from today apart from the absent summary.
 3. A manifest with malformed YAML in its fence still renders its body; the panel logs nothing user-visible and shows no Specification rows.
 4. The Overview tab shows a **Specification** section listing only the frontmatter fields that are present, followed by a **Details** section with author (omitted when absent), last updated, and file count. No file rows remain in Overview.
-5. The Files tab appears for a skill with at least one file, lists files grouped under their folder path with grouping-folder entries excluded, and does not appear when the file listing failed.
-6. Clicking a file's download button calls `downloadSkillFile` with that file's bucket and path; a rejection surfaces one notification and leaves the panel open.
-7. The tab the panel opens on does not change as details resolve, for a skill or for a prompt.
-8. `npm exec nx test catalog`, `npm exec nx test chat`, `npm exec nx lint catalog`, `npm exec nx lint chat`, and `npm exec nx build chat` all pass; `mapSkillDetails` and `type: 'SKILL'` no longer appear anywhere in `apps/chat/src`.
+5. A skill with two or more files shows a file picker above the Content body, opened on `SKILL.md`, with the file count beside it and grouping folders excluded. A skill with one file, and a skill whose listing failed, show no picker.
+6. Picking another file calls `downloadSkillFile` with the opened skill's bucket and path and renders that file's text; reselecting `SKILL.md` restores the manifest body without a second request; a failure renders the error text and leaves the panel open.
+7. The tab the panel opens on does not change as details resolve, for a skill or for a prompt, and no new tab is added to the row.
+8. `npm exec nx lint` and the vitest suites for `@epam/ai-dial-catalog` and the skill-touching `@epam/chat` specs all pass; `mapSkillDetails` and `type: 'SKILL'` no longer appear anywhere in `apps/chat/src`.
