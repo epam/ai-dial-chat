@@ -176,6 +176,15 @@ describe('SigninInterruptDialog', () => {
     });
     expect(loginButton.hasAttribute('disabled')).toBe(true);
 
+    /*
+     * The popup's focus manager pulls focus onto the dialog root shortly
+     * after mount; typing before that lands loses the keystrokes. Wait for
+     * the initial focus to settle so the click inside `type` keeps the input
+     * focused.
+     */
+    await waitFor(() =>
+      expect(document.activeElement?.getAttribute('role')).toBe('dialog'),
+    );
     await user.type(
       screen.getByLabelText(ToolsetSigninI18nKeys.ApiKeyLabel),
       'secret-key',
