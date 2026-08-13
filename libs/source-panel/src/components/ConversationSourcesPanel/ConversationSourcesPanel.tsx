@@ -178,7 +178,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
       }
     >
       {hasFilesOrSources && (
-        <div role="search">
+        <div role="search" className="px-3 py-2">
           <Search
             value={searchQuery}
             onChange={handleSearchChange}

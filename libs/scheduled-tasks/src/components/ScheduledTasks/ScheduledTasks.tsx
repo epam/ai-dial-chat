@@ -8,6 +8,7 @@ import {
   ButtonDropdown,
   ButtonVariant,
   DIAL_ICON_SIZE,
+  ElementSize,
   GhostButton,
   PrimaryButton,
   Search,
@@ -235,7 +236,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
             placeholder={labels.searchPlaceholder}
             clearLabel={labels.clearSearchLabel}
             aria-label={labels.searchAriaLabel}
-            wrapperClassName="!h-[50px] rounded-xl"
+            size={ElementSize.Large}
           />
         </div>
         {labels.sortOptions.length > 0 && (

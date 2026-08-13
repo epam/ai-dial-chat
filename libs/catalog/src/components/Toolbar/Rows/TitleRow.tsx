@@ -6,6 +6,7 @@ import {
   DIAL_ICON_SIZE,
   DropdownItem,
   Search,
+  ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
 import { FC } from 'react';
@@ -149,6 +150,7 @@ export const TitleRow: FC<TitleRowProps> = ({
           <Search
             value={query}
             onChange={handleChange}
+            size={ElementSize.Large}
             placeholder={searchPlaceholder}
             aria-label={searchPlaceholder}
           />
