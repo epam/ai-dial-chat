@@ -62,6 +62,18 @@ Ground-truth design docs live in `docs/` — app architecture, technical/product
 - **Reading:** Before changing or explaining documented behavior, use the `dial-docs` skill to find the one authoritative doc. Don't guess from memory and don't read all docs — the skill is an index that routes you to the right one.
 - **Writing:** When a change alters behavior a doc describes, update that doc and any affected diagram in the **same commit**.
 
+### `docs/architecture.md` is structural — keep it current
+
+`docs/architecture.md` is the map of what exists. It goes stale silently, because nothing fails when a new library or backend domain is missing from it. Update it in the **same change**, not later, whenever you:
+
+- add, rename, or remove a library under `libs/` or an app under `apps/`
+- add, rename, or remove a backend domain folder under `apps/chat-api/src/` or a controller base path
+- add or remove a React context in `apps/chat/src/context/`, a route folder under `pages/`, or an entry in the `ApiEndpoints` enum
+- change a cross-cutting mechanism the document describes — auth/session/CSRF, SSE streaming, theming token flow, the overlay protocol, styling tiers, or module boundaries
+- change a tooling major version listed in the Monorepo & Tooling table
+
+Two rules for the content: state what the code does today, and when intent and code disagree, say so explicitly rather than documenting the intent (see the `Open` rows in the Decision Log). Deep detail belongs in the specialized doc — `docs/theme-customization.md`, `docs/chat-overlay-migration-guide.md`, `docs/auth/` — with `architecture.md` carrying a summary and a link, so the same fact is not maintained twice.
+
 ## TypeScript module imports
 
 - In `.ts` and `.tsx` source files, omit `.js`, `.jsx`, `.ts`, and `.tsx` from relative module specifiers. Write `./Component` or `../models/Message`, not `./Component.js`.

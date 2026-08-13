@@ -5,6 +5,7 @@ A modern full-stack chat application built with Nx monorepo, featuring a React f
 ## 📚 Table of Contents
 
 - [Overview](#overview)
+- [Migrating from the Legacy DIAL Chat](#migrating-from-the-legacy-dial-chat)
 - [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
@@ -25,9 +26,58 @@ AI DIAL Chat is a comprehensive chat application platform featuring:
 
 - **Frontend**: Modern React application with TypeScript, Vite, and Tailwind CSS
 - **Backend**: NestJS REST API with Swagger documentation
-- **Internationalization**: Multi-language support (English & Ukrainian)
+- **Internationalization**: Multi-language ready — English by default, RTL supported
 - **Integration**: EPAM AI DIAL Core connectivity
 - **Monorepo**: Nx-powered workspace for efficient development
+
+## Migrating from the Legacy DIAL Chat
+
+Start with the [Legacy Chat Migration Guide](docs/legacy-chat-migration-guide.md):
+what changed, an ordered checklist, the legacy → new environment-variable
+mapping, what happens to existing user data, and the capabilities with no
+successor yet. The areas below have their own detailed guides.
+
+### Overlay (embedded chat)
+
+The chat is embedded into a host page as an iframe driven over a `postMessage`
+protocol. The host-side library lives in
+[`libs/chat-overlay`](libs/chat-overlay) and is published as
+`@epam/ai-dial-chat-overlay`, replacing the legacy `@epam/ai-dial-overlay`
+package. The integration model is the same, but the new package is **not** a
+drop-in replacement: deployment configuration, authentication options,
+feature-flag names, data shapes, and parts of the API changed.
+
+Follow the [Chat Overlay Migration Guide](docs/chat-overlay-migration-guide.md),
+which covers:
+
+- Deployment config: `IS_IFRAME` → `OVERLAY_ENABLED`, the origin allowlist, and
+  the cookie settings a cross-site iframe needs
+- Authentication: removed `signInOptions`, and the per-provider
+  `auth.providerUiModes` map that opts a provider into same-window login
+- The `INIT_READY` → `READY` → `READY_TO_INTERACT` handshake, request queuing,
+  and the four `OverlayRequestErrorCode` values
+- Changed method signatures, response payloads, and the narrowed
+  `OverlayChatMessage` / `OverlayConversation` shapes
+- All 39 `OverlayFeature` flags: legacy → new names, flags that became
+  unconditional, flags with no successor yet, and the default-on baseline
+- `ChatOverlayManager` options and the widget chrome it now owns
+
+Before touching the host application, try the migrated API against a real
+deployment in the [Chat Overlay Sandbox](apps/chat-overlay-sandbox/README.md) —
+it has a ready-made page for each integration case (direct overlay, manager,
+conversation list, feature flags, per-provider auth UI modes).
+
+### Themes
+
+Themes are still served by a standalone themes host and applied as CSS custom
+properties, but `THEMES_CONFIG_HOST` became `THEMES_CONFIG_URL`, the palette was
+redesigned, and the default theme flipped from dark to light. A legacy
+`config.json` loads without an error and applies almost nothing, so the token
+names have to be ported deliberately.
+
+[Theme Customization](docs/theme-customization.md) documents the configuration
+format and the full token list, and carries a legacy → new mapping table plus
+the features with no replacement (`additional_css`, the `custom-logo` flag).
 
 ## Architecture
 
@@ -141,14 +191,19 @@ ai-dial-chat/
 │   │   ├── tailwind.config.js   # Tailwind config
 │   │   └── README.md            # Frontend docs
 │   │
-│   └── chat-api/                # NestJS backend application
-│       ├── src/
-│       │   ├── app/             # App module & controllers
-│       │   └── main.ts          # API entry point
-│       ├── .env.template        # Environment template
-│       ├── .env.local           # Local environment (gitignored)
-│       ├── webpack.config.js    # Webpack configuration
-│       └── README.md            # Backend docs
+│   ├── chat-api/                # NestJS backend application
+│   │   ├── src/
+│   │   │   ├── app/             # App module & controllers
+│   │   │   └── main.ts          # API entry point
+│   │   ├── .env.template        # Environment template
+│   │   ├── .env.local           # Local environment (gitignored)
+│   │   ├── webpack.config.js    # Webpack configuration
+│   │   └── README.md            # Backend docs
+│   │
+│   └── chat-overlay-sandbox/    # Host page for testing the chat overlay
+│       ├── src/cases/           # One page per overlay integration case
+│       ├── vite.config.mts      # Vite configuration
+│       └── README.md            # Sandbox docs
 │
 ├── libs/
 │   └── conversation-input/      # Chat input component library
@@ -249,7 +304,7 @@ The main user interface for the chat application.
 - Modern React 19 with hooks
 - Responsive design with Tailwind CSS
 - Real-time chat interface
-- Multi-language support (EN/UK)
+- Multi-language ready, English by default
 - Language switcher component
 - Integration with DIAL UI Kit
 
@@ -275,6 +330,26 @@ RESTful API server with OpenAPI documentation.
 
 **Port**: 5000
 
+### Chat Overlay Sandbox
+
+A host page that embeds a deployed chat through
+`@epam/ai-dial-chat-overlay`, with one case per integration scenario — direct
+overlay, overlay manager, conversation list, feature flags, and per-provider
+auth UI modes. Use it to exercise the overlay API against a real deployment
+without wiring it into your own application first.
+
+**Key Features:**
+
+- One page per overlay integration case
+- Live `enabledFeatures` and `setOverlayOptions()` experimentation
+- Served by `chat-api` at `/overlay-sandbox/` when
+  `OVERLAY_SANDBOX_ENABLED=true`, or run locally against any chat host via
+  `VITE_CHAT_OVERLAY_HOST`
+
+**Documentation**: [`apps/chat-overlay-sandbox/README.md`](apps/chat-overlay-sandbox/README.md)
+
+**Port**: 4300
+
 ## Libraries
 
 ### conversation-input
@@ -289,6 +364,9 @@ Reusable chat panel component.
 
 - [Chat App Documentation](apps/chat/README.md) - Frontend details
 - [Chat API Documentation](apps/chat-api/README.md) - Backend details
+- [Legacy Chat Migration Guide](docs/legacy-chat-migration-guide.md) - Moving a deployment from the legacy DIAL Chat to 1.0
+- [Chat Overlay Migration Guide](docs/chat-overlay-migration-guide.md) - Migrating an embedded overlay from the legacy chat
+- [Theme Customization](docs/theme-customization.md) - Configuring a theme and porting one from the legacy chat
 - [Swagger API Docs](http://localhost:5000/api/docs) - Interactive API documentation
 - [Nx Documentation](https://nx.dev) - Nx workspace guide
 

@@ -18,7 +18,9 @@ the API, and the set of UI feature flags.
 4. Replace raw event and feature-flag strings with the exported enums.
 5. Adapt changed methods and remove calls to methods that are not supported
    yet.
-6. Verify authentication, the handshake, core operations, and resource
+6. Update every host site that reads a message or conversation field — the
+   protocol now carries narrow projections, not the chat's own entities.
+7. Verify authentication, the handshake, core operations, and resource
    cleanup.
 
 ## 1. Prepare the new chat deployment
@@ -61,7 +63,11 @@ Both settings are required:
   that established the trusted overlay session.
 
 Do not use `*` in production. The new overlay intentionally requires an exact
-origin and does not send data with `postMessage(..., '*')`.
+origin and does not send data with `postMessage(..., '*')`. The only messages
+posted to `'*'` are the two bootstrap events, `INIT_READY` and `READY`, which
+the embedded chat emits before any host origin is known; they carry no
+payload. Every message that carries data — responses and all later events —
+is posted to the exact origin that completed the handshake.
 
 ### Authentication in the embedded chat
 
@@ -228,6 +234,28 @@ overlay.destroy();
 `theme`, `modelId`, `overlayConversationId`, `enabledFeatures`, and `auth`. Do
 not pass `domain`, `hostDomain`, the request timeout, or loader settings to it.
 
+### Iframe attributes and browser permissions
+
+The library owns the `<iframe>` element and its security attributes; they are
+not configurable. Check them against the host page's own CSP and
+`Permissions-Policy` before rolling out:
+
+```text
+sandbox = allow-same-origin allow-scripts allow-modals allow-forms
+          allow-popups allow-downloads allow-popups-to-escape-sandbox
+allow    = clipboard-write
+           + microphone   when `voice-input` is in `enabledFeatures`
+           + fullscreen   after `allowFullscreen()` is called
+```
+
+`allow-popups` and `allow-popups-to-escape-sandbox` are what let the external
+login flow open in a real browser tab, and `allow-downloads` is what lets a
+user save an attachment — a host that re-frames the overlay under a stricter
+sandbox breaks both. The `allow` list only delegates a permission the host
+document already holds: if the host page's `Permissions-Policy` does not
+grant `microphone` or `fullscreen` to the chat origin, the corresponding
+feature stays blocked no matter what the overlay requests.
+
 ## 3. Account for the new handshake and error handling
 
 The initialization sequence is now:
@@ -252,10 +280,8 @@ Practical implications:
   iframe, not when it enters the queue.
 - Every request receives a `requestId` and `expiresAt`.
 - A request the embedded chat cannot execute rejects immediately with
-  `ChatOverlayRequestError`; inspect its `code` and `requestType` fields.
-- Active-conversation methods called while the empty composer is open reject
-  with `OverlayRequestErrorCode.ActiveConversationUnavailable` rather than
-  waiting for the request timeout.
+  `ChatOverlayRequestError` instead of waiting out the request timeout;
+  inspect its `code` and `requestType` fields.
 - `setOverlayOptions()` may be called before `ready()` because it participates
   in the handshake.
 - `destroy()` rejects pending requests and removes the iframe, loader, and
@@ -268,6 +294,26 @@ loaderHideEvent: OverlayEventType.ReadyToInteract;
 ```
 
 The default `loaderHideEvent` is `OverlayEventType.Ready`.
+
+### Request-level error codes
+
+`ChatOverlayRequestError.code` is one of the four values exported as
+`OverlayRequestErrorCode`:
+
+| Code                              | Raised when                                                                                                                       |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `ACTIVE_CONVERSATION_UNAVAILABLE` | An active-conversation method was called while the empty composer is open. Raised immediately instead of waiting out the timeout. |
+| `CONVERSATION_LIST_UNAVAILABLE`   | A conversation-list method was called on a screen that does not mount the conversation list.                                      |
+| `INVALID_PAYLOAD`                 | The request payload does not match the method contract, for example a missing or non-string conversation id.                      |
+| `REQUEST_EXECUTION_FAILED`        | The embedded chat accepted the request and then failed while executing it.                                                        |
+
+Before `READY_TO_INTERACT`, a request whose integration is not mounted yet is
+queued rather than rejected; the two `*_UNAVAILABLE` codes are only produced
+after the handshake completes.
+
+These request-level codes are distinct from the domain `error` field the
+conversation-list methods return (`NOT_FOUND`, `FORBIDDEN`,
+`INVALID_ARGUMENT`) — see below.
 
 ## 4. Migrate the public API
 
@@ -294,6 +340,30 @@ The following methods are available on the new `ChatOverlay`:
 | `subscribe(eventType, callback)`        | Uses `OverlayEventType` and returns an unsubscribe function.                 |
 | `allowFullscreen()`, `openFullscreen()` | Preserved.                                                                   |
 | `destroy()`                             | Idempotently releases resources.                                             |
+
+The legacy `overlay.send(type, payload)` escape hatch is gone — the new
+`send()` is private. Hosts that spoke the `@DIAL_OVERLAY` protocol directly
+through it must move to the typed methods above; there is no supported way to
+post an arbitrary request type.
+
+### Changed response payloads
+
+Several methods that resolved to `void` in the legacy overlay now resolve to a
+payload, and one that resolved to a conversation now always resolves to
+`null`:
+
+| Method                      | Legacy result      | New result                            |
+| --------------------------- | ------------------ | ------------------------------------- |
+| `sendMessage(content)`      | `void`             | `{ messages }` after the send         |
+| `setSystemPrompt(prompt)`   | `void`             | `{ systemPrompt }` that was persisted |
+| `setTemperature(value)`     | `void`             | `{ temperature }` that was persisted  |
+| `deleteConversation(id)`    | `void`             | `{ error? }`                          |
+| `createLocalConversation()` | `{ conversation }` | `{ conversation: null }` — always     |
+| `setInputContent(content)`  | `void`             | `void` (unchanged)                    |
+
+Existing code keeps compiling — the added payloads are additive — but a host
+that inferred success from "resolved with nothing" should now read the
+returned payload.
 
 ### New `createConversation` signature
 
@@ -350,6 +420,54 @@ inaccessible conversation from one that is still loading. In this case,
 `selectConversation()` may time out instead of returning an explicit
 `NOT_FOUND` error.
 
+### Changed message and conversation shapes
+
+The protocol no longer carries the chat's internal entities. It carries two
+narrow projections, `OverlayChatMessage` and `OverlayConversation`. A host
+that imports its types from the new package gets compile errors on the
+removed fields; a host that kept its own local typings, or passed the values
+through `any`, gets `undefined` at runtime instead — so audit these call
+sites even if the build stays green.
+
+`getMessages()` and `sendMessage()` return `OverlayChatMessage`:
+
+```ts
+interface OverlayChatMessage {
+  id: string;
+  role: string;
+  content: string;
+}
+```
+
+Everything else the legacy `Message` carried is gone from the protocol:
+`custom_content` (attachments, stages, state, form schema and value),
+`custom_fields.annotations`, `like`, `errorMessage`, `model`, `settings`,
+`responseId`, and `templateMapping`. A host that rendered attachments or read
+a like state from overlay messages has no replacement. `id` is new — the
+legacy `Message` had none, so messages were addressed by array index, which
+is also why `deleteMessage(index)` and `updateMessage(index, fields)` have no
+successor.
+
+`getConversations()`, `getSelectedConversations()`, `selectConversation()`,
+`createConversation()`, and `renameConversation()` return
+`OverlayConversation`:
+
+| Legacy field                                   | New field                                  |
+| ---------------------------------------------- | ------------------------------------------ |
+| `name`                                         | `title`                                    |
+| `id`                                           | `id`                                       |
+| `updatedAt`                                    | `updatedAt` (now required, epoch ms)       |
+| `sharedWithMe`, `publishedWithMe`              | Preserved.                                 |
+| —                                              | `isPinned` (new)                           |
+| —                                              | `isReadonly` (new)                         |
+| `folderId`, `bucket`, `parentPath`             | Removed — the new chat has no folders.     |
+| `model`                                        | Removed. Select an agent with `modelId`.   |
+| `isPlayback`, `isReplay`                       | Removed with the playback and replay APIs. |
+| `permissions`, `author`, `status`, `createdAt` | Removed.                                   |
+
+Grep the host for `conversation.name` first: the `name` to `title` rename is
+the substitution reviewers miss most often.
+
 ### Methods not supported yet
 
 The following methods are absent from the new overlay:
@@ -404,6 +522,11 @@ The same event may arrive multiple times, and subscribers are called each
 time. If an action must run only once, unsubscribe inside the callback or add
 your own guard.
 
+Every new event is a bare notification: the callback receives `undefined`,
+not a payload. In particular `SELECTED_CONVERSATION_LOADED` no longer carries
+`{ selectedConversationIds }` — call `getSelectedConversations()` from the
+callback when you need to know which conversation was loaded.
+
 ## 6. Migrate UI feature flags
 
 In the new API, `enabledFeatures` is an `OverlayFeature` array, not a string:
@@ -446,6 +569,7 @@ behavior is unconditional in the new chat, so you can normally remove them:
 | `top-chat-model-settings` | The model selector is rendered; use `hide-change-agent` to remove it or `disallow-change-agent` to restrict it. |
 | `chat-header-border`      | The header bottom border is always rendered.                                                                    |
 | `chat-input-border`       | The input border is always rendered.                                                                            |
+| `user-message-align-end`  | User messages are always aligned to the inline end.                                                             |
 
 ### UI flags not supported yet
 
@@ -473,7 +597,6 @@ The following legacy chat flags are not included in the new `OverlayFeature`:
 | `report-an-issue`               | No equivalent toggle is available.                                            |
 | `request-api-key`               | No equivalent toggle is available.                                            |
 | `md-sidebar-overlay-breakpoint` | Requires a sidebar overlay/backdrop mode that does not exist in the new chat. |
-| `user-message-align-end`        | Inline-end alignment is already unconditional.                                |
 
 Pass only values exported by `OverlayFeature`. This also protects TypeScript
 integrations from typos and removed keys.
@@ -506,6 +629,7 @@ file-manager
 toolsets
 custom-apps
 prompts
+skills
 voice-input
 ```
 
@@ -525,7 +649,6 @@ catalog-table-view
 hide-delete-user-message
 hide-edit-user-message
 hide-regenerate-assistant-message
-skills
 hide-user-menu
 hide-user-settings
 hide-keyboard-shortcuts
@@ -555,7 +678,11 @@ surfaces; use `hide-keyboard-shortcuts` when the language selector should
 stay.
 
 `voice-input` additionally adds `microphone` to the iframe's `allow`
-attribute. The flag itself does not provide an ASR model or replace the
+attribute. That attribute is computed once, when `ChatOverlay` is
+constructed, so `voice-input` must be present in the constructor's
+`enabledFeatures`. Adding it later through `setOverlayOptions()` shows the
+recording button but leaves the iframe without microphone permission, and
+recording fails. The flag itself does not provide an ASR model or replace the
 backend configuration required for voice input.
 
 ### Server baseline
@@ -567,7 +694,7 @@ ENABLED_UI_FEATURES=header,conversations-section,likes,input-files
 ```
 
 This is also a complete replacement set, not an addition to the defaults. If
-the variable is absent or empty, the built-in baseline of 22 default-on flags
+the variable is absent or empty, the built-in baseline of 23 default-on flags
 out of the 39 supported is used. Entries the server does not recognize — including
 the renamed and retired legacy strings listed above — are logged and dropped;
 if every entry is unrecognized, the built-in baseline is used instead. An overlay host may replace the server baseline with
@@ -613,3 +740,30 @@ Key differences:
 - Manager methods still accept `overlayId` as their first argument.
 - `destroy()` releases every overlay and all global listeners.
 - The unsupported methods listed above are also absent from the manager.
+- `createOverlay()` throws when `overlayId` is already registered, and every
+  other method throws on an unknown `overlayId`.
+
+### Changes to `ChatOverlayManagerOptions`
+
+| Legacy option                                                    | New option or required action                                                                                                           |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                                                             | Renamed to `overlayId`.                                                                                                                 |
+| `position`                                                       | Preserved; type it with the `OverlayPosition` enum instead of a raw string.                                                             |
+| `allowFullscreen`                                                | Preserved.                                                                                                                              |
+| `width`, `height`                                                | Now `number \| string`; a number is treated as px. Defaults changed from `'540px'` × `'540px'` to `380` × `600`.                        |
+| `zIndex`                                                         | Now `number`, not a string. The default changed from `'5'` to `999999`.                                                                 |
+| `iconSvg`, `iconHeight`, `iconWidth`, `iconBgColor`, `iconColor` | Removed. The toggle button's icon and colors are fixed.                                                                                 |
+| —                                                                | New: `toggleButtonAriaLabel`, `closeButtonAriaLabel`, `fullscreenButtonAriaLabel` — supply translated strings, they default to English. |
+
+The chrome is no longer assembled by the host. `createOverlayToggle()`,
+`createFullscreenButton()`, `createCloseButton()`, and `updateOverlay()` are
+gone; `createOverlay()` builds the panel, the toggle, the close button, and —
+when `allowFullscreen` is set — the fullscreen button, and re-lays them out on
+`resize` and `orientationchange`. Below a 768px viewport the panel ignores
+`position`, `width`, and `height` and covers the full screen.
+
+One asymmetry to plan around: `ChatOverlayManager.setOverlayOptions()`
+accepts only `theme`, `modelId`, `overlayConversationId`, and
+`enabledFeatures` — not `auth`. Per-provider login modes can therefore only be
+set through `createOverlay()` for manager-created overlays; changing them at
+runtime requires a directly constructed `ChatOverlay`.
