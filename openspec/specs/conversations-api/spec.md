@@ -177,20 +177,25 @@ DIAL Core's sharing mechanism grants READ access to the resource at its original
 
 `apps/chat-api/src/conversations/utils/parse-scheduled-task-conversation-path.ts` SHALL export a pure function `parseScheduledTaskConversationPath(resourceId: string): { scheduleId: string; runId: string } | null` with no dependency injection, logging, or DIAL Core client access.
 
-A conversation resource id matches the scheduler pattern **iff** the `/`-delimited segment immediately following the bucket segment is the literal `.scheduler`, followed by exactly one further `scheduleId` segment and then the conversation's own filename segment (`{deploymentId}__{title}__{runId}`) — no other segments may follow.
+A conversation resource id matches the scheduler pattern **iff** the `/`-delimited segment immediately following the bucket segment is the literal `.scheduler`, followed by a `scheduleId` segment and, after it, one or more further segments ending in the conversation's own filename segment (`{deploymentId}__{title}__{runId}`). A scheduled run of a custom-application deployment nests the filename under an extra `applications/{applicationId}/...` path (possibly with additional subfolders) between `scheduleId` and the filename; the pattern MUST match regardless of how many such intermediate segments are present, since the filename position is not fixed relative to `scheduleId`.
 
 The function SHALL:
 1. Split the id into `/`-delimited segments.
 2. Return `null` if the segment after the bucket is not exactly `.scheduler`.
-3. Return `null` unless exactly two further segments follow `.scheduler`: a candidate `scheduleId` and the conversation filename.
+3. Return `null` unless at least two further segments follow `.scheduler`: a candidate `scheduleId` and, at the end of the path, the conversation filename. Any segments between `scheduleId` and the filename (e.g. `applications/{applicationId}/...`) are permitted and are not otherwise validated by this function.
 4. Decode the candidate `scheduleId` with the existing `safeDecodeURIComponent` helper (`apps/chat-api` equivalent used elsewhere in this spec for path segments) and validate it against `^[A-Za-z0-9_-]{1,128}$` (the same allowlist used by the scheduled-tasks BFF routes — see the [scheduled-tasks-api spec](../scheduled-tasks-api/spec.md)).
-5. Decode the filename segment and extract `runId` as its trailing UUID suffix (`{deploymentId}__{title}__{runId}`), using the same UUID-suffix detection as `getConversationTitleFromName`.
-6. Return `{ scheduleId, runId }` only when `scheduleId` passes the allowlist and the filename has a trailing UUID `runId`; return `null` in every other case (missing/extra segments, empty segments, decode failure, validation failure, no UUID suffix). The function MUST NOT throw.
+5. Decode the filename segment (the last `/`-delimited segment) and extract `runId` as its trailing UUID suffix (`{deploymentId}__{title}__{runId}`), using the same UUID-suffix detection as `getConversationTitleFromName`. The segments between `scheduleId` and the filename are joined back into a folder path and passed through `isApplicationDeploymentPath` to determine whether the filename's `{deploymentId}` may carry a `{name}__{version}` suffix, exactly as `getConversationTitleFromName` requires for application-deployment filenames elsewhere in this spec.
+6. Return `{ scheduleId, runId }` only when `scheduleId` passes the allowlist and the filename has a trailing UUID `runId`; return `null` in every other case (missing segments, empty segments, decode failure, validation failure, no UUID suffix). The function MUST NOT throw.
 
 #### Scenario: Valid scheduler path returns scheduleId and runId
 
 - **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/sched_abc/gpt-4o__Morning briefing__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5")` is called
 - **THEN** it returns `{ scheduleId: "sched_abc", runId: "c7aeee4c-c01f-41f2-b0db-b8a1a39943f5" }`
+
+#### Scenario: Scheduled application-deployment path with a nested applications/{applicationId} folder returns scheduleId and runId
+
+- **WHEN** `parseScheduledTaskConversationPath("conversations/test-bucket/.scheduler/8433fe2f-2ac7-4880-9869-31ea70f2c822/applications/test-bucket/MY%20Outlook%20Agent__0.0.1__EPM-RTC%20Issue%20Tracker__73482c36-2ff1-40e6-a6bf-e38a63a83f2c")` is called
+- **THEN** it returns `{ scheduleId: "8433fe2f-2ac7-4880-9869-31ea70f2c822", runId: "73482c36-2ff1-40e6-a6bf-e38a63a83f2c" }`
 
 #### Scenario: Normal conversation path returns null
 
