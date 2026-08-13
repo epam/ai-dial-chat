@@ -1,4 +1,10 @@
-## ADDED Requirements
+# app-config-context Specification
+
+## Purpose
+
+The frontend `AppConfigContext`: loading, ready, and error states for client configuration, and the feature-flag, overlay, and announcement fields it exposes.
+
+## Requirements
 
 ### Requirement: AppConfigContext exposes loading, ready, and error states
 

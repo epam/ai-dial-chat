@@ -930,4 +930,140 @@ describe('ShareService', () => {
       ).rejects.toThrow(ServiceUnavailableException);
     });
   });
+
+  describe('getRecipientsCount', () => {
+    it('counts the accepted recipients of the requested resource', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'getSharedResources')
+        .mockResolvedValue(
+          okResponse({
+            resources: [
+              {
+                url: 'applications/owner-bucket/my-app',
+                sharedWith: [{ user: 'a' }, { user: 'b' }],
+              },
+              {
+                url: 'applications/owner-bucket/other-app',
+                sharedWith: [{ user: 'c' }],
+              },
+            ],
+          }),
+        );
+
+      const result = await service.getRecipientsCount(
+        'applications/owner-bucket/my-app',
+        'token-abc',
+      );
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          resourceTypes: ['APPLICATION'],
+          with: 'others',
+          includeUserInfo: true,
+        },
+      });
+      expect(result).toEqual({
+        itemId: 'applications/owner-bucket/my-app',
+        recipientsCount: 2,
+      });
+    });
+
+    it('scopes the upstream query to the resource kind named by the itemId', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'getSharedResources')
+        .mockResolvedValue(okResponse({ resources: [] }));
+
+      await service.getRecipientsCount(
+        'toolsets/owner-bucket/my-toolset',
+        'token-abc',
+      );
+
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({ resourceTypes: ['TOOL_SET'] }),
+        }),
+      );
+    });
+
+    it('reports 0 for a resource a successful response does not mention', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue(okResponse({ resources: [] }));
+
+      const result = await service.getRecipientsCount(
+        'applications/owner-bucket/never-shared',
+        'token-abc',
+      );
+
+      expect(result).toEqual({
+        itemId: 'applications/owner-bucket/never-shared',
+        recipientsCount: 0,
+      });
+    });
+
+    it('matches a percent-encoded conversation id against its decoded share url', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue(
+        okResponse({
+          resources: [
+            {
+              url: 'conversations/owner-bucket/my chat',
+              sharedWith: [{ user: 'a' }],
+            },
+          ],
+        }),
+      );
+
+      const result = await service.getRecipientsCount(
+        'conversations/owner-bucket/my%20chat',
+        'token-abc',
+      );
+
+      expect(result.recipientsCount).toBe(1);
+    });
+
+    it('throws UnauthorizedException on upstream 401', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue(errResponse(401));
+
+      await expect(
+        service.getRecipientsCount('applications/x/y', 'token'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('throws BadGatewayException on upstream 5xx', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue(errResponse(502));
+
+      await expect(
+        service.getRecipientsCount('applications/x/y', 'token'),
+      ).rejects.toThrow(BadGatewayException);
+    });
+
+    it('throws ServiceUnavailableException on network error', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockRejectedValue(new TypeError('fetch failed'));
+
+      await expect(
+        service.getRecipientsCount('applications/x/y', 'token'),
+      ).rejects.toThrow(ServiceUnavailableException);
+    });
+  });
 });

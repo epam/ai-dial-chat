@@ -189,6 +189,12 @@ export interface ConversationPanelProps {
   activeFilter?: FilterTab;
   /** Called when the active filter tab changes. */
   onActiveFilterChange?: (tab: FilterTab) => void;
+  /**
+   * When `true`, the filter tabs are not rendered and the list stays on
+   * whichever tab is active — `FilterTab.All` unless `activeFilter` says
+   * otherwise. Defaults to `false`.
+   */
+  isFilterTabsHidden?: boolean;
 }
 
 /** Describes a completed drag-and-drop move in the conversation panel. */

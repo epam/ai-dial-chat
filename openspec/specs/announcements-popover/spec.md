@@ -1,4 +1,10 @@
-## ADDED Requirements
+# announcements-popover Specification
+
+## Purpose
+
+A count pill in the announcement banner that opens a popover listing every configured announcement with its title, description, and link.
+
+## Requirements
 
 ### Requirement: A count pill in the banner opens the announcements popover
 

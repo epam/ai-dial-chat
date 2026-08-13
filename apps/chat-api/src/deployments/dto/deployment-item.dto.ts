@@ -192,13 +192,6 @@ export class DeploymentItemDto {
 
   @ApiPropertyOptional({
     description:
-      'How many other users currently hold shared access to this deployment, for deployments the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.',
-    example: 3,
-  })
-  recipientsCount?: number;
-
-  @ApiPropertyOptional({
-    description:
       'Parent folder path for application-type deployments (absent for root-level or non-application items)',
   })
   applicationFolder?: string;

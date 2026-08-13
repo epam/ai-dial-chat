@@ -1,12 +1,18 @@
 # User Menu
 
+## Purpose
+
+The avatar dropdown menu on desktop: the identity header, its action items, and the language and theme submenus.
+
 ## Overview
 
 The navigation sidebar avatar button opens a dropdown menu giving the user access to theme selection, keyboard shortcut preferences, and Log out. A Logout confirmation dialog guards the logout action.
 
 ---
 
-## Requirement: Avatar button opens a dropdown menu (desktop only)
+## Requirements
+
+### Requirement: Avatar button opens a dropdown menu (desktop only)
 
 The avatar button in the navigation sidebar SHALL open a `DialDropdown` (`placement="top-end"`, `matchReferenceWidth={false}`) when clicked **on desktop only**. On mobile viewports (`useIsMobile()` returns `true`) `UserMenu` SHALL return `null` — the mobile bottom sheet (`MobileNavBottomSheet`) owns the mobile settings surface instead. The existing `DialTooltip` showing the user email SHALL be retained as the trigger child and SHALL be hidden on mobile (moot because the component returns `null` on mobile, but the `hideTooltip={isMobile}` prop remains). The avatar button SHALL carry `aria-label={t('auth.signedInAs', { email })}`.
 
@@ -21,6 +27,11 @@ i18n keys: `auth.logOut`, `auth.signedInAs`
 ### Requirement: User identity header
 
 The first menu item SHALL be a non-interactive `DropdownItemType.PlainText` row showing the user's avatar (image or initials fallback) and the user's display name (`user.claims['name']`). The display name SHALL be rendered with `DialEllipsisTooltip` to show the full name on hover when truncated. Header padding SHALL be `px-2 py-1`.
+
+#### Scenario: Identity header is not actionable
+- **WHEN** the dropdown is open
+- **THEN** its first row shows the avatar and display name as plain text
+- **AND** the row is not focusable and activating it neither closes the menu nor triggers an action
 
 ### Requirement: Action items
 
@@ -48,27 +59,27 @@ A `DropdownItemType.Divider` SHALL separate the identity header from the Theme a
 
 ---
 
-## Requirement: Language submenu item
+### Requirement: Language submenu item
 
 A **Language** item SHALL appear in the User Menu dropdown immediately below the first divider (between the identity header and the Theme item). It SHALL render with a right-arrow indicator (via `DropdownItem.children`) that reveals a submenu on hover containing one option per supported language. The item label SHALL be `t('settings.language')`. The item icon SHALL be `IconLanguage` (16 px, `@tabler/icons-react`).
 
 i18n keys: `settings.language`
 
-### Scenario: Language submenu opens on hover
+#### Scenario: Language submenu opens on hover
 - **WHEN** the user hovers over the Language item in the User Menu
 - **THEN** a submenu appears listing all supported language options
 
-### Scenario: Language item appears between identity header and Theme item
+#### Scenario: Language item appears between identity header and Theme item
 - **WHEN** the User Menu dropdown is open
 - **THEN** the menu order is: identity header → divider → Language → Theme → Keyboard Shortcuts → divider → Log out
 
-### Scenario: Language item is hidden when only one language is available
+#### Scenario: Language item is hidden when only one language is available
 - **WHEN** only one language is registered in the i18n config
 - **THEN** the Language item does NOT appear in the User Menu dropdown
 
 ---
 
-## Requirement: Theme submenu item
+### Requirement: Theme submenu item
 
 A **Theme** item SHALL appear in the dropdown below the first divider. It SHALL render with a right-arrow indicator (via `DropdownItem.children`) that reveals a submenu on hover containing three options: **Dark**, **Light**, and **System**.
 
@@ -80,27 +91,27 @@ The active theme option SHALL be visually indicated (e.g., checkmark or bold lab
 
 i18n keys: `settings.theme`, `settings.themeDark`, `settings.themeLight`, `settings.themeSystem`
 
-### Scenario: Theme submenu opens on hover
+#### Scenario: Theme submenu opens on hover
 - **WHEN** the user hovers over the Theme item
 - **THEN** a submenu appears with Dark, Light, and System options
 
-### Scenario: Selecting Dark applies dark theme immediately
+#### Scenario: Selecting Dark applies dark theme immediately
 - **WHEN** the user clicks Dark in the Theme submenu
 - **THEN** `setTheme('dark')` is called and the theme changes without a confirmation step
 
-### Scenario: Selecting System follows OS preference
+#### Scenario: Selecting System follows OS preference
 - **WHEN** the user selects System AND the OS is in dark mode
 - **THEN** the dark theme is applied
 
-### Scenario: System theme responds to OS changes
+#### Scenario: System theme responds to OS changes
 - **WHEN** `preference = 'system'` AND the OS switches from dark to light mode
 - **THEN** the application theme switches to light automatically
 
-### Scenario: Active theme is visually indicated
+#### Scenario: Active theme is visually indicated
 - **WHEN** the Theme submenu is open
 - **THEN** the currently active theme option is visually distinguished from the others
 
-### Scenario: Dark and System are mutually exclusive indicators when OS is dark
+#### Scenario: Dark and System are mutually exclusive indicators when OS is dark
 - **GIVEN** the OS color scheme is dark
 - **WHEN** the user selects **Dark**
 - **THEN** only **Dark** shows the active indicator and **System** does not
@@ -109,7 +120,7 @@ i18n keys: `settings.theme`, `settings.themeDark`, `settings.themeLight`, `setti
 
 ---
 
-## Requirement: Keyboard shortcuts submenu item
+### Requirement: Keyboard shortcuts submenu item
 
 A **Keyboard shortcuts** item SHALL appear in the dropdown below the Theme item. It SHALL render with a right-arrow indicator (via `DropdownItem.children`) that reveals a submenu on hover containing two options:
 
@@ -120,19 +131,19 @@ Selecting an option SHALL call `setPreference(value)` from `useKeyboardShortcutP
 
 i18n keys: `settings.keyboardShortcuts`, `settings.shortcutEnter`, `settings.shortcutMetaEnter`
 
-### Scenario: Keyboard shortcuts submenu opens on hover
+#### Scenario: Keyboard shortcuts submenu opens on hover
 - **WHEN** the user hovers over the Keyboard shortcuts item
 - **THEN** a submenu appears with the two send-key options
 
-### Scenario: Selecting an option persists it
+#### Scenario: Selecting an option persists it
 - **WHEN** the user clicks a shortcut option
 - **THEN** `setPreference` is called with the corresponding value AND the chat input reflects the new shortcut immediately
 
-### Scenario: Active shortcut is visually indicated
+#### Scenario: Active shortcut is visually indicated
 - **WHEN** the Keyboard shortcuts submenu is open
 - **THEN** the currently active option is visually distinguished
 
-### Scenario: Platform-aware modifier key label
+#### Scenario: Platform-aware modifier key label
 - **WHEN** the user is on macOS
 - **THEN** the second option label reads "⌘+Enter — send message, Enter — new line"
 - **WHEN** the user is on Windows or Linux
@@ -140,7 +151,7 @@ i18n keys: `settings.keyboardShortcuts`, `settings.shortcutEnter`, `settings.sho
 
 ---
 
-## Requirement: Logout confirmation modal
+### Requirement: Logout confirmation modal
 
 `LogoutConfirmationModal` SHALL render a `DialConfirmationPopup` (default Info variant) with `header={t('auth.logOutConfirmTitle')}`, `description={t('auth.logOutConfirmDescription')}`, and `confirmLabel={t('auth.logOutConfirm')}`. `onConfirm` SHALL set `window.location.href = ApiEndpoints.AUTH_LOGOUT`. `onCancel` and `onClose` SHALL call `onClose` without navigating.
 

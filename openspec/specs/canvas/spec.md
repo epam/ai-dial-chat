@@ -1,3 +1,9 @@
+# canvas Specification
+
+## Purpose
+
+The canvas side panel: its chrome, open and auto-close behavior, layout, and the content-type routing that picks a viewer.
+
 ## Capability: canvas
 
 ### Overview
@@ -112,153 +118,11 @@ For `AttachmentType.File` attachments, `openFileCanvas` (`apps/chat/src/hooks/at
 
 Extension checks for `md`/`markdown` and `json` run *before* the generic `isTextPreviewable` branch. The `html`/`htm` branch runs before the generic `isTextPreviewable` branch. The `isTextPreviewable` branch now routes to `resolveCodeCanvasContent` (returning `CodeCanvasContent`) instead of `resolveTextCanvasContent`.
 
-#### Scenario: html extension routes to Html
-
-- **WHEN** `openFileCanvas` is called with an attachment whose name ends in `.html`
-- **THEN** `resolveHtmlCanvasContent` is called
-- **AND** the canvas opens with `HtmlCanvasContent`
-
-#### Scenario: ts extension routes to Code
-
-- **WHEN** `openFileCanvas` is called with an attachment whose name ends in `.ts`
-- **THEN** `resolveCodeCanvasContent` is called with `language: 'typescript'`
-- **AND** the canvas opens with `CodeCanvasContent`
-
 ---
 
 ### Visualizer content type
 
 The requirements below extend the canvas with a `Visualizer` content type routed to a registry-driven iframe renderer (see the `custom-visualizers` capability for the registry, the postMessage protocol, and the connector classes).
-
-#### Requirement: `AttachmentContentType.Visualizer` variant
-
-`libs/attachment-canvas/src/types/attachment-canvas.ts` SHALL add a new enum member `AttachmentContentType.Visualizer`.
-
-`libs/attachment-canvas/src/models/attachment-canvas.ts` SHALL add a new member to the `AttachmentCanvasContent` discriminated union:
-
-```ts
-interface VisualizerCanvasContent {
-  type: AttachmentContentType.Visualizer;
-  url: string;                              // iframe src, from the registry entry's `url`
-  mimeType: string;                         // the attachment's own MIME (NOT the entry's raw
-                                            // `contentType`, which may be a comma-separated list)
-  data: unknown;                            // opaque attachment payload consumed by the visualizer
-  layout: CustomVisualizerDataLayout;       // themeId, width, height, mobileHeight
-  visualizerName: string;                   // postMessage type prefix — MUST be the registry
-                                            // entry's `title`; the iframe app is constructed
-                                            // with the identical string or nothing is received
-  requestTimeout?: number;                  // from the registry entry; bounds send(), default
-                                            // 10000ms. Does NOT bound the handshake.
-}
-```
-
-`isDownloadable(content)` SHALL return `false` for a `VisualizerCanvasContent` value.
-
-**RTL impact:** none directly; canvas panel chrome already handles direction.
-
-**i18n impact:** none; visualizer chrome carries no lib-side user-visible strings.
-
-##### Scenario: Visualizer content is not downloadable
-
-- **WHEN** the canvas is opened with a `VisualizerCanvasContent` and `onDownload` is provided
-- **THEN** the download button in the canvas header is not rendered
-
-##### Scenario: Panel opens with visualizer content
-
-- **WHEN** `openCanvas` is called with a `VisualizerCanvasContent` and `fileName`
-- **THEN** `AttachmentCanvasContext.content` equals the passed content
-- **AND** `AttachmentCanvasContainer` re-renders with the panel open and the visualizer renderer inside
-
-#### Requirement: `VisualizerCanvasRenderer` component
-
-`libs/attachment-canvas/src/components/VisualizerCanvasRenderer/VisualizerCanvasRenderer.tsx` SHALL render an iframe host and drive the visualizer handshake and data delivery via the published npm package `@epam/ai-dial-visualizer-connector` (and `@epam/ai-dial-shared` for the request enum). Behaviour:
-
-- On mount, create a `VisualizerConnector` bound to the container element, passing `domain: content.url`, `hostDomain: window.location.origin` (required by the published options type; unused at runtime in the current package), `visualizerName: content.visualizerName`, and `requestTimeout: content.requestTimeout`.
-- Await `.ready()` and then call `.send(VisualizerConnectorRequests.sendVisualizeData, { mimeType: content.mimeType, visualizerData: { layout: content.layout, ...content.data } })`, where `VisualizerConnectorRequests` is imported from `@epam/ai-dial-shared` (camelCase member; wire value `SEND_VISUALIZE_DATA`).
-- On unmount, call `connector.destroy()` exactly once for that instance.
-- Display a loading state while `.ready()` is pending. Because `.ready()` never times out (see the `custom-visualizers` capability), a visualizer that never completes the handshake leaves the body in this loading state indefinitely — this is intended. Display an error state if the `SEND_VISUALIZE_DATA` `send()` rejects (its own timeout) or if `.ready()` rejects due to `destroy()`.
-- The component SHALL keep the connector instance stable across parent re-renders that do not change `url` / `visualizerName` / `requestTimeout`, so those re-renders do not tear down the iframe.
-
-The component MUST NOT read from any app-level context (auth, theme, i18n, feature flags) — all data required for the visualizer is passed in through `VisualizerCanvasContent`.
-
-##### Scenario: connector is destroyed on unmount
-
-- **WHEN** the `VisualizerCanvasRenderer` unmounts
-- **THEN** `VisualizerConnector.destroy()` is called
-- **AND** the iframe element is removed from the DOM
-
-##### Scenario: SEND_VISUALIZE_DATA is dispatched after READY_TO_INTERACT
-
-- **WHEN** the iframe posts `${visualizerName}/READY_TO_INTERACT`
-- **THEN** the renderer calls `connector.send` with the published enum member whose wire value is `SEND_VISUALIZE_DATA` exactly once
-- **AND** the payload's `layout` equals `content.layout`
-
-##### Scenario: send failure surfaces error state
-
-- **WHEN** the `SEND_VISUALIZE_DATA` `send()` promise rejects (no `/RESPONSE` within `requestTimeout`)
-- **THEN** the renderer displays an error state
-- **AND** the canvas remains closable via the header's close button
-
-##### Scenario: incomplete handshake stays in the loading state
-
-- **WHEN** the iframe mounts but never posts `READY_TO_INTERACT`
-- **THEN** the renderer keeps showing the loading state and does not show an error
-- **AND** the canvas remains closable via the header's close button
-
-#### Requirement: `AttachmentCanvas` switch handles Visualizer variant
-
-`libs/attachment-canvas/src/components/AttachmentCanvas/AttachmentCanvas.tsx` SHALL extend its switch over `AttachmentContentType` with a `case AttachmentContentType.Visualizer` branch that renders `<VisualizerCanvasRenderer content={content} />` inside the panel body.
-
-The panel chrome (header, close button, resize handle, keyboard/ARIA behaviour) SHALL be identical to the chrome used for other content types.
-
-**Feature flag:** none. The variant is reachable only when the app builds a `VisualizerCanvasContent` from a populated registry.
-
-##### Scenario: rendering switch dispatches to the visualizer branch
-
-- **WHEN** `AttachmentCanvas` is rendered with a `VisualizerCanvasContent`
-- **THEN** the panel body contains a mounted `VisualizerCanvasRenderer`
-- **AND** the panel header renders the `fileName` as usual
-
-#### Requirement: `useOpenAttachmentCanvas` dispatches to the visualizer branch before content-type handling
-
-`apps/chat/src/hooks/attachment/useOpenAttachmentCanvas.ts`'s internal `openFileCanvas` SHALL check the attachment's `contentType` against the `CustomVisualizer[]` registry (via `useCustomVisualizers()` and a case-insensitive `findVisualizerForMime` lookup) as the FIRST case in its `switch (contentType)` block — evaluated before the existing `MIMEType.PDF`, `MIMEType.Markdown`, and `MIMEType.JSON` cases described above.
-
-When a match is found:
-
-- The hook fetches the attachment payload using the same file-content helper already used for text/JSON attachments.
-- On success, it builds a `VisualizerCanvasContent`: `url` from the registry entry, `mimeType` from the attachment's own `contentType`, `data` from the fetched payload, `layout` with `width`/`height`/`mobileHeight` from the registry entry plus `themeId` from theme context, `visualizerName` from the registry entry's `title`, and `requestTimeout` from the registry entry. It returns this for `openCanvas`.
-- On payload-fetch failure, the hook falls through to the existing switch/extension/`Unsupported` handling (unchanged behaviour).
-
-When the registry is empty or no entry matches, `openFileCanvas` behaves exactly as it did before this addition.
-
-`apps/chat/src/hooks/attachment/useAttachmentAction.ts` is NOT modified by this addition. It only runs as a fallback when `openAttachmentCanvas` returns `false` (see "Open triggers" above), and a matched visualizer MIME always causes `openAttachmentCanvas` to return `true` — so `useAttachmentAction` would never observe a visualizer-eligible attachment.
-
-**Feature flag:** none. The `CUSTOM_VISUALIZERS` env is the effective gate.
-
-**RTL impact:** none. Canvas chrome already handles direction.
-
-**i18n impact:** none new. Existing labels are reused.
-
-##### Scenario: MIME matches a visualizer registry entry from a message bubble click
-
-- **WHEN** `handleMessageAttachmentClick` (`ConversationView.tsx`) is invoked for an attachment whose `contentType` matches a `customVisualizers` entry
-- **THEN** `openAttachmentCanvas` resolves a `VisualizerCanvasContent` and calls `openCanvas` with it
-- **AND** the panel opens with the visualizer renderer, not the PDF/Markdown/JSON/Unsupported branch
-
-##### Scenario: MIME matches but payload fetch fails — falls back to existing handling
-
-- **WHEN** the registry contains a matching entry but fetching the attachment payload rejects
-- **THEN** `openFileCanvas` falls through to the existing `contentType`/extension switch for that attachment
-
-##### Scenario: Registry is empty — behaviour unchanged
-
-- **WHEN** the `customVisualizers` registry is `[]`
-- **THEN** `openFileCanvas` behaves exactly as it did before this addition
-
-##### Scenario: MIME does not match any registry entry
-
-- **WHEN** the registry contains only `contentType: 'application/x-my-viz'` and the attachment's `contentType` is `'application/pdf'`
-- **THEN** the visualizer branch does not fire; the existing `MIMEType.PDF` case handles the attachment
 
 ---
 
@@ -310,16 +174,6 @@ Some attachments (e.g. an LLM-revised image prompt saved back onto the conversat
 | `Html` | `srcdoc?: string; url?: string` | `HtmlContent` (sandboxed `<iframe>`) |
 | `Unsupported` | — | Centered "Preview not supported" message |
 | `Error` | `errorType: AttachmentErrorType; url?: string` | Centered error message, text depends on `errorType` (see "Error rendering" below) |
-
-#### Scenario: Code content type uses CodeContent renderer
-
-- **WHEN** `AttachmentCanvas` renders a `CodeCanvasContent`
-- **THEN** a `CodeContent` component is mounted in the panel body
-
-#### Scenario: Html content type uses HtmlContent renderer
-
-- **WHEN** `AttachmentCanvas` renders an `HtmlCanvasContent`
-- **THEN** an `HtmlContent` component is mounted in the panel body
 
 ---
 
@@ -551,3 +405,244 @@ interface PdfBBoxSelector {
   x1: number; y1: number; x2: number; y2: number;
 }
 ```
+
+---
+
+## Requirements
+
+### Requirement: The canvas panel opens beside the conversation and closes on navigation
+
+Activating an attachment SHALL open `AttachmentCanvas` at the right edge of the conversation layout, keyed by the `attachmentId` the caller supplies. The panel SHALL close whenever the URL `pathname` changes, and SHALL be mutually exclusive with both `ConversationSourcesPanel` and the conversation history panel — opening any one of the three closes the other two, synchronously, before any content is fetched.
+
+#### Scenario: Activating an attachment opens the panel
+
+- **WHEN** the user activates an attachment card from a message bubble, an input tray, or the sources panel
+- **THEN** `openCanvas` is called with the resolved content, file name, and attachment key, and the panel renders open at the right edge
+
+#### Scenario: Only the tile that opened the canvas reads as selected
+
+- **GIVEN** two messages hold attachments with the same content-derived `id`
+- **WHEN** one of them opens the canvas
+- **THEN** only that message's tile renders selected, because the key carries the message index and each message strips its own prefix
+
+#### Scenario: Navigating away closes the panel
+
+- **WHEN** the `pathname` changes for a conversation switch, catalog navigation, or new chat
+- **THEN** `closeCanvas()` runs and the panel is closed
+
+#### Scenario: The panels never overlap
+
+- **WHEN** the user opens the canvas while the sources panel or the history panel is open
+- **THEN** the other panel closes immediately on click, before content resolution completes
+- **AND** opening either of those panels afterwards closes the canvas
+
+#### Scenario: The chat area keeps a minimum width
+
+- **WHEN** the user drags the canvas resize handle on desktop
+- **THEN** the width is clamped between 600 px and `usePanelMaxWidth()`, leaving at least 400 px of chat area
+- **AND** on mobile the panel fills the viewport and is not resizable
+
+### Requirement: The canvas is an accessible, always-available panel
+
+`SidebarPanel` SHALL render with `role="complementary"` and the `ariaLabel` prop as its accessible name, SHALL be `aria-hidden` while closed, and SHALL expose every header control by keyboard with an `aria-label` supplied as a prop. All app-level strings SHALL come from `AttachmentCanvasI18nKeys`, with the lib carrying English defaults. The capability SHALL NOT be gated behind a feature flag.
+
+#### Scenario: The panel is a named landmark
+
+- **WHEN** the canvas is open
+- **THEN** it exposes `role="complementary"` named by `ariaLabel`, and its close, download, and copy buttons are reachable by Tab with their own labels
+
+#### Scenario: A closed panel is hidden from assistive tech
+
+- **WHEN** the canvas is closed
+- **THEN** the panel carries `aria-hidden="true"`
+
+### Requirement: Content type routing resolves a typed payload at the app layer
+
+`useOpenAttachmentCanvas` SHALL resolve a `DisplayAttachment` into a typed content payload before the lib renders anything, switching first on `attachment.type` and then, for files, running the reference-only PDF check, the no-type inline-data fallback, MIME routing, and extension routing in that order. Extension checks for `md`/`markdown`, `json`, `pdf`, and `html`/`htm` SHALL run before the generic `isTextPreviewable` branch, which routes to `resolveCodeCanvasContent`. Anything unmatched SHALL become `UnsupportedCanvasContent`.
+
+#### Scenario: html extension routes to Html
+
+- **WHEN** `openFileCanvas` is called with an attachment whose name ends in `.html`
+- **THEN** `resolveHtmlCanvasContent` is called
+- **AND** the canvas opens with `HtmlCanvasContent`
+
+#### Scenario: ts extension routes to Code
+
+- **WHEN** `openFileCanvas` is called with an attachment whose name ends in `.ts`
+- **THEN** `resolveCodeCanvasContent` is called with `language: 'typescript'`
+- **AND** the canvas opens with `CodeCanvasContent`
+
+#### Scenario: A reference-only PDF chunk opens the referenced page
+
+- **GIVEN** an attachment with no `url` and a `referenceUrl` such as `files/{bucket}/report.pdf#page=81`
+- **WHEN** `openFileCanvas` runs
+- **THEN** `referenceAttachmentToPdfCanvasContent` returns a `PdfCanvasContent` scrolled to page 81, and no further routing runs
+
+#### Scenario: Inline data with no content type renders as text
+
+- **GIVEN** an attachment whose `contentType` is the empty string and whose `data` is present
+- **WHEN** `openFileCanvas` runs
+- **THEN** `resolveTextCanvasContent` produces the content and the attachment does not fall through to `Unsupported`
+
+### Requirement: Each content type has a dedicated renderer
+
+`AttachmentCanvas` SHALL dispatch on `AttachmentContentType` to the renderer listed in the "Content renderers" table, and SHALL render `Json`, `Code`, and `Html` bodies inside a `dir="ltr"` container so code and tree layout stay left-to-right in an RTL app.
+
+#### Scenario: Code content type uses CodeContent renderer
+
+- **WHEN** `AttachmentCanvas` renders a `CodeCanvasContent`
+- **THEN** a `CodeContent` component is mounted in the panel body
+
+#### Scenario: Html content type uses HtmlContent renderer
+
+- **WHEN** `AttachmentCanvas` renders an `HtmlCanvasContent`
+- **THEN** an `HtmlContent` component is mounted in the panel body
+
+### Requirement: Load failures are distinguished from unsupported previews
+
+A failed fetch SHALL resolve to `ErrorCanvasContent` carrying `errorType: Forbidden` for HTTP `403` and `errorType: LoadFailed` otherwise, and every `resolveXCanvasContent` SHALL propagate it unchanged rather than wrapping it. `isDownloadable(content)` SHALL return `false` for a `Forbidden` error regardless of `url`, `true` for a `LoadFailed` error or an `Unsupported` payload when `url` is present, and `false` for `VisualizerCanvasContent`.
+
+#### Scenario: A forbidden file offers no download
+
+- **WHEN** the fetch for an attachment returns HTTP `403`
+- **THEN** the body shows `forbiddenErrorLabel` and the header renders no download button, even though a `url` is known
+
+#### Scenario: A failed load stays retryable
+
+- **WHEN** the fetch fails with a network error or a non-`403` status and a `url` is known
+- **THEN** the body shows `loadErrorLabel` and the download button is still offered
+
+#### Scenario: Image failures surface in the renderer, not as error content
+
+- **WHEN** an image fails to load
+- **THEN** `resolveImageCanvasContent` still returns `ImageCanvasContent` and `ImageContent`'s `onError` swaps in the inline error message
+
+### Requirement: `AttachmentContentType.Visualizer` variant
+
+`libs/attachment-canvas/src/types/attachment-canvas.ts` SHALL add a new enum member `AttachmentContentType.Visualizer`.
+
+`libs/attachment-canvas/src/models/attachment-canvas.ts` SHALL add a new member to the `AttachmentCanvasContent` discriminated union:
+
+```ts
+interface VisualizerCanvasContent {
+  type: AttachmentContentType.Visualizer;
+  url: string;                              // iframe src, from the registry entry's `url`
+  mimeType: string;                         // the attachment's own MIME (NOT the entry's raw
+                                            // `contentType`, which may be a comma-separated list)
+  data: unknown;                            // opaque attachment payload consumed by the visualizer
+  layout: CustomVisualizerDataLayout;       // themeId, width, height, mobileHeight
+  visualizerName: string;                   // postMessage type prefix — MUST be the registry
+                                            // entry's `title`; the iframe app is constructed
+                                            // with the identical string or nothing is received
+  requestTimeout?: number;                  // from the registry entry; bounds send(), default
+                                            // 10000ms. Does NOT bound the handshake.
+}
+```
+
+`isDownloadable(content)` SHALL return `false` for a `VisualizerCanvasContent` value.
+
+**RTL impact:** none directly; canvas panel chrome already handles direction.
+
+**i18n impact:** none; visualizer chrome carries no lib-side user-visible strings.
+
+#### Scenario: Visualizer content is not downloadable
+
+- **WHEN** the canvas is opened with a `VisualizerCanvasContent` and `onDownload` is provided
+- **THEN** the download button in the canvas header is not rendered
+
+#### Scenario: Panel opens with visualizer content
+
+- **WHEN** `openCanvas` is called with a `VisualizerCanvasContent` and `fileName`
+- **THEN** `AttachmentCanvasContext.content` equals the passed content
+- **AND** `AttachmentCanvasContainer` re-renders with the panel open and the visualizer renderer inside
+
+### Requirement: `VisualizerCanvasRenderer` component
+
+`libs/attachment-canvas/src/components/VisualizerCanvasRenderer/VisualizerCanvasRenderer.tsx` SHALL render an iframe host and drive the visualizer handshake and data delivery via the published npm package `@epam/ai-dial-visualizer-connector` (and `@epam/ai-dial-shared` for the request enum). Behaviour:
+
+- On mount, create a `VisualizerConnector` bound to the container element, passing `domain: content.url`, `hostDomain: window.location.origin` (required by the published options type; unused at runtime in the current package), `visualizerName: content.visualizerName`, and `requestTimeout: content.requestTimeout`.
+- Await `.ready()` and then call `.send(VisualizerConnectorRequests.sendVisualizeData, { mimeType: content.mimeType, visualizerData: { layout: content.layout, ...content.data } })`, where `VisualizerConnectorRequests` is imported from `@epam/ai-dial-shared` (camelCase member; wire value `SEND_VISUALIZE_DATA`).
+- On unmount, call `connector.destroy()` exactly once for that instance.
+- Display a loading state while `.ready()` is pending. Because `.ready()` never times out (see the `custom-visualizers` capability), a visualizer that never completes the handshake leaves the body in this loading state indefinitely — this is intended. Display an error state if the `SEND_VISUALIZE_DATA` `send()` rejects (its own timeout) or if `.ready()` rejects due to `destroy()`.
+- The component SHALL keep the connector instance stable across parent re-renders that do not change `url` / `visualizerName` / `requestTimeout`, so those re-renders do not tear down the iframe.
+
+The component MUST NOT read from any app-level context (auth, theme, i18n, feature flags) — all data required for the visualizer is passed in through `VisualizerCanvasContent`.
+
+#### Scenario: connector is destroyed on unmount
+
+- **WHEN** the `VisualizerCanvasRenderer` unmounts
+- **THEN** `VisualizerConnector.destroy()` is called
+- **AND** the iframe element is removed from the DOM
+
+#### Scenario: SEND_VISUALIZE_DATA is dispatched after READY_TO_INTERACT
+
+- **WHEN** the iframe posts `${visualizerName}/READY_TO_INTERACT`
+- **THEN** the renderer calls `connector.send` with the published enum member whose wire value is `SEND_VISUALIZE_DATA` exactly once
+- **AND** the payload's `layout` equals `content.layout`
+
+#### Scenario: send failure surfaces error state
+
+- **WHEN** the `SEND_VISUALIZE_DATA` `send()` promise rejects (no `/RESPONSE` within `requestTimeout`)
+- **THEN** the renderer displays an error state
+- **AND** the canvas remains closable via the header's close button
+
+#### Scenario: incomplete handshake stays in the loading state
+
+- **WHEN** the iframe mounts but never posts `READY_TO_INTERACT`
+- **THEN** the renderer keeps showing the loading state and does not show an error
+- **AND** the canvas remains closable via the header's close button
+
+### Requirement: `AttachmentCanvas` switch handles Visualizer variant
+
+`libs/attachment-canvas/src/components/AttachmentCanvas/AttachmentCanvas.tsx` SHALL extend its switch over `AttachmentContentType` with a `case AttachmentContentType.Visualizer` branch that renders `<VisualizerCanvasRenderer content={content} />` inside the panel body.
+
+The panel chrome (header, close button, resize handle, keyboard/ARIA behaviour) SHALL be identical to the chrome used for other content types.
+
+**Feature flag:** none. The variant is reachable only when the app builds a `VisualizerCanvasContent` from a populated registry.
+
+#### Scenario: rendering switch dispatches to the visualizer branch
+
+- **WHEN** `AttachmentCanvas` is rendered with a `VisualizerCanvasContent`
+- **THEN** the panel body contains a mounted `VisualizerCanvasRenderer`
+- **AND** the panel header renders the `fileName` as usual
+
+### Requirement: `useOpenAttachmentCanvas` dispatches to the visualizer branch before content-type handling
+
+`apps/chat/src/hooks/attachment/useOpenAttachmentCanvas.ts`'s internal `openFileCanvas` SHALL check the attachment's `contentType` against the `CustomVisualizer[]` registry (via `useCustomVisualizers()` and a case-insensitive `findVisualizerForMime` lookup) as the FIRST case in its `switch (contentType)` block — evaluated before the existing `MIMEType.PDF`, `MIMEType.Markdown`, and `MIMEType.JSON` cases described above.
+
+When a match is found:
+
+- The hook fetches the attachment payload using the same file-content helper already used for text/JSON attachments.
+- On success, it builds a `VisualizerCanvasContent`: `url` from the registry entry, `mimeType` from the attachment's own `contentType`, `data` from the fetched payload, `layout` with `width`/`height`/`mobileHeight` from the registry entry plus `themeId` from theme context, `visualizerName` from the registry entry's `title`, and `requestTimeout` from the registry entry. It returns this for `openCanvas`.
+- On payload-fetch failure, the hook falls through to the existing switch/extension/`Unsupported` handling (unchanged behaviour).
+
+When the registry is empty or no entry matches, `openFileCanvas` behaves exactly as it did before this addition.
+
+`apps/chat/src/hooks/attachment/useAttachmentAction.ts` is NOT modified by this addition. It only runs as a fallback when `openAttachmentCanvas` returns `false` (see "Open triggers" above), and a matched visualizer MIME always causes `openAttachmentCanvas` to return `true` — so `useAttachmentAction` would never observe a visualizer-eligible attachment.
+
+**Feature flag:** none. The `CUSTOM_VISUALIZERS` env is the effective gate.
+
+**RTL impact:** none. Canvas chrome already handles direction.
+
+**i18n impact:** none new. Existing labels are reused.
+
+#### Scenario: MIME matches a visualizer registry entry from a message bubble click
+
+- **WHEN** `handleMessageAttachmentClick` (`ConversationView.tsx`) is invoked for an attachment whose `contentType` matches a `customVisualizers` entry
+- **THEN** `openAttachmentCanvas` resolves a `VisualizerCanvasContent` and calls `openCanvas` with it
+- **AND** the panel opens with the visualizer renderer, not the PDF/Markdown/JSON/Unsupported branch
+
+#### Scenario: MIME matches but payload fetch fails — falls back to existing handling
+
+- **WHEN** the registry contains a matching entry but fetching the attachment payload rejects
+- **THEN** `openFileCanvas` falls through to the existing `contentType`/extension switch for that attachment
+
+#### Scenario: Registry is empty — behaviour unchanged
+
+- **WHEN** the `customVisualizers` registry is `[]`
+- **THEN** `openFileCanvas` behaves exactly as it did before this addition
+
+#### Scenario: MIME does not match any registry entry
+
+- **WHEN** the registry contains only `contentType: 'application/x-my-viz'` and the attachment's `contentType` is `'application/pdf'`
+- **THEN** the visualizer branch does not fire; the existing `MIMEType.PDF` case handles the attachment

@@ -1,5 +1,9 @@
 # Spec: default-deployment-config
 
+## Purpose
+
+The `DEFAULT_DEPLOYMENT` setting, from environment validation through client config to the frontend.
+
 ## Requirements
 
 ### Requirement: DEFAULT_DEPLOYMENT env var is validated in EnvironmentVariables

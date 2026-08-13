@@ -1,5 +1,11 @@
 # Spec: file-manager-copy-move
 
+## Purpose
+
+The copy and move endpoints, folder expansion via pagination, and their wiring into `useDialFileManager`.
+
+## Requirements
+
 ### Requirement: POST /api/v1/files/copy endpoint
 
 The BFF SHALL expose `POST /api/v1/files/copy` that accepts a batch of file/folder items, copies each via DIAL Core `copyResource`, and returns a per-item result array.

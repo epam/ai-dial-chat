@@ -1,4 +1,10 @@
-## MODIFIED Requirements
+# attachment-send-flow Specification
+
+## Purpose
+
+Immediate app-level upload of attachments and their mapping to URL DTOs when a message is sent.
+
+## Requirements
 
 ### Requirement: `attachmentsToDtos` maps uploaded attachments to URL DTOs
 
@@ -74,8 +80,6 @@ This callback SHALL be invoked by the input library immediately when an attachme
 - **THEN** `attachments` is omitted from the chat request body
 
 ---
-
-## ADDED Requirements
 
 ### Requirement: App-level upload path generation utility
 

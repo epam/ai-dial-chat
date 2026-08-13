@@ -61,6 +61,9 @@ export const UserMenu = memo(() => {
   const isMobile = useIsMobile();
   const { isLogoutOpen, openLogout, closeLogout } = useLogout();
   const isUserSettingsHidden = useUiFeature(OverlayFeature.HideUserSettings);
+  const isKeyboardShortcutsHidden = useUiFeature(
+    OverlayFeature.HideKeyboardShortcuts,
+  );
 
   if (status !== AuthStatus.Authenticated || !user || isMobile) {
     return null;
@@ -164,7 +167,7 @@ export const UserMenu = memo(() => {
     //   icon: <IconColorSwatch size={DIAL_ICON_SIZE.SM} aria-hidden />,
     //   children: themeChildren,
     // },
-    ...(!isUserSettingsHidden
+    ...(!isUserSettingsHidden && !isKeyboardShortcutsHidden
       ? [
           {
             key: 'keyboard-shortcuts',

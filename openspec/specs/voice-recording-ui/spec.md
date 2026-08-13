@@ -1,3 +1,11 @@
+# voice-recording-ui Specification
+
+## Purpose
+
+The mic button and the voice bar that replaces the conversation input while a recording is in progress.
+
+## Requirements
+
 ### Requirement: Mic button in ConversationInput
 
 `ConversationInput` SHALL render a ghost icon button (UI kit `GhostIconButton`, 40 px outer / 24 px icon) on the right side of the action bar when `isAudioMessageSupported` is `true`. The button SHALL be hidden when `isAudioMessageSupported` is `false` or not provided. The button SHALL remain visible regardless of whether there is text in the message field or attachments in the tray.
@@ -96,6 +104,17 @@ The waveform `<canvas>` element SHALL be:
 - `h-6` (24 px) on desktop breakpoints, to fit within the single-row layout alongside controls.
 
 A `ResizeObserver` SHALL be attached to the canvas so that the histogram redraws at the correct pixel width whenever the flex layout changes (e.g. on breakpoint change). Resizing SHALL NOT reset the ring buffer; it only redraws the existing buffer content at the new width.
+
+#### Scenario: Canvas height follows the breakpoint
+
+- **WHEN** the voice bar is rendered at a mobile viewport and then at a desktop viewport
+- **THEN** the canvas is `h-8` on mobile and `h-6` on desktop
+
+#### Scenario: A resize redraws without losing history
+
+- **WHEN** the flex layout changes width while recording
+- **THEN** the `ResizeObserver` triggers a redraw at the new pixel width
+- **AND** the already-captured waveform history remains in the ring buffer
 
 ---
 

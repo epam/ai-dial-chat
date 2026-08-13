@@ -167,8 +167,16 @@ export interface CatalogProps {
    */
   onRevokeShare?: (item: CatalogItem) => Promise<void> | void;
   /**
+   * Resolves how many users currently hold shared access to an owned item.
+   * Called when the owner opens the details panel's Manage menu, so "Revoke
+   * access" is gated and labelled on a count that is never stale. `0` hides
+   * the action; `undefined` (or a rejection) leaves it reachable without a
+   * count. Omit to offer the action for every owned item.
+   */
+  onFetchRecipientsCount?: (item: CatalogItem) => Promise<number | undefined>;
+  /**
    * Narrows where the "Revoke access" action is offered, on top of the
-   * built-in `isMyApp`/`recipientsCount` rule. Use it to declare that
+   * built-in `isMyApp` rule and the recipient count. Use it to declare that
    * revoking is unsupported for a kind of item. Defaults to `true` (visible)
    * when absent.
    */

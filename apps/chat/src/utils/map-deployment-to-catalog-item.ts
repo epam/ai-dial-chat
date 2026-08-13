@@ -192,7 +192,6 @@ export const mapDeploymentToCatalogItem = (
     isStarred: favoriteIds.has(deployment.id),
     isMyApp: deployment.isMy ?? false,
     sharedWithMe: deployment.sharedWithMe ?? false,
-    recipientsCount: deployment.recipientsCount,
     isEditable:
       (!!deployment.isMy || !!deployment.canEdit) &&
       ((editableSchemaIds.length > 0 &&
@@ -251,7 +250,6 @@ export const mapToolsetToCatalogItem = (
     isStarred: favoriteIds.has(toolset.id),
     isMyApp: toolset.isMy ?? false,
     sharedWithMe: toolset.sharedWithMe ?? false,
-    recipientsCount: toolset.recipientsCount,
     isEditable: !!(toolset.isMy || toolset.canEdit),
     folder: resolveToolsetFolder(toolset, t),
     credentials: mapToolsetCredentials(
