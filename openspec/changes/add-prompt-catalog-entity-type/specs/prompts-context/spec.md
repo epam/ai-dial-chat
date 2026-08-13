@@ -102,7 +102,7 @@ This is required for correctness, not simplicity: a folder rename rewrites the `
 
 ### Requirement: Non-functional contract for the prompts context
 
-- **State ownership**: `PromptsContext` is the single owner of prompt list, folder list, shared-with-me, and organisation-prompt state. Details-panel content state stays panel-scoped inside `libs/catalog`'s `Catalog` component, per `catalog-item-details-fetch`. Editor form state stays local to `PromptEditor`.
+- **State ownership**: `PromptsContext` SHALL be the single owner of prompt list, folder list, shared-with-me, and organisation-prompt state. Details-panel content state stays panel-scoped inside `libs/catalog`'s `Catalog` component, per `catalog-item-details-fetch`. Editor form state stays local to `PromptEditor`.
 - **Memoisation**: the context value MUST be `useMemo`'d on its constituent state; `refetchPrompts` and `refetchPublicPrompts` MUST be `useCallback`'d so consumers can list them as effect dependencies without re-triggering.
 - **Feature flag**: the provider itself is not gated — it mounts unconditionally and simply holds empty arrays when nothing is fetched. Consumption is gated by `OverlayFeature.Prompts` at the `CatalogView` and route level, so a disabled deployment issues no prompt requests.
 - **i18n**: this capability introduces no user-visible strings; error presentation belongs to its consumers.

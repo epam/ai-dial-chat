@@ -251,7 +251,7 @@ The content and description fields SHALL show a character counter. Per the a11y 
 
 ### Requirement: Non-functional contract for the prompt editor
 
-- **State ownership**: form state is local to `PromptEditor` (`useState`); the prompt and folder lists come from `usePrompts()`. No new context is introduced.
+- **State ownership**: form state SHALL be local to `PromptEditor` (`useState`); the prompt and folder lists come from `usePrompts()`. No new context is introduced.
 - **Loading / empty / error states**: edit mode shows a loading state while `getPrompt` is pending, an error state with retry on failure, and a disabled submit with a pending indicator while a save is in flight. The folder picker shows an explicit empty state when the user has no folders — not a blank list.
 - **i18n**: new keys under `promptEditor.*` — page titles for create and edit, field labels and placeholders for name/description/content/folder, the four validation messages, the character-counter template, the folder create/rename/delete labels, the folder-delete confirmation title and message, and the save/delete success and failure notifications. Save/Cancel/Delete/Edit labels reuse existing `ButtonsI18nKeys` members rather than adding duplicates. Every key is declared in `translation-keys.ts` and `en.json` in the same change.
 - **RTL / direction impact**: the form, folder tree indentation, and character counters use logical properties (`ps-*`, `pe-*`, `text-start`, `border-s-*`); the back/breadcrumb chevron gets `rtl:scale-x-[-1]`; the folder, plus, and trash icons are symmetric and are not mirrored.

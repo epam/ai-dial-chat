@@ -230,6 +230,8 @@ remain disabled in this state, since `ReadyToSave` still gates them and will not
 
 ### Requirement: Settings iframe receives live updates for toolset logins initiated elsewhere
 
+The host SHALL keep a mounted Settings-step iframe's toolset status in sync with toolset logins that succeed outside its own request-response flow, without reloading the iframe.
+
 A toolset login can succeed outside the embedded Settings-step editor's own
 `RequestToolsetLogin`/`ToolsetLoginResult` request-response flow — specifically, the global
 sign-in-interrupt dialog (`SigninInterruptDialog`) lets the user log into a toolset mid-stream
