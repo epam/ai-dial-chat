@@ -131,6 +131,9 @@ export function DropdownSelector({
           multiValue: (styles, state) => ({
             ...styles,
             height: '30px',
+            // react-select stretches the pill children, which leaves the fixed
+            // 24px remove button at the top of the 30px pill instead of centered
+            alignItems: 'center',
             backgroundColor: state.data.backgroundColor,
             borderWidth: '1px',
             borderColor: state.data.borderColor,
