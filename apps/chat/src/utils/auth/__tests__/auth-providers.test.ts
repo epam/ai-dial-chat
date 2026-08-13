@@ -78,9 +78,7 @@ describe('auth-providers tokenConfig.request', () => {
   );
 
   let tokenRequest: TokenEndpointRequest;
-  let configuredAuth0Provider:
-    | OAuthConfig<Record<string, unknown>>
-    | undefined;
+  let configuredAuth0Provider: OAuthConfig<Record<string, unknown>> | undefined;
 
   beforeAll(async () => {
     mockAuth0Provider.mockImplementation((options) => ({

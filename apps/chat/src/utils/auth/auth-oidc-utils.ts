@@ -1,6 +1,5 @@
 const OIDC_DISCOVERY_PATH = '/.well-known/openid-configuration';
-const OIDC_DISCOVERY_PATH_PATTERN =
-  /\/+\.well-known\/openid-configuration$/;
+const OIDC_DISCOVERY_PATH_PATTERN = /\/+\.well-known\/openid-configuration$/;
 
 export const normalizeOidcWellKnownUrl = (wellKnown: string): string => {
   try {
