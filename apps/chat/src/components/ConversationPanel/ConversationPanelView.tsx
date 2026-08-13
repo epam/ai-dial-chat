@@ -141,6 +141,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const isConversationsPublishingEnabled = useUiFeature(
     OverlayFeature.ConversationsPublishing,
   );
+  const isConversationsFilterHidden = useUiFeature(
+    OverlayFeature.HideConversationsFilter,
+  );
   const {
     jobs: exportJobs,
     exportSingle,
@@ -366,7 +369,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       /* Only an owned, writable row can offer revoking, so only those need a
        * count. */
       const rawItem = items.find((c) => c.id === contextId);
-      if (rawItem?.isReadonly || rawItem?.sharedWithMe || rawItem?.publishedWithMe) {
+      if (
+        rawItem?.isReadonly ||
+        rawItem?.sharedWithMe ||
+        rawItem?.publishedWithMe
+      ) {
         return;
       }
       requestRecipientsCount(contextId);
@@ -839,6 +846,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           activeConversationId={panelActiveConversationId}
           activeFilter={requestedFilter}
           onActiveFilterChange={handleActiveFilterChange}
+          isFilterTabsHidden={isConversationsFilterHidden}
           labels={{
             title: t(ConversationPanelI18nKeys.Title),
             emptyLabel: t(ConversationPanelI18nKeys.Empty),

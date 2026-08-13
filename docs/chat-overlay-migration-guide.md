@@ -480,7 +480,7 @@ integrations from typos and removed keys.
 
 ### Supported flags and defaults
 
-The new chat supports 37 flags.
+The new chat supports 39 flags.
 
 Enabled by default:
 
@@ -506,6 +506,7 @@ file-manager
 toolsets
 custom-apps
 prompts
+skills
 voice-input
 ```
 
@@ -517,6 +518,7 @@ disabled-send
 skip-focus-chat-input-onload
 disallow-change-agent
 hide-change-agent
+hide-conversations-filter
 hide-new-conversation
 hide-empty-chat-change-agent
 catalog-hide-my-apps
@@ -524,9 +526,9 @@ catalog-table-view
 hide-delete-user-message
 hide-edit-user-message
 hide-regenerate-assistant-message
-skills
 hide-user-menu
 hide-user-settings
+hide-keyboard-shortcuts
 ```
 
 `disallow-change-agent` and `hide-change-agent` both act on the in-chat
@@ -536,6 +538,19 @@ not rendered at all, rather than rendered greyed out. Use
 otherwise changeable; use `disallow-change-agent` when the restriction itself
 is the point. The empty-chat composer has its own key,
 `hide-empty-chat-change-agent`.
+
+`hide-conversations-filter` removes the conversations panel's source filter
+row (All / My chats / Shared / Organization). The list keeps every group, so
+nothing becomes unreachable — only the control is gone. Use it for embeds
+where one source is the whole story.
+
+`hide-keyboard-shortcuts` removes the Keyboard shortcuts entry from the user
+menu and from the mobile profile sheet. The preference it edits (Enter vs
+`⌘`/`Ctrl`+Enter to send) keeps working from its stored value, defaulting to
+Enter — hiding the entry pins users to whatever they last chose rather than
+disabling the shortcut. `hide-user-settings` also hides this entry, on both
+surfaces; use `hide-keyboard-shortcuts` when the language selector should
+stay.
 
 `voice-input` additionally adds `microphone` to the iframe's `allow`
 attribute. The flag itself does not provide an ASR model or replace the
@@ -550,8 +565,8 @@ ENABLED_UI_FEATURES=header,conversations-section,likes,input-files
 ```
 
 This is also a complete replacement set, not an addition to the defaults. If
-the variable is absent or empty, the built-in baseline containing 22
-default-on flags (of 37) is used. Entries the server does not recognize — including
+the variable is absent or empty, the built-in baseline containing 23
+default-on flags (of 39) is used. Entries the server does not recognize — including
 the renamed and retired legacy strings listed above — are logged and dropped;
 if every entry is unrecognized, the built-in baseline is used instead. An overlay host may replace the server baseline with
 its own `enabledFeatures`; the server baseline is not a security ceiling.

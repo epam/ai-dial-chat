@@ -91,6 +91,8 @@ export enum OverlayFeature {
   Header = 'header',
   /** Makes the conversations sidebar section open by default. */
   ShowConversationsSectionByDefault = 'showConversationsSectionByDefault',
+  /** Hides the conversations panel's source filter tabs (All / My chats / Shared / Organization). */
+  HideConversationsFilter = 'hide-conversations-filter',
   /** Enables the catalog (`/catalog`) route. */
   Catalog = 'catalog',
   /** Restricts the catalog to hide the current user's own/shared-with-me apps. */
@@ -125,6 +127,8 @@ export enum OverlayFeature {
   HideUserMenu = 'hide-user-menu',
   /** Hides the settings entry in the user menu. */
   HideUserSettings = 'hide-user-settings',
+  /** Hides the keyboard-shortcuts entry in the user menu and the mobile profile sheet. */
+  HideKeyboardShortcuts = 'hide-keyboard-shortcuts',
   /** Enables the `microphone` permission on the iframe's `allow` attribute for voice input. */
   VoiceInput = 'voice-input',
 }

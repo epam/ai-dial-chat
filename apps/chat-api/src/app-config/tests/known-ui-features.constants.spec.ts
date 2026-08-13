@@ -10,8 +10,8 @@ import { KNOWN_UI_FEATURES } from '../known-ui-features.constants';
  * them in the same change as any `OverlayFeature` addition, removal, or rename.
  */
 describe('KNOWN_UI_FEATURES', () => {
-  it('has exactly 37 members, one per OverlayFeature key', () => {
-    expect(KNOWN_UI_FEATURES.size).toBe(37);
+  it('has exactly 39 members, one per OverlayFeature key', () => {
+    expect(KNOWN_UI_FEATURES.size).toBe(39);
   });
 
   it('includes representative transferable keys', () => {
