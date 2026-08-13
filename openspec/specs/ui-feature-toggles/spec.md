@@ -33,7 +33,7 @@
 
 ### Requirement: Default baseline preserves current unconditional behavior
 
-`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 22 default-on keys and exclude the 13 default-off (`Hide*`/restrictive modifier) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `file-manager`, `prompts`... are default-on; `hide-edit-user-message`, `disabled-send`, `catalog-table-view`... are default-off — the full 35-key membership is the `OverlayFeature` enum itself, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 35 keys, matching each surface's current unconditional behavior.
+`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 22 default-on keys and exclude the 15 default-off (`Hide*`/restrictive modifier) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `file-manager`, `prompts`... are default-on; `hide-edit-user-message`, `disabled-send`, `catalog-table-view`, `hide-change-agent`... are default-off — the full 37-key membership is the `OverlayFeature` enum itself, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 37 keys, matching each surface's current unconditional behavior.
 
 **RTL impact:** None for this requirement itself — individual owning-surface gates state their own RTL impact where relevant (see per-surface requirements below).
 
@@ -125,7 +125,7 @@ The effective visibility of the voice-input UI affordance SHALL be `isEnabled('v
 
 ### Requirement: Each transferable feature key gates exactly one owning surface
 
-Each of the 35 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
+Each of the 37 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
 
 **Accessibility:** Conditionally-unmounted controls remove themselves from both the accessibility tree and the tab order by not rendering — no `aria-hidden` container with focusable descendants is introduced by this change.
 
@@ -140,6 +140,31 @@ Each of the 35 transferable `OverlayFeature` values SHALL gate exactly the ownin
 
 - **WHEN** `isEnabled('hide-new-conversation')` is `true`
 - **THEN** the "New conversation" controls in `Header.tsx` and `ChatLayout.tsx` do not render, and no other header/layout control is affected
+
+### Requirement: An unusable agent selector is removed, not dimmed
+
+The in-chat agent selector SHALL NOT render when the user cannot act on it. `isEnabled('hide-change-agent')` and `isEnabled('disallow-change-agent')` SHALL each remove the control from `ConversationView`'s conversation input entirely, by passing no `deployments` to `ConversationInput` — the lib's own hide path, which also leaves the send button enabled because `Input` reads an absent selector as a resolved model. Neither key SHALL render the selector greyed out: a dimmed icon carrying a caret advertises a menu that never opens, and where the deployment cannot be changed the icon carries no actionable information.
+
+A pinned `fixedModel` SHALL keep rendering the disabled selector, because the app editor's preview pane shows the same chip through `NewConversationComposer` in its empty state and would otherwise lose it after the first message. The empty-chat composer keeps its own separate key, `hide-empty-chat-change-agent`.
+
+**Accessibility:** The removed control leaves neither an accessibility-tree node nor a tab stop, replacing a `pointer-events-none` element that was still exposed to assistive tech.
+
+**i18n impact:** None — the selector's existing translated labels are shown or omitted; no new strings.
+
+#### Scenario: hide-change-agent removes the in-chat selector
+
+- **WHEN** `isEnabled('hide-change-agent')` is `true`
+- **THEN** the conversation input renders no agent selector, and the send button stays enabled
+
+#### Scenario: disallow-change-agent removes the selector rather than dimming it
+
+- **WHEN** `isEnabled('disallow-change-agent')` is `true`
+- **THEN** the conversation input renders no agent selector — in particular no greyed-out icon with a caret
+
+#### Scenario: A pinned model still shows its disabled selector
+
+- **WHEN** `ConversationView` receives a `fixedModel` and neither agent-selector key is enabled
+- **THEN** the selector renders disabled with the pinned model's icon, matching what the composer shows before the first message
 
 ### Requirement: A key that gates a route hides both the entry point and the route
 

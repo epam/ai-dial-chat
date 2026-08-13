@@ -131,19 +131,27 @@ i18n keys: `navigation.menu` (root title), `navigation.mobileMenu` (hamburger ar
 
 ### Requirement: NavPageContent
 
-`apps/chat/src/components/MobileNavBottomSheet/NavPageContent.tsx`
+The navigation root page SHALL live at `apps/chat/src/components/MobileNavBottomSheet/NavPageContent.tsx`.
 
-Props: `{ onLogoutRequest: () => void }`. Lists navigation items from `NAVIGATION_CONFIG` then a Profile row (`IconUser`, `IconChevronRight rtl:scale-x-[-1]`). Nav item tap: `close()` + `useNavigate`. Profile tap: `push({ title: t(NavigationI18nKeys.Profile), content: <ProfilePageContent onLogoutRequest={onLogoutRequest} /> })`.
+Props: `{ onLogoutRequest: () => void }`. It SHALL list navigation items from `NAVIGATION_CONFIG` followed by a Profile row (`IconUser`, `IconChevronRight rtl:scale-x-[-1]`). Nav item tap: `close()` + `useNavigate`. Profile tap: `push({ title: t(NavigationI18nKeys.Profile), content: <ProfilePageContent onLogoutRequest={onLogoutRequest} /> })`.
 
 i18n: `navigation.profile`
+
+#### Scenario: Tapping a navigation item closes the sheet and navigates
+- **WHEN** the user taps a row backed by `NAVIGATION_CONFIG`
+- **THEN** the sheet closes and the app navigates to that route
+
+#### Scenario: Tapping Profile pushes the profile page
+- **WHEN** the user taps the Profile row
+- **THEN** `ProfilePageContent` is pushed onto the stack under the Profile title, and the sheet stays open
 
 ---
 
 ### Requirement: ProfilePageContent
 
-`apps/chat/src/components/MobileNavBottomSheet/ProfilePageContent.tsx`
+The profile page SHALL live at `apps/chat/src/components/MobileNavBottomSheet/ProfilePageContent.tsx`.
 
-Props: `{ onLogoutRequest: () => void }`. Uses `useUserProfile()` for identity data; `useTheme()` for `themes`.
+Props: `{ onLogoutRequest: () => void }`. It SHALL read identity data from `useUserProfile()` and available themes from `useTheme()`.
 
 Body:
 1. Avatar (40 × 40 px image or `AvatarInitials` fallback) + `DialEllipsisTooltip` display name.
@@ -164,17 +172,29 @@ Body:
 
 ### Requirement: ThemePageContent
 
-`apps/chat/src/components/MobileNavBottomSheet/ThemePageContent.tsx`
+The theme page SHALL live at `apps/chat/src/components/MobileNavBottomSheet/ThemePageContent.tsx`.
 
-Uses `useThemeOptions()` → `{ hasDark, hasLight, selectedTheme, setTheme }`. One row per available theme: `IconMoon` (Dark), `IconSun` (Light), `IconDeviceDesktop` (System, only when both dark and light available). Active selection shows `IconCheck` (`DIAL_ICON_SIZE.SM`). All other icons use `BASE_ICON_SIZE`. Tap: `setTheme(id)` then `pop()`.
+It SHALL read `{ hasDark, hasLight, selectedTheme, setTheme }` from `useThemeOptions()` and render one row per available theme: `IconMoon` (Dark), `IconSun` (Light), `IconDeviceDesktop` (System, only when both dark and light are available). Active selection shows `IconCheck` (`DIAL_ICON_SIZE.SM`). All other icons use `BASE_ICON_SIZE`. Tap: `setTheme(id)` then `pop()`.
+
+#### Scenario: Selecting a theme applies it and returns
+- **WHEN** the user taps a theme row
+- **THEN** `setTheme` is called with that theme and the sheet pops back to the profile page
+
+#### Scenario: System is offered only when both variants exist
+- **WHEN** only a dark theme is available
+- **THEN** no System row is rendered
 
 ---
 
 ### Requirement: KeyboardPageContent
 
-`apps/chat/src/components/MobileNavBottomSheet/KeyboardPageContent.tsx`
+The keyboard-shortcut page SHALL live at `apps/chat/src/components/MobileNavBottomSheet/KeyboardPageContent.tsx`.
 
-Uses `useKeyboardShortcutPreference()`. Two rows mirroring the desktop options; active shows `IconCheck` (`DIAL_ICON_SIZE.SM`). Tap: `setPreference(value)` then `pop()`.
+It SHALL read the current preference from `useKeyboardShortcutPreference()` and render two rows mirroring the desktop options; the active one shows `IconCheck` (`DIAL_ICON_SIZE.SM`). Tap: `setPreference(value)` then `pop()`.
+
+#### Scenario: Selecting a shortcut persists it and returns
+- **WHEN** the user taps the non-active shortcut row
+- **THEN** `setPreference` is called with that value and the sheet pops back to the profile page
 
 ---
 

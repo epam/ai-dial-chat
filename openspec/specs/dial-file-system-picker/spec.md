@@ -297,6 +297,8 @@ The `DialFileManager` rendered in this modal SHALL expose only a subset of mutat
 
 ### Requirement: i18n, Accessibility, RTL, and Responsive Behavior
 
+The picker SHALL be fully translated, keyboard-operable, direction-agnostic, and usable at both mobile and desktop widths.
+
 **i18n keys** (all in `apps/chat/src/i18n/locales/en.json`):
 
 | Key | English |

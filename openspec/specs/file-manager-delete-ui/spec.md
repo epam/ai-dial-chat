@@ -4,15 +4,17 @@
 
 The delete capability on `useDialFileManager` and its wiring into the file-manager modal.
 
-## Requirement: useDialFileManager — delete capability
+## Requirements
+
+### Requirement: useDialFileManager — delete capability
 
 `useDialFileManager` in `apps/chat/src/hooks/files/useDialFileManager.ts` SHALL expose `onDeleteFiles` and `isDeleting`, and SHALL surface delete results through the `onNotification` option passed by `DialFileManagerModal`.
 
-### State ownership
+#### State ownership
 
 Delete loading state is owned by `useDialFileManager`. Toast rendering is owned by `DialFileManagerModal` through the app-level `useNotification` context. No new React Context is introduced.
 
-### Interface additions
+#### Interface additions
 
 ```typescript
 export interface UseDialFileManagerResult {
@@ -35,7 +37,7 @@ onNotification?: (notification: {
 }) => void;
 ```
 
-### `onDeleteFiles` implementation
+#### `onDeleteFiles` implementation
 
 `DialDeletedItem.sourceUrl` is the **virtual path** set on `DialFile.path` (e.g. `/All files/reports/q1.pdf`), NOT a DIAL resource URL. Convert it to an API-relative path using the existing `virtualPathToApiPath(sourceUrl, rootLabel)` helper already defined in the hook.
 
@@ -59,7 +61,7 @@ onNotification?: (notification: {
 10. setIsDeleting(false)
 ```
 
-### Cache invalidation detail
+#### Cache invalidation detail
 
 For each deleted item, compute its API folder key (parent path):
 - `item` node: parent = everything up to the last `/` in `relPath` (e.g. `reports/` for `reports/q1.pdf`)
@@ -67,7 +69,7 @@ For each deleted item, compute its API folder key (parent path):
 
 Remove those keys from both `cache` and `listingPermissionsCache`.
 
-### Navigation on current-folder deletion
+#### Navigation on current-folder deletion
 
 Check whether `folderPath` (current) equals or starts with any deleted folder's API path. If so, navigate to the nearest non-deleted ancestor:
 
@@ -78,13 +80,13 @@ setFolderPath(parentApiPath);
 
 If `folderPath` is root (`''`), no navigation needed — root cannot be deleted.
 
-### Permission gating
+#### Permission gating
 
 `DialFileManagerActions.Delete` is included in `actionLabels` only when the current folder has WRITE permission (`canWriteCurrentFolder`). This hides the delete action for read-only folders without a separate disable prop.
 
 Bulk mixed-selection: the delete action visibility is governed by the current browsed folder's WRITE permission. Items in sub-folders with stricter permissions produce per-item 403s, captured as partial failures.
 
-### i18n keys (hook-level)
+#### i18n keys (hook-level)
 
 | Key | Usage |
 |-----|-------|
@@ -99,11 +101,11 @@ Bulk mixed-selection: the delete action visibility is governed by the current br
 
 ---
 
-## Requirement: DialFileManagerModal — delete wiring
+### Requirement: DialFileManagerModal — delete wiring
 
 `DialFileManagerModal` in `apps/chat/src/components/DialFileManagerModal/DialFileManagerModal.tsx` SHALL wire delete into the `DialFileManager` component and expose new props for i18n copy.
 
-### New Props
+#### New Props
 
 ```typescript
 interface Props {
@@ -119,7 +121,7 @@ interface Props {
 
 All copy is passed from call sites (`ConversationView` / `ConversationRoute`) using `useTranslation` at the app layer. The modal itself does NOT call `useTranslation` for delete strings.
 
-### Hook consumption
+#### Hook consumption
 
 ```typescript
 const {
@@ -129,14 +131,14 @@ const {
 } = useDialFileManager({ bucket, onNotification: showNotification });
 ```
 
-### isOperationInProgress update
+#### isOperationInProgress update
 
 ```typescript
 const isOperationInProgress =
   isDownloading || isDeleting || isCreatingFolder || uploadBatchState != null;
 ```
 
-### deleteConfirmationOptions (memoized)
+#### deleteConfirmationOptions (memoized)
 
 ```typescript
 const deleteConfirmationOptions = useMemo(
@@ -150,7 +152,7 @@ const deleteConfirmationOptions = useMemo(
 );
 ```
 
-### gridOptions — delete action label
+#### gridOptions — delete action label
 
 ```typescript
 actionLabels: {
@@ -161,7 +163,7 @@ actionLabels: {
 
 `deleteLabel` added to the `useMemo` dependency array.
 
-### treeOptions — delete action label
+#### treeOptions — delete action label
 
 ```typescript
 actionLabels: {
@@ -170,7 +172,7 @@ actionLabels: {
 },
 ```
 
-### bulkActionsToolbarOptions — delete action label
+#### bulkActionsToolbarOptions — delete action label
 
 ```typescript
 actionLabels: {
@@ -179,7 +181,7 @@ actionLabels: {
 },
 ```
 
-### DialFileManager props
+#### DialFileManager props
 
 ```tsx
 <DialFileManager
@@ -189,7 +191,7 @@ actionLabels: {
 />
 ```
 
-### Loading overlay (delete)
+#### Loading overlay (delete)
 
 Inside the `<div className="relative ...">` that wraps `DialFileManager`:
 
@@ -204,11 +206,11 @@ Inside the `<div className="relative ...">` that wraps `DialFileManager`:
 )}
 ```
 
-### Toast feedback (delete)
+#### Toast feedback (delete)
 
 `DialFileManagerModal` calls `useNotification()` and passes `showNotification` into `useDialFileManager({ bucket, onNotification: showNotification })`. Delete success and failure feedback is rendered by the global `NotificationContainer`, not as an inline banner inside the modal.
 
-### Call sites: new prop values
+#### Call sites: new prop values
 
 In `ConversationView` and `ConversationRoute`, add the delete props using `useTranslation`:
 
@@ -250,9 +252,67 @@ In `ConversationView` and `ConversationRoute`, add the delete props using `useTr
 
 > **Note on `names[]`**: the ui-kit passes `DialDeletedItem.sourceUrl` values as the `names` array to both `titleRenderer` and `contentRenderer`. Each entry is a DIAL resource URL (`files/{bucket}/path/file.pdf`). Use `.split('/').pop()` to extract the display filename for the single-item case, matching the legacy behavior.
 
+
+#### Scenario: Delete single file from grid row context menu
+
+- **GIVEN** user is browsing a folder with WRITE permission
+- **WHEN** user right-clicks a file → selects "Delete" → confirms in the popup
+- **THEN** `onDeleteFiles` is called with one `DialDeletedItem`; a loading overlay appears; on completion the file is gone from the listing
+
+#### Scenario: Bulk delete 3 items
+
+- **GIVEN** user selects 3 items in the grid (files and/or folders)
+- **WHEN** user clicks "Delete" in the bulk toolbar → confirms
+- **THEN** all 3 items are deleted; list refreshes; selection is cleared
+
+#### Scenario: Delete folder from folder tree context menu
+
+- **GIVEN** user right-clicks a folder in the navigation tree
+- **WHEN** user selects "Delete" → confirms
+- **THEN** folder and all its contents are recursively deleted; folder disappears from the tree; if the user was browsing inside it, navigation moves to the parent
+
+#### Scenario: Delete current folder
+
+- **GIVEN** user is browsing `/All files/old-data/`
+- **WHEN** user deletes `old-data` (via tree context menu) → confirms
+- **THEN** hook detects `folderPath === 'old-data/'` is deleted; navigates to root; listing shows root contents
+
+#### Scenario: Partial failure (some items forbidden)
+
+- **GIVEN** a bulk selection of 4 items where 1 is in a read-only sub-folder
+- **WHEN** delete is confirmed
+- **THEN** 3 items are deleted successfully; a success toast is shown for the deleted items; an error toast lists the failed item names
+
+#### Scenario: Read-only folder — delete action hidden
+
+- **GIVEN** user navigates to a folder they only have READ permission on
+- **WHEN** the grid row context menu is opened for any item in that folder
+- **THEN** "Delete" is absent from the menu (no `DialFileManagerActions.Delete` in `actionLabels`)
+
+#### Scenario: Delete 101 items (bulk)
+
+- **GIVEN** user attempts a batch delete of 101 items
+- **WHEN** `onDeleteFiles` builds the DTO and calls the BFF
+- **THEN** BFF returns 400; an error toast shows `dialFileManager.deleteFilesError`
+
+#### Scenario: DIAL Core 403 on all items
+
+- **GIVEN** all items in the batch return 403 from DIAL Core
+- **WHEN** delete completes
+- **THEN** an error toast lists the failed item names; cache refresh still runs for the current folder
+
+#### Scenario: Upload/Download/Attach unchanged
+
+- **GIVEN** the modal is open with existing upload, download, and attach functionality
+- **WHEN** the user uses any of those flows
+- **THEN** they work identically to before this change (no regressions in `isOperationInProgress`, `selectedPaths`, footer button)
+
+
 ---
 
-## Requirement: i18n keys
+### Requirement: i18n keys
+
+Every user-visible delete string SHALL resolve through a translation key; no delete label, confirmation copy, or toast text may be a literal in component code.
 
 New keys added to `apps/chat/src/i18n/locales/en.json` under `dialFileManager`:
 
@@ -277,35 +337,62 @@ New keys added to `apps/chat/src/i18n/locales/en.json` under `dialFileManager`:
 
 `buttons.cancel` already exists and is reused.
 
+#### Scenario: Delete copy is fully translated
+
+- **WHEN** the delete action, its confirmation popup, and its result toasts are rendered
+- **THEN** each string resolves through one of the listed `dialFileManager.*` keys, with Cancel reusing `buttons.cancel`
+
 ---
 
-## Requirement: RTL
+### Requirement: RTL
+
+The delete surfaces SHALL introduce no physical-direction styling, so they follow the writing direction unchanged:
 
 - No new physical-direction Tailwind classes. All classes follow the logical pattern or are symmetric.
 - Toast placement is handled by `NotificationContainer`, which uses logical positioning (`start-1/2`).
 - `aria-live`, `role="alert"`, `z-*`, `bg-*` — direction-agnostic.
 - No new directional icons.
 
+#### Scenario: Delete surfaces flip with the document
+
+- **WHEN** the file manager is rendered with `dir="rtl"`
+- **THEN** the delete overlay, toasts, and menu entries mirror through logical positioning, with no physical `left-*` / `right-*` class and no mirrored icon
+
 ---
 
-## Requirement: Accessibility
+### Requirement: Accessibility
+
+The delete flow SHALL stay operable and announced without a pointer:
 
 - Delete loading overlay: `aria-live="polite"` — announces to screen readers that an operation is in progress.
 - Delete result toasts are rendered through `NotificationContainer` / `Notification`.
 - Confirmation popup: handled by `DialFileManager` / ui-kit (focus trap, keyboard Escape = cancel, Enter = confirm).
 - Delete action items in grid/tree context menus: rendered by ui-kit; keyboard-accessible via existing grid/tree keyboard navigation.
 
+#### Scenario: A keyboard-only delete is announced end to end
+
+- **WHEN** the user reaches the Delete action by keyboard and confirms it
+- **THEN** focus stays trapped in the confirmation popup, Escape cancels and Enter confirms
+- **AND** the in-progress overlay announces itself through `aria-live="polite"` before the result toast appears
+
 ---
 
-## Requirement: Memoisation
+### Requirement: Memoisation
+
+Delete wiring SHALL keep the option objects the file manager already caches referentially stable:
 
 - `deleteConfirmationOptions` wrapped in `useMemo` with all four copy props as deps.
 - `gridOptions`, `treeOptions`, `bulkActionsToolbarOptions` already use `useMemo`; `deleteLabel` added to each dependency array.
 - `onDeleteFiles` inside `useDialFileManager` is wrapped in `useCallback` with `[bucket, rootLabel, t]` deps (same pattern as `onDownloadFiles`).
 
+#### Scenario: Unrelated re-render keeps option identity
+
+- **WHEN** the host re-renders without changing bucket, root label, or translations
+- **THEN** `onDeleteFiles`, `deleteConfirmationOptions`, `gridOptions`, `treeOptions`, and `bulkActionsToolbarOptions` keep their previous references
+
 ---
 
-## Requirement: dial-file-system-picker spec sync
+### Requirement: dial-file-system-picker spec sync
 
 `openspec/specs/dial-file-system-picker/spec.md` SHALL be updated with a sync note at the top:
 
@@ -318,63 +405,11 @@ New keys added to `apps/chat/src/i18n/locales/en.json` under `dialFileManager`:
 
 No requirement-level behavior in `dial-file-system-picker` changes.
 
----
+#### Scenario: The picker spec records the new props
 
-## Scenarios
-
-### Scenario: Delete single file from grid row context menu
-
-- **GIVEN** user is browsing a folder with WRITE permission
-- **WHEN** user right-clicks a file → selects "Delete" → confirms in the popup
-- **THEN** `onDeleteFiles` is called with one `DialDeletedItem`; a loading overlay appears; on completion the file is gone from the listing
-
-### Scenario: Bulk delete 3 items
-
-- **GIVEN** user selects 3 items in the grid (files and/or folders)
-- **WHEN** user clicks "Delete" in the bulk toolbar → confirms
-- **THEN** all 3 items are deleted; list refreshes; selection is cleared
-
-### Scenario: Delete folder from folder tree context menu
-
-- **GIVEN** user right-clicks a folder in the navigation tree
-- **WHEN** user selects "Delete" → confirms
-- **THEN** folder and all its contents are recursively deleted; folder disappears from the tree; if the user was browsing inside it, navigation moves to the parent
-
-### Scenario: Delete current folder
-
-- **GIVEN** user is browsing `/All files/old-data/`
-- **WHEN** user deletes `old-data` (via tree context menu) → confirms
-- **THEN** hook detects `folderPath === 'old-data/'` is deleted; navigates to root; listing shows root contents
-
-### Scenario: Partial failure (some items forbidden)
-
-- **GIVEN** a bulk selection of 4 items where 1 is in a read-only sub-folder
-- **WHEN** delete is confirmed
-- **THEN** 3 items are deleted successfully; a success toast is shown for the deleted items; an error toast lists the failed item names
-
-### Scenario: Read-only folder — delete action hidden
-
-- **GIVEN** user navigates to a folder they only have READ permission on
-- **WHEN** the grid row context menu is opened for any item in that folder
-- **THEN** "Delete" is absent from the menu (no `DialFileManagerActions.Delete` in `actionLabels`)
-
-### Scenario: Delete 101 items (bulk)
-
-- **GIVEN** user attempts a batch delete of 101 items
-- **WHEN** `onDeleteFiles` builds the DTO and calls the BFF
-- **THEN** BFF returns 400; an error toast shows `dialFileManager.deleteFilesError`
-
-### Scenario: DIAL Core 403 on all items
-
-- **GIVEN** all items in the batch return 403 from DIAL Core
-- **WHEN** delete completes
-- **THEN** an error toast lists the failed item names; cache refresh still runs for the current folder
-
-### Scenario: Upload/Download/Attach unchanged
-
-- **GIVEN** the modal is open with existing upload, download, and attach functionality
-- **WHEN** the user uses any of those flows
-- **THEN** they work identically to before this change (no regressions in `isOperationInProgress`, `selectedPaths`, footer button)
+- **WHEN** this change ships
+- **THEN** `dial-file-system-picker/spec.md` carries the sync note above
+- **AND** none of its own requirements or scenarios are altered
 
 ---
 

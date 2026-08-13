@@ -149,6 +149,8 @@ The `DialConfirmationPopup` SHALL:
 
 ### Requirement: Successful deletion clears the panel and navigates to root when a conversation was open
 
+On a complete success the panel SHALL clear and, when a conversation was open, the app SHALL return to root.
+
 After the API returns with `failed.length === 0`:
 - The popup is closed.
 - If `activeConversationId` is non-null, the app navigates to `ROUTES.ROOT`.
@@ -181,6 +183,8 @@ Navigation MUST be triggered by checking `activeConversationId` directly — NOT
 
 ### Requirement: Partial failure closes the popup, shows a notification, and navigates to root
 
+A partial failure SHALL be reported through a dismissible notification rather than an inline error, and SHALL still close the popup.
+
 After the API returns with `failed.length > 0 && (deleted > 0 || alreadyAbsent > 0)`:
 - The popup is closed.
 - A `Notification` with `variant={NotificationVariant.Error}` is shown with text from `ConversationPanelI18nKeys.DeleteAllPartialError`.
@@ -197,6 +201,8 @@ After the API returns with `failed.length > 0 && (deleted > 0 || alreadyAbsent >
 ---
 
 ### Requirement: Total failure keeps the popup open with an inline error
+
+A total failure SHALL keep the popup open with an inline error so the user can retry in place.
 
 After the API returns with `failed.length > 0 && deleted === 0 && alreadyAbsent === 0`:
 - The popup remains open.
@@ -253,6 +259,8 @@ New keys:
 
 ### Requirement: RTL — dropdown placement and notification use logical positioning
 
+The menu and its notification SHALL be positioned logically, so both follow the writing direction:
+
 - `DialDropdown` uses `placement="bottom-end"` so the menu opens at the logical end of the trigger (left in RTL, right in LTR).
 - The `Notification` for partial error uses `start-4` (not `left-4`) in its `className`.
 
@@ -265,6 +273,8 @@ New keys:
 ---
 
 ### Requirement: Accessibility — keyboard, focus, and ARIA
+
+The whole delete-all flow SHALL be reachable and operable by keyboard alone:
 
 - The overflow trigger is a native `<button>` (via `DialIconButton`) and is keyboard-focusable and activatable with Enter/Space.
 - `DialDropdown` handles arrow-key navigation among items and Escape to close.

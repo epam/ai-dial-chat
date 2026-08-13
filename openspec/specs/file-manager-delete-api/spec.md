@@ -4,15 +4,17 @@
 
 `POST /api/v1/files/delete`: its DTOs, service behavior, cache invalidation, and rate limiting.
 
-## Requirement: POST /api/v1/files/delete endpoint
+## Requirements
+
+### Requirement: POST /api/v1/files/delete endpoint
 
 The BFF SHALL expose `POST /api/v1/files/delete` that accepts a batch of file/folder items, deletes each from DIAL Core, and returns a per-item result array.
 
-### State ownership
+#### State ownership
 
 `FilesBatchOperationsService` (`apps/chat-api/src/files/batch/files-batch-operations.service.ts`) owns all delete logic, sharing its per-child dispatch/fan-out/aggregate-partial-failure control flow with rename, copy, and move through one internal generic helper. It injects `FilesListingService` for `expandFolderContents`. `FilesController` delegates through the `FilesService` facade, following the existing thin-controller pattern.
 
-### Request DTO
+#### Request DTO
 
 **`DeleteItemNodeType`** (string enum, `apps/chat-api/src/files/dto/delete-files.dto.ts`):
 ```
@@ -35,7 +37,7 @@ Folder = 'folder'
 |-------|------|-------------|
 | `items` | `DeleteItemDto[]` | `@IsArray @ArrayMinSize(1) @ArrayMaxSize(100) @ValidateNested({ each: true }) @Type(() => DeleteItemDto)` |
 
-### Response DTO
+#### Response DTO
 
 **`DeleteItemResultDto`**:
 
@@ -51,7 +53,7 @@ Folder = 'folder'
 |-------|------|
 | `results` | `DeleteItemResultDto[]` |
 
-### Controller signature
+#### Controller signature
 
 ```typescript
 @Post('delete')
@@ -70,7 +72,7 @@ async deleteFiles(
 ): Promise<DeleteFilesResponseDto>
 ```
 
-### Service behavior
+#### Service behavior
 
 1. For each `DeleteItemDto`:
    - If `nodeType === 'item'`: call `this.client.deleteFile(bucket, relativePath, { headers: getBearerAuthHeaders(at) })`.  
@@ -85,7 +87,7 @@ async deleteFiles(
 
 **`expandFolderContents` reuse**: the method lives on `FilesListingService` (relocated from the original monolithic `FilesService`); `FilesBatchOperationsService` calls it with `at` from the session token.
 
-### Generated client
+#### Generated client
 
 - **operationId**: `filesControllerDeleteFiles` (NestJS auto-name)
 - **SDK method**: `filesApi.deleteFiles({ deleteFilesDto: { items } })`
@@ -93,15 +95,15 @@ async deleteFiles(
 - **Response DTO**: `DeleteFilesResponseDto`
 - **Raw method**: Not needed (JSON response).
 
-### Cache key and invalidation
+#### Cache key and invalidation
 
 This endpoint does not manage server-side cache. Cache TTL/invalidation is frontend-only (per the hook design).
 
-### Rate limiting
+#### Rate limiting
 
 `@Throttle({ default: { limit: 10, ttl: 60000 } })` — 10 calls per 60 s per authenticated user.
 
-### Concrete example
+#### Concrete example
 
 **Request**:
 ```json
@@ -150,51 +152,50 @@ HTTP 400
 
 ---
 
-## Scenarios
 
-### Scenario: Delete a single file
+#### Scenario: Delete a single file
 
 - **GIVEN** a valid session and `items = [{ bucket, path: "report.pdf", nodeType: "item" }]`
 - **WHEN** `POST /api/v1/files/delete` is called
 - **THEN** `200 { results: [{ path: "report.pdf", success: true }] }`
 
-### Scenario: File already gone (404 from DIAL Core)
+#### Scenario: File already gone (404 from DIAL Core)
 
 - **GIVEN** the file does not exist on DIAL Core
 - **WHEN** delete is called for that file
 - **THEN** `results[0].success === true` (idempotent)
 
-### Scenario: Delete folder recursively
+#### Scenario: Delete folder recursively
 
 - **GIVEN** `items = [{ bucket, path: "old-data/", nodeType: "folder" }]`
 - **WHEN** `POST /api/v1/files/delete` is called
 - **THEN** all child files and the `.dial_folder` marker are deleted; `results[0].success === true`
 
-### Scenario: Partial batch failure (2 of 5 items forbidden)
+#### Scenario: Partial batch failure (2 of 5 items forbidden)
 
 - **GIVEN** 5 items where items 2 and 4 return 403 from DIAL Core
 - **WHEN** delete is called
 - **THEN** `200` with `results[1].success === false` and `results[3].success === false`; remaining items are `success: true`
 
-### Scenario: Batch exceeds 100 items
+#### Scenario: Batch exceeds 100 items
 
 - **GIVEN** `items` array with 101 elements
 - **WHEN** `POST /api/v1/files/delete` is called
 - **THEN** `400 Bad Request` with validation error message
 
-### Scenario: Unauthenticated request
+#### Scenario: Unauthenticated request
 
 - **GIVEN** no valid session cookie
 - **WHEN** `POST /api/v1/files/delete` is called
 - **THEN** `401 Unauthorized`
 
-### Scenario: DIAL Core unreachable
+#### Scenario: DIAL Core unreachable
 
 - **GIVEN** DIAL Core times out
 - **WHEN** delete is called
 - **THEN** `503 Service Unavailable`
 
-### Scenario: Rate limit exceeded
+#### Scenario: Rate limit exceeded
 
 - **GIVEN** user has sent 10 delete requests in the last 60 s
 - **WHEN** an 11th request arrives
