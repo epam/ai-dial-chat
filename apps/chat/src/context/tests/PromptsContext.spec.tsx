@@ -16,6 +16,7 @@ vi.mock('../../server-api/prompts.api', () => ({
 
 const makePrompt = (id: string): PromptResponseDto => ({
   id,
+  bucket: 'my-bucket',
   name: id.split('/').pop() ?? id,
   content: 'Summarize:',
   folderId: id.split('/').slice(0, -1).join('/'),

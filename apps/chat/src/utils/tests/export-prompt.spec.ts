@@ -19,6 +19,7 @@ const makePrompt = (
   overrides: Partial<PromptResponseDto> = {},
 ): PromptResponseDto => ({
   id: 'Work/AI/summarize',
+  bucket: 'my-bucket',
   name: 'summarize',
   description: 'Summarize a document',
   content: 'Summarize:\n\n{{document}}',

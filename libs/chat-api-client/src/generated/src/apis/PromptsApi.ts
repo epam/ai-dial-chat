@@ -43,6 +43,7 @@ export interface DeletePromptFolderRequest {
 
 export interface GetPromptRequest {
   path: string;
+  bucket?: string;
 }
 
 export interface GetPublicPromptRequest {
@@ -263,7 +264,8 @@ export class PromptsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Get a personal prompt
+   * Reads a prompt from the caller\'s own bucket, or from the `bucket` given in the query — the owner bucket a shared prompt reports. DIAL Core authorises the read either way.
+   * Get a personal or shared prompt
    */
   async getPromptRaw(
     requestParameters: GetPromptRequest,
@@ -280,6 +282,10 @@ export class PromptsApi extends runtime.BaseAPI {
 
     if (requestParameters['path'] != null) {
       queryParameters['path'] = requestParameters['path'];
+    }
+
+    if (requestParameters['bucket'] != null) {
+      queryParameters['bucket'] = requestParameters['bucket'];
     }
 
     const headerParameters: runtime.HTTPHeaders = {};
@@ -300,7 +306,8 @@ export class PromptsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Get a personal prompt
+   * Reads a prompt from the caller\'s own bucket, or from the `bucket` given in the query — the owner bucket a shared prompt reports. DIAL Core authorises the read either way.
+   * Get a personal or shared prompt
    */
   async getPrompt(
     requestParameters: GetPromptRequest,

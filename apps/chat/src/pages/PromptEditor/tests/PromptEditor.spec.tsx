@@ -52,6 +52,7 @@ vi.mock('../../../server-api/prompts.api', () => ({
 
 const promptDto = {
   id: 'Work/AI/summarize',
+  bucket: 'my-bucket',
   name: 'summarize',
   description: 'Summarize a document',
   content: 'Summarize the following text:',

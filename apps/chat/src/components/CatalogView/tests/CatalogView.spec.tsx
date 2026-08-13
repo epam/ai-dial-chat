@@ -2769,6 +2769,7 @@ describe('CatalogView', () => {
   describe('prompt wiring', () => {
     const personalPrompt = {
       id: 'Work/AI/summarize',
+      bucket: 'my-bucket',
       name: 'summarize',
       description: 'Summarize a document',
       content: 'Summarize the following text:',
@@ -2896,6 +2897,38 @@ describe('CatalogView', () => {
 
       expect(getPublicPrompt).toHaveBeenCalledWith('Public/translate');
       expect(getPrompt).not.toHaveBeenCalled();
+    });
+
+    it('fetches a shared prompt from the owner bucket, not the caller bucket', async () => {
+      enablePrompts();
+      const sharedPrompt = { ...personalPrompt, bucket: 'owner-bucket' };
+      mockPrompts({ prompts: [], sharedWithMe: [sharedPrompt] });
+      vi.mocked(getPrompt).mockResolvedValue(sharedPrompt);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'fetch details prompts/owner-bucket/Work/AI/summarize',
+        }),
+      );
+
+      expect(getPrompt).toHaveBeenCalledWith(
+        'Work/AI/summarize',
+        'owner-bucket',
+      );
+    });
+
+    it('keeps a shared prompt distinct from a personal prompt at the same path', () => {
+      enablePrompts();
+      mockPrompts({
+        sharedWithMe: [{ ...personalPrompt, bucket: 'owner-bucket' }],
+      });
+
+      render(<CatalogView />);
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).toContain('Work/AI/summarize:PROMPT');
+      expect(ids).toContain('prompts/owner-bucket/Work/AI/summarize:PROMPT');
     });
 
     it('resolves undefined when the prompt fetch fails', async () => {
@@ -3036,6 +3069,7 @@ describe('CatalogView', () => {
   describe('prompt use in chat', () => {
     const personalPrompt = {
       id: 'Work/AI/summarize',
+      bucket: 'my-bucket',
       name: 'summarize',
       content: 'Summarize the following text:',
       folderId: 'Work/AI',
@@ -3335,6 +3369,7 @@ describe('CatalogView', () => {
   describe('prompt download', () => {
     const personalPrompt = {
       id: 'Work/AI/summarize',
+      bucket: 'my-bucket',
       name: 'summarize',
       description: 'Summarize a document',
       content: 'Summarize:\n\n{{document}}',

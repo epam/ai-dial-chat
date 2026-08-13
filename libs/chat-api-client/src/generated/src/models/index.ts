@@ -4496,6 +4496,12 @@ export interface PromptResponseDto {
    */
   id: string;
   /**
+   * DIAL Core bucket the prompt lives in. For a prompt shared with the caller this is the owner bucket, not the caller bucket, so `id` can be qualified back into a `prompts/{bucket}/{id}` resource url
+   * @type {string}
+   * @memberof PromptResponseDto
+   */
+  bucket: string;
+  /**
    * Display name
    * @type {string}
    * @memberof PromptResponseDto
