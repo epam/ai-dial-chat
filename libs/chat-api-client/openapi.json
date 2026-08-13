@@ -4547,13 +4547,7 @@
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "file",
-                  "bucket",
-                  "path",
-                  "skillManifest",
-                  "filePaths"
-                ],
+                "required": ["bucket", "path", "skillManifest", "filePaths"],
                 "properties": {
                   "bucket": {
                     "type": "string",
@@ -6961,23 +6955,6 @@
           }
         }
       },
-      "ModelPricingDto": {
-        "type": "object",
-        "properties": {
-          "unit": {
-            "type": "string",
-            "description": "The pricing unit"
-          },
-          "prompt": {
-            "type": "string",
-            "description": "Per-unit price for the completion request"
-          },
-          "completion": {
-            "type": "string",
-            "description": "Per-unit price for the completion response"
-          }
-        }
-      },
       "DeploymentFeaturesDetailsDto": {
         "type": "object",
         "properties": {
@@ -7100,7 +7077,16 @@
             "$ref": "#/components/schemas/ModelLimitsDto"
           },
           "pricing": {
-            "$ref": "#/components/schemas/ModelPricingDto"
+            "type": "object",
+            "description": "Pricing as reported by DIAL Core: `unit` names the billing unit and every other key holds the per-unit price for that key",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "unit": "token",
+              "prompt": "0.000003",
+              "completion": "0.000015"
+            }
           },
           "features": {
             "$ref": "#/components/schemas/DeploymentFeaturesDetailsDto"

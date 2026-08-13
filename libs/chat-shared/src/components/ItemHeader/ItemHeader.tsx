@@ -72,7 +72,10 @@ export const ItemHeader: FC<ItemHeaderProps> = ({
     >
       <h3
         className={mergeClasses(
-          shouldTruncateTitle ? 'min-w-0 flex-1' : 'shrink-0 whitespace-nowrap',
+          /* `shrink` + `min-w-0` (not `flex-1`) so the title keeps its natural
+             width and the postfix stays next to it, while still giving way to
+             an ellipsis when the row is too narrow. */
+          shouldTruncateTitle ? 'min-w-0 shrink' : 'shrink-0 whitespace-nowrap',
           titleClassName,
           styles.title,
         )}

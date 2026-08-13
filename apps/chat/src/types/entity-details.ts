@@ -68,11 +68,16 @@ export interface ModelSpecification {
   createdAt?: number;
 }
 
+export interface ModelPriceRow {
+  /* DIAL Core pricing key, e.g. `prompt`, `completion`, `cache_read`. */
+  key: string;
+  /* Per-unit price formatted for display, e.g. `$3/M tokens`. */
+  price: string;
+}
+
 export interface ModelPricing {
-  inputTokensPrice?: string;
-  outputTokensPrice?: string;
-  cachedInputPrice?: string;
-  batchPrice?: string;
+  /* Every price DIAL Core reports for the deployment, `unit` excluded. */
+  prices?: ModelPriceRow[];
   dailyLimit?: string;
   weeklyLimit?: string;
   monthlyLimit?: string;

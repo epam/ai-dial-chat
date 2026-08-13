@@ -23,6 +23,7 @@ export * from './utils/is-audio-transcription-supported';
 export * from './utils/copy-to-clipboard';
 export * from './utils/format-last-used';
 export * from './utils/format-file-size';
+export * from './utils/format-price';
 export * from './utils/file-download';
 export * from './constants/entity-colors';
 export * from './utils/prompt-variables';
