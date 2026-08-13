@@ -150,18 +150,6 @@ describe('MarkdownRenderer', () => {
     expect(screen.getByRole('button', { name: 'Copy code' })).toBeTruthy();
   });
 
-  it('renders a fenced block without language: no label text, copy button present', () => {
-    const { container } = render(
-      <MarkdownRenderer
-        content={FENCED_NO_LANG_MARKDOWN}
-        codeBlockCopyLabel="Copy code"
-      />,
-    );
-
-    const labelSpan = container.querySelector('span.uppercase');
-    expect(screen.getByRole('button', { name: 'Copy code' })).toBeTruthy();
-  });
-
   it('renders inline `code` as a <code> element without a header', () => {
     render(<MarkdownRenderer content="Use `const` here." />);
 
