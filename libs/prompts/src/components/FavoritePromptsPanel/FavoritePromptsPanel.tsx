@@ -6,10 +6,11 @@ import {
 import {
   DIAL_ICON_SIZE,
   DialTooltip,
+  ElementSize,
   GhostButton,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
-import { IconChevronLeft, IconStarFilled } from '@tabler/icons-react';
+import { IconStarFilled } from '@tabler/icons-react';
 import type { FC, KeyboardEvent } from 'react';
 import type { FavoritePromptItem } from '../../models/favorite-prompt-item';
 import type { FavoritePromptsPanelProps } from '../../models/favorite-prompts-panel-props';
@@ -24,7 +25,6 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
   onSelect,
   onToggleFavorite,
   onBrowse,
-  onBack,
   labels = {},
   colors,
   nameClassName = 'dial-small-text',
@@ -36,7 +36,6 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
     emptyHintLabel = 'Star a prompt to pin it here',
     browseLabel = 'Browse',
     removeFromFavoritesLabel = 'Remove from favorites',
-    backLabel = 'Back',
   } = labels;
 
   const cssVars = buildCssVars({
@@ -80,6 +79,7 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
           {item.name}
         </span>
         <GhostIconButton
+          size={ElementSize.Small}
           icon={
             <IconStarFilled
               size={DIAL_ICON_SIZE.SM}
@@ -114,20 +114,11 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
 
   return (
     <div className="flex min-w-[240px] flex-col" style={cssVars}>
-      <div className="flex items-center gap-1 pb-0.5 pt-2">
-        {onBack != null && (
-          <GhostIconButton
-            icon={<IconChevronLeft className="rtl:scale-x-[-1]" aria-hidden />}
-            aria-label={backLabel}
-            onClick={onBack}
-            className="ms-1"
-          />
-        )}
+      <div className="flex items-center gap-1 py-2.5">
         <p
           className={mergeClasses(
             headerClassName,
             'px-3 uppercase',
-            onBack != null ? 'ps-0' : null,
             styles.header,
           )}
         >

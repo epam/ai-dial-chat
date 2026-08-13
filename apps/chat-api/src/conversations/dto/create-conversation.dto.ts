@@ -20,10 +20,10 @@ export class CreateConversationDto {
     description:
       'The first message to start the conversation. May be empty when custom_content carries attachments, form_value, or configuration_value.',
     example: 'Hello, how can you help me today?',
-    maxLength: 4000,
+    maxLength: 40000,
   })
   @IsString()
-  @MaxLength(4000)
+  @MaxLength(40000)
   @IsMessageOrAttachmentsPresent()
   firstMessage!: string;
 

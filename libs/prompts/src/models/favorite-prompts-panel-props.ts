@@ -10,8 +10,6 @@ export interface FavoritePromptsPanelLabels {
   browseLabel?: string;
   /** Accessible label for a row's remove-from-favorites star button. Defaults to `'Remove from favorites'`. */
   removeFromFavoritesLabel?: string;
-  /** Accessible label for the back chevron, shown only when `onBack` is provided. Defaults to `'Back'`. */
-  backLabel?: string;
 }
 
 /** CSS custom-property overrides for the favorites panel. */
@@ -38,11 +36,6 @@ export interface FavoritePromptsPanelProps {
   onToggleFavorite: (id: string) => void;
   /** Called when the "Browse" button is clicked. */
   onBrowse: () => void;
-  /**
-   * Called to return to the previous screen (the main attachment menu). When
-   * omitted, no back chevron is rendered in the header.
-   */
-  onBack?: () => void;
   /** Localizable string overrides. */
   labels?: FavoritePromptsPanelLabels;
   /** Color overrides applied as CSS custom properties. */

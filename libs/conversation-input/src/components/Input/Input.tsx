@@ -72,6 +72,7 @@ export const Input: FC<InputProps> = ({
   pendingAttachments = [],
   onPendingAttachmentsConsumed,
   pasteTextThreshold = 4000,
+  maxMessageLength = 50000,
   deployments,
   selectedDeploymentId,
   onDeploymentChange,
@@ -214,15 +215,15 @@ export const Input: FC<InputProps> = ({
     (e: ClipboardEvent<HTMLTextAreaElement>) => {
       if (!isAttachmentsEnabled) {
         const text = e.clipboardData.getData('text/plain');
-        if (text.length >= pasteTextThreshold) {
-          onMessageTooLong?.(text.length, pasteTextThreshold);
+        if (text.length >= maxMessageLength) {
+          onMessageTooLong?.(text.length, maxMessageLength);
         }
       }
       handleClipboardPaste(e);
     },
     [
       isAttachmentsEnabled,
-      pasteTextThreshold,
+      maxMessageLength,
       onMessageTooLong,
       handleClipboardPaste,
     ],
@@ -265,8 +266,8 @@ export const Input: FC<InputProps> = ({
 
   const handleSend = async () => {
     if (isSendDisabled) return;
-    if (!isAttachmentsEnabled && message.length >= pasteTextThreshold) {
-      onMessageTooLong?.(message.length, pasteTextThreshold);
+    if (!isAttachmentsEnabled && message.length >= maxMessageLength) {
+      onMessageTooLong?.(message.length, maxMessageLength);
       return;
     }
 

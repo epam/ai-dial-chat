@@ -65,11 +65,11 @@ export class SendCompletionDto {
     description:
       'The new user message to send. May be empty when custom_content carries attachments, form_value, or configuration_value.',
     example: 'What is the capital of France?',
-    maxLength: 4000,
+    maxLength: 40000,
   })
   @IsOptional()
   @IsString()
-  @MaxLength(4000)
+  @MaxLength(40000)
   @IsMessageOrAttachmentsPresent()
   message?: string;
 

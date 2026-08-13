@@ -9148,7 +9148,7 @@
             "type": "string",
             "description": "The first message to start the conversation. May be empty when custom_content carries attachments, form_value, or configuration_value.",
             "example": "Hello, how can you help me today?",
-            "maxLength": 4000
+            "maxLength": 40000
           },
           "deploymentId": {
             "type": "string",
@@ -9569,7 +9569,7 @@
             "type": "string",
             "description": "The new user message to send. May be empty when custom_content carries attachments, form_value, or configuration_value.",
             "example": "What is the capital of France?",
-            "maxLength": 4000
+            "maxLength": 40000
           },
           "messageIndex": {
             "type": "number",
@@ -11885,11 +11885,7 @@
             }
           }
         },
-        "required": [
-          "authorizationEndpoint",
-          "clientId",
-          "scopes"
-        ]
+        "required": ["authorizationEndpoint", "clientId", "scopes"]
       },
       "GetOfflineCredentialsResponseDto": {
         "type": "object",

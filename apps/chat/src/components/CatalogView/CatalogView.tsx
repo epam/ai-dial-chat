@@ -9,7 +9,10 @@ import {
 } from '@epam/ai-dial-catalog';
 import type { ToolsetLogoutBodyDto } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { triggerBlobDownload } from '@epam/ai-dial-chat-shared';
+import {
+  extractPromptParams,
+  triggerBlobDownload,
+} from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
@@ -701,6 +704,21 @@ const CatalogView: FC<Props> = ({
             return;
           }
         }
+
+        if (extractPromptParams(promptContent).length > 0) {
+          navigate(ROUTES.Root, {
+            state: {
+              pendingPrompt: {
+                id: item.id,
+                name: item.name,
+                content: promptContent,
+                description: item.description,
+              },
+            },
+          });
+          return;
+        }
+
         navigate(ROUTES.Root, { state: { promptContent } });
         return;
       }

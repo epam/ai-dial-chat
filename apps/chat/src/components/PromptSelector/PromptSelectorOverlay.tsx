@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
   FavoritesI18nKeys,
-  NavigationI18nKeys,
   PromptSelectorI18nKeys,
 } from '../../constants/translation-keys';
 
@@ -21,7 +20,6 @@ interface Props {
   onSelect: (item: FavoritePromptItem) => void;
   onToggleFavorite: (id: string) => void;
   onBrowse: () => void;
-  onBack?: () => void;
 }
 
 /** Wires app i18n labels into the lib's `FavoritePromptsPanel`. */
@@ -30,7 +28,6 @@ const PromptSelectorOverlay: FC<Props> = ({
   onSelect,
   onToggleFavorite,
   onBrowse,
-  onBack,
 }) => {
   const { t } = useTranslation();
 
@@ -39,7 +36,6 @@ const PromptSelectorOverlay: FC<Props> = ({
     emptyHintLabel: t(PromptSelectorI18nKeys.EmptyHint),
     browseLabel: t(ButtonsI18nKeys.Browse),
     removeFromFavoritesLabel: t(FavoritesI18nKeys.RemoveFromFavorites),
-    backLabel: t(NavigationI18nKeys.Back),
   };
 
   return (
@@ -49,7 +45,6 @@ const PromptSelectorOverlay: FC<Props> = ({
         onSelect={onSelect}
         onToggleFavorite={onToggleFavorite}
         onBrowse={onBrowse}
-        onBack={onBack}
         labels={labels}
       />
     </Suspense>
