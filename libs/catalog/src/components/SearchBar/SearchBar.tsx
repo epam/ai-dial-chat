@@ -45,7 +45,6 @@ export const SearchBar: FC<SearchBarProps> = ({
           'h-[50px] flex-1 rounded-xl px-[18px]',
           className,
         ),
-        inputClassName: 'text-[15px]',
         clearButtonClassName: 'size-11 desktop:size-auto',
       }}
     />

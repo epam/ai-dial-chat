@@ -189,6 +189,8 @@ export interface AttachmentCanvasTypography {
    * individual typography fields above. When set, those fields are ignored.
    */
   fontClassName?: string;
+  /** CSS utility class applied to the JSON tree viewer. Defaults to `'dial-code-text'`. */
+  jsonClassName?: string;
 }
 
 /** Combined style override prop for AttachmentCanvas. */

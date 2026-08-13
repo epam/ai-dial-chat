@@ -50,7 +50,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
-  DialTag: ({
+  Tag: ({
     onClick,
     label,
     selected,

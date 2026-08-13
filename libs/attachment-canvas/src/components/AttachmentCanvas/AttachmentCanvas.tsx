@@ -337,7 +337,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
                 style={{
                   container: mergeClasses(
                     'whitespace-pre-wrap break-words p-2',
-                    styles.jsonContainer,
+                    typography?.jsonClassName ?? 'dial-code-text',
                   ),
                   basicChildStyle: defaultStyles.basicChildStyle,
                   childFieldsContainer: 'm-0 ps-3',
@@ -434,6 +434,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   }, [
     content,
     typography?.fontClassName,
+    typography?.jsonClassName,
     fileName,
     codeBlockTheme,
     unsupportedLabel,

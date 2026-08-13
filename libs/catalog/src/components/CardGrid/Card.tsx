@@ -16,7 +16,6 @@ import {
 } from 'react';
 import type { CardProps } from '../../models/card-props';
 import { DeploymentSize } from '../../types/deployment-icon-size';
-import { getFeaturedEntityStyle } from '../../utils/styles';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
 import { CredentialsBadge } from '../CredentialsBadge/CredentialsBadge';
 import { FeaturedChip } from '../FeaturedChip/FeaturedChip';
@@ -52,6 +51,8 @@ export const Card: FC<CardProps> = ({
 
   const descriptionClassName =
     cardStyles?.typography?.descriptionClassName ?? 'dial-small-text';
+  const descriptionSizeClassName =
+    cardStyles?.typography?.descriptionSizeClassName ?? 'dial-tiny-text';
 
   const featuredChipClassName = cardStyles?.typography?.featuredChipClassName;
   const folderLabelClassName =
@@ -101,9 +102,9 @@ export const Card: FC<CardProps> = ({
           }
         : {})}
       aria-label={item.name}
-      style={{ ...getFeaturedEntityStyle(item), ...cssVars }}
+      style={cssVars}
       className={mergeClasses(
-        'box-border cursor-pointer',
+        'box-border cursor-pointer gap-3',
         styles.card,
         item.isFeatured ? styles.featuredCard : undefined,
         isSelected ? styles.selectedCard : undefined,
@@ -114,6 +115,7 @@ export const Card: FC<CardProps> = ({
         <div className="absolute end-[22px] top-0 -translate-y-1/2">
           <FeaturedChip
             label={featuredLabel}
+            type={item.type}
             className={featuredChipClassName}
           />
         </div>
@@ -137,22 +139,29 @@ export const Card: FC<CardProps> = ({
         version={item.version}
         size={DeploymentSize.SM}
         query={query}
-        className="min-w-0 flex-1"
         iconClassName={styles.cardIcon}
       />
 
-      {/* Description */}
       <p
         className={mergeClasses(
           descriptionClassName,
-          'line-clamp-2 min-h-[44px] !leading-[22px]',
+          /*
+           * `min-h` is two line-heights, not a fixed px value: `line-clamp-2`
+           * limits the text to 2 lines but `overflow: hidden` clips at the box
+           * height, so any box taller than 2 lines paints the clamped-away
+           * lines. `2lh` tracks whichever typography class is applied.
+           */
+          'line-clamp-2 min-h-[2lh] break-words',
+          descriptionSizeClassName,
           styles.description,
         )}
       >
         {item.description}
       </p>
 
-      <div className="flex min-h-[28px] items-center justify-between gap-2">
+      {/* `mt-auto` pins the topics row and footer to the card bottom — the job
+       * `flex-1` on the description used to do before it broke the clamp. */}
+      <div className="mt-auto flex items-center justify-between gap-2">
         <TopicsLine topics={item.topics} />
         <CredentialsBadge
           credentials={item.credentials}
@@ -160,7 +169,7 @@ export const Card: FC<CardProps> = ({
         />
       </div>
 
-      <div className={mergeClasses('mt-auto border-t pt-3', styles.footer)}>
+      <div className={mergeClasses('border-t pt-3', styles.footer)}>
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1">
             {item.folder.length > 0 && (

@@ -17,7 +17,7 @@ export interface CollapsedGroupColors {
 
 /** Typography configuration for the toggle button label text. */
 export interface CollapsedGroupTypography {
-  /** CSS utility class applied to the toggle button label. */
+  /** CSS utility class applied to the toggle button label. Defaults to `'dial-small-text'`. */
   fontClassName?: string;
 }
 

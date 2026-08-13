@@ -15,6 +15,7 @@ import { cloneElement, ReactElement, ReactNode, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConversations } from '../../../context/ConversationsContext';
 import { useNotification } from '../../../context/NotificationContext';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { useConversationExport } from '../../../hooks/useConversationExport';
 import { useConversationImport } from '../../../hooks/useConversationImport';
 import { useUiFeature } from '../../../hooks/useUiFeature';
@@ -418,11 +419,9 @@ beforeEach(() => {
   vi.mocked(useUiFeature).mockReturnValue(true);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vi.mocked(useConversations).mockReturnValue(baseContextValue as any);
-  vi.mocked(useNotification).mockReturnValue({
-    notifications: [],
-    showNotification: mockShowNotification,
-    dismissNotification: vi.fn(),
-  });
+  vi.mocked(useNotification).mockReturnValue(
+    createNotificationContextValue(mockShowNotification),
+  );
   vi.mocked(useConversationExport).mockReturnValue({
     jobs: [],
     exportSingle: mockExportSingle,
@@ -934,6 +933,30 @@ describe('ConversationPanelView — single-conversation delete navigation', () =
 describe('ConversationPanelView — rename', () => {
   const RENAME_LABEL = 'buttons.rename';
 
+  it('confirms a duplicated conversation and navigates to the copy', async () => {
+    const mockDuplicateConversation = vi
+      .fn()
+      .mockResolvedValue('conversations/bucket/conv1-copy');
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      duplicateConversation: mockDuplicateConversation,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: 'buttons.duplicate' }),
+      );
+    });
+
+    expect(mockDuplicateConversation).toHaveBeenCalled();
+    expect(mockShowNotification).toHaveBeenCalledWith({
+      variant: 'success',
+      title: 'entityNotifications.conversation.duplicatedTitle',
+      message: 'entityNotifications.conversation.duplicated',
+    });
+  });
+
   it('clicking rename opens the popup with the current title', () => {
     render(<ConversationPanelView {...defaultProps} />);
 
@@ -967,6 +990,33 @@ describe('ConversationPanelView — rename', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
     });
+    expect(mockShowNotification).toHaveBeenCalledWith({
+      variant: 'success',
+      title: 'entityNotifications.conversation.renamedTitle',
+      message: 'entityNotifications.conversation.renamed',
+    });
+  });
+
+  it('a failed rename keeps the popup open and raises no success notification', async () => {
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      renameConversation: vi.fn().mockRejectedValue(new Error('boom')),
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(screen.getByRole('button', { name: RENAME_LABEL }));
+
+    const dialog = screen.getByRole('dialog', {
+      name: 'rename conversation',
+    });
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    });
+
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(mockShowNotification).not.toHaveBeenCalledWith(
+      expect.objectContaining({ variant: 'success' }),
+    );
   });
 });
 

@@ -39,7 +39,7 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
   ul?: string;
   /** Extra classes on `<ol>` (base: `list-decimal ps-5`). */
   ol?: string;
-  /** Typography class for `<strong>`. Defaults to `'font-semibold'`. */
+  /** Typography class for `<strong>`. Defaults to `'dial-body-paragraph-semi-text'` — the semibold step matching the default `p` class. */
   strong?: string;
   /** Typography class for `<em>`. Defaults to `'italic'`. */
   em?: string;
@@ -72,7 +72,7 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
   tableBodyCell?: string;
   /** Extra classes on `<th>` only (applied alongside `tableCell`). */
   tableHeader?: string;
-  /** Typography class for `<th>` cells. Defaults to `'dial-tiny-semi-text uppercase tracking-wider'`. Text color is set separately via `colors.tableHeaderText`. */
+  /** Typography class for `<th>` cells. Defaults to `'dial-tiny-lead-semi-text'`. Text color is set separately via `colors.tableHeaderText`. */
   tableHeaderFont?: string;
 }
 
@@ -206,7 +206,9 @@ const buildMarkdownComponents = (
     <ol className={mergeClasses('list-decimal ps-5', cn.ol)}>{children}</ol>
   ),
   strong: ({ children }) => (
-    <strong className={cn.strong ?? 'font-semibold'}>{children}</strong>
+    <strong className={cn.strong ?? 'dial-body-paragraph-semi-text'}>
+      {children}
+    </strong>
   ),
   em: ({ children }) => <em className={cn.em ?? 'italic'}>{children}</em>,
   pre: ({ children }) => <>{children}</>,
@@ -314,10 +316,10 @@ const buildMarkdownComponents = (
     <th
       scope="col"
       className={mergeClasses(
-        'sticky top-0 z-[2] max-w-96 whitespace-normal break-words border-b px-3 py-2.5 text-start [overflow-wrap:anywhere]',
+        'sticky top-0 z-[2] max-w-96 whitespace-normal break-words border-b px-3 py-2.5 text-start',
         tableStyles.rowDivider,
         tableStyles.tableHeaderCell,
-        cn.tableHeaderFont ?? 'dial-tiny-semi-text uppercase tracking-wider',
+        cn.tableHeaderFont ?? 'dial-tiny-lead-semi-text',
         cn.tableCell,
         cn.tableHeader,
       )}
@@ -328,7 +330,7 @@ const buildMarkdownComponents = (
   td: ({ children }) => (
     <td
       className={mergeClasses(
-        'max-w-96 whitespace-normal break-words border-b px-3 py-2.5 align-top [overflow-wrap:anywhere]',
+        'max-w-96 whitespace-normal border-b px-3 py-2.5 align-top [overflow-wrap:anywhere]',
         tableStyles.rowDivider,
         cn.tableBodyCell,
         cn.tableCell,

@@ -6,7 +6,6 @@ import {
   triggerBlobDownload,
   type Conversation,
 } from '@epam/ai-dial-chat-shared';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { normalizeConversationId } from '../constants/routes';
@@ -105,7 +104,11 @@ interface UseConversationExportResult {
  */
 export const useConversationExport = (): UseConversationExportResult => {
   const { t } = useTranslation();
-  const { showNotification } = useNotification();
+  const {
+    showSuccessNotification,
+    showWarningNotification,
+    showErrorNotification,
+  } = useNotification();
   const [jobs, setJobs] = useState<QueueJob[]>([]);
 
   const controllersRef = useRef(new Map<string, AbortController>());
@@ -203,8 +206,7 @@ export const useConversationExport = (): UseConversationExportResult => {
         const classification = classifyExportError(error);
         if (!classification.isUnauthorized) {
           const { traceId } = await getApiErrorDetails(error);
-          showNotification({
-            variant: NotificationVariant.Error,
+          showErrorNotification({
             title: t(ConversationExportI18nKeys.FailedTitle),
             message: t(ConversationExportI18nKeys.FailedSingle, { title }),
             requestId: traceId,
@@ -225,8 +227,7 @@ export const useConversationExport = (): UseConversationExportResult => {
             EXPORT_APP_NAME,
           );
           triggerBlobDownload(blob, fileName);
-          showNotification({
-            variant: NotificationVariant.Success,
+          showSuccessNotification({
             title: t(ConversationExportI18nKeys.SuccessTitle),
             message: t(ConversationExportI18nKeys.SuccessSingle, { title }),
           });
@@ -251,8 +252,7 @@ export const useConversationExport = (): UseConversationExportResult => {
           zipAttachments,
         );
         if (anySkipped || skippedPaths.length > 0) {
-          showNotification({
-            variant: NotificationVariant.Warning,
+          showWarningNotification({
             message: t(ConversationExportI18nKeys.WarningAttachmentSkipped),
           });
         }
@@ -261,8 +261,7 @@ export const useConversationExport = (): UseConversationExportResult => {
           EXPORT_APP_NAME,
         );
         triggerBlobDownload(blob, fileName);
-        showNotification({
-          variant: NotificationVariant.Success,
+        showSuccessNotification({
           title: t(ConversationExportI18nKeys.SuccessTitle),
           message: t(ConversationExportI18nKeys.SuccessSingle, { title }),
         });
@@ -270,8 +269,7 @@ export const useConversationExport = (): UseConversationExportResult => {
       } catch (error) {
         if (signal.aborted) return;
         const { traceId } = await getApiErrorDetails(error);
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           title: t(ConversationExportI18nKeys.FailedTitle),
           message: t(ConversationExportI18nKeys.FailedSingle, { title }),
           requestId: traceId,
@@ -280,7 +278,14 @@ export const useConversationExport = (): UseConversationExportResult => {
         console.error('Failed to build conversation export archive', error);
       }
     },
-    [fetchAttachments, showNotification, t, updateJob],
+    [
+      fetchAttachments,
+      showSuccessNotification,
+      showWarningNotification,
+      showErrorNotification,
+      t,
+      updateJob,
+    ],
   );
 
   const exportSingle = useCallback(
@@ -327,8 +332,7 @@ export const useConversationExport = (): UseConversationExportResult => {
           const classification = classifyExportError(error);
           if (!classification.isUnauthorized) {
             const { traceId } = await getApiErrorDetails(error);
-            showNotification({
-              variant: NotificationVariant.Error,
+            showErrorNotification({
               title: t(ConversationExportI18nKeys.FailedTitle),
               message: t(ConversationExportI18nKeys.FailedAll),
               requestId: traceId,
@@ -364,8 +368,7 @@ export const useConversationExport = (): UseConversationExportResult => {
           }
           if (classification.isNotFound) {
             const { traceId } = await getApiErrorDetails(error);
-            showNotification({
-              variant: NotificationVariant.Error,
+            showErrorNotification({
               title: t(ConversationExportI18nKeys.FailedTitle),
               message: t(ConversationExportI18nKeys.FailedSingle, {
                 title: ref.title,
@@ -379,8 +382,7 @@ export const useConversationExport = (): UseConversationExportResult => {
             continue;
           }
           const { traceId: allFailedTraceId } = await getApiErrorDetails(error);
-          showNotification({
-            variant: NotificationVariant.Error,
+          showErrorNotification({
             title: t(ConversationExportI18nKeys.FailedTitle),
             message: t(ConversationExportI18nKeys.FailedAll),
             requestId: allFailedTraceId,
@@ -403,16 +405,14 @@ export const useConversationExport = (): UseConversationExportResult => {
           EXPORT_APP_NAME,
         );
         triggerBlobDownload(blob, fileName);
-        showNotification({
-          variant: NotificationVariant.Success,
+        showSuccessNotification({
           title: t(ConversationExportI18nKeys.SuccessTitle),
           message: t(ConversationExportI18nKeys.SuccessAll),
         });
         updateJob(jobId, { status: ExportJobStatus.Success });
       } catch (error) {
         const { traceId } = await getApiErrorDetails(error);
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           title: t(ConversationExportI18nKeys.FailedTitle),
           message: t(ConversationExportI18nKeys.FailedAll),
           requestId: traceId,
@@ -421,7 +421,7 @@ export const useConversationExport = (): UseConversationExportResult => {
         console.error('Failed to build export-all archive', error);
       }
     },
-    [showNotification, t, updateJob],
+    [showSuccessNotification, showErrorNotification, t, updateJob],
   );
 
   const exportAll = useCallback((): Promise<void> => {

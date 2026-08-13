@@ -12,7 +12,6 @@ import {
   type ConversationInputStyles,
   type ToolsChipLabels,
 } from '@epam/ai-dial-conversation-input';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC, ReactNode } from 'react';
 import { lazy, memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -134,7 +133,7 @@ const NewConversationComposer: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
-  const { showNotification } = useNotification();
+  const { showErrorNotification } = useNotification();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
 
@@ -185,13 +184,12 @@ const NewConversationComposer: FC<Props> = ({
     (filenames: string[]) => {
       const { title, message: notificationMessage } =
         buildNetworkUploadErrorNotification(filenames, t);
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         title,
         message: notificationMessage,
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const { handleUploadAttachment } = useAttachmentUpload({
@@ -265,8 +263,7 @@ const NewConversationComposer: FC<Props> = ({
 
   const handleAttachmentsLimitExceeded = useCallback(
     (count: number, limit: number) => {
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         title: t(DialFileManagerI18nKeys.TooManyFilesSelected),
         message: t(DialFileManagerI18nKeys.TooManyFilesDescription, {
           count,
@@ -274,17 +271,16 @@ const NewConversationComposer: FC<Props> = ({
         }),
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const handleMessageTooLong = useCallback(
     (_length: number, max: number) => {
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(ConversationI18nKeys.MessageTooLong, { max }),
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const handleSend = useCallback(
@@ -296,8 +292,7 @@ const NewConversationComposer: FC<Props> = ({
       } catch (err) {
         const { message: errorMessage, traceId } =
           await getApiErrorDetails(err);
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           message: errorMessage ?? t(ChatI18nKeys.CreateConversationError),
           requestId: traceId,
         });
@@ -310,7 +305,7 @@ const NewConversationComposer: FC<Props> = ({
       selectedDeploymentId,
       onCreateConversation,
       chatSettingsValues,
-      showNotification,
+      showErrorNotification,
       t,
     ],
   );
@@ -469,7 +464,7 @@ const NewConversationComposer: FC<Props> = ({
               : t(DialFileManagerI18nKeys.DeleteConfirmTitleMultiple)
           }
           deleteConfirmBody={(names) => (
-            <div className="px-6 py-3 text-sm">
+            <div className="dial-small-text px-6 py-3">
               <p className="mb-3 text-secondary">
                 {names.length === 1 ? (
                   <>

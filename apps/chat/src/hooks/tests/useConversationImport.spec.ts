@@ -21,6 +21,7 @@ import {
 import { useUser } from '../../context/auth/UserContext';
 import { useConversations } from '../../context/ConversationsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { createNotificationContextValue } from '../../context/tests/notification-context-mock';
 import { UnauthorizedError } from '../../server-api/base';
 import { saveConversation } from '../../server-api/conversations.api';
 import { listFiles, uploadFile } from '../../server-api/files.api';
@@ -101,11 +102,9 @@ const dialFile = (
 describe('useConversationImport', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification: mockShowNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(mockShowNotification),
+    );
     vi.mocked(useConversations).mockReturnValue({
       conversations: [],
       isLoading: false,

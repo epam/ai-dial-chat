@@ -95,6 +95,8 @@ export enum OverlayFeature {
   CatalogHideMyApps = 'catalog-hide-my-apps',
   /** Makes the catalog's table view the initial default (instead of grid). */
   CatalogTableView = 'catalog-table-view',
+  /** Enables the file manager (`/files`) route and its navigation entry. */
+  FileManager = 'file-manager',
   /** Hides the delete action on a user's own messages. */
   HideDeleteUserMessage = 'hide-delete-user-message',
   /** Hides the edit action on a user's own messages. */

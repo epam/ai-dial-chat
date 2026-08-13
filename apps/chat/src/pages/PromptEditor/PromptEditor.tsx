@@ -6,7 +6,6 @@ import {
   type PromptEditorValues,
   type PromptFolderActions,
 } from '@epam/ai-dial-prompt-editor';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +16,7 @@ import {
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { usePrompts } from '../../context/PromptsContext';
+import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import {
@@ -28,6 +28,10 @@ import {
   renamePromptFolder,
   updatePrompt,
 } from '../../server-api/prompts.api';
+import {
+  EntityOperation,
+  NotifiableEntity,
+} from '../../types/entity-notification';
 import { PromptFieldError } from '../../types/prompt';
 import { PromptEditorQuery } from '../../types/prompt-editor';
 import { ROUTES } from '../../types/routes';
@@ -53,7 +57,8 @@ const PromptEditorPage: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { showNotification } = useNotification();
+  const { showErrorNotification } = useNotification();
+  const { notifyOperationSuccess } = useOperationNotification();
   const isPromptsEnabled = useUiFeature(OverlayFeature.Prompts);
   const { folders, refetchPrompts } = usePrompts();
 
@@ -212,8 +217,7 @@ const PromptEditorPage: FC = () => {
               const { traceId } = await getApiErrorDetails(moveErr);
               await refetchPrompts();
               setErrors({ folder: PromptFieldError.Conflict });
-              showNotification({
-                variant: NotificationVariant.Error,
+              showErrorNotification({
                 message: t(PromptEditorI18nKeys.MoveError),
                 requestId: traceId,
               });
@@ -223,16 +227,11 @@ const PromptEditorPage: FC = () => {
         }
 
         await refetchPrompts();
-        showNotification({
-          variant: NotificationVariant.Success,
-          title: t(PromptEditorI18nKeys.SaveSuccessTitle),
-          message: t(
-            isEditMode
-              ? PromptEditorI18nKeys.UpdateSuccess
-              : PromptEditorI18nKeys.CreateSuccess,
-            { name: trimmedName },
-          ),
-        });
+        notifyOperationSuccess(
+          NotifiableEntity.Prompt,
+          isEditMode ? EntityOperation.Edited : EntityOperation.Created,
+          { name: trimmedName },
+        );
         navigate(returnUrl);
       } catch (err) {
         const { status, traceId } = await getApiErrorDetails(err);
@@ -240,8 +239,7 @@ const PromptEditorPage: FC = () => {
           setErrors({ name: PromptFieldError.Conflict });
           return;
         }
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           message: t(PromptEditorI18nKeys.SaveError),
           requestId: traceId,
         });
@@ -255,7 +253,8 @@ const PromptEditorPage: FC = () => {
       promptId,
       initialFolderId,
       refetchPrompts,
-      showNotification,
+      notifyOperationSuccess,
+      showErrorNotification,
       t,
       navigate,
       returnUrl,
@@ -269,13 +268,12 @@ const PromptEditorPage: FC = () => {
         setFolderNameError(PromptFieldError.Conflict);
         return;
       }
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(PromptEditorI18nKeys.FolderError),
         requestId: traceId,
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const folderActions = useMemo<PromptFolderActions>(

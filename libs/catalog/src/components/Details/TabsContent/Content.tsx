@@ -34,7 +34,7 @@ export const ContentTab: FC<ContentTabProps> = ({
   const hasDescription = description != null && description !== '';
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-4 pb-6">
       {hasDescription && (
         <>
           <p className={mergeClasses('m-0', bodyClassName)}>{description}</p>

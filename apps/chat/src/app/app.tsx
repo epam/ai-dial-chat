@@ -18,6 +18,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Navigate,
   Route,
   Routes,
   useLocation,
@@ -174,6 +175,7 @@ const App: FC = () => {
   const isAttachmentsManagerEnabled = useUiFeature(
     OverlayFeature.AttachmentsManager,
   );
+  const isFileManagerEnabled = useUiFeature(OverlayFeature.FileManager);
 
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   const { handleClose: closeSourcesPanel } = useSourcesSidebar();
@@ -379,11 +381,16 @@ const App: FC = () => {
               <Route
                 path={ROUTES.FileManager}
                 element={
-                  <RouteErrorBoundary>
-                    <Suspense fallback={<RouteFallback />}>
-                      <DialFileManagerPage />
-                    </Suspense>
-                  </RouteErrorBoundary>
+                  isFileManagerEnabled ? (
+                    <RouteErrorBoundary>
+                      <Suspense fallback={<RouteFallback />}>
+                        <DialFileManagerPage />
+                      </Suspense>
+                    </RouteErrorBoundary>
+                  ) : (
+                    /* Keeps a direct /files URL from bypassing the hidden nav entry. */
+                    <Navigate to={ROUTES.Root} replace />
+                  )
                 }
               />
               <Route

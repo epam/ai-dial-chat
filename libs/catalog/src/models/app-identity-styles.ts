@@ -10,7 +10,7 @@ export interface AppIdentityColors {
 
 /** Typography class overrides for `AppIdentity`. */
 export interface AppIdentityTypography {
-  /** CSS class for the type label. Default: `'dial-caption-semi-text'`. */
+  /** CSS class for the type label. Default: `'dial-caption-lead-semi-text'`. */
   typeClassName?: string;
   /** Typography CSS class for the entity name. Default: `'dial-body-semi-text'`. */
   nameClassName?: string;

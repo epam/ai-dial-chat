@@ -1,7 +1,6 @@
 import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC, ReactNode } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
-import { getFeaturedEntityStyle } from '../../utils/styles';
 import { EntityTypeLabel } from '../EntityTypeLabel/EntityTypeLabel';
 import { FeaturedChip } from '../FeaturedChip/FeaturedChip';
 import { ItemHeader } from '../ItemHeader/ItemHeader';
@@ -12,7 +11,7 @@ export interface EntityHeaderProps {
   item: CatalogItem;
   /** Typography CSS class for the item name. Falls back to `ItemHeader`'s own default when omitted. */
   nameClassName?: string;
-  /** CSS class for the entity type label. Default: 'dial-caption-semi-text'. */
+  /** CSS class for the entity type label. Default: 'dial-caption-lead-semi-text'. */
   typeClassName?: string;
   /** CSS class applied to the icon badge, e.g. to set border-radius. Default: 'rounded-[14px]'. */
   iconBadgeClassName?: string;
@@ -40,7 +39,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
   nameClassName,
   versionClassName,
   showVersion = true,
-  typeClassName = 'dial-caption-semi-text',
+  typeClassName = 'dial-caption-lead-semi-text',
   iconBadgeClassName = 'rounded-[14px]',
   featuredChipClassName,
   featuredLabel = 'Featured',
@@ -49,10 +48,8 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
   query,
   footer,
 }) => {
-  const featuredStyle = getFeaturedEntityStyle(item);
-
   return (
-    <div className="flex items-start gap-2" style={featuredStyle}>
+    <div className="flex items-start gap-2">
       <DeploymentIcon
         src={item.iconUrl}
         size={iconSize}
@@ -71,6 +68,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
           {hasFeaturedTag && item.isFeatured && (
             <div className="absolute end-0 top-[-6px]">
               <FeaturedChip
+                type={item.type}
                 label={featuredLabel}
                 className={featuredChipClassName}
               />

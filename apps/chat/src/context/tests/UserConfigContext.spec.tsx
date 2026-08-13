@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as userConfigApi from '../../server-api/user-config.api';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { UserConfigProvider, useUserConfig } from '../UserConfigContext';
+import { createNotificationContextValue } from './notification-context-mock';
 
 const contextMocks = vi.hoisted(() => ({
   userSub: 'user-1' as string | undefined,
@@ -35,7 +36,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
 
 const mockShowNotification = vi.fn();
 vi.mock('../NotificationContext', () => ({
-  useNotification: () => ({ showNotification: mockShowNotification }),
+  useNotification: () => createNotificationContextValue(mockShowNotification),
 }));
 
 const mockGetUserConfig = vi.mocked(userConfigApi.getUserConfig);

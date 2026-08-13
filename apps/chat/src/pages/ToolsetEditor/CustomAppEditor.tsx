@@ -6,11 +6,7 @@ import {
   DeploymentCreationFieldErrorCode,
   validateDeploymentCreationFields,
 } from '@epam/ai-dial-deployment-creation-form';
-import {
-  ConfirmationPopup,
-  NotificationVariant,
-  Spinner,
-} from '@epam/ai-dial-ui-kit';
+import { ConfirmationPopup, Spinner } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -33,6 +29,7 @@ import {
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useOperationNotification } from '../../hooks/useOperationNotification';
 import type {
   CustomAppFormData,
   CustomAppFormErrors,
@@ -44,6 +41,10 @@ import {
   updateApplication,
 } from '../../server-api/applications';
 import { getDeploymentDetails } from '../../server-api/deployments';
+import {
+  EntityOperation,
+  NotifiableEntity,
+} from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import {
   isValidAbsoluteUrl,
@@ -69,7 +70,8 @@ const CustomAppEditor: FC = () => {
     refetchDeployments,
     isLoading: isDeploymentsLoading,
   } = useDeployments();
-  const { showNotification } = useNotification();
+  const { showErrorNotification } = useNotification();
+  const { notifyOperationSuccess } = useOperationNotification();
 
   const step =
     (searchParams.get(ToolsetEditorQuery.Step) as ToolsetEditorSteps) ??
@@ -109,8 +111,7 @@ const CustomAppEditor: FC = () => {
       })
       .catch(() => {
         if (!cancelled) {
-          showNotification({
-            variant: NotificationVariant.Error,
+          showErrorNotification({
             message: t(CustomAppI18nKeys.ErrorLoadFailed),
           });
           navigate(returnUrl, { replace: true });
@@ -364,11 +365,15 @@ const CustomAppEditor: FC = () => {
         await createApplication(body);
       }
       await refetchDeployments();
+      notifyOperationSuccess(
+        NotifiableEntity.CustomApp,
+        isEditMode ? EntityOperation.Edited : EntityOperation.Created,
+        { name: generalForm.name },
+      );
       navigate(returnUrl);
     } catch (err) {
       const { message, traceId } = await getApiErrorDetails(err);
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message:
           message ??
           t(
@@ -389,7 +394,8 @@ const CustomAppEditor: FC = () => {
     refetchDeployments,
     navigate,
     returnUrl,
-    showNotification,
+    showErrorNotification,
+    notifyOperationSuccess,
     t,
   ]);
 
@@ -484,7 +490,7 @@ const CustomAppEditor: FC = () => {
           >
             <div className="flex items-center gap-3 rounded-lg bg-layer-sunken px-4 py-3 shadow-lg">
               <Spinner />
-              <span className="text-sm text-primary">
+              <span className="dial-small-text text-primary">
                 {t(
                   isSaving
                     ? CustomAppI18nKeys.SavingOverlayLabel

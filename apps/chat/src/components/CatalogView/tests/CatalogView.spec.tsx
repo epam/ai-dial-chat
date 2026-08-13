@@ -31,6 +31,7 @@ import {
 } from '../../../context/FavoriteApplicationsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { usePrompts } from '../../../context/PromptsContext';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { useCatalogSortFilterPreference } from '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import { useUiFeature } from '../../../hooks/useUiFeature';
@@ -92,6 +93,7 @@ const capturedPublishProps: {
       folderPath: string[],
       rules: PublicationRule[],
     ) => Promise<void>;
+    onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
     isPublishVisible?: (item: CatalogItem) => boolean;
     publishExpandedPaths?: Set<string>;
@@ -160,6 +162,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     publishLoadingPaths,
     onCreatePublishFolder,
     onPublish,
+    onPublishSuccess,
     getPublishHistory,
     isPublishVisible,
     ruleSourceOptions,
@@ -204,6 +207,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       folderPath: string[],
       rules: PublicationRule[],
     ) => Promise<void>;
+    onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
     isPublishVisible?: (item: CatalogItem) => boolean;
     ruleSourceOptions?: string[];
@@ -219,6 +223,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     const [fetchResult, setFetchResult] = useState<string>('');
     capturedPublishProps.current = {
       onPublish,
+      onPublishSuccess,
       getPublishHistory,
       isPublishVisible,
       publishExpandedPaths,
@@ -589,11 +594,9 @@ describe('CatalogView', () => {
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentLimits).mockResolvedValue({});
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification: vi.fn(),
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(vi.fn()),
+    );
     vi.mocked(useFavoriteApplications).mockReturnValue({
       favoriteIds: new Set(),
       isLoading: false,
@@ -780,6 +783,34 @@ describe('CatalogView', () => {
         },
       );
     });
+
+    it.each([
+      [CatalogEntityType.Toolset, 'toolset'],
+      [CatalogEntityType.Prompt, 'prompt'],
+      [CatalogEntityType.Agent, 'agent'],
+      [CatalogEntityType.Model, 'model'],
+      [CatalogEntityType.Skill, 'skill'],
+    ])(
+      'reports a submitted publish request naming the %s kind',
+      (type, entity) => {
+        const showNotification = vi.fn();
+        vi.mocked(useNotification).mockReturnValue(
+          createNotificationContextValue(showNotification),
+        );
+
+        render(<CatalogView />);
+        capturedPublishProps.current?.onPublishSuccess?.(
+          makeCatalogItem({ type }),
+          ['Organization', 'Data Science'],
+        );
+
+        expect(showNotification).toHaveBeenCalledWith({
+          variant: 'success',
+          title: `entityNotifications.${entity}.publishRequestedTitle`,
+          message: `entityNotifications.${entity}.publishRequested`,
+        });
+      },
+    );
 
     it('forwards rules added in the panel to publishCatalogEntity', async () => {
       vi.mocked(publishCatalogEntity).mockResolvedValue({
@@ -1699,11 +1730,9 @@ describe('CatalogView', () => {
 
   it('shows an error notification when loginToolset rejects', async () => {
     const showNotification = vi.fn();
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
     vi.mocked(useDeployments).mockReturnValue({
       items: [],
       selectedItemId: null,
@@ -1797,11 +1826,9 @@ describe('CatalogView', () => {
         ];
       });
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       const { unmount } = renderWithOAuthToolset(
         refetchToolsets,
         () => currentToolsets,
@@ -1848,11 +1875,9 @@ describe('CatalogView', () => {
     it('shows the success notification on the first attempt when the channel event is missed', async () => {
       const refetchToolsets = vi.fn().mockResolvedValue(undefined);
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       renderWithOAuthToolset(refetchToolsets);
 
       await user.click(
@@ -1882,11 +1907,9 @@ describe('CatalogView', () => {
     it('shows an error notification and does not refetch when the OAuth result is a failure', async () => {
       const refetchToolsets = vi.fn().mockResolvedValue(undefined);
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       renderWithOAuthToolset(refetchToolsets);
 
       await user.click(
@@ -1915,11 +1938,9 @@ describe('CatalogView', () => {
     it('recovers a login that actually succeeded but was reported as Cancelled by a lost broadcast message', async () => {
       const refetchToolsets = vi.fn().mockResolvedValue(undefined);
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       vi.mocked(getToolset).mockResolvedValue({
         ...oauthToolset,
         authSettings: {
@@ -1949,11 +1970,9 @@ describe('CatalogView', () => {
     it('shows a popup-blocked error notification without waiting for a result', async () => {
       vi.mocked(window.open).mockReturnValueOnce(null);
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       renderWithOAuthToolset();
 
       await user.click(
@@ -1973,11 +1992,9 @@ describe('CatalogView', () => {
   it('deletes a toolset, refetches toolsets, and shows a success notification', async () => {
     const refetchToolsets = vi.fn().mockResolvedValue(undefined);
     const showNotification = vi.fn();
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
     vi.mocked(useDeployments).mockReturnValue({
       items: [],
       selectedItemId: null,
@@ -2012,18 +2029,20 @@ describe('CatalogView', () => {
     expect(refetchToolsets).toHaveBeenCalledOnce();
     expect(deleteApplication).not.toHaveBeenCalled();
     expect(showNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ variant: 'success' }),
+      expect.objectContaining({
+        variant: 'success',
+        title: 'entityNotifications.toolset.deletedTitle',
+        message: 'entityNotifications.toolset.deleted',
+      }),
     );
   });
 
   it('deletes an application, refetches deployments, and shows a success notification', async () => {
     const refetchDeployments = vi.fn().mockResolvedValue(undefined);
     const showNotification = vi.fn();
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
     vi.mocked(useDeployments).mockReturnValue({
       items: [
         {
@@ -2062,17 +2081,55 @@ describe('CatalogView', () => {
     expect(refetchDeployments).toHaveBeenCalledOnce();
     expect(deleteToolset).not.toHaveBeenCalled();
     expect(showNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ variant: 'success' }),
+      expect.objectContaining({
+        variant: 'success',
+        title: 'entityNotifications.customApp.deletedTitle',
+        message: 'entityNotifications.customApp.deleted',
+      }),
+    );
+  });
+
+  it('names a schema-driven application a quick app when deleting it', async () => {
+    const showNotification = vi.fn();
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
+    vi.mocked(useDeployments).mockReturnValue({
+      ...vi.mocked(useDeployments)(),
+      items: [
+        {
+          id: 'applications/b/Quick One__1.0',
+          displayName: 'Quick One',
+          type: 'application',
+          isMy: true,
+          applicationTypeSchemaId: 'quickapps2-schema',
+        },
+      ],
+      refetchDeployments: vi.fn().mockResolvedValue(undefined),
+    });
+    vi.mocked(deleteApplication).mockResolvedValue(undefined);
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'delete applications/b/Quick One__1.0',
+      }),
+    );
+
+    expect(showNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'entityNotifications.quickApp.deletedTitle',
+        message: 'entityNotifications.quickApp.deleted',
+      }),
     );
   });
 
   it('shows an error notification when deleteToolset rejects', async () => {
     const showNotification = vi.fn();
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
     vi.mocked(useDeployments).mockReturnValue({
       items: [],
       selectedItemId: null,
@@ -2503,11 +2560,9 @@ describe('CatalogView', () => {
       const refetchToolsets = vi.fn().mockResolvedValue(undefined);
       const refetchDeployments = vi.fn().mockResolvedValue(undefined);
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       mockDeployments({
         toolsets: [sharedToolset],
         refetchToolsets,
@@ -2533,11 +2588,9 @@ describe('CatalogView', () => {
       const refetchToolsets = vi.fn().mockResolvedValue(undefined);
       const refetchDeployments = vi.fn().mockResolvedValue(undefined);
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       mockDeployments({
         items: [sharedApplication],
         refetchToolsets,
@@ -2606,11 +2659,9 @@ describe('CatalogView', () => {
       const refetchDeployments = vi.fn().mockResolvedValue(undefined);
       const setSelectedItemId = vi.fn();
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       mockDeployments({
         items: [sharedApplication],
         selectedItemId: sharedApplication.id,
@@ -2640,11 +2691,9 @@ describe('CatalogView', () => {
         .mockRejectedValue(new Error('refresh failed'));
       const setSelectedItemId = vi.fn();
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       mockDeployments({
         items: [sharedApplication],
         selectedItemId: sharedApplication.id,
@@ -2856,11 +2905,9 @@ describe('CatalogView', () => {
       enablePrompts();
       mockPrompts();
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       vi.mocked(deletePrompt).mockRejectedValue(new Error('502'));
 
       render(<CatalogView />);
@@ -3040,11 +3087,9 @@ describe('CatalogView', () => {
       enablePrompts();
       mockPrompts([{ ...personalPrompt, content: '' }]);
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       vi.mocked(getPrompt).mockRejectedValue(new Error('502'));
 
       render(<CatalogView />);
@@ -3154,11 +3199,9 @@ describe('CatalogView', () => {
       const refetchDeployments = vi.fn().mockResolvedValue(undefined);
       const setSelectedItemId = vi.fn();
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       mockDeployments({
         items: [ownedApplication],
         selectedItemId: ownedApplication.id,
@@ -3185,11 +3228,9 @@ describe('CatalogView', () => {
 
     it('shows an error notification carrying the trace id when revokeSharedAccess rejects', async () => {
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       mockDeployments({
         items: [ownedApplication],
       } as Partial<ReturnType<typeof useDeployments>>);
@@ -3356,6 +3397,53 @@ describe('CatalogView', () => {
       ).toBeTruthy();
     });
 
+    it('confirms a completed download with a success notification', async () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(getPrompt).mockResolvedValue(personalPrompt);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+      );
+      await waitFor(() => expect(triggerBlobDownload).toHaveBeenCalledOnce());
+
+      expect(showNotification).toHaveBeenCalledWith({
+        variant: 'success',
+        title: 'entityNotifications.prompt.downloadedTitle',
+        message: 'entityNotifications.prompt.downloaded',
+      });
+    });
+
+    it('raises no success notification when the download fails', async () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(getPrompt).mockRejectedValue(new Error('boom'));
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+      );
+
+      await waitFor(() =>
+        expect(showNotification).toHaveBeenCalledWith(
+          expect.objectContaining({ variant: 'error' }),
+        ),
+      );
+      expect(triggerBlobDownload).not.toHaveBeenCalled();
+      expect(showNotification).not.toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
+    });
+
     it('offers no download for an item that is not a prompt', () => {
       enablePrompts();
       mockPrompts();
@@ -3378,11 +3466,9 @@ describe('CatalogView', () => {
       enablePrompts();
       mockPrompts();
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       vi.mocked(getPrompt).mockRejectedValue(new Error('502'));
 
       render(<CatalogView />);

@@ -11,7 +11,7 @@ import type { ToolsetLogoutBodyDto } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { triggerBlobDownload } from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
-import { DropdownItem, NotificationVariant } from '@epam/ai-dial-ui-kit';
+import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -47,6 +47,7 @@ import {
   useToolsetLogin,
 } from '../../hooks/toolsets/useToolsetLogin';
 import { useCatalogSortFilterPreference } from '../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
+import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import { deleteApplication } from '../../server-api/applications';
@@ -69,11 +70,16 @@ import {
 import { deleteToolset, logoutToolset } from '../../server-api/toolsets';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { CatalogQuery } from '../../types/catalog';
+import {
+  EntityOperation,
+  NotifiableEntity,
+} from '../../types/entity-notification';
 import { PromptSource } from '../../types/prompt';
 import { PromptEditorQuery } from '../../types/prompt-editor';
 import { ROUTES } from '../../types/routes';
 import { isQuickAppSchema } from '../../utils/application-schema';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
+import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import { EXPORT_APP_NAME } from '../../utils/export-conversation';
 import {
   buildPromptExportEnvelope,
@@ -166,7 +172,8 @@ const CatalogView: FC<Props> = ({
     );
   }, [itemIdParam, setSearchParams]);
 
-  const { showNotification } = useNotification();
+  const { showSuccessNotification, showErrorNotification } = useNotification();
+  const { notifyOperationSuccess } = useOperationNotification();
   const { user } = useUser();
   const isAdmin = user?.isAdmin ?? false;
   const { config } = useAppConfig();
@@ -412,13 +419,12 @@ const CatalogView: FC<Props> = ({
           : isAdminAndPublic
             ? CatalogI18nKeys.CredentialsLoginSuccessOrg
             : CatalogI18nKeys.CredentialsLoginSuccessGlobal;
-      showNotification({
-        variant: NotificationVariant.Success,
+      showSuccessNotification({
         title: t(CatalogI18nKeys.CredentialsLoginSuccessTitle),
         message: t(messageKey, { name: item.name, version: item.version }),
       });
     },
-    [isAdmin, showNotification, t],
+    [isAdmin, showSuccessNotification, t],
   );
 
   const showLogoutSuccess = useCallback(
@@ -430,13 +436,12 @@ const CatalogView: FC<Props> = ({
           : isAdminAndPublic
             ? CatalogI18nKeys.CredentialsLogoutSuccessOrg
             : CatalogI18nKeys.CredentialsLogoutSuccessGlobal;
-      showNotification({
-        variant: NotificationVariant.Success,
+      showSuccessNotification({
         title: t(CatalogI18nKeys.CredentialsLogoutSuccessTitle),
         message: t(messageKey, { name: item.name, version: item.version }),
       });
     },
-    [isAdmin, showNotification, t],
+    [isAdmin, showSuccessNotification, t],
   );
 
   const { login: loginToolsetShared } = useToolsetLogin();
@@ -475,14 +480,12 @@ const CatalogView: FC<Props> = ({
           await refetchToolsets();
           return;
         case ToolsetLoginOutcomeType.PopupBlocked:
-          showNotification({
-            variant: NotificationVariant.Error,
+          showErrorNotification({
             message: t(ToolsetEditorI18nKeys.ErrorPopupBlocked),
           });
           return;
         case ToolsetLoginOutcomeType.Failure:
-          showNotification({
-            variant: NotificationVariant.Error,
+          showErrorNotification({
             message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
           });
           return;
@@ -493,7 +496,7 @@ const CatalogView: FC<Props> = ({
     },
     [
       toolsets,
-      showNotification,
+      showErrorNotification,
       t,
       getLevelStatus,
       showLoginSuccess,
@@ -521,14 +524,13 @@ const CatalogView: FC<Props> = ({
         await refetchToolsets();
       } catch (error) {
         const { traceId } = await getApiErrorDetails(error);
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           message: t(ToolsetEditorI18nKeys.ErrorLogoutFailed),
           requestId: traceId,
         });
       }
     },
-    [showNotification, t, showLogoutSuccess, refetchToolsets],
+    [showErrorNotification, t, showLogoutSuccess, refetchToolsets],
   );
 
   const onToggleFavorite = useCallback(
@@ -544,10 +546,8 @@ const CatalogView: FC<Props> = ({
           resolveFavoriteEntityType(item?.type),
         );
 
-        showNotification({
-          variant: isFavorite
-            ? NotificationVariant.Success
-            : NotificationVariant.Info,
+        /* Removing a favourite is as successful an outcome as adding one. */
+        showSuccessNotification({
           title: t(
             isFavorite
               ? FavoritesI18nKeys.AddedTitle
@@ -560,8 +560,7 @@ const CatalogView: FC<Props> = ({
         });
       } catch (error) {
         const { traceId } = await getApiErrorDetails(error);
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           title: t(
             isFavorite
               ? FavoritesI18nKeys.AddFailedTitle
@@ -577,7 +576,14 @@ const CatalogView: FC<Props> = ({
         });
       }
     },
-    [isLoading, toggleFavorite, catalogItems, showNotification, t],
+    [
+      isLoading,
+      toggleFavorite,
+      catalogItems,
+      showSuccessNotification,
+      showErrorNotification,
+      t,
+    ],
   );
 
   const handleUseInChat = useCallback(
@@ -599,8 +605,7 @@ const CatalogView: FC<Props> = ({
             promptContent = dto.content;
           } catch (err) {
             const { traceId } = await getApiErrorDetails(err);
-            showNotification({
-              variant: NotificationVariant.Error,
+            showErrorNotification({
               message: t(CatalogI18nKeys.DetailsPromptLoadError),
               requestId: traceId,
             });
@@ -614,7 +619,7 @@ const CatalogView: FC<Props> = ({
       setSelectedItemId(item.id);
       navigate(ROUTES.Root);
     },
-    [setSelectedItemId, navigate, showNotification, t],
+    [setSelectedItemId, navigate, showErrorNotification, t],
   );
 
   /* Picker mode: a card click selects it and closes the modal immediately,
@@ -650,16 +655,20 @@ const CatalogView: FC<Props> = ({
           serializePromptExport(buildPromptExportEnvelope(dto)),
           buildPromptExportFileName(dto.name, EXPORT_APP_NAME),
         );
+        notifyOperationSuccess(
+          NotifiableEntity.Prompt,
+          EntityOperation.Downloaded,
+          { name: dto.name },
+        );
       } catch (err) {
         const { traceId } = await getApiErrorDetails(err);
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           message: t(CatalogI18nKeys.DetailsPromptDownloadError),
           requestId: traceId,
         });
       }
     },
-    [showNotification, t],
+    [notifyOperationSuccess, showErrorNotification, t],
   );
 
   /* Only a prompt has a downloadable body; every other type is backed by config the catalog does not export. */
@@ -789,16 +798,19 @@ const CatalogView: FC<Props> = ({
   const handlePublishSuccess = useCallback(
     (item: CatalogItem, folderPath: string[]) => {
       rememberPublishFolder(folderPath);
-      showNotification({
-        variant: NotificationVariant.Success,
-        title: t(CatalogI18nKeys.PublishSuccessTitle),
-        message: t(CatalogI18nKeys.PublishSuccess, {
+      notifyOperationSuccess(
+        resolveCatalogItemEntity(
+          item.type,
+          findDeploymentByIdOrReference(deployments, item.id),
+        ),
+        EntityOperation.PublishRequested,
+        {
           name: item.name,
           folder: folderPath[folderPath.length - 1],
-        }),
-      });
+        },
+      );
     },
-    [rememberPublishFolder, showNotification, t],
+    [deployments, rememberPublishFolder, notifyOperationSuccess],
   );
 
   const handlePublishError = useCallback(
@@ -873,22 +885,32 @@ const CatalogView: FC<Props> = ({
           await refetchDeployments();
         }
 
-        showNotification({
-          variant: NotificationVariant.Success,
-          title: t(CatalogI18nKeys.DetailsDeleteSuccessTitle),
-          message: t(CatalogI18nKeys.DetailsDeleteSuccess, { name: item.name }),
-        });
+        notifyOperationSuccess(
+          resolveCatalogItemEntity(
+            item.type,
+            findDeploymentByIdOrReference(deployments, item.id),
+          ),
+          EntityOperation.Deleted,
+          { name: item.name },
+        );
       } catch (err) {
         const { traceId } = await getApiErrorDetails(err);
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           message: t(CatalogI18nKeys.DetailsDeleteError),
           requestId: traceId,
         });
         throw err;
       }
     },
-    [refetchToolsets, refetchDeployments, refetchPrompts, showNotification, t],
+    [
+      deployments,
+      refetchToolsets,
+      refetchDeployments,
+      refetchPrompts,
+      notifyOperationSuccess,
+      showErrorNotification,
+      t,
+    ],
   );
 
   const handleUnshare = useCallback(
@@ -897,8 +919,7 @@ const CatalogView: FC<Props> = ({
         await discardSharedCatalogItem(item.id);
       } catch (err) {
         const { traceId } = await getApiErrorDetails(err);
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           title: t(CatalogI18nKeys.DetailsUnshareErrorTitle),
           message: t(CatalogI18nKeys.DetailsUnshareError, { name: item.name }),
           requestId: traceId,
@@ -924,8 +945,7 @@ const CatalogView: FC<Props> = ({
         setSelectedItemId(null);
       }
 
-      showNotification({
-        variant: NotificationVariant.Success,
+      showSuccessNotification({
         title: t(CatalogI18nKeys.DetailsUnshareSuccessTitle),
         message: t(CatalogI18nKeys.DetailsUnshareSuccess, { name: item.name }),
       });
@@ -935,7 +955,8 @@ const CatalogView: FC<Props> = ({
       refetchDeployments,
       selectedItemId,
       setSelectedItemId,
-      showNotification,
+      showSuccessNotification,
+      showErrorNotification,
       t,
     ],
   );
@@ -951,8 +972,7 @@ const CatalogView: FC<Props> = ({
         await revokeSharedAccess(item.id);
       } catch (err) {
         const { traceId } = await getApiErrorDetails(err);
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           title: t(CatalogI18nKeys.DetailsRevokeShareErrorTitle),
           message: t(CatalogI18nKeys.DetailsRevokeShareError, {
             name: item.name,
@@ -962,15 +982,14 @@ const CatalogView: FC<Props> = ({
         throw err;
       }
 
-      showNotification({
-        variant: NotificationVariant.Success,
+      showSuccessNotification({
         title: t(CatalogI18nKeys.DetailsRevokeShareSuccessTitle),
         message: t(CatalogI18nKeys.DetailsRevokeShareSuccess, {
           name: item.name,
         }),
       });
     },
-    [showNotification, t],
+    [showErrorNotification, showSuccessNotification, t],
   );
 
   const createOptions = useMemo<DropdownItem[]>(() => {

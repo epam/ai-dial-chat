@@ -5,7 +5,7 @@ import {
   ScheduledTaskCreateFormValues,
   ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
-import { GhostButton, NotificationVariant } from '@epam/ai-dial-ui-kit';
+import { GhostButton } from '@epam/ai-dial-ui-kit';
 import {
   memo,
   useCallback,
@@ -51,7 +51,7 @@ const ScheduledTaskEditPage: FC = () => {
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
   const { scheduleId = '' } = useParams<{ scheduleId: string }>();
-  const { showNotification } = useNotification();
+  const { showSuccessNotification, showErrorNotification } = useNotification();
   const { currentTheme } = useTheme();
   const modelLabelId = useId();
 
@@ -231,8 +231,7 @@ const ScheduledTaskEditPage: FC = () => {
     setIsSubmitting(true);
     try {
       await updateScheduledTask(scheduleId, mapFormValuesToUpdateBody(values));
-      showNotification({
-        variant: NotificationVariant.Success,
+      showSuccessNotification({
         message: t(ScheduledTasksI18nKeys.EditSuccessNotification),
       });
       navigate(returnUrl);
@@ -243,14 +242,21 @@ const ScheduledTaskEditPage: FC = () => {
         return;
       }
       const { traceId } = await getApiErrorDetails(error);
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(ScheduledTasksI18nKeys.EditErrorNotification),
         requestId: traceId,
       });
       setIsSubmitting(false);
     }
-  }, [values, showNotification, t, navigate, returnUrl, scheduleId]);
+  }, [
+    values,
+    showSuccessNotification,
+    showErrorNotification,
+    t,
+    navigate,
+    returnUrl,
+    scheduleId,
+  ]);
 
   const handleSubmitVoid = useCallback(
     () => void handleSubmit(),

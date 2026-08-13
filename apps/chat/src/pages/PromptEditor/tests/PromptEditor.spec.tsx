@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNotification } from '../../../context/NotificationContext';
 import { usePrompts } from '../../../context/PromptsContext';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import {
   createPrompt,
@@ -85,11 +86,9 @@ describe('PromptEditor', () => {
       refetchPrompts,
       refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
     });
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
     vi.mocked(createPrompt).mockResolvedValue(promptDto);
     vi.mocked(updatePrompt).mockResolvedValue(promptDto);
     vi.mocked(movePrompt).mockResolvedValue(promptDto);
@@ -173,6 +172,11 @@ describe('PromptEditor', () => {
     );
     expect(refetchPrompts).toHaveBeenCalled();
     expect(mockNavigate).toHaveBeenCalledWith('/catalog');
+    expect(showNotification).toHaveBeenCalledWith({
+      variant: 'success',
+      title: 'entityNotifications.prompt.createdTitle',
+      message: 'entityNotifications.prompt.created',
+    });
   });
 
   it('blocks submission and shows an inline error for an empty name', async () => {
@@ -274,6 +278,11 @@ describe('PromptEditor', () => {
       }),
     );
     expect(movePrompt).not.toHaveBeenCalled();
+    expect(showNotification).toHaveBeenCalledWith({
+      variant: 'success',
+      title: 'entityNotifications.prompt.editedTitle',
+      message: 'entityNotifications.prompt.edited',
+    });
   });
 
   it('creates a folder and refetches so the picker sees it', async () => {

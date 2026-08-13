@@ -128,7 +128,7 @@ const SigninRow: FC<SigninRowProps> = ({
       )}
 
       {rowState.error && (
-        <div className="flex items-center gap-2 text-sm text-error">
+        <div className="dial-small-text flex items-center gap-2 text-error">
           <IconAlertCircleFilled size={DIAL_ICON_SIZE.SM} aria-hidden />
           <span>{rowState.error}</span>
           <button

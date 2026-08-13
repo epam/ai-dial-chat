@@ -114,14 +114,43 @@ describe('isOverlayMessageResponse', () => {
 });
 
 describe('OverlayFeature', () => {
-  it('has exactly 34 unique members', () => {
+  it('has exactly 35 unique members', () => {
     const values = Object.values(OverlayFeature);
-    expect(values).toHaveLength(34);
-    expect(new Set(values).size).toBe(34);
+    expect(values).toHaveLength(35);
+    expect(new Set(values).size).toBe(35);
   });
 
   it('includes the prompts feature key', () => {
     expect(Object.values(OverlayFeature)).toContain('prompts');
+  });
+
+  it('includes the file-manager feature key', () => {
+    expect(Object.values(OverlayFeature)).toContain('file-manager');
+  });
+
+  it('does not include the renamed marketplace keys', () => {
+    const values = Object.values(OverlayFeature) as string[];
+    [
+      'marketplace',
+      'marketplace-hide-my-apps',
+      'marketplace-table-view',
+    ].forEach((key) => {
+      expect(values).not.toContain(key);
+    });
+  });
+
+  it('does not include keys whose behavior became unconditional', () => {
+    const values = Object.values(OverlayFeature) as string[];
+    [
+      'custom-logo',
+      'show-layout-dividers',
+      'top-settings',
+      'top-chat-model-settings',
+      'chat-header-border',
+      'chat-input-border',
+    ].forEach((key) => {
+      expect(values).not.toContain(key);
+    });
   });
 
   it('includes the pre-existing and newly-added transferable keys', () => {

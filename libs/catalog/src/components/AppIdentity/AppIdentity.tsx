@@ -59,7 +59,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
 
   const isLg = size === DeploymentSize.LG;
   const logoClass = isLg
-    ? 'size-[54px] rounded-[14px]'
+    ? 'size-[52px] rounded-[14px]'
     : 'size-[44px] rounded-lg';
   const logoSize = isLg ? 54 : 44;
   const cssVars = buildCssVars({
@@ -70,10 +70,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
 
   return (
     <div
-      className={mergeClasses(
-        'flex min-w-0 items-start gap-[14px] rounded-xl',
-        className,
-      )}
+      className={mergeClasses('flex min-w-0 items-start gap-3', className)}
       style={cssVars}
     >
       <div
@@ -96,10 +93,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <EntityTypeLabel
-          type={type}
-          className={typography?.typeClassName ?? 'dial-caption-semi-text'}
-        />
+        <EntityTypeLabel type={type} className={typography?.typeClassName} />
 
         <div className="flex min-w-0 flex-col">
           <div className="flex min-w-0 items-start gap-1 overflow-hidden">

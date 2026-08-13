@@ -153,9 +153,7 @@
         "consequenceSharedConfigurations": "All shared configurations will be lost",
         "consequenceUsersLoseAccess": "Users who rely on it will lose access",
         "consequenceCannotBeUndone": "Cannot be undone",
-        "error": "Failed to delete. Please try again.",
-        "successTitle": "Deleted successfully",
-        "success": "\"{{name}}\" was deleted."
+        "error": "Failed to delete. Please try again."
       },
       "unshare": {
         "confirmTitle": "Remove from My List",
@@ -200,8 +198,6 @@
       "customApp": "Custom App",
       "prompt": "Prompt"
     },
-    "publishSuccessTitle": "Published",
-    "publishSuccess": "\"{{name}}\" published to {{folder}}",
     "publishFolderSearchPlaceholder": "Search folders",
     "publishFolderEmptyState": "No folders match \"{{query}}\".",
     "publishHistoryLoading": "Loading history…",
@@ -341,8 +337,6 @@
     },
     "delete": {
       "deleteConfirmTitle": "Confirm Deleting Chat",
-      "deleteSuccess": "Conversation deleted successfully",
-      "deleteSuccessTitle": "Conversation deleted",
       "deleteError": "Failed to delete the conversation. Please try again."
     },
     "rename": {
@@ -385,7 +379,6 @@
   "conversationPublish": {
     "panelAriaLabel": "Publish conversation",
     "alreadyPublishedWarning": "This conversation is already published in {folder}.",
-    "successMessage": "Publish request submitted. It will appear in Organization once an admin approves it.",
     "emptyFolderNameError": "Folder name cannot be empty.",
     "invalidFolderNameError": "Folder name contains invalid characters.",
     "duplicateFolderNameError": "A folder with this name already exists."
@@ -398,6 +391,10 @@
   },
   "publishAccessRules": {
     "heading": "Allow access if all match",
+    "folderScopeHint": "These rules apply to \"{folder}\". Selecting another folder loads that folder's own rules instead.",
+    "noFolderScopeHint": "Access rules apply to the destination folder — pick a folder above to set its rules.",
+    "rulesWithoutFolderWarning": "These rules have no destination yet. Select a folder above to apply them.",
+    "maxRulesReachedLabel": "Rule limit reached ({max}). Remove a rule to add another.",
     "addRuleLabel": "Add rule",
     "clearAllLabel": "Clear all",
     "orSeparatorLabel": "Or",
@@ -1067,9 +1064,6 @@
     "loadError": "Couldn't load this prompt.",
     "retryLabel": "Try again",
     "savingStatus": "Saving",
-    "saveSuccessTitle": "Prompt saved",
-    "createSuccess": "\"{{name}}\" has been created.",
-    "updateSuccess": "\"{{name}}\" has been updated.",
     "saveError": "Couldn't save this prompt. Please try again.",
     "moveError": "The prompt was saved but couldn't be moved to the selected folder.",
     "folderCreateLabel": "New folder",
@@ -1080,5 +1074,97 @@
     "folderDeleteConfirmMessage": "Delete \"{{name}}\" and every prompt inside it? This cannot be undone.",
     "folderError": "Couldn't update folders. Please try again.",
     "loadingAriaLabel": "Loading prompt"
+  },
+  "entityNotifications": {
+    "prompt": {
+      "createdTitle": "Prompt created successfully",
+      "created": "You can now see prompt \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "Prompt edited successfully",
+      "edited": "Changes for prompt \"{{name}}\" are saved.",
+      "deletedTitle": "Prompt deleted successfully",
+      "deleted": "Prompt \"{{name}}\" is not available anymore.",
+      "downloadedTitle": "Prompt downloaded successfully",
+      "downloaded": "Prompt \"{{name}}\" is saved on your device.",
+      "publishRequestedTitle": "Prompt publish requested",
+      "publishRequested": "Publish request for prompt \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+    },
+    "agent": {
+      "createdTitle": "Agent created successfully",
+      "created": "You can now see agent \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "Agent edited successfully",
+      "edited": "Changes for agent \"{{name}}\" are saved.",
+      "deletedTitle": "Agent deleted successfully",
+      "deleted": "Agent \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "Agent publish requested",
+      "publishRequested": "Publish request for agent \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+    },
+    "quickApp": {
+      "createdTitle": "Quick app created successfully",
+      "created": "You can now see quick app \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "Quick app edited successfully",
+      "edited": "Changes for quick app \"{{name}}\" are saved.",
+      "deletedTitle": "Quick app deleted successfully",
+      "deleted": "Quick app \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "Quick app publish requested",
+      "publishRequested": "Publish request for quick app \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+    },
+    "customApp": {
+      "createdTitle": "Custom app created successfully",
+      "created": "You can now see custom app \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "Custom app edited successfully",
+      "edited": "Changes for custom app \"{{name}}\" are saved.",
+      "deletedTitle": "Custom app deleted successfully",
+      "deleted": "Custom app \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "Custom app publish requested",
+      "publishRequested": "Publish request for custom app \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+    },
+    "toolset": {
+      "createdTitle": "Toolset created successfully",
+      "created": "You can now see toolset \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "Toolset edited successfully",
+      "edited": "Changes for toolset \"{{name}}\" are saved.",
+      "deletedTitle": "Toolset deleted successfully",
+      "deleted": "Toolset \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "Toolset publish requested",
+      "publishRequested": "Publish request for toolset \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+    },
+    "model": {
+      "deletedTitle": "Model deleted successfully",
+      "deleted": "Model \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "Model publish requested",
+      "publishRequested": "Publish request for model \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+    },
+    "skill": {
+      "deletedTitle": "Skill deleted successfully",
+      "deleted": "Skill \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "Skill publish requested",
+      "publishRequested": "Publish request for skill \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+    },
+    "conversation": {
+      "renamedTitle": "Conversation renamed successfully",
+      "renamed": "Conversation \"{{name}}\" is renamed.",
+      "duplicatedTitle": "Conversation duplicated successfully",
+      "duplicated": "A copy of conversation \"{{name}}\" is created.",
+      "publishRequestedTitle": "Conversation publish requested",
+      "publishRequested": "Publish request for conversation \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "deletedTitle": "Conversation deleted successfully",
+      "deleted": "Conversation \"{{name}}\" is not available anymore."
+    },
+    "file": {
+      "renamedTitle": "File renamed successfully",
+      "renamed": "File \"{{name}}\" is renamed.",
+      "downloadedTitle_one": "File downloaded successfully",
+      "downloadedTitle_other": "Files downloaded successfully",
+      "downloaded_one": "File \"{{name}}\" is saved on your device.",
+      "downloaded_other": "{{count}} files are saved on your device."
+    },
+    "folder": {
+      "createdTitle": "Folder created successfully",
+      "created": "Folder \"{{name}}\" is created.",
+      "renamedTitle": "Folder renamed successfully",
+      "renamed": "Folder \"{{name}}\" is renamed.",
+      "downloadedTitle": "Folder downloaded successfully",
+      "downloaded": "Folder \"{{name}}\" is saved on your device."
+    }
   }
 }

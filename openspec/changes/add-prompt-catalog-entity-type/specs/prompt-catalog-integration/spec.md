@@ -229,7 +229,7 @@ Each unsupported action's absence is a documented backend-capability limitation,
 - **Memoisation**: the prompt-item mapping MUST live inside the existing `catalogItems` `useMemo`; `handleFetchDetails`, `handleDelete`, and every visibility predicate MUST be `useCallback`'d so `Catalog`'s fetch effect and ag-grid column identity are not invalidated on unrelated re-renders.
 - **i18n**: new keys `catalog.tabPrompts` (`CatalogI18nKeys.TabPrompts`) and `catalog.details.tabContent` (`CatalogI18nKeys.DetailsTabContent`). Copy/Delete/Edit/Cancel labels reuse existing `ButtonsI18nKeys` members. Every key is declared in `translation-keys.ts` and `en.json` in the same change.
 - **RTL / direction impact**: the Content tab and folder breadcrumb use logical properties only; no new physical-direction class and no mirrored icon are introduced by the app adapter.
-- **Accessibility**: the Content tab's copy control keeps a stable `aria-label` with a separate `role="status" aria-live="polite"` confirmation region; the Prompts tab participates in the existing `TabRow` keyboard model unchanged.
+- **Accessibility**: the Content tab's copy control keeps a stable `aria-label` with a separate `role="status" aria-live="polite"` confirmation region; the Prompts tab participates in the existing `Tabs` keyboard model unchanged.
 - **Observability**: none beyond the shared API client's per-request logging.
 - **Rate limiting / caching**: no new client cache. Backend throttles already apply per the prompts controller.
 - **Authorization**: every prompt endpoint is session-authenticated and scoped to the caller's own bucket by the backend; the frontend adds no role check. Organisation prompts are read-only for all users.

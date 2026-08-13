@@ -37,6 +37,13 @@ const existingRule: PublicationRule = {
   targets: ['Internal Tools'],
 };
 
+const buildRules = (count: number): PublicationRule[] =>
+  Array.from({ length: count }, (_, i) => ({
+    source: 'role',
+    function: PublicationRuleFunction.Contain,
+    targets: [`team-${i}`],
+  }));
+
 const renderRules = (
   props?: Partial<Parameters<typeof PublishAccessRules>[0]>,
 ) => {
@@ -127,16 +134,37 @@ describe('PublishAccessRules', () => {
   });
 
   it('blocks adding a 21st rule', () => {
-    const rules = Array.from({ length: 20 }, (_, i) => ({
-      source: 'role',
-      function: PublicationRuleFunction.Contain,
-      targets: [`team-${i}`],
-    }));
-    renderRules({ rules });
+    renderRules({ rules: buildRules(20) });
 
     expect(isDisabled(screen.getByRole('button', { name: 'Add rule' }))).toBe(
       true,
     );
+  });
+
+  it('explains why "Add rule" is disabled once the rule limit is reached', () => {
+    renderRules({ rules: buildRules(20) });
+
+    expect(
+      screen.getByText(
+        'Rule limit reached (20). Remove a rule to add another.',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('shows no rule-limit hint while more rules can still be added', () => {
+    renderRules({ rules: buildRules(19) });
+
+    expect(screen.queryByText(/Rule limit reached/)).toBeNull();
+  });
+
+  it('styles "Clear all" with the primary ghost appearance so its active state is distinguishable', () => {
+    renderRules({ rules: [existingRule] });
+
+    expect(
+      screen
+        .getByRole('button', { name: 'Clear all' })
+        .classList.contains('dial-kit-primary-ghost-button'),
+    ).toBe(true);
   });
 
   it('shows a non-blocking loading indicator without disabling Add rule', () => {
@@ -179,6 +207,50 @@ describe('PublishAccessRules', () => {
     expect(screen.getByRole('status').textContent).toBe(
       'Existing rules loaded for the selected folder.',
     );
+  });
+
+  describe('destination-folder scope', () => {
+    it('names the folder the rules apply to when one is selected', () => {
+      renderRules({ folderName: 'Published models' });
+
+      expect(
+        screen.getByText(/These rules apply to "Published models"/),
+      ).toBeTruthy();
+    });
+
+    it('points the user at the folder picker when no folder is selected', () => {
+      renderRules();
+
+      expect(
+        screen.getByText(
+          'Access rules apply to the destination folder — pick a folder above to set its rules.',
+        ),
+      ).toBeTruthy();
+    });
+
+    it('warns that existing rules have no destination while no folder is selected', () => {
+      renderRules({ rules: [existingRule] });
+
+      expect(
+        screen.getByText(
+          'These rules have no destination yet. Select a folder above to apply them.',
+        ),
+      ).toBeTruthy();
+    });
+
+    it('drops the no-destination warning once a folder is selected', () => {
+      renderRules({ rules: [existingRule], folderName: 'Shared' });
+
+      expect(screen.queryByText(/have no destination yet/)).toBeNull();
+    });
+
+    it('exposes the section as a group named by its heading', () => {
+      renderRules();
+
+      expect(
+        screen.getByRole('group', { name: 'Allow access if all match' }),
+      ).toBeTruthy();
+    });
   });
 
   it('cancelling the editor does not add a rule', async () => {

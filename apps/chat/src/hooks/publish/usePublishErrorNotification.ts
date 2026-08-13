@@ -1,4 +1,3 @@
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PublishI18nKeys } from '../../constants/translation-keys';
@@ -14,7 +13,7 @@ import { getApiErrorDetails } from '../../server-api/api-error';
  */
 export const usePublishErrorNotification = (): ((error: unknown) => void) => {
   const { t } = useTranslation();
-  const { showNotification } = useNotification();
+  const { showErrorNotification } = useNotification();
 
   return useCallback(
     (error: unknown) => {
@@ -26,8 +25,7 @@ export const usePublishErrorNotification = (): ((error: unknown) => void) => {
        * connection, mirroring the attachment-upload network-error notification.
        */
       if (!navigator.onLine) {
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           title: t(PublishI18nKeys.FailedTitle),
           message: t(PublishI18nKeys.NetworkErrorMessage),
         });
@@ -36,8 +34,7 @@ export const usePublishErrorNotification = (): ((error: unknown) => void) => {
 
       const notify = async () => {
         const { message, traceId } = await getApiErrorDetails(error);
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           title: t(PublishI18nKeys.FailedTitle),
           message: message ?? t(PublishI18nKeys.FailedMessage),
           requestId: traceId,
@@ -46,6 +43,6 @@ export const usePublishErrorNotification = (): ((error: unknown) => void) => {
 
       void notify();
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 };

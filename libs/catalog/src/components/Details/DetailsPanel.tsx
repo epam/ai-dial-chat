@@ -1,5 +1,4 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { TabRow } from '@epam/ai-dial-kit';
 import {
   derivePublishState,
   PublishFooter,
@@ -14,7 +13,8 @@ import {
   CloseButton,
   ElementSize,
   Skeleton,
-  DialTag,
+  Tag,
+  Tabs,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft } from '@tabler/icons-react';
@@ -142,6 +142,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   styles: detailsStyles,
 }) => {
   const {
+    subViewTitleClassName = 'dial-body-semi-text',
     overviewSectionClassName = 'dial-caption-text',
     overviewLabelClassName = 'dial-small-semi-text',
     overviewValueClassName = 'dial-small-text',
@@ -606,7 +607,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
               />
               <span
                 className={mergeClasses(
-                  'dial-body-semi-text flex-1',
+                  'flex-1',
+                  subViewTitleClassName,
                   styles.publishTitle,
                 )}
               >
@@ -666,7 +668,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                         showVersion={false}
                       />
                     </div>
-                    <DialTag
+                    <Tag
                       label={`Version ${item.version} · current`}
                       className={mergeClasses(
                         'shrink-0 whitespace-nowrap',
@@ -741,7 +743,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
               )}
 
               <div className="flex items-center px-6">
-                <TabRow
+                <Tabs
                   tabs={tabs}
                   activeTabId={activeTab}
                   onTabChange={setActiveTab}

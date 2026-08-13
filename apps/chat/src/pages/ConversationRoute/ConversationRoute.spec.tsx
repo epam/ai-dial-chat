@@ -13,6 +13,7 @@ import * as UserContextModule from '../../context/auth/UserContext';
 import * as DeploymentsContextModule from '../../context/DeploymentsContext';
 import * as NotificationContextModule from '../../context/NotificationContext';
 import * as OverlayContextMock from '../../context/overlay/OverlayContext';
+import { createNotificationContextValue } from '../../context/tests/notification-context-mock';
 import * as ToolsMenuModule from '../../hooks/conversation/useToolsMenu';
 import * as KeyboardShortcutModule from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import * as conversationsApi from '../../server-api/conversations.api';
@@ -283,11 +284,9 @@ describe('ConversationRoute', () => {
       onToolToggle: vi.fn(),
       toolConfigurationValue: {},
     });
-    mockUseNotification.mockReturnValue({
-      notifications: [],
-      showNotification: mockShowNotification,
-      dismissNotification: vi.fn(),
-    });
+    mockUseNotification.mockReturnValue(
+      createNotificationContextValue(mockShowNotification),
+    );
   });
 
   it('passes catalog items and selectedItemId into ConversationInput', async () => {

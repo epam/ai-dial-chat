@@ -1,8 +1,8 @@
-import { PillTabs } from '@epam/ai-dial-kit';
 import { mergeClasses } from '@epam/ai-dial-ui-kit';
 import { type FC, memo } from 'react';
 import { type FilterLabels } from '../../models/panel-props';
 import { FilterTab } from '../../types/conversation-classification';
+import { PillTabs } from '../PillTabs/PillTabs';
 
 /** Props for `FilterTabs`. */
 export interface FilterTabsProps {

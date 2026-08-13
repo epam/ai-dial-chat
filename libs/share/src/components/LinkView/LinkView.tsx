@@ -19,7 +19,7 @@ interface LinkViewProps {
   copiedButtonLabel: string;
   /** Called when the Copy button is clicked. */
   onCopy: () => void;
-  /** CSS class applied to the section label above the URL field. Defaults to `'dial-tiny-semi-text uppercase'`. */
+  /** CSS class applied to the section label above the URL field. Defaults to `'dial-tiny-lead-semi-text'`. */
   sectionLabelClassName?: string;
 }
 
@@ -32,7 +32,7 @@ export const LinkView: FC<LinkViewProps> = ({
   copyButtonLabel,
   copiedButtonLabel,
   onCopy,
-  sectionLabelClassName = 'dial-tiny-semi-text uppercase',
+  sectionLabelClassName = 'dial-tiny-lead-semi-text',
 }) => (
   <>
     <p

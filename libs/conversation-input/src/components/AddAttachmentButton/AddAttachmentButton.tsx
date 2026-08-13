@@ -62,7 +62,7 @@ interface AddAttachmentButtonProps {
   menuCloseLabel: string;
   /** CSS custom-property overrides forwarded to the mobile BottomSheet. */
   style?: CSSProperties;
-  /** Width class applied to the desktop dropdown list. Defaults to `'!w-[240px]'`. */
+  /** Width class applied to the desktop dropdown list. Defaults to `'w-[240px]'`. */
   listClassName?: string;
   /** When `true`, the trigger button is disabled and the menu cannot open. */
   isDisabled?: boolean;

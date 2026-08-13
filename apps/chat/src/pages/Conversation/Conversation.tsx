@@ -9,7 +9,6 @@ import {
   ConfirmationPopupVariant,
   ConfirmationPopup,
   Spinner,
-  NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -110,16 +109,15 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     selectedDeploymentId: currentSelectedItemId,
   });
 
-  const { showNotification } = useNotification();
+  const { showSuccessNotification, showErrorNotification } = useNotification();
 
   const handleNetworkUploadError = useCallback(
     (filenames: string[]) => {
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         ...buildNetworkUploadErrorNotification(filenames, t),
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const [pendingDislikeMessageIndex, setPendingDislikeMessageIndex] = useState<
@@ -220,11 +218,10 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
    */
   const autoStartedPathsRef = useRef<Set<string>>(new Set());
   const handleStopError = useCallback(() => {
-    showNotification({
-      variant: NotificationVariant.Error,
+    showErrorNotification({
       message: t(ChatI18nKeys.StreamError),
     });
-  }, [showNotification, t]);
+  }, [showErrorNotification, t]);
 
   const {
     startStream,
@@ -373,8 +370,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         if (notificationShownForRef.current !== id) {
           notificationShownForRef.current = id;
           const { traceId } = await getApiErrorDetails(error);
-          showNotification({
-            variant: NotificationVariant.Error,
+          showErrorNotification({
             message: t(ChatI18nKeys.ConversationNotFound),
             requestId: traceId,
           });
@@ -391,7 +387,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       resumeIfAwaitingGeneration,
       updateConversationTitle,
       getGeneration,
-      showNotification,
+      showErrorNotification,
       t,
     ],
   );
@@ -482,14 +478,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     async (messageIndex: number, rating: MessageRating | null) => {
       const success = await handleRateMessage(messageIndex, rating);
       if (success && rating === MessageRating.Like) {
-        showNotification({
-          variant: NotificationVariant.Success,
+        showSuccessNotification({
           title: t(RateI18nKeys.LikeToastTitle),
           message: t(RateI18nKeys.LikeToastDescription),
         });
       }
     },
-    [handleRateMessage, showNotification, t],
+    [handleRateMessage, showSuccessNotification, t],
   );
 
   const handleOpenDislikeModal = useCallback((messageIndex: number) => {
@@ -507,14 +502,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         comment,
       );
       if (success) {
-        showNotification({
-          variant: NotificationVariant.Success,
+        showSuccessNotification({
           title: t(RateI18nKeys.DislikeToastTitle),
           message: t(RateI18nKeys.LikeToastDescription),
         });
       }
     },
-    [pendingDislikeMessageIndex, handleRateMessage, showNotification, t],
+    [pendingDislikeMessageIndex, handleRateMessage, showSuccessNotification, t],
   );
 
   const handleDislikeModalClose = useCallback(() => {

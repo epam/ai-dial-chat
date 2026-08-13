@@ -204,7 +204,13 @@ export const Header: FC<HeaderProps> = ({
       items.push({
         key: 'edit',
         label: texts?.editActionLabel ?? 'Edit',
-        icon: <IconPencil size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        icon: (
+          <IconPencil
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            className="text-secondary"
+          />
+        ),
         onClick: handleEdit,
       });
     }
@@ -212,7 +218,13 @@ export const Header: FC<HeaderProps> = ({
       items.push({
         key: 'download',
         label: texts?.downloadActionLabel ?? 'Download',
-        icon: <IconDownload size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        icon: (
+          <IconDownload
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            className="text-secondary"
+          />
+        ),
         onClick: handleDownload,
       });
     }
@@ -220,7 +232,13 @@ export const Header: FC<HeaderProps> = ({
       items.push({
         key: 'publish',
         label: texts?.publishLabel ?? 'Publish',
-        icon: <IconWorldShare size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        icon: (
+          <IconWorldShare
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            className="text-secondary"
+          />
+        ),
         onClick: handleOpenPublish,
       });
     }

@@ -24,7 +24,7 @@ const renderProviders = (
   signInLabel: string,
 ) => (
   <>
-    <p className="text-center text-base text-primary">{signInLabel}</p>
+    <p className="dial-body-text text-center text-primary">{signInLabel}</p>
     <div className="flex w-full flex-col gap-3">
       {providers.map((provider) => {
         const href = `/api/v1/auth/login/${encodeURIComponent(provider.id)}?callbackUrl=${encodeURIComponent(callbackUrl)}`;
