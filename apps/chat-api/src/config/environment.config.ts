@@ -810,24 +810,33 @@ export class EnvironmentVariables {
   @MaxLength(200, { each: true })
   PUBLICATION_FILTER_SOURCES?: string[] = [];
 
-  // Skills domain ingress limits (see openspec/changes/add-skills-bff-api/design.md "Upload Limits")
+  /*
+   * Skills domain limits (see openspec/changes/fix-skill-editor-core-contract/design.md).
+   * Defaults match DIAL Core's own real, verified `ComplexResourceService.Settings`
+   * (maxFiles=100, maxFileSizeBytes=1 MiB, maxTotalBytes=16 MiB — read directly from
+   * epam/ai-dial-core's source, not the epic issue's "~" approximations). The former
+   * `SKILL_UPLOAD_MAX_BYTES` (a compressed-ZIP Multer ingress cap) has been removed: no
+   * ZIP is ever uploaded on the create/update path since this change, so it has no
+   * remaining meaning. A deployment that still sets it has that value silently ignored
+   * (class-transformer only maps decorated properties) rather than the boot failing.
+   */
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))
   @IsInt()
   @Min(1)
-  SKILL_UPLOAD_MAX_BYTES?: number = 104_857_600;
+  SKILL_UPLOAD_MAX_FILES?: number = 100;
 
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))
   @IsInt()
   @Min(1)
-  SKILL_UPLOAD_MAX_FILES?: number = 500;
+  SKILL_FILE_UPLOAD_MAX_BYTES?: number = 1_048_576;
 
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))
   @IsInt()
   @Min(1)
-  SKILL_FILE_UPLOAD_MAX_BYTES?: number = 20_971_520;
+  SKILL_UPLOAD_MAX_TOTAL_BYTES?: number = 16_777_216;
 
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))

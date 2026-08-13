@@ -9,6 +9,7 @@ export enum ROUTES {
   ToolsetEditor = '/toolset-editor',
   CustomAppEditor = '/custom-app-editor',
   PromptEditor = '/prompt-editor',
+  SkillEditor = '/skill-editor',
   /**
    * The sole registered OAuth redirect_uri for every toolset's IdP client.
    * Landed on by both the admin ToolsetEditor's redirect flow AND the

@@ -1,30 +1,27 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   Logger,
   PayloadTooLargeException,
-  UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as yauzl from 'yauzl';
-import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
+import {
+  extractDialErrorMessage,
+  handleDialSdkError,
+  mapDialHttpStatus,
+} from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { buildIfMatchHeaders } from '../../common/utils/conditional-headers';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
+import type { UploadedSkillFile } from '../package/skills-package.service';
+import { SkillsPackageService } from '../package/skills-package.service';
 import { getSkillTransferTimeoutMs } from '../utils/skill-config.util';
-import {
-  SKILL_MANIFEST_FILE,
-  isValidSkillRelativePath,
-} from '../utils/skill-path.util';
+import { isValidSkillRelativePath } from '../utils/skill-path.util';
 
-export interface UploadedSkillFile {
-  buffer: Buffer;
-  mimetype: string;
-}
-
-const buildUploadFormData = (
+const buildSingleFileFormData = (
   file: UploadedSkillFile,
   fileName: string,
 ): FormData => {
@@ -43,17 +40,13 @@ export class SkillsUploadService {
 
   constructor(
     private readonly dialClient: DialClientService,
+    private readonly packageService: SkillsPackageService,
     private readonly configService: ConfigService<EnvironmentVariables>,
   ) {}
 
-  private getUploadMaxFiles(): number {
-    return this.configService.get<number>('SKILL_UPLOAD_MAX_FILES') ?? 500;
-  }
-
   private getFileUploadMaxBytes(): number {
     return (
-      this.configService.get<number>('SKILL_FILE_UPLOAD_MAX_BYTES') ??
-      20_971_520
+      this.configService.get<number>('SKILL_FILE_UPLOAD_MAX_BYTES') ?? 1_048_576
     );
   }
 
@@ -71,22 +64,87 @@ export class SkillsUploadService {
   }
 
   /**
-   * Validates every entry of an uploaded whole-skill ZIP (path safety,
-   * reserved markers, duplicate paths, `SKILL.md` at the root — design.md
-   * D1/D4) without extracting any file content, then forwards the untouched
-   * ZIP buffer to DIAL Core's `uploadSkillFolder`, which does its own
-   * extraction server-side. Returns the new aggregate ETag when DIAL Core
-   * provides one.
+   * Creates a new skill atomically. Sends `If-None-Match: '*'` to DIAL
+   * Core's `uploadSkillFolder` (its real, verified create-only mechanism —
+   * design.md's Context, read directly from Core's `EtagHeader` source) and
+   * sends no `If-Match`. A `412` response (Core's real create-collision
+   * signal) is translated to `409 Conflict`.
    */
-  async uploadSkill(
+  async createSkill(
     bucket: string,
     path: string,
-    zipFile: UploadedSkillFile,
+    skillManifest: string,
+    filePathsJson: string,
+    files: UploadedSkillFile[],
     accessToken: string,
-    ifMatch?: string,
     signal?: AbortSignal,
   ): Promise<{ etag?: string }> {
-    await this.validateSkillArchive(zipFile.buffer);
+    const formData = this.packageService.validateAndBuildFormData(
+      skillManifest,
+      filePathsJson,
+      files,
+    );
+
+    try {
+      const { error, response } =
+        await this.dialClient.client.uploadSkillFolder(
+          bucket,
+          encodeDialResourcePath(path),
+          {
+            headers: {
+              ...getBearerAuthHeaders(accessToken),
+              // Undeclared in the pinned SDK's operation type — a verified
+              // schema gap, not a speculative header (design.md D2).
+              'If-None-Match': '*',
+            } as Record<string, string>,
+            body: formData as unknown as { file: string },
+            signal: this.combineWithTimeoutSignal(signal),
+          },
+        );
+
+      if (error != null) {
+        if (response.status === 412) {
+          throw new ConflictException(
+            extractDialErrorMessage(error) ??
+              'A skill already exists at this path',
+          );
+        }
+        return mapDialHttpStatus(
+          response.status,
+          'skills.createSkill',
+          this.logger,
+          error,
+          extractDialErrorMessage(error),
+        );
+      }
+
+      return { etag: response.headers.get('etag') ?? undefined };
+    } catch (err) {
+      if (err instanceof ConflictException) throw err;
+      return handleDialSdkError(err, 'skills.createSkill', this.logger);
+    }
+  }
+
+  /**
+   * Replaces an existing skill's whole content, guarded by the caller's
+   * concrete `If-Match`. A `412` response is a genuine stale-edit conflict
+   * and is surfaced unchanged.
+   */
+  async updateSkill(
+    bucket: string,
+    path: string,
+    skillManifest: string,
+    filePathsJson: string,
+    files: UploadedSkillFile[],
+    ifMatch: string,
+    accessToken: string,
+    signal?: AbortSignal,
+  ): Promise<{ etag?: string }> {
+    const formData = this.packageService.validateAndBuildFormData(
+      skillManifest,
+      filePathsJson,
+      files,
+    );
 
     try {
       const { error, response } =
@@ -98,34 +156,34 @@ export class SkillsUploadService {
               ...getBearerAuthHeaders(accessToken),
               ...buildIfMatchHeaders(ifMatch),
             },
-            body: buildUploadFormData(
-              zipFile,
-              `${path.split('/').filter(Boolean).pop() ?? 'skill'}.zip`,
-            ) as unknown as { file: string },
+            body: formData as unknown as { file: string },
             signal: this.combineWithTimeoutSignal(signal),
           },
         );
 
       if (error != null) {
-        return handleDialSdkError(
-          error,
-          'skills.uploadSkill',
+        return mapDialHttpStatus(
+          response.status,
+          'skills.updateSkill',
           this.logger,
-          response,
+          error,
+          extractDialErrorMessage(error),
         );
       }
 
       return { etag: response.headers.get('etag') ?? undefined };
     } catch (err) {
-      return handleDialSdkError(err, 'skills.uploadSkill', this.logger);
+      return handleDialSdkError(err, 'skills.updateSkill', this.logger);
     }
   }
 
   /**
    * Uploads (or replaces) a single file inside an existing skill. `filePath`
    * is re-validated here (beyond the DTO's `IsValidFilePath`) against the
-   * same reserved-marker/path-safety rules whole-skill entries use, since
-   * both are DIAL Core skill-relative paths (design.md D4).
+   * same reserved-marker/path-safety rules whole-skill entries use. This
+   * operation always targets an existing skill (adding a file to a skill
+   * that doesn't exist yet is not a supported flow) — it has no create-only
+   * case and therefore no `If-None-Match`/`409` handling to add.
    */
   async uploadSkillFile(
     bucket: string,
@@ -155,7 +213,7 @@ export class SkillsUploadService {
             ...getBearerAuthHeaders(accessToken),
             ...buildIfMatchHeaders(ifMatch),
           },
-          body: buildUploadFormData(
+          body: buildSingleFileFormData(
             file,
             filePath.split('/').filter(Boolean).pop() ?? 'file',
           ) as unknown as { file: string },
@@ -164,11 +222,12 @@ export class SkillsUploadService {
       );
 
       if (error != null) {
-        return handleDialSdkError(
-          error,
+        return mapDialHttpStatus(
+          response.status,
           'skills.uploadSkillFile',
           this.logger,
-          response,
+          error,
+          extractDialErrorMessage(error),
         );
       }
 
@@ -176,76 +235,5 @@ export class SkillsUploadService {
     } catch (err) {
       return handleDialSdkError(err, 'skills.uploadSkillFile', this.logger);
     }
-  }
-
-  /**
-   * Reads a ZIP's central directory (no content extraction) and rejects it
-   * with `BadRequestException` on any unsafe/reserved entry path or
-   * duplicate relative path, and with `UnprocessableEntityException` when it
-   * exceeds `SKILL_UPLOAD_MAX_FILES` or is missing a root `SKILL.md`.
-   */
-  private async validateSkillArchive(buffer: Buffer): Promise<void> {
-    let zipfile: yauzl.ZipFile;
-    try {
-      zipfile = await yauzl.fromBufferPromise(buffer, {
-        lazyEntries: true,
-        decodeStrings: false,
-        autoClose: false,
-      });
-    } catch {
-      throw new BadRequestException('Invalid or corrupted skill ZIP archive');
-    }
-
-    try {
-      const maxFiles = this.getUploadMaxFiles();
-      const seenPaths = new Set<string>();
-      let hasManifest = false;
-      let fileCount = 0;
-
-      for await (const entry of zipfile.eachEntry()) {
-        const fileName = this.decodeEntryName(entry.fileName);
-        if (fileName.endsWith('/')) {
-          continue;
-        }
-
-        fileCount += 1;
-        if (fileCount > maxFiles) {
-          throw new UnprocessableEntityException(
-            `Skill archive contains more than ${maxFiles} files`,
-          );
-        }
-
-        if (!isValidSkillRelativePath(fileName)) {
-          throw new BadRequestException(
-            `Skill archive contains an invalid entry path: ${fileName}`,
-          );
-        }
-
-        if (seenPaths.has(fileName)) {
-          throw new BadRequestException(
-            `Skill archive contains a duplicate entry path: ${fileName}`,
-          );
-        }
-        seenPaths.add(fileName);
-
-        if (fileName === SKILL_MANIFEST_FILE) {
-          hasManifest = true;
-        }
-      }
-
-      if (!hasManifest) {
-        throw new BadRequestException(
-          `Skill archive is missing a root ${SKILL_MANIFEST_FILE} file`,
-        );
-      }
-    } finally {
-      zipfile.close();
-    }
-  }
-
-  /** Decodes a yauzl entry name read with `decodeStrings: false` (raw `Buffer`), or passes a string through unchanged. */
-  private decodeEntryName(rawFileName: string): string {
-    const raw: unknown = rawFileName;
-    return Buffer.isBuffer(raw) ? raw.toString('utf8') : rawFileName;
   }
 }

@@ -2,6 +2,7 @@ import { EventEmitter } from 'node:events';
 import {
   BadGatewayException,
   BadRequestException,
+  ConflictException,
   HttpException,
   INestApplication,
   NotFoundException,
@@ -69,7 +70,8 @@ describe('SkillsController (integration)', () => {
     listSkillFiles: ReturnType<typeof vi.fn>;
     downloadSkill: ReturnType<typeof vi.fn>;
     downloadSkillFile: ReturnType<typeof vi.fn>;
-    uploadSkill: ReturnType<typeof vi.fn>;
+    createSkill: ReturnType<typeof vi.fn>;
+    updateSkill: ReturnType<typeof vi.fn>;
     uploadSkillFile: ReturnType<typeof vi.fn>;
     deleteSkill: ReturnType<typeof vi.fn>;
     deleteSkillFile: ReturnType<typeof vi.fn>;
@@ -83,7 +85,8 @@ describe('SkillsController (integration)', () => {
       listSkillFiles: vi.fn().mockResolvedValue(mockListResponse),
       downloadSkill: vi.fn(),
       downloadSkillFile: vi.fn(),
-      uploadSkill: vi.fn(),
+      createSkill: vi.fn(),
+      updateSkill: vi.fn(),
       uploadSkillFile: vi.fn(),
       deleteSkill: vi.fn(),
       deleteSkillFile: vi.fn(),
@@ -318,96 +321,191 @@ describe('SkillsController (integration)', () => {
     });
   });
 
-  describe('PUT /api/v1/skills', () => {
-    it('returns 200 and delegates to the service with the uploaded file and If-Match', async () => {
-      service.uploadSkill.mockResolvedValue({ etag: '"abc123"' });
+  describe('POST /api/v1/skills', () => {
+    it('returns 201 and delegates to the service with skillManifest/filePaths/files, no If-Match', async () => {
+      service.createSkill.mockResolvedValue({ etag: '"abc123"' });
 
       const res = await request(app.getHttpServer())
-        .put('/api/v1/skills')
-        .set('If-Match', '"prev-etag"')
+        .post('/api/v1/skills')
         .field('bucket', 'my-bucket')
         .field('path', 'team-a/docs-helper')
-        .attach('file', Buffer.from('zip-bytes'), 'skill.zip')
-        .expect(200);
+        .field('skillManifest', '---\nname: x\ndescription: y\n---\n\nbody')
+        .field('filePaths', JSON.stringify(['scripts/run.sh']))
+        .attach('files', Buffer.from('echo hi'), 'run.sh')
+        .expect(201);
 
       expect(res.body).toEqual({ etag: '"abc123"' });
-      expect(service.uploadSkill).toHaveBeenCalledWith(
+      expect(service.createSkill).toHaveBeenCalledWith(
         'my-bucket',
         'team-a/docs-helper',
-        expect.objectContaining({ mimetype: expect.any(String) }),
+        '---\nname: x\ndescription: y\n---\n\nbody',
+        JSON.stringify(['scripts/run.sh']),
+        [expect.objectContaining({ mimetype: expect.any(String) })],
         TEST_USER.at,
-        '"prev-etag"',
         expect.any(AbortSignal),
       );
     });
 
     /*
      * The controller here mocks SkillsService entirely, so this exercises
-     * routing/status-code propagation only — the real zip-slip/reserved-path
-     * rejection logic (including the "no upstream call" assertion) is
-     * covered against the live SkillsUploadService in
-     * skills-upload.service.spec.ts.
+     * routing/status-code propagation only — the real path-safety/limit
+     * rejection logic is covered against the live SkillsPackageService in
+     * skills-package.service.spec.ts.
      */
-    it('returns 400 when the service rejects an unsafe archive entry', async () => {
-      service.uploadSkill.mockRejectedValue(
-        new BadRequestException('Skill archive contains an invalid entry path'),
+    it('returns 400 when the service rejects an unsafe supporting path', async () => {
+      service.createSkill.mockRejectedValue(
+        new BadRequestException('Invalid supporting file path'),
       );
 
       await request(app.getHttpServer())
-        .put('/api/v1/skills')
+        .post('/api/v1/skills')
         .field('bucket', 'my-bucket')
         .field('path', 'team-a/docs-helper')
-        .attach('file', Buffer.from('zip-bytes'), '../../etc/passwd.zip')
+        .field('skillManifest', 'manifest')
+        .field('filePaths', JSON.stringify(['../escape.md']))
+        .attach('files', Buffer.from('x'), 'escape.md')
         .expect(400);
     });
 
     it('returns 400 when bucket is missing', async () => {
       await request(app.getHttpServer())
-        .put('/api/v1/skills')
+        .post('/api/v1/skills')
         .field('path', 'team-a/docs-helper')
-        .attach('file', Buffer.from('zip-bytes'), 'skill.zip')
+        .field('skillManifest', 'manifest')
+        .field('filePaths', '[]')
         .expect(400);
-      expect(service.uploadSkill).not.toHaveBeenCalled();
+      expect(service.createSkill).not.toHaveBeenCalled();
     });
 
-    it('returns 400 when no file is attached, without calling the service', async () => {
+    it('returns 400 when skillManifest is missing', async () => {
       await request(app.getHttpServer())
-        .put('/api/v1/skills')
+        .post('/api/v1/skills')
         .field('bucket', 'my-bucket')
         .field('path', 'team-a/docs-helper')
+        .field('filePaths', '[]')
         .expect(400);
-      expect(service.uploadSkill).not.toHaveBeenCalled();
+      expect(service.createSkill).not.toHaveBeenCalled();
     });
 
-    it('returns 412 when the service throws PreconditionFailedException', async () => {
-      service.uploadSkill.mockRejectedValue(new PreconditionFailedException());
+    it('returns 409 when the service throws ConflictException', async () => {
+      service.createSkill.mockRejectedValue(new ConflictException());
       await request(app.getHttpServer())
-        .put('/api/v1/skills')
+        .post('/api/v1/skills')
         .field('bucket', 'my-bucket')
         .field('path', 'team-a/docs-helper')
-        .attach('file', Buffer.from('zip-bytes'), 'skill.zip')
-        .expect(412);
+        .field('skillManifest', 'manifest')
+        .field('filePaths', '[]')
+        .expect(409);
     });
 
     it('returns 413 when the service throws PayloadTooLargeException', async () => {
-      service.uploadSkill.mockRejectedValue(new PayloadTooLargeException());
+      service.createSkill.mockRejectedValue(new PayloadTooLargeException());
       await request(app.getHttpServer())
-        .put('/api/v1/skills')
+        .post('/api/v1/skills')
         .field('bucket', 'my-bucket')
         .field('path', 'team-a/docs-helper')
-        .attach('file', Buffer.from('zip-bytes'), 'skill.zip')
+        .field('skillManifest', 'manifest')
+        .field('filePaths', '[]')
         .expect(413);
     });
 
     it('returns 429 when the service throws a 429 HttpException', async () => {
-      service.uploadSkill.mockRejectedValue(
+      service.createSkill.mockRejectedValue(
         new HttpException('Too many requests', 429),
       );
+      await request(app.getHttpServer())
+        .post('/api/v1/skills')
+        .field('bucket', 'my-bucket')
+        .field('path', 'team-a/docs-helper')
+        .field('skillManifest', 'manifest')
+        .field('filePaths', '[]')
+        .expect(429);
+    });
+  });
+
+  describe('PUT /api/v1/skills', () => {
+    it('returns 200 and delegates to the service with skillManifest/filePaths/files and If-Match', async () => {
+      service.updateSkill.mockResolvedValue({ etag: '"abc123"' });
+
+      const res = await request(app.getHttpServer())
+        .put('/api/v1/skills')
+        .set('If-Match', '"prev-etag"')
+        .field('bucket', 'my-bucket')
+        .field('path', 'team-a/docs-helper')
+        .field('skillManifest', '---\nname: x\ndescription: y\n---\n\nbody')
+        .field('filePaths', '[]')
+        .expect(200);
+
+      expect(res.body).toEqual({ etag: '"abc123"' });
+      expect(service.updateSkill).toHaveBeenCalledWith(
+        'my-bucket',
+        'team-a/docs-helper',
+        '---\nname: x\ndescription: y\n---\n\nbody',
+        '[]',
+        [],
+        '"prev-etag"',
+        TEST_USER.at,
+        expect.any(AbortSignal),
+      );
+    });
+
+    it('returns 428 when If-Match is missing, without calling the service', async () => {
       await request(app.getHttpServer())
         .put('/api/v1/skills')
         .field('bucket', 'my-bucket')
         .field('path', 'team-a/docs-helper')
-        .attach('file', Buffer.from('zip-bytes'), 'skill.zip')
+        .field('skillManifest', 'manifest')
+        .field('filePaths', '[]')
+        .expect(428);
+      expect(service.updateSkill).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when bucket is missing', async () => {
+      await request(app.getHttpServer())
+        .put('/api/v1/skills')
+        .set('If-Match', '"prev-etag"')
+        .field('path', 'team-a/docs-helper')
+        .field('skillManifest', 'manifest')
+        .field('filePaths', '[]')
+        .expect(400);
+      expect(service.updateSkill).not.toHaveBeenCalled();
+    });
+
+    it('returns 412 when the service throws PreconditionFailedException', async () => {
+      service.updateSkill.mockRejectedValue(new PreconditionFailedException());
+      await request(app.getHttpServer())
+        .put('/api/v1/skills')
+        .set('If-Match', '"stale-etag"')
+        .field('bucket', 'my-bucket')
+        .field('path', 'team-a/docs-helper')
+        .field('skillManifest', 'manifest')
+        .field('filePaths', '[]')
+        .expect(412);
+    });
+
+    it('returns 413 when the service throws PayloadTooLargeException', async () => {
+      service.updateSkill.mockRejectedValue(new PayloadTooLargeException());
+      await request(app.getHttpServer())
+        .put('/api/v1/skills')
+        .set('If-Match', '"prev-etag"')
+        .field('bucket', 'my-bucket')
+        .field('path', 'team-a/docs-helper')
+        .field('skillManifest', 'manifest')
+        .field('filePaths', '[]')
+        .expect(413);
+    });
+
+    it('returns 429 when the service throws a 429 HttpException', async () => {
+      service.updateSkill.mockRejectedValue(
+        new HttpException('Too many requests', 429),
+      );
+      await request(app.getHttpServer())
+        .put('/api/v1/skills')
+        .set('If-Match', '"prev-etag"')
+        .field('bucket', 'my-bucket')
+        .field('path', 'team-a/docs-helper')
+        .field('skillManifest', 'manifest')
+        .field('filePaths', '[]')
         .expect(429);
     });
   });
@@ -611,10 +709,10 @@ describe('SkillsController (integration)', () => {
       expect(abortOnDisconnect).toHaveBeenCalledOnce();
     });
 
-    it('uploadSkill aborts the signal passed to the service when the request closes', () => {
+    it('createSkill aborts the signal passed to the service when the request closes', () => {
       const controller = new SkillsController(service as never);
       // Never resolves — this test only cares about the signal, not the response.
-      service.uploadSkill.mockReturnValue(new Promise<never>(() => undefined));
+      service.createSkill.mockReturnValue(new Promise<never>(() => undefined));
 
       const req = new EventEmitter() as unknown as Request & {
         user: typeof TEST_USER;
@@ -623,18 +721,64 @@ describe('SkillsController (integration)', () => {
       req.user = TEST_USER;
       req.headers = {};
 
-      controller.uploadSkill(
-        { buffer: Buffer.from('zip-bytes'), mimetype: 'application/zip' },
-        { bucket: 'my-bucket', path: 'team-a/docs-helper' },
+      controller.createSkill(
+        [{ buffer: Buffer.from('echo hi'), mimetype: 'text/x-sh' }],
+        {
+          bucket: 'my-bucket',
+          path: 'team-a/docs-helper',
+          skillManifest: 'manifest',
+          filePaths: '["run.sh"]',
+        },
         req,
       );
 
-      const [, , , , , signal] = service.uploadSkill.mock.calls[0] as [
+      const [, , , , , , signal] = service.createSkill.mock.calls[0] as [
+        string,
+        string,
         string,
         string,
         unknown,
         string,
-        string | undefined,
+        AbortSignal,
+      ];
+      expect(signal.aborted).toBe(false);
+
+      req.emit('close');
+
+      expect(signal.aborted).toBe(true);
+    });
+
+    it('updateSkill aborts the signal passed to the service when the request closes', () => {
+      const controller = new SkillsController(service as never);
+      // Never resolves — this test only cares about the signal, not the response.
+      service.updateSkill.mockReturnValue(new Promise<never>(() => undefined));
+
+      const req = new EventEmitter() as unknown as Request & {
+        user: typeof TEST_USER;
+        headers: Record<string, string>;
+      };
+      req.user = TEST_USER;
+      req.headers = { 'if-match': '"etag"' };
+
+      controller.updateSkill(
+        [],
+        {
+          bucket: 'my-bucket',
+          path: 'team-a/docs-helper',
+          skillManifest: 'manifest',
+          filePaths: '[]',
+        },
+        req,
+      );
+
+      const [, , , , , , , signal] = service.updateSkill.mock.calls[0] as [
+        string,
+        string,
+        string,
+        string,
+        unknown,
+        string,
+        string,
         AbortSignal,
       ];
       expect(signal.aborted).toBe(false);

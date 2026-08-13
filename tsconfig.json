@@ -76,6 +76,9 @@
       "path": "./libs/prompt-editor"
     },
     {
+      "path": "./libs/skill-editor"
+    },
+    {
       "path": "./libs/prompts"
     }
   ]

@@ -89,6 +89,7 @@ const CustomAppEditorPage = lazy(
 const PromptEditorPage = lazy(
   () => import('../pages/PromptEditor/PromptEditor'),
 );
+const SkillEditorPage = lazy(() => import('../pages/SkillEditor/SkillEditor'));
 const ToolsetAuthCallbackPage = lazy(
   () => import('../pages/ToolsetAuthCallback/ToolsetAuthCallback'),
 );
@@ -499,6 +500,16 @@ const App: FC = () => {
                   <RouteErrorBoundary>
                     <Suspense fallback={<RouteFallback />}>
                       <PromptEditorPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.SkillEditor}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <SkillEditorPage />
                     </Suspense>
                   </RouteErrorBoundary>
                 }
