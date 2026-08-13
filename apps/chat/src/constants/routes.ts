@@ -23,9 +23,9 @@ export const isSafePathSegment = (segment: string): boolean =>
 
 /**
  * Rejects anything but a local, same-app path for a `returnUrl` query param
- * (e.g. `PromptEditorQuery.ReturnUrl`/`SkillEditorQuery.ReturnUrl`) — blocks
- * absolute URLs and protocol-relative URLs (`//evil.example`), which a
- * `navigate()` call would otherwise follow off-site.
+ * (e.g. `EditorQuery.ReturnUrl`) — blocks absolute URLs and protocol-relative
+ * URLs (`//evil.example`), which a `navigate()` call would otherwise follow
+ * off-site.
  */
 export const isSafeReturnUrl = (value: string): boolean =>
   value.startsWith('/') && !value.startsWith('//');

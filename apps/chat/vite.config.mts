@@ -108,6 +108,14 @@ export default defineConfig(() => ({
         __dirname,
         '../../libs/builder-form/src/index.ts',
       ),
+      '@epam/ai-dial-skill-editor': path.resolve(
+        __dirname,
+        '../../libs/skill-editor/src/index.ts',
+      ),
+      '@epam/ai-dial-prompt-editor': path.resolve(
+        __dirname,
+        '../../libs/prompt-editor/src/index.ts',
+      ),
       '@epam/ai-dial-react-pdf-highlighter/styles.css': path.resolve(
         __dirname,
         '../../node_modules/@epam/ai-dial-react-pdf-highlighter/dist/index.css',

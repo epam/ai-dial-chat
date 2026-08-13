@@ -73,19 +73,18 @@ import { downloadSkillFile, listSkillFiles } from '../../server-api/skills.api';
 import { deleteToolset, logoutToolset } from '../../server-api/toolsets';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { CatalogQuery } from '../../types/catalog';
+import { EditorQuery } from '../../types/editor-query';
 import {
   EntityOperation,
   NotifiableEntity,
 } from '../../types/entity-notification';
 import { PromptSource } from '../../types/prompt';
-import { PromptEditorQuery } from '../../types/prompt-editor';
 import { ROUTES } from '../../types/routes';
 import {
   parseSkillResourceUrl,
   SKILL_MANIFEST_FILE,
   SkillSource,
 } from '../../types/skill';
-import { SkillEditorQuery } from '../../types/skill-editor';
 import { isQuickAppSchema } from '../../utils/application-schema';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
@@ -911,8 +910,8 @@ const CatalogView: FC<Props> = ({
     (item: CatalogItem) => {
       if (item.type === CatalogEntityType.Prompt) {
         const params = new URLSearchParams({
-          [PromptEditorQuery.Id]: item.id,
-          [PromptEditorQuery.ReturnUrl]: ROUTES.Catalog,
+          [EditorQuery.Id]: item.id,
+          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
         });
         navigate(`${ROUTES.PromptEditor}?${params.toString()}`);
         return;
@@ -1147,7 +1146,7 @@ const CatalogView: FC<Props> = ({
         label: t(CatalogI18nKeys.CreatePrompt),
         onClick: () => {
           const params = new URLSearchParams({
-            [PromptEditorQuery.ReturnUrl]: ROUTES.Catalog,
+            [EditorQuery.ReturnUrl]: ROUTES.Catalog,
           });
           navigate(`${ROUTES.PromptEditor}?${params.toString()}`);
         },
@@ -1159,7 +1158,7 @@ const CatalogView: FC<Props> = ({
       label: t(CatalogI18nKeys.CreateSkill),
       onClick: () => {
         const params = new URLSearchParams({
-          [SkillEditorQuery.ReturnUrl]: ROUTES.Catalog,
+          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
         });
         navigate(`${ROUTES.SkillEditor}?${params.toString()}`);
       },

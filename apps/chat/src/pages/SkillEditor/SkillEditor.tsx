@@ -38,8 +38,8 @@ import {
   downloadSkill,
   updateSkill,
 } from '../../server-api/skills.api';
+import { EditorQuery } from '../../types/editor-query';
 import { ROUTES } from '../../types/routes';
-import { SkillEditorQuery } from '../../types/skill-editor';
 import { ThemeId } from '../../types/theme-id';
 import {
   buildSkillManifest,
@@ -101,7 +101,7 @@ const SkillEditorPage: FC = () => {
   const { currentTheme } = useTheme();
   const { showNotification } = useNotification();
 
-  const rawReturnUrl = searchParams.get(SkillEditorQuery.ReturnUrl);
+  const rawReturnUrl = searchParams.get(EditorQuery.ReturnUrl);
   const returnUrl =
     rawReturnUrl != null && isSafeReturnUrl(rawReturnUrl)
       ? rawReturnUrl
@@ -109,7 +109,7 @@ const SkillEditorPage: FC = () => {
 
   const bucket = user?.bucket;
 
-  const rawId = searchParams.get(SkillEditorQuery.Id);
+  const rawId = searchParams.get(EditorQuery.Id);
   const isEditMode = rawId != null && rawId !== '';
   /*
    * A skill's `id` is its relative path within the *current user's own*

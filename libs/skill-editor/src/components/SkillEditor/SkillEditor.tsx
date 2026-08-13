@@ -339,7 +339,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       <div
         className={mergeClasses(
           'hidden items-center justify-between gap-2 border-b px-4 py-2 desktop:flex desktop:px-8 desktop:pb-3 desktop:pt-3',
-          styles.border,
+          styles.headerBorder,
         )}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -366,7 +366,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         <div
           className={mergeClasses(
             'hidden border-e desktop:block desktop:w-[360px] desktop:shrink-0 desktop:px-8 desktop:py-6',
-            styles.border,
+            styles.sidebarBorder,
           )}
         >
           {filesPaneContent}
@@ -469,7 +469,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       <div
         className={mergeClasses(
           'fixed inset-x-0 bottom-0 flex items-center gap-2 border-t p-3 desktop:hidden',
-          styles.border,
+          styles.actionBarBorder,
         )}
       >
         {actions}

@@ -6,6 +6,17 @@
   color: var(--se-helper-text-color, var(--text-secondary, #57647a));
 }
 
-.border {
-  border-color: var(--se-border-color, var(--stroke-tertiary, #e0e6f0));
+.headerBorder {
+  border-bottom-color: var(--se-border-color, var(--stroke-tertiary, #e0e6f0));
+}
+
+.sidebarBorder {
+  border-inline-end-color: var(
+    --se-border-color,
+    var(--stroke-tertiary, #e0e6f0)
+  );
+}
+
+.actionBarBorder {
+  border-top-color: var(--se-border-color, var(--stroke-tertiary, #e0e6f0));
 }
