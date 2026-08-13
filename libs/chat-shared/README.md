@@ -196,6 +196,8 @@ import {
   buildCssVars,
   copyToClipboard,
   formatLastUsed,
+  formatPrice,
+  formatUnitPrice,
   getInitials,
   getAvatarColor,
   isAudioTranscriptionSupported,
@@ -206,6 +208,12 @@ const className = mergeClass('base-class', isActive && 'active');
 
 // Generate CSS custom property declarations from a theme object
 const vars = buildCssVars(theme);
+
+// Format a USD amount, keeping decimals for sub-dollar values
+formatPrice(0.3); // '$0.3'
+
+// Re-quote a DIAL Core per-unit price for display
+formatUnitPrice('0.000003', 'token'); // '$3/M tokens'
 ```
 
 ## Constants

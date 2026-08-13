@@ -75,7 +75,7 @@ describe('NameCellRenderer — long version', () => {
 
     const heading = screen.getByText('Claude').closest('h3');
     expect(heading?.className).toContain('min-w-0');
-    expect(heading?.className).toContain('flex-1');
+    expect(heading?.className).toContain('shrink');
   });
 });
 

@@ -4,12 +4,9 @@ import type {
   CatalogItemPricing,
   CatalogItemTabData,
   CatalogItemTools,
-  CodeSnippet,
-  EndpointOption,
   OverviewSection,
 } from '@epam/ai-dial-catalog';
 import {
-  CodeLanguage,
   CredentialStatus,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
@@ -18,12 +15,11 @@ import type {
   DeploymentFeaturesDetailsDto,
 } from '@epam/ai-dial-chat-api-client';
 import { formatUnitPrice } from '@epam/ai-dial-chat-shared';
-import { AuthenticationType, ModelEndpointType } from '../types/entity-details';
+import { AuthenticationType } from '../types/entity-details';
 import type {
   AgentEntityDetails,
   EntitySpecificDetails,
   GuardrailEntityDetails,
-  ModelEndpoint,
   ModelEntityDetails,
   ModelPricing,
   SkillEntityDetails,
@@ -32,12 +28,6 @@ import type {
   ToolsetSpecification,
 } from '../types/entity-details';
 import { isPublicToolsetId } from './toolsets';
-
-const ENDPOINT_LABELS: Record<ModelEndpointType, string> = {
-  [ModelEndpointType.AzureOpenAI]: 'Azure OpenAI Endpoint',
-  [ModelEndpointType.Anthropic]: 'Anthropic Endpoint',
-  [ModelEndpointType.Responses]: 'Responses Endpoint',
-};
 
 const formatTokens = (n: number): string =>
   n >= 1_000_000
@@ -50,19 +40,6 @@ const formatReleaseDate = (timestampMs: number): string =>
   new Date(timestampMs).toLocaleDateString();
 
 const PRICING_UNIT_KEY = 'unit';
-
-const mapEndpointSnippets = (endpoint: ModelEndpoint): CodeSnippet[] => {
-  const snippets: CodeSnippet[] = [];
-  const { snippets: s } = endpoint;
-  if (s == null) return snippets;
-  if (s.pythonSnippet != null)
-    snippets.push({ language: CodeLanguage.Python, code: s.pythonSnippet });
-  if (s.curlSnippet != null)
-    snippets.push({ language: CodeLanguage.Curl, code: s.curlSnippet });
-  if (s.jsSnippet != null)
-    snippets.push({ language: CodeLanguage.JavaScript, code: s.jsSnippet });
-  return snippets;
-};
 
 const mapModelDetails = (data: ModelEntityDetails): CatalogItemTabData => {
   const sections: OverviewSection[] = [];
@@ -213,32 +190,13 @@ const mapModelPricing = (
   return { prices, limits };
 };
 
-/**
- * Maps endpoint-type variants (Azure OpenAI / Anthropic / Responses) shared
- * by models and agents into the lib's endpoint-selector shape.
- */
-const mapApiEndpoints = (
-  endpoints: ModelEndpoint[] | undefined,
-): EndpointOption[] | undefined =>
-  endpoints != null && endpoints.length > 0
-    ? endpoints.map((e) => ({
-        label: ENDPOINT_LABELS[e.type] ?? e.type,
-        url: e.url,
-        snippets: mapEndpointSnippets(e),
-      }))
-    : undefined;
-
 const mapModelApi = (
   data: ModelEntityDetails,
 ): CatalogItemApiDetails | undefined => {
   const { api } = data;
-  if (api == null) return undefined;
+  if (api?.modelId == null) return undefined;
 
-  const resource = api.modelId != null ? { modelId: api.modelId } : undefined;
-  const endpoints = mapApiEndpoints(api.endpoints);
-
-  if (resource == null && endpoints == null) return undefined;
-  return { resource, endpoints };
+  return { resource: { modelId: api.modelId } };
 };
 
 const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
@@ -339,7 +297,6 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
             data.api.endpointUrl != null
               ? { endpointUrl: data.api.endpointUrl }
               : undefined,
-          endpoints: mapApiEndpoints(data.api.endpoints),
           requestExample: data.api.requestExample,
           responseSchema: data.api.responseSchema,
         }
