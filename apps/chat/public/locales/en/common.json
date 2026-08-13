@@ -293,5 +293,6 @@
   "Repair will re-register this toolset with the Authorization Server. Continue?": "Repair will re-register this toolset with the Authorization Server. Continue?",
   "The list of tools will be available after filling in the definition and authentication sections": "The list of tools will be available after filling in the definition and authentication sections",
   "All available locales are already added": "All available locales are already added",
-  "No changes to apply": "No changes to apply"
+  "No changes to apply": "No changes to apply",
+  "View": "View"
 }

@@ -72,6 +72,8 @@ interface LocalsPopupProps<T extends MarketplaceEntity> {
   onSubmit: (value: LocalsForm) => void;
   onClose: () => void;
   descriptionPlaceholder?: string;
+  readonly?: boolean;
+  fieldTooltip?: string;
 }
 
 export const LocalesPopup = <T extends MarketplaceEntity>({
@@ -79,6 +81,8 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
   onSubmit,
   onClose,
   descriptionPlaceholder,
+  readonly = false,
+  fieldTooltip,
 }: LocalsPopupProps<T>) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -130,8 +134,8 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
     });
   }, [append, localOptions]);
 
-  const isAddLocaleDisabled = !localOptions.length;
-  const isApplyDisabled = !isDirty || !isValid;
+  const isAddLocaleDisabled = !localOptions.length || readonly;
+  const isApplyDisabled = !isDirty || !isValid || readonly;
 
   const applyTooltip = useMemo(
     () =>
@@ -167,7 +171,7 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
               label={t(CommonI18nKeys.Apply)}
               disabled={isApplyDisabled}
               tooltipProps={{
-                tooltip: applyTooltip,
+                tooltip: fieldTooltip || applyTooltip,
                 hideTooltip: !isApplyDisabled,
               }}
               onClick={handleApply}
@@ -184,7 +188,14 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
                     {t(CommonI18nKeys.Locale)} {index + 1}
                   </label>
 
-                  <DialRemoveButton onClick={() => remove(index)} />
+                  <DialRemoveButton
+                    onClick={() => remove(index)}
+                    disabled={readonly}
+                    tooltipProps={{
+                      tooltip: fieldTooltip,
+                      hideTooltip: !readonly,
+                    }}
+                  />
                 </div>
 
                 <div className="grid grid-cols-[auto_1fr] gap-5">
@@ -208,6 +219,8 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
                             (option as unknown as DropdownSelectorOption).value,
                           )
                         }
+                        isDisabled={readonly}
+                        tooltip={fieldTooltip}
                       />
                     )}
                   />
@@ -218,6 +231,8 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
                     placeholder={t(CommonI18nKeys.TypeName)}
                     id={`${index}-name`}
                     error={errors.locales?.[index]?.name?.message}
+                    disabled={readonly}
+                    tooltip={fieldTooltip}
                   />
                   <div className="col-span-2">
                     <FieldTextArea
@@ -228,6 +243,8 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
                       rows={3}
                       className="resize-none"
                       id={`${index}-description`}
+                      disabled={readonly}
+                      tooltip={fieldTooltip}
                     />
                   </div>
                 </div>
@@ -241,7 +258,8 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
             onClick={handleAppend}
             disabled={isAddLocaleDisabled}
             tooltipProps={{
-              tooltip: t(CommonI18nKeys.AllAvailableLocalesAdded),
+              tooltip:
+                fieldTooltip || t(CommonI18nKeys.AllAvailableLocalesAdded),
               hideTooltip: !isAddLocaleDisabled,
               triggerClassName: 'w-fit',
             }}

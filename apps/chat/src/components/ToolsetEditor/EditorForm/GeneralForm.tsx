@@ -1,4 +1,4 @@
-import { IconPencilMinus, IconPlus } from '@tabler/icons-react';
+import { IconEye, IconPencilMinus, IconPlus } from '@tabler/icons-react';
 import React, {
   ComponentProps,
   FormEvent,
@@ -130,9 +130,17 @@ export const GeneralForm = ({
       [setValue],
     );
 
-  const langPostfix = availableLocales.length
-    ? ` [${primaryLocale.toUpperCase()}]`
-    : '';
+  const showLocales = isToolsetPublic
+    ? !!locales.length
+    : !!availableLocales.length;
+
+  const langPostfix = showLocales ? ` [${primaryLocale.toUpperCase()}]` : '';
+
+  const [localesLabel, LocalesIcon] = useMemo(() => {
+    if (isToolsetPublic) return [t(CommonI18nKeys.View), IconEye];
+    if (locales.length) return [t(CommonI18nKeys.Edit), IconPencilMinus];
+    return [t(CommonI18nKeys.AddLocales), IconPlus];
+  }, [isToolsetPublic, locales.length, t]);
 
   return (
     <>
@@ -198,7 +206,7 @@ export const GeneralForm = ({
             tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
           />
 
-          {!!availableLocales.length && (
+          {showLocales && (
             <div className="flex items-center gap-1">
               {!!locales.length && (
                 <span className="text-xs font-semibold text-secondary">
@@ -211,18 +219,8 @@ export const GeneralForm = ({
 
               <DialLinkButton
                 className="border-none"
-                label={t(
-                  locales.length
-                    ? CommonI18nKeys.Edit
-                    : CommonI18nKeys.AddLocales,
-                )}
-                iconBefore={
-                  locales.length ? (
-                    <IconPencilMinus size={16} />
-                  ) : (
-                    <IconPlus size={16} />
-                  )
-                }
+                label={localesLabel}
+                iconBefore={<LocalesIcon size={16} />}
                 onClick={() => setLocalsPopup(true)}
                 size={ElementSize.Small}
               />
@@ -273,6 +271,8 @@ export const GeneralForm = ({
           onClose={() => setLocalsPopup(false)}
           entity={getEntityPayloadFromLocals(locales) as MarketplaceEntity}
           descriptionPlaceholder={t(CommonI18nKeys.ToolsetDescription)}
+          readonly={isToolsetPublic}
+          fieldTooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
         />
       )}
     </>
