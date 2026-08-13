@@ -1,5 +1,5 @@
 import { StageStatus } from '@epam/ai-dial-chat-shared';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { CollapsedGroup } from '../CollapsedGroup';
@@ -116,7 +116,9 @@ describe('CollapsedGroup — collapsed states', () => {
         isStreaming
       />,
     );
-    const liveName = screen.getByText(longName);
+    /* The same name also renders in the expanded StagesPanel row, so scope the
+       query to the summary line inside the toggle button. */
+    const liveName = within(screen.getByRole('button')).getByText(longName);
     expect(liveName.className).toContain('truncate');
   });
 
