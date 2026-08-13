@@ -27,7 +27,7 @@ export const ItemHeader: FC<ItemHeaderProps> = ({
   return (
     <div className={mergeClasses('flex items-center gap-2', className)}>
       <h3
-        className={mergeClasses('flex-3 min-w-0', titleClassName, styles.title)}
+        className={mergeClasses('min-w-0 flex-1', titleClassName, styles.title)}
       >
         {query ? (
           <Highlight text={title} query={query} />
@@ -36,8 +36,14 @@ export const ItemHeader: FC<ItemHeaderProps> = ({
         )}
       </h3>
       {postfix != null && (
+        /* Capped at 30% of the row so a long version truncates instead of
+           squeezing the title out of the header. */
         <DialEllipsisTooltip
-          className={mergeClasses('flex-2', postfixClassName, styles.count)}
+          className={mergeClasses(
+            'max-w-[30%] shrink-0',
+            postfixClassName,
+            styles.count,
+          )}
           text={postfix}
         />
       )}

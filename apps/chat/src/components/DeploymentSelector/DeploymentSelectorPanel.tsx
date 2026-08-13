@@ -237,18 +237,21 @@ const DeploymentSelectorPanel: FC<Props> = ({
               <Highlight
                 text={item.name}
                 query={query}
-                className="dial-small-text !flex-initial"
+                className="dial-small-text min-w-0 !flex-initial"
               />
             ) : (
               <DialEllipsisTooltip
                 text={item.name}
-                className="dial-small-text !flex-initial"
+                className="dial-small-text min-w-0 !flex-initial"
               />
             )}
-            {item.version != null && (
-              <span className="dial-tiny-text shrink-0 whitespace-nowrap text-secondary">
-                {item.version}
-              </span>
+            {item.version && (
+              /* Capped at 30% of the row so a long version truncates instead of
+                 squeezing the name out of the option. */
+              <DialEllipsisTooltip
+                text={item.version}
+                className="dial-tiny-text max-w-[30%] shrink-0 text-secondary"
+              />
             )}
           </div>
           {isSelected && (

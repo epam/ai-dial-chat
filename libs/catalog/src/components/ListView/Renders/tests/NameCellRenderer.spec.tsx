@@ -55,6 +55,30 @@ describe('NameCellRenderer — selected state', () => {
   });
 });
 
+describe('NameCellRenderer — long version', () => {
+  it('caps the version at 30% of the row so it cannot overlap the name', () => {
+    render(
+      <NameCellRenderer
+        {...makeParams(
+          makeItem({ version: 'With Google Search Grounding preview' }),
+        )}
+      />,
+    );
+
+    const version = screen.getByText('With Google Search Grounding preview');
+    expect(version.className).toContain('max-w-[30%]');
+    expect(version.className).toContain('shrink-0');
+  });
+
+  it('lets the name shrink instead of being pushed out', () => {
+    render(<NameCellRenderer {...makeParams(makeItem())} />);
+
+    const heading = screen.getByText('Claude').closest('h3');
+    expect(heading?.className).toContain('min-w-0');
+    expect(heading?.className).toContain('flex-1');
+  });
+});
+
 describe('NameCellRenderer — density', () => {
   it('renders the name at the smaller dense list-view size', () => {
     render(<NameCellRenderer {...makeParams(makeItem({ name: 'Claude' }))} />);

@@ -39,6 +39,26 @@ describe('Card — selected state', () => {
   });
 });
 
+describe('Card — long version', () => {
+  it('caps the version at 30% of the row so it cannot overlap the name', () => {
+    render(
+      <Card item={makeItem({ version: 'With Google Search Grounding' })} />,
+    );
+
+    const version = screen.getByText('With Google Search Grounding');
+    expect(version.className).toContain('max-w-[30%]');
+    expect(version.className).toContain('shrink-0');
+  });
+
+  it('lets the name truncate instead of being pushed out', () => {
+    render(<Card item={makeItem()} />);
+
+    const name = screen.getByText('Claude');
+    expect(name.className).toContain('min-w-0');
+    expect(name.className).toContain('truncate');
+  });
+});
+
 describe('Card — favorite visibility', () => {
   it('renders the star button for every entity type, prompts included', () => {
     render(<Card item={makeItem({ type: CatalogEntityType.Prompt })} />);
