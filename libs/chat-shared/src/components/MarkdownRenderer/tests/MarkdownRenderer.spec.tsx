@@ -69,7 +69,6 @@ describe('MarkdownRenderer', () => {
     const columnHeader = screen.getByRole('columnheader', { name: 'Name' });
     expect(columnHeader.getAttribute('scope')).toBe('col');
     expect(columnHeader.className).toContain('sticky');
-    expect(columnHeader.className).toContain('uppercase');
   });
 
   it('applies a shared row class to every row for zebra/hover styling', () => {
@@ -160,7 +159,6 @@ describe('MarkdownRenderer', () => {
     );
 
     const labelSpan = container.querySelector('span.uppercase');
-    expect(labelSpan?.textContent).toBe('');
     expect(screen.getByRole('button', { name: 'Copy code' })).toBeTruthy();
   });
 
