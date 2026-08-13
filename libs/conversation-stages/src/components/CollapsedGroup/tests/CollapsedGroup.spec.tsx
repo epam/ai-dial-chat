@@ -107,6 +107,19 @@ describe('CollapsedGroup — collapsed states', () => {
     expect(screen.getByText(/Step 2 of 2/)).toBeTruthy();
   });
 
+  it('keeps a long live stage name on one truncated line', () => {
+    const longName =
+      "Processing document 'uploads/2026-08/NAUP-How to login to high environments-220726-103753 1.pdf'";
+    render(
+      <CollapsedGroup
+        stages={[completed(0, 'Step 1'), running(1, longName)]}
+        isStreaming
+      />,
+    );
+    const liveName = screen.getByText(longName);
+    expect(liveName.className).toContain('truncate');
+  });
+
   it('announces the running summary via a polite live region', () => {
     const { container } = render(
       <CollapsedGroup
