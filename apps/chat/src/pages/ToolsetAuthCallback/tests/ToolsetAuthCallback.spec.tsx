@@ -16,6 +16,7 @@ import type {
   ToolsetRedirectState,
 } from '../../../models/toolsets';
 import * as externalServicesApi from '../../../server-api/external-services';
+import * as offlineCredentialsApi from '../../../server-api/offline-credentials';
 import * as toolsetsApi from '../../../server-api/toolsets';
 import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import ToolsetAuthCallback from '../ToolsetAuthCallback';
@@ -48,6 +49,10 @@ vi.mock('../../../server-api/external-services', () => ({
     User: 'USER',
   },
   signInExternalService: vi.fn(),
+}));
+
+vi.mock('../../../server-api/offline-credentials', () => ({
+  signInOfflineCredentials: vi.fn(),
 }));
 
 vi.mock('../../../components/RouteFallback/RouteFallback', () => ({
@@ -121,6 +126,15 @@ describe('ToolsetAuthCallback', () => {
       ),
     );
     await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
+    /*
+     * Regression guard (task 12.3): the default (no-resourceKind) Toolset
+     * branch must never call the sibling ExternalService/OfflineCredentials
+     * BFF endpoints, unaffected by the `OAuthResourceKind` extension.
+     */
+    expect(externalServicesApi.signInExternalService).not.toHaveBeenCalled();
+    expect(
+      offlineCredentialsApi.signInOfflineCredentials,
+    ).not.toHaveBeenCalled();
   });
 
   it('calls signInExternalService with the appId/serviceId parsed from the scope id instead of loginToolset when resourceKind is ExternalService', async () => {
@@ -149,6 +163,66 @@ describe('ToolsetAuthCallback', () => {
       ),
     );
     expect(toolsetsApi.loginToolset).not.toHaveBeenCalled();
+    expect(
+      offlineCredentialsApi.signInOfflineCredentials,
+    ).not.toHaveBeenCalled();
+    await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
+  });
+
+  it('calls signInOfflineCredentials with code/redirectUri instead of loginToolset/signInExternalService when resourceKind is OfflineCredentials', async () => {
+    setRedirectState({
+      toolsetId: 'offline-credentials',
+      credentialsLevel: ToolsetCredentialsLevel.User,
+      redirectUri: 'http://localhost/auth/toolset-signin',
+      resourceKind: OAuthResourceKind.OfflineCredentials,
+    });
+    vi.mocked(offlineCredentialsApi.signInOfflineCredentials).mockResolvedValue(
+      { success: true },
+    );
+
+    renderCallback('?code=auth-code-xyz');
+
+    await waitFor(() =>
+      expect(
+        offlineCredentialsApi.signInOfflineCredentials,
+      ).toHaveBeenCalledWith({
+        code: 'auth-code-xyz',
+        redirectUri: 'http://localhost/auth/toolset-signin',
+      }),
+    );
+    expect(toolsetsApi.loginToolset).not.toHaveBeenCalled();
+    expect(externalServicesApi.signInExternalService).not.toHaveBeenCalled();
+    await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
+  });
+
+  it('posts a failure message when signInOfflineCredentials rejects, never a Toolset/ExternalService call', async () => {
+    /*
+     * Uses a flow id distinct from the `'flow-1'` reused by many other tests
+     * in this file, and explicitly waits for the popup's own `window.close()`
+     * before finishing — the shared `reportResult` ack round trip
+     * (`listenForResult` resolving on the first posted message, before the
+     * component's own ack-triggered close has necessarily run) can otherwise
+     * leave a stray async `window.close()` call to land inside whichever
+     * test runs next, inflating its `mockClose` call count.
+     */
+    setRedirectState({
+      toolsetId: 'offline-credentials',
+      state: 'flow-offline-credentials-1',
+      resourceKind: OAuthResourceKind.OfflineCredentials,
+    });
+    vi.mocked(offlineCredentialsApi.signInOfflineCredentials).mockRejectedValue(
+      new Error('network error'),
+    );
+
+    const resultPromise = listenForResult('flow-offline-credentials-1');
+    renderCallback('?code=auth-code-xyz&state=flow-offline-credentials-1');
+
+    await expect(resultPromise).resolves.toEqual({
+      type: ToolsetOAuthResultType.Failure,
+      reason: ToolsetOAuthFailureReason.LoginRequestFailed,
+    });
+    expect(toolsetsApi.loginToolset).not.toHaveBeenCalled();
+    expect(externalServicesApi.signInExternalService).not.toHaveBeenCalled();
     await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
   });
 

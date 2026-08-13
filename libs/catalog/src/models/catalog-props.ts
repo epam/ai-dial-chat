@@ -128,6 +128,17 @@ export interface CatalogProps {
   /** Called when the "Edit" button is clicked in the details panel. Shown only when the item's `isEditable` is `true`. */
   onEdit?: (item: CatalogItem) => void;
   /**
+   * Called when the "Download" action is clicked in the details panel, with no
+   * confirmation step. The panel does not await the result or show a pending
+   * state, so the host owns any progress and failure feedback.
+   */
+  onDownload?: (item: CatalogItem) => Promise<void> | void;
+  /**
+   * Narrows which items offer the "Download" action. Defaults to `true`
+   * (visible for every item) whenever `onDownload` is supplied.
+   */
+  isDownloadVisible?: (item: CatalogItem) => boolean;
+  /**
    * Called immediately when the "Delete" button in the details panel is
    * clicked, with no confirmation step. Shown only when the item's `isMyApp`
    * is `true` and its `type` is `Application` or `Toolset`. May return a
@@ -155,6 +166,21 @@ export interface CatalogProps {
    * shows a loading state and prevents duplicate submission while pending.
    */
   onRevokeShare?: (item: CatalogItem) => Promise<void> | void;
+  /**
+   * Resolves how many users currently hold shared access to an owned item.
+   * Called when the owner opens the details panel's Manage menu, so "Revoke
+   * access" is gated and labelled on a count that is never stale. `0` hides
+   * the action; `undefined` (or a rejection) leaves it reachable without a
+   * count. Omit to offer the action for every owned item.
+   */
+  onFetchRecipientsCount?: (item: CatalogItem) => Promise<number | undefined>;
+  /**
+   * Narrows where the "Revoke access" action is offered, on top of the
+   * built-in `isMyApp` rule and the recipient count. Use it to declare that
+   * revoking is unsupported for a kind of item. Defaults to `true` (visible)
+   * when absent.
+   */
+  isRevokeShareVisible?: (item: CatalogItem) => boolean;
   /**
    * Renders the Share popover content anchored to the Share button in the
    * details panel. When provided, clicking Share opens this popover instead

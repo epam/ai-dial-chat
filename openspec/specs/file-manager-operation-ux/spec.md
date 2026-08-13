@@ -1,3 +1,9 @@
+# file-manager-operation-ux Specification
+
+## Purpose
+
+A shared in-progress flag and the consolidated blackout overlay covering long-running file operations.
+
 ## Requirements
 
 ### Requirement: isAnyOperationInProgress derived flag on useDialFileManager

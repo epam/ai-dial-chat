@@ -1,4 +1,10 @@
-## ADDED Requirements
+# file-metadata-get Specification
+
+## Purpose
+
+Retrieving single-file metadata through the Chat API.
+
+## Requirements
 
 ### Requirement: Retrieve single-file metadata through Chat API
 

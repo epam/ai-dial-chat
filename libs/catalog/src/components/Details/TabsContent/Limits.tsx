@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialProgressBar, DialProgressBarSize } from '@epam/ai-dial-ui-kit';
+import { ElementSize, ProgressBar } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import type {
   CatalogItemLimits,
@@ -17,8 +17,13 @@ const getProgressValue = (row: UsageLimitProgressRow): number => {
 const getProgressMax = (total: number): number =>
   Number.isFinite(total) && total > 0 ? total : 1;
 
+const numberFormatter = new Intl.NumberFormat(undefined, {
+  maximumFractionDigits: 2,
+});
+
 const getValueLabel = ({ used, total, valueLabel }: UsageLimitProgressRow) =>
-  valueLabel ?? `${used} / ${total}`;
+  valueLabel ??
+  `${numberFormatter.format(used)} / ${numberFormatter.format(total)}`;
 
 const hasProgress = ({ total }: UsageLimitProgressRow) =>
   Number.isFinite(total) && total > 0;
@@ -50,7 +55,7 @@ export const LimitsTab: FC<LimitsTabProps> = ({
         const shouldRenderProgress = hasProgress(row);
 
         return (
-          <li key={row.label} className="flex flex-col gap-2 rounded px-3 py-2">
+          <li key={row.label} className="flex flex-col gap-2">
             <div className="flex items-start justify-between gap-3">
               <span
                 className={mergeClasses('min-w-0 break-words', labelClassName)}
@@ -62,12 +67,12 @@ export const LimitsTab: FC<LimitsTabProps> = ({
               </span>
             </div>
             {shouldRenderProgress && (
-              <DialProgressBar
+              <ProgressBar
                 value={getProgressValue(row)}
                 max={getProgressMax(row.total)}
-                size={DialProgressBarSize.Medium}
+                size={ElementSize.Standard}
                 className="w-full"
-                ariaLabel={row.ariaLabel ?? `${row.label}: ${valueLabel}`}
+                aria-label={row.ariaLabel ?? `${row.label}: ${valueLabel}`}
               />
             )}
           </li>

@@ -1,3 +1,4 @@
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { BASE_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import {
@@ -13,6 +14,7 @@ import {
 } from '../../constants/translation-keys';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { useSheetNavigation } from '../../hooks/useSheetNavigation';
+import { useUiFeature } from '../../hooks/useUiFeature';
 import AvatarInitials from '../Navigation/AvatarInitials';
 import KeyboardPageContent from './KeyboardPageContent';
 import styles from './MobileNavBottomSheet.module.scss';
@@ -31,6 +33,14 @@ const ProfilePageContent: FC<Props> = ({ onLogoutRequest }) => {
     isFallbackIconShown,
     setIsFallbackIconShown,
   } = useUserProfile();
+  const isUserSettingsHidden = useUiFeature(OverlayFeature.HideUserSettings);
+  const isKeyboardShortcutsHidden = useUiFeature(
+    OverlayFeature.HideKeyboardShortcuts,
+  );
+  /* Keyboard shortcuts is the sheet's only setting, so hiding it drops the whole
+     group and its divider — otherwise an empty list and a stray rule remain. */
+  const isSettingsGroupShown =
+    !isUserSettingsHidden && !isKeyboardShortcutsHidden;
 
   const handleKeyboard = () => {
     push({
@@ -69,36 +79,40 @@ const ProfilePageContent: FC<Props> = ({ onLogoutRequest }) => {
         />
       </div>
 
-      <ul className="flex flex-col">
-        <li>
-          <button
-            type="button"
-            className={mergeClasses(
-              styles.item,
-              'flex w-full items-center gap-3 px-4 py-[10px] text-start',
-            )}
-            onClick={handleKeyboard}
-          >
-            <IconKeyboard
-              size={BASE_ICON_SIZE}
-              stroke={1.5}
-              aria-hidden
-              className={styles.itemIcon}
-            />
-            <span className="dial-small-text flex-1">
-              {t(SettingsI18nKeys.KeyboardShortcuts)}
-            </span>
-            <IconChevronRight
-              size={BASE_ICON_SIZE}
-              stroke={1.5}
-              aria-hidden
-              className={mergeClasses(styles.itemIcon, 'rtl:scale-x-[-1]')}
-            />
-          </button>
-        </li>
-      </ul>
+      {isSettingsGroupShown && (
+        <>
+          <ul className="flex flex-col">
+            <li>
+              <button
+                type="button"
+                className={mergeClasses(
+                  styles.item,
+                  'flex w-full items-center gap-3 px-4 py-[10px] text-start',
+                )}
+                onClick={handleKeyboard}
+              >
+                <IconKeyboard
+                  size={BASE_ICON_SIZE}
+                  stroke={1.5}
+                  aria-hidden
+                  className={styles.itemIcon}
+                />
+                <span className="dial-small-text flex-1">
+                  {t(SettingsI18nKeys.KeyboardShortcuts)}
+                </span>
+                <IconChevronRight
+                  size={BASE_ICON_SIZE}
+                  stroke={1.5}
+                  aria-hidden
+                  className={mergeClasses(styles.itemIcon, 'rtl:scale-x-[-1]')}
+                />
+              </button>
+            </li>
+          </ul>
 
-      <hr className="border-secondary" />
+          <hr className="border-secondary" />
+        </>
+      )}
 
       <ul className="flex flex-col pb-4">
         <li>

@@ -14,6 +14,7 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
+import { toPromptResourceUrl } from '../prompts/utils/prompt-mapper.util';
 import { CatalogEntityType } from './dto/catalog-entity-params.dto';
 import { PublishHistoryEntryDto } from './dto/publish-history-entry.dto';
 import { PublishResultDto } from './dto/publish-result.dto';
@@ -40,6 +41,21 @@ import {
 const historyCacheKey = (entityType: CatalogEntityType, entityId: string) =>
   `publish-history:${entityType}:${entityId}`;
 
+/*
+ * Every other entity kind is addressed by a full DIAL Core resource path, so
+ * `entityId` is already the Publication API's `sourceUrl`. A prompt's id is
+ * bucket-relative (`Work/AI/summarize`), the form the prompts endpoints
+ * return, and is qualified here with the caller's own bucket.
+ */
+const toSourceUrl = (
+  entityType: CatalogEntityType,
+  entityId: string,
+  bucket: string,
+): string =>
+  entityType === CatalogEntityType.Prompt
+    ? toPromptResourceUrl(entityId, bucket)
+    : entityId;
+
 /**
  * Catalog entity names are always `{name}__{version}` (see
  * `applications.service.ts`/`toolsets.service.ts`), so the entity's display
@@ -62,7 +78,7 @@ const splitEntityNameAndVersion = (
 };
 
 /**
- * Publishes catalog entities (Toolset, Application) to an Organization
+ * Publishes catalog entities (Toolset, Application, Prompt) to an Organization
  * folder and reads their publish history by proxying DIAL Core's
  * Publication API (`createPublication`/`getPublications`) — this service
  * holds no persistence of its own. `apps/chat-api` has no database, and Core
@@ -96,6 +112,7 @@ export class PublishService {
    */
   async publish(
     accessToken: string,
+    bucket: string,
     entityType: CatalogEntityType,
     entityId: string,
     folderPath: string,
@@ -103,13 +120,15 @@ export class PublishService {
     author: string,
     rules?: PublishRuleDto[],
   ): Promise<PublishResultDto> {
+    const sourceUrl = toSourceUrl(entityType, entityId, bucket);
     const publicTargetFolder = getPublicTargetFolder(folderPath);
-    const targetUrl = `${getResourceTypePrefix(entityId)}/${publicTargetFolder}${getResourceName(entityId)}`;
-    const { name: entityName } = splitEntityNameAndVersion(entityId);
+    const targetUrl = `${getResourceTypePrefix(sourceUrl)}/${publicTargetFolder}${getResourceName(sourceUrl)}`;
+    const { name: entityName } = splitEntityNameAndVersion(sourceUrl);
     const requestBody = {
-      name: `${entityName} ${version}`,
+      /* A prompt carries no version, so the title must not gain a trailing space. */
+      name: `${entityName} ${version}`.trim(),
       targetFolder: publicTargetFolder,
-      resources: [{ action: 'ADD' as const, sourceUrl: entityId, targetUrl }],
+      resources: [{ action: 'ADD' as const, sourceUrl, targetUrl }],
       displayAuthor: author,
       rules: rules ?? [],
     };
@@ -162,9 +181,11 @@ export class PublishService {
    */
   async getPublishHistory(
     accessToken: string,
+    bucket: string,
     entityType: CatalogEntityType,
     entityId: string,
   ): Promise<PublishHistoryEntryDto[]> {
+    const sourceUrl = toSourceUrl(entityType, entityId, bucket);
     return withCachedDialRequest({
       cacheManager: this.cacheManager,
       cacheKey: historyCacheKey(entityType, entityId),
@@ -181,7 +202,7 @@ export class PublishService {
          */
         const result = await this.dialClient.client.getPublications({
           headers: getBearerAuthHeaders(accessToken),
-          body: { url: getPublicationsListScope(getResourceBucket(entityId)) },
+          body: { url: getPublicationsListScope(getResourceBucket(sourceUrl)) },
         });
         if (result.error) {
           return mapDialHttpStatus(
@@ -192,12 +213,12 @@ export class PublishService {
             extractDialErrorMessage(result.error),
           );
         }
-        const { version } = splitEntityNameAndVersion(entityId);
+        const { version } = splitEntityNameAndVersion(sourceUrl);
 
         return (result.data ?? [])
           .filter((publication) =>
             publication.resources?.some(
-              (resource) => resource.sourceUrl === entityId,
+              (resource) => resource.sourceUrl === sourceUrl,
             ),
           )
           .map(

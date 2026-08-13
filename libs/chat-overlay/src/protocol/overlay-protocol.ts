@@ -73,6 +73,8 @@ export enum OverlayFeature {
   LiveChatInteraction = 'live-chat-interaction',
   /** Restricts (disables) changing the selected agent/model on the conversation top bar. */
   DisallowChangeAgent = 'disallow-change-agent',
+  /** Hides the agent/model selector on the in-chat conversation input. */
+  HideChangeAgent = 'hide-change-agent',
   /** Hides the new-conversation controls in the header/layout. */
   HideNewConversation = 'hide-new-conversation',
   /** Enables the empty-chat (new conversation composer) settings UI. */
@@ -89,12 +91,16 @@ export enum OverlayFeature {
   Header = 'header',
   /** Makes the conversations sidebar section open by default. */
   ShowConversationsSectionByDefault = 'showConversationsSectionByDefault',
+  /** Hides the conversations panel's source filter tabs (All / My chats / Shared / Organization). */
+  HideConversationsFilter = 'hide-conversations-filter',
   /** Enables the catalog (`/catalog`) route. */
   Catalog = 'catalog',
   /** Restricts the catalog to hide the current user's own/shared-with-me apps. */
   CatalogHideMyApps = 'catalog-hide-my-apps',
   /** Makes the catalog's table view the initial default (instead of grid). */
   CatalogTableView = 'catalog-table-view',
+  /** Enables the file manager (`/files`) route and its navigation entry. */
+  FileManager = 'file-manager',
   /** Hides the delete action on a user's own messages. */
   HideDeleteUserMessage = 'hide-delete-user-message',
   /** Hides the edit action on a user's own messages. */
@@ -113,12 +119,16 @@ export enum OverlayFeature {
   Toolsets = 'toolsets',
   /** Enables prompts: the catalog's Prompts tab, its create option, and the prompt editor route. */
   Prompts = 'prompts',
+  /** Enables skills: the catalog's Skills tab and the skill details panel. */
+  Skills = 'skills',
   /** Enables the custom-app creation entry in the catalog. */
   CustomApps = 'custom-apps',
   /** Hides the user avatar/menu button in the header. */
   HideUserMenu = 'hide-user-menu',
   /** Hides the settings entry in the user menu. */
   HideUserSettings = 'hide-user-settings',
+  /** Hides the keyboard-shortcuts entry in the user menu and the mobile profile sheet. */
+  HideKeyboardShortcuts = 'hide-keyboard-shortcuts',
   /** Enables the `microphone` permission on the iframe's `allow` attribute for voice input. */
   VoiceInput = 'voice-input',
 }

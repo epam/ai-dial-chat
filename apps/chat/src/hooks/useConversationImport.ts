@@ -3,7 +3,6 @@ import {
   type ConversationResponseDto,
 } from '@epam/ai-dial-chat-api-client';
 import type { Conversation } from '@epam/ai-dial-chat-shared';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -224,7 +223,11 @@ interface UseConversationImportResult {
  */
 export const useConversationImport = (): UseConversationImportResult => {
   const { t } = useTranslation();
-  const { showNotification } = useNotification();
+  const {
+    showSuccessNotification,
+    showWarningNotification,
+    showErrorNotification,
+  } = useNotification();
   const { user } = useUser();
   const { refreshConversations } = useConversations();
   const [jobs, setJobs] = useState<QueueJob[]>([]);
@@ -392,8 +395,7 @@ export const useConversationImport = (): UseConversationImportResult => {
         } catch {
           /* The saves already succeeded; a refresh failure must not undo that success. */
         }
-        showNotification({
-          variant: NotificationVariant.Success,
+        showSuccessNotification({
           title: t(ConversationImportI18nKeys.SuccessTitle),
           message: t(ConversationImportI18nKeys.Success, {
             names: formatQuotedNameList(successNames),
@@ -401,8 +403,7 @@ export const useConversationImport = (): UseConversationImportResult => {
         });
       }
       if (failedNames.length > 0) {
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           title: t(ConversationImportI18nKeys.FailedTitle),
           message: t(ConversationImportI18nKeys.Failed, {
             names: formatQuotedNameList(failedNames),
@@ -411,8 +412,7 @@ export const useConversationImport = (): UseConversationImportResult => {
         });
       }
       if (skippedAttachmentNames.length > 0) {
-        showNotification({
-          variant: NotificationVariant.Warning,
+        showWarningNotification({
           message: t(ConversationImportI18nKeys.WarningAttachmentSkipped, {
             names: formatQuotedNameList(skippedAttachmentNames),
           }),
@@ -425,7 +425,15 @@ export const useConversationImport = (): UseConversationImportResult => {
             : ExportJobStatus.Success,
       });
     },
-    [refreshConversations, showNotification, t, updateJob, user?.bucket],
+    [
+      refreshConversations,
+      showSuccessNotification,
+      showWarningNotification,
+      showErrorNotification,
+      t,
+      updateJob,
+      user?.bucket,
+    ],
   );
 
   const importConversations = useCallback(
@@ -435,15 +443,13 @@ export const useConversationImport = (): UseConversationImportResult => {
         parsed = await parseImportFile(file);
       } catch (error) {
         if (error instanceof UnsupportedImportFormatError) {
-          showNotification({
-            variant: NotificationVariant.Error,
+          showErrorNotification({
             title: t(ConversationImportI18nKeys.FailedTitle),
             message: t(ConversationImportI18nKeys.UnsupportedFormat),
           });
           return;
         }
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           title: t(ConversationImportI18nKeys.FailedTitle),
           message: t(ConversationImportI18nKeys.UnsupportedFormat),
         });
@@ -473,7 +479,7 @@ export const useConversationImport = (): UseConversationImportResult => {
       });
       return run();
     },
-    [addJob, runImportJob, showNotification, t, updateJob],
+    [addJob, runImportJob, showErrorNotification, t, updateJob],
   );
 
   const retryJob = useCallback((jobId: string) => {

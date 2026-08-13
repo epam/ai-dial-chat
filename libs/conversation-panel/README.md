@@ -36,12 +36,33 @@ import type { ConversationPanelProps } from '@epam/ai-dial-conversation-panel';
 
 <ConversationPanel
   conversations={historyItems}
-  onSelect={handleSelect}
-  onDelete={handleDelete}
-  onMove={handleMove}
-  selectedId={activeConversationId}
+  isOpen={isPanelOpen}
+  onSelectConversation={handleSelectConversation}
+  activeConversationId={activeConversationId}
+  onNewChat={handleNewChat}
+  getActions={buildRowActions}
+  onMoveConversation={handleMove}
+  labels={{
+    title: 'Chats',
+    emptyLabel: 'No conversations yet',
+    noResultsLabel: 'No results found',
+    newChatLabel: 'New chat',
+    searchPlaceholder: 'Search…',
+    searchClearLabel: 'Clear search',
+    filterLabels: {
+      all: 'All',
+      myChats: 'My chats',
+      shared: 'Shared',
+      organization: 'Organization',
+    },
+  }}
 />;
 ```
+
+Pass `isFilterTabsHidden` to drop the All / My chats / Shared / Organization
+row. The list then stays on whichever tab is active — `FilterTab.All` unless
+`activeFilter` says otherwise — so every group remains visible; only the
+control disappears. `labels.filterLabels` stays required either way.
 
 ## Enums
 

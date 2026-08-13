@@ -89,7 +89,7 @@ The tab body MUST use logical CSS properties (`ps-*`/`pe-*`, `text-start`) so it
 
 - **WHEN** the Content tab renders a body
 - **THEN** no button is rendered inside it
-- **AND** an `aria-live="polite"` status region announces the `contentCopiedStatusLabel` text
+- **AND** no `aria-live` region is rendered, since there is no transient status left to announce
 
 #### Scenario: Long content scrolls inside its own container
 
@@ -122,27 +122,40 @@ Both host predicates (`isPrimaryActionVisible`, `isPublishVisible`) keep precede
 
 ---
 
-### Requirement: The unshare control is suppressible per item by host predicate
+### Requirement: The unshare and revoke controls are suppressible per item by host predicate
 
-`libs/catalog` SHALL add one optional host predicate so a host can declare that unsharing does not exist for a given item, without the lib knowing why:
+`libs/catalog` SHALL add two optional host predicates so a host can declare that a sharing-removal action does not exist for a given item, without the lib knowing why:
 
-- `isUnshareVisible?: (item: CatalogItem) => boolean` on `CatalogProps` and `DetailsPanelProps`, combined (AND) with the lib's existing `!!onUnshare && item.isMyApp !== true && item.sharedWithMe === true` rule (`Header.tsx:153`).
+- `isUnshareVisible?: (item: CatalogItem) => boolean`, combined (AND) with the lib's existing recipient-side rule `!!onUnshare && item.isMyApp !== true && item.sharedWithMe === true`.
+- `isRevokeShareVisible?: (item: CatalogItem) => boolean`, combined (AND) with the lib's existing owner-side rule `!!onRevokeShare && item.isMyApp === true && (recipientsCount == null || recipientsCount > 0)`.
 
-It SHALL default to "visible" when absent, so every existing host renders identically to today, and SHALL be documented with JSDoc stating that default.
+Both live on `CatalogProps` and `DetailsPanelProps` and are threaded to `Header`. Because each is ANDed with its built-in rule, a predicate can only ever narrow visibility — returning `true` MUST NOT surface an action the built-in rule hides.
+
+Both SHALL default to "visible" when absent, so every existing host renders identically to today, and SHALL be documented with JSDoc stating that default.
 
 No favourite-visibility predicate is added. An earlier revision of this change added `isFavoriteVisible` to hide the star for prompts; prompts are favouritable now (see `prompt-catalog-integration`), which left the predicate with no caller. A lib prop that no host passes is dead public API and SHALL NOT be retained: the star renders for every entity type, prompts included.
 
-No revoke-access predicate is added either: this branch's `libs/catalog` has no `onRevokeShare` callback and no owner-side revoke action, so a predicate gating it would be a prop nothing reads.
+The revoke predicate was added late: `libs/catalog` gained the owner-side `onRevokeShare` action from `development-1.0` after this change was drafted, and without a predicate that action rendered on every personal prompt and failed with a 400 — see the Revoke access bullet in `prompt-catalog-integration`.
 
 #### Scenario: Unshare action is hidden by predicate
 
 - **WHEN** the details panel opens for an item with `sharedWithMe: true` and `onUnshare` supplied, and `isUnshareVisible` returns `false`
 - **THEN** no "Remove from My List" action is rendered
 
-#### Scenario: The predicate is optional and additive
+#### Scenario: Revoke action is hidden by predicate
 
-- **WHEN** an existing consumer of `Catalog` passes no predicate
-- **THEN** it compiles unchanged and every unshare control renders exactly as before
+- **WHEN** the details panel opens for an item with `isMyApp: true` and `onRevokeShare` supplied, and `isRevokeShareVisible` returns `false`
+- **THEN** no "Revoke access" action is rendered
+
+#### Scenario: A predicate cannot widen visibility
+
+- **WHEN** `isRevokeShareVisible` returns `true` for an item with `sharedWithMe: true`
+- **THEN** no "Revoke access" action is rendered, because the built-in owner-side rule still excludes it
+
+#### Scenario: The predicates are optional and additive
+
+- **WHEN** an existing consumer of `Catalog` passes neither predicate
+- **THEN** it compiles unchanged and every unshare and revoke control renders exactly as before
 
 #### Scenario: The star renders for every entity type
 
@@ -193,7 +206,9 @@ The body SHALL be rendered as markdown through the shared `MarkdownRenderer`, no
 - skip `code` and `pre` subtrees, where a placeholder is being shown as literal syntax
 - require a non-empty inner run that contains no braces, so `{{}}` and an unclosed `{{` stay plain text and one stray brace pair cannot swallow the rest of the document
 
-The lib SHALL provide the class name only, not a colour for it. Styling `.cat-prompt-variable` is the host's, so no `*Colors` field is declared for it — a CSS variable no stylesheet reads would be dead API.
+`Content.module.scss` SHALL colour `.cat-prompt-variable` from `var(--cat-details-variable-text, var(--text-visual-violet-2, #3730B7))`, and `ItemDetailsColors` SHALL declare a matching `variableText` field that `DetailsPanel`'s `buildCssVars` maps to `--cat-details-variable-text`. Both halves are required by the lib-styling contract: a stylesheet reading a variable nothing sets makes a host override silently inert, and a `buildCssVars` entry no stylesheet reads is dead API.
+
+An earlier revision shipped the class name without a colour, on the reasoning that styling belonged to the host. That left placeholders indistinguishable from the surrounding prose in every host that did not know to add the rule, so the lib now carries the default and the host overrides it.
 
 #### Scenario: A placeholder is highlighted
 
@@ -245,7 +260,7 @@ Prompt body text is NOT searchable: `filterCatalogItems` matches `name`, `descri
 
 ### Requirement: Lib documentation covers the new surface
 
-`libs/catalog/README.md` SHALL document the `Prompt` entity type, the `promptContent` details field with the `Content` tab, and the `isUnshareVisible` predicate. Every component name, prop name, and type name in a README example MUST exist with that exact spelling and shape — in particular, the README MUST NOT document `isFavoriteVisible`, which this change removes.
+`libs/catalog/README.md` SHALL document the `Prompt` entity type, the `promptContent` details field with the `Content` tab, the `isUnshareVisible` / `isRevokeShareVisible` predicates, and the `onDownload` / `isDownloadVisible` pair — including that the lib never learns the downloaded file's format. Every component name, prop name, and type name in a README example MUST exist with that exact spelling and shape — in particular, the README MUST NOT document `isFavoriteVisible`, which this change removes.
 
 #### Scenario: README examples compile against the shipped API
 

@@ -47,6 +47,10 @@ confirmation step and calls them only once the user confirms:
   // Owner-side: revokes every recipient's access to an `isMyApp` item.
   // The item stays in the owner's catalog, so the panel stays open.
   onRevokeShare={handleRevokeShare}
+  // Resolves the current recipient count when the Manage menu opens. `0`
+  // hides "Revoke access"; `undefined` or a rejection leaves it reachable
+  // without a count. Omit to offer it for every owned item.
+  onFetchRecipientsCount={fetchRecipientsCount}
   // Recipient-side: drops the caller's own access to a `sharedWithMe` item.
   // The item leaves the caller's catalog, so the panel closes.
   onUnshare={handleUnshare}
@@ -155,8 +159,22 @@ hidden, exactly as with `overview`, `pricing`, `limits`, `api`, and `tools`.
 The body is rendered as markdown, and each `{{placeholder}}` token is wrapped in
 a `span.cat-prompt-variable` so a template can read apart from its prose.
 Placeholders inside fenced code are left alone, since there they are being shown
-as literal syntax. The lib ships no colour for that class — style it from the
-host stylesheet, or the tokens render like the surrounding text.
+as literal syntax. The lib colours the class itself, from
+`--cat-details-variable-text` with a `--text-prompt-parameter` theme fallback.
+Override it through `DetailsPanel`'s `styles.colors.variableText`:
+
+```tsx
+<DetailsPanel
+  item={promptItem}
+  isOpen
+  onClose={handleClose}
+  styles={{ colors: { variableText: '#7c3aed' } }}
+/>
+```
+
+Note that `Catalog` forwards only `detailsTexts` to the panel, not styles, so
+every `ItemDetailsColors` field — this one included — is reachable only when a
+host renders `DetailsPanel` itself.
 
 ```tsx
 const promptItem: CatalogItem = {
@@ -183,24 +201,50 @@ The lib never learns where a prompt comes from: the body arrives already
 resolved, and the host decides every prompt-specific action through the
 existing `onFetchDetails` / `onEdit` / `onUseInChat` props.
 
+### Download
+
+`onDownload` adds a "Download" entry to the details panel's Manage menu. The lib
+neither builds the file nor knows its format — it only reports the click, so the
+host fetches whatever it needs and writes the file itself. The call is
+fire-and-forget: the panel does not await the result and shows no pending state,
+so failures are the host's to surface.
+
+Scope it with `isDownloadVisible`, which defaults to **visible for every item**
+whenever `onDownload` is supplied.
+
+```tsx
+<Catalog
+  items={items}
+  favorites={favorites}
+  // Only prompts carry a downloadable body.
+  isDownloadVisible={(item) => item.type === CatalogEntityType.Prompt}
+  onDownload={handleDownload}
+/>
+```
+
 ### Declaring unsupported per-item capabilities
 
-`isUnshareVisible` lets a host hide "Remove from My List" for items whose
-backing capability does not exist, without the lib knowing why. It defaults to
+`isUnshareVisible` and `isRevokeShareVisible` let a host hide the recipient-side
+"Remove from My List" and the owner-side "Revoke access" for items whose backing
+capability does not exist, without the lib knowing why. Both default to
 **visible** when omitted.
 
 ```tsx
 <Catalog
   items={items}
   favorites={favorites}
-  // Hide "Remove from My List" on prompts — the host's API rejects prompt paths.
+  // Hide both on prompts — the host's API rejects prompt paths.
   isUnshareVisible={(item) => item.type !== CatalogEntityType.Prompt}
+  isRevokeShareVisible={(item) => item.type !== CatalogEntityType.Prompt}
   onUnshare={handleUnshare}
+  onRevokeShare={handleRevokeShare}
 />
 ```
 
-`isUnshareVisible` is combined (AND) with the built-in `sharedWithMe`/`isMyApp`
-rule, so it can only ever narrow visibility.
+Each is combined (AND) with its built-in rule — `sharedWithMe`/`isMyApp` for
+unshare, `isMyApp` plus the recipient count resolved by
+`onFetchRecipientsCount` for revoke — so a predicate can only ever narrow
+visibility, never widen it.
 
 ## Types
 

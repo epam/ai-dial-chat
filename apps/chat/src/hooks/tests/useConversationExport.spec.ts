@@ -11,6 +11,7 @@ import {
   type Mock,
 } from 'vitest';
 import { useNotification } from '../../context/NotificationContext';
+import { createNotificationContextValue } from '../../context/tests/notification-context-mock';
 import { UnauthorizedError } from '../../server-api/base';
 import { downloadFile } from '../../server-api/files.api';
 import {
@@ -72,11 +73,9 @@ const makeAttachmentMessage = (fileId: string, title: string) => ({
 describe('useConversationExport', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification: mockShowNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(mockShowNotification),
+    );
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 

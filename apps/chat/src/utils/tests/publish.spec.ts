@@ -22,6 +22,12 @@ describe('toPublishEntityType', () => {
       CatalogPublishEntityType.Application,
     );
   });
+
+  it('maps Prompt to the publish API prompt enum value', () => {
+    expect(toPublishEntityType(CatalogEntityType.Prompt)).toBe(
+      CatalogPublishEntityType.Prompt,
+    );
+  });
 });
 
 describe('mapPublishHistoryEntryDto', () => {

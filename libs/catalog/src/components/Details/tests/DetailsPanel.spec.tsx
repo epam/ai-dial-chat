@@ -15,8 +15,8 @@ import {
 } from '../../../types/toolset-auth';
 import { DetailsPanel } from '../DetailsPanel';
 
-vi.mock('@epam/ai-dial-kit', () => ({
-  TabRow: ({
+vi.mock('@epam/ai-dial-ui-kit', () => ({
+  Tabs: ({
     tabs,
     onTabChange,
   }: {
@@ -31,8 +31,6 @@ vi.mock('@epam/ai-dial-kit', () => ({
       ))}
     </div>
   ),
-}));
-vi.mock('@epam/ai-dial-ui-kit', () => ({
   GhostIconButton: ({
     'aria-label': ariaLabel,
     disabled,
@@ -132,23 +130,34 @@ vi.mock('../../StarToggleButton/StarToggleButton', () => ({
 }));
 vi.mock('../Header/Header', () => ({
   Header: ({
+    item,
     onOpenPublish,
+    onDownload,
+    isDownloadVisible,
     onDelete,
     onUnshare,
     onRevokeShare,
+    isRevokeShareVisible,
     onRequestLogout,
   }: {
+    item: CatalogItem;
     onOpenPublish?: () => void;
+    onDownload?: (item: CatalogItem) => void;
+    isDownloadVisible?: (item: CatalogItem) => boolean;
     onDelete?: () => void;
     onUnshare?: () => void;
     onRevokeShare?: () => void;
+    isRevokeShareVisible?: (item: CatalogItem) => boolean;
     onRequestLogout?: () => void;
   }) => (
     <>
       <button onClick={onOpenPublish}>Publish</button>
+      {onDownload && (isDownloadVisible?.(item) ?? true) && (
+        <button onClick={() => onDownload(item)}>DownloadTrigger</button>
+      )}
       {onDelete && <button onClick={onDelete}>DeleteTrigger</button>}
       {onUnshare && <button onClick={onUnshare}>UnshareTrigger</button>}
-      {onRevokeShare && (
+      {onRevokeShare && (isRevokeShareVisible?.(item) ?? true) && (
         <button onClick={onRevokeShare}>RevokeShareTrigger</button>
       )}
       {onRequestLogout && (
@@ -305,12 +314,83 @@ describe('DetailsPanel — Content tab', () => {
     expect(tabLabels).toEqual(['Details', 'Overview']);
   });
 
-  it('keeps the About tab for non-prompt entity types', () => {
-    renderPanel({
-      item: makeItem({ type: CatalogEntityType.Model, description: 'A model' }),
+  /* Without this the stylesheet reads a variable nothing ever sets, so the host override is silently inert. */
+  it('sets the placeholder colour variable on the panel root from styles.colors.variableText', () => {
+    const { container } = renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Prompt,
+        details: { promptContent: { content: 'Hi {{name}}' } },
+      }),
+      styles: { colors: { variableText: '#3730b7' } },
     });
 
-    expect(screen.getByRole('button', { name: 'About' })).toBeTruthy();
+    const panel = container.querySelector('[role="dialog"]') as HTMLElement;
+    expect(panel.style.getPropertyValue('--cat-details-variable-text')).toBe(
+      '#3730b7',
+    );
+  });
+
+  it.each([
+    CatalogEntityType.Model,
+    CatalogEntityType.Agent,
+    CatalogEntityType.Toolset,
+  ])('keeps the About tab first for %s', (type) => {
+    renderPanel({
+      item: makeItem({ type, description: 'A description' }),
+    });
+
+    expect(
+      screen.getByRole('tablist').querySelector('button')?.textContent,
+    ).toBe('About');
+  });
+
+  it('gives a skill exactly two tabs — Details then Overview, never About', () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Skill,
+        description: '',
+        details: {
+          promptContent: { content: '# Revenue skill' },
+          overview: promptOverview,
+        },
+      }),
+    });
+
+    const tabLabels = Array.from(
+      screen.getByRole('tablist').querySelectorAll('button'),
+    ).map((button) => button.textContent);
+    expect(tabLabels).toEqual(['Details', 'Overview']);
+  });
+
+  it('keeps the Details tab first and active for a skill whose manifest has not arrived', () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Skill,
+        description: '',
+        details: { overview: promptOverview },
+      }),
+    });
+
+    expect(
+      screen.getByRole('tablist').querySelector('button')?.textContent,
+    ).toBe('Details');
+    /* Overview shows only as a tab button, so Details is still the active tab. */
+    expect(screen.getAllByText('Overview')).toHaveLength(1);
+  });
+
+  it('renders the skill manifest in the Content tab by default', () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Skill,
+        description: '',
+        details: {
+          promptContent: { content: '# Revenue skill' },
+          overview: promptOverview,
+        },
+      }),
+    });
+
+    expect(screen.getByRole('heading', { name: 'Revenue skill' })).toBeTruthy();
   });
 
   it('opens on the Details tab, not Overview', () => {
@@ -349,7 +429,7 @@ describe('DetailsPanel — Content tab', () => {
     expect(screen.getByText('Summarize:')).toBeTruthy();
   });
 
-  it('does not render a Content tab when promptContent is absent', () => {
+  it('keeps the Details tab first and active for a prompt whose body has not arrived', () => {
     renderPanel({
       item: makeItem({
         type: CatalogEntityType.Prompt,
@@ -357,7 +437,11 @@ describe('DetailsPanel — Content tab', () => {
       }),
     });
 
-    expect(screen.queryByRole('button', { name: 'Details' })).toBeNull();
+    expect(
+      screen.getByRole('tablist').querySelector('button')?.textContent,
+    ).toBe('Details');
+    /* Overview shows only as a tab button, so Details is still the active tab. */
+    expect(screen.getAllByText('Overview')).toHaveLength(1);
   });
 });
 
@@ -776,6 +860,46 @@ describe('DetailsPanel', () => {
     expect(tablist.textContent).toBe('AboutOverviewPricingLimitsConnect');
   });
 
+  describe('Download action', () => {
+    const DOWNLOAD_TRIGGER = 'DownloadTrigger';
+
+    it('forwards onDownload to the header', async () => {
+      const onDownload = vi.fn();
+      renderPanel({ onDownload });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: DOWNLOAD_TRIGGER }),
+      );
+
+      expect(onDownload).toHaveBeenCalledWith(item);
+    });
+
+    it('exposes no download action when onDownload is absent', () => {
+      renderPanel();
+      expect(
+        screen.queryByRole('button', { name: DOWNLOAD_TRIGGER }),
+      ).toBeNull();
+    });
+
+    it('forwards isDownloadVisible so the header can hide the action', () => {
+      renderPanel({ onDownload: vi.fn(), isDownloadVisible: () => false });
+      expect(
+        screen.queryByRole('button', { name: DOWNLOAD_TRIGGER }),
+      ).toBeNull();
+    });
+
+    it('keeps the details content in place after a download, with no confirmation step', async () => {
+      renderPanel({ onDownload: vi.fn() });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: DOWNLOAD_TRIGGER }),
+      );
+
+      expect(screen.getByRole('tablist')).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
+    });
+  });
+
   describe('Confirmation sub-view', () => {
     const UNSHARE_TRIGGER = 'UnshareTrigger';
     const DELETE_TRIGGER = 'DeleteTrigger';
@@ -808,6 +932,14 @@ describe('DetailsPanel', () => {
     it('does not expose the delete action when onDelete is absent', () => {
       renderPanel();
       expect(screen.queryByRole('button', { name: DELETE_TRIGGER })).toBeNull();
+    });
+
+    it('forwards isRevokeShareVisible so the header can hide the revoke action', () => {
+      renderPanel({
+        onRevokeShare: vi.fn(),
+        isRevokeShareVisible: () => false,
+      });
+      expect(screen.queryByRole('button', { name: REVOKE_TRIGGER })).toBeNull();
     });
 
     it('replaces the details content with the confirmation instead of overlaying a popup', async () => {

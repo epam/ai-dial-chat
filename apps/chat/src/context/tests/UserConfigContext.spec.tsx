@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as userConfigApi from '../../server-api/user-config.api';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { UserConfigProvider, useUserConfig } from '../UserConfigContext';
+import { createNotificationContextValue } from './notification-context-mock';
 
 const contextMocks = vi.hoisted(() => ({
   userSub: 'user-1' as string | undefined,
@@ -35,7 +36,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
 
 const mockShowNotification = vi.fn();
 vi.mock('../NotificationContext', () => ({
-  useNotification: () => ({ showNotification: mockShowNotification }),
+  useNotification: () => createNotificationContextValue(mockShowNotification),
 }));
 
 const mockGetUserConfig = vi.mocked(userConfigApi.getUserConfig);
@@ -51,11 +52,12 @@ const mockUpdateSelectedDeployment = vi.mocked(
 );
 
 const fullConfig = {
-  version: 4,
+  version: 5,
   conversations: { pinnedIds: ['conv-1'] },
   toolsets: { installed: ['ts-a'] },
   deployments: { installed: ['dep-1'] },
   prompts: { installed: ['Work/AI/summarize'] },
+  skills: { installed: ['skills/my-bucket/revenue-skill'] },
 };
 
 const wrapper = ({ children }: { children: ReactNode }) => (
@@ -208,11 +210,12 @@ describe('UserConfigContext', () => {
 
       await act(async () => {
         resolveRefetch({
-          version: 4,
+          version: 5,
           conversations: { pinnedIds: ['conv-2'] },
           toolsets: { installed: [] },
           deployments: { installed: [] },
           prompts: { installed: [] },
+          skills: { installed: [] },
         });
         await refetchPromise;
       });

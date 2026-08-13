@@ -22,7 +22,6 @@ Use this library whenever a host application needs the "publish to a folder, opt
 
 - `react`
 - `@tabler/icons-react`
-- `@epam/ai-dial-kit`
 - `@epam/ai-dial-sidebar`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-ui-kit`
@@ -87,6 +86,21 @@ import { PublishFooter } from '@epam/ai-dial-publish-panel';
   isSubmitLoading={false}
   onCancel={handleCancel}
   onSubmit={handleSubmit}
+/>;
+```
+
+### PublishAccessRules
+
+Access-rules section of the Publish flow: one removable chip per rule, an "Add rule" trigger opening `PublishAccessRuleEditor`, and a "Clear all" control shown only when rules exist. Pass `folderName` so the section states which destination folder the rules apply to; leave it `undefined` while no folder is selected and the section prompts the user to pick one instead, warning when rules already exist without a destination.
+
+```tsx
+import { PublishAccessRules } from '@epam/ai-dial-publish-panel';
+
+<PublishAccessRules
+  rules={rules}
+  onRulesChange={setRules}
+  sourceOptions={['title', 'roles', 'dial_roles']}
+  folderName={selectedFolderName}
 />;
 ```
 

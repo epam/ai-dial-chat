@@ -1,3 +1,9 @@
+# citation-marker Specification
+
+## Purpose
+
+Inline citation markers injected after cited text spans in assistant messages, grouped by source attachment.
+
 ## Requirements
 
 ---

@@ -2,13 +2,15 @@ import type { CatalogItem } from './catalog-item';
 
 /** Typography class overrides for `Card` content. */
 export interface CardTypography {
-  /** Typography class applied to the item name. Default: `'dial-h3-text'`. */
+  /** Typography class applied to the item name. Default: `'dial-body-semi-text'`. */
   nameClassName?: string;
   /** Typography class applied to the version text. Default: `'dial-tiny-text'`. */
   versionClassName?: string;
   /** Typography class applied to the description text. Default: `'dial-small-text'`. */
   descriptionClassName?: string;
-  /** Typography class applied to the featured chip label. Default: `'dial-tiny-semi-text uppercase tracking-[0.06em]'`. */
+  /** Typography class applied to the last-used text. Default: `'dial-tiny-text'`. */
+  descriptionSizeClassName?: string;
+  /** Typography class applied to the featured chip label. Default: `'dial-tiny-lead-semi-text'`. */
   featuredChipClassName?: string;
   /** Typography class applied to folder path separator labels. Default: `'dial-tiny-text'`. */
   folderLabelClassName?: string;

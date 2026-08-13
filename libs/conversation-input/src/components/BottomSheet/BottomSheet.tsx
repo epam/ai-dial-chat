@@ -51,7 +51,7 @@ export interface BottomSheetProps {
   items: BottomSheetItem[];
   /** Extra classes appended to the sheet container (e.g. a max-height constraint). */
   className?: string;
-  /** CSS class applied to the sheet title. Defaults to `'dial-body-semi-bold-text'`. */
+  /** CSS class applied to the sheet title. Defaults to `'dial-body-semi-text'`. */
   titleClassName?: string;
   /** CSS class applied to each item label. Defaults to `'dial-small-text'`. */
   itemLabelClassName?: string;

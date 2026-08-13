@@ -67,6 +67,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     onMoveConversation,
     activeFilter,
     onActiveFilterChange,
+    isFilterTabsHidden = false,
   }) => {
     const {
       colors,
@@ -408,15 +409,17 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           }}
         />
 
-        <FilterTabs
-          activeTab={activeTab}
-          labels={filterLabels}
-          onChange={(tab) => {
-            setActiveTab(tab);
-            onActiveFilterChange?.(tab);
-          }}
-          tabClassName={typography?.tabClassName}
-        />
+        {!isFilterTabsHidden && (
+          <FilterTabs
+            activeTab={activeTab}
+            labels={filterLabels}
+            onChange={(tab) => {
+              setActiveTab(tab);
+              onActiveFilterChange?.(tab);
+            }}
+            tabClassName={typography?.tabClassName}
+          />
+        )}
 
         <span role="status" aria-live="polite" className="sr-only">
           {isLoading

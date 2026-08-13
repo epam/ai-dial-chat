@@ -1,6 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { TabRow } from '@epam/ai-dial-kit';
-import { Spinner, DropdownItem } from '@epam/ai-dial-ui-kit';
+import { DropdownItem, Spinner, Tabs } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
@@ -52,10 +51,14 @@ export const Catalog: FC<CatalogProps> = ({
   isShareVisible,
   onFetchDetails,
   onEdit,
+  onDownload,
+  isDownloadVisible,
   onDelete,
   onUnshare,
   isUnshareVisible,
   onRevokeShare,
+  onFetchRecipientsCount,
+  isRevokeShareVisible,
   onLogin,
   onLogout,
   onCreateClick,
@@ -443,7 +446,7 @@ export const Catalog: FC<CatalogProps> = ({
 
         {tabs.length > 0 && (
           <div className="px-8">
-            <TabRow
+            <Tabs
               tabs={tabs.map((tab) => ({
                 id: tab.id,
                 label:
@@ -535,10 +538,14 @@ export const Catalog: FC<CatalogProps> = ({
           shareOverlay={shareOverlay}
           isShareVisible={isShareVisible}
           onEdit={onEdit}
+          onDownload={onDownload}
+          isDownloadVisible={isDownloadVisible}
           onDelete={onDelete}
           onUnshare={onUnshare}
           isUnshareVisible={isUnshareVisible}
           onRevokeShare={onRevokeShare}
+          onFetchRecipientsCount={onFetchRecipientsCount}
+          isRevokeShareVisible={isRevokeShareVisible}
           onLogin={handleLogin}
           onLogout={handleLogout}
           texts={detailsTexts}

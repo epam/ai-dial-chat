@@ -12,7 +12,6 @@ import {
   DIAL_ICON_SIZE,
   ConfirmationPopup,
   Popup,
-  NotificationVariant,
   PopupSize,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
@@ -58,6 +57,8 @@ import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useConversationExport } from '../../hooks/useConversationExport';
 import { useConversationImport } from '../../hooks/useConversationImport';
+import { useOperationNotification } from '../../hooks/useOperationNotification';
+import { useShareRecipientsCount } from '../../hooks/useShareRecipientsCount/useShareRecipientsCount';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import {
@@ -65,7 +66,12 @@ import {
   revokeSharedAccess,
 } from '../../server-api/share.api';
 import { ConversationExportMode } from '../../types/conversation-export';
+import {
+  EntityOperation,
+  NotifiableEntity,
+} from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
+import { RecipientsCountStatus } from '../../types/share-recipients';
 import {
   conversationIdsMatch,
   toPanelConversationId,
@@ -124,7 +130,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const { language } = useLanguage();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const { showNotification } = useNotification();
+  const { showSuccessNotification, showErrorNotification } = useNotification();
+  const { notifyOperationSuccess } = useOperationNotification();
   const isConversationsSectionEnabled = useUiFeature(
     OverlayFeature.ConversationsSection,
   );
@@ -133,6 +140,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   );
   const isConversationsPublishingEnabled = useUiFeature(
     OverlayFeature.ConversationsPublishing,
+  );
+  const isConversationsFilterHidden = useUiFeature(
+    OverlayFeature.HideConversationsFilter,
   );
   const {
     jobs: exportJobs,
@@ -223,12 +233,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   } | null>(null);
   const publishReturnFocusRef = useRef<HTMLButtonElement | null>(null);
 
-  const handleActionMenuOpen = useCallback(
-    (_item: ConversationItem, trigger: HTMLButtonElement) => {
-      publishReturnFocusRef.current = trigger;
-    },
-    [],
-  );
+  const {
+    requestRecipientsCount,
+    getRecipientsCount,
+    invalidateRecipientsCount,
+  } = useShareRecipientsCount();
 
   const handleExportAll = useCallback(() => {
     void exportAll();
@@ -343,6 +352,40 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [panelToContextId, conversations, pinConversation],
   );
 
+  /*
+   * The row's recipient count is fetched here rather than carried on the list
+   * items: it only matters at the moment the owner is about to act on it, and a
+   * snapshot from the list fetch would still offer "Revoke access (3)" right
+   * after those three grants were revoked.
+   */
+  const handleActionMenuOpen = useCallback(
+    (item: ConversationItem, trigger: HTMLButtonElement) => {
+      publishReturnFocusRef.current = trigger;
+      if (!isConversationsSharingEnabled) return;
+
+      const contextId = panelToContextId.get(item.id);
+      if (!contextId) return;
+
+      /* Only an owned, writable row can offer revoking, so only those need a
+       * count. */
+      const rawItem = items.find((c) => c.id === contextId);
+      if (
+        rawItem?.isReadonly ||
+        rawItem?.sharedWithMe ||
+        rawItem?.publishedWithMe
+      ) {
+        return;
+      }
+      requestRecipientsCount(contextId);
+    },
+    [
+      panelToContextId,
+      items,
+      isConversationsSharingEnabled,
+      requestRecipientsCount,
+    ],
+  );
+
   const getActions = useCallback(
     (panelItem: ConversationItem): DropdownItem[] => {
       const contextId = panelToContextId.get(panelItem.id);
@@ -353,6 +396,12 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         rawItem?.isReadonly ||
         rawItem?.sharedWithMe ||
         rawItem?.publishedWithMe;
+
+      const recipients = getRecipientsCount(contextId);
+      const isRevokeVisible =
+        recipients.status === RecipientsCountStatus.Unknown ||
+        (recipients.status === RecipientsCountStatus.Resolved &&
+          (recipients.count ?? 0) > 0);
 
       const pinAction: DropdownItem = {
         key: 'pin',
@@ -384,11 +433,15 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             ) {
               onDuplicateReadonly?.();
             }
+            notifyOperationSuccess(
+              NotifiableEntity.Conversation,
+              EntityOperation.Duplicated,
+              { name: panelItem.title },
+            );
             navigate(getConversationRoute(newPath));
           } catch (error) {
             const { traceId } = await getApiErrorDetails(error);
-            showNotification({
-              variant: NotificationVariant.Error,
+            showErrorNotification({
               message: t(ConversationPanelI18nKeys.DuplicateError),
               requestId: traceId,
             });
@@ -498,21 +551,23 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         /*
          * Revoking cuts off every recipient of an owned conversation. It rides
          * the same feature flag as Share: with sharing disabled there is no way
-         * to grant access, so offering to revoke it would be incoherent. It is
-         * hidden again once nobody holds access (`recipientsCount === 0`); an
-         * absent count means the backend could not determine it, and the action
-         * stays visible rather than becoming unreachable.
+         * to grant access, so offering to revoke it would be incoherent.
+         *
+         * The recipient count is requested when this menu opens, so it is never
+         * a stale list snapshot. The entry is withheld until the lookup settles
+         * and stays hidden once nobody holds access; a lookup that could not
+         * produce a number still shows it, so a transient failure never removes
+         * the only way to revoke.
          */
-        ...(isConversationsSharingEnabled &&
-        (rawItem?.recipientsCount == null || rawItem.recipientsCount > 0)
+        ...(isConversationsSharingEnabled && isRevokeVisible
           ? [
               {
                 key: 'revoke-access',
                 label:
-                  rawItem?.recipientsCount == null
+                  recipients.count == null
                     ? t(ButtonsI18nKeys.RevokeAccess)
                     : t(ButtonsI18nKeys.RevokeAccessWithCount, {
-                        count: rawItem.recipientsCount,
+                        count: recipients.count,
                       }),
                 icon: (
                   <IconUserOff
@@ -544,8 +599,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       isConversationsPublishingEnabled,
       navigate,
       onDuplicateReadonly,
-      showNotification,
+      notifyOperationSuccess,
+      showErrorNotification,
       exportSingle,
+      getRecipientsCount,
     ],
   );
 
@@ -570,11 +627,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     setDeleteError(null);
     try {
       await deleteConversation(idToDelete);
-      showNotification({
-        variant: NotificationVariant.Success,
-        message: t(ConversationPanelI18nKeys.DeleteSuccess),
-        title: t(ConversationPanelI18nKeys.DeleteSuccessTitle),
-      });
+      notifyOperationSuccess(
+        NotifiableEntity.Conversation,
+        EntityOperation.Deleted,
+        { name: pendingDeleteTitle },
+      );
     } catch {
       setDeleteError(t(ConversationPanelI18nKeys.DeleteError));
       setIsDeleting(false);
@@ -591,7 +648,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     }
   }, [
     pendingDeleteId,
-    showNotification,
+    pendingDeleteTitle,
+    notifyOperationSuccess,
     deleteConversation,
     panelActiveConversationId,
     navigate,
@@ -634,8 +692,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       /* The discard already succeeded; a refresh failure must not undo that success. */
     }
 
-    showNotification({
-      variant: NotificationVariant.Info,
+    showSuccessNotification({
       title: t(ConversationPanelI18nKeys.UnshareSuccessTitle),
       message: t(ConversationPanelI18nKeys.UnshareSuccess, {
         name: pendingUnshareTitle,
@@ -655,7 +712,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     pendingUnshareId,
     pendingUnshareTitle,
     refreshConversations,
-    showNotification,
+    showSuccessNotification,
     panelActiveConversationId,
     navigate,
     t,
@@ -696,14 +753,17 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       return;
     }
 
+    /* Nobody holds access any more, so the cached count is spent: dropping it
+     * makes the next menu open re-ask instead of offering to revoke again. */
+    invalidateRecipientsCount(idToRevoke);
+
     try {
       await refreshConversations();
     } catch {
       /* The revoke already succeeded; a refresh failure must not undo that success. */
     }
 
-    showNotification({
-      variant: NotificationVariant.Success,
+    showSuccessNotification({
       title: t(ConversationPanelI18nKeys.RevokeSuccessTitle),
       message: t(ConversationPanelI18nKeys.RevokeSuccess, {
         name: pendingRevokeTitle,
@@ -716,7 +776,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     pendingRevokeId,
     pendingRevokeTitle,
     refreshConversations,
-    showNotification,
+    invalidateRecipientsCount,
+    showSuccessNotification,
     t,
   ]);
 
@@ -742,8 +803,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       }
       setIsRenaming(false);
       setPendingRenameItem(null);
+      notifyOperationSuccess(
+        NotifiableEntity.Conversation,
+        EntityOperation.Renamed,
+        { name: newTitle },
+      );
     },
-    [pendingRenameItem, renameConversation, t],
+    [pendingRenameItem, renameConversation, notifyOperationSuccess, t],
   );
 
   const handleGenerateRenameWithAi = useCallback(async () => {
@@ -780,6 +846,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           activeConversationId={panelActiveConversationId}
           activeFilter={requestedFilter}
           onActiveFilterChange={handleActiveFilterChange}
+          isFilterTabsHidden={isConversationsFilterHidden}
           labels={{
             title: t(ConversationPanelI18nKeys.Title),
             emptyLabel: t(ConversationPanelI18nKeys.Empty),

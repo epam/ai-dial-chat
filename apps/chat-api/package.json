@@ -118,7 +118,7 @@
     }
   },
   "dependencies": {
-    "@epam/ai-dial-typescript-sdk": "0.1.0-dev.35",
+    "@epam/ai-dial-typescript-sdk": "0.1.0-dev.37",
     "@nestjs/cache-manager": "^3.1.2",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.4",

@@ -4,7 +4,6 @@ import type {
   ResponseFormat,
 } from '@epam/ai-dial-chat-shared';
 import type { ChatSettingsValues } from '@epam/ai-dial-conversation-input';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -38,7 +37,7 @@ type Params = LocalModeParams | ConversationModeParams;
 
 export const useChatSettingsFormConfig = (params: Params) => {
   const { t } = useTranslation();
-  const { showNotification } = useNotification();
+  const { showSuccessNotification } = useNotification();
 
   const responseFormat =
     params.mode === 'local'
@@ -77,12 +76,11 @@ export const useChatSettingsFormConfig = (params: Params) => {
           }),
         });
       }
-      showNotification({
-        variant: NotificationVariant.Success,
+      showSuccessNotification({
         message: t(ChatSettingsI18nKeys.SavedNotification),
       });
     },
-    [params, showNotification, t],
+    [params, showSuccessNotification, t],
   );
 
   return useMemo(

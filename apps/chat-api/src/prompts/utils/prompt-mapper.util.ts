@@ -70,6 +70,28 @@ export const isSentinelPath = (path: string): boolean =>
 export const isHiddenPromptPath = (path: string): boolean =>
   path.split('/').includes(HIDDEN_FILE);
 
+/**
+ * First segment of every DIAL Core prompt resource url, which is shaped
+ * `prompts/{bucket}/{path}`. Owned here rather than per-module so the publish
+ * and share flows cannot drift on whether the trailing slash is part of it.
+ */
+export const PROMPT_RESOURCE_PREFIX = 'prompts';
+
+/**
+ * Qualifies a bucket-relative prompt path into a full DIAL Core resource url.
+ * The prompts endpoints address a prompt by a bucket-relative path because they
+ * already scope to the caller's bucket, so the bucket is re-attached here
+ * rather than being leaked to the frontend, which never sees it.
+ */
+export const toPromptResourceUrl = (
+  promptPath: string,
+  bucket: string,
+): string => `${PROMPT_RESOURCE_PREFIX}/${bucket}/${promptPath}`;
+
+/** Whether `url` is a DIAL Core prompt resource url, i.e. `prompts/{bucket}/{path}`. */
+export const isPromptResourceUrl = (url: string): boolean =>
+  url.startsWith(`${PROMPT_RESOURCE_PREFIX}/`);
+
 /* Parses a full DIAL resource URL back to the SDK-relative prompt path. */
 export const urlToPromptPath = (url: string, bucket: string): string | null => {
   const decoded = safeDecodeURIComponent(url);
@@ -99,6 +121,7 @@ export const mapPromptToResponse = (
   description: prompt.description,
   content: prompt.content ?? '',
   folderId: prompt.folderId ?? folderIdFromId(id),
+  author: metadata.author,
   createdAt: metadata.createdAt ?? 0,
   updatedAt: metadata.updatedAt ?? 0,
 });

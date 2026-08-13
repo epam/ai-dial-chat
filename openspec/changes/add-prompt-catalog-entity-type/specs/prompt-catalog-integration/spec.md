@@ -154,9 +154,10 @@ Failures SHALL resolve `undefined` exactly as the existing deployment path does,
 - **Delete** — `handleDelete` gains a Prompt branch calling `deletePrompt(item.id)` then `refetchPrompts()`. Success and failure notifications reuse the existing `CatalogI18nKeys.DetailsDeleteSuccess*` / `DetailsDeleteError` keys.
 - **Share** — enabled. `isShareVisible` returns `true` for a personal prompt (`item.isMyApp`) and `false` for shared or organisation prompts. `SharePopoverContainer` SHALL pass `CreateShareLinkDtoResourceKindEnum.Prompt` to `useShareLink` for a Prompt item, so the backend qualifies the bucket-relative path; `canEditAccess` is `false`, since a prompt is not in `EDITABLE_ACCESS_TYPES`.
 - **Favourite** — enabled. `onToggleFavorite` resolves the user-config section through `resolveFavoriteEntityType(item.type)`, which maps Prompt to `FavoriteEntityType.Prompt`, Toolset to `FavoriteEntityType.Toolset`, and everything else to `FavoriteEntityType.Deployment`. Prompts appear in the Favorites strip like any other favourited item.
-- **Unshare (Remove from My List)** — unsupported. `isUnshareVisible` returns `false` for Prompt, because `DiscardSharedCatalogItemDto` (`apps/chat-api/src/share/dto/discard-shared-catalog-item.dto.ts:6`) restricts `itemId` to `applications|toolsets|conversations` paths and would reject a prompt path with 400.
-- **Revoke access** — out of scope: `libs/catalog` has no owner-side revoke action on this branch, so there is nothing to suppress for prompts or any other type.
-- **Publish** — unsupported. `toPublishEntityType` (`apps/chat/src/utils/publish.ts`) returns `undefined` for Prompt, so `isPublishVisible` is already `false` via the existing `Boolean(item.isMyApp) && toPublishEntityType(item.type) != null` rule with no edit needed.
+- **Download** — enabled for every prompt source. See `prompt-download` for the file format and the wiring.
+- **Unshare (Remove from My List)** — unsupported. `isUnshareVisible` returns `false` for Prompt, for two independent reasons: `DiscardSharedCatalogItemDto` (`apps/chat-api/src/share/dto/discard-shared-catalog-item.dto.ts:6`) restricts `itemId` to `applications|toolsets|conversations` paths and rejects a prompt path with 400; and `getSharedPrompts` strips the owner bucket from the resource URL before mapping, so the frontend could not build the qualified path a discard call needs even if the regex admitted prompts.
+- **Publish** — supported. `PUBLISHABLE_ENTITY_TYPES` (`apps/chat/src/utils/publish.ts`) maps Prompt to `CatalogPublishEntityType.Prompt`, so the existing `Boolean(item.isMyApp) && toPublishEntityType(item.type) != null` rule offers it on personal prompts only. Server-side, `publish.service.ts` qualifies a prompt's bucket-relative id with the caller's own bucket via `toPromptResourceUrl`, since the caller is by definition the owner; a prompt carries no version, so the publication title is trimmed. `libs/catalog`'s built-in publish default still excludes Prompt, which is inert here because `CatalogView` always supplies `isPublishVisible`.
+- **Revoke access** — unsupported, and suppressed. `RevokeSharedAccessDto` carries the same `applications|toolsets|conversations` regex as the discard DTO, so a prompt path is rejected with 400. `Header`'s built-in rule (`!!onRevokeShare && item.isMyApp === true && (recipientsCount == null || recipientsCount > 0)`) would otherwise leave it visible, because `mapPromptToCatalogItem` never sets `recipientsCount` and `undefined == null` reads as "count unknown". `CatalogView` therefore passes `isRevokeShareVisible` returning `false` for Prompt, mirroring `isUnshareVisible`.
 
 Each unsupported action's absence is a documented backend-capability limitation, not a defect.
 
@@ -198,6 +199,24 @@ Each unsupported action's absence is a documented backend-capability limitation,
 - **THEN** no "Remove from My List" action is rendered
 - **AND** the Content tab and primary action are still available
 
+#### Scenario: No revoke-access control on a personal prompt
+
+- **WHEN** the details panel opens for a prompt the user owns
+- **THEN** no "Revoke access" action is rendered
+- **AND** the same action is still rendered for an owned Model, Agent, or Toolset
+
+#### Scenario: Publishing a personal prompt qualifies the caller's bucket
+
+- **WHEN** the user publishes their own prompt `Work/AI/summarize` to an Organization folder
+- **THEN** the publish request carries `entityType: 'prompt'`
+- **AND** the backend's publication `sourceUrl` is `prompts/{callerBucket}/Work/AI/summarize`
+- **AND** the publication title carries no trailing space, because a prompt has no version
+
+#### Scenario: Publish is not offered on a prompt the user does not own
+
+- **WHEN** the details panel opens for a shared or organisation prompt
+- **THEN** the Manage menu contains no Publish entry
+
 #### Scenario: Deployment actions are unchanged
 
 - **WHEN** the details panel opens for a Model, Agent, or Toolset item
@@ -210,7 +229,7 @@ Each unsupported action's absence is a documented backend-capability limitation,
 - **Memoisation**: the prompt-item mapping MUST live inside the existing `catalogItems` `useMemo`; `handleFetchDetails`, `handleDelete`, and every visibility predicate MUST be `useCallback`'d so `Catalog`'s fetch effect and ag-grid column identity are not invalidated on unrelated re-renders.
 - **i18n**: new keys `catalog.tabPrompts` (`CatalogI18nKeys.TabPrompts`) and `catalog.details.tabContent` (`CatalogI18nKeys.DetailsTabContent`). Copy/Delete/Edit/Cancel labels reuse existing `ButtonsI18nKeys` members. Every key is declared in `translation-keys.ts` and `en.json` in the same change.
 - **RTL / direction impact**: the Content tab and folder breadcrumb use logical properties only; no new physical-direction class and no mirrored icon are introduced by the app adapter.
-- **Accessibility**: the Content tab's copy control keeps a stable `aria-label` with a separate `role="status" aria-live="polite"` confirmation region; the Prompts tab participates in the existing `TabRow` keyboard model unchanged.
+- **Accessibility**: the Content tab's copy control keeps a stable `aria-label` with a separate `role="status" aria-live="polite"` confirmation region; the Prompts tab participates in the existing `Tabs` keyboard model unchanged.
 - **Observability**: none beyond the shared API client's per-request logging.
 - **Rate limiting / caching**: no new client cache. Backend throttles already apply per the prompts controller.
 - **Authorization**: every prompt endpoint is session-authenticated and scoped to the caller's own bucket by the backend; the frontend adds no role check. Organisation prompts are read-only for all users.

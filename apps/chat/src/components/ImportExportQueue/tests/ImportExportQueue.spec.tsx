@@ -11,14 +11,13 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DialProgressBar: ({
+  ProgressBar: ({
     value,
-    ariaLabel,
+    'aria-label': ariaLabel,
   }: {
     value: number;
-    ariaLabel?: string;
+    'aria-label'?: string;
   }) => <div data-progress={value} aria-label={ariaLabel} />,
-  DialProgressBarSize: { Small: 'sm', Medium: 'md' },
   GhostIconButton: ({
     'aria-label': ariaLabel,
     onClick,

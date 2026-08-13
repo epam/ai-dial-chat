@@ -1,4 +1,10 @@
-## ADDED Requirements
+# custom-app-editor Specification
+
+## Purpose
+
+The Custom App editor page: its settings form, create and edit flows, validation, and the loading and saving overlays.
+
+## Requirements
 
 ### Requirement: Custom App editor page
 The system SHALL provide a `CustomAppEditor` page that reuses `ToolsetEditorHeader` and a new `CustomAppEditorView`. The editor has two steps: General and Settings. The General step reuses `GeneralForm`. The Settings step renders `CustomAppSettingsForm`. The editor supports both **create** and **edit** modes; edit mode is entered when `ToolsetEditorQuery.Id` is present in the URL.
@@ -59,6 +65,10 @@ The Save action on the Settings step SHALL stay disabled until the Chat completi
 ### Requirement: Create — no type sent
 On save in creation mode, `CustomAppEditor` SHALL NOT send `type` in the create payload. Custom apps are plain-endpoint applications with no application-type schema ID; `application_type_schema_id` is omitted from the DIAL Core body.
 
+#### Scenario: Create payload omits the schema id
+- **WHEN** the user saves a new custom app
+- **THEN** the create request body carries no `type` field and no `application_type_schema_id`
+
 ### Requirement: General step validation — name and version
 `CustomAppEditor` SHALL validate the `name` field as required and the `version` field against the shared `DeploymentCreationForm` version pattern (via `validateDeploymentCreationFields` from `@epam/ai-dial-deployment-creation-form`). Each field SHALL be re-validated on blur, independently of the other, so an error shown for one field does not get cleared by fixing the other. The Next button SHALL stay disabled while either field is invalid.
 
@@ -75,6 +85,9 @@ On save in creation mode, `CustomAppEditor` SHALL NOT send `type` in the create 
 - **THEN** the Next button is disabled
 
 ### Requirement: Save validation — name required
+`CustomAppEditor` SHALL re-check that `name` is filled when Save is activated from any step, and SHALL send no request while it is blank.
+
+#### Scenario: Saving with a blank name returns to the General step
 - **WHEN** user clicks Save and `name` is blank
 - **THEN** the editor redirects to the General step and shows a name-required error; no API call is made
 
@@ -130,6 +143,11 @@ On save in edit mode, `CustomAppEditor` SHALL call `PATCH /api/v1/applications/:
 
 `type` and `applicationProperties` remain excluded.
 
+#### Scenario: Settings fields survive validation, excluded fields are rejected
+- **WHEN** an update body carries `version`, `endpoint`, `features`, `inputAttachmentTypes`, and `maxInputAttachments` with valid values
+- **THEN** the DTO validates and forwards all five
+- **AND** a body that also carries `type` or `applicationProperties` is rejected by the global validation pipe
+
 ### Requirement: Saving overlay
 While a save request is in flight, `CustomAppEditor` SHALL render a blocking overlay (spinner plus a translated "Saving in progress…" label) over the editor content and mark the underlying form `inert` so it cannot be interacted with or reached by keyboard focus.
 
@@ -147,3 +165,27 @@ On a failed create/save request, `CustomAppEditor` SHALL extract the error messa
 #### Scenario: Generic error fallback
 - **WHEN** the create or save request fails and the API response has no error message
 - **THEN** the notification falls back to the generic create-failed or save-failed translation
+
+### Requirement: Successful create or save confirms itself
+
+`CustomAppEditor` SHALL raise a success notification when a create (`POST /api/v1/applications`) or save (`PATCH /api/v1/applications/:id`) request resolves, before or in the same tick as the navigation to the return URL, through `useOperationNotification` (see `entity-operation-notifications`).
+
+- Create → `NotifiableEntity.CustomApp` + `EntityOperation.Created`, `name` = the application's name.
+- Save → `NotifiableEntity.CustomApp` + `EntityOperation.Edited`, same `name`.
+
+Today a successful save only navigates away, so a user who saves and lands back on the catalog has no confirmation that anything was persisted. The failure path is unchanged (see "Save/create failure surfaces API error details"): the error notification with `requestId` stays exactly as specified, and no success notification is raised.
+
+#### Scenario: Create confirms and returns
+
+- **WHEN** a user creates a custom app and the create request succeeds
+- **THEN** a success notification titled `"Custom app created successfully"` naming the app is shown and the editor navigates to the return URL
+
+#### Scenario: Save confirms and returns
+
+- **WHEN** a user saves an existing custom app and the PATCH succeeds
+- **THEN** a success notification titled `"Custom app edited successfully"` naming the app is shown and the editor navigates to the return URL
+
+#### Scenario: Failed save raises only the error notification
+
+- **WHEN** the create or save request fails
+- **THEN** the existing error notification (with the API message and trace id) is shown, the editor stays open, and no success notification is raised

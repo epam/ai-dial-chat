@@ -25,7 +25,7 @@ export interface ConversationInputColors {
 
 /** Typography overrides for the `ConversationInput` component. */
 export interface ConversationInputTypography {
-  /** Tailwind (or custom) class applied to the welcome heading. */
+  /** Tailwind (or custom) class applied to the welcome heading. Defaults to `'dial-display2-text'`. */
   welcomeClassName?: string;
   /** Typography overrides forwarded to the inner `Input` component. */
   input?: InputTypography;

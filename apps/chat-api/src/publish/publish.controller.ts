@@ -31,7 +31,7 @@ export class PublishController {
     operationId: 'publishCatalogEntity',
     summary: 'Publish a catalog entity to an Organization folder',
     description:
-      'Publishes a catalog entity (Toolset or Application) to a folder under the Organization/public ' +
+      'Publishes a catalog entity (Toolset, Application, or Prompt) to a folder under the Organization/public ' +
       "bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no " +
       'publish records of its own — DIAL Core is the sole source of truth.',
   })
@@ -68,9 +68,10 @@ export class PublishController {
     @Param() { entityType, entityId }: CatalogEntityParamsDto,
     @Body() { folderPath, version, rules }: PublishCatalogEntityDto,
   ): Promise<PublishResultDto> {
-    const { at, claims } = req.user as SessionUser;
+    const { at, bucket, claims } = req.user as SessionUser;
     return this.publishService.publish(
       at,
+      bucket,
       entityType,
       entityId,
       folderPath,
@@ -117,7 +118,12 @@ export class PublishController {
     @Req() req: Request,
     @Param() { entityType, entityId }: CatalogEntityParamsDto,
   ): Promise<PublishHistoryEntryDto[]> {
-    const { at } = req.user as SessionUser;
-    return this.publishService.getPublishHistory(at, entityType, entityId);
+    const { at, bucket } = req.user as SessionUser;
+    return this.publishService.getPublishHistory(
+      at,
+      bucket,
+      entityType,
+      entityId,
+    );
   }
 }

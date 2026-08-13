@@ -1,5 +1,4 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { TabRow } from '@epam/ai-dial-kit';
 import {
   derivePublishState,
   PublishFooter,
@@ -14,7 +13,8 @@ import {
   CloseButton,
   ElementSize,
   Skeleton,
-  DialTag,
+  Tag,
+  Tabs,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft } from '@tabler/icons-react';
@@ -23,6 +23,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -49,6 +50,17 @@ import { LimitsTab } from './TabsContent/Limits';
 import { Overview } from './TabsContent/Overview';
 import { Pricing } from './TabsContent/Pricing';
 import { Tools } from './TabsContent/Tools/Tools';
+
+/*
+ * Entity types that lead with their body instead of a description. A prompt's
+ * content already carries its description, so an About tab would only repeat
+ * it; a skill has no description at all in its metadata, so an About tab would
+ * always render empty. Both open on Content, followed by Overview.
+ */
+const CONTENT_FIRST_ENTITY_TYPES = new Set<CatalogEntityType>([
+  CatalogEntityType.Prompt,
+  CatalogEntityType.Skill,
+]);
 
 const NO_OP_PUBLISH = async () => undefined;
 const EMPTY_PUBLISH_FOLDERS: PublishFolderNode[] = [];
@@ -128,16 +140,21 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   shareOverlay,
   isShareVisible,
   onEdit,
+  onDownload,
+  isDownloadVisible,
   onDelete,
   onUnshare,
   isUnshareVisible,
   onRevokeShare,
+  onFetchRecipientsCount,
+  isRevokeShareVisible,
   onLogin,
   onLogout,
   texts,
   styles: detailsStyles,
 }) => {
   const {
+    subViewTitleClassName = 'dial-body-semi-text',
     overviewSectionClassName = 'dial-caption-text',
     overviewLabelClassName = 'dial-small-semi-text',
     overviewValueClassName = 'dial-small-text',
@@ -162,6 +179,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-details-version-tag-text': detailsColors?.versionTagText,
     '--cat-credentials-status-text': detailsColors?.credentialsStatusText,
     '--cat-details-content-text': detailsColors?.contentText,
+    '--cat-details-variable-text': detailsColors?.variableText,
     '--cat-api-heading-text': detailsColors?.apiHeadingText,
     '--cat-tools-divider': detailsColors?.toolsDivider,
     '--cat-tools-description-text': detailsColors?.toolsDescriptionText,
@@ -375,18 +393,19 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
   const tabs = useMemo(() => {
     const result: { id: string; label: string }[] = [];
-    /*
-     * A prompt leads with its body: the Content tab is first and already
-     * carries the description, so an About tab would only repeat it. Prompts
-     * therefore show Content then Overview, and nothing else.
-     */
-    if (item.type !== CatalogEntityType.Prompt) {
+    const isContentFirst = CONTENT_FIRST_ENTITY_TYPES.has(item.type);
+    if (!isContentFirst) {
       result.push({
         id: CatalogDetailsTab.About,
         label: texts?.tabAboutLabel ?? 'About',
       });
     }
-    if (item.details?.promptContent != null) {
+    /*
+     * A content-first entity keeps its Content tab even before a body arrives
+     * (or when it has none), so the tab it opens on never shifts as details
+     * resolve.
+     */
+    if (isContentFirst || item.details?.promptContent != null) {
       result.push({
         id: CatalogDetailsTab.Content,
         label: texts?.tabContentLabel ?? 'Details',
@@ -431,10 +450,16 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     return result;
   }, [item, texts]);
 
-  // Reset to the first available tab when the item changes or the active
-  // tab is no longer in the (possibly newly-fetched) available list.
+  /*
+   * Every item opens on its first tab: a tab the previous item happened to
+   * share must not carry over. Within one item the selection is kept, unless
+   * a newly-fetched details payload dropped the active tab from the list.
+   */
+  const shownItemId = useRef<string | null>(null);
   useEffect(() => {
-    if (!tabs.some((t) => t.id === activeTab)) {
+    const isNewItem = shownItemId.current !== item.id;
+    shownItemId.current = item.id;
+    if (isNewItem || !tabs.some((t) => t.id === activeTab)) {
       setActiveTab(tabs[0]?.id ?? '');
     }
   }, [item.id, tabs, activeTab]);
@@ -590,7 +615,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
               />
               <span
                 className={mergeClasses(
-                  'dial-body-semi-text flex-1',
+                  'flex-1',
+                  subViewTitleClassName,
                   styles.publishTitle,
                 )}
               >
@@ -650,7 +676,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                         showVersion={false}
                       />
                     </div>
-                    <DialTag
+                    <Tag
                       label={`Version ${item.version} · current`}
                       className={mergeClasses(
                         'shrink-0 whitespace-nowrap',
@@ -697,12 +723,16 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 isPublishVisible={isPublishVisible}
                 onOpenPublish={handleOpenPublish}
                 onEdit={onEdit}
+                onDownload={onDownload}
+                isDownloadVisible={isDownloadVisible}
                 onDelete={onDelete ? handleRequestDelete : undefined}
                 onUnshare={onUnshare ? handleRequestUnshare : undefined}
                 isUnshareVisible={isUnshareVisible}
                 onRevokeShare={
                   onRevokeShare ? handleRequestRevokeShare : undefined
                 }
+                onFetchRecipientsCount={onFetchRecipientsCount}
+                isRevokeShareVisible={isRevokeShareVisible}
                 onLogin={onLogin}
                 onLogout={onLogout}
                 onToggleCredentials={handleToggleCredentials}
@@ -722,7 +752,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
               )}
 
               <div className="flex items-center px-6">
-                <TabRow
+                <Tabs
                   tabs={tabs}
                   activeTabId={activeTab}
                   onTabChange={setActiveTab}
@@ -748,7 +778,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
               <div
                 className={mergeClasses(
                   'min-h-0 flex-1 overflow-y-auto',
-                  activeTab !== CatalogDetailsTab.Overview && 'mt-4 px-6',
+                  activeTab !== CatalogDetailsTab.Overview && 'px-6',
                 )}
               >
                 {activeTab === CatalogDetailsTab.About && (
@@ -758,14 +788,13 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                     detailsStyles={detailsStyles}
                   />
                 )}
-                {activeTab === CatalogDetailsTab.Content &&
-                  item.details?.promptContent != null && (
-                    <ContentTab
-                      content={item.details.promptContent.content}
-                      description={item.description}
-                      detailsStyles={detailsStyles}
-                    />
-                  )}
+                {activeTab === CatalogDetailsTab.Content && (
+                  <ContentTab
+                    content={item.details?.promptContent?.content ?? ''}
+                    description={item.description}
+                    detailsStyles={detailsStyles}
+                  />
+                )}
                 {activeTab === CatalogDetailsTab.Overview && (
                   <Overview
                     sections={item.details?.overview?.sections}

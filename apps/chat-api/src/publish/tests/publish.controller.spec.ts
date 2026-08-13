@@ -16,6 +16,8 @@ import { PublishService } from '../publish.service';
 const TEST_USER = {
   sub: 'user-123',
   at: 'test-access-token',
+  /* The service qualifies a prompt's bucket-relative id against the caller's own bucket. */
+  bucket: 'bucket-123',
   claims: { name: 'Test User' },
 };
 
@@ -94,6 +96,7 @@ describe('PublishController (integration)', () => {
       expect(res.body).toEqual(publishResult);
       expect(service.publish).toHaveBeenCalledWith(
         TEST_USER.at,
+        TEST_USER.bucket,
         'toolset',
         'tool-abc123',
         'Organization/Data Science',
@@ -119,6 +122,7 @@ describe('PublishController (integration)', () => {
 
       expect(service.publish).toHaveBeenCalledWith(
         TEST_USER.at,
+        TEST_USER.bucket,
         'toolset',
         'tool-abc123',
         'Organization/Data Science',
@@ -195,6 +199,7 @@ describe('PublishController (integration)', () => {
       expect(res.body).toEqual([publishResult]);
       expect(service.getPublishHistory).toHaveBeenCalledWith(
         TEST_USER.at,
+        TEST_USER.bucket,
         'toolset',
         'tool-abc123',
       );

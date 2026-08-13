@@ -1,5 +1,9 @@
 # Spec: conversation-history-panel
 
+## Purpose
+
+The `conversation-panel` library: grouped, searchable, filterable conversation history with per-item actions, persistent on desktop and a drawer on mobile.
+
 ## Requirements
 
 ### Requirement: `libs/conversation-panel` library exposes `ConversationPanel`
@@ -225,9 +229,20 @@ For owned, non-readonly conversations (`isReadonly: false`, `sharedWithMe: false
 
 ### Requirement: Panel is responsive — persistent on desktop, drawer on mobile
 
-`ConversationPanel` renders the same markup regardless of viewport. On desktop it is a persistent `w-[325px]` panel that pushes `<main>` via flex row. On mobile `ConversationPanelView` passes `className="inset-y-0 start-0 z-50"` plus `onToggle={onClose}` so `SidebarPanel` renders a close button inside the panel header; the parent manages `isOpen` state.
+`ConversationPanel` SHALL render the same markup regardless of viewport. On desktop it is a persistent `w-[325px]` panel that pushes `<main>` via flex row. On mobile `ConversationPanelView` passes `className="inset-y-0 start-0 z-50"` plus `onToggle={onClose}` so `SidebarPanel` renders a close button inside the panel header; the parent manages `isOpen` state.
 
 Mobile close is handled exclusively via the close button inside the panel header (via `onToggle` → `SidebarPanel.onClose`). There is no backdrop overlay.
+
+#### Scenario: Desktop renders a persistent panel
+
+- **WHEN** the app is rendered at a desktop viewport
+- **THEN** the panel occupies a persistent `w-[325px]` column beside `<main>` and renders no close button
+
+#### Scenario: Mobile renders a closable drawer
+
+- **WHEN** the app is rendered at a mobile viewport and the panel is open
+- **THEN** the panel is positioned with `inset-y-0 start-0 z-50` and its header carries a close button
+- **AND** no backdrop overlay is rendered
 
 ---
 

@@ -896,6 +896,37 @@
         ]
       }
     },
+    "/api/v1/user-config/skills": {
+      "patch": {
+        "operationId": "updateInstalledSkill",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInstalledSkillDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Skill favorite state updated"
+          },
+          "400": {
+            "description": "Missing or invalid body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "summary": "Add or remove a skill from favorites",
+        "tags": [
+          "user-config"
+        ]
+      }
+    },
     "/api/v1/user-config/deployments/selected": {
       "patch": {
         "operationId": "updateSelectedDeployment",
@@ -4415,6 +4446,55 @@
         ]
       }
     },
+    "/api/v1/share/recipients": {
+      "get": {
+        "description": "Returns how many users currently hold shared access to a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core's getSharedResources operation. Intended to be called when an owner opens the menu offering \"Revoke access\", so the count is never stale. Counts accepted invitations only — an issued but unopened share link is not counted.",
+        "operationId": "getShareRecipientsCount",
+        "parameters": [
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "query",
+            "description": "Identifier (DIAL Core resource path) of the owned catalog item or conversation to count current recipients for.",
+            "schema": {
+              "example": "applications/owner-bucket/my-app",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recipient count resolved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareRecipientsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid itemId"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Count current recipients of an owned resource",
+        "tags": [
+          "share"
+        ]
+      }
+    },
     "/api/v1/share/revoke": {
       "post": {
         "description": "Revokes every outstanding share grant on a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core's revokeSharedResources operation. Affects all recipients at once — DIAL Core cannot target a single recipient. Discarding only the caller's own access to a resource shared with them is a separate operation.",
@@ -5400,7 +5480,7 @@
     },
     "/api/v1/catalog/{entityType}/{entityId}/publish": {
       "post": {
-        "description": "Publishes a catalog entity (Toolset or Application) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.",
+        "description": "Publishes a catalog entity (Toolset, Application, or Prompt) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.",
         "operationId": "publishCatalogEntity",
         "parameters": [
           {
@@ -5415,6 +5495,7 @@
                 "model",
                 "toolset",
                 "application",
+                "prompt",
                 "skill"
               ]
             }
@@ -5493,6 +5574,7 @@
                 "model",
                 "toolset",
                 "application",
+                "prompt",
                 "skill"
               ]
             }
@@ -6045,6 +6127,95 @@
         "summary": "Resume a scheduled task",
         "tags": [
           "scheduled-tasks"
+        ]
+      }
+    },
+    "/api/v1/offline-credentials": {
+      "get": {
+        "description": "Returns the session user's offline-credentials consent status by proxying DIAL Core (GET /v1/user/offline-credentials). Never cached.",
+        "operationId": "getOfflineCredentials",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved offline-credentials status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetOfflineCredentialsResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission, or the scheduledTasksEnabled feature is not enabled"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable"
+          }
+        },
+        "summary": "Get offline-credentials status",
+        "tags": [
+          "offline-credentials"
+        ]
+      }
+    },
+    "/api/v1/offline-credentials/signin": {
+      "post": {
+        "description": "Submits the OAuth authorization code obtained from the offline-credentials consent popup by proxying DIAL Core (POST /v1/user/offline-credentials/signin). The authorization code is never logged.",
+        "operationId": "signInOfflineCredentials",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfflineCredentialsSigninBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed in successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfflineCredentialsAuthResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body, or redirectUri is not allowlisted"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission, or the scheduledTasksEnabled feature is not enabled"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response or rejected sign-in"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable"
+          }
+        },
+        "summary": "Submit offline-credentials OAuth authorization code",
+        "tags": [
+          "offline-credentials"
         ]
       }
     }
@@ -6975,11 +7146,6 @@
             "type": "boolean",
             "description": "True when this deployment is shared with the current user (READ or WRITE) and not owned by them"
           },
-          "recipientsCount": {
-            "type": "number",
-            "description": "How many other users currently hold shared access to this deployment, for deployments the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.",
-            "example": 3
-          },
           "applicationFolder": {
             "type": "string",
             "description": "Parent folder path for application-type deployments (absent for root-level or non-application items)"
@@ -7593,6 +7759,24 @@
           "installed"
         ]
       },
+      "SkillsConfigDto": {
+        "type": "object",
+        "properties": {
+          "installed": {
+            "description": "Favorited skill resource URLs.",
+            "example": [
+              "skills/my-bucket/analysis/revenue-skill"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "installed"
+        ]
+      },
       "UserConfigDto": {
         "type": "object",
         "properties": {
@@ -7612,6 +7796,9 @@
           },
           "prompts": {
             "$ref": "#/components/schemas/PromptsConfigDto"
+          },
+          "skills": {
+            "$ref": "#/components/schemas/SkillsConfigDto"
           }
         },
         "required": [
@@ -7619,7 +7806,8 @@
           "conversations",
           "toolsets",
           "deployments",
-          "prompts"
+          "prompts",
+          "skills"
         ]
       },
       "UpdatePinsDto": {
@@ -7672,6 +7860,26 @@
           "isInstalled": {
             "type": "boolean",
             "description": "Pass `true` to favorite the prompt, `false` to unfavorite it.",
+            "example": true
+          }
+        },
+        "required": [
+          "id",
+          "isInstalled"
+        ]
+      },
+      "UpdateInstalledSkillDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Full skill resource URL.",
+            "example": "skills/my-bucket/analysis/revenue-skill",
+            "maxLength": 2048
+          },
+          "isInstalled": {
+            "type": "boolean",
+            "description": "Pass `true` to favorite the skill, `false` to unfavorite it.",
             "example": true
           }
         },
@@ -8321,11 +8529,6 @@
           "sharedWithMe": {
             "type": "boolean",
             "description": "True when this toolset is shared with the current user (READ or WRITE) and not owned by them"
-          },
-          "recipientsCount": {
-            "type": "number",
-            "description": "How many other users currently hold shared access to this toolset, for toolsets the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.",
-            "example": 3
           }
         },
         "required": [
@@ -9192,11 +9395,6 @@
             "description": "True when this conversation was published to the organisation and is visible to the current user.",
             "example": false
           },
-          "recipientsCount": {
-            "type": "number",
-            "description": "How many other users currently hold shared access to this conversation, for conversations the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.",
-            "example": 3
-          },
           "isPinned": {
             "type": "boolean",
             "description": "True when the user has pinned this conversation.",
@@ -9677,6 +9875,11 @@
             "type": "string",
             "description": "Parent folder path; empty string means root",
             "example": "Work/AI"
+          },
+          "author": {
+            "type": "string",
+            "description": "Resource author reported by DIAL Core, when it is known",
+            "example": "john.doe@example.com"
           },
           "createdAt": {
             "type": "number",
@@ -10961,6 +11164,25 @@
           "success"
         ]
       },
+      "ShareRecipientsResponseDto": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "description": "The resource the count belongs to, echoed from the request.",
+            "example": "applications/owner-bucket/my-app"
+          },
+          "recipientsCount": {
+            "type": "number",
+            "description": "How many users currently hold shared access to the resource. Counts accepted invitations only — an issued but unopened share link is not counted, so `0` means \"nobody holds access\", not \"never shared\".",
+            "example": 3
+          }
+        },
+        "required": [
+          "itemId",
+          "recipientsCount"
+        ]
+      },
       "RevokeSharedAccessDto": {
         "type": "object",
         "properties": {
@@ -11132,6 +11354,7 @@
               "model",
               "toolset",
               "application",
+              "prompt",
               "skill"
             ],
             "example": "toolset"
@@ -11175,6 +11398,7 @@
               "model",
               "toolset",
               "application",
+              "prompt",
               "skill"
             ],
             "example": "toolset"
@@ -11633,6 +11857,88 @@
           "id",
           "displayName",
           "trigger"
+        ]
+      },
+      "OfflineCredentialsConnectDto": {
+        "type": "object",
+        "properties": {
+          "authorizationEndpoint": {
+            "type": "string",
+            "example": "https://identity.example.com/authorize"
+          },
+          "clientId": {
+            "type": "string",
+            "example": "dial-chat"
+          },
+          "redirectUri": {
+            "type": "string",
+            "example": "https://chat.example.com/auth/toolset-signin"
+          },
+          "scopes": {
+            "example": [
+              "openid",
+              "offline_access"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "authorizationEndpoint",
+          "clientId",
+          "scopes"
+        ]
+      },
+      "GetOfflineCredentialsResponseDto": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "example": true
+          },
+          "connected": {
+            "type": "boolean",
+            "example": false
+          },
+          "connect": {
+            "$ref": "#/components/schemas/OfflineCredentialsConnectDto"
+          }
+        },
+        "required": [
+          "available",
+          "connected"
+        ]
+      },
+      "OfflineCredentialsSigninBodyDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "OAuth authorization code."
+          },
+          "redirectUri": {
+            "type": "string",
+            "description": "OAuth redirect URI used for the code exchange. Must resolve to the configured AUTH_CALLBACK_BASE_URL origin and one of the app's own callback paths.",
+            "example": "https://chat.example.com/auth/toolset-signin"
+          }
+        },
+        "required": [
+          "code",
+          "redirectUri"
+        ]
+      },
+      "OfflineCredentialsAuthResultDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "success"
         ]
       }
     }

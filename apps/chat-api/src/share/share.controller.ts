@@ -5,6 +5,7 @@ import {
   HttpCode,
   Param,
   Post,
+  Query,
   Req,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -23,6 +24,10 @@ import {
   RevokeSharedAccessResponseDto,
 } from './dto/revoke-shared-access.dto';
 import { ShareLinkResponseDto } from './dto/share-link-response.dto';
+import {
+  GetShareRecipientsDto,
+  ShareRecipientsResponseDto,
+} from './dto/share-recipients.dto';
 import { ShareService } from './share.service';
 
 /** Controller for creating share links for DIAL Core resources. */
@@ -164,6 +169,47 @@ export class ShareController {
   ): Promise<DiscardSharedCatalogItemResponseDto> {
     const { at, sub } = req.user as SessionUser;
     return this.shareService.discardShared(body.itemId, at, sub);
+  }
+
+  @Get('recipients')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @ApiOperation({
+    operationId: 'getShareRecipientsCount',
+    summary: 'Count current recipients of an owned resource',
+    description:
+      "Returns how many users currently hold shared access to a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core's " +
+      'getSharedResources operation. Intended to be called when an owner opens the menu offering "Revoke access", so the count is never stale. ' +
+      'Counts accepted invitations only — an issued but unopened share link is not counted.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Recipient count resolved',
+    type: ShareRecipientsResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error — invalid itemId',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  getShareRecipientsCount(
+    @Req() req: Request,
+    @Query() { itemId }: GetShareRecipientsDto,
+  ): Promise<ShareRecipientsResponseDto> {
+    const { at } = req.user as SessionUser;
+    return this.shareService.getRecipientsCount(itemId, at);
   }
 
   @Post('revoke')

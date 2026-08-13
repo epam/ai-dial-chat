@@ -753,12 +753,6 @@ export interface ConversationListItemDto {
    */
   publishedWithMe: boolean;
   /**
-   * How many other users currently hold shared access to this conversation, for conversations the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.
-   * @type {number}
-   * @memberof ConversationListItemDto
-   */
-  recipientsCount?: number;
-  /**
    * True when the user has pinned this conversation.
    * @type {boolean}
    * @memberof ConversationListItemDto
@@ -2322,12 +2316,6 @@ export interface DeploymentItemDto {
    */
   sharedWithMe?: boolean;
   /**
-   * How many other users currently hold shared access to this deployment, for deployments the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.
-   * @type {number}
-   * @memberof DeploymentItemDto
-   */
-  recipientsCount?: number;
-  /**
    * Parent folder path for application-type deployments (absent for root-level or non-application items)
    * @type {string}
    * @memberof DeploymentItemDto
@@ -3144,12 +3132,6 @@ export interface DialToolsetDto {
    * @memberof DialToolsetDto
    */
   sharedWithMe?: boolean;
-  /**
-   * How many other users currently hold shared access to this toolset, for toolsets the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.
-   * @type {number}
-   * @memberof DialToolsetDto
-   */
-  recipientsCount?: number;
 }
 /**
  * @type DialToolsetDtoDescription
@@ -3729,6 +3711,31 @@ export const GetExternalServiceResponseDtoAuthenticationTypeEnum = {
 export type GetExternalServiceResponseDtoAuthenticationTypeEnum =
   (typeof GetExternalServiceResponseDtoAuthenticationTypeEnum)[keyof typeof GetExternalServiceResponseDtoAuthenticationTypeEnum];
 
+/**
+ *
+ * @export
+ * @interface GetOfflineCredentialsResponseDto
+ */
+export interface GetOfflineCredentialsResponseDto {
+  /**
+   *
+   * @type {boolean}
+   * @memberof GetOfflineCredentialsResponseDto
+   */
+  available: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof GetOfflineCredentialsResponseDto
+   */
+  connected: boolean;
+  /**
+   *
+   * @type {OfflineCredentialsConnectDto}
+   * @memberof GetOfflineCredentialsResponseDto
+   */
+  connect?: OfflineCredentialsConnectDto;
+}
 /**
  *
  * @export
@@ -4372,6 +4379,69 @@ export interface MutatedToolsetDto {
 /**
  *
  * @export
+ * @interface OfflineCredentialsAuthResultDto
+ */
+export interface OfflineCredentialsAuthResultDto {
+  /**
+   *
+   * @type {boolean}
+   * @memberof OfflineCredentialsAuthResultDto
+   */
+  success: boolean;
+}
+/**
+ *
+ * @export
+ * @interface OfflineCredentialsConnectDto
+ */
+export interface OfflineCredentialsConnectDto {
+  /**
+   *
+   * @type {string}
+   * @memberof OfflineCredentialsConnectDto
+   */
+  authorizationEndpoint: string;
+  /**
+   *
+   * @type {string}
+   * @memberof OfflineCredentialsConnectDto
+   */
+  clientId: string;
+  /**
+   *
+   * @type {string}
+   * @memberof OfflineCredentialsConnectDto
+   */
+  redirectUri?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof OfflineCredentialsConnectDto
+   */
+  scopes: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface OfflineCredentialsSigninBodyDto
+ */
+export interface OfflineCredentialsSigninBodyDto {
+  /**
+   * OAuth authorization code.
+   * @type {string}
+   * @memberof OfflineCredentialsSigninBodyDto
+   */
+  code: string;
+  /**
+   * OAuth redirect URI used for the code exchange. Must resolve to the configured AUTH_CALLBACK_BASE_URL origin and one of the app's own callback paths.
+   * @type {string}
+   * @memberof OfflineCredentialsSigninBodyDto
+   */
+  redirectUri: string;
+}
+/**
+ *
+ * @export
  * @interface PromptFolderResponseDto
  */
 export interface PromptFolderResponseDto {
@@ -4449,6 +4519,12 @@ export interface PromptResponseDto {
    * @memberof PromptResponseDto
    */
   folderId: string;
+  /**
+   * Resource author reported by DIAL Core, when it is known
+   * @type {string}
+   * @memberof PromptResponseDto
+   */
+  author?: string;
   /**
    * Creation timestamp (Unix ms)
    * @type {number}
@@ -4639,6 +4715,7 @@ export const PublishHistoryEntryDtoEntityTypeEnum = {
   Model: 'model',
   Toolset: 'toolset',
   Application: 'application',
+  Prompt: 'prompt',
   Skill: 'skill',
 } as const;
 export type PublishHistoryEntryDtoEntityTypeEnum =
@@ -4695,6 +4772,7 @@ export const PublishResultDtoEntityTypeEnum = {
   Model: 'model',
   Toolset: 'toolset',
   Application: 'application',
+  Prompt: 'prompt',
   Skill: 'skill',
 } as const;
 export type PublishResultDtoEntityTypeEnum =
@@ -5353,6 +5431,25 @@ export type ShareLinkResponseDtoAccessEnum =
 /**
  *
  * @export
+ * @interface ShareRecipientsResponseDto
+ */
+export interface ShareRecipientsResponseDto {
+  /**
+   * The resource the count belongs to, echoed from the request.
+   * @type {string}
+   * @memberof ShareRecipientsResponseDto
+   */
+  itemId: string;
+  /**
+   * How many users currently hold shared access to the resource. Counts accepted invitations only — an issued but unopened share link is not counted, so `0` means "nobody holds access", not "never shared".
+   * @type {number}
+   * @memberof ShareRecipientsResponseDto
+   */
+  recipientsCount: number;
+}
+/**
+ *
+ * @export
  * @interface SkillFileDeleteResponseDto
  */
 export interface SkillFileDeleteResponseDto {
@@ -5560,6 +5657,19 @@ export interface SkillUploadResponseDto {
    * @memberof SkillUploadResponseDto
    */
   etag?: string;
+}
+/**
+ *
+ * @export
+ * @interface SkillsConfigDto
+ */
+export interface SkillsConfigDto {
+  /**
+   * Favorited skill resource URLs.
+   * @type {Array<string>}
+   * @memberof SkillsConfigDto
+   */
+  installed: Array<string>;
 }
 /**
  *
@@ -6310,6 +6420,25 @@ export interface UpdateInstalledPromptDto {
 /**
  *
  * @export
+ * @interface UpdateInstalledSkillDto
+ */
+export interface UpdateInstalledSkillDto {
+  /**
+   * Full skill resource URL.
+   * @type {string}
+   * @memberof UpdateInstalledSkillDto
+   */
+  id: string;
+  /**
+   * Pass `true` to favorite the skill, `false` to unfavorite it.
+   * @type {boolean}
+   * @memberof UpdateInstalledSkillDto
+   */
+  isInstalled: boolean;
+}
+/**
+ *
+ * @export
  * @interface UpdatePinsDto
  */
 export interface UpdatePinsDto {
@@ -6596,6 +6725,12 @@ export interface UserConfigDto {
    * @memberof UserConfigDto
    */
   prompts: PromptsConfigDto;
+  /**
+   *
+   * @type {SkillsConfigDto}
+   * @memberof UserConfigDto
+   */
+  skills: SkillsConfigDto;
 }
 /**
  *

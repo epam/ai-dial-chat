@@ -39,6 +39,28 @@ const controlsBgColors = {
   'control-disable': 'var(--bg-control-disable, #848E9C)', // grey-700
 };
 
+const visualBgColors = {
+  blue: 'var(--bg-visual-blue, #D6EDF9)', // blue-50
+  'green-1': 'var(--bg-visual-green-1, #CDE8E5)', // green-200
+  'green-2': 'var(--bg-visual-green-2, #D1F0DC)', // green-300
+  brown: 'var(--bg-visual-brown, #FDE8D8)', // brown-300
+  red: 'var(--bg-visual-red, #FCE7F3)', // red-200
+  'violet-1': 'var(--bg-visual-violet-1, #DDE3F9)', // violet-100
+  'violet-2': 'var(--bg-visual-violet-2, #F1E9FF)', // violet-150
+};
+
+const visualTextColors = {
+  blue: 'var(--text-visual-blue, #1189C8)', // blue-250
+  'green-1': 'var(--text-visual-green-1, #059669)', // green-500
+  'green-2': 'var(--text-visual-green-2, #0D6E72)', // green-600
+  'green-3': 'var(--text-visual-green-3, #065F46)', // green-900
+  'brown-1': 'var(--text-visual-brown-1, #D36817)', // brown-400
+  'brown-2': 'var(--text-visual-brown-2, #B45309)', // brown-500
+  red: 'var(--text-visual-red, #9D174D)', // red-900
+  'violet-1': 'var(--text-visual-violet-1, #7C3AED)', // violet-500
+  'violet-2': 'var(--text-visual-violet-2, #3730B7)', // violet-800
+};
+
 const borderColors = {
   transparent: 'transparent',
   primary: 'var(--stroke-primary, #57647A)', // grey-800

@@ -36,6 +36,12 @@ The `mapDeploymentToCatalogItem` utility accepts a 6th param `isCustomAppsEditab
 ### Requirement: `OverlayFeature.HideCustomAppCreation`
 The `HideCustomAppCreation = 'hide-custom-app-creation'` modifier flag SHALL suppress the "Custom App" entry in the catalog create menu when active, without disabling the Edit button. This allows operators to permit editing existing custom apps while preventing creation of new ones.
 
+#### Scenario: Create entry is suppressed while Edit stays available
+
+- **WHEN** `OverlayFeature.CustomApps` is enabled and `OverlayFeature.HideCustomAppCreation` is active
+- **THEN** the catalog create menu offers no "Custom App" entry
+- **AND** the Edit button still renders on schema-less custom apps the user can edit
+
 ### Requirement: Skill create option in catalog
 The system SHALL add a "Skill" option to the `CatalogView` create button, unconditionally (no `OverlayFeature` gate), alongside the existing Prompt/Toolset/Custom App/Quick App entries. The option SHALL be a single direct action — not a submenu — that navigates to `ROUTES.SkillEditor` with a `returnUrl` query param pointing back to `ROUTES.Catalog`, mirroring the existing Prompt entry's `createOptions` shape in `CatalogView.tsx`.
 

@@ -26,7 +26,6 @@ import {
   ErrorMessageNotification,
   FabButton,
   NeutralButton,
-  NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
 import {
@@ -191,13 +190,14 @@ const ConversationView: FC<Props> = ({
   const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
   const { t } = useTranslation();
   const { language } = useLanguage();
-  const { showNotification } = useNotification();
+  const { showErrorNotification } = useNotification();
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
   const isDisallowChangeAgentEnabled = useUiFeature(
     OverlayFeature.DisallowChangeAgent,
   );
+  const isHideChangeAgentEnabled = useUiFeature(OverlayFeature.HideChangeAgent);
   const isDisabledSendEnabled = useUiFeature(OverlayFeature.DisabledSend);
   const isSkipFocusChatInputOnloadEnabled = useUiFeature(
     OverlayFeature.SkipFocusChatInputOnload,
@@ -298,6 +298,26 @@ const ConversationView: FC<Props> = ({
         : undefined,
     [fixedModel],
   );
+
+  /*
+   * A selector the user cannot act on is removed rather than dimmed: a greyed-out
+   * icon with a caret advertises a menu that never opens, and where a deployment
+   * cannot be changed the icon carries no actionable information either.
+   * `deployments: undefined` is the lib's own hide path (the same one
+   * `NewConversationComposer` uses for `hide-empty-chat-change-agent`) and leaves
+   * the send button enabled, because `Input` reads an absent selector as "model
+   * already resolved".
+   *
+   * `fixedModel` is deliberately excluded. It reaches this component only from
+   * the app editor's preview pane, whose empty state renders the same chip
+   * through `NewConversationComposer` — hiding it here alone would make that
+   * pane lose the chip the moment the first message is sent.
+   */
+  const isAgentSelectorHidden =
+    isHideChangeAgentEnabled || isDisallowChangeAgentEnabled;
+  const agentSelectorItems = isModelFixed
+    ? fixedDeploymentItems
+    : deploymentItems;
 
   const hasQuickAppStarters = useMemo(
     () =>
@@ -511,8 +531,7 @@ const ConversationView: FC<Props> = ({
 
   const handleAttachmentsLimitExceeded = useCallback(
     (count: number, limit: number) => {
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         title: t(DialFileManagerI18nKeys.TooManyFilesSelected),
         message: t(DialFileManagerI18nKeys.TooManyFilesDescription, {
           count,
@@ -520,17 +539,16 @@ const ConversationView: FC<Props> = ({
         }),
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const handleMessageTooLong = useCallback(
     (_length: number, max: number) => {
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(ConversationI18nKeys.MessageTooLong, { max }),
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const handleInputAttachmentClick = useCallback(
@@ -738,15 +756,13 @@ const ConversationView: FC<Props> = ({
                 onAttachmentsChange={handleAttachmentsChange}
                 placeholder={placeholder}
                 deployments={
-                  fixedModel ? fixedDeploymentItems : deploymentItems
+                  isAgentSelectorHidden ? undefined : agentSelectorItems
                 }
                 selectedDeploymentId={
                   selectedDeployment?.id ?? activeDeploymentId
                 }
                 onDeploymentChange={fixedModel ? undefined : setSelectedItemId}
-                isModelSelectorDisabled={
-                  isModelFixed || isDisallowChangeAgentEnabled
-                }
+                isModelSelectorDisabled={isModelFixed}
                 isSendDisabled={isDisabledSendEnabled}
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
@@ -860,7 +876,7 @@ const ConversationView: FC<Props> = ({
                       : t(DialFileManagerI18nKeys.DeleteConfirmTitleMultiple)
                   }
                   deleteConfirmBody={(names) => (
-                    <div className="px-6 py-3 text-sm">
+                    <div className="dial-small-text px-6 py-3">
                       <p className="mb-3 text-secondary">
                         {names.length === 1 ? (
                           <>

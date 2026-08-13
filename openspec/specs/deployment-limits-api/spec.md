@@ -1,4 +1,10 @@
-## ADDED Requirements
+# deployment-limits-api Specification
+
+## Purpose
+
+The authenticated deployment-limits endpoint, its path-parameter validation, and the frontend server-api helper.
+
+## Requirements
 
 ### Requirement: Authenticated deployment limits endpoint
 
