@@ -214,7 +214,6 @@ dialTest(
       await entityEditorPage.waitForPageLoadedForEdit(
         EntityEditorToolsetTypes.Toolset,
       );
-      realToolset = await itemApiHelper.getItem<Toolset>(updatedId);
     });
 
     await dialTest.step(
