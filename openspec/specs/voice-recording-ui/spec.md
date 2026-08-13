@@ -4,6 +4,8 @@
 
 The mic button and the voice bar that replaces the conversation input while a recording is in progress.
 
+## Requirements
+
 ### Requirement: Mic button in ConversationInput
 
 `ConversationInput` SHALL render a ghost icon button (UI kit `GhostIconButton`, 40 px outer / 24 px icon) on the right side of the action bar when `isAudioMessageSupported` is `true`. The button SHALL be hidden when `isAudioMessageSupported` is `false` or not provided. The button SHALL remain visible regardless of whether there is text in the message field or attachments in the tray.

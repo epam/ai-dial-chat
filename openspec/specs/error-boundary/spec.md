@@ -187,7 +187,7 @@ Development context (not applicable to production UI):
 ---
 
 ### Requirement: Telemetry and observability
-The `ErrorBoundary` relies exclusively on the existing `console.error` convention for error logging. No external monitoring SDK is introduced.
+The `ErrorBoundary` SHALL rely exclusively on the existing `console.error` convention for error logging, and SHALL NOT introduce an external monitoring SDK.
 
 **Logging format (root `onError` behavior):**
 ```ts

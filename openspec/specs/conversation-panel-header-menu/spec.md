@@ -310,6 +310,12 @@ Tests for `deleteAllConversations` SHALL be added in a new or updated spec file 
 - Total failure: neither `setConversations` nor `refreshConversations` is called; DTO has `deleted === 0`.
 - API throw: error is propagated; state is unchanged.
 
+#### Scenario: Context suite covers every deletion outcome
+
+- **WHEN** the `ConversationsContext` test suite is executed
+- **THEN** it asserts `refreshConversations()` runs for complete success, empty bucket, and partial failure
+- **AND** it asserts that total failure updates no state and that a thrown API error propagates unchanged
+
 ---
 
 ### Requirement: Tests — `ConversationPanelView`
@@ -331,3 +337,9 @@ Tests in `apps/chat/src/components/ConversationPanel/tests/ConversationPanelView
 - `isDeletingAll` resets to false after the request resolves (success or failure).
 - Single delete: navigates to root when the deleted conversation is the active one.
 - Single delete: does not navigate when the deleted conversation is not the active one.
+
+#### Scenario: View suite covers the full delete-all interaction
+
+- **WHEN** the `ConversationPanelView` test suite is executed
+- **THEN** it asserts the overflow trigger, its single dropdown item, and that opening the confirmation issues no API call
+- **AND** it asserts each confirm outcome — complete success, partial failure, total failure, and thrown error — together with the in-flight guard against a double submit

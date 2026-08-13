@@ -156,7 +156,7 @@ Code content MUST be rendered with `whitespace-pre` so that indentation and line
 
 ### Requirement: Support RTL pages while keeping code LTR
 
-When the page `<html>` element has `dir="rtl"`:
+When the page `<html>` element has `dir="rtl"`, `MarkdownCodeBlock` MUST keep code content left-to-right while its own chrome follows the writing direction:
 1. The `MarkdownCodeBlock` container layout (header flex, padding, border radius) MUST respond to writing direction via logical Tailwind properties (`ps-*`, `pe-*`, `ms-*`, `me-*`, `start-*`, `end-*`).
 2. The scrollable code body MUST have `dir="ltr"` set explicitly so code text and horizontal scroll direction are always left-to-right.
 

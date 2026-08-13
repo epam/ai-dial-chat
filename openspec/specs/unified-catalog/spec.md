@@ -4,6 +4,8 @@
 
 The unified catalog endpoint and the `DeploymentsContext` that owns deployment selection in the frontend.
 
+## Requirements
+
 ### Requirement: Unified catalog endpoint
 The system SHALL expose `GET /api/v1/catalog` that returns models and applications merged into a single sorted list for the authenticated session user, optionally filtered by model capability query parameters.
 

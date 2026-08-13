@@ -36,3 +36,9 @@ The `mapDeploymentToCatalogItem` utility accepts a 6th param `isCustomAppsEditab
 
 ### Requirement: `OverlayFeature.HideCustomAppCreation`
 The `HideCustomAppCreation = 'hide-custom-app-creation'` modifier flag SHALL suppress the "Custom App" entry in the catalog create menu when active, without disabling the Edit button. This allows operators to permit editing existing custom apps while preventing creation of new ones.
+
+#### Scenario: Create entry is suppressed while Edit stays available
+
+- **WHEN** `OverlayFeature.CustomApps` is enabled and `OverlayFeature.HideCustomAppCreation` is active
+- **THEN** the catalog create menu offers no "Custom App" entry
+- **AND** the Edit button still renders on schema-less custom apps the user can edit

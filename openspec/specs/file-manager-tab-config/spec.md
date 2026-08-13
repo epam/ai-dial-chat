@@ -4,7 +4,7 @@
 
 The operator-configurable file-manager tab list, from the config registry through to active-tab correction in the UI.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: fileManager.availableTabs config-registry key
 

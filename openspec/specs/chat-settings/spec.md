@@ -104,6 +104,11 @@ interface ChatSettingsConfig {
 }
 ```
 
+#### Scenario: Saved payload carries only enabled fields
+
+- **WHEN** a deployment enables `responseFormat` but neither `systemPrompt` nor `temperature`, and the user saves
+- **THEN** the emitted `ChatSettingsValues` contains `responseFormat` and omits `systemPrompt` and `temperature`
+
 ---
 
 ### Requirement: Chat settings entry in the + dropdown menu
@@ -141,6 +146,22 @@ Sections not enabled SHALL be hidden entirely (not disabled).
 The modal SHALL have a primary "Apply changes" action that calls `onSave` with `ChatSettingsValues` and closes. It SHALL close without saving when the user dismisses it (no `onSave` call). The button SHALL be disabled (and optionally show a tooltip) when `canSubmit` is `false` — see the *Response format required* requirement below.
 
 All user-visible strings SHALL be provided as optional props (with English defaults); the component MUST NOT call `useTranslation`.
+
+#### Scenario: Only enabled sections are rendered
+
+- **WHEN** `features` enables `systemPrompt` alone
+- **THEN** the modal renders the system prompt textarea
+- **AND** no response format radio group and no temperature slider are present in the DOM
+
+#### Scenario: Applying changes saves and closes
+
+- **WHEN** the user edits a field and activates "Apply changes"
+- **THEN** `onSave` is called with the current `ChatSettingsValues` and the modal closes
+
+#### Scenario: Dismissing discards the edit
+
+- **WHEN** the user dismisses the modal instead of applying
+- **THEN** the modal closes and `onSave` is not called
 
 ### Requirement: ChatSettingsBottomSheet renders deployment-gated settings (mobile)
 

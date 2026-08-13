@@ -8,7 +8,7 @@ User configuration stored in the user's DIAL Core bucket: read consolidation, th
 
 ### Requirement: UserConfigService owns .client_data/.user-config.json in the user's DIAL Core bucket
 
-`UserConfigService` in `apps/chat-api/src/user-config/user-config.service.ts` is the single owner of a JSON file called `.user-config.json` stored at `.client_data/.user-config.json` in the user's personal DIAL Core bucket. No other service reads or writes this file directly.
+`UserConfigService` in `apps/chat-api/src/user-config/user-config.service.ts` SHALL be the single owner of a JSON file called `.user-config.json` stored at `.client_data/.user-config.json` in the user's personal DIAL Core bucket. No other service reads or writes this file directly.
 
 The file format is versioned (current version: `2`):
 

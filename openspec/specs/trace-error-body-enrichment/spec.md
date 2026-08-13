@@ -7,8 +7,7 @@ Carrying the active trace context in JSON error responses, without fabricating o
 ## Requirements
 
 ### Requirement: JSON error responses carry the active trace context
-When a traced `chat-api` route throws and the response is serialized as a JSON error body, the
-system SHALL add a `traceparent` property to that body whenever a valid active OpenTelemetry span
+When a traced `chat-api` route throws and the response is serialized as a JSON error body, the system SHALL add a `traceparent` property to that body whenever a valid active OpenTelemetry span
 exists at response time, using the same validity check (`isSpanContextValid` on
 `trace.getSpan(context.active())`) already used to set the `traceparent` response header. The
 value SHALL be byte-identical to the value set on the response header for the same response. All

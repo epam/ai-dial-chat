@@ -228,6 +228,8 @@ RTL: all layout uses logical Tailwind spacing utilities (`ms-*`, `me-*`, `ps-*`,
 
 ### Requirement: Same-window callback restores overlay handshake
 
+A completed `SameWindow` provider login SHALL be finished by re-running the overlay handshake, and SHALL NOT reload the host page.
+
 When a `SameWindow` provider login completes, the BFF redirects the iframe back to the overlay URL (the same protected route). The `OverlayProvider` re-initializes and emits `INIT_READY`. The library, which is still running in the host page with its stored options, responds to `READY` by re-sending `SET_OVERLAY_OPTIONS` including `authProviderUiModes`. The `OverlayContext` applies the options and the authenticated user state resolves through `RequireAuth`, rendering protected content.
 
 No reload of the host page occurs. The host's `ChatOverlay` instance is preserved throughout.

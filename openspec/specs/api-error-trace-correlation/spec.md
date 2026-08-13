@@ -57,8 +57,7 @@ helper SHALL NOT throw and SHALL still return the resolved `message`.
 - **THEN** `getApiErrorDetails` returns `traceId: undefined` without throwing
 
 ### Requirement: Batch failures surface exactly one trace ID
-When a caller aggregates results from multiple operations and one representative failure must be
-shown, the caller SHALL call `getApiErrorDetails` on the first failing operation in the existing
+When a caller aggregates results from multiple operations and one representative failure must be shown, the caller SHALL call `getApiErrorDetails` on the first failing operation in the existing
 iteration order and use only that result's `traceId`. Trace IDs from other failed operations in the
 same batch SHALL NOT be concatenated or otherwise included in the same notification.
 

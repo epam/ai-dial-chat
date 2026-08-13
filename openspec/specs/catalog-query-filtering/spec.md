@@ -95,6 +95,12 @@ It SHALL expose:
 - `apply()`: empty filter, matching model filter, application pass-through, empty model result, all-items result
 - No network calls, no NestJS context required
 
+#### Scenario: Filter service suite runs in isolation
+
+- **WHEN** `catalog-filter.service.spec.ts` is executed
+- **THEN** it covers `parse()`, `capabilitiesFilter()`, and `apply()` across the listed cases
+- **AND** it completes without a network call or a NestJS testing module
+
 ---
 
 ### Requirement: Controller unit tests for query validation
