@@ -174,9 +174,17 @@ const SkillEditorPage: FC = () => {
         case 503:
           setSubmitError(t(SkillEditorI18nKeys.ErrorServiceUnavailable));
           return;
-        case 400:
-          setSubmitError(t(SkillEditorI18nKeys.ErrorPathInvalid));
+        case 400: {
+          /*
+           * A 400 has no single fixed cause (bad archive, rejected manifest
+           * field, upstream request-shape issue, ...) — show the BFF's own
+           * message (which now forwards DIAL Core's `upstreamMessage`)
+           * instead of a fixed, potentially misleading guess.
+           */
+          const { message } = await getApiErrorDetails(err);
+          setSubmitError(message ?? t(SkillEditorI18nKeys.ErrorPathInvalid));
           return;
+        }
         default: {
           const { traceId } = await getApiErrorDetails(err);
           setSubmitError(t(SkillEditorI18nKeys.ErrorSave));

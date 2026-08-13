@@ -7,7 +7,11 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as yauzl from 'yauzl';
-import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
+import {
+  extractDialErrorMessage,
+  handleDialSdkError,
+  mapDialHttpStatus,
+} from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { buildIfMatchHeaders } from '../../common/utils/conditional-headers';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
@@ -107,11 +111,12 @@ export class SkillsUploadService {
         );
 
       if (error != null) {
-        return handleDialSdkError(
-          error,
+        return mapDialHttpStatus(
+          response.status,
           'skills.uploadSkill',
           this.logger,
-          response,
+          error,
+          extractDialErrorMessage(error),
         );
       }
 
@@ -164,11 +169,12 @@ export class SkillsUploadService {
       );
 
       if (error != null) {
-        return handleDialSdkError(
-          error,
+        return mapDialHttpStatus(
+          response.status,
           'skills.uploadSkillFile',
           this.logger,
-          response,
+          error,
+          extractDialErrorMessage(error),
         );
       }
 

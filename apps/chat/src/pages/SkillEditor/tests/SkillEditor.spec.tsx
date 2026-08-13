@@ -231,7 +231,6 @@ describe('SkillEditor page', () => {
   });
 
   it.each([
-    [400, 'skillEditor.error.pathInvalid'],
     [409, 'skillEditor.error.nameConflict'],
     [412, 'skillEditor.error.nameConflict'],
     [413, 'skillEditor.error.archiveTooLarge'],
@@ -261,6 +260,55 @@ describe('SkillEditor page', () => {
       expect(mockNavigate).not.toHaveBeenCalledWith('/catalog');
     },
   );
+
+  it('shows the BFF-forwarded message on a 400 upload failure and keeps field values', async () => {
+    vi.mocked(uploadSkill).mockRejectedValue({
+      response: {
+        status: 400,
+        json: () =>
+          Promise.resolve({ message: 'Skill archive is missing SKILL.md' }),
+      },
+    });
+
+    render(<SkillEditor />);
+    await fillRequiredFields(
+      user,
+      'Good Morning Breakfast',
+      'Says good morning',
+      '# Instructions',
+    );
+    await user.click(getCreateButton());
+
+    await waitFor(() =>
+      expect(
+        screen.getByText('Skill archive is missing SKILL.md'),
+      ).toBeTruthy(),
+    );
+    expect(screen.getByDisplayValue('Good Morning Breakfast')).toBeTruthy();
+    expect(mockNavigate).not.toHaveBeenCalledWith('/catalog');
+  });
+
+  it('falls back to the generic path-invalid message on a 400 with no server message', async () => {
+    vi.mocked(uploadSkill).mockRejectedValue({
+      response: {
+        status: 400,
+        json: () => Promise.resolve({}),
+      },
+    });
+
+    render(<SkillEditor />);
+    await fillRequiredFields(
+      user,
+      'Good Morning Breakfast',
+      'Says good morning',
+      '# Instructions',
+    );
+    await user.click(getCreateButton());
+
+    await waitFor(() =>
+      expect(screen.getByText('skillEditor.error.pathInvalid')).toBeTruthy(),
+    );
+  });
 
   it('resubmits the same archive on retry after a 503 without rebuilding it', async () => {
     vi.mocked(uploadSkill).mockRejectedValueOnce({
