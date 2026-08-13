@@ -235,6 +235,16 @@
     "refetchToolsetsFailed": "Failed to refresh toolsets. The Catalog list may be out of date.",
     "refetchDeploymentsFailed": "Failed to refresh applications. The Catalog list may be out of date."
   },
+  "promptSelector": {
+    "addMenuLabel": "Prompts",
+    "myCollectionLabel": "My Collection",
+    "emptyHint": "Star a prompt to pin it here",
+    "modalTitle": "Use prompt",
+    "parametersTitle": "Prompt parameters",
+    "parametersLabel": "Parameters",
+    "detailsLabel": "Details",
+    "enterValuePlaceholder": "Enter value"
+  },
   "notFound": {
     "eyebrow": "404",
     "title": "Page not found",

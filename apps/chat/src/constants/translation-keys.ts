@@ -260,6 +260,17 @@ export enum DeploymentSelectorI18nKeys {
   RefetchDeploymentsFailed = 'deploymentSelector.refetchDeploymentsFailed',
 }
 
+export enum PromptSelectorI18nKeys {
+  AddMenuLabel = 'promptSelector.addMenuLabel',
+  MyCollectionLabel = 'promptSelector.myCollectionLabel',
+  EmptyHint = 'promptSelector.emptyHint',
+  ModalTitle = 'promptSelector.modalTitle',
+  ParametersTitle = 'promptSelector.parametersTitle',
+  ParametersLabel = 'promptSelector.parametersLabel',
+  DetailsLabel = 'promptSelector.detailsLabel',
+  EnterValuePlaceholder = 'promptSelector.enterValuePlaceholder',
+}
+
 export enum NotFoundI18nKeys {
   Eyebrow = 'notFound.eyebrow',
   Title = 'notFound.title',

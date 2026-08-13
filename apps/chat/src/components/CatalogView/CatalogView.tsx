@@ -145,12 +145,19 @@ interface Props {
    * selected deployment via `setSelectedItemId`).
    */
   onSelect?: (id: string) => void;
+  /**
+   * Entity types shown while `isSelectorMode` is true. Defaults to
+   * `PICKER_VISIBLE_TYPES` (models and agents only), matching the existing
+   * model/agent picker.
+   */
+  visibleTypes?: Set<CatalogEntityType>;
 }
 
 const CatalogView: FC<Props> = ({
   isSelectorMode = false,
   onClose,
   onSelect,
+  visibleTypes = PICKER_VISIBLE_TYPES,
 }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
@@ -343,13 +350,13 @@ const CatalogView: FC<Props> = ({
 
   const visibleCatalogItems = useMemo(() => {
     let result = isSelectorMode
-      ? catalogItems.filter((item) => PICKER_VISIBLE_TYPES.has(item.type))
+      ? catalogItems.filter((item) => visibleTypes.has(item.type))
       : catalogItems;
     if (isCatalogHideMyAppsEnabled) {
       result = result.filter((item) => !item.isMyApp);
     }
     return result;
-  }, [catalogItems, isSelectorMode, isCatalogHideMyAppsEnabled]);
+  }, [catalogItems, isSelectorMode, isCatalogHideMyAppsEnabled, visibleTypes]);
 
   const reconciledFilterTopics = useMemo(() => {
     const availableTopics = new Set(

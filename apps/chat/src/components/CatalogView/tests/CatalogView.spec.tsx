@@ -2852,6 +2852,23 @@ describe('CatalogView', () => {
       expect(ids).not.toContain('PROMPT');
     });
 
+    it('shows only prompts in selector mode when visibleTypes is set to Prompt', () => {
+      enablePrompts();
+      mockPrompts();
+
+      render(
+        <CatalogView
+          isSelectorMode
+          visibleTypes={new Set([CatalogEntityType.Prompt])}
+        />,
+      );
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).toContain('PROMPT');
+      expect(ids).not.toContain(':MODEL');
+      expect(ids).not.toContain(':AGENT');
+    });
+
     it('filters personal prompts out when catalog-hide-my-apps is enabled', () => {
       setFeatures([OverlayFeature.Prompts, OverlayFeature.CatalogHideMyApps]);
       mockPrompts();

@@ -255,6 +255,18 @@ export interface InputProps {
   toolsBackLabel?: string;
   /** Labels for the selected-tools chip row shown in the input when tools are active. */
   toolsChipLabels?: ToolsChipLabels;
+  /**
+   * When provided, a "Prompts" item is added to the `+` menu above "Chat
+   * settings". Its submenu (desktop flyout / mobile bottom sheet) renders
+   * this host-owned overlay, mirroring `modelPickerOverlay`. On desktop, the
+   * overlay replaces the main menu, so a second `onBack` callback is also
+   * passed — the overlay can render its own back affordance to return there.
+   */
+  promptsMenuOverlay?: (onClose: () => void, onBack?: () => void) => ReactNode;
+  /** Label for the "Prompts" menu item and mobile sheet title. Defaults to `'Prompts'`. */
+  promptsMenuTitle?: string;
+  /** Accessible label for the back arrow in the mobile prompts bottom sheet. Defaults to `'Back'`. */
+  promptsBackLabel?: string;
   /** When `true`, focuses the textarea on mount. Defaults to `false`. */
   autoFocus?: boolean;
   /**
