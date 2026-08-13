@@ -14,7 +14,7 @@ Request body (`CreateConversationDto`):
 
 ```
 {
-  "firstMessage": "<string, @IsString, @MaxLength(40000)>",
+  "firstMessage": "<string, @IsString, @MaxLength(50000)>",
   "deploymentId": "<string, @IsString, @MinLength(1), @MaxLength(256), @Matches(/^(?:[\w.\-:@/]|%[\dA-Fa-f]{2})+$/)>",
   "custom_content"?: "<MessageCustomContentDto, optional>"
 }
@@ -37,7 +37,7 @@ Rate limiting: `@Throttle({ default: { limit: 20, ttl: 60000 } })` on the handle
 
 Error codes:
 
-- `400 Bad Request` — body fails DTO validation (both `firstMessage` and `custom_content` absent/empty, `firstMessage` exceeds 40000 chars, missing `deploymentId`, empty `deploymentId`, `deploymentId` exceeds 256 chars, `deploymentId` contains disallowed characters)
+- `400 Bad Request` — body fails DTO validation (both `firstMessage` and `custom_content` absent/empty, `firstMessage` exceeds 50000 chars, missing `deploymentId`, empty `deploymentId`, `deploymentId` exceeds 256 chars, `deploymentId` contains disallowed characters)
 - `401 Unauthorized` — missing or invalid bearer token
 - `500 Internal Server Error` — unexpected server-side failure
 
@@ -61,7 +61,7 @@ Error codes:
 - **WHEN** `POST /api/v1/conversations` is called with `{ "deploymentId": "dep-1" }` and no `custom_content`
 - **THEN** the response status is 400
 
-#### Scenario: firstMessage exceeding 40000 chars returns 400
+#### Scenario: firstMessage exceeding 50000 chars returns 400
 
 - **WHEN** `POST /api/v1/conversations` is called with `firstMessage` of length 40001 and a valid `deploymentId`
 - **THEN** the response status is 400
