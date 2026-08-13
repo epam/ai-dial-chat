@@ -14,6 +14,7 @@ export {
   ToolsetAuthenticationType,
 } from './types/toolset-auth';
 export { CatalogViewMode } from './types/view-mode';
+export { CatalogSortKey } from './types/sort';
 
 // Models
 export type { CatalogItem } from './models/catalog-item';
