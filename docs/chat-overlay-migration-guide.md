@@ -541,7 +541,9 @@ ENABLED_UI_FEATURES=header,conversations-section,likes,input-files
 
 This is also a complete replacement set, not an addition to the defaults. If
 the variable is absent or empty, the built-in baseline containing 22
-default-on flags is used. An overlay host may replace the server baseline with
+default-on flags is used. Entries the server does not recognize — including
+the renamed and retired legacy strings listed above — are logged and dropped;
+if every entry is unrecognized, the built-in baseline is used instead. An overlay host may replace the server baseline with
 its own `enabledFeatures`; the server baseline is not a security ceiling.
 
 Do not use UI flags as an authorization mechanism. The backend must restrict

@@ -128,6 +128,29 @@ describe('OverlayFeature', () => {
     expect(Object.values(OverlayFeature)).toContain('file-manager');
   });
 
+  it('does not include the renamed marketplace keys', () => {
+    const values = Object.values(OverlayFeature) as string[];
+    ['marketplace', 'marketplace-hide-my-apps', 'marketplace-table-view'].forEach(
+      (key) => {
+        expect(values).not.toContain(key);
+      },
+    );
+  });
+
+  it('does not include keys whose behavior became unconditional', () => {
+    const values = Object.values(OverlayFeature) as string[];
+    [
+      'custom-logo',
+      'show-layout-dividers',
+      'top-settings',
+      'top-chat-model-settings',
+      'chat-header-border',
+      'chat-input-border',
+    ].forEach((key) => {
+      expect(values).not.toContain(key);
+    });
+  });
+
   it('includes the pre-existing and newly-added transferable keys', () => {
     const values = Object.values(OverlayFeature);
     expect(values).toContain('voice-input');

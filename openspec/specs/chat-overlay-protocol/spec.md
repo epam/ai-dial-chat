@@ -270,16 +270,28 @@ The library SHALL remove its `window` `message` listener and reject/clear all pe
 - **AND** it receives `RENAME_CONVERSATION` from `https://other.example.com`
 - **THEN** the app does not execute the request and sends no response for its `requestId`
 
-### Requirement: OverlayFeature enum covers the 38 transferable UI-section toggle keys
+### Requirement: OverlayFeature enum covers the 35 transferable UI-section toggle keys
 
-`libs/chat-shared/src/types/overlay/overlay-protocol.ts`'s `OverlayFeature` enum SHALL be expanded from its single `VoiceInput = 'voice-input'` member to exactly 38 members, covering the groups: applications (`code-apps`, `custom-applications`, `hide-custom-app-creation`), chat header (`chat-header-border`), chat input (`chat-input-border`, `disabled-send`, `skip-focus-chat-input-onload`), conversation functions (`dislike-comment`, `input-files`, `likes`, `live-chat-interaction`), conversation header (`disallow-change-agent`, `hide-new-conversation`, `top-chat-model-settings`, `top-settings`), empty chat (`empty-chat-settings`, `hide-empty-chat-change-agent`), layout (`attachments-manager`, `conversations-panel-toggle`, `conversations-section`, `header`, `showConversationsSectionByDefault`, `show-layout-dividers`), marketplace (`marketplace`, `marketplace-hide-my-apps`, `marketplace-table-view`), message editing (`hide-delete-user-message`, `hide-edit-user-message`, `hide-regenerate-assistant-message`), publishing (`conversations-publishing`), sharing (`applications-sharing`, `conversations-sharing`, `toolsets-sharing`), toolsets (`toolsets`), user settings (`custom-logo`, `hide-user-menu`, `hide-user-settings`), and voice input (`voice-input`, pre-existing). This module SHALL remain import-free (no imports from `apps/*`, `libs/chat-overlay`, or app-owned code), consistent with its existing "pure types only" requirement.
+`libs/chat-overlay/src/protocol/overlay-protocol.ts`'s `OverlayFeature` enum SHALL have exactly 35 members, covering the groups: applications (`code-apps`, `custom-applications`, `hide-custom-app-creation`, `custom-apps`), chat input (`disabled-send`, `skip-focus-chat-input-onload`), conversation functions (`dislike-comment`, `input-files`, `likes`, `live-chat-interaction`), conversation header (`disallow-change-agent`, `hide-new-conversation`), empty chat (`empty-chat-settings`, `hide-empty-chat-change-agent`), layout (`attachments-manager`, `conversations-panel-toggle`, `conversations-section`, `header`, `showConversationsSectionByDefault`), catalog (`catalog`, `catalog-hide-my-apps`, `catalog-table-view`), file manager (`file-manager`), message editing (`hide-delete-user-message`, `hide-edit-user-message`, `hide-regenerate-assistant-message`), publishing (`conversations-publishing`), sharing (`applications-sharing`, `conversations-sharing`, `toolsets-sharing`), toolsets (`toolsets`), prompts (`prompts`), user settings (`hide-user-menu`, `hide-user-settings`), and voice input (`voice-input`). This module SHALL remain import-free (no imports from `apps/*` or app-owned code), consistent with its existing "pure types only" requirement.
+
+`apps/chat-api`'s `KNOWN_UI_FEATURES` SHALL mirror this membership one-to-one. It is duplicated rather than imported so the Node-only service stays independent of the browser-facing overlay package, and it SHALL be updated in the same change as any addition, removal, or rename here — a key present in only one of the two is silently unusable through `ENABLED_UI_FEATURES`.
 
 **Feature flag:** N/A — this is the enum definition itself, not a gated feature. This repo has no `ENABLED_FEATURES`/`ENABLED_FEATURES_ROLES` mechanism to gate it behind.
 
-#### Scenario: OverlayFeature has exactly 38 members
+#### Scenario: OverlayFeature has exactly 35 members
 
 - **WHEN** `Object.values(OverlayFeature)` is inspected
-- **THEN** it has exactly 38 unique string values, including `'voice-input'` (pre-existing) and `'header'`, `'likes'`, `'hide-new-conversation'`, `'live-chat-interaction'` (new)
+- **THEN** it has exactly 35 unique string values, including `'voice-input'`, `'header'`, `'likes'`, `'hide-new-conversation'`, `'live-chat-interaction'`, `'prompts'`, and `'file-manager'`
+
+#### Scenario: The renamed marketplace keys are not in the enum
+
+- **WHEN** `OverlayFeature` is inspected
+- **THEN** it has no member for `marketplace`, `marketplace-hide-my-apps`, or `marketplace-table-view` — those were renamed to `catalog`, `catalog-hide-my-apps`, and `catalog-table-view`
+
+#### Scenario: Keys whose behavior became unconditional are not in the enum
+
+- **WHEN** `OverlayFeature` is inspected
+- **THEN** it has no member for `custom-logo`, `show-layout-dividers`, `top-settings`, `top-chat-model-settings`, `chat-header-border`, or `chat-input-border` — the behavior each guarded is unconditional in the new chat
 
 #### Scenario: The 21 absent keys are not in the enum
 

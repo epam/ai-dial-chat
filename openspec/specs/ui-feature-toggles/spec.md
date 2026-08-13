@@ -27,7 +27,7 @@
 
 ### Requirement: Default baseline preserves current unconditional behavior
 
-`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 23 default-on keys and exclude the 15 default-off keys enumerated in `design.md`'s classification table (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `show-layout-dividers`, `attachments-manager`, `top-settings`, `top-chat-model-settings`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `hide-edit-user-message`... — the full 38-key membership is defined in `design.md`, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 38 keys, matching each surface's current unconditional behavior.
+`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 22 default-on keys and exclude the 13 default-off (`Hide*`/restrictive modifier) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `file-manager`, `prompts`... are default-on; `hide-edit-user-message`, `disabled-send`, `catalog-table-view`... are default-off — the full 35-key membership is the `OverlayFeature` enum itself, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 35 keys, matching each surface's current unconditional behavior.
 
 **RTL impact:** None for this requirement itself — individual owning-surface gates state their own RTL impact where relevant (see per-surface requirements below).
 
@@ -39,7 +39,7 @@
 #### Scenario: Modifier features default off
 
 - **WHEN** no `enabledUiFeatures` and no overlay override are present
-- **THEN** `isEnabled('hide-new-conversation')`, `isEnabled('disabled-send')`, `isEnabled('hide-user-menu')`, and `isEnabled('chat-header-border')` all return `false`
+- **THEN** `isEnabled('hide-new-conversation')`, `isEnabled('disabled-send')`, `isEnabled('hide-user-menu')`, and `isEnabled('catalog-table-view')` all return `false`
 
 #### Scenario: Non-overlay app is unaffected by this change when nothing is configured
 
@@ -119,7 +119,7 @@ The effective visibility of the voice-input UI affordance SHALL be `isEnabled('v
 
 ### Requirement: Each transferable feature key gates exactly one owning surface
 
-Each of the 38 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
+Each of the 35 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
 
 **Accessibility:** Conditionally-unmounted controls remove themselves from both the accessibility tree and the tab order by not rendering — no `aria-hidden` container with focusable descendants is introduced by this change.
 
@@ -127,10 +127,35 @@ Each of the 38 transferable `OverlayFeature` values SHALL gate exactly the ownin
 
 #### Scenario: Gating one feature does not affect another
 
-- **WHEN** `enabledUiFeatures` omits `'top-settings'` but includes everything else
+- **WHEN** `enabledUiFeatures` omits `'likes'` but includes everything else
 - **THEN** the new-conversation button's visibility (`hide-new-conversation`) is unaffected
 
 #### Scenario: hide-new-conversation hides only the new-conversation entry points
 
 - **WHEN** `isEnabled('hide-new-conversation')` is `true`
 - **THEN** the "New conversation" controls in `Header.tsx` and `ChatLayout.tsx` do not render, and no other header/layout control is affected
+
+### Requirement: A key that gates a route hides both the entry point and the route
+
+A feature key whose owning surface is a whole route SHALL gate the navigation entry and the route element together, so that a direct URL cannot reach a section whose entry point is hidden. `file-manager` SHALL gate the File Manager navigation entry (desktop `Navigation` and mobile `NavPageContent`, both through the shared `useVisibleNavItems` hook) and the `ROUTES.FileManager` route element, which SHALL redirect to `ROUTES.Root` with `replace` when the key is disabled.
+
+Route gating SHALL NOT be treated as an authorization boundary: the backend SHALL continue to enforce access to the underlying data and operations regardless of which keys are enabled.
+
+**Accessibility:** A hidden navigation entry is not rendered at all, so it leaves neither an accessibility-tree node nor a tab stop.
+
+**i18n impact:** None — the entry's existing translated label is shown or omitted; no new strings.
+
+#### Scenario: file-manager hides the navigation entry on both layouts
+
+- **WHEN** `isEnabled('file-manager')` is `false`
+- **THEN** neither the desktop sidebar nor the mobile navigation sheet renders a File Manager entry, and every other navigation entry is unaffected
+
+#### Scenario: A direct /files URL does not bypass the hidden entry
+
+- **WHEN** `isEnabled('file-manager')` is `false` and the user navigates directly to `/files`
+- **THEN** the app redirects to `/` with `replace`, and `DialFileManagerPage` is never mounted
+
+#### Scenario: file-manager is independent of the in-chat attachment flow
+
+- **WHEN** `isEnabled('file-manager')` is `false` and `isEnabled('input-files')` is `true`
+- **THEN** the conversation input still renders the attach-file button and can open the file-manager modal — only the standalone `/files` section is gone
