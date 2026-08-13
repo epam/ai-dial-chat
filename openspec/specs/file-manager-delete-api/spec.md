@@ -1,5 +1,9 @@
 # Spec: file-manager-delete-api
 
+## Purpose
+
+`POST /api/v1/files/delete`: its DTOs, service behavior, cache invalidation, and rate limiting.
+
 ## Requirement: POST /api/v1/files/delete endpoint
 
 The BFF SHALL expose `POST /api/v1/files/delete` that accepts a batch of file/folder items, deletes each from DIAL Core, and returns a per-item result array.

@@ -1,3 +1,9 @@
+# ui-feature-toggles Specification
+
+## Purpose
+
+`UiFeaturesContext`: the effective UI-feature set, its default baseline, server override, and overlay replace semantics.
+
 ## ADDED Requirements
 
 ### Requirement: UiFeaturesContext owns the effective UI-feature set

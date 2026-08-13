@@ -1,5 +1,9 @@
 # Spec: File Manager Upload
 
+## Purpose
+
+File upload in the file manager: validation, concurrency, per-file upload mode, progress UI, and cache invalidation.
+
 ## State ownership
 
 `useDialFileManager` (`apps/chat/src/hooks/files/useDialFileManager.ts`) owns all upload state. No new React Context is introduced.

@@ -1,3 +1,9 @@
+# chat-overlay-sandbox Specification
+
+## Purpose
+
+The React + Vite sandbox app that exercises `ChatOverlay` and `ChatOverlayManager` end to end.
+
 ## ADDED Requirements
 
 ### Requirement: Sandbox is a React + Vite Nx app, not a ported Next.js app

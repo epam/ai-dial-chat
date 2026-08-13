@@ -1,3 +1,9 @@
+# applications-listing Specification
+
+## Purpose
+
+The applications listing endpoint, its DTO shape, generated client, and the frontend server-api wrapper.
+
 ## ADDED Requirements
 
 ### Requirement: Applications listing endpoint

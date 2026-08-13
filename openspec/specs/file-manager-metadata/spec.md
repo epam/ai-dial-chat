@@ -1,3 +1,9 @@
+# file-manager-metadata Specification
+
+## Purpose
+
+The file Info action and the metadata popup behind it.
+
 ## ADDED Requirements
 
 ### Requirement: onGetInfo wired on useDialFileManager

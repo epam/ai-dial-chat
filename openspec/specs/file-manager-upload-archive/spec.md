@@ -1,3 +1,9 @@
+# file-manager-upload-archive Specification
+
+## Purpose
+
+The archive-upload endpoint with zip-slip validation and server-side conflict resolution, plus the standalone-only toolbar action.
+
 ## ADDED Requirements
 
 ### Requirement: POST /api/v1/files/upload-archive endpoint

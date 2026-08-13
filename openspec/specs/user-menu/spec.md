@@ -1,5 +1,9 @@
 # User Menu
 
+## Purpose
+
+The avatar dropdown menu on desktop: the identity header, its action items, and the language and theme submenus.
+
 ## Overview
 
 The navigation sidebar avatar button opens a dropdown menu giving the user access to theme selection, keyboard shortcut preferences, and Log out. A Logout confirmation dialog guards the logout action.

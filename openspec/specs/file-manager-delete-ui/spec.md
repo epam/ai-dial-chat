@@ -1,5 +1,9 @@
 # Spec: file-manager-delete-ui
 
+## Purpose
+
+The delete capability on `useDialFileManager` and its wiring into the file-manager modal.
+
 ## Requirement: useDialFileManager — delete capability
 
 `useDialFileManager` in `apps/chat/src/hooks/files/useDialFileManager.ts` SHALL expose `onDeleteFiles` and `isDeleting`, and SHALL surface delete results through the `onNotification` option passed by `DialFileManagerModal`.

@@ -1,3 +1,9 @@
+# catalog-connect-action Specification
+
+## Purpose
+
+A Connect tab in the catalog details panel exposing MCP endpoint details for toolsets and MCP-capable applications.
+
 ## ADDED Requirements
 
 ### Requirement: `libs/catalog` renders Connect as a details-panel tab

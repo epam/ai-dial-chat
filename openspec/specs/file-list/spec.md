@@ -1,3 +1,9 @@
+# file-list Specification
+
+## Purpose
+
+Listing files for the file manager: normalizing DIAL metadata, supporting virtual folders, and paginating via `nextToken`.
+
 ## MODIFIED Requirements
 
 ### Requirement: List files for FileManager

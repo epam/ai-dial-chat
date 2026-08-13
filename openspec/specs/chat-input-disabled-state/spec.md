@@ -1,3 +1,9 @@
+# chat-input-disabled-state Specification
+
+## Purpose
+
+The `isInputDisabled` prop on the conversation input: what it disables, what stays interactive, and how the app edge derives it.
+
 ### Requirement: Input accepts isInputDisabled prop
 
 `libs/conversation-input/src/models/Input.ts` (`InputProps`) and `libs/conversation-input/src/models/ConversationInput.ts` (`ConversationInputProps`) SHALL each expose an optional prop:

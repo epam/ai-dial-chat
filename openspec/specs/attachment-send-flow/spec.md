@@ -1,3 +1,9 @@
+# attachment-send-flow Specification
+
+## Purpose
+
+Immediate app-level upload of attachments and their mapping to URL DTOs when a message is sent.
+
 ## MODIFIED Requirements
 
 ### Requirement: `attachmentsToDtos` maps uploaded attachments to URL DTOs

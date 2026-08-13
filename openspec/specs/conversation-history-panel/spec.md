@@ -1,5 +1,9 @@
 # Spec: conversation-history-panel
 
+## Purpose
+
+The `conversation-panel` library: grouped, searchable, filterable conversation history with per-item actions, persistent on desktop and a drawer on mobile.
+
 ## Requirements
 
 ### Requirement: `libs/conversation-panel` library exposes `ConversationPanel`

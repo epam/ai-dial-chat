@@ -1,3 +1,9 @@
+# file-manager-attach-modal-polish Specification
+
+## Purpose
+
+Attach-modal refinements: auto-selecting uploaded items, tab-specific empty states, and capping file-name byte length.
+
 ## ADDED Requirements
 
 ### Requirement: autoSelectUploadedItems adds uploaded paths to selectedPaths

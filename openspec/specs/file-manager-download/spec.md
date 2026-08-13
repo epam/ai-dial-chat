@@ -1,5 +1,9 @@
 # Spec: File Manager Download
 
+## Purpose
+
+Single-file download and the archive endpoint behind folder and bulk download, including recursive expansion and ZIP-slip prevention.
+
 ## State ownership
 
 `useDialFileManager` (`apps/chat/src/hooks/files/useDialFileManager.ts`) owns download state.

@@ -1,3 +1,9 @@
+# trace-error-body-enrichment Specification
+
+## Purpose
+
+Carrying the active trace context in JSON error responses, without fabricating or duplicating it.
+
 ## ADDED Requirements
 
 ### Requirement: JSON error responses carry the active trace context

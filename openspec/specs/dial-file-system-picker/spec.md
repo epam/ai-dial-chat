@@ -1,3 +1,9 @@
+# dial-file-system-picker Specification
+
+## Purpose
+
+Attaching files from the DIAL file system through the file-manager modal, both in the composer and while editing a message.
+
 > **Sync note (2026-07-23):** The "read-only" framing below was inaccurate.
 > `DialFileManagerModal` (attach picker, `actionProfile = Attach`) intentionally
 > allows Upload, Create folder, Delete, Rename, and Download — only Move, Copy,

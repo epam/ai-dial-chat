@@ -1,3 +1,9 @@
+# deployments-api Specification
+
+## Purpose
+
+`GET /api/v1/deployments`: the DTO shape, domain structure, generated client, and frontend wrapper.
+
 ### Requirement: GET /api/v1/deployments endpoint
 
 The system SHALL expose `GET /api/v1/deployments` that proxies DIAL Core `GET /v1/deployments` and returns all models and applications (excluding toolsets) visible to the authenticated session user, optionally filtered by interface type.

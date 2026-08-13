@@ -1,3 +1,9 @@
+# conversation-publish-api Specification
+
+## Purpose
+
+Conversation publish and publish-history endpoints proxying DIAL Core's Publication API.
+
 ## ADDED Requirements
 
 ### Requirement: Publish endpoint proxies DIAL Core's Publication API for conversations

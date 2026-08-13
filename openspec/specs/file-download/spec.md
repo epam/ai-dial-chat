@@ -1,3 +1,9 @@
+# file-download Specification
+
+## Purpose
+
+Downloading a file from DIAL Core through the BFF, with query DTO validation and a generated-client frontend wrapper.
+
 ## ADDED Requirements
 
 ### Requirement: Download file from DIAL Core via BFF

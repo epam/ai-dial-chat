@@ -1,3 +1,9 @@
+# config-registry-and-env-provider Specification
+
+## Purpose
+
+The backend configuration registry and the provider chain — env, static defaults, composite — that resolves every declared key.
+
 ## ADDED Requirements
 
 ### Requirement: ConfigDefinition registry declares all known keys

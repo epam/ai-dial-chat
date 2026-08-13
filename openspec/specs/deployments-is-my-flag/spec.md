@@ -1,3 +1,9 @@
+# deployments-is-my-flag Specification
+
+## Purpose
+
+The `isMy` boolean flag computed for deployments at the BFF layer.
+
 ### Requirement: `isMy` boolean flag computed at the BFF layer
 
 The `DeploymentItemDto` SHALL include an optional `isMy: boolean` field indicating whether the deployment belongs to the currently authenticated user.

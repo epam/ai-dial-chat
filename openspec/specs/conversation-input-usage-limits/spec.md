@@ -1,3 +1,9 @@
+# conversation-input-usage-limits Specification
+
+## Purpose
+
+The monthly deployment-usage trigger and popover surfaced in the conversation input.
+
 ### Requirement: Monthly deployment usage
 
 The app SHALL map `monthTokenStats` from the existing deployment-limits response

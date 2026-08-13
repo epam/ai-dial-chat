@@ -1,3 +1,9 @@
+# model-lookup Specification
+
+## Purpose
+
+The authenticated model lookup endpoint, its path-parameter validation, and the frontend server-api helper.
+
 ## ADDED Requirements
 
 ### Requirement: Authenticated model lookup endpoint

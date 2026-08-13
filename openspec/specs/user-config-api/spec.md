@@ -1,5 +1,9 @@
 # Spec: user-config-api
 
+## Purpose
+
+User configuration stored in the user's DIAL Core bucket: read consolidation, the v2 shape, and pin persistence.
+
 ## Requirements
 
 ### Requirement: UserConfigService owns .client_data/.user-config.json in the user's DIAL Core bucket

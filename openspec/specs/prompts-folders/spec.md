@@ -1,3 +1,9 @@
+# prompts-folders Specification
+
+## Purpose
+
+Prompt folders as virtual path prefixes: the create, rename, delete, and move endpoints behind them.
+
 ## ADDED Requirements
 
 ### Requirement: Prompt folders are virtual path prefixes with sentinel files

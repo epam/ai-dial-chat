@@ -1,3 +1,9 @@
+# canvas Specification
+
+## Purpose
+
+The canvas side panel: its chrome, open and auto-close behavior, layout, and the content-type routing that picks a viewer.
+
 ## Capability: canvas
 
 ### Overview

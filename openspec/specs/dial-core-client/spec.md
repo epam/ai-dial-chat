@@ -1,3 +1,9 @@
+# dial-core-client Specification
+
+## Purpose
+
+A single shared DIAL Core SDK client service used by every chat-api domain.
+
 ### Requirement: Single shared DIAL Core SDK client
 The system SHALL create exactly one `@epam/ai-dial-typescript-sdk` client instance per process, owned by `DialClientService`, using `createSDK({ baseUrl })` where `baseUrl` is read from the `DIAL_CORE_URL` environment variable via `ConfigService<EnvironmentVariables>` with `{ infer: true }`.
 

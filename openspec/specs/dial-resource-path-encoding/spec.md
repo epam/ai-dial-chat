@@ -1,3 +1,9 @@
+# dial-resource-path-encoding Specification
+
+## Purpose
+
+One DIAL resource-path encoder shared by every chat-api domain.
+
 ## ADDED Requirements
 
 ### Requirement: Single DIAL resource-path encoder for all chat-api domains

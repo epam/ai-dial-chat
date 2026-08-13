@@ -1,3 +1,9 @@
+# user-config-frontend-init Specification
+
+## Purpose
+
+Loading user configuration once per authenticated identity and keeping context state synchronized with the backend.
+
 ## Requirement: UserConfigContext loads user configuration once per authenticated identity
 
 `UserConfigProvider` (`apps/chat/src/context/UserConfigContext.tsx`) SHALL call `getUserConfig()` from `apps/chat/src/server-api/user-config.api.ts` exactly once for each authenticated identity: once on mount, and again whenever the authenticated identity (`useUser().user?.sub`) changes while the provider remains mounted. It must not trigger a second request on re-renders, or on child component mount/unmount cycles, that do not correspond to a `sub` change.

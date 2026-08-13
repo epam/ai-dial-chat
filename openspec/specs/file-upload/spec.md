@@ -1,5 +1,9 @@
 # Spec: File Upload
 
+## Purpose
+
+Uploading a file to DIAL Core through the BFF, with DTO validation and environment configuration.
+
 ### Requirement: Upload file to DIAL Core via BFF
 The system SHALL expose `POST /api/v1/files` accepting a `multipart/form-data` request with a `file` field (binary), `bucket` and `path` form fields, and an optional `uploadMode` field. The endpoint SHALL validate all inputs, apply conditional DIAL Core headers based on `uploadMode`, and proxy the upload to DIAL Core `PUT /v1/files/{bucket}/{path}` under the authenticated user's session. The endpoint SHALL return `201 Created` with a `FileUploadResponseDto` on success.
 

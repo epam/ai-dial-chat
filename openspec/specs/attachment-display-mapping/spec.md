@@ -1,3 +1,9 @@
+# attachment-display-mapping Specification
+
+## Purpose
+
+One pure mapper in `chat-shared` from the API `MessageAttachment` shape to the UI `DisplayAttachment` model.
+
 ## ADDED Requirements
 
 ### Requirement: Single pure MessageAttachment-to-DisplayAttachment mapper in chat-shared

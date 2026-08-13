@@ -1,3 +1,9 @@
+# catalog-create-options Specification
+
+## Purpose
+
+The create options offered in the catalog, including the Custom App entry and the feature flag that hides it.
+
 ## ADDED Requirements
 
 ### Requirement: Custom App create option in catalog

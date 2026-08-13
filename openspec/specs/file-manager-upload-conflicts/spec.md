@@ -1,5 +1,9 @@
 # Spec: File Manager Upload Conflicts
 
+## Purpose
+
+The conflict-resolution popup shown when an upload's name collides with an existing file.
+
 ### Requirement: Conflict resolution popup for upload name collisions
 The system SHALL display a conflict resolution popup when one or more files being uploaded have the same name (case-insensitive, after sanitization) as an existing file in the destination folder. The popup SHALL present the following options:
 

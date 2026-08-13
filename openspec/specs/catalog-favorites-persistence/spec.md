@@ -1,5 +1,9 @@
 # Spec: catalog-favorites-persistence
 
+## Purpose
+
+Persisting a user's catalog favorites and wiring the toggle through `CatalogView`.
+
 ## Requirements
 
 ### Requirement: useFavoriteApplications hook loads and persists favorites

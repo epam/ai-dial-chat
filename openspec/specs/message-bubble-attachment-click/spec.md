@@ -1,3 +1,9 @@
+# message-bubble-attachment-click Specification
+
+## Purpose
+
+Forwarding an attachment-click callback from `ConversationMessageItem` down through `MessageBubble` to `UserMessageBubble`.
+
 ## ADDED Requirements
 
 ### Requirement: `UserMessageBubble` accepts and forwards an attachment click callback

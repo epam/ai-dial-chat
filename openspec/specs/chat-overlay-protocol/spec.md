@@ -1,3 +1,9 @@
+# chat-overlay-protocol Specification
+
+## Purpose
+
+The pure postMessage protocol types in `chat-shared`: message envelopes, handshake sequencing, request/response matching, events, and origin validation.
+
 ## ADDED Requirements
 
 ### Requirement: Protocol types are pure and live in libs/chat-shared

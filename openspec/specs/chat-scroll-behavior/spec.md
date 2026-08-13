@@ -1,3 +1,9 @@
+# chat-scroll-behavior Specification
+
+## Purpose
+
+Scroll behavior during a chat: where a sent message lands, why streaming never forces the scroll position, and when the scroll-to-bottom button appears.
+
 ### Cross-cutting notes
 
 - **i18n**: No new user-visible strings. The scroll-to-bottom button keeps its existing aria-label key `ChatI18nKeys.ScrollToBottom`.

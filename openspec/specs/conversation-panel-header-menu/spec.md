@@ -1,5 +1,9 @@
 # Spec: conversation-panel-header-menu
 
+## Purpose
+
+The overflow menu in the conversation panel header and the "Delete all conversations" flow behind it.
+
 ## Requirements
 
 ---

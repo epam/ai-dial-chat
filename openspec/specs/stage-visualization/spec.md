@@ -1,3 +1,9 @@
+# stage-visualization Specification
+
+## Purpose
+
+The `conversation-stages` library: merging streamed stages into a conversation and rendering them above assistant message bubbles.
+
 ## Requirements
 
 ### Requirement: `libs/conversation-stages` library exposes `StagesPanel`

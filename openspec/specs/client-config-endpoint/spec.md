@@ -1,3 +1,9 @@
+# client-config-endpoint Specification
+
+## Purpose
+
+`GET /api/v1/client-config`: the client-safe configuration payload and its fully annotated response DTO.
+
 ## ADDED Requirements
 
 ### Requirement: GET /api/v1/client-config returns client-safe configuration

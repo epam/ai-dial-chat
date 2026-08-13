@@ -1,5 +1,9 @@
 # Spec: File Manager Folder Creation
 
+## Purpose
+
+Creating folders as zero-byte markers, with inline name validation and the cache update that follows.
+
 ## State ownership
 
 `useDialFileManager` (`apps/chat/src/hooks/files/useDialFileManager.ts`) owns folder-creation state.

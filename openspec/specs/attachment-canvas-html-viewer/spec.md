@@ -1,3 +1,9 @@
+# attachment-canvas-html-viewer Specification
+
+## Purpose
+
+The HTML-viewing variant of the attachment canvas: the `Html` content type, previewability detection, renderer, and routing.
+
 ## Capability: attachment-canvas-html-viewer
 
 ### Overview

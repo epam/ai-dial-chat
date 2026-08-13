@@ -1,3 +1,9 @@
+# chat-settings Specification
+
+## Purpose
+
+Deployment-gated chat settings such as response format, rendered in a desktop modal and a mobile bottom sheet.
+
 ### Requirement: ResponseFormat enum in libs/chat-shared
 
 `libs/chat-shared/src/models/deployment-features.ts` SHALL export a `ResponseFormat` string enum:

@@ -1,5 +1,9 @@
 # Capability: application-schemas-get
 
+## Purpose
+
+Endpoint that fetches a single DIAL Core application type schema by its `$id`, with per-user caching.
+
 Fetch a single DIAL Core application type schema by its `$id`.
 
 ---

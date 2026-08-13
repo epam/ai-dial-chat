@@ -1,3 +1,9 @@
+# custom-visualizers Specification
+
+## Purpose
+
+The registry, postMessage protocol, and connectors behind operator-configured custom attachment visualizers.
+
 ## ADDED Requirements
 
 ### Requirement: CustomVisualizer registry entry shape

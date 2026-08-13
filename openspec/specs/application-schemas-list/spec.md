@@ -1,5 +1,9 @@
 # Capability: application-schemas-list
 
+## Purpose
+
+Endpoint that lists every DIAL Core application type schema visible to the authenticated session user, with per-user caching.
+
 List all DIAL Core application type schemas visible to the authenticated session user.
 
 ---

@@ -1,3 +1,9 @@
+# catalog-publish-flow Specification
+
+## Purpose
+
+Publishing a catalog entity: folder-tree destination picking, inline folder creation, access rules, and submission against real backend data.
+
 ## ADDED Requirements
 
 ### Requirement: Folder selection uses the ui-kit folder tree

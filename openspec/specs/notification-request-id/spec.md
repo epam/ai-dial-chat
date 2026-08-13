@@ -1,3 +1,9 @@
+# notification-request-id Specification
+
+## Purpose
+
+Carrying a request/trace ID on error notifications, and the copy control that surfaces it accessibly.
+
 ## ADDED Requirements
 
 ### Requirement: Notification model carries an optional request ID

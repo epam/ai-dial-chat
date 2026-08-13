@@ -1,3 +1,9 @@
+# model-listing Specification
+
+## Purpose
+
+The authenticated model list endpoint, the shared `DialModel` type, and the frontend server-api helper.
+
 ## ADDED Requirements
 
 ### Requirement: Authenticated model list endpoint

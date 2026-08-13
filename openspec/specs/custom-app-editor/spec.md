@@ -1,3 +1,9 @@
+# custom-app-editor Specification
+
+## Purpose
+
+The Custom App editor page: its settings form, create and edit flows, validation, and the loading and saving overlays.
+
 ## ADDED Requirements
 
 ### Requirement: Custom App editor page

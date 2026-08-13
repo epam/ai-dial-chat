@@ -1,3 +1,9 @@
+# file-manager-shared-list Specification
+
+## Purpose
+
+Endpoints listing files shared with the current user and files in the organization bucket.
+
 ## ADDED Requirements
 
 ### Requirement: GET /api/v1/files/shared lists files shared with the current user

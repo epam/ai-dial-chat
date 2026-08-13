@@ -1,5 +1,9 @@
 # Mobile Navigation Bottom Sheet
 
+## Purpose
+
+The mobile navigation bottom sheet: its shell primitive, the generic stack navigator, and each page it can show.
+
 ## Overview
 
 On mobile viewports the hamburger button opens a multi-page bottom sheet anchored to the bottom of the screen. The sheet provides navigation items (Home, Catalog) and a Profile entry point that leads to user identity, theme selection, keyboard shortcut preference, and logout. Desktop layout and the `DialDropdown`-based `UserMenu` are unchanged.

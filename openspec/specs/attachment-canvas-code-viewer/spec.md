@@ -1,3 +1,9 @@
+# attachment-canvas-code-viewer Specification
+
+## Purpose
+
+The code-viewing variant of the attachment canvas: the `Code` content type, extension-to-language mapping, renderer, and routing.
+
 ## Capability: attachment-canvas-code-viewer
 
 ### Overview

@@ -1,3 +1,9 @@
+# markdown-code-blocks Specification
+
+## Purpose
+
+Fenced code blocks in rendered markdown: language detection, the copy action, theming, internal scrolling, RTL, and accessibility.
+
 ## ADDED Requirements
 
 ### Requirement: Render fenced code blocks with polished layout

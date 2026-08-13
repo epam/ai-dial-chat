@@ -1,3 +1,9 @@
+# api-error-trace-correlation Specification
+
+## Purpose
+
+A single helper that normalizes any API error into a message and trace ID, so a failure the user sees can be correlated with a backend trace.
+
 ## ADDED Requirements
 
 ### Requirement: One normalization helper resolves message and trace ID from any API error

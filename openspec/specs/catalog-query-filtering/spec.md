@@ -1,3 +1,9 @@
+# catalog-query-filtering Specification
+
+## Purpose
+
+Capability query parameters on the catalog endpoint and the filter service that applies them.
+
 ### Requirement: CatalogQueryDto capability query parameters
 The system SHALL accept only capability filter query parameters on `GET /api/v1/catalog` via a `CatalogQueryDto` class decorated with `class-validator`, `class-transformer`, and `@nestjs/swagger`.
 

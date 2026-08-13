@@ -1,5 +1,9 @@
 # Language Selector
 
+## Purpose
+
+Language selection: persistence across sessions, immediate application without reload, and document-direction switching for RTL locales.
+
 ## Overview
 
 The language selector allows users to switch the application UI language at runtime. It is surfaced as a submenu within the User Menu dropdown. Language selection persists across sessions via `localStorage` and takes effect immediately without a page reload.

@@ -1,3 +1,9 @@
+# error-boundary Specification
+
+## Purpose
+
+The React error boundary: its accessible fallback, recovery paths, placement in the application tree, and what it must never disclose.
+
 ## ADDED Requirements
 
 ### Requirement: ErrorBoundary catches descendant render and lifecycle errors

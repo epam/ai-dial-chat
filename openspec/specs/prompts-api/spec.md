@@ -1,3 +1,9 @@
+# prompts-api Specification
+
+## Purpose
+
+The personal and organisation prompt endpoints, the prompt data model, and the generated client for both.
+
 ## ADDED Requirements
 
 ### Requirement: Prompt entity data model

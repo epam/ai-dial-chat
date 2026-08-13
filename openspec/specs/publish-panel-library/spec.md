@@ -1,3 +1,9 @@
+# publish-panel-library Specification
+
+## Purpose
+
+The standalone publish-panel library: its public surface, and the independence from catalog models, i18n, and app context it must keep.
+
 ## ADDED Requirements
 
 ### Requirement: Public package surface exports the shared publish UI and state

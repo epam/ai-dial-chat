@@ -1,3 +1,9 @@
+# starter-buttons-overflow Specification
+
+## Purpose
+
+Capping the number of visible conversation-starter pills and moving the rest into an accessible overflow menu.
+
 ## ADDED Requirements
 
 ### Requirement: Visible pill count is capped at four

@@ -1,5 +1,9 @@
 # Keyboard Shortcut Preference
 
+## Purpose
+
+The persisted Enter vs. Meta+Enter send preference and how the chat inputs honor it.
+
 ## Overview
 
 The application allows users to choose their preferred send-key shortcut for the chat input. The preference is persisted to `localStorage` and applied immediately to the input behavior.
