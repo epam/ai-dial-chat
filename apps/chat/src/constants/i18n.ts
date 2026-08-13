@@ -370,6 +370,9 @@ export enum CommonI18nKeys {
   Locales = 'Locales',
   Apply = 'Apply',
   Edit = 'Edit',
+  AllAvailableLocalesAdded = 'All available locales are already added',
+  NoChangesToApply = 'No changes to apply',
+  View = 'View',
 }
 
 // errors.json

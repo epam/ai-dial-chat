@@ -71,12 +71,18 @@ interface LocalsPopupProps<T extends MarketplaceEntity> {
   entity?: T;
   onSubmit: (value: LocalsForm) => void;
   onClose: () => void;
+  descriptionPlaceholder?: string;
+  readonly?: boolean;
+  fieldTooltip?: string;
 }
 
 export const LocalesPopup = <T extends MarketplaceEntity>({
   entity,
   onSubmit,
   onClose,
+  descriptionPlaceholder,
+  readonly = false,
+  fieldTooltip,
 }: LocalsPopupProps<T>) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -128,6 +134,17 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
     });
   }, [append, localOptions]);
 
+  const isAddLocaleDisabled = !localOptions.length || readonly;
+  const isApplyDisabled = !isDirty || !isValid || readonly;
+
+  const applyTooltip = useMemo(
+    () =>
+      !isValid
+        ? t(CommonI18nKeys.FillInAllRequiredFields)
+        : t(CommonI18nKeys.NoChangesToApply),
+    [isValid, t],
+  );
+
   const handleApply = useCallback(() => {
     trigger().then((valid) => {
       if (valid) handleSubmit(onSubmit)();
@@ -152,7 +169,11 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
             />
             <DialPrimaryButton
               label={t(CommonI18nKeys.Apply)}
-              disabled={!isDirty || !isValid}
+              disabled={isApplyDisabled}
+              tooltipProps={{
+                tooltip: fieldTooltip || applyTooltip,
+                hideTooltip: !isApplyDisabled,
+              }}
               onClick={handleApply}
             />
           </div>
@@ -167,7 +188,14 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
                     {t(CommonI18nKeys.Locale)} {index + 1}
                   </label>
 
-                  <DialRemoveButton onClick={() => remove(index)} />
+                  <DialRemoveButton
+                    onClick={() => remove(index)}
+                    disabled={readonly}
+                    tooltipProps={{
+                      tooltip: fieldTooltip,
+                      hideTooltip: !readonly,
+                    }}
+                  />
                 </div>
 
                 <div className="grid grid-cols-[auto_1fr] gap-5">
@@ -191,6 +219,8 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
                             (option as unknown as DropdownSelectorOption).value,
                           )
                         }
+                        isDisabled={readonly}
+                        tooltip={fieldTooltip}
                       />
                     )}
                   />
@@ -201,16 +231,20 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
                     placeholder={t(CommonI18nKeys.TypeName)}
                     id={`${index}-name`}
                     error={errors.locales?.[index]?.name?.message}
+                    disabled={readonly}
+                    tooltip={fieldTooltip}
                   />
                   <div className="col-span-2">
                     <FieldTextArea
                       {...register(`locales.${index}.description`)}
                       label={t(CommonI18nKeys.Description)}
-                      placeholder={t(CommonI18nKeys.ToolsetDescription)}
+                      placeholder={descriptionPlaceholder}
                       info={t(CommonI18nKeys.DescriptionInfo)}
                       rows={3}
                       className="resize-none"
                       id={`${index}-description`}
+                      disabled={readonly}
+                      tooltip={fieldTooltip}
                     />
                   </div>
                 </div>
@@ -222,7 +256,13 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
             label={t(CommonI18nKeys.AddLocale)}
             iconBefore={<IconPlus />}
             onClick={handleAppend}
-            disabled={!localOptions.length}
+            disabled={isAddLocaleDisabled}
+            tooltipProps={{
+              tooltip:
+                fieldTooltip || t(CommonI18nKeys.AllAvailableLocalesAdded),
+              hideTooltip: !isAddLocaleDisabled,
+              triggerClassName: 'w-fit',
+            }}
             className="w-fit"
           />
         </div>
