@@ -53,6 +53,7 @@ import {
 } from '@/src/utils/app/id';
 import { isMarketplaceEditorStep } from '@/src/utils/app/marketplace';
 import { mergeFeatures } from '@/src/utils/app/models';
+import { getInternalPathname, isInternalRoute } from '@/src/utils/app/route';
 import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 import { translate } from '@/src/utils/app/translation';
 import { parseEntityApiKey } from '@/src/utils/server/api';
@@ -1038,7 +1039,7 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
         );
       }
 
-      if (route.pathname === Routes.Marketplace) {
+      if (isInternalRoute(route.pathname ?? '', Routes.Marketplace, router)) {
         if (payload.shouldSelectApplication && reference) {
           actions.push(
             of(
@@ -1129,11 +1130,11 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
         action.type === ApplicationActions.updateSuccess.type &&
         action.payload.isExitingAfterSave;
 
-      if (window.location.pathname !== Routes.AppsEditor || isExitingAfterSave)
-        return EMPTY;
+      const pathname = getInternalPathname(window.location.pathname, router);
+
+      if (pathname !== Routes.AppsEditor || isExitingAfterSave) return EMPTY;
       const state = state$.value;
       const query = parse(window.location.search.slice(1));
-      const pathname = window.location.pathname;
 
       // editor-step
       query[AppsEditorQuery.Step] =
