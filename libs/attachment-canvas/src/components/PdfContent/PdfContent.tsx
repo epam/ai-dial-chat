@@ -33,6 +33,17 @@ export interface PdfContentProps {
   loadPdf?: (url: string) => Promise<Blob>;
   /** File name shown in the canvas header. */
   fileName?: string;
+  /**
+   * Hides the underlying `DocumentPreview`'s own title/zoom toolbar row —
+   * for hosts that render their own header and don't want it duplicated.
+   * `DocumentPreview` (`@epam/ai-dial-react-pdf-highlighter`) has no public
+   * prop for this, so it is done via `containerClassName` targeting that
+   * row's structural position; this only holds while `PdfContent` itself
+   * never passes `title`/`fileName` through to `DocumentPreview` (it
+   * currently doesn't — see the unused `fileName` prop above). Defaults to
+   * `false`, preserving the existing chat sidebar canvas's appearance.
+   */
+  hideHeader?: boolean;
 }
 
 /** Renders a PDF with highlight annotations, a sidebar thumbnail strip, and page navigation. */
@@ -41,6 +52,7 @@ export const PdfContent: FC<PdfContentProps> = ({
   highlights,
   selectedHighlightId,
   loadPdf,
+  hideHeader = false,
 }) => {
   const isMobile = useIsMobile();
   const [totalPages, setTotalPages] = useState(0);
@@ -254,6 +266,9 @@ export const PdfContent: FC<PdfContentProps> = ({
           thumbnailPageNumbers={pendingThumbnailPages}
           onThumbnailsLoaded={handleThumbnailsLoaded}
           onViewerReady={handleViewerReady}
+          containerClassName={
+            hideHeader ? '[&>div:first-child]:hidden' : undefined
+          }
         />
       </div>
     </div>

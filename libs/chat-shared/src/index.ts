@@ -17,6 +17,7 @@ export * from './utils/merge-class';
 export * from './utils/build-css-vars';
 export * from './utils/message';
 export * from './utils/message-attachment-to-display';
+export * from './utils/mime-type';
 export * from './utils/is-audio-transcription-supported';
 export * from './utils/copy-to-clipboard';
 export * from './utils/format-last-used';
