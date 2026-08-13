@@ -194,8 +194,16 @@
         "section": "Skill",
         "author": "Author",
         "updated": "Last updated",
-        "fileCount": "Files"
-      }
+        "fileCount": "Files",
+        "specificationSection": "Specification",
+        "whenToUse": "When to use",
+        "allowedTools": "Allowed tools",
+        "bundledResources": "Bundled resources"
+      },
+      "contentFileSelectorAriaLabel": "Select file",
+      "contentFileCount": "{{count}} files",
+      "contentFileLoading": "Loading file",
+      "contentFileError": "Failed to load this file."
     },
     "create": {
       "menuCaption": "Create new",

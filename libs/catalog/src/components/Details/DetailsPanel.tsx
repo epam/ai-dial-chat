@@ -142,6 +142,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onEdit,
   onDownload,
   isDownloadVisible,
+  onLoadContentFile,
   onDelete,
   onUnshare,
   isUnshareVisible,
@@ -180,6 +181,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-credentials-status-text': detailsColors?.credentialsStatusText,
     '--cat-details-content-text': detailsColors?.contentText,
     '--cat-details-variable-text': detailsColors?.variableText,
+    '--cat-details-file-count-text': detailsColors?.contentFileCountText,
     '--cat-api-heading-text': detailsColors?.apiHeadingText,
     '--cat-tools-divider': detailsColors?.toolsDivider,
     '--cat-tools-description-text': detailsColors?.toolsDescriptionText,
@@ -204,6 +206,57 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   );
   const [isPublishHistoryLoading, setIsPublishHistoryLoading] = useState(false);
   const [hasPublishHistoryError, setHasPublishHistoryError] = useState(false);
+
+  const promptContent = item.details?.promptContent;
+  const baseFileId = promptContent?.selectedFileId;
+  /*
+   * A picked file overlays the body the details fetch already supplied.
+   * `null` means "showing the base content", so reselecting the base file
+   * costs no request.
+   */
+  const [pickedFile, setPickedFile] = useState<{
+    id: string;
+    content: string | null;
+  } | null>(null);
+  const [isContentFileLoading, setIsContentFileLoading] = useState(false);
+
+  /* A new item, or a re-fetched body, invalidates whatever file was picked. */
+  useEffect(() => {
+    setPickedFile(null);
+    setIsContentFileLoading(false);
+  }, [item.id, baseFileId]);
+
+  const handleSelectContentFile = useCallback(
+    async (fileId: string) => {
+      if (fileId === baseFileId) {
+        setPickedFile(null);
+        setIsContentFileLoading(false);
+        return;
+      }
+      if (onLoadContentFile == null) return;
+
+      setPickedFile({ id: fileId, content: null });
+      setIsContentFileLoading(true);
+      try {
+        const content = await onLoadContentFile(fileId);
+        setPickedFile({ id: fileId, content: content ?? null });
+      } catch {
+        setPickedFile({ id: fileId, content: null });
+      } finally {
+        setIsContentFileLoading(false);
+      }
+    },
+    [baseFileId, onLoadContentFile],
+  );
+
+  const selectedFileId = pickedFile?.id ?? baseFileId;
+  const resolveContentBody = (): string => {
+    if (pickedFile == null) return promptContent?.content ?? '';
+    if (pickedFile.content != null) return pickedFile.content;
+    return isContentFileLoading
+      ? ''
+      : (texts?.contentFileErrorLabel ?? 'Failed to load this file.');
+  };
 
   useEffect(() => {
     if (!isPublishOpen || !getPublishHistory) {
@@ -790,8 +843,17 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 )}
                 {activeTab === CatalogDetailsTab.Content && (
                   <ContentTab
-                    content={item.details?.promptContent?.content ?? ''}
-                    description={item.description}
+                    content={resolveContentBody()}
+                    description={promptContent?.description ?? item.description}
+                    files={promptContent?.files}
+                    selectedFileId={selectedFileId}
+                    onSelectFile={(fileId) =>
+                      void handleSelectContentFile(fileId)
+                    }
+                    isFileLoading={isContentFileLoading}
+                    fileSelectorAriaLabel={texts?.contentFileSelectorAriaLabel}
+                    fileCountLabel={texts?.contentFileCountLabel}
+                    fileLoadingLabel={texts?.contentFileLoadingLabel}
                     detailsStyles={detailsStyles}
                   />
                 )}

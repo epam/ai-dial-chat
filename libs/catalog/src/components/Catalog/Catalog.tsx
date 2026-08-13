@@ -53,6 +53,7 @@ export const Catalog: FC<CatalogProps> = ({
   onEdit,
   onDownload,
   isDownloadVisible,
+  onLoadContentFile,
   onDelete,
   onUnshare,
   isUnshareVisible,
@@ -540,6 +541,7 @@ export const Catalog: FC<CatalogProps> = ({
           onEdit={onEdit}
           onDownload={onDownload}
           isDownloadVisible={isDownloadVisible}
+          onLoadContentFile={onLoadContentFile}
           onDelete={onDelete}
           onUnshare={onUnshare}
           isUnshareVisible={isUnshareVisible}

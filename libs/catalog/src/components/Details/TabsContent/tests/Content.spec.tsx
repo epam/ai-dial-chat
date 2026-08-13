@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
 import { ContentTab } from '../Content';
 
 describe('ContentTab', () => {
@@ -66,5 +67,101 @@ describe('ContentTab', () => {
     render(<ContentTab content="Summarize:" />);
 
     expect(screen.queryByRole('button')).toBeNull();
+  });
+});
+
+describe('ContentTab — file picker', () => {
+  const files = [
+    { id: 'SKILL.md', name: 'SKILL.md' },
+    { id: 'analyzer.md', name: 'analyzer.md' },
+  ];
+
+  it('renders no picker when the item carries no files', () => {
+    render(<ContentTab content="Body" />);
+
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  /* One file is the body itself — a picker with a single option is noise. */
+  it('renders no picker for a single file', () => {
+    render(
+      <ContentTab
+        content="Body"
+        files={[files[0]]}
+        selectedFileId="SKILL.md"
+      />,
+    );
+
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.queryByText('1 files')).toBeNull();
+  });
+
+  it('renders the picker and the file count for several files', () => {
+    render(
+      <ContentTab content="Body" files={files} selectedFileId="SKILL.md" />,
+    );
+
+    expect(screen.getByRole('button')).toBeTruthy();
+    expect(screen.getByText('2 files')).toBeTruthy();
+  });
+
+  it('opens on the selected file', () => {
+    render(
+      <ContentTab content="Body" files={files} selectedFileId="analyzer.md" />,
+    );
+
+    expect(screen.getByRole('button').textContent).toContain('analyzer.md');
+  });
+
+  it('uses the supplied file-count label', () => {
+    render(
+      <ContentTab
+        content="Body"
+        files={files}
+        selectedFileId="SKILL.md"
+        fileCountLabel={(count) => `${count} файла`}
+      />,
+    );
+
+    expect(screen.getByText('2 файла')).toBeTruthy();
+  });
+
+  it('calls onSelectFile with the picked file id', async () => {
+    const onSelectFile = vi.fn();
+    render(
+      <ContentTab
+        content="Body"
+        files={files}
+        selectedFileId="SKILL.md"
+        onSelectFile={onSelectFile}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button'));
+    await userEvent.click(screen.getByText('analyzer.md'));
+
+    expect(onSelectFile).toHaveBeenCalledWith('analyzer.md');
+  });
+
+  it('announces a loading file through a status region', () => {
+    render(
+      <ContentTab
+        content=""
+        files={files}
+        selectedFileId="analyzer.md"
+        isFileLoading
+        fileLoadingLabel="Loading file"
+      />,
+    );
+
+    expect(screen.getByRole('status').textContent).toBe('Loading file');
+  });
+
+  it('announces nothing once the file has loaded', () => {
+    render(
+      <ContentTab content="Body" files={files} selectedFileId="analyzer.md" />,
+    );
+
+    expect(screen.queryByRole('status')).toBeNull();
   });
 });

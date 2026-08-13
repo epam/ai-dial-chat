@@ -16,7 +16,7 @@ import {
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
-import { memo, useCallback, useEffect, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
@@ -87,6 +87,7 @@ import {
   parseSkillResourceUrl,
   SKILL_MANIFEST_FILE,
   SkillSource,
+  type ParsedSkillResourceUrl,
 } from '../../types/skill';
 import { isQuickAppSchema } from '../../utils/application-schema';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
@@ -114,6 +115,7 @@ import {
   mapPromptToCatalogItem,
 } from '../../utils/map-prompt-to-catalog-item';
 import {
+  buildSkillContentFiles,
   buildSkillOverview,
   mapSkillToCatalogItem,
   readSkillManifest,
@@ -123,6 +125,7 @@ import {
   resolveMcpResourceKind,
 } from '../../utils/mcp-endpoint-url';
 import { getAccessRulesLabels, toPublishEntityType } from '../../utils/publish';
+import { parseSkillManifest } from '../../utils/skill-manifest';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 
 /** Entity types shown in the catalog picker modal: models and agents only. */
@@ -190,6 +193,8 @@ const CatalogView: FC<Props> = ({
 
   const { showSuccessNotification, showErrorNotification } = useNotification();
   const { notifyOperationSuccess } = useOperationNotification();
+  /* Skill whose details panel is open, for resolving picked file contents. */
+  const openSkillRef = useRef<ParsedSkillResourceUrl | null>(null);
   const { user } = useUser();
   const isAdmin = user?.isAdmin ?? false;
   const { config } = useAppConfig();
@@ -427,6 +432,12 @@ const CatalogView: FC<Props> = ({
         if (parsed == null) return undefined;
 
         const { bucket, path } = parsed;
+        /*
+         * The Content tab's file picker reports back only a file's own path,
+         * so the skill it belongs to is remembered here — the panel shows one
+         * item at a time, and this runs each time it opens.
+         */
+        openSkillRef.current = parsed;
         const [manifest, files] = await Promise.allSettled([
           downloadSkillFile(bucket, path, SKILL_MANIFEST_FILE).then(
             readSkillManifest,
@@ -434,21 +445,47 @@ const CatalogView: FC<Props> = ({
           listSkillFiles({ bucket, path, filePath: '', recursive: true }),
         ]);
 
-        const content =
+        /*
+         * A manifest that downloads but fails to parse is not a failure: the
+         * parser hands back the raw text as the body, so the Content tab
+         * still renders — it simply carries no summary and no Specification.
+         */
+        const parsedManifest =
           manifest.status === 'fulfilled' && manifest.value != null
-            ? manifest.value
+            ? parseSkillManifest(manifest.value)
             : undefined;
         const skill = [...skills, ...publicSkills].find(
           (candidate) => candidate.url === item.id,
         );
         const overview =
           files.status === 'fulfilled'
-            ? buildSkillOverview(skill, files.value.items, t)
+            ? buildSkillOverview(
+                skill,
+                files.value.items,
+                parsedManifest?.about,
+                t,
+              )
             : undefined;
 
-        if (content == null && overview == null) return undefined;
+        const contentFiles =
+          files.status === 'fulfilled'
+            ? buildSkillContentFiles(files.value.items)
+            : [];
+
+        if (parsedManifest == null && overview == null) return undefined;
         return {
-          ...(content != null ? { promptContent: { content } } : {}),
+          ...(parsedManifest != null
+            ? {
+                promptContent: {
+                  content: parsedManifest.body,
+                  ...(parsedManifest.description != null
+                    ? { description: parsedManifest.description }
+                    : {}),
+                  files: contentFiles,
+                  selectedFileId: SKILL_MANIFEST_FILE,
+                },
+              }
+            : {}),
           ...(overview != null ? { overview } : {}),
         };
       }
@@ -783,6 +820,29 @@ const CatalogView: FC<Props> = ({
     (item: CatalogItem) => item.type === CatalogEntityType.Prompt,
     [],
   );
+
+  /*
+   * A picked file carries only its own path within the skill, so the bucket
+   * and skill path come from whichever skill's details are open. The manifest
+   * is stripped of its frontmatter exactly as it is on first load; every
+   * other file is shown as written.
+   */
+  const handleLoadContentFile = useCallback(async (fileId: string) => {
+    const openSkill = openSkillRef.current;
+    if (openSkill == null) return undefined;
+
+    const response = await downloadSkillFile(
+      openSkill.bucket,
+      openSkill.path,
+      fileId,
+    );
+    const text = await readSkillManifest(response);
+    if (text == null) return undefined;
+
+    return fileId === SKILL_MANIFEST_FILE
+      ? parseSkillManifest(text).body
+      : text;
+  }, []);
 
   const isPrimaryActionVisible = useCallback((item: CatalogItem) => {
     /*
@@ -1236,6 +1296,7 @@ const CatalogView: FC<Props> = ({
       onEdit={handleEdit}
       onDownload={handleDownload}
       isDownloadVisible={isDownloadVisible}
+      onLoadContentFile={handleLoadContentFile}
       onDelete={handleDelete}
       onUnshare={handleUnshare}
       isUnshareVisible={isUnshareVisible}
@@ -1299,6 +1360,13 @@ const CatalogView: FC<Props> = ({
         tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
         tabContentLabel: t(CatalogI18nKeys.DetailsTabContent),
         tabLimitsLabel: t(CatalogI18nKeys.DetailsTabLimits),
+        contentFileSelectorAriaLabel: t(
+          CatalogI18nKeys.DetailsContentFileSelectorAriaLabel,
+        ),
+        contentFileCountLabel: (count: number) =>
+          t(CatalogI18nKeys.DetailsContentFileCount, { count }),
+        contentFileLoadingLabel: t(CatalogI18nKeys.DetailsContentFileLoading),
+        contentFileErrorLabel: t(CatalogI18nKeys.DetailsContentFileError),
         primaryActionLabel: t(ButtonsI18nKeys.UseInChat),
         editActionLabel: t(ButtonsI18nKeys.Edit),
         downloadActionLabel: t(ButtonsI18nKeys.Download),

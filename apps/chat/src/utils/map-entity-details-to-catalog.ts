@@ -25,7 +25,6 @@ import type {
   ModelEndpoint,
   ModelEntityDetails,
   ModelPricing,
-  SkillEntityDetails,
   ToolsetAuthStatus,
   ToolsetEntityDetails,
   ToolsetSpecification,
@@ -47,6 +46,53 @@ const formatTokens = (n: number): string =>
 
 const formatReleaseDate = (timestampMs: number): string =>
   new Date(timestampMs).toLocaleDateString();
+
+const TOKEN_PRICING_UNIT = 'token';
+const TOKENS_PER_QUOTED_PRICE = 1_000_000;
+
+const priceFormatter = new Intl.NumberFormat(undefined, {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+});
+
+const smallPriceFormatter = new Intl.NumberFormat(undefined, {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 6,
+});
+
+const formatPrice = (value: number): string => {
+  if (value !== 0 && Math.abs(value) < 1) {
+    return smallPriceFormatter.format(value);
+  }
+  return priceFormatter.format(value);
+};
+
+/*
+ * DIAL Core quotes prices per single unit (for example `'0.000003'` per token),
+ * which is unreadable in a table, so token prices are re-quoted per 1M tokens
+ * (`$3/M tokens`) — the convention model-pricing pages use. Non-token units
+ * (for example `char_without_whitespace`) keep their per-unit price and name
+ * the unit. A missing unit is treated as tokens, DIAL Core's default.
+ */
+const formatUnitPrice = (
+  price: string | undefined,
+  unit: string | undefined,
+): string | undefined => {
+  if (price == null) return undefined;
+
+  const perUnit = Number(price);
+  if (price.trim() === '' || !Number.isFinite(perUnit)) return price;
+
+  if (unit == null || unit.toLowerCase() === TOKEN_PRICING_UNIT) {
+    return `${formatPrice(perUnit * TOKENS_PER_QUOTED_PRICE)}/M tokens`;
+  }
+
+  return `${formatPrice(perUnit)}/${unit.replace(/_/g, ' ')}`;
+};
 
 const mapEndpointSnippets = (endpoint: ModelEndpoint): CodeSnippet[] => {
   const snippets: CodeSnippet[] = [];
@@ -477,36 +523,6 @@ const mapGuardrailDetails = (
   };
 };
 
-const mapSkillDetails = (data: SkillEntityDetails): CatalogItemTabData => {
-  const sections: OverviewSection[] = [];
-
-  if (data.about != null) {
-    const { about: a } = data;
-    const specs: OverviewSection['specs'] = [];
-
-    if (a.allowedTools?.length)
-      specs.push({ label: 'Allowed tools', value: a.allowedTools.join(' · ') });
-    if (a.bundledResources?.length)
-      specs.push({
-        label: 'Bundled resources',
-        value: a.bundledResources.join(' · '),
-      });
-
-    if (specs.length > 0) sections.push({ title: 'Specification', specs });
-
-    if (a.skillPrompt != null) {
-      sections.push({
-        title: 'Context',
-        specs: [{ label: 'Skill prompt', value: a.skillPrompt }],
-      });
-    }
-  }
-
-  return {
-    overview: sections.length > 0 ? { sections } : undefined,
-  };
-};
-
 /** Converts a strongly-typed entity domain model into the lib's `CatalogItemTabData` shape. */
 export const mapEntityDetailsToCatalogDetails = (
   details: EntitySpecificDetails,
@@ -520,8 +536,6 @@ export const mapEntityDetailsToCatalogDetails = (
       return mapToolsetDetails(details.data);
     case 'GUARDRAIL':
       return mapGuardrailDetails(details.data);
-    case 'SKILL':
-      return mapSkillDetails(details.data);
   }
 };
 
@@ -605,8 +619,11 @@ const mapModelDetailsDto = (
       pricing:
         pricing != null
           ? {
-              inputTokensPrice: pricing.prompt,
-              outputTokensPrice: pricing.completion,
+              inputTokensPrice: formatUnitPrice(pricing.prompt, pricing.unit),
+              outputTokensPrice: formatUnitPrice(
+                pricing.completion,
+                pricing.unit,
+              ),
             }
           : undefined,
       api: { modelId: dto.id },

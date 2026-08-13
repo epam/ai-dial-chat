@@ -124,10 +124,24 @@ export interface CatalogItemTools {
   tools: ToolDefinition[];
 }
 
+/** One selectable file in the Content tab's file picker. */
+export interface CatalogContentFile {
+  /** Opaque id passed back to `onLoadContentFile`. Never parsed by the panel. */
+  id: string;
+  /** File name shown in the picker. */
+  name: string;
+}
+
 /** Complete data for the Content tab (long-form text entities such as prompts). */
 export interface CatalogItemPromptContent {
   /** The item's full text body, already resolved by the host. */
   content: string;
+  /** Summary shown above the body. Takes precedence over `CatalogItem.description`, for hosts whose summary is only known once details resolve. */
+  description?: string;
+  /** Files the tab can switch between. A picker is rendered above the body whenever this holds two or more entries. */
+  files?: CatalogContentFile[];
+  /** Id of the file `content` was resolved from. The picker opens on it, and reselecting it restores `content` without a reload. */
+  selectedFileId?: string;
 }
 
 /**

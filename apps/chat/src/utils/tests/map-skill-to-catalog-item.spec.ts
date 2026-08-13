@@ -7,7 +7,11 @@ import type { TFunction } from 'i18next';
 import { describe, expect, it } from 'vitest';
 import { CatalogI18nKeys } from '../../constants/translation-keys';
 import { SkillSource } from '../../types/skill';
-import { mapSkillToCatalogItem } from '../map-skill-to-catalog-item';
+import {
+  buildSkillContentFiles,
+  buildSkillOverview,
+  mapSkillToCatalogItem,
+} from '../map-skill-to-catalog-item';
 
 const LABELS: Partial<Record<string, string>> = {
   [CatalogI18nKeys.FolderPersonal]: 'Personal',
@@ -114,5 +118,205 @@ describe('mapSkillToCatalogItem', () => {
 
     expect(item.createdAt).toBe(1000);
     expect(item.updatedAt).toBe(2000);
+  });
+});
+
+const makeFile = (
+  path: string,
+  nodeType: SkillMetadataItemDtoNodeTypeEnum = SkillMetadataItemDtoNodeTypeEnum.Item,
+): SkillMetadataItemDto =>
+  makeSkill({ name: path, path, nodeType, url: `skills/my-bucket/${path}` });
+
+const readSection = (
+  overview: ReturnType<typeof buildSkillOverview>,
+  title: string,
+) => overview.sections.find((section) => section.title === title);
+
+const specificationOf = (overview: ReturnType<typeof buildSkillOverview>) =>
+  readSection(overview, CatalogI18nKeys.DetailsSkillSpecificationSection);
+
+const detailsOf = (overview: ReturnType<typeof buildSkillOverview>) =>
+  readSection(overview, CatalogI18nKeys.DetailsSkillSection);
+
+describe('buildSkillOverview', () => {
+  it('builds a Specification section from the parsed frontmatter', () => {
+    const overview = buildSkillOverview(
+      makeSkill(),
+      [],
+      {
+        whenToUse: 'For research tasks',
+        allowedTools: ['search', 'fetch'],
+        bundledResources: ['scripts/run.py'],
+      },
+      t,
+    );
+
+    expect(specificationOf(overview)?.specs).toEqual([
+      {
+        label: CatalogI18nKeys.DetailsSkillWhenToUse,
+        value: 'For research tasks',
+      },
+      {
+        label: CatalogI18nKeys.DetailsSkillAllowedTools,
+        value: 'search · fetch',
+      },
+      {
+        label: CatalogI18nKeys.DetailsSkillBundledResources,
+        value: 'scripts/run.py',
+      },
+    ]);
+  });
+
+  it('places Specification before Details', () => {
+    const overview = buildSkillOverview(
+      makeSkill(),
+      [],
+      { whenToUse: 'For research' },
+      t,
+    );
+
+    expect(overview.sections.map((section) => section.title)).toEqual([
+      CatalogI18nKeys.DetailsSkillSpecificationSection,
+      CatalogI18nKeys.DetailsSkillSection,
+    ]);
+  });
+
+  it('omits absent Specification rows rather than rendering them empty', () => {
+    const overview = buildSkillOverview(
+      makeSkill(),
+      [],
+      { allowedTools: ['search'] },
+      t,
+    );
+
+    expect(specificationOf(overview)?.specs).toHaveLength(1);
+  });
+
+  it('omits the Specification section when no frontmatter resolved', () => {
+    const overview = buildSkillOverview(makeSkill(), [], undefined, t);
+
+    expect(specificationOf(overview)).toBeUndefined();
+    expect(overview.sections).toHaveLength(1);
+  });
+
+  it('omits the Specification section when every about field is empty', () => {
+    const overview = buildSkillOverview(
+      makeSkill(),
+      [],
+      { allowedTools: [], bundledResources: [] },
+      t,
+    );
+
+    expect(specificationOf(overview)).toBeUndefined();
+  });
+
+  /* The skill prompt repeats the manifest body the Content tab already shows. */
+  it('never renders the skill prompt as a Specification row', () => {
+    const overview = buildSkillOverview(
+      makeSkill(),
+      [],
+      { skillPrompt: 'Follow the steps' },
+      t,
+    );
+
+    expect(specificationOf(overview)).toBeUndefined();
+  });
+
+  it('omits the author row when the metadata carries none', () => {
+    const overview = buildSkillOverview(makeSkill(), [], undefined, t);
+
+    expect(
+      detailsOf(overview)?.specs.some(
+        (spec) => spec.label === CatalogI18nKeys.DetailsSkillAuthor,
+      ),
+    ).toBe(false);
+  });
+
+  it('includes the author row when the metadata carries one', () => {
+    const overview = buildSkillOverview(
+      makeSkill({ author: 'ada' }),
+      [],
+      undefined,
+      t,
+    );
+
+    expect(detailsOf(overview)?.specs[0]).toEqual({
+      label: CatalogI18nKeys.DetailsSkillAuthor,
+      value: 'ada',
+    });
+  });
+
+  it('counts only files, excluding grouping folders', () => {
+    const overview = buildSkillOverview(
+      makeSkill(),
+      [
+        makeFile('SKILL.md'),
+        makeFile('scripts', SkillMetadataItemDtoNodeTypeEnum.Folder),
+        makeFile('scripts/run.py'),
+      ],
+      undefined,
+      t,
+    );
+
+    expect(
+      detailsOf(overview)?.specs.find(
+        (spec) => spec.label === CatalogI18nKeys.DetailsSkillFileCount,
+      )?.value,
+    ).toBe('2');
+  });
+
+  it('renders no per-file rows — the files live in the Content tab picker', () => {
+    const overview = buildSkillOverview(
+      makeSkill(),
+      [makeFile('SKILL.md'), makeFile('scripts/run.py')],
+      undefined,
+      t,
+    );
+
+    const labels = detailsOf(overview)?.specs.map((spec) => spec.label);
+    expect(labels).toEqual([
+      CatalogI18nKeys.DetailsSkillUpdated,
+      CatalogI18nKeys.DetailsSkillFileCount,
+    ]);
+  });
+});
+
+describe('buildSkillContentFiles', () => {
+  it('excludes grouping folders', () => {
+    const files = buildSkillContentFiles([
+      makeFile('SKILL.md'),
+      makeFile('scripts', SkillMetadataItemDtoNodeTypeEnum.Folder),
+    ]);
+
+    expect(files).toEqual([{ id: 'SKILL.md', name: 'SKILL.md' }]);
+  });
+
+  /* The manifest is the file the panel opens on, so it heads the list. */
+  it('lists the manifest first, then the rest alphabetically', () => {
+    const files = buildSkillContentFiles([
+      makeFile('scripts/run.py'),
+      makeFile('analyzer.md'),
+      makeFile('SKILL.md'),
+    ]);
+
+    expect(files.map((file) => file.id)).toEqual([
+      'SKILL.md',
+      'analyzer.md',
+      'scripts/run.py',
+    ]);
+  });
+
+  /* The id must round-trip to downloadSkillFile without being re-derived. */
+  it('uses the listing entry path verbatim as both id and name', () => {
+    const files = buildSkillContentFiles([makeFile('scripts/run.py')]);
+
+    expect(files[0]).toEqual({
+      id: 'scripts/run.py',
+      name: 'scripts/run.py',
+    });
+  });
+
+  it('returns no options for an empty listing', () => {
+    expect(buildSkillContentFiles([])).toEqual([]);
   });
 });

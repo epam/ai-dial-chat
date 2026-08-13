@@ -30,6 +30,31 @@ export const SKILL_LISTING_PAGE_SIZE = 1000;
  */
 export const SKILL_LISTING_MAX_PAGES = 10;
 
+/** Structured fields lifted from a skill manifest's frontmatter. */
+export interface SkillAboutDetails {
+  whenToUse?: string;
+  allowedTools?: string[];
+  bundledResources?: string[];
+  skillPrompt?: string;
+}
+
+/** A skill's parsed manifest details. */
+export interface SkillEntityDetails {
+  about?: SkillAboutDetails;
+}
+
+/** A `SKILL.md` split into its frontmatter fields and its prose body. */
+export interface SkillManifest {
+  /** `name` frontmatter field, when present and a string. */
+  name?: string;
+  /** `description` frontmatter field, when present and a string. */
+  description?: string;
+  /** Recognised `about.*` frontmatter fields. Absent when none resolved. */
+  about?: SkillAboutDetails;
+  /** Everything after the frontmatter fence, or the whole file when there is none. */
+  body: string;
+}
+
 /** A skill resource URL split into the bucket and the path within it. */
 export interface ParsedSkillResourceUrl {
   /** DIAL Core bucket name. */

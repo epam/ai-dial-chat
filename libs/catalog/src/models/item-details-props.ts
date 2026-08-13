@@ -41,6 +41,14 @@ export interface ItemDetailsTexts {
   overviewNoLabel?: string;
   /** "Tools" tab label. Default: `'Tools'`. */
   tabToolsLabel?: string;
+  /** Accessible label for the Content tab's file picker. Default: `'Select file'`. */
+  contentFileSelectorAriaLabel?: string;
+  /** Returns the file-count text shown beside the picker. Default: ``(count) => `${count} files` ``. */
+  contentFileCountLabel?: (count: number) => string;
+  /** Status text announced while a picked file's content loads. Default: `'Loading file'`. */
+  contentFileLoadingLabel?: string;
+  /** Body text shown when a picked file cannot be read. Default: `'Failed to load this file.'`. */
+  contentFileErrorLabel?: string;
   /** Label on the "Featured" tag chip shown when the entity is featured. Default: `'Featured'`. */
   featuredLabel?: string;
   /** Primary action button label. Default: `'Use in chat'`. */
@@ -192,6 +200,8 @@ export interface ItemDetailsTypography {
   contentHeadingClassName?: string;
   /** Typography class for the description body text. Default: `'dial-small-text'`. */
   contentClassName?: string;
+  /** Typography class for the file-count text beside the Content tab's file picker. Default: `'dial-tiny-text'`. */
+  contentFileCountClassName?: string;
   /** Typography class for Overview section headings. Default: `'dial-caption-text'`. */
   overviewSectionClassName?: string;
   /** Typography class for spec row labels (left column). Default: `'dial-small-semi-text'`. */
@@ -244,6 +254,8 @@ export interface ItemDetailsColors {
   contentText?: string;
   /** Text color of a `{{placeholder}}` token in the Content tab's body. Fallback: `--text-prompt-parameter`. */
   variableText?: string;
+  /** File-count text color beside the Content tab's file picker. Fallback: `--text-secondary`. */
+  contentFileCountText?: string;
   /** Heading color of the API section. Fallback: `--text-secondary`. */
   apiHeadingText?: string;
   /** Divider color between tool entries. Fallback: `--stroke-tertiary`. */
@@ -379,6 +391,13 @@ export interface DetailsPanelProps {
    * (visible for every item) whenever `onDownload` is supplied.
    */
   isDownloadVisible?: (item: CatalogItem) => boolean;
+  /**
+   * Resolves the text of a file picked in the Content tab, given its opaque
+   * `id`. The panel shows a loading state while it is pending and renders the
+   * resolved text as the body; resolving `undefined` or rejecting leaves the
+   * body showing `texts.contentFileErrorLabel`.
+   */
+  onLoadContentFile?: (fileId: string) => Promise<string | undefined>;
   /**
    * Called immediately when the "Delete" button is clicked, with no
    * confirmation step. Shown only when the item's `isMyApp` is `true` and

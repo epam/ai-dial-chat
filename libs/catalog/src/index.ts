@@ -29,6 +29,7 @@ export type {
 export type { EndpointOption } from './models/item-details-data';
 export type {
   ApiResource,
+  CatalogContentFile,
   CatalogItemApiDetails,
   CatalogItemDetailsFetchResult,
   CatalogItemLimits,

@@ -201,6 +201,49 @@ The lib never learns where a prompt comes from: the body arrives already
 resolved, and the host decides every prompt-specific action through the
 existing `onFetchDetails` / `onEdit` / `onUseInChat` props.
 
+`promptContent.description` is an optional summary that takes precedence over
+the item's own `description` when rendering the line above the body. It exists
+for hosts whose summary is only known once details resolve — an entity whose
+list metadata carries no description can still show one, without the tab row
+changing shape mid-interaction.
+
+### Multi-file content
+
+An item whose body is one of several files supplies `promptContent.files` and
+the `selectedFileId` the body belongs to. The Content tab then renders a file
+picker above the body, alongside a file count. **The picker appears only when
+there are two or more files** — a single file is the body itself, so a picker
+with one option is noise.
+
+Picking a different file calls `onLoadContentFile` with that file's `id`
+verbatim — the lib never parses it — and renders whatever text it resolves.
+Reselecting the file named by `selectedFileId` restores the original
+`content` without a request. A rejection, or a resolved `undefined`, renders
+`texts.contentFileErrorLabel`. The picked file is dropped whenever the panel
+switches item or the body is re-fetched.
+
+```tsx
+<DetailsPanel
+  item={{
+    ...skillItem,
+    details: {
+      promptContent: {
+        content: '# Instructions',
+        selectedFileId: 'SKILL.md',
+        files: [
+          { id: 'SKILL.md', name: 'SKILL.md' },
+          { id: 'scripts/run.py', name: 'scripts/run.py' },
+        ],
+      },
+    },
+  }}
+  isOpen
+  onClose={handleClose}
+  onLoadContentFile={handleLoadContentFile}
+  texts={{ contentFileCountLabel: (count) => `${count} files` }}
+/>
+```
+
 ### Download
 
 `onDownload` adds a "Download" entry to the details panel's Manage menu. The lib

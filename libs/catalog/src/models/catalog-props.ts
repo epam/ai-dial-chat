@@ -139,6 +139,12 @@ export interface CatalogProps {
    */
   isDownloadVisible?: (item: CatalogItem) => boolean;
   /**
+   * Resolves the text of a file picked in the details panel's Content tab,
+   * given its opaque `id`. The panel shows a loading state while it is
+   * pending and renders the resolved text as the body.
+   */
+  onLoadContentFile?: (fileId: string) => Promise<string | undefined>;
+  /**
    * Called immediately when the "Delete" button in the details panel is
    * clicked, with no confirmation step. Shown only when the item's `isMyApp`
    * is `true` and its `type` is `Application` or `Toolset`. May return a

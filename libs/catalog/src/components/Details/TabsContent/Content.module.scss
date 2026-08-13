@@ -3,6 +3,10 @@
     var(--cat-details-divider, var(--stroke-tertiary, #e0e6f0));
 }
 
+.fileCount {
+  color: var(--cat-details-file-count-text, var(--text-secondary, #57647a));
+}
+
 .body {
   color: var(--cat-details-content-text, var(--text-primary, #161b2d));
 

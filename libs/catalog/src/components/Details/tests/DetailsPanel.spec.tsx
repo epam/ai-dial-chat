@@ -55,6 +55,26 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     ariaLabel: string;
   }) => <button onClick={onClose}>{ariaLabel}</button>,
   Skeleton: () => <div>skeleton</div>,
+  InlineSelect: ({
+    items,
+    selectedKey,
+    onSelect,
+    ariaLabel,
+  }: {
+    items: { key: string; label: string }[];
+    selectedKey?: string;
+    onSelect?: (item: { key: string; label: string }) => void;
+    ariaLabel?: string;
+  }) => (
+    <div aria-label={ariaLabel}>
+      <span>selected:{selectedKey}</span>
+      {items.map((option) => (
+        <button key={option.key} onClick={() => onSelect?.(option)}>
+          pick {option.label}
+        </button>
+      ))}
+    </div>
+  ),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   ElementSize: { Standard: 'standard' },
   Spinner: () => <svg />,
@@ -442,6 +462,159 @@ describe('DetailsPanel — Content tab', () => {
     ).toBe('Details');
     /* Overview shows only as a tab button, so Details is still the active tab. */
     expect(screen.getAllByText('Overview')).toHaveLength(1);
+  });
+
+  it('prefers the fetched promptContent description over the item description', () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Skill,
+        description: 'stale list description',
+        details: {
+          promptContent: {
+            content: '# Body',
+            description: 'Finds and cites sources',
+          },
+        },
+      }),
+    });
+
+    expect(screen.getByText('Finds and cites sources')).toBeTruthy();
+    expect(screen.queryByText('stale list description')).toBeNull();
+  });
+
+  it('falls back to the item description when promptContent carries none', () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Prompt,
+        description: 'A prompt summary',
+        details: { promptContent: { content: 'Summarize:' } },
+      }),
+    });
+
+    expect(screen.getByText('A prompt summary')).toBeTruthy();
+  });
+});
+
+describe('DetailsPanel — Content file picker', () => {
+  const files = [
+    { id: 'SKILL.md', name: 'SKILL.md' },
+    { id: 'analyzer.md', name: 'analyzer.md' },
+  ];
+
+  const skillWithFiles = () =>
+    makeItem({
+      type: CatalogEntityType.Skill,
+      details: {
+        promptContent: {
+          content: '# Manifest body',
+          files,
+          selectedFileId: 'SKILL.md',
+        },
+      },
+    });
+
+  it('loads a picked file and shows it as the body', async () => {
+    const onLoadContentFile = vi.fn().mockResolvedValue('# Analyzer body');
+    renderPanel({ item: skillWithFiles(), onLoadContentFile });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'pick analyzer.md' }),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', { name: 'Analyzer body' }),
+      ).toBeTruthy(),
+    );
+    expect(onLoadContentFile).toHaveBeenCalledWith('analyzer.md');
+    expect(screen.getByText('selected:analyzer.md')).toBeTruthy();
+  });
+
+  /* The base body is already in hand — reselecting it must not re-request. */
+  it('restores the base body without a request when the base file is reselected', async () => {
+    const onLoadContentFile = vi.fn().mockResolvedValue('# Analyzer body');
+    renderPanel({ item: skillWithFiles(), onLoadContentFile });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'pick analyzer.md' }),
+    );
+    await waitFor(() => expect(onLoadContentFile).toHaveBeenCalledOnce());
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'pick SKILL.md' }),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', { name: 'Manifest body' }),
+      ).toBeTruthy(),
+    );
+    expect(onLoadContentFile).toHaveBeenCalledOnce();
+  });
+
+  it('shows the error text when a picked file cannot be read', async () => {
+    const onLoadContentFile = vi.fn().mockRejectedValue(new Error('404'));
+    renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFile,
+      texts: { contentFileErrorLabel: 'Failed to load this file.' },
+    });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'pick analyzer.md' }),
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText('Failed to load this file.')).toBeTruthy(),
+    );
+  });
+
+  it('shows the error text when a picked file resolves undefined', async () => {
+    const onLoadContentFile = vi.fn().mockResolvedValue(undefined);
+    renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFile,
+      texts: { contentFileErrorLabel: 'Failed to load this file.' },
+    });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'pick analyzer.md' }),
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText('Failed to load this file.')).toBeTruthy(),
+    );
+  });
+
+  it('drops a picked file when the panel switches to another item', async () => {
+    const onLoadContentFile = vi.fn().mockResolvedValue('# Analyzer body');
+    const { rerender } = renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFile,
+    });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'pick analyzer.md' }),
+    );
+    await waitFor(() =>
+      expect(screen.getByText('selected:analyzer.md')).toBeTruthy(),
+    );
+
+    rerender(
+      <DetailsPanel
+        item={{ ...skillWithFiles(), id: 'other-skill' }}
+        isOpen
+        onClose={vi.fn()}
+        publishFolderItems={folderItems}
+        onPublish={vi.fn().mockResolvedValue(undefined)}
+        onLoadContentFile={onLoadContentFile}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText('selected:SKILL.md')).toBeTruthy(),
+    );
+    expect(screen.getByRole('heading', { name: 'Manifest body' })).toBeTruthy();
   });
 });
 

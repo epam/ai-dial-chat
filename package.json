@@ -95,8 +95,7 @@
     "vite-plugin-svgr": "^5.2.0",
     "vitest": "~4.1.0",
     "webpack-cli": "^5.1.4",
-    "webpack-node-externals": "^3.0.0",
-    "yaml": "2.8.3"
+    "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
     "@epam/ai-dial-react-file-manager": "0.1.0-dev.21",
@@ -151,7 +150,8 @@
     "rxjs": "^7.8.2",
     "swagger-ui-express": "^5.0.1",
     "tailwind-merge": "^3.6.0",
-    "unified": "^11.0.5"
+    "unified": "^11.0.5",
+    "yaml": "2.8.3"
   },
   "overrides": {
     "axios": "1.19.0",
