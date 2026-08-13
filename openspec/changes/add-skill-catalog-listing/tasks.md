@@ -62,5 +62,5 @@
 - [x] 8.1 Run `npm exec nx test chat`, `npm exec nx lint chat`, and `npm exec nx build chat`
 - [x] 8.2 Run `npm exec nx affected --target=test --base=origin/development-1.0` and confirm the catalog, overlay, and chat-api projects are green
 - [ ] 8.3 Manually verify against a running stack: Skills tab lists personal and organisation skills, folder labels match the grouping-folder structure, search and sort work on skills, the details panel opens on Content with the manifest and an Overview file list, starring persists across a reload, and turning the flag off restores today's catalog exactly
-- [ ] 8.4 Run the five-axis review from `./.claude/skills/code-review-and-quality/SKILL.md` over the diff, paying explicit attention to the `libs/*` isolation rule for the `DetailsPanel` change
+- [x] 8.4 Run the five-axis review from `./.claude/skills/code-review-and-quality/SKILL.md` over the diff, paying explicit attention to the `libs/*` isolation rule for the `DetailsPanel` change
 - [ ] 8.5 Resolve design.md's open questions before merge: whether the `public` skills bucket exists in the target deployments (drop the branch if it never will), and what `SKILL_LISTING_MAX_PAGES` should ship as
