@@ -130,11 +130,13 @@ describe('OverlayFeature', () => {
 
   it('does not include the renamed marketplace keys', () => {
     const values = Object.values(OverlayFeature) as string[];
-    ['marketplace', 'marketplace-hide-my-apps', 'marketplace-table-view'].forEach(
-      (key) => {
-        expect(values).not.toContain(key);
-      },
-    );
+    [
+      'marketplace',
+      'marketplace-hide-my-apps',
+      'marketplace-table-view',
+    ].forEach((key) => {
+      expect(values).not.toContain(key);
+    });
   });
 
   it('does not include keys whose behavior became unconditional', () => {
