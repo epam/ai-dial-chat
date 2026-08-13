@@ -86,6 +86,7 @@ export const ReviewEntityDialog = {
   completionUrl: '[data-qa="app-completion-url"]',
   externalUrlLabel: '[data-qa="app-external-url-label"]',
   externalUrl: '[data-qa="app-external-url"]',
+  editApplicationButton: '[data-qa="admin-edit-application"]',
   endpoint: '[data-qa="toolset-endpoint"]',
   transport: '[data-qa="toolset-transport"]',
   authType: '[data-qa="toolset-authentication-type"]',
@@ -105,6 +106,7 @@ export const SettingsTooltip = {
   assistantInfo: '[data-qa="assistant-info"]',
   promptInfo: '[data-qa="prompt-info"]',
   tempInfo: '[data-qa="temp-info"]',
+  responseFormatInfo: '[data-qa="response-format"]',
 };
 
 export const TooltipSelector = {
@@ -223,6 +225,7 @@ export const ChatSettingsModalSelectors = {
   systemPrompt: '[data-qa="system-prompt"]',
   temperatureSlider: '[data-qa="temp-slider"]',
   slider: '.temperature-slider',
+  responseFormatContainer: '[data-qa="response-format-container"]',
 };
 
 export const TalkToAgentDialogSelectors = {
@@ -318,7 +321,7 @@ export const AddEntityGeneralInfoFormSelector = {
   nextButton: '[data-qa="save-entity-general-info"]',
   selectedTopicPills: '[class*="-multiValue"]', // Selector for the selected topic pills within the container
   selectedTopicPillRemoveIcon: (topicName: string) =>
-    `[role="button"][aria-label="Remove ${topicName}"]`, // Selector for the 'x' icon within the pill
+    `button[aria-label="Remove ${topicName}"]`, // Selector for the 'x' icon within the pill
   clearAllTopicsButton: '[data-qa="clear-dropdown-selection"]', // Selector for the main clear button within the container
 };
 
@@ -385,7 +388,8 @@ export const AddQuickApp2SettingsFormSelector = {
   chipName: '[data-qa="chip-name"]',
   chipVersion: '[data-qa="chip-version"]',
   chipRemoveButtonLabel: 'Remove item', // aria-label of the chip remove button
-  errorChipClass: 'bg-error', // class on a not-available (red) chip
+  errorChipClass: 'bg-error', // class on a not-available or logged-out (red) chip
+  activeChipClass: 'bg-accent-primary-alpha', // class on a healthy (blue) chip
 
   // Code Interpreter toggle
   codeInterpreterToggle: '[data-qa="toggle-switch"]',

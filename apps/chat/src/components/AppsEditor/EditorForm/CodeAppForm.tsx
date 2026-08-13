@@ -32,11 +32,12 @@ import {
 } from '@/src/constants/applications';
 import { CODE_APPS_ENDPOINTS } from '@/src/constants/code-apps';
 import { CommonI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
+import { getPendingAttachmentTypeError } from '@/src/constants/validation-helpers';
 
 import {
   CodeAppForm as CodeAppFormType,
   MANDATORY_FIELD_PLACEHOLDER,
-  getAttachmentTypeErrorHandlers,
+  getPendingAttachmentTypeProps,
 } from '@/src/components/AppsEditor/form';
 import { FormCodeEditor } from '@/src/components/Common/ApplicationWizard/CodeAppView/FormCodeEditor';
 import { RuntimeVersionSelector } from '@/src/components/Common/ApplicationWizard/CodeAppView/RuntimeVersionSelector';
@@ -88,11 +89,17 @@ export const CodeAppForm = () => {
   const folders = useAppSelector(FilesSelectors.selectFolders);
   const publicationUrl = publicationUrlQuery.toString();
 
-  const { control, setError, clearErrors, setValue } =
-    useFormContext<CodeAppFormType>();
+  const { control, clearErrors, setValue } = useFormContext<CodeAppFormType>();
   const { errors } = useFormState<CodeAppFormType>({ control });
   const sources = useWatch<CodeAppFormType, 'sources'>({
     name: 'sources',
+    control,
+  });
+  const pendingAttachmentType = useWatch<
+    CodeAppFormType,
+    'pendingInputAttachmentType'
+  >({
+    name: 'pendingInputAttachmentType',
     control,
   });
   const filesLoaded = useWatch<CodeAppFormType, 'filesLoaded'>({
@@ -143,10 +150,13 @@ export const CodeAppForm = () => {
             hasDeleteAll
             hideSuggestions
             itemHeightClassName="h-[31px]"
-            error={errors.inputAttachmentTypes?.message}
+            error={
+              errors.inputAttachmentTypes?.message ??
+              getPendingAttachmentTypeError(pendingAttachmentType)
+            }
             disabled={isAppPublic}
             tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
-            {...getAttachmentTypeErrorHandlers(setError, clearErrors)}
+            {...getPendingAttachmentTypeProps(pendingAttachmentType, setValue)}
           />
         )}
       />

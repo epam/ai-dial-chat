@@ -45,6 +45,7 @@ import {
   Toast,
   ToolsetEditorContainer,
   ToolsetEditorViewForm,
+  ToolsetLoginEventsModal,
   ToolsetLoginModal,
   TooltipPortal,
   VariableModalDialog,
@@ -73,6 +74,7 @@ import {
   PublishingApprovalModalAssertion,
   PublishingRequestDialogAssertion,
   TalkToAgentDialogAssertion,
+  ToastAssertion,
   TooltipAssertion,
   TooltipPortalAssertion,
   VariableModalAssertion,
@@ -91,9 +93,11 @@ import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ToolsetApiHelper } from '@/src/testData/api';
+import { ModelApiHelper } from '@/src/testData/api/modelApiHelper';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
+import { ToolsetSignInMockHelper } from '@/src/testData/toolsets/toolsetSignInMockHelper';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { ChatSettingsTooltip } from '@/src/ui/webElements/chatSettingsTooltip';
 import {
@@ -221,6 +225,8 @@ const dialAdminTest = dialTest.extend<{
   adminFileManager: FileManager;
   adminFileManagerToolbar: FileManagerToolbar;
   adminFileManagerGrid: FileManagerGrid;
+  adminFileManagerCollapsibleSidebar: FileManagerCollapsibleSidebar;
+  adminFileManagerFoldersTree: FoldersTree;
   adminFileManagerGridAssertion: FileManagerGridAssertion;
   adminFileManagerModal: FileManagerModal;
   adminFileManagerModalManager: FileManager;
@@ -263,6 +269,10 @@ const dialAdminTest = dialTest.extend<{
   adminEntityEditorGeneralFormAssertion: EntityEditorGeneralFormAssertion;
   adminToolsetLoginModal: ToolsetLoginModal;
   adminToolsetLoginModalAssertion: ToolsetLoginModalAssertion;
+  adminToolsetLoginEventsModal: ToolsetLoginEventsModal;
+  adminToolsetSignInMock: ToolsetSignInMockHelper;
+  adminModelApiHelper: ModelApiHelper;
+  adminToastAssertion: ToastAssertion;
 }>({
   adminRenameConversationModal: async ({ adminPage }, use) => {
     const adminRenameConversationModal = new RenameConversationModal(adminPage);
@@ -875,6 +885,19 @@ const dialAdminTest = dialTest.extend<{
     const adminFileManagerGrid = adminFileManager.getFileManagerGrid();
     await use(adminFileManagerGrid);
   },
+  adminFileManagerCollapsibleSidebar: async ({ adminFileManager }, use) => {
+    const adminFileManagerCollapsibleSidebar =
+      adminFileManager.getFileManagerCollapsibleSidebar();
+    await use(adminFileManagerCollapsibleSidebar);
+  },
+  adminFileManagerFoldersTree: async (
+    { adminFileManagerCollapsibleSidebar },
+    use,
+  ) => {
+    const adminFileManagerFoldersTree =
+      adminFileManagerCollapsibleSidebar.getFoldersTree();
+    await use(adminFileManagerFoldersTree);
+  },
   adminFileManagerGridAssertion: async ({ adminFileManagerGrid }, use) => {
     const adminFileManagerGridAssertion = new FileManagerGridAssertion(
       adminFileManagerGrid,
@@ -1089,6 +1112,22 @@ const dialAdminTest = dialTest.extend<{
       adminToolsetLoginModal,
     );
     await use(adminToolsetLoginModalAssertion);
+  },
+  adminToolsetLoginEventsModal: async ({ adminPage }, use) => {
+    const adminToolsetLoginEventsModal = new ToolsetLoginEventsModal(adminPage);
+    await use(adminToolsetLoginEventsModal);
+  },
+  adminToolsetSignInMock: async ({ adminPage }, use) => {
+    const adminToolsetSignInMock = new ToolsetSignInMockHelper(adminPage);
+    await use(adminToolsetSignInMock);
+  },
+  adminModelApiHelper: async ({ adminUserRequestContext }, use) => {
+    const adminModelApiHelper = new ModelApiHelper(adminUserRequestContext);
+    await use(adminModelApiHelper);
+  },
+  adminToastAssertion: async ({ adminToast }, use) => {
+    const adminToastAssertion = new ToastAssertion(adminToast);
+    await use(adminToastAssertion);
   },
 });
 

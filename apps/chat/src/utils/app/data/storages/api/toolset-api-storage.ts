@@ -14,14 +14,14 @@ import { DEFAULT_VERSION } from '@/src/constants/publication';
 
 import { ApiEntityStorage } from './api-entity-storage';
 
-import { Entity, Toolset } from '@epam/ai-dial-shared';
+import { Toolset } from '@epam/ai-dial-shared';
 
 export class ToolsetApiStorage extends ApiEntityStorage<
   ToolsetInfo,
   ToolsetModel,
   Toolset
 > {
-  mergeGetResult(info: Entity, entity: Toolset): ToolsetModel {
+  mergeGetResult(info: ToolsetInfo, entity: Toolset): ToolsetModel {
     return {
       ...info,
       ...convertToolsetFromApi(entity),

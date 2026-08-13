@@ -37,7 +37,6 @@ dialTest(
     entityEditorGeneralForm,
     confirmationDialog,
     toolsetApiHelper,
-    itemApiHelper,
     toolsetApiAuthenticationAssertion,
     page,
   }) => {
@@ -51,7 +50,6 @@ dialTest(
     const clientSecret = GeneratorUtil.randomString(7);
     const updatedVersion = GeneratorUtil.randomEntityVersion();
     let updatedId: string;
-    let realToolset: Toolset;
     let oauthMockHelper: OAuthMockHelper;
     let initialToolset: Toolset;
     let loginPopup: Page;
@@ -288,9 +286,6 @@ dialTest(
     );
 
     await dialTest.step('Update toolset version and click Next', async () => {
-      //get real toolset object from BE
-      realToolset = await itemApiHelper.getItem<Toolset>(initialToolset.id!);
-
       //intercept toolset routes with a new version
       updatedId = initialToolset.id!.replace(
         toolsetEntity.version,
@@ -311,9 +306,6 @@ dialTest(
       await entityEditorPage.waitForPageLoadedForEdit(
         EntityEditorToolsetTypes.Toolset,
       );
-      //update real toolset version
-      realToolset.display_version = updatedVersion;
-      await toolsetApiHelper.createToolset(realToolset);
     });
 
     await dialTest.step(

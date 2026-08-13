@@ -16,13 +16,15 @@ import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useSyncXScroll } from '@/src/hooks/useSyncXScroll';
 
+import { compareLocalizedNames } from '@/src/utils/app/marketplace-localization';
+
 import { ScreenState } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 import { ToolsetModel } from '@/src/types/toolsets';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors } from '@/src/store/selectors';
+import { MarketplaceSelectors, UISelectors } from '@/src/store/selectors';
 
 import {
   ALL_APPS_HEADER_SENTINEL,
@@ -130,6 +132,7 @@ export const MarketplaceEntitiesTable: React.FC<
   const currentParentRef = wrapperRefs.current?.parentRef.current ?? null;
 
   const tableSort = useAppSelector(MarketplaceSelectors.selectTableSort);
+  const locale = useAppSelector(UISelectors.selectLocale);
 
   const selectedEntitiesTab = useAppSelector(
     MarketplaceSelectors.selectSelectedEntitiesTab,
@@ -160,6 +163,13 @@ export const MarketplaceEntitiesTable: React.FC<
       items: T[],
       sortField: keyof T,
     ) => {
+      if (sortField === 'name') {
+        return [...items].sort((a, b) => {
+          const result = compareLocalizedNames(locale, a.name, b.name);
+          return tableSort.order === 'desc' ? -result : result;
+        });
+      }
+
       return orderBy(
         items,
         [
@@ -209,6 +219,7 @@ export const MarketplaceEntitiesTable: React.FC<
     entities,
     featuredEntities,
     isAgentsTab,
+    locale,
     suggestedResults,
     tableSort.column,
     tableSort.order,

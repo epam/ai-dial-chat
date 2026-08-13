@@ -1,4 +1,9 @@
-import { parseLocalizedDescription } from '@/src/utils/app/application';
+import { LocalesService } from '@/src/utils/app/data/locales-service';
+import {
+  getEntityLocals,
+  getLocalizedEntityIdName,
+  parseLocalizedField,
+} from '@/src/utils/app/marketplace-localization';
 import {
   getStorageSafeUniqueToolsetName,
   isToolsetSignedIn,
@@ -156,7 +161,7 @@ export const getDefaultLoginFormData = ({
         tokenEndpoint: toolset?.authSettings?.tokenEndpoint ?? '',
         tokenEndpointAuthMethod:
           toolset?.authSettings?.tokenEndpointAuthMethod ??
-          TokenEndpointAuthMethod.ClientSecretPost,
+          TokenEndpointAuthMethod.ClientSecretBasic,
         withLogin:
           !prevData &&
           toolset?.authSettings?.clientSecret &&
@@ -180,18 +185,16 @@ export const getDefaultFormData = ({
   toolsets,
   prevData,
   isAdminReview,
-  locale,
 }: {
   toolset?: ToolsetModel;
   toolsets?: ToolsetModel[];
   prevData?: ToolsetEditorForm;
   isAdminReview?: boolean;
-  locale: string;
 }): ToolsetEditorForm => {
   return {
     name:
-      toolset?.name ??
-      getStorageSafeUniqueToolsetName({
+      getLocalizedEntityIdName(toolset?.name) ||
+      (getStorageSafeUniqueToolsetName({
         toolset: {
           name: '',
           version: toolset?.version ?? DEFAULT_VERSION,
@@ -199,16 +202,23 @@ export const getDefaultFormData = ({
           id: toolset?.id,
         },
         defaultName: DEFAULT_TOOLSET_NAME,
-        existingNames: (toolsets ?? []).map((t) => t.name),
+        existingNames: (toolsets ?? []).map((t) =>
+          getLocalizedEntityIdName(t.name),
+        ),
       }) ??
-      DEFAULT_TOOLSET_NAME,
+        DEFAULT_TOOLSET_NAME),
     endpoint: toolset ? (toolset.endpoint ?? '') : ENDPOINT_PLACEHOLDER,
     protocol: toolset?.transport ?? ToolsetTransportType.HTTP,
-    description: parseLocalizedDescription(locale, toolset?.description),
+    description: parseLocalizedField(
+      LocalesService.getPrimaryLocale(),
+      toolset?.description,
+      true,
+    ),
     allowedTools: toolset?.allowedTools ?? [],
     iconUrl: toolset?.iconUrl ?? '',
     version: toolset ? (toolset.version ?? '') : DEFAULT_VERSION,
     topics: toolset?.topics ?? [],
+    locales: getEntityLocals(toolset, true),
 
     ...getDefaultLoginFormData({
       authenticationType:

@@ -894,7 +894,9 @@ dialTest(
             .getTemperatureSlider()
             .setTemperature(secondUpdatedTemp);
         }
-        await conversationSettingsModal.applyChangesButton.click();
+        // neither side's setting change above is guaranteed (both are
+        // conditional on model capabilities) — no PUT is guaranteed to fire
+        await conversationSettingsModal.applyChanges({ waitForUpdate: false });
       },
     );
 

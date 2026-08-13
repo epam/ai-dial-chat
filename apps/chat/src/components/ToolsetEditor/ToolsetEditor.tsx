@@ -3,7 +3,9 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
+import { LocalesService } from '@/src/utils/app/data/locales-service';
 import { getValidFormFields } from '@/src/utils/app/forms';
+import { getEntityPayloadFromLocals } from '@/src/utils/app/marketplace-localization';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isTruthyQuery } from '@/src/utils/app/route';
 import { getToolsetPayload, isToolsetSignedIn } from '@/src/utils/app/toolsets';
@@ -12,7 +14,6 @@ import { ToolsetEditorSteps } from '@/src/types/toolsets';
 
 import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/selectors';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
@@ -41,7 +42,6 @@ export const ToolsetEditor = () => {
   } = router.query;
   const isCreatingToolset = !idQuery || isTruthyQuery(isCreating);
 
-  const locale = useAppSelector(UISelectors.selectLocale);
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
   const toolsets = useAppSelector(ToolsetSelectors.selectToolsets);
   const editorStep = useAppSelector(ToolsetSelectors.selectEditorStep);
@@ -60,14 +60,13 @@ export const ToolsetEditor = () => {
       toolset: toolsetDetails,
       toolsets,
       isAdminReview,
-      locale,
     }),
     mode: 'onChange',
     reValidateMode: 'onChange',
     resolver: zodResolver(ToolsetEditorFormSchema),
   });
   const lastSubmittedValuesRef = useRef<ToolsetEditorForm>(
-    getDefaultFormData({ toolset: toolsetDetails, toolsets, locale }),
+    getDefaultFormData({ toolset: toolsetDetails, toolsets }),
   );
 
   const isDirty = formMethods.formState.isDirty;
@@ -75,14 +74,16 @@ export const ToolsetEditor = () => {
 
   const submitHandler = useCallback(
     (data: ToolsetEditorForm) => {
+      const { name, description } = getEntityPayloadFromLocals(data.locales);
+      const primaryLocale = LocalesService.getPrimaryLocale();
       const payloadToolset = getToolsetPayload(
         {
-          name: data.name,
+          name: { ...name, [primaryLocale]: data.name },
           endpoint:
             data.endpoint === ENDPOINT_PLACEHOLDER ? '' : data.endpoint.trim(),
           iconUrl: data.iconUrl,
           transport: data.protocol,
-          description: data.description,
+          description: { ...description, [primaryLocale]: data.description },
           topics: data.topics,
           allowedTools: data.allowedTools,
           version: data.version,
@@ -128,10 +129,9 @@ export const ToolsetEditor = () => {
       });
       lastSubmittedValuesRef.current = getDefaultFormData({
         toolset: payloadToolset,
-        locale,
       });
     },
-    [dispatch, formMethods, isCreatingToolset, toolsetDetails, locale],
+    [dispatch, formMethods, isCreatingToolset, toolsetDetails],
   );
 
   const handleSubmit = useCallback(

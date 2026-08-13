@@ -261,31 +261,30 @@ export class Chat extends BaseElement {
     waitForAnswer = true,
   ) {
     await this.addModelToWorkspace();
-    const apiPromises = [];
     const requestPromise = this.waitForRequestSent(message);
-    apiPromises.push(requestPromise);
-    if (waitForAnswer) {
-      const conversRespPromise = this.page.waitForResponse(
-        (resp) =>
-          resp.request().method() === 'PUT' &&
-          resp.url().includes(API.conversationHost),
-      );
-      const unsubscrRespPromise = this.page.waitForResponse(
-        (r) => r.url().includes(API.unsubscribeHost()) && r.ok(),
-      );
-      apiPromises.push(conversRespPromise);
-      apiPromises.push(unsubscrRespPromise);
-    }
+    const conversRespPromise = waitForAnswer
+      ? this.page.waitForResponse(
+          (resp) =>
+            resp.request().method() === 'PUT' &&
+            resp.url().includes(API.conversationHost),
+        )
+      : undefined;
+    const unsubscrRespPromise = waitForAnswer
+      ? this.page.waitForResponse(
+          (r) => r.url().includes(API.unsubscribeHost()) && r.ok(),
+        )
+      : undefined;
+
     await sendMethod();
-    let request;
-    for (let i = 0; i < apiPromises.length; i++) {
-      const resolvedPromise = await apiPromises[i];
-      if (i === 0) {
-        request = resolvedPromise as Request;
-      }
-    }
+    const completionRequest = await requestPromise;
+    const conversationUpdateRequest = (await conversRespPromise)?.request();
+    await unsubscrRespPromise;
+
     await this.waitForResponse(waitForAnswer);
-    return request?.postDataJSON();
+    return {
+      completionRequest: completionRequest?.postDataJSON(),
+      conversationUpdateRequest: conversationUpdateRequest?.postDataJSON(),
+    };
   }
 
   public async sendRequestWithButton(message?: string, waitForAnswer = true) {
@@ -308,13 +307,13 @@ export class Chat extends BaseElement {
     const updateResponsePromise = this.page.waitForResponse(
       (resp) => resp.request().method() === 'PUT',
     );
-    const request = this.sendRequest(
+    const requests = this.sendRequest(
       undefined,
       () => this.getChatMessages().saveAndSubmit.click(),
       waitForAnswer,
     );
     await updateResponsePromise;
-    return request;
+    return requests;
   }
 
   public async playNextChatMessage(waitForResponse = true) {

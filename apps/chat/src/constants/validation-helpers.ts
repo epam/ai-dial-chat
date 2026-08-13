@@ -62,6 +62,18 @@ export const getEntityNameSchema = (options: {
       formErrors.noDotInTheStart(options.name),
     );
 
+export const EntityLocalesSchema = zodValidation.array(
+  zodValidation.object({
+    locale: zodValidation.string(),
+    name: getEntityNameSchema({
+      name: 'Name',
+      checkDotsInTheEnd: true,
+      skipMaxBytesCheck: true,
+    }),
+    description: zodValidation.string(),
+  }),
+);
+
 export const MarketplaceEntityBaseSchema = zodValidation
   .object({
     name: getEntityNameSchema({
@@ -77,6 +89,7 @@ export const MarketplaceEntityBaseSchema = zodValidation
     description: zodValidation.string(),
     iconUrl: zodValidation.string(),
     topics: zodValidation.array(zodValidation.string()),
+    locales: EntityLocalesSchema,
   })
   .superRefine((data, ctx) => {
     const apiKey = getMarketplaceEntityApiKey({
@@ -94,12 +107,51 @@ export const MarketplaceEntityBaseSchema = zodValidation
     }
   });
 
+export const MIME_FORMAT_ERROR = 'Please match the MIME format';
+
 export const AttachmentTypesSchema = zodValidation
   .array(zodValidation.string())
   .refine(
     (types) => types.every((t) => MIME_FORMAT_REGEX.test(t)),
-    'Please match the MIME format',
+    MIME_FORMAT_ERROR,
   );
+
+/**
+ * A MIME type typed into the attachment types combobox but not added to the
+ * list yet. It is kept in the form state so that it survives switching editor
+ * steps and so that the form stays invalid while it cannot be added.
+ */
+export const PendingAttachmentTypeSchema = zodValidation.string();
+
+/**
+ * The error of the attachment type that is being typed. The field shows it
+ * directly instead of reading it from the form errors: the value is validated
+ * by a cross field rule, and react-hook-form only refreshes the errors of the
+ * field being changed, so a rule reported on another field would stay hidden
+ * until the whole form is validated.
+ */
+export const getPendingAttachmentTypeError = (
+  pendingInputAttachmentType?: string,
+) => {
+  const pendingType = pendingInputAttachmentType?.trim();
+
+  return pendingType && !MIME_FORMAT_REGEX.test(pendingType)
+    ? MIME_FORMAT_ERROR
+    : undefined;
+};
+
+export const refinePendingAttachmentType = (
+  data: { pendingInputAttachmentType?: string },
+  ctx: zodValidation.RefinementCtx,
+) => {
+  if (getPendingAttachmentTypeError(data.pendingInputAttachmentType)) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['inputAttachmentTypes'],
+      message: MIME_FORMAT_ERROR,
+    });
+  }
+};
 
 export const MaxInputAttachmentsSchema = zodValidation.coerce
   .number<number>()

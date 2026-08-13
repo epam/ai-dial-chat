@@ -8,6 +8,7 @@ import {
 
 import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import {
+  ToolsetAuthErrorDetails,
   ToolsetCredentialsLevel,
   ToolsetEditorSteps,
   ToolsetModel,
@@ -247,7 +248,7 @@ export const toolsetSlice = createSlice({
     logInToolsetFail: (
       state,
       _action: PayloadAction<
-        { skipToastMessage?: boolean; traceId?: string } | undefined
+        (ToolsetAuthErrorDetails & { skipToastMessage?: boolean }) | undefined
       >,
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;

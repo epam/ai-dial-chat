@@ -17,7 +17,7 @@ export class ToolsetApiHelper extends BaseApiHelper {
     );
     await this.apiAssertion.assertResponseCode(
       response,
-      toolsetModel.display_name,
+      ItemUtil.getDisplayNameText(toolsetModel.display_name),
       200,
     );
     return (await response.json()) as BackendEntity;
@@ -44,7 +44,7 @@ export class ToolsetApiHelper extends BaseApiHelper {
     const allToolsets = await this.listToolsets();
     const e2eToolsets = Object.values(allToolsets).filter(
       (toolset) =>
-        (toolset.display_name
+        (ItemUtil.getDisplayNameText(toolset.display_name)
           .toLowerCase()
           .includes(toolsetNamePrefix.toLowerCase()) ||
           toolset.display_name === ExpectedConstants.defaultToolsetName) &&
@@ -60,7 +60,7 @@ export class ToolsetApiHelper extends BaseApiHelper {
     const response = await this.request.delete(this.getHost(path));
     await this.apiAssertion.assertResponseCode(
       response,
-      toolset.display_name,
+      ItemUtil.getDisplayNameText(toolset.display_name),
       200,
     );
   }

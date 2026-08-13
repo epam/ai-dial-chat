@@ -340,7 +340,7 @@ dialAdminTest(
         await agentSettings.setSystemPrompt(newSystemPrompt);
         const temperatureSlider = agentSettings.getTemperatureSlider();
         await temperatureSlider.setTemperature(newTemp);
-        await adminConversationSettings.applyChangesButton.click();
+        await adminConversationSettings.applyChanges();
         await adminChatHeader.openConversationSettingsPopup();
         await adminEntitySettingsAssertion.assertSystemPromptValue(
           newSystemPrompt,

@@ -11,6 +11,7 @@ import {
   Fragment,
   RefObject,
   createElement,
+  useCallback,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -84,8 +85,9 @@ interface Props<T> {
   getItemLabel: (item: T) => string;
   getItemValue: (item: T) => string;
   onChangeSelectedItems: (value: T[]) => void;
-  handleError?: () => void;
-  handleClearError?: () => void;
+  /** Makes the not yet added input text controlled from the outside. */
+  inputValue?: string;
+  onInputValueChange?: (value: string) => void;
   dataQa?: string;
   /** When set, merged with the internal input ref (e.g. to focus programmatically). */
   inputRef?: RefObject<HTMLInputElement | null>;
@@ -114,8 +116,8 @@ export function MultipleComboBox<T>({
   getItemLabel,
   getItemValue,
   onChangeSelectedItems,
-  handleError,
-  handleClearError,
+  inputValue: inputValueProp,
+  onInputValueChange,
   dataQa,
   inputRef: inputRefProp,
   showConnectorBetweenSelectedItems,
@@ -123,8 +125,20 @@ export function MultipleComboBox<T>({
   isLoading,
 }: Props<T>) {
   const { t } = useTranslation(Translation.Common);
-  const [inputValue, setInputValue] = useState<string | undefined>('');
+  const [ownInputValue, setOwnInputValue] = useState<string | undefined>('');
   const [floatingWidth, setFloatingWidth] = useState(0);
+
+  const isInputValueControlled = inputValueProp !== undefined;
+  const inputValue = isInputValueControlled ? inputValueProp : ownInputValue;
+  const setInputValue = useCallback(
+    (value: string | undefined) => {
+      if (!isInputValueControlled) {
+        setOwnInputValue(value);
+      }
+      onInputValueChange?.(value ?? '');
+    },
+    [isInputValueControlled, onInputValueChange],
+  );
 
   const inputRef = useRef<HTMLInputElement>(null);
   const cursorPositionRef = useRef<number | null>(null);
@@ -243,7 +257,6 @@ export function MultipleComboBox<T>({
             typeof itemToAdd === 'string' &&
             !validationRegExp.test(itemToAdd)
           ) {
-            handleError?.();
             return;
           }
 
@@ -264,7 +277,6 @@ export function MultipleComboBox<T>({
         }
 
         case useCombobox.stateChangeTypes.InputChange:
-          handleClearError?.();
           setInputValue(newInputValue);
           break;
         default:

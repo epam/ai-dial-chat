@@ -1591,8 +1591,10 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        const request = await chat.sendRequestWithButton(longRequest);
-        const expectedFullName = request.id.split(ItemUtil.urlSeparator)[2];
+        const requests = await chat.sendRequestWithButton(longRequest);
+        const expectedFullName = requests.completionRequest.id.split(
+          ItemUtil.urlSeparator,
+        )[2];
         const expectedName = expectedFullName.split(
           ItemUtil.entityIdSeparator,
         )[1];

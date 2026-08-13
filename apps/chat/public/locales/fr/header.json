@@ -1,0 +1,17 @@
+{
+  "Login": "Se connecter",
+  "Log out": "Se déconnecter",
+  "Confirm logging out": "Confirmer la déconnexion",
+  "Are you sure that you want to log out?": "Voulez-vous vraiment vous déconnecter ?",
+  "Cancel": "Annuler",
+  "User": "Utilisateur",
+  "User profile": "Profil utilisateur",
+  "Settings": "Paramètres",
+  "User avatar": "Avatar de l'utilisateur",
+  "Account settings": "Paramètres du compte",
+  "New conversation": "Nouvelle conversation",
+  "New prompt": "Nouveau prompt",
+  "Filters": "Filtres",
+  "Prompts": "Prompts",
+  "Conversations": "Conversations"
+}

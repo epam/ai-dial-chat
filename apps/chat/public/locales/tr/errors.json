@@ -1,0 +1,19 @@
+{
+  "This field is required": "Bu alan zorunludur",
+  "{{name}} should be {{minLength}} to {{maxLength}} characters long and should not contain special characters": "{{name}} alanı {{minLength}} ile {{maxLength}} karakter arasında olmalı ve özel karakter içermemelidir",
+  "{{name}} should not contain special symbols {{notAllowedSymbols}}": "{{name}} alanı şu özel karakterleri içermemelidir: {{notAllowedSymbols}}",
+  "{{name}} should be at least {{minLength}} characters long": "{{name}} alanı en az {{minLength}} karakter uzunluğunda olmalıdır",
+  "{{name}} should be at most {{maxLength}} characters long": "{{name}} alanı en fazla {{maxLength}} karakter uzunluğunda olmalıdır",
+  "Using a dot at the end of a {{name}} is not permitted.": "{{name}} alanının sonunda nokta kullanılmasına izin verilmez.",
+  "{{name}} \"{{newName}}\" already exists in this folder.": "{{name}} \"{{newName}}\" bu klasörde zaten mevcut.",
+  "URL is not correct": "URL doğru değil",
+  "URL must start with a valid protocol": "URL geçerli bir protokol ile başlamalıdır",
+  "Endpoint cannot end with . or //": "Uç nokta . veya // ile bitemez",
+  "The image has been deleted, does not exist, or you do not have access to it.": "Görsel silinmiş, mevcut değil veya görsele erişim izniniz yok.",
+  "The {{name}} is too long. Please shorten it and try again.": "{{name}} çok uzun. Lütfen kısaltıp tekrar deneyin.",
+  "Using a dot at the start of a {{name}} is not permitted.": "{{name}} alanının başında nokta kullanılmasına izin verilmez.",
+  "Version is required": "Sürüm zorunludur",
+  "Version format is invalid (example: 0.0.1)": "Sürüm biçimi geçersiz (örnek: 0.0.1)",
+  "This version already exists": "Bu sürüm zaten mevcut",
+  "Each part of the version should contain no more than five numbers.": "Sürümün her bir bölümü en fazla beş basamak içermelidir."
+}

@@ -5,6 +5,8 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getSelectButtonProps } from '@/src/utils/app/select';
+
 import { DropdownSelectorOption } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
@@ -13,7 +15,7 @@ import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { Tooltip } from './Tooltip';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 type Props = SelectProps<DropdownSelectorOption, true> & {
   tooltip?: string;
@@ -40,46 +42,39 @@ export function DropdownSelector({
         closeMenuOnSelect={closeMenuOnSelect}
         name="colors"
         menuPortalTarget={document.body}
+        menuPosition="fixed"
         components={{
           ClearIndicator: (props) => (
-            <DialButton
-              className="group p-2"
+            <DialGhostIconButton
+              size={ElementSize.Small}
+              data-qa="clear-dropdown-selection"
               onClick={() => props.clearValue()}
               onTouchEnd={() => props.clearValue()}
-              iconBefore={
-                <IconX
-                  className="shrink-0 text-secondary group-hover:text-accent-primary"
-                  data-qa="clear-dropdown-selection"
-                  size={18}
-                />
+              icon={
+                <IconX className="shrink-0" size={DEFAULT_ICON_SIZES.SMALL} />
               }
             />
           ),
           MultiValueRemove: (props) => (
-            <components.MultiValueRemove
-              {...props}
-              innerProps={{
-                ...props.innerProps,
-                style: {
-                  ...props.innerProps.style,
-                  fontSize: '12px',
-                  backgroundColor: 'transparent',
-                },
-                className: 'group',
-              }}
-            >
-              <IconX
-                className="cursor-pointer text-secondary group-hover:text-accent-primary"
-                size={DEFAULT_ICON_SIZES.SMALL}
-              />
-            </components.MultiValueRemove>
+            <DialGhostIconButton
+              size={ElementSize.Small}
+              {...getSelectButtonProps(props.innerProps)}
+              data-qa={`unselect-item-${props.data.value}`}
+              icon={<IconX size={DEFAULT_ICON_SIZES.SMALL} />}
+            />
           ),
           DropdownIndicator: (props) => (
             <components.DropdownIndicator {...props}>
               {props.selectProps.menuIsOpen ? (
-                <IconChevronUp size={18} className="shrink-0 text-primary" />
+                <IconChevronUp
+                  size={DEFAULT_ICON_SIZES.SMALL}
+                  className="shrink-0 text-primary"
+                />
               ) : (
-                <IconChevronDown size={18} className="shrink-0 text-primary" />
+                <IconChevronDown
+                  size={DEFAULT_ICON_SIZES.SMALL}
+                  className="shrink-0 text-primary"
+                />
               )}
             </components.DropdownIndicator>
           ),
@@ -99,6 +94,7 @@ export function DropdownSelector({
             color: 'var(--text-primary)',
           }),
           menu: (styles) => ({ ...styles, margin: 0 }),
+          menuPortal: (styles) => ({ ...styles, zIndex: 60 }),
           menuList: (styles) => ({
             ...styles,
             margin: 0,
@@ -131,11 +127,13 @@ export function DropdownSelector({
           indicatorSeparator: (styles) => ({
             ...styles,
             visibility: 'hidden',
-            backgroundColor: 'var(--text-secondary)',
           }),
           multiValue: (styles, state) => ({
             ...styles,
             height: '30px',
+            // react-select stretches the pill children, which leaves the fixed
+            // 24px remove button at the top of the 30px pill instead of centered
+            alignItems: 'center',
             backgroundColor: state.data.backgroundColor,
             borderWidth: '1px',
             borderColor: state.data.borderColor,

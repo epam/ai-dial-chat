@@ -106,9 +106,9 @@ dialOverlayTest(
       `Click on "Set system prompt', send one more message and verify system prompt is set in the request`,
       async () => {
         await overlayActions.setSysPromptButton.click();
-        secondRequest = (await overlayChat.sendRequestWithButton(
-          secondRequestContent,
-        )) as Conversation;
+        secondRequest = (
+          await overlayChat.sendRequestWithButton(secondRequestContent)
+        ).completionRequest as Conversation;
         const systemMessage = secondRequest.messages.find(
           (m) => m.role === 'system',
         );

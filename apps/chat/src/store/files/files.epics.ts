@@ -510,15 +510,15 @@ const getFoldersListEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.getFoldersList.type),
     switchMap(({ payload }) => {
-      if (payload.paths) {
-        return concat(
-          ...payload.paths.map((path) =>
-            of(FilesActions.getFolders({ id: path })),
-          ),
-        );
-      }
+      const listPath = (path?: string) =>
+        payload.withFiles
+          ? [
+              FilesActions.getFolders({ id: path }),
+              FilesActions.getFiles({ id: path }),
+            ]
+          : [FilesActions.getFolders({ id: path })];
 
-      return of(FilesActions.getFolders({}));
+      return from((payload.paths ?? [undefined]).flatMap((p) => listPath(p)));
     }),
   );
 
@@ -1392,19 +1392,19 @@ const continueUploadReplaceDialogEpic: AppEpic = (action$, state$) =>
         ),
       ];
 
-      if (dialog.selectFileIds && resolvedFiles.length) {
-        actions.push(
-          FilesActions.selectFiles({
-            ids: resolvedFiles.map(({ id }) => id),
-          }),
-        );
-      }
-
       if (resolvedFiles.length) {
+        const ids = resolvedFiles.map(({ id }) => id);
+
+        // Hand the resolved files back to whoever opened the dialog, one way
+        // only. The chat input reads them off the store selection, while an
+        // editor that opted out of selecting picks them up from
+        // `resolvedUploadIds`. Doing both attached a file dropped on the chat
+        // input to any message that happened to be open in edit mode.
+        // Issue #7876
         actions.push(
-          FilesActions.setResolvedUploadIds({
-            ids: resolvedFiles.map(({ id }) => id),
-          }),
+          dialog.selectFileIds
+            ? FilesActions.selectFiles({ ids })
+            : FilesActions.setResolvedUploadIds({ ids }),
         );
       }
 

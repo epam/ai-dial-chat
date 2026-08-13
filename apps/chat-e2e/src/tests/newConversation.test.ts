@@ -68,7 +68,8 @@ dialTest(
       await chat.configureSettingsButton.click();
       await agentSettings.setSystemPrompt(PROMPTS.DOG);
       await temperatureSlider.setTemperature(TEMPERATURE.HIGH);
-      await conversationSettingsModal.applyChangesButton.click();
+      // no conversation exists yet — no PUT is guaranteed to fire
+      await conversationSettingsModal.applyChanges({ waitForUpdate: false });
     });
 
     await dialTest.step(
@@ -113,7 +114,8 @@ dialTest(
       await chat.configureSettingsButton.click();
       await agentSettings.setSystemPrompt(PROMPTS.CAT);
       await temperatureSlider.setTemperature(TEMPERATURE.LOW);
-      await conversationSettingsModal.applyChangesButton.click();
+      // no conversation exists yet — no PUT is guaranteed to fire
+      await conversationSettingsModal.applyChanges({ waitForUpdate: false });
     });
 
     await dialTest.step(
@@ -554,7 +556,10 @@ dialTest(
         await chat.configureSettingsButton.click();
         await agentSettings.setSystemPrompt('Act like a cat');
         await temperatureSlider.setTemperature(0.2);
-        await conversationSettingsModal.applyChangesButton.click();
+        // no conversation exists yet — no PUT is guaranteed to fire
+        await conversationSettingsModal.applyChanges({
+          waitForUpdate: false,
+        });
         await header.logo.click();
         await chat.configureSettingsButton.click();
         await agentSettingAssertion.assertSystemPromptValue(

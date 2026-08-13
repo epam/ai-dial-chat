@@ -21,11 +21,12 @@ import { ApplicationSelectors } from '@/src/store/selectors';
 
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/applications';
 import { CommonI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
+import { getPendingAttachmentTypeError } from '@/src/constants/validation-helpers';
 
 import {
   CustomAppForm as CustomAppFormType,
   MANDATORY_FIELD_PLACEHOLDER,
-  getAttachmentTypeErrorHandlers,
+  getPendingAttachmentTypeProps,
 } from '@/src/components/AppsEditor/form';
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
 import { Field } from '@/src/components/Common/Forms/Field';
@@ -48,11 +49,15 @@ export const CustomAppForm = () => {
     ApplicationSelectors.selectApplicationDetail,
   );
 
-  const { control, register, setError, clearErrors, setValue } =
+  const { control, register, clearErrors, setValue } =
     useFormContext<CustomAppFormType>();
   const { errors } = useFormState<CustomAppFormType>({ control });
   const completionUrl = useWatch({
     name: 'completionUrl',
+    control,
+  });
+  const pendingAttachmentType = useWatch({
+    name: 'pendingInputAttachmentType',
     control,
   });
 
@@ -106,11 +111,14 @@ export const CustomAppForm = () => {
             hasDeleteAll
             hideSuggestions
             itemHeightClassName="h-[31px]"
-            error={errors.inputAttachmentTypes?.message}
+            error={
+              errors.inputAttachmentTypes?.message ??
+              getPendingAttachmentTypeError(pendingAttachmentType)
+            }
             disabled={isAppPublic}
             tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
             dataQa="combobox"
-            {...getAttachmentTypeErrorHandlers(setError, clearErrors)}
+            {...getPendingAttachmentTypeProps(pendingAttachmentType, setValue)}
           />
         )}
       />

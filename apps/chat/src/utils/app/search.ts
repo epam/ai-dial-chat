@@ -6,13 +6,14 @@ import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 
 import { getOpenAIEntityFullName } from './conversation';
 import { getConversationRootId, getFileRootId, getPromptRootId } from './id';
+import { parseLocalizedField } from './marketplace-localization';
 
 import {
   ConversationInfo,
   ShareEntity,
   ShareInterface,
 } from '@epam/ai-dial-shared';
-import { IFuseOptions } from 'fuse.js';
+import Fuse, { IFuseOptions } from 'fuse.js';
 
 export const doesEntityContainSearchTerm = (
   entity: { name: string },
@@ -134,4 +135,21 @@ export const getEntitySearchOptions = <T>(): IFuseOptions<T> => ({
   findAllMatches: false,
   isCaseSensitive: false,
   includeScore: false,
+});
+
+export const getLocalizedEntitySearchOptions = <
+  T extends { name?: string | Record<string, string> },
+>(
+  locale: string,
+): IFuseOptions<T> => ({
+  ...getEntitySearchOptions<T>(),
+  getFn: (obj, path) => {
+    const key = Array.isArray(path) ? path[0] : path;
+
+    if (key === 'name') {
+      return parseLocalizedField(locale, (obj as T).name);
+    }
+
+    return Fuse.config.getFn(obj, path);
+  },
 });

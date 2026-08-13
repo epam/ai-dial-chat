@@ -44,6 +44,7 @@ import {
   MarketplaceI18nKeys,
   SettingsI18nKeys,
 } from '@/src/constants/i18n';
+import { getPendingAttachmentTypeError } from '@/src/constants/validation-helpers';
 
 import { FormCollapsibleSection } from '@/src/components/AppsEditor/EditorForm/FormCollapsibleSection';
 import { AgentSkillsField } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/AgentSkillsField';
@@ -54,7 +55,7 @@ import { ModelField } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form
 import { StartersBehaviourRadioGroup } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/StartersBehaviourRadioGroup';
 import {
   QuickApp2Form as QuickApp2FormType,
-  getAttachmentTypeErrorHandlers,
+  getPendingAttachmentTypeProps,
 } from '@/src/components/AppsEditor/form';
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
 import { FilesSelector } from '@/src/components/Common/FilesSelector/FilesSelector';
@@ -109,11 +110,14 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
   );
   const files = useAppSelector(FilesSelectors.selectFiles);
 
-  const { control, setError, clearErrors, setValue, getValues } =
-    useFormContext<QuickApp2FormType>();
+  const { control, setValue, getValues } = useFormContext<QuickApp2FormType>();
   const { errors } = useFormState<QuickApp2FormType>({ control });
 
   const modelId = useWatch({ control, name: 'model' });
+  const pendingAttachmentType = useWatch({
+    control,
+    name: 'pendingInputAttachmentType',
+  });
   const starters = useWatch({ control, name: 'starters' });
   const autoSubmit = useWatch({ control, name: 'autoSubmit' });
   const chatMessageInputDisabled = useWatch({
@@ -488,11 +492,17 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               hasDeleteAll
               hideSuggestions
               itemHeightClassName="h-[31px]"
-              error={errors.inputAttachmentTypes?.message}
+              error={
+                errors.inputAttachmentTypes?.message ??
+                getPendingAttachmentTypeError(pendingAttachmentType)
+              }
               disabled={isAppPublic}
               tooltip={isAppPublicTooltip}
               dataQa="attachment-types-field"
-              {...getAttachmentTypeErrorHandlers(setError, clearErrors)}
+              {...getPendingAttachmentTypeProps(
+                pendingAttachmentType,
+                setValue,
+              )}
             />
           )}
         />

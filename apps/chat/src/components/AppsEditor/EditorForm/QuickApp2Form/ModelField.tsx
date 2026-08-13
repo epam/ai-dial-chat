@@ -5,6 +5,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getModelName } from '@/src/utils/app/application';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
@@ -15,6 +16,7 @@ import { Translation } from '@/src/types/translation';
 import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/applications';
 import { ChatI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
@@ -85,6 +87,7 @@ export const ModelField = () => {
     ApplicationSelectors.selectApplicationDetail,
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const locale = useAppSelector(UISelectors.selectLocale);
 
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
 
@@ -162,7 +165,9 @@ export const ModelField = () => {
                   data-qa="orchestrator-model-name"
                 >
                   <DialEllipsisTooltip
-                    text={selectedEntity?.name ?? selectedModelId}
+                    text={
+                      getModelName(selectedEntity, locale) || selectedModelId
+                    }
                   />
                 </span>
 

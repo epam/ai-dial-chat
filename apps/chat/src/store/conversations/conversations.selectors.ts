@@ -38,6 +38,7 @@ import {
   isEntityIdLocal,
   isRootId,
 } from '@/src/utils/app/id';
+import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { checkIsNotAllowedModelUtil } from '@/src/utils/app/models';
 import { isEntityReadOnly } from '@/src/utils/app/permissions';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
@@ -55,6 +56,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 import { RootState } from '@/src/types/store';
 
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
 import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
@@ -826,7 +828,8 @@ const selectNotAllowedItemsForDisplay = createSelector(
         const modelDetails = modelsMap[conv.model.id];
         return {
           conversationId: conv.id,
-          agentName: modelDetails?.name ?? conv.model.id,
+          agentName:
+            getLocalizedEntityIdName(modelDetails?.name) || conv.model.id,
         };
       });
   },
@@ -840,6 +843,7 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     selectAreSelectedConversationsReadOnly,
     AuthSelectors.selectIsAdmin,
     ChatSelectors.selectUploadedConfigurationSchemas,
+    ApplicationTypesSchemasSelectors.selectAllSchemas,
     (state: RootState) => state,
   ],
   (
@@ -849,6 +853,7 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     areReadOnly,
     isAdmin,
     uploadedConfigurationSchemas,
+    applicationTypeSchemas,
     state,
   ) => {
     const conversationsModelsIds = conversations.map(
@@ -873,9 +878,25 @@ const selectIsSelectedConversationBlocksInput = createSelector(
       ),
     )?.schema;
 
+    const isCustomViewerConversation = conversations.some((conversation) => {
+      const model = modelsMap[conversation.model.id];
+
+      if (!model) {
+        return false;
+      }
+
+      return (
+        !!model.viewerUrl ||
+        !!applicationTypeSchemas.find(
+          (schema) => schema.id === model.applicationTypeSchemaId,
+        )?.viewerUrl
+      );
+    });
+
     return conversations.some(
       (conversation) =>
         conversation.sharedWithMe ||
+        isCustomViewerConversation ||
         (!conversation.messages?.length &&
           (isConfigurationBlocksInput || isReplayConversation(conversation))) ||
         isNotAllowedModels ||

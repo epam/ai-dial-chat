@@ -6,6 +6,7 @@ import { Store, combineReducers, configureStore } from '@reduxjs/toolkit';
 
 import { EpicMiddleware, createEpicMiddleware } from 'redux-observable';
 
+import { LocalesService } from '@/src/utils/app/data/locales-service';
 import { initResourceMaxSegmentBytes } from '@/src/utils/app/resource-limits';
 
 import { AppAction, RootState } from '@/src/types/store';
@@ -95,6 +96,8 @@ export const createStore = (preloadedState: { settings: SettingsState }) => {
     preloadedState.settings?.resourceMaxSegmentBytes ??
       DEFAULT_RESOURCE_MAX_SEGMENT_BYTES,
   );
+
+  LocalesService.setAvailableLocales(preloadedState.settings?.availableLocales);
 
   if (typeof window === 'undefined') {
     const epicMiddleware = createEpicMiddleware<

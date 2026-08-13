@@ -82,4 +82,15 @@ export class ItemUtil {
   public static getUtf8ByteLength(str: string): number {
     return new TextEncoder().encode(str).byteLength;
   }
+
+  // display_name/name on backend entities can be a localized
+  // Record<locale, string> instead of a plain string. Callers that only need
+  // the text for matching/filtering (not locale-correct display) can use
+  // this instead of assuming a string.
+  public static getDisplayNameText(
+    displayName?: string | Record<string, string>,
+  ): string {
+    if (typeof displayName === 'string') return displayName;
+    return Object.values(displayName ?? {})[0] ?? '';
+  }
 }

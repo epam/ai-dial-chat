@@ -13,6 +13,41 @@ import { QUERY_VALUE_TRUE, Routes } from '@/src/constants/routes';
 
 import { cleanSchemaId } from './application-type-schema';
 
+type RouterPrefixes = Pick<BaseRouter, 'basePath' | 'locales'>;
+
+/**
+ * `window.location.pathname` contains the `basePath` and, for any non-default
+ * locale, the locale sub-path (e.g. `/base/ru/marketplace`), while `Routes.*`
+ * are plain internal routes (e.g. `/marketplace`). This strips both prefixes so
+ * the two can be compared and so the result can be safely passed to
+ * `router.push` (which re-adds `basePath`/locale itself).
+ */
+export const getInternalPathname = (
+  pathname: string,
+  router?: RouterPrefixes,
+): string => {
+  let result = pathname;
+
+  const basePath = router?.basePath ?? '';
+  if (basePath && (result === basePath || result.startsWith(`${basePath}/`))) {
+    result = result.slice(basePath.length);
+  }
+
+  const segments = result.split('/').filter(Boolean);
+  if (segments.length && router?.locales?.includes(segments[0])) {
+    segments.shift();
+    result = segments.length ? `/${segments.join('/')}` : '/';
+  }
+
+  return result || '/';
+};
+
+export const isInternalRoute = (
+  pathname: string,
+  route: Routes,
+  router?: RouterPrefixes,
+): boolean => getInternalPathname(pathname, router) === route;
+
 export const getPageType = (route?: string) => {
   switch (route) {
     case Routes.Marketplace:

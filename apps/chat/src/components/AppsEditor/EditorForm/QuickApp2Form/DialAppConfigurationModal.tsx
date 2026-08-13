@@ -2,6 +2,7 @@ import { FC, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getModelName } from '@/src/utils/app/application';
 import { doesAgentHaveChatCompletion } from '@/src/utils/app/models';
 import { parseEntityApiKey } from '@/src/utils/server/api';
 
@@ -10,6 +11,7 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { NA_VERSION } from '@/src/constants/publication';
@@ -41,6 +43,7 @@ export const DialAppConfigurationModal: FC<DialAppConfigurationModalProps> = ({
   );
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const locale = useAppSelector(UISelectors.selectLocale);
 
   const entity = modelsMap[toolset.deployment_id];
   const { version: parsedVersion } = parseEntityApiKey(toolset.deployment_id, {
@@ -81,7 +84,7 @@ export const DialAppConfigurationModal: FC<DialAppConfigurationModalProps> = ({
 
           <div className="flex flex-col justify-center gap-1 truncate">
             <span className="truncate text-sm font-semibold text-primary">
-              {entity?.name ?? toolset.name}
+              {getModelName(entity, locale) || toolset.name}
             </span>
             {version && version !== NA_VERSION && (
               <span className="truncate text-xs text-primary">{version}</span>

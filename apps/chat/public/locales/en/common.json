@@ -201,6 +201,7 @@
   "Failed to add {{entityType}} to my workspace": "Failed to add {{entityType}} to my workspace",
   "Failed to delete toolset": "Failed to delete toolset",
   "Failed to sign in toolset": "Failed to sign in toolset",
+  "Failed to sign in toolset: {{details}}": "Failed to sign in toolset: {{details}}",
   "Failed to sign out toolset": "Failed to sign out toolset",
   "Publishing failed. You are only allowed to publish conversations with attachments from \"My files\"": "Publishing failed. You are only allowed to publish conversations with attachments from \"My files\"",
   "Publication request created successfully": "Publication request created successfully",
@@ -290,5 +291,8 @@
   "Toolset repaired. Users must re-authenticate.": "Toolset repaired. Users must re-authenticate.",
   "Authorization server is currently unavailable. Try again once the AS is back.": "Authorization server is currently unavailable. Try again once the AS is back.",
   "Repair will re-register this toolset with the Authorization Server. Continue?": "Repair will re-register this toolset with the Authorization Server. Continue?",
-  "The list of tools will be available after filling in the definition and authentication sections": "The list of tools will be available after filling in the definition and authentication sections"
+  "The list of tools will be available after filling in the definition and authentication sections": "The list of tools will be available after filling in the definition and authentication sections",
+  "All available locales are already added": "All available locales are already added",
+  "No changes to apply": "No changes to apply",
+  "View": "View"
 }

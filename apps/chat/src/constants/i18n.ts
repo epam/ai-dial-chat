@@ -307,6 +307,7 @@ export enum CommonI18nKeys {
   AddToMarketplaceFailed = 'Failed to add {{entityType}} to my workspace',
   ToolsetDeleteFailed = 'Failed to delete toolset',
   ToolsetSignInFailed = 'Failed to sign in toolset',
+  ToolsetSignInFailedWithDetails = 'Failed to sign in toolset: {{details}}',
   ToolsetSignOutFailed = 'Failed to sign out toolset',
   PublicationWithExternalFilesFailed = 'Publishing failed. You are only allowed to publish conversations with attachments from "My files"',
   PublicationRequestCreatedSuccessfully = 'Publication request created successfully',
@@ -362,6 +363,16 @@ export enum CommonI18nKeys {
   RepairMyDescription = 'Repair will re-register this toolset with the Authorization Server. Continue?',
   ToolsetRepairSuccessMessage = 'Toolset repaired. Users must re-authenticate.',
   ToolsetRepairFailedMessage = 'Authorization server is currently unavailable. Try again once the AS is back.',
+  Language = 'Language',
+  AddLocale = 'Add locale',
+  AddLocales = 'Add locales',
+  Locale = 'Locale',
+  Locales = 'Locales',
+  Apply = 'Apply',
+  Edit = 'Edit',
+  AllAvailableLocalesAdded = 'All available locales are already added',
+  NoChangesToApply = 'No changes to apply',
+  View = 'View',
 }
 
 // errors.json

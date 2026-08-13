@@ -28,6 +28,7 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
   protected isSignedInUser = false;
   protected orgSignInRequest: T | null = null;
   protected userSignInRequest: T | null = null;
+  private signInCount = 0;
 
   protected constructor(
     page: Page,
@@ -54,6 +55,12 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
    * Build the auth_settings payload for mocked GET responses.
    */
   protected abstract buildAuthSettings(): Record<string, unknown>;
+
+  // Auth settings with the sign-in status tracked so far. Call it per request
+  // so a listing served by another mock reflects logins made meanwhile.
+  getAuthSettings(): Record<string, unknown> {
+    return this.buildAuthSettings();
+  }
 
   abstract setupMocks(): Promise<void>;
 
@@ -83,6 +90,10 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
 
   getSignInRequest(): T | null {
     return this.state.signInRequest;
+  }
+
+  getSignInCount(): number {
+    return this.signInCount;
   }
 
   getSignOutRequest(): ToolsetAuthPayloadBase | null {
@@ -151,12 +162,25 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
       });
   }
 
+  // Every mock registers on the same sign-in endpoint, so without this check
+  // the last one would swallow all logins and flip its own signed-in flags.
+  private isOwnSignInRequest(body: { url?: string }): boolean {
+    const requestedUrl = decodeURIComponent(body.url ?? '');
+    return [this.toolset.id, this.toolset.name]
+      .filter((value): value is string => !!value)
+      .some((value) => decodeURIComponent(value) === requestedUrl);
+  }
+
   async setupSignInRoute(): Promise<void> {
     await this.page
       .context()
       .route(API.toolsetSignInHost(), async (route, request) => {
         if (request.method() !== 'POST') {
           await route.continue();
+          return;
+        }
+        if (!this.isOwnSignInRequest(request.postDataJSON() ?? {})) {
+          await route.fallback();
           return;
         }
         const { backendSignInCode } = this.expectedStatusCodes;
@@ -171,6 +195,7 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
           }
           this.state.isSignedIn = true;
           this.state.signInRequest = body;
+          this.signInCount++;
           await route.fulfill({
             status: 200,
             contentType: 'application/json',
