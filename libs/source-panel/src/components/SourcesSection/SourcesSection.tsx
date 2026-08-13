@@ -8,6 +8,7 @@ import {
   ElementSize,
   GhostIconButton,
   Highlight,
+  LinkButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
 import { memo, useMemo, useState, type FC, type ReactNode } from 'react';
@@ -81,15 +82,27 @@ const SourcesSection: FC<SourcesSectionProps> = ({
         {sources.map((source) => (
           <li key={source.url} className="flex flex-col gap-1">
             <div className="flex min-w-0 items-center justify-between gap-2">
-              <a
+              <LinkButton
                 href={source.url}
                 target="_blank"
-                rel="noopener noreferrer"
+                size={ElementSize.Small}
                 className={mergeClasses(
-                  linkClassName,
                   styles.link,
-                  'min-w-0 flex-1 truncate',
+                  'min-w-0 flex-1 justify-start',
                 )}
+                textClassName={mergeClasses(linkClassName, 'min-w-0 truncate')}
+                label={
+                  searchQuery ? (
+                    <Highlight
+                      text={source.title}
+                      query={searchQuery}
+                      maxLines={1}
+                    />
+                  ) : (
+                    source.title
+                  )
+                }
+                aria-label={source.title}
                 onClick={
                   onSourceClick
                     ? (e) => {
@@ -98,17 +111,7 @@ const SourcesSection: FC<SourcesSectionProps> = ({
                       }
                     : undefined
                 }
-              >
-                {searchQuery ? (
-                  <Highlight
-                    text={source.title}
-                    query={searchQuery}
-                    maxLines={1}
-                  />
-                ) : (
-                  source.title
-                )}
-              </a>
+              />
               <GhostIconButton
                 size={ElementSize.Small}
                 icon={

@@ -29,14 +29,13 @@ const renderProviders = (
       {providers.map((provider) => {
         const href = `/api/v1/auth/login/${encodeURIComponent(provider.id)}?callbackUrl=${encodeURIComponent(callbackUrl)}`;
         return (
-          <a key={provider.id} href={href} className="w-full">
-            <NeutralButton
-              className="w-full"
-              tabIndex={-1}
-              iconBefore={<ProviderIcon providerId={provider.id} />}
-              label={provider.label}
-            />
-          </a>
+          <NeutralButton
+            key={provider.id}
+            href={href}
+            className="w-full"
+            iconBefore={<ProviderIcon providerId={provider.id} />}
+            label={provider.label}
+          />
         );
       })}
     </div>
