@@ -49,6 +49,13 @@ vi.mock(
     }),
   }),
 );
+vi.mock('../../components/PromptSelector/usePromptSelectorOverlay', () => ({
+  usePromptSelectorOverlay: () => ({
+    renderOverlay: vi.fn(),
+    promptCatalogModal: null,
+    parametersPopup: null,
+  }),
+}));
 vi.mock('../../context/AppConfigContext', () => ({
   default: ({ children }: { children: ReactNode }) => children,
   useAppConfig: () => ({
