@@ -13,14 +13,14 @@ import { Conversation } from '@epam/ai-dial-shared';
 describe('createPublicationIconTargetUrl', () => {
   const targetFolder = 'public/Organization';
 
-  it('puts the icon into a folder named after the published entity', () => {
+  it('puts the icon next to the published entity and names it after the entity', () => {
     expect(
       createPublicationIconTargetUrl({
         entityId: 'applications/mybucket/myapp__0.0.1',
         iconUrl: 'files/mybucket/folder1/icon.svg',
         targetFolder,
       }),
-    ).toBe('files/public/Organization/myapp__0.0.1/icon.svg');
+    ).toBe('files/public/Organization/myapp__0.0.1.svg');
   });
 
   it('keeps icons of two app versions apart when the file names match', () => {
@@ -38,14 +38,34 @@ describe('createPublicationIconTargetUrl', () => {
     expect(first).not.toBe(second);
   });
 
-  it('drops the source folder of the icon', () => {
+  it('drops the source folder of the icon and creates no folder of its own', () => {
     expect(
       createPublicationIconTargetUrl({
         entityId: 'toolsets/mybucket/folder/mytoolset__1.0.0',
         iconUrl: 'files/mybucket/deeply/nested/folder/icon.svg',
         targetFolder,
       }),
-    ).toBe('files/public/Organization/mytoolset__1.0.0/icon.svg');
+    ).toBe('files/public/Organization/mytoolset__1.0.0.svg');
+  });
+
+  it('keeps the icon extension when the entity has no version', () => {
+    expect(
+      createPublicationIconTargetUrl({
+        entityId: 'applications/mybucket/myapp',
+        iconUrl: 'files/mybucket/folder1/icon.PNG',
+        targetFolder,
+      }),
+    ).toBe('files/public/Organization/myapp.png');
+  });
+
+  it('publishes an icon without an extension under the entity name', () => {
+    expect(
+      createPublicationIconTargetUrl({
+        entityId: 'applications/mybucket/myapp__0.0.1',
+        iconUrl: 'files/mybucket/folder1/icon',
+        targetFolder,
+      }),
+    ).toBe('files/public/Organization/myapp__0.0.1');
   });
 });
 

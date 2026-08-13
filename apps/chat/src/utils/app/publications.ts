@@ -41,7 +41,7 @@ import {
 } from './common';
 import { BucketService } from './data/bucket-service';
 import { FileService } from './data/file-service';
-import { constructPath } from './file';
+import { constructPath, getFileNameExtension, prepareFileName } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import {
   getEntityBucket,
@@ -163,11 +163,14 @@ export const createFoldersFilesTargetUrl = (id: string) => {
 
 /**
  * Target path for the icon of a published application or toolset. The icon is
- * put into a folder named after the published entity, because the source
- * folder of the icon is not a part of the target path: two entities, for
- * instance two versions of the same app, can use different icon files sharing
- * a file name, and a common target would make the second publication silently
- * reuse the icon of the first one.
+ * published next to its entity, into the selected target folder, and is named
+ * after the entity key. The source file name cannot be kept as is, because the
+ * source folder of the icon is not a part of the target path: two entities, for
+ * instance two versions of the same app, can use different icon files sharing a
+ * file name, and a common target would make the second publication silently
+ * reuse the icon of the first one. The entity key carries the version
+ * (`getMarketplaceEntityApiKey` builds `name__version`), so the targets of two
+ * versions can never collide.
  */
 export const createPublicationIconTargetUrl = ({
   entityId,
@@ -181,8 +184,11 @@ export const createPublicationIconTargetUrl = ({
   constructPath(
     ApiKeys.Files,
     targetFolder,
-    splitEntityId(entityId).name,
-    splitEntityId(iconUrl).name,
+    prepareFileName(
+      `${splitEntityId(entityId).name}${getFileNameExtension(
+        splitEntityId(iconUrl).name,
+      )}`,
+    ),
   );
 
 /**
