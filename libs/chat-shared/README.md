@@ -103,7 +103,8 @@ import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
 
 Item title row with an optional postfix (version, count) and a trailing slot.
 The title is highlighted when a search `query` is supplied and truncates with a
-tooltip on overflow.
+tooltip on overflow. Pass `shouldTruncateTitle={false}` for static section
+headings that must always render in full.
 
 ```tsx
 import { ItemHeader } from '@epam/ai-dial-chat-shared';
