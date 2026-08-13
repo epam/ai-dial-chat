@@ -5,7 +5,7 @@ import { EntityType } from '@/chat/types/common';
 import { ServerSlugs } from '@/chat/types/slugs-types';
 import { ItemUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
-import { Toolset } from '@epam/ai-dial-shared';
+import { TokenEndpointAuthMethod, Toolset } from '@epam/ai-dial-shared';
 import path from 'path';
 
 export const ExpectedConstants = {
@@ -381,6 +381,12 @@ export const ExpectedConstants = {
   allowedToolsLabelSubtitle:
     'The list of tools will be available after filling in the definition and authentication section',
   oAuthNotSupportedError: 'MCP server does not support OAuth authentication',
+  tokenEndpointAuthMethodLabel: 'Token Endpoint Authentication Method',
+  tokenEndpointAuthMethodLabels: {
+    [TokenEndpointAuthMethod.ClientSecretBasic]: 'Client secret (HTTP Basic)',
+    [TokenEndpointAuthMethod.ClientSecretPost]: 'Client secret (POST body)',
+    [TokenEndpointAuthMethod.None]: 'None',
+  },
   mcpServerUrl: 'https://mcp.deepwiki.com/mcp',
   mixedImportOption: 'Mixed',
   logOutDialogTitle: 'Logging out',

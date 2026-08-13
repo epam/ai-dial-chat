@@ -548,6 +548,8 @@ export const MarketplaceExpectedMessages = {
     'Toolset Sign-out request authentication type is valid',
   toolsetSignOutCredentialsLevelIsValid:
     'Toolset Sign-out request credentials level is valid',
+  toolsetTokenEndpointAuthMethodIsValid:
+    'Toolset update request token endpoint auth method is valid',
   usedLimitIsValid: 'Model used limit is valid',
   totalLimitIsValid: 'Model total limit is valid',
   limitItemIsVisible: (item: MarketplaceI18nKeys) =>

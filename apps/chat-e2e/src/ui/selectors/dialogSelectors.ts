@@ -431,6 +431,7 @@ export const AddToolsetSettingsFormSelector = {
   apiKeyParameterNameFieldErrorMessage: () =>
     `${AddToolsetSettingsFormSelector.apiKeyParameterNameFieldContainer} + ${ErrorLabelSelectors.fieldError}`,
   apiKeyParameterValueFieldContainer: '[data-qa="apiKey"]',
+  tokenEndpointAuthMethodContainer: '[data-qa="tokenEndpointAuthMethod"]',
   apiKeyContainer: '[data-qa="api_key"]',
   apiKeyLabel: '[data-qa="api_key-label"]',
   withoutAuthContainer: '[data-qa="none"]',
