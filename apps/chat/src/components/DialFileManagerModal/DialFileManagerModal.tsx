@@ -13,7 +13,6 @@ import {
   Popup,
   NOT_ALLOWED_SYMBOLS,
   NOT_ALLOWED_SYMBOLS_REGEXP,
-  NotificationVariant,
   PopupSize,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
@@ -120,7 +119,8 @@ const DialFileManagerModal: FC<Props> = ({
   autoSelectUploadedItems = false,
 }) => {
   const { t } = useTranslation();
-  const { showNotification } = useNotification();
+  const { showInfoNotification, showErrorNotification, showNotification } =
+    useNotification();
 
   const tabLabels = useMemo(
     () => ({
@@ -248,8 +248,7 @@ const DialFileManagerModal: FC<Props> = ({
 
     const skippedCount = selectedFileNodes.length - validFiles.length;
     if (skippedCount > 0) {
-      showNotification({
-        variant: NotificationVariant.Info,
+      showInfoNotification({
         message: t(DialFileManagerI18nKeys.UnsupportedFilesDescription),
         title: t(DialFileManagerI18nKeys.UnsupportedFilesSkipped),
       });
@@ -287,8 +286,7 @@ const DialFileManagerModal: FC<Props> = ({
       maximumAttachmentsAmount > 0 &&
       totalCount > maximumAttachmentsAmount
     ) {
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(DialFileManagerI18nKeys.TooManyFilesDescription, {
           count: totalCount,
           limit: maximumAttachmentsAmount,
@@ -305,7 +303,8 @@ const DialFileManagerModal: FC<Props> = ({
     allowedTypes,
     maximumAttachmentsAmount,
     existingAttachmentsAmount,
-    showNotification,
+    showInfoNotification,
+    showErrorNotification,
     t,
     filesByPath,
     bucket,

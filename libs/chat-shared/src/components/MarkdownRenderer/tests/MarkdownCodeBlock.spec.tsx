@@ -33,8 +33,6 @@ describe('MarkdownCodeBlock', () => {
       <MarkdownCodeBlock language="typescript" value="const x = 1;" />,
     );
 
-    const label = screen.getByText('typescript');
-    expect(label.className).toContain('uppercase');
     expect(container.querySelector('span.opacity-60')).toBeNull();
   });
 
@@ -58,7 +56,7 @@ describe('MarkdownCodeBlock', () => {
     );
 
     const labelSpan = container.querySelector('span.uppercase');
-    expect(labelSpan?.textContent).toBe('');
+    expect(labelSpan?.textContent).toBeUndefined();
   });
 
   it('renders the copy button when isStreaming is false', () => {

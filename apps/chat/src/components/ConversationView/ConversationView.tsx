@@ -26,7 +26,6 @@ import {
   ErrorMessageNotification,
   FabButton,
   NeutralButton,
-  NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
 import {
@@ -191,7 +190,7 @@ const ConversationView: FC<Props> = ({
   const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
   const { t } = useTranslation();
   const { language } = useLanguage();
-  const { showNotification } = useNotification();
+  const { showErrorNotification } = useNotification();
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
@@ -511,8 +510,7 @@ const ConversationView: FC<Props> = ({
 
   const handleAttachmentsLimitExceeded = useCallback(
     (count: number, limit: number) => {
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         title: t(DialFileManagerI18nKeys.TooManyFilesSelected),
         message: t(DialFileManagerI18nKeys.TooManyFilesDescription, {
           count,
@@ -520,17 +518,16 @@ const ConversationView: FC<Props> = ({
         }),
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const handleMessageTooLong = useCallback(
     (_length: number, max: number) => {
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(ConversationI18nKeys.MessageTooLong, { max }),
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const handleInputAttachmentClick = useCallback(
@@ -860,7 +857,7 @@ const ConversationView: FC<Props> = ({
                       : t(DialFileManagerI18nKeys.DeleteConfirmTitleMultiple)
                   }
                   deleteConfirmBody={(names) => (
-                    <div className="px-6 py-3 text-sm">
+                    <div className="dial-small-text px-6 py-3">
                       <p className="mb-3 text-secondary">
                         {names.length === 1 ? (
                           <>

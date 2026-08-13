@@ -15,8 +15,8 @@ import {
 } from '../../../types/toolset-auth';
 import { DetailsPanel } from '../DetailsPanel';
 
-vi.mock('@epam/ai-dial-kit', () => ({
-  TabRow: ({
+vi.mock('@epam/ai-dial-ui-kit', () => ({
+  Tabs: ({
     tabs,
     onTabChange,
   }: {
@@ -31,8 +31,6 @@ vi.mock('@epam/ai-dial-kit', () => ({
       ))}
     </div>
   ),
-}));
-vi.mock('@epam/ai-dial-ui-kit', () => ({
   GhostIconButton: ({
     'aria-label': ariaLabel,
     disabled,

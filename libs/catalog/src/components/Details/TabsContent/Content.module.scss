@@ -22,7 +22,7 @@
   :global(.cat-prompt-variable) {
     color: var(
       --cat-details-variable-text,
-      var(--text-prompt-parameter, #3730b7)
+      var(--text-visual-violet-2, #3730b7)
     );
   }
 }

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ShareI18nKeys } from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { acceptInvitation } from '../../../server-api/share.api';
 import { ROUTES } from '../../../types/routes';
 import SharedInvitationPage from '../SharedInvitation';
@@ -41,11 +42,9 @@ describe('SharedInvitationPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockInvitationId = 'abc123';
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
     refetchDeployments.mockResolvedValue(undefined);
     refetchToolsets.mockResolvedValue(undefined);
     vi.mocked(useDeployments).mockReturnValue({

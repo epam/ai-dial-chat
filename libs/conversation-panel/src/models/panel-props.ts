@@ -44,7 +44,7 @@ export interface ConversationItem {
 export interface ConversationPanelTypography {
   /** A single utility class (e.g. `'dial-body-semi-text'`) applied to the title span. */
   fontClassName?: string;
-  /** Typography class applied to collapsible group header buttons. Defaults to `'dial-tiny-semi-text uppercase'`. */
+  /** Typography class applied to collapsible group header buttons. Defaults to `'dial-tiny-lead-semi-text'`. */
   groupHeaderClassName?: string;
   /** Typography class applied to conversation title text in each row. Defaults to `'dial-small-text'`. */
   itemTitleClassName?: string;
@@ -108,7 +108,7 @@ export interface ConversationPanelStyles {
   typography?: ConversationPanelTypography;
   /** CSS class applied to the icon badge in each conversation row. Defaults to `'rounded-full'`. */
   itemIconBadgeClassName?: string;
-  /** Typography class applied to the task pill badge in each conversation row. Defaults to `'dial-caption-semi-text uppercase tracking-[0.6px]'`. Colors come from the module stylesheet. */
+  /** Typography class applied to the task pill badge in each conversation row. Defaults to `'dial-caption-lead-semi-text'`. Colors come from the module stylesheet. */
   taskBadgeClassName?: string;
 }
 

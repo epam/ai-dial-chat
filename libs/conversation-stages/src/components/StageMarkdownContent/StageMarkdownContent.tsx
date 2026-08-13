@@ -85,8 +85,7 @@ export const StageMarkdownContent: FC<Props> = memo(
                 <code
                   className={mergeClasses(
                     'inline-block px-1.5 py-1',
-                    typography?.codeClassName ??
-                      'dial-small-text rounded-md font-mono',
+                    typography?.codeClassName ?? 'dial-code-text rounded-md',
                     styles.codeInline,
                   )}
                 >
@@ -97,6 +96,7 @@ export const StageMarkdownContent: FC<Props> = memo(
             return (
               <StageCodeBlock
                 codeClassName={className}
+                blockClassName={typography?.codeBlockClassName}
                 copyAriaLabel={copyAriaLabel}
               >
                 {children}

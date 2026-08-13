@@ -38,6 +38,8 @@ export interface SearchBarStyles {
   iconClassName?: string;
   /** Extra CSS class applied to the `<input>` element. */
   inputClassName?: string;
+  /** Typography class applied to the `<input>` element. Defaults to `'dial-small-text'`. */
+  inputTextClassName?: string;
   /** Extra CSS class applied to the clear button. */
   clearButtonClassName?: string;
 }
@@ -77,6 +79,7 @@ export const SearchBar: FC<SearchBarProps> = ({
     containerClassName,
     iconClassName,
     inputClassName,
+    inputTextClassName = 'dial-small-text',
     clearButtonClassName,
   } = searchBarStyles ?? {};
   const resolvedAriaLabel = ariaLabel ?? placeholder;
@@ -112,7 +115,8 @@ export const SearchBar: FC<SearchBarProps> = ({
           type="text"
           className={mergeClasses(
             styles.input,
-            'dial-small-text min-w-0 flex-1 border-0 p-0 outline-none',
+            'min-w-0 flex-1 border-0 p-0 outline-none',
+            inputTextClassName,
             inputClassName,
           )}
           value={value}

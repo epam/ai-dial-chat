@@ -5,27 +5,28 @@ import { CatalogEntityType } from '../../../types/entity-type';
 import { EntityTypeLabel } from '../EntityTypeLabel';
 
 describe('EntityTypeLabel', () => {
-  it('renders the type as uppercase text with no background', () => {
-    const { container } = render(
-      <EntityTypeLabel type={CatalogEntityType.Model} />,
-    );
+  it('renders the type through the uppercasing lead typography class with no background', () => {
+    render(<EntityTypeLabel type={CatalogEntityType.Model} />);
 
-    expect(screen.getByText(CatalogEntityType.Model)).toBeTruthy();
-    expect(container.querySelector('span')?.className).toContain('uppercase');
-    expect(container.querySelector('span')?.className).not.toMatch(
-      /bg-|background/,
-    );
+    const label = screen.getByText(CatalogEntityType.Model);
+
+    expect(label.className).toContain('dial-caption-lead-semi-text');
+    expect(label.className).not.toMatch(/bg-|background/);
   });
 
-  it('renders PROMPT with the prompt entry of the entity colour map', () => {
-    const { container } = render(
-      <EntityTypeLabel type={CatalogEntityType.Prompt} />,
-    );
+  it('renders PROMPT as its own label', () => {
+    render(<EntityTypeLabel type={CatalogEntityType.Prompt} />);
 
     expect(screen.getByText('PROMPT')).toBeTruthy();
-    expect(container.querySelector('span')?.getAttribute('style')).toContain(
-      ENTITY_TYPE_COLOR[CatalogEntityType.Prompt],
+  });
+
+  it('has a distinct colour for every entity type it can render', () => {
+    const colors = Object.values(CatalogEntityType).map(
+      (type) => ENTITY_TYPE_COLOR[type],
     );
+
+    expect(colors.every(Boolean)).toBe(true);
+    expect(new Set(colors).size).toBe(colors.length);
   });
 
   it('merges a custom className with the default uppercase/tracking classes', () => {

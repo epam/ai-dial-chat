@@ -47,34 +47,34 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         ))}
       </select>
     ),
-    // Mirrors real DialTagInput's "commit on Enter or comma" behavior so
-    // parent-driven dedup/remount logic is exercised the same way it would
-    // be against the real component, rather than firing onChange per keystroke.
-    DialTagInput: ({
-      label,
+    /*
+     * Mirrors the real TagInput: fully controlled through `value`, committing
+     * the typed text on Enter or comma. The parent's trim/dedup/cap logic is
+     * exercised the same way it would be against the real component, rather
+     * than firing onChange per keystroke.
+     */
+    TagInput: ({
+      labelProps,
       placeholder,
       onChange,
-      initialTags,
+      value,
       disabled,
     }: {
-      label?: string;
+      labelProps?: { label?: string };
       placeholder?: string;
       onChange?: (tags: string[]) => void;
-      initialTags?: string[];
+      value?: string[];
       disabled?: boolean;
     }) => {
-      const [tags, setTags] = useState<string[]>(initialTags ?? []);
       const [text, setText] = useState('');
       const commit = () => {
         if (!text.trim()) return;
-        const next = [...tags, text];
-        setTags(next);
         setText('');
-        onChange?.(next);
+        onChange?.([...(value ?? []), text]);
       };
       return (
         <label>
-          {label}
+          {labelProps?.label}
           <input
             placeholder={placeholder}
             disabled={disabled}
@@ -128,8 +128,6 @@ describe('PublishAccessRuleEditor', () => {
     const { onSave } = renderEditor();
     await userEvent.selectOptions(screen.getByLabelText('Source'), 'role');
     await userEvent.selectOptions(screen.getByLabelText('Function'), 'CONTAIN');
-    // Re-query after each commit: trimming a tag with surrounding whitespace
-    // remounts the tag input to sync its displayed value to the trimmed form.
     await userEvent.type(screen.getByLabelText('Targets'), '  engineering ,');
     await userEvent.type(screen.getByLabelText('Targets'), 'support{Enter}');
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
@@ -145,7 +143,6 @@ describe('PublishAccessRuleEditor', () => {
     const { onSave } = renderEditor();
     await userEvent.selectOptions(screen.getByLabelText('Source'), 'role');
     await userEvent.selectOptions(screen.getByLabelText('Function'), 'CONTAIN');
-    // Re-query the input after each commit: a rejected duplicate remounts it.
     await userEvent.type(screen.getByLabelText('Targets'), 'engineering,');
     await userEvent.type(screen.getByLabelText('Targets'), 'engineering,');
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));

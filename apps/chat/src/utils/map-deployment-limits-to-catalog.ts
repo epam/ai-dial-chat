@@ -60,7 +60,7 @@ const LIMIT_STAT_MAPPINGS: DeploymentLimitMapping[] = [
 const UNLIMITED_TOTAL_THRESHOLD = Number.MAX_SAFE_INTEGER;
 
 const numberFormatter = new Intl.NumberFormat(undefined, {
-  maximumFractionDigits: 6,
+  maximumFractionDigits: 2,
 });
 
 const isUsableLimitStats = (

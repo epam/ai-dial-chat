@@ -65,7 +65,7 @@ export interface AttachmentCardColors {
 export interface AttachmentCardTypography {
   /** Utility class applied to the file name text. Defaults to `'dial-tiny-text'`. */
   fontClassName?: string;
-  /** Utility class applied to the bottom meta label (file type / status). Defaults to `'dial-tiny-text'`. */
+  /** Utility class applied to the bottom meta label (file type / status). Defaults to `'dial-caption-text'`. */
   metaClassName?: string;
 }
 

@@ -4,18 +4,15 @@ import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
-import { NAVIGATION_CONFIG } from '../../constants/navigation';
 import {
   ChatI18nKeys,
   NavigationI18nKeys,
 } from '../../constants/translation-keys';
-import { useAppConfig } from '../../context/AppConfigContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLogout } from '../../hooks/logout/useLogout';
 import { useUiFeature } from '../../hooks/useUiFeature';
-import { ROUTES } from '../../types/routes';
-import { UserConfigStatus } from '../../types/user-config-status';
+import { useVisibleNavItems } from '../../hooks/useVisibleNavItems';
 import { getIconPath } from '../../utils/icon-path';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
 import NavPageContent from '../MobileNavBottomSheet/NavPageContent';
@@ -33,35 +30,31 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
   const isMobile = useIsMobile();
   const { isLogoutOpen, openLogout, closeLogout } = useLogout();
   const { currentThemeFavicon } = useTheme();
-  const { status, features } = useAppConfig();
-  const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
   const isUserMenuHidden = useUiFeature(OverlayFeature.HideUserMenu);
+  const visibleNavItems = useVisibleNavItems();
 
-  const navItems = NAVIGATION_CONFIG.filter(
-    ({ path, featureFlag }) =>
-      (path !== ROUTES.Catalog || isCatalogEnabled) &&
-      (featureFlag == null ||
-        (status === UserConfigStatus.Ready && features[featureFlag] === true)),
-  ).map(({ path, matchPaths, icon: Icon, labelKey }) => {
-    const isActive =
-      (path === '/' ? pathname === '/' : pathname.startsWith(path)) ||
-      (matchPaths?.some((p) => pathname.startsWith(p)) ?? false);
-    return (
-      <Link key={path} to={path} className="contents">
-        <IconButton
-          icon={<Icon size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
-          aria-label={t(labelKey)}
-          aria-current={isActive ? 'page' : undefined}
-          tooltipProps={{ tooltip: t(labelKey) }}
-          tabIndex={-1}
-          className={mergeClasses(
-            'rounded hover:bg-control-accent-alpha-hover active:bg-control-accent-alpha-active',
-            isActive ? 'text-accent' : 'text-secondary',
-          )}
-        />
-      </Link>
-    );
-  });
+  const navItems = visibleNavItems.map(
+    ({ path, matchPaths, icon: Icon, labelKey }) => {
+      const isActive =
+        (path === '/' ? pathname === '/' : pathname.startsWith(path)) ||
+        (matchPaths?.some((p) => pathname.startsWith(p)) ?? false);
+      return (
+        <Link key={path} to={path} className="contents">
+          <IconButton
+            icon={<Icon size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
+            aria-label={t(labelKey)}
+            aria-current={isActive ? 'page' : undefined}
+            tooltipProps={{ tooltip: t(labelKey) }}
+            tabIndex={-1}
+            className={mergeClasses(
+              'rounded hover:bg-control-accent-alpha-hover active:bg-control-accent-alpha-active',
+              isActive ? 'text-accent' : 'text-secondary',
+            )}
+          />
+        </Link>
+      );
+    },
+  );
 
   return (
     <>

@@ -34,6 +34,8 @@ export interface CitationDropdownProps {
   markerLabels: CitationMarkerLabels;
   /** Optional typography overrides forwarded to the card. */
   cardTypography?: CitationCardTypography;
+  /** Typography class forwarded to the marker's label text. Defaults to `'dial-caption-text'`. */
+  markerLabelClassName?: string;
 }
 
 /** Combines `CitationMarker` and `CitationCard` into a tooltip-based dropdown. Requires a `CitationCardProvider` ancestor. */
@@ -46,6 +48,7 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
   cardLabels,
   markerLabels,
   cardTypography,
+  markerLabelClassName,
 }) => {
   const citationCard = useCitationCardContext();
   const isOpen = citationCard.isOpen(group.sourceUrl);
@@ -95,6 +98,7 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
         onOpen={() => citationCard.openPopup(group.sourceUrl)}
         icon={icon}
         labels={markerLabels}
+        labelClassName={markerLabelClassName}
       />
     </DialTooltip>
   );

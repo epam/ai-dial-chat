@@ -49,25 +49,3 @@ import { SearchBar } from '@epam/ai-dial-kit';
   labels={{ placeholder: 'Search...' }}
 />;
 ```
-
-### TabRow
-
-Horizontal tab navigation component. Colors are themed through CSS custom
-properties — pass values (not utility class names) via `styles.colors`.
-
-```tsx
-import { TabRow } from '@epam/ai-dial-kit';
-
-<TabRow
-  tabs={[
-    { id: 'all', label: 'All' },
-    { id: 'favorites', label: 'Favorites', count: 3 },
-  ]}
-  activeTabId="all"
-  onTabChange={setActiveTab}
-  styles={{
-    colors: { inactiveTabTextHover: '#374151' },
-    typography: { tabLabelClassName: 'dial-small-semi-text' },
-  }}
-/>;
-```

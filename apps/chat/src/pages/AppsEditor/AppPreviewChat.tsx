@@ -11,7 +11,6 @@ import {
 import {
   ConfirmationPopupVariant,
   ConfirmationPopup,
-  NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import {
@@ -65,7 +64,7 @@ interface Props {
 
 const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
   const { t } = useTranslation();
-  const { showNotification } = useNotification();
+  const { showErrorNotification } = useNotification();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
   const { items } = useDeployments();
@@ -124,9 +123,9 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         filenames,
         t,
       );
-      showNotification({ variant: NotificationVariant.Error, title, message });
+      showErrorNotification({ title, message });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const { isAudioMessageSupported } = useAudioTranscription({
@@ -134,11 +133,10 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
   });
 
   const handleStopError = useCallback(() => {
-    showNotification({
-      variant: NotificationVariant.Error,
+    showErrorNotification({
       message: t(ChatI18nKeys.StreamError),
     });
-  }, [showNotification, t]);
+  }, [showErrorNotification, t]);
 
   const { startStream, handleStop, isStreaming, canStopStreaming } =
     useConversationStream({
@@ -216,8 +214,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         } catch (err) {
           const { message: errorMessage, traceId } =
             await getApiErrorDetails(err);
-          showNotification({
-            variant: NotificationVariant.Error,
+          showErrorNotification({
             message: errorMessage ?? t(ChatI18nKeys.CreateConversationError),
             requestId: traceId,
           });
@@ -226,7 +223,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
 
       void createFromStarter();
     },
-    [handleCreateConversation, showNotification, t],
+    [handleCreateConversation, showErrorNotification, t],
   );
 
   /*

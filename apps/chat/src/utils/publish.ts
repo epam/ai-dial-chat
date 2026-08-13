@@ -39,6 +39,12 @@ export const getAccessRulesLabels = (
   t: TFunction,
 ): PublishAccessRulesLabels => ({
   heading: t(PublishAccessRulesI18nKeys.Heading),
+  folderScopeHint: t(PublishAccessRulesI18nKeys.FolderScopeHint),
+  noFolderScopeHint: t(PublishAccessRulesI18nKeys.NoFolderScopeHint),
+  rulesWithoutFolderWarning: t(
+    PublishAccessRulesI18nKeys.RulesWithoutFolderWarning,
+  ),
+  maxRulesReachedLabel: t(PublishAccessRulesI18nKeys.MaxRulesReachedLabel),
   addRuleLabel: t(PublishAccessRulesI18nKeys.AddRuleLabel),
   clearAllLabel: t(PublishAccessRulesI18nKeys.ClearAllLabel),
   orSeparatorLabel: t(PublishAccessRulesI18nKeys.OrSeparatorLabel),

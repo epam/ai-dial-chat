@@ -10,8 +10,8 @@ describe('pickAvatarColor', () => {
     const result = pickAvatarColor('');
     expect(result).toHaveProperty('background');
     expect(result).toHaveProperty('foreground');
-    expect(result.background).toMatch(/^#[0-9a-f]{6}$/i);
-    expect(result.foreground).toMatch(/^#[0-9a-f]{6}$/i);
+    expect(result.background).toMatch(/^var\(--[a-z0-9-]+, #[0-9a-f]{6}\)$/i);
+    expect(result.foreground).toMatch(/^var\(--[a-z0-9-]+, #[0-9a-f]{6}\)$/i);
   });
 
   it('palette contains more than one distinct entry', () => {

@@ -311,7 +311,9 @@ describe('AnnouncementBanner — legacy layout', () => {
     mockAppConfigState.announcementHtml = 'Welcome!';
     render(<AnnouncementBanner />);
 
-    expect(screen.getByText('Welcome!').className).toContain('text-center');
+    expect(screen.getByText('Welcome!').className).toContain(
+      'dial-small-paragraph-semi-text',
+    );
     expect(screen.getByRole('region').className).toContain('justify-center');
   });
 });

@@ -1,0 +1,5 @@
+.tag {
+  border-color: var(--cat-card-tag-border, var(--stroke-tertiary, #e0e6f0));
+  background-color: var(--cat-card-tag-bg, var(--bg-layer-sunken, #eef1f7));
+  color: var(--cat-card-tag-text, var(--text-secondary, #57647a));
+}

@@ -124,22 +124,22 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       ))}
     </select>
   ),
-  DialTagInput: ({
-    label,
+  TagInput: ({
+    labelProps,
     placeholder,
     onChange,
-    initialTags,
+    value,
   }: {
-    label?: string;
+    labelProps?: { label?: string };
     placeholder?: string;
     onChange?: (tags: string[]) => void;
-    initialTags?: string[];
+    value?: string[];
   }) => (
     <label>
-      {label}
+      {labelProps?.label}
       <input
         placeholder={placeholder}
-        defaultValue={(initialTags ?? []).join(',')}
+        value={(value ?? []).join(',')}
         onChange={(e) =>
           onChange?.(e.target.value ? e.target.value.split(',') : [])
         }

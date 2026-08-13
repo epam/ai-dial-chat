@@ -13,7 +13,7 @@ export interface DataGridProps {
    * Defaults to `repeat(N, 1fr)` where N is `columns.length`.
    */
   columnsTemplate?: string;
-  /** CSS class for header cells. Defaults to `'dial-caption-text'`. */
+  /** CSS class for header cells. Defaults to `'dial-caption-lead-semi-text'`, which uppercases the label itself. */
   headingClassName?: string;
   /** CSS class for data cells. Defaults to `'dial-tiny-text'`. */
   cellClassName?: string;
@@ -24,7 +24,7 @@ export const DataGrid: FC<DataGridProps> = ({
   columns,
   rows,
   columnsTemplate,
-  headingClassName = 'dial-caption-text',
+  headingClassName = 'dial-caption-lead-semi-text',
   cellClassName = 'dial-tiny-text',
 }) => {
   const template = columnsTemplate ?? `repeat(${columns.length}, 1fr)`;
@@ -41,7 +41,7 @@ export const DataGrid: FC<DataGridProps> = ({
         <div
           key={col}
           className={mergeClasses(
-            'px-2 py-1 text-start uppercase',
+            'px-2 py-1 text-start',
             headingClassName,
             styles.header,
           )}

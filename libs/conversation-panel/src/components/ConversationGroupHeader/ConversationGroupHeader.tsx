@@ -15,7 +15,7 @@ export interface ConversationGroupHeaderProps {
   onToggle: () => void;
   /** `id` of the virtualized list container this header's rows belong to, referenced via `aria-controls`. */
   listId: string;
-  /** Typography class applied to the header button. Defaults to `'dial-tiny-semi-text uppercase'`. */
+  /** Typography class applied to the header button. Defaults to `'dial-tiny-lead-text'`. */
   className?: string;
   /** When provided the header acts as a drag-and-drop drop zone. */
   dropZoneGroupKey?: FilterTab;

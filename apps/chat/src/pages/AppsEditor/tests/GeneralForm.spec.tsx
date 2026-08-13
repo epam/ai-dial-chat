@@ -15,10 +15,6 @@ vi.mock('../../../server-api/applications', () => ({
   createApplication: vi.fn(),
 }));
 
-vi.mock('@epam/ai-dial-kit', () => ({
-  TagInput: ({ label }: { label?: string }) => <span>{label}</span>,
-}));
-
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
   return {

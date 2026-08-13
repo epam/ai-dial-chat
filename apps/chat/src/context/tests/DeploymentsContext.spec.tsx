@@ -6,6 +6,7 @@ import * as applicationSchemasApi from '../../server-api/application-schemas';
 import * as deploymentsApi from '../../server-api/deployments.api';
 import * as toolsetsApi from '../../server-api/toolsets';
 import { DeploymentsProvider, useDeployments } from '../DeploymentsContext';
+import { createNotificationContextValue } from './notification-context-mock';
 
 const contextMocks = vi.hoisted(() => ({
   defaultDeploymentId: null as string | null,
@@ -37,11 +38,8 @@ vi.mock('../UserConfigContext', () => ({
   }),
 }));
 vi.mock('../NotificationContext', () => ({
-  useNotification: () => ({
-    notifications: [],
-    showNotification: contextMocks.showNotification,
-    dismissNotification: vi.fn(),
-  }),
+  useNotification: () =>
+    createNotificationContextValue(contextMocks.showNotification),
 }));
 
 const mockItem1 = {

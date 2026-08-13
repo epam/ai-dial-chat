@@ -5,11 +5,11 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialSwitch,
   Spinner,
   GhostButton,
   GhostIconButton,
   NeutralButton,
+  Switch,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowLeft, IconPencilMinus } from '@tabler/icons-react';
 import { type FC } from 'react';
@@ -136,24 +136,13 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
               <span className={fieldValueClassName}>
                 {labels.activeStatusLabel}
               </span>
-              {/*
-               * DialSwitch's own root already carries role="switch" but no
-               * aria-checked (a UI-kit gap — see AGENTS.md a11y "Scope
-               * boundary"). This wrapper adds the missing checked-state
-               * signal at the group level rather than editing vendor code.
-               */}
-              <div
-                role="group"
-                aria-checked={isActive}
+              <Switch
+                id="scheduled-task-active-switch"
                 aria-label={labels.activeStatusLabel}
-              >
-                <DialSwitch
-                  switchId="scheduled-task-active-switch"
-                  isOn={isActive}
-                  disabled={isActiveUpdating || isActiveDisabled}
-                  onChange={(value) => onActiveChange?.(value)}
-                />
-              </div>
+                isOn={isActive}
+                disabled={isActiveUpdating || isActiveDisabled}
+                onChange={(value) => onActiveChange?.(value)}
+              />
             </>
           )}
 

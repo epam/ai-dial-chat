@@ -1,5 +1,5 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialTag } from '@epam/ai-dial-ui-kit';
+import { Tag } from '@epam/ai-dial-ui-kit';
 import { type FC, memo } from 'react';
 import styles from './PillTabs.module.scss';
 
@@ -69,7 +69,7 @@ export const PillTabs: FC<PillTabsProps> = memo(
               aria-selected={isActive}
               className="contents"
             >
-              <DialTag
+              <Tag
                 label={tab.label}
                 selected={isActive}
                 onClick={() => onTabChange(tab.id)}
