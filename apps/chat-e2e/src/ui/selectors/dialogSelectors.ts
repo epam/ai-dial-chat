@@ -106,6 +106,7 @@ export const SettingsTooltip = {
   assistantInfo: '[data-qa="assistant-info"]',
   promptInfo: '[data-qa="prompt-info"]',
   tempInfo: '[data-qa="temp-info"]',
+  responseFormatInfo: '[data-qa="response-format"]',
 };
 
 export const TooltipSelector = {
@@ -224,6 +225,7 @@ export const ChatSettingsModalSelectors = {
   systemPrompt: '[data-qa="system-prompt"]',
   temperatureSlider: '[data-qa="temp-slider"]',
   slider: '.temperature-slider',
+  responseFormatContainer: '[data-qa="response-format-container"]',
 };
 
 export const TalkToAgentDialogSelectors = {

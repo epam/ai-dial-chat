@@ -425,7 +425,7 @@ dialSharedWithMeTest(
         await chatHeader.openConversationSettingsPopup();
         await agentSettings.setSystemPrompt(GeneratorUtil.randomString(5));
         await temperatureSlider.setTemperature(0);
-        await conversationSettingsModal.applyChangesButton.click();
+        await conversationSettingsModal.applyChanges();
         await toast.closeToast();
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,

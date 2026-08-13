@@ -19,6 +19,9 @@ export class ChatSettingsTooltip extends BaseElement {
   public temperatureInfo = this.getChildElementBySelector(
     SettingsTooltip.tempInfo,
   );
+  public responseFormatInfo = this.getChildElementBySelector(
+    SettingsTooltip.responseFormatInfo,
+  );
 
   public async getApplicationInfo() {
     return this.applicationInfo.getElementInnerContent();
