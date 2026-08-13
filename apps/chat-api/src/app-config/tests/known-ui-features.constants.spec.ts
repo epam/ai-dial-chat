@@ -10,8 +10,8 @@ import { KNOWN_UI_FEATURES } from '../known-ui-features.constants';
  * them in the same change as any `OverlayFeature` addition, removal, or rename.
  */
 describe('KNOWN_UI_FEATURES', () => {
-  it('has exactly 35 members, one per OverlayFeature key', () => {
-    expect(KNOWN_UI_FEATURES.size).toBe(35);
+  it('has exactly 37 members, one per OverlayFeature key', () => {
+    expect(KNOWN_UI_FEATURES.size).toBe(37);
   });
 
   it('includes representative transferable keys', () => {
@@ -29,7 +29,13 @@ describe('KNOWN_UI_FEATURES', () => {
   it('includes the keys that gate a whole route', () => {
     expect(KNOWN_UI_FEATURES.has('file-manager')).toBe(true);
     expect(KNOWN_UI_FEATURES.has('prompts')).toBe(true);
+    expect(KNOWN_UI_FEATURES.has('skills')).toBe(true);
     expect(KNOWN_UI_FEATURES.has('custom-apps')).toBe(true);
+  });
+
+  it('includes both agent-selector keys', () => {
+    expect(KNOWN_UI_FEATURES.has('disallow-change-agent')).toBe(true);
+    expect(KNOWN_UI_FEATURES.has('hide-change-agent')).toBe(true);
   });
 
   it('rejects the legacy wire values that OverlayFeature renamed', () => {

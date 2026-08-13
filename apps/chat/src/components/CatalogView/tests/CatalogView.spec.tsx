@@ -47,6 +47,7 @@ import { getPublishRules } from '../../../server-api/publish-rules.api';
 import { publishCatalogEntity } from '../../../server-api/publish.api';
 import {
   discardSharedCatalogItem,
+  getShareRecipientsCount,
   revokeSharedAccess,
 } from '../../../server-api/share.api';
 import {
@@ -151,6 +152,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onUnshare,
     isUnshareVisible,
     onRevokeShare,
+    onFetchRecipientsCount,
     isRevokeShareVisible,
     onFetchDetails,
     onLogin,
@@ -189,6 +191,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onUnshare?: (item: CatalogItem) => Promise<void>;
     isUnshareVisible?: (item: CatalogItem) => boolean;
     onRevokeShare?: (item: CatalogItem) => Promise<void>;
+    onFetchRecipientsCount?: (item: CatalogItem) => Promise<number | undefined>;
     isRevokeShareVisible?: (item: CatalogItem) => boolean;
     onFetchDetails?: (item: CatalogItem) => Promise<unknown>;
     onLogin?: (
@@ -221,6 +224,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onMyAppsActiveChange?: (isActive: boolean) => void;
   }) => {
     const [fetchResult, setFetchResult] = useState<string>('');
+    const [recipientsCount, setRecipientsCount] = useState<string>('');
     capturedPublishProps.current = {
       onPublish,
       onPublishSuccess,
@@ -374,6 +378,26 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
               revoke {item.id}
             </button>
           ))}
+        {/* Stands in for the real Header's Manage-menu open, which is what
+         * triggers the recipient-count lookup. */}
+        {(items ?? []).map((item) => (
+          <button
+            key={`recipients-count-${item.id}`}
+            type="button"
+            onClick={async () => {
+              try {
+                const count = await onFetchRecipientsCount?.(item);
+                setRecipientsCount(String(count));
+              } catch {
+                /* The real Header treats a rejection as "count unknown". */
+                setRecipientsCount('unknown');
+              }
+            }}
+          >
+            recipients count {item.id}
+          </button>
+        ))}
+        <output aria-label="Recipients count result">{recipientsCount}</output>
         {(items ?? []).map((item) => (
           <button
             key={`fetch-details-${item.id}`}
@@ -482,6 +506,7 @@ vi.mock('../../../server-api/applications', () => ({
 vi.mock('../../../server-api/share.api', () => ({
   discardSharedCatalogItem: vi.fn(),
   revokeSharedAccess: vi.fn(),
+  getShareRecipientsCount: vi.fn(),
 }));
 
 vi.mock('../../../context/PromptsContext', () => ({
@@ -3232,6 +3257,55 @@ describe('CatalogView', () => {
       );
       expect(showNotification).not.toHaveBeenCalledWith(
         expect.objectContaining({ variant: 'success' }),
+      );
+    });
+
+    it('resolves the recipient count for the item the details panel asks about', async () => {
+      mockDeployments({
+        items: [ownedApplication],
+      } as Partial<ReturnType<typeof useDeployments>>);
+      vi.mocked(getShareRecipientsCount).mockResolvedValue({
+        itemId: ownedApplication.id,
+        recipientsCount: 4,
+      });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: `recipients count ${ownedApplication.id}`,
+        }),
+      );
+
+      expect(getShareRecipientsCount).toHaveBeenCalledWith(ownedApplication.id);
+      expect(
+        screen.getByLabelText('Recipients count result').textContent,
+      ).toBe('4');
+    });
+
+    it('propagates a failed recipient-count lookup without notifying', async () => {
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      mockDeployments({
+        items: [ownedApplication],
+      } as Partial<ReturnType<typeof useDeployments>>);
+      vi.mocked(getShareRecipientsCount).mockRejectedValue(new Error('503'));
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: `recipients count ${ownedApplication.id}`,
+        }),
+      );
+
+      /* The details panel decides how to degrade; a failed count is not
+       * something to interrupt the user about. */
+      expect(showNotification).not.toHaveBeenCalled();
+      expect(screen.getByLabelText('Recipients count result').textContent).toBe(
+        'unknown',
       );
     });
   });

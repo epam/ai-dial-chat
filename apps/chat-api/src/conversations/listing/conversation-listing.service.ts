@@ -2,10 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
-import {
-  countRecipientsByUrl,
-  resolveRecipientsCount,
-} from '../../common/utils/resource-ownership';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
 import { HIDDEN_FILE } from '../../constants/dial.constants';
 import { DialClientService } from '../../dial/dial-client.service';
@@ -62,77 +58,44 @@ export class ConversationListingService {
     });
 
     try {
-      const [
-        userResult,
-        publicResult,
-        sharedResult,
-        sharedByMeResult,
-        pinnedIds,
-        viewedIds,
-      ] = await Promise.all([
-        this.dialClient.client.getConversationMetadata(bucket, '', {
-          headers: getBearerAuthHeaders(token),
-          params: {
-            query: { ...buildQuery(userNextToken), permissions: true },
-          },
-        }) as Promise<MetadataResult & { response: globalThis.Response }>,
-        (
-          this.dialClient.client.getConversationMetadata(PUBLIC_BUCKET, '', {
+      const [userResult, publicResult, sharedResult, pinnedIds, viewedIds] =
+        await Promise.all([
+          this.dialClient.client.getConversationMetadata(bucket, '', {
             headers: getBearerAuthHeaders(token),
-            params: { query: buildQuery(publicNextToken) },
-          }) as Promise<MetadataResult>
-        ).catch((err: unknown) => {
-          this.logger.warn(
-            'DIAL Core listConversations (public bucket) failed',
-            err,
-          );
-          return { data: undefined, error: err } satisfies MetadataResult;
-        }),
-        (
-          this.dialClient.client.getSharedResources({
-            headers: getBearerAuthHeaders(token),
-            body: { resourceTypes: ['CONVERSATION'], with: 'me' },
-          }) as Promise<SharedResourcesResult>
-        ).catch((err: unknown) => {
-          this.logger.warn(
-            'DIAL Core listConversations (shared resources) failed',
-            err,
-          );
-          return {
-            data: undefined,
-            error: err,
-          } satisfies SharedResourcesResult;
-        }),
-        /*
-         * The mirror image of the call above: conversations the caller owns
-         * and has shared with *others*, with `includeUserInfo` so each one
-         * carries its recipient list. Only the count is kept — it lets the
-         * frontend hide "Revoke access" for a conversation nobody holds.
-         * Best-effort like its sibling: a failure leaves every count absent
-         * rather than failing the whole listing.
-         */
-        (
-          this.dialClient.client.getSharedResources({
-            headers: getBearerAuthHeaders(token),
-            body: {
-              resourceTypes: ['CONVERSATION'],
-              with: 'others',
-              includeUserInfo: true,
+            params: {
+              query: { ...buildQuery(userNextToken), permissions: true },
             },
-          }) as Promise<SharedResourcesResult>
-        ).catch((err: unknown) => {
-          this.logger.warn(
-            'DIAL Core listConversations (shared-with-others resources) failed',
-            err,
-          );
-          return {
-            data: undefined,
-            error: err,
-          } satisfies SharedResourcesResult;
-        }),
-        this.userConfigService.getPinnedIds(token, bucket),
-        this.scheduledTaskUnreadService.getViewedIds(token, bucket),
-      ]);
+          }) as Promise<MetadataResult & { response: globalThis.Response }>,
+          (
+            this.dialClient.client.getConversationMetadata(PUBLIC_BUCKET, '', {
+              headers: getBearerAuthHeaders(token),
+              params: { query: buildQuery(publicNextToken) },
+            }) as Promise<MetadataResult>
+          ).catch((err: unknown) => {
+            this.logger.warn(
+              'DIAL Core listConversations (public bucket) failed',
+              err,
+            );
+            return { data: undefined, error: err } satisfies MetadataResult;
+          }),
+          (
+            this.dialClient.client.getSharedResources({
+              headers: getBearerAuthHeaders(token),
+              body: { resourceTypes: ['CONVERSATION'], with: 'me' },
+            }) as Promise<SharedResourcesResult>
+          ).catch((err: unknown) => {
+            this.logger.warn(
+              'DIAL Core listConversations (shared resources) failed',
+              err,
+            );
+            return {
+              data: undefined,
+              error: err,
+            } satisfies SharedResourcesResult;
+          }),
+          this.userConfigService.getPinnedIds(token, bucket),
+          this.scheduledTaskUnreadService.getViewedIds(token, bucket),
+        ]);
 
       const {
         data: userData,
@@ -175,23 +138,6 @@ export class ConversationListingService {
       const pinnedSet = new Set(pinnedIds.map(safeDecodeURIComponent));
       const viewedSet = new Set(viewedIds.map(safeDecodeURIComponent));
 
-      const { data: sharedByMeData, error: sharedByMeError } = sharedByMeResult;
-      if (sharedByMeError !== undefined) {
-        this.logger.warn(
-          'DIAL Core listConversations (shared-with-others resources) failed',
-          sharedByMeError,
-        );
-      }
-      /*
-       * `null` on failure, not an empty map: a successful response omits
-       * conversations nobody holds, so a missing entry is a real zero, while
-       * a failed call means the count is unknown.
-       */
-      const recipientCounts =
-        sharedByMeError === undefined
-          ? countRecipientsByUrl(sharedByMeData?.resources ?? [])
-          : null;
-
       const mapItems = (
         items: MetadataItem[],
         overrides: {
@@ -223,11 +169,6 @@ export class ConversationListingService {
                 overrides.publishedWithMe ?? item.publishedWithMe ?? false,
               isPinned: pinnedSet.has(decodedId),
               isReadonly,
-              recipientsCount: resolveRecipientsCount(
-                recipientCounts,
-                id,
-                decodedId,
-              ),
               isScheduledTask: scheduledTask !== null,
               ...(scheduledTask !== null
                 ? {

@@ -465,13 +465,6 @@ export class DialToolsetDto {
       'True when this toolset is shared with the current user (READ or WRITE) and not owned by them',
   })
   sharedWithMe?: boolean;
-
-  @ApiPropertyOptional({
-    description:
-      'How many other users currently hold shared access to this toolset, for toolsets the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.',
-    example: 3,
-  })
-  recipientsCount?: number;
 }
 
 export class DialToolsetListResponseDto {

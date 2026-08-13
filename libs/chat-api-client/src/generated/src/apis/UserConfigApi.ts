@@ -16,6 +16,7 @@ import * as runtime from '../runtime';
 import type {
   UpdateInstalledDto,
   UpdateInstalledPromptDto,
+  UpdateInstalledSkillDto,
   UpdatePinsDto,
   UpdateSelectedDeploymentDto,
   UserConfigDto,
@@ -27,6 +28,10 @@ export interface UpdateInstalledDeploymentRequest {
 
 export interface UpdateInstalledPromptRequest {
   updateInstalledPromptDto: UpdateInstalledPromptDto;
+}
+
+export interface UpdateInstalledSkillRequest {
+  updateInstalledSkillDto: UpdateInstalledSkillDto;
 }
 
 export interface UpdateInstalledToolsetRequest {
@@ -170,6 +175,52 @@ export class UserConfigApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
     await this.updateInstalledPromptRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Add or remove a skill from favorites
+   */
+  async updateInstalledSkillRaw(
+    requestParameters: UpdateInstalledSkillRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['updateInstalledSkillDto'] == null) {
+      throw new runtime.RequiredError(
+        'updateInstalledSkillDto',
+        'Required parameter "updateInstalledSkillDto" was null or undefined when calling updateInstalledSkill().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/user-config/skills`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PATCH',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['updateInstalledSkillDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Add or remove a skill from favorites
+   */
+  async updateInstalledSkill(
+    requestParameters: UpdateInstalledSkillRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.updateInstalledSkillRaw(requestParameters, initOverrides);
   }
 
   /**

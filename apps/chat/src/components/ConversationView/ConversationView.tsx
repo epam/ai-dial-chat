@@ -197,6 +197,7 @@ const ConversationView: FC<Props> = ({
   const isDisallowChangeAgentEnabled = useUiFeature(
     OverlayFeature.DisallowChangeAgent,
   );
+  const isHideChangeAgentEnabled = useUiFeature(OverlayFeature.HideChangeAgent);
   const isDisabledSendEnabled = useUiFeature(OverlayFeature.DisabledSend);
   const isSkipFocusChatInputOnloadEnabled = useUiFeature(
     OverlayFeature.SkipFocusChatInputOnload,
@@ -297,6 +298,26 @@ const ConversationView: FC<Props> = ({
         : undefined,
     [fixedModel],
   );
+
+  /*
+   * A selector the user cannot act on is removed rather than dimmed: a greyed-out
+   * icon with a caret advertises a menu that never opens, and where a deployment
+   * cannot be changed the icon carries no actionable information either.
+   * `deployments: undefined` is the lib's own hide path (the same one
+   * `NewConversationComposer` uses for `hide-empty-chat-change-agent`) and leaves
+   * the send button enabled, because `Input` reads an absent selector as "model
+   * already resolved".
+   *
+   * `fixedModel` is deliberately excluded. It reaches this component only from
+   * the app editor's preview pane, whose empty state renders the same chip
+   * through `NewConversationComposer` — hiding it here alone would make that
+   * pane lose the chip the moment the first message is sent.
+   */
+  const isAgentSelectorHidden =
+    isHideChangeAgentEnabled || isDisallowChangeAgentEnabled;
+  const agentSelectorItems = isModelFixed
+    ? fixedDeploymentItems
+    : deploymentItems;
 
   const hasQuickAppStarters = useMemo(
     () =>
@@ -735,15 +756,13 @@ const ConversationView: FC<Props> = ({
                 onAttachmentsChange={handleAttachmentsChange}
                 placeholder={placeholder}
                 deployments={
-                  fixedModel ? fixedDeploymentItems : deploymentItems
+                  isAgentSelectorHidden ? undefined : agentSelectorItems
                 }
                 selectedDeploymentId={
                   selectedDeployment?.id ?? activeDeploymentId
                 }
                 onDeploymentChange={fixedModel ? undefined : setSelectedItemId}
-                isModelSelectorDisabled={
-                  isModelFixed || isDisallowChangeAgentEnabled
-                }
+                isModelSelectorDisabled={isModelFixed}
                 isSendDisabled={isDisabledSendEnabled}
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}

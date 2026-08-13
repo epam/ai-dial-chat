@@ -65,6 +65,7 @@ import {
 import { publishCatalogEntity } from '../../server-api/publish.api';
 import {
   discardSharedCatalogItem,
+  getShareRecipientsCount,
   revokeSharedAccess,
 } from '../../server-api/share.api';
 import { deleteToolset, logoutToolset } from '../../server-api/toolsets';
@@ -697,9 +698,8 @@ const CatalogView: FC<Props> = ({
 
   /*
    * `RevokeSharedAccessDto` carries the same `applications|toolsets|conversations`
-   * restriction as the discard DTO, so a prompt path is rejected with 400. The
-   * built-in rule would otherwise keep the action visible, since prompt items
-   * carry no `recipientsCount`.
+   * restriction as the discard DTO, so a prompt path is rejected with 400 —
+   * both by the revoke call and by the recipient-count lookup that gates it.
    */
   const isRevokeShareVisible = useCallback(
     (item: CatalogItem) => item.type !== CatalogEntityType.Prompt,
@@ -985,6 +985,19 @@ const CatalogView: FC<Props> = ({
     [showErrorNotification, showSuccessNotification, t],
   );
 
+  /*
+   * Resolved per item when the details panel's Manage menu opens, rather than
+   * carried on the list items: the count only matters at the moment the owner
+   * is about to act on it, and a snapshot taken at list-fetch time would still
+   * offer "Revoke access (3)" right after those three grants were revoked.
+   * A failure resolves to `undefined`, which keeps the action reachable
+   * without a count instead of hiding the only way to revoke.
+   */
+  const handleFetchRecipientsCount = useCallback(async (item: CatalogItem) => {
+    const { recipientsCount } = await getShareRecipientsCount(item.id);
+    return recipientsCount;
+  }, []);
+
   const createOptions = useMemo<DropdownItem[]>(() => {
     const options: DropdownItem[] = [];
 
@@ -1097,6 +1110,7 @@ const CatalogView: FC<Props> = ({
       onUnshare={handleUnshare}
       isUnshareVisible={isUnshareVisible}
       onRevokeShare={handleRevokeShare}
+      onFetchRecipientsCount={handleFetchRecipientsCount}
       isRevokeShareVisible={isRevokeShareVisible}
       isPrimaryActionVisible={isPrimaryActionVisible}
       isPublishVisible={isPublishVisible}

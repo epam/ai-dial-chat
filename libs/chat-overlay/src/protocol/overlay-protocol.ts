@@ -73,6 +73,8 @@ export enum OverlayFeature {
   LiveChatInteraction = 'live-chat-interaction',
   /** Restricts (disables) changing the selected agent/model on the conversation top bar. */
   DisallowChangeAgent = 'disallow-change-agent',
+  /** Hides the agent/model selector on the in-chat conversation input. */
+  HideChangeAgent = 'hide-change-agent',
   /** Hides the new-conversation controls in the header/layout. */
   HideNewConversation = 'hide-new-conversation',
   /** Enables the empty-chat (new conversation composer) settings UI. */
@@ -115,6 +117,8 @@ export enum OverlayFeature {
   Toolsets = 'toolsets',
   /** Enables prompts: the catalog's Prompts tab, its create option, and the prompt editor route. */
   Prompts = 'prompts',
+  /** Enables skills: the catalog's Skills tab and the skill details panel. */
+  Skills = 'skills',
   /** Enables the custom-app creation entry in the catalog. */
   CustomApps = 'custom-apps',
   /** Hides the user avatar/menu button in the header. */

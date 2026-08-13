@@ -330,12 +330,67 @@ describe('DetailsPanel — Content tab', () => {
     );
   });
 
-  it('keeps the About tab for non-prompt entity types', () => {
+  it.each([
+    CatalogEntityType.Model,
+    CatalogEntityType.Agent,
+    CatalogEntityType.Toolset,
+  ])('keeps the About tab first for %s', (type) => {
     renderPanel({
-      item: makeItem({ type: CatalogEntityType.Model, description: 'A model' }),
+      item: makeItem({ type, description: 'A description' }),
     });
 
-    expect(screen.getByRole('button', { name: 'About' })).toBeTruthy();
+    expect(
+      screen.getByRole('tablist').querySelector('button')?.textContent,
+    ).toBe('About');
+  });
+
+  it('gives a skill exactly two tabs — Details then Overview, never About', () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Skill,
+        description: '',
+        details: {
+          promptContent: { content: '# Revenue skill' },
+          overview: promptOverview,
+        },
+      }),
+    });
+
+    const tabLabels = Array.from(
+      screen.getByRole('tablist').querySelectorAll('button'),
+    ).map((button) => button.textContent);
+    expect(tabLabels).toEqual(['Details', 'Overview']);
+  });
+
+  it('keeps the Details tab first and active for a skill whose manifest has not arrived', () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Skill,
+        description: '',
+        details: { overview: promptOverview },
+      }),
+    });
+
+    expect(
+      screen.getByRole('tablist').querySelector('button')?.textContent,
+    ).toBe('Details');
+    /* Overview shows only as a tab button, so Details is still the active tab. */
+    expect(screen.getAllByText('Overview')).toHaveLength(1);
+  });
+
+  it('renders the skill manifest in the Content tab by default', () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Skill,
+        description: '',
+        details: {
+          promptContent: { content: '# Revenue skill' },
+          overview: promptOverview,
+        },
+      }),
+    });
+
+    expect(screen.getByRole('heading', { name: 'Revenue skill' })).toBeTruthy();
   });
 
   it('opens on the Details tab, not Overview', () => {
