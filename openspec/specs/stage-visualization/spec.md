@@ -120,6 +120,16 @@ Each `StageItem` SHALL render a header row (icon + name). When `stage.content` i
 
 When `colors` is provided, `StagesPanel` SHALL apply values as CSS custom properties on the root element using `buildCssVars`. Supported variables: `--cs-bg`, `--cs-border`, `--cs-text`, `--cs-stage-text`, `--cs-running`, `--cs-completed`, `--cs-failed`.
 
+#### Scenario: Supplied colors become custom properties
+
+- **WHEN** `StagesPanel` is rendered with a `colors` object
+- **THEN** its root element carries the corresponding `--cs-*` custom properties built via `buildCssVars`
+
+#### Scenario: Omitted colors leave the root unstyled
+
+- **WHEN** `StagesPanel` is rendered without `colors`
+- **THEN** no `--cs-*` custom property is written onto the root element and the panel inherits the ambient theme
+
 ---
 
 ### Requirement: `StagesPanel` is rendered above assistant message bubbles that have stages

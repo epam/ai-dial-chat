@@ -10,9 +10,11 @@ On mobile viewports the hamburger button opens a multi-page bottom sheet anchore
 
 ---
 
-## Requirement: BottomSheetShell primitive (lib)
+## Requirements
 
-`BottomSheetShell` from `@epam/ai-dial-conversation-input` is the generic portal primitive used by this feature.
+### Requirement: BottomSheetShell primitive (lib)
+
+`BottomSheetShell` from `@epam/ai-dial-conversation-input` SHALL be the generic portal primitive used by this feature.
 
 ```ts
 interface BottomSheetShellProps {
@@ -30,11 +32,24 @@ interface BottomSheetShellProps {
 
 The component renders via `createPortal`, shows a semi-transparent backdrop, locks body scroll while open, closes on Escape and backdrop click, and renders an optional header (back button · centred title · close button) when `title` is provided.
 
+#### Scenario: An open sheet locks the page behind it
+- **WHEN** `BottomSheetShell` is rendered with `isOpen`
+- **THEN** it is portalled above the page with a semi-transparent backdrop and body scroll is locked until it closes
+
+#### Scenario: Escape and backdrop both dismiss
+- **WHEN** the user presses Escape or taps the backdrop
+- **THEN** `onClose` fires
+
+#### Scenario: The header appears only with a title
+- **WHEN** `title` is provided together with `onBack`
+- **THEN** the header renders the back button, the centred title, and the close button, each labelled by `backLabel` / `closeLabel`
+- **AND** omitting `title` renders no header, with the sheet named by its `aria-label`
+
 ---
 
-## Requirement: NavigableBottomSheet — generic stack navigator
+### Requirement: NavigableBottomSheet — generic stack navigator
 
-`NavigableBottomSheet` at `apps/chat/src/components/NavigableBottomSheet/NavigableBottomSheet.tsx` wraps `BottomSheetShell` and manages a `SheetPage[]` stack, exposing navigation to all descendants via `SheetNavigationContext`.
+`NavigableBottomSheet` at `apps/chat/src/components/NavigableBottomSheet/NavigableBottomSheet.tsx` SHALL wrap `BottomSheetShell` and manage a `SheetPage[]` stack, exposing navigation to all descendants via `SheetNavigationContext`.
 
 Interfaces at `apps/chat/src/models/sheet-navigation.ts`:
 
@@ -98,7 +113,7 @@ i18n keys: `navigation.back`, `navigation.close`.
 
 ---
 
-## Requirement: Hamburger button opens the sheet on mobile
+### Requirement: Hamburger button opens the sheet on mobile
 
 On mobile the hamburger button SHALL open `NavigableBottomSheet` (rendered in `Navigation.tsx`) with `NavPageContent` as its root child. `isNavOpen` state remains in `app.tsx`.
 
@@ -114,7 +129,7 @@ i18n keys: `navigation.menu` (root title), `navigation.mobileMenu` (hamburger ar
 
 ---
 
-## Requirement: NavPageContent
+### Requirement: NavPageContent
 
 `apps/chat/src/components/MobileNavBottomSheet/NavPageContent.tsx`
 
@@ -124,7 +139,7 @@ i18n: `navigation.profile`
 
 ---
 
-## Requirement: ProfilePageContent
+### Requirement: ProfilePageContent
 
 `apps/chat/src/components/MobileNavBottomSheet/ProfilePageContent.tsx`
 
@@ -147,7 +162,7 @@ Body:
 
 ---
 
-## Requirement: ThemePageContent
+### Requirement: ThemePageContent
 
 `apps/chat/src/components/MobileNavBottomSheet/ThemePageContent.tsx`
 
@@ -155,7 +170,7 @@ Uses `useThemeOptions()` → `{ hasDark, hasLight, selectedTheme, setTheme }`. O
 
 ---
 
-## Requirement: KeyboardPageContent
+### Requirement: KeyboardPageContent
 
 `apps/chat/src/components/MobileNavBottomSheet/KeyboardPageContent.tsx`
 

@@ -280,6 +280,12 @@ The following keys SHALL be added to `apps/chat/src/i18n/locales/en.json` with m
 
 No raw string literal keys are passed to `t()` anywhere in this change — every key above is referenced through its `DialFileManagerI18nKeys` enum member.
 
+#### Scenario: Sharing labels resolve through the key enum
+
+- **WHEN** the Unshare and Remove access actions are rendered and their failures surface
+- **THEN** every label and error message resolves through a `DialFileManagerI18nKeys` member
+- **AND** no `t()` call in the sharing code passes a raw string literal
+
 ---
 
 ### Requirement: No feature-flag gating

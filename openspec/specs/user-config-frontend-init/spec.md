@@ -4,7 +4,9 @@
 
 Loading user configuration once per authenticated identity and keeping context state synchronized with the backend.
 
-## Requirement: UserConfigContext loads user configuration once per authenticated identity
+## Requirements
+
+### Requirement: UserConfigContext loads user configuration once per authenticated identity
 
 `UserConfigProvider` (`apps/chat/src/context/UserConfigContext.tsx`) SHALL call `getUserConfig()` from `apps/chat/src/server-api/user-config.api.ts` exactly once for each authenticated identity: once on mount, and again whenever the authenticated identity (`useUser().user?.sub`) changes while the provider remains mounted. It must not trigger a second request on re-renders, or on child component mount/unmount cycles, that do not correspond to a `sub` change.
 
@@ -58,7 +60,7 @@ interface UserConfigContextType {
 
 ---
 
-## Requirement: App shows the existing loading spinner while user config is loading
+### Requirement: App shows the existing loading spinner while user config is loading
 
 `UserConfigProvider` SHALL render `<Spinner />` while `status === UserConfigStatus.Loading`. It SHALL render its `children` (wrapped in the context provider) only once `status` is `Ready` or `Error`.
 
@@ -83,7 +85,7 @@ Neither `AppConfigProvider`, `ConversationsProvider`, nor `App` renders until `U
 
 ---
 
-## Requirement: Empty and partially populated responses are normalized to empty arrays
+### Requirement: Empty and partially populated responses are normalized to empty arrays
 
 `UserConfigProvider` SHALL normalize missing, `null`, or absent array fields in the API response to empty arrays. A partially populated response must not cause `undefined` to appear in `pinnedConversationIds`, `installedToolsetIds`, or `installedDeploymentIds`.
 
@@ -122,7 +124,7 @@ Neither `AppConfigProvider`, `ConversationsProvider`, nor `App` renders until `U
 
 ---
 
-## Requirement: On request failure, app falls back to empty arrays and shows an error notification
+### Requirement: On request failure, app falls back to empty arrays and shows an error notification
 
 `UserConfigProvider` SHALL catch any rejection from `getUserConfig()`. On failure it SHALL:
 1. Set `status` to `UserConfigStatus.Error`
@@ -147,7 +149,7 @@ The application MUST remain usable after a config load failure (empty-array fall
 
 ---
 
-## Requirement: setPinnedConversation keeps UserConfigContext state synchronized with backend
+### Requirement: setPinnedConversation keeps UserConfigContext state synchronized with backend
 
 `UserConfigContext.setPinnedConversation(id, isPinned)` SHALL:
 1. Optimistically update `pinnedConversationIds` (add `id` if `isPinned = true`, deduplicated; remove `id` if `isPinned = false`)
@@ -179,7 +181,7 @@ The application MUST remain usable after a config load failure (empty-array fall
 
 ---
 
-## Requirement: setInstalledToolset keeps UserConfigContext state synchronized with backend
+### Requirement: setInstalledToolset keeps UserConfigContext state synchronized with backend
 
 `UserConfigContext.setInstalledToolset(id, isInstalled)` SHALL:
 1. Optimistically update `installedToolsetIds` (add `id` if `isInstalled = true`, deduplicated; remove `id` if `isInstalled = false`)
@@ -204,7 +206,7 @@ The application MUST remain usable after a config load failure (empty-array fall
 
 ---
 
-## Requirement: setInstalledDeployment keeps UserConfigContext state synchronized with backend
+### Requirement: setInstalledDeployment keeps UserConfigContext state synchronized with backend
 
 `UserConfigContext.setInstalledDeployment(id, isInstalled)` SHALL:
 1. Optimistically update `installedDeploymentIds` (add `id` if `isInstalled = true`, deduplicated; remove `id` if `isInstalled = false`)
