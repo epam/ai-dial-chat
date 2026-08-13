@@ -65,6 +65,18 @@ describe('DropdownSelector', () => {
     expect(onChange.mock.calls[0][0]).toEqual([]);
   });
 
+  it('centers the pill content, so the fixed size remove button is not pushed to the top', () => {
+    render(<DropdownSelector isMulti options={options} value={[options[0]]} />);
+
+    const pill = screen
+      .getByTestId(`unselect-item-${options[0].value}`)
+      // eslint-disable-next-line testing-library/no-node-access
+      .closest('[class*="-multiValue"]');
+
+    expect(pill).not.toBeNull();
+    expect(getComputedStyle(pill!).alignItems).toBe('center');
+  });
+
   it('sizes the remove, clear and dropdown icons consistently at 16px', () => {
     const { container } = render(
       <DropdownSelector
