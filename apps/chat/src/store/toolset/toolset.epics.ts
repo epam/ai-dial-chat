@@ -30,6 +30,7 @@ import {
 } from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { getInternalPathname, isInternalRoute } from '@/src/utils/app/route';
 import {
   encodeToolsetRedirectState,
   fitToolsetNameToStorageLimits,
@@ -100,7 +101,7 @@ const isToolsetEditorStep = (step: string): step is ToolsetEditorSteps => {
 const getMyWorkspaceUrl = (
   params?: Partial<Record<MarketplaceQueryParams, unknown>>,
 ) => {
-  const route = new URL(Routes.Marketplace);
+  const route = new URL(Routes.Marketplace, window.location.origin);
   route.searchParams.append(
     MarketplaceQueryParams.tab,
     MarketplaceTabs.MY_WORKSPACE,
@@ -294,7 +295,9 @@ const getToolsetDetailsFailedEpic: AppEpic = (action$, _state$, { router }) =>
   action$.pipe(
     ofType(ToolsetActions.getToolsetDetailsFailed.type),
     switchMap(({ payload }) => {
-      if (window.location.pathname === Routes.ToolsetEditor) {
+      if (
+        isInternalRoute(window.location.pathname, Routes.ToolsetEditor, router)
+      ) {
         console.error(
           'NotFound',
           `Toolset with id ${payload?.id} is not found`,
@@ -1081,14 +1084,11 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
         action.type === ToolsetActions.updateToolsetSuccess.type &&
         action.payload.isExitingAfterSave;
 
-      if (
-        window.location.pathname !== Routes.ToolsetEditor ||
-        isExitingAfterSave
-      )
-        return EMPTY;
+      const pathname = getInternalPathname(window.location.pathname, router);
+
+      if (pathname !== Routes.ToolsetEditor || isExitingAfterSave) return EMPTY;
       const state = state$.value;
       const query = parse(window.location.search.slice(1));
-      const pathname = window.location.pathname;
 
       // editor step
       query[ToolsetEditorQuery.Step] = ToolsetSelectors.selectEditorStep(state);
@@ -1148,23 +1148,25 @@ const exitEditorEpic: AppEpic = (action$, _state$, { router }) =>
         redirectUrl ??
         returnUrl ??
         (publicationUrl
-          ? new URL(Routes.Chat)
+          ? new URL(Routes.Chat, window.location.origin)
           : getMyWorkspaceUrl({
               [MarketplaceQueryParams.entitiesTab]:
                 MarketplaceEntitiesTabs.TOOLSETS,
             }));
 
-      if (
-        route.pathname === Routes.Marketplace &&
-        payload.shouldSelectToolset &&
-        reference
-      ) {
+      const isMarketplaceRoute = isInternalRoute(
+        route.pathname,
+        Routes.Marketplace,
+        router,
+      );
+
+      if (isMarketplaceRoute && payload.shouldSelectToolset && reference) {
         route.searchParams.append(MarketplaceQueryParams.toolset, reference);
       }
 
       const actions: Observable<AppAction>[] = [];
 
-      if (route.pathname === Routes.Marketplace) {
+      if (isMarketplaceRoute) {
         if (payload.shouldSelectToolset && reference) {
           actions.push(
             of(

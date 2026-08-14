@@ -1,4 +1,4 @@
-import { IconPencilMinus, IconPlus } from '@tabler/icons-react';
+import { IconEye, IconPencilMinus, IconPlus } from '@tabler/icons-react';
 import React, {
   ComponentProps,
   FormEvent,
@@ -53,8 +53,8 @@ import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
+import { LocalesPopup } from '@/src/components/Common/Forms/LocalesPopup';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
-import { LocalesPopup } from '@/src/components/ToolsetEditor/EditorForm/LocalesPopup';
 
 import {
   DialLinkButton,
@@ -190,9 +190,17 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
       [setValue],
     );
 
-  const langPostfix = availableLocales.length
-    ? ` [${primaryLocale.toUpperCase()}]`
-    : '';
+  const showLocales = isAppPublic
+    ? !!locales.length
+    : !!availableLocales.length;
+
+  const langPostfix = showLocales ? ` [${primaryLocale.toUpperCase()}]` : '';
+
+  const [localesLabel, LocalesIcon] = useMemo(() => {
+    if (isAppPublic) return [t(CommonI18nKeys.View), IconEye];
+    if (locales.length) return [t(CommonI18nKeys.Edit), IconPencilMinus];
+    return [t(CommonI18nKeys.AddLocales), IconPlus];
+  }, [isAppPublic, locales.length, t]);
 
   return (
     <>
@@ -263,7 +271,7 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
             id="description"
           />
 
-          {!!availableLocales.length && (
+          {showLocales && (
             <div className="flex items-center gap-1">
               {!!locales.length && (
                 <span className="text-xs font-semibold text-secondary">
@@ -276,18 +284,8 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
 
               <DialLinkButton
                 className="border-none"
-                label={t(
-                  locales.length
-                    ? CommonI18nKeys.Edit
-                    : CommonI18nKeys.AddLocales,
-                )}
-                iconBefore={
-                  locales.length ? (
-                    <IconPencilMinus size={16} />
-                  ) : (
-                    <IconPlus size={16} />
-                  )
-                }
+                label={localesLabel}
+                iconBefore={<LocalesIcon size={16} />}
                 onClick={() => setLocalsPopup(true)}
                 size={ElementSize.Small}
               />
@@ -337,6 +335,9 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
           onSubmit={handleLocalsChange}
           onClose={() => setLocalsPopup(false)}
           entity={getEntityPayloadFromLocals(locales) as MarketplaceEntity}
+          descriptionPlaceholder={t(CommonI18nKeys.ApplicationDescription)}
+          readonly={isAppPublic}
+          fieldTooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : undefined}
         />
       )}
     </>

@@ -269,12 +269,12 @@ dialOverlayTest(
           { isOverlay: true },
         );
         const requestContent = 'test';
-        const request = await overlayChat.sendRequestWithButton(
+        const requests = await overlayChat.sendRequestWithButton(
           requestContent,
           false,
         );
         overlayBaseAssertion.assertValue(
-          request.messages[0].content,
+          requests.completionRequest.messages[0].content,
           requestContent,
         );
         await overlayChatMessages.getChatMessage(2).waitFor();

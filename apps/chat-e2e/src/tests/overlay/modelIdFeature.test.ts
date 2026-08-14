@@ -102,9 +102,12 @@ dialOverlayTest(
         await overlayTalkToAgentDialog.selectAgent(randomModel, {
           isHttpMethodTriggered: false,
         });
-        const request =
+        const requests =
           await overlayChat.sendRequestWithButton(randomAgentRequest);
-        overlayApiAssertion.assertRequestModelId(request, randomModel);
+        overlayApiAssertion.assertRequestModelId(
+          requests.completionRequest,
+          randomModel,
+        );
       },
     );
 
@@ -176,9 +179,12 @@ dialOverlayTest(
     await dialOverlayTest.step(
       'Send the request and verify configured model is sent in the request',
       async () => {
-        const request =
+        const requests =
           await overlayChat.sendRequestWithButton('second request');
-        overlayApiAssertion.assertRequestModelId(request, expectedModel);
+        overlayApiAssertion.assertRequestModelId(
+          requests.completionRequest,
+          expectedModel,
+        );
       },
     );
 

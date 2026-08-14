@@ -59,7 +59,9 @@ dialTest(
     ) {
       await temperatureSlider.setTemperature(temp);
     }
-    await conversationSettingsModal.applyChangesButton.click();
+    // no conversation exists yet, and neither setting is guaranteed to have
+    // changed above — no PUT is guaranteed to fire
+    await conversationSettingsModal.applyChanges({ waitForUpdate: false });
 
     await chat.changeAgentButton.click();
     await talkToAgentDialog.selectAgent(randomModel, {

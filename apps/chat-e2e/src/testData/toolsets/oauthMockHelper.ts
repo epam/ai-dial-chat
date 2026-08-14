@@ -30,6 +30,7 @@ export class OAuthMockHelper extends BaseAuthMockHelper<ToolsetOAuthSignInReques
     capturedState: null,
     callbackUrl: null,
   };
+  private handledSignInCount = 0;
 
   constructor(
     page: Page,
@@ -69,49 +70,72 @@ export class OAuthMockHelper extends BaseAuthMockHelper<ToolsetOAuthSignInReques
     await this.setupSignOutRoute();
   }
 
-  // Navigate the popup to the callback URL and wait for the flow to complete.
-  //
-  // We navigate explicitly instead of relying on the automatic 302 redirect
-  // because after a cross-origin navigation (random OAuth URL → localhost),
-  // Playwright's context-level route handlers may not intercept the popup's
-  // fetch requests. Driving the popup ourselves keeps everything same-origin
-  // from the start, so the sign-in mock fires reliably.
-  //
-  // After the popup loads /auth/toolset-signin, it calls the sign-in API,
-  // then adds login-complete=1 to its URL. The main page detects that and
-  // closes the popup. If the popup is already closed (the flow finished
-  // during an earlier step), we return immediately.
+  // Drives the popup through the OAuth callback and waits for it to close —
+  // the signal that sign-in fully landed. We navigate there ourselves unless
+  // the mocked auth redirect already got it there first, or the flow is
+  // already done.
   async navigateToCallback(popup: Page): Promise<void> {
     if (!this.oauthState.callbackUrl) {
       throw new Error('Callback URL has not been captured yet');
     }
-    if (popup.isClosed()) return;
 
-    // Set up the response waiter before navigating so we don't miss it
-    const signInResponsePromise = popup.waitForResponse((resp) =>
-      resp.url().includes(API.toolsetSignInHost()),
-    );
-    try {
-      await popup.goto(this.oauthState.callbackUrl, {
-        waitUntil: 'domcontentloaded',
-      });
-    } catch (e) {
-      // Race condition: the 302 redirect completed the sign-in flow before we
-      // got here, so the main page already closed the popup. Nothing left to do.
-      if (!popup.isClosed()) throw e;
-      signInResponsePromise.catch(() => {
-        console.error(
-          'Expected sign-in response was not received, likely due to the popup being closed before navigation.',
-        );
-      });
-      return;
+    if (!this.isFlowAlreadyDone(popup)) {
+      // Set up the response waiter before navigating so we don't miss it
+      const signInResponsePromise = popup.waitForResponse((resp) =>
+        resp.url().includes(API.toolsetSignInHost()),
+      );
+
+      // If the mocked auth redirect already landed the popup on the callback
+      // page, navigating it there again would cancel its in-flight sign-in
+      // request (a new navigation aborts the old document's pending
+      // fetches) — let it finish the flow on its own instead.
+      if (!popup.url().includes(Routes.ToolsetSignIn)) {
+        try {
+          await popup.goto(this.oauthState.callbackUrl, {
+            waitUntil: 'domcontentloaded',
+          });
+        } catch (e) {
+          // Race: the mocked auth redirect can drive the popup through the
+          // whole sign-in flow before/during our goto(), aborting it or
+          // tearing the popup down as a side effect. Only rethrow if that's
+          // not what happened.
+          if (
+            !this.isFlowAlreadyDone(popup) &&
+            !popup.url().includes(Routes.ToolsetSignIn)
+          ) {
+            throw e;
+          }
+        }
+      }
+
+      if (!this.isFlowAlreadyDone(popup)) {
+        try {
+          await signInResponsePromise;
+        } catch {
+          throw new Error(
+            `Expected sign-in response was not received for toolset "${this.getToolset().id}". Popup URL: "${popup.isClosed() ? '<closed>' : popup.url()}"`,
+          );
+        }
+      }
     }
-    await signInResponsePromise;
 
-    // The main page closes the popup once it detects login-complete=1
+    this.handledSignInCount = this.getSignInCount();
+
+    // The main page closes the popup once it detects login-complete=1. This
+    // is also the caller's synchronization point — getSignInRequest() and
+    // the app's UI are only guaranteed to reflect this login once the popup
+    // is gone, whether we drove the navigation ourselves or the mocked auth
+    // redirect completed the whole flow before we ever got here.
     if (!popup.isClosed()) {
       await popup.waitForEvent('close');
     }
+  }
+
+  // Race: the mocked auth redirect can finish the whole sign-in flow before
+  // we ever get here. The counter catches that reliably; popup.isClosed()
+  // can lag or throw mid-teardown.
+  private isFlowAlreadyDone(popup: Page): boolean {
+    return popup.isClosed() || this.getSignInCount() > this.handledSignInCount;
   }
 
   /**

@@ -291,5 +291,7 @@
   "Toolset repaired. Users must re-authenticate.": "Boîte à outils réparée. Les utilisateurs doivent se réauthentifier.",
   "Authorization server is currently unavailable. Try again once the AS is back.": "Le serveur d'autorisation est actuellement indisponible. Réessayez dès qu'il sera de nouveau accessible.",
   "Repair will re-register this toolset with the Authorization Server. Continue?": "La réparation réenregistrera cette boîte à outils auprès du serveur d'autorisation. Continuer ?",
-  "The list of tools will be available after filling in the definition and authentication sections": "La liste des outils sera disponible après avoir renseigné les sections définition et authentification"
+  "The list of tools will be available after filling in the definition and authentication sections": "La liste des outils sera disponible après avoir renseigné les sections définition et authentification",
+  "All available locales are already added": "Toutes les langues disponibles sont déjà ajoutées",
+  "No changes to apply": "Aucune modification à appliquer"
 }

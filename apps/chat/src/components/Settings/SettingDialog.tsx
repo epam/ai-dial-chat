@@ -215,7 +215,7 @@ const view = withRenderWhen((state) => {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="flex flex-col w-[400px] overflow-hidden px-3 py-4 align-bottom transition-all md:max-h-[531px] md:p-6"
+      containerClassName="flex flex-col w-[400px] overflow-hidden px-3 py-4 align-bottom transition-all md:p-6"
       dataQa="settings-modal"
       state={ModalState.OPENED}
       onClose={handleClose}

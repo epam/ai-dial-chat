@@ -80,7 +80,7 @@ dialAdminTest(
     const toolsetsList = await adminToolsetApiHelper.listToolsets();
     const publishedE2EToolsets = Object.values(toolsetsList).filter(
       (toolset) =>
-        (toolset.display_name
+        (ItemUtil.getDisplayNameText(toolset.display_name)
           .toLowerCase()
           .includes(toolsetNamePrefix.toLowerCase()) ||
           toolset.display_name === ExpectedConstants.defaultToolsetName) &&
@@ -90,7 +90,7 @@ dialAdminTest(
     for (const toolset of publishedE2EToolsets || []) {
       const relativePath = ItemUtil.extractRelativePath(toolset.id!);
       await adminPublicationApiHelper.unpublishEntity(
-        toolset.display_name,
+        ItemUtil.getDisplayNameText(toolset.display_name),
         relativePath,
         publishRequestBuilder,
         (request) => {
