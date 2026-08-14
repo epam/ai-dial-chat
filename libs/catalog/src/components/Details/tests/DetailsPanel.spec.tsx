@@ -1444,6 +1444,9 @@ describe('DetailsPanel', () => {
       renderPanel({ item });
       await openDeleteApiKeyConfirmation();
 
+      /* The info card root carries no role, so its palette class is only
+       * reachable by traversal — a CSS-level assertion with no semantic query. */
+      // eslint-disable-next-line testing-library/no-node-access
       const card = screen.getByText(item.name).parentElement;
       expect(card?.className).not.toContain('danger');
       expect(
