@@ -48,6 +48,23 @@ export const isInternalRoute = (
   router?: RouterPrefixes,
 ): boolean => getInternalPathname(pathname, router) === route;
 
+export interface InternalRoute {
+  pathname: string;
+  query: Record<string, string>;
+}
+
+/**
+ * Converts an absolute `URL` (e.g. a stored `returnUrl`/`redirectUrl`) into a
+ * Next `UrlObject` with the `basePath` and locale prefixes stripped off.
+ */
+export const getInternalRoute = (
+  url: URL,
+  router?: RouterPrefixes,
+): InternalRoute => ({
+  pathname: getInternalPathname(url.pathname, router),
+  query: Object.fromEntries(url.searchParams.entries()),
+});
+
 export const getPageType = (route?: string) => {
   switch (route) {
     case Routes.Marketplace:
