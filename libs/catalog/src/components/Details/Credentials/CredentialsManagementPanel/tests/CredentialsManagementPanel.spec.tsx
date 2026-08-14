@@ -1,7 +1,7 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { act } from 'react';
+import { act, type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../../../models/catalog-item';
 import type { CatalogItemCredentials } from '../../../../../models/catalog-item-credentials';
@@ -68,6 +68,11 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
     <span role="status">{ariaLabel}</span>
   ),
+  /* Rendered by the real EntityHeader (via ItemHeader/DeploymentIcon) that
+   * CredentialsManagementPanel pulls in from @epam/ai-dial-chat-shared. */
+  DialEllipsisTooltip: ({ text }: { text?: ReactNode }) => <span>{text}</span>,
+  DialTooltip: ({ children }: { children?: ReactNode }) => <>{children}</>,
+  Highlight: ({ text }: { text?: ReactNode }) => <span>{text}</span>,
 }));
 vi.mock('@tabler/icons-react', () => ({
   IconBuildingCommunity: () => <svg />,
