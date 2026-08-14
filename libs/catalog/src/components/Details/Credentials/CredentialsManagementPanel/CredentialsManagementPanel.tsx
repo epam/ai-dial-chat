@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { EntityHeader, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DangerButton,
   DIAL_ICON_SIZE,
@@ -24,7 +24,6 @@ import {
   CredentialStatus,
   ToolsetAuthenticationType,
 } from '../../../../types/toolset-auth';
-import { EntityHeader } from '../../../EntityHeader/EntityHeader';
 import { CredentialsInfoCard } from '../CredentialsInfoCard/CredentialsInfoCard';
 import styles from './CredentialsManagementPanel.module.scss';
 

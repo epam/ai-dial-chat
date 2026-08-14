@@ -200,7 +200,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-details-skeleton': detailsColors?.skeleton,
     '--cat-details-name-text': detailsColors?.nameText,
     '--cat-details-publish-title-text': detailsColors?.publishTitleText,
-    '--cat-credentials-status-text': detailsColors?.credentialsStatusText,
+    // '--cat-credentials-status-text': detailsColors?.credentialsStatusText,
     '--cat-details-content-text': detailsColors?.contentText,
     '--cat-details-variable-text': detailsColors?.variableText,
     '--cat-api-heading-text': detailsColors?.apiHeadingText,
