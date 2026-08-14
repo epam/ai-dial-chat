@@ -1,4 +1,8 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  CatalogEntityType,
+  EntityHeader,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   Dropdown,
@@ -34,7 +38,6 @@ import type {
   ItemDetailsStyles,
   ItemDetailsTexts,
 } from '../../../models/item-details-props';
-import { CatalogEntityType } from '../../../types/entity-type';
 import { RecipientsCountStatus } from '../../../types/recipients-count';
 import {
   CredentialsUiState,
@@ -42,7 +45,6 @@ import {
   type CredentialsLevel,
 } from '../../../types/toolset-auth';
 import { getCredentialsUiState } from '../../../utils/toolset-credentials';
-import { EntityHeader } from '../../EntityHeader/EntityHeader';
 import styles from './Header.module.scss';
 import { ShareButton } from './ShareButton/ShareButton';
 

@@ -1,4 +1,8 @@
-import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  DeploymentIcon,
+  ItemHeader,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import type { ICellRendererParams } from 'ag-grid-community';
@@ -6,7 +10,6 @@ import { FC } from 'react';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { GridContext } from '../../../models/grid-context';
 import { CredentialsBadge } from '../../CredentialsBadge/CredentialsBadge';
-import { ItemHeader } from '../../ItemHeader/ItemHeader';
 import styles from '../ListView.module.scss';
 
 /** ag-grid cell renderer for the name/identity column: icon, name, version, credentials badge, and selection checkmark. */

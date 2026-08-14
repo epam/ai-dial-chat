@@ -15,6 +15,7 @@ import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { CreatePromptFolderDto } from './dto/create-prompt-folder.dto';
 import { CreatePromptDto } from './dto/create-prompt.dto';
+import { GetPromptQueryDto } from './dto/get-prompt-query.dto';
 import { MovePromptDto } from './dto/move-prompt.dto';
 import { PromptFolderResponseDto } from './dto/prompt-folder-response.dto';
 import { PromptListResponseDto } from './dto/prompt-list-response.dto';
@@ -55,7 +56,9 @@ export class PromptController {
   @Get('item')
   @ApiOperation({
     operationId: 'getPrompt',
-    summary: 'Get a personal prompt',
+    summary: 'Get a personal or shared prompt',
+    description:
+      "Reads a prompt from the caller's own bucket, or from the `bucket` given in the query — the owner bucket a shared prompt reports. DIAL Core authorises the read either way.",
   })
   @ApiResponse({
     status: 200,
@@ -66,9 +69,9 @@ export class PromptController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Prompt not found' })
   @ApiResponse({ status: 502, description: 'DIAL Core error' })
-  getPrompt(@Req() req: Request, @Query() query: RequiredPromptPathDto) {
+  getPrompt(@Req() req: Request, @Query() query: GetPromptQueryDto) {
     const { at, bucket } = req.user as SessionUser;
-    return this.promptService.getPrompt(at, bucket, query.path);
+    return this.promptService.getPrompt(at, query.bucket ?? bucket, query.path);
   }
 
   @Post()

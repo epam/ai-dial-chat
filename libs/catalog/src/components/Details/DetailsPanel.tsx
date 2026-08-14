@@ -1,4 +1,8 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  CatalogEntityType,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   derivePublishState,
   PublishFooter,
@@ -13,7 +17,6 @@ import {
   CloseButton,
   ElementSize,
   Skeleton,
-  Tag,
   Tabs,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
@@ -34,9 +37,7 @@ import {
   DetailsConfirmationKind,
   DetailsConfirmationVariant,
 } from '../../types/details-confirmation';
-import { CatalogEntityType } from '../../types/entity-type';
 import { getSignedInLevel } from '../../utils/toolset-credentials';
-import { EntityHeader } from '../EntityHeader/EntityHeader';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { ApiDetails } from './ApiDetails';
 import { ConfirmationFooter } from './ConfirmationView/ConfirmationFooter';
@@ -174,9 +175,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-details-skeleton': detailsColors?.skeleton,
     '--cat-details-name-text': detailsColors?.nameText,
     '--cat-details-publish-title-text': detailsColors?.publishTitleText,
-    '--cat-details-version-tag-border': detailsColors?.versionTagBorder,
-    '--cat-details-version-tag-bg': detailsColors?.versionTagBackground,
-    '--cat-details-version-tag-text': detailsColors?.versionTagText,
     '--cat-credentials-status-text': detailsColors?.credentialsStatusText,
     '--cat-details-content-text': detailsColors?.contentText,
     '--cat-details-variable-text': detailsColors?.variableText,
@@ -665,26 +663,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 resource={{
                   title: item.name,
                   version: item.version,
+                  type: item.type,
+                  iconUrl: item.iconUrl,
                 }}
-                renderSummary={() => (
-                  <>
-                    <div className="min-w-0 flex-1">
-                      <EntityHeader
-                        item={item}
-                        iconSize={40}
-                        hasFeaturedTag={false}
-                        showVersion={false}
-                      />
-                    </div>
-                    <Tag
-                      label={`Version ${item.version} · current`}
-                      className={mergeClasses(
-                        'shrink-0 whitespace-nowrap',
-                        styles.currentVersionTag,
-                      )}
-                    />
-                  </>
-                )}
                 history={publishHistory}
                 isHistoryLoading={isPublishHistoryLoading}
                 hasHistoryError={hasPublishHistoryError}
@@ -707,6 +688,12 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 isRulesLoading={publishFlow.isRulesLoading}
                 hasRulesLoadError={publishFlow.hasRulesLoadError}
                 labels={publishLabels}
+                colors={{
+                  summaryVersionTagBorder: detailsColors?.versionTagBorder,
+                  summaryVersionTagBackground:
+                    detailsColors?.versionTagBackground,
+                  summaryVersionTagText: detailsColors?.versionTagText,
+                }}
               />
             </div>
           )}

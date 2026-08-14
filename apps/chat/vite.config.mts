@@ -84,10 +84,6 @@ export default defineConfig(() => ({
         __dirname,
         '../../libs/attachment-input/src/index.ts',
       ),
-      '@epam/ai-dial-kit': path.resolve(
-        __dirname,
-        '../../libs/ai-dial-kit/src/index.ts',
-      ),
       '@epam/ai-dial-share': path.resolve(
         __dirname,
         '../../libs/share/src/index.ts',

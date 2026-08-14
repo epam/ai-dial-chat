@@ -36,8 +36,6 @@ export interface CitationCardLabels {
 
 /** Color overrides for `CitationCard`, applied as CSS custom properties with app theme fallbacks. */
 export interface CitationCardColors {
-  /** Card border color. Fallback: `--stroke-primary`. */
-  cardBorder?: string;
   /** Card background color. Fallback: `--bg-layer-raised`. */
   cardBackground?: string;
   /** Quoted excerpt text color. Fallback: `--text-secondary`. */
@@ -118,7 +116,6 @@ export const CitationCard: FC<CitationCardProps> = ({
   const switcherClassName = typography?.switcherClassName ?? 'dial-tiny-text';
 
   const cssVars = buildCssVars({
-    '--cc-card-border': colors?.cardBorder,
     '--cc-card-bg': colors?.cardBackground,
     '--cc-quote-text': colors?.quoteText,
     '--cc-title-text': colors?.titleText,
@@ -133,7 +130,7 @@ export const CitationCard: FC<CitationCardProps> = ({
       aria-label={labels.ariaLabel}
       style={cssVars}
       className={mergeClasses(
-        'flex w-[400px] flex-col gap-3 rounded-lg border p-4 shadow-lg',
+        'flex w-[400px] flex-col gap-3 rounded-lg p-4 shadow-lg',
         styles.card,
       )}
     >

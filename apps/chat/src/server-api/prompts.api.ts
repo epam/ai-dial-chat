@@ -18,8 +18,15 @@ import { promptsApi } from './api-client';
 export const listPrompts = (): Promise<PromptListResponseDto> =>
   promptsApi.listPrompts();
 
-export const getPrompt = (path: string): Promise<PromptResponseDto> =>
-  promptsApi.getPrompt({ path });
+/**
+ * Reads a prompt from `bucket`, defaulting to the caller's own bucket. Pass the
+ * owner bucket to read a prompt shared with the caller — a bare path would
+ * resolve against the caller's bucket instead.
+ */
+export const getPrompt = (
+  path: string,
+  bucket?: string,
+): Promise<PromptResponseDto> => promptsApi.getPrompt({ path, bucket });
 
 export const createPrompt = (
   body: CreatePromptDto,

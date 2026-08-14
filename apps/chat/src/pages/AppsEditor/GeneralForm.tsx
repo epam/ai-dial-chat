@@ -1,5 +1,6 @@
 import type { CatalogItem } from '@epam/ai-dial-catalog';
-import { Card, CatalogEntityType } from '@epam/ai-dial-catalog';
+import { Card } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   DeploymentCreationFieldErrorCode,
   DeploymentCreationForm,

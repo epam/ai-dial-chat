@@ -58,20 +58,6 @@ import {
 
 `searchEntity` ranks 2.0 results first, and a 1.0 result carries an explicit "Use instead" pointer — follow it. When migrating an existing `Dial*` call site, confirm the 2.0 prop signature with `getEntityDetails("component", "<Name>")` first; props are not always identical between generations.
 
-The app-level wrappers in `@epam/ai-dial-kit` still take precedence over both generations wherever one exists (see the sections below).
-
-### Search bar
-
-**Never** use `DialSearch` from `@epam/ai-dial-ui-kit`. Use `SearchBar` from `@epam/ai-dial-kit` instead.
-
-```tsx
-// Correct
-import { SearchBar } from '@epam/ai-dial-kit';
-
-// Wrong
-import { DialSearch } from '@epam/ai-dial-ui-kit';
-```
-
 ````
 
 ## Semantic HTML

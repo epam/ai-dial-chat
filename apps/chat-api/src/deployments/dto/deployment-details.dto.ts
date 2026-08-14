@@ -44,20 +44,13 @@ export class ModelLimitsDto {
   maxCompletionTokens?: number;
 }
 
-export class ModelPricingDto {
-  @ApiPropertyOptional({ description: 'The pricing unit' })
-  unit?: string;
-
-  @ApiPropertyOptional({
-    description: 'Per-unit price for the completion request',
-  })
-  prompt?: string;
-
-  @ApiPropertyOptional({
-    description: 'Per-unit price for the completion response',
-  })
-  completion?: string;
-}
+/*
+ * DIAL Core quotes pricing as an open-ended map: `unit` names the billing unit
+ * and every other key (`prompt`, `completion`, `cache_read`, and
+ * deployment-specific ones) holds a per-unit price, so the map is forwarded
+ * verbatim instead of whitelisting a fixed set of keys.
+ */
+export type ModelPricingRecord = Record<string, string | undefined>;
 
 /**
  * Feature flags shared by DIAL Core's model, application, and toolset
@@ -171,8 +164,14 @@ export class ModelDetailsDto {
   @ApiPropertyOptional({ type: ModelLimitsDto })
   limits?: ModelLimitsDto;
 
-  @ApiPropertyOptional({ type: ModelPricingDto })
-  pricing?: ModelPricingDto;
+  @ApiPropertyOptional({
+    description:
+      'Pricing as reported by DIAL Core: `unit` names the billing unit and every other key holds the per-unit price for that key',
+    type: 'object',
+    additionalProperties: { type: 'string' },
+    example: { unit: 'token', prompt: '0.000003', completion: '0.000015' },
+  })
+  pricing?: ModelPricingRecord;
 
   @ApiPropertyOptional({ type: DeploymentFeaturesDetailsDto })
   features?: DeploymentFeaturesDetailsDto;

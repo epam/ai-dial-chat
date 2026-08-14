@@ -1,14 +1,13 @@
 import {
-  CatalogEntityType,
   type CatalogItemOverview,
   type CatalogItem,
   type OverviewSpec,
 } from '@epam/ai-dial-catalog';
 import type { PromptResponseDto } from '@epam/ai-dial-chat-api-client';
-import { formatLastUsed } from '@epam/ai-dial-chat-shared';
+import { CatalogEntityType, formatLastUsed } from '@epam/ai-dial-chat-shared';
 import type { TFunction } from 'i18next';
 import { CatalogI18nKeys } from '../constants/translation-keys';
-import { PromptSource } from '../types/prompt';
+import { buildPromptResourceUrl, PromptSource } from '../types/prompt';
 import { safeDecodeURIComponent } from './string-utils';
 
 const SOURCE_FOLDER_KEY: Record<PromptSource, CatalogI18nKeys> = {
@@ -72,19 +71,28 @@ export interface MapPromptToCatalogItemOptions {
 }
 
 /**
- * Maps a prompt DTO into a catalog item. The DIAL prompt path is used verbatim
- * as `CatalogItem.id`, since every id-to-endpoint dispatch in `CatalogView` is
- * already switched on `item.type`.
+ * Maps a prompt DTO into a catalog item.
+ *
+ * A personal or organisation prompt uses its DIAL path verbatim as
+ * `CatalogItem.id` — its bucket is implied by the endpoint that serves it. A
+ * shared-with-me prompt cannot: its path is relative to the *owner's* bucket,
+ * so a bare path both collides with a same-named personal prompt and resolves
+ * against the caller's own bucket when read back. Those items carry the
+ * qualified `prompts/{ownerBucket}/{path}` url instead.
  */
 export const mapPromptToCatalogItem = (
   prompt: PromptResponseDto,
   { t, source, favoriteIds }: MapPromptToCatalogItemOptions,
 ): CatalogItem => {
   const isPersonal = source === PromptSource.Personal;
-  const isFavorite = favoriteIds.has(prompt.id);
+  const id =
+    source === PromptSource.SharedWithMe
+      ? buildPromptResourceUrl({ bucket: prompt.bucket, path: prompt.id })
+      : prompt.id;
+  const isFavorite = favoriteIds.has(id);
 
   return {
-    id: prompt.id,
+    id,
     type: CatalogEntityType.Prompt,
     name: prompt.name,
     description: prompt.description ?? '',

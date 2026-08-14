@@ -1,4 +1,4 @@
-import { CatalogEntityType } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { EntityNotificationsI18nKeys } from '../constants/translation-keys';
 import {
   EntityOperation,
