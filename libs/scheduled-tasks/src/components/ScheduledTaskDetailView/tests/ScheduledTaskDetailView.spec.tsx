@@ -842,7 +842,9 @@ describe('ScheduledTaskDetailView', () => {
           Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();
 
+      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- decorative icons inside already-labeled buttons carry no accessible role of their own
       const backIcon = container.querySelector('[data-icon="back"]');
+      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- decorative icons inside already-labeled buttons carry no accessible role of their own
       const deleteIcon = container.querySelector('[data-icon="delete"]');
       expect(backIcon).toBeTruthy();
       expect(deleteIcon).toBeTruthy();

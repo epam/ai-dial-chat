@@ -789,9 +789,9 @@ describe('ScheduledTaskDetailPage', () => {
 
     /** Clicks the header Delete action and returns the now-open dialog element. */
     const openDeleteDialog = async () => {
-      const deleteButton = await waitFor(() =>
-        screen.getByRole('button', { name: 'buttons.delete' }),
-      );
+      const deleteButton = await screen.findByRole('button', {
+        name: 'buttons.delete',
+      });
       await userEvent.click(deleteButton);
       return screen.getByRole('dialog');
     };
@@ -922,9 +922,7 @@ describe('ScheduledTaskDetailPage', () => {
         within(dialog).getByRole('button', { name: 'buttons.delete' }),
       );
 
-      await waitFor(() =>
-        expect(screen.getByText('scheduled tasks list')).toBeTruthy(),
-      );
+      expect(await screen.findByText('scheduled tasks list')).toBeTruthy();
       expect(showNotificationMock).toHaveBeenCalledWith(
         expect.objectContaining({ variant: 'success' }),
       );
@@ -1040,9 +1038,7 @@ describe('ScheduledTaskDetailPage', () => {
       });
       renderDetailPage();
 
-      await waitFor(() =>
-        expect(screen.getByText('isDeleted:true')).toBeTruthy(),
-      );
+      expect(await screen.findByText('isDeleted:true')).toBeTruthy();
       expect(
         screen.getByText('scheduledTasks.detail.deletedStateLabel'),
       ).toBeTruthy();
