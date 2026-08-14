@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { scheduledTasksApi } from '../api-client';
 import {
   createScheduledTask,
+  deleteScheduledTask,
   getScheduledTask,
   listScheduledTaskRuns,
   listScheduledTasks,
@@ -175,5 +176,16 @@ describe('scheduled-tasks.api', () => {
 
     expect(spy).toHaveBeenCalledWith({ scheduleId: 'sched_123' });
     expect(result).toEqual(resumedSchedule);
+  });
+
+  it('deleteScheduledTask delegates with the scheduleId and resolves to undefined', async () => {
+    const spy = vi
+      .spyOn(scheduledTasksApi, 'deleteScheduledTask')
+      .mockResolvedValue(undefined);
+
+    const result = await deleteScheduledTask('sched_123');
+
+    expect(spy).toHaveBeenCalledWith({ scheduleId: 'sched_123' });
+    expect(result).toBeUndefined();
   });
 });
