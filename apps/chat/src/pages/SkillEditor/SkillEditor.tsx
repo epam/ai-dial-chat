@@ -8,6 +8,7 @@ import {
   type SkillEditorLabels,
   type SkillEditorValues,
   type SkillFileTreeNode,
+  type SkillFileUploadCandidate,
 } from '@epam/ai-dial-skill-editor';
 import {
   ConfirmationPopup,
@@ -49,7 +50,6 @@ import {
   isValidSkillRelativePath,
   normalizeSkillName,
   parseSkillManifest,
-  SKILL_FILE_UPLOAD_MAX_BYTES,
   SKILL_MANIFEST_FILE,
   unpackSkillArchive,
 } from '../../utils/skill';
@@ -57,8 +57,10 @@ import {
   skillFileToAttachment,
   type SkillFileContent,
 } from '../../utils/skill-file-preview';
-import { formatFileSize } from '../../utils/string-utils';
+import { getUtf8ByteLength } from '../../utils/string-utils';
 import { SkillFilePreview } from './SkillFilePreview';
+import type { SkillFileBatchValidationMessages } from './utils/skill-file-batch-validation';
+import { validateSkillFileBatch } from './utils/skill-file-batch-validation';
 
 /*
  * Phase names collapse the tasks.md-specified `initial`/`dirty` distinction
@@ -166,6 +168,10 @@ const SkillEditorPage: FC = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [pendingCancel, setPendingCancel] = useState(false);
   const [pendingReload, setPendingReload] = useState(false);
+  const [pendingManifestImport, setPendingManifestImport] = useState(false);
+  const manifestImportResolveRef = useRef<((accepted: boolean) => void) | null>(
+    null,
+  );
 
   // Edit-mode load.
   useEffect(() => {
@@ -317,45 +323,156 @@ const SkillEditorPage: FC = () => {
     setLoadAttempt((attempt) => attempt + 1);
   }, []);
 
-  const validatePath = useCallback(
-    (path: string): string | undefined => {
-      if (!path) return t(SkillEditorI18nKeys.ErrorRequired);
-      if (path === SKILL_MANIFEST_FILE) {
-        return t(SkillEditorI18nKeys.ErrorPathReserved);
-      }
-      if (!isValidSkillRelativePath(path)) {
-        return t(SkillEditorI18nKeys.ErrorPathInvalid);
-      }
-      if (files.some((node) => node.path === path)) {
-        return t(SkillEditorI18nKeys.ErrorPathDuplicate);
-      }
-      return undefined;
-    },
-    [files, t],
+  const batchValidationMessages = useMemo<SkillFileBatchValidationMessages>(
+    () => ({
+      required: t(SkillEditorI18nKeys.ErrorRequired),
+      pathReserved: t(SkillEditorI18nKeys.ErrorPathReserved),
+      pathInvalid: t(SkillEditorI18nKeys.ErrorPathInvalid),
+      pathDuplicate: t(SkillEditorI18nKeys.ErrorPathDuplicate),
+      fileTooLarge: (maxSize) =>
+        t(SkillEditorI18nKeys.ErrorFileTooLarge, { maxSize }),
+      manifestCasingInvalid: t(SkillEditorI18nKeys.ErrorManifestCasingInvalid),
+      manifestDuplicate: t(SkillEditorI18nKeys.ErrorManifestDuplicate),
+      manifestInvalidUtf8: t(SkillEditorI18nKeys.ErrorManifestInvalidUtf8),
+      manifestInvalidFrontmatter: t(
+        SkillEditorI18nKeys.ErrorManifestInvalidFrontmatter,
+      ),
+      totalSizeExceeded: t(SkillEditorI18nKeys.ErrorTotalSizeExceeded),
+      totalCountExceeded: t(SkillEditorI18nKeys.ErrorTotalCountExceeded),
+    }),
+    [t],
   );
+
+  /*
+   * The live in-progress name/description/instructions the user is typing
+   * live only inside `libs/skill-editor`'s internal form state — this page
+   * only ever sees them via `onSubmit`. `loadedValues` (the seeded baseline)
+   * is therefore the closest available approximation of "the current
+   * manifest" for the projected-total-size check; the BFF remains the
+   * authoritative gate regardless of this estimate's precision.
+   */
+  const buildBatchValidationContext = useCallback(() => {
+    const existingPaths = files
+      .filter((node) => node.kind === SkillFileNodeKind.File)
+      .map((node) => node.path);
+    let existingTotalBytes = 0;
+    for (const path of existingPaths) {
+      existingTotalBytes +=
+        filesContentRef.current.get(path)?.bytes.length ?? 0;
+    }
+    const baseline = {
+      name: loadedValues?.name ?? '',
+      description: loadedValues?.description ?? '',
+      instructions: loadedValues?.instructions ?? '',
+    };
+    const manifestText = isEditMode
+      ? buildSkillManifestFromFrontmatter(
+          frontmatterRef.current,
+          baseline.name,
+          baseline.description,
+          baseline.instructions,
+        )
+      : buildSkillManifest(baseline);
+    return {
+      existingPaths,
+      existingTotalBytes,
+      manifestByteLength: getUtf8ByteLength(manifestText),
+      messages: batchValidationMessages,
+    };
+  }, [files, isEditMode, loadedValues, batchValidationMessages]);
+
+  const confirmManifestImport = useCallback((): Promise<boolean> => {
+    return new Promise<boolean>((resolve) => {
+      manifestImportResolveRef.current = resolve;
+      setPendingManifestImport(true);
+    });
+  }, []);
 
   const fileActions = useMemo<SkillEditorFileActions>(
     () => ({
-      validatePath,
-      onUploadFile: async (file, path) => {
-        if (file.size > SKILL_FILE_UPLOAD_MAX_BYTES) {
-          showNotification({
-            variant: NotificationVariant.Error,
-            message: t(SkillEditorI18nKeys.ErrorFileTooLarge, {
-              maxSize: formatFileSize(SKILL_FILE_UPLOAD_MAX_BYTES),
-            }),
-          });
-          return;
+      validateBatch: async (candidates: SkillFileUploadCandidate[]) => {
+        const { results, batchErrors } = await validateSkillFileBatch(
+          candidates,
+          buildBatchValidationContext(),
+        );
+        return { results, batchErrors };
+      },
+      commitBatch: async (candidates: SkillFileUploadCandidate[]) => {
+        const { results, batchErrors, manifestCandidate } =
+          await validateSkillFileBatch(
+            candidates,
+            buildBatchValidationContext(),
+          );
+        const hasInvalid = results.some((result) => result.error !== undefined);
+        if (hasInvalid || batchErrors.length > 0) {
+          return {
+            error: batchErrors[0]?.message ?? t(SkillEditorI18nKeys.ErrorSave),
+          };
         }
-        const buffer = await file.arrayBuffer();
-        filesContentRef.current.set(path, {
-          bytes: new Uint8Array(buffer),
-          mimeType: file.type || undefined,
-        });
-        setFiles((prev) => [
-          ...prev,
-          { path, name: nameFromPath(path), kind: SkillFileNodeKind.File },
-        ]);
+
+        if (manifestCandidate) {
+          if (
+            isEditMode &&
+            manifestCandidate.name !== (loadedValues?.name ?? '')
+          ) {
+            return { error: t(SkillEditorI18nKeys.ErrorManifestNameMismatch) };
+          }
+          if (isEditMode || isDirty) {
+            const accepted = await confirmManifestImport();
+            if (!accepted) {
+              return {
+                error: t(SkillEditorI18nKeys.ManifestImportCancelLabel),
+              };
+            }
+          }
+        }
+
+        try {
+          const supportingCandidates = candidates.filter(
+            (candidate) => candidate.id !== manifestCandidate?.candidateId,
+          );
+          const reads = await Promise.all(
+            supportingCandidates.map(async (candidate) => ({
+              path: candidate.path,
+              bytes: new Uint8Array(await candidate.file.arrayBuffer()),
+              mimeType: candidate.file.type || undefined,
+            })),
+          );
+
+          for (const read of reads) {
+            filesContentRef.current.set(read.path, {
+              bytes: read.bytes,
+              mimeType: read.mimeType,
+            });
+          }
+          if (reads.length > 0) {
+            setFiles((prev) => [
+              ...prev,
+              ...reads.map((read) => ({
+                path: read.path,
+                name: nameFromPath(read.path),
+                kind: SkillFileNodeKind.File,
+              })),
+            ]);
+          }
+
+          if (manifestCandidate) {
+            frontmatterRef.current = isEditMode
+              ? { ...frontmatterRef.current, ...manifestCandidate.frontmatter }
+              : manifestCandidate.frontmatter;
+            setLoadedValues({
+              name: isEditMode
+                ? (loadedValues?.name ?? manifestCandidate.name)
+                : manifestCandidate.name,
+              description: manifestCandidate.description,
+              instructions: manifestCandidate.instructions,
+            });
+          }
+
+          return {};
+        } catch (err) {
+          return { error: err instanceof Error ? err.message : String(err) };
+        }
       },
       onRemoveNode: (path) => {
         setFiles((prev) =>
@@ -375,7 +492,14 @@ const SkillEditorPage: FC = () => {
         );
       },
     }),
-    [validatePath, t, showNotification],
+    [
+      buildBatchValidationContext,
+      isEditMode,
+      isDirty,
+      loadedValues,
+      confirmManifestImport,
+      t,
+    ],
   );
 
   const applyUploadErrorStatus = useCallback(
@@ -445,11 +569,25 @@ const SkillEditorPage: FC = () => {
       if (canReuse) {
         ({ skillManifest, filePaths, files: fileBlobs } = cached);
       } else {
-        skillManifest = buildSkillManifest({
-          name: normalizedName,
-          description: values.description,
-          instructions: values.instructions,
-        });
+        /*
+         * A dropped SKILL.md's unknown frontmatter fields (e.g. `version`)
+         * are preserved by merging into the imported frontmatter object
+         * rather than always building a fresh one — `frontmatterRef` stays
+         * `{}` unless a manifest was imported in this create session.
+         */
+        skillManifest =
+          Object.keys(frontmatterRef.current).length > 0
+            ? buildSkillManifestFromFrontmatter(
+                frontmatterRef.current,
+                normalizedName,
+                values.description,
+                values.instructions,
+              )
+            : buildSkillManifest({
+                name: normalizedName,
+                description: values.description,
+                instructions: values.instructions,
+              });
         const fileNodes = files.filter(
           (node) => node.kind === SkillFileNodeKind.File,
         );
@@ -640,6 +778,25 @@ const SkillEditorPage: FC = () => {
       ),
       supportingFileNote: t(SkillEditorI18nKeys.SupportingFileNote),
       reloadLatestLabel: t(SkillEditorI18nKeys.ReloadLatestLabel),
+      uploadDialogTitle: t(SkillEditorI18nKeys.UploadDialogTitle),
+      uploadDialogCloseAriaLabel: t(
+        SkillEditorI18nKeys.UploadDialogCloseAriaLabel,
+      ),
+      uploadDropZoneLabel: t(SkillEditorI18nKeys.UploadDropZoneLabel),
+      uploadDropZoneMobileLabel: t(
+        SkillEditorI18nKeys.UploadDropZoneMobileLabel,
+      ),
+      uploadDropZoneAriaLabel: t(SkillEditorI18nKeys.UploadDropZoneAriaLabel),
+      uploadRemoveCandidateLabel: (path) =>
+        t(SkillEditorI18nKeys.UploadRemoveCandidateLabel, { path }),
+      uploadManifestRowNote: t(SkillEditorI18nKeys.UploadManifestRowNote),
+      uploadConfirmLabel: t(SkillEditorI18nKeys.UploadConfirmLabel),
+      uploadCancelLabel: t(SkillEditorI18nKeys.UploadCancelLabel),
+      uploadBatchErrorAriaPrefix: t(
+        SkillEditorI18nKeys.UploadBatchErrorAriaPrefix,
+      ),
+      dropOverlayTitle: t(SkillEditorI18nKeys.DropOverlayTitle),
+      dropOverlaySubtitle: t(SkillEditorI18nKeys.DropOverlaySubtitle),
     }),
     [t, isEditMode, loadState],
   );
@@ -686,7 +843,7 @@ const SkillEditorPage: FC = () => {
       </div>
       <div className="min-h-0 flex-1">
         <SkillEditorForm
-          initialValues={isEditMode ? loadedValues : undefined}
+          initialValues={loadedValues}
           files={files}
           selectedPath={selectedPath}
           onSelectedPathChange={setSelectedPath}
@@ -741,6 +898,30 @@ const SkillEditorPage: FC = () => {
         onConfirm={confirmReloadLatest}
         onCancel={() => setPendingReload(false)}
         onClose={() => setPendingReload(false)}
+      />
+
+      <ConfirmationPopup
+        open={pendingManifestImport}
+        header={t(SkillEditorI18nKeys.ManifestImportConfirmTitle)}
+        description={t(SkillEditorI18nKeys.ManifestImportConfirmMessage)}
+        confirmLabel={t(SkillEditorI18nKeys.ManifestImportConfirmLabel)}
+        cancelLabel={t(SkillEditorI18nKeys.ManifestImportCancelLabel)}
+        variant={ConfirmationPopupVariant.Danger}
+        onConfirm={() => {
+          setPendingManifestImport(false);
+          manifestImportResolveRef.current?.(true);
+          manifestImportResolveRef.current = null;
+        }}
+        onCancel={() => {
+          setPendingManifestImport(false);
+          manifestImportResolveRef.current?.(false);
+          manifestImportResolveRef.current = null;
+        }}
+        onClose={() => {
+          setPendingManifestImport(false);
+          manifestImportResolveRef.current?.(false);
+          manifestImportResolveRef.current = null;
+        }}
       />
     </div>
   );

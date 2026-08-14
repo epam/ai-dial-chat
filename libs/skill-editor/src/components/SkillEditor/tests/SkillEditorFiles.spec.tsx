@@ -11,6 +11,11 @@ import { describe, expect, it, vi } from 'vitest';
 import type {
   SkillEditorFileActions,
   SkillEditorProps,
+  SkillFileUploadCandidate,
+} from '../../../models/skill-editor-props';
+import {
+  SkillFileCandidateKind,
+  SkillFileValidationStatus,
 } from '../../../models/skill-editor-props';
 import { SkillFileNodeKind } from '../../../types/skill-file-node-kind';
 import { SkillEditor } from '../SkillEditor';
@@ -169,6 +174,46 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
     <div role="status">{ariaLabel}</div>
   ),
+  PopupSize: { Sm: 'sm', Md: 'md', Lg: 'lg' },
+  Popup: ({
+    open,
+    header,
+    children,
+    footer,
+    onClose,
+    closeAriaLabel,
+  }: {
+    open: boolean;
+    header: ReactNode;
+    children: ReactNode;
+    footer?: ReactNode;
+    onClose: () => void;
+    closeAriaLabel?: string;
+  }) =>
+    open ? (
+      <div
+        role="dialog"
+        aria-label={typeof header === 'string' ? header : undefined}
+      >
+        <h2>{header}</h2>
+        <button onClick={onClose}>{closeAriaLabel ?? 'Close'}</button>
+        {children}
+        {footer}
+      </div>
+    ) : null,
+  GhostIconButton: ({
+    icon,
+    onClick,
+    'aria-label': ariaLabel,
+  }: {
+    icon: ReactNode;
+    onClick?: () => void;
+    'aria-label'?: string;
+  }) => (
+    <button aria-label={ariaLabel} onClick={onClick}>
+      {icon}
+    </button>
+  ),
   LazyMarkdownEditor: () =>
     Promise.resolve({
       MarkdownEditor: ({
@@ -190,18 +235,26 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 vi.mock('@tabler/icons-react', () => ({
   IconPlus: () => <svg />,
   IconTrashX: () => <svg />,
+  IconUpload: () => <svg />,
+  IconFileText: () => <svg />,
 }));
 
 const buildFileActions = (
   overrides?: Partial<SkillEditorFileActions>,
 ): SkillEditorFileActions => ({
-  validatePath: () => undefined,
-  onUploadFile: vi.fn(async () => undefined),
+  validateBatch: vi.fn(async () => ({ results: [], batchErrors: [] })),
+  commitBatch: vi.fn(async () => ({})),
   onRemoveNode: vi.fn(),
   ...overrides,
 });
 
-const uploadFile = (file: File) => {
+const openUploadDialog = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.click(
+    screen.getAllByRole('button', { name: 'Upload from device' })[0],
+  );
+};
+
+const stageFile = (file: File) => {
   const input = document.querySelector('input[type="file"]');
   fireEvent.change(input as Element, { target: { files: [file] } });
 };
@@ -239,49 +292,193 @@ describe('SkillEditor — files pane', () => {
     expect(screen.getAllByRole('button', { name: 'Remove' })).toHaveLength(2);
   });
 
-  it('uploads a file when its name is accepted by validatePath', () => {
-    const onUploadFile = vi.fn(async () => undefined);
-    renderEditor({}, buildFileActions({ onUploadFile }));
+  it('commits a staged file when the batch validates and the user confirms', async () => {
+    const user = userEvent.setup({ delay: null });
+    const commitBatch = vi.fn(async () => ({}));
     const file = new File(['content'], 'analyzer.md');
-
-    uploadFile(file);
-
-    expect(onUploadFile).toHaveBeenCalledWith(file, 'analyzer.md');
-  });
-
-  it('shows the validation error and uploads nothing for a rejected file name', () => {
-    const onUploadFile = vi.fn(async () => undefined);
     renderEditor(
       {},
       buildFileActions({
-        validatePath: () => 'A file already exists at this path',
-        onUploadFile,
+        validateBatch: vi.fn(
+          async (candidates: SkillFileUploadCandidate[]) => ({
+            results: candidates.map((c) => ({
+              candidateId: c.id,
+              status: SkillFileValidationStatus.Valid,
+              kind: SkillFileCandidateKind.SupportingFile,
+            })),
+            batchErrors: [],
+          }),
+        ),
+        commitBatch,
       }),
     );
 
-    uploadFile(new File(['content'], 'notes.md'));
+    await openUploadDialog(user);
+    stageFile(file);
+    expect(await screen.findByText('analyzer.md')).toBeTruthy();
 
-    expect(
-      screen.getAllByText('A file already exists at this path')[0],
-    ).toBeTruthy();
-    expect(onUploadFile).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Add' }));
+
+    expect(commitBatch).toHaveBeenCalledWith([
+      expect.objectContaining({ file, path: 'analyzer.md' }),
+    ]);
   });
 
-  it('shows a rejected onUploadFile error inline instead of an unhandled rejection', async () => {
-    const onUploadFile = vi.fn(async () => {
-      throw new Error('This file exceeds the maximum size of 1 MB.');
-    });
-    renderEditor({}, buildFileActions({ onUploadFile }));
+  it('shows the validation error and disables confirm for a rejected staged file', async () => {
+    const user = userEvent.setup({ delay: null });
+    const commitBatch = vi.fn(async () => ({}));
+    renderEditor(
+      {},
+      buildFileActions({
+        validateBatch: vi.fn(
+          async (candidates: SkillFileUploadCandidate[]) => ({
+            results: candidates.map((c) => ({
+              candidateId: c.id,
+              status: SkillFileValidationStatus.Invalid,
+              kind: SkillFileCandidateKind.SupportingFile,
+              error: 'A file already exists at this path',
+            })),
+            batchErrors: [],
+          }),
+        ),
+        commitBatch,
+      }),
+    );
 
-    uploadFile(new File(['content'], 'huge.md'));
+    await openUploadDialog(user);
+    stageFile(new File(['content'], 'notes.md'));
 
     expect(
-      (
-        await screen.findAllByText(
-          'This file exceeds the maximum size of 1 MB.',
-        )
-      )[0],
+      await screen.findByText('A file already exists at this path'),
     ).toBeTruthy();
+    expect(
+      (screen.getByRole('button', { name: 'Add' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(commitBatch).not.toHaveBeenCalled();
+  });
+
+  it('keeps the dialog open with the batch intact when commitBatch fails', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderEditor(
+      {},
+      buildFileActions({
+        validateBatch: vi.fn(
+          async (candidates: SkillFileUploadCandidate[]) => ({
+            results: candidates.map((c) => ({
+              candidateId: c.id,
+              status: SkillFileValidationStatus.Valid,
+              kind: SkillFileCandidateKind.SupportingFile,
+            })),
+            batchErrors: [],
+          }),
+        ),
+        commitBatch: vi.fn(async () => ({
+          error: 'This skill package is too large to upload.',
+        })),
+      }),
+    );
+
+    await openUploadDialog(user);
+    stageFile(new File(['content'], 'huge.md'));
+    await screen.findByText('huge.md');
+
+    await user.click(screen.getByRole('button', { name: 'Add' }));
+
+    expect(
+      await screen.findByText('This skill package is too large to upload.'),
+    ).toBeTruthy();
+    expect(screen.getByText('huge.md')).toBeTruthy();
+  });
+
+  it('cancel closes the dialog and commits nothing', async () => {
+    const user = userEvent.setup({ delay: null });
+    const commitBatch = vi.fn(async () => ({}));
+    renderEditor({}, buildFileActions({ commitBatch }));
+
+    await openUploadDialog(user);
+    stageFile(new File(['content'], 'notes.md'));
+    await screen.findByText('notes.md');
+
+    await user.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: 'Cancel',
+      }),
+    );
+
+    expect(commitBatch).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('removing a staged row removes only that row, with no confirmation', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderEditor({}, buildFileActions());
+
+    await openUploadDialog(user);
+    stageFile(new File(['content'], 'notes.md'));
+    stageFile(new File(['content'], 'other.md'));
+    await screen.findByText('notes.md');
+
+    await user.click(screen.getByRole('button', { name: 'Remove notes.md' }));
+
+    expect(screen.queryByText('notes.md')).toBeNull();
+    expect(screen.getByText('other.md')).toBeTruthy();
+  });
+
+  it('renders a manifest-kind staged row with distinct explanatory copy', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderEditor(
+      {},
+      buildFileActions({
+        validateBatch: vi.fn(
+          async (candidates: SkillFileUploadCandidate[]) => ({
+            results: candidates.map((c) => ({
+              candidateId: c.id,
+              status: SkillFileValidationStatus.Valid,
+              kind: SkillFileCandidateKind.Manifest,
+            })),
+            batchErrors: [],
+          }),
+        ),
+      }),
+    );
+
+    await openUploadDialog(user);
+    stageFile(new File(['content'], 'SKILL.md'));
+
+    expect(
+      await screen.findByText(
+        "Will replace this Skill's name, description, and instructions",
+      ),
+    ).toBeTruthy();
+  });
+
+  it('opens the upload dialog and stages a file dropped anywhere on the editor surface, without clicking Upload from device first', async () => {
+    renderEditor();
+    const file = new File(['content'], 'notes.md');
+
+    fireEvent.drop(screen.getByRole('heading', { name: 'SKILL.md' }), {
+      dataTransfer: { types: ['Files'], files: [file] },
+    });
+
+    expect(await screen.findByRole('dialog')).toBeTruthy();
+    expect(await screen.findByText('notes.md')).toBeTruthy();
+  });
+
+  it('shows a full-surface drop overlay while dragging over the editor, hidden once the dialog opens', async () => {
+    renderEditor();
+    const heading = screen.getByRole('heading', { name: 'SKILL.md' });
+    const dragEvent = { dataTransfer: { types: ['Files'], files: [] } };
+
+    fireEvent.dragEnter(heading, dragEvent);
+    expect(screen.getByText('Upload files')).toBeTruthy();
+
+    fireEvent.drop(heading, {
+      dataTransfer: { types: ['Files'], files: [new File(['x'], 'a.md')] },
+    });
+
+    await screen.findByRole('dialog');
+    expect(screen.queryByText('Upload files')).toBeNull();
   });
 
   it('requires confirmation before removing a supporting entry', async () => {

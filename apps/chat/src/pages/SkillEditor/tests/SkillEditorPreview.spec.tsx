@@ -90,9 +90,20 @@ const Providers = ({ children }: { children: ReactNode }) => (
 
 const renderPage = () => render(<SkillEditor />, { wrapper: Providers });
 
-const uploadFile = (file: File) => {
+const uploadFile = async (
+  user: ReturnType<typeof userEvent.setup>,
+  file: File,
+) => {
+  await user.click(
+    screen.getAllByRole('button', { name: 'skillEditor.addUploadLabel' })[0],
+  );
   const input = document.querySelector('input[type="file"]');
   fireEvent.change(input as Element, { target: { files: [file] } });
+  await waitFor(() => expect(screen.getAllByText(file.name)[0]).toBeTruthy());
+  await user.click(
+    screen.getByRole('button', { name: 'skillEditor.uploadConfirmLabel' }),
+  );
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
 };
 
 const selectFile = async (
@@ -134,11 +145,9 @@ describe('SkillEditor page — supporting file preview', () => {
 
   it('opens a Markdown preview when a Markdown supporting file is selected, with no BFF call', async () => {
     renderPage();
-    uploadFile(
+    await uploadFile(
+      user,
       new File(['# Hello there'], 'notes.md', { type: 'text/markdown' }),
-    );
-    await waitFor(() =>
-      expect(screen.getAllByText('notes.md')[0]).toBeTruthy(),
     );
 
     await selectFile(user, 'notes.md');
@@ -153,13 +162,11 @@ describe('SkillEditor page — supporting file preview', () => {
 
   it('opens a JSON preview when a JSON supporting file is selected', async () => {
     renderPage();
-    uploadFile(
+    await uploadFile(
+      user,
       new File(['{"key":"value"}'], 'data.json', {
         type: 'application/json',
       }),
-    );
-    await waitFor(() =>
-      expect(screen.getAllByText('data.json')[0]).toBeTruthy(),
     );
 
     await selectFile(user, 'data.json');
@@ -172,9 +179,9 @@ describe('SkillEditor page — supporting file preview', () => {
 
   it('opens a plain-text/code preview for an unrecognized text extension', async () => {
     renderPage();
-    uploadFile(new File(['print("hi")'], 'script.py', { type: 'text/plain' }));
-    await waitFor(() =>
-      expect(screen.getAllByText('script.py')[0]).toBeTruthy(),
+    await uploadFile(
+      user,
+      new File(['print("hi")'], 'script.py', { type: 'text/plain' }),
     );
 
     await selectFile(user, 'script.py');
@@ -188,13 +195,11 @@ describe('SkillEditor page — supporting file preview', () => {
 
   it('shows the unsupported-format state for an unrecognized binary extension', async () => {
     renderPage();
-    uploadFile(
+    await uploadFile(
+      user,
       new File([new Uint8Array([1, 2, 3])], 'archive.bin', {
         type: 'application/octet-stream',
       }),
-    );
-    await waitFor(() =>
-      expect(screen.getAllByText('archive.bin')[0]).toBeTruthy(),
     );
 
     await selectFile(user, 'archive.bin');
@@ -208,9 +213,9 @@ describe('SkillEditor page — supporting file preview', () => {
 
   it('does not open a preview when SKILL.md is selected', async () => {
     renderPage();
-    uploadFile(new File(['# Hello'], 'notes.md', { type: 'text/markdown' }));
-    await waitFor(() =>
-      expect(screen.getAllByText('notes.md')[0]).toBeTruthy(),
+    await uploadFile(
+      user,
+      new File(['# Hello'], 'notes.md', { type: 'text/markdown' }),
     );
     await selectFile(user, 'notes.md');
     await waitFor(() =>
