@@ -57,8 +57,7 @@ AI DIAL Chat is a comprehensive chat application platform featuring:
 
 ## Migrating from the Legacy DIAL Chat
 
-The legacy chat is maintained on the `development-legacy` branch until the end of
-2026. Because 1.0 is a rewrite rather than an upgrade, moving a deployment is a
+The legacy chat is maintained on the `development-legacy` branch until the end of 2026. Because 1.0 is a rewrite rather than an upgrade, moving a deployment is a
 deliberate migration — there is no in-place upgrade path.
 
 Start with the [Legacy Chat Migration Guide](docs/legacy-chat-migration-guide.md):

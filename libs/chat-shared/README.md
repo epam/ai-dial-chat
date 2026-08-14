@@ -4,7 +4,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Overview
 
-`@epam/ai-dial-chat-shared` is the foundational layer of the AI DIAL Chat workspace. It solves the problem of sharing domain knowledge — data shapes, business logic, and common UI — across every feature library without duplicating code or forcing each lib to declare its own conflicting versions. The package covers three areas: (1) **domain models** — TypeScript interfaces and enums for chats, messages, annotations, deployments, themes, and auth sessions that form the lingua franca between libs and apps; (2) **shared utilities** — string helpers, CSS variable builders, clipboard access, avatar colour generation, MIME type constants, and mobile-breakpoint hooks that every lib needs but should not re-implement; and (3) **shared UI components** — `MarkdownRenderer`, `CodeBlock`, `InitialsAvatar`, `DeploymentIcon`, `PanelEmptyState`, which appear in multiple panels and must have a single, consistent implementation. All other workspace libraries list this package as a peer dependency, so changes to the shared models propagate across the entire workspace in a single update.
+`@epam/ai-dial-chat-shared` is the foundational layer of the AI DIAL Chat workspace. It solves the problem of sharing domain knowledge — data shapes, business logic, and common UI — across every feature library without duplicating code or forcing each lib to declare its own conflicting versions. The package covers three areas: (1) **domain models** — TypeScript interfaces and enums for conversations, messages, stages, annotations, deployments, themes, and user profiles that form the lingua franca between libs and apps; (2) **shared utilities** — string helpers, CSS variable builders, clipboard access, avatar colour generation, MIME type constants, and mobile-breakpoint hooks that every lib needs but should not re-implement; and (3) **shared UI components** — `MarkdownRenderer`, `MarkdownCodeBlock`, `InitialsAvatar`, `DeploymentIcon`, `EntityHeader`, `PanelEmptyState`, which appear in multiple panels and must have a single, consistent implementation. All other workspace libraries list this package as a peer dependency, so changes to the shared models propagate across the entire workspace in a single update.
 
 ## Installation
 
@@ -213,35 +213,63 @@ const isMobile = useIsMobile();
 
 ```tsx
 import {
-  mergeClass,
+  mergeClasses,
   buildCssVars,
   copyToClipboard,
+  copyMarkdownAsRichText,
   formatLastUsed,
+  formatFileSize,
   formatPrice,
   formatUnitPrice,
-  getInitials,
-  getAvatarColor,
+  extractInitials,
+  pickAvatarColor,
   isAudioTranscriptionSupported,
+  downloadTextFile,
+  triggerBlobDownload,
+  getUtf8ByteLength,
+  truncateToUtf8Bytes,
 } from '@epam/ai-dial-chat-shared';
 
-// Merge conditional class names
-const className = mergeClass('base-class', isActive && 'active');
+// Merge conditional class names — the only supported way to compose classes
+const className = mergeClasses('base-class', isActive && 'active');
 
-// Generate CSS custom property declarations from a theme object
-const vars = buildCssVars(theme);
+// Map a *Colors object to CSS custom property declarations; undefined values are dropped
+const cssVars = buildCssVars({ '--cs-text': colors?.text });
 
 // Format a USD amount, keeping decimals for sub-dollar values
 formatPrice(0.3); // '$0.3'
 
 // Re-quote a DIAL Core per-unit price for display
 formatUnitPrice('0.000003', 'token'); // '$3/M tokens'
+
+// Derive an avatar's initials and its deterministic color from a name
+const initials = extractInitials(user.displayName);
+const { background, foreground } = pickAvatarColor(user.displayName);
 ```
 
 ## Constants
 
 ```tsx
-import { MIME_TYPES, DIAL_CONSTANTS } from '@epam/ai-dial-chat-shared';
+import {
+  MIME_TYPE_EXT_MAP,
+  MIME_TYPE_WILDCARD,
+  MIME_TYPE_AUDIO_PREFIX,
+  HIDDEN_FILE,
+  BASE_MD_ICON_PROPS,
+  BASE_LG_ICON_PROPS,
+  ENTITY_TYPE_COLOR,
+  ENTITY_TYPE_BG_COLOR,
+} from '@epam/ai-dial-chat-shared';
 ```
+
+| Constant                                     | Purpose                                                           |
+| -------------------------------------------- | ----------------------------------------------------------------- |
+| `MIME_TYPE_EXT_MAP`                          | MIME type → file extension, for labels and download file names    |
+| `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists  |
+| `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types   |
+| `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders     |
+| `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step |
+| `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens               |
 
 ## Building
 

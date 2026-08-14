@@ -1,6 +1,6 @@
 ---
 name: code-review-and-quality
-description: Five-axis code review before merge. Use for quality passes after implementation, before merge, and when asked to review a diff.
+description: Five-axis code review before merge, plus responsive-parity and documentation-accuracy gates. Use for quality passes after implementation, before merge, and when asked to review a diff.
 context: fork
 ---
 
@@ -8,7 +8,7 @@ context: fork
 
 ## Overview
 
-Review every non-trivial change before it lands on the main line. Use **five axes**: correctness, readability, architecture, security, performance.
+Review every non-trivial change before it lands on the main line. Use **five axes**: correctness, readability, architecture, security, performance — plus the two repo-specific gates below them, responsive parity and documentation accuracy.
 
 **Approval bar:** Approve when the change clearly **improves or preserves** overall code health and matches project conventions. Do not block because you would have written it differently. Do block on real defects, security issues, or violations of agreed patterns.
 
@@ -57,7 +57,7 @@ Emit a JSON object with this shape:
   "findings": [
     {
       "severity": "critical | required | warning | nit | optional | fyi",
-      "category": "correctness | readability | architecture | security | performance | responsive | openspec | verification",
+      "category": "correctness | readability | architecture | security | performance | responsive | documentation | openspec | verification",
       "file": "path/from/repo/root",
       "line": 123,
       "side": "RIGHT | LEFT",
@@ -97,6 +97,7 @@ Fail the pipeline for:
 - API/OpenAPI/generated-client contract mismatch.
 - Hand-authored `libs/*` leaking host/external integration details.
 - Security, authz, secret exposure, data loss, or broken public contract risks.
+- `npm run validate:docs` failure, or a lib's public API changing without its README, when the diff touches `libs/*/src/index.ts`, any README, or `docs/**`.
 
 Do not fail the pipeline for `nit`, `optional`, or `fyi` findings. Use `warning` for non-blocking risk, missing non-critical evidence, or human-follow-up items.
 
@@ -117,7 +118,7 @@ Automated review passed.
 
 - No blocking findings.
 - Verification: `npm exec nx affected --target=test --base=origin/development-1.0` passed.
-- Scope checked: correctness, architecture boundaries, security, performance, responsive parity, and OpenSpec alignment.
+- Scope checked: correctness, architecture boundaries, security, performance, responsive parity, documentation accuracy, and OpenSpec alignment.
 ```
 
 If there are findings, the top-level comment must summarize the verdict, count blocking/non-blocking findings, and list verification status. Inline comments carry the detailed code-specific feedback.
@@ -202,6 +203,21 @@ Block merge for OpenSpec-backed work when code behavior materially diverges from
 - Verification story names which breakpoints were exercised — "desktop verified only" is a request-changes signal for any user-facing change
 - See `.claude/skills/responsive-design/SKILL.md` for the full rubric
 
+### 7. Documentation accuracy
+
+Docs drift silently — no build breaks when a README documents a component that
+was renamed two releases ago. Nothing in `lint`/`test`/`build` covers it, so the
+review is the only gate.
+
+- `npm run validate:docs` is green. It checks README coverage and H1/package identity, lib `package.json` metadata (`description`, `license`), that every relative markdown link resolves, and that every name a lib README imports from its own package is actually exported. Treat a failure as `required`.
+- A change to a lib's `src/index.ts` — added, renamed, or removed export — carries a matching README change in the same diff.
+- A renamed prop, a changed prop type, or a newly required prop is reflected in every README example that passes it.
+- README code fences name only symbols that exist, with the required props present, the right value types, and imports from the package that actually exports the name (`CatalogEntityType` is `@epam/ai-dial-chat-shared`, not `@epam/ai-dial-catalog`).
+- Prose describes what the code does today, not an intended capability. A claimed feature the component lacks is `required`, not a nit — readers act on it.
+- Structural additions (lib, app, backend domain, context, route, `ApiEndpoints` entry) update `docs/architecture.md`; new or removed environment variables update `apps/chat-api/README.md` **and** `.env.template`.
+- Deleting a doc means fixing every link to it, including the `dial-docs` skill index.
+- See `.claude/rules/docs.md` for the same-change update matrix and the drift classes already found here.
+
 ## Repo-specific routing
 
 Use the repository skills and rules as the source of truth before applying generic advice:
@@ -215,6 +231,7 @@ Use the repository skills and rules as the source of truth before applying gener
 | `libs/*` React components              | `openspec/config.yaml`, library isolation rules from `AGENTS.md`, `openspec/lib-styling-guide.md` plus exported-symbol JSDoc rules |
 | UI kit components                      | Use the `@epam/ai-dial-ui-kit` MCP tools before recommending raw HTML primitives                                                   |
 | Responsive / mobile parity             | `.claude/skills/responsive-design/SKILL.md`                                                                                        |
+| READMEs, `docs/**`, lib public API     | `.claude/rules/docs.md` plus `npm run validate:docs`; use the `dial-docs` skill to find the authoritative doc                      |
 | CI status or self-healing fixes        | `.agents/skills/monitor-ci/SKILL.md`; do not replace it with ad hoc polling                                                        |
 
 Do not import generic standards that conflict with these repo rules. For example, do not require a new REST response envelope, direct frontend REST helpers, raw HTML controls, or a generic project structure when local conventions say otherwise.
@@ -287,14 +304,15 @@ When checking "tests / build / lint":
 
 Select the smallest validation set that proves the change:
 
-| Change type                | Expected validation (interactive/local only — skip build rows in CI)                                                                    |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Frontend component / hook  | `npm exec nx test chat`, `npm exec nx lint chat`; build if route/bundling/shared imports changed                                        |
-| Backend `apps/chat-api/**` | `npm exec nx test chat-api`, `npm exec nx lint chat-api`, `npm exec nx build chat-api` when startup/module/config wiring changed        |
-| HTTP API contract          | Backend checks plus `npm run openapi`, `npm run openapi:check`, `npm exec nx build chat-api-client`, `npm exec nx lint chat-api-client` |
-| Shared lib                 | Test/lint/build for the touched lib and any directly affected app when behavior is consumed                                             |
-| Broad cross-project change | `npm exec nx affected --target=lint --base=origin/development-1.0` and affected test/build targets as appropriate                       |
-| CI-only review             | Prefer `monitor-ci` skill for Nx Cloud status and self-healing context; do not start build targets from the review job                  |
+| Change type                | Expected validation (interactive/local only — skip build rows in CI)                                                                                            |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend component / hook  | `npm exec nx test chat`, `npm exec nx lint chat`; build if route/bundling/shared imports changed                                                                |
+| Backend `apps/chat-api/**` | `npm exec nx test chat-api`, `npm exec nx lint chat-api`, `npm exec nx build chat-api` when startup/module/config wiring changed                                |
+| HTTP API contract          | Backend checks plus `npm run openapi`, `npm run openapi:check`, `npm exec nx build chat-api-client`, `npm exec nx lint chat-api-client`                         |
+| Shared lib                 | Test/lint/build for the touched lib and any directly affected app when behavior is consumed, plus `npm run validate:docs` when its public API or README changed |
+| README / `docs/**`         | `npm run validate:docs`; `npm run validate:agent-docs` as well when `.claude/**`, `.agents/**`, `AGENTS.md`, or `CLAUDE.md` changed                             |
+| Broad cross-project change | `npm exec nx affected --target=lint --base=origin/development-1.0` and affected test/build targets as appropriate                                               |
+| CI-only review             | Prefer `monitor-ci` skill for Nx Cloud status and self-healing context; do not start build targets from the review job                                          |
 
 Record skipped checks with a reason. A review without a verification story is incomplete.
 
@@ -371,10 +389,20 @@ Use as a literal template when writing a review:
 - [ ] Touch targets, hover-only affordances, and 360px overflow checked
 - [ ] Verification names the breakpoints exercised
 
+### Documentation accuracy
+
+- [ ] `npm run validate:docs` green
+- [ ] Public API changes (`libs/*/src/index.ts`, prop renames, new required props) reflected in the lib README in this diff
+- [ ] README examples name only existing symbols, include required props, and import from the owning package
+- [ ] Prose describes current behavior, not intended behavior
+- [ ] `docs/architecture.md` updated for structural changes; `apps/chat-api/README.md` + `.env.template` for env vars
+- [ ] No links left pointing at a deleted or renamed doc
+
 ### Verification
 
 - [ ] Relevant Nx targets (or CI) green
 - [ ] OpenAPI/generated-client checks run when API contracts changed
+- [ ] `npm run validate:docs` run when READMEs, `docs/**`, or a lib's public API changed
 - [ ] Manual / visual check noted if UI
 
 ### Verdict
@@ -384,12 +412,14 @@ Use as a literal template when writing a review:
 
 ## Rationalizations to reject
 
-| Excuse                     | Response                                                        |
-| -------------------------- | --------------------------------------------------------------- |
-| "It works, ship it"        | Readability, security, and architecture debt still compound.    |
-| "I wrote it, it's fine"    | Second pass catches blind spots.                                |
-| "We'll clean up later"     | Cleanup before merge unless true emergency + tracked follow-up. |
-| "Tests pass, so it's good" | Tests don't replace architecture or security review.            |
+| Excuse                       | Response                                                                                                                  |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| "It works, ship it"          | Readability, security, and architecture debt still compound.                                                              |
+| "I wrote it, it's fine"      | Second pass catches blind spots.                                                                                          |
+| "We'll clean up later"       | Cleanup before merge unless true emergency + tracked follow-up.                                                           |
+| "Tests pass, so it's good"   | Tests don't replace architecture or security review.                                                                      |
+| "It's only a README"         | READMEs are the public contract; callers copy the examples. Nothing type-checks a code fence, so review is the only gate. |
+| "I'll update the docs after" | Docs updated later are docs not updated. Same change or it drifts.                                                        |
 
 ## Red flags
 
