@@ -9,10 +9,8 @@ import {
   SKILL_UPLOAD_MAX_FILES,
   SKILL_UPLOAD_MAX_TOTAL_BYTES,
 } from '../../../../utils/skill';
-import {
-  type SkillFileBatchValidationMessages,
-  validateSkillFileBatch,
-} from '../skill-file-batch-validation';
+import type { SkillFileBatchValidationMessages } from '../../models/skill-file-batch-validation';
+import { validateSkillFileBatch } from '../skill-file-batch-validation';
 
 const messages: SkillFileBatchValidationMessages = {
   required: 'Required',

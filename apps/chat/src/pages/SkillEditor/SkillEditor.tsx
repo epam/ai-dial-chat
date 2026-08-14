@@ -2,25 +2,18 @@ import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   SkillEditor as SkillEditorForm,
-  SkillFileNodeKind,
-  type SkillEditorErrors,
-  type SkillEditorFileActions,
   type SkillEditorLabels,
-  type SkillEditorValues,
-  type SkillFileTreeNode,
-  type SkillFileUploadCandidate,
 } from '@epam/ai-dial-skill-editor';
 import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
   ErrorText,
   GhostIconButton,
-  NotificationVariant,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowLeft } from '@tabler/icons-react';
 import type { FC } from 'react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { isSafeReturnUrl } from '../../constants/routes';
@@ -29,79 +22,20 @@ import {
   SkillEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
-import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
-import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
-import {
-  getApiErrorDetails,
-  getApiErrorStatus,
-} from '../../server-api/api-error';
-import {
-  createSkill,
-  downloadSkill,
-  updateSkill,
-} from '../../server-api/skills.api';
 import { EditorQuery } from '../../types/editor-query';
 import { ROUTES } from '../../types/routes';
+import { SkillEditorLoadState } from '../../types/skill-editor-load-state';
 import { ThemeId } from '../../types/theme-id';
 import {
-  buildSkillManifest,
-  buildSkillManifestFromFrontmatter,
   isValidSkillRelativePath,
-  normalizeSkillName,
-  parseSkillManifest,
   SKILL_MANIFEST_FILE,
-  unpackSkillArchive,
 } from '../../utils/skill';
-import {
-  skillFileToAttachment,
-  type SkillFileContent,
-} from '../../utils/skill-file-preview';
-import { getUtf8ByteLength } from '../../utils/string-utils';
+import { useSkillEditorLoad } from './hooks/useSkillEditorLoad';
+import { useSkillEditorSubmit } from './hooks/useSkillEditorSubmit';
+import { useSkillFileActions } from './hooks/useSkillFileActions';
+import { useSkillFilePreviewSync } from './hooks/useSkillFilePreviewSync';
 import { SkillFilePreview } from './SkillFilePreview';
-import type { SkillFileBatchValidationMessages } from './utils/skill-file-batch-validation';
-import { validateSkillFileBatch } from './utils/skill-file-batch-validation';
-
-/*
- * Phase names collapse the tasks.md-specified `initial`/`dirty` distinction
- * into a single `idle` phase for submit purposes — dirty tracking for
- * navigation guards is handled separately via `isDirty` (from the library's
- * `onDirtyChange`), not folded into this enum.
- */
-type SubmitPhase = 'idle' | 'submitting' | 'success' | 'failure';
-
-/** Edit-mode load state; create mode never leaves `'loaded'`. */
-type LoadState = 'loading' | 'loaded' | 'error' | 'forbidden' | 'not-found';
-
-const nameFromPath = (path: string): string => {
-  const lastSlash = path.lastIndexOf('/');
-  return lastSlash === -1 ? path : path.slice(lastSlash + 1);
-};
-
-const toBlob = (bytes: Uint8Array): Blob => new Blob([new Uint8Array(bytes)]);
-
-/*
- * Fingerprints the in-memory package (form values + supporting-file paths) so
- * a retried submission after a 503 resubmits the exact same request payload
- * rather than re-deriving it from (possibly since-edited) current form state.
- */
-const fingerprintAttempt = (
-  values: SkillEditorValues,
-  files: SkillFileTreeNode[],
-): string =>
-  JSON.stringify({
-    values,
-    files: [...files].sort((a, b) => a.path.localeCompare(b.path)),
-  });
-
-interface LastAttempt {
-  fingerprint: string;
-  bucket: string;
-  path: string;
-  skillManifest: string;
-  filePaths: string[];
-  files: Blob[];
-}
 
 const SkillEditorPage: FC = () => {
   const { t } = useTranslation();
@@ -109,14 +43,7 @@ const SkillEditorPage: FC = () => {
   const [searchParams] = useSearchParams();
   const { user } = useUser();
   const { currentTheme } = useTheme();
-  const { showNotification } = useNotification();
-  const { openAttachmentCanvas } = useOpenAttachmentCanvas();
-  const {
-    closeCanvas,
-    isOpen: isCanvasOpen,
-    isLoading: isCanvasLoading,
-    attachmentId: canvasAttachmentId,
-  } = useAttachmentCanvas();
+  const { closeCanvas } = useAttachmentCanvas();
 
   const rawReturnUrl = searchParams.get(EditorQuery.ReturnUrl);
   const returnUrl =
@@ -144,96 +71,50 @@ const SkillEditorPage: FC = () => {
     }
   }, [isEditMode, rawId]);
 
-  const [loadState, setLoadState] = useState<LoadState>(
-    isEditMode ? 'loading' : 'loaded',
-  );
-  const [loadAttempt, setLoadAttempt] = useState(0);
-  const [loadedValues, setLoadedValues] = useState<
-    SkillEditorValues | undefined
-  >();
-  const etagRef = useRef<string | undefined>(undefined);
-  const frontmatterRef = useRef<Record<string, unknown>>({});
-  const loadedPathRef = useRef<string | undefined>(undefined);
+  const {
+    loadState,
+    loadedValues,
+    setLoadedValues,
+    files,
+    setFiles,
+    filesContentRef,
+    frontmatterRef,
+    etagRef,
+    loadedPathRef,
+    retryLoad,
+  } = useSkillEditorLoad({ isEditMode, bucket, skillPath });
 
-  const [files, setFiles] = useState<SkillFileTreeNode[]>([]);
-  const filesContentRef = useRef<Map<string, SkillFileContent>>(new Map());
-  const lastAttemptRef = useRef<LastAttempt | null>(null);
   const [selectedPath, setSelectedPath] = useState(SKILL_MANIFEST_FILE);
-
-  const [errors, setErrors] = useState<SkillEditorErrors>({});
-  const [submitError, setSubmitError] = useState<string | undefined>();
-  const [conflict, setConflict] = useState<{ message: string } | undefined>();
-  const [phase, setPhase] = useState<SubmitPhase>('idle');
-
   const [isDirty, setIsDirty] = useState(false);
   const [pendingCancel, setPendingCancel] = useState(false);
   const [pendingReload, setPendingReload] = useState(false);
-  const [pendingManifestImport, setPendingManifestImport] = useState(false);
-  const manifestImportResolveRef = useRef<((accepted: boolean) => void) | null>(
-    null,
-  );
 
-  // Edit-mode load.
-  useEffect(() => {
-    if (!isEditMode || !bucket) return;
-    if (skillPath == null) {
-      setLoadState('error');
-      return;
-    }
+  useSkillFilePreviewSync({ selectedPath, files, filesContentRef });
 
-    let cancelled = false;
-    setLoadState('loading');
+  const { fileActions, pendingManifestImport, resolveManifestImport } =
+    useSkillFileActions({
+      files,
+      setFiles,
+      filesContentRef,
+      frontmatterRef,
+      loadedValues,
+      setLoadedValues,
+      isEditMode,
+      isDirty,
+      setSelectedPath,
+    });
 
-    (async () => {
-      try {
-        const response = await downloadSkill(bucket, skillPath);
-        const etag = response.headers.get('etag');
-        if (!etag) {
-          if (!cancelled) setLoadState('error');
-          return;
-        }
-        const buffer = await response.arrayBuffer();
-        const { manifestText, files: unpackedFiles } = unpackSkillArchive(
-          new Uint8Array(buffer),
-        );
-        const { frontmatter, instructions } = parseSkillManifest(manifestText);
-        if (cancelled) return;
-
-        etagRef.current = etag;
-        frontmatterRef.current = frontmatter;
-        loadedPathRef.current = skillPath;
-        filesContentRef.current = new Map(
-          [...unpackedFiles].map(([path, bytes]) => [path, { bytes }]),
-        );
-        setFiles(
-          [...unpackedFiles.keys()].map((path) => ({
-            path,
-            name: nameFromPath(path),
-            kind: SkillFileNodeKind.File,
-          })),
-        );
-        setLoadedValues({
-          name: typeof frontmatter.name === 'string' ? frontmatter.name : '',
-          description:
-            typeof frontmatter.description === 'string'
-              ? frontmatter.description
-              : '',
-          instructions,
-        });
-        setLoadState('loaded');
-      } catch (err) {
-        if (cancelled) return;
-        const status = getApiErrorStatus(err);
-        if (status === 403) setLoadState('forbidden');
-        else if (status === 404) setLoadState('not-found');
-        else setLoadState('error');
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isEditMode, bucket, skillPath, loadAttempt]);
+  const { phase, errors, submitError, conflict, clearConflict, handleSubmit } =
+    useSkillEditorSubmit({
+      bucket,
+      isEditMode,
+      files,
+      filesContentRef,
+      frontmatterRef,
+      loadedPathRef,
+      etagRef,
+      returnUrl,
+    });
 
   // Warn on a full page unload while there are unsaved changes — the
   // in-app Cancel/Back guards below cover in-app navigation.
@@ -254,53 +135,6 @@ const SkillEditorPage: FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on resource identity only
   }, [isEditMode, skillPath]);
 
-  // Reconciles the attachment canvas with the current file-tree selection:
-  // opens/replaces the preview for a selected supporting file, closes it for
-  // SKILL.md/a folder, and self-corrects if a slower-resolving earlier
-  // selection's content lands after a newer selection already committed.
-  useEffect(() => {
-    if (selectedPath === SKILL_MANIFEST_FILE) {
-      if (isCanvasOpen) closeCanvas();
-      return;
-    }
-    const node = files.find(
-      (file) =>
-        file.path === selectedPath && file.kind === SkillFileNodeKind.File,
-    );
-    if (!node) {
-      if (isCanvasOpen) closeCanvas();
-      return;
-    }
-    if (
-      canvasAttachmentId === selectedPath &&
-      (isCanvasLoading || isCanvasOpen)
-    ) {
-      return;
-    }
-    const content = filesContentRef.current.get(node.path);
-    if (!content) return;
-
-    void openAttachmentCanvas(skillFileToAttachment(node, content), node.path);
-  }, [
-    selectedPath,
-    files,
-    canvasAttachmentId,
-    isCanvasLoading,
-    isCanvasOpen,
-    closeCanvas,
-    openAttachmentCanvas,
-  ]);
-
-  // Close any open preview when leaving the Skill Editor.
-  useEffect(() => {
-    return () => closeCanvas();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- unmount-only cleanup
-  }, []);
-
-  const handleRetryLoad = useCallback(() => {
-    setLoadAttempt((attempt) => attempt + 1);
-  }, []);
-
   const navigateAway = useCallback(() => {
     navigate(returnUrl);
   }, [navigate, returnUrl]);
@@ -319,427 +153,9 @@ const SkillEditorPage: FC = () => {
 
   const confirmReloadLatest = useCallback(() => {
     setPendingReload(false);
-    setConflict(undefined);
-    setLoadAttempt((attempt) => attempt + 1);
-  }, []);
-
-  const batchValidationMessages = useMemo<SkillFileBatchValidationMessages>(
-    () => ({
-      required: t(SkillEditorI18nKeys.ErrorRequired),
-      pathReserved: t(SkillEditorI18nKeys.ErrorPathReserved),
-      pathInvalid: t(SkillEditorI18nKeys.ErrorPathInvalid),
-      pathDuplicate: t(SkillEditorI18nKeys.ErrorPathDuplicate),
-      fileTooLarge: (maxSize) =>
-        t(SkillEditorI18nKeys.ErrorFileTooLarge, { maxSize }),
-      manifestCasingInvalid: t(SkillEditorI18nKeys.ErrorManifestCasingInvalid),
-      manifestDuplicate: t(SkillEditorI18nKeys.ErrorManifestDuplicate),
-      manifestInvalidUtf8: t(SkillEditorI18nKeys.ErrorManifestInvalidUtf8),
-      manifestInvalidFrontmatter: t(
-        SkillEditorI18nKeys.ErrorManifestInvalidFrontmatter,
-      ),
-      totalSizeExceeded: t(SkillEditorI18nKeys.ErrorTotalSizeExceeded),
-      totalCountExceeded: t(SkillEditorI18nKeys.ErrorTotalCountExceeded),
-    }),
-    [t],
-  );
-
-  /*
-   * The live in-progress name/description/instructions the user is typing
-   * live only inside `libs/skill-editor`'s internal form state — this page
-   * only ever sees them via `onSubmit`. `loadedValues` (the seeded baseline)
-   * is therefore the closest available approximation of "the current
-   * manifest" for the projected-total-size check; the BFF remains the
-   * authoritative gate regardless of this estimate's precision.
-   */
-  const buildBatchValidationContext = useCallback(() => {
-    const existingPaths = files
-      .filter((node) => node.kind === SkillFileNodeKind.File)
-      .map((node) => node.path);
-    let existingTotalBytes = 0;
-    for (const path of existingPaths) {
-      existingTotalBytes +=
-        filesContentRef.current.get(path)?.bytes.length ?? 0;
-    }
-    const baseline = {
-      name: loadedValues?.name ?? '',
-      description: loadedValues?.description ?? '',
-      instructions: loadedValues?.instructions ?? '',
-    };
-    const manifestText = isEditMode
-      ? buildSkillManifestFromFrontmatter(
-          frontmatterRef.current,
-          baseline.name,
-          baseline.description,
-          baseline.instructions,
-        )
-      : buildSkillManifest(baseline);
-    return {
-      existingPaths,
-      existingTotalBytes,
-      manifestByteLength: getUtf8ByteLength(manifestText),
-      messages: batchValidationMessages,
-    };
-  }, [files, isEditMode, loadedValues, batchValidationMessages]);
-
-  const confirmManifestImport = useCallback((): Promise<boolean> => {
-    return new Promise<boolean>((resolve) => {
-      manifestImportResolveRef.current = resolve;
-      setPendingManifestImport(true);
-    });
-  }, []);
-
-  const fileActions = useMemo<SkillEditorFileActions>(
-    () => ({
-      validateBatch: async (candidates: SkillFileUploadCandidate[]) => {
-        const { results, batchErrors } = await validateSkillFileBatch(
-          candidates,
-          buildBatchValidationContext(),
-        );
-        return { results, batchErrors };
-      },
-      commitBatch: async (candidates: SkillFileUploadCandidate[]) => {
-        const { results, batchErrors, manifestCandidate } =
-          await validateSkillFileBatch(
-            candidates,
-            buildBatchValidationContext(),
-          );
-        const hasInvalid = results.some((result) => result.error !== undefined);
-        if (hasInvalid || batchErrors.length > 0) {
-          return {
-            error: batchErrors[0]?.message ?? t(SkillEditorI18nKeys.ErrorSave),
-          };
-        }
-
-        if (manifestCandidate) {
-          if (
-            isEditMode &&
-            manifestCandidate.name !== (loadedValues?.name ?? '')
-          ) {
-            return { error: t(SkillEditorI18nKeys.ErrorManifestNameMismatch) };
-          }
-          if (isEditMode || isDirty) {
-            const accepted = await confirmManifestImport();
-            if (!accepted) {
-              return {
-                error: t(SkillEditorI18nKeys.ErrorManifestImportDeclined),
-              };
-            }
-          }
-        }
-
-        try {
-          const supportingCandidates = candidates.filter(
-            (candidate) => candidate.id !== manifestCandidate?.candidateId,
-          );
-          const reads = await Promise.all(
-            supportingCandidates.map(async (candidate) => ({
-              path: candidate.path,
-              bytes: new Uint8Array(await candidate.file.arrayBuffer()),
-              mimeType: candidate.file.type || undefined,
-            })),
-          );
-
-          for (const read of reads) {
-            filesContentRef.current.set(read.path, {
-              bytes: read.bytes,
-              mimeType: read.mimeType,
-            });
-          }
-          if (reads.length > 0) {
-            setFiles((prev) => [
-              ...prev,
-              ...reads.map((read) => ({
-                path: read.path,
-                name: nameFromPath(read.path),
-                kind: SkillFileNodeKind.File,
-              })),
-            ]);
-          }
-
-          if (manifestCandidate) {
-            frontmatterRef.current = isEditMode
-              ? { ...frontmatterRef.current, ...manifestCandidate.frontmatter }
-              : manifestCandidate.frontmatter;
-            setLoadedValues({
-              name: isEditMode
-                ? (loadedValues?.name ?? manifestCandidate.name)
-                : manifestCandidate.name,
-              description: manifestCandidate.description,
-              instructions: manifestCandidate.instructions,
-            });
-          }
-
-          return {};
-        } catch (err) {
-          return { error: err instanceof Error ? err.message : String(err) };
-        }
-      },
-      onRemoveNode: (path) => {
-        setFiles((prev) =>
-          prev.filter(
-            (node) => node.path !== path && !node.path.startsWith(`${path}/`),
-          ),
-        );
-        for (const key of [...filesContentRef.current.keys()]) {
-          if (key === path || key.startsWith(`${path}/`)) {
-            filesContentRef.current.delete(key);
-          }
-        }
-        setSelectedPath((prev) =>
-          prev === path || prev.startsWith(`${path}/`)
-            ? SKILL_MANIFEST_FILE
-            : prev,
-        );
-      },
-    }),
-    [
-      buildBatchValidationContext,
-      isEditMode,
-      isDirty,
-      loadedValues,
-      confirmManifestImport,
-      t,
-    ],
-  );
-
-  const applyUploadErrorStatus = useCallback(
-    async (err: unknown) => {
-      const status = getApiErrorStatus(err);
-      switch (status) {
-        case 409:
-          setErrors({ name: t(SkillEditorI18nKeys.ErrorNameConflict) });
-          return;
-        case 412:
-          /*
-           * In edit mode this is a genuine stale-edit conflict, handled
-           * separately by `handleSubmit` before this function is ever
-           * called. In create mode it is unreachable (create never sends
-           * `If-Match`) — treated defensively the same as `409` should it
-           * ever occur, which would indicate an unexpected upstream change.
-           */
-          setErrors({ name: t(SkillEditorI18nKeys.ErrorNameConflict) });
-          return;
-        case 413:
-          setSubmitError(t(SkillEditorI18nKeys.ErrorArchiveTooLarge));
-          return;
-        case 503:
-          setSubmitError(t(SkillEditorI18nKeys.ErrorServiceUnavailable));
-          return;
-        case 400: {
-          /*
-           * A 400 has no single fixed cause (bad archive, rejected manifest
-           * field, upstream request-shape issue, ...) — show the BFF's own
-           * message (which now forwards DIAL Core's `upstreamMessage`)
-           * instead of a fixed, potentially misleading guess.
-           */
-          const { message } = await getApiErrorDetails(err);
-          setSubmitError(message ?? t(SkillEditorI18nKeys.ErrorPathInvalid));
-          return;
-        }
-        default: {
-          const { traceId } = await getApiErrorDetails(err);
-          setSubmitError(t(SkillEditorI18nKeys.ErrorSave));
-          showNotification({
-            variant: NotificationVariant.Error,
-            message: t(SkillEditorI18nKeys.ErrorSave),
-            requestId: traceId,
-          });
-        }
-      }
-    },
-    [showNotification, t],
-  );
-
-  const handleSubmitCreate = useCallback(
-    async (values: SkillEditorValues) => {
-      const normalizedName = normalizeSkillName(values.name);
-      if (!normalizedName || !isValidSkillRelativePath(normalizedName)) {
-        setErrors({ name: t(SkillEditorI18nKeys.ErrorNameInvalid) });
-        return;
-      }
-
-      const fingerprint = fingerprintAttempt(values, files);
-      const cached = lastAttemptRef.current;
-      const canReuse = cached != null && cached.fingerprint === fingerprint;
-
-      const path = normalizedName;
-      let skillManifest: string;
-      let filePaths: string[];
-      let fileBlobs: Blob[];
-      if (canReuse) {
-        ({ skillManifest, filePaths, files: fileBlobs } = cached);
-      } else {
-        /*
-         * A dropped SKILL.md's unknown frontmatter fields (e.g. `version`)
-         * are preserved by merging into the imported frontmatter object
-         * rather than always building a fresh one — `frontmatterRef` stays
-         * `{}` unless a manifest was imported in this create session.
-         */
-        skillManifest =
-          Object.keys(frontmatterRef.current).length > 0
-            ? buildSkillManifestFromFrontmatter(
-                frontmatterRef.current,
-                normalizedName,
-                values.description,
-                values.instructions,
-              )
-            : buildSkillManifest({
-                name: normalizedName,
-                description: values.description,
-                instructions: values.instructions,
-              });
-        const fileNodes = files.filter(
-          (node) => node.kind === SkillFileNodeKind.File,
-        );
-        filePaths = fileNodes.map((node) => node.path);
-        fileBlobs = fileNodes.map((node) =>
-          toBlob(
-            filesContentRef.current.get(node.path)?.bytes ?? new Uint8Array(0),
-          ),
-        );
-      }
-
-      setPhase('submitting');
-      lastAttemptRef.current = {
-        fingerprint,
-        bucket: bucket as string,
-        path,
-        skillManifest,
-        filePaths,
-        files: fileBlobs,
-      };
-
-      try {
-        await createSkill(
-          bucket as string,
-          path,
-          skillManifest,
-          filePaths,
-          fileBlobs,
-        );
-
-        setPhase('success');
-        showNotification({
-          variant: NotificationVariant.Success,
-          title: t(SkillEditorI18nKeys.SaveSuccessTitle),
-          message: t(SkillEditorI18nKeys.CreateSuccess, {
-            name: normalizedName,
-          }),
-        });
-        navigate(returnUrl);
-      } catch (err) {
-        setPhase('failure');
-        await applyUploadErrorStatus(err);
-      }
-    },
-    [
-      bucket,
-      files,
-      t,
-      showNotification,
-      navigate,
-      returnUrl,
-      applyUploadErrorStatus,
-    ],
-  );
-
-  const handleSubmitEdit = useCallback(
-    async (values: SkillEditorValues) => {
-      const path = loadedPathRef.current;
-      const etag = etagRef.current;
-      if (!path || !etag) {
-        setSubmitError(t(SkillEditorI18nKeys.ErrorSave));
-        return;
-      }
-
-      const skillManifest = buildSkillManifestFromFrontmatter(
-        frontmatterRef.current,
-        values.name,
-        values.description,
-        values.instructions,
-      );
-      const fileNodes = files.filter(
-        (node) => node.kind === SkillFileNodeKind.File,
-      );
-      const filePaths = fileNodes.map((node) => node.path);
-      const fileBlobs = fileNodes.map((node) =>
-        toBlob(
-          filesContentRef.current.get(node.path)?.bytes ?? new Uint8Array(0),
-        ),
-      );
-
-      setPhase('submitting');
-      try {
-        const result = await updateSkill(
-          bucket as string,
-          path,
-          skillManifest,
-          filePaths,
-          fileBlobs,
-          etag,
-        );
-        etagRef.current = result.etag ?? etag;
-
-        setPhase('success');
-        showNotification({
-          variant: NotificationVariant.Success,
-          title: t(SkillEditorI18nKeys.SaveSuccessTitle),
-          message: t(SkillEditorI18nKeys.UpdateSuccess, {
-            name: values.name,
-          }),
-        });
-        navigate(returnUrl);
-      } catch (err) {
-        setPhase('failure');
-        const status = getApiErrorStatus(err);
-        if (status === 412) {
-          setConflict({ message: t(SkillEditorI18nKeys.ConflictMessage) });
-          return;
-        }
-        await applyUploadErrorStatus(err);
-      }
-    },
-    [
-      bucket,
-      files,
-      t,
-      showNotification,
-      navigate,
-      returnUrl,
-      applyUploadErrorStatus,
-    ],
-  );
-
-  const handleSubmit = useCallback(
-    async (values: SkillEditorValues) => {
-      if (phase === 'submitting' || !bucket) return;
-
-      const nextErrors: SkillEditorErrors = {};
-      if (!values.name.trim())
-        nextErrors.name = t(SkillEditorI18nKeys.ErrorRequired);
-      if (!values.description.trim()) {
-        nextErrors.description = t(SkillEditorI18nKeys.ErrorRequired);
-      }
-      if (!values.instructions.trim()) {
-        nextErrors.instructions = t(SkillEditorI18nKeys.ErrorRequired);
-      }
-      if (Object.keys(nextErrors).length > 0) {
-        setErrors(nextErrors);
-        return;
-      }
-
-      setErrors({});
-      setSubmitError(undefined);
-      setConflict(undefined);
-
-      if (isEditMode) {
-        await handleSubmitEdit(values);
-      } else {
-        await handleSubmitCreate(values);
-      }
-    },
-    [phase, bucket, t, isEditMode, handleSubmitEdit, handleSubmitCreate],
-  );
+    clearConflict();
+    retryLoad();
+  }, [clearConflict, retryLoad]);
 
   const labels = useMemo<SkillEditorLabels>(
     () => ({
@@ -766,9 +182,9 @@ const SkillEditorPage: FC = () => {
       cancelLabel: t(ButtonsI18nKeys.Cancel),
       retryLabel: t(ButtonsI18nKeys.Retry),
       loadErrorMessage:
-        loadState === 'forbidden'
+        loadState === SkillEditorLoadState.Forbidden
           ? t(SkillEditorI18nKeys.LoadErrorForbidden)
-          : loadState === 'not-found'
+          : loadState === SkillEditorLoadState.NotFound
             ? t(SkillEditorI18nKeys.LoadErrorNotFound)
             : t(SkillEditorI18nKeys.LoadError),
       savingStatusLabel: t(SkillEditorI18nKeys.SavingStatus),
@@ -845,11 +261,11 @@ const SkillEditorPage: FC = () => {
           files={files}
           selectedPath={selectedPath}
           onSelectedPathChange={setSelectedPath}
-          isLoading={loadState === 'loading'}
+          isLoading={loadState === SkillEditorLoadState.Loading}
           hasLoadError={
-            loadState === 'error' ||
-            loadState === 'forbidden' ||
-            loadState === 'not-found'
+            loadState === SkillEditorLoadState.Error ||
+            loadState === SkillEditorLoadState.Forbidden ||
+            loadState === SkillEditorLoadState.NotFound
           }
           isSubmitting={phase === 'submitting'}
           errors={errors}
@@ -864,7 +280,7 @@ const SkillEditorPage: FC = () => {
           labels={labels}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
-          onRetry={handleRetryLoad}
+          onRetry={retryLoad}
           instructionsEditorTheme={
             currentTheme === ThemeId.Dark ? 'dark' : 'light'
           }
@@ -905,21 +321,9 @@ const SkillEditorPage: FC = () => {
         confirmLabel={t(ButtonsI18nKeys.Replace)}
         cancelLabel={t(ButtonsI18nKeys.Cancel)}
         variant={ConfirmationPopupVariant.Danger}
-        onConfirm={() => {
-          setPendingManifestImport(false);
-          manifestImportResolveRef.current?.(true);
-          manifestImportResolveRef.current = null;
-        }}
-        onCancel={() => {
-          setPendingManifestImport(false);
-          manifestImportResolveRef.current?.(false);
-          manifestImportResolveRef.current = null;
-        }}
-        onClose={() => {
-          setPendingManifestImport(false);
-          manifestImportResolveRef.current?.(false);
-          manifestImportResolveRef.current = null;
-        }}
+        onConfirm={() => resolveManifestImport(true)}
+        onCancel={() => resolveManifestImport(false)}
+        onClose={() => resolveManifestImport(false)}
       />
     </div>
   );
