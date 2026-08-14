@@ -45,14 +45,14 @@ describe('SidebarPanel', () => {
   });
 
   it('has role=complementary and aria-label', () => {
-    const { container } = render(
+    render(
       <SidebarPanel {...defaultProps}>
         <span />
       </SidebarPanel>,
     );
-    const aside = container.querySelector('aside');
-    expect(aside?.getAttribute('role')).toBe('complementary');
-    expect(aside?.getAttribute('aria-label')).toBe('Test panel');
+    expect(
+      screen.getByRole('complementary', { name: 'Test panel' }),
+    ).toBeTruthy();
   });
 
   it('renders leftActions in the left header group', () => {
@@ -97,17 +97,14 @@ describe('SidebarPanel', () => {
   });
 
   it('side=right: applies border-s divider', () => {
-    const { container } = render(
+    render(
       <SidebarPanel {...defaultProps} orientation={SidebarOrientation.Right}>
         <span />
       </SidebarPanel>,
     );
-    expect(
-      container.querySelector('aside')?.classList.contains('border-s'),
-    ).toBe(true);
-    expect(
-      container.querySelector('aside')?.classList.contains('border-e'),
-    ).toBe(false);
+    const aside = screen.getByRole('complementary');
+    expect(aside.classList.contains('border-s')).toBe(true);
+    expect(aside.classList.contains('border-e')).toBe(false);
   });
 
   // --- side='left' close placement ---
@@ -128,17 +125,14 @@ describe('SidebarPanel', () => {
   });
 
   it('side=left: applies border-e divider', () => {
-    const { container } = render(
+    render(
       <SidebarPanel {...defaultProps} orientation={SidebarOrientation.Left}>
         <span />
       </SidebarPanel>,
     );
-    expect(
-      container.querySelector('aside')?.classList.contains('border-e'),
-    ).toBe(true);
-    expect(
-      container.querySelector('aside')?.classList.contains('border-s'),
-    ).toBe(false);
+    const aside = screen.getByRole('complementary');
+    expect(aside.classList.contains('border-e')).toBe(true);
+    expect(aside.classList.contains('border-s')).toBe(false);
   });
 
   it('close button calls onClose', async () => {
@@ -153,7 +147,7 @@ describe('SidebarPanel', () => {
   });
 
   it('colors prop emits CSS custom properties', () => {
-    const { container } = render(
+    render(
       <SidebarPanel
         {...defaultProps}
         styles={{ colors: { background: '#ff0000' } }}
@@ -161,17 +155,17 @@ describe('SidebarPanel', () => {
         <span />
       </SidebarPanel>,
     );
-    const style = container.querySelector('aside')?.getAttribute('style') ?? '';
+    const style = screen.getByRole('complementary').getAttribute('style') ?? '';
     expect(style).toContain('--sb-bg: #ff0000');
   });
 
   it('no inline style when colors and typography are omitted', () => {
-    const { container } = render(
+    render(
       <SidebarPanel {...defaultProps}>
         <span />
       </SidebarPanel>,
     );
-    const style = container.querySelector('aside')?.getAttribute('style') ?? '';
+    const style = screen.getByRole('complementary').getAttribute('style') ?? '';
     expect(style).not.toContain('--sb-bg');
   });
 
@@ -185,6 +179,7 @@ describe('SidebarPanel', () => {
         <span />
       </SidebarPanel>,
     );
+    // eslint-disable-next-line testing-library/no-node-access -- the outermost width/style wrapper is a plain div with no accessible role or text
     const wrapper = container.firstChild as HTMLElement;
     expect(wrapper.classList.contains('w-full')).toBe(true);
     expect(wrapper.style.width).toBe('');
@@ -196,6 +191,7 @@ describe('SidebarPanel', () => {
         <span />
       </SidebarPanel>,
     );
+    // eslint-disable-next-line testing-library/no-node-access -- the outermost width/style wrapper is a plain div with no accessible role or text
     const wrapper = container.firstChild as HTMLElement;
     expect(wrapper.style.width).toBe('360px');
   });

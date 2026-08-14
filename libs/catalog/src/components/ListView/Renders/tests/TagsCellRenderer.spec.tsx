@@ -27,6 +27,8 @@ describe('TagsCellRenderer', () => {
     const { container } = render(
       <TagsCellRenderer {...makeParams(undefined)} />,
     );
+    // Component renders null; no semantic query can assert total absence of output.
+    // eslint-disable-next-line testing-library/no-node-access
     expect(container.firstChild).toBeNull();
   });
 
@@ -34,6 +36,8 @@ describe('TagsCellRenderer', () => {
     const { container } = render(
       <TagsCellRenderer {...makeParams(makeItem({ topics: [] }))} />,
     );
+    // Component renders null; no semantic query can assert total absence of output.
+    // eslint-disable-next-line testing-library/no-node-access
     expect(container.firstChild).toBeNull();
     expect(screen.queryByText('—')).toBeNull();
   });

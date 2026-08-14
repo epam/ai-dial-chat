@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -61,9 +61,7 @@ describe('PromptEditor', () => {
       />,
     );
 
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('summarize')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('summarize')).toBeTruthy();
   });
 
   it('submits the entered values, with the root folder as an empty string', async () => {

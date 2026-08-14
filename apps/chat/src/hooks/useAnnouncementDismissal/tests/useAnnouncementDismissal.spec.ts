@@ -55,55 +55,64 @@ describe('useAnnouncementDismissal', () => {
 
   it('keeps an unchanged announcement dismissed across remounts', () => {
     const content = makeContent({ title: 'Welcome', description: 'Explore.' });
-    const first = renderDismissal(content);
+    const { result: firstResult, unmount: unmountFirst } =
+      renderDismissal(content);
 
     act(() => {
-      first.result.current.dismiss();
+      firstResult.current.dismiss();
     });
-    first.unmount();
+    unmountFirst();
 
-    const second = renderDismissal(content);
-    expect(second.result.current.isDismissed).toBe(true);
+    const { result: secondResult } = renderDismissal(content);
+    expect(secondResult.current.isDismissed).toBe(true);
   });
 
   it('re-shows the banner when the title changes', () => {
-    const first = renderDismissal(makeContent({ title: 'Welcome' }));
+    const { result: firstResult, unmount: unmountFirst } = renderDismissal(
+      makeContent({ title: 'Welcome' }),
+    );
 
     act(() => {
-      first.result.current.dismiss();
+      firstResult.current.dismiss();
     });
-    first.unmount();
+    unmountFirst();
 
-    const second = renderDismissal(makeContent({ title: 'Welcome back' }));
-    expect(second.result.current.isDismissed).toBe(false);
+    const { result: secondResult } = renderDismissal(
+      makeContent({ title: 'Welcome back' }),
+    );
+    expect(secondResult.current.isDismissed).toBe(false);
   });
 
   it('re-shows the banner when the description changes', () => {
-    const first = renderDismissal(
+    const { result: firstResult, unmount: unmountFirst } = renderDismissal(
       makeContent({ title: 'Welcome', description: 'Explore DIAL.' }),
     );
 
     act(() => {
-      first.result.current.dismiss();
+      firstResult.current.dismiss();
     });
-    first.unmount();
+    unmountFirst();
 
-    const second = renderDismissal(
+    const { result: secondResult } = renderDismissal(
       makeContent({ title: 'Welcome', description: 'Explore DIAL today.' }),
     );
-    expect(second.result.current.isDismissed).toBe(false);
+    expect(secondResult.current.isDismissed).toBe(false);
   });
 
   it('re-shows the banner when the legacy message changes', () => {
-    const first = renderDismissal(makeContent({ html: LEGACY_MESSAGE }));
+    const { result: firstResult, unmount: unmountFirst } = renderDismissal(
+      makeContent({ html: LEGACY_MESSAGE }),
+    );
 
     act(() => {
-      first.result.current.dismiss();
+      firstResult.current.dismiss();
     });
-    first.unmount();
+    unmountFirst();
 
-    const second = renderDismissal(makeContent({ html: 'Something else' }));
-    expect(second.result.current.isDismissed).toBe(false);
+    const { result: secondResult } = renderDismissal(
+      makeContent({ html: 'Something else' }),
+    );
+    expect(secondResult.current.isDismissed).toBe(false);
   });
 
   it('stores the raw message for a legacy-only announcement', () => {

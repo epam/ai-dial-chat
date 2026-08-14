@@ -6,6 +6,7 @@ import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
 import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { ReactNode, useEffect, useState, type Context } from 'react';
 import { MemoryRouter, useNavigate } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -593,9 +594,7 @@ describe('ConversationRoute', () => {
     expect(await screen.findByText('Choose how to start')).toBeTruthy();
     expect(screen.getByLabelText('Input disabled').textContent).toBe('true');
 
-    await act(async () => {
-      screen.getByText('Draft').click();
-    });
+    await userEvent.click(screen.getByText('Draft'));
 
     expect(screen.getByLabelText('Input message').textContent).toBe(
       'Write a draft',
@@ -654,9 +653,7 @@ describe('ConversationRoute', () => {
 
     expect(screen.getByLabelText('Input disabled').textContent).toBe('false');
 
-    await act(async () => {
-      screen.getByText('Draft').click();
-    });
+    await userEvent.click(screen.getByText('Draft'));
 
     expect(screen.getByLabelText('Input message').textContent).toBe(
       'Write a draft',
@@ -696,9 +693,7 @@ describe('ConversationRoute', () => {
 
     renderRoute();
 
-    await act(async () => {
-      screen.getByText('Summarize').click();
-    });
+    await userEvent.click(screen.getByText('Summarize'));
 
     await waitFor(() => {
       expect(mockCreateConversation).toHaveBeenCalledWith(
@@ -747,9 +742,7 @@ describe('ConversationRoute', () => {
 
     renderRoute();
 
-    await act(async () => {
-      screen.getByText('OCR image').click();
-    });
+    await userEvent.click(screen.getByText('OCR image'));
 
     await waitFor(() => {
       expect(mockCreateConversation).toHaveBeenCalledWith(
@@ -803,9 +796,7 @@ describe('ConversationRoute', () => {
 
     renderRoute();
 
-    await act(async () => {
-      screen.getByText('Starter override').click();
-    });
+    await userEvent.click(screen.getByText('Starter override'));
 
     await waitFor(() => {
       expect(mockCreateConversation).toHaveBeenCalledWith(
@@ -864,9 +855,7 @@ describe('ConversationRoute', () => {
 
     renderRoute();
 
-    await act(async () => {
-      screen.getByText('Summarize').click();
-    });
+    await userEvent.click(screen.getByText('Summarize'));
 
     await waitFor(() => {
       expect(mockCreateConversation).toHaveBeenCalledWith(
@@ -916,9 +905,7 @@ describe('ConversationRoute', () => {
 
     renderRoute();
 
-    await act(async () => {
-      screen.getByText('2').click();
-    });
+    await userEvent.click(screen.getByText('2'));
 
     await waitFor(() => {
       expect(mockCreateConversation).toHaveBeenCalledWith(
@@ -976,9 +963,7 @@ describe('ConversationRoute', () => {
 
     renderRoute();
 
-    await act(async () => {
-      screen.getByText('OCR image').click();
-    });
+    await userEvent.click(screen.getByText('OCR image'));
 
     await waitFor(() => {
       expect(mockShowNotification).toHaveBeenCalledWith({

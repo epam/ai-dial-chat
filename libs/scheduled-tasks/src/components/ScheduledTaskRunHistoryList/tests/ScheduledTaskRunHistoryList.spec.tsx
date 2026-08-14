@@ -79,6 +79,7 @@ describe('ScheduledTaskRunHistoryList', () => {
     );
 
     expect(
+      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- skeleton rows are plain divs with no accessible role/text; only their data-skeleton CSS hook distinguishes them
       container.querySelectorAll('[data-skeleton]').length,
     ).toBeGreaterThan(0);
   });
@@ -130,7 +131,7 @@ describe('ScheduledTaskRunHistoryList', () => {
     );
 
     expect(
-      screen.getByRole('listitem').getAttribute('aria-current'),
+      screen.queryByRole('listitem')?.getAttribute('aria-current'),
     ).toBeNull();
   });
 
@@ -182,8 +183,11 @@ describe('ScheduledTaskRunHistoryList', () => {
     );
 
     expect(screen.getAllByRole('listitem')).toHaveLength(1);
-    expect(container.querySelectorAll('li').length).toBeGreaterThan(1);
     expect(
+      screen.getAllByRole('listitem', { hidden: true }).length,
+    ).toBeGreaterThan(1);
+    expect(
+      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- skeleton rows are plain divs with no accessible role/text; only their data-skeleton CSS hook distinguishes them
       container.querySelectorAll('[data-skeleton]').length,
     ).toBeGreaterThan(0);
   });

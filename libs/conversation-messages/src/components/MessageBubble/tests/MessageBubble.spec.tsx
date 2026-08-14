@@ -26,13 +26,20 @@ const ATTACHMENT: DisplayAttachment = {
   status: RequestStatus.Idle,
 };
 
-const getMessageTextWrapper = (message: string) => {
-  const paragraph = screen.getByText((_, element) => {
+const findMessageParagraph = (message: string) =>
+  screen.getByText((_, element) => {
     return element?.tagName === 'P' && element.textContent === message;
   });
 
-  return paragraph.parentElement as HTMLElement;
-};
+/*
+ * The collapsible wrapper around the message paragraph carries no ARIA role
+ * of its own (it is only referenced via aria-controls from the toggle
+ * button), so reaching it to check its inline style requires walking up from
+ * the paragraph — a CSS-level check with no semantic query available.
+ */
+const getMessageTextWrapper = (message: string) =>
+  // eslint-disable-next-line testing-library/no-node-access -- see comment above
+  findMessageParagraph(message).parentElement as HTMLElement;
 
 afterEach(() => {
   vi.useRealTimers();
@@ -41,16 +48,20 @@ afterEach(() => {
 
 describe('MessageBubble', () => {
   it('renders the provided text content', () => {
-    const { getByText } = render(
-      <MessageBubble text="Hello world" role={MessageRole.User} />,
-    );
-    expect(getByText('Hello world')).toBeTruthy();
+    render(<MessageBubble text="Hello world" role={MessageRole.User} />);
+    expect(screen.getByText('Hello world')).toBeTruthy();
   });
 
   it('applies rounded-se-md with BubblePosition.Bottom (default)', () => {
     const { container } = render(
       <MessageBubble text="msg" role={MessageRole.User} />,
     );
+    /*
+     * The bubble div carries the position-dependent rounded corner but has
+     * no ARIA role of its own — a CSS-level check with no semantic query
+     * available (see spec.md's container.querySelector exception).
+     */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- see comment above
     expect(container.querySelector(':scope > * > * > *')?.className).toContain(
       'rounded-se-md',
     );
@@ -64,31 +75,32 @@ describe('MessageBubble', () => {
         position={BubblePosition.Top}
       />,
     );
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- same structural CSS check as above, no ARIA anchor exists
     expect(container.querySelector(':scope > * > * > *')?.className).toContain(
       'rounded-ee-md',
     );
   });
 
   it('merges additional className onto the container', () => {
-    const { container } = render(
+    render(
       <MessageBubble
         text="msg"
         role={MessageRole.User}
         styles={{ className: 'my-custom-class' }}
       />,
     );
-    expect(container.querySelector(':scope > *')?.className).toContain(
-      'my-custom-class',
-    );
+    expect(
+      screen.getByRole('group', { name: 'User message' }).className,
+    ).toContain('my-custom-class');
   });
 
   it('does not apply user rounded classes for assistant messages', () => {
-    const { container } = render(
-      <MessageBubble text="msg" role={MessageRole.Assistant} />,
-    );
-    const innerClassName = container.querySelector(':scope > * > *')?.className;
-    expect(innerClassName).not.toContain('rounded-tr-[24px]');
-    expect(innerClassName).not.toContain('rounded-br-[24px]');
+    render(<MessageBubble text="msg" role={MessageRole.Assistant} />);
+    const { className } = screen.getByRole('group', {
+      name: 'Assistant message',
+    });
+    expect(className).not.toContain('rounded-tr-[24px]');
+    expect(className).not.toContain('rounded-br-[24px]');
   });
 
   it('renders no action buttons when no actions prop is given (read-only)', () => {
@@ -121,15 +133,17 @@ describe('MessageBubble', () => {
   });
 
   it('makes actions always visible when hasAlwaysVisibleActions is true', () => {
-    const { container } = render(
+    render(
       <MessageBubble
         text="msg"
         role={MessageRole.User}
         hasAlwaysVisibleActions
       />,
     );
-    const actionsWrapper = container.querySelector('[class*="gap-1"]');
-    expect(actionsWrapper?.className).not.toContain('opacity-0');
+    const actionsWrapper = screen.getByRole('toolbar', {
+      name: 'Message actions',
+    });
+    expect(actionsWrapper.className).not.toContain('opacity-0');
   });
 });
 
@@ -137,13 +151,13 @@ describe('UserMessageBubble — attachments', () => {
   it('preserves line breaks in the message text', () => {
     const message = 'First line\n\nSecond line\n- Item';
 
-    const { container } = render(<UserMessageBubble text={message} />);
+    render(<UserMessageBubble text={message} />);
 
-    const paragraph = container.querySelector('p');
-    expect(paragraph?.textContent).toBe(message);
-    expect(paragraph?.className).toContain('whitespace-pre-wrap');
-    expect(paragraph?.className).toContain('text-start');
-    expect(paragraph?.className).toContain('[overflow-wrap:anywhere]');
+    const paragraph = findMessageParagraph(message);
+    expect(paragraph.textContent).toBe(message);
+    expect(paragraph.className).toContain('whitespace-pre-wrap');
+    expect(paragraph.className).toContain('text-start');
+    expect(paragraph.className).toContain('[overflow-wrap:anywhere]');
   });
 
   it('renders an attachment tray when attachments are provided', () => {
@@ -163,22 +177,13 @@ describe('UserMessageBubble — attachments', () => {
   });
 
   it('renders the tray before the message text in the DOM', () => {
-    const { container } = render(
-      <UserMessageBubble text="Hello" attachments={[ATTACHMENT]} />,
-    );
-    const inner = container.querySelector(
-      '.flex.w-fit.flex-col',
-    ) as HTMLElement;
-    const children = Array.from(inner?.children ?? []);
-    const trayIndex = children.findIndex(
-      (el) => el.getAttribute('role') === 'group',
-    );
-    const textIndex = children.findIndex(
-      (el) =>
-        el.tagName === 'DIV' &&
-        el.getAttribute('role') !== 'group' &&
-        el.className.includes('rounded'),
-    );
+    render(<UserMessageBubble text="Hello" attachments={[ATTACHMENT]} />);
+
+    const root = screen.getByRole('group', { name: 'User message' });
+    const trayIndex = root.textContent?.indexOf('report') ?? -1;
+    const textIndex = root.textContent?.indexOf('Hello') ?? -1;
+
+    expect(trayIndex).toBeGreaterThanOrEqual(0);
     // tray should come before the bubble
     expect(trayIndex).toBeLessThan(textIndex);
   });
@@ -300,6 +305,12 @@ describe('AssistantMessageBubble — attachments', () => {
     expect(paragraph.className).toContain('dial-body-paragraph-text');
     expect(paragraph.className).toContain('mb-3');
     expect(paragraph.className).toContain('[text-wrap:pretty]');
+    /*
+     * The min-w-0/max-w-full wrapper around MDMessageViewer only carries
+     * aria-live/aria-atomic (not a role), so there is no semantic query that
+     * reaches it directly — a CSS-level check with no semantic alternative.
+     */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- see comment above
     expect(container.querySelector('.min-w-0.max-w-full')).not.toBeNull();
   });
 
@@ -310,7 +321,13 @@ describe('AssistantMessageBubble — attachments', () => {
       <AssistantMessageBubble text={`\`\`\`\n${longToken}\n\`\`\``} />,
     );
 
+    /*
+     * CodeBlock's scroll container and <pre><code> carry no ARIA role —
+     * a CSS-level check with no semantic query available.
+     */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- see comment above
     const scrollContainer = container.querySelector('[dir="ltr"]');
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- see comment above
     const code = container.querySelector('pre code');
     expect(scrollContainer?.className).toContain('overflow-auto');
     expect(code?.className).toContain('whitespace-pre');
@@ -319,13 +336,13 @@ describe('AssistantMessageBubble — attachments', () => {
   it('reveals appended streaming text gradually', () => {
     vi.useFakeTimers();
 
-    const { queryByText, rerender } = render(
+    const { rerender } = render(
       <AssistantMessageBubble text="Hi" isStreaming />,
     );
 
     rerender(<AssistantMessageBubble text="Hi there" isStreaming />);
 
-    expect(queryByText('Hi there')).toBeNull();
+    expect(screen.queryByText('Hi there')).toBeNull();
 
     act(() => {
       vi.advanceTimersByTime(1000);
@@ -386,22 +403,18 @@ describe('AssistantMessageBubble — attachments', () => {
   });
 
   it('renders the tray after the message text in the DOM', () => {
-    const { container } = render(
+    render(
       <AssistantMessageBubble
         text="Here is your file"
         attachments={[ATTACHMENT]}
       />,
     );
-    const inner = container.querySelector(
-      '.flex.w-full.flex-col.gap-4',
-    ) as HTMLElement;
-    const children = Array.from(inner?.children ?? []);
-    const textIndex = children.findIndex((el) =>
-      el.className.includes('min-w-0'),
-    );
-    const trayIndex = children.findIndex(
-      (el) => el.getAttribute('role') === 'group',
-    );
+
+    const root = screen.getByRole('group', { name: 'Assistant message' });
+    const textIndex = root.textContent?.indexOf('Here is your file') ?? -1;
+    const trayIndex = root.textContent?.indexOf('report') ?? -1;
+
+    expect(textIndex).toBeGreaterThanOrEqual(0);
     // text comes before the tray
     expect(textIndex).toBeLessThan(trayIndex);
   });
@@ -419,21 +432,21 @@ describe('AssistantMessageBubble — attachments', () => {
 
 describe('AssistantMessageBubble — deployment icon', () => {
   it('renders an img when deploymentIconUrl is provided', () => {
-    const { container } = render(
+    render(
       <AssistantMessageBubble
         text="Hello"
         deploymentIconUrl="https://example.com/icon.png"
         deploymentDisplayName="GPT-4"
       />,
     );
-    const img = container.querySelector('img');
-    expect(img).not.toBeNull();
-    expect(img?.getAttribute('src')).toBe('https://example.com/icon.png');
+    const img = screen.getByAltText('');
+    expect(img).toBeTruthy();
+    expect(img.getAttribute('src')).toBe('https://example.com/icon.png');
   });
 
   it('renders no icon header when neither deploymentIconUrl nor deploymentDisplayName is provided', () => {
-    const { container } = render(<AssistantMessageBubble text="Hello" />);
-    expect(container.querySelector('img')).toBeNull();
+    render(<AssistantMessageBubble text="Hello" />);
+    expect(screen.queryByAltText('')).toBeNull();
     expect(screen.queryByText(/GPT/)).toBeNull();
   });
 });
@@ -468,6 +481,12 @@ describe('StatusMessageBubble', () => {
     const { container } = render(
       <StatusMessageBubble labels={{ bodyText: 'Changed.' }} />,
     );
+    /*
+     * InfoMessageNotification (ui-kit) renders its icon as a bare
+     * decorative svg with no accessible role or name to query by — a
+     * DOM-presence check with no semantic query available.
+     */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- see comment above
     expect(container.querySelector('svg')).not.toBeNull();
   });
 });

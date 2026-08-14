@@ -74,6 +74,6 @@ describe('SelectedToolsChips', () => {
       true,
     );
 
-    expect(container.firstChild).toBeNull();
+    expect(container.innerHTML).toBe('');
   });
 });

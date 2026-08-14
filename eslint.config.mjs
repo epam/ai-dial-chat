@@ -5,6 +5,7 @@ import importPlugin from 'eslint-plugin-import';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import reactHooks from 'eslint-plugin-react-hooks';
 import tailwindcss from 'eslint-plugin-tailwindcss';
+import testingLibrary from 'eslint-plugin-testing-library';
 
 export default [
   ...nx.configs['flat/base'],
@@ -145,6 +146,17 @@ export default [
           caughtErrorsIgnorePattern: '^_',
         },
       ],
+    },
+  },
+  {
+    // React Testing Library rules apply only to spec files (this repo's
+    // convention is co-located `*.spec.ts(x)`, never `*.test.ts(x)`).
+    files: ['**/*.spec.ts', '**/*.spec.tsx'],
+    plugins: {
+      'testing-library': testingLibrary,
+    },
+    rules: {
+      ...testingLibrary.configs['flat/react'].rules,
     },
   },
   prettierConfig,

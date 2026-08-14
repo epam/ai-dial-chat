@@ -91,6 +91,7 @@ const Providers = ({ children }: { children: ReactNode }) => (
 const renderPage = () => render(<SkillEditor />, { wrapper: Providers });
 
 const uploadFile = (file: File) => {
+  // eslint-disable-next-line testing-library/no-node-access
   const input = document.querySelector('input[type="file"]');
   fireEvent.change(input as Element, { target: { files: [file] } });
 };
@@ -143,9 +144,7 @@ describe('SkillEditor page — supporting file preview', () => {
 
     await selectFile(user, 'notes.md');
 
-    await waitFor(() =>
-      expect(screen.getByRole('group', { name: 'notes.md' })).toBeTruthy(),
-    );
+    expect(await screen.findByRole('group', { name: 'notes.md' })).toBeTruthy();
     expect(screen.getByText('Hello there', { exact: false })).toBeTruthy();
     expect(createSkill).not.toHaveBeenCalled();
     expect(downloadSkill).not.toHaveBeenCalled();
@@ -164,9 +163,9 @@ describe('SkillEditor page — supporting file preview', () => {
 
     await selectFile(user, 'data.json');
 
-    await waitFor(() =>
-      expect(screen.getByRole('group', { name: 'data.json' })).toBeTruthy(),
-    );
+    expect(
+      await screen.findByRole('group', { name: 'data.json' }),
+    ).toBeTruthy();
     expect(screen.getByText('"value"', { exact: false })).toBeTruthy();
   });
 
@@ -199,11 +198,9 @@ describe('SkillEditor page — supporting file preview', () => {
 
     await selectFile(user, 'archive.bin');
 
-    await waitFor(() =>
-      expect(
-        screen.getByText('attachmentCanvas.unsupportedLabel'),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByText('attachmentCanvas.unsupportedLabel'),
+    ).toBeTruthy();
   });
 
   it('does not open a preview when SKILL.md is selected', async () => {
@@ -213,9 +210,7 @@ describe('SkillEditor page — supporting file preview', () => {
       expect(screen.getAllByText('notes.md')[0]).toBeTruthy(),
     );
     await selectFile(user, 'notes.md');
-    await waitFor(() =>
-      expect(screen.getByRole('group', { name: 'notes.md' })).toBeTruthy(),
-    );
+    expect(await screen.findByRole('group', { name: 'notes.md' })).toBeTruthy();
 
     await selectFile(user, 'SKILL.md');
 
@@ -262,9 +257,9 @@ describe('SkillEditor page — supporting file preview', () => {
 
     await selectFile(user, 'analyzer.md');
 
-    await waitFor(() =>
-      expect(screen.getByRole('group', { name: 'analyzer.md' })).toBeTruthy(),
-    );
+    expect(
+      await screen.findByRole('group', { name: 'analyzer.md' }),
+    ).toBeTruthy();
     expect(screen.getByText('Analyzer notes', { exact: false })).toBeTruthy();
     expect(downloadSkill).toHaveBeenCalledOnce();
     expect(updateSkill).not.toHaveBeenCalled();

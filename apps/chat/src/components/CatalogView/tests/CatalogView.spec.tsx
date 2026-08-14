@@ -2404,7 +2404,7 @@ describe('CatalogView', () => {
           feature !== OverlayFeature.Catalog,
       );
       const { container } = render(<CatalogView />);
-      expect(container.firstChild).toBeNull();
+      expect(container.innerHTML).toBe('');
     });
 
     it('still renders in selector mode when catalog is disabled', () => {

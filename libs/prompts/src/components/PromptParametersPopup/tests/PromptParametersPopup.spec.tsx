@@ -8,7 +8,7 @@ import { PromptParametersPopup } from '../PromptParametersPopup';
 const renderPopup = async (
   props?: Partial<ComponentProps<typeof PromptParametersPopup>>,
 ) => {
-  const result = render(
+  const view = render(
     <PromptParametersPopup
       open
       promptName="Summarizer"
@@ -31,7 +31,7 @@ const renderPopup = async (
     expect(document.activeElement?.getAttribute('role')).toBe('dialog');
   });
 
-  return result;
+  return view;
 };
 
 describe('PromptParametersPopup', () => {

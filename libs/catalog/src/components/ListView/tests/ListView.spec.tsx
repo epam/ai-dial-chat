@@ -136,6 +136,9 @@ describe('ListView', () => {
       />,
     );
 
+    // Mocked ag-grid row markup exposes the computed class only via this
+    // test-only data attribute; no semantic role identifies individual rows.
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
     const rows = container.querySelectorAll('[data-row-class]');
     expect(rows[0].getAttribute('data-row-class')).toBe('');
     expect(rows[1].getAttribute('data-row-class')).toBeTruthy();
