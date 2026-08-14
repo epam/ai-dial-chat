@@ -1,3 +1,5 @@
+import type { EditorThemes } from '@epam/ai-dial-ui-kit';
+
 /** One selectable folder in the prompt editor's folder picker. */
 export interface PromptEditorFolder {
   /** Folder path, used as the option's value. The empty string is never listed — the root option is synthesised. */
@@ -159,8 +161,8 @@ export interface PromptEditorProps {
   onRetry?: () => void;
   /** Text overrides. */
   labels?: PromptEditorLabels;
-  /** Theme applied to the prompt markdown editor. Defaults to the editor's own default (`'light'`). */
-  markdownEditorTheme?: 'light' | 'dark';
+  /** Theme applied to the prompt markdown editor. Defaults to the editor's own default (`EditorThemes.light`). */
+  markdownEditorTheme?: EditorThemes;
   /** Style overrides. */
   styles?: PromptEditorStyles;
 }

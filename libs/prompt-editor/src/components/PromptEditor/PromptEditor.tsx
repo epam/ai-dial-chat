@@ -11,7 +11,6 @@ import {
 import {
   lazy,
   Suspense,
-  type ComponentProps,
   type FC,
   useCallback,
   useEffect,
@@ -28,8 +27,6 @@ const MarkdownEditor = lazy(async () => {
   const module = await LazyMarkdownEditor();
   return { default: module.MarkdownEditor };
 });
-
-type MarkdownEditorTheme = ComponentProps<typeof MarkdownEditor>['theme'];
 
 const EMPTY_VALUES: PromptEditorValues = {
   name: '',
@@ -229,7 +226,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
               placeholder={
                 labels?.contentPlaceholder ?? 'Write the prompt instructions'
               }
-              theme={markdownEditorTheme as MarkdownEditorTheme}
+              theme={markdownEditorTheme}
             />
           </Suspense>
           {errors?.content != null && (

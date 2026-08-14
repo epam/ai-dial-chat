@@ -5,6 +5,7 @@ import {
   type PromptEditorLabels,
   type PromptEditorValues,
 } from '@epam/ai-dial-prompt-editor';
+import { EditorThemes } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -266,7 +267,9 @@ const PromptEditorPage: FC = () => {
       descriptionMaxLength={PROMPT_DESCRIPTION_MAX_LENGTH}
       contentMaxLength={PROMPT_CONTENT_MAX_LENGTH}
       labels={labels}
-      markdownEditorTheme={currentTheme === ThemeId.Dark ? 'dark' : 'light'}
+      markdownEditorTheme={
+        currentTheme === ThemeId.Dark ? EditorThemes.dark : EditorThemes.light
+      }
       onSubmit={handleSubmit}
       onBack={handleBack}
       onCancel={handleCancel}
