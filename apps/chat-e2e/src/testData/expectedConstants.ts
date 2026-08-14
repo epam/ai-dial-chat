@@ -12,6 +12,9 @@ export const ExpectedConstants = {
   // Agents & toolsets select modal — empty state (no created/bookmarked items)
   noAgentsAndToolsets: 'No Agents and Toolsets',
   goToMarketplaceLink: 'Go to Marketplace',
+  // Agents & toolsets select modal — nothing matches the search
+  noResultsInMyWorkspace: 'No results found in My workspace',
+  seeResultsFromMarketplaceLink: 'See results from Marketplace',
   settingsTooltip: (entityType: EntityType, temperature?: number | string) =>
     entityType === EntityType.Application
       ? 'Change conversation settings:\nThere are no conversation settings for this agent'
@@ -631,7 +634,8 @@ export const API = {
   moveFilesHost: '/api/files/move',
   copyFilesHost: '/api/files/copy',
   importFileRootPath: (bucket: string) => `${API.filesHostSegment}/${bucket}`,
-  modelFilePath: (modelId: string) => `appdata/${modelId}/images`,
+  modelFilePath: (modelId: string) =>
+    `appdata/${ItemUtil.getEncodedItemId(modelId)}/images`,
   importFilePath: (bucket: string, modelId: string) =>
     `${API.importFileRootPath(bucket)}/${API.modelFilePath(modelId)}`,
   shareInviteAcceptanceHost: '/api/share/accept',

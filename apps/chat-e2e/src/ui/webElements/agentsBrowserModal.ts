@@ -2,6 +2,7 @@ import { ExpectedConstants } from '@/src/testData/expectedConstants';
 import { AgentsBrowserModalSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Popup } from '@/src/ui/webElements/common/popup';
+import { SliderDots } from '@/src/ui/webElements/common/sliderDots';
 import { MarketplaceEntities } from '@/src/ui/webElements/marketplace/marketplaceEntities';
 import { Locator, Page } from '@playwright/test';
 
@@ -13,6 +14,7 @@ export class AgentsBrowserModal extends Popup {
   }
 
   private entities!: MarketplaceEntities;
+  private sliderDots!: SliderDots;
 
   public searchInput = this.getChildElementBySelector(
     AgentsBrowserModalSelectors.searchInput,
@@ -36,12 +38,23 @@ export class AgentsBrowserModal extends Popup {
   public goToMarketplaceLink = this.createElementFromLocator(
     this.rootLocator.getByText(ExpectedConstants.goToMarketplaceLink),
   );
+  // Suggestion under "No results found in My workspace" (no data-qa — by text).
+  public seeResultsFromMarketplaceLink = this.createElementFromLocator(
+    this.rootLocator.getByText(ExpectedConstants.seeResultsFromMarketplaceLink),
+  );
 
   getEntities(): MarketplaceEntities {
     if (!this.entities) {
       this.entities = new MarketplaceEntities(this.page, this.rootLocator);
     }
     return this.entities;
+  }
+
+  getSliderDots(): SliderDots {
+    if (!this.sliderDots) {
+      this.sliderDots = new SliderDots(this.page, this.rootLocator);
+    }
+    return this.sliderDots;
   }
 
   public getEntityByName(name: string): BaseElement {

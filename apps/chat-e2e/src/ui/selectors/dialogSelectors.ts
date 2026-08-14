@@ -228,14 +228,25 @@ export const ChatSettingsModalSelectors = {
   responseFormatContainer: '[data-qa="response-format-container"]',
 };
 
+// Dots pagination of the SliderGrid (entity grid pages).
+export const SliderDotsSelectors = {
+  container: '[data-qa="slider-dots"]',
+  dotsList: '[data-qa="slider-dots-list"]',
+  dot: '[data-qa^="slider-dot-"]', // scope it by dotsList to skip the arrows
+  dotByIndex: (index: number) => `[data-qa="slider-dot-${index}"]`,
+  nextArrow: '[data-qa="slider-dot-arrow-next"]',
+  previousArrow: '[data-qa="slider-dot-arrow-prev"]',
+  activeDotClass: 'w-8', // the active page is a bar, the rest are circles
+};
+
 export const TalkToAgentDialogSelectors = {
   talkToAgentModal: '[data-qa="talk-to-agent"]',
   goToMyWorkspaceButton: '[data-qa="go-to-my-workspace"]',
   goToDialMarketplaceButton: '[data-qa="go-to-marketplace"]',
   myAgentsTab: '[data-qa="workspace"]',
   allAgentsTab: '[data-qa="marketplace"]',
-  nextArrowButton: '[data-qa="slider-dot-arrow-next"]',
-  previousArrowButton: '[data-qa="slider-dot-arrow-prev"]',
+  nextArrowButton: SliderDotsSelectors.nextArrow,
+  previousArrowButton: SliderDotsSelectors.previousArrow,
 };
 
 export const MessageTemplateModalSelectors = {

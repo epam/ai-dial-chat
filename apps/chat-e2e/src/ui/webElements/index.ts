@@ -115,6 +115,7 @@ export * from './common/loader';
 export * from './common/input';
 export * from './common/tooltipPortal';
 export * from './common/search';
+export * from './common/sliderDots';
 export * from './fileManager/fileManagerToolbar';
 export * from './fileManager/fileManagerNavigationPanel';
 export * from './fileManager/fileManagerGrid';

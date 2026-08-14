@@ -29,4 +29,23 @@ export class AgentsBrowserModalAssertion<
       await this.assertElementState(entity, state);
     }
   }
+
+  // What the grid currently holds — the search input is left untouched.
+  public async assertDisplayedEntities(names: {
+    visible?: string[];
+    hidden?: string[];
+  }) {
+    for (const name of names.visible ?? []) {
+      await this.assertElementState(
+        this.agentsBrowserModal.getEntityByName(name),
+        'visible',
+      );
+    }
+    for (const name of names.hidden ?? []) {
+      await this.assertElementState(
+        this.agentsBrowserModal.getEntityByName(name),
+        'hidden',
+      );
+    }
+  }
 }
