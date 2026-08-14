@@ -1,3 +1,4 @@
+import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   SkillEditor as SkillEditorForm,
@@ -29,6 +30,7 @@ import {
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import {
   getApiErrorDetails,
   getApiErrorStatus,
@@ -48,9 +50,15 @@ import {
   normalizeSkillName,
   parseSkillManifest,
   SKILL_FILE_UPLOAD_MAX_BYTES,
+  SKILL_MANIFEST_FILE,
   unpackSkillArchive,
 } from '../../utils/skill';
+import {
+  skillFileToAttachment,
+  type SkillFileContent,
+} from '../../utils/skill-file-preview';
 import { formatFileSize } from '../../utils/string-utils';
+import { SkillFilePreview } from './SkillFilePreview';
 
 /*
  * Phase names collapse the tasks.md-specified `initial`/`dirty` distinction
@@ -100,6 +108,13 @@ const SkillEditorPage: FC = () => {
   const { user } = useUser();
   const { currentTheme } = useTheme();
   const { showNotification } = useNotification();
+  const { openAttachmentCanvas } = useOpenAttachmentCanvas();
+  const {
+    closeCanvas,
+    isOpen: isCanvasOpen,
+    isLoading: isCanvasLoading,
+    attachmentId: canvasAttachmentId,
+  } = useAttachmentCanvas();
 
   const rawReturnUrl = searchParams.get(EditorQuery.ReturnUrl);
   const returnUrl =
@@ -139,8 +154,9 @@ const SkillEditorPage: FC = () => {
   const loadedPathRef = useRef<string | undefined>(undefined);
 
   const [files, setFiles] = useState<SkillFileTreeNode[]>([]);
-  const filesContentRef = useRef<Map<string, Uint8Array>>(new Map());
+  const filesContentRef = useRef<Map<string, SkillFileContent>>(new Map());
   const lastAttemptRef = useRef<LastAttempt | null>(null);
+  const [selectedPath, setSelectedPath] = useState(SKILL_MANIFEST_FILE);
 
   const [errors, setErrors] = useState<SkillEditorErrors>({});
   const [submitError, setSubmitError] = useState<string | undefined>();
@@ -180,7 +196,9 @@ const SkillEditorPage: FC = () => {
         etagRef.current = etag;
         frontmatterRef.current = frontmatter;
         loadedPathRef.current = skillPath;
-        filesContentRef.current = unpackedFiles;
+        filesContentRef.current = new Map(
+          [...unpackedFiles].map(([path, bytes]) => [path, { bytes }]),
+        );
         setFiles(
           [...unpackedFiles.keys()].map((path) => ({
             path,
@@ -222,6 +240,57 @@ const SkillEditorPage: FC = () => {
     return () => window.removeEventListener('beforeunload', handler);
   }, [isDirty]);
 
+  // Reset selection and close any open preview when switching between
+  // resources (create <-> edit, or editing a different skill).
+  useEffect(() => {
+    setSelectedPath(SKILL_MANIFEST_FILE);
+    closeCanvas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on resource identity only
+  }, [isEditMode, skillPath]);
+
+  // Reconciles the attachment canvas with the current file-tree selection:
+  // opens/replaces the preview for a selected supporting file, closes it for
+  // SKILL.md/a folder, and self-corrects if a slower-resolving earlier
+  // selection's content lands after a newer selection already committed.
+  useEffect(() => {
+    if (selectedPath === SKILL_MANIFEST_FILE) {
+      if (isCanvasOpen) closeCanvas();
+      return;
+    }
+    const node = files.find(
+      (file) =>
+        file.path === selectedPath && file.kind === SkillFileNodeKind.File,
+    );
+    if (!node) {
+      if (isCanvasOpen) closeCanvas();
+      return;
+    }
+    if (
+      canvasAttachmentId === selectedPath &&
+      (isCanvasLoading || isCanvasOpen)
+    ) {
+      return;
+    }
+    const content = filesContentRef.current.get(node.path);
+    if (!content) return;
+
+    void openAttachmentCanvas(skillFileToAttachment(node, content), node.path);
+  }, [
+    selectedPath,
+    files,
+    canvasAttachmentId,
+    isCanvasLoading,
+    isCanvasOpen,
+    closeCanvas,
+    openAttachmentCanvas,
+  ]);
+
+  // Close any open preview when leaving the Skill Editor.
+  useEffect(() => {
+    return () => closeCanvas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- unmount-only cleanup
+  }, []);
+
   const handleRetryLoad = useCallback(() => {
     setLoadAttempt((attempt) => attempt + 1);
   }, []);
@@ -251,7 +320,7 @@ const SkillEditorPage: FC = () => {
   const validatePath = useCallback(
     (path: string): string | undefined => {
       if (!path) return t(SkillEditorI18nKeys.ErrorRequired);
-      if (path === 'SKILL.md') {
+      if (path === SKILL_MANIFEST_FILE) {
         return t(SkillEditorI18nKeys.ErrorPathReserved);
       }
       if (!isValidSkillRelativePath(path)) {
@@ -279,7 +348,10 @@ const SkillEditorPage: FC = () => {
           return;
         }
         const buffer = await file.arrayBuffer();
-        filesContentRef.current.set(path, new Uint8Array(buffer));
+        filesContentRef.current.set(path, {
+          bytes: new Uint8Array(buffer),
+          mimeType: file.type || undefined,
+        });
         setFiles((prev) => [
           ...prev,
           { path, name: nameFromPath(path), kind: SkillFileNodeKind.File },
@@ -296,6 +368,11 @@ const SkillEditorPage: FC = () => {
             filesContentRef.current.delete(key);
           }
         }
+        setSelectedPath((prev) =>
+          prev === path || prev.startsWith(`${path}/`)
+            ? SKILL_MANIFEST_FILE
+            : prev,
+        );
       },
     }),
     [validatePath, t, showNotification],
@@ -378,7 +455,9 @@ const SkillEditorPage: FC = () => {
         );
         filePaths = fileNodes.map((node) => node.path);
         fileBlobs = fileNodes.map((node) =>
-          toBlob(filesContentRef.current.get(node.path) ?? new Uint8Array(0)),
+          toBlob(
+            filesContentRef.current.get(node.path)?.bytes ?? new Uint8Array(0),
+          ),
         );
       }
 
@@ -446,7 +525,9 @@ const SkillEditorPage: FC = () => {
       );
       const filePaths = fileNodes.map((node) => node.path);
       const fileBlobs = fileNodes.map((node) =>
-        toBlob(filesContentRef.current.get(node.path) ?? new Uint8Array(0)),
+        toBlob(
+          filesContentRef.current.get(node.path)?.bytes ?? new Uint8Array(0),
+        ),
       );
 
       setPhase('submitting');
@@ -607,6 +688,8 @@ const SkillEditorPage: FC = () => {
         <SkillEditorForm
           initialValues={isEditMode ? loadedValues : undefined}
           files={files}
+          selectedPath={selectedPath}
+          onSelectedPathChange={setSelectedPath}
           isLoading={loadState === 'loading'}
           hasLoadError={
             loadState === 'error' ||
@@ -622,6 +705,7 @@ const SkillEditorPage: FC = () => {
           onDirtyChange={setIsDirty}
           fileActions={fileActions}
           headerContent={headerRow}
+          supportingFileContent={<SkillFilePreview path={selectedPath} />}
           labels={labels}
           onSubmit={handleSubmit}
           onCancel={handleCancel}

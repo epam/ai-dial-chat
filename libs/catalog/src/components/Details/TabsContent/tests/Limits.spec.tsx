@@ -58,6 +58,8 @@ describe('LimitsTab', () => {
   it('renders nothing without limit rows', () => {
     const { container } = render(<LimitsTab limits={{ rows: [] }} />);
 
+    // Component renders null; no semantic query can assert total absence of output.
+    // eslint-disable-next-line testing-library/no-node-access
     expect(container.firstChild).toBeNull();
   });
 

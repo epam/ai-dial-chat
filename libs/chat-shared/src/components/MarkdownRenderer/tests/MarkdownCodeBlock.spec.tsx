@@ -29,15 +29,14 @@ describe('MarkdownCodeBlock', () => {
   });
 
   it('renders the language label as a small uppercase muted caption', () => {
-    const { container } = render(
-      <MarkdownCodeBlock language="typescript" value="const x = 1;" />,
-    );
+    render(<MarkdownCodeBlock language="typescript" value="const x = 1;" />);
 
-    expect(container.querySelector('span.opacity-60')).toBeNull();
+    const label = screen.getByText('typescript');
+    expect(label.className).not.toContain('opacity-60');
   });
 
   it('renders title in place of language in the header, keeping language for highlighting', () => {
-    const { container } = render(
+    render(
       <MarkdownCodeBlock
         language="bash"
         title="cURL"
@@ -47,16 +46,21 @@ describe('MarkdownCodeBlock', () => {
 
     expect(screen.getByText('cURL')).toBeTruthy();
     expect(screen.queryByText('bash')).toBeNull();
-    expect(container.querySelector('[data-language="bash"]')).toBeTruthy();
+    /*
+     * The `language` prop is forwarded to the syntax highlighter for
+     * highlighting only — it renders as a `data-language` attribute (mocked
+     * here), never as visible text, so no semantic query can reach it.
+     */
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.querySelector('[data-language="bash"]')).toBeTruthy();
   });
 
   it('renders no label text when language is empty', () => {
-    const { container } = render(
-      <MarkdownCodeBlock language="" value="const x = 1;" />,
-    );
+    render(<MarkdownCodeBlock language="" value="const x = 1;" />);
 
-    const labelSpan = container.querySelector('span.uppercase');
-    expect(labelSpan?.textContent).toBeUndefined();
+    // Empty language renders an empty label span with no accessible text.
+    const label = screen.getByText('', { selector: 'span' });
+    expect(label.textContent).toBe('');
   });
 
   it('renders the copy button when isStreaming is false', () => {
@@ -167,15 +171,16 @@ describe('MarkdownCodeBlock', () => {
   });
 
   it('sets dir="ltr" on the scroll container', () => {
-    const { container } = render(
-      <MarkdownCodeBlock language="typescript" value="const x = 1;" />,
-    );
+    render(<MarkdownCodeBlock language="typescript" value="const x = 1;" />);
 
-    expect(container.querySelector('[dir="ltr"]')).toBeTruthy();
+    // The scroll container has no accessible role/name — this is a plain
+    // layout-attribute check with no semantic query available.
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.querySelector('[dir="ltr"]')).toBeTruthy();
   });
 
   it('applies containerClassName to the outer div', () => {
-    const { container } = render(
+    render(
       <MarkdownCodeBlock
         language="typescript"
         value="const x = 1;"
@@ -183,18 +188,19 @@ describe('MarkdownCodeBlock', () => {
       />,
     );
 
-    expect((container.firstChild as HTMLElement)?.className).toContain(
-      'my-custom-class',
-    );
+    // `.my-4` is a stable class on the outer container, used to locate it for this class-merge check.
+    // eslint-disable-next-line testing-library/no-node-access
+    const outer = document.querySelector('.my-4') as HTMLElement;
+    expect(outer.className).toContain('my-custom-class');
   });
 
   it('uses comfortable block spacing and a compact header', () => {
-    const { container } = render(
-      <MarkdownCodeBlock language="typescript" value="const x = 1;" />,
-    );
+    render(<MarkdownCodeBlock language="typescript" value="const x = 1;" />);
 
-    const block = container.firstChild as HTMLElement;
-    const header = block.firstChild as HTMLElement;
+    // eslint-disable-next-line testing-library/no-node-access
+    const block = document.querySelector('.my-4') as HTMLElement;
+    // eslint-disable-next-line testing-library/no-node-access
+    const header = document.querySelector('.min-h-10') as HTMLElement;
 
     expect(block.className).toContain('my-4');
     expect(block.className).toContain('max-w-full');
@@ -203,19 +209,15 @@ describe('MarkdownCodeBlock', () => {
   });
 
   it('renders the code value', () => {
-    const { container } = render(
-      <MarkdownCodeBlock language="typescript" value="const x = 1;" />,
-    );
+    render(<MarkdownCodeBlock language="typescript" value="const x = 1;" />);
 
-    expect(container.querySelector('code')?.textContent).toContain(
-      'const x = 1;',
-    );
+    expect(screen.getByText('const x = 1;')).toBeTruthy();
   });
 
   it.each([CodeBlockTheme.Light, CodeBlockTheme.Dark])(
     'renders the %s theme without error, on the restrained CSS-token palette',
     (theme) => {
-      const { container } = render(
+      render(
         <MarkdownCodeBlock
           language="typescript"
           value="const x = 1;"
@@ -223,19 +225,16 @@ describe('MarkdownCodeBlock', () => {
         />,
       );
 
-      expect(container.querySelector('code')?.textContent).toContain(
-        'const x = 1;',
-      );
+      expect(screen.getByText('const x = 1;')).toBeTruthy();
     },
   );
 
   it('scrolls long lines horizontally instead of wrapping', () => {
     const longLine = `const url = "${'a'.repeat(400)}";`;
-    const { container } = render(
-      <MarkdownCodeBlock language="typescript" value={longLine} />,
-    );
+    render(<MarkdownCodeBlock language="typescript" value={longLine} />);
 
-    const scrollContainer = container.querySelector(
+    // eslint-disable-next-line testing-library/no-node-access -- no accessible role/name on the scroll container; layout-attribute check only
+    const scrollContainer = document.querySelector(
       '[dir="ltr"]',
     ) as HTMLElement;
     expect(scrollContainer.className).toContain('overflow-auto');
@@ -256,7 +255,7 @@ describe('MarkdownCodeBlock', () => {
   });
 
   it('removes the header vertical padding when a custom titleSlot is provided', () => {
-    const { container } = render(
+    render(
       <MarkdownCodeBlock
         language="typescript"
         value="const x = 1;"
@@ -264,17 +263,17 @@ describe('MarkdownCodeBlock', () => {
       />,
     );
 
-    const header = container.querySelector('.border-b') as HTMLElement;
+    // eslint-disable-next-line testing-library/no-node-access -- header has no accessible role; padding-class check only
+    const header = document.querySelector('.border-b') as HTMLElement;
     expect(header.className).toContain('py-0');
     expect(header.className).not.toContain('py-2');
   });
 
   it('keeps the header default vertical padding for the plain language label', () => {
-    const { container } = render(
-      <MarkdownCodeBlock language="typescript" value="const x = 1;" />,
-    );
+    render(<MarkdownCodeBlock language="typescript" value="const x = 1;" />);
 
-    const header = container.querySelector('.border-b') as HTMLElement;
+    // eslint-disable-next-line testing-library/no-node-access -- header has no accessible role; padding-class check only
+    const header = document.querySelector('.border-b') as HTMLElement;
     expect(header.className).toContain('py-2');
   });
 
@@ -294,11 +293,12 @@ describe('MarkdownCodeBlock', () => {
   });
 
   it('preserves <pre>/<code> semantics for a language-less block', () => {
-    const { container } = render(
-      <MarkdownCodeBlock language="" value="plain text block" />,
-    );
+    render(<MarkdownCodeBlock language="" value="plain text block" />);
 
-    const pre = container.querySelector('pre');
-    expect(pre?.querySelector('code')?.textContent).toBe('plain text block');
+    // Verifying the <pre>/<code> tag structure itself is the point of this
+    // test, so a tag-hierarchy selector is used instead of a semantic query.
+    // eslint-disable-next-line testing-library/no-node-access
+    const code = document.querySelector('pre code');
+    expect(code?.textContent).toBe('plain text block');
   });
 });

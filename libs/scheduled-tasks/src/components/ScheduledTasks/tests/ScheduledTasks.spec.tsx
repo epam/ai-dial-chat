@@ -285,57 +285,57 @@ describe('ScheduledTasks', () => {
     expect(onSearchQueryChange).toHaveBeenCalledWith('a');
   });
 
-  const countSkeletonCards = (container: HTMLElement) =>
-    container.querySelectorAll('article[aria-hidden="true"]').length;
+  const countSkeletonCards = () =>
+    screen
+      .queryAllByRole('article', { hidden: true })
+      .filter((card) => card.getAttribute('aria-hidden') === 'true').length;
 
   it('renders exactly 6 skeleton cards below the loaded cards when isLoadingMore', () => {
-    const { container } = renderScheduledTasks({
+    renderScheduledTasks({
       items: [buildItem()],
       hasMore: true,
       isLoadingMore: true,
     });
 
-    expect(countSkeletonCards(container)).toBe(6);
+    expect(countSkeletonCards()).toBe(6);
   });
 
   it('forwards styles.colors.skeletonColor down to every skeleton bar', () => {
-    const { container } = renderScheduledTasks({
+    renderScheduledTasks({
       items: [buildItem()],
       hasMore: true,
       isLoadingMore: true,
       styles: { colors: { skeletonColor: '#ff00ff' } },
     });
 
-    const skeletonCards = container.querySelectorAll(
-      'article[aria-hidden="true"]',
-    );
+    const skeletonCards = screen
+      .queryAllByRole('article', { hidden: true })
+      .filter((card) => card.getAttribute('aria-hidden') === 'true');
     expect(skeletonCards.length).toBeGreaterThan(0);
     skeletonCards.forEach((card) => {
-      expect(
-        (card as HTMLElement).style.getPropertyValue('--stcs-skeleton-bg'),
-      ).toBe('#ff00ff');
+      expect(card.style.getPropertyValue('--stcs-skeleton-bg')).toBe('#ff00ff');
     });
   });
 
   it('renders a custom skeletonCount of placeholder cards', () => {
-    const { container } = renderScheduledTasks({
+    renderScheduledTasks({
       items: [buildItem()],
       hasMore: true,
       isLoadingMore: true,
       skeletonCount: 3,
     });
 
-    expect(countSkeletonCards(container)).toBe(3);
+    expect(countSkeletonCards()).toBe(3);
   });
 
   it('renders no skeleton cards when isLoadingMore is false', () => {
-    const { container } = renderScheduledTasks({
+    renderScheduledTasks({
       items: [buildItem()],
       hasMore: true,
       isLoadingMore: false,
     });
 
-    expect(countSkeletonCards(container)).toBe(0);
+    expect(countSkeletonCards()).toBe(0);
   });
 
   it('announces the loading-more label via the aria-live status region', () => {
@@ -351,13 +351,13 @@ describe('ScheduledTasks', () => {
   });
 
   it('renders no skeleton cards during the initial loading state', () => {
-    const { container } = renderScheduledTasks({
+    renderScheduledTasks({
       items: [],
       isLoading: true,
       isLoadingMore: true,
     });
 
-    expect(countSkeletonCards(container)).toBe(0);
+    expect(countSkeletonCards()).toBe(0);
     expect(screen.getByRole('progressbar')).toBeTruthy();
   });
 

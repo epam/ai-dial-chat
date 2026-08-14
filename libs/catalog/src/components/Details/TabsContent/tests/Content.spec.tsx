@@ -25,13 +25,20 @@ describe('ContentTab', () => {
       <ContentTab content="Summarize:" description="Writes a short summary." />,
     );
 
+    // The divider is a bare styled div with no role/text; only a CSS-class
+    // check can detect it.
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
     expect(container.querySelector('[class*="divider"]')).toBeTruthy();
   });
 
   it('omits the description block when it is empty', () => {
     const { container } = render(<ContentTab content="Summarize:" />);
 
+    // Counting bare <p> elements and checking for the divider class are
+    // CSS-level checks with no semantic query available.
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
     expect(container.querySelectorAll('p')).toHaveLength(1);
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
     expect(container.querySelector('[class*="divider"]')).toBeNull();
   });
 
@@ -58,7 +65,10 @@ describe('ContentTab', () => {
     render(<ContentTab content="a very long prompt body" />);
 
     const body = screen.getByText('a very long prompt body');
-    /* The markdown paragraph sits inside the scroll container. */
+    /* The markdown paragraph sits inside the scroll container. The scroll
+     * container is a bare div with no role, so checking ancestry via its
+     * CSS class is the only way to verify this layout detail. */
+    // eslint-disable-next-line testing-library/no-node-access
     expect(body.closest('.overflow-auto')).toBeTruthy();
   });
 

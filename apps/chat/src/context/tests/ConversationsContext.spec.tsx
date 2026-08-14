@@ -123,9 +123,7 @@ describe('ConversationsContext — identity-keyed refetch', () => {
     mockListConversations.mockReturnValueOnce(refetchPromise);
     contextMocks.userSub = 'user-2';
 
-    act(() => {
-      rerender();
-    });
+    rerender();
 
     expect(result.current.isLoading).toBe(true);
     expect(result.current.conversations).toEqual([]);

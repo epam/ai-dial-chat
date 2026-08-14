@@ -184,7 +184,7 @@ describe('FooterMessage', () => {
       mockState.appVersion = '0.45.0';
       renderFooter();
 
-      const label = screen.getByText('v0.45.0').parentElement;
+      const label = screen.getByRole('paragraph');
       expect(label?.className).toContain('pointer-events-none');
     });
 
@@ -202,7 +202,7 @@ describe('FooterMessage', () => {
 
       /* `end-*` is a logical inset resolved against this element's own
        * direction — a `dir` here would defeat the RTL corner flip. */
-      const label = screen.getByText('v0.45.0').parentElement;
+      const label = screen.getByRole('paragraph');
       expect(label?.hasAttribute('dir')).toBe(false);
       expect(label?.className).toContain('end-4');
     });
@@ -214,7 +214,7 @@ describe('FooterMessage', () => {
 
       /* Absolute positioning against a section with no in-flow child would
        * place the label outside its collapsed box. */
-      const label = screen.getByText('v0.45.0').parentElement;
+      const label = screen.getByRole('paragraph');
       expect(label?.className).not.toContain('absolute');
       expect(label?.className).toContain('text-end');
     });

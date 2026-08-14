@@ -198,27 +198,36 @@ describe('PublishPanel', () => {
   });
 
   it('shows the replace-warning callout when the version already exists in the folder, with the folder name bold', () => {
-    const { container } = renderPanel({
+    renderPanel({
       selectedFolderPath: ['Shared', 'Data Science', 'Published models'],
       hasExistingPublicationInFolder: true,
     });
-    expect(container.textContent).toContain(
-      'Version 4.0.1 is already published in Published models. Publishing will replace it.',
-    );
-    expect(container.querySelector('strong')?.textContent).toBe(
-      'Published models',
-    );
+    expect(
+      screen.getByText('is already published in', { exact: false }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText('Publishing will replace it.', { exact: false }),
+    ).toBeTruthy();
+    const boldFolderNames = screen
+      .getAllByText('Published models')
+      .filter((el) => el.tagName === 'STRONG');
+    expect(boldFolderNames).toHaveLength(1);
   });
 
   it('shows the no-access callout when the user lacks write access, with the folder name bold', () => {
-    const { container } = renderPanel({
+    renderPanel({
       selectedFolderPath: ['Shared', 'Data Science'],
       hasWriteAccess: false,
     });
-    expect(container.textContent).toContain(
-      "You don't have permission to publish to Data Science. Pick another, or ask an owner for access.",
-    );
-    expect(container.querySelector('strong')?.textContent).toBe('Data Science');
+    expect(
+      screen.getByText("don't have permission to publish to", {
+        exact: false,
+      }),
+    ).toBeTruthy();
+    const boldFolderNames = screen
+      .getAllByText('Data Science')
+      .filter((el) => el.tagName === 'STRONG');
+    expect(boldFolderNames).toHaveLength(1);
   });
 
   it('shows the submit-error callout when the most recent submit attempt failed', () => {

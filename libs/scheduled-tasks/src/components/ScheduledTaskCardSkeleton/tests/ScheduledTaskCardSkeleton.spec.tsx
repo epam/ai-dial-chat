@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { ScheduledTaskCardSkeleton } from '../ScheduledTaskCardSkeleton';
@@ -20,22 +20,23 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 
 describe('ScheduledTaskCardSkeleton', () => {
   it('renders as an aria-hidden card', () => {
-    const { container } = render(<ScheduledTaskCardSkeleton />);
+    render(<ScheduledTaskCardSkeleton />);
 
-    const article = container.querySelector('article');
-    expect(article).toBeTruthy();
-    expect(article?.getAttribute('aria-hidden')).toBe('true');
+    const article = screen.getByRole('article', { hidden: true });
+    expect(article.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('renders a title bar, description lines, and a footer bar as skeleton elements', () => {
     const { container } = render(<ScheduledTaskCardSkeleton />);
 
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- the skeleton bars are plain divs with no accessible role/text; only their data-skeleton CSS hook distinguishes them
     expect(container.querySelectorAll('[data-skeleton]')).toHaveLength(5);
   });
 
   it('reads every skeleton bar color from the --stcs-skeleton-bg variable', () => {
     const { container } = render(<ScheduledTaskCardSkeleton />);
 
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- the skeleton bars are plain divs with no accessible role/text; only their data-skeleton CSS hook distinguishes them
     const bars = container.querySelectorAll('[data-skeleton]');
     expect(bars.length).toBeGreaterThan(0);
     bars.forEach((bar) => {
@@ -44,21 +45,21 @@ describe('ScheduledTaskCardSkeleton', () => {
   });
 
   it('leaves --stcs-skeleton-bg unset inline so the module fallback applies', () => {
-    const { container } = render(<ScheduledTaskCardSkeleton />);
+    render(<ScheduledTaskCardSkeleton />);
 
-    const article = container.querySelector('article');
-    expect(article?.style.getPropertyValue('--stcs-skeleton-bg')).toBe('');
+    const article = screen.getByRole('article', { hidden: true });
+    expect(article.style.getPropertyValue('--stcs-skeleton-bg')).toBe('');
   });
 
   it('sets --stcs-skeleton-bg from the caller-supplied skeletonColor override', () => {
-    const { container } = render(
+    render(
       <ScheduledTaskCardSkeleton
         styles={{ colors: { skeletonColor: '#ff00ff' } }}
       />,
     );
 
-    const article = container.querySelector('article');
-    expect(article?.style.getPropertyValue('--stcs-skeleton-bg')).toBe(
+    const article = screen.getByRole('article', { hidden: true });
+    expect(article.style.getPropertyValue('--stcs-skeleton-bg')).toBe(
       '#ff00ff',
     );
   });

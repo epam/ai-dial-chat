@@ -153,6 +153,9 @@ describe('LoginPage', () => {
 
     const { container } = renderLogin();
 
+    /* The favicon element carries no role/text/testid; asserting the inline
+     * `background-image` style is CSS-level behavior with no semantic query available. */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
     const faviconEl = container.querySelector('[style*="background-image"]');
     expect(faviconEl).toBeTruthy();
     expect(faviconEl?.getAttribute('style')).toContain('favicon.png');

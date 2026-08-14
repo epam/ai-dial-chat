@@ -52,6 +52,10 @@ describe('DeploymentSelectorPanel — long version', () => {
   it('renders no version element when the item has an empty version', () => {
     renderPanel([makeItem('model-1', CatalogEntityType.Model)]);
 
+    /* Asserting the absence of a CSS-level styling class (not text/role) has
+       no semantic query equivalent — this repo's spec conventions carve out
+       this exact case for container/document.querySelector. */
+    // eslint-disable-next-line testing-library/no-node-access
     expect(document.querySelector('.max-w-\\[30\\%\\]')).toBeNull();
   });
 });

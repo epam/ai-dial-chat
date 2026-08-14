@@ -983,7 +983,7 @@ describe('Header', () => {
     });
 
     it('renders the credentials button as the primary action, first in the action row, for a Toolset item', () => {
-      const { container } = render(
+      render(
         <Header
           item={{
             ...makeItem(CatalogEntityType.Toolset),
@@ -998,7 +998,7 @@ describe('Header', () => {
 
       const buttons = screen.getAllByRole('button');
       expect(buttons[0].textContent).toBe('Log in');
-      expect(container.querySelector('.primary')?.textContent).toBe('Log in');
+      expect(buttons[0].className).toContain('primary');
     });
 
     it('keeps the credentials button as a non-primary, non-leading action for a non-Toolset item', () => {

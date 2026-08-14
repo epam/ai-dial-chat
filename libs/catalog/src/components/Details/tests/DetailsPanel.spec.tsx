@@ -4,7 +4,7 @@ import {
   PublicationRuleFunction,
   PublishFolderNode,
 } from '@epam/ai-dial-publish-panel';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -351,15 +351,15 @@ describe('DetailsPanel — Content tab', () => {
       }),
     });
 
-    const tabLabels = Array.from(
-      screen.getByRole('tablist').querySelectorAll('button'),
-    ).map((button) => button.textContent);
+    const tabLabels = within(screen.getByRole('tablist'))
+      .getAllByRole('button')
+      .map((tab) => tab.textContent);
     expect(tabLabels).toEqual(['Details', 'Overview']);
   });
 
   /* Without this the stylesheet reads a variable nothing ever sets, so the host override is silently inert. */
   it('sets the placeholder colour variable on the panel root from styles.colors.variableText', () => {
-    const { container } = renderPanel({
+    renderPanel({
       item: makeItem({
         type: CatalogEntityType.Prompt,
         details: { promptContent: { content: 'Hi {{name}}' } },
@@ -367,7 +367,7 @@ describe('DetailsPanel — Content tab', () => {
       styles: { colors: { variableText: '#3730b7' } },
     });
 
-    const panel = container.querySelector('[role="dialog"]') as HTMLElement;
+    const panel = screen.getByRole('dialog');
     expect(panel.style.getPropertyValue('--cat-details-variable-text')).toBe(
       '#3730b7',
     );
@@ -383,7 +383,7 @@ describe('DetailsPanel — Content tab', () => {
     });
 
     expect(
-      screen.getByRole('tablist').querySelector('button')?.textContent,
+      within(screen.getByRole('tablist')).getAllByRole('button')[0].textContent,
     ).toBe('About');
   });
 
@@ -399,9 +399,9 @@ describe('DetailsPanel — Content tab', () => {
       }),
     });
 
-    const tabLabels = Array.from(
-      screen.getByRole('tablist').querySelectorAll('button'),
-    ).map((button) => button.textContent);
+    const tabLabels = within(screen.getByRole('tablist'))
+      .getAllByRole('button')
+      .map((tab) => tab.textContent);
     expect(tabLabels).toEqual(['Details', 'Overview']);
   });
 
@@ -415,7 +415,7 @@ describe('DetailsPanel — Content tab', () => {
     });
 
     expect(
-      screen.getByRole('tablist').querySelector('button')?.textContent,
+      within(screen.getByRole('tablist')).getAllByRole('button')[0].textContent,
     ).toBe('Details');
     /* Overview shows only as a tab button, so Details is still the active tab. */
     expect(screen.getAllByText('Overview')).toHaveLength(1);
@@ -454,7 +454,7 @@ describe('DetailsPanel — Content tab', () => {
     expect(screen.getByText('Summarize:')).toBeTruthy();
     expect(screen.getAllByText('Overview')).toHaveLength(1);
     expect(
-      screen.getByRole('tablist').querySelector('button')?.textContent,
+      within(screen.getByRole('tablist')).getAllByRole('button')[0].textContent,
     ).toBe('Details');
   });
 
@@ -481,7 +481,7 @@ describe('DetailsPanel — Content tab', () => {
     });
 
     expect(
-      screen.getByRole('tablist').querySelector('button')?.textContent,
+      within(screen.getByRole('tablist')).getAllByRole('button')[0].textContent,
     ).toBe('Details');
     /* Overview shows only as a tab button, so Details is still the active tab. */
     expect(screen.getAllByText('Overview')).toHaveLength(1);

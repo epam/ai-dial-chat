@@ -185,13 +185,13 @@ describe('SharePopover', () => {
     viewOption.focus();
 
     await user.keyboard('{ArrowDown}');
-    expect(document.activeElement).toBe(editOption);
+    expect(editOption.matches(':focus')).toBe(true);
 
     await user.keyboard('{ArrowDown}');
-    expect(document.activeElement).toBe(viewOption);
+    expect(viewOption.matches(':focus')).toBe(true);
 
     await user.keyboard('{ArrowUp}');
-    expect(document.activeElement).toBe(editOption);
+    expect(editOption.matches(':focus')).toBe(true);
   });
 
   it('traps Tab within the open access menu', async () => {
@@ -203,10 +203,10 @@ describe('SharePopover', () => {
     editOption.focus();
 
     await user.tab();
-    expect(document.activeElement).toBe(viewOption);
+    expect(viewOption.matches(':focus')).toBe(true);
 
     await user.tab({ shift: true });
-    expect(document.activeElement).toBe(editOption);
+    expect(editOption.matches(':focus')).toBe(true);
   });
 
   it('shows the interactive access dropdown when canEditAccess is true', () => {
@@ -275,15 +275,15 @@ describe('SharePopover', () => {
       screen.getByRole('img', { name: 'QR code for the share link' }),
     ).toBeTruthy();
     expect(screen.queryByDisplayValue(ITEM_URL)).toBeNull();
-    expect(document.activeElement).toBe(
-      screen.getByRole('button', { name: 'Link' }),
+    expect(screen.getByRole('button', { name: 'Link' }).matches(':focus')).toBe(
+      true,
     );
 
     await user.click(screen.getByRole('button', { name: 'Link' }));
 
     expect(screen.getByDisplayValue(ITEM_URL)).toBeTruthy();
-    expect(document.activeElement).toBe(
-      screen.getByRole('button', { name: 'QR' }),
+    expect(screen.getByRole('button', { name: 'QR' }).matches(':focus')).toBe(
+      true,
     );
   });
 
@@ -341,10 +341,10 @@ describe('SharePopover', () => {
 
     copyButton.focus();
     await user.tab();
-    expect(document.activeElement).toBe(qrButton);
+    expect(qrButton.matches(':focus')).toBe(true);
 
     await user.tab({ shift: true });
-    expect(document.activeElement).toBe(copyButton);
+    expect(copyButton.matches(':focus')).toBe(true);
   });
 
   it('moves Tab focus explicitly through every interior control, reaching Copy', async () => {
@@ -357,20 +357,20 @@ describe('SharePopover', () => {
 
     qrButton.focus();
     await user.tab();
-    expect(document.activeElement).toBe(accessTrigger);
+    expect(accessTrigger.matches(':focus')).toBe(true);
 
     await user.tab();
-    expect(document.activeElement).toBe(linkInput);
+    expect(linkInput.matches(':focus')).toBe(true);
 
     await user.tab();
-    expect(document.activeElement).toBe(copyButton);
+    expect(copyButton.matches(':focus')).toBe(true);
   });
 
   it('moves focus to the first control in the popover when it mounts', () => {
     render(<SharePopover {...makeProps({ onClose })} />);
 
-    expect(document.activeElement).toBe(
-      screen.getByRole('button', { name: 'QR' }),
+    expect(screen.getByRole('button', { name: 'QR' }).matches(':focus')).toBe(
+      true,
     );
   });
 
@@ -399,9 +399,10 @@ describe('SharePopover', () => {
       name: 'Creating share link…',
     });
     expect(status).toBeTruthy();
-    expect(container.querySelectorAll('[aria-hidden]').length).toBeGreaterThan(
-      0,
-    );
+    expect(
+      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- checking for decorative aria-hidden skeleton placeholders, which by definition carry no accessible role/name
+      container.querySelectorAll('[aria-hidden]').length,
+    ).toBeGreaterThan(0);
     expect(screen.queryByDisplayValue(ITEM_URL)).toBeNull();
     expect(screen.queryByRole('button', { name: 'Copy' })).toBeNull();
   });

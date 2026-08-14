@@ -20,30 +20,37 @@ describe('InitialsAvatar', () => {
 
   it('sets aria-hidden on the root element', () => {
     const { container } = renderAvatar();
-    expect(
-      (container.firstChild as HTMLElement).getAttribute('aria-hidden'),
-    ).toBe('true');
+    /*
+     * Root is aria-hidden with no accessible role/text, so a CSS-level
+     * container query is the only way to reach it (allowed for CSS-level
+     * assertions per .claude/rules/spec.md).
+     */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+    const el = container.querySelector('div') as HTMLElement;
+    expect(el.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('applies the palette colours as CSS custom properties', () => {
     const { container } = renderAvatar({ name: 'Alpha' });
     const { background, foreground } = pickAvatarColor('Alpha');
-    const el = container.firstChild as HTMLElement;
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- root is aria-hidden; CSS custom properties have no semantic query
+    const el = container.querySelector('div') as HTMLElement;
     expect(el.style.getPropertyValue('--ia-bg')).toBe(background);
     expect(el.style.getPropertyValue('--ia-fg')).toBe(foreground);
   });
 
   it('applies size as width and height', () => {
     const { container } = renderAvatar({ size: 48 });
-    const el = container.firstChild as HTMLElement;
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- root is aria-hidden; inline style has no semantic query
+    const el = container.querySelector('div') as HTMLElement;
     expect(el.style.width).toBe('48px');
     expect(el.style.height).toBe('48px');
   });
 
   it('forwards className to the root element', () => {
     const { container } = renderAvatar({ className: 'shrink-0' });
-    expect((container.firstChild as HTMLElement).className).toContain(
-      'shrink-0',
-    );
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- root is aria-hidden; className has no semantic query
+    const el = container.querySelector('div') as HTMLElement;
+    expect(el.className).toContain('shrink-0');
   });
 });

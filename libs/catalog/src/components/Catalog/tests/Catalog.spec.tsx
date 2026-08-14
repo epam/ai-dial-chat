@@ -302,6 +302,9 @@ describe('Catalog', () => {
   it('applies horizontal and vertical padding to the empty state in the default grid view', () => {
     render(<Catalog items={[]} favorites={[]} />);
     const grid = screen.getByRole('grid', { name: 'catalog grid' });
+    // Layout wrapper divs carry no role/label of their own; asserting their
+    // padding classes is a CSS-level check with no semantic query available.
+    // eslint-disable-next-line testing-library/no-node-access
     const wrapper = grid.parentElement?.parentElement;
     expect(wrapper?.className).toContain('px-8');
     expect(wrapper?.className).toContain('py-6');

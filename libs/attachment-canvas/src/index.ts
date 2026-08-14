@@ -1,4 +1,5 @@
 export { AttachmentCanvas } from './components/AttachmentCanvas/AttachmentCanvas';
+export { AttachmentCanvasBody } from './components/AttachmentCanvasBody/AttachmentCanvasBody';
 export { CodeContent } from './components/CodeContent/CodeContent';
 export type { CodeContentProps } from './components/CodeContent/CodeContent';
 export { AttachmentCanvasContainer } from './components/AttachmentCanvasContainer/AttachmentCanvasContainer';
@@ -37,6 +38,9 @@ export type {
   AttachmentCanvasColors,
   AttachmentCanvasTypography,
   AttachmentCanvasStyles,
+  AttachmentCanvasBodyStyles,
   AttachmentCanvasLabels,
+  AttachmentCanvasBodyLabels,
   AttachmentCanvasProps,
+  AttachmentCanvasBodyProps,
 } from './models/attachment-canvas';

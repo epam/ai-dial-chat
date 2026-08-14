@@ -194,7 +194,7 @@ const fetchDialText = (dialUrl: string): Promise<string> => {
 const resolveAttachmentBlobUrl = async (
   attachment: DisplayAttachment,
 ): Promise<string | ErrorCanvasContent | undefined> => {
-  if ('file' in attachment && (attachment as Attachment).file.size > 0) {
+  if ('file' in attachment) {
     return URL.createObjectURL((attachment as Attachment).file);
   }
   const dialUrl = resolveDialUrl(attachment);
@@ -236,7 +236,7 @@ const resolveAttachmentText = async (
       return networkFailureContent(downloadUrl);
     }
   }
-  if ('file' in attachment && (attachment as Attachment).file.size > 0) {
+  if ('file' in attachment) {
     return (attachment as Attachment).file.text();
   }
   return undefined;
@@ -253,7 +253,7 @@ export const hasAttachmentTextSource = (
 ): boolean =>
   attachment.data != null ||
   resolveDialUrl(attachment) != null ||
-  ('file' in attachment && (attachment as Attachment).file.size > 0);
+  'file' in attachment;
 
 /**
  * Resolves an image canvas content payload from a DisplayAttachment without
@@ -265,7 +265,7 @@ export const hasAttachmentTextSource = (
 export const resolveImageCanvasContent = (
   attachment: DisplayAttachment,
 ): ImageCanvasContent | null => {
-  if ('file' in attachment && (attachment as Attachment).file.size > 0) {
+  if ('file' in attachment) {
     return {
       type: AttachmentContentType.Image,
       url: URL.createObjectURL((attachment as Attachment).file),

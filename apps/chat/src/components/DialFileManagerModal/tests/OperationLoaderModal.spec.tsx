@@ -44,6 +44,10 @@ describe('OperationLoaderModal', () => {
       />,
     );
 
+    /* The live region carries only `aria-live` (no ARIA role) in the source
+       component, so it has no accessible role/text a Testing Library query
+       could target. */
+    // eslint-disable-next-line testing-library/no-node-access
     expect(document.querySelector('[aria-live="polite"]')).toBeTruthy();
   });
 });

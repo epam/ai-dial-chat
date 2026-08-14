@@ -141,17 +141,19 @@ describe('useOfflineCredentialsGate', () => {
       return Promise.resolve({ available: true, connected: false });
     });
 
-    const first = renderHook(() => useOfflineCredentialsGate(), {
-      wrapper: makeWrapper(),
-    });
-    first.unmount();
+    const { unmount: unmountFirst } = renderHook(
+      () => useOfflineCredentialsGate(),
+      { wrapper: makeWrapper() },
+    );
+    unmountFirst();
 
-    const second = renderHook(() => useOfflineCredentialsGate(), {
-      wrapper: makeWrapper(),
-    });
+    const { result: secondResult } = renderHook(
+      () => useOfflineCredentialsGate(),
+      { wrapper: makeWrapper() },
+    );
 
     await waitFor(() =>
-      expect(second.result.current.status).toBe(
+      expect(secondResult.current.status).toBe(
         OfflineCredentialsGateStatus.Available,
       ),
     );

@@ -72,6 +72,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   onDirtyChange,
   fileActions,
   headerContent,
+  supportingFileContent,
   onSubmit,
   onCancel,
   onRetry,
@@ -372,7 +373,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           {filesPaneContent}
         </div>
 
-        <div className="flex flex-1 flex-col gap-4 desktop:gap-5 desktop:px-8 desktop:py-6">
+        <div className="flex min-w-0 flex-1 flex-col gap-4 desktop:gap-5 desktop:px-8 desktop:py-6">
           <h2 className={mergeClasses(styles.title, titleClassName)}>
             {selectedPath === SKILL_MANIFEST_PATH
               ? SKILL_MANIFEST_PATH
@@ -453,14 +454,15 @@ export const SkillEditor: FC<SkillEditorProps> = ({
               </div>
             </>
           ) : (
-            selectedNode?.kind !== SkillFileNodeKind.Folder && (
+            selectedNode?.kind === SkillFileNodeKind.File &&
+            (supportingFileContent ?? (
               <CaptionText
                 text={
                   t.supportingFileNote ??
                   'This supporting file is included in the skill package as-is. Remove it from the Files panel to replace its content.'
                 }
               />
-            )
+            ))
           )}
         </div>
       </div>
