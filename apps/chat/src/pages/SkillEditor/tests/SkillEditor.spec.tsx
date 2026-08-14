@@ -418,9 +418,9 @@ describe('SkillEditor page', () => {
     await openUploadDialog(user);
     stageFile(oversizedFile);
 
-    await waitFor(() =>
-      expect(screen.getByText('skillEditor.error.fileTooLarge')).toBeTruthy(),
-    );
+    expect(
+      await screen.findByText('skillEditor.error.fileTooLarge'),
+    ).toBeTruthy();
     expect(
       (
         screen.getByRole('button', {
@@ -459,9 +459,7 @@ describe('SkillEditor page', () => {
     expect(
       screen.queryByText('skillEditor.manifestImportConfirmTitle'),
     ).toBeNull();
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('good-morning')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('good-morning')).toBeTruthy();
     expect(screen.getByDisplayValue('A greeting skill')).toBeTruthy();
   });
 
@@ -483,11 +481,9 @@ describe('SkillEditor page', () => {
     );
     await confirmUpload(user);
 
-    await waitFor(() =>
-      expect(
-        screen.getByText('skillEditor.manifestImportConfirmTitle'),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByText('skillEditor.manifestImportConfirmTitle'),
+    ).toBeTruthy();
     expect(screen.getByDisplayValue('my-draft')).toBeTruthy();
 
     await user.click(
@@ -496,9 +492,7 @@ describe('SkillEditor page', () => {
       }),
     );
 
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('good-morning')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('good-morning')).toBeTruthy();
   });
 
   it('preserves unknown frontmatter fields from an imported SKILL.md on create', async () => {
@@ -516,9 +510,7 @@ describe('SkillEditor page', () => {
       expect(screen.getAllByText('SKILL.md')[0]).toBeTruthy(),
     );
     await confirmUpload(user);
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('good-morning')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('good-morning')).toBeTruthy();
 
     await user.click(getCreateButton());
 
@@ -542,9 +534,7 @@ describe('SkillEditor page', () => {
       expect(screen.getAllByText('notes.md')[0]).toBeTruthy(),
     );
     await confirmUpload(user);
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('good-morning')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('good-morning')).toBeTruthy();
 
     await user.click(getCreateButton());
 
@@ -854,9 +844,7 @@ describe('SkillEditor page — edit mode', () => {
     vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
 
     render(<SkillEditor />);
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('docs-helper')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
 
     const manifestFile = new File(
       [
@@ -871,20 +859,16 @@ describe('SkillEditor page — edit mode', () => {
     );
     await confirmUpload(user);
 
-    await waitFor(() =>
-      expect(
-        screen.getByText('skillEditor.manifestImportConfirmTitle'),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByText('skillEditor.manifestImportConfirmTitle'),
+    ).toBeTruthy();
     await user.click(
       screen.getByRole('button', {
         name: 'skillEditor.manifestImportConfirmLabel',
       }),
     );
 
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('Updated description')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('Updated description')).toBeTruthy();
     expect(screen.getByDisplayValue('docs-helper')).toBeTruthy();
   });
 
@@ -892,9 +876,7 @@ describe('SkillEditor page — edit mode', () => {
     vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
 
     render(<SkillEditor />);
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('docs-helper')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
 
     const manifestFile = new File(
       [
@@ -909,11 +891,9 @@ describe('SkillEditor page — edit mode', () => {
     );
     await confirmUpload(user);
 
-    await waitFor(() =>
-      expect(
-        screen.getByText('skillEditor.error.manifestNameMismatch'),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByText('skillEditor.error.manifestNameMismatch'),
+    ).toBeTruthy();
     expect(screen.getByDisplayValue('docs-helper')).toBeTruthy();
     expect(screen.queryByDisplayValue('Updated description')).toBeNull();
   });
@@ -929,9 +909,7 @@ describe('SkillEditor page — edit mode', () => {
     } as unknown as Awaited<ReturnType<typeof updateSkill>>);
 
     render(<SkillEditor />);
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('docs-helper')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
 
     const manifestFile = new File(
       [
@@ -945,19 +923,15 @@ describe('SkillEditor page — edit mode', () => {
       expect(screen.getAllByText('SKILL.md')[0]).toBeTruthy(),
     );
     await confirmUpload(user);
-    await waitFor(() =>
-      expect(
-        screen.getByText('skillEditor.manifestImportConfirmTitle'),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByText('skillEditor.manifestImportConfirmTitle'),
+    ).toBeTruthy();
     await user.click(
       screen.getByRole('button', {
         name: 'skillEditor.manifestImportConfirmLabel',
       }),
     );
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('Updated description')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('Updated description')).toBeTruthy();
 
     await user.click(getSaveButton());
 

@@ -92,6 +92,7 @@ const buildFileActions = (
 });
 
 const stageFile = (file: File) => {
+  // eslint-disable-next-line testing-library/no-node-access -- the upload <input type="file"> is visually hidden and carries no accessible name/role to query by
   const input = document.querySelector('input[type="file"]') as HTMLElement;
   fireEvent.change(input, { target: { files: [file] } });
 };
@@ -145,6 +146,7 @@ describe('SkillFileUploadDialog', () => {
       />,
     );
 
+    // eslint-disable-next-line testing-library/no-node-access -- the upload <input type="file"> is visually hidden and carries no accessible name/role to query by
     const input = document.querySelector('input[type="file"]') as HTMLElement;
     fireEvent.change(input, {
       target: {
