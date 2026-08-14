@@ -480,10 +480,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           readonlyActions.push({
             key: 'unshare',
             label: t(ButtonsI18nKeys.RemoveFromMyList),
-            icon: (
-              <IconTrashX size={DIAL_ICON_SIZE.SM} className="text-error" />
-            ),
-            className: 'text-error',
+            icon: <IconTrashX size={DIAL_ICON_SIZE.SM} />,
             onClick: () => setPendingUnshareId(contextId),
           });
         }

@@ -363,14 +363,8 @@ export const Header: FC<HeaderProps> = ({
       items.push({
         key: 'unshare',
         label: texts?.unshareLabel ?? 'Remove from My List',
-        icon: (
-          <IconTrash
-            size={DIAL_ICON_SIZE.SM}
-            aria-hidden
-            className="text-error"
-          />
-        ),
-        className: 'text-error',
+        icon: <IconTrash size={DIAL_ICON_SIZE.SM} aria-hidden />,
+
         onClick: handleUnshare,
       });
     }

@@ -1,5 +1,6 @@
 import {
   DangerButton,
+  DIAL_ICON_SIZE,
   Input,
   LinkButton,
   NeutralButton,
@@ -21,10 +22,6 @@ import {
 } from '../../../../types/toolset-auth';
 import { EntityHeader } from '../../../EntityHeader/EntityHeader';
 import { CredentialsInfoCard } from '../CredentialsInfoCard/CredentialsInfoCard';
-
-const ROW_ICON_SIZE = 16;
-const STATUS_ICON_SIZE = 16;
-const SPINNER_SIZE = 16;
 
 /** Props for {@link CredentialsManagementRow}. */
 interface CredentialsManagementRowProps {
@@ -140,7 +137,7 @@ const CredentialsManagementRow: FC<CredentialsManagementRowProps> = ({
         </div>
         {isActive && (
           <IconCircleCheckFilled
-            size={STATUS_ICON_SIZE}
+            size={DIAL_ICON_SIZE.SM}
             aria-hidden
             className="absolute -end-1 -top-1 text-success"
           />
@@ -193,7 +190,7 @@ const CredentialsManagementRow: FC<CredentialsManagementRowProps> = ({
                   iconBefore={
                     isSaving ? (
                       <Spinner
-                        size={SPINNER_SIZE}
+                        size={DIAL_ICON_SIZE.SM}
                         ariaLabel={addingStatusLabel}
                       />
                     ) : undefined
@@ -221,7 +218,7 @@ const CredentialsManagementRow: FC<CredentialsManagementRowProps> = ({
               <CredentialsInfoCard
                 icon={
                   <IconKey
-                    size={STATUS_ICON_SIZE}
+                    size={DIAL_ICON_SIZE.SM}
                     aria-hidden
                     className="text-secondary"
                   />
@@ -316,7 +313,7 @@ export const CredentialsManagementPanel: FC<
               texts?.personalCredentialsDescription ??
               'These credentials apply only to your account.'
             }
-            icon={<IconUser size={ROW_ICON_SIZE} aria-hidden />}
+            icon={<IconUser size={DIAL_ICON_SIZE.SM} aria-hidden />}
             status={credentials.userStatus}
             isActive={isUserActive}
             authenticationType={credentials.authenticationType}
@@ -336,7 +333,9 @@ export const CredentialsManagementPanel: FC<
               texts?.organizationCredentialsDescription ??
               'Once added, these credentials will grant all users in your organization access to this toolset.'
             }
-            icon={<IconBuildingCommunity size={ROW_ICON_SIZE} aria-hidden />}
+            icon={
+              <IconBuildingCommunity size={DIAL_ICON_SIZE.SM} aria-hidden />
+            }
             status={credentials.globalStatus}
             isActive={isGlobalActive}
             authenticationType={credentials.authenticationType}
