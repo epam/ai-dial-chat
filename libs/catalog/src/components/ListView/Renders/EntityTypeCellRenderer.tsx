@@ -1,8 +1,8 @@
+import { EntityTypeLabel } from '@epam/ai-dial-chat-shared';
 import type { ICellRendererParams } from 'ag-grid-community';
 import { FC } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
 import { GridContext } from '../../../models/grid-context';
-import { EntityTypeLabel } from '../../EntityTypeLabel/EntityTypeLabel';
 
 /** ag-grid cell renderer for the entity-type column. */
 export const EntityTypeCellRenderer: FC<

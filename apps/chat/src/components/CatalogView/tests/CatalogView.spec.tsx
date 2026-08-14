@@ -1,6 +1,5 @@
 import type { CatalogItem } from '@epam/ai-dial-catalog';
 import {
-  CatalogEntityType,
   CatalogSortKey,
   CredentialsBadgeState,
   CredentialsUiState,
@@ -9,7 +8,10 @@ import {
 } from '@epam/ai-dial-catalog';
 import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { triggerBlobDownload } from '@epam/ai-dial-chat-shared';
+import {
+  CatalogEntityType,
+  triggerBlobDownload,
+} from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -1381,7 +1383,12 @@ describe('CatalogView', () => {
       type: 'model',
       modelDetails: {
         limits: { maxTotalTokens: 128000 },
-        pricing: { unit: 'token', prompt: '0.01', completion: '0.03' },
+        pricing: {
+          unit: 'token',
+          prompt: '0.000003',
+          completion: '0.000015',
+          cache_read: '0.0000003',
+        },
         features: {
           tools: true,
           mcp: false,
@@ -1418,8 +1425,9 @@ describe('CatalogView', () => {
     );
     expect(result.pricing).toEqual({
       prices: [
-        { label: 'Input tokens', price: '0.01' },
-        { label: 'Output tokens', price: '0.03' },
+        { label: 'Input tokens', price: '$3/M tokens' },
+        { label: 'Output tokens', price: '$15/M tokens' },
+        { label: 'Cached input', price: '$0.3/M tokens' },
       ],
       limits: [],
     });
@@ -2769,6 +2777,7 @@ describe('CatalogView', () => {
   describe('prompt wiring', () => {
     const personalPrompt = {
       id: 'Work/AI/summarize',
+      bucket: 'my-bucket',
       name: 'summarize',
       description: 'Summarize a document',
       content: 'Summarize the following text:',
@@ -2915,6 +2924,38 @@ describe('CatalogView', () => {
       expect(getPrompt).not.toHaveBeenCalled();
     });
 
+    it('fetches a shared prompt from the owner bucket, not the caller bucket', async () => {
+      enablePrompts();
+      const sharedPrompt = { ...personalPrompt, bucket: 'owner-bucket' };
+      mockPrompts({ prompts: [], sharedWithMe: [sharedPrompt] });
+      vi.mocked(getPrompt).mockResolvedValue(sharedPrompt);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'fetch details prompts/owner-bucket/Work/AI/summarize',
+        }),
+      );
+
+      expect(getPrompt).toHaveBeenCalledWith(
+        'Work/AI/summarize',
+        'owner-bucket',
+      );
+    });
+
+    it('keeps a shared prompt distinct from a personal prompt at the same path', () => {
+      enablePrompts();
+      mockPrompts({
+        sharedWithMe: [{ ...personalPrompt, bucket: 'owner-bucket' }],
+      });
+
+      render(<CatalogView />);
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).toContain('Work/AI/summarize:PROMPT');
+      expect(ids).toContain('prompts/owner-bucket/Work/AI/summarize:PROMPT');
+    });
+
     it('resolves undefined when the prompt fetch fails', async () => {
       enablePrompts();
       mockPrompts();
@@ -3053,6 +3094,7 @@ describe('CatalogView', () => {
   describe('prompt use in chat', () => {
     const personalPrompt = {
       id: 'Work/AI/summarize',
+      bucket: 'my-bucket',
       name: 'summarize',
       description: '',
       content: 'Summarize the following text:',
@@ -3401,6 +3443,7 @@ describe('CatalogView', () => {
   describe('prompt download', () => {
     const personalPrompt = {
       id: 'Work/AI/summarize',
+      bucket: 'my-bucket',
       name: 'summarize',
       description: 'Summarize a document',
       content: 'Summarize:\n\n{{document}}',

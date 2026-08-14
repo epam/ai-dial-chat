@@ -4153,11 +4153,11 @@ export interface ModelDetailsDto {
    */
   limits?: ModelLimitsDto;
   /**
-   *
-   * @type {ModelPricingDto}
+   * Pricing as reported by DIAL Core: `unit` names the billing unit and every other key holds the per-unit price for that key
+   * @type {{ [key: string]: string; }}
    * @memberof ModelDetailsDto
    */
-  pricing?: ModelPricingDto;
+  pricing?: { [key: string]: string };
   /**
    *
    * @type {DeploymentFeaturesDetailsDto}
@@ -4213,31 +4213,6 @@ export interface ModelLimitsDto {
    * @memberof ModelLimitsDto
    */
   maxCompletionTokens?: number;
-}
-/**
- *
- * @export
- * @interface ModelPricingDto
- */
-export interface ModelPricingDto {
-  /**
-   * The pricing unit
-   * @type {string}
-   * @memberof ModelPricingDto
-   */
-  unit?: string;
-  /**
-   * Per-unit price for the completion request
-   * @type {string}
-   * @memberof ModelPricingDto
-   */
-  prompt?: string;
-  /**
-   * Per-unit price for the completion response
-   * @type {string}
-   * @memberof ModelPricingDto
-   */
-  completion?: string;
 }
 /**
  *
@@ -4495,6 +4470,12 @@ export interface PromptResponseDto {
    * @memberof PromptResponseDto
    */
   id: string;
+  /**
+   * DIAL Core bucket the prompt lives in. For a prompt shared with the caller this is the owner bucket, not the caller bucket, so `id` can be qualified back into a `prompts/{bucket}/{id}` resource url
+   * @type {string}
+   * @memberof PromptResponseDto
+   */
+  bucket: string;
   /**
    * Display name
    * @type {string}

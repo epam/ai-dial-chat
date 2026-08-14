@@ -1,4 +1,4 @@
-import type { CatalogEntityType } from '../types/entity-type';
+import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { CatalogItem } from './catalog-item';
 /** Typography class overrides for `ListView` cells. */
 export interface ListViewTypography {

@@ -78,7 +78,12 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
       onOpenChange={handleOpenChange}
       placement="bottom-end"
       triggerClassName="ms-1 inline-flex align-middle"
-      contentClassName="!p-0 !bg-transparent !border-0 !shadow-none !max-w-none !rounded-none"
+      /* The tooltip's own arrow keeps its `stroke-primary` outline even though
+         the container border is off, so it reads as a stray outlined notch next
+         to the card — `[&>svg]` targets that arrow and clears the stroke.
+         `stroke-transparent`, not `stroke-none`: the Tailwind theme replaces the
+         default stroke scale with the border palette, which has no `none`. */
+      contentClassName="!p-0 !bg-transparent !border-0 !shadow-none !max-w-none !rounded-none [&>svg]:stroke-transparent"
       tooltip={
         <CitationCard
           group={group}

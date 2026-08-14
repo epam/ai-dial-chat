@@ -1,3 +1,4 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps, ReactNode } from 'react';
@@ -117,6 +118,20 @@ describe('PublishPanel', () => {
     });
     expect(screen.getByText('Custom entity header')).toBeTruthy();
     expect(screen.queryByText('ali.deepseek-v4-flash')).toBeNull();
+  });
+
+  it('renders the entity-header row with a version tag when the resource has a type', () => {
+    renderPanel({ resource: { ...resource, type: CatalogEntityType.Model } });
+    expect(screen.getByText(CatalogEntityType.Model)).toBeTruthy();
+    expect(screen.getByText('Version 4.0.1 · current')).toBeTruthy();
+  });
+
+  it('ignores renderSummary once the resource carries a type', () => {
+    renderPanel({
+      resource: { ...resource, type: CatalogEntityType.Model },
+      renderSummary: () => <div>Custom entity header</div>,
+    });
+    expect(screen.queryByText('Custom entity header')).toBeNull();
   });
 
   it('renders the folder section title', () => {

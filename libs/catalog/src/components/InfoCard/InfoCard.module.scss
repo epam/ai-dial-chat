@@ -1,10 +1,19 @@
 // Colors are CSS-var-driven so consumers can theme the card.
 // Layout, spacing, and border-radius live in Tailwind classes in the TSX.
+// The classes set `--rs-bg` on the `ResourceSummary` row they are applied to,
+// which is the variable its own stylesheet reads for the surface color.
 
 .info {
-  background: var(--cat-info-card-bg, var(--bg-info, #d6e2f9));
+  --rs-bg: var(--cat-info-card-bg, var(--bg-info, #d6e2f9));
 }
 
 .danger {
-  background: var(--cat-info-card-danger-bg, var(--bg-error, #f3d6d8));
+  --rs-bg: var(
+    --cat-info-card-danger-bg,
+    var(--bg-control-error-alpha-active, #f7646433)
+  );
+  --rs-border: var(
+    --cat-info-card-danger-border,
+    var(--stroke-error-alpha, #ae2f2f73)
+  );
 }

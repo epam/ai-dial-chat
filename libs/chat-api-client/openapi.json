@@ -2680,6 +2680,7 @@
     },
     "/api/v1/prompts/item": {
       "get": {
+        "description": "Reads a prompt from the caller's own bucket, or from the `bucket` given in the query — the owner bucket a shared prompt reports. DIAL Core authorises the read either way.",
         "operationId": "getPrompt",
         "parameters": [
           {
@@ -2690,6 +2691,16 @@
             "schema": {
               "maxLength": 2048,
               "example": "Work/AI/my-prompt",
+              "type": "string"
+            }
+          },
+          {
+            "name": "bucket",
+            "required": false,
+            "in": "query",
+            "description": "DIAL Core bucket to read from. Defaults to the caller's own bucket; pass the owner bucket reported as `bucket` on a shared prompt to read that one. DIAL Core still enforces access, so a bucket the caller has no grant for resolves to 404.",
+            "schema": {
+              "example": "owner-bucket",
               "type": "string"
             }
           }
@@ -2718,7 +2729,7 @@
             "description": "DIAL Core error"
           }
         },
-        "summary": "Get a personal prompt",
+        "summary": "Get a personal or shared prompt",
         "tags": ["prompts"]
       }
     },
@@ -6944,23 +6955,6 @@
           }
         }
       },
-      "ModelPricingDto": {
-        "type": "object",
-        "properties": {
-          "unit": {
-            "type": "string",
-            "description": "The pricing unit"
-          },
-          "prompt": {
-            "type": "string",
-            "description": "Per-unit price for the completion request"
-          },
-          "completion": {
-            "type": "string",
-            "description": "Per-unit price for the completion response"
-          }
-        }
-      },
       "DeploymentFeaturesDetailsDto": {
         "type": "object",
         "properties": {
@@ -7083,7 +7077,16 @@
             "$ref": "#/components/schemas/ModelLimitsDto"
           },
           "pricing": {
-            "$ref": "#/components/schemas/ModelPricingDto"
+            "type": "object",
+            "description": "Pricing as reported by DIAL Core: `unit` names the billing unit and every other key holds the per-unit price for that key",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "unit": "token",
+              "prompt": "0.000003",
+              "completion": "0.000015"
+            }
           },
           "features": {
             "$ref": "#/components/schemas/DeploymentFeaturesDetailsDto"
@@ -9202,6 +9205,11 @@
             "description": "Prompt path within the prompts namespace (used as stable ID)",
             "example": "Work/AI/my-prompt"
           },
+          "bucket": {
+            "type": "string",
+            "description": "DIAL Core bucket the prompt lives in. For a prompt shared with the caller this is the owner bucket, not the caller bucket, so `id` can be qualified back into a `prompts/{bucket}/{id}` resource url",
+            "example": "my-bucket"
+          },
           "name": {
             "type": "string",
             "description": "Display name",
@@ -9240,6 +9248,7 @@
         },
         "required": [
           "id",
+          "bucket",
           "name",
           "content",
           "folderId",
