@@ -37,6 +37,7 @@ import { ApiKeys } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { errorsMessages } from '@/src/constants/errors';
 
 import {
   Conversation,
@@ -751,13 +752,27 @@ describe('utils/app/conversation.ts', () => {
     it('Should return updated messages with error', () => {
       const expectedMessage = {
         ...testMessage2,
-        errorMessage:
-          'Response generation was stopped. Please regenerate to continue working with conversation',
+        errorMessage: errorsMessages.generationStopped,
       };
 
       expect(
         addPausedError(
           testConv2,
+          [{ features: {} } as DialAIEntityModel],
+          [testMessage1, testMessage2],
+        ),
+      ).toEqual([testMessage1, expectedMessage]);
+    });
+
+    it('Should return updated messages with replay error for replay conversation', () => {
+      const expectedMessage = {
+        ...testMessage2,
+        errorMessage: errorsMessages.generationStoppedReplay,
+      };
+
+      expect(
+        addPausedError(
+          { ...testConv2, replay: { isReplay: true } },
           [{ features: {} } as DialAIEntityModel],
           [testMessage1, testMessage2],
         ),
