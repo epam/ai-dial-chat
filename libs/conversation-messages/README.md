@@ -63,7 +63,7 @@ import { AssistantMessageBubble } from '@epam/ai-dial-conversation-messages';
   deploymentIconUrl={deployment.iconUrl}
   deploymentDisplayName={deployment.displayName}
   actions={{
-    role: MessageRole.Agent,
+    role: MessageRole.Assistant,
     onRegenerate: handleRegenerate,
     onCopy: handleCopy,
     onLike: handleLike,
@@ -97,13 +97,13 @@ import { MessageBubble } from '@epam/ai-dial-conversation-messages';
 
 ### MessageActions
 
-Toolbar with per-message actions. `role` selects the action set: `User` shows Edit/Delete, `Agent` shows Regenerate/Copy/Like/Dislike. Usually passed to a bubble through its `actions` prop rather than rendered directly.
+Toolbar with per-message actions. `role` selects the action set: `MessageRole.User` (the default) shows Edit/Delete, any other role shows Regenerate/Copy/Like/Dislike. Usually passed to a bubble through its `actions` prop rather than rendered directly.
 
 ```tsx
 import { MessageActions } from '@epam/ai-dial-conversation-messages';
 
 <MessageActions
-  role={MessageRole.Agent}
+  role={MessageRole.Assistant}
   onRegenerate={handleRegenerate}
   onCopy={handleCopy}
   onCopyMarkdown={handleCopyMarkdown}
