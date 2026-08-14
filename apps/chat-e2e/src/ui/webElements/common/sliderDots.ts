@@ -4,10 +4,17 @@ import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Locator, Page } from '@playwright/test';
 
 // Dots pagination of a SliderGrid: one dot per page plus the prev/next arrows.
+// Only about 7 dots fit the strip and the rest are clipped by its overflow, so a
+// dot can be clicked only when it sits next to the active one. Distant pages are
+// reachable the way a user reaches them - with the arrows.
 export class SliderDots extends BaseElement {
   constructor(page: Page, parentLocator?: Locator) {
     super(page, SliderDotsSelectors.container, parentLocator);
   }
+
+  private dotsList = this.getChildElementBySelector(
+    SliderDotsSelectors.dotsList,
+  );
 
   public nextArrow = this.getChildElementBySelector(
     SliderDotsSelectors.nextArrow,
@@ -15,13 +22,16 @@ export class SliderDots extends BaseElement {
   public previousArrow = this.getChildElementBySelector(
     SliderDotsSelectors.previousArrow,
   );
-  public dots = this.getChildElementBySelector(
-    SliderDotsSelectors.dotsList,
-  ).getChildElementBySelector(SliderDotsSelectors.dot);
+  public dots = this.dotsList.getChildElementBySelector(
+    SliderDotsSelectors.dot,
+  );
+  public activeDot = this.dotsList.getChildElementBySelector(
+    SliderDotsSelectors.activeDot,
+  );
 
   // Pages are 0-based, same as the component's activeSlide.
   public getDot(pageIndex: number): BaseElement {
-    return this.getChildElementBySelector(
+    return this.dotsList.getChildElementBySelector(
       SliderDotsSelectors.dotByIndex(pageIndex),
     );
   }
@@ -35,21 +45,24 @@ export class SliderDots extends BaseElement {
     return this.dots.getElementsCount();
   }
 
-  // The active page is a bar (w-8), the others stay circles.
   public async getActivePageIndex(): Promise<number> {
-    const pagesCount = await this.getPagesCount();
-    for (let pageIndex = 0; pageIndex < pagesCount; pageIndex++) {
-      const dotClass = await this.getDotButton(pageIndex).getAttribute(
-        Attributes.class,
-      );
-      if (dotClass?.includes(SliderDotsSelectors.activeDotClass)) {
-        return pageIndex;
-      }
-    }
-    return -1;
+    const dotQa = await this.activeDot.getAttribute(Attributes.dataQA);
+    return dotQa ? +dotQa.replace(SliderDotsSelectors.dotQaPrefix, '') : -1;
   }
 
-  public async openPage(pageIndex: number) {
-    await this.getDot(pageIndex).click();
+  public async openNextPageByDot() {
+    const activePage = await this.getActivePageIndex();
+    await this.getDot(activePage + 1).click();
+  }
+
+  public async openPreviousPageByDot() {
+    const activePage = await this.getActivePageIndex();
+    await this.getDot(activePage - 1).click();
+  }
+
+  public async goToLastPage() {
+    while (await this.nextArrow.isElementEnabled()) {
+      await this.nextArrow.click();
+    }
   }
 }
