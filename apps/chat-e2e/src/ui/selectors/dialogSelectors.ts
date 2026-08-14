@@ -247,8 +247,6 @@ export const TalkToAgentDialogSelectors = {
   goToDialMarketplaceButton: '[data-qa="go-to-marketplace"]',
   myAgentsTab: '[data-qa="workspace"]',
   allAgentsTab: '[data-qa="marketplace"]',
-  nextArrowButton: SliderDotsSelectors.nextArrow,
-  previousArrowButton: SliderDotsSelectors.previousArrow,
 };
 
 export const MessageTemplateModalSelectors = {

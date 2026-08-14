@@ -34,12 +34,6 @@ export class TalkToAgentDialog extends AgentsBrowserModal {
   public allAgentsTab = this.getChildElementBySelector(
     TalkToAgentDialogSelectors.allAgentsTab,
   );
-  public nextArrowButton = this.getChildElementBySelector(
-    TalkToAgentDialogSelectors.nextArrowButton,
-  );
-  public previousArrowButton = this.getChildElementBySelector(
-    TalkToAgentDialogSelectors.previousArrowButton,
-  );
   public noResultFound = this.getChildElementBySelector(
     ErrorLabelSelectors.noResultFound,
   );
@@ -78,20 +72,7 @@ export class TalkToAgentDialog extends AgentsBrowserModal {
   }
 
   public async getAllAgentNames() {
-    const allAgentNames = await this.getAgents().getEntityNames();
-    while (
-      (await this.nextArrowButton.isVisible()) &&
-      (await this.nextArrowButton.isElementEnabled())
-    ) {
-      await this.nextArrowButton.click();
-      const visibleAgentNames = await this.getAgents().getEntityNames();
-      for (const visibleAgentName of visibleAgentNames) {
-        if (!allAgentNames.includes(visibleAgentName)) {
-          allAgentNames.push(visibleAgentName);
-        }
-      }
-    }
-    return allAgentNames;
+    return this.getAllEntityNames();
   }
 
   public async selectAgent(

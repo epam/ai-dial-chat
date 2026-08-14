@@ -1,5 +1,5 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
-import { ElementState } from '@/src/testData';
+import { ElementState, ExpectedMessages } from '@/src/testData';
 import { AgentsBrowserModal } from '@/src/ui/webElements/agentsBrowserModal';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 
@@ -28,6 +28,28 @@ export class AgentsBrowserModalAssertion<
       const entity = await this.agentsBrowserModal.searchForEntity(name);
       await this.assertElementState(entity, state);
     }
+  }
+
+  // Names are collected across all the slider pages, so it works with a grid
+  // that holds more items than one page fits.
+  public async assertAllEntityNamesInclude(names: string[]) {
+    const displayedNames = await this.agentsBrowserModal.getAllEntityNames();
+    for (const name of names) {
+      this.assertArrayIncludes(
+        displayedNames,
+        name,
+        ExpectedMessages.searchResultsAreCorrect,
+      );
+    }
+  }
+
+  // The grid shows something - used when the exact content is not predictable.
+  public async assertGridIsNotEmpty() {
+    this.assertNumberIsGreaterThan(
+      await this.agentsBrowserModal.getEntities().getElementsCount(),
+      0,
+      ExpectedMessages.searchResultCountIsValid,
+    );
   }
 
   // What the grid currently holds — the search input is left untouched.

@@ -75,4 +75,24 @@ export class AgentsBrowserModal extends Popup {
     await this.searchInput.fillInInput(name);
     return this.getEntityByName(name);
   }
+
+  // Only the active page and its neighbours are rendered, so the names of the
+  // rest are collected by walking the pages with the next arrow.
+  public async getAllEntityNames(): Promise<string[]> {
+    const sliderDots = this.getSliderDots();
+    const allNames = await this.getEntities().getEntityNames();
+    while (
+      (await sliderDots.nextArrow.isVisible()) &&
+      (await sliderDots.nextArrow.isElementEnabled())
+    ) {
+      await sliderDots.nextArrow.click();
+      const pageNames = await this.getEntities().getEntityNames();
+      for (const pageName of pageNames) {
+        if (!allNames.includes(pageName)) {
+          allNames.push(pageName);
+        }
+      }
+    }
+    return allNames;
+  }
 }
