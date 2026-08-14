@@ -5,7 +5,7 @@ on:
     types: [opened, synchronize, ready_for_review, reopened] # Allowed types: https://github.com/anthropics/claude-code-action/blob/4481e6d3c7bbb88db2a928ca3444c536f589c7c1/src/modes/detector.ts#L101
     branches:
       - development
-      - development-1.0
+      - development-legacy
       - release-*.*
 
 concurrency:

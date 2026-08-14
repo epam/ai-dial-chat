@@ -2,7 +2,7 @@ name: PR Workflow
 
 on:
   pull_request:
-    branches: [development, development-1.0, release-*]
+    branches: [development, release-*]
 
 permissions:
   contents: read
@@ -32,7 +32,7 @@ jobs:
         run: npm run validate:agent-docs
 
   run_tests:
-    uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@4.7.1
+    uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@4.8.0
     with:
       node-version: 24
       maximize-build-space: true

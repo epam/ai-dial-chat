@@ -2,13 +2,13 @@ name: Release Workflow
 
 on:
   push:
-    branches: [development-1.0, release-1.*]
+    branches: [development, release-*]
   workflow_dispatch:
     inputs:
       promote:
         type: boolean
         default: false
-        description: Promote release to stable (for release-1.* branches only)
+        description: Promote release to stable (for release-* branches only)
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -22,14 +22,10 @@ permissions:
 
 jobs:
   release:
-    uses: epam/ai-dial-ci/.github/workflows/node_release.yml@4.7.1
+    uses: epam/ai-dial-ci/.github/workflows/node_release.yml@4.8.0
     with:
       promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
       node-version: 24
-      filter-version: '1\.[0-9]+'
-      primary-branch-pattern: '^development-1\.0$'
-      release-branch-pattern: '^release-1\.[0-9]+$'
-      docker-development-tag: 'development-1.0'
       maximize-build-space: true
       draft-stable-releases: true
       # ORT 90: fixes ORT 85 NPM graph mapping (analyzer: ~25m → ~3m)
