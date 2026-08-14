@@ -1,6 +1,5 @@
 import {
   Catalog,
-  CatalogEntityType,
   CatalogItem,
   CatalogItemDetailsFetchResult,
   CatalogViewMode,
@@ -8,9 +7,13 @@ import {
   CredentialStatus,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
-import type { ToolsetLogoutBodyDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  PromptResponseDto,
+  ToolsetLogoutBodyDto,
+} from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
+  CatalogEntityType,
   extractPromptParams,
   triggerBlobDownload,
 } from '@epam/ai-dial-chat-shared';
@@ -82,7 +85,7 @@ import {
   EntityOperation,
   NotifiableEntity,
 } from '../../types/entity-notification';
-import { PromptSource } from '../../types/prompt';
+import { parsePromptResourceUrl, PromptSource } from '../../types/prompt';
 import { ROUTES } from '../../types/routes';
 import {
   parseSkillResourceUrl,
@@ -390,6 +393,23 @@ const CatalogView: FC<Props> = ({
     [visibleCatalogItems],
   );
 
+  /*
+   * Reads a prompt item back through whichever endpoint owns it. A shared
+   * prompt carries a qualified `prompts/{ownerBucket}/{path}` id: the bucket
+   * has to travel with the request, because the personal endpoint resolves a
+   * bare path against the *caller's* bucket and would 404 — or, on a path
+   * collision, silently return the caller's own prompt of the same name.
+   */
+  const fetchPromptDto = useCallback(
+    (item: CatalogItem): Promise<PromptResponseDto> => {
+      if (isOrganisationPromptItem(item)) return getPublicPrompt(item.id);
+      const ref = parsePromptResourceUrl(item.id);
+      if (ref == null) return getPrompt(item.id);
+      return getPrompt(ref.path, ref.bucket);
+    },
+    [],
+  );
+
   const handleFetchDetails = useCallback(
     async (
       item: CatalogItem,
@@ -401,9 +421,7 @@ const CatalogView: FC<Props> = ({
        */
       if (item.type === CatalogEntityType.Prompt) {
         try {
-          const dto = isOrganisationPromptItem(item)
-            ? await getPublicPrompt(item.id)
-            : await getPrompt(item.id);
+          const dto = await fetchPromptDto(item);
           /*
            * The fetch result replaces `item.details` wholesale, so the
            * Overview tab has to be rebuilt here too or it would disappear.
@@ -489,7 +507,7 @@ const CatalogView: FC<Props> = ({
         return undefined;
       }
     },
-    [isAdmin, t, dialCoreExternalUrl, skills, publicSkills],
+    [isAdmin, t, dialCoreExternalUrl, skills, publicSkills, fetchPromptDto],
   );
 
   const getLevelStatus = useCallback(
@@ -724,9 +742,7 @@ const CatalogView: FC<Props> = ({
         let promptContent = item.details?.promptContent?.content;
         if (promptContent == null) {
           try {
-            const dto = isOrganisationPromptItem(item)
-              ? await getPublicPrompt(item.id)
-              : await getPrompt(item.id);
+            const dto = await fetchPromptDto(item);
             promptContent = dto.content;
           } catch (err) {
             const { traceId } = await getApiErrorDetails(err);
@@ -759,7 +775,7 @@ const CatalogView: FC<Props> = ({
       setSelectedItemId(item.id);
       navigate(ROUTES.Root);
     },
-    [setSelectedItemId, navigate, showErrorNotification, t],
+    [setSelectedItemId, navigate, showErrorNotification, t, fetchPromptDto],
   );
 
   /* Picker mode: a card click selects it and closes the modal immediately,
@@ -788,9 +804,7 @@ const CatalogView: FC<Props> = ({
     async (item: CatalogItem) => {
       if (item.type !== CatalogEntityType.Prompt) return;
       try {
-        const dto = isOrganisationPromptItem(item)
-          ? await getPublicPrompt(item.id)
-          : await getPrompt(item.id);
+        const dto = await fetchPromptDto(item);
         triggerBlobDownload(
           serializePromptExport(buildPromptExportEnvelope(dto)),
           buildPromptExportFileName(dto.name, EXPORT_APP_NAME),
@@ -808,7 +822,7 @@ const CatalogView: FC<Props> = ({
         });
       }
     },
-    [notifyOperationSuccess, showErrorNotification, t],
+    [notifyOperationSuccess, showErrorNotification, t, fetchPromptDto],
   );
 
   /* Only a prompt has a downloadable body; every other type is backed by config the catalog does not export. */

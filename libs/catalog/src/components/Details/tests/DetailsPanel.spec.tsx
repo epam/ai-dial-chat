@@ -1,3 +1,4 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   PublicationRule,
   PublicationRuleFunction,
@@ -8,7 +9,6 @@ import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
-import { CatalogEntityType } from '../../../types/entity-type';
 import {
   CredentialsLevel,
   CredentialStatus,
@@ -16,7 +16,8 @@ import {
 } from '../../../types/toolset-auth';
 import { DetailsPanel } from '../DetailsPanel';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
   Tabs: ({
     tabs,
     onTabChange,
@@ -123,7 +124,8 @@ vi.mock('@tabler/icons-react', () => ({
   IconShare: () => <svg />,
   IconTrashX: () => <svg />,
 }));
-vi.mock('../../EntityHeader/EntityHeader', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
 }));
 vi.mock('../../StarToggleButton/StarToggleButton', () => ({

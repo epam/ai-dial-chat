@@ -65,16 +65,14 @@ describe('LoginPage', () => {
       '/login?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2Fconversation%3Fx%3D1',
     );
 
-    const keycloakAnchor = (
-      await screen.findByRole('button', { name: 'Keycloak' })
-    ).closest('a');
-    expect(keycloakAnchor?.getAttribute('href')).toBe(
+    const keycloakAnchor = await screen.findByRole('link', {
+      name: 'Keycloak',
+    });
+    expect(keycloakAnchor.getAttribute('href')).toBe(
       '/api/v1/auth/login/keycloak?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2Fconversation%3Fx%3D1',
     );
 
-    const auth0Anchor = screen
-      .getByRole('button', { name: 'Auth0' })
-      .closest('a');
+    const auth0Anchor = screen.getByRole('link', { name: 'Auth0' });
     expect(auth0Anchor?.getAttribute('href')).toBe(
       '/api/v1/auth/login/auth0?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2Fconversation%3Fx%3D1',
     );
@@ -90,10 +88,10 @@ describe('LoginPage', () => {
 
     renderLogin();
 
-    const keycloakAnchor = (
-      await screen.findByRole('button', { name: 'Keycloak' })
-    ).closest('a');
-    expect(keycloakAnchor?.getAttribute('href')).toBe(
+    const keycloakAnchor = await screen.findByRole('link', {
+      name: 'Keycloak',
+    });
+    expect(keycloakAnchor.getAttribute('href')).toBe(
       `/api/v1/auth/login/keycloak?callbackUrl=${encodeURIComponent('http://localhost/')}`,
     );
   });
@@ -124,10 +122,10 @@ describe('LoginPage', () => {
 
     renderLogin('/login?callbackUrl=https%3A%2F%2Fevil.example.com%2Fsteal');
 
-    const keycloakAnchor = (
-      await screen.findByRole('button', { name: 'Keycloak' })
-    ).closest('a');
-    const href = keycloakAnchor?.getAttribute('href') ?? '';
+    const keycloakAnchor = await screen.findByRole('link', {
+      name: 'Keycloak',
+    });
+    const href = keycloakAnchor.getAttribute('href') ?? '';
 
     expect(href).toContain(
       `callbackUrl=${encodeURIComponent('http://localhost/')}`,

@@ -1,6 +1,6 @@
 import type { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Spinner } from '@epam/ai-dial-ui-kit';
+import { LinkButton, Spinner } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   type SyntheticEvent,
@@ -101,23 +101,17 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
           <p className="text-center">{htmlFrameBlockedLabel}</p>
           {content.url != null && (
             /*
-             * A real anchor, not a button: the target is a URL the user must
-             * be able to middle-click, copy, or open in a background tab. The
-             * ui-kit has no anchor-rendering button component (`LinkButton`
-             * renders a `<button>`), so the link styling is applied here.
+             * `href` makes `LinkButton` render a real anchor, so the target
+             * stays middle-clickable, copyable, and openable in a background
+             * tab.
              */
-            <a
+            <LinkButton
               href={content.url}
               target="_blank"
-              rel="noopener noreferrer"
-              className={mergeClasses(
-                'underline hover:no-underline',
-                styles.openInNewTabButton,
-                openInNewTabButtonTypographyClassName,
-              )}
-            >
-              {htmlOpenInNewTabLabel}
-            </a>
+              label={htmlOpenInNewTabLabel}
+              className={styles.openInNewTabButton}
+              textClassName={openInNewTabButtonTypographyClassName}
+            />
           )}
         </div>
       );

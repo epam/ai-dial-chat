@@ -1,4 +1,4 @@
-import type { CatalogEntityType } from '../types/entity-type';
+import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { CatalogItemCredentials } from './catalog-item-credentials';
 import type { CatalogItemTabData } from './item-details-data';
 

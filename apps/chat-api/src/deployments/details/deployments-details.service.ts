@@ -256,13 +256,7 @@ export class DeploymentsDetailsService {
                   : undefined,
             }
           : undefined,
-        pricing: raw.pricing
-          ? {
-              unit: raw.pricing.unit,
-              prompt: raw.pricing.prompt,
-              completion: raw.pricing.completion,
-            }
-          : undefined,
+        pricing: raw.pricing,
         features: mapDeploymentFeatures(raw.features),
         owner: raw.owner,
         inputAttachmentTypes: Array.isArray(raw.input_attachment_types)

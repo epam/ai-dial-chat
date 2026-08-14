@@ -123,7 +123,7 @@ export class PromptsResourceService {
         );
       }
 
-      return mapPromptToResponse(data, path, metadata);
+      return mapPromptToResponse(data, path, metadata, bucket);
     } catch (err) {
       return handleDialSdkError(err, 'prompts.readPrompt', this.logger);
     }

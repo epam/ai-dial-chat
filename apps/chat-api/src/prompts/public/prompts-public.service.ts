@@ -107,6 +107,6 @@ export class PromptsPublicService {
     if (metadata == null) {
       throw new NotFoundException(`Public prompt metadata not found: ${path}`);
     }
-    return mapPromptToResponse(data, path, metadata);
+    return mapPromptToResponse(data, path, metadata, PUBLIC_BUCKET);
   }
 }

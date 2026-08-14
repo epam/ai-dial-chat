@@ -1,4 +1,8 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  CatalogEntityType,
+  EntityHeader,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   DangerButton,
   DIAL_ICON_SIZE,
@@ -37,7 +41,6 @@ import type {
   ItemDetailsStyles,
   ItemDetailsTexts,
 } from '../../../models/item-details-props';
-import { CatalogEntityType } from '../../../types/entity-type';
 import { RecipientsCountStatus } from '../../../types/recipients-count';
 import {
   CredentialsLevel,
@@ -45,9 +48,7 @@ import {
   ToolsetAuthenticationType,
 } from '../../../types/toolset-auth';
 import { getCredentialsUiState } from '../../../utils/toolset-credentials';
-import { EntityHeader } from '../../EntityHeader/EntityHeader';
 import { CredentialsApiKeyOverlay } from './CredentialsApiKeyOverlay/CredentialsApiKeyOverlay';
-import styles from './Header.module.scss';
 import { ShareButton } from './ShareButton/ShareButton';
 
 const defaultManageCredentialsActionLabel = (
