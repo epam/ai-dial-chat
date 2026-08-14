@@ -52,8 +52,13 @@ import {
   isMyEntity,
 } from '@/src/utils/app/id';
 import { isMarketplaceEditorStep } from '@/src/utils/app/marketplace';
+import { parseLocalizedField } from '@/src/utils/app/marketplace-localization';
 import { mergeFeatures } from '@/src/utils/app/models';
-import { getInternalPathname, isInternalRoute } from '@/src/utils/app/route';
+import {
+  getInternalPathname,
+  getInternalRoute,
+  isInternalRoute,
+} from '@/src/utils/app/route';
 import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 import { translate } from '@/src/utils/app/translation';
 import { parseEntityApiKey } from '@/src/utils/server/api';
@@ -91,6 +96,7 @@ import {
   ConversationsSelectors,
   ModelsSelectors,
   ShareSelectors,
+  UISelectors,
 } from '@/src/store/selectors';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
@@ -845,8 +851,16 @@ const updateApplicationStatusSuccessEpic: AppEpic = (action$, state$) =>
       ].includes(payload.status),
     ),
     switchMap(({ payload }) => {
-      const { name } = parseEntityApiKey(payload.id, { parseVersion: true });
+      const locale = UISelectors.selectLocale(state$.value);
+      const application = ModelsSelectors.selectModelsMap(state$.value)[
+        payload.id
+      ];
+      const { name: nameFromId } = parseEntityApiKey(payload.id, {
+        parseVersion: true,
+      });
       const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
+
+      const name = parseLocalizedField(locale, application?.name ?? nameFromId);
 
       return isAdmin || !isEntityIdExternal(payload)
         ? of(
@@ -1013,10 +1027,11 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
         ? getSafeRedirectUrl(payload.redirectUrl.toString())
         : undefined;
 
-      const route =
-        redirectUrl ??
-        returnUrl ??
-        (publicationUrl
+      const targetUrl = redirectUrl ?? returnUrl;
+
+      const route = targetUrl
+        ? getInternalRoute(targetUrl, router)
+        : publicationUrl
           ? { pathname: Routes.Chat }
           : {
               pathname: Routes.Marketplace,
@@ -1025,7 +1040,7 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
                 [MarketplaceQueryParams.entitiesTab]:
                   MarketplaceEntitiesTabs.AGENTS,
               },
-            });
+            };
 
       const actions: Observable<AppAction>[] = [
         of(PromptsActions.clearSkillValidations()),
