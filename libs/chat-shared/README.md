@@ -28,11 +28,24 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 ## Domain Models
 
 ```tsx
-import type { Chat, Message, Annotation } from '@epam/ai-dial-chat-shared';
-import type { Deployment, DeploymentFeatures } from '@epam/ai-dial-chat-shared';
-import type { Theme, AuthSession, DialModel } from '@epam/ai-dial-chat-shared';
+import type {
+  Conversation,
+  Message,
+  Stage,
+  Annotation,
+} from '@epam/ai-dial-chat-shared';
+import type {
+  DeploymentItem,
+  DeploymentFeatures,
+} from '@epam/ai-dial-chat-shared';
+import type { Theme, UserProfile, DialModel } from '@epam/ai-dial-chat-shared';
 import type { EntityHeaderItem } from '@epam/ai-dial-chat-shared';
-import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import {
+  CatalogEntityType,
+  MessageRole,
+  MessageRating,
+  StageStatus,
+} from '@epam/ai-dial-chat-shared';
 ```
 
 `CatalogEntityType` is the entity taxonomy (`MODEL`, `AGENT`, `TOOLSET`,
@@ -51,14 +64,22 @@ import { MarkdownRenderer } from '@epam/ai-dial-chat-shared';
 <MarkdownRenderer content={markdownText} />;
 ```
 
-### CodeBlock
+### MarkdownCodeBlock
 
-Syntax-highlighted code block with a copy button.
+Syntax-highlighted code block with copy and download buttons. `language` and
+`value` are required; pass `isStreaming` to hide the copy button while content is
+still arriving.
 
 ```tsx
-import { CodeBlock } from '@epam/ai-dial-chat-shared';
+import { MarkdownCodeBlock } from '@epam/ai-dial-chat-shared';
 
-<CodeBlock language="typescript" code={snippet} />;
+<MarkdownCodeBlock
+  language="typescript"
+  value={snippet}
+  isStreaming={isStreaming}
+  copyLabel="Copy code"
+  copiedLabel="Copied!"
+/>;
 ```
 
 ### MarkdownTable
