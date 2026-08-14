@@ -289,6 +289,18 @@ export interface ItemDetailsTypography {
   folderLeafClassName?: string;
   /** Typography class for a confirmation step's body copy and consequence bullets. Default: `'dial-small-text'`. */
   confirmMessageClassName?: string;
+  /** Typography class for the credentials-management sub-screen's description. Default: `'dial-body-paragraph-text'`. */
+  credentialsDescriptionClassName?: string;
+  /** Typography class for a credentials row's title. Default: `'dial-small-semi-text'`. */
+  credentialsRowLabelClassName?: string;
+  /** Typography class for a credentials row's description. Default: `'dial-small-text'`. */
+  credentialsRowDescriptionClassName?: string;
+  /** Typography class for the empty-API-key validation message. Default: `'dial-caption-text'`. */
+  credentialsErrorClassName?: string;
+  /** Typography class for the configured-API-key card's title. Default: `'dial-tiny-semi-text'`. */
+  credentialsKeyCardTitleClassName?: string;
+  /** Typography class for the configured-API-key card's description. Default: `'dial-tiny-text'`. */
+  credentialsKeyCardDescriptionClassName?: string;
 }
 
 /**
@@ -351,6 +363,24 @@ export interface ItemDetailsColors {
   confirmConsequenceText?: string;
   /** Top border color of the confirmation action row. Fallback: `--stroke-tertiary`. */
   confirmFooterBorder?: string;
+  /** Background of the credentials sub-screen's identity card and its rows' icon chips. Fallback: `--bg-layer-sunken`. */
+  credentialsSurfaceBackground?: string;
+  /** Color of the checkmark marking the credentials level currently in effect. Fallback: `--text-success`. */
+  credentialsActiveIcon?: string;
+  /** Text color of the credentials sub-screen's description. Fallback: `--text-primary`. */
+  credentialsDescriptionText?: string;
+  /** Text color of a credentials row's description. Fallback: `--text-tertiary`. */
+  credentialsRowDescriptionText?: string;
+  /** Text color of the empty-API-key validation message. Fallback: `--text-error`. */
+  credentialsErrorText?: string;
+  /** Surface color of the credentials status card used by the banner, the configured-key card, and the personal API-key popover. Fallback: `--bg-layer-base`. */
+  credentialsCardBackground?: string;
+  /** Color of the credentials status card's leading icon. Fallback: `--text-secondary`. */
+  credentialsCardIcon?: string;
+  /** Title text color of the credentials status card. Fallback: `--text-primary`. */
+  credentialsCardTitleText?: string;
+  /** Description text color of the credentials status card. Fallback: `--text-secondary`. */
+  credentialsCardDescriptionText?: string;
 }
 
 /** Grouped style overrides for `DetailsPanel`. */

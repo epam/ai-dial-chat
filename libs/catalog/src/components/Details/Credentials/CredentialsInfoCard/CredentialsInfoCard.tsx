@@ -1,5 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC, ReactNode } from 'react';
+import styles from './CredentialsInfoCard.module.scss';
 
 /** Props for {@link CredentialsInfoCard}. */
 interface CredentialsInfoCardProps {
@@ -29,9 +30,18 @@ export const CredentialsInfoCard: FC<CredentialsInfoCardProps> = ({
   <div
     role="status"
     aria-live="polite"
-    className="flex items-start gap-3 rounded-xl bg-layer-base p-3"
+    className={mergeClasses(
+      'flex items-start gap-3 rounded-xl p-3',
+      styles.card,
+    )}
   >
-    <span className={mergeClasses('shrink-0', description != null && 'mt-0.5')}>
+    <span
+      className={mergeClasses(
+        'shrink-0',
+        styles.icon,
+        description != null && 'mt-0.5',
+      )}
+    >
       {icon}
     </span>
     {/*
@@ -40,12 +50,12 @@ export const CredentialsInfoCard: FC<CredentialsInfoCardProps> = ({
      */}
     <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
       <div className="flex min-w-0 flex-col gap-1">
-        <span className={mergeClasses(titleClassName, 'text-primary')}>
+        <span className={mergeClasses(titleClassName, styles.title)}>
           {title}
         </span>
         {description != null && (
           <span
-            className={mergeClasses(descriptionClassName, 'text-secondary')}
+            className={mergeClasses(descriptionClassName, styles.description)}
           >
             {description}
           </span>

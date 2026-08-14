@@ -218,6 +218,17 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-confirm-message-text': detailsColors?.confirmMessageText,
     '--cat-confirm-consequence-text': detailsColors?.confirmConsequenceText,
     '--cat-confirm-footer-border': detailsColors?.confirmFooterBorder,
+    '--cat-cred-surface-bg': detailsColors?.credentialsSurfaceBackground,
+    '--cat-cred-active-icon': detailsColors?.credentialsActiveIcon,
+    '--cat-cred-description-text': detailsColors?.credentialsDescriptionText,
+    '--cat-cred-row-description-text':
+      detailsColors?.credentialsRowDescriptionText,
+    '--cat-cred-error-text': detailsColors?.credentialsErrorText,
+    '--cat-cred-card-bg': detailsColors?.credentialsCardBackground,
+    '--cat-cred-card-icon': detailsColors?.credentialsCardIcon,
+    '--cat-cred-card-title-text': detailsColors?.credentialsCardTitleText,
+    '--cat-cred-card-description-text':
+      detailsColors?.credentialsCardDescriptionText,
   });
 
   const [isStarred, setIsStarred] = useState(initialIsStarred);
@@ -771,6 +782,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onRequestLogout={handleRequestLogout}
                 onRequestDeleteApiKey={handleRequestDeleteApiKey}
                 texts={texts}
+                detailsStyles={detailsStyles}
               />
             )}
 

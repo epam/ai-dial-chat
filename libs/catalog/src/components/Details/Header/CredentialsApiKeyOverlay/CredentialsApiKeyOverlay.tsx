@@ -158,7 +158,7 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
       {isSignedIn && (
         <div className="animate-fadeIn px-4 py-3.5">
           <CredentialsInfoCard
-            icon={<IconKey size={20} aria-hidden className="text-secondary" />}
+            icon={<IconKey size={20} aria-hidden />}
             title={addedMessage}
             description={addedWhenLabel}
             action={

@@ -53,13 +53,8 @@ export const CredentialsBanner: FC<CredentialsBannerProps> = ({
   authenticationType,
   texts,
 }) => {
-  const orgIcon = (
-    <IconBuildingCommunity
-      size={BANNER_ICON_SIZE}
-      aria-hidden
-      className="text-secondary"
-    />
-  );
+  /* Color comes from `CredentialsInfoCard`'s icon slot, which the icon inherits. */
+  const orgIcon = <IconBuildingCommunity size={BANNER_ICON_SIZE} aria-hidden />;
 
   if (state === CredentialsBannerState.PersonalCredentialsActive) {
     const title = (
@@ -68,13 +63,7 @@ export const CredentialsBanner: FC<CredentialsBannerProps> = ({
     )(authenticationType);
     return (
       <CredentialsInfoCard
-        icon={
-          <IconUser
-            size={BANNER_ICON_SIZE}
-            aria-hidden
-            className="text-secondary"
-          />
-        }
+        icon={<IconUser size={BANNER_ICON_SIZE} aria-hidden />}
         title={title}
       />
     );

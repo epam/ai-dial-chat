@@ -1,3 +1,4 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DangerButton,
   DIAL_ICON_SIZE,
@@ -14,7 +15,10 @@ import {
 } from '@tabler/icons-react';
 import { FC, ReactNode, useCallback, useState } from 'react';
 import type { CatalogItem } from '../../../../models/catalog-item';
-import type { ItemDetailsTexts } from '../../../../models/item-details-props';
+import type {
+  ItemDetailsStyles,
+  ItemDetailsTexts,
+} from '../../../../models/item-details-props';
 import {
   CredentialsLevel,
   CredentialStatus,
@@ -22,6 +26,7 @@ import {
 } from '../../../../types/toolset-auth';
 import { EntityHeader } from '../../../EntityHeader/EntityHeader';
 import { CredentialsInfoCard } from '../CredentialsInfoCard/CredentialsInfoCard';
+import styles from './CredentialsManagementPanel.module.scss';
 
 /** Props for {@link CredentialsManagementRow}. */
 interface CredentialsManagementRowProps {
@@ -59,6 +64,18 @@ interface CredentialsManagementRowProps {
   onRequestDeleteApiKey?: (level: CredentialsLevel) => void;
   /** Text overrides. */
   texts?: ItemDetailsTexts;
+  /** CSS class applied to the row title. */
+  labelClassName: string;
+  /** CSS class applied to the row description. */
+  descriptionClassName: string;
+  /** CSS class applied to the empty-API-key validation message. */
+  errorClassName: string;
+  /** CSS class applied to the configured-key card's title. */
+  keyCardTitleClassName: string;
+  /** CSS class applied to the configured-key card's description. */
+  keyCardDescriptionClassName: string;
+  /** CSS class applied to the "Delete" action on a configured API key. */
+  deleteActionClassName: string;
 }
 
 /** One credentials slot (personal or organization) in the admin management sub-screen: status, and a login/logout or add/delete-key action. */
@@ -76,6 +93,12 @@ const CredentialsManagementRow: FC<CredentialsManagementRowProps> = ({
   onRequestLogout,
   onRequestDeleteApiKey,
   texts,
+  labelClassName,
+  descriptionClassName,
+  errorClassName,
+  keyCardTitleClassName,
+  keyCardDescriptionClassName,
+  deleteActionClassName,
 }) => {
   const [apiKey, setApiKey] = useState('');
   const [hasEmptyKeyError, setHasEmptyKeyError] = useState(false);
@@ -132,14 +155,22 @@ const CredentialsManagementRow: FC<CredentialsManagementRowProps> = ({
   return (
     <div className="flex items-start gap-3">
       <div className="relative shrink-0">
-        <div className="flex size-8 items-center justify-center rounded-lg bg-layer-sunken">
+        <div
+          className={mergeClasses(
+            'flex size-8 items-center justify-center rounded-lg',
+            styles.surface,
+          )}
+        >
           {icon}
         </div>
         {isActive && (
           <IconCircleCheckFilled
             size={DIAL_ICON_SIZE.SM}
             aria-hidden
-            className="absolute -end-1 -top-1 text-success"
+            className={mergeClasses(
+              'absolute -end-1 -top-1',
+              styles.activeIcon,
+            )}
           />
         )}
         <span className="sr-only">
@@ -150,8 +181,15 @@ const CredentialsManagementRow: FC<CredentialsManagementRowProps> = ({
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 flex-col gap-0.5">
-            <span className="dial-small-semi-text">{label}</span>
-            <span className="dial-small-text text-tertiary">{description}</span>
+            <span className={labelClassName}>{label}</span>
+            <span
+              className={mergeClasses(
+                descriptionClassName,
+                styles.rowDescription,
+              )}
+            >
+              {description}
+            </span>
           </div>
           {authenticationType === ToolsetAuthenticationType.OAuth &&
             (isSignedIn ? (
@@ -205,7 +243,9 @@ const CredentialsManagementRow: FC<CredentialsManagementRowProps> = ({
                * `error` prop, so the button never shifts when it appears.
                */}
               {hasEmptyKeyError && (
-                <span className="dial-caption-text text-error">
+                <span
+                  className={mergeClasses(errorClassName, styles.errorText)}
+                >
                   {texts?.apiKeyRequiredErrorMessage ?? 'API key is required.'}
                 </span>
               )}
@@ -216,21 +256,15 @@ const CredentialsManagementRow: FC<CredentialsManagementRowProps> = ({
           isSignedIn && (
             <div className="animate-fadeIn pt-1">
               <CredentialsInfoCard
-                icon={
-                  <IconKey
-                    size={DIAL_ICON_SIZE.SM}
-                    aria-hidden
-                    className="text-secondary"
-                  />
-                }
+                icon={<IconKey size={DIAL_ICON_SIZE.SM} aria-hidden />}
                 title={configuredMessage}
                 description={addedWhenLabel}
-                titleClassName="dial-tiny-semi-text"
-                descriptionClassName="dial-tiny-text"
+                titleClassName={keyCardTitleClassName}
+                descriptionClassName={keyCardDescriptionClassName}
                 action={
                   <LinkButton
                     label={deleteLabel}
-                    className="text-error"
+                    className={deleteActionClassName}
                     onClick={handleRequestDeleteApiKey}
                   />
                 }
@@ -257,6 +291,13 @@ interface CredentialsManagementPanelProps {
   onRequestDeleteApiKey?: (level: CredentialsLevel) => void;
   /** Text overrides. */
   texts?: ItemDetailsTexts;
+  /**
+   * Style overrides. Typography classes are read from `typography`; colors are
+   * applied as CSS custom properties on the `DetailsPanel` root and cascade in.
+   */
+  detailsStyles?: ItemDetailsStyles;
+  /** CSS class applied to the "Delete" action on a configured API key. Defaults to `'text-error'`. */
+  deleteActionClassName?: string;
 }
 
 const defaultCredentialsManagementDescription = (
@@ -269,7 +310,24 @@ const defaultCredentialsManagementDescription = (
 /** Admin sub-screen listing an item's personal and organization-wide credentials slots, each independently manageable. Reached via the details header's "Manage credentials"/"Manage API keys" action. */
 export const CredentialsManagementPanel: FC<
   CredentialsManagementPanelProps
-> = ({ item, onLogin, onRequestLogout, onRequestDeleteApiKey, texts }) => {
+> = ({
+  item,
+  onLogin,
+  onRequestLogout,
+  onRequestDeleteApiKey,
+  texts,
+  detailsStyles,
+  deleteActionClassName = 'text-error',
+}) => {
+  const {
+    credentialsDescriptionClassName = 'dial-body-paragraph-text',
+    credentialsRowLabelClassName = 'dial-small-semi-text',
+    credentialsRowDescriptionClassName = 'dial-small-text',
+    credentialsErrorClassName = 'dial-caption-text',
+    credentialsKeyCardTitleClassName = 'dial-tiny-semi-text',
+    credentialsKeyCardDescriptionClassName = 'dial-tiny-text',
+  } = detailsStyles?.typography ?? {};
+
   const credentials = item.credentials;
   if (credentials == null) {
     return null;
@@ -295,13 +353,18 @@ export const CredentialsManagementPanel: FC<
       {/* Padding matches Figma's "Identity" section (px-24 py-16) — a separate section from the description/rows below, not one contiguous gap. */}
       <div className="px-6 py-4">
         {/* Background matches the Publish flow's agent summary card (`bg-layer-sunken`), not the shared InfoCard's info/danger tint — this is a neutral identity chip, not a warning. */}
-        <div className="rounded-xl bg-layer-sunken p-3">
+        <div className={mergeClasses('rounded-xl p-3', styles.surface)}>
           <EntityHeader item={item} iconSize={40} hasFeaturedTag={false} />
         </div>
       </div>
       {/* Padding and gap match Figma's "Authorisation" section (px-24 py-16, gap-20). */}
       <div className="flex flex-col gap-5 px-6 py-4">
-        <span className="dial-body-paragraph-text text-primary">
+        <span
+          className={mergeClasses(
+            credentialsDescriptionClassName,
+            styles.description,
+          )}
+        >
           {description}
         </span>
         <div className="flex flex-col gap-4">
@@ -322,6 +385,12 @@ export const CredentialsManagementPanel: FC<
             onRequestLogout={onRequestLogout}
             onRequestDeleteApiKey={onRequestDeleteApiKey}
             texts={texts}
+            labelClassName={credentialsRowLabelClassName}
+            descriptionClassName={credentialsRowDescriptionClassName}
+            errorClassName={credentialsErrorClassName}
+            keyCardTitleClassName={credentialsKeyCardTitleClassName}
+            keyCardDescriptionClassName={credentialsKeyCardDescriptionClassName}
+            deleteActionClassName={deleteActionClassName}
           />
           <CredentialsManagementRow
             item={item}
@@ -344,6 +413,12 @@ export const CredentialsManagementPanel: FC<
             onRequestLogout={onRequestLogout}
             onRequestDeleteApiKey={onRequestDeleteApiKey}
             texts={texts}
+            labelClassName={credentialsRowLabelClassName}
+            descriptionClassName={credentialsRowDescriptionClassName}
+            errorClassName={credentialsErrorClassName}
+            keyCardTitleClassName={credentialsKeyCardTitleClassName}
+            keyCardDescriptionClassName={credentialsKeyCardDescriptionClassName}
+            deleteActionClassName={deleteActionClassName}
           />
         </div>
       </div>
