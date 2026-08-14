@@ -42,7 +42,10 @@ import {
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { resolveLocalizedText } from '../../utils/locale';
-import { buildScheduleLabel } from '../../utils/map-scheduled-task-dto';
+import {
+  buildScheduleLabel,
+  getDeleteErrorMessageKey,
+} from '../../utils/map-scheduled-task-dto';
 import { mapScheduledTaskRunDtosToItems } from '../../utils/map-scheduled-task-run-dto';
 import NotFoundPage from '../NotFound/NotFound';
 
@@ -325,12 +328,7 @@ const ScheduledTaskDetailPage: FC = () => {
       navigate(ROUTES.ScheduledTasks);
     } catch (err) {
       const { status, traceId } = await getApiErrorDetails(err);
-      const messageKey =
-        status === 404 || status === 409
-          ? ScheduledTasksI18nKeys.DetailDeleteNotFoundError
-          : status === 502
-            ? ScheduledTasksI18nKeys.DetailDeleteRetryableError
-            : ScheduledTasksI18nKeys.DetailDeleteGenericError;
+      const messageKey = getDeleteErrorMessageKey(status);
       showErrorNotification({
         message: t(messageKey),
         requestId: traceId,
