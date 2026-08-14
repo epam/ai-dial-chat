@@ -35,6 +35,8 @@ describe('Card — selected state', () => {
 
     const card = screen.getByRole('article', { hidden: true });
     expect(card.className).toContain('selectedCard');
+    // Checkmark icon is aria-hidden with no accessible role, so no semantic query can find it.
+    // eslint-disable-next-line testing-library/no-node-access
     expect(card.querySelector('svg')).toBeTruthy();
   });
 });

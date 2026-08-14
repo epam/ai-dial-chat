@@ -202,6 +202,7 @@ const buildFileActions = (
 });
 
 const uploadFile = (file: File) => {
+  // eslint-disable-next-line testing-library/no-node-access -- the upload <input type="file"> is visually hidden and carries no accessible name/role to query by
   const input = document.querySelector('input[type="file"]');
   fireEvent.change(input as Element, { target: { files: [file] } });
 };

@@ -389,6 +389,7 @@ describe('ScheduledTaskDetailView', () => {
     );
 
     expect(
+      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- skeleton rows/bars are plain aria-hidden elements with no accessible role/text
       container.querySelectorAll('li[aria-hidden="true"] [data-skeleton]'),
     ).toHaveLength(12); // 2 skeleton bars per row × 6 rows
   });
@@ -458,6 +459,7 @@ describe('ScheduledTaskDetailView', () => {
     );
 
     expect(
+      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- skeleton rows/bars are plain aria-hidden elements with no accessible role/text
       container.querySelectorAll('li[aria-hidden="true"] [data-skeleton]'),
     ).toHaveLength(12);
     expect(

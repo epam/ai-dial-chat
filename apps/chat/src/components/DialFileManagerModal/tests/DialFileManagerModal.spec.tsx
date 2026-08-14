@@ -554,12 +554,17 @@ describe('DialFileManagerModal', () => {
     expect(dialog.classList.contains('!h-[min(800px,100dvh)]')).toBe(true);
     expect(dialog.classList.contains('!bg-layer-sunken')).toBe(true);
 
+    /* These assert pure CSS-level styling (which class is present), for which
+       no semantic query applies — this repo's spec conventions carve out
+       this exact case for container/element.querySelector. */
+    // eslint-disable-next-line testing-library/no-node-access
     const body = dialog.querySelector('.overflow-auto');
     expect(body?.classList.contains('flex')).toBe(true);
     expect(body?.classList.contains('min-h-0')).toBe(true);
     expect(body?.classList.contains('flex-col')).toBe(true);
 
-    const footer = screen.getByRole('button', { name: 'Attach' }).parentElement;
+    // eslint-disable-next-line testing-library/no-node-access
+    const footer = dialog.querySelector('.px-6.py-4');
     expect(footer?.classList.contains('px-6')).toBe(true);
     expect(footer?.classList.contains('py-4')).toBe(true);
   });

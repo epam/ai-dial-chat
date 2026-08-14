@@ -50,7 +50,7 @@ describe('useOperationNotification', () => {
   it.each(mappedPairs)(
     'notifies %s %s from its mapped keys',
     (entity, operation, keys) => {
-      const result = renderNotifier();
+      const view = renderNotifier();
 
       const params = {
         name: 'Meeting Notes Summarizer',
@@ -58,7 +58,7 @@ describe('useOperationNotification', () => {
       };
       const interpolated = JSON.stringify(params);
 
-      result.current.notifyOperationSuccess(entity, operation as never, params);
+      view.current.notifyOperationSuccess(entity, operation as never, params);
 
       expect(mockShowNotification).toHaveBeenCalledWith({
         variant: NotificationVariant.Success,
@@ -69,9 +69,9 @@ describe('useOperationNotification', () => {
   );
 
   it('interpolates the entity name into the body', () => {
-    const result = renderNotifier();
+    const view = renderNotifier();
 
-    result.current.notifyOperationSuccess(
+    view.current.notifyOperationSuccess(
       NotifiableEntity.Prompt,
       EntityOperation.Downloaded,
       { name: 'Weekly digest' },
@@ -88,9 +88,9 @@ describe('useOperationNotification', () => {
   });
 
   it('interpolates the target folder for a publish request', () => {
-    const result = renderNotifier();
+    const view = renderNotifier();
 
-    result.current.notifyOperationSuccess(
+    view.current.notifyOperationSuccess(
       NotifiableEntity.Toolset,
       EntityOperation.PublishRequested,
       { name: 'Jira tools', folder: 'Shared/Ops' },
@@ -105,9 +105,9 @@ describe('useOperationNotification', () => {
   });
 
   it('passes the item count so a plural pair can pick its variant', () => {
-    const result = renderNotifier();
+    const view = renderNotifier();
 
-    result.current.notifyOperationSuccess(
+    view.current.notifyOperationSuccess(
       NotifiableEntity.File,
       EntityOperation.Downloaded,
       { name: 'files.zip', count: 3 },
@@ -124,9 +124,9 @@ describe('useOperationNotification', () => {
   });
 
   it('never sets a requestId — trace ids belong to error notifications', () => {
-    const result = renderNotifier();
+    const view = renderNotifier();
 
-    result.current.notifyOperationSuccess(
+    view.current.notifyOperationSuccess(
       NotifiableEntity.Folder,
       EntityOperation.Created,
       { name: 'Reports' },
@@ -139,9 +139,9 @@ describe('useOperationNotification', () => {
   });
 
   it('rejects an (entity, operation) pair that has no copy', () => {
-    const result = renderNotifier();
+    const view = renderNotifier();
 
-    result.current.notifyOperationSuccess(
+    view.current.notifyOperationSuccess(
       NotifiableEntity.Model,
       // @ts-expect-error a model cannot be created from the UI, so no copy exists
       EntityOperation.Created,

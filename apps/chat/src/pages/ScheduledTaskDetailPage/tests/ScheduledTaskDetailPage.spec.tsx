@@ -307,9 +307,7 @@ describe('ScheduledTaskDetailPage', () => {
     });
     renderDetailPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
 
     expect(getScheduledTaskMock).toHaveBeenCalledWith('sched_123');
     expect(useScheduledTaskRunsMock).toHaveBeenCalledWith('sched_123', true);
@@ -322,11 +320,9 @@ describe('ScheduledTaskDetailPage', () => {
     getApiErrorStatusMock.mockReturnValue(404);
     renderDetailPage();
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole('region', { name: NotFoundI18nKeys.Title }),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByRole('region', { name: NotFoundI18nKeys.Title }),
+    ).toBeTruthy();
   });
 
   it('shows a page-level error with retry on a non-404 task fetch failure', async () => {
@@ -335,13 +331,11 @@ describe('ScheduledTaskDetailPage', () => {
     getApiErrorStatusMock.mockReturnValue(undefined);
     renderDetailPage();
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole('button', {
-          name: 'scheduledTasks.list.retryLabel',
-        }),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByRole('button', {
+        name: 'scheduledTasks.list.retryLabel',
+      }),
+    ).toBeTruthy();
 
     getScheduledTaskMock.mockResolvedValue({
       id: 'sched_123',
@@ -374,9 +368,7 @@ describe('ScheduledTaskDetailPage', () => {
     });
     renderDetailPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     await userEvent.click(
       screen.getByRole('button', {
         name: 'scheduledTasks.list.retryLabel',
@@ -401,9 +393,7 @@ describe('ScheduledTaskDetailPage', () => {
     });
     renderDetailPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
 
     expect(
       screen.getByText(
@@ -421,9 +411,7 @@ describe('ScheduledTaskDetailPage', () => {
     });
     renderDetailPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
 
     expect(screen.getByText('activeWindowLabel:')).toBeTruthy();
   });
@@ -437,9 +425,7 @@ describe('ScheduledTaskDetailPage', () => {
     });
     renderDetailPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'back' }));
 
     expect(screen.getByText('scheduled tasks list')).toBeTruthy();
@@ -463,13 +449,11 @@ describe('ScheduledTaskDetailPage', () => {
     getApiErrorStatusMock.mockReturnValue(undefined);
     renderDetailPage();
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole('button', {
-          name: 'scheduledTasks.list.retryLabel',
-        }),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByRole('button', {
+        name: 'scheduledTasks.list.retryLabel',
+      }),
+    ).toBeTruthy();
 
     expect(
       screen.queryByRole('button', {
@@ -487,13 +471,11 @@ describe('ScheduledTaskDetailPage', () => {
     });
     renderDetailPage();
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole('button', {
-          name: 'scheduledTasks.card.editActionLabel',
-        }),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByRole('button', {
+        name: 'scheduledTasks.card.editActionLabel',
+      }),
+    ).toBeTruthy();
   });
 
   it('navigates to the edit route for the current task when Edit is activated', async () => {
@@ -505,9 +487,7 @@ describe('ScheduledTaskDetailPage', () => {
     });
     renderDetailPage('sched_123');
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     await userEvent.click(
       screen.getByRole('button', {
         name: 'scheduledTasks.card.editActionLabel',
@@ -530,9 +510,7 @@ describe('ScheduledTaskDetailPage', () => {
     });
     renderDetailPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('modelLabel:GPT-4.1 mini')).toBeTruthy(),
-    );
+    expect(await screen.findByText('modelLabel:GPT-4.1 mini')).toBeTruthy();
   });
 
   it('falls back to the raw model id when unresolved', async () => {
@@ -546,9 +524,7 @@ describe('ScheduledTaskDetailPage', () => {
     });
     renderDetailPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('modelLabel:unknown-model')).toBeTruthy(),
-    );
+    expect(await screen.findByText('modelLabel:unknown-model')).toBeTruthy();
   });
 
   it('formats nextRunTime into a localized "Next run" label', async () => {
@@ -561,11 +537,11 @@ describe('ScheduledTaskDetailPage', () => {
     });
     renderDetailPage();
 
-    await waitFor(() =>
-      expect(
-        screen.getByText(/nextRunLabel:scheduledTasks\.detail\.nextRunLabel/),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByText(
+        /nextRunLabel:scheduledTasks\.detail\.nextRunLabel/,
+      ),
+    ).toBeTruthy();
   });
 
   it('omits nextRunLabel when the task has no nextRunTime', async () => {
@@ -577,9 +553,7 @@ describe('ScheduledTaskDetailPage', () => {
     });
     renderDetailPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     expect(screen.getByText('nextRunLabel:').textContent).toBe('nextRunLabel:');
   });
 
@@ -603,7 +577,7 @@ describe('ScheduledTaskDetailPage', () => {
       });
       renderDetailPage();
 
-      const switchEl = await waitFor(() => screen.getByRole('switch'));
+      const switchEl = await screen.findByRole('switch');
       expect(switchEl).toHaveProperty('checked', true);
 
       await userEvent.click(switchEl);
@@ -629,7 +603,7 @@ describe('ScheduledTaskDetailPage', () => {
       resumeScheduledTaskMock.mockResolvedValue(activeTask);
       renderDetailPage();
 
-      const switchEl = await waitFor(() => screen.getByRole('switch'));
+      const switchEl = await screen.findByRole('switch');
       expect(switchEl).toHaveProperty('checked', false);
 
       await userEvent.click(switchEl);
@@ -653,7 +627,7 @@ describe('ScheduledTaskDetailPage', () => {
       );
       renderDetailPage();
 
-      const switchEl = await waitFor(() => screen.getByRole('switch'));
+      const switchEl = await screen.findByRole('switch');
       await userEvent.click(switchEl);
 
       expect(screen.getByRole('switch')).toHaveProperty('disabled', true);
@@ -671,7 +645,7 @@ describe('ScheduledTaskDetailPage', () => {
       getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-abc' });
       renderDetailPage();
 
-      const switchEl = await waitFor(() => screen.getByRole('switch'));
+      const switchEl = await screen.findByRole('switch');
       await userEvent.click(switchEl);
 
       await waitFor(() =>
@@ -698,7 +672,7 @@ describe('ScheduledTaskDetailPage', () => {
       );
       const { unmount } = renderDetailPage();
 
-      const switchEl = await waitFor(() => screen.getByRole('switch'));
+      const switchEl = await screen.findByRole('switch');
       await userEvent.click(switchEl);
 
       unmount();
@@ -720,7 +694,7 @@ describe('ScheduledTaskDetailPage', () => {
       });
       renderDetailPage();
 
-      const switchEl = await waitFor(() => screen.getByRole('switch'));
+      const switchEl = await screen.findByRole('switch');
       expect(switchEl).toHaveProperty('checked', false);
       expect(switchEl).toHaveProperty('disabled', true);
 
@@ -747,7 +721,7 @@ describe('ScheduledTaskDetailPage', () => {
       });
       renderDetailPage();
 
-      const switchEl = await waitFor(() => screen.getByRole('switch'));
+      const switchEl = await screen.findByRole('switch');
       expect(switchEl).toHaveProperty('checked', false);
       expect(switchEl).toHaveProperty('disabled', true);
 
@@ -774,7 +748,7 @@ describe('ScheduledTaskDetailPage', () => {
       });
       renderDetailPage();
 
-      const switchEl = await waitFor(() => screen.getByRole('switch'));
+      const switchEl = await screen.findByRole('switch');
       expect(switchEl).toHaveProperty('disabled', false);
     });
 
@@ -797,7 +771,7 @@ describe('ScheduledTaskDetailPage', () => {
       });
       renderDetailPage();
 
-      const switchEl = await waitFor(() => screen.getByRole('switch'));
+      const switchEl = await screen.findByRole('switch');
       expect(switchEl).toHaveProperty('disabled', false);
 
       await userEvent.click(switchEl);

@@ -339,11 +339,14 @@ describe('ConversationSourcesPanel — title and additionalSections (optional, a
       additionalSections: <div data-testid="history">History content</div>,
     });
 
-    const container = screen.getByText('History content').closest('div');
-    expect(container).toBeTruthy();
     const headings = screen.getAllByRole('heading');
     expect(headings.map((h) => h.textContent)).toContain('Uploaded files');
     expect(screen.getByText('History content')).toBeTruthy();
+
+    const bodyText = document.body.textContent ?? '';
+    expect(bodyText.indexOf('History content')).toBeLessThan(
+      bodyText.indexOf('Uploaded files'),
+    );
   });
 
   it('renders additionalSections instead of the global empty state when there are no files or sources', () => {

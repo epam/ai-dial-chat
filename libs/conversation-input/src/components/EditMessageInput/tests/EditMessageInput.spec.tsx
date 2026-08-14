@@ -26,7 +26,7 @@ describe('EditMessageInput — external pendingDropFiles', () => {
         onDropFilesConsumed={vi.fn()}
       />,
     );
-    await waitFor(() => expect(screen.getByText('report')).toBeTruthy());
+    expect(await screen.findByText('report')).toBeTruthy();
   });
 
   it('calls onDropFilesConsumed after consuming external files', async () => {

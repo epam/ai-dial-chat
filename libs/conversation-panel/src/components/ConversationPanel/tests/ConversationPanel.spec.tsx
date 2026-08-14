@@ -281,6 +281,11 @@ describe('ConversationPanel', () => {
     render(
       <ConversationPanel {...BASE_PROPS} conversations={[]} isOpen={false} />,
     );
+    /*
+     * A backdrop overlay would be a plain div with no accessible role, so
+     * there is no semantic query that can assert its absence.
+     */
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
     expect(document.querySelector('div[aria-hidden="true"]')).toBeNull();
   });
 
@@ -335,10 +340,15 @@ describe('ConversationPanel', () => {
 
   it('collapses a group when its header is clicked', () => {
     render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
-    const pinnedHeader = screen.getByText('Pinned').closest('button');
-    expect(pinnedHeader).toBeTruthy();
+    /*
+     * The mocked IconCaretDownFilled doesn't forward aria-hidden, so the
+     * header button's accessible name includes the icon's mock text.
+     */
+    const pinnedHeader = screen.getByRole('button', {
+      name: 'caret-down-filled Pinned',
+    });
     expect(screen.getByText('Pinned chat')).toBeTruthy();
-    fireEvent.click(pinnedHeader!);
+    fireEvent.click(pinnedHeader);
     expect(screen.queryByText('Pinned chat')).toBeNull();
   });
 

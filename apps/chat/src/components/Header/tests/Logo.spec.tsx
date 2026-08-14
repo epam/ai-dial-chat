@@ -34,6 +34,10 @@ describe('Logo', () => {
     const { container } = render(<Logo />);
 
     const logo = screen.getByLabelText(ChatI18nKeys.Logo);
+    /* This is a decorative background-image span with no accessible role
+       or text; asserting its inline style/class is CSS-level behavior with
+       no semantic query equivalent. */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
     const logoImage = container.querySelector('span.desktop\\:block');
     expect(logo).toBeTruthy();
     expect(logoImage).toBeTruthy();
@@ -54,7 +58,7 @@ describe('Logo', () => {
     });
 
     const { container } = render(<Logo />);
-    expect(container.firstChild).toBeNull();
+    expect(container.innerHTML).toBe('');
   });
 
   it('should update logo when theme changes', () => {
@@ -74,6 +78,10 @@ describe('Logo', () => {
 
     const { container } = render(<Logo />);
 
+    /* This is a decorative background-image span with no accessible role
+       or text; asserting its inline style/class is CSS-level behavior with
+       no semantic query equivalent. */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
     const logoImage = container.querySelector('span.desktop\\:block');
     expect(logoImage).toBeTruthy();
     expect((logoImage as HTMLElement).style.backgroundImage).toBe(
@@ -114,6 +122,10 @@ describe('Logo', () => {
 
     const { container } = render(<Logo />);
 
+    /* This is a decorative background-image span with no accessible role
+       or text; asserting its inline style/class is CSS-level behavior with
+       no semantic query equivalent. */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
     const logoImage = container.querySelector('span.desktop\\:block');
     expect(logoImage).toBeTruthy();
     expect((logoImage as HTMLElement).classList.contains('min-w-[125px]')).toBe(

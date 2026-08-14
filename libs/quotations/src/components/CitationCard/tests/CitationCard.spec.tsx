@@ -152,9 +152,11 @@ describe('CitationCard', () => {
       'ReallyLongUnbrokenTitleTokenThatWouldOtherwiseOverflowTheFixedWidthCard',
     );
 
-    const { container } = render(<CitationCard {...defaultProps({ group })} />);
+    render(<CitationCard {...defaultProps({ group })} />);
 
-    const title = container.querySelectorAll('p')[0];
+    const title = screen.getByText(
+      'ReallyLongUnbrokenTitleTokenThatWouldOtherwiseOverflowTheFixedWidthCard',
+    );
     expect(title.className).toContain('break-words');
   });
 });

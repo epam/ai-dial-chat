@@ -273,9 +273,9 @@ describe('SkillEditor page', () => {
     );
     await user.click(getCreateButton());
 
-    await waitFor(() =>
-      expect(screen.getByText('skillEditor.error.nameConflict')).toBeTruthy(),
-    );
+    expect(
+      await screen.findByText('skillEditor.error.nameConflict'),
+    ).toBeTruthy();
     expect(mockNavigate).not.toHaveBeenCalledWith('/catalog');
   });
 
@@ -300,7 +300,7 @@ describe('SkillEditor page', () => {
       );
       await user.click(getCreateButton());
 
-      await waitFor(() => expect(screen.getByText(expectedKey)).toBeTruthy());
+      expect(await screen.findByText(expectedKey)).toBeTruthy();
       expect(screen.getByDisplayValue('Good Morning Breakfast')).toBeTruthy();
       expect(mockNavigate).not.toHaveBeenCalledWith('/catalog');
     },
@@ -325,11 +325,9 @@ describe('SkillEditor page', () => {
     );
     await user.click(getCreateButton());
 
-    await waitFor(() =>
-      expect(
-        screen.getByText('Skill must contain a SKILL.md at its root'),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByText('Skill must contain a SKILL.md at its root'),
+    ).toBeTruthy();
     expect(screen.getByDisplayValue('Good Morning Breakfast')).toBeTruthy();
     expect(mockNavigate).not.toHaveBeenCalledWith('/catalog');
   });
@@ -350,9 +348,9 @@ describe('SkillEditor page', () => {
     );
     await user.click(getCreateButton());
 
-    await waitFor(() =>
-      expect(screen.getByText('skillEditor.error.pathInvalid')).toBeTruthy(),
-    );
+    expect(
+      await screen.findByText('skillEditor.error.pathInvalid'),
+    ).toBeTruthy();
   });
 
   it('resubmits the same request payload on retry after a 503 without rebuilding it', async () => {
@@ -371,11 +369,9 @@ describe('SkillEditor page', () => {
     );
     await user.click(getCreateButton());
 
-    await waitFor(() =>
-      expect(
-        screen.getByText('skillEditor.error.serviceUnavailable'),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByText('skillEditor.error.serviceUnavailable'),
+    ).toBeTruthy();
 
     const firstManifest = vi.mocked(createSkill).mock.calls[0][2];
 
@@ -396,6 +392,8 @@ describe('SkillEditor page', () => {
   it('rejects a supporting file over the 1 MB limit with a toast notification and adds nothing', async () => {
     render(<SkillEditor />);
     const oversizedFile = new File([new Uint8Array(1_048_577)], 'oversized.md');
+    /* The upload input is visually hidden and has no accessible role/label/text; no semantic query applies. */
+    // eslint-disable-next-line testing-library/no-node-access
     const input = document.querySelector('input[type="file"]');
 
     fireEvent.change(input as Element, { target: { files: [oversizedFile] } });
@@ -415,6 +413,8 @@ describe('SkillEditor page', () => {
   it('accepts a supporting file at exactly the 1 MB limit', async () => {
     render(<SkillEditor />);
     const file = new File([new Uint8Array(1_048_576)], 'fits.md');
+    /* The upload input is visually hidden and has no accessible role/label/text; no semantic query applies. */
+    // eslint-disable-next-line testing-library/no-node-access
     const input = document.querySelector('input[type="file"]');
 
     fireEvent.change(input as Element, { target: { files: [file] } });
@@ -450,9 +450,7 @@ describe('SkillEditor page — edit mode', () => {
         'team-a/docs-helper',
       ),
     );
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('docs-helper')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
   });
 
   it('shows a load error and does not populate the form when the ETag header is missing', async () => {
@@ -462,9 +460,7 @@ describe('SkillEditor page — edit mode', () => {
 
     render(<SkillEditor />);
 
-    await waitFor(() =>
-      expect(screen.getByText('skillEditor.loadError')).toBeTruthy(),
-    );
+    expect(await screen.findByText('skillEditor.loadError')).toBeTruthy();
     expect(screen.queryByDisplayValue('docs-helper')).toBeNull();
   });
 
@@ -475,9 +471,9 @@ describe('SkillEditor page — edit mode', () => {
 
     render(<SkillEditor />);
 
-    await waitFor(() =>
-      expect(screen.getByText('skillEditor.loadErrorForbidden')).toBeTruthy(),
-    );
+    expect(
+      await screen.findByText('skillEditor.loadErrorForbidden'),
+    ).toBeTruthy();
   });
 
   it('shows a not-found state on a 404 load failure', async () => {
@@ -487,9 +483,9 @@ describe('SkillEditor page — edit mode', () => {
 
     render(<SkillEditor />);
 
-    await waitFor(() =>
-      expect(screen.getByText('skillEditor.loadErrorNotFound')).toBeTruthy(),
-    );
+    expect(
+      await screen.findByText('skillEditor.loadErrorNotFound'),
+    ).toBeTruthy();
   });
 
   it('retries the same load on Retry', async () => {
@@ -502,17 +498,13 @@ describe('SkillEditor page — edit mode', () => {
 
     render(<SkillEditor />);
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole('button', { name: 'buttons.retry' }),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByRole('button', { name: 'buttons.retry' }),
+    ).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'buttons.retry' }));
 
     await waitFor(() => expect(downloadSkill).toHaveBeenCalledTimes(2));
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('docs-helper')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
   });
 
   it('renders the Name field as read-only', async () => {
@@ -534,9 +526,7 @@ describe('SkillEditor page — edit mode', () => {
     } as unknown as Awaited<ReturnType<typeof updateSkill>>);
 
     render(<SkillEditor />);
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('docs-helper')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
 
     await user.click(getSaveButton());
 
@@ -568,9 +558,7 @@ describe('SkillEditor page — edit mode', () => {
     } as unknown as Awaited<ReturnType<typeof updateSkill>>);
 
     render(<SkillEditor />);
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('docs-helper')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
 
     await user.click(getSaveButton());
 
@@ -586,15 +574,11 @@ describe('SkillEditor page — edit mode', () => {
     });
 
     render(<SkillEditor />);
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('docs-helper')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
 
     await user.click(getSaveButton());
 
-    await waitFor(() =>
-      expect(screen.getByText('skillEditor.conflictMessage')).toBeTruthy(),
-    );
+    expect(await screen.findByText('skillEditor.conflictMessage')).toBeTruthy();
 
     await user.click(
       screen.getByRole('button', { name: 'skillEditor.reloadLatestLabel' }),
@@ -610,9 +594,7 @@ describe('SkillEditor page — edit mode', () => {
     vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
 
     render(<SkillEditor />);
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('docs-helper')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
 
     await user.type(
       screen.getByPlaceholderText('skillEditor.descriptionPlaceholder'),
@@ -638,9 +620,7 @@ describe('SkillEditor page — edit mode', () => {
     vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
 
     render(<SkillEditor />);
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('docs-helper')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
 
     await user.type(
       screen.getByPlaceholderText('skillEditor.descriptionPlaceholder'),
@@ -661,9 +641,7 @@ describe('SkillEditor page — edit mode', () => {
     vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
 
     render(<SkillEditor />);
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('docs-helper')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
 
     await user.click(getCancelButton());
 

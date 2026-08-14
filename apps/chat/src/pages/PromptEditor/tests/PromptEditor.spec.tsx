@@ -137,9 +137,7 @@ describe('PromptEditor', () => {
       expect(getPrompt).toHaveBeenCalledWith('Work/AI/summarize'),
     );
     expect(screen.getByText('promptEditor.editTitle')).toBeTruthy();
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('summarize')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('summarize')).toBeTruthy();
   });
 
   it('shows an error state with retry when the prompt cannot be loaded', async () => {
@@ -148,7 +146,7 @@ describe('PromptEditor', () => {
 
     render(<PromptEditor />);
 
-    await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy());
+    expect(await screen.findByRole('alert')).toBeTruthy();
     expect(screen.getByText('promptEditor.loadError')).toBeTruthy();
     expect(
       screen.getByRole('button', { name: 'promptEditor.retryLabel' }),
@@ -234,9 +232,9 @@ describe('PromptEditor', () => {
     await fillRequiredFields('summarize', 'Summarize:');
     await user.click(screen.getByRole('button', { name: 'buttons.save' }));
 
-    await waitFor(() =>
-      expect(screen.getByText('promptEditor.error.nameConflict')).toBeTruthy(),
-    );
+    expect(
+      await screen.findByText('promptEditor.error.nameConflict'),
+    ).toBeTruthy();
     expect(mockNavigate).not.toHaveBeenCalledWith('/catalog');
   });
 
@@ -260,9 +258,7 @@ describe('PromptEditor', () => {
     mockSearchParams = new URLSearchParams({ id: 'Work/AI/summarize' });
 
     render(<PromptEditor />);
-    await waitFor(() =>
-      expect(screen.getByDisplayValue('summarize')).toBeTruthy(),
-    );
+    expect(await screen.findByDisplayValue('summarize')).toBeTruthy();
 
     const contentField = screen.getByRole('textbox', {
       name: /promptEditor.contentLabel/,
@@ -342,9 +338,9 @@ describe('PromptEditor', () => {
       within(folderForm).getByRole('button', { name: 'buttons.save' }),
     );
 
-    await waitFor(() =>
-      expect(screen.getByText('promptEditor.error.nameConflict')).toBeTruthy(),
-    );
+    expect(
+      await screen.findByText('promptEditor.error.nameConflict'),
+    ).toBeTruthy();
     expect(showNotification).not.toHaveBeenCalled();
   });
 

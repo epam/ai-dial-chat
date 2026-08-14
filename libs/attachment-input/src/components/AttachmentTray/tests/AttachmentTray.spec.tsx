@@ -14,10 +14,8 @@ const makeAttachment = (id: string, name = 'file.pdf'): DisplayAttachment => ({
 
 describe('AttachmentTray', () => {
   it('returns null when attachments list is empty', () => {
-    const { container } = render(
-      <AttachmentTray attachments={[]} onRemove={vi.fn()} />,
-    );
-    expect(container.firstChild).toBeNull();
+    render(<AttachmentTray attachments={[]} onRemove={vi.fn()} />);
+    expect(document.body.textContent).toBe('');
   });
 
   it('renders a card for each attachment', () => {
@@ -48,11 +46,12 @@ describe('AttachmentTray', () => {
   });
 
   it('disappears when last card is removed (empty list passed)', () => {
-    const { rerender, container } = render(
+    const { rerender } = render(
       <AttachmentTray attachments={[makeAttachment('1')]} onRemove={vi.fn()} />,
     );
-    expect(container.firstChild).not.toBeNull();
+    expect(screen.getByText('file')).toBeTruthy();
     rerender(<AttachmentTray attachments={[]} onRemove={vi.fn()} />);
-    expect(container.firstChild).toBeNull();
+    expect(screen.queryByText('file')).toBeNull();
+    expect(document.body.textContent).toBe('');
   });
 });

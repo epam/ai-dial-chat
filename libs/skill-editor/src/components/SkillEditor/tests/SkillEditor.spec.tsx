@@ -299,6 +299,7 @@ describe('SkillEditor', () => {
   it('applies an explicit dir override to the root element without reading i18n', () => {
     const { container } = renderEditor({ dir: 'rtl' });
 
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- dir="rtl" is a plain DOM attribute with no accessible role/text to query
     expect(container.querySelector('[dir="rtl"]')).toBeTruthy();
   });
 

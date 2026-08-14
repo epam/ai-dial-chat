@@ -35,7 +35,7 @@ describe('AnnouncementsPopover', () => {
   it('renders nothing when there are no announcements', () => {
     const { container } = render(<AnnouncementsPopover announcements={[]} />);
 
-    expect(container.firstChild).toBeNull();
+    expect(container.innerHTML).toBe('');
   });
 
   it('labels the pill with the announcement count', () => {
@@ -79,14 +79,14 @@ describe('AnnouncementsPopover', () => {
        nothing ever restored it. */
     const link = screen.getByRole('link', { name: /Changelog/ });
     link.focus();
-    expect(document.activeElement).toBe(link);
+    expect(link.matches(':focus')).toBe(true);
 
     await userEvent.keyboard('{Escape}');
 
     expect(screen.queryByRole('list')).toBeNull();
-    expect(document.activeElement).toBe(
-      screen.getByRole('button', { name: PILL_NAME }),
-    );
+    expect(
+      screen.getByRole('button', { name: PILL_NAME }).matches(':focus'),
+    ).toBe(true);
   });
 
   it('renders one list item per announcement in configured order', async () => {
@@ -159,7 +159,10 @@ describe('AnnouncementsPopover — accessibility', () => {
     const controlledId = screen
       .getByRole('button', { name: PILL_NAME })
       .getAttribute('aria-controls');
-    expect(document.getElementById(controlledId ?? '')).toBeTruthy();
+    const region = screen.getByRole('region', {
+      name: 'announcementsPopover.listAriaLabel',
+    });
+    expect(controlledId).toBe(region.id);
   });
 
   it('announces the overlay as a labeled region containing a list', async () => {

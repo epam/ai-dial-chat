@@ -106,6 +106,7 @@ describe('NestOtelLogger', () => {
     silenceConsole();
     const logger = new NestOtelLogger(['log', 'error', 'warn']);
 
+    // eslint-disable-next-line testing-library/no-debugging-utils -- this is NestOtelLogger.debug() under test, not a Testing Library debug util
     logger.debug('should be suppressed');
 
     expect(process.stdout.write).not.toHaveBeenCalled();

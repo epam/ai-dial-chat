@@ -214,7 +214,7 @@ const baseValues: ScheduledTaskCreateFormValues = {
 const renderForm = async (
   overrides?: Partial<ScheduledTaskCreateFormProps>,
 ) => {
-  const result = render(
+  const view = render(
     <ScheduledTaskCreateForm
       labels={{
         pageTitle: 'New task',
@@ -260,7 +260,7 @@ const renderForm = async (
     />,
   );
   await screen.findAllByRole('textbox');
-  return result;
+  return view;
 };
 
 describe('ScheduledTaskCreateForm', () => {
