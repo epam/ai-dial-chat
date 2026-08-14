@@ -5,7 +5,7 @@ import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import { API, Attachment, MenuOptions, PublishPath } from '@/src/testData';
 import { BaseElement } from '@/src/ui/webElements';
-import { GeneratorUtil, ItemUtil, UserUtil } from '@/src/utils';
+import { GeneratorUtil, UserUtil } from '@/src/utils';
 import { Conversation } from '@epam/ai-dial-shared';
 
 dialAdminTest(
@@ -263,9 +263,6 @@ dialAdminTest(
           'visible',
         );
         await fileManagerGrid.openFolder(orgFolder);
-        await fileManagerGrid.openFolder(
-          `${appName}${ItemUtil.entityIdSeparator}${appVersion}`,
-        );
         await fileManagerGridAssertion.assertGridRowByNameState(
           filename,
           'visible',
