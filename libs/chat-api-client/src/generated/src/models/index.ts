@@ -1671,6 +1671,12 @@ export interface CreatedScheduledTaskDto {
   isActive?: boolean;
   /**
    *
+   * @type {boolean}
+   * @memberof CreatedScheduledTaskDto
+   */
+  isDeleted?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof CreatedScheduledTaskDto
    */
@@ -5215,6 +5221,12 @@ export interface ScheduledTaskDto {
   isActive?: boolean;
   /**
    *
+   * @type {boolean}
+   * @memberof ScheduledTaskDto
+   */
+  isDeleted?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof ScheduledTaskDto
    */
@@ -6590,6 +6602,12 @@ export interface UpdatedScheduledTaskDto {
    * @memberof UpdatedScheduledTaskDto
    */
   isActive?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  isDeleted?: boolean;
   /**
    *
    * @type {string}

@@ -170,3 +170,20 @@ export const mapScheduledTaskDtosToItems = (
   t: TFunction,
 ): ScheduledTaskItem[] =>
   tasks.map((task) => mapScheduledTaskDtoToItem(task, t));
+
+/**
+ * Maps a failed delete request's HTTP status to the localized error message
+ * key shown in the delete confirmation dialog: not-found/already-deleted
+ * (404/409), a retryable scheduler failure (502), or a generic fallback.
+ */
+export const getDeleteErrorMessageKey = (
+  status: number | undefined,
+): ScheduledTasksI18nKeys => {
+  if (status === 404 || status === 409) {
+    return ScheduledTasksI18nKeys.DetailDeleteNotFoundError;
+  }
+  if (status === 502) {
+    return ScheduledTasksI18nKeys.DetailDeleteRetryableError;
+  }
+  return ScheduledTasksI18nKeys.DetailDeleteGenericError;
+};

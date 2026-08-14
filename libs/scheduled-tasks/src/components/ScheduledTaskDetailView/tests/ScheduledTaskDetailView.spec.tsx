@@ -20,7 +20,7 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  ButtonVariant: { Primary: 'primary', Neutral: 'neutral' },
+  ButtonVariant: { Primary: 'primary', Neutral: 'neutral', Danger: 'danger' },
   Switch: ({
     id,
     isOn,
@@ -52,45 +52,70 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   SkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
   GhostButton: ({
     label,
+    iconBefore,
     onClick,
     disabled,
   }: {
     label: string;
+    iconBefore?: ReactNode;
     onClick?: () => void;
     disabled?: boolean;
   }) => (
     <button onClick={onClick} disabled={disabled}>
+      {iconBefore}
       {label}
     </button>
   ),
   GhostIconButton: ({
+    icon,
     onClick,
     'aria-label': ariaLabel,
   }: {
     onClick: () => void;
     icon?: ReactNode;
     'aria-label'?: string;
-  }) => <button onClick={onClick} aria-label={ariaLabel} />,
+  }) => (
+    <button onClick={onClick} aria-label={ariaLabel}>
+      {icon}
+    </button>
+  ),
   NeutralButton: ({
     label,
+    iconBefore,
     onClick,
+    disabled,
   }: {
     label: string;
+    iconBefore?: ReactNode;
     onClick?: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
+    disabled?: boolean;
+  }) => (
+    <button onClick={onClick} disabled={disabled}>
+      {iconBefore}
+      {label}
+    </button>
+  ),
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconArrowLeft: () => <svg />,
+  IconArrowLeft: ({ className }: { className?: string }) => (
+    <svg data-icon="back" className={className} />
+  ),
   IconCircleCheck: () => <svg data-icon="success" />,
   IconCircleX: () => <svg data-icon="error" />,
   IconAlertTriangle: () => <svg data-icon="missed" />,
+  IconClipboardX: () => <svg data-icon="empty" />,
   IconPencilMinus: () => <svg data-icon="edit" />,
+  IconTrashX: ({ className }: { className?: string }) => (
+    <svg data-icon="delete" className={className} />
+  ),
 }));
 
 const labels: ScheduledTaskDetailViewLabels = {
   backAriaLabel: 'Back',
   editButtonLabel: 'Edit',
+  deleteButtonLabel: 'Delete',
+  deletedStateLabel: 'Deleted',
   errorLabel: 'Failed to load the scheduled task',
   detailsTitle: 'Details',
   descriptionLabel: 'Description',
@@ -687,6 +712,181 @@ describe('ScheduledTaskDetailView', () => {
 
       const announcement = screen.getByText('Task paused');
       expect(announcement.getAttribute('role')).toBe('status');
+    });
+  });
+
+  describe('Delete action', () => {
+    it('does not render when onDelete is omitted', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          displayName="Daily summary"
+          runs={[]}
+        />,
+      );
+
+      expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
+    });
+
+    it('renders when onDelete is supplied', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          onDelete={vi.fn()}
+          displayName="Daily summary"
+          runs={[]}
+        />,
+      );
+
+      expect(screen.getByRole('button', { name: 'Delete' })).toBeTruthy();
+    });
+
+    it('calls onDelete exactly once when activated, with no dialog or network side effects', async () => {
+      const onDelete = vi.fn();
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          onDelete={onDelete}
+          displayName="Daily summary"
+          runs={[]}
+        />,
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+      expect(onDelete).toHaveBeenCalledOnce();
+    });
+
+    it('renders between the Active switch and the Edit button in DOM order', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          onDelete={vi.fn()}
+          onEdit={vi.fn()}
+          isActive={true}
+          displayName="Daily summary"
+          runs={[]}
+        />,
+      );
+
+      const switchEl = screen.getByRole('switch');
+      const deleteButton = screen.getByRole('button', { name: 'Delete' });
+      const editButton = screen.getByRole('button', { name: 'Edit' });
+      expect(
+        switchEl.compareDocumentPosition(deleteButton) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        deleteButton.compareDocumentPosition(editButton) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it('renders Active, Delete, and Edit disabled — but not removed — while isDeleting is true', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          onDelete={vi.fn()}
+          onEdit={vi.fn()}
+          isActive={true}
+          isDeleting
+          displayName="Daily summary"
+          runs={[]}
+        />,
+      );
+
+      expect(screen.getByRole('switch')).toHaveProperty('disabled', true);
+      expect(screen.getByRole('button', { name: 'Delete' })).toHaveProperty(
+        'disabled',
+        true,
+      );
+      expect(screen.getByRole('button', { name: 'Edit' })).toHaveProperty(
+        'disabled',
+        true,
+      );
+    });
+  });
+
+  describe('RTL', () => {
+    it('keeps the header action order Active → Delete → Edit unmirrored, and mirrors only the back icon, under a dir="rtl" ancestor', () => {
+      const { container } = render(
+        <div dir="rtl">
+          <ScheduledTaskDetailView
+            labels={labels}
+            onBack={vi.fn()}
+            onDelete={vi.fn()}
+            onEdit={vi.fn()}
+            isActive={true}
+            displayName="Daily summary"
+            runs={[]}
+          />
+        </div>,
+      );
+
+      const switchEl = screen.getByRole('switch');
+      const deleteButton = screen.getByRole('button', { name: 'Delete' });
+      const editButton = screen.getByRole('button', { name: 'Edit' });
+      expect(
+        switchEl.compareDocumentPosition(deleteButton) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        deleteButton.compareDocumentPosition(editButton) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+
+      const backIcon = container.querySelector('[data-icon="back"]');
+      const deleteIcon = container.querySelector('[data-icon="delete"]');
+      expect(backIcon).toBeTruthy();
+      expect(deleteIcon).toBeTruthy();
+      expect(backIcon?.getAttribute('class')).toContain('rtl:scale-x-[-1]');
+      expect(deleteIcon?.getAttribute('class') ?? '').not.toContain(
+        'rtl:scale-x-[-1]',
+      );
+    });
+  });
+
+  describe('Deleted state', () => {
+    it('suppresses Edit, Delete, and Active regardless of callback presence, and shows the deleted-state indicator', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          onDelete={vi.fn()}
+          onEdit={vi.fn()}
+          isActive={true}
+          onActiveChange={vi.fn()}
+          isDeleted
+          displayName="Daily summary"
+          runs={[]}
+        />,
+      );
+
+      expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
+      expect(screen.queryByRole('switch')).toBeNull();
+      expect(screen.getByText('Deleted')).toBeTruthy();
+    });
+
+    it('still renders History when the task is deleted', () => {
+      render(
+        <ScheduledTaskDetailView
+          labels={labels}
+          onBack={vi.fn()}
+          isDeleted
+          displayName="Daily summary"
+          runs={[buildRun()]}
+        />,
+      );
+
+      expect(
+        screen.getByLabelText('Succeeded today at 9:01 AM (99s)'),
+      ).toBeTruthy();
     });
   });
 
