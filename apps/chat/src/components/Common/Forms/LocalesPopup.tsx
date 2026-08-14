@@ -155,28 +155,30 @@ export const LocalesPopup = <T extends MarketplaceEntity>({
     <form onKeyDown={preventEnterDown}>
       <DialPopup
         open
-        header={t(CommonI18nKeys.AddLocale)}
+        header={t(readonly ? CommonI18nKeys.Locales : CommonI18nKeys.AddLocale)}
         headerClassName="px-3 md:px-6 pt-4 md:pt-6"
         className="mx-3 !h-auto !max-h-[600px] !bg-layer-2 md:m-0"
         onClose={onClose}
         portalId="chat"
         size={PopupSize.Md}
         footer={
-          <div className="flex justify-end gap-2 border-t border-t-tertiary px-3 py-4 md:px-6">
-            <DialGhostButton
-              label={t(CommonI18nKeys.Cancel)}
-              onClick={onClose}
-            />
-            <DialPrimaryButton
-              label={t(CommonI18nKeys.Apply)}
-              disabled={isApplyDisabled}
-              tooltipProps={{
-                tooltip: fieldTooltip || applyTooltip,
-                hideTooltip: !isApplyDisabled,
-              }}
-              onClick={handleApply}
-            />
-          </div>
+          !readonly ? (
+            <div className="flex justify-end gap-2 border-t border-t-tertiary px-3 py-4 md:px-6">
+              <DialGhostButton
+                label={t(CommonI18nKeys.Cancel)}
+                onClick={onClose}
+              />
+              <DialPrimaryButton
+                label={t(CommonI18nKeys.Apply)}
+                disabled={isApplyDisabled}
+                tooltipProps={{
+                  tooltip: fieldTooltip || applyTooltip,
+                  hideTooltip: !isApplyDisabled,
+                }}
+                onClick={handleApply}
+              />
+            </div>
+          ) : undefined
         }
       >
         <div className="flex flex-col gap-2 overflow-hidden p-3 md:p-6">
