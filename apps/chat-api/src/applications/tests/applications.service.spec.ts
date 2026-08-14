@@ -284,7 +284,7 @@ describe('ApplicationsService', () => {
         expect.anything(),
         expect.objectContaining({
           body: {
-            displayName: { plainValue: 'My App' },
+            displayName: 'My App',
             displayVersion: '1.0',
             application_type_schema_id:
               'https://mydial.epam.com/custom_application_schemas/quickapps2',
@@ -314,19 +314,19 @@ describe('ApplicationsService', () => {
 
       const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
       expect(sentBody).toMatchObject({
-        displayName: { localeMap: { en: 'My App', de: 'Meine App' } },
+        displayName: { en: 'My App', de: 'Meine App' },
         description: { en: 'A description', de: 'Eine Beschreibung' },
       });
     });
 
-    it('still produces a plainValue displayName when locales is omitted (regression guard)', async () => {
+    it('still produces a plain-string displayName when locales is omitted (regression guard)', async () => {
       const { service } = makeService();
       const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
 
       await service.createApplication('user1', 'token', body);
 
       const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
-      expect(sentBody).toMatchObject({ displayName: { plainValue: 'My App' } });
+      expect(sentBody).toMatchObject({ displayName: 'My App' });
     });
 
     it('maps topics to descriptionKeywords in SDK body', async () => {
@@ -431,7 +431,7 @@ describe('ApplicationsService', () => {
     const id = 'applications/test-bucket/My%20App__0.0.1';
     const updateBody: UpdateApplicationBodyDto = { name: 'Updated App' };
     const existingApp = {
-      displayName: { plainValue: 'My App' },
+      displayName: 'My App',
       displayVersion: '0.0.1',
       application_type_schema_id: 'https://mydial.epam.com/schema',
       application_properties: {
@@ -480,7 +480,7 @@ describe('ApplicationsService', () => {
         'My%20App__0.0.1',
         expect.objectContaining({
           body: {
-            displayName: { plainValue: 'Updated App' },
+            displayName: 'Updated App',
             displayVersion: '0.0.1',
             application_type_schema_id: 'https://mydial.epam.com/schema',
             application_properties: existingApp.application_properties,
@@ -533,9 +533,7 @@ describe('ApplicationsService', () => {
 
       const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
       expect(sentBody).toMatchObject({
-        displayName: {
-          localeMap: { en: 'Updated App', de: 'Aktualisierte App' },
-        },
+        displayName: { en: 'Updated App', de: 'Aktualisierte App' },
       });
     });
 
@@ -545,7 +543,7 @@ describe('ApplicationsService', () => {
         service,
         okResponse({
           ...existingApp,
-          displayName: { localeMap: { en: 'My App', de: 'Meine App' } },
+          displayName: { en: 'My App', de: 'Meine App' },
         }),
       );
 
@@ -553,7 +551,7 @@ describe('ApplicationsService', () => {
 
       const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
       expect(sentBody).toMatchObject({
-        displayName: { plainValue: 'Updated App' },
+        displayName: 'Updated App',
       });
     });
 
