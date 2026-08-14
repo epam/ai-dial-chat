@@ -340,7 +340,9 @@ describe('useConversationExport', () => {
       ) {
         resolvers.shift()?.();
 
-        await Promise.resolve();
+        // A microtask-only tick can starve the macrotask (Blob#arrayBuffer)
+        // the next downloadFile call needs to progress, spinning forever.
+        await new Promise((resolve) => setTimeout(resolve, 0));
       }
 
       await act(async () => {

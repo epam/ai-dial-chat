@@ -20,7 +20,7 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  ButtonVariant: { Primary: 'primary', Neutral: 'neutral' },
+  ButtonVariant: { Primary: 'primary', Neutral: 'neutral', Danger: 'danger' },
   Switch: ({
     id,
     isOn,
@@ -52,14 +52,17 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   SkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
   GhostButton: ({
     label,
+    iconBefore,
     onClick,
     disabled,
   }: {
     label: string;
+    iconBefore?: ReactNode;
     onClick?: () => void;
     disabled?: boolean;
   }) => (
     <button onClick={onClick} disabled={disabled}>
+      {iconBefore}
       {label}
     </button>
   ),
@@ -92,22 +95,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
-  DangerButton: ({
-    label,
-    iconBefore,
-    onClick,
-    disabled,
-  }: {
-    label: string;
-    iconBefore?: ReactNode;
-    onClick?: () => void;
-    disabled?: boolean;
-  }) => (
-    <button onClick={onClick} disabled={disabled}>
-      {iconBefore}
-      {label}
-    </button>
-  ),
 }));
 
 vi.mock('@tabler/icons-react', () => ({
@@ -117,6 +104,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconCircleCheck: () => <svg data-icon="success" />,
   IconCircleX: () => <svg data-icon="error" />,
   IconAlertTriangle: () => <svg data-icon="missed" />,
+  IconClipboardX: () => <svg data-icon="empty" />,
   IconPencilMinus: () => <svg data-icon="edit" />,
   IconTrashX: ({ className }: { className?: string }) => (
     <svg data-icon="delete" className={className} />
@@ -813,9 +801,10 @@ describe('ScheduledTaskDetailView', () => {
       );
 
       expect(screen.getByRole('switch')).toHaveProperty('disabled', true);
-      expect(
-        screen.getByRole('button', { name: 'Delete' }),
-      ).toHaveProperty('disabled', true);
+      expect(screen.getByRole('button', { name: 'Delete' })).toHaveProperty(
+        'disabled',
+        true,
+      );
       expect(screen.getByRole('button', { name: 'Edit' })).toHaveProperty(
         'disabled',
         true,

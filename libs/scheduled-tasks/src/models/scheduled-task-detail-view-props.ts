@@ -75,13 +75,13 @@ export interface ScheduledTaskDetailViewColors {
 
 /** Typography overrides for the {@link ScheduledTaskDetailView} component. */
 export interface ScheduledTaskDetailViewTypography {
-  /** CSS class applied to the header title. Defaults to `'dial-h1-text'`. */
+  /** CSS class applied to the header title. Defaults to `'dial-h2-text'`. */
   titleClassName?: string;
   /** CSS class applied to section titles. Defaults to `'dial-body-semi-text'`. */
   sectionTitleClassName?: string;
   /** CSS class applied to field labels. Defaults to `'dial-tiny-text'`. */
   fieldLabelClassName?: string;
-  /** CSS class applied to field values. Defaults to `'dial-body-text'`. */
+  /** CSS class applied to field values. Defaults to `'dial-small-text'`. */
   fieldValueClassName?: string;
   /** CSS class applied to each run row's timestamp text. Defaults to `'dial-small-text'`. */
   runTimestampClassName?: string;

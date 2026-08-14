@@ -4,9 +4,9 @@ import {
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
+  ButtonVariant,
   DIAL_ICON_SIZE,
   Spinner,
-  DangerButton,
   GhostButton,
   GhostIconButton,
   NeutralButton,
@@ -63,13 +63,13 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   styles: viewStyles,
 }) => {
   const { colors, typography } = viewStyles ?? {};
-  const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
+  const titleClassName = typography?.titleClassName ?? 'dial-h2-text';
   const sectionTitleClassName =
     typography?.sectionTitleClassName ?? 'dial-body-semi-text';
   const fieldLabelClassName =
     typography?.fieldLabelClassName ?? 'dial-tiny-text';
   const fieldValueClassName =
-    typography?.fieldValueClassName ?? 'dial-body-text';
+    typography?.fieldValueClassName ?? 'dial-small-text';
   const runTimestampClassName =
     typography?.runTimestampClassName ?? 'dial-small-text';
 
@@ -151,22 +151,18 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
 
         <div className="flex shrink-0 items-center gap-2">
           {!isDeleted && isActive !== undefined && (
-            <>
-              <span className={fieldValueClassName}>
-                {labels.activeStatusLabel}
-              </span>
-              <Switch
-                id="scheduled-task-active-switch"
-                aria-label={labels.activeStatusLabel}
-                isOn={isActive}
-                disabled={isActiveUpdating || isActiveDisabled || isDeleting}
-                onChange={(value) => onActiveChange?.(value)}
-              />
-            </>
+            <Switch
+              id="scheduled-task-active-switch"
+              labelProps={{ label: labels.activeStatusLabel }}
+              isOn={isActive}
+              disabled={isActiveUpdating || isActiveDisabled || isDeleting}
+              onChange={(value) => onActiveChange?.(value)}
+            />
           )}
 
           {!isDeleted && onDelete && (
-            <DangerButton
+            <GhostButton
+              variant={ButtonVariant.Danger}
               label={labels.deleteButtonLabel}
               iconBefore={<IconTrashX size={DIAL_ICON_SIZE.SM} aria-hidden />}
               onClick={onDelete}
@@ -224,7 +220,12 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
 
             {description && (
               <div className="flex flex-col gap-1">
-                <span className={fieldLabelClassName}>
+                <span
+                  className={mergeClasses(
+                    fieldLabelClassName,
+                    styles.subtitleText,
+                  )}
+                >
                   {labels.descriptionLabel}
                 </span>
                 <p className={fieldValueClassName}>{description}</p>
@@ -233,14 +234,26 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
 
             {modelLabel && (
               <div className="flex flex-col gap-1">
-                <span className={fieldLabelClassName}>{labels.modelLabel}</span>
+                <span
+                  className={mergeClasses(
+                    fieldLabelClassName,
+                    styles.subtitleText,
+                  )}
+                >
+                  {labels.modelLabel}
+                </span>
                 <p className={fieldValueClassName}>{modelLabel}</p>
               </div>
             )}
 
             {repeatsLabel && (
               <div className="flex flex-col gap-1">
-                <span className={fieldLabelClassName}>
+                <span
+                  className={mergeClasses(
+                    fieldLabelClassName,
+                    styles.subtitleText,
+                  )}
+                >
                   {labels.repeatsLabel}
                 </span>
                 <p className={fieldValueClassName}>{repeatsLabel}</p>
@@ -249,7 +262,12 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
 
             {activeWindowLabel && (
               <div className="flex flex-col gap-1">
-                <span className={fieldLabelClassName}>
+                <span
+                  className={mergeClasses(
+                    fieldLabelClassName,
+                    styles.subtitleText,
+                  )}
+                >
                   {labels.activeWindowLabel}
                 </span>
                 <p className={fieldValueClassName}>{activeWindowLabel}</p>
@@ -267,7 +285,12 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
               aria-label={labels.instructionsLabel}
               className="flex flex-col gap-1"
             >
-              <span className={fieldLabelClassName}>
+              <span
+                className={mergeClasses(
+                  fieldLabelClassName,
+                  styles.subtitleText,
+                )}
+              >
                 {labels.instructionsLabel}
               </span>
               {instructionsMarkdown &&
@@ -284,7 +307,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
             >
               <div
                 className={mergeClasses(
-                  'sticky top-0 z-10 flex flex-col gap-1 rounded-t-xl px-6 pb-2 pt-5',
+                  'sticky top-0 z-10 flex flex-col gap-4 rounded-t-xl px-6 pb-2 pt-5',
                   styles.historyCard,
                 )}
               >
