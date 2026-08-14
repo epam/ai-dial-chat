@@ -17,7 +17,6 @@ import {
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   buildDedupedPublicationFileTargetsFromConversations,
-  createPublicationIconTargetUrl,
   isEntityIdPublic,
 } from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
@@ -180,16 +179,13 @@ const PublishDialogContainer = ({
       isMyEntity({ id: entity.iconUrl })
     ) {
       const decodedIconUrl = ApiUtils.decodeApiUrl(entity.iconUrl);
+      const targetIconUrl = transformIdToRootEntityId(decodedIconUrl);
 
       iconResource.push({
         action: PublishActions.ADD_IF_ABSENT,
         sourceUrl: decodedIconUrl,
         reviewUrl: decodedIconUrl,
-        targetUrl: createPublicationIconTargetUrl({
-          entityId: entity.id,
-          iconUrl: decodedIconUrl,
-          targetFolder: PUBLIC_URL_PREFIX,
-        }),
+        targetUrl: replaceIdWithBucket(targetIconUrl, PUBLIC_URL_PREFIX),
       });
     }
 
