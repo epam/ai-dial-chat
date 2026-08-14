@@ -133,7 +133,7 @@ At least one identity provider (see [Auth provider environment variables](#auth-
 | `UTILITY_NAMING_TIMEOUT_MS`             | `10000`                        | Timeout in milliseconds for utility-model conversation naming requests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `RESPONSES_API_ENABLED`                 | `false`                        | Server-only kill switch for routing eligible generations through the OpenAI Responses API. Even when a deployment reports `features.responsesApi=true`, Responses is only used when this is also `true`; otherwise Chat Completions is used. Not exposed to the frontend. Takes effect on the next service restart.                                                                                                                                                                                                                                                                  |
 | `FEATURED_MODEL_IDS`                    | —                              | Comma-separated list of model (or application) IDs to mark as featured in the catalog. Matching is exact and case-sensitive against the item's `id` field. Example: `chat-hub-v2,gpt-4o,dial-rag`. Takes effect on the next service restart; changing it without a restart has no effect.                                                                                                                                                                                                                                                                                            |
-| `HIDDEN_ENTITY_TAGS`                    | `[]`                           | Comma-separated topic tags marking models and toolsets that stay hidden in the Catalog while remaining visible in the Quick App 2.0 form. Example: `internal,experimental`. |
+| `HIDDEN_ENTITY_TAGS`                    | `[]`                           | Comma-separated topic tags marking models and toolsets that stay hidden in the Catalog while remaining visible in the Quick App 2.0 form. Example: `internal,experimental`.                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `ALLOWED_IFRAME_ORIGINS`                | —                              | Comma-separated list of origins allowed to frame this app and be loaded by it (added to CSP `frame-ancestors` and `frame-src`). Each entry must be an origin only (`scheme://host[:port]`, no path or query string) with an `https://` (or `http://` for local development only) scheme. Required for chat overlay mode and iframe integrations such as Quick Apps editors. Example: `https://quickapps.example.com`                                                                                                                                                                 |
 | `OVERLAY_ENABLED`                       | `false`                        | Enables embedded chat overlay runtime mode. Has no effect unless `ALLOWED_IFRAME_ORIGINS` also includes at least one allowed host origin.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `OVERLAY_SANDBOX_ENABLED`               | `false`                        | Serves the overlay sandbox static app at `/overlay-sandbox/`. Intended for development/test environments only; the route is not served when disabled.                                                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -152,7 +152,9 @@ At least one identity provider (see [Auth provider environment variables](#auth-
 
 Banner dismissal is content-keyed and persists in the browser's `localStorage`: a user who closes the banner keeps it hidden across restarts, and it reappears automatically for everyone once an operator changes the title or the description — no version counter or manual reset. Note that dismissing the banner also hides the announcements popover, since the pill lives inside the banner.
 
-A deprecated `ANNOUNCEMENT_HTML_MESSAGE` variable still renders a legacy single-line banner when neither variable above is set. It is documented in [the environment variables migration guide](../../docs/environment-variables-migration-guide.md#migrating-from-announcement_html_message) rather than here — use `ANNOUNCEMENT_TITLE` / `ANNOUNCEMENT_DESCRIPTION` for new deployments.
+| Variable                    | Default | Description                                                                                                                                                                                                                                                      |
+| --------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ANNOUNCEMENT_HTML_MESSAGE` | —       | Deprecated. Renders the legacy single-line, centered banner, with the same sanitization and content-keyed dismissal as the structured form. Ignored when `ANNOUNCEMENT_TITLE` or `ANNOUNCEMENT_DESCRIPTION` is set. Use the structured pair for new deployments. |
 
 #### Header bearer-token authentication
 
@@ -341,39 +343,39 @@ maps each backend domain to its base path.
 
 ### Infrastructure
 
-| Method | Path                | Description                                                                 |
-| ------ | ------------------- | --------------------------------------------------------------------------- |
-| `GET`  | `/api/health`       | Health status: `{ status, timestamp, version }` (`version` from `CHAT_VERSION`) |
-| `GET`  | `/api/themes`       | Theme configuration. Errors: 404, 502, 503                                   |
-| `GET`  | `/api/themes/icon`  | Theme icon SVG by validated `iconName`. Errors: 400, 404, 502, 503          |
+| Method | Path               | Description                                                                     |
+| ------ | ------------------ | ------------------------------------------------------------------------------- |
+| `GET`  | `/api/health`      | Health status: `{ status, timestamp, version }` (`version` from `CHAT_VERSION`) |
+| `GET`  | `/api/themes`      | Theme configuration. Errors: 404, 502, 503                                      |
+| `GET`  | `/api/themes/icon` | Theme icon SVG by validated `iconName`. Errors: 400, 404, 502, 503              |
 
 ### Versioned domains (`/api/v1/...`)
 
-| Base path              | Source folder           | Responsibility                                                     |
-| ---------------------- | ----------------------- | ------------------------------------------------------------------ |
-| `auth`                 | `auth/`                 | Provider list, login/callback, logout, session, CSRF, `me`          |
-| `client-config`        | `app-config/`           | Server-resolved client configuration and feature flags             |
-| `user-config`          | `user-config/`          | Per-user persisted preferences                                     |
-| `chat`                 | `chat/`                 | Chat completions, streamed over SSE                                |
-| `conversations`        | `conversations/`        | Conversation CRUD, plus publish operations                         |
-| `models`               | `models/`               | Available models                                                   |
-| `deployments`          | `deployments/`          | Deployment metadata and usage limits                               |
-| `applications`         | `applications/`         | Application CRUD                                                   |
-| `application-schemas`  | `application-schemas/`  | Quick App / custom application schemas                             |
-| `toolsets`             | `toolsets/`             | Toolsets and their credential state                                |
-| `skills`               | `skills/`               | Skill CRUD and skill file transfer                                 |
-| `prompts`              | `prompts/`              | Prompt CRUD and folders                                            |
-| `files`                | `files/`                | File upload/download, archive upload, ZIP streaming                |
-| `share`                | `share/`                | Share links and recipient management                               |
-| `catalog`              | `publish/`              | Publication requests and published-resource listing                |
-| `publish`              | `publish/`              | Publication rules                                                  |
-| `rate`                 | `rate/`                 | Message rating (like/dislike) and feedback                         |
-| `transcription`        | `transcription/`        | Audio transcription through the ASR model                          |
-| `scheduled-tasks`      | `scheduled-tasks/`      | DIAL Scheduler proxy — schedules and run history                   |
-| `client-channel`       | `client-channel/`       | Server-initiated interactions (mid-stream toolset sign-in), SSE    |
-| `offline-credentials`  | `offline-credentials/`  | Offline credential consent flow                                    |
-| `external-services`    | `external-services/`    | External service registry and sign-in state                        |
-| `apps`                 | `app/`                  | Root application controller                                        |
+| Base path             | Source folder          | Responsibility                                                  |
+| --------------------- | ---------------------- | --------------------------------------------------------------- |
+| `auth`                | `auth/`                | Provider list, login/callback, logout, session, CSRF, `me`      |
+| `client-config`       | `app-config/`          | Server-resolved client configuration and feature flags          |
+| `user-config`         | `user-config/`         | Per-user persisted preferences                                  |
+| `chat`                | `chat/`                | Chat completions, streamed over SSE                             |
+| `conversations`       | `conversations/`       | Conversation CRUD, plus publish operations                      |
+| `models`              | `models/`              | Available models                                                |
+| `deployments`         | `deployments/`         | Deployment metadata and usage limits                            |
+| `applications`        | `applications/`        | Application CRUD                                                |
+| `application-schemas` | `application-schemas/` | Quick App / custom application schemas                          |
+| `toolsets`            | `toolsets/`            | Toolsets and their credential state                             |
+| `skills`              | `skills/`              | Skill CRUD and skill file transfer                              |
+| `prompts`             | `prompts/`             | Prompt CRUD and folders                                         |
+| `files`               | `files/`               | File upload/download, archive upload, ZIP streaming             |
+| `share`               | `share/`               | Share links and recipient management                            |
+| `catalog`             | `publish/`             | Publication requests and published-resource listing             |
+| `publish`             | `publish/`             | Publication rules                                               |
+| `rate`                | `rate/`                | Message rating (like/dislike) and feedback                      |
+| `transcription`       | `transcription/`       | Audio transcription through the ASR model                       |
+| `scheduled-tasks`     | `scheduled-tasks/`     | DIAL Scheduler proxy — schedules and run history                |
+| `client-channel`      | `client-channel/`      | Server-initiated interactions (mid-stream toolset sign-in), SSE |
+| `offline-credentials` | `offline-credentials/` | Offline credential consent flow                                 |
+| `external-services`   | `external-services/`   | External service registry and sign-in state                     |
+| `apps`                | `app/`                 | Root application controller                                     |
 
 `libs/chat-api-client` is generated from this surface. After changing any
 controller or DTO, run `npm run openapi` and `npm run openapi:check` — handler
@@ -410,17 +412,17 @@ logic with `Logger` and `ConfigService` injected, DTO classes with
 
 The API returns appropriate HTTP status codes:
 
-| Status | Description                                                     |
-| ------ | --------------------------------------------------------------- |
-| `200`  | Success                                                         |
-| `400`  | Bad Request (validation error)                                   |
-| `401`  | Unauthorized (no valid session or header token)                  |
-| `403`  | Forbidden (authenticated but not permitted, or CSRF rejection)   |
-| `404`  | Resource Not Found                                              |
-| `413`  | Payload Too Large (upload exceeds the configured byte limit)     |
-| `422`  | Unprocessable Entity (archive/skill upload fails entry limits)   |
-| `429`  | Too Many Requests (throttled)                                   |
-| `502`  | Bad Gateway (external service error)                             |
+| Status | Description                                                         |
+| ------ | ------------------------------------------------------------------- |
+| `200`  | Success                                                             |
+| `400`  | Bad Request (validation error)                                      |
+| `401`  | Unauthorized (no valid session or header token)                     |
+| `403`  | Forbidden (authenticated but not permitted, or CSRF rejection)      |
+| `404`  | Resource Not Found                                                  |
+| `413`  | Payload Too Large (upload exceeds the configured byte limit)        |
+| `422`  | Unprocessable Entity (archive/skill upload fails entry limits)      |
+| `429`  | Too Many Requests (throttled)                                       |
+| `502`  | Bad Gateway (external service error)                                |
 | `503`  | Service Unavailable (timeout, unreachable, or unconfigured feature) |
 
 All errors include descriptive messages to help with debugging. When
@@ -685,7 +687,7 @@ regenerated output — never hand-edit generated files.
 - [Authentication (BFF, encrypted cookie)](../../docs/auth/auth-bff-encrypted-cookie.md)
 - [Auth Diagrams](../../docs/auth/auth-diagrams/README.md)
 - [Testing the Auth Implementation](../../docs/auth/testing-current-auth-implementation.md)
-- [Environment Variables Migration Guide](../../docs/environment-variables-migration-guide.md)
+- [Legacy Chat Migration Guide](../../docs/legacy-chat-migration-guide.md) — what happens to a legacy deployment's variables
 - [Theme Customization](../../docs/theme-customization.md)
 - [Responses API Integration](../../docs/responses-api-integration.md)
 - [NestJS best practices for this app](../../.claude/rules/nestjs-best-practices.md)

@@ -20,7 +20,7 @@ Ground-truth design docs live in `docs/`. This skill is the index. Open **only**
 | [`docs/theme-customization.md`](../../../docs/theme-customization.md)                                           | Theming: the themes service and `config.json` format, the color tokens the app reads, logos and favicon, the light/dark/system picker, legacy theme migration. |
 | [`docs/chat-overlay-migration-guide.md`](../../../docs/chat-overlay-migration-guide.md)                         | Embedding the chat: the overlay package, `postMessage` protocol and handshake, `OverlayFeature` flags, and migrating from the legacy `@epam/ai-dial-overlay`.  |
 | [`docs/responses-api-integration.md`](../../../docs/responses-api-integration.md)                               | Working on completions dispatch: how deployments declaring `responses_api` are routed and normalized.                                                          |
-| [`docs/environment-variables-migration-guide.md`](../../../docs/environment-variables-migration-guide.md)       | Mapping a legacy deployment's environment variables onto this application's configuration.                                                                     |
+| [`apps/chat-api/README.md`](../../../apps/chat-api/README.md)                                                   | The full environment-variable reference: every supported variable, its default, and its effect. `apps/chat-api/.env.template` is the annotated source.         |
 
 ## How to use
 

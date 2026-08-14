@@ -7,13 +7,13 @@ Static sandbox for exercising `@epam/ai-dial-chat-overlay` against a deployed
 
 One page per integration scenario, under `src/cases/`:
 
-| Case                    | Exercises                                                                       |
-| ----------------------- | ------------------------------------------------------------------------------- |
-| `DirectOverlayCase`     | `new ChatOverlay(...)` mounted into a host-owned layout                          |
-| `ManagerOverlayCase`    | `ChatOverlayManager` — floating widget chrome, toggle/close/fullscreen           |
-| `ConversationListCase`  | `getConversations`, `createConversation`, `selectConversation`, rename, delete   |
-| `EnabledFeaturesCase`   | Live `enabledFeatures` and `setOverlayOptions()` experimentation                 |
-| `AuthUiModeCase`        | Per-provider `auth.providerUiModes` login UI modes                               |
+| Case                   | Exercises                                                                      |
+| ---------------------- | ------------------------------------------------------------------------------ |
+| `DirectOverlayCase`    | `new ChatOverlay(...)` mounted into a host-owned layout                        |
+| `ManagerOverlayCase`   | `ChatOverlayManager` — floating widget chrome, toggle/close/fullscreen         |
+| `ConversationListCase` | `getConversations`, `createConversation`, `selectConversation`, rename, delete |
+| `EnabledFeaturesCase`  | Live `enabledFeatures` and `setOverlayOptions()` experimentation               |
+| `AuthUiModeCase`       | Per-provider `auth.providerUiModes` login UI modes                             |
 
 ## Deployment
 

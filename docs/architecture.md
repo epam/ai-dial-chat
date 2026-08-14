@@ -44,7 +44,7 @@ root/
 │   ├── chat/                  # React SPA — frontend chat application (port 4207)
 │   ├── chat-api/              # NestJS — backend API server (port 5000)
 │   └── chat-overlay-sandbox/  # Static host page for exercising the overlay (port 4300)
-├── libs/                      # 20 @epam/* libraries — see Libraries below
+├── libs/                      # 22 @epam/* libraries — see Libraries below
 ├── docs/                      # Architecture, requirements, auth, theming, overlay migration
 ├── openspec/
 │   ├── config.yaml            # Tech stack, commands, architecture rules for AI agents
@@ -104,6 +104,8 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 | `@epam/ai-dial-share`                    | `share`                    | Share popover UI and share-link types                                        |
 | `@epam/ai-dial-publish-panel`            | `publish-panel`            | Publish-to-folder UI and state flow                                          |
 | `@epam/ai-dial-prompt-editor`            | `prompt-editor`            | Host-agnostic prompt authoring form with an inline folder picker             |
+| `@epam/ai-dial-prompts`                  | `prompts`                  | Favorite-prompts panel and the prompt-parameters popup for the composer      |
+| `@epam/ai-dial-skill-editor`             | `skill-editor`             | Skill authoring form with a file tree and conflict handling                  |
 | `@epam/ai-dial-builder-form`             | `builder-form`             | Presentational builder form for composing and editing DIAL entities          |
 | `@epam/ai-dial-deployment-creation-form` | `deployment-creation-form` | Form for creating and editing a deployment                                   |
 | `@epam/ai-dial-scheduled-tasks`          | `scheduled-tasks`          | Scheduled Tasks page shell — header, toolbar, empty state                    |
@@ -561,7 +563,7 @@ The intended direction, enforced in review:
 - [Theme Customization](theme-customization.md) — theme configuration, tokens, and legacy theme migration
 - [Technical Requirements](technical-requirements.md)
 - [Responses API Integration](responses-api-integration.md)
-- [Environment Variables Migration Guide](environment-variables-migration-guide.md)
+- [Chat API environment variables](../apps/chat-api/README.md#environment-variables) — the full variable reference
 - [Auth subsystem](./auth/)
 - [Legacy AI DIAL Chat](https://github.com/epam/ai-dial-chat)
 - [AI DIAL Chat Themes](https://github.com/epam/ai-dial-chat-themes)

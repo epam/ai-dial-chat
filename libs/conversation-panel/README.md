@@ -4,7 +4,7 @@ Panel component for browsing conversation history with virtual scrolling, groupe
 
 ## Overview
 
-`@epam/ai-dial-conversation-panel` renders the conversation history sidebar that lets users navigate between past chats. It addresses the performance and UX challenges that come with displaying large conversation histories: items are rendered with `react-window` for virtualised scrolling so the DOM stays small even with thousands of entries; conversations are grouped by recency (Today, This Week, This Month, Older) or by source (local vs. remote) so users can quickly locate recent work; and a tab bar with a search field narrows the list without a full page reload. Use this library whenever an application needs a left-rail or slide-in drawer that shows the user's chat history with standard navigation affordances. The library is intentionally data-agnostic — it accepts a flat list of `ConversationItem` objects and emits callbacks for selection, deletion, and moves, leaving storage and routing entirely to the consuming app.
+`@epam/ai-dial-conversation-panel` renders the conversation history sidebar that lets users navigate between past chats. It addresses the performance and UX challenges that come with displaying large conversation histories: rows are rendered through `react-window` so the DOM stays small even with thousands of entries; conversations are grouped into a Pinned section plus per-source sections (`FilterTab`) with collapsible headers, so users can quickly locate work; and a tab bar with a search field narrows the list without a full page reload. Rows support drag-and-drop reordering between groups, per-row action menus, task badges, and unread indicators. Use this library whenever an application needs a left-rail or slide-in drawer that shows the user's chat history with standard navigation affordances. The library is intentionally data-agnostic — it accepts an already-ordered flat list of `ConversationItem` objects and emits callbacks for selection, actions, and moves, leaving sorting, storage, and routing entirely to the consuming app.
 
 ## Installation
 
@@ -81,23 +81,47 @@ FilterTab.Organization; // 'organization'
 ```tsx
 import type {
   ConversationPanelProps,
+  ConversationPanelLabels,
+  ConversationPanelStyles,
+  ConversationPanelTypography,
+  ConversationColors,
+  NewChatButtonColors,
   ConversationItem,
   ConversationMove,
   FilterLabels,
-  ConversationGroupProps,
+  PillTabsColors,
+  PillTabsStyles,
+  PillTabsTypography,
 } from '@epam/ai-dial-conversation-panel';
 ```
 
 ### ConversationItem
 
-Minimal data shape required for each conversation entry in the list.
+Data shape for each conversation entry in the list. Only `id` and `title` are
+required.
 
 ```tsx
 interface ConversationItem {
   id: string;
-  name: string;
-  updatedAt: number;
-  source: FilterTab;
+  title: string;
   isPinned?: boolean;
+  source?: FilterTab;
+  iconUrl?: string;
+  iconTooltip?: string;
+  isIconLoading?: boolean;
+  href?: string;
+  showTaskBadge?: boolean;
+  taskBadgeLabel?: string;
+  isUnread?: boolean;
 }
 ```
+
+The panel does not sort — it renders `conversations` in the order given, so
+recency ordering is the host's job. Grouping is derived from `isPinned` and
+`source`.
+
+### ConversationMove
+
+Payload for a completed drag-and-drop move: the dragged `draggedId`, the
+`targetGroupKey` it landed in, and `afterId` — the item to insert after, or
+`null` for the top of that group.

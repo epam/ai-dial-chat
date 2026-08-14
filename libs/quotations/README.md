@@ -51,14 +51,15 @@ import { CitationCard } from '@epam/ai-dial-quotations';
 
 <CitationCard
   group={group}
-  activeIndex={0}
-  onIndexChange={setIndex}
+  activeIndex={activeIndex}
+  onIndexChange={setActiveIndex}
+  onPreview={handlePreview}
   onOpenInBrowser={handleOpen}
   labels={{
-    markerAriaLabel: `Citation from ${group.sourceName}`,
+    ariaLabel: `Citation from ${group.sourceName}`,
     previousCitation: 'Previous',
     nextCitation: 'Next',
-    switcherText: '1 / 3',
+    formatSwitcherText: (current, total) => `${current} / ${total}`,
     preview: 'Preview',
     openInBrowser: 'Open in browser',
     download: 'Download',

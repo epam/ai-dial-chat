@@ -118,19 +118,19 @@ openCanvas(
 
 `AttachmentContentType` is the discriminant on every content descriptor.
 
-| Enum member                          | Content type               | Description                                     |
-| ------------------------------------ | -------------------------- | ----------------------------------------------- |
-| `AttachmentContentType.PlainText`    | `PlainTextCanvasContent`   | Renders plain text                              |
-| `AttachmentContentType.Image`        | `ImageCanvasContent`       | Renders an image from a URL                     |
-| `AttachmentContentType.Audio`        | `AudioCanvasContent`       | Renders an audio player                         |
-| `AttachmentContentType.Markdown`     | `MarkdownCanvasContent`    | Renders markdown text                           |
-| `AttachmentContentType.Json`         | `JsonCanvasContent`        | Renders a JSON tree viewer                      |
-| `AttachmentContentType.Pdf`          | `PdfCanvasContent`         | Renders a PDF with highlight support            |
-| `AttachmentContentType.Code`         | `CodeCanvasContent`        | Renders syntax-highlighted source               |
-| `AttachmentContentType.Html`         | `HtmlCanvasContent`        | Renders HTML in a sandboxed frame, or its source |
-| `AttachmentContentType.Visualizer`   | `VisualizerCanvasContent`  | Renders a registered custom visualizer          |
-| `AttachmentContentType.Unsupported`  | `UnsupportedCanvasContent` | Fallback for unsupported MIME types             |
-| `AttachmentContentType.Error`        | `ErrorCanvasContent`       | Load failure or forbidden access                |
+| Enum member                         | Content type               | Description                                      |
+| ----------------------------------- | -------------------------- | ------------------------------------------------ |
+| `AttachmentContentType.PlainText`   | `PlainTextCanvasContent`   | Renders plain text                               |
+| `AttachmentContentType.Image`       | `ImageCanvasContent`       | Renders an image from a URL                      |
+| `AttachmentContentType.Audio`       | `AudioCanvasContent`       | Renders an audio player                          |
+| `AttachmentContentType.Markdown`    | `MarkdownCanvasContent`    | Renders markdown text                            |
+| `AttachmentContentType.Json`        | `JsonCanvasContent`        | Renders a JSON tree viewer                       |
+| `AttachmentContentType.Pdf`         | `PdfCanvasContent`         | Renders a PDF with highlight support             |
+| `AttachmentContentType.Code`        | `CodeCanvasContent`        | Renders syntax-highlighted source                |
+| `AttachmentContentType.Html`        | `HtmlCanvasContent`        | Renders HTML in a sandboxed frame, or its source |
+| `AttachmentContentType.Visualizer`  | `VisualizerCanvasContent`  | Renders a registered custom visualizer           |
+| `AttachmentContentType.Unsupported` | `UnsupportedCanvasContent` | Fallback for unsupported MIME types              |
+| `AttachmentContentType.Error`       | `ErrorCanvasContent`       | Load failure or forbidden access                 |
 
 `AttachmentErrorType` distinguishes the two failure kinds carried by
 `ErrorCanvasContent`: `LoadFailed` (network error or a non-`403` non-OK

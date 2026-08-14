@@ -82,7 +82,7 @@ The application will be available at `http://localhost:4207`.
 npm exec nx build chat
 ```
 
-The built files are output to `dist/apps/chat/` and served by `chat-api` in
+The built files are output to `apps/chat/dist/` and served by `chat-api` in
 production — every route except `/api/*` falls through to the SPA.
 
 ## Project Structure
@@ -116,26 +116,26 @@ Route paths are declared once in the `ROUTES` enum
 (`src/types/routes.ts`); build parameterized paths with the helpers in
 `src/constants/routes.ts` rather than by string concatenation.
 
-| Route                              | Page                                           |
-| ---------------------------------- | ---------------------------------------------- |
-| `/`                                | Active conversation (or the new-chat composer)  |
-| `/conversations/:id`               | A specific conversation                        |
-| `/conversations/shared/:invitationId` | Accept a shared-conversation invitation     |
-| `/catalog`                         | Entity catalog                                 |
-| `/catalog/shared/:invitationId`    | Accept a shared-entity invitation              |
-| `/apps-editor`                     | Application editor                              |
-| `/toolset-editor`                  | Toolset editor                                 |
-| `/toolset-editor/callback`         | Registered OAuth redirect for toolset IdPs      |
-| `/custom-app-editor`               | Custom application editor                      |
-| `/prompt-editor`                   | Prompt editor                                  |
-| `/skill-editor`                    | Skill editor                                   |
-| `/auth/toolset-signin`             | Interactive toolset sign-in                     |
-| `/files`                           | DIAL file manager                              |
-| `/scheduled-tasks`                 | Scheduled tasks list (feature-gated)            |
-| `/scheduled-tasks/new`             | Create a scheduled task                        |
-| `/scheduled-tasks/:scheduleId`     | Scheduled task detail and run history           |
-| `/scheduled-tasks/:scheduleId/edit`| Edit a scheduled task                          |
-| `/login`                           | Login entry point                              |
+| Route                                 | Page                                           |
+| ------------------------------------- | ---------------------------------------------- |
+| `/`                                   | Active conversation (or the new-chat composer) |
+| `/conversations/:id`                  | A specific conversation                        |
+| `/conversations/shared/:invitationId` | Accept a shared-conversation invitation        |
+| `/catalog`                            | Entity catalog                                 |
+| `/catalog/shared/:invitationId`       | Accept a shared-entity invitation              |
+| `/apps-editor`                        | Application editor                             |
+| `/toolset-editor`                     | Toolset editor                                 |
+| `/toolset-editor/callback`            | Registered OAuth redirect for toolset IdPs     |
+| `/custom-app-editor`                  | Custom application editor                      |
+| `/prompt-editor`                      | Prompt editor                                  |
+| `/skill-editor`                       | Skill editor                                   |
+| `/auth/toolset-signin`                | Interactive toolset sign-in                    |
+| `/files`                              | DIAL file manager                              |
+| `/scheduled-tasks`                    | Scheduled tasks list (feature-gated)           |
+| `/scheduled-tasks/new`                | Create a scheduled task                        |
+| `/scheduled-tasks/:scheduleId`        | Scheduled task detail and run history          |
+| `/scheduled-tasks/:scheduleId/edit`   | Edit a scheduled task                          |
+| `/login`                              | Login entry point                              |
 
 Pages are lazy-loaded behind `Suspense` and wrapped in a `RouteErrorBoundary`,
 so a failure in one route does not take the shell down.
@@ -144,26 +144,26 @@ so a failure in one route does not take the shell down.
 
 State that spans routes lives in providers under `src/context/`:
 
-| Context                    | Owns                                                     |
-| -------------------------- | -------------------------------------------------------- |
-| `AppConfigContext`         | Server-resolved app configuration                        |
-| `UiFeaturesContext`        | Enabled UI feature flags                                 |
-| `UserConfigContext`        | Per-user persisted preferences                           |
-| `ThemeContext`             | Active theme and its CSS custom properties               |
-| `ConversationsContext`     | Conversation list, selection, and mutations              |
-| `ConversationPanelContext` | Sidebar panel state                                      |
-| `GenerationContext`        | In-flight generation and streaming state                 |
-| `DeploymentsContext`       | Models, applications, and their capabilities             |
-| `PromptsContext`           | Prompts and favorites                                    |
-| `SkillsContext`            | Skills                                                   |
-| `FavoriteApplicationsContext` | Favorited applications                                |
-| `SourcesSidebarContext`    | Conversation sources panel                               |
-| `ActiveScheduledTaskContext` | The scheduled task being viewed or edited              |
-| `ClientChannelContext`     | Server-initiated interactions (toolset sign-in prompts)  |
-| `NotificationContext`      | Toast notifications                                      |
-| `SheetNavigationContext`   | Mobile bottom-sheet navigation stack                     |
-| `context/auth`             | Session state, `SessionGuard`, and sign-in/out           |
-| `context/overlay`          | Overlay-mode bridges for the postMessage protocol        |
+| Context                       | Owns                                                    |
+| ----------------------------- | ------------------------------------------------------- |
+| `AppConfigContext`            | Server-resolved app configuration                       |
+| `UiFeaturesContext`           | Enabled UI feature flags                                |
+| `UserConfigContext`           | Per-user persisted preferences                          |
+| `ThemeContext`                | Active theme and its CSS custom properties              |
+| `ConversationsContext`        | Conversation list, selection, and mutations             |
+| `ConversationPanelContext`    | Sidebar panel state                                     |
+| `GenerationContext`           | In-flight generation and streaming state                |
+| `DeploymentsContext`          | Models, applications, and their capabilities            |
+| `PromptsContext`              | Prompts and favorites                                   |
+| `SkillsContext`               | Skills                                                  |
+| `FavoriteApplicationsContext` | Favorited applications                                  |
+| `SourcesSidebarContext`       | Conversation sources panel                              |
+| `ActiveScheduledTaskContext`  | The scheduled task being viewed or edited               |
+| `ClientChannelContext`        | Server-initiated interactions (toolset sign-in prompts) |
+| `NotificationContext`         | Toast notifications                                     |
+| `SheetNavigationContext`      | Mobile bottom-sheet navigation stack                    |
+| `context/auth`                | Session state, `SessionGuard`, and sign-in/out          |
+| `context/overlay`             | Overlay-mode bridges for the postMessage protocol       |
 
 ## Configuration
 
@@ -202,8 +202,8 @@ shape — is in
 
 `tailwind.config.js` defines exactly two named screens:
 
-| Screen    | Query          |
-| --------- | -------------- |
+| Screen    | Query              |
+| --------- | ------------------ |
 | `mobile`  | `max-width: 768px` |
 | `desktop` | `min-width: 769px` |
 

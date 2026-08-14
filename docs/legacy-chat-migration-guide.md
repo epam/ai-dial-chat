@@ -42,9 +42,10 @@ API, never a rebuild of the frontend image.
 ## Environment variables
 
 The full reference for the variables 1.0 accepts is
-[Environment Variables](environment-variables-migration-guide.md); the tables
-below only describe what happens to a legacy deployment's variables. The source
-of truth is `apps/chat-api/src/config/environment.config.ts`, validated at boot.
+[`apps/chat-api/README.md`](../apps/chat-api/README.md#environment-variables),
+alongside the annotated `apps/chat-api/.env.template`; the tables below only
+describe what happens to a legacy deployment's variables. The source of truth is
+`apps/chat-api/src/config/environment.config.ts`, validated at boot.
 
 ### Renamed or re-shaped
 
@@ -200,7 +201,7 @@ though not through the overlay API.
 
 ## Related
 
-- [Environment Variables](environment-variables-migration-guide.md) — the full variable reference for 1.0
+- [Chat API](../apps/chat-api/README.md#environment-variables) — the full variable reference for 1.0
 - [Chat Overlay Migration Guide](chat-overlay-migration-guide.md) — embedding and UI feature flags
 - [Theme Customization](theme-customization.md) — theming and legacy theme migration
 - [Architecture](architecture.md) — how 1.0 is put together

@@ -30,10 +30,18 @@ Marketplace/catalog component for browsing models, tools, and assistants with se
 
 Root component. Manages all state internally (search, filters, view mode, selected item) and renders the toolbar and content area.
 
+`items` and `favorites` are both required — the Browse section and the Favorites
+section take separate lists.
+
 ```tsx
 import { Catalog } from '@epam/ai-dial-catalog';
 
-<Catalog items={catalogItems} onSelect={handleSelect} />;
+<Catalog
+  items={catalogItems}
+  favorites={favoriteItems}
+  onToggleFavorite={handleToggleFavorite}
+  onUseInChat={handleUseInChat}
+/>;
 ```
 
 Sharing-related details-panel actions are opt-in callbacks — the panel owns the
@@ -42,7 +50,7 @@ confirmation step and calls them only once the user confirms:
 ```tsx
 <Catalog
   items={catalogItems}
-  onSelect={handleSelect}
+  favorites={favoriteItems}
   // Owner-side: revokes every recipient's access to an `isMyApp` item.
   // The item stays in the owner's catalog, so the panel stays open.
   onRevokeShare={handleRevokeShare}
@@ -63,39 +71,74 @@ Virtualized grid view of catalog cards.
 ```tsx
 import { CardGrid } from '@epam/ai-dial-catalog';
 
-<CardGrid items={filteredItems} onSelect={handleSelect} />;
+<CardGrid
+  items={filteredItems}
+  query={searchQuery}
+  onItemClick={handleItemClick}
+  onToggleFavorite={handleToggleFavorite}
+  selectedItemId={selectedItemId}
+/>;
 ```
+
+Pass `query` so each card highlights the matched text — the grid forwards it to
+`Card`, which renders the match through the shared `Highlight` component.
 
 ### ListView
 
-Table view powered by ag-grid with column sorting and row selection.
+Table view powered by ag-grid with column sorting and row selection. `type` and
+`items` are required.
 
 ```tsx
 import { ListView } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 
-<ListView items={filteredItems} onSelect={handleSelect} />;
+<ListView
+  type={CatalogEntityType.Model}
+  items={filteredItems}
+  query={searchQuery}
+  onItemClick={handleItemClick}
+  onToggleFavorite={handleToggleFavorite}
+  stickyHeaderTop={headingHeight}
+/>;
 ```
 
 ### Favorites
 
-Renders the user's favorited items in a dedicated section.
+Renders the user's favorited items in a dedicated, paginated section.
 
 ```tsx
-import { Favorites, FavoriteCard } from '@epam/ai-dial-catalog';
+import { Favorites } from '@epam/ai-dial-catalog';
 
-<Favorites items={favoriteItems} onSelect={handleSelect} />;
+<Favorites
+  items={favoriteItems}
+  totalCount={totalFavoritesCount}
+  onItemClick={handleItemClick}
+  onToggleFavorite={handleToggleFavorite}
+/>;
 ```
 
-### Filter / TopicTag / EntityBadge
+### FavoriteCard
 
-Filter sidebar and label components.
+A single favorite tile, exported for hosts composing their own favorites layout.
+
+### Filter / TopicTag
+
+Filter sidebar and topic label components.
 
 ```tsx
-import { Filter, TopicTag, EntityBadge } from '@epam/ai-dial-catalog';
+import { Filter, TopicTag } from '@epam/ai-dial-catalog';
 
 <Filter filters={activeFilters} onChange={setFilters} />
-<EntityBadge type={CatalogEntityType.Model} />
 <TopicTag label="Vision" />
+```
+
+For the entity-type badge itself, use `EntityTypeLabel` from
+`@epam/ai-dial-chat-shared` — that is where the type enum and its color map live.
+
+```tsx
+import { EntityTypeLabel, CatalogEntityType } from '@epam/ai-dial-chat-shared';
+
+<EntityTypeLabel type={CatalogEntityType.Model} />;
 ```
 
 ### InfoCard
@@ -118,14 +161,22 @@ import {
 
 ```tsx
 import {
-  CatalogEntityType,
   CatalogSortKey,
   CatalogViewMode,
   CatalogDetailsTab,
   CodeLanguage,
+  CredentialsLevel,
+  CredentialStatus,
+  CredentialsBadgeState,
+  CredentialsUiState,
+  DeploymentSize,
   DetailsConfirmationKind,
   DetailsConfirmationVariant,
+  ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
+
+/* CatalogEntityType is owned by @epam/ai-dial-chat-shared, not this lib. */
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 
 CatalogEntityType.Model; // 'MODEL'
 CatalogEntityType.Agent; // 'AGENT'

@@ -295,46 +295,46 @@ nx graph
 
 ### Root Level Scripts
 
-| Command                 | Description                                            |
-| ----------------------- | ------------------------------------------------------ |
-| `npm run start`         | Start React app (port 4207)                            |
-| `npm run start:api`     | Start NestJS API (port 5000)                           |
-| `npm run start:api:dev` | Start the API in webpack HMR watch mode                |
-| `npm run start:all`     | Start both apps in parallel                            |
-| `npm run build`         | Build React app                                        |
-| `npm run build:api`     | Build NestJS API                                       |
-| `npm run build:all`     | Build all projects                                     |
-| `npm run test`          | Run all tests                                          |
-| `npm run lint`          | Lint all projects with `--fix`, then format            |
-| `npm run lint:check`    | Lint and check formatting without writing (CI mode)    |
-| `npm run lint:fix`      | Fix linting issues only                                |
-| `npm run lint:affected` | Lint only affected projects                            |
-| `npm run format`        | Format code with Prettier                              |
-| `npm run format:check`  | Check code formatting                                  |
-| `npm run graph`         | Visualize project dependencies                         |
+| Command                 | Description                                         |
+| ----------------------- | --------------------------------------------------- |
+| `npm run start`         | Start React app (port 4207)                         |
+| `npm run start:api`     | Start NestJS API (port 5000)                        |
+| `npm run start:api:dev` | Start the API in webpack HMR watch mode             |
+| `npm run start:all`     | Start both apps in parallel                         |
+| `npm run build`         | Build React app                                     |
+| `npm run build:api`     | Build NestJS API                                    |
+| `npm run build:all`     | Build all projects                                  |
+| `npm run test`          | Run all tests                                       |
+| `npm run lint`          | Lint all projects with `--fix`, then format         |
+| `npm run lint:check`    | Lint and check formatting without writing (CI mode) |
+| `npm run lint:fix`      | Fix linting issues only                             |
+| `npm run lint:affected` | Lint only affected projects                         |
+| `npm run format`        | Format code with Prettier                           |
+| `npm run format:check`  | Check code formatting                               |
+| `npm run graph`         | Visualize project dependencies                      |
 
 ### OpenAPI & Postman
 
 The generated API client in `libs/chat-api-client` is part of the endpoint
 contract — run these after any change to a `chat-api` controller or DTO.
 
-| Command                  | Description                                                  |
-| ------------------------ | ------------------------------------------------------------ |
-| `npm run openapi`        | Regenerate the OpenAPI spec and the typed client             |
-| `npm run openapi:check`  | Verify the committed client matches the current spec         |
-| `npm run openapi:spec`   | Emit only the OpenAPI document                               |
-| `npm run openapi:sdk`    | Emit only the generated SDK                                  |
-| `npm run postman`        | Generate the Postman collection from the current spec        |
-| `npm run postman:refresh`| Regenerate the spec and then the Postman collection          |
+| Command                   | Description                                           |
+| ------------------------- | ----------------------------------------------------- |
+| `npm run openapi`         | Regenerate the OpenAPI spec and the typed client      |
+| `npm run openapi:check`   | Verify the committed client matches the current spec  |
+| `npm run openapi:spec`    | Emit only the OpenAPI document                        |
+| `npm run openapi:sdk`     | Emit only the generated SDK                           |
+| `npm run postman`         | Generate the Postman collection from the current spec |
+| `npm run postman:refresh` | Regenerate the spec and then the Postman collection   |
 
 ### Publishing & docs validation
 
-| Command                        | Description                                            |
-| ------------------------------ | ------------------------------------------------------ |
-| `npm run build:publishable`    | Build every project tagged `publishable`               |
-| `npm run publish`              | Publish every project tagged `publishable`             |
-| `npm run publish:dry`          | Dry-run the publish pipeline with a preview version    |
-| `npm run validate:agent-docs`  | Validate the agent instruction documents               |
+| Command                       | Description                                         |
+| ----------------------------- | --------------------------------------------------- |
+| `npm run build:publishable`   | Build every project tagged `publishable`            |
+| `npm run publish`             | Publish every project tagged `publishable`          |
+| `npm run publish:dry`         | Dry-run the publish pipeline with a preview version |
+| `npm run validate:agent-docs` | Validate the agent instruction documents            |
 
 ## Applications
 
@@ -400,30 +400,30 @@ plus the Nx project graph. `apps/chat` consumes them as workspace packages —
 every `package.json` under `libs/` is still `private: true`, so nothing is
 published to npm today. Each library has its own README with its public API.
 
-| Package                                  | Path                                                                 | Purpose                                                                      |
-| ---------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `@epam/ai-dial-chat-shared`              | [`libs/chat-shared`](libs/chat-shared)                               | Shared domain models, utilities, and UI primitives consumed by every lib     |
-| `@epam/ai-dial-chat-api-client`          | [`libs/chat-api-client`](libs/chat-api-client)                       | Generated OpenAPI client for the chat API (consumed only by app adapters)    |
-| `@epam/ai-dial-chat-overlay`             | [`libs/chat-overlay`](libs/chat-overlay)                             | Embeddable `ChatOverlay` / `ChatOverlayManager` and the postMessage protocol |
-| `@epam/ai-dial-catalog`                  | [`libs/catalog`](libs/catalog)                                       | Catalog for browsing models, applications, tools, prompts, and skills        |
-| `@epam/ai-dial-conversation-input`       | [`libs/conversation-input`](libs/conversation-input)                 | Message composer — model selection, attachments, voice input, edit mode      |
-| `@epam/ai-dial-conversation-messages`    | [`libs/conversation-messages`](libs/conversation-messages)           | Message bubbles with actions and source citations                            |
-| `@epam/ai-dial-conversation-panel`       | [`libs/conversation-panel`](libs/conversation-panel)                 | Virtualized conversation-history sidebar with grouping, tabs, and search     |
-| `@epam/ai-dial-conversation-stages`      | [`libs/conversation-stages`](libs/conversation-stages)               | Agent processing stages shown during response streaming                      |
-| `@epam/ai-dial-sidebar`                  | [`libs/sidebar`](libs/sidebar)                                       | Resizable sidebar shell — header, search, empty state                        |
-| `@epam/ai-dial-source-panel`             | [`libs/source-panel`](libs/source-panel)                             | Conversation sources — uploaded files and generated citations                |
-| `@epam/ai-dial-quotations`               | [`libs/quotations`](libs/quotations)                                 | Citation and annotation components, hooks, and utilities                     |
-| `@epam/ai-dial-attachment-canvas`        | [`libs/attachment-canvas`](libs/attachment-canvas)                   | Viewer for attachment content — images, PDFs, JSON, markdown, code, text     |
-| `@epam/ai-dial-attachment-input`         | [`libs/attachment-input`](libs/attachment-input)                     | File input with upload validation, drag-and-drop, progress                   |
-| `@epam/ai-dial-starter-buttons`          | [`libs/starter-buttons`](libs/starter-buttons)                       | Starter prompts that overflow into a dropdown when space runs out            |
-| `@epam/ai-dial-share`                    | [`libs/share`](libs/share)                                           | Share popover UI and share-link types                                        |
-| `@epam/ai-dial-publish-panel`            | [`libs/publish-panel`](libs/publish-panel)                           | Publish-to-folder UI and state flow                                          |
-| `@epam/ai-dial-prompt-editor`            | [`libs/prompt-editor`](libs/prompt-editor)                           | Host-agnostic prompt authoring form with an inline folder picker             |
-| `@epam/ai-dial-prompts`                  | [`libs/prompts`](libs/prompts)                                       | Favorite-prompts panel and the prompt-parameters popup for the composer      |
-| `@epam/ai-dial-skill-editor`             | [`libs/skill-editor`](libs/skill-editor)                             | Skill authoring form with a file tree and conflict handling                  |
-| `@epam/ai-dial-builder-form`             | [`libs/builder-form`](libs/builder-form)                             | Presentational builder form shell for composing and editing DIAL entities    |
-| `@epam/ai-dial-deployment-creation-form` | [`libs/deployment-creation-form`](libs/deployment-creation-form)     | Form for creating and editing a deployment, with locale fields               |
-| `@epam/ai-dial-scheduled-tasks`          | [`libs/scheduled-tasks`](libs/scheduled-tasks)                       | Scheduled Tasks surfaces — cards, create form, detail view, run history      |
+| Package                                  | Path                                                             | Purpose                                                                      |
+| ---------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `@epam/ai-dial-chat-shared`              | [`libs/chat-shared`](libs/chat-shared)                           | Shared domain models, utilities, and UI primitives consumed by every lib     |
+| `@epam/ai-dial-chat-api-client`          | [`libs/chat-api-client`](libs/chat-api-client)                   | Generated OpenAPI client for the chat API (consumed only by app adapters)    |
+| `@epam/ai-dial-chat-overlay`             | [`libs/chat-overlay`](libs/chat-overlay)                         | Embeddable `ChatOverlay` / `ChatOverlayManager` and the postMessage protocol |
+| `@epam/ai-dial-catalog`                  | [`libs/catalog`](libs/catalog)                                   | Catalog for browsing models, applications, tools, prompts, and skills        |
+| `@epam/ai-dial-conversation-input`       | [`libs/conversation-input`](libs/conversation-input)             | Message composer — model selection, attachments, voice input, edit mode      |
+| `@epam/ai-dial-conversation-messages`    | [`libs/conversation-messages`](libs/conversation-messages)       | Message bubbles with actions and source citations                            |
+| `@epam/ai-dial-conversation-panel`       | [`libs/conversation-panel`](libs/conversation-panel)             | Virtualized conversation-history sidebar with grouping, tabs, and search     |
+| `@epam/ai-dial-conversation-stages`      | [`libs/conversation-stages`](libs/conversation-stages)           | Agent processing stages shown during response streaming                      |
+| `@epam/ai-dial-sidebar`                  | [`libs/sidebar`](libs/sidebar)                                   | Resizable sidebar shell — header, search, empty state                        |
+| `@epam/ai-dial-source-panel`             | [`libs/source-panel`](libs/source-panel)                         | Conversation sources — uploaded files and generated citations                |
+| `@epam/ai-dial-quotations`               | [`libs/quotations`](libs/quotations)                             | Citation and annotation components, hooks, and utilities                     |
+| `@epam/ai-dial-attachment-canvas`        | [`libs/attachment-canvas`](libs/attachment-canvas)               | Viewer for attachment content — images, PDFs, JSON, markdown, code, text     |
+| `@epam/ai-dial-attachment-input`         | [`libs/attachment-input`](libs/attachment-input)                 | File input with upload validation, drag-and-drop, progress                   |
+| `@epam/ai-dial-starter-buttons`          | [`libs/starter-buttons`](libs/starter-buttons)                   | Starter prompts that overflow into a dropdown when space runs out            |
+| `@epam/ai-dial-share`                    | [`libs/share`](libs/share)                                       | Share popover UI and share-link types                                        |
+| `@epam/ai-dial-publish-panel`            | [`libs/publish-panel`](libs/publish-panel)                       | Publish-to-folder UI and state flow                                          |
+| `@epam/ai-dial-prompt-editor`            | [`libs/prompt-editor`](libs/prompt-editor)                       | Host-agnostic prompt authoring form with an inline folder picker             |
+| `@epam/ai-dial-prompts`                  | [`libs/prompts`](libs/prompts)                                   | Favorite-prompts panel and the prompt-parameters popup for the composer      |
+| `@epam/ai-dial-skill-editor`             | [`libs/skill-editor`](libs/skill-editor)                         | Skill authoring form with a file tree and conflict handling                  |
+| `@epam/ai-dial-builder-form`             | [`libs/builder-form`](libs/builder-form)                         | Presentational builder form shell for composing and editing DIAL entities    |
+| `@epam/ai-dial-deployment-creation-form` | [`libs/deployment-creation-form`](libs/deployment-creation-form) | Form for creating and editing a deployment, with locale fields               |
+| `@epam/ai-dial-scheduled-tasks`          | [`libs/scheduled-tasks`](libs/scheduled-tasks)                   | Scheduled Tasks surfaces — cards, create form, detail view, run history      |
 
 > `libs/ai-dial-kit/` is a leftover build-output directory from a removed
 > library — it has no `package.json`, no sources, and no importers. Do not add
@@ -459,7 +459,7 @@ the backend's OpenAPI document, and apps consume it through
 
 - [Legacy Chat Migration Guide](docs/legacy-chat-migration-guide.md) - Moving a deployment from the legacy DIAL Chat to 1.0
 - [Chat Overlay Migration Guide](docs/chat-overlay-migration-guide.md) - Migrating an embedded overlay from the legacy chat
-- [Environment Variables Migration Guide](docs/environment-variables-migration-guide.md) - Legacy → new environment-variable mapping
+- [Chat API environment variables](apps/chat-api/README.md#environment-variables) - The full variable reference, with `apps/chat-api/.env.template` as the annotated source
 
 ### External
 

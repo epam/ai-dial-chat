@@ -34,11 +34,7 @@ import { StarterButtons } from '@epam/ai-dial-starter-buttons';
 import type { StarterButtonsProps } from '@epam/ai-dial-starter-buttons';
 
 <StarterButtons
-  starters={[
-    { const: '1', title: 'Summarize a document' },
-    { const: '2', title: 'Write a blog post' },
-    { const: '3', title: 'Explain a concept' },
-  ]}
+  starters={deployment.starters}
   isMobile={isMobile}
   labels={{
     list: 'Conversation starters',
@@ -46,6 +42,19 @@ import type { StarterButtonsProps } from '@epam/ai-dial-starter-buttons';
   }}
   onSelect={handleStarterSelect}
 />;
+```
+
+`starters` is `StarterOption[]` from `@epam/ai-dial-chat-shared` — the same shape
+a deployment's configuration schema declares, so pass it through unchanged:
+
+```tsx
+import type { StarterOption } from '@epam/ai-dial-chat-shared';
+
+const starter: StarterOption = {
+  const: 1,
+  title: 'Summarize a document',
+  'dial:widgetOptions': widgetOptions,
+};
 ```
 
 ## Types

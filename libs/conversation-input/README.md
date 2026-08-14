@@ -29,38 +29,49 @@ Message input component for conversations, supporting model selection, chat sett
 
 ### ConversationInput
 
-The primary input component. Renders the text area, attachment tray, action buttons, and model selector.
+The primary input component. Renders the text area, attachment tray, action buttons, and model selector. Every prop is optional — the component manages its own local attachment list and textarea state, and reports outward through callbacks. `onSend` receives the message text plus the current local attachments; the model selector is only rendered when `deployments` is supplied.
 
 ```tsx
 import { ConversationInput } from '@epam/ai-dial-conversation-input';
-import type { ConversationInputProps } from '@epam/ai-dial-conversation-input';
 
 <ConversationInput
-  onSubmit={handleSubmit}
-  onAttach={handleAttach}
-  deployments={availableModels}
-  selectedDeploymentId={currentModelId}
-  onDeploymentChange={setModel}
+  message={draft}
+  placeholder="Type a message"
+  welcomeText={welcomeText}
+  onSend={handleSend}
+  onUploadAttachment={uploadAttachment}
+  onAttachmentsChange={setDraftAttachments}
+  isStreaming={isStreaming}
+  onStop={handleStop}
+  deployments={availableDeployments}
+  selectedDeploymentId={currentDeploymentId}
+  onDeploymentChange={handleDeploymentChange}
 />;
 ```
 
+`pasteTextThreshold` (default `4000`) is the character count above which pasted
+plain text becomes an attachment instead of inline content, and
+`maxMessageLength` (default `50000`) caps the message text.
+
 ### EditMessageInput
 
-Renders the input in edit mode for revising an existing message.
+Renders the input in edit mode for revising an existing message. `onCancel` and `onSave` are required; `onSave` receives the new text, the attachments the user kept, and any newly added ones.
 
 ```tsx
 import { EditMessageInput } from '@epam/ai-dial-conversation-input';
 
 <EditMessageInput
-  initialValue={message.content}
+  message={message.content}
+  initialAttachments={message.attachments}
   onSave={handleSave}
   onCancel={handleCancel}
+  onUploadAttachment={uploadAttachment}
 />;
 ```
 
 ### Input
 
-Base text input with auto-resize and keyboard shortcut handling. Use directly when a stripped-down input is needed.
+Base text input with auto-resize and keyboard shortcut handling. Use directly when a stripped-down input is needed — `ConversationInput` wraps it with the tray, model selector, and action row.
 
 ```tsx
 import { Input } from '@epam/ai-dial-conversation-input';
@@ -68,25 +79,40 @@ import { Input } from '@epam/ai-dial-conversation-input';
 
 ### ChatSettingsModal
 
-Modal dialog for configuring conversation-level settings (temperature, system prompt, etc.).
+Modal dialog for conversation-level settings. `features` decides which fields render; the modal is uncontrolled — it seeds from the `initial*` props and reports the result through `onSave` when it closes. There is no `isOpen` prop: mount it when open, unmount it when closed.
 
 ```tsx
 import { ChatSettingsModal } from '@epam/ai-dial-conversation-input';
 
-<ChatSettingsModal
-  isOpen={isOpen}
-  onClose={handleClose}
-  values={settings}
-  onChange={setSettings}
-/>;
+{
+  isSettingsOpen && (
+    <ChatSettingsModal
+      features={deployment.features}
+      initialResponseFormat={settings.responseFormat}
+      initialSystemPrompt={settings.systemPrompt}
+      initialTemperature={settings.temperature}
+      onSave={handleSaveSettings}
+      onClose={handleCloseSettings}
+    />
+  );
+}
 ```
 
 ### BottomSheetShell
 
-Layout shell for bottom sheet panels on mobile.
+Layout shell for bottom sheet panels on mobile — header with optional title, back and close buttons, and Escape/backdrop dismissal.
 
 ```tsx
 import { BottomSheetShell } from '@epam/ai-dial-conversation-input';
+
+<BottomSheetShell
+  isOpen={isSheetOpen}
+  title="Select a model"
+  closeLabel="Close"
+  onClose={handleCloseSheet}
+>
+  {sheetContent}
+</BottomSheetShell>;
 ```
 
 ## Enums
@@ -94,16 +120,19 @@ import { BottomSheetShell } from '@epam/ai-dial-conversation-input';
 ```tsx
 import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 
-SendOnEnter.Enter; // send on Enter key
-SendOnEnter.ShiftEnter; // send on Shift+Enter
+SendOnEnter.Enter; // Enter submits; Shift+Enter inserts a newline
+SendOnEnter.MetaEnter; // ⌘/Ctrl+Enter submits; bare Enter inserts a newline
 ```
 
 ## Re-exports from @epam/ai-dial-attachment-input
+
+Kept for backwards compatibility so an input-area consumer needs one import path.
 
 ```tsx
 import {
   AttachmentCard,
   AttachmentTray,
+  AttachmentGroup,
   FileDndOverlay,
   getAttachmentIcon,
 } from '@epam/ai-dial-conversation-input';
