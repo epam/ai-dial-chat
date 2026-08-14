@@ -318,24 +318,24 @@ describe('ScheduledTasks', () => {
   });
 
   it('renders a custom skeletonCount of placeholder cards', () => {
-    const { container } = renderScheduledTasks({
+    renderScheduledTasks({
       items: [buildItem()],
       hasMore: true,
       isLoadingMore: true,
       skeletonCount: 3,
     });
 
-    expect(countSkeletonCards(container)).toBe(3);
+    expect(countSkeletonCards()).toBe(3);
   });
 
   it('renders no skeleton cards when isLoadingMore is false', () => {
-    const { container } = renderScheduledTasks({
+    renderScheduledTasks({
       items: [buildItem()],
       hasMore: true,
       isLoadingMore: false,
     });
 
-    expect(countSkeletonCards(container)).toBe(0);
+    expect(countSkeletonCards()).toBe(0);
   });
 
   it('announces the loading-more label via the aria-live status region', () => {
@@ -351,13 +351,13 @@ describe('ScheduledTasks', () => {
   });
 
   it('renders no skeleton cards during the initial loading state', () => {
-    const { container } = renderScheduledTasks({
+    renderScheduledTasks({
       items: [],
       isLoading: true,
       isLoadingMore: true,
     });
 
-    expect(countSkeletonCards(container)).toBe(0);
+    expect(countSkeletonCards()).toBe(0);
     expect(screen.getByRole('progressbar')).toBeTruthy();
   });
 
