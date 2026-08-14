@@ -30,6 +30,7 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
   protected orgSignInRequest: T | null = null;
   protected userSignInRequest: T | null = null;
   private signInCount = 0;
+  private toolsetUpdateRequest: Toolset | null = null;
 
   protected constructor(
     page: Page,
@@ -105,6 +106,15 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
     return this.toolset;
   }
 
+  /**
+   * Body of the last PUT sent to the toolset entity (e.g. the update fired
+   * when clicking "Log in", which persists auth_settings such as
+   * token_endpoint_auth_method before the OAuth redirect starts).
+   */
+  getToolsetUpdateRequest(): Toolset | null {
+    return this.toolsetUpdateRequest;
+  }
+
   async cleanup(): Promise<void> {
     await this.page.context().unrouteAll({ behavior: 'ignoreErrors' });
   }
@@ -132,6 +142,7 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
       const method = request.method();
       switch (method) {
         case 'PUT':
+          this.toolsetUpdateRequest = request.postDataJSON();
           await this.fulfillPutRoute(route);
           break;
         case 'GET':
