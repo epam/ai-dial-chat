@@ -13,6 +13,7 @@ import {
   SKILL_UPLOAD_MAX_FILES,
   SKILL_UPLOAD_MAX_TOTAL_BYTES,
 } from '../../../utils/skill';
+import { formatFileSize } from '../../../utils/string-utils';
 
 /** A recognized, structurally valid manifest candidate from a staged batch. */
 export interface SkillManifestImportCandidate {
@@ -65,14 +66,6 @@ export interface SkillFileBatchValidationOutcome {
   manifestCandidate?: SkillManifestImportCandidate;
 }
 
-const formatBytesForMessage = (bytes: number): string => {
-  const KB = 1024;
-  const MB = KB * 1024;
-  if (bytes >= MB) return `${(bytes / MB).toFixed(1)} MB`;
-  if (bytes >= KB) return `${(bytes / KB).toFixed(1)} KB`;
-  return `${bytes} B`;
-};
-
 /**
  * Validates a whole staged upload batch against per-file limits, path
  * safety, in-batch/against-existing duplicates, and projected total
@@ -123,7 +116,7 @@ export const validateSkillFileBatch = async (
       manifestCandidateCount += 1;
       if (file.size > SKILL_FILE_UPLOAD_MAX_BYTES) {
         error = messages.fileTooLarge(
-          formatBytesForMessage(SKILL_FILE_UPLOAD_MAX_BYTES),
+          formatFileSize(SKILL_FILE_UPLOAD_MAX_BYTES),
         );
       } else {
         try {
@@ -166,7 +159,7 @@ export const validateSkillFileBatch = async (
       error = messages.pathDuplicate;
     } else if (file.size > SKILL_FILE_UPLOAD_MAX_BYTES) {
       error = messages.fileTooLarge(
-        formatBytesForMessage(SKILL_FILE_UPLOAD_MAX_BYTES),
+        formatFileSize(SKILL_FILE_UPLOAD_MAX_BYTES),
       );
     }
 

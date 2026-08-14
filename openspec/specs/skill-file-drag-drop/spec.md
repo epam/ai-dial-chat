@@ -7,7 +7,7 @@ Specifies `libs/skill-editor`'s file-upload dialog: opening it from the existing
 
 ### Requirement: Upload dialog opens from "Upload from device" and supports drag-and-drop plus click-to-browse
 
-`libs/skill-editor` SHALL open a dialog (modal at the `desktop` breakpoint, bottom-sheet at the `mobile` breakpoint) when the existing "Upload from device" control is activated. The dialog SHALL contain a drop zone that accepts a file-bearing drag from anywhere over the zone and, on drop, stages every dropped file; clicking the drop zone SHALL open the native OS file picker configured for multiple selection. The dialog SHALL remain open and accept additional drags/drops or additional picker selections until the user confirms or cancels.
+`libs/skill-editor` SHALL open a dialog (a responsive centered modal at every breakpoint — a bottom-sheet deviation for `mobile` was considered but rejected because the ui kit's `Popup` has no sheet variant, documented in design.md) when the existing "Upload from device" control is activated. The dialog SHALL contain a drop zone that accepts a file-bearing drag from anywhere over the zone and, on drop, stages every dropped file; clicking the drop zone SHALL open the native OS file picker configured for multiple selection. The dialog SHALL remain open and accept additional drags/drops or additional picker selections until the user confirms or cancels.
 
 #### Scenario: Activating "Upload from device" opens the dialog
 - **WHEN** a user activates the existing "Upload from device" control

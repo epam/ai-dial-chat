@@ -421,7 +421,7 @@ const SkillEditorPage: FC = () => {
             const accepted = await confirmManifestImport();
             if (!accepted) {
               return {
-                error: t(SkillEditorI18nKeys.ManifestImportCancelLabel),
+                error: t(SkillEditorI18nKeys.ErrorManifestImportDeclined),
               };
             }
           }
@@ -779,9 +779,7 @@ const SkillEditorPage: FC = () => {
       supportingFileNote: t(SkillEditorI18nKeys.SupportingFileNote),
       reloadLatestLabel: t(SkillEditorI18nKeys.ReloadLatestLabel),
       uploadDialogTitle: t(SkillEditorI18nKeys.UploadDialogTitle),
-      uploadDialogCloseAriaLabel: t(
-        SkillEditorI18nKeys.UploadDialogCloseAriaLabel,
-      ),
+      uploadDialogCloseAriaLabel: t(ButtonsI18nKeys.Close),
       uploadDropZoneLabel: t(SkillEditorI18nKeys.UploadDropZoneLabel),
       uploadDropZoneMobileLabel: t(
         SkillEditorI18nKeys.UploadDropZoneMobileLabel,
@@ -790,8 +788,8 @@ const SkillEditorPage: FC = () => {
       uploadRemoveCandidateLabel: (path) =>
         t(SkillEditorI18nKeys.UploadRemoveCandidateLabel, { path }),
       uploadManifestRowNote: t(SkillEditorI18nKeys.UploadManifestRowNote),
-      uploadConfirmLabel: t(SkillEditorI18nKeys.UploadConfirmLabel),
-      uploadCancelLabel: t(SkillEditorI18nKeys.UploadCancelLabel),
+      uploadConfirmLabel: t(ButtonsI18nKeys.Add),
+      uploadCancelLabel: t(ButtonsI18nKeys.Cancel),
       uploadBatchErrorAriaPrefix: t(
         SkillEditorI18nKeys.UploadBatchErrorAriaPrefix,
       ),
@@ -904,8 +902,8 @@ const SkillEditorPage: FC = () => {
         open={pendingManifestImport}
         header={t(SkillEditorI18nKeys.ManifestImportConfirmTitle)}
         description={t(SkillEditorI18nKeys.ManifestImportConfirmMessage)}
-        confirmLabel={t(SkillEditorI18nKeys.ManifestImportConfirmLabel)}
-        cancelLabel={t(SkillEditorI18nKeys.ManifestImportCancelLabel)}
+        confirmLabel={t(ButtonsI18nKeys.Replace)}
+        cancelLabel={t(ButtonsI18nKeys.Cancel)}
         variant={ConfirmationPopupVariant.Danger}
         onConfirm={() => {
           setPendingManifestImport(false);

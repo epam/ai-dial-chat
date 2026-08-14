@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { strToU8, zipSync } from 'fflate';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -131,7 +137,7 @@ const stageFile = (file: File) => {
 const confirmUpload = async (user: ReturnType<typeof userEvent.setup>) => {
   const button = () =>
     screen.getByRole('button', {
-      name: 'skillEditor.uploadConfirmLabel',
+      name: 'buttons.add',
     }) as HTMLButtonElement;
   await waitFor(() => expect(button().disabled).toBe(false));
   await user.click(button());
@@ -424,7 +430,7 @@ describe('SkillEditor page', () => {
     expect(
       (
         screen.getByRole('button', {
-          name: 'skillEditor.uploadConfirmLabel',
+          name: 'buttons.add',
         }) as HTMLButtonElement
       ).disabled,
     ).toBe(true);
@@ -488,11 +494,45 @@ describe('SkillEditor page', () => {
 
     await user.click(
       screen.getByRole('button', {
-        name: 'skillEditor.manifestImportConfirmLabel',
+        name: 'buttons.replace',
       }),
     );
 
     expect(await screen.findByDisplayValue('good-morning')).toBeTruthy();
+  });
+
+  it('shows a dedicated message and keeps the batch staged when a manifest import is declined', async () => {
+    render(<SkillEditor />);
+    await user.type(
+      screen.getByPlaceholderText('skillEditor.namePlaceholder'),
+      'my-draft',
+    );
+    const manifestFile = new File(
+      ['---\nname: good-morning\ndescription: A greeting skill\n---\n\nDo it.'],
+      'SKILL.md',
+    );
+
+    await openUploadDialog(user);
+    stageFile(manifestFile);
+    await waitFor(() =>
+      expect(screen.getAllByText('SKILL.md')[0]).toBeTruthy(),
+    );
+    await confirmUpload(user);
+
+    const confirmationDialog = await screen.findByRole('dialog', {
+      name: 'skillEditor.manifestImportConfirmTitle',
+    });
+    await user.click(
+      within(confirmationDialog).getByRole('button', {
+        name: 'buttons.cancel',
+      }),
+    );
+
+    expect(
+      await screen.findByText('skillEditor.error.manifestImportDeclined'),
+    ).toBeTruthy();
+    expect(screen.getByDisplayValue('my-draft')).toBeTruthy();
+    expect(screen.getByRole('dialog')).toBeTruthy();
   });
 
   it('preserves unknown frontmatter fields from an imported SKILL.md on create', async () => {
@@ -864,7 +904,7 @@ describe('SkillEditor page — edit mode', () => {
     ).toBeTruthy();
     await user.click(
       screen.getByRole('button', {
-        name: 'skillEditor.manifestImportConfirmLabel',
+        name: 'buttons.replace',
       }),
     );
 
@@ -928,7 +968,7 @@ describe('SkillEditor page — edit mode', () => {
     ).toBeTruthy();
     await user.click(
       screen.getByRole('button', {
-        name: 'skillEditor.manifestImportConfirmLabel',
+        name: 'buttons.replace',
       }),
     );
     expect(await screen.findByDisplayValue('Updated description')).toBeTruthy();

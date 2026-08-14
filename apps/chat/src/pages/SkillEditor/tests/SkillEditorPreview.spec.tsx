@@ -102,9 +102,7 @@ const uploadFile = async (
   const input = document.querySelector('input[type="file"]');
   fireEvent.change(input as Element, { target: { files: [file] } });
   await waitFor(() => expect(screen.getAllByText(file.name)[0]).toBeTruthy());
-  await user.click(
-    screen.getByRole('button', { name: 'skillEditor.uploadConfirmLabel' }),
-  );
+  await user.click(screen.getByRole('button', { name: 'buttons.add' }));
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
 };
 

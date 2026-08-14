@@ -110,6 +110,8 @@ export enum ButtonsI18nKeys {
   RemoveFromMyList = 'buttons.removeFromMyList',
   RevokeAccess = 'buttons.revokeAccess',
   RevokeAccessWithCount = 'buttons.revokeAccessWithCount',
+  Add = 'buttons.add',
+  Replace = 'buttons.replace',
 }
 
 export enum NavigationI18nKeys {
@@ -875,13 +877,10 @@ export enum SkillEditorI18nKeys {
   UnsavedChangesConfirmLabel = 'skillEditor.unsavedChangesConfirmLabel',
   UnsavedChangesCancelLabel = 'skillEditor.unsavedChangesCancelLabel',
   UploadDialogTitle = 'skillEditor.uploadDialogTitle',
-  UploadDialogCloseAriaLabel = 'skillEditor.uploadDialogCloseAriaLabel',
   UploadDropZoneLabel = 'skillEditor.uploadDropZoneLabel',
   UploadDropZoneMobileLabel = 'skillEditor.uploadDropZoneMobileLabel',
   UploadDropZoneAriaLabel = 'skillEditor.uploadDropZoneAriaLabel',
   UploadManifestRowNote = 'skillEditor.uploadManifestRowNote',
-  UploadConfirmLabel = 'skillEditor.uploadConfirmLabel',
-  UploadCancelLabel = 'skillEditor.uploadCancelLabel',
   UploadBatchErrorAriaPrefix = 'skillEditor.uploadBatchErrorAriaPrefix',
   UploadRemoveCandidateLabel = 'skillEditor.uploadRemoveCandidateLabel',
   DropOverlayTitle = 'skillEditor.dropOverlayTitle',
@@ -893,10 +892,9 @@ export enum SkillEditorI18nKeys {
   ErrorManifestNameMismatch = 'skillEditor.error.manifestNameMismatch',
   ErrorTotalSizeExceeded = 'skillEditor.error.totalSizeExceeded',
   ErrorTotalCountExceeded = 'skillEditor.error.totalCountExceeded',
+  ErrorManifestImportDeclined = 'skillEditor.error.manifestImportDeclined',
   ManifestImportConfirmTitle = 'skillEditor.manifestImportConfirmTitle',
   ManifestImportConfirmMessage = 'skillEditor.manifestImportConfirmMessage',
-  ManifestImportConfirmLabel = 'skillEditor.manifestImportConfirmLabel',
-  ManifestImportCancelLabel = 'skillEditor.manifestImportCancelLabel',
 }
 
 export enum AppsEditorI18nKeys {
