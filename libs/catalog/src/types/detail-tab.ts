@@ -2,6 +2,8 @@
 export enum CatalogDetailsTab {
   /** Description content (`item.description`). Always the first tab. */
   About = 'about',
+  /** Read-only long-form text body, e.g. a prompt's content. */
+  Content = 'content',
   Overview = 'overview',
   Pricing = 'pricing',
   /** Runtime usage-limit progress for model deployments. */

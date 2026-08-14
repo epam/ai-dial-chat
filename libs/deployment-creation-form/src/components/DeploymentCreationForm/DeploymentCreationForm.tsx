@@ -1,6 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { TagInput } from '@epam/ai-dial-kit';
-import { Input, Textarea } from '@epam/ai-dial-ui-kit';
+import { Input, TagInput, Textarea } from '@epam/ai-dial-ui-kit';
 import { useEffect, useRef, type FC } from 'react';
 import type { DeploymentCreationFormProps } from '../../models/deployment-creation-form';
 import { DeploymentLocalesField } from '../DeploymentLocalesField/DeploymentLocalesField';
@@ -10,6 +9,8 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
   values,
   errors,
   onChange,
+  onNameBlur,
+  onVersionBlur,
   labels,
   styles,
   availableLocaleOptions = [],
@@ -46,6 +47,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
         inputRef={nameInputRef}
         value={values.name}
         onChange={(value) => onChange({ name: value ?? '' })}
+        onBlur={onNameBlur}
         labelProps={{ label: labels.name.label, required: true }}
         placeholder={labels.name.placeholder}
         error={errors.name || undefined}
@@ -84,6 +86,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
         inputRef={versionInputRef}
         value={values.version}
         onChange={(value) => onChange({ version: value ?? '' })}
+        onBlur={onVersionBlur}
         labelProps={{ label: labels.version.label }}
         placeholder={labels.version.placeholder}
         error={errors.version || undefined}
@@ -93,10 +96,10 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
 
       <div className={styles?.field}>
         <TagInput
-          elementId="deployment-creation-form-topics"
-          label={labels.topics.label}
+          id="deployment-creation-form-topics"
+          labelProps={{ label: labels.topics.label }}
           placeholder={labels.topics.placeholder}
-          initialTags={values.topics}
+          value={values.topics}
           onChange={(topics) => onChange({ topics })}
         />
       </div>

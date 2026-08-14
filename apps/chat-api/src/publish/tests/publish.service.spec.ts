@@ -5,6 +5,9 @@ import { CatalogEntityType } from '../dto/catalog-entity-params.dto';
 import { PublishRuleFunction } from '../dto/publish-rule.dto';
 import { PublishService } from '../publish.service';
 
+/* The caller's own bucket, which `toSourceUrl` uses to qualify a prompt's bucket-relative id. */
+const TEST_BUCKET = 'bucket-123';
+
 const okResponse = (data: unknown) =>
   ({ data, response: {} as Response }) as never;
 
@@ -43,6 +46,7 @@ describe('PublishService', () => {
 
       const result = await service.publish(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/tool-abc123__1.2.0',
         'Organization/Data Science',
@@ -80,6 +84,58 @@ describe('PublishService', () => {
       );
     });
 
+    it('publishes a skill entityType, using the leaf name only for targetUrl and the caller-supplied version', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({
+          createdAt: 1_700_000_000_000,
+          author: 'user@example.com',
+        }),
+      );
+
+      const result = await service.publish(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Skill,
+        'skills/bucket-123/team-a/docs-helper',
+        'Organization/Data Science',
+        '2.1.0',
+        'Test User',
+      );
+
+      expect(dialClient.client.createPublication).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          /* No {name}__{version} suffix to recover from a skill entityId —
+             the title's "name" segment is the bare leaf path, and "version"
+             is always the caller-supplied value for skills (open question,
+             catalog-publish-api spec). */
+          name: 'docs-helper 2.1.0',
+          targetFolder: 'public/Organization/Data%20Science/',
+          resources: [
+            {
+              action: 'ADD',
+              sourceUrl: 'skills/bucket-123/team-a/docs-helper',
+              /* Leaf name only — the "team-a/" grouping-folder subpath is
+                 not preserved in targetUrl (documented collision risk). */
+              targetUrl:
+                'skills/public/Organization/Data%20Science/docs-helper',
+            },
+          ],
+          displayAuthor: 'Test User',
+          rules: [],
+        },
+      });
+      expect(result).toEqual({
+        entityId: 'skills/bucket-123/team-a/docs-helper',
+        entityType: CatalogEntityType.Skill,
+        folderPath: 'Organization/Data Science',
+        version: '2.1.0',
+        publishedAt: new Date(1_700_000_000_000).toISOString(),
+        publishedBy: 'user@example.com',
+      });
+    });
+
     it('passes the caller-supplied rules through to createPublication unchanged', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
@@ -96,6 +152,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/tool-abc123__1.2.0',
         'Organization/Data Science',
@@ -117,6 +174,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/tool-abc123__1.2.0',
         'Organization/Data Science',
@@ -139,6 +197,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Application,
         'applications/bucket-123/My App Name__0.0.1',
         'DK Test with nested/Level 1',
@@ -173,6 +232,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Application,
         'applications/bucket-123/My App Name__0.0.1',
         '',
@@ -202,6 +262,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Application,
         'applications/bucket-123/Untitled%20app123123123123__0.0.1',
         'test 14.04',
@@ -232,6 +293,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/tool-abc123__1.2.0',
         'Organization/Data Science',
@@ -258,6 +320,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Application,
         'applications/bucket-123/Untitled%20app%202222232__0.0.1',
         'folder02',
@@ -283,6 +346,7 @@ describe('PublishService', () => {
       await expect(
         service.publish(
           'token-abc',
+          TEST_BUCKET,
           CatalogEntityType.Toolset,
           'toolsets/bucket-123/tool-abc123__1.2.0',
           'Organization/Production',
@@ -301,6 +365,7 @@ describe('PublishService', () => {
       await expect(
         service.publish(
           'token-abc',
+          TEST_BUCKET,
           CatalogEntityType.Toolset,
           'toolsets/bucket-123/tool-abc123__1.2.0',
           'Organization/Data Science',
@@ -342,6 +407,7 @@ describe('PublishService', () => {
 
       const result = await service.getPublishHistory(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/tool-abc123__1.2.0',
       );
@@ -380,6 +446,7 @@ describe('PublishService', () => {
 
       const result = await service.getPublishHistory(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/legacy-entity-without-version',
       );
@@ -403,6 +470,7 @@ describe('PublishService', () => {
 
       const result = await service.getPublishHistory(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/tool-abc123__1.0.0',
       );
@@ -426,6 +494,7 @@ describe('PublishService', () => {
 
       const result = await service.getPublishHistory(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/tool-abc123__1.0.0',
       );
@@ -442,6 +511,7 @@ describe('PublishService', () => {
 
       const result = await service.getPublishHistory(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/tool-abc123__1.2.0',
       );
@@ -455,6 +525,7 @@ describe('PublishService', () => {
 
       const result = await service.getPublishHistory(
         'token-abc',
+        TEST_BUCKET,
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/tool-abc123__1.2.0',
       );
@@ -473,6 +544,7 @@ describe('PublishService', () => {
       await expect(
         service.getPublishHistory(
           'token-abc',
+          TEST_BUCKET,
           CatalogEntityType.Toolset,
           'toolsets/bucket-123/tool-abc123__1.2.0',
         ),

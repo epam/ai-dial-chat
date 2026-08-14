@@ -22,21 +22,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
-  SearchBar: ({
-    onChange,
-    placeholder,
-    value,
-  }: {
-    onChange: (v: string) => void;
-    placeholder: string;
-    value: string;
-  }) => (
-    <input
-      placeholder={placeholder}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-    />
-  ),
   DialRoundedButton: ({
     onClick,
     label,
@@ -50,7 +35,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
-  DialTag: ({
+  Tag: ({
     onClick,
     label,
     selected,
@@ -69,6 +54,27 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DialTooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Skeleton: () => null,
   SkeletonVariant: { Circular: 'circular' },
+  Search: ({
+    onChange,
+    placeholder,
+    value,
+    clearLabel,
+  }: {
+    onChange?: (v?: string) => void;
+    placeholder?: string;
+    value?: string;
+    clearLabel?: string;
+  }) => (
+    <>
+      <input
+        type="search"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange?.(e.target.value)}
+      />
+      <button aria-label={clearLabel} onClick={() => onChange?.(undefined)} />
+    </>
+  ),
 
   Button: ({
     onClick,
@@ -98,27 +104,6 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
   PanelEmpty: ({ label }: { label: string }) => <div>{label}</div>,
   PanelNoResults: ({ label }: { label: string }) => <div>{label}</div>,
   SidebarOrientation: { Left: 'left', Right: 'right' },
-  SearchInput: ({
-    onChange,
-    placeholder,
-    value,
-    clearLabel,
-  }: {
-    onChange: (v: string) => void;
-    placeholder: string;
-    value: string;
-    clearLabel: string;
-  }) => (
-    <>
-      <input
-        type="search"
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
-      <button aria-label={clearLabel} onClick={() => onChange('')} />
-    </>
-  ),
   SidebarPanel: ({
     children,
     isOpen,
@@ -310,6 +295,34 @@ describe('ConversationPanel', () => {
     );
     fireEvent.click(screen.getByText('New chat'));
     expect(onNewChat).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the filter tabs by default', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
+    expect(screen.getByText('All')).toBeTruthy();
+  });
+
+  it('does not render the filter tabs when isFilterTabsHidden is true', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={items}
+        isFilterTabsHidden
+      />,
+    );
+    expect(screen.queryByText('All')).toBeNull();
+  });
+
+  it('still lists every conversation group when the filter tabs are hidden', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={items}
+        isFilterTabsHidden
+      />,
+    );
+    expect(screen.getByText('Pinned chat')).toBeTruthy();
+    expect(screen.getByText('First chat')).toBeTruthy();
   });
 
   it('puts isPinned items in Pinned group and others in My chats group', () => {

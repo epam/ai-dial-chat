@@ -7,6 +7,13 @@ export class PromptResponseDto {
   })
   id!: string;
 
+  @ApiProperty({
+    description:
+      'DIAL Core bucket the prompt lives in. For a prompt shared with the caller this is the owner bucket, not the caller bucket, so `id` can be qualified back into a `prompts/{bucket}/{id}` resource url',
+    example: 'my-bucket',
+  })
+  bucket!: string;
+
   @ApiProperty({ description: 'Display name', example: 'My Prompt' })
   name!: string;
 
@@ -21,6 +28,12 @@ export class PromptResponseDto {
     example: 'Work/AI',
   })
   folderId!: string;
+
+  @ApiPropertyOptional({
+    description: 'Resource author reported by DIAL Core, when it is known',
+    example: 'john.doe@example.com',
+  })
+  author?: string;
 
   @ApiProperty({
     description: 'Creation timestamp (Unix ms)',

@@ -1,5 +1,9 @@
 # Spec: model-selection-context
 
+## Purpose
+
+Loading models once at app startup and the context that owns selection state for conversation creation.
+
 ## Requirements
 
 ### Requirement: Models are loaded once during app startup

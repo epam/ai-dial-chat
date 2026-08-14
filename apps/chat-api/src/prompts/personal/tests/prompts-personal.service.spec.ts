@@ -186,6 +186,37 @@ describe('PromptsPersonalService', () => {
         expect.any(Object),
       );
     });
+
+    /*
+     * `id` is owner-bucket-relative, so without the owner bucket alongside it
+     * a shared prompt is indistinguishable from a personal one at the same
+     * path — and reading it back resolves against the caller's own bucket.
+     */
+    it('reports the owner bucket rather than the caller bucket', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue(
+        okResponse({
+          resources: [metaItem('Shared/greeting', 'owner-bucket')],
+        }),
+      );
+      vi.spyOn(service['dialClient'].client, 'getPrompt').mockResolvedValue(
+        okResponse(storedPrompt),
+      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getPromptMetadata',
+      ).mockResolvedValue(
+        okResponse(metaItem('Shared/greeting', 'owner-bucket')),
+      );
+
+      const result = await service.getSharedPrompts(TOKEN, BUCKET);
+
+      expect(result[0].bucket).toBe('owner-bucket');
+      expect(result[0].bucket).not.toBe(BUCKET);
+    });
   });
 
   /* ------------------------------------------------------------------ */

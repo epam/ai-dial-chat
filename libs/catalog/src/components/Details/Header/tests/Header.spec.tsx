@@ -1,3 +1,4 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -8,7 +9,6 @@ import {
 } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../../models/catalog-item';
-import { CatalogEntityType } from '../../../../types/entity-type';
 import {
   CredentialStatus,
   ToolsetAuthenticationType,
@@ -44,13 +44,25 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   NeutralIconButton: ({
     'aria-label': ariaLabel,
     onClick,
+    onMouseEnter,
+    onFocus,
   }: {
     'aria-label'?: string;
     onClick?: () => void;
-  }) => <button aria-label={ariaLabel} onClick={onClick} />,
+    onMouseEnter?: () => void;
+    onFocus?: () => void;
+  }) => (
+    <button
+      aria-label={ariaLabel}
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onFocus={onFocus}
+    />
+  ),
   Dropdown: ({
     children,
     items,
+    onOpenChange,
   }: {
     children: ReactElement<{ onClick?: () => void }>;
     items: Array<{
@@ -59,12 +71,16 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       disabled?: boolean;
       onClick?: () => void;
     }>;
+    onOpenChange?: (isOpen: boolean) => void;
   }) => {
     const [isOpen, setIsOpen] = useState(false);
     return (
       <div>
         {cloneElement(children, {
-          onClick: () => setIsOpen((value) => !value),
+          onClick: () => {
+            setIsOpen(!isOpen);
+            onOpenChange?.(!isOpen);
+          },
         })}
         {isOpen &&
           items.map((item) => (
@@ -82,16 +98,18 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 vi.mock('@tabler/icons-react', () => ({
   IconDots: () => <svg />,
+  IconDownload: () => <svg />,
   IconKey: () => <svg />,
   IconLogin: () => <svg />,
   IconLogout: () => <svg />,
   IconPencil: () => <svg />,
   IconPlayerPlayFilled: () => <svg />,
   IconTrash: () => <svg />,
-  IconUpload: () => <svg />,
   IconUserOff: () => <svg />,
+  IconWorldShare: () => <svg />,
 }));
-vi.mock('../../../EntityHeader/EntityHeader', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
 }));
 vi.mock('../ShareButton/ShareButton', () => ({
@@ -121,6 +139,17 @@ describe('Header', () => {
   it('renders Use in chat for an Application item', () => {
     render(<Header item={makeItem(CatalogEntityType.Agent)} />);
     expect(screen.getByRole('button', { name: 'Use in chat' })).toBeTruthy();
+  });
+
+  it('renders Use in chat for a Prompt item', () => {
+    render(<Header item={makeItem(CatalogEntityType.Prompt)} />);
+    expect(screen.getByRole('button', { name: 'Use in chat' })).toBeTruthy();
+  });
+
+  it('does not render Publish for a Prompt item by default', async () => {
+    render(<Header item={makeItem(CatalogEntityType.Prompt)} />);
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
   });
 
   it('does not render Use in chat for a Toolset item', () => {
@@ -293,6 +322,53 @@ describe('Header', () => {
     expect(onEdit).toHaveBeenCalledWith(item);
   });
 
+  it('renders Download in the Manage menu when onDownload is supplied', async () => {
+    render(
+      <Header item={makeItem(CatalogEntityType.Prompt)} onDownload={vi.fn()} />,
+    );
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Download' })).toBeTruthy();
+  });
+
+  it('does not render Download when onDownload is absent', async () => {
+    render(<Header item={makeItem(CatalogEntityType.Prompt)} />);
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Download' })).toBeNull();
+  });
+
+  it('does not render Download when isDownloadVisible returns false', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onDownload={vi.fn()}
+        isDownloadVisible={() => false}
+      />,
+    );
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Download' })).toBeNull();
+  });
+
+  it('passes texts.downloadActionLabel through to the Download item label', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Prompt)}
+        onDownload={vi.fn()}
+        texts={{ downloadActionLabel: 'Export' }}
+      />,
+    );
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Export' })).toBeTruthy();
+  });
+
+  it('calls onDownload with the item when Download is clicked', async () => {
+    const onDownload = vi.fn();
+    const item = makeItem(CatalogEntityType.Prompt);
+    render(<Header item={item} onDownload={onDownload} />);
+    await openManage();
+    await userEvent.click(screen.getByRole('button', { name: 'Download' }));
+    expect(onDownload).toHaveBeenCalledWith(item);
+  });
+
   it('renders Delete in the Manage menu', async () => {
     render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
     await openManage();
@@ -351,6 +427,34 @@ describe('Header', () => {
 
   it('renders Remove from My List in the Manage menu for an item shared with the user', async () => {
     render(<Header item={makeSharedItem()} onUnshare={vi.fn()} />);
+    await openManage();
+    expect(
+      screen.getByRole('button', { name: 'Remove from My List' }),
+    ).toBeTruthy();
+  });
+
+  it('does not render Remove from My List when isUnshareVisible returns false', async () => {
+    render(
+      <Header
+        item={makeSharedItem()}
+        onUnshare={vi.fn()}
+        isUnshareVisible={() => false}
+      />,
+    );
+    await openManage();
+    expect(
+      screen.queryByRole('button', { name: 'Remove from My List' }),
+    ).toBeNull();
+  });
+
+  it('still renders Remove from My List when isUnshareVisible returns true', async () => {
+    render(
+      <Header
+        item={makeSharedItem()}
+        onUnshare={vi.fn()}
+        isUnshareVisible={() => true}
+      />,
+    );
     await openManage();
     expect(
       screen.getByRole('button', { name: 'Remove from My List' }),
@@ -434,6 +538,43 @@ describe('Header', () => {
     expect(screen.queryByRole('button', { name: 'Revoke access' })).toBeNull();
   });
 
+  it('does not render Revoke access when isRevokeShareVisible returns false', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Prompt)}
+        onRevokeShare={vi.fn()}
+        isRevokeShareVisible={() => false}
+      />,
+    );
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Revoke access' })).toBeNull();
+  });
+
+  it('still renders Revoke access when isRevokeShareVisible returns true', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onRevokeShare={vi.fn()}
+        isRevokeShareVisible={() => true}
+      />,
+    );
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Revoke access' })).toBeTruthy();
+  });
+
+  /* The predicate narrows the built-in rule; it must not resurrect a hidden action. */
+  it('does not render Revoke access for a shared item even when isRevokeShareVisible returns true', async () => {
+    render(
+      <Header
+        item={makeSharedItem()}
+        onRevokeShare={vi.fn()}
+        isRevokeShareVisible={() => true}
+      />,
+    );
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Revoke access' })).toBeNull();
+  });
+
   it('passes texts.revokeShareLabel through to the Revoke access item label', async () => {
     render(
       <Header
@@ -462,8 +603,9 @@ describe('Header', () => {
   it('hides Revoke access for an owned item nobody currently holds access to', async () => {
     render(
       <Header
-        item={{ ...makeItem(CatalogEntityType.Toolset), recipientsCount: 0 }}
+        item={makeItem(CatalogEntityType.Toolset)}
         onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={vi.fn().mockResolvedValue(0)}
       />,
     );
     await openManage();
@@ -473,21 +615,23 @@ describe('Header', () => {
   it('shows the recipient count in the Revoke access label when it is known', async () => {
     render(
       <Header
-        item={{ ...makeItem(CatalogEntityType.Toolset), recipientsCount: 3 }}
+        item={makeItem(CatalogEntityType.Toolset)}
         onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={vi.fn().mockResolvedValue(3)}
       />,
     );
     await openManage();
     expect(
-      screen.getByRole('button', { name: 'Revoke access (3)' }),
+      await screen.findByRole('button', { name: 'Revoke access (3)' }),
     ).toBeTruthy();
   });
 
   it('uses texts.revokeShareLabelWithCount to format the counted label', async () => {
     render(
       <Header
-        item={{ ...makeItem(CatalogEntityType.Toolset), recipientsCount: 2 }}
+        item={makeItem(CatalogEntityType.Toolset)}
         onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={vi.fn().mockResolvedValue(2)}
         texts={{
           revokeShareLabelWithCount: (count) => `Отозвать у ${count} человек`,
         }}
@@ -495,7 +639,7 @@ describe('Header', () => {
     );
     await openManage();
     expect(
-      screen.getByRole('button', { name: 'Отозвать у 2 человек' }),
+      await screen.findByRole('button', { name: 'Отозвать у 2 человек' }),
     ).toBeTruthy();
   });
 
@@ -504,10 +648,116 @@ describe('Header', () => {
       <Header
         item={makeItem(CatalogEntityType.Toolset)}
         onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+    await openManage();
+    expect(
+      await screen.findByRole('button', { name: 'Revoke access' }),
+    ).toBeTruthy();
+  });
+
+  it('keeps Revoke access reachable when the recipient-count lookup rejects', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={vi.fn().mockRejectedValue(new Error('boom'))}
+      />,
+    );
+    await openManage();
+    expect(
+      await screen.findByRole('button', { name: 'Revoke access' }),
+    ).toBeTruthy();
+  });
+
+  it('requests the recipient count when the Manage menu opens, not on render', async () => {
+    const onFetchRecipientsCount = vi.fn().mockResolvedValue(1);
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={onFetchRecipientsCount}
+      />,
+    );
+
+    expect(onFetchRecipientsCount).not.toHaveBeenCalled();
+
+    await openManage();
+    expect(onFetchRecipientsCount).toHaveBeenCalledWith(
+      makeItem(CatalogEntityType.Toolset),
+    );
+  });
+
+  /* Hovering starts the lookup early; the subsequent click must not repeat it. */
+  it('requests the recipient count once when the Manage button is hovered and then clicked', async () => {
+    const onFetchRecipientsCount = vi.fn().mockResolvedValue(1);
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={onFetchRecipientsCount}
+      />,
+    );
+
+    await userEvent.hover(screen.getByRole('button', { name: 'Manage' }));
+    await openManage();
+
+    expect(onFetchRecipientsCount).toHaveBeenCalledOnce();
+  });
+
+  it('withholds Revoke access while the recipient count is still loading', async () => {
+    /* Never settles, so the entry is observed mid-flight. */
+    const pendingLookup = new Promise<number>(() => undefined);
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={vi.fn().mockReturnValue(pendingLookup)}
+      />,
+    );
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Revoke access' })).toBeNull();
+  });
+
+  it('offers Revoke access for every owned item when no count resolver is supplied', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onRevokeShare={vi.fn()}
       />,
     );
     await openManage();
     expect(screen.getByRole('button', { name: 'Revoke access' })).toBeTruthy();
+  });
+
+  it('re-requests the recipient count for a newly displayed item', async () => {
+    const onFetchRecipientsCount = vi.fn().mockResolvedValue(1);
+    const { rerender } = render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={onFetchRecipientsCount}
+      />,
+    );
+    await openManage();
+    /* Close it again so the next click reopens rather than dismisses. */
+    await openManage();
+
+    onFetchRecipientsCount.mockResolvedValue(5);
+    rerender(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Toolset), id: '2' }}
+        onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={onFetchRecipientsCount}
+      />,
+    );
+    await openManage();
+
+    expect(onFetchRecipientsCount).toHaveBeenCalledTimes(2);
+    expect(
+      await screen.findByRole('button', { name: 'Revoke access (5)' }),
+    ).toBeTruthy();
   });
 
   it('keeps Revoke access in the Manage menu under dir="rtl"', async () => {

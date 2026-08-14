@@ -1,8 +1,8 @@
-import { PillTabs } from '@epam/ai-dial-kit';
 import { mergeClasses } from '@epam/ai-dial-ui-kit';
 import { type FC, memo } from 'react';
 import { type FilterLabels } from '../../models/panel-props';
 import { FilterTab } from '../../types/conversation-classification';
+import { PillTabs, type PillTabsColors } from '../PillTabs/PillTabs';
 
 /** Props for `FilterTabs`. */
 export interface FilterTabsProps {
@@ -14,6 +14,8 @@ export interface FilterTabsProps {
   onChange: (tab: FilterTab) => void;
   /** Class applied to each tab. Defaults to `'dial-tiny-semi-text'`. */
   tabClassName?: string;
+  /** Color overrides forwarded to the underlying pill tabs. */
+  colors?: PillTabsColors;
 }
 
 const TABS: { value: FilterTab; labelKey: keyof FilterLabels }[] = [
@@ -25,7 +27,13 @@ const TABS: { value: FilterTab; labelKey: keyof FilterLabels }[] = [
 
 /** Segmented pill-tab control for filtering conversations by source. */
 export const FilterTabs: FC<FilterTabsProps> = memo(
-  ({ activeTab, labels, onChange, tabClassName = 'dial-tiny-semi-text' }) => (
+  ({
+    activeTab,
+    labels,
+    onChange,
+    tabClassName = 'dial-tiny-semi-text',
+    colors,
+  }) => (
     <div className="px-3 py-2">
       <PillTabs
         tabs={TABS.map(({ value, labelKey }) => ({
@@ -38,6 +46,7 @@ export const FilterTabs: FC<FilterTabsProps> = memo(
           typography: {
             tabClassName: mergeClasses(tabClassName, 'flex-1'),
           },
+          colors,
         }}
       />
     </div>

@@ -17,7 +17,6 @@ import type {
   ToolsetFormData,
 } from '../../../../models/toolsets';
 import SettingsForm from '../SettingsForm';
-
 vi.mock('../AuthSection', () => ({ default: () => null }));
 
 vi.mock('../../../../context/AppConfigContext', () => ({
@@ -26,9 +25,8 @@ vi.mock('../../../../context/AppConfigContext', () => ({
   })),
 }));
 
-vi.mock('@epam/ai-dial-chat-shared', () => ({
-  mergeClasses: (...classes: (string | undefined | false)[]) =>
-    classes.filter(Boolean).join(' '),
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   useCodeCopy: vi.fn(() => ({ isCopied: false, copy: vi.fn() })),
   CopyButton: ({
     copyLabel,
@@ -124,22 +122,22 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       ))}
     </select>
   ),
-  DialTagInput: ({
-    label,
+  TagInput: ({
+    labelProps,
     placeholder,
     onChange,
-    initialTags,
+    value,
   }: {
-    label?: string;
+    labelProps?: { label?: string };
     placeholder?: string;
     onChange?: (tags: string[]) => void;
-    initialTags?: string[];
+    value?: string[];
   }) => (
     <label>
-      {label}
+      {labelProps?.label}
       <input
         placeholder={placeholder}
-        defaultValue={(initialTags ?? []).join(',')}
+        value={(value ?? []).join(',')}
         onChange={(e) =>
           onChange?.(e.target.value ? e.target.value.split(',') : [])
         }

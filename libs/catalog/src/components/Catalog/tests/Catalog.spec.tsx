@@ -1,9 +1,9 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
-import { CatalogEntityType } from '../../../types/entity-type';
 import { CatalogSortKey } from '../../../types/sort';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { Catalog } from '../Catalog';
@@ -18,22 +18,22 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     text: unknown;
     className?: string;
   }) => <span className={className}>{text as string}</span>,
-  DialTabs: ({
+  Tabs: ({
     tabs,
-    activeTab,
-    onClick,
+    activeTabId,
+    onTabChange,
   }: {
     tabs: { id: string; label: React.ReactNode }[];
-    activeTab: string;
-    onClick: (id: string) => void;
+    activeTabId: string;
+    onTabChange: (id: string) => void;
   }) => (
     <div role="tablist">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           role="tab"
-          aria-selected={tab.id === activeTab}
-          onClick={() => onClick(tab.id)}
+          aria-selected={tab.id === activeTabId}
+          onClick={() => onTabChange(tab.id)}
         >
           {tab.label}
         </button>
@@ -188,15 +188,29 @@ vi.mock('../../Details/DetailsPanel', () => ({
     isPrimaryActionVisible,
     shareOverlay,
     isDetailsLoading,
+    onDownload,
+    isDownloadVisible,
+    onRevokeShare,
+    isRevokeShareVisible,
   }: {
     item: CatalogItem;
     isPrimaryActionVisible?: (item: CatalogItem) => boolean;
     shareOverlay?: (item: CatalogItem, onClose: () => void) => React.ReactNode;
     isDetailsLoading?: boolean;
+    onDownload?: (item: CatalogItem) => void;
+    isDownloadVisible?: (item: CatalogItem) => boolean;
+    onRevokeShare?: (item: CatalogItem) => void;
+    isRevokeShareVisible?: (item: CatalogItem) => boolean;
   }) => (
     <div>
       <span>{item.name}</span>
       <span>{String(isPrimaryActionVisible?.(item))}</span>
+      {onDownload && (isDownloadVisible?.(item) ?? true) && (
+        <button onClick={() => onDownload(item)}>DownloadTrigger</button>
+      )}
+      {onRevokeShare && (isRevokeShareVisible?.(item) ?? true) && (
+        <button onClick={() => onRevokeShare(item)}>RevokeShareTrigger</button>
+      )}
       {shareOverlay?.(item, () => undefined)}
       <span>{`details:${JSON.stringify(item.details ?? null)}`}</span>
       <span>{`isDetailsLoading:${String(isDetailsLoading)}`}</span>
@@ -384,6 +398,60 @@ describe('Catalog', () => {
     expect(onFetchDetails).toHaveBeenCalledWith(
       expect.objectContaining({ id: '1' }),
     );
+  });
+
+  it('forwards onDownload and isDownloadVisible to the details panel', async () => {
+    const onDownload = vi.fn();
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        onDownload={onDownload}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'DownloadTrigger' }),
+    );
+
+    expect(onDownload).toHaveBeenCalledWith(
+      expect.objectContaining({ id: '1' }),
+    );
+  });
+
+  it('lets isRevokeShareVisible hide the revoke action in the details panel', async () => {
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        onRevokeShare={vi.fn()}
+        isRevokeShareVisible={() => false}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+
+    expect(
+      screen.queryByRole('button', { name: 'RevokeShareTrigger' }),
+    ).toBeNull();
+  });
+
+  it('lets isDownloadVisible hide the download action in the details panel', async () => {
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        onDownload={vi.fn()}
+        isDownloadVisible={() => false}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+
+    expect(
+      screen.queryByRole('button', { name: 'DownloadTrigger' }),
+    ).toBeNull();
   });
 
   it('renders fetched details, overriding static item.details, once resolved', async () => {

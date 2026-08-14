@@ -22,8 +22,6 @@ Use this library whenever a host application needs the "publish to a folder, opt
 
 - `react`
 - `@tabler/icons-react`
-- `@epam/ai-dial-kit`
-- `@epam/ai-dial-sidebar`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-ui-kit`
 
@@ -49,7 +47,26 @@ import { PublishPanel } from '@epam/ai-dial-publish-panel';
 />;
 ```
 
-Pass `renderSummary={() => <CustomHeader />}` instead of `resource` when the host needs to render a richer, domain-specific summary (icon, type badge, version pill) — see `libs/catalog`'s `DetailsPanel` for an example that renders its own `EntityHeader` plus a version tag this way.
+Add `type` (and optionally `iconUrl`) to `resource` to get the richer entity
+summary row — icon, type label, name, and a current-version tag — rendered by
+`ResourceSummary` from `@epam/ai-dial-chat-shared`. `libs/catalog`'s
+`DetailsPanel` uses this for versioned catalog entities:
+
+```tsx
+<PublishPanel
+  resource={{
+    title: item.name,
+    version: item.version,
+    type: item.type,
+    iconUrl: item.iconUrl,
+  }}
+  labels={{ summaryVersionLabel: t(...) }}
+  {...rest}
+/>;
+```
+
+For any other custom summary, pass `renderSummary={() => <CustomHeader />}`; it
+replaces the default title-only row and is ignored once `resource.type` is set.
 
 ### StandalonePublishPanel
 
@@ -87,6 +104,21 @@ import { PublishFooter } from '@epam/ai-dial-publish-panel';
   isSubmitLoading={false}
   onCancel={handleCancel}
   onSubmit={handleSubmit}
+/>;
+```
+
+### PublishAccessRules
+
+Access-rules section of the Publish flow: one removable chip per rule, an "Add rule" trigger opening `PublishAccessRuleEditor`, and a "Clear all" control shown only when rules exist. Pass `folderName` so the section states which destination folder the rules apply to; leave it `undefined` while no folder is selected and the section prompts the user to pick one instead, warning when rules already exist without a destination.
+
+```tsx
+import { PublishAccessRules } from '@epam/ai-dial-publish-panel';
+
+<PublishAccessRules
+  rules={rules}
+  onRulesChange={setRules}
+  sourceOptions={['title', 'roles', 'dial_roles']}
+  folderName={selectedFolderName}
 />;
 ```
 

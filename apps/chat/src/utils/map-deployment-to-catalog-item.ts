@@ -1,5 +1,4 @@
 import {
-  CatalogEntityType,
   CredentialStatus,
   ToolsetAuthenticationType,
   type CatalogItem,
@@ -10,7 +9,7 @@ import type {
   DialToolsetAuthSettingsDto,
   DialToolsetDto,
 } from '@epam/ai-dial-chat-api-client';
-import { formatLastUsed } from '@epam/ai-dial-chat-shared';
+import { CatalogEntityType, formatLastUsed } from '@epam/ai-dial-chat-shared';
 import type { TFunction } from 'i18next';
 import { CatalogI18nKeys } from '../constants/translation-keys';
 import type { EntitySpecificDetails } from '../types/entity-details';
@@ -192,7 +191,6 @@ export const mapDeploymentToCatalogItem = (
     isStarred: favoriteIds.has(deployment.id),
     isMyApp: deployment.isMy ?? false,
     sharedWithMe: deployment.sharedWithMe ?? false,
-    recipientsCount: deployment.recipientsCount,
     isEditable:
       (!!deployment.isMy || !!deployment.canEdit) &&
       ((editableSchemaIds.length > 0 &&
@@ -251,7 +249,6 @@ export const mapToolsetToCatalogItem = (
     isStarred: favoriteIds.has(toolset.id),
     isMyApp: toolset.isMy ?? false,
     sharedWithMe: toolset.sharedWithMe ?? false,
-    recipientsCount: toolset.recipientsCount,
     isEditable: !!(toolset.isMy || toolset.canEdit),
     folder: resolveToolsetFolder(toolset, t),
     credentials: mapToolsetCredentials(

@@ -1,8 +1,8 @@
-import type { CatalogEntityType } from '../types/entity-type';
+import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { CatalogItem } from './catalog-item';
 /** Typography class overrides for `ListView` cells. */
 export interface ListViewTypography {
-  /** Typography class for item name text. Default: `'dial-h3-text'`. */
+  /** Typography class for item name text. Default: `'dial-small-semi-text'`. */
   nameClassName?: string;
   /** Typography class for item version text. Default: `'dial-tiny-text'`. */
   versionClassName?: string;

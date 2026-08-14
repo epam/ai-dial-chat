@@ -29,19 +29,21 @@
       "@epam/ai-dial-conversation-panel/*": ["./libs/conversation-panel/*"],
       "@epam/ai-dial-starter-buttons/*": ["./libs/starter-buttons/*"],
       "@epam/ai-dial-catalog/*": ["./libs/catalog/*"],
+      "@epam/ai-dial-prompt-editor/*": ["./libs/prompt-editor/*"],
+      "@epam/ai-dial-prompts/*": ["./libs/prompts/*"],
       "@epam/ai-dial-publish-panel/*": ["./libs/publish-panel/*"],
       "@epam/ai-dial-share/*": ["./libs/share/*"],
       "@epam/ai-dial-source-panel/*": ["./libs/source-panel/*"],
       "@epam/ai-dial-attachment-canvas/*": ["./libs/attachment-canvas/*"],
       "@epam/ai-dial-attachment-input/*": ["./libs/attachment-input/*"],
-      "@epam/ai-dial-kit/*": ["./libs/ai-dial-kit/*"],
       "@epam/ai-dial-deployment-creation-form/*": [
         "./libs/deployment-creation-form/*"
       ],
       "@epam/ai-dial-chat-overlay/*": ["./libs/chat-overlay/*"],
       "@epam/ai-dial-scheduled-tasks/*": ["./libs/scheduled-tasks/*"],
       "@epam/ai-dial-quotations/*": ["./libs/quotations/*"],
-      "@epam/ai-dial-builder-form/*": ["./libs/builder-form/*"]
+      "@epam/ai-dial-builder-form/*": ["./libs/builder-form/*"],
+      "@epam/ai-dial-skill-editor/*": ["./libs/skill-editor/*"]
     }
   }
 }

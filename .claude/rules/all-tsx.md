@@ -28,60 +28,37 @@ className={mergeClasses(nameClassName, styles.nameText)}
 
 **Always prefer UI kit components over raw HTML elements.** Before reaching for native `<button>`, `<input>`, `<select>`, or other HTML elements:
 
-1. **Look for a UI kit component** — check if a suitable `Dial*` component exists for your use case using the MCP tools below.
+1. **Look for a UI kit component** — check if a suitable component exists for your use case using the `@epam/ai-dial-ui-kit` MCP tools (`searchEntity` / `getEntityDetails`).
 2. **Use raw elements only as last resort** — if and only if no UI kit component meets the requirements, use native HTML (and document why).
 
-### Search bar
+### Always use generation 2.0 kit components
 
-**Never** use `DialSearch` from `@epam/ai-dial-ui-kit`. Use `SearchBar` from `@epam/ai-dial-kit` instead.
+`@epam/ai-dial-ui-kit` ships two component generations:
 
-```tsx
-// Correct
-import { SearchBar } from '@epam/ai-dial-kit';
+| Generation      | Naming                                  | Status                            |
+| --------------- | --------------------------------------- | --------------------------------- |
+| **2.0** (use)   | no prefix — `Button`, `Input`, `Select` | current design system             |
+| **1.0** (avoid) | `Dial*` — `DialButton`, `DialInput`     | legacy, kept for back-compat only |
 
-// Wrong
-import { DialSearch } from '@epam/ai-dial-ui-kit';
-```
-
-### Spinner / loader
-
-**Never** use `DialLoader`. Use `Spinner` from `@epam/ai-dial-ui-kit` instead.
+**Always import the 2.0 component.** Reach for a `Dial*` component only when the MCP lookup shows it has no 2.0 replacement (e.g. `DialCheckbox`, `DialTooltip`, `DialPagination`, `DialEllipsisTooltip`, `DialFileManager` currently have none).
 
 ```tsx
-// Correct
-import { Spinner } from '@epam/ai-dial-ui-kit';
+// Correct — generation 2.0
+import { Button, Input, Popup, Select, Tabs } from '@epam/ai-dial-ui-kit';
 
-// Wrong
-import { DialLoader } from '@epam/ai-dial-ui-kit';
+// Wrong — legacy 1.0 with a 2.0 replacement available
+import {
+  DialButton,
+  DialInput,
+  DialPopup,
+  DialSelect,
+  DialTabs,
+} from '@epam/ai-dial-ui-kit';
 ```
 
-### Tab row
+`searchEntity` ranks 2.0 results first, and a 1.0 result carries an explicit "Use instead" pointer — follow it. When migrating an existing `Dial*` call site, confirm the 2.0 prop signature with `getEntityDetails("component", "<Name>")` first; props are not always identical between generations.
 
-**Never** use `DialTab` from `@epam/ai-dial-ui-kit`. Use `TabRow` from `@epam/ai-dial-kit` instead.
-
-```tsx
-// Correct
-import { TabRow } from '@epam/ai-dial-kit';
-
-// Wrong
-import { DialTab } from '@epam/ai-dial-ui-kit';
-```
-
-### Text fields (input, textarea, tag input)
-
-**Never** import `DialTagInput` directly from `@epam/ai-dial-ui-kit`. Use the app-level wrappers from `libs/ai-dial-kit/src/components/{Input,TagInput}/` instead, so the field's visual style (e.g. corner radius) is restyled once and stays consistent everywhere it's used, including in other `libs/*`:
-
-| Use case        | Component  |
-| --------------- | ---------- |
-| Free-entry tags | `TagInput` |
-
-```tsx
-// Correct
-import { TagInput } from '@epam/ai-dial-kit';
-
-// Wrong — do not import directly from ui-kit
-import { DialTagInput } from '@epam/ai-dial-ui-kit';
-```
+````
 
 ## Semantic HTML
 
@@ -114,7 +91,7 @@ const Outer: FC<OuterProps> = ({
   bar,
   baz,
 }) => <Inner foo={foo} bar={bar} baz={baz} derivedProp={derived(stylesProp)} />;
-```
+````
 
 Props with non-trivial defaults that are also needed locally must still be destructured with their defaults; pass them explicitly to the inner component before `{...innerProps}` so that caller-supplied values in the spread override the defaults correctly. Derived or locally-managed props (e.g. state, computed values) go after `{...innerProps}` so they always take precedence.
 

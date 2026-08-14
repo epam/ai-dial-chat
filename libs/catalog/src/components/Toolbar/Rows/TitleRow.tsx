@@ -1,18 +1,18 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { ItemHeader, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
   ButtonDropdown,
   ButtonVariant,
   DIAL_ICON_SIZE,
   DropdownItem,
+  Search,
+  ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
 import { FC } from 'react';
 import { ToolbarStyles } from '../../../models/toolbar-props';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { Filter } from '../../Filter/Filter';
-import { ItemHeader } from '../../ItemHeader/ItemHeader';
-import { SearchBar } from '../../SearchBar/SearchBar';
 import styles from '../Toolbar.module.scss';
 
 interface TitleRowProps {
@@ -68,6 +68,10 @@ export const TitleRow: FC<TitleRowProps> = ({
 
   const activeLabel = sortOptions?.find((o) => o.key === sortKey)?.label ?? '';
 
+  const handleChange = (nextValue?: string) => {
+    onQueryChange(nextValue ?? '');
+  };
+
   return (
     <div className="flex flex-col gap-3">
       {/* Row 1: title | view toggle | divider | sort */}
@@ -78,6 +82,11 @@ export const TitleRow: FC<TitleRowProps> = ({
           titleClassName={titleClassName}
           postfixClassName={countClassName}
           className="shrink-0"
+          shouldTruncateTitle={false}
+          colors={{
+            title: browseStyles?.colors?.titleText,
+            count: browseStyles?.colors?.countText,
+          }}
         />
 
         <div className="ms-auto flex items-center gap-2">
@@ -138,12 +147,15 @@ export const TitleRow: FC<TitleRowProps> = ({
       </div>
 
       <div className="mb-5 flex items-center gap-3">
-        <SearchBar
-          value={query}
-          onChange={onQueryChange}
-          placeholder={searchPlaceholder}
-          className="flex-1"
-        />
+        <div role="search" className="flex-1">
+          <Search
+            value={query}
+            onChange={handleChange}
+            size={ElementSize.Large}
+            placeholder={searchPlaceholder}
+            aria-label={searchPlaceholder}
+          />
+        </div>
         <Filter
           checked={filters ?? new Set()}
           onChange={onFiltersChange ?? (() => undefined)}

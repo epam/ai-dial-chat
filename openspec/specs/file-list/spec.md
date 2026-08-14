@@ -1,4 +1,10 @@
-## MODIFIED Requirements
+# file-list Specification
+
+## Purpose
+
+Listing files for the file manager: normalizing DIAL metadata, supporting virtual folders, and paginating via `nextToken`.
+
+## Requirements
 
 ### Requirement: List files for FileManager
 
@@ -247,6 +253,12 @@ The system SHALL map each item in the DIAL Core folder response to a `ListFilesI
 
 The system SHALL correctly list folder items returned by DIAL Core even when the underlying storage has no physical object at the folder path. A DIAL item with `nodeType` resolving to `"folder"` SHALL be treated as a valid virtual folder entry and normalized accordingly. No additional existence check SHALL be made.
 
+#### Scenario: A folder with no physical object is listed
+
+- **GIVEN** DIAL Core returns an item with `nodeType: "FOLDER"` for a path that has no stored object
+- **WHEN** the listing is normalized
+- **THEN** the item appears in the response as a folder node and no existence check is issued against storage
+
 ---
 
 ### Requirement: Pagination via nextToken
@@ -254,6 +266,17 @@ The system SHALL correctly list folder items returned by DIAL Core even when the
 The system SHALL forward the `token` query parameter to DIAL Core as the continuation token and SHALL include the `nextToken` field from the DIAL Core response in `ListFilesResponseDto.nextToken`. When no further pages are available, `nextToken` SHALL be absent (undefined / omitted) from the response.
 
 The `nextToken` field is not declared in the SDK TypeScript interface but is returned by the DIAL endpoint per its documented API contract. The service accesses it via a type cast.
+
+#### Scenario: A further page is advertised
+
+- **WHEN** DIAL Core returns a `nextToken` for the requested folder
+- **THEN** the response carries the same value in `ListFilesResponseDto.nextToken`
+- **AND** passing it back as `token` requests the following page
+
+#### Scenario: The last page omits the token
+
+- **WHEN** DIAL Core returns no continuation token
+- **THEN** `nextToken` is absent from the response rather than present and empty
 
 ---
 
@@ -273,6 +296,16 @@ Field specifications:
 - `permissions`: `@IsOptional()`, `@Transform(({ value }) => value !== 'false' && value !== false)`, `@IsBoolean()`, `@ApiPropertyOptional(...)`
 
 Response DTOs for Swagger (`ListFilesItemDto`, `ListFilesResponseDto`) SHALL be defined in the same file and carry full `@ApiProperty` annotations so the generated client has strong types.
+
+#### Scenario: An undeclared query parameter is rejected
+
+- **WHEN** the endpoint is called with a parameter that `ListFilesQueryDto` does not declare
+- **THEN** the global `ValidationPipe` responds `400` and the request never reaches the service
+
+#### Scenario: A traversing path is rejected
+
+- **WHEN** `path` is `../other-bucket/`
+- **THEN** `@IsValidFilePath()` rejects it with `400` and no DIAL Core call is made
 
 ---
 

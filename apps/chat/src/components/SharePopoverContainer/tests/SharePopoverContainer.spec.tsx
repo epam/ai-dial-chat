@@ -1,4 +1,5 @@
-import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
+import { type CatalogItem } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { ShareLinkAccess, type SharePopoverProps } from '@epam/ai-dial-share';
 import { render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -65,7 +66,10 @@ describe('SharePopoverContainer', () => {
       />,
     );
 
-    expect(useShareLinkModule.useShareLink).toHaveBeenCalledWith('item-1');
+    expect(useShareLinkModule.useShareLink).toHaveBeenCalledWith(
+      'item-1',
+      undefined,
+    );
 
     expect(mockSharePopover).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -101,6 +105,36 @@ describe('SharePopoverContainer', () => {
     render(
       <SharePopoverContainer
         item={makeItem(CatalogEntityType.Model)}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(mockSharePopover).toHaveBeenCalledWith(
+      expect.objectContaining({ canEditAccess: false }),
+      undefined,
+    );
+  });
+
+  it('tags a prompt with the prompt resource kind so the backend can qualify its path', () => {
+    mockUseShareLink();
+    render(
+      <SharePopoverContainer
+        item={makeItem(CatalogEntityType.Prompt)}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(useShareLinkModule.useShareLink).toHaveBeenCalledWith(
+      'item-1',
+      'prompt',
+    );
+  });
+
+  it('passes canEditAccess false for a prompt', () => {
+    mockUseShareLink();
+    render(
+      <SharePopoverContainer
+        item={makeItem(CatalogEntityType.Prompt)}
         onClose={vi.fn()}
       />,
     );

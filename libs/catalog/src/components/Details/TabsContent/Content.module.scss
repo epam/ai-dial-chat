@@ -1,0 +1,28 @@
+.divider {
+  border-block-end: 1px solid
+    var(--cat-details-divider, var(--stroke-tertiary, #e0e6f0));
+}
+
+.body {
+  color: var(--cat-details-content-text, var(--text-primary, #161b2d));
+
+  /*
+   * Markdown blocks carry no vertical rhythm of their own, so without this a
+   * heading sits flush against the paragraph under it.
+   */
+  > div > :global(*) + :global(*) {
+    margin-block-start: 12px;
+  }
+
+  /*
+   * The class is set by `rehypePromptVariables`; this rule is what actually
+   * colours a placeholder. Remove it and the spans still render, silently
+   * indistinguishable from the surrounding prose.
+   */
+  :global(.cat-prompt-variable) {
+    color: var(
+      --cat-details-variable-text,
+      var(--text-visual-violet-2, #3730b7)
+    );
+  }
+}

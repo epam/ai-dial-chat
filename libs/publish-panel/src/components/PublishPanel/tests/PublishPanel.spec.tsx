@@ -1,3 +1,4 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps, ReactNode } from 'react';
@@ -119,6 +120,20 @@ describe('PublishPanel', () => {
     expect(screen.queryByText('ali.deepseek-v4-flash')).toBeNull();
   });
 
+  it('renders the entity-header row with a version tag when the resource has a type', () => {
+    renderPanel({ resource: { ...resource, type: CatalogEntityType.Model } });
+    expect(screen.getByText(CatalogEntityType.Model)).toBeTruthy();
+    expect(screen.getByText('Version 4.0.1 · current')).toBeTruthy();
+  });
+
+  it('ignores renderSummary once the resource carries a type', () => {
+    renderPanel({
+      resource: { ...resource, type: CatalogEntityType.Model },
+      renderSummary: () => <div>Custom entity header</div>,
+    });
+    expect(screen.queryByText('Custom entity header')).toBeNull();
+  });
+
   it('renders the folder section title', () => {
     renderPanel();
     expect(screen.getByText('Publish to folder')).toBeTruthy();
@@ -127,6 +142,27 @@ describe('PublishPanel', () => {
   it('renders the access-rules section between the folder block and history', () => {
     renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
     expect(screen.getByText('Allow access if all match')).toBeTruthy();
+  });
+
+  it('scopes the access-rules hint to the selected folder', () => {
+    renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
+    expect(
+      screen.getByText(/These rules apply to "Data Science"/),
+    ).toBeTruthy();
+  });
+
+  it('uses the root folder label in the access-rules hint when the root is selected', () => {
+    renderPanel({ selectedFolderPath: [] });
+    expect(
+      screen.getByText(/These rules apply to "Organization"/),
+    ).toBeTruthy();
+  });
+
+  it('prompts for a destination folder in the access-rules hint when none is selected', () => {
+    renderPanel();
+    expect(
+      screen.getByText(/pick a folder above to set its rules/),
+    ).toBeTruthy();
   });
 
   it('renders existing rules as chips and forwards removals via onRulesChange', async () => {

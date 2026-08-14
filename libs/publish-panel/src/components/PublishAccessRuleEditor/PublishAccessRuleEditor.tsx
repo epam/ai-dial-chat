@@ -1,10 +1,10 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { TagInput } from '@epam/ai-dial-kit';
 import {
   Input,
   NeutralButton,
   PrimaryButton,
   Select,
+  TagInput,
 } from '@epam/ai-dial-ui-kit';
 import {
   FC,
@@ -148,6 +148,7 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
   const patternErrorId = useId();
   const sourceElementId = useId();
   const functionElementId = useId();
+  const targetsElementId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -161,7 +162,6 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
   const [source, setSource] = useState<string>();
   const [ruleFunction, setRuleFunction] = useState<PublicationRuleFunction>();
   const [targets, setTargets] = useState<string[]>([]);
-  const [tagInputResetKey, setTagInputResetKey] = useState(0);
   const [pattern, setPattern] = useState('');
 
   const sourceSelectOptions = useMemo(
@@ -191,10 +191,9 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
     setRuleFunction(value as PublicationRuleFunction);
     setTargets([]);
     setPattern('');
-    setTagInputResetKey((key) => key + 1);
   };
 
-  /** Trims each tag and rejects an exact-duplicate (post-trim, case-sensitive) target, remounting the tag input to reflect the corrected list when a correction was made. */
+  /** Trims each tag, rejects an exact-duplicate (post-trim, case-sensitive) target, and caps the list at `maxTargets`. `TagInput` is controlled, so the corrected list is what the field renders. */
   const handleTargetsChange = (nextTags: string[]) => {
     const deduped: string[] = [];
     for (const rawTag of nextTags) {
@@ -208,12 +207,6 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
       }
     }
     setTargets(deduped);
-    const wasCorrected =
-      deduped.length !== nextTags.length ||
-      deduped.some((tag, i) => tag !== nextTags[i]);
-    if (wasCorrected) {
-      setTagInputResetKey((key) => key + 1);
-    }
   };
 
   const handleSave = () => {
@@ -307,11 +300,10 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
         </div>
       ) : (
         <TagInput
-          key={tagInputResetKey}
-          elementId="publish-access-rule-targets"
-          label={targetsLabel}
+          id={targetsElementId}
+          labelProps={{ label: targetsLabel }}
           placeholder={targetsPlaceholder}
-          initialTags={targets}
+          value={targets}
           onChange={handleTargetsChange}
           disabled={disabled}
         />

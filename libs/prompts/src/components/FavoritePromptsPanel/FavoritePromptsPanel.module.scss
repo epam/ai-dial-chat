@@ -1,0 +1,22 @@
+.row {
+  &:hover,
+  &:focus-visible {
+    background: var(--fp-row-hover-bg, var(--bg-layer-sunken, #eef1f7));
+  }
+}
+
+.header {
+  color: var(--fp-header-text, var(--text-tertiary, #7f8792));
+}
+
+.emptyHint {
+  color: var(--fp-empty-hint-text, var(--text-icon-tertiary, #848e9c));
+}
+
+.star {
+  color: var(--fp-star-color, var(--text-warning-icon, #e6a600));
+}
+
+.footer {
+  border-top-color: var(--fp-footer-border, var(--stroke-tertiary, #e0e6f0));
+}

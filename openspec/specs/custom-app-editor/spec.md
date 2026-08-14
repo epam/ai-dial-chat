@@ -1,4 +1,10 @@
-## ADDED Requirements
+# custom-app-editor Specification
+
+## Purpose
+
+The Custom App editor page: its settings form, create and edit flows, validation, and the loading and saving overlays.
+
+## Requirements
 
 ### Requirement: Custom App editor page
 The system SHALL provide a `CustomAppEditor` page that reuses `ToolsetEditorHeader` and a new `CustomAppEditorView`. The editor has two steps: General and Settings. The General step reuses `GeneralForm`. The Settings step renders `CustomAppSettingsForm`. The editor supports both **create** and **edit** modes; edit mode is entered when `ToolsetEditorQuery.Id` is present in the URL.
@@ -24,15 +30,29 @@ The `CustomAppSettingsForm` SHALL contain exactly four fields rendered in this o
 1. **Features data** — `<Textarea>` with description "Enter key-value pairs for rate_endpoint and/or configuration_endpoint in JSON format." and JSON placeholder
 2. **Attachment types** — `<TagInput>` for MIME type entries
 3. **Max attachments number** — `<Input type="number">` with minimum value 0
-4. **Chat completion URL** — `<Input>` field, validated as a valid absolute URL; error shown on invalid value
+4. **Chat completion URL** — `<Input>` field, validated on blur as a valid absolute URL; distinct errors are shown for an empty value versus an invalid value
 
-#### Scenario: Chat completion URL validation
-- **WHEN** user enters an invalid URL in the Chat completion URL field and submits
-- **THEN** an error message is shown and the form does not submit
+The Save action on the Settings step SHALL stay disabled until the Chat completion URL is a valid absolute URL (`isValidAbsoluteUrl`), not merely non-empty.
+
+#### Scenario: Chat completion URL blur validation — empty
+- **WHEN** the Chat completion URL field is empty and loses focus
+- **THEN** a "required" error message is shown
+
+#### Scenario: Chat completion URL blur validation — invalid
+- **WHEN** user enters a non-absolute-URL value in the Chat completion URL field and the field loses focus
+- **THEN** an "invalid URL" error message is shown
+
+#### Scenario: Save disabled until URL is valid
+- **WHEN** the Chat completion URL field does not hold a valid absolute URL
+- **THEN** the Save button is disabled
 
 #### Scenario: Features data placeholder
 - **WHEN** the Features data textarea is empty
 - **THEN** the placeholder shows `{\n\t"rate_endpoint": "http://application1/rate",\n\t"configuration_endpoint": "http://application1/configuration"\n}`
+
+#### Scenario: Features data rejects unknown keys
+- **WHEN** the Features data textarea contains a JSON object with any key other than `rate_endpoint` or `configuration_endpoint`
+- **THEN** the field is treated as invalid, even if it also contains one of the allowed keys
 
 #### Scenario: Max attachments accepts only positive integers
 - **WHEN** user enters a value less than 1 in Max attachments number
@@ -45,7 +65,29 @@ The `CustomAppSettingsForm` SHALL contain exactly four fields rendered in this o
 ### Requirement: Create — no type sent
 On save in creation mode, `CustomAppEditor` SHALL NOT send `type` in the create payload. Custom apps are plain-endpoint applications with no application-type schema ID; `application_type_schema_id` is omitted from the DIAL Core body.
 
+#### Scenario: Create payload omits the schema id
+- **WHEN** the user saves a new custom app
+- **THEN** the create request body carries no `type` field and no `application_type_schema_id`
+
+### Requirement: General step validation — name and version
+`CustomAppEditor` SHALL validate the `name` field as required and the `version` field against the shared `DeploymentCreationForm` version pattern (via `validateDeploymentCreationFields` from `@epam/ai-dial-deployment-creation-form`). Each field SHALL be re-validated on blur, independently of the other, so an error shown for one field does not get cleared by fixing the other. The Next button SHALL stay disabled while either field is invalid.
+
+#### Scenario: Name required error on blur
+- **WHEN** the Name field is blank and loses focus
+- **THEN** a name-required error is shown under the Name field
+
+#### Scenario: Version format error on blur
+- **WHEN** the Version field contains a value that does not match the allowed version pattern and loses focus
+- **THEN** a version-invalid error is shown under the Version field
+
+#### Scenario: Next disabled while General step invalid
+- **WHEN** the Name or Version field currently holds an invalid value
+- **THEN** the Next button is disabled
+
 ### Requirement: Save validation — name required
+`CustomAppEditor` SHALL re-check that `name` is filled when Save is activated from any step, and SHALL send no request while it is blank.
+
+#### Scenario: Saving with a blank name returns to the General step
 - **WHEN** user clicks Save and `name` is blank
 - **THEN** the editor redirects to the General step and shows a name-required error; no API call is made
 
@@ -59,6 +101,30 @@ The backend (`DeploymentsService.buildApplicationDetails`) SHALL call `getCustom
 #### Scenario: Settings step pre-populated in edit mode
 - **WHEN** editor opens in edit mode
 - **THEN** Chat completion URL, Features data, Attachment types, and Max attachments are pre-populated from the deployment details
+
+### Requirement: Edit mode — deployment resolution waits for shared context
+`CustomAppEditor` SHALL populate `generalForm` (name, description, icon, version, topics, other locales) from the matching entry in `useDeployments().items`, and SHALL keep re-resolving that match whenever the deployments list updates until a match is found — not only once at mount. This covers the case where the editor is opened for a just-accepted shared item before `DeploymentsContext` has finished propagating the corrected shared-context entry (`isMy`/`canEdit`/`sharedWithMe`); the editor SHALL NOT get stuck showing empty/placeholder General fields for that item. Once a match is found and applied, it SHALL NOT be re-applied again for the same deployment id, so it never overwrites in-progress user edits. If the deployments list finishes loading (`useDeployments().isLoading` becomes `false`) without ever producing a match, `CustomAppEditor` SHALL stop waiting rather than block indefinitely.
+
+Settings-form fields fetched directly from `GET /api/v1/deployments/:id/details` SHALL be populated as soon as that response arrives, independently of whether the deployment list match has resolved yet.
+
+#### Scenario: Shared item resolves after deployments list updates
+- **WHEN** the editor opens in edit mode for an item that is not yet present (or not yet marked as shared) in `useDeployments().items`, and the list is subsequently updated with the resolved shared-context entry
+- **THEN** the General step fields (name, description, icon, version, topics) update to reflect that entry without requiring a page refresh
+
+#### Scenario: Resolution gives up once the list finishes loading with no match
+- **WHEN** `useDeployments().isLoading` transitions to `false` and no entry in `items` matches the edited deployment id
+- **THEN** `CustomAppEditor` stops waiting and does not show the loading overlay indefinitely
+
+### Requirement: Loading overlay while resolving edit-mode context
+After the initial `GET /api/v1/deployments/:id/details` request completes, if the matching deployment entry has not yet been resolved from `useDeployments().items`, `CustomAppEditor` SHALL render the same blocking overlay pattern used for saving (spinner plus a translated "Loading…" label) over the editor content and mark the underlying form `inert`, instead of showing the editor with incomplete General-step fields.
+
+#### Scenario: Overlay shown while deployment match is still resolving
+- **WHEN** edit mode has finished the initial details fetch but the deployment entry has not yet been resolved from the deployments list
+- **THEN** a spinner overlay with an `aria-live` status label and a "Loading…" message is shown, and the editor form beneath it is `inert`
+
+#### Scenario: Overlay hidden once resolved
+- **WHEN** the deployment entry is resolved and applied to the General step, or resolution gives up because the deployments list finished loading with no match
+- **THEN** the loading overlay is removed and the editor form is interactive again
 
 ### Requirement: Edit mode — save settings
 On save in edit mode, `CustomAppEditor` SHALL call `PATCH /api/v1/applications/:id` with all changed General and Settings fields. The `UpdateApplicationBodyDto` accepts optional `version`, `endpoint`, `features`, `inputAttachmentTypes`, and `maxInputAttachments` in addition to the existing general fields. `type` and `applicationProperties` remain excluded from the update body.
@@ -76,3 +142,50 @@ On save in edit mode, `CustomAppEditor` SHALL call `PATCH /api/v1/applications/:
 - `maxInputAttachments` — number ≥ 0
 
 `type` and `applicationProperties` remain excluded.
+
+#### Scenario: Settings fields survive validation, excluded fields are rejected
+- **WHEN** an update body carries `version`, `endpoint`, `features`, `inputAttachmentTypes`, and `maxInputAttachments` with valid values
+- **THEN** the DTO validates and forwards all five
+- **AND** a body that also carries `type` or `applicationProperties` is rejected by the global validation pipe
+
+### Requirement: Saving overlay
+While a save request is in flight, `CustomAppEditor` SHALL render a blocking overlay (spinner plus a translated "Saving in progress…" label) over the editor content and mark the underlying form `inert` so it cannot be interacted with or reached by keyboard focus.
+
+#### Scenario: Overlay shown during save
+- **WHEN** the user triggers Save and the request is pending
+- **THEN** a spinner overlay with an `aria-live` status label is shown and the editor form beneath it is `inert`
+
+### Requirement: Save/create failure surfaces API error details
+On a failed create/save request, `CustomAppEditor` SHALL extract the error message and trace ID via `getApiErrorDetails` and show them in the error notification (`requestId` set to the trace ID), falling back to the generic create/save-failed translation only when the API did not provide a message.
+
+#### Scenario: API error message shown
+- **WHEN** the create or save request fails and the API response includes an error message
+- **THEN** the notification shows that message and includes the trace ID as `requestId`
+
+#### Scenario: Generic error fallback
+- **WHEN** the create or save request fails and the API response has no error message
+- **THEN** the notification falls back to the generic create-failed or save-failed translation
+
+### Requirement: Successful create or save confirms itself
+
+`CustomAppEditor` SHALL raise a success notification when a create (`POST /api/v1/applications`) or save (`PATCH /api/v1/applications/:id`) request resolves, before or in the same tick as the navigation to the return URL, through `useOperationNotification` (see `entity-operation-notifications`).
+
+- Create → `NotifiableEntity.CustomApp` + `EntityOperation.Created`, `name` = the application's name.
+- Save → `NotifiableEntity.CustomApp` + `EntityOperation.Edited`, same `name`.
+
+Today a successful save only navigates away, so a user who saves and lands back on the catalog has no confirmation that anything was persisted. The failure path is unchanged (see "Save/create failure surfaces API error details"): the error notification with `requestId` stays exactly as specified, and no success notification is raised.
+
+#### Scenario: Create confirms and returns
+
+- **WHEN** a user creates a custom app and the create request succeeds
+- **THEN** a success notification titled `"Custom app created successfully"` naming the app is shown and the editor navigates to the return URL
+
+#### Scenario: Save confirms and returns
+
+- **WHEN** a user saves an existing custom app and the PATCH succeeds
+- **THEN** a success notification titled `"Custom app edited successfully"` naming the app is shown and the editor navigates to the return URL
+
+#### Scenario: Failed save raises only the error notification
+
+- **WHEN** the create or save request fails
+- **THEN** the existing error notification (with the API message and trace id) is shown, the editor stays open, and no success notification is raised

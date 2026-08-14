@@ -25,11 +25,6 @@ import {
 } from '../../utils/calendar-value';
 import styles from './ScheduledTaskCreateForm.module.scss';
 
-/* `Calendar` has no built-in required-field indicator (unlike `Input`'s
- * `labelProps.required`), so required Calendar fields get the marker
- * appended to their label text directly. */
-const withRequiredMarker = (label: string): string => `${label} *`;
-
 const MarkdownEditor = lazy(async () => {
   const module = await LazyMarkdownEditor();
   return { default: module.MarkdownEditor };
@@ -192,7 +187,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                   onChange={(value) =>
                     onFieldChange('runAt', calendarValueToRunAt(value))
                   }
-                  label={withRequiredMarker(labels.runAtLabel)}
+                  labelProps={{ label: labels.runAtLabel, required: true }}
                   invalid={Boolean(errors.runAt)}
                 />
                 {errors.runAt && (
@@ -222,7 +217,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                           typeof value === 'string' ? value : '',
                         )
                       }
-                      label={withRequiredMarker(labels.timeLabel)}
+                      labelProps={{ label: labels.timeLabel, required: true }}
                       invalid={Boolean(errors.time)}
                     />
                     {errors.time && (
@@ -250,7 +245,10 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                           calendarValueToDayOfWeek(value),
                         )
                       }
-                      label={withRequiredMarker(labels.dayOfWeekLabel)}
+                      labelProps={{
+                        label: labels.dayOfWeekLabel,
+                        required: true,
+                      }}
                       invalid={Boolean(errors.dayOfWeek)}
                     />
                     {errors.dayOfWeek && (
@@ -316,7 +314,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                           calendarValueToDateValue(value),
                         )
                       }
-                      label={labels.startDateLabel}
+                      labelProps={{ label: labels.startDateLabel }}
                       placeholder={labels.startDatePlaceholder}
                       invalid={Boolean(errors.startDate)}
                     />
@@ -343,7 +341,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                           calendarValueToDateValue(value),
                         )
                       }
-                      label={labels.endDateLabel}
+                      labelProps={{ label: labels.endDateLabel }}
                       placeholder={labels.endDatePlaceholder}
                       invalid={Boolean(errors.endDate)}
                     />

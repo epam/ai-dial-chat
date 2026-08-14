@@ -1,9 +1,9 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import type { ICellRendererParams } from 'ag-grid-community';
 import { describe, expect, it } from 'vitest';
 import type { CatalogItem } from '../../../../models/catalog-item';
 import type { GridContext } from '../../../../models/grid-context';
-import { CatalogEntityType } from '../../../../types/entity-type';
 import { NameCellRenderer } from '../NameCellRenderer';
 
 const makeItem = (overrides: Partial<CatalogItem> = {}): CatalogItem => ({
@@ -52,6 +52,30 @@ describe('NameCellRenderer — selected state', () => {
     );
     expect(container.querySelector('svg')).toBeNull();
     expect(screen.getByText('Claude')).toBeTruthy();
+  });
+});
+
+describe('NameCellRenderer — long version', () => {
+  it('caps the version at 30% of the row so it cannot overlap the name', () => {
+    render(
+      <NameCellRenderer
+        {...makeParams(
+          makeItem({ version: 'With Google Search Grounding preview' }),
+        )}
+      />,
+    );
+
+    const version = screen.getByText('With Google Search Grounding preview');
+    expect(version.className).toContain('max-w-[30%]');
+    expect(version.className).toContain('shrink-0');
+  });
+
+  it('lets the name shrink instead of being pushed out', () => {
+    render(<NameCellRenderer {...makeParams(makeItem())} />);
+
+    const heading = screen.getByText('Claude').closest('h3');
+    expect(heading?.className).toContain('min-w-0');
+    expect(heading?.className).toContain('shrink');
   });
 });
 

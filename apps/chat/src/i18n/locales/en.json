@@ -99,6 +99,9 @@
     "listViewLabel": "List view",
     "details": {
       "tabTools": "Tools",
+      "tabContent": "Details",
+      "promptLoadError": "Couldn't load this prompt. Please try again.",
+      "promptDownloadError": "Couldn't download this prompt. Please try again.",
       "tabLimits": "Limits",
       "api": {
         "resourceSection": "Resource",
@@ -150,9 +153,7 @@
         "consequenceSharedConfigurations": "All shared configurations will be lost",
         "consequenceUsersLoseAccess": "Users who rely on it will lose access",
         "consequenceCannotBeUndone": "Cannot be undone",
-        "error": "Failed to delete. Please try again.",
-        "successTitle": "Deleted successfully",
-        "success": "\"{{name}}\" was deleted."
+        "error": "Failed to delete. Please try again."
       },
       "unshare": {
         "confirmTitle": "Remove from My List",
@@ -183,24 +184,38 @@
         "applicationTitle": "Connect Application",
         "toolsetDescription": "Copy endpoint URL to easily integrate toolset into your workflows",
         "applicationDescription": "Copy endpoint URL to easily integrate application into your workflows"
+      },
+      "prompt": {
+        "section": "Prompt",
+        "author": "Author",
+        "updated": "Last updated"
+      },
+      "skill": {
+        "section": "Skill",
+        "author": "Author",
+        "updated": "Last updated",
+        "fileCount": "Files"
       }
     },
     "create": {
       "menuCaption": "Create new",
       "quickApp": "QuickApp",
       "toolset": "Toolset",
-      "customApp": "Custom App"
+      "customApp": "Custom App",
+      "prompt": "Prompt",
+      "skill": "Skill"
     },
-    "publishSuccessTitle": "Published",
-    "publishSuccess": "\"{{name}}\" published to {{folder}}",
     "publishFolderSearchPlaceholder": "Search folders",
     "publishFolderEmptyState": "No folders match \"{{query}}\".",
     "publishHistoryLoading": "Loading history…",
     "publishHistoryError": "Failed to load publish history.",
+    "skillsLoadError": "Failed to load skills",
     "tab": {
       "models": "Models",
       "applications": "Agents",
-      "toolsets": "Toolsets"
+      "toolsets": "Toolsets",
+      "prompts": "Prompts",
+      "skills": "Skills"
     },
     "folder": {
       "personal": "Personal",
@@ -220,6 +235,16 @@
     "closeLabel": "Close model selector",
     "refetchToolsetsFailed": "Failed to refresh toolsets. The Catalog list may be out of date.",
     "refetchDeploymentsFailed": "Failed to refresh applications. The Catalog list may be out of date."
+  },
+  "promptSelector": {
+    "addMenuLabel": "Prompts",
+    "myCollectionLabel": "My Collection",
+    "emptyHint": "Star a prompt to pin it here",
+    "modalTitle": "Use prompt",
+    "parametersTitle": "Prompt parameters",
+    "parametersLabel": "Parameters",
+    "detailsLabel": "Details",
+    "enterValuePlaceholder": "Enter value"
   },
   "notFound": {
     "eyebrow": "404",
@@ -321,8 +346,6 @@
     },
     "delete": {
       "deleteConfirmTitle": "Confirm Deleting Chat",
-      "deleteSuccess": "Conversation deleted successfully",
-      "deleteSuccessTitle": "Conversation deleted",
       "deleteError": "Failed to delete the conversation. Please try again."
     },
     "rename": {
@@ -365,7 +388,6 @@
   "conversationPublish": {
     "panelAriaLabel": "Publish conversation",
     "alreadyPublishedWarning": "This conversation is already published in {folder}.",
-    "successMessage": "Publish request submitted. It will appear in Organization once an admin approves it.",
     "emptyFolderNameError": "Folder name cannot be empty.",
     "invalidFolderNameError": "Folder name contains invalid characters.",
     "duplicateFolderNameError": "A folder with this name already exists."
@@ -378,6 +400,10 @@
   },
   "publishAccessRules": {
     "heading": "Allow access if all match",
+    "folderScopeHint": "These rules apply to \"{folder}\". Selecting another folder loads that folder's own rules instead.",
+    "noFolderScopeHint": "Access rules apply to the destination folder — pick a folder above to set its rules.",
+    "rulesWithoutFolderWarning": "These rules have no destination yet. Select a folder above to apply them.",
+    "maxRulesReachedLabel": "Rule limit reached ({max}). Remove a rule to add another.",
     "addRuleLabel": "Add rule",
     "clearAllLabel": "Clear all",
     "orSeparatorLabel": "Or",
@@ -445,7 +471,7 @@
     "overlayLoginDescription": "Choose a sign-in option to use DIAL Chat in this embedded view.",
     "overlayExternalLoginBlocked": "The sign-in tab was blocked. Allow popups for this site and try again.",
     "overlayLoginTakingLonger": "Sign-in is taking longer than expected. Finish it in the opened tab, or try again.",
-    "overlayProviderPickerLoading": "Loading sign-in providers\u2026",
+    "overlayProviderPickerLoading": "Loading sign-in providers…",
     "overlayProvidersError": "Could not load sign-in providers. Please try again.",
     "logOutConfirmTitle": "Log out?",
     "logOutConfirmDescription": "Are you sure you want to log out?",
@@ -634,6 +660,18 @@
     "conversationPanel": {
       "modelLabel": "Model",
       "currentRunLabel": "Current run"
+    },
+    "offlineCredentialsModal": {
+      "title": "Log in required for scheduled tasks",
+      "body": "To run your scheduled tasks automatically, you need to log in once so they can keep running without you present.",
+      "dismissButtonLabel": "Not now",
+      "closeAriaLabel": "Close login required dialog",
+      "popupBlockedMessage": "The login popup was blocked by your browser. Please allow popups and try again.",
+      "cancelledMessage": "Login was cancelled.",
+      "timeoutMessage": "The login attempt timed out. Please try again.",
+      "failedMessage": "Login failed. Please try again.",
+      "successAnnouncement": "You're logged in. Scheduled tasks can now run automatically.",
+      "loggingInAriaLabel": "Logging in…"
     }
   },
   "dialFileManager": {
@@ -961,8 +999,7 @@
   "voiceRecording": {
     "micLabel": "Record voice message",
     "stopRecordingLabel": "Stop recording",
-    "discardRecordingLabel": "Discard recording",
-    "timerAriaLabel": "Recording time"
+    "discardRecordingLabel": "Discard recording"
   },
   "tools": {
     "menuTitle": "Tools",
@@ -1011,10 +1048,196 @@
       "description": "Some fields are invalid or required fields are missing. Changes in those fields will not be saved. Exit and save only valid information?",
       "confirmLabel": "Save"
     },
+    "savingOverlay": "Saving in progress…",
+    "loadingOverlay": "Loading…",
     "error": {
       "createFailed": "Failed to create custom app. Please try again.",
       "saveFailed": "Failed to save custom app. Please try again.",
       "loadFailed": "Failed to load custom app. Please try again."
+    }
+  },
+  "promptEditor": {
+    "createTitle": "New prompt",
+    "editTitle": "Edit prompt",
+    "nameLabel": "Name",
+    "namePlaceholder": "Give your prompt a short name",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "What is this prompt for?",
+    "contentLabel": "Prompt",
+    "contentPlaceholder": "Write the prompt text you want to reuse",
+    "folderLabel": "Folder",
+    "folderRootOption": "No folder",
+    "folderEmptyState": "You have no folders yet.",
+    "error": {
+      "required": "This field is required.",
+      "nameTooLong": "Use 256 characters or fewer.",
+      "nameInvalid": "Use only letters, digits, spaces, and _ . -",
+      "descriptionTooLong": "Use 2000 characters or fewer.",
+      "contentTooLong": "Use 50000 characters or fewer.",
+      "nameConflict": "A prompt with this name already exists in this folder.",
+      "folderConflict": "A folder with this name already exists here."
+    },
+    "charactersRemaining": "{{count}} characters left",
+    "loadError": "Couldn't load this prompt.",
+    "retryLabel": "Try again",
+    "savingStatus": "Saving",
+    "saveError": "Couldn't save this prompt. Please try again.",
+    "moveError": "The prompt was saved but couldn't be moved to the selected folder.",
+    "folderCreateLabel": "New folder",
+    "folderRenameLabel": "Rename folder",
+    "folderDeleteLabel": "Delete folder",
+    "folderNameLabel": "Folder name",
+    "folderDeleteConfirmTitle": "Delete folder",
+    "folderDeleteConfirmMessage": "Delete \"{{name}}\" and every prompt inside it? This cannot be undone.",
+    "folderError": "Couldn't update folders. Please try again.",
+    "loadingAriaLabel": "Loading prompt"
+  },
+  "skillEditor": {
+    "title": "Create skill",
+    "backAriaLabel": "Back",
+    "filesHeading": "Files",
+    "filesTreeAriaLabel": "Skill files",
+    "addUploadLabel": "Upload from device",
+    "removeLabel": "Remove",
+    "removeConfirmTitle": "Remove file",
+    "removeConfirmMessage": "Remove \"{{path}}\"? This cannot be undone.",
+    "removeConfirmLabel": "Remove",
+    "removeCancelLabel": "Cancel",
+    "editingFileLabel": "Editing file",
+    "nameLabel": "Name",
+    "namePlaceholder": "good-morning-breakfast",
+    "nameCaption": "Lowercase letters and hyphens only, no spaces. We'll reformat automatically if needed.",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "What this skill does and when to use it",
+    "instructionsLabel": "Instructions",
+    "instructionsPlaceholder": "Write the skill instructions in Markdown",
+    "loadError": "Couldn't load this skill. Please try again.",
+    "savingStatus": "Saving",
+    "loadingAriaLabel": "Loading skill",
+    "instructionsLoadingAriaLabel": "Loading",
+    "supportingFileNote": "This supporting file is included in the skill package as-is. Remove it from the Files panel to replace its content.",
+    "bucketMissingTitle": "Can't create a skill right now",
+    "bucketMissingMessage": "We couldn't determine your storage location. Please sign in again or try later.",
+    "error": {
+      "required": "This field is required.",
+      "nameInvalid": "Use only letters, digits, and hyphens.",
+      "nameConflict": "A skill with this name already exists.",
+      "pathInvalid": "Enter a valid relative path.",
+      "pathReserved": "This path is reserved and can't be used.",
+      "pathDuplicate": "A file or folder already exists at this path.",
+      "fileTooLarge": "This file exceeds the maximum size of {{maxSize}}.",
+      "archiveTooLarge": "This skill package is too large to upload.",
+      "serviceUnavailable": "The service is temporarily unavailable. Please try again.",
+      "save": "Couldn't create this skill. Please try again."
+    },
+    "saveSuccessTitle": "Skill created",
+    "createSuccess": "\"{{name}}\" has been created.",
+    "editTitle": "Edit skill",
+    "saveLabel": "Save",
+    "updateSuccess": "\"{{name}}\" has been updated.",
+    "loadErrorForbidden": "You don't have access to this skill.",
+    "loadErrorNotFound": "This skill could not be found.",
+    "conflictMessage": "Someone else changed this skill since you opened it.",
+    "reloadLatestLabel": "Reload latest",
+    "reloadConfirmTitle": "Reload latest version?",
+    "reloadConfirmMessage": "Reloading will discard your unsaved changes. This cannot be undone.",
+    "reloadConfirmLabel": "Reload",
+    "reloadCancelLabel": "Cancel",
+    "unsavedChangesTitle": "Discard unsaved changes?",
+    "unsavedChangesMessage": "You have unsaved changes. Leaving now will discard them.",
+    "unsavedChangesConfirmLabel": "Discard changes",
+    "unsavedChangesCancelLabel": "Keep editing"
+  },
+  "entityNotifications": {
+    "prompt": {
+      "createdTitle": "Prompt created successfully",
+      "created": "You can now see prompt \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "Prompt edited successfully",
+      "edited": "Changes for prompt \"{{name}}\" are saved.",
+      "deletedTitle": "Prompt deleted successfully",
+      "deleted": "Prompt \"{{name}}\" is not available anymore.",
+      "downloadedTitle": "Prompt downloaded successfully",
+      "downloaded": "Prompt \"{{name}}\" is saved on your device.",
+      "publishRequestedTitle": "Prompt publish requested",
+      "publishRequested": "Publish request for prompt \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+    },
+    "agent": {
+      "createdTitle": "Agent created successfully",
+      "created": "You can now see agent \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "Agent edited successfully",
+      "edited": "Changes for agent \"{{name}}\" are saved.",
+      "deletedTitle": "Agent deleted successfully",
+      "deleted": "Agent \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "Agent publish requested",
+      "publishRequested": "Publish request for agent \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+    },
+    "quickApp": {
+      "createdTitle": "Quick app created successfully",
+      "created": "You can now see quick app \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "Quick app edited successfully",
+      "edited": "Changes for quick app \"{{name}}\" are saved.",
+      "deletedTitle": "Quick app deleted successfully",
+      "deleted": "Quick app \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "Quick app publish requested",
+      "publishRequested": "Publish request for quick app \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+    },
+    "customApp": {
+      "createdTitle": "Custom app created successfully",
+      "created": "You can now see custom app \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "Custom app edited successfully",
+      "edited": "Changes for custom app \"{{name}}\" are saved.",
+      "deletedTitle": "Custom app deleted successfully",
+      "deleted": "Custom app \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "Custom app publish requested",
+      "publishRequested": "Publish request for custom app \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+    },
+    "toolset": {
+      "createdTitle": "Toolset created successfully",
+      "created": "You can now see toolset \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "Toolset edited successfully",
+      "edited": "Changes for toolset \"{{name}}\" are saved.",
+      "deletedTitle": "Toolset deleted successfully",
+      "deleted": "Toolset \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "Toolset publish requested",
+      "publishRequested": "Publish request for toolset \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+    },
+    "model": {
+      "deletedTitle": "Model deleted successfully",
+      "deleted": "Model \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "Model publish requested",
+      "publishRequested": "Publish request for model \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+    },
+    "skill": {
+      "deletedTitle": "Skill deleted successfully",
+      "deleted": "Skill \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "Skill publish requested",
+      "publishRequested": "Publish request for skill \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+    },
+    "conversation": {
+      "renamedTitle": "Conversation renamed successfully",
+      "renamed": "Conversation \"{{name}}\" is renamed.",
+      "duplicatedTitle": "Conversation duplicated successfully",
+      "duplicated": "A copy of conversation \"{{name}}\" is created.",
+      "publishRequestedTitle": "Conversation publish requested",
+      "publishRequested": "Publish request for conversation \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "deletedTitle": "Conversation deleted successfully",
+      "deleted": "Conversation \"{{name}}\" is not available anymore."
+    },
+    "file": {
+      "renamedTitle": "File renamed successfully",
+      "renamed": "File \"{{name}}\" is renamed.",
+      "downloadedTitle_one": "File downloaded successfully",
+      "downloadedTitle_other": "Files downloaded successfully",
+      "downloaded_one": "File \"{{name}}\" is saved on your device.",
+      "downloaded_other": "{{count}} files are saved on your device."
+    },
+    "folder": {
+      "createdTitle": "Folder created successfully",
+      "created": "Folder \"{{name}}\" is created.",
+      "renamedTitle": "Folder renamed successfully",
+      "renamed": "Folder \"{{name}}\" is renamed.",
+      "downloadedTitle": "Folder downloaded successfully",
+      "downloaded": "Folder \"{{name}}\" is saved on your device."
     }
   }
 }

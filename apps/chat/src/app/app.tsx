@@ -18,6 +18,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Navigate,
   Route,
   Routes,
   useLocation,
@@ -75,6 +76,9 @@ const ScheduledTaskDetailPage = lazy(
 const ScheduledTaskEditPage = lazy(
   () => import('../pages/ScheduledTaskEditPage/ScheduledTaskEditPage'),
 );
+const ScheduledTasksRouteGate = lazy(
+  () => import('../pages/ScheduledTasksRouteGate/ScheduledTasksRouteGate'),
+);
 const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
 const ToolsetEditorPage = lazy(
   () => import('../pages/ToolsetEditor/ToolsetEditor'),
@@ -82,6 +86,10 @@ const ToolsetEditorPage = lazy(
 const CustomAppEditorPage = lazy(
   () => import('../pages/ToolsetEditor/CustomAppEditor'),
 );
+const PromptEditorPage = lazy(
+  () => import('../pages/PromptEditor/PromptEditor'),
+);
+const SkillEditorPage = lazy(() => import('../pages/SkillEditor/SkillEditor'));
 const ToolsetAuthCallbackPage = lazy(
   () => import('../pages/ToolsetAuthCallback/ToolsetAuthCallback'),
 );
@@ -168,6 +176,7 @@ const App: FC = () => {
   const isAttachmentsManagerEnabled = useUiFeature(
     OverlayFeature.AttachmentsManager,
   );
+  const isFileManagerEnabled = useUiFeature(OverlayFeature.FileManager);
 
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   const { handleClose: closeSourcesPanel } = useSourcesSidebar();
@@ -373,53 +382,68 @@ const App: FC = () => {
               <Route
                 path={ROUTES.FileManager}
                 element={
-                  <RouteErrorBoundary>
-                    <Suspense fallback={<RouteFallback />}>
-                      <DialFileManagerPage />
-                    </Suspense>
-                  </RouteErrorBoundary>
+                  isFileManagerEnabled ? (
+                    <RouteErrorBoundary>
+                      <Suspense fallback={<RouteFallback />}>
+                        <DialFileManagerPage />
+                      </Suspense>
+                    </RouteErrorBoundary>
+                  ) : (
+                    /* Keeps a direct /files URL from bypassing the hidden nav entry. */
+                    <Navigate to={ROUTES.Root} replace />
+                  )
                 }
               />
               <Route
-                path={ROUTES.ScheduledTasks}
                 element={
                   <RouteErrorBoundary>
                     <Suspense fallback={<RouteFallback />}>
-                      <ScheduledTasksPage />
+                      <ScheduledTasksRouteGate />
                     </Suspense>
                   </RouteErrorBoundary>
                 }
-              />
-              <Route
-                path={ROUTES.ScheduledTaskCreate}
-                element={
-                  <RouteErrorBoundary>
-                    <Suspense fallback={<RouteFallback />}>
-                      <ScheduledTaskCreatePage />
-                    </Suspense>
-                  </RouteErrorBoundary>
-                }
-              />
-              <Route
-                path={ROUTES.ScheduledTaskDetail}
-                element={
-                  <RouteErrorBoundary>
-                    <Suspense fallback={<RouteFallback />}>
-                      <ScheduledTaskDetailPage />
-                    </Suspense>
-                  </RouteErrorBoundary>
-                }
-              />
-              <Route
-                path={ROUTES.ScheduledTaskEdit}
-                element={
-                  <RouteErrorBoundary>
-                    <Suspense fallback={<RouteFallback />}>
-                      <ScheduledTaskEditPage />
-                    </Suspense>
-                  </RouteErrorBoundary>
-                }
-              />
+              >
+                <Route
+                  path={ROUTES.ScheduledTasks}
+                  element={
+                    <RouteErrorBoundary>
+                      <Suspense fallback={<RouteFallback />}>
+                        <ScheduledTasksPage />
+                      </Suspense>
+                    </RouteErrorBoundary>
+                  }
+                />
+                <Route
+                  path={ROUTES.ScheduledTaskCreate}
+                  element={
+                    <RouteErrorBoundary>
+                      <Suspense fallback={<RouteFallback />}>
+                        <ScheduledTaskCreatePage />
+                      </Suspense>
+                    </RouteErrorBoundary>
+                  }
+                />
+                <Route
+                  path={ROUTES.ScheduledTaskDetail}
+                  element={
+                    <RouteErrorBoundary>
+                      <Suspense fallback={<RouteFallback />}>
+                        <ScheduledTaskDetailPage />
+                      </Suspense>
+                    </RouteErrorBoundary>
+                  }
+                />
+                <Route
+                  path={ROUTES.ScheduledTaskEdit}
+                  element={
+                    <RouteErrorBoundary>
+                      <Suspense fallback={<RouteFallback />}>
+                        <ScheduledTaskEditPage />
+                      </Suspense>
+                    </RouteErrorBoundary>
+                  }
+                />
+              </Route>
               <Route
                 path={ROUTES.AppsEditor}
                 element={
@@ -466,6 +490,26 @@ const App: FC = () => {
                   <RouteErrorBoundary>
                     <Suspense fallback={<RouteFallback />}>
                       <CustomAppEditorPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.PromptEditor}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <PromptEditorPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.SkillEditor}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <SkillEditorPage />
                     </Suspense>
                   </RouteErrorBoundary>
                 }

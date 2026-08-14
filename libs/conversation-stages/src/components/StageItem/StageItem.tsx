@@ -71,8 +71,8 @@ export const StageItem: FC<StageItemProps> = ({
       {stage.tag && (
         <span
           className={mergeClasses(
-            'flex-none uppercase',
-            typography?.countFontClassName ?? 'dial-tiny-text',
+            'flex-none',
+            typography?.tagClassName ?? 'dial-tiny-lead-text',
             styles.tag,
           )}
         >

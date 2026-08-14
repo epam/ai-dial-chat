@@ -1,4 +1,10 @@
-## ADDED Requirements
+# file-manager-tree-state Specification
+
+## Purpose
+
+Ownership of `expandedPaths` and `loadedPaths` in `useDialFileManager`, and the tree header i18n it passes down.
+
+## Requirements
 
 ### Requirement: useDialFileManager owns expandedPaths and loadedPaths
 

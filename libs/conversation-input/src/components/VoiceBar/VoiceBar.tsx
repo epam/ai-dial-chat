@@ -23,17 +23,12 @@ const BAR_GAP = 1;
 const BAR_STEP = BAR_WIDTH + BAR_GAP;
 const RING_SIZE = 200;
 
-const formatTime = (seconds: number): string =>
-  `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
-
 /** Props accepted by the `VoiceBar` component. */
 export interface VoiceBarProps {
   /** Current recorder state — must not be `'idle'` when this component is rendered. */
   state: VoiceRecorderState;
   /** Stable ref to the live `AnalyserNode` during recording; `.current` is `null` when idle. */
   analyserNodeRef: RefObject<AnalyserNode | null>;
-  /** Elapsed recording time in whole seconds. */
-  elapsedSeconds: number;
   /** Error message in `error` state; `null` otherwise. */
   errorMessage: string | null;
   /** Called when the user clicks the stop button to finish recording. */
@@ -44,25 +39,21 @@ export interface VoiceBarProps {
   stopLabel?: string;
   /** Accessible label for the discard / cancel button. Defaults to `'Discard recording'`. */
   discardLabel?: string;
-  /** Accessible label for the recording timer region. Defaults to `'Recording time'`. */
-  timerLabel?: string;
   /** CSS custom properties forwarded from the parent (e.g. `--ci-bg`, `--ci-border`). */
   style?: CSSProperties;
   /** Extra class names applied to the root element. */
   className?: string;
 }
 
-/** Voice recording bar: live timer, scrolling waveform, stop and discard controls. */
+/** Voice recording bar: scrolling waveform, stop and discard controls. */
 export const VoiceBar: FC<VoiceBarProps> = ({
   state,
   analyserNodeRef,
-  elapsedSeconds,
   errorMessage,
   onStop,
   onDiscard,
   stopLabel = 'Stop recording',
   discardLabel = 'Discard recording',
-  timerLabel = 'Recording time',
   style,
   className,
 }) => {
@@ -212,24 +203,16 @@ export const VoiceBar: FC<VoiceBarProps> = ({
           isError && styles.wrapperError,
         )}
       >
-        {/* Row 1 on mobile / inline on desktop: timer + waveform canvas */}
+        {/* Row 1 on mobile / inline on desktop: recording dot + waveform canvas */}
         <div className="flex min-w-0 flex-1 items-center gap-3">
           {isRecording && (
-            <>
-              <span
-                className={mergeClasses(
-                  styles.recordingDot,
-                  'pointer-events-none block size-[8px] rounded-3xl',
-                )}
-                aria-hidden
-              />
-              <span
-                className={mergeClasses(styles.timer, 'flex-shrink-0')}
-                aria-label={timerLabel}
-              >
-                {formatTime(elapsedSeconds)}
-              </span>
-            </>
+            <span
+              className={mergeClasses(
+                styles.recordingDot,
+                'pointer-events-none block size-[8px] rounded-3xl',
+              )}
+              aria-hidden
+            />
           )}
           <canvas
             ref={canvasRef}

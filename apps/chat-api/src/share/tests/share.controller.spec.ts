@@ -17,6 +17,7 @@ import { ShareAccess } from '../dto/create-share-link.dto';
 import type { DiscardSharedCatalogItemResponseDto } from '../dto/discard-shared-catalog-item.dto';
 import type { RevokeSharedAccessResponseDto } from '../dto/revoke-shared-access.dto';
 import { ShareLinkResponseDto } from '../dto/share-link-response.dto';
+import type { ShareRecipientsResponseDto } from '../dto/share-recipients.dto';
 import { ShareController } from '../share.controller';
 import { ShareService } from '../share.service';
 
@@ -75,6 +76,10 @@ const discardedSuccess: DiscardSharedCatalogItemResponseDto = {
 const revokedSuccess: RevokeSharedAccessResponseDto = {
   success: true,
 };
+const recipientsCount: ShareRecipientsResponseDto = {
+  itemId: 'applications/owner-bucket/my-app',
+  recipientsCount: 2,
+};
 
 describe('ShareController (integration)', () => {
   let app: INestApplication;
@@ -83,6 +88,7 @@ describe('ShareController (integration)', () => {
     acceptInvitation: ReturnType<typeof vi.fn>;
     discardShared: ReturnType<typeof vi.fn>;
     revokeShared: ReturnType<typeof vi.fn>;
+    getRecipientsCount: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -91,6 +97,7 @@ describe('ShareController (integration)', () => {
       acceptInvitation: vi.fn().mockResolvedValue(acceptedInvitation),
       discardShared: vi.fn().mockResolvedValue(discardedSuccess),
       revokeShared: vi.fn().mockResolvedValue(revokedSuccess),
+      getRecipientsCount: vi.fn().mockResolvedValue(recipientsCount),
     };
     app = await buildApp(service);
   });
@@ -112,8 +119,41 @@ describe('ShareController (integration)', () => {
       expect(res.body).toEqual(createdLink);
       expect(service.createShareLink).toHaveBeenCalledWith(
         TEST_USER.at,
+        TEST_USER.bucket,
         validBody,
       );
+    });
+
+    it('forwards resourceKind for a bucket-relative prompt path', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/share')
+        .send({
+          itemId: 'Work/AI/summarize',
+          access: [ShareAccess.View],
+          resourceKind: 'prompt',
+        })
+        .expect(201);
+
+      expect(service.createShareLink).toHaveBeenCalledWith(
+        TEST_USER.at,
+        TEST_USER.bucket,
+        {
+          itemId: 'Work/AI/summarize',
+          access: [ShareAccess.View],
+          resourceKind: 'prompt',
+        },
+      );
+    });
+
+    it('returns 400 for an unknown resourceKind', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/share')
+        .send({
+          itemId: 'Work/AI/summarize',
+          access: [ShareAccess.View],
+          resourceKind: 'conversation',
+        })
+        .expect(400);
     });
 
     it('returns 400 when access is invalid', async () => {
@@ -531,6 +571,90 @@ describe('ShareController (integration)', () => {
       await request(app.getHttpServer())
         .post('/api/v1/share/revoke')
         .send(validBody)
+        .expect(503);
+    });
+  });
+
+  describe('GET /api/v1/share/recipients', () => {
+    const validItemId = 'applications/owner-bucket/my-app';
+
+    it('delegates to the service and returns 200 with the count', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/share/recipients')
+        .query({ itemId: validItemId })
+        .expect(200);
+
+      expect(res.body).toEqual(recipientsCount);
+      expect(service.getRecipientsCount).toHaveBeenCalledWith(
+        validItemId,
+        TEST_USER.at,
+      );
+    });
+
+    it('returns 400 when itemId is missing', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/share/recipients')
+        .expect(400);
+
+      expect(service.getRecipientsCount).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      'files/owner-bucket/report.pdf',
+      'prompts/owner-bucket/my-prompt',
+      'gpt-4o',
+      'applications/owner-bucket',
+      '../etc/passwd',
+      'applications/owner-bucket/../../etc/passwd',
+    ])(
+      'returns 400 when itemId is not a revocable catalog or conversation resource: %s',
+      async (itemId) => {
+        await request(app.getHttpServer())
+          .get('/api/v1/share/recipients')
+          .query({ itemId })
+          .expect(400);
+
+        expect(service.getRecipientsCount).not.toHaveBeenCalled();
+      },
+    );
+
+    it('accepts a conversation resource path', async () => {
+      const itemId = 'conversations/owner-bucket/my-chat';
+
+      await request(app.getHttpServer())
+        .get('/api/v1/share/recipients')
+        .query({ itemId })
+        .expect(200);
+
+      expect(service.getRecipientsCount).toHaveBeenCalledWith(
+        itemId,
+        TEST_USER.at,
+      );
+    });
+
+    it('returns 401 when the service throws UnauthorizedException', async () => {
+      service.getRecipientsCount.mockRejectedValue(new UnauthorizedException());
+      await request(app.getHttpServer())
+        .get('/api/v1/share/recipients')
+        .query({ itemId: validItemId })
+        .expect(401);
+    });
+
+    it('returns 502 when the service throws BadGatewayException', async () => {
+      service.getRecipientsCount.mockRejectedValue(new BadGatewayException());
+      await request(app.getHttpServer())
+        .get('/api/v1/share/recipients')
+        .query({ itemId: validItemId })
+        .expect(502);
+    });
+
+    it('returns 503 when the service throws ServiceUnavailableException', async () => {
+      service.getRecipientsCount.mockRejectedValue(
+        new ServiceUnavailableException(),
+      );
+      await request(app.getHttpServer())
+        .get('/api/v1/share/recipients')
+        .query({ itemId: validItemId })
         .expect(503);
     });
   });

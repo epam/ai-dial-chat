@@ -16,6 +16,7 @@ import {
   ToolsetEditorI18nKeys,
 } from '../../../../constants/translation-keys';
 import { useNotification } from '../../../../context/NotificationContext';
+import { createNotificationContextValue } from '../../../../context/tests/notification-context-mock';
 import type {
   ToolsetAuthFormData,
   ToolsetFormErrors,
@@ -83,6 +84,31 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {error && <p role="alert">{error}</p>}
     </>
   ),
+  TagInput: ({
+    labelProps,
+    placeholder,
+    onChange,
+    value,
+    disabled,
+  }: {
+    labelProps?: { label?: string };
+    placeholder?: string;
+    onChange?: (tags: string[]) => void;
+    value?: string[];
+    disabled?: boolean;
+  }) => (
+    <label>
+      {labelProps?.label}
+      <input
+        placeholder={placeholder}
+        value={(value ?? []).join(',')}
+        disabled={disabled}
+        onChange={(e) =>
+          onChange?.(e.target.value ? e.target.value.split(',') : [])
+        }
+      />
+    </label>
+  ),
   DialRadioButton: ({
     inputId,
     value,
@@ -109,31 +135,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         onChange={() => onChange?.(value ?? '')}
       />
       {label}
-    </label>
-  ),
-  DialTagInput: ({
-    label,
-    placeholder,
-    onChange,
-    initialTags,
-    disabled,
-  }: {
-    label?: string;
-    placeholder?: string;
-    onChange?: (tags: string[]) => void;
-    initialTags?: string[];
-    disabled?: boolean;
-  }) => (
-    <label>
-      {label}
-      <input
-        placeholder={placeholder}
-        defaultValue={(initialTags ?? []).join(',')}
-        disabled={disabled}
-        onChange={(e) =>
-          onChange?.(e.target.value ? e.target.value.split(',') : [])
-        }
-      />
     </label>
   ),
   PrimaryButton: ({
@@ -257,11 +258,9 @@ describe('AuthSection', () => {
         return capturedPopup;
       }),
     });
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification: mockShowNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(mockShowNotification),
+    );
   });
 
   describe('type selection', () => {

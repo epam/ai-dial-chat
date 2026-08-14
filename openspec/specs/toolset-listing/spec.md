@@ -1,4 +1,10 @@
-## ADDED Requirements
+# toolset-listing Specification
+
+## Purpose
+
+The authenticated toolset list endpoint and the frontend server-api helper.
+
+## Requirements
 
 ### Requirement: Authenticated toolset list endpoint
 

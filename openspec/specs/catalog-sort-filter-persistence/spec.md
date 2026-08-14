@@ -1,5 +1,9 @@
 # Spec: catalog-sort-filter-persistence
 
+## Purpose
+
+Persisting the catalog's sort key and topic filter, and reconciling them into the controlled `Catalog` component.
+
 ## Requirements
 
 ### Requirement: Catalog accepts controlled sort and filter props

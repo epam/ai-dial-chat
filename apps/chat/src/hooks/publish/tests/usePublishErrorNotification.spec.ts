@@ -2,6 +2,7 @@ import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNotification } from '../../../context/NotificationContext';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { usePublishErrorNotification } from '../usePublishErrorNotification';
 
 vi.mock('../../../context/NotificationContext');
@@ -30,11 +31,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
   setOnLine(true);
-  vi.mocked(useNotification).mockReturnValue({
-    notifications: [],
-    showNotification: mockShowNotification,
-    dismissNotification: vi.fn(),
-  });
+  vi.mocked(useNotification).mockReturnValue(
+    createNotificationContextValue(mockShowNotification),
+  );
 });
 
 afterEach(() => {
@@ -57,7 +56,7 @@ describe('usePublishErrorNotification', () => {
     );
   });
 
-  it('shows a generic publish-failed notification with the trace ID for a backend error', async () => {
+  it('shows the server-provided error message with the trace ID for a backend error', async () => {
     const { result } = renderHook(() => usePublishErrorNotification());
 
     result.current(
@@ -71,8 +70,23 @@ describe('usePublishErrorNotification', () => {
       expect(mockShowNotification).toHaveBeenCalledWith({
         variant: NotificationVariant.Error,
         title: 'publish.failedTitle',
-        message: 'publish.failedMessage',
+        message: 'Upstream rejected the request',
         requestId: '4bf92f3577b34da6a3ce929d0e0e4736',
+      }),
+    );
+  });
+
+  it('falls back to the generic message when the error carries no server message', async () => {
+    const { result } = renderHook(() => usePublishErrorNotification());
+
+    result.current({});
+
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Error,
+        title: 'publish.failedTitle',
+        message: 'publish.failedMessage',
+        requestId: undefined,
       }),
     );
   });
@@ -86,7 +100,7 @@ describe('usePublishErrorNotification', () => {
       expect(mockShowNotification).toHaveBeenCalledWith({
         variant: NotificationVariant.Error,
         title: 'publish.failedTitle',
-        message: 'publish.failedMessage',
+        message: 'boom',
         requestId: undefined,
       }),
     );

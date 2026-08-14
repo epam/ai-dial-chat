@@ -1,4 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import type { AppConfigEvalContext } from '../../app-config/app-config.types';
+import { FeatureFlagsService } from '../../app-config/feature-flags/feature-flags.service';
+import { FeatureKey } from '../../app-config/feature-flags/feature-key.enum';
 import {
   extractDialErrorMessage,
   handleDialSdkError,
@@ -43,6 +46,8 @@ import {
   resolveConversationLocation,
 } from '../utils/conversation.utils';
 
+const SERVER_APP_CONFIG_CONTEXT: AppConfigEvalContext = { appId: 'chat-api' };
+
 const getValidAttachments = (
   customContent?: ConversationMessageDto['custom_content'],
 ) =>
@@ -75,6 +80,7 @@ export class ConversationStreamingService {
     private readonly persistenceService: ConversationPersistenceService,
     private readonly deploymentsService: DeploymentsService,
     private readonly responsesAdapter: ResponsesAdapter,
+    private readonly featureFlagsService: FeatureFlagsService,
   ) {}
 
   private async resolveGenerationApiForDeployment(
@@ -82,11 +88,20 @@ export class ConversationStreamingService {
     model: string,
     token: string,
   ): Promise<{ generationApi: GenerationApi; temperatureSupported: boolean }> {
-    const details = await this.deploymentsService.getDeploymentDetails(
-      sub,
-      model,
-      token,
-    );
+    /*
+     * getDeploymentDetails is not skipped when features.responsesApiEnabled is
+     * disabled — it also performs the toolset rejection and temperature-
+     * capability derivation below, neither of which is specific to the
+     * Responses API. Resolved concurrently with the feature flag so a
+     * disabled (default) flag adds no sequential latency.
+     */
+    const [details, responsesApiEnabled] = await Promise.all([
+      this.deploymentsService.getDeploymentDetails(sub, model, token),
+      this.featureFlagsService.isEnabled(
+        FeatureKey.ResponsesApiEnabled,
+        SERVER_APP_CONFIG_CONTEXT,
+      ),
+    ]);
 
     if (details.type === 'toolset') {
       const safeModel = StringUtils.sanitizeForLog(model);
@@ -101,7 +116,9 @@ export class ConversationStreamingService {
         : details.modelDetails?.features;
 
     return {
-      generationApi: resolveGenerationApi(features),
+      generationApi: responsesApiEnabled
+        ? resolveGenerationApi(features)
+        : GenerationApi.ChatCompletions,
       temperatureSupported: features?.temperature === true,
     };
   }

@@ -5,8 +5,7 @@ export {
   DetailsConfirmationKind,
   DetailsConfirmationVariant,
 } from './types/details-confirmation';
-export { CatalogEntityType } from './types/entity-type';
-export { CatalogSortKey } from './types/sort';
+export { DeploymentSize } from './types/deployment-icon-size';
 export {
   CredentialsBadgeState,
   CredentialsLevel,
@@ -15,6 +14,7 @@ export {
   ToolsetAuthenticationType,
 } from './types/toolset-auth';
 export { CatalogViewMode } from './types/view-mode';
+export { CatalogSortKey } from './types/sort';
 
 // Models
 export type { CatalogItem } from './models/catalog-item';
@@ -32,6 +32,7 @@ export type {
   CatalogItemDetailsFetchResult,
   CatalogItemLimits,
   CatalogItemPricing,
+  CatalogItemPromptContent,
   CatalogItemTabData,
   CatalogItemTools,
   CodeSnippet,
@@ -107,9 +108,6 @@ export type {
   ListViewTypography,
 } from './models/list-props';
 
-export { EntityTypeLabel } from './components/EntityTypeLabel/EntityTypeLabel';
-export type { EntityTypeLabelProps } from './components/EntityTypeLabel/EntityTypeLabel';
-
 export { FavoriteCard } from './components/Favorites/FavoriteCard';
 export type { FavoriteCardProps } from './components/Favorites/FavoriteCard';
 
@@ -127,3 +125,14 @@ export type { InfoCardProps } from './components/InfoCard/InfoCard';
 
 export { CredentialsBadge } from './components/CredentialsBadge/CredentialsBadge';
 export type { CredentialsBadgeProps } from './components/CredentialsBadge/CredentialsBadge';
+
+export { ContentTab } from './components/Details/TabsContent/Content';
+export type { ContentTabProps } from './components/Details/TabsContent/Content';
+
+export { AppIdentity } from './components/AppIdentity/AppIdentity';
+export type { AppIdentityProps } from './components/AppIdentity/AppIdentity';
+export type {
+  AppIdentityColors,
+  AppIdentityStyles,
+  AppIdentityTypography,
+} from './models/app-identity-styles';

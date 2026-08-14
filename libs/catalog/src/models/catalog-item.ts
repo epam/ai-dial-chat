@@ -1,4 +1,4 @@
-import type { CatalogEntityType } from '../types/entity-type';
+import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { CatalogItemCredentials } from './catalog-item-credentials';
 import type { CatalogItemTabData } from './item-details-data';
 
@@ -34,13 +34,6 @@ export interface CatalogItem {
   isMyApp?: boolean;
   /** Whether this item is shared with the current user (not owned by them) via a share invitation. */
   sharedWithMe?: boolean;
-  /**
-   * How many other users currently hold shared access to this item, for items
-   * the current user owns. `0` means nobody holds access; `undefined` means
-   * the host could not determine it. Counts accepted invitations only, so an
-   * issued-but-unopened share link reads as `0`.
-   */
-  recipientsCount?: number;
   /** Whether the item can be edited by the current user. When true and `onEdit` is supplied, an "Edit" action is shown in the details panel. */
   isEditable?: boolean;
   /** Provider name shown below the entity name in the details header, e.g. `'OpenAI'` or `'Anthropic'`. */

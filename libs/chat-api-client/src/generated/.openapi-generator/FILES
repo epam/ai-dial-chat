@@ -13,11 +13,13 @@ src/apis/ExternalServicesApi.ts
 src/apis/FilesApi.ts
 src/apis/HealthApi.ts
 src/apis/ModelsApi.ts
+src/apis/OfflineCredentialsApi.ts
 src/apis/PromptsApi.ts
 src/apis/PublishApi.ts
 src/apis/RateApi.ts
 src/apis/ScheduledTasksApi.ts
 src/apis/ShareApi.ts
+src/apis/SkillsApi.ts
 src/apis/ThemesApi.ts
 src/apis/ToolsetsApi.ts
 src/apis/TranscriptionApi.ts

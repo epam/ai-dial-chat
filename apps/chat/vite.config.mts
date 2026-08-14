@@ -84,10 +84,6 @@ export default defineConfig(() => ({
         __dirname,
         '../../libs/attachment-input/src/index.ts',
       ),
-      '@epam/ai-dial-kit': path.resolve(
-        __dirname,
-        '../../libs/ai-dial-kit/src/index.ts',
-      ),
       '@epam/ai-dial-share': path.resolve(
         __dirname,
         '../../libs/share/src/index.ts',
@@ -107,6 +103,18 @@ export default defineConfig(() => ({
       '@epam/ai-dial-builder-form': path.resolve(
         __dirname,
         '../../libs/builder-form/src/index.ts',
+      ),
+      '@epam/ai-dial-skill-editor': path.resolve(
+        __dirname,
+        '../../libs/skill-editor/src/index.ts',
+      ),
+      '@epam/ai-dial-prompt-editor': path.resolve(
+        __dirname,
+        '../../libs/prompt-editor/src/index.ts',
+      ),
+      '@epam/ai-dial-prompts': path.resolve(
+        __dirname,
+        '../../libs/prompts/src/index.ts',
       ),
       '@epam/ai-dial-react-pdf-highlighter/styles.css': path.resolve(
         __dirname,

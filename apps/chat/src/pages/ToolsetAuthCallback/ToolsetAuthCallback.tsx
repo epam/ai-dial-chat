@@ -33,6 +33,7 @@ import {
   ExternalServiceCredentialsLevel,
   signInExternalService,
 } from '../../server-api/external-services';
+import { signInOfflineCredentials } from '../../server-api/offline-credentials';
 import { loginToolset } from '../../server-api/toolsets';
 import { ROUTES } from '../../types/routes';
 import { parseExternalServiceUrl } from '../../utils/external-services';
@@ -198,6 +199,10 @@ const ToolsetAuthCallback: FC = () => {
             code,
             redirectUri,
           });
+        } else if (
+          redirectState.resourceKind === OAuthResourceKind.OfflineCredentials
+        ) {
+          await signInOfflineCredentials({ code, redirectUri });
         } else {
           const body: ToolsetLoginBodyDto = {
             url: redirectState.toolsetId,

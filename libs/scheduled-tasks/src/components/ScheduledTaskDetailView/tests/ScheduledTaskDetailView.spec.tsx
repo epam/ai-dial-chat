@@ -21,21 +21,25 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   ButtonVariant: { Primary: 'primary', Neutral: 'neutral' },
-  DialSwitch: ({
-    switchId,
+  Switch: ({
+    id,
     isOn,
     disabled,
     onChange,
+    'aria-label': ariaLabel,
   }: {
-    switchId: string;
+    id?: string;
     isOn?: boolean;
     disabled?: boolean;
     onChange?: (value: boolean) => void;
+    'aria-label'?: string;
   }) => (
     <input
       type="checkbox"
       role="switch"
-      id={switchId}
+      id={id}
+      aria-label={ariaLabel}
+      aria-checked={!!isOn}
       checked={!!isOn}
       disabled={disabled}
       onChange={(e) => onChange?.(e.target.checked)}

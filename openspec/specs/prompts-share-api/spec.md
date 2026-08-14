@@ -1,4 +1,10 @@
-## ADDED Requirements
+# prompts-share-api Specification
+
+## Purpose
+
+Sharing personal prompts through the existing share endpoint.
+
+## Requirements
 
 ### Requirement: Personal prompts are shareable via the existing share endpoint
 

@@ -1,3 +1,11 @@
+# input-history-navigation Specification
+
+## Purpose
+
+Recalling previously sent messages in the conversation input with the arrow keys.
+
+## Requirements
+
 ### Requirement: Host provides message history to ConversationInput
 
 `ConversationInput` SHALL accept an optional prop `messageHistory?: readonly string[]` containing the user-authored messages for the current conversation in chronological order (oldest at index 0, most recent at the last index). The host (app) is responsible for deriving this list from its conversation state and passing it in. When omitted or empty, keyboard history navigation is disabled.

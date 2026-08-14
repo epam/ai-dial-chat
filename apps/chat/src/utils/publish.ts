@@ -1,5 +1,5 @@
-import { CatalogEntityType } from '@epam/ai-dial-catalog';
 import type { PublishHistoryEntryDto } from '@epam/ai-dial-chat-api-client';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   PublishAccessRulesLabels,
   PublishHistoryEntry,
@@ -17,6 +17,7 @@ const PUBLISHABLE_ENTITY_TYPES: Partial<
   [CatalogEntityType.Model]: CatalogPublishEntityType.Model,
   [CatalogEntityType.Toolset]: CatalogPublishEntityType.Toolset,
   [CatalogEntityType.Agent]: CatalogPublishEntityType.Application,
+  [CatalogEntityType.Prompt]: CatalogPublishEntityType.Prompt,
 };
 
 /** Maps a catalog item's entity type to the publish API's entity-type path param, or `undefined` if that type is not publishable. */
@@ -38,6 +39,12 @@ export const getAccessRulesLabels = (
   t: TFunction,
 ): PublishAccessRulesLabels => ({
   heading: t(PublishAccessRulesI18nKeys.Heading),
+  folderScopeHint: t(PublishAccessRulesI18nKeys.FolderScopeHint),
+  noFolderScopeHint: t(PublishAccessRulesI18nKeys.NoFolderScopeHint),
+  rulesWithoutFolderWarning: t(
+    PublishAccessRulesI18nKeys.RulesWithoutFolderWarning,
+  ),
+  maxRulesReachedLabel: t(PublishAccessRulesI18nKeys.MaxRulesReachedLabel),
   addRuleLabel: t(PublishAccessRulesI18nKeys.AddRuleLabel),
   clearAllLabel: t(PublishAccessRulesI18nKeys.ClearAllLabel),
   orSeparatorLabel: t(PublishAccessRulesI18nKeys.OrSeparatorLabel),

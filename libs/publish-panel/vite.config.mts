@@ -16,10 +16,6 @@ export default defineConfig(() => ({
   ],
   resolve: {
     alias: {
-      '@epam/ai-dial-kit': path.resolve(
-        import.meta.dirname,
-        '../ai-dial-kit/src/index.ts',
-      ),
       '@epam/ai-dial-sidebar': path.resolve(
         import.meta.dirname,
         '../sidebar/src/index.ts',

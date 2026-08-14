@@ -305,7 +305,12 @@ describe('DeploymentsDetailsService', () => {
           lifecycle_status: 'generally-available',
           tokenizer_model: 'gpt-4o',
           limits: { max_total_tokens: 128000 },
-          pricing: { unit: 'token', prompt: '0.01', completion: '0.03' },
+          pricing: {
+            unit: 'token',
+            prompt: '0.01',
+            completion: '0.03',
+            cache_read: '0.001',
+          },
         }),
       );
 
@@ -334,7 +339,12 @@ describe('DeploymentsDetailsService', () => {
             maxPromptTokens: undefined,
             maxCompletionTokens: undefined,
           },
-          pricing: { unit: 'token', prompt: '0.01', completion: '0.03' },
+          pricing: {
+            unit: 'token',
+            prompt: '0.01',
+            completion: '0.03',
+            cache_read: '0.001',
+          },
         },
       });
       expect(sdkClient.getApplication).not.toHaveBeenCalled();
@@ -396,7 +406,7 @@ describe('DeploymentsDetailsService', () => {
       sdkClient.getApplication.mockResolvedValue(
         okResponse({
           id: 'applications/public/finhub-via-openapi__1.0.0',
-          display_name: 'finhub-via-openapi',
+          display_name: { plainValue: 'finhub-via-openapi' },
         }),
       );
 
@@ -417,7 +427,7 @@ describe('DeploymentsDetailsService', () => {
       sdkClient.getApplication.mockResolvedValue(
         okResponse({
           id: 'applications/public/finhub-via-openapi__1.0.0',
-          display_name: 'finhub-via-openapi',
+          display_name: { plainValue: 'finhub-via-openapi' },
         }),
       );
 

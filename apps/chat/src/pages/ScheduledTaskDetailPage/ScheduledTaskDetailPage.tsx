@@ -6,7 +6,6 @@ import {
 import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
-  NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import {
   memo,
@@ -49,7 +48,7 @@ import NotFoundPage from '../NotFound/NotFound';
 
 const ScheduledTaskDetailPage: FC = () => {
   const { t } = useTranslation();
-  const { showNotification } = useNotification();
+  const { showSuccessNotification, showErrorNotification } = useNotification();
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
@@ -277,8 +276,7 @@ const ScheduledTaskDetailPage: FC = () => {
               : ScheduledTasksI18nKeys.DetailPauseSuccess,
           ),
         );
-        showNotification({
-          variant: NotificationVariant.Success,
+        showSuccessNotification({
           message: t(
             nextActive
               ? ScheduledTasksI18nKeys.DetailResumeSuccess
@@ -292,8 +290,7 @@ const ScheduledTaskDetailPage: FC = () => {
           current ? { ...current, isActive: !nextActive } : current,
         );
         const { traceId } = await getApiErrorDetails(err);
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           message: t(ScheduledTasksI18nKeys.DetailActiveStatusUpdateError),
           requestId: traceId,
         });
@@ -303,7 +300,7 @@ const ScheduledTaskDetailPage: FC = () => {
         }
       }
     },
-    [scheduleId, t, showNotification],
+    [scheduleId, t, showSuccessNotification, showErrorNotification],
   );
 
   const handleDeleteClick = useCallback(() => {
@@ -322,8 +319,7 @@ const ScheduledTaskDetailPage: FC = () => {
     try {
       await deleteScheduledTask(scheduleId);
       setIsDeleteDialogOpen(false);
-      showNotification({
-        variant: NotificationVariant.Success,
+      showSuccessNotification({
         message: t(ScheduledTasksI18nKeys.DetailDeleteSuccess),
       });
       navigate(ROUTES.ScheduledTasks);
@@ -335,14 +331,20 @@ const ScheduledTaskDetailPage: FC = () => {
           : status === 502
             ? ScheduledTasksI18nKeys.DetailDeleteRetryableError
             : ScheduledTasksI18nKeys.DetailDeleteGenericError;
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(messageKey),
         requestId: traceId,
       });
       setIsDeleting(false);
     }
-  }, [scheduleId, t, showNotification, navigate, isDeleting]);
+  }, [
+    scheduleId,
+    t,
+    showSuccessNotification,
+    showErrorNotification,
+    navigate,
+    isDeleting,
+  ]);
 
   if (appConfigStatus !== UserConfigStatus.Ready) {
     return <RouteFallback />;

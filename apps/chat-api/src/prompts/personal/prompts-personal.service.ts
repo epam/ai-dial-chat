@@ -13,10 +13,12 @@ import { PromptsResourceService } from '../resource/prompts-resource.service';
 import {
   deriveFolders,
   folderIdFromId,
+  isHiddenPromptPath,
   isSentinelPath,
   mapPromptToResponse,
   metadataItemToPromptPath,
   nameFromId,
+  PROMPT_RESOURCE_PREFIX,
   type PromptMetadataItem,
   type PromptPayload,
   type PromptReadResult,
@@ -51,7 +53,9 @@ export class PromptsPersonalService {
         }))
         .filter(
           (entry): entry is { item: PromptMetadataItem; path: string } =>
-            entry.path != null && !isSentinelPath(entry.path),
+            entry.path != null &&
+            !isSentinelPath(entry.path) &&
+            !isHiddenPromptPath(entry.path),
         );
       const sentinelFolderIds = items
         .map((item) => metadataItemToPromptPath(item, bucket))
@@ -112,11 +116,13 @@ export class PromptsPersonalService {
           /* URL format: 'prompts/{ownerBucket}/{path}' */
           const decoded = safeDecodeURIComponent(raw);
           const parts = decoded.split('/');
-          if (parts.length < 3 || parts[0] !== 'prompts')
+          if (parts.length < 3 || parts[0] !== PROMPT_RESOURCE_PREFIX)
             return Promise.resolve(null);
 
           const ownerBucket = parts[1];
           const path = parts.slice(2).join('/');
+
+          if (isHiddenPromptPath(path)) return Promise.resolve(null);
 
           return this.resourceService.readPromptByPath(
             token,
@@ -164,7 +170,7 @@ export class PromptsPersonalService {
     if (metadata == null) {
       throw new NotFoundException(`Prompt metadata not found: ${path}`);
     }
-    return mapPromptToResponse(data, path, metadata);
+    return mapPromptToResponse(data, path, metadata, bucket);
   }
 
   async createPrompt(
@@ -189,7 +195,7 @@ export class PromptsPersonalService {
       'prompts.createPrompt',
       true,
     );
-    return mapPromptToResponse(prompt, id, metadata);
+    return mapPromptToResponse(prompt, id, metadata, bucket);
   }
 
   async updatePrompt(
@@ -270,7 +276,7 @@ export class PromptsPersonalService {
       }
     }
 
-    return mapPromptToResponse(updatedPrompt, targetId, metadata);
+    return mapPromptToResponse(updatedPrompt, targetId, metadata, bucket);
   }
 
   async deletePrompt(

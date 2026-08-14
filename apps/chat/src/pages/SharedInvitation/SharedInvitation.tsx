@@ -1,4 +1,3 @@
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { FC, memo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
@@ -36,7 +35,7 @@ const SharedInvitationPage: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { showNotification } = useNotification();
+  const { showErrorNotification } = useNotification();
   const { refetchDeployments, refetchToolsets, mergeSharedItem } =
     useDeployments();
   const { invitationId } = useParams<{ invitationId: string }>();
@@ -67,8 +66,7 @@ const SharedInvitationPage: FC<Props> = ({
       } catch (err) {
         const { message: errorMessage, traceId } =
           await getApiErrorDetails(err);
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           message: errorMessage ?? t(ShareI18nKeys.InvitationAcceptError),
           requestId: traceId,
         });
@@ -80,7 +78,7 @@ const SharedInvitationPage: FC<Props> = ({
   }, [
     invitationId,
     navigate,
-    showNotification,
+    showErrorNotification,
     t,
     getTargetRoute,
     errorFallbackRoute,

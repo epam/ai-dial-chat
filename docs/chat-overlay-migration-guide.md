@@ -438,14 +438,14 @@ Do not send a partial diff. Always send the complete desired set.
 The following legacy strings are no longer recognized. Their corresponding
 behavior is unconditional in the new chat, so you can normally remove them:
 
-| Legacy flag               | New chat behavior                                                                |
-| ------------------------- | -------------------------------------------------------------------------------- |
-| `custom-logo`             | The logo always comes from theme configuration; use `theme` to select the theme. |
-| `show-layout-dividers`    | Dividers are a permanent part of the UI.                                         |
-| `top-settings`            | The top settings panel is always rendered.                                       |
-| `top-chat-model-settings` | The model selector is rendered; use `disallow-change-agent` to restrict it.      |
-| `chat-header-border`      | The header bottom border is always rendered.                                     |
-| `chat-input-border`       | The input border is always rendered.                                             |
+| Legacy flag               | New chat behavior                                                                                               |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `custom-logo`             | The logo always comes from theme configuration; use `theme` to select the theme.                                |
+| `show-layout-dividers`    | Dividers are a permanent part of the UI.                                                                        |
+| `top-settings`            | The top settings panel is always rendered.                                                                      |
+| `top-chat-model-settings` | The model selector is rendered; use `hide-change-agent` to remove it or `disallow-change-agent` to restrict it. |
+| `chat-header-border`      | The header bottom border is always rendered.                                                                    |
+| `chat-input-border`       | The input border is always rendered.                                                                            |
 
 ### UI flags not supported yet
 
@@ -480,7 +480,7 @@ integrations from typos and removed keys.
 
 ### Supported flags and defaults
 
-The new chat supports 32 flags.
+The new chat supports 39 flags.
 
 Enabled by default:
 
@@ -502,7 +502,10 @@ conversations-publishing
 custom-applications
 code-apps
 catalog
+file-manager
 toolsets
+custom-apps
+prompts
 voice-input
 ```
 
@@ -513,6 +516,8 @@ hide-custom-app-creation
 disabled-send
 skip-focus-chat-input-onload
 disallow-change-agent
+hide-change-agent
+hide-conversations-filter
 hide-new-conversation
 hide-empty-chat-change-agent
 catalog-hide-my-apps
@@ -520,9 +525,34 @@ catalog-table-view
 hide-delete-user-message
 hide-edit-user-message
 hide-regenerate-assistant-message
+skills
 hide-user-menu
 hide-user-settings
+hide-keyboard-shortcuts
 ```
+
+`disallow-change-agent` and `hide-change-agent` both act on the in-chat
+agent selector, and either one removes it: a control the user cannot open is
+not rendered at all, rather than rendered greyed out. Use
+`hide-change-agent` when the agent must stay hidden even though it is
+otherwise changeable; use `disallow-change-agent` when the restriction itself
+is the point. The empty-chat composer has its own key,
+`hide-empty-chat-change-agent`.
+
+`hide-conversations-filter` removes the conversations panel's source filter
+row (All / My chats / Shared / Organization). The list keeps every group, so
+nothing becomes unreachable — only the control is gone. Because the row is
+today the only thing that ever moves the list off the All tab, hiding it
+leaves the panel permanently showing all sources. Use it for embeds where one
+source is the whole story.
+
+`hide-keyboard-shortcuts` removes the Keyboard shortcuts entry from the user
+menu and from the mobile profile sheet. The preference it edits (Enter vs
+`⌘`/`Ctrl`+Enter to send) keeps working from its stored value, defaulting to
+Enter — hiding the entry pins users to whatever they last chose rather than
+disabling the shortcut. `hide-user-settings` also hides this entry, on both
+surfaces; use `hide-keyboard-shortcuts` when the language selector should
+stay.
 
 `voice-input` additionally adds `microphone` to the iframe's `allow`
 attribute. The flag itself does not provide an ASR model or replace the
@@ -537,8 +567,10 @@ ENABLED_UI_FEATURES=header,conversations-section,likes,input-files
 ```
 
 This is also a complete replacement set, not an addition to the defaults. If
-the variable is absent or empty, the built-in baseline containing 19
-default-on flags is used. An overlay host may replace the server baseline with
+the variable is absent or empty, the built-in baseline of 22 default-on flags
+out of the 39 supported is used. Entries the server does not recognize — including
+the renamed and retired legacy strings listed above — are logged and dropped;
+if every entry is unrecognized, the built-in baseline is used instead. An overlay host may replace the server baseline with
 its own `enabledFeatures`; the server baseline is not a security ceiling.
 
 Do not use UI flags as an authorization mechanism. The backend must restrict

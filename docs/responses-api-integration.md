@@ -7,7 +7,7 @@ This document describes the current integration of the OpenAI Responses API in A
 AI DIAL Chat supports two generation APIs:
 
 - Chat Completions API — the existing mode;
-- Responses API — used only when DIAL Core reports `features.responses_api: true` for the selected model or application.
+- Responses API — used only when **both** a server-side operator flag (`RESPONSES_API_ENABLED`, default `false`) is enabled **and** DIAL Core reports `features.responses_api: true` for the selected model or application.
 
 Both modes look the same to the browser. The client continues to call:
 
@@ -15,18 +15,23 @@ Both modes look the same to the browser. The client continues to call:
 POST /api/v1/conversations/completions
 ```
 
-The BFF selects the appropriate upstream API and returns the SSE stream format already understood by Chat. The frontend neither calls `/openai/v1/responses` directly nor parses native Responses API events.
+The BFF selects the appropriate upstream API and returns the SSE stream format already understood by Chat. The frontend neither calls `/openai/v1/responses` directly nor parses native Responses API events. There is no client-visible toggle for this — the flag is server-only (`visibility: server` in the config registry) and the client cannot select the generation API.
 
 The main selection rule is:
 
 ```text
-features.responsesApi === true
+features.responsesApiEnabled === true (server flag, default false)
+AND features.responsesApi === true (deployment capability)
     -> Responses API
 otherwise
     -> Chat Completions API
 ```
 
 There is no automatic retry through the other API after an error.
+
+### Operator kill switch
+
+`RESPONSES_API_ENABLED` (env var, boolean, default `false`) is the operational rollback lever for this integration. Setting it to `false` (or leaving it unset) and restarting the backend makes every generation use Chat Completions, regardless of what any deployment reports for `features.responsesApi` — including deployments that were previously being routed to Responses. This is the fastest way to stop new generations from using the Responses API without a DIAL Core change or a Chat code rollback. See `apps/chat-api/README.md` and `apps/chat-api/.env.template` for the operator-facing description.
 
 ## Architecture
 
@@ -86,14 +91,16 @@ Core derives this flag from the deployment interfaces. Responses API support cor
 
 ### Selection table
 
-| `features.responsesApi` | Selected API         |
-| ----------------------- | -------------------- |
-| `true`                  | Responses API        |
-| `false`                 | Chat Completions API |
-| absent                  | Chat Completions API |
-| `undefined`             | Chat Completions API |
+Two independent conditions gate the Responses API: the server-side operator flag `features.responsesApiEnabled` (backed by `RESPONSES_API_ENABLED`, default `false`) and the per-deployment capability `features.responsesApi`. Both must be `true`:
 
-The check is deliberately strict: only `true` enables the Responses API. This preserves compatibility with Core versions and deployments that do not yet publish the new flag.
+| `features.responsesApiEnabled` (server, default `false`) | `features.responsesApi` (deployment) | Selected API         |
+| -------------------------------------------------------- | ------------------------------------ | -------------------- |
+| `false` (default)                                        | `true`                               | Chat Completions API |
+| `false` (default)                                        | `false` / absent                     | Chat Completions API |
+| `true`                                                   | `true`                               | Responses API        |
+| `true`                                                   | `false` / absent                     | Chat Completions API |
+
+The deployment-capability check is deliberately strict: only `true` enables the Responses API on that side. This preserves compatibility with Core versions and deployments that do not yet publish the new flag. The server-side flag defaults to `false`, so upgrading Chat to a version that includes this integration does not change any deployment's behavior until an operator explicitly opts in.
 
 ### Where deployment details come from
 
@@ -105,6 +112,8 @@ Before generation starts, the BFF calls `DeploymentsService.getDeploymentDetails
 Data previously received by the browser is not trusted on its own. The capability is resolved again on the server with the current user's token. Details are cached separately for each user and deployment for approximately 60 seconds.
 
 If the deployment is a toolset, generation is rejected with `400 Bad Request`. If details cannot be retrieved, the upstream request is not started and the registered generation is released correctly.
+
+`getDeploymentDetails` runs unconditionally on every completion request, regardless of `RESPONSES_API_ENABLED`'s state — it is not skipped when the server-side flag is disabled. It also performs the toolset rejection above and the `temperature`-capability detection used to build the outgoing request, neither of which is specific to the Responses API; skipping the call for a disabled flag would silently remove that validation for Chat Completions requests too. The feature-flag check runs concurrently with this lookup, so a disabled (default) flag adds no additional latency to the existing call.
 
 ## Complete Request Lifecycle
 
@@ -261,8 +270,11 @@ Core's response cancellation endpoint is not used because the current implementa
 
 Fallback occurs only as part of capability-based API selection:
 
-- when the flag is not `true`, Chat Completions is selected immediately;
-- when the flag is `true`, the Responses API is selected.
+- when `features.responsesApiEnabled` (server flag) is not `true`, Chat Completions is selected immediately, regardless of what the deployment reports;
+- when the server flag is `true` but the deployment's `features.responsesApi` is not `true`, Chat Completions is selected;
+- when both are `true`, the Responses API is selected.
+
+When the server-side flag is disabled, Chat behaves exactly as if the targeted deployment had never reported `responses_api: true` — no different code path, no different error, no latency change beyond what `getDeploymentDetails` already costs today. Setting `RESPONSES_API_ENABLED=false` and restarting the backend is the operational rollback path: it immediately makes every new generation use Chat Completions.
 
 If the Responses API has already been selected and returns an error, Chat does not repeat the request through Chat Completions. An automatic retry could create a second response or repeat a tool or action, so such switching must be designed separately.
 
@@ -356,6 +368,7 @@ Possible `generation.api` values:
 | API-selection unit tests                   | `apps/chat-api/src/conversations/generation/generation-api.spec.ts`                                                                                                               |
 | Responses-adapter unit tests               | `apps/chat-api/src/conversations/generation/responses.adapter.spec.ts`                                                                                                            |
 | Service-level integration                  | `apps/chat-api/src/conversations/tests/conversation.service.spec.ts`                                                                                                              |
+| `features.responsesApiEnabled` flag source | `apps/chat-api/src/app-config/feature-flags/feature-key.enum.ts`, `apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`                                     |
 
 ## DIAL Core Context
 

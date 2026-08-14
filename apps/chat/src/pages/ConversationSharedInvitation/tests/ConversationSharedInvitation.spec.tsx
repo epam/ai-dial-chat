@@ -1,5 +1,6 @@
 import { render, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { acceptInvitation } from '../../../server-api/share.api';
 import { ROUTES } from '../../../types/routes';
 import ConversationSharedInvitationPage from '../ConversationSharedInvitation';
@@ -17,11 +18,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('../../../context/NotificationContext', () => ({
-  useNotification: () => ({
-    notifications: [],
-    showNotification: vi.fn(),
-    dismissNotification: vi.fn(),
-  }),
+  useNotification: () => createNotificationContextValue(vi.fn()),
 }));
 
 vi.mock('../../../context/DeploymentsContext', () => ({

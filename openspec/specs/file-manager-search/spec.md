@@ -1,4 +1,10 @@
-## ADDED Requirements
+# file-manager-search Specification
+
+## Purpose
+
+Recursive file search exposed by `useDialFileManager` and enabled in the file-manager shell.
+
+## Requirements
 
 ### Requirement: useDialFileManager exposes onSearchFiles for recursive file search
 

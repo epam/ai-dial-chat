@@ -1,5 +1,8 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { TabRow } from '@epam/ai-dial-kit';
+import {
+  buildCssVars,
+  CatalogEntityType,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   derivePublishState,
   PublishFooter,
@@ -14,7 +17,7 @@ import {
   CloseButton,
   ElementSize,
   Skeleton,
-  DialTag,
+  Tabs,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft } from '@tabler/icons-react';
@@ -23,6 +26,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -34,7 +38,6 @@ import {
   DetailsConfirmationVariant,
 } from '../../types/details-confirmation';
 import { getSignedInLevel } from '../../utils/toolset-credentials';
-import { EntityHeader } from '../EntityHeader/EntityHeader';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { ApiDetails } from './ApiDetails';
 import { ConfirmationFooter } from './ConfirmationView/ConfirmationFooter';
@@ -43,10 +46,22 @@ import { CredentialsSection } from './Credentials/CredentialsSection';
 import styles from './DetailsPanel.module.scss';
 import { Header } from './Header/Header';
 import { AboutTab } from './TabsContent/About';
+import { ContentTab } from './TabsContent/Content';
 import { LimitsTab } from './TabsContent/Limits';
 import { Overview } from './TabsContent/Overview';
 import { Pricing } from './TabsContent/Pricing';
 import { Tools } from './TabsContent/Tools/Tools';
+
+/*
+ * Entity types that lead with their body instead of a description. A prompt's
+ * content already carries its description, so an About tab would only repeat
+ * it; a skill has no description at all in its metadata, so an About tab would
+ * always render empty. Both open on Content, followed by Overview.
+ */
+const CONTENT_FIRST_ENTITY_TYPES = new Set<CatalogEntityType>([
+  CatalogEntityType.Prompt,
+  CatalogEntityType.Skill,
+]);
 
 const NO_OP_PUBLISH = async () => undefined;
 const EMPTY_PUBLISH_FOLDERS: PublishFolderNode[] = [];
@@ -126,15 +141,21 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   shareOverlay,
   isShareVisible,
   onEdit,
+  onDownload,
+  isDownloadVisible,
   onDelete,
   onUnshare,
+  isUnshareVisible,
   onRevokeShare,
+  onFetchRecipientsCount,
+  isRevokeShareVisible,
   onLogin,
   onLogout,
   texts,
   styles: detailsStyles,
 }) => {
   const {
+    subViewTitleClassName = 'dial-body-semi-text',
     overviewSectionClassName = 'dial-caption-text',
     overviewLabelClassName = 'dial-small-semi-text',
     overviewValueClassName = 'dial-small-text',
@@ -154,10 +175,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-details-skeleton': detailsColors?.skeleton,
     '--cat-details-name-text': detailsColors?.nameText,
     '--cat-details-publish-title-text': detailsColors?.publishTitleText,
-    '--cat-details-version-tag-border': detailsColors?.versionTagBorder,
-    '--cat-details-version-tag-bg': detailsColors?.versionTagBackground,
-    '--cat-details-version-tag-text': detailsColors?.versionTagText,
     '--cat-credentials-status-text': detailsColors?.credentialsStatusText,
+    '--cat-details-content-text': detailsColors?.contentText,
+    '--cat-details-variable-text': detailsColors?.variableText,
     '--cat-api-heading-text': detailsColors?.apiHeadingText,
     '--cat-tools-divider': detailsColors?.toolsDivider,
     '--cat-tools-description-text': detailsColors?.toolsDescriptionText,
@@ -245,7 +265,13 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   }, [item.id, initialIsStarred]);
 
   useEffect(() => {
-    setActiveTab(CatalogDetailsTab.About);
+    /*
+     * Cleared rather than set to a named tab: `About` is not in every item's
+     * tab set (a prompt has none), so naming it here would select a tab that
+     * does not exist. The reconciliation effect below picks whichever tab is
+     * actually first for this item.
+     */
+    setActiveTab('');
     setIsPublishOpen(false);
     publishFlow.reset();
     setPublishHistory([]);
@@ -364,9 +390,25 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   }, [isStarred, item.id, onToggleFavorite]);
 
   const tabs = useMemo(() => {
-    const result: { id: string; label: string }[] = [
-      { id: CatalogDetailsTab.About, label: texts?.tabAboutLabel ?? 'About' },
-    ];
+    const result: { id: string; label: string }[] = [];
+    const isContentFirst = CONTENT_FIRST_ENTITY_TYPES.has(item.type);
+    if (!isContentFirst) {
+      result.push({
+        id: CatalogDetailsTab.About,
+        label: texts?.tabAboutLabel ?? 'About',
+      });
+    }
+    /*
+     * A content-first entity keeps its Content tab even before a body arrives
+     * (or when it has none), so the tab it opens on never shifts as details
+     * resolve.
+     */
+    if (isContentFirst || item.details?.promptContent != null) {
+      result.push({
+        id: CatalogDetailsTab.Content,
+        label: texts?.tabContentLabel ?? 'Details',
+      });
+    }
     if (item.details?.overview != null) {
       result.push({
         id: CatalogDetailsTab.Overview,
@@ -406,10 +448,16 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     return result;
   }, [item, texts]);
 
-  // Reset to the first available tab when the item changes or the active
-  // tab is no longer in the (possibly newly-fetched) available list.
+  /*
+   * Every item opens on its first tab: a tab the previous item happened to
+   * share must not carry over. Within one item the selection is kept, unless
+   * a newly-fetched details payload dropped the active tab from the list.
+   */
+  const shownItemId = useRef<string | null>(null);
   useEffect(() => {
-    if (!tabs.some((t) => t.id === activeTab)) {
+    const isNewItem = shownItemId.current !== item.id;
+    shownItemId.current = item.id;
+    if (isNewItem || !tabs.some((t) => t.id === activeTab)) {
       setActiveTab(tabs[0]?.id ?? '');
     }
   }, [item.id, tabs, activeTab]);
@@ -565,7 +613,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
               />
               <span
                 className={mergeClasses(
-                  'dial-body-semi-text flex-1',
+                  'flex-1',
+                  subViewTitleClassName,
                   styles.publishTitle,
                 )}
               >
@@ -614,26 +663,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 resource={{
                   title: item.name,
                   version: item.version,
+                  type: item.type,
+                  iconUrl: item.iconUrl,
                 }}
-                renderSummary={() => (
-                  <>
-                    <div className="min-w-0 flex-1">
-                      <EntityHeader
-                        item={item}
-                        iconSize={40}
-                        hasFeaturedTag={false}
-                        showVersion={false}
-                      />
-                    </div>
-                    <DialTag
-                      label={`Version ${item.version} · current`}
-                      className={mergeClasses(
-                        'shrink-0 whitespace-nowrap',
-                        styles.currentVersionTag,
-                      )}
-                    />
-                  </>
-                )}
                 history={publishHistory}
                 isHistoryLoading={isPublishHistoryLoading}
                 hasHistoryError={hasPublishHistoryError}
@@ -656,6 +688,12 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 isRulesLoading={publishFlow.isRulesLoading}
                 hasRulesLoadError={publishFlow.hasRulesLoadError}
                 labels={publishLabels}
+                colors={{
+                  summaryVersionTagBorder: detailsColors?.versionTagBorder,
+                  summaryVersionTagBackground:
+                    detailsColors?.versionTagBackground,
+                  summaryVersionTagText: detailsColors?.versionTagText,
+                }}
               />
             </div>
           )}
@@ -672,11 +710,16 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 isPublishVisible={isPublishVisible}
                 onOpenPublish={handleOpenPublish}
                 onEdit={onEdit}
+                onDownload={onDownload}
+                isDownloadVisible={isDownloadVisible}
                 onDelete={onDelete ? handleRequestDelete : undefined}
                 onUnshare={onUnshare ? handleRequestUnshare : undefined}
+                isUnshareVisible={isUnshareVisible}
                 onRevokeShare={
                   onRevokeShare ? handleRequestRevokeShare : undefined
                 }
+                onFetchRecipientsCount={onFetchRecipientsCount}
+                isRevokeShareVisible={isRevokeShareVisible}
                 onLogin={onLogin}
                 onLogout={onLogout}
                 onToggleCredentials={handleToggleCredentials}
@@ -696,7 +739,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
               )}
 
               <div className="flex items-center px-6">
-                <TabRow
+                <Tabs
                   tabs={tabs}
                   activeTabId={activeTab}
                   onTabChange={setActiveTab}
@@ -721,13 +764,21 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
               <div
                 className={mergeClasses(
-                  activeTab !== CatalogDetailsTab.Overview && 'mt-4 px-6',
+                  'min-h-0 flex-1 overflow-y-auto',
+                  activeTab !== CatalogDetailsTab.Overview && 'px-6',
                 )}
               >
                 {activeTab === CatalogDetailsTab.About && (
                   <AboutTab
                     content={item.description}
                     topics={item.topics}
+                    detailsStyles={detailsStyles}
+                  />
+                )}
+                {activeTab === CatalogDetailsTab.Content && (
+                  <ContentTab
+                    content={item.details?.promptContent?.content ?? ''}
+                    description={item.description}
                     detailsStyles={detailsStyles}
                   />
                 )}

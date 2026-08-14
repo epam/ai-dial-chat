@@ -15,6 +15,8 @@
 import * as runtime from '../runtime';
 import type {
   UpdateInstalledDto,
+  UpdateInstalledPromptDto,
+  UpdateInstalledSkillDto,
   UpdatePinsDto,
   UpdateSelectedDeploymentDto,
   UserConfigDto,
@@ -22,6 +24,14 @@ import type {
 
 export interface UpdateInstalledDeploymentRequest {
   updateInstalledDto: UpdateInstalledDto;
+}
+
+export interface UpdateInstalledPromptRequest {
+  updateInstalledPromptDto: UpdateInstalledPromptDto;
+}
+
+export interface UpdateInstalledSkillRequest {
+  updateInstalledSkillDto: UpdateInstalledSkillDto;
 }
 
 export interface UpdateInstalledToolsetRequest {
@@ -119,6 +129,98 @@ export class UserConfigApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
     await this.updateInstalledDeploymentRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Add or remove a prompt from favorites
+   */
+  async updateInstalledPromptRaw(
+    requestParameters: UpdateInstalledPromptRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['updateInstalledPromptDto'] == null) {
+      throw new runtime.RequiredError(
+        'updateInstalledPromptDto',
+        'Required parameter "updateInstalledPromptDto" was null or undefined when calling updateInstalledPrompt().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/user-config/prompts`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PATCH',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['updateInstalledPromptDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Add or remove a prompt from favorites
+   */
+  async updateInstalledPrompt(
+    requestParameters: UpdateInstalledPromptRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.updateInstalledPromptRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Add or remove a skill from favorites
+   */
+  async updateInstalledSkillRaw(
+    requestParameters: UpdateInstalledSkillRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['updateInstalledSkillDto'] == null) {
+      throw new runtime.RequiredError(
+        'updateInstalledSkillDto',
+        'Required parameter "updateInstalledSkillDto" was null or undefined when calling updateInstalledSkill().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/user-config/skills`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PATCH',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['updateInstalledSkillDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Add or remove a skill from favorites
+   */
+  async updateInstalledSkill(
+    requestParameters: UpdateInstalledSkillRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.updateInstalledSkillRaw(requestParameters, initOverrides);
   }
 
   /**

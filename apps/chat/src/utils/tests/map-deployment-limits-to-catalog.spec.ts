@@ -18,7 +18,7 @@ const labels: Partial<Record<CatalogI18nKeys, string>> = {
 };
 
 const format = new Intl.NumberFormat(undefined, {
-  maximumFractionDigits: 6,
+  maximumFractionDigits: 2,
 }).format;
 
 const t = ((key: string, params?: Record<string, string>) => {
@@ -110,8 +110,8 @@ describe('mapDeploymentLimitsDtoToCatalogLimits', () => {
           label: 'Cost per day',
           used: 0.003852,
           total: 100,
-          valueLabel: '0.003852 / 100',
-          ariaLabel: 'Cost per day: 0.003852 of 100 used',
+          valueLabel: `${format(0.003852)} / 100`,
+          ariaLabel: `Cost per day: ${format(0.003852)} of 100 used`,
         },
         {
           label: 'Cost per week',

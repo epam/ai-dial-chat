@@ -5,7 +5,6 @@ import {
   type DialToolsetDto,
 } from '@epam/ai-dial-chat-api-client';
 import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import {
   createContext,
   ReactNode,
@@ -155,7 +154,7 @@ const resolveInitialSelection = (
 export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
-  const { showNotification } = useNotification();
+  const { showErrorNotification } = useNotification();
   const { selectedDeploymentId: userConfigSelectedId, setSelectedDeployment } =
     useUserConfig();
   const { config: appConfig } = useAppConfig();
@@ -329,13 +328,12 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       if (toolsetsRequestIdRef.current !== requestId) return;
       const { traceId } = await getApiErrorDetails(error);
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(DeploymentSelectorI18nKeys.RefetchToolsetsFailed),
         requestId: traceId,
       });
     }
-  }, [showNotification, t]);
+  }, [showErrorNotification, t]);
 
   const refetchDeployments = useCallback(
     async (refresh = true) => {
@@ -355,14 +353,13 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         if (deploymentsRequestIdRef.current !== requestId) return;
         const { traceId } = await getApiErrorDetails(error);
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           message: t(DeploymentSelectorI18nKeys.RefetchDeploymentsFailed),
           requestId: traceId,
         });
       }
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const mergeSharedItem = useCallback(

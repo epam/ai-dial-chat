@@ -1,6 +1,6 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { ColDef } from 'ag-grid-community';
 import { CatalogItem } from '../../models/catalog-item';
-import { CatalogEntityType } from '../../types/entity-type';
 import styles from './ListView.module.scss';
 import { EntityTypeCellRenderer } from './Renders/EntityTypeCellRenderer';
 import { FolderCellRenderer } from './Renders/FolderCellRenderer';

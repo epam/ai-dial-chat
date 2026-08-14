@@ -11,7 +11,7 @@ export interface CatalogColors {
 
 /** Typography overrides for the Catalog component. */
 export interface CatalogTypography {
-  /** A single utility class (e.g. `'dial-h2-text'`) applied to the page heading. */
+  /** A single utility class applied to the page heading. Defaults to `'dial-display2-text'`. */
   pageHeadingFontClassName?: string;
   /** Typography class applied to tab text. Defaults to `'dial-body-text'`. */
   tabClassName?: string;

@@ -1,4 +1,6 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
+import type { FeatureFlagsService } from '../../../app-config/feature-flags/feature-flags.service';
+import { FeatureKey } from '../../../app-config/feature-flags/feature-key.enum';
 import type { DeploymentsService } from '../../../deployments/deployments.service';
 import type { DialClientService } from '../../../dial/dial-client.service';
 import {
@@ -10,6 +12,7 @@ import {
   StatusEvent,
 } from '../../dto/conversation-message.dto';
 import { CompletionMode } from '../../dto/send-completion.dto';
+import { generationRequestsTotal } from '../../generation/generation-metrics';
 import { ResponsesAdapter } from '../../generation/responses.adapter';
 import { ConversationPersistenceService } from '../../persistence/conversation-persistence.service';
 import { ConversationStreamingService } from '../conversation-streaming.service';
@@ -70,6 +73,7 @@ describe('ConversationStreamingService', () => {
   let mockDialClient: DialClientService;
   let mockGenerationService: ConversationGenerationService;
   let mockDeploymentsService: DeploymentsService;
+  let mockFeatureFlagsService: FeatureFlagsService;
   let mockConversationNamingService: {
     maybeRenameAfterFirstReply: ReturnType<typeof vi.fn>;
   };
@@ -153,6 +157,15 @@ describe('ConversationStreamingService', () => {
         modelDetails: { features: { chatCompletion: true } },
       }),
     } as unknown as DeploymentsService;
+    /*
+     * Defaults to enabled so existing Responses-selection tests (which cover
+     * resolveGenerationApi's own capability logic, not the feature flag)
+     * don't need to know about the flag. Tests covering the flag itself
+     * override this per-case.
+     */
+    mockFeatureFlagsService = {
+      isEnabled: vi.fn().mockResolvedValue(true),
+    } as unknown as FeatureFlagsService;
     persistenceService = new ConversationPersistenceService(
       mockDialClient,
       mockConversationNamingService as never,
@@ -163,6 +176,7 @@ describe('ConversationStreamingService', () => {
       persistenceService,
       mockDeploymentsService,
       new ResponsesAdapter(mockDialClient),
+      mockFeatureFlagsService,
     );
     vi.spyOn(
       service['dialClient'].client,
@@ -338,6 +352,242 @@ describe('ConversationStreamingService', () => {
       expect(sendSpy).not.toHaveBeenCalled();
       expect(res.getWritten()).toContain('Hello');
       expect(res.getWritten()).toContain('data: [DONE]');
+    });
+
+    it('resolves the feature flag via FeatureFlagsService.isEnabled with the fixed server context', async () => {
+      vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
+        id: 'gpt-4o',
+        type: 'model',
+        modelDetails: { features: { responsesApi: true } },
+      });
+
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      await callStream(conversation, 'Next message', 'gpt-4o');
+
+      expect(mockFeatureFlagsService.isEnabled).toHaveBeenCalledWith(
+        FeatureKey.ResponsesApiEnabled,
+        { appId: 'chat-api' },
+      );
+    });
+
+    it('falls back to Chat Completions when the feature flag is disabled, even though the deployment supports Responses', async () => {
+      vi.mocked(mockFeatureFlagsService.isEnabled).mockResolvedValue(false);
+      vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
+        id: 'gpt-4o',
+        type: 'model',
+        modelDetails: { features: { responsesApi: true, temperature: true } },
+      });
+      const createResponseSpy = vi.spyOn(
+        mockDialClient.client,
+        'createResponse',
+      );
+
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      const { sendSpy } = await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+      );
+
+      expect(sendSpy).toHaveBeenCalledOnce();
+      expect(createResponseSpy).not.toHaveBeenCalled();
+    });
+
+    it('uses Chat Completions when the flag is enabled but the deployment does not support Responses', async () => {
+      vi.mocked(mockFeatureFlagsService.isEnabled).mockResolvedValue(true);
+      vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
+        id: 'gpt-4o',
+        type: 'model',
+        modelDetails: { features: { responsesApi: false } },
+      });
+      const createResponseSpy = vi.spyOn(
+        mockDialClient.client,
+        'createResponse',
+      );
+
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      const { sendSpy } = await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+      );
+
+      expect(sendSpy).toHaveBeenCalledOnce();
+      expect(createResponseSpy).not.toHaveBeenCalled();
+    });
+
+    it('falls back to Chat Completions when feature-flag resolution has already failed closed', async () => {
+      /*
+       * FeatureFlagsService.isEnabled never rejects — it catches internally
+       * and resolves `false` on any resolution failure (see
+       * feature-flags.service.ts). ConversationStreamingService relies on
+       * that contract rather than adding its own catch, so this test mocks
+       * the already-fail-closed outcome rather than a rejected promise.
+       */
+      vi.mocked(mockFeatureFlagsService.isEnabled).mockResolvedValue(false);
+      vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
+        id: 'gpt-4o',
+        type: 'model',
+        modelDetails: { features: { responsesApi: true } },
+      });
+      const createResponseSpy = vi.spyOn(
+        mockDialClient.client,
+        'createResponse',
+      );
+
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      const { sendSpy, res } = await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+      );
+
+      expect(sendSpy).toHaveBeenCalledOnce();
+      expect(createResponseSpy).not.toHaveBeenCalled();
+      expect(mockGenerationService.error).not.toHaveBeenCalled();
+      expect(res.getWritten()).not.toBe('');
+    });
+
+    it('still rejects a toolset target with 400 regardless of the feature flag state', async () => {
+      for (const flagEnabled of [true, false]) {
+        vi.mocked(mockFeatureFlagsService.isEnabled).mockResolvedValue(
+          flagEnabled,
+        );
+        vi.mocked(
+          mockDeploymentsService.getDeploymentDetails,
+        ).mockResolvedValue({
+          id: 'my-toolset',
+          type: 'toolset',
+        } as never);
+
+        const res = makeMockRes();
+        await expect(
+          runStreamCompletion(
+            'test-path',
+            'test-token',
+            'test-bucket',
+            'test-gen-id',
+            CompletionMode.Append,
+            'Hello',
+            undefined,
+            'my-toolset',
+            undefined,
+            'test-session-id',
+            res as never,
+          ),
+        ).rejects.toThrow(/toolset and cannot be used for generation/);
+      }
+    });
+
+    it('records generation.requests with generation.api=chat_completions when the flag suppresses an otherwise-eligible Responses selection', async () => {
+      vi.mocked(mockFeatureFlagsService.isEnabled).mockResolvedValue(false);
+      vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
+        id: 'gpt-4o',
+        type: 'model',
+        modelDetails: { features: { responsesApi: true } },
+      });
+      const addSpy = vi.spyOn(generationRequestsTotal, 'add');
+
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      await callStream(conversation, 'Next message', 'gpt-4o');
+
+      expect(addSpy).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ 'generation.api': 'chat_completions' }),
+      );
+    });
+
+    it('does not retry through Chat Completions when a Responses request fails after it has started (flag enabled)', async () => {
+      vi.mocked(mockFeatureFlagsService.isEnabled).mockResolvedValue(true);
+      vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
+        id: 'gpt-4o',
+        type: 'model',
+        modelDetails: { features: { responsesApi: true } },
+      });
+      const createResponseSpy = vi
+        .spyOn(mockDialClient.client, 'createResponse')
+        .mockResolvedValue({
+          response: new Response(null, {
+            status: 502,
+            statusText: 'Bad Gateway',
+          }),
+        } as never);
+
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      const { sendSpy } = await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+      );
+
+      expect(createResponseSpy).toHaveBeenCalledOnce();
+      expect(sendSpy).not.toHaveBeenCalled();
     });
 
     it('excludes ConversationMessageRole.Status messages from the DIAL Core payload', async () => {

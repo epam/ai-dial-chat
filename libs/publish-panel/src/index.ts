@@ -41,6 +41,7 @@ export type {
 
 export { PublishAccessRules } from './components/PublishAccessRules/PublishAccessRules';
 export type {
+  PublishAccessRulesColors,
   PublishAccessRulesLabels,
   PublishAccessRulesProps,
 } from './components/PublishAccessRules/PublishAccessRules';

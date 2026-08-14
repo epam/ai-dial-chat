@@ -1,4 +1,10 @@
-## ADDED Requirements
+# error-boundary Specification
+
+## Purpose
+
+The React error boundary: its accessible fallback, recovery paths, placement in the application tree, and what it must never disclose.
+
+## Requirements
 
 ### Requirement: ErrorBoundary catches descendant render and lifecycle errors
 The root and route wrappers SHALL use `react-error-boundary` to catch descendant errors thrown during render, construction, or React lifecycle methods.
@@ -181,7 +187,7 @@ Development context (not applicable to production UI):
 ---
 
 ### Requirement: Telemetry and observability
-The `ErrorBoundary` relies exclusively on the existing `console.error` convention for error logging. No external monitoring SDK is introduced.
+The `ErrorBoundary` SHALL rely exclusively on the existing `console.error` convention for error logging, and SHALL NOT introduce an external monitoring SDK.
 
 **Logging format (root `onError` behavior):**
 ```ts

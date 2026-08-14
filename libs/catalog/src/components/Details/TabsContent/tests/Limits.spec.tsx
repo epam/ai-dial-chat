@@ -4,17 +4,17 @@ import { LimitsTab } from '../Limits';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialProgressBarSize: { Medium: 'md' },
-  DialProgressBar: ({
+  ElementSize: { Small: 'small', Standard: 'standard' },
+  ProgressBar: ({
     value,
     max,
     size,
-    ariaLabel,
+    'aria-label': ariaLabel,
   }: {
     value: number;
     max?: number;
     size?: string;
-    ariaLabel?: string;
+    'aria-label'?: string;
   }) => (
     <div
       role="progressbar"
@@ -52,7 +52,7 @@ describe('LimitsTab', () => {
     });
     expect(progress.getAttribute('aria-valuenow')).toBe('12');
     expect(progress.getAttribute('aria-valuemax')).toBe('20');
-    expect(progress.getAttribute('data-size')).toBe('md');
+    expect(progress.getAttribute('data-size')).toBe('standard');
   });
 
   it('renders nothing without limit rows', () => {

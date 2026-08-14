@@ -85,7 +85,7 @@ describe('Header', () => {
     const header = container.querySelector('header');
     expect(header?.classList.contains('relative')).toBe(true);
     expect(header?.classList.contains('z-30')).toBe(true);
-    expect(header?.classList.contains('min-h-[64px]')).toBe(true);
+    expect(header?.classList.contains('min-h-[48px]')).toBe(true);
     expect(header?.classList.contains('w-full')).toBe(true);
   });
 

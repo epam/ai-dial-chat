@@ -1,5 +1,9 @@
 # Spec: File Manager Folder Creation
 
+## Purpose
+
+Creating folders as zero-byte markers, with inline name validation and the cache update that follows.
+
 ## State ownership
 
 `useDialFileManager` (`apps/chat/src/hooks/files/useDialFileManager.ts`) owns folder-creation state.
@@ -176,32 +180,6 @@ Conflict check in `onCreateFolderValidate` is against the **cached** `items` —
 
 ---
 
-### Requirement: Folder creation is rejected for invalid names independent of the host UI
-
-`onCreateFolder` (`apps/chat/src/hooks/files/useDialFileMutations.ts`) SHALL independently call `onCreateFolderValidate` with the resolved folder name and parent folder before calling the `POST /api/v1/files/folders` BFF endpoint, and SHALL NOT call it when `onCreateFolderValidate` returns a non-null error — regardless of whether the host `DialFileManager` component already blocked confirmation on that same validation result.
-
-#### Scenario: Enter confirms an invalid folder name
-
-- **WHEN** a user is creating a new folder, types a name that fails validation (empty, contains a forbidden symbol such as `/` or `:`, starts with `.`, equals the reserved marker name, or exceeds 255 characters) so the inline error is shown, and presses Enter to confirm
-- **THEN** `onCreateFolder` does not call the `createFolder` BFF endpoint and no folder is created
-
-#### Scenario: Clicking the folder row confirms an invalid folder name
-
-- **WHEN** a user is creating a new folder with an invalid name (as above) and confirms by clicking the folder row instead of pressing Enter
-- **THEN** `onCreateFolder` does not call the `createFolder` BFF endpoint and no folder is created
-
-#### Scenario: Valid folder name is created normally
-
-- **WHEN** a user confirms a folder name that passes `onCreateFolderValidate`
-- **THEN** `onCreateFolder` calls the `createFolder` BFF endpoint exactly as before this change, and the folder is created
-
-#### Scenario: Parent folder resolution when creating outside the currently browsed folder
-
-- **WHEN** a folder is created from a destination-folder popup browsing a different folder than the outer grid, so no cached sibling list is available for the new folder's actual parent
-- **THEN** `onCreateFolder` still runs the empty-name, forbidden-symbol, leading-dot, reserved-name, and length checks against the resolved name
-- **AND** the client-side sibling-duplicate check is best-effort only for this case; a genuine conflict is still caught by the BFF's `409` response, exactly as already specified for the existing conflict-check scenario
-
----
 
 ## Cache update after creation
 
@@ -372,3 +350,52 @@ No new metrics or analytics events beyond `MetricsInterceptor` (request duration
 - **WHEN** the folder appears in the grid
 - **THEN** the folder row is not selectable (existing `isRowSelectable` checks `nodeType === DialFileNodeType.ITEM`)
 - **AND** the "Attach" button remains disabled while no files are selected
+
+## Requirements
+### Requirement: Folder creation is rejected for invalid names independent of the host UI
+
+`onCreateFolder` (`apps/chat/src/hooks/files/useDialFileMutations.ts`) SHALL independently call `onCreateFolderValidate` with the resolved folder name and parent folder before calling the `POST /api/v1/files/folders` BFF endpoint, and SHALL NOT call it when `onCreateFolderValidate` returns a non-null error — regardless of whether the host `DialFileManager` component already blocked confirmation on that same validation result.
+
+#### Scenario: Enter confirms an invalid folder name
+
+- **WHEN** a user is creating a new folder, types a name that fails validation (empty, contains a forbidden symbol such as `/` or `:`, starts with `.`, equals the reserved marker name, or exceeds 255 characters) so the inline error is shown, and presses Enter to confirm
+- **THEN** `onCreateFolder` does not call the `createFolder` BFF endpoint and no folder is created
+
+#### Scenario: Clicking the folder row confirms an invalid folder name
+
+- **WHEN** a user is creating a new folder with an invalid name (as above) and confirms by clicking the folder row instead of pressing Enter
+- **THEN** `onCreateFolder` does not call the `createFolder` BFF endpoint and no folder is created
+
+#### Scenario: Valid folder name is created normally
+
+- **WHEN** a user confirms a folder name that passes `onCreateFolderValidate`
+- **THEN** `onCreateFolder` calls the `createFolder` BFF endpoint exactly as before this change, and the folder is created
+
+#### Scenario: Parent folder resolution when creating outside the currently browsed folder
+
+- **WHEN** a folder is created from a destination-folder popup browsing a different folder than the outer grid, so no cached sibling list is available for the new folder's actual parent
+- **THEN** `onCreateFolder` still runs the empty-name, forbidden-symbol, leading-dot, reserved-name, and length checks against the resolved name
+- **AND** the client-side sibling-duplicate check is best-effort only for this case; a genuine conflict is still caught by the BFF's `409` response, exactly as already specified for the existing conflict-check scenario
+---
+### Requirement: A created folder confirms itself
+
+`onCreateFolder` (`apps/chat/src/hooks/files/useDialFileMutations.ts`) SHALL raise a success notification after the `POST /api/v1/files/folders` call resolves and the created folder has been merged into the listing cache, through `useOperationNotification` (see `entity-operation-notifications`) with `NotifiableEntity.Folder` + `EntityOperation.Created` and `name` = the created folder's resolved name.
+
+Today only the failure path notifies (`dialFileManager.folderCreateError`), so a folder created into a collapsed or non-visible parent — from a destination-folder popup, for example — produces no feedback at all.
+
+The notification SHALL NOT be raised when validation rejects the name locally or when the BFF returns `409`; those paths keep their existing inline error and error-toast behaviour.
+
+#### Scenario: Folder created from the grid confirms
+
+- **WHEN** a user confirms a valid new folder name and the create request succeeds
+- **THEN** a success notification titled `"Folder created successfully"` is shown, naming the folder
+
+#### Scenario: Folder created from a destination-folder popup confirms
+
+- **WHEN** a folder is created from a destination-folder popup browsing a different folder than the outer grid, and the create request succeeds
+- **THEN** the same success notification is shown, even though the new folder is not visible in the outer grid
+
+#### Scenario: Rejected name raises no success notification
+
+- **WHEN** the name fails client-side validation, or the BFF responds `409`
+- **THEN** no success notification is raised and the existing inline error / error toast behaviour is unchanged

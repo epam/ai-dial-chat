@@ -2,6 +2,7 @@ import type { CatalogItem } from '@epam/ai-dial-catalog';
 import { lazy, memo, Suspense, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   DeploymentSelectorI18nKeys,
   FavoritesI18nKeys,
@@ -33,6 +34,7 @@ const DeploymentSelectorOverlay: FC<Props> = ({
 
   const labels: DeploymentSelectorLabels = {
     searchPlaceholder: t(DeploymentSelectorI18nKeys.SearchPlaceholder),
+    clearSearchLabel: t(BasicI18nKeys.ClearSearch),
     favoritesLabel: t(FavoritesI18nKeys.FavoritesLabel),
     emptyHint: t(DeploymentSelectorI18nKeys.EmptyHint),
     browseCatalogLabel: t(ButtonsI18nKeys.Browse),

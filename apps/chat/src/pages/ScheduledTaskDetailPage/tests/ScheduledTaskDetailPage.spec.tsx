@@ -9,6 +9,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotFoundI18nKeys } from '../../../constants/translation-keys';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import ScheduledTaskDetailPage from '../ScheduledTaskDetailPage';
 
 const useFeatureFlagMock = vi.fn();
@@ -39,7 +40,7 @@ vi.mock('../../../server-api/scheduled-tasks.api', () => ({
 
 const showNotificationMock = vi.fn();
 vi.mock('../../../context/NotificationContext', () => ({
-  useNotification: () => ({ showNotification: showNotificationMock }),
+  useNotification: () => createNotificationContextValue(showNotificationMock),
 }));
 
 const getApiErrorDetailsMock = vi.fn();

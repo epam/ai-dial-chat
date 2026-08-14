@@ -1,8 +1,8 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
-import { CatalogEntityType } from '../../../types/entity-type';
 import {
   CredentialStatus,
   ToolsetAuthenticationType,
@@ -36,6 +36,36 @@ describe('Card — selected state', () => {
     const card = screen.getByRole('article', { hidden: true });
     expect(card.className).toContain('selectedCard');
     expect(card.querySelector('svg')).toBeTruthy();
+  });
+});
+
+describe('Card — long version', () => {
+  it('caps the version at 30% of the row so it cannot overlap the name', () => {
+    render(
+      <Card item={makeItem({ version: 'With Google Search Grounding' })} />,
+    );
+
+    const version = screen.getByText('With Google Search Grounding');
+    expect(version.className).toContain('max-w-[30%]');
+    expect(version.className).toContain('shrink-0');
+  });
+
+  it('lets the name truncate instead of being pushed out', () => {
+    render(<Card item={makeItem()} />);
+
+    const name = screen.getByText('Claude');
+    expect(name.className).toContain('min-w-0');
+    expect(name.className).toContain('truncate');
+  });
+});
+
+describe('Card — favorite visibility', () => {
+  it('renders the star button for every entity type, prompts included', () => {
+    render(<Card item={makeItem({ type: CatalogEntityType.Prompt })} />);
+
+    expect(
+      screen.getByRole('button', { name: 'Add to favorites' }),
+    ).toBeTruthy();
   });
 });
 

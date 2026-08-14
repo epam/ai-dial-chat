@@ -3,7 +3,6 @@ import {
   DeploymentCreationFieldErrorCode,
   validateDeploymentCreationFields,
 } from '@epam/ai-dial-deployment-creation-form';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +21,7 @@ import {
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useOperationNotification } from '../../hooks/useOperationNotification';
 import type {
   ToolsetAuthFormData,
   ToolsetFormData,
@@ -35,6 +35,10 @@ import {
   loginToolset,
   updateToolset,
 } from '../../server-api/toolsets';
+import {
+  EntityOperation,
+  NotifiableEntity,
+} from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import { PRIMARY_LOCALE, resolveLocalizedText } from '../../utils/locale';
 import {
@@ -81,7 +85,8 @@ const getDirtyFieldsFromPatch = (patch: object): ToolsetDirtyFields => {
 
 const ToolsetEditor: FC = () => {
   const { t } = useTranslation();
-  const { showNotification } = useNotification();
+  const { showErrorNotification } = useNotification();
+  const { notifyOperationSuccess } = useOperationNotification();
   const { refetchToolsets } = useDeployments();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -250,8 +255,7 @@ const ToolsetEditor: FC = () => {
     } catch (err) {
       const { traceId } = await getApiErrorDetails(err);
       const upstreamMessage = await extractToolsetApiErrorMessage(err);
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message:
           upstreamMessage ??
           t(
@@ -265,7 +269,7 @@ const ToolsetEditor: FC = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [form, persistedToolsetId, t, showNotification, refetchToolsets]);
+  }, [form, persistedToolsetId, t, showErrorNotification, refetchToolsets]);
 
   const handleNext = useCallback(async () => {
     if (!form) return;
@@ -413,13 +417,24 @@ const ToolsetEditor: FC = () => {
         ? await updateToolset(persistedToolsetId, body)
         : await createToolset(body);
       await refetchToolsets();
+      /*
+       * Reported before the post-save auth attempt: the toolset is persisted at this
+       * point, so a failing connection must not read as a failed save. The operation
+       * follows `isEditMode`, not the request kind — a toolset authored in this
+       * session is saved through `updateToolset` once its draft exists, but the user
+       * created it.
+       */
+      notifyOperationSuccess(
+        NotifiableEntity.Toolset,
+        isEditMode ? EntityOperation.Edited : EntityOperation.Created,
+        { name: form.name.trim() },
+      );
       try {
         await runPostSaveAuth(result.id, form);
         navigate(returnUrl);
       } catch (error) {
         const { traceId } = await getApiErrorDetails(error);
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
           requestId: traceId,
         });
@@ -427,8 +442,7 @@ const ToolsetEditor: FC = () => {
     } catch (err) {
       const { traceId } = await getApiErrorDetails(err);
       const upstreamMessage = await extractToolsetApiErrorMessage(err);
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message:
           upstreamMessage ??
           t(
@@ -445,10 +459,12 @@ const ToolsetEditor: FC = () => {
     form,
     validate,
     persistedToolsetId,
+    isEditMode,
     navigate,
     returnUrl,
     t,
-    showNotification,
+    showErrorNotification,
+    notifyOperationSuccess,
     setEditorStep,
     runPostSaveAuth,
     refetchToolsets,

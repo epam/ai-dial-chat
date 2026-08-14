@@ -19,6 +19,8 @@ export interface ItemDetailsTexts {
   manageActionLabel?: string;
   /** "About" tab label. Default: `'About'`. */
   tabAboutLabel?: string;
+  /** Content tab label, shown for items carrying a text body. Default: `'Details'`. */
+  tabContentLabel?: string;
   /** "Overview" tab label. Default: `'Overview'`. */
   tabOverviewLabel?: string;
   /** "Pricing" tab label. Default: `'Pricing'`. */
@@ -53,6 +55,8 @@ export interface ItemDetailsTexts {
   hasPrimaryAction?: boolean;
   /** "Edit" action button label. Default: `'Edit'`. */
   editActionLabel?: string;
+  /** "Download" action button label. Default: `'Download'`. */
+  downloadActionLabel?: string;
   /** "Resource" section heading in the API tab. Default: `'Resource'`. */
   apiResourceSectionLabel?: string;
   /** "Code snippet" section heading in the API tab. Default: `'Code snippet'`. */
@@ -180,6 +184,8 @@ export interface ItemDetailsTexts {
 export interface ItemDetailsTypography {
   /** Typography class for the entity name. Default: `'dial-body-semi-text'`. */
   nameClassName?: string;
+  /** Typography class for a sub-view header title (publish, share, credentials). Default: `'dial-body-semi-text'`. */
+  subViewTitleClassName?: string;
   /** Typography class for the version string. Default: `'dial-tiny-text'`. */
   versionClassName?: string;
   /** Typography class for section headings inside the description content. Default: `'dial-small-semi-text'`. */
@@ -234,6 +240,10 @@ export interface ItemDetailsColors {
   versionTagText?: string;
   /** Credentials signed-in/signed-out status label color. Fallback: `--text-primary`. */
   credentialsStatusText?: string;
+  /** Body text color of the Content tab. Fallback: `--text-primary`. */
+  contentText?: string;
+  /** Text color of a `{{placeholder}}` token in the Content tab's body. Fallback: `--text-prompt-parameter`. */
+  variableText?: string;
   /** Heading color of the API section. Fallback: `--text-secondary`. */
   apiHeadingText?: string;
   /** Divider color between tool entries. Fallback: `--stroke-tertiary`. */
@@ -289,6 +299,12 @@ export interface DetailsPanelProps {
   onClose: () => void;
   /** Called when the star/favorite button is toggled. */
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
+  /**
+   * Additional caller-supplied rule for whether the "Remove from My List"
+   * action is shown, combined (AND) with the built-in
+   * `sharedWithMe`/`isMyApp` rule. Defaults to `true` when absent.
+   */
+  isUnshareVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Use in chat" button is clicked. */
   onUseInChat?: (item: CatalogItem) => void;
   /** Controls whether the primary action button is shown for the item. */
@@ -353,6 +369,17 @@ export interface DetailsPanelProps {
   /** Called when the "Edit" button is clicked. Shown only when the item's `isEditable` is `true`. */
   onEdit?: (item: CatalogItem) => void;
   /**
+   * Called when the "Download" action is clicked, with no confirmation step.
+   * The panel does not await the result or show a pending state, so the host
+   * owns any progress and failure feedback.
+   */
+  onDownload?: (item: CatalogItem) => Promise<void> | void;
+  /**
+   * Narrows which items offer the "Download" action. Defaults to `true`
+   * (visible for every item) whenever `onDownload` is supplied.
+   */
+  isDownloadVisible?: (item: CatalogItem) => boolean;
+  /**
    * Called immediately when the "Delete" button is clicked, with no
    * confirmation step. Shown only when the item's `isMyApp` is `true` and
    * its `type` is `Application` or `Toolset`. May return a promise; the
@@ -374,6 +401,20 @@ export interface DetailsPanelProps {
    * catalog, so the panel returns to its details content on success.
    */
   onRevokeShare?: (item: CatalogItem) => Promise<void> | void;
+  /**
+   * Resolves how many users currently hold shared access to an owned item.
+   * Called when the owner opens the Manage menu, so "Revoke access" is gated
+   * and labelled on a count that is never stale. `0` hides the action;
+   * `undefined` (or a rejection) leaves it reachable without a count. Omit to
+   * offer the action for every owned item.
+   */
+  onFetchRecipientsCount?: (item: CatalogItem) => Promise<number | undefined>;
+  /**
+   * Additional caller-supplied rule for whether "Revoke access" is shown,
+   * combined (AND) with the built-in `isMyApp` rule and the recipient count.
+   * Defaults to `true` when absent.
+   */
+  isRevokeShareVisible?: (item: CatalogItem) => boolean;
   /**
    * Called when the credentials login form is submitted. `level` identifies
    * which credentials slot the call applies to (`USER` for the current

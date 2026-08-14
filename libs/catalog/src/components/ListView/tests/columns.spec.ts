@@ -1,5 +1,5 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
-import { CatalogEntityType } from '../../../types/entity-type';
 import { CATALOG_COLUMNS } from '../columns';
 
 describe('CATALOG_COLUMNS', () => {
@@ -32,6 +32,14 @@ describe('CATALOG_COLUMNS', () => {
     expect(favColumn?.width).toBe(72);
     expect(favColumn?.resizable).toBe(false);
     expect(favColumn?.headerClass).toBeTruthy();
+  });
+
+  it('shows the Folder column for prompts and hides it only for models', () => {
+    const folderOf = (type: CatalogEntityType) =>
+      CATALOG_COLUMNS(type).find((c) => c.field === 'folder');
+
+    expect(folderOf(CatalogEntityType.Prompt)?.hide).toBe(false);
+    expect(folderOf(CatalogEntityType.Model)?.hide).toBe(true);
   });
 
   it('disables sorting on Type and Tags, but not on Name and Folder', () => {

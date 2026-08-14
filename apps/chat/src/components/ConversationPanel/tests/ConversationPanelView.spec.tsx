@@ -15,11 +15,13 @@ import { cloneElement, ReactElement, ReactNode, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConversations } from '../../../context/ConversationsContext';
 import { useNotification } from '../../../context/NotificationContext';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { useConversationExport } from '../../../hooks/useConversationExport';
 import { useConversationImport } from '../../../hooks/useConversationImport';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import {
   discardSharedCatalogItem,
+  getShareRecipientsCount,
   revokeSharedAccess,
 } from '../../../server-api/share.api';
 import {
@@ -65,6 +67,7 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
             <button
               id={`action-trigger-${item.id}`}
               aria-label={`action trigger ${item.id}`}
+              onClick={(event) => onActionMenuOpen?.(item, event.currentTarget)}
             />
             {item.isUnread && (
               <span aria-label={`unread indicator ${item.id}`} />
@@ -418,11 +421,9 @@ beforeEach(() => {
   vi.mocked(useUiFeature).mockReturnValue(true);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vi.mocked(useConversations).mockReturnValue(baseContextValue as any);
-  vi.mocked(useNotification).mockReturnValue({
-    notifications: [],
-    showNotification: mockShowNotification,
-    dismissNotification: vi.fn(),
-  });
+  vi.mocked(useNotification).mockReturnValue(
+    createNotificationContextValue(mockShowNotification),
+  );
   vi.mocked(useConversationExport).mockReturnValue({
     jobs: [],
     exportSingle: mockExportSingle,
@@ -934,6 +935,30 @@ describe('ConversationPanelView — single-conversation delete navigation', () =
 describe('ConversationPanelView — rename', () => {
   const RENAME_LABEL = 'buttons.rename';
 
+  it('confirms a duplicated conversation and navigates to the copy', async () => {
+    const mockDuplicateConversation = vi
+      .fn()
+      .mockResolvedValue('conversations/bucket/conv1-copy');
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      duplicateConversation: mockDuplicateConversation,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: 'buttons.duplicate' }),
+      );
+    });
+
+    expect(mockDuplicateConversation).toHaveBeenCalled();
+    expect(mockShowNotification).toHaveBeenCalledWith({
+      variant: 'success',
+      title: 'entityNotifications.conversation.duplicatedTitle',
+      message: 'entityNotifications.conversation.duplicated',
+    });
+  });
+
   it('clicking rename opens the popup with the current title', () => {
     render(<ConversationPanelView {...defaultProps} />);
 
@@ -967,6 +992,33 @@ describe('ConversationPanelView — rename', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
     });
+    expect(mockShowNotification).toHaveBeenCalledWith({
+      variant: 'success',
+      title: 'entityNotifications.conversation.renamedTitle',
+      message: 'entityNotifications.conversation.renamed',
+    });
+  });
+
+  it('a failed rename keeps the popup open and raises no success notification', async () => {
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      renameConversation: vi.fn().mockRejectedValue(new Error('boom')),
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(screen.getByRole('button', { name: RENAME_LABEL }));
+
+    const dialog = screen.getByRole('dialog', {
+      name: 'rename conversation',
+    });
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    });
+
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(mockShowNotification).not.toHaveBeenCalledWith(
+      expect.objectContaining({ variant: 'success' }),
+    );
   });
 });
 
@@ -1664,25 +1716,72 @@ describe('ConversationPanelView — revoke access', () => {
 
   beforeEach(() => {
     vi.mocked(revokeSharedAccess).mockResolvedValue({ success: true });
+    vi.mocked(getShareRecipientsCount).mockResolvedValue({
+      itemId: 'conv1',
+      recipientsCount: 1,
+    });
   });
 
+  /*
+   * The count that gates "Revoke access" is fetched when the row's action menu
+   * opens, so every test that expects the entry has to open the menu first.
+   */
+  const openRowMenu = async (id = 'conv1') => {
+    fireEvent.click(
+      screen.getByRole('button', { name: `action trigger ${id}` }),
+    );
+    await waitFor(() => expect(getShareRecipientsCount).toHaveBeenCalled());
+  };
+
+  /* The default lookup resolves one recipient, so the menu entry carries the
+   * counted label; the confirmation's own button keeps the plain one. */
   const openRevokeConfirmation = () => {
-    fireEvent.click(screen.getByRole('button', { name: REVOKE_BUTTON }));
+    fireEvent.click(
+      screen.getByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
+    );
     return screen.getByRole('dialog');
   };
 
-  it('owned row menu includes Revoke access', () => {
+  it('owned row menu includes Revoke access once the recipient count resolves', async () => {
     render(<ConversationPanelView {...defaultProps} />);
-    expect(screen.getByRole('button', { name: REVOKE_BUTTON })).toBeTruthy();
+    await openRowMenu();
+
+    expect(getShareRecipientsCount).toHaveBeenCalledWith('conv1');
+    expect(
+      screen.getByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
+    ).toBeTruthy();
   });
 
-  it('shared-with-me row menu does not include Revoke access', () => {
+  it('does not request the recipient count until the row menu opens', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+
+    expect(getShareRecipientsCount).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: REVOKE_BUTTON })).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
+    ).toBeNull();
+  });
+
+  it('requests the recipient count once across repeated menu opens', async () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
+    await openRowMenu();
+
+    expect(getShareRecipientsCount).toHaveBeenCalledOnce();
+  });
+
+  it('shared-with-me row menu does not include Revoke access', async () => {
     vi.mocked(useConversations).mockReturnValue({
       ...baseContextValue,
       conversations: [sharedWithMeConversation],
     } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(
+      screen.getByRole('button', { name: 'action trigger conv1' }),
+    );
+
+    expect(getShareRecipientsCount).not.toHaveBeenCalled();
     expect(screen.queryByRole('button', { name: REVOKE_BUTTON })).toBeNull();
     expect(screen.getByRole('button', { name: UNSHARE_BUTTON })).toBeTruthy();
   });
@@ -1700,37 +1799,56 @@ describe('ConversationPanelView — revoke access', () => {
     } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(
+      screen.getByRole('button', { name: 'action trigger conv1' }),
+    );
+
     expect(screen.queryByRole('button', { name: REVOKE_BUTTON })).toBeNull();
   });
 
-  it('hides Revoke access for an owned conversation nobody currently holds access to', () => {
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [
-        { ...baseContextValue.conversations[0], recipientsCount: 0 },
-      ],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+  it('hides Revoke access for an owned conversation nobody currently holds access to', async () => {
+    vi.mocked(getShareRecipientsCount).mockResolvedValue({
+      itemId: 'conv1',
+      recipientsCount: 0,
+    });
 
     render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
+
     expect(screen.queryByRole('button', { name: REVOKE_BUTTON })).toBeNull();
-  });
-
-  it('shows the recipient count in the Revoke access label when it is known', () => {
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [
-        { ...baseContextValue.conversations[0], recipientsCount: 2 },
-      ],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(<ConversationPanelView {...defaultProps} />);
     expect(
-      screen.getByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
+      screen.queryByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
+    ).toBeNull();
+  });
+
+  it('shows the recipient count in the Revoke access label when it is known', async () => {
+    vi.mocked(getShareRecipientsCount).mockResolvedValue({
+      itemId: 'conv1',
+      recipientsCount: 2,
+    });
+
+    render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
+
+    expect(
+      await screen.findByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
     ).toBeTruthy();
   });
 
-  it('clicking Revoke access opens confirmation without calling the revoke API', () => {
+  it('keeps Revoke access reachable without a count when the lookup fails', async () => {
+    vi.mocked(getShareRecipientsCount).mockRejectedValue(new Error('503'));
+
     render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
+
+    expect(
+      await screen.findByRole('button', { name: REVOKE_BUTTON }),
+    ).toBeTruthy();
+  });
+
+  it('clicking Revoke access opens confirmation without calling the revoke API', async () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
     const dialog = openRevokeConfirmation();
 
     expect(within(dialog).getByText(REVOKE_CONFIRM_TITLE)).toBeTruthy();
@@ -1746,6 +1864,7 @@ describe('ConversationPanelView — revoke access', () => {
     );
 
     render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
     const dialog = openRevokeConfirmation();
     const confirmButton = within(dialog).getByRole('button', {
       name: REVOKE_BUTTON,
@@ -1771,6 +1890,7 @@ describe('ConversationPanelView — revoke access', () => {
     } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
     const dialog = openRevokeConfirmation();
     await act(async () => {
       fireEvent.click(
@@ -1792,6 +1912,7 @@ describe('ConversationPanelView — revoke access', () => {
     } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
     const dialog = openRevokeConfirmation();
     await act(async () => {
       fireEvent.click(
@@ -1812,6 +1933,7 @@ describe('ConversationPanelView — revoke access', () => {
     } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
     const dialog = openRevokeConfirmation();
     await act(async () => {
       fireEvent.click(
@@ -1824,8 +1946,9 @@ describe('ConversationPanelView — revoke access', () => {
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
-  it('cancel closes the popup without calling the revoke API', () => {
+  it('cancel closes the popup without calling the revoke API', async () => {
     render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
     const dialog = openRevokeConfirmation();
     fireEvent.click(
       within(dialog).getByRole('button', { name: CANCEL_BUTTON }),
@@ -1835,10 +1958,11 @@ describe('ConversationPanelView — revoke access', () => {
     expect(revokeSharedAccess).not.toHaveBeenCalled();
   });
 
-  it('keeps the action and its confirmation reachable under dir="rtl"', () => {
+  it('keeps the action and its confirmation reachable under dir="rtl"', async () => {
     document.documentElement.dir = 'rtl';
     try {
       render(<ConversationPanelView {...defaultProps} />);
+      await openRowMenu();
       const dialog = openRevokeConfirmation();
       expect(within(dialog).getByText(REVOKE_CONFIRM_TITLE)).toBeTruthy();
       expect(

@@ -1,10 +1,10 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ICellRendererParams } from 'ag-grid-community';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../../models/catalog-item';
 import type { GridContext } from '../../../../models/grid-context';
-import { CatalogEntityType } from '../../../../types/entity-type';
 import { StarCellRenderer } from '../StarCellRenderer';
 
 const makeItem = (overrides: Partial<CatalogItem> = {}): CatalogItem => ({
@@ -32,6 +32,17 @@ describe('StarCellRenderer', () => {
       <StarCellRenderer {...makeParams(undefined)} />,
     );
     expect(container.firstChild).toBeNull();
+  });
+
+  it('renders the toggle for a prompt row like any other entity type', () => {
+    render(
+      <StarCellRenderer
+        {...makeParams(makeItem({ type: CatalogEntityType.Prompt }))}
+      />,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Toggle favorite' }),
+    ).toBeTruthy();
   });
 
   it('renders an accessible, labelled toggle reflecting the starred state', () => {
