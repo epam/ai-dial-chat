@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { strToU8, zipSync } from 'fflate';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -114,6 +120,28 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
 });
 
 const showNotification = vi.fn();
+
+const openUploadDialog = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.click(
+    screen.getAllByRole('button', { name: 'skillEditor.addUploadLabel' })[0],
+  );
+};
+
+const stageFile = (file: File) => {
+  /* The upload input is visually hidden and has no accessible role/label/text; no semantic query applies. */
+  // eslint-disable-next-line testing-library/no-node-access
+  const input = document.querySelector('input[type="file"]');
+  fireEvent.change(input as Element, { target: { files: [file] } });
+};
+
+const confirmUpload = async (user: ReturnType<typeof userEvent.setup>) => {
+  const button = () =>
+    screen.getByRole('button', {
+      name: 'buttons.add',
+    }) as HTMLButtonElement;
+  await waitFor(() => expect(button().disabled).toBe(false));
+  await user.click(button());
+};
 
 /*
  * The library renders the Cancel/Create pair twice (once in the desktop
@@ -389,37 +417,204 @@ describe('SkillEditor page', () => {
     expect((getCreateButton() as HTMLButtonElement).disabled).toBe(false);
   });
 
-  it('rejects a supporting file over the 1 MB limit with a toast notification and adds nothing', async () => {
+  it('shows an inline error and adds nothing for a supporting file over the 1 MB limit', async () => {
     render(<SkillEditor />);
     const oversizedFile = new File([new Uint8Array(1_048_577)], 'oversized.md');
-    /* The upload input is visually hidden and has no accessible role/label/text; no semantic query applies. */
-    // eslint-disable-next-line testing-library/no-node-access
-    const input = document.querySelector('input[type="file"]');
 
-    fireEvent.change(input as Element, { target: { files: [oversizedFile] } });
+    await openUploadDialog(user);
+    stageFile(oversizedFile);
 
-    await waitFor(() =>
-      expect(showNotification).toHaveBeenCalledWith(
-        expect.objectContaining({
-          variant: 'error',
-          message: 'skillEditor.error.fileTooLarge',
-        }),
-      ),
-    );
-    expect(screen.queryByText('skillEditor.error.fileTooLarge')).toBeNull();
-    expect(screen.queryByText('oversized.md')).toBeNull();
+    expect(
+      await screen.findByText('skillEditor.error.fileTooLarge'),
+    ).toBeTruthy();
+    expect(
+      (
+        screen.getByRole('button', {
+          name: 'buttons.add',
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
   });
 
   it('accepts a supporting file at exactly the 1 MB limit', async () => {
     render(<SkillEditor />);
     const file = new File([new Uint8Array(1_048_576)], 'fits.md');
-    /* The upload input is visually hidden and has no accessible role/label/text; no semantic query applies. */
-    // eslint-disable-next-line testing-library/no-node-access
-    const input = document.querySelector('input[type="file"]');
 
-    fireEvent.change(input as Element, { target: { files: [file] } });
+    await openUploadDialog(user);
+    stageFile(file);
+    await waitFor(() => expect(screen.getAllByText('fits.md')[0]).toBeTruthy());
+    await confirmUpload(user);
 
     await waitFor(() => expect(screen.getAllByText('fits.md')[0]).toBeTruthy());
+  });
+
+  it('a valid SKILL.md import populates the form when the form is clean', async () => {
+    render(<SkillEditor />);
+    const manifestFile = new File(
+      ['---\nname: good-morning\ndescription: A greeting skill\n---\n\nDo it.'],
+      'SKILL.md',
+    );
+
+    await openUploadDialog(user);
+    stageFile(manifestFile);
+    await waitFor(() =>
+      expect(screen.getAllByText('SKILL.md')[0]).toBeTruthy(),
+    );
+    await confirmUpload(user);
+
+    expect(
+      screen.queryByText('skillEditor.manifestImportConfirmTitle'),
+    ).toBeNull();
+    expect(await screen.findByDisplayValue('good-morning')).toBeTruthy();
+    expect(screen.getByDisplayValue('A greeting skill')).toBeTruthy();
+  });
+
+  it('asks for confirmation before importing SKILL.md over a dirty form', async () => {
+    render(<SkillEditor />);
+    await user.type(
+      screen.getByPlaceholderText('skillEditor.namePlaceholder'),
+      'my-draft',
+    );
+    const manifestFile = new File(
+      ['---\nname: good-morning\ndescription: A greeting skill\n---\n\nDo it.'],
+      'SKILL.md',
+    );
+
+    await openUploadDialog(user);
+    stageFile(manifestFile);
+    await waitFor(() =>
+      expect(screen.getAllByText('SKILL.md')[0]).toBeTruthy(),
+    );
+    await confirmUpload(user);
+
+    expect(
+      await screen.findByText('skillEditor.manifestImportConfirmTitle'),
+    ).toBeTruthy();
+    expect(screen.getByDisplayValue('my-draft')).toBeTruthy();
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'buttons.replace',
+      }),
+    );
+
+    expect(await screen.findByDisplayValue('good-morning')).toBeTruthy();
+  });
+
+  it('shows a dedicated message and keeps the batch staged when a manifest import is declined', async () => {
+    render(<SkillEditor />);
+    await user.type(
+      screen.getByPlaceholderText('skillEditor.namePlaceholder'),
+      'my-draft',
+    );
+    const manifestFile = new File(
+      ['---\nname: good-morning\ndescription: A greeting skill\n---\n\nDo it.'],
+      'SKILL.md',
+    );
+
+    await openUploadDialog(user);
+    stageFile(manifestFile);
+    await waitFor(() =>
+      expect(screen.getAllByText('SKILL.md')[0]).toBeTruthy(),
+    );
+    await confirmUpload(user);
+
+    const confirmationDialog = await screen.findByRole('dialog', {
+      name: 'skillEditor.manifestImportConfirmTitle',
+    });
+    await user.click(
+      within(confirmationDialog).getByRole('button', {
+        name: 'buttons.cancel',
+      }),
+    );
+
+    expect(
+      await screen.findByText('skillEditor.error.manifestImportDeclined'),
+    ).toBeTruthy();
+    expect(screen.getByDisplayValue('my-draft')).toBeTruthy();
+    expect(screen.getByRole('dialog')).toBeTruthy();
+  });
+
+  it('preserves unknown frontmatter fields from an imported SKILL.md on create', async () => {
+    render(<SkillEditor />);
+    const manifestFile = new File(
+      [
+        '---\nname: good-morning\ndescription: A greeting skill\nversion: "1.0.0"\n---\n\nDo it.',
+      ],
+      'SKILL.md',
+    );
+
+    await openUploadDialog(user);
+    stageFile(manifestFile);
+    await waitFor(() =>
+      expect(screen.getAllByText('SKILL.md')[0]).toBeTruthy(),
+    );
+    await confirmUpload(user);
+    expect(await screen.findByDisplayValue('good-morning')).toBeTruthy();
+
+    await user.click(getCreateButton());
+
+    await waitFor(() => expect(createSkill).toHaveBeenCalledOnce());
+    const sentManifest = vi.mocked(createSkill).mock.calls[0][2];
+    expect(sentManifest).toContain('1.0.0');
+  });
+
+  it('sends a batch-added supporting file in filePaths/files, with SKILL.md never included', async () => {
+    render(<SkillEditor />);
+    const manifestFile = new File(
+      ['---\nname: good-morning\ndescription: A greeting skill\n---\n\nDo it.'],
+      'SKILL.md',
+    );
+    const supportingFile = new File(['notes body'], 'notes.md');
+
+    await openUploadDialog(user);
+    stageFile(manifestFile);
+    stageFile(supportingFile);
+    await waitFor(() =>
+      expect(screen.getAllByText('notes.md')[0]).toBeTruthy(),
+    );
+    await confirmUpload(user);
+    expect(await screen.findByDisplayValue('good-morning')).toBeTruthy();
+
+    await user.click(getCreateButton());
+
+    await waitFor(() =>
+      expect(createSkill).toHaveBeenCalledWith(
+        'my-bucket',
+        'good-morning',
+        expect.stringContaining('Do it.'),
+        ['notes.md'],
+        [expect.any(Blob)],
+      ),
+    );
+  });
+
+  it('stages and commits a dropped .zip file as an ordinary supporting file, with no unpacking', async () => {
+    render(<SkillEditor />);
+    await fillRequiredFields(user, 'my-skill', 'A skill');
+    const zipFile = new File([new Uint8Array([1, 2, 3])], 'bundle.zip');
+
+    await openUploadDialog(user);
+    stageFile(zipFile);
+    await waitFor(() =>
+      expect(screen.getAllByText('bundle.zip')[0]).toBeTruthy(),
+    );
+    await confirmUpload(user);
+    await waitFor(() =>
+      expect(screen.getAllByText('bundle.zip')[0]).toBeTruthy(),
+    );
+
+    await user.click(getCreateButton());
+
+    await waitFor(() =>
+      expect(createSkill).toHaveBeenCalledWith(
+        'my-bucket',
+        'my-skill',
+        expect.any(String),
+        ['bundle.zip'],
+        [expect.any(Blob)],
+      ),
+    );
   });
 });
 
@@ -567,6 +762,43 @@ describe('SkillEditor page — edit mode', () => {
     expect(sentManifest).toContain('1.2.0');
   });
 
+  it('sends both the already-loaded and a batch-added supporting file, with SKILL.md never in filePaths', async () => {
+    vi.mocked(downloadSkill).mockResolvedValue(
+      buildSkillResponse(manifest, '"etag-1"', {
+        'existing.md': 'existing body',
+      }),
+    );
+    vi.mocked(updateSkill).mockResolvedValue({
+      etag: 'etag-2',
+    } as unknown as Awaited<ReturnType<typeof updateSkill>>);
+
+    render(<SkillEditor />);
+    await waitFor(() =>
+      expect(screen.getAllByText('existing.md')[0]).toBeTruthy(),
+    );
+
+    await openUploadDialog(user);
+    stageFile(new File(['new body'], 'new.md'));
+    await waitFor(() => expect(screen.getAllByText('new.md')[0]).toBeTruthy());
+    await confirmUpload(user);
+    await waitFor(() => expect(screen.getAllByText('new.md')[0]).toBeTruthy());
+
+    await user.click(getSaveButton());
+
+    await waitFor(() =>
+      expect(updateSkill).toHaveBeenCalledWith(
+        'my-bucket',
+        'team-a/docs-helper',
+        expect.any(String),
+        expect.arrayContaining(['existing.md', 'new.md']),
+        [expect.any(Blob), expect.any(Blob)],
+        '"etag-1"',
+      ),
+    );
+    const [, , , filePaths] = vi.mocked(updateSkill).mock.calls[0];
+    expect(filePaths).not.toContain('SKILL.md');
+  });
+
   it('shows an explicit conflict state on a 412 save failure, with a working Reload latest', async () => {
     vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
     vi.mocked(updateSkill).mockRejectedValue({
@@ -646,5 +878,105 @@ describe('SkillEditor page — edit mode', () => {
     await user.click(getCancelButton());
 
     expect(mockNavigate).toHaveBeenCalledWith('/catalog');
+  });
+
+  it('applies a matching-name SKILL.md import after confirmation, even with no unsaved edits', async () => {
+    vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
+
+    render(<SkillEditor />);
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
+
+    const manifestFile = new File(
+      [
+        '---\nname: docs-helper\ndescription: Updated description\n---\n\nNew instructions.',
+      ],
+      'SKILL.md',
+    );
+    await openUploadDialog(user);
+    stageFile(manifestFile);
+    await waitFor(() =>
+      expect(screen.getAllByText('SKILL.md')[0]).toBeTruthy(),
+    );
+    await confirmUpload(user);
+
+    expect(
+      await screen.findByText('skillEditor.manifestImportConfirmTitle'),
+    ).toBeTruthy();
+    await user.click(
+      screen.getByRole('button', {
+        name: 'buttons.replace',
+      }),
+    );
+
+    expect(await screen.findByDisplayValue('Updated description')).toBeTruthy();
+    expect(screen.getByDisplayValue('docs-helper')).toBeTruthy();
+  });
+
+  it('rejects an imported SKILL.md whose name does not match the read-only skill name', async () => {
+    vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
+
+    render(<SkillEditor />);
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
+
+    const manifestFile = new File(
+      [
+        '---\nname: a-different-name\ndescription: Updated description\n---\n\nNew instructions.',
+      ],
+      'SKILL.md',
+    );
+    await openUploadDialog(user);
+    stageFile(manifestFile);
+    await waitFor(() =>
+      expect(screen.getAllByText('SKILL.md')[0]).toBeTruthy(),
+    );
+    await confirmUpload(user);
+
+    expect(
+      await screen.findByText('skillEditor.error.manifestNameMismatch'),
+    ).toBeTruthy();
+    expect(screen.getByDisplayValue('docs-helper')).toBeTruthy();
+    expect(screen.queryByDisplayValue('Updated description')).toBeNull();
+  });
+
+  it('preserves unknown frontmatter fields on a confirmed SKILL.md import', async () => {
+    const manifestWithVersion =
+      '---\nname: docs-helper\ndescription: Explains docs\nversion: "2.0.0"\n---\n\ninstr';
+    vi.mocked(downloadSkill).mockResolvedValue(
+      buildSkillResponse(manifestWithVersion),
+    );
+    vi.mocked(updateSkill).mockResolvedValue({
+      etag: 'etag-2',
+    } as unknown as Awaited<ReturnType<typeof updateSkill>>);
+
+    render(<SkillEditor />);
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
+
+    const manifestFile = new File(
+      [
+        '---\nname: docs-helper\ndescription: Updated description\n---\n\nNew instr',
+      ],
+      'SKILL.md',
+    );
+    await openUploadDialog(user);
+    stageFile(manifestFile);
+    await waitFor(() =>
+      expect(screen.getAllByText('SKILL.md')[0]).toBeTruthy(),
+    );
+    await confirmUpload(user);
+    expect(
+      await screen.findByText('skillEditor.manifestImportConfirmTitle'),
+    ).toBeTruthy();
+    await user.click(
+      screen.getByRole('button', {
+        name: 'buttons.replace',
+      }),
+    );
+    expect(await screen.findByDisplayValue('Updated description')).toBeTruthy();
+
+    await user.click(getSaveButton());
+
+    await waitFor(() => expect(updateSkill).toHaveBeenCalledOnce());
+    const sentManifest = vi.mocked(updateSkill).mock.calls[0][2];
+    expect(sentManifest).toContain('2.0.0');
   });
 });

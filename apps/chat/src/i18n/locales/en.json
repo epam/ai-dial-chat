@@ -299,7 +299,8 @@
     "manage": "Manage",
     "removeFromMyList": "Remove from My List",
     "revokeAccess": "Revoke access",
-    "revokeAccessWithCount": "Revoke access ({{count}})"
+    "revokeAccessWithCount": "Revoke access ({{count}})",
+    "replace": "Replace"
   },
   "sidebar": {
     "base": {
@@ -1128,7 +1129,15 @@
       "fileTooLarge": "This file exceeds the maximum size of {{maxSize}}.",
       "archiveTooLarge": "This skill package is too large to upload.",
       "serviceUnavailable": "The service is temporarily unavailable. Please try again.",
-      "save": "Couldn't create this skill. Please try again."
+      "save": "Couldn't create this skill. Please try again.",
+      "manifestCasingInvalid": "The manifest filename must be exactly \"SKILL.md\".",
+      "manifestDuplicate": "Only one SKILL.md is allowed per upload.",
+      "manifestInvalidUtf8": "SKILL.md isn't valid UTF-8 text.",
+      "manifestInvalidFrontmatter": "SKILL.md must have valid YAML frontmatter with a name and description.",
+      "manifestNameMismatch": "This SKILL.md's name doesn't match this skill. Renaming a skill isn't supported.",
+      "totalSizeExceeded": "This would make the skill package too large to upload.",
+      "totalCountExceeded": "This would exceed the maximum number of files allowed in a skill.",
+      "manifestImportDeclined": "Manifest import cancelled, staged files kept."
     },
     "saveSuccessTitle": "Skill created",
     "createSuccess": "\"{{name}}\" has been created.",
@@ -1146,7 +1155,18 @@
     "unsavedChangesTitle": "Discard unsaved changes?",
     "unsavedChangesMessage": "You have unsaved changes. Leaving now will discard them.",
     "unsavedChangesConfirmLabel": "Discard changes",
-    "unsavedChangesCancelLabel": "Keep editing"
+    "unsavedChangesCancelLabel": "Keep editing",
+    "uploadDialogTitle": "Upload files from device",
+    "uploadDropZoneLabel": "Drag and drop it or click here to upload",
+    "uploadDropZoneMobileLabel": "Click here to upload",
+    "uploadDropZoneAriaLabel": "Upload files",
+    "uploadManifestRowNote": "Will replace this Skill's name, description, and instructions",
+    "uploadBatchErrorAriaPrefix": "Upload error: ",
+    "uploadRemoveCandidateLabel": "Remove {{path}}",
+    "dropOverlayTitle": "Upload files",
+    "dropOverlaySubtitle": "Drop files here to add them to this skill",
+    "manifestImportConfirmTitle": "Replace Skill metadata?",
+    "manifestImportConfirmMessage": "Importing this SKILL.md will replace the Name, Description, and Instructions fields. This cannot be undone."
   },
   "entityNotifications": {
     "prompt": {

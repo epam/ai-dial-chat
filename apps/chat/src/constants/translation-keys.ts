@@ -110,6 +110,8 @@ export enum ButtonsI18nKeys {
   RemoveFromMyList = 'buttons.removeFromMyList',
   RevokeAccess = 'buttons.revokeAccess',
   RevokeAccessWithCount = 'buttons.revokeAccessWithCount',
+  Add = 'buttons.add',
+  Replace = 'buttons.replace',
 }
 
 export enum NavigationI18nKeys {
@@ -874,6 +876,25 @@ export enum SkillEditorI18nKeys {
   UnsavedChangesMessage = 'skillEditor.unsavedChangesMessage',
   UnsavedChangesConfirmLabel = 'skillEditor.unsavedChangesConfirmLabel',
   UnsavedChangesCancelLabel = 'skillEditor.unsavedChangesCancelLabel',
+  UploadDialogTitle = 'skillEditor.uploadDialogTitle',
+  UploadDropZoneLabel = 'skillEditor.uploadDropZoneLabel',
+  UploadDropZoneMobileLabel = 'skillEditor.uploadDropZoneMobileLabel',
+  UploadDropZoneAriaLabel = 'skillEditor.uploadDropZoneAriaLabel',
+  UploadManifestRowNote = 'skillEditor.uploadManifestRowNote',
+  UploadBatchErrorAriaPrefix = 'skillEditor.uploadBatchErrorAriaPrefix',
+  UploadRemoveCandidateLabel = 'skillEditor.uploadRemoveCandidateLabel',
+  DropOverlayTitle = 'skillEditor.dropOverlayTitle',
+  DropOverlaySubtitle = 'skillEditor.dropOverlaySubtitle',
+  ErrorManifestCasingInvalid = 'skillEditor.error.manifestCasingInvalid',
+  ErrorManifestDuplicate = 'skillEditor.error.manifestDuplicate',
+  ErrorManifestInvalidUtf8 = 'skillEditor.error.manifestInvalidUtf8',
+  ErrorManifestInvalidFrontmatter = 'skillEditor.error.manifestInvalidFrontmatter',
+  ErrorManifestNameMismatch = 'skillEditor.error.manifestNameMismatch',
+  ErrorTotalSizeExceeded = 'skillEditor.error.totalSizeExceeded',
+  ErrorTotalCountExceeded = 'skillEditor.error.totalCountExceeded',
+  ErrorManifestImportDeclined = 'skillEditor.error.manifestImportDeclined',
+  ManifestImportConfirmTitle = 'skillEditor.manifestImportConfirmTitle',
+  ManifestImportConfirmMessage = 'skillEditor.manifestImportConfirmMessage',
 }
 
 export enum AppsEditorI18nKeys {
