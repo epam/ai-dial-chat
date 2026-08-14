@@ -2,6 +2,31 @@
 
 A modern full-stack chat application built with Nx monorepo, featuring a React frontend and NestJS backend with DIAL Core integration.
 
+> ## 🎉 This is the new DIAL Chat
+>
+> DIAL Chat has been **rewritten from the ground up**. This is not an
+> incremental update — it is a new application.
+>
+> - **A completely new UI.** Every surface was redesigned, and we think you're
+>   going to like living in it.
+> - **Built out of libraries, not one monolith.** The interface is composed from
+>   the packages in [`libs/`](#libraries) — the composer, the message list, the
+>   catalog, the sidebar, the panels. Each one takes its data, strings, and
+>   behaviour through props, so you can restyle it, rearrange it, or swap a piece
+>   out without forking the app. See [Libraries](#libraries) and
+>   [Theme Customization](docs/theme-customization.md).
+> - **A backend-for-frontend.** The frontend no longer talks to DIAL Core
+>   directly; `apps/chat-api` owns authentication, configuration, and every
+>   upstream call.
+>
+> ### Using the legacy chat?
+>
+> The previous chat continues to live on the **`development-legacy`** branch and
+> will keep receiving fixes for a while yet. Its **end-of-life is the end of
+> 2026** — after that it is no longer maintained, so plan the move before then.
+> [Migrating from the Legacy DIAL Chat](#migrating-from-the-legacy-dial-chat)
+> below is the starting point.
+
 ## 📚 Table of Contents
 
 - [Overview](#overview)
@@ -31,6 +56,10 @@ AI DIAL Chat is a comprehensive chat application platform featuring:
 - **Monorepo**: Nx-powered workspace for efficient development
 
 ## Migrating from the Legacy DIAL Chat
+
+The legacy chat is maintained on the `development-legacy` branch until the end of
+2026. Because 1.0 is a rewrite rather than an upgrade, moving a deployment is a
+deliberate migration — there is no in-place upgrade path.
 
 Start with the [Legacy Chat Migration Guide](docs/legacy-chat-migration-guide.md):
 what changed, an ordered checklist, the legacy → new environment-variable
