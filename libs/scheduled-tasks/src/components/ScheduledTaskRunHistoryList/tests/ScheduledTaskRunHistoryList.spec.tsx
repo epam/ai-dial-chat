@@ -26,6 +26,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconCircleCheck: () => <svg data-icon="success" />,
   IconCircleX: () => <svg data-icon="error" />,
   IconAlertTriangle: () => <svg data-icon="missed" />,
+  IconClipboardX: () => <svg data-icon="empty" />,
 }));
 
 const labels: ScheduledTaskRunHistoryListLabels = {

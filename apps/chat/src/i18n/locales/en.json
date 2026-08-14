@@ -634,7 +634,15 @@
       "activeStatusLabel": "Active",
       "pauseSuccess": "Task paused",
       "resumeSuccess": "Task resumed",
-      "activeStatusUpdateError": "Failed to update the task's active status"
+      "activeStatusUpdateError": "Failed to update the task's active status",
+      "deleteConfirmTitle": "Confirm Deleting Task",
+      "deleteConfirmDescription": "Are you sure you want to delete the task \"{{taskName}}\"? All run conversations will still be accessible.",
+      "deleteConfirmingLabel": "Deleting…",
+      "deleteSuccess": "Scheduled task deleted",
+      "deleteNotFoundError": "This task has already been deleted or could not be found",
+      "deleteRetryableError": "Couldn't delete the task — it hasn't been removed and you can safely try again",
+      "deleteGenericError": "Failed to delete the scheduled task",
+      "deletedStateLabel": "Deleted"
     },
     "edit": {
       "pageTitle": "Edit scheduled task",
