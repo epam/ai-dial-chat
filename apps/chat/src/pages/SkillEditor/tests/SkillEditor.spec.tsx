@@ -53,6 +53,28 @@ vi.mock('../../../context/NotificationContext', () => ({
   useNotification: vi.fn(),
 }));
 
+vi.mock('../../../hooks/attachment/useOpenAttachmentCanvas', () => ({
+  useOpenAttachmentCanvas: () => ({ openAttachmentCanvas: vi.fn() }),
+}));
+
+vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-attachment-canvas')>();
+  return {
+    ...actual,
+    useAttachmentCanvas: () => ({
+      isOpen: false,
+      isLoading: false,
+      content: { type: actual.AttachmentContentType.PlainText, text: '' },
+      fileName: undefined,
+      attachmentId: undefined,
+      openCanvasLoading: vi.fn(),
+      openCanvas: vi.fn(),
+      closeCanvas: vi.fn(),
+    }),
+  };
+});
+
 vi.mock('../../../server-api/skills.api', () => ({
   createSkill: vi.fn(),
   updateSkill: vi.fn(),
