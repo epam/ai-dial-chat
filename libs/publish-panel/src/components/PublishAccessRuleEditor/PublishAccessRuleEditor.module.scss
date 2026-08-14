@@ -2,8 +2,7 @@
   background: var(--pare-mobile-bg, var(--bg-layer-1, #e0e6f0));
 
   @media (min-width: 769px) {
-    border-color: var(--pare-border, var(--stroke-tertiary, #e0e6f0));
-    background: var(--pare-bg, var(--bg-layer-sunken, #eef1f7));
+    background: var(--pare-bg, var(--bg-layer-base, #f5f7fa));
   }
 }
 
@@ -13,4 +12,51 @@
 
 .error {
   color: var(--pare-error-text, var(--text-error, #ae2f2f));
+}
+
+/*
+ * Reskins the kit's own `.dial-kit-input` field (source/function `Select`)
+ * to match the Catalog "From" filter's default/hover/focus/open states (see
+ * `libs/catalog/src/components/Filter/Filter.module.scss`). Picking a value
+ * closes the dropdown and returns the field to its default border — there
+ * is no persistent "has a value" state. `!important` is required to beat
+ * the kit's own border/outline rules on this third-party class;
+ * `selectFieldOpen` relies on being declared after `selectField` to win the
+ * border-color tie when both apply to the same element.
+ */
+.selectField {
+  &:global(.dial-kit-input) {
+    border-color: var(--pare-select-border, #0000000d) !important;
+    outline: none !important;
+    transition:
+      border-color 150ms ease,
+      outline-color 150ms ease;
+
+    @media (hover: hover) {
+      &:hover:not(:focus-within) {
+        border-color: #0000001f !important;
+      }
+    }
+
+    &:focus-within {
+      border-color: transparent !important;
+      outline: 1px solid
+        color-mix(
+          in srgb,
+          var(--pare-select-border-focus, var(--stroke-info, #124ace)) 50%,
+          transparent
+        ) !important;
+      outline-offset: -1px;
+    }
+  }
+}
+
+.selectFieldOpen {
+  &:global(.dial-kit-input) {
+    border-color: color-mix(
+      in srgb,
+      var(--pare-select-border-open, var(--stroke-info, #124ace)) 50%,
+      transparent
+    ) !important;
+  }
 }

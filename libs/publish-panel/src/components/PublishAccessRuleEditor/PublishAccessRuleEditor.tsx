@@ -1,8 +1,8 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  GhostButton,
   Input,
   NeutralButton,
-  PrimaryButton,
   Select,
   TagInput,
 } from '@epam/ai-dial-ui-kit';
@@ -41,12 +41,18 @@ export interface PublishAccessRuleEditorLabels {
   targetsLabel?: string;
   /** Placeholder for the targets tag input. Default: `'Add a target'`. */
   targetsPlaceholder?: string;
+  /** Hint shown below the targets tag input. Default: `'Press Enter or comma to add a target.'`. */
+  targetsHintLabel?: string;
   /** Label above the pattern field (REGEX). Default: `'Pattern'`. */
   patternLabel?: string;
   /** Placeholder for the pattern field. Default: `'Enter a regular expression'`. */
   patternPlaceholder?: string;
   /** Inline error shown for an invalid or empty regular expression. Default: `'Enter a valid regular expression.'`. */
   invalidRegexError?: string;
+  /** Inline error shown under the source/function picker when Save is clicked without a value. Default: `'This field is required.'`. */
+  requiredFieldError?: string;
+  /** Inline error shown under the targets field when Save is clicked with no targets added. Default: `'Add at least one target.'`. */
+  targetsRequiredError?: string;
   /** Label for the action that saves the rule. Default: `'Save'`. */
   saveLabel?: string;
   /** Label for the action that discards the in-progress rule. Default: `'Cancel'`. */
@@ -81,14 +87,18 @@ export interface PublishAccessRuleEditorProps {
 export interface PublishAccessRuleEditorColors {
   /** Background color of the full-screen mobile overlay. Fallback: `--bg-layer-1`. */
   mobileBackground?: string;
-  /** Border color of the desktop inline panel. Fallback: `--stroke-tertiary`. */
-  border?: string;
-  /** Background color of the desktop inline panel. Fallback: `--bg-layer-sunken`. */
+  /** Background color of the desktop inline panel. Fallback: `--bg-layer-base`. */
   background?: string;
   /** Text color of the source/function field labels. Fallback: `--text-primary`. */
   labelText?: string;
   /** Text color of the pattern validation error. Fallback: `--text-error`. */
   errorText?: string;
+  /** Source/function field border color in its default state. Fallback: `#0000000d`. */
+  selectBorder?: string;
+  /** Source/function field border color while its dropdown is open. Fallback: `--stroke-info` at 50% opacity. */
+  selectBorderOpen?: string;
+  /** Source/function field outline color while focused. Fallback: `--stroke-info` at 50% opacity. */
+  selectBorderFocus?: string;
 }
 
 const isValidRegex = (pattern: string): boolean => {
@@ -122,10 +132,12 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
 }) => {
   const cssVars = buildCssVars({
     '--pare-mobile-bg': colors?.mobileBackground,
-    '--pare-border': colors?.border,
     '--pare-bg': colors?.background,
     '--pare-label-text': colors?.labelText,
     '--pare-error-text': colors?.errorText,
+    '--pare-select-border': colors?.selectBorder,
+    '--pare-select-border-open': colors?.selectBorderOpen,
+    '--pare-select-border-focus': colors?.selectBorderFocus,
   });
 
   const {
@@ -137,9 +149,12 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
     regexOptionLabel = 'Regex',
     targetsLabel = 'Targets',
     targetsPlaceholder = 'Add a target',
+    targetsHintLabel = 'Press Enter or comma to add a target.',
     patternLabel = 'Pattern',
     patternPlaceholder = 'Enter a regular expression',
     invalidRegexError = 'Enter a valid regular expression.',
+    requiredFieldError = 'This field is required.',
+    targetsRequiredError = 'Add at least one target.',
     saveLabel = 'Save',
     cancelLabel = 'Cancel',
     dialogAriaLabel = 'Add access rule',
@@ -163,6 +178,24 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
   const [ruleFunction, setRuleFunction] = useState<PublicationRuleFunction>();
   const [targets, setTargets] = useState<string[]>([]);
   const [pattern, setPattern] = useState('');
+  const [isSourceOpen, setIsSourceOpen] = useState(false);
+  const [isFunctionOpen, setIsFunctionOpen] = useState(false);
+  const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
+
+  /* Mirrors the Catalog "From" filter's default/focused/open border states
+   * (see `libs/catalog/src/components/Filter/Filter.module.scss`) onto the
+   * kit's own field styling; `:focus-within` in the module covers the
+   * focused state via pure CSS. Picking a value closes the dropdown and
+   * returns the field to its default border — there is no persistent
+   * "has a value" state. */
+  const sourceFieldClassName = mergeClasses(
+    styles.selectField,
+    isSourceOpen && styles.selectFieldOpen,
+  );
+  const functionFieldClassName = mergeClasses(
+    styles.selectField,
+    isFunctionOpen && styles.selectFieldOpen,
+  );
 
   const sourceSelectOptions = useMemo(
     () => sourceOptions.map((option) => ({ value: option, label: option })),
@@ -186,11 +219,17 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
     ruleFunction != null &&
     (isRegex ? isPatternValid : targets.length > 0);
 
+  const handleSourceChange = (next: string | string[]) => {
+    setSource(Array.isArray(next) ? next[0] : next);
+    setIsSourceOpen(false);
+  };
+
   const handleFunctionChange = (next: string | string[]) => {
     const value = Array.isArray(next) ? next[0] : next;
     setRuleFunction(value as PublicationRuleFunction);
     setTargets([]);
     setPattern('');
+    setIsFunctionOpen(false);
   };
 
   /** Trims each tag, rejects an exact-duplicate (post-trim, case-sensitive) target, and caps the list at `maxTargets`. `TagInput` is controlled, so the corrected list is what the field renders. */
@@ -211,6 +250,7 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
 
   const handleSave = () => {
     if (!isStructurallyComplete || source == null || ruleFunction == null) {
+      setHasAttemptedSave(true);
       return;
     }
     onSave({
@@ -244,7 +284,7 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
       style={cssVars}
       className={mergeClasses(
         'fixed inset-0 z-[60] flex flex-col gap-3 overflow-y-auto p-4',
-        'desktop:static desktop:z-auto desktop:flex-none desktop:overflow-visible desktop:rounded-lg desktop:border desktop:p-3',
+        'desktop:static desktop:z-auto desktop:flex-none desktop:overflow-visible desktop:rounded-lg desktop:p-3',
         styles.dialog,
       )}
     >
@@ -253,11 +293,18 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
         labelProps={{ label: sourceLabel }}
         options={sourceSelectOptions}
         value={source}
-        onChange={(next) => setSource(Array.isArray(next) ? next[0] : next)}
+        onChange={handleSourceChange}
         placeholder={sourcePlaceholder}
         searchable={sourceOptions.length > SEARCHABLE_SOURCE_THRESHOLD}
         searchPlaceholder={sourcePlaceholder}
         disabled={disabled}
+        open={isSourceOpen}
+        onOpenChange={setIsSourceOpen}
+        fieldClassName={sourceFieldClassName}
+        invalid={hasAttemptedSave && source == null}
+        error={
+          hasAttemptedSave && source == null ? requiredFieldError : undefined
+        }
       />
 
       <Select
@@ -268,6 +315,15 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
         onChange={handleFunctionChange}
         placeholder={functionLabel}
         disabled={disabled}
+        open={isFunctionOpen}
+        onOpenChange={setIsFunctionOpen}
+        fieldClassName={functionFieldClassName}
+        invalid={hasAttemptedSave && ruleFunction == null}
+        error={
+          hasAttemptedSave && ruleFunction == null
+            ? requiredFieldError
+            : undefined
+        }
       />
 
       {isRegex ? (
@@ -278,13 +334,17 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
             placeholder={patternPlaceholder}
             value={pattern}
             onChange={(value) => setPattern(value ?? '')}
-            invalid={pattern.length > 0 && !isPatternValid}
+            invalid={
+              (pattern.length > 0 || hasAttemptedSave) && !isPatternValid
+            }
             aria-describedby={
-              pattern.length > 0 && !isPatternValid ? patternErrorId : undefined
+              (pattern.length > 0 || hasAttemptedSave) && !isPatternValid
+                ? patternErrorId
+                : undefined
             }
             disabled={disabled}
           />
-          {pattern.length > 0 && !isPatternValid && (
+          {(pattern.length > 0 || hasAttemptedSave) && !isPatternValid && (
             <span
               id={patternErrorId}
               role="alert"
@@ -303,22 +363,40 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
           id={targetsElementId}
           labelProps={{ label: targetsLabel }}
           placeholder={targetsPlaceholder}
+          caption={
+            hasAttemptedSave && targets.length === 0
+              ? undefined
+              : targetsHintLabel
+          }
+          error={
+            hasAttemptedSave && targets.length === 0
+              ? targetsRequiredError
+              : undefined
+          }
+          invalid={hasAttemptedSave && targets.length === 0}
           value={targets}
           onChange={handleTargetsChange}
           disabled={disabled}
         />
       )}
 
+      {/*
+       * `GhostButton` (Cancel) and `NeutralButton` (Save) stand in for
+       * tertiary/secondary: the installed kit declares
+       * `ButtonVariant.Tertiary`/`Secondary` but ships no CSS for them yet on
+       * the real Button/GhostButton, so they would silently render as
+       * primary-solid. Switch once the kit adds the styles.
+       */}
       <div className="mt-auto flex justify-end gap-2 desktop:mt-2">
-        <NeutralButton
+        <GhostButton
           label={cancelLabel}
           onClick={onCancel}
           disabled={disabled}
         />
-        <PrimaryButton
+        <NeutralButton
           label={saveLabel}
           onClick={handleSave}
-          disabled={disabled || !isStructurallyComplete}
+          disabled={disabled}
         />
       </div>
     </div>

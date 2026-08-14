@@ -7,10 +7,9 @@ import {
   Notification,
   NotificationType,
   NotificationVariant,
-  PrimaryButton,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import { IconPlus, IconX } from '@tabler/icons-react';
+import { IconPlus, IconTrashX } from '@tabler/icons-react';
 import { FC, useEffect, useId, useRef, useState } from 'react';
 import { PublicationRule, PublicationRuleFunction } from '../../models/publish';
 import {
@@ -101,13 +100,11 @@ export interface PublishAccessRulesProps {
 
 /** Color overrides for {@link PublishAccessRules}, applied as CSS custom properties with app theme fallbacks. */
 export interface PublishAccessRulesColors {
-  /** Rule row border color. Fallback: `--stroke-tertiary`. */
-  ruleBorder?: string;
-  /** Rule row background color. Fallback: `--bg-layer-sunken`. */
+  /** Rule row background color. Fallback: `--bg-layer-base`. */
   ruleBackground?: string;
   /** Section heading text color. Fallback: `--text-primary`. */
   headingText?: string;
-  /** Folder-scope and rule-limit hint text color. Fallback: `--text-primary`. */
+  /** Folder-scope and rule-limit hint text color. Fallback: `--text-secondary`. */
   hintText?: string;
   /** Loading message text color. Fallback: `--text-secondary`. */
   loadingText?: string;
@@ -151,7 +148,6 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
   colors,
 }) => {
   const cssVars = buildCssVars({
-    '--par-rule-border': colors?.ruleBorder,
     '--par-rule-bg': colors?.ruleBackground,
     '--par-heading-text': colors?.headingText,
     '--par-hint-text': colors?.hintText,
@@ -246,11 +242,21 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
         {statusMessage}
       </span>
 
-      <div
-        id={headingId}
-        className={mergeClasses('mb-1', headingClassName, styles.heading)}
-      >
-        {heading}
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <div
+          id={headingId}
+          className={mergeClasses(headingClassName, styles.heading)}
+        >
+          {heading}
+        </div>
+        {rules.length > 0 && (
+          <GhostButton
+            variant={ButtonVariant.Primary}
+            label={clearAllLabel}
+            onClick={handleClearAll}
+            disabled={disabled}
+          />
+        )}
       </div>
 
       <p className={mergeClasses('mb-2', hintClassName, styles.hint)}>
@@ -304,7 +310,7 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
                 key={index}
                 style={cssVars}
                 className={mergeClasses(
-                  'flex items-center justify-between gap-2 rounded-lg border px-3 py-2',
+                  'flex items-center justify-between gap-2 rounded-lg px-3 py-2',
                   styles.ruleRow,
                 )}
               >
@@ -319,7 +325,7 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
                   {functionLabel(rule.function, functionLabels)}: {targetsText}
                 </span>
                 <GhostIconButton
-                  icon={<IconX size={DIAL_ICON_SIZE.SM} aria-hidden />}
+                  icon={<IconTrashX size={DIAL_ICON_SIZE.SM} aria-hidden />}
                   aria-label={removeAriaLabel}
                   onClick={() => handleRemoveRule(index)}
                   disabled={disabled}
@@ -342,20 +348,19 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        <PrimaryButton
+        {/*
+         * Plain `GhostButton` stands in for a tertiary button: the installed
+         * kit declares `ButtonVariant.Tertiary` but ships no CSS for it yet on
+         * the real Button/GhostButton, so it would silently render as
+         * primary-solid. Switch to `variant={ButtonVariant.Tertiary}` once the
+         * kit adds the style.
+         */}
+        <GhostButton
           label={addRuleLabel}
           iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} aria-hidden />}
           onClick={openEditor}
           disabled={isAddDisabled}
         />
-        {rules.length > 0 && (
-          <GhostButton
-            variant={ButtonVariant.Primary}
-            label={clearAllLabel}
-            onClick={handleClearAll}
-            disabled={disabled}
-          />
-        )}
       </div>
 
       {isMaxRulesReached && (

@@ -1,6 +1,5 @@
 .ruleRow {
-  border-color: var(--par-rule-border, var(--stroke-tertiary, #e0e6f0));
-  background: var(--par-rule-bg, var(--bg-layer-sunken, #eef1f7));
+  background: var(--par-rule-bg, var(--bg-layer-base, #f5f7fa));
 }
 
 .heading {
@@ -8,7 +7,7 @@
 }
 
 .hint {
-  color: var(--par-hint-text, var(--text-primary, #161b2d));
+  color: var(--par-hint-text, var(--text-secondary, #57647a));
 }
 
 .loading {

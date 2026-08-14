@@ -50,7 +50,10 @@ export { PublishHistoryList } from './components/PublishHistoryList/PublishHisto
 export type { PublishHistoryListProps } from './components/PublishHistoryList/PublishHistoryList';
 
 export { PublishFoldersTree } from './components/PublishFoldersTree/PublishFoldersTree';
-export type { PublishFoldersTreeProps } from './components/PublishFoldersTree/PublishFoldersTree';
+export type {
+  PublishFoldersTreeColors,
+  PublishFoldersTreeProps,
+} from './components/PublishFoldersTree/PublishFoldersTree';
 
 export { PublishPanel } from './components/PublishPanel/PublishPanel';
 export type {

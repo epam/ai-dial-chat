@@ -21,6 +21,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       labelProps,
       placeholder,
       disabled,
+      error,
     }: {
       options: { value: string; label: string }[];
       value?: string;
@@ -29,23 +30,27 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       labelProps?: { label?: string };
       placeholder?: string;
       disabled?: boolean;
+      error?: string;
     }) => (
-      <select
-        id={id}
-        aria-label={labelProps?.label}
-        value={value ?? ''}
-        disabled={disabled}
-        onChange={(e) => onChange?.(e.target.value)}
-      >
-        <option value="" disabled hidden>
-          {placeholder}
-        </option>
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
+      <>
+        <select
+          id={id}
+          aria-label={labelProps?.label}
+          value={value ?? ''}
+          disabled={disabled}
+          onChange={(e) => onChange?.(e.target.value)}
+        >
+          <option value="" disabled hidden>
+            {placeholder}
           </option>
-        ))}
-      </select>
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        {error && <span role="alert">{error}</span>}
+      </>
     ),
     /*
      * Mirrors the real TagInput: fully controlled through `value`, committing
@@ -59,12 +64,14 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       onChange,
       value,
       disabled,
+      error,
     }: {
       labelProps?: { label?: string };
       placeholder?: string;
       onChange?: (tags: string[]) => void;
       value?: string[];
       disabled?: boolean;
+      error?: string;
     }) => {
       const [text, setText] = useState('');
       const commit = () => {
@@ -87,6 +94,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
               }
             }}
           />
+          {error && <span role="alert">{error}</span>}
         </label>
       );
     },
@@ -112,16 +120,30 @@ const renderEditor = (
 };
 
 describe('PublishAccessRuleEditor', () => {
-  it('disables Save with no source selected', () => {
-    renderEditor();
-    expect(isDisabled(screen.getByRole('button', { name: 'Save' }))).toBe(true);
+  it('keeps Save enabled with no source selected, and shows a required-field error instead of saving', async () => {
+    const { onSave } = renderEditor();
+    expect(isDisabled(screen.getByRole('button', { name: 'Save' }))).toBe(
+      false,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(onSave).not.toHaveBeenCalled();
+    expect(
+      screen.getAllByText('This field is required.').length,
+    ).toBeGreaterThan(0);
   });
 
-  it('disables Save with zero targets under CONTAIN', async () => {
-    renderEditor();
+  it('keeps Save enabled with zero targets under CONTAIN, and shows a targets error instead of saving', async () => {
+    const { onSave } = renderEditor();
     await userEvent.selectOptions(screen.getByLabelText('Source'), 'role');
     await userEvent.selectOptions(screen.getByLabelText('Function'), 'CONTAIN');
-    expect(isDisabled(screen.getByRole('button', { name: 'Save' }))).toBe(true);
+    expect(isDisabled(screen.getByRole('button', { name: 'Save' }))).toBe(
+      false,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.getByText('Add at least one target.')).toBeTruthy();
   });
 
   it('trims targets and saves the rule with combined OR targets', async () => {
@@ -171,7 +193,7 @@ describe('PublishAccessRuleEditor', () => {
     });
   });
 
-  it('shows an inline error for an invalid regex, disables Save, and links the error via aria-describedby', async () => {
+  it('shows an inline error for an invalid regex and links the error via aria-describedby', async () => {
     renderEditor();
     await userEvent.selectOptions(
       screen.getByLabelText('Source'),
@@ -184,22 +206,25 @@ describe('PublishAccessRuleEditor', () => {
     expect(screen.getByRole('alert').textContent).toContain(
       'Enter a valid regular expression.',
     );
-    expect(isDisabled(screen.getByRole('button', { name: 'Save' }))).toBe(true);
     const describedBy = patternInput.getAttribute('aria-describedby');
     expect(describedBy).toBeTruthy();
     expect(screen.getByRole('alert').id).toBe(describedBy);
   });
 
-  it('treats an empty/whitespace-only regex as invalid', async () => {
-    renderEditor();
+  it('treats an empty/whitespace-only regex as invalid and does not save', async () => {
+    const { onSave } = renderEditor();
     await userEvent.selectOptions(
       screen.getByLabelText('Source'),
       'dial_roles',
     );
     await userEvent.selectOptions(screen.getByLabelText('Function'), 'REGEX');
     await userEvent.type(screen.getByLabelText('Pattern'), '   ');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
-    expect(isDisabled(screen.getByRole('button', { name: 'Save' }))).toBe(true);
+    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert').textContent).toContain(
+      'Enter a valid regular expression.',
+    );
   });
 
   it('rejects a regex pattern longer than 200 characters', async () => {
@@ -214,7 +239,6 @@ describe('PublishAccessRuleEditor', () => {
     expect(screen.getByRole('alert').textContent).toContain(
       'Enter a valid regular expression.',
     );
-    expect(isDisabled(screen.getByRole('button', { name: 'Save' }))).toBe(true);
   });
 
   it('clears the pattern state when switching from REGEX to CONTAIN', async () => {
