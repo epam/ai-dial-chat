@@ -31,6 +31,7 @@ import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import { errorsMessages } from '@/src/constants/errors';
 
 import { constructPath, isAttachmentLink } from './file';
 import type { FileMovesMap } from './folders';
@@ -353,7 +354,7 @@ export const getOpenAIEntityFullName = (
 };
 
 export const addPausedError = (
-  _conversation: Conversation,
+  conversation: Conversation,
   models: DialAIEntityModel[],
   messages: Message[],
 ): Message[] => {
@@ -386,7 +387,9 @@ export const addPausedError = (
     }),
     errorMessage:
       assistantMessage.errorMessage ??
-      'Response generation was stopped. Please regenerate to continue working with conversation',
+      (conversation.replay?.isReplay
+        ? errorsMessages.generationStoppedReplay
+        : errorsMessages.generationStopped),
   };
 
   return messages.map((message, index) => {

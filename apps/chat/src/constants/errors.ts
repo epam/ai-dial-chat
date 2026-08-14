@@ -78,6 +78,10 @@ export const errorsMessages = {
   removeFromMarketplaceFailed:
     'Failed to remove {{entityType}} from my workspace',
   addToMarketplaceFailed: 'Failed to add {{entityType}} to my workspace',
+  generationStopped:
+    'Response generation was stopped. Please regenerate to continue working with conversation',
+  generationStoppedReplay:
+    'Response generation was stopped. Please continue to replay the conversation',
 
   // Toolsets
   // params: {{name}}
