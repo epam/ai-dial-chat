@@ -71,7 +71,7 @@ export const mapToolsetCredentials = (
   const authenticationType = isCoveredByGlobalAuth
     ? ToolsetAuthenticationType.None
     : AUTHENTICATION_TYPE_MAP[authSettings.authenticationType];
-  const isApiKey = authenticationType === ToolsetAuthenticationType.ApiKey;
+  // const isApiKey = authenticationType === ToolsetAuthenticationType.ApiKey;
 
   return {
     authenticationType,
@@ -86,14 +86,14 @@ export const mapToolsetCredentials = (
      * so the "Added X ago" support text has something to show in the
      * details panel; replace with the real value once the API adds one.
      */
-    userApiKeyAddedWhen:
-      isApiKey && userStatus === CredentialStatus.SignedIn
-        ? '3 weeks ago'
-        : undefined,
-    globalApiKeyAddedWhen:
-      isApiKey && globalStatus === CredentialStatus.SignedIn
-        ? '1 week ago'
-        : undefined,
+    // userApiKeyAddedWhen:
+    //   isApiKey && userStatus === CredentialStatus.SignedIn
+    //     ? '3 weeks ago'
+    //     : undefined,
+    // globalApiKeyAddedWhen:
+    //   isApiKey && globalStatus === CredentialStatus.SignedIn
+    //     ? '1 week ago'
+    //     : undefined,
   };
 };
 

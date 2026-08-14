@@ -343,7 +343,7 @@ export const mapToolsetCredentials = (
   const isPublic = isPublicToolsetId(toolsetId);
   const userStatus = userLevel ? TOOLSET_AUTH_STATUS_MAP[userLevel] : undefined;
   const globalStatus = global ? TOOLSET_AUTH_STATUS_MAP[global] : undefined;
-  const isApiKey = authenticationType === ToolsetAuthenticationType.ApiKey;
+  // const isApiKey = authenticationType === ToolsetAuthenticationType.ApiKey;
 
   return {
     authenticationType,
@@ -358,14 +358,14 @@ export const mapToolsetCredentials = (
      * the "Added X ago" support text has something to show in the details
      * panel; replace with the real value once the API adds one.
      */
-    userApiKeyAddedWhen:
-      isApiKey && userStatus === CredentialStatus.SignedIn
-        ? '3 weeks ago'
-        : undefined,
-    globalApiKeyAddedWhen:
-      isApiKey && globalStatus === CredentialStatus.SignedIn
-        ? '1 week ago'
-        : undefined,
+    // userApiKeyAddedWhen:
+    //   isApiKey && userStatus === CredentialStatus.SignedIn
+    //     ? '3 weeks ago'
+    //     : undefined,
+    // globalApiKeyAddedWhen:
+    //   isApiKey && globalStatus === CredentialStatus.SignedIn
+    //     ? '1 week ago'
+    //     : undefined,
   };
 };
 
