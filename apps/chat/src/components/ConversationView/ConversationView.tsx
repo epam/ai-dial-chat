@@ -65,6 +65,7 @@ import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/use
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUiFeature } from '../../hooks/useUiFeature';
+import { isQuickAppSchema } from '../../utils/application-schema';
 import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import {
@@ -523,6 +524,9 @@ const ConversationView: FC<Props> = ({
     conversation,
     onConversationChange,
     deploymentFeatures: selectedDeployment?.features,
+    isQuickApp: isQuickAppSchema({
+      id: selectedDeployment?.applicationTypeSchemaId,
+    }),
   });
 
   const handleAttachDialFiles = useCallback(

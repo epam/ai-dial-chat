@@ -24,6 +24,8 @@ interface LocalModeParams {
   values: LocalModeValues;
   onValuesChange: (values: LocalModeValues) => void;
   deploymentFeatures?: DeploymentFeatures;
+  /** True when the selected deployment is a Quick App. Its orchestrator sets its own fixed temperature, so the temperature field is forced off regardless of `deploymentFeatures`. */
+  isQuickApp?: boolean;
 }
 
 interface ConversationModeParams {
@@ -31,6 +33,8 @@ interface ConversationModeParams {
   conversation: Conversation;
   onConversationChange: (conversation: Conversation) => void;
   deploymentFeatures?: DeploymentFeatures;
+  /** True when the conversation's deployment is a Quick App. Its orchestrator sets its own fixed temperature, so the temperature field is forced off regardless of `deploymentFeatures`. */
+  isQuickApp?: boolean;
 }
 
 type Params = LocalModeParams | ConversationModeParams;
@@ -83,13 +87,15 @@ export const useChatSettingsFormConfig = (params: Params) => {
     [params, showSuccessNotification, t],
   );
 
+  const isSystemPromptEnabled = params.deploymentFeatures?.systemPrompt ?? false;
+  const isTemperatureEnabled =
+    !params.isQuickApp && (params.deploymentFeatures?.temperature ?? false);
+
   return useMemo(
     () => ({
       features: {
-        ...(params.deploymentFeatures ?? {
-          systemPrompt: false,
-          temperature: false,
-        }),
+        systemPrompt: isSystemPromptEnabled,
+        temperature: isTemperatureEnabled,
         responseFormat: true,
       },
       responseFormat,
@@ -119,7 +125,8 @@ export const useChatSettingsFormConfig = (params: Params) => {
       saveDisabledTooltip: t(ChatSettingsI18nKeys.SaveDisabledTooltip),
     }),
     [
-      params.deploymentFeatures,
+      isSystemPromptEnabled,
+      isTemperatureEnabled,
       responseFormat,
       systemPrompt,
       temperature,
