@@ -324,4 +324,72 @@ describe('SkillEditor — files pane', () => {
       screen.getAllByRole('heading', { name: 'notes.md' })[0],
     ).toBeTruthy();
   });
+
+  it('renders supportingFileContent for a selected supporting file', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderEditor({
+      files: [
+        { path: 'notes.md', name: 'notes.md', kind: SkillFileNodeKind.File },
+      ],
+      supportingFileContent: <div>Preview goes here</div>,
+    });
+
+    await user.click(screen.getAllByRole('button', { name: 'notes.md' })[0]);
+
+    expect(screen.getByText('Preview goes here')).toBeTruthy();
+    expect(
+      screen.queryByText(
+        'This supporting file is included in the skill package as-is. Remove it from the Files panel to replace its content.',
+      ),
+    ).toBeNull();
+  });
+
+  it('falls back to the default supportingFileNote when supportingFileContent is omitted', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderEditor({
+      files: [
+        { path: 'notes.md', name: 'notes.md', kind: SkillFileNodeKind.File },
+      ],
+    });
+
+    await user.click(screen.getAllByRole('button', { name: 'notes.md' })[0]);
+
+    expect(
+      screen.getByText(
+        'This supporting file is included in the skill package as-is. Remove it from the Files panel to replace its content.',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('does not render supportingFileContent when SKILL.md is selected', () => {
+    renderEditor({
+      files: [
+        { path: 'notes.md', name: 'notes.md', kind: SkillFileNodeKind.File },
+      ],
+      supportingFileContent: <div>Preview goes here</div>,
+    });
+
+    expect(screen.queryByText('Preview goes here')).toBeNull();
+  });
+
+  it('does not render supportingFileContent when a folder is selected', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderEditor({
+      files: [
+        {
+          path: 'agents/analyzer.md',
+          name: 'analyzer.md',
+          kind: SkillFileNodeKind.File,
+        },
+      ],
+      selectedPath: 'agents',
+      supportingFileContent: <div>Preview goes here</div>,
+    });
+
+    expect(screen.queryByText('Preview goes here')).toBeNull();
+    // Sanity check the folder node actually rendered.
+    expect(screen.getAllByRole('button', { name: 'agents' })[0]).toBeTruthy();
+    await user.click(screen.getAllByRole('button', { name: 'agents' })[0]);
+    expect(screen.queryByText('Preview goes here')).toBeNull();
+  });
 });

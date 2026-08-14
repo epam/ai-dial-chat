@@ -213,6 +213,14 @@ export interface SkillEditorProps {
    * library renders it verbatim with no knowledge of what it contains.
    */
   headerContent?: ReactNode;
+  /**
+   * Host-rendered content shown in the main pane in place of `labels.supportingFileNote`
+   * whenever the currently selected node is a supporting file (not `SKILL.md`, not a
+   * folder). The library renders it verbatim with no knowledge of what it contains — it
+   * only decides *when* to show it, mirroring the `headerContent` pattern. Falls back to
+   * `labels.supportingFileNote` when omitted.
+   */
+  supportingFileContent?: ReactNode;
   /** Called with the current values when the form is submitted. */
   onSubmit: (values: SkillEditorValues) => void;
   /** Called when the form is dismissed without saving. */
