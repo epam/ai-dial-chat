@@ -9,7 +9,7 @@ inputs:
     default: "epam/ai-dial-chat"
   test-branch:
     description: "Git branch name of the e2e-tests repository to use"
-    default: "development"
+    default: "development-legacy"
   dotenv-file:
     description: "Relative path from e2e-tests repo root to dotenv file with variables. Will be sourced before running tests"
     default: "apps/chat-e2e/.env.ci"

@@ -2,7 +2,7 @@ name: Release Workflow
 
 on:
   push:
-    branches: [development, release-0.*]
+    branches: [development-legacy, release-0.*]
   workflow_dispatch:
     inputs:
       promote:
@@ -27,7 +27,9 @@ jobs:
       promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
       node-version: 24
       filter-version: '0\.[0-9]+'
+      primary-branch-pattern: '^development-legacy$'
       release-branch-pattern: '^release-0\.[0-9]+$'
+      docker-development-tag: 'development-legacy'
       maximize-build-space: true
       draft-stable-releases: true
     secrets: inherit

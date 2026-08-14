@@ -10,10 +10,10 @@ on:
 permissions: {}
 
 jobs:
-  trigger:
+  trigger-legacy:
     if: |
-      (github.event_name == 'workflow_dispatch' && github.event.ref == 'refs/heads/development') ||
-      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development')
+      (github.event_name == 'workflow_dispatch' && github.event.ref == 'refs/heads/development-legacy') ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development-legacy')
     strategy:
       fail-fast: false
       matrix:
@@ -35,8 +35,8 @@ jobs:
 
   trigger-ng:
     if: |
-      (github.event_name == 'workflow_dispatch' && github.event.ref == 'refs/heads/development-1.0') ||
-      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development-1.0')
+      (github.event_name == 'workflow_dispatch' && github.event.ref == 'refs/heads/development') ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development')
     strategy:
       fail-fast: false
       matrix:
