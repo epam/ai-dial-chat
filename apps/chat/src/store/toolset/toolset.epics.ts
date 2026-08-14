@@ -29,6 +29,7 @@ import {
   isPredefinedEntity,
 } from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
+import { parseLocalizedField } from '@/src/utils/app/marketplace-localization';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import {
   InternalRoute,
@@ -69,7 +70,7 @@ import {
   PublicationActions,
   UIActions,
 } from '@/src/store/actions';
-import { AuthSelectors } from '@/src/store/selectors';
+import { AuthSelectors, UISelectors } from '@/src/store/selectors';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
@@ -973,12 +974,17 @@ const loginToolsetSuccessEpic: AppEpic = (action$, state$) =>
     filter(({ payload }) => !payload.skipToastMessage),
     map(({ payload }) => {
       const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
+      const locale = UISelectors.selectLocale(state$.value);
+      const toolset = ToolsetSelectors.selectToolsetsMap(state$.value)[
+        payload.toolsetId
+      ];
       const isPublic =
         isEntityIdPublic({ id: payload.toolsetId }) ||
         isPredefinedEntity({ id: payload.toolsetId });
-      const name = getEntityNameFromId(payload.toolsetId, {
+      const nameFromId = getEntityNameFromId(payload.toolsetId, {
         removeVersion: true,
       });
+      const name = parseLocalizedField(locale, toolset?.name ?? nameFromId);
       const version = getVersionFromId(payload.toolsetId);
 
       return UIActions.showSuccessToast(
@@ -1027,12 +1033,17 @@ const logOutToolsetEpic: AppEpic = (action$, state$) =>
       }).pipe(
         switchMap(() => {
           const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
+          const locale = UISelectors.selectLocale(state$.value);
+          const toolset = ToolsetSelectors.selectToolsetsMap(state$.value)[
+            payload.toolsetId
+          ];
           const isPublic =
             isEntityIdPublic({ id: payload.toolsetId }) ||
             isPredefinedEntity({ id: payload.toolsetId });
-          const name = getEntityNameFromId(payload.toolsetId, {
+          const nameFromId = getEntityNameFromId(payload.toolsetId, {
             removeVersion: true,
           });
+          const name = parseLocalizedField(locale, toolset?.name ?? nameFromId);
           const version = getVersionFromId(payload.toolsetId);
 
           return refreshToolset$(payload.toolsetId, state$.value).pipe(
