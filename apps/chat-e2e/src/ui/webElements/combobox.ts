@@ -19,7 +19,7 @@ export class Combobox extends BaseElement {
   public selectedPills = this.getChildElementBySelector(
     ComboboxSelectors.selectedPills,
   );
-  public listboxMenu = new ListboxMenu(this.page);
+  public listboxMenu!: ListboxMenu;
 
   getListboxMenu(): ListboxMenu {
     if (!this.listboxMenu) {

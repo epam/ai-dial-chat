@@ -381,7 +381,6 @@ export const ExpectedConstants = {
   allowedToolsLabelSubtitle:
     'The list of tools will be available after filling in the definition and authentication section',
   oAuthNotSupportedError: 'MCP server does not support OAuth authentication',
-  tokenEndpointAuthMethodLabel: 'Token Endpoint Authentication Method',
   tokenEndpointAuthMethodLabels: {
     [TokenEndpointAuthMethod.ClientSecretBasic]: 'Client secret (HTTP Basic)',
     [TokenEndpointAuthMethod.ClientSecretPost]: 'Client secret (POST body)',

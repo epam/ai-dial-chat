@@ -82,7 +82,7 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
     this.oAuthLoginForm.getChildElementBySelector(
       AddToolsetSettingsFormSelector.tokenEndpointAuthMethodContainer,
     );
-  public tokenEndpointAuthMethodListboxMenu = new ListboxMenu(this.page);
+  public tokenEndpointAuthMethodListboxMenu!: ListboxMenu;
   public getTokenEndpointAuthMethodListboxMenu() {
     if (!this.tokenEndpointAuthMethodListboxMenu) {
       this.tokenEndpointAuthMethodListboxMenu = new ListboxMenu(this.page);
