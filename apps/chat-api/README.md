@@ -99,7 +99,7 @@ At least one identity provider (see [Auth provider environment variables](#auth-
 **Optional:**
 
 | Variable                                | Default                        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| --------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- | --- |
+| --------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `PORT`                                  | `5000`                         | HTTP server port                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `API_PREFIX`                            | `api`                          | Global route prefix for all API endpoints                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `CORS_ORIGIN`                           | `http://localhost:4207`        | Allowed CORS origin for frontend                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
@@ -133,7 +133,7 @@ At least one identity provider (see [Auth provider environment variables](#auth-
 | `UTILITY_NAMING_TIMEOUT_MS`             | `10000`                        | Timeout in milliseconds for utility-model conversation naming requests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `RESPONSES_API_ENABLED`                 | `false`                        | Server-only kill switch for routing eligible generations through the OpenAI Responses API. Even when a deployment reports `features.responsesApi=true`, Responses is only used when this is also `true`; otherwise Chat Completions is used. Not exposed to the frontend. Takes effect on the next service restart.                                                                                                                                                                                                                                                                  |
 | `FEATURED_MODEL_IDS`                    | —                              | Comma-separated list of model (or application) IDs to mark as featured in the catalog. Matching is exact and case-sensitive against the item's `id` field. Example: `chat-hub-v2,gpt-4o,dial-rag`. Takes effect on the next service restart; changing it without a restart has no effect.                                                                                                                                                                                                                                                                                            |
-| `HIDDEN_ENTITY_TAGS`                    | No                             | A special topics name for models and toolsets that should remain hidden in the Catalog but be visible in the Quick App 2.0 form.                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Any string |     |
+| `HIDDEN_ENTITY_TAGS`                    | `[]`                           | Comma-separated topic tags marking models and toolsets that stay hidden in the Catalog while remaining visible in the Quick App 2.0 form. Example: `internal,experimental`. |
 | `ALLOWED_IFRAME_ORIGINS`                | —                              | Comma-separated list of origins allowed to frame this app and be loaded by it (added to CSP `frame-ancestors` and `frame-src`). Each entry must be an origin only (`scheme://host[:port]`, no path or query string) with an `https://` (or `http://` for local development only) scheme. Required for chat overlay mode and iframe integrations such as Quick Apps editors. Example: `https://quickapps.example.com`                                                                                                                                                                 |
 | `OVERLAY_ENABLED`                       | `false`                        | Enables embedded chat overlay runtime mode. Has no effect unless `ALLOWED_IFRAME_ORIGINS` also includes at least one allowed host origin.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `OVERLAY_SANDBOX_ENABLED`               | `false`                        | Serves the overlay sandbox static app at `/overlay-sandbox/`. Intended for development/test environments only; the route is not served when disabled.                                                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -289,13 +289,19 @@ Google has no host variable (issuer is the fixed `https://accounts.google.com`) 
 **Development mode:**
 
 ```bash
-npm run start:api
+npm run start:api          # same as: npm exec nx serve chat-api
 ```
 
-**Development mode (watch mode):**
+**Development mode with webpack HMR:**
 
 ```bash
-npx nx serve chat-api
+npm run start:api:dev
+```
+
+**Start both the frontend and the API:**
+
+```bash
+npm run start:all
 ```
 
 **Production build:**
@@ -304,16 +310,13 @@ npx nx serve chat-api
 npm run build && npm run build:api
 ```
 
-**Build and start both frontend and API:**
-
-```bash
-npm run start:all
-```
+Output lands in `apps/chat-api/dist/` (and `apps/chat/dist/` for the frontend it
+serves); run it with `node apps/chat-api/dist/main.js`.
 
 The API will be available at:
 
 - **API**: `http://localhost:5000/api`
-- **Swagger Docs**: `http://localhost:5000/api/docs`
+- **Swagger Docs**: `http://localhost:5000/api/docs` (development only)
 - **Health Check**: `http://localhost:5000/api/health`
 
 ## API Documentation
@@ -327,78 +330,115 @@ Interactive API documentation is available at `/api/docs` when the application i
 
 ## API Endpoints
 
-### Health
+Business endpoints are URI-versioned: `main.ts` sets a global `api` prefix and
+enables `VersioningType.URI`, so a controller declared as
+`@Controller({ path: 'conversations', version: '1' })` resolves to
+`/api/v1/conversations`. Infrastructure endpoints (health, themes) are
+unversioned by design.
 
-- **GET** `/api/health` - Application health status
-  - Returns: `{ status: "ok", timestamp: "...", version: "1.0.0" }`
+Swagger at `/api/docs` is the authoritative per-route reference — the table below
+maps each backend domain to its base path.
 
-### Themes
+### Infrastructure
 
-- **GET** `/api/themes` - Get themes configuration
-  - Returns: Theme configuration object
-  - Errors: 404, 502, 503
+| Method | Path                | Description                                                                 |
+| ------ | ------------------- | --------------------------------------------------------------------------- |
+| `GET`  | `/api/health`       | Health status: `{ status, timestamp, version }` (`version` from `CHAT_VERSION`) |
+| `GET`  | `/api/themes`       | Theme configuration. Errors: 404, 502, 503                                   |
+| `GET`  | `/api/themes/icon`  | Theme icon SVG by validated `iconName`. Errors: 400, 404, 502, 503          |
 
-- **GET** `/api/themes/icon?iconName={name}` - Get theme icon SVG
-  - Query params: `iconName` (validated, alphanumeric + dash/underscore/dot only)
-  - Returns: SVG content with `image/svg+xml` content type
-  - Errors: 400 (invalid name), 404, 502, 503
+### Versioned domains (`/api/v1/...`)
+
+| Base path              | Source folder           | Responsibility                                                     |
+| ---------------------- | ----------------------- | ------------------------------------------------------------------ |
+| `auth`                 | `auth/`                 | Provider list, login/callback, logout, session, CSRF, `me`          |
+| `client-config`        | `app-config/`           | Server-resolved client configuration and feature flags             |
+| `user-config`          | `user-config/`          | Per-user persisted preferences                                     |
+| `chat`                 | `chat/`                 | Chat completions, streamed over SSE                                |
+| `conversations`        | `conversations/`        | Conversation CRUD, plus publish operations                         |
+| `models`               | `models/`               | Available models                                                   |
+| `deployments`          | `deployments/`          | Deployment metadata and usage limits                               |
+| `applications`         | `applications/`         | Application CRUD                                                   |
+| `application-schemas`  | `application-schemas/`  | Quick App / custom application schemas                             |
+| `toolsets`             | `toolsets/`             | Toolsets and their credential state                                |
+| `skills`               | `skills/`               | Skill CRUD and skill file transfer                                 |
+| `prompts`              | `prompts/`              | Prompt CRUD and folders                                            |
+| `files`                | `files/`                | File upload/download, archive upload, ZIP streaming                |
+| `share`                | `share/`                | Share links and recipient management                               |
+| `catalog`              | `publish/`              | Publication requests and published-resource listing                |
+| `publish`              | `publish/`              | Publication rules                                                  |
+| `rate`                 | `rate/`                 | Message rating (like/dislike) and feedback                         |
+| `transcription`        | `transcription/`        | Audio transcription through the ASR model                          |
+| `scheduled-tasks`      | `scheduled-tasks/`      | DIAL Scheduler proxy — schedules and run history                   |
+| `client-channel`       | `client-channel/`       | Server-initiated interactions (mid-stream toolset sign-in), SSE    |
+| `offline-credentials`  | `offline-credentials/`  | Offline credential consent flow                                    |
+| `external-services`    | `external-services/`    | External service registry and sign-in state                        |
+| `apps`                 | `app/`                  | Root application controller                                        |
+
+`libs/chat-api-client` is generated from this surface. After changing any
+controller or DTO, run `npm run openapi` and `npm run openapi:check` — handler
+names become the generated SDK's method names, so name them like
+`listModels` / `getCurrentUser`.
 
 ## Project Structure
 
 ```
 apps/chat-api/src/
-├── app/                    # Application module and core service
-│   ├── app.module.ts      # Root module with global configuration
-│   ├── app.controller.ts  # Base controller
-│   └── app.service.ts     # AI DIAL SDK initialization
-├── common/                 # Shared utilities and interceptors
-│   └── interceptors/
-│       └── metrics.interceptor.ts  # Request metrics logging
-├── config/                 # Configuration and validation
-│   ├── environment.config.ts  # Environment variables schema
-│   └── validation.ts      # Validation function
-├── health/                 # Health check endpoint
-│   └── health.controller.ts
-├── telemetry/               # OpenTelemetry bootstrap, logger bridge, metrics, traceparent header
-│   ├── otel-config.ts
-│   ├── otel-sdk.ts
-│   ├── nestjs-otel-logger.ts
-│   ├── http-metrics.ts
-│   └── traceparent.middleware.ts
-├── themes/                 # Theme management
-│   ├── dto/               # Data transfer objects
-│   │   └── get-theme-icon.dto.ts
-│   ├── theme.controller.ts
-│   ├── theme.service.ts
-│   ├── theme.controller.spec.ts  # Integration tests
-│   └── theme.service.spec.ts     # Unit tests
-└── main.ts                 # Application bootstrap
+├── app/                     # Root module, DIAL Core service, static-asset wiring
+├── auth/                    # OIDC providers, session cookie, refresh, CSRF, guards
+├── common/                  # Shared filters, interceptors, utilities
+├── config/                  # environment.config.ts (validated env schema) + validation
+├── constants/               # Shared constants
+├── dial/                    # DIAL Core module and shared upstream client
+├── models/                  # Shared backend models
+├── openapi/                 # OpenAPI generation helpers
+├── telemetry/               # OpenTelemetry bootstrap, logger bridge, metrics, traceparent
+├── health/                  # Health check endpoint
+├── themes/                  # Theme configuration and icon proxy
+├── <domain>/                # One folder per domain from the table above, each with
+│                            #   *.controller.ts, *.service.ts, *.module.ts, dto/, *.spec.ts
+├── openapi-spec.ts          # Spec emission entry point
+└── main.ts                  # Application bootstrap
 ```
+
+Each domain folder follows the same NestJS layout: a thin controller carrying
+`@ApiTags` / `@ApiOperation` / `@ApiResponse` / `@Throttle`, a service holding the
+logic with `Logger` and `ConfigService` injected, DTO classes with
+`class-validator` and `@ApiProperty` metadata, and co-located `*.spec.ts` tests.
 
 ## Error Handling
 
 The API returns appropriate HTTP status codes:
 
-| Status | Description                                  |
-| ------ | -------------------------------------------- |
-| `200`  | Success                                      |
-| `400`  | Bad Request (validation error)               |
-| `404`  | Resource Not Found                           |
-| `502`  | Bad Gateway (external service error)         |
-| `503`  | Service Unavailable (timeout or unreachable) |
+| Status | Description                                                     |
+| ------ | --------------------------------------------------------------- |
+| `200`  | Success                                                         |
+| `400`  | Bad Request (validation error)                                   |
+| `401`  | Unauthorized (no valid session or header token)                  |
+| `403`  | Forbidden (authenticated but not permitted, or CSRF rejection)   |
+| `404`  | Resource Not Found                                              |
+| `413`  | Payload Too Large (upload exceeds the configured byte limit)     |
+| `422`  | Unprocessable Entity (archive/skill upload fails entry limits)   |
+| `429`  | Too Many Requests (throttled)                                   |
+| `502`  | Bad Gateway (external service error)                             |
+| `503`  | Service Unavailable (timeout, unreachable, or unconfigured feature) |
 
-All errors include descriptive messages to help with debugging.
+All errors include descriptive messages to help with debugging. When
+OpenTelemetry tracing is enabled, JSON error bodies also carry a `traceparent`
+property so a client failure can be correlated with server traces and logs.
 
 ## Security & Performance Features
 
 ### Security
 
 - **Environment Variable Validation**: Required variables are validated at startup using class-validator
-- **Input Validation**: All endpoints use DTOs with validation decorators
-- **Path Traversal Protection**: Icon names are validated with regex to prevent directory traversal
-- **Security Headers**: Helmet middleware with CSP, HSTS, and other security headers
+- **Input Validation**: A global `ValidationPipe` (`whitelist`, `forbidNonWhitelisted`, `transform`) plus per-endpoint DTOs with validation decorators
+- **Path Traversal Protection**: Any string reaching a path, URL, or log line is constrained by an allowlist regex
+- **Session Security**: Encrypted session cookie, `HttpOnly` + `Secure` + `SameSite=Lax`, `__Host-` prefixed when host-scoped, with CSRF protection on state-changing requests
+- **Security Headers**: Helmet middleware with CSP, HSTS, and other security headers; `frame-ancestors` driven by `ALLOWED_IFRAME_ORIGINS`
 - **CORS Configuration**: Restricted to configured origin with credentials support
 - **Rate Limiting**: Throttling to prevent abuse (100 req/min default, customizable per endpoint)
+- **Secret Hygiene**: Tokens, refresh tokens, and cookie payloads are never logged
 
 ### Performance
 
@@ -410,15 +450,26 @@ All errors include descriptive messages to help with debugging.
 ## Testing
 
 ```bash
-# Run all tests
-npm test
-
 # Run tests for chat-api only
-npx nx test chat-api
+npm exec nx test chat-api
 
 # Run tests with coverage
-npx nx test chat-api --coverage
+npm exec nx test chat-api --coverage
+
+# Lint
+npm exec nx lint chat-api
+
+# Build (when bundling or Nest startup is affected)
+npm exec nx build chat-api
+
+# After an endpoint contract change
+npm run openapi && npm run openapi:check
 ```
+
+Tests are co-located as `*.spec.ts` next to the source — `@nestjs/testing` for
+units, `supertest` for e2e. A domain's tests cover the happy path, every thrown
+exception, validation rejections (including path traversal), and the rate-limit
+boundary.
 
 ## CORS Configuration
 
@@ -610,8 +661,34 @@ Check the logs for detailed error messages including the external service URL an
 
 Adjust the `THEMES_SERVICE_TIMEOUT_MS` environment variable if the external theme service is slow to respond.
 
+### Login does nothing / no providers offered
+
+`GET /api/v1/auth/providers` returns an empty list when no provider's
+`CLIENT_ID` variable is set. A provider whose `CLIENT_ID` is set but is missing
+another required field fails the boot with an error naming that variable.
+
+### `503` from a feature endpoint
+
+Feature-gated domains fail fast rather than silently degrading. Scheduled tasks
+need `SCHEDULER_APP_ID` (and `SCHEDULER_SERVICE_ID` for create/update); check
+the relevant variables in the table above.
+
+### `openapi:check` fails in CI
+
+The committed client in `libs/chat-api-client` drifted from the current spec.
+Run `npm run openapi`, then build and lint `chat-api-client`, and commit the
+regenerated output — never hand-edit generated files.
+
 ## Related Documentation
 
+- [Architecture](../../docs/architecture.md)
+- [Authentication (BFF, encrypted cookie)](../../docs/auth/auth-bff-encrypted-cookie.md)
+- [Auth Diagrams](../../docs/auth/auth-diagrams/README.md)
+- [Testing the Auth Implementation](../../docs/auth/testing-current-auth-implementation.md)
+- [Environment Variables Migration Guide](../../docs/environment-variables-migration-guide.md)
+- [Theme Customization](../../docs/theme-customization.md)
+- [Responses API Integration](../../docs/responses-api-integration.md)
+- [NestJS best practices for this app](../../.claude/rules/nestjs-best-practices.md)
 - [NestJS Documentation](https://docs.nestjs.com/)
 - [AI DIAL SDK](https://github.com/epam/ai-dial-sdk)
 - [Swagger/OpenAPI](https://swagger.io/specification/)
