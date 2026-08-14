@@ -49,6 +49,7 @@ import {
 } from '../../../types/toolset-auth';
 import { getCredentialsUiState } from '../../../utils/toolset-credentials';
 import { CredentialsApiKeyOverlay } from './CredentialsApiKeyOverlay/CredentialsApiKeyOverlay';
+import styles from './Header.module.scss';
 import { ShareButton } from './ShareButton/ShareButton';
 
 const defaultManageCredentialsActionLabel = (

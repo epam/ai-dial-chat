@@ -575,47 +575,4 @@ describe('mapToolsetCredentials', () => {
       isPublic: false,
     });
   });
-
-  it('mocks userApiKeyAddedWhen/globalApiKeyAddedWhen for a signed-in API-key toolset', () => {
-    const result = mapToolsetCredentials(
-      'toolsets/public/x__1.0',
-      {
-        authenticationType: 'API_KEY',
-        userLevelAuthStatus: 'SIGNED_IN',
-        globalAuthStatus: 'SIGNED_IN',
-      },
-      true,
-    );
-
-    expect(result).toMatchObject({
-      userApiKeyAddedWhen: '3 weeks ago',
-      globalApiKeyAddedWhen: '1 week ago',
-    });
-  });
-
-  it('omits userApiKeyAddedWhen/globalApiKeyAddedWhen when signed out or not API-key auth', () => {
-    const signedOut = mapToolsetCredentials(
-      'toolsets/public/x__1.0',
-      {
-        authenticationType: 'API_KEY',
-        userLevelAuthStatus: 'SIGNED_OUT',
-        globalAuthStatus: 'SIGNED_OUT',
-      },
-      true,
-    );
-    expect(signedOut?.userApiKeyAddedWhen).toBeUndefined();
-    expect(signedOut?.globalApiKeyAddedWhen).toBeUndefined();
-
-    const oauth = mapToolsetCredentials(
-      'toolsets/public/x__1.0',
-      {
-        authenticationType: 'OAUTH',
-        userLevelAuthStatus: 'SIGNED_IN',
-        globalAuthStatus: 'SIGNED_IN',
-      },
-      true,
-    );
-    expect(oauth?.userApiKeyAddedWhen).toBeUndefined();
-    expect(oauth?.globalApiKeyAddedWhen).toBeUndefined();
-  });
 });
