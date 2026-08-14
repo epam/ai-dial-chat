@@ -99,6 +99,8 @@ const makeItem = (overrides?: Partial<CatalogItem>): CatalogItem => ({
 describe('CredentialsSection', () => {
   it('renders nothing when the item has no credentials', () => {
     const { container } = render(<CredentialsSection item={makeItem()} />);
+    // Component renders null; no semantic query can assert total absence of output.
+    // eslint-disable-next-line testing-library/no-node-access
     expect(container.firstChild).toBeNull();
   });
 

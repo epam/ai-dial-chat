@@ -123,6 +123,14 @@ const ScrollHarness = forwardRef<ScrollHarnessHandle, ScrollHarnessProps>(
       >
         <div
           ref={(el) => {
+            /*
+             * `containerRef.current` is not guaranteed to be set yet here
+             * (React commits child refs before parent refs), so this walks
+             * the live DOM tree the harness itself just built rather than
+             * querying rendered output — there is no Testing Library query
+             * for "the parent node of the element whose ref just fired".
+             */
+            // eslint-disable-next-line testing-library/no-node-access
             const container = el?.parentElement as HTMLDivElement | null;
             if (el && container) configureContent(el, container, contentHeight);
             assignRef(contentRef, el);
@@ -132,8 +140,10 @@ const ScrollHarness = forwardRef<ScrollHarnessHandle, ScrollHarnessProps>(
             <div
               key={index}
               ref={(el) => {
+                /* eslint-disable testing-library/no-node-access */
                 const container = el?.parentElement
                   ?.parentElement as HTMLDivElement | null;
+                /* eslint-enable testing-library/no-node-access */
                 if (el && container)
                   setScrolledRect(el, container, {
                     top: index * 100,
@@ -152,17 +162,25 @@ const ScrollHarness = forwardRef<ScrollHarnessHandle, ScrollHarnessProps>(
 
 ScrollHarness.displayName = 'ScrollHarness';
 
+/*
+ * The scroll container and spacer are plain unlabeled `<div>`s with no
+ * accessible role or text (they exist purely for layout/scroll mechanics),
+ * so there is no semantic query to reach them — structural traversal from
+ * the render `container` is the only option for this CSS/layout-level test.
+ */
 const getScrollContainer = (container: HTMLElement) =>
+  // eslint-disable-next-line testing-library/no-node-access
   container.firstElementChild as HTMLDivElement;
 
 const getSpacer = (container: HTMLElement) =>
+  // eslint-disable-next-line testing-library/no-node-access
   getScrollContainer(container).lastElementChild as HTMLDivElement;
 
 const renderStreamingReply = (contentHeight = 650) => {
   const harnessRef = createRef<ScrollHarnessHandle>();
   const initialMessages = makeMessages(4);
   const replyMessages = makeMessages(6);
-  const result = render(
+  const view = render(
     <ScrollHarness
       ref={harnessRef}
       conversationId="conversation-a"
@@ -177,7 +195,7 @@ const renderStreamingReply = (contentHeight = 650) => {
     harnessRef.current?.armAnchor(4);
   });
 
-  result.rerender(
+  view.rerender(
     <ScrollHarness
       ref={harnessRef}
       conversationId="conversation-a"
@@ -188,11 +206,11 @@ const renderStreamingReply = (contentHeight = 650) => {
   );
 
   return {
-    ...result,
+    ...view,
     harnessRef,
     replyMessages,
-    scrollContainer: getScrollContainer(result.container),
-    spacer: getSpacer(result.container),
+    scrollContainer: getScrollContainer(view.container),
+    spacer: getSpacer(view.container),
   };
 };
 
@@ -297,10 +315,8 @@ describe('useConversationScroll', () => {
     const { scrollContainer, spacer } = renderStreamingReply();
     expect(spacer.style.height).toBe('150px');
 
-    act(() => {
-      scrollContainer.scrollTop = 500;
-      fireEvent.scroll(scrollContainer);
-    });
+    scrollContainer.scrollTop = 500;
+    fireEvent.scroll(scrollContainer);
 
     expect(scrollContainer.scrollTop).toBe(400);
   });
@@ -319,17 +335,13 @@ describe('useConversationScroll', () => {
       />,
     );
 
-    act(() => {
-      scrollContainer.scrollTop = 650;
-      fireEvent.scroll(scrollContainer);
-    });
+    scrollContainer.scrollTop = 650;
+    fireEvent.scroll(scrollContainer);
 
     expect(scrollContainer.scrollTop).toBe(600);
 
-    act(() => {
-      scrollContainer.scrollTop = 550;
-      fireEvent.scroll(scrollContainer);
-    });
+    scrollContainer.scrollTop = 550;
+    fireEvent.scroll(scrollContainer);
 
     expect(scrollContainer.scrollTop).toBe(550);
   });
@@ -338,10 +350,8 @@ describe('useConversationScroll', () => {
     const { scrollContainer, spacer } = renderCompletedShortReply();
     scrollToMock.mockClear();
 
-    act(() => {
-      scrollContainer.scrollTop = 250;
-      fireEvent.scroll(scrollContainer);
-    });
+    scrollContainer.scrollTop = 250;
+    fireEvent.scroll(scrollContainer);
 
     expect(spacer.style.height).toBe('0px');
     expect(scrollContainer.scrollTop).toBe(250);

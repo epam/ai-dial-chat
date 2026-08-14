@@ -54,6 +54,9 @@ export const resumeScheduledTask = (
 ): Promise<ScheduledTaskDto> =>
   scheduledTasksApi.resumeScheduledTask({ scheduleId });
 
+export const deleteScheduledTask = (scheduleId: string): Promise<void> =>
+  scheduledTasksApi.deleteScheduledTask({ scheduleId });
+
 export const listScheduledTaskRuns = ({
   scheduleId,
   limit,

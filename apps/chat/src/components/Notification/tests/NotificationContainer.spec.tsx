@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -81,7 +81,7 @@ describe('NotificationContainer', () => {
 
   it('renders nothing when there are no notifications', () => {
     const { container } = render(<NotificationContainer />);
-    expect(container.firstChild).toBeNull();
+    expect(container.innerHTML).toBe('');
   });
 
   it.each(['error', 'warning', 'info', 'success', 'loading'])(
@@ -126,7 +126,7 @@ describe('NotificationContainer', () => {
   it('calls dismissNotification with the item id when the dismiss button is clicked', () => {
     notifications = [makeItem({ id: 'item-1' })];
     render(<NotificationContainer />);
-    screen.getByRole('button', { name: 'Close notification' }).click();
+    fireEvent.click(screen.getByRole('button', { name: 'Close notification' }));
     expect(dismissNotification).toHaveBeenCalledWith('item-1');
   });
 

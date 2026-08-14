@@ -187,9 +187,7 @@ describe('PublishAccessRuleEditor', () => {
     expect(isDisabled(screen.getByRole('button', { name: 'Save' }))).toBe(true);
     const describedBy = patternInput.getAttribute('aria-describedby');
     expect(describedBy).toBeTruthy();
-    expect(document.getElementById(describedBy as string)).toBe(
-      screen.getByRole('alert'),
-    );
+    expect(screen.getByRole('alert').id).toBe(describedBy);
   });
 
   it('treats an empty/whitespace-only regex as invalid', async () => {
@@ -288,6 +286,6 @@ describe('PublishAccessRuleEditor', () => {
 
   it('moves focus into the dialog when it opens', () => {
     renderEditor();
-    expect(document.activeElement).toBe(screen.getByRole('dialog'));
+    expect(screen.getByRole('dialog').matches(':focus')).toBe(true);
   });
 });

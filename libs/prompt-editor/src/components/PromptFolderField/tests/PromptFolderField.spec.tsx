@@ -133,9 +133,7 @@ describe('PromptFolderField', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
-    await waitFor(() =>
-      expect(screen.getByText('Folder already exists')).toBeTruthy(),
-    );
+    expect(await screen.findByText('Folder already exists')).toBeTruthy();
     expect(screen.getByRole('textbox', { name: /Folder name/ })).toBeTruthy();
   });
 

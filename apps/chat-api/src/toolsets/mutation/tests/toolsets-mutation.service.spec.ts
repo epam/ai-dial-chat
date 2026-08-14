@@ -157,7 +157,7 @@ describe('ToolsetsMutationService', () => {
       );
       const sentBody = saveSpy.mock.calls[0][2].body as Record<string, unknown>;
       expect(sentBody).toEqual({
-        displayName: { plainValue: 'My toolset' },
+        displayName: 'My toolset',
         displayVersion: '0.0.1',
         endpoint: 'https://my-toolset.example.com/mcp',
         transport: 'HTTP',
@@ -196,7 +196,8 @@ describe('ToolsetsMutationService', () => {
 
       const sentBody = saveSpy.mock.calls[0][2].body as Record<string, unknown>;
       expect(sentBody.displayName).toEqual({
-        localeMap: { en: 'My toolset', de: 'Mein Toolset' },
+        en: 'My toolset',
+        de: 'Mein Toolset',
       });
       expect(sentBody.description).toEqual({
         en: 'desc',
@@ -348,7 +349,7 @@ describe('ToolsetsMutationService', () => {
             Authorization: 'Bearer token',
           }),
           body: expect.objectContaining({
-            displayName: { plainValue: 'My toolset' },
+            displayName: 'My toolset',
           }),
         }),
       );
@@ -372,11 +373,12 @@ describe('ToolsetsMutationService', () => {
 
       const sentBody = saveSpy.mock.calls[0][2].body as Record<string, unknown>;
       expect(sentBody.displayName).toEqual({
-        localeMap: { en: 'My toolset', de: 'Mein Toolset' },
+        en: 'My toolset',
+        de: 'Mein Toolset',
       });
     });
 
-    it('still produces a plainValue displayName when locales is omitted (regression guard)', async () => {
+    it('still produces a plain-string displayName when locales is omitted (regression guard)', async () => {
       const { service } = makeWriteService();
       const saveSpy = vi
         .spyOn(service['dialClient'].client, 'saveToolSet')
@@ -385,7 +387,7 @@ describe('ToolsetsMutationService', () => {
       await service.updateToolset('user1', 'token', id, baseBody);
 
       const sentBody = saveSpy.mock.calls[0][2].body as Record<string, unknown>;
-      expect(sentBody.displayName).toEqual({ plainValue: 'My toolset' });
+      expect(sentBody.displayName).toEqual('My toolset');
     });
 
     it('preserves hidden OAuth auth settings when update omits a new client secret', async () => {

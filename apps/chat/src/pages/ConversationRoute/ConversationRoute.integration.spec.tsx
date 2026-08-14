@@ -1,4 +1,5 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { ReactNode, useEffect, useState } from 'react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -262,14 +263,10 @@ describe('ConversationRoute — new chat model inheritance (issue #8150 Case 3)'
       );
     });
 
-    await act(async () => {
-      screen.getByText('Open other conversation').click();
-    });
+    await userEvent.click(screen.getByText('Open other conversation'));
     expect(screen.getByText('Viewing conversation')).toBeTruthy();
 
-    await act(async () => {
-      screen.getByText('New chat').click();
-    });
+    await userEvent.click(screen.getByText('New chat'));
 
     await waitFor(() => {
       expect(screen.getByLabelText('Selected deployment').textContent).toBe(

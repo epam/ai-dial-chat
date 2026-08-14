@@ -69,6 +69,12 @@ describe('StagesPanel', () => {
       />,
     );
 
+    /*
+     * The outermost panel div carries the CSS custom properties and custom
+     * className but has no ARIA role of its own — a CSS-level check with no
+     * semantic query available.
+     */
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
     const panel = container.firstElementChild as HTMLElement;
 
     expect(panel.className).toContain('custom-panel');
@@ -87,12 +93,12 @@ describe('StagesPanel', () => {
       />,
     );
 
-    expect(
-      screen.getByText('Running step').closest('span')?.className,
-    ).toContain('dial-body-text');
-    expect(
-      screen.getByText('Completed step').closest('span')?.className,
-    ).toContain('dial-body-text');
+    expect(screen.getByText('Running step').className).toContain(
+      'dial-body-text',
+    );
+    expect(screen.getByText('Completed step').className).toContain(
+      'dial-body-text',
+    );
   });
 
   it('defaults the row name to dial-small-text and expanded content to dial-tiny-text', () => {
@@ -105,12 +111,12 @@ describe('StagesPanel', () => {
       />,
     );
 
-    expect(
-      screen.getByText('Completed step').closest('span')?.className,
-    ).toContain('dial-small-text');
+    expect(screen.getByText('Completed step').className).toContain(
+      'dial-small-text',
+    );
 
     fireEvent.click(screen.getByRole('button'));
-    expect(screen.getByText('Detail text').closest('p')?.className).toContain(
+    expect(screen.getByText('Detail text').className).toContain(
       'dial-tiny-text',
     );
   });

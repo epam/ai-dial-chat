@@ -321,6 +321,7 @@ describe('fromUpstreamSchedule', () => {
       trigger: { date: '2026-07-24T09:00:00.000Z', cron: undefined },
       serviceId: 'dial-oauth',
       isActive: false,
+      isDeleted: false,
     });
   });
 
@@ -416,6 +417,7 @@ describe('fromUpstreamSchedule', () => {
       displayName: 'Hourly check',
       trigger: { date: undefined, cron: { fields: { minute: '0' } } },
       isActive: false,
+      isDeleted: false,
     });
   });
 
@@ -519,6 +521,57 @@ describe('fromUpstreamSchedule', () => {
 
       expect(() => fromUpstreamSchedule(upstream)).not.toThrow();
       expect(fromUpstreamSchedule(upstream).isActive).toBeUndefined();
+    });
+  });
+
+  describe('isDeleted derivation', () => {
+    it('maps is_deleted true to isDeleted true', () => {
+      const upstream: UpstreamScheduleResponse = {
+        id: 'sched_910',
+        display_name: 'Soft-deleted schedule',
+        trigger: {},
+        is_deleted: true,
+      };
+
+      expect(fromUpstreamSchedule(upstream).isDeleted).toBe(true);
+    });
+
+    it('maps is_deleted false to isDeleted false', () => {
+      const upstream: UpstreamScheduleResponse = {
+        id: 'sched_911',
+        display_name: 'Active schedule',
+        trigger: {},
+        is_deleted: false,
+      };
+
+      expect(fromUpstreamSchedule(upstream).isDeleted).toBe(false);
+    });
+
+    it('defaults isDeleted to false without throwing when is_deleted is absent', () => {
+      const upstream: UpstreamScheduleResponse = {
+        id: 'sched_912',
+        display_name: 'No deletion field',
+        trigger: {},
+      };
+
+      expect(() => fromUpstreamSchedule(upstream)).not.toThrow();
+      expect(fromUpstreamSchedule(upstream).isDeleted).toBe(false);
+    });
+
+    it('maps a soft-deleted schedule with a null next_run_time without treating deletion as evidence of anything else', () => {
+      const upstream: UpstreamScheduleResponse = {
+        id: 'sched_913',
+        display_name: 'Soft-deleted with no next run',
+        trigger_type: 'cron',
+        is_deleted: true,
+        next_run_time: undefined,
+      };
+
+      const result = fromUpstreamSchedule(upstream);
+
+      expect(result.isDeleted).toBe(true);
+      expect(result.nextRunTime).toBeUndefined();
+      expect(result.isActive).toBe(false);
     });
   });
 });

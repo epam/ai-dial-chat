@@ -37,6 +37,12 @@ const renderTable = (props?: Partial<Parameters<typeof MarkdownTable>[0]>) =>
 
 const makeScrollable = (hasContentBeyondEnd: boolean) => {
   const table = screen.getByRole('table');
+  /*
+   * The scroll container has no accessible role/name when content fits (it
+   * only gains role="region" once scrollable), so it cannot be reached with
+   * a semantic query — DOM traversal from the table is the only option.
+   */
+  // eslint-disable-next-line testing-library/no-node-access
   const scrollContainer = table.parentElement as HTMLElement;
 
   Object.defineProperties(scrollContainer, {
@@ -71,6 +77,7 @@ describe('MarkdownTable', () => {
     makeScrollable(false);
 
     const table = screen.getByRole('table');
+    // eslint-disable-next-line testing-library/no-node-access -- see makeScrollable above: no accessible role/name exists when content fits
     const scrollContainer = table.parentElement as HTMLElement;
 
     expect(scrollContainer.getAttribute('role')).toBeNull();

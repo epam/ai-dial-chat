@@ -32,6 +32,8 @@ describe('NameCellRenderer — selected state', () => {
     const { container } = render(
       <NameCellRenderer {...makeParams(makeItem())} />,
     );
+    // Checkmark icon is aria-hidden with no accessible role, so no semantic query can find it.
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
     expect(container.querySelector('svg')).toBeNull();
   });
 
@@ -41,6 +43,7 @@ describe('NameCellRenderer — selected state', () => {
         {...makeParams(makeItem({ id: '1' }), { selectedItemId: '1' })}
       />,
     );
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
     expect(container.querySelector('svg')).toBeTruthy();
   });
 
@@ -50,6 +53,7 @@ describe('NameCellRenderer — selected state', () => {
         {...makeParams(makeItem({ id: '1' }), { selectedItemId: '2' })}
       />,
     );
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
     expect(container.querySelector('svg')).toBeNull();
     expect(screen.getByText('Claude')).toBeTruthy();
   });
@@ -73,23 +77,26 @@ describe('NameCellRenderer — long version', () => {
   it('lets the name shrink instead of being pushed out', () => {
     render(<NameCellRenderer {...makeParams(makeItem())} />);
 
-    const heading = screen.getByText('Claude').closest('h3');
-    expect(heading?.className).toContain('min-w-0');
-    expect(heading?.className).toContain('shrink');
+    const heading = screen.getByRole('heading', { level: 3, name: 'Claude' });
+    expect(heading.className).toContain('min-w-0');
+    expect(heading.className).toContain('shrink');
   });
 });
 
 describe('NameCellRenderer — density', () => {
   it('renders the name at the smaller dense list-view size', () => {
     render(<NameCellRenderer {...makeParams(makeItem({ name: 'Claude' }))} />);
-    const heading = screen.getByText('Claude').closest('h3');
-    expect(heading?.className).toContain('dial-small-semi-text');
+    const heading = screen.getByRole('heading', { level: 3, name: 'Claude' });
+    expect(heading.className).toContain('dial-small-semi-text');
   });
 
   it('never renders a description, even when the item has one', () => {
     const { container } = render(
       <NameCellRenderer {...makeParams(makeItem({ description: 'desc' }))} />,
     );
+    // A bare <p> carries no role; checking that none exists at all has no
+    // semantic-query equivalent.
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
     expect(container.querySelector('p')).toBeNull();
     expect(screen.queryByText('desc')).toBeNull();
   });
@@ -98,6 +105,8 @@ describe('NameCellRenderer — density', () => {
     const { container } = render(
       <NameCellRenderer {...makeParams(makeItem())} />,
     );
+    // Inline width/height style is a CSS-level check with no semantic query.
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
     const badge = container.querySelector(
       '[style*="width"]',
     ) as HTMLElement | null;
