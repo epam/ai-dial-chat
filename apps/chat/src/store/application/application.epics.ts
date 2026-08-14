@@ -52,6 +52,7 @@ import {
   isMyEntity,
 } from '@/src/utils/app/id';
 import { isMarketplaceEditorStep } from '@/src/utils/app/marketplace';
+import { parseLocalizedField } from '@/src/utils/app/marketplace-localization';
 import { mergeFeatures } from '@/src/utils/app/models';
 import {
   getInternalPathname,
@@ -95,6 +96,7 @@ import {
   ConversationsSelectors,
   ModelsSelectors,
   ShareSelectors,
+  UISelectors,
 } from '@/src/store/selectors';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
@@ -849,8 +851,16 @@ const updateApplicationStatusSuccessEpic: AppEpic = (action$, state$) =>
       ].includes(payload.status),
     ),
     switchMap(({ payload }) => {
-      const { name } = parseEntityApiKey(payload.id, { parseVersion: true });
+      const locale = UISelectors.selectLocale(state$.value);
+      const application = ModelsSelectors.selectModelsMap(state$.value)[
+        payload.id
+      ];
+      const { name: nameFromId } = parseEntityApiKey(payload.id, {
+        parseVersion: true,
+      });
       const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
+
+      const name = parseLocalizedField(locale, application?.name ?? nameFromId);
 
       return isAdmin || !isEntityIdExternal(payload)
         ? of(
