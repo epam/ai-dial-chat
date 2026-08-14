@@ -147,13 +147,12 @@ dialTest(
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
 
-        const firstPageEntities = await agentAndToolsetSelectModal
-          .getEntities()
-          .getEntityNames();
+        const firstPageEntities =
+          await agentAndToolsetSelectModal.getPageEntityNames(0);
         await agentAndToolsetSelectModalSliderDots.nextArrow.click();
         await agentAndToolsetSelectModalSliderDotsAssertion.assertActivePage(1);
         baseAssertion.assertValuesAreNotEqual(
-          await agentAndToolsetSelectModal.getEntities().getEntityNames(),
+          await agentAndToolsetSelectModal.getPageEntityNames(1),
           firstPageEntities,
           ExpectedMessages.searchResultsAreCorrect,
         );
@@ -241,13 +240,12 @@ dialTest(
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textSecondary),
         );
 
-        const firstPageEntities = await agentAndToolsetSelectModal
-          .getEntities()
-          .getEntityNames();
+        const firstPageEntities =
+          await agentAndToolsetSelectModal.getPageEntityNames(0);
         await agentAndToolsetSelectModalSliderDots.openNextPageByDot();
         await agentAndToolsetSelectModalSliderDotsAssertion.assertActivePage(1);
         baseAssertion.assertValuesAreNotEqual(
-          await agentAndToolsetSelectModal.getEntities().getEntityNames(),
+          await agentAndToolsetSelectModal.getPageEntityNames(1),
           firstPageEntities,
           ExpectedMessages.searchResultsAreCorrect,
         );
@@ -255,12 +253,13 @@ dialTest(
         await agentAndToolsetSelectModalSliderDots.openPreviousPageByDot();
         await agentAndToolsetSelectModalSliderDotsAssertion.assertActivePage(0);
         baseAssertion.assertValuesAreEqual(
-          await agentAndToolsetSelectModal.getEntities().getEntityNames(),
+          await agentAndToolsetSelectModal.getPageEntityNames(0),
           firstPageEntities,
           ExpectedMessages.searchResultsAreCorrect,
         );
       },
     );
+
     await dialTest.step(
       'The Marketplace tab has more pages than My workspace',
       async () => {

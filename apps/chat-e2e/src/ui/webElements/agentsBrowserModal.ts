@@ -1,5 +1,6 @@
 import { ExpectedConstants } from '@/src/testData/expectedConstants';
 import { AgentsBrowserModalSelectors } from '@/src/ui/selectors';
+import { MarketplaceSelectors } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Popup } from '@/src/ui/webElements/common/popup';
 import { SliderDots } from '@/src/ui/webElements/common/sliderDots';
@@ -59,6 +60,21 @@ export class AgentsBrowserModal extends Popup {
 
   public getEntityByName(name: string): BaseElement {
     return this.getEntities().getEntity(name);
+  }
+
+  // Cards of one slider page only. A plain getEntities() covers every rendered
+  // page - the active one plus its neighbours - so it cannot tell them apart.
+  public getPageEntities(pageIndex: number): MarketplaceEntities {
+    return new MarketplaceEntities(
+      this.page,
+      this.getChildElementBySelector(
+        MarketplaceSelectors.marketplaceEntitiesSection,
+      ).getNthElement(pageIndex + 1),
+    );
+  }
+
+  public async getPageEntityNames(pageIndex: number): Promise<string[]> {
+    return this.getPageEntities(pageIndex).getEntityNames();
   }
 
   // The tab carries the accent-border class only when it is the active one.
