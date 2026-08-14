@@ -1,15 +1,24 @@
 # Chat API
 
-NestJS backend application for the chat platform. Provides REST API endpoints for theme configuration, serves the frontend application, and integrates with the EPAM AI DIAL SDK.
+NestJS backend-for-frontend for the AI DIAL Chat platform. It terminates
+authentication, brokers every call to DIAL Core, exposes a versioned REST API to
+the SPA, and serves the built frontend in production.
+
+The frontend never talks to DIAL Core directly: this service holds the session,
+attaches the caller's access token upstream, and adapts DIAL Core's surface into
+the endpoints `apps/chat` consumes.
 
 ## Features
 
 - 🚀 NestJS framework with TypeScript
-- 📚 Swagger/OpenAPI documentation
+- 🔐 OIDC login/logout with an encrypted session cookie, transparent token refresh, and CSRF protection
+- 🪪 Optional header bearer-token authentication verified against provider JWKS
+- 🔌 DIAL Core integration through `@epam/ai-dial-typescript-sdk`
+- 🌊 SSE streaming for chat completions and the client channel
+- 📚 Swagger/OpenAPI documentation, and a generated typed client (`libs/chat-api-client`)
 - 🌐 CORS configuration
-- 📦 Static file serving for React frontend
+- 📦 Static file serving for the React frontend and the overlay sandbox
 - ⚙️ Environment validation at startup
-- 🔌 AI DIAL SDK integration (placeholder for future implementation)
 - 🎨 Theme management endpoints
 - 🏥 Health check endpoint
 - ✅ Input validation with class-validator
@@ -18,16 +27,17 @@ NestJS backend application for the chat platform. Provides REST API endpoints fo
 - 📝 Comprehensive error handling
 - 🗄️ In-memory caching (5-minute TTL)
 - 🔒 Security headers (helmet middleware)
-- 🚦 Rate limiting (100 req/min default)
+- 🚦 Rate limiting (100 req/min default, per-endpoint overrides)
 - 📊 Request metrics logging
 - 🔭 OpenTelemetry traces, logs, and Prometheus-compatible metrics (opt-in, see [Observability](#observability))
 
 ## Prerequisites
 
-- Node.js 18+
-- npm
-- Access to AI DIAL core service
-- Access to themes configuration service
+- Node.js 24+
+- npm 11+
+- Access to an AI DIAL Core service
+- An OIDC identity provider (at least one configured — see below)
+- Access to a themes configuration service (optional; theming falls back to defaults)
 
 ## Getting Started
 

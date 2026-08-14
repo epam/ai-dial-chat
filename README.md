@@ -526,17 +526,21 @@ npm run build:api    # Backend
 
 ### Build Outputs
 
-- **Frontend**: `dist/apps/chat/`
-- **Backend**: `dist/apps/chat-api/`
+- **Frontend**: `apps/chat/dist/`
+- **Backend**: `apps/chat-api/dist/`
+- **Overlay sandbox**: `apps/chat-overlay-sandbox/dist/`
 
 ### Production Deployment
 
 The NestJS API serves both the API endpoints and the built React application:
 
 1. Build both applications
-2. Deploy the API server with the built frontend
-3. The API serves static files from `dist/apps/chat/`
-4. All routes except `/api/*` serve the React app
+2. Deploy the API server with the built frontend alongside it
+3. The API serves static files from `apps/chat/dist/`
+4. All routes except `/api/*` (and `/overlay-sandbox/*` when the sandbox is
+   enabled) fall through to the React app's `index.html`
+
+`Dockerfile` at the repository root builds this arrangement into a single image.
 
 ### Environment Variables in Production
 
