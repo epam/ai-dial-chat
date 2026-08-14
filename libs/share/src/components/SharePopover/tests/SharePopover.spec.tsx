@@ -381,9 +381,9 @@ describe('SharePopover', () => {
       />,
     );
 
-    expect(
-      screen.getByRole('dialog', { name: 'Share' }).matches(':focus-within'),
-    ).toBe(true);
+    expect(screen.getByRole('button', { name: 'QR' }).matches(':focus')).toBe(
+      true,
+    );
   });
 
   it('shows a skeleton loading state while the link is not ready', () => {
