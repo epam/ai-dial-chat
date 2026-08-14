@@ -382,9 +382,7 @@ describe('SharePopover', () => {
     );
 
     expect(
-      screen
-        .getByRole('dialog', { name: 'Share' })
-        .contains(document.activeElement),
+      screen.getByRole('dialog', { name: 'Share' }).matches(':focus-within'),
     ).toBe(true);
   });
 

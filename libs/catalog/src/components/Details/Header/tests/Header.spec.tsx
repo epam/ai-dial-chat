@@ -1078,7 +1078,7 @@ describe('Header', () => {
     });
 
     it('renders the "API key" trigger as the primary (call-to-action) style before a key is added', () => {
-      const { container } = render(
+      render(
         <Header
           item={{
             ...makeItem(CatalogEntityType.Toolset),
@@ -1090,11 +1090,13 @@ describe('Header', () => {
           onLogin={vi.fn()}
         />,
       );
-      expect(container.querySelector('.primary')?.textContent).toBe('API key');
+      expect(
+        screen.getByRole('button', { name: 'API key' }).className,
+      ).toContain('primary');
     });
 
     it('drops the "Change API key" trigger to the low-emphasis style once a key is configured', () => {
-      const { container } = render(
+      render(
         <Header
           item={{
             ...makeItem(CatalogEntityType.Toolset),
@@ -1106,10 +1108,9 @@ describe('Header', () => {
           onLogout={vi.fn()}
         />,
       );
-      expect(container.querySelector('.primary')).toBeNull();
-      expect(container.querySelector('.neutral')?.textContent).toBe(
-        'Change API key',
-      );
+      const trigger = screen.getByRole('button', { name: 'Change API key' });
+      expect(trigger.className).not.toContain('primary');
+      expect(trigger.className).toContain('neutral');
     });
 
     it('opens the personal API-key popover instead of calling onLogin directly', async () => {

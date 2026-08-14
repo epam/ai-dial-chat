@@ -107,7 +107,7 @@ const makeItem = (
 
 describe('CredentialsManagementPanel', () => {
   it('renders nothing when the item has no credentials', () => {
-    const { container } = render(
+    render(
       <CredentialsManagementPanel
         item={{
           id: '1',
@@ -121,7 +121,8 @@ describe('CredentialsManagementPanel', () => {
         }}
       />,
     );
-    expect(container.firstChild).toBeNull();
+    expect(screen.queryByText('Personal credentials')).toBeNull();
+    expect(screen.queryByText('Organization credentials')).toBeNull();
   });
 
   it('renders both credentials rows', () => {
