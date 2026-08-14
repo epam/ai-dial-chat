@@ -53,7 +53,11 @@ import {
 } from '@/src/utils/app/id';
 import { isMarketplaceEditorStep } from '@/src/utils/app/marketplace';
 import { mergeFeatures } from '@/src/utils/app/models';
-import { getInternalPathname, isInternalRoute } from '@/src/utils/app/route';
+import {
+  getInternalPathname,
+  getInternalRoute,
+  isInternalRoute,
+} from '@/src/utils/app/route';
 import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 import { translate } from '@/src/utils/app/translation';
 import { parseEntityApiKey } from '@/src/utils/server/api';
@@ -1013,10 +1017,11 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
         ? getSafeRedirectUrl(payload.redirectUrl.toString())
         : undefined;
 
-      const route =
-        redirectUrl ??
-        returnUrl ??
-        (publicationUrl
+      const targetUrl = redirectUrl ?? returnUrl;
+
+      const route = targetUrl
+        ? getInternalRoute(targetUrl, router)
+        : publicationUrl
           ? { pathname: Routes.Chat }
           : {
               pathname: Routes.Marketplace,
@@ -1025,7 +1030,7 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
                 [MarketplaceQueryParams.entitiesTab]:
                   MarketplaceEntitiesTabs.AGENTS,
               },
-            });
+            };
 
       const actions: Observable<AppAction>[] = [
         of(PromptsActions.clearSkillValidations()),

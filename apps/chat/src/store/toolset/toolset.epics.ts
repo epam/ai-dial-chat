@@ -30,7 +30,12 @@ import {
 } from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
-import { getInternalPathname, isInternalRoute } from '@/src/utils/app/route';
+import {
+  InternalRoute,
+  getInternalPathname,
+  getInternalRoute,
+  isInternalRoute,
+} from '@/src/utils/app/route';
 import {
   encodeToolsetRedirectState,
   fitToolsetNameToStorageLimits,
@@ -1144,7 +1149,7 @@ const exitEditorEpic: AppEpic = (action$, _state$, { router }) =>
         ? getSafeRedirectUrl(payload.redirectUrl.toString())
         : undefined;
 
-      const route =
+      const targetUrl =
         redirectUrl ??
         returnUrl ??
         (publicationUrl
@@ -1154,6 +1159,8 @@ const exitEditorEpic: AppEpic = (action$, _state$, { router }) =>
                 MarketplaceEntitiesTabs.TOOLSETS,
             }));
 
+      const route: InternalRoute = getInternalRoute(targetUrl, router);
+
       const isMarketplaceRoute = isInternalRoute(
         route.pathname,
         Routes.Marketplace,
@@ -1161,7 +1168,7 @@ const exitEditorEpic: AppEpic = (action$, _state$, { router }) =>
       );
 
       if (isMarketplaceRoute && payload.shouldSelectToolset && reference) {
-        route.searchParams.append(MarketplaceQueryParams.toolset, reference);
+        route.query[MarketplaceQueryParams.toolset] = reference;
       }
 
       const actions: Observable<AppAction>[] = [];
