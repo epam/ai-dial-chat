@@ -314,15 +314,17 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
             card select {item.id}
           </button>
         ))}
-        {(items ?? []).map((item) => (
-          <button
-            key={`edit-${item.id}`}
-            type="button"
-            onClick={() => onEdit?.(item)}
-          >
-            edit {item.id}
-          </button>
-        ))}
+        {(items ?? [])
+          .filter((item) => item.isEditable)
+          .map((item) => (
+            <button
+              key={`edit-${item.id}`}
+              type="button"
+              onClick={() => onEdit?.(item)}
+            >
+              edit {item.id}
+            </button>
+          ))}
         {(items ?? [])
           .filter((item) => isDownloadVisible?.(item) ?? true)
           .map((item) => (
@@ -661,6 +663,7 @@ describe('CatalogView', () => {
       publicSkills: [],
       isLoading: false,
       error: null,
+      refetchSkills: vi.fn().mockResolvedValue(undefined),
     });
     vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [],
@@ -3234,6 +3237,69 @@ describe('CatalogView', () => {
       );
     });
 
+    it('opens the prompt editor for a writable shared prompt', async () => {
+      enablePrompts();
+      vi.mocked(usePrompts).mockReturnValue({
+        prompts: [],
+        folders: [],
+        publicPrompts: [],
+        publicFolders: [],
+        sharedWithMe: [
+          {
+            ...personalPrompt,
+            bucket: 'owner-bucket',
+            isMy: false,
+            canEdit: true,
+            sharedWithMe: true,
+          },
+        ],
+        isLoading: false,
+        error: null,
+        refetchPrompts: vi.fn().mockResolvedValue(undefined),
+        refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'edit prompts/owner-bucket/Work/AI/summarize',
+        }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/prompt-editor?id=prompts%2Fowner-bucket%2FWork%2FAI%2Fsummarize&returnUrl=%2Fcatalog',
+      );
+    });
+
+    it('keeps public prompts read-only even when metadata contains WRITE', () => {
+      enablePrompts();
+      vi.mocked(usePrompts).mockReturnValue({
+        prompts: [],
+        folders: [],
+        sharedWithMe: [],
+        publicPrompts: [
+          {
+            ...personalPrompt,
+            id: 'Public/translate',
+            name: 'translate',
+            folderId: 'Public',
+            canEdit: true,
+          },
+        ],
+        publicFolders: [],
+        isLoading: false,
+        error: null,
+        refetchPrompts: vi.fn().mockResolvedValue(undefined),
+        refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
+      });
+
+      render(<CatalogView />);
+
+      expect(
+        screen.queryByRole('button', { name: 'edit Public/translate' }),
+      ).toBeNull();
+    });
+
     it('offers a Prompt create option only when the feature is enabled', async () => {
       enablePrompts();
       mockPrompts();
@@ -3721,6 +3787,7 @@ describe('CatalogView', () => {
         publicSkills: [organisationSkill],
         isLoading: false,
         error: null,
+        refetchSkills: vi.fn().mockResolvedValue(undefined),
         ...overrides,
       });
 
@@ -3738,6 +3805,52 @@ describe('CatalogView', () => {
       const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
       expect(ids).toContain('skills/my-bucket/analysis/revenue-skill:SKILL');
       expect(ids).toContain('skills/public/shared-skill:SKILL');
+    });
+
+    it('opens the skill editor for a writable shared skill', async () => {
+      enableSkills();
+      mockSkills({
+        skills: [],
+        publicSkills: [],
+        sharedWithMe: [
+          {
+            ...personalSkill,
+            url: 'skills/owner-bucket/analysis/revenue-skill',
+            bucket: 'owner-bucket',
+            isMy: false,
+            canEdit: true,
+            sharedWithMe: true,
+          },
+        ],
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'edit skills/owner-bucket/analysis/revenue-skill',
+        }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/skill-editor?id=skills%2Fowner-bucket%2Fanalysis%2Frevenue-skill&returnUrl=%2Fcatalog',
+      );
+    });
+
+    it('keeps public skills read-only even when metadata contains WRITE', () => {
+      enableSkills();
+      mockSkills({
+        skills: [],
+        sharedWithMe: [],
+        publicSkills: [{ ...organisationSkill, canEdit: true }],
+      });
+
+      render(<CatalogView />);
+
+      expect(
+        screen.queryByRole('button', {
+          name: 'edit skills/public/shared-skill',
+        }),
+      ).toBeNull();
     });
 
     it('adds no skill items when the feature is disabled', () => {

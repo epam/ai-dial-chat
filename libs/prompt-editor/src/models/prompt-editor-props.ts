@@ -145,6 +145,8 @@ export interface PromptEditorProps {
   onRetry?: () => void;
   /** Folder mutations. Omit to render the picker without create/rename/delete controls. */
   folderActions?: PromptFolderActions;
+  /** Whether the folder picker is read-only. */
+  isFolderReadOnly?: boolean;
   /** Inline message shown under the folder-name field of the create/rename sub-form. */
   folderNameError?: string;
   /** Text overrides. */

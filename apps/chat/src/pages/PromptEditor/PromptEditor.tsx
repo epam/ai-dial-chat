@@ -33,7 +33,7 @@ import {
   EntityOperation,
   NotifiableEntity,
 } from '../../types/entity-notification';
-import { PromptFieldError } from '../../types/prompt';
+import { parsePromptResourceUrl, PromptFieldError } from '../../types/prompt';
 import { ROUTES } from '../../types/routes';
 import {
   PROMPT_CONTENT_MAX_LENGTH,
@@ -65,6 +65,13 @@ const PromptEditorPage: FC = () => {
   const promptId = searchParams.get(EditorQuery.Id) ?? undefined;
   const returnUrl = searchParams.get(EditorQuery.ReturnUrl) ?? ROUTES.Catalog;
   const isEditMode = promptId != null;
+  const promptResource = useMemo(
+    () => (promptId == null ? null : parsePromptResourceUrl(promptId)),
+    [promptId],
+  );
+  const promptPath = promptResource?.path ?? promptId;
+  const ownerBucket = promptResource?.bucket;
+  const isSharedPrompt = promptResource != null;
 
   const [loadedValues, setLoadedValues] = useState<PromptEditorValues>();
   const [initialFolderId, setInitialFolderId] = useState(ROOT_FOLDER_ID);
@@ -87,14 +94,17 @@ const PromptEditorPage: FC = () => {
    * the user to author a duplicate.
    */
   useEffect(() => {
-    if (!isPromptsEnabled || promptId == null) return;
+    if (!isPromptsEnabled || promptPath == null) return;
     const cancelled = { value: false };
 
     const load = async () => {
       setIsLoading(true);
       setLoadError(null);
       try {
-        const dto = await getPrompt(promptId);
+        const dto =
+          ownerBucket == null
+            ? await getPrompt(promptPath)
+            : await getPrompt(promptPath, ownerBucket);
         if (cancelled.value) return;
         setLoadedValues({
           name: dto.name,
@@ -115,7 +125,7 @@ const PromptEditorPage: FC = () => {
     return () => {
       cancelled.value = true;
     };
-  }, [promptId, isPromptsEnabled, loadAttempt]);
+  }, [promptPath, ownerBucket, isPromptsEnabled, loadAttempt]);
 
   const resolveNameError = useCallback(
     (error?: PromptFieldError) => {
@@ -204,14 +214,27 @@ const PromptEditorPage: FC = () => {
            * is a second call. Update runs first so the move operates on the
            * post-rename path.
            */
-          const updated = await updatePrompt(promptId, {
+          const updateBody = {
             name: trimmedName,
             description,
             content,
-          });
+          };
+          const updated =
+            ownerBucket == null
+              ? await updatePrompt(promptPath as string, updateBody)
+              : await updatePrompt(
+                  promptPath as string,
+                  updateBody,
+                  ownerBucket,
+                );
           if (folderId !== initialFolderId) {
             try {
-              await movePrompt(updated.id, { targetFolderId: folderId });
+              const moveBody = { targetFolderId: folderId };
+              if (ownerBucket == null) {
+                await movePrompt(updated.id, moveBody);
+              } else {
+                await movePrompt(updated.id, moveBody, ownerBucket);
+              }
             } catch (moveErr) {
               const { traceId } = await getApiErrorDetails(moveErr);
               await refetchPrompts();
@@ -249,7 +272,8 @@ const PromptEditorPage: FC = () => {
     [
       isSaving,
       isEditMode,
-      promptId,
+      promptPath,
+      ownerBucket,
       initialFolderId,
       refetchPrompts,
       notifyOperationSuccess,
@@ -363,7 +387,8 @@ const PromptEditorPage: FC = () => {
       descriptionMaxLength={PROMPT_DESCRIPTION_MAX_LENGTH}
       contentMaxLength={PROMPT_CONTENT_MAX_LENGTH}
       folderNameError={resolveNameError(folderNameError)}
-      folderActions={folderActions}
+      folderActions={isSharedPrompt ? undefined : folderActions}
+      isFolderReadOnly={isSharedPrompt}
       labels={labels}
       onSubmit={handleSubmit}
       onCancel={handleCancel}

@@ -33,7 +33,7 @@ Field mapping:
 
 | `CatalogItem` field | Value |
 | --- | --- |
-| `id` | `prompt.id` verbatim — the DIAL prompt path, unprefixed |
+| `id` | personal/public: `prompt.id`; shared: `prompts/{prompt.bucket}/{prompt.id}` so the owner bucket survives selection and editing |
 | `type` | `CatalogEntityType.Prompt` |
 | `name` | `prompt.name` |
 | `description` | `prompt.description ?? ''` |
@@ -42,10 +42,10 @@ Field mapping:
 | `createdAt` / `updatedAt` | passed through |
 | `topics` | `[]` — the backend exposes no prompt topics |
 | `folder` | source-prefixed segments (below) |
-| `isMyApp` | `true` only for `PromptSource.Personal` |
-| `sharedWithMe` | `true` only for `PromptSource.SharedWithMe` |
-| `isEditable` | `true` only for `PromptSource.Personal` |
-| `isUserFavorite` / `isStarred` | `favoriteIds.has(prompt.id)` — the same set the deployment and toolset mappers read |
+| `isMyApp` | `prompt.isMy`, falling back to `true` only for `PromptSource.Personal` for backward compatibility |
+| `sharedWithMe` | `prompt.sharedWithMe`, falling back to the source discriminator |
+| `isEditable` | `false` for `PromptSource.Public`; otherwise `prompt.canEdit`, falling back to personal-only editability for older responses |
+| `isUserFavorite` / `isStarred` | `favoriteIds.has(mappedId)` where `mappedId` is the source-aware id above |
 | `isFeatured` / `isHidden` | `false` |
 | `details.promptContent` | `{ content: prompt.content }` when the list response already carries a body, else omitted |
 | `details.overview` | `buildPromptOverview(prompt, source, t)` — always present, since a prompt has no About tab |
@@ -64,11 +64,16 @@ Field mapping:
 - **WHEN** the prompt's `folderId` is `''`
 - **THEN** `folder` is `['Personal']`
 
-#### Scenario: Shared prompt is not editable
+#### Scenario: Read-only shared prompt is not editable
 
-- **WHEN** a prompt is mapped with `source: PromptSource.SharedWithMe`
+- **WHEN** a prompt is mapped with `source: PromptSource.SharedWithMe` and `canEdit: false`
 - **THEN** `sharedWithMe` is `true`, `isMyApp` is `false`, and `isEditable` is `false`
 - **AND** `folder` begins with the Shared label
+
+#### Scenario: Writable shared prompt keeps its owner and is editable
+
+- **WHEN** a prompt with `bucket: 'owner-bucket'` and `canEdit: true` is mapped with `source: PromptSource.SharedWithMe`
+- **THEN** its id is `prompts/owner-bucket/<prompt.id>` and `isEditable` is `true`
 
 #### Scenario: Organisation prompt is not editable
 
@@ -76,9 +81,9 @@ Field mapping:
 - **THEN** `isMyApp` is `false`, `sharedWithMe` is `false`, `isEditable` is `false`
 - **AND** `folder` begins with the Public label
 
-#### Scenario: A prompt whose path is in favoriteIds is starred
+#### Scenario: A prompt whose catalog id is in favoriteIds is starred
 
-- **WHEN** any prompt is mapped with `favoriteIds` containing its `id`, regardless of source
+- **WHEN** any prompt is mapped with `favoriteIds` containing its source-aware catalog id
 - **THEN** `isUserFavorite` and `isStarred` are both `true`
 
 #### Scenario: A prompt whose path is absent from favoriteIds is not starred
@@ -121,7 +126,7 @@ Selector mode (`isSelectorMode`) SHALL NOT show prompts: `PICKER_VISIBLE_TYPES` 
 
 ### Requirement: Prompt details resolve through the prompts endpoints
 
-`handleFetchDetails` in `CatalogView` SHALL branch before its deployment path: for `CatalogEntityType.Prompt` it calls `getPublicPrompt(item.id)` when the item came from the organisation source and `getPrompt(item.id)` otherwise, and resolves `{ promptContent: { content } }`. It SHALL NOT call `getDeploymentDetails` or `getDeploymentLimits` for a prompt.
+`handleFetchDetails` in `CatalogView` SHALL branch before its deployment path: for `CatalogEntityType.Prompt` it calls `getPublicPrompt(item.id)` when the item came from the organisation source, `getPrompt(item.id)` for a personal prompt, and parses a shared prompt's qualified id before calling `getPrompt(path, ownerBucket)`. It resolves `{ promptContent: { content } }` and SHALL NOT call `getDeploymentDetails` or `getDeploymentLimits` for a prompt.
 
 Failures SHALL resolve `undefined` exactly as the existing deployment path does, so the panel falls back to the `promptContent` the mapper already seeded and never throws out of the callback.
 
@@ -134,6 +139,11 @@ Failures SHALL resolve `undefined` exactly as the existing deployment path does,
 
 - **WHEN** the user opens the details panel for a prompt whose source is Public
 - **THEN** `getPublicPrompt(item.id)` is called and no personal-prompt request is issued
+
+#### Scenario: Opening a shared prompt's details uses the owner bucket
+
+- **WHEN** the user opens `prompts/owner-bucket/Work/AI/summarize`
+- **THEN** `getPrompt('Work/AI/summarize', 'owner-bucket')` is called
 
 #### Scenario: Prompt details never call the deployment endpoints
 
@@ -155,7 +165,8 @@ Failures SHALL resolve `undefined` exactly as the existing deployment path does,
 - **Share** — enabled. `isShareVisible` returns `true` for a personal prompt (`item.isMyApp`) and `false` for shared or organisation prompts. `SharePopoverContainer` SHALL pass `CreateShareLinkDtoResourceKindEnum.Prompt` to `useShareLink` for a Prompt item, so the backend qualifies the bucket-relative path; `canEditAccess` is `false`, since a prompt is not in `EDITABLE_ACCESS_TYPES`.
 - **Favourite** — enabled. `onToggleFavorite` resolves the user-config section through `resolveFavoriteEntityType(item.type)`, which maps Prompt to `FavoriteEntityType.Prompt`, Toolset to `FavoriteEntityType.Toolset`, and everything else to `FavoriteEntityType.Deployment`. Prompts appear in the Favorites strip like any other favourited item.
 - **Download** — enabled for every prompt source. See `prompt-download` for the file format and the wiring.
-- **Unshare (Remove from My List)** — unsupported. `isUnshareVisible` returns `false` for Prompt, for two independent reasons: `DiscardSharedCatalogItemDto` (`apps/chat-api/src/share/dto/discard-shared-catalog-item.dto.ts:6`) restricts `itemId` to `applications|toolsets|conversations` paths and rejects a prompt path with 400; and `getSharedPrompts` strips the owner bucket from the resource URL before mapping, so the frontend could not build the qualified path a discard call needs even if the regex admitted prompts.
+- **Edit** — enabled for personal prompts and shared prompts whose listing metadata yields `canEdit: true`; always hidden for organisation prompts even if upstream metadata unexpectedly carries `WRITE`.
+- **Unshare (Remove from My List)** — unsupported. `isUnshareVisible` returns `false` for Prompt because `DiscardSharedCatalogItemDto` (`apps/chat-api/src/share/dto/discard-shared-catalog-item.dto.ts:6`) restricts `itemId` to `applications|toolsets|conversations` paths and rejects a prompt resource URL with 400.
 - **Publish** — supported. `PUBLISHABLE_ENTITY_TYPES` (`apps/chat/src/utils/publish.ts`) maps Prompt to `CatalogPublishEntityType.Prompt`, so the existing `Boolean(item.isMyApp) && toPublishEntityType(item.type) != null` rule offers it on personal prompts only. Server-side, `publish.service.ts` qualifies a prompt's bucket-relative id with the caller's own bucket via `toPromptResourceUrl`, since the caller is by definition the owner; a prompt carries no version, so the publication title is trimmed. `libs/catalog`'s built-in publish default still excludes Prompt, which is inert here because `CatalogView` always supplies `isPublishVisible`.
 - **Revoke access** — unsupported, and suppressed. `RevokeSharedAccessDto` carries the same `applications|toolsets|conversations` regex as the discard DTO, so a prompt path is rejected with 400. `Header`'s built-in rule (`!!onRevokeShare && item.isMyApp === true && (recipientsCount == null || recipientsCount > 0)`) would otherwise leave it visible, because `mapPromptToCatalogItem` never sets `recipientsCount` and `undefined == null` reads as "count unknown". `CatalogView` therefore passes `isRevokeShareVisible` returning `false` for Prompt, mirroring `isUnshareVisible`.
 
@@ -181,6 +192,16 @@ Each unsupported action's absence is a documented backend-capability limitation,
 
 - **WHEN** the details panel opens for an organisation prompt
 - **THEN** no Share control is rendered
+
+#### Scenario: Writable shared prompt exposes Edit
+
+- **WHEN** a shared prompt carries `canEdit: true`
+- **THEN** its details panel renders Edit and navigating through it preserves the qualified owner-bucket id
+
+#### Scenario: Organisation prompt remains read-only despite metadata
+
+- **WHEN** an organisation prompt's upstream metadata contains `WRITE`
+- **THEN** its catalog item still has `isEditable: false` and no Edit action is rendered
 
 #### Scenario: Favouriting a prompt writes to the prompts config section
 
@@ -232,7 +253,7 @@ Each unsupported action's absence is a documented backend-capability limitation,
 - **Accessibility**: the Content tab's copy control keeps a stable `aria-label` with a separate `role="status" aria-live="polite"` confirmation region; the Prompts tab participates in the existing `Tabs` keyboard model unchanged.
 - **Observability**: none beyond the shared API client's per-request logging.
 - **Rate limiting / caching**: no new client cache. Backend throttles already apply per the prompts controller.
-- **Authorization**: every prompt endpoint is session-authenticated and scoped to the caller's own bucket by the backend; the frontend adds no role check. Organisation prompts are read-only for all users.
+- **Authorization**: every prompt endpoint is session-authenticated. Personal operations default to the caller's bucket; qualified shared reads/updates pass the owner bucket and rely on DIAL Core permissions. The frontend renders Edit from normalized `canEdit`, while organisation prompts are forced read-only at both the BFF and mapper boundaries.
 
 #### Scenario: Prompt mapping does not invalidate the details fetch
 

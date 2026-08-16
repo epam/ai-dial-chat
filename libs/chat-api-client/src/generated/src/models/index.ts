@@ -4463,6 +4463,18 @@ export interface PromptListResponseDto {
    * @memberof PromptListResponseDto
    */
   sharedWithMe: Array<PromptResponseDto>;
+  /**
+   *
+   * @type {Array<PromptResponseDto>}
+   * @memberof PromptListResponseDto
+   */
+  publicPrompts?: Array<PromptResponseDto>;
+  /**
+   *
+   * @type {Array<PromptFolderResponseDto>}
+   * @memberof PromptListResponseDto
+   */
+  publicFolders?: Array<PromptFolderResponseDto>;
 }
 /**
  *
@@ -4524,6 +4536,30 @@ export interface PromptResponseDto {
    * @memberof PromptResponseDto
    */
   updatedAt: number;
+  /**
+   * Whether the prompt belongs to the requestor
+   * @type {boolean}
+   * @memberof PromptResponseDto
+   */
+  isMy?: boolean;
+  /**
+   * Whether the requestor may update the prompt. Organisation prompts are always read-only.
+   * @type {boolean}
+   * @memberof PromptResponseDto
+   */
+  canEdit?: boolean;
+  /**
+   * Whether another user shared the prompt with the requestor
+   * @type {boolean}
+   * @memberof PromptResponseDto
+   */
+  sharedWithMe?: boolean;
+  /**
+   * READ/WRITE/SHARE permissions applicable to the requestor
+   * @type {Array<string>}
+   * @memberof PromptResponseDto
+   */
+  permissions?: Array<string>;
 }
 /**
  *
@@ -5443,6 +5479,31 @@ export interface ShareRecipientsResponseDto {
 /**
  *
  * @export
+ * @interface SkillCatalogListResponseDto
+ */
+export interface SkillCatalogListResponseDto {
+  /**
+   *
+   * @type {Array<SkillMetadataItemDto>}
+   * @memberof SkillCatalogListResponseDto
+   */
+  skills: Array<SkillMetadataItemDto>;
+  /**
+   *
+   * @type {Array<SkillMetadataItemDto>}
+   * @memberof SkillCatalogListResponseDto
+   */
+  sharedWithMe: Array<SkillMetadataItemDto>;
+  /**
+   *
+   * @type {Array<SkillMetadataItemDto>}
+   * @memberof SkillCatalogListResponseDto
+   */
+  publicSkills: Array<SkillMetadataItemDto>;
+}
+/**
+ *
+ * @export
  * @interface SkillFileDeleteResponseDto
  */
 export interface SkillFileDeleteResponseDto {
@@ -5613,6 +5674,24 @@ export interface SkillMetadataItemDto {
    * @memberof SkillMetadataItemDto
    */
   updatedAt?: number;
+  /**
+   * Whether the skill belongs to the requestor
+   * @type {boolean}
+   * @memberof SkillMetadataItemDto
+   */
+  isMy?: boolean;
+  /**
+   * Whether the requestor may update the skill. Organisation skills are always read-only.
+   * @type {boolean}
+   * @memberof SkillMetadataItemDto
+   */
+  canEdit?: boolean;
+  /**
+   * Whether another user shared the skill with the requestor
+   * @type {boolean}
+   * @memberof SkillMetadataItemDto
+   */
+  sharedWithMe?: boolean;
 }
 
 /**

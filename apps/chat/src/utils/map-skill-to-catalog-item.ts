@@ -15,6 +15,7 @@ import { safeDecodeURIComponent } from './string-utils';
 
 const SOURCE_FOLDER_KEY: Record<SkillSource, CatalogI18nKeys> = {
   [SkillSource.Personal]: CatalogI18nKeys.FolderPersonal,
+  [SkillSource.SharedWithMe]: CatalogI18nKeys.FolderShared,
   [SkillSource.Public]: CatalogI18nKeys.FolderPublic,
 };
 
@@ -28,7 +29,7 @@ const resolveSkillFolder = (
 ];
 
 export interface MapSkillToCatalogItemOptions {
-  /** Resolves the Personal/Public folder label; i18n stays at the app edge. */
+  /** Resolves the Personal/Shared/Public folder label; i18n stays at the app edge. */
   t: TFunction;
   /** Namespace the skill came from; drives ownership flags and the folder prefix. */
   source: SkillSource;
@@ -47,6 +48,8 @@ export const mapSkillToCatalogItem = (
   { t, source, favoriteIds }: MapSkillToCatalogItemOptions,
 ): CatalogItem => {
   const isFavorite = favoriteIds.has(skill.url);
+  const isPublic = source === SkillSource.Public;
+  const isPersonal = source === SkillSource.Personal;
 
   return {
     id: skill.url,
@@ -65,11 +68,9 @@ export const mapSkillToCatalogItem = (
     topics: [],
     isUserFavorite: isFavorite,
     isStarred: isFavorite,
-    isMyApp: source === SkillSource.Personal,
-    /* No shared-skill listing endpoint exists, so a skill is never shared-with-me. */
-    sharedWithMe: false,
-    /* Skills are read-only in the catalog; no mutating action is wired up. */
-    isEditable: false,
+    isMyApp: skill.isMy ?? isPersonal,
+    sharedWithMe: skill.sharedWithMe ?? source === SkillSource.SharedWithMe,
+    isEditable: !isPublic && (skill.canEdit ?? isPersonal),
     folder: resolveSkillFolder(skill.parentPath, source, t),
   };
 };

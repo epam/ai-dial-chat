@@ -63,7 +63,7 @@ Every user-visible string SHALL be an optional label with an English default, pe
 
 `apps/chat/src/types/prompt-editor.ts` SHALL define a `PromptEditorQuery` string enum with `Id = 'id'` and `ReturnUrl = 'returnUrl'`, mirroring `ToolsetEditorQuery`.
 
-Mode resolution: `?id=<promptPath>` opens edit mode; an absent `id` opens create mode. On save or cancel the page navigates to `returnUrl` when present, otherwise `ROUTES.Catalog`.
+Mode resolution: `?id=<promptPath>` opens edit mode for a personal prompt; `?id=prompts/{ownerBucket}/{promptPath}` opens edit mode for a shared prompt while preserving the owner bucket; an absent `id` opens create mode. On save or cancel the page navigates to `returnUrl` when present, otherwise `ROUTES.Catalog`.
 
 When `OverlayFeature.Prompts` is disabled the route SHALL redirect to `ROUTES.Catalog` without issuing any prompt request.
 
@@ -76,6 +76,12 @@ When `OverlayFeature.Prompts` is disabled the route SHALL redirect to `ROUTES.Ca
 
 - **WHEN** the user navigates to `/prompt-editor?id=Work%2FAI%2Fsummarize&returnUrl=/catalog`
 - **THEN** `getPrompt('Work/AI/summarize')` is called and the form is populated with the prompt's name, description, content, and folder
+
+#### Scenario: Shared edit mode loads from the owner bucket
+
+- **WHEN** the user navigates to `/prompt-editor?id=prompts%2Fowner-bucket%2FWork%2FAI%2Fsummarize`
+- **THEN** `getPrompt('Work/AI/summarize', 'owner-bucket')` is called
+- **AND** the folder selector is disabled because the caller's personal folder list cannot represent mutations in the owner's namespace
 
 #### Scenario: Editing a non-existent prompt shows an error state
 
@@ -96,7 +102,7 @@ When `OverlayFeature.Prompts` is disabled the route SHALL redirect to `ROUTES.Ca
 
 ### Requirement: The editor creates and updates prompts
 
-Create SHALL call `createPrompt({ name, description, content, folderId })` with `folderId` set to the picker's selected folder path (`''` for root). Update SHALL call `updatePrompt(path, { name, description, content })` with only the changed fields.
+Create SHALL call `createPrompt({ name, description, content, folderId })` with `folderId` set to the picker's selected folder path (`''` for root). A personal update SHALL call `updatePrompt(path, { name, description, content })`; a shared update SHALL call `updatePrompt(path, { name, description, content }, ownerBucket)`. The update payload carries the form's current name, description, and content values.
 
 `updatePrompt` cannot change a prompt's folder — moving is a separate operation (below). In edit mode, changing the folder selection SHALL dispatch `movePrompt` in addition to `updatePrompt`.
 
@@ -116,13 +122,18 @@ On success the page SHALL call `refetchPrompts()`, show a success notification, 
 #### Scenario: Updating content only
 
 - **WHEN** the user edits only the content field and saves
-- **THEN** `updatePrompt(path, { content: <new value> })` is dispatched without `name` or `description`
+- **THEN** `updatePrompt(path, { name: <current name>, description: <current description>, content: <new value> })` is dispatched
 - **AND** no `movePrompt` call is made
 
 #### Scenario: Renaming a prompt
 
 - **WHEN** the user changes the name and saves
 - **THEN** `updatePrompt(path, { name: <new name> })` is dispatched and the prompt's `id` changes to the new path
+
+#### Scenario: Saving a writable shared prompt preserves its owner bucket
+
+- **WHEN** the user saves changes to `prompts/owner-bucket/Work/AI/summarize`
+- **THEN** `updatePrompt('Work/AI/summarize', <body>, 'owner-bucket')` is dispatched
 
 #### Scenario: Duplicate name shows an inline field error
 
@@ -138,7 +149,7 @@ On success the page SHALL call `refetchPrompts()`, show a success notification, 
 
 ### Requirement: The editor moves prompts between folders
 
-Changing the folder selection in edit mode SHALL dispatch `movePrompt(path, { targetFolderId })`, with `''` as the target for root. When both the folder and the content/name changed, the update SHALL be applied before the move so the move operates on the current path, and a failure of either step SHALL leave the form open with an error rather than reporting partial success.
+Changing the folder selection for a personal prompt in edit mode SHALL dispatch `movePrompt(path, { targetFolderId })`, with `''` as the target for root. When both the folder and the content/name changed, the update SHALL be applied before the move so the move operates on the current path, and a failure of either step SHALL leave the form open with an error rather than reporting partial success. Shared prompts cannot enter this path because their folder selector is disabled.
 
 #### Scenario: Moving a prompt into a subfolder
 
@@ -169,7 +180,9 @@ Changing the folder selection in edit mode SHALL dispatch `movePrompt(path, { ta
 
 ### Requirement: The editor manages prompt folders
 
-The folder picker SHALL expose controls to create, rename, and delete folders, calling `createPromptFolder({ name, parentId })`, `renamePromptFolder(path, { name })`, and `deletePromptFolder(path)`. It renders the folder list from `usePrompts().folders`, and refetches after every folder mutation.
+For personal prompts, the folder picker SHALL expose controls to create, rename, and delete folders, calling `createPromptFolder({ name, parentId })`, `renamePromptFolder(path, { name })`, and `deletePromptFolder(path)`. It renders the folder list from `usePrompts().folders`, and refetches after every folder mutation.
+
+For a shared prompt, the folder selector SHALL be disabled and folder-management controls SHALL be hidden. The list in `PromptsContext` describes the caller's own folders, so using it to move or manage paths in another user's bucket would be incorrect even when that shared prompt grants `WRITE`.
 
 Folder deletion is destructive — it removes every prompt beneath the folder — so it SHALL require an explicit confirmation naming the folder and stating that its contents will be deleted.
 
@@ -259,7 +272,7 @@ The content and description fields SHALL show a character counter. Per the a11y 
 - **Feature flag**: gated by `OverlayFeature.Prompts` at the route level.
 - **Memoisation**: mutation handlers are `useCallback`'d; the derived folder tree is `useMemo`'d on `folders`.
 - **Observability**: none beyond the shared API client's per-request logging. No new metrics.
-- **Authorization**: the editor is reachable by any authenticated user and operates only on the caller's own prompt bucket, enforced backend-side. Organisation prompts are never editable — an organisation prompt's details panel offers no Edit action.
+- **Authorization**: the editor is reachable by any authenticated user. Personal prompts use the caller's bucket; a writable shared prompt uses the owner bucket carried by its qualified resource id and relies on DIAL Core to enforce `WRITE`. Organisation prompts are always read-only and their details panel offers no Edit action regardless of returned metadata.
 - **Rate limiting / caching**: no client cache. `POST /api/v1/prompts` and `POST /api/v1/prompts/folders` carry the backend's existing per-route throttles (30/min and 20/min); the form disables submit while a save is in flight so a user cannot trip them by double-submitting.
 
 #### Scenario: Double-submit is impossible

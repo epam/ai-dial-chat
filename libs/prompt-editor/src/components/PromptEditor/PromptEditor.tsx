@@ -56,6 +56,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
   onCancel,
   onRetry,
   folderActions,
+  isFolderReadOnly = false,
   folderNameError,
   labels,
   styles,
@@ -209,6 +210,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
           error={errors?.folder}
           nameError={folderNameError}
           actions={folderActions}
+          disabled={isFolderReadOnly}
           labels={labels}
           helperTextClassName={helperTextClassName}
           onChange={(folderId) => setField('folderId', folderId)}

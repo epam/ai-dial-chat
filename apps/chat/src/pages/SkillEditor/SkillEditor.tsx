@@ -22,9 +22,11 @@ import {
   SkillEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
+import { useSkills } from '../../context/SkillsContext';
 import { useTheme } from '../../context/ThemeContext';
 import { EditorQuery } from '../../types/editor-query';
 import { ROUTES } from '../../types/routes';
+import { parseSkillResourceUrl, PUBLIC_SKILL_BUCKET } from '../../types/skill';
 import { SkillEditorLoadState } from '../../types/skill-editor-load-state';
 import { ThemeId } from '../../types/theme-id';
 import {
@@ -42,6 +44,7 @@ const SkillEditorPage: FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useUser();
+  const { refetchSkills } = useSkills();
   const { currentTheme } = useTheme();
   const { closeCanvas } = useAttachmentCanvas();
 
@@ -51,25 +54,31 @@ const SkillEditorPage: FC = () => {
       ? rawReturnUrl
       : ROUTES.Catalog;
 
-  const bucket = user?.bucket;
+  const personalBucket = user?.bucket;
 
   const rawId = searchParams.get(EditorQuery.Id);
   const isEditMode = rawId != null && rawId !== '';
-  /*
-   * A skill's `id` is its relative path within the *current user's own*
-   * bucket — there is no Catalog entry point yet to reach another user's
-   * shared skill (see design.md Non-Goals), so bucket is always the current
-   * user's, never decoded from `id`.
-   */
-  const skillPath = useMemo(() => {
-    if (!isEditMode) return undefined;
+  const skillResource = useMemo(() => {
+    if (!isEditMode) {
+      return personalBucket
+        ? { bucket: personalBucket, path: undefined }
+        : null;
+    }
     try {
       const decoded = decodeURIComponent(rawId);
-      return isValidSkillRelativePath(decoded) ? decoded : null;
+      const parsed = parseSkillResourceUrl(decoded);
+      if (parsed != null) {
+        return parsed.bucket === PUBLIC_SKILL_BUCKET ? null : parsed;
+      }
+      return personalBucket && isValidSkillRelativePath(decoded)
+        ? { bucket: personalBucket, path: decoded }
+        : null;
     } catch {
       return null;
     }
-  }, [isEditMode, rawId]);
+  }, [isEditMode, personalBucket, rawId]);
+  const bucket = skillResource?.bucket;
+  const skillPath = skillResource?.path;
 
   const {
     loadState,
@@ -114,6 +123,7 @@ const SkillEditorPage: FC = () => {
       loadedPathRef,
       etagRef,
       returnUrl,
+      refetchSkills,
     });
 
   // Warn on a full page unload while there are unsaved changes — the
