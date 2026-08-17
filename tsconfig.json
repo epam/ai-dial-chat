@@ -16,6 +16,9 @@
       "path": "./libs/chat-shared"
     },
     {
+      "path": "./libs/ai-dial-chat-hooks"
+    },
+    {
       "path": "./libs/conversation-messages"
     },
     {
