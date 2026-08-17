@@ -524,6 +524,30 @@ describe('ShareController (integration)', () => {
       );
     });
 
+    it('accepts a skills/{bucket}/{path} resource path', async () => {
+      const itemId = 'skills/owner-bucket/team-a/docs-helper';
+
+      await request(app.getHttpServer())
+        .post('/api/v1/share/revoke')
+        .send({ itemId })
+        .expect(200);
+
+      expect(service.revokeShared).toHaveBeenCalledWith(
+        itemId,
+        TEST_USER.at,
+        TEST_USER.sub,
+      );
+    });
+
+    it('returns 400 when a skills itemId is missing the item path segment', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/share/revoke')
+        .send({ itemId: 'skills/owner-bucket' })
+        .expect(400);
+
+      expect(service.revokeShared).not.toHaveBeenCalled();
+    });
+
     it('returns 401 when the service throws UnauthorizedException', async () => {
       service.revokeShared.mockRejectedValue(new UnauthorizedException());
       await request(app.getHttpServer())
@@ -620,6 +644,20 @@ describe('ShareController (integration)', () => {
 
     it('accepts a conversation resource path', async () => {
       const itemId = 'conversations/owner-bucket/my-chat';
+
+      await request(app.getHttpServer())
+        .get('/api/v1/share/recipients')
+        .query({ itemId })
+        .expect(200);
+
+      expect(service.getRecipientsCount).toHaveBeenCalledWith(
+        itemId,
+        TEST_USER.at,
+      );
+    });
+
+    it('accepts a skills/{bucket}/{path} resource path', async () => {
+      const itemId = 'skills/owner-bucket/team-a/docs-helper';
 
       await request(app.getHttpServer())
         .get('/api/v1/share/recipients')
