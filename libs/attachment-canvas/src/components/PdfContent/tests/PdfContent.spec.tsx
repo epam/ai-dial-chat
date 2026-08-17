@@ -1,16 +1,54 @@
-import { act } from 'react';
-
-import { fireEvent, render, screen } from '@testing-library/react';
 import type { InputHighlightData } from '@epam/pdf-highlighter-kit';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { act } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PdfContent } from '../PdfContent';
 
+interface DocumentPreviewMockProps {
+  onTotalPagesChange: (totalPages: number) => void;
+  thumbnailPageNumbers: number[];
+  onThumbnailsLoaded: (map: Map<number, string>) => void;
+  onViewerReady: (api: { navigateToPage: (page: number) => void }) => void;
+}
+
+interface PageThumbnailMockProps {
+  pageNum: number;
+  onSelectPage: (pageNum: number) => void;
+  isSelected: boolean;
+  isLoading: boolean;
+  thumbnailUrl: string | null;
+}
+
+interface FabButtonMockProps {
+  icon: ReactNode;
+  'aria-label': string;
+  'aria-expanded'?: boolean;
+  'aria-controls'?: string;
+}
+
+interface DropdownMockProps {
+  children: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  renderOverlay?: () => ReactNode;
+}
+
+interface InputMockProps {
+  value: string;
+  onChange: (value: string | undefined) => void;
+  onBlur?: () => void;
+  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
+  postfix?: string;
+  'aria-label'?: string;
+}
+
 const documentPreviewState = vi.hoisted(() => {
-  return { props: undefined as any };
+  return { props: undefined as DocumentPreviewMockProps | undefined };
 });
 
 vi.mock('@epam/ai-dial-react-pdf-highlighter', () => ({
-  DocumentPreview: (props: any) => {
+  DocumentPreview: (props: DocumentPreviewMockProps) => {
     documentPreviewState.props = props;
     return null;
   },
@@ -20,7 +58,7 @@ vi.mock('@epam/ai-dial-react-pdf-highlighter', () => ({
     isSelected,
     isLoading,
     thumbnailUrl,
-  }: any) => (
+  }: PageThumbnailMockProps) => (
     <button aria-pressed={isSelected} onClick={() => onSelectPage(pageNum)}>
       {isLoading ? `loading-${pageNum}` : `page-${pageNum}:${thumbnailUrl}`}
     </button>
@@ -35,7 +73,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     'aria-label': ariaLabel,
     'aria-expanded': ariaExpanded,
     'aria-controls': ariaControls,
-  }: any) => (
+  }: FabButtonMockProps) => (
     <button
       aria-label={ariaLabel}
       aria-expanded={ariaExpanded}
@@ -44,9 +82,23 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {icon}
     </button>
   ),
-  Dropdown: ({ children, open, onOpenChange, renderOverlay }: any) => (
-    <div onClick={() => onOpenChange?.(!open)}>
-      {children}
+  Dropdown: ({
+    children,
+    open,
+    onOpenChange,
+    renderOverlay,
+  }: DropdownMockProps) => (
+    <div>
+      <span
+        role="button"
+        tabIndex={0}
+        onClick={() => onOpenChange?.(!open)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') onOpenChange?.(!open);
+        }}
+      >
+        {children}
+      </span>
       {open && renderOverlay?.()}
     </div>
   ),
@@ -57,7 +109,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     onKeyDown,
     postfix,
     'aria-label': ariaLabel,
-  }: any) => (
+  }: InputMockProps) => (
     <label>
       {ariaLabel}
       <input
@@ -88,31 +140,47 @@ const openThumbnailsPanel = () => {
 
 const setTotalPages = (totalPages: number) => {
   act(() => {
-    documentPreviewState.props.onTotalPagesChange(totalPages);
+    documentPreviewState.props?.onTotalPagesChange(totalPages);
   });
+};
+
+const getThumbnailPageNumbers = (): number[] => {
+  const props = documentPreviewState.props;
+  if (!props) throw new Error('DocumentPreview has not rendered yet');
+  return props.thumbnailPageNumbers;
 };
 
 describe('PdfContent', () => {
   beforeEach(() => {
     Element.prototype.scrollTo = vi.fn();
     vi.useFakeTimers();
+    // Run rAF callbacks synchronously so a scroll's setScrollTop lands
+    // before the test's next assertion, without depending on whether this
+    // vitest version's fake-timer clock also drives requestAnimationFrame.
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+      cb(0);
+      return 0;
+    });
+    vi.stubGlobal('cancelAnimationFrame', () => undefined);
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
     vi.clearAllMocks();
   });
 
   it('renders nothing when url is empty', () => {
-    const { container } = render(<PdfContent url="" highlights={[]} />);
-    expect(container.firstChild).toBeNull();
+    render(<PdfContent url="" highlights={[]} />);
+    expect(documentPreviewState.props).toBeUndefined();
+    expect(screen.queryByLabelText('Show thumbnails')).toBeNull();
   });
 
   describe('virtualization', () => {
     it('requests the eager first batch of thumbnails as soon as totalPages resolves', () => {
       render(<PdfContent url="doc.pdf" highlights={[]} />);
       setTotalPages(50);
-      expect(documentPreviewState.props.thumbnailPageNumbers).toEqual(
+      expect(getThumbnailPageNumbers()).toEqual(
         Array.from({ length: 15 }, (_, i) => i + 1),
       );
     });
@@ -120,9 +188,7 @@ describe('PdfContent', () => {
     it('caps the eager batch at totalPages when the document is shorter than the batch size', () => {
       render(<PdfContent url="doc.pdf" highlights={[]} />);
       setTotalPages(5);
-      expect(documentPreviewState.props.thumbnailPageNumbers).toEqual([
-        1, 2, 3, 4, 5,
-      ]);
+      expect(getThumbnailPageNumbers()).toEqual([1, 2, 3, 4, 5]);
     });
 
     it('renders only the visible window of thumbnails plus spacers, not every page', () => {
@@ -150,8 +216,7 @@ describe('PdfContent', () => {
         vi.runAllTimers();
       });
 
-      const requested: number[] = documentPreviewState.props
-        .thumbnailPageNumbers;
+      const requested = getThumbnailPageNumbers();
       // Original eager batch (1-15) must still be present...
       expect(requested).toEqual(expect.arrayContaining([1, 15]));
       // ...and the newly scrolled-to pages around row 30 must be added too.
@@ -171,7 +236,7 @@ describe('PdfContent', () => {
         vi.runAllTimers();
       });
 
-      expect(documentPreviewState.props.thumbnailPageNumbers).toEqual(
+      expect(getThumbnailPageNumbers()).toEqual(
         Array.from({ length: 15 }, (_, i) => i + 1),
       );
     });
