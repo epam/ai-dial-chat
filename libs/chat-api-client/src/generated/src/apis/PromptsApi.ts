@@ -53,6 +53,7 @@ export interface GetPublicPromptRequest {
 export interface MovePromptRequest {
   path: string;
   movePromptDto: MovePromptDto;
+  bucket?: string;
 }
 
 export interface RenamePromptFolderRequest {
@@ -63,6 +64,7 @@ export interface RenamePromptFolderRequest {
 export interface UpdatePromptRequest {
   path: string;
   updatePromptDto: UpdatePromptDto;
+  bucket?: string;
 }
 
 /**
@@ -369,8 +371,8 @@ export class PromptsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns all personal prompts and the folder hierarchy.
-   * List personal prompts
+   * Returns all catalog-visible prompts in one response. Organisation prompts are always read-only.
+   * List personal, shared, and organisation prompts
    */
   async listPromptsRaw(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
@@ -395,8 +397,8 @@ export class PromptsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns all personal prompts and the folder hierarchy.
-   * List personal prompts
+   * Returns all catalog-visible prompts in one response. Organisation prompts are always read-only.
+   * List personal, shared, and organisation prompts
    */
   async listPrompts(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
@@ -441,7 +443,7 @@ export class PromptsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Move a personal prompt to a different folder
+   * Move a personal or writable shared prompt to another folder
    */
   async movePromptRaw(
     requestParameters: MovePromptRequest,
@@ -467,6 +469,10 @@ export class PromptsApi extends runtime.BaseAPI {
       queryParameters['path'] = requestParameters['path'];
     }
 
+    if (requestParameters['bucket'] != null) {
+      queryParameters['bucket'] = requestParameters['bucket'];
+    }
+
     const headerParameters: runtime.HTTPHeaders = {};
 
     headerParameters['Content-Type'] = 'application/json';
@@ -488,7 +494,7 @@ export class PromptsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Move a personal prompt to a different folder
+   * Move a personal or writable shared prompt to another folder
    */
   async movePrompt(
     requestParameters: MovePromptRequest,
@@ -560,7 +566,7 @@ export class PromptsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Update a personal prompt
+   * Update a personal or writable shared prompt
    */
   async updatePromptRaw(
     requestParameters: UpdatePromptRequest,
@@ -586,6 +592,10 @@ export class PromptsApi extends runtime.BaseAPI {
       queryParameters['path'] = requestParameters['path'];
     }
 
+    if (requestParameters['bucket'] != null) {
+      queryParameters['bucket'] = requestParameters['bucket'];
+    }
+
     const headerParameters: runtime.HTTPHeaders = {};
 
     headerParameters['Content-Type'] = 'application/json';
@@ -607,7 +617,7 @@ export class PromptsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Update a personal prompt
+   * Update a personal or writable shared prompt
    */
   async updatePrompt(
     requestParameters: UpdatePromptRequest,

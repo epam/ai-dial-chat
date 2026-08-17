@@ -45,6 +45,22 @@ export class SkillMetadataItemDto {
 
   @ApiPropertyOptional({ description: 'Unix timestamp ms (item only)' })
   updatedAt?: number;
+
+  @ApiPropertyOptional({
+    description: 'Whether the skill belongs to the requestor',
+  })
+  isMy?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Whether the requestor may update the skill. Organisation skills are always read-only.',
+  })
+  canEdit?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Whether another user shared the skill with the requestor',
+  })
+  sharedWithMe?: boolean;
 }
 
 export class SkillListResponseDto {
@@ -63,3 +79,14 @@ export class SkillListResponseDto {
 
 /** Same shape as `SkillListResponseDto`, scoped to one skill's own files. */
 export class SkillFileListResponseDto extends SkillListResponseDto {}
+
+export class SkillCatalogListResponseDto {
+  @ApiProperty({ type: [SkillMetadataItemDto] })
+  skills!: SkillMetadataItemDto[];
+
+  @ApiProperty({ type: [SkillMetadataItemDto] })
+  sharedWithMe!: SkillMetadataItemDto[];
+
+  @ApiProperty({ type: [SkillMetadataItemDto] })
+  publicSkills!: SkillMetadataItemDto[];
+}

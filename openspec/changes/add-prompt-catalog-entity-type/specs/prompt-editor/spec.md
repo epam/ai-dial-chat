@@ -2,7 +2,7 @@
 
 ### Requirement: The editor's UI lives in `@epam/ai-dial-prompt-editor`
 
-**Revised (see design.md D16):** `PromptEditor` no longer renders a folder picker or owns folder sub-form state — the approved Figma design (`513:49196`) has no folder control on the create/edit screen. `PromptFolderField` remains exported from the same lib as a standalone widget a host may compose in separately; the requirement below describes `PromptEditor` only.
+**Revised (see design.md D16):** `PromptEditor` SHALL no longer render a folder picker or own folder sub-form state — the approved Figma design (`513:49196`) has no folder control on the create/edit screen. `PromptFolderField` remains exported from the same lib as a standalone widget a host may compose in separately; the requirement below describes `PromptEditor` only.
 
 A new lib, `libs/prompt-editor`, SHALL own the prompt form: name, description, and content (labelled **Instructions**) as a single flat column, with no "Details"/"Configuration" section split. `apps/chat/src/pages/PromptEditor/PromptEditor.tsx` SHALL become a container that supplies data and behaviour and renders nothing itself.
 
@@ -67,7 +67,7 @@ The flat column SHALL be capped at `max-w-[1180px]` and horizontally centered (`
 
 `apps/chat/src/types/prompt-editor.ts` SHALL define a `PromptEditorQuery` string enum with `Id = 'id'` and `ReturnUrl = 'returnUrl'`, mirroring `ToolsetEditorQuery`.
 
-Mode resolution: `?id=<promptPath>` opens edit mode; an absent `id` opens create mode. On save or cancel the page navigates to `returnUrl` when present, otherwise `ROUTES.Catalog`.
+Mode resolution: `?id=<promptPath>` opens edit mode for a personal prompt; `?id=prompts/{ownerBucket}/{promptPath}` opens edit mode for a shared prompt while preserving the owner bucket; an absent `id` opens create mode. On save or cancel the page navigates to `returnUrl` when present, otherwise `ROUTES.Catalog`.
 
 When `OverlayFeature.Prompts` is disabled the route SHALL redirect to `ROUTES.Catalog` without issuing any prompt request.
 
@@ -80,6 +80,12 @@ When `OverlayFeature.Prompts` is disabled the route SHALL redirect to `ROUTES.Ca
 
 - **WHEN** the user navigates to `/prompt-editor?id=Work%2FAI%2Fsummarize&returnUrl=/catalog`
 - **THEN** `getPrompt('Work/AI/summarize')` is called and the form is populated with the prompt's name, description, and content (the prompt's stored folder is not shown or editable on this screen — see design.md D16)
+
+#### Scenario: Shared edit mode loads from the owner bucket
+
+- **WHEN** the user navigates to `/prompt-editor?id=prompts%2Fowner-bucket%2FWork%2FAI%2Fsummarize`
+- **THEN** `getPrompt('Work/AI/summarize', 'owner-bucket')` is called
+- **AND** no folder selector is rendered, consistently with the flattened editor layout
 
 #### Scenario: Editing a non-existent prompt shows an error state
 
@@ -100,9 +106,9 @@ When `OverlayFeature.Prompts` is disabled the route SHALL redirect to `ROUTES.Ca
 
 ### Requirement: The editor creates and updates prompts
 
-**Revised (see design.md D16):** `createPrompt` no longer sends a `folderId` — new prompts land at root, since the screen has no folder control to derive one from. `updatePrompt` was already folder-agnostic and is unchanged.
+**Revised (see design.md D16):** `createPrompt` SHALL no longer send a `folderId` — new prompts land at root, since the screen has no folder control to derive one from. `updatePrompt` was already folder-agnostic and is unchanged.
 
-Create SHALL call `createPrompt({ name, description, content })`. Update SHALL call `updatePrompt(path, { name, description, content })` with only the changed fields.
+Create SHALL call `createPrompt({ name, description, content })`. A personal update SHALL call `updatePrompt(path, { name, description, content })`; a shared update SHALL call `updatePrompt(path, { name, description, content }, ownerBucket)`. The update payload carries the form's current name, description, and content values.
 
 On success the page SHALL call `refetchPrompts()`, show a success notification, and navigate back only after the refetch settles.
 
@@ -115,12 +121,18 @@ On success the page SHALL call `refetchPrompts()`, show a success notification, 
 #### Scenario: Updating content only
 
 - **WHEN** the user edits only the content field and saves
-- **THEN** `updatePrompt(path, { content: <new value> })` is dispatched without `name` or `description`
+- **THEN** `updatePrompt(path, { name: <current name>, description: <current description>, content: <new value> })` is dispatched
+- **AND** no `movePrompt` call is made
 
 #### Scenario: Renaming a prompt
 
 - **WHEN** the user changes the name and saves
 - **THEN** `updatePrompt(path, { name: <new name> })` is dispatched and the prompt's `id` changes to the new path
+
+#### Scenario: Saving a writable shared prompt preserves its owner bucket
+
+- **WHEN** the user saves changes to `prompts/owner-bucket/Work/AI/summarize`
+- **THEN** `updatePrompt('Work/AI/summarize', <body>, 'owner-bucket')` is dispatched
 
 #### Scenario: Duplicate name shows an inline field error
 
@@ -136,7 +148,7 @@ On success the page SHALL call `refetchPrompts()`, show a success notification, 
 
 ### Requirement: The editor screen does not move or manage prompt folders
 
-**Superseded (see design.md D16).** The two requirements this change originally shipped here — "The editor moves prompts between folders" and "The editor manages prompt folders" — described folder move/create/rename/delete dispatched from `PromptEditor`'s own folder picker. The approved Figma layout has no folder control on this screen, so none of that is reachable from `/prompt-editor` any more: `apps/chat/src/pages/PromptEditor/PromptEditor.tsx` does not call `movePrompt`, `createPromptFolder`, `renamePromptFolder`, or `deletePromptFolder`.
+**Superseded (see design.md D16).** `PromptEditor` SHALL expose no folder-management affordance. The two requirements this change originally shipped here — "The editor moves prompts between folders" and "The editor manages prompt folders" — described folder move/create/rename/delete dispatched from `PromptEditor`'s own folder picker. The approved Figma layout has no folder control on this screen, so none of that is reachable from `/prompt-editor` any more: `apps/chat/src/pages/PromptEditor/PromptEditor.tsx` does not call `movePrompt`, `createPromptFolder`, `renamePromptFolder`, or `deletePromptFolder`.
 
 The create/rename/delete behavior itself still exists, unchanged, in `PromptFolderField` (`libs/prompt-editor`) — see that component's own tests (`PromptFolderField.spec.tsx`, 13 passing) — for a host that composes the widget into a different screen. Nothing currently does.
 
@@ -148,7 +160,7 @@ The create/rename/delete behavior itself still exists, unchanged, in `PromptFold
 #### Scenario: A prompt's folder is unaffected by editing it
 
 - **WHEN** the user edits and saves a prompt that lives in `Work/AI`
-- **THEN** `updatePrompt` is dispatched with only the changed fields, no `movePrompt` call is made, and the prompt's `id` (and therefore its folder) is unchanged unless the name itself changed
+- **THEN** `updatePrompt` is dispatched with the current form fields, no `movePrompt` call is made, and the prompt's `id` (and therefore its folder) is unchanged unless the name itself changed
 
 ---
 
@@ -193,7 +205,7 @@ The content and description fields SHALL show a character counter. Per the a11y 
 
 ### Requirement: Non-functional contract for the prompt editor
 
-**Revised (see design.md D16):** the folder-picker-specific bullets below (folder empty state, folder tree RTL/a11y, folder-derived memoisation) described the editor's now-removed folder field; they still apply to `PromptFolderField` in isolation, not to the `/prompt-editor` screen.
+**Revised (see design.md D16):** the non-functional contract SHALL apply to the flattened prompt editor as described below. The folder-picker-specific bullets (folder empty state, folder tree RTL/a11y, folder-derived memoisation) described the editor's now-removed folder field; they still apply to `PromptFolderField` in isolation, not to the `/prompt-editor` screen.
 
 - **State ownership**: form state SHALL be local to `PromptEditor` (`useState`). No new context is introduced.
 - **Loading / empty / error states**: edit mode shows a loading state while `getPrompt` is pending, an error state with retry on failure, and a disabled submit with a pending indicator while a save is in flight.
@@ -203,7 +215,7 @@ The content and description fields SHALL show a character counter. Per the a11y 
 - **Feature flag**: gated by `OverlayFeature.Prompts` at the route level.
 - **Memoisation**: mutation handlers are `useCallback`'d.
 - **Observability**: none beyond the shared API client's per-request logging. No new metrics.
-- **Authorization**: the editor is reachable by any authenticated user and operates only on the caller's own prompt bucket, enforced backend-side. Organisation prompts are never editable — an organisation prompt's details panel offers no Edit action.
+- **Authorization**: the editor is reachable by any authenticated user. Personal prompts use the caller's bucket; a writable shared prompt uses the owner bucket carried by its qualified resource id and relies on DIAL Core to enforce `WRITE`. Organisation prompts are always read-only and their details panel offers no Edit action regardless of returned metadata.
 - **Rate limiting / caching**: no client cache. `POST /api/v1/prompts` carries the backend's existing per-route throttle (30/min); the form disables submit while a save is in flight so a user cannot trip it by double-submitting.
 
 #### Scenario: Double-submit is impossible

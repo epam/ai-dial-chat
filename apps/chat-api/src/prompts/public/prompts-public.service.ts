@@ -64,6 +64,11 @@ export class PromptsPublicService {
           ),
         )
       ).filter((p): p is PromptResponseDto => p != null);
+      for (const prompt of prompts) {
+        prompt.isMy = false;
+        prompt.canEdit = false;
+        prompt.sharedWithMe = false;
+      }
 
       const folders = deriveFolders([
         ...prompts.map((p) => p.id),

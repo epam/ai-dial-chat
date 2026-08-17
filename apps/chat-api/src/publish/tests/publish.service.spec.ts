@@ -50,7 +50,7 @@ describe('PublishService', () => {
         CatalogEntityType.Toolset,
         'toolsets/bucket-123/tool-abc123__1.2.0',
         'Organization/Data Science',
-        '1.2.0',
+        undefined,
         'Test User',
       );
 
@@ -84,7 +84,7 @@ describe('PublishService', () => {
       );
     });
 
-    it('publishes a skill entityType, using the leaf name only for targetUrl and the caller-supplied version', async () => {
+    it('publishes an unversioned skill using only its leaf name in the publication title and targetUrl', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
         okResponse({
@@ -99,18 +99,14 @@ describe('PublishService', () => {
         CatalogEntityType.Skill,
         'skills/bucket-123/team-a/docs-helper',
         'Organization/Data Science',
-        '2.1.0',
+        undefined,
         'Test User',
       );
 
       expect(dialClient.client.createPublication).toHaveBeenCalledWith({
         headers: { Authorization: 'Bearer token-abc' },
         body: {
-          /* No {name}__{version} suffix to recover from a skill entityId —
-             the title's "name" segment is the bare leaf path, and "version"
-             is always the caller-supplied value for skills (open question,
-             catalog-publish-api spec). */
-          name: 'docs-helper 2.1.0',
+          name: 'docs-helper',
           targetFolder: 'public/Organization/Data%20Science/',
           resources: [
             {
@@ -130,7 +126,7 @@ describe('PublishService', () => {
         entityId: 'skills/bucket-123/team-a/docs-helper',
         entityType: CatalogEntityType.Skill,
         folderPath: 'Organization/Data Science',
-        version: '2.1.0',
+        version: '',
         publishedAt: new Date(1_700_000_000_000).toISOString(),
         publishedBy: 'user@example.com',
       });

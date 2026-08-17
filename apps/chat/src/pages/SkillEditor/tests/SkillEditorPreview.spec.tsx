@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useUser } from '../../../context/auth/UserContext';
 import { ConversationPanelProvider } from '../../../context/ConversationPanelContext';
 import { useNotification } from '../../../context/NotificationContext';
+import { SkillsContext } from '../../../context/SkillsContext';
 import { SourcesSidebarProvider } from '../../../context/SourcesSidebarContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import {
@@ -79,13 +80,25 @@ if (!document.elementFromPoint) {
 }
 
 let mockSearchParams = new URLSearchParams();
+const refetchSkills = vi.fn<() => Promise<void>>();
 
 const Providers = ({ children }: { children: ReactNode }) => (
-  <AttachmentCanvasProvider>
-    <ConversationPanelProvider>
-      <SourcesSidebarProvider>{children}</SourcesSidebarProvider>
-    </ConversationPanelProvider>
-  </AttachmentCanvasProvider>
+  <SkillsContext.Provider
+    value={{
+      skills: [],
+      publicSkills: [],
+      sharedWithMe: [],
+      isLoading: false,
+      error: null,
+      refetchSkills,
+    }}
+  >
+    <AttachmentCanvasProvider>
+      <ConversationPanelProvider>
+        <SourcesSidebarProvider>{children}</SourcesSidebarProvider>
+      </ConversationPanelProvider>
+    </AttachmentCanvasProvider>
+  </SkillsContext.Provider>
 );
 
 const renderPage = () => render(<SkillEditor />, { wrapper: Providers });
@@ -141,6 +154,7 @@ describe('SkillEditor page — supporting file preview', () => {
     vi.mocked(useNotification).mockReturnValue(
       createNotificationContextValue(vi.fn()),
     );
+    refetchSkills.mockResolvedValue(undefined);
   });
 
   it('opens a Markdown preview when a Markdown supporting file is selected, with no BFF call', async () => {

@@ -299,6 +299,37 @@ describe('PromptEditor', () => {
     });
   });
 
+  it('updates a writable shared prompt in the owner bucket', async () => {
+    mockSearchParams = new URLSearchParams({
+      id: 'prompts/owner-bucket/Work/AI/summarize',
+    });
+    vi.mocked(getPrompt).mockResolvedValue({
+      ...promptDto,
+      bucket: 'owner-bucket',
+      isMy: false,
+      canEdit: true,
+      sharedWithMe: true,
+    });
+
+    render(<PromptEditor />);
+
+    expect(await screen.findByDisplayValue('summarize')).toBeTruthy();
+    expect(getPrompt).toHaveBeenCalledWith('Work/AI/summarize', 'owner-bucket');
+
+    await user.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await waitFor(() =>
+      expect(updatePrompt).toHaveBeenCalledWith(
+        'Work/AI/summarize',
+        {
+          name: 'summarize',
+          description: 'Summarize a document',
+          content: 'Summarize the following text:',
+        },
+        'owner-bucket',
+      ),
+    );
+  });
   it('navigates to the return url on cancel without dispatching a mutation', async () => {
     mockSearchParams = new URLSearchParams({ returnUrl: '/catalog' });
 

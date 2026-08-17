@@ -2643,7 +2643,7 @@
     },
     "/api/v1/prompts": {
       "get": {
-        "description": "Returns all personal prompts and the folder hierarchy.",
+        "description": "Returns all catalog-visible prompts in one response. Organisation prompts are always read-only.",
         "operationId": "listPrompts",
         "parameters": [],
         "responses": {
@@ -2664,7 +2664,7 @@
             "description": "DIAL Core error"
           }
         },
-        "summary": "List personal prompts",
+        "summary": "List personal, shared, and organisation prompts",
         "tags": [
           "prompts"
         ]
@@ -2724,6 +2724,16 @@
               "example": "Work/AI/my-prompt",
               "type": "string"
             }
+          },
+          {
+            "name": "bucket",
+            "required": false,
+            "in": "query",
+            "description": "DIAL Core bucket to read from. Defaults to the caller's own bucket; pass the owner bucket reported as `bucket` on a shared prompt to read that one. DIAL Core still enforces access, so a bucket the caller has no grant for resolves to 404.",
+            "schema": {
+              "example": "owner-bucket",
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -2763,7 +2773,7 @@
             "description": "DIAL Core error"
           }
         },
-        "summary": "Update a personal prompt",
+        "summary": "Update a personal or writable shared prompt",
         "tags": [
           "prompts"
         ]
@@ -3089,6 +3099,16 @@
               "example": "Work/AI/my-prompt",
               "type": "string"
             }
+          },
+          {
+            "name": "bucket",
+            "required": false,
+            "in": "query",
+            "description": "DIAL Core bucket to read from. Defaults to the caller's own bucket; pass the owner bucket reported as `bucket` on a shared prompt to read that one. DIAL Core still enforces access, so a bucket the caller has no grant for resolves to 404.",
+            "schema": {
+              "example": "owner-bucket",
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -3128,7 +3148,7 @@
             "description": "DIAL Core error"
           }
         },
-        "summary": "Move a personal prompt to a different folder",
+        "summary": "Move a personal or writable shared prompt to another folder",
         "tags": [
           "prompts"
         ]
@@ -4560,6 +4580,44 @@
         ]
       }
     },
+    "/api/v1/skills/catalog": {
+      "get": {
+        "description": "Returns all catalog-visible skills in one response. Organisation skills are always marked read-only.",
+        "operationId": "listCatalogSkills",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillCatalogListResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable"
+          }
+        },
+        "summary": "List personal, shared, and organisation skills",
+        "tags": [
+          "skills"
+        ]
+      }
+    },
     "/api/v1/skills": {
       "get": {
         "description": "Proxies DIAL Core listSkillMetadata to list the grouping folders and skills at or under the given path.",
@@ -5491,7 +5549,7 @@
     },
     "/api/v1/catalog/{entityType}/{entityId}/publish": {
       "post": {
-        "description": "Publishes a catalog entity (Toolset, Application, or Prompt) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.",
+        "description": "Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.",
         "operationId": "publishCatalogEntity",
         "parameters": [
           {
@@ -5544,7 +5602,7 @@
             }
           },
           "400": {
-            "description": "Validation error — invalid entityType, entityId, or folderPath"
+            "description": "Validation error — invalid entityType, entityId, folderPath, version, or rules"
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
@@ -9948,6 +10006,25 @@
             "type": "number",
             "description": "Last update timestamp (Unix ms)",
             "example": 1700000001000
+          },
+          "isMy": {
+            "type": "boolean",
+            "description": "Whether the prompt belongs to the requestor"
+          },
+          "canEdit": {
+            "type": "boolean",
+            "description": "Whether the requestor may update the prompt. Organisation prompts are always read-only."
+          },
+          "sharedWithMe": {
+            "type": "boolean",
+            "description": "Whether another user shared the prompt with the requestor"
+          },
+          "permissions": {
+            "description": "READ/WRITE/SHARE permissions applicable to the requestor",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -9998,6 +10075,18 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PromptResponseDto"
+            }
+          },
+          "publicPrompts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromptResponseDto"
+            }
+          },
+          "publicFolders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromptFolderResponseDto"
             }
           }
         },
@@ -11151,6 +11240,18 @@
           "updatedAt": {
             "type": "number",
             "description": "Unix timestamp ms (item only)"
+          },
+          "isMy": {
+            "type": "boolean",
+            "description": "Whether the skill belongs to the requestor"
+          },
+          "canEdit": {
+            "type": "boolean",
+            "description": "Whether the requestor may update the skill. Organisation skills are always read-only."
+          },
+          "sharedWithMe": {
+            "type": "boolean",
+            "description": "Whether another user shared the skill with the requestor"
           }
         },
         "required": [
@@ -11265,6 +11366,34 @@
         },
         "required": [
           "success"
+        ]
+      },
+      "SkillCatalogListResponseDto": {
+        "type": "object",
+        "properties": {
+          "skills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkillMetadataItemDto"
+            }
+          },
+          "sharedWithMe": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkillMetadataItemDto"
+            }
+          },
+          "publicSkills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkillMetadataItemDto"
+            }
+          }
+        },
+        "required": [
+          "skills",
+          "sharedWithMe",
+          "publicSkills"
         ]
       },
       "SkillListResponseDto": {
@@ -11383,7 +11512,7 @@
           },
           "version": {
             "type": "string",
-            "description": "Version label for this publish.",
+            "description": "Optional version label. When omitted, versioned resource ids recover it from their {name}__{version} suffix; unversioned resources use an empty version.",
             "example": "1.2.0"
           },
           "rules": {
@@ -11396,8 +11525,7 @@
           }
         },
         "required": [
-          "folderPath",
-          "version"
+          "folderPath"
         ]
       },
       "PublishResultDto": {
