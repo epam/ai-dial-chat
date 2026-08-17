@@ -8,13 +8,13 @@ import { IsValidFilePath } from '../../files/dto/file-path.validator';
  * count worth answering either.
  */
 const CATALOG_RESOURCE_PATH_PATTERN =
-  /^(?:applications|toolsets|conversations)\/[^/\s]+\/[^/\r\n][^\r\n]*(?![\s\S])/;
+  /^(?:applications|toolsets|conversations|skills)\/[^/\s]+\/[^/\r\n][^\r\n]*(?![\s\S])/;
 
 /** Query parameters for `GET /api/v1/share/recipients`. */
 export class GetShareRecipientsDto {
   @ApiProperty({
     description:
-      'Identifier (DIAL Core resource path) of the owned catalog item or conversation to count current recipients for.',
+      'Identifier (DIAL Core resource path) of the owned catalog item, skill, or conversation to count current recipients for.',
     example: 'applications/owner-bucket/my-app',
   })
   @IsString()
@@ -22,7 +22,7 @@ export class GetShareRecipientsDto {
   @IsValidFilePath()
   @Matches(CATALOG_RESOURCE_PATH_PATTERN, {
     message:
-      'itemId must identify an application, toolset, or conversation resource with a bucket and item path',
+      'itemId must identify an application, toolset, skill, or conversation resource with a bucket and item path',
   })
   @MaxLength(2048)
   itemId!: string;
