@@ -1,4 +1,3 @@
-import type { Message as MessageType } from '@epam/ai-dial-chat-shared';
 import {
   useCallback,
   useEffect,
@@ -12,13 +11,18 @@ const NEAR_BOTTOM_THRESHOLD = 80;
 const SPACER_CLEAR_TOLERANCE = 1;
 const SCROLL_CLAMP_TOLERANCE = 1;
 
-interface Params {
-  messages: MessageType[];
+/** Parameters for {@link useConversationScroll}. `T` is never read — only `messages.length` is used to detect growth/reset. */
+export interface UseConversationScrollParams<T> {
+  /** Messages currently rendered in the list. */
+  messages: T[];
+  /** Whether an assistant response is currently streaming in. */
   isAssistantTyping: boolean;
+  /** Identifier of the conversation being displayed. */
   conversationId: string;
 }
 
-interface Result {
+/** Return value of {@link useConversationScroll}. */
+export interface UseConversationScrollResult {
   /** Attach to the scrollable message-list element. */
   containerRef: RefObject<HTMLDivElement | null>;
   /** Attach to the element wrapping all rendered messages (used to detect content growth). */
@@ -52,11 +56,11 @@ interface Result {
  * it is sized to the minimum required to make the anchor reachable and manual
  * scrolling is clamped before the user can move past the real message content.
  */
-export const useConversationScroll = ({
+export const useConversationScroll = <T>({
   messages,
   isAssistantTyping,
   conversationId,
-}: Params): Result => {
+}: UseConversationScrollParams<T>): UseConversationScrollResult => {
   const [isScrollButtonVisible, setIsScrollButtonVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);

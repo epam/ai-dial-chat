@@ -30,6 +30,7 @@ Apply in order, stop at the first match:
 
 | Scope                   | Covers                                                        |
 | ----------------------- | ------------------------------------------------------------- |
+| `ai-dial-chat-hooks`    | Reusable hooks for chat functionality (scroll, export, etc.)  |
 | `attachment-canvas`     | Side canvas / attachment preview (PDF, JSON, MD rendering)    |
 | `attachment-input`      | Attachment upload input and file handling UI                  |
 | `builder-form`          | Shared builder/editor form page shell (header, column layout) |
