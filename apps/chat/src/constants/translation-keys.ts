@@ -748,6 +748,10 @@ export enum AttachmentCanvasI18nKeys {
   HtmlOpenInNewTab = 'attachmentCanvas.htmlOpenInNewTab',
   HtmlViewSource = 'attachmentCanvas.htmlViewSource',
   HtmlViewRendered = 'attachmentCanvas.htmlViewRendered',
+  PdfThumbnailsLabel = 'attachmentCanvas.pdfThumbnailsLabel',
+  PdfShowThumbnailsLabel = 'attachmentCanvas.pdfShowThumbnailsLabel',
+  PdfHideThumbnailsLabel = 'attachmentCanvas.pdfHideThumbnailsLabel',
+  PdfPageNumberLabel = 'attachmentCanvas.pdfPageNumberLabel',
 }
 
 export enum AnnouncementBannerI18nKeys {
