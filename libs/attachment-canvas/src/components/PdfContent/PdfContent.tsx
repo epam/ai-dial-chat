@@ -15,15 +15,26 @@ import type { InputHighlightData } from '@epam/pdf-highlighter-kit';
 import { IconMenu2, IconX } from '@tabler/icons-react';
 import {
   type FC,
+  type UIEvent,
   useCallback,
   useEffect,
   useId,
-  useMemo,
   useRef,
   useState,
 } from 'react';
 import { fetchBlobFromUrl } from '../../utils/download';
 import styles from './PdfContent.module.scss';
+
+/** Number of pages eagerly requested as soon as the document loads, before the user opens the panel. */
+const THUMBNAIL_EAGER_BATCH_SIZE = 15;
+/** Extra rows rendered above/below the visible window so scrolling doesn't outrun loaded thumbnails. */
+const THUMBNAIL_OVERSCAN = 3;
+/** Assumed thumbnail row height (px) until the first rendered row is measured. */
+const THUMBNAIL_ITEM_HEIGHT_FALLBACK = 172;
+/** Assumed scrollable panel height (px) until it is measured via `ResizeObserver`. */
+const THUMBNAIL_PANEL_HEIGHT_FALLBACK = 400;
+/** Debounce (ms) before requesting thumbnails for a newly scrolled-to range, so rapid scrolling doesn't restart the vendor's internal batch fetch on every frame. */
+const THUMBNAIL_SCROLL_REQUEST_DEBOUNCE_MS = 150;
 
 /** User-visible strings for the collapsible thumbnails section. */
 export interface PdfContentLabels {
@@ -89,11 +100,21 @@ export const PdfContent: FC<PdfContentProps> = ({
   });
 
   const viewerApiRef = useRef<PdfViewerApi | null>(null);
-  const thumbnailNodeRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const panelRef = useRef<HTMLDivElement>(null);
   const [requestedThumbnailPages, setRequestedThumbnailPages] = useState<
     number[]
   >([]);
+
+  const [itemHeight, setItemHeight] = useState(
+    THUMBNAIL_ITEM_HEIGHT_FALLBACK,
+  );
+  const [panelHeight, setPanelHeight] = useState(
+    THUMBNAIL_PANEL_HEIGHT_FALLBACK,
+  );
+  const [scrollTop, setScrollTop] = useState(0);
+  const hasMeasuredItemHeightRef = useRef(false);
+  const latestScrollTopRef = useRef(0);
+  const scrollRafRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!selectedHighlightId) return;
@@ -102,44 +123,114 @@ export const PdfContent: FC<PdfContentProps> = ({
     if (page != null) setSelectedPage(page);
   }, [selectedHighlightId, highlights]);
 
-  /*
-   * Scroll to the selected page thumbnail by setting `scrollTop` on the
-   * panel directly, rather than `Element.scrollIntoView()`. The panel is
-   * rendered through the `Dropdown`'s portal with floating-ui's
-   * `position: fixed` placement, which isn't anchored to any ancestor's
-   * scroll offset — `scrollIntoView`'s ancestor walk doesn't recognize
-   * that boundary and falls through to scrolling the real `<html>` root
-   * instead of the (visually unmoving) fixed panel.
-   */
+  /* Keep the scrollable panel's height in sync with its actual rendered size (it's capped by `max-h-[70vh]`, so viewport size matters). */
   useEffect(() => {
-    const container = panelRef.current;
-    const el = thumbnailNodeRefs.current.get(selectedPage);
-    if (!container || !el) return;
-    container.scrollTo({
-      top: el.offsetTop - container.clientHeight / 2 + el.clientHeight / 2,
-      behavior: 'smooth',
+    const panel = panelRef.current;
+    if (!isThumbnailsOpen || !panel) return;
+    const observer = new ResizeObserver((entries) => {
+      const height = entries[0]?.contentRect.height;
+      if (height) setPanelHeight(height);
     });
-  }, [selectedPage, totalPages, isThumbnailsOpen]);
+    observer.observe(panel);
+    return () => observer.disconnect();
+  }, [isThumbnailsOpen]);
 
-  const allPageNumbers = useMemo(
-    () => Array.from({ length: totalPages }, (_, i) => i + 1),
-    [totalPages],
+  const measureItemHeight = useCallback((el: HTMLDivElement | null) => {
+    if (!el || hasMeasuredItemHeightRef.current) return;
+    const height = el.getBoundingClientRect().height;
+    if (height > 0) {
+      hasMeasuredItemHeightRef.current = true;
+      setItemHeight(height);
+    }
+  }, []);
+
+  const handlePanelScroll = useCallback((e: UIEvent<HTMLDivElement>) => {
+    latestScrollTopRef.current = e.currentTarget.scrollTop;
+    if (scrollRafRef.current != null) return;
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = null;
+      setScrollTop(latestScrollTopRef.current);
+    });
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (scrollRafRef.current != null) {
+        cancelAnimationFrame(scrollRafRef.current);
+      }
+    },
+    [],
   );
 
   /*
-   * Request every page's thumbnail as soon as the document finishes
-   * loading, even while the section is still collapsed, so it's ready by
-   * the time the user opens it. The vendor library batches these requests
-   * internally (15 pages per batch) and reports each batch via
-   * `onThumbnailsLoaded` as it completes, so pages render progressively
-   * rather than all at once.
+   * Scroll to the selected page by setting `scrollTop` on the panel
+   * directly, computed purely from page index * item height rather than
+   * looking up the thumbnail's DOM node — with virtualization the target
+   * page may not be mounted yet. (`Element.scrollIntoView()` is also
+   * unusable here: the panel is rendered through the `Dropdown`'s portal
+   * with floating-ui's `position: fixed` placement, which isn't anchored to
+   * any ancestor's scroll offset, so `scrollIntoView`'s ancestor walk falls
+   * through to scrolling the real `<html>` root instead.)
+   */
+  useEffect(() => {
+    const container = panelRef.current;
+    if (!container || totalPages === 0) return;
+    const targetTop =
+      (selectedPage - 1) * itemHeight -
+      container.clientHeight / 2 +
+      itemHeight / 2;
+    container.scrollTo({
+      top: Math.max(0, targetTop),
+      behavior: 'smooth',
+    });
+  }, [selectedPage, totalPages, isThumbnailsOpen, itemHeight]);
+
+  const startIndex = Math.max(
+    0,
+    Math.floor(scrollTop / itemHeight) - THUMBNAIL_OVERSCAN,
+  );
+  const visibleRowCount =
+    Math.ceil(panelHeight / itemHeight) + THUMBNAIL_OVERSCAN * 2;
+  const endIndex = Math.min(totalPages - 1, startIndex + visibleRowCount);
+
+  /*
+   * Eagerly request the first batch of thumbnails as soon as the document
+   * finishes loading, even while the panel is still collapsed, so they're
+   * ready by the time the user opens it.
    */
   useEffect(() => {
     if (totalPages === 0) return;
+    const eagerEnd = Math.min(totalPages, THUMBNAIL_EAGER_BATCH_SIZE);
     setRequestedThumbnailPages(
-      Array.from({ length: totalPages }, (_, i) => i + 1),
+      Array.from({ length: eagerEnd }, (_, i) => i + 1),
     );
   }, [totalPages]);
+
+  /*
+   * Extend the requested set on demand as the user scrolls the panel,
+   * debounced so a fast scroll doesn't repeatedly restart the vendor's
+   * internal batch fetch effect. Pages already requested are never removed
+   * — the array only grows — since the vendor's `thumbnailPageNumbers`
+   * effect aborts and restarts its whole batch loop on every reference
+   * change.
+   */
+  useEffect(() => {
+    if (!isThumbnailsOpen || totalPages === 0) return;
+    const timeoutId = setTimeout(() => {
+      setRequestedThumbnailPages((prev) => {
+        const next = new Set(prev);
+        let changed = false;
+        for (let pageNum = startIndex + 1; pageNum <= endIndex + 1; pageNum++) {
+          if (!next.has(pageNum)) {
+            next.add(pageNum);
+            changed = true;
+          }
+        }
+        return changed ? Array.from(next).sort((a, b) => a - b) : prev;
+      });
+    }, THUMBNAIL_SCROLL_REQUEST_DEBOUNCE_MS);
+    return () => clearTimeout(timeoutId);
+  }, [isThumbnailsOpen, startIndex, endIndex, totalPages]);
 
   const handleThumbnailsLoaded = useCallback((map: Map<number, string>) => {
     setThumbnails((prev) => new Map([...prev, ...map]));
@@ -196,26 +287,30 @@ export const PdfContent: FC<PdfContentProps> = ({
 
   if (!url) return null;
 
-  const thumbnailItems = allPageNumbers.map((pageNum) => (
-    <div
-      key={pageNum}
-      ref={(el) => {
-        if (el) {
-          thumbnailNodeRefs.current.set(pageNum, el);
-        } else {
-          thumbnailNodeRefs.current.delete(pageNum);
-        }
-      }}
-    >
-      <PageThumbnail
-        pageNum={pageNum}
-        onSelectPage={handleSelectPage}
-        isSelected={selectedPage === pageNum}
-        isLoading={!thumbnails.has(pageNum)}
-        thumbnailUrl={thumbnails.get(pageNum) ?? null}
-      />
-    </div>
-  ));
+  const thumbnailItems = [];
+  for (
+    let pageNum = startIndex + 1;
+    pageNum <= endIndex + 1 && pageNum <= totalPages;
+    pageNum++
+  ) {
+    thumbnailItems.push(
+      <div
+        key={pageNum}
+        ref={pageNum === startIndex + 1 ? measureItemHeight : undefined}
+      >
+        <PageThumbnail
+          pageNum={pageNum}
+          onSelectPage={handleSelectPage}
+          isSelected={selectedPage === pageNum}
+          isLoading={!thumbnails.has(pageNum)}
+          thumbnailUrl={thumbnails.get(pageNum) ?? null}
+        />
+      </div>,
+    );
+  }
+
+  const topSpacerHeight = startIndex * itemHeight;
+  const bottomSpacerHeight = Math.max(0, totalPages - endIndex - 1) * itemHeight;
 
   return (
     <div className="relative flex h-full overflow-hidden">
@@ -247,9 +342,12 @@ export const PdfContent: FC<PdfContentProps> = ({
                   id={thumbnailsRegionId}
                   role="region"
                   aria-label={thumbnailsLabel}
+                  onScroll={handlePanelScroll}
                   className="min-h-0 max-h-[70vh] overflow-y-auto overflow-x-hidden p-1 [scrollbar-gutter:stable]"
                 >
+                  <div style={{ height: topSpacerHeight }} />
                   {thumbnailItems}
+                  <div style={{ height: bottomSpacerHeight }} />
                 </div>
               </div>
             )}
