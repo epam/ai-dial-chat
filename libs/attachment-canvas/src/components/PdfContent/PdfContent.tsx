@@ -15,6 +15,7 @@ import type { InputHighlightData } from '@epam/pdf-highlighter-kit';
 import { IconMenu2, IconX } from '@tabler/icons-react';
 import {
   type FC,
+  type ReactElement,
   type UIEvent,
   useCallback,
   useEffect,
@@ -105,9 +106,7 @@ export const PdfContent: FC<PdfContentProps> = ({
     number[]
   >([]);
 
-  const [itemHeight, setItemHeight] = useState(
-    THUMBNAIL_ITEM_HEIGHT_FALLBACK,
-  );
+  const [itemHeight, setItemHeight] = useState(THUMBNAIL_ITEM_HEIGHT_FALLBACK);
   const [panelHeight, setPanelHeight] = useState(
     THUMBNAIL_PANEL_HEIGHT_FALLBACK,
   );
@@ -287,7 +286,7 @@ export const PdfContent: FC<PdfContentProps> = ({
 
   if (!url) return null;
 
-  const thumbnailItems = [];
+  const thumbnailItems: ReactElement[] = [];
   for (
     let pageNum = startIndex + 1;
     pageNum <= endIndex + 1 && pageNum <= totalPages;
@@ -310,7 +309,8 @@ export const PdfContent: FC<PdfContentProps> = ({
   }
 
   const topSpacerHeight = startIndex * itemHeight;
-  const bottomSpacerHeight = Math.max(0, totalPages - endIndex - 1) * itemHeight;
+  const bottomSpacerHeight =
+    Math.max(0, totalPages - endIndex - 1) * itemHeight;
 
   return (
     <div className="relative flex h-full overflow-hidden">
@@ -343,7 +343,7 @@ export const PdfContent: FC<PdfContentProps> = ({
                   role="region"
                   aria-label={thumbnailsLabel}
                   onScroll={handlePanelScroll}
-                  className="min-h-0 max-h-[70vh] overflow-y-auto overflow-x-hidden p-1 [scrollbar-gutter:stable]"
+                  className="max-h-[70vh] min-h-0 overflow-y-auto overflow-x-hidden p-1 [scrollbar-gutter:stable]"
                 >
                   <div style={{ height: topSpacerHeight }} />
                   {thumbnailItems}
