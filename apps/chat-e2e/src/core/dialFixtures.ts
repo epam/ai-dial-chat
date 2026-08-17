@@ -35,6 +35,7 @@ import {
   EntityEditorPreviewCard,
   ExternalAppEditorContainer,
   ExternalAppEditorViewForm,
+  Favicon,
   FileConflictResolutionPopup,
   FileDropArea,
   FileManager,
@@ -363,6 +364,7 @@ const dialTest = test.extend<{
   downloadTableCsvModal: DownloadTableCsvModal;
   selectFolderModal: SelectFolderModal;
   selectFolderManagerModal: SelectFolderManagerModal;
+  favicon: Favicon;
   selectFolders: Folders;
   messageTemplateModal: MessageTemplateModal;
   settingsModal: SettingsModal;
@@ -1289,6 +1291,10 @@ const dialTest = test.extend<{
     const selectFolderManagerModalManager =
       selectFolderManagerModal.getFileManager();
     await use(selectFolderManagerModalManager);
+  },
+  favicon: async ({ page }, use) => {
+    const favicon = new Favicon(page);
+    await use(favicon);
   },
   selectFolderManagerModalCollapsibleSidebar: async (
     { selectFolderManagerModalManager },
