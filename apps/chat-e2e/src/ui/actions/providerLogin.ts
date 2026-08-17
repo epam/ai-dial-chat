@@ -51,13 +51,13 @@ export abstract class ProviderLogin<T extends BasePage & LoginInterface> {
     );
   }
 
-  protected async navigateToProviderStartPage(url?: string) {
+  public async navigateToProviderStartPage(url?: string) {
     url
       ? await this.loginPage.navigateToUrl(url)
       : await this.loginPage.navigateToBaseUrl();
   }
 
-  protected async authProviderLogin(
+  public async authProviderLogin(
     testInfo: TestInfo,
     username: string,
     password: string,

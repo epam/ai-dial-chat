@@ -326,6 +326,8 @@ export const ExpectedMessages = {
   elementAttributeValueShouldBe: 'Element attribute value should be: ',
   elementAttributeValueShouldNotBe: 'Element attribute value should not be: ',
   elementAttributeIsAbsent: 'Element attribute is absent',
+  responseContentTypeIsImage: 'Response content type is an image',
+  faviconUrlIsValid: 'Favicon url is valid',
   uploadedFilesAreaIsScrollable: 'Uploaded files area is scrollable vertically',
   elementIsInFocus: 'Element is in focus',
   elementIsNotInFocus: 'Element is not in focus',

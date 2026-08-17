@@ -610,6 +610,7 @@ export const API = {
   bucketHost: '/api/bucket',
   listingHost: '/api/listing',
   themesListingHost: '/api/themes/listing',
+  faviconHost: '/api/themes/favicon',
   conversationsHost: () => `${API.listingHost}/conversations`,
   conversationsMetadataHost: `/api/metadata/conversations`,
   promptsHost: () => `${API.listingHost}/prompts`,
