@@ -41,6 +41,27 @@ const formatTokens = (n: number): string =>
 const formatReleaseDate = (timestampMs: number): string =>
   new Date(timestampMs).toLocaleDateString();
 
+const formatCatalogDate = (date: string): string => {
+  const dateParts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  if (dateParts == null) return date;
+
+  const [, year, month, day] = dateParts;
+  const yearNumber = Number(year);
+  const monthIndex = Number(month) - 1;
+  const dayNumber = Number(day);
+  const localDate = new Date(yearNumber, monthIndex, dayNumber);
+
+  if (
+    localDate.getFullYear() !== yearNumber ||
+    localDate.getMonth() !== monthIndex ||
+    localDate.getDate() !== dayNumber
+  ) {
+    return date;
+  }
+
+  return formatReleaseDate(localDate.getTime());
+};
+
 const PRICING_UNIT_KEY = 'unit';
 
 const getDetailsLabel = (
@@ -123,7 +144,7 @@ const mapModelDetails = (
           CatalogI18nKeys.DetailsModelKnowledgeCutoffDate,
           'Knowledge cutoff date',
         ),
-        value: s.knowledgeCutoffDate,
+        value: formatCatalogDate(s.knowledgeCutoffDate),
       });
     if (s.hostedBy != null)
       specs.push({ label: 'Hosted by', value: s.hostedBy });

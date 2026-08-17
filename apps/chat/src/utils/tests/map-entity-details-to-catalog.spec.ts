@@ -58,7 +58,7 @@ describe('mapEntityDetailsToCatalogDetails', () => {
             { label: 'License', value: 'License' },
             {
               label: 'Knowledge cutoff date',
-              value: '2026-08-17',
+              value: new Date(2026, 7, 17).toLocaleDateString(),
             },
           ],
         },

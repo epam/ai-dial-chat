@@ -32,8 +32,6 @@ type DialDeploymentInterfaceType = NonNullable<
   >['interface_type']
 >[number];
 
-const LOGGED_DEPLOYMENT_ID = 'als-regre-19-adapter';
-
 @Injectable()
 export class DeploymentsListingService {
   private readonly logger = new Logger(DeploymentsListingService.name);
@@ -187,14 +185,6 @@ export class DeploymentsListingService {
           ? (rawData as RawDeploymentDto[])
           : ((rawData as { deployments?: RawDeploymentDto[] }).deployments ??
             []);
-        const loggedDeployment = rawItems.find(
-          (item) => item.id === LOGGED_DEPLOYMENT_ID,
-        );
-        if (loggedDeployment) {
-          this.logger.debug(
-            `DIAL Core /v1/deployments response for "${LOGGED_DEPLOYMENT_ID}": ${JSON.stringify(loggedDeployment)}`,
-          );
-        }
 
         const mappedItems = rawItems
           .filter((item) => item.id && !item.id.includes(HIDDEN_FILE))
