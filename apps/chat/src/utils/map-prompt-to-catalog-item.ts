@@ -55,8 +55,8 @@ export const buildPromptOverview = (
 
 /**
  * Whether a prompt item came from the organisation namespace, which the public
- * prompt endpoints serve. Personal and shared-with-me prompts both resolve
- * through the caller's own bucket instead.
+ * prompt endpoints serve. Personal prompts resolve through the caller's own
+ * bucket, while shared prompts carry their owner's bucket in the resource URL.
  */
 export const isOrganisationPromptItem = (item: CatalogItem): boolean =>
   !item.isMyApp && !item.sharedWithMe;
@@ -108,9 +108,10 @@ export const mapPromptToCatalogItem = (
     /* Favorites live in the user config's `prompts.installed`, keyed by path. */
     isUserFavorite: isFavorite,
     isStarred: isFavorite,
-    isMyApp: isPersonal,
-    sharedWithMe: source === PromptSource.SharedWithMe,
-    isEditable: isPersonal,
+    isMyApp: prompt.isMy ?? isPersonal,
+    sharedWithMe: prompt.sharedWithMe ?? source === PromptSource.SharedWithMe,
+    isEditable:
+      source !== PromptSource.Public && (prompt.canEdit ?? isPersonal),
     folder: resolvePromptFolder(prompt.folderId, source, t),
     /*
      * `listPrompts` already returns the body, so the details panel can render

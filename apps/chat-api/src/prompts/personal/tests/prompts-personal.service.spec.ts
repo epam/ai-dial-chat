@@ -26,11 +26,12 @@ const storedPrompt = {
 };
 
 const metaUrl = (path: string, bucket = BUCKET) => `prompts/${bucket}/${path}`;
-const metaItem = (path: string, bucket = BUCKET) => ({
+const metaItem = (path: string, bucket = BUCKET, permissions?: string[]) => ({
   nodeType: 'ITEM',
   url: metaUrl(path, bucket),
   createdAt: 1000,
   updatedAt: 2000,
+  permissions,
 });
 const writeOk = (path = 'my-prompt', bucket = BUCKET) =>
   okResponse(metaItem(path, bucket));
@@ -160,7 +161,9 @@ describe('PromptsPersonalService', () => {
         'getSharedResources',
       ).mockResolvedValue(
         okResponse({
-          resources: [metaItem('Shared/greeting', 'owner-bucket')],
+          resources: [
+            metaItem('Shared/greeting', 'owner-bucket', ['READ', 'WRITE']),
+          ],
         }),
       );
       const getPromptSpy = vi
@@ -179,6 +182,9 @@ describe('PromptsPersonalService', () => {
         id: 'Shared/greeting',
         createdAt: 1000,
         updatedAt: 2000,
+        canEdit: true,
+        sharedWithMe: true,
+        permissions: ['READ', 'WRITE'],
       });
       expect(getPromptSpy).toHaveBeenCalledWith(
         'owner-bucket',

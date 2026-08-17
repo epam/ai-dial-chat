@@ -3,11 +3,15 @@ import type {
   SkillFileListResponseDto,
   SkillFileUploadResponseDto,
   SkillGroupingFolderResponseDto,
+  SkillCatalogListResponseDto,
   SkillListResponseDto,
   SkillOperationResultDto,
   SkillUploadResponseDto,
 } from '@epam/ai-dial-chat-api-client';
 import { skillsApi } from './api-client';
+
+export const listCatalogSkills = (): Promise<SkillCatalogListResponseDto> =>
+  skillsApi.listCatalogSkills();
 
 export const listSkills = (
   params: {

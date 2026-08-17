@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PromptFolderResponseDto } from './prompt-folder-response.dto';
 import { PromptResponseDto } from './prompt-response.dto';
 
@@ -11,4 +11,10 @@ export class PromptListResponseDto {
 
   @ApiProperty({ type: [PromptResponseDto] })
   sharedWithMe!: PromptResponseDto[];
+
+  @ApiPropertyOptional({ type: [PromptResponseDto] })
+  publicPrompts?: PromptResponseDto[];
+
+  @ApiPropertyOptional({ type: [PromptFolderResponseDto] })
+  publicFolders?: PromptFolderResponseDto[];
 }
