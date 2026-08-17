@@ -225,8 +225,6 @@ const dialAdminTest = dialTest.extend<{
   adminFileManager: FileManager;
   adminFileManagerToolbar: FileManagerToolbar;
   adminFileManagerGrid: FileManagerGrid;
-  adminFileManagerCollapsibleSidebar: FileManagerCollapsibleSidebar;
-  adminFileManagerFoldersTree: FoldersTree;
   adminFileManagerGridAssertion: FileManagerGridAssertion;
   adminFileManagerModal: FileManagerModal;
   adminFileManagerModalManager: FileManager;
@@ -884,19 +882,6 @@ const dialAdminTest = dialTest.extend<{
   adminFileManagerGrid: async ({ adminFileManager }, use) => {
     const adminFileManagerGrid = adminFileManager.getFileManagerGrid();
     await use(adminFileManagerGrid);
-  },
-  adminFileManagerCollapsibleSidebar: async ({ adminFileManager }, use) => {
-    const adminFileManagerCollapsibleSidebar =
-      adminFileManager.getFileManagerCollapsibleSidebar();
-    await use(adminFileManagerCollapsibleSidebar);
-  },
-  adminFileManagerFoldersTree: async (
-    { adminFileManagerCollapsibleSidebar },
-    use,
-  ) => {
-    const adminFileManagerFoldersTree =
-      adminFileManagerCollapsibleSidebar.getFoldersTree();
-    await use(adminFileManagerFoldersTree);
   },
   adminFileManagerGridAssertion: async ({ adminFileManagerGrid }, use) => {
     const adminFileManagerGridAssertion = new FileManagerGridAssertion(

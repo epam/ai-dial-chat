@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import { Routes } from '@/src/constants/routes';
 
-import { getInternalPathname, isInternalRoute } from '../route';
+import {
+  getInternalPathname,
+  getInternalRoute,
+  isInternalRoute,
+} from '../route';
 
 const router = { basePath: '', locales: ['en', 'ru', 'de'] };
 const routerWithBasePath = { basePath: '/chat', locales: ['en', 'ru', 'de'] };
@@ -73,5 +77,49 @@ describe('isInternalRoute', () => {
     expect(isInternalRoute('/ru/apps-editor', Routes.Marketplace, router)).toBe(
       false,
     );
+  });
+});
+
+describe('getInternalRoute', () => {
+  const origin = 'https://example.com';
+
+  it('strips the locale prefix so the current locale can be applied', () => {
+    expect(
+      getInternalRoute(
+        new URL('/ru/marketplace?tab=MY_WORKSPACE', origin),
+        router,
+      ),
+    ).toEqual({
+      pathname: Routes.Marketplace,
+      query: { tab: 'MY_WORKSPACE' },
+    });
+  });
+
+  it('strips the basePath together with the locale', () => {
+    expect(
+      getInternalRoute(
+        new URL('/chat/ru/marketplace', origin),
+        routerWithBasePath,
+      ),
+    ).toEqual({ pathname: Routes.Marketplace, query: {} });
+  });
+
+  it('keeps default-locale urls untouched', () => {
+    expect(getInternalRoute(new URL('/marketplace', origin), router)).toEqual({
+      pathname: Routes.Marketplace,
+      query: {},
+    });
+  });
+
+  it('decodes and preserves all query params', () => {
+    expect(
+      getInternalRoute(
+        new URL('/de/apps-editor?id=my%2Fapp&step=general', origin),
+        router,
+      ),
+    ).toEqual({
+      pathname: Routes.AppsEditor,
+      query: { id: 'my/app', step: 'general' },
+    });
   });
 });
