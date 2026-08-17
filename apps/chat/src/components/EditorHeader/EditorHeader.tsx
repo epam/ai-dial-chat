@@ -65,6 +65,7 @@ const getStepCircleClassName = (
 
 const StepCircle: FC<StepCircleProps> = ({ index, isCurrent, status }) => (
   <span
+    aria-hidden="true"
     className={mergeClasses(
       'dial-tiny-text flex size-6 shrink-0 items-center justify-center rounded-full font-semibold',
       getStepCircleClassName(isCurrent, status),
