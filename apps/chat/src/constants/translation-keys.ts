@@ -766,6 +766,8 @@ export enum FooterMessageI18nKeys {
 export enum EditorI18nKeys {
   StepGeneral = 'editor.stepGeneral',
   StepsNavAriaLabel = 'editor.stepsNavAriaLabel',
+  StepOfTotal = 'editor.stepOfTotal',
+  MoreActionsLabel = 'editor.moreActionsLabel',
   SaveButton = 'editor.saveButton',
   NextButton = 'editor.nextButton',
   NameLabel = 'editor.nameLabel',

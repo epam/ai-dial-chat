@@ -884,6 +884,8 @@
   "editor": {
     "stepGeneral": "General",
     "stepsNavAriaLabel": "Editor steps",
+    "stepOfTotal": "Step {{current}} of {{total}}",
+    "moreActionsLabel": "More actions",
     "saveButton": "Save & Exit",
     "nextButton": "Next",
     "nameLabel": "Name",
