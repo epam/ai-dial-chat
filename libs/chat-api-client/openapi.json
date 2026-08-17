@@ -5549,7 +5549,7 @@
     },
     "/api/v1/catalog/{entityType}/{entityId}/publish": {
       "post": {
-        "description": "Publishes a catalog entity (Toolset, Application, or Prompt) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.",
+        "description": "Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.",
         "operationId": "publishCatalogEntity",
         "parameters": [
           {
@@ -5602,7 +5602,7 @@
             }
           },
           "400": {
-            "description": "Validation error — invalid entityType, entityId, or folderPath"
+            "description": "Validation error — invalid entityType, entityId, folderPath, version, or rules"
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
@@ -11512,7 +11512,7 @@
           },
           "version": {
             "type": "string",
-            "description": "Version label for this publish.",
+            "description": "Optional version label. When omitted, versioned resource ids recover it from their {name}__{version} suffix; unversioned resources use an empty version.",
             "example": "1.2.0"
           },
           "rules": {
@@ -11525,8 +11525,7 @@
           }
         },
         "required": [
-          "folderPath",
-          "version"
+          "folderPath"
         ]
       },
       "PublishResultDto": {

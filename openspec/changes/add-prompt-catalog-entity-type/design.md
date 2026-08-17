@@ -181,6 +181,16 @@ Personal/shared and public namespace loads settle independently inside each BFF 
 
 *Alternatives:* keep separate browser requests (duplicates orchestration and exposes bucket topology to UI state); merge directly in `CatalogView` (duplicates context behavior and pagination); trust public `WRITE` metadata (violates the explicit read-only product rule). Rejected.
 
+### D18 — Owned skills use the existing Publish flow without a synthetic version
+
+**Added.** The publish BFF and generated client already accept `entityType: skill`, and `PublishService` already targets the whole `skills/{bucket}/{path}` resource. The missing frontend mapping kept `isPublishVisible` false. `CatalogEntityType.Skill` is therefore added to `toPublishEntityType`; the existing ownership guard keeps Publish limited to personal skills, while public and shared-with-me skills remain unavailable regardless of `canEdit`.
+
+DIAL Core's Publication request has no version field. `PublishCatalogEntityDto.version` becomes optional for every catalog entity. `PublishService` uses the supplied value when present, otherwise recovers a version from a versioned `{name}__{version}` resource id; unversioned Prompt/Skill resources use an empty response version and a publication title containing only the resource name. The frontend omits `version` when `CatalogItem.version` is empty. This is backward compatible: existing clients may continue sending the field, and `PublishResultDto.version` remains a required string.
+
+The endpoint remains `POST /api/v1/catalog/{entityType}/{entityId}/publish`, authenticated, rate-limited to 10 writes/minute, and authorized by DIAL Core. Cache invalidation remains `publish-history:{entityType}:{entityId}` after success. Swagger and the generated client must reflect only the request-field optionality; no hand-authored library learns the REST contract.
+
+*Alternatives:* send a fake skill version (misrepresents an unversioned resource); keep an empty required string (contradicts `@IsNotEmpty` and creates a 400); add a skill-only endpoint (duplicates the generic flow). Making the existing field optional matches Core and preserves one publish path.
+
 ### D10 — Details fetch dispatches on type inside the app adapter
 
 `handleFetchDetails` (`CatalogView.tsx:257-297`) currently always calls `getDeploymentDetails`. It gains an early branch: a `Prompt` item resolves through `getPrompt` (personal/shared) or `getPublicPrompt` (public folder), returning `{ promptContent: { content } }`. Existing behaviour for every other type is byte-identical.

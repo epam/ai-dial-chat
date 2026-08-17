@@ -836,6 +836,37 @@ describe('CatalogView', () => {
       );
     });
 
+    it('publishes an owned skill without sending a synthetic version', async () => {
+      vi.mocked(publishCatalogEntity).mockResolvedValue({
+        entityId: 'skills/my-bucket/analysis/revenue-skill',
+        entityType: 'skill',
+        folderPath: 'Organization/Data Science',
+        version: '',
+        publishedAt: '2026-07-13T10:00:00.000Z',
+        publishedBy: 'user@example.com',
+      });
+
+      render(<CatalogView />);
+      await capturedPublishProps.current?.onPublish?.(
+        makeCatalogItem({
+          id: 'skills/my-bucket/analysis/revenue-skill',
+          type: CatalogEntityType.Skill,
+          version: '',
+        }),
+        ['Organization', 'Data Science'],
+        [],
+      );
+
+      expect(publishCatalogEntity).toHaveBeenCalledWith(
+        'skill',
+        'skills/my-bucket/analysis/revenue-skill',
+        {
+          folderPath: 'Organization/Data Science',
+          rules: [],
+        },
+      );
+    });
+
     it.each([
       [CatalogEntityType.Toolset, 'toolset'],
       [CatalogEntityType.Prompt, 'prompt'],
@@ -3894,7 +3925,7 @@ describe('CatalogView', () => {
       ).toBeNull();
     });
 
-    it('hides Share and Publish for a skill regardless of ownership', () => {
+    it('shows Publish only for an owned skill while Share remains hidden', () => {
       enableSkills();
       mockSkills();
 
@@ -3908,8 +3939,22 @@ describe('CatalogView', () => {
         false,
       );
       expect(capturedPublishProps.current?.isPublishVisible?.(ownedSkill)).toBe(
-        false,
+        true,
       );
+      expect(
+        capturedPublishProps.current?.isPublishVisible?.({
+          ...ownedSkill,
+          isMyApp: false,
+          sharedWithMe: true,
+        }),
+      ).toBe(false);
+      expect(
+        capturedPublishProps.current?.isPublishVisible?.({
+          ...ownedSkill,
+          isMyApp: false,
+          folder: ['Public'],
+        }),
+      ).toBe(false);
     });
 
     it('leaves the Create dropdown without a skill entry', () => {

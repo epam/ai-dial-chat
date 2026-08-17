@@ -4625,11 +4625,11 @@ export interface PublishCatalogEntityDto {
    */
   folderPath: string;
   /**
-   * Version label for this publish.
+   * Optional version label. When omitted, versioned resource ids recover it from their {name}__{version} suffix; unversioned resources use an empty version.
    * @type {string}
    * @memberof PublishCatalogEntityDto
    */
-  version: string;
+  version?: string;
   /**
    * Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.
    * @type {Array<PublishRuleDto>}

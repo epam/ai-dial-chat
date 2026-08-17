@@ -3,7 +3,6 @@ import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
-  IsNotEmpty,
   IsOptional,
   IsString,
   ValidateNested,
@@ -13,9 +12,9 @@ import { PublishRuleDto } from './publish-rule.dto';
 
 /**
  * Request body for `POST /api/v1/catalog/{entityType}/{entityId}/publish`.
- * `version` is required — DIAL Core's Publication API has no version
- * concept, so the caller (which already knows the entity's current version)
- * supplies it for display in the response and publish-history mapping.
+ * DIAL Core's Publication API has no version concept. Callers may supply a
+ * display version; the service otherwise recovers one from versioned resource
+ * ids and leaves unversioned Prompt/Skill publications empty.
  */
 export class PublishCatalogEntityDto {
   @ApiProperty({
@@ -27,13 +26,14 @@ export class PublishCatalogEntityDto {
   @IsValidFilePath()
   folderPath!: string;
 
-  @ApiProperty({
-    description: 'Version label for this publish.',
+  @ApiPropertyOptional({
+    description:
+      'Optional version label. When omitted, versioned resource ids recover it from their {name}__{version} suffix; unversioned resources use an empty version.',
     example: '1.2.0',
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  version!: string;
+  version?: string;
 
   @ApiPropertyOptional({
     description:

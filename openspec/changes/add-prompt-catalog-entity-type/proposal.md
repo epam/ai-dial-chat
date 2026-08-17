@@ -35,6 +35,8 @@ A third round added publishing a prompt to an Organization folder (backend `Cata
 
 A fourth round aligned prompts and skills with the applications/toolsets catalog flow: each frontend context now makes one aggregate request, listings carry requestor permissions, writable shared resources retain their owner bucket for edit routing, and public resources remain unconditionally read-only (D17).
 
+A fifth round completes personal-skill publishing: owned skills expose the existing Publish flow, and the publish request no longer invents a version that DIAL Core does not require. The request DTO makes `version` optional; versioned entities retain their current value while unversioned Prompt/Skill publishes omit it (D18).
+
 ### Non-goals
 
 - No prompt **unshare** — the discard DTO still rejects prompt paths. Shared prompt ids now retain the owner bucket, so DTO validation is the remaining blocker.
@@ -77,6 +79,7 @@ This change touches two shared libs and one global provider:
 - `prompt-share-link`: `CreateShareLinkDto.resourceKind` and the server-side bucket qualification that lets a prompt's bucket-relative path become a DIAL share link.
 - `prompt-listing-markers`: `.dial_folder` markers excluded from every prompt listing and from folder renames.
 - `skills-bff-api`: `GET /api/v1/skills/catalog`, aggregating personal, shared-with-me, and public skills with recursive pagination, permission metadata, partial namespace degradation, and public resources forced read-only.
+- `skill-publishing`: owned skills use the existing catalog Publish flow; `POST /api/v1/catalog/{entityType}/{entityId}/publish` accepts an omitted `version`, publishes the whole skill resource, and keeps public/shared skills out of the action.
 
 ### Modified Capabilities
 

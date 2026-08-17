@@ -53,11 +53,11 @@ describe('mapSkillToCatalogItem', () => {
     expect(item.sharedWithMe).toBe(false);
   });
 
-  it('maps a writable shared skill as editable', () => {
+  it('maps a writable shared skill as editable but never owned', () => {
     const item = mapSkillToCatalogItem(
       makeSkill({
         url: 'skills/owner-bucket/revenue-skill',
-        isMy: false,
+        isMy: true,
         canEdit: true,
         sharedWithMe: true,
       }),
@@ -70,9 +70,13 @@ describe('mapSkillToCatalogItem', () => {
     expect(item.folder[0]).toBe('Shared with me');
   });
 
-  it('maps an organisation skill as not owned', () => {
+  it('maps an organisation skill as not owned even when metadata claims ownership', () => {
     const item = mapSkillToCatalogItem(
-      makeSkill({ url: 'skills/public/shared-skill', canEdit: true }),
+      makeSkill({
+        url: 'skills/public/shared-skill',
+        isMy: true,
+        canEdit: true,
+      }),
       { t, source: SkillSource.Public, favoriteIds: new Set() },
     );
 

@@ -872,7 +872,7 @@ const CatalogView: FC<Props> = ({
        * bucket-relative prompt path against.
        */
       if (item.type === CatalogEntityType.Prompt) return Boolean(item.isMyApp);
-      /* Skills are read-only here: no skill share/publish path exists yet. */
+      /* Skill sharing is not supported; publishing is gated separately. */
       if (item.type === CatalogEntityType.Skill) return false;
       if (item.type === CatalogEntityType.Toolset) {
         return isToolsetsSharingEnabled;
@@ -902,7 +902,7 @@ const CatalogView: FC<Props> = ({
       }
       await publishCatalogEntity(entityType, item.id, {
         folderPath: folderPath.join('/'),
-        version: item.version,
+        ...(item.version ? { version: item.version } : {}),
         rules: rules.map(toPublishRuleDto),
       });
     },

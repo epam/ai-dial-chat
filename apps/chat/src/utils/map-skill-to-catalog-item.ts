@@ -68,7 +68,8 @@ export const mapSkillToCatalogItem = (
     topics: [],
     isUserFavorite: isFavorite,
     isStarred: isFavorite,
-    isMyApp: skill.isMy ?? isPersonal,
+    /* Only the personal namespace can confer ownership; public/shared metadata is untrusted. */
+    isMyApp: isPersonal && (skill.isMy ?? true),
     sharedWithMe: skill.sharedWithMe ?? source === SkillSource.SharedWithMe,
     isEditable: !isPublic && (skill.canEdit ?? isPersonal),
     folder: resolveSkillFolder(skill.parentPath, source, t),

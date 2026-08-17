@@ -15,7 +15,7 @@
 
 | Field | Value |
 | --- | --- |
-| `isMyApp` | `skill.isMy`, falling back to personal-source ownership for backward compatibility |
+| `isMyApp` | `false` outside the Personal source; for Personal, `skill.isMy` falling back to `true` for backward compatibility |
 | `sharedWithMe` | `skill.sharedWithMe`, falling back to whether the source is `SharedWithMe` |
 | `isEditable` | `false` for Public; otherwise `skill.canEdit`, falling back to personal-source editability |
 
@@ -28,7 +28,7 @@ Every other field retains the canonical skill mapping. The mapper remains pure a
 
 #### Scenario: Writable shared skill is editable
 
-- **WHEN** a shared skill carries `canEdit: true`
+- **WHEN** a shared skill carries `canEdit: true`, even if malformed metadata also claims `isMy: true`
 - **THEN** it is not owned, is marked shared-with-me, and has `isEditable: true`
 
 #### Scenario: Read-only shared skill is not editable
@@ -36,10 +36,10 @@ Every other field retains the canonical skill mapping. The mapper remains pure a
 - **WHEN** a shared skill carries `canEdit: false`
 - **THEN** its details panel receives `isEditable: false`
 
-#### Scenario: Public skill ignores WRITE metadata
+#### Scenario: Public skill ignores ownership and WRITE metadata
 
-- **WHEN** a public skill carries `canEdit: true` from an untrusted or older response
-- **THEN** the mapper still produces `isEditable: false`
+- **WHEN** a public skill carries `isMy: true` and `canEdit: true` from an untrusted or older response
+- **THEN** the mapper still produces `isMyApp: false` and `isEditable: false`
 
 ### Requirement: Folder path derives from source label plus grouping-folder segments
 
