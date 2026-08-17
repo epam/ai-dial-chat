@@ -23,10 +23,10 @@ export class SliderDots extends BaseElement {
     SliderDotsSelectors.previousArrow,
   );
   public dots = this.dotsList.getChildElementBySelector(
-    SliderDotsSelectors.dot,
+    SliderDotsSelectors.dot(),
   );
   public activeDot = this.dotsList.getChildElementBySelector(
-    SliderDotsSelectors.activeDot,
+    SliderDotsSelectors.activeDot(),
   );
 
   // Pages are 0-based, same as the component's activeSlide.

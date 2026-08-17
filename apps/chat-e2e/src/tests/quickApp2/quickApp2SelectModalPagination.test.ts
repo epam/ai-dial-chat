@@ -59,6 +59,9 @@ dialTest(
     let lastPage: number;
     let myWorkspacePagesCount: number;
     let marketplacePagesCount: number;
+    const activeArrowColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textAccentPrimary,
+    );
 
     await dialTest.step(
       `Precondition: start from a clean workspace and create ${agentsCount} agents and ${toolsetsCount} toolsets`,
@@ -144,7 +147,7 @@ dialTest(
         );
         await baseAssertion.assertElementColor(
           agentAndToolsetSelectModalSliderDots.nextArrow,
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+          activeArrowColor,
         );
 
         const firstPageEntities =
@@ -193,7 +196,7 @@ dialTest(
         );
         await baseAssertion.assertElementColor(
           agentAndToolsetSelectModalSliderDots.previousArrow,
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+          activeArrowColor,
         );
         await agentAndToolsetSelectModalSliderDots.previousArrow.click();
         await agentAndToolsetSelectModalSliderDotsAssertion.assertActivePage(

@@ -233,10 +233,10 @@ export const SliderDotsSelectors = {
   container: '[data-qa="slider-dots"]',
   dotsList: '[data-qa="slider-dots-list"]',
   dotQaPrefix: 'slider-dot-',
-  dot: '[data-qa^="slider-dot-"]', // scope it by dotsList to skip the arrows
+  dot: () => `[data-qa^="${SliderDotsSelectors.dotQaPrefix}"]`, // scope it by dotsList to skip the arrows
   dotByIndex: (index: number) => `[data-qa="slider-dot-${index}"]`,
   // The active page is a bar (w-8), the rest are circles.
-  activeDot: '[data-qa^="slider-dot-"]:has(button.w-8)',
+  activeDot: () => `${SliderDotsSelectors.dot()}:has(button.w-8)`,
   nextArrow: '[data-qa="slider-dot-arrow-next"]',
   previousArrow: '[data-qa="slider-dot-arrow-prev"]',
 };
