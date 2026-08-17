@@ -2,6 +2,8 @@
 export enum SkillSource {
   /** A skill in the caller's own bucket. */
   Personal = 'personal',
+  /** A skill another user shared with the caller. */
+  SharedWithMe = 'sharedWithMe',
   /** An organisation-wide skill; read-only for every user. */
   Public = 'public',
 }

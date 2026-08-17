@@ -53,7 +53,7 @@ When the host passes `isNameReadOnly`, the Name field SHALL render as non-editab
 - **THEN** `onDirtyChange(true)` is called; if the user then reverts to the exact seeded values, `onDirtyChange(false)` is called
 
 ### Requirement: File-tree selection and protected `SKILL.md` node
-`SkillEditor` SHALL render a file tree seeded from a `files` prop (the in-memory supporting-file/folder structure) plus an always-present, always-first root `SKILL.md` node. The library SHALL own which tree node is currently selected and which folder nodes are expanded as internal state (overridable via optional `selectedPath`/`expandedPaths` + `onSelectedPathChange`/`onExpandedPathsChange` controlled props, mirroring `PublishFoldersTree`'s controlled/uncontrolled pattern). The `SKILL.md` node SHALL NOT expose rename, move, or delete affordances; all other nodes SHALL.
+`SkillEditor` SHALL render a file tree seeded from a `files` prop (the in-memory supporting-file/folder structure) plus an always-present, always-first root `SKILL.md` node. The library SHALL own which tree node is currently selected and which folder nodes are expanded as internal state (overridable via optional `selectedPath`/`expandedPaths` + `onSelectedPathChange`/`onExpandedPathsChange` controlled props, mirroring `PublishFoldersTree`'s controlled/uncontrolled pattern). The `SKILL.md` node SHALL NOT expose rename, move, or delete affordances; all other nodes SHALL. When a supporting-file node (not `SKILL.md`, not a folder) is selected, the main pane SHALL render the host-supplied `supportingFileContent` prop when present, falling back to the existing `labels.supportingFileNote` text when it is not. Selecting a folder node SHALL only select or expand/collapse that folder and SHALL NOT render `supportingFileContent` or `supportingFileNote`.
 
 #### Scenario: SKILL.md is selected by default
 - **WHEN** `SkillEditor` first renders with no `selectedPath` override
@@ -63,28 +63,56 @@ When the host passes `isNameReadOnly`, the Name field SHALL render as non-editab
 - **WHEN** a user opens the context menu or interaction affordance for the `SKILL.md` node
 - **THEN** no rename, move, or delete action is offered
 
-#### Scenario: Selecting a supporting file updates the main pane heading
+#### Scenario: Selecting a supporting file updates the main pane heading and renders host content
 - **WHEN** a user selects a supporting file node other than `SKILL.md`
-- **THEN** the main pane heading updates to that file's name and `onSelectedPathChange` (if provided) is called with the new path
+- **THEN** the main pane heading updates to that file's name, `onSelectedPathChange` (if provided) is called with the new path, and the main pane body renders the host's `supportingFileContent` node when the host supplied one for this selection
+
+#### Scenario: Selecting a folder does not render supporting-file content
+- **WHEN** a user selects or expands a folder node
+- **THEN** the main pane does not render `supportingFileContent` or `supportingFileNote`, and only the folder's selection/expansion state changes
+
+#### Scenario: Falls back to the static note when no content is supplied
+- **WHEN** a host does not pass `supportingFileContent` and selects a supporting file
+- **THEN** the main pane renders `labels.supportingFileNote` exactly as it did before this change
+
+### Requirement: Host-rendered supporting-file content slot
+
+`SkillEditor` SHALL accept an optional `supportingFileContent?: ReactNode` prop and render it verbatim in the main pane whenever the currently selected node is a supporting file (not `SKILL.md`, not a folder), with no knowledge of what it contains. This follows the same pattern as the existing `headerContent` prop: the library owns layout and the selection/visibility decision, the host owns the rendered content (typically an attachment preview). No new callback (e.g. `onPreviewFile`) is introduced — the existing `selectedPath`/`onSelectedPathChange` controlled pair already tells the host which node is selected, which is sufficient for the host to decide what to pass as `supportingFileContent`.
+
+#### Scenario: Host content renders for the selected supporting file
+- **WHEN** the host passes `supportingFileContent={<FilePreview />}` while a supporting file is selected
+- **THEN** `<FilePreview />` renders in the main pane in place of the default note
+
+#### Scenario: Host content does not render for SKILL.md or a folder
+- **WHEN** the host passes a non-`undefined` `supportingFileContent` while `SKILL.md` or a folder node is selected
+- **THEN** the library does not render `supportingFileContent` for that selection — it only ever appears for a selected supporting-file node
+
+#### Scenario: Omitting the prop preserves prior behavior
+- **WHEN** a host never passes `supportingFileContent`
+- **THEN** `SkillEditor` behaves exactly as it did before this prop existed
 
 ### Requirement: Adding and removing supporting files and folders
-`SkillEditor` SHALL expose a single "Upload from device" control as the only way to add a supporting file, validated through a host-supplied `validatePath: (path: string) => string | undefined` callback (returning an error message or `undefined`) before the entry is added to the tree, so the app boundary's path-safety rules apply without the library encoding DIAL-specific reserved-segment knowledge itself. The library SHALL NOT offer any control for creating a new empty file or an empty folder — folder nodes are inferred only from the paths of existing files (own or previously loaded), never created directly. Removing a supporting file or folder SHALL require an explicit confirmation step before the entry is removed from local state.
+`SkillEditor` SHALL expose a single "Upload from device" control that opens the upload dialog (specified by the `skill-file-drag-drop` capability) as the only way to add a supporting file — a user may stage one or more files in that dialog via drag-and-drop or the native file picker, review them, and commit the whole valid batch at once, rather than a single file being added directly on selection. Validation SHALL be performed through a host-supplied `fileActions.validateBatch` callback (returning per-candidate and batch-level results) and commit SHALL be performed through a host-supplied `fileActions.commitBatch` callback, so the app boundary's path-safety, size, count, and duplicate-detection rules apply without the library encoding any DIAL-specific policy itself. The library SHALL NOT offer any control for creating a new empty file or an empty folder — folder nodes are inferred only from the paths of existing files (own or previously loaded), never created directly. Removing an already-committed supporting file or folder from the editor's tree (as opposed to removing a not-yet-committed staged candidate inside the upload dialog) SHALL require an explicit confirmation step before the entry is removed from local state.
 
-#### Scenario: Uploading a file from the device adds it as a supporting file
-- **WHEN** a user activates "Upload from device" and selects a local file
-- **THEN** `fileActions.onUploadFile` is called with the selected `File` and its name, and on success a corresponding node appears in the tree
+#### Scenario: Uploading files from the device adds them as supporting files
+- **WHEN** a user activates "Upload from device", stages one or more local files in the resulting dialog, and confirms
+- **THEN** `fileActions.commitBatch` is called with the staged batch and, on success, a corresponding node appears in the tree for each committed file
 
-#### Scenario: A rejected upload shows an inline error and adds nothing
-- **WHEN** the host's `validatePath` returns an error message for the uploaded file's name
-- **THEN** the library renders that message inline and does not call `onUploadFile`
+#### Scenario: A rejected batch shows inline errors and commits nothing
+- **WHEN** every candidate in the staged batch fails `fileActions.validateBatch`
+- **THEN** the library shows each candidate's error inline in the dialog and does not call `fileActions.commitBatch`
 
 #### Scenario: No control exists to create an empty file or folder
 - **WHEN** a host renders `SkillEditor`
-- **THEN** no "New file" or "New folder" action is present anywhere in the Add control or elsewhere in the files pane
+- **THEN** no "New file" or "New folder" action is present anywhere in the Add control, the upload dialog, or elsewhere in the files pane
 
-#### Scenario: Removing a supporting entry requires confirmation
-- **WHEN** a user triggers delete on a non-`SKILL.md` node
+#### Scenario: Removing a committed supporting entry requires confirmation
+- **WHEN** a user triggers delete on a non-`SKILL.md` node already present in the editor's file tree
 - **THEN** a confirmation prompt appears before the node is actually removed from the tree
+
+#### Scenario: Removing a staged (not yet committed) candidate needs no such confirmation
+- **WHEN** a user removes a row from the still-open upload dialog's staged list before confirming the batch
+- **THEN** the candidate is removed immediately, with no separate confirmation step, since nothing has been added to the editor's tree yet
 
 ### Requirement: Loading, saving, and inline error presentation
 `SkillEditor` SHALL accept `isLoading`, `isSubmitting`, and `submitError` props and SHALL render, respectively, a loading state in place of the form, disabled Cancel/Create actions with a saving indicator while submitting, and an inline error region (`role="alert"`) reflecting `submitError` without redirecting or clearing user input.

@@ -1,10 +1,9 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { CatalogEntityType, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DropdownItem, Spinner, Tabs } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
 import type { CatalogItemDetailsFetchResult } from '../../models/item-details-data';
-import { CatalogEntityType } from '../../types/entity-type';
 import { CatalogSortKey } from '../../types/sort';
 import type { CredentialsLevel } from '../../types/toolset-auth';
 import { CatalogViewMode } from '../../types/view-mode';

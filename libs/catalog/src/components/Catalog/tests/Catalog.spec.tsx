@@ -1,9 +1,9 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
-import { CatalogEntityType } from '../../../types/entity-type';
 import { CatalogSortKey } from '../../../types/sort';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { Catalog } from '../Catalog';
@@ -302,6 +302,9 @@ describe('Catalog', () => {
   it('applies horizontal and vertical padding to the empty state in the default grid view', () => {
     render(<Catalog items={[]} favorites={[]} />);
     const grid = screen.getByRole('grid', { name: 'catalog grid' });
+    // Layout wrapper divs carry no role/label of their own; asserting their
+    // padding classes is a CSS-level check with no semantic query available.
+    // eslint-disable-next-line testing-library/no-node-access
     const wrapper = grid.parentElement?.parentElement;
     expect(wrapper?.className).toContain('px-8');
     expect(wrapper?.className).toContain('py-6');

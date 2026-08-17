@@ -4,12 +4,9 @@ import type {
   CatalogItemPricing,
   CatalogItemTabData,
   CatalogItemTools,
-  CodeSnippet,
-  EndpointOption,
   OverviewSection,
 } from '@epam/ai-dial-catalog';
 import {
-  CodeLanguage,
   CredentialStatus,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
@@ -17,12 +14,12 @@ import type {
   DeploymentDetailsDto,
   DeploymentFeaturesDetailsDto,
 } from '@epam/ai-dial-chat-api-client';
-import { AuthenticationType, ModelEndpointType } from '../types/entity-details';
+import { formatUnitPrice } from '@epam/ai-dial-chat-shared';
+import { AuthenticationType } from '../types/entity-details';
 import type {
   AgentEntityDetails,
   EntitySpecificDetails,
   GuardrailEntityDetails,
-  ModelEndpoint,
   ModelEntityDetails,
   ModelPricing,
   ToolsetAuthStatus,
@@ -30,12 +27,6 @@ import type {
   ToolsetSpecification,
 } from '../types/entity-details';
 import { isPublicToolsetId } from './toolsets';
-
-const ENDPOINT_LABELS: Record<ModelEndpointType, string> = {
-  [ModelEndpointType.AzureOpenAI]: 'Azure OpenAI Endpoint',
-  [ModelEndpointType.Anthropic]: 'Anthropic Endpoint',
-  [ModelEndpointType.Responses]: 'Responses Endpoint',
-};
 
 const formatTokens = (n: number): string =>
   n >= 1_000_000
@@ -47,65 +38,7 @@ const formatTokens = (n: number): string =>
 const formatReleaseDate = (timestampMs: number): string =>
   new Date(timestampMs).toLocaleDateString();
 
-const TOKEN_PRICING_UNIT = 'token';
-const TOKENS_PER_QUOTED_PRICE = 1_000_000;
-
-const priceFormatter = new Intl.NumberFormat(undefined, {
-  style: 'currency',
-  currency: 'USD',
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 2,
-});
-
-const smallPriceFormatter = new Intl.NumberFormat(undefined, {
-  style: 'currency',
-  currency: 'USD',
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 6,
-});
-
-const formatPrice = (value: number): string => {
-  if (value !== 0 && Math.abs(value) < 1) {
-    return smallPriceFormatter.format(value);
-  }
-  return priceFormatter.format(value);
-};
-
-/*
- * DIAL Core quotes prices per single unit (for example `'0.000003'` per token),
- * which is unreadable in a table, so token prices are re-quoted per 1M tokens
- * (`$3/M tokens`) — the convention model-pricing pages use. Non-token units
- * (for example `char_without_whitespace`) keep their per-unit price and name
- * the unit. A missing unit is treated as tokens, DIAL Core's default.
- */
-const formatUnitPrice = (
-  price: string | undefined,
-  unit: string | undefined,
-): string | undefined => {
-  if (price == null) return undefined;
-
-  const perUnit = Number(price);
-  if (price.trim() === '' || !Number.isFinite(perUnit)) return price;
-
-  if (unit == null || unit.toLowerCase() === TOKEN_PRICING_UNIT) {
-    return `${formatPrice(perUnit * TOKENS_PER_QUOTED_PRICE)}/M tokens`;
-  }
-
-  return `${formatPrice(perUnit)}/${unit.replace(/_/g, ' ')}`;
-};
-
-const mapEndpointSnippets = (endpoint: ModelEndpoint): CodeSnippet[] => {
-  const snippets: CodeSnippet[] = [];
-  const { snippets: s } = endpoint;
-  if (s == null) return snippets;
-  if (s.pythonSnippet != null)
-    snippets.push({ language: CodeLanguage.Python, code: s.pythonSnippet });
-  if (s.curlSnippet != null)
-    snippets.push({ language: CodeLanguage.Curl, code: s.curlSnippet });
-  if (s.jsSnippet != null)
-    snippets.push({ language: CodeLanguage.JavaScript, code: s.jsSnippet });
-  return snippets;
-};
+const PRICING_UNIT_KEY = 'unit';
 
 const mapModelDetails = (data: ModelEntityDetails): CatalogItemTabData => {
   const sections: OverviewSection[] = [];
@@ -185,29 +118,57 @@ const mapModelDetails = (data: ModelEntityDetails): CatalogItemTabData => {
   };
 };
 
+/*
+ * DIAL Core names its price keys after the completion request/response
+ * (`prompt`/`completion`), so the well-known ones keep the catalog wording and
+ * a fixed display order; any other key a deployment reports is humanized
+ * (`cache_read` → `Cache read`) and listed after them.
+ */
+const PRICING_KEY_LABELS: Record<string, string> = {
+  prompt: 'Input tokens',
+  completion: 'Output tokens',
+  cache_read: 'Cached input',
+  cacheRead: 'Cached input',
+  cache_write: 'Cached write',
+  cacheWrite: 'Cached write',
+};
+
+const PRICING_KEY_ORDER = [
+  'prompt',
+  'completion',
+  'cache_read',
+  'cacheRead',
+  'cache_write',
+  'cacheWrite',
+];
+
+const getPricingKeyRank = (key: string): number => {
+  const index = PRICING_KEY_ORDER.indexOf(key);
+  return index === -1 ? PRICING_KEY_ORDER.length : index;
+};
+
+const formatPricingKeyLabel = (key: string): string => {
+  const knownLabel = PRICING_KEY_LABELS[key];
+  if (knownLabel != null) return knownLabel;
+
+  const words = key
+    .replace(/([a-z\d])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .trim()
+    .toLowerCase();
+  if (words === '') return key;
+
+  return ` ${words.charAt(0).toUpperCase()}${words.slice(1)}`;
+};
+
 const mapModelPricing = (
   pricing: ModelPricing | undefined,
 ): CatalogItemPricing | undefined => {
   if (pricing == null) return undefined;
 
-  const prices = [
-    pricing.inputTokensPrice != null && {
-      label: 'Input tokens',
-      price: pricing.inputTokensPrice,
-    },
-    pricing.outputTokensPrice != null && {
-      label: 'Output tokens',
-      price: pricing.outputTokensPrice,
-    },
-    pricing.cachedInputPrice != null && {
-      label: 'Cached input',
-      price: pricing.cachedInputPrice,
-    },
-    pricing.batchPrice != null && {
-      label: 'Batch / async',
-      price: pricing.batchPrice,
-    },
-  ].filter(Boolean) as CatalogItemPricing['prices'];
+  const prices = [...(pricing.prices ?? [])]
+    .sort((a, b) => getPricingKeyRank(a.key) - getPricingKeyRank(b.key))
+    .map(({ key, price }) => ({ label: formatPricingKeyLabel(key), price }));
 
   const limits = [
     pricing.dailyLimit != null && {
@@ -224,36 +185,17 @@ const mapModelPricing = (
     },
   ].filter(Boolean) as CatalogItemPricing['limits'];
 
-  if (!prices?.length && !limits?.length) return undefined;
+  if (prices.length === 0 && !limits?.length) return undefined;
   return { prices, limits };
 };
-
-/**
- * Maps endpoint-type variants (Azure OpenAI / Anthropic / Responses) shared
- * by models and agents into the lib's endpoint-selector shape.
- */
-const mapApiEndpoints = (
-  endpoints: ModelEndpoint[] | undefined,
-): EndpointOption[] | undefined =>
-  endpoints != null && endpoints.length > 0
-    ? endpoints.map((e) => ({
-        label: ENDPOINT_LABELS[e.type] ?? e.type,
-        url: e.url,
-        snippets: mapEndpointSnippets(e),
-      }))
-    : undefined;
 
 const mapModelApi = (
   data: ModelEntityDetails,
 ): CatalogItemApiDetails | undefined => {
   const { api } = data;
-  if (api == null) return undefined;
+  if (api?.modelId == null) return undefined;
 
-  const resource = api.modelId != null ? { modelId: api.modelId } : undefined;
-  const endpoints = mapApiEndpoints(api.endpoints);
-
-  if (resource == null && endpoints == null) return undefined;
-  return { resource, endpoints };
+  return { resource: { modelId: api.modelId } };
 };
 
 const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
@@ -354,7 +296,6 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
             data.api.endpointUrl != null
               ? { endpointUrl: data.api.endpointUrl }
               : undefined,
-          endpoints: mapApiEndpoints(data.api.endpoints),
           requestExample: data.api.requestExample,
           responseSchema: data.api.responseSchema,
         }
@@ -584,6 +525,28 @@ const mapFeaturesToCapabilities = (
   };
 };
 
+/*
+ * DIAL Core reports pricing as an open-ended map, so every key except `unit`
+ * — which names the billing unit the other keys are priced in — is surfaced as
+ * a price row in the order Core returned it.
+ */
+const mapPricingDto = (
+  pricing: NonNullable<DeploymentDetailsDto['modelDetails']>['pricing'],
+): ModelPricing | undefined => {
+  if (pricing == null) return undefined;
+
+  const { unit } = pricing;
+  const prices = Object.entries(pricing).flatMap(([key, value]) => {
+    if (key === PRICING_UNIT_KEY) return [];
+    if (typeof value !== 'string' || value.trim() === '') return [];
+
+    const price = formatUnitPrice(value, unit);
+    return price != null ? [{ key, price }] : [];
+  });
+
+  return prices.length > 0 ? { prices } : undefined;
+};
+
 const mapModelDetailsDto = (
   dto: DeploymentDetailsDto,
 ): EntitySpecificDetails => {
@@ -616,16 +579,7 @@ const mapModelDetailsDto = (
             createdAt,
           }
         : undefined,
-      pricing:
-        pricing != null
-          ? {
-              inputTokensPrice: formatUnitPrice(pricing.prompt, pricing.unit),
-              outputTokensPrice: formatUnitPrice(
-                pricing.completion,
-                pricing.unit,
-              ),
-            }
-          : undefined,
+      pricing: mapPricingDto(pricing),
       api: { modelId: dto.id },
     },
   };

@@ -173,15 +173,16 @@ describe('Filter', () => {
   });
 
   it('applies active CSS class to trigger when any filter is on', () => {
-    const { container } = renderFilter({ isMyAppsActive: true });
-    const btn = container.querySelector('button');
-    expect(btn?.className).toContain('filterBtnActive');
+    renderFilter({ isMyAppsActive: true });
+    // Trigger button renders first, ahead of the Clear/Apply footer buttons.
+    const btn = screen.getAllByRole('button')[0];
+    expect(btn.className).toContain('filterBtnActive');
   });
 
   it('does not apply active CSS class when no filter is on', () => {
-    const { container } = renderFilter();
-    const btn = container.querySelector('button');
-    expect(btn?.className ?? '').not.toContain('filterBtnActive');
+    renderFilter();
+    const btn = screen.getAllByRole('button')[0];
+    expect(btn.className).not.toContain('filterBtnActive');
   });
 
   it('renders the Apply button', () => {

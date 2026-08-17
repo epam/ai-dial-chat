@@ -1,0 +1,17 @@
+.row {
+  border-color: var(--rs-border, var(--stroke-tertiary, #e0e6f0));
+  background: var(--rs-bg, var(--bg-layer-sunken, #eef1f7));
+}
+
+/* Overrides the tag's own palette, which is why the declarations are !important. */
+.versionTag {
+  border-color: var(
+    --rs-version-tag-border,
+    var(--stroke-tertiary, #e0e6f0)
+  ) !important;
+  background: var(
+    --rs-version-tag-bg,
+    var(--bg-accent-primary-alpha, #7da4ff2e)
+  ) !important;
+  color: var(--rs-version-tag-text, var(--text-accent, #1d4ed8)) !important;
+}

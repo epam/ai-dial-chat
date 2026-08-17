@@ -1,3 +1,4 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps, ReactNode } from 'react';
@@ -119,6 +120,20 @@ describe('PublishPanel', () => {
     expect(screen.queryByText('ali.deepseek-v4-flash')).toBeNull();
   });
 
+  it('renders the entity-header row with a version tag when the resource has a type', () => {
+    renderPanel({ resource: { ...resource, type: CatalogEntityType.Model } });
+    expect(screen.getByText(CatalogEntityType.Model)).toBeTruthy();
+    expect(screen.getByText('Version 4.0.1 · current')).toBeTruthy();
+  });
+
+  it('ignores renderSummary once the resource carries a type', () => {
+    renderPanel({
+      resource: { ...resource, type: CatalogEntityType.Model },
+      renderSummary: () => <div>Custom entity header</div>,
+    });
+    expect(screen.queryByText('Custom entity header')).toBeNull();
+  });
+
   it('renders the folder section title', () => {
     renderPanel();
     expect(screen.getByText('Publish to folder')).toBeTruthy();
@@ -183,27 +198,36 @@ describe('PublishPanel', () => {
   });
 
   it('shows the replace-warning callout when the version already exists in the folder, with the folder name bold', () => {
-    const { container } = renderPanel({
+    renderPanel({
       selectedFolderPath: ['Shared', 'Data Science', 'Published models'],
       hasExistingPublicationInFolder: true,
     });
-    expect(container.textContent).toContain(
-      'Version 4.0.1 is already published in Published models. Publishing will replace it.',
-    );
-    expect(container.querySelector('strong')?.textContent).toBe(
-      'Published models',
-    );
+    expect(
+      screen.getByText('is already published in', { exact: false }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText('Publishing will replace it.', { exact: false }),
+    ).toBeTruthy();
+    const boldFolderNames = screen
+      .getAllByText('Published models')
+      .filter((el) => el.tagName === 'STRONG');
+    expect(boldFolderNames).toHaveLength(1);
   });
 
   it('shows the no-access callout when the user lacks write access, with the folder name bold', () => {
-    const { container } = renderPanel({
+    renderPanel({
       selectedFolderPath: ['Shared', 'Data Science'],
       hasWriteAccess: false,
     });
-    expect(container.textContent).toContain(
-      "You don't have permission to publish to Data Science. Pick another, or ask an owner for access.",
-    );
-    expect(container.querySelector('strong')?.textContent).toBe('Data Science');
+    expect(
+      screen.getByText("don't have permission to publish to", {
+        exact: false,
+      }),
+    ).toBeTruthy();
+    const boldFolderNames = screen
+      .getAllByText('Data Science')
+      .filter((el) => el.tagName === 'STRONG');
+    expect(boldFolderNames).toHaveLength(1);
   });
 
   it('shows the submit-error callout when the most recent submit attempt failed', () => {

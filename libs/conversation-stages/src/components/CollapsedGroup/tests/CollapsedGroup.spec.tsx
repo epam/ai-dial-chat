@@ -1,5 +1,5 @@
 import { StageStatus } from '@epam/ai-dial-chat-shared';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { CollapsedGroup } from '../CollapsedGroup';
@@ -59,7 +59,7 @@ describe('CollapsedGroup — collapsed states', () => {
     const { container } = render(
       <CollapsedGroup stages={[]} isStreaming={false} />,
     );
-    expect(container.firstChild).toBeNull();
+    expect(container.innerHTML).toBe('');
   });
 
   it('renders a single stage directly, with no summary wrapper', () => {
@@ -107,14 +107,35 @@ describe('CollapsedGroup — collapsed states', () => {
     expect(screen.getByText(/Step 2 of 2/)).toBeTruthy();
   });
 
+  it('keeps a long live stage name on one truncated line', () => {
+    const longName =
+      "Processing document 'uploads/2026-08/NAUP-How to login to high environments-220726-103753 1.pdf'";
+    render(
+      <CollapsedGroup
+        stages={[completed(0, 'Step 1'), running(1, longName)]}
+        isStreaming
+      />,
+    );
+    /* The same name also renders in the expanded StagesPanel row, so scope the
+       query to the summary line inside the toggle button. */
+    const liveName = within(screen.getByRole('button')).getByText(longName);
+    expect(liveName.className).toContain('truncate');
+  });
+
   it('announces the running summary via a polite live region', () => {
-    const { container } = render(
+    render(
       <CollapsedGroup
         stages={[completed(0, 'Step 1'), running(1, 'Step 2')]}
         isStreaming
       />,
     );
-    expect(container.querySelector('[aria-live="polite"]')).toBeTruthy();
+    // role="status" implies aria-live="polite"; the Spinner mock also
+    // renders one, so confirm the summary text is inside a status region.
+    const summaryText = screen.getByText(/Step 2 of 2/);
+    const isAnnounced = screen
+      .getAllByRole('status')
+      .some((status) => status.contains(summaryText));
+    expect(isAnnounced).toBe(true);
   });
 });
 

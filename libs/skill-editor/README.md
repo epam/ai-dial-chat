@@ -74,7 +74,10 @@ const CreateSkillPage = () => {
         onUploadFile: async (file, path) => {
           const blob = await file.arrayBuffer();
           setSupportingFileContent(path, blob);
-          setFiles((prev) => [...prev, { path, name: file.name, kind: SkillFileNodeKind.File }]);
+          setFiles((prev) => [
+            ...prev,
+            { path, name: file.name, kind: SkillFileNodeKind.File },
+          ]);
         },
         onRemoveNode: (path) =>
           setFiles((prev) => prev.filter((node) => node.path !== path)),

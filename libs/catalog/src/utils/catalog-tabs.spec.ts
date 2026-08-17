@@ -1,6 +1,6 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import type { CatalogItem } from '../models/catalog-item';
-import { CatalogEntityType } from '../types/entity-type';
 import { buildCatalogTabs } from './catalog-tabs';
 
 const makeItem = (

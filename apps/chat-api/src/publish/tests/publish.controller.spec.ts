@@ -164,13 +164,25 @@ describe('PublishController (integration)', () => {
       expect(service.publish).not.toHaveBeenCalled();
     });
 
-    it('returns 400 when version is missing', async () => {
-      await request(app.getHttpServer())
-        .post('/api/v1/catalog/toolset/tool-abc123/publish')
+    it('accepts a skill publish request without version', async () => {
+      const res = await request(app.getHttpServer())
+        .post(
+          '/api/v1/catalog/skill/skills%2Fbucket-123%2Fteam-a%2Fdocs-helper/publish',
+        )
         .send({ folderPath: 'Organization/Data Science' })
-        .expect(400);
+        .expect(201);
 
-      expect(service.publish).not.toHaveBeenCalled();
+      expect(res.body).toEqual(publishResult);
+      expect(service.publish).toHaveBeenCalledWith(
+        TEST_USER.at,
+        TEST_USER.bucket,
+        'skill',
+        'skills/bucket-123/team-a/docs-helper',
+        'Organization/Data Science',
+        undefined,
+        'Test User',
+        undefined,
+      );
     });
 
     it('returns 403 when the service throws ForbiddenException', async () => {

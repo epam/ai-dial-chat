@@ -5,9 +5,7 @@ export {
   DetailsConfirmationKind,
   DetailsConfirmationVariant,
 } from './types/details-confirmation';
-export { CatalogEntityType } from './types/entity-type';
 export { DeploymentSize } from './types/deployment-icon-size';
-export { CatalogSortKey } from './types/sort';
 export {
   CredentialsBadgeState,
   CredentialsLevel,
@@ -16,6 +14,7 @@ export {
   ToolsetAuthenticationType,
 } from './types/toolset-auth';
 export { CatalogViewMode } from './types/view-mode';
+export { CatalogSortKey } from './types/sort';
 
 // Models
 export type { CatalogItem } from './models/catalog-item';
@@ -109,9 +108,6 @@ export type {
   ListViewStyles,
   ListViewTypography,
 } from './models/list-props';
-
-export { EntityTypeLabel } from './components/EntityTypeLabel/EntityTypeLabel';
-export type { EntityTypeLabelProps } from './components/EntityTypeLabel/EntityTypeLabel';
 
 export { FavoriteCard } from './components/Favorites/FavoriteCard';
 export type { FavoriteCardProps } from './components/Favorites/FavoriteCard';

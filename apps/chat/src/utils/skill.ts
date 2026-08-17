@@ -12,6 +12,22 @@ export const SKILL_MANIFEST_FILE = 'SKILL.md';
  */
 export const SKILL_FILE_UPLOAD_MAX_BYTES = 1_048_576;
 
+/**
+ * Client-side mirror of the backend's default `SKILL_UPLOAD_MAX_TOTAL_BYTES`
+ * (`apps/chat-api/src/config/environment.config.ts`), used only for
+ * immediate inline feedback on the projected total package size — the server
+ * remains authoritative and enforces its own configured limit regardless.
+ */
+export const SKILL_UPLOAD_MAX_TOTAL_BYTES = 16_777_216;
+
+/**
+ * Client-side mirror of the backend's default `SKILL_UPLOAD_MAX_FILES`
+ * (`apps/chat-api/src/config/environment.config.ts`), used only for
+ * immediate inline feedback on the projected total file count (including the
+ * root `SKILL.md`) — the server remains authoritative regardless.
+ */
+export const SKILL_UPLOAD_MAX_FILES = 100;
+
 const RESERVED_ENTRY_NAMES = new Set(['.dial-resource', '.dial-folder']);
 const RESERVED_FIRST_SEGMENTS = new Set(['files', 'v']);
 const WINDOWS_DRIVE_PATTERN = /^[a-zA-Z]:/;

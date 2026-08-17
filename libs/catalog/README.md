@@ -20,7 +20,6 @@ Marketplace/catalog component for browsing models, tools, and assistants with se
 
 - `react`
 - `@epam/ai-dial-ui-kit`
-- `@epam/ai-dial-kit`
 - `@epam/ai-dial-chat-shared`
 - `@tabler/icons-react`
 - `ag-grid-community@35.3.0`

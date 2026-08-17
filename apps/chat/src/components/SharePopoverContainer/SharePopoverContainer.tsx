@@ -1,5 +1,6 @@
-import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
+import { type CatalogItem } from '@epam/ai-dial-catalog';
 import { CreateShareLinkDtoResourceKindEnum } from '@epam/ai-dial-chat-api-client';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { ShareLinkAccess, SharePopover } from '@epam/ai-dial-share';
 import type { FC } from 'react';
 import { memo } from 'react';

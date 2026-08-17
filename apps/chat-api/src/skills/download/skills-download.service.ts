@@ -14,16 +14,18 @@ export interface SkillDownload {
 }
 
 /**
- * Safe response-header allowlist for skill downloads — extends
+ * Safe response-header allowlist for skill downloads — based on
  * `apps/chat-api/src/files/download/files-download.service.ts`'s
- * `SAFE_DOWNLOAD_HEADERS` with `etag`, since skill downloads carry a
- * resource-version ETag the plain file-download endpoint has no equivalent
- * for (design.md D5).
+ * `SAFE_DOWNLOAD_HEADERS` and including `etag`, since skill downloads carry
+ * a resource-version ETag the plain file-download endpoint has no equivalent
+ * for (design.md D5). `content-length` is intentionally omitted: the SDK's
+ * Fetch response body may already be transport-decoded, so the upstream wire
+ * length is not necessarily the number of bytes this BFF streams to its
+ * caller. Node must frame the outgoing response from the actual body.
  */
 export const SAFE_SKILL_DOWNLOAD_HEADERS = [
   'content-type',
   'content-disposition',
-  'content-length',
   'etag',
 ] as const;
 

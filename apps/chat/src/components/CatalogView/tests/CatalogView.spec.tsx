@@ -1,6 +1,5 @@
 import type { CatalogItem } from '@epam/ai-dial-catalog';
 import {
-  CatalogEntityType,
   CatalogSortKey,
   CredentialsBadgeState,
   CredentialsUiState,
@@ -9,7 +8,10 @@ import {
 } from '@epam/ai-dial-catalog';
 import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { triggerBlobDownload } from '@epam/ai-dial-chat-shared';
+import {
+  CatalogEntityType,
+  triggerBlobDownload,
+} from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -312,15 +314,17 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
             card select {item.id}
           </button>
         ))}
-        {(items ?? []).map((item) => (
-          <button
-            key={`edit-${item.id}`}
-            type="button"
-            onClick={() => onEdit?.(item)}
-          >
-            edit {item.id}
-          </button>
-        ))}
+        {(items ?? [])
+          .filter((item) => item.isEditable)
+          .map((item) => (
+            <button
+              key={`edit-${item.id}`}
+              type="button"
+              onClick={() => onEdit?.(item)}
+            >
+              edit {item.id}
+            </button>
+          ))}
         {(items ?? [])
           .filter((item) => isDownloadVisible?.(item) ?? true)
           .map((item) => (
@@ -659,6 +663,7 @@ describe('CatalogView', () => {
       publicSkills: [],
       isLoading: false,
       error: null,
+      refetchSkills: vi.fn().mockResolvedValue(undefined),
     });
     vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [],
@@ -826,6 +831,37 @@ describe('CatalogView', () => {
         {
           folderPath: 'Organization/Data Science',
           version: '1.2.0',
+          rules: [],
+        },
+      );
+    });
+
+    it('publishes an owned skill without sending a synthetic version', async () => {
+      vi.mocked(publishCatalogEntity).mockResolvedValue({
+        entityId: 'skills/my-bucket/analysis/revenue-skill',
+        entityType: 'skill',
+        folderPath: 'Organization/Data Science',
+        version: '',
+        publishedAt: '2026-07-13T10:00:00.000Z',
+        publishedBy: 'user@example.com',
+      });
+
+      render(<CatalogView />);
+      await capturedPublishProps.current?.onPublish?.(
+        makeCatalogItem({
+          id: 'skills/my-bucket/analysis/revenue-skill',
+          type: CatalogEntityType.Skill,
+          version: '',
+        }),
+        ['Organization', 'Data Science'],
+        [],
+      );
+
+      expect(publishCatalogEntity).toHaveBeenCalledWith(
+        'skill',
+        'skills/my-bucket/analysis/revenue-skill',
+        {
+          folderPath: 'Organization/Data Science',
           rules: [],
         },
       );
@@ -1381,7 +1417,12 @@ describe('CatalogView', () => {
       type: 'model',
       modelDetails: {
         limits: { maxTotalTokens: 128000 },
-        pricing: { unit: 'token', prompt: '0.01', completion: '0.03' },
+        pricing: {
+          unit: 'token',
+          prompt: '0.000003',
+          completion: '0.000015',
+          cache_read: '0.0000003',
+        },
         features: {
           tools: true,
           mcp: false,
@@ -1418,8 +1459,9 @@ describe('CatalogView', () => {
     );
     expect(result.pricing).toEqual({
       prices: [
-        { label: 'Input tokens', price: '0.01' },
-        { label: 'Output tokens', price: '0.03' },
+        { label: 'Input tokens', price: '$3/M tokens' },
+        { label: 'Output tokens', price: '$15/M tokens' },
+        { label: 'Cached input', price: '$0.3/M tokens' },
       ],
       limits: [],
     });
@@ -2396,7 +2438,7 @@ describe('CatalogView', () => {
           feature !== OverlayFeature.Catalog,
       );
       const { container } = render(<CatalogView />);
-      expect(container.firstChild).toBeNull();
+      expect(container.innerHTML).toBe('');
     });
 
     it('still renders in selector mode when catalog is disabled', () => {
@@ -2769,6 +2811,7 @@ describe('CatalogView', () => {
   describe('prompt wiring', () => {
     const personalPrompt = {
       id: 'Work/AI/summarize',
+      bucket: 'my-bucket',
       name: 'summarize',
       description: 'Summarize a document',
       content: 'Summarize the following text:',
@@ -2915,6 +2958,38 @@ describe('CatalogView', () => {
       expect(getPrompt).not.toHaveBeenCalled();
     });
 
+    it('fetches a shared prompt from the owner bucket, not the caller bucket', async () => {
+      enablePrompts();
+      const sharedPrompt = { ...personalPrompt, bucket: 'owner-bucket' };
+      mockPrompts({ prompts: [], sharedWithMe: [sharedPrompt] });
+      vi.mocked(getPrompt).mockResolvedValue(sharedPrompt);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'fetch details prompts/owner-bucket/Work/AI/summarize',
+        }),
+      );
+
+      expect(getPrompt).toHaveBeenCalledWith(
+        'Work/AI/summarize',
+        'owner-bucket',
+      );
+    });
+
+    it('keeps a shared prompt distinct from a personal prompt at the same path', () => {
+      enablePrompts();
+      mockPrompts({
+        sharedWithMe: [{ ...personalPrompt, bucket: 'owner-bucket' }],
+      });
+
+      render(<CatalogView />);
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).toContain('Work/AI/summarize:PROMPT');
+      expect(ids).toContain('prompts/owner-bucket/Work/AI/summarize:PROMPT');
+    });
+
     it('resolves undefined when the prompt fetch fails', async () => {
       enablePrompts();
       mockPrompts();
@@ -3053,6 +3128,7 @@ describe('CatalogView', () => {
   describe('prompt use in chat', () => {
     const personalPrompt = {
       id: 'Work/AI/summarize',
+      bucket: 'my-bucket',
       name: 'summarize',
       description: '',
       content: 'Summarize the following text:',
@@ -3190,6 +3266,69 @@ describe('CatalogView', () => {
       expect(mockNavigate).toHaveBeenCalledWith(
         '/prompt-editor?id=Work%2FAI%2Fsummarize&returnUrl=%2Fcatalog',
       );
+    });
+
+    it('opens the prompt editor for a writable shared prompt', async () => {
+      enablePrompts();
+      vi.mocked(usePrompts).mockReturnValue({
+        prompts: [],
+        folders: [],
+        publicPrompts: [],
+        publicFolders: [],
+        sharedWithMe: [
+          {
+            ...personalPrompt,
+            bucket: 'owner-bucket',
+            isMy: false,
+            canEdit: true,
+            sharedWithMe: true,
+          },
+        ],
+        isLoading: false,
+        error: null,
+        refetchPrompts: vi.fn().mockResolvedValue(undefined),
+        refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'edit prompts/owner-bucket/Work/AI/summarize',
+        }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/prompt-editor?id=prompts%2Fowner-bucket%2FWork%2FAI%2Fsummarize&returnUrl=%2Fcatalog',
+      );
+    });
+
+    it('keeps public prompts read-only even when metadata contains WRITE', () => {
+      enablePrompts();
+      vi.mocked(usePrompts).mockReturnValue({
+        prompts: [],
+        folders: [],
+        sharedWithMe: [],
+        publicPrompts: [
+          {
+            ...personalPrompt,
+            id: 'Public/translate',
+            name: 'translate',
+            folderId: 'Public',
+            canEdit: true,
+          },
+        ],
+        publicFolders: [],
+        isLoading: false,
+        error: null,
+        refetchPrompts: vi.fn().mockResolvedValue(undefined),
+        refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
+      });
+
+      render(<CatalogView />);
+
+      expect(
+        screen.queryByRole('button', { name: 'edit Public/translate' }),
+      ).toBeNull();
     });
 
     it('offers a Prompt create option only when the feature is enabled', async () => {
@@ -3401,6 +3540,7 @@ describe('CatalogView', () => {
   describe('prompt download', () => {
     const personalPrompt = {
       id: 'Work/AI/summarize',
+      bucket: 'my-bucket',
       name: 'summarize',
       description: 'Summarize a document',
       content: 'Summarize:\n\n{{document}}',
@@ -3678,6 +3818,7 @@ describe('CatalogView', () => {
         publicSkills: [organisationSkill],
         isLoading: false,
         error: null,
+        refetchSkills: vi.fn().mockResolvedValue(undefined),
         ...overrides,
       });
 
@@ -3695,6 +3836,52 @@ describe('CatalogView', () => {
       const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
       expect(ids).toContain('skills/my-bucket/analysis/revenue-skill:SKILL');
       expect(ids).toContain('skills/public/shared-skill:SKILL');
+    });
+
+    it('opens the skill editor for a writable shared skill', async () => {
+      enableSkills();
+      mockSkills({
+        skills: [],
+        publicSkills: [],
+        sharedWithMe: [
+          {
+            ...personalSkill,
+            url: 'skills/owner-bucket/analysis/revenue-skill',
+            bucket: 'owner-bucket',
+            isMy: false,
+            canEdit: true,
+            sharedWithMe: true,
+          },
+        ],
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'edit skills/owner-bucket/analysis/revenue-skill',
+        }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/skill-editor?id=skills%2Fowner-bucket%2Fanalysis%2Frevenue-skill&returnUrl=%2Fcatalog',
+      );
+    });
+
+    it('keeps public skills read-only even when metadata contains WRITE', () => {
+      enableSkills();
+      mockSkills({
+        skills: [],
+        sharedWithMe: [],
+        publicSkills: [{ ...organisationSkill, canEdit: true }],
+      });
+
+      render(<CatalogView />);
+
+      expect(
+        screen.queryByRole('button', {
+          name: 'edit skills/public/shared-skill',
+        }),
+      ).toBeNull();
     });
 
     it('adds no skill items when the feature is disabled', () => {
@@ -3738,7 +3925,7 @@ describe('CatalogView', () => {
       ).toBeNull();
     });
 
-    it('hides Share and Publish for a skill regardless of ownership', () => {
+    it('shows Publish only for an owned skill while Share remains hidden', () => {
       enableSkills();
       mockSkills();
 
@@ -3752,8 +3939,22 @@ describe('CatalogView', () => {
         false,
       );
       expect(capturedPublishProps.current?.isPublishVisible?.(ownedSkill)).toBe(
-        false,
+        true,
       );
+      expect(
+        capturedPublishProps.current?.isPublishVisible?.({
+          ...ownedSkill,
+          isMyApp: false,
+          sharedWithMe: true,
+        }),
+      ).toBe(false);
+      expect(
+        capturedPublishProps.current?.isPublishVisible?.({
+          ...ownedSkill,
+          isMyApp: false,
+          folder: ['Public'],
+        }),
+      ).toBe(false);
     });
 
     it('leaves the Create dropdown without a skill entry', () => {

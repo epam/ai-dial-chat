@@ -21,7 +21,6 @@
   "peerDependencies": {
     "react": "^19.0.0",
     "@tabler/icons-react": "^3.0.0",
-    "@epam/ai-dial-kit": "*",
     "@epam/ai-dial-chat-shared": "*",
     "@epam/ai-dial-publish-panel": "*",
     "ag-grid-community": "35.3.0",

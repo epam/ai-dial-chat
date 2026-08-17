@@ -34,6 +34,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { LG: 24, MD: 20, SM: 16 },
+  EditorThemes: { dark: 'dark', light: 'light' },
   Accordion: ({
     title,
     children,
@@ -155,6 +156,46 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
     <div role="status">{ariaLabel}</div>
   ),
+  PopupSize: { Sm: 'sm', Md: 'md', Lg: 'lg' },
+  Popup: ({
+    open,
+    header,
+    children,
+    footer,
+    onClose,
+    closeAriaLabel,
+  }: {
+    open: boolean;
+    header: ReactNode;
+    children: ReactNode;
+    footer?: ReactNode;
+    onClose: () => void;
+    closeAriaLabel?: string;
+  }) =>
+    open ? (
+      <div
+        role="dialog"
+        aria-label={typeof header === 'string' ? header : undefined}
+      >
+        <h2>{header}</h2>
+        <button onClick={onClose}>{closeAriaLabel ?? 'Close'}</button>
+        {children}
+        {footer}
+      </div>
+    ) : null,
+  GhostIconButton: ({
+    icon,
+    onClick,
+    'aria-label': ariaLabel,
+  }: {
+    icon: ReactNode;
+    onClick?: () => void;
+    'aria-label'?: string;
+  }) => (
+    <button aria-label={ariaLabel} onClick={onClick}>
+      {icon}
+    </button>
+  ),
   LazyMarkdownEditor: () =>
     Promise.resolve({
       MarkdownEditor: ({
@@ -176,11 +217,13 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 vi.mock('@tabler/icons-react', () => ({
   IconPlus: () => <svg />,
   IconTrashX: () => <svg />,
+  IconUpload: () => <svg />,
+  IconFileText: () => <svg />,
 }));
 
 const fileActions: SkillEditorFileActions = {
-  validatePath: () => undefined,
-  onUploadFile: vi.fn(async () => undefined),
+  validateBatch: vi.fn(async () => ({ results: [], batchErrors: [] })),
+  commitBatch: vi.fn(async () => ({})),
   onRemoveNode: vi.fn(),
 };
 
@@ -299,6 +342,7 @@ describe('SkillEditor', () => {
   it('applies an explicit dir override to the root element without reading i18n', () => {
     const { container } = renderEditor({ dir: 'rtl' });
 
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- dir="rtl" is a plain DOM attribute with no accessible role/text to query
     expect(container.querySelector('[dir="rtl"]')).toBeTruthy();
   });
 

@@ -1,5 +1,6 @@
 import type { CatalogItemApiDetails } from '@epam/ai-dial-catalog';
-import { CatalogEntityType, CodeLanguage } from '@epam/ai-dial-catalog';
+import { CodeLanguage } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { McpResourceKind } from '../types/mcp';
 
 const safeDecodeURIComponent = (value: string): string => {

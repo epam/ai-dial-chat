@@ -193,21 +193,25 @@ export interface AttachmentCanvasTypography {
   jsonClassName?: string;
 }
 
-/** Combined style override prop for AttachmentCanvas. */
-export interface AttachmentCanvasStyles {
+/** Style override prop for `AttachmentCanvasBody`'s content-rendering area. */
+export interface AttachmentCanvasBodyStyles {
   /** Color overrides for the content body, applied as CSS custom properties. */
   colors?: AttachmentCanvasColors;
   /** Typography overrides for the content body. */
   typography?: AttachmentCanvasTypography;
   /** Extra class name(s) merged onto the scrollable content body element. */
   bodyClassName?: string;
-  /** Extra class name(s) merged onto the panel width wrapper. */
-  className?: string;
   /**
    * Arbitrary CSS custom properties applied inline to the content body.
    * Merged after the typed color/typography vars, so they can override them.
    */
   cssVars?: CSSProperties;
+}
+
+/** Combined style override prop for AttachmentCanvas. */
+export interface AttachmentCanvasStyles extends AttachmentCanvasBodyStyles {
+  /** Extra class name(s) merged onto the panel width wrapper. */
+  className?: string;
   /** Style overrides forwarded to the underlying SidebarPanel (panel chrome). */
   panelStyles?: SidebarPanelStyles;
 }
@@ -292,4 +296,50 @@ export interface AttachmentCanvasProps {
    * plain `fetch` if not provided.
    */
   loadPdf?: (url: string) => Promise<Blob>;
+}
+
+/** User-visible strings for `AttachmentCanvasBody`'s content states. */
+export type AttachmentCanvasBodyLabels = Pick<
+  AttachmentCanvasLabels,
+  | 'unsupportedLabel'
+  | 'loadErrorLabel'
+  | 'forbiddenErrorLabel'
+  | 'visualizerErrorLabel'
+  | 'htmlFrameBlockedLabel'
+  | 'htmlOpenInNewTabLabel'
+>;
+
+/** Props for the `AttachmentCanvasBody` component. */
+export interface AttachmentCanvasBodyProps {
+  /** The attachment content to render. */
+  content: AttachmentCanvasContent;
+  /** When `true`, renders a loading spinner instead of content. Defaults to `false`. */
+  isLoading?: boolean;
+  /** File name used for image `alt` text and the audio player's accessible label. */
+  fileName?: string;
+  /**
+   * Whether an `Html` content type renders its raw source instead of the
+   * sandboxed rendered view. Ignored for every other content type. Defaults
+   * to `false`. The host owns this toggle's state since the corresponding
+   * toggle button lives outside this component.
+   */
+  isHtmlSourceView?: boolean;
+  /** User-visible strings for content states (unsupported/error/HTML-blocked messages). */
+  labels?: AttachmentCanvasBodyLabels;
+  /** Style overrides for the content body. */
+  styles?: AttachmentCanvasBodyStyles;
+  /** Syntax highlight color theme forwarded to MarkdownRenderer/CodeContent code blocks. */
+  codeBlockTheme?: CodeBlockTheme;
+  /**
+   * Fetches a PDF file by URL and returns its bytes as a `Blob`. Used when
+   * content type is `Pdf` to load the file before rendering. Defaults to a
+   * plain `fetch` if not provided.
+   */
+  loadPdf?: (url: string) => Promise<Blob>;
+  /**
+   * Hides the PDF renderer's own title/zoom toolbar row for `Pdf` content —
+   * for hosts that render their own header and don't want it duplicated.
+   * Ignored for every other content type. Defaults to `false`.
+   */
+  hidePdfToolbar?: boolean;
 }

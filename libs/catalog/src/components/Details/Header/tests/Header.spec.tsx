@@ -1,3 +1,4 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -8,7 +9,6 @@ import {
 } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../../models/catalog-item';
-import { CatalogEntityType } from '../../../../types/entity-type';
 import {
   CredentialStatus,
   ToolsetAuthenticationType,
@@ -108,7 +108,8 @@ vi.mock('@tabler/icons-react', () => ({
   IconUserOff: () => <svg />,
   IconWorldShare: () => <svg />,
 }));
-vi.mock('../../../EntityHeader/EntityHeader', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
 }));
 vi.mock('../ShareButton/ShareButton', () => ({
@@ -917,7 +918,7 @@ describe('Header', () => {
   });
 
   it('renders the credentials button as the primary action, first in the action row, for a Toolset item', () => {
-    const { container } = render(
+    render(
       <Header
         item={{
           ...makeItem(CatalogEntityType.Toolset),
@@ -932,7 +933,7 @@ describe('Header', () => {
 
     const buttons = screen.getAllByRole('button');
     expect(buttons[0].textContent).toBe('Log in');
-    expect(container.querySelector('.primary')?.textContent).toBe('Log in');
+    expect(buttons[0].className).toContain('primary');
   });
 
   it('keeps the credentials button as a non-primary, non-leading action for a non-Toolset item', () => {

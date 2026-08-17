@@ -1,5 +1,5 @@
-import { CatalogEntityType } from '@epam/ai-dial-catalog';
 import type { PublishHistoryEntryDto } from '@epam/ai-dial-chat-api-client';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   PublishAccessRulesLabels,
   PublishHistoryEntry,
@@ -18,6 +18,7 @@ const PUBLISHABLE_ENTITY_TYPES: Partial<
   [CatalogEntityType.Toolset]: CatalogPublishEntityType.Toolset,
   [CatalogEntityType.Agent]: CatalogPublishEntityType.Application,
   [CatalogEntityType.Prompt]: CatalogPublishEntityType.Prompt,
+  [CatalogEntityType.Skill]: CatalogPublishEntityType.Skill,
 };
 
 /** Maps a catalog item's entity type to the publish API's entity-type path param, or `undefined` if that type is not publishable. */

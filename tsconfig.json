@@ -16,6 +16,9 @@
       "path": "./libs/chat-shared"
     },
     {
+      "path": "./libs/ai-dial-chat-hooks"
+    },
+    {
       "path": "./libs/conversation-messages"
     },
     {
@@ -44,9 +47,6 @@
     },
     {
       "path": "./libs/attachment-input"
-    },
-    {
-      "path": "./libs/ai-dial-kit"
     },
     {
       "path": "./libs/deployment-creation-form"

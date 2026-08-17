@@ -133,12 +133,18 @@ module.exports = {
       ...backgroundsColors,
       ...bgColorsToRemove,
       ...controlsBgColors,
+      ...visualBgColors,
     },
     borderColor: borderColors,
     stroke: borderColors,
     divideColor: borderColors,
     placeholderColor: placeholderColor,
-    textColor: { ...textColors, ...textColorsToRemove, ...controlsTextColors },
+    textColor: {
+      ...textColors,
+      ...textColorsToRemove,
+      ...controlsTextColors,
+      ...visualTextColors,
+    },
     gradientColorStops: backgroundsColors,
 
     extend: {

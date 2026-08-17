@@ -28,8 +28,8 @@ const makeFile = (
 
 describe('AttachmentGroup', () => {
   it('renders nothing for an empty attachment list', () => {
-    const { container } = render(<AttachmentGroup attachments={[]} />);
-    expect(container.firstChild).toBeNull();
+    render(<AttachmentGroup attachments={[]} />);
+    expect(document.body.textContent).toBe('');
   });
 
   describe('images', () => {
@@ -88,6 +88,7 @@ describe('AttachmentGroup', () => {
       const images = ['a', 'b'].map(makeImage);
       const { container } = render(<AttachmentGroup attachments={images} />);
 
+      // eslint-disable-next-line testing-library/no-container -- checking a CSS width class on the unlabeled root wrapper, which has no accessible role or text to query
       const widthClass = container.firstElementChild?.className
         .split(' ')
         .find((c) => c.startsWith('w-[') || c.startsWith('max-w-['));

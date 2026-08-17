@@ -67,6 +67,7 @@ describe('SkillsController (integration)', () => {
   let app: INestApplication;
   let service: {
     listSkills: ReturnType<typeof vi.fn>;
+    listCatalogSkills: ReturnType<typeof vi.fn>;
     listSkillFiles: ReturnType<typeof vi.fn>;
     downloadSkill: ReturnType<typeof vi.fn>;
     downloadSkillFile: ReturnType<typeof vi.fn>;
@@ -82,6 +83,11 @@ describe('SkillsController (integration)', () => {
   beforeEach(async () => {
     service = {
       listSkills: vi.fn().mockResolvedValue(mockListResponse),
+      listCatalogSkills: vi.fn().mockResolvedValue({
+        skills: [],
+        sharedWithMe: [],
+        publicSkills: [],
+      }),
       listSkillFiles: vi.fn().mockResolvedValue(mockListResponse),
       downloadSkill: vi.fn(),
       downloadSkillFile: vi.fn(),
@@ -192,6 +198,19 @@ describe('SkillsController (integration)', () => {
       await request(app.getHttpServer())
         .get('/api/v1/skills?bucket=my-bucket')
         .expect(503);
+    });
+  });
+
+  describe('GET /api/v1/skills/catalog', () => {
+    it('lists every catalog namespace for the session user', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/skills/catalog')
+        .expect(200);
+
+      expect(service.listCatalogSkills).toHaveBeenCalledWith(
+        TEST_USER.bucket,
+        TEST_USER.at,
+      );
     });
   });
 

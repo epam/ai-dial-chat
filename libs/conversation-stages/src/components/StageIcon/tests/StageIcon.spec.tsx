@@ -20,6 +20,12 @@ describe('StageIcon — icon priority order', () => {
       <StageIcon status={StageStatus.Failed} isLive={false} />,
     );
     expect(screen.getByText('Failed')).toBeTruthy();
+    /*
+     * The status icon is intentionally aria-hidden and decorative (its
+     * meaning is carried by the adjacent sr-only label above), so there is
+     * no accessible role/name to query it by.
+     */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- see comment above
     expect(container.querySelector('svg[aria-hidden]')).toBeTruthy();
   });
 
@@ -27,6 +33,7 @@ describe('StageIcon — icon priority order', () => {
     const { container } = render(
       <StageIcon status={StageStatus.Completed} isLive={false} />,
     );
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- decorative aria-hidden icon, no accessible query applies
     expect(container.querySelector('svg[aria-hidden]')).toBeTruthy();
     expect(screen.queryByText('Failed')).toBeNull();
     expect(screen.queryByLabelText('Running')).toBeNull();
@@ -34,6 +41,7 @@ describe('StageIcon — icon priority order', () => {
 
   it('falls back to the quiet check icon for a settled-but-unresolved (null, not live) stage', () => {
     const { container } = render(<StageIcon status={null} isLive={false} />);
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- decorative aria-hidden icon, no accessible query applies
     expect(container.querySelector('svg[aria-hidden]')).toBeTruthy();
     expect(screen.queryByText('Failed')).toBeNull();
   });

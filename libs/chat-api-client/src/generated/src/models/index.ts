@@ -1671,6 +1671,12 @@ export interface CreatedScheduledTaskDto {
   isActive?: boolean;
   /**
    *
+   * @type {boolean}
+   * @memberof CreatedScheduledTaskDto
+   */
+  isDeleted?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof CreatedScheduledTaskDto
    */
@@ -4153,11 +4159,11 @@ export interface ModelDetailsDto {
    */
   limits?: ModelLimitsDto;
   /**
-   *
-   * @type {ModelPricingDto}
+   * Pricing as reported by DIAL Core: `unit` names the billing unit and every other key holds the per-unit price for that key
+   * @type {{ [key: string]: string; }}
    * @memberof ModelDetailsDto
    */
-  pricing?: ModelPricingDto;
+  pricing?: { [key: string]: string };
   /**
    *
    * @type {DeploymentFeaturesDetailsDto}
@@ -4213,31 +4219,6 @@ export interface ModelLimitsDto {
    * @memberof ModelLimitsDto
    */
   maxCompletionTokens?: number;
-}
-/**
- *
- * @export
- * @interface ModelPricingDto
- */
-export interface ModelPricingDto {
-  /**
-   * The pricing unit
-   * @type {string}
-   * @memberof ModelPricingDto
-   */
-  unit?: string;
-  /**
-   * Per-unit price for the completion request
-   * @type {string}
-   * @memberof ModelPricingDto
-   */
-  prompt?: string;
-  /**
-   * Per-unit price for the completion response
-   * @type {string}
-   * @memberof ModelPricingDto
-   */
-  completion?: string;
 }
 /**
  *
@@ -4482,6 +4463,18 @@ export interface PromptListResponseDto {
    * @memberof PromptListResponseDto
    */
   sharedWithMe: Array<PromptResponseDto>;
+  /**
+   *
+   * @type {Array<PromptResponseDto>}
+   * @memberof PromptListResponseDto
+   */
+  publicPrompts?: Array<PromptResponseDto>;
+  /**
+   *
+   * @type {Array<PromptFolderResponseDto>}
+   * @memberof PromptListResponseDto
+   */
+  publicFolders?: Array<PromptFolderResponseDto>;
 }
 /**
  *
@@ -4495,6 +4488,12 @@ export interface PromptResponseDto {
    * @memberof PromptResponseDto
    */
   id: string;
+  /**
+   * DIAL Core bucket the prompt lives in. For a prompt shared with the caller this is the owner bucket, not the caller bucket, so `id` can be qualified back into a `prompts/{bucket}/{id}` resource url
+   * @type {string}
+   * @memberof PromptResponseDto
+   */
+  bucket: string;
   /**
    * Display name
    * @type {string}
@@ -4537,6 +4536,30 @@ export interface PromptResponseDto {
    * @memberof PromptResponseDto
    */
   updatedAt: number;
+  /**
+   * Whether the prompt belongs to the requestor
+   * @type {boolean}
+   * @memberof PromptResponseDto
+   */
+  isMy?: boolean;
+  /**
+   * Whether the requestor may update the prompt. Organisation prompts are always read-only.
+   * @type {boolean}
+   * @memberof PromptResponseDto
+   */
+  canEdit?: boolean;
+  /**
+   * Whether another user shared the prompt with the requestor
+   * @type {boolean}
+   * @memberof PromptResponseDto
+   */
+  sharedWithMe?: boolean;
+  /**
+   * READ/WRITE/SHARE permissions applicable to the requestor
+   * @type {Array<string>}
+   * @memberof PromptResponseDto
+   */
+  permissions?: Array<string>;
 }
 /**
  *
@@ -4602,11 +4625,11 @@ export interface PublishCatalogEntityDto {
    */
   folderPath: string;
   /**
-   * Version label for this publish.
+   * Optional version label. When omitted, versioned resource ids recover it from their {name}__{version} suffix; unversioned resources use an empty version.
    * @type {string}
    * @memberof PublishCatalogEntityDto
    */
-  version: string;
+  version?: string;
   /**
    * Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.
    * @type {Array<PublishRuleDto>}
@@ -5234,6 +5257,12 @@ export interface ScheduledTaskDto {
   isActive?: boolean;
   /**
    *
+   * @type {boolean}
+   * @memberof ScheduledTaskDto
+   */
+  isDeleted?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof ScheduledTaskDto
    */
@@ -5450,6 +5479,31 @@ export interface ShareRecipientsResponseDto {
 /**
  *
  * @export
+ * @interface SkillCatalogListResponseDto
+ */
+export interface SkillCatalogListResponseDto {
+  /**
+   *
+   * @type {Array<SkillMetadataItemDto>}
+   * @memberof SkillCatalogListResponseDto
+   */
+  skills: Array<SkillMetadataItemDto>;
+  /**
+   *
+   * @type {Array<SkillMetadataItemDto>}
+   * @memberof SkillCatalogListResponseDto
+   */
+  sharedWithMe: Array<SkillMetadataItemDto>;
+  /**
+   *
+   * @type {Array<SkillMetadataItemDto>}
+   * @memberof SkillCatalogListResponseDto
+   */
+  publicSkills: Array<SkillMetadataItemDto>;
+}
+/**
+ *
+ * @export
  * @interface SkillFileDeleteResponseDto
  */
 export interface SkillFileDeleteResponseDto {
@@ -5620,6 +5674,24 @@ export interface SkillMetadataItemDto {
    * @memberof SkillMetadataItemDto
    */
   updatedAt?: number;
+  /**
+   * Whether the skill belongs to the requestor
+   * @type {boolean}
+   * @memberof SkillMetadataItemDto
+   */
+  isMy?: boolean;
+  /**
+   * Whether the requestor may update the skill. Organisation skills are always read-only.
+   * @type {boolean}
+   * @memberof SkillMetadataItemDto
+   */
+  canEdit?: boolean;
+  /**
+   * Whether another user shared the skill with the requestor
+   * @type {boolean}
+   * @memberof SkillMetadataItemDto
+   */
+  sharedWithMe?: boolean;
 }
 
 /**
@@ -6609,6 +6681,12 @@ export interface UpdatedScheduledTaskDto {
    * @memberof UpdatedScheduledTaskDto
    */
   isActive?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  isDeleted?: boolean;
   /**
    *
    * @type {string}

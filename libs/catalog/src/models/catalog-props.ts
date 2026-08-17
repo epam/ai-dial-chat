@@ -1,3 +1,4 @@
+import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type {
   PublicationRule,
   PublishFolderNode,
@@ -7,7 +8,6 @@ import type {
 } from '@epam/ai-dial-publish-panel';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
-import type { CatalogEntityType } from '../types/entity-type';
 import type { CatalogSortKey } from '../types/sort';
 import type { CredentialsLevel } from '../types/toolset-auth';
 import type { CatalogViewMode } from '../types/view-mode';

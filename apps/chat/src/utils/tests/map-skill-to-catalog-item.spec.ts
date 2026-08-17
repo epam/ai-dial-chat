@@ -1,8 +1,8 @@
-import { CatalogEntityType } from '@epam/ai-dial-catalog';
 import {
   SkillMetadataItemDtoNodeTypeEnum,
   type SkillMetadataItemDto,
 } from '@epam/ai-dial-chat-api-client';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { TFunction } from 'i18next';
 import { describe, expect, it } from 'vitest';
 import { CatalogI18nKeys } from '../../constants/translation-keys';
@@ -15,6 +15,7 @@ import {
 
 const LABELS: Partial<Record<string, string>> = {
   [CatalogI18nKeys.FolderPersonal]: 'Personal',
+  [CatalogI18nKeys.FolderShared]: 'Shared with me',
   [CatalogI18nKeys.FolderPublic]: 'Organization',
 };
 
@@ -47,18 +48,39 @@ describe('mapSkillToCatalogItem', () => {
     expect(mapPersonal().id).toBe('skills/my-bucket/revenue-skill');
   });
 
-  it('maps a personal skill as owned but not editable', () => {
+  it('maps a personal skill as owned and editable', () => {
     const item = mapPersonal();
 
     expect(item.type).toBe(CatalogEntityType.Skill);
     expect(item.isMyApp).toBe(true);
-    expect(item.isEditable).toBe(false);
+    expect(item.isEditable).toBe(true);
     expect(item.sharedWithMe).toBe(false);
   });
 
-  it('maps an organisation skill as not owned', () => {
+  it('maps a writable shared skill as editable but never owned', () => {
     const item = mapSkillToCatalogItem(
-      makeSkill({ url: 'skills/public/shared-skill' }),
+      makeSkill({
+        url: 'skills/owner-bucket/revenue-skill',
+        isMy: true,
+        canEdit: true,
+        sharedWithMe: true,
+      }),
+      { t, source: SkillSource.SharedWithMe, favoriteIds: new Set() },
+    );
+
+    expect(item.isMyApp).toBe(false);
+    expect(item.sharedWithMe).toBe(true);
+    expect(item.isEditable).toBe(true);
+    expect(item.folder[0]).toBe('Shared with me');
+  });
+
+  it('maps an organisation skill as not owned even when metadata claims ownership', () => {
+    const item = mapSkillToCatalogItem(
+      makeSkill({
+        url: 'skills/public/shared-skill',
+        isMy: true,
+        canEdit: true,
+      }),
       { t, source: SkillSource.Public, favoriteIds: new Set() },
     );
 

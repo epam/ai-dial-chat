@@ -1,6 +1,7 @@
 import {
   BadGatewayException,
   BadRequestException,
+  ConflictException,
   HttpException,
   INestApplication,
   NotFoundException,
@@ -39,6 +40,7 @@ interface MockScheduledTasksService {
   listScheduledTaskRuns: ReturnType<typeof vi.fn>;
   pauseScheduledTask: ReturnType<typeof vi.fn>;
   resumeScheduledTask: ReturnType<typeof vi.fn>;
+  deleteScheduledTask: ReturnType<typeof vi.fn>;
 }
 
 async function buildApp(
@@ -91,6 +93,7 @@ describe('ScheduledTasksController (integration)', () => {
       listScheduledTaskRuns: vi.fn(),
       pauseScheduledTask: vi.fn(),
       resumeScheduledTask: vi.fn(),
+      deleteScheduledTask: vi.fn(),
     };
     app = await buildApp(service);
   });
@@ -818,6 +821,86 @@ describe('ScheduledTasksController (integration)', () => {
         .expect(503);
     });
   });
+
+  describe('DELETE /api/v1/scheduled-tasks/:scheduleId', () => {
+    it('returns 204 with an empty body for an authenticated owner delete', async () => {
+      service.deleteScheduledTask.mockResolvedValue(undefined);
+
+      const res = await request(app.getHttpServer())
+        .delete('/api/v1/scheduled-tasks/sched_123')
+        .expect(204);
+
+      expect(res.body).toEqual({});
+      expect(res.text).toBe('');
+      expect(service.deleteScheduledTask).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        'sched_123',
+      );
+    });
+
+    it('does not cache the response', async () => {
+      service.deleteScheduledTask.mockResolvedValue(undefined);
+
+      const res = await request(app.getHttpServer())
+        .delete('/api/v1/scheduled-tasks/sched_123')
+        .expect(204);
+
+      expect(res.headers['cache-control']).toBe('private, no-store');
+    });
+
+    it('returns 400 for a path-traversal-shaped scheduleId without calling the service', async () => {
+      await request(app.getHttpServer())
+        .delete('/api/v1/scheduled-tasks/..%2F..%2Fetc%2Fpasswd')
+        .expect(400);
+      expect(service.deleteScheduledTask).not.toHaveBeenCalled();
+    });
+
+    it('returns 401 when the service reports the caller is not authenticated', async () => {
+      service.deleteScheduledTask.mockRejectedValue(
+        new UnauthorizedException(),
+      );
+      await request(app.getHttpServer())
+        .delete('/api/v1/scheduled-tasks/sched_123')
+        .expect(401);
+    });
+
+    it('returns 404 when the schedule does not exist, is owned by another user, or is already hard-deleted', async () => {
+      service.deleteScheduledTask.mockRejectedValue(
+        new NotFoundException('Resource not found'),
+      );
+      await request(app.getHttpServer())
+        .delete('/api/v1/scheduled-tasks/sched_missing')
+        .expect(404);
+    });
+
+    it('returns 409 when the schedule is already soft-deleted', async () => {
+      service.deleteScheduledTask.mockRejectedValue(
+        new ConflictException('Conflict'),
+      );
+      await request(app.getHttpServer())
+        .delete('/api/v1/scheduled-tasks/sched_123')
+        .expect(409);
+    });
+
+    it('returns 429 when the service reports a rate limit', async () => {
+      service.deleteScheduledTask.mockRejectedValue(
+        new HttpException('Too many requests', 429),
+      );
+      await request(app.getHttpServer())
+        .delete('/api/v1/scheduled-tasks/sched_123')
+        .expect(429);
+    });
+
+    it('returns 502/503 on upstream failure', async () => {
+      service.deleteScheduledTask.mockRejectedValue(
+        new BadGatewayException('DIAL Scheduler could not unregister the job'),
+      );
+      await request(app.getHttpServer())
+        .delete('/api/v1/scheduled-tasks/sched_123')
+        .expect(502);
+    });
+  });
 });
 
 describe('ScheduledTasksController — unauthenticated / feature-disabled', () => {
@@ -830,6 +913,7 @@ describe('ScheduledTasksController — unauthenticated / feature-disabled', () =
       listScheduledTaskRuns: vi.fn(),
       pauseScheduledTask: vi.fn(),
       resumeScheduledTask: vi.fn(),
+      deleteScheduledTask: vi.fn(),
     };
     const app = await buildApp(service, false);
 
@@ -856,6 +940,9 @@ describe('ScheduledTasksController — unauthenticated / feature-disabled', () =
     await request(app.getHttpServer())
       .post('/api/v1/scheduled-tasks/sched_123/resume')
       .expect(403);
+    await request(app.getHttpServer())
+      .delete('/api/v1/scheduled-tasks/sched_123')
+      .expect(403);
 
     expect(service.listScheduledTasks).not.toHaveBeenCalled();
     expect(service.createScheduledTask).not.toHaveBeenCalled();
@@ -864,6 +951,7 @@ describe('ScheduledTasksController — unauthenticated / feature-disabled', () =
     expect(service.listScheduledTaskRuns).not.toHaveBeenCalled();
     expect(service.pauseScheduledTask).not.toHaveBeenCalled();
     expect(service.resumeScheduledTask).not.toHaveBeenCalled();
+    expect(service.deleteScheduledTask).not.toHaveBeenCalled();
 
     await app.close();
   });

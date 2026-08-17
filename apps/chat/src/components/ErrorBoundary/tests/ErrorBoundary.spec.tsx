@@ -66,8 +66,10 @@ describe('ErrorFallback', () => {
   it('sets focus on the action button on mount', () => {
     renderFallback();
     expect(
-      screen.getByRole('button', { name: 'errorBoundary.retryLabel' }),
-    ).toBe(document.activeElement);
+      screen
+        .getByRole('button', { name: 'errorBoundary.retryLabel' })
+        .matches(':focus'),
+    ).toBe(true);
   });
 
   it('uses actionLabel i18n key when provided', () => {

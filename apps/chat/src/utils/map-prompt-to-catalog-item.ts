@@ -1,14 +1,13 @@
 import {
-  CatalogEntityType,
   type CatalogItemOverview,
   type CatalogItem,
   type OverviewSpec,
 } from '@epam/ai-dial-catalog';
 import type { PromptResponseDto } from '@epam/ai-dial-chat-api-client';
-import { formatLastUsed } from '@epam/ai-dial-chat-shared';
+import { CatalogEntityType, formatLastUsed } from '@epam/ai-dial-chat-shared';
 import type { TFunction } from 'i18next';
 import { CatalogI18nKeys } from '../constants/translation-keys';
-import { PromptSource } from '../types/prompt';
+import { buildPromptResourceUrl, PromptSource } from '../types/prompt';
 import { safeDecodeURIComponent } from './string-utils';
 
 const SOURCE_FOLDER_KEY: Record<PromptSource, CatalogI18nKeys> = {
@@ -56,8 +55,8 @@ export const buildPromptOverview = (
 
 /**
  * Whether a prompt item came from the organisation namespace, which the public
- * prompt endpoints serve. Personal and shared-with-me prompts both resolve
- * through the caller's own bucket instead.
+ * prompt endpoints serve. Personal prompts resolve through the caller's own
+ * bucket, while shared prompts carry their owner's bucket in the resource URL.
  */
 export const isOrganisationPromptItem = (item: CatalogItem): boolean =>
   !item.isMyApp && !item.sharedWithMe;
@@ -72,19 +71,28 @@ export interface MapPromptToCatalogItemOptions {
 }
 
 /**
- * Maps a prompt DTO into a catalog item. The DIAL prompt path is used verbatim
- * as `CatalogItem.id`, since every id-to-endpoint dispatch in `CatalogView` is
- * already switched on `item.type`.
+ * Maps a prompt DTO into a catalog item.
+ *
+ * A personal or organisation prompt uses its DIAL path verbatim as
+ * `CatalogItem.id` — its bucket is implied by the endpoint that serves it. A
+ * shared-with-me prompt cannot: its path is relative to the *owner's* bucket,
+ * so a bare path both collides with a same-named personal prompt and resolves
+ * against the caller's own bucket when read back. Those items carry the
+ * qualified `prompts/{ownerBucket}/{path}` url instead.
  */
 export const mapPromptToCatalogItem = (
   prompt: PromptResponseDto,
   { t, source, favoriteIds }: MapPromptToCatalogItemOptions,
 ): CatalogItem => {
   const isPersonal = source === PromptSource.Personal;
-  const isFavorite = favoriteIds.has(prompt.id);
+  const id =
+    source === PromptSource.SharedWithMe
+      ? buildPromptResourceUrl({ bucket: prompt.bucket, path: prompt.id })
+      : prompt.id;
+  const isFavorite = favoriteIds.has(id);
 
   return {
-    id: prompt.id,
+    id,
     type: CatalogEntityType.Prompt,
     name: prompt.name,
     description: prompt.description ?? '',
@@ -100,9 +108,10 @@ export const mapPromptToCatalogItem = (
     /* Favorites live in the user config's `prompts.installed`, keyed by path. */
     isUserFavorite: isFavorite,
     isStarred: isFavorite,
-    isMyApp: isPersonal,
-    sharedWithMe: source === PromptSource.SharedWithMe,
-    isEditable: isPersonal,
+    isMyApp: prompt.isMy ?? isPersonal,
+    sharedWithMe: prompt.sharedWithMe ?? source === PromptSource.SharedWithMe,
+    isEditable:
+      source !== PromptSource.Public && (prompt.canEdit ?? isPersonal),
     folder: resolvePromptFolder(prompt.folderId, source, t),
     /*
      * `listPrompts` already returns the body, so the details panel can render

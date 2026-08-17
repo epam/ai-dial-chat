@@ -37,6 +37,7 @@ import {
   SkillListQueryDto,
 } from './dto/skill-list-query.dto';
 import {
+  SkillCatalogListResponseDto,
   SkillFileListResponseDto,
   SkillListResponseDto,
 } from './dto/skill-metadata.dto';
@@ -69,6 +70,25 @@ interface UploadedMulterFile {
 @Controller({ path: 'skills', version: '1' })
 export class SkillsController {
   constructor(private readonly skillsService: SkillsService) {}
+
+  @Get('catalog')
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @ApiOperation({
+    operationId: 'listCatalogSkills',
+    summary: 'List personal, shared, and organisation skills',
+    description:
+      'Returns all catalog-visible skills in one response. Organisation skills are always marked read-only.',
+  })
+  @ApiResponse({ status: 200, type: SkillCatalogListResponseDto })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
+  @ApiResponse({ status: 503, description: 'DIAL Core is unavailable' })
+  listCatalogSkills(@Req() req: Request): Promise<SkillCatalogListResponseDto> {
+    const { at, bucket } = req.user as SessionUser;
+    return this.skillsService.listCatalogSkills(bucket, at);
+  }
 
   @Get()
   @Throttle({ default: { limit: 60, ttl: 60000 } })

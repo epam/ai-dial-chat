@@ -1,4 +1,5 @@
 import type {
+  SkillCatalogListResponseDto,
   SkillFileDeleteResponseDto,
   SkillFileListResponseDto,
   SkillFileUploadResponseDto,
@@ -18,10 +19,27 @@ import {
   downloadSkill,
   downloadSkillFile,
   listSkillFiles,
+  listCatalogSkills,
   listSkills,
   updateSkill,
   uploadSkillFile,
 } from '../skills.api';
+
+describe('listCatalogSkills', () => {
+  it('delegates the aggregate listing to the generated client', async () => {
+    const response: SkillCatalogListResponseDto = {
+      skills: [],
+      sharedWithMe: [],
+      publicSkills: [],
+    };
+    const spy = vi
+      .spyOn(skillsApi, 'listCatalogSkills')
+      .mockResolvedValue(response);
+
+    await expect(listCatalogSkills()).resolves.toEqual(response);
+    expect(spy).toHaveBeenCalledOnce();
+  });
+});
 
 const MOCK_LIST_RESPONSE: SkillListResponseDto = {
   bucket: 'my-bucket',

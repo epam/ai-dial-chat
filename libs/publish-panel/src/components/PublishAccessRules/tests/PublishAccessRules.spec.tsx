@@ -283,7 +283,7 @@ describe('PublishAccessRules', () => {
       screen.getByRole('button', { name: 'Save mock rule' }),
     );
 
-    expect(document.activeElement).toBe(addRuleButton);
+    expect(addRuleButton.matches(':focus')).toBe(true);
   });
 
   it('returns focus to the "Add rule" trigger after cancelling the editor', async () => {
@@ -294,6 +294,6 @@ describe('PublishAccessRules', () => {
       screen.getByRole('button', { name: 'Cancel editor' }),
     );
 
-    expect(document.activeElement).toBe(addRuleButton);
+    expect(addRuleButton.matches(':focus')).toBe(true);
   });
 });
