@@ -4,6 +4,7 @@ import {
   ScheduledTaskCreateFormValues,
   ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
+import { EditorThemes } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useId, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
@@ -73,8 +74,8 @@ const ScheduledTaskCreatePage: FC = () => {
   const { currentTheme } = useTheme();
   const modelLabelId = useId();
 
-  const markdownEditorTheme: 'light' | 'dark' =
-    currentTheme === ThemeId.Dark ? 'dark' : 'light';
+  const markdownEditorTheme: EditorThemes =
+    currentTheme === ThemeId.Dark ? EditorThemes.dark : EditorThemes.light;
 
   const [values, setValues] =
     useState<ScheduledTaskCreateFormValues>(DEFAULT_VALUES);

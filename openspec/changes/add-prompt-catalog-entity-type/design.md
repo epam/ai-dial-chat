@@ -17,7 +17,7 @@ Constraints that shape every decision below:
 - Every one of the ten generated `PromptsApi` methods has a real caller in `apps/chat`.
 - Prompts are first-class citizens of the existing unified catalog — searchable, sortable, filterable, with a details panel — not a bolt-on list.
 - A prompt is reusable: its body reaches the conversation composer in one click.
-- Full authoring lifecycle: create, edit, delete, move between folders, and create/rename/delete folders.
+- Full authoring lifecycle: create, edit, delete, move between folders, and create/rename/delete folders. **Revised by D16:** move and folder create/rename/delete are no longer reachable from `PromptEditor` — the approved Figma design has no folder control on that screen. Create/edit/delete remain; `PromptFolderField` still supports folder management for a host that composes it elsewhere.
 - `libs/catalog` gains no host knowledge; every prompt-specific decision arrives through a prop.
 
 **Non-Goals:**
@@ -107,15 +107,17 @@ Unshare stays off (see Non-Goals): both the DTO regex and the missing owner buck
 
 ### D9 — `PromptEditor` is a route page and the sole home of folder management
 
+**Partially revised by D16.** The route/query-param shape below is unchanged; the "sole home of folder management" half is walked back — see D16.
+
 `ROUTES.PromptEditor = '/prompt-editor'`, lazy-loaded in `app/app.tsx` next to `ToolsetEditorPage`, with query params `?id=<path>` (edit) / absent (create) and `?returnUrl=`, matching `ToolsetEditorQuery` conventions.
 
-Layout: name, description, and content fields, plus a folder picker whose own controls cover create/rename/delete folder and (in edit mode) move. Form validation mirrors the backend DTOs exactly so the user never round-trips for a rule the client already knows — name 1–256 chars and no `/` (`create-prompt.dto.ts:24-28`), description ≤ 2000, content ≤ 50 000, folder path against the same optional-path shape. Server-side 409 (duplicate / rename conflict) still surfaces as an inline field error, because uniqueness cannot be checked client-side.
+Layout (as originally shipped; **see D16** for the flattened, folder-less Figma layout that replaced it): name, description, and content fields, plus a folder picker whose own controls cover create/rename/delete folder and (in edit mode) move. Form validation mirrors the backend DTOs exactly so the user never round-trips for a rule the client already knows — name 1–256 chars and no `/` (`create-prompt.dto.ts:24-28`), description ≤ 2000, content ≤ 50 000, folder path against the same optional-path shape. Server-side 409 (duplicate / rename conflict) still surfaces as an inline field error, because uniqueness cannot be checked client-side.
 
 *Why not a modal:* content is long-form, folder management is a second dimension of state, and a route gives a deep-linkable edit URL consistent with the three existing editor pages.
 
 ### D13 — The editor's UI lives in `libs/prompt-editor`; the route page is a thin adapter
 
-**Added.** The form and folder picker moved out of `apps/chat` into a new `@epam/ai-dial-prompt-editor` lib, splitting cleanly along the isolation rule:
+**Added, folder-picker wiring later revised by D16.** The form and folder picker moved out of `apps/chat` into a new `@epam/ai-dial-prompt-editor` lib, splitting cleanly along the isolation rule. `PromptFolderField` itself is untouched by D16 and still exports the same API; only `PromptEditor`'s own use of it was removed.
 
 | Concern | Owner |
 | --- | --- |
@@ -137,6 +139,19 @@ The lib deliberately **does not validate**. Length limits and the name pattern a
 `renameFolder` skips them too: a marker cannot be read as a prompt, so copying it to the new path would fail the whole rename.
 
 This matches the existing precedent in `conversation-listing.service.ts:240`, `deployments-listing.service.ts:190`, and `toolset-mapper.util.ts:332`. The prompts module's own `.folder` sentinel is unaffected — it is still used to derive empty folders.
+
+### D16 — The editor's layout is flattened to match Figma, and folder management moves out of `PromptEditor`
+
+**Revised.** A later Figma pass (`DIAL Chat 2.0 — Prompts`, node `513:49196`) specifies a single-column form — Name, Description, Instructions — with no two-column Details/Configuration split and no folder field on the page at all. This walks back part of D9 and D13:
+
+- The two-column `left`/`children` split through `BuilderFormContainer` is dropped. `PromptEditor` now renders one flat column: Name, Description, then the content field (relabelled **Instructions**, matching the Figma copy and `libs/skill-editor`'s existing `instructionsLabel` precedent — the default was `'Prompt'`). The "Details" and "Configuration" section headings/subtitles are removed along with the typography/label fields that only existed to render them (`sectionTitleClassName`, `sectionSubtitleClassName`, `detailsSectionTitle`, `detailsSectionSubtitle`, `configurationSectionTitle`, `configurationSectionSubtitle`).
+- The flat column no longer has a fixed-width side column to bound it, so on a wide viewport it would stretch edge to edge — which the Figma frame does not. It is capped with `max-w-[1180px] mx-auto`, the same value already used by `Catalog.tsx` and `ScheduledTasks.tsx` for centered page-level content, rather than inventing a new width.
+- **Folder assignment is removed from `PromptEditor` entirely** — `PromptEditorValues.folderId`, `PromptEditorErrors.folder`, and `PromptEditorProps.folders`/`folderActions`/`folderNameError` are gone from the component's contract. `apps/chat/src/pages/PromptEditor/PromptEditor.tsx` no longer imports or calls `movePrompt`, `createPromptFolder`, `renamePromptFolder`, or `deletePromptFolder`. `createPrompt` is called without a `folderId` (so new prompts land at root); `updatePrompt` is unchanged since it never touched the folder.
+- `PromptFolderField` (D13's folder sub-form) is **not deleted** — it remains exported from `libs/prompt-editor` exactly as before, for a host that wants to compose a folder picker into its own layout elsewhere. It currently has no caller in `apps/chat`.
+
+*Consequence for the Goals in this design's Context section:* "Full authoring lifecycle: create, edit, delete, move between folders, and create/rename/delete folders" is walked back to "create, edit, delete" — move and folder create/rename/delete are no longer reachable from the product's `PromptEditor` screen. Nothing backend-side changed; this is a product/UI decision to match the approved design, not a capability limitation.
+
+*Why not keep the folder field and just restyle it:* the Figma frame was reviewed as the source of truth for this screen and it has no folder control on it at all — adding one back without a design would be guessing. If folder assignment from this screen is wanted again, it needs its own design pass rather than reverse-engineering one from the removed code.
 
 ### D15 — A prompt downloads as the conversation export's envelope, and the lib never learns the format
 

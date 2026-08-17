@@ -5,7 +5,7 @@ import {
   ScheduledTaskCreateFormValues,
   ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
-import { GhostButton } from '@epam/ai-dial-ui-kit';
+import { EditorThemes, GhostButton } from '@epam/ai-dial-ui-kit';
 import {
   memo,
   useCallback,
@@ -55,8 +55,8 @@ const ScheduledTaskEditPage: FC = () => {
   const { currentTheme } = useTheme();
   const modelLabelId = useId();
 
-  const markdownEditorTheme: 'light' | 'dark' =
-    currentTheme === ThemeId.Dark ? 'dark' : 'light';
+  const markdownEditorTheme: EditorThemes =
+    currentTheme === ThemeId.Dark ? EditorThemes.dark : EditorThemes.light;
 
   const [task, setTask] = useState<ScheduledTaskDto | null>(null);
   const [isTaskLoading, setIsTaskLoading] = useState(true);

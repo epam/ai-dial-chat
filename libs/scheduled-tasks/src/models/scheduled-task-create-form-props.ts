@@ -1,3 +1,4 @@
+import type { EditorThemes } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
 import type { ScheduledTaskRepeat } from '../types/scheduled-task-schedule';
 
@@ -188,8 +189,8 @@ export interface ScheduledTaskCreateFormProps {
   onSubmit: () => void;
   /** When `true`, the Save action is disabled and shows a busy affordance. Defaults to `false`. */
   isSubmitting?: boolean;
-  /** Color theme applied to the Instructions markdown editor. Defaults to the editor's own default (`'dark'`). */
-  markdownEditorTheme?: 'light' | 'dark';
+  /** Color theme applied to the Instructions markdown editor. Defaults to the editor's own default (`EditorThemes.light`). */
+  markdownEditorTheme?: EditorThemes;
   /** Style overrides. */
   styles?: ScheduledTaskCreateFormStyles;
 }
