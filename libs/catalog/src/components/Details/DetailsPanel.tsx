@@ -688,11 +688,13 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 isRulesLoading={publishFlow.isRulesLoading}
                 hasRulesLoadError={publishFlow.hasRulesLoadError}
                 labels={publishLabels}
-                colors={{
-                  summaryVersionTagBorder: detailsColors?.versionTagBorder,
-                  summaryVersionTagBackground:
-                    detailsColors?.versionTagBackground,
-                  summaryVersionTagText: detailsColors?.versionTagText,
+                styles={{
+                  colors: {
+                    summaryVersionTagBorder: detailsColors?.versionTagBorder,
+                    summaryVersionTagBackground:
+                      detailsColors?.versionTagBackground,
+                    summaryVersionTagText: detailsColors?.versionTagText,
+                  },
                 }}
               />
             </div>

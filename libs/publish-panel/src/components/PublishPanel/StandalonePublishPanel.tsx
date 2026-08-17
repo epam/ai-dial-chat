@@ -7,6 +7,7 @@ import {
   PublishHistoryEntry,
   PublishResourceSummary,
 } from '../../models/publish';
+import type { PublishPanelStyles } from '../../models/publish-panel-styles';
 import { derivePublishState } from '../../utils/publish-state';
 import { PublishFooter, PublishFooterLabels } from './PublishFooter';
 import { PublishPanel, PublishPanelLabels } from './PublishPanel';
@@ -88,6 +89,8 @@ export interface StandalonePublishPanelProps {
   onSubmit: () => void;
   /** Text overrides for the panel body. */
   panelLabels?: PublishPanelLabels;
+  /** Style overrides for the panel body. */
+  panelStyles?: PublishPanelStyles;
   /** Text overrides for the pinned footer. */
   footerLabels?: PublishFooterLabels;
   /** Text overrides for the header/shell. */
@@ -143,6 +146,7 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   returnFocusRef,
   onSubmit,
   panelLabels,
+  panelStyles,
   footerLabels,
   labels = {},
   titleClassName = 'dial-body-semi-text',
@@ -321,6 +325,7 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
               isRulesLoading={isRulesLoading}
               hasRulesLoadError={hasRulesLoadError}
               labels={panelLabels}
+              styles={panelStyles}
             />
           </div>
         </div>

@@ -5,15 +5,13 @@ import {
   DialFoldersTree,
 } from '@epam/ai-dial-react-file-manager';
 import {
-  CloseButton,
   DIAL_ICON_SIZE,
   DropdownItem,
   GhostButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconFolderPlus, IconPlus } from '@tabler/icons-react';
-import { FC, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { PublishFolderNode } from '../../models/publish';
+import { FC, useMemo, useRef, useState } from 'react';
+import type { PublishFoldersTreeProps } from '../../models/publish-folders-tree';
 import {
   collectFolderKeys,
   filterFolderTree,
@@ -27,78 +25,6 @@ import {
 } from '../../utils/publish-folder-tree';
 import styles from './PublishFoldersTree.module.scss';
 
-/** Color overrides for {@link PublishFoldersTree}, applied as CSS custom properties with app theme fallbacks. */
-export interface PublishFoldersTreeColors {
-  /** Divider color above the "create new folder" trigger. Fallback: `--stroke-tertiary`. */
-  dividerColor?: string;
-  /** Check icon color on the selected row. Fallback: `--stroke-info`. */
-  selectedCheckColor?: string;
-}
-
-/** Props for {@link PublishFoldersTree}. */
-export interface PublishFoldersTreeProps {
-  /** Root-level folder nodes. */
-  items: PublishFolderNode[];
-  /**
-   * Currently selected destination folder path, outermost first.
-   * `undefined` means nothing is selected; `[]` means the bucket root
-   * itself is selected (a distinct, valid destination).
-   */
-  selectedPath?: string[];
-  /** Called when the user selects a folder or the root; `undefined` when deselected. */
-  onSelectedPathChange: (path: string[] | undefined) => void;
-  /**
-   * Called when the user confirms a new folder name. The caller owns
-   * persisting the new node into `items`; the tree only reports intent.
-   */
-  onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
-  /**
-   * Search query used to filter the tree; owned by the host so it can render
-   * the search input in its own layout (e.g. above other controls). Filtering
-   * is suspended while the inline create-folder row is open.
-   */
-  searchQuery: string;
-  /** Whether the whole tree is disabled, e.g. while a publish request is in flight. Default: `false`. */
-  disabled?: boolean;
-  /** Label for the trailing "create new folder" trigger. Default: `'Create new folder'`. */
-  createFolderLabel?: string;
-  /** Accessible label for the button that cancels the in-progress "create new folder" row. Default: `'Cancel creating folder'`. */
-  cancelCreatingFolderLabel?: string;
-  /** Label for the per-row context menu action that creates a folder alongside the clicked folder. Default: `'Add sibling'`. */
-  addSiblingFolderLabel?: string;
-  /** Label for the per-row context menu action that creates a folder inside the clicked folder. Default: `'Add child'`. */
-  addChildFolderLabel?: string;
-  /** Default name pre-filled for a new folder before the user edits it, unless `searchQuery` matched no folder and is itself a valid name, in which case the query is used. Default: `'New folder'`. */
-  newFolderDefaultName?: string;
-  /** Message shown when a search query matches no folders; `{query}` is replaced. Default: `'No folders match "{query}".'`. */
-  noResultsLabel?: string;
-  /** Inline error shown while creating a folder with an empty name. Default: `'Folder name cannot be empty.'`. */
-  emptyFolderNameError?: string;
-  /** Inline error shown while creating a folder whose name contains `..` or a forbidden character. Default: `'Folder name contains invalid characters.'`. */
-  invalidFolderNameError?: string;
-  /** Inline error shown while creating a folder whose name duplicates a sibling. Default: `'A folder with this name already exists.'`. */
-  duplicateFolderNameError?: string;
-  /**
-   * Label for the tree node representing the bucket root itself as a
-   * selectable publish destination (`selectedPath: []`); rendered as the
-   * top-level, always-expanded node that wraps `items`. Default: `'Organization'`.
-   */
-  rootLabel?: string;
-  /**
-   * Externally-controlled set of expanded folder path keys (`path.join('/')`).
-   * Pass this together with `onExpandedPathsChange` when the host needs to
-   * know which folders were expanded (e.g. to lazily fetch their children).
-   * When omitted, the tree manages expand state internally.
-   */
-  expandedPaths?: Set<string>;
-  /** Called when the set of expanded folders changes; required to control `expandedPaths`. */
-  onExpandedPathsChange?: (paths: Set<string>) => void;
-  /** Folder path keys currently being fetched by the host; shows a loading affordance on those rows. */
-  loadingPaths?: Set<string>;
-  /** Color overrides. */
-  colors?: PublishFoldersTreeColors;
-}
-
 /** Destination folder tree for the Publish flow, ordered by folder name at every level, with search, folder creation (trailing button and context menu), and a disabled state. */
 export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   items,
@@ -108,7 +34,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   searchQuery,
   disabled = false,
   createFolderLabel = 'Create new folder',
-  cancelCreatingFolderLabel = 'Cancel creating folder',
+  cancelCreatingFolderLabel = 'Cancel',
   addSiblingFolderLabel = 'Add sibling',
   addChildFolderLabel = 'Add child',
   newFolderDefaultName = 'New folder',
@@ -120,12 +46,14 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   expandedPaths: controlledExpandedPaths,
   onExpandedPathsChange,
   loadingPaths,
-  colors,
+  styles: stylesProp = {},
 }) => {
-  const cssVars = buildCssVars({
-    '--pft-divider': colors?.dividerColor,
-    '--pft-selected-check': colors?.selectedCheckColor,
-  });
+  const cssVars = {
+    ...buildCssVars({
+      '--pft-divider': stylesProp.colors?.divider,
+    }),
+    ...stylesProp.cssVars,
+  };
 
   const [internalExpandedPaths, setInternalExpandedPaths] = useState<
     Set<string>
@@ -138,10 +66,12 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
       ),
   );
   const expandedPaths = controlledExpandedPaths ?? internalExpandedPaths;
-  // The root node's own path key ('') is always kept expanded so its
-  // children stay visible; it is stripped before the set reaches the host,
-  // since '' is not a real folder path the host can fetch children for.
-  const updateExpandedPaths = (next: Set<string>) => {
+  /*
+   * The root node's own path key ('') is always kept expanded so its
+   * children stay visible. It is stripped before the set reaches the host
+   * because '' is not a real folder path the host can fetch children for.
+   */
+  const handleExpandedPathsChange = (next: Set<string>) => {
     const withoutRoot = new Set(next);
     withoutRoot.delete('');
     if (onExpandedPathsChange) {
@@ -153,15 +83,14 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   const [creatingParentPath, setCreatingParentPath] = useState<string[] | null>(
     null,
   );
-  // Resolved once when creation starts so the inline editor never defaults to
-  // an already-existing sibling name such as "New folder".
+  /* Resolved once per creation session to avoid an existing sibling name. */
   const [creatingFolderName, setCreatingFolderName] =
     useState(newFolderDefaultName);
   /*
    * The host `DialFoldersTree` component shows `onRenameValidate`'s result
    * inline but does not reliably block its own confirm callback on it (the
    * error can still be visible when the folder gets created — see #7968).
-   * Track the last live-typed validation result ourselves so `confirmCreatingFolder`
+   * Track the last live-typed validation result ourselves so `handleConfirmCreatingFolder`
    * can refuse to create even when the value it receives no longer reflects
    * that error.
    */
@@ -169,63 +98,6 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
 
   const trimmedQuery = searchQuery.trim();
   const isCreatingFolder = creatingParentPath != null;
-
-  /*
-   * `DialFoldersTree` owns the create-row markup and exposes no prop to add a
-   * trailing cancel control to it, but it does mark that row's editor with
-   * `data-editable-container` — a stable hook. Every row (editing or not)
-   * also carries an `aria-selected` attribute, so walking up from that
-   * marker to the nearest `[aria-selected]` finds the row's own element —
-   * the same one the selected-state check icon anchors to (see
-   * `[aria-selected='true']::after` below) — letting us portal a real,
-   * clickable cross into that row's end-of-row slot instead of an
-   * absolutely-positioned guess at its location.
-   */
-  const treeContainerRef = useRef<HTMLDivElement>(null);
-  const [creatingRow, setCreatingRow] = useState<HTMLElement | null>(null);
-
-  useLayoutEffect(() => {
-    if (!isCreatingFolder) {
-      setCreatingRow(null);
-      return;
-    }
-    const editableContainer = treeContainerRef.current?.querySelector(
-      '[data-editable-container]',
-    );
-    const row = editableContainer?.closest<HTMLElement>('[aria-selected]');
-    setCreatingRow(row ?? null);
-    // Re-queries whenever creation starts/stops or targets a different
-    // parent; the DOM node found in between stays valid for that session.
-  }, [isCreatingFolder, creatingParentPath]);
-
-  /*
-   * New folders are inserted alphabetically, so the created folder can land
-   * anywhere in a long sibling list — well outside the visible scroll area.
-   * `onCreateFolder` is host-owned and its result isn't reflected in `items`
-   * until the host re-renders with it, so scrolling can't happen synchronously
-   * inside `confirmCreatingFolder`; this flag defers it to the render where
-   * the newly-selected row (there's only ever one) actually exists.
-   */
-  const pendingScrollToSelectionRef = useRef(false);
-
-  useLayoutEffect(() => {
-    if (!pendingScrollToSelectionRef.current) {
-      return;
-    }
-    const row = treeContainerRef.current?.querySelector(
-      '[aria-selected="true"]',
-    );
-    if (!row) {
-      return;
-    }
-    pendingScrollToSelectionRef.current = false;
-    const prefersReducedMotion =
-      window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
-    row.scrollIntoView({
-      block: 'nearest',
-      behavior: prefersReducedMotion ? 'auto' : 'smooth',
-    });
-  }, [items, selectedPath]);
 
   const matchingItems = useMemo(
     () => filterFolderTree(items, searchQuery),
@@ -313,11 +185,12 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     lastLiveValidationErrorRef.current = null;
     const parentKey = toFolderPathKey(parentPath);
     if (parentKey) {
-      updateExpandedPaths(new Set(expandedPaths).add(parentKey));
+      handleExpandedPathsChange(new Set(expandedPaths).add(parentKey));
     }
   };
 
-  const startCreatingFolder = () => beginCreatingFolder(selectedPath ?? []);
+  const handleStartCreatingFolder = () =>
+    beginCreatingFolder(selectedPath ?? []);
 
   /**
    * Per-row context menu, mirroring the file manager's "Add sibling" /
@@ -362,7 +235,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     return error;
   };
 
-  const confirmCreatingFolder = (rawValue: string) => {
+  const handleConfirmCreatingFolder = (rawValue: string) => {
     if (!creatingParentPath) {
       return;
     }
@@ -372,12 +245,11 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     if (!error) {
       void onCreateFolder(creatingParentPath, trimmed);
       onSelectedPathChange([...creatingParentPath, trimmed]);
-      pendingScrollToSelectionRef.current = true;
     }
     setCreatingParentPath(null);
   };
 
-  const cancelCreatingFolder = () => setCreatingParentPath(null);
+  const handleCancelCreatingFolder = () => setCreatingParentPath(null);
 
   const handleItemClick = (file: DialFile) => {
     const isSelected =
@@ -386,19 +258,14 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   };
 
   return (
-    <div className={mergeClasses(disabled && 'pointer-events-none opacity-60')}>
-      {/*
-       * `DialFoldersTree` sizes the create/rename input to its row's natural
-       * width, which — combined with deep indentation — can exceed the
-       * dialog's width. Scoping the overflow to this wrapper keeps the input
-       * reachable via horizontal scroll instead of the whole dialog
-       * overflowing the viewport.
-       */}
-      <div
-        ref={treeContainerRef}
-        style={cssVars}
-        className={mergeClasses('w-full min-w-0 overflow-x-auto', styles.tree)}
-      >
+    <div
+      style={cssVars}
+      className={mergeClasses(
+        disabled && 'pointer-events-none opacity-60',
+        stylesProp.className,
+      )}
+    >
+      <div className="w-full min-w-0 max-w-full">
         <DialFoldersTree
           items={dialFiles}
           showFiles={false}
@@ -406,14 +273,14 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
             selectedPath != null ? toFolderPathKey(selectedPath) : undefined
           }
           expandedPaths={treeExpandedPaths}
-          onExpandedPathsChange={updateExpandedPaths}
+          onExpandedPathsChange={handleExpandedPathsChange}
           loadingPaths={loadingPaths}
           onItemClick={handleItemClick}
           getContextMenuItems={getFolderContextMenuItems}
           createdFolderPath={createdFolderPath}
           newFolderDefaultName={creatingFolderName}
-          onCreateFolderSave={confirmCreatingFolder}
-          onCreateFolderCancel={cancelCreatingFolder}
+          onCreateFolderSave={handleConfirmCreatingFolder}
+          onCreateFolderCancel={handleCancelCreatingFolder}
           onRenameValidate={(value) => validateNewFolderName(value)}
           emptyStateTitle={
             isFiltering
@@ -421,24 +288,9 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
               : undefined
           }
         />
-
-        {creatingRow &&
-          createPortal(
-            <CloseButton
-              ariaLabel={cancelCreatingFolderLabel}
-              onClose={cancelCreatingFolder}
-              className={styles.cancelCreatingButton}
-            />,
-            creatingRow,
-          )}
       </div>
 
-      <div
-        role="separator"
-        style={cssVars}
-        className={mergeClasses('my-2 h-px', styles.divider)}
-        aria-hidden
-      />
+      <div className={mergeClasses('my-2 h-px', styles.divider)} aria-hidden />
 
       {/*
        * Plain `GhostButton` stands in for a tertiary button: the installed
@@ -447,13 +299,21 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
        * primary-solid. Switch to `variant={ButtonVariant.Tertiary}` once the
        * kit adds the style.
        */}
-      <GhostButton
-        onClick={startCreatingFolder}
-        label={createFolderLabel}
-        iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} aria-hidden />}
-        disabled={disabled}
-        className="mb-4"
-      />
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <GhostButton
+          onClick={handleStartCreatingFolder}
+          label={createFolderLabel}
+          iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} aria-hidden />}
+          disabled={disabled || isCreatingFolder}
+        />
+        {isCreatingFolder && (
+          <GhostButton
+            label={cancelCreatingFolderLabel}
+            onClick={handleCancelCreatingFolder}
+            disabled={disabled}
+          />
+        )}
+      </div>
     </div>
   );
 };

@@ -139,6 +139,15 @@ describe('PublishPanel', () => {
     expect(screen.getByText('Publish to folder')).toBeTruthy();
   });
 
+  it('forwards the translated folder-creation cancel label', async () => {
+    renderPanel({ labels: { cancelCreatingFolderLabel: 'Discard folder' } });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Create new folder' }),
+    );
+
+    expect(screen.getByRole('button', { name: 'Discard folder' })).toBeTruthy();
+  });
+
   it('renders the access-rules section between the folder block and history', () => {
     renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
     expect(screen.getByText('Allow access if all match')).toBeTruthy();

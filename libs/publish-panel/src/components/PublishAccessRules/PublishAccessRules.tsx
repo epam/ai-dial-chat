@@ -12,10 +12,9 @@ import {
 import { IconPlus, IconTrashX } from '@tabler/icons-react';
 import { FC, useEffect, useId, useRef, useState } from 'react';
 import { PublicationRule, PublicationRuleFunction } from '../../models/publish';
-import {
-  PublishAccessRuleEditor,
-  PublishAccessRuleEditorLabels,
-} from '../PublishAccessRuleEditor/PublishAccessRuleEditor';
+import type { PublishAccessRuleEditorLabels } from '../../models/publish-access-rule-editor';
+import type { PublishAccessRulesStyles } from '../../models/publish-access-rules-styles';
+import { PublishAccessRuleEditor } from '../PublishAccessRuleEditor/PublishAccessRuleEditor';
 import styles from './PublishAccessRules.module.scss';
 
 const MAX_RULES_DEFAULT = 20;
@@ -94,22 +93,8 @@ export interface PublishAccessRulesProps {
   ruleTextClassName?: string;
   /** Typography class for the emphasised rule source inside each chip. Default: `'dial-small-semi-text'`. */
   ruleSourceClassName?: string;
-  /** Color overrides. */
-  colors?: PublishAccessRulesColors;
-}
-
-/** Color overrides for {@link PublishAccessRules}, applied as CSS custom properties with app theme fallbacks. */
-export interface PublishAccessRulesColors {
-  /** Rule row background color. Fallback: `--bg-layer-base`. */
-  ruleBackground?: string;
-  /** Section heading text color. Fallback: `--text-primary`. */
-  headingText?: string;
-  /** Folder-scope and rule-limit hint text color. Fallback: `--text-secondary`. */
-  hintText?: string;
-  /** Loading message text color. Fallback: `--text-secondary`. */
-  loadingText?: string;
-  /** Rule chip text color. Fallback: `--text-primary`. */
-  ruleText?: string;
+  /** Style overrides. */
+  styles?: PublishAccessRulesStyles;
 }
 
 const functionLabel = (
@@ -121,14 +106,7 @@ const functionLabel = (
   return labels.regex;
 };
 
-/**
- * Chip list for the access-rules section: renders each rule as a removable
- * chip, a hint tying the rules to the destination folder, an "Add rule"
- * trigger opening {@link PublishAccessRuleEditor}, and a "Clear all" control
- * shown only when rules are present. Announces add, remove, clear, and
- * pre-fill-from-folder-selection through a shared `aria-live="polite"` status
- * region.
- */
+/** Renders access rules with controls to add, remove, and clear them. */
 export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
   rules,
   onRulesChange,
@@ -145,15 +123,18 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
   loadingClassName = 'dial-small-text',
   ruleTextClassName = 'dial-small-text',
   ruleSourceClassName = 'dial-small-semi-text',
-  colors,
+  styles: stylesProp = {},
 }) => {
-  const cssVars = buildCssVars({
-    '--par-rule-bg': colors?.ruleBackground,
-    '--par-heading-text': colors?.headingText,
-    '--par-hint-text': colors?.hintText,
-    '--par-loading-text': colors?.loadingText,
-    '--par-rule-text': colors?.ruleText,
-  });
+  const cssVars = {
+    ...buildCssVars({
+      '--par-rule-bg': stylesProp.colors?.ruleBackground,
+      '--par-heading-text': stylesProp.colors?.headingText,
+      '--par-hint-text': stylesProp.colors?.hintText,
+      '--par-loading-text': stylesProp.colors?.loadingText,
+      '--par-rule-text': stylesProp.colors?.ruleText,
+    }),
+    ...stylesProp.cssVars,
+  };
 
   const {
     heading = 'Allow access if all match',
@@ -196,12 +177,12 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
     wasLoadingRef.current = isLoading;
   }, [isLoading, rules, rulesLoadedAnnouncement]);
 
-  const openEditor = () => {
+  const handleOpenEditor = () => {
     previousFocusRef.current = document.activeElement as HTMLElement | null;
     setIsEditorOpen(true);
   };
 
-  const closeEditor = () => {
+  const handleCloseEditor = () => {
     setIsEditorOpen(false);
     previousFocusRef.current?.focus?.();
   };
@@ -209,7 +190,7 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
   const handleAddRule = (rule: PublicationRule) => {
     onRulesChange([...rules, rule]);
     setStatusMessage(ruleAddedAnnouncement);
-    closeEditor();
+    handleCloseEditor();
   };
 
   const handleRemoveRule = (index: number) => {
@@ -236,6 +217,7 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
     <div
       role="group"
       aria-labelledby={headingId}
+      style={cssVars}
       className={mergeClasses(disabled && 'pointer-events-none opacity-60')}
     >
       <span role="status" aria-live="polite" className="sr-only">
@@ -308,7 +290,6 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
             return (
               <li
                 key={index}
-                style={cssVars}
                 className={mergeClasses(
                   'flex items-center justify-between gap-2 rounded-lg px-3 py-2',
                   styles.ruleRow,
@@ -340,10 +321,11 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
         <PublishAccessRuleEditor
           sourceOptions={sourceOptions}
           onSave={handleAddRule}
-          onCancel={closeEditor}
+          onCancel={handleCloseEditor}
           disabled={disabled}
           maxTargets={maxTargetsPerRule}
           labels={editorLabels}
+          styles={stylesProp.editor}
         />
       )}
 
@@ -358,7 +340,7 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
         <GhostButton
           label={addRuleLabel}
           iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} aria-hidden />}
-          onClick={openEditor}
+          onClick={handleOpenEditor}
           disabled={isAddDisabled}
         />
       </div>

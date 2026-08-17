@@ -15,91 +15,14 @@ import {
   useRef,
   useState,
 } from 'react';
-import { PublicationRule, PublicationRuleFunction } from '../../models/publish';
+import { PublicationRuleFunction } from '../../models/publish';
+import type { PublishAccessRuleEditorProps } from '../../models/publish-access-rule-editor';
 import styles from './PublishAccessRuleEditor.module.scss';
 
 const MAX_TARGETS_DEFAULT = 20;
 const MAX_RULE_VALUE_LENGTH = 200;
 /** `Select`'s built-in search is enabled once the source list is long enough to be hard to scan. */
 const SEARCHABLE_SOURCE_THRESHOLD = 8;
-
-/** Text overrides for all user-visible strings in {@link PublishAccessRuleEditor}. */
-export interface PublishAccessRuleEditorLabels {
-  /** Label above the source picker. Default: `'Source'`. */
-  sourceLabel?: string;
-  /** Placeholder for the source picker. Default: `'Select...'`. */
-  sourcePlaceholder?: string;
-  /** Label above the function picker. Default: `'Function'`. */
-  functionLabel?: string;
-  /** Label for the `EQUAL` function option. Default: `'Equal'`. */
-  equalOptionLabel?: string;
-  /** Label for the `CONTAIN` function option. Default: `'Contain'`. */
-  containOptionLabel?: string;
-  /** Label for the `REGEX` function option. Default: `'Regex'`. */
-  regexOptionLabel?: string;
-  /** Label above the targets tag input (EQUAL/CONTAIN). Default: `'Targets'`. */
-  targetsLabel?: string;
-  /** Placeholder for the targets tag input. Default: `'Add a target'`. */
-  targetsPlaceholder?: string;
-  /** Hint shown below the targets tag input. Default: `'Press Enter or comma to add a target.'`. */
-  targetsHintLabel?: string;
-  /** Label above the pattern field (REGEX). Default: `'Pattern'`. */
-  patternLabel?: string;
-  /** Placeholder for the pattern field. Default: `'Enter a regular expression'`. */
-  patternPlaceholder?: string;
-  /** Inline error shown for an invalid or empty regular expression. Default: `'Enter a valid regular expression.'`. */
-  invalidRegexError?: string;
-  /** Inline error shown under the source/function picker when Save is clicked without a value. Default: `'This field is required.'`. */
-  requiredFieldError?: string;
-  /** Inline error shown under the targets field when Save is clicked with no targets added. Default: `'Add at least one target.'`. */
-  targetsRequiredError?: string;
-  /** Label for the action that saves the rule. Default: `'Save'`. */
-  saveLabel?: string;
-  /** Label for the action that discards the in-progress rule. Default: `'Cancel'`. */
-  cancelLabel?: string;
-  /** Accessible label for the editor's dialog role. Default: `'Add access rule'`. */
-  dialogAriaLabel?: string;
-}
-
-/** Props for {@link PublishAccessRuleEditor}. */
-export interface PublishAccessRuleEditorProps {
-  /** Options offered in the source picker. */
-  sourceOptions: string[];
-  /** Called with the completed rule when the user saves it. */
-  onSave: (rule: PublicationRule) => void;
-  /** Called when the in-progress rule is discarded (Cancel or Escape). */
-  onCancel: () => void;
-  /** Disables every control in the editor. Default: `false`. */
-  disabled?: boolean;
-  /** Maximum number of targets allowed for an EQUAL/CONTAIN rule. Default: `20`. */
-  maxTargets?: number;
-  /** Text overrides for all user-visible strings. */
-  labels?: PublishAccessRuleEditorLabels;
-  /** Typography class for the source/function field labels. Default: `'dial-small-semi-text'`. */
-  labelClassName?: string;
-  /** Typography class for the pattern validation error. Default: `'dial-small-text'`. */
-  errorClassName?: string;
-  /** Color overrides. */
-  colors?: PublishAccessRuleEditorColors;
-}
-
-/** Color overrides for {@link PublishAccessRuleEditor}, applied as CSS custom properties with app theme fallbacks. */
-export interface PublishAccessRuleEditorColors {
-  /** Background color of the full-screen mobile overlay. Fallback: `--bg-layer-1`. */
-  mobileBackground?: string;
-  /** Background color of the desktop inline panel. Fallback: `--bg-layer-base`. */
-  background?: string;
-  /** Text color of the source/function field labels. Fallback: `--text-primary`. */
-  labelText?: string;
-  /** Text color of the pattern validation error. Fallback: `--text-error`. */
-  errorText?: string;
-  /** Source/function field border color in its default state. Fallback: `#0000000d`. */
-  selectBorder?: string;
-  /** Source/function field border color while its dropdown is open. Fallback: `--stroke-info` at 50% opacity. */
-  selectBorderOpen?: string;
-  /** Source/function field outline color while focused. Fallback: `--stroke-info` at 50% opacity. */
-  selectBorderFocus?: string;
-}
 
 const isValidRegex = (pattern: string): boolean => {
   const trimmed = pattern.trim();
@@ -113,12 +36,7 @@ const isValidRegex = (pattern: string): boolean => {
   }
 };
 
-/**
- * Single-rule editor for the access-rules section: source and function
- * pickers, plus a multi-target tag input for EQUAL/CONTAIN or a single
- * pattern field for REGEX. Renders inline on desktop and as a full-screen
- * step on mobile, using responsive Tailwind classes only.
- */
+/** Edits one access rule inline on desktop or in a full-screen mobile step. */
 export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
   sourceOptions,
   onSave,
@@ -126,19 +44,21 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
   disabled = false,
   maxTargets = MAX_TARGETS_DEFAULT,
   labels = {},
-  labelClassName = 'dial-small-semi-text',
   errorClassName = 'dial-small-text',
-  colors,
+  styles: stylesProp = {},
 }) => {
-  const cssVars = buildCssVars({
-    '--pare-mobile-bg': colors?.mobileBackground,
-    '--pare-bg': colors?.background,
-    '--pare-label-text': colors?.labelText,
-    '--pare-error-text': colors?.errorText,
-    '--pare-select-border': colors?.selectBorder,
-    '--pare-select-border-open': colors?.selectBorderOpen,
-    '--pare-select-border-focus': colors?.selectBorderFocus,
-  });
+  const cssVars = {
+    ...buildCssVars({
+      '--pare-mobile-bg': stylesProp.colors?.mobileBackground,
+      '--pare-bg': stylesProp.colors?.background,
+      '--pare-error-text': stylesProp.colors?.errorText,
+      '--pare-select-border': stylesProp.colors?.selectBorder,
+      '--pare-select-border-hover': stylesProp.colors?.selectBorderHover,
+      '--pare-select-border-open': stylesProp.colors?.selectBorderOpen,
+      '--pare-select-border-focus': stylesProp.colors?.selectBorderFocus,
+    }),
+    ...stylesProp.cssVars,
+  };
 
   const {
     sourceLabel = 'Source',

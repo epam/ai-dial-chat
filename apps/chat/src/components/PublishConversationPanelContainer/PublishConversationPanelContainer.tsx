@@ -155,6 +155,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
       }}
       panelLabels={{
         replaceWarning: t(ConversationPublishI18nKeys.AlreadyPublishedWarning),
+        cancelCreatingFolderLabel: t(ButtonsI18nKeys.Cancel),
         createFolderEmptyNameError: t(
           ConversationPublishI18nKeys.EmptyFolderNameError,
         ),

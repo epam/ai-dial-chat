@@ -217,7 +217,7 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
           aria-label={t.uploadDropZoneAriaLabel ?? 'Upload files'}
           className={mergeClasses(
             'bg-layer-2 flex min-h-[164px] cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-secondary px-6 py-9 focus-visible:outline focus-visible:outline-focus-black',
-            isDragActive && 'border-accent-primary bg-layer-3',
+            isDragActive && 'bg-layer-3 border-accent-primary',
             isAllInvalid && 'border-error',
           )}
           onClick={() => inputRef.current?.click()}

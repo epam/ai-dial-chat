@@ -17,6 +17,7 @@ import {
   PublishHistoryEntry,
   PublishResourceSummary,
 } from '../../models/publish';
+import type { PublishPanelStyles } from '../../models/publish-panel-styles';
 import { derivePublishState } from '../../utils/publish-state';
 import {
   PublishAccessRules,
@@ -48,6 +49,8 @@ export interface PublishPanelLabels {
   addSiblingFolderLabel?: string;
   /** Label for the per-row context menu action that creates a folder inside the clicked folder. */
   addChildFolderLabel?: string;
+  /** Label for the action that cancels inline folder creation. Defaults to `'Cancel'`. */
+  cancelCreatingFolderLabel?: string;
   /** Inline error shown while creating a folder with an empty name. */
   createFolderEmptyNameError?: string;
   /** Inline error shown while creating a folder whose name contains `..` or a forbidden character. */
@@ -145,26 +148,8 @@ export interface PublishPanelProps {
   summaryTitleClassName?: string;
   /** Typography class for the "Publish to folder" and "Versions history" section headings. Default: `'dial-body-semi-text'`. */
   headingClassName?: string;
-  /** Color overrides. */
-  colors?: PublishPanelColors;
-}
-
-/** Color overrides for {@link PublishPanel}, applied as CSS custom properties with app theme fallbacks. */
-export interface PublishPanelColors {
-  /** Summary row border color. Fallback: `--stroke-tertiary`. */
-  summaryBorder?: string;
-  /** Summary row background color. Fallback: `--bg-layer-sunken`. */
-  summaryBackground?: string;
-  /** Version tag border color in the entity-header summary row. Fallback: `--stroke-tertiary`. */
-  summaryVersionTagBorder?: string;
-  /** Version tag background color in the entity-header summary row. Fallback: `--bg-accent-primary-alpha`. */
-  summaryVersionTagBackground?: string;
-  /** Version tag text color in the entity-header summary row. Fallback: `--text-accent`. */
-  summaryVersionTagText?: string;
-  /** Default summary title text color. Fallback: `--text-primary`. */
-  summaryTitleText?: string;
-  /** Section heading text color. Fallback: `--text-primary`. */
-  headingText?: string;
+  /** Style overrides. */
+  styles?: PublishPanelStyles;
 }
 
 /** Scrollable body of the Publish flow: entity summary, destination folder picker with callout, and publish history. */
@@ -194,12 +179,20 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   labels = {},
   summaryTitleClassName = 'dial-body-semi-text',
   headingClassName = 'dial-body-semi-text',
-  colors,
+  styles: stylesProp = {},
 }) => {
-  const cssVars = buildCssVars({
-    '--pp-summary-title-text': colors?.summaryTitleText,
-    '--pp-heading-text': colors?.headingText,
-  });
+  const {
+    colors,
+    folderTree: folderTreeStyles,
+    accessRules: accessRulesStyles,
+  } = stylesProp;
+  const cssVars = {
+    ...buildCssVars({
+      '--pp-summary-title-text': colors?.summaryTitleText,
+      '--pp-heading-text': colors?.headingText,
+    }),
+    ...stylesProp.cssVars,
+  };
 
   /* Border and background belong to `ResourceSummary`'s own row, so they are
      forwarded as colors instead of being set as vars on an ancestor. */
@@ -220,6 +213,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     folderEmptyStateLabel,
     addSiblingFolderLabel,
     addChildFolderLabel,
+    cancelCreatingFolderLabel,
     createFolderEmptyNameError,
     createFolderInvalidNameError,
     createFolderDuplicateNameError,
@@ -337,10 +331,12 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           noResultsLabel={folderEmptyStateLabel}
           addSiblingFolderLabel={addSiblingFolderLabel}
           addChildFolderLabel={addChildFolderLabel}
+          cancelCreatingFolderLabel={cancelCreatingFolderLabel}
           emptyFolderNameError={createFolderEmptyNameError}
           invalidFolderNameError={createFolderInvalidNameError}
           duplicateFolderNameError={createFolderDuplicateNameError}
           rootLabel={rootFolderLabel}
+          styles={folderTreeStyles}
         />
         {derived.calloutKind !== PublishCalloutKind.None &&
           derived.calloutKind !== PublishCalloutKind.Info && (
@@ -372,6 +368,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             isLoading={isRulesLoading}
             hasLoadError={hasRulesLoadError}
             labels={accessRulesLabels}
+            styles={accessRulesStyles}
           />
         </div>
       </div>
