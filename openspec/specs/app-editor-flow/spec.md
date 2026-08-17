@@ -90,7 +90,9 @@ Navigation between steps is reflected in URL search params (update via `setSearc
 - `?step=general` shows the General form
 - `?step=settings` shows the Settings step
 
-The stepper always shows both steps regardless of whether the app has been created yet.
+The stepper always shows both steps regardless of whether the app has been created yet, but clicking the Settings step in the header is a no-op until the app has been created: `handleChangeStep` SHALL return early (without updating `?step=`) when `stepId === AppsEditorStep.Settings` and `appIdForSettings` is falsy. This mirrors the equivalent guard in `ToolsetEditor`/`CustomAppEditor`, which block advancing past an invalid General step.
+
+The page root SHALL use `className="flex min-h-0 flex-1 flex-col"` (not `size-full`) so the page correctly shrinks to the space left by the mobile-only global `Header` component instead of overflowing the viewport by that header's height — `height: 100%`/`size-full` on a flex item resolves against the flex container's total height, not the space remaining after sibling elements, so it must use `flex-1` (grow into remaining space) like `ChatLayout`'s `<Outlet />` wrapper.
 
 The page header SHALL be the shared `EditorHeader` component (see "Shared editor header component" below), given:
 - `title`: the schema `displayName` (resolved from `useDeployments().schemas`)
@@ -100,12 +102,14 @@ The page header SHALL be the shared `EditorHeader` component (see "Shared editor
 - `onPreview`: on the Settings step, exits preview when `isPreviewing` is true; otherwise clears `saveError`, sets `pendingSaveAction = 'preview'`, and calls `settingsStepRef.current.triggerSave()`
 - `onCancel`: navigates to `returnUrl`
 
-**i18n keys** (all under `appsEditor.*`):
+**i18n keys** (under `appsEditor.*` unless noted; the mobile header's two keys are shared under `editor.*` — see "Shared editor header component"):
 
 | Key | English |
 |---|---|
 | `appsEditor.stepGeneral` | `General` |
 | `appsEditor.stepSettings` | `Settings` |
+| `editor.stepOfTotal` | `Step {{current}} of {{total}}` |
+| `editor.moreActionsLabel` | `More actions` |
 | `appsEditor.backAriaLabel` | `Back` |
 | `appsEditor.saveButton` | `Save & Exit` |
 | `appsEditor.generalForm.nameLabel` | `Name` |
@@ -155,6 +159,16 @@ The page header SHALL be the shared `EditorHeader` component (see "Shared editor
 - **THEN** an error message (`appsEditor.error.createFailed`) is displayed inline
 - **AND** the Save/Next button is re-enabled
 
+#### Scenario: Page content is not clipped below the mobile global header
+
+- **WHEN** the page renders at a mobile viewport (`≤768px`), where the app-wide mobile-only `Header` component (`apps/chat/src/components/Header/Header.tsx`) is also rendered as a sibling above the routed page content
+- **THEN** the page's content area still reaches the true bottom of the viewport and remains scrollable to its end — it does not get clipped by an amount equal to the global header's height
+
+#### Scenario: Clicking the Settings step before the app exists is a no-op
+
+- **WHEN** the user is on the General step, the app has not yet been created (`appIdForSettings` is falsy), and the user clicks the "Settings" step in the header (desktop step button or mobile step dropdown item)
+- **THEN** `?step=` in the URL does NOT change and the General step remains rendered
+
 #### Scenario: Schema not found — page still renders
 
 - **WHEN** the `schema` query param does not match any schema in `useDeployments().schemas`
@@ -190,32 +204,52 @@ The page header SHALL be the shared `EditorHeader` component (see "Shared editor
 
 ### Requirement: Shared editor header component
 
-`apps/chat/src/components/EditorHeader/EditorHeader.tsx` SHALL be a presentational component shared by `AppsEditor` and `ToolsetEditorHeader`, replacing the header markup each previously duplicated.
+`apps/chat/src/components/EditorHeader/EditorHeader.tsx` SHALL be a presentational component shared by `AppsEditor` and `ToolsetEditorHeader` (in turn used by `ToolsetEditor` and `CustomAppEditor`), replacing the header markup each previously duplicated. It SHALL render a fully different markup tree for mobile vs. desktop, branching on `useIsMobile()` from `apps/chat/src/hooks/breakpoint/useBreakpoint.ts` (a JS branch is required here because mobile collapses the step list into a dropdown and the trailing actions into a kebab menu — not just a CSS layout change).
 
 Props:
 ```ts
 interface Props {
   title?: string;
-  steps: Step[]; // from @epam/ai-dial-ui-kit
+  steps: Step[]; // from @epam/ai-dial-ui-kit — status?: StepStatus per step
   currentStep: string;
   navAriaLabel: string;
   isSaving: boolean;
+  isSaveDisabled?: boolean;
   cancelButtonLabel: string;
   saveButtonLabel: string;
   onChangeStep: (stepId: string) => void;
   onCancel: () => void;
   onSave: () => void;
+  previewButtonLabel?: string;
+  exitPreviewButtonLabel?: string;
+  isPreviewing?: boolean;
+  onPreview?: () => void;
+  isPreviewDisabled?: boolean;
 }
 ```
 
-It SHALL render:
-- An optional `title` (only when provided) using the same `dial-caption-text` heading style previously inlined in `AppsEditor`.
-- A `<nav role="navigation" aria-label={navAriaLabel}>` wrapping `DialSteps` bound to `steps`/`currentStep`/`onChangeStep`.
-- A `NeutralButton` (`label={cancelButtonLabel}`, `onClick={onCancel}`, `disabled={isSaving}`) and a `PrimaryButton` (`label={saveButtonLabel}`, `onClick={onSave}`, `disabled={isSaving}`).
+**Desktop** (`≥769px`) renders:
+- An optional `title` (only when provided), as an `<h1 className="dial-caption-text truncate text-primary">`.
+- A `<nav aria-label={navAriaLabel}>` wrapping an `<ol>` of step `<button>`s (no longer the `DialSteps` component). Each step button renders a numbered `StepCircle` badge (filled/accent when current, error-bordered when `step.status === StepStatus.ERROR`, otherwise a plain outline) followed by the step name, with a horizontal connector line between steps. The current step gets `aria-current="step"`. **The `StepCircle`'s numeral SHALL be `aria-hidden="true"`** — the step order is already conveyed by list position and `aria-current`, so the numeral is decorative and must not be folded into the button's accessible name (its accessible name is the step name alone, e.g. `"General"`, not `"1 General"`).
+- Trailing actions: an optional `GhostButton` for Preview/Exit-preview (rendered only when `onPreview` is provided, hidden while `isPreviewing`... rendered based on `isPreviewing` toggling icon/label), then `NeutralButton` (Cancel) and `PrimaryButton` (Save/Next) — both hidden while `isPreviewing`.
 
-`ToolsetEditorHeader` SHALL delegate its rendering entirely to `EditorHeader`, passing its existing `steps`, `step`, `isSaving`, `onChangeStep`, `onCancel`, `onSave` props through unchanged and omitting `title`.
+**Mobile** (`≤768px`) renders:
+- A single-row header: a `Dropdown` (from `@epam/ai-dial-ui-kit`) whose trigger `<button aria-label={navAriaLabel}>` shows the optional `title`, then `editor.stepOfTotal` ("Step {{current}} of {{total}}") followed by `· {currentStep.name}`, with a chevron-down icon. The dropdown's menu items are the same steps, each calling `onChangeStep(step.id)`, with a check icon next to the current step.
+- Trailing actions, collapsed: while not previewing, a kebab (`IconDotsVertical`) `Dropdown` holding Cancel and (if `onPreview` provided) Preview as menu items (`editor.moreActionsLabel` = "More actions" aria-label), plus the primary Save/Next button rendered directly. While previewing, only an exit-preview `GhostButton` is shown.
+- A `ProgressBar` (`ElementSize.Small`) below the row, `value={currentIndex + 1}` / `max={steps.length}`, with `aria-label={navAriaLabel}` and `aria-valuetext` set to the same "Step X of Y" string.
 
-**RTL / UI impact**: Uses the same logical-property layout (`gap-3`, `justify-between`) as the components it replaces; no new physical-direction classes introduced.
+**New i18n keys** (`EditorI18nKeys`, shared `editor.*` namespace):
+
+| Key | English |
+|---|---|
+| `editor.stepOfTotal` | `Step {{current}} of {{total}}` |
+| `editor.moreActionsLabel` | `More actions` |
+
+`ToolsetEditorHeader` SHALL delegate its rendering entirely to `EditorHeader`, passing its existing `steps`, `step`, `isSaving`, `isSaveDisabled`, `onChangeStep`, `onCancel`, `onSave` props through unchanged and omitting `title`.
+
+**RTL / UI impact**: Uses logical-property layout (`gap-*`, `justify-between`, `text-start`); the mobile dropdown trigger uses `text-start`. No new physical-direction classes introduced. Chevron/kebab icons are direction-agnostic (no mirroring needed).
+
+**Accessibility**: The mobile step-dropdown trigger and the kebab-menu trigger each carry their own `aria-label`; the decorative `StepCircle` numeral is `aria-hidden`; the `ProgressBar` exposes `aria-valuetext` so assistive tech announces "Step X of Y" instead of a raw fraction.
 
 #### Scenario: AppsEditor renders header with title
 
@@ -232,13 +266,23 @@ It SHALL render:
 - **WHEN** `isSaving` is `true`
 - **THEN** both the Cancel and Save buttons are rendered as disabled
 
+#### Scenario: Desktop step button's accessible name excludes the numeral badge
+
+- **WHEN** the header renders on desktop with a step named "General" at index 0
+- **THEN** a `button` with accessible name exactly `"General"` exists (not `"1 General"`)
+
+#### Scenario: Mobile viewport collapses steps into a dropdown
+
+- **WHEN** the header renders with `useIsMobile()` returning `true`
+- **THEN** the step list is not rendered as inline buttons; instead a single dropdown trigger button shows the current step and a `ProgressBar` reflects step progress
+
 ---
 
 ### Requirement: General form (step 1)
 
-`apps/chat/src/pages/AppsEditor/GeneralForm.tsx` SHALL render a two-column layout:
+`apps/chat/src/pages/AppsEditor/GeneralForm.tsx` SHALL render a mobile-first layout: the two sections stack vertically (full width, page-scrollable) on mobile and become a fixed two-column row (each `desktop:w-1/2`, independently scrollable) on desktop (`≥769px`). The form root is `className="flex h-full w-full flex-col overflow-y-auto desktop:flex-row desktop:overflow-hidden"`.
 
-**Left column** — form fields (scrollable, `w-1/2`, `border-e`):
+**Left column** — form fields (scrollable, `desktop:w-1/2`, `border-b` on mobile / `desktop:border-e`):
 
 - **Name** (`Input`, required): maps to `CreateApplicationBodyDto.name`.
 - **Description** (`Textarea`, optional): maps to `CreateApplicationBodyDto.description`.
@@ -256,10 +300,10 @@ export interface GeneralFormHandle {
 
 `submit` SHALL run the same validation/create-and-callback logic the Next button previously triggered on click, and SHALL be a no-op (return without calling the API) if a submit is already in flight (`isSubmitting`).
 
-**Right column** — live preview (`w-1/2`, `bg-layer-1`):
+**Right column** — live preview (`desktop:w-1/2`, `bg-layer-1`):
 
 - A "Preview" label (`appsEditor.generalForm.previewTitle`) pinned to the top-left.
-- A `<Card>` from `@epam/ai-dial-catalog` centered vertically and horizontally in the remaining space, width `280px`, driven by a `useMemo`-derived `CatalogItem` built from the current form state (`name`, `version`, `description`, `topics`, `iconUrl`). Uses `CatalogEntityType.Model` to match how existing applications appear in the catalog.
+- A `<Card>` from `@epam/ai-dial-catalog` centered vertically and horizontally in the remaining space, `w-full max-w-[280px]` so the card never overflows a narrow mobile viewport, driven by a `useMemo`-derived `CatalogItem` built from the current form state (`name`, `version`, `description`, `topics`, `iconUrl`). Uses `CatalogEntityType.Model` to match how existing applications appear in the catalog.
 
 State owned locally via `useState`:
 - `name`, `description`, `iconUrl`, `version` — controlled string values
@@ -308,6 +352,11 @@ interface Props {
 
 - **WHEN** `generalFormRef.current.submit()` is called while a previous `submit()` call is still in flight
 - **THEN** the create API is NOT called a second time
+
+#### Scenario: Preview column stacks below the form on mobile
+
+- **WHEN** the page renders at a mobile viewport (`≤768px`)
+- **THEN** the form fields and the Preview card render as two full-width sections stacked vertically, both reachable by scrolling the page, instead of a fixed-height two-column row
 
 ---
 

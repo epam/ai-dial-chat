@@ -139,6 +139,8 @@ since the candidate name itself is always primary-locale content.
 The editor SHALL render the active step form as the only content pane beneath the editor
 header. The editor SHALL NOT render a separate live preview or catalog-card preview pane.
 
+`ToolsetEditor`'s page root SHALL use `className="flex min-h-0 flex-1 flex-col"` (`flex-1` growth, not `size-full`), matching `AppsEditor` and `CustomAppEditor` — see the "Apps-editor page renders two steps" requirement in `app-editor-flow` for why `flex-1` is required under the mobile-only global `Header`: `size-full`/`height: 100%` on a flex item resolves against the flex container's total height rather than the space left after sibling elements, which previously clipped the page's bottom content by an amount equal to that header's height.
+
 #### Scenario: Create toolset layout
 - **WHEN** a user opens the toolset editor in create mode
 - **THEN** the form occupies the available editor content width with no preview pane beside it
