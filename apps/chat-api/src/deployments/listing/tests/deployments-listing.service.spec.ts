@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -123,6 +124,30 @@ describe('DeploymentsListingService', () => {
       expect(
         result.deployments.find((d) => d.id === 'search-tool'),
       ).toBeUndefined();
+    });
+
+    it('logs the raw DIAL Core list item for als-regre-19-adapter', async () => {
+      const debugSpy = vi
+        .spyOn(Logger.prototype, 'debug')
+        .mockImplementation(() => undefined);
+      const { service, sdkClient } = makeService();
+      const adapterDeployment = {
+        id: 'als-regre-19-adapter',
+        object: 'model',
+        display_name: 'ALS Regression 19 Adapter',
+        features: { chat_completion: true },
+      };
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200, url: 'http://dial-core/v1/deployments' },
+        data: [mockModel, adapterDeployment],
+      });
+
+      await service.listDeployments('user1', 'token', 'bucket-1');
+
+      expect(debugSpy).toHaveBeenCalledWith(
+        `DIAL Core /v1/deployments response for "als-regre-19-adapter": ${JSON.stringify(adapterDeployment)}`,
+      );
     });
 
     it('skips items without id', async () => {

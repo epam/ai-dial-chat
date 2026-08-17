@@ -4131,6 +4131,37 @@ export interface ModelCapabilitiesDto {
 /**
  *
  * @export
+ * @interface ModelCatalogPropertiesDto
+ */
+export interface ModelCatalogPropertiesDto {
+  /**
+   * Model provider for catalog display
+   * @type {string}
+   * @memberof ModelCatalogPropertiesDto
+   */
+  provider?: string;
+  /**
+   * Model vendor for catalog display
+   * @type {string}
+   * @memberof ModelCatalogPropertiesDto
+   */
+  vendor?: string;
+  /**
+   * Model license for catalog display
+   * @type {string}
+   * @memberof ModelCatalogPropertiesDto
+   */
+  license?: string;
+  /**
+   * Model knowledge cutoff date for catalog display
+   * @type {string}
+   * @memberof ModelCatalogPropertiesDto
+   */
+  knowledgeCutoffDate?: string;
+}
+/**
+ *
+ * @export
  * @interface ModelDetailsDto
  */
 export interface ModelDetailsDto {
@@ -4170,6 +4201,12 @@ export interface ModelDetailsDto {
    * @memberof ModelDetailsDto
    */
   features?: DeploymentFeaturesDetailsDto;
+  /**
+   * Known model catalog properties allow-listed from DIAL Core catalog_properties
+   * @type {ModelCatalogPropertiesDto}
+   * @memberof ModelDetailsDto
+   */
+  catalogProperties?: ModelCatalogPropertiesDto;
   /**
    * Owner of the deployment as reported by DIAL Core
    * @type {string}
@@ -5125,7 +5162,7 @@ export interface RevokeAccessResponseDto {
  */
 export interface RevokeSharedAccessDto {
   /**
-   * Identifier (DIAL Core resource path) of the owned catalog item or conversation to revoke all shared access to.
+   * Identifier (DIAL Core resource path) of the owned catalog item, skill, or conversation to revoke all shared access to.
    * @type {string}
    * @memberof RevokeSharedAccessDto
    */

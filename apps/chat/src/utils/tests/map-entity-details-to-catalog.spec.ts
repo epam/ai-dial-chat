@@ -29,6 +29,41 @@ describe('mapEntityDetailsToCatalogDetails', () => {
 
       expect(result.api?.resource).toEqual({ modelId: 'gpt-4o' });
     });
+
+    it('maps known catalog properties into Overview Specification rows', () => {
+      const dto: Parameters<typeof mapDeploymentDetailsDtoToEntityDetails>[0] =
+        {
+          id: 'als-regre-19-adapter',
+          type: 'model',
+          modelDetails: {
+            catalogProperties: {
+              provider: 'Provider',
+              vendor: 'Vendor',
+              license: 'License',
+              knowledgeCutoffDate: '2026-08-17',
+            },
+          },
+        };
+
+      const result = mapEntityDetailsToCatalogDetails(
+        mapDeploymentDetailsDtoToEntityDetails(dto),
+      );
+
+      expect(result.overview?.sections).toEqual([
+        {
+          title: 'Specification',
+          specs: [
+            { label: 'Provider', value: 'Provider' },
+            { label: 'Vendor', value: 'Vendor' },
+            { label: 'License', value: 'License' },
+            {
+              label: 'Knowledge cutoff date',
+              value: '2026-08-17',
+            },
+          ],
+        },
+      ]);
+    });
   });
 
   describe('MODEL pricing', () => {

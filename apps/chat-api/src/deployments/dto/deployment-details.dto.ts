@@ -52,6 +52,23 @@ export class ModelLimitsDto {
  */
 export type ModelPricingRecord = Record<string, string | undefined>;
 
+export class ModelCatalogPropertiesDto {
+  @ApiPropertyOptional({ description: 'Model provider for catalog display' })
+  provider?: string;
+
+  @ApiPropertyOptional({ description: 'Model vendor for catalog display' })
+  vendor?: string;
+
+  @ApiPropertyOptional({ description: 'Model license for catalog display' })
+  license?: string;
+
+  @ApiPropertyOptional({
+    description: 'Model knowledge cutoff date for catalog display',
+    example: '2026-08-17',
+  })
+  knowledgeCutoffDate?: string;
+}
+
 /**
  * Feature flags shared by DIAL Core's model, application, and toolset
  * detail responses (all extend the same `DeploymentWithFeatures` schema).
@@ -175,6 +192,13 @@ export class ModelDetailsDto {
 
   @ApiPropertyOptional({ type: DeploymentFeaturesDetailsDto })
   features?: DeploymentFeaturesDetailsDto;
+
+  @ApiPropertyOptional({
+    type: ModelCatalogPropertiesDto,
+    description:
+      'Known model catalog properties allow-listed from DIAL Core catalog_properties',
+  })
+  catalogProperties?: ModelCatalogPropertiesDto;
 
   @ApiPropertyOptional({
     description: 'Owner of the deployment as reported by DIAL Core',

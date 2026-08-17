@@ -22,6 +22,10 @@ export interface ModelCapabilities {
 }
 
 export interface ModelSpecification {
+  provider?: string;
+  vendor?: string;
+  license?: string;
+  knowledgeCutoffDate?: string;
   contextWindowTokens?: number;
   maxOutputTokens?: number;
   inputTypes?: string[];
