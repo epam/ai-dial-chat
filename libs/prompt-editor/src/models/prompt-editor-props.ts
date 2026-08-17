@@ -1,3 +1,5 @@
+import type { EditorThemes } from '@epam/ai-dial-ui-kit';
+
 /** One selectable folder in the prompt editor's folder picker. */
 export interface PromptEditorFolder {
   /** Folder path, used as the option's value. The empty string is never listed — the root option is synthesised. */
@@ -14,8 +16,6 @@ export interface PromptEditorValues {
   description: string;
   /** The prompt body. */
   content: string;
-  /** Folder the prompt belongs to. The empty string means the root folder. */
-  folderId: string;
 }
 
 /**
@@ -29,8 +29,6 @@ export interface PromptEditorErrors {
   description?: string;
   /** Message shown under the content field. */
   content?: string;
-  /** Message shown under the folder picker. */
-  folder?: string;
 }
 
 /** Folder mutations the host performs on the editor's behalf. */
@@ -51,6 +49,8 @@ export interface PromptEditorLabels {
   createTitle?: string;
   /** Heading shown in edit mode. Defaults to `'Edit prompt'`. */
   editTitle?: string;
+  /** Accessible label of the header back button. Defaults to `'Back to prompts'`. */
+  backButtonLabel?: string;
   /** Name field label. Defaults to `'Name'`. */
   nameLabel?: string;
   /** Name field placeholder. Defaults to `'Prompt name'`. */
@@ -59,11 +59,11 @@ export interface PromptEditorLabels {
   descriptionLabel?: string;
   /** Description field placeholder. Defaults to `'What this prompt is for'`. */
   descriptionPlaceholder?: string;
-  /** Content field label. Defaults to `'Prompt'`. */
+  /** Content field label. Defaults to `'Instructions'`. */
   contentLabel?: string;
-  /** Content field placeholder. Defaults to `'Write the prompt text'`. */
+  /** Content field placeholder. Defaults to `'Write the prompt instructions'`. */
   contentPlaceholder?: string;
-  /** Folder picker label. Defaults to `'Folder'`. */
+  /** Folder picker label, used by the standalone `PromptFolderField`. Defaults to `'Folder'`. */
   folderLabel?: string;
   /** Label of the root option in the folder picker. Defaults to `'Root'`. */
   folderRootOption?: string;
@@ -93,6 +93,8 @@ export interface PromptEditorLabels {
   savingStatusLabel?: string;
   /** Accessible label of the loading spinner. Defaults to `'Loading prompt'`. */
   loadingAriaLabel?: string;
+  /** Accessible label of the markdown editor loading spinner. Defaults to `'Loading prompt editor'`. */
+  contentLoadingAriaLabel?: string;
   /** Builds the characters-remaining announcement. Defaults to `` `${count} characters remaining` ``. */
   charactersRemaining?: (count: number) => string;
 }
@@ -101,12 +103,26 @@ export interface PromptEditorLabels {
 export interface PromptEditorTypography {
   /** Class applied to the heading. Defaults to `'dial-h1-text'`. */
   titleClassName?: string;
+  /** Class applied to the prompt editor label. Defaults to `'dial-tiny-semi-text'`. */
+  contentLabelClassName?: string;
   /** Class applied to helper, error, and confirmation text. Defaults to `'dial-small-text'`. */
   helperTextClassName?: string;
 }
 
+/** Color overrides for `PromptEditor`. */
+export interface PromptEditorColors {
+  /** Form background. Fallback: `--bg-layer-base`. */
+  background?: string;
+  /** Header bottom border. Fallback: `--stroke-tertiary`. */
+  headerBorder?: string;
+  /** Prompt validation error text. Fallback: `--text-error`. */
+  contentErrorText?: string;
+}
+
 /** Grouped style overrides for `PromptEditor`. */
 export interface PromptEditorStyles {
+  /** Color overrides applied as CSS custom properties. */
+  colors?: PromptEditorColors;
   /** Typography class overrides. */
   typography?: PromptEditorTypography;
 }
@@ -121,8 +137,6 @@ export interface PromptEditorProps {
    * produce a new object once the data has arrived.
    */
   initialValues?: Partial<PromptEditorValues>;
-  /** Folders offered by the picker, excluding the root. */
-  folders: PromptEditorFolder[];
   /** Whether the prompt being edited is still loading. Defaults to `false`. */
   isLoading?: boolean;
   /** Whether loading the prompt failed; renders an error state with a retry instead of the form. Defaults to `false`. */
@@ -141,16 +155,14 @@ export interface PromptEditorProps {
   onSubmit: (values: PromptEditorValues) => void;
   /** Called when the form is dismissed without saving. */
   onCancel: () => void;
+  /** Called when the header back button is activated. Defaults to `onCancel`. */
+  onBack?: () => void;
   /** Called when the retry button in the load-error state is activated. */
   onRetry?: () => void;
-  /** Folder mutations. Omit to render the picker without create/rename/delete controls. */
-  folderActions?: PromptFolderActions;
-  /** Whether the folder picker is read-only. */
-  isFolderReadOnly?: boolean;
-  /** Inline message shown under the folder-name field of the create/rename sub-form. */
-  folderNameError?: string;
   /** Text overrides. */
   labels?: PromptEditorLabels;
+  /** Theme applied to the prompt markdown editor. Defaults to the editor's own default (`EditorThemes.light`). */
+  markdownEditorTheme?: EditorThemes;
   /** Style overrides. */
   styles?: PromptEditorStyles;
 }

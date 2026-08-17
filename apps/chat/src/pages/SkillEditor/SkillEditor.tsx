@@ -7,6 +7,7 @@ import {
 import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
+  EditorThemes,
   ErrorText,
   GhostIconButton,
   PrimaryButton,
@@ -292,7 +293,9 @@ const SkillEditorPage: FC = () => {
           onCancel={handleCancel}
           onRetry={retryLoad}
           instructionsEditorTheme={
-            currentTheme === ThemeId.Dark ? 'dark' : 'light'
+            currentTheme === ThemeId.Dark
+              ? EditorThemes.dark
+              : EditorThemes.light
           }
         />
       </div>

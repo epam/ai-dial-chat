@@ -4,8 +4,8 @@ import {
   type PromptEditorErrors,
   type PromptEditorLabels,
   type PromptEditorValues,
-  type PromptFolderActions,
 } from '@epam/ai-dial-prompt-editor';
+import { EditorThemes } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -16,16 +16,13 @@ import {
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { usePrompts } from '../../context/PromptsContext';
+import { useTheme } from '../../context/ThemeContext';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import {
   createPrompt,
-  createPromptFolder,
-  deletePromptFolder,
   getPrompt,
-  movePrompt,
-  renamePromptFolder,
   updatePrompt,
 } from '../../server-api/prompts.api';
 import { EditorQuery } from '../../types/editor-query';
@@ -35,6 +32,7 @@ import {
 } from '../../types/entity-notification';
 import { parsePromptResourceUrl, PromptFieldError } from '../../types/prompt';
 import { ROUTES } from '../../types/routes';
+import { ThemeId } from '../../types/theme-id';
 import {
   PROMPT_CONTENT_MAX_LENGTH,
   PROMPT_DESCRIPTION_MAX_LENGTH,
@@ -43,14 +41,10 @@ import {
   validatePromptName,
 } from '../../utils/prompt';
 
-/** Root folder is modelled as the empty string, matching the prompts API. */
-const ROOT_FOLDER_ID = '';
-
 interface FormErrors {
   name?: PromptFieldError;
   description?: PromptFieldError;
   content?: PromptFieldError;
-  folder?: PromptFieldError;
 }
 
 const PromptEditorPage: FC = () => {
@@ -59,8 +53,9 @@ const PromptEditorPage: FC = () => {
   const [searchParams] = useSearchParams();
   const { showErrorNotification } = useNotification();
   const { notifyOperationSuccess } = useOperationNotification();
+  const { currentTheme } = useTheme();
   const isPromptsEnabled = useUiFeature(OverlayFeature.Prompts);
-  const { folders, refetchPrompts } = usePrompts();
+  const { refetchPrompts } = usePrompts();
 
   const promptId = searchParams.get(EditorQuery.Id) ?? undefined;
   const returnUrl = searchParams.get(EditorQuery.ReturnUrl) ?? ROUTES.Catalog;
@@ -71,12 +66,9 @@ const PromptEditorPage: FC = () => {
   );
   const promptPath = promptResource?.path ?? promptId;
   const ownerBucket = promptResource?.bucket;
-  const isSharedPrompt = promptResource != null;
 
   const [loadedValues, setLoadedValues] = useState<PromptEditorValues>();
-  const [initialFolderId, setInitialFolderId] = useState(ROOT_FOLDER_ID);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [folderNameError, setFolderNameError] = useState<PromptFieldError>();
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -110,9 +102,7 @@ const PromptEditorPage: FC = () => {
           name: dto.name,
           description: dto.description ?? '',
           content: dto.content,
-          folderId: dto.folderId,
         });
-        setInitialFolderId(dto.folderId);
       } catch (err) {
         if (!cancelled.value) setLoadError(err);
       } finally {
@@ -164,14 +154,14 @@ const PromptEditorPage: FC = () => {
         errors.content,
         PromptEditorI18nKeys.ErrorContentTooLong,
       ),
-      folder:
-        errors.folder != null
-          ? t(PromptEditorI18nKeys.ErrorFolderConflict)
-          : undefined,
     };
   }, [errors, resolveNameError, t]);
 
   const handleCancel = useCallback(() => {
+    navigate(returnUrl);
+  }, [navigate, returnUrl]);
+
+  const handleBack = useCallback(() => {
     navigate(returnUrl);
   }, [navigate, returnUrl]);
 
@@ -180,7 +170,7 @@ const PromptEditorPage: FC = () => {
   }, []);
 
   const handleSubmit = useCallback(
-    async ({ name, description, content, folderId }: PromptEditorValues) => {
+    async ({ name, description, content }: PromptEditorValues) => {
       if (isSaving) return;
 
       const nextErrors: FormErrors = {};
@@ -206,45 +196,17 @@ const PromptEditorPage: FC = () => {
             name: trimmedName,
             description: description || undefined,
             content,
-            folderId,
           });
         } else {
-          /*
-           * `updatePrompt` cannot change a prompt's folder, so a folder change
-           * is a second call. Update runs first so the move operates on the
-           * post-rename path.
-           */
           const updateBody = {
             name: trimmedName,
             description,
             content,
           };
-          const updated =
-            ownerBucket == null
-              ? await updatePrompt(promptPath as string, updateBody)
-              : await updatePrompt(
-                  promptPath as string,
-                  updateBody,
-                  ownerBucket,
-                );
-          if (folderId !== initialFolderId) {
-            try {
-              const moveBody = { targetFolderId: folderId };
-              if (ownerBucket == null) {
-                await movePrompt(updated.id, moveBody);
-              } else {
-                await movePrompt(updated.id, moveBody, ownerBucket);
-              }
-            } catch (moveErr) {
-              const { traceId } = await getApiErrorDetails(moveErr);
-              await refetchPrompts();
-              setErrors({ folder: PromptFieldError.Conflict });
-              showErrorNotification({
-                message: t(PromptEditorI18nKeys.MoveError),
-                requestId: traceId,
-              });
-              return;
-            }
+          if (ownerBucket == null) {
+            await updatePrompt(promptPath as string, updateBody);
+          } else {
+            await updatePrompt(promptPath as string, updateBody, ownerBucket);
           }
         }
 
@@ -274,7 +236,6 @@ const PromptEditorPage: FC = () => {
       isEditMode,
       promptPath,
       ownerBucket,
-      initialFolderId,
       refetchPrompts,
       notifyOperationSuccess,
       showErrorNotification,
@@ -284,89 +245,24 @@ const PromptEditorPage: FC = () => {
     ],
   );
 
-  const reportFolderFailure = useCallback(
-    async (err: unknown) => {
-      const { status, traceId } = await getApiErrorDetails(err);
-      if (status === 409) {
-        setFolderNameError(PromptFieldError.Conflict);
-        return;
-      }
-      showErrorNotification({
-        message: t(PromptEditorI18nKeys.FolderError),
-        requestId: traceId,
-      });
-    },
-    [showErrorNotification, t],
-  );
-
-  const folderActions = useMemo<PromptFolderActions>(
-    () => ({
-      onCreateFolder: async (name, parentId) => {
-        setFolderNameError(undefined);
-        try {
-          const created = await createPromptFolder({ name, parentId });
-          await refetchPrompts();
-          return created.id;
-        } catch (err) {
-          await reportFolderFailure(err);
-          throw err;
-        }
-      },
-      onRenameFolder: async (folderId, name) => {
-        setFolderNameError(undefined);
-        try {
-          const renamed = await renamePromptFolder(folderId, { name });
-          await refetchPrompts();
-          return renamed.id;
-        } catch (err) {
-          await reportFolderFailure(err);
-          throw err;
-        }
-      },
-      onDeleteFolder: async (folderId) => {
-        setFolderNameError(undefined);
-        try {
-          await deletePromptFolder(folderId);
-          await refetchPrompts();
-        } catch (err) {
-          await reportFolderFailure(err);
-          throw err;
-        }
-      },
-      onValidateFolderName: (name) =>
-        resolveNameError(validatePromptName(name) ?? undefined),
-    }),
-    [refetchPrompts, reportFolderFailure, resolveNameError],
-  );
-
   const labels = useMemo<PromptEditorLabels>(
     () => ({
       createTitle: t(PromptEditorI18nKeys.CreateTitle),
       editTitle: t(PromptEditorI18nKeys.EditTitle),
+      backButtonLabel: t(PromptEditorI18nKeys.BackButtonLabel),
       nameLabel: t(PromptEditorI18nKeys.NameLabel),
       namePlaceholder: t(PromptEditorI18nKeys.NamePlaceholder),
       descriptionLabel: t(PromptEditorI18nKeys.DescriptionLabel),
       descriptionPlaceholder: t(PromptEditorI18nKeys.DescriptionPlaceholder),
       contentLabel: t(PromptEditorI18nKeys.ContentLabel),
       contentPlaceholder: t(PromptEditorI18nKeys.ContentPlaceholder),
-      folderLabel: t(PromptEditorI18nKeys.FolderLabel),
-      folderRootOption: t(PromptEditorI18nKeys.FolderRootOption),
-      folderEmptyState: t(PromptEditorI18nKeys.FolderEmptyState),
-      folderCreateLabel: t(PromptEditorI18nKeys.FolderCreateLabel),
-      folderRenameLabel: t(PromptEditorI18nKeys.FolderRenameLabel),
-      folderDeleteLabel: t(PromptEditorI18nKeys.FolderDeleteLabel),
-      folderNameLabel: t(PromptEditorI18nKeys.FolderNameLabel),
-      folderDeleteConfirmTitle: t(
-        PromptEditorI18nKeys.FolderDeleteConfirmTitle,
-      ),
-      folderDeleteConfirmMessage: (folderId) =>
-        t(PromptEditorI18nKeys.FolderDeleteConfirmMessage, { name: folderId }),
       saveLabel: t(ButtonsI18nKeys.Save),
       cancelLabel: t(ButtonsI18nKeys.Cancel),
       retryLabel: t(PromptEditorI18nKeys.RetryLabel),
       loadErrorMessage: t(PromptEditorI18nKeys.LoadError),
       savingStatusLabel: t(PromptEditorI18nKeys.SavingStatus),
       loadingAriaLabel: t(PromptEditorI18nKeys.LoadingAriaLabel),
+      contentLoadingAriaLabel: t(PromptEditorI18nKeys.ContentLoadingAriaLabel),
       charactersRemaining: (count) =>
         t(PromptEditorI18nKeys.CharactersRemaining, { count }),
     }),
@@ -379,18 +275,18 @@ const PromptEditorPage: FC = () => {
     <PromptEditorForm
       isEditMode={isEditMode}
       initialValues={loadedValues}
-      folders={folders}
       isLoading={isLoading}
       hasLoadError={loadError != null}
       isSaving={isSaving}
       errors={formErrors}
       descriptionMaxLength={PROMPT_DESCRIPTION_MAX_LENGTH}
       contentMaxLength={PROMPT_CONTENT_MAX_LENGTH}
-      folderNameError={resolveNameError(folderNameError)}
-      folderActions={isSharedPrompt ? undefined : folderActions}
-      isFolderReadOnly={isSharedPrompt}
       labels={labels}
+      markdownEditorTheme={
+        currentTheme === ThemeId.Dark ? EditorThemes.dark : EditorThemes.light
+      }
       onSubmit={handleSubmit}
+      onBack={handleBack}
       onCancel={handleCancel}
       onRetry={handleRetry}
     />

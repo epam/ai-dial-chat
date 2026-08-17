@@ -2,28 +2,31 @@
 
 ### Requirement: The editor's UI lives in `@epam/ai-dial-prompt-editor`
 
-A new lib, `libs/prompt-editor`, SHALL own the prompt form and its folder picker. `apps/chat/src/pages/PromptEditor/PromptEditor.tsx` SHALL become a container that supplies data and behaviour and renders nothing itself.
+**Revised (see design.md D16):** `PromptEditor` SHALL no longer render a folder picker or own folder sub-form state — the approved Figma design (`513:49196`) has no folder control on the create/edit screen. `PromptFolderField` remains exported from the same lib as a standalone widget a host may compose in separately; the requirement below describes `PromptEditor` only.
 
-The lib SHALL export `PromptEditor`, `PromptFolderField`, and every type reachable through their props (`PromptEditorProps`, `PromptEditorValues`, `PromptEditorErrors`, `PromptEditorFolder`, `PromptEditorLabels`, `PromptEditorStyles`, `PromptEditorTypography`, `PromptFolderActions`, `PromptFolderFieldProps`, `FolderFormMode`).
+A new lib, `libs/prompt-editor`, SHALL own the prompt form: name, description, and content (labelled **Instructions**) as a single flat column, with no "Details"/"Configuration" section split. `apps/chat/src/pages/PromptEditor/PromptEditor.tsx` SHALL become a container that supplies data and behaviour and renders nothing itself.
+
+The lib SHALL export `PromptEditor`, `PromptFolderField`, and every type reachable through their props (`PromptEditorProps`, `PromptEditorValues`, `PromptEditorErrors`, `PromptEditorFolder`, `PromptEditorLabels`, `PromptEditorStyles`, `PromptEditorTypography`, `PromptFolderActions`, `PromptFolderFieldProps`, `FolderFormMode`). `PromptEditorFolder` and `PromptFolderActions` remain reachable only through `PromptFolderFieldProps`, not through `PromptEditorProps`.
 
 Division of responsibility:
 
 | Concern | Owner |
 | --- | --- |
-| Field values, folder sub-form state, character-counter announcements, a11y wiring | lib |
+| Field values, character-counter announcements, a11y wiring | lib (`PromptEditor`) |
+| Folder sub-form state (when a host composes `PromptFolderField` itself) | lib (`PromptFolderField`) |
 | Validation against the DIAL storage contract, API calls, notifications, routing, feature gate, i18n | app container |
 
 The lib SHALL NOT validate field values, import i18n, call an API, or read a route. Specifically:
 
 - Inline messages arrive as plain strings through `errors`; the lib renders them and never derives them.
 - `onSubmit` fires with the current values unconditionally — an empty form still submits, because "empty is invalid" is a contract fact the host owns.
-- Folder mutations are delegated through `folderActions`. `onCreateFolder` and `onRenameFolder` MAY resolve with the resulting folder path; when they do, the picker selects it. A rejection leaves the sub-form open with the entered name.
-- `onValidateFolderName` is a pure callback the lib calls before dispatching a mutation; returning a message blocks the dispatch and shows it inline.
 - Length limits arrive as `descriptionMaxLength` / `contentMaxLength` numbers, used only to decide when to announce the characters remaining.
 
 `initialValues` SHALL re-seed the fields whenever its object identity changes, so a host that loads asynchronously can hand over a prompt once the fetch settles.
 
-Every user-visible string SHALL be an optional label with an English default, per the no-i18n-in-libs rule, and the lib SHALL NOT hardcode typography classes — `styles.typography` carries `titleClassName` (default `'dial-h1-text'`) and `helperTextClassName` (default `'dial-small-text'`).
+Every user-visible string SHALL be an optional label with an English default, per the no-i18n-in-libs rule, and the lib SHALL NOT hardcode typography classes — `styles.typography` carries `titleClassName` (default `'dial-h1-text'`), `contentLabelClassName` (default `'dial-tiny-semi-text'`, matching `Input`/`Textarea`'s own label style), and `helperTextClassName` (default `'dial-small-text'`).
+
+The flat column SHALL be capped at `max-w-[1180px]` and horizontally centered (`mx-auto`), matching the convention already used for centered page-level content in `Catalog.tsx` and `ScheduledTasks.tsx`, so it does not stretch edge-to-edge on a wide viewport now that no fixed-width side column bounds it.
 
 #### Scenario: The lib does not validate
 
@@ -50,10 +53,11 @@ Every user-visible string SHALL be an optional label with an English default, pe
 - **WHEN** `isSaving` is true and the save button is activated
 - **THEN** `onSubmit` is not called and a `status` region announces the saving label
 
-#### Scenario: The folder sub-form is a named region
+#### Scenario: The folder sub-form is a named region (applies to `PromptFolderField` in isolation)
 
-- **WHEN** the create-folder sub-form is open
-- **THEN** it is exposed as a `group` named by the create-folder label, so its Save and Cancel controls are distinguishable from the outer form's identically-labelled pair
+- **WHEN** a host composes `PromptFolderField` and its create-folder sub-form is open
+- **THEN** it is exposed as a `group` named by the create-folder label, so its Save and Cancel controls are distinguishable from an outer form's identically-labelled pair
+- **NOTE**: `PromptEditor` itself does not render `PromptFolderField`, so this scenario is not exercised from the editor screen
 
 ---
 
@@ -70,18 +74,18 @@ When `OverlayFeature.Prompts` is disabled the route SHALL redirect to `ROUTES.Ca
 #### Scenario: Create mode opens with an empty form
 
 - **WHEN** the user navigates to `/prompt-editor?returnUrl=/catalog`
-- **THEN** the page renders empty name, description, and content fields with the folder picker at root
+- **THEN** the page renders empty name, description, and content fields
 
 #### Scenario: Edit mode loads the prompt
 
 - **WHEN** the user navigates to `/prompt-editor?id=Work%2FAI%2Fsummarize&returnUrl=/catalog`
-- **THEN** `getPrompt('Work/AI/summarize')` is called and the form is populated with the prompt's name, description, content, and folder
+- **THEN** `getPrompt('Work/AI/summarize')` is called and the form is populated with the prompt's name, description, and content (the prompt's stored folder is not shown or editable on this screen — see design.md D16)
 
 #### Scenario: Shared edit mode loads from the owner bucket
 
 - **WHEN** the user navigates to `/prompt-editor?id=prompts%2Fowner-bucket%2FWork%2FAI%2Fsummarize`
 - **THEN** `getPrompt('Work/AI/summarize', 'owner-bucket')` is called
-- **AND** the folder selector is disabled because the caller's personal folder list cannot represent mutations in the owner's namespace
+- **AND** no folder selector is rendered, consistently with the flattened editor layout
 
 #### Scenario: Editing a non-existent prompt shows an error state
 
@@ -102,22 +106,17 @@ When `OverlayFeature.Prompts` is disabled the route SHALL redirect to `ROUTES.Ca
 
 ### Requirement: The editor creates and updates prompts
 
-Create SHALL call `createPrompt({ name, description, content, folderId })` with `folderId` set to the picker's selected folder path (`''` for root). A personal update SHALL call `updatePrompt(path, { name, description, content })`; a shared update SHALL call `updatePrompt(path, { name, description, content }, ownerBucket)`. The update payload carries the form's current name, description, and content values.
+**Revised (see design.md D16):** `createPrompt` SHALL no longer send a `folderId` — new prompts land at root, since the screen has no folder control to derive one from. `updatePrompt` was already folder-agnostic and is unchanged.
 
-`updatePrompt` cannot change a prompt's folder — moving is a separate operation (below). In edit mode, changing the folder selection SHALL dispatch `movePrompt` in addition to `updatePrompt`.
+Create SHALL call `createPrompt({ name, description, content })`. A personal update SHALL call `updatePrompt(path, { name, description, content })`; a shared update SHALL call `updatePrompt(path, { name, description, content }, ownerBucket)`. The update payload carries the form's current name, description, and content values.
 
 On success the page SHALL call `refetchPrompts()`, show a success notification, and navigate back only after the refetch settles.
 
 #### Scenario: Creating a root-level prompt
 
-- **WHEN** the user fills name `summarize`, content `Summarize:`, leaves the folder at root, and saves
-- **THEN** `createPrompt({ name: 'summarize', content: 'Summarize:', folderId: '' })` is dispatched
+- **WHEN** the user fills name `summarize`, content `Summarize:`, and saves
+- **THEN** `createPrompt({ name: 'summarize', content: 'Summarize:' })` is dispatched
 - **AND** on 201 the prompt appears in the catalog's Prompts tab under the Personal folder
-
-#### Scenario: Creating a prompt inside a folder
-
-- **WHEN** the user selects folder `Work/AI` and saves a prompt named `summarize`
-- **THEN** `createPrompt` is dispatched with `folderId: 'Work/AI'` and the created prompt's `id` is `Work/AI/summarize`
 
 #### Scenario: Updating content only
 
@@ -147,80 +146,21 @@ On success the page SHALL call `refetchPrompts()`, show a success notification, 
 
 ---
 
-### Requirement: The editor moves prompts between folders
+### Requirement: The editor screen does not move or manage prompt folders
 
-Changing the folder selection for a personal prompt in edit mode SHALL dispatch `movePrompt(path, { targetFolderId })`, with `''` as the target for root. When both the folder and the content/name changed, the update SHALL be applied before the move so the move operates on the current path, and a failure of either step SHALL leave the form open with an error rather than reporting partial success. Shared prompts cannot enter this path because their folder selector is disabled.
+**Superseded (see design.md D16).** `PromptEditor` SHALL expose no folder-management affordance. The two requirements this change originally shipped here — "The editor moves prompts between folders" and "The editor manages prompt folders" — described folder move/create/rename/delete dispatched from `PromptEditor`'s own folder picker. The approved Figma layout has no folder control on this screen, so none of that is reachable from `/prompt-editor` any more: `apps/chat/src/pages/PromptEditor/PromptEditor.tsx` does not call `movePrompt`, `createPromptFolder`, `renamePromptFolder`, or `deletePromptFolder`.
 
-#### Scenario: Moving a prompt into a subfolder
+The create/rename/delete behavior itself still exists, unchanged, in `PromptFolderField` (`libs/prompt-editor`) — see that component's own tests (`PromptFolderField.spec.tsx`, 13 passing) — for a host that composes the widget into a different screen. Nothing currently does.
 
-- **WHEN** the user opens `summarize` (at root) in edit mode, selects folder `Work/AI`, and saves
-- **THEN** `movePrompt('summarize', { targetFolderId: 'Work/AI' })` is dispatched and the prompt's `id` becomes `Work/AI/summarize`
+#### Scenario: The editor screen has no folder affordance
 
-#### Scenario: Moving a prompt to root
+- **WHEN** the user opens `/prompt-editor` in create or edit mode
+- **THEN** no folder picker, folder create/rename/delete control, or move-related error is rendered anywhere on the page
 
-- **WHEN** the user opens `Work/AI/summarize` and selects the root folder
-- **THEN** `movePrompt('Work/AI/summarize', { targetFolderId: '' })` is dispatched with an empty-string target
+#### Scenario: A prompt's folder is unaffected by editing it
 
-#### Scenario: Move conflict shows an inline error
-
-- **WHEN** `movePrompt` responds `409` because a prompt of the same name already exists in the target folder
-- **THEN** an inline error is shown on the folder field and the prompt stays in its original folder
-
-#### Scenario: Rename plus move ordering
-
-- **WHEN** the user changes both the name and the folder in one save
-- **THEN** `updatePrompt` is dispatched first, and `movePrompt` is dispatched against the post-rename path
-
-#### Scenario: Partial failure is reported, not hidden
-
-- **WHEN** `updatePrompt` succeeds and the subsequent `movePrompt` fails
-- **THEN** an error notification states that the move failed, the form stays open, and the already-applied rename is reflected in the form's state after refetch
-
----
-
-### Requirement: The editor manages prompt folders
-
-For personal prompts, the folder picker SHALL expose controls to create, rename, and delete folders, calling `createPromptFolder({ name, parentId })`, `renamePromptFolder(path, { name })`, and `deletePromptFolder(path)`. It renders the folder list from `usePrompts().folders`, and refetches after every folder mutation.
-
-For a shared prompt, the folder selector SHALL be disabled and folder-management controls SHALL be hidden. The list in `PromptsContext` describes the caller's own folders, so using it to move or manage paths in another user's bucket would be incorrect even when that shared prompt grants `WRITE`.
-
-Folder deletion is destructive — it removes every prompt beneath the folder — so it SHALL require an explicit confirmation naming the folder and stating that its contents will be deleted.
-
-#### Scenario: Creating a root folder
-
-- **WHEN** the user creates a folder named `Work` with no parent selected
-- **THEN** `createPromptFolder({ name: 'Work' })` is dispatched and `Work` appears in the picker after refetch
-
-#### Scenario: Creating a nested folder
-
-- **WHEN** the user selects `Work` and creates a folder named `AI`
-- **THEN** `createPromptFolder({ name: 'AI', parentId: 'Work' })` is dispatched and `Work/AI` appears in the picker
-
-#### Scenario: Duplicate folder shows an inline error
-
-- **WHEN** folder creation responds `409`
-- **THEN** an inline error is shown on the folder-name input and no folder is added to the picker
-
-#### Scenario: Renaming a folder updates descendant paths in the picker
-
-- **WHEN** the user renames `Work/AI` to `Machine Learning`
-- **THEN** `renamePromptFolder('Work/AI', { name: 'Machine Learning' })` is dispatched, and after refetch the picker shows `Work/Machine Learning` and every prompt formerly under `Work/AI`
-
-#### Scenario: Deleting a folder requires confirmation
-
-- **WHEN** the user activates delete on folder `Work/AI`
-- **THEN** a confirmation naming `Work/AI` and stating that its prompts will be deleted is shown
-- **AND** `deletePromptFolder` is dispatched only after the user confirms
-
-#### Scenario: Cancelling folder deletion dispatches nothing
-
-- **WHEN** the user dismisses the folder-delete confirmation
-- **THEN** no request is dispatched and the folder remains
-
-#### Scenario: Deleting the folder the open prompt lives in
-
-- **WHEN** the user deletes the folder currently selected for the prompt being edited
-- **THEN** the selection falls back to root and the form reflects that before the next save
+- **WHEN** the user edits and saves a prompt that lives in `Work/AI`
+- **THEN** `updatePrompt` is dispatched with the current form fields, no `movePrompt` call is made, and the prompt's `id` (and therefore its folder) is unchanged unless the name itself changed
 
 ---
 
@@ -233,7 +173,8 @@ The form SHALL block submission and show inline errors for:
 | name | required, 1–256 characters, no `/` | `CreatePromptDto.name` |
 | description | ≤ 2000 characters | `CreatePromptDto.description` |
 | content | required, ≤ 50 000 characters | `CreatePromptDto.content` |
-| folder name | required, 1–256 characters, no `/` | `CreatePromptFolderDto.name` |
+
+**Revised (see design.md D16):** the `folder name` row (`CreatePromptFolderDto.name`) applied to the editor's now-removed folder picker and is no longer part of this screen's contract; it still applies to `PromptFolderField` when a host composes it elsewhere.
 
 Uniqueness is NOT validated client-side — it cannot be — so `409` responses always surface as inline field errors.
 
@@ -264,26 +205,23 @@ The content and description fields SHALL show a character counter. Per the a11y 
 
 ### Requirement: Non-functional contract for the prompt editor
 
-- **State ownership**: form state SHALL be local to `PromptEditor` (`useState`); the prompt and folder lists come from `usePrompts()`. No new context is introduced.
-- **Loading / empty / error states**: edit mode shows a loading state while `getPrompt` is pending, an error state with retry on failure, and a disabled submit with a pending indicator while a save is in flight. The folder picker shows an explicit empty state when the user has no folders — not a blank list.
-- **i18n**: new keys under `promptEditor.*` — page titles for create and edit, field labels and placeholders for name/description/content/folder, the four validation messages, the character-counter template, the folder create/rename/delete labels, the folder-delete confirmation title and message, and the save/delete success and failure notifications. Save/Cancel/Delete/Edit labels reuse existing `ButtonsI18nKeys` members rather than adding duplicates. Every key is declared in `translation-keys.ts` and `en.json` in the same change.
-- **RTL / direction impact**: the form, folder tree indentation, and character counters use logical properties (`ps-*`, `pe-*`, `text-start`, `border-s-*`); the back/breadcrumb chevron gets `rtl:scale-x-[-1]`; the folder, plus, and trash icons are symmetric and are not mirrored.
-- **Accessibility**: every field has a programmatically associated label; inline errors are associated via `aria-describedby` and announced; the folder tree exposes `aria-expanded` on expandable nodes; the destructive folder-delete confirmation moves focus to its confirm control and returns focus to the trigger on dismiss; the pending save state is announced through a `role="status"` region.
+**Revised (see design.md D16):** the non-functional contract SHALL apply to the flattened prompt editor as described below. The folder-picker-specific bullets (folder empty state, folder tree RTL/a11y, folder-derived memoisation) described the editor's now-removed folder field; they still apply to `PromptFolderField` in isolation, not to the `/prompt-editor` screen.
+
+- **State ownership**: form state SHALL be local to `PromptEditor` (`useState`). No new context is introduced.
+- **Loading / empty / error states**: edit mode shows a loading state while `getPrompt` is pending, an error state with retry on failure, and a disabled submit with a pending indicator while a save is in flight.
+- **i18n**: keys under `promptEditor.*` — page titles for create and edit, field labels and placeholders for name/description/content, the three validation messages, the character-counter template, and the save/delete success and failure notifications. Save/Cancel/Delete/Edit labels reuse existing `ButtonsI18nKeys` members rather than adding duplicates. Every key is declared in `translation-keys.ts` and `en.json` in the same change. The `promptEditor.folder*`, `promptEditor.moveError`, and `promptEditor.folderError` keys the first pass added were removed once the folder field and move flow left the screen.
+- **RTL / direction impact**: the form and character counters use logical properties (`ps-*`, `pe-*`, `text-start`, `border-s-*`); the back/breadcrumb chevron gets `rtl:scale-x-[-1]`.
+- **Accessibility**: every field has a programmatically associated label; inline errors are associated via `aria-describedby` and announced; the pending save state is announced through a `role="status"` region.
 - **Feature flag**: gated by `OverlayFeature.Prompts` at the route level.
-- **Memoisation**: mutation handlers are `useCallback`'d; the derived folder tree is `useMemo`'d on `folders`.
+- **Memoisation**: mutation handlers are `useCallback`'d.
 - **Observability**: none beyond the shared API client's per-request logging. No new metrics.
 - **Authorization**: the editor is reachable by any authenticated user. Personal prompts use the caller's bucket; a writable shared prompt uses the owner bucket carried by its qualified resource id and relies on DIAL Core to enforce `WRITE`. Organisation prompts are always read-only and their details panel offers no Edit action regardless of returned metadata.
-- **Rate limiting / caching**: no client cache. `POST /api/v1/prompts` and `POST /api/v1/prompts/folders` carry the backend's existing per-route throttles (30/min and 20/min); the form disables submit while a save is in flight so a user cannot trip them by double-submitting.
+- **Rate limiting / caching**: no client cache. `POST /api/v1/prompts` carries the backend's existing per-route throttle (30/min); the form disables submit while a save is in flight so a user cannot trip it by double-submitting.
 
 #### Scenario: Double-submit is impossible
 
 - **WHEN** the user activates Save twice in quick succession
 - **THEN** the second activation is ignored because the control is disabled while the first request is pending, and exactly one request is dispatched
-
-#### Scenario: Folder picker empty state
-
-- **WHEN** the user has no prompt folders
-- **THEN** the picker renders an explicit empty state with a create-folder affordance, not a blank area
 
 #### Scenario: Inline errors are announced
 

@@ -33,7 +33,7 @@ Two further UI revisions came with them: a prompt's details panel shows exactly 
 
 A third round added publishing a prompt to an Organization folder (backend `CatalogEntityType.Prompt` plus bucket qualification in `publish.service.ts`) and downloading a prompt as a `version: 5` JSON envelope (D15) through a new `onDownload` / `isDownloadVisible` pair on `CatalogProps`.
 
-A fourth round aligned prompts and skills with the applications/toolsets catalog flow: each frontend context now makes one aggregate request, listings carry requestor permissions, writable shared resources retain their owner bucket for edit routing, and public resources remain unconditionally read-only (D16).
+A fourth round aligned prompts and skills with the applications/toolsets catalog flow: each frontend context now makes one aggregate request, listings carry requestor permissions, writable shared resources retain their owner bucket for edit routing, and public resources remain unconditionally read-only (D17).
 
 ### Non-goals
 

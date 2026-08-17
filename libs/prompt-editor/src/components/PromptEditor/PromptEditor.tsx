@@ -1,36 +1,44 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { BuilderFormContainer } from '@epam/ai-dial-builder-form';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
-  ElementSize,
   Input,
+  Label,
+  LazyMarkdownEditor,
   NeutralButton,
-  PrimaryButton,
   Spinner,
   Textarea,
 } from '@epam/ai-dial-ui-kit';
-import type { FC } from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import {
+  lazy,
+  Suspense,
+  type FC,
+  useCallback,
+  useEffect,
+  useId,
+  useState,
+} from 'react';
 import type {
   PromptEditorProps,
   PromptEditorValues,
 } from '../../models/prompt-editor-props';
-import { PromptFolderField } from '../PromptFolderField/PromptFolderField';
+import styles from './PromptEditor.module.scss';
+
+const MarkdownEditor = lazy(async () => {
+  const module = await LazyMarkdownEditor();
+  return { default: module.MarkdownEditor };
+});
 
 const EMPTY_VALUES: PromptEditorValues = {
   name: '',
   description: '',
   content: '',
-  folderId: '',
 };
 
 const DEFAULT_DESCRIPTION_MAX_LENGTH = 2000;
 const DEFAULT_CONTENT_MAX_LENGTH = 50000;
 const DEFAULT_ANNOUNCE_THRESHOLD = 10;
 
-/**
- * Returns how many characters are left before `maxLength`, or `null` while the
- * value is still further away than `threshold` — announcing on every keystroke
- * would be unusable noise.
- */
+/** Returns the remaining character count when it is close enough to announce. */
 const getRemainingCharacters = (
   value: string,
   maxLength: number,
@@ -40,11 +48,10 @@ const getRemainingCharacters = (
   return remaining <= threshold ? Math.max(remaining, 0) : null;
 };
 
-/** Form for authoring or editing a reusable prompt, including its folder. */
+/** Form for authoring or editing a reusable prompt. */
 export const PromptEditor: FC<PromptEditorProps> = ({
   isEditMode = false,
   initialValues,
-  folders,
   isLoading = false,
   hasLoadError = false,
   isSaving = false,
@@ -54,27 +61,26 @@ export const PromptEditor: FC<PromptEditorProps> = ({
   counterAnnounceThreshold = DEFAULT_ANNOUNCE_THRESHOLD,
   onSubmit,
   onCancel,
+  onBack = onCancel,
   onRetry,
-  folderActions,
-  isFolderReadOnly = false,
-  folderNameError,
   labels,
-  styles,
+  markdownEditorTheme,
+  styles: editorStyles,
 }) => {
-  const {
-    titleClassName = 'dial-h1-text',
-    helperTextClassName = 'dial-small-text',
-  } = styles?.typography ?? {};
+  const { colors, typography } = editorStyles ?? {};
+  const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
+  const contentLabelClassName =
+    typography?.contentLabelClassName ?? 'dial-tiny-semi-text';
+  const helperTextClassName =
+    typography?.helperTextClassName ?? 'dial-small-text';
 
   const [values, setValues] = useState<PromptEditorValues>({
     ...EMPTY_VALUES,
     ...initialValues,
   });
+  const contentLabelId = useId();
 
-  /*
-   * Hosts that load an existing prompt hand over `initialValues` only once the
-   * fetch settles, so the fields are re-seeded whenever that object changes.
-   */
+  /* Hosts that load asynchronously re-seed the form through `initialValues`. */
   useEffect(() => {
     setValues({ ...EMPTY_VALUES, ...initialValues });
   }, [initialValues]);
@@ -95,48 +101,63 @@ export const PromptEditor: FC<PromptEditorProps> = ({
   }, [isSaving, onSubmit, values]);
 
   const cancelLabel = labels?.cancelLabel ?? 'Cancel';
+  const title = isEditMode
+    ? (labels?.editTitle ?? 'Edit prompt')
+    : (labels?.createTitle ?? 'Create prompt');
+  const cssVars = buildCssVars({
+    '--pe-content-error': colors?.contentErrorText,
+  });
+  const containerProps = {
+    labels: {
+      title,
+      backButtonLabel: labels?.backButtonLabel ?? 'Back to prompts',
+      cancelButtonLabel: cancelLabel,
+      submitButtonLabel: labels?.saveLabel ?? 'Save',
+    },
+    onBack,
+    onCancel,
+    onSubmit: handleSubmit,
+    isCancelDisabled: isSaving,
+    styles: {
+      colors: { background: colors?.background },
+      header: {
+        colors: { borderColor: colors?.headerBorder },
+        typography: { fontClassName: titleClassName },
+      },
+      cssVars,
+    },
+  };
 
   if (isLoading) {
     return (
-      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
-        <h1 className={mergeClasses('mb-6', titleClassName)}>
-          {isEditMode
-            ? (labels?.editTitle ?? 'Edit prompt')
-            : (labels?.createTitle ?? 'Create prompt')}
-        </h1>
+      <BuilderFormContainer {...containerProps} isSubmitDisabled>
         <div
           role="status"
           aria-label={labels?.loadingAriaLabel ?? 'Loading prompt'}
-          className="flex items-center gap-2"
+          className="flex flex-1 items-center justify-center p-8"
         >
           <Spinner />
         </div>
-      </main>
+      </BuilderFormContainer>
     );
   }
 
   if (hasLoadError) {
     return (
-      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
-        <h1 className={mergeClasses('mb-6', titleClassName)}>
-          {labels?.editTitle ?? 'Edit prompt'}
-        </h1>
-        <div role="alert" className="flex flex-col items-start gap-3">
+      <BuilderFormContainer {...containerProps} isSubmitDisabled>
+        <div role="alert" className="flex flex-col items-start gap-3 p-8">
           <p className={mergeClasses('m-0', helperTextClassName)}>
             {labels?.loadErrorMessage ??
               "Couldn't load this prompt. Please try again."}
           </p>
-          <div className="flex gap-2">
-            {onRetry != null && (
-              <NeutralButton
-                label={labels?.retryLabel ?? 'Retry'}
-                onClick={onRetry}
-              />
-            )}
-            <NeutralButton label={cancelLabel} onClick={onCancel} />
-          </div>
+          {onRetry != null && (
+            <NeutralButton
+              label={labels?.retryLabel ?? 'Retry'}
+              onClick={onRetry}
+            />
+          )}
         </div>
-      </main>
+      </BuilderFormContainer>
     );
   }
 
@@ -154,20 +175,8 @@ export const PromptEditor: FC<PromptEditorProps> = ({
     labels?.charactersRemaining?.(count) ?? `${count} characters remaining`;
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
-      <h1 className={mergeClasses('mb-6', titleClassName)}>
-        {isEditMode
-          ? (labels?.editTitle ?? 'Edit prompt')
-          : (labels?.createTitle ?? 'Create prompt')}
-      </h1>
-
-      <form
-        className="flex max-w-[720px] flex-col gap-5"
-        onSubmit={(event) => {
-          event.preventDefault();
-          handleSubmit();
-        }}
-      >
+    <BuilderFormContainer {...containerProps} isSubmitDisabled={isSaving}>
+      <div className="mx-auto flex w-full max-w-[1180px] flex-1 flex-col gap-5 px-4 py-6 desktop:px-8">
         <Input
           id="prompt-name"
           value={values.name}
@@ -190,63 +199,56 @@ export const PromptEditor: FC<PromptEditorProps> = ({
           onChange={(value) => setField('description', value)}
         />
 
-        <Textarea
-          id="prompt-content"
-          value={values.content}
-          resize
-          labelProps={{
-            label: labels?.contentLabel ?? 'Prompt',
-            required: true,
-          }}
-          placeholder={labels?.contentPlaceholder ?? 'Write the prompt text'}
-          invalid={errors?.content != null}
-          error={errors?.content}
-          onChange={(value) => setField('content', value)}
-        />
+        <div
+          role="group"
+          aria-labelledby={contentLabelId}
+          className="flex flex-1 flex-col gap-2"
+        >
+          <Label
+            id={contentLabelId}
+            label={labels?.contentLabel ?? 'Instructions'}
+            required
+            className={contentLabelClassName}
+          />
+          <Suspense
+            fallback={
+              <Spinner
+                ariaLabel={
+                  labels?.contentLoadingAriaLabel ?? 'Loading prompt editor'
+                }
+              />
+            }
+          >
+            <MarkdownEditor
+              value={values.content}
+              onChange={(value) => setField('content', value)}
+              height={480}
+              placeholder={
+                labels?.contentPlaceholder ?? 'Write the prompt instructions'
+              }
+              theme={markdownEditorTheme}
+            />
+          </Suspense>
+          {errors?.content != null && (
+            <p
+              className={mergeClasses(helperTextClassName, styles.contentError)}
+            >
+              {errors.content}
+            </p>
+          )}
+        </div>
 
-        <PromptFolderField
-          value={values.folderId}
-          folders={folders}
-          error={errors?.folder}
-          nameError={folderNameError}
-          actions={folderActions}
-          disabled={isFolderReadOnly}
-          labels={labels}
-          helperTextClassName={helperTextClassName}
-          onChange={(folderId) => setField('folderId', folderId)}
-        />
-
-        {/*
-         * Only announced within the last few characters of a limit — a live
-         * region that fires on every keystroke is unusable noise.
-         */}
         <span role="status" aria-live="polite" className="sr-only">
           {descriptionRemaining != null &&
             buildCounterMessage(descriptionRemaining)}
           {contentRemaining != null && buildCounterMessage(contentRemaining)}
         </span>
-
-        <div className="flex gap-2">
-          <PrimaryButton
-            type="submit"
-            size={ElementSize.Standard}
-            label={labels?.saveLabel ?? 'Save'}
-            disabled={isSaving}
-          />
-          <NeutralButton
-            type="button"
-            size={ElementSize.Standard}
-            label={cancelLabel}
-            disabled={isSaving}
-            onClick={onCancel}
-          />
-          {isSaving && (
-            <span role="status" className="sr-only">
-              {labels?.savingStatusLabel ?? 'Saving'}
-            </span>
-          )}
-        </div>
-      </form>
-    </main>
+        {isSaving && (
+          <span role="status" className="sr-only">
+            {labels?.savingStatusLabel ?? 'Saving'}
+          </span>
+        )}
+      </div>
+    </BuilderFormContainer>
   );
 };
