@@ -169,7 +169,7 @@ Some attachments (e.g. an LLM-revised image prompt saved back onto the conversat
 | `PlainText` | `text: string` | `<pre>` with `whitespace-pre-wrap break-words` |
 | `Markdown` | `text: string` | `MarkdownRenderer` from `@epam/ai-dial-chat-shared`, neutral defaults |
 | `Json` | `value: unknown` | `react-json-view-lite` `JsonView`, container has `dir="ltr"` |
-| `Pdf` | `url: string; highlights?: InputHighlightData[]; selectedHighlightId?: string` | `PdfContent` (thumbnail sidebar + `DocumentPreview` from `@epam/ai-dial-react-pdf-highlighter`) |
+| `Pdf` | `url: string; highlights?: InputHighlightData[]; selectedHighlightId?: string` | `PdfContent` (collapsible thumbnails section/panel + `DocumentPreview` from `@epam/ai-dial-react-pdf-highlighter`) |
 | `Code` | `text: string; language?: string` | `CodeContent` (`react-syntax-highlighter` PrismLight inside `dir="ltr"`) |
 | `Html` | `srcdoc?: string; url?: string` | `HtmlContent` (sandboxed `<iframe>`) |
 | `Unsupported` | — | Centered "Preview not supported" message |
@@ -336,17 +336,32 @@ Citation-preview PDFs (see "Citation preview" below) build their `PdfCanvasConte
 
 #### Rendering
 
-The `PdfContent` component (`libs/attachment-canvas/src/components/AttachmentCanvas/PdfContent.tsx`) wraps `DocumentPreview` and adds a thumbnail sidebar.
+The `PdfContent` component (`libs/attachment-canvas/src/components/PdfContent/PdfContent.tsx`) wraps `DocumentPreview` and adds a single floating collapsible thumbnails panel — the same FAB + overlay pattern on both desktop and mobile — closed by default.
 
-**Layout** — `flex h-full overflow-hidden`:
-- **Thumbnail sidebar** (`w-30 shrink-0 overflow-auto`) — rendered once `totalPages > 0`. Displays one `PageThumbnail` per page. Clicking a thumbnail calls `viewerApiRef.current?.navigateToPage(pageNum)` and updates `selectedPage` state.
-- **Viewer pane** (`min-w-0 flex-1 overflow-hidden`) — contains `DocumentPreview`.
+**Layout** — root is `relative flex h-full overflow-hidden`:
+- Once `totalPages > 0`, a `FabButton` (`@epam/ai-dial-ui-kit`) is absolutely positioned at `start-3 top-3` inside the relative root (a "bubble" pinned to the top-start corner, on every breakpoint) and acts as the trigger for a `Dropdown` (`@epam/ai-dial-ui-kit`) whose `renderOverlay` renders a `w-36` panel floating above the document — `placement="bottom-start"`, `matchReferenceWidth={false}`, controlled by `isThumbnailsOpen` (default `false`). The FAB icon swaps `IconMenu2` (burger, collapsed) ↔ `IconX` (expanded) — no visible title text — and its `aria-label`/`aria-expanded` reflect open/closed state via `labels.showThumbnailsLabel` / `labels.hideThumbnailsLabel` (defaults `'Show thumbnails'` / `'Hide thumbnails'`); `aria-controls` points at the thumbnails region's `id` while expanded, omitted while collapsed since the region is unmounted then, not merely hidden. Opening the panel does not resize or replace the document viewer — it stays full width underneath.
+- **Viewer pane** (`min-w-0 flex-1 overflow-auto`) — contains `DocumentPreview`, always full width regardless of thumbnails-open state.
+
+**Panel internal layout** — the `renderOverlay` content is a `flex flex-col` column with two children, not a single scrollable div, so the page navigator stays pinned above the scrolling thumbnail list:
+1. A `shrink-0` header row holding the page-number `Input` (see "Page navigator" below).
+2. The scrollable thumbnails region itself: `role="region"`, `id` from `useId()`, `aria-label={labels.thumbnailsLabel}`, classed `max-h-[70vh] overflow-y-auto overflow-x-hidden p-1 [scrollbar-gutter:stable]`. `PdfContent` owns this scroll container directly — `panelRef` points at this exact element and all scroll/resize tracking reads `panelRef.current` — deliberately not delegated to any ancestor established by `Dropdown` internally, since that would be a second, competing scroll container. `w-36` (144px) comfortably fits the library's fixed `120px`-wide `PageThumbnail` tile without horizontal overflow; `[scrollbar-gutter:stable]` reserves the native scrollbar's width up front so the left/right padding stays visually even whether or not the scrollbar is actually rendered.
+
+**Page navigator** — an `Input` (`@epam/ai-dial-ui-kit`, `size={ElementSize.Small}`) pinned at the top of the panel, above the scrollable thumbnail list:
+- `value` is `pageInputValue` (local string state, kept separate from `selectedPage` so the field can be freely edited/cleared before a valid page number is committed), `postfix` is `` `/ ${totalPages}` `` (static, non-editable total).
+- Typing updates `pageInputValue` only. Committing — `Enter` (`onKeyDown`) or blur (`onBlur`) — calls `commitPageInput`, which parses the value; if it is an integer within `[1, totalPages]` it calls `handleSelectPage` (same path a thumbnail click uses — updates `selectedPage` and calls `viewerApiRef.current?.navigateToPage`), otherwise it resets the field back to the current `selectedPage`.
+- A `useEffect` keyed on `[selectedPage]` re-syncs `pageInputValue` whenever `selectedPage` changes from elsewhere (thumbnail click, citation navigation), so the field always reflects the current page when not being actively edited.
+- `aria-label` comes from `labels.pageNumberLabel` (default `'Page number'`).
+
+**Thumbnail loading — eager first batch, then load-on-open/scroll:**
+- As soon as `totalPages` resolves (document loaded), an effect requests a viewport-sized "eager" batch of thumbnails — `Math.ceil(panelHeight / itemHeight)` pages, capped at `totalPages` — regardless of whether the panel is open. `panelHeight`/`itemHeight` fall back to constants (`600` / `200` px) until the panel has been opened and measured once, so this eager batch loads in the background while the panel is still closed, and is instant on first open.
+- The thumbnail list's DOM nodes (and the region that wraps them) only exist while the panel is open — the `Dropdown` overlay is conditionally rendered on `isThumbnailsOpen`, not merely hidden — so the `IntersectionObserver` that requests further pages (pages scrolled within 300 px of the viewport) naturally only fires once the user has opened the panel — satisfying "load thumbnails beyond the first batch only when clicked open."
+- `thumbnails` state (`Map<number, string>`) and `requestedThumbnailPages` persist across open/close toggles — reopening the panel does not re-request or re-render already-loaded thumbnails.
 
 **`selectedPage` state** — tracks which thumbnail is highlighted (selected):
 - Initialised via a lazy `useState` initializer: finds the `InputHighlightData` entry whose `id` matches `selectedHighlightId` and returns its first `BBox.page`; falls back to `1` when no match is found.
 - A `useEffect` keyed on `[selectedHighlightId, highlights]` updates `selectedPage` when the user opens a different citation in the same PDF (new `selectedHighlightId` prop on the already-mounted component).
 - `PdfContent` is keyed by `content.url` in `AttachmentCanvas` — the component stays mounted across same-PDF citation changes, so there is no blink or document reload.
-- A second `useEffect` keyed on `[selectedPage, totalPages]` calls `scrollIntoView({ block: 'center', behavior: 'smooth' })` on the selected thumbnail's wrapper `div` (tracked in `thumbnailNodeRefs`). Including `totalPages` in the deps ensures the scroll fires once the thumbnail sidebar has been rendered for the first time.
+- A second `useEffect` keyed on `[selectedPage, totalPages, isThumbnailsOpen]` calls `scrollIntoView({ block: 'center', behavior: 'smooth' })` on the selected thumbnail's wrapper `div` (tracked in `thumbnailNodeRefs`) when that node exists, or `scrollTo` on `panelRef.current` otherwise — i.e. once the thumbnails panel has been opened and rendered.
 - Clicking a thumbnail calls `handleSelectPage`, which sets `selectedPage` directly and calls `viewerApiRef.current?.navigateToPage(pageNum)`.
 
 `DocumentPreview` props:
@@ -358,10 +373,12 @@ The `PdfContent` component (`libs/attachment-canvas/src/components/AttachmentCan
 | `highlights` | `content.highlights ?? []` — highlight regions; empty when no citation context |
 | `selectedHighlightId` | `content.selectedHighlightId` — viewer scrolls to this highlight on load |
 | `showOccurrences` | `false` — occurrence counter suppressed |
-| `thumbnailPageNumbers` | `[1 … totalPages]` — drives thumbnail generation inside the library |
-| `onTotalPagesChange` | sets `totalPages` state, which controls sidebar visibility and `thumbnailPageNumbers` |
+| `thumbnailPageNumbers` | pending (eagerly-requested or scroll-requested, not-yet-loaded) page numbers — drives thumbnail generation inside the library |
+| `onTotalPagesChange` | sets `totalPages` state, which controls thumbnails-affordance visibility and drives the eager batch |
 | `onThumbnailsLoaded` | merges newly loaded thumbnail URLs into `thumbnails` state (`Map<number, string>`) |
 | `onViewerReady` | stores the `PdfViewerApi` reference used for programmatic page navigation |
+
+`PdfContent`'s optional `labels` prop (`PdfContentLabels`: `thumbnailsLabel`, `showThumbnailsLabel`, `hideThumbnailsLabel`, `pageNumberLabel`) is threaded from `AttachmentCanvasLabels` (`pdfThumbnailsLabel`, `pdfShowThumbnailsLabel`, `pdfHideThumbnailsLabel`, `pdfPageNumberLabel`) through `AttachmentCanvasBodyLabels` — the app supplies these via `AttachmentCanvasI18nKeys.PdfThumbnailsLabel` / `PdfShowThumbnailsLabel` / `PdfHideThumbnailsLabel` / `PdfPageNumberLabel`, all with English defaults when omitted.
 
 No `title` prop is passed — toolbar title is hidden.
 

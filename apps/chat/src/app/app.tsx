@@ -555,6 +555,18 @@ const App: FC = () => {
               htmlViewRenderedLabel: t(
                 AttachmentCanvasI18nKeys.HtmlViewRendered,
               ),
+              pdfThumbnailsLabel: t(
+                AttachmentCanvasI18nKeys.PdfThumbnailsLabel,
+              ),
+              pdfShowThumbnailsLabel: t(
+                AttachmentCanvasI18nKeys.PdfShowThumbnailsLabel,
+              ),
+              pdfHideThumbnailsLabel: t(
+                AttachmentCanvasI18nKeys.PdfHideThumbnailsLabel,
+              ),
+              pdfPageNumberLabel: t(
+                AttachmentCanvasI18nKeys.PdfPageNumberLabel,
+              ),
             }}
             isMobile={isMobile}
             defaultWidth={canvasDefaultWidth}

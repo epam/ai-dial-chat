@@ -829,7 +829,11 @@
     "htmlFrameBlocked": "This page cannot be displayed in preview",
     "htmlOpenInNewTab": "Open in new tab",
     "htmlViewSource": "View source",
-    "htmlViewRendered": "View rendered"
+    "htmlViewRendered": "View rendered",
+    "pdfThumbnailsLabel": "Thumbnails",
+    "pdfShowThumbnailsLabel": "Show thumbnails",
+    "pdfHideThumbnailsLabel": "Hide thumbnails",
+    "pdfPageNumberLabel": "Page number"
   },
   "announcementBanner": {
     "regionAriaLabel": "Announcement",
