@@ -114,6 +114,12 @@
         "pricesSection": "Token pricing",
         "limitsSection": "Usage limits"
       },
+      "modelSpecification": {
+        "provider": "Provider",
+        "vendor": "Vendor",
+        "license": "License",
+        "knowledgeCutoffDate": "Knowledge cutoff date"
+      },
       "limits": {
         "requestsPerHour": "Requests per hour",
         "requestsPerDay": "Requests per day",
@@ -830,7 +836,11 @@
     "htmlFrameBlocked": "This page cannot be displayed in preview",
     "htmlOpenInNewTab": "Open in new tab",
     "htmlViewSource": "View source",
-    "htmlViewRendered": "View rendered"
+    "htmlViewRendered": "View rendered",
+    "pdfThumbnailsLabel": "Thumbnails",
+    "pdfShowThumbnailsLabel": "Show thumbnails",
+    "pdfHideThumbnailsLabel": "Hide thumbnails",
+    "pdfPageNumberLabel": "Page number"
   },
   "announcementBanner": {
     "regionAriaLabel": "Announcement",
@@ -885,6 +895,8 @@
   "editor": {
     "stepGeneral": "General",
     "stepsNavAriaLabel": "Editor steps",
+    "stepOfTotal": "Step {{current}} of {{total}}",
+    "moreActionsLabel": "More actions",
     "saveButton": "Save & Exit",
     "nextButton": "Next",
     "nameLabel": "Name",

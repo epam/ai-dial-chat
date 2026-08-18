@@ -2,8 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist",
-    "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
+    "outDir": "../../dist/libs/ai-dial-chat-hooks",
+    "tsBuildInfoFile": "../../dist/libs/ai-dial-chat-hooks/tsconfig.lib.tsbuildinfo",
     "emitDeclarationOnly": false,
     "jsx": "react-jsx",
     "module": "esnext",

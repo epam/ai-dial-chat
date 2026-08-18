@@ -169,6 +169,10 @@ export enum CatalogI18nKeys {
   DetailsApiResponseSchema = 'catalog.details.api.responseSchema',
   DetailsPricingPricesSection = 'catalog.details.pricing.pricesSection',
   DetailsPricingLimitsSection = 'catalog.details.pricing.limitsSection',
+  DetailsModelProvider = 'catalog.details.modelSpecification.provider',
+  DetailsModelVendor = 'catalog.details.modelSpecification.vendor',
+  DetailsModelLicense = 'catalog.details.modelSpecification.license',
+  DetailsModelKnowledgeCutoffDate = 'catalog.details.modelSpecification.knowledgeCutoffDate',
   DetailsTabLimits = 'catalog.details.tabLimits',
   DetailsLimitsRequestsPerHour = 'catalog.details.limits.requestsPerHour',
   DetailsLimitsRequestsPerDay = 'catalog.details.limits.requestsPerDay',
@@ -745,6 +749,10 @@ export enum AttachmentCanvasI18nKeys {
   HtmlOpenInNewTab = 'attachmentCanvas.htmlOpenInNewTab',
   HtmlViewSource = 'attachmentCanvas.htmlViewSource',
   HtmlViewRendered = 'attachmentCanvas.htmlViewRendered',
+  PdfThumbnailsLabel = 'attachmentCanvas.pdfThumbnailsLabel',
+  PdfShowThumbnailsLabel = 'attachmentCanvas.pdfShowThumbnailsLabel',
+  PdfHideThumbnailsLabel = 'attachmentCanvas.pdfHideThumbnailsLabel',
+  PdfPageNumberLabel = 'attachmentCanvas.pdfPageNumberLabel',
 }
 
 export enum AnnouncementBannerI18nKeys {
@@ -767,6 +775,8 @@ export enum FooterMessageI18nKeys {
 export enum EditorI18nKeys {
   StepGeneral = 'editor.stepGeneral',
   StepsNavAriaLabel = 'editor.stepsNavAriaLabel',
+  StepOfTotal = 'editor.stepOfTotal',
+  MoreActionsLabel = 'editor.moreActionsLabel',
   SaveButton = 'editor.saveButton',
   NextButton = 'editor.nextButton',
   NameLabel = 'editor.nameLabel',

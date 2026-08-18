@@ -76,6 +76,10 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     visualizerErrorLabel,
     htmlFrameBlockedLabel = 'This page cannot be displayed in preview',
     htmlOpenInNewTabLabel = 'Open in new tab',
+    pdfThumbnailsLabel,
+    pdfShowThumbnailsLabel,
+    pdfHideThumbnailsLabel,
+    pdfPageNumberLabel,
   } = {},
   styles: stylesProp,
   codeBlockTheme,
@@ -271,6 +275,12 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             selectedHighlightId={content.selectedHighlightId}
             loadPdf={loadPdf}
             hideHeader={hidePdfToolbar}
+            labels={{
+              thumbnailsLabel: pdfThumbnailsLabel,
+              showThumbnailsLabel: pdfShowThumbnailsLabel,
+              hideThumbnailsLabel: pdfHideThumbnailsLabel,
+              pageNumberLabel: pdfPageNumberLabel,
+            }}
           />
         );
       case AttachmentContentType.Visualizer:
@@ -321,6 +331,10 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     isHtmlSourceView,
     loadPdf,
     hidePdfToolbar,
+    pdfThumbnailsLabel,
+    pdfShowThumbnailsLabel,
+    pdfHideThumbnailsLabel,
+    pdfPageNumberLabel,
   ]);
 
   return (
