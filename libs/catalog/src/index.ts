@@ -15,8 +15,10 @@ export {
 } from './types/toolset-auth';
 export { CatalogViewMode } from './types/view-mode';
 export { CatalogSortKey } from './types/sort';
-export { CatalogContentNodeType } from './types/catalog-content-node-type';
-export { CatalogContentPreviewType } from './types/catalog-content-preview-type';
+export {
+  CatalogContentNodeType,
+  CatalogContentPreviewType,
+} from './types/catalog-content-type';
 
 // Models
 export type { CatalogItem } from './models/catalog-item';

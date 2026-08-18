@@ -20,7 +20,10 @@ import {
   SkillSource,
   type SkillAboutDetails,
 } from '../types/skill';
-import { safeDecodeURIComponent } from './string-utils';
+import {
+  safeDecodeURIComponent,
+  stripSurroundingSlashes,
+} from './string-utils';
 
 const SOURCE_FOLDER_KEY: Record<SkillSource, CatalogI18nKeys> = {
   [SkillSource.Personal]: CatalogI18nKeys.FolderPersonal,
@@ -145,12 +148,12 @@ export const resolveSkillManifestFileId = (
   files: SkillMetadataItemDto[],
   skillPath: string,
 ): string => {
-  const normalizedSkillPath = skillPath.replace(/^\/+|\/+$/g, '');
+  const normalizedSkillPath = stripSurroundingSlashes(skillPath);
   const filesRoot = normalizedSkillPath
     ? `${normalizedSkillPath}/files`
     : 'files';
   const manifest = selectFileItems(files).find((file) => {
-    const path = file.path.replace(/^\/+|\/+$/g, '');
+    const path = stripSurroundingSlashes(file.path);
     return (
       path === SKILL_MANIFEST_FILE ||
       path === `files/${SKILL_MANIFEST_FILE}` ||
@@ -171,8 +174,8 @@ export const resolveSkillFileDownloadPath = (
   fileId: string,
   skillPath: string,
 ): string | null => {
-  const normalizedFileId = fileId.replace(/^\/+|\/+$/g, '');
-  const normalizedSkillPath = skillPath.replace(/^\/+|\/+$/g, '');
+  const normalizedFileId = stripSurroundingSlashes(fileId);
+  const normalizedSkillPath = stripSurroundingSlashes(skillPath);
   const filesRoot = normalizedSkillPath
     ? `${normalizedSkillPath}/files`
     : 'files';

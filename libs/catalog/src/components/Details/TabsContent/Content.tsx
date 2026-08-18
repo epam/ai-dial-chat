@@ -14,7 +14,7 @@ import type {
   CatalogContentTreeNode,
 } from '../../../models/item-details-data';
 import type { ItemDetailsStyles } from '../../../models/item-details-props';
-import { CatalogContentPreviewType } from '../../../types/catalog-content-preview-type';
+import { CatalogContentPreviewType } from '../../../types/catalog-content-type';
 import {
   countFileNodes,
   findContentNodeName,

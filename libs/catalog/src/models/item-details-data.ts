@@ -1,5 +1,7 @@
-import type { CatalogContentNodeType } from '../types/catalog-content-node-type';
-import type { CatalogContentPreviewType } from '../types/catalog-content-preview-type';
+import type {
+  CatalogContentNodeType,
+  CatalogContentPreviewType,
+} from '../types/catalog-content-type';
 import type { CodeLanguage } from '../types/code-language';
 import type { CatalogItemCredentials } from './catalog-item-credentials';
 import type { CatalogItemOverview } from './item-overview';

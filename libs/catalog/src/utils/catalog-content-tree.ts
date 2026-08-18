@@ -1,5 +1,5 @@
 import type { CatalogContentTreeNode } from '../models/item-details-data';
-import { CatalogContentNodeType } from '../types/catalog-content-node-type';
+import { CatalogContentNodeType } from '../types/catalog-content-type';
 
 /** Counts file nodes across the whole tree, at any depth; folders themselves are not counted. */
 export const countFileNodes = (nodes: CatalogContentTreeNode[]): number =>

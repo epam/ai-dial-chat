@@ -13,8 +13,10 @@ import type {
   CatalogContentFilePreview,
   CatalogContentTreeNode,
 } from '../../../models/item-details-data';
-import { CatalogContentNodeType } from '../../../types/catalog-content-node-type';
-import { CatalogContentPreviewType } from '../../../types/catalog-content-preview-type';
+import {
+  CatalogContentNodeType,
+  CatalogContentPreviewType,
+} from '../../../types/catalog-content-type';
 import {
   CredentialStatus,
   ToolsetAuthenticationType,

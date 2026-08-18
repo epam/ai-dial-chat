@@ -33,7 +33,7 @@ import {
 import type { CatalogItem } from '../../models/catalog-item';
 import type { CatalogContentFilePreview } from '../../models/item-details-data';
 import type { DetailsPanelProps } from '../../models/item-details-props';
-import { CatalogContentPreviewType } from '../../types/catalog-content-preview-type';
+import { CatalogContentPreviewType } from '../../types/catalog-content-type';
 import { CatalogDetailsTab } from '../../types/detail-tab';
 import {
   DetailsConfirmationKind,

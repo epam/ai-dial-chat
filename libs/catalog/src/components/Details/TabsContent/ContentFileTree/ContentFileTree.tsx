@@ -11,7 +11,7 @@ import {
   useState,
 } from 'react';
 import type { CatalogContentTreeNode } from '../../../../models/item-details-data';
-import { CatalogContentNodeType } from '../../../../types/catalog-content-node-type';
+import { CatalogContentNodeType } from '../../../../types/catalog-content-type';
 
 /** Props for {@link ContentFileTree}. */
 export interface ContentFileTreeProps {

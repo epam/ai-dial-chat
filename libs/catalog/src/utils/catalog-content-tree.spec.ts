@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CatalogContentTreeNode } from '../models/item-details-data';
-import { CatalogContentNodeType } from '../types/catalog-content-node-type';
+import { CatalogContentNodeType } from '../types/catalog-content-type';
 import { collectAllFolderIds, countFileNodes } from './catalog-content-tree';
 
 const file = (id: string): CatalogContentTreeNode => ({
