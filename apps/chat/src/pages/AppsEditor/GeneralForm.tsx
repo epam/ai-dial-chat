@@ -214,16 +214,18 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
     }
   }, [isSubmitting, values, appId, t, onCreated, schemaId]);
 
-  const getValues = useCallback(
-    (): TriggerSaveGeneralPayload => ({
+  const getValues = useCallback((): TriggerSaveGeneralPayload => {
+    const locales = composeLocalePayload(values.otherLocales, PRIMARY_LOCALE);
+    return {
       name: values.name.trim(),
       description: values.description.trim() || undefined,
       iconUrl: values.iconUrl.trim() || undefined,
       topics: values.topics.length > 0 ? values.topics : undefined,
       display_version: values.version.trim() || undefined,
-    }),
-    [values],
-  );
+      locales,
+      primaryLocale: locales ? PRIMARY_LOCALE : undefined,
+    };
+  }, [values]);
 
   useImperativeHandle(ref, () => ({ submit: handleSubmit, getValues }), [
     handleSubmit,

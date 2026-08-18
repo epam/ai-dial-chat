@@ -1,4 +1,5 @@
 import type { CatalogItemCredentials } from '@epam/ai-dial-catalog';
+import type { LocaleTextEntryDto } from '@epam/ai-dial-chat-api-client';
 import type { ToolsetCredentialsLevel } from '../constants/toolsets';
 
 export enum AppsEditorQuery {
@@ -90,6 +91,10 @@ export interface TriggerSaveGeneralPayload {
   iconUrl?: string;
   topics?: string[];
   display_version?: string;
+  /** Additional-locale name/description entries, keyed by locale code. Omitted when no additional locales are configured — see {@link composeLocalePayload}. */
+  locales?: LocaleTextEntryDto[];
+  /** The content locale `name`/`description` are authored in. Set only alongside `locales`, mirroring {@link composeLocalePayload}'s pairing with `PRIMARY_LOCALE`. */
+  primaryLocale?: string;
 }
 
 /** Payload of a `TriggerSave` message posted to the embedded QuickApps iframe. */
