@@ -20,9 +20,9 @@ import { getErrorDetails } from '../utils/error-details';
  * Logs endpoint duration, method, path, and status code, and records the same data on the
  * shared `http.server.request.duration` histogram (see telemetry/http-metrics.ts), which is a
  * no-op when OpenTelemetry metrics are disabled. Infra probe routes
- * (`telemetry/excluded-paths.ts`, e.g. `/api/health`) are still logged but never recorded onto
- * the histogram, mirroring the same routes' exclusion from tracing so probe traffic doesn't
- * pollute business-request dashboards/alerting.
+ * (`telemetry/excluded-paths.ts`, e.g. `/api/health`) are logged at `debug` instead of `log` and
+ * never recorded onto the histogram, mirroring the same routes' exclusion from tracing so probe
+ * traffic doesn't pollute business-request dashboards/alerting or logs at the default level.
  */
 @Injectable()
 export class MetricsInterceptor implements NestInterceptor {
@@ -41,10 +41,14 @@ export class MetricsInterceptor implements NestInterceptor {
           const duration = Date.now() - startTime;
           const response = context.switchToHttp().getResponse();
           const statusCode = response.statusCode;
+          const message = `${method} ${url} ${statusCode} - ${duration}ms`;
 
-          this.logger.log(`${method} ${url} ${statusCode} - ${duration}ms`);
+          if (isExcludedFromMetrics) {
+            this.logger.debug(message);
+            return;
+          }
 
-          if (isExcludedFromMetrics) return;
+          this.logger.log(message);
 
           httpServerRequestDuration.record(duration / 1000, {
             'http.request.method': method,
