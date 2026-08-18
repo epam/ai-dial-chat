@@ -273,4 +273,12 @@ export interface CatalogProps {
   isMyAppsActive?: boolean;
   /** Called when the user toggles the "My Apps" filter; required to control `isMyAppsActive`. */
   onMyAppsActiveChange?: (isActive: boolean) => void;
+  /**
+   * Externally-controlled active entity-type tab id. When omitted, `Catalog`
+   * manages its own tab state internally, defaulting to the first tab
+   * returned by `buildCatalogTabs`.
+   */
+  activeTab?: string;
+  /** Called when the user switches tabs; required to control `activeTab`. */
+  onActiveTabChange?: (tabId: string) => void;
 }

@@ -53,6 +53,7 @@ import {
   ToolsetLoginOutcomeType,
   useToolsetLogin,
 } from '../../hooks/toolsets/useToolsetLogin';
+import { useCatalogActiveTabPreference } from '../../hooks/useCatalogActiveTabPreference/useCatalogActiveTabPreference';
 import { useCatalogSortFilterPreference } from '../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useUiFeature } from '../../hooks/useUiFeature';
@@ -78,7 +79,7 @@ import {
 import { downloadSkillFile, listSkillFiles } from '../../server-api/skills.api';
 import { deleteToolset, logoutToolset } from '../../server-api/toolsets';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
-import { CatalogQuery } from '../../types/catalog';
+import { CATALOG_TAB_ORDER, CatalogQuery } from '../../types/catalog';
 import { EditorQuery } from '../../types/editor-query';
 import {
   EntityOperation,
@@ -384,6 +385,14 @@ const CatalogView: FC<Props> = ({
       ),
     );
   }, [visibleCatalogItems, persistedFilterTopics]);
+
+  const availableTabIds = useMemo(() => {
+    const presentTypes = new Set(visibleCatalogItems.map((item) => item.type));
+    return CATALOG_TAB_ORDER.filter((type) => presentTypes.has(type));
+  }, [visibleCatalogItems]);
+
+  const { activeTab, setActiveTab } =
+    useCatalogActiveTabPreference(availableTabIds);
 
   const {
     folderItems: publishFolderItems,
@@ -1276,6 +1285,8 @@ const CatalogView: FC<Props> = ({
       onFilterTopicsChange={isSelectorMode ? undefined : setFilterTopics}
       isMyAppsActive={isSelectorMode ? undefined : isMyAppsActive}
       onMyAppsActiveChange={isSelectorMode ? undefined : setIsMyAppsActive}
+      activeTab={isSelectorMode ? undefined : activeTab}
+      onActiveTabChange={isSelectorMode ? undefined : setActiveTab}
       onFetchDetails={handleFetchDetails}
       onToggleFavorite={onToggleFavorite}
       onUseInChat={handleUseInChat}
