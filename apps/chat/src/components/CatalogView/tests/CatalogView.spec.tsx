@@ -3928,8 +3928,8 @@ describe('CatalogView', () => {
       expect(ids).not.toContain('SKILL');
     });
 
-    /* Download is the one runtime action a skill offers — its own whole-archive download, not a mutation. */
-    it('hides every mutating and use-in-chat action for a skill, offering only download', () => {
+    /* A skill has no chat interface, so it never offers Use in chat; download, unshare, and revoke are all backed by DTOs that accept a skills path. */
+    it('hides Use in chat for a skill while offering download, unshare, and revoke', () => {
       enableSkills();
       mockSkills();
 
@@ -3943,11 +3943,11 @@ describe('CatalogView', () => {
         screen.getByRole('button', { name: `download ${skillId}` }),
       ).toBeTruthy();
       expect(
-        screen.queryByRole('button', { name: `unshare ${skillId}` }),
-      ).toBeNull();
+        screen.getByRole('button', { name: `unshare ${skillId}` }),
+      ).toBeTruthy();
       expect(
-        screen.queryByRole('button', { name: `revoke ${skillId}` }),
-      ).toBeNull();
+        screen.getByRole('button', { name: `revoke ${skillId}` }),
+      ).toBeTruthy();
     });
 
     it('shows Publish and Share for an owned skill', () => {
