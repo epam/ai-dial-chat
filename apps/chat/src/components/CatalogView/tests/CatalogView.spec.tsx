@@ -314,15 +314,17 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
             card select {item.id}
           </button>
         ))}
-        {(items ?? []).map((item) => (
-          <button
-            key={`edit-${item.id}`}
-            type="button"
-            onClick={() => onEdit?.(item)}
-          >
-            edit {item.id}
-          </button>
-        ))}
+        {(items ?? [])
+          .filter((item) => item.isEditable)
+          .map((item) => (
+            <button
+              key={`edit-${item.id}`}
+              type="button"
+              onClick={() => onEdit?.(item)}
+            >
+              edit {item.id}
+            </button>
+          ))}
         {(items ?? [])
           .filter((item) => isDownloadVisible?.(item) ?? true)
           .map((item) => (
@@ -661,6 +663,7 @@ describe('CatalogView', () => {
       publicSkills: [],
       isLoading: false,
       error: null,
+      refetchSkills: vi.fn().mockResolvedValue(undefined),
     });
     vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [],
@@ -828,6 +831,37 @@ describe('CatalogView', () => {
         {
           folderPath: 'Organization/Data Science',
           version: '1.2.0',
+          rules: [],
+        },
+      );
+    });
+
+    it('publishes an owned skill without sending a synthetic version', async () => {
+      vi.mocked(publishCatalogEntity).mockResolvedValue({
+        entityId: 'skills/my-bucket/analysis/revenue-skill',
+        entityType: 'skill',
+        folderPath: 'Organization/Data Science',
+        version: '',
+        publishedAt: '2026-07-13T10:00:00.000Z',
+        publishedBy: 'user@example.com',
+      });
+
+      render(<CatalogView />);
+      await capturedPublishProps.current?.onPublish?.(
+        makeCatalogItem({
+          id: 'skills/my-bucket/analysis/revenue-skill',
+          type: CatalogEntityType.Skill,
+          version: '',
+        }),
+        ['Organization', 'Data Science'],
+        [],
+      );
+
+      expect(publishCatalogEntity).toHaveBeenCalledWith(
+        'skill',
+        'skills/my-bucket/analysis/revenue-skill',
+        {
+          folderPath: 'Organization/Data Science',
           rules: [],
         },
       );
@@ -3234,6 +3268,69 @@ describe('CatalogView', () => {
       );
     });
 
+    it('opens the prompt editor for a writable shared prompt', async () => {
+      enablePrompts();
+      vi.mocked(usePrompts).mockReturnValue({
+        prompts: [],
+        folders: [],
+        publicPrompts: [],
+        publicFolders: [],
+        sharedWithMe: [
+          {
+            ...personalPrompt,
+            bucket: 'owner-bucket',
+            isMy: false,
+            canEdit: true,
+            sharedWithMe: true,
+          },
+        ],
+        isLoading: false,
+        error: null,
+        refetchPrompts: vi.fn().mockResolvedValue(undefined),
+        refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'edit prompts/owner-bucket/Work/AI/summarize',
+        }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/prompt-editor?id=prompts%2Fowner-bucket%2FWork%2FAI%2Fsummarize&returnUrl=%2Fcatalog',
+      );
+    });
+
+    it('keeps public prompts read-only even when metadata contains WRITE', () => {
+      enablePrompts();
+      vi.mocked(usePrompts).mockReturnValue({
+        prompts: [],
+        folders: [],
+        sharedWithMe: [],
+        publicPrompts: [
+          {
+            ...personalPrompt,
+            id: 'Public/translate',
+            name: 'translate',
+            folderId: 'Public',
+            canEdit: true,
+          },
+        ],
+        publicFolders: [],
+        isLoading: false,
+        error: null,
+        refetchPrompts: vi.fn().mockResolvedValue(undefined),
+        refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
+      });
+
+      render(<CatalogView />);
+
+      expect(
+        screen.queryByRole('button', { name: 'edit Public/translate' }),
+      ).toBeNull();
+    });
+
     it('offers a Prompt create option only when the feature is enabled', async () => {
       enablePrompts();
       mockPrompts();
@@ -3721,6 +3818,7 @@ describe('CatalogView', () => {
         publicSkills: [organisationSkill],
         isLoading: false,
         error: null,
+        refetchSkills: vi.fn().mockResolvedValue(undefined),
         ...overrides,
       });
 
@@ -3738,6 +3836,52 @@ describe('CatalogView', () => {
       const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
       expect(ids).toContain('skills/my-bucket/analysis/revenue-skill:SKILL');
       expect(ids).toContain('skills/public/shared-skill:SKILL');
+    });
+
+    it('opens the skill editor for a writable shared skill', async () => {
+      enableSkills();
+      mockSkills({
+        skills: [],
+        publicSkills: [],
+        sharedWithMe: [
+          {
+            ...personalSkill,
+            url: 'skills/owner-bucket/analysis/revenue-skill',
+            bucket: 'owner-bucket',
+            isMy: false,
+            canEdit: true,
+            sharedWithMe: true,
+          },
+        ],
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'edit skills/owner-bucket/analysis/revenue-skill',
+        }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/skill-editor?id=skills%2Fowner-bucket%2Fanalysis%2Frevenue-skill&returnUrl=%2Fcatalog',
+      );
+    });
+
+    it('keeps public skills read-only even when metadata contains WRITE', () => {
+      enableSkills();
+      mockSkills({
+        skills: [],
+        sharedWithMe: [],
+        publicSkills: [{ ...organisationSkill, canEdit: true }],
+      });
+
+      render(<CatalogView />);
+
+      expect(
+        screen.queryByRole('button', {
+          name: 'edit skills/public/shared-skill',
+        }),
+      ).toBeNull();
     });
 
     it('adds no skill items when the feature is disabled', () => {
@@ -3760,7 +3904,7 @@ describe('CatalogView', () => {
       expect(ids).not.toContain('SKILL');
     });
 
-    it('hides every mutating and runtime action for a skill', () => {
+    it('hides runtime actions that no skill supports', () => {
       enableSkills();
       mockSkills();
 
@@ -3773,15 +3917,9 @@ describe('CatalogView', () => {
       expect(
         screen.queryByRole('button', { name: `download ${skillId}` }),
       ).toBeNull();
-      expect(
-        screen.queryByRole('button', { name: `unshare ${skillId}` }),
-      ).toBeNull();
-      expect(
-        screen.queryByRole('button', { name: `revoke ${skillId}` }),
-      ).toBeNull();
     });
 
-    it('hides Share and Publish for a skill regardless of ownership', () => {
+    it('shows Publish and Share for an owned skill', () => {
       enableSkills();
       mockSkills();
 
@@ -3792,9 +3930,74 @@ describe('CatalogView', () => {
         isMyApp: true,
       });
       expect(capturedPublishProps.current?.isShareVisible?.(ownedSkill)).toBe(
-        false,
+        true,
       );
       expect(capturedPublishProps.current?.isPublishVisible?.(ownedSkill)).toBe(
+        true,
+      );
+      expect(
+        capturedPublishProps.current?.isPublishVisible?.({
+          ...ownedSkill,
+          isMyApp: false,
+          sharedWithMe: true,
+        }),
+      ).toBe(false);
+      expect(
+        capturedPublishProps.current?.isPublishVisible?.({
+          ...ownedSkill,
+          isMyApp: false,
+          folder: ['Public'],
+        }),
+      ).toBe(false);
+    });
+
+    it('hides Share for a writable shared skill, even though it is editable', () => {
+      enableSkills();
+      mockSkills();
+
+      render(<CatalogView />);
+
+      const writableSharedSkill = makeCatalogItem({
+        type: CatalogEntityType.Skill,
+        isMyApp: false,
+        sharedWithMe: true,
+        isEditable: true,
+      });
+      expect(
+        capturedPublishProps.current?.isShareVisible?.(writableSharedSkill),
+      ).toBe(false);
+    });
+
+    it('hides Share for a read-only shared skill', () => {
+      enableSkills();
+      mockSkills();
+
+      render(<CatalogView />);
+
+      const readOnlySharedSkill = makeCatalogItem({
+        type: CatalogEntityType.Skill,
+        isMyApp: false,
+        sharedWithMe: true,
+        isEditable: false,
+      });
+      expect(
+        capturedPublishProps.current?.isShareVisible?.(readOnlySharedSkill),
+      ).toBe(false);
+    });
+
+    it('hides Share for a public skill', () => {
+      enableSkills();
+      mockSkills();
+
+      render(<CatalogView />);
+
+      const publicSkill = makeCatalogItem({
+        type: CatalogEntityType.Skill,
+        isMyApp: false,
+        sharedWithMe: false,
+        isEditable: false,
+      });
+      expect(capturedPublishProps.current?.isShareVisible?.(publicSkill)).toBe(
         false,
       );
     });
@@ -3807,6 +4010,104 @@ describe('CatalogView', () => {
 
       /* Create options render as buttons labelled with the option's own label. */
       expect(screen.queryByRole('button', { name: 'Skill' })).toBeNull();
+    });
+
+    it('removes a shared skill via Remove from My List, refetches skills, and shows a success notification', async () => {
+      enableSkills();
+      const refetchSkills = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      const sharedSkill = {
+        ...personalSkill,
+        url: 'skills/owner-bucket/analysis/revenue-skill',
+        bucket: 'owner-bucket',
+        isMy: false,
+        sharedWithMe: true,
+      };
+      mockSkills({
+        skills: [],
+        publicSkills: [],
+        sharedWithMe: [sharedSkill],
+        refetchSkills,
+      });
+      vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', { name: `unshare ${sharedSkill.url}` }),
+      );
+
+      expect(discardSharedCatalogItem).toHaveBeenCalledWith(sharedSkill.url);
+      expect(refetchSkills).toHaveBeenCalledOnce();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
+    });
+
+    it('shows an error notification and does not refetch skills when discardSharedCatalogItem rejects for a skill', async () => {
+      enableSkills();
+      const refetchSkills = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      const sharedSkill = {
+        ...personalSkill,
+        url: 'skills/owner-bucket/analysis/revenue-skill',
+        bucket: 'owner-bucket',
+        isMy: false,
+        sharedWithMe: true,
+      };
+      mockSkills({
+        skills: [],
+        publicSkills: [],
+        sharedWithMe: [sharedSkill],
+        refetchSkills,
+      });
+      vi.mocked(discardSharedCatalogItem).mockRejectedValue(
+        new Error('network error'),
+      );
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', { name: `unshare ${sharedSkill.url}` }),
+      );
+
+      expect(refetchSkills).not.toHaveBeenCalled();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'error' }),
+      );
+    });
+
+    it('revokes access to an owned skill and shows a success notification without refetching', async () => {
+      enableSkills();
+      const refetchSkills = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      mockSkills({ skills: [personalSkill], publicSkills: [], refetchSkills });
+      vi.mocked(getShareRecipientsCount).mockResolvedValue({
+        itemId: personalSkill.url,
+        recipientsCount: 2,
+      });
+      vi.mocked(revokeSharedAccess).mockResolvedValue({ success: true });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', { name: `revoke ${personalSkill.url}` }),
+      );
+
+      expect(revokeSharedAccess).toHaveBeenCalledWith(personalSkill.url);
+      expect(refetchSkills).not.toHaveBeenCalled();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
     });
 
     it('notifies once when the skill listing fails and still renders the catalog', async () => {

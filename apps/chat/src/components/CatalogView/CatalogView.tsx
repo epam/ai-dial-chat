@@ -253,9 +253,11 @@ const CatalogView: FC<Props> = ({
 
   const {
     skills,
+    sharedWithMe: sharedSkills = [],
     publicSkills,
     isLoading: isSkillsLoading,
     error: skillsError,
+    refetchSkills,
   } = useSkills();
 
   const isLoading =
@@ -325,6 +327,13 @@ const CatalogView: FC<Props> = ({
                 favoriteIds,
               }),
             ),
+            ...sharedSkills.map((skill) =>
+              mapSkillToCatalogItem(skill, {
+                t,
+                source: SkillSource.SharedWithMe,
+                favoriteIds,
+              }),
+            ),
             ...publicSkills.map((skill) =>
               mapSkillToCatalogItem(skill, {
                 t,
@@ -351,6 +360,7 @@ const CatalogView: FC<Props> = ({
     publicPrompts,
     isSkillsEnabled,
     skills,
+    sharedSkills,
     publicSkills,
   ]);
 
@@ -456,7 +466,7 @@ const CatalogView: FC<Props> = ({
           manifest.status === 'fulfilled' && manifest.value != null
             ? manifest.value
             : undefined;
-        const skill = [...skills, ...publicSkills].find(
+        const skill = [...skills, ...sharedSkills, ...publicSkills].find(
           (candidate) => candidate.url === item.id,
         );
         const overview =
@@ -481,7 +491,10 @@ const CatalogView: FC<Props> = ({
           limitsPromise,
         ]);
         const entityDetails = mapDeploymentDetailsDtoToEntityDetails(dto);
-        const catalogDetails = mapEntityDetailsToCatalogDetails(entityDetails);
+        const catalogDetails = mapEntityDetailsToCatalogDetails(
+          entityDetails,
+          t,
+        );
         const mcpResourceKind = resolveMcpResourceKind(
           item.type,
           item.supportsMcp,
@@ -506,7 +519,15 @@ const CatalogView: FC<Props> = ({
         return undefined;
       }
     },
-    [isAdmin, t, dialCoreExternalUrl, skills, publicSkills, fetchPromptDto],
+    [
+      isAdmin,
+      t,
+      dialCoreExternalUrl,
+      skills,
+      sharedSkills,
+      publicSkills,
+      fetchPromptDto,
+    ],
   );
 
   const getLevelStatus = useCallback(
@@ -814,26 +835,23 @@ const CatalogView: FC<Props> = ({
 
   /*
    * `DiscardSharedCatalogItemDto` restricts `itemId` to
-   * `applications|toolsets|conversations` paths, so a prompt path is rejected
-   * with 400 before reaching the service. Hide the action until the backend
-   * accepts prompts.
+   * `applications|toolsets|conversations|skills` paths, so a prompt path is
+   * rejected with 400 before reaching the service. Hide the action until the
+   * backend accepts prompts.
    */
   const isUnshareVisible = useCallback(
-    (item: CatalogItem) =>
-      item.type !== CatalogEntityType.Prompt &&
-      item.type !== CatalogEntityType.Skill,
+    (item: CatalogItem) => item.type !== CatalogEntityType.Prompt,
     [],
   );
 
   /*
-   * `RevokeSharedAccessDto` carries the same `applications|toolsets|conversations`
-   * restriction as the discard DTO, so a prompt path is rejected with 400 —
-   * both by the revoke call and by the recipient-count lookup that gates it.
+   * `RevokeSharedAccessDto` carries the same
+   * `applications|toolsets|conversations|skills` restriction as the discard
+   * DTO, so a prompt path is rejected with 400 — both by the revoke call and
+   * by the recipient-count lookup that gates it.
    */
   const isRevokeShareVisible = useCallback(
-    (item: CatalogItem) =>
-      item.type !== CatalogEntityType.Prompt &&
-      item.type !== CatalogEntityType.Skill,
+    (item: CatalogItem) => item.type !== CatalogEntityType.Prompt,
     [],
   );
 
@@ -855,8 +873,12 @@ const CatalogView: FC<Props> = ({
        * bucket-relative prompt path against.
        */
       if (item.type === CatalogEntityType.Prompt) return Boolean(item.isMyApp);
-      /* Skills are read-only here: no skill share/publish path exists yet. */
-      if (item.type === CatalogEntityType.Skill) return false;
+      /*
+       * Same ownership rule as prompts: a skill shared to the current user
+       * with `WRITE` (`isEditable: true`) must not become re-shareable
+       * merely from holding that permission — only the owner can share.
+       */
+      if (item.type === CatalogEntityType.Skill) return Boolean(item.isMyApp);
       if (item.type === CatalogEntityType.Toolset) {
         return isToolsetsSharingEnabled;
       }
@@ -885,7 +907,7 @@ const CatalogView: FC<Props> = ({
       }
       await publishCatalogEntity(entityType, item.id, {
         folderPath: folderPath.join('/'),
-        version: item.version,
+        ...(item.version ? { version: item.version } : {}),
         rules: rules.map(toPublishRuleDto),
       });
     },
@@ -953,6 +975,15 @@ const CatalogView: FC<Props> = ({
           [EditorQuery.ReturnUrl]: ROUTES.Catalog,
         });
         navigate(`${ROUTES.PromptEditor}?${params.toString()}`);
+        return;
+      }
+
+      if (item.type === CatalogEntityType.Skill) {
+        const params = new URLSearchParams({
+          [EditorQuery.Id]: item.id,
+          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
+        });
+        navigate(`${ROUTES.SkillEditor}?${params.toString()}`);
         return;
       }
 
@@ -1056,6 +1087,8 @@ const CatalogView: FC<Props> = ({
       try {
         if (item.type === CatalogEntityType.Toolset) {
           await refetchToolsets();
+        } else if (item.type === CatalogEntityType.Skill) {
+          await refetchSkills();
         } else {
           await refetchDeployments();
         }
@@ -1079,6 +1112,7 @@ const CatalogView: FC<Props> = ({
     [
       refetchToolsets,
       refetchDeployments,
+      refetchSkills,
       selectedItemId,
       setSelectedItemId,
       showSuccessNotification,

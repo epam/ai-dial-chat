@@ -201,7 +201,7 @@ export const mapDeploymentToCatalogItem = (
     folder: resolveDeploymentFolder(deployment, t),
     details:
       entityDetails != null
-        ? mapEntityDetailsToCatalogDetails(entityDetails)
+        ? mapEntityDetailsToCatalogDetails(entityDetails, t)
         : undefined,
     supportsMcp: deployment.features?.mcp === true,
     supportsChat:

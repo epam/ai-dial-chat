@@ -7,7 +7,7 @@ import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
   type DropdownItem,
-  type EditorThemes,
+  EditorThemes,
   ErrorText,
   GhostButton,
   Input,
@@ -30,6 +30,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useSkillFileDropZone } from '../../hooks/useSkillFileDropZone';
 import type {
   SkillEditorProps,
   SkillEditorValues,
@@ -38,6 +39,8 @@ import type {
 import { SKILL_MANIFEST_PATH } from '../../types/skill-editor-defaults';
 import { SkillFileNodeKind } from '../../types/skill-file-node-kind';
 import { buildDialFileTree } from '../../utils/file-tree';
+import { SkillFileDropOverlay } from '../SkillFileDropOverlay/SkillFileDropOverlay';
+import { SkillFileUploadDialog } from '../SkillFileUploadDialog/SkillFileUploadDialog';
 import styles from './SkillEditor.module.scss';
 
 type MarkdownEditorComponent = ComponentType<{
@@ -79,7 +82,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   labels,
   styles: stylesProp,
   dir,
-  instructionsEditorTheme = 'light',
+  instructionsEditorTheme = EditorThemes.light,
 }) => {
   const [values, setValues] = useState<SkillEditorValues>({
     name: initialValues?.name ?? '',
@@ -147,9 +150,28 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   const [pendingRemovePath, setPendingRemovePath] = useState<string | null>(
     null,
   );
-  const [uploadError, setUploadError] = useState<string | undefined>();
-  const uploadInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [droppedFiles, setDroppedFiles] = useState<File[] | undefined>();
   const [isFilesExpanded, setIsFilesExpanded] = useState(true);
+
+  /*
+   * Files dropped anywhere on the editor surface (not just inside the
+   * already-open dialog's own drop zone) open the upload dialog and stage
+   * them immediately — dragging in from the OS shouldn't first require
+   * clicking "Upload from device".
+   */
+  const handleSurfaceFilesDropped = useCallback(
+    (files: File[]) => {
+      if (isUploadDialogOpen) return;
+      setDroppedFiles(files);
+      setIsUploadDialogOpen(true);
+    },
+    [isUploadDialogOpen],
+  );
+  const {
+    isDragActive: isSurfaceDragActive,
+    dropZoneHandlers: surfaceDropZoneHandlers,
+  } = useSkillFileDropZone(handleSurfaceFilesDropped);
 
   const t = labels ?? {};
   const colors = stylesProp?.colors;
@@ -206,25 +228,6 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     [t.removeLabel],
   );
 
-  const handleUploadInputChange = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-    const validationError = fileActions.validatePath(file.name);
-    if (validationError) {
-      setUploadError(validationError);
-      return;
-    }
-    setUploadError(undefined);
-    try {
-      await fileActions.onUploadFile(file, file.name);
-    } catch (err) {
-      setUploadError(err instanceof Error ? err.message : String(err));
-    }
-  };
-
   const filesTreeId = useId();
   const savingStatusId = useId();
 
@@ -237,16 +240,12 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         <NeutralButton
           label={t.addUploadLabel ?? 'Upload from device'}
           iconBefore={<IconPlus size={16} aria-hidden />}
-          onClick={() => uploadInputRef.current?.click()}
+          onClick={() => {
+            setDroppedFiles(undefined);
+            setIsUploadDialogOpen(true);
+          }}
         />
       </div>
-      <input
-        ref={uploadInputRef}
-        type="file"
-        className="hidden"
-        onChange={handleUploadInputChange}
-      />
-      {uploadError && <ErrorText text={uploadError} />}
       <div
         id={filesTreeId}
         role="tree"
@@ -312,7 +311,16 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   }
 
   return (
-    <div dir={dir} className="flex h-full flex-col" style={cssVars}>
+    <div
+      dir={dir}
+      className="relative flex h-full flex-col"
+      style={cssVars}
+      {...surfaceDropZoneHandlers}
+    >
+      <SkillFileDropOverlay
+        isVisible={isSurfaceDragActive && !isUploadDialogOpen}
+        labels={labels}
+      />
       <span
         role="status"
         aria-live="polite"
@@ -441,7 +449,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                     onChange={(value) =>
                       setValues((prev) => ({ ...prev, instructions: value }))
                     }
-                    theme={instructionsEditorTheme as EditorThemes}
+                    theme={instructionsEditorTheme}
                     placeholder={
                       t.instructionsPlaceholder ??
                       'Write the skill instructions in Markdown'
@@ -497,6 +505,17 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           onCancel={() => setPendingRemovePath(null)}
         />
       )}
+
+      <SkillFileUploadDialog
+        isOpen={isUploadDialogOpen}
+        onClose={() => {
+          setIsUploadDialogOpen(false);
+          setDroppedFiles(undefined);
+        }}
+        fileActions={fileActions}
+        initialFiles={droppedFiles}
+        labels={labels}
+      />
     </div>
   );
 };

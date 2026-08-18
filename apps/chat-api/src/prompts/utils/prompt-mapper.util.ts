@@ -40,6 +40,7 @@ export interface SharedResourceItem {
   url?: string;
   name?: string;
   parentPath?: string;
+  permissions?: string[];
 }
 
 export interface SharedResourcesResult {
@@ -117,6 +118,9 @@ export const mapPromptToResponse = (
   id: string,
   metadata: PromptMetadataItem,
   bucket: string,
+  ownership: Partial<
+    Pick<PromptResponseDto, 'isMy' | 'canEdit' | 'sharedWithMe' | 'permissions'>
+  > = {},
 ): PromptResponseDto => ({
   id,
   bucket,
@@ -127,6 +131,10 @@ export const mapPromptToResponse = (
   author: metadata.author,
   createdAt: metadata.createdAt ?? 0,
   updatedAt: metadata.updatedAt ?? 0,
+  isMy: ownership.isMy ?? false,
+  canEdit: ownership.canEdit ?? false,
+  sharedWithMe: ownership.sharedWithMe ?? false,
+  permissions: ownership.permissions ?? metadata.permissions,
 });
 
 export const deriveFolders = (

@@ -114,6 +114,12 @@
         "pricesSection": "Token pricing",
         "limitsSection": "Usage limits"
       },
+      "modelSpecification": {
+        "provider": "Provider",
+        "vendor": "Vendor",
+        "license": "License",
+        "knowledgeCutoffDate": "Knowledge cutoff date"
+      },
       "limits": {
         "requestsPerHour": "Requests per hour",
         "requestsPerDay": "Requests per day",
@@ -299,7 +305,8 @@
     "manage": "Manage",
     "removeFromMyList": "Remove from My List",
     "revokeAccess": "Revoke access",
-    "revokeAccessWithCount": "Revoke access ({{count}})"
+    "revokeAccessWithCount": "Revoke access ({{count}})",
+    "replace": "Replace"
   },
   "sidebar": {
     "base": {
@@ -828,7 +835,11 @@
     "htmlFrameBlocked": "This page cannot be displayed in preview",
     "htmlOpenInNewTab": "Open in new tab",
     "htmlViewSource": "View source",
-    "htmlViewRendered": "View rendered"
+    "htmlViewRendered": "View rendered",
+    "pdfThumbnailsLabel": "Thumbnails",
+    "pdfShowThumbnailsLabel": "Show thumbnails",
+    "pdfHideThumbnailsLabel": "Hide thumbnails",
+    "pdfPageNumberLabel": "Page number"
   },
   "announcementBanner": {
     "regionAriaLabel": "Announcement",
@@ -883,6 +894,8 @@
   "editor": {
     "stepGeneral": "General",
     "stepsNavAriaLabel": "Editor steps",
+    "stepOfTotal": "Step {{current}} of {{total}}",
+    "moreActionsLabel": "More actions",
     "saveButton": "Save & Exit",
     "nextButton": "Next",
     "nameLabel": "Name",
@@ -1059,38 +1072,28 @@
   "promptEditor": {
     "createTitle": "New prompt",
     "editTitle": "Edit prompt",
+    "backButtonLabel": "Back",
     "nameLabel": "Name",
     "namePlaceholder": "Give your prompt a short name",
     "descriptionLabel": "Description",
     "descriptionPlaceholder": "What is this prompt for?",
-    "contentLabel": "Prompt",
-    "contentPlaceholder": "Write the prompt text you want to reuse",
-    "folderLabel": "Folder",
-    "folderRootOption": "No folder",
-    "folderEmptyState": "You have no folders yet.",
+    "contentLabel": "Instructions",
+    "contentPlaceholder": "Write the prompt instructions you want to reuse",
     "error": {
       "required": "This field is required.",
       "nameTooLong": "Use 256 characters or fewer.",
       "nameInvalid": "Use only letters, digits, spaces, and _ . -",
       "descriptionTooLong": "Use 2000 characters or fewer.",
       "contentTooLong": "Use 50000 characters or fewer.",
-      "nameConflict": "A prompt with this name already exists in this folder.",
-      "folderConflict": "A folder with this name already exists here."
+      "nameConflict": "A prompt with this name already exists in this folder."
     },
     "charactersRemaining": "{{count}} characters left",
     "loadError": "Couldn't load this prompt.",
     "retryLabel": "Try again",
     "savingStatus": "Saving",
     "saveError": "Couldn't save this prompt. Please try again.",
-    "moveError": "The prompt was saved but couldn't be moved to the selected folder.",
-    "folderCreateLabel": "New folder",
-    "folderRenameLabel": "Rename folder",
-    "folderDeleteLabel": "Delete folder",
-    "folderNameLabel": "Folder name",
-    "folderDeleteConfirmTitle": "Delete folder",
-    "folderDeleteConfirmMessage": "Delete \"{{name}}\" and every prompt inside it? This cannot be undone.",
-    "folderError": "Couldn't update folders. Please try again.",
-    "loadingAriaLabel": "Loading prompt"
+    "loadingAriaLabel": "Loading prompt",
+    "contentLoadingAriaLabel": "Loading prompt editor"
   },
   "skillEditor": {
     "title": "Create skill",
@@ -1128,7 +1131,15 @@
       "fileTooLarge": "This file exceeds the maximum size of {{maxSize}}.",
       "archiveTooLarge": "This skill package is too large to upload.",
       "serviceUnavailable": "The service is temporarily unavailable. Please try again.",
-      "save": "Couldn't create this skill. Please try again."
+      "save": "Couldn't create this skill. Please try again.",
+      "manifestCasingInvalid": "The manifest filename must be exactly \"SKILL.md\".",
+      "manifestDuplicate": "Only one SKILL.md is allowed per upload.",
+      "manifestInvalidUtf8": "SKILL.md isn't valid UTF-8 text.",
+      "manifestInvalidFrontmatter": "SKILL.md must have valid YAML frontmatter with a name and description.",
+      "manifestNameMismatch": "This SKILL.md's name doesn't match this skill. Renaming a skill isn't supported.",
+      "totalSizeExceeded": "This would make the skill package too large to upload.",
+      "totalCountExceeded": "This would exceed the maximum number of files allowed in a skill.",
+      "manifestImportDeclined": "Manifest import cancelled, staged files kept."
     },
     "saveSuccessTitle": "Skill created",
     "createSuccess": "\"{{name}}\" has been created.",
@@ -1146,7 +1157,18 @@
     "unsavedChangesTitle": "Discard unsaved changes?",
     "unsavedChangesMessage": "You have unsaved changes. Leaving now will discard them.",
     "unsavedChangesConfirmLabel": "Discard changes",
-    "unsavedChangesCancelLabel": "Keep editing"
+    "unsavedChangesCancelLabel": "Keep editing",
+    "uploadDialogTitle": "Upload files from device",
+    "uploadDropZoneLabel": "Drag and drop it or click here to upload",
+    "uploadDropZoneMobileLabel": "Click here to upload",
+    "uploadDropZoneAriaLabel": "Upload files",
+    "uploadManifestRowNote": "Will replace this Skill's name, description, and instructions",
+    "uploadBatchErrorAriaPrefix": "Upload error: ",
+    "uploadRemoveCandidateLabel": "Remove {{path}}",
+    "dropOverlayTitle": "Upload files",
+    "dropOverlaySubtitle": "Drop files here to add them to this skill",
+    "manifestImportConfirmTitle": "Replace Skill metadata?",
+    "manifestImportConfirmMessage": "Importing this SKILL.md will replace the Name, Description, and Instructions fields. This cannot be undone."
   },
   "entityNotifications": {
     "prompt": {

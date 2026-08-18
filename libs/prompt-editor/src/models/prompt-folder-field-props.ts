@@ -16,6 +16,8 @@ export interface PromptFolderFieldProps {
   nameError?: string;
   /** Folder mutations. Omit to render the picker without create/rename/delete controls. */
   actions?: PromptFolderActions;
+  /** Whether the selected folder is read-only. */
+  disabled?: boolean;
   /** Text overrides, shared with `PromptEditor`. */
   labels?: PromptEditorLabels;
   /** Class applied to helper and confirmation text. Defaults to `'dial-small-text'`. */

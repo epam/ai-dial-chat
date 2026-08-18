@@ -263,6 +263,20 @@ describe('PromptsResourceService', () => {
         metaUrl('second'),
       ]);
       expect(metadataSpy).toHaveBeenCalledTimes(2);
+      expect(metadataSpy).toHaveBeenNthCalledWith(
+        1,
+        BUCKET,
+        '',
+        expect.objectContaining({
+          params: {
+            query: {
+              recursive: true,
+              token: undefined,
+              permissions: true,
+            },
+          },
+        }),
+      );
     });
 
     it('rejects a repeated page token instead of looping forever', async () => {
