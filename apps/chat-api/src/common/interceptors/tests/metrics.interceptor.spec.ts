@@ -1,8 +1,17 @@
+import { Logger } from '@nestjs/common';
 import type { CallHandler, ExecutionContext } from '@nestjs/common';
 import { metrics } from '@opentelemetry/api';
 import { MeterProvider, MetricReader } from '@opentelemetry/sdk-metrics';
 import { of, throwError } from 'rxjs';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 import type { MetricsInterceptor as MetricsInterceptorType } from '../metrics.interceptor';
 
 class TestMetricReader extends MetricReader {
@@ -156,5 +165,59 @@ describe('MetricsInterceptor', () => {
       'http.response.status_code': 200,
     });
     expect(dataPoint).toBeUndefined();
+  });
+
+  describe('log level', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('logs the excluded /api/health route at debug level', async () => {
+      const debugSpy = vi.spyOn(Logger.prototype, 'debug');
+      const logSpy = vi.spyOn(Logger.prototype, 'log');
+      const interceptor = new MetricsInterceptor();
+      const context = createExecutionContext(
+        { method: 'GET', url: '/api/health', route: { path: '/api/health' } },
+        { statusCode: 200 },
+      );
+      const handler: CallHandler = { handle: () => of({ status: 'ok' }) };
+
+      await new Promise<void>((resolve) => {
+        interceptor
+          .intercept(context, handler)
+          .subscribe({ complete: resolve });
+      });
+
+      expect(debugSpy).toHaveBeenCalledWith(
+        expect.stringContaining('GET /api/health 200'),
+      );
+      expect(logSpy).not.toHaveBeenCalled();
+    });
+
+    it('logs a non-excluded route at log level', async () => {
+      const debugSpy = vi.spyOn(Logger.prototype, 'debug');
+      const logSpy = vi.spyOn(Logger.prototype, 'log');
+      const interceptor = new MetricsInterceptor();
+      const context = createExecutionContext(
+        {
+          method: 'GET',
+          url: '/api/v1/themes/abc',
+          route: { path: '/api/v1/themes/:id' },
+        },
+        { statusCode: 200 },
+      );
+      const handler: CallHandler = { handle: () => of({ ok: true }) };
+
+      await new Promise<void>((resolve) => {
+        interceptor
+          .intercept(context, handler)
+          .subscribe({ complete: resolve });
+      });
+
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringContaining('GET /api/v1/themes/abc 200'),
+      );
+      expect(debugSpy).not.toHaveBeenCalled();
+    });
   });
 });

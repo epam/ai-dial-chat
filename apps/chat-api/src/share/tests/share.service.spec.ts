@@ -202,6 +202,33 @@ describe('ShareService', () => {
       expect(result.url).toBe('https://example.com/catalog/shared/p1');
     });
 
+    it('percent-encodes a prompt itemId nested inside a folder with a space in its name', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/p2' }));
+
+      const result = await service.createShareLink('token-abc', 'my-bucket', {
+        itemId: 'New folder 1/Prompt 1',
+        access: [ShareAccess.View],
+        resourceKind: ShareResourceKind.Prompt,
+      });
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'prompts/my-bucket/New%20folder%201/Prompt%201',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+      expect(result.url).toBe('https://example.com/catalog/shared/p2');
+    });
+
     it('leaves itemId untouched when no resourceKind is given', async () => {
       const { service } = makeService();
       const spy = vi
