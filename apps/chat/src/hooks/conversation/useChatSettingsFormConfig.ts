@@ -87,7 +87,8 @@ export const useChatSettingsFormConfig = (params: Params) => {
     [params, showSuccessNotification, t],
   );
 
-  const isSystemPromptEnabled = params.deploymentFeatures?.systemPrompt ?? false;
+  const isSystemPromptEnabled =
+    params.deploymentFeatures?.systemPrompt ?? false;
   const isTemperatureEnabled =
     !params.isQuickApp && (params.deploymentFeatures?.temperature ?? false);
 

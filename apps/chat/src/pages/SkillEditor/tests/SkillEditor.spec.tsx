@@ -7,13 +7,17 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { strToU8, zipSync } from 'fflate';
+import { StrictMode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useUser } from '../../../context/auth/UserContext';
 import { useNotification } from '../../../context/NotificationContext';
+import { useSkills } from '../../../context/SkillsContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import {
   createSkill,
   downloadSkill,
+  downloadSkillFile,
+  listSkillFiles,
   updateSkill,
 } from '../../../server-api/skills.api';
 import SkillEditor from '../SkillEditor';
@@ -59,6 +63,10 @@ vi.mock('../../../context/NotificationContext', () => ({
   useNotification: vi.fn(),
 }));
 
+vi.mock('../../../context/SkillsContext', () => ({
+  useSkills: vi.fn(),
+}));
+
 vi.mock('../../../hooks/attachment/useOpenAttachmentCanvas', () => ({
   useOpenAttachmentCanvas: () => ({ openAttachmentCanvas: vi.fn() }),
 }));
@@ -85,6 +93,8 @@ vi.mock('../../../server-api/skills.api', () => ({
   createSkill: vi.fn(),
   updateSkill: vi.fn(),
   downloadSkill: vi.fn(),
+  downloadSkillFile: vi.fn(),
+  listSkillFiles: vi.fn(),
 }));
 
 /*
@@ -120,6 +130,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
 });
 
 const showNotification = vi.fn();
+const refetchSkills = vi.fn<() => Promise<void>>();
 
 const openUploadDialog = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(
@@ -197,6 +208,15 @@ describe('SkillEditor page', () => {
     vi.mocked(useNotification).mockReturnValue(
       createNotificationContextValue(showNotification),
     );
+    refetchSkills.mockResolvedValue(undefined);
+    vi.mocked(useSkills).mockReturnValue({
+      skills: [],
+      publicSkills: [],
+      sharedWithMe: [],
+      isLoading: false,
+      error: null,
+      refetchSkills,
+    });
     vi.mocked(createSkill).mockResolvedValue({
       etag: 'etag-1',
     } as unknown as Awaited<ReturnType<typeof createSkill>>);
@@ -269,6 +289,24 @@ describe('SkillEditor page', () => {
       ),
     );
     expect(mockNavigate).toHaveBeenCalledWith('/catalog');
+  });
+
+  it('refreshes the skill catalog before navigating after create', async () => {
+    refetchSkills.mockImplementationOnce(async () => {
+      expect(createSkill).toHaveBeenCalledOnce();
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+    render(<SkillEditor />);
+
+    await fillRequiredFields(
+      user,
+      'New Catalog Skill',
+      'Must appear immediately',
+    );
+    await user.click(getCreateButton());
+
+    await waitFor(() => expect(refetchSkills).toHaveBeenCalledOnce());
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/catalog'));
   });
 
   it('blocks submission with a required-field error when Instructions is empty', async () => {
@@ -601,6 +639,13 @@ describe('SkillEditor page', () => {
     );
     await confirmUpload(user);
     await waitFor(() =>
+      expect(
+        screen.queryByRole('dialog', {
+          name: 'skillEditor.uploadDialogTitle',
+        }),
+      ).toBeNull(),
+    );
+    await waitFor(() =>
       expect(screen.getAllByText('bundle.zip')[0]).toBeTruthy(),
     );
 
@@ -625,6 +670,8 @@ describe('SkillEditor page — edit mode', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(downloadSkillFile).mockReset();
+    vi.mocked(listSkillFiles).mockReset();
     mockSearchParams = new URLSearchParams({ id: 'team-a/docs-helper' });
     vi.mocked(useUser).mockReturnValue({
       user: { bucket: 'my-bucket' },
@@ -632,6 +679,15 @@ describe('SkillEditor page — edit mode', () => {
     vi.mocked(useNotification).mockReturnValue(
       createNotificationContextValue(showNotification),
     );
+    refetchSkills.mockResolvedValue(undefined);
+    vi.mocked(useSkills).mockReturnValue({
+      skills: [],
+      publicSkills: [],
+      sharedWithMe: [],
+      isLoading: false,
+      error: null,
+      refetchSkills,
+    });
   });
 
   it('downloads and populates the form when id is present', async () => {
@@ -646,6 +702,109 @@ describe('SkillEditor page — edit mode', () => {
       ),
     );
     expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
+  });
+
+  it('opens only one ZIP request during the StrictMode setup-cleanup-setup cycle', async () => {
+    vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
+
+    render(
+      <StrictMode>
+        <SkillEditor />
+      </StrictMode>,
+    );
+
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
+    expect(downloadSkill).toHaveBeenCalledOnce();
+    expect(downloadSkill).toHaveBeenCalledWith(
+      'my-bucket',
+      'team-a/docs-helper',
+    );
+  });
+
+  it('loads and updates a writable shared skill in the owner bucket', async () => {
+    mockSearchParams = new URLSearchParams({
+      id: 'skills/owner-bucket/team-a/docs-helper',
+    });
+    vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
+    vi.mocked(updateSkill).mockResolvedValue({
+      etag: 'etag-2',
+    } as unknown as Awaited<ReturnType<typeof updateSkill>>);
+
+    render(<SkillEditor />);
+
+    await waitFor(() =>
+      expect(downloadSkill).toHaveBeenCalledWith(
+        'owner-bucket',
+        'team-a/docs-helper',
+      ),
+    );
+    await user.click(getSaveButton());
+
+    await waitFor(() =>
+      expect(updateSkill).toHaveBeenCalledWith(
+        'owner-bucket',
+        'team-a/docs-helper',
+        expect.any(String),
+        [],
+        [],
+        '"etag-1"',
+      ),
+    );
+  });
+
+  it('falls back to manifest and file endpoints when Core treats the ZIP path as a grouping folder', async () => {
+    vi.mocked(downloadSkill).mockRejectedValue({
+      response: { status: 400, json: () => Promise.resolve({}) },
+    });
+    vi.mocked(listSkillFiles).mockResolvedValue({
+      bucket: 'my-bucket',
+      path: 'team-a/docs-helper',
+      items: [
+        {
+          bucket: 'my-bucket',
+          name: 'SKILL.md',
+          path: 'team-a/docs-helper/files/SKILL.md',
+          url: 'skills/my-bucket/team-a/docs-helper/files/SKILL.md',
+          nodeType: 'item',
+          parentPath: 'team-a/docs-helper/files',
+          etag: '"etag-1"',
+        },
+        {
+          bucket: 'my-bucket',
+          name: 'notes.md',
+          path: 'team-a/docs-helper/files/docs/notes.md',
+          url: 'skills/my-bucket/team-a/docs-helper/files/docs/notes.md',
+          nodeType: 'item',
+          parentPath: 'team-a/docs-helper/files/docs',
+        },
+      ],
+    });
+    vi.mocked(downloadSkillFile).mockImplementation(
+      async (_bucket, _path, filePath) =>
+        ({
+          headers: {
+            get: (key: string) =>
+              key === 'etag' && filePath === 'SKILL.md' ? '"etag-1"' : null,
+          },
+          text: () => Promise.resolve(manifest),
+          arrayBuffer: () =>
+            Promise.resolve(new TextEncoder().encode('supporting').buffer),
+        }) as unknown as Response,
+    );
+
+    render(<SkillEditor />);
+
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
+    expect(downloadSkillFile).toHaveBeenCalledWith(
+      'my-bucket',
+      'team-a/docs-helper',
+      'SKILL.md',
+    );
+    expect(downloadSkillFile).toHaveBeenCalledWith(
+      'my-bucket',
+      'team-a/docs-helper',
+      'docs/notes.md',
+    );
   });
 
   it('shows a load error and does not populate the form when the ETag header is missing', async () => {
@@ -781,6 +940,13 @@ describe('SkillEditor page — edit mode', () => {
     stageFile(new File(['new body'], 'new.md'));
     await waitFor(() => expect(screen.getAllByText('new.md')[0]).toBeTruthy());
     await confirmUpload(user);
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('dialog', {
+          name: 'skillEditor.uploadDialogTitle',
+        }),
+      ).toBeNull(),
+    );
     await waitFor(() => expect(screen.getAllByText('new.md')[0]).toBeTruthy());
 
     await user.click(getSaveButton());

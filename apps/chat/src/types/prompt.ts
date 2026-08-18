@@ -2,7 +2,7 @@
 export enum PromptSource {
   /** The caller's own prompt, editable and deletable by them. */
   Personal = 'personal',
-  /** Shared with the caller by another user; read-only. */
+  /** Shared with the caller by another user; permissions determine editability. */
   SharedWithMe = 'sharedWithMe',
   /** Organisation-wide prompt; read-only for every user. */
   Public = 'public',

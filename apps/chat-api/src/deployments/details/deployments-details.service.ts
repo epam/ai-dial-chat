@@ -15,6 +15,7 @@ import type { DeploymentDetailsDto } from '../dto/deployment-details.dto';
 import { DeploymentItemType } from '../dto/deployment-item.dto';
 import {
   getNumber,
+  getString,
   isRecord,
   mapDeploymentFeatures,
   mapToolsetAuthSettings,
@@ -258,6 +259,23 @@ export class DeploymentsDetailsService {
           : undefined,
         pricing: raw.pricing,
         features: mapDeploymentFeatures(raw.features),
+        catalogProperties: (() => {
+          if (!isRecord(raw.catalog_properties)) return undefined;
+
+          const properties = {
+            provider: getString(raw.catalog_properties, 'provider'),
+            vendor: getString(raw.catalog_properties, 'vendor'),
+            license: getString(raw.catalog_properties, 'license'),
+            knowledgeCutoffDate: getString(
+              raw.catalog_properties,
+              'knowledgeCutoffDate',
+            ),
+          };
+
+          return Object.values(properties).some((value) => value != null)
+            ? properties
+            : undefined;
+        })(),
         owner: raw.owner,
         inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
           ? raw.input_attachment_types

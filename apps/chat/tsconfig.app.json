@@ -60,7 +60,13 @@
       "path": "../../libs/share/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/prompts/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/attachment-input/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/ai-dial-chat-hooks/tsconfig.lib.json"
     },
     {
       "path": "../../libs/conversation-input/tsconfig.lib.json"
@@ -100,9 +106,6 @@
     },
     {
       "path": "../../libs/attachment-canvas/tsconfig.lib.json"
-    },
-    {
-      "path": "../../libs/prompts/tsconfig.lib.json"
     }
   ]
 }

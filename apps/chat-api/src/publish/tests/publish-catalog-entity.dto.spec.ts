@@ -17,6 +17,20 @@ async function validateDto(plain: Record<string, unknown>) {
   return validate(instance, { whitelist: true, forbidNonWhitelisted: true });
 }
 
+describe('PublishCatalogEntityDto — version', () => {
+  it('accepts an omitted version for unversioned resources', async () => {
+    const errors = await validateDto({
+      folderPath: 'Organization/Data Science',
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects a non-string version', async () => {
+    const errors = await validateDto({ ...BASE_BODY, version: 2 });
+    expect(errors.some((error) => error.property === 'version')).toBe(true);
+  });
+});
+
 describe('PublishCatalogEntityDto — rules', () => {
   it('passes when rules is omitted', async () => {
     const errors = await validateDto(BASE_BODY);

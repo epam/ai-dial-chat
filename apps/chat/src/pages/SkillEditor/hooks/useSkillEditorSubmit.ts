@@ -64,6 +64,7 @@ interface UseSkillEditorSubmitParams {
   loadedPathRef: React.MutableRefObject<string | undefined>;
   etagRef: React.MutableRefObject<string | undefined>;
   returnUrl: string;
+  refetchSkills: () => Promise<void>;
 }
 
 interface UseSkillEditorSubmitResult {
@@ -90,6 +91,7 @@ export const useSkillEditorSubmit = ({
   loadedPathRef,
   etagRef,
   returnUrl,
+  refetchSkills,
 }: UseSkillEditorSubmitParams): UseSkillEditorSubmitResult => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -216,6 +218,7 @@ export const useSkillEditorSubmit = ({
           filePaths,
           fileBlobs,
         );
+        await refetchSkills();
 
         setPhase('success');
         showNotification({
@@ -240,6 +243,7 @@ export const useSkillEditorSubmit = ({
       showNotification,
       navigate,
       returnUrl,
+      refetchSkills,
       applyUploadErrorStatus,
     ],
   );
@@ -280,6 +284,7 @@ export const useSkillEditorSubmit = ({
           etag,
         );
         etagRef.current = result.etag ?? etag;
+        await refetchSkills();
 
         setPhase('success');
         showNotification({
@@ -311,6 +316,7 @@ export const useSkillEditorSubmit = ({
       showNotification,
       navigate,
       returnUrl,
+      refetchSkills,
       applyUploadErrorStatus,
     ],
   );

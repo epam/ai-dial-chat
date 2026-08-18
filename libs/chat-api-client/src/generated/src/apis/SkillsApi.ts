@@ -14,6 +14,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  SkillCatalogListResponseDto,
   SkillFileDeleteResponseDto,
   SkillFileListResponseDto,
   SkillFileUploadResponseDto,
@@ -630,6 +631,43 @@ export class SkillsApi extends runtime.BaseAPI {
       requestParameters,
       initOverrides,
     );
+    return await response.value();
+  }
+
+  /**
+   * Returns all catalog-visible skills in one response. Organisation skills are always marked read-only.
+   * List personal, shared, and organisation skills
+   */
+  async listCatalogSkillsRaw(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<SkillCatalogListResponseDto>> {
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/skills/catalog`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<SkillCatalogListResponseDto>(response);
+  }
+
+  /**
+   * Returns all catalog-visible skills in one response. Organisation skills are always marked read-only.
+   * List personal, shared, and organisation skills
+   */
+  async listCatalogSkills(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<SkillCatalogListResponseDto> {
+    const response = await this.listCatalogSkillsRaw(initOverrides);
     return await response.value();
   }
 

@@ -1,3 +1,4 @@
+import type { EditorThemes } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
 import type { SkillFileNodeKind } from '../types/skill-file-node-kind';
 
@@ -315,6 +316,6 @@ export interface SkillEditorProps {
   styles?: SkillEditorStyles;
   /** Explicit direction override. Omit to inherit from the ambient `dir` attribute. */
   dir?: 'ltr' | 'rtl';
-  /** Theme applied to the Instructions Markdown editor, resolved by the host from its own theme state. Defaults to `'light'`. */
-  instructionsEditorTheme?: 'light' | 'dark';
+  /** Theme applied to the Instructions Markdown editor, resolved by the host from its own theme state. Defaults to `EditorThemes.light`. */
+  instructionsEditorTheme?: EditorThemes;
 }

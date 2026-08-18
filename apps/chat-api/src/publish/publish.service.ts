@@ -29,14 +29,9 @@ import {
 } from './publish-target.util';
 
 /*
- * This service does NOT inject SkillsLookupService (design.md D9 in
- * openspec/changes/add-skills-bff-api). `splitEntityNameAndVersion` below
- * already degrades gracefully for a skill entityId with no `{name}__{version}`
- * suffix (empty version string), and no verified consumer of this service
- * currently needs a resolved skill name/version beyond that — see the open
- * questions in the `catalog-publish-api` delta spec (skill publish-history
- * version recovery, nested-grouping-folder targetUrl collision) before
- * adding one. Re-read that rationale before "fixing" this.
+ * This service does NOT inject SkillsLookupService. Skill publication uses the
+ * whole resource URL and intentionally has no synthetic version; a missing
+ * request version degrades to the empty value already used by skill history.
  */
 const historyCacheKey = (entityType: CatalogEntityType, entityId: string) =>
   `publish-history:${entityType}:${entityId}`;
@@ -78,7 +73,7 @@ const splitEntityNameAndVersion = (
 };
 
 /**
- * Publishes catalog entities (Toolset, Application, Prompt) to an Organization
+ * Publishes catalog entities (Toolset, Application, Prompt, Skill) to an Organization
  * folder and reads their publish history by proxying DIAL Core's
  * Publication API (`createPublication`/`getPublications`) — this service
  * holds no persistence of its own. `apps/chat-api` has no database, and Core
@@ -116,17 +111,19 @@ export class PublishService {
     entityType: CatalogEntityType,
     entityId: string,
     folderPath: string,
-    version: string,
+    version: string | undefined,
     author: string,
     rules?: PublishRuleDto[],
   ): Promise<PublishResultDto> {
     const sourceUrl = toSourceUrl(entityType, entityId, bucket);
     const publicTargetFolder = getPublicTargetFolder(folderPath);
     const targetUrl = `${getResourceTypePrefix(sourceUrl)}/${publicTargetFolder}${getResourceName(sourceUrl)}`;
-    const { name: entityName } = splitEntityNameAndVersion(sourceUrl);
+    const { name: entityName, version: resourceVersion } =
+      splitEntityNameAndVersion(sourceUrl);
+    const publicationVersion = version || resourceVersion;
     const requestBody = {
       /* A prompt carries no version, so the title must not gain a trailing space. */
-      name: `${entityName} ${version}`.trim(),
+      name: `${entityName} ${publicationVersion}`.trim(),
       targetFolder: publicTargetFolder,
       resources: [{ action: 'ADD' as const, sourceUrl, targetUrl }],
       displayAuthor: author,
@@ -167,7 +164,7 @@ export class PublishService {
       entityId,
       entityType,
       folderPath,
-      version,
+      version: publicationVersion,
       publishedAt: publication.createdAt
         ? new Date(publication.createdAt).toISOString()
         : new Date().toISOString(),

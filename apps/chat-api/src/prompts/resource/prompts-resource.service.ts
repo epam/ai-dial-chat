@@ -147,7 +147,13 @@ export class PromptsResourceService {
           folderSubPath ? encodeDialResourcePath(folderSubPath) : '',
           {
             headers: getBearerAuthHeaders(token),
-            params: { query: { recursive: true, token: pageToken } },
+            params: {
+              query: {
+                recursive: true,
+                token: pageToken,
+                permissions: true,
+              },
+            },
           },
         )) as PromptMetadataListResult;
 

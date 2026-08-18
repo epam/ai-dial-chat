@@ -311,6 +311,13 @@ describe('DeploymentsDetailsService', () => {
             completion: '0.03',
             cache_read: '0.001',
           },
+          catalog_properties: {
+            provider: 'Provider',
+            vendor: 'Vendor',
+            license: 'License',
+            knowledgeCutoffDate: '2026-08-17',
+            schemaSpecificExtra: 'not exposed',
+          },
         }),
       );
 
@@ -344,6 +351,12 @@ describe('DeploymentsDetailsService', () => {
             prompt: '0.01',
             completion: '0.03',
             cache_read: '0.001',
+          },
+          catalogProperties: {
+            provider: 'Provider',
+            vendor: 'Vendor',
+            license: 'License',
+            knowledgeCutoffDate: '2026-08-17',
           },
         },
       });
