@@ -77,6 +77,7 @@ import {
   revokeSharedAccess,
 } from '../../server-api/share.api';
 import {
+  deleteSkill,
   downloadSkill,
   downloadSkillFile,
   listSkillFiles,
@@ -1207,6 +1208,13 @@ const CatalogView: FC<Props> = ({
         } else if (item.type === CatalogEntityType.Toolset) {
           await deleteToolset(item.id);
           await refetchToolsets();
+        } else if (item.type === CatalogEntityType.Skill) {
+          const parsed = parseSkillResourceUrl(item.id);
+          if (parsed == null) {
+            throw new Error(`Invalid skill resource url: ${item.id}`);
+          }
+          await deleteSkill(parsed.bucket, parsed.path);
+          await refetchSkills();
         } else {
           await deleteApplication(item.id);
           await refetchDeployments();
@@ -1234,6 +1242,7 @@ const CatalogView: FC<Props> = ({
       refetchToolsets,
       refetchDeployments,
       refetchPrompts,
+      refetchSkills,
       notifyOperationSuccess,
       showErrorNotification,
       t,
