@@ -17,9 +17,11 @@
   color: var(--ac-error-icon, var(--text-error, #ae2f2f));
 }
 
+/* Background matches MarkdownCodeBlock's light-theme .containerLight
+   (libs/chat-shared/.../CodeBlock/CodeBlock.module.scss). */
 .jsonWrapper {
   border-color: var(--ac-json-border, var(--stroke-secondary, #d1dbea));
-  background-color: var(--ac-json-bg, var(--bg-layer-1, #e0e6f0));
+  background-color: var(--ac-json-bg, var(--bg-layer-6, #f8fafc));
 }
 
 .jsonLabel {

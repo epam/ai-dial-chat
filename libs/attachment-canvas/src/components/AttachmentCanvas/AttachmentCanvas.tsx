@@ -154,6 +154,11 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
       onResizeStop={onResizeStop}
       styles={{
         ...panelStyles,
+        titleClassName: panelStyles?.titleClassName ?? 'dial-h3-text',
+        headerClassName: mergeClasses(
+          'border-b border-tertiary',
+          panelStyles?.headerClassName,
+        ),
         className: mergeClasses(
           isOpen ? 'mobile:w-full mobile:max-w-full' : 'w-0',
           className,

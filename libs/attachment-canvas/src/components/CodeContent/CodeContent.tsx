@@ -1,10 +1,12 @@
 import {
   CodeBlockTheme,
+  mergeClasses,
   restrainedSyntaxTheme,
 } from '@epam/ai-dial-chat-shared';
 import { memo, type FC } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import type { CodeCanvasContent } from '../../models/attachment-canvas';
+import styles from './CodeContent.module.scss';
 
 const SYNTAX_THEME = {
   [CodeBlockTheme.Dark]: restrainedSyntaxTheme,
@@ -25,9 +27,17 @@ export const CodeContent: FC<CodeContentProps> = memo(
     const { text, language } = content;
     const isPlain = language == null || language === 'plaintext';
     const syntaxTheme = SYNTAX_THEME[codeBlockTheme];
+    const isLightTheme = codeBlockTheme === CodeBlockTheme.Light;
 
     return (
-      <div dir="ltr" className="h-full overflow-auto">
+      <div
+        dir="ltr"
+        className={mergeClasses(
+          'h-full overflow-auto',
+          styles.container,
+          isLightTheme && styles.containerLight,
+        )}
+      >
         {isPlain ? (
           <pre className="whitespace-pre-wrap break-words p-4">{text}</pre>
         ) : (

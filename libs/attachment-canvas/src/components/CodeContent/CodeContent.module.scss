@@ -1,0 +1,10 @@
+/* Matches MarkdownCodeBlock's .container/.containerLight background
+   (libs/chat-shared/.../CodeBlock/CodeBlock.module.scss) so a code
+   attachment's background matches a markdown fenced code block's. */
+.container {
+  background: var(--cc-bg, var(--bg-layer-raised, #fcfcfc));
+}
+
+.containerLight {
+  background: var(--cc-bg, var(--bg-layer-6, #f8fafc));
+}
