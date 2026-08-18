@@ -1272,6 +1272,7 @@ const CatalogView: FC<Props> = ({
       onFetchExistingRules={handleFetchExistingRules}
       publishLabels={{
         searchPlaceholder: t(CatalogI18nKeys.PublishFolderSearchPlaceholder),
+        cancelCreatingFolderLabel: t(ButtonsI18nKeys.Cancel),
         folderEmptyStateLabel: t(CatalogI18nKeys.PublishFolderEmptyState, {
           query: '{query}',
         }),

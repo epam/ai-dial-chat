@@ -24,6 +24,7 @@ Use this library whenever a host application needs the "publish to a folder, opt
 - `@tabler/icons-react`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-ui-kit`
+- `@epam/ai-dial-react-file-manager`
 
 ## Components
 
