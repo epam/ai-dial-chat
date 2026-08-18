@@ -3950,7 +3950,7 @@ describe('CatalogView', () => {
       ).toBeNull();
     });
 
-    it('shows Publish only for an owned skill while Share remains hidden', () => {
+    it('shows Publish and Share for an owned skill', () => {
       enableSkills();
       mockSkills();
 
@@ -3961,7 +3961,7 @@ describe('CatalogView', () => {
         isMyApp: true,
       });
       expect(capturedPublishProps.current?.isShareVisible?.(ownedSkill)).toBe(
-        false,
+        true,
       );
       expect(capturedPublishProps.current?.isPublishVisible?.(ownedSkill)).toBe(
         true,
@@ -3982,6 +3982,57 @@ describe('CatalogView', () => {
       ).toBe(false);
     });
 
+    it('hides Share for a writable shared skill, even though it is editable', () => {
+      enableSkills();
+      mockSkills();
+
+      render(<CatalogView />);
+
+      const writableSharedSkill = makeCatalogItem({
+        type: CatalogEntityType.Skill,
+        isMyApp: false,
+        sharedWithMe: true,
+        isEditable: true,
+      });
+      expect(
+        capturedPublishProps.current?.isShareVisible?.(writableSharedSkill),
+      ).toBe(false);
+    });
+
+    it('hides Share for a read-only shared skill', () => {
+      enableSkills();
+      mockSkills();
+
+      render(<CatalogView />);
+
+      const readOnlySharedSkill = makeCatalogItem({
+        type: CatalogEntityType.Skill,
+        isMyApp: false,
+        sharedWithMe: true,
+        isEditable: false,
+      });
+      expect(
+        capturedPublishProps.current?.isShareVisible?.(readOnlySharedSkill),
+      ).toBe(false);
+    });
+
+    it('hides Share for a public skill', () => {
+      enableSkills();
+      mockSkills();
+
+      render(<CatalogView />);
+
+      const publicSkill = makeCatalogItem({
+        type: CatalogEntityType.Skill,
+        isMyApp: false,
+        sharedWithMe: false,
+        isEditable: false,
+      });
+      expect(capturedPublishProps.current?.isShareVisible?.(publicSkill)).toBe(
+        false,
+      );
+    });
+
     it('leaves the Create dropdown without a skill entry', () => {
       enableSkills();
       mockSkills();
@@ -3990,6 +4041,104 @@ describe('CatalogView', () => {
 
       /* Create options render as buttons labelled with the option's own label. */
       expect(screen.queryByRole('button', { name: 'Skill' })).toBeNull();
+    });
+
+    it('removes a shared skill via Remove from My List, refetches skills, and shows a success notification', async () => {
+      enableSkills();
+      const refetchSkills = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      const sharedSkill = {
+        ...personalSkill,
+        url: 'skills/owner-bucket/analysis/revenue-skill',
+        bucket: 'owner-bucket',
+        isMy: false,
+        sharedWithMe: true,
+      };
+      mockSkills({
+        skills: [],
+        publicSkills: [],
+        sharedWithMe: [sharedSkill],
+        refetchSkills,
+      });
+      vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', { name: `unshare ${sharedSkill.url}` }),
+      );
+
+      expect(discardSharedCatalogItem).toHaveBeenCalledWith(sharedSkill.url);
+      expect(refetchSkills).toHaveBeenCalledOnce();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
+    });
+
+    it('shows an error notification and does not refetch skills when discardSharedCatalogItem rejects for a skill', async () => {
+      enableSkills();
+      const refetchSkills = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      const sharedSkill = {
+        ...personalSkill,
+        url: 'skills/owner-bucket/analysis/revenue-skill',
+        bucket: 'owner-bucket',
+        isMy: false,
+        sharedWithMe: true,
+      };
+      mockSkills({
+        skills: [],
+        publicSkills: [],
+        sharedWithMe: [sharedSkill],
+        refetchSkills,
+      });
+      vi.mocked(discardSharedCatalogItem).mockRejectedValue(
+        new Error('network error'),
+      );
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', { name: `unshare ${sharedSkill.url}` }),
+      );
+
+      expect(refetchSkills).not.toHaveBeenCalled();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'error' }),
+      );
+    });
+
+    it('revokes access to an owned skill and shows a success notification without refetching', async () => {
+      enableSkills();
+      const refetchSkills = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      mockSkills({ skills: [personalSkill], publicSkills: [], refetchSkills });
+      vi.mocked(getShareRecipientsCount).mockResolvedValue({
+        itemId: personalSkill.url,
+        recipientsCount: 2,
+      });
+      vi.mocked(revokeSharedAccess).mockResolvedValue({ success: true });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', { name: `revoke ${personalSkill.url}` }),
+      );
+
+      expect(revokeSharedAccess).toHaveBeenCalledWith(personalSkill.url);
+      expect(refetchSkills).not.toHaveBeenCalled();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
     });
 
     it('notifies once when the skill listing fails and still renders the catalog', async () => {

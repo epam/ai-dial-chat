@@ -131,9 +131,10 @@ export class ShareController {
     summary: 'Discard a shared catalog resource or conversation',
     description:
       "Discards the authenticated user's own access to a shared catalog " +
-      "entity (application or toolset) or conversation, via DIAL Core's " +
-      "discardSharedResources operation. Only affects the caller's own " +
-      'access — removing access for everyone else is a separate operation.',
+      'entity (application or toolset), a skill, or a conversation, via ' +
+      "DIAL Core's discardSharedResources operation. Only affects the " +
+      "caller's own access — removing access for everyone else is a " +
+      'separate operation.',
   })
   @ApiBody({ type: DiscardSharedCatalogItemDto })
   @ApiResponse({
@@ -178,7 +179,7 @@ export class ShareController {
     operationId: 'getShareRecipientsCount',
     summary: 'Count current recipients of an owned resource',
     description:
-      "Returns how many users currently hold shared access to a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core's " +
+      "Returns how many users currently hold shared access to a catalog entity (application or toolset), a skill, or a conversation the caller owns, via DIAL Core's " +
       'getSharedResources operation. Intended to be called when an owner opens the menu offering "Revoke access", so the count is never stale. ' +
       'Counts accepted invitations only — an issued but unopened share link is not counted.',
   })
@@ -219,7 +220,7 @@ export class ShareController {
     operationId: 'revokeSharedAccess',
     summary: 'Revoke all shared access to an owned resource',
     description:
-      "Revokes every outstanding share grant on a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core's " +
+      "Revokes every outstanding share grant on a catalog entity (application or toolset), a skill, or a conversation the caller owns, via DIAL Core's " +
       'revokeSharedResources operation. Affects all recipients at once — DIAL Core cannot target a single recipient. Discarding only the ' +
       "caller's own access to a resource shared with them is a separate operation.",
   })

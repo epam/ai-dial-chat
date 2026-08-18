@@ -43,6 +43,14 @@ export const SkillFilePreview: FC<Props> = ({ path }) => {
           forbiddenErrorLabel: t(AttachmentCanvasI18nKeys.ForbiddenErrorLabel),
           htmlFrameBlockedLabel: t(AttachmentCanvasI18nKeys.HtmlFrameBlocked),
           htmlOpenInNewTabLabel: t(AttachmentCanvasI18nKeys.HtmlOpenInNewTab),
+          pdfThumbnailsLabel: t(AttachmentCanvasI18nKeys.PdfThumbnailsLabel),
+          pdfShowThumbnailsLabel: t(
+            AttachmentCanvasI18nKeys.PdfShowThumbnailsLabel,
+          ),
+          pdfHideThumbnailsLabel: t(
+            AttachmentCanvasI18nKeys.PdfHideThumbnailsLabel,
+          ),
+          pdfPageNumberLabel: t(AttachmentCanvasI18nKeys.PdfPageNumberLabel),
         }}
         codeBlockTheme={
           currentTheme === ThemeId.Dark

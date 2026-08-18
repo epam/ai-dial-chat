@@ -1,10 +1,4 @@
-# share-revoke-access Specification
-
-## Purpose
-
-An owner takes back every recipient's access to a resource they own — a catalog entity (application or toolset) or a conversation — without deleting it. Covers the BFF revoke endpoint, the on-demand recipient-count lookup that gates the action, and the catalog details-panel surface that offers it.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: BFF revoke-shared-access endpoint
 
@@ -149,89 +143,6 @@ Shared helpers: `countRecipientsByUrl` and `resolveRecipientsCount` in `apps/cha
 - **WHEN** the shared-with-others set contains `{ url: 'skills/owner-bucket/team-a/docs-helper', sharedWith: [a] }`
 - **THEN** `GET /api/v1/share/recipients?itemId=skills/owner-bucket/team-a/docs-helper` resolves `kind(itemId) = 'SKILL'` and answers `{ itemId, recipientsCount: 1 }`
 
-### Requirement: Owner-side "Revoke access" action in the catalog details panel
-
-`Header` (`libs/catalog/src/components/Details/Header/Header.tsx`) SHALL append a "Revoke access" entry to the details panel's "Manage" dropdown when, and only when, both of the following hold:
-
-- an `onRevokeShare` callback was supplied by the host, and
-- the item's `isMyApp` is `true`.
-
-The entry SHALL render after the owner-side Delete entry, use the label `texts.revokeShareLabel` (English default `'Revoke access'`), and use `IconUserOff` from `@tabler/icons-react` at `DIAL_ICON_SIZE.SM` with `aria-hidden`, visually distinguishing it from Delete's `IconTrash` while sharing Delete's `danger: true` treatment. Because the entry is gated on ownership and "Remove from My List" is gated on `sharedWithMe`, the two never render together.
-
-Clicking it SHALL only request confirmation — it SHALL NOT call the host's `onRevokeShare` directly.
-
-Additionally, the entry SHALL be gated on a recipient count resolved **when the Manage menu opens**, via the host-supplied `onFetchRecipientsCount(item): Promise<number | undefined>`. `Header` SHALL call it from the dropdown's `onOpenChange`, and also from the trigger's `onMouseEnter`/`onFocus` so the lookup is usually settled before the click lands — at most once per displayed item, reset whenever `item.id` changes. It SHALL NOT be called for an item that could never offer the action (no `onRevokeShare`, `isMyApp !== true`, or `isRevokeShareVisible` returning `false`).
-
-Resolution states map to the entry as follows:
-
-- **in flight** — the entry is withheld, so a count never appears and then contradicts itself,
-- **`0`** — the entry stays hidden; an action that could only be a no-op is noise,
-- **positive number** — the entry is shown, labelled `texts.revokeShareLabelWithCount(count)` (English default `` (count) => `Revoke access (${count})` ``) so the owner sees the blast radius before confirming,
-- **`undefined` or a rejection** — the entry is shown with the plain `texts.revokeShareLabel`, so a transient upstream failure never removes the owner's only way to revoke.
-
-When the host supplies no `onFetchRecipientsCount`, the entry is offered for every owned item.
-
-Resolving on menu open, rather than reading a value carried on the item, is what keeps the entry honest after a revoke: the confirmation sub-view unmounts `Header`, so the next menu open asks again instead of replaying a pre-revoke count.
-
-#### Scenario: Owned item exposes the action
-
-- **GIVEN** a catalog item with `isMyApp: true` and a host-supplied `onRevokeShare`
-- **WHEN** the details panel's Manage menu is opened
-- **THEN** the menu includes a "Revoke access" entry after the Delete entry, and no "Remove from My List" entry
-
-#### Scenario: Shared-with-me item does not expose the action
-
-- **GIVEN** a catalog item with `isMyApp: false` and `sharedWithMe: true`
-- **WHEN** the details panel's Manage menu is opened
-- **THEN** the menu includes "Remove from My List" and no "Revoke access" entry
-
-#### Scenario: Host that supplies no callback gets no entry
-
-- **GIVEN** a catalog item with `isMyApp: true` and no `onRevokeShare` prop
-- **WHEN** the Manage menu is opened
-- **THEN** no "Revoke access" entry is rendered
-
-#### Scenario: Confirmation precedes the API call
-
-- **WHEN** the user activates "Revoke access"
-- **THEN** the confirmation sub-view opens and `onRevokeShare` has not been called
-
-#### Scenario: Count is requested on menu open, not on render
-
-- **GIVEN** an owned catalog item and a host-supplied `onFetchRecipientsCount`
-- **WHEN** the details panel renders
-- **THEN** `onFetchRecipientsCount` has not been called; it is called once the Manage menu is opened (or its trigger hovered or focused), and not a second time for the same item
-
-#### Scenario: Item nobody holds access to does not expose the action
-
-- **GIVEN** an owned catalog item whose `onFetchRecipientsCount` resolves `0`
-- **WHEN** the Manage menu is opened
-- **THEN** no "Revoke access" entry is rendered
-
-#### Scenario: Known recipient count is shown in the label
-
-- **GIVEN** an owned catalog item whose `onFetchRecipientsCount` resolves `3`
-- **WHEN** the Manage menu is opened
-- **THEN** the entry's label reads "Revoke access (3)"
-
-#### Scenario: Failed lookup keeps the action reachable
-
-- **GIVEN** an owned catalog item whose `onFetchRecipientsCount` rejects or resolves `undefined`
-- **WHEN** the Manage menu is opened
-- **THEN** the entry is rendered with the plain "Revoke access" label
-
-#### Scenario: Entry is withheld while the count is in flight
-
-- **GIVEN** an owned catalog item whose `onFetchRecipientsCount` has not settled
-- **WHEN** the Manage menu is opened
-- **THEN** no "Revoke access" entry is rendered yet
-
-#### Scenario: A revoked item stops offering the action without a reload
-
-- **GIVEN** an owner who has just confirmed "Revoke access (3)" successfully
-- **WHEN** the Manage menu is opened again
-- **THEN** the count is fetched again, now answers `0`, and no "Revoke access" entry is rendered
-
 ### Requirement: `CatalogView` wires revoke to the BFF endpoint
 
 `CatalogView` (`apps/chat/src/components/CatalogView/CatalogView.tsx`) SHALL implement `onRevokeShare` as `handleRevokeShare`, structurally parallel to the existing `handleUnshare`:
@@ -293,37 +204,6 @@ New keys SHALL be added to `apps/chat/src/constants/translation-keys.ts` and `ap
 
 - **WHEN** an owner revokes access to a skill named `"docs-helper"`
 - **THEN** the success notification renders `catalog.details.revokeShare.success` interpolated as `Shared access to "docs-helper" was revoked.`, using the identical key already used for applications and toolsets
-
-### Requirement: Library isolation for the revoke callback
-
-`libs/catalog` SHALL receive revoke behaviour exclusively through host-supplied values: the `onRevokeShare?: (item: CatalogItem) => void | Promise<void>` callback on `CatalogProps` / `DetailsPanelProps` / `ItemDetailsProps`, and the `texts.revokeShareLabel`, `texts.revokeShareConfirmTitle`, `texts.revokeShareConfirmMessage`, `texts.revokeShareConfirmConsequences`, and `texts.revokingShareStatusLabel` entries on `ItemDetailsTexts`, each with an English default.
-
-The lib SHALL NOT contain the endpoint path, import `@epam/ai-dial-chat-api-client` or `apps/chat/src/server-api`, read app contexts, emit notifications, or know that revocation is an HTTP operation at all. `texts.revokeShareConfirmMessage` SHALL follow the existing `unshareConfirmMessage` signature `(name: string) => ReactNode` so hosts can pass either JSX or a plain translated string.
-
-Every newly declared prop and `texts` entry SHALL be read by the lib — the callback by `Header`/`DetailsPanel`, each text entry by `DetailsPanel`'s confirmation content resolution — and `libs/catalog/README.md` SHALL document the new public props.
-
-#### Scenario: Lib holds no host integration details
-
-- **WHEN** `libs/catalog` is searched for `/api/`, `chat-api-client`, `server-api`, or notification imports related to revoke
-- **THEN** no match is found; the only revoke-related surface is the callback prop, the `texts` entries, and the `DetailsConfirmationKind.RevokeAccess` member
-
-### Requirement: RTL, accessibility, and memoisation for the catalog revoke action
-
-The Manage-menu entry and the confirmation sub-view SHALL introduce no physical-direction Tailwind classes; the existing `Dropdown placement="bottom-end"` and the sub-view's logical layout classes are reused unchanged. `IconUserOff` is direction-neutral and SHALL NOT be mirrored with `rtl:scale-x-[-1]`. The item name inside the confirmation message is substituted through the i18next `{{name}}` placeholder, not string concatenation, so mixed-direction names render under the browser's bidi algorithm.
-
-The entry's icon SHALL carry `aria-hidden` (the entry's own label names it). The confirmation sub-view's in-flight status SHALL be announced through the existing `role="status" aria-live="polite"` region using `texts.revokingShareStatusLabel`, and the whole flow SHALL be operable by keyboard alone using the dialog semantics the sub-view already provides.
-
-`handleRevokeShare` in `CatalogView` SHALL be wrapped in `useCallback` with `[showNotification, t]` as dependencies, matching `handleUnshare`. The `Header` `manageItems` array SHALL keep its existing `useMemo`, extended with the new visibility flag and handler in its dependency list, and the new `handleRevokeShare` callback inside `Header` SHALL be `useCallback`-wrapped like `handleUnshare`.
-
-#### Scenario: RTL layout leaves the entry logically positioned
-
-- **WHEN** `dir="rtl"` is set on the document and the Manage menu is opened for an owned item
-- **THEN** "Revoke access" renders in the same logical position as the other entries and `IconUserOff` is not mirrored
-
-#### Scenario: In-flight state is announced
-
-- **WHEN** the revoke confirmation is submitted and the host callback is pending
-- **THEN** the sub-view's live region announces the revoking status text and both the confirm and cancel controls are disabled
 
 ### Requirement: Tests — backend and catalog revoke flow
 

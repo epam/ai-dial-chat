@@ -15,6 +15,8 @@ import type {
   DeploymentFeaturesDetailsDto,
 } from '@epam/ai-dial-chat-api-client';
 import { formatUnitPrice } from '@epam/ai-dial-chat-shared';
+import type { TFunction } from 'i18next';
+import { CatalogI18nKeys } from '../constants/translation-keys';
 import { AuthenticationType } from '../types/entity-details';
 import type {
   AgentEntityDetails,
@@ -38,9 +40,39 @@ const formatTokens = (n: number): string =>
 const formatReleaseDate = (timestampMs: number): string =>
   new Date(timestampMs).toLocaleDateString();
 
+const formatCatalogDate = (date: string): string => {
+  const dateParts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  if (dateParts == null) return date;
+
+  const [, year, month, day] = dateParts;
+  const yearNumber = Number(year);
+  const monthIndex = Number(month) - 1;
+  const dayNumber = Number(day);
+  const localDate = new Date(yearNumber, monthIndex, dayNumber);
+
+  if (
+    localDate.getFullYear() !== yearNumber ||
+    localDate.getMonth() !== monthIndex ||
+    localDate.getDate() !== dayNumber
+  ) {
+    return date;
+  }
+
+  return formatReleaseDate(localDate.getTime());
+};
+
 const PRICING_UNIT_KEY = 'unit';
 
-const mapModelDetails = (data: ModelEntityDetails): CatalogItemTabData => {
+const getDetailsLabel = (
+  t: TFunction | undefined,
+  key: CatalogI18nKeys,
+  fallback: string,
+): string => (t == null ? fallback : t(key));
+
+const mapModelDetails = (
+  data: ModelEntityDetails,
+  t?: TFunction,
+): CatalogItemTabData => {
   const sections: OverviewSection[] = [];
 
   if (data.capabilities != null) {
@@ -81,6 +113,38 @@ const mapModelDetails = (data: ModelEntityDetails): CatalogItemTabData => {
     const { specification: s } = data;
     const specs: OverviewSection['specs'] = [];
 
+    if (s.provider != null)
+      specs.push({
+        label: getDetailsLabel(
+          t,
+          CatalogI18nKeys.DetailsModelProvider,
+          'Provider',
+        ),
+        value: s.provider,
+      });
+    if (s.vendor != null)
+      specs.push({
+        label: getDetailsLabel(t, CatalogI18nKeys.DetailsModelVendor, 'Vendor'),
+        value: s.vendor,
+      });
+    if (s.license != null)
+      specs.push({
+        label: getDetailsLabel(
+          t,
+          CatalogI18nKeys.DetailsModelLicense,
+          'License',
+        ),
+        value: s.license,
+      });
+    if (s.knowledgeCutoffDate != null)
+      specs.push({
+        label: getDetailsLabel(
+          t,
+          CatalogI18nKeys.DetailsModelKnowledgeCutoffDate,
+          'Knowledge cutoff date',
+        ),
+        value: formatCatalogDate(s.knowledgeCutoffDate),
+      });
     if (s.hostedBy != null)
       specs.push({ label: 'Hosted by', value: s.hostedBy });
     if (s.createdAt != null)
@@ -467,10 +531,11 @@ const mapGuardrailDetails = (
 /** Converts a strongly-typed entity domain model into the lib's `CatalogItemTabData` shape. */
 export const mapEntityDetailsToCatalogDetails = (
   details: EntitySpecificDetails,
+  t?: TFunction,
 ): CatalogItemTabData => {
   switch (details.type) {
     case 'MODEL':
-      return mapModelDetails(details.data);
+      return mapModelDetails(details.data, t);
     case 'AGENT':
       return mapAgentDetails(details.data);
     case 'TOOLSET':
@@ -554,6 +619,7 @@ const mapModelDetailsDto = (
     limits,
     pricing,
     features,
+    catalogProperties,
     owner,
     inputAttachmentTypes,
     defaultMaxTokens,
@@ -562,6 +628,7 @@ const mapModelDetailsDto = (
 
   const hasSpecification =
     limits != null ||
+    catalogProperties != null ||
     owner != null ||
     createdAt != null ||
     (inputAttachmentTypes?.length ?? 0) > 0;
@@ -572,6 +639,10 @@ const mapModelDetailsDto = (
       capabilities: mapFeaturesToCapabilities(features),
       specification: hasSpecification
         ? {
+            provider: catalogProperties?.provider,
+            vendor: catalogProperties?.vendor,
+            license: catalogProperties?.license,
+            knowledgeCutoffDate: catalogProperties?.knowledgeCutoffDate,
             contextWindowTokens: limits?.maxTotalTokens,
             maxOutputTokens: limits?.maxCompletionTokens ?? defaultMaxTokens,
             inputTypes: inputAttachmentTypes,
