@@ -120,6 +120,33 @@ const renderEditor = (
 };
 
 describe('PublishAccessRuleEditor', () => {
+  it('applies picker color overrides through the styles contract', () => {
+    renderEditor({
+      styles: {
+        colors: {
+          selectBorder: '#123456',
+          selectBorderHover: '#234567',
+          selectBorderFocus: '#345678',
+          selectBorderOpen: '#456789',
+        },
+      },
+    });
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.style.getPropertyValue('--pare-select-border')).toBe(
+      '#123456',
+    );
+    expect(dialog.style.getPropertyValue('--pare-select-border-hover')).toBe(
+      '#234567',
+    );
+    expect(dialog.style.getPropertyValue('--pare-select-border-focus')).toBe(
+      '#345678',
+    );
+    expect(dialog.style.getPropertyValue('--pare-select-border-open')).toBe(
+      '#456789',
+    );
+  });
+
   it('keeps Save enabled with no source selected, and shows a required-field error instead of saving', async () => {
     const { onSave } = renderEditor();
     expect(isDisabled(screen.getByRole('button', { name: 'Save' }))).toBe(

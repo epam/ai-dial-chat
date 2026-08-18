@@ -50,6 +50,10 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
         htmlOpenInNewTabLabel,
         htmlViewSourceLabel,
         htmlViewRenderedLabel,
+        pdfThumbnailsLabel,
+        pdfShowThumbnailsLabel,
+        pdfHideThumbnailsLabel,
+        pdfPageNumberLabel,
       } = labels ?? {};
 
       const { isOpen, isLoading, content, fileName, closeCanvas } =
@@ -105,6 +109,10 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
             htmlOpenInNewTabLabel,
             htmlViewSourceLabel,
             htmlViewRenderedLabel,
+            pdfThumbnailsLabel,
+            pdfShowThumbnailsLabel,
+            pdfHideThumbnailsLabel,
+            pdfPageNumberLabel,
           }}
           onDownload={handleDownload}
           onCopyText={

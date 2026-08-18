@@ -59,7 +59,12 @@ describe('PromptsPublicService', () => {
         'getPromptMetadata',
       ).mockResolvedValue(
         okResponse({
-          items: [{ ...metaItem('org-prompt', 'public') }],
+          items: [
+            {
+              ...metaItem('org-prompt', 'public'),
+              permissions: ['READ', 'WRITE'],
+            },
+          ],
         }),
       );
       vi.spyOn(service['dialClient'].client, 'getPrompt').mockResolvedValue(
@@ -75,6 +80,11 @@ describe('PromptsPublicService', () => {
 
       expect(result.prompts).toHaveLength(1);
       expect(result.prompts[0].id).toBe('org-prompt');
+      expect(result.prompts[0]).toMatchObject({
+        isMy: false,
+        canEdit: false,
+        sharedWithMe: false,
+      });
       expect(result.folders).toEqual([]);
     });
   });

@@ -2,6 +2,7 @@ export { PromptEditor } from './components/PromptEditor/PromptEditor';
 export { PromptFolderField } from './components/PromptFolderField/PromptFolderField';
 export type {
   PromptEditorErrors,
+  PromptEditorColors,
   PromptEditorFolder,
   PromptEditorLabels,
   PromptEditorProps,

@@ -1,3 +1,4 @@
+import type { SkillMetadataItemDto } from '@epam/ai-dial-chat-api-client';
 import {
   SkillFileNodeKind,
   type SkillEditorValues,
@@ -6,11 +7,107 @@ import {
 import type { Dispatch, SetStateAction } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { getApiErrorStatus } from '../../../server-api/api-error';
-import { downloadSkill } from '../../../server-api/skills.api';
+import {
+  downloadSkill,
+  downloadSkillFile,
+  listSkillFiles,
+} from '../../../server-api/skills.api';
 import { SkillEditorLoadState } from '../../../types/skill-editor-load-state';
-import { parseSkillManifest, unpackSkillArchive } from '../../../utils/skill';
+import {
+  parseSkillManifest,
+  SKILL_MANIFEST_FILE,
+  unpackSkillArchive,
+} from '../../../utils/skill';
 import type { SkillFileContent } from '../../../utils/skill-file-preview';
 import { nameFromPath } from '../utils/skill-file-tree';
+
+interface LoadedSkill {
+  etag: string;
+  manifestText: string;
+  files: Map<string, Uint8Array>;
+}
+
+class InvalidSkillArchiveError extends Error {}
+
+const resolveSkillFilePath = (
+  item: SkillMetadataItemDto,
+  skillPath: string,
+): string | null => {
+  const parentPath = item.parentPath?.replace(/^\/+|\/+$/g, '') ?? '';
+  const filesRoot = `${skillPath.replace(/\/+$/g, '')}/files`;
+
+  if (parentPath === filesRoot) return item.name;
+  if (parentPath.startsWith(`${filesRoot}/`)) {
+    return `${parentPath.slice(filesRoot.length + 1)}/${item.name}`;
+  }
+
+  /* Some Core versions return file-relative metadata instead. */
+  if (parentPath === 'files') return item.name;
+  if (parentPath.startsWith('files/')) {
+    return `${parentPath.slice('files/'.length)}/${item.name}`;
+  }
+
+  return null;
+};
+
+const loadSkillArchive = async (
+  bucket: string,
+  skillPath: string,
+): Promise<LoadedSkill> => {
+  const response = await downloadSkill(bucket, skillPath);
+  const etag = response.headers.get('etag');
+  if (!etag) throw new InvalidSkillArchiveError('Skill ETag is missing');
+
+  try {
+    const buffer = await response.arrayBuffer();
+    const { manifestText, files } = unpackSkillArchive(new Uint8Array(buffer));
+    return { etag, manifestText, files };
+  } catch {
+    throw new InvalidSkillArchiveError('Skill ZIP is invalid');
+  }
+};
+
+const loadSkillFiles = async (
+  bucket: string,
+  skillPath: string,
+): Promise<LoadedSkill> => {
+  const [manifestResponse, listing] = await Promise.all([
+    downloadSkillFile(bucket, skillPath, SKILL_MANIFEST_FILE),
+    listSkillFiles({
+      bucket,
+      path: skillPath,
+      filePath: '',
+      recursive: true,
+    }),
+  ]);
+  const manifestItem = listing.items.find(
+    (item) =>
+      item.nodeType === 'item' &&
+      resolveSkillFilePath(item, skillPath) === SKILL_MANIFEST_FILE,
+  );
+  const etag = manifestResponse.headers.get('etag') ?? manifestItem?.etag;
+  if (!etag) throw new Error('Skill ETag is missing');
+
+  const fileItems = listing.items
+    .filter((item) => item.nodeType === 'item')
+    .map((item) => ({ item, path: resolveSkillFilePath(item, skillPath) }))
+    .filter(
+      (entry): entry is { item: SkillMetadataItemDto; path: string } =>
+        entry.path != null && entry.path !== SKILL_MANIFEST_FILE,
+    );
+  const downloadedFiles = await Promise.all(
+    fileItems.map(async ({ path }) => {
+      const response = await downloadSkillFile(bucket, skillPath, path);
+      return [path, new Uint8Array(await response.arrayBuffer())] as const;
+    }),
+  );
+
+  return {
+    etag,
+    manifestText: await manifestResponse.text(),
+    files: new Map(downloadedFiles),
+  };
+};
 
 interface UseSkillEditorLoadParams {
   isEditMode: boolean;
@@ -69,28 +166,44 @@ export const useSkillEditorLoad = ({
     setLoadState(SkillEditorLoadState.Loading);
 
     (async () => {
+      /*
+       * Let StrictMode finish its development-only setup → cleanup → setup
+       * cycle before opening a streaming HTTP response. Aborting that first
+       * stream can make Vite's dev proxy write to an already-ended response.
+       */
+      await Promise.resolve();
+      if (cancelled) return;
+
       try {
-        const response = await downloadSkill(bucket, skillPath);
-        const etag = response.headers.get('etag');
-        if (!etag) {
-          if (!cancelled) setLoadState(SkillEditorLoadState.Error);
-          return;
+        let loadedSkill: LoadedSkill;
+        try {
+          loadedSkill = await loadSkillArchive(bucket, skillPath);
+        } catch (error) {
+          const status = getApiErrorStatus(error);
+          if (!(error instanceof InvalidSkillArchiveError) && status !== 400) {
+            throw error;
+          }
+          /*
+           * Core installations differ in whole-skill ZIP behavior. The same
+           * manifest/file endpoints used by Catalog details are the
+           * compatibility path when the ZIP route resolves the skill as a
+           * grouping folder or returns an unusable archive.
+           */
+          loadedSkill = await loadSkillFiles(bucket, skillPath);
         }
-        const buffer = await response.arrayBuffer();
-        const { manifestText, files: unpackedFiles } = unpackSkillArchive(
-          new Uint8Array(buffer),
+        const { frontmatter, instructions } = parseSkillManifest(
+          loadedSkill.manifestText,
         );
-        const { frontmatter, instructions } = parseSkillManifest(manifestText);
         if (cancelled) return;
 
-        etagRef.current = etag;
+        etagRef.current = loadedSkill.etag;
         frontmatterRef.current = frontmatter;
         loadedPathRef.current = skillPath;
         filesContentRef.current = new Map(
-          [...unpackedFiles].map(([path, bytes]) => [path, { bytes }]),
+          [...loadedSkill.files].map(([path, bytes]) => [path, { bytes }]),
         );
         setFiles(
-          [...unpackedFiles.keys()].map((path) => ({
+          [...loadedSkill.files.keys()].map((path) => ({
             path,
             name: nameFromPath(path),
             kind: SkillFileNodeKind.File,

@@ -20,7 +20,7 @@
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "*",
     "@epam/ai-dial-ui-kit": "^0.13.0-dev.26",
-    "@epam/ai-dial-react-file-manager": "^0.1.0-dev.17",
+    "@epam/ai-dial-react-file-manager": "^0.1.0-dev.22",
     "@tabler/icons-react": "^3.0.0",
     "react": "^19.0.0"
   },

@@ -248,14 +248,14 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
   return (
     <form
       noValidate
-      className="flex h-full w-full"
+      className="flex h-full w-full flex-col overflow-y-auto desktop:flex-row desktop:overflow-hidden"
       onSubmit={(e) => {
         e.preventDefault();
         void handleSubmit();
       }}
     >
-      <div className="flex h-full w-1/2 flex-col border-e border-e-tertiary">
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-6">
+      <div className="flex w-full flex-col border-b border-b-tertiary desktop:h-full desktop:w-1/2 desktop:border-b-0 desktop:border-e desktop:border-e-tertiary">
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 desktop:p-6">
           <DeploymentCreationForm
             values={values}
             errors={errors}
@@ -268,12 +268,12 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
         </div>
       </div>
 
-      <div className="flex w-1/2 flex-col bg-layer-1 p-4">
+      <div className="flex w-full flex-col bg-layer-1 p-4 desktop:w-1/2">
         <p className="dial-small-text text-secondary">
           {t(BasicI18nKeys.Preview)}
         </p>
-        <div className="flex flex-1 items-center justify-center">
-          <div className="w-[280px]">
+        <div className="flex flex-1 items-center justify-center py-4">
+          <div className="w-full max-w-[280px]">
             <Card item={previewItem} />
           </div>
         </div>

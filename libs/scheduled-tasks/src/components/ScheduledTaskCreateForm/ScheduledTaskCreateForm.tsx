@@ -11,7 +11,7 @@ import {
   LazyMarkdownEditor,
   Select,
 } from '@epam/ai-dial-ui-kit';
-import { lazy, Suspense, type ComponentProps, type FC } from 'react';
+import { lazy, Suspense, type FC } from 'react';
 import { DESCRIPTION_MAX_LENGTH } from '../../constants/scheduled-task-create-form';
 import { ScheduledTaskCreateFormProps } from '../../models/scheduled-task-create-form-props';
 import { ScheduledTaskRepeat } from '../../types/scheduled-task-schedule';
@@ -29,8 +29,6 @@ const MarkdownEditor = lazy(async () => {
   const module = await LazyMarkdownEditor();
   return { default: module.MarkdownEditor };
 });
-
-type MarkdownEditorTheme = ComponentProps<typeof MarkdownEditor>['theme'];
 
 /**
  * Presentational create-task form: a back-navigable header (Cancel/Save
@@ -395,7 +393,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
               value={values.prompt}
               onChange={(value) => onFieldChange('prompt', value)}
               height={480}
-              theme={markdownEditorTheme as MarkdownEditorTheme}
+              theme={markdownEditorTheme}
             />
           </Suspense>
           {errors.prompt && (

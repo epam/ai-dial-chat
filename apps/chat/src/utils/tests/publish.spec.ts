@@ -28,6 +28,12 @@ describe('toPublishEntityType', () => {
       CatalogPublishEntityType.Prompt,
     );
   });
+
+  it('maps Skill to the publish API skill enum value', () => {
+    expect(toPublishEntityType(CatalogEntityType.Skill)).toBe(
+      CatalogPublishEntityType.Skill,
+    );
+  });
 });
 
 describe('mapPublishHistoryEntryDto', () => {

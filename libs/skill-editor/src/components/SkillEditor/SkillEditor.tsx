@@ -7,7 +7,7 @@ import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
   type DropdownItem,
-  type EditorThemes,
+  EditorThemes,
   ErrorText,
   GhostButton,
   Input,
@@ -82,7 +82,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   labels,
   styles: stylesProp,
   dir,
-  instructionsEditorTheme = 'light',
+  instructionsEditorTheme = EditorThemes.light,
 }) => {
   const [values, setValues] = useState<SkillEditorValues>({
     name: initialValues?.name ?? '',
@@ -449,7 +449,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                     onChange={(value) =>
                       setValues((prev) => ({ ...prev, instructions: value }))
                     }
-                    theme={instructionsEditorTheme as EditorThemes}
+                    theme={instructionsEditorTheme}
                     placeholder={
                       t.instructionsPlaceholder ??
                       'Write the skill instructions in Markdown'

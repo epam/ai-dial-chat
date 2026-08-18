@@ -36,8 +36,9 @@ export const createPrompt = (
 export const updatePrompt = (
   path: string,
   body: UpdatePromptDto,
+  bucket?: string,
 ): Promise<PromptResponseDto> =>
-  promptsApi.updatePrompt({ path, updatePromptDto: body });
+  promptsApi.updatePrompt({ path, updatePromptDto: body, bucket });
 
 export const deletePrompt = (path: string): Promise<void> =>
   promptsApi.deletePrompt({ path });
@@ -45,8 +46,9 @@ export const deletePrompt = (path: string): Promise<void> =>
 export const movePrompt = (
   path: string,
   body: MovePromptDto,
+  bucket?: string,
 ): Promise<PromptResponseDto> =>
-  promptsApi.movePrompt({ path, movePromptDto: body });
+  promptsApi.movePrompt({ path, movePromptDto: body, bucket });
 
 /* ------------------------------------------------------------------ */
 /* Organisation (public) prompts                                        */

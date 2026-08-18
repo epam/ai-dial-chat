@@ -9,6 +9,12 @@ The Custom App editor page: its settings form, create and edit flows, validation
 ### Requirement: Custom App editor page
 The system SHALL provide a `CustomAppEditor` page that reuses `ToolsetEditorHeader` and a new `CustomAppEditorView`. The editor has two steps: General and Settings. The General step reuses `GeneralForm`. The Settings step renders `CustomAppSettingsForm`. The editor supports both **create** and **edit** modes; edit mode is entered when `ToolsetEditorQuery.Id` is present in the URL.
 
+`CustomAppEditor`'s page root SHALL use `className="flex min-h-0 flex-1 flex-col"` (`flex-1` growth, not `size-full`/`h-full`), matching `AppsEditor` and `ToolsetEditor` — see the "Apps-editor page renders two steps" requirement in `app-editor-flow` for why `flex-1` is required under the mobile-only global `Header`. `CustomAppEditorView`'s own root, in turn, SHALL use `className="flex h-full min-h-0"` (`h-full`, not `flex-1`): its parent (`CustomAppEditor`'s `<div className="size-full">` content wrapper) is a plain block element, not a flex container, so `flex-1` there would have no effect and the view would fall back to content-based (`auto`) height, leaving its `shrink-0` Cancel/Next footer un-pinned from the bottom of the viewport instead of sitting flush against it.
+
+#### Scenario: Bottom Cancel/Next buttons stay pinned to the viewport bottom
+- **WHEN** the General step is shown and its content is shorter than the available height
+- **THEN** the Cancel/Next button row still renders flush against the bottom of the viewport, not immediately below the form content
+
 #### Scenario: Navigate to custom app editor (create)
 - **WHEN** user clicks "Custom App" in the catalog
 - **THEN** the app navigates to the Custom App Editor with no `id` query param (creation mode)

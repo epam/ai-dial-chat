@@ -1,5 +1,3 @@
-import type { Message as MessageType } from '@epam/ai-dial-chat-shared';
-import { MessageRole } from '@epam/ai-dial-chat-shared';
 import { act, fireEvent, render } from '@testing-library/react';
 import {
   createRef,
@@ -10,14 +8,32 @@ import {
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConversationScroll } from '../useConversationScroll';
 
+/* jsdom has no ResizeObserver; a no-op stub is enough since these tests
+ * drive content-growth checks via `fireEvent.scroll`, not resize callbacks. */
+class ResizeObserverMock {
+  observe() {
+    // No-op in JSDOM.
+  }
+  unobserve() {
+    // No-op in JSDOM.
+  }
+  disconnect() {
+    // No-op in JSDOM.
+  }
+}
+vi.stubGlobal('ResizeObserver', ResizeObserverMock);
+
+interface TestMessage {
+  content: string;
+}
+
 const scrollToMock = vi.fn();
 const CONTAINER_HEIGHT = 400;
 
-const makeMessages = (count: number): MessageType[] =>
+const makeMessages = (count: number): TestMessage[] =>
   Array.from({ length: count }, (_, index) => ({
-    role: index % 2 === 0 ? MessageRole.User : MessageRole.Assistant,
     content: `message ${index}`,
-  })) as MessageType[];
+  }));
 
 const assignRef = (
   ref: RefObject<HTMLDivElement | null>,
@@ -87,7 +103,7 @@ interface ScrollHarnessHandle {
 }
 
 interface ScrollHarnessProps {
-  messages: MessageType[];
+  messages: TestMessage[];
   conversationId: string;
   contentHeight?: number;
   isAssistantTyping?: boolean;

@@ -38,8 +38,9 @@ export class PromptController {
   @Get()
   @ApiOperation({
     operationId: 'listPrompts',
-    summary: 'List personal prompts',
-    description: 'Returns all personal prompts and the folder hierarchy.',
+    summary: 'List personal, shared, and organisation prompts',
+    description:
+      'Returns all catalog-visible prompts in one response. Organisation prompts are always read-only.',
   })
   @ApiResponse({
     status: 200,
@@ -101,7 +102,7 @@ export class PromptController {
   @Put()
   @ApiOperation({
     operationId: 'updatePrompt',
-    summary: 'Update a personal prompt',
+    summary: 'Update a personal or writable shared prompt',
   })
   @ApiQuery({
     name: 'path',
@@ -120,11 +121,16 @@ export class PromptController {
   @ApiResponse({ status: 502, description: 'DIAL Core error' })
   updatePrompt(
     @Req() req: Request,
-    @Query() query: RequiredPromptPathDto,
+    @Query() query: GetPromptQueryDto,
     @Body() dto: UpdatePromptDto,
   ) {
     const { at, bucket } = req.user as SessionUser;
-    return this.promptService.updatePrompt(at, bucket, query.path, dto);
+    return this.promptService.updatePrompt(
+      at,
+      query.bucket ?? bucket,
+      query.path,
+      dto,
+    );
   }
 
   @Delete()
@@ -265,7 +271,9 @@ export class PromptController {
 
   @Post('move')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Move a personal prompt to a different folder' })
+  @ApiOperation({
+    summary: 'Move a personal or writable shared prompt to another folder',
+  })
   @ApiQuery({
     name: 'path',
     required: true,
@@ -283,10 +291,15 @@ export class PromptController {
   @ApiResponse({ status: 502, description: 'DIAL Core error' })
   movePrompt(
     @Req() req: Request,
-    @Query() query: RequiredPromptPathDto,
+    @Query() query: GetPromptQueryDto,
     @Body() dto: MovePromptDto,
   ) {
     const { at, bucket } = req.user as SessionUser;
-    return this.promptService.movePrompt(at, bucket, query.path, dto);
+    return this.promptService.movePrompt(
+      at,
+      query.bucket ?? bucket,
+      query.path,
+      dto,
+    );
   }
 }

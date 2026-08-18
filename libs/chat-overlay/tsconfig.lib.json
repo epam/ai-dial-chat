@@ -2,8 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist",
-    "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
+    "outDir": "../../dist/libs/chat-overlay",
+    "tsBuildInfoFile": "../../dist/libs/chat-overlay/tsconfig.lib.tsbuildinfo",
     "emitDeclarationOnly": true,
     "module": "esnext",
     "moduleResolution": "bundler",
