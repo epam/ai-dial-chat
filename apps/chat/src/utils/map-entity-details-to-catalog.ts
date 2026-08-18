@@ -24,7 +24,6 @@ import type {
   GuardrailEntityDetails,
   ModelEntityDetails,
   ModelPricing,
-  SkillEntityDetails,
   ToolsetAuthStatus,
   ToolsetEntityDetails,
   ToolsetSpecification,
@@ -405,14 +404,31 @@ export const mapToolsetCredentials = (
 
   const { userLevel, global } = data.specification?.authStatus ?? {};
   const isPublic = isPublicToolsetId(toolsetId);
+  const userStatus = userLevel ? TOOLSET_AUTH_STATUS_MAP[userLevel] : undefined;
+  const globalStatus = global ? TOOLSET_AUTH_STATUS_MAP[global] : undefined;
+  // const isApiKey = authenticationType === ToolsetAuthenticationType.ApiKey;
 
   return {
     authenticationType,
-    userStatus: userLevel ? TOOLSET_AUTH_STATUS_MAP[userLevel] : undefined,
-    globalStatus: global ? TOOLSET_AUTH_STATUS_MAP[global] : undefined,
+    userStatus,
+    globalStatus,
     isPublic,
     isManageableByAdmin: isAdmin && isPublic,
     apiKeyHeader: data.specification?.authStatus?.apiKeyHeader,
+    /*
+     * MOCK DATA: the backend does not yet expose when an API key was added
+     * (`ToolsetAuthSettingsDto` has no timestamp field). Hardcoded here so
+     * the "Added X ago" support text has something to show in the details
+     * panel; replace with the real value once the API adds one.
+     */
+    // userApiKeyAddedWhen:
+    //   isApiKey && userStatus === CredentialStatus.SignedIn
+    //     ? '3 weeks ago'
+    //     : undefined,
+    // globalApiKeyAddedWhen:
+    //   isApiKey && globalStatus === CredentialStatus.SignedIn
+    //     ? '1 week ago'
+    //     : undefined,
   };
 };
 
@@ -529,36 +545,6 @@ const mapGuardrailDetails = (
   };
 };
 
-const mapSkillDetails = (data: SkillEntityDetails): CatalogItemTabData => {
-  const sections: OverviewSection[] = [];
-
-  if (data.about != null) {
-    const { about: a } = data;
-    const specs: OverviewSection['specs'] = [];
-
-    if (a.allowedTools?.length)
-      specs.push({ label: 'Allowed tools', value: a.allowedTools.join(' · ') });
-    if (a.bundledResources?.length)
-      specs.push({
-        label: 'Bundled resources',
-        value: a.bundledResources.join(' · '),
-      });
-
-    if (specs.length > 0) sections.push({ title: 'Specification', specs });
-
-    if (a.skillPrompt != null) {
-      sections.push({
-        title: 'Context',
-        specs: [{ label: 'Skill prompt', value: a.skillPrompt }],
-      });
-    }
-  }
-
-  return {
-    overview: sections.length > 0 ? { sections } : undefined,
-  };
-};
-
 /** Converts a strongly-typed entity domain model into the lib's `CatalogItemTabData` shape. */
 export const mapEntityDetailsToCatalogDetails = (
   details: EntitySpecificDetails,
@@ -573,8 +559,6 @@ export const mapEntityDetailsToCatalogDetails = (
       return mapToolsetDetails(details.data);
     case 'GUARDRAIL':
       return mapGuardrailDetails(details.data);
-    case 'SKILL':
-      return mapSkillDetails(details.data);
   }
 };
 

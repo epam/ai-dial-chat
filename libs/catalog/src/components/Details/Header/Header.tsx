@@ -4,15 +4,19 @@ import {
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
+  DangerButton,
   DIAL_ICON_SIZE,
   Dropdown,
   FolderPath,
   NeutralButton,
   NeutralIconButton,
   PrimaryButton,
+  Spinner,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import {
+  IconArrowRight,
+  IconChevronDown,
   IconDots,
   IconDownload,
   IconKey,
@@ -40,13 +44,21 @@ import type {
 } from '../../../models/item-details-props';
 import { RecipientsCountStatus } from '../../../types/recipients-count';
 import {
+  CredentialsLevel,
   CredentialsUiState,
   ToolsetAuthenticationType,
-  type CredentialsLevel,
 } from '../../../types/toolset-auth';
 import { getCredentialsUiState } from '../../../utils/toolset-credentials';
+import { CredentialsApiKeyOverlay } from './CredentialsApiKeyOverlay/CredentialsApiKeyOverlay';
 import styles from './Header.module.scss';
 import { ShareButton } from './ShareButton/ShareButton';
+
+const defaultManageCredentialsActionLabel = (
+  authenticationType: ToolsetAuthenticationType,
+): string =>
+  authenticationType === ToolsetAuthenticationType.ApiKey
+    ? 'Manage API keys'
+    : 'Manage credentials';
 
 interface HeaderProps {
   item: CatalogItem;
@@ -64,10 +76,21 @@ interface HeaderProps {
    */
   isShareVisible?: (item: CatalogItem) => boolean;
   onEdit?: (item: CatalogItem) => void;
-  /** Called when "Download" is clicked in the Manage menu. Fire-and-forget: the result is not awaited and no pending state is shown. */
+  /**
+   * Called when "Download" is clicked. In the Manage menu, fire-and-forget:
+   * the result is not awaited and no pending state is shown. As the primary
+   * action (see `isDownloadPrimary`), the call is awaited and drives a
+   * pending/disabled state on the button.
+   */
   onDownload?: (item: CatalogItem) => Promise<void> | void;
   /** Additional caller-supplied rule for whether "Download" is shown. Defaults to `true` when absent. */
   isDownloadVisible?: (item: CatalogItem) => boolean;
+  /**
+   * Resolves whether Download renders as the primary action instead of a
+   * Manage-menu entry. Defaults to `item.type === CatalogEntityType.Skill`.
+   * An item whose Download is primary never also shows it in the Manage menu.
+   */
+  isDownloadPrimary?: (item: CatalogItem) => boolean;
   /** Called when "Delete" is clicked in the Manage menu. The details panel owns the confirmation step, so this only requests it. */
   onDelete?: (item: CatalogItem) => void;
   /** Called when the recipient-side "Remove from My List" action is clicked for an item shared with the current user. The details panel owns the confirmation step. */
@@ -89,15 +112,15 @@ interface HeaderProps {
     params: { level: CredentialsLevel },
   ) => Promise<void> | void;
   /**
-   * Called when the credentials trigger button is clicked and the
-   * resolved state is "Log in" / "Login with my creds" / "Manage
-   * credentials" — toggles the inline credentials section.
+   * Called when the credentials trigger button is clicked and the resolved
+   * state is "Manage credentials"/"Manage API keys" — opens the admin
+   * credentials-management sub-screen.
    */
-  onToggleCredentials?: () => void;
+  onOpenCredentialsManagement?: () => void;
   /**
-   * Called instead of `onToggleCredentials` when the resolved state is
-   * "Log out" — opens the logout confirmation directly, without expanding
-   * the full section first.
+   * Called instead of directly logging out when the resolved state is
+   * "Log out" for OAuth authentication — opens the logout confirmation
+   * without signing out immediately.
    */
   onRequestLogout?: () => void;
   texts?: ItemDetailsTexts;
@@ -118,6 +141,7 @@ export const Header: FC<HeaderProps> = ({
   onEdit,
   onDownload,
   isDownloadVisible,
+  isDownloadPrimary,
   onDelete,
   onUnshare,
   isUnshareVisible,
@@ -126,7 +150,7 @@ export const Header: FC<HeaderProps> = ({
   isRevokeShareVisible,
   onLogin,
   onLogout,
-  onToggleCredentials,
+  onOpenCredentialsManagement,
   onRequestLogout,
   texts,
   detailsStyles,
@@ -155,6 +179,35 @@ export const Header: FC<HeaderProps> = ({
   const handleDownload = useCallback(() => {
     void onDownload?.(item);
   }, [item, onDownload]);
+
+  /*
+   * The promoted primary-action Download button, unlike the Manage-menu
+   * entry above, awaits the call so it can show a pending/disabled state.
+   * `isDownloading` only ever transitions true -> false once a call is in
+   * flight, so resetting it on `item.id` change (below) cannot be raced by a
+   * stale call settling for a since-abandoned item.
+   */
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  useEffect(() => {
+    setIsDownloading(false);
+  }, [item.id]);
+
+  const handleDownloadPrimary = useCallback(() => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    const run = async () => {
+      try {
+        await onDownload?.(item);
+      } catch {
+        /* The host owns failure feedback (e.g. a notification); this button
+         * only needs to know the call has settled, to clear its own pending state. */
+      } finally {
+        setIsDownloading(false);
+      }
+    };
+    void run();
+  }, [item, onDownload, isDownloading]);
 
   const handleUnshare = useCallback(() => {
     onUnshare?.(item);
@@ -244,8 +297,32 @@ export const Header: FC<HeaderProps> = ({
       item.type === CatalogEntityType.Agent);
 
   const shouldShowEditAction = !!onEdit && !!item.isEditable;
-  const shouldShowDownloadAction =
+
+  const authenticationType =
+    item.credentials?.authenticationType ?? ToolsetAuthenticationType.None;
+  const credentialsUiState =
+    item.credentials != null &&
+    authenticationType !== ToolsetAuthenticationType.None
+      ? getCredentialsUiState(item.credentials)
+      : undefined;
+  const shouldShowCredentialsAction =
+    credentialsUiState != null && (!!onLogin || !!onLogout);
+  /* Toolsets have no "Use in chat" primary action, so the credentials
+   * button (Log in / Log out / manage) takes over as their primary,
+   * leading action instead. */
+  const isCredentialsActionPrimary =
+    item.type === CatalogEntityType.Toolset && shouldShowCredentialsAction;
+
+  const isDownloadActionEnabled =
     !!onDownload && (isDownloadVisible?.(item) ?? true);
+  /* Credentials, where active, always keeps the primary slot ahead of Download. */
+  const isDownloadActionPrimary =
+    isDownloadActionEnabled &&
+    !isCredentialsActionPrimary &&
+    (isDownloadPrimary?.(item) ?? item.type === CatalogEntityType.Skill);
+  /* A promoted Download renders in the primary slot only — never duplicated in the Manage menu. */
+  const shouldShowDownloadAction =
+    isDownloadActionEnabled && !isDownloadActionPrimary;
   const shouldShowDeleteAction = item.isMyApp;
   /*
    * The recipient-side "Remove from My List" action is the counterpart of
@@ -354,14 +431,8 @@ export const Header: FC<HeaderProps> = ({
       items.push({
         key: 'unshare',
         label: texts?.unshareLabel ?? 'Remove from My List',
-        icon: (
-          <IconTrash
-            size={DIAL_ICON_SIZE.SM}
-            aria-hidden
-            className="text-error"
-          />
-        ),
-        className: 'text-error',
+        icon: <IconTrash size={DIAL_ICON_SIZE.SM} aria-hidden />,
+
         onClick: handleUnshare,
       });
     }
@@ -383,46 +454,139 @@ export const Header: FC<HeaderProps> = ({
     handleUnshare,
   ]);
 
-  const credentialsUiState =
-    item.credentials != null &&
-    item.credentials.authenticationType !== ToolsetAuthenticationType.None
-      ? getCredentialsUiState(item.credentials)
-      : undefined;
-  const shouldShowCredentialsAction =
-    credentialsUiState != null && (!!onLogin || !!onLogout);
-  /* Toolsets have no "Use in chat" primary action, so the credentials
-   * button (Log in / Log out / manage) takes over as their primary,
-   * leading action instead. */
-  const isCredentialsActionPrimary =
-    item.type === CatalogEntityType.Toolset && shouldShowCredentialsAction;
+  const [isApiKeyOverlayOpen, setIsApiKeyOverlayOpen] = useState(false);
+
+  /* API-key auth resolves to a popover trigger for every state except the
+   * admin's "Manage API keys", which opens the dedicated sub-screen. */
+  const isApiKeyOverlayTrigger =
+    authenticationType === ToolsetAuthenticationType.ApiKey &&
+    credentialsUiState !== CredentialsUiState.ManageCredentials;
+  /* Once a personal API key is on file, the trigger drops from the
+   * call-to-action (primary) look to the same low-emphasis style as Share —
+   * matching the design's "Change API key" state. */
+  const isApiKeyConfigured =
+    authenticationType === ToolsetAuthenticationType.ApiKey &&
+    credentialsUiState === CredentialsUiState.LogOut;
+  /* Only the OAuth Log in/Log out toggle needs a fixed width and a danger
+   * treatment when signed in — "Manage credentials"/"API key" wording is
+   * variable-length by design and keeps its normal styling. */
+  const isOAuthLoginLogoutButton =
+    authenticationType !== ToolsetAuthenticationType.ApiKey &&
+    credentialsUiState !== CredentialsUiState.ManageCredentials;
+  const isOAuthLogoutState =
+    isOAuthLoginLogoutButton &&
+    credentialsUiState === CredentialsUiState.LogOut;
 
   const handleCredentialsClick = useCallback(() => {
+    if (credentialsUiState === CredentialsUiState.ManageCredentials) {
+      onOpenCredentialsManagement?.();
+      return;
+    }
+    if (isApiKeyOverlayTrigger) {
+      setIsApiKeyOverlayOpen((prev) => !prev);
+      return;
+    }
     if (credentialsUiState === CredentialsUiState.LogOut) {
       onRequestLogout?.();
-    } else {
-      onToggleCredentials?.();
+      return;
     }
-  }, [credentialsUiState, onRequestLogout, onToggleCredentials]);
+    /* OAuth "Log in" always applies to the current user's own credentials —
+     * there is no admin/global concept here since this branch only runs for
+     * the non-admin states. The org-fallback nudge is conveyed by the banner
+     * below the header, not by the button's wording. */
+    onLogin?.(item, { level: CredentialsLevel.User });
+  }, [
+    credentialsUiState,
+    isApiKeyOverlayTrigger,
+    item,
+    onLogin,
+    onOpenCredentialsManagement,
+    onRequestLogout,
+  ]);
 
-  const credentialsLabel = {
-    [CredentialsUiState.ManageCredentials]:
-      texts?.manageCredentialsActionLabel ?? 'Manage credentials',
-    [CredentialsUiState.LoginWithMyCreds]:
-      texts?.loginWithMyCredsActionLabel ?? 'Login with my creds',
-    [CredentialsUiState.LogIn]: texts?.loginActionLabel ?? 'Log in',
-    [CredentialsUiState.LogOut]: texts?.logoutActionLabel ?? 'Log out',
-  }[credentialsUiState ?? CredentialsUiState.LogIn];
+  const credentialsLabel = (() => {
+    if (credentialsUiState === CredentialsUiState.ManageCredentials) {
+      return (
+        texts?.manageCredentialsActionLabel ??
+        defaultManageCredentialsActionLabel
+      )(authenticationType);
+    }
+    if (authenticationType === ToolsetAuthenticationType.ApiKey) {
+      return credentialsUiState === CredentialsUiState.LogOut
+        ? (texts?.changeApiKeyActionLabel ?? 'Change API key')
+        : (texts?.apiKeyActionLabel ?? 'API key');
+    }
+    return credentialsUiState === CredentialsUiState.LogOut
+      ? (texts?.logoutActionLabel ?? 'Log out')
+      : (texts?.loginActionLabel ?? 'Log in');
+  })();
 
-  const credentialsIcon = {
-    [CredentialsUiState.ManageCredentials]: (
-      <IconKey size={DIAL_ICON_SIZE.MD} />
-    ),
-    [CredentialsUiState.LoginWithMyCreds]: (
+  const credentialsIconBefore = (() => {
+    if (credentialsUiState === CredentialsUiState.ManageCredentials) {
+      return <IconKey size={DIAL_ICON_SIZE.MD} />;
+    }
+    if (authenticationType === ToolsetAuthenticationType.ApiKey) {
+      return <IconKey size={DIAL_ICON_SIZE.MD} />;
+    }
+    return credentialsUiState === CredentialsUiState.LogOut ? (
+      <IconLogout size={DIAL_ICON_SIZE.MD} />
+    ) : (
       <IconLogin size={DIAL_ICON_SIZE.MD} />
-    ),
-    [CredentialsUiState.LogIn]: <IconLogin size={DIAL_ICON_SIZE.MD} />,
-    [CredentialsUiState.LogOut]: <IconLogout size={DIAL_ICON_SIZE.MD} />,
-  }[credentialsUiState ?? CredentialsUiState.LogIn];
+    );
+  })();
+
+  const credentialsIconAfter =
+    credentialsUiState === CredentialsUiState.ManageCredentials ? (
+      <IconArrowRight size={DIAL_ICON_SIZE.MD} className="rtl:scale-x-[-1]" />
+    ) : isApiKeyOverlayTrigger ? (
+      <IconChevronDown size={DIAL_ICON_SIZE.MD} />
+    ) : undefined;
+
+  const renderCredentialsButton = (
+    ButtonComponent:
+      | typeof PrimaryButton
+      | typeof NeutralButton
+      | typeof DangerButton,
+  ) => {
+    const button = (
+      <ButtonComponent
+        label={credentialsLabel}
+        iconBefore={credentialsIconBefore}
+        iconAfter={credentialsIconAfter}
+        onClick={handleCredentialsClick}
+        aria-haspopup={isApiKeyOverlayTrigger ? 'dialog' : undefined}
+        aria-expanded={isApiKeyOverlayTrigger ? isApiKeyOverlayOpen : undefined}
+        className={isOAuthLoginLogoutButton ? 'w-28 justify-center' : undefined}
+      />
+    );
+    if (!isApiKeyOverlayTrigger || item.credentials == null) {
+      return button;
+    }
+    return (
+      <Dropdown
+        placement="bottom-start"
+        matchReferenceWidth={false}
+        open={isApiKeyOverlayOpen}
+        onOpenChange={setIsApiKeyOverlayOpen}
+        trigger={[]}
+        outsideClosable
+        renderOverlay={() => (
+          <CredentialsApiKeyOverlay
+            item={item}
+            level={CredentialsLevel.User}
+            status={item.credentials?.userStatus}
+            apiKeyAddedWhen={item.credentials?.userApiKeyAddedWhen}
+            onLogin={onLogin}
+            onLogout={onLogout}
+            onClose={() => setIsApiKeyOverlayOpen(false)}
+            texts={texts}
+          />
+        )}
+      >
+        {button}
+      </Dropdown>
+    );
+  };
 
   return (
     <div className="flex flex-col gap-3 px-6 py-4">
@@ -442,19 +606,42 @@ export const Header: FC<HeaderProps> = ({
         }
       />
       <div className="flex flex-wrap items-center gap-2 ps-[60px]">
-        {isCredentialsActionPrimary && (
-          <PrimaryButton
-            label={credentialsLabel}
-            iconBefore={credentialsIcon}
-            onClick={handleCredentialsClick}
-          />
-        )}
+        {isCredentialsActionPrimary &&
+          renderCredentialsButton(
+            (() => {
+              if (isApiKeyConfigured) return NeutralButton;
+              if (isOAuthLogoutState) return DangerButton;
+              return PrimaryButton;
+            })(),
+          )}
         {shouldShowPrimaryAction && (
           <PrimaryButton
             label={texts?.primaryActionLabel ?? 'Use in chat'}
             iconBefore={<IconPlayerPlayFilled size={DIAL_ICON_SIZE.MD} />}
             onClick={handleUseInChat}
           />
+        )}
+        {isDownloadActionPrimary && (
+          <>
+            <PrimaryButton
+              label={texts?.downloadActionLabel ?? 'Download'}
+              iconBefore={
+                isDownloading ? (
+                  <Spinner size={DIAL_ICON_SIZE.MD} aria-hidden />
+                ) : (
+                  <IconDownload size={DIAL_ICON_SIZE.MD} aria-hidden />
+                )
+              }
+              onClick={handleDownloadPrimary}
+              disabled={isDownloading}
+              aria-busy={isDownloading}
+            />
+            {isDownloading && (
+              <span role="status" aria-live="polite" className="sr-only">
+                {texts?.downloadingStatusLabel ?? 'Downloading'}
+              </span>
+            )}
+          </>
         )}
         <ShareButton
           item={item}
@@ -463,13 +650,11 @@ export const Header: FC<HeaderProps> = ({
           isShareVisible={isShareVisible}
           label={texts?.shareLabel}
         />
-        {shouldShowCredentialsAction && !isCredentialsActionPrimary && (
-          <NeutralButton
-            label={credentialsLabel}
-            iconBefore={credentialsIcon}
-            onClick={handleCredentialsClick}
-          />
-        )}
+        {shouldShowCredentialsAction &&
+          !isCredentialsActionPrimary &&
+          renderCredentialsButton(
+            isOAuthLogoutState ? DangerButton : NeutralButton,
+          )}
         {manageItems.length > 0 && (
           <Dropdown
             items={manageItems}

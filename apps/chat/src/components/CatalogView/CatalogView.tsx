@@ -5,6 +5,7 @@ import {
   CatalogViewMode,
   CredentialsLevel,
   CredentialStatus,
+  ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
 import type {
   PromptResponseDto,
@@ -19,7 +20,7 @@ import {
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
-import { memo, useCallback, useEffect, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
@@ -53,6 +54,7 @@ import {
   ToolsetLoginOutcomeType,
   useToolsetLogin,
 } from '../../hooks/toolsets/useToolsetLogin';
+import { useCatalogActiveTabPreference } from '../../hooks/useCatalogActiveTabPreference/useCatalogActiveTabPreference';
 import { useCatalogSortFilterPreference } from '../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useUiFeature } from '../../hooks/useUiFeature';
@@ -75,10 +77,15 @@ import {
   getShareRecipientsCount,
   revokeSharedAccess,
 } from '../../server-api/share.api';
-import { downloadSkillFile, listSkillFiles } from '../../server-api/skills.api';
+import {
+  deleteSkill,
+  downloadSkill,
+  downloadSkillFile,
+  listSkillFiles,
+} from '../../server-api/skills.api';
 import { deleteToolset, logoutToolset } from '../../server-api/toolsets';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
-import { CatalogQuery } from '../../types/catalog';
+import { CATALOG_TAB_ORDER, CatalogQuery } from '../../types/catalog';
 import { EditorQuery } from '../../types/editor-query';
 import {
   EntityOperation,
@@ -90,6 +97,7 @@ import {
   parseSkillResourceUrl,
   SKILL_MANIFEST_FILE,
   SkillSource,
+  type ParsedSkillResourceUrl,
 } from '../../types/skill';
 import { isQuickAppSchema } from '../../utils/application-schema';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
@@ -101,6 +109,8 @@ import {
   serializePromptExport,
 } from '../../utils/export-prompt';
 import { resolveFavoriteEntityType } from '../../utils/favorites';
+import { triggerBrowserDownload } from '../../utils/file-download';
+import { sanitizeFileName } from '../../utils/file-name';
 import { mapDeploymentLimitsDtoToCatalogLimits } from '../../utils/map-deployment-limits-to-catalog';
 import {
   mapDeploymentToCatalogItem,
@@ -117,16 +127,23 @@ import {
   mapPromptToCatalogItem,
 } from '../../utils/map-prompt-to-catalog-item';
 import {
+  buildSkillContentTree,
   buildSkillOverview,
   mapSkillToCatalogItem,
+  readSkillFileBytes,
   readSkillManifest,
+  resolveSkillFileDownloadPath,
+  resolveSkillManifestFileId,
 } from '../../utils/map-skill-to-catalog-item';
 import {
   buildConnectApi,
   resolveMcpResourceKind,
 } from '../../utils/mcp-endpoint-url';
 import { getAccessRulesLabels, toPublishEntityType } from '../../utils/publish';
+import type { SkillFileContent } from '../../utils/skill-file-preview';
+import { parseSkillManifest } from '../../utils/skill-manifest';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
+import { SkillDetailsFilePreview } from './SkillDetailsFilePreview';
 
 /** Entity types shown in the catalog picker modal: models and agents only. */
 const PICKER_VISIBLE_TYPES = new Set<CatalogEntityType>([
@@ -193,6 +210,8 @@ const CatalogView: FC<Props> = ({
 
   const { showSuccessNotification, showErrorNotification } = useNotification();
   const { notifyOperationSuccess } = useOperationNotification();
+  /* Skill whose details panel is open, for resolving picked file contents. */
+  const openSkillRef = useRef<ParsedSkillResourceUrl | null>(null);
   const { user } = useUser();
   const isAdmin = user?.isAdmin ?? false;
   const { config } = useAppConfig();
@@ -385,6 +404,14 @@ const CatalogView: FC<Props> = ({
     );
   }, [visibleCatalogItems, persistedFilterTopics]);
 
+  const availableTabIds = useMemo(() => {
+    const presentTypes = new Set(visibleCatalogItems.map((item) => item.type));
+    return CATALOG_TAB_ORDER.filter((type) => presentTypes.has(type));
+  }, [visibleCatalogItems]);
+
+  const { activeTab, setActiveTab } =
+    useCatalogActiveTabPreference(availableTabIds);
+
   const {
     folderItems: publishFolderItems,
     expandedPaths: publishExpandedPaths,
@@ -455,6 +482,12 @@ const CatalogView: FC<Props> = ({
         if (parsed == null) return undefined;
 
         const { bucket, path } = parsed;
+        /*
+         * The Content tab's file picker reports back only a file's own path,
+         * so the skill it belongs to is remembered here — the panel shows one
+         * item at a time, and this runs each time it opens.
+         */
+        openSkillRef.current = parsed;
         const [manifest, files] = await Promise.allSettled([
           downloadSkillFile(bucket, path, SKILL_MANIFEST_FILE).then(
             readSkillManifest,
@@ -462,21 +495,51 @@ const CatalogView: FC<Props> = ({
           listSkillFiles({ bucket, path, filePath: '', recursive: true }),
         ]);
 
-        const content =
+        /*
+         * A manifest that downloads but fails to parse is not a failure: the
+         * parser hands back the raw text as the body, so the Content tab
+         * still renders — it simply carries no summary and no Specification.
+         */
+        const parsedManifest =
           manifest.status === 'fulfilled' && manifest.value != null
-            ? manifest.value
+            ? parseSkillManifest(manifest.value)
             : undefined;
         const skill = [...skills, ...sharedSkills, ...publicSkills].find(
           (candidate) => candidate.url === item.id,
         );
         const overview =
           files.status === 'fulfilled'
-            ? buildSkillOverview(skill, files.value.items, t)
+            ? buildSkillOverview(
+                skill,
+                files.value.items,
+                parsedManifest?.about,
+                t,
+              )
             : undefined;
 
-        if (content == null && overview == null) return undefined;
+        const contentFiles =
+          files.status === 'fulfilled'
+            ? buildSkillContentTree(files.value.items)
+            : [];
+        const selectedFileId =
+          files.status === 'fulfilled'
+            ? resolveSkillManifestFileId(files.value.items, path)
+            : SKILL_MANIFEST_FILE;
+
+        if (parsedManifest == null && overview == null) return undefined;
         return {
-          ...(content != null ? { promptContent: { content } } : {}),
+          ...(parsedManifest != null
+            ? {
+                promptContent: {
+                  content: parsedManifest.body,
+                  ...(parsedManifest.description != null
+                    ? { description: parsedManifest.description }
+                    : {}),
+                  files: contentFiles,
+                  selectedFileId,
+                },
+              }
+            : {}),
           ...(overview != null ? { overview } : {}),
         };
       }
@@ -544,6 +607,22 @@ const CatalogView: FC<Props> = ({
   const showLoginSuccess = useCallback(
     (item: CatalogItem, level: CredentialsLevel) => {
       const isAdminAndPublic = isAdmin && !!item.credentials?.isPublic;
+      const isApiKey =
+        item.credentials?.authenticationType ===
+        ToolsetAuthenticationType.ApiKey;
+      if (isApiKey) {
+        const messageKey =
+          level === CredentialsLevel.User
+            ? CatalogI18nKeys.CredentialsApiKeyAddedSuccessUser
+            : isAdminAndPublic
+              ? CatalogI18nKeys.CredentialsApiKeyAddedSuccessOrg
+              : CatalogI18nKeys.CredentialsApiKeyAddedSuccessGlobal;
+        showSuccessNotification({
+          title: t(CatalogI18nKeys.CredentialsApiKeyAddedSuccessTitle),
+          message: t(messageKey, { name: item.name, version: item.version }),
+        });
+        return;
+      }
       const messageKey =
         level === CredentialsLevel.User
           ? CatalogI18nKeys.CredentialsLoginSuccessUser
@@ -561,6 +640,22 @@ const CatalogView: FC<Props> = ({
   const showLogoutSuccess = useCallback(
     (item: CatalogItem, level: CredentialsLevel) => {
       const isAdminAndPublic = isAdmin && !!item.credentials?.isPublic;
+      const isApiKey =
+        item.credentials?.authenticationType ===
+        ToolsetAuthenticationType.ApiKey;
+      if (isApiKey) {
+        const messageKey =
+          level === CredentialsLevel.User
+            ? CatalogI18nKeys.CredentialsApiKeyDeletedSuccessUser
+            : isAdminAndPublic
+              ? CatalogI18nKeys.CredentialsApiKeyDeletedSuccessOrg
+              : CatalogI18nKeys.CredentialsApiKeyDeletedSuccessGlobal;
+        showSuccessNotification({
+          title: t(CatalogI18nKeys.CredentialsApiKeyDeletedSuccessTitle),
+          message: t(messageKey, { name: item.name, version: item.version }),
+        });
+        return;
+      }
       const messageKey =
         level === CredentialsLevel.User
           ? CatalogI18nKeys.CredentialsLogoutSuccessUser
@@ -790,33 +885,142 @@ const CatalogView: FC<Props> = ({
    */
   const handleDownload = useCallback(
     async (item: CatalogItem) => {
-      if (item.type !== CatalogEntityType.Prompt) return;
-      try {
-        const dto = await fetchPromptDto(item);
-        triggerBlobDownload(
-          serializePromptExport(buildPromptExportEnvelope(dto)),
-          buildPromptExportFileName(dto.name, EXPORT_APP_NAME),
-        );
-        notifyOperationSuccess(
-          NotifiableEntity.Prompt,
-          EntityOperation.Downloaded,
-          { name: dto.name },
-        );
-      } catch (err) {
-        const { traceId } = await getApiErrorDetails(err);
-        showErrorNotification({
-          message: t(CatalogI18nKeys.DetailsPromptDownloadError),
-          requestId: traceId,
-        });
+      if (item.type === CatalogEntityType.Prompt) {
+        try {
+          const dto = await fetchPromptDto(item);
+          triggerBlobDownload(
+            serializePromptExport(buildPromptExportEnvelope(dto)),
+            buildPromptExportFileName(dto.name, EXPORT_APP_NAME),
+          );
+          notifyOperationSuccess(
+            NotifiableEntity.Prompt,
+            EntityOperation.Downloaded,
+            { name: dto.name },
+          );
+        } catch (err) {
+          const { traceId } = await getApiErrorDetails(err);
+          showErrorNotification({
+            message: t(CatalogI18nKeys.DetailsPromptDownloadError),
+            requestId: traceId,
+          });
+        }
+        return;
+      }
+
+      if (item.type === CatalogEntityType.Skill) {
+        const openSkill = openSkillRef.current;
+        if (openSkill == null) return;
+        try {
+          const response = await downloadSkill(
+            openSkill.bucket,
+            openSkill.path,
+          );
+          if (!response.ok) {
+            throw new Error(`Download failed with status ${response.status}`);
+          }
+          const fallbackName = `${sanitizeFileName(item.name)}.zip`;
+          const savedName = await triggerBrowserDownload(
+            response,
+            fallbackName,
+          );
+          notifyOperationSuccess(
+            NotifiableEntity.Skill,
+            EntityOperation.Downloaded,
+            { name: savedName },
+          );
+        } catch (err) {
+          const { traceId } = await getApiErrorDetails(err);
+          showErrorNotification({
+            message: t(CatalogI18nKeys.DetailsSkillDownloadError),
+            requestId: traceId,
+          });
+        }
       }
     },
     [notifyOperationSuccess, showErrorNotification, t, fetchPromptDto],
   );
 
-  /* Only a prompt has a downloadable body; every other type is backed by config the catalog does not export. */
+  /* A prompt has a downloadable body and a skill has a whole-archive download; every other type is backed by config the catalog does not export. */
   const isDownloadVisible = useCallback(
-    (item: CatalogItem) => item.type === CatalogEntityType.Prompt,
+    (item: CatalogItem) =>
+      item.type === CatalogEntityType.Prompt ||
+      item.type === CatalogEntityType.Skill,
     [],
+  );
+
+  /*
+   * A picked file carries its opaque listing id. Core may prefix that id with
+   * the skill path and its internal `files` directory, so the app adapter
+   * converts it to the file-relative path expected by the download endpoint.
+   * The manifest is stripped of its frontmatter exactly as it is on first
+   * load; every other file is shown as written.
+   */
+  const handleLoadContentFile = useCallback(async (fileId: string) => {
+    const openSkill = openSkillRef.current;
+    if (openSkill == null) return undefined;
+
+    const filePath = resolveSkillFileDownloadPath(fileId, openSkill.path);
+    if (filePath == null) return undefined;
+
+    const response = await downloadSkillFile(
+      openSkill.bucket,
+      openSkill.path,
+      filePath,
+    );
+    const text = await readSkillManifest(response);
+    if (text == null) return undefined;
+
+    return filePath === SKILL_MANIFEST_FILE
+      ? parseSkillManifest(text).body
+      : text;
+  }, []);
+
+  const handleLoadSkillDetailsFile = useCallback(
+    async (fileId: string): Promise<SkillFileContent> => {
+      const openSkill = openSkillRef.current;
+      if (openSkill == null) throw new Error('No skill details are open');
+
+      const filePath = resolveSkillFileDownloadPath(fileId, openSkill.path);
+      if (filePath == null) throw new Error('A folder cannot be previewed');
+
+      const response = await downloadSkillFile(
+        openSkill.bucket,
+        openSkill.path,
+        filePath,
+      );
+      if (!response.ok) {
+        throw Object.assign(
+          new Error(`File preview failed with status ${response.status}`),
+          { status: response.status },
+        );
+      }
+
+      const bytes = await readSkillFileBytes(response);
+      if (bytes == null) throw new Error('File exceeds the preview size limit');
+
+      const responseMimeType =
+        response.headers.get('content-type')?.split(';')[0].trim() || undefined;
+      return {
+        bytes,
+        /* Core commonly sends this generic value; omitting it lets the same extension inference as Skill Builder run. */
+        mimeType:
+          responseMimeType === 'application/octet-stream'
+            ? undefined
+            : responseMimeType,
+      };
+    },
+    [],
+  );
+
+  const renderContentFilePreview = useCallback(
+    (fileId: string, fileName: string) => (
+      <SkillDetailsFilePreview
+        fileId={fileId}
+        fileName={fileName}
+        onLoadFile={handleLoadSkillDetailsFile}
+      />
+    ),
+    [handleLoadSkillDetailsFile],
   );
 
   const isPrimaryActionVisible = useCallback((item: CatalogItem) => {
@@ -1037,6 +1241,13 @@ const CatalogView: FC<Props> = ({
         } else if (item.type === CatalogEntityType.Toolset) {
           await deleteToolset(item.id);
           await refetchToolsets();
+        } else if (item.type === CatalogEntityType.Skill) {
+          const parsed = parseSkillResourceUrl(item.id);
+          if (parsed == null) {
+            throw new Error(`Invalid skill resource url: ${item.id}`);
+          }
+          await deleteSkill(parsed.bucket, parsed.path);
+          await refetchSkills();
         } else {
           await deleteApplication(item.id);
           await refetchDeployments();
@@ -1064,6 +1275,7 @@ const CatalogView: FC<Props> = ({
       refetchToolsets,
       refetchDeployments,
       refetchPrompts,
+      refetchSkills,
       notifyOperationSuccess,
       showErrorNotification,
       t,
@@ -1276,6 +1488,8 @@ const CatalogView: FC<Props> = ({
       onFilterTopicsChange={isSelectorMode ? undefined : setFilterTopics}
       isMyAppsActive={isSelectorMode ? undefined : isMyAppsActive}
       onMyAppsActiveChange={isSelectorMode ? undefined : setIsMyAppsActive}
+      activeTab={isSelectorMode ? undefined : activeTab}
+      onActiveTabChange={isSelectorMode ? undefined : setActiveTab}
       onFetchDetails={handleFetchDetails}
       onToggleFavorite={onToggleFavorite}
       onUseInChat={handleUseInChat}
@@ -1284,6 +1498,8 @@ const CatalogView: FC<Props> = ({
       onEdit={handleEdit}
       onDownload={handleDownload}
       isDownloadVisible={isDownloadVisible}
+      onLoadContentFile={handleLoadContentFile}
+      renderContentFilePreview={renderContentFilePreview}
       onDelete={handleDelete}
       onUnshare={handleUnshare}
       isUnshareVisible={isUnshareVisible}
@@ -1306,6 +1522,7 @@ const CatalogView: FC<Props> = ({
       onFetchExistingRules={handleFetchExistingRules}
       publishLabels={{
         searchPlaceholder: t(CatalogI18nKeys.PublishFolderSearchPlaceholder),
+        cancelCreatingFolderLabel: t(ButtonsI18nKeys.Cancel),
         folderEmptyStateLabel: t(CatalogI18nKeys.PublishFolderEmptyState, {
           query: '{query}',
         }),
@@ -1347,9 +1564,20 @@ const CatalogView: FC<Props> = ({
         tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
         tabContentLabel: t(CatalogI18nKeys.DetailsTabContent),
         tabLimitsLabel: t(CatalogI18nKeys.DetailsTabLimits),
+        contentFileSelectorAriaLabel: t(
+          CatalogI18nKeys.DetailsContentFileSelectorAriaLabel,
+        ),
+        contentFileCountLabel: (count: number) =>
+          t(CatalogI18nKeys.DetailsContentFileCount, { count }),
+        contentFileLoadingLabel: t(CatalogI18nKeys.DetailsContentFileLoading),
+        contentFileErrorLabel: t(CatalogI18nKeys.DetailsContentFileError),
+        contentFileUnsupportedLabel: t(
+          CatalogI18nKeys.DetailsContentFileUnsupported,
+        ),
         primaryActionLabel: t(ButtonsI18nKeys.UseInChat),
         editActionLabel: t(ButtonsI18nKeys.Edit),
         downloadActionLabel: t(ButtonsI18nKeys.Download),
+        downloadingStatusLabel: t(CatalogI18nKeys.DetailsDownloadingStatus),
         deleteActionLabel: t(ButtonsI18nKeys.Delete),
         deletingStatusLabel: t(DialFileManagerI18nKeys.DeletingLabel),
         apiResourceSectionLabel: t(CatalogI18nKeys.DetailsApiResourceSection),
@@ -1368,20 +1596,78 @@ const CatalogView: FC<Props> = ({
         ),
         loginActionLabel: t(ButtonsI18nKeys.LogIn),
         logoutActionLabel: t(ButtonsI18nKeys.LogOut),
-        loginWithMyCredsActionLabel: t(
-          CatalogI18nKeys.CredentialsLoginWithMyCredsLabel,
-        ),
-        manageCredentialsActionLabel: t(CatalogI18nKeys.CredentialsManageLabel),
-        myCredentialsSectionLabel: t(CatalogI18nKeys.CredentialsMySectionLabel),
-        organizationCredentialsSectionLabel: t(
-          CatalogI18nKeys.CredentialsOrgSectionLabel,
-        ),
+        manageCredentialsActionLabel: (authenticationType) =>
+          authenticationType === ToolsetAuthenticationType.ApiKey
+            ? t(CatalogI18nKeys.CredentialsManageApiKeysLabel)
+            : t(CatalogI18nKeys.CredentialsManageLabel),
         credentialsSignedInLabel: t(CatalogI18nKeys.CredentialsSignedInLabel),
         credentialsSignedOutLabel: t(CatalogI18nKeys.CredentialsSignedOutLabel),
         logoutConfirmMessage: t(AuthI18nKeys.LogOutConfirmDescription),
+        deleteApiKeyConfirmMessage: (level) =>
+          level === CredentialsLevel.Global
+            ? t(CatalogI18nKeys.CredentialsDeleteApiKeyConfirmMessageOrg)
+            : t(CatalogI18nKeys.CredentialsDeleteApiKeyConfirmMessagePersonal),
         apiKeyFieldLabel: t(ApiI18nKeys.ApiKey),
-        apiKeyFieldHint: (header) =>
-          t(CatalogI18nKeys.CredentialsApiKeyFieldHint, { header }),
+        apiKeyRequiredErrorMessage: t(
+          CatalogI18nKeys.CredentialsApiKeyRequiredErrorMessage,
+        ),
+        apiKeyActionLabel: t(ApiI18nKeys.ApiKey),
+        changeApiKeyActionLabel: t(
+          CatalogI18nKeys.CredentialsChangeApiKeyActionLabel,
+        ),
+        personalApiKeyPanelTitle: t(
+          CatalogI18nKeys.CredentialsPersonalApiKeyPanelTitle,
+        ),
+        personalApiKeyAddedMessage: t(
+          CatalogI18nKeys.CredentialsPersonalApiKeyAddedMessage,
+        ),
+        apiKeyConfiguredMessage: t(
+          CatalogI18nKeys.CredentialsApiKeyConfiguredMessage,
+        ),
+        addApiKeyActionLabel: t(ButtonsI18nKeys.Add),
+        addingApiKeyStatusLabel: t(
+          CatalogI18nKeys.CredentialsAddingApiKeyStatusLabel,
+        ),
+        apiKeyAddedLabel: (when) =>
+          t(CatalogI18nKeys.CredentialsApiKeyAddedLabel, { when }),
+        orgFallbackBannerTitle: (authenticationType) =>
+          authenticationType === ToolsetAuthenticationType.ApiKey
+            ? t(CatalogI18nKeys.CredentialsOrgFallbackBannerTitleApiKey)
+            : t(CatalogI18nKeys.CredentialsOrgFallbackBannerTitleCredentials),
+        orgFallbackBannerDescription: (authenticationType) =>
+          authenticationType === ToolsetAuthenticationType.ApiKey
+            ? t(CatalogI18nKeys.CredentialsOrgFallbackBannerDescriptionApiKey)
+            : t(
+                CatalogI18nKeys.CredentialsOrgFallbackBannerDescriptionCredentials,
+              ),
+        orgCredentialsActiveBannerTitle: (authenticationType) =>
+          authenticationType === ToolsetAuthenticationType.ApiKey
+            ? t(CatalogI18nKeys.CredentialsOrgActiveBannerTitleApiKey)
+            : t(CatalogI18nKeys.CredentialsOrgActiveBannerTitleCredentials),
+        personalCredentialsActiveBannerTitle: (authenticationType) =>
+          authenticationType === ToolsetAuthenticationType.ApiKey
+            ? t(CatalogI18nKeys.CredentialsPersonalActiveBannerTitleApiKey)
+            : t(
+                CatalogI18nKeys.CredentialsPersonalActiveBannerTitleCredentials,
+              ),
+        credentialsManagementTitle: (authenticationType) =>
+          authenticationType === ToolsetAuthenticationType.ApiKey
+            ? t(CatalogI18nKeys.CredentialsManagementTitleApiKey)
+            : t(CatalogI18nKeys.CredentialsManagementTitleCredentials),
+        credentialsManagementDescription: (authenticationType) =>
+          authenticationType === ToolsetAuthenticationType.ApiKey
+            ? t(CatalogI18nKeys.CredentialsManagementDescriptionApiKey)
+            : t(CatalogI18nKeys.CredentialsManagementDescriptionCredentials),
+        personalCredentialsLabel: t(CatalogI18nKeys.CredentialsPersonalLabel),
+        personalCredentialsDescription: t(
+          CatalogI18nKeys.CredentialsPersonalDescription,
+        ),
+        organizationCredentialsLabel: t(
+          CatalogI18nKeys.CredentialsOrganizationLabel,
+        ),
+        organizationCredentialsDescription: t(
+          CatalogI18nKeys.CredentialsOrganizationDescription,
+        ),
         credentialsBadgeLoggedOutLabel: t(
           CatalogI18nKeys.CredentialsBadgeLoggedOut,
         ),

@@ -73,6 +73,10 @@ The following utility functions SHALL be exported from `libs/attachment-input/sr
 - **WHEN** `isMimeTypeAllowed` is called with a MIME type and an allowlist array
 - **THEN** it returns `true` if the MIME type matches an allowed entry, `false` otherwise
 
+#### Scenario: getAttachmentCardState handles an attachment missing name
+- **WHEN** `getAttachmentCardState` is called with an attachment whose `name` is `undefined` or `null` (a non-conformant runtime payload) and no usable `contentType`
+- **THEN** it returns without throwing, with `typeLabel` falling back to an empty string
+
 #### Scenario: mimeTypesToExtensionLabels converts MIME types
 - **WHEN** `mimeTypesToExtensionLabels` is called with an array of MIME type strings
 - **THEN** it returns an array of human-readable extension label strings

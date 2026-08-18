@@ -8,6 +8,8 @@ export enum DetailsConfirmationKind {
   Unshare = 'unshare',
   /** Owner-side revocation of everyone else's shared access. */
   RevokeAccess = 'revokeAccess',
+  /** Removing a configured API key from a credentials slot. */
+  DeleteApiKey = 'deleteApiKey',
 }
 
 /** Palette a confirmation step is rendered with. */

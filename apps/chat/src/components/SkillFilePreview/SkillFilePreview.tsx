@@ -9,25 +9,16 @@ import { AttachmentCanvasI18nKeys } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
 import { ThemeId } from '../../types/theme-id';
 
-/** Props for {@link SkillFilePreview}. */
+/** Props for the inline skill supporting-file preview. */
 interface Props {
-  /**
-   * Full relative path of the currently selected supporting file. Used to
-   * guard against briefly rendering another file's content — the global
-   * attachment canvas can momentarily hold a slower-resolving earlier
-   * selection's content after a newer selection has already committed.
-   */
+  /** Opaque path identifying the file currently selected by the host. */
   path: string;
 }
 
 /**
- * Renders a Skill supporting file's content inline in the Skill Editor's main
- * pane, reusing the same `AttachmentCanvasBody` renderers chat attachments use
- * (Markdown/JSON/code/HTML/PDF/image/audio/unsupported/error). Content only —
- * no header: `libs/skill-editor`'s own main-pane heading already shows the
- * selected file's name, and per the Figma design there is no dedicated
- * download/close control in this surface — re-selecting `SKILL.md` in the
- * file tree already returns to the manifest form.
+ * Renders a skill supporting file through the same attachment-canvas body
+ * used by chat attachments. The host owns the surrounding file heading and
+ * selection controls, so this component renders content only.
  */
 export const SkillFilePreview: FC<Props> = ({ path }) => {
   const { t } = useTranslation();

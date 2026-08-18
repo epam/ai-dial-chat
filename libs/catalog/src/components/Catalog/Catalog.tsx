@@ -52,6 +52,10 @@ export const Catalog: FC<CatalogProps> = ({
   onEdit,
   onDownload,
   isDownloadVisible,
+  isDownloadPrimary,
+  onLoadContentFile,
+  onLoadContentFilePreview,
+  renderContentFilePreview,
   onDelete,
   onUnshare,
   isUnshareVisible,
@@ -77,6 +81,8 @@ export const Catalog: FC<CatalogProps> = ({
   onFilterTopicsChange,
   isMyAppsActive: controlledIsMyAppsActive,
   onMyAppsActiveChange,
+  activeTab: controlledActiveTab,
+  onActiveTabChange,
 }) => {
   const { typography } = catalogStyles ?? {};
   const cssVars = getStyles(catalogStyles);
@@ -170,11 +176,21 @@ export const Catalog: FC<CatalogProps> = ({
   );
 
   const firstTabId = tabs[0]?.id ?? '';
-  const [activeTab, setActiveTab] = useState(firstTabId);
+  const [internalActiveTab, setInternalActiveTab] = useState(firstTabId);
 
   useEffect(() => {
-    setActiveTab((prev) => prev || firstTabId);
+    setInternalActiveTab((prev) => prev || firstTabId);
   }, [firstTabId]);
+
+  const activeTab = controlledActiveTab ?? internalActiveTab;
+
+  const handleActiveTabChange = useCallback(
+    (tabId: string) => {
+      setInternalActiveTab(tabId);
+      onActiveTabChange?.(tabId);
+    },
+    [onActiveTabChange],
+  );
 
   const [isFavoritesRendered, setIsFavoritesRendered] = useState(
     favorites.length > 0,
@@ -454,7 +470,7 @@ export const Catalog: FC<CatalogProps> = ({
                   .length,
               }))}
               activeTabId={activeTab}
-              onTabChange={setActiveTab}
+              onTabChange={handleActiveTabChange}
             />
           </div>
         )}
@@ -539,6 +555,10 @@ export const Catalog: FC<CatalogProps> = ({
           onEdit={onEdit}
           onDownload={onDownload}
           isDownloadVisible={isDownloadVisible}
+          isDownloadPrimary={isDownloadPrimary}
+          onLoadContentFile={onLoadContentFile}
+          onLoadContentFilePreview={onLoadContentFilePreview}
+          renderContentFilePreview={renderContentFilePreview}
           onDelete={onDelete}
           onUnshare={onUnshare}
           isUnshareVisible={isUnshareVisible}

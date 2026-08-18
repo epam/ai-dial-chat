@@ -13,6 +13,10 @@ import {
 } from 'react';
 import type { SharePopoverProps } from '../../models/share-popover-props';
 import { ShareLinkAccess, SharePopoverView } from '../../types/share';
+import {
+  focusFirstInteractiveElement,
+  getInteractiveElements,
+} from '../../utils/focus';
 import { AccessControl } from '../AccessControl/AccessControl';
 import { LinkView } from '../LinkView/LinkView';
 import { QrCode } from '../QrCode/QrCode';
@@ -110,12 +114,17 @@ const SharePopover: FC<SharePopoverProps> = ({
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  /* Moves focus into the popover as soon as it opens. */
+  /*
+   * Moves focus to the popover's first control as soon as it opens, so the
+   * keyboard user lands on a visibly focused element rather than on the
+   * outline-less popover root. The deferred pass re-runs only if the host's
+   * own focus management pulled focus back out in the same tick.
+   */
   useEffect(() => {
-    containerRef.current?.focus();
+    focusFirstInteractiveElement(containerRef.current);
     const timeoutId = setTimeout(() => {
       if (!containerRef.current?.contains(document.activeElement)) {
-        containerRef.current?.focus();
+        focusFirstInteractiveElement(containerRef.current);
       }
     }, 0);
     return () => clearTimeout(timeoutId);
@@ -145,11 +154,7 @@ const SharePopover: FC<SharePopoverProps> = ({
             '[role="menuitemradio"]',
           ) ?? [],
         )
-      : Array.from(
-          containerRef.current?.querySelectorAll<HTMLElement>(
-            'button:not(:disabled), input:not(:disabled), [tabindex]:not([tabindex="-1"])',
-          ) ?? [],
-        );
+      : getInteractiveElements(containerRef.current);
     if (scope.length === 0) return;
 
     e.preventDefault();
