@@ -9,7 +9,10 @@ import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { resolveLocalizedValue } from '../../common/utils/localized-value';
 import { DialClientService } from '../../dial/dial-client.service';
-import type { DeploymentLimitsResponseDto } from '../../openapi/openapi-response.dto';
+import type {
+  DeploymentLimitsResponseDto,
+  UserLimitStatsResponseDto,
+} from '../../openapi/openapi-response.dto';
 import type { DeploymentConfigurationDto } from '../dto/deployment-configuration.dto';
 import type { DeploymentDetailsDto } from '../dto/deployment-details.dto';
 import { DeploymentItemType } from '../dto/deployment-item.dto';
@@ -506,6 +509,42 @@ export class DeploymentsDetailsService {
         this.logger,
         0,
       );
+    }
+  }
+
+  async getUserLimits(accessToken: string): Promise<UserLimitStatsResponseDto> {
+    try {
+      const result = await this.dialClient.client.getUserLimits({
+        headers: getBearerAuthHeaders(accessToken),
+      });
+      if (result.error) {
+        return mapDialHttpStatus(
+          result.response.status,
+          'get user limits',
+          this.logger,
+        );
+      }
+      return result.data as unknown as UserLimitStatsResponseDto;
+    } catch (err) {
+      return handleDialFetchError(err, 'get user limits', this.logger, 0);
+    }
+  }
+
+  async getUserUsage(accessToken: string): Promise<UserLimitStatsResponseDto> {
+    try {
+      const result = await this.dialClient.client.getUserUsage({
+        headers: getBearerAuthHeaders(accessToken),
+      });
+      if (result.error) {
+        return mapDialHttpStatus(
+          result.response.status,
+          'get user usage',
+          this.logger,
+        );
+      }
+      return result.data as unknown as UserLimitStatsResponseDto;
+    } catch (err) {
+      return handleDialFetchError(err, 'get user usage', this.logger, 0);
     }
   }
 }

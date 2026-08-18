@@ -23,6 +23,7 @@ src/apis/SkillsApi.ts
 src/apis/ThemesApi.ts
 src/apis/ToolsetsApi.ts
 src/apis/TranscriptionApi.ts
+src/apis/UserApi.ts
 src/apis/UserConfigApi.ts
 src/apis/index.ts
 src/index.ts

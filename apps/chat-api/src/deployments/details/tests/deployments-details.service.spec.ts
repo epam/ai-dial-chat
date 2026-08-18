@@ -26,6 +26,8 @@ function makeService() {
   const sdkClient = {
     configurationDeployment: vi.fn(),
     getDeploymentLimits: vi.fn(),
+    getUserLimits: vi.fn(),
+    getUserUsage: vi.fn(),
     getModel: vi.fn(),
     getApplication: vi.fn(),
     getCustomApplication: vi.fn().mockResolvedValue({
@@ -274,6 +276,100 @@ describe('DeploymentsDetailsService', () => {
       await expect(
         service.getDeploymentLimits('gpt-4o', 'token'),
       ).rejects.toThrow(BadGatewayException);
+    });
+  });
+
+  describe('getUserLimits', () => {
+    const mockUserLimits = {
+      deployments: {
+        'gpt-4o': { dayTokenStats: { total: 10000, used: 4000 } },
+      },
+      dayCostStats: { total: 100, used: 10 },
+    };
+
+    it('returns aggregate limits from upstream', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getUserLimits.mockResolvedValue(okResponse(mockUserLimits));
+
+      const result = await service.getUserLimits('token');
+      expect(result).toEqual(mockUserLimits);
+    });
+
+    it('forwards Authorization header to DIAL Core', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getUserLimits.mockResolvedValue(okResponse(mockUserLimits));
+
+      await service.getUserLimits('my-token');
+      expect(sdkClient.getUserLimits).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer my-token',
+          }),
+        }),
+      );
+    });
+
+    it('throws ServiceUnavailableException on network error', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getUserLimits.mockRejectedValue(new TypeError('fetch failed'));
+      await expect(service.getUserLimits('token')).rejects.toThrow(
+        ServiceUnavailableException,
+      );
+    });
+
+    it('throws BadGatewayException on upstream 5xx', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getUserLimits.mockResolvedValue(errResponse(502));
+      await expect(service.getUserLimits('token')).rejects.toThrow(
+        BadGatewayException,
+      );
+    });
+  });
+
+  describe('getUserUsage', () => {
+    const mockUserUsage = {
+      deployments: {
+        'gpt-4o': { dayTokenStats: { total: 10000, used: 4000 } },
+      },
+      dayCostStats: { total: 100, used: 10 },
+    };
+
+    it('returns usage from upstream', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getUserUsage.mockResolvedValue(okResponse(mockUserUsage));
+
+      const result = await service.getUserUsage('token');
+      expect(result).toEqual(mockUserUsage);
+    });
+
+    it('forwards Authorization header to DIAL Core', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getUserUsage.mockResolvedValue(okResponse(mockUserUsage));
+
+      await service.getUserUsage('my-token');
+      expect(sdkClient.getUserUsage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer my-token',
+          }),
+        }),
+      );
+    });
+
+    it('throws ServiceUnavailableException on network error', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getUserUsage.mockRejectedValue(new TypeError('fetch failed'));
+      await expect(service.getUserUsage('token')).rejects.toThrow(
+        ServiceUnavailableException,
+      );
+    });
+
+    it('throws BadGatewayException on upstream 5xx', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getUserUsage.mockResolvedValue(errResponse(502));
+      await expect(service.getUserUsage('token')).rejects.toThrow(
+        BadGatewayException,
+      );
     });
   });
 

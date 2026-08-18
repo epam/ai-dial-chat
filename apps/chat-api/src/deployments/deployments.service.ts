@@ -41,6 +41,8 @@ export class DeploymentsService {
   getDeploymentLimits = this.detailsService.getDeploymentLimits.bind(
     this.detailsService,
   );
+  getUserLimits = this.detailsService.getUserLimits.bind(this.detailsService);
+  getUserUsage = this.detailsService.getUserUsage.bind(this.detailsService);
   invalidateDetailsCache = this.detailsService.invalidateDetailsCache.bind(
     this.detailsService,
   );

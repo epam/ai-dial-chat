@@ -18,6 +18,7 @@ import {
   ShareApi,
   SkillsApi,
   ToolsetsApi,
+  UserApi,
   UserConfigApi,
 } from '@epam/ai-dial-chat-api-client';
 import {
@@ -174,6 +175,7 @@ const config = createApiConfiguration();
 export const applicationsApi = new ApplicationsApi(config);
 export const appConfigApi = new AppConfigApi(config);
 export const deploymentsApi = new DeploymentsApi(config);
+export const userApi = new UserApi(config);
 export const filesApi = new FilesApi(config);
 export const modelsApi = new ModelsApi(config);
 export const conversationsApi = new ConversationsApi(config);
