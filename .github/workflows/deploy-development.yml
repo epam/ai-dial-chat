@@ -12,8 +12,8 @@ permissions: {}
 jobs:
   trigger-legacy:
     if: |
-      (github.event_name == 'workflow_dispatch' && github.event.ref == 'refs/heads/development-legacy') ||
-      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development-legacy')
+      (github.event_name == 'workflow_dispatch' && github.event.ref == 'refs/heads/development-0.x') ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development-0.x')
     strategy:
       fail-fast: false
       matrix:
