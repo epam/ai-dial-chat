@@ -24,7 +24,6 @@ import type {
   GuardrailEntityDetails,
   ModelEntityDetails,
   ModelPricing,
-  SkillEntityDetails,
   ToolsetAuthStatus,
   ToolsetEntityDetails,
   ToolsetSpecification,
@@ -529,36 +528,6 @@ const mapGuardrailDetails = (
   };
 };
 
-const mapSkillDetails = (data: SkillEntityDetails): CatalogItemTabData => {
-  const sections: OverviewSection[] = [];
-
-  if (data.about != null) {
-    const { about: a } = data;
-    const specs: OverviewSection['specs'] = [];
-
-    if (a.allowedTools?.length)
-      specs.push({ label: 'Allowed tools', value: a.allowedTools.join(' · ') });
-    if (a.bundledResources?.length)
-      specs.push({
-        label: 'Bundled resources',
-        value: a.bundledResources.join(' · '),
-      });
-
-    if (specs.length > 0) sections.push({ title: 'Specification', specs });
-
-    if (a.skillPrompt != null) {
-      sections.push({
-        title: 'Context',
-        specs: [{ label: 'Skill prompt', value: a.skillPrompt }],
-      });
-    }
-  }
-
-  return {
-    overview: sections.length > 0 ? { sections } : undefined,
-  };
-};
-
 /** Converts a strongly-typed entity domain model into the lib's `CatalogItemTabData` shape. */
 export const mapEntityDetailsToCatalogDetails = (
   details: EntitySpecificDetails,
@@ -573,8 +542,6 @@ export const mapEntityDetailsToCatalogDetails = (
       return mapToolsetDetails(details.data);
     case 'GUARDRAIL':
       return mapGuardrailDetails(details.data);
-    case 'SKILL':
-      return mapSkillDetails(details.data);
   }
 };
 

@@ -16,7 +16,13 @@ import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
+import {
+  isValidElement,
+  type ComponentProps,
+  type ReactElement,
+  type ReactNode,
+  useState,
+} from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ToolsetOAuthCallbackQuery,
@@ -55,6 +61,7 @@ import {
   revokeSharedAccess,
 } from '../../../server-api/share.api';
 import {
+  downloadSkill,
   downloadSkillFile,
   listSkillFiles,
 } from '../../../server-api/skills.api';
@@ -70,6 +77,7 @@ import { SKILL_MANIFEST_MAX_BYTES } from '../../../types/skill';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import CatalogView from '../CatalogView';
+import { SkillDetailsFilePreview } from '../SkillDetailsFilePreview';
 
 /** Minimal fake popup `Window` — enough surface for `initiateOAuthLogin`/`waitForToolsetOAuthResult`. */
 const makeFakePopup = () => {
@@ -123,6 +131,13 @@ const capturedPublishProps: {
   } | null;
 } = { current: null };
 
+const capturedContentFileProps: {
+  current: {
+    onLoadContentFile?: (fileId: string) => Promise<string | undefined>;
+    renderContentFilePreview?: (fileId: string, fileName: string) => ReactNode;
+  } | null;
+} = { current: null };
+
 vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
   useSearchParams: () => [mockSearchParams, mockSetSearchParams],
@@ -166,6 +181,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onFetchRecipientsCount,
     isRevokeShareVisible,
     onFetchDetails,
+    onLoadContentFile,
+    renderContentFilePreview,
     onLogin,
     onLogout,
     initialDetailsItemId,
@@ -207,6 +224,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onFetchRecipientsCount?: (item: CatalogItem) => Promise<number | undefined>;
     isRevokeShareVisible?: (item: CatalogItem) => boolean;
     onFetchDetails?: (item: CatalogItem) => Promise<unknown>;
+    onLoadContentFile?: (fileId: string) => Promise<string | undefined>;
+    renderContentFilePreview?: (fileId: string, fileName: string) => ReactNode;
     onLogin?: (
       item: CatalogItem,
       params: { level: string; apiKey?: string },
@@ -259,6 +278,10 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       onMyAppsActiveChange,
       activeTab,
       onActiveTabChange,
+    };
+    capturedContentFileProps.current = {
+      onLoadContentFile,
+      renderContentFilePreview,
     };
 
     return (
@@ -547,6 +570,7 @@ vi.mock('../../../context/SkillsContext', () => ({
 }));
 
 vi.mock('../../../server-api/skills.api', () => ({
+  downloadSkill: vi.fn(),
   downloadSkillFile: vi.fn(),
   listSkillFiles: vi.fn(),
 }));
@@ -3979,7 +4003,8 @@ describe('CatalogView', () => {
       expect(ids).not.toContain('SKILL');
     });
 
-    it('hides runtime actions that no skill supports', () => {
+    /* A skill has no chat interface, so it never offers Use in chat; download, unshare, and revoke are all backed by DTOs that accept a skills path. */
+    it('hides Use in chat for a skill while offering download, unshare, and revoke', () => {
       enableSkills();
       mockSkills();
 
@@ -3990,8 +4015,14 @@ describe('CatalogView', () => {
         screen.queryByRole('button', { name: `use in chat ${skillId}` }),
       ).toBeNull();
       expect(
-        screen.queryByRole('button', { name: `download ${skillId}` }),
-      ).toBeNull();
+        screen.getByRole('button', { name: `download ${skillId}` }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole('button', { name: `unshare ${skillId}` }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole('button', { name: `revoke ${skillId}` }),
+      ).toBeTruthy();
     });
 
     it('shows Publish and Share for an owned skill', () => {
@@ -4351,6 +4382,223 @@ describe('CatalogView', () => {
       });
     });
 
+    const skillFileItems = [
+      {
+        name: 'SKILL.md',
+        path: 'SKILL.md',
+        url: 'skills/my-bucket/analysis/revenue-skill/SKILL.md',
+        bucket: 'my-bucket',
+        nodeType: 'item' as const,
+        updatedAt: 3,
+      },
+      {
+        name: 'run.py',
+        path: 'scripts/run.py',
+        url: 'skills/my-bucket/analysis/revenue-skill/scripts/run.py',
+        bucket: 'my-bucket',
+        nodeType: 'item' as const,
+        updatedAt: 4,
+      },
+    ];
+
+    const mockSkillDetailRequests = (manifest: string) => {
+      vi.mocked(downloadSkillFile).mockResolvedValue(
+        makeManifestResponse(manifest),
+      );
+      vi.mocked(listSkillFiles).mockResolvedValue({
+        bucket: 'my-bucket',
+        path: 'analysis/revenue-skill',
+        items: skillFileItems,
+      });
+    };
+
+    const openSkillDetails = async () => {
+      await user.click(
+        screen.getByRole('button', {
+          name: 'fetch details skills/my-bucket/analysis/revenue-skill',
+        }),
+      );
+    };
+
+    const readFetchResult = () =>
+      screen.getByLabelText('Fetch details result').textContent ?? '';
+
+    it('lifts the frontmatter out of the body and into the summary and Specification', async () => {
+      enableSkills();
+      mockSkills();
+      mockSkillDetailRequests(
+        '---\nname: Revenue\ndescription: Finds revenue figures\nallowed_tools: [search]\n---\n\n# Instructions\nDo the thing.',
+      );
+
+      render(<CatalogView />);
+      await openSkillDetails();
+
+      await waitFor(() =>
+        expect(readFetchResult()).toContain('Finds revenue figures'),
+      );
+      const result = readFetchResult();
+      /* The fence and its keys must not survive into the rendered body. */
+      expect(result).not.toContain('allowed_tools');
+      expect(result).toContain(CatalogI18nKeys.DetailsSkillAllowedTools);
+      expect(result).toContain('# Instructions');
+    });
+
+    it('renders a manifest with no frontmatter as body only', async () => {
+      enableSkills();
+      mockSkills();
+      mockSkillDetailRequests('# Instructions\nDo the thing.');
+
+      render(<CatalogView />);
+      await openSkillDetails();
+
+      await waitFor(() => {
+        const result = readFetchResult();
+        expect(result).toContain('# Instructions');
+        expect(result).not.toContain('description');
+        expect(result).not.toContain(
+          CatalogI18nKeys.DetailsSkillSpecificationSection,
+        );
+      });
+    });
+
+    it('keeps the whole manifest as the body when its frontmatter is malformed', async () => {
+      enableSkills();
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      mockSkills();
+      mockSkillDetailRequests(
+        '---\ndescription: "unbalanced\n---\n\n# Instructions',
+      );
+
+      render(<CatalogView />);
+      await openSkillDetails();
+
+      await waitFor(() =>
+        expect(readFetchResult()).toContain('# Instructions'),
+      );
+      expect(readFetchResult()).toContain('unbalanced');
+      /* A parse failure is weaker than a fetch failure — it is not reported. */
+      expect(showNotification).not.toHaveBeenCalled();
+    });
+
+    it('builds a hierarchical file tree, keeping an empty grouping folder visible', async () => {
+      enableSkills();
+      mockSkills();
+      vi.mocked(downloadSkillFile).mockResolvedValue(
+        makeManifestResponse('# Instructions'),
+      );
+      vi.mocked(listSkillFiles).mockResolvedValue({
+        bucket: 'my-bucket',
+        path: 'analysis/revenue-skill',
+        items: [
+          ...skillFileItems,
+          {
+            name: 'scripts',
+            path: 'scripts',
+            url: 'skills/my-bucket/analysis/revenue-skill/scripts',
+            bucket: 'my-bucket',
+            nodeType: 'folder' as const,
+            updatedAt: 5,
+          },
+          {
+            name: 'assets',
+            path: 'assets',
+            url: 'skills/my-bucket/analysis/revenue-skill/assets',
+            bucket: 'my-bucket',
+            nodeType: 'folder' as const,
+            updatedAt: 6,
+          },
+        ],
+      });
+
+      render(<CatalogView />);
+      await openSkillDetails();
+
+      await waitFor(() => {
+        const { promptContent, overview } = JSON.parse(readFetchResult());
+        expect(promptContent.files).toEqual([
+          { type: 'file', id: 'SKILL.md', name: 'SKILL.md' },
+          {
+            type: 'folder',
+            id: 'assets',
+            name: 'assets',
+            items: [],
+          },
+          {
+            type: 'folder',
+            id: 'scripts',
+            name: 'scripts',
+            items: [{ type: 'file', id: 'scripts/run.py', name: 'run.py' }],
+          },
+        ]);
+        expect(promptContent.selectedFileId).toBe('SKILL.md');
+        /* Grouping folders are neither counted nor rendered as file rows. */
+        expect(overview.sections[0].specs).toContainEqual({
+          label: CatalogI18nKeys.DetailsSkillFileCount,
+          value: '2',
+        });
+      });
+    });
+
+    it('selects the manifest by its opaque listing id when Core returns a prefixed path', async () => {
+      enableSkills();
+      mockSkills();
+      const manifestPath = 'analysis/revenue-skill/files/SKILL.md';
+      vi.mocked(downloadSkillFile).mockResolvedValue(
+        makeManifestResponse('# Instructions'),
+      );
+      vi.mocked(listSkillFiles).mockResolvedValue({
+        bucket: 'my-bucket',
+        path: 'analysis/revenue-skill',
+        items: [
+          {
+            name: 'SKILL.md',
+            path: manifestPath,
+            parentPath: 'analysis/revenue-skill/files',
+            url: `skills/my-bucket/${manifestPath}`,
+            bucket: 'my-bucket',
+            nodeType: 'item',
+            updatedAt: 3,
+          },
+          {
+            name: 'notes.md',
+            path: 'analysis/revenue-skill/files/notes.md',
+            parentPath: 'analysis/revenue-skill/files',
+            url: 'skills/my-bucket/analysis/revenue-skill/files/notes.md',
+            bucket: 'my-bucket',
+            nodeType: 'item',
+            updatedAt: 4,
+          },
+        ],
+      });
+
+      render(<CatalogView />);
+      await openSkillDetails();
+
+      await waitFor(() => {
+        const { promptContent } = JSON.parse(readFetchResult());
+        expect(promptContent.selectedFileId).toBe(manifestPath);
+      });
+    });
+
+    it('offers an empty tree when the file listing fails', async () => {
+      enableSkills();
+      mockSkills();
+      vi.mocked(downloadSkillFile).mockResolvedValue(
+        makeManifestResponse('# Instructions'),
+      );
+      vi.mocked(listSkillFiles).mockRejectedValue(new Error('502'));
+
+      render(<CatalogView />);
+      await openSkillDetails();
+
+      await waitFor(() =>
+        expect(JSON.parse(readFetchResult()).promptContent.files).toEqual([]),
+      );
+    });
+
     it('issues no request for a skill whose id is not a skill resource URL', async () => {
       enableSkills();
       mockSkills({
@@ -4372,6 +4620,377 @@ describe('CatalogView', () => {
           'null',
         ),
       );
+    });
+
+    describe('content file preview', () => {
+      const getPreviewElement = (
+        fileId = 'analysis/revenue-skill/files/openai.yaml',
+        fileName = 'openai.yaml',
+      ) => {
+        const view =
+          capturedContentFileProps.current?.renderContentFilePreview?.(
+            fileId,
+            fileName,
+          );
+        expect(isValidElement(view)).toBe(true);
+        return view as ReactElement<
+          ComponentProps<typeof SkillDetailsFilePreview>
+        >;
+      };
+
+      const openDetailsAndGetPreview = async () => {
+        enableSkills();
+        mockSkills();
+        mockSkillDetailRequests('# Instructions');
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+        return getPreviewElement();
+      };
+
+      it('supplies the shared Skill Builder preview component for supporting files', async () => {
+        const element = await openDetailsAndGetPreview();
+
+        expect(element.type).toBe(SkillDetailsFilePreview);
+        expect(element.props.fileId).toBe(
+          'analysis/revenue-skill/files/openai.yaml',
+        );
+        expect(element.props.fileName).toBe('openai.yaml');
+      });
+
+      it('normalizes Core-prefixed ids and loads raw bytes for the shared preview pipeline', async () => {
+        const element = await openDetailsAndGetPreview();
+        vi.mocked(downloadSkillFile).mockClear();
+        vi.mocked(downloadSkillFile).mockResolvedValueOnce(
+          new Response('name: address-current-branch-review', {
+            headers: { 'content-type': 'application/octet-stream' },
+          }),
+        );
+
+        const content = await element.props.onLoadFile(element.props.fileId);
+
+        expect(downloadSkillFile).toHaveBeenCalledWith(
+          'my-bucket',
+          'analysis/revenue-skill',
+          'openai.yaml',
+        );
+        expect(new TextDecoder().decode(content.bytes)).toBe(
+          'name: address-current-branch-review',
+        );
+        expect(content.mimeType).toBeUndefined();
+      });
+
+      it('preserves a specific response MIME type for the Skill Builder classifier', async () => {
+        const element = await openDetailsAndGetPreview();
+        vi.mocked(downloadSkillFile).mockResolvedValueOnce(
+          new Response('image-bytes', {
+            headers: { 'content-type': 'image/png; charset=binary' },
+          }),
+        );
+
+        const content = await element.props.onLoadFile(element.props.fileId);
+
+        expect(content.mimeType).toBe('image/png');
+      });
+
+      it('preserves the HTTP status when a supporting file cannot be loaded', async () => {
+        const element = await openDetailsAndGetPreview();
+        vi.mocked(downloadSkillFile).mockResolvedValueOnce(
+          new Response(null, { status: 403 }),
+        );
+
+        await expect(
+          element.props.onLoadFile(element.props.fileId),
+        ).rejects.toMatchObject({ status: 403 });
+      });
+
+      it('rejects an oversized supporting file before opening the shared preview', async () => {
+        const element = await openDetailsAndGetPreview();
+        vi.mocked(downloadSkillFile).mockResolvedValueOnce(
+          new Response('irrelevant', {
+            headers: {
+              'content-length': String(SKILL_MANIFEST_MAX_BYTES + 1),
+            },
+          }),
+        );
+
+        await expect(
+          element.props.onLoadFile(element.props.fileId),
+        ).rejects.toThrow('File exceeds the preview size limit');
+      });
+
+      it('keeps the legacy manifest loader frontmatter-stripped', async () => {
+        await openDetailsAndGetPreview();
+        vi.mocked(downloadSkillFile).mockClear();
+        vi.mocked(downloadSkillFile).mockResolvedValueOnce(
+          new Response('---\nname: Revenue\n---\n\n# Updated instructions'),
+        );
+
+        const content =
+          await capturedContentFileProps.current?.onLoadContentFile?.(
+            'analysis/revenue-skill/files/SKILL.md',
+          );
+
+        expect(downloadSkillFile).toHaveBeenCalledWith(
+          'my-bucket',
+          'analysis/revenue-skill',
+          'SKILL.md',
+        );
+        expect(content).toBe('# Updated instructions');
+      });
+    });
+
+    describe('archive download', () => {
+      it('downloads the whole skill through the archive endpoint using the open skill bucket and path', async () => {
+        enableSkills();
+        mockSkills();
+        mockSkillDetailRequests('# Instructions');
+        vi.mocked(downloadSkill).mockResolvedValue(new Response('zip-bytes'));
+
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+
+        await user.click(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        );
+
+        await waitFor(() =>
+          expect(downloadSkill).toHaveBeenCalledWith(
+            'my-bucket',
+            'analysis/revenue-skill',
+          ),
+        );
+        await waitFor(() => expect(triggerBlobDownload).toHaveBeenCalledOnce());
+      });
+
+      it('uses the server-provided Content-Disposition filename when present', async () => {
+        enableSkills();
+        mockSkills();
+        mockSkillDetailRequests('# Instructions');
+        vi.mocked(downloadSkill).mockResolvedValue(
+          new Response('zip-bytes', {
+            headers: {
+              'Content-Disposition': 'attachment; filename="custom-name.zip"',
+            },
+          }),
+        );
+
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+
+        await user.click(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        );
+
+        await waitFor(() =>
+          expect(triggerBlobDownload).toHaveBeenCalledWith(
+            expect.anything(),
+            'custom-name.zip',
+          ),
+        );
+      });
+
+      it('falls back to the sanitized skill name when no filename is provided', async () => {
+        enableSkills();
+        mockSkills();
+        mockSkillDetailRequests('# Instructions');
+        vi.mocked(downloadSkill).mockResolvedValue(new Response('zip-bytes'));
+
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+
+        await user.click(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        );
+
+        await waitFor(() =>
+          expect(triggerBlobDownload).toHaveBeenCalledWith(
+            expect.anything(),
+            'revenue-skill.zip',
+          ),
+        );
+      });
+
+      it('sanitizes unsafe characters out of the fallback filename', async () => {
+        enableSkills();
+        mockSkills({
+          skills: [{ ...personalSkill, name: 'revenue:skill/v2' }],
+        });
+        mockSkillDetailRequests('# Instructions');
+        vi.mocked(downloadSkill).mockResolvedValue(new Response('zip-bytes'));
+
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+
+        await user.click(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        );
+
+        await waitFor(() =>
+          expect(triggerBlobDownload).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.not.stringMatching(/[:/]/),
+          ),
+        );
+      });
+
+      it('passes a Unicode skill name through unchanged in the fallback filename', async () => {
+        enableSkills();
+        mockSkills({
+          skills: [{ ...personalSkill, name: 'выручка-skill' }],
+        });
+        mockSkillDetailRequests('# Instructions');
+        vi.mocked(downloadSkill).mockResolvedValue(new Response('zip-bytes'));
+
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+
+        await user.click(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        );
+
+        await waitFor(() =>
+          expect(triggerBlobDownload).toHaveBeenCalledWith(
+            expect.anything(),
+            'выручка-skill.zip',
+          ),
+        );
+      });
+
+      it('resolves a saved filename even when the response body is empty', async () => {
+        enableSkills();
+        mockSkills();
+        mockSkillDetailRequests('# Instructions');
+        vi.mocked(downloadSkill).mockResolvedValue(new Response(''));
+
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+
+        await user.click(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        );
+
+        await waitFor(() =>
+          expect(triggerBlobDownload).toHaveBeenCalledWith(
+            expect.anything(),
+            'revenue-skill.zip',
+          ),
+        );
+      });
+
+      it('confirms a completed download with a success notification', async () => {
+        enableSkills();
+        mockSkills();
+        mockSkillDetailRequests('# Instructions');
+        vi.mocked(downloadSkill).mockResolvedValue(new Response('zip-bytes'));
+        const showNotification = vi.fn();
+        vi.mocked(useNotification).mockReturnValue(
+          createNotificationContextValue(showNotification),
+        );
+
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+
+        await user.click(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        );
+
+        await waitFor(() =>
+          expect(showNotification).toHaveBeenCalledWith(
+            expect.objectContaining({ variant: 'success' }),
+          ),
+        );
+      });
+
+      it('reports a failed download and leaves the panel open without a success notification', async () => {
+        enableSkills();
+        mockSkills();
+        mockSkillDetailRequests('# Instructions');
+        vi.mocked(downloadSkill).mockRejectedValue(new Error('502'));
+        const showNotification = vi.fn();
+        vi.mocked(useNotification).mockReturnValue(
+          createNotificationContextValue(showNotification),
+        );
+
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+
+        await user.click(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        );
+
+        await waitFor(() =>
+          expect(showNotification).toHaveBeenCalledWith(
+            expect.objectContaining({
+              variant: 'error',
+              message: CatalogI18nKeys.DetailsSkillDownloadError,
+            }),
+          ),
+        );
+        expect(triggerBlobDownload).not.toHaveBeenCalled();
+        expect(showNotification).not.toHaveBeenCalledWith(
+          expect.objectContaining({ variant: 'success' }),
+        );
+        expect(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        ).toBeTruthy();
+      });
+
+      it('treats a non-OK response as a failure without decoding the body', async () => {
+        enableSkills();
+        mockSkills();
+        mockSkillDetailRequests('# Instructions');
+        vi.mocked(downloadSkill).mockResolvedValue(
+          new Response('error body', { status: 500 }),
+        );
+        const showNotification = vi.fn();
+        vi.mocked(useNotification).mockReturnValue(
+          createNotificationContextValue(showNotification),
+        );
+
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+
+        await user.click(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        );
+
+        await waitFor(() =>
+          expect(showNotification).toHaveBeenCalledWith(
+            expect.objectContaining({ variant: 'error' }),
+          ),
+        );
+        expect(triggerBlobDownload).not.toHaveBeenCalled();
+      });
     });
   });
 });

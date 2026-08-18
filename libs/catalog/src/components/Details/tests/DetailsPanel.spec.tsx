@@ -9,6 +9,14 @@ import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
+import type {
+  CatalogContentFilePreview,
+  CatalogContentTreeNode,
+} from '../../../models/item-details-data';
+import {
+  CatalogContentNodeType,
+  CatalogContentPreviewType,
+} from '../../../types/catalog-content-type';
 import {
   CredentialStatus,
   ToolsetAuthenticationType,
@@ -56,8 +64,29 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     ariaLabel: string;
   }) => <button onClick={onClose}>{ariaLabel}</button>,
   Skeleton: () => <div>skeleton</div>,
+  InlineSelectTrigger: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick?: () => void;
+  }) => <button onClick={onClick}>{label}</button>,
+  Dropdown: ({
+    children,
+    open,
+    renderOverlay,
+  }: {
+    children: React.ReactNode;
+    open?: boolean;
+    renderOverlay?: () => React.ReactNode;
+  }) => (
+    <div>
+      {children}
+      {open && renderOverlay?.()}
+    </div>
+  ),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  ElementSize: { Standard: 'standard' },
+  ElementSize: { Small: 'small', Standard: 'standard' },
   Spinner: () => <svg />,
   DangerButton: ({
     label,
@@ -115,6 +144,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconChevronLeft: () => <svg />,
   IconChevronDown: () => <svg />,
   IconCopy: () => <svg />,
+  IconFolder: () => <svg />,
   IconKey: () => <svg />,
   IconLogin: () => <svg />,
   IconLogout: () => <svg />,
@@ -444,6 +474,509 @@ describe('DetailsPanel — Content tab', () => {
     ).toBe('Details');
     /* Overview shows only as a tab button, so Details is still the active tab. */
     expect(screen.getAllByText('Overview')).toHaveLength(1);
+  });
+
+  it('prefers the fetched promptContent description over the item description', () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Skill,
+        description: 'stale list description',
+        details: {
+          promptContent: {
+            content: '# Body',
+            description: 'Finds and cites sources',
+          },
+        },
+      }),
+    });
+
+    expect(screen.getByText('Finds and cites sources')).toBeTruthy();
+    expect(screen.queryByText('stale list description')).toBeNull();
+  });
+
+  it('falls back to the item description when promptContent carries none', () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Prompt,
+        description: 'A prompt summary',
+        details: { promptContent: { content: 'Summarize:' } },
+      }),
+    });
+
+    expect(screen.getByText('A prompt summary')).toBeTruthy();
+  });
+});
+
+describe('DetailsPanel — Content file selector', () => {
+  const files: CatalogContentTreeNode[] = [
+    { type: CatalogContentNodeType.File, id: 'SKILL.md', name: 'SKILL.md' },
+    {
+      type: CatalogContentNodeType.File,
+      id: 'analyzer.md',
+      name: 'analyzer.md',
+    },
+  ];
+  const nestedFiles: CatalogContentTreeNode[] = [
+    { type: CatalogContentNodeType.File, id: 'SKILL.md', name: 'SKILL.md' },
+    {
+      type: CatalogContentNodeType.Folder,
+      id: 'scripts',
+      name: 'scripts',
+      items: [
+        {
+          type: CatalogContentNodeType.File,
+          id: 'scripts/run.py',
+          name: 'run.py',
+        },
+      ],
+    },
+  ];
+
+  const skillWithFiles = (
+    treeFiles: CatalogContentTreeNode[] = files,
+  ): CatalogItem =>
+    makeItem({
+      type: CatalogEntityType.Skill,
+      details: {
+        promptContent: {
+          content: '# Manifest body',
+          files: treeFiles,
+          selectedFileId: 'SKILL.md',
+        },
+      },
+    });
+
+  const openSelector = async (label = 'SKILL.md') =>
+    userEvent.click(screen.getByRole('button', { name: label }));
+
+  it('loads a picked file and shows it as the body', async () => {
+    const onLoadContentFile = vi.fn().mockResolvedValue('# Analyzer body');
+    renderPanel({ item: skillWithFiles(), onLoadContentFile });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+
+    expect(
+      await screen.findByRole('heading', { name: 'Analyzer body' }),
+    ).toBeTruthy();
+    expect(onLoadContentFile).toHaveBeenCalledWith('analyzer.md');
+    expect(screen.getByRole('button', { name: 'analyzer.md' })).toBeTruthy();
+  });
+
+  /* The base body is already in hand — reselecting it must not re-request. */
+  it('restores the base body without a request when the base file is reselected', async () => {
+    const onLoadContentFile = vi.fn().mockResolvedValue('# Analyzer body');
+    renderPanel({ item: skillWithFiles(), onLoadContentFile });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+    await waitFor(() => expect(onLoadContentFile).toHaveBeenCalledOnce());
+
+    await openSelector('analyzer.md');
+    await userEvent.click(screen.getByText('SKILL.md'));
+
+    expect(
+      await screen.findByRole('heading', { name: 'Manifest body' }),
+    ).toBeTruthy();
+    expect(onLoadContentFile).toHaveBeenCalledOnce();
+  });
+
+  it('shows the error text when a picked file cannot be read', async () => {
+    const onLoadContentFile = vi.fn().mockRejectedValue(new Error('404'));
+    renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFile,
+      texts: { contentFileErrorLabel: 'Failed to load this file.' },
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+
+    expect(await screen.findByText('Failed to load this file.')).toBeTruthy();
+  });
+
+  it('shows the error text when a picked file resolves undefined', async () => {
+    const onLoadContentFile = vi.fn().mockResolvedValue(undefined);
+    renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFile,
+      texts: { contentFileErrorLabel: 'Failed to load this file.' },
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+
+    expect(await screen.findByText('Failed to load this file.')).toBeTruthy();
+  });
+
+  it('drops a picked file when the panel switches to another item', async () => {
+    const onLoadContentFile = vi.fn().mockResolvedValue('# Analyzer body');
+    const { rerender } = renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFile,
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+    expect(
+      await screen.findByRole('button', { name: 'analyzer.md' }),
+    ).toBeTruthy();
+
+    rerender(
+      <DetailsPanel
+        item={{ ...skillWithFiles(), id: 'other-skill' }}
+        isOpen
+        onClose={vi.fn()}
+        publishFolderItems={folderItems}
+        onPublish={vi.fn().mockResolvedValue(undefined)}
+        onLoadContentFile={onLoadContentFile}
+      />,
+    );
+
+    expect(
+      await screen.findByRole('button', { name: 'SKILL.md' }),
+    ).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Manifest body' })).toBeTruthy();
+  });
+
+  it('opens the selector with every folder expanded by default', async () => {
+    renderPanel({ item: skillWithFiles(nestedFiles) });
+
+    await openSelector();
+
+    expect(screen.getByText('run.py')).toBeTruthy();
+  });
+
+  it('resets the expanded folders and closes the selector when the item switches', async () => {
+    const { rerender } = renderPanel({ item: skillWithFiles(nestedFiles) });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('scripts'));
+    expect(screen.queryByText('run.py')).toBeNull();
+
+    rerender(
+      <DetailsPanel
+        item={{ ...skillWithFiles(nestedFiles), id: 'other-skill' }}
+        isOpen
+        onClose={vi.fn()}
+        publishFolderItems={folderItems}
+        onPublish={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(screen.queryByText('run.py')).toBeNull();
+    await openSelector();
+    expect(screen.getByText('run.py')).toBeTruthy();
+  });
+});
+
+describe('DetailsPanel — file preview', () => {
+  const files: CatalogContentTreeNode[] = [
+    { type: CatalogContentNodeType.File, id: 'SKILL.md', name: 'SKILL.md' },
+    {
+      type: CatalogContentNodeType.File,
+      id: 'analyzer.md',
+      name: 'analyzer.md',
+    },
+    { type: CatalogContentNodeType.File, id: 'run.py', name: 'run.py' },
+  ];
+
+  const skillWithFiles = (): CatalogItem =>
+    makeItem({
+      type: CatalogEntityType.Skill,
+      details: {
+        promptContent: {
+          content: '# Manifest body',
+          files,
+          selectedFileId: 'SKILL.md',
+        },
+      },
+    });
+
+  const openSelector = async (label = 'SKILL.md') =>
+    userEvent.click(screen.getByRole('button', { name: label }));
+
+  /** Creates a promise whose resolution the test controls explicitly. */
+  const deferred = <T,>() => {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((r) => {
+      resolve = r;
+    });
+    return { promise, resolve };
+  };
+
+  it('prefers a host-owned renderer and passes it the opaque id and basename', async () => {
+    const onLoadContentFile = vi.fn().mockResolvedValue('ignored');
+    const onLoadContentFilePreview = vi.fn().mockResolvedValue({
+      type: CatalogContentPreviewType.Text,
+      text: 'ignored',
+    } satisfies CatalogContentFilePreview);
+    const renderContentFilePreview = vi.fn(
+      (fileId: string, fileName: string) => (
+        <div>{`Attachment canvas: ${fileId}:${fileName}`}</div>
+      ),
+    );
+    renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFile,
+      onLoadContentFilePreview,
+      renderContentFilePreview,
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('run.py'));
+
+    expect(screen.getByText('Attachment canvas: run.py:run.py')).toBeTruthy();
+    expect(renderContentFilePreview).toHaveBeenCalledWith('run.py', 'run.py');
+    expect(onLoadContentFilePreview).not.toHaveBeenCalled();
+    expect(onLoadContentFile).not.toHaveBeenCalled();
+  });
+
+  it('does not invoke the host-owned renderer for the base manifest', () => {
+    const renderContentFilePreview = vi.fn(() => <div>Supporting file</div>);
+    renderPanel({ item: skillWithFiles(), renderContentFilePreview });
+
+    expect(screen.getByRole('heading', { name: 'Manifest body' })).toBeTruthy();
+    expect(renderContentFilePreview).not.toHaveBeenCalled();
+  });
+
+  it('prefers onLoadContentFilePreview over onLoadContentFile when both are supplied', async () => {
+    const onLoadContentFile = vi.fn().mockResolvedValue('ignored');
+    const onLoadContentFilePreview = vi.fn().mockResolvedValue({
+      type: CatalogContentPreviewType.Text,
+      text: 'print(1)',
+      language: 'python',
+    } satisfies CatalogContentFilePreview);
+    const { container } = renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFile,
+      onLoadContentFilePreview,
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('run.py'));
+
+    await waitFor(() => expect(container.textContent).toContain('print(1)'));
+    expect(onLoadContentFilePreview).toHaveBeenCalledWith('run.py');
+    expect(onLoadContentFile).not.toHaveBeenCalled();
+  });
+
+  it('an older request resolving after a newer one does not override it', async () => {
+    const analyzerDeferred = deferred<CatalogContentFilePreview>();
+    const onLoadContentFilePreview = vi
+      .fn()
+      .mockImplementation((fileId: string) =>
+        fileId === 'analyzer.md'
+          ? analyzerDeferred.promise
+          : Promise.resolve({
+              type: CatalogContentPreviewType.Text,
+              text: 'run.py body',
+            } satisfies CatalogContentFilePreview),
+      );
+    const { container } = renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFilePreview,
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+    await openSelector('analyzer.md');
+    await userEvent.click(screen.getByText('run.py'));
+
+    await waitFor(() => expect(container.textContent).toContain('run.py body'));
+
+    analyzerDeferred.resolve({
+      type: CatalogContentPreviewType.Text,
+      text: 'stale analyzer body',
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(container.textContent).toContain('run.py body');
+
+    expect(container.textContent).not.toContain('stale analyzer body');
+  });
+
+  it('discards a pending preview request when the panel switches to a different item', async () => {
+    const pending = deferred<CatalogContentFilePreview>();
+    const onLoadContentFilePreview = vi.fn().mockReturnValue(pending.promise);
+    const { rerender } = renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFilePreview,
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+
+    rerender(
+      <DetailsPanel
+        item={{ ...skillWithFiles(), id: 'other-skill' }}
+        isOpen
+        onClose={vi.fn()}
+        publishFolderItems={folderItems}
+        onPublish={vi.fn().mockResolvedValue(undefined)}
+        onLoadContentFilePreview={onLoadContentFilePreview}
+      />,
+    );
+
+    pending.resolve({
+      type: CatalogContentPreviewType.Text,
+      text: 'stale content',
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.getByRole('heading', { name: 'Manifest body' })).toBeTruthy();
+  });
+
+  it('revokes a blob: image preview url when a different file is picked', async () => {
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+    const onLoadContentFilePreview = vi
+      .fn()
+      .mockResolvedValueOnce({
+        type: CatalogContentPreviewType.Image,
+        url: 'blob:image-url',
+      } satisfies CatalogContentFilePreview)
+      .mockResolvedValueOnce({
+        type: CatalogContentPreviewType.Text,
+        text: 'next file',
+      } satisfies CatalogContentFilePreview);
+    renderPanel({ item: skillWithFiles(), onLoadContentFilePreview });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+    await screen.findByRole('img');
+
+    await openSelector('analyzer.md');
+    await userEvent.click(screen.getByText('run.py'));
+
+    await waitFor(() =>
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:image-url'),
+    );
+    revokeObjectURL.mockRestore();
+  });
+
+  it('never revokes a non-blob image preview url', async () => {
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+    const onLoadContentFilePreview = vi
+      .fn()
+      .mockResolvedValueOnce({
+        type: CatalogContentPreviewType.Image,
+        url: 'https://example.com/image.png',
+      } satisfies CatalogContentFilePreview)
+      .mockResolvedValueOnce({
+        type: CatalogContentPreviewType.Text,
+        text: 'next file',
+      } satisfies CatalogContentFilePreview);
+    renderPanel({ item: skillWithFiles(), onLoadContentFilePreview });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+    await screen.findByRole('img');
+
+    await openSelector('analyzer.md');
+    await userEvent.click(screen.getByText('run.py'));
+
+    expect(await screen.findByText('next file')).toBeTruthy();
+    expect(revokeObjectURL).not.toHaveBeenCalledWith(
+      'https://example.com/image.png',
+    );
+    revokeObjectURL.mockRestore();
+  });
+
+  it('revokes a stale image preview url that resolves after a newer pick, even though it was never displayed', async () => {
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+    const staleDeferred = deferred<CatalogContentFilePreview>();
+    const onLoadContentFilePreview = vi
+      .fn()
+      .mockImplementation((fileId: string) =>
+        fileId === 'analyzer.md'
+          ? staleDeferred.promise
+          : Promise.resolve({
+              type: CatalogContentPreviewType.Text,
+              text: 'run.py body',
+            } satisfies CatalogContentFilePreview),
+      );
+    const { container } = renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFilePreview,
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+    await openSelector('analyzer.md');
+    await userEvent.click(screen.getByText('run.py'));
+
+    await waitFor(() => expect(container.textContent).toContain('run.py body'));
+
+    staleDeferred.resolve({
+      type: CatalogContentPreviewType.Image,
+      url: 'blob:discarded-url',
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:discarded-url');
+    revokeObjectURL.mockRestore();
+  });
+
+  it('discards a stale item-switch preview resolution, revoking its blob: image url', async () => {
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+    const pending = deferred<CatalogContentFilePreview>();
+    const onLoadContentFilePreview = vi.fn().mockReturnValue(pending.promise);
+    const { rerender } = renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFilePreview,
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+
+    rerender(
+      <DetailsPanel
+        item={{ ...skillWithFiles(), id: 'other-skill' }}
+        isOpen
+        onClose={vi.fn()}
+        publishFolderItems={folderItems}
+        onPublish={vi.fn().mockResolvedValue(undefined)}
+        onLoadContentFilePreview={onLoadContentFilePreview}
+      />,
+    );
+
+    pending.resolve({
+      type: CatalogContentPreviewType.Image,
+      url: 'blob:switched-away-url',
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:switched-away-url');
+    revokeObjectURL.mockRestore();
+  });
+
+  it('revokes a still-displayed blob: image preview url on unmount', async () => {
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+    const onLoadContentFilePreview = vi.fn().mockResolvedValue({
+      type: CatalogContentPreviewType.Image,
+      url: 'blob:unmount-url',
+    } satisfies CatalogContentFilePreview);
+    const { unmount } = renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFilePreview,
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+    await screen.findByRole('img');
+
+    unmount();
+
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:unmount-url');
+    revokeObjectURL.mockRestore();
   });
 });
 

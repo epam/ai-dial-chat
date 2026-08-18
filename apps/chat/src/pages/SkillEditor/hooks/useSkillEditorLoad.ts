@@ -19,6 +19,7 @@ import {
   unpackSkillArchive,
 } from '../../../utils/skill';
 import type { SkillFileContent } from '../../../utils/skill-file-preview';
+import { stripSurroundingSlashes } from '../../../utils/string-utils';
 import { nameFromPath } from '../utils/skill-file-tree';
 
 interface LoadedSkill {
@@ -33,7 +34,9 @@ const resolveSkillFilePath = (
   item: SkillMetadataItemDto,
   skillPath: string,
 ): string | null => {
-  const parentPath = item.parentPath?.replace(/^\/+|\/+$/g, '') ?? '';
+  const parentPath = item.parentPath
+    ? stripSurroundingSlashes(item.parentPath)
+    : '';
   const filesRoot = `${skillPath.replace(/\/+$/g, '')}/files`;
 
   if (parentPath === filesRoot) return item.name;
