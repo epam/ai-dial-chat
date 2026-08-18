@@ -153,7 +153,7 @@ export const ModelSelectorControl: FC<Props> = ({
         renderOverlay={() =>
           modelPickerOverlay(() => onPickerOpenChange?.(false))
         }
-        listClassName="cp-dropdown-overlay !w-[320px]"
+        listClassName="cp-dropdown-overlay !w-[368px] !bg-layer-raised"
       >
         <DialTooltip tooltip={selectedLabel}>
           <button

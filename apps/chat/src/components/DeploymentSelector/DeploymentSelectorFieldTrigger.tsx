@@ -94,7 +94,7 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
         outsideClosable
         disabled={isDisabled}
         renderOverlay={() => renderOverlay(() => setIsOpen(false))}
-        listClassName="cp-dropdown-overlay"
+        listClassName="cp-dropdown-overlay !bg-layer-raised"
         className="w-full"
       >
         {/*
