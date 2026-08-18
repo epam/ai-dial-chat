@@ -5,7 +5,7 @@ import {
   ExpectedMessages,
   MockedChatApiResponseBodies,
 } from '../testData';
-import { Cursors, Styles } from '../ui/domData';
+import { Cursors } from '../ui/domData';
 
 import { DialAIEntityModel } from '@/chat/types/models';
 import { keys } from '@/src/ui/keyboard';
@@ -146,7 +146,7 @@ dialTest(
 );
 
 dialTest(
-  'Default model in new chat is set as in previous chat.\n' +
+  'Default model in new chat is set as in previous chat with model response.\n' +
     'Send button is disabled if the message box is empty.\n' +
     'Chat name is shown in chat header.\n' +
     `It's impossible to send a message with spaces only`,
@@ -157,8 +157,10 @@ dialTest(
     agentInfoAssertion,
     chat,
     sendMessage,
-    chatHeader,
+    sendMessageAssertion,
+    chatHeaderAssertion,
     chatMessages,
+    chatMessagesAssertion,
     page,
     localStorageManager,
     talkToAgentDialog,
@@ -178,15 +180,11 @@ dialTest(
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        const isSendMessageBtnEnabled =
-          await sendMessage.sendMessageButton.isElementEnabled();
-        expect
-          .soft(
-            isSendMessageBtnEnabled,
-            ExpectedMessages.sendMessageButtonDisabled,
-          )
-          .toBeFalsy();
-
+        await sendMessageAssertion.assertElementActionabilityState(
+          sendMessage.sendMessageButton,
+          'disabled',
+          ExpectedMessages.sendMessageButtonDisabled,
+        );
         await sendMessage.sendMessageButton.hoverOver();
         await tooltipPortalAssertion.assertTooltipContent(
           ExpectedConstants.sendMessageTooltip,
@@ -205,33 +203,23 @@ dialTest(
             await page.keyboard.press(keys.enter);
             const messagesCountAfter =
               await chatMessages.chatMessages.getElementsCount();
-            expect
-              .soft(
-                messagesCountBefore === messagesCountAfter,
-                ExpectedMessages.messageCountIsCorrect,
-              )
-              .toBeTruthy();
+            chatMessagesAssertion.assertBooleanCondition(
+              messagesCountBefore === messagesCountAfter,
+              true,
+              ExpectedMessages.messageCountIsCorrect,
+            );
           }
-          const isSendMessageBtnEnabled =
-            await sendMessage.sendMessageButton.isElementEnabled();
-          expect
-            .soft(
-              isSendMessageBtnEnabled,
-              ExpectedMessages.sendMessageButtonDisabled,
-            )
-            .toBeFalsy();
+          await sendMessageAssertion.assertElementActionabilityState(
+            sendMessage.sendMessageButton,
+            'disabled',
+            ExpectedMessages.sendMessageButtonDisabled,
+          );
 
           await sendMessage.sendMessageButton.hoverOver();
-          const sendBtnCursor =
-            await sendMessage.sendMessageButton.getComputedStyleProperty(
-              Styles.cursor,
-            );
-          expect
-            .soft(
-              sendBtnCursor[0],
-              ExpectedMessages.sendButtonCursorIsNotAllowed,
-            )
-            .toBe(Cursors.notAllowed);
+          await sendMessageAssertion.assertElementCursor(
+            sendMessage.sendMessageButton,
+            Cursors.notAllowed,
+          );
           await tooltipPortalAssertion.assertTooltipContent(
             ExpectedConstants.sendMessageTooltip,
           );
@@ -246,10 +234,7 @@ dialTest(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await chat.sendRequestWithButton(request);
-        const chatTitle = await chatHeader.chatTitle.getElementInnerContent();
-        expect
-          .soft(chatTitle, ExpectedMessages.headerTitleCorrespondRequest)
-          .toBe(request);
+        await chatHeaderAssertion.assertHeaderTitle(request);
       },
     );
 
@@ -266,9 +251,11 @@ dialTest(
         await talkToAgentDialogAssertion.assertAgentIsSelected(nonDefaultModel);
 
         const recentTalkTo = await talkToAgents.getEntityNames();
-        expect
-          .soft(recentTalkTo[0], ExpectedMessages.recentEntitiesIsOnTop)
-          .toBe(nonDefaultModel.name);
+        talkToAgentDialogAssertion.assertValue(
+          recentTalkTo[0],
+          nonDefaultModel.name,
+          ExpectedMessages.recentEntitiesIsOnTop,
+        );
       },
     );
   },

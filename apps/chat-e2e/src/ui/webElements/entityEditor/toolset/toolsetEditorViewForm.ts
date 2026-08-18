@@ -1,10 +1,16 @@
-import { OAuthOptions } from '@/src/testData';
+import { ExpectedConstants, OAuthOptions } from '@/src/testData';
 import { AttributeValues, Attributes, Tags } from '@/src/ui/domData';
 import {
   AddToolsetSettingsFormSelector,
   IconSelectors,
 } from '@/src/ui/selectors';
-import { Button, Combobox, EntityEditorViewForm } from '@/src/ui/webElements';
+import {
+  Button,
+  Combobox,
+  EntityEditorViewForm,
+  ListboxMenu,
+} from '@/src/ui/webElements';
+import { TokenEndpointAuthMethod } from '@epam/ai-dial-shared';
 import { Page } from '@playwright/test';
 
 export class ToolsetEditorViewForm extends EntityEditorViewForm {
@@ -72,6 +78,17 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
     this.page,
     this.oAuthLoginForm.getElementLocator(),
   );
+  public tokenEndpointAuthMethodContainer =
+    this.oAuthLoginForm.getChildElementBySelector(
+      AddToolsetSettingsFormSelector.tokenEndpointAuthMethodContainer,
+    );
+  public tokenEndpointAuthMethodListboxMenu!: ListboxMenu;
+  public getTokenEndpointAuthMethodListboxMenu() {
+    if (!this.tokenEndpointAuthMethodListboxMenu) {
+      this.tokenEndpointAuthMethodListboxMenu = new ListboxMenu(this.page);
+    }
+    return this.tokenEndpointAuthMethodListboxMenu;
+  }
   public loginButton = new Button(
     this.page,
     AttributeValues.login,
@@ -137,6 +154,14 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
     this.page,
     AddToolsetSettingsFormSelector.copyUrlButton,
   );
+
+  public async selectTokenEndpointAuthMethod(method: TokenEndpointAuthMethod) {
+    await this.tokenEndpointAuthMethodContainer.click();
+    await this.getTokenEndpointAuthMethodListboxMenu().waitForState();
+    await this.getTokenEndpointAuthMethodListboxMenu().selectOption(
+      ExpectedConstants.tokenEndpointAuthMethodLabels[method],
+    );
+  }
 
   public async clickLoginButton(
     triggeredHttpHost?: string,

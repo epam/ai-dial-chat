@@ -13,6 +13,11 @@ import { ConversationResponseFormat } from '@epam/ai-dial-shared';
 
 const firstResponseMessageIndex = 2;
 const secondResponseMessageIndex = 4;
+const request = 'Generate one MD table';
+const tableInPlainText = `| Country | Capital |
+| --- | --- |
+| Canada | Ottawa |
+| United States | Washington, D.C. |`;
 
 let randomModel: DialAIEntityModel;
 
@@ -43,11 +48,6 @@ dialTest(
     conversations,
   }) => {
     setTestIds('EPMDIAL-5985', 'EPMDIAL-5984', 'EPMDIAL-5983', 'EPMDIAL-5986');
-    const request = 'Generate one MD table';
-    const tableInPlainText = `| Country | Capital |
-| --- | --- |
-| Canada | Ottawa |
-| United States | Washington, D.C. |`;
 
     await dialTest.step(
       'Send a request that generates a table and verify the default value of responseFormat field',
@@ -275,6 +275,90 @@ dialTest(
         await chatHeader.openConversationSettingsPopup();
         await agentSettingAssertion.assertResponseFormat(
           ConversationResponseFormat.PlainText,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Check response format is stored for Playback chat',
+  async ({
+    dialHomePage,
+    setTestIds,
+    localStorageManager,
+    chat,
+    chatHeader,
+    chatMessages,
+    chatMessagesAssertion,
+    conversationSettingsModal,
+    agentSettings,
+    conversations,
+    conversationDropdownMenu,
+    agentInfo,
+    chatSettingsTooltip,
+    tooltipAssertion,
+  }) => {
+    setTestIds('EPMDIAL-7435');
+
+    await dialTest.step(
+      'Set response format to Plain text and create a chat with a table response',
+      async () => {
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          randomModel,
+        );
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await chat.configureSettingsButton.click();
+        await agentSettings.setResponseFormat(
+          ConversationResponseFormat.PlainText,
+        );
+        await conversationSettingsModal.applyChanges({
+          waitForUpdate: false,
+        });
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.mdTableBody,
+        );
+        await chat.sendRequestWithButton(request, true);
+      },
+    );
+
+    await dialTest.step(
+      'Create Playback chat based on the prepared conversation',
+      async () => {
+        await conversations.openEntityDropdownMenu(request);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.playback);
+        await agentInfo.waitForState();
+      },
+    );
+
+    await dialTest.step(
+      'Click on Next button several times to have the response on the screen',
+      async () => {
+        for (let i = 1; i <= 2; i++) {
+          await chat.playNextChatMessage(false);
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Verify Response format is Plain text in the tooltip on Gear icon and in the chat history',
+      async () => {
+        await chatHeader.hoverOverChatSettings();
+        await tooltipAssertion.assertElementText(
+          chatSettingsTooltip.responseFormatInfo,
+          ConversationResponseFormat.PlainText,
+          ExpectedMessages.chatInfoResponseFormatIsValid,
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.getChatMessageTable(firstResponseMessageIndex),
+          'hidden',
+          ExpectedMessages.tableIsHidden,
+        );
+        await chatMessagesAssertion.assertElementText(
+          chatMessages.getChatMessageContent(firstResponseMessageIndex),
+          tableInPlainText,
         );
       },
     );
