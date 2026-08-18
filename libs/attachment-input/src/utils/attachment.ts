@@ -230,6 +230,9 @@ const getBottomLabel = (
     if (ext) return `.${ext}`;
   }
 
+  // name may be missing on some backend payloads despite the required type
+  if (name == null) return '';
+
   // Fall back to name extension; guard against trailing dots (e.g. sentence endings)
   const lastDot = name.lastIndexOf('.');
   if (lastDot > 0 && lastDot < name.length - 1) {
