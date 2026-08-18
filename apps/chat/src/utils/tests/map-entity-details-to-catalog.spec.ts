@@ -1,7 +1,14 @@
+import { CredentialStatus } from '@epam/ai-dial-catalog';
 import { describe, expect, it } from 'vitest';
+import {
+  AuthenticationType,
+  type ToolsetAuthStatus,
+  type ToolsetEntityDetails,
+} from '../../types/entity-details';
 import {
   mapDeploymentDetailsDtoToEntityDetails,
   mapEntityDetailsToCatalogDetails,
+  mapToolsetCredentials,
 } from '../map-entity-details-to-catalog';
 
 describe('mapEntityDetailsToCatalogDetails', () => {
@@ -260,6 +267,30 @@ describe('mapEntityDetailsToCatalogDetails', () => {
       );
       expect(labels).not.toContain('Allowed tools');
       expect(labels).not.toContain('All supported tools');
+    });
+  });
+});
+
+describe('mapToolsetCredentials', () => {
+  const makeData = (authStatus: ToolsetAuthStatus): ToolsetEntityDetails => ({
+    specification: {
+      authentication: AuthenticationType.ApiKey,
+      authStatus,
+    },
+  });
+
+  it('maps status levels as before', () => {
+    const result = mapToolsetCredentials(
+      'toolsets/public/x__1.0',
+      makeData({ userLevel: 'SIGNED_IN', global: 'SIGNED_OUT' }),
+      true,
+    );
+
+    expect(result).toMatchObject({
+      userStatus: CredentialStatus.SignedIn,
+      globalStatus: CredentialStatus.SignedOut,
+      isPublic: true,
+      isManageableByAdmin: true,
     });
   });
 });

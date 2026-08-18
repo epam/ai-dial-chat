@@ -366,12 +366,24 @@ describe('SharePopover', () => {
     expect(copyButton.matches(':focus')).toBe(true);
   });
 
-  it('moves focus into the popover when it mounts', () => {
+  it('moves focus to the first control in the popover when it mounts', () => {
     render(<SharePopover {...makeProps({ onClose })} />);
 
-    expect(
-      screen.getByRole('dialog', { name: 'Share' }).matches(':focus'),
-    ).toBe(true);
+    expect(screen.getByRole('button', { name: 'QR' }).matches(':focus')).toBe(
+      true,
+    );
+  });
+
+  it('moves focus into the popover when it mounts without a link', () => {
+    render(
+      <SharePopover
+        {...makeProps({ onClose, url: undefined, isLoading: true })}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'QR' }).matches(':focus')).toBe(
+      true,
+    );
   });
 
   it('shows a skeleton loading state while the link is not ready', () => {
