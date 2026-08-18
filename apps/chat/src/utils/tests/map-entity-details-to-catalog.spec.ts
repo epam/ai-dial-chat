@@ -1,7 +1,4 @@
-import {
-  CredentialStatus,
-  ToolsetAuthenticationType,
-} from '@epam/ai-dial-catalog';
+import { CredentialStatus } from '@epam/ai-dial-catalog';
 import { describe, expect, it } from 'vitest';
 import {
   AuthenticationType,
