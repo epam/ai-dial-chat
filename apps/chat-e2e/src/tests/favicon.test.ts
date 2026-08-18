@@ -1,6 +1,7 @@
 import dialTest from '@/src/core/dialFixtures';
 import { API, ExpectedMessages } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
+import { apiTimeout } from '@/src/ui/pages';
 
 dialTest(
   'Favicon is shown when user is logged in',
@@ -14,6 +15,8 @@ dialTest(
         const { responses } = await dialHomePage.waitForExpectedResponses(
           () => dialHomePage.openHomePage(),
           [{ apiMethod: 'GET', urlPattern: API.faviconHost }],
+          200,
+          apiTimeout * 2,
         );
         await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         baseAssertion.assertValueMatchPattern(
