@@ -111,7 +111,6 @@ export enum ButtonsI18nKeys {
   RemoveFromMyList = 'buttons.removeFromMyList',
   RevokeAccess = 'buttons.revokeAccess',
   RevokeAccessWithCount = 'buttons.revokeAccessWithCount',
-  Add = 'buttons.add',
   Replace = 'buttons.replace',
 }
 
