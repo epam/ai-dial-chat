@@ -70,6 +70,7 @@ const borderColors = {
   warning: 'var(--stroke-warning, #EEC840)', // yellow-500
   info: 'var(--stroke-info, #124ACE)', // blue-500
   success: 'var(--stroke-success, #007274)', // green-800
+  'accent-primary': 'var(--stroke-accent-primary, var(--stroke-info, #124ACE))',
 
   // controls
   'hover-alpha': 'var(--stroke-hover-alpha, #2764D933)', // blue-500 alpha-20
@@ -127,6 +128,7 @@ module.exports = {
   content: [
     './apps/chat/src/**/*.{html,js,ts,tsx,yaml}',
     './node_modules/@epam/ai-dial-ui-kit/**/*.{js,ts,jsx,tsx}',
+    './node_modules/@epam/ai-dial-react-file-manager/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     backgroundColor: {

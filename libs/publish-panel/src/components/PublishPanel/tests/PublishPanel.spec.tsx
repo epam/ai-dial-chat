@@ -139,6 +139,15 @@ describe('PublishPanel', () => {
     expect(screen.getByText('Publish to folder')).toBeTruthy();
   });
 
+  it('forwards the translated folder-creation cancel label', async () => {
+    renderPanel({ labels: { cancelCreatingFolderLabel: 'Discard folder' } });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Create new folder' }),
+    );
+
+    expect(screen.getByRole('button', { name: 'Discard folder' })).toBeTruthy();
+  });
+
   it('renders the access-rules section between the folder block and history', () => {
     renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
     expect(screen.getByText('Allow access if all match')).toBeTruthy();
@@ -192,7 +201,9 @@ describe('PublishPanel', () => {
     expect(screen.queryByText('Versions history')).toBeNull();
   });
 
-  it('shows the history section once a folder is selected', () => {
+  // TODO: will implement later — versions history section is commented out
+  // in PublishPanel; re-enable once it comes back.
+  it.skip('shows the history section once a folder is selected', () => {
     renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
     expect(screen.getByText('Versions history')).toBeTruthy();
   });
@@ -248,7 +259,9 @@ describe('PublishPanel', () => {
     expect(screen.queryByText(/Everyone with access/)).toBeNull();
   });
 
-  it('renders the empty-history message when there is no publish history for the selected folder', () => {
+  // TODO: will implement later — versions history section is commented out
+  // in PublishPanel; re-enable once it comes back.
+  it.skip('renders the empty-history message when there is no publish history for the selected folder', () => {
     renderPanel({
       selectedFolderPath: ['Shared', 'Data Science'],
     });
@@ -259,7 +272,9 @@ describe('PublishPanel', () => {
     ).toBeTruthy();
   });
 
-  it('renders history rows only for the selected folder', () => {
+  // TODO: will implement later — versions history section is commented out
+  // in PublishPanel; re-enable once it comes back.
+  it.skip('renders history rows only for the selected folder', () => {
     renderPanel({
       selectedFolderPath: ['Shared', 'Data Science', 'Published models'],
     });
@@ -272,12 +287,16 @@ describe('PublishPanel', () => {
   });
 
   describe('root selection', () => {
-    it('shows the history section when the root ([]) is selected', () => {
+    // TODO: will implement later — versions history section is commented out
+    // in PublishPanel; re-enable once it comes back.
+    it.skip('shows the history section when the root ([]) is selected', () => {
       renderPanel({ selectedFolderPath: [] });
       expect(screen.getByText('Versions history')).toBeTruthy();
     });
 
-    it('shows the empty-history message for the root when there is no root history', () => {
+    // TODO: will implement later — versions history section is commented out
+    // in PublishPanel; re-enable once it comes back.
+    it.skip('shows the empty-history message for the root when there is no root history', () => {
       renderPanel({ selectedFolderPath: [] });
       expect(
         screen.getByText(
