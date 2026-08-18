@@ -329,11 +329,14 @@ One folder per domain. **No `modules/` wrapper** — `{domain}.module.ts` sits d
 
 #### Models & Deployments
 
-| Method | Path                                       | Description                                              |
-| ------ | ------------------------------------------ | -------------------------------------------------------- |
-| `GET`  | `/api/v1/models`                           | List available models (cached)                           |
-| `GET`  | `/api/deployments`                         | List available deployments                               |
-| `GET`  | `/api/v1/deployments/{deployment}/details` | Full per-entity detail for one deployment by id (cached) |
+| Method | Path                                       | Description                                                                                      |
+| ------ | ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `GET`  | `/api/v1/models`                           | List available models (cached)                                                                   |
+| `GET`  | `/api/deployments`                         | List available deployments                                                                       |
+| `GET`  | `/api/v1/deployments/{deployment}/details` | Full per-entity detail for one deployment by id (cached)                                         |
+| `GET`  | `/api/v1/deployments/{deployment}/limits`  | Rate-limit and rolling usage stats for one deployment                                            |
+| `GET`  | `/api/v1/user/limits`                      | Rate-limit and rolling usage stats for every visible deployment, plus global cost-budget figures |
+| `GET`  | `/api/v1/user/usage`                       | Same shape as `/api/v1/user/limits`, restricted to deployments used in the trailing 30 days      |
 
 #### Client Channel (`/api/v1/client-channel`)
 
