@@ -437,7 +437,7 @@ describe('Header — Download as primary action', () => {
         onLogin={vi.fn()}
       />,
     );
-    expect(screen.getByRole('button', { name: 'Log in' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'API key' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Download' })).toBeNull();
   });
 
