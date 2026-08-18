@@ -74,10 +74,12 @@ Modal dialog for configuring conversation-level settings (temperature, system pr
 import { ChatSettingsModal } from '@epam/ai-dial-conversation-input';
 
 <ChatSettingsModal
-  isOpen={isOpen}
+  features={features}
+  initialResponseFormat={settings.responseFormat}
+  initialSystemPrompt={settings.systemPrompt}
+  initialTemperature={settings.temperature}
+  onSave={setSettings}
   onClose={handleClose}
-  values={settings}
-  onChange={setSettings}
 />;
 ```
 
