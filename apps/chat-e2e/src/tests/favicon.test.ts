@@ -1,39 +1,50 @@
 import dialTest from '@/src/core/dialFixtures';
 import { API, ExpectedMessages } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
-import { apiTimeout } from '@/src/ui/pages';
 
-dialTest.only(
+dialTest(
   'Favicon is shown when user is logged in',
-  async ({ dialHomePage, baseAssertion, favicon, setTestIds }) => {
+  async ({
+    dialHomePage,
+    apiAssertion,
+    baseAssertion,
+    favicon,
+    iconApiHelper,
+    setTestIds,
+  }) => {
     setTestIds('EPMDIAL-2385');
     const imageContentType = /^image\//;
 
+    await dialTest.step('Log in DIAL', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+    });
+
+    await dialTest.step('Check favicon is set in DOM', async () => {
+      await baseAssertion.assertElementAttribute(
+        favicon,
+        Attributes.href,
+        API.faviconHost,
+        ExpectedMessages.faviconUrlIsValid,
+      );
+    });
+
     await dialTest.step(
-      'Open DIAL home page and verify favicon request is triggered, icon is set in DOM',
+      'Check favicon endpoint serves a valid image',
       async () => {
-        // const { responses } = await dialHomePage.waitForExpectedResponses(
-        //   () => dialHomePage.openHomePage(),
-        //   [{ apiMethod: 'GET', urlPattern: API.faviconHost }],
-        //   200,
-        //   apiTimeout * 2,
-        // );
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
-        // baseAssertion.assertValueMatchPattern(
-        //   responses[0].headers()['content-type'],
-        //   imageContentType,
-        //   ExpectedMessages.responseContentTypeIsImage,
-        // );
-        // baseAssertion.assertNumberIsGreaterThan(
-        //   (await responses[0].text()).length,
-        //   0,
-        // );
-        await baseAssertion.assertElementAttribute(
-          favicon,
-          Attributes.href,
-          API.faviconHost,
-          ExpectedMessages.faviconUrlIsValid,
+        // Headless Chromium doesn't reliably fetch the <link rel="icon"> resource on its own.
+        // Favicon fetching is tied to browser tab/history UI, not the page's normal resource loading,
+        // so it's not guaranteed to fire without a real tab to render an icon
+        const response = await iconApiHelper.getFavicon();
+        await apiAssertion.assertResponseCode(response, 'favicon', 200);
+        baseAssertion.assertValueMatchPattern(
+          response.headers()['content-type'],
+          imageContentType,
+          ExpectedMessages.responseContentTypeIsImage,
+        );
+        baseAssertion.assertNumberIsGreaterThan(
+          (await response.body()).length,
+          0,
         );
       },
     );
