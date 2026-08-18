@@ -1,16 +1,21 @@
+import { CatalogContentNodeType } from '@epam/ai-dial-catalog';
 import {
   SkillMetadataItemDtoNodeTypeEnum,
   type SkillMetadataItemDto,
 } from '@epam/ai-dial-chat-api-client';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { TFunction } from 'i18next';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { CatalogI18nKeys } from '../../constants/translation-keys';
-import { SkillSource } from '../../types/skill';
+import { SKILL_MANIFEST_MAX_BYTES, SkillSource } from '../../types/skill';
 import {
-  buildSkillContentFiles,
+  buildSkillContentTree,
   buildSkillOverview,
   mapSkillToCatalogItem,
+  readSkillFileBytes,
+  readSkillManifest,
+  resolveSkillFileDownloadPath,
+  resolveSkillManifestFileId,
 } from '../map-skill-to-catalog-item';
 
 const LABELS: Partial<Record<string, string>> = {
@@ -147,7 +152,12 @@ const makeFile = (
   path: string,
   nodeType: SkillMetadataItemDtoNodeTypeEnum = SkillMetadataItemDtoNodeTypeEnum.Item,
 ): SkillMetadataItemDto =>
-  makeSkill({ name: path, path, nodeType, url: `skills/my-bucket/${path}` });
+  makeSkill({
+    name: path.includes('/') ? path.slice(path.lastIndexOf('/') + 1) : path,
+    path,
+    nodeType,
+    url: `skills/my-bucket/${path}`,
+  });
 
 const readSection = (
   overview: ReturnType<typeof buildSkillOverview>,
@@ -303,42 +313,243 @@ describe('buildSkillOverview', () => {
   });
 });
 
-describe('buildSkillContentFiles', () => {
-  it('excludes grouping folders', () => {
-    const files = buildSkillContentFiles([
-      makeFile('SKILL.md'),
-      makeFile('scripts', SkillMetadataItemDtoNodeTypeEnum.Folder),
-    ]);
+describe('buildSkillContentTree', () => {
+  const fileNode = (tree: ReturnType<typeof buildSkillContentTree>[number]) =>
+    tree.type === CatalogContentNodeType.File ? tree : undefined;
+  const folderNode = (
+    tree: ReturnType<typeof buildSkillContentTree>[number],
+  ) => (tree.type === CatalogContentNodeType.Folder ? tree : undefined);
 
-    expect(files).toEqual([{ id: 'SKILL.md', name: 'SKILL.md' }]);
+  it('returns an empty tree for an empty listing', () => {
+    expect(buildSkillContentTree([])).toEqual([]);
   });
 
-  /* The manifest is the file the panel opens on, so it heads the list. */
-  it('lists the manifest first, then the rest alphabetically', () => {
-    const files = buildSkillContentFiles([
+  it('places a root-level file directly under the root', () => {
+    const tree = buildSkillContentTree([makeFile('SKILL.md')]);
+
+    expect(tree).toEqual([
+      { type: CatalogContentNodeType.File, id: 'SKILL.md', name: 'SKILL.md' },
+    ]);
+  });
+
+  it('builds a two-level tree from a flat listing', () => {
+    const tree = buildSkillContentTree([
+      makeFile('SKILL.md'),
+      makeFile('scripts', SkillMetadataItemDtoNodeTypeEnum.Folder),
       makeFile('scripts/run.py'),
+    ]);
+
+    const scripts = folderNode(tree.find((node) => node.id === 'scripts')!);
+    expect(scripts?.items).toEqual([
+      {
+        type: CatalogContentNodeType.File,
+        id: 'scripts/run.py',
+        name: 'run.py',
+      },
+    ]);
+  });
+
+  /* No 'agents' folder entry is ever listed — its own path is implied only by the nested file. */
+  it('synthesizes an implicit intermediate folder a nested file implies but the listing never enumerated', () => {
+    const tree = buildSkillContentTree([
+      makeFile('SKILL.md'),
+      makeFile('agents/analyzer.md'),
+    ]);
+
+    const agents = folderNode(tree.find((node) => node.id === 'agents')!);
+    expect(agents?.name).toBe('agents');
+    expect(agents?.items).toEqual([
+      {
+        type: CatalogContentNodeType.File,
+        id: 'agents/analyzer.md',
+        name: 'analyzer.md',
+      },
+    ]);
+  });
+
+  it('still shows an explicit empty folder entry, with no items', () => {
+    const tree = buildSkillContentTree([
+      makeFile('SKILL.md'),
+      makeFile('assets', SkillMetadataItemDtoNodeTypeEnum.Folder),
+    ]);
+
+    const assets = folderNode(tree.find((node) => node.id === 'assets')!);
+    expect(assets?.items).toEqual([]);
+  });
+
+  it('keeps two same-named files in different folders as distinct nodes', () => {
+    const tree = buildSkillContentTree([
+      makeFile('SKILL.md'),
+      makeFile('a/run.py'),
+      makeFile('b/run.py'),
+    ]);
+
+    const a = folderNode(tree.find((node) => node.id === 'a')!);
+    const b = folderNode(tree.find((node) => node.id === 'b')!);
+    expect(fileNode(a!.items[0])?.id).toBe('a/run.py');
+    expect(fileNode(b!.items[0])?.id).toBe('b/run.py');
+  });
+
+  /* The manifest is the file the panel opens on, so it heads the root regardless of name. */
+  it('sorts the manifest first at the root, then the rest alphabetically', () => {
+    const tree = buildSkillContentTree([
+      makeFile('scripts', SkillMetadataItemDtoNodeTypeEnum.Folder),
       makeFile('analyzer.md'),
       makeFile('SKILL.md'),
     ]);
 
-    expect(files.map((file) => file.id)).toEqual([
+    expect(tree.map((node) => node.id)).toEqual([
       'SKILL.md',
       'analyzer.md',
-      'scripts/run.py',
+      'scripts',
     ]);
   });
 
-  /* The id must round-trip to downloadSkillFile without being re-derived. */
-  it('uses the listing entry path verbatim as both id and name', () => {
-    const files = buildSkillContentFiles([makeFile('scripts/run.py')]);
+  it('never mistakes a grouping folder for a file', () => {
+    const tree = buildSkillContentTree([
+      makeFile('SKILL.md'),
+      makeFile('scripts', SkillMetadataItemDtoNodeTypeEnum.Folder),
+    ]);
 
-    expect(files[0]).toEqual({
-      id: 'scripts/run.py',
-      name: 'scripts/run.py',
-    });
+    const scripts = tree.find((node) => node.id === 'scripts');
+    expect(scripts?.type).toBe(CatalogContentNodeType.Folder);
   });
 
-  it('returns no options for an empty listing', () => {
-    expect(buildSkillContentFiles([])).toEqual([]);
+  /* The id stays opaque until the app-edge download adapter receives it. */
+  it('uses the listing entry path verbatim as the file id, through at least one nested level', () => {
+    const tree = buildSkillContentTree([makeFile('scripts/run.py')]);
+
+    const scripts = folderNode(tree[0]);
+    expect(fileNode(scripts!.items[0])).toEqual({
+      type: CatalogContentNodeType.File,
+      id: 'scripts/run.py',
+      name: 'run.py',
+    });
+  });
+});
+
+describe('resolveSkillFileDownloadPath', () => {
+  it('keeps a file-relative nested path unchanged', () => {
+    expect(
+      resolveSkillFileDownloadPath(
+        'scripts/run.py',
+        'address-current-branch-review',
+      ),
+    ).toBe('scripts/run.py');
+  });
+
+  it('removes the skill files-root prefix returned by Core', () => {
+    expect(
+      resolveSkillFileDownloadPath(
+        'address-current-branch-review/files/openai.yaml',
+        'address-current-branch-review',
+      ),
+    ).toBe('openai.yaml');
+  });
+
+  it('removes a files-root prefix without a skill-path prefix', () => {
+    expect(
+      resolveSkillFileDownloadPath(
+        'files/docs/notes.md',
+        'address-current-branch-review',
+      ),
+    ).toBe('docs/notes.md');
+  });
+
+  it('rejects folder-root ids because they are not downloadable files', () => {
+    expect(
+      resolveSkillFileDownloadPath(
+        'address-current-branch-review/files',
+        'address-current-branch-review',
+      ),
+    ).toBeNull();
+    expect(
+      resolveSkillFileDownloadPath('', 'address-current-branch-review'),
+    ).toBeNull();
+  });
+});
+
+describe('resolveSkillManifestFileId', () => {
+  it('keeps a file-relative manifest id unchanged', () => {
+    expect(
+      resolveSkillManifestFileId([makeFile('SKILL.md')], 'revenue-skill'),
+    ).toBe('SKILL.md');
+  });
+
+  it('returns the verbatim manifest id when Core prefixes the skill files root', () => {
+    const manifestPath = 'team-a/docs-helper/files/SKILL.md';
+
+    expect(
+      resolveSkillManifestFileId(
+        [makeFile(manifestPath)],
+        'team-a/docs-helper',
+      ),
+    ).toBe(manifestPath);
+  });
+
+  it('does not mistake a nested supporting manifest for the base file', () => {
+    expect(
+      resolveSkillManifestFileId(
+        [makeFile('docs/SKILL.md'), makeFile('SKILL.md')],
+        'revenue-skill',
+      ),
+    ).toBe('SKILL.md');
+  });
+});
+
+describe('readSkillFileBytes', () => {
+  it('returns the response body as bytes when within the size cap', async () => {
+    const body = 'hello world';
+    const response = new Response(body, {
+      headers: { 'content-length': String(body.length) },
+    });
+
+    const bytes = await readSkillFileBytes(response);
+
+    expect(bytes).not.toBeNull();
+    expect(new TextDecoder().decode(bytes!)).toBe(body);
+  });
+
+  it('short-circuits before reading when the declared content-length exceeds the cap', async () => {
+    const response = new Response('irrelevant', {
+      headers: {
+        'content-length': String(SKILL_MANIFEST_MAX_BYTES + 1),
+      },
+    });
+    const arrayBufferSpy = vi.spyOn(response, 'arrayBuffer');
+
+    const bytes = await readSkillFileBytes(response);
+
+    expect(bytes).toBeNull();
+    expect(arrayBufferSpy).not.toHaveBeenCalled();
+  });
+
+  it('rejects an oversized body when no declared length is present', async () => {
+    const oversized = 'a'.repeat(SKILL_MANIFEST_MAX_BYTES + 1);
+    const response = new Response(oversized);
+
+    const bytes = await readSkillFileBytes(response);
+
+    expect(bytes).toBeNull();
+  });
+});
+
+describe('readSkillManifest', () => {
+  it('decodes the response body as text', async () => {
+    const response = new Response('# Instructions', {
+      headers: { 'content-length': '14' },
+    });
+
+    expect(await readSkillManifest(response)).toBe('# Instructions');
+  });
+
+  it('returns null for an oversized manifest, applying the same guard as readSkillFileBytes', async () => {
+    const response = new Response('irrelevant', {
+      headers: {
+        'content-length': String(SKILL_MANIFEST_MAX_BYTES + 1),
+      },
+    });
+
+    expect(await readSkillManifest(response)).toBeNull();
   });
 });

@@ -10,6 +10,7 @@ import {
   NeutralButton,
   NeutralIconButton,
   PrimaryButton,
+  Spinner,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import {
@@ -64,10 +65,21 @@ interface HeaderProps {
    */
   isShareVisible?: (item: CatalogItem) => boolean;
   onEdit?: (item: CatalogItem) => void;
-  /** Called when "Download" is clicked in the Manage menu. Fire-and-forget: the result is not awaited and no pending state is shown. */
+  /**
+   * Called when "Download" is clicked. In the Manage menu, fire-and-forget:
+   * the result is not awaited and no pending state is shown. As the primary
+   * action (see `isDownloadPrimary`), the call is awaited and drives a
+   * pending/disabled state on the button.
+   */
   onDownload?: (item: CatalogItem) => Promise<void> | void;
   /** Additional caller-supplied rule for whether "Download" is shown. Defaults to `true` when absent. */
   isDownloadVisible?: (item: CatalogItem) => boolean;
+  /**
+   * Resolves whether Download renders as the primary action instead of a
+   * Manage-menu entry. Defaults to `item.type === CatalogEntityType.Skill`.
+   * An item whose Download is primary never also shows it in the Manage menu.
+   */
+  isDownloadPrimary?: (item: CatalogItem) => boolean;
   /** Called when "Delete" is clicked in the Manage menu. The details panel owns the confirmation step, so this only requests it. */
   onDelete?: (item: CatalogItem) => void;
   /** Called when the recipient-side "Remove from My List" action is clicked for an item shared with the current user. The details panel owns the confirmation step. */
@@ -118,6 +130,7 @@ export const Header: FC<HeaderProps> = ({
   onEdit,
   onDownload,
   isDownloadVisible,
+  isDownloadPrimary,
   onDelete,
   onUnshare,
   isUnshareVisible,
@@ -155,6 +168,35 @@ export const Header: FC<HeaderProps> = ({
   const handleDownload = useCallback(() => {
     void onDownload?.(item);
   }, [item, onDownload]);
+
+  /*
+   * The promoted primary-action Download button, unlike the Manage-menu
+   * entry above, awaits the call so it can show a pending/disabled state.
+   * `isDownloading` only ever transitions true -> false once a call is in
+   * flight, so resetting it on `item.id` change (below) cannot be raced by a
+   * stale call settling for a since-abandoned item.
+   */
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  useEffect(() => {
+    setIsDownloading(false);
+  }, [item.id]);
+
+  const handleDownloadPrimary = useCallback(() => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    const run = async () => {
+      try {
+        await onDownload?.(item);
+      } catch {
+        /* The host owns failure feedback (e.g. a notification); this button
+         * only needs to know the call has settled, to clear its own pending state. */
+      } finally {
+        setIsDownloading(false);
+      }
+    };
+    void run();
+  }, [item, onDownload, isDownloading]);
 
   const handleUnshare = useCallback(() => {
     onUnshare?.(item);
@@ -244,8 +286,30 @@ export const Header: FC<HeaderProps> = ({
       item.type === CatalogEntityType.Agent);
 
   const shouldShowEditAction = !!onEdit && !!item.isEditable;
-  const shouldShowDownloadAction =
+
+  const credentialsUiState =
+    item.credentials != null &&
+    item.credentials.authenticationType !== ToolsetAuthenticationType.None
+      ? getCredentialsUiState(item.credentials)
+      : undefined;
+  const shouldShowCredentialsAction =
+    credentialsUiState != null && (!!onLogin || !!onLogout);
+  /* Toolsets have no "Use in chat" primary action, so the credentials
+   * button (Log in / Log out / manage) takes over as their primary,
+   * leading action instead. */
+  const isCredentialsActionPrimary =
+    item.type === CatalogEntityType.Toolset && shouldShowCredentialsAction;
+
+  const isDownloadActionEnabled =
     !!onDownload && (isDownloadVisible?.(item) ?? true);
+  /* Credentials, where active, always keeps the primary slot ahead of Download. */
+  const isDownloadActionPrimary =
+    isDownloadActionEnabled &&
+    !isCredentialsActionPrimary &&
+    (isDownloadPrimary?.(item) ?? item.type === CatalogEntityType.Skill);
+  /* A promoted Download renders in the primary slot only — never duplicated in the Manage menu. */
+  const shouldShowDownloadAction =
+    isDownloadActionEnabled && !isDownloadActionPrimary;
   const shouldShowDeleteAction = item.isMyApp;
   /*
    * The recipient-side "Remove from My List" action is the counterpart of
@@ -383,19 +447,6 @@ export const Header: FC<HeaderProps> = ({
     handleUnshare,
   ]);
 
-  const credentialsUiState =
-    item.credentials != null &&
-    item.credentials.authenticationType !== ToolsetAuthenticationType.None
-      ? getCredentialsUiState(item.credentials)
-      : undefined;
-  const shouldShowCredentialsAction =
-    credentialsUiState != null && (!!onLogin || !!onLogout);
-  /* Toolsets have no "Use in chat" primary action, so the credentials
-   * button (Log in / Log out / manage) takes over as their primary,
-   * leading action instead. */
-  const isCredentialsActionPrimary =
-    item.type === CatalogEntityType.Toolset && shouldShowCredentialsAction;
-
   const handleCredentialsClick = useCallback(() => {
     if (credentialsUiState === CredentialsUiState.LogOut) {
       onRequestLogout?.();
@@ -455,6 +506,28 @@ export const Header: FC<HeaderProps> = ({
             iconBefore={<IconPlayerPlayFilled size={DIAL_ICON_SIZE.MD} />}
             onClick={handleUseInChat}
           />
+        )}
+        {isDownloadActionPrimary && (
+          <>
+            <PrimaryButton
+              label={texts?.downloadActionLabel ?? 'Download'}
+              iconBefore={
+                isDownloading ? (
+                  <Spinner size={DIAL_ICON_SIZE.MD} aria-hidden />
+                ) : (
+                  <IconDownload size={DIAL_ICON_SIZE.MD} aria-hidden />
+                )
+              }
+              onClick={handleDownloadPrimary}
+              disabled={isDownloading}
+              aria-busy={isDownloading}
+            />
+            {isDownloading && (
+              <span role="status" aria-live="polite" className="sr-only">
+                {texts?.downloadingStatusLabel ?? 'Downloading'}
+              </span>
+            )}
+          </>
         )}
         <ShareButton
           item={item}

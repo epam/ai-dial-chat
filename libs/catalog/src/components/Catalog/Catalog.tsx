@@ -52,7 +52,10 @@ export const Catalog: FC<CatalogProps> = ({
   onEdit,
   onDownload,
   isDownloadVisible,
+  isDownloadPrimary,
   onLoadContentFile,
+  onLoadContentFilePreview,
+  renderContentFilePreview,
   onDelete,
   onUnshare,
   isUnshareVisible,
@@ -540,7 +543,10 @@ export const Catalog: FC<CatalogProps> = ({
           onEdit={onEdit}
           onDownload={onDownload}
           isDownloadVisible={isDownloadVisible}
+          isDownloadPrimary={isDownloadPrimary}
           onLoadContentFile={onLoadContentFile}
+          onLoadContentFilePreview={onLoadContentFilePreview}
+          renderContentFilePreview={renderContentFilePreview}
           onDelete={onDelete}
           onUnshare={onUnshare}
           isUnshareVisible={isUnshareVisible}

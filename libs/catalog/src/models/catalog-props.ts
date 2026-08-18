@@ -13,7 +13,10 @@ import type { CredentialsLevel } from '../types/toolset-auth';
 import type { CatalogViewMode } from '../types/view-mode';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
-import type { CatalogItemDetailsFetchResult } from './item-details-data';
+import type {
+  CatalogContentFilePreview,
+  CatalogItemDetailsFetchResult,
+} from './item-details-data';
 import type { ItemDetailsTexts } from './item-details-props';
 
 /** Text labels used by the `Catalog` surface. */
@@ -129,8 +132,11 @@ export interface CatalogProps {
   onEdit?: (item: CatalogItem) => void;
   /**
    * Called when the "Download" action is clicked in the details panel, with no
-   * confirmation step. The panel does not await the result or show a pending
-   * state, so the host owns any progress and failure feedback.
+   * confirmation step. When "Download" renders in the Manage menu (see
+   * `isDownloadPrimary`), the panel does not await the result or show a
+   * pending state, so the host owns any progress and failure feedback. When
+   * "Download" is the primary action, the panel awaits this call and shows a
+   * pending/disabled state for its duration.
    */
   onDownload?: (item: CatalogItem) => Promise<void> | void;
   /**
@@ -139,11 +145,31 @@ export interface CatalogProps {
    */
   isDownloadVisible?: (item: CatalogItem) => boolean;
   /**
+   * Resolves whether an item's Download action renders as the primary action
+   * instead of a Manage-menu entry. Defaults to
+   * `item.type === CatalogEntityType.Skill`.
+   */
+  isDownloadPrimary?: (item: CatalogItem) => boolean;
+  /**
    * Resolves the text of a file picked in the details panel's Content tab,
    * given its opaque `id`. The panel shows a loading state while it is
-   * pending and renders the resolved text as the body.
+   * pending and renders the resolved text as the body. Superseded by
+   * `onLoadContentFilePreview` for a given pick when both are supplied.
    */
   onLoadContentFile?: (fileId: string) => Promise<string | undefined>;
+  /**
+   * Resolves a picked file's typed preview, given its opaque `id`. Takes
+   * precedence over `onLoadContentFile` when both are supplied.
+   */
+  onLoadContentFilePreview?: (
+    fileId: string,
+  ) => Promise<CatalogContentFilePreview | undefined>;
+  /**
+   * Renders a picked file through a host-owned preview surface. Takes
+   * precedence over both loading callbacks, while the catalog continues to
+   * own selection and passes the opaque file id and resolved basename only.
+   */
+  renderContentFilePreview?: (fileId: string, fileName: string) => ReactNode;
   /**
    * Called immediately when the "Delete" button in the details panel is
    * clicked, with no confirmation step. Shown only when the item's `isMyApp`

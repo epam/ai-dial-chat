@@ -75,7 +75,11 @@ import {
   getShareRecipientsCount,
   revokeSharedAccess,
 } from '../../server-api/share.api';
-import { downloadSkillFile, listSkillFiles } from '../../server-api/skills.api';
+import {
+  downloadSkill,
+  downloadSkillFile,
+  listSkillFiles,
+} from '../../server-api/skills.api';
 import { deleteToolset, logoutToolset } from '../../server-api/toolsets';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { CatalogQuery } from '../../types/catalog';
@@ -102,6 +106,8 @@ import {
   serializePromptExport,
 } from '../../utils/export-prompt';
 import { resolveFavoriteEntityType } from '../../utils/favorites';
+import { triggerBrowserDownload } from '../../utils/file-download';
+import { sanitizeFileName } from '../../utils/file-name';
 import { mapDeploymentLimitsDtoToCatalogLimits } from '../../utils/map-deployment-limits-to-catalog';
 import {
   mapDeploymentToCatalogItem,
@@ -118,18 +124,23 @@ import {
   mapPromptToCatalogItem,
 } from '../../utils/map-prompt-to-catalog-item';
 import {
-  buildSkillContentFiles,
+  buildSkillContentTree,
   buildSkillOverview,
   mapSkillToCatalogItem,
+  readSkillFileBytes,
   readSkillManifest,
+  resolveSkillFileDownloadPath,
+  resolveSkillManifestFileId,
 } from '../../utils/map-skill-to-catalog-item';
 import {
   buildConnectApi,
   resolveMcpResourceKind,
 } from '../../utils/mcp-endpoint-url';
 import { getAccessRulesLabels, toPublishEntityType } from '../../utils/publish';
+import type { SkillFileContent } from '../../utils/skill-file-preview';
 import { parseSkillManifest } from '../../utils/skill-manifest';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
+import { SkillDetailsFilePreview } from './SkillDetailsFilePreview';
 
 /** Entity types shown in the catalog picker modal: models and agents only. */
 const PICKER_VISIBLE_TYPES = new Set<CatalogEntityType>([
@@ -496,8 +507,12 @@ const CatalogView: FC<Props> = ({
 
         const contentFiles =
           files.status === 'fulfilled'
-            ? buildSkillContentFiles(files.value.items)
+            ? buildSkillContentTree(files.value.items)
             : [];
+        const selectedFileId =
+          files.status === 'fulfilled'
+            ? resolveSkillManifestFileId(files.value.items, path)
+            : SKILL_MANIFEST_FILE;
 
         if (parsedManifest == null && overview == null) return undefined;
         return {
@@ -509,7 +524,7 @@ const CatalogView: FC<Props> = ({
                     ? { description: parsedManifest.description }
                     : {}),
                   files: contentFiles,
-                  selectedFileId: SKILL_MANIFEST_FILE,
+                  selectedFileId,
                 },
               }
             : {}),
@@ -823,57 +838,143 @@ const CatalogView: FC<Props> = ({
    */
   const handleDownload = useCallback(
     async (item: CatalogItem) => {
-      if (item.type !== CatalogEntityType.Prompt) return;
-      try {
-        const dto = await fetchPromptDto(item);
-        triggerBlobDownload(
-          serializePromptExport(buildPromptExportEnvelope(dto)),
-          buildPromptExportFileName(dto.name, EXPORT_APP_NAME),
-        );
-        notifyOperationSuccess(
-          NotifiableEntity.Prompt,
-          EntityOperation.Downloaded,
-          { name: dto.name },
-        );
-      } catch (err) {
-        const { traceId } = await getApiErrorDetails(err);
-        showErrorNotification({
-          message: t(CatalogI18nKeys.DetailsPromptDownloadError),
-          requestId: traceId,
-        });
+      if (item.type === CatalogEntityType.Prompt) {
+        try {
+          const dto = await fetchPromptDto(item);
+          triggerBlobDownload(
+            serializePromptExport(buildPromptExportEnvelope(dto)),
+            buildPromptExportFileName(dto.name, EXPORT_APP_NAME),
+          );
+          notifyOperationSuccess(
+            NotifiableEntity.Prompt,
+            EntityOperation.Downloaded,
+            { name: dto.name },
+          );
+        } catch (err) {
+          const { traceId } = await getApiErrorDetails(err);
+          showErrorNotification({
+            message: t(CatalogI18nKeys.DetailsPromptDownloadError),
+            requestId: traceId,
+          });
+        }
+        return;
+      }
+
+      if (item.type === CatalogEntityType.Skill) {
+        const openSkill = openSkillRef.current;
+        if (openSkill == null) return;
+        try {
+          const response = await downloadSkill(
+            openSkill.bucket,
+            openSkill.path,
+          );
+          if (!response.ok) {
+            throw new Error(`Download failed with status ${response.status}`);
+          }
+          const fallbackName = `${sanitizeFileName(item.name)}.zip`;
+          const savedName = await triggerBrowserDownload(
+            response,
+            fallbackName,
+          );
+          notifyOperationSuccess(
+            NotifiableEntity.Skill,
+            EntityOperation.Downloaded,
+            { name: savedName },
+          );
+        } catch (err) {
+          const { traceId } = await getApiErrorDetails(err);
+          showErrorNotification({
+            message: t(CatalogI18nKeys.DetailsSkillDownloadError),
+            requestId: traceId,
+          });
+        }
       }
     },
     [notifyOperationSuccess, showErrorNotification, t, fetchPromptDto],
   );
 
-  /* Only a prompt has a downloadable body; every other type is backed by config the catalog does not export. */
+  /* A prompt has a downloadable body and a skill has a whole-archive download; every other type is backed by config the catalog does not export. */
   const isDownloadVisible = useCallback(
-    (item: CatalogItem) => item.type === CatalogEntityType.Prompt,
+    (item: CatalogItem) =>
+      item.type === CatalogEntityType.Prompt ||
+      item.type === CatalogEntityType.Skill,
     [],
   );
 
   /*
-   * A picked file carries only its own path within the skill, so the bucket
-   * and skill path come from whichever skill's details are open. The manifest
-   * is stripped of its frontmatter exactly as it is on first load; every
-   * other file is shown as written.
+   * A picked file carries its opaque listing id. Core may prefix that id with
+   * the skill path and its internal `files` directory, so the app adapter
+   * converts it to the file-relative path expected by the download endpoint.
+   * The manifest is stripped of its frontmatter exactly as it is on first
+   * load; every other file is shown as written.
    */
   const handleLoadContentFile = useCallback(async (fileId: string) => {
     const openSkill = openSkillRef.current;
     if (openSkill == null) return undefined;
 
+    const filePath = resolveSkillFileDownloadPath(fileId, openSkill.path);
+    if (filePath == null) return undefined;
+
     const response = await downloadSkillFile(
       openSkill.bucket,
       openSkill.path,
-      fileId,
+      filePath,
     );
     const text = await readSkillManifest(response);
     if (text == null) return undefined;
 
-    return fileId === SKILL_MANIFEST_FILE
+    return filePath === SKILL_MANIFEST_FILE
       ? parseSkillManifest(text).body
       : text;
   }, []);
+
+  const handleLoadSkillDetailsFile = useCallback(
+    async (fileId: string): Promise<SkillFileContent> => {
+      const openSkill = openSkillRef.current;
+      if (openSkill == null) throw new Error('No skill details are open');
+
+      const filePath = resolveSkillFileDownloadPath(fileId, openSkill.path);
+      if (filePath == null) throw new Error('A folder cannot be previewed');
+
+      const response = await downloadSkillFile(
+        openSkill.bucket,
+        openSkill.path,
+        filePath,
+      );
+      if (!response.ok) {
+        throw Object.assign(
+          new Error(`File preview failed with status ${response.status}`),
+          { status: response.status },
+        );
+      }
+
+      const bytes = await readSkillFileBytes(response);
+      if (bytes == null) throw new Error('File exceeds the preview size limit');
+
+      const responseMimeType =
+        response.headers.get('content-type')?.split(';')[0].trim() || undefined;
+      return {
+        bytes,
+        /* Core commonly sends this generic value; omitting it lets the same extension inference as Skill Builder run. */
+        mimeType:
+          responseMimeType === 'application/octet-stream'
+            ? undefined
+            : responseMimeType,
+      };
+    },
+    [],
+  );
+
+  const renderContentFilePreview = useCallback(
+    (fileId: string, fileName: string) => (
+      <SkillDetailsFilePreview
+        fileId={fileId}
+        fileName={fileName}
+        onLoadFile={handleLoadSkillDetailsFile}
+      />
+    ),
+    [handleLoadSkillDetailsFile],
+  );
 
   const isPrimaryActionVisible = useCallback((item: CatalogItem) => {
     /*
@@ -1337,6 +1438,7 @@ const CatalogView: FC<Props> = ({
       onDownload={handleDownload}
       isDownloadVisible={isDownloadVisible}
       onLoadContentFile={handleLoadContentFile}
+      renderContentFilePreview={renderContentFilePreview}
       onDelete={handleDelete}
       onUnshare={handleUnshare}
       isUnshareVisible={isUnshareVisible}
@@ -1407,9 +1509,13 @@ const CatalogView: FC<Props> = ({
           t(CatalogI18nKeys.DetailsContentFileCount, { count }),
         contentFileLoadingLabel: t(CatalogI18nKeys.DetailsContentFileLoading),
         contentFileErrorLabel: t(CatalogI18nKeys.DetailsContentFileError),
+        contentFileUnsupportedLabel: t(
+          CatalogI18nKeys.DetailsContentFileUnsupported,
+        ),
         primaryActionLabel: t(ButtonsI18nKeys.UseInChat),
         editActionLabel: t(ButtonsI18nKeys.Edit),
         downloadActionLabel: t(ButtonsI18nKeys.Download),
+        downloadingStatusLabel: t(CatalogI18nKeys.DetailsDownloadingStatus),
         deleteActionLabel: t(ButtonsI18nKeys.Delete),
         deletingStatusLabel: t(DialFileManagerI18nKeys.DeletingLabel),
         apiResourceSectionLabel: t(CatalogI18nKeys.DetailsApiResourceSection),

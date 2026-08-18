@@ -17,6 +17,7 @@ import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
+import { SkillFilePreview } from '../../components/SkillFilePreview/SkillFilePreview';
 import { isSafeReturnUrl } from '../../constants/routes';
 import {
   ButtonsI18nKeys,
@@ -25,6 +26,7 @@ import {
 import { useUser } from '../../context/auth/UserContext';
 import { useSkills } from '../../context/SkillsContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useSkillFilePreviewSync } from '../../hooks/attachment/useSkillFilePreviewSync';
 import { EditorQuery } from '../../types/editor-query';
 import { ROUTES } from '../../types/routes';
 import { parseSkillResourceUrl, PUBLIC_SKILL_BUCKET } from '../../types/skill';
@@ -37,8 +39,6 @@ import {
 import { useSkillEditorLoad } from './hooks/useSkillEditorLoad';
 import { useSkillEditorSubmit } from './hooks/useSkillEditorSubmit';
 import { useSkillFileActions } from './hooks/useSkillFileActions';
-import { useSkillFilePreviewSync } from './hooks/useSkillFilePreviewSync';
-import { SkillFilePreview } from './SkillFilePreview';
 
 const SkillEditorPage: FC = () => {
   const { t } = useTranslation();

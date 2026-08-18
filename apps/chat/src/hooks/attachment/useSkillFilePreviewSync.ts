@@ -4,10 +4,10 @@ import {
   type SkillFileTreeNode,
 } from '@epam/ai-dial-skill-editor';
 import { useEffect } from 'react';
-import { useOpenAttachmentCanvas } from '../../../hooks/attachment/useOpenAttachmentCanvas';
-import { SKILL_MANIFEST_FILE } from '../../../utils/skill';
-import { skillFileToAttachment } from '../../../utils/skill-file-preview';
-import type { SkillFileContent } from '../../../utils/skill-file-preview';
+import { SKILL_MANIFEST_FILE } from '../../utils/skill';
+import { skillFileToAttachment } from '../../utils/skill-file-preview';
+import type { SkillFileContent } from '../../utils/skill-file-preview';
+import { useOpenAttachmentCanvas } from './useOpenAttachmentCanvas';
 
 interface UseSkillFilePreviewSyncParams {
   selectedPath: string;
@@ -16,11 +16,9 @@ interface UseSkillFilePreviewSyncParams {
 }
 
 /**
- * Reconciles the shared attachment canvas with the current file-tree
- * selection: opens/replaces the preview for a selected supporting file,
- * closes it for `SKILL.md`/a folder, self-corrects if a slower-resolving
- * earlier selection's content lands after a newer selection already
- * committed, and closes the preview when the Skill Editor unmounts.
+ * Reconciles the shared attachment canvas with a skill file-tree selection.
+ * It is shared by Skill Builder and read-only skill details so both surfaces
+ * resolve every supporting file through exactly the same preview pipeline.
  */
 export const useSkillFilePreviewSync = ({
   selectedPath,
@@ -69,7 +67,6 @@ export const useSkillFilePreviewSync = ({
     openAttachmentCanvas,
   ]);
 
-  // Close any open preview when leaving the Skill Editor.
   useEffect(() => {
     return () => closeCanvas();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- unmount-only cleanup

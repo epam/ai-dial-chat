@@ -8,6 +8,7 @@ import type {
 import type { ReactNode } from 'react';
 import type { CredentialsLevel } from '../types/toolset-auth';
 import type { CatalogItem } from './catalog-item';
+import type { CatalogContentFilePreview } from './item-details-data';
 
 /** Text overrides for all user-visible strings in `DetailsPanel`. */
 export interface ItemDetailsTexts {
@@ -49,6 +50,8 @@ export interface ItemDetailsTexts {
   contentFileLoadingLabel?: string;
   /** Body text shown when a picked file cannot be read. Default: `'Failed to load this file.'`. */
   contentFileErrorLabel?: string;
+  /** Body text shown when a picked file's preview type is `unsupported`. Default: `'Preview is not supported for this file'`. */
+  contentFileUnsupportedLabel?: string;
   /** Label on the "Featured" tag chip shown when the entity is featured. Default: `'Featured'`. */
   featuredLabel?: string;
   /** Primary action button label. Default: `'Use in chat'`. */
@@ -186,6 +189,8 @@ export interface ItemDetailsTexts {
   loggingOutStatusLabel?: string;
   /** Generic "Cancel" label, used by every confirmation step. Default: `'Cancel'`. */
   cancelLabel?: string;
+  /** Status text announced to assistive tech while the primary Download action is in progress. Default: `'Downloading'`. */
+  downloadingStatusLabel?: string;
 }
 
 /** Typography class overrides for `DetailsPanel` text elements. */
@@ -382,8 +387,11 @@ export interface DetailsPanelProps {
   onEdit?: (item: CatalogItem) => void;
   /**
    * Called when the "Download" action is clicked, with no confirmation step.
-   * The panel does not await the result or show a pending state, so the host
-   * owns any progress and failure feedback.
+   * When "Download" renders in the Manage menu (see `isDownloadPrimary`), the
+   * panel does not await the result or show a pending state, so the host
+   * owns any progress and failure feedback. When "Download" is the primary
+   * action, the panel awaits this call and shows a pending/disabled state
+   * for its duration; the host still owns failure feedback either way.
    */
   onDownload?: (item: CatalogItem) => Promise<void> | void;
   /**
@@ -392,12 +400,35 @@ export interface DetailsPanelProps {
    */
   isDownloadVisible?: (item: CatalogItem) => boolean;
   /**
+   * Resolves whether an item's Download action renders as the primary action
+   * (in the same slot as "Use in chat") instead of a Manage-menu entry.
+   * Defaults to `item.type === CatalogEntityType.Skill`. An item whose
+   * Download is primary never also shows it in the Manage menu.
+   */
+  isDownloadPrimary?: (item: CatalogItem) => boolean;
+  /**
    * Resolves the text of a file picked in the Content tab, given its opaque
    * `id`. The panel shows a loading state while it is pending and renders the
    * resolved text as the body; resolving `undefined` or rejecting leaves the
-   * body showing `texts.contentFileErrorLabel`.
+   * body showing `texts.contentFileErrorLabel`. Superseded by
+   * `onLoadContentFilePreview` for a given pick when both are supplied.
    */
   onLoadContentFile?: (fileId: string) => Promise<string | undefined>;
+  /**
+   * Resolves a picked file's typed preview, given its opaque `id`. Takes
+   * precedence over `onLoadContentFile` when both are supplied. Resolving
+   * `undefined` or rejecting leaves the body showing
+   * `texts.contentFileErrorLabel`.
+   */
+  onLoadContentFilePreview?: (
+    fileId: string,
+  ) => Promise<CatalogContentFilePreview | undefined>;
+  /**
+   * Renders a picked file through a host-owned preview surface. Takes
+   * precedence over both loading callbacks. The file id is opaque to the
+   * panel; `fileName` is the basename resolved from the supplied tree.
+   */
+  renderContentFilePreview?: (fileId: string, fileName: string) => ReactNode;
   /**
    * Called immediately when the "Delete" button is clicked, with no
    * confirmation step. Shown only when the item's `isMyApp` is `true` and

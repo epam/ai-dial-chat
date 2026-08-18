@@ -102,6 +102,7 @@
       "tabContent": "Details",
       "promptLoadError": "Couldn't load this prompt. Please try again.",
       "promptDownloadError": "Couldn't download this prompt. Please try again.",
+      "skillDownloadError": "Couldn't download this skill. Please try again.",
       "tabLimits": "Limits",
       "api": {
         "resourceSection": "Resource",
@@ -203,7 +204,9 @@
       "contentFileSelectorAriaLabel": "Select file",
       "contentFileCount": "{{count}} files",
       "contentFileLoading": "Loading file",
-      "contentFileError": "Failed to load this file."
+      "contentFileError": "Failed to load this file.",
+      "contentFileUnsupported": "Preview is not supported for this file",
+      "downloadingStatus": "Downloading"
     },
     "create": {
       "menuCaption": "Create new",
@@ -1228,6 +1231,8 @@
     "skill": {
       "deletedTitle": "Skill deleted successfully",
       "deleted": "Skill \"{{name}}\" is not available anymore.",
+      "downloadedTitle": "Skill downloaded successfully",
+      "downloaded": "Skill \"{{name}}\" is saved on your device.",
       "publishRequestedTitle": "Skill publish requested",
       "publishRequested": "Publish request for skill \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
     },

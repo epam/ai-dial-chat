@@ -1,3 +1,5 @@
+import type { CatalogContentNodeType } from '../types/catalog-content-node-type';
+import type { CatalogContentPreviewType } from '../types/catalog-content-preview-type';
 import type { CodeLanguage } from '../types/code-language';
 import type { CatalogItemCredentials } from './catalog-item-credentials';
 import type { CatalogItemOverview } from './item-overview';
@@ -124,13 +126,71 @@ export interface CatalogItemTools {
   tools: ToolDefinition[];
 }
 
-/** One selectable file in the Content tab's file picker. */
-export interface CatalogContentFile {
+/** A selectable file in the Content tab's hierarchical file selector. */
+export interface CatalogContentFileNode {
+  /** Discriminates this node as a file. */
+  type: CatalogContentNodeType.File;
   /** Opaque id passed back to `onLoadContentFile`. Never parsed by the panel. */
   id: string;
-  /** File name shown in the picker. */
+  /** File name shown in the tree row. Not required to be unique across the tree — only `id` must be unique among a node's siblings' descendants. */
   name: string;
 }
+
+/** A grouping folder in the Content tab's hierarchical file selector. */
+export interface CatalogContentFolderNode {
+  /** Discriminates this node as a folder. */
+  type: CatalogContentNodeType.Folder;
+  /** Stable key identifying this folder for expand/collapse state. Never parsed by the panel. */
+  id: string;
+  /** Folder name shown in the tree row. */
+  name: string;
+  /** Nested folders and files. Empty when the folder carries no children. */
+  items: CatalogContentTreeNode[];
+}
+
+/** One node of the Content tab's hierarchical file tree — either a file or a folder. */
+export type CatalogContentTreeNode =
+  | CatalogContentFileNode
+  | CatalogContentFolderNode;
+
+/** A picked file's content, resolved and typed for safe read-only rendering. */
+export interface CatalogContentMarkdownPreview {
+  /** Discriminates this preview as Markdown. */
+  type: CatalogContentPreviewType.Markdown;
+  /** Markdown source, rendered through the same safe path as the base body. */
+  text: string;
+}
+
+/** Plain or source-code text, rendered read-only with whitespace preserved. */
+export interface CatalogContentTextPreview {
+  /** Discriminates this preview as text. */
+  type: CatalogContentPreviewType.Text;
+  /** The file's text content. */
+  text: string;
+  /** Syntax-highlighting language id (e.g. `'python'`, `'json'`). Omitted renders as unhighlighted monospace text. */
+  language?: string;
+}
+
+/** An image preview, already resolved to a browser-loadable URL. */
+export interface CatalogContentImagePreview {
+  /** Discriminates this preview as an image. */
+  type: CatalogContentPreviewType.Image;
+  /** Already-resolved, browser-loadable image URL. May be a `blob:` URL the host created for this preview. */
+  url: string;
+}
+
+/** A file the panel cannot render — shown as an explicit, accessible state rather than garbled content. */
+export interface CatalogContentUnsupportedPreview {
+  /** Discriminates this preview as unsupported. */
+  type: CatalogContentPreviewType.Unsupported;
+}
+
+/** A picked file's resolved preview — one of four generic, host-agnostic shapes. */
+export type CatalogContentFilePreview =
+  | CatalogContentMarkdownPreview
+  | CatalogContentTextPreview
+  | CatalogContentImagePreview
+  | CatalogContentUnsupportedPreview;
 
 /** Complete data for the Content tab (long-form text entities such as prompts). */
 export interface CatalogItemPromptContent {
@@ -138,9 +198,9 @@ export interface CatalogItemPromptContent {
   content: string;
   /** Summary shown above the body. Takes precedence over `CatalogItem.description`, for hosts whose summary is only known once details resolve. */
   description?: string;
-  /** Files the tab can switch between. A picker is rendered above the body whenever this holds two or more entries. */
-  files?: CatalogContentFile[];
-  /** Id of the file `content` was resolved from. The picker opens on it, and reselecting it restores `content` without a reload. */
+  /** Folder/file tree the tab can switch between. A selector is rendered above the body whenever this holds two or more file nodes, at any depth. */
+  files?: CatalogContentTreeNode[];
+  /** Id of the file `content` was resolved from. The selector opens on it, and reselecting it restores `content` without a reload. */
   selectedFileId?: string;
 }
 

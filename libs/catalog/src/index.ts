@@ -15,6 +15,8 @@ export {
 } from './types/toolset-auth';
 export { CatalogViewMode } from './types/view-mode';
 export { CatalogSortKey } from './types/sort';
+export { CatalogContentNodeType } from './types/catalog-content-node-type';
+export { CatalogContentPreviewType } from './types/catalog-content-preview-type';
 
 // Models
 export type { CatalogItem } from './models/catalog-item';
@@ -28,7 +30,14 @@ export type {
 export type { EndpointOption } from './models/item-details-data';
 export type {
   ApiResource,
-  CatalogContentFile,
+  CatalogContentFileNode,
+  CatalogContentFolderNode,
+  CatalogContentTreeNode,
+  CatalogContentFilePreview,
+  CatalogContentMarkdownPreview,
+  CatalogContentTextPreview,
+  CatalogContentImagePreview,
+  CatalogContentUnsupportedPreview,
   CatalogItemApiDetails,
   CatalogItemDetailsFetchResult,
   CatalogItemLimits,

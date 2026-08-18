@@ -31,12 +31,18 @@ import {
   type ReactNode,
 } from 'react';
 import type { CatalogItem } from '../../models/catalog-item';
+import type { CatalogContentFilePreview } from '../../models/item-details-data';
 import type { DetailsPanelProps } from '../../models/item-details-props';
+import { CatalogContentPreviewType } from '../../types/catalog-content-preview-type';
 import { CatalogDetailsTab } from '../../types/detail-tab';
 import {
   DetailsConfirmationKind,
   DetailsConfirmationVariant,
 } from '../../types/details-confirmation';
+import {
+  collectAllFolderIds,
+  findContentNodeName,
+} from '../../utils/catalog-content-tree';
 import { getSignedInLevel } from '../../utils/toolset-credentials';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { ApiDetails } from './ApiDetails';
@@ -143,7 +149,10 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onEdit,
   onDownload,
   isDownloadVisible,
+  isDownloadPrimary,
   onLoadContentFile,
+  onLoadContentFilePreview,
+  renderContentFilePreview,
   onDelete,
   onUnshare,
   isUnshareVisible,
@@ -214,47 +223,170 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
    */
   const [pickedFile, setPickedFile] = useState<{
     id: string;
-    content: string | null;
+    preview: CatalogContentFilePreview | null;
   } | null>(null);
   const [isContentFileLoading, setIsContentFileLoading] = useState(false);
+  const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [isFileSelectorOpen, setIsFileSelectorOpen] = useState(false);
 
-  /* A new item, or a re-fetched body, invalidates whatever file was picked. */
+  /*
+   * The blob: URL (if any) currently displayed as an image preview. Tracked
+   * outside React state so it can be revoked exactly once, right before it
+   * stops being displayed — never for a host-supplied non-blob URL.
+   */
+  const activeImageUrlRef = useRef<string | null>(null);
+  /*
+   * Guards against an out-of-order resolution: a superseded pick (or an item
+   * switch) bumps this, and a resolution whose captured generation no longer
+   * matches the latest one is discarded on arrival.
+   */
+  const requestGenerationRef = useRef(0);
+
+  const setPickedFilePreview = useCallback(
+    (
+      next: { id: string; preview: CatalogContentFilePreview | null } | null,
+    ) => {
+      const previousUrl = activeImageUrlRef.current;
+      const nextUrl =
+        next?.preview?.type === CatalogContentPreviewType.Image
+          ? next.preview.url
+          : null;
+      if (
+        previousUrl != null &&
+        previousUrl !== nextUrl &&
+        previousUrl.startsWith('blob:')
+      ) {
+        URL.revokeObjectURL(previousUrl);
+      }
+      activeImageUrlRef.current = nextUrl;
+      setPickedFile(next);
+    },
+    [],
+  );
+
+  /*
+   * A new item, or a re-fetched body, invalidates whatever file was picked
+   * and resets the selector back to every folder expanded and closed.
+   */
   useEffect(() => {
-    setPickedFile(null);
+    requestGenerationRef.current += 1;
+    setPickedFilePreview(null);
     setIsContentFileLoading(false);
+    setExpandedFolderIds(collectAllFolderIds(promptContent?.files ?? []));
+    setIsFileSelectorOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id, baseFileId]);
+
+  /* Revoke whatever blob: URL is still displayed when the panel unmounts. */
+  useEffect(() => {
+    return () => {
+      const url = activeImageUrlRef.current;
+      if (url != null && url.startsWith('blob:')) URL.revokeObjectURL(url);
+    };
+  }, []);
+
+  const handleToggleFolder = useCallback((folderId: string) => {
+    setExpandedFolderIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(folderId)) {
+        next.delete(folderId);
+      } else {
+        next.add(folderId);
+      }
+      return next;
+    });
+  }, []);
 
   const handleSelectContentFile = useCallback(
     async (fileId: string) => {
       if (fileId === baseFileId) {
-        setPickedFile(null);
+        requestGenerationRef.current += 1;
+        setPickedFilePreview(null);
         setIsContentFileLoading(false);
         return;
       }
-      if (onLoadContentFile == null) return;
+      if (
+        renderContentFilePreview == null &&
+        onLoadContentFile == null &&
+        onLoadContentFilePreview == null
+      ) {
+        return;
+      }
 
-      setPickedFile({ id: fileId, content: null });
+      if (renderContentFilePreview != null) {
+        requestGenerationRef.current += 1;
+        setPickedFilePreview({ id: fileId, preview: null });
+        setIsContentFileLoading(false);
+        return;
+      }
+
+      const generation = ++requestGenerationRef.current;
+      setPickedFilePreview({ id: fileId, preview: null });
       setIsContentFileLoading(true);
       try {
-        const content = await onLoadContentFile(fileId);
-        setPickedFile({ id: fileId, content: content ?? null });
+        const preview: CatalogContentFilePreview | undefined =
+          onLoadContentFilePreview != null
+            ? await onLoadContentFilePreview(fileId)
+            : await onLoadContentFile?.(fileId).then((text) =>
+                text != null
+                  ? ({
+                      type: CatalogContentPreviewType.Markdown,
+                      text,
+                    } satisfies CatalogContentFilePreview)
+                  : undefined,
+              );
+        if (requestGenerationRef.current !== generation) {
+          /*
+           * A discarded resolution's own image preview was never tracked by
+           * `activeImageUrlRef` (it only learns about a URL through
+           * `setPickedFilePreview`), so its `blob:` URL must be revoked here
+           * or it leaks.
+           */
+          if (
+            preview?.type === CatalogContentPreviewType.Image &&
+            preview.url.startsWith('blob:')
+          ) {
+            URL.revokeObjectURL(preview.url);
+          }
+          return;
+        }
+        setPickedFilePreview({ id: fileId, preview: preview ?? null });
       } catch {
-        setPickedFile({ id: fileId, content: null });
+        if (requestGenerationRef.current !== generation) return;
+        setPickedFilePreview({ id: fileId, preview: null });
       } finally {
-        setIsContentFileLoading(false);
+        if (requestGenerationRef.current === generation) {
+          setIsContentFileLoading(false);
+        }
       }
     },
-    [baseFileId, onLoadContentFile],
+    [
+      baseFileId,
+      onLoadContentFile,
+      onLoadContentFilePreview,
+      renderContentFilePreview,
+      setPickedFilePreview,
+    ],
   );
 
   const selectedFileId = pickedFile?.id ?? baseFileId;
-  const resolveContentBody = (): string => {
-    if (pickedFile == null) return promptContent?.content ?? '';
-    if (pickedFile.content != null) return pickedFile.content;
-    return isContentFileLoading
-      ? ''
-      : (texts?.contentFileErrorLabel ?? 'Failed to load this file.');
+  const resolveContentFilePreview = (): CatalogContentFilePreview | null => {
+    if (pickedFile == null) return null;
+    if (pickedFile.preview != null) return pickedFile.preview;
+    return {
+      type: CatalogContentPreviewType.Text,
+      text: texts?.contentFileErrorLabel ?? 'Failed to load this file.',
+    };
   };
+  const renderedContentFilePreview =
+    pickedFile != null && renderContentFilePreview != null
+      ? renderContentFilePreview(
+          pickedFile.id,
+          findContentNodeName(promptContent?.files ?? [], pickedFile.id) ?? '',
+        )
+      : undefined;
 
   useEffect(() => {
     if (!isPublishOpen || !getPublishHistory) {
@@ -765,6 +897,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onEdit={onEdit}
                 onDownload={onDownload}
                 isDownloadVisible={isDownloadVisible}
+                isDownloadPrimary={isDownloadPrimary}
                 onDelete={onDelete ? handleRequestDelete : undefined}
                 onUnshare={onUnshare ? handleRequestUnshare : undefined}
                 isUnshareVisible={isUnshareVisible}
@@ -830,7 +963,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 )}
                 {activeTab === CatalogDetailsTab.Content && (
                   <ContentTab
-                    content={resolveContentBody()}
+                    content={promptContent?.content ?? ''}
+                    filePreview={resolveContentFilePreview()}
+                    filePreviewContent={renderedContentFilePreview}
                     description={promptContent?.description ?? item.description}
                     files={promptContent?.files}
                     selectedFileId={selectedFileId}
@@ -838,9 +973,14 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                       void handleSelectContentFile(fileId)
                     }
                     isFileLoading={isContentFileLoading}
+                    expandedFolderIds={expandedFolderIds}
+                    onToggleFolder={handleToggleFolder}
+                    isFileSelectorOpen={isFileSelectorOpen}
+                    onFileSelectorOpenChange={setIsFileSelectorOpen}
                     fileSelectorAriaLabel={texts?.contentFileSelectorAriaLabel}
                     fileCountLabel={texts?.contentFileCountLabel}
                     fileLoadingLabel={texts?.contentFileLoadingLabel}
+                    fileUnsupportedLabel={texts?.contentFileUnsupportedLabel}
                     detailsStyles={detailsStyles}
                   />
                 )}

@@ -1,5 +1,7 @@
 import {
-  type CatalogContentFile,
+  CatalogContentNodeType,
+  type CatalogContentFolderNode,
+  type CatalogContentTreeNode,
   type CatalogItem,
   type CatalogItemOverview,
   type OverviewSection,
@@ -134,6 +136,67 @@ const selectFileItems = (
   );
 
 /**
+ * Resolves the manifest file's opaque listing id across DIAL Core versions.
+ * Some return file-relative paths (`SKILL.md`), while others prefix the
+ * skill's path and its internal `files` directory. The returned id is kept
+ * verbatim so it matches the corresponding tree node exactly.
+ */
+export const resolveSkillManifestFileId = (
+  files: SkillMetadataItemDto[],
+  skillPath: string,
+): string => {
+  const normalizedSkillPath = skillPath.replace(/^\/+|\/+$/g, '');
+  const filesRoot = normalizedSkillPath
+    ? `${normalizedSkillPath}/files`
+    : 'files';
+  const manifest = selectFileItems(files).find((file) => {
+    const path = file.path.replace(/^\/+|\/+$/g, '');
+    return (
+      path === SKILL_MANIFEST_FILE ||
+      path === `files/${SKILL_MANIFEST_FILE}` ||
+      path === `${filesRoot}/${SKILL_MANIFEST_FILE}`
+    );
+  });
+
+  return manifest?.path ?? SKILL_MANIFEST_FILE;
+};
+
+/**
+ * Converts an opaque file-listing id into the path expected by the single-file
+ * download endpoint. Core may prefix listing paths with the skill path and its
+ * internal `files` directory, while the endpoint accepts a path relative to
+ * that directory. File-relative ids are returned unchanged.
+ */
+export const resolveSkillFileDownloadPath = (
+  fileId: string,
+  skillPath: string,
+): string | null => {
+  const normalizedFileId = fileId.replace(/^\/+|\/+$/g, '');
+  const normalizedSkillPath = skillPath.replace(/^\/+|\/+$/g, '');
+  const filesRoot = normalizedSkillPath
+    ? `${normalizedSkillPath}/files`
+    : 'files';
+
+  if (
+    normalizedFileId === '' ||
+    normalizedFileId === 'files' ||
+    normalizedFileId === filesRoot
+  ) {
+    return null;
+  }
+
+  if (normalizedFileId.startsWith(`${filesRoot}/`)) {
+    return normalizedFileId.slice(filesRoot.length + 1);
+  }
+
+  if (normalizedFileId.startsWith('files/')) {
+    return normalizedFileId.slice('files/'.length);
+  }
+
+  return normalizedFileId;
+};
+
+/**
  * Builds the Overview tab data for a skill: a Specification section from its
  * parsed manifest frontmatter, followed by a Details section covering who
  * authored it, when it last changed, and its file inventory. Grouping folders
@@ -176,30 +239,114 @@ export const buildSkillOverview = (
 };
 
 /**
- * Builds the Content tab's file options for a skill. Each option's `id` is the
- * listing entry's own path, so it round-trips back to `downloadSkillFile`
- * without being re-derived, and the manifest is listed first — it is the file
- * the panel opens on.
+ * Returns the child-node array a node at `folderPath` should be attached to,
+ * creating that folder node — and any missing ancestor between it and the
+ * root — the first time a path reaches it. Returns `roots` itself for the
+ * empty path (the tree's own root).
  */
-export const buildSkillContentFiles = (
-  files: SkillMetadataItemDto[],
-): CatalogContentFile[] =>
-  selectFileItems(files)
-    .map((file) => ({ id: file.path, name: file.path }))
-    .sort((a, b) => {
-      if (a.id === SKILL_MANIFEST_FILE) return -1;
-      if (b.id === SKILL_MANIFEST_FILE) return 1;
-      return a.name.localeCompare(b.name);
-    });
+const getOrCreateFolderChain = (
+  folderPath: string,
+  folderNodesByPath: Map<string, CatalogContentFolderNode>,
+  roots: CatalogContentTreeNode[],
+): CatalogContentTreeNode[] => {
+  if (folderPath === '') return roots;
+
+  const existing = folderNodesByPath.get(folderPath);
+  if (existing != null) return existing.items;
+
+  const segments = folderPath.split('/');
+  const parentPath = segments.slice(0, -1).join('/');
+  const parentItems = getOrCreateFolderChain(
+    parentPath,
+    folderNodesByPath,
+    roots,
+  );
+
+  const node: CatalogContentFolderNode = {
+    type: CatalogContentNodeType.Folder,
+    id: folderPath,
+    name: segments[segments.length - 1],
+    items: [],
+  };
+  folderNodesByPath.set(folderPath, node);
+  parentItems.push(node);
+  return node.items;
+};
 
 /**
- * Reads a skill manifest response as text, or `null` when the body is larger
- * than `SKILL_MANIFEST_MAX_BYTES`. The size is checked before decoding, so an
- * oversized manifest is never turned into a string.
+ * Orders a folder's children case-insensitively by name, folders and files
+ * interleaved, recursing into every folder. At the root only, the manifest
+ * sorts first regardless of name — it is the file the panel opens on.
  */
-export const readSkillManifest = async (
+const sortContentTree = (
+  nodes: CatalogContentTreeNode[],
+  isRoot: boolean,
+): void => {
+  nodes.sort((a, b) => {
+    if (isRoot) {
+      if (a.id === SKILL_MANIFEST_FILE) return -1;
+      if (b.id === SKILL_MANIFEST_FILE) return 1;
+    }
+    return a.name.localeCompare(b.name);
+  });
+  for (const node of nodes) {
+    if (node.type === CatalogContentNodeType.Folder) {
+      sortContentTree(node.items, false);
+    }
+  }
+};
+
+/**
+ * Builds the Content tab's hierarchical file tree for a skill from
+ * `listSkillFiles({ recursive: true })`'s flat listing. Every folder entry is
+ * attached under its own path so an empty grouping folder still appears;
+ * every file entry attaches under the folder chain its own path implies,
+ * synthesizing any intermediate folder the listing never enumerated on its
+ * own. A file node's `id` is the listing entry's own path, so it round-trips
+ * back to `downloadSkillFile` without being re-derived; a folder node's `id`
+ * only keys client-side expand/collapse state.
+ */
+export const buildSkillContentTree = (
+  files: SkillMetadataItemDto[],
+): CatalogContentTreeNode[] => {
+  const folderNodesByPath = new Map<string, CatalogContentFolderNode>();
+  const roots: CatalogContentTreeNode[] = [];
+
+  for (const entry of files) {
+    if (entry.nodeType === SkillMetadataItemDtoNodeTypeEnum.Folder) {
+      getOrCreateFolderChain(entry.path, folderNodesByPath, roots);
+      continue;
+    }
+
+    const lastSlash = entry.path.lastIndexOf('/');
+    const parentPath = lastSlash === -1 ? '' : entry.path.slice(0, lastSlash);
+    const parentItems = getOrCreateFolderChain(
+      parentPath,
+      folderNodesByPath,
+      roots,
+    );
+    parentItems.push({
+      type: CatalogContentNodeType.File,
+      id: entry.path,
+      name: entry.name,
+    });
+  }
+
+  sortContentTree(roots, true);
+  return roots;
+};
+
+/**
+ * Reads a skill file response as raw bytes, or `null` when the body is
+ * larger than `SKILL_MANIFEST_MAX_BYTES`. The declared `content-length` is
+ * checked first so an oversized body is never read into memory at all; the
+ * actual byte length is checked again after reading, for a response with no
+ * (or an inaccurate) declared length. Applies identically to every skill
+ * file, text or binary — not only `SKILL.md`.
+ */
+export const readSkillFileBytes = async (
   response: Response,
-): Promise<string | null> => {
+): Promise<Uint8Array | null> => {
   const declaredLength = Number(response.headers.get('content-length'));
   if (
     Number.isFinite(declaredLength) &&
@@ -211,5 +358,19 @@ export const readSkillManifest = async (
   const buffer = await response.arrayBuffer();
   if (buffer.byteLength > SKILL_MANIFEST_MAX_BYTES) return null;
 
-  return new TextDecoder().decode(buffer);
+  return new Uint8Array(buffer);
+};
+
+/**
+ * Reads a skill manifest response as text, or `null` when the body is larger
+ * than `SKILL_MANIFEST_MAX_BYTES`. The size is checked before decoding, so an
+ * oversized manifest is never turned into a string.
+ */
+export const readSkillManifest = async (
+  response: Response,
+): Promise<string | null> => {
+  const bytes = await readSkillFileBytes(response);
+  if (bytes == null) return null;
+
+  return new TextDecoder().decode(bytes);
 };

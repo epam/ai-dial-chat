@@ -1,5 +1,5 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   cloneElement,
@@ -22,11 +22,20 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   PrimaryButton: ({
     label,
     onClick,
+    disabled,
+    'aria-busy': ariaBusy,
   }: {
     label: string;
     onClick: () => void;
+    disabled?: boolean;
+    'aria-busy'?: boolean;
   }) => (
-    <button className="primary" onClick={onClick}>
+    <button
+      className="primary"
+      onClick={onClick}
+      disabled={disabled}
+      aria-busy={ariaBusy}
+    >
       {label}
     </button>
   ),
@@ -130,6 +139,10 @@ const makeItem = (type: CatalogEntityType): CatalogItem => ({
   isMyApp: true,
 });
 
+const openManage = async (label = 'Manage') => {
+  await userEvent.click(screen.getByRole('button', { name: label }));
+};
+
 describe('Header', () => {
   it('renders Use in chat for a Model item', () => {
     render(<Header item={makeItem(CatalogEntityType.Model)} />);
@@ -211,10 +224,6 @@ describe('Header', () => {
     );
     expect(screen.getByRole('button', { name: 'Share this' })).toBeTruthy();
   });
-
-  const openManage = async (label = 'Manage') => {
-    await userEvent.click(screen.getByRole('button', { name: label }));
-  };
 
   it('does not render the Manage button for a Model item the user cannot edit, publish, or delete', () => {
     render(
@@ -368,7 +377,225 @@ describe('Header', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Download' }));
     expect(onDownload).toHaveBeenCalledWith(item);
   });
+});
 
+describe('Header — Download as primary action', () => {
+  it('defaults to Download as the primary action for a Skill', async () => {
+    render(
+      <Header item={makeItem(CatalogEntityType.Skill)} onDownload={vi.fn()} />,
+    );
+    expect(screen.getByRole('button', { name: 'Download' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Use in chat' })).toBeNull();
+  });
+
+  it('does not promote Download for a Model regardless of onDownload', () => {
+    render(
+      <Header item={makeItem(CatalogEntityType.Model)} onDownload={vi.fn()} />,
+    );
+    expect(screen.getByRole('button', { name: 'Use in chat' })).toBeTruthy();
+  });
+
+  it("Toolset's credentials swap takes precedence over Download", () => {
+    render(
+      <Header
+        item={{
+          ...makeItem(CatalogEntityType.Toolset),
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.ApiKey,
+            userStatus: CredentialStatus.SignedOut,
+          },
+        }}
+        onDownload={vi.fn()}
+        isDownloadPrimary={() => true}
+        onLogin={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Log in' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Download' })).toBeNull();
+  });
+
+  it('a host can suppress the default Skill promotion', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Skill)}
+        onDownload={vi.fn()}
+        isDownloadPrimary={() => false}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Download' })).toBeNull();
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Download' })).toBeTruthy();
+  });
+
+  it('a host can promote Download for a non-Skill type', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Prompt)}
+        onDownload={vi.fn()}
+        isDownloadPrimary={(item) => item.type === CatalogEntityType.Prompt}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Download' })).toBeTruthy();
+  });
+
+  it('never renders Download in both the primary slot and the Manage menu', async () => {
+    render(
+      <Header item={makeItem(CatalogEntityType.Skill)} onDownload={vi.fn()} />,
+    );
+    await openManage();
+    expect(screen.getAllByRole('button', { name: 'Download' })).toHaveLength(1);
+  });
+
+  it('disables the button and announces progress while a download is pending', async () => {
+    let resolveDownload!: () => void;
+    const onDownload = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveDownload = resolve;
+        }),
+    );
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Skill)}
+        onDownload={onDownload}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Download' }));
+
+    const button = screen.getByRole('button', {
+      name: 'Download',
+    }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(button.getAttribute('aria-busy')).toBe('true');
+    expect(screen.getByRole('status').textContent).toBe('Downloading');
+
+    resolveDownload();
+    await waitFor(() =>
+      expect(
+        (screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(false),
+    );
+  });
+
+  it('ignores a second click while a download is already pending', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function -- a promise that never settles by design
+    const onDownload = vi.fn(() => new Promise<void>(() => {}));
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Skill)}
+        onDownload={onDownload}
+      />,
+    );
+
+    const button = screen.getByRole('button', { name: 'Download' });
+    await userEvent.click(button);
+    await userEvent.click(button);
+
+    expect(onDownload).toHaveBeenCalledOnce();
+  });
+
+  it('re-enables the button after a successful download', async () => {
+    const onDownload = vi.fn().mockResolvedValue(undefined);
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Skill)}
+        onDownload={onDownload}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Download' }));
+
+    await waitFor(() =>
+      expect(
+        (screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(false),
+    );
+  });
+
+  it('re-enables the button after a failed download', async () => {
+    const onDownload = vi.fn().mockRejectedValue(new Error('failed'));
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Skill)}
+        onDownload={onDownload}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Download' }));
+
+    await waitFor(() =>
+      expect(
+        (screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(false),
+    );
+  });
+
+  it('resets pending state when the item changes, without a stale call resurrecting it', async () => {
+    let resolveDownload!: () => void;
+    const onDownload = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveDownload = resolve;
+        }),
+    );
+    const { rerender } = render(
+      <Header
+        item={makeItem(CatalogEntityType.Skill)}
+        onDownload={onDownload}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Download' }));
+    expect(
+      (screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+
+    rerender(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Skill), id: 'other-skill' }}
+        onDownload={onDownload}
+      />,
+    );
+    expect(
+      (screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
+
+    resolveDownload();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(
+      (screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
+  });
+
+  it("the Manage-menu Download entry's fire-and-forget contract is unchanged", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function -- a promise that never settles by design
+    const onDownload = vi.fn(() => new Promise<void>(() => {}));
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Prompt)}
+        onDownload={onDownload}
+      />,
+    );
+
+    await openManage();
+    await userEvent.click(screen.getByRole('button', { name: 'Download' }));
+
+    expect(onDownload).toHaveBeenCalledOnce();
+    /* No pending/disabled state exists for the Manage-menu path. */
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+});
+
+describe('Header', () => {
   it('renders Delete in the Manage menu', async () => {
     render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
     await openManage();
