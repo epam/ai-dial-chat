@@ -61,6 +61,7 @@ import {
   revokeSharedAccess,
 } from '../../../server-api/share.api';
 import {
+  deleteSkill,
   downloadSkill,
   downloadSkillFile,
   listSkillFiles,
@@ -573,6 +574,7 @@ vi.mock('../../../server-api/skills.api', () => ({
   downloadSkill: vi.fn(),
   downloadSkillFile: vi.fn(),
   listSkillFiles: vi.fn(),
+  deleteSkill: vi.fn(),
 }));
 
 /* Only the download trigger is stubbed; the mappers still need the real helpers. */
@@ -4116,6 +4118,61 @@ describe('CatalogView', () => {
 
       /* Create options render as buttons labelled with the option's own label. */
       expect(screen.queryByRole('button', { name: 'Skill' })).toBeNull();
+    });
+
+    it('deletes a skill via the skills endpoint, refetches skills, and shows a success notification', async () => {
+      enableSkills();
+      const refetchSkills = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      mockSkills({ skills: [personalSkill], publicSkills: [], refetchSkills });
+      vi.mocked(deleteSkill).mockResolvedValue({ success: true });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', { name: `delete ${personalSkill.url}` }),
+      );
+
+      expect(deleteSkill).toHaveBeenCalledWith(
+        'my-bucket',
+        'analysis/revenue-skill',
+      );
+      expect(deleteApplication).not.toHaveBeenCalled();
+      expect(refetchSkills).toHaveBeenCalledOnce();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
+    });
+
+    it('shows an error notification and does not call deleteSkill or deleteApplication for a malformed skill resource id', async () => {
+      enableSkills();
+      const refetchSkills = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      const malformedSkill = { ...personalSkill, url: 'skills/onlybucket' };
+      mockSkills({
+        skills: [malformedSkill],
+        publicSkills: [],
+        refetchSkills,
+      });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', { name: `delete ${malformedSkill.url}` }),
+      );
+
+      expect(deleteSkill).not.toHaveBeenCalled();
+      expect(deleteApplication).not.toHaveBeenCalled();
+      expect(refetchSkills).not.toHaveBeenCalled();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'error' }),
+      );
     });
 
     it('removes a shared skill via Remove from My List, refetches skills, and shows a success notification', async () => {
