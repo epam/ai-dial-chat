@@ -747,6 +747,82 @@
         ]
       }
     },
+    "/api/v1/user/limits": {
+      "get": {
+        "description": "Returns rate-limit and rolling-usage statistics for every model deployment visible to the caller, plus the caller's global cost-budget figures. Proxies GET /v1/user/limits using the caller's session access token. Not cached — every request hits DIAL Core for real-time usage data.",
+        "operationId": "getUserLimits",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved aggregate user limits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserLimitStatsResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Get aggregate usage limits for every visible deployment",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/api/v1/user/usage": {
+      "get": {
+        "description": "Returns the same shape as GET /user/limits, restricted to deployments the caller actually used within the trailing 30 days. Proxies GET /v1/user/usage using the caller's session access token. Not cached — every request hits DIAL Core for real-time usage data.",
+        "operationId": "getUserUsage",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved user usage",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserLimitStatsResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Get usage limits for deployments used in the trailing 30 days",
+        "tags": [
+          "user"
+        ]
+      }
+    },
     "/api/v1/user-config": {
       "get": {
         "operationId": "getUserConfig",
@@ -2643,7 +2719,7 @@
     },
     "/api/v1/prompts": {
       "get": {
-        "description": "Returns all personal prompts and the folder hierarchy.",
+        "description": "Returns all catalog-visible prompts in one response. Organisation prompts are always read-only.",
         "operationId": "listPrompts",
         "parameters": [],
         "responses": {
@@ -2664,7 +2740,7 @@
             "description": "DIAL Core error"
           }
         },
-        "summary": "List personal prompts",
+        "summary": "List personal, shared, and organisation prompts",
         "tags": [
           "prompts"
         ]
@@ -2724,6 +2800,16 @@
               "example": "Work/AI/my-prompt",
               "type": "string"
             }
+          },
+          {
+            "name": "bucket",
+            "required": false,
+            "in": "query",
+            "description": "DIAL Core bucket to read from. Defaults to the caller's own bucket; pass the owner bucket reported as `bucket` on a shared prompt to read that one. DIAL Core still enforces access, so a bucket the caller has no grant for resolves to 404.",
+            "schema": {
+              "example": "owner-bucket",
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -2763,7 +2849,7 @@
             "description": "DIAL Core error"
           }
         },
-        "summary": "Update a personal prompt",
+        "summary": "Update a personal or writable shared prompt",
         "tags": [
           "prompts"
         ]
@@ -3089,6 +3175,16 @@
               "example": "Work/AI/my-prompt",
               "type": "string"
             }
+          },
+          {
+            "name": "bucket",
+            "required": false,
+            "in": "query",
+            "description": "DIAL Core bucket to read from. Defaults to the caller's own bucket; pass the owner bucket reported as `bucket` on a shared prompt to read that one. DIAL Core still enforces access, so a bucket the caller has no grant for resolves to 404.",
+            "schema": {
+              "example": "owner-bucket",
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -3128,7 +3224,7 @@
             "description": "DIAL Core error"
           }
         },
-        "summary": "Move a personal prompt to a different folder",
+        "summary": "Move a personal or writable shared prompt to another folder",
         "tags": [
           "prompts"
         ]
@@ -4405,7 +4501,7 @@
     },
     "/api/v1/share/discard": {
       "post": {
-        "description": "Discards the authenticated user's own access to a shared catalog entity (application or toolset) or conversation, via DIAL Core's discardSharedResources operation. Only affects the caller's own access — removing access for everyone else is a separate operation.",
+        "description": "Discards the authenticated user's own access to a shared catalog entity (application or toolset), a skill, or a conversation, via DIAL Core's discardSharedResources operation. Only affects the caller's own access — removing access for everyone else is a separate operation.",
         "operationId": "discardSharedCatalogItem",
         "parameters": [],
         "requestBody": {
@@ -4459,14 +4555,14 @@
     },
     "/api/v1/share/recipients": {
       "get": {
-        "description": "Returns how many users currently hold shared access to a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core's getSharedResources operation. Intended to be called when an owner opens the menu offering \"Revoke access\", so the count is never stale. Counts accepted invitations only — an issued but unopened share link is not counted.",
+        "description": "Returns how many users currently hold shared access to a catalog entity (application or toolset), a skill, or a conversation the caller owns, via DIAL Core's getSharedResources operation. Intended to be called when an owner opens the menu offering \"Revoke access\", so the count is never stale. Counts accepted invitations only — an issued but unopened share link is not counted.",
         "operationId": "getShareRecipientsCount",
         "parameters": [
           {
             "name": "itemId",
             "required": true,
             "in": "query",
-            "description": "Identifier (DIAL Core resource path) of the owned catalog item or conversation to count current recipients for.",
+            "description": "Identifier (DIAL Core resource path) of the owned catalog item, skill, or conversation to count current recipients for.",
             "schema": {
               "example": "applications/owner-bucket/my-app",
               "type": "string"
@@ -4508,7 +4604,7 @@
     },
     "/api/v1/share/revoke": {
       "post": {
-        "description": "Revokes every outstanding share grant on a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core's revokeSharedResources operation. Affects all recipients at once — DIAL Core cannot target a single recipient. Discarding only the caller's own access to a resource shared with them is a separate operation.",
+        "description": "Revokes every outstanding share grant on a catalog entity (application or toolset), a skill, or a conversation the caller owns, via DIAL Core's revokeSharedResources operation. Affects all recipients at once — DIAL Core cannot target a single recipient. Discarding only the caller's own access to a resource shared with them is a separate operation.",
         "operationId": "revokeSharedAccess",
         "parameters": [],
         "requestBody": {
@@ -4557,6 +4653,44 @@
         "summary": "Revoke all shared access to an owned resource",
         "tags": [
           "share"
+        ]
+      }
+    },
+    "/api/v1/skills/catalog": {
+      "get": {
+        "description": "Returns all catalog-visible skills in one response. Organisation skills are always marked read-only.",
+        "operationId": "listCatalogSkills",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillCatalogListResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable"
+          }
+        },
+        "summary": "List personal, shared, and organisation skills",
+        "tags": [
+          "skills"
         ]
       }
     },
@@ -5491,7 +5625,7 @@
     },
     "/api/v1/catalog/{entityType}/{entityId}/publish": {
       "post": {
-        "description": "Publishes a catalog entity (Toolset, Application, or Prompt) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.",
+        "description": "Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.",
         "operationId": "publishCatalogEntity",
         "parameters": [
           {
@@ -5544,7 +5678,7 @@
             }
           },
           "400": {
-            "description": "Validation error — invalid entityType, entityId, or folderPath"
+            "description": "Validation error — invalid entityType, entityId, folderPath, version, or rules"
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
@@ -7475,6 +7609,28 @@
           }
         }
       },
+      "ModelCatalogPropertiesDto": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": "Model provider for catalog display"
+          },
+          "vendor": {
+            "type": "string",
+            "description": "Model vendor for catalog display"
+          },
+          "license": {
+            "type": "string",
+            "description": "Model license for catalog display"
+          },
+          "knowledgeCutoffDate": {
+            "type": "string",
+            "description": "Model knowledge cutoff date for catalog display",
+            "example": "2026-08-17"
+          }
+        }
+      },
       "ModelDetailsDto": {
         "type": "object",
         "properties": {
@@ -7506,6 +7662,14 @@
           },
           "features": {
             "$ref": "#/components/schemas/DeploymentFeaturesDetailsDto"
+          },
+          "catalogProperties": {
+            "description": "Known model catalog properties allow-listed from DIAL Core catalog_properties",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ModelCatalogPropertiesDto"
+              }
+            ]
           },
           "owner": {
             "type": "string",
@@ -7735,6 +7899,50 @@
           "id",
           "type"
         ]
+      },
+      "UserLimitStatsResponseDto": {
+        "type": "object",
+        "properties": {
+          "deployments": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/DeploymentLimitsResponseDto"
+            },
+            "description": "Per-deployment rate-limit and rolling usage stats, keyed by deployment name. Models only — applications, toolsets, and routes never appear here. On GET /v1/user/limits every deployment visible to the caller is present, including ones never used (reported against zero usage). On GET /v1/user/usage only deployments used in the trailing 30 days are present; absence means zero usage, not \"unknown\"."
+          },
+          "minuteCostStats": {
+            "description": "The caller's global cost budget for the trailing minute and spend against it. Unlike the identically-named field nested inside a `deployments` entry (that is per-deployment attributed spend with an unlimited `total`), this is the caller's actual money budget. A `total` at or above 9007199254740992 (2^53) represents the upstream \"unlimited\" sentinel (`Long.MAX_VALUE`, which exceeds `Number.MAX_SAFE_INTEGER`) and must be treated as unlimited rather than rendered as a used/total ratio.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LimitStatsDto"
+              }
+            ]
+          },
+          "dayCostStats": {
+            "description": "The caller's global cost budget for the trailing 24 hours and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LimitStatsDto"
+              }
+            ]
+          },
+          "weekCostStats": {
+            "description": "The caller's global cost budget for the trailing 7 days and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LimitStatsDto"
+              }
+            ]
+          },
+          "monthCostStats": {
+            "description": "The caller's global cost budget for the trailing 30 days and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LimitStatsDto"
+              }
+            ]
+          }
+        }
       },
       "ConversationsConfigDto": {
         "type": "object",
@@ -9948,6 +10156,25 @@
             "type": "number",
             "description": "Last update timestamp (Unix ms)",
             "example": 1700000001000
+          },
+          "isMy": {
+            "type": "boolean",
+            "description": "Whether the prompt belongs to the requestor"
+          },
+          "canEdit": {
+            "type": "boolean",
+            "description": "Whether the requestor may update the prompt. Organisation prompts are always read-only."
+          },
+          "sharedWithMe": {
+            "type": "boolean",
+            "description": "Whether another user shared the prompt with the requestor"
+          },
+          "permissions": {
+            "description": "READ/WRITE/SHARE permissions applicable to the requestor",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -9998,6 +10225,18 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PromptResponseDto"
+            }
+          },
+          "publicPrompts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromptResponseDto"
+            }
+          },
+          "publicFolders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromptFolderResponseDto"
             }
           }
         },
@@ -11151,6 +11390,18 @@
           "updatedAt": {
             "type": "number",
             "description": "Unix timestamp ms (item only)"
+          },
+          "isMy": {
+            "type": "boolean",
+            "description": "Whether the skill belongs to the requestor"
+          },
+          "canEdit": {
+            "type": "boolean",
+            "description": "Whether the requestor may update the skill. Organisation skills are always read-only."
+          },
+          "sharedWithMe": {
+            "type": "boolean",
+            "description": "Whether another user shared the skill with the requestor"
           }
         },
         "required": [
@@ -11247,7 +11498,7 @@
         "properties": {
           "itemId": {
             "type": "string",
-            "description": "Identifier (DIAL Core resource path) of the owned catalog item or conversation to revoke all shared access to.",
+            "description": "Identifier (DIAL Core resource path) of the owned catalog item, skill, or conversation to revoke all shared access to.",
             "example": "applications/owner-bucket/my-app"
           }
         },
@@ -11265,6 +11516,34 @@
         },
         "required": [
           "success"
+        ]
+      },
+      "SkillCatalogListResponseDto": {
+        "type": "object",
+        "properties": {
+          "skills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkillMetadataItemDto"
+            }
+          },
+          "sharedWithMe": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkillMetadataItemDto"
+            }
+          },
+          "publicSkills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkillMetadataItemDto"
+            }
+          }
+        },
+        "required": [
+          "skills",
+          "sharedWithMe",
+          "publicSkills"
         ]
       },
       "SkillListResponseDto": {
@@ -11383,7 +11662,7 @@
           },
           "version": {
             "type": "string",
-            "description": "Version label for this publish.",
+            "description": "Optional version label. When omitted, versioned resource ids recover it from their {name}__{version} suffix; unversioned resources use an empty version.",
             "example": "1.2.0"
           },
           "rules": {
@@ -11396,8 +11675,7 @@
           }
         },
         "required": [
-          "folderPath",
-          "version"
+          "folderPath"
         ]
       },
       "PublishResultDto": {

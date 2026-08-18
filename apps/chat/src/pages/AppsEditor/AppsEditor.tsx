@@ -180,13 +180,15 @@ const AppsEditor: FC = () => {
 
   const handleChangeStep = useCallback(
     (stepId: string) => {
+      if (stepId === AppsEditorStep.Settings && !appIdForSettings) return;
+
       setSearchParams((prev) => {
         const next = new URLSearchParams(prev);
         next.set(AppsEditorQuery.Step, stepId);
         return next;
       });
     },
-    [setSearchParams],
+    [appIdForSettings, setSearchParams],
   );
 
   const isGeneralStep = step === AppsEditorStep.General;
@@ -402,7 +404,7 @@ const AppsEditor: FC = () => {
   const isSaveDisabled = !isGeneralStep && !isSettingsReady;
 
   return (
-    <div className="flex size-full flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <EditorHeader
         title={schema?.displayName}
         steps={steps}

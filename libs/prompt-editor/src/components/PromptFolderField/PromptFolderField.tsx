@@ -33,6 +33,7 @@ export const PromptFolderField: FC<PromptFolderFieldProps> = ({
   error,
   nameError,
   actions,
+  disabled = false,
   labels,
   helperTextClassName = 'dial-small-text',
   onChange,
@@ -161,11 +162,12 @@ export const PromptFolderField: FC<PromptFolderFieldProps> = ({
           value={isRootSelected ? ROOT_OPTION_VALUE : value}
           labelProps={{ label: labels?.folderLabel ?? 'Folder' }}
           invalid={error != null}
+          disabled={disabled}
           error={error}
           emptyStateTitle={emptyStateLabel}
           onChange={handleSelect}
         />
-        {actions != null && (
+        {actions != null && !disabled && (
           <>
             <GhostIconButton
               icon={<IconFolderPlus size={DIAL_ICON_SIZE.SM} aria-hidden />}

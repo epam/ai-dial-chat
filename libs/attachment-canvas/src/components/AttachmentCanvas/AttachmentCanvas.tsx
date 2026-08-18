@@ -41,6 +41,10 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     htmlOpenInNewTabLabel = 'Open in new tab',
     htmlViewSourceLabel = 'View source',
     htmlViewRenderedLabel = 'View rendered',
+    pdfThumbnailsLabel,
+    pdfShowThumbnailsLabel,
+    pdfHideThumbnailsLabel,
+    pdfPageNumberLabel,
   },
   onDownload,
   onCopyText,
@@ -296,6 +300,10 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
           visualizerErrorLabel,
           htmlFrameBlockedLabel,
           htmlOpenInNewTabLabel,
+          pdfThumbnailsLabel,
+          pdfShowThumbnailsLabel,
+          pdfHideThumbnailsLabel,
+          pdfPageNumberLabel,
         }}
         styles={bodyStylesProp}
         codeBlockTheme={codeBlockTheme}

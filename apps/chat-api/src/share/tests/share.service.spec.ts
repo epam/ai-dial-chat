@@ -202,6 +202,33 @@ describe('ShareService', () => {
       expect(result.url).toBe('https://example.com/catalog/shared/p1');
     });
 
+    it('percent-encodes a prompt itemId nested inside a folder with a space in its name', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/p2' }));
+
+      const result = await service.createShareLink('token-abc', 'my-bucket', {
+        itemId: 'New folder 1/Prompt 1',
+        access: [ShareAccess.View],
+        resourceKind: ShareResourceKind.Prompt,
+      });
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'prompts/my-bucket/New%20folder%201/Prompt%201',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+      expect(result.url).toBe('https://example.com/catalog/shared/p2');
+    });
+
     it('leaves itemId untouched when no resourceKind is given', async () => {
       const { service } = makeService();
       const spy = vi
@@ -823,6 +850,33 @@ describe('ShareService', () => {
       expect(result).toEqual({ success: true });
     });
 
+    it('revokes a skills/{bucket}/{path} resource url unchanged', async () => {
+      const { service, deploymentsService, toolsetsService } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'revokeSharedResources')
+        .mockResolvedValue(okResponse(undefined));
+
+      const result = await service.revokeShared(
+        'skills/owner-bucket/team-a/docs-helper',
+        'token-abc',
+        'user-sub-1',
+      );
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          resources: [{ url: 'skills/owner-bucket/team-a/docs-helper' }],
+        },
+      });
+      expect(result).toEqual({ success: true });
+      expect(deploymentsService.invalidateListCache).toHaveBeenCalledWith(
+        'user-sub-1',
+      );
+      expect(toolsetsService.invalidateListCache).toHaveBeenCalledWith(
+        'user-sub-1',
+      );
+    });
+
     it('succeeds without checking whether the resource currently has recipients', async () => {
       const { service } = makeService();
       const sharedSpy = vi.spyOn(
@@ -986,6 +1040,40 @@ describe('ShareService', () => {
           body: expect.objectContaining({ resourceTypes: ['TOOL_SET'] }),
         }),
       );
+    });
+
+    it('counts the accepted recipients of a shared skill', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'getSharedResources')
+        .mockResolvedValue(
+          okResponse({
+            resources: [
+              {
+                url: 'skills/owner-bucket/team-a/docs-helper',
+                sharedWith: [{ user: 'a' }],
+              },
+            ],
+          }),
+        );
+
+      const result = await service.getRecipientsCount(
+        'skills/owner-bucket/team-a/docs-helper',
+        'token-abc',
+      );
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          resourceTypes: ['SKILL'],
+          with: 'others',
+          includeUserInfo: true,
+        },
+      });
+      expect(result).toEqual({
+        itemId: 'skills/owner-bucket/team-a/docs-helper',
+        recipientsCount: 1,
+      });
     });
 
     it('reports 0 for a resource a successful response does not mention', async () => {

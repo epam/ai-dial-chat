@@ -72,9 +72,9 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       activeTab: mockActiveTab.value ?? Tabs.MyFiles,
       handleTabChange: mockHandleTabChange,
       tabs: [
-        { id: Tabs.MyFiles, name: 'My Files' },
-        { id: Tabs.Shared, name: 'Shared with Me' },
-        { id: Tabs.Organization, name: 'Organization' },
+        { id: Tabs.MyFiles, label: 'My Files' },
+        { id: Tabs.Shared, label: 'Shared with Me' },
+        { id: Tabs.Organization, label: 'Organization' },
       ],
     })),
     DialFileManager: ({
@@ -113,7 +113,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       };
       uploadEnabled?: boolean;
       toolbarOptions?: {
-        tabs?: Array<{ id: string; name: string }>;
+        tabs?: Array<{ id: string; label: string }>;
         activeTab?: string;
         onTabChange?: (id: DialFileManagerTabs) => void;
         showHiddenFilesToggle?: boolean;
@@ -251,7 +251,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
                   toolbarOptions.onTabChange?.(tab.id as DialFileManagerTabs)
                 }
               >
-                {tab.name}
+                {tab.label}
               </button>
             ))}
         <button

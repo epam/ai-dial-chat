@@ -17,13 +17,16 @@ import {
   PublishHistoryEntry,
   PublishResourceSummary,
 } from '../../models/publish';
+import type { PublishPanelStyles } from '../../models/publish-panel-styles';
 import { derivePublishState } from '../../utils/publish-state';
 import {
   PublishAccessRules,
   PublishAccessRulesLabels,
 } from '../PublishAccessRules/PublishAccessRules';
 import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
-import { PublishHistoryList } from '../PublishHistoryList/PublishHistoryList';
+// TODO: will implement later — re-enable along with the versions history
+// section below.
+// import { PublishHistoryList } from '../PublishHistoryList/PublishHistoryList';
 import styles from './PublishPanel.module.scss';
 
 /** Text overrides for all user-visible strings in {@link PublishPanel}. */
@@ -48,6 +51,8 @@ export interface PublishPanelLabels {
   addSiblingFolderLabel?: string;
   /** Label for the per-row context menu action that creates a folder inside the clicked folder. */
   addChildFolderLabel?: string;
+  /** Label for the action that cancels inline folder creation. Defaults to `'Cancel'`. */
+  cancelCreatingFolderLabel?: string;
   /** Inline error shown while creating a folder with an empty name. */
   createFolderEmptyNameError?: string;
   /** Inline error shown while creating a folder whose name contains `..` or a forbidden character. */
@@ -145,34 +150,21 @@ export interface PublishPanelProps {
   summaryTitleClassName?: string;
   /** Typography class for the "Publish to folder" and "Versions history" section headings. Default: `'dial-body-semi-text'`. */
   headingClassName?: string;
-  /** Color overrides. */
-  colors?: PublishPanelColors;
-}
-
-/** Color overrides for {@link PublishPanel}, applied as CSS custom properties with app theme fallbacks. */
-export interface PublishPanelColors {
-  /** Summary row border color. Fallback: `--stroke-tertiary`. */
-  summaryBorder?: string;
-  /** Summary row background color. Fallback: `--bg-layer-sunken`. */
-  summaryBackground?: string;
-  /** Version tag border color in the entity-header summary row. Fallback: `--stroke-tertiary`. */
-  summaryVersionTagBorder?: string;
-  /** Version tag background color in the entity-header summary row. Fallback: `--bg-accent-primary-alpha`. */
-  summaryVersionTagBackground?: string;
-  /** Version tag text color in the entity-header summary row. Fallback: `--text-accent`. */
-  summaryVersionTagText?: string;
-  /** Default summary title text color. Fallback: `--text-primary`. */
-  summaryTitleText?: string;
-  /** Section heading text color. Fallback: `--text-primary`. */
-  headingText?: string;
+  /** Style overrides. */
+  styles?: PublishPanelStyles;
 }
 
 /** Scrollable body of the Publish flow: entity summary, destination folder picker with callout, and publish history. */
 export const PublishPanel: FC<PublishPanelProps> = ({
   resource,
   renderSummary,
+  // TODO: will implement later — history, isHistoryLoading, hasHistoryError
+  // are unused while the versions history section below is commented out.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   history,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   isHistoryLoading = false,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   hasHistoryError = false,
   folderItems,
   selectedFolderPath,
@@ -194,12 +186,20 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   labels = {},
   summaryTitleClassName = 'dial-body-semi-text',
   headingClassName = 'dial-body-semi-text',
-  colors,
+  styles: stylesProp = {},
 }) => {
-  const cssVars = buildCssVars({
-    '--pp-summary-title-text': colors?.summaryTitleText,
-    '--pp-heading-text': colors?.headingText,
-  });
+  const {
+    colors,
+    folderTree: folderTreeStyles,
+    accessRules: accessRulesStyles,
+  } = stylesProp;
+  const cssVars = {
+    ...buildCssVars({
+      '--pp-summary-title-text': colors?.summaryTitleText,
+      '--pp-heading-text': colors?.headingText,
+    }),
+    ...stylesProp.cssVars,
+  };
 
   /* Border and background belong to `ResourceSummary`'s own row, so they are
      forwarded as colors instead of being set as vars on an ancestor. */
@@ -213,18 +213,20 @@ export const PublishPanel: FC<PublishPanelProps> = ({
 
   const {
     folderLabel = 'Publish to folder',
-    historyLabel = 'Versions history',
+    // TODO: will implement later — historyLabel is unused while the versions
+    // history section below is commented out.
     replaceWarning = 'Version {version} is already published in {folder}. Publishing will replace it.',
     noAccessError = "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
     submitError = 'Publishing failed. Please try again.',
     folderEmptyStateLabel,
     addSiblingFolderLabel,
     addChildFolderLabel,
+    cancelCreatingFolderLabel,
     createFolderEmptyNameError,
     createFolderInvalidNameError,
     createFolderDuplicateNameError,
-    historyLoadingLabel,
-    historyErrorLabel,
+    // TODO: will implement later — historyLoadingLabel, historyErrorLabel are
+    // unused while the versions history section below is commented out.
     rootFolderLabel = 'Organization',
     summaryVersionLabel,
     accessRulesLabels,
@@ -264,13 +266,15 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     ? (selectedFolderPath[selectedFolderPath.length - 1] ?? rootFolderLabel)
     : '';
 
-  const folderHistory = useMemo(() => {
-    if (!isFolderSelected) {
-      return [];
-    }
-    const key = selectedFolderPath.join('/');
-    return history.filter((entry) => entry.folderPath.join('/') === key);
-  }, [history, selectedFolderPath, isFolderSelected]);
+  // TODO: will implement later — re-enable along with the versions history
+  // section below.
+  // const folderHistory = useMemo(() => {
+  //   if (!isFolderSelected) {
+  //     return [];
+  //   }
+  //   const key = selectedFolderPath.join('/');
+  //   return history.filter((entry) => entry.folderPath.join('/') === key);
+  // }, [history, selectedFolderPath, isFolderSelected]);
 
   const defaultSummary = renderSummary ? (
     renderSummary()
@@ -337,10 +341,12 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           noResultsLabel={folderEmptyStateLabel}
           addSiblingFolderLabel={addSiblingFolderLabel}
           addChildFolderLabel={addChildFolderLabel}
+          cancelCreatingFolderLabel={cancelCreatingFolderLabel}
           emptyFolderNameError={createFolderEmptyNameError}
           invalidFolderNameError={createFolderInvalidNameError}
           duplicateFolderNameError={createFolderDuplicateNameError}
           rootLabel={rootFolderLabel}
+          styles={folderTreeStyles}
         />
         {derived.calloutKind !== PublishCalloutKind.None &&
           derived.calloutKind !== PublishCalloutKind.Info && (
@@ -372,11 +378,14 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             isLoading={isRulesLoading}
             hasLoadError={hasRulesLoadError}
             labels={accessRulesLabels}
+            styles={accessRulesStyles}
           />
         </div>
       </div>
 
-      {isFolderSelected && resource?.version != null && (
+      {/* TODO: will implement later — versions history section is disabled
+          for now, keep the markup below for when it's re-enabled. */}
+      {/* {isFolderSelected && resource?.version != null && (
         <div>
           <div
             className={mergeClasses(
@@ -396,7 +405,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             errorLabel={historyErrorLabel}
           />
         </div>
-      )}
+      )} */}
     </div>
   );
 };

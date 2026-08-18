@@ -42,6 +42,7 @@ import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { getApiErrorDetails } from '../../server-api/api-error';
+import { isQuickAppSchema } from '../../utils/application-schema';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { getTimeOfDayGreeting } from '../../utils/greeting';
 import { resolveLocalizedText } from '../../utils/locale';
@@ -211,6 +212,9 @@ const NewConversationComposer: FC<Props> = ({
     values: chatSettingsValues,
     onValuesChange: setChatSettingsValues,
     deploymentFeatures: selectedDeployment?.features,
+    isQuickApp: isQuickAppSchema({
+      id: selectedDeployment?.applicationTypeSchemaId,
+    }),
   });
 
   const modelSelectorLabels = useModelSelectorLabels({

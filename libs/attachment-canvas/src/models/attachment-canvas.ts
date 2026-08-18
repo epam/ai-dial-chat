@@ -252,6 +252,14 @@ export interface AttachmentCanvasLabels {
   htmlViewSourceLabel?: string;
   /** Tooltip and `aria-label` for the toggle button when the source view is active (clicking switches back to rendered). Defaults to `'View rendered'`. */
   htmlViewRenderedLabel?: string;
+  /** Accessible name for the PDF viewer's floating thumbnails panel region. Defaults to `'Thumbnails'`. */
+  pdfThumbnailsLabel?: string;
+  /** Accessible label for the FAB button that opens the PDF thumbnails panel. Defaults to `'Show thumbnails'`. */
+  pdfShowThumbnailsLabel?: string;
+  /** Accessible label for the FAB button that closes the PDF thumbnails panel. Defaults to `'Hide thumbnails'`. */
+  pdfHideThumbnailsLabel?: string;
+  /** Accessible label for the current-page number input at the top of the PDF thumbnails panel. Defaults to `'Page number'`. */
+  pdfPageNumberLabel?: string;
 }
 
 /** Props for the AttachmentCanvas component. */
@@ -307,6 +315,10 @@ export type AttachmentCanvasBodyLabels = Pick<
   | 'visualizerErrorLabel'
   | 'htmlFrameBlockedLabel'
   | 'htmlOpenInNewTabLabel'
+  | 'pdfThumbnailsLabel'
+  | 'pdfShowThumbnailsLabel'
+  | 'pdfHideThumbnailsLabel'
+  | 'pdfPageNumberLabel'
 >;
 
 /** Props for the `AttachmentCanvasBody` component. */

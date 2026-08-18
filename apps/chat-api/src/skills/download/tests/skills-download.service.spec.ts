@@ -66,9 +66,9 @@ describe('SkillsDownloadService', () => {
       expect(result.stream).toBeInstanceOf(ReadableStream);
       expect(result.headers).toEqual({
         'content-type': 'application/zip',
-        'content-length': '1234',
         etag: '"abc123"',
       });
+      expect(result.headers['content-length']).toBeUndefined();
       expect(result.headers['x-secret-header']).toBeUndefined();
     });
 

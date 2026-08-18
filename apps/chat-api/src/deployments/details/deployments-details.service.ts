@@ -9,12 +9,16 @@ import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { resolveLocalizedValue } from '../../common/utils/localized-value';
 import { DialClientService } from '../../dial/dial-client.service';
-import type { DeploymentLimitsResponseDto } from '../../openapi/openapi-response.dto';
+import type {
+  DeploymentLimitsResponseDto,
+  UserLimitStatsResponseDto,
+} from '../../openapi/openapi-response.dto';
 import type { DeploymentConfigurationDto } from '../dto/deployment-configuration.dto';
 import type { DeploymentDetailsDto } from '../dto/deployment-details.dto';
 import { DeploymentItemType } from '../dto/deployment-item.dto';
 import {
   getNumber,
+  getString,
   isRecord,
   mapDeploymentFeatures,
   mapToolsetAuthSettings,
@@ -258,6 +262,23 @@ export class DeploymentsDetailsService {
           : undefined,
         pricing: raw.pricing,
         features: mapDeploymentFeatures(raw.features),
+        catalogProperties: (() => {
+          if (!isRecord(raw.catalog_properties)) return undefined;
+
+          const properties = {
+            provider: getString(raw.catalog_properties, 'provider'),
+            vendor: getString(raw.catalog_properties, 'vendor'),
+            license: getString(raw.catalog_properties, 'license'),
+            knowledgeCutoffDate: getString(
+              raw.catalog_properties,
+              'knowledgeCutoffDate',
+            ),
+          };
+
+          return Object.values(properties).some((value) => value != null)
+            ? properties
+            : undefined;
+        })(),
         owner: raw.owner,
         inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
           ? raw.input_attachment_types
@@ -488,6 +509,42 @@ export class DeploymentsDetailsService {
         this.logger,
         0,
       );
+    }
+  }
+
+  async getUserLimits(accessToken: string): Promise<UserLimitStatsResponseDto> {
+    try {
+      const result = await this.dialClient.client.getUserLimits({
+        headers: getBearerAuthHeaders(accessToken),
+      });
+      if (result.error) {
+        return mapDialHttpStatus(
+          result.response.status,
+          'get user limits',
+          this.logger,
+        );
+      }
+      return result.data as unknown as UserLimitStatsResponseDto;
+    } catch (err) {
+      return handleDialFetchError(err, 'get user limits', this.logger, 0);
+    }
+  }
+
+  async getUserUsage(accessToken: string): Promise<UserLimitStatsResponseDto> {
+    try {
+      const result = await this.dialClient.client.getUserUsage({
+        headers: getBearerAuthHeaders(accessToken),
+      });
+      if (result.error) {
+        return mapDialHttpStatus(
+          result.response.status,
+          'get user usage',
+          this.logger,
+        );
+      }
+      return result.data as unknown as UserLimitStatsResponseDto;
+    } catch (err) {
+      return handleDialFetchError(err, 'get user usage', this.logger, 0);
     }
   }
 }

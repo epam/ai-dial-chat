@@ -161,6 +161,96 @@ The `getDeploymentDetails` endpoint SHALL satisfy the following generated-client
 - **WHEN** the details panel closes
 - **THEN** no fetched detail data persists outside `Catalog`'s local component state — reopening re-fetches; deployment details may be subject to the backend's 60s cache, while model limits follow the no-cache deployment-limits API contract
 
+### Requirement: Model catalog properties are exposed in Overview Specification
+
+The BFF SHALL support DIAL Core model details that contain `catalog_properties`. The installed
+`@epam/ai-dial-typescript-sdk` represents this field as
+`ModelData.catalog_properties?: MapStringObject`, where `MapStringObject` is
+`Record<string, unknown>`; the meaning of its keys is schema-specific and is identified by
+`catalog_schema_id`. The BFF MUST therefore treat this object as untrusted, open-ended input
+and allow-list only the following string-valued model properties:
+
+- `provider`
+- `vendor`
+- `license`
+- `knowledgeCutoffDate`
+
+`GET /api/v1/deployments/:deployment/details` SHALL expose the recognized values as the
+optional `modelDetails.catalogProperties` object in `DeploymentDetailsDto`, using
+`ModelCatalogPropertiesDto` with the same four optional camelCase string fields. Unknown keys
+and recognized keys with non-string values MUST be omitted. When no recognized string value
+remains, `catalogProperties` MUST be omitted rather than returned as an empty object.
+
+This is an additive response change. OpenAPI `operationId: getDeploymentDetails`, its path
+parameter, authentication, status codes, rate limit, and the normal (non-`Raw`) generated
+`DeploymentsApi.getDeploymentDetails({ deployment })` call remain unchanged. Regenerating
+`@epam/chat-api-client` SHALL add `ModelCatalogPropertiesDto` and the optional
+`ModelDetailsDto.catalogProperties` property. A representative successful response fragment is:
+
+```json
+{
+  "id": "als-regre-19-adapter",
+  "type": "model",
+  "modelDetails": {
+    "catalogProperties": {
+      "provider": "Provider",
+      "vendor": "Vendor",
+      "license": "License",
+      "knowledgeCutoffDate": "2026-08-17"
+    }
+  }
+}
+```
+
+The app-level DTO mapper in `apps/chat/src/utils/map-entity-details-to-catalog.ts` SHALL copy
+these values into `ModelSpecification`. `mapEntityDetailsToCatalogDetails` SHALL render every
+present value as a separate row in the model details panel under `Overview` → `Specification`,
+in this order: Provider, Vendor, License, Knowledge cutoff date. Missing values SHALL NOT create
+empty rows.
+
+The four labels MUST use these i18n keys through `CatalogI18nKeys`:
+
+- `catalog.details.modelSpecification.provider`
+- `catalog.details.modelSpecification.vendor`
+- `catalog.details.modelSpecification.license`
+- `catalog.details.modelSpecification.knowledgeCutoffDate`
+
+A valid date-only `knowledgeCutoffDate` in `YYYY-MM-DD` form SHALL be parsed as a local calendar
+date and formatted with the same locale-sensitive `toLocaleDateString()` path as the existing
+Release date row. It MUST NOT be parsed as UTC, which could shift the displayed calendar day in
+negative-offset time zones. A non-date or invalid date string SHALL remain visible verbatim
+rather than being dropped or normalized to an invalid date.
+
+This metadata is not gated by `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`. It uses the existing
+user-scoped deployment-details cache (`deployments:details:<userSub>:<deployment>`, 60-second TTL)
+and existing invalidation behavior. It introduces no new metrics, analytics, or targeted raw
+deployment-payload debug logging. The rows are non-interactive and reuse the existing Overview
+semantics and responsive layout; they add no keyboard interaction or ARIA contract. The content
+is direction-agnostic, requires no directional icons, and MUST inherit the existing LTR/RTL
+layout without physical-direction overrides. No new React state or memoisation is required.
+
+#### Scenario: All supported properties render in Specification
+
+- **WHEN** DIAL Core returns the four recognized string values shown in the example above for a model
+- **THEN** the BFF returns them under `modelDetails.catalogProperties`
+- **AND** the model details panel renders Provider, Vendor, License, and Knowledge cutoff date as four rows under `Overview` → `Specification`
+
+#### Scenario: Knowledge cutoff date uses the Release date display format
+
+- **WHEN** `knowledgeCutoffDate` is `2026-08-17`
+- **THEN** it is displayed through the same locale-sensitive date formatter as Release date, without changing the calendar day because of timezone conversion
+
+#### Scenario: Unknown and non-string properties are ignored
+
+- **WHEN** `catalog_properties` contains `provider: "Provider"`, `schemaSpecificExtra: true`, and `license: { "name": "License" }`
+- **THEN** `modelDetails.catalogProperties` contains only `provider: "Provider"`
+- **AND** no rows are rendered for `schemaSpecificExtra` or the non-string `license`
+
+#### Scenario: Existing clients remain compatible
+
+- **WHEN** a client ignores the optional `modelDetails.catalogProperties` field
+- **THEN** all pre-existing deployment-details response fields and behavior remain unchanged
+
 ### Requirement: Only the About tab reads `item.description`; the Summary section shows topics and usage limits
 
 `CatalogItem` (`libs/catalog/src/models/catalog-item.ts`) SHALL NOT define an `intro` field.
@@ -217,4 +307,3 @@ field from `DeploymentItemDto`/`DialToolsetDto`.
 - **WHEN** `mapDeploymentToCatalogItem`/`mapToolsetToCatalogItem` map a
   `DeploymentItemDto`/`DialToolsetDto` into a `CatalogItem`
 - **THEN** the resulting `CatalogItem` has no `intro` property
-

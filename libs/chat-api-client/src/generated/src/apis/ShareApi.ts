@@ -154,7 +154,7 @@ export class ShareApi extends runtime.BaseAPI {
   }
 
   /**
-   * Discards the authenticated user\'s own access to a shared catalog entity (application or toolset) or conversation, via DIAL Core\'s discardSharedResources operation. Only affects the caller\'s own access — removing access for everyone else is a separate operation.
+   * Discards the authenticated user\'s own access to a shared catalog entity (application or toolset), a skill, or a conversation, via DIAL Core\'s discardSharedResources operation. Only affects the caller\'s own access — removing access for everyone else is a separate operation.
    * Discard a shared catalog resource or conversation
    */
   async discardSharedCatalogItemRaw(
@@ -193,7 +193,7 @@ export class ShareApi extends runtime.BaseAPI {
   }
 
   /**
-   * Discards the authenticated user\'s own access to a shared catalog entity (application or toolset) or conversation, via DIAL Core\'s discardSharedResources operation. Only affects the caller\'s own access — removing access for everyone else is a separate operation.
+   * Discards the authenticated user\'s own access to a shared catalog entity (application or toolset), a skill, or a conversation, via DIAL Core\'s discardSharedResources operation. Only affects the caller\'s own access — removing access for everyone else is a separate operation.
    * Discard a shared catalog resource or conversation
    */
   async discardSharedCatalogItem(
@@ -208,7 +208,7 @@ export class ShareApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns how many users currently hold shared access to a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core\'s getSharedResources operation. Intended to be called when an owner opens the menu offering \"Revoke access\", so the count is never stale. Counts accepted invitations only — an issued but unopened share link is not counted.
+   * Returns how many users currently hold shared access to a catalog entity (application or toolset), a skill, or a conversation the caller owns, via DIAL Core\'s getSharedResources operation. Intended to be called when an owner opens the menu offering \"Revoke access\", so the count is never stale. Counts accepted invitations only — an issued but unopened share link is not counted.
    * Count current recipients of an owned resource
    */
   async getShareRecipientsCountRaw(
@@ -246,7 +246,7 @@ export class ShareApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns how many users currently hold shared access to a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core\'s getSharedResources operation. Intended to be called when an owner opens the menu offering \"Revoke access\", so the count is never stale. Counts accepted invitations only — an issued but unopened share link is not counted.
+   * Returns how many users currently hold shared access to a catalog entity (application or toolset), a skill, or a conversation the caller owns, via DIAL Core\'s getSharedResources operation. Intended to be called when an owner opens the menu offering \"Revoke access\", so the count is never stale. Counts accepted invitations only — an issued but unopened share link is not counted.
    * Count current recipients of an owned resource
    */
   async getShareRecipientsCount(
@@ -261,7 +261,7 @@ export class ShareApi extends runtime.BaseAPI {
   }
 
   /**
-   * Revokes every outstanding share grant on a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core\'s revokeSharedResources operation. Affects all recipients at once — DIAL Core cannot target a single recipient. Discarding only the caller\'s own access to a resource shared with them is a separate operation.
+   * Revokes every outstanding share grant on a catalog entity (application or toolset), a skill, or a conversation the caller owns, via DIAL Core\'s revokeSharedResources operation. Affects all recipients at once — DIAL Core cannot target a single recipient. Discarding only the caller\'s own access to a resource shared with them is a separate operation.
    * Revoke all shared access to an owned resource
    */
   async revokeSharedAccessRaw(
@@ -298,7 +298,7 @@ export class ShareApi extends runtime.BaseAPI {
   }
 
   /**
-   * Revokes every outstanding share grant on a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core\'s revokeSharedResources operation. Affects all recipients at once — DIAL Core cannot target a single recipient. Discarding only the caller\'s own access to a resource shared with them is a separate operation.
+   * Revokes every outstanding share grant on a catalog entity (application or toolset), a skill, or a conversation the caller owns, via DIAL Core\'s revokeSharedResources operation. Affects all recipients at once — DIAL Core cannot target a single recipient. Discarding only the caller\'s own access to a resource shared with them is a separate operation.
    * Revoke all shared access to an owned resource
    */
   async revokeSharedAccess(
