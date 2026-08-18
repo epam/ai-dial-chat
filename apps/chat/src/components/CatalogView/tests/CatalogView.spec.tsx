@@ -36,6 +36,7 @@ import { usePrompts } from '../../../context/PromptsContext';
 import { useSkills } from '../../../context/SkillsContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
+import { useCatalogActiveTabPreference } from '../../../hooks/useCatalogActiveTabPreference/useCatalogActiveTabPreference';
 import { useCatalogSortFilterPreference } from '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import { deleteApplication } from '../../../server-api/applications';
@@ -117,6 +118,8 @@ const capturedPublishProps: {
     onFilterTopicsChange?: (topics: Set<string>) => void;
     isMyAppsActive?: boolean;
     onMyAppsActiveChange?: (isActive: boolean) => void;
+    activeTab?: string;
+    onActiveTabChange?: (tabId: string) => void;
   } | null;
 } = { current: null };
 
@@ -184,6 +187,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onFilterTopicsChange,
     isMyAppsActive,
     onMyAppsActiveChange,
+    activeTab,
+    onActiveTabChange,
   }: {
     createOptions?: DropdownItem[];
     items?: CatalogItem[];
@@ -230,6 +235,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onFilterTopicsChange?: (topics: Set<string>) => void;
     isMyAppsActive?: boolean;
     onMyAppsActiveChange?: (isActive: boolean) => void;
+    activeTab?: string;
+    onActiveTabChange?: (tabId: string) => void;
   }) => {
     const [fetchResult, setFetchResult] = useState<string>('');
     const [recipientsCount, setRecipientsCount] = useState<string>('');
@@ -250,6 +257,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       onFilterTopicsChange,
       isMyAppsActive,
       onMyAppsActiveChange,
+      activeTab,
+      onActiveTabChange,
     };
 
     return (
@@ -257,6 +266,10 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
         <output aria-label="Catalog item ids">
           {(items ?? []).map((item) => `${item.id}:${item.type}`).join(',')}
         </output>
+        <output aria-label="Active tab">{activeTab ?? ''}</output>
+        <button type="button" onClick={() => onActiveTabChange?.('PROMPT')}>
+          switch to Prompts tab
+        </button>
         {(items ?? []).map((item) => (
           <output
             key={`credentials-badge-${item.id}`}
@@ -590,6 +603,13 @@ vi.mock(
   }),
 );
 
+vi.mock(
+  '../../../hooks/useCatalogActiveTabPreference/useCatalogActiveTabPreference',
+  () => ({
+    useCatalogActiveTabPreference: vi.fn(),
+  }),
+);
+
 describe('CatalogView', () => {
   const user = userEvent.setup({ delay: null });
   let capturedPopup: ReturnType<typeof makeFakePopup> | undefined;
@@ -674,6 +694,10 @@ describe('CatalogView', () => {
       onCreatePublishFolder: vi.fn(),
       rememberPublishFolder: vi.fn(),
       hasPublishWriteAccess: vi.fn().mockReturnValue(true),
+    });
+    vi.mocked(useCatalogActiveTabPreference).mockReturnValue({
+      activeTab: 'MODEL',
+      setActiveTab: vi.fn(),
     });
     vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
       sortKey: CatalogSortKey.RecentlyUpdated,
@@ -2365,6 +2389,57 @@ describe('CatalogView', () => {
       expect(
         capturedPublishProps.current?.onMyAppsActiveChange,
       ).toBeUndefined();
+    });
+  });
+
+  describe('active tab persistence wiring', () => {
+    it('passes the persisted activeTab through to Catalog', () => {
+      vi.mocked(useCatalogActiveTabPreference).mockReturnValue({
+        activeTab: 'PROMPT',
+        setActiveTab: vi.fn(),
+      });
+
+      render(<CatalogView />);
+
+      expect(capturedPublishProps.current?.activeTab).toBe('PROMPT');
+    });
+
+    it('forwards Catalog tab switches to the persistence hook setter', () => {
+      const setActiveTab = vi.fn();
+      vi.mocked(useCatalogActiveTabPreference).mockReturnValue({
+        activeTab: 'MODEL',
+        setActiveTab,
+      });
+
+      render(<CatalogView />);
+      capturedPublishProps.current?.onActiveTabChange?.('PROMPT');
+
+      expect(setActiveTab).toHaveBeenCalledWith('PROMPT');
+    });
+
+    it('does not forward the activeTab controlled props in selector mode', () => {
+      render(<CatalogView isSelectorMode onClose={vi.fn()} />);
+
+      expect(capturedPublishProps.current?.activeTab).toBeUndefined();
+      expect(capturedPublishProps.current?.onActiveTabChange).toBeUndefined();
+    });
+
+    it('restores the origin tab after remounting with the same persisted value, as happens when an editor navigates back to Catalog', () => {
+      vi.mocked(useCatalogActiveTabPreference).mockReturnValue({
+        activeTab: 'PROMPT',
+        setActiveTab: vi.fn(),
+      });
+
+      const { unmount } = render(<CatalogView />);
+      expect(capturedPublishProps.current?.activeTab).toBe('PROMPT');
+
+      // Simulate the editor's `navigate(returnUrl)` back to the bare
+      // `ROUTES.Catalog`, which remounts `CatalogView`. The hook still
+      // resolves the same persisted value from `localStorage`.
+      unmount();
+      render(<CatalogView />);
+
+      expect(capturedPublishProps.current?.activeTab).toBe('PROMPT');
     });
   });
 

@@ -682,4 +682,59 @@ describe('Catalog', () => {
 
     expect(onMyAppsActiveChange).toHaveBeenCalledWith(true);
   });
+
+  it('defaults the active tab to the first tab when uncontrolled', () => {
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', { type: CatalogEntityType.Model }),
+          makeItem('2', 'My Prompt', { type: CatalogEntityType.Prompt }),
+        ]}
+        favorites={[]}
+      />,
+    );
+
+    expect(
+      screen
+        .getByRole('tab', { name: /Models/i })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
+  });
+
+  it('uses the controlled activeTab prop instead of internal state', () => {
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', { type: CatalogEntityType.Model }),
+          makeItem('2', 'My Prompt', { type: CatalogEntityType.Prompt }),
+        ]}
+        favorites={[]}
+        activeTab={CatalogEntityType.Prompt}
+      />,
+    );
+
+    expect(
+      screen
+        .getByRole('tab', { name: /Prompts/i })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
+  });
+
+  it('calls onActiveTabChange with the clicked tab id', async () => {
+    const onActiveTabChange = vi.fn();
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', { type: CatalogEntityType.Model }),
+          makeItem('2', 'My Prompt', { type: CatalogEntityType.Prompt }),
+        ]}
+        favorites={[]}
+        onActiveTabChange={onActiveTabChange}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('tab', { name: /Prompts/i }));
+
+    expect(onActiveTabChange).toHaveBeenCalledWith(CatalogEntityType.Prompt);
+  });
 });
