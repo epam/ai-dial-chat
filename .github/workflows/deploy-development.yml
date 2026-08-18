@@ -10,7 +10,7 @@ on:
 permissions: {}
 
 jobs:
-  trigger-legacy:
+  trigger-0.x:
     if: |
       (github.event_name == 'workflow_dispatch' && github.event.ref == 'refs/heads/development-0.x') ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development-0.x')
@@ -33,7 +33,7 @@ jobs:
       DEPLOY_ACCESS_TOKEN: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
       DEPLOY_TRIGGER_TOKEN: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
 
-  trigger-ng:
+  trigger:
     if: |
       (github.event_name == 'workflow_dispatch' && github.event.ref == 'refs/heads/development') ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development')
