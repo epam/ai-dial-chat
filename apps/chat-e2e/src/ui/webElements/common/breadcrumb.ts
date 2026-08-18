@@ -19,9 +19,10 @@ export class Breadcrumb extends BaseElement {
       }),
     });
 
+  public itemByNameContent = (name: string) =>
+    this.itemByName(name).locator(BreadcrumbSelectors.breadcrumbItemContent);
+
   public async clickBreadcrumbByName(name: string) {
-    await this.itemByName(name)
-      .locator(BreadcrumbSelectors.breadcrumbItemContent)
-      .click();
+    await this.itemByNameContent(name).click();
   }
 }

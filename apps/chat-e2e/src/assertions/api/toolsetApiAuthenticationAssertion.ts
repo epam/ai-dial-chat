@@ -11,7 +11,11 @@ import {
   ToolsetOAuthSignInRequest,
 } from '@/src/testData/toolsets/authMockConfig';
 import { OAuthState } from '@/src/testData/toolsets/oauthMockHelper';
-import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
+import {
+  TokenEndpointAuthMethod,
+  Toolset,
+  ToolsetAuthTypes,
+} from '@epam/ai-dial-shared';
 
 export class ToolsetApiAuthenticationAssertion extends BaseAssertion {
   public assertOAuthRedirectRequest(
@@ -90,6 +94,17 @@ export class ToolsetApiAuthenticationAssertion extends BaseAssertion {
         MarketplaceExpectedMessages.toolsetSignInApiKeyIsValid,
       );
     }
+  }
+
+  public assertTokenEndpointAuthMethod(
+    request: Toolset,
+    expectedMethod: TokenEndpointAuthMethod,
+  ) {
+    this.assertValue(
+      request.auth_settings?.token_endpoint_auth_method,
+      expectedMethod,
+      MarketplaceExpectedMessages.toolsetTokenEndpointAuthMethodIsValid,
+    );
   }
 
   public assertSignOutRequest(

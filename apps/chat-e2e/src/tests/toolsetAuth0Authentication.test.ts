@@ -1,4 +1,4 @@
-import { ToolsetCredentialsLevel } from '@/chat/types/toolsets';
+import { ToolsetCredentialsLevel, ToolsetTool } from '@/chat/types/toolsets';
 import dialTest from '@/src/core/dialFixtures';
 import {
   API,
@@ -541,6 +541,158 @@ dialTest(
           toolsetEditorViewForm.logoutButton,
           SignInButtonTitles.logOut,
         );
+      },
+    );
+  },
+);
+
+dialTest(
+  "[Toolset]: allowed tools are displayed in Toolset editor after toolset's login",
+  async ({
+    marketplacePage,
+    entityEditorPage,
+    setTestIds,
+    toolsetEditorViewForm,
+    toolsetEditorViewFormAssertion,
+    toolsetEditorSettingsPreviewCardAssertion,
+    entityEditorGeneralForm,
+    confirmationDialog,
+    toolsetApiHelper,
+    page,
+  }) => {
+    setTestIds('EPMDIAL-5400');
+    const toolsetEntity = {
+      name: GeneratorUtil.randomToolsetName(),
+      version: GeneratorUtil.randomEntityVersion(),
+      endpoint: GeneratorUtil.randomUrl(),
+    };
+    let initialToolset: Toolset;
+    let loginPopup: Page;
+    const toolNames = ['search_pages', 'create_page', 'update_page'];
+    const tools: ToolsetTool[] = toolNames.map((name) => ({
+      name,
+      title: name,
+    }));
+    let oauthMockHelper: OAuthMockHelper;
+
+    await dialTest.step('Open toolset creation page directly', async () => {
+      await marketplacePage.openCreateToolsetPage();
+      await entityEditorPage.waitForPageLoaded(
+        EntityEditorToolsetTypes.Toolset,
+      );
+    });
+
+    await dialTest.step(
+      'Fill in the required fields and click Next',
+      async () => {
+        await entityEditorGeneralForm.fillInEntityFields({
+          name: toolsetEntity.name,
+          version: toolsetEntity.version,
+        });
+        await entityEditorGeneralForm.goNext({
+          hostsArray: [API.toolsetCreateHost(), API.installedToolsetsHost()],
+        });
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorToolsetTypes.Toolset,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Fill in Endpoint field and select OAuth Authentication option',
+      async () => {
+        await toolsetEditorViewForm.endpoint.fillInInput(
+          toolsetEntity.endpoint,
+        );
+        await toolsetEditorViewForm.oauthContainer.click();
+        //get saved toolset object
+        initialToolset = (await toolsetApiHelper.getToolset(
+          toolsetEntity.name,
+          toolsetEntity.version,
+        ))!;
+      },
+    );
+
+    await dialTest.step('Setup OAuth mocks', async () => {
+      oauthMockHelper = new OAuthMockHelper(
+        page,
+        initialToolset,
+        toolsetEntity.endpoint,
+      );
+      await oauthMockHelper.setupMocks();
+      await oauthMockHelper.setupToolsetToolsRoute(tools);
+    });
+
+    await dialTest.step(
+      "Click 'Login in' button for 'With login' option",
+      async () => {
+        // need to enable mocking before clicking 'Log In'
+        oauthMockHelper.enableMocking();
+        // store popup — it's needed in the 'Navigate to OAuth callback' step below
+        loginPopup = (await toolsetEditorViewForm.clickLoginButton(
+          oauthMockHelper.getMockConfig().authorization_endpoint,
+        ))!;
+      },
+    );
+
+    await dialTest.step(
+      'Navigate to OAuth callback and wait for sign-in API was called',
+      async () => {
+        await oauthMockHelper.navigateToCallback(loginPopup);
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorToolsetTypes.Toolset,
+        );
+        await toolsetEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
+          { expectedCredsLabel: Creds.myCreds },
+        );
+        await toolsetEditorViewFormAssertion.assertElementText(
+          toolsetEditorViewForm.logoutButton,
+          SignInButtonTitles.logOut,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on Allowed tools drop-down and verify the list of available tools is displayed',
+      async () => {
+        await toolsetEditorViewForm.allowedTools.openMenu();
+        const displayedTools = await toolsetEditorViewForm.allowedTools
+          .getListboxMenu()
+          .getAllOptions();
+        toolsetEditorViewFormAssertion.assertValuesAreEqual(
+          displayedTools,
+          toolNames,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on "Log out" btn and verify preview card label is changed',
+      async () => {
+        await toolsetEditorViewForm.clickLogoutButton();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
+        await toolsetEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
+          { expectedCredsLabel: Creds.loggedOut },
+        );
+        await toolsetEditorViewFormAssertion.assertElementText(
+          toolsetEditorViewForm.loginButton,
+          SignInButtonTitles.logIn,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Reload the browser and verify Allowed tools field is empty',
+      async () => {
+        await entityEditorPage.reloadPage();
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorToolsetTypes.Toolset,
+        );
+        await toolsetEditorViewForm.allowedTools.openMenu();
+        const displayedTools = await toolsetEditorViewForm.allowedTools
+          .getListboxMenu()
+          .getAllOptions();
+        toolsetEditorViewFormAssertion.assertValuesAreEqual(displayedTools, []);
       },
     );
   },

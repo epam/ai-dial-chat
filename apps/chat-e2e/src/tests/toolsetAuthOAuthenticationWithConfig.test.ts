@@ -13,7 +13,11 @@ import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
 import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil, toolsetNamePrefix } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
-import { Toolset, ToolsetAuthTypes } from '@epam/ai-dial-shared';
+import {
+  TokenEndpointAuthMethod,
+  Toolset,
+  ToolsetAuthTypes,
+} from '@epam/ai-dial-shared';
 import { Page } from '@playwright/test';
 
 dialTest(
@@ -482,5 +486,155 @@ dialTest(
         'visible',
       );
     });
+  },
+);
+
+dialTest(
+  '[Toolset]: select field "Token Endpoint Authentication Method" for OAuth toolset with static registration',
+  async ({
+    marketplacePage,
+    entityEditorPage,
+    setTestIds,
+    toolsetAuthAssertion,
+    toolsetApiAuthenticationAssertion,
+    toolsetEditorViewForm,
+    entityEditorGeneralForm,
+    toolsetApiHelper,
+    confirmationDialog,
+    page,
+  }) => {
+    setTestIds('EPMDIAL-7422');
+    const toolsetEntity = {
+      name: GeneratorUtil.randomToolsetName(),
+      version: GeneratorUtil.randomEntityVersion(),
+      endpoint: GeneratorUtil.randomUrl(),
+    };
+    const clientId = GeneratorUtil.randomString(7);
+    const clientSecret = GeneratorUtil.randomString(7);
+    let oauthMockHelper: OAuthMockHelper;
+    let initialToolset: Toolset;
+    let loginPopup: Page;
+
+    await dialTest.step('Open toolset creation page directly', async () => {
+      await marketplacePage.openCreateToolsetPage();
+      await entityEditorPage.waitForPageLoaded(
+        EntityEditorToolsetTypes.Toolset,
+      );
+    });
+
+    await dialTest.step(
+      'Fill in the required fields and click Next',
+      async () => {
+        await entityEditorGeneralForm.fillInEntityFields({
+          name: toolsetEntity.name,
+          version: toolsetEntity.version,
+        });
+        await entityEditorGeneralForm.goNext({
+          hostsArray: [API.toolsetCreateHost(), API.installedToolsetsHost()],
+        });
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorToolsetTypes.Toolset,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Fill in Endpoint field, select "With login & config" option and fill in required fields',
+      async () => {
+        await toolsetEditorViewForm.endpoint.fillInInput(
+          toolsetEntity.endpoint,
+        );
+        await toolsetEditorViewForm.oauthContainer.click();
+        await toolsetEditorViewForm
+          .oAuthOptionRadioButton(OAuthOptions.WithLoginAndConfig)
+          .click();
+        await toolsetEditorViewForm.clientIdFieldInput.fillInInput(clientId);
+        await toolsetEditorViewForm.clientSecretFieldInput.fillInInput(
+          clientSecret,
+        );
+        //get saved toolset object
+        initialToolset = (await toolsetApiHelper.getToolset(
+          toolsetEntity.name,
+          toolsetEntity.version,
+        ))!;
+      },
+    );
+
+    await dialTest.step('Setup OAuth mocks', async () => {
+      oauthMockHelper = new OAuthMockHelper(
+        page,
+        initialToolset,
+        toolsetEntity.endpoint,
+        {
+          mockOAuthConfig: {
+            client_id: clientId,
+            client_secret: clientSecret,
+          },
+        },
+      );
+      await oauthMockHelper.setupMocks();
+      oauthMockHelper.enableMocking();
+    });
+
+    await dialTest.step(
+      'Select Token Endpoint Authentication Method = HTTP basic and verify toolset is successfully logged in',
+      async () => {
+        await toolsetEditorViewForm.selectTokenEndpointAuthMethod(
+          TokenEndpointAuthMethod.ClientSecretBasic,
+        );
+        loginPopup = (await toolsetEditorViewForm.clickLoginButton(
+          oauthMockHelper.getMockConfig().authorization_endpoint,
+        ))!;
+        await oauthMockHelper.navigateToCallback(loginPopup);
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorToolsetTypes.Toolset,
+        );
+        toolsetApiAuthenticationAssertion.assertTokenEndpointAuthMethod(
+          oauthMockHelper.getToolsetUpdateRequest()!,
+          TokenEndpointAuthMethod.ClientSecretBasic,
+        );
+        await toolsetAuthAssertion.assertAuthState(
+          oauthMockHelper.getSignInRequest()!,
+          initialToolset.id!,
+          Creds.myCreds,
+          SignInButtonTitles.logOut,
+        );
+      },
+    );
+
+    await dialTest.step('Log out', async () => {
+      await toolsetEditorViewForm.clickLogoutButton();
+      await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
+    });
+
+    await dialTest.step(
+      'Select Token Endpoint Authentication Method = POST body and log in again',
+      async () => {
+        await toolsetEditorViewForm.clientIdFieldInput.fillInInput(clientId);
+        await toolsetEditorViewForm.clientSecretFieldInput.fillInInput(
+          clientSecret,
+        );
+        await toolsetEditorViewForm.selectTokenEndpointAuthMethod(
+          TokenEndpointAuthMethod.ClientSecretPost,
+        );
+        loginPopup = (await toolsetEditorViewForm.clickLoginButton(
+          oauthMockHelper.getMockConfig().authorization_endpoint,
+        ))!;
+        await oauthMockHelper.navigateToCallback(loginPopup);
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorToolsetTypes.Toolset,
+        );
+        await toolsetAuthAssertion.assertAuthState(
+          oauthMockHelper.getSignInRequest()!,
+          initialToolset.id!,
+          Creds.myCreds,
+          SignInButtonTitles.logOut,
+        );
+        toolsetApiAuthenticationAssertion.assertTokenEndpointAuthMethod(
+          oauthMockHelper.getToolsetUpdateRequest()!,
+          TokenEndpointAuthMethod.ClientSecretPost,
+        );
+      },
+    );
   },
 );
