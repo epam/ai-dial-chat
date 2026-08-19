@@ -21,7 +21,7 @@ new package layout.
 ### Using the legacy chat?
 
 The previous chat continues to live on the **`development-0.x`** branch and
-will keep receiving fixes until it reaches end of life in **June 2027**.
+will keep receiving fixes until it reaches end of life at the **end of 2026**.
 After that it is no longer maintained, so plan the move before then.
 [Migrating from the Legacy DIAL Chat](#migrating-from-the-legacy-dial-chat)
 below is the starting point.
