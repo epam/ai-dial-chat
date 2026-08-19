@@ -131,14 +131,6 @@ export interface SkillEditorLabels {
   addUploadLabel?: string;
   /** Accessible label of a node's remove action. Defaults to `'Remove'`. */
   removeLabel?: string;
-  /** Title of the remove-confirmation prompt. Defaults to `'Remove file'`. */
-  removeConfirmTitle?: string;
-  /** Builds the remove-confirmation message for a given path. Defaults to a sentence naming the path. */
-  removeConfirmMessage?: (path: string) => string;
-  /** Confirm button label in the remove-confirmation prompt. Defaults to `'Remove'`. */
-  removeConfirmLabel?: string;
-  /** Cancel button label in the remove-confirmation prompt. Defaults to `'Cancel'`. */
-  removeCancelLabel?: string;
   /** Collapsed mobile summary label. Defaults to `'Editing file'`. */
   editingFileLabel?: string;
   /** Main-pane heading, given the selected node's name. Defaults to the name itself. */

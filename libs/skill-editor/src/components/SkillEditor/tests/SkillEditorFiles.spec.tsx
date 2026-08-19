@@ -79,26 +79,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   CaptionText: ({ text }: { text?: string }) => <span>{text}</span>,
   ErrorText: ({ text }: { text?: string }) => <span>{text}</span>,
-  ConfirmationPopupVariant: { Danger: 'danger' },
-  ConfirmationPopup: ({
-    header,
-    onConfirm,
-    onCancel,
-    confirmLabel,
-    cancelLabel,
-  }: {
-    header: ReactNode;
-    onConfirm: () => void;
-    onCancel?: () => void;
-    confirmLabel?: string;
-    cancelLabel?: string;
-  }) => (
-    <div role="dialog">
-      <h2>{header}</h2>
-      <button onClick={onConfirm}>{confirmLabel ?? 'Confirm'}</button>
-      <button onClick={onCancel}>{cancelLabel ?? 'Cancel'}</button>
-    </div>
-  ),
   GhostButton: ({
     label,
     onClick,
@@ -483,7 +463,7 @@ describe('SkillEditor — files pane', () => {
     expect(screen.queryByText('Upload files')).toBeNull();
   });
 
-  it('requires confirmation before removing a supporting entry', async () => {
+  it('removes a supporting entry immediately, with no confirmation', async () => {
     const user = userEvent.setup({ delay: null });
     const onRemoveNode = vi.fn();
     renderEditor(
@@ -497,13 +477,8 @@ describe('SkillEditor — files pane', () => {
 
     await user.click(screen.getAllByRole('button', { name: 'Remove' })[0]);
 
-    expect(onRemoveNode).not.toHaveBeenCalled();
-    const dialog = screen.getByRole('dialog');
-    expect(dialog).toBeTruthy();
-
-    await user.click(within(dialog).getByRole('button', { name: 'Remove' }));
-
     expect(onRemoveNode).toHaveBeenCalledWith('notes.md');
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('updates the main-pane heading when a supporting file is selected', async () => {

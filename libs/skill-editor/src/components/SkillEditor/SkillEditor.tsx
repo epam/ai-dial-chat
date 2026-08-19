@@ -4,8 +4,7 @@ import { DialFoldersTree } from '@epam/ai-dial-react-file-manager';
 import {
   Accordion,
   CaptionText,
-  ConfirmationPopup,
-  ConfirmationPopupVariant,
+  DIAL_ICON_SIZE,
   type DropdownItem,
   EditorThemes,
   ErrorText,
@@ -147,9 +146,6 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     [onExpandedPathsChange],
   );
 
-  const [pendingRemovePath, setPendingRemovePath] = useState<string | null>(
-    null,
-  );
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [droppedFiles, setDroppedFiles] = useState<File[] | undefined>();
   const [isFilesExpanded, setIsFilesExpanded] = useState(true);
@@ -210,22 +206,35 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     [handleSelectedPathChange],
   );
 
+  const handleRemoveNode = useCallback(
+    (path: string) => {
+      fileActions.onRemoveNode(path);
+      if (selectedPath === path) {
+        handleSelectedPathChange(SKILL_MANIFEST_PATH);
+      }
+    },
+    [fileActions, selectedPath, handleSelectedPathChange],
+  );
+
   const getContextMenuItems = useCallback(
     (item: DialFile): DropdownItem[] => {
       if (item.path === SKILL_MANIFEST_PATH) return [];
       return [
         {
           key: 'remove',
-          label: (
-            <span className="text-error">{t.removeLabel ?? 'Remove'}</span>
+          label: t.removeLabel ?? 'Remove',
+          icon: (
+            <IconTrashX
+              size={DIAL_ICON_SIZE.SM}
+              className="text-secondary"
+              aria-hidden
+            />
           ),
-          danger: true,
-          icon: <IconTrashX size={16} className="text-error" aria-hidden />,
-          onClick: () => setPendingRemovePath(item.path),
+          onClick: () => handleRemoveNode(item.path),
         },
       ];
     },
-    [t.removeLabel],
+    [t.removeLabel, handleRemoveNode],
   );
 
   const filesTreeId = useId();
@@ -484,27 +493,6 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       >
         {actions}
       </div>
-
-      {pendingRemovePath && (
-        <ConfirmationPopup
-          header={t.removeConfirmTitle ?? 'Remove file'}
-          description={
-            t.removeConfirmMessage?.(pendingRemovePath) ??
-            `Remove "${pendingRemovePath}"? This cannot be undone.`
-          }
-          confirmLabel={t.removeConfirmLabel ?? 'Remove'}
-          cancelLabel={t.removeCancelLabel ?? 'Cancel'}
-          variant={ConfirmationPopupVariant.Danger}
-          onConfirm={() => {
-            fileActions.onRemoveNode(pendingRemovePath);
-            if (selectedPath === pendingRemovePath) {
-              handleSelectedPathChange(SKILL_MANIFEST_PATH);
-            }
-            setPendingRemovePath(null);
-          }}
-          onCancel={() => setPendingRemovePath(null)}
-        />
-      )}
 
       <SkillFileUploadDialog
         isOpen={isUploadDialogOpen}

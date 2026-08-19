@@ -1146,10 +1146,6 @@
     "filesTreeAriaLabel": "Skill files",
     "addUploadLabel": "Upload from device",
     "removeLabel": "Remove",
-    "removeConfirmTitle": "Remove file",
-    "removeConfirmMessage": "Remove \"{{path}}\"? This cannot be undone.",
-    "removeConfirmLabel": "Remove",
-    "removeCancelLabel": "Cancel",
     "editingFileLabel": "Editing file",
     "nameLabel": "Name",
     "namePlaceholder": "good-morning-breakfast",
@@ -1186,6 +1182,7 @@
       "manifestImportDeclined": "Manifest import cancelled, staged files kept."
     },
     "saveSuccessTitle": "Skill created",
+    "updateSuccessTitle": "Skill updated",
     "createSuccess": "\"{{name}}\" has been created.",
     "editTitle": "Edit skill",
     "saveLabel": "Save",
