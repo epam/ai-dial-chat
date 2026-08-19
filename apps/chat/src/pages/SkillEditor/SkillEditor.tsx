@@ -174,11 +174,6 @@ const SkillEditorPage: FC = () => {
       filesTreeAriaLabel: t(SkillEditorI18nKeys.FilesTreeAriaLabel),
       addUploadLabel: t(SkillEditorI18nKeys.AddUploadLabel),
       removeLabel: t(SkillEditorI18nKeys.RemoveLabel),
-      removeConfirmTitle: t(SkillEditorI18nKeys.RemoveConfirmTitle),
-      removeConfirmMessage: (path) =>
-        t(SkillEditorI18nKeys.RemoveConfirmMessage, { path }),
-      removeConfirmLabel: t(SkillEditorI18nKeys.RemoveConfirmLabel),
-      removeCancelLabel: t(SkillEditorI18nKeys.RemoveCancelLabel),
       editingFileLabel: t(SkillEditorI18nKeys.EditingFileLabel),
       nameLabel: t(SkillEditorI18nKeys.NameLabel),
       namePlaceholder: t(SkillEditorI18nKeys.NamePlaceholder),

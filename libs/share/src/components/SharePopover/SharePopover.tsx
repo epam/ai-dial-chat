@@ -90,6 +90,7 @@ const SharePopover: FC<SharePopoverProps> = ({
     qrCodeAriaLabel = 'QR code for the share link',
     loadingLabel = 'Creating share link…',
     errorTitle = 'Couldn’t create the share link. Please try again.',
+    nestedItemsNote,
   } = labels ?? {};
 
   const [view, setView] = useState(SharePopoverView.Link);
@@ -284,6 +285,17 @@ const SharePopover: FC<SharePopoverProps> = ({
                 ? visibilityNoteEdit
                 : visibilityNote}
             </p>
+
+            {nestedItemsNote != null && (
+              <p
+                className={mergeClasses(
+                  typography?.nestedItemsNoteClassName ?? 'dial-tiny-semi-text',
+                  styles.note,
+                )}
+              >
+                {nestedItemsNote}
+              </p>
+            )}
 
             {view === SharePopoverView.Qr ? (
               <QrCode value={url} labels={{ ariaLabel: qrCodeAriaLabel }} />

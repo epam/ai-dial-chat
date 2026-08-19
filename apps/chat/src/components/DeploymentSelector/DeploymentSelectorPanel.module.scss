@@ -37,7 +37,7 @@
    (a row moving to/from the "Currently selected" section); see
    listContentRef/listHeight in DeploymentSelectorPanel.tsx. */
 .listContent {
-  transition: height 200ms ease;
+  transition: max-height 200ms ease;
 }
 
 @media (prefers-reduced-motion: reduce) {

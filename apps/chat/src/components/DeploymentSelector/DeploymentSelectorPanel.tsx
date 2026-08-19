@@ -36,7 +36,7 @@ export interface DeploymentSelectorLabels {
   favoritesLabel?: string;
   /** Hint shown when Favorites is empty. Default: `'Star a model or agent to pin it here.'`. */
   emptyHint?: string;
-  /** Label for the footer action button. Default: `'Browse'`. */
+  /** Label for the footer action button. Default: `'Catalog'`. */
   browseCatalogLabel?: string;
   /** Accessible label for the remove-from-favorites button. Default: `'Remove from favorites'`. */
   removeFromFavoritesLabel?: string;
@@ -102,7 +102,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
     clearSearchLabel = 'Clear search',
     favoritesLabel = 'Favorites',
     emptyHint = 'Star a model or agent to pin it here.',
-    browseCatalogLabel = 'Browse',
+    browseCatalogLabel = 'Catalog',
     removeFromFavoritesLabel = 'Remove from favorites',
     currentlySelectedLabel = 'Currently selected',
     addToFavoritesLabel = 'Add to favorites',
@@ -301,7 +301,19 @@ const DeploymentSelectorPanel: FC<Props> = ({
   };
 
   return (
-    <div className="flex min-w-[240px] flex-col">
+    <div
+      className="flex min-w-[360px] flex-col"
+      /*
+       * Bound to the kit Dropdown's own live available-height var (set by
+       * floating-ui) so the list, not the outer popup wrapper, absorbs any
+       * height constraint — the wrapper's overflow-auto would otherwise clip
+       * the footer instead of letting the list shrink. The -8px accounts for
+       * the wrapper's own p-1 (4px top + 4px bottom) padding.
+       */
+      style={{
+        maxHeight: 'calc(var(--fui-available-height, 9999px) - 8px)',
+      }}
+    >
       {/* Sticky search header */}
       <div
         role="search"
@@ -317,8 +329,11 @@ const DeploymentSelectorPanel: FC<Props> = ({
       </div>
 
       <div
-        className={mergeClasses('max-h-72 overflow-y-auto', styles.listContent)}
-        style={{ height: listHeight }}
+        className={mergeClasses(
+          'max-h-72 min-h-0 flex-1 overflow-y-auto',
+          styles.listContent,
+        )}
+        style={{ maxHeight: listHeight }}
       >
         <div ref={listContentRef}>
           {showCurrentlySelected && selectedItem && (
@@ -331,7 +346,9 @@ const DeploymentSelectorPanel: FC<Props> = ({
           )}
 
           {(showCurrentlySelected || filteredFavorites.length > 0) && (
-            <p className={SECTION_HEADING_CLASS_NAME}>{favoritesLabel}</p>
+            <p className="dial-tiny-lead-semi-text sticky top-0 z-10 bg-layer-raised px-3 pb-2 pt-2 text-tertiary will-change-transform">
+              {favoritesLabel}
+            </p>
           )}
 
           {filteredFavorites.length > 0 ? (
@@ -346,7 +363,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
         </div>
       </div>
 
-      <div className="border-t border-tertiary px-2 py-1">
+      <div className="border-t border-tertiary bg-layer-raised px-2 py-3">
         <GhostButton
           label={browseCatalogLabel}
           className="w-full justify-center"

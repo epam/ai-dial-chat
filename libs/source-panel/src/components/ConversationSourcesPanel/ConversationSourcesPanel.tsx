@@ -155,7 +155,6 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
       styles={{
         className: isMobile && isOpen ? 'w-full' : undefined,
         bodyClassName: 'flex flex-col overflow-hidden p-0',
-        headerClassName: 'border-b border-tertiary',
       }}
       labels={labels}
       title={title}

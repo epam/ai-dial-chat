@@ -281,7 +281,8 @@
     "empty": "No models available",
     "closeLabel": "Close model selector",
     "refetchToolsetsFailed": "Failed to refresh toolsets. The Catalog list may be out of date.",
-    "refetchDeploymentsFailed": "Failed to refresh applications. The Catalog list may be out of date."
+    "refetchDeploymentsFailed": "Failed to refresh applications. The Catalog list may be out of date.",
+    "browseCatalogLabel": "Catalog"
   },
   "promptSelector": {
     "addMenuLabel": "Prompts",
@@ -927,6 +928,7 @@
     "visibilityNote": "This deployment and its updates will be visible to users with the link.",
     "visibilityNoteEdit": "Anyone with the link will be able to view and edit this deployment.",
     "visibilityNoteConversation": "This conversation and its updates will be visible to users with the link.",
+    "nestedItemsNote": "Nested items such as prompts and files aren't shared automatically — share them separately so the app works correctly.",
     "copiedButtonLabel": "Copied",
     "linkAriaLabel": "Share link",
     "expiryNote": "This link is active for {{days}} days.",
@@ -1146,10 +1148,6 @@
     "filesTreeAriaLabel": "Skill files",
     "addUploadLabel": "Upload from device",
     "removeLabel": "Remove",
-    "removeConfirmTitle": "Remove file",
-    "removeConfirmMessage": "Remove \"{{path}}\"? This cannot be undone.",
-    "removeConfirmLabel": "Remove",
-    "removeCancelLabel": "Cancel",
     "editingFileLabel": "Editing file",
     "nameLabel": "Name",
     "namePlaceholder": "good-morning-breakfast",
@@ -1186,6 +1184,7 @@
       "manifestImportDeclined": "Manifest import cancelled, staged files kept."
     },
     "saveSuccessTitle": "Skill created",
+    "updateSuccessTitle": "Skill updated",
     "createSuccess": "\"{{name}}\" has been created.",
     "editTitle": "Edit skill",
     "saveLabel": "Save",

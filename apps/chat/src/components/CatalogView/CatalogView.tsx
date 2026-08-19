@@ -245,6 +245,18 @@ const CatalogView: FC<Props> = ({
     [schemas],
   );
 
+  const quickAppDeploymentIds = useMemo(
+    () =>
+      new Set(
+        quickAppSchemaId
+          ? deployments
+              .filter((d) => d.applicationTypeSchemaId === quickAppSchemaId)
+              .map((d) => d.id)
+          : [],
+      ),
+    [deployments, quickAppSchemaId],
+  );
+
   const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
   const isCatalogTableViewEnabled = useUiFeature(
     OverlayFeature.CatalogTableView,
@@ -1532,7 +1544,11 @@ const CatalogView: FC<Props> = ({
         accessRulesLabels: getAccessRulesLabels(t),
       }}
       shareOverlay={(item, onClose) => (
-        <SharePopoverContainer item={item} onClose={onClose} />
+        <SharePopoverContainer
+          item={item}
+          isQuickApp={quickAppDeploymentIds.has(item.id)}
+          onClose={onClose}
+        />
       )}
       isShareVisible={isShareVisible}
       styles={{

@@ -306,6 +306,7 @@ export enum DeploymentSelectorI18nKeys {
   CloseLabel = 'deploymentSelector.closeLabel',
   RefetchToolsetsFailed = 'deploymentSelector.refetchToolsetsFailed',
   RefetchDeploymentsFailed = 'deploymentSelector.refetchDeploymentsFailed',
+  BrowseCatalogLabel = 'deploymentSelector.browseCatalogLabel',
 }
 
 export enum PromptSelectorI18nKeys {
@@ -874,10 +875,6 @@ export enum SkillEditorI18nKeys {
   FilesTreeAriaLabel = 'skillEditor.filesTreeAriaLabel',
   AddUploadLabel = 'skillEditor.addUploadLabel',
   RemoveLabel = 'skillEditor.removeLabel',
-  RemoveConfirmTitle = 'skillEditor.removeConfirmTitle',
-  RemoveConfirmMessage = 'skillEditor.removeConfirmMessage',
-  RemoveConfirmLabel = 'skillEditor.removeConfirmLabel',
-  RemoveCancelLabel = 'skillEditor.removeCancelLabel',
   EditingFileLabel = 'skillEditor.editingFileLabel',
   NameLabel = 'skillEditor.nameLabel',
   NamePlaceholder = 'skillEditor.namePlaceholder',
@@ -904,6 +901,7 @@ export enum SkillEditorI18nKeys {
   ErrorServiceUnavailable = 'skillEditor.error.serviceUnavailable',
   ErrorSave = 'skillEditor.error.save',
   SaveSuccessTitle = 'skillEditor.saveSuccessTitle',
+  UpdateSuccessTitle = 'skillEditor.updateSuccessTitle',
   CreateSuccess = 'skillEditor.createSuccess',
   EditTitle = 'skillEditor.editTitle',
   SaveLabel = 'skillEditor.saveLabel',
@@ -1036,6 +1034,7 @@ export enum ShareI18nKeys {
   VisibilityNote = 'share.visibilityNote',
   VisibilityNoteEdit = 'share.visibilityNoteEdit',
   VisibilityNoteConversation = 'share.visibilityNoteConversation',
+  NestedItemsNote = 'share.nestedItemsNote',
   CopiedButtonLabel = 'share.copiedButtonLabel',
   LinkAriaLabel = 'share.linkAriaLabel',
   ExpiryNote = 'share.expiryNote',

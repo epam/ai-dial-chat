@@ -289,7 +289,7 @@ export const useSkillEditorSubmit = ({
         setPhase('success');
         showNotification({
           variant: NotificationVariant.Success,
-          title: t(SkillEditorI18nKeys.SaveSuccessTitle),
+          title: t(SkillEditorI18nKeys.UpdateSuccessTitle),
           message: t(SkillEditorI18nKeys.UpdateSuccess, {
             name: values.name,
           }),

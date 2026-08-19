@@ -31,7 +31,7 @@ export const CredentialsInfoCard: FC<CredentialsInfoCardProps> = ({
     role="status"
     aria-live="polite"
     className={mergeClasses(
-      'flex items-start gap-3 rounded-xl p-3',
+      'flex items-center gap-3 rounded-xl p-3',
       styles.card,
     )}
   >
