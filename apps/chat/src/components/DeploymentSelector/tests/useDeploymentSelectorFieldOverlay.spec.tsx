@@ -44,6 +44,8 @@ const mockDeployments = (items: DeploymentItemDto[]) => {
     toolsets: [],
     refetchToolsets: vi.fn(),
     refetchDeployments: vi.fn(),
+    selectedDeploymentDetails: null,
+    isDeploymentDetailsLoading: false,
     mergeSharedItem: vi.fn(),
   });
 };
@@ -125,6 +127,8 @@ describe('useDeploymentSelectorFieldOverlay', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 

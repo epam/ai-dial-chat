@@ -54,6 +54,8 @@ describe('SharedInvitationPage', () => {
       restoreSelectedItemId: vi.fn(),
       restoreDefaultSelection: vi.fn(),
       selectedDeploymentConfiguration: null,
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       isLoading: false,
       error: null,
       schemas: [],

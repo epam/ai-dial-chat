@@ -682,6 +682,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentLimits).mockResolvedValue({});
@@ -1163,6 +1165,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1194,6 +1198,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(useFavoriteApplications).mockReturnValue({
@@ -1238,6 +1244,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1275,6 +1283,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1309,6 +1319,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1342,6 +1354,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1375,6 +1389,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1406,6 +1422,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1434,6 +1452,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1460,6 +1480,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
@@ -1579,6 +1601,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
@@ -1640,6 +1664,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
@@ -1723,6 +1749,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockRejectedValue(new Error('502'));
@@ -1761,6 +1789,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(loginToolset).mockResolvedValue({ success: true });
@@ -1805,6 +1835,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(loginToolset).mockResolvedValue({ success: true });
@@ -1848,6 +1880,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(logoutToolset).mockResolvedValue({ success: true });
@@ -1892,6 +1926,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(loginToolset).mockRejectedValue(new Error('network error'));
@@ -1938,6 +1974,8 @@ describe('CatalogView', () => {
         toolsets: getToolsets(),
         refetchToolsets,
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       }));
       return render(<CatalogView />);
@@ -2154,6 +2192,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(deleteToolset).mockResolvedValue(undefined);
@@ -2202,6 +2242,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments,
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(deleteApplication).mockResolvedValue(undefined);
@@ -2289,6 +2331,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(deleteToolset).mockRejectedValue(new Error('network error'));
@@ -2321,6 +2365,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       });
       vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
@@ -2352,6 +2398,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       });
       vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
@@ -2485,6 +2533,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       });
       const onClose = vi.fn();
@@ -2513,6 +2563,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       });
       const onClose = vi.fn();
@@ -2573,6 +2625,8 @@ describe('CatalogView', () => {
         ],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       });
       vi.mocked(useUiFeature).mockImplementation(
@@ -2605,6 +2659,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       } as never);
 
@@ -2629,6 +2685,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       } as never);
       vi.mocked(useUiFeature).mockImplementation(
@@ -2658,6 +2716,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       } as never);
       vi.mocked(useUiFeature).mockImplementation(
@@ -2694,6 +2754,8 @@ describe('CatalogView', () => {
         ],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       });
       vi.mocked(useUiFeature).mockImplementation(
@@ -2742,6 +2804,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
         ...overrides,
       } as ReturnType<typeof useDeployments>);
@@ -3526,6 +3590,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
         ...overrides,
       } as ReturnType<typeof useDeployments>);

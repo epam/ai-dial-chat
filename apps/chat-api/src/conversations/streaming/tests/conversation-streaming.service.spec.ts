@@ -492,6 +492,64 @@ describe('ConversationStreamingService', () => {
       expect(res.getWritten()).not.toBe('');
     });
 
+    it('omits temperature from the Chat Completions request when the deployment does not support it', async () => {
+      vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
+        id: 'gpt-4o',
+        type: 'model',
+        modelDetails: { features: { temperature: false } },
+      });
+
+      const conversation = {
+        ...baseConversation,
+        temperature: 1,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      const { sendSpy } = await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+      );
+
+      expect(sendSpy.mock.calls[0][1].body).not.toHaveProperty('temperature');
+    });
+
+    it('includes temperature in the Chat Completions request when the deployment supports it', async () => {
+      vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
+        id: 'gpt-4o',
+        type: 'model',
+        modelDetails: { features: { temperature: true } },
+      });
+
+      const conversation = {
+        ...baseConversation,
+        temperature: 1,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      const { sendSpy } = await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+      );
+
+      expect(sendSpy.mock.calls[0][1].body).toMatchObject({ temperature: 1 });
+    });
+
     it('still rejects a toolset target with 400 regardless of the feature flag state', async () => {
       for (const flagEnabled of [true, false]) {
         vi.mocked(mockFeatureFlagsService.isEnabled).mockResolvedValue(
