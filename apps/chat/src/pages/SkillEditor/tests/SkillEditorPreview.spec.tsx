@@ -91,6 +91,7 @@ const Providers = ({ children }: { children: ReactNode }) => (
       isLoading: false,
       error: null,
       refetchSkills,
+      mergeSharedSkill: vi.fn(),
     }}
   >
     <AttachmentCanvasProvider>

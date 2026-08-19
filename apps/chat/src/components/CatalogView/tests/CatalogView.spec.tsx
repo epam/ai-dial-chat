@@ -712,6 +712,7 @@ describe('CatalogView', () => {
       isLoading: false,
       error: null,
       refetchSkills: vi.fn().mockResolvedValue(undefined),
+      mergeSharedSkill: vi.fn(),
     });
     vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [],
@@ -3986,6 +3987,7 @@ describe('CatalogView', () => {
         isLoading: false,
         error: null,
         refetchSkills: vi.fn().mockResolvedValue(undefined),
+        mergeSharedSkill: vi.fn(),
         ...overrides,
       });
 
