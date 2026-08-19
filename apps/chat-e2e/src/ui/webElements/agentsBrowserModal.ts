@@ -1,7 +1,9 @@
 import { ExpectedConstants } from '@/src/testData/expectedConstants';
 import { AgentsBrowserModalSelectors } from '@/src/ui/selectors';
+import { MarketplaceSelectors } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Popup } from '@/src/ui/webElements/common/popup';
+import { SliderDots } from '@/src/ui/webElements/common/sliderDots';
 import { MarketplaceEntities } from '@/src/ui/webElements/marketplace/marketplaceEntities';
 import { Locator, Page } from '@playwright/test';
 
@@ -13,6 +15,7 @@ export class AgentsBrowserModal extends Popup {
   }
 
   private entities!: MarketplaceEntities;
+  private sliderDots!: SliderDots;
 
   public searchInput = this.getChildElementBySelector(
     AgentsBrowserModalSelectors.searchInput,
@@ -36,6 +39,10 @@ export class AgentsBrowserModal extends Popup {
   public goToMarketplaceLink = this.createElementFromLocator(
     this.rootLocator.getByText(ExpectedConstants.goToMarketplaceLink),
   );
+  // Suggestion under "No results found in My workspace" (no data-qa — by text).
+  public seeResultsFromMarketplaceLink = this.createElementFromLocator(
+    this.rootLocator.getByText(ExpectedConstants.seeResultsFromMarketplaceLink),
+  );
 
   getEntities(): MarketplaceEntities {
     if (!this.entities) {
@@ -44,8 +51,30 @@ export class AgentsBrowserModal extends Popup {
     return this.entities;
   }
 
+  getSliderDots(): SliderDots {
+    if (!this.sliderDots) {
+      this.sliderDots = new SliderDots(this.page, this.rootLocator);
+    }
+    return this.sliderDots;
+  }
+
   public getEntityByName(name: string): BaseElement {
     return this.getEntities().getEntity(name);
+  }
+
+  // Cards of one slider page only. A plain getEntities() covers every rendered
+  // page - the active one plus its neighbours - so it cannot tell them apart.
+  public getPageEntities(pageIndex: number): MarketplaceEntities {
+    return new MarketplaceEntities(
+      this.page,
+      this.getChildElementBySelector(
+        MarketplaceSelectors.marketplaceEntitiesSection,
+      ).getNthElement(pageIndex + 1),
+    );
+  }
+
+  public async getPageEntityNames(pageIndex: number): Promise<string[]> {
+    return this.getPageEntities(pageIndex).getEntityNames();
   }
 
   // The tab carries the accent-border class only when it is the active one.
@@ -61,5 +90,25 @@ export class AgentsBrowserModal extends Popup {
   public async searchForEntity(name: string): Promise<BaseElement> {
     await this.searchInput.fillInInput(name);
     return this.getEntityByName(name);
+  }
+
+  // Only the active page and its neighbours are rendered, so the names of the
+  // rest are collected by walking the pages with the next arrow.
+  public async getAllEntityNames(): Promise<string[]> {
+    const sliderDots = this.getSliderDots();
+    const allNames = await this.getEntities().getEntityNames();
+    while (
+      (await sliderDots.nextArrow.isVisible()) &&
+      (await sliderDots.nextArrow.isElementEnabled())
+    ) {
+      await sliderDots.nextArrow.click();
+      const pageNames = await this.getEntities().getEntityNames();
+      for (const pageName of pageNames) {
+        if (!allNames.includes(pageName)) {
+          allNames.push(pageName);
+        }
+      }
+    }
+    return allNames;
   }
 }

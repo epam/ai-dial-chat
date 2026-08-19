@@ -113,6 +113,7 @@ export const SliderDots: React.FC<Props> = ({
 
   return (
     <div
+      data-qa="slider-dots"
       className={classNames(
         'mt-4 flex w-full items-center justify-center md:justify-end',
         className,
@@ -137,6 +138,7 @@ export const SliderDots: React.FC<Props> = ({
               )}
               <div className="flex max-w-[176px] overflow-hidden">
                 <div
+                  data-qa="slider-dots-list"
                   className="flex items-center gap-4 transition-all duration-200"
                   style={{
                     transform: `translateX(-${translateXValue}px)`,

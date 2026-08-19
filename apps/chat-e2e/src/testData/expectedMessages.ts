@@ -201,6 +201,8 @@ export const ExpectedMessages = {
   playbackNextMessageIsScrollable: 'Playback next message is scrollable',
   playbackNextMessageIsHidden: 'Playback next message is hidden',
   searchResultCountIsValid: 'Search results count is valid',
+  sliderPagesCountIsValid: 'Slider pages count is valid',
+  sliderActivePageIsValid: 'Slider active page is valid',
   searchResultsAreCorrect: 'Search results are correct',
   noResultsFound: 'No results found is displayed',
   notAllowedModelErrorDisplayed:
@@ -462,6 +464,7 @@ export const ExpectedMessages = {
   myAgentsListIsValid: 'My Agents list is valid',
   allAgentsListIsValid: 'All Agents list is valid',
   valuesAreEqual: 'Values are equal',
+  valuesAreNotEqual: 'Values are not equal',
   valueMatchPattern: 'Value match pattern',
   requestCannotBeApproved:
     "Request can't be approved as some conversations have no messages",
