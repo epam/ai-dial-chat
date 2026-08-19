@@ -137,7 +137,7 @@ The `overview` returned for a skill SHALL be up to two `CatalogItemOverview` sec
 **Details** — title `catalog.details.skill.section`, with specs in order:
 
 1. `catalog.details.skill.author` → `skill.author`, included only when the metadata carries one.
-2. `catalog.details.skill.updated` → `formatLastUsed(skill.updatedAt)`.
+2. `catalog.details.skill.updated` → `formatCalendarDate(skill.updatedAt)` (an absolute calendar date, e.g. `'22/7/2026'` — not the relative `formatLastUsed` phrasing used for catalog list rows).
 3. `catalog.details.skill.fileCount` → the number of `nodeType: 'item'` entries returned by the file listing.
 
 Per-file rows SHALL NOT appear in the Overview. The files are enumerated by the Content tab's picker, where selecting one shows it; repeating them as inert `{ label, value }` rows would be the same list twice, once without an action.
@@ -259,18 +259,24 @@ A manifest that is nothing but frontmatter (no text after the closing fence) SHA
 
 ### Requirement: The skill's files populate the Content tab's hierarchical selector
 
-The Skill branch SHALL build the selector's tree from the file listing through a new `buildSkillContentTree(files)` in `apps/chat/src/utils/map-skill-to-catalog-item.ts` (replacing the flat picker's `buildSkillContentFiles`), and return it as `promptContent.files`. It SHALL set `promptContent.selectedFileId` to the manifest node's actual opaque listing id: `SKILL_MANIFEST_FILE` when Core returns file-relative paths, or the verbatim Core-prefixed listing path when Core returns paths such as `{skillPath}/files/SKILL.md`.
+The Skill branch SHALL build the selector's tree from the file listing through a new `buildSkillContentTree(files, skillPath)` in `apps/chat/src/utils/map-skill-to-catalog-item.ts` (replacing the flat picker's `buildSkillContentFiles`), and return it as `promptContent.files`. It SHALL set `promptContent.selectedFileId` to the manifest node's actual opaque listing id: `SKILL_MANIFEST_FILE` when Core returns file-relative paths, or the verbatim Core-prefixed listing path when Core returns paths such as `{skillPath}/files/SKILL.md`.
 
 The manifest node SHALL be the file displayed by default every time a skill's details panel opens, regardless of how many supporting files the skill ships or how they are named — this is not merely a side effect of the sort rule below; it is a standalone requirement `promptContent.selectedFileId` exists specifically to satisfy. A skill with no supporting files (or exactly one file elsewhere in its tree) SHALL still open on the manifest's content, unaffected by whether a selector renders at all. Resolving the listing id SHALL recognise both file-relative metadata and the `{skillPath}/files/SKILL.md` shape used by other Core versions, while preserving the matched listing id verbatim so the selector can find and mark that exact tree node.
 
 `buildSkillContentTree` SHALL reconstruct the folder hierarchy from the listing's flat, recursive result:
 
-1. Every `nodeType: 'folder'` entry SHALL become a `CatalogContentFolderNode`, including one with no files under it (an empty folder), so an empty grouping folder still appears in the tree.
-2. Every `nodeType: 'item'` entry SHALL become a `CatalogContentFileNode`, using its listing path as `id` and its listing `name` (already a basename) as the node's `name`.
-3. A folder implied by an item's path but not present as its own `nodeType: 'folder'` entry (an implicit intermediate folder) SHALL still be created and populated, so the tree is always fully connected from its roots down to every file, regardless of which intermediate folders the listing happened to enumerate explicitly.
-4. Within each folder's `items` (and at the root), entries SHALL sort case-insensitively by name with folders and files interleaved, except that the manifest (`SKILL_MANIFEST_FILE`) SHALL always be ordered first at the root, regardless of where it would otherwise sort.
+1. Every entry's listing path SHALL first be stripped of the skill's own path prefix and its internal `files` storage directory via a shared `stripSkillPathPrefix(rawPath, skillPath)` helper (the same normalization `resolveSkillFileDownloadPath` uses) before it contributes to the tree's structure. An entry whose path strips to nothing — the skill's own root, or the bare `files` directory itself — SHALL NOT become a node: neither the skill's own name nor a `files` folder SHALL ever appear as a wrapping node in the displayed tree, regardless of how many of the skill-path/`files` prefix layers Core's listing includes.
+2. Every `nodeType: 'folder'` entry (whose stripped path is non-empty) SHALL become a `CatalogContentFolderNode`, including one with no files under it (an empty folder), so an empty grouping folder still appears in the tree. Its `id` is the stripped path.
+3. Every `nodeType: 'item'` entry SHALL become a `CatalogContentFileNode`, using its **unstripped** listing path as `id` (so it round-trips back to `downloadSkillFile` without being re-derived) and its listing `name` (already a basename) as the node's `name`. Its position in the tree is determined by its stripped path.
+4. A folder implied by an item's stripped path but not present as its own `nodeType: 'folder'` entry (an implicit intermediate folder) SHALL still be created and populated, so the tree is always fully connected from its roots down to every file, regardless of which intermediate folders the listing happened to enumerate explicitly.
+5. Within each folder's `items` (and at the root), entries SHALL sort case-insensitively by name with folders and files interleaved, except that the manifest (whose `name` equals `SKILL_MANIFEST_FILE`) SHALL always be ordered first at the root, regardless of where it would otherwise sort or how its `id` is prefixed.
 
 A failed file listing SHALL yield an empty tree (`files: []` or the field omitted), so no selector renders and the manifest body still shows.
+
+#### Scenario: The skill's own path and internal files directory are never shown as folders
+
+- **WHEN** the file listing returns `{skillPath}/files` as a `nodeType: 'folder'` entry, `{skillPath}/files/SKILL.md` as an item, and `{skillPath}/files/agents/analyzer.md` as an item, for a skill opened at `skillPath`
+- **THEN** `promptContent.files` has two root entries — the `SKILL.md` file node and an `agents` folder node (not `{skillPath}` or `files`) — with `agents` containing one file node for `analyzer.md`, and the `SKILL.md`/`analyzer.md` file nodes' `id`s remain the unstripped listing paths
 
 `CatalogView` SHALL supply `onLoadContentFile`. The catalog library SHALL pass the picked file node's opaque `id` to that callback unchanged. At the application edge, `CatalogView` SHALL convert a Core-prefixed listing id in either `{skillPath}/files/{relativeFilePath}` or `files/{relativeFilePath}` form into the `{relativeFilePath}` accepted by `downloadSkillFile`; an already-relative id SHALL remain unchanged. It SHALL then call the existing wrapper with the opened skill's `{ bucket, path }` and that normalized download path, and read the response through `readSkillManifest` so the same size cap applies to every file, regardless of nesting depth. A normalized path equal to `SKILL_MANIFEST_FILE` SHALL be returned frontmatter-stripped via `parseSkillManifest`; every other file SHALL be returned as written. No new endpoint, generated-client method, or `base.ts` helper is introduced.
 

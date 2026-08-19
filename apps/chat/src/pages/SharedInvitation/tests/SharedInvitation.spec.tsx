@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ShareI18nKeys } from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
+import { useSkills } from '../../../context/SkillsContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { acceptInvitation } from '../../../server-api/share.api';
 import { ROUTES } from '../../../types/routes';
@@ -29,6 +30,10 @@ vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: vi.fn(),
 }));
 
+vi.mock('../../../context/SkillsContext', () => ({
+  useSkills: vi.fn(),
+}));
+
 vi.mock('../../../server-api/share.api', () => ({
   acceptInvitation: vi.fn(),
 }));
@@ -38,6 +43,8 @@ describe('SharedInvitationPage', () => {
   const refetchDeployments = vi.fn();
   const refetchToolsets = vi.fn();
   const mergeSharedItem = vi.fn();
+  const refetchSkills = vi.fn();
+  const mergeSharedSkill = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -47,6 +54,7 @@ describe('SharedInvitationPage', () => {
     );
     refetchDeployments.mockResolvedValue(undefined);
     refetchToolsets.mockResolvedValue(undefined);
+    refetchSkills.mockResolvedValue(undefined);
     vi.mocked(useDeployments).mockReturnValue({
       items: [],
       selectedItemId: null,
@@ -63,6 +71,15 @@ describe('SharedInvitationPage', () => {
       refetchToolsets,
       refetchDeployments,
       mergeSharedItem,
+    });
+    vi.mocked(useSkills).mockReturnValue({
+      skills: [],
+      publicSkills: [],
+      sharedWithMe: [],
+      isLoading: false,
+      error: null,
+      refetchSkills,
+      mergeSharedSkill,
     });
   });
 
@@ -187,5 +204,30 @@ describe('SharedInvitationPage', () => {
     );
     expect(mergeSharedItem).not.toHaveBeenCalled();
     expect(refetchDeployments).toHaveBeenCalled();
+  });
+
+  it('merges the resolved sharedSkill before refetching and navigating', async () => {
+    const sharedSkill = {
+      name: 'search',
+      path: 'search',
+      url: 'skills/b/search',
+      bucket: 'b',
+      nodeType: 'item' as const,
+    };
+    vi.mocked(acceptInvitation).mockResolvedValue({
+      itemId: 'skills/b/search',
+      sharedSkill,
+    });
+
+    render(<SharedInvitationPage />);
+
+    await waitFor(() =>
+      expect(mockNavigate).toHaveBeenCalledWith(
+        `${ROUTES.Catalog}?itemId=${encodeURIComponent('skills/b/search')}`,
+        { replace: true },
+      ),
+    );
+    expect(mergeSharedSkill).toHaveBeenCalledWith(sharedSkill);
+    expect(refetchSkills).toHaveBeenCalled();
   });
 });

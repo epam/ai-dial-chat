@@ -8,6 +8,7 @@ import { CatalogEntityType, formatLastUsed } from '@epam/ai-dial-chat-shared';
 import type { TFunction } from 'i18next';
 import { CatalogI18nKeys } from '../constants/translation-keys';
 import { buildPromptResourceUrl, PromptSource } from '../types/prompt';
+import { formatCalendarDate } from './formatting';
 import { safeDecodeURIComponent } from './string-utils';
 
 const SOURCE_FOLDER_KEY: Record<PromptSource, CatalogI18nKeys> = {
@@ -45,7 +46,7 @@ export const buildPromptOverview = (
   }
   specs.push({
     label: t(CatalogI18nKeys.DetailsPromptUpdated),
-    value: formatLastUsed(prompt.updatedAt),
+    value: formatCalendarDate(prompt.updatedAt),
   });
 
   return {

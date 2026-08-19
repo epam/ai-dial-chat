@@ -531,7 +531,7 @@ const CatalogView: FC<Props> = ({
 
         const contentFiles =
           files.status === 'fulfilled'
-            ? buildSkillContentTree(files.value.items)
+            ? buildSkillContentTree(files.value.items, path)
             : [];
         const selectedFileId =
           files.status === 'fulfilled'
