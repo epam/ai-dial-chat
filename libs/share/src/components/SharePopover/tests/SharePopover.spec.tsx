@@ -245,6 +245,26 @@ describe('SharePopover', () => {
     ).toBeNull();
   });
 
+  it('shows the nested-items note only when supplied via labels', () => {
+    const NESTED_ITEMS_NOTE =
+      "Nested items such as prompts and files aren't shared automatically — share them separately so the app works correctly.";
+
+    const { rerender } = render(<SharePopover {...makeProps({ onClose })} />);
+    expect(screen.queryByText(NESTED_ITEMS_NOTE)).toBeNull();
+
+    rerender(
+      <SharePopover
+        {...makeProps({
+          onClose,
+          labels: { expiryNote: EXPIRY_NOTE, nestedItemsNote: NESTED_ITEMS_NOTE },
+        })}
+      />,
+    );
+    expect(screen.getByText(NESTED_ITEMS_NOTE).className).toContain(
+      'dial-tiny-semi-text',
+    );
+  });
+
   it('shows a transient Copied confirmation after clicking Copy', async () => {
     render(<SharePopover {...makeProps({ onClose })} />);
 

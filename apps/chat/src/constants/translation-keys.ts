@@ -1037,6 +1037,7 @@ export enum ShareI18nKeys {
   VisibilityNote = 'share.visibilityNote',
   VisibilityNoteEdit = 'share.visibilityNoteEdit',
   VisibilityNoteConversation = 'share.visibilityNoteConversation',
+  NestedItemsNote = 'share.nestedItemsNote',
   CopiedButtonLabel = 'share.copiedButtonLabel',
   LinkAriaLabel = 'share.linkAriaLabel',
   ExpiryNote = 'share.expiryNote',
