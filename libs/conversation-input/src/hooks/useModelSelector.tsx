@@ -94,6 +94,9 @@ export const useModelSelector = ({
   );
   const isLoading = modelSelectorLabels?.loading !== undefined;
 
+  const isSelectedDeploymentUnavailable =
+    !isLoading && !selectedItem && !!selectedDeploymentId;
+
   const selectorIcon: ReactNode = useMemo(
     () =>
       isLoading ? (
@@ -104,9 +107,18 @@ export const useModelSelector = ({
           selectedItem?.type,
           selectedItem?.displayName ?? selectedItem?.id ?? '',
           DIAL_ICON_SIZE.LG,
+          isSelectedDeploymentUnavailable
+            ? (modelSelectorLabels?.unavailableTooltip ??
+                'This deployment is no longer available')
+            : undefined,
         )
       ),
-    [isLoading, selectedItem],
+    [
+      isLoading,
+      selectedItem,
+      isSelectedDeploymentUnavailable,
+      modelSelectorLabels?.unavailableTooltip,
+    ],
   );
 
   const selectedLabel = selectedItem?.displayName ?? selectedItem?.id;
