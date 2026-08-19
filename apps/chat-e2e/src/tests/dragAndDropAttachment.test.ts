@@ -2,6 +2,7 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import { Attachment, ExpectedConstants } from '@/src/testData';
+import { FileMetadata } from '@/src/ui/pages';
 import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree';
 import { DateUtil, GeneratorUtil } from '@/src/utils';
 import { Conversation, PublishActions } from '@epam/ai-dial-shared';
@@ -219,6 +220,114 @@ dialTest(
           Attachment.flowerImageName,
           'hidden',
         );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Drag&Drop a file in the chat when user-message is opened in edit mode.\n' +
+    'Drag&Drop a file in the chat when user-message is opened in edit mode when the file already exists in DIAL imports folder',
+  async ({
+    dialHomePage,
+    setTestIds,
+    sendMessageInputAttachmentsAssertions,
+    editMessageInputAttachmentsAssertions,
+    localStorageManager,
+    conversationData,
+    dataInjector,
+    conversations,
+    chatMessages,
+    fileDropArea,
+    toast,
+    baseAssertion,
+    replaceConfirmationModal,
+    customApplicationPublishingUtil,
+  }) => {
+    setTestIds('EPMDIAL-6835', 'EPMDIAL-7458');
+    let conversation: Conversation;
+    let fileMetadata: FileMetadata;
+
+    await dialTest.step(
+      'Create a custom app with set of allowed attachment types via API',
+      async () => {
+        const appData = await customApplicationPublishingUtil.createCustomApp({
+          inputAttachmentTypes: [Attachment.imageTypesExtension],
+        });
+        appEntity = {
+          name: appData.name,
+          version: appData.version,
+          reference: appData.reference,
+        } as DialAIEntityModel;
+
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
+        await localStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialTest.step(
+      'Create a conversation with custom app via API',
+      async () => {
+        conversation = conversationData.prepareDefaultConversation(appEntity);
+        await dataInjector.createConversations([conversation]);
+      },
+    );
+
+    await dialTest.step(
+      'Open the conversation, open the first message in edit mode, drop the file and verify it is displayed in the send message input only',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
+        await chatMessages.openEditMessageMode(1);
+        fileMetadata = await dialHomePage.getAttachmentFileMetadataAndContent(
+          Attachment.flowerImageName,
+        );
+        await fileDropArea.dragAndDropFiles([fileMetadata], {
+          implementation: dialHomePage.executeReactOnDrop,
+        });
+        await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
+          Attachment.flowerImageName,
+          'visible',
+        );
+        await editMessageInputAttachmentsAssertions.assertFileIsAttached(
+          Attachment.flowerImageName,
+          'hidden',
+        );
+        await toast.closeToast();
+      },
+    );
+
+    await dialTest.step(
+      'Drop the same file again, continue with postfix and verify the file with the postfix appears in the message input only',
+      async () => {
+        const expectedDuplicatedFilename = Attachment.flowerImageName.replace(
+          '.',
+          ' 1.',
+        );
+        await fileDropArea.dragAndDropFiles(
+          [fileMetadata],
+          { implementation: dialHomePage.executeReactOnDrop },
+          { isHttpMethodTriggered: false },
+        );
+        await baseAssertion.assertElementText(
+          replaceConfirmationModal.title,
+          ExpectedConstants.uploadDuplicateNamesModalTitle,
+        );
+        await baseAssertion.assertElementText(
+          replaceConfirmationModal.description,
+          ExpectedConstants.uploadDuplicateNamesModalDescription,
+        );
+        await replaceConfirmationModal.confirmUploadDuplicates();
+        await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
+          expectedDuplicatedFilename,
+          'visible',
+        );
+        await editMessageInputAttachmentsAssertions.assertFileIsAttached(
+          expectedDuplicatedFilename,
+          'hidden',
+        );
+        await toast.closeToast();
       },
     );
   },
