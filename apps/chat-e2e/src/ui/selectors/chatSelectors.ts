@@ -3,6 +3,7 @@ import { Attributes } from '@/src/ui/domData';
 
 export const layoutContainer = '#theme-main';
 export const overlayFrame = '[name="overlay"]';
+export const favicon = 'link[rel="icon"]';
 
 export const SendMessageSelectors = {
   sendMessageContainer: '[data-qa="send-message-container"]',
