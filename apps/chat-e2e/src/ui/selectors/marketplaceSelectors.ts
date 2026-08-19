@@ -12,7 +12,8 @@ export const MarketplaceSelectors = {
   noDataHeader: '[data-qa="no-data-header"]',
   noResultsFoundDescription: '[data-qa="no-data-description"]',
   marketplaceSuggestions: '[data-qa="marketplace-suggestions-label"]',
-  marketplaceEntitiesSection: '[data-qa="entities-section"]',
+  marketplaceEntitiesSection:
+    '[data-qa="entities-section-container"] > [data-qa="entities-section"]',
   marketplaceEntitiesRow: '[data-qa="entities-row"]',
   marketplaceNoDataContainer: '[data-qa="no-data-container"]',
 };

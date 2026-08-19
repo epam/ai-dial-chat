@@ -201,6 +201,8 @@ export const ExpectedMessages = {
   playbackNextMessageIsScrollable: 'Playback next message is scrollable',
   playbackNextMessageIsHidden: 'Playback next message is hidden',
   searchResultCountIsValid: 'Search results count is valid',
+  sliderPagesCountIsValid: 'Slider pages count is valid',
+  sliderActivePageIsValid: 'Slider active page is valid',
   searchResultsAreCorrect: 'Search results are correct',
   noResultsFound: 'No results found is displayed',
   notAllowedModelErrorDisplayed:
@@ -326,6 +328,8 @@ export const ExpectedMessages = {
   elementAttributeValueShouldBe: 'Element attribute value should be: ',
   elementAttributeValueShouldNotBe: 'Element attribute value should not be: ',
   elementAttributeIsAbsent: 'Element attribute is absent',
+  responseContentTypeIsImage: 'Response content type is an image',
+  faviconUrlIsValid: 'Favicon url is valid',
   uploadedFilesAreaIsScrollable: 'Uploaded files area is scrollable vertically',
   elementIsInFocus: 'Element is in focus',
   elementIsNotInFocus: 'Element is not in focus',
@@ -462,6 +466,7 @@ export const ExpectedMessages = {
   myAgentsListIsValid: 'My Agents list is valid',
   allAgentsListIsValid: 'All Agents list is valid',
   valuesAreEqual: 'Values are equal',
+  valuesAreNotEqual: 'Values are not equal',
   valueMatchPattern: 'Value match pattern',
   requestCannotBeApproved:
     "Request can't be approved as some conversations have no messages",

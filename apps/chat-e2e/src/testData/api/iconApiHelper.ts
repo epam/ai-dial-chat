@@ -36,6 +36,10 @@ export class IconApiHelper extends BaseApiHelper {
     }
   }
 
+  public async getFavicon() {
+    return this.request.get(this.getHost(API.faviconHost));
+  }
+
   public static getNonCachedIconSource(iconSource: string | null) {
     return iconSource ? iconSource.replace('?v2', '') : '';
   }
