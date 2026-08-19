@@ -1,14 +1,17 @@
 import { ExpectedConstants, Import } from '@/src/testData';
 import { webcrypto } from 'node:crypto';
 
-export const publicationRequestPrefix = 'E2EPublish';
-export const unpublishRequestPrefix = 'E2EUnpublish';
-export const applicationNamePrefix = 'E2EApp';
-export const filenamePrefix = 'E2EFile';
-export const toolsetNamePrefix = 'E2EToolset';
+// Every generated name starts with it, so it also works as a search word.
+export const entityNamePrefix = 'E2E';
 
-export const conversationNamePrefix = 'E2EConversation';
-export const promptNamePrefix = 'E2EPrompt';
+export const publicationRequestPrefix = `${entityNamePrefix}Publish`;
+export const unpublishRequestPrefix = `${entityNamePrefix}Unpublish`;
+export const applicationNamePrefix = `${entityNamePrefix}App`;
+export const filenamePrefix = `${entityNamePrefix}File`;
+export const toolsetNamePrefix = `${entityNamePrefix}Toolset`;
+
+export const conversationNamePrefix = `${entityNamePrefix}Conversation`;
+export const promptNamePrefix = `${entityNamePrefix}Prompt`;
 
 export class GeneratorUtil {
   static randomIntegerNumber() {
