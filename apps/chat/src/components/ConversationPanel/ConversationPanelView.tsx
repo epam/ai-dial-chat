@@ -829,7 +829,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   );
 
   const panelClassName = isMobile
-    ? mergeClasses('inset-y-0 start-0', isOpen && 'z-50')
+    ? mergeClasses('fixed inset-y-0 start-0', isOpen && 'z-50')
     : undefined;
 
   return (

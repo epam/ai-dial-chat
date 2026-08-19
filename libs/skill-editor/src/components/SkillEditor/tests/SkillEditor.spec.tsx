@@ -49,26 +49,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   CaptionText: ({ text }: { text?: string }) => <span>{text}</span>,
   ErrorText: ({ text }: { text?: string }) => <span>{text}</span>,
-  ConfirmationPopupVariant: { Danger: 'danger' },
-  ConfirmationPopup: ({
-    header,
-    onConfirm,
-    onCancel,
-    confirmLabel,
-    cancelLabel,
-  }: {
-    header: ReactNode;
-    onConfirm: () => void;
-    onCancel?: () => void;
-    confirmLabel?: string;
-    cancelLabel?: string;
-  }) => (
-    <div role="dialog">
-      <h2>{header}</h2>
-      <button onClick={onConfirm}>{confirmLabel ?? 'Confirm'}</button>
-      <button onClick={onCancel}>{cancelLabel ?? 'Cancel'}</button>
-    </div>
-  ),
   GhostButton: ({
     label,
     onClick,

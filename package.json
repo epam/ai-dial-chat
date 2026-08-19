@@ -31,6 +31,7 @@
     "publish:dry": "nx run-many -t publish --output-style=static --projects=tag:publishable --dry=true --ver=0.0.0-preview.0 --tag=dev",
     "validate:agent-docs": "node scripts/validate-agent-docs.mjs",
     "validate:agent-docs:test": "node --test scripts/validate-agent-docs.spec.mjs",
+    "validate:docs": "node scripts/validate-docs.mjs",
     "prepare": "git config core.hooksPath .githooks"
   },
   "devDependencies": {
