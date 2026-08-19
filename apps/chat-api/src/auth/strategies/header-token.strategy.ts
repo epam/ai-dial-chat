@@ -80,15 +80,24 @@ export class HeaderTokenStrategy implements AuthStrategy {
     const token = parseBearerToken(req);
     const claims = this.decodeUnverifiedClaims(token);
 
-    const entry = this.registry.findByIssuer(claims.iss);
     const allowedIssuers =
       this.config.get('AUTH_HEADER_TOKEN_ALLOWED_ISSUERS', { infer: true }) ??
       [];
-    if (!entry || !allowedIssuers.includes(claims.iss)) {
+    if (!allowedIssuers.includes(claims.iss)) {
       throw new UnauthorizedException({
         code: AuthErrorCode.HeaderTokenUntrustedIssuer,
         error: 'Unauthorized',
         message: 'Token issuer is not a trusted, allowlisted provider',
+        statusCode: 401,
+      });
+    }
+
+    const entry = this.registry.findByIssuer(claims.iss);
+    if (!entry) {
+      throw new UnauthorizedException({
+        code: AuthErrorCode.HeaderProviderNotFound,
+        error: 'Unauthorized',
+        message: 'No registered provider matches the token issuer',
         statusCode: 401,
       });
     }
