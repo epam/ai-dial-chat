@@ -9,6 +9,7 @@ import userEvent from '@testing-library/user-event';
 import { strToU8, zipSync } from 'fflate';
 import { StrictMode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { SkillEditorI18nKeys } from '../../../constants/translation-keys';
 import { useUser } from '../../../context/auth/UserContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { useSkills } from '../../../context/SkillsContext';
@@ -285,7 +286,10 @@ describe('SkillEditor page', () => {
 
     await waitFor(() =>
       expect(showNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ variant: 'success' }),
+        expect.objectContaining({
+          variant: 'success',
+          title: SkillEditorI18nKeys.SaveSuccessTitle,
+        }),
       ),
     );
     expect(mockNavigate).toHaveBeenCalledWith('/catalog');
@@ -896,7 +900,10 @@ describe('SkillEditor page — edit mode', () => {
     );
     await waitFor(() =>
       expect(showNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ variant: 'success' }),
+        expect.objectContaining({
+          variant: 'success',
+          title: SkillEditorI18nKeys.UpdateSuccessTitle,
+        }),
       ),
     );
   });
