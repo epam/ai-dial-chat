@@ -41,9 +41,11 @@ The invitation URL for a prompt SHALL use the catalog accept-invitation route, s
 
 `getShareLink` SHALL accept an optional `resourceKind` and forward it in the request body. `useShareLink` SHALL accept it too and include it in the memoised load callback's dependencies, so switching item or kind re-requests the link.
 
-`SharePopoverContainer` SHALL pass `CreateShareLinkDtoResourceKindEnum.Prompt` for a `CatalogEntityType.Prompt` item and `undefined` for every other type. A prompt SHALL NOT offer edit access, since it is not in `EDITABLE_ACCESS_TYPES`.
+`SharePopoverContainer` SHALL pass `CreateShareLinkDtoResourceKindEnum.Prompt` for a `CatalogEntityType.Prompt` item and `undefined` for every other type.
 
 `CatalogView.isShareVisible` SHALL return `true` for a Prompt item only when `item.isMyApp` is true.
+
+**Revised:** a prompt SHALL offer edit access, the same as Agent/Skill/Toolset — `CatalogEntityType.Prompt` is a member of `EDITABLE_ACCESS_TYPES`. `ShareService.createShareLink` already maps `ShareAccess.Edit` to DIAL Core's `['READ', 'WRITE']` permissions for any `resourceKind`, including `Prompt`, so there was no backend restriction backing the earlier view-only default — see `design.md` D7.
 
 #### Scenario: A prompt share request carries the resource kind
 
@@ -55,7 +57,8 @@ The invitation URL for a prompt SHALL use the catalog accept-invitation route, s
 - **WHEN** the share popover opens for an agent item
 - **THEN** `useShareLink` is called with the item id and `undefined`
 
-#### Scenario: A prompt cannot be shared with edit access
+#### Scenario: A prompt can be shared with edit access
 
 - **WHEN** the share popover opens for a prompt item
-- **THEN** `canEditAccess` is `false`, so the access control renders as a static label
+- **THEN** `canEditAccess` is `true`, so the access control renders as the "Can view" / "Can edit" dropdown
+- **AND** choosing "Can edit" requests a link whose access includes `Edit`, which `createShareLink` maps to DIAL Core permissions `['READ', 'WRITE']` on the qualified `prompts/{bucket}/{path}` resource

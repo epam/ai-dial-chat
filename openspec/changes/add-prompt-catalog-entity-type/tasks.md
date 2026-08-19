@@ -182,3 +182,11 @@ Slicing strategy: contract-first. Depends on group 12. See `design.md` D18.
 - [x] 13.3 **Generated client.** Run `npm run openapi`, `npm run openapi:check`, and the `chat-api-client` build/lint targets; do not hand-edit generated files.
 - [x] 13.4 **Frontend wiring.** Map `CatalogEntityType.Skill` to the generated publish enum, omit empty versions from `handlePublish`, and update utility/CatalogView tests for owned versus shared/public skills.
 - [x] 13.5 **Verification and review.** Focused backend (40) and frontend (144) tests, strict OpenSpec validation, OpenAPI drift check, generated-client build/lint, formatting, and the five-axis review passed. `chat-api` lint passed with two pre-existing warnings. Full app typecheck/lint remain blocked by the already-recorded unrelated file-manager type errors and `useChatSettingsFormConfig.ts` formatting error. The generated-client exception is the only touched lib contract; the existing Publish control adds no new layout, focus, or direction behavior.
+
+## 14. Follow-up round: allow edit access on shared prompt links
+
+Depends on group 9. Bug fix — revises task 9.4 and design.md D7; see the `prompt-share-link` spec's revised requirement.
+
+- [x] 14.1 **Bug.** `SharePopoverContainer`'s `EDITABLE_ACCESS_TYPES` omitted `CatalogEntityType.Prompt`, so a prompt's share popover always rendered "Can view" as a static label instead of the Agent/Skill/Toolset "Can view"/"Can edit" dropdown, even though `ShareService.createShareLink` already maps `Edit` to `['READ', 'WRITE']` for a prompt's `resourceKind`, and shared-prompt write access (`canEdit`/`isEditable`) was already fully wired (group 12.4).
+- [x] 14.2 **Fix.** Added `CatalogEntityType.Prompt` to `EDITABLE_ACCESS_TYPES` in `apps/chat/src/components/SharePopoverContainer/SharePopoverContainer.tsx`.
+- [ ] 14.3 Verify: `npm exec nx lint @epam/chat`, `npm exec nx test @epam/chat -- SharePopoverContainer`, and a manual share-popover check for a personal prompt.
