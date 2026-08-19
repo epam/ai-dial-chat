@@ -77,6 +77,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const displayNameWatchCleanupRef = useRef<(() => void) | null>(null);
   const displayNameWatchKeyRef = useRef<string | null>(null);
   const notificationShownForRef = useRef<string | null>(null);
+  const restoredToolConfigIdRef = useRef<string | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
   const {
@@ -320,9 +321,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         if (modelToSelect) {
           restoreSelectedItemId(modelToSelect);
         }
-        restoreToolConfiguration(
-          getLastUserMessageToolConfiguration(result.messages),
-        );
+        if (restoredToolConfigIdRef.current !== id) {
+          restoredToolConfigIdRef.current = id;
+          restoreToolConfiguration(
+            getLastUserMessageToolConfiguration(result.messages),
+          );
+        }
 
         const lastMsg = result.messages[result.messages.length - 1];
 
