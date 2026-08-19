@@ -79,6 +79,9 @@ export class DeploymentsDetailsService {
           headers: getBearerAuthHeaders(accessToken),
         },
       );
+      this.logger.debug(
+        `DIAL Core configurationDeployment for "${name}": ${JSON.stringify(result)}`,
+      );
       if (result.error) {
         return mapDialHttpStatus(
           result.response.status,

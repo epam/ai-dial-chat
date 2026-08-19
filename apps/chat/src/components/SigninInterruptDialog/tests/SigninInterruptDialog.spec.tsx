@@ -108,6 +108,8 @@ const makeDeploymentsValue = (toolsets: unknown[] = []) => ({
   toolsets,
   refetchToolsets: vi.fn().mockResolvedValue(undefined),
   refetchDeployments: vi.fn().mockResolvedValue(undefined),
+  selectedDeploymentDetails: null,
+  isDeploymentDetailsLoading: false,
   mergeSharedItem: vi.fn(),
 });
 
