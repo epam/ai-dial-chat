@@ -130,6 +130,26 @@ When the selected deployment changes, all tool toggle states SHALL be reinitiali
 
 ---
 
+### Requirement: Tool selection restored when a conversation (re)mounts
+
+The tools menu state is owned by a `useToolsMenu` hook instance scoped to the page component it is called from. Creating a conversation from the new-chat screen navigates from that screen's component to a separate conversation-view component, mounting a new `useToolsMenu` instance whose local toggle state starts uninitialized from conversation history. To prevent the just-sent toggle from silently reverting to the schema default on that navigation, the conversation-view component SHALL restore the toggle from the `configuration_value` stored on the conversation's last user message as soon as the conversation is (re)loaded — whether freshly created, opened from the sidebar, or reloaded — using the same value it stores per user message (see "Tool choices persisted in conversation history" below). This restore SHALL NOT be treated as a deployment-driven reset and SHALL NOT be persisted as a new user choice.
+
+#### Scenario: First message toggle survives the new-chat-to-conversation navigation
+- **WHEN** the user toggles Deep Research on and sends the first message from the new-chat screen
+- **THEN** the created conversation's user message is persisted with `configuration_value: { "deep_research": true }`
+- **AND** the conversation view that the app navigates to shows the Tools toggle as selected
+- **AND** the next message the user sends also includes `configuration_value: { "deep_research": true }`
+
+#### Scenario: Opening an existing conversation restores its last toggle state
+- **WHEN** the user opens a conversation whose last user message has `configuration_value: { "deep_research": true }`
+- **THEN** the Tools toggle displays as selected for that conversation
+
+#### Scenario: No configuration on the last user message — falls back to schema default
+- **WHEN** the conversation's last user message has no `configuration_value` (or no value for the configured tool id)
+- **THEN** the Tools toggle state is left at the deployment configuration schema's `default` value
+
+---
+
 ### Requirement: Tool choices sent in completion request
 
 When the user sends a message, the selected tool states SHALL be included in the message's `custom_content.configuration_value` as key-value pairs (e.g. `{ "deep_research": true }`).
