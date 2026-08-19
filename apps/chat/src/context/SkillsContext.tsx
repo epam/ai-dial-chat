@@ -27,6 +27,8 @@ export interface SkillsContextType {
   error: unknown;
   /** Re-reads personal, shared, and organisation skills. */
   refetchSkills: () => Promise<void>;
+  /** Upserts a single skill into the shared-with-me list, e.g. right after a share invitation is accepted. */
+  mergeSharedSkill: (item: SkillMetadataItemDto) => void;
 }
 
 export const SkillsContext = createContext<SkillsContextType | undefined>(
@@ -99,6 +101,13 @@ export const SkillsProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [isProfileSettled, isSkillsEnabled]);
 
+  const mergeSharedSkill = useCallback((item: SkillMetadataItemDto) => {
+    setSharedWithMe((prev) => [
+      ...prev.filter((skill) => skill.url !== item.url),
+      item,
+    ]);
+  }, []);
+
   const contextValue = useMemo(
     () => ({
       skills,
@@ -107,8 +116,17 @@ export const SkillsProvider = ({ children }: { children: ReactNode }) => {
       isLoading,
       error,
       refetchSkills,
+      mergeSharedSkill,
     }),
-    [skills, sharedWithMe, publicSkills, isLoading, error, refetchSkills],
+    [
+      skills,
+      sharedWithMe,
+      publicSkills,
+      isLoading,
+      error,
+      refetchSkills,
+      mergeSharedSkill,
+    ],
   );
 
   return (
