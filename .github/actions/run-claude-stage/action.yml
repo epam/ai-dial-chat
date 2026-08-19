@@ -189,14 +189,14 @@ runs:
         if [ -n "${MODEL}" ]; then
           # In DIAL mode (SDLC_DIAL_MODE=1, set by run-agent's inference-route
           # step) route the model through DIAL's Anthropic-compatible deployment
-          # as `dial,anthropic.<model>`. Manifests stay provider-agnostic
+          # as `anthropic.<model>`. Manifests stay provider-agnostic
           # (model: claude-sonnet-4-6); the platform adds the routing.
           if [ "${SDLC_DIAL_MODE:-}" = "1" ]; then
             # Route to the DIAL deployment: prefer the explicit DIAL_MODEL id
             # (set by run-agent from vars.DIAL_MODEL — DIAL deployment names
             # rarely match Anthropic model strings), else assume an
             # `anthropic.<model>` deployment exists.
-            ARGS="${ARGS} --model dial,${SDLC_DIAL_MODEL:-anthropic.${MODEL}}"
+            ARGS="${ARGS} --model ${SDLC_DIAL_MODEL:-anthropic.${MODEL}}"
           else
             ARGS="${ARGS} --model ${MODEL}"
           fi
