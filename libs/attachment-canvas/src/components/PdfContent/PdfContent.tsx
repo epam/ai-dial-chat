@@ -36,6 +36,15 @@ const THUMBNAIL_ITEM_HEIGHT_FALLBACK = 172;
 const THUMBNAIL_PANEL_HEIGHT_FALLBACK = 400;
 /** Debounce (ms) before requesting thumbnails for a newly scrolled-to range, so rapid scrolling doesn't restart the vendor's internal batch fetch on every frame. */
 const THUMBNAIL_SCROLL_REQUEST_DEBOUNCE_MS = 150;
+/**
+ * Number of animation frames to keep re-centering horizontal scroll after a
+ * detected zoom change. The vendor viewer re-renders pages asynchronously
+ * (`reRenderVisiblePages` awaits per-page dimensions one at a time) and
+ * exposes no `onZoomChange` callback, so the new page width isn't known the
+ * instant `getZoom()` changes — polling for a short window catches it once
+ * layout settles.
+ */
+const ZOOM_RECENTER_CORRECTION_FRAMES = 60;
 
 /** User-visible strings for the collapsible thumbnails section. */
 export interface PdfContentLabels {
@@ -242,6 +251,65 @@ export const PdfContent: FC<PdfContentProps> = ({
     setIsViewerReady(true);
   }, []);
 
+  const viewerContainerRef = useRef<HTMLDivElement>(null);
+
+  /*
+   * Auto zoom can render the page wider than the panel, which produces a
+   * horizontal scrollbar on the vendor's `.pdf-highlight-viewer` element
+   * (see PdfContent.module.scss). Center that overflow by width:
+   * - `ResizeObserver` on `.pdf-container`/`.pdf-highlight-viewer` catches
+   *   layout-driven changes (panel resize, page width changes once rendered).
+   * - Polling `viewerApiRef.current.getZoom()` catches a zoom change itself —
+   *   `PdfViewerApi` exposes no `onZoomChange` callback, so this is the only
+   *   way to detect it — and keeps re-centering for a short window afterward
+   *   since the vendor's re-render is asynchronous, so the new width isn't
+   *   final the instant the zoom value changes.
+   */
+  useEffect(() => {
+    if (!isViewerReady) return;
+    const root = viewerContainerRef.current;
+    const pdfContainer = root?.querySelector<HTMLElement>('.pdf-container');
+    const scrollContainer = root?.querySelector<HTMLElement>(
+      '.pdf-highlight-viewer',
+    );
+    if (!pdfContainer || !scrollContainer) return;
+
+    const centerHorizontally = () => {
+      const overflow =
+        scrollContainer.scrollWidth - scrollContainer.clientWidth;
+      if (overflow > 0) {
+        scrollContainer.scrollLeft = overflow / 2;
+      }
+    };
+
+    centerHorizontally();
+    const observer = new ResizeObserver(centerHorizontally);
+    observer.observe(pdfContainer);
+    observer.observe(scrollContainer);
+
+    let lastZoom = viewerApiRef.current?.getZoom();
+    let correctionFramesLeft = 0;
+    let rafId: number;
+    const tick = () => {
+      const zoom = viewerApiRef.current?.getZoom();
+      if (zoom !== lastZoom) {
+        lastZoom = zoom;
+        correctionFramesLeft = ZOOM_RECENTER_CORRECTION_FRAMES;
+      }
+      if (correctionFramesLeft > 0) {
+        centerHorizontally();
+        correctionFramesLeft -= 1;
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      observer.disconnect();
+    };
+  }, [isViewerReady]);
+
   /*
    * On initial load with no highlight/page requested, explicitly scroll to
    * the top of page 1 instead of trusting wherever the viewer's own initial
@@ -374,6 +442,7 @@ export const PdfContent: FC<PdfContentProps> = ({
         </div>
       )}
       <div
+        ref={viewerContainerRef}
         className={mergeClasses(
           'min-w-0 flex-1 overflow-hidden',
           styles.viewer,
