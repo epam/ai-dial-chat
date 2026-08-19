@@ -39,5 +39,6 @@ export const getApiHeaders = ({
   if (ifNoneMatch) {
     headers['If-None-Match'] = ifNoneMatch;
   }
+  console.info('headers>>', headers);
   return headers;
 };
