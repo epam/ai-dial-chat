@@ -72,18 +72,6 @@ interface Props {
 const SECTION_HEADING_CLASS_NAME =
   'dial-tiny-lead-semi-text px-3 pb-0.5 pt-2 text-tertiary';
 
-/*
- * Own full class list (not merged on top of SECTION_HEADING_CLASS_NAME) so its
- * larger pb-2 never competes with that constant's pb-0.5 for the same
- * property. Sticks to the top of the scrollable list, right below the
- * already-sticky search box, once the "Currently selected" row scrolls past.
- * will-change-transform gives it its own compositing layer — without it,
- * animating .listContent's height (see LIST_MAX_HEIGHT_PX/listHeight below)
- * can tear/ghost a sliver of a row behind this sticky element mid-transition.
- */
-const STICKY_FAVORITES_HEADING_CLASS_NAME =
-  'dial-tiny-lead-semi-text sticky top-0 z-10 bg-layer-raised px-3 pb-2 pt-2 text-tertiary will-change-transform';
-
 // Must match the .rowLeaving exit-animation duration in DeploymentSelectorPanel.module.scss.
 const ROW_LEAVE_ANIMATION_MS = 180;
 
@@ -358,7 +346,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
           )}
 
           {(showCurrentlySelected || filteredFavorites.length > 0) && (
-            <p className={STICKY_FAVORITES_HEADING_CLASS_NAME}>
+            <p className="dial-tiny-lead-semi-text sticky top-0 z-10 bg-layer-raised px-3 pb-2 pt-2 text-tertiary will-change-transform">
               {favoritesLabel}
             </p>
           )}
