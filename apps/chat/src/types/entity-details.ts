@@ -22,6 +22,10 @@ export interface ModelCapabilities {
 }
 
 export interface ModelSpecification {
+  provider?: string;
+  vendor?: string;
+  license?: string;
+  knowledgeCutoffDate?: string;
   contextWindowTokens?: number;
   maxOutputTokens?: number;
   inputTypes?: string[];
@@ -215,24 +219,15 @@ export interface GuardrailEntityDetails {
   specification?: GuardrailSpecification;
 }
 
-// ---- Skill entity ----
-
-export interface SkillAboutDetails {
-  whenToUse?: string;
-  allowedTools?: string[];
-  bundledResources?: string[];
-  skillPrompt?: string;
-}
-
-export interface SkillEntityDetails {
-  about?: SkillAboutDetails;
-}
-
 // ---- Discriminated union ----
 
+/*
+ * Built only by `mapDeploymentDetailsDtoToEntityDetails`. Skills never reach
+ * the deployment details endpoint — their details resolve from the skills
+ * endpoints and their manifest — so they are not a member here.
+ */
 export type EntitySpecificDetails =
   | { type: 'MODEL'; data: ModelEntityDetails }
   | { type: 'AGENT'; data: AgentEntityDetails }
   | { type: 'TOOLSET'; data: ToolsetEntityDetails }
-  | { type: 'GUARDRAIL'; data: GuardrailEntityDetails }
-  | { type: 'SKILL'; data: SkillEntityDetails };
+  | { type: 'GUARDRAIL'; data: GuardrailEntityDetails };

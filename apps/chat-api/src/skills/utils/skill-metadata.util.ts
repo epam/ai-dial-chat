@@ -4,6 +4,14 @@ import { SkillNodeType } from '../dto/skill-node-type';
 
 export type DialMetadataBase = components['schemas']['MetadataBase'];
 
+const joinMetadataPath = (
+  parentPath: string | undefined,
+  name: string,
+): string => {
+  if (parentPath == null || parentPath === '') return name;
+  return `${parentPath.replace(/\/+$/, '')}/${name}`;
+};
+
 /**
  * Maps DIAL Core's `MetadataBase` (`ResourceFolderMetadata |
  * ResourceItemMetadata`, discriminated by `nodeType: 'FOLDER' | 'ITEM'`)
@@ -26,13 +34,22 @@ export const mapToSkillMetadataItem = (
     return null;
   }
 
-  const path =
-    item.parentPath != null ? `${item.parentPath}${item.name}` : item.name;
+  const path = joinMetadataPath(item.parentPath, item.name);
+  const url =
+    nodeType === SkillNodeType.Item
+      ? `skills/${item.bucket}/${path}`
+      : (item.url ?? `skills/${item.bucket}/${path}`);
 
   return {
     name: item.name,
     path: nodeType === SkillNodeType.Folder ? `${path}/` : path,
-    url: item.url ?? `skills/${item.bucket}/${path}`,
+    /*
+     * Core may expose a complex skill resource with a folder-shaped URL
+     * ending in `/`. Downloading that URL addresses the grouping folder and
+     * returns 400. Item identity is authoritative in bucket/parentPath/name,
+     * so rebuild the item URL without a trailing folder separator.
+     */
+    url,
     bucket: item.bucket,
     nodeType,
     parentPath: item.parentPath,

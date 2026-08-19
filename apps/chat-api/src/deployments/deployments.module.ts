@@ -5,10 +5,11 @@ import { DeploymentsService } from './deployments.service';
 import { DeploymentsDetailsService } from './details/deployments-details.service';
 import { DeploymentsListingService } from './listing/deployments-listing.service';
 import { DeploymentsLookupService } from './lookup/deployments-lookup.service';
+import { UserLimitsController } from './user-limits.controller';
 
 @Module({
   imports: [UserConfigModule],
-  controllers: [DeploymentsController],
+  controllers: [DeploymentsController, UserLimitsController],
   providers: [
     DeploymentsService,
     DeploymentsListingService,

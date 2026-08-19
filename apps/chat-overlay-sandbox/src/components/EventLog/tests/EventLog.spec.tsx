@@ -13,31 +13,31 @@ describe('EventLog', () => {
     render(<EventLog entries={['12:00 ready']} onClear={vi.fn()} />);
 
     const trigger = screen.getByRole('button', { name: /Event log 1 events/i });
-    const panelId = trigger.getAttribute('aria-controls');
-    const panel = document.getElementById(panelId ?? '');
+    /* `hidden: true` keeps matching the panel while it is `inert` and thus removed from the default accessibility tree. */
+    const panel = screen.getByRole('complementary', { hidden: true });
 
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
-    expect(panel?.hasAttribute('inert')).toBe(true);
-    expect(panel?.classList.contains('translate-y-full')).toBe(true);
-    expect(panel?.classList.contains('desktop:translate-x-full')).toBe(true);
+    expect(panel.hasAttribute('inert')).toBe(true);
+    expect(panel.classList.contains('translate-y-full')).toBe(true);
+    expect(panel.classList.contains('desktop:translate-x-full')).toBe(true);
 
     await user.click(trigger);
 
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
-    expect(panel?.hasAttribute('inert')).toBe(false);
-    expect(panel?.classList.contains('translate-y-full')).toBe(false);
-    expect(panel?.classList.contains('desktop:translate-x-full')).toBe(false);
-    expect(panel?.classList.contains('translate-y-0')).toBe(true);
-    expect(panel?.classList.contains('desktop:translate-x-0')).toBe(true);
-    expect(document.activeElement).toBe(
-      screen.getByRole('button', { name: 'Close' }),
-    );
+    expect(panel.hasAttribute('inert')).toBe(false);
+    expect(panel.classList.contains('translate-y-full')).toBe(false);
+    expect(panel.classList.contains('desktop:translate-x-full')).toBe(false);
+    expect(panel.classList.contains('translate-y-0')).toBe(true);
+    expect(panel.classList.contains('desktop:translate-x-0')).toBe(true);
+    expect(
+      screen.getByRole('button', { name: 'Close' }).matches(':focus'),
+    ).toBe(true);
 
     await user.keyboard('{Escape}');
 
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
-    expect(panel?.classList.contains('translate-y-full')).toBe(true);
-    expect(document.activeElement).toBe(trigger);
+    expect(panel.classList.contains('translate-y-full')).toBe(true);
+    expect(trigger.matches(':focus')).toBe(true);
   });
 
   it('renders the event count on an opaque contrasting badge', () => {

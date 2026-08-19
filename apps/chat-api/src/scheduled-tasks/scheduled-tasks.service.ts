@@ -201,10 +201,11 @@ export class ScheduledTasksService {
 
   private async fetchUpstream<T = UpstreamScheduleResponse>(
     url: string,
-    method: 'GET' | 'POST' | 'PUT',
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     accessToken: string,
     context: string,
     body?: unknown,
+    parseJson = true,
   ): Promise<T> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
@@ -239,6 +240,10 @@ export class ScheduledTasksService {
           this.logger,
           errorBody,
         );
+      }
+
+      if (!parseJson) {
+        return undefined as T;
       }
 
       const json = (await response.json()) as T;
@@ -498,6 +503,23 @@ export class ScheduledTasksService {
       scheduleId,
       ScheduleAction.Resume,
     );
+  }
+
+  async deleteScheduledTask(
+    userSub: string,
+    accessToken: string,
+    scheduleId: string,
+  ): Promise<void> {
+    await this.fetchUpstream(
+      this.buildSchedulesUrl(scheduleId),
+      'DELETE',
+      accessToken,
+      `delete scheduled task "${scheduleId}"`,
+      undefined,
+      false,
+    );
+
+    await this.invalidateListCache(userSub);
   }
 
   private async invalidateListCache(userSub: string): Promise<void> {

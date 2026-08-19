@@ -49,9 +49,9 @@ export const composeLocalizedFields = (
 
 /**
  * Converts a {@link LocalizedText} (plain string or locale map) into the
- * verified SDK's `LocalizedValue` shape (`{ plainValue?, localeMap? }`) —
- * the wire format `Application.displayName`/`ToolSet.displayName` require
- * since the `@epam/ai-dial-typescript-sdk` upgrade to `0.1.0-dev.35`.
+ * SDK's `LocalizedValue` — the wire format `Application.displayName`/
+ * `ToolSet.displayName` require. The two types share the same shape
+ * (`string | Record<string, string>`), so this is an identity conversion
+ * kept for call-site clarity.
  */
-export const toLocalizedValue = (text: LocalizedText): LocalizedValue =>
-  typeof text === 'string' ? { plainValue: text } : { localeMap: text };
+export const toLocalizedValue = (text: LocalizedText): LocalizedValue => text;

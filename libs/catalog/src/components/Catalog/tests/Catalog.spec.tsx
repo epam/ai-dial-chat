@@ -302,6 +302,9 @@ describe('Catalog', () => {
   it('applies horizontal and vertical padding to the empty state in the default grid view', () => {
     render(<Catalog items={[]} favorites={[]} />);
     const grid = screen.getByRole('grid', { name: 'catalog grid' });
+    // Layout wrapper divs carry no role/label of their own; asserting their
+    // padding classes is a CSS-level check with no semantic query available.
+    // eslint-disable-next-line testing-library/no-node-access
     const wrapper = grid.parentElement?.parentElement;
     expect(wrapper?.className).toContain('px-8');
     expect(wrapper?.className).toContain('py-6');
@@ -678,5 +681,60 @@ describe('Catalog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'My Apps' }));
 
     expect(onMyAppsActiveChange).toHaveBeenCalledWith(true);
+  });
+
+  it('defaults the active tab to the first tab when uncontrolled', () => {
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', { type: CatalogEntityType.Model }),
+          makeItem('2', 'My Prompt', { type: CatalogEntityType.Prompt }),
+        ]}
+        favorites={[]}
+      />,
+    );
+
+    expect(
+      screen
+        .getByRole('tab', { name: /Models/i })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
+  });
+
+  it('uses the controlled activeTab prop instead of internal state', () => {
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', { type: CatalogEntityType.Model }),
+          makeItem('2', 'My Prompt', { type: CatalogEntityType.Prompt }),
+        ]}
+        favorites={[]}
+        activeTab={CatalogEntityType.Prompt}
+      />,
+    );
+
+    expect(
+      screen
+        .getByRole('tab', { name: /Prompts/i })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
+  });
+
+  it('calls onActiveTabChange with the clicked tab id', async () => {
+    const onActiveTabChange = vi.fn();
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', { type: CatalogEntityType.Model }),
+          makeItem('2', 'My Prompt', { type: CatalogEntityType.Prompt }),
+        ]}
+        favorites={[]}
+        onActiveTabChange={onActiveTabChange}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('tab', { name: /Prompts/i }));
+
+    expect(onActiveTabChange).toHaveBeenCalledWith(CatalogEntityType.Prompt);
   });
 });

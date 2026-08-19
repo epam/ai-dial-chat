@@ -76,6 +76,16 @@ describe('mapPromptToCatalogItem', () => {
     expect(item.folder[0]).toBe('Shared with me');
   });
 
+  it('marks a shared prompt with WRITE permission as editable', () => {
+    const item = mapPromptToCatalogItem(makePrompt({ canEdit: true }), {
+      t,
+      source: PromptSource.SharedWithMe,
+      favoriteIds: NO_FAVORITES,
+    });
+
+    expect(item.isEditable).toBe(true);
+  });
+
   it('qualifies a shared prompt id with the owner bucket', () => {
     const item = mapPromptToCatalogItem(
       makePrompt({ bucket: 'owner-bucket' }),
@@ -103,7 +113,7 @@ describe('mapPromptToCatalogItem', () => {
   });
 
   it('marks an organisation prompt as not editable and not owned', () => {
-    const item = mapPromptToCatalogItem(makePrompt(), {
+    const item = mapPromptToCatalogItem(makePrompt({ canEdit: true }), {
       t,
       source: PromptSource.Public,
       favoriteIds: NO_FAVORITES,

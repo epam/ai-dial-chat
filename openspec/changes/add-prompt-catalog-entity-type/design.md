@@ -6,7 +6,7 @@ Nothing on the frontend calls any of it. There is no `prompts.api.ts` wrapper, `
 
 Constraints that shape every decision below:
 
-1. **No backend change.** The API surface is fixed at what `apps/chat-api` exposes today. Where the existing backend cannot serve a UI affordance, that affordance is dropped rather than bolted on with a new endpoint.
+1. **Backend changes stay at the BFF boundary.** The frontend must not call DIAL Core directly. `apps/chat-api` owns aggregate listing, pagination, permission normalization, namespace failure handling, and owner-bucket forwarding; the generated OpenAPI client remains the contract used by `apps/chat`.
 2. **`libs/catalog` stays host-agnostic** (`AGENTS.md` §Library isolation). The lib may learn that a `Prompt` entity type exists as a display category; it may not learn about `/api/v1/prompts`, the generated client, `ROUTES`, or `OverlayFeature`.
 3. **The catalog is already generic over entity type.** `filterCatalogItems` matches on `item.type`, `sortCatalogItems` is type-blind, `buildCatalogTabs` derives tabs from the items present, and `Card` / `ListView` / `EntityTypeLabel` read `type` through `ENTITY_TYPE_COLOR`. Adding a member is mostly declarative; the work is in the app adapter and the editor page.
 
@@ -17,15 +17,15 @@ Constraints that shape every decision below:
 - Every one of the ten generated `PromptsApi` methods has a real caller in `apps/chat`.
 - Prompts are first-class citizens of the existing unified catalog — searchable, sortable, filterable, with a details panel — not a bolt-on list.
 - A prompt is reusable: its body reaches the conversation composer in one click.
-- Full authoring lifecycle: create, edit, delete, move between folders, and create/rename/delete folders.
+- Full authoring lifecycle: create, edit, delete, move between folders, and create/rename/delete folders. **Revised by D16:** move and folder create/rename/delete are no longer reachable from `PromptEditor` — the approved Figma design has no folder control on that screen. Create/edit/delete remain; `PromptFolderField` still supports folder management for a host that composes it elsewhere.
 - `libs/catalog` gains no host knowledge; every prompt-specific decision arrives through a prop.
 
 **Non-Goals:**
 
-- **Prompt unshare.** `discard-shared-catalog-item.dto.ts:6` `@Matches(/^(?:applications|toolsets|conversations)\/…/)`, so a prompt path is rejected with 400 before reaching the service. Worse, `listPrompts` returns a shared prompt under a bucket-relative path with the *owner's* bucket stripped, so the frontend cannot reconstruct the resource url the discard call needs. See D7.
+- **Prompt unshare.** `discard-shared-catalog-item.dto.ts:6` `@Matches(/^(?:applications|toolsets|conversations)\/…/)`, so a prompt path is rejected with 400 before reaching the service. Shared prompt ids now preserve the owner bucket; DTO validation is the remaining blocker. See D7.
 - Prompt variables/templating (`{{placeholder}}` substitution at insert time), a prompt picker inside the composer, prompt versioning, and prompt folder navigation inside the catalog grid.
 
-**Scope revision (post-review):** the change originally forbade any edit under `apps/chat-api/**`. Four of the follow-ups the first pass documented as backend-capability limitations were subsequently pulled into scope — prompt favourites (D6), prompt share links (D7), dropping DIAL folder markers from the prompt listings (D14), and publishing a prompt to an Organization folder (`CatalogEntityType.Prompt` on the publish DTO plus bucket qualification in `publish.service.ts`) — so the backend, `openapi.json`, and the generated client are now part of this change. Download (D15) was added last and needed no backend change at all. `npm run openapi:check` staying green is still the proof that spec and client agree.
+**Scope revision (post-review):** the change originally forbade any edit under `apps/chat-api/**`. Follow-ups subsequently pulled prompt favourites (D6), prompt share links (D7), DIAL folder-marker filtering (D14), prompt publishing, and aggregate permission-aware prompt/skill listing (D17) into scope. The backend, `openapi.json`, and generated client are therefore part of this change. Download (D15) needed no backend change. `npm run openapi:check` staying green is still the proof that spec and client agree.
 
 ## Decisions
 
@@ -51,17 +51,17 @@ Add `promptContent?: CatalogItemPromptContent` to `CatalogItemTabData` and `Cont
 
 *Alternatives:* stuffing the body into `api.snippets` (misuses a Connect-tab model, shows a language selector for a non-code payload); putting it in `overview` (a label/value spec grid, wrong shape for a 50k-character block); putting it in `item.description` / the About tab (collides with the prompt's own description field, and About has no copy affordance). Rejected.
 
-### D3 — The prompt's DIAL path is the `CatalogItem.id`, unprefixed
+### D3 — Prompt catalog ids preserve the addressing information needed by their source
 
-`PromptResponseDto.id` is the path inside the prompts namespace (`Work/AI/my-prompt`). Use it verbatim as `CatalogItem.id`.
+For personal and public prompts, `PromptResponseDto.id` is the path inside the prompts namespace (`Work/AI/my-prompt`) and is used verbatim as `CatalogItem.id`. A shared prompt instead uses the fully qualified resource id `prompts/{ownerBucket}/{path}` so details and Edit can address the resource in its owner's bucket.
 
-Every id→API dispatch in `CatalogView` is *already* type-switched (`handleFetchDetails`, `handleEdit`, `handleDelete`, `onToggleFavorite` all branch on `item.type` today — `CatalogView.tsx:257-297,610-680`), so the type discriminator needed to route a prompt id to the prompts endpoints is present at every call site without inventing an encoding.
+Every id→API dispatch in `CatalogView` is type-switched. Prompt-specific helpers additionally parse the qualified shared id into `{ bucket, path }` before calling the BFF; personal/public ids keep their established representation.
 
-*Alternative:* a `prompt:` sentinel prefix for global id uniqueness. Rejected — it forces encode/decode at every boundary (details deep-link `?itemId=`, favourites, share) for a collision that requires a deployment id shaped exactly like a prompt path, and it would silently corrupt the value passed to `getPrompt({ path })` if one call site forgot to strip it.
+*Alternative:* strip the shared owner bucket and keep only the relative path. Rejected — a writable shared resource cannot be safely read or updated without its owner bucket, and reconstructing it later is impossible.
 
 ### D4 — `PromptsContext` owns prompt state; `DeploymentsContext` is untouched
 
-A new provider following the `ThemeContext` reference pattern (`useMemo`'d value, `usePrompts` throws outside the provider, cancelled-flag fetches). It exposes `prompts`, `folders`, `sharedWithMe` (from `listPrompts`), `publicPrompts`, `publicFolders` (from `listPublicPrompts`), `isLoading`, `error`, and `refetchPrompts` / `refetchPublicPrompts`.
+A new provider following the `ThemeContext` reference pattern (`useMemo`'d value, `usePrompts` throws outside the provider, cancelled-flag fetches). It exposes `prompts`, `folders`, `sharedWithMe`, `publicPrompts`, `publicFolders`, `isLoading`, `error`, and `refetchPrompts` / the backward-compatible `refetchPublicPrompts` alias. One `listPrompts()` call returns all namespaces; the frontend does not issue a second public-list request.
 
 *Why not extend `DeploymentsContext`:* it is already a large provider owning deployments, toolsets, schemas, and the selected-deployment preference; prompts share no lifecycle with it and would force every deployment consumer to re-render on a prompt mutation. *Why not fetch inside `CatalogView`:* the `PromptEditor` page needs the same folder list, and `ConversationRoute` will eventually need prompt lookup — a component-local fetch would be duplicated immediately.
 
@@ -89,15 +89,15 @@ On the frontend, `FavoriteEntityType` gains `Prompt`, `FavoriteApplicationsProvi
 
 ### D7 — Prompt share links work via an explicit `resourceKind`; unshare stays suppressed
 
-**Revised.** The open question was whether `POST /api/v1/share` accepts a bare prompt path. It does not: DIAL Core's sharing API wants the fully-qualified resource url (`prompts/{bucket}/{path}`), and the prompts endpoints deliberately never expose a bucket to the frontend.
+**Revised.** The open question was whether `POST /api/v1/share` accepts a bare prompt path. It does not: DIAL Core's sharing API wants the fully-qualified resource url (`prompts/{bucket}/{path}`). Personal prompt share still uses the caller bucket and therefore does not require exposing that bucket to the client. Aggregate listing does expose the owner bucket for shared prompts because it is required to read and edit an authorized shared resource.
 
 Rather than leak the bucket into the client, `CreateShareLinkDto` gains an optional `resourceKind?: ShareResourceKind` (`'prompt'`). When set, `ShareService` treats `itemId` as bucket-relative and qualifies it with the caller's own session bucket. Absent, the existing pass-through behaviour is byte-identical, so no other share caller changes.
 
 *Why an explicit discriminator rather than sniffing the path:* a bare prompt path `AI/summarize` prefixed blindly becomes `prompts/AI/summarize`, which is indistinguishable from an already-qualified path whose bucket happens to be `AI`. A flag makes the caller's intent unambiguous.
 
-`isShareVisible` returns `true` for a prompt only when `item.isMyApp` — DIAL Core grants access out of the owner's bucket, and the caller's bucket is the only one the backend can qualify against.
+`isShareVisible` returns `true` for a prompt only when `item.isMyApp` — DIAL Core grants access out of the owner's bucket, and the share endpoint deliberately qualifies only against the caller's own bucket.
 
-Unshare stays off (see Non-Goals): both the DTO regex and the missing owner bucket block it, and `resolveSharedItemSummary` short-circuits `prompts/` ids because a prompt has no deployments/toolsets list entry to summarise.
+Unshare stays off (see Non-Goals): the DTO regex remains the blocker. `resolveSharedItemSummary` short-circuits `prompts/` ids because a prompt has no deployments/toolsets list entry to summarise.
 
 ### D8 — One feature key, `OverlayFeature.Prompts`, gates the whole surface
 
@@ -107,15 +107,17 @@ Unshare stays off (see Non-Goals): both the DTO regex and the missing owner buck
 
 ### D9 — `PromptEditor` is a route page and the sole home of folder management
 
-`ROUTES.PromptEditor = '/prompt-editor'`, lazy-loaded in `app/app.tsx` next to `ToolsetEditorPage`, with query params `?id=<path>` (edit) / absent (create) and `?returnUrl=`, matching `ToolsetEditorQuery` conventions.
+**Partially revised by D16.** The route/query-param shape below is unchanged; the "sole home of folder management" half is walked back — see D16.
 
-Layout: name, description, and content fields, plus a folder picker whose own controls cover create/rename/delete folder and (in edit mode) move. Form validation mirrors the backend DTOs exactly so the user never round-trips for a rule the client already knows — name 1–256 chars and no `/` (`create-prompt.dto.ts:24-28`), description ≤ 2000, content ≤ 50 000, folder path against the same optional-path shape. Server-side 409 (duplicate / rename conflict) still surfaces as an inline field error, because uniqueness cannot be checked client-side.
+`ROUTES.PromptEditor = '/prompt-editor'`, lazy-loaded in `app/app.tsx` next to `ToolsetEditorPage`, with query params `?id=<path>` for a personal prompt, `?id=prompts/{ownerBucket}/{path}` for a shared prompt, absent `id` for create mode, and optional `?returnUrl=`. The shared form preserves the owner bucket for load/update; D16 removes folder controls from both personal and shared forms.
+
+Layout (as originally shipped; **see D16** for the flattened, folder-less Figma layout that replaced it): name, description, and content fields, plus a folder picker whose own controls cover create/rename/delete folder and (in edit mode) move. Form validation mirrors the backend DTOs exactly so the user never round-trips for a rule the client already knows — name 1–256 chars and no `/` (`create-prompt.dto.ts:24-28`), description ≤ 2000, content ≤ 50 000, folder path against the same optional-path shape. Server-side 409 (duplicate / rename conflict) still surfaces as an inline field error, because uniqueness cannot be checked client-side.
 
 *Why not a modal:* content is long-form, folder management is a second dimension of state, and a route gives a deep-linkable edit URL consistent with the three existing editor pages.
 
 ### D13 — The editor's UI lives in `libs/prompt-editor`; the route page is a thin adapter
 
-**Added.** The form and folder picker moved out of `apps/chat` into a new `@epam/ai-dial-prompt-editor` lib, splitting cleanly along the isolation rule:
+**Added, folder-picker wiring later revised by D16.** The form and folder picker moved out of `apps/chat` into a new `@epam/ai-dial-prompt-editor` lib, splitting cleanly along the isolation rule. `PromptFolderField` itself is untouched by D16 and still exports the same API; only `PromptEditor`'s own use of it was removed.
 
 | Concern | Owner |
 | --- | --- |
@@ -138,6 +140,19 @@ The lib deliberately **does not validate**. Length limits and the name pattern a
 
 This matches the existing precedent in `conversation-listing.service.ts:240`, `deployments-listing.service.ts:190`, and `toolset-mapper.util.ts:332`. The prompts module's own `.folder` sentinel is unaffected — it is still used to derive empty folders.
 
+### D16 — The editor's layout is flattened to match Figma, and folder management moves out of `PromptEditor`
+
+**Revised.** A later Figma pass (`DIAL Chat 2.0 — Prompts`, node `513:49196`) specifies a single-column form — Name, Description, Instructions — with no two-column Details/Configuration split and no folder field on the page at all. This walks back part of D9 and D13:
+
+- The two-column `left`/`children` split through `BuilderFormContainer` is dropped. `PromptEditor` now renders one flat column: Name, Description, then the content field (relabelled **Instructions**, matching the Figma copy and `libs/skill-editor`'s existing `instructionsLabel` precedent — the default was `'Prompt'`). The "Details" and "Configuration" section headings/subtitles are removed along with the typography/label fields that only existed to render them (`sectionTitleClassName`, `sectionSubtitleClassName`, `detailsSectionTitle`, `detailsSectionSubtitle`, `configurationSectionTitle`, `configurationSectionSubtitle`).
+- The flat column no longer has a fixed-width side column to bound it, so on a wide viewport it would stretch edge to edge — which the Figma frame does not. It is capped with `max-w-[1180px] mx-auto`, the same value already used by `Catalog.tsx` and `ScheduledTasks.tsx` for centered page-level content, rather than inventing a new width.
+- **Folder assignment is removed from `PromptEditor` entirely** — `PromptEditorValues.folderId`, `PromptEditorErrors.folder`, and `PromptEditorProps.folders`/`folderActions`/`folderNameError` are gone from the component's contract. `apps/chat/src/pages/PromptEditor/PromptEditor.tsx` no longer imports or calls `movePrompt`, `createPromptFolder`, `renamePromptFolder`, or `deletePromptFolder`. `createPrompt` is called without a `folderId` (so new prompts land at root); `updatePrompt` is unchanged since it never touched the folder.
+- `PromptFolderField` (D13's folder sub-form) is **not deleted** — it remains exported from `libs/prompt-editor` exactly as before, for a host that wants to compose a folder picker into its own layout elsewhere. It currently has no caller in `apps/chat`.
+
+*Consequence for the Goals in this design's Context section:* "Full authoring lifecycle: create, edit, delete, move between folders, and create/rename/delete folders" is walked back to "create, edit, delete" — move and folder create/rename/delete are no longer reachable from the product's `PromptEditor` screen. Nothing backend-side changed; this is a product/UI decision to match the approved design, not a capability limitation.
+
+*Why not keep the folder field and just restyle it:* the Figma frame was reviewed as the source of truth for this screen and it has no folder control on it at all — adding one back without a design would be guessing. If folder assignment from this screen is wanted again, it needs its own design pass rather than reverse-engineering one from the removed code.
+
 ### D15 — A prompt downloads as the conversation export's envelope, and the lib never learns the format
 
 **Added.** Download is split at the same seam as every other prompt action: `libs/catalog` contributes only a Manage-menu entry (`onDownload` + `isDownloadVisible`), and `apps/chat` owns the fetch, the payload, and the file name. A lib that serialized a prompt would embed a host-owned wire contract, which the library-isolation rule forbids.
@@ -151,6 +166,30 @@ This matches the existing precedent in `conversation-listing.service.ts:240`, `d
 *Why the body is re-fetched:* the listing seeds `details.promptContent`, so writing that field would silently save a stale body if the prompt was edited in another tab. The fetch reuses the details path's `getPublicPrompt` / `getPrompt` dispatch, extracted as `isOrganisationPromptItem` so all three call sites share one predicate.
 
 *Why there is no success toast:* the browser's own download UI already confirms it. Only failure notifies, carrying the trace id.
+
+### D17 — Prompt and skill contexts consume one permission-aware aggregate BFF response
+
+**Added.** Applications and toolsets already arrive at the catalog through app-level aggregate APIs. Prompts and skills follow the same boundary: each frontend context makes one request and receives personal, shared-with-me, and public arrays. The BFF, not the browser, owns bucket selection, recursive pagination, shared-resource lookup, deduplication, and partial namespace failures.
+
+Prompt metadata listings pass `permissions=true` to DIAL Core. Personal prompt `canEdit` is derived from `WRITE` when permissions are present, while shared prompt editability comes from `getSharedResources`. The new `GET /api/v1/skills/catalog` endpoint marks personal skills editable and shared skills editable only when their shared-resource permissions include `WRITE`. Both aggregate DTOs carry `isMy`, `sharedWithMe`, and `canEdit` so the frontend mapper does not infer authorization from folder placement.
+
+Public is a product policy, not an upstream permission accident: every public prompt and skill is normalized to `isMy: false`, `sharedWithMe: false`, and `canEdit: false`, even if Core unexpectedly reports `WRITE`. The frontend mapper repeats the `source === Public` guard as defense in depth, so an Edit button cannot appear due to malformed metadata.
+
+Writable shared resources keep their fully qualified `prompts/{ownerBucket}/{path}` or `skills/{ownerBucket}/{path}` address. Skill ITEM URLs are canonicalized from metadata identity fields and never retain a grouping-folder trailing slash, because `downloadSkillFolder` interprets such a path as a grouping folder and returns 400. The skill editor normally consumes that whole-resource ZIP, but falls back to the manifest/file endpoints already used by Catalog details when a Core installation still classifies the canonical path as a grouping folder or returns an unusable ZIP. File metadata's technical `{skillPath}/files` prefix is removed before supporting paths enter editor state; the manifest response/file metadata supplies the same ETag required by update. The load effect yields one microtask before opening the stream, allowing React StrictMode's discarded development setup to clean up without starting a request. Once started, the binary response is allowed to settle and a cancellation flag only suppresses stale state updates. The BFF deliberately omits Core's `Content-Length` from both skill stream variants because Fetch may expose a transport-decoded body while retaining the original wire length; Node frames the bytes actually streamed downstream. Together these rules avoid malformed proxied responses and Vite `ERR_STREAM_WRITE_AFTER_END`. The editors parse the qualified address, pass the owner bucket to the BFF, and rely on DIAL Core to enforce `WRITE`. Per D16, prompt folder assignment is absent from the editor for both personal and shared prompts.
+
+Personal/shared and public namespace loads settle independently inside each BFF service. A single namespace failure returns the surviving data with the failed namespace empty; failure of both primary namespaces propagates an error. Skill shared-resource lookup is auxiliary and degrades to an empty shared array.
+
+*Alternatives:* keep separate browser requests (duplicates orchestration and exposes bucket topology to UI state); merge directly in `CatalogView` (duplicates context behavior and pagination); trust public `WRITE` metadata (violates the explicit read-only product rule). Rejected.
+
+### D18 — Owned skills use the existing Publish flow without a synthetic version
+
+**Added.** The publish BFF and generated client already accept `entityType: skill`, and `PublishService` already targets the whole `skills/{bucket}/{path}` resource. The missing frontend mapping kept `isPublishVisible` false. `CatalogEntityType.Skill` is therefore added to `toPublishEntityType`; the existing ownership guard keeps Publish limited to personal skills, while public and shared-with-me skills remain unavailable regardless of `canEdit`.
+
+DIAL Core's Publication request has no version field. `PublishCatalogEntityDto.version` becomes optional for every catalog entity. `PublishService` uses the supplied value when present, otherwise recovers a version from a versioned `{name}__{version}` resource id; unversioned Prompt/Skill resources use an empty response version and a publication title containing only the resource name. The frontend omits `version` when `CatalogItem.version` is empty. This is backward compatible: existing clients may continue sending the field, and `PublishResultDto.version` remains a required string.
+
+The endpoint remains `POST /api/v1/catalog/{entityType}/{entityId}/publish`, authenticated, rate-limited to 10 writes/minute, and authorized by DIAL Core. Cache invalidation remains `publish-history:{entityType}:{entityId}` after success. Swagger and the generated client must reflect only the request-field optionality; no hand-authored library learns the REST contract.
+
+*Alternatives:* send a fake skill version (misrepresents an unversioned resource); keep an empty required string (contradicts `@IsNotEmpty` and creates a 400); add a skill-only endpoint (duplicates the generic flow). Making the existing field optional matches Core and preserves one publish path.
 
 ### D10 — Details fetch dispatches on type inside the app adapter
 
@@ -174,6 +213,8 @@ This matches the existing precedent in `conversation-listing.service.ts:240`, `d
 - **Refetch-after-mutation costs a round trip and can flash a stale list** → Accepted for correctness (D4): a folder rename rewrites every descendant id, and a client-side patch would diverge from the backend's own path arithmetic. `isLoading` covers the window; the editor navigates back only after the refetch settles.
 - **A 50 000-character prompt body in a details tab and a textarea** → Render the content block with `overflow` scroll inside its own container and no syntax highlighting; the editor's textarea is plain. Character counters announce only near the limit (last 10 chars) per `.claude/rules/a11y.md`, not on every keystroke.
 - **Prompt ids are user-authored paths that reach `?itemId=` deep links and the share flow** → Always pass them through the existing `safeDecodeURIComponent` / `encodeURIComponent` boundary helpers already used by the deployment mappers; the backend re-validates every path against `PROMPT_PATH_PATTERN`, so a malformed id fails closed with a 400.
+- **Shared ids now include an owner bucket, and mutations can target it** → Parsing is confined to app-level prompt/skill resource-url helpers. The BFF forwards the explicit bucket but does not treat it as authorization; DIAL Core remains authoritative for READ/WRITE. Public items never expose Edit even if upstream metadata is inconsistent.
+- **One aggregate request can hide a partial upstream outage behind a 200** → The BFF logs each failed namespace and returns surviving data deliberately. It returns an error when both primary namespaces fail, avoiding a misleading successful empty catalog.
 - **`OverlayFeature` is part of the published overlay protocol** → Additive enum member only; overlay hosts that do not send `prompts` get today's behaviour. `libs/chat-overlay`'s protocol spec and any host-facing docs list the new key in the same commit.
 - **Prompt search matches name, description, and type but not body** (`filterCatalogItems` reads those three fields) → Accepted. Content search would need either the body eagerly loaded for every prompt or a backend search endpoint; both are out of scope. Called out in the spec so it is a known gap, not a bug report.
 - **RTL** → The content block, character counters, and folder picker use logical properties (`ps-*`/`pe-*`, `text-start`, `border-s-*`); the editor's back chevron gets `rtl:scale-x-[-1]`. The copy icon is symmetric and is not mirrored.
@@ -183,9 +224,9 @@ This matches the existing precedent in `conversation-listing.service.ts:240`, `d
 One persisted-shape change: user-config `version` 3 → 4, gaining `prompts: { installed: [] }`. It is forward- and backward-tolerant (see Risks), so no migration step is needed — `readConfig` rewrites the file on first read.
 
 1. Ship `libs/catalog` (enum member, colour, tab, content tab, `isUnshareVisible`, `isRevokeShareVisible`, `onDownload`/`isDownloadVisible`, prompt tab set) and `libs/chat-overlay` (feature key). Inert on their own: no host passes the new props yet, and `buildCatalogTabs` only renders a tab for a type present in `items`.
-2. Ship the backend slice — `.dial_folder` filtering, the user-config prompts section, and the share `resourceKind` — plus the regenerated client. All three are additive; existing callers are unaffected.
-3. Ship `prompts.api.ts` + `promptsApi` registration. Inert: no caller yet.
-4. Ship `PromptsContext` and `mapPromptToCatalogItem` behind `OverlayFeature.Prompts`. Zero user-visible change while the key is off.
+2. Ship the backend slice — `.dial_folder` filtering, the user-config prompts section, share `resourceKind`, aggregate prompt response, optional prompt owner-bucket parameters, and `GET /api/v1/skills/catalog` — plus the regenerated client. These changes are additive; legacy public and bucket-list endpoints remain available.
+3. Ship the prompt/skill server-api wrappers and client registration. Inert until their contexts consume them.
+4. Ship `PromptsContext`, `SkillsContext`, and the catalog mappers. Each context performs one aggregate request; prompt visibility remains behind `OverlayFeature.Prompts`.
 5. Ship `libs/prompt-editor`, the `PromptEditor` route, and the catalog wiring, still gated.
 6. Enable `prompts` in `ENABLED_FEATURES` per environment.
 
@@ -196,7 +237,7 @@ One persisted-shape change: user-config `version` 3 → 4, gaining `prompts: { i
 ## Open Questions
 
 1. **Should organisation (public) prompts be visible when `OverlayFeature.Prompts` is on but the user has no personal prompts?** Assumed yes — the Public folder is how a user discovers prompts worth copying. Revisit only if a stakeholder wants the tab hidden until the user owns a prompt.
-2. **Should a prompt shared with the user be removable from their list?** Blocked on two backend facts, not on a product decision: the discard DTO rejects prompt paths, and `getSharedPrompts` strips the owner bucket a discard call needs. Both are fixable; neither is in this change.
+2. **Should a prompt shared with the user be removable from their list?** The owner bucket is now preserved, but the discard DTO still rejects prompt paths. Extending that DTO and discard flow is outside this change.
 3. **Should a downloaded prompt be re-importable?** The file is shaped for it (`version: 5` with the folder chain), but this change ships no importer, so nothing verifies the round trip end to end. Decide whether prompt import belongs in a follow-up before the format is treated as a contract.
 
 **Resolved since the first pass:**

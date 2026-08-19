@@ -22,6 +22,9 @@ export class SkillsService {
 
   // Listing
   listSkills = this.listingService.listSkills.bind(this.listingService);
+  listCatalogSkills = this.listingService.listCatalogSkills.bind(
+    this.listingService,
+  );
   listSkillFiles = this.listingService.listSkillFiles.bind(this.listingService);
 
   // Download

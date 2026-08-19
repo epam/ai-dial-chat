@@ -4,7 +4,7 @@ import {
   type MessageAttachment,
 } from '../models/chat';
 import { AttachmentType } from '../types/attachment';
-import { FileExtension, MIMEType } from '../types/mime-type';
+import { getAttachmentTypeFromMime, inferMimeTypeFromPath } from './mime-type';
 
 /**
  * Optional app-owned callbacks used to resolve display URLs for an attachment.
@@ -17,34 +17,6 @@ export interface AttachmentDisplayResolvers {
   /** Resolves the audio playback URL for an attachment that has a remote `url`. */
   resolvePlayUrl?(dto: MessageAttachment): string | undefined;
 }
-
-const EXTENSION_MIME_TYPES: Partial<Record<FileExtension, MIMEType>> = {
-  [FileExtension.PDF]: MIMEType.PDF,
-  [FileExtension.Markdown]: MIMEType.Markdown,
-  [FileExtension.MarkdownAlt]: MIMEType.Markdown,
-  [FileExtension.JSON]: MIMEType.JSON,
-};
-
-/**
- * Infers a MIME type from a reference-only attachment's `reference_url` file
- * extension (ignoring any query string or `#` fragment such as a PDF
- * `#page=N` anchor). Returns `undefined` when the extension is unrecognized.
- */
-const inferContentTypeFromReferenceUrl = (
-  referenceUrl: string,
-): MIMEType | undefined => {
-  const path = referenceUrl.split(/[?#]/)[0];
-  const dotIdx = path.lastIndexOf('.');
-  if (dotIdx === -1) return undefined;
-  const ext = path.slice(dotIdx + 1).toLowerCase() as FileExtension;
-  return EXTENSION_MIME_TYPES[ext];
-};
-
-const getAttachmentType = (mimeType: string | undefined): AttachmentType => {
-  if (mimeType?.startsWith('image/')) return AttachmentType.Image;
-  if (mimeType?.startsWith('audio/')) return AttachmentType.Audio;
-  return AttachmentType.File;
-};
 
 const getInlineDataUrl = (
   mimeType: string | undefined,
@@ -66,7 +38,7 @@ export const messageAttachmentToDisplayAttachment = (
   dto: MessageAttachment,
   resolvers: AttachmentDisplayResolvers = {},
 ): DisplayAttachment => {
-  const type = getAttachmentType(dto.type);
+  const type = getAttachmentTypeFromMime(dto.type);
   const isImage = type === AttachmentType.Image;
   const isAudio = type === AttachmentType.Audio;
   const isLink = dto.url && dto.reference_url && !dto.reference_type;
@@ -74,8 +46,7 @@ export const messageAttachmentToDisplayAttachment = (
 
   const contentType =
     (dto.url == null && dto.reference_url != null
-      ? (dto.reference_type ??
-        inferContentTypeFromReferenceUrl(dto.reference_url))
+      ? (dto.reference_type ?? inferMimeTypeFromPath(dto.reference_url))
       : undefined) ??
     dto.type ??
     '';

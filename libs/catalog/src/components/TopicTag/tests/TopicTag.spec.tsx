@@ -51,8 +51,15 @@ beforeEach(() => {
   });
   Object.defineProperty(HTMLElement.prototype, 'offsetLeft', {
     configurable: true,
+    /*
+     * Not a test assertion — this getter stands in for the browser layout
+     * engine jsdom lacks, so it has to walk the DOM directly to compute a
+     * synthetic offsetLeft.
+     */
     get(this: HTMLElement) {
+      // eslint-disable-next-line testing-library/no-node-access
       if (!widthConfig || !this.parentElement) return 0;
+      // eslint-disable-next-line testing-library/no-node-access
       const index = Array.from(this.parentElement.children).indexOf(this);
       return index * (widthConfig.child + widthConfig.gap);
     },
@@ -116,6 +123,9 @@ describe('TopicsLine', () => {
   it('never wraps to a second row (single-line container classes)', () => {
     widthConfig = { container: 400, child: 60, gap: 8 };
     const { container } = render(<TopicsLine topics={['Alpha']} />);
+    // Root is an unlabelled layout div; asserting its class list is a
+    // CSS-level check with no semantic query available.
+    // eslint-disable-next-line testing-library/no-node-access
     const root = container.firstElementChild as HTMLElement;
     expect(root.className).toContain('flex-nowrap');
     expect(root.className).toContain('overflow-hidden');

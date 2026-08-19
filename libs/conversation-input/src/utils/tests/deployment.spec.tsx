@@ -29,7 +29,7 @@ describe('buildDeploymentIcon', () => {
   });
 
   it('renders DeploymentIcon with src when icon URL is provided', () => {
-    const { container } = render(
+    render(
       <>
         {buildDeploymentIcon(
           'https://example.com/icon.png',
@@ -38,7 +38,7 @@ describe('buildDeploymentIcon', () => {
         )}
       </>,
     );
-    expect(container.querySelector('img')).toBeTruthy();
+    expect(screen.getByRole('presentation')).toBeTruthy();
   });
 
   it('passes empty string initialsName when displayName is empty', () => {

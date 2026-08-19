@@ -27,6 +27,8 @@ describe('FavoriteCard — selected state', () => {
     const card = screen.getByLabelText('Claude');
     expect(card.className).toContain('border-transparent');
     expect(card.className).not.toContain('selectedCard');
+    // Checkmark icon is aria-hidden with no accessible role, so no semantic query can find it.
+    // eslint-disable-next-line testing-library/no-node-access
     expect(card.querySelector('svg[aria-hidden]')).toBeNull();
   });
 
@@ -35,6 +37,7 @@ describe('FavoriteCard — selected state', () => {
 
     const card = screen.getByLabelText('Claude');
     expect(card.className).toContain('selectedCard');
+    // eslint-disable-next-line testing-library/no-node-access
     expect(card.querySelector('svg[aria-hidden]')).toBeTruthy();
   });
 });

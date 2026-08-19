@@ -53,6 +53,20 @@ import {
 />;
 ```
 
+### AttachmentCanvasBody
+
+Content-only renderer shared by `AttachmentCanvas` — the same Markdown/JSON/code/HTML/PDF/image/audio/visualizer/unsupported/error rendering, with no sidebar chrome (no panel, header, close/download/copy actions). Use it when a host wants to mount an attachment preview inline in its own layout instead of the resizable side panel `AttachmentCanvas`/`AttachmentCanvasContainer` render.
+
+```tsx
+import { AttachmentCanvasBody } from '@epam/ai-dial-attachment-canvas';
+
+<AttachmentCanvasBody
+  content={canvasContent}
+  isLoading={isLoading}
+  fileName="report.pdf"
+/>;
+```
+
 ### AttachmentCanvasContainer
 
 Context-connected container that reads state from `AttachmentCanvasProvider` and renders `AttachmentCanvas` with download support wired up. Every prop is optional — `labels` fields all have English defaults.

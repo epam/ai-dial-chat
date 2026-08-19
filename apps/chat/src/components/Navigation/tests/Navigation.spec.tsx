@@ -101,27 +101,35 @@ describe('Navigation', () => {
     renderNavigation('/catalog');
     expect(
       screen
-        .getByRole('button', { name: NavigationI18nKeys.Home })
-        .getAttribute('aria-current'),
+        .queryByRole('button', { name: NavigationI18nKeys.Home })
+        ?.getAttribute('aria-current'),
     ).toBeNull();
   });
 
   it('renders each nav item as a link with the correct href', () => {
-    const { container } = renderNavigation();
+    renderNavigation();
+    const hrefs = screen
+      .getAllByRole('link')
+      .map((link) => link.getAttribute('href'));
     for (const { path } of NAVIGATION_CONFIG) {
-      const link = container.querySelector(`a[href="${path}"]`);
-      expect(link, `expected a link with href="${path}"`).toBeTruthy();
+      expect(hrefs).toContain(path);
     }
   });
 
   it('Home nav item has href="/"', () => {
-    const { container } = renderNavigation();
-    expect(container.querySelector('a[href="/"]')).toBeTruthy();
+    renderNavigation();
+    const hrefs = screen
+      .getAllByRole('link')
+      .map((link) => link.getAttribute('href'));
+    expect(hrefs).toContain('/');
   });
 
   it('Catalog nav item has href="/catalog"', () => {
-    const { container } = renderNavigation();
-    expect(container.querySelector('a[href="/catalog"]')).toBeTruthy();
+    renderNavigation();
+    const hrefs = screen
+      .getAllByRole('link')
+      .map((link) => link.getAttribute('href'));
+    expect(hrefs).toContain('/catalog');
   });
 
   it('hides a feature-flag-gated nav item when the flag is off', () => {
@@ -166,8 +174,11 @@ describe('Navigation', () => {
     mockUseUiFeature.mockImplementation(
       (feature) => feature !== OverlayFeature.Catalog,
     );
-    const { container } = renderNavigation();
-    expect(container.querySelector('a[href="/catalog"]')).toBeNull();
+    renderNavigation();
+    const hrefs = screen
+      .getAllByRole('link')
+      .map((link) => link.getAttribute('href'));
+    expect(hrefs).not.toContain('/catalog');
     expect(
       screen.queryByRole('button', { name: NavigationI18nKeys.Catalog }),
     ).toBeNull();
@@ -177,16 +188,22 @@ describe('Navigation', () => {
     mockUseUiFeature.mockImplementation(
       (feature) => feature !== OverlayFeature.FileManager,
     );
-    const { container } = renderNavigation();
-    expect(container.querySelector('a[href="/files"]')).toBeNull();
+    renderNavigation();
+    const hrefs = screen
+      .getAllByRole('link')
+      .map((link) => link.getAttribute('href'));
+    expect(hrefs).not.toContain('/files');
     expect(
       screen.queryByRole('button', { name: NavigationI18nKeys.FileManager }),
     ).toBeNull();
   });
 
   it('shows the File Manager nav item when file-manager is enabled', () => {
-    const { container } = renderNavigation();
-    expect(container.querySelector('a[href="/files"]')).toBeTruthy();
+    renderNavigation();
+    const hrefs = screen
+      .getAllByRole('link')
+      .map((link) => link.getAttribute('href'));
+    expect(hrefs).toContain('/files');
     expect(
       screen.getByRole('button', { name: NavigationI18nKeys.FileManager }),
     ).toBeTruthy();

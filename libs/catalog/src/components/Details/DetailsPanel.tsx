@@ -3,22 +3,22 @@ import {
   CatalogEntityType,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
+import type {
+  PublishFolderNode,
+  PublishHistoryEntry,
+} from '@epam/ai-dial-publish-panel';
 import {
   derivePublishState,
   PublishFooter,
   PublishPanel,
   usePublishFlow,
 } from '@epam/ai-dial-publish-panel';
-import type {
-  PublishFolderNode,
-  PublishHistoryEntry,
-} from '@epam/ai-dial-publish-panel';
 import {
   CloseButton,
   ElementSize,
+  GhostIconButton,
   Skeleton,
   Tabs,
-  GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft } from '@tabler/icons-react';
 import {
@@ -31,18 +31,32 @@ import {
   type ReactNode,
 } from 'react';
 import type { CatalogItem } from '../../models/catalog-item';
+import type { CatalogContentFilePreview } from '../../models/item-details-data';
 import type { DetailsPanelProps } from '../../models/item-details-props';
+import { CatalogContentPreviewType } from '../../types/catalog-content-type';
 import { CatalogDetailsTab } from '../../types/detail-tab';
 import {
   DetailsConfirmationKind,
   DetailsConfirmationVariant,
 } from '../../types/details-confirmation';
-import { getSignedInLevel } from '../../utils/toolset-credentials';
+import {
+  CredentialsLevel,
+  ToolsetAuthenticationType,
+} from '../../types/toolset-auth';
+import {
+  collectAllFolderIds,
+  findContentNodeName,
+} from '../../utils/catalog-content-tree';
+import {
+  getCredentialsBannerState,
+  getSignedInLevel,
+} from '../../utils/toolset-credentials';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { ApiDetails } from './ApiDetails';
 import { ConfirmationFooter } from './ConfirmationView/ConfirmationFooter';
 import { ConfirmationView } from './ConfirmationView/ConfirmationView';
-import { CredentialsSection } from './Credentials/CredentialsSection';
+import { CredentialsBanner } from './Credentials/CredentialsBanner/CredentialsBanner';
+import { CredentialsManagementPanel } from './Credentials/CredentialsManagementPanel/CredentialsManagementPanel';
 import styles from './DetailsPanel.module.scss';
 import { Header } from './Header/Header';
 import { AboutTab } from './TabsContent/About';
@@ -85,6 +99,18 @@ const DEFAULT_REVOKE_SHARE_CONSEQUENCES = [
   'You keep full access — nothing is deleted',
 ];
 
+const defaultCredentialsManagementTitle = (
+  authenticationType: ToolsetAuthenticationType,
+): string =>
+  authenticationType === ToolsetAuthenticationType.ApiKey
+    ? 'Toolset API keys'
+    : 'Toolset credentials';
+
+const defaultDeleteApiKeyConfirmMessage = (level: CredentialsLevel): string =>
+  level === CredentialsLevel.Global
+    ? 'Are you sure you want to delete the organization API key?'
+    : 'Are you sure you want to delete your personal API key?';
+
 /*
  * Whether confirming a given step takes the item out of the caller's own
  * view. `Delete` destroys it and `Unshare` drops the caller's own grant, so
@@ -109,8 +135,14 @@ interface ConfirmationContent {
   confirmLabel: string;
   /** Status text announced to assistive tech while the action is in flight. */
   loadingStatusLabel: string;
-  /** Palette the step is rendered with. */
+  /** Palette the confirm button (and its icon) is rendered with. */
   variant: DetailsConfirmationVariant;
+  /**
+   * Palette of the item identity card. Defaults to `variant` when absent —
+   * only `DeleteApiKey` diverges, since removing one credential is far less
+   * consequential than the whole-item actions that share the danger button.
+   */
+  cardVariant?: DetailsConfirmationVariant;
 }
 
 /** Right-side slide-in panel displaying full details for a catalog item. */
@@ -143,6 +175,10 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onEdit,
   onDownload,
   isDownloadVisible,
+  isDownloadPrimary,
+  onLoadContentFile,
+  onLoadContentFilePreview,
+  renderContentFilePreview,
   onDelete,
   onUnshare,
   isUnshareVisible,
@@ -160,7 +196,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     overviewLabelClassName = 'dial-small-semi-text',
     overviewValueClassName = 'dial-small-text',
     overviewValueTrueClassName = 'dial-small-text',
-    credentialsStatusLabelClassName,
     confirmMessageClassName = 'dial-small-text',
   } = detailsStyles?.typography ?? {};
 
@@ -175,9 +210,10 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-details-skeleton': detailsColors?.skeleton,
     '--cat-details-name-text': detailsColors?.nameText,
     '--cat-details-publish-title-text': detailsColors?.publishTitleText,
-    '--cat-credentials-status-text': detailsColors?.credentialsStatusText,
+    // '--cat-credentials-status-text': detailsColors?.credentialsStatusText,
     '--cat-details-content-text': detailsColors?.contentText,
     '--cat-details-variable-text': detailsColors?.variableText,
+    '--cat-details-file-count-text': detailsColors?.contentFileCountText,
     '--cat-api-heading-text': detailsColors?.apiHeadingText,
     '--cat-tools-divider': detailsColors?.toolsDivider,
     '--cat-tools-description-text': detailsColors?.toolsDescriptionText,
@@ -192,6 +228,17 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-confirm-message-text': detailsColors?.confirmMessageText,
     '--cat-confirm-consequence-text': detailsColors?.confirmConsequenceText,
     '--cat-confirm-footer-border': detailsColors?.confirmFooterBorder,
+    '--cat-cred-surface-bg': detailsColors?.credentialsSurfaceBackground,
+    '--cat-cred-active-icon': detailsColors?.credentialsActiveIcon,
+    '--cat-cred-description-text': detailsColors?.credentialsDescriptionText,
+    '--cat-cred-row-description-text':
+      detailsColors?.credentialsRowDescriptionText,
+    '--cat-cred-error-text': detailsColors?.credentialsErrorText,
+    '--cat-cred-card-bg': detailsColors?.credentialsCardBackground,
+    '--cat-cred-card-icon': detailsColors?.credentialsCardIcon,
+    '--cat-cred-card-title-text': detailsColors?.credentialsCardTitleText,
+    '--cat-cred-card-description-text':
+      detailsColors?.credentialsCardDescriptionText,
   });
 
   const [isStarred, setIsStarred] = useState(initialIsStarred);
@@ -202,6 +249,180 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   );
   const [isPublishHistoryLoading, setIsPublishHistoryLoading] = useState(false);
   const [hasPublishHistoryError, setHasPublishHistoryError] = useState(false);
+
+  const promptContent = item.details?.promptContent;
+  const baseFileId = promptContent?.selectedFileId;
+  /*
+   * A picked file overlays the body the details fetch already supplied.
+   * `null` means "showing the base content", so reselecting the base file
+   * costs no request.
+   */
+  const [pickedFile, setPickedFile] = useState<{
+    id: string;
+    preview: CatalogContentFilePreview | null;
+  } | null>(null);
+  const [isContentFileLoading, setIsContentFileLoading] = useState(false);
+  const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [isFileSelectorOpen, setIsFileSelectorOpen] = useState(false);
+
+  /*
+   * The blob: URL (if any) currently displayed as an image preview. Tracked
+   * outside React state so it can be revoked exactly once, right before it
+   * stops being displayed — never for a host-supplied non-blob URL.
+   */
+  const activeImageUrlRef = useRef<string | null>(null);
+  /*
+   * Guards against an out-of-order resolution: a superseded pick (or an item
+   * switch) bumps this, and a resolution whose captured generation no longer
+   * matches the latest one is discarded on arrival.
+   */
+  const requestGenerationRef = useRef(0);
+
+  const setPickedFilePreview = useCallback(
+    (
+      next: { id: string; preview: CatalogContentFilePreview | null } | null,
+    ) => {
+      const previousUrl = activeImageUrlRef.current;
+      const nextUrl =
+        next?.preview?.type === CatalogContentPreviewType.Image
+          ? next.preview.url
+          : null;
+      if (
+        previousUrl != null &&
+        previousUrl !== nextUrl &&
+        previousUrl.startsWith('blob:')
+      ) {
+        URL.revokeObjectURL(previousUrl);
+      }
+      activeImageUrlRef.current = nextUrl;
+      setPickedFile(next);
+    },
+    [],
+  );
+
+  /*
+   * A new item, or a re-fetched body, invalidates whatever file was picked
+   * and resets the selector back to every folder expanded and closed.
+   */
+  useEffect(() => {
+    requestGenerationRef.current += 1;
+    setPickedFilePreview(null);
+    setIsContentFileLoading(false);
+    setExpandedFolderIds(collectAllFolderIds(promptContent?.files ?? []));
+    setIsFileSelectorOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.id, baseFileId]);
+
+  /* Revoke whatever blob: URL is still displayed when the panel unmounts. */
+  useEffect(() => {
+    return () => {
+      const url = activeImageUrlRef.current;
+      if (url != null && url.startsWith('blob:')) URL.revokeObjectURL(url);
+    };
+  }, []);
+
+  const handleToggleFolder = useCallback((folderId: string) => {
+    setExpandedFolderIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(folderId)) {
+        next.delete(folderId);
+      } else {
+        next.add(folderId);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleSelectContentFile = useCallback(
+    async (fileId: string) => {
+      if (fileId === baseFileId) {
+        requestGenerationRef.current += 1;
+        setPickedFilePreview(null);
+        setIsContentFileLoading(false);
+        return;
+      }
+      if (
+        renderContentFilePreview == null &&
+        onLoadContentFile == null &&
+        onLoadContentFilePreview == null
+      ) {
+        return;
+      }
+
+      if (renderContentFilePreview != null) {
+        requestGenerationRef.current += 1;
+        setPickedFilePreview({ id: fileId, preview: null });
+        setIsContentFileLoading(false);
+        return;
+      }
+
+      const generation = ++requestGenerationRef.current;
+      setPickedFilePreview({ id: fileId, preview: null });
+      setIsContentFileLoading(true);
+      try {
+        const preview: CatalogContentFilePreview | undefined =
+          onLoadContentFilePreview != null
+            ? await onLoadContentFilePreview(fileId)
+            : await onLoadContentFile?.(fileId).then((text) =>
+                text != null
+                  ? ({
+                      type: CatalogContentPreviewType.Markdown,
+                      text,
+                    } satisfies CatalogContentFilePreview)
+                  : undefined,
+              );
+        if (requestGenerationRef.current !== generation) {
+          /*
+           * A discarded resolution's own image preview was never tracked by
+           * `activeImageUrlRef` (it only learns about a URL through
+           * `setPickedFilePreview`), so its `blob:` URL must be revoked here
+           * or it leaks.
+           */
+          if (
+            preview?.type === CatalogContentPreviewType.Image &&
+            preview.url.startsWith('blob:')
+          ) {
+            URL.revokeObjectURL(preview.url);
+          }
+          return;
+        }
+        setPickedFilePreview({ id: fileId, preview: preview ?? null });
+      } catch {
+        if (requestGenerationRef.current !== generation) return;
+        setPickedFilePreview({ id: fileId, preview: null });
+      } finally {
+        if (requestGenerationRef.current === generation) {
+          setIsContentFileLoading(false);
+        }
+      }
+    },
+    [
+      baseFileId,
+      onLoadContentFile,
+      onLoadContentFilePreview,
+      renderContentFilePreview,
+      setPickedFilePreview,
+    ],
+  );
+
+  const selectedFileId = pickedFile?.id ?? baseFileId;
+  const resolveContentFilePreview = (): CatalogContentFilePreview | null => {
+    if (pickedFile == null) return null;
+    if (pickedFile.preview != null) return pickedFile.preview;
+    return {
+      type: CatalogContentPreviewType.Text,
+      text: texts?.contentFileErrorLabel ?? 'Failed to load this file.',
+    };
+  };
+  const renderedContentFilePreview =
+    pickedFile != null && renderContentFilePreview != null
+      ? renderContentFilePreview(
+          pickedFile.id,
+          findContentNodeName(promptContent?.files ?? [], pickedFile.id) ?? '',
+        )
+      : undefined;
 
   useEffect(() => {
     if (!isPublishOpen || !getPublishHistory) {
@@ -255,10 +476,22 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
       publishFlow.hasSubmitError,
     ],
   );
-  const [isCredentialsOpen, setIsCredentialsOpen] = useState(false);
+  const [isCredentialsManagementOpen, setIsCredentialsManagementOpen] =
+    useState(false);
   const [confirmation, setConfirmation] =
     useState<DetailsConfirmationKind | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
+  /* Set alongside `confirmation` only for `DeleteApiKey`, since that step can apply to either credentials slot on the same item. */
+  const [pendingApiKeyDeleteLevel, setPendingApiKeyDeleteLevel] =
+    useState<CredentialsLevel | null>(null);
+  /*
+   * Set alongside `confirmation` for `Logout`. The top-level header action
+   * has only one signed-in level to log out of, resolved via
+   * `getSignedInLevel`; the admin management panel can request either level
+   * explicitly since both may be independently signed in.
+   */
+  const [pendingLogoutLevel, setPendingLogoutLevel] =
+    useState<CredentialsLevel | null>(null);
 
   useEffect(() => {
     setIsStarred(initialIsStarred);
@@ -276,24 +509,40 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     publishFlow.reset();
     setPublishHistory([]);
     setHasPublishHistoryError(false);
-    setIsCredentialsOpen(false);
+    setIsCredentialsManagementOpen(false);
     setConfirmation(null);
     setIsConfirming(false);
+    setPendingApiKeyDeleteLevel(null);
+    setPendingLogoutLevel(null);
     // Reset publish-flow-local state only when the displayed item changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id]);
 
-  const handleToggleCredentials = useCallback(() => {
-    setIsCredentialsOpen((prev) => !prev);
-  }, []);
+  const handleOpenCredentialsManagement = useCallback(
+    () => setIsCredentialsManagementOpen(true),
+    [],
+  );
+  const handleCloseCredentialsManagement = useCallback(
+    () => setIsCredentialsManagementOpen(false),
+    [],
+  );
 
   const handleRequestDelete = useCallback(() => {
     setConfirmation(DetailsConfirmationKind.Delete);
   }, []);
 
-  const handleRequestLogout = useCallback(() => {
-    setConfirmation(DetailsConfirmationKind.Logout);
-  }, []);
+  const handleRequestLogout = useCallback(
+    (level?: CredentialsLevel) => {
+      setPendingLogoutLevel(
+        level ??
+          (item.credentials != null
+            ? getSignedInLevel(item.credentials)
+            : null),
+      );
+      setConfirmation(DetailsConfirmationKind.Logout);
+    },
+    [item.credentials],
+  );
 
   const handleRequestUnshare = useCallback(() => {
     setConfirmation(DetailsConfirmationKind.Unshare);
@@ -303,9 +552,16 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     setConfirmation(DetailsConfirmationKind.RevokeAccess);
   }, []);
 
+  const handleRequestDeleteApiKey = useCallback((level: CredentialsLevel) => {
+    setPendingApiKeyDeleteLevel(level);
+    setConfirmation(DetailsConfirmationKind.DeleteApiKey);
+  }, []);
+
   const handleCancelConfirmation = useCallback(() => {
     if (isConfirming) return;
     setConfirmation(null);
+    setPendingApiKeyDeleteLevel(null);
+    setPendingLogoutLevel(null);
   }, [isConfirming]);
 
   const handleConfirm = useCallback(async () => {
@@ -323,14 +579,19 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           await onRevokeShare?.(item);
           break;
         case DetailsConfirmationKind.Logout:
-          if (item.credentials != null) {
-            await onLogout?.(item, {
-              level: getSignedInLevel(item.credentials),
-            });
+          if (pendingLogoutLevel != null) {
+            await onLogout?.(item, { level: pendingLogoutLevel });
+          }
+          break;
+        case DetailsConfirmationKind.DeleteApiKey:
+          if (pendingApiKeyDeleteLevel != null) {
+            await onLogout?.(item, { level: pendingApiKeyDeleteLevel });
           }
           break;
       }
       setConfirmation(null);
+      setPendingApiKeyDeleteLevel(null);
+      setPendingLogoutLevel(null);
       if (CONFIRMATIONS_REMOVING_ITEM_FROM_VIEW.has(confirmation)) {
         onClose();
       }
@@ -340,12 +601,16 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
        * responsibility; the item stays visible and the panel stays open.
        */
       setConfirmation(null);
+      setPendingApiKeyDeleteLevel(null);
+      setPendingLogoutLevel(null);
     } finally {
       setIsConfirming(false);
     }
   }, [
     isConfirming,
     confirmation,
+    pendingApiKeyDeleteLevel,
+    pendingLogoutLevel,
     item,
     onDelete,
     onUnshare,
@@ -546,15 +811,41 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           variant: DetailsConfirmationVariant.Info,
         };
       }
+      case DetailsConfirmationKind.DeleteApiKey: {
+        const deleteLabel = texts?.deleteActionLabel ?? 'Delete';
+        const level = pendingApiKeyDeleteLevel ?? CredentialsLevel.User;
+        return {
+          title: deleteLabel,
+          message: (
+            texts?.deleteApiKeyConfirmMessage ??
+            defaultDeleteApiKeyConfirmMessage
+          )(level),
+          consequences: undefined,
+          confirmLabel: deleteLabel,
+          loadingStatusLabel: texts?.deletingStatusLabel ?? 'Deleting',
+          variant: DetailsConfirmationVariant.Danger,
+          /* Removing one credential doesn't warrant a red toolset card — the
+           * item itself is unaffected, only the confirm button stays danger. */
+          cardVariant: DetailsConfirmationVariant.Info,
+        };
+      }
       default:
         return null;
     }
-  }, [confirmation, item.name, texts]);
+  }, [confirmation, item.name, pendingApiKeyDeleteLevel, texts]);
 
   const isConfirmationOpen = confirmationContent != null;
-  const isSubViewOpen = isConfirmationOpen || isPublishOpen;
+  const isSubViewOpen =
+    isConfirmationOpen || isPublishOpen || isCredentialsManagementOpen;
 
-  /* A confirmation and the publish flow never share the header; null means the details header. */
+  const credentialsManagementTitle =
+    item.credentials != null
+      ? (
+          texts?.credentialsManagementTitle ?? defaultCredentialsManagementTitle
+        )(item.credentials.authenticationType)
+      : '';
+
+  /* A confirmation, the publish flow, and credentials management never share the header; null means the details header. */
   const subViewHeader = (() => {
     if (isConfirmationOpen) {
       return {
@@ -568,6 +859,13 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
         title: publishTitle,
         isBackDisabled: publishFlow.isSubmitting,
         onBack: handleClosePublish,
+      };
+    }
+    if (isCredentialsManagementOpen) {
+      return {
+        title: credentialsManagementTitle,
+        isBackDisabled: false,
+        onBack: handleCloseCredentialsManagement,
       };
     }
     return null;
@@ -652,10 +950,25 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
               item={item}
               message={confirmationContent.message}
               consequences={confirmationContent.consequences}
-              variant={confirmationContent.variant}
+              variant={
+                confirmationContent.cardVariant ?? confirmationContent.variant
+              }
               messageClassName={confirmMessageClassName}
             />
           )}
+
+          {!isConfirmationOpen &&
+            !isPublishOpen &&
+            isCredentialsManagementOpen && (
+              <CredentialsManagementPanel
+                item={item}
+                onLogin={onLogin}
+                onRequestLogout={handleRequestLogout}
+                onRequestDeleteApiKey={handleRequestDeleteApiKey}
+                texts={texts}
+                detailsStyles={detailsStyles}
+              />
+            )}
 
           {!isConfirmationOpen && isPublishOpen && (
             <div className="p-[22px]">
@@ -688,11 +1001,13 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 isRulesLoading={publishFlow.isRulesLoading}
                 hasRulesLoadError={publishFlow.hasRulesLoadError}
                 labels={publishLabels}
-                colors={{
-                  summaryVersionTagBorder: detailsColors?.versionTagBorder,
-                  summaryVersionTagBackground:
-                    detailsColors?.versionTagBackground,
-                  summaryVersionTagText: detailsColors?.versionTagText,
+                styles={{
+                  colors: {
+                    summaryVersionTagBorder: detailsColors?.versionTagBorder,
+                    summaryVersionTagBackground:
+                      detailsColors?.versionTagBackground,
+                    summaryVersionTagText: detailsColors?.versionTagText,
+                  },
                 }}
               />
             </div>
@@ -712,6 +1027,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onEdit={onEdit}
                 onDownload={onDownload}
                 isDownloadVisible={isDownloadVisible}
+                isDownloadPrimary={isDownloadPrimary}
                 onDelete={onDelete ? handleRequestDelete : undefined}
                 onUnshare={onUnshare ? handleRequestUnshare : undefined}
                 isUnshareVisible={isUnshareVisible}
@@ -722,21 +1038,31 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 isRevokeShareVisible={isRevokeShareVisible}
                 onLogin={onLogin}
                 onLogout={onLogout}
-                onToggleCredentials={handleToggleCredentials}
+                onOpenCredentialsManagement={handleOpenCredentialsManagement}
                 onRequestLogout={handleRequestLogout}
                 texts={texts}
                 detailsStyles={detailsStyles}
               />
 
-              {isCredentialsOpen && (
-                <CredentialsSection
-                  item={item}
-                  onLogin={onLogin}
-                  onLogout={onLogout}
-                  texts={texts}
-                  statusLabelClassName={credentialsStatusLabelClassName}
-                />
-              )}
+              {item.credentials != null &&
+                (() => {
+                  const bannerState = getCredentialsBannerState(
+                    item.credentials,
+                  );
+                  return (
+                    bannerState != null && (
+                      <div className="px-6">
+                        <CredentialsBanner
+                          state={bannerState}
+                          authenticationType={
+                            item.credentials.authenticationType
+                          }
+                          texts={texts}
+                        />
+                      </div>
+                    )
+                  );
+                })()}
 
               <div className="flex items-center px-6">
                 <Tabs
@@ -777,8 +1103,24 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 )}
                 {activeTab === CatalogDetailsTab.Content && (
                   <ContentTab
-                    content={item.details?.promptContent?.content ?? ''}
-                    description={item.description}
+                    content={promptContent?.content ?? ''}
+                    filePreview={resolveContentFilePreview()}
+                    filePreviewContent={renderedContentFilePreview}
+                    description={promptContent?.description ?? item.description}
+                    files={promptContent?.files}
+                    selectedFileId={selectedFileId}
+                    onSelectFile={(fileId) =>
+                      void handleSelectContentFile(fileId)
+                    }
+                    isFileLoading={isContentFileLoading}
+                    expandedFolderIds={expandedFolderIds}
+                    onToggleFolder={handleToggleFolder}
+                    isFileSelectorOpen={isFileSelectorOpen}
+                    onFileSelectorOpenChange={setIsFileSelectorOpen}
+                    fileSelectorAriaLabel={texts?.contentFileSelectorAriaLabel}
+                    fileCountLabel={texts?.contentFileCountLabel}
+                    fileLoadingLabel={texts?.contentFileLoadingLabel}
+                    fileUnsupportedLabel={texts?.contentFileUnsupportedLabel}
                     detailsStyles={detailsStyles}
                   />
                 )}

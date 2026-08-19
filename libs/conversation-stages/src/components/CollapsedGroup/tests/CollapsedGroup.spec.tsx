@@ -59,7 +59,7 @@ describe('CollapsedGroup — collapsed states', () => {
     const { container } = render(
       <CollapsedGroup stages={[]} isStreaming={false} />,
     );
-    expect(container.firstChild).toBeNull();
+    expect(container.innerHTML).toBe('');
   });
 
   it('renders a single stage directly, with no summary wrapper', () => {
@@ -123,13 +123,19 @@ describe('CollapsedGroup — collapsed states', () => {
   });
 
   it('announces the running summary via a polite live region', () => {
-    const { container } = render(
+    render(
       <CollapsedGroup
         stages={[completed(0, 'Step 1'), running(1, 'Step 2')]}
         isStreaming
       />,
     );
-    expect(container.querySelector('[aria-live="polite"]')).toBeTruthy();
+    // role="status" implies aria-live="polite"; the Spinner mock also
+    // renders one, so confirm the summary text is inside a status region.
+    const summaryText = screen.getByText(/Step 2 of 2/);
+    const isAnnounced = screen
+      .getAllByRole('status')
+      .some((status) => status.contains(summaryText));
+    expect(isAnnounced).toBe(true);
   });
 });
 

@@ -15,7 +15,9 @@ Lets a user who received shared access to a catalog application, toolset, skill,
 
 `DetailsPanel` SHALL own the confirmation step and present it as an in-place sub-view — see the `catalog-details-confirmation-subview` capability for the shared mechanics. While the awaited `onUnshare` is pending the confirm button SHALL show a loading state and reject duplicate submissions. On success the whole details panel closes; on rejection the panel returns to its details content and stays open, leaving failure feedback to the host. The sub-view SHALL also close when the displayed item changes.
 
-`CatalogView` (`apps/chat/src/components/CatalogView/CatalogView.tsx`) SHALL implement `onUnshare` by calling `discardSharedCatalogItem(item.id)`, then refetching toolsets for a `Toolset` item and deployments otherwise, clearing `selectedItemId` when the removed item was selected, and showing a success notification. A rejection from the discard call SHALL surface an error notification (with the request's trace id) and be re-thrown so the panel stays open; a rejection from the subsequent refetch SHALL NOT downgrade the already-succeeded mutation to an error.
+`CatalogView` (`apps/chat/src/components/CatalogView/CatalogView.tsx`) SHALL implement `onUnshare` by calling `discardSharedCatalogItem(item.id)`, then refetching toolsets for a `Toolset` item, skills for a `Skill` item (via `refetchSkills()` from `useSkills()`), and deployments otherwise, clearing `selectedItemId` when the removed item was selected, and showing a success notification. A rejection from the discard call SHALL surface an error notification (with the request's trace id) and be re-thrown so the panel stays open; a rejection from the subsequent refetch SHALL NOT downgrade the already-succeeded mutation to an error.
+
+`CatalogView.isUnshareVisible` SHALL NOT unconditionally exclude `CatalogEntityType.Skill`. It SHALL return `true` for `Skill` (subject to `Header`'s built-in `isMyApp`/`sharedWithMe` gate above, which already applies uniformly across entity types), since `DiscardSharedCatalogItemDto`'s allowlist already accepts `skills/{bucket}/{path}` and no backend change is required to support it.
 
 #### Scenario: Shared item exposes the action
 
@@ -37,12 +39,24 @@ Lets a user who received shared access to a catalog application, toolset, skill,
 #### Scenario: Successful removal closes the panel and refreshes the catalog
 
 - **WHEN** the user confirms removal of a shared toolset
-- **THEN** `discardSharedCatalogItem` is called once with the item id, toolsets are refetched (deployments are not), a success notification is shown, and the details panel closes
+- **THEN** `discardSharedCatalogItem` is called once with the item id, toolsets are refetched (deployments and skills are not), a success notification is shown, and the details panel closes
 
 #### Scenario: Failed removal keeps the panel open
 
 - **WHEN** `discardSharedCatalogItem` rejects
 - **THEN** an error notification is shown, no refetch runs, the selection is left untouched, and the details panel stays open
+
+#### Scenario: Shared skill exposes and exercises "Remove from My List"
+
+- **GIVEN** a skill catalog item with `isMyApp: false` and `sharedWithMe: true`
+- **WHEN** the user opens the Manage menu and confirms "Remove from My List"
+- **THEN** the menu includes the entry (no longer excluded by `isUnshareVisible`), `discardSharedCatalogItem` is called once with the skill's `item.id` (`skills/{bucket}/{path}`), `refetchSkills()` is called (neither toolsets nor deployments are refetched), a success notification is shown, and the details panel closes
+
+#### Scenario: Failed skill removal does not refetch and keeps the panel open
+
+- **GIVEN** a shared skill item
+- **WHEN** `discardSharedCatalogItem` rejects for that item
+- **THEN** an error notification is shown with the request's trace id, `refetchSkills` is NOT called, the selection is left untouched, and the details panel stays open
 
 ### Requirement: BFF discard-shared-catalog-item endpoint
 

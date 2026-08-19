@@ -250,7 +250,7 @@ describe('RenameConversationPopup', () => {
 
     await user.click(getAiButton());
 
-    await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+    expect(await screen.findByRole('status')).toBeTruthy();
     expect(getAiButton().disabled).toBe(true);
 
     resolveGenerate('Done');

@@ -11,7 +11,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { listPrompts, listPublicPrompts } from '../server-api/prompts.api';
+import { listPrompts } from '../server-api/prompts.api';
 
 export interface PromptsContextType {
   /** The caller's own prompts. */
@@ -24,13 +24,13 @@ export interface PromptsContextType {
   publicPrompts: PromptResponseDto[];
   /** Folders in the organisation prompt namespace. */
   publicFolders: PromptFolderResponseDto[];
-  /** True until both the personal and organisation list requests have settled. */
+  /** True until the aggregate prompt listing has settled. */
   isLoading: boolean;
   /** Rejection reason of the most recent failed list request, or `null`. */
   error: unknown;
-  /** Re-reads personal prompts, folders, and shared-with-me prompts. */
+  /** Re-reads personal, shared-with-me, and organisation prompts. */
   refetchPrompts: () => Promise<void>;
-  /** Re-reads organisation prompts and folders. */
+  /** Compatibility alias for the aggregate refetch. */
   refetchPublicPrompts: () => Promise<void>;
 }
 
@@ -62,51 +62,37 @@ export const PromptsProvider = ({ children }: { children: ReactNode }) => {
       setPrompts(response.prompts);
       setFolders(response.folders);
       setSharedWithMe(response.sharedWithMe);
+      setPublicPrompts(response.publicPrompts ?? []);
+      setPublicFolders(response.publicFolders ?? []);
       setError(null);
     } catch (err) {
       setError(err);
     }
   }, []);
 
-  const refetchPublicPrompts = useCallback(async () => {
-    try {
-      const response = await listPublicPrompts();
-      setPublicPrompts(response.prompts);
-      setPublicFolders(response.folders);
-      setError(null);
-    } catch (err) {
-      setError(err);
-    }
-  }, []);
+  const refetchPublicPrompts = refetchPrompts;
 
   /*
-   * Both lists load independently: an organisation-bucket outage must not
-   * hide the caller's own prompts, and vice versa. `allSettled` also keeps
-   * `isLoading` honest — it always reaches false, whatever either call did.
+   * The BFF aggregates personal, shared, and organisation prompts, so the
+   * browser makes one request and receives one ownership-aware snapshot.
    */
   useEffect(() => {
     const cancelled = { value: false };
 
     const load = async () => {
-      const [personal, organisation] = await Promise.allSettled([
-        listPrompts(),
-        listPublicPrompts(),
-      ]);
+      const response = await listPrompts().catch((reason: unknown) => {
+        if (!cancelled.value) setError(reason);
+        return null;
+      });
       if (cancelled.value) return;
 
-      if (personal.status === 'fulfilled') {
-        setPrompts(personal.value.prompts);
-        setFolders(personal.value.folders);
-        setSharedWithMe(personal.value.sharedWithMe);
-      } else {
-        setError(personal.reason);
-      }
-
-      if (organisation.status === 'fulfilled') {
-        setPublicPrompts(organisation.value.prompts);
-        setPublicFolders(organisation.value.folders);
-      } else {
-        setError(organisation.reason);
+      if (response != null) {
+        setPrompts(response.prompts);
+        setFolders(response.folders);
+        setSharedWithMe(response.sharedWithMe);
+        setPublicPrompts(response.publicPrompts ?? []);
+        setPublicFolders(response.publicFolders ?? []);
+        setError(null);
       }
 
       setIsLoading(false);

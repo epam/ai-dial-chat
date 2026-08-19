@@ -70,9 +70,12 @@ describe('SettingsStep', () => {
       <SettingsStep schema={SCHEMA} appId="abc" isPreviewing={false} />,
     );
 
+    // Wrapper divs carry no role/testid; asserting the "hidden" class is CSS-level behavior with no semantic query available.
+    // eslint-disable-next-line testing-library/no-node-access
     const previewWrapper = screen.getByText('preview-chat-abc').parentElement;
     expect(previewWrapper?.className).toContain('hidden');
 
+    // eslint-disable-next-line testing-library/no-node-access
     const iframeWrapper = screen.getByText('iframe-content').parentElement;
     expect(iframeWrapper?.className).not.toContain('hidden');
     expect(container).toBeTruthy();
@@ -81,9 +84,12 @@ describe('SettingsStep', () => {
   it('hides the iframe wrapper (not the preview pane) when previewing', () => {
     render(<SettingsStep schema={SCHEMA} appId="abc" isPreviewing />);
 
+    // Wrapper divs carry no role/testid; asserting the "hidden" class is CSS-level behavior with no semantic query available.
+    // eslint-disable-next-line testing-library/no-node-access
     const previewWrapper = screen.getByText('preview-chat-abc').parentElement;
     expect(previewWrapper?.className).not.toContain('hidden');
 
+    // eslint-disable-next-line testing-library/no-node-access
     const iframeWrapper = screen.getByText('iframe-content').parentElement;
     expect(iframeWrapper?.className).toContain('hidden');
   });

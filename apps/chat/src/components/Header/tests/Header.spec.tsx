@@ -71,8 +71,8 @@ describe('Header', () => {
   });
 
   it('renders Header component', () => {
-    const { container } = renderHeader();
-    expect(container.querySelector('header')).toBeTruthy();
+    renderHeader();
+    expect(screen.getByRole('banner')).toBeTruthy();
   });
 
   it('renders Logo component inside Header', () => {
@@ -81,8 +81,8 @@ describe('Header', () => {
   });
 
   it('applies expected container classes', () => {
-    const { container } = renderHeader();
-    const header = container.querySelector('header');
+    renderHeader();
+    const header = screen.getByRole('banner');
     expect(header?.classList.contains('relative')).toBe(true);
     expect(header?.classList.contains('z-30')).toBe(true);
     expect(header?.classList.contains('min-h-[48px]')).toBe(true);
@@ -124,8 +124,8 @@ describe('Header', () => {
     mockUseUiFeature.mockImplementation(
       (feature) => feature !== OverlayFeature.Header,
     );
-    const { container } = renderHeader();
-    expect(container.querySelector('header')).toBeNull();
+    renderHeader();
+    expect(screen.queryByRole('banner')).toBeNull();
   });
 
   it('hides the conversations-panel-toggle button when the feature is disabled', () => {

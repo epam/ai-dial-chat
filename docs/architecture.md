@@ -338,6 +338,17 @@ Business controllers are versioned; three infrastructure controllers are deliber
 
 `POST /api/v1/conversations/completions` routes to one of two upstream generation APIs per request — `ConversationService.streamCompletion` resolves `features.responsesApi` off `DeploymentsService.getDeploymentDetails` (under the caller's own token, before opening the upstream stream) and dispatches to `chat-completions.adapter.ts` or `responses.adapter.ts` (`apps/chat-api/src/conversations/generation/`) accordingly. Both adapters normalize their upstream SSE events into the same `chat.completion.chunk` shape, so the wire contract to the browser, `apply-chunk.server.ts`, and the persistence lifecycle are unchanged regardless of which API served the request. Deployments that don't declare `responses_api: true` keep using Chat Completions exactly as before.
 
+#### Models & Deployments
+
+| Method | Path                                       | Description                                                                                      |
+| ------ | ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `GET`  | `/api/v1/models`                           | List available models (cached)                                                                   |
+| `GET`  | `/api/deployments`                         | List available deployments                                                                       |
+| `GET`  | `/api/v1/deployments/{deployment}/details` | Full per-entity detail for one deployment by id (cached)                                         |
+| `GET`  | `/api/v1/deployments/{deployment}/limits`  | Rate-limit and rolling usage stats for one deployment                                            |
+| `GET`  | `/api/v1/user/limits`                      | Rate-limit and rolling usage stats for every visible deployment, plus global cost-budget figures |
+| `GET`  | `/api/v1/user/usage`                       | Same shape as `/api/v1/user/limits`, restricted to deployments used in the trailing 30 days      |
+
 #### Client Channel (`/api/v1/client-channel`)
 
 DIAL Core RPC proxy used to deliver mid-completion `toolset/signin` and `external-service/signin` interrupts. See [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services).

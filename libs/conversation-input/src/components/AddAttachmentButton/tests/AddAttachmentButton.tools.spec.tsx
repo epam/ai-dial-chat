@@ -135,7 +135,7 @@ describe('AddAttachmentButton — tools submenu', () => {
         screen.getByRole('menuitem', { name: 'Attach file' }),
       ).toBeTruthy();
       expect(toolsTrigger.getAttribute('aria-expanded')).toBe('false');
-      expect(document.activeElement).toBe(toolsTrigger);
+      expect(toolsTrigger.matches(':focus')).toBe(true);
     });
   });
 
@@ -176,8 +176,10 @@ describe('AddAttachmentButton — tools submenu', () => {
       fireEvent.click(screen.getByLabelText('Add'));
       fireEvent.click(await screen.findByText('Tools'));
 
-      const row = (await screen.findByText('Deep Research')).closest('button');
-      expect(row?.getAttribute('aria-checked')).toBe('true');
+      const row = await screen.findByRole('menuitemcheckbox', {
+        name: 'Deep Research',
+      });
+      expect(row.getAttribute('aria-checked')).toBe('true');
     });
 
     it('reflects isSelected=false as aria-checked on the tool row', async () => {
@@ -193,8 +195,10 @@ describe('AddAttachmentButton — tools submenu', () => {
       fireEvent.click(screen.getByLabelText('Add'));
       fireEvent.click(await screen.findByText('Tools'));
 
-      const row = (await screen.findByText('Deep Research')).closest('button');
-      expect(row?.getAttribute('aria-checked')).toBe('false');
+      const row = await screen.findByRole('menuitemcheckbox', {
+        name: 'Deep Research',
+      });
+      expect(row.getAttribute('aria-checked')).toBe('false');
     });
   });
 });

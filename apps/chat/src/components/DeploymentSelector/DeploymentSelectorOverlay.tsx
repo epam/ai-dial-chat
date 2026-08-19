@@ -3,7 +3,6 @@ import { lazy, memo, Suspense, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BasicI18nKeys,
-  ButtonsI18nKeys,
   DeploymentSelectorI18nKeys,
   FavoritesI18nKeys,
 } from '../../constants/translation-keys';
@@ -37,7 +36,7 @@ const DeploymentSelectorOverlay: FC<Props> = ({
     clearSearchLabel: t(BasicI18nKeys.ClearSearch),
     favoritesLabel: t(FavoritesI18nKeys.FavoritesLabel),
     emptyHint: t(DeploymentSelectorI18nKeys.EmptyHint),
-    browseCatalogLabel: t(ButtonsI18nKeys.Browse),
+    browseCatalogLabel: t(DeploymentSelectorI18nKeys.BrowseCatalogLabel),
     removeFromFavoritesLabel: t(FavoritesI18nKeys.RemoveFromFavorites),
     currentlySelectedLabel: t(
       DeploymentSelectorI18nKeys.CurrentlySelectedLabel,

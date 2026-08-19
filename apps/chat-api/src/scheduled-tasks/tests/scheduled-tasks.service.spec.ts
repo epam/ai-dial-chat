@@ -1,4 +1,10 @@
-import { Logger, ServiceUnavailableException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  ConflictException,
+  Logger,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../dial/dial-client.service';
 import { ScheduledTasksService } from '../scheduled-tasks.service';
@@ -858,6 +864,144 @@ describe('ScheduledTasksService', () => {
       ).rejects.toBeInstanceOf(ServiceUnavailableException);
       await expect(
         service.resumeScheduledTask('user-1', 'token', 'sched_123'),
+      ).rejects.toBeInstanceOf(ServiceUnavailableException);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteScheduledTask', () => {
+    it('calls the exact upstream DELETE URL with no body and invalidates the list cache', async () => {
+      fetchMock.mockResolvedValue({ ok: true, status: 204 });
+      const cacheManager = makeCacheManager();
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        cacheManager as never,
+      );
+
+      await service.deleteScheduledTask('user-1', 'token', 'sched_123');
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://dial-core/v1/deployments/applications/scheduler-app/route/v1/schedules/sched_123',
+        expect.objectContaining({
+          method: 'DELETE',
+          body: undefined,
+          headers: expect.objectContaining({ Authorization: 'Bearer token' }),
+        }),
+      );
+      expect(cacheManager.set).toHaveBeenCalledWith(
+        'scheduled-tasks:list-epoch:user-1',
+        1,
+        24 * 60 * 60 * 1000,
+      );
+    });
+
+    it('does not attempt to parse a JSON body from the 204 response', async () => {
+      const jsonSpy = vi.fn();
+      fetchMock.mockResolvedValue({ ok: true, status: 204, json: jsonSpy });
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        makeCacheManager() as never,
+      );
+
+      await expect(
+        service.deleteScheduledTask('user-1', 'token', 'sched_123'),
+      ).resolves.toBeUndefined();
+      expect(jsonSpy).not.toHaveBeenCalled();
+    });
+
+    it('propagates a 404 as NotFoundException and does not invalidate the list cache', async () => {
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 404,
+        json: () => Promise.resolve('schedule not found'),
+      });
+      const cacheManager = makeCacheManager();
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        cacheManager as never,
+      );
+
+      await expect(
+        service.deleteScheduledTask('user-1', 'token', 'sched_missing'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(cacheManager.set).not.toHaveBeenCalledWith(
+        'scheduled-tasks:list-epoch:user-1',
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
+    it('propagates a 409 as ConflictException and does not invalidate the list cache', async () => {
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: () => Promise.resolve('schedule already deleted'),
+      });
+      const cacheManager = makeCacheManager();
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        cacheManager as never,
+      );
+
+      await expect(
+        service.deleteScheduledTask('user-1', 'token', 'sched_123'),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(cacheManager.set).not.toHaveBeenCalledWith(
+        'scheduled-tasks:list-epoch:user-1',
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
+    it('propagates a 502 as BadGatewayException and does not invalidate the list cache', async () => {
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 502,
+        json: () => Promise.resolve('could not unregister job'),
+      });
+      const cacheManager = makeCacheManager();
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        cacheManager as never,
+      );
+
+      await expect(
+        service.deleteScheduledTask('user-1', 'token', 'sched_123'),
+      ).rejects.toBeInstanceOf(BadGatewayException);
+      expect(cacheManager.set).not.toHaveBeenCalledWith(
+        'scheduled-tasks:list-epoch:user-1',
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
+    it('maps a network/timeout error to ServiceUnavailableException', async () => {
+      fetchMock.mockRejectedValue(new Error('network down'));
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        makeCacheManager() as never,
+      );
+
+      await expect(
+        service.deleteScheduledTask('user-1', 'token', 'sched_123'),
+      ).rejects.toBeInstanceOf(ServiceUnavailableException);
+    });
+
+    it('throws ServiceUnavailableException when SCHEDULER_APP_ID is unset', async () => {
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService(undefined) as never,
+        makeCacheManager() as never,
+      );
+
+      await expect(
+        service.deleteScheduledTask('user-1', 'token', 'sched_123'),
       ).rejects.toBeInstanceOf(ServiceUnavailableException);
       expect(fetchMock).not.toHaveBeenCalled();
     });

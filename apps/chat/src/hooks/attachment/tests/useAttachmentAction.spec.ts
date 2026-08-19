@@ -1,6 +1,6 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
-import { renderHook } from '@testing-library/react';
+import { renderHook, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   downloadAttachment,
@@ -36,7 +36,9 @@ const makeAttachment = (
  * the assertions run.
  */
 const getDownloadAnchor = (): HTMLAnchorElement | null =>
-  document.body.querySelector('a[download]');
+  screen
+    .queryAllByRole<HTMLAnchorElement>('link', { hidden: true })
+    .find((anchor) => anchor.hasAttribute('download')) ?? null;
 
 describe('useAttachmentAction', () => {
   let anchorClickSpy: ReturnType<typeof vi.spyOn>;

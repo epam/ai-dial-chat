@@ -1,3 +1,4 @@
+import type { EditorThemes } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
 import type { SkillFileNodeKind } from '../types/skill-file-node-kind';
 
@@ -38,24 +39,82 @@ export interface SkillEditorErrors {
   instructions?: string;
 }
 
+/** Whether a staged upload candidate is the Skill manifest or an ordinary supporting file. */
+export enum SkillFileCandidateKind {
+  /** An ordinary supporting file, added to the tree on commit. */
+  SupportingFile = 'supporting-file',
+  /** The root `SKILL.md` manifest, handled by the host as a metadata import rather than a tree entry. */
+  Manifest = 'manifest',
+}
+
+/** Whether a staged upload candidate's latest host validation passed. */
+export enum SkillFileValidationStatus {
+  /** The candidate may be included in a commit. */
+  Valid = 'valid',
+  /** The candidate is blocked from commit; see the result's `error`. */
+  Invalid = 'invalid',
+}
+
+/** One file staged in the upload dialog, not yet committed to the editor. */
+export interface SkillFileUploadCandidate {
+  /** Stable id for React keys and remove targeting, independent of path edits. */
+  id: string;
+  /** The raw selected or dropped file. */
+  file: File;
+  /** Resolved relative path (`webkitRelativePath` falling back to `File.name`, `/`-normalized). */
+  path: string;
+}
+
+/** Host validation outcome for one staged candidate. */
+export interface SkillFileValidationResult {
+  /** The `SkillFileUploadCandidate.id` this result applies to. */
+  candidateId: string;
+  /** Whether the candidate currently passes host validation. */
+  status: SkillFileValidationStatus;
+  /** Whether this candidate is the Skill manifest or an ordinary supporting file. */
+  kind: SkillFileCandidateKind;
+  /** Error message to render on the candidate's row. Present when `status` is `Invalid`. */
+  error?: string;
+}
+
+/** A validation problem attributable to the whole staged batch, not one row (e.g. total size/count). */
+export interface SkillFileBatchError {
+  /** Message rendered in the dialog's batch-level error region. */
+  message: string;
+}
+
+/** Outcome of committing a staged batch to the editor. */
+export interface SkillFileCommitResult {
+  /** Present when the commit failed; the dialog stays open with the batch intact and shows this message. */
+  error?: string;
+}
+
 /**
  * Host-owned operations on the in-memory supporting-file set. The library
- * calls these when the user uploads a file from their device or removes an
+ * calls these when the user stages files in the upload dialog or removes an
  * entry; it never mutates `files` itself.
  */
 export interface SkillEditorFileActions {
   /**
-   * Validates an uploaded file's path before it is added to the tree. Return
-   * an error message to block the addition, or `undefined` to accept it.
+   * Validates the complete currently staged batch. Called on every staged-set
+   * change and again immediately before a commit. Never mutates any state.
    */
-  validatePath: (path: string) => string | undefined;
+  validateBatch: (candidates: SkillFileUploadCandidate[]) => Promise<{
+    /** One result per candidate, in the same order as `candidates`. */
+    results: SkillFileValidationResult[];
+    /** Errors attributable to the batch as a whole. */
+    batchErrors: SkillFileBatchError[];
+  }>;
   /**
-   * Called when the user picks a local file to upload as a supporting file.
-   * Resolves once the host has read and stored its content; rejects to
-   * surface an inline upload error instead of adding the node.
+   * Called once, with the full currently-valid staged batch, when the user
+   * confirms the upload dialog. Resolves without an `error` to close the
+   * dialog and clear staged state; resolves with an `error` to keep the
+   * dialog open with the batch intact.
    */
-  onUploadFile: (file: File, path: string) => Promise<void>;
-  /** Called after the user confirms removing a non-protected node. */
+  commitBatch: (
+    candidates: SkillFileUploadCandidate[],
+  ) => Promise<SkillFileCommitResult>;
+  /** Called after the user confirms removing a non-protected node already present in the tree. */
   onRemoveNode: (path: string) => void;
 }
 
@@ -116,6 +175,30 @@ export interface SkillEditorLabels {
   supportingFileNote?: string;
   /** Label of the "Reload latest" button rendered next to the host-supplied `conflict.message` in the conflict state. Defaults to `'Reload latest'`. */
   reloadLatestLabel?: string;
+  /** Upload dialog title. Defaults to `'Upload files from device'`. */
+  uploadDialogTitle?: string;
+  /** Accessible label of the upload dialog's close control. Defaults to `'Close'`. */
+  uploadDialogCloseAriaLabel?: string;
+  /** Drop-zone copy shown at the `desktop` breakpoint. Defaults to `'Drag and drop it or click here to upload'`. */
+  uploadDropZoneLabel?: string;
+  /** Drop-zone copy shown at the `mobile` breakpoint (no drag surface). Defaults to `'Click here to upload'`. */
+  uploadDropZoneMobileLabel?: string;
+  /** Accessible label of the drop zone / native-picker trigger. Defaults to `'Upload files'`. */
+  uploadDropZoneAriaLabel?: string;
+  /** Builds the accessible label of a staged row's remove control, given its path. Defaults to a sentence naming the path. */
+  uploadRemoveCandidateLabel?: (path: string) => string;
+  /** Explanatory copy on a manifest-kind staged row. Defaults to a sentence explaining it will populate/replace the Skill's metadata. */
+  uploadManifestRowNote?: string;
+  /** Confirm ("Add"/"Upload") button label in the upload dialog. Defaults to `'Add'`. */
+  uploadConfirmLabel?: string;
+  /** Cancel button label in the upload dialog. Defaults to `'Cancel'`. */
+  uploadCancelLabel?: string;
+  /** Prefix announced in the `aria-live` region when a batch-level error appears. Defaults to `'Upload error: '`. */
+  uploadBatchErrorAriaPrefix?: string;
+  /** Title shown in the full-surface overlay while a file-bearing drag is over the editor and the upload dialog isn't open yet. Defaults to `'Upload files'`. */
+  dropOverlayTitle?: string;
+  /** Subtitle shown below `dropOverlayTitle`. Defaults to `'Drop files here to add them to this skill'`. */
+  dropOverlaySubtitle?: string;
 }
 
 /**
@@ -213,6 +296,14 @@ export interface SkillEditorProps {
    * library renders it verbatim with no knowledge of what it contains.
    */
   headerContent?: ReactNode;
+  /**
+   * Host-rendered content shown in the main pane in place of `labels.supportingFileNote`
+   * whenever the currently selected node is a supporting file (not `SKILL.md`, not a
+   * folder). The library renders it verbatim with no knowledge of what it contains — it
+   * only decides *when* to show it, mirroring the `headerContent` pattern. Falls back to
+   * `labels.supportingFileNote` when omitted.
+   */
+  supportingFileContent?: ReactNode;
   /** Called with the current values when the form is submitted. */
   onSubmit: (values: SkillEditorValues) => void;
   /** Called when the form is dismissed without saving. */
@@ -225,6 +316,6 @@ export interface SkillEditorProps {
   styles?: SkillEditorStyles;
   /** Explicit direction override. Omit to inherit from the ambient `dir` attribute. */
   dir?: 'ltr' | 'rtl';
-  /** Theme applied to the Instructions Markdown editor, resolved by the host from its own theme state. Defaults to `'light'`. */
-  instructionsEditorTheme?: 'light' | 'dark';
+  /** Theme applied to the Instructions Markdown editor, resolved by the host from its own theme state. Defaults to `EditorThemes.light`. */
+  instructionsEditorTheme?: EditorThemes;
 }

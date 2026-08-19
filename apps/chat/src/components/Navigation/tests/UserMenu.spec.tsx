@@ -79,7 +79,7 @@ describe('UserMenu', () => {
         <UserMenu />
       </MemoryRouter>,
     );
-    expect(container.firstChild).toBeNull();
+    expect(container.innerHTML).toBe('');
   });
 
   it('renders avatar image when authenticated and image claim exists', () => {

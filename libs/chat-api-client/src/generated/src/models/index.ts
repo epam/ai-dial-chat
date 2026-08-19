@@ -1671,6 +1671,12 @@ export interface CreatedScheduledTaskDto {
   isActive?: boolean;
   /**
    *
+   * @type {boolean}
+   * @memberof CreatedScheduledTaskDto
+   */
+  isDeleted?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof CreatedScheduledTaskDto
    */
@@ -4125,6 +4131,37 @@ export interface ModelCapabilitiesDto {
 /**
  *
  * @export
+ * @interface ModelCatalogPropertiesDto
+ */
+export interface ModelCatalogPropertiesDto {
+  /**
+   * Model provider for catalog display
+   * @type {string}
+   * @memberof ModelCatalogPropertiesDto
+   */
+  provider?: string;
+  /**
+   * Model vendor for catalog display
+   * @type {string}
+   * @memberof ModelCatalogPropertiesDto
+   */
+  vendor?: string;
+  /**
+   * Model license for catalog display
+   * @type {string}
+   * @memberof ModelCatalogPropertiesDto
+   */
+  license?: string;
+  /**
+   * Model knowledge cutoff date for catalog display
+   * @type {string}
+   * @memberof ModelCatalogPropertiesDto
+   */
+  knowledgeCutoffDate?: string;
+}
+/**
+ *
+ * @export
  * @interface ModelDetailsDto
  */
 export interface ModelDetailsDto {
@@ -4164,6 +4201,12 @@ export interface ModelDetailsDto {
    * @memberof ModelDetailsDto
    */
   features?: DeploymentFeaturesDetailsDto;
+  /**
+   * Known model catalog properties allow-listed from DIAL Core catalog_properties
+   * @type {ModelCatalogPropertiesDto}
+   * @memberof ModelDetailsDto
+   */
+  catalogProperties?: ModelCatalogPropertiesDto;
   /**
    * Owner of the deployment as reported by DIAL Core
    * @type {string}
@@ -4457,6 +4500,18 @@ export interface PromptListResponseDto {
    * @memberof PromptListResponseDto
    */
   sharedWithMe: Array<PromptResponseDto>;
+  /**
+   *
+   * @type {Array<PromptResponseDto>}
+   * @memberof PromptListResponseDto
+   */
+  publicPrompts?: Array<PromptResponseDto>;
+  /**
+   *
+   * @type {Array<PromptFolderResponseDto>}
+   * @memberof PromptListResponseDto
+   */
+  publicFolders?: Array<PromptFolderResponseDto>;
 }
 /**
  *
@@ -4518,6 +4573,30 @@ export interface PromptResponseDto {
    * @memberof PromptResponseDto
    */
   updatedAt: number;
+  /**
+   * Whether the prompt belongs to the requestor
+   * @type {boolean}
+   * @memberof PromptResponseDto
+   */
+  isMy?: boolean;
+  /**
+   * Whether the requestor may update the prompt. Organisation prompts are always read-only.
+   * @type {boolean}
+   * @memberof PromptResponseDto
+   */
+  canEdit?: boolean;
+  /**
+   * Whether another user shared the prompt with the requestor
+   * @type {boolean}
+   * @memberof PromptResponseDto
+   */
+  sharedWithMe?: boolean;
+  /**
+   * READ/WRITE/SHARE permissions applicable to the requestor
+   * @type {Array<string>}
+   * @memberof PromptResponseDto
+   */
+  permissions?: Array<string>;
 }
 /**
  *
@@ -4583,11 +4662,11 @@ export interface PublishCatalogEntityDto {
    */
   folderPath: string;
   /**
-   * Version label for this publish.
+   * Optional version label. When omitted, versioned resource ids recover it from their {name}__{version} suffix; unversioned resources use an empty version.
    * @type {string}
    * @memberof PublishCatalogEntityDto
    */
-  version: string;
+  version?: string;
   /**
    * Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.
    * @type {Array<PublishRuleDto>}
@@ -5083,7 +5162,7 @@ export interface RevokeAccessResponseDto {
  */
 export interface RevokeSharedAccessDto {
   /**
-   * Identifier (DIAL Core resource path) of the owned catalog item or conversation to revoke all shared access to.
+   * Identifier (DIAL Core resource path) of the owned catalog item, skill, or conversation to revoke all shared access to.
    * @type {string}
    * @memberof RevokeSharedAccessDto
    */
@@ -5213,6 +5292,12 @@ export interface ScheduledTaskDto {
    * @memberof ScheduledTaskDto
    */
   isActive?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof ScheduledTaskDto
+   */
+  isDeleted?: boolean;
   /**
    *
    * @type {string}
@@ -5431,6 +5516,31 @@ export interface ShareRecipientsResponseDto {
 /**
  *
  * @export
+ * @interface SkillCatalogListResponseDto
+ */
+export interface SkillCatalogListResponseDto {
+  /**
+   *
+   * @type {Array<SkillMetadataItemDto>}
+   * @memberof SkillCatalogListResponseDto
+   */
+  skills: Array<SkillMetadataItemDto>;
+  /**
+   *
+   * @type {Array<SkillMetadataItemDto>}
+   * @memberof SkillCatalogListResponseDto
+   */
+  sharedWithMe: Array<SkillMetadataItemDto>;
+  /**
+   *
+   * @type {Array<SkillMetadataItemDto>}
+   * @memberof SkillCatalogListResponseDto
+   */
+  publicSkills: Array<SkillMetadataItemDto>;
+}
+/**
+ *
+ * @export
  * @interface SkillFileDeleteResponseDto
  */
 export interface SkillFileDeleteResponseDto {
@@ -5601,6 +5711,24 @@ export interface SkillMetadataItemDto {
    * @memberof SkillMetadataItemDto
    */
   updatedAt?: number;
+  /**
+   * Whether the skill belongs to the requestor
+   * @type {boolean}
+   * @memberof SkillMetadataItemDto
+   */
+  isMy?: boolean;
+  /**
+   * Whether the requestor may update the skill. Organisation skills are always read-only.
+   * @type {boolean}
+   * @memberof SkillMetadataItemDto
+   */
+  canEdit?: boolean;
+  /**
+   * Whether another user shared the skill with the requestor
+   * @type {boolean}
+   * @memberof SkillMetadataItemDto
+   */
+  sharedWithMe?: boolean;
 }
 
 /**
@@ -6592,6 +6720,12 @@ export interface UpdatedScheduledTaskDto {
   isActive?: boolean;
   /**
    *
+   * @type {boolean}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  isDeleted?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof UpdatedScheduledTaskDto
    */
@@ -6712,6 +6846,43 @@ export interface UserConfigDto {
    * @memberof UserConfigDto
    */
   skills: SkillsConfigDto;
+}
+/**
+ *
+ * @export
+ * @interface UserLimitStatsResponseDto
+ */
+export interface UserLimitStatsResponseDto {
+  /**
+   * Per-deployment rate-limit and rolling usage stats, keyed by deployment name. Models only — applications, toolsets, and routes never appear here. On GET /v1/user/limits every deployment visible to the caller is present, including ones never used (reported against zero usage). On GET /v1/user/usage only deployments used in the trailing 30 days are present; absence means zero usage, not "unknown".
+   * @type {{ [key: string]: DeploymentLimitsResponseDto; }}
+   * @memberof UserLimitStatsResponseDto
+   */
+  deployments?: { [key: string]: DeploymentLimitsResponseDto };
+  /**
+   * The caller's global cost budget for the trailing minute and spend against it. Unlike the identically-named field nested inside a `deployments` entry (that is per-deployment attributed spend with an unlimited `total`), this is the caller's actual money budget. A `total` at or above 9007199254740992 (2^53) represents the upstream "unlimited" sentinel (`Long.MAX_VALUE`, which exceeds `Number.MAX_SAFE_INTEGER`) and must be treated as unlimited rather than rendered as a used/total ratio.
+   * @type {LimitStatsDto}
+   * @memberof UserLimitStatsResponseDto
+   */
+  minuteCostStats?: LimitStatsDto;
+  /**
+   * The caller's global cost budget for the trailing 24 hours and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.
+   * @type {LimitStatsDto}
+   * @memberof UserLimitStatsResponseDto
+   */
+  dayCostStats?: LimitStatsDto;
+  /**
+   * The caller's global cost budget for the trailing 7 days and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.
+   * @type {LimitStatsDto}
+   * @memberof UserLimitStatsResponseDto
+   */
+  weekCostStats?: LimitStatsDto;
+  /**
+   * The caller's global cost budget for the trailing 30 days and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.
+   * @type {LimitStatsDto}
+   * @memberof UserLimitStatsResponseDto
+   */
+  monthCostStats?: LimitStatsDto;
 }
 /**
  *

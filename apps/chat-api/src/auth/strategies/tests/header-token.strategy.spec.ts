@@ -214,7 +214,7 @@ describe('HeaderTokenStrategy', () => {
       });
     });
 
-    it('rejects a token from an issuer with no registered provider', async () => {
+    it('rejects an allowlisted issuer with no matching registered provider using AUTH_HEADER_PROVIDER_NOT_FOUND', async () => {
       registry.findByIssuer.mockReturnValue(undefined);
       const token = await makeToken(privateKey, kid);
       const req = makeReq({ authorization: `Bearer ${token}` });
@@ -223,9 +223,25 @@ describe('HeaderTokenStrategy', () => {
         strategy.authenticate(req, {} as never),
       ).rejects.toMatchObject({
         response: expect.objectContaining({
-          code: AuthErrorCode.HeaderTokenUntrustedIssuer,
+          code: AuthErrorCode.HeaderProviderNotFound,
         }),
       });
+    });
+
+    it('authenticates an Azure AD v1 issuer resolved to the registered v2 provider', async () => {
+      const azureIssuer = 'https://sts.windows.net/tenant-123/';
+      configValues.AUTH_HEADER_TOKEN_ALLOWED_ISSUERS = [azureIssuer];
+      registry.findByIssuer.mockReturnValue({
+        client: { issuer: { metadata: { jwks_uri: JWKS_URI } } },
+        config: { id: 'azure-ad' },
+      });
+      const token = await makeToken(privateKey, kid, { iss: azureIssuer });
+      const req = makeReq({ authorization: `Bearer ${token}` });
+
+      const user = await strategy.authenticate(req, {} as never);
+
+      expect(user).toMatchObject({ providerId: 'azure-ad' });
+      expect(registry.findByIssuer).toHaveBeenCalledWith(azureIssuer);
     });
 
     it.each([

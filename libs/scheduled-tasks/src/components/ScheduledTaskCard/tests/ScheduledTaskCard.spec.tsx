@@ -169,15 +169,16 @@ describe('ScheduledTaskCard', () => {
   });
 
   it('pins the schedule pill to the bottom of the card regardless of description length', () => {
-    render(
+    const { container } = render(
       <ScheduledTaskCard
         item={buildItem({ locationSegments: ['Public', 'Project folder'] })}
       />,
     );
 
-    const pill = screen.getByText('Every Monday 12:00');
-    const bottomGroup = pill.closest('div.mt-auto');
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- verifying CSS layout (the mt-auto wrapper) which carries no accessible role/text of its own
+    const bottomGroup = container.querySelector('div.mt-auto');
     expect(bottomGroup).toBeTruthy();
-    expect(bottomGroup?.contains(screen.getByText('Public'))).toBe(true);
+    expect(bottomGroup?.textContent).toContain('Every Monday 12:00');
+    expect(bottomGroup?.textContent).toContain('Public');
   });
 });

@@ -46,4 +46,26 @@ export class PromptResponseDto {
     example: 1700000001000,
   })
   updatedAt!: number;
+
+  @ApiPropertyOptional({
+    description: 'Whether the prompt belongs to the requestor',
+  })
+  isMy?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Whether the requestor may update the prompt. Organisation prompts are always read-only.',
+  })
+  canEdit?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Whether another user shared the prompt with the requestor',
+  })
+  sharedWithMe?: boolean;
+
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'READ/WRITE/SHARE permissions applicable to the requestor',
+  })
+  permissions?: string[];
 }

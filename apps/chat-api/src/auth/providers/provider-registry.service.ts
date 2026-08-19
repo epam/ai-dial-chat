@@ -9,7 +9,9 @@ import { validateSync } from 'class-validator';
 import { Issuer, type Client } from 'openid-client';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { buildProviderConfigs } from './provider-builders';
-import { ProviderConfig } from './provider.types';
+import { AuthProviderId, ProviderConfig } from './provider.types';
+
+const AZURE_AD_V1_ISSUER_PATTERN = /^https:\/\/sts\.windows\.net\/([^/]+)\/?$/;
 
 const PROVIDER_ENV_KEYS = [
   'AUTH_POST_LOGOUT_REDIRECT_URI',
@@ -151,12 +153,36 @@ export class ProviderRegistryService implements OnModuleInit {
    * Finds the registered provider whose OIDC issuer matches `issuer` exactly.
    * Used by header bearer-token verification to resolve the provider whose
    * JWKS should validate a token's signature (see `HeaderTokenStrategy`).
+   *
+   * Azure AD emits both a v1 issuer (`https://sts.windows.net/{tenant}/`)
+   * and a v2 issuer (`https://login.microsoftonline.com/{tenant}/v2.0`) for
+   * the same tenant depending on token version. Since only one Azure AD
+   * provider can be registered per deployment (`buildProviderConfigs` builds
+   * at most one `AuthProviderId.AzureAd` entry), an exact-match miss on a v1
+   * issuer falls back to deriving the v2 issuer for the same tenant and
+   * matching it against the registered Azure AD provider.
    */
   findByIssuer(
     issuer: string,
   ): { client: Client; config: ProviderConfig } | undefined {
-    return Array.from(this.clients.values()).find(
+    const exact = Array.from(this.clients.values()).find(
       (entry) => entry.config.issuer === issuer,
+    );
+    if (exact) {
+      return exact;
+    }
+
+    const stsMatch = AZURE_AD_V1_ISSUER_PATTERN.exec(issuer);
+    if (!stsMatch) {
+      return undefined;
+    }
+
+    const tenantId = stsMatch[1];
+    const azureAdV2Issuer = `https://login.microsoftonline.com/${tenantId}/v2.0`;
+    return Array.from(this.clients.values()).find(
+      (entry) =>
+        entry.config.id === AuthProviderId.AzureAd &&
+        entry.config.issuer === azureAdV2Issuer,
     );
   }
 

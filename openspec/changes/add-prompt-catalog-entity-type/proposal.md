@@ -11,8 +11,9 @@ Not one of those endpoints has a frontend caller. There is no `apps/chat/src/ser
 - **`libs/catalog`: new `CatalogEntityType.Prompt` member**, with its entity colour (`libs/catalog/src/constants/entity-colors.ts`), tab label and canonical tab position (`libs/catalog/src/utils/catalog-tabs.ts:10-23`), and list-view Folder-column visibility. The type flows automatically into `EntityTypeLabel`, `AppIdentity`, cards, `ListView`, search (`filterCatalogItems` already matches on `item.type`), sort, and favourites with no per-type branching.
 - **`libs/catalog`: a Prompt content details tab.** A new `CatalogItemPromptContent` entry on `CatalogItemTabData` plus a `CatalogDetailsTab.Content` tab renders the prompt body in a read-only, copyable block. Absent field ⇒ tab hidden, matching how `tools`, `limits`, `pricing` and `api` already gate their tabs (`libs/catalog/src/models/item-details-data.ts`).
 - **`libs/catalog`: Prompt-aware built-in action defaults.** `Header.tsx:139-152` currently defaults the primary action to Model/Agent and Publish to Model/Agent/Toolset. Prompt joins the primary-action default; it stays out of the Publish default, which is inert because `CatalogView` always supplies `isPublishVisible`. Every host-owned decision still arrives through the existing `isPrimaryActionVisible` / `isPublishVisible` / `isShareVisible` predicates plus the new `isDownloadVisible` — no new host knowledge enters the lib.
-- **`apps/chat`: `server-api/prompts.api.ts` covering all ten generated methods** — `listPrompts`, `getPrompt`, `createPrompt`, `updatePrompt`, `deletePrompt`, `listPublicPrompts`, `getPublicPrompt`, `createPromptFolder`, `renamePromptFolder`, `deletePromptFolder`, `movePrompt` — as thin wrappers in the shape of `apps/chat/src/server-api/toolsets.ts:11-40`, with `promptsApi` registered in `api-client.ts`.
-- **`apps/chat`: `PromptsContext`** owning prompt/folder state and exposing `prompts`, `publicPrompts`, `sharedWithMe`, `folders`, `isLoading`, `error`, `refetch*`, following the `DeploymentsContext` + `ThemeContext` pattern (`useMemo`'d value, guard hook that throws outside the provider, cancelled-flag fetches).
+- **`apps/chat`: `server-api/prompts.api.ts` covering all generated prompt methods** — including one aggregate `listPrompts` call for personal, shared-with-me, and public data, permission-aware item metadata, and optional owner-bucket routing for reading and updating writable shared prompts. The legacy public-list wrapper remains for compatibility but is no longer used by `PromptsContext`.
+- **`apps/chat`: `PromptsContext`** owning prompt/folder state and exposing `prompts`, `publicPrompts`, `sharedWithMe`, `folders`, `isLoading`, `error`, `refetch*`, following the `DeploymentsContext` + `ThemeContext` pattern. One frontend request loads all three namespaces; the BFF degrades a failed personal/shared or public namespace independently.
+- **`apps/chat-api`: aggregate, permission-aware prompt and skill catalog listing.** Prompt metadata requests ask DIAL Core for requestor permissions. A new skill catalog endpoint recursively aggregates personal, shared-with-me, and public skills. Writable personal/shared resources expose Edit, while public resources are forced read-only regardless of upstream metadata.
 - **`apps/chat`: prompts merged into `CatalogView`.** `mapPromptToCatalogItem` (personal ⇒ `isMyApp`, `sharedWithMe` ⇒ Shared folder, public ⇒ Public folder) joins the `catalogItems` memo at `CatalogView.tsx:185-217`, gated on a new `OverlayFeature.Prompts` key exactly as toolsets are gated today.
 - **`apps/chat`: new `PromptEditor` route page** (`ROUTES.PromptEditor = '/prompt-editor'`), lazy-loaded, following `ToolsetEditor`. Handles create, edit, move-to-folder, and folder create/rename/delete — the surface that consumes the remaining endpoints. Reached from the catalog's Create dropdown and the details panel's Edit action.
 - **`apps/chat`: "Use in chat" for a Prompt** navigates to the composer with the prompt body pre-filled via router state, reusing the existing `inputMessage` seam in `ConversationRoute.tsx:57-60,238,266` — no new composer prop.
@@ -32,9 +33,13 @@ Two further UI revisions came with them: a prompt's details panel shows exactly 
 
 A third round added publishing a prompt to an Organization folder (backend `CatalogEntityType.Prompt` plus bucket qualification in `publish.service.ts`) and downloading a prompt as a `version: 5` JSON envelope (D15) through a new `onDownload` / `isDownloadVisible` pair on `CatalogProps`.
 
+A fourth round aligned prompts and skills with the applications/toolsets catalog flow: each frontend context now makes one aggregate request, listings carry requestor permissions, writable shared resources retain their owner bucket for edit routing, and public resources remain unconditionally read-only (D17).
+
+A fifth round completes personal-skill publishing: owned skills expose the existing Publish flow, and the publish request no longer invents a version that DIAL Core does not require. The request DTO makes `version` optional; versioned entities retain their current value while unversioned Prompt/Skill publishes omit it (D18).
+
 ### Non-goals
 
-- No prompt **unshare** — the discard DTO rejects prompt paths, and `getSharedPrompts` strips the owner bucket such a call would need.
+- No prompt **unshare** — the discard DTO still rejects prompt paths. Shared prompt ids now retain the owner bucket, so DTO validation is the remaining blocker.
 - No prompt **import** — download writes a re-importable envelope, but nothing in this change reads one back.
 - No prompt variables/templating (`{{placeholder}}` substitution), no prompt-picker inside the chat composer, and no prompt versioning. All are separate features on top of this one.
 - No prompt folder tree UI inside the catalog itself; folder management lives in the editor page.
@@ -45,12 +50,13 @@ A third round added publishing a prompt to an Organization folder (backend `Cata
 2. **Read-only prompt listing first, mutations later** — rejected on the explicit scope decision to consume every prompts endpoint. It would also ship a catalog tab a user can look at but never populate, since nothing else in the product creates prompts.
 3. **Inline modal editor instead of a route page** — rejected. Prompt content is a long-form field and folder management is a second dimension of state; both fit an editor page. The route also gives deep-linkable edit URLs, matching `ToolsetEditor`, `AppsEditor`, and `CustomAppEditor`.
 4. **Reuse `CatalogEntityType.Skill` rather than adding a member** — rejected. `Skill` is already exported and colour-mapped for a different concept; overloading it would break the type label, tab, and any host filtering on it.
+5. **Keep separate frontend requests for personal/shared and public resources** — rejected. Aggregation belongs at the BFF boundary, where namespace failures, pagination, permission normalization, and the always-read-only public policy can be implemented once instead of duplicated across contexts.
 
 ### Rollback / backward compatibility
 
 Every addition is additive and feature-gated. Turning off `OverlayFeature.Prompts` removes the tab, the Create option, and the editor entry points, leaving the catalog byte-identical to today.
 
-One persisted shape does change: user-config `version` 3 → 4, gaining `prompts: { installed: [] }`. No migration step is required — `migrateConfig` fills the section on read, and a v3 file read by new code or a v4 file read by old code both degrade to an empty favourites list. The API additions are an optional request field and a new endpoint, so no existing caller is affected.
+One persisted shape does change: user-config `version` 3 → 4, gaining `prompts: { installed: [] }`. No migration step is required — `migrateConfig` fills the section on read, and a v3 file read by new code or a v4 file read by old code both degrade to an empty favourites list. The API changes are additive: optional prompt fields/parameters and a new skill catalog endpoint. Legacy prompt-public and skill bucket-listing endpoints remain available, so no existing caller is affected.
 
 ### Scope creep to flag
 
@@ -72,12 +78,20 @@ This change touches two shared libs and one global provider:
 - `prompt-favorites`: The `prompts.installed` user-config section, `PATCH /api/v1/user-config/prompts`, and the frontend wiring that folds prompt paths into the one `favoriteIds` set.
 - `prompt-share-link`: `CreateShareLinkDto.resourceKind` and the server-side bucket qualification that lets a prompt's bucket-relative path become a DIAL share link.
 - `prompt-listing-markers`: `.dial_folder` markers excluded from every prompt listing and from folder renames.
+- `skills-bff-api`: `GET /api/v1/skills/catalog`, aggregating personal, shared-with-me, and public skills with recursive pagination, permission metadata, partial namespace degradation, and public resources forced read-only.
+- `skill-publishing`: owned skills use the existing catalog Publish flow; `POST /api/v1/catalog/{entityType}/{entityId}/publish` accepts an omitted `version`, publishes the whole skill resource, and keeps public/shared skills out of the action.
 
 ### Modified Capabilities
 
 - `catalog-use-in-chat`: currently requires that the primary action is available only for chat-capable Model and Application items and explicitly absent for other types. Prompt becomes a third type with a primary action, and its action pre-fills the composer instead of only selecting a deployment.
 - `catalog-create-options`: the Create dropdown gains a Prompt entry, visible only when `OverlayFeature.Prompts` is enabled, navigating to `ROUTES.PromptEditor`.
 - `catalog-item-details-fetch`: `onFetchDetails` currently always resolves through the deployment-details endpoint. It gains a type-dispatched path so a Prompt item resolves its content through the prompts endpoints instead.
+- `prompts-api`: prompt list responses become aggregate and permission-aware, and item reads/updates can target an authorized shared resource's owner bucket.
+- `prompts-folders`: prompt move accepts the optional owner bucket used for writable shared resources.
+- `skills-catalog-context`: the frontend loads the aggregate skill catalog in one request and exposes personal, shared-with-me, and public arrays.
+- `skill-catalog-item-mapping`: shared skills become a first-class source and editability is derived from normalized permissions, with public forced read-only.
+- `skill-catalog-listing`: writable personal/shared skills expose Edit while public and read-only shared skills do not.
+- `skill-editing`: the editor accepts a full skill resource URL and preserves the owner bucket when updating a writable shared skill.
 
 ## Impact
 
@@ -94,7 +108,8 @@ This change touches two shared libs and one global provider:
 
 **Backend / API**
 
-- `prompts/`: `utils/prompt-mapper.util.ts` (`isHiddenPromptPath`), `personal/prompts-personal.service.ts`, `public/prompts-public.service.ts`, `folder/prompts-folder.service.ts`.
+- `prompts/`: aggregate personal/shared/public listing, requestor-permission metadata, optional owner-bucket item/move/update routing, public read-only normalization, and `.dial_folder` filtering.
+- `skills/`: new aggregate catalog endpoint with recursive pagination, shared-resource permission mapping, public read-only normalization, and partial namespace failure handling.
 - `user-config/`: `dto/user-config.dto.ts` (the `prompts` section, `createDefaultUserConfig`, version 4), a new `dto/update-installed-prompt.dto.ts`, `user-config.service.ts`, `user-config.controller.ts`.
 - `share/`: `dto/create-share-link.dto.ts` (`resourceKind`), `share.service.ts`, `share.controller.ts`.
 - `libs/chat-api-client`: regenerated from the updated swagger. `npm run openapi:check` stays green as proof that spec and client agree. Note the generator writes `openapi.json` unformatted — run Prettier over it afterwards.

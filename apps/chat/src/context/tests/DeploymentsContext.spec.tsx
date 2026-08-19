@@ -1,8 +1,10 @@
+import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DeploymentSelectorI18nKeys } from '../../constants/translation-keys';
 import * as applicationSchemasApi from '../../server-api/application-schemas';
+import * as deploymentDetailsApi from '../../server-api/deployments';
 import * as deploymentsApi from '../../server-api/deployments.api';
 import * as toolsetsApi from '../../server-api/toolsets';
 import { DeploymentsProvider, useDeployments } from '../DeploymentsContext';
@@ -17,6 +19,7 @@ const contextMocks = vi.hoisted(() => ({
 }));
 
 vi.mock('../../server-api/deployments.api');
+vi.mock('../../server-api/deployments');
 vi.mock('../../server-api/application-schemas');
 vi.mock('../../server-api/toolsets');
 vi.mock('../auth/UserContext', () => ({
@@ -54,6 +57,10 @@ const mockItem2 = {
 };
 const mockResponse = { deployments: [mockItem1, mockItem2] };
 const emptySchemas = { schemas: [] };
+const mockDeploymentDetails = {
+  id: mockItem1.id,
+  type: 'model' as const,
+};
 
 describe('DeploymentsContext', () => {
   const mockGetDeployments = vi.mocked(deploymentsApi.getDeployments);
@@ -61,6 +68,12 @@ describe('DeploymentsContext', () => {
     applicationSchemasApi.getApplicationSchemas,
   );
   const mockListToolsets = vi.mocked(toolsetsApi.listToolsets);
+  const mockGetDeploymentConfiguration = vi.mocked(
+    deploymentDetailsApi.getDeploymentConfiguration,
+  );
+  const mockGetDeploymentDetails = vi.mocked(
+    deploymentDetailsApi.getDeploymentDetails,
+  );
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -71,6 +84,8 @@ describe('DeploymentsContext', () => {
     mockGetDeployments.mockResolvedValue(mockResponse);
     mockGetApplicationSchemas.mockResolvedValue(emptySchemas);
     mockListToolsets.mockResolvedValue({ data: [] });
+    mockGetDeploymentConfiguration.mockResolvedValue({});
+    mockGetDeploymentDetails.mockResolvedValue(mockDeploymentDetails);
   });
 
   describe('identity-keyed refetch', () => {
@@ -129,9 +144,7 @@ describe('DeploymentsContext', () => {
       mockGetDeployments.mockReturnValueOnce(refetchPromise);
       contextMocks.userSub = 'user-2';
 
-      act(() => {
-        rerender();
-      });
+      rerender();
 
       expect(result.current.isLoading).toBe(true);
       expect(result.current.items).toEqual([]);
@@ -842,6 +855,149 @@ describe('DeploymentsContext', () => {
         variant: NotificationVariant.Error,
         message: DeploymentSelectorI18nKeys.RefetchDeploymentsFailed,
       });
+    });
+  });
+
+  describe('selectedDeploymentDetails', () => {
+    it('fetches configuration and details in parallel when a deployment is selected', async () => {
+      let resolveConfiguration: (value: DeploymentConfigurationSchema) => void;
+      const configurationPromise = new Promise<DeploymentConfigurationSchema>(
+        (resolve) => {
+          resolveConfiguration = resolve;
+        },
+      );
+      let resolveDetails: (value: typeof mockDeploymentDetails) => void;
+      const detailsPromise = new Promise<typeof mockDeploymentDetails>(
+        (resolve) => {
+          resolveDetails = resolve;
+        },
+      );
+      mockGetDeploymentConfiguration.mockReturnValueOnce(configurationPromise);
+      mockGetDeploymentDetails.mockReturnValueOnce(detailsPromise);
+
+      renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() => {
+        expect(mockGetDeploymentConfiguration).toHaveBeenCalledWith(
+          mockItem1.id,
+        );
+        expect(mockGetDeploymentDetails).toHaveBeenCalledWith(mockItem1.id);
+      });
+
+      await act(async () => {
+        resolveConfiguration({});
+        resolveDetails(mockDeploymentDetails);
+        await Promise.all([configurationPromise, detailsPromise]);
+      });
+    });
+
+    it('sets selectedDeploymentDetails on successful fetch', async () => {
+      mockGetDeploymentDetails.mockResolvedValue(mockDeploymentDetails);
+
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() => {
+        expect(result.current.selectedDeploymentDetails).toEqual(
+          mockDeploymentDetails,
+        );
+        expect(result.current.isDeploymentDetailsLoading).toBe(false);
+      });
+    });
+
+    it('sets selectedDeploymentDetails to null on fetch failure without affecting configuration', async () => {
+      mockGetDeploymentDetails.mockRejectedValue(new Error('Details failed'));
+      mockGetDeploymentConfiguration.mockResolvedValue({
+        title: 'GPT-4o config',
+      });
+
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() =>
+        expect(result.current.selectedItemId).toBe(mockItem1.id),
+      );
+      await waitFor(() =>
+        expect(result.current.selectedDeploymentConfiguration).toEqual({
+          title: 'GPT-4o config',
+        }),
+      );
+      expect(result.current.isDeploymentDetailsLoading).toBe(false);
+      expect(result.current.selectedDeploymentDetails).toBeNull();
+    });
+
+    it('clears details and skips the request when no deployment is selected', async () => {
+      mockGetDeployments.mockResolvedValueOnce({ deployments: [] });
+
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() => expect(result.current.selectedItemId).toBeNull());
+
+      expect(result.current.selectedDeploymentConfiguration).toBeNull();
+      expect(result.current.selectedDeploymentDetails).toBeNull();
+      expect(result.current.isDeploymentDetailsLoading).toBe(false);
+      expect(mockGetDeploymentConfiguration).not.toHaveBeenCalled();
+      expect(mockGetDeploymentDetails).not.toHaveBeenCalled();
+    });
+
+    it('discards a stale details response after the selection changes again', async () => {
+      let resolveFirstDetails: (value: typeof mockDeploymentDetails) => void;
+      const firstDetailsPromise = new Promise<typeof mockDeploymentDetails>(
+        (resolve) => {
+          resolveFirstDetails = resolve;
+        },
+      );
+      mockGetDeploymentDetails.mockReturnValueOnce(firstDetailsPromise);
+
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() =>
+        expect(result.current.selectedItemId).toBe(mockItem1.id),
+      );
+
+      const secondDetails = { id: mockItem2.id, type: 'application' as const };
+      mockGetDeploymentDetails.mockResolvedValueOnce(secondDetails);
+
+      act(() => {
+        result.current.setSelectedItemId(mockItem2.id);
+      });
+
+      await waitFor(() =>
+        expect(result.current.selectedDeploymentDetails).toEqual(secondDetails),
+      );
+
+      await act(async () => {
+        resolveFirstDetails(mockDeploymentDetails);
+        await firstDetailsPromise;
+      });
+
+      // The stale first-selection response must not clobber the newer one.
+      expect(result.current.selectedDeploymentDetails).toEqual(secondDetails);
+    });
+
+    it('does not refetch details when the selected deployment id is unchanged', async () => {
+      const { result, rerender } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() =>
+        expect(result.current.selectedDeploymentDetails).toEqual(
+          mockDeploymentDetails,
+        ),
+      );
+      expect(mockGetDeploymentDetails).toHaveBeenCalledOnce();
+
+      rerender();
+
+      expect(mockGetDeploymentDetails).toHaveBeenCalledOnce();
     });
   });
 

@@ -85,6 +85,9 @@ describe('usePublishFolders', () => {
     });
 
     await waitFor(() =>
+      // `folderItems[0].children` is the hook's own plain data tree, not a
+      // DOM node — `.children` here is unrelated to `Element.children`.
+      // eslint-disable-next-line testing-library/no-node-access
       expect(result.current.folderItems[0].children).toEqual([
         {
           path: ['Organization', 'Data Science'],
@@ -162,6 +165,9 @@ describe('usePublishFolders', () => {
       );
     });
 
+    // `folderItems[0].children` is the hook's own plain data tree, not a
+    // DOM node — `.children` here is unrelated to `Element.children`.
+    // eslint-disable-next-line testing-library/no-node-access
     expect(result.current.folderItems[0].children).toEqual([
       {
         path: ['Organization', 'Data Science'],
@@ -178,11 +184,13 @@ describe('usePublishFolders', () => {
       ) as string[];
 
     it('keeps a published folder in the tree after the panel is reopened', async () => {
-      const first = renderHook(() => usePublishFolders());
+      const { result: firstResult, unmount: unmountFirst } = renderHook(() =>
+        usePublishFolders(),
+      );
       await waitFor(() => expect(listPublicFiles).toHaveBeenCalled());
 
-      act(() => first.result.current.rememberPublishFolder(['Model releases']));
-      first.unmount();
+      act(() => firstResult.current.rememberPublishFolder(['Model releases']));
+      unmountFirst();
 
       const { result } = renderHook(() => usePublishFolders());
       await waitFor(() =>
@@ -218,6 +226,9 @@ describe('usePublishFolders', () => {
       const { result } = renderHook(() => usePublishFolders());
 
       await waitFor(() =>
+        // `folderItems[0].children` is the hook's own plain data tree, not a
+        // DOM node — `.children` here is unrelated to `Element.children`.
+        // eslint-disable-next-line testing-library/no-node-access
         expect(result.current.folderItems[0]?.children).toEqual([
           {
             path: ['Organization', 'Model releases'],

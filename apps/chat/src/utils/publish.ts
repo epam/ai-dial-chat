@@ -18,6 +18,7 @@ const PUBLISHABLE_ENTITY_TYPES: Partial<
   [CatalogEntityType.Toolset]: CatalogPublishEntityType.Toolset,
   [CatalogEntityType.Agent]: CatalogPublishEntityType.Application,
   [CatalogEntityType.Prompt]: CatalogPublishEntityType.Prompt,
+  [CatalogEntityType.Skill]: CatalogPublishEntityType.Skill,
 };
 
 /** Maps a catalog item's entity type to the publish API's entity-type path param, or `undefined` if that type is not publishable. */
@@ -75,6 +76,9 @@ export const getAccessRulesLabels = (
     regexOptionLabel: t(PublishAccessRulesI18nKeys.RegexFunctionLabel),
     targetsLabel: t(PublishAccessRulesI18nKeys.TargetsLabel),
     targetsPlaceholder: t(PublishAccessRulesI18nKeys.TargetsPlaceholder),
+    targetsHintLabel: t(PublishAccessRulesI18nKeys.TargetsHintLabel),
+    requiredFieldError: t(PublishAccessRulesI18nKeys.RequiredFieldError),
+    targetsRequiredError: t(PublishAccessRulesI18nKeys.TargetsRequiredError),
     patternLabel: t(PublishAccessRulesI18nKeys.PatternLabel),
     patternPlaceholder: t(PublishAccessRulesI18nKeys.PatternPlaceholder),
     invalidRegexError: t(PublishAccessRulesI18nKeys.InvalidRegexError),

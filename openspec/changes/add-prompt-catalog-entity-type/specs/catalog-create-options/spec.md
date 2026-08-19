@@ -40,7 +40,7 @@ The entry SHALL be appended after the existing Quick App, Toolset, and Custom Ap
 
 `CatalogView`'s `handleEdit` SHALL branch on `CatalogEntityType.Prompt` before its toolset and deployment branches, navigating to `ROUTES.PromptEditor` with `PromptEditorQuery.Id` set to the prompt's `id` and `PromptEditorQuery.ReturnUrl` set to `ROUTES.Catalog`.
 
-The Edit action's visibility is governed by the lib's existing `!!onEdit && !!item.isEditable` rule with no change; `mapPromptToCatalogItem` sets `isEditable: true` only for personal prompts, so shared and organisation prompts show no Edit action.
+The Edit action's visibility is governed by the lib's existing `!!onEdit && !!item.isEditable` rule with no change. `mapPromptToCatalogItem` derives `isEditable` from the permission-aware listing: personal prompts and shared prompts with `canEdit: true` may expose Edit, while read-only shared and organisation prompts do not. A shared prompt's qualified id SHALL be preserved in the editor URL.
 
 #### Scenario: Editing an owned prompt opens it in the editor
 
@@ -48,14 +48,20 @@ The Edit action's visibility is governed by the lib's existing `!!onEdit && !!it
 - **THEN** the app navigates to `/prompt-editor?id=<prompt path>&returnUrl=/catalog`
 - **AND** the editor loads that prompt in edit mode
 
-#### Scenario: Shared prompt has no Edit action
+#### Scenario: Read-only shared prompt has no Edit action
 
-- **WHEN** the user opens the details panel for a prompt shared with them
+- **WHEN** the user opens the details panel for a prompt shared with them with `canEdit: false`
 - **THEN** no Edit action is present in the Manage menu
+
+#### Scenario: Writable shared prompt opens with its owner bucket
+
+- **WHEN** the user activates Edit for `prompts/owner-bucket/Work/summarize` with `canEdit: true`
+- **THEN** the app navigates to `/prompt-editor?id=prompts%2Fowner-bucket%2FWork%2Fsummarize&returnUrl=/catalog`
+- **AND** the editor preserves `owner-bucket` when loading and updating the prompt
 
 #### Scenario: Organisation prompt has no Edit action
 
-- **WHEN** the user opens the details panel for an organisation prompt
+- **WHEN** the user opens the details panel for an organisation prompt, even if upstream metadata reports `WRITE`
 - **THEN** no Edit action is present in the Manage menu
 
 #### Scenario: Toolset and application edit routing is unchanged

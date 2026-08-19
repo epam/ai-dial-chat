@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Header,
   HttpCode,
+  HttpStatus,
   Param,
   Post,
   Put,
@@ -395,6 +397,63 @@ export class ScheduledTasksController {
       at,
       params.scheduleId,
       body,
+    );
+  }
+
+  @Delete(':scheduleId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Header('Cache-Control', 'private, no-store')
+  @ApiOperation({
+    operationId: 'deleteScheduledTask',
+    summary: 'Delete a scheduled task',
+    description:
+      'Deletes a DIAL Scheduler schedule for the authenticated session user. ' +
+      'DIAL Scheduler alone decides whether the schedule is hard-deleted (no run ' +
+      'history) or soft-deleted (is_deleted: true, run history preserved) — the BFF ' +
+      'never predicts or requests a specific outcome. Invalidates the scheduled ' +
+      'tasks list cache on success.',
+  })
+  @ApiResponse({
+    status: 204,
+    description: 'Scheduled task deleted successfully (empty body)',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid scheduleId' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({
+    status: 403,
+    description:
+      'The scheduledTasksEnabled feature is not enabled for this user',
+  })
+  @ApiResponse({
+    status: 404,
+    description:
+      'Scheduled task not found, owned by another user, or already hard-deleted',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Scheduled task is already soft-deleted',
+  })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({
+    status: 502,
+    description:
+      'DIAL Scheduler could not unregister the job; no data changed and retrying is safe',
+  })
+  @ApiResponse({
+    status: 503,
+    description:
+      'DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured',
+  })
+  deleteScheduledTask(
+    @Req() req: Request,
+    @Param() params: GetScheduledTaskDto,
+  ): Promise<void> {
+    const { sub, at } = req.user as SessionUser;
+    return this.scheduledTasksService.deleteScheduledTask(
+      sub,
+      at,
+      params.scheduleId,
     );
   }
 }
