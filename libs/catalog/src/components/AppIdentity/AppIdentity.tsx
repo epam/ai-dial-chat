@@ -1,14 +1,14 @@
 import {
   buildCssVars,
+  CatalogEntityType,
   DeploymentIcon,
+  EntityTypeLabel,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import { DialEllipsisTooltip, Highlight } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
 import { AppIdentityStyles } from '../../models/app-identity-styles';
 import { DeploymentSize } from '../../types/deployment-icon-size';
-import { CatalogEntityType } from '../../types/entity-type';
-import { EntityTypeLabel } from '../EntityTypeLabel/EntityTypeLabel';
 import styles from './AppIdentity.module.scss';
 
 /** Props for the shared AppIdentity block used in browse and favorite cards. */
@@ -59,7 +59,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
 
   const isLg = size === DeploymentSize.LG;
   const logoClass = isLg
-    ? 'size-[54px] rounded-[14px]'
+    ? 'size-[52px] rounded-[14px]'
     : 'size-[44px] rounded-lg';
   const logoSize = isLg ? 54 : 44;
   const cssVars = buildCssVars({
@@ -70,10 +70,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
 
   return (
     <div
-      className={mergeClasses(
-        'flex min-w-0 items-start gap-[14px] rounded-xl',
-        className,
-      )}
+      className={mergeClasses('flex min-w-0 items-start gap-3', className)}
       style={cssVars}
     >
       <div
@@ -96,27 +93,26 @@ export const AppIdentity: FC<AppIdentityProps> = ({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <EntityTypeLabel
-          type={type}
-          className={typography?.typeClassName ?? 'dial-caption-semi-text'}
-        />
+        <EntityTypeLabel type={type} className={typography?.typeClassName} />
 
         <div className="flex min-w-0 flex-col">
           <div className="flex min-w-0 items-start gap-1 overflow-hidden">
             <span
               className={mergeClasses(
-                'flex-3 min-w-0 truncate',
+                'min-w-0 flex-1 truncate',
                 typography?.nameClassName ?? 'dial-body-semi-text',
                 styles.name,
               )}
             >
               {query ? <Highlight text={name} query={query} /> : name}
             </span>
-            {version != null && (
+            {version && (
+              /* Capped at 30% of the row so a long version truncates instead of
+                 squeezing the name out of the card. */
               <DialEllipsisTooltip
                 text={version}
                 className={mergeClasses(
-                  'flex-2 tabular-nums',
+                  'max-w-[30%] shrink-0 tabular-nums',
                   typography?.versionClassName ?? 'dial-tiny-text',
                   styles.version,
                 )}

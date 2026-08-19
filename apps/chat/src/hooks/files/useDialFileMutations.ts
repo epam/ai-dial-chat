@@ -31,6 +31,10 @@ import {
   renameFiles,
 } from '../../server-api/files.api';
 import {
+  EntityOperation,
+  NotifiableEntity,
+} from '../../types/entity-notification';
+import {
   DownloadDestinationType,
   prepareDownloadDestination,
   triggerBrowserDownload,
@@ -40,6 +44,7 @@ import {
   resolveDialFileApiPath,
   virtualPathToApiPath,
 } from '../../utils/resolve-dial-file-api-path';
+import { useOperationNotification } from '../useOperationNotification';
 import {
   prepareCopyItems,
   prepareMoveRenameItems,
@@ -136,6 +141,7 @@ export const useDialFileMutations = ({
   forbiddenSymbolsRegExp,
 }: UseDialFileMutationsOptions): UseDialFileMutationsResult => {
   const { t } = useTranslation();
+  const { notifyOperationSuccess } = useOperationNotification();
 
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -232,6 +238,11 @@ export const useDialFileMutations = ({
           listingPermissionsCache.get(parentApiPath),
         );
         bumpRetry();
+        notifyOperationSuccess(
+          NotifiableEntity.Folder,
+          EntityOperation.Created,
+          { name },
+        );
       } catch {
         onNotification?.({
           variant: NotificationVariant.Error,
@@ -251,6 +262,7 @@ export const useDialFileMutations = ({
       listingPermissionsCache,
       mergeCreatedFolder,
       bumpRetry,
+      notifyOperationSuccess,
       sharedRootMetaRef,
       onNotification,
       t,
@@ -294,7 +306,16 @@ export const useDialFileMutations = ({
             if (!response.ok) {
               throw new Error(`Download failed with status ${response.status}`);
             }
-            await triggerBrowserDownload(response, file.name, destination);
+            const savedName = await triggerBrowserDownload(
+              response,
+              file.name,
+              destination,
+            );
+            notifyOperationSuccess(
+              NotifiableEntity.File,
+              EntityOperation.Downloaded,
+              { name: savedName, count: 1 },
+            );
           } else {
             const archiveItems = dialFiles.map((f) => ({
               bucket: f.bucket ?? bucket,
@@ -309,7 +330,29 @@ export const useDialFileMutations = ({
             if (!response.ok) {
               throw new Error(`Download failed with status ${response.status}`);
             }
-            await triggerBrowserDownload(response, filename, destination);
+            const savedName = await triggerBrowserDownload(
+              response,
+              filename,
+              destination,
+            );
+            /*
+             * A lone folder is reported as a folder; a multi-item selection is
+             * reported as a count of files, since the archive itself is not an
+             * entity the user picked.
+             */
+            if (dialFiles.length === 1) {
+              notifyOperationSuccess(
+                NotifiableEntity.Folder,
+                EntityOperation.Downloaded,
+                { name: savedName },
+              );
+            } else {
+              notifyOperationSuccess(
+                NotifiableEntity.File,
+                EntityOperation.Downloaded,
+                { name: savedName, count: dialFiles.length },
+              );
+            }
           }
         } catch {
           onNotification?.({
@@ -326,7 +369,7 @@ export const useDialFileMutations = ({
       };
       void run();
     },
-    [bucket, rootLabel, onNotification, t],
+    [bucket, rootLabel, notifyOperationSuccess, onNotification, t],
   );
 
   const onDeleteFiles = useCallback(
@@ -699,6 +742,28 @@ export const useDialFileMutations = ({
           });
         }
 
+        /*
+         * Renaming from the grid is always a single item, so a fully successful
+         * single rename is confirmed by name. A multi-item rename batch — which
+         * the UI cannot produce today — stays silent rather than claiming a name
+         * that only covers part of the batch.
+         */
+        if (renameDtos.length === 1 && renameFailedCount === 0) {
+          const [renamedDto] = renameDtos;
+          notifyOperationSuccess(
+            renamedDto.nodeType === RenameItemDtoNodeTypeEnum.Folder
+              ? NotifiableEntity.Folder
+              : NotifiableEntity.File,
+            EntityOperation.Renamed,
+            {
+              name: getVirtualPathName(
+                renamedDto.destinationPath,
+                renamedDto.destinationPath,
+              ),
+            },
+          );
+        }
+
         if (totalFailed > 0) {
           if (totalFailed === totalCount) {
             onNotification?.({
@@ -765,6 +830,7 @@ export const useDialFileMutations = ({
       bucket,
       rootLabel,
       folderPath,
+      notifyOperationSuccess,
       onNotification,
       t,
       isCopying,

@@ -4,7 +4,7 @@
 
 Specifies inline editing of user messages within a conversation: entering edit mode, modifying text and attachments, submitting (truncates subsequent messages and re-runs the AI), and cancelling.
 
----
+## Requirements
 
 ### Requirement: Edit button availability
 The edit button on user message bubbles SHALL be visible at all times and disabled while the AI is streaming a response or when the conversation is read-only.
@@ -44,7 +44,7 @@ Clicking the edit button on a user message SHALL replace the static message bubb
 ---
 
 ### Requirement: Edit area layout
-The inline edit area consists of two parts stacked vertically:
+The inline edit area SHALL consist of two parts stacked vertically:
 1. A bordered box containing the attachment tray (pre-existing and newly added attachments shown together) and the textarea below it.
 2. An action row below the bordered box: the attach (+) button on the left, Cancel and Save & Submit buttons on the right.
 

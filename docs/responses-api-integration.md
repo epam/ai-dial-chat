@@ -93,12 +93,12 @@ Core derives this flag from the deployment interfaces. Responses API support cor
 
 Two independent conditions gate the Responses API: the server-side operator flag `features.responsesApiEnabled` (backed by `RESPONSES_API_ENABLED`, default `false`) and the per-deployment capability `features.responsesApi`. Both must be `true`:
 
-| `features.responsesApiEnabled` (server, default `false`) | `features.responsesApi` (deployment) | Selected API          |
-| ---------------------------------------------------------- | -------------------------------------- | --------------------- |
-| `false` (default)                                           | `true`                                  | Chat Completions API  |
-| `false` (default)                                           | `false` / absent                        | Chat Completions API  |
-| `true`                                                       | `true`                                  | Responses API         |
-| `true`                                                       | `false` / absent                        | Chat Completions API  |
+| `features.responsesApiEnabled` (server, default `false`) | `features.responsesApi` (deployment) | Selected API         |
+| -------------------------------------------------------- | ------------------------------------ | -------------------- |
+| `false` (default)                                        | `true`                               | Chat Completions API |
+| `false` (default)                                        | `false` / absent                     | Chat Completions API |
+| `true`                                                   | `true`                               | Responses API        |
+| `true`                                                   | `false` / absent                     | Chat Completions API |
 
 The deployment-capability check is deliberately strict: only `true` enables the Responses API on that side. This preserves compatibility with Core versions and deployments that do not yet publish the new flag. The server-side flag defaults to `false`, so upgrading Chat to a version that includes this integration does not change any deployment's behavior until an operator explicitly opts in.
 
@@ -368,7 +368,7 @@ Possible `generation.api` values:
 | API-selection unit tests                   | `apps/chat-api/src/conversations/generation/generation-api.spec.ts`                                                                                                               |
 | Responses-adapter unit tests               | `apps/chat-api/src/conversations/generation/responses.adapter.spec.ts`                                                                                                            |
 | Service-level integration                  | `apps/chat-api/src/conversations/tests/conversation.service.spec.ts`                                                                                                              |
-| `features.responsesApiEnabled` flag source | `apps/chat-api/src/app-config/feature-flags/feature-key.enum.ts`, `apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`                                    |
+| `features.responsesApiEnabled` flag source | `apps/chat-api/src/app-config/feature-flags/feature-key.enum.ts`, `apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`                                     |
 
 ## DIAL Core Context
 

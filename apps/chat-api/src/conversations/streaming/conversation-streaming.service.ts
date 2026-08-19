@@ -495,9 +495,10 @@ export class ConversationStreamingService {
     const requestBody = {
       messages: [...systemMessages, ...dialMessages],
       stream: true,
-      ...(startConversation.temperature != null && {
-        temperature: startConversation.temperature,
-      }),
+      ...(temperatureSupported &&
+        startConversation.temperature != null && {
+          temperature: startConversation.temperature,
+        }),
       ...(configuration ? { custom_fields: { configuration } } : {}),
     };
 

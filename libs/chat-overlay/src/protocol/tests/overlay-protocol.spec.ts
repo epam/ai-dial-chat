@@ -114,10 +114,61 @@ describe('isOverlayMessageResponse', () => {
 });
 
 describe('OverlayFeature', () => {
-  it('has exactly 33 unique members', () => {
+  it('has exactly 39 unique members', () => {
     const values = Object.values(OverlayFeature);
-    expect(values).toHaveLength(33);
-    expect(new Set(values).size).toBe(33);
+    expect(values).toHaveLength(39);
+    expect(new Set(values).size).toBe(39);
+  });
+
+  it('includes the hide-keyboard-shortcuts feature key', () => {
+    expect(Object.values(OverlayFeature)).toContain('hide-keyboard-shortcuts');
+  });
+
+  it('includes the hide-conversations-filter feature key', () => {
+    expect(Object.values(OverlayFeature)).toContain(
+      'hide-conversations-filter',
+    );
+  });
+
+  it('includes the hide-change-agent feature key', () => {
+    expect(Object.values(OverlayFeature)).toContain('hide-change-agent');
+  });
+
+  it('includes the prompts feature key', () => {
+    expect(Object.values(OverlayFeature)).toContain('prompts');
+  });
+
+  it('includes the skills feature key', () => {
+    expect(Object.values(OverlayFeature)).toContain('skills');
+  });
+
+  it('includes the file-manager feature key', () => {
+    expect(Object.values(OverlayFeature)).toContain('file-manager');
+  });
+
+  it('does not include the renamed marketplace keys', () => {
+    const values = Object.values(OverlayFeature) as string[];
+    [
+      'marketplace',
+      'marketplace-hide-my-apps',
+      'marketplace-table-view',
+    ].forEach((key) => {
+      expect(values).not.toContain(key);
+    });
+  });
+
+  it('does not include keys whose behavior became unconditional', () => {
+    const values = Object.values(OverlayFeature) as string[];
+    [
+      'custom-logo',
+      'show-layout-dividers',
+      'top-settings',
+      'top-chat-model-settings',
+      'chat-header-border',
+      'chat-input-border',
+    ].forEach((key) => {
+      expect(values).not.toContain(key);
+    });
   });
 
   it('includes the pre-existing and newly-added transferable keys', () => {

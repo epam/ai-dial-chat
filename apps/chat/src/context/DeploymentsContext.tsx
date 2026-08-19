@@ -1,11 +1,11 @@
 import {
   ListDeploymentsInterfaceTypeEnum,
   type ApplicationSchemaSummaryDto,
+  type DeploymentDetailsDto,
   type DeploymentItemDto,
   type DialToolsetDto,
 } from '@epam/ai-dial-chat-api-client';
 import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import {
   createContext,
   ReactNode,
@@ -21,7 +21,10 @@ import { DeploymentSelectorI18nKeys } from '../constants/translation-keys';
 import { useLanguage } from '../hooks/language/useLanguage';
 import { getApiErrorDetails } from '../server-api/api-error';
 import { getApplicationSchemas } from '../server-api/application-schemas';
-import { getDeploymentConfiguration } from '../server-api/deployments';
+import {
+  getDeploymentConfiguration,
+  getDeploymentDetails,
+} from '../server-api/deployments';
 import { getDeployments } from '../server-api/deployments.api';
 import { listToolsets } from '../server-api/toolsets';
 import { findDeploymentByIdOrReference } from '../utils/deployment-id';
@@ -55,6 +58,10 @@ export interface DeploymentsContextType {
   restoreDefaultSelection: () => void;
   /** JSON Schema configuration for the currently selected deployment, or null if none selected or unsupported. */
   selectedDeploymentConfiguration: DeploymentConfigurationSchema | null;
+  /** Full per-entity details (model/application/toolset) for the currently selected deployment, or null if none selected or the fetch failed. */
+  selectedDeploymentDetails: DeploymentDetailsDto | null;
+  /** True while selectedDeploymentDetails is being fetched for the current selection. */
+  isDeploymentDetailsLoading: boolean;
   /** True while deployments are being fetched. */
   isLoading: boolean;
   /** Non-null if the deployments fetch failed. */
@@ -155,7 +162,7 @@ const resolveInitialSelection = (
 export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
-  const { showNotification } = useNotification();
+  const { showErrorNotification } = useNotification();
   const { selectedDeploymentId: userConfigSelectedId, setSelectedDeployment } =
     useUserConfig();
   const { config: appConfig } = useAppConfig();
@@ -170,6 +177,10 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   );
   const [selectedDeploymentConfiguration, setSelectedDeploymentConfiguration] =
     useState<DeploymentConfigurationSchema | null>(null);
+  const [selectedDeploymentDetails, setSelectedDeploymentDetails] =
+    useState<DeploymentDetailsDto | null>(null);
+  const [isDeploymentDetailsLoading, setIsDeploymentDetailsLoading] =
+    useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -329,13 +340,12 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       if (toolsetsRequestIdRef.current !== requestId) return;
       const { traceId } = await getApiErrorDetails(error);
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(DeploymentSelectorI18nKeys.RefetchToolsetsFailed),
         requestId: traceId,
       });
     }
-  }, [showNotification, t]);
+  }, [showErrorNotification, t]);
 
   const refetchDeployments = useCallback(
     async (refresh = true) => {
@@ -355,14 +365,13 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         if (deploymentsRequestIdRef.current !== requestId) return;
         const { traceId } = await getApiErrorDetails(error);
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           message: t(DeploymentSelectorI18nKeys.RefetchDeploymentsFailed),
           requestId: traceId,
         });
       }
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const mergeSharedItem = useCallback(
@@ -416,27 +425,34 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!resolvedSelectedDeploymentId) {
       setSelectedDeploymentConfiguration(null);
+      setSelectedDeploymentDetails(null);
+      setIsDeploymentDetailsLoading(false);
       return;
     }
 
     const signal = { isCancelled: false };
+    setIsDeploymentDetailsLoading(true);
 
-    const loadConfiguration = async () => {
-      try {
-        const configuration = await getDeploymentConfiguration(
-          resolvedSelectedDeploymentId,
-        );
-        if (!signal.isCancelled) {
-          setSelectedDeploymentConfiguration(configuration);
-        }
-      } catch {
-        if (!signal.isCancelled) {
-          setSelectedDeploymentConfiguration(null);
-        }
-      }
+    const loadConfigurationAndDetails = async () => {
+      const [configurationResult, detailsResult] = await Promise.allSettled([
+        getDeploymentConfiguration(resolvedSelectedDeploymentId),
+        getDeploymentDetails(resolvedSelectedDeploymentId),
+      ]);
+
+      if (signal.isCancelled) return;
+
+      setSelectedDeploymentConfiguration(
+        configurationResult.status === 'fulfilled'
+          ? configurationResult.value
+          : null,
+      );
+      setSelectedDeploymentDetails(
+        detailsResult.status === 'fulfilled' ? detailsResult.value : null,
+      );
+      setIsDeploymentDetailsLoading(false);
     };
 
-    loadConfiguration();
+    loadConfigurationAndDetails();
 
     return () => {
       signal.isCancelled = true;
@@ -478,6 +494,8 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       restoreSelectedItemId,
       restoreDefaultSelection,
       selectedDeploymentConfiguration,
+      selectedDeploymentDetails,
+      isDeploymentDetailsLoading,
       isLoading,
       error,
       schemas,
@@ -493,6 +511,8 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       restoreSelectedItemId,
       restoreDefaultSelection,
       selectedDeploymentConfiguration,
+      selectedDeploymentDetails,
+      isDeploymentDetailsLoading,
       isLoading,
       error,
       schemas,

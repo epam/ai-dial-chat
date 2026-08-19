@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import type { Cache } from 'cache-manager';
 import {
+  extractDialErrorMessage,
   handleDialSdkError,
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
@@ -126,6 +127,8 @@ export class ConversationPublishService {
         result.response.status,
         `publish conversation "${sourceUrl}"`,
         this.logger,
+        result.error,
+        extractDialErrorMessage(result.error),
       );
     }
 
@@ -181,6 +184,8 @@ export class ConversationPublishService {
             result.response.status,
             `get publish history for conversation "${sourceUrl}"`,
             this.logger,
+            result.error,
+            extractDialErrorMessage(result.error),
           );
         }
 

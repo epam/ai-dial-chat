@@ -23,9 +23,27 @@ export interface NotificationItem {
 
 export type ShowNotificationOptions = Omit<NotificationItem, 'id'>;
 
-interface NotificationContextType {
+/*
+ * Payload of the variant-scoped helpers (`showErrorNotification` and friends):
+ * same as `ShowNotificationOptions` minus the variant, which the helper supplies.
+ */
+export type ShowVariantNotificationOptions = Omit<
+  ShowNotificationOptions,
+  'variant'
+>;
+
+type ShowVariantNotification = (
+  options: ShowVariantNotificationOptions,
+) => void;
+
+export interface NotificationContextType {
   notifications: NotificationItem[];
   showNotification: (options: ShowNotificationOptions) => void;
+  showInfoNotification: ShowVariantNotification;
+  showSuccessNotification: ShowVariantNotification;
+  showWarningNotification: ShowVariantNotification;
+  showErrorNotification: ShowVariantNotification;
+  showLoadingNotification: ShowVariantNotification;
   dismissNotification: (id: string) => void;
 }
 
@@ -45,11 +63,59 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     setNotifications((prev) => [...prev, { ...options, id }]);
   }, []);
 
+  const showInfoNotification = useCallback<ShowVariantNotification>(
+    (options) =>
+      showNotification({ ...options, variant: NotificationVariant.Info }),
+    [showNotification],
+  );
+
+  const showSuccessNotification = useCallback<ShowVariantNotification>(
+    (options) =>
+      showNotification({ ...options, variant: NotificationVariant.Success }),
+    [showNotification],
+  );
+
+  const showWarningNotification = useCallback<ShowVariantNotification>(
+    (options) =>
+      showNotification({ ...options, variant: NotificationVariant.Warning }),
+    [showNotification],
+  );
+
+  const showErrorNotification = useCallback<ShowVariantNotification>(
+    (options) =>
+      showNotification({ ...options, variant: NotificationVariant.Error }),
+    [showNotification],
+  );
+
+  const showLoadingNotification = useCallback<ShowVariantNotification>(
+    (options) =>
+      showNotification({ ...options, variant: NotificationVariant.Loading }),
+    [showNotification],
+  );
+
   return (
     <NotificationContext.Provider
       value={useMemo(
-        () => ({ notifications, showNotification, dismissNotification }),
-        [notifications, showNotification, dismissNotification],
+        () => ({
+          notifications,
+          showNotification,
+          showInfoNotification,
+          showSuccessNotification,
+          showWarningNotification,
+          showErrorNotification,
+          showLoadingNotification,
+          dismissNotification,
+        }),
+        [
+          notifications,
+          showNotification,
+          showInfoNotification,
+          showSuccessNotification,
+          showWarningNotification,
+          showErrorNotification,
+          showLoadingNotification,
+          dismissNotification,
+        ],
       )}
     >
       {children}

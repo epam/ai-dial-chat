@@ -1,4 +1,4 @@
-import { Dropdown, NeutralButton } from '@epam/ai-dial-ui-kit';
+import { Dropdown, LinkButton, NeutralButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -80,17 +80,19 @@ const AnnouncementsPopover: FC<Props> = ({ announcements }) => {
               </div>
 
               {announcement.link && (
-                <a
+                <LinkButton
                   href={announcement.link.href}
                   target="_blank"
-                  rel="noopener noreferrer"
-                  className="dial-small-paragraph-semi-text shrink-0 text-accent hover:underline focus-visible:underline"
-                >
-                  {announcement.link.label}
-                  <span className="sr-only">
-                    {` ${t(AnnouncementsPopoverI18nKeys.OpensInNewTab)}`}
-                  </span>
-                </a>
+                  className="h-auto shrink-0"
+                  label={
+                    <>
+                      {announcement.link.label}
+                      <span className="sr-only">
+                        {` ${t(AnnouncementsPopoverI18nKeys.OpensInNewTab)}`}
+                      </span>
+                    </>
+                  }
+                />
               )}
             </li>
           );

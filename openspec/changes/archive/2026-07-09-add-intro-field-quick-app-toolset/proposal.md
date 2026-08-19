@@ -45,13 +45,13 @@ field set into a library once, and adds `intro` to the extracted form.
     multi-section editor layout (General/Settings/Auth).
 - New `Input`, `Textarea`, and `TagInput` wrappers are added to `libs/ai-dial-kit` (thin
   pass-throughs around `Input`/`Textarea`/`DialTagInput`, following the existing
-  `PrimaryButton`/`SearchBar`/`TabRow` wrapper convention), so the app's text-field visual
+  `PrimaryButton`/`SearchBar`/`Tabs` wrapper convention), so the app's text-field visual
   style (e.g. corner radius) is restyled once and stays consistent everywhere, including
   other `libs/*` consumers such as `libs/catalog`. This supersedes this proposal's original
   decision to consume `Input`/`Textarea`/`DialTagInput` directly — reversed after
   visual-parity feedback against the Catalog page showed the app needs a single place to
   restyle these fields without diverging per call site. `.claude/rules/all-tsx.md` is updated
-  with a new "Text fields" entry alongside the existing Button/SearchBar/Spinner/TabRow rules.
+  with a new "Text fields" entry alongside the existing Button/SearchBar/Spinner/Tabs rules.
   `libs/deployment-creation-form` consumes `Input`/`Textarea`/`TagInput` from `@epam/ai-dial-kit`
   instead of importing `@epam/ai-dial-ui-kit` directly.
 - Keep the two current visual layouts entirely app-owned: Quick App's two-column

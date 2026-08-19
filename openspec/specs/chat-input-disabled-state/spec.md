@@ -1,3 +1,11 @@
+# chat-input-disabled-state Specification
+
+## Purpose
+
+The `isInputDisabled` prop on the conversation input: what it disables, what stays interactive, and how the app edge derives it.
+
+## Requirements
+
 ### Requirement: Input accepts isInputDisabled prop
 
 `libs/conversation-input/src/models/Input.ts` (`InputProps`) and `libs/conversation-input/src/models/ConversationInput.ts` (`ConversationInputProps`) SHALL each expose an optional prop:
@@ -176,6 +184,12 @@ Starter buttons (rendered via `renderFooterActions` or the starters bar), form b
 - `isInputDisabled={true}` does not call `onSend` when Enter is pressed, populated message or not.
 - `isInputDisabled={false}` (or omitted) allows send via Enter.
 
+#### Scenario: Input suite covers both states of the flag
+
+- **WHEN** the `Input` unit test suite is executed
+- **THEN** it asserts the disabled textarea, disabled attach button, and suppressed Enter-send for `isInputDisabled={true}`
+- **AND** it asserts that an already-populated message still sends, and that Enter-send works again when the flag is absent
+
 ---
 
 ### Requirement: App-level mapping tested in ConversationRoute tests
@@ -185,3 +199,9 @@ Starter buttons (rendered via `renderFooterActions` or the starters bar), form b
 - When `selectedDeploymentConfiguration` has `isChatMessageInputDisabled: true`, the rendered `ConversationInput` receives `isInputDisabled={true}`.
 - When `selectedDeploymentConfiguration` is `null`, the rendered `ConversationInput` receives `isInputDisabled={false}`.
 - When `selectedDeploymentConfiguration` exists but lacks `isChatMessageInputDisabled`, the rendered `ConversationInput` receives `isInputDisabled={false}`.
+
+#### Scenario: Route suite covers every derivation input
+
+- **WHEN** the `ConversationRoute` test suite is executed
+- **THEN** it asserts `isInputDisabled={true}` only for a configuration with `isChatMessageInputDisabled: true`
+- **AND** it asserts `isInputDisabled={false}` for both a `null` configuration and one that omits the field

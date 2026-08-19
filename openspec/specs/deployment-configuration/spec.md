@@ -1,5 +1,9 @@
 # Spec: deployment-configuration
 
+## Purpose
+
+The deployment configuration schema endpoint and the conversation starters the frontend renders from it.
+
 ## Requirements
 
 ### Requirement: Backend exposes deployment configuration schema endpoint

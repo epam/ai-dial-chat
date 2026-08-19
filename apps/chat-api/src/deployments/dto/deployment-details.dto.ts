@@ -44,19 +44,29 @@ export class ModelLimitsDto {
   maxCompletionTokens?: number;
 }
 
-export class ModelPricingDto {
-  @ApiPropertyOptional({ description: 'The pricing unit' })
-  unit?: string;
+/*
+ * DIAL Core quotes pricing as an open-ended map: `unit` names the billing unit
+ * and every other key (`prompt`, `completion`, `cache_read`, and
+ * deployment-specific ones) holds a per-unit price, so the map is forwarded
+ * verbatim instead of whitelisting a fixed set of keys.
+ */
+export type ModelPricingRecord = Record<string, string | undefined>;
+
+export class ModelCatalogPropertiesDto {
+  @ApiPropertyOptional({ description: 'Model provider for catalog display' })
+  provider?: string;
+
+  @ApiPropertyOptional({ description: 'Model vendor for catalog display' })
+  vendor?: string;
+
+  @ApiPropertyOptional({ description: 'Model license for catalog display' })
+  license?: string;
 
   @ApiPropertyOptional({
-    description: 'Per-unit price for the completion request',
+    description: 'Model knowledge cutoff date for catalog display',
+    example: '2026-08-17',
   })
-  prompt?: string;
-
-  @ApiPropertyOptional({
-    description: 'Per-unit price for the completion response',
-  })
-  completion?: string;
+  knowledgeCutoffDate?: string;
 }
 
 /**
@@ -171,11 +181,24 @@ export class ModelDetailsDto {
   @ApiPropertyOptional({ type: ModelLimitsDto })
   limits?: ModelLimitsDto;
 
-  @ApiPropertyOptional({ type: ModelPricingDto })
-  pricing?: ModelPricingDto;
+  @ApiPropertyOptional({
+    description:
+      'Pricing as reported by DIAL Core: `unit` names the billing unit and every other key holds the per-unit price for that key',
+    type: 'object',
+    additionalProperties: { type: 'string' },
+    example: { unit: 'token', prompt: '0.000003', completion: '0.000015' },
+  })
+  pricing?: ModelPricingRecord;
 
   @ApiPropertyOptional({ type: DeploymentFeaturesDetailsDto })
   features?: DeploymentFeaturesDetailsDto;
+
+  @ApiPropertyOptional({
+    type: ModelCatalogPropertiesDto,
+    description:
+      'Known model catalog properties allow-listed from DIAL Core catalog_properties',
+  })
+  catalogProperties?: ModelCatalogPropertiesDto;
 
   @ApiPropertyOptional({
     description: 'Owner of the deployment as reported by DIAL Core',

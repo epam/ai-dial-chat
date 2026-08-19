@@ -1,4 +1,5 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { ReactNode, useEffect, useState } from 'react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -8,6 +9,7 @@ import {
   useDeployments,
 } from '../../context/DeploymentsContext';
 import * as NotificationContextModule from '../../context/NotificationContext';
+import { createNotificationContextValue } from '../../context/tests/notification-context-mock';
 import * as ToolsMenuModule from '../../hooks/conversation/useToolsMenu';
 import * as KeyboardShortcutModule from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import * as applicationSchemasApi from '../../server-api/application-schemas';
@@ -46,6 +48,13 @@ vi.mock(
     }),
   }),
 );
+vi.mock('../../components/PromptSelector/usePromptSelectorOverlay', () => ({
+  usePromptSelectorOverlay: () => ({
+    renderOverlay: vi.fn(),
+    promptCatalogModal: null,
+    parametersPopup: null,
+  }),
+}));
 vi.mock('../../context/AppConfigContext', () => ({
   default: ({ children }: { children: ReactNode }) => children,
   useAppConfig: () => ({
@@ -225,11 +234,9 @@ describe('ConversationRoute — new chat model inheritance (issue #8150 Case 3)'
       refresh: vi.fn(),
       reset: vi.fn(),
     });
-    mockUseNotification.mockReturnValue({
-      notifications: [],
-      showNotification: vi.fn(),
-      dismissNotification: vi.fn(),
-    });
+    mockUseNotification.mockReturnValue(
+      createNotificationContextValue(vi.fn()),
+    );
     mockUseKeyboardShortcutPreference.mockReturnValue({
       preference: 'enter' as never,
       setPreference: vi.fn(),
@@ -256,14 +263,10 @@ describe('ConversationRoute — new chat model inheritance (issue #8150 Case 3)'
       );
     });
 
-    await act(async () => {
-      screen.getByText('Open other conversation').click();
-    });
+    await userEvent.click(screen.getByText('Open other conversation'));
     expect(screen.getByText('Viewing conversation')).toBeTruthy();
 
-    await act(async () => {
-      screen.getByText('New chat').click();
-    });
+    await userEvent.click(screen.getByText('New chat'));
 
     await waitFor(() => {
       expect(screen.getByLabelText('Selected deployment').textContent).toBe(

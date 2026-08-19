@@ -1,4 +1,10 @@
-## ADDED Requirements
+# file-manager-tabs Specification
+
+## Purpose
+
+File-manager tabs: per-tab visible columns, action labels, upload rules, and selection behavior.
+
+## Requirements
 
 ### Requirement: Tab navigation in DialFileManagerModal
 
@@ -341,3 +347,9 @@ Before changing `activeTab`, the tab-change handler SHALL reset `selectedPaths` 
 ### Requirement: Tab button accessibility
 
 Each rendered tab button SHALL carry `role="tab"` and `aria-selected` (per ARIA spec). `aria-selected` SHALL be `true` for the currently active tab and `false` for all others. This requirement mirrors the pattern established in the `file-manager-toolbar` spec (#7932).
+
+#### Scenario: Exactly one tab reports itself selected
+
+- **WHEN** the tab strip is rendered with a tab active
+- **THEN** every tab button exposes `role="tab"`
+- **AND** the active tab carries `aria-selected="true"` while each remaining tab carries `aria-selected="false"`

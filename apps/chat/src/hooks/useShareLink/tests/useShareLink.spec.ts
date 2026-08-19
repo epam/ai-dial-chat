@@ -67,10 +67,12 @@ describe('useShareLink', () => {
     });
 
     expect(result.current.isLoading).toBe(true);
-    expect(getShareLink).toHaveBeenCalledWith('gpt-4o', [
-      ShareLinkAccess.View,
-      ShareLinkAccess.Edit,
-    ]);
+    expect(getShareLink).toHaveBeenCalledWith(
+      'gpt-4o',
+      [ShareLinkAccess.View, ShareLinkAccess.Edit],
+      window.location.origin,
+      undefined,
+    );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 

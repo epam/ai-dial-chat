@@ -39,7 +39,7 @@ describe('NewVersionFallback', () => {
       name: 'errorBoundary.reloadLabel',
     });
     expect(button).toBeTruthy();
-    expect(button).toBe(document.activeElement);
+    expect(button.matches(':focus')).toBe(true);
   });
 
   it('reloads the page when the reload button is clicked', async () => {

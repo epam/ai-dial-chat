@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -36,7 +36,11 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     closable?: boolean;
     onClose?: () => void;
   }) => (
-    <div role="alert" data-variant={variant}>
+    /* The kit reserves the assertive `alert` role for error/warning; the rest are polite. */
+    <div
+      role={variant === 'error' || variant === 'warning' ? 'alert' : 'status'}
+      data-variant={variant}
+    >
       {title && <div>{title}</div>}
       <div>{message}</div>
       {closable && <button aria-label="Close notification" onClick={onClose} />}
@@ -77,7 +81,7 @@ describe('NotificationContainer', () => {
 
   it('renders nothing when there are no notifications', () => {
     const { container } = render(<NotificationContainer />);
-    expect(container.firstChild).toBeNull();
+    expect(container.innerHTML).toBe('');
   });
 
   it.each(['error', 'warning', 'info', 'success', 'loading'])(
@@ -91,9 +95,9 @@ describe('NotificationContainer', () => {
       ];
       render(<NotificationContainer />);
       expect(screen.getByText(`${variant} message`)).toBeTruthy();
-      expect(screen.getByRole('alert').getAttribute('data-variant')).toBe(
-        variant,
-      );
+      const role =
+        variant === 'error' || variant === 'warning' ? 'alert' : 'status';
+      expect(screen.getByRole(role).getAttribute('data-variant')).toBe(variant);
     },
   );
 
@@ -104,7 +108,7 @@ describe('NotificationContainer', () => {
       makeItem({ id: 'c', message: 'Third' }),
     ];
     render(<NotificationContainer />);
-    const alerts = screen.getAllByRole('alert');
+    const alerts = screen.getAllByRole('status');
     expect(alerts).toHaveLength(3);
     expect(alerts[0].textContent).toContain('First');
     expect(alerts[1].textContent).toContain('Second');
@@ -122,7 +126,7 @@ describe('NotificationContainer', () => {
   it('calls dismissNotification with the item id when the dismiss button is clicked', () => {
     notifications = [makeItem({ id: 'item-1' })];
     render(<NotificationContainer />);
-    screen.getByRole('button', { name: 'Close notification' }).click();
+    fireEvent.click(screen.getByRole('button', { name: 'Close notification' }));
     expect(dismissNotification).toHaveBeenCalledWith('item-1');
   });
 
@@ -240,7 +244,9 @@ describe('NotificationContainer — Request ID row and Copy control', () => {
     expect(
       await screen.findByText('notification.requestId.copiedStatus'),
     ).toBeTruthy();
-    expect(screen.getAllByRole('alert')).toHaveLength(1);
+    /* The copy announcement is its own `status` region, so count notification
+     * bodies rather than roles to assert no second notification was pushed. */
+    expect(screen.getAllByText('Test message')).toHaveLength(1);
   });
 
   it('is keyboard accessible via Enter', async () => {

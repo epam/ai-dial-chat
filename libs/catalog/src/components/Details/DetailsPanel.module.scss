@@ -35,19 +35,3 @@
 :export {
   skeletonColor: var(--cat-details-skeleton, var(--bg-layer-4, #d1dbea));
 }
-
-/* Overrides the tag's own palette, which is why the declarations are !important. */
-.currentVersionTag {
-  border-color: var(
-    --cat-details-version-tag-border,
-    var(--stroke-tertiary, #e0e6f0)
-  ) !important;
-  background: var(
-    --cat-details-version-tag-bg,
-    var(--bg-accent-primary-alpha, #7da4ff2e)
-  ) !important;
-  color: var(
-    --cat-details-version-tag-text,
-    var(--text-accent, #1d4ed8)
-  ) !important;
-}

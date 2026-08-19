@@ -1,8 +1,9 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as conversationsApi from '../../../server-api/conversations.api';
 import AppPreviewChat from '../AppPreviewChat';
 
@@ -19,9 +20,7 @@ vi.mock('../../../context/auth/UserContext', () => ({
 }));
 
 vi.mock('../../../context/NotificationContext', () => ({
-  useNotification: () => ({
-    showNotification: vi.fn(),
-  }),
+  useNotification: () => createNotificationContextValue(vi.fn()),
 }));
 
 vi.mock('../../../context/DeploymentsContext');
@@ -193,9 +192,7 @@ describe('AppPreviewChat', () => {
 
     render(<AppPreviewChat appId="applications/bucket/My App" />);
 
-    await act(async () => {
-      screen.getByRole('button', { name: 'Draft' }).click();
-    });
+    await userEvent.click(screen.getByRole('button', { name: 'Draft' }));
 
     await waitFor(() => {
       expect(mockCreateConversation).toHaveBeenCalledWith(

@@ -57,7 +57,7 @@ const UploadProgressModal: FC<Props> = ({
         <div className="flex flex-col gap-2">
           <div>{uploadProgressTitle}</div>
           <div
-            className="text-sm text-secondary"
+            className="dial-small-text text-secondary"
             data-qa="uploading-items-count"
           >
             {uploadProgressText}

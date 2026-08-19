@@ -1,9 +1,9 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
-import { CatalogEntityType } from '../../../types/entity-type';
 import { CatalogSortKey } from '../../../types/sort';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { Catalog } from '../Catalog';
@@ -18,22 +18,22 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     text: unknown;
     className?: string;
   }) => <span className={className}>{text as string}</span>,
-  DialTabs: ({
+  Tabs: ({
     tabs,
-    activeTab,
-    onClick,
+    activeTabId,
+    onTabChange,
   }: {
     tabs: { id: string; label: React.ReactNode }[];
-    activeTab: string;
-    onClick: (id: string) => void;
+    activeTabId: string;
+    onTabChange: (id: string) => void;
   }) => (
     <div role="tablist">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           role="tab"
-          aria-selected={tab.id === activeTab}
-          onClick={() => onClick(tab.id)}
+          aria-selected={tab.id === activeTabId}
+          onClick={() => onTabChange(tab.id)}
         >
           {tab.label}
         </button>
@@ -188,15 +188,29 @@ vi.mock('../../Details/DetailsPanel', () => ({
     isPrimaryActionVisible,
     shareOverlay,
     isDetailsLoading,
+    onDownload,
+    isDownloadVisible,
+    onRevokeShare,
+    isRevokeShareVisible,
   }: {
     item: CatalogItem;
     isPrimaryActionVisible?: (item: CatalogItem) => boolean;
     shareOverlay?: (item: CatalogItem, onClose: () => void) => React.ReactNode;
     isDetailsLoading?: boolean;
+    onDownload?: (item: CatalogItem) => void;
+    isDownloadVisible?: (item: CatalogItem) => boolean;
+    onRevokeShare?: (item: CatalogItem) => void;
+    isRevokeShareVisible?: (item: CatalogItem) => boolean;
   }) => (
     <div>
       <span>{item.name}</span>
       <span>{String(isPrimaryActionVisible?.(item))}</span>
+      {onDownload && (isDownloadVisible?.(item) ?? true) && (
+        <button onClick={() => onDownload(item)}>DownloadTrigger</button>
+      )}
+      {onRevokeShare && (isRevokeShareVisible?.(item) ?? true) && (
+        <button onClick={() => onRevokeShare(item)}>RevokeShareTrigger</button>
+      )}
       {shareOverlay?.(item, () => undefined)}
       <span>{`details:${JSON.stringify(item.details ?? null)}`}</span>
       <span>{`isDetailsLoading:${String(isDetailsLoading)}`}</span>
@@ -288,6 +302,9 @@ describe('Catalog', () => {
   it('applies horizontal and vertical padding to the empty state in the default grid view', () => {
     render(<Catalog items={[]} favorites={[]} />);
     const grid = screen.getByRole('grid', { name: 'catalog grid' });
+    // Layout wrapper divs carry no role/label of their own; asserting their
+    // padding classes is a CSS-level check with no semantic query available.
+    // eslint-disable-next-line testing-library/no-node-access
     const wrapper = grid.parentElement?.parentElement;
     expect(wrapper?.className).toContain('px-8');
     expect(wrapper?.className).toContain('py-6');
@@ -384,6 +401,60 @@ describe('Catalog', () => {
     expect(onFetchDetails).toHaveBeenCalledWith(
       expect.objectContaining({ id: '1' }),
     );
+  });
+
+  it('forwards onDownload and isDownloadVisible to the details panel', async () => {
+    const onDownload = vi.fn();
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        onDownload={onDownload}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'DownloadTrigger' }),
+    );
+
+    expect(onDownload).toHaveBeenCalledWith(
+      expect.objectContaining({ id: '1' }),
+    );
+  });
+
+  it('lets isRevokeShareVisible hide the revoke action in the details panel', async () => {
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        onRevokeShare={vi.fn()}
+        isRevokeShareVisible={() => false}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+
+    expect(
+      screen.queryByRole('button', { name: 'RevokeShareTrigger' }),
+    ).toBeNull();
+  });
+
+  it('lets isDownloadVisible hide the download action in the details panel', async () => {
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        onDownload={vi.fn()}
+        isDownloadVisible={() => false}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+
+    expect(
+      screen.queryByRole('button', { name: 'DownloadTrigger' }),
+    ).toBeNull();
   });
 
   it('renders fetched details, overriding static item.details, once resolved', async () => {
@@ -610,5 +681,60 @@ describe('Catalog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'My Apps' }));
 
     expect(onMyAppsActiveChange).toHaveBeenCalledWith(true);
+  });
+
+  it('defaults the active tab to the first tab when uncontrolled', () => {
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', { type: CatalogEntityType.Model }),
+          makeItem('2', 'My Prompt', { type: CatalogEntityType.Prompt }),
+        ]}
+        favorites={[]}
+      />,
+    );
+
+    expect(
+      screen
+        .getByRole('tab', { name: /Models/i })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
+  });
+
+  it('uses the controlled activeTab prop instead of internal state', () => {
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', { type: CatalogEntityType.Model }),
+          makeItem('2', 'My Prompt', { type: CatalogEntityType.Prompt }),
+        ]}
+        favorites={[]}
+        activeTab={CatalogEntityType.Prompt}
+      />,
+    );
+
+    expect(
+      screen
+        .getByRole('tab', { name: /Prompts/i })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
+  });
+
+  it('calls onActiveTabChange with the clicked tab id', async () => {
+    const onActiveTabChange = vi.fn();
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', { type: CatalogEntityType.Model }),
+          makeItem('2', 'My Prompt', { type: CatalogEntityType.Prompt }),
+        ]}
+        favorites={[]}
+        onActiveTabChange={onActiveTabChange}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('tab', { name: /Prompts/i }));
+
+    expect(onActiveTabChange).toHaveBeenCalledWith(CatalogEntityType.Prompt);
   });
 });

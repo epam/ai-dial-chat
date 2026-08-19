@@ -57,7 +57,7 @@ export interface MarkdownCodeBlockProps {
   headerClassName?: string;
   /** Typography class for the `<code>` element (used when no language is detected). Defaults to `'dial-code-text'`. */
   codeClassName?: string;
-  /** CSS class applied to the language label in the header. Defaults to `'dial-tiny-semi-text uppercase'` plus the module's `.languageLabel` class (`--text-secondary`). */
+  /** CSS class applied to the language label in the header. Defaults to `'dial-tiny-lead-semi-text'` plus the module's `.languageLabel` class (`--text-secondary`). */
   languageLabelClassName?: string;
   /** Header text shown in place of `language`, for blocks whose highlighting id is not the name to display (e.g. `bash` highlighted, `cURL` shown). Defaults to the `language` value. */
   title?: string;
@@ -86,7 +86,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
     containerClassName,
     headerClassName,
     codeClassName = 'dial-code-text',
-    languageLabelClassName = 'dial-tiny-semi-text uppercase',
+    languageLabelClassName = 'dial-tiny-lead-semi-text',
     title,
     titleSlot,
     colors,

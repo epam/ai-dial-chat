@@ -7,7 +7,6 @@ import {
   type Attachment,
   type DeploymentItem,
 } from '@epam/ai-dial-chat-shared';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AttachmentsI18nKeys } from '../../constants/translation-keys';
@@ -18,7 +17,7 @@ export const useAttachmentValidation = (
   selectedDeployment: DeploymentItem | undefined,
 ) => {
   const { t } = useTranslation();
-  const { showNotification } = useNotification();
+  const { showErrorNotification } = useNotification();
 
   const inputAttachmentTypes = useMemo(
     () => selectedDeployment?.inputAttachmentTypes ?? [],
@@ -46,8 +45,7 @@ export const useAttachmentValidation = (
         }
         unsupportedTypeTimerRef.current = setTimeout(() => {
           const noTypesAllowed = inputAttachmentTypes.length === 0;
-          showNotification({
-            variant: NotificationVariant.Error,
+          showErrorNotification({
             title: t(
               noTypesAllowed
                 ? AttachmentsI18nKeys.NoAttachmentsAllowedTitle
@@ -68,7 +66,7 @@ export const useAttachmentValidation = (
       }
       return undefined;
     },
-    [inputAttachmentTypes, showNotification, t],
+    [inputAttachmentTypes, showErrorNotification, t],
   );
 
   return {

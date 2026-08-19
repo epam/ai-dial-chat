@@ -36,7 +36,7 @@ export const Overview: FC<OverviewProps> = ({
     return null;
   }
   return (
-    <div className="mt-4 flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
       {sections.map((section, sIdx) => (
         <div key={sIdx} className="flex flex-col gap-4">
           {sIdx > 0 && (

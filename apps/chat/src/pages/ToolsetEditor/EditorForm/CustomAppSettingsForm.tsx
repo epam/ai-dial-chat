@@ -1,5 +1,4 @@
-import { TagInput } from '@epam/ai-dial-kit';
-import { Input, Textarea } from '@epam/ai-dial-ui-kit';
+import { Input, Textarea, TagInput } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -91,14 +90,16 @@ const CustomAppSettingsForm: FC<Props> = ({ form, errors, onChange }) => {
       />
 
       <TagInput
-        elementId="custom-app-attachment-types"
-        label={t(CustomAppI18nKeys.AttachmentTypesLabel)}
-        caption={t(CustomAppI18nKeys.AttachmentTypesDescription)}
+        id="custom-app-attachment-types"
+        labelProps={{
+          label: t(CustomAppI18nKeys.AttachmentTypesLabel),
+          caption: t(CustomAppI18nKeys.AttachmentTypesDescription),
+        }}
         placeholder={t(CustomAppI18nKeys.EnterAttachmentTypes)}
-        initialTags={form.inputAttachmentTypes}
+        value={form.inputAttachmentTypes}
         onChange={handleAttachmentTypesChange}
-        invalid={!!mimeError || !!errors.inputAttachmentTypes || undefined}
-        errorText={mimeError ?? errors.inputAttachmentTypes}
+        invalid={!!mimeError || !!errors.inputAttachmentTypes}
+        error={mimeError ?? errors.inputAttachmentTypes}
       />
 
       <Input

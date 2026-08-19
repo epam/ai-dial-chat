@@ -1,5 +1,5 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialTag, DialTooltip } from '@epam/ai-dial-ui-kit';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DialTooltip } from '@epam/ai-dial-ui-kit';
 import {
   FC,
   useCallback,
@@ -8,13 +8,13 @@ import {
   useRef,
   useState,
 } from 'react';
-import styles from './TopicTag.module.scss';
+import { CardTag } from '../CardTag/CardTag';
 
 /** Color overrides for `TopicTag`, applied as CSS custom properties. */
 export interface TopicTagColors {
   /** Tag text color. Fallback: `--text-secondary`. */
   text?: string;
-  /** Tag border color. Fallback: `--stroke-secondary`. */
+  /** Tag border color. Fallback: `--stroke-tertiary`. */
   border?: string;
   /** Tag background color. Fallback: `--bg-layer-sunken`. */
   background?: string;
@@ -35,20 +35,7 @@ export const TopicTag: FC<TopicTagProps> = ({
   label,
   className = 'dial-tiny-text',
   colors,
-}) => (
-  /* `DialTag` takes no `style`, so the variables go on a `display: contents`
-   * wrapper — it generates no box, leaving layout and width measurement intact. */
-  <span
-    className="contents"
-    style={buildCssVars({
-      '--cat-pricing-tag-text': colors?.text,
-      '--cat-pricing-tag-border': colors?.border,
-      '--cat-pricing-tag-bg': colors?.background,
-    })}
-  >
-    <DialTag label={label} className={mergeClasses(className, styles.tag)} />
-  </span>
-);
+}) => <CardTag label={label} badgeClassName={className} colors={colors} />;
 
 /** Props for TopicsLine. */
 export interface TopicsLineProps {

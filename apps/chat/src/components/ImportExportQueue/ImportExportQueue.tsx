@@ -3,10 +3,9 @@ import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
   DialEllipsisTooltip,
-  DialProgressBar,
-  DialProgressBarSize,
   ElementSize,
   GhostIconButton,
+  ProgressBar,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconAlertCircleFilled,
@@ -225,10 +224,10 @@ const ImportExportQueue: FC<Props> = ({
         </div>
       </div>
       <div className="px-3 pb-2">
-        <DialProgressBar
+        <ProgressBar
           value={percentage}
-          size={DialProgressBarSize.Small}
-          ariaLabel={title}
+          size={ElementSize.Small}
+          aria-label={title}
           className="w-full"
         />
       </div>

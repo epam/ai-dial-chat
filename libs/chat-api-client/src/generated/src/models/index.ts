@@ -24,6 +24,12 @@ export interface AcceptInvitationResponseDto {
    * @memberof AcceptInvitationResponseDto
    */
   sharedToolset?: DialToolsetDto;
+  /**
+   * List-item summary of the shared skill, resolved by id at accept time so the frontend can show its details panel without waiting on a bulk skills list refresh. Omitted when itemId is not a skill, or when resolution failed (a best-effort step that never fails the accept call itself).
+   * @type {SkillMetadataItemDto}
+   * @memberof AcceptInvitationResponseDto
+   */
+  sharedSkill?: SkillMetadataItemDto;
 }
 /**
  *
@@ -746,12 +752,6 @@ export interface ConversationListItemDto {
    * @memberof ConversationListItemDto
    */
   publishedWithMe: boolean;
-  /**
-   * How many other users currently hold shared access to this conversation, for conversations the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.
-   * @type {number}
-   * @memberof ConversationListItemDto
-   */
-  recipientsCount?: number;
   /**
    * True when the user has pinned this conversation.
    * @type {boolean}
@@ -1550,12 +1550,27 @@ export interface CreateShareLinkDto {
    */
   itemId: string;
   /**
+   * Set to `prompt` when `itemId` is a bucket-relative prompt path (as returned by the prompts endpoints) rather than a full DIAL Core resource path. The caller's own bucket is then used to qualify it.
+   * @type {string}
+   * @memberof CreateShareLinkDto
+   */
+  resourceKind?: CreateShareLinkDtoResourceKindEnum;
+  /**
    * Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.
    * @type {Array<string>}
    * @memberof CreateShareLinkDto
    */
   access: Array<CreateShareLinkDtoAccessEnum>;
 }
+
+/**
+ * @export
+ */
+export const CreateShareLinkDtoResourceKindEnum = {
+  Prompt: 'prompt',
+} as const;
+export type CreateShareLinkDtoResourceKindEnum =
+  (typeof CreateShareLinkDtoResourceKindEnum)[keyof typeof CreateShareLinkDtoResourceKindEnum];
 
 /**
  * @export
@@ -1654,6 +1669,12 @@ export interface CreatedScheduledTaskDto {
    * @memberof CreatedScheduledTaskDto
    */
   isActive?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof CreatedScheduledTaskDto
+   */
+  isDeleted?: boolean;
   /**
    *
    * @type {string}
@@ -2300,12 +2321,6 @@ export interface DeploymentItemDto {
    * @memberof DeploymentItemDto
    */
   sharedWithMe?: boolean;
-  /**
-   * How many other users currently hold shared access to this deployment, for deployments the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.
-   * @type {number}
-   * @memberof DeploymentItemDto
-   */
-  recipientsCount?: number;
   /**
    * Parent folder path for application-type deployments (absent for root-level or non-application items)
    * @type {string}
@@ -3123,12 +3138,6 @@ export interface DialToolsetDto {
    * @memberof DialToolsetDto
    */
   sharedWithMe?: boolean;
-  /**
-   * How many other users currently hold shared access to this toolset, for toolsets the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.
-   * @type {number}
-   * @memberof DialToolsetDto
-   */
-  recipientsCount?: number;
 }
 /**
  * @type DialToolsetDtoDescription
@@ -3313,7 +3322,7 @@ export interface DialToolsetListResponseDto {
  */
 export interface DiscardSharedCatalogItemDto {
   /**
-   * Identifier (DIAL Core resource path) of the catalog item or conversation to discard access to.
+   * Identifier (DIAL Core resource path) of the catalog item, skill, or conversation to discard access to.
    * @type {string}
    * @memberof DiscardSharedCatalogItemDto
    */
@@ -3711,6 +3720,31 @@ export type GetExternalServiceResponseDtoAuthenticationTypeEnum =
 /**
  *
  * @export
+ * @interface GetOfflineCredentialsResponseDto
+ */
+export interface GetOfflineCredentialsResponseDto {
+  /**
+   *
+   * @type {boolean}
+   * @memberof GetOfflineCredentialsResponseDto
+   */
+  available: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof GetOfflineCredentialsResponseDto
+   */
+  connected: boolean;
+  /**
+   *
+   * @type {OfflineCredentialsConnectDto}
+   * @memberof GetOfflineCredentialsResponseDto
+   */
+  connect?: OfflineCredentialsConnectDto;
+}
+/**
+ *
+ * @export
  * @interface LimitStatsDto
  */
 export interface LimitStatsDto {
@@ -4097,6 +4131,37 @@ export interface ModelCapabilitiesDto {
 /**
  *
  * @export
+ * @interface ModelCatalogPropertiesDto
+ */
+export interface ModelCatalogPropertiesDto {
+  /**
+   * Model provider for catalog display
+   * @type {string}
+   * @memberof ModelCatalogPropertiesDto
+   */
+  provider?: string;
+  /**
+   * Model vendor for catalog display
+   * @type {string}
+   * @memberof ModelCatalogPropertiesDto
+   */
+  vendor?: string;
+  /**
+   * Model license for catalog display
+   * @type {string}
+   * @memberof ModelCatalogPropertiesDto
+   */
+  license?: string;
+  /**
+   * Model knowledge cutoff date for catalog display
+   * @type {string}
+   * @memberof ModelCatalogPropertiesDto
+   */
+  knowledgeCutoffDate?: string;
+}
+/**
+ *
+ * @export
  * @interface ModelDetailsDto
  */
 export interface ModelDetailsDto {
@@ -4125,17 +4190,23 @@ export interface ModelDetailsDto {
    */
   limits?: ModelLimitsDto;
   /**
-   *
-   * @type {ModelPricingDto}
+   * Pricing as reported by DIAL Core: `unit` names the billing unit and every other key holds the per-unit price for that key
+   * @type {{ [key: string]: string; }}
    * @memberof ModelDetailsDto
    */
-  pricing?: ModelPricingDto;
+  pricing?: { [key: string]: string };
   /**
    *
    * @type {DeploymentFeaturesDetailsDto}
    * @memberof ModelDetailsDto
    */
   features?: DeploymentFeaturesDetailsDto;
+  /**
+   * Known model catalog properties allow-listed from DIAL Core catalog_properties
+   * @type {ModelCatalogPropertiesDto}
+   * @memberof ModelDetailsDto
+   */
+  catalogProperties?: ModelCatalogPropertiesDto;
   /**
    * Owner of the deployment as reported by DIAL Core
    * @type {string}
@@ -4185,31 +4256,6 @@ export interface ModelLimitsDto {
    * @memberof ModelLimitsDto
    */
   maxCompletionTokens?: number;
-}
-/**
- *
- * @export
- * @interface ModelPricingDto
- */
-export interface ModelPricingDto {
-  /**
-   * The pricing unit
-   * @type {string}
-   * @memberof ModelPricingDto
-   */
-  unit?: string;
-  /**
-   * Per-unit price for the completion request
-   * @type {string}
-   * @memberof ModelPricingDto
-   */
-  prompt?: string;
-  /**
-   * Per-unit price for the completion response
-   * @type {string}
-   * @memberof ModelPricingDto
-   */
-  completion?: string;
 }
 /**
  *
@@ -4351,6 +4397,69 @@ export interface MutatedToolsetDto {
 /**
  *
  * @export
+ * @interface OfflineCredentialsAuthResultDto
+ */
+export interface OfflineCredentialsAuthResultDto {
+  /**
+   *
+   * @type {boolean}
+   * @memberof OfflineCredentialsAuthResultDto
+   */
+  success: boolean;
+}
+/**
+ *
+ * @export
+ * @interface OfflineCredentialsConnectDto
+ */
+export interface OfflineCredentialsConnectDto {
+  /**
+   *
+   * @type {string}
+   * @memberof OfflineCredentialsConnectDto
+   */
+  authorizationEndpoint: string;
+  /**
+   *
+   * @type {string}
+   * @memberof OfflineCredentialsConnectDto
+   */
+  clientId: string;
+  /**
+   *
+   * @type {string}
+   * @memberof OfflineCredentialsConnectDto
+   */
+  redirectUri?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof OfflineCredentialsConnectDto
+   */
+  scopes: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface OfflineCredentialsSigninBodyDto
+ */
+export interface OfflineCredentialsSigninBodyDto {
+  /**
+   * OAuth authorization code.
+   * @type {string}
+   * @memberof OfflineCredentialsSigninBodyDto
+   */
+  code: string;
+  /**
+   * OAuth redirect URI used for the code exchange. Must resolve to the configured AUTH_CALLBACK_BASE_URL origin and one of the app's own callback paths.
+   * @type {string}
+   * @memberof OfflineCredentialsSigninBodyDto
+   */
+  redirectUri: string;
+}
+/**
+ *
+ * @export
  * @interface PromptFolderResponseDto
  */
 export interface PromptFolderResponseDto {
@@ -4391,6 +4500,18 @@ export interface PromptListResponseDto {
    * @memberof PromptListResponseDto
    */
   sharedWithMe: Array<PromptResponseDto>;
+  /**
+   *
+   * @type {Array<PromptResponseDto>}
+   * @memberof PromptListResponseDto
+   */
+  publicPrompts?: Array<PromptResponseDto>;
+  /**
+   *
+   * @type {Array<PromptFolderResponseDto>}
+   * @memberof PromptListResponseDto
+   */
+  publicFolders?: Array<PromptFolderResponseDto>;
 }
 /**
  *
@@ -4404,6 +4525,12 @@ export interface PromptResponseDto {
    * @memberof PromptResponseDto
    */
   id: string;
+  /**
+   * DIAL Core bucket the prompt lives in. For a prompt shared with the caller this is the owner bucket, not the caller bucket, so `id` can be qualified back into a `prompts/{bucket}/{id}` resource url
+   * @type {string}
+   * @memberof PromptResponseDto
+   */
+  bucket: string;
   /**
    * Display name
    * @type {string}
@@ -4429,6 +4556,12 @@ export interface PromptResponseDto {
    */
   folderId: string;
   /**
+   * Resource author reported by DIAL Core, when it is known
+   * @type {string}
+   * @memberof PromptResponseDto
+   */
+  author?: string;
+  /**
    * Creation timestamp (Unix ms)
    * @type {number}
    * @memberof PromptResponseDto
@@ -4440,6 +4573,43 @@ export interface PromptResponseDto {
    * @memberof PromptResponseDto
    */
   updatedAt: number;
+  /**
+   * Whether the prompt belongs to the requestor
+   * @type {boolean}
+   * @memberof PromptResponseDto
+   */
+  isMy?: boolean;
+  /**
+   * Whether the requestor may update the prompt. Organisation prompts are always read-only.
+   * @type {boolean}
+   * @memberof PromptResponseDto
+   */
+  canEdit?: boolean;
+  /**
+   * Whether another user shared the prompt with the requestor
+   * @type {boolean}
+   * @memberof PromptResponseDto
+   */
+  sharedWithMe?: boolean;
+  /**
+   * READ/WRITE/SHARE permissions applicable to the requestor
+   * @type {Array<string>}
+   * @memberof PromptResponseDto
+   */
+  permissions?: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface PromptsConfigDto
+ */
+export interface PromptsConfigDto {
+  /**
+   * Favorited prompt paths.
+   * @type {Array<string>}
+   * @memberof PromptsConfigDto
+   */
+  installed: Array<string>;
 }
 /**
  *
@@ -4492,11 +4662,11 @@ export interface PublishCatalogEntityDto {
    */
   folderPath: string;
   /**
-   * Version label for this publish.
+   * Optional version label. When omitted, versioned resource ids recover it from their {name}__{version} suffix; unversioned resources use an empty version.
    * @type {string}
    * @memberof PublishCatalogEntityDto
    */
-  version: string;
+  version?: string;
   /**
    * Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.
    * @type {Array<PublishRuleDto>}
@@ -4605,6 +4775,8 @@ export const PublishHistoryEntryDtoEntityTypeEnum = {
   Model: 'model',
   Toolset: 'toolset',
   Application: 'application',
+  Prompt: 'prompt',
+  Skill: 'skill',
 } as const;
 export type PublishHistoryEntryDtoEntityTypeEnum =
   (typeof PublishHistoryEntryDtoEntityTypeEnum)[keyof typeof PublishHistoryEntryDtoEntityTypeEnum];
@@ -4660,6 +4832,8 @@ export const PublishResultDtoEntityTypeEnum = {
   Model: 'model',
   Toolset: 'toolset',
   Application: 'application',
+  Prompt: 'prompt',
+  Skill: 'skill',
 } as const;
 export type PublishResultDtoEntityTypeEnum =
   (typeof PublishResultDtoEntityTypeEnum)[keyof typeof PublishResultDtoEntityTypeEnum];
@@ -4988,7 +5162,7 @@ export interface RevokeAccessResponseDto {
  */
 export interface RevokeSharedAccessDto {
   /**
-   * Identifier (DIAL Core resource path) of the owned catalog item or conversation to revoke all shared access to.
+   * Identifier (DIAL Core resource path) of the owned catalog item, skill, or conversation to revoke all shared access to.
    * @type {string}
    * @memberof RevokeSharedAccessDto
    */
@@ -5118,6 +5292,12 @@ export interface ScheduledTaskDto {
    * @memberof ScheduledTaskDto
    */
   isActive?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof ScheduledTaskDto
+   */
+  isDeleted?: boolean;
   /**
    *
    * @type {string}
@@ -5314,6 +5494,292 @@ export const ShareLinkResponseDtoAccessEnum = {
 export type ShareLinkResponseDtoAccessEnum =
   (typeof ShareLinkResponseDtoAccessEnum)[keyof typeof ShareLinkResponseDtoAccessEnum];
 
+/**
+ *
+ * @export
+ * @interface ShareRecipientsResponseDto
+ */
+export interface ShareRecipientsResponseDto {
+  /**
+   * The resource the count belongs to, echoed from the request.
+   * @type {string}
+   * @memberof ShareRecipientsResponseDto
+   */
+  itemId: string;
+  /**
+   * How many users currently hold shared access to the resource. Counts accepted invitations only — an issued but unopened share link is not counted, so `0` means "nobody holds access", not "never shared".
+   * @type {number}
+   * @memberof ShareRecipientsResponseDto
+   */
+  recipientsCount: number;
+}
+/**
+ *
+ * @export
+ * @interface SkillCatalogListResponseDto
+ */
+export interface SkillCatalogListResponseDto {
+  /**
+   *
+   * @type {Array<SkillMetadataItemDto>}
+   * @memberof SkillCatalogListResponseDto
+   */
+  skills: Array<SkillMetadataItemDto>;
+  /**
+   *
+   * @type {Array<SkillMetadataItemDto>}
+   * @memberof SkillCatalogListResponseDto
+   */
+  sharedWithMe: Array<SkillMetadataItemDto>;
+  /**
+   *
+   * @type {Array<SkillMetadataItemDto>}
+   * @memberof SkillCatalogListResponseDto
+   */
+  publicSkills: Array<SkillMetadataItemDto>;
+}
+/**
+ *
+ * @export
+ * @interface SkillFileDeleteResponseDto
+ */
+export interface SkillFileDeleteResponseDto {
+  /**
+   * New ETag of the skill after file deletion, when DIAL Core returns one
+   * @type {string}
+   * @memberof SkillFileDeleteResponseDto
+   */
+  etag?: string;
+}
+/**
+ *
+ * @export
+ * @interface SkillFileListResponseDto
+ */
+export interface SkillFileListResponseDto {
+  /**
+   * DIAL Core bucket name
+   * @type {string}
+   * @memberof SkillFileListResponseDto
+   */
+  bucket: string;
+  /**
+   * The listed grouping-folder path
+   * @type {string}
+   * @memberof SkillFileListResponseDto
+   */
+  path: string;
+  /**
+   *
+   * @type {Array<SkillMetadataItemDto>}
+   * @memberof SkillFileListResponseDto
+   */
+  items: Array<SkillMetadataItemDto>;
+  /**
+   * Pagination continuation token
+   * @type {string}
+   * @memberof SkillFileListResponseDto
+   */
+  nextToken?: string;
+}
+/**
+ *
+ * @export
+ * @interface SkillFileUploadResponseDto
+ */
+export interface SkillFileUploadResponseDto {
+  /**
+   * New ETag of the uploaded file, when DIAL Core returns one
+   * @type {string}
+   * @memberof SkillFileUploadResponseDto
+   */
+  etag?: string;
+}
+/**
+ *
+ * @export
+ * @interface SkillGroupingFolderResponseDto
+ */
+export interface SkillGroupingFolderResponseDto {
+  /**
+   * ETag of the created grouping folder, when DIAL Core returns one
+   * @type {string}
+   * @memberof SkillGroupingFolderResponseDto
+   */
+  etag?: string;
+}
+/**
+ *
+ * @export
+ * @interface SkillListResponseDto
+ */
+export interface SkillListResponseDto {
+  /**
+   * DIAL Core bucket name
+   * @type {string}
+   * @memberof SkillListResponseDto
+   */
+  bucket: string;
+  /**
+   * The listed grouping-folder path
+   * @type {string}
+   * @memberof SkillListResponseDto
+   */
+  path: string;
+  /**
+   *
+   * @type {Array<SkillMetadataItemDto>}
+   * @memberof SkillListResponseDto
+   */
+  items: Array<SkillMetadataItemDto>;
+  /**
+   * Pagination continuation token
+   * @type {string}
+   * @memberof SkillListResponseDto
+   */
+  nextToken?: string;
+}
+/**
+ *
+ * @export
+ * @interface SkillMetadataItemDto
+ */
+export interface SkillMetadataItemDto {
+  /**
+   * Resource name (last path segment)
+   * @type {string}
+   * @memberof SkillMetadataItemDto
+   */
+  name: string;
+  /**
+   * Relative path within the bucket
+   * @type {string}
+   * @memberof SkillMetadataItemDto
+   */
+  path: string;
+  /**
+   * Full DIAL Core resource URL (skills/{bucket}/{path})
+   * @type {string}
+   * @memberof SkillMetadataItemDto
+   */
+  url: string;
+  /**
+   * DIAL Core bucket name
+   * @type {string}
+   * @memberof SkillMetadataItemDto
+   */
+  bucket: string;
+  /**
+   *
+   * @type {string}
+   * @memberof SkillMetadataItemDto
+   */
+  nodeType: SkillMetadataItemDtoNodeTypeEnum;
+  /**
+   * Parent grouping-folder path
+   * @type {string}
+   * @memberof SkillMetadataItemDto
+   */
+  parentPath?: string;
+  /**
+   * READ/WRITE/SHARE permissions on this resource
+   * @type {Array<string>}
+   * @memberof SkillMetadataItemDto
+   */
+  permissions?: Array<string>;
+  /**
+   * Resource version ETag (item only)
+   * @type {string}
+   * @memberof SkillMetadataItemDto
+   */
+  etag?: string;
+  /**
+   * Author (item only)
+   * @type {string}
+   * @memberof SkillMetadataItemDto
+   */
+  author?: string;
+  /**
+   * Unix timestamp ms (item only)
+   * @type {number}
+   * @memberof SkillMetadataItemDto
+   */
+  createdAt?: number;
+  /**
+   * Unix timestamp ms (item only)
+   * @type {number}
+   * @memberof SkillMetadataItemDto
+   */
+  updatedAt?: number;
+  /**
+   * Whether the skill belongs to the requestor
+   * @type {boolean}
+   * @memberof SkillMetadataItemDto
+   */
+  isMy?: boolean;
+  /**
+   * Whether the requestor may update the skill. Organisation skills are always read-only.
+   * @type {boolean}
+   * @memberof SkillMetadataItemDto
+   */
+  canEdit?: boolean;
+  /**
+   * Whether another user shared the skill with the requestor
+   * @type {boolean}
+   * @memberof SkillMetadataItemDto
+   */
+  sharedWithMe?: boolean;
+}
+
+/**
+ * @export
+ */
+export const SkillMetadataItemDtoNodeTypeEnum = {
+  Folder: 'folder',
+  Item: 'item',
+} as const;
+export type SkillMetadataItemDtoNodeTypeEnum =
+  (typeof SkillMetadataItemDtoNodeTypeEnum)[keyof typeof SkillMetadataItemDtoNodeTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface SkillOperationResultDto
+ */
+export interface SkillOperationResultDto {
+  /**
+   * Always true on success
+   * @type {boolean}
+   * @memberof SkillOperationResultDto
+   */
+  success?: boolean;
+}
+/**
+ *
+ * @export
+ * @interface SkillUploadResponseDto
+ */
+export interface SkillUploadResponseDto {
+  /**
+   * New aggregate ETag of the uploaded skill, when DIAL Core returns one
+   * @type {string}
+   * @memberof SkillUploadResponseDto
+   */
+  etag?: string;
+}
+/**
+ *
+ * @export
+ * @interface SkillsConfigDto
+ */
+export interface SkillsConfigDto {
+  /**
+   * Favorited skill resource URLs.
+   * @type {Array<string>}
+   * @memberof SkillsConfigDto
+   */
+  installed: Array<string>;
+}
 /**
  *
  * @export
@@ -6044,6 +6510,44 @@ export interface UpdateInstalledDto {
 /**
  *
  * @export
+ * @interface UpdateInstalledPromptDto
+ */
+export interface UpdateInstalledPromptDto {
+  /**
+   * Prompt path within the prompts namespace.
+   * @type {string}
+   * @memberof UpdateInstalledPromptDto
+   */
+  id: string;
+  /**
+   * Pass `true` to favorite the prompt, `false` to unfavorite it.
+   * @type {boolean}
+   * @memberof UpdateInstalledPromptDto
+   */
+  isInstalled: boolean;
+}
+/**
+ *
+ * @export
+ * @interface UpdateInstalledSkillDto
+ */
+export interface UpdateInstalledSkillDto {
+  /**
+   * Full skill resource URL.
+   * @type {string}
+   * @memberof UpdateInstalledSkillDto
+   */
+  id: string;
+  /**
+   * Pass `true` to favorite the skill, `false` to unfavorite it.
+   * @type {boolean}
+   * @memberof UpdateInstalledSkillDto
+   */
+  isInstalled: boolean;
+}
+/**
+ *
+ * @export
  * @interface UpdatePinsDto
  */
 export interface UpdatePinsDto {
@@ -6216,6 +6720,12 @@ export interface UpdatedScheduledTaskDto {
   isActive?: boolean;
   /**
    *
+   * @type {boolean}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  isDeleted?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof UpdatedScheduledTaskDto
    */
@@ -6324,6 +6834,55 @@ export interface UserConfigDto {
    * @memberof UserConfigDto
    */
   deployments: DeploymentsConfigDto;
+  /**
+   *
+   * @type {PromptsConfigDto}
+   * @memberof UserConfigDto
+   */
+  prompts: PromptsConfigDto;
+  /**
+   *
+   * @type {SkillsConfigDto}
+   * @memberof UserConfigDto
+   */
+  skills: SkillsConfigDto;
+}
+/**
+ *
+ * @export
+ * @interface UserLimitStatsResponseDto
+ */
+export interface UserLimitStatsResponseDto {
+  /**
+   * Per-deployment rate-limit and rolling usage stats, keyed by deployment name. Models only — applications, toolsets, and routes never appear here. On GET /v1/user/limits every deployment visible to the caller is present, including ones never used (reported against zero usage). On GET /v1/user/usage only deployments used in the trailing 30 days are present; absence means zero usage, not "unknown".
+   * @type {{ [key: string]: DeploymentLimitsResponseDto; }}
+   * @memberof UserLimitStatsResponseDto
+   */
+  deployments?: { [key: string]: DeploymentLimitsResponseDto };
+  /**
+   * The caller's global cost budget for the trailing minute and spend against it. Unlike the identically-named field nested inside a `deployments` entry (that is per-deployment attributed spend with an unlimited `total`), this is the caller's actual money budget. A `total` at or above 9007199254740992 (2^53) represents the upstream "unlimited" sentinel (`Long.MAX_VALUE`, which exceeds `Number.MAX_SAFE_INTEGER`) and must be treated as unlimited rather than rendered as a used/total ratio.
+   * @type {LimitStatsDto}
+   * @memberof UserLimitStatsResponseDto
+   */
+  minuteCostStats?: LimitStatsDto;
+  /**
+   * The caller's global cost budget for the trailing 24 hours and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.
+   * @type {LimitStatsDto}
+   * @memberof UserLimitStatsResponseDto
+   */
+  dayCostStats?: LimitStatsDto;
+  /**
+   * The caller's global cost budget for the trailing 7 days and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.
+   * @type {LimitStatsDto}
+   * @memberof UserLimitStatsResponseDto
+   */
+  weekCostStats?: LimitStatsDto;
+  /**
+   * The caller's global cost budget for the trailing 30 days and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.
+   * @type {LimitStatsDto}
+   * @memberof UserLimitStatsResponseDto
+   */
+  monthCostStats?: LimitStatsDto;
 }
 /**
  *

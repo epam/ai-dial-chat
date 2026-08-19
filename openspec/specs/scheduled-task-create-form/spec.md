@@ -1,5 +1,9 @@
 # Spec: scheduled-task-create-form
 
+## Purpose
+
+The create and edit routes for scheduled tasks and the shared form component behind them.
+
 ## Requirements
 
 ### Requirement: New task navigates to a dedicated create route

@@ -1,6 +1,9 @@
 .toggleButton {
   color: var(--cs-cg-label, var(--text-secondary, #57647a));
   width: 100%;
+  min-width: 0;
+  /* A button centers its text by default, which misaligns a summary line that has to wrap. */
+  text-align: start;
   justify-content: flex-start !important;
 
   &:hover {

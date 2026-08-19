@@ -3,11 +3,11 @@ import { CatalogViewMode } from '../types/view-mode';
 
 /** Typography class overrides for `Toolbar`. */
 export interface ToolbarTypography {
-  /** Typography class for the section title. Default: `'dial-h3-text'`. */
+  /** Typography class for the section title. Default: `'dial-body-semi-text'`. */
   titleClassName?: string;
-  /** Typography class for the total count. Default: `'dial-tiny-text'`. */
+  /** Typography class for the total count. Default: `'dial-tiny-semi-text'`. */
   countClassName?: string;
-  /** Typography class for the filter section label. Default: `'dial-tiny-semi-text'`. */
+  /** Typography class for the filter section label. Default: `'dial-tiny-lead-semi-text'`. */
   filterSectionLabelClassName?: string;
   /** Typography class for the filter checkbox labels. Default: `'dial-small-semi-text'`. */
   filterButtonClassName?: string;

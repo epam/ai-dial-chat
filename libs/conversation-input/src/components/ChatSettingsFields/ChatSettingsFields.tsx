@@ -5,7 +5,7 @@ import {
   ResponseFormat,
 } from '@epam/ai-dial-chat-shared';
 import {
-  Input,
+  Textarea,
   DialRadioGroup,
   DialSlider,
   RadioGroupOrientation,
@@ -91,11 +91,13 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
   );
 
   return (
-    <div className="flex flex-col gap-4 px-6 py-3" style={cssVars}>
+    <div className="flex flex-col gap-4 px-6 pb-3" style={cssVars}>
       {features.responseFormat && (
         <DialRadioGroup
           fieldTitle={responseFormatLabel}
-          labelClassName={fieldLabelClassName}
+          groupLabelClassName={fieldLabelClassName}
+          containerClassName="!gap-2"
+          formItemChildrenClassName="mb-2"
           elementId="response-format"
           orientation={RadioGroupOrientation.Column}
           activeRadioButton={responseFormat ?? ResponseFormat.Markdown}
@@ -114,9 +116,10 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
         />
       )}
       {features.systemPrompt && (
-        <Input
+        <Textarea
           value={systemPrompt}
           placeholder={systemPromptTooltip}
+          resize
           labelProps={{
             className: fieldLabelClassName,
             label: systemPromptLabel,

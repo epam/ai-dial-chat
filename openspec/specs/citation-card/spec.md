@@ -1,3 +1,9 @@
+# citation-card Specification
+
+## Purpose
+
+The citation card tooltip that shows source details, with preview, navigation, and download actions.
+
 ## Requirements
 
 ---

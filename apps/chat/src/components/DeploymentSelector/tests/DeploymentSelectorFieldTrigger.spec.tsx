@@ -73,6 +73,10 @@ describe('DeploymentSelectorFieldTrigger', () => {
 
     expect(screen.queryByText('overlay content')).toBeNull();
 
+    /* The chevron is `aria-hidden` by design (decorative, click bubbles to the
+       combobox wrapper), so it has no accessible role/text a Testing Library
+       query could target — this is the one way to reach that exact node. */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
     const chevron = container.querySelector('svg');
     expect(chevron).toBeTruthy();
     await user.click(chevron as SVGElement);

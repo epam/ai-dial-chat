@@ -1,5 +1,9 @@
 # Spec: deployment-icon-tooltip
 
+## Purpose
+
+An optional tooltip on the deployment icon, forwarded through icon building into assistant message bubbles.
+
 ## Requirements
 
 ### Requirement: `DeploymentIcon` accepts an optional `tooltip` prop and displays it on hover

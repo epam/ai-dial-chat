@@ -118,19 +118,20 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   },
   Calendar: ({
     id,
-    label,
+    labelProps,
     value,
     onChange,
     placeholder,
   }: {
     id?: string;
-    label?: string;
+    labelProps?: { label: ReactNode; required?: boolean };
     value?: Date | string | null;
     onChange: (value: string | null) => void;
     placeholder?: string;
   }) => (
     <label htmlFor={id}>
-      {label}
+      {labelProps?.label}
+      {labelProps?.required && ' *'}
       <input
         id={id}
         placeholder={placeholder}
@@ -213,7 +214,7 @@ const baseValues: ScheduledTaskCreateFormValues = {
 const renderForm = async (
   overrides?: Partial<ScheduledTaskCreateFormProps>,
 ) => {
-  const result = render(
+  const view = render(
     <ScheduledTaskCreateForm
       labels={{
         pageTitle: 'New task',
@@ -259,7 +260,7 @@ const renderForm = async (
     />,
   );
   await screen.findAllByRole('textbox');
-  return result;
+  return view;
 };
 
 describe('ScheduledTaskCreateForm', () => {

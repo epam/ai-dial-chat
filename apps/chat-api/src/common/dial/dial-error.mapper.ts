@@ -6,10 +6,13 @@ import {
   HttpException,
   HttpStatus,
   Logger,
+  MethodNotAllowedException,
   NotFoundException,
   PayloadTooLargeException,
+  PreconditionFailedException,
   ServiceUnavailableException,
   UnauthorizedException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 
 /**
@@ -50,6 +53,18 @@ export const mapDialHttpStatus = (
     throw new ConflictException(upstreamMessage ?? 'Conflict');
   if (status === 413)
     throw new PayloadTooLargeException(upstreamMessage ?? 'Payload too large');
+  if (status === 405)
+    throw new MethodNotAllowedException(
+      upstreamMessage ?? 'Method not allowed for this resource',
+    );
+  if (status === 412)
+    throw new PreconditionFailedException(
+      upstreamMessage ?? 'Precondition failed',
+    );
+  if (status === 422)
+    throw new UnprocessableEntityException(
+      upstreamMessage ?? 'Unprocessable entity',
+    );
   if (status === 429)
     throw new HttpException(
       upstreamMessage ?? 'Too Many Requests',

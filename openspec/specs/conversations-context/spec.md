@@ -1,5 +1,9 @@
 # Spec: conversations-context
 
+## Purpose
+
+Reset and refetch semantics of `ConversationsContext` when the authenticated identity changes.
+
 ## Requirements
 
 ### Requirement: ConversationsContext resets and refetches when the authenticated identity changes

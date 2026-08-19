@@ -1,5 +1,9 @@
 # Spec: user-config-deployment-management
 
+## Purpose
+
+Installing, uninstalling, and selecting deployments within the user configuration.
+
 ## Requirements
 
 ### Requirement: PATCH /api/v1/user-config/deployments installs or uninstalls a deployment

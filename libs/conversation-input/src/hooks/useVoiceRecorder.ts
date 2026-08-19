@@ -25,8 +25,6 @@ export interface UseVoiceRecorderResult {
    * Passed to `VoiceBar` for waveform rendering.
    */
   analyserNodeRef: React.RefObject<AnalyserNode | null>;
-  /** Elapsed recording time in whole seconds. Resets to `0` when transitioning to `idle`. */
-  elapsedSeconds: number;
   /** Human-readable error message in `error` state, otherwise `null`. */
   errorMessage: string | null;
   /** Requests microphone access and starts recording. No-op unless `state === 'idle'`. */
@@ -58,7 +56,6 @@ export const useVoiceRecorder = ({
     VoiceRecorderState.Idle,
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const streamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -66,20 +63,11 @@ export const useVoiceRecorder = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const mimeTypeRef = useRef<string>('');
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   /* Stable ref so the onstop closure always calls the latest callback. */
   const onAttachAudioRef = useRef(onAttachAudio);
   onAttachAudioRef.current = onAttachAudio;
 
-  const stopTimer = useCallback(() => {
-    if (intervalRef.current != null) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  }, []);
-
   const cleanupMedia = useCallback(() => {
-    stopTimer();
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
@@ -90,7 +78,7 @@ export const useVoiceRecorder = ({
     }
     analyserRef.current = null;
     mediaRecorderRef.current = null;
-  }, [stopTimer]);
+  }, []);
 
   const startRecording = useCallback(() => {
     const run = async () => {
@@ -123,10 +111,6 @@ export const useVoiceRecorder = ({
 
         recorder.start();
         setState(VoiceRecorderState.Recording);
-
-        intervalRef.current = setInterval(() => {
-          setElapsedSeconds((prev) => prev + 1);
-        }, 1000);
       } catch (err) {
         const msg =
           err instanceof Error ? err.message : 'Microphone access denied';
@@ -141,8 +125,6 @@ export const useVoiceRecorder = ({
     const recorder = mediaRecorderRef.current;
     if (!recorder || recorder.state !== 'recording') return;
 
-    stopTimer();
-
     recorder.onstop = () => {
       const effectiveMime = mimeTypeRef.current || 'audio/webm';
       const blob = new Blob(chunksRef.current, { type: effectiveMime });
@@ -152,13 +134,12 @@ export const useVoiceRecorder = ({
       const file = new File([blob], `voice-${ts}.${ext}`, { type: baseMime });
       onAttachAudioRef.current(file);
       cleanupMedia();
-      setElapsedSeconds(0);
       setErrorMessage(null);
       setState(VoiceRecorderState.Idle);
     };
 
     recorder.stop();
-  }, [stopTimer, cleanupMedia]);
+  }, [cleanupMedia]);
 
   const discardRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current;
@@ -168,7 +149,6 @@ export const useVoiceRecorder = ({
       recorder.stop();
     }
     cleanupMedia();
-    setElapsedSeconds(0);
     setErrorMessage(null);
     setState(VoiceRecorderState.Idle);
   }, [cleanupMedia]);
@@ -182,7 +162,6 @@ export const useVoiceRecorder = ({
   return {
     state,
     analyserNodeRef: analyserRef,
-    elapsedSeconds,
     errorMessage,
     startRecording,
     stopRecording,

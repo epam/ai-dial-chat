@@ -57,10 +57,25 @@ Default behavior:
 
 ## Docs
 
-Ground-truth design docs live in `docs/` — app architecture, technical/product requirements, and the auth subsystem (OIDC login/logout, session cookies, token refresh, BFF flow, SessionGuard).
+Ground-truth design docs live in `docs/` — app architecture, technical/product requirements, and the auth subsystem (OIDC login/logout, session cookies, token refresh, BFF flow, SessionGuard). Every app and lib additionally owns a `README.md` that documents its public API.
 
 - **Reading:** Before changing or explaining documented behavior, use the `dial-docs` skill to find the one authoritative doc. Don't guess from memory and don't read all docs — the skill is an index that routes you to the right one.
 - **Writing:** When a change alters behavior a doc describes, update that doc and any affected diagram in the **same commit**.
+- **Verifying:** Run `npm run validate:docs` after touching any README, `docs/**`, a lib's public API, or a project's `package.json`. It checks README coverage and H1/package identity, lib `package.json` metadata, that every relative link resolves, and that every name a lib README imports is actually exported. Nothing in `lint`/`test`/`build` covers this.
+
+READMEs are part of the public contract: a documented prop that a component never had is worse than no README, because callers copy it. Treat every code fence as if it were type-checked — names, required props, value types, and owning packages must all match the source. `.claude/rules/docs.md` has the full rule set, the same-change update matrix, and the drift classes that have actually reached the main line here.
+
+### `docs/architecture.md` is structural — keep it current
+
+`docs/architecture.md` is the map of what exists. It goes stale silently, because nothing fails when a new library or backend domain is missing from it. Update it in the **same change**, not later, whenever you:
+
+- add, rename, or remove a library under `libs/` or an app under `apps/`
+- add, rename, or remove a backend domain folder under `apps/chat-api/src/` or a controller base path
+- add or remove a React context in `apps/chat/src/context/`, a route folder under `pages/`, or an entry in the `ApiEndpoints` enum
+- change a cross-cutting mechanism the document describes — auth/session/CSRF, SSE streaming, theming token flow, the overlay protocol, styling tiers, or module boundaries
+- change a tooling major version listed in the Monorepo & Tooling table
+
+Two rules for the content: state what the code does today, and when intent and code disagree, say so explicitly rather than documenting the intent (see the `Open` rows in the Decision Log). Deep detail belongs in the specialized doc — `docs/theme-customization.md`, `docs/chat-overlay-migration-guide.md`, `docs/auth/` — with `architecture.md` carrying a summary and a link, so the same fact is not maintained twice.
 
 ## TypeScript module imports
 
@@ -133,6 +148,10 @@ Whenever implementing or modifying a search feature (search bars, filterable dro
 ## @epam/ai-dial-ui-kit MCP tools
 
 Use these two tools for all UI kit discovery and documentation needs: `searchEntity(entity, query?)` and `getEntityDetails(entity, name?)`. If you need to look up **ANYTHING** about the ui kit, use the MCP server. **Never** use `grep`, `glob`, `find`, or similar file system tools to discover components — they miss type information and examples.
+
+### Component generations — always use 2.0
+
+The kit ships two generations: **2.0** (current design system, exported without the `Dial` prefix — `Button`, `Input`, `Select`, `Popup`, `Tabs`) and **1.0** (legacy `Dial*`). Always use the 2.0 component; fall back to a `Dial*` one only when the MCP lookup shows no 2.0 replacement exists. `searchEntity` ranks 2.0 first and flags superseded 1.0 entries with "Use instead". See `.claude/rules/all-tsx.md` for details.
 
 ### UI Kit Breaking Changes & Migration
 

@@ -6,6 +6,9 @@ import type {
 import { ExportFileNameKind } from '../types/conversation-export';
 import { formatDateYMD } from './date';
 
+/** Placeholder app name used in every export file name — this branch has no app display-name config yet. */
+export const EXPORT_APP_NAME = 'ai_dial';
+
 export const buildExportEnvelope = (
   conversations: Conversation[],
   folders: ExportFolder[] = [],

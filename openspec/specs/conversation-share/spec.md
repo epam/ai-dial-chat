@@ -235,11 +235,13 @@ Cache keys invalidated: `deployments:list:<userSub>` and `deployments:list:<user
 - **WHEN** the frontend calls `refetchDeployments()`/`refetchToolsets()` immediately after `acceptInvitation` resolves
 - **THEN** the next `GET /api/v1/deployments` / `GET /api/v1/toolsets` request is a cache miss and reflects the newly shared resource
 
-### Requirement: Frontend refetches deployment/toolset lists before navigating past an accepted invitation
+### Requirement: Frontend refetches deployment/toolset/skill lists before navigating past an accepted invitation
 
-`SharedInvitationPage` (`apps/chat/src/pages/SharedInvitation/SharedInvitation.tsx`) SHALL call `useDeployments()`'s `refetchDeployments()` and `refetchToolsets()` (via `Promise.all`, awaited) after a successful `acceptInvitation` and before calling `navigate(getTargetRoute(itemId), { replace: true })`. These calls remain a consistency backstop; they are no longer the mechanism the details panel depends on to find the newly-shared item (see "Accepting an invitation resolves and returns the shared item's summary" below).
+`SharedInvitationPage` (`apps/chat/src/pages/SharedInvitation/SharedInvitation.tsx`) SHALL call `useDeployments()`'s `refetchDeployments()` and `refetchToolsets()`, and `useSkills()`'s `refetchSkills()`, (via a single `Promise.all`, awaited) after a successful `acceptInvitation` and before calling `navigate(getTargetRoute(itemId), { replace: true })`. These calls remain a consistency backstop; they are no longer the mechanism the details panel depends on to find the newly-shared item (see "Accepting an invitation resolves and returns the shared item's summary" below).
 
-`SharedInvitationPage` SHALL call `useDeployments()`'s `mergeSharedItem(item)` with the `sharedDeployment`/`sharedToolset` value from `acceptInvitation`'s response, **after** the `refetchDeployments()`/`refetchToolsets()` call above has resolved and **before** calling `navigate(...)`, whenever that field is present. This order is required, not incidental: `refetchDeployments`/`refetchToolsets` fully replace `DeploymentsContext`'s `rawDeployments`/`toolsets` arrays with whatever DIAL Core's bulk list returns, so merging before (or in parallel with) the refetch lets a stale bulk-list response — one that has not yet propagated the just-granted share — silently overwrite the merged item and remove it again. Running the merge after the refetch guarantees the backend-resolved item always wins. When neither field is present (the backend could not resolve the item, e.g. an upstream propagation gap — see the new requirement below), `SharedInvitationPage` SHALL still proceed with the existing refetch-then-navigate behavior unchanged.
+`SharedInvitationPage` SHALL call `useDeployments()`'s `mergeSharedItem(item)` with the `sharedDeployment`/`sharedToolset` value from `acceptInvitation`'s response, and `useSkills()`'s `mergeSharedSkill(item)` with the response's `sharedSkill` value, **after** the `Promise.all` refetch above has resolved and **before** calling `navigate(...)`, whenever the corresponding field is present. This order is required, not incidental: `refetchDeployments`/`refetchToolsets`/`refetchSkills` fully replace the respective context's item arrays with whatever DIAL Core's bulk list returns, so merging before (or in parallel with) the refetch lets a stale bulk-list response — one that has not yet propagated the just-granted share — silently overwrite the merged item and remove it again. Running the merge after the refetch guarantees the backend-resolved item always wins. When none of `sharedDeployment`/`sharedToolset`/`sharedSkill` is present (the backend could not resolve the item, e.g. an upstream propagation gap — see the new requirement below), `SharedInvitationPage` SHALL still proceed with the existing refetch-then-navigate behavior unchanged.
+
+`SkillsContext` (`apps/chat/src/context/SkillsContext.tsx`) SHALL expose a `mergeSharedSkill(item: SkillMetadataItemDto): void` method on its context value, mirroring `DeploymentsContext`'s `mergeSharedItem`. Calling it SHALL upsert `item` into `sharedWithMe` (replacing any existing entry with the same `url`, or appending a new entry) via the existing `setSharedWithMe` setter. `mergeSharedSkill` SHALL NOT issue any network request itself.
 
 `CatalogView` (`apps/chat/src/components/CatalogView/CatalogView.tsx`) SHALL treat the `itemId` search param (`CatalogQuery.ItemId`) it reads into `initialDetailsItemId` as a one-shot signal: after reading a non-empty value for a render, it SHALL clear that param from the URL via `setSearchParams` with `{ replace: true }`, so the param does not linger in the address bar once consumed.
 
@@ -257,8 +259,13 @@ Cache keys invalidated: `deployments:list:<userSub>` and `deployments:list:<user
 
 #### Scenario: Falls back to refetch-only behavior when the backend can't resolve the item
 
-- **WHEN** `acceptInvitation`'s response has neither `sharedDeployment` nor `sharedToolset` set
-- **THEN** `SharedInvitationPage` does not call `mergeSharedItem` and proceeds exactly as before: `refetchDeployments()`/`refetchToolsets()` then `navigate(...)`
+- **WHEN** `acceptInvitation`'s response has neither `sharedDeployment` nor `sharedToolset` nor `sharedSkill` set
+- **THEN** `SharedInvitationPage` does not call `mergeSharedItem`/`mergeSharedSkill` and proceeds exactly as before: `refetchDeployments()`/`refetchToolsets()`/`refetchSkills()` then `navigate(...)`
+
+#### Scenario: Catalog details panel opens for a newly shared skill on a fresh full-page navigation
+
+- **WHEN** a user accepts a share invitation for a skill via a full-page navigation to `/catalog/shared/:invitationId`, and `acceptInvitation`'s response includes a resolved `sharedSkill`
+- **THEN** `SharedInvitationPage` merges that item into `SkillsContext` via `mergeSharedSkill` before navigating to `${ROUTES.Catalog}?itemId=<id>`, so `SkillsContext`'s `sharedWithMe` already includes the shared skill by the time `CatalogView` mounts — independent of whether the skills listing endpoint itself reflects the grant yet — and `Catalog`'s `initialDetailsItemId` effect finds a match and opens the details panel on the first attempt, without requiring a page reload
 
 #### Scenario: itemId query param is cleared after being consumed
 

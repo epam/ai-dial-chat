@@ -8,7 +8,7 @@ import styles from './MarkdownTable.module.scss';
 export interface MarkdownTableClassNames {
   /** Extra classes on the outer table wrapper. */
   tableWrapper?: string;
-  /** Typography class for the table. Defaults to `'text-sm'`. */
+  /** Typography class for the table. Defaults to `'dial-small-text'`. */
   tableFont?: string;
 }
 
@@ -98,7 +98,7 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
             ref={tableRef}
             className={mergeClasses(
               'w-max min-w-full border-collapse',
-              classNames.tableFont ?? 'text-sm',
+              classNames.tableFont ?? 'dial-small-text',
             )}
           >
             {children}

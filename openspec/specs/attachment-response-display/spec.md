@@ -1,3 +1,9 @@
+# attachment-response-display Specification
+
+## Purpose
+
+How user-sent and assistant-generated attachments are mapped to display models and rendered in message bubbles, without leaking the DIAL API shape into UI components.
+
 ## Requirements
 
 ---

@@ -1,5 +1,5 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialTag } from '@epam/ai-dial-ui-kit';
+import { Tag } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import { PublishHistoryEntry } from '../../models/publish';
 import { formatPublishedDate } from '../../utils/format-published-date';
@@ -126,10 +126,10 @@ export const PublishHistoryList: FC<PublishHistoryListProps> = ({
               {versionPrefix} {entry.version}
             </span>
             {entry.version === currentVersion && (
-              <DialTag
+              <Tag
                 label={currentBadgeLabel}
                 className={mergeClasses(
-                  'shrink-0 !cursor-default whitespace-nowrap',
+                  'shrink-0 whitespace-nowrap',
                   styles.currentBadge,
                 )}
               />

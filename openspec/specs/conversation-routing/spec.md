@@ -1,5 +1,9 @@
 # Spec: conversation-routing
 
+## Purpose
+
+Conversation URLs: creating a conversation on the first message, redirecting to its route, and appending subsequent messages.
+
 ## Requirements
 
 ### Requirement: Sending the first message creates a conversation via the API and redirects to its URL

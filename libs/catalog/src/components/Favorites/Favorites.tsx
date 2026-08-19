@@ -1,4 +1,8 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  ItemHeader,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import {
   FC,
@@ -10,7 +14,6 @@ import {
 } from 'react';
 import { FavoritesProps } from '../../models/favorites';
 import { useFavColumns } from '../../utils/use-fav-columns';
-import { ItemHeader } from '../ItemHeader/ItemHeader';
 import { FavoriteCard } from './FavoriteCard';
 import styles from './Favorites.module.scss';
 

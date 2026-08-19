@@ -4,7 +4,6 @@ import type {
   ResponseFormat,
 } from '@epam/ai-dial-chat-shared';
 import type { ChatSettingsValues } from '@epam/ai-dial-conversation-input';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -25,6 +24,8 @@ interface LocalModeParams {
   values: LocalModeValues;
   onValuesChange: (values: LocalModeValues) => void;
   deploymentFeatures?: DeploymentFeatures;
+  /** True when the selected deployment is a Quick App. Its orchestrator sets its own fixed temperature, so the temperature field is forced off regardless of `deploymentFeatures`. */
+  isQuickApp?: boolean;
 }
 
 interface ConversationModeParams {
@@ -32,13 +33,15 @@ interface ConversationModeParams {
   conversation: Conversation;
   onConversationChange: (conversation: Conversation) => void;
   deploymentFeatures?: DeploymentFeatures;
+  /** True when the conversation's deployment is a Quick App. Its orchestrator sets its own fixed temperature, so the temperature field is forced off regardless of `deploymentFeatures`. */
+  isQuickApp?: boolean;
 }
 
 type Params = LocalModeParams | ConversationModeParams;
 
 export const useChatSettingsFormConfig = (params: Params) => {
   const { t } = useTranslation();
-  const { showNotification } = useNotification();
+  const { showSuccessNotification } = useNotification();
 
   const responseFormat =
     params.mode === 'local'
@@ -77,21 +80,23 @@ export const useChatSettingsFormConfig = (params: Params) => {
           }),
         });
       }
-      showNotification({
-        variant: NotificationVariant.Success,
+      showSuccessNotification({
         message: t(ChatSettingsI18nKeys.SavedNotification),
       });
     },
-    [params, showNotification, t],
+    [params, showSuccessNotification, t],
   );
+
+  const isSystemPromptEnabled =
+    params.deploymentFeatures?.systemPrompt ?? false;
+  const isTemperatureEnabled =
+    !params.isQuickApp && (params.deploymentFeatures?.temperature ?? false);
 
   return useMemo(
     () => ({
       features: {
-        ...(params.deploymentFeatures ?? {
-          systemPrompt: false,
-          temperature: false,
-        }),
+        systemPrompt: isSystemPromptEnabled,
+        temperature: isTemperatureEnabled,
         responseFormat: true,
       },
       responseFormat,
@@ -121,7 +126,8 @@ export const useChatSettingsFormConfig = (params: Params) => {
       saveDisabledTooltip: t(ChatSettingsI18nKeys.SaveDisabledTooltip),
     }),
     [
-      params.deploymentFeatures,
+      isSystemPromptEnabled,
+      isTemperatureEnabled,
       responseFormat,
       systemPrompt,
       temperature,

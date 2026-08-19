@@ -1,5 +1,9 @@
 # Spec: user-config-toolset-management
 
+## Purpose
+
+Installing and uninstalling toolsets within the user configuration.
+
 ## Requirements
 
 ### Requirement: PATCH /api/v1/user-config/toolsets installs or uninstalls a toolset

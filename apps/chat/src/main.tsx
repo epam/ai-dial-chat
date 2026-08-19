@@ -24,6 +24,8 @@ import { FavoriteApplicationsProvider } from './context/FavoriteApplicationsCont
 import { GenerationProvider } from './context/GenerationContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { OverlayModeGate } from './context/overlay/OverlayContext';
+import { PromptsProvider } from './context/PromptsContext';
+import { SkillsProvider } from './context/SkillsContext';
 import { SourcesSidebarProvider } from './context/SourcesSidebarContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { UiFeaturesProvider } from './context/UiFeaturesContext';
@@ -71,9 +73,13 @@ root.render(
                                         <UserConfigProvider>
                                           <DeploymentsProvider>
                                             <FavoriteApplicationsProvider>
-                                              <ConversationsProvider>
-                                                <App />
-                                              </ConversationsProvider>
+                                              <PromptsProvider>
+                                                <SkillsProvider>
+                                                  <ConversationsProvider>
+                                                    <App />
+                                                  </ConversationsProvider>
+                                                </SkillsProvider>
+                                              </PromptsProvider>
                                             </FavoriteApplicationsProvider>
                                           </DeploymentsProvider>
                                         </UserConfigProvider>

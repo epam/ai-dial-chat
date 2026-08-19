@@ -110,9 +110,6 @@ const SigninRow: FC<SigninRowProps> = ({
           {info.displayName}
           {info.displayVersion ? ` (${info.displayVersion})` : ''}
         </span>
-        {isProcessing && (
-          <Spinner size={16} ariaLabel={t(ButtonsI18nKeys.LogIn)} />
-        )}
       </div>
 
       {isApiKey && (
@@ -128,7 +125,7 @@ const SigninRow: FC<SigninRowProps> = ({
       )}
 
       {rowState.error && (
-        <div className="flex items-center gap-2 text-sm text-error">
+        <div className="dial-small-text flex items-center gap-2 text-error">
           <IconAlertCircleFilled size={DIAL_ICON_SIZE.SM} aria-hidden />
           <span>{rowState.error}</span>
           <button
@@ -155,7 +152,13 @@ const SigninRow: FC<SigninRowProps> = ({
             onClick={() => onDecline(event.id)}
           />
           <PrimaryButton
-            label={t(ButtonsI18nKeys.LogIn)}
+            label={isProcessing ? undefined : t(ButtonsI18nKeys.LogIn)}
+            aria-label={isProcessing ? t(ButtonsI18nKeys.LogIn) : undefined}
+            iconBefore={
+              isProcessing ? (
+                <Spinner size={16} ariaLabel={t(ButtonsI18nKeys.LogIn)} />
+              ) : undefined
+            }
             disabled={isProcessing || !canSubmitLogin}
             onClick={() => onLogin(event, info)}
           />

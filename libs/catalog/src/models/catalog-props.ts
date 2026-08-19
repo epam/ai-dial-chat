@@ -1,3 +1,4 @@
+import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type {
   PublicationRule,
   PublishFolderNode,
@@ -7,13 +8,15 @@ import type {
 } from '@epam/ai-dial-publish-panel';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
-import type { CatalogEntityType } from '../types/entity-type';
 import type { CatalogSortKey } from '../types/sort';
 import type { CredentialsLevel } from '../types/toolset-auth';
 import type { CatalogViewMode } from '../types/view-mode';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
-import type { CatalogItemDetailsFetchResult } from './item-details-data';
+import type {
+  CatalogContentFilePreview,
+  CatalogItemDetailsFetchResult,
+} from './item-details-data';
 import type { ItemDetailsTexts } from './item-details-props';
 
 /** Text labels used by the `Catalog` surface. */
@@ -128,6 +131,46 @@ export interface CatalogProps {
   /** Called when the "Edit" button is clicked in the details panel. Shown only when the item's `isEditable` is `true`. */
   onEdit?: (item: CatalogItem) => void;
   /**
+   * Called when the "Download" action is clicked in the details panel, with no
+   * confirmation step. When "Download" renders in the Manage menu (see
+   * `isDownloadPrimary`), the panel does not await the result or show a
+   * pending state, so the host owns any progress and failure feedback. When
+   * "Download" is the primary action, the panel awaits this call and shows a
+   * pending/disabled state for its duration.
+   */
+  onDownload?: (item: CatalogItem) => Promise<void> | void;
+  /**
+   * Narrows which items offer the "Download" action. Defaults to `true`
+   * (visible for every item) whenever `onDownload` is supplied.
+   */
+  isDownloadVisible?: (item: CatalogItem) => boolean;
+  /**
+   * Resolves whether an item's Download action renders as the primary action
+   * instead of a Manage-menu entry. Defaults to
+   * `item.type === CatalogEntityType.Skill`.
+   */
+  isDownloadPrimary?: (item: CatalogItem) => boolean;
+  /**
+   * Resolves the text of a file picked in the details panel's Content tab,
+   * given its opaque `id`. The panel shows a loading state while it is
+   * pending and renders the resolved text as the body. Superseded by
+   * `onLoadContentFilePreview` for a given pick when both are supplied.
+   */
+  onLoadContentFile?: (fileId: string) => Promise<string | undefined>;
+  /**
+   * Resolves a picked file's typed preview, given its opaque `id`. Takes
+   * precedence over `onLoadContentFile` when both are supplied.
+   */
+  onLoadContentFilePreview?: (
+    fileId: string,
+  ) => Promise<CatalogContentFilePreview | undefined>;
+  /**
+   * Renders a picked file through a host-owned preview surface. Takes
+   * precedence over both loading callbacks, while the catalog continues to
+   * own selection and passes the opaque file id and resolved basename only.
+   */
+  renderContentFilePreview?: (fileId: string, fileName: string) => ReactNode;
+  /**
    * Called immediately when the "Delete" button in the details panel is
    * clicked, with no confirmation step. Shown only when the item's `isMyApp`
    * is `true` and its `type` is `Application` or `Toolset`. May return a
@@ -142,12 +185,34 @@ export interface CatalogProps {
    */
   onUnshare?: (item: CatalogItem) => Promise<void> | void;
   /**
+   * Narrows where the "Remove from My List" action is offered, on top of the
+   * built-in `sharedWithMe`/`isMyApp` rule. Use it to declare that unsharing
+   * is unsupported for a kind of item. Defaults to `true` (visible) when
+   * absent.
+   */
+  isUnshareVisible?: (item: CatalogItem) => boolean;
+  /**
    * Called when revocation is confirmed via the details panel's confirmation
    * step, for an item the current user owns (`isMyApp: true`), removing every
    * recipient's shared access at once. May return a promise; the confirmation
    * shows a loading state and prevents duplicate submission while pending.
    */
   onRevokeShare?: (item: CatalogItem) => Promise<void> | void;
+  /**
+   * Resolves how many users currently hold shared access to an owned item.
+   * Called when the owner opens the details panel's Manage menu, so "Revoke
+   * access" is gated and labelled on a count that is never stale. `0` hides
+   * the action; `undefined` (or a rejection) leaves it reachable without a
+   * count. Omit to offer the action for every owned item.
+   */
+  onFetchRecipientsCount?: (item: CatalogItem) => Promise<number | undefined>;
+  /**
+   * Narrows where the "Revoke access" action is offered, on top of the
+   * built-in `isMyApp` rule and the recipient count. Use it to declare that
+   * revoking is unsupported for a kind of item. Defaults to `true` (visible)
+   * when absent.
+   */
+  isRevokeShareVisible?: (item: CatalogItem) => boolean;
   /**
    * Renders the Share popover content anchored to the Share button in the
    * details panel. When provided, clicking Share opens this popover instead
@@ -240,4 +305,12 @@ export interface CatalogProps {
   isMyAppsActive?: boolean;
   /** Called when the user toggles the "My Apps" filter; required to control `isMyAppsActive`. */
   onMyAppsActiveChange?: (isActive: boolean) => void;
+  /**
+   * Externally-controlled active entity-type tab id. When omitted, `Catalog`
+   * manages its own tab state internally, defaulting to the first tab
+   * returned by `buildCatalogTabs`.
+   */
+  activeTab?: string;
+  /** Called when the user switches tabs; required to control `activeTab`. */
+  onActiveTabChange?: (tabId: string) => void;
 }

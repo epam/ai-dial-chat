@@ -1,4 +1,10 @@
-## ADDED Requirements
+# applications-listing Specification
+
+## Purpose
+
+The applications listing endpoint, its DTO shape, generated client, and the frontend server-api wrapper.
+
+## Requirements
 
 ### Requirement: Applications listing endpoint
 The system SHALL expose `GET /api/v1/applications` that returns all applications visible to the authenticated session user by proxying the DIAL Core Applications API, exhausting all pages before responding.

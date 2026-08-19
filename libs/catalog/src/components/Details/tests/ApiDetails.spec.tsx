@@ -256,6 +256,9 @@ describe('ApiDetails', () => {
       />,
     );
 
+    // The syntax highlighter sets a data-language attribute with no
+    // accessible role; asserting it requires a direct attribute check.
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
     expect(container.querySelector('[data-language="bash"]')).toBeTruthy();
     expect(screen.getByText('curl example')).toBeTruthy();
   });

@@ -1,6 +1,10 @@
 # Spec: overlay-external-login
 
-## ADDED Requirements
+## Purpose
+
+Completing authentication outside the iframe when the overlay is embedded and unauthenticated.
+
+## Requirements
 
 ### Requirement: Overlay login gate renders when unauthenticated in overlay mode
 

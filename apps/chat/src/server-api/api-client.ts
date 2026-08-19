@@ -10,11 +10,15 @@ import {
   HealthApi,
   Middleware,
   ModelsApi,
+  OfflineCredentialsApi,
+  PromptsApi,
   PublishApi,
   RateApi,
   ScheduledTasksApi,
   ShareApi,
+  SkillsApi,
   ToolsetsApi,
+  UserApi,
   UserConfigApi,
 } from '@epam/ai-dial-chat-api-client';
 import {
@@ -171,6 +175,7 @@ const config = createApiConfiguration();
 export const applicationsApi = new ApplicationsApi(config);
 export const appConfigApi = new AppConfigApi(config);
 export const deploymentsApi = new DeploymentsApi(config);
+export const userApi = new UserApi(config);
 export const filesApi = new FilesApi(config);
 export const modelsApi = new ModelsApi(config);
 export const conversationsApi = new ConversationsApi(config);
@@ -179,7 +184,10 @@ export const authApi = new AuthApi(config);
 export const rateApi = new RateApi(config);
 export const toolsetsApi = new ToolsetsApi(config);
 export const shareApi = new ShareApi(config);
+export const skillsApi = new SkillsApi(config);
 export const publishApi = new PublishApi(config);
+export const promptsApi = new PromptsApi(config);
 export const clientChannelApi = new ClientChannelApi(config);
 export const scheduledTasksApi = new ScheduledTasksApi(config);
+export const offlineCredentialsApi = new OfflineCredentialsApi(config);
 export const healthApi = new HealthApi(config);

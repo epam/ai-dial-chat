@@ -1,11 +1,3 @@
-/**
- * Strongly-typed domain models for entity-specific detail data.
- * All domain enums live here because they represent backend vocabulary.
- * The app-layer mapper converts these into the lib's `CatalogItemTabData` shape.
- */
-
-// ---- Shared enums ----
-
 export enum AuthenticationType {
   None = 'NONE',
   ApiKey = 'API_KEY',
@@ -15,35 +7,6 @@ export enum AuthenticationType {
 }
 
 // ---- Model entity ----
-
-export enum ModelProvider {
-  OpenAI = 'OPEN_AI',
-  Anthropic = 'ANTHROPIC',
-  Google = 'GOOGLE',
-  Meta = 'META',
-  Mistral = 'MISTRAL',
-  Azure = 'AZURE',
-  Amazon = 'AMAZON',
-  Cohere = 'COHERE',
-}
-
-export enum ModelEndpointType {
-  AzureOpenAI = 'AZURE_OPEN_AI',
-  Anthropic = 'ANTHROPIC',
-  Responses = 'RESPONSES',
-}
-
-export interface ModelEndpointSnippets {
-  pythonSnippet?: string;
-  curlSnippet?: string;
-  jsSnippet?: string;
-}
-
-export interface ModelEndpoint {
-  type: ModelEndpointType;
-  url: string;
-  snippets?: ModelEndpointSnippets;
-}
 
 export interface ModelCapabilities {
   hasTools?: boolean;
@@ -59,6 +22,10 @@ export interface ModelCapabilities {
 }
 
 export interface ModelSpecification {
+  provider?: string;
+  vendor?: string;
+  license?: string;
+  knowledgeCutoffDate?: string;
   contextWindowTokens?: number;
   maxOutputTokens?: number;
   inputTypes?: string[];
@@ -68,11 +35,16 @@ export interface ModelSpecification {
   createdAt?: number;
 }
 
+export interface ModelPriceRow {
+  /* DIAL Core pricing key, e.g. `prompt`, `completion`, `cache_read`. */
+  key: string;
+  /* Per-unit price formatted for display, e.g. `$3/M tokens`. */
+  price: string;
+}
+
 export interface ModelPricing {
-  inputTokensPrice?: string;
-  outputTokensPrice?: string;
-  cachedInputPrice?: string;
-  batchPrice?: string;
+  /* Every price DIAL Core reports for the deployment, `unit` excluded. */
+  prices?: ModelPriceRow[];
   dailyLimit?: string;
   weeklyLimit?: string;
   monthlyLimit?: string;
@@ -80,11 +52,9 @@ export interface ModelPricing {
 
 export interface ModelApiDetails {
   modelId?: string;
-  endpoints?: ModelEndpoint[];
 }
 
 export interface ModelEntityDetails {
-  provider?: ModelProvider;
   capabilities?: ModelCapabilities;
   specification?: ModelSpecification;
   pricing?: ModelPricing;
@@ -148,8 +118,6 @@ export interface AgentCapabilityLink {
 
 export interface AgentApiDetails {
   endpointUrl?: string;
-  /** Endpoint-type variants (Azure OpenAI / Anthropic / Responses), same shape as `ModelApiDetails.endpoints`. */
-  endpoints?: ModelEndpoint[];
   requestExample?: string;
   responseSchema?: string;
 }
@@ -251,24 +219,15 @@ export interface GuardrailEntityDetails {
   specification?: GuardrailSpecification;
 }
 
-// ---- Skill entity ----
-
-export interface SkillAboutDetails {
-  whenToUse?: string;
-  allowedTools?: string[];
-  bundledResources?: string[];
-  skillPrompt?: string;
-}
-
-export interface SkillEntityDetails {
-  about?: SkillAboutDetails;
-}
-
 // ---- Discriminated union ----
 
+/*
+ * Built only by `mapDeploymentDetailsDtoToEntityDetails`. Skills never reach
+ * the deployment details endpoint — their details resolve from the skills
+ * endpoints and their manifest — so they are not a member here.
+ */
 export type EntitySpecificDetails =
   | { type: 'MODEL'; data: ModelEntityDetails }
   | { type: 'AGENT'; data: AgentEntityDetails }
   | { type: 'TOOLSET'; data: ToolsetEntityDetails }
-  | { type: 'GUARDRAIL'; data: GuardrailEntityDetails }
-  | { type: 'SKILL'; data: SkillEntityDetails };
+  | { type: 'GUARDRAIL'; data: GuardrailEntityDetails };

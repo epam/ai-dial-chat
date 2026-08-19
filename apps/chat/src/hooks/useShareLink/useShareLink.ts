@@ -1,3 +1,4 @@
+import type { CreateShareLinkDtoResourceKindEnum } from '@epam/ai-dial-chat-api-client';
 import { ShareLinkAccess, ShareLinkData } from '@epam/ai-dial-share';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getShareLink } from '../../utils/share-link';
@@ -21,7 +22,10 @@ export interface UseShareLinkResult {
  * implementation for a real API call only touches that function; this hook's
  * public shape (and every consumer of it) stays the same.
  */
-export const useShareLink = (itemId: string): UseShareLinkResult => {
+export const useShareLink = (
+  itemId: string,
+  resourceKind?: CreateShareLinkDtoResourceKindEnum,
+): UseShareLinkResult => {
   const [data, setData] = useState<ShareLinkData>();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -39,7 +43,12 @@ export const useShareLink = (itemId: string): UseShareLinkResult => {
       setError(null);
 
       try {
-        const result = await getShareLink(itemId, access);
+        const result = await getShareLink(
+          itemId,
+          access,
+          window.location.origin,
+          resourceKind,
+        );
         if (requestIdRef.current === requestId) setData(result);
       } catch (err) {
         if (requestIdRef.current === requestId) {
@@ -53,7 +62,7 @@ export const useShareLink = (itemId: string): UseShareLinkResult => {
         if (requestIdRef.current === requestId) setIsLoading(false);
       }
     },
-    [itemId],
+    [itemId, resourceKind],
   );
 
   useEffect(() => {

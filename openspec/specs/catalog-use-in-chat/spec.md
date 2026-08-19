@@ -1,5 +1,9 @@
 # Spec: catalog-use-in-chat
 
+## Purpose
+
+The "Use in chat" action that selects a deployment and starts a new conversation, and the item kinds for which it is unavailable.
+
 ## Requirements
 
 ### Requirement: Use in chat selects a deployment and starts a new conversation

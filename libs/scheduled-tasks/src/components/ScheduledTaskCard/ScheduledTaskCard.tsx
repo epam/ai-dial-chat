@@ -35,6 +35,8 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
   const titleClassName = typography?.titleClassName ?? 'dial-body-semi-text';
   const descriptionClassName =
     typography?.descriptionClassName ?? 'dial-small-text';
+  const descriptionSizeClassName =
+    typography?.descriptionSizeClassName ?? 'dial-tiny-text';
   const scheduleLabelClassName =
     typography?.scheduleLabelClassName ?? 'dial-tiny-text';
   const locationLabelClassName =
@@ -109,7 +111,8 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
       {item.descriptionPreview && (
         <p
           className={mergeClasses(
-            'line-clamp-4 min-h-0 flex-1 overflow-hidden !leading-[22px]',
+            'line-clamp-4 min-h-0 flex-1 overflow-hidden',
+            descriptionSizeClassName,
             descriptionClassName,
             styles.description,
           )}

@@ -33,7 +33,7 @@ const OperationLoaderModal: FC<Props> = ({
       <Spinner size={32} fullWidth={false} ariaLabel={title} />
       <div className="flex flex-col gap-1">
         <div>{title}</div>
-        <div className="text-sm text-secondary">{text}</div>
+        <div className="dial-small-text text-secondary">{text}</div>
       </div>
     </div>
   </Popup>

@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   getUserConfig,
   updateInstalledDeployment,
+  updateInstalledPrompt,
+  updateInstalledSkill,
   updateInstalledToolset,
 } from '../../server-api/user-config.api';
 import {
@@ -14,6 +16,8 @@ import {
 vi.mock('../../server-api/user-config.api', () => ({
   getUserConfig: vi.fn(),
   updateInstalledDeployment: vi.fn(),
+  updateInstalledPrompt: vi.fn(),
+  updateInstalledSkill: vi.fn(),
   updateInstalledToolset: vi.fn(),
 }));
 
@@ -25,9 +29,13 @@ describe('FavoriteApplicationsContext', () => {
       conversations: { pinnedIds: [] },
       toolsets: { installed: ['toolsets/b/search__0.0.1'] },
       deployments: { installed: ['gpt-4o'], selectedId: null },
+      prompts: { installed: ['Work/AI/summarize'] },
+      skills: { installed: ['skills/my-bucket/revenue-skill'] },
     });
     vi.mocked(updateInstalledDeployment).mockResolvedValue(undefined);
     vi.mocked(updateInstalledToolset).mockResolvedValue(undefined);
+    vi.mocked(updateInstalledPrompt).mockResolvedValue(undefined);
+    vi.mocked(updateInstalledSkill).mockResolvedValue(undefined);
   });
 
   it('throws when used outside a FavoriteApplicationsProvider', () => {
@@ -36,7 +44,7 @@ describe('FavoriteApplicationsContext', () => {
     );
   });
 
-  it('loads installed deployments and toolsets as favorite ids', async () => {
+  it('loads installed deployments, toolsets, prompts, and skills as favorite ids', async () => {
     const { result } = renderHook(() => useFavoriteApplications(), {
       wrapper: FavoriteApplicationsProvider,
     });
@@ -47,6 +55,103 @@ describe('FavoriteApplicationsContext', () => {
     expect(result.current.favoriteIds.has('toolsets/b/search__0.0.1')).toBe(
       true,
     );
+    expect(result.current.favoriteIds.has('Work/AI/summarize')).toBe(true);
+    expect(
+      result.current.favoriteIds.has('skills/my-bucket/revenue-skill'),
+    ).toBe(true);
+  });
+
+  it('persists skill favorite toggles via the skills user config section', async () => {
+    const { result } = renderHook(() => useFavoriteApplications(), {
+      wrapper: FavoriteApplicationsProvider,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await act(async () => {
+      await result.current.toggleFavorite(
+        'skills/my-bucket/analysis',
+        true,
+        FavoriteEntityType.Skill,
+      );
+    });
+
+    expect(updateInstalledSkill).toHaveBeenCalledWith(
+      'skills/my-bucket/analysis',
+      true,
+    );
+    expect(updateInstalledDeployment).not.toHaveBeenCalled();
+    expect(updateInstalledPrompt).not.toHaveBeenCalled();
+    expect(result.current.favoriteIds.has('skills/my-bucket/analysis')).toBe(
+      true,
+    );
+  });
+
+  it('reverts an optimistic skill favorite when the write fails', async () => {
+    vi.mocked(updateInstalledSkill).mockRejectedValueOnce(
+      new Error('API error'),
+    );
+
+    const { result } = renderHook(() => useFavoriteApplications(), {
+      wrapper: FavoriteApplicationsProvider,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await act(async () => {
+      await expect(
+        result.current.toggleFavorite(
+          'skills/my-bucket/analysis',
+          true,
+          FavoriteEntityType.Skill,
+        ),
+      ).rejects.toThrow('API error');
+    });
+
+    expect(result.current.favoriteIds.has('skills/my-bucket/analysis')).toBe(
+      false,
+    );
+  });
+
+  it('persists prompt favorite toggles via the prompts user config section', async () => {
+    const { result } = renderHook(() => useFavoriteApplications(), {
+      wrapper: FavoriteApplicationsProvider,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await act(async () => {
+      await result.current.toggleFavorite(
+        'Work/AI/rewrite',
+        true,
+        FavoriteEntityType.Prompt,
+      );
+    });
+
+    expect(updateInstalledPrompt).toHaveBeenCalledWith('Work/AI/rewrite', true);
+    expect(updateInstalledDeployment).not.toHaveBeenCalled();
+    expect(updateInstalledToolset).not.toHaveBeenCalled();
+    expect(result.current.favoriteIds.has('Work/AI/rewrite')).toBe(true);
+  });
+
+  it('reverts an optimistic prompt favorite when the write fails', async () => {
+    vi.mocked(updateInstalledPrompt).mockRejectedValueOnce(
+      new Error('API error'),
+    );
+
+    const { result } = renderHook(() => useFavoriteApplications(), {
+      wrapper: FavoriteApplicationsProvider,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await act(async () => {
+      await expect(
+        result.current.toggleFavorite(
+          'Work/AI/rewrite',
+          true,
+          FavoriteEntityType.Prompt,
+        ),
+      ).rejects.toThrow('API error');
+    });
+
+    expect(result.current.favoriteIds.has('Work/AI/rewrite')).toBe(false);
   });
 
   it('persists toolset favorite toggles via toolset user config', async () => {

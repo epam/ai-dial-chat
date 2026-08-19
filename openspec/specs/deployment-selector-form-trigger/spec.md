@@ -1,5 +1,9 @@
 # Spec: deployment-selector-form-trigger
 
+## Purpose
+
+A form-field trigger that reuses the deployment selector overlay, including its loading, empty, error, disabled, and unavailable-deployment states.
+
 ## Requirements
 
 ### Requirement: DeploymentSelectorFieldTrigger reuses the existing overlay content behind a form-field trigger

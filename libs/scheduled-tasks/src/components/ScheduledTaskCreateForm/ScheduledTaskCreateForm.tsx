@@ -11,7 +11,7 @@ import {
   LazyMarkdownEditor,
   Select,
 } from '@epam/ai-dial-ui-kit';
-import { lazy, Suspense, type ComponentProps, type FC } from 'react';
+import { lazy, Suspense, type FC } from 'react';
 import { DESCRIPTION_MAX_LENGTH } from '../../constants/scheduled-task-create-form';
 import { ScheduledTaskCreateFormProps } from '../../models/scheduled-task-create-form-props';
 import { ScheduledTaskRepeat } from '../../types/scheduled-task-schedule';
@@ -25,17 +25,10 @@ import {
 } from '../../utils/calendar-value';
 import styles from './ScheduledTaskCreateForm.module.scss';
 
-/* `Calendar` has no built-in required-field indicator (unlike `Input`'s
- * `labelProps.required`), so required Calendar fields get the marker
- * appended to their label text directly. */
-const withRequiredMarker = (label: string): string => `${label} *`;
-
 const MarkdownEditor = lazy(async () => {
   const module = await LazyMarkdownEditor();
   return { default: module.MarkdownEditor };
 });
-
-type MarkdownEditorTheme = ComponentProps<typeof MarkdownEditor>['theme'];
 
 /**
  * Presentational create-task form: a back-navigable header (Cancel/Save
@@ -192,7 +185,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                   onChange={(value) =>
                     onFieldChange('runAt', calendarValueToRunAt(value))
                   }
-                  label={withRequiredMarker(labels.runAtLabel)}
+                  labelProps={{ label: labels.runAtLabel, required: true }}
                   invalid={Boolean(errors.runAt)}
                 />
                 {errors.runAt && (
@@ -222,7 +215,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                           typeof value === 'string' ? value : '',
                         )
                       }
-                      label={withRequiredMarker(labels.timeLabel)}
+                      labelProps={{ label: labels.timeLabel, required: true }}
                       invalid={Boolean(errors.time)}
                     />
                     {errors.time && (
@@ -250,7 +243,10 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                           calendarValueToDayOfWeek(value),
                         )
                       }
-                      label={withRequiredMarker(labels.dayOfWeekLabel)}
+                      labelProps={{
+                        label: labels.dayOfWeekLabel,
+                        required: true,
+                      }}
                       invalid={Boolean(errors.dayOfWeek)}
                     />
                     {errors.dayOfWeek && (
@@ -316,7 +312,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                           calendarValueToDateValue(value),
                         )
                       }
-                      label={labels.startDateLabel}
+                      labelProps={{ label: labels.startDateLabel }}
                       placeholder={labels.startDatePlaceholder}
                       invalid={Boolean(errors.startDate)}
                     />
@@ -343,7 +339,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                           calendarValueToDateValue(value),
                         )
                       }
-                      label={labels.endDateLabel}
+                      labelProps={{ label: labels.endDateLabel }}
                       placeholder={labels.endDatePlaceholder}
                       invalid={Boolean(errors.endDate)}
                     />
@@ -397,7 +393,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
               value={values.prompt}
               onChange={(value) => onFieldChange('prompt', value)}
               height={480}
-              theme={markdownEditorTheme as MarkdownEditorTheme}
+              theme={markdownEditorTheme}
             />
           </Suspense>
           {errors.prompt && (

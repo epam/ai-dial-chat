@@ -1,5 +1,5 @@
 import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
-import { act, renderHook } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { useModelSelector } from '../useModelSelector';
@@ -236,15 +236,13 @@ describe('useModelSelector — search filtering', () => {
         deployments: mockDeployments,
       }),
     );
-    act(() => {
-      /*
-       * Simulate search by closing and re-opening would not work in isolation;
-       * instead we access the internal setter via onOpenChange side-effect.
-       * We need to trigger the search — the hook exposes no direct setter,
-       * so we test filtering indirectly via DialSearch onChange in integration.
-       * Here we verify the baseline (no query) returns all items.
-       */
-    });
+    /*
+     * Simulate search by closing and re-opening would not work in isolation;
+     * instead we access the internal setter via onOpenChange side-effect.
+     * We need to trigger the search — the hook exposes no direct setter,
+     * so we test filtering indirectly via DialSearch onChange in integration.
+     * Here we verify the baseline (no query) returns all items.
+     */
     expect(result.current.menuItems).toHaveLength(3);
   });
 });

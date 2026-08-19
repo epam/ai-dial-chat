@@ -4,7 +4,7 @@ import ScheduledTasksIcon from '../components/Icons/ScheduledTasksIcon/Scheduled
 import { ROUTES } from '../types/routes';
 import { NavigationI18nKeys } from './translation-keys';
 
-interface NavigationItem {
+export interface NavigationItem {
   path: string;
   matchPaths?: string[];
   icon: FC<{ size?: number; stroke?: number }>;

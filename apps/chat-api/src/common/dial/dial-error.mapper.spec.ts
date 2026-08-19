@@ -5,10 +5,13 @@ import {
   ForbiddenException,
   HttpException,
   Logger,
+  MethodNotAllowedException,
   NotFoundException,
   PayloadTooLargeException,
+  PreconditionFailedException,
   ServiceUnavailableException,
   UnauthorizedException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import {
@@ -36,6 +39,24 @@ describe('mapDialHttpStatus', () => {
 
   it('throws ConflictException for 409', () => {
     expect(() => mapDialHttpStatus(409, 'ctx')).toThrow(ConflictException);
+  });
+
+  it('throws MethodNotAllowedException for 405', () => {
+    expect(() => mapDialHttpStatus(405, 'ctx')).toThrow(
+      MethodNotAllowedException,
+    );
+  });
+
+  it('throws PreconditionFailedException for 412', () => {
+    expect(() => mapDialHttpStatus(412, 'ctx')).toThrow(
+      PreconditionFailedException,
+    );
+  });
+
+  it('throws UnprocessableEntityException for 422', () => {
+    expect(() => mapDialHttpStatus(422, 'ctx')).toThrow(
+      UnprocessableEntityException,
+    );
   });
 
   it('throws PayloadTooLargeException for 413', () => {

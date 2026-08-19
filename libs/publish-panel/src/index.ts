@@ -35,27 +35,41 @@ export type { FolderNameValidationMessages } from './utils/publish-folder-tree';
 // Components
 export { PublishAccessRuleEditor } from './components/PublishAccessRuleEditor/PublishAccessRuleEditor';
 export type {
+  PublishAccessRuleEditorColors,
   PublishAccessRuleEditorLabels,
   PublishAccessRuleEditorProps,
-} from './components/PublishAccessRuleEditor/PublishAccessRuleEditor';
+  PublishAccessRuleEditorStyles,
+} from './models/publish-access-rule-editor';
 
 export { PublishAccessRules } from './components/PublishAccessRules/PublishAccessRules';
 export type {
   PublishAccessRulesLabels,
   PublishAccessRulesProps,
 } from './components/PublishAccessRules/PublishAccessRules';
+export type {
+  PublishAccessRulesColors,
+  PublishAccessRulesStyles,
+} from './models/publish-access-rules-styles';
 
 export { PublishHistoryList } from './components/PublishHistoryList/PublishHistoryList';
 export type { PublishHistoryListProps } from './components/PublishHistoryList/PublishHistoryList';
 
 export { PublishFoldersTree } from './components/PublishFoldersTree/PublishFoldersTree';
-export type { PublishFoldersTreeProps } from './components/PublishFoldersTree/PublishFoldersTree';
+export type {
+  PublishFoldersTreeColors,
+  PublishFoldersTreeProps,
+  PublishFoldersTreeStyles,
+} from './models/publish-folders-tree';
 
 export { PublishPanel } from './components/PublishPanel/PublishPanel';
 export type {
   PublishPanelProps,
   PublishPanelLabels,
 } from './components/PublishPanel/PublishPanel';
+export type {
+  PublishPanelColors,
+  PublishPanelStyles,
+} from './models/publish-panel-styles';
 
 export { PublishFooter } from './components/PublishPanel/PublishFooter';
 export type {

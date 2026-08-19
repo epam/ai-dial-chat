@@ -9,7 +9,6 @@ import {
   ConfirmationPopupVariant,
   ConfirmationPopup,
   Spinner,
-  NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -95,7 +94,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   } = useConversations();
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const overlay = useOptionalOverlay();
-  const [overlayInputContent, setOverlayInputContent] = useState({
+  /*
+   * One-shot text hand-off into the composer's textarea: the overlay bridge
+   * and prompt insertion both write here rather than each owning a separate
+   * revision-token channel.
+   */
+  const [pendingInputContent, setPendingInputContent] = useState({
     revision: 0,
     value: '',
   });
@@ -105,16 +109,15 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     selectedDeploymentId: currentSelectedItemId,
   });
 
-  const { showNotification } = useNotification();
+  const { showSuccessNotification, showErrorNotification } = useNotification();
 
   const handleNetworkUploadError = useCallback(
     (filenames: string[]) => {
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         ...buildNetworkUploadErrorNotification(filenames, t),
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const [pendingDislikeMessageIndex, setPendingDislikeMessageIndex] = useState<
@@ -215,11 +218,10 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
    */
   const autoStartedPathsRef = useRef<Set<string>>(new Set());
   const handleStopError = useCallback(() => {
-    showNotification({
-      variant: NotificationVariant.Error,
+    showErrorNotification({
       message: t(ChatI18nKeys.StreamError),
     });
-  }, [showNotification, t]);
+  }, [showErrorNotification, t]);
 
   const {
     startStream,
@@ -368,8 +370,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         if (notificationShownForRef.current !== id) {
           notificationShownForRef.current = id;
           const { traceId } = await getApiErrorDetails(error);
-          showNotification({
-            variant: NotificationVariant.Error,
+          showErrorNotification({
             message: t(ChatI18nKeys.ConversationNotFound),
             requestId: traceId,
           });
@@ -386,7 +387,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       resumeIfAwaitingGeneration,
       updateConversationTitle,
       getGeneration,
-      showNotification,
+      showErrorNotification,
       t,
     ],
   );
@@ -457,8 +458,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     overlay.notifyConversationLoaded();
   }, [overlay, isFetching, conversation, conversationId]);
 
-  const handleOverlayInputContent = useCallback((content: string) => {
-    setOverlayInputContent((prev) => ({
+  const handleSetPendingInputContent = useCallback((content: string) => {
+    setPendingInputContent((prev) => ({
       revision: prev.revision + 1,
       value: content,
     }));
@@ -470,21 +471,20 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     conversationRef,
     setConversation,
     handleSend,
-    setOverlayInputContent: handleOverlayInputContent,
+    setOverlayInputContent: handleSetPendingInputContent,
   });
 
   const handleLike = useCallback(
     async (messageIndex: number, rating: MessageRating | null) => {
       const success = await handleRateMessage(messageIndex, rating);
       if (success && rating === MessageRating.Like) {
-        showNotification({
-          variant: NotificationVariant.Success,
+        showSuccessNotification({
           title: t(RateI18nKeys.LikeToastTitle),
           message: t(RateI18nKeys.LikeToastDescription),
         });
       }
     },
-    [handleRateMessage, showNotification, t],
+    [handleRateMessage, showSuccessNotification, t],
   );
 
   const handleOpenDislikeModal = useCallback((messageIndex: number) => {
@@ -502,14 +502,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         comment,
       );
       if (success) {
-        showNotification({
-          variant: NotificationVariant.Success,
+        showSuccessNotification({
           title: t(RateI18nKeys.DislikeToastTitle),
           message: t(RateI18nKeys.LikeToastDescription),
         });
       }
     },
-    [pendingDislikeMessageIndex, handleRateMessage, showNotification, t],
+    [pendingDislikeMessageIndex, handleRateMessage, showSuccessNotification, t],
   );
 
   const handleDislikeModalClose = useCallback(() => {
@@ -557,10 +556,9 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           isAudioMessageSupported={isAudioMessageSupported}
           conversation={conversation}
           onConversationChange={handleConversationChange}
-          inputContent={overlay ? overlayInputContent.value : undefined}
-          inputContentRevision={
-            overlay ? overlayInputContent.revision : undefined
-          }
+          inputContent={pendingInputContent.value}
+          inputContentRevision={pendingInputContent.revision}
+          onInsertText={handleSetPendingInputContent}
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}
           toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}

@@ -6,6 +6,7 @@ import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
 import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { ReactNode, useEffect, useState, type Context } from 'react';
 import { MemoryRouter, useNavigate } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -13,6 +14,7 @@ import * as UserContextModule from '../../context/auth/UserContext';
 import * as DeploymentsContextModule from '../../context/DeploymentsContext';
 import * as NotificationContextModule from '../../context/NotificationContext';
 import * as OverlayContextMock from '../../context/overlay/OverlayContext';
+import { createNotificationContextValue } from '../../context/tests/notification-context-mock';
 import * as ToolsMenuModule from '../../hooks/conversation/useToolsMenu';
 import * as KeyboardShortcutModule from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import * as conversationsApi from '../../server-api/conversations.api';
@@ -48,6 +50,15 @@ vi.mock(
     }),
   }),
 );
+const mockOpenParametersPopup = vi.fn();
+vi.mock('../../components/PromptSelector/usePromptSelectorOverlay', () => ({
+  usePromptSelectorOverlay: () => ({
+    renderOverlay: vi.fn(),
+    promptCatalogModal: null,
+    parametersPopup: null,
+    openParametersPopup: mockOpenParametersPopup,
+  }),
+}));
 vi.mock('../../context/AppConfigContext', () => ({
   default: ({ children }: { children: ReactNode }) => children,
   useAppConfig: () => ({
@@ -255,6 +266,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     mockUseUser.mockReturnValue({
@@ -283,11 +296,9 @@ describe('ConversationRoute', () => {
       onToolToggle: vi.fn(),
       toolConfigurationValue: {},
     });
-    mockUseNotification.mockReturnValue({
-      notifications: [],
-      showNotification: mockShowNotification,
-      dismissNotification: vi.fn(),
-    });
+    mockUseNotification.mockReturnValue(
+      createNotificationContextValue(mockShowNotification),
+    );
   });
 
   it('passes catalog items and selectedItemId into ConversationInput', async () => {
@@ -483,6 +494,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -512,6 +525,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     renderRoute();
@@ -541,6 +556,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     renderRoute();
@@ -573,6 +590,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: function (
         item: DeploymentItemDto | DialToolsetDto,
       ): void {
@@ -585,9 +604,7 @@ describe('ConversationRoute', () => {
     expect(await screen.findByText('Choose how to start')).toBeTruthy();
     expect(screen.getByLabelText('Input disabled').textContent).toBe('true');
 
-    await act(async () => {
-      screen.getByText('Draft').click();
-    });
+    await userEvent.click(screen.getByText('Draft'));
 
     expect(screen.getByLabelText('Input message').textContent).toBe(
       'Write a draft',
@@ -639,6 +656,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -646,9 +665,7 @@ describe('ConversationRoute', () => {
 
     expect(screen.getByLabelText('Input disabled').textContent).toBe('false');
 
-    await act(async () => {
-      screen.getByText('Draft').click();
-    });
+    await userEvent.click(screen.getByText('Draft'));
 
     expect(screen.getByLabelText('Input message').textContent).toBe(
       'Write a draft',
@@ -679,6 +696,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: function (
         item: DeploymentItemDto | DialToolsetDto,
       ): void {
@@ -688,9 +707,7 @@ describe('ConversationRoute', () => {
 
     renderRoute();
 
-    await act(async () => {
-      screen.getByText('Summarize').click();
-    });
+    await userEvent.click(screen.getByText('Summarize'));
 
     await waitFor(() => {
       expect(mockCreateConversation).toHaveBeenCalledWith(
@@ -734,14 +751,14 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
     renderRoute();
 
-    await act(async () => {
-      screen.getByText('OCR image').click();
-    });
+    await userEvent.click(screen.getByText('OCR image'));
 
     await waitFor(() => {
       expect(mockCreateConversation).toHaveBeenCalledWith(
@@ -790,14 +807,14 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
     renderRoute();
 
-    await act(async () => {
-      screen.getByText('Starter override').click();
-    });
+    await userEvent.click(screen.getByText('Starter override'));
 
     await waitFor(() => {
       expect(mockCreateConversation).toHaveBeenCalledWith(
@@ -851,14 +868,14 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
     renderRoute();
 
-    await act(async () => {
-      screen.getByText('Summarize').click();
-    });
+    await userEvent.click(screen.getByText('Summarize'));
 
     await waitFor(() => {
       expect(mockCreateConversation).toHaveBeenCalledWith(
@@ -903,14 +920,14 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
     renderRoute();
 
-    await act(async () => {
-      screen.getByText('2').click();
-    });
+    await userEvent.click(screen.getByText('2'));
 
     await waitFor(() => {
       expect(mockCreateConversation).toHaveBeenCalledWith(
@@ -954,6 +971,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     mockCreateConversation.mockRejectedValueOnce({
@@ -968,9 +987,7 @@ describe('ConversationRoute', () => {
 
     renderRoute();
 
-    await act(async () => {
-      screen.getByText('OCR image').click();
-    });
+    await userEvent.click(screen.getByText('OCR image'));
 
     await waitFor(() => {
       expect(mockShowNotification).toHaveBeenCalledWith({
@@ -1063,6 +1080,78 @@ describe('ConversationRoute', () => {
         undefined,
         undefined,
       );
+    });
+  });
+
+  describe('prompt content from router state', () => {
+    it('seeds the composer with the prompt body passed as router state', async () => {
+      render(
+        <MemoryRouter
+          initialEntries={[
+            { pathname: '/', state: { promptContent: 'Summarize:' } },
+          ]}
+        >
+          <ConversationRoute />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Input message').textContent).toBe(
+          'Summarize:',
+        );
+      });
+    });
+
+    it('leaves the composer empty when no prompt content is passed', async () => {
+      renderRoute();
+
+      await waitFor(() => {
+        expect(mockRestoreDefaultSelection).toHaveBeenCalled();
+      });
+      expect(screen.getByLabelText('Input message').textContent).toBe('');
+    });
+
+    it('does not select a deployment when seeding from prompt content', async () => {
+      render(
+        <MemoryRouter
+          initialEntries={[
+            { pathname: '/', state: { promptContent: 'Summarize:' } },
+          ]}
+        >
+          <ConversationRoute />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Input message').textContent).toBe(
+          'Summarize:',
+        );
+      });
+      expect(mockRestoreSelectedItemId).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('pending parameterized prompt from router state', () => {
+    it('opens the parameters popup for a pendingPrompt passed as router state', async () => {
+      const pendingPrompt = {
+        id: 'Work/AI/summarize',
+        name: 'summarize',
+        content: 'Summarize {{text}}',
+        description: 'A summarizer prompt',
+      };
+
+      render(
+        <MemoryRouter
+          initialEntries={[{ pathname: '/', state: { pendingPrompt } }]}
+        >
+          <ConversationRoute />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() => {
+        expect(mockOpenParametersPopup).toHaveBeenCalledWith(pendingPrompt);
+      });
+      expect(screen.getByLabelText('Input message').textContent).toBe('');
     });
   });
 });

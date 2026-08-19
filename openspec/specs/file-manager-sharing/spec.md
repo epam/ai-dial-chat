@@ -1,5 +1,11 @@
 # Spec: file-manager-sharing
 
+## Purpose
+
+The revoke-access, discard-shared, and shared-by-me endpoints, and their wiring into the file manager.
+
+## Requirements
+
 ### Requirement: POST /api/v1/files/revoke-access endpoint
 
 The BFF SHALL expose `POST /api/v1/files/revoke-access` that accepts a batch of file/folder paths owned and previously shared by the caller, and revokes access for **all** users the resources were shared with, via DIAL Core `revokeSharedResources`. This is distinct from `discard-shared` below: revoke is an owner action affecting every recipient; it does not accept or require a permission level (revoking removes all granted permissions).
@@ -273,6 +279,12 @@ The following keys SHALL be added to `apps/chat/src/i18n/locales/en.json` with m
 | `dialFileManager.removeAccessError` | `Failed to remove access` |
 
 No raw string literal keys are passed to `t()` anywhere in this change — every key above is referenced through its `DialFileManagerI18nKeys` enum member.
+
+#### Scenario: Sharing labels resolve through the key enum
+
+- **WHEN** the Unshare and Remove access actions are rendered and their failures surface
+- **THEN** every label and error message resolves through a `DialFileManagerI18nKeys` member
+- **AND** no `t()` call in the sharing code passes a raw string literal
 
 ---
 

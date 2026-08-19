@@ -9,6 +9,7 @@ import type { PublicPromptListResponseDto } from '../dto/public-prompt-list-resp
 import { PromptsResourceService } from '../resource/prompts-resource.service';
 import {
   deriveFolders,
+  isHiddenPromptPath,
   isSentinelPath,
   mapPromptToResponse,
   metadataItemToPromptPath,
@@ -41,7 +42,9 @@ export class PromptsPublicService {
         }))
         .filter(
           (entry): entry is { item: PromptMetadataItem; path: string } =>
-            entry.path != null && !isSentinelPath(entry.path),
+            entry.path != null &&
+            !isSentinelPath(entry.path) &&
+            !isHiddenPromptPath(entry.path),
         );
       const sentinelFolderIds = items
         .map((item) => metadataItemToPromptPath(item, PUBLIC_BUCKET))
@@ -61,6 +64,11 @@ export class PromptsPublicService {
           ),
         )
       ).filter((p): p is PromptResponseDto => p != null);
+      for (const prompt of prompts) {
+        prompt.isMy = false;
+        prompt.canEdit = false;
+        prompt.sharedWithMe = false;
+      }
 
       const folders = deriveFolders([
         ...prompts.map((p) => p.id),
@@ -104,6 +112,6 @@ export class PromptsPublicService {
     if (metadata == null) {
       throw new NotFoundException(`Public prompt metadata not found: ${path}`);
     }
-    return mapPromptToResponse(data, path, metadata);
+    return mapPromptToResponse(data, path, metadata, PUBLIC_BUCKET);
   }
 }

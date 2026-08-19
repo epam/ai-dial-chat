@@ -4,7 +4,7 @@ import {
   ScheduledTaskCreateFormValues,
   ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
+import { EditorThemes } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useId, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
@@ -70,12 +70,12 @@ const ScheduledTaskCreatePage: FC = () => {
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { showNotification } = useNotification();
+  const { showSuccessNotification, showErrorNotification } = useNotification();
   const { currentTheme } = useTheme();
   const modelLabelId = useId();
 
-  const markdownEditorTheme: 'light' | 'dark' =
-    currentTheme === ThemeId.Dark ? 'dark' : 'light';
+  const markdownEditorTheme: EditorThemes =
+    currentTheme === ThemeId.Dark ? EditorThemes.dark : EditorThemes.light;
 
   const [values, setValues] =
     useState<ScheduledTaskCreateFormValues>(DEFAULT_VALUES);
@@ -186,21 +186,26 @@ const ScheduledTaskCreatePage: FC = () => {
     setIsSubmitting(true);
     try {
       await createScheduledTask(mapFormValuesToCreateBody(values));
-      showNotification({
-        variant: NotificationVariant.Success,
+      showSuccessNotification({
         message: t(ScheduledTasksI18nKeys.CreateSuccessNotification),
       });
       navigate(returnUrl, { state: { refresh: true } });
     } catch (error) {
       const { traceId } = await getApiErrorDetails(error);
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(ScheduledTasksI18nKeys.CreateErrorNotification),
         requestId: traceId,
       });
       setIsSubmitting(false);
     }
-  }, [values, showNotification, t, navigate, returnUrl]);
+  }, [
+    values,
+    showSuccessNotification,
+    showErrorNotification,
+    t,
+    navigate,
+    returnUrl,
+  ]);
 
   if (appConfigStatus !== UserConfigStatus.Ready) {
     return <RouteFallback />;

@@ -17,7 +17,12 @@ import {
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
+import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
+import {
+  EntityOperation,
+  NotifiableEntity,
+} from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import {
@@ -53,6 +58,7 @@ const SETTINGS_READY_TIMEOUT_MS = 60000;
 const AppsEditor: FC = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const { notifyOperationSuccess } = useOperationNotification();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { schemas, items: deployments, refetchDeployments } = useDeployments();
@@ -174,13 +180,15 @@ const AppsEditor: FC = () => {
 
   const handleChangeStep = useCallback(
     (stepId: string) => {
+      if (stepId === AppsEditorStep.Settings && !appIdForSettings) return;
+
       setSearchParams((prev) => {
         const next = new URLSearchParams(prev);
         next.set(AppsEditorQuery.Step, stepId);
         return next;
       });
     },
-    [setSearchParams],
+    [appIdForSettings, setSearchParams],
   );
 
   const isGeneralStep = step === AppsEditorStep.General;
@@ -256,6 +264,11 @@ const AppsEditor: FC = () => {
     void refetchDeployments(false);
   }, [refetchDeployments]);
 
+  const appDisplayName =
+    submittedAppInfo?.displayName ||
+    resolveLocalizedText(existingDeployment?.displayName, language) ||
+    schema?.displayName;
+
   const handleSaveSuccess = useCallback(
     async (hasChanges: boolean) => {
       clearSaveTimeout();
@@ -282,6 +295,17 @@ const AppsEditor: FC = () => {
         } finally {
           setIsSaving(false);
         }
+        /*
+         * Only Save & Exit reports an outcome: a preview-triggered save is a
+         * side effect of opening the pane, not something the user asked about.
+         */
+        notifyOperationSuccess(
+          NotifiableEntity.QuickApp,
+          isEditingExistingApp
+            ? EntityOperation.Edited
+            : EntityOperation.Created,
+          { name: appDisplayName ?? '' },
+        );
         navigate(returnUrl);
       }
 
@@ -292,6 +316,9 @@ const AppsEditor: FC = () => {
       isPreviewing,
       pendingSaveAction,
       refetchDeployments,
+      notifyOperationSuccess,
+      isEditingExistingApp,
+      appDisplayName,
       navigate,
       returnUrl,
     ],
@@ -349,10 +376,6 @@ const AppsEditor: FC = () => {
     ? t(EditorI18nKeys.NextButton)
     : t(EditorI18nKeys.SaveButton);
 
-  const appDisplayName =
-    submittedAppInfo?.displayName ||
-    resolveLocalizedText(existingDeployment?.displayName, language) ||
-    schema?.displayName;
   const appIconUrl =
     submittedAppInfo?.iconUrl ?? existingDeployment?.iconUrl ?? schema?.iconUrl;
 
@@ -381,7 +404,7 @@ const AppsEditor: FC = () => {
   const isSaveDisabled = !isGeneralStep && !isSettingsReady;
 
   return (
-    <div className="flex size-full flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <EditorHeader
         title={schema?.displayName}
         steps={steps}
@@ -445,7 +468,7 @@ const AppsEditor: FC = () => {
           >
             <div className="flex items-center gap-3 rounded-lg bg-layer-sunken px-4 py-3 shadow-lg">
               <Spinner />
-              <span className="text-sm text-primary">
+              <span className="dial-small-text text-primary">
                 {t(AppsEditorI18nKeys.SavingOverlayLabel)}
               </span>
             </div>

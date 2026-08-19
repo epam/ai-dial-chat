@@ -11,12 +11,14 @@ import type {
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clearAttachmentCache,
+  hasAttachmentTextSource,
   isExternalSourcePreviewable,
   referenceAttachmentToPdfCanvasContent,
   resolveImageCanvasContent,
   resolveJsonCanvasContent,
   resolveMarkdownCanvasContent,
   resolvePdfCanvasContent,
+  resolveTextCanvasContent,
   resolveVisualizerCanvasContent,
 } from '../attachment-canvas';
 
@@ -62,6 +64,21 @@ const makeLocalAttachment = (
   // jsdom does not implement Blob.text — provide a shim
   (file as unknown as { text: () => Promise<string> }).text = () =>
     Promise.resolve(content);
+  return {
+    id: name,
+    name,
+    contentType: 'text/plain',
+    type: AttachmentType.File,
+    status: RequestStatus.Idle,
+    file,
+  } as unknown as DisplayAttachment;
+};
+
+const makeLocalZeroByteAttachment = (name: string): DisplayAttachment => {
+  const file = new File([], name, { type: 'text/plain' });
+  // jsdom does not implement Blob.text — provide a shim
+  (file as unknown as { text: () => Promise<string> }).text = () =>
+    Promise.resolve('');
   return {
     id: name,
     name,
@@ -449,6 +466,43 @@ describe('resolveImageCanvasContent', () => {
       status: RequestStatus.Idle,
     });
     expect(result).toBeNull();
+  });
+
+  it('returns ImageCanvasContent for a zero-byte local file instead of treating it as missing', () => {
+    const result = resolveImageCanvasContent(
+      makeLocalZeroByteAttachment('empty.png'),
+    );
+    expect(result).toEqual({
+      type: AttachmentContentType.Image,
+      url: 'blob:mock-image-url',
+    });
+  });
+});
+
+describe('zero-byte local file handling', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    clearAttachmentCache();
+  });
+
+  it('resolveTextCanvasContent opens an empty preview for a zero-byte local file', async () => {
+    const result = await resolveTextCanvasContent(
+      makeLocalZeroByteAttachment('empty.txt'),
+    );
+    expect(result).toEqual({ type: AttachmentContentType.PlainText, text: '' });
+  });
+
+  it('resolveMarkdownCanvasContent opens an empty preview for a zero-byte local file', async () => {
+    const result = await resolveMarkdownCanvasContent(
+      makeLocalZeroByteAttachment('empty.md'),
+    );
+    expect(result).toEqual({ type: AttachmentContentType.Markdown, text: '' });
+  });
+
+  it('hasAttachmentTextSource reports true for a zero-byte local file', () => {
+    expect(
+      hasAttachmentTextSource(makeLocalZeroByteAttachment('empty.txt')),
+    ).toBe(true);
   });
 });
 

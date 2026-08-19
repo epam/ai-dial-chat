@@ -4,12 +4,9 @@ import type {
   CatalogItemPricing,
   CatalogItemTabData,
   CatalogItemTools,
-  CodeSnippet,
-  EndpointOption,
   OverviewSection,
 } from '@epam/ai-dial-catalog';
 import {
-  CodeLanguage,
   CredentialStatus,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
@@ -17,26 +14,22 @@ import type {
   DeploymentDetailsDto,
   DeploymentFeaturesDetailsDto,
 } from '@epam/ai-dial-chat-api-client';
-import { AuthenticationType, ModelEndpointType } from '../types/entity-details';
+import { formatUnitPrice } from '@epam/ai-dial-chat-shared';
+import type { TFunction } from 'i18next';
+import { CatalogI18nKeys } from '../constants/translation-keys';
+import { AuthenticationType } from '../types/entity-details';
 import type {
   AgentEntityDetails,
   EntitySpecificDetails,
   GuardrailEntityDetails,
-  ModelEndpoint,
   ModelEntityDetails,
   ModelPricing,
-  SkillEntityDetails,
   ToolsetAuthStatus,
   ToolsetEntityDetails,
   ToolsetSpecification,
 } from '../types/entity-details';
+import { formatCalendarDate } from './formatting';
 import { isPublicToolsetId } from './toolsets';
-
-const ENDPOINT_LABELS: Record<ModelEndpointType, string> = {
-  [ModelEndpointType.AzureOpenAI]: 'Azure OpenAI Endpoint',
-  [ModelEndpointType.Anthropic]: 'Anthropic Endpoint',
-  [ModelEndpointType.Responses]: 'Responses Endpoint',
-};
 
 const formatTokens = (n: number): string =>
   n >= 1_000_000
@@ -45,23 +38,39 @@ const formatTokens = (n: number): string =>
       ? `${n / 1_000}K tokens`
       : `${n} tokens`;
 
-const formatReleaseDate = (timestampMs: number): string =>
-  new Date(timestampMs).toLocaleDateString();
+const formatCatalogDate = (date: string): string => {
+  const dateParts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  if (dateParts == null) return date;
 
-const mapEndpointSnippets = (endpoint: ModelEndpoint): CodeSnippet[] => {
-  const snippets: CodeSnippet[] = [];
-  const { snippets: s } = endpoint;
-  if (s == null) return snippets;
-  if (s.pythonSnippet != null)
-    snippets.push({ language: CodeLanguage.Python, code: s.pythonSnippet });
-  if (s.curlSnippet != null)
-    snippets.push({ language: CodeLanguage.Curl, code: s.curlSnippet });
-  if (s.jsSnippet != null)
-    snippets.push({ language: CodeLanguage.JavaScript, code: s.jsSnippet });
-  return snippets;
+  const [, year, month, day] = dateParts;
+  const yearNumber = Number(year);
+  const monthIndex = Number(month) - 1;
+  const dayNumber = Number(day);
+  const localDate = new Date(yearNumber, monthIndex, dayNumber);
+
+  if (
+    localDate.getFullYear() !== yearNumber ||
+    localDate.getMonth() !== monthIndex ||
+    localDate.getDate() !== dayNumber
+  ) {
+    return date;
+  }
+
+  return formatCalendarDate(localDate.getTime());
 };
 
-const mapModelDetails = (data: ModelEntityDetails): CatalogItemTabData => {
+const PRICING_UNIT_KEY = 'unit';
+
+const getDetailsLabel = (
+  t: TFunction | undefined,
+  key: CatalogI18nKeys,
+  fallback: string,
+): string => (t == null ? fallback : t(key));
+
+const mapModelDetails = (
+  data: ModelEntityDetails,
+  t?: TFunction,
+): CatalogItemTabData => {
   const sections: OverviewSection[] = [];
 
   if (data.capabilities != null) {
@@ -102,12 +111,44 @@ const mapModelDetails = (data: ModelEntityDetails): CatalogItemTabData => {
     const { specification: s } = data;
     const specs: OverviewSection['specs'] = [];
 
+    if (s.provider != null)
+      specs.push({
+        label: getDetailsLabel(
+          t,
+          CatalogI18nKeys.DetailsModelProvider,
+          'Provider',
+        ),
+        value: s.provider,
+      });
+    if (s.vendor != null)
+      specs.push({
+        label: getDetailsLabel(t, CatalogI18nKeys.DetailsModelVendor, 'Vendor'),
+        value: s.vendor,
+      });
+    if (s.license != null)
+      specs.push({
+        label: getDetailsLabel(
+          t,
+          CatalogI18nKeys.DetailsModelLicense,
+          'License',
+        ),
+        value: s.license,
+      });
+    if (s.knowledgeCutoffDate != null)
+      specs.push({
+        label: getDetailsLabel(
+          t,
+          CatalogI18nKeys.DetailsModelKnowledgeCutoffDate,
+          'Knowledge cutoff date',
+        ),
+        value: formatCatalogDate(s.knowledgeCutoffDate),
+      });
     if (s.hostedBy != null)
       specs.push({ label: 'Hosted by', value: s.hostedBy });
     if (s.createdAt != null)
       specs.push({
         label: 'Release date',
-        value: formatReleaseDate(s.createdAt),
+        value: formatCalendarDate(s.createdAt),
       });
     if (s.contextWindowTokens != null)
       specs.push({
@@ -139,29 +180,57 @@ const mapModelDetails = (data: ModelEntityDetails): CatalogItemTabData => {
   };
 };
 
+/*
+ * DIAL Core names its price keys after the completion request/response
+ * (`prompt`/`completion`), so the well-known ones keep the catalog wording and
+ * a fixed display order; any other key a deployment reports is humanized
+ * (`cache_read` → `Cache read`) and listed after them.
+ */
+const PRICING_KEY_LABELS: Record<string, string> = {
+  prompt: 'Input tokens',
+  completion: 'Output tokens',
+  cache_read: 'Cached input',
+  cacheRead: 'Cached input',
+  cache_write: 'Cached write',
+  cacheWrite: 'Cached write',
+};
+
+const PRICING_KEY_ORDER = [
+  'prompt',
+  'completion',
+  'cache_read',
+  'cacheRead',
+  'cache_write',
+  'cacheWrite',
+];
+
+const getPricingKeyRank = (key: string): number => {
+  const index = PRICING_KEY_ORDER.indexOf(key);
+  return index === -1 ? PRICING_KEY_ORDER.length : index;
+};
+
+const formatPricingKeyLabel = (key: string): string => {
+  const knownLabel = PRICING_KEY_LABELS[key];
+  if (knownLabel != null) return knownLabel;
+
+  const words = key
+    .replace(/([a-z\d])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .trim()
+    .toLowerCase();
+  if (words === '') return key;
+
+  return ` ${words.charAt(0).toUpperCase()}${words.slice(1)}`;
+};
+
 const mapModelPricing = (
   pricing: ModelPricing | undefined,
 ): CatalogItemPricing | undefined => {
   if (pricing == null) return undefined;
 
-  const prices = [
-    pricing.inputTokensPrice != null && {
-      label: 'Input tokens',
-      price: pricing.inputTokensPrice,
-    },
-    pricing.outputTokensPrice != null && {
-      label: 'Output tokens',
-      price: pricing.outputTokensPrice,
-    },
-    pricing.cachedInputPrice != null && {
-      label: 'Cached input',
-      price: pricing.cachedInputPrice,
-    },
-    pricing.batchPrice != null && {
-      label: 'Batch / async',
-      price: pricing.batchPrice,
-    },
-  ].filter(Boolean) as CatalogItemPricing['prices'];
+  const prices = [...(pricing.prices ?? [])]
+    .sort((a, b) => getPricingKeyRank(a.key) - getPricingKeyRank(b.key))
+    .map(({ key, price }) => ({ label: formatPricingKeyLabel(key), price }));
 
   const limits = [
     pricing.dailyLimit != null && {
@@ -178,36 +247,17 @@ const mapModelPricing = (
     },
   ].filter(Boolean) as CatalogItemPricing['limits'];
 
-  if (!prices?.length && !limits?.length) return undefined;
+  if (prices.length === 0 && !limits?.length) return undefined;
   return { prices, limits };
 };
-
-/**
- * Maps endpoint-type variants (Azure OpenAI / Anthropic / Responses) shared
- * by models and agents into the lib's endpoint-selector shape.
- */
-const mapApiEndpoints = (
-  endpoints: ModelEndpoint[] | undefined,
-): EndpointOption[] | undefined =>
-  endpoints != null && endpoints.length > 0
-    ? endpoints.map((e) => ({
-        label: ENDPOINT_LABELS[e.type] ?? e.type,
-        url: e.url,
-        snippets: mapEndpointSnippets(e),
-      }))
-    : undefined;
 
 const mapModelApi = (
   data: ModelEntityDetails,
 ): CatalogItemApiDetails | undefined => {
   const { api } = data;
-  if (api == null) return undefined;
+  if (api?.modelId == null) return undefined;
 
-  const resource = api.modelId != null ? { modelId: api.modelId } : undefined;
-  const endpoints = mapApiEndpoints(api.endpoints);
-
-  if (resource == null && endpoints == null) return undefined;
-  return { resource, endpoints };
+  return { resource: { modelId: api.modelId } };
 };
 
 const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
@@ -230,7 +280,7 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
     if (s.createdAt != null)
       specs.push({
         label: 'Release date',
-        value: formatReleaseDate(s.createdAt),
+        value: formatCalendarDate(s.createdAt),
       });
     if (s.routes?.length)
       specs.push({ label: 'Routes', value: s.routes.join(' · ') });
@@ -308,7 +358,6 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
             data.api.endpointUrl != null
               ? { endpointUrl: data.api.endpointUrl }
               : undefined,
-          endpoints: mapApiEndpoints(data.api.endpoints),
           requestExample: data.api.requestExample,
           responseSchema: data.api.responseSchema,
         }
@@ -353,14 +402,31 @@ export const mapToolsetCredentials = (
 
   const { userLevel, global } = data.specification?.authStatus ?? {};
   const isPublic = isPublicToolsetId(toolsetId);
+  const userStatus = userLevel ? TOOLSET_AUTH_STATUS_MAP[userLevel] : undefined;
+  const globalStatus = global ? TOOLSET_AUTH_STATUS_MAP[global] : undefined;
+  // const isApiKey = authenticationType === ToolsetAuthenticationType.ApiKey;
 
   return {
     authenticationType,
-    userStatus: userLevel ? TOOLSET_AUTH_STATUS_MAP[userLevel] : undefined,
-    globalStatus: global ? TOOLSET_AUTH_STATUS_MAP[global] : undefined,
+    userStatus,
+    globalStatus,
     isPublic,
     isManageableByAdmin: isAdmin && isPublic,
     apiKeyHeader: data.specification?.authStatus?.apiKeyHeader,
+    /*
+     * MOCK DATA: the backend does not yet expose when an API key was added
+     * (`ToolsetAuthSettingsDto` has no timestamp field). Hardcoded here so
+     * the "Added X ago" support text has something to show in the details
+     * panel; replace with the real value once the API adds one.
+     */
+    // userApiKeyAddedWhen:
+    //   isApiKey && userStatus === CredentialStatus.SignedIn
+    //     ? '3 weeks ago'
+    //     : undefined,
+    // globalApiKeyAddedWhen:
+    //   isApiKey && globalStatus === CredentialStatus.SignedIn
+    //     ? '1 week ago'
+    //     : undefined,
   };
 };
 
@@ -401,7 +467,7 @@ const mapToolsetDetails = (data: ToolsetEntityDetails): CatalogItemTabData => {
     if (s.createdAt != null)
       specs.push({
         label: 'Release date',
-        value: formatReleaseDate(s.createdAt),
+        value: formatCalendarDate(s.createdAt),
       });
     if (s.authStatus?.scopesSupported?.length)
       specs.push({
@@ -477,51 +543,20 @@ const mapGuardrailDetails = (
   };
 };
 
-const mapSkillDetails = (data: SkillEntityDetails): CatalogItemTabData => {
-  const sections: OverviewSection[] = [];
-
-  if (data.about != null) {
-    const { about: a } = data;
-    const specs: OverviewSection['specs'] = [];
-
-    if (a.allowedTools?.length)
-      specs.push({ label: 'Allowed tools', value: a.allowedTools.join(' · ') });
-    if (a.bundledResources?.length)
-      specs.push({
-        label: 'Bundled resources',
-        value: a.bundledResources.join(' · '),
-      });
-
-    if (specs.length > 0) sections.push({ title: 'Specification', specs });
-
-    if (a.skillPrompt != null) {
-      sections.push({
-        title: 'Context',
-        specs: [{ label: 'Skill prompt', value: a.skillPrompt }],
-      });
-    }
-  }
-
-  return {
-    overview: sections.length > 0 ? { sections } : undefined,
-  };
-};
-
 /** Converts a strongly-typed entity domain model into the lib's `CatalogItemTabData` shape. */
 export const mapEntityDetailsToCatalogDetails = (
   details: EntitySpecificDetails,
+  t?: TFunction,
 ): CatalogItemTabData => {
   switch (details.type) {
     case 'MODEL':
-      return mapModelDetails(details.data);
+      return mapModelDetails(details.data, t);
     case 'AGENT':
       return mapAgentDetails(details.data);
     case 'TOOLSET':
       return mapToolsetDetails(details.data);
     case 'GUARDRAIL':
       return mapGuardrailDetails(details.data);
-    case 'SKILL':
-      return mapSkillDetails(details.data);
   }
 };
 
@@ -570,6 +605,28 @@ const mapFeaturesToCapabilities = (
   };
 };
 
+/*
+ * DIAL Core reports pricing as an open-ended map, so every key except `unit`
+ * — which names the billing unit the other keys are priced in — is surfaced as
+ * a price row in the order Core returned it.
+ */
+const mapPricingDto = (
+  pricing: NonNullable<DeploymentDetailsDto['modelDetails']>['pricing'],
+): ModelPricing | undefined => {
+  if (pricing == null) return undefined;
+
+  const { unit } = pricing;
+  const prices = Object.entries(pricing).flatMap(([key, value]) => {
+    if (key === PRICING_UNIT_KEY) return [];
+    if (typeof value !== 'string' || value.trim() === '') return [];
+
+    const price = formatUnitPrice(value, unit);
+    return price != null ? [{ key, price }] : [];
+  });
+
+  return prices.length > 0 ? { prices } : undefined;
+};
+
 const mapModelDetailsDto = (
   dto: DeploymentDetailsDto,
 ): EntitySpecificDetails => {
@@ -577,6 +634,7 @@ const mapModelDetailsDto = (
     limits,
     pricing,
     features,
+    catalogProperties,
     owner,
     inputAttachmentTypes,
     defaultMaxTokens,
@@ -585,6 +643,7 @@ const mapModelDetailsDto = (
 
   const hasSpecification =
     limits != null ||
+    catalogProperties != null ||
     owner != null ||
     createdAt != null ||
     (inputAttachmentTypes?.length ?? 0) > 0;
@@ -595,6 +654,10 @@ const mapModelDetailsDto = (
       capabilities: mapFeaturesToCapabilities(features),
       specification: hasSpecification
         ? {
+            provider: catalogProperties?.provider,
+            vendor: catalogProperties?.vendor,
+            license: catalogProperties?.license,
+            knowledgeCutoffDate: catalogProperties?.knowledgeCutoffDate,
             contextWindowTokens: limits?.maxTotalTokens,
             maxOutputTokens: limits?.maxCompletionTokens ?? defaultMaxTokens,
             inputTypes: inputAttachmentTypes,
@@ -602,13 +665,7 @@ const mapModelDetailsDto = (
             createdAt,
           }
         : undefined,
-      pricing:
-        pricing != null
-          ? {
-              inputTokensPrice: pricing.prompt,
-              outputTokensPrice: pricing.completion,
-            }
-          : undefined,
+      pricing: mapPricingDto(pricing),
       api: { modelId: dto.id },
     },
   };

@@ -12,7 +12,6 @@ import {
   type ConversationInputStyles,
   type ToolsChipLabels,
 } from '@epam/ai-dial-conversation-input';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC, ReactNode } from 'react';
 import { lazy, memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -43,6 +42,7 @@ import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { getApiErrorDetails } from '../../server-api/api-error';
+import { isQuickAppSchema } from '../../utils/application-schema';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { getTimeOfDayGreeting } from '../../utils/greeting';
 import { resolveLocalizedText } from '../../utils/locale';
@@ -84,6 +84,15 @@ interface Props {
   introText?: string;
   /** Initial textarea content (e.g. populated by a starter selection). */
   message?: string;
+  /** Token that forces `message` to re-apply even if its string is unchanged. */
+  messageRevision?: number;
+  /**
+   * When provided, adds a "Prompts" item to the `+` menu whose submenu
+   * renders this host-owned overlay, mirroring `modelPickerOverlay`.
+   */
+  promptsMenuOverlay?: (onClose: () => void) => ReactNode;
+  /** Label for the "Prompts" menu item and mobile sheet title. */
+  promptsMenuTitle?: string;
   inputStyles?: ConversationInputStyles;
   /** Called on first send. Rejecting shows the standard create-conversation error notification. */
   onCreateConversation: (
@@ -112,6 +121,9 @@ const NewConversationComposer: FC<Props> = ({
   placeholder,
   introText,
   message,
+  messageRevision,
+  promptsMenuOverlay,
+  promptsMenuTitle,
   inputStyles,
   onCreateConversation,
   toolsMenuItems,
@@ -122,7 +134,7 @@ const NewConversationComposer: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
-  const { showNotification } = useNotification();
+  const { showErrorNotification } = useNotification();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
 
@@ -173,13 +185,12 @@ const NewConversationComposer: FC<Props> = ({
     (filenames: string[]) => {
       const { title, message: notificationMessage } =
         buildNetworkUploadErrorNotification(filenames, t);
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         title,
         message: notificationMessage,
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const { handleUploadAttachment } = useAttachmentUpload({
@@ -201,6 +212,9 @@ const NewConversationComposer: FC<Props> = ({
     values: chatSettingsValues,
     onValuesChange: setChatSettingsValues,
     deploymentFeatures: selectedDeployment?.features,
+    isQuickApp: isQuickAppSchema({
+      id: selectedDeployment?.applicationTypeSchemaId,
+    }),
   });
 
   const modelSelectorLabels = useModelSelectorLabels({
@@ -253,8 +267,7 @@ const NewConversationComposer: FC<Props> = ({
 
   const handleAttachmentsLimitExceeded = useCallback(
     (count: number, limit: number) => {
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         title: t(DialFileManagerI18nKeys.TooManyFilesSelected),
         message: t(DialFileManagerI18nKeys.TooManyFilesDescription, {
           count,
@@ -262,17 +275,16 @@ const NewConversationComposer: FC<Props> = ({
         }),
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const handleMessageTooLong = useCallback(
     (_length: number, max: number) => {
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(ConversationI18nKeys.MessageTooLong, { max }),
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const handleSend = useCallback(
@@ -284,8 +296,7 @@ const NewConversationComposer: FC<Props> = ({
       } catch (err) {
         const { message: errorMessage, traceId } =
           await getApiErrorDetails(err);
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           message: errorMessage ?? t(ChatI18nKeys.CreateConversationError),
           requestId: traceId,
         });
@@ -298,7 +309,7 @@ const NewConversationComposer: FC<Props> = ({
       selectedDeploymentId,
       onCreateConversation,
       chatSettingsValues,
-      showNotification,
+      showErrorNotification,
       t,
     ],
   );
@@ -331,6 +342,7 @@ const NewConversationComposer: FC<Props> = ({
           onUploadAttachment={handleUploadAttachment}
           onAttachmentsChange={handleAttachmentsChange}
           message={message}
+          messageRevision={messageRevision}
           welcomeText={getTimeOfDayGreeting(
             new Date().getHours(),
             {
@@ -374,7 +386,6 @@ const NewConversationComposer: FC<Props> = ({
           discardRecordingLabel={t(
             VoiceRecordingI18nKeys.DiscardRecordingLabel,
           )}
-          timerAriaLabel={t(VoiceRecordingI18nKeys.TimerAriaLabel)}
           sendOnEnter={sendOnEnter}
           chatSettings={isEmptyChatSettingsEnabled ? chatSettings : undefined}
           pendingDropFiles={pendingFiles}
@@ -399,6 +410,8 @@ const NewConversationComposer: FC<Props> = ({
           onAttachmentClick={handleAttachmentClick}
           onMessageTooLong={handleMessageTooLong}
           modelPickerOverlay={modelPickerOverlay}
+          promptsMenuOverlay={promptsMenuOverlay}
+          promptsMenuTitle={promptsMenuTitle}
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}
           toolsMenuTitle={toolsMenuTitle}
@@ -455,7 +468,7 @@ const NewConversationComposer: FC<Props> = ({
               : t(DialFileManagerI18nKeys.DeleteConfirmTitleMultiple)
           }
           deleteConfirmBody={(names) => (
-            <div className="px-6 py-3 text-sm">
+            <div className="dial-small-text px-6 py-3">
               <p className="mb-3 text-secondary">
                 {names.length === 1 ? (
                   <>

@@ -1,3 +1,11 @@
+# responses-api-generation Specification
+
+## Purpose
+
+Generating assistant responses through DIAL's Responses API behind an adapter seam, normalized into the existing stream chunk contract.
+
+## Requirements
+
 ### Requirement: Generation API resolver
 
 `resolveGenerationApi` (`apps/chat-api/src/conversations/generation/generation-api.ts`) SHALL be a pure function that takes the resolved deployment `features` object (`{ responsesApi?: boolean }`, as produced by `DeploymentsService.getDeploymentDetails`) and returns a `GenerationApi` string enum value: `Responses = 'responses'` when `features.responsesApi === true`, otherwise `ChatCompletions = 'chat_completions'`. A missing `features` object or a missing/`false` `responsesApi` field SHALL resolve to `ChatCompletions`.

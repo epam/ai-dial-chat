@@ -1,11 +1,11 @@
-import { CatalogEntityType } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialTagInput,
   ElementSize,
   GhostIconButton,
   Input,
   Select,
+  TagInput,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
 import type { FC } from 'react';
@@ -138,11 +138,13 @@ const SettingsForm: FC<Props> = ({
         onChange={handleProtocolChange}
       />
 
-      <DialTagInput
-        elementId="toolset-allowed-tools"
-        label={t(ToolsetEditorI18nKeys.AllowedToolsLabel)}
+      <TagInput
+        id="toolset-allowed-tools"
+        labelProps={{
+          label: t(ToolsetEditorI18nKeys.AllowedToolsLabel),
+        }}
         placeholder={t(ToolsetEditorI18nKeys.AllowedToolsPlaceholder)}
-        initialTags={form.allowedTools}
+        value={form.allowedTools}
         onChange={(allowedTools) => onChange({ allowedTools })}
       />
 

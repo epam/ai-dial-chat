@@ -1,6 +1,10 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { describe, expect, it } from 'vitest';
+import {
+  CatalogEntityParamsDto,
+  CatalogEntityType,
+} from '../dto/catalog-entity-params.dto';
 import { PublishCatalogEntityDto } from '../dto/publish-catalog-entity.dto';
 
 const BASE_BODY = {
@@ -12,6 +16,20 @@ async function validateDto(plain: Record<string, unknown>) {
   const instance = plainToInstance(PublishCatalogEntityDto, plain);
   return validate(instance, { whitelist: true, forbidNonWhitelisted: true });
 }
+
+describe('PublishCatalogEntityDto — version', () => {
+  it('accepts an omitted version for unversioned resources', async () => {
+    const errors = await validateDto({
+      folderPath: 'Organization/Data Science',
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects a non-string version', async () => {
+    const errors = await validateDto({ ...BASE_BODY, version: 2 });
+    expect(errors.some((error) => error.property === 'version')).toBe(true);
+  });
+});
 
 describe('PublishCatalogEntityDto — rules', () => {
   it('passes when rules is omitted', async () => {
@@ -62,5 +80,41 @@ describe('PublishCatalogEntityDto — rules', () => {
       ],
     });
     expect(errors.some((e) => e.property === 'rules')).toBe(true);
+  });
+});
+
+describe('CatalogEntityParamsDto — entityType', () => {
+  const validateParams = async (plain: Record<string, unknown>) => {
+    const instance = plainToInstance(CatalogEntityParamsDto, plain);
+    return validate(instance, { whitelist: true, forbidNonWhitelisted: true });
+  };
+
+  it('accepts entityType: skill with a nested skill entityId', async () => {
+    const errors = await validateParams({
+      entityType: CatalogEntityType.Skill,
+      entityId: 'skills/bucket-123/team-a/docs-helper',
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  /*
+   * A prompt's entityId is bucket-relative, unlike every other kind: the
+   * prompts endpoints never expose a bucket, so `publish.service.ts` re-attaches
+   * the caller's own before calling DIAL Core.
+   */
+  it('accepts entityType: prompt with a bucket-relative prompt entityId', async () => {
+    const errors = await validateParams({
+      entityType: CatalogEntityType.Prompt,
+      entityId: 'Work/AI/summarize',
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects an unknown entityType', async () => {
+    const errors = await validateParams({
+      entityType: 'conversation',
+      entityId: 'conversations/bucket-123/my-chat',
+    });
+    expect(errors.some((e) => e.property === 'entityType')).toBe(true);
   });
 });

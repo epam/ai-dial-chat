@@ -12,14 +12,14 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
 
   return {
     ...actual,
-    DialProgressBar: ({
+    ProgressBar: ({
       value,
       max,
-      ariaLabel,
+      'aria-label': ariaLabel,
     }: {
       value: number;
       max: number;
-      ariaLabel: string;
+      'aria-label': string;
     }) => (
       <div
         role="progressbar"
@@ -28,7 +28,6 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         aria-valuemax={max}
       />
     ),
-    DialProgressBarSize: { Small: 'small' },
   };
 });
 
@@ -79,14 +78,14 @@ describe('UsageLimitsControl', () => {
 
   it('renders nothing without a deployment or monthly limit', () => {
     const { container, rerender } = renderControl(undefined);
-    expect(container.firstChild).toBeNull();
+    expect(container.innerHTML).toBe('');
 
     mockUseDeploymentUsageLimits.mockReturnValue({
       ...defaultHookResult,
       limit: undefined,
     });
     rerender(<UsageLimitsControl deploymentId="gpt-4o" labels={labels} />);
-    expect(container.firstChild).toBeNull();
+    expect(container.innerHTML).toBe('');
   });
 
   it('shows a ring-only trigger at rest with an accessible percentage', () => {
@@ -302,7 +301,7 @@ describe('UsageLimitsControl', () => {
     await userEvent.keyboard('{Escape}');
 
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(document.activeElement).toBe(trigger);
+    expect(trigger.matches(':focus')).toBe(true);
   });
 
   it('closes when the user points outside the popover', async () => {
@@ -324,7 +323,7 @@ describe('UsageLimitsControl', () => {
 
     expect(screen.queryByRole('dialog')).toBeNull();
     await waitFor(() => {
-      expect(document.activeElement).toBe(trigger);
+      expect(trigger.matches(':focus')).toBe(true);
     });
   });
 

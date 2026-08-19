@@ -3,7 +3,12 @@ import {
   mergeClasses,
   StageStatus,
 } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, LinkButton, Spinner } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DialEllipsisTooltip,
+  LinkButton,
+  Spinner,
+} from '@epam/ai-dial-ui-kit';
 import {
   IconCheck,
   IconChevronDown,
@@ -119,11 +124,14 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
       <span
         role="status"
         aria-live="polite"
-        className="inline-flex items-center gap-2"
+        className="flex min-w-0 items-center gap-2"
       >
-        <Spinner size={14} ariaLabel={runningAriaLabel} />
+        <span className="flex flex-none items-center">
+          <Spinner size={14} ariaLabel={runningAriaLabel} />
+        </span>
         <span
           className={mergeClasses(
+            'flex-none whitespace-nowrap',
             summaryTypography.fontClassName,
             styles.liveName,
           )}
@@ -133,11 +141,12 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         {liveName && (
           <span
             className={mergeClasses(
+              'min-w-0 max-w-[22rem] truncate',
               summaryTypography.fontClassName,
               styles.executedLabel,
             )}
           >
-            {liveName}
+            <DialEllipsisTooltip text={liveName} />
           </span>
         )}
       </span>
@@ -213,6 +222,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
     >
       <LinkButton
         className={styles.toggleButton}
+        textClassName="min-w-0"
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
         iconAfter={

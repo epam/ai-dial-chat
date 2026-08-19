@@ -4,8 +4,8 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { DialClientService } from '../dial/dial-client.service';
 import {
   CURRENT_CONFIG_VERSION,
-  DEFAULT_USER_CONFIG,
   UserConfig,
+  createDefaultUserConfig,
   migrateConfig,
 } from './dto/user-config.dto';
 
@@ -35,12 +35,7 @@ export class UserConfigService {
           await this.writeConfig(config, token, bucket);
           await this.deleteFileBestEffort(LEGACY_CONFIG_PATH, token, bucket);
         } else {
-          config = {
-            ...DEFAULT_USER_CONFIG,
-            conversations: { pinnedIds: [] },
-            toolsets: { installed: [] },
-            deployments: { installed: [], selectedId: null },
-          };
+          config = createDefaultUserConfig();
         }
       }
 
@@ -54,12 +49,7 @@ export class UserConfigService {
       return merged;
     } catch {
       this.logger.warn('Failed to read user config, using default');
-      return {
-        ...DEFAULT_USER_CONFIG,
-        conversations: { pinnedIds: [] },
-        toolsets: { installed: [] },
-        deployments: { installed: [], selectedId: null },
-      };
+      return createDefaultUserConfig();
     }
   }
 
@@ -312,7 +302,7 @@ export class UserConfigService {
   }
 
   private async updateInstalledEntry(
-    section: 'toolsets' | 'deployments',
+    section: 'toolsets' | 'deployments' | 'prompts' | 'skills',
     id: string,
     isInstalled: boolean,
     token: string,
@@ -363,6 +353,24 @@ export class UserConfigService {
       token,
       bucket,
     );
+  }
+
+  async updateInstalledPrompt(
+    id: string,
+    isInstalled: boolean,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    return this.updateInstalledEntry('prompts', id, isInstalled, token, bucket);
+  }
+
+  async updateInstalledSkill(
+    id: string,
+    isInstalled: boolean,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    return this.updateInstalledEntry('skills', id, isInstalled, token, bucket);
   }
 
   async updateSelectedDeployment(

@@ -23,6 +23,8 @@ export interface CitationMarkerProps {
   icon?: ReactNode;
   /** User-visible strings. */
   labels: CitationMarkerLabels;
+  /** Typography class applied to the marker's label text. Defaults to `'dial-caption-text'`. */
+  labelClassName?: string;
 }
 
 /** Inline button that opens the citation popup for a source group. */
@@ -31,11 +33,12 @@ export const CitationMarker: FC<CitationMarkerProps> = ({
   onOpen,
   icon,
   labels,
+  labelClassName = 'dial-caption-text',
 }) => {
   const label = (
     <span className="flex items-center gap-1">
       {icon}
-      <span className="dial-caption-text">
+      <span className={labelClassName}>
         {annotationCount > 1 ? labels.labelWithOverflow : labels.label}
       </span>
     </span>

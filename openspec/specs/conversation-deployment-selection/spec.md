@@ -1,5 +1,9 @@
 # Spec: conversation-deployment-selection
 
+## Purpose
+
+Choosing the deployment a conversation runs on at creation time, and restoring the user's default deployment on the New Chat screen.
+
 ## Requirements
 
 ### Requirement: CreateConversationDto accepts deploymentId

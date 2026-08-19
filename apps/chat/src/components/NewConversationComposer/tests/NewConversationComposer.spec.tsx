@@ -3,6 +3,7 @@ import { type DeploymentItem } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import { Suspense } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as useUiFeatureModule from '../../../hooks/useUiFeature';
 import NewConversationComposer from '../NewConversationComposer';
 
@@ -52,9 +53,7 @@ vi.mock('../../../context/auth/UserContext', () => ({
 }));
 
 vi.mock('../../../context/NotificationContext', () => ({
-  useNotification: () => ({
-    showNotification: vi.fn(),
-  }),
+  useNotification: () => createNotificationContextValue(vi.fn()),
 }));
 
 vi.mock('../../../hooks/attachment/useAttachmentValidation', () => ({

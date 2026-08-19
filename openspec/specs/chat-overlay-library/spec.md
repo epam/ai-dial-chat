@@ -1,4 +1,10 @@
-## ADDED Requirements
+# chat-overlay-library Specification
+
+## Purpose
+
+The publishable `chat-overlay` package: iframe lifecycle management, the v1 method surface, structured request errors, and `ChatOverlayManager`.
+
+## Requirements
 
 ### Requirement: Publishable package metadata
 

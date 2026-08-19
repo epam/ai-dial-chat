@@ -4,17 +4,18 @@ Single source of truth for the diagrams referenced in [`../auth-bff-encrypted-co
 
 Each `.mmd` file is a standalone Mermaid source. SVG versions (committed next to them) are what the markdown actually embeds.
 
-| Source `.mmd`                                                          | Rendered                                                                                |
-| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| [`01-high-level-architecture.mmd`](./01-high-level-architecture.mmd)   | High-level BFF architecture                                                             |
-| [`02-provider-registry.mmd`](./02-provider-registry.mmd)               | Multi-provider registry                                                                 |
-| [`03-login-flow.mmd`](./03-login-flow.mmd)                             | Login (Authorization Code + PKCE)                                                       |
-| [`04-api-request-refresh.mmd`](./04-api-request-refresh.mmd)           | Authenticated API request + transparent refresh                                         |
-| [`05-logout-flow.mmd`](./05-logout-flow.mmd)                           | Federated logout                                                                        |
-| [`06-cross-pod-stateless.mmd`](./06-cross-pod-stateless.mmd)           | Cross-pod stateless decryption                                                          |
-| [`07-cookie-structure.mmd`](./07-cookie-structure.mmd)                 | Encrypted cookie payload structure                                                      |
-| [`08-toolset-signin-interrupt.mmd`](./08-toolset-signin-interrupt.mmd) | Mid-completion toolset **and application external-service** sign-in via client-channel  |
-| [`09-header-token-auth-chain.mmd`](./09-header-token-auth-chain.mmd)   | Pluggable auth-strategy chain (header bearer token vs. session cookie) + CSRF exemption |
+| Source `.mmd`                                                                | Rendered                                                                                                                       |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| [`01-high-level-architecture.mmd`](./01-high-level-architecture.mmd)         | High-level BFF architecture                                                                                                    |
+| [`02-provider-registry.mmd`](./02-provider-registry.mmd)                     | Multi-provider registry                                                                                                        |
+| [`03-login-flow.mmd`](./03-login-flow.mmd)                                   | Login (Authorization Code + PKCE)                                                                                              |
+| [`04-api-request-refresh.mmd`](./04-api-request-refresh.mmd)                 | Authenticated API request + transparent refresh                                                                                |
+| [`05-logout-flow.mmd`](./05-logout-flow.mmd)                                 | Federated logout                                                                                                               |
+| [`06-cross-pod-stateless.mmd`](./06-cross-pod-stateless.mmd)                 | Cross-pod stateless decryption                                                                                                 |
+| [`07-cookie-structure.mmd`](./07-cookie-structure.mmd)                       | Encrypted cookie payload structure                                                                                             |
+| [`08-toolset-signin-interrupt.mmd`](./08-toolset-signin-interrupt.mmd)       | Mid-completion toolset **and application external-service** sign-in via client-channel                                         |
+| [`09-header-token-auth-chain.mmd`](./09-header-token-auth-chain.mmd)         | Pluggable auth-strategy chain (header bearer token vs. session cookie) + CSRF exemption                                        |
+| [`10-offline-credentials-consent.mmd`](./10-offline-credentials-consent.mmd) | Proactive Scheduled Tasks offline-credentials consent (route entry -> status check -> modal -> popup -> authoritative refetch) |
 
 ---
 
@@ -72,15 +73,15 @@ From the repo root:
 
 ```bash
 npx -y @mermaid-js/mermaid-cli \
-  -i docs/auth-diagrams/01-high-level-architecture.mmd \
-  -o docs/auth-diagrams/01-high-level-architecture.svg \
+  -i docs/auth/auth-diagrams/01-high-level-architecture.mmd \
+  -o docs/auth/auth-diagrams/01-high-level-architecture.svg \
   -b transparent
 ```
 
 ### Render all at once
 
 ```bash
-cd docs/auth-diagrams
+cd docs/auth/auth-diagrams
 for f in *.mmd; do
   npx -y @mermaid-js/mermaid-cli -i "$f" -o "${f%.mmd}.svg" -b transparent
 done
@@ -93,7 +94,7 @@ Add to the workspace `package.json`:
 ```json
 {
   "scripts": {
-    "docs:diagrams": "for f in docs/auth-diagrams/*.mmd; do npx -y @mermaid-js/mermaid-cli -i \"$f\" -o \"${f%.mmd}.svg\" -b transparent; done"
+    "docs:diagrams": "for f in docs/auth/auth-diagrams/*.mmd; do npx -y @mermaid-js/mermaid-cli -i \"$f\" -o \"${f%.mmd}.svg\" -b transparent; done"
   }
 }
 ```
@@ -147,7 +148,7 @@ To prevent stale SVGs, add a pre-commit hook or CI check that re-renders all `.m
 
 ```bash
 npm run docs:diagrams
-git diff --exit-code docs/auth-diagrams/*.svg
+git diff --exit-code docs/auth/auth-diagrams/*.svg
 ```
 
 Run it from `lint-staged`, a Husky hook, or a workflow step before merge.

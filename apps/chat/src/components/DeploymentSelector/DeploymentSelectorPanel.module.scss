@@ -37,7 +37,7 @@
    (a row moving to/from the "Currently selected" section); see
    listContentRef/listHeight in DeploymentSelectorPanel.tsx. */
 .listContent {
-  transition: height 200ms ease;
+  transition: max-height 200ms ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -48,27 +48,5 @@
 
   .listContent {
     transition: none;
-  }
-}
-
-.searchBar {
-  border-color: rgba(0, 0, 0, 0.05) !important;
-
-  @media (hover: hover) {
-    &:hover:not(:focus-within) {
-      border-color: rgba(0, 0, 0, 0.12) !important;
-    }
-  }
-
-  /* Focus ring is an `outline`, not a `border-color` swap — outline is painted
-   * outside the border box, so it costs no layout and is preserved in
-   * forced-colors mode. `outline-offset: -1px` keeps it in the border's place
-   * (the border itself goes transparent) so nothing grows or jitters. */
-  &:focus-within {
-    border-color: transparent !important;
-    outline: 1px solid
-      color-mix(in srgb, var(--stroke-info, #124ace) 50%, transparent) !important;
-    outline-offset: -1px;
-    box-shadow: none !important;
   }
 }

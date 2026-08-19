@@ -387,7 +387,7 @@ describe('ToolsetsMutationService', () => {
       await service.updateToolset('user1', 'token', id, baseBody);
 
       const sentBody = saveSpy.mock.calls[0][2].body as Record<string, unknown>;
-      expect(sentBody.displayName).toBe('My toolset');
+      expect(sentBody.displayName).toEqual('My toolset');
     });
 
     it('preserves hidden OAuth auth settings when update omits a new client secret', async () => {

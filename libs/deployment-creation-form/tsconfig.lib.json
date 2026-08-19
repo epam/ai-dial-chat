@@ -35,9 +35,6 @@
   "references": [
     {
       "path": "../chat-shared/tsconfig.lib.json"
-    },
-    {
-      "path": "../ai-dial-kit/tsconfig.lib.json"
     }
   ]
 }

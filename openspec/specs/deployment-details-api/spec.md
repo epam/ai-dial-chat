@@ -1,5 +1,9 @@
 # Spec: deployment-details-api
 
+## Purpose
+
+`GET /api/v1/deployments/{deployment}/details` and the shape of its response DTO.
+
 ## Requirements
 
 ### Requirement: GET /api/v1/deployments/{deployment}/details endpoint

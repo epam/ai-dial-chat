@@ -1,0 +1,40 @@
+.tabContainer {
+  border-color: var(--pt-tab-border, transparent) !important;
+  background-color: var(--pt-tab-bg, transparent);
+
+  color: var(--pt-tab-text, var(--text-tertiary, #848e9c)) !important;
+
+  @media (hover: hover) {
+    &:hover {
+      color: var(
+        --pt-tab-text-hover,
+        var(--text-secondary, #57647a)
+      ) !important;
+      background-color: var(
+        --pt-tab-bg-hover,
+        var(--bg-control-accent-alpha, #2764d90f)
+      );
+    }
+  }
+
+  > span {
+    text-align: center;
+  }
+
+  &.tabActive {
+    background-color: var(
+      --pt-tab-active-bg,
+      var(--bg-control-accent-alpha, #2764d90f)
+    ) !important;
+    color: var(--pt-tab-active-text, var(--text-secondary, #57647a)) !important;
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(
+          --pt-tab-active-bg-hover,
+          var(--bg-control-accent-alpha-hover, #2764d924)
+        );
+      }
+    }
+  }
+}

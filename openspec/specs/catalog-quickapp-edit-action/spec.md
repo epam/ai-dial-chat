@@ -1,5 +1,9 @@
 # Spec: catalog-quickapp-edit-action
 
+## Purpose
+
+The Edit action in the catalog details panel for items the current user owns, and the editor each entity type routes to.
+
 ## Requirements
 
 ### Requirement: CatalogItem exposes a generic editability flag

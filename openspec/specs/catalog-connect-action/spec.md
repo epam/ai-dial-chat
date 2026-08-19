@@ -1,4 +1,10 @@
-## ADDED Requirements
+# catalog-connect-action Specification
+
+## Purpose
+
+A Connect tab in the catalog details panel exposing MCP endpoint details for toolsets and MCP-capable applications.
+
+## Requirements
 
 ### Requirement: `libs/catalog` renders Connect as a details-panel tab
 
@@ -29,7 +35,7 @@ None of these sections render a download action; every `MarkdownCodeBlock` insta
 
 **i18n impact:** `tabConnectLabel` default `'Connect'` is a lib-level default string; the consuming app supplies the localized value through `texts.tabConnectLabel`, reusing the shared `Connect` button/tab key rather than a feature-scoped key.
 
-**Accessibility:** The tab follows the same `TabRow` keyboard/ARIA behavior as every other details tab (`role="tab"`/`aria-selected` provided by `TabRow`). The copy action on each code block announces its "copied" feedback via `MarkdownCodeBlock`'s existing `aria-live="polite"` region; the button's own label stays stable.
+**Accessibility:** The tab follows the same `Tabs` keyboard/ARIA behavior as every other details tab (`role="tab"`/`aria-selected` provided by `Tabs`). The copy action on each code block announces its "copied" feedback via `MarkdownCodeBlock`'s existing `aria-live="polite"` region; the button's own label stays stable.
 
 #### Scenario: Connect tab renders last when an endpoint URL is present
 

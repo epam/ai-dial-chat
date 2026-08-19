@@ -47,6 +47,8 @@ export interface ScheduledTaskCardTypography {
   titleClassName?: string;
   /** CSS class applied to the description/prompt-preview line. Defaults to `'dial-small-text'`. */
   descriptionClassName?: string;
+  /** CSS class applied to the description's size. Defaults to `'dial-tiny-text'`. */
+  descriptionSizeClassName?: string;
   /** CSS class applied to the schedule pill's label text. Defaults to `'dial-tiny-text'`. */
   scheduleLabelClassName?: string;
   /** CSS class applied to non-leaf location breadcrumb segments. Defaults to `'dial-tiny-text'`. */

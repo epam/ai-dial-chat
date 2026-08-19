@@ -1,4 +1,10 @@
-## ADDED Requirements
+# feature-flags-service Specification
+
+## Purpose
+
+Backend feature keys, `FeatureFlagsService.isEnabled`, and the route guard built on them.
+
+## Requirements
 
 ### Requirement: FeatureKey enum enumerates all feature keys
 

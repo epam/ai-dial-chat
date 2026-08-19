@@ -23,6 +23,8 @@ const makeDeploymentsContext = (selectedItemId: string | null) => ({
   toolsets: [],
   refetchToolsets: vi.fn(),
   refetchDeployments: vi.fn(),
+  selectedDeploymentDetails: null,
+  isDeploymentDetailsLoading: false,
   mergeSharedItem: vi.fn(),
 });
 

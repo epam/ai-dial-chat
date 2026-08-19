@@ -44,15 +44,26 @@ When `onFetchDetails` resolves data, it SHALL take precedence over any staticall
 
 ### Requirement: `CatalogView` wires `onFetchDetails` to the new backend endpoint
 
-`apps/chat/src/components/CatalogView/CatalogView.tsx` SHALL implement `onFetchDetails` by calling a new `apps/chat/src/server-api` wrapper (e.g. `getDeploymentDetails(id)` in `apps/chat/src/server-api/deployments.ts`, following the same pattern as the existing `getDeploymentConfiguration` wrapper) that in turn calls the generated `@epam/chat-api-client` `DeploymentsApi.getDeploymentDetails` method — never `fetch` directly and never a new `base.ts` helper.
+`apps/chat/src/components/CatalogView/CatalogView.tsx` SHALL implement `onFetchDetails` by dispatching on the opened item's `type` to the wrapper appropriate for that entity kind. All wrappers live in `apps/chat/src/server-api` and call generated `@epam/ai-dial-chat-api-client` methods — never `fetch` directly and never a new `base.ts` helper.
+
+**Deployment-backed items (`Model`, `Agent`, `Toolset`).** `CatalogView.tsx` SHALL call `getDeploymentDetails(id)` in `apps/chat/src/server-api/deployments.ts`, following the same pattern as the existing `getDeploymentConfiguration` wrapper, which in turn calls the generated `DeploymentsApi.getDeploymentDetails` method.
 
 `CatalogView.tsx` SHALL convert the returned `DeploymentDetailsDto` into the appropriate `EntitySpecificDetails` variant (`apps/chat/src/types/entity-details.ts`) via `mapDeploymentDetailsDtoToEntityDetails(dto: DeploymentDetailsDto): EntitySpecificDetails`, which switches on `dto.type` — the discriminator the backend has already resolved server-side — not on the `CatalogItem`'s own `type` field. The result is then passed through the existing `mapEntityDetailsToCatalogDetails` (`apps/chat/src/utils/map-entity-details-to-catalog.ts`) to produce the core `CatalogItemTabData`.
 
 For model catalog items only, `CatalogView.tsx` SHALL also call the existing `getDeploymentLimits(item.id)` wrapper from `apps/chat/src/server-api/deployment-limits.ts` in parallel with `getDeploymentDetails(item.id)`. The returned `DeploymentLimitsResponseDto` SHALL be converted by an app-level mapper (for example `mapDeploymentLimitsDtoToCatalogLimits`) into `CatalogItemLimits` and merged into the returned `CatalogItemTabData` as `limits`. This mapper is the only place that knows DIAL Core's limit-stat field names (`minuteTokenStats`, `dayCostStats`, etc.); `libs/catalog` receives only resolved display data and numeric progress values.
 
+**Prompt items (`CatalogEntityType.Prompt`).** `CatalogView.tsx` SHALL branch before the deployment path and resolve the item's body through the prompts wrappers in `apps/chat/src/server-api/prompts.api.ts`: `getPublicPrompt(item.id)` when the item's source is the organisation bucket, `getPrompt(item.id)` otherwise. The result SHALL be returned as `{ promptContent: { content: dto.content } }`. A prompt MUST NOT trigger `getDeploymentDetails` or `getDeploymentLimits`, since neither endpoint accepts a prompt path.
+
+**Skill items (`CatalogEntityType.Skill`).** `CatalogView.tsx` SHALL branch before the deployment path, parse `{ bucket, path }` out of `item.id` with `parseSkillResourceUrl` (`apps/chat/src/types/skill.ts`), and resolve the panel's data through the skills wrappers in `apps/chat/src/server-api/skills.api.ts` with `Promise.allSettled`:
+
+- `downloadSkillFile(bucket, path, 'SKILL.md')` — read as text, size-capped, mapped to `{ promptContent: { content } }`;
+- `listSkillFiles(bucket, path, { recursive: true })` — mapped to an `overview` section carrying author, last-updated, file count, and one row per file.
+
+Each result is independently optional: either may be omitted when its request fails, and both failing resolves `undefined`. An `item.id` that `parseSkillResourceUrl` rejects SHALL resolve `undefined` with no request issued. A skill MUST NOT trigger `getDeploymentDetails` or `getDeploymentLimits`, since neither endpoint accepts a skill resource URL.
+
 The `onFetchDetails` callback SHALL be wrapped in `useCallback` (dependencies: app-level adapter inputs such as `isAdmin` and `t`) to satisfy the design's memoisation requirement and avoid re-triggering `Catalog`'s fetch effect on unrelated `CatalogView` re-renders.
 
-If the details server-api call rejects (network error or a mapped HTTP exception surfaced by the base client), `onFetchDetails` SHALL catch the error, resolve `undefined`, and log nothing beyond what the shared API client already logs — it MUST NOT throw out of the callback and break the details panel. If the model limits call rejects, the details result SHALL still be returned without `limits`; a limits-specific failure MUST NOT hide Overview/Pricing/API data.
+If a details server-api call rejects (network error or a mapped HTTP exception surfaced by the base client), `onFetchDetails` SHALL catch the error, resolve `undefined`, and log nothing beyond what the shared API client already logs — it MUST NOT throw out of the callback and break the details panel. If the model limits call rejects, the details result SHALL still be returned without `limits`; a limits-specific failure MUST NOT hide Overview/Pricing/API data. For a prompt, resolving `undefined` leaves the panel showing the `promptContent` the list mapper already seeded, so a failed refresh degrades to slightly stale content rather than an empty tab. For a skill, a partial failure returns whichever half succeeded rather than discarding both.
 
 #### Scenario: Successful detail fetch renders structured tabs
 
@@ -90,6 +101,46 @@ If the details server-api call rejects (network error or a mapped HTTP exception
 - **AND** the additional `getDeploymentLimits(item.id)` call is made only for `CatalogEntityType.Model`
 - **THEN** `onFetchDetails` calls the same `getDeploymentDetails(item.id)` wrapper regardless of type, and only the DTO → `EntitySpecificDetails` mapping branches on type
 
+#### Scenario: Personal prompt detail fetch renders the Content tab
+
+- **WHEN** a user opens a personal prompt's details panel
+- **THEN** `onFetchDetails` calls `getPrompt(item.id)` and resolves `{ promptContent: { content } }`, and the panel renders the `Content` tab with the prompt's body
+
+#### Scenario: Organisation prompt detail fetch uses the public wrapper
+
+- **WHEN** a user opens the details panel for a prompt from the organisation bucket
+- **THEN** `onFetchDetails` calls `getPublicPrompt(item.id)` and no personal-prompt request is dispatched
+
+#### Scenario: Prompt fetch never reaches the deployment endpoints
+
+- **WHEN** the opened item's `type` is `CatalogEntityType.Prompt`
+- **THEN** neither `getDeploymentDetails` nor `getDeploymentLimits` is called
+
+#### Scenario: Prompt fetch failure degrades to seeded content
+
+- **WHEN** `getPrompt` rejects and the list mapper had already seeded `details.promptContent`
+- **THEN** `onFetchDetails` resolves `undefined`, the panel keeps rendering the seeded body, and nothing throws
+
+#### Scenario: Skill detail fetch renders Content and Overview
+
+- **WHEN** a user opens a skill's details panel and both `downloadSkillFile('SKILL.md')` and `listSkillFiles` resolve
+- **THEN** `onFetchDetails` resolves `{ promptContent: { content }, overview }` and the panel renders the manifest text and the file inventory
+
+#### Scenario: Skill fetch never reaches the deployment endpoints
+
+- **WHEN** the opened item's `type` is `CatalogEntityType.Skill`
+- **THEN** neither `getDeploymentDetails` nor `getDeploymentLimits` is called
+
+#### Scenario: Skill partial failure returns the half that succeeded
+
+- **WHEN** `downloadSkillFile` rejects with a 404 and `listSkillFiles` resolves
+- **THEN** `onFetchDetails` resolves an `overview` with no `promptContent`, and nothing throws
+
+#### Scenario: Unparseable skill id issues no request
+
+- **WHEN** a skill item's `id` is not a well-formed `skills/{bucket}/{path}` URL
+- **THEN** `onFetchDetails` resolves `undefined` without calling any skills wrapper
+
 ---
 
 ### Requirement: Generated-client and state-ownership contract for the new endpoint
@@ -109,6 +160,96 @@ The `getDeploymentDetails` endpoint SHALL satisfy the following generated-client
 
 - **WHEN** the details panel closes
 - **THEN** no fetched detail data persists outside `Catalog`'s local component state — reopening re-fetches; deployment details may be subject to the backend's 60s cache, while model limits follow the no-cache deployment-limits API contract
+
+### Requirement: Model catalog properties are exposed in Overview Specification
+
+The BFF SHALL support DIAL Core model details that contain `catalog_properties`. The installed
+`@epam/ai-dial-typescript-sdk` represents this field as
+`ModelData.catalog_properties?: MapStringObject`, where `MapStringObject` is
+`Record<string, unknown>`; the meaning of its keys is schema-specific and is identified by
+`catalog_schema_id`. The BFF MUST therefore treat this object as untrusted, open-ended input
+and allow-list only the following string-valued model properties:
+
+- `provider`
+- `vendor`
+- `license`
+- `knowledgeCutoffDate`
+
+`GET /api/v1/deployments/:deployment/details` SHALL expose the recognized values as the
+optional `modelDetails.catalogProperties` object in `DeploymentDetailsDto`, using
+`ModelCatalogPropertiesDto` with the same four optional camelCase string fields. Unknown keys
+and recognized keys with non-string values MUST be omitted. When no recognized string value
+remains, `catalogProperties` MUST be omitted rather than returned as an empty object.
+
+This is an additive response change. OpenAPI `operationId: getDeploymentDetails`, its path
+parameter, authentication, status codes, rate limit, and the normal (non-`Raw`) generated
+`DeploymentsApi.getDeploymentDetails({ deployment })` call remain unchanged. Regenerating
+`@epam/chat-api-client` SHALL add `ModelCatalogPropertiesDto` and the optional
+`ModelDetailsDto.catalogProperties` property. A representative successful response fragment is:
+
+```json
+{
+  "id": "als-regre-19-adapter",
+  "type": "model",
+  "modelDetails": {
+    "catalogProperties": {
+      "provider": "Provider",
+      "vendor": "Vendor",
+      "license": "License",
+      "knowledgeCutoffDate": "2026-08-17"
+    }
+  }
+}
+```
+
+The app-level DTO mapper in `apps/chat/src/utils/map-entity-details-to-catalog.ts` SHALL copy
+these values into `ModelSpecification`. `mapEntityDetailsToCatalogDetails` SHALL render every
+present value as a separate row in the model details panel under `Overview` → `Specification`,
+in this order: Provider, Vendor, License, Knowledge cutoff date. Missing values SHALL NOT create
+empty rows.
+
+The four labels MUST use these i18n keys through `CatalogI18nKeys`:
+
+- `catalog.details.modelSpecification.provider`
+- `catalog.details.modelSpecification.vendor`
+- `catalog.details.modelSpecification.license`
+- `catalog.details.modelSpecification.knowledgeCutoffDate`
+
+A valid date-only `knowledgeCutoffDate` in `YYYY-MM-DD` form SHALL be parsed as a local calendar
+date and formatted with the same locale-sensitive `toLocaleDateString()` path as the existing
+Release date row. It MUST NOT be parsed as UTC, which could shift the displayed calendar day in
+negative-offset time zones. A non-date or invalid date string SHALL remain visible verbatim
+rather than being dropped or normalized to an invalid date.
+
+This metadata is not gated by `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`. It uses the existing
+user-scoped deployment-details cache (`deployments:details:<userSub>:<deployment>`, 60-second TTL)
+and existing invalidation behavior. It introduces no new metrics, analytics, or targeted raw
+deployment-payload debug logging. The rows are non-interactive and reuse the existing Overview
+semantics and responsive layout; they add no keyboard interaction or ARIA contract. The content
+is direction-agnostic, requires no directional icons, and MUST inherit the existing LTR/RTL
+layout without physical-direction overrides. No new React state or memoisation is required.
+
+#### Scenario: All supported properties render in Specification
+
+- **WHEN** DIAL Core returns the four recognized string values shown in the example above for a model
+- **THEN** the BFF returns them under `modelDetails.catalogProperties`
+- **AND** the model details panel renders Provider, Vendor, License, and Knowledge cutoff date as four rows under `Overview` → `Specification`
+
+#### Scenario: Knowledge cutoff date uses the Release date display format
+
+- **WHEN** `knowledgeCutoffDate` is `2026-08-17`
+- **THEN** it is displayed through the same locale-sensitive date formatter as Release date, without changing the calendar day because of timezone conversion
+
+#### Scenario: Unknown and non-string properties are ignored
+
+- **WHEN** `catalog_properties` contains `provider: "Provider"`, `schemaSpecificExtra: true`, and `license: { "name": "License" }`
+- **THEN** `modelDetails.catalogProperties` contains only `provider: "Provider"`
+- **AND** no rows are rendered for `schemaSpecificExtra` or the non-string `license`
+
+#### Scenario: Existing clients remain compatible
+
+- **WHEN** a client ignores the optional `modelDetails.catalogProperties` field
+- **THEN** all pre-existing deployment-details response fields and behavior remain unchanged
 
 ### Requirement: Only the About tab reads `item.description`; the Summary section shows topics and usage limits
 
@@ -166,4 +307,3 @@ field from `DeploymentItemDto`/`DialToolsetDto`.
 - **WHEN** `mapDeploymentToCatalogItem`/`mapToolsetToCatalogItem` map a
   `DeploymentItemDto`/`DialToolsetDto` into a `CatalogItem`
 - **THEN** the resulting `CatalogItem` has no `intro` property
-

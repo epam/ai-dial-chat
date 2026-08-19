@@ -1,5 +1,9 @@
 # Spec: conversation-panel-icon-loading-state
 
+## Purpose
+
+The skeleton state shown for a conversation row's deployment icon while deployments are still loading.
+
 ## Requirements
 
 ### Requirement: `ConversationPanelView` propagates deployments loading state as `isIconLoading`

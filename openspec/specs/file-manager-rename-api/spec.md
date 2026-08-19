@@ -1,5 +1,11 @@
 # Spec: file-manager-rename-api
 
+## Purpose
+
+`POST /api/v1/files/rename`, folder rename via paginated expansion, and the observability around both.
+
+## Requirements
+
 ### Requirement: POST /api/v1/files/rename endpoint
 
 The BFF SHALL expose `POST /api/v1/files/rename` that accepts a batch of file/folder items, renames (moves) each via DIAL Core `moveResource`, and returns a per-item result array.

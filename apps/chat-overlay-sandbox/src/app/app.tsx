@@ -92,7 +92,7 @@ const App: FC = () => {
   return (
     <main className="mx-auto w-full max-w-[1120px] px-5 py-8 desktop:px-8 desktop:py-16">
       <header className="mb-10 max-w-[720px] desktop:mb-14">
-        <span className="inline-flex min-h-[30px] items-center rounded-full border border-accent-alpha bg-info px-[11px] py-1 text-xs font-bold uppercase tracking-[0.08em] text-info">
+        <span className="dial-tiny-lead-semi-text dial-tiny-lead-semi-text inline-flex min-h-[30px] items-center rounded-full border border-accent-alpha bg-info px-[11px] py-1 text-info">
           Developer playground
         </span>
         <h1 className="mb-3 mt-[18px] text-[clamp(2rem,7vw,3.5rem)] leading-[1.05] tracking-[-0.04em]">

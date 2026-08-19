@@ -30,6 +30,7 @@ Apply in order, stop at the first match:
 
 | Scope                   | Covers                                                        |
 | ----------------------- | ------------------------------------------------------------- |
+| `ai-dial-chat-hooks`    | Reusable hooks for chat functionality (scroll, export, etc.)  |
 | `attachment-canvas`     | Side canvas / attachment preview (PDF, JSON, MD rendering)    |
 | `attachment-input`      | Attachment upload input and file handling UI                  |
 | `builder-form`          | Shared builder/editor form page shell (header, column layout) |
@@ -42,6 +43,7 @@ Apply in order, stop at the first match:
 | `conversation-stages`   | Stage / step rendering inside a conversation                  |
 | `scheduled-tasks`       | Scheduled tasks UI (detail view, cards, runs history)         |
 | `sidebar`               | Sidebar navigation                                            |
+| `skill-editor`          | Skill editor UI and authoring components                      |
 | `source-panel`          | Sources panel                                                 |
 | `starter-buttons`       | Starter prompt buttons                                        |
 

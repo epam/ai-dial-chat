@@ -1,11 +1,9 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { TabRow } from '@epam/ai-dial-kit';
-import { Spinner, DropdownItem } from '@epam/ai-dial-ui-kit';
+import { CatalogEntityType, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DropdownItem, Spinner, Tabs } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
 import type { CatalogItemDetailsFetchResult } from '../../models/item-details-data';
-import { CatalogEntityType } from '../../types/entity-type';
 import { CatalogSortKey } from '../../types/sort';
 import type { CredentialsLevel } from '../../types/toolset-auth';
 import { CatalogViewMode } from '../../types/view-mode';
@@ -52,9 +50,18 @@ export const Catalog: FC<CatalogProps> = ({
   isShareVisible,
   onFetchDetails,
   onEdit,
+  onDownload,
+  isDownloadVisible,
+  isDownloadPrimary,
+  onLoadContentFile,
+  onLoadContentFilePreview,
+  renderContentFilePreview,
   onDelete,
   onUnshare,
+  isUnshareVisible,
   onRevokeShare,
+  onFetchRecipientsCount,
+  isRevokeShareVisible,
   onLogin,
   onLogout,
   onCreateClick,
@@ -74,6 +81,8 @@ export const Catalog: FC<CatalogProps> = ({
   onFilterTopicsChange,
   isMyAppsActive: controlledIsMyAppsActive,
   onMyAppsActiveChange,
+  activeTab: controlledActiveTab,
+  onActiveTabChange,
 }) => {
   const { typography } = catalogStyles ?? {};
   const cssVars = getStyles(catalogStyles);
@@ -167,11 +176,21 @@ export const Catalog: FC<CatalogProps> = ({
   );
 
   const firstTabId = tabs[0]?.id ?? '';
-  const [activeTab, setActiveTab] = useState(firstTabId);
+  const [internalActiveTab, setInternalActiveTab] = useState(firstTabId);
 
   useEffect(() => {
-    setActiveTab((prev) => prev || firstTabId);
+    setInternalActiveTab((prev) => prev || firstTabId);
   }, [firstTabId]);
+
+  const activeTab = controlledActiveTab ?? internalActiveTab;
+
+  const handleActiveTabChange = useCallback(
+    (tabId: string) => {
+      setInternalActiveTab(tabId);
+      onActiveTabChange?.(tabId);
+    },
+    [onActiveTabChange],
+  );
 
   const [isFavoritesRendered, setIsFavoritesRendered] = useState(
     favorites.length > 0,
@@ -397,7 +416,7 @@ export const Catalog: FC<CatalogProps> = ({
         </div>
       )}
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-auto">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
         {isFavoritesRendered && (
           <div className="w-full px-8">
             <Favorites
@@ -441,8 +460,8 @@ export const Catalog: FC<CatalogProps> = ({
         </div>
 
         {tabs.length > 0 && (
-          <div className="px-8">
-            <TabRow
+          <div className="min-w-0 shrink-0 overflow-x-auto px-8">
+            <Tabs
               tabs={tabs.map((tab) => ({
                 id: tab.id,
                 label:
@@ -451,7 +470,7 @@ export const Catalog: FC<CatalogProps> = ({
                   .length,
               }))}
               activeTabId={activeTab}
-              onTabChange={setActiveTab}
+              onTabChange={handleActiveTabChange}
             />
           </div>
         )}
@@ -534,9 +553,18 @@ export const Catalog: FC<CatalogProps> = ({
           shareOverlay={shareOverlay}
           isShareVisible={isShareVisible}
           onEdit={onEdit}
+          onDownload={onDownload}
+          isDownloadVisible={isDownloadVisible}
+          isDownloadPrimary={isDownloadPrimary}
+          onLoadContentFile={onLoadContentFile}
+          onLoadContentFilePreview={onLoadContentFilePreview}
+          renderContentFilePreview={renderContentFilePreview}
           onDelete={onDelete}
           onUnshare={onUnshare}
+          isUnshareVisible={isUnshareVisible}
           onRevokeShare={onRevokeShare}
+          onFetchRecipientsCount={onFetchRecipientsCount}
+          isRevokeShareVisible={isRevokeShareVisible}
           onLogin={handleLogin}
           onLogout={handleLogout}
           texts={detailsTexts}

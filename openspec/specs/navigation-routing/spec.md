@@ -1,5 +1,9 @@
 # Spec: navigation-routing
 
+## Purpose
+
+The top-level client-side routes, the navigation sidebar that reflects them, and the 404 recovery state for unknown routes.
+
 ## Requirements
 
 ### Requirement: Client-side routing resolves three top-level routes

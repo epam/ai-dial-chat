@@ -37,8 +37,10 @@ interface AccessControlProps {
   titleClassName?: string;
   /** CSS class applied to the secondary row text. Defaults to `'dial-tiny-text'`. */
   subtitleClassName?: string;
-  /** CSS class applied to the access trigger label. Defaults to `undefined`. */
+  /** CSS class applied to the access trigger label. Defaults to `'dial-small-semi-text'`. */
   accessTriggerLabelClassName?: string;
+  /** CSS class applied to each access menu item label. Defaults to `'dial-small-text'`. */
+  accessMenuItemLabelClassName?: string;
 }
 
 /** "Anyone with the link" row: icon, title/subtitle, and an optional Can view/Can edit access-level control. */
@@ -59,6 +61,7 @@ export const AccessControl: FC<AccessControlProps> = ({
   titleClassName = 'dial-small-semi-text',
   subtitleClassName = 'dial-tiny-text',
   accessTriggerLabelClassName = 'dial-small-semi-text',
+  accessMenuItemLabelClassName = 'dial-small-text',
 }) => {
   const accessOptions: { value: ShareLinkAccess; label: string }[] = [
     { value: ShareLinkAccess.View, label: accessViewLabel },
@@ -134,7 +137,12 @@ export const AccessControl: FC<AccessControlProps> = ({
                       onOpenChange(false);
                     }}
                   >
-                    <span className={styles.accessMenuItemLabel}>
+                    <span
+                      className={mergeClasses(
+                        accessMenuItemLabelClassName,
+                        styles.accessMenuItemLabel,
+                      )}
+                    >
                       {option.label}
                     </span>
                     {isChecked && (

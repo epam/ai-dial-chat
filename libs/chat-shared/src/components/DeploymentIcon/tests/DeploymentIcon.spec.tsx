@@ -53,13 +53,14 @@ describe('DeploymentIcon', () => {
   });
 
   it('renders the image immediately on initial mount without preloading', () => {
-    const { container } = renderIcon({
+    renderIcon({
       src: 'https://example.com/icon.png',
       initialsName: 'My App',
     });
-    const img = container.querySelector('img');
-    expect(img).toBeTruthy();
-    expect(img?.getAttribute('src')).toBe('https://example.com/icon.png');
+    // The image has alt="" (decorative), so it has role "presentation" and
+    // must be queried with { hidden: true }.
+    const img = screen.getByRole('presentation', { hidden: true });
+    expect(img.getAttribute('src')).toBe('https://example.com/icon.png');
   });
 
   it('renders custom fallback node when fallback prop is provided', () => {
@@ -68,18 +69,17 @@ describe('DeploymentIcon', () => {
   });
 
   it('shows the fallback avatar once the image fails to load', () => {
-    const { container } = renderIcon({
+    renderIcon({
       src: 'https://example.com/a.png',
       initialsName: 'Model A',
     });
-    const img = container.querySelector('img');
-    expect(img).toBeTruthy();
-    fireEvent.error(img as HTMLImageElement);
+    const img = screen.getByRole('presentation', { hidden: true });
+    fireEvent.error(img);
     expect(screen.getByText('MA')).toBeTruthy();
   });
 
   it('keeps the previous image visible while the new src preloads', async () => {
-    const { container, rerender } = renderIcon({
+    const { rerender } = renderIcon({
       src: 'https://example.com/a.png',
       initialsName: 'Model A',
     });
@@ -92,17 +92,16 @@ describe('DeploymentIcon', () => {
       />,
     );
 
-    const img = container.querySelector('img');
-    expect(img).toBeTruthy();
-    expect(img?.getAttribute('src')).toBe('https://example.com/a.png');
+    const img = screen.getByRole('presentation', { hidden: true });
+    expect(img.getAttribute('src')).toBe('https://example.com/a.png');
   });
 
   it('shows the fallback avatar when src becomes absent after a previous src failed', () => {
-    const { container, rerender } = renderIcon({
+    const { rerender } = renderIcon({
       src: 'https://example.com/a.png',
       initialsName: 'Model A',
     });
-    fireEvent.error(container.querySelector('img') as HTMLImageElement);
+    fireEvent.error(screen.getByRole('presentation', { hidden: true }));
 
     rerender(<DeploymentIcon size={36} initialsName="Model A" />);
 
@@ -110,15 +109,14 @@ describe('DeploymentIcon', () => {
   });
 
   it('never shows fallback when switching between two working icons', async () => {
-    const { container, rerender } = renderIcon({
+    const { rerender } = renderIcon({
       src: 'https://example.com/a.png',
       initialsName: 'Model A',
     });
 
     // No error event fired, so image should be present and fallback not rendered
-    const img = container.querySelector('img');
-    expect(img).toBeTruthy();
-    expect(img?.getAttribute('src')).toBe('https://example.com/a.png');
+    const img = screen.getByRole('presentation', { hidden: true });
+    expect(img.getAttribute('src')).toBe('https://example.com/a.png');
     expect(screen.queryByText('MA')).toBeNull();
 
     rerender(
@@ -130,16 +128,16 @@ describe('DeploymentIcon', () => {
     );
 
     await waitFor(() =>
-      expect(container.querySelector('img')?.getAttribute('src')).toBe(
-        'https://example.com/b.png',
-      ),
+      expect(
+        screen.getByRole('presentation', { hidden: true }).getAttribute('src'),
+      ).toBe('https://example.com/b.png'),
     );
     expect(screen.queryByText('MB')).toBeNull();
     expect(screen.queryByText('?')).toBeNull();
   });
 
   it('shows the new image once it finishes preloading, with no fallback frame', async () => {
-    const { container, rerender } = renderIcon({
+    const { rerender } = renderIcon({
       src: 'https://example.com/a.png',
       initialsName: 'Model A',
     });
@@ -153,19 +151,19 @@ describe('DeploymentIcon', () => {
     );
 
     await waitFor(() =>
-      expect(container.querySelector('img')?.getAttribute('src')).toBe(
-        'https://example.com/b.png',
-      ),
+      expect(
+        screen.getByRole('presentation', { hidden: true }).getAttribute('src'),
+      ).toBe('https://example.com/b.png'),
     );
     expect(screen.queryByText('MB')).toBeNull();
   });
 
   it('shows the new image immediately when src changes after a previous src failed', async () => {
-    const { container, rerender } = renderIcon({
+    const { rerender } = renderIcon({
       src: 'https://example.com/a.png',
       initialsName: 'Model A',
     });
-    fireEvent.error(container.querySelector('img') as HTMLImageElement);
+    fireEvent.error(screen.getByRole('presentation', { hidden: true }));
     expect(screen.getByText('MA')).toBeTruthy();
 
     rerender(
@@ -177,9 +175,9 @@ describe('DeploymentIcon', () => {
     );
 
     await waitFor(() =>
-      expect(container.querySelector('img')?.getAttribute('src')).toBe(
-        'https://example.com/b.png',
-      ),
+      expect(
+        screen.getByRole('presentation', { hidden: true }).getAttribute('src'),
+      ).toBe('https://example.com/b.png'),
     );
     expect(screen.queryByText('MB')).toBeNull();
   });
@@ -199,7 +197,7 @@ describe('DeploymentIcon', () => {
       />,
     );
 
-    await waitFor(() => expect(screen.getByText('MB')).toBeTruthy());
+    await screen.findByText('MB');
   });
 
   it('shows the fallback avatar when src becomes absent', () => {
