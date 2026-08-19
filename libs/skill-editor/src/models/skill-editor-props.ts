@@ -220,6 +220,8 @@ export interface SkillEditorTypography {
   titleClassName?: string;
   /** Typography class applied to the hand-rendered Instructions field label. Defaults to `'dial-tiny-semi-text'`. */
   helperTextClassName?: string;
+  /** Color class applied to the file tree "Remove" context-menu icon. Defaults to `'text-secondary'`. */
+  removeIconClassName?: string;
 }
 
 /** Grouped style overrides for `SkillEditor`. */

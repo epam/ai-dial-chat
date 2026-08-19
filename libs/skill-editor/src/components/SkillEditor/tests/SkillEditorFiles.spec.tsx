@@ -481,6 +481,25 @@ describe('SkillEditor — files pane', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  it('resets the selection to SKILL.md when the removed node was selected', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onSelectedPathChange = vi.fn();
+    renderEditor({
+      files: [
+        { path: 'notes.md', name: 'notes.md', kind: SkillFileNodeKind.File },
+      ],
+      onSelectedPathChange,
+    });
+
+    await user.click(screen.getAllByRole('button', { name: 'notes.md' })[0]);
+    await user.click(screen.getAllByRole('button', { name: 'Remove' })[0]);
+
+    expect(onSelectedPathChange).toHaveBeenLastCalledWith('SKILL.md');
+    expect(
+      screen.getAllByRole('heading', { name: 'SKILL.md' })[0],
+    ).toBeTruthy();
+  });
+
   it('updates the main-pane heading when a supporting file is selected', async () => {
     const user = userEvent.setup({ delay: null });
     const onSelectedPathChange = vi.fn();

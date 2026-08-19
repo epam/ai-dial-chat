@@ -175,6 +175,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   const titleClassName = typography.titleClassName ?? 'dial-body-semi-text';
   const helperTextClassName =
     typography.helperTextClassName ?? 'dial-tiny-semi-text';
+  const removeIconClassName = typography.removeIconClassName ?? 'text-secondary';
   const cssVars = buildCssVars({
     '--se-title-color': colors?.title,
     '--se-helper-text-color': colors?.helperText,
@@ -226,7 +227,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           icon: (
             <IconTrashX
               size={DIAL_ICON_SIZE.SM}
-              className="text-secondary"
+              className={removeIconClassName}
               aria-hidden
             />
           ),
@@ -234,7 +235,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         },
       ];
     },
-    [t.removeLabel, handleRemoveNode],
+    [t.removeLabel, removeIconClassName, handleRemoveNode],
   );
 
   const filesTreeId = useId();
