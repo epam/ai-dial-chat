@@ -22,6 +22,8 @@ export interface SharePopoverLabels {
   visibilityNote?: string;
   /** Visibility note shown when access is Edit. */
   visibilityNoteEdit?: string;
+  /** Extra warning shown below the visibility note when the shared item has nested content (e.g. prompts, files) that is not shared automatically. Omitted when not supplied. */
+  nestedItemsNote?: string;
   /** Copy button default label. Defaults to `"Copy"`. */
   copyButtonLabel?: string;
   /** Copy button label after copying. Defaults to `"Copied"`. */
@@ -90,6 +92,8 @@ export interface SharePopoverTypography {
   errorClassName?: string;
   /** CSS class applied to the visibility and expiry notes. Defaults to `'dial-tiny-text'`. */
   noteClassName?: string;
+  /** CSS class applied to the nested-items warning note. Defaults to `'dial-tiny-semi-text'`. */
+  nestedItemsNoteClassName?: string;
   /** CSS class applied to the "Anyone with the link" primary text. Defaults to `'dial-small-semi-text'`. */
   anyoneTitleClassName?: string;
   /** CSS class applied to the "Anyone with the link" secondary text. Defaults to `'dial-tiny-text'`. */

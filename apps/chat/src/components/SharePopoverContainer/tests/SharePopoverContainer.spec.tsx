@@ -130,6 +130,43 @@ describe('SharePopoverContainer', () => {
     );
   });
 
+  it('omits the nested-items note by default', () => {
+    mockUseShareLink();
+    render(
+      <SharePopoverContainer
+        item={makeItem(CatalogEntityType.Agent)}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(mockSharePopover).toHaveBeenCalledWith(
+      expect.objectContaining({
+        labels: expect.objectContaining({ nestedItemsNote: undefined }),
+      }),
+      undefined,
+    );
+  });
+
+  it('passes the nested-items note when isQuickApp is true', () => {
+    mockUseShareLink();
+    render(
+      <SharePopoverContainer
+        item={makeItem(CatalogEntityType.Agent)}
+        isQuickApp
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(mockSharePopover).toHaveBeenCalledWith(
+      expect.objectContaining({
+        labels: expect.objectContaining({
+          nestedItemsNote: ShareI18nKeys.NestedItemsNote,
+        }),
+      }),
+      undefined,
+    );
+  });
+
   it('passes canEditAccess false for a prompt', () => {
     mockUseShareLink();
     render(

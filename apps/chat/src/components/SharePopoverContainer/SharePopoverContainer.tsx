@@ -28,6 +28,8 @@ const EDITABLE_ACCESS_TYPES = new Set<CatalogEntityType>([
 interface Props {
   /** The catalog item being shared. */
   item: CatalogItem;
+  /** Whether the item being shared is a QuickApp; shows the nested-items warning note when true. */
+  isQuickApp?: boolean;
   /** Called when the popover should close. */
   onClose: () => void;
 }
@@ -37,7 +39,11 @@ interface Props {
  * `@epam/ai-dial-share`, resolving all runtime data and i18n strings the lib
  * receives as flat props.
  */
-const SharePopoverContainer: FC<Props> = ({ item, onClose }) => {
+const SharePopoverContainer: FC<Props> = ({
+  item,
+  isQuickApp = false,
+  onClose,
+}) => {
   const { t } = useTranslation();
   /*
    * A prompt's `item.id` is a bucket-relative path, so the backend has to be
@@ -73,6 +79,9 @@ const SharePopoverContainer: FC<Props> = ({ item, onClose }) => {
         accessEditLabel: t(BasicI18nKeys.CanEdit),
         visibilityNote: t(ShareI18nKeys.VisibilityNote),
         visibilityNoteEdit: t(ShareI18nKeys.VisibilityNoteEdit),
+        nestedItemsNote: isQuickApp
+          ? t(ShareI18nKeys.NestedItemsNote)
+          : undefined,
         copyButtonLabel: t(ButtonsI18nKeys.Copy),
         copiedButtonLabel: t(ShareI18nKeys.CopiedButtonLabel),
         linkAriaLabel: t(ShareI18nKeys.LinkAriaLabel),
