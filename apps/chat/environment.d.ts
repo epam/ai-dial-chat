@@ -29,6 +29,7 @@ declare global {
       ALLOW_TOKEN_IN_SESSION?: boolean;
       ENABLED_FEATURES?: string;
       AVAILABLE_LOCALES?: string;
+      PROXY_LANGUAGE_HEADER?: string;
       PUBLICATION_FILTERS?: string;
       ADMIN_ROLE_NAMES?: string;
       DIAL_ROLES_FIELD?: string;
