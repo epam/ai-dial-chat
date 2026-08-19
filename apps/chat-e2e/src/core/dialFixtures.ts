@@ -35,6 +35,7 @@ import {
   EntityEditorPreviewCard,
   ExternalAppEditorContainer,
   ExternalAppEditorViewForm,
+  Favicon,
   FileConflictResolutionPopup,
   FileDropArea,
   FileManager,
@@ -58,6 +59,7 @@ import {
   SelectFolderModal,
   SendMessage,
   ShareAppModal,
+  SliderDots,
   ToolsetEditorContainer,
   ToolsetEditorViewForm,
   ToolsetLoginEventsModal,
@@ -104,6 +106,7 @@ import {
   ShareModalAssertion,
   SharedWithMePromptsAssertion,
   SideBarAssertion,
+  SliderDotsAssertion,
   TalkToAgentDialogAssertion,
   ToastAssertion,
   ToolsetApiAuthenticationAssertion,
@@ -246,6 +249,8 @@ const dialTest = test.extend<{
   agentAndToolsetSelectModal: AgentAndToolsetSelectModal;
   agentAndToolsetSelectModalEntityMenu: DropdownMenu;
   agentAndToolsetSelectModalEntityMenuAssertion: MenuAssertion;
+  agentAndToolsetSelectModalSliderDots: SliderDots;
+  agentAndToolsetSelectModalSliderDotsAssertion: SliderDotsAssertion;
   externalAppEditorAppSettingsPreviewBody: EntityEditorEntitySettingsCardPreviewBody;
   externalAppEditorAppSettingsPreviewCard: EntityEditorPreviewCard;
   toolsetEditorContainer: ToolsetEditorContainer;
@@ -363,6 +368,7 @@ const dialTest = test.extend<{
   downloadTableCsvModal: DownloadTableCsvModal;
   selectFolderModal: SelectFolderModal;
   selectFolderManagerModal: SelectFolderManagerModal;
+  favicon: Favicon;
   selectFolders: Folders;
   messageTemplateModal: MessageTemplateModal;
   settingsModal: SettingsModal;
@@ -743,6 +749,18 @@ const dialTest = test.extend<{
     use,
   ) => {
     await use(new MenuAssertion(agentAndToolsetSelectModalEntityMenu));
+  },
+  agentAndToolsetSelectModalSliderDots: async (
+    { agentAndToolsetSelectModal },
+    use,
+  ) => {
+    await use(agentAndToolsetSelectModal.getSliderDots());
+  },
+  agentAndToolsetSelectModalSliderDotsAssertion: async (
+    { agentAndToolsetSelectModalSliderDots },
+    use,
+  ) => {
+    await use(new SliderDotsAssertion(agentAndToolsetSelectModalSliderDots));
   },
   toolsetEditorContainer: async ({ entityEditorPage }, use) => {
     const toolsetEditorContainer = entityEditorPage.getToolsetEditorContainer();
@@ -1289,6 +1307,10 @@ const dialTest = test.extend<{
     const selectFolderManagerModalManager =
       selectFolderManagerModal.getFileManager();
     await use(selectFolderManagerModalManager);
+  },
+  favicon: async ({ page }, use) => {
+    const favicon = new Favicon(page);
+    await use(favicon);
   },
   selectFolderManagerModalCollapsibleSidebar: async (
     { selectFolderManagerModalManager },

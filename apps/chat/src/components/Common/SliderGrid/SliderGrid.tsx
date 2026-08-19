@@ -253,6 +253,7 @@ const SliderGridInner = <T extends { id: string }, P>(
             ),
             gap: `${GAP_BETWEEN_SLIDES}px`,
           }}
+          data-qa="entities-section-container"
         >
           {sliderGroups.length ? (
             sliderGroups.map((sliderGroup, index) => (

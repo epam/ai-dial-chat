@@ -49,6 +49,7 @@ export * from './replaceConfirmationModalAssertion';
 export * from './toolset/toolsetAuthAssertion';
 export * from './toolset/toolsetLoginModalAssertion';
 export * from './common/confirmationPopupAssertion';
+export * from './common/sliderDotsAssertion';
 export * from './common/fileConflictResolutionPopupAssertion';
 export * from './fileManager/fileManagerGridAssertion';
 export * from './common/foldersTreeAssertion';

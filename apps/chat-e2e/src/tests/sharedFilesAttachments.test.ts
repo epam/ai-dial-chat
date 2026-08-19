@@ -968,27 +968,6 @@ dialSharedWithMeTest(
           ExpectedConstants.unsharedSuccessfullyToast(user1ImageInRequest1),
         );
         await additionalShareUserToast.closeToast();
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/5971
-        // await additionalShareUserFileManagerDeleteItemConfirmationPopup
-        //   .getCloseButton()
-        //   .click();
-        // await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
-        //   user1ImageInRequest1,
-        //   'visible',
-        // );
-        // await fileRow.hover();
-        // await dotsMenu.click();
-        // await additionalShareUserFileManagerGridRowDropdownMenu.selectItem(
-        //   MenuOptions.delete,
-        //   {
-        //     isHttpMethodTriggered: false,
-        //   },
-        // );
-        // await additionalShareUserFileManagerDeleteItemConfirmationPopup.confirm(
-        //   {
-        //     triggeredHttpMethod: 'POST',
-        //   },
-        // );
         await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
           user1ImageInRequest1,
           'hidden',
@@ -1003,8 +982,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'User 2 check that the file has disappeared',
       async () => {
-        await additionalShareUserFileManagerPage.reloadPage();
-        await additionalShareUserFileManagerPage.waitForPageLoaded();
+        await additionalShareUserFileManagerToolbar.myFilesTab.click();
         await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
         await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
           user1ImageInRequest2,
@@ -1077,18 +1055,13 @@ dialSharedWithMeTest(
     dataInjector,
     fileApiHelper,
     mainUserShareApiHelper,
-    additionalUserShareApiHelper,
-    fileManagerPage,
-    fileManagerGrid,
-    fileManagerGridRowDropdownMenu,
-    fileManagerGridAssertion,
-    fileManagerDeleteItemConfirmationPopup,
+    additionalShareUserDialHomePage,
     localStorageManager,
     additionalShareUserFileManagerPage,
+    additionalShareUserNavigationPanel,
     additionalShareUserFileManagerToolbar,
     additionalShareUserFileManager,
     additionalShareUserFileManagerGridAssertion,
-    additionalSecondUserShareApiHelper,
   }) => {
     setTestIds('EPMDIAL-6739');
     let imageUrl: string;
@@ -1117,46 +1090,25 @@ dialSharedWithMeTest(
     );
 
     await dialTest.step('Accept share invitation by another user', async () => {
-      await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
-      await additionalSecondUserShareApiHelper.acceptInvite(
-        shareByLinkResponse,
+      await additionalShareUserDialHomePage.navigateToUrl(
+        ExpectedConstants.sharedSideBarEntityUrl(
+          shareByLinkResponse.invitationLink,
+        ),
       );
-      await localStorageManager.setShowSideBarPanels();
+      await additionalShareUserDialHomePage.waitForPageLoaded({
+        selectedSharedConversationName: conversation.name,
+        skipSidebars: true,
+      });
     });
 
-    await dialTest.step(
-      'Delete the file from shared conversation by main user',
-      async () => {
-        await fileManagerPage.openFileManagerPage();
-        await fileManagerPage.waitForPageLoaded();
-        const attachmentRow = await fileManagerGrid.goToGridRowByNameCell(
-          Attachment.sunImageName,
-        );
-        await attachmentRow.hover();
-        const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
-          Attachment.sunImageName,
-        );
-        await dotsMenu.click();
-        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.delete, {
-          isHttpMethodTriggered: false,
-        });
-        await fileManagerDeleteItemConfirmationPopup.confirm({
-          expectedRequests: new Map([
-            [API.deleteFileHost(), 'POST'],
-            [API.filesListingHost(), 'GET'],
-          ]),
-        });
-        await fileManagerGridAssertion.assertGridRowByNameState(
-          Attachment.sunImageName,
-          'hidden',
-        );
-      },
-    );
+    await dialTest.step('Delete the file by main user via API', async () => {
+      await fileApiHelper.deleteFromAllFiles(imageUrl);
+    });
 
     await dialSharedWithMeTest.step(
       'Open "File manager" by additional user and verify "Shared with me" tab is empty',
       async () => {
-        await additionalShareUserFileManagerPage.openFileManagerPage();
+        await additionalShareUserNavigationPanel.goToFileManager();
         await additionalShareUserFileManagerPage.waitForPageLoaded({
           isGridVisible: false,
         });

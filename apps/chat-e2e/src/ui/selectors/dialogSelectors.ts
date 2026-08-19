@@ -228,14 +228,25 @@ export const ChatSettingsModalSelectors = {
   responseFormatContainer: '[data-qa="response-format-container"]',
 };
 
+// Dots pagination of the SliderGrid (entity grid pages).
+export const SliderDotsSelectors = {
+  container: '[data-qa="slider-dots"]',
+  dotsList: '[data-qa="slider-dots-list"]',
+  dotQaPrefix: 'slider-dot-',
+  dot: () => `[data-qa^="${SliderDotsSelectors.dotQaPrefix}"]`, // scope it by dotsList to skip the arrows
+  dotByIndex: (index: number) => `[data-qa="slider-dot-${index}"]`,
+  // The active page is a bar (w-8), the rest are circles.
+  activeDot: () => `${SliderDotsSelectors.dot()}:has(button.w-8)`,
+  nextArrow: '[data-qa="slider-dot-arrow-next"]',
+  previousArrow: '[data-qa="slider-dot-arrow-prev"]',
+};
+
 export const TalkToAgentDialogSelectors = {
   talkToAgentModal: '[data-qa="talk-to-agent"]',
   goToMyWorkspaceButton: '[data-qa="go-to-my-workspace"]',
   goToDialMarketplaceButton: '[data-qa="go-to-marketplace"]',
   myAgentsTab: '[data-qa="workspace"]',
   allAgentsTab: '[data-qa="marketplace"]',
-  nextArrowButton: '[data-qa="slider-dot-arrow-next"]',
-  previousArrowButton: '[data-qa="slider-dot-arrow-prev"]',
 };
 
 export const MessageTemplateModalSelectors = {
@@ -431,6 +442,7 @@ export const AddToolsetSettingsFormSelector = {
   apiKeyParameterNameFieldErrorMessage: () =>
     `${AddToolsetSettingsFormSelector.apiKeyParameterNameFieldContainer} + ${ErrorLabelSelectors.fieldError}`,
   apiKeyParameterValueFieldContainer: '[data-qa="apiKey"]',
+  tokenEndpointAuthMethodContainer: '[data-qa="tokenEndpointAuthMethod"]',
   apiKeyContainer: '[data-qa="api_key"]',
   apiKeyLabel: '[data-qa="api_key-label"]',
   withoutAuthContainer: '[data-qa="none"]',

@@ -250,7 +250,7 @@ dialTest(
 );
 
 dialTest(
-  'Prompt is moved to folder created from Move to',
+  '[Move to] Prompt is moved to folder created from Move to',
   async ({
     dialHomePage,
     prompts,
@@ -264,6 +264,7 @@ dialTest(
     selectFoldersAssertion,
     selectFolderModalAssertion,
     promptBarFolderAssertion,
+    toastAssertion,
   }) => {
     setTestIds('EPMDIAL-3626');
     const newFolderName = ExpectedConstants.newFolderWithIndexTitle(1);
@@ -294,6 +295,7 @@ dialTest(
       selectFolderModal,
       'hidden',
     );
+    await toastAssertion.assertToastIsHidden();
     await promptBarFolderAssertion.assertFolderEntityState(
       { name: newFolderName },
       { name: prompt.name },
@@ -303,7 +305,7 @@ dialTest(
 );
 
 dialTest(
-  'Prompt is moved to folder from Move to list',
+  '[Move to] Prompt is moved to single folder from Move to list',
   async ({
     dialHomePage,
     prompts,
@@ -317,6 +319,7 @@ dialTest(
     selectFoldersAssertion,
     selectFolderModalAssertion,
     promptBarFolderAssertion,
+    toastAssertion,
   }) => {
     setTestIds('EPMDIAL-3627');
     const prompt = promptData.prepareDefaultPrompt();
@@ -349,6 +352,7 @@ dialTest(
       selectFolderModal,
       'hidden',
     );
+    await toastAssertion.assertToastIsHidden();
     await promptBarFolderAssertion.assertFolderEntityState(
       { name: ExpectedConstants.newFolderWithIndexTitle(1) },
       { name: prompt.name },

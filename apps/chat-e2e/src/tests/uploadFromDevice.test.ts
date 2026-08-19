@@ -3,7 +3,9 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
+  CheckboxState,
   ExpectedMessages,
+  MenuOptions,
   UploadMenuOptions,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
@@ -27,7 +29,7 @@ dialTest.beforeAll(async () => {
   );
 });
 
-//test-case is not relevant since no uploadFromDeviceModal is displayed anymore
+//TODO: to update
 dialTest.skip(
   'Delete a file from "Upload from device".\n' +
     'Three dots appear at the end of long file name on "Upload from device".\n' +
@@ -157,7 +159,7 @@ dialTest.skip(
   },
 );
 
-//test-case is not relevant since no uploadFromDeviceModal is displayed anymore
+//TODO: to update
 dialTest.skip(
   '[Upload from device] opened from message box. Select 15 files at the same time.\n' +
     '[Upload from device] opened from Attach files. Select 15 files at the same time.\n' +
@@ -268,24 +270,20 @@ dialTest.skip(
   },
 );
 
-//test-case is not relevant since no uploadFromDeviceModal is displayed anymore
-dialTest.skip(
-  '[Upload from device] No error appears if to load two files with equal names but different extensions.\n' +
-    '[Upload from device] Files with weight 0 and 512Mb are uploaded',
+dialTest(
+  '[Upload from device] No error appears if to load two files with equal names but different extensions',
   async ({
     dialHomePage,
     conversations,
     setTestIds,
-    sendMessageInputAttachmentsAssertions,
-    uploadFromDeviceModal,
     localStorageManager,
-    baseAssertion,
+    fileManagerModalGridAssertion,
     conversationData,
     sendMessage,
     attachmentDropdownMenu,
     dataInjector,
   }) => {
-    setTestIds('EPMDIAL-6909', 'EPMDIAL-6919');
+    setTestIds('EPMDIAL-6909');
     const attachments = [
       Attachment.incrementedImageName(1),
       Attachment.zeroSizeFileName,
@@ -320,23 +318,19 @@ dialTest.skip(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
         await sendMessage.attachmentMenuTrigger.click();
-        await attachmentDropdownMenu.selectMenuOption(
-          UploadMenuOptions.uploadFromDevice,
-          {
-            isHttpMethodTriggered: true,
-            triggeredHttpMethod: 'GET',
-          },
+        await dialHomePage.uploadData(
+          { path: attachments, dataType: 'upload' },
+          () =>
+            attachmentDropdownMenu.selectMenuOption(
+              UploadMenuOptions.uploadFromDevice,
+              {
+                isHttpMethodTriggered: true,
+                triggeredHttpMethod: 'GET',
+              },
+            ),
         );
-        await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
         for (const attachment of attachments) {
-          await baseAssertion.assertElementState(
-            uploadFromDeviceModal.getUploadedFullFilename(attachment),
-            'visible',
-          );
-        }
-        await uploadFromDeviceModal.uploadFiles();
-        for (const attachment of attachments) {
-          await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
+          await fileManagerModalGridAssertion.assertGridRowByNameState(
             attachment,
             'visible',
           );
@@ -346,16 +340,16 @@ dialTest.skip(
   },
 );
 
-//test-case is not relevant since no uploadFromDeviceModal is displayed anymore
-dialTest.skip(
+dialTest(
   `Focus stays in the file named while it's being renamed manually on "Upload from device".\n` +
-    "[Upload from device] It's allowed to upload a file with a dot at the end of the name but before extension. Renamed file.\n" +
     "[Upload from device] It's allowed to upload a file with a dot at the end of the name but before extension.\n" +
     'File extension is changed to lower case on "Upload from device"',
   async ({
     dialHomePage,
     setTestIds,
-    uploadFromDeviceModal,
+    fileManagerModal,
+    fileManagerModalGrid,
+    fileManagerModalGridAssertion,
     page,
     localStorageManager,
     baseAssertion,
@@ -366,10 +360,9 @@ dialTest.skip(
     sendMessage,
     attachmentDropdownMenu,
   }) => {
-    setTestIds('EPMDIAL-6913', 'EPMDIAL-6915', 'EPMDIAL-6921', 'EPMDIAL-7317');
-    const fileNameExtension = Attachment.sunImageName.split('.');
-    const expectedName = `${fileNameExtension[0]}${'.'.repeat(2)}${fileNameExtension[1]}`;
+    setTestIds('EPMDIAL-6913', 'EPMDIAL-6915', 'EPMDIAL-7317');
     let conversation: Conversation;
+    const dotExtensionFileName = Attachment.dotExtensionImageName.toLowerCase();
 
     await dialTest.step(
       'Create a new conversation that allows image input attachments',
@@ -386,77 +379,112 @@ dialTest.skip(
     );
 
     await dialTest.step(
-      'Upload files through "Upload from device" modal',
+      'Upload a file via "Upload from device", rename it and verify focus stays in the file name',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
         await sendMessage.attachmentMenuTrigger.click();
-        await attachmentDropdownMenu.selectMenuOption(
-          UploadMenuOptions.uploadFromDevice,
-          {
-            isHttpMethodTriggered: true,
-            triggeredHttpMethod: 'GET',
-          },
+        await dialHomePage.uploadData(
+          { path: Attachment.sunImageName, dataType: 'upload' },
+          () =>
+            attachmentDropdownMenu.selectMenuOption(
+              UploadMenuOptions.uploadFromDevice,
+              { isHttpMethodTriggered: true, triggeredHttpMethod: 'GET' },
+            ),
         );
-        await uploadFromDeviceModal.addMoreFilesToUpload(
+        await baseAssertion.assertElementState(fileManagerModal, 'visible');
+        await fileManagerModalGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,
-          Attachment.dotExtensionImageName,
+          'visible',
         );
-        for (const file of [
+        await fileManagerModalGrid
+          .gridRowByNameCell(Attachment.sunImageName)
+          .hover();
+        const dotsMenu = await fileManagerModalGrid.gridDotsMenuByNameCell(
           Attachment.sunImageName,
-          Attachment.dotExtensionImageName,
-        ]) {
-          await baseAssertion.assertElementState(
-            uploadFromDeviceModal.getUploadedFile(file),
-            'visible',
-          );
-        }
-      },
-    );
-
-    await dialTest.step(
-      'Type "." at the end of first uploaded file name and verify cursor stays in the field',
-      async () => {
-        await uploadFromDeviceModal
-          .getUploadedFilenameInput(Attachment.sunImageName)
-          .click();
+        );
+        await dotsMenu.click();
+        await fileManagerModalGrid
+          .getRowDropdownMenu()
+          .selectItem(MenuOptions.rename);
+        const renameInput = fileManagerModalGrid.getRenameInput();
+        await renameInput.click();
         await page.keyboard.press(keys.end);
-        await uploadFromDeviceModal.typeInUploadedFilename(
-          Attachment.sunImageName,
-          '.',
-        );
-        await baseAssertion.assertIsElementFocused(
-          uploadFromDeviceModal.getUploadedFilenameInputLocator(expectedName),
-          true,
-        );
+        await renameInput.typeInInput(' renamed manually');
+        await baseAssertion.assertIsElementFocused(renameInput, true);
+        await page.keyboard.press(keys.escape);
       },
     );
 
     await dialTest.step(
-      'Verify second file changed extension to lower case',
+      'Upload a file with a dot before the extension and uppercase extension and verify it is uploaded with lower-case extension and automatically selected',
       async () => {
-        await baseAssertion.assertElementState(
-          uploadFromDeviceModal.getUploadedFile(
-            Attachment.dotExtensionImageName.toLowerCase(),
-          ),
-          'visible',
-          ExpectedMessages.fileIsUploaded,
+        await sendMessage.attachmentMenuTrigger.click();
+        await attachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
         );
+        await dialHomePage.uploadData(
+          { path: Attachment.dotExtensionImageName, dataType: 'upload' },
+          () => fileManagerModal.openUploadFromDevice(),
+        );
+        await fileManagerModalGridAssertion.assertGridRowByNameState(
+          dotExtensionFileName,
+          'visible',
+        );
+        await fileManagerModalGridAssertion.assertGridCheckboxByNameState(
+          dotExtensionFileName,
+          CheckboxState.checked,
+        );
+        await fileManagerModal.getAttachButton().click();
       },
     );
 
     await dialTest.step(
-      'Click "Upload" button and verify both files are uploaded',
+      'Verify uploaded file is attached to the message input with lowercase extensions',
       async () => {
-        await uploadFromDeviceModal.uploadFiles();
         await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
-          expectedName,
+          dotExtensionFileName,
           'visible',
         );
-        await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
-          Attachment.dotExtensionImageName.toLowerCase(),
-          'visible',
+      },
+    );
+  },
+);
+
+dialTest(
+  '[Upload from device] Change upload to folder with long name which is cut at the end with three dots',
+  async ({
+    fileManagerPage,
+    setTestIds,
+    fileManagerFoldersTree,
+    fileApiHelper,
+    fileManagerBreadcrumb,
+    baseAssertion,
+  }) => {
+    setTestIds('EPMDIAL-6920');
+    const folderName = GeneratorUtil.randomString(256);
+
+    await dialTest.step(
+      'Upload file to the folder with long name via API',
+      async () => {
+        await fileApiHelper.putFile(Attachment.flowerImageName, {
+          parentPath: folderName,
+        });
+      },
+    );
+
+    await dialTest.step(
+      'Open "File manager" page, select created folder and verify folder long name is cut at the end with three dots',
+      async () => {
+        await fileManagerPage.openFileManagerPage();
+        await fileManagerPage.waitForPageLoaded();
+        await fileManagerFoldersTree.expandFolder(
+          { isFilesListingTriggered: true },
+          folderName,
+        );
+        await baseAssertion.assertElementTextIsTruncated(
+          fileManagerBreadcrumb.itemByNameContent(folderName),
         );
       },
     );

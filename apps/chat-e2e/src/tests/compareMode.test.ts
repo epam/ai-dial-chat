@@ -506,6 +506,8 @@ dialTest(
     conversationToCompareAssertion,
     apiAssertion,
     conversationAssertion,
+    rightChatHeaderAssertion,
+    leftChatHeaderAssertion,
     localStorageManager,
   }) => {
     setTestIds('EPMDIAL-6214', 'EPMDIAL-6221');
@@ -596,9 +598,13 @@ dialTest(
           { name: firstConversation.name },
           'visible',
         );
+        await leftChatHeaderAssertion.assertHeaderTitle(firstConversation.name);
         await conversationAssertion.assertEntityState(
           { name: secondConversation.name },
           'visible',
+        );
+        await rightChatHeaderAssertion.assertHeaderTitle(
+          secondConversation.name,
         );
       },
     );

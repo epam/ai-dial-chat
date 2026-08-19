@@ -5,13 +5,16 @@ import { EntityType } from '@/chat/types/common';
 import { ServerSlugs } from '@/chat/types/slugs-types';
 import { ItemUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
-import { Toolset } from '@epam/ai-dial-shared';
+import { TokenEndpointAuthMethod, Toolset } from '@epam/ai-dial-shared';
 import path from 'path';
 
 export const ExpectedConstants = {
   // Agents & toolsets select modal — empty state (no created/bookmarked items)
   noAgentsAndToolsets: 'No Agents and Toolsets',
   goToMarketplaceLink: 'Go to Marketplace',
+  // Agents & toolsets select modal — nothing matches the search
+  noResultsInMyWorkspace: 'No results found in My workspace',
+  seeResultsFromMarketplaceLink: 'See results from Marketplace',
   settingsTooltip: (entityType: EntityType, temperature?: number | string) =>
     entityType === EntityType.Application
       ? 'Change conversation settings:\nThere are no conversation settings for this agent'
@@ -381,6 +384,11 @@ export const ExpectedConstants = {
   allowedToolsLabelSubtitle:
     'The list of tools will be available after filling in the definition and authentication section',
   oAuthNotSupportedError: 'MCP server does not support OAuth authentication',
+  tokenEndpointAuthMethodLabels: {
+    [TokenEndpointAuthMethod.ClientSecretBasic]: 'Client secret (HTTP Basic)',
+    [TokenEndpointAuthMethod.ClientSecretPost]: 'Client secret (POST body)',
+    [TokenEndpointAuthMethod.None]: 'None',
+  },
   mcpServerUrl: 'https://mcp.deepwiki.com/mcp',
   mixedImportOption: 'Mixed',
   logOutDialogTitle: 'Logging out',
@@ -610,6 +618,7 @@ export const API = {
   bucketHost: '/api/bucket',
   listingHost: '/api/listing',
   themesListingHost: '/api/themes/listing',
+  faviconHost: '/api/themes/favicon',
   conversationsHost: () => `${API.listingHost}/conversations`,
   conversationsMetadataHost: `/api/metadata/conversations`,
   promptsHost: () => `${API.listingHost}/prompts`,
@@ -631,7 +640,8 @@ export const API = {
   moveFilesHost: '/api/files/move',
   copyFilesHost: '/api/files/copy',
   importFileRootPath: (bucket: string) => `${API.filesHostSegment}/${bucket}`,
-  modelFilePath: (modelId: string) => `appdata/${modelId}/images`,
+  modelFilePath: (modelId: string) =>
+    `appdata/${ItemUtil.getEncodedItemId(modelId)}/images`,
   importFilePath: (bucket: string, modelId: string) =>
     `${API.importFileRootPath(bucket)}/${API.modelFilePath(modelId)}`,
   shareInviteAcceptanceHost: '/api/share/accept',
@@ -676,6 +686,8 @@ export const API = {
   authorizationEndpoint: (endpoint: string) => `${endpoint}/oauth/authorize`,
   tokenEndpoint: (endpoint: string) => `${endpoint}/oauth/token`,
   toolsetSignInHost: () => `${API.api}/ops/${ServerSlugs.TOOLSET_SIGN_IN}`,
+  toolsetToolsHost: (id: string) =>
+    `${API.api}/toolset/${ItemUtil.getEncodedItemId(id)}/tools`,
   subscribeHost: () => `${API.api}/client-channels/subscribe`,
   unsubscribeHost: () => `${API.api}/client-channels/unsubscribe`,
   reportHost: () => `${API.api}/client-channels/report`,

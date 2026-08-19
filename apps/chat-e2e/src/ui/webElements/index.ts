@@ -1,4 +1,5 @@
 export * from './baseElement';
+export * from './favicon';
 export * from './fileDropArea';
 export * from './dragFile';
 export * from './chat';
@@ -115,6 +116,7 @@ export * from './common/loader';
 export * from './common/input';
 export * from './common/tooltipPortal';
 export * from './common/search';
+export * from './common/sliderDots';
 export * from './fileManager/fileManagerToolbar';
 export * from './fileManager/fileManagerNavigationPanel';
 export * from './fileManager/fileManagerGrid';
