@@ -288,7 +288,11 @@ describe('SkillEditor page — supporting file preview', () => {
     expect(
       await screen.findByRole('group', { name: 'analyzer.md' }),
     ).toBeTruthy();
-    expect(screen.getByText('Analyzer notes', { exact: false })).toBeTruthy();
+    await waitFor(() =>
+      expect(
+        screen.getByRole('group', { name: 'analyzer.md' }).textContent,
+      ).toContain('Analyzer notes'),
+    );
     expect(downloadSkill).toHaveBeenCalledOnce();
     expect(updateSkill).not.toHaveBeenCalled();
   });
