@@ -32,6 +32,10 @@ export default defineConfig(() => ({
         __dirname,
         '../../libs/chat-shared/src/index.ts',
       ),
+      '@epam/ai-dial-chat-hooks': path.resolve(
+        __dirname,
+        '../../libs/ai-dial-chat-hooks/src/index.ts',
+      ),
       '@epam/ai-dial-chat-overlay': path.resolve(
         __dirname,
         '../../libs/chat-overlay/src/index.ts',

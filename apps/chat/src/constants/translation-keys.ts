@@ -306,6 +306,7 @@ export enum DeploymentSelectorI18nKeys {
   CloseLabel = 'deploymentSelector.closeLabel',
   RefetchToolsetsFailed = 'deploymentSelector.refetchToolsetsFailed',
   RefetchDeploymentsFailed = 'deploymentSelector.refetchDeploymentsFailed',
+  BrowseCatalogLabel = 'deploymentSelector.browseCatalogLabel',
 }
 
 export enum PromptSelectorI18nKeys {

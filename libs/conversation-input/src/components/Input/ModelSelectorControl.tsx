@@ -153,7 +153,7 @@ export const ModelSelectorControl: FC<Props> = ({
         renderOverlay={() =>
           modelPickerOverlay(() => onPickerOpenChange?.(false))
         }
-        listClassName="cp-dropdown-overlay !w-[320px]"
+        listClassName="!w-[368px] !bg-layer-raised"
       >
         <DialTooltip tooltip={selectedLabel}>
           <button
@@ -193,7 +193,7 @@ export const ModelSelectorControl: FC<Props> = ({
           menuHeader={menuHeader}
           placement="bottom-end"
           matchReferenceWidth={false}
-          listClassName="cp-dropdown-overlay !w-[240px] !max-h-80"
+          listClassName="!w-[240px] !max-h-80"
           onOpenChange={isDisabled ? undefined : handleModelSelectorOpenChange}
           size={ElementSize.Standard}
           caretIcon={caretIcon}
