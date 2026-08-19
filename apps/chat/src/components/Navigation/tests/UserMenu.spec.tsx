@@ -1,9 +1,11 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AuthI18nKeys,
+  BasicI18nKeys,
   SettingsI18nKeys,
 } from '../../../constants/translation-keys';
 import * as UserContextModule from '../../../context/auth/UserContext';
@@ -13,10 +15,20 @@ import * as useUiFeatureModule from '../../../hooks/useUiFeature';
 import { AuthStatus } from '../../../types/auth-status';
 import { UserMenu } from '../UserMenu';
 
+const mockNavigate = vi.fn();
+const mockUseFeatureFlag = vi.fn();
+
 vi.mock('../../../context/auth/UserContext');
 vi.mock('../../../context/ThemeContext');
 vi.mock('../../../hooks/breakpoint/useBreakpoint');
 vi.mock('../../../hooks/useUiFeature');
+vi.mock('../../../context/AppConfigContext', () => ({
+  useFeatureFlag: (key: string) => mockUseFeatureFlag(key),
+}));
+vi.mock('react-router', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router')>();
+  return { ...actual, useNavigate: () => mockNavigate };
+});
 
 const mockUseUser = vi.mocked(UserContextModule.useUser);
 const mockUseTheme = vi.mocked(ThemeContextModule.useTheme);
@@ -64,6 +76,7 @@ describe('UserMenu', () => {
     mockUseTheme.mockReturnValue(defaultTheme);
     mockUseIsMobile.mockReturnValue(false);
     mockUseUiFeature.mockReturnValue(false);
+    mockUseFeatureFlag.mockReturnValue(true);
   });
 
   it('returns null when status is loading', () => {
@@ -248,5 +261,88 @@ describe('UserMenu', () => {
     fireEvent.click(screen.getByRole('button'));
 
     expect(screen.getByText(SettingsI18nKeys.Language)).toBeTruthy();
+  });
+
+  it('navigates to /settings when the Settings item is clicked', async () => {
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: mockUser,
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter>
+        <UserMenu />
+      </MemoryRouter>,
+    );
+    await userEvent.click(screen.getByRole('button'));
+    await userEvent.click(
+      screen.getByRole('menuitem', { name: BasicI18nKeys.Settings }),
+    );
+
+    expect(mockNavigate).toHaveBeenCalledWith('/settings');
+  });
+
+  it('hides the Settings item when the settingsPageEnabled feature flag is disabled', async () => {
+    mockUseFeatureFlag.mockReturnValue(false);
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: mockUser,
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter>
+        <UserMenu />
+      </MemoryRouter>,
+    );
+    await userEvent.click(screen.getByRole('button'));
+
+    expect(
+      screen.queryByRole('menuitem', { name: BasicI18nKeys.Settings }),
+    ).toBeNull();
+  });
+
+  it('shows the Settings item when the settingsPageEnabled feature flag is enabled', async () => {
+    mockUseFeatureFlag.mockReturnValue(true);
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: mockUser,
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter>
+        <UserMenu />
+      </MemoryRouter>,
+    );
+    await userEvent.click(screen.getByRole('button'));
+
+    expect(
+      screen.getByRole('menuitem', { name: BasicI18nKeys.Settings }),
+    ).toBeTruthy();
+  });
+
+  it('navigates to /settings when the Settings item is activated via keyboard', async () => {
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: mockUser,
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter>
+        <UserMenu />
+      </MemoryRouter>,
+    );
+    await userEvent.click(screen.getByRole('button'));
+    screen.getByRole('menuitem', { name: BasicI18nKeys.Settings }).focus();
+    await userEvent.keyboard('{Enter}');
+
+    expect(mockNavigate).toHaveBeenCalledWith('/settings');
   });
 });

@@ -45,13 +45,13 @@
   ],
   "references": [
     {
-      "path": "../../libs/skill-editor/tsconfig.lib.json"
-    },
-    {
       "path": "../../libs/prompt-editor/tsconfig.lib.json"
     },
     {
       "path": "../../libs/deployment-creation-form/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/settings-panel/tsconfig.lib.json"
     },
     {
       "path": "../../libs/starter-buttons/tsconfig.lib.json"
@@ -85,6 +85,9 @@
     },
     {
       "path": "../../libs/scheduled-tasks/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/skill-editor/tsconfig.lib.json"
     },
     {
       "path": "../../libs/publish-panel/tsconfig.lib.json"

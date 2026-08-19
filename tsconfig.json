@@ -80,6 +80,9 @@
     },
     {
       "path": "./libs/prompts"
+    },
+    {
+      "path": "./libs/settings-panel"
     }
   ]
 }

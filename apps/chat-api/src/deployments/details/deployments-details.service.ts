@@ -1,7 +1,14 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import type { Cache } from 'cache-manager';
 import {
+  extractDialErrorMessage,
   handleDialFetchError,
   mapDialHttpStatus,
 } from '../../common/dial/dial-error.mapper';
@@ -513,37 +520,76 @@ export class DeploymentsDetailsService {
   }
 
   async getUserLimits(accessToken: string): Promise<UserLimitStatsResponseDto> {
+    this.logger.debug('Fetching user limits from DIAL Core');
     try {
       const result = await this.dialClient.client.getUserLimits({
         headers: getBearerAuthHeaders(accessToken),
       });
       if (result.error) {
+        this.logger.debug(
+          `DIAL Core get user limits error: status=${result.response.status} body=${JSON.stringify(result.error)}`,
+        );
         return mapDialHttpStatus(
           result.response.status,
           'get user limits',
           this.logger,
+          result.error,
+          extractDialErrorMessage(result.error),
         );
       }
+      this.logger.debug(
+        `DIAL Core user limits raw response: ${JSON.stringify(result.data)}`,
+      );
       return result.data as unknown as UserLimitStatsResponseDto;
     } catch (err) {
+      /* mapDialHttpStatus above throws on a non-2xx DIAL Core response, so it
+       * lands here too — only a non-HttpException means no response was
+       * actually received (network error, timeout, unexpected throw). */
+      if (err instanceof HttpException) {
+        this.logger.debug(
+          `get user limits: re-throwing mapped DIAL Core error: ${err.message}`,
+        );
+      } else {
+        this.logger.debug(
+          `get user limits threw before a response was received: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
       return handleDialFetchError(err, 'get user limits', this.logger, 0);
     }
   }
 
   async getUserUsage(accessToken: string): Promise<UserLimitStatsResponseDto> {
+    this.logger.debug('Fetching user usage from DIAL Core');
     try {
       const result = await this.dialClient.client.getUserUsage({
         headers: getBearerAuthHeaders(accessToken),
       });
       if (result.error) {
+        this.logger.debug(
+          `DIAL Core get user usage error: status=${result.response.status} body=${JSON.stringify(result.error)}`,
+        );
         return mapDialHttpStatus(
           result.response.status,
           'get user usage',
           this.logger,
+          result.error,
+          extractDialErrorMessage(result.error),
         );
       }
+      this.logger.debug(
+        `DIAL Core user usage raw response: ${JSON.stringify(result.data)}`,
+      );
       return result.data as unknown as UserLimitStatsResponseDto;
     } catch (err) {
+      if (err instanceof HttpException) {
+        this.logger.debug(
+          `get user usage: re-throwing mapped DIAL Core error: ${err.message}`,
+        );
+      } else {
+        this.logger.debug(
+          `get user usage threw before a response was received: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
       return handleDialFetchError(err, 'get user usage', this.logger, 0);
     }
   }

@@ -53,6 +53,7 @@ export enum BasicI18nKeys {
   UrlPlaceholder = 'basic.urlPlaceholder',
   Preview = 'basic.preview',
   Settings = 'basic.settings',
+  Usage = 'basic.usage',
   AttachFiles = 'basic.attachFiles',
   DeleteConfirmDescription = 'basic.deleteConfirmDescription',
   CanView = 'basic.canView',

@@ -1,0 +1,37 @@
+.sectionLabel {
+  color: var(--sp-section-label-text, var(--text-secondary, #57647a));
+}
+
+.row {
+  color: var(--sp-row-text, var(--text-secondary, #57647a));
+
+  @media (hover: hover) {
+    &:hover:not(:disabled):not(.rowActive) {
+      background-color: var(
+        --sp-row-bg-hover,
+        var(--bg-control-accent-alpha-hover, #2764d924)
+      );
+    }
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  &.rowActive {
+    color: var(--sp-active-row-text, var(--text-accent, #1d4ed8));
+    background-color: var(
+      --sp-active-row-bg,
+      var(--bg-control-accent-alpha, #2764d90f)
+    );
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(
+          --sp-active-row-bg-hover,
+          var(--bg-control-accent-alpha-hover, #2764d924)
+        );
+      }
+    }
+  }
+}

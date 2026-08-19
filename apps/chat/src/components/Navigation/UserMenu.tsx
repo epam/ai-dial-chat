@@ -15,15 +15,19 @@ import {
   IconLanguage,
   IconLogout,
   IconMoon,
+  IconSettings,
   IconSun,
 } from '@tabler/icons-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
 import {
   AuthI18nKeys,
+  BasicI18nKeys,
   ButtonsI18nKeys,
   SettingsI18nKeys,
 } from '../../constants/translation-keys';
+import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import {
@@ -39,6 +43,7 @@ import { useThemeOptions } from '../../hooks/theme/useThemeOptions';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { AuthStatus } from '../../types/auth-status';
+import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
 import AvatarInitials from './AvatarInitials';
@@ -59,11 +64,13 @@ export const UserMenu = memo(() => {
     setIsFallbackIconShown,
   } = useUserProfile();
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const { isLogoutOpen, openLogout, closeLogout } = useLogout();
   const isUserSettingsHidden = useUiFeature(OverlayFeature.HideUserSettings);
   const isKeyboardShortcutsHidden = useUiFeature(
     OverlayFeature.HideKeyboardShortcuts,
   );
+  const isSettingsPageEnabled = useFeatureFlag('settingsPageEnabled');
 
   if (status !== AuthStatus.Authenticated || !user || isMobile) {
     return null;
@@ -201,6 +208,20 @@ export const UserMenu = memo(() => {
                 onClick: () => setPreference(SendOnEnter.MetaEnter),
               },
             ],
+          },
+        ]
+      : []),
+    ...(isSettingsPageEnabled
+      ? [
+          {
+            key: 'settings',
+            label: (
+              <span className="dial-small-text">
+                {t(BasicI18nKeys.Settings)}
+              </span>
+            ),
+            icon: <IconSettings size={DIAL_ICON_SIZE.SM} aria-hidden />,
+            onClick: () => navigate(ROUTES.Settings),
           },
         ]
       : []),

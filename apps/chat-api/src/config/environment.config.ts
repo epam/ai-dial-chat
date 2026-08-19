@@ -781,6 +781,26 @@ export class EnvironmentVariables {
   SCHEDULED_TASKS_ENABLED_ROLES?: string[] = [];
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null) return undefined;
+    if (typeof value === 'boolean') return value;
+    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  })
+  @IsBoolean()
+  SETTINGS_PAGE_ENABLED?: boolean = false;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  SETTINGS_PAGE_ENABLED_ROLES?: string[] = [];
+
+  @IsOptional()
   @IsString()
   SCHEDULER_APP_ID?: string;
 
