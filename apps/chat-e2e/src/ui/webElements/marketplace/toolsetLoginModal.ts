@@ -4,6 +4,7 @@ import { IconSelectors, ToolsetLoginModalSelectors } from '@/src/ui/selectors';
 import { Button } from '@/src/ui/webElements';
 import { Popup } from '@/src/ui/webElements/common/popup';
 import { FieldLabel } from '@/src/ui/webElements/fieldLabel';
+import { waitForOAuthPopupNavigation } from '@/src/utils';
 import { Toolset } from '@epam/ai-dial-shared';
 import { Page } from '@playwright/test';
 
@@ -137,11 +138,7 @@ export class ToolsetLoginModal extends Popup {
     const popupPromise = this.page.waitForEvent('popup');
     await method();
     const popup = await popupPromise;
-    try {
-      await popup.waitForLoadState('domcontentloaded');
-    } catch {
-      // popup may close before DOM loads if the flow finishes very fast
-    }
+    await waitForOAuthPopupNavigation(popup);
     return popup;
   }
 

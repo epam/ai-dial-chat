@@ -8,3 +8,4 @@ export * from './regexUtil';
 export * from './sortingUtil';
 export * from './userUtil';
 export * from './applicationsUtil';
+export * from './oauthPopupUtil';

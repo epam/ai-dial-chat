@@ -19,7 +19,12 @@ import {
 } from '@/src/ui/selectors/dialogSelectors';
 import { ToolsetLoginModalSelectors } from '@/src/ui/selectors/marketplaceSelectors';
 import { ToolsetLoginModal } from '@/src/ui/webElements';
-import { DateUtil, GeneratorUtil, UserUtil } from '@/src/utils';
+import {
+  DateUtil,
+  GeneratorUtil,
+  UserUtil,
+  waitForOAuthPopupNavigation,
+} from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 import { Locator, Page } from '@playwright/test';
 import { Response } from 'playwright-core';
@@ -427,7 +432,7 @@ dialTest(
         const popupPromise = page.waitForEvent('popup');
         await signinModal.loginButton.click();
         loginPopup = await popupPromise;
-        await loginPopup.waitForLoadState('domcontentloaded');
+        await waitForOAuthPopupNavigation(loginPopup);
         await oauthMockHelper.navigateToCallback(loginPopup);
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorAppTypes.QuickApp2,
@@ -608,10 +613,11 @@ dialTest(
     await dialTest.step(
       "Click the model's bar and verify the details modal shows the model's name, version, author, release date and description",
       async () => {
-        await quickApp2EditorViewForm.clickChipByName(modelWithVersion.name);
+        const modelName = modelWithVersion.name as string;
+        await quickApp2EditorViewForm.clickChipByName(modelName);
         await baseAssertion.assertElementState(entityDetailsModal, 'visible');
         await entityDetailsModalAssertion.assertEntityCommonAttributes({
-          expectedName: modelWithVersion.name,
+          expectedName: modelName,
           expectedVersion: modelWithVersion.version,
           expectedAuthor: modelWithVersion.owner,
           expectedReleaseDate: modelWithVersion.createdAt,

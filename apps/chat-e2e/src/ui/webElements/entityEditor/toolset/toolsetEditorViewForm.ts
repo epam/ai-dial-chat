@@ -10,6 +10,7 @@ import {
   EntityEditorViewForm,
   ListboxMenu,
 } from '@/src/ui/webElements';
+import { waitForOAuthPopupNavigation } from '@/src/utils';
 import { TokenEndpointAuthMethod } from '@epam/ai-dial-shared';
 import { Page } from '@playwright/test';
 
@@ -185,12 +186,7 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
       const popupPromise = this.page.waitForEvent('popup');
       await button.click();
       const popup = await popupPromise;
-      try {
-        // popup is redirected to /auth/toolset-signin — wait for it to load
-        await popup.waitForLoadState('domcontentloaded');
-      } catch {
-        // popup may close before DOM loads if the flow finishes very fast
-      }
+      await waitForOAuthPopupNavigation(popup);
       return popup;
     }
     await button.click();

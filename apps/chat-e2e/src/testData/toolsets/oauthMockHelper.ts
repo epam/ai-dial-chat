@@ -9,6 +9,7 @@ import {
   ToolsetOAuthSignInRequest,
 } from '@/src/testData/toolsets/authMockConfig';
 import { BaseAuthMockHelper } from '@/src/testData/toolsets/baseAuthMockHelper';
+import { waitForOAuthPopupNavigation } from '@/src/utils';
 import {
   Toolset,
   ToolsetAuthStatus,
@@ -75,6 +76,11 @@ export class OAuthMockHelper extends BaseAuthMockHelper<ToolsetOAuthSignInReques
   // the mocked auth redirect already got it there first, or the flow is
   // already done.
   async navigateToCallback(popup: Page): Promise<void> {
+    // The app opens the login window blank and points it at the authorization
+    // endpoint only afterwards, so the mocked route may not have captured the
+    // callback URL yet when we get here.
+    await waitForOAuthPopupNavigation(popup);
+
     if (!this.oauthState.callbackUrl) {
       throw new Error('Callback URL has not been captured yet');
     }
