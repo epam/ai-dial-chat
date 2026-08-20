@@ -473,6 +473,7 @@ describe('SkillsController (integration)', () => {
       });
       expect(service.importSkillArchive).toHaveBeenCalledWith(
         TEST_USER.bucket,
+        'skill.zip',
         expect.any(String),
         TEST_USER.at,
         expect.any(AbortSignal),
@@ -494,10 +495,114 @@ describe('SkillsController (integration)', () => {
 
       expect(service.importSkillArchive).toHaveBeenCalledWith(
         TEST_USER.bucket,
+        'skill.zip',
         expect.any(String),
         TEST_USER.at,
         expect.any(AbortSignal),
       );
+    });
+
+    it('returns 201 and delegates to the service for a standalone SKILL.md upload', async () => {
+      service.importSkillArchive.mockResolvedValue({
+        name: 'docs-helper',
+        path: 'docs-helper',
+        url: 'skills/test-bucket/docs-helper',
+        etag: '"abc123"',
+      });
+
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/skills/import')
+        .attach(
+          'file',
+          Buffer.from('---\nname: docs-helper\ndescription: y\n---\n'),
+          'SKILL.md',
+        )
+        .expect(201);
+
+      expect(res.body).toEqual({
+        name: 'docs-helper',
+        path: 'docs-helper',
+        url: 'skills/test-bucket/docs-helper',
+        etag: '"abc123"',
+      });
+      expect(service.importSkillArchive).toHaveBeenCalledWith(
+        TEST_USER.bucket,
+        'SKILL.md',
+        expect.any(String),
+        TEST_USER.at,
+        expect.any(AbortSignal),
+      );
+    });
+
+    it('returns 400 when a wrong-case Markdown filename is neither SKILL.md nor a ZIP', async () => {
+      service.importSkillArchive.mockRejectedValue(
+        new BadRequestException(
+          'Expected a ZIP archive or a file named exactly SKILL.md, but the upload is not a valid ZIP archive',
+        ),
+      );
+
+      await request(app.getHttpServer())
+        .post('/api/v1/skills/import')
+        .attach(
+          'file',
+          Buffer.from('---\nname: docs-helper\ndescription: y\n---\n'),
+          'skill.md',
+        )
+        .expect(400);
+    });
+
+    it('returns 413 when the service rejects an oversized standalone manifest', async () => {
+      service.importSkillArchive.mockRejectedValue(
+        new PayloadTooLargeException(
+          'SKILL.md exceeds the per-file limit of 1048576 bytes',
+        ),
+      );
+
+      await request(app.getHttpServer())
+        .post('/api/v1/skills/import')
+        .attach('file', Buffer.from('oversized'), 'SKILL.md')
+        .expect(413);
+    });
+
+    it('returns 400 when the service rejects a malformed UTF-8 standalone manifest', async () => {
+      service.importSkillArchive.mockRejectedValue(
+        new BadRequestException('SKILL.md is not valid UTF-8'),
+      );
+
+      await request(app.getHttpServer())
+        .post('/api/v1/skills/import')
+        .attach('file', Buffer.from([0xff, 0xfe, 0xfd]), 'SKILL.md')
+        .expect(400);
+    });
+
+    it('returns 400 when the service rejects missing frontmatter fields on a standalone manifest', async () => {
+      service.importSkillArchive.mockRejectedValue(
+        new BadRequestException(
+          'SKILL.md frontmatter must include a non-empty "description"',
+        ),
+      );
+
+      await request(app.getHttpServer())
+        .post('/api/v1/skills/import')
+        .attach(
+          'file',
+          Buffer.from('---\nname: docs-helper\n---\n'),
+          'SKILL.md',
+        )
+        .expect(400);
+    });
+
+    it('returns 409 when a standalone-manifest import collides with an existing skill', async () => {
+      service.importSkillArchive.mockRejectedValue(new ConflictException());
+
+      await request(app.getHttpServer())
+        .post('/api/v1/skills/import')
+        .attach(
+          'file',
+          Buffer.from('---\nname: docs-helper\ndescription: y\n---\n'),
+          'SKILL.md',
+        )
+        .expect(409);
     });
 
     it('returns 400 when no file is attached', async () => {

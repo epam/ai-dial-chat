@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { SkillsDownloadService } from './download/skills-download.service';
-import { SkillsArchiveImportService } from './import/skills-archive-import.service';
+import { SkillsImportService } from './import/skills-import.service';
 import { SkillsListingService } from './listing/skills-listing.service';
 import { SkillsMutationService } from './mutation/skills-mutation.service';
 import { SkillsUploadService } from './upload/skills-upload.service';
@@ -19,7 +19,7 @@ export class SkillsService {
     private readonly downloadService: SkillsDownloadService,
     private readonly uploadService: SkillsUploadService,
     private readonly mutationService: SkillsMutationService,
-    private readonly importService: SkillsArchiveImportService,
+    private readonly importService: SkillsImportService,
   ) {}
 
   // Listing
