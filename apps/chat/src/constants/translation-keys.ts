@@ -952,6 +952,7 @@ export enum SkillArchiveImportI18nKeys {
   StatusError = 'skillArchiveImport.status.error',
   ErrorTitle = 'skillArchiveImport.error.title',
   ErrorValidation = 'skillArchiveImport.error.validation',
+  ErrorUnsupportedFilename = 'skillArchiveImport.error.unsupportedFilename',
   ErrorCollision = 'skillArchiveImport.error.collision',
   ErrorRateLimited = 'skillArchiveImport.error.rateLimited',
   ErrorServiceUnavailable = 'skillArchiveImport.error.serviceUnavailable',

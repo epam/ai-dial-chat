@@ -199,6 +199,70 @@ describe('useSkillArchiveImport', () => {
     expect(mockImportSkillArchive).not.toHaveBeenCalled();
     expect(result.current.status).toBe(SkillArchiveImportStatus.Idle);
   });
+
+  it('uploads a file named exactly SKILL.md', async () => {
+    mockImportSkillArchive.mockResolvedValue(IMPORT_RESPONSE);
+    const { result } = renderHook(() => useSkillArchiveImport());
+    const file = new File(['---\nname: docs-helper\n---\n'], 'SKILL.md');
+    const event = makeChangeEvent(file);
+
+    await act(async () => {
+      result.current.handleFileChange(event);
+      await Promise.resolve();
+    });
+
+    expect(mockImportSkillArchive).toHaveBeenCalledWith(file);
+    expect(result.current.status).toBe(SkillArchiveImportStatus.Success);
+  });
+
+  it('rejects a wrong-case Markdown filename locally without calling the API', () => {
+    const { result } = renderHook(() => useSkillArchiveImport());
+    const file = new File(['content'], 'skill.md');
+    const event = makeChangeEvent(file);
+
+    act(() => {
+      result.current.handleFileChange(event);
+    });
+
+    expect(mockImportSkillArchive).not.toHaveBeenCalled();
+    expect(result.current.status).toBe(SkillArchiveImportStatus.Error);
+    expect(result.current.statusMessage).toBe(
+      SkillArchiveImportI18nKeys.ErrorUnsupportedFilename,
+    );
+    expect(mockShowNotification).toHaveBeenCalledWith({
+      variant: NotificationVariant.Error,
+      title: SkillArchiveImportI18nKeys.ErrorTitle,
+      message: SkillArchiveImportI18nKeys.ErrorUnsupportedFilename,
+    });
+  });
+
+  it('rejects any other Markdown filename locally without calling the API', () => {
+    const { result } = renderHook(() => useSkillArchiveImport());
+    const file = new File(['content'], 'readme.md');
+    const event = makeChangeEvent(file);
+
+    act(() => {
+      result.current.handleFileChange(event);
+    });
+
+    expect(mockImportSkillArchive).not.toHaveBeenCalled();
+    expect(result.current.status).toBe(SkillArchiveImportStatus.Error);
+    expect(result.current.statusMessage).toBe(
+      SkillArchiveImportI18nKeys.ErrorUnsupportedFilename,
+    );
+  });
+
+  it('resets the input value even when the local filename check rejects the file', () => {
+    const { result } = renderHook(() => useSkillArchiveImport());
+    const file = new File(['content'], 'skill.md');
+    const event = makeChangeEvent(file);
+
+    act(() => {
+      result.current.handleFileChange(event);
+    });
+
+    expect(event.target.value).toBe('');
+  });
 });
 
 describe('mapSkillArchiveImportErrorKey', () => {

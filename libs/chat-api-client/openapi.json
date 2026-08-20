@@ -5482,7 +5482,7 @@
     },
     "/api/v1/skills/import": {
       "post": {
-        "description": "Safely extracts and validates a whole-skill ZIP archive server-side (container/structure validity, path safety, encrypted/symlink rejection, incremental decompression limits, manifest UTF-8/frontmatter checks), then creates the skill atomically via the same If-None-Match: * uploadSkillFolder call createSkill uses. Uses the authenticated user's own bucket; a client-supplied bucket is never trusted.",
+        "description": "Accepts either a whole-skill ZIP archive or a standalone file named exactly (case-sensitive) SKILL.md in the file field, safely extracts and validates it server-side (container/structure validity, path safety, encrypted/symlink rejection, incremental decompression limits, manifest UTF-8/frontmatter checks), then creates the skill atomically via the same If-None-Match: * uploadSkillFolder call createSkill uses. The two forms are told apart by the field's exact filename, never by its declared content type. Uses the authenticated user's own bucket; a client-supplied bucket is never trusted.",
         "operationId": "importSkillArchive",
         "parameters": [],
         "requestBody": {
@@ -5516,7 +5516,7 @@
             }
           },
           "400": {
-            "description": "Missing file, non-ZIP or corrupted archive, missing/ambiguous manifest, unsafe path, or invalid manifest content"
+            "description": "Missing file, unsupported file type (neither a valid ZIP nor a file named exactly SKILL.md), non-ZIP or corrupted archive, missing/ambiguous manifest, unsafe path, or invalid manifest content"
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
@@ -5528,10 +5528,10 @@
             "description": "A skill already exists at this path"
           },
           "413": {
-            "description": "The archive, a decompressed file, or the total decompressed content exceeds a configured limit"
+            "description": "The archive, a decompressed file, the total decompressed content, or a standalone SKILL.md exceeds a configured limit"
           },
           "422": {
-            "description": "Archive is structurally invalid: too many entries, more than one skill, duplicate paths, or an encrypted/symlink/unsupported entry"
+            "description": "Archive is structurally invalid: too many entries, more than one skill, duplicate paths, or an encrypted/symlink/unsupported entry (standalone SKILL.md uploads never produce this status)"
           },
           "429": {
             "description": "Rate limit exceeded"
@@ -5543,7 +5543,7 @@
             "description": "DIAL Core is unavailable or timed out"
           }
         },
-        "summary": "Create a new skill from an uploaded ZIP archive",
+        "summary": "Create a new skill from an uploaded ZIP archive or a standalone SKILL.md",
         "tags": [
           "skills"
         ]
