@@ -44,7 +44,7 @@ import {
 
 import { DialFile as LocalDialFileType } from '@/src/types/files';
 import type { RootState } from '@/src/types/store';
-import { Translation } from '@/src/types/translation';
+import { Translation, TranslationOptions } from '@/src/types/translation';
 
 import {
   PublicationActions,
@@ -55,6 +55,7 @@ import { FilesActions } from '@/src/store/files/files.reducers';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
+import { MAX_FILE_SIZE_IN_BYTES } from '@/src/constants/file';
 import {
   MY_FILES_SECTION,
   ORGANIZATION_FILES_SECTION,
@@ -236,9 +237,9 @@ export const useFileManager = ({
   }, [i18n, router.locale]);
 
   const translateChat = useCallback(
-    (key: string) => {
+    (key: string, options?: TranslationOptions) => {
       void supplementalSidebarVersion;
-      return t(key, { ns: Translation.Chat });
+      return t(key, { ns: Translation.Chat, ...options });
     },
     [supplementalSidebarVersion, t],
   );
@@ -1546,22 +1547,43 @@ export const useFileManager = ({
     (filesToUpload: DialUploadFileItem[], destinationUrl: string) => {
       if (filesToUpload.length === 0) return;
 
+      const oversizedFiles = filesToUpload.filter(
+        (file) => file.fileContent.size > MAX_FILE_SIZE_IN_BYTES,
+      );
+
+      if (oversizedFiles.length > 0) {
+        dispatch(
+          UIActions.showErrorToast({
+            message: translateChat(
+              ChatI18nKeys.MaxFileSizeUpTo512MbNextFilesHaventBeenUploaded,
+              { fileNames: oversizedFiles.map((file) => file.name).join(', ') },
+            ),
+          }),
+        );
+      }
+
+      const allowedFiles = filesToUpload.filter(
+        (file) => file.fileContent.size <= MAX_FILE_SIZE_IN_BYTES,
+      );
+
+      if (allowedFiles.length === 0) return;
+
       const isFromDeviceAttachment =
         getQuickAttachmentsSavingPath() === destinationUrl;
 
       dispatch(
         FilesActions.uploadFiles({
-          files: filesToUpload,
+          files: allowedFiles,
           destinationUrl,
           isFromDeviceAttachment,
         }),
       );
 
       setUploadingFilesIds(
-        new Set(filesToUpload.map((f) => getFileId(f.name, destinationUrl))),
+        new Set(allowedFiles.map((f) => getFileId(f.name, destinationUrl))),
       );
     },
-    [dispatch, getFileId],
+    [dispatch, getFileId, translateChat],
   );
 
   const deduplicatedFileIdsRef = useRef<Set<string>>(new Set());
