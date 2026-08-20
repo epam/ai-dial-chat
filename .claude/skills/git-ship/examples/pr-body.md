@@ -67,14 +67,14 @@ See Figma: https://figma.com/file/… (catalog card + star states)
 ```bash
 # Regular PR
 gh pr create \
-  --base development-1.0 \
+  --base development \
   --head <type>/<short-slug> \
   --title "<type>(<area>): <description> (Issue #<ticket>)" \
   --body "<generated body>"
 
 # Draft PR (if the user said "draft")
 gh pr create \
-  --base development-1.0 \
+  --base development \
   --head <type>/<short-slug> \
   --title "<type>(<area>): <description> (Issue #<ticket>)" \
   --body "<generated body>" \
@@ -84,5 +84,5 @@ gh pr create \
 If `gh` is unavailable, give the compare URL for manual PR creation:
 
 ```
-https://github.com/epam/ai-dial-chat/compare/development-1.0...<type>/<short-slug>
+https://github.com/epam/ai-dial-chat/compare/development...<type>/<short-slug>
 ```
