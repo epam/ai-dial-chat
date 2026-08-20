@@ -130,6 +130,36 @@ When the selected deployment changes, all tool toggle states SHALL be reinitiali
 
 ---
 
+### Requirement: Tool selection restored when a conversation (re)mounts
+
+The tools menu state is owned by a `useToolsMenu` hook instance scoped to the page component it is called from. Creating a conversation from the new-chat screen navigates from that screen's component to a separate conversation-view component, mounting a new `useToolsMenu` instance whose local toggle state starts uninitialized from conversation history. To prevent the just-sent toggle from silently reverting to the schema default on that navigation, the conversation-view component SHALL restore the toggle from the `configuration_value` stored on the conversation's last user message the first time a given conversation id is loaded in that component instance — whether freshly created, opened from the sidebar, switched to from another conversation, or reloaded — using the same value it stores per user message (see "Tool choices persisted in conversation history" below). This restore SHALL NOT be treated as a deployment-driven reset and SHALL NOT be persisted as a new user choice.
+
+The restore SHALL run at most once per conversation id per component mount. While that conversation's generation is still in flight, the last user message's `configuration_value` reflects only the turn already sent and does not change until the user sends a new message; re-running the restore on every reload of that same in-flight turn would silently overwrite a toggle change the user made locally after sending it. A conversation id already restored in this component instance SHALL NOT be restored again unless the user navigates away to a different conversation and back.
+
+#### Scenario: First message toggle survives the new-chat-to-conversation navigation
+- **WHEN** the user toggles Deep Research on and sends the first message from the new-chat screen
+- **THEN** the created conversation's user message is persisted with `configuration_value: { "deep_research": true }`
+- **AND** the conversation view that the app navigates to shows the Tools toggle as selected
+- **AND** the next message the user sends also includes `configuration_value: { "deep_research": true }`
+
+#### Scenario: Opening an existing conversation restores its last toggle state
+- **WHEN** the user opens a conversation whose last user message has `configuration_value: { "deep_research": true }`
+- **THEN** the Tools toggle displays as selected for that conversation
+
+#### Scenario: No configuration on the last user message — falls back to schema default
+- **WHEN** the conversation's last user message has no `configuration_value` (or no value for the configured tool id)
+- **THEN** the Tools toggle state is left at the deployment configuration schema's `default` value
+
+#### Scenario: In-flight generation does not re-clobber a local toggle change
+- **WHEN** a conversation's generation is still in flight for its last user message (`configuration_value: { "deep_research": true }`) AND the user locally toggles Deep Research off while waiting AND the component reloads that same conversation id again without the user navigating away
+- **THEN** the Tools toggle stays off — the restore does not re-run for a conversation id already restored in this component instance
+
+#### Scenario: Navigating away and back to an in-flight conversation re-derives from its persisted state
+- **WHEN** the user navigates from a conversation with an in-flight generation to a different conversation and back
+- **THEN** the Tools toggle for the original conversation is re-restored from its last user message's `configuration_value`, since it is a fresh load for that conversation id in this component instance
+
+---
+
 ### Requirement: Tool choices sent in completion request
 
 When the user sends a message, the selected tool states SHALL be included in the message's `custom_content.configuration_value` as key-value pairs (e.g. `{ "deep_research": true }`).

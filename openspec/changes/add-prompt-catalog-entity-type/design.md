@@ -31,7 +31,7 @@ Constraints that shape every decision below:
 
 ### D1 — `Prompt` is a `CatalogEntityType` member, not a parallel type system
 
-Add `Prompt = 'PROMPT'` to the existing enum, with an `ENTITY_TYPE_COLOR` entry and a `TAB_ORDER` slot after `Toolset`. Everything type-generic then works for free.
+Add `Prompt = 'PROMPT'` to the existing enum, with an `ENTITY_TYPE_COLOR` entry and a `TAB_ORDER` slot after `Skill`, as the last entry. Everything type-generic then works for free.
 
 *Alternatives:* a separate `PromptCatalog` component (duplicates search/sort/filter/details, and prompts stay invisible to catalog search); reusing `CatalogEntityType.Skill` (already exported and colour-mapped for a different concept — silently breaks any host filtering on it). Both rejected.
 
