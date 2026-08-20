@@ -282,7 +282,8 @@
     "closeLabel": "Close model selector",
     "refetchToolsetsFailed": "Failed to refresh toolsets. The Catalog list may be out of date.",
     "refetchDeploymentsFailed": "Failed to refresh applications. The Catalog list may be out of date.",
-    "browseCatalogLabel": "Catalog"
+    "browseCatalogLabel": "Catalog",
+    "unavailableTooltip": "This deployment is no longer available"
   },
   "promptSelector": {
     "addMenuLabel": "Prompts",
