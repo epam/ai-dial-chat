@@ -252,6 +252,44 @@ describe('SkillsArchiveExtractionService', () => {
     expect(result.filePaths).toEqual(['assets/icon.png']);
   });
 
+  it('ignores a macOS Finder __MACOSX resource-fork tree alongside a wrapped skill', async () => {
+    const service = makeService();
+    const buffer = await buildZipBuffer([
+      { name: 'api-design/', content: undefined },
+      { name: 'api-design/SKILL.md', content: VALID_MANIFEST },
+      { name: '__MACOSX/', content: undefined },
+      { name: '__MACOSX/api-design/', content: undefined },
+      {
+        name: '__MACOSX/api-design/._SKILL.md',
+        content: 'resource fork noise',
+      },
+    ]);
+
+    const result = await withArchiveFile(buffer, (path) =>
+      service.extract(path),
+    );
+
+    expect(result.name).toBe('docs-helper');
+    expect(result.filePaths).toEqual([]);
+  });
+
+  it('ignores stray .DS_Store and Thumbs.db entries', async () => {
+    const service = makeService();
+    const buffer = await buildZipBuffer([
+      { name: 'SKILL.md', content: VALID_MANIFEST },
+      { name: '.DS_Store', content: 'finder metadata' },
+      { name: 'scripts/.DS_Store', content: 'finder metadata' },
+      { name: 'scripts/Thumbs.db', content: 'windows metadata' },
+      { name: 'scripts/run.sh', content: 'echo hi' },
+    ]);
+
+    const result = await withArchiveFile(buffer, (path) =>
+      service.extract(path),
+    );
+
+    expect(result.filePaths).toEqual(['scripts/run.sh']);
+  });
+
   it('rejects an encrypted entry', async () => {
     const service = makeService();
     // Deflate (not `store`) compression, since yauzl's stored-file

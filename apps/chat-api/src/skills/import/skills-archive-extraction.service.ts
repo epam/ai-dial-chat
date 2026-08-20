@@ -166,6 +166,8 @@ export class SkillsArchiveExtractionService {
     const collected: CollectedEntry[] = [];
     for await (const entry of zipfile.eachEntry()) {
       const rawPath = this.decodeEntryName(entry.fileName);
+      if (this.isIgnorableJunkEntry(rawPath)) continue;
+
       const { isDirectory, safeRelativePath } = resolveSkillEntryPath(rawPath);
       if (isDirectory) continue;
 
@@ -379,5 +381,23 @@ export class SkillsArchiveExtractionService {
   private decodeEntryName(rawFileName: string): string {
     const raw: unknown = rawFileName;
     return Buffer.isBuffer(raw) ? raw.toString('utf8') : rawFileName;
+  }
+
+  /**
+   * OS-added metadata noise that has nothing to do with the Skill's content.
+   * macOS's Finder "Compress" always writes a sibling `__MACOSX/` tree of
+   * AppleDouble resource-fork files (`__MACOSX/<name>/._SKILL.md`, ...) next
+   * to the real folder, and both macOS and Windows routinely leave
+   * `.DS_Store`/`Thumbs.db` behind. None of this is user content: skipping
+   * it here (like a directory entry) keeps it from tripping the "every entry
+   * must share one wrapper directory" check, which would otherwise reject
+   * every archive a Mac user creates via Finder for looking "ambiguous".
+   */
+  private isIgnorableJunkEntry(rawPath: string): boolean {
+    if (rawPath === '__MACOSX' || rawPath.startsWith('__MACOSX/')) {
+      return true;
+    }
+    const baseName = rawPath.split('/').pop();
+    return baseName === '.DS_Store' || baseName === 'Thumbs.db';
   }
 }

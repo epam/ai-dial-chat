@@ -4,6 +4,7 @@ import type {
   SkillFileListResponseDto,
   SkillFileUploadResponseDto,
   SkillGroupingFolderResponseDto,
+  SkillImportResponseDto,
   SkillListResponseDto,
   SkillOperationResultDto,
   SkillUploadResponseDto,
@@ -18,6 +19,7 @@ import {
   deleteSkillGroupingFolder,
   downloadSkill,
   downloadSkillFile,
+  importSkillArchive,
   listSkillFiles,
   listCatalogSkills,
   listSkills,
@@ -384,6 +386,52 @@ describe('uploadSkillFile', () => {
         new Blob(['print(1)']),
       ),
     ).rejects.toBe(error);
+  });
+});
+
+describe('importSkillArchive', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const MOCK_IMPORT_RESPONSE: SkillImportResponseDto = {
+    name: 'docs-helper',
+    path: 'docs-helper',
+    url: 'skills/my-bucket/docs-helper',
+    etag: '"abc123"',
+  };
+
+  it('delegates to the generated SkillsApi with the archive file', async () => {
+    const spy = vi
+      .spyOn(skillsApi, 'importSkillArchive')
+      .mockResolvedValue(MOCK_IMPORT_RESPONSE);
+    const file = new Blob(['zip bytes']);
+
+    const result = await importSkillArchive(file);
+
+    expect(spy).toHaveBeenCalledWith({ file }, undefined);
+    expect(result).toEqual(MOCK_IMPORT_RESPONSE);
+  });
+
+  it('forwards an AbortSignal when provided', async () => {
+    const spy = vi
+      .spyOn(skillsApi, 'importSkillArchive')
+      .mockResolvedValue(MOCK_IMPORT_RESPONSE);
+    const file = new Blob(['zip bytes']);
+    const controller = new AbortController();
+
+    await importSkillArchive(file, controller.signal);
+
+    expect(spy).toHaveBeenCalledWith({ file }, { signal: controller.signal });
+  });
+
+  it('propagates rejection from the generated client', async () => {
+    const error = new Response(null, { status: 409 });
+    vi.spyOn(skillsApi, 'importSkillArchive').mockRejectedValue(error);
+
+    await expect(importSkillArchive(new Blob(['zip bytes']))).rejects.toBe(
+      error,
+    );
   });
 });
 
