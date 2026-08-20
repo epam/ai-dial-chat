@@ -129,6 +129,15 @@ const mapModelDetails = (
         ),
         value: formatCatalogDate(s.knowledgeCutoffDate),
       });
+    if (s.parameters != null)
+      specs.push({
+        label: getDetailsLabel(
+          t,
+          CatalogI18nKeys.DetailsModelParameters,
+          'Parameters',
+        ),
+        value: s.parameters,
+      });
     if (s.hostedBy != null)
       specs.push({ label: 'Hosted by', value: s.hostedBy });
     if (s.createdAt != null)
@@ -632,6 +641,7 @@ const mapModelDetailsDto = (
             vendor: catalogProperties?.vendor,
             license: catalogProperties?.license,
             knowledgeCutoffDate: catalogProperties?.knowledgeCutoffDate,
+            parameters: catalogProperties?.parameters,
             contextWindowTokens: limits?.maxTotalTokens,
             maxOutputTokens: limits?.maxCompletionTokens ?? defaultMaxTokens,
             inputTypes: inputAttachmentTypes,

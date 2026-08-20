@@ -7628,6 +7628,11 @@
             "type": "string",
             "description": "Model knowledge cutoff date for catalog display",
             "example": "2026-08-17"
+          },
+          "parameters": {
+            "type": "string",
+            "description": "Model parameter count for catalog display",
+            "example": "100B"
           }
         }
       },

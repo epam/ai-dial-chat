@@ -174,10 +174,12 @@ and allow-list only the following string-valued model properties:
 - `vendor`
 - `license`
 - `knowledgeCutoffDate`
+- `parameters` — the model's parameter count for catalog display (e.g. `"100B"`); a free-form
+  string, not parsed or validated as a number/unit pair
 
 `GET /api/v1/deployments/:deployment/details` SHALL expose the recognized values as the
 optional `modelDetails.catalogProperties` object in `DeploymentDetailsDto`, using
-`ModelCatalogPropertiesDto` with the same four optional camelCase string fields. Unknown keys
+`ModelCatalogPropertiesDto` with the same five optional camelCase string fields. Unknown keys
 and recognized keys with non-string values MUST be omitted. When no recognized string value
 remains, `catalogProperties` MUST be omitted rather than returned as an empty object.
 
@@ -196,7 +198,8 @@ parameter, authentication, status codes, rate limit, and the normal (non-`Raw`) 
       "provider": "Provider",
       "vendor": "Vendor",
       "license": "License",
-      "knowledgeCutoffDate": "2026-08-17"
+      "knowledgeCutoffDate": "2026-08-17",
+      "parameters": "100B"
     }
   }
 }
@@ -205,15 +208,16 @@ parameter, authentication, status codes, rate limit, and the normal (non-`Raw`) 
 The app-level DTO mapper in `apps/chat/src/utils/map-entity-details-to-catalog.ts` SHALL copy
 these values into `ModelSpecification`. `mapEntityDetailsToCatalogDetails` SHALL render every
 present value as a separate row in the model details panel under `Overview` → `Specification`,
-in this order: Provider, Vendor, License, Knowledge cutoff date. Missing values SHALL NOT create
-empty rows.
+in this order: Provider, Vendor, License, Knowledge cutoff date, Parameters. Missing values
+SHALL NOT create empty rows.
 
-The four labels MUST use these i18n keys through `CatalogI18nKeys`:
+The five labels MUST use these i18n keys through `CatalogI18nKeys`:
 
 - `catalog.details.modelSpecification.provider`
 - `catalog.details.modelSpecification.vendor`
 - `catalog.details.modelSpecification.license`
 - `catalog.details.modelSpecification.knowledgeCutoffDate`
+- `catalog.details.modelSpecification.parameters`
 
 A valid date-only `knowledgeCutoffDate` in `YYYY-MM-DD` form SHALL be parsed as a local calendar
 date and formatted with the same locale-sensitive `toLocaleDateString()` path as the existing
@@ -231,9 +235,9 @@ layout without physical-direction overrides. No new React state or memoisation i
 
 #### Scenario: All supported properties render in Specification
 
-- **WHEN** DIAL Core returns the four recognized string values shown in the example above for a model
+- **WHEN** DIAL Core returns the five recognized string values shown in the example above for a model
 - **THEN** the BFF returns them under `modelDetails.catalogProperties`
-- **AND** the model details panel renders Provider, Vendor, License, and Knowledge cutoff date as four rows under `Overview` → `Specification`
+- **AND** the model details panel renders Provider, Vendor, License, Knowledge cutoff date, and Parameters as five rows under `Overview` → `Specification`
 
 #### Scenario: Knowledge cutoff date uses the Release date display format
 

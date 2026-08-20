@@ -34,6 +34,7 @@ export interface ModelSpecification {
   vendor?: string;
   license?: string;
   knowledgeCutoffDate?: string;
+  parameters?: string;
   contextWindowTokens?: number;
   maxOutputTokens?: number;
   inputTypes?: string[];

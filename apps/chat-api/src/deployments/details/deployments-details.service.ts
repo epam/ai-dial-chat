@@ -279,6 +279,7 @@ export class DeploymentsDetailsService {
               raw.catalog_properties,
               'knowledgeCutoffDate',
             ),
+            parameters: getString(raw.catalog_properties, 'parameters'),
           };
 
           return Object.values(properties).some((value) => value != null)
