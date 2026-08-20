@@ -4158,6 +4158,12 @@ export interface ModelCatalogPropertiesDto {
    * @memberof ModelCatalogPropertiesDto
    */
   knowledgeCutoffDate?: string;
+  /**
+   * Model parameter count for catalog display
+   * @type {string}
+   * @memberof ModelCatalogPropertiesDto
+   */
+  parameters?: string;
 }
 /**
  *

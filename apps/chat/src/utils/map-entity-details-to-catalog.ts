@@ -1,3 +1,4 @@
+import { mimeTypesToExtensionLabels } from '@epam/ai-dial-attachment-input';
 import type {
   CatalogItemApiDetails,
   CatalogItemCredentials,
@@ -78,26 +79,11 @@ const mapModelDetails = (
     const specs: OverviewSection['specs'] = [];
 
     if (c.hasTools != null) specs.push({ label: 'Tools', value: c.hasTools });
-    if (c.hasMcp != null) specs.push({ label: 'MCP', value: c.hasMcp });
-    if (c.hasCaching != null)
-      specs.push({ label: 'Prompt caching', value: c.hasCaching });
     if (c.hasParallelToolCalls != null)
       specs.push({
         label: 'Parallel tool calls',
         value: c.hasParallelToolCalls,
       });
-    if (c.hasUrlAttachments != null)
-      specs.push({ label: 'URL attachments', value: c.hasUrlAttachments });
-    if (c.hasFolderAttachments != null)
-      specs.push({
-        label: 'Folder attachments',
-        value: c.hasFolderAttachments,
-      });
-    if (c.hasSeed != null) specs.push({ label: 'Seed', value: c.hasSeed });
-    if (c.hasSystemPrompt != null)
-      specs.push({ label: 'System prompt', value: c.hasSystemPrompt });
-    if (c.hasResume != null)
-      specs.push({ label: 'Resume', value: c.hasResume });
     if (c.reasoningEfforts?.length)
       specs.push({
         label: 'Reasoning efforts',
@@ -143,6 +129,15 @@ const mapModelDetails = (
         ),
         value: formatCatalogDate(s.knowledgeCutoffDate),
       });
+    if (s.parameters != null)
+      specs.push({
+        label: getDetailsLabel(
+          t,
+          CatalogI18nKeys.DetailsModelParameters,
+          'Parameters',
+        ),
+        value: s.parameters,
+      });
     if (s.hostedBy != null)
       specs.push({ label: 'Hosted by', value: s.hostedBy });
     if (s.createdAt != null)
@@ -161,9 +156,23 @@ const mapModelDetails = (
         value: formatTokens(s.maxOutputTokens),
       });
     if (s.inputTypes?.length)
-      specs.push({ label: 'Input type', value: s.inputTypes.join(' · ') });
+      specs.push({
+        label: getDetailsLabel(
+          t,
+          CatalogI18nKeys.DetailsModelInputModalities,
+          'Input modalities',
+        ),
+        value: mimeTypesToExtensionLabels(s.inputTypes),
+      });
     if (s.outputTypes?.length)
-      specs.push({ label: 'Output type', value: s.outputTypes.join(' · ') });
+      specs.push({
+        label: getDetailsLabel(
+          t,
+          CatalogI18nKeys.DetailsModelOutputModalities,
+          'Output modalities',
+        ),
+        value: mimeTypesToExtensionLabels(s.outputTypes),
+      });
     if (s.languages?.length)
       specs.push({ label: 'Languages', value: s.languages.join(' · ') });
 
@@ -293,26 +302,11 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
     const specs: OverviewSection['specs'] = [];
 
     if (c.hasTools != null) specs.push({ label: 'Tools', value: c.hasTools });
-    if (c.hasMcp != null) specs.push({ label: 'MCP', value: c.hasMcp });
-    if (c.hasCaching != null)
-      specs.push({ label: 'Prompt caching', value: c.hasCaching });
     if (c.hasParallelToolCalls != null)
       specs.push({
         label: 'Parallel tool calls',
         value: c.hasParallelToolCalls,
       });
-    if (c.hasUrlAttachments != null)
-      specs.push({ label: 'URL attachments', value: c.hasUrlAttachments });
-    if (c.hasFolderAttachments != null)
-      specs.push({
-        label: 'Folder attachments',
-        value: c.hasFolderAttachments,
-      });
-    if (c.hasSeed != null) specs.push({ label: 'Seed', value: c.hasSeed });
-    if (c.hasSystemPrompt != null)
-      specs.push({ label: 'System prompt', value: c.hasSystemPrompt });
-    if (c.hasResume != null)
-      specs.push({ label: 'Resume', value: c.hasResume });
     if (c.hasConfiguration != null)
       specs.push({ label: 'Configuration schema', value: c.hasConfiguration });
 
@@ -328,12 +322,12 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
     if (c.inputAttachmentTypes?.length)
       specs.push({
         label: 'Input attachments',
-        value: c.inputAttachmentTypes.join(' · '),
+        value: mimeTypesToExtensionLabels(c.inputAttachmentTypes),
       });
     if (c.outputAttachmentTypes?.length)
       specs.push({
         label: 'Output attachments',
-        value: c.outputAttachmentTypes.join(' · '),
+        value: mimeTypesToExtensionLabels(c.outputAttachmentTypes),
       });
     if (c.authentication != null)
       specs.push({ label: 'Authentication', value: c.authentication });
@@ -488,21 +482,6 @@ const mapToolsetDetails = (data: ToolsetEntityDetails): CatalogItemTabData => {
     if (specs.length > 0) sections.push({ title: 'Specification', specs });
   }
 
-  if (data.capabilities != null) {
-    const { capabilities: c } = data;
-    const specs: OverviewSection['specs'] = [];
-
-    if (c.hasMcp != null) specs.push({ label: 'MCP', value: c.hasMcp });
-    if (c.hasCaching != null)
-      specs.push({ label: 'Prompt caching', value: c.hasCaching });
-    if (c.hasSystemPrompt != null)
-      specs.push({ label: 'System prompt', value: c.hasSystemPrompt });
-    if (c.hasResume != null)
-      specs.push({ label: 'Resume', value: c.hasResume });
-
-    if (specs.length > 0) sections.push({ title: 'Capabilities', specs });
-  }
-
   return {
     overview: sections.length > 0 ? { sections } : undefined,
     tools: mapToolsetTools(data.specification),
@@ -576,6 +555,8 @@ interface DeploymentCapabilities {
   hasSystemPrompt?: boolean;
   hasResume?: boolean;
   hasConfiguration?: boolean;
+  hasChatCompletion?: boolean;
+  hasResponsesApi?: boolean;
   reasoningEfforts?: string[];
 }
 
@@ -601,6 +582,8 @@ const mapFeaturesToCapabilities = (
     hasSystemPrompt: features.systemPrompt,
     hasResume: features.allowResume,
     hasConfiguration: features.hasConfigurationSchema,
+    hasChatCompletion: features.chatCompletion,
+    hasResponsesApi: features.responsesApi,
     reasoningEfforts: features.reasoningEfforts,
   };
 };
@@ -658,6 +641,7 @@ const mapModelDetailsDto = (
             vendor: catalogProperties?.vendor,
             license: catalogProperties?.license,
             knowledgeCutoffDate: catalogProperties?.knowledgeCutoffDate,
+            parameters: catalogProperties?.parameters,
             contextWindowTokens: limits?.maxTotalTokens,
             maxOutputTokens: limits?.maxCompletionTokens ?? defaultMaxTokens,
             inputTypes: inputAttachmentTypes,

@@ -174,10 +174,12 @@ and allow-list only the following string-valued model properties:
 - `vendor`
 - `license`
 - `knowledgeCutoffDate`
+- `parameters` — the model's parameter count for catalog display (e.g. `"100B"`); a free-form
+  string, not parsed or validated as a number/unit pair
 
 `GET /api/v1/deployments/:deployment/details` SHALL expose the recognized values as the
 optional `modelDetails.catalogProperties` object in `DeploymentDetailsDto`, using
-`ModelCatalogPropertiesDto` with the same four optional camelCase string fields. Unknown keys
+`ModelCatalogPropertiesDto` with the same five optional camelCase string fields. Unknown keys
 and recognized keys with non-string values MUST be omitted. When no recognized string value
 remains, `catalogProperties` MUST be omitted rather than returned as an empty object.
 
@@ -196,7 +198,8 @@ parameter, authentication, status codes, rate limit, and the normal (non-`Raw`) 
       "provider": "Provider",
       "vendor": "Vendor",
       "license": "License",
-      "knowledgeCutoffDate": "2026-08-17"
+      "knowledgeCutoffDate": "2026-08-17",
+      "parameters": "100B"
     }
   }
 }
@@ -205,15 +208,16 @@ parameter, authentication, status codes, rate limit, and the normal (non-`Raw`) 
 The app-level DTO mapper in `apps/chat/src/utils/map-entity-details-to-catalog.ts` SHALL copy
 these values into `ModelSpecification`. `mapEntityDetailsToCatalogDetails` SHALL render every
 present value as a separate row in the model details panel under `Overview` → `Specification`,
-in this order: Provider, Vendor, License, Knowledge cutoff date. Missing values SHALL NOT create
-empty rows.
+in this order: Provider, Vendor, License, Knowledge cutoff date, Parameters. Missing values
+SHALL NOT create empty rows.
 
-The four labels MUST use these i18n keys through `CatalogI18nKeys`:
+The five labels MUST use these i18n keys through `CatalogI18nKeys`:
 
 - `catalog.details.modelSpecification.provider`
 - `catalog.details.modelSpecification.vendor`
 - `catalog.details.modelSpecification.license`
 - `catalog.details.modelSpecification.knowledgeCutoffDate`
+- `catalog.details.modelSpecification.parameters`
 
 A valid date-only `knowledgeCutoffDate` in `YYYY-MM-DD` form SHALL be parsed as a local calendar
 date and formatted with the same locale-sensitive `toLocaleDateString()` path as the existing
@@ -231,9 +235,9 @@ layout without physical-direction overrides. No new React state or memoisation i
 
 #### Scenario: All supported properties render in Specification
 
-- **WHEN** DIAL Core returns the four recognized string values shown in the example above for a model
+- **WHEN** DIAL Core returns the five recognized string values shown in the example above for a model
 - **THEN** the BFF returns them under `modelDetails.catalogProperties`
-- **AND** the model details panel renders Provider, Vendor, License, and Knowledge cutoff date as four rows under `Overview` → `Specification`
+- **AND** the model details panel renders Provider, Vendor, License, Knowledge cutoff date, and Parameters as five rows under `Overview` → `Specification`
 
 #### Scenario: Knowledge cutoff date uses the Release date display format
 
@@ -251,6 +255,68 @@ layout without physical-direction overrides. No new React state or memoisation i
 - **WHEN** a client ignores the optional `modelDetails.catalogProperties` field
 - **THEN** all pre-existing deployment-details response fields and behavior remain unchanged
 
+### Requirement: Input/Output modalities render as friendly labels, and internal-only capability flags are hidden
+
+`apps/chat/src/utils/map-entity-details-to-catalog.ts` SHALL render a model's and application's
+`inputAttachmentTypes`/`outputAttachmentTypes` (surfaced as `ModelSpecification.inputTypes`/
+`outputTypes` and `AgentConfiguration.inputAttachmentTypes`/`outputAttachmentTypes`) as
+human-readable labels via `mimeTypesToExtensionLabels` (`@epam/ai-dial-attachment-input`) rather
+than the raw MIME type strings DIAL Core returns. A wildcard major type (`image/*`, `audio/*`,
+`video/*`, `text/*`) SHALL render as `"<Major> files"` (e.g. `"Image files"`); the catch-all
+wildcard `*/*` SHALL render as `"All files"` rather than falling through to the generic
+`"<major> files"` template (which would otherwise render the nonsensical `"* files"`); a
+concrete MIME type (e.g. `application/pdf`) SHALL render as its uppercased subtype (`"PDF"`).
+The `Specification` section's row labels for these two fields SHALL use the i18n keys
+`catalog.details.modelSpecification.inputModalities` / `.outputModalities`
+(`CatalogI18nKeys.DetailsModelInputModalities` / `DetailsModelOutputModalities`), replacing the
+previous untranslated `'Input type'`/`'Output type'` literals. The `Configuration` section's
+`Input attachments`/`Output attachments` rows (Agent only) SHALL use the same
+`mimeTypesToExtensionLabels` formatting for their values, keeping their existing labels.
+
+The model, application, and toolset `Capabilities` sections built by `mapModelDetails`/
+`mapAgentDetails`/`mapToolsetDetails` SHALL NOT render rows for `hasMcp`, `hasCaching`,
+`hasUrlAttachments`, `hasFolderAttachments`, `hasSeed`, `hasSystemPrompt`, or `hasResume`, even
+though the backend continues to return these flags (`DeploymentFeaturesDetailsDto.mcp`/`cache`/
+`urlAttachments`/`folderAttachments`/`seed`/`systemPrompt`/`allowResume`) and the frontend
+`ModelCapabilities`/`AgentCapabilities`/`ToolsetCapabilities` types continue to carry them —
+they are collected but intentionally unrendered, kept for a future or other consumer. A
+toolset's `Capabilities` section — which, before this change, only ever rendered a subset of
+these now-hidden flags — SHALL therefore never render at all (its `specs` array is always
+empty). Model and application `Capabilities` sections continue to render `Tools`, `Parallel
+tool calls`, `Reasoning efforts` (model only), and `Configuration schema` (application only).
+
+**Feature flag:** Not gated. **RTL impact:** None (label text only). **i18n impact:** New keys
+`catalog.details.modelSpecification.inputModalities`/`.outputModalities` added to
+`translation-keys.ts`/`en.json`; the seven hidden capability rows had no i18n keys to remove
+(they were untranslated string literals).
+
+#### Scenario: Wildcard MIME types render as group labels
+
+- **WHEN** a model's `input_attachment_types` is `["text/*", "image/*"]`
+- **THEN** the `Specification` section's Input modalities row renders `"Text files, Image files"`
+
+#### Scenario: The catch-all wildcard renders as "All files"
+
+- **WHEN** a model's `input_attachment_types` is `["*/*"]`
+- **THEN** the Input modalities row renders `"All files"`, not `"* files"`
+
+#### Scenario: A concrete MIME type renders as its uppercased subtype
+
+- **WHEN** an application's `input_attachment_types` is `["application/pdf"]`
+- **THEN** the `Configuration` section's Input attachments row renders `"PDF"`
+
+#### Scenario: Toolset Capabilities section never renders
+
+- **WHEN** a toolset's `features` includes `mcp: true`, `cache: false`, and `systemPrompt: true`
+- **THEN** the toolset's Overview tab data contains no `Capabilities` section at all
+
+#### Scenario: Model Capabilities section omits the seven hidden flags
+
+- **WHEN** a model's `features` includes `mcp`, `cache`, `urlAttachments`, `folderAttachments`,
+  `seed`, `systemPrompt`, `allowResume`, `tools: true`, and `parallelToolCalls: true`
+- **THEN** the model's `Capabilities` section renders only `Tools` and `Parallel tool calls`
+  (plus `Reasoning efforts` when present), with no rows for the seven hidden flags
+
 ### Requirement: Only the About tab reads `item.description`; the Summary section shows topics and usage limits
 
 `CatalogItem` (`libs/catalog/src/models/catalog-item.ts`) SHALL NOT define an `intro` field.
@@ -260,6 +326,16 @@ SHALL display `item.description` via the shared `AboutTab` component
 `content: string` prop rather than deriving its own fallback. The `About` tab is the only
 `DetailsPanel` surface that renders `item.description`; it uses no async fetch, callback prop,
 or loading state for this content.
+
+`AboutTab` SHALL render `content` as Markdown via the shared `MarkdownRenderer`
+(`@epam/ai-dial-chat-shared`) — the same renderer used for chat message content — rather than
+a bespoke plain-text/bullet parser. Heading elements (`h1`–`h6`) and body elements (`p`/`ul`/`ol`)
+SHALL use `detailsStyles?.typography?.contentHeadingClassName` (default `'dial-small-semi-text'`)
+and `detailsStyles?.typography?.contentClassName` (default `'dial-small-text'`) respectively,
+matching the typography this tab already exposed before switching renderers. This applies
+uniformly to every entity type that supplies a description (models, applications, toolsets,
+guardrails, prompts, skills) since `content` is the same `item.description` string regardless
+of type.
 
 The details panel's always-visible Summary section (rendered by `Summary`) SHALL NOT render
 `item.description` or any `AboutTab` content. `Summary` SHALL render only the item's topics
@@ -278,6 +354,13 @@ field from `DeploymentItemDto`/`DialToolsetDto`.
 - **WHEN** the details panel opens for any `CatalogItem`
 - **THEN** the About tab renders `item.description`, and the Summary section does not render
   `item.description` anywhere
+
+#### Scenario: Description renders as Markdown, not plain text
+- **WHEN** `item.description` contains Markdown syntax (e.g. `**bold**`, a `-`/`*` bullet list,
+  a fenced code block, or a link)
+- **THEN** the About tab renders it through `MarkdownRenderer` with full formatting (bold text,
+  a real `<ul>`/`<ol>` list, a syntax-highlighted code block, a clickable link) rather than the
+  raw Markdown source or a heuristic bullet-only parse
 
 #### Scenario: Summary section renders topics and usage limits only
 - **WHEN** the details panel opens for a `CatalogItem` with a non-empty `topics` array and a

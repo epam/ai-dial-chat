@@ -102,6 +102,7 @@ import {
   type ParsedSkillResourceUrl,
 } from '../../types/skill';
 import { isQuickAppSchema } from '../../utils/application-schema';
+import { buildDeploymentConnectApi } from '../../utils/deployment-endpoint-url';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import { EXPORT_APP_NAME } from '../../utils/export-conversation';
@@ -583,6 +584,21 @@ const CatalogView: FC<Props> = ({
           item.type,
           item.supportsMcp,
         );
+        /*
+         * DIAL Core routes generation through the same deployment-keyed
+         * endpoints for models and custom applications, so both entity
+         * types get a Connect entry built from their generation-API support
+         * flags.
+         */
+        const deploymentConnectApi =
+          entityDetails.type === 'MODEL' || entityDetails.type === 'AGENT'
+            ? buildDeploymentConnectApi(dialCoreExternalUrl ?? '', item.id, {
+                hasChatCompletion:
+                  entityDetails.data.capabilities?.hasChatCompletion,
+                hasResponsesApi:
+                  entityDetails.data.capabilities?.hasResponsesApi,
+              })
+            : undefined;
         return {
           ...catalogDetails,
           api:
@@ -592,7 +608,7 @@ const CatalogView: FC<Props> = ({
                   item.id,
                   mcpResourceKind,
                 )
-              : catalogDetails.api,
+              : (deploymentConnectApi ?? catalogDetails.api),
           limits: mapDeploymentLimitsDtoToCatalogLimits(limitsDto, t),
           credentials:
             entityDetails.type === 'TOOLSET'

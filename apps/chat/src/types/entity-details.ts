@@ -8,6 +8,12 @@ export enum AuthenticationType {
 
 // ---- Model entity ----
 
+/*
+ * hasMcp/hasCaching/hasUrlAttachments/hasFolderAttachments/hasSeed/
+ * hasSystemPrompt/hasResume are deliberately not rendered by
+ * mapModelDetails's Capabilities section — kept here since the backend
+ * still returns them and another consumer may want them later.
+ */
 export interface ModelCapabilities {
   hasTools?: boolean;
   hasMcp?: boolean;
@@ -18,6 +24,8 @@ export interface ModelCapabilities {
   hasSeed?: boolean;
   hasSystemPrompt?: boolean;
   hasResume?: boolean;
+  hasChatCompletion?: boolean;
+  hasResponsesApi?: boolean;
   reasoningEfforts?: string[];
 }
 
@@ -26,6 +34,7 @@ export interface ModelSpecification {
   vendor?: string;
   license?: string;
   knowledgeCutoffDate?: string;
+  parameters?: string;
   contextWindowTokens?: number;
   maxOutputTokens?: number;
   inputTypes?: string[];
@@ -91,6 +100,12 @@ export interface AgentSpecification {
   routes?: string[];
 }
 
+/*
+ * hasMcp/hasCaching/hasUrlAttachments/hasFolderAttachments/hasSeed/
+ * hasSystemPrompt/hasResume are deliberately not rendered by
+ * mapAgentDetails's Capabilities section — kept here since the backend
+ * still returns them and another consumer may want them later.
+ */
 export interface AgentCapabilities {
   hasTools?: boolean;
   hasMcp?: boolean;
@@ -102,6 +117,8 @@ export interface AgentCapabilities {
   hasSystemPrompt?: boolean;
   hasResume?: boolean;
   hasConfiguration?: boolean;
+  hasChatCompletion?: boolean;
+  hasResponsesApi?: boolean;
 }
 
 export interface AgentConfiguration {
@@ -153,6 +170,11 @@ export interface ToolsetSpecification {
   allTools?: string[];
 }
 
+/*
+ * hasMcp/hasCaching/hasSystemPrompt/hasResume are deliberately not rendered
+ * by mapToolsetDetails's Capabilities section — kept here since the backend
+ * still returns them and another consumer may want them later.
+ */
 export interface ToolsetCapabilities {
   hasMcp?: boolean;
   hasCaching?: boolean;

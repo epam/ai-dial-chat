@@ -1582,14 +1582,7 @@ describe('CatalogView', () => {
         title: 'Capabilities',
         specs: [
           { label: 'Tools', value: true },
-          { label: 'MCP', value: false },
-          { label: 'Prompt caching', value: true },
           { label: 'Parallel tool calls', value: true },
-          { label: 'URL attachments', value: false },
-          { label: 'Folder attachments', value: false },
-          { label: 'Seed', value: false },
-          { label: 'System prompt', value: true },
-          { label: 'Resume', value: true },
           { label: 'Reasoning efforts', value: 'low · medium · high' },
         ],
       },
@@ -1602,7 +1595,10 @@ describe('CatalogView', () => {
             value: new Date(1780387921823).toLocaleDateString(),
           },
           { label: 'Context window', value: '128K tokens' },
-          { label: 'Input type', value: 'text/* · image/*' },
+          {
+            label: CatalogI18nKeys.DetailsModelInputModalities,
+            value: 'Text files, Image files',
+          },
         ],
       },
     ]);
@@ -1656,15 +1652,11 @@ describe('CatalogView', () => {
       },
       {
         title: 'Capabilities',
-        specs: [
-          { label: 'Tools', value: false },
-          { label: 'MCP', value: false },
-          { label: 'Prompt caching', value: false },
-        ],
+        specs: [{ label: 'Tools', value: false }],
       },
       {
         title: 'Configuration',
-        specs: [{ label: 'Input attachments', value: 'text/*' }],
+        specs: [{ label: 'Input attachments', value: 'Text files' }],
       },
     ]);
   });
@@ -1734,14 +1726,6 @@ describe('CatalogView', () => {
             label: 'Token endpoint',
             value: 'https://mcp.example.com/oauth/token',
           },
-        ],
-      },
-      {
-        title: 'Capabilities',
-        specs: [
-          { label: 'MCP', value: true },
-          { label: 'Prompt caching', value: false },
-          { label: 'System prompt', value: true },
         ],
       },
     ]);
