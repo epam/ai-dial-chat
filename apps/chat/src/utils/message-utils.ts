@@ -69,6 +69,22 @@ export const hasActiveToolConfig = (
   value: Record<string, boolean> | undefined,
 ): boolean => value != null && Object.keys(value).length > 0;
 
+/**
+ * Returns the `configuration_value` stored on the last user message, or
+ * `undefined` if none exists. Used to restore the tools menu toggle state
+ * when a conversation is (re-)loaded, mirroring `getLastDeploymentId`.
+ */
+export const getLastUserMessageToolConfiguration = (
+  messages: Message[],
+): Record<string, unknown> | undefined => {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === MessageRole.User) {
+      return messages[i].custom_content?.configuration_value;
+    }
+  }
+  return undefined;
+};
+
 /** Normalises a stored response-format string to the current enum.
  * Legacy data may contain 'Markdown' or 'PlainText' (capital-first) instead
  * of the current enum values 'markdown' / 'plain_text'. */

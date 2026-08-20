@@ -58,6 +58,17 @@ export const useToolsMenu = () => {
     [deepResearchToolId],
   );
 
+  const restoreToolConfiguration = useCallback(
+    (configurationValue: Record<string, unknown> | undefined) => {
+      if (deepResearchToolId == null) return;
+      const value = configurationValue?.[deepResearchToolId];
+      if (typeof value === 'boolean') {
+        setIsSelected(value);
+      }
+    },
+    [deepResearchToolId],
+  );
+
   const toolsMenuItems: ToolMenuItem[] = useMemo(() => {
     if (schemaProperty == null || deepResearchToolId == null) return [];
 
@@ -80,5 +91,10 @@ export const useToolsMenu = () => {
     return { [deepResearchToolId]: isSelected };
   }, [deepResearchToolId, schemaProperty, isSelected]);
 
-  return { toolsMenuItems, onToolToggle, toolConfigurationValue };
+  return {
+    toolsMenuItems,
+    onToolToggle,
+    toolConfigurationValue,
+    restoreToolConfiguration,
+  };
 };

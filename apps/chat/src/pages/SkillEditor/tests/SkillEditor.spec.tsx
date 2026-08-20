@@ -217,6 +217,7 @@ describe('SkillEditor page', () => {
       isLoading: false,
       error: null,
       refetchSkills,
+      mergeSharedSkill: vi.fn(),
     });
     vi.mocked(createSkill).mockResolvedValue({
       etag: 'etag-1',
@@ -691,6 +692,7 @@ describe('SkillEditor page — edit mode', () => {
       isLoading: false,
       error: null,
       refetchSkills,
+      mergeSharedSkill: vi.fn(),
     });
   });
 

@@ -531,7 +531,7 @@ const CatalogView: FC<Props> = ({
 
         const contentFiles =
           files.status === 'fulfilled'
-            ? buildSkillContentTree(files.value.items)
+            ? buildSkillContentTree(files.value.items, path)
             : [];
         const selectedFileId =
           files.status === 'fulfilled'
@@ -1437,6 +1437,17 @@ const CatalogView: FC<Props> = ({
       });
     }
 
+    options.push({
+      key: 'skill',
+      label: t(CatalogI18nKeys.CreateSkill),
+      onClick: () => {
+        const params = new URLSearchParams({
+          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
+        });
+        navigate(`${ROUTES.SkillEditor}?${params.toString()}`);
+      },
+    });
+
     if (isPromptsEnabled) {
       options.push({
         key: 'prompt',
@@ -1449,17 +1460,6 @@ const CatalogView: FC<Props> = ({
         },
       });
     }
-
-    options.push({
-      key: 'skill',
-      label: t(CatalogI18nKeys.CreateSkill),
-      onClick: () => {
-        const params = new URLSearchParams({
-          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
-        });
-        navigate(`${ROUTES.SkillEditor}?${params.toString()}`);
-      },
-    });
 
     return options;
   }, [

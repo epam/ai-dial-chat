@@ -20,6 +20,7 @@ import {
   SkillSource,
   type SkillAboutDetails,
 } from '../types/skill';
+import { formatCalendarDate } from './formatting';
 import {
   safeDecodeURIComponent,
   stripSurroundingSlashes,
@@ -165,6 +166,43 @@ export const resolveSkillManifestFileId = (
 };
 
 /**
+ * Strips a skill's own path prefix and its internal `files` storage
+ * directory from a raw listing path, leaving the author-relative path
+ * (`SKILL.md`, `agents/analyzer.md`, ...). Core may prefix listing paths
+ * with either or both. Returns `null` for a path that resolves to the skill
+ * root or the bare `files` directory itself — a grouping node with no
+ * author-meaningful name to show.
+ */
+const stripSkillPathPrefix = (
+  rawPath: string,
+  skillPath: string,
+): string | null => {
+  const normalizedPath = stripSurroundingSlashes(rawPath);
+  const normalizedSkillPath = stripSurroundingSlashes(skillPath);
+  const filesRoot = normalizedSkillPath
+    ? `${normalizedSkillPath}/files`
+    : 'files';
+
+  if (
+    normalizedPath === '' ||
+    normalizedPath === 'files' ||
+    normalizedPath === filesRoot
+  ) {
+    return null;
+  }
+
+  if (normalizedPath.startsWith(`${filesRoot}/`)) {
+    return normalizedPath.slice(filesRoot.length + 1);
+  }
+
+  if (normalizedPath.startsWith('files/')) {
+    return normalizedPath.slice('files/'.length);
+  }
+
+  return normalizedPath;
+};
+
+/**
  * Converts an opaque file-listing id into the path expected by the single-file
  * download endpoint. Core may prefix listing paths with the skill path and its
  * internal `files` directory, while the endpoint accepts a path relative to
@@ -173,31 +211,7 @@ export const resolveSkillManifestFileId = (
 export const resolveSkillFileDownloadPath = (
   fileId: string,
   skillPath: string,
-): string | null => {
-  const normalizedFileId = stripSurroundingSlashes(fileId);
-  const normalizedSkillPath = stripSurroundingSlashes(skillPath);
-  const filesRoot = normalizedSkillPath
-    ? `${normalizedSkillPath}/files`
-    : 'files';
-
-  if (
-    normalizedFileId === '' ||
-    normalizedFileId === 'files' ||
-    normalizedFileId === filesRoot
-  ) {
-    return null;
-  }
-
-  if (normalizedFileId.startsWith(`${filesRoot}/`)) {
-    return normalizedFileId.slice(filesRoot.length + 1);
-  }
-
-  if (normalizedFileId.startsWith('files/')) {
-    return normalizedFileId.slice('files/'.length);
-  }
-
-  return normalizedFileId;
-};
+): string | null => stripSkillPathPrefix(fileId, skillPath);
 
 /**
  * Builds the Overview tab data for a skill: a Specification section from its
@@ -228,7 +242,7 @@ export const buildSkillOverview = (
   }
   specs.push({
     label: t(CatalogI18nKeys.DetailsSkillUpdated),
-    value: formatLastUsed(skill?.updatedAt),
+    value: skill?.updatedAt ? formatCalendarDate(skill.updatedAt) : '',
   });
 
   specs.push({
@@ -287,8 +301,8 @@ const sortContentTree = (
 ): void => {
   nodes.sort((a, b) => {
     if (isRoot) {
-      if (a.id === SKILL_MANIFEST_FILE) return -1;
-      if (b.id === SKILL_MANIFEST_FILE) return 1;
+      if (a.name === SKILL_MANIFEST_FILE) return -1;
+      if (b.name === SKILL_MANIFEST_FILE) return 1;
     }
     return a.name.localeCompare(b.name);
   });
@@ -301,28 +315,39 @@ const sortContentTree = (
 
 /**
  * Builds the Content tab's hierarchical file tree for a skill from
- * `listSkillFiles({ recursive: true })`'s flat listing. Every folder entry is
- * attached under its own path so an empty grouping folder still appears;
- * every file entry attaches under the folder chain its own path implies,
- * synthesizing any intermediate folder the listing never enumerated on its
- * own. A file node's `id` is the listing entry's own path, so it round-trips
+ * `listSkillFiles({ recursive: true })`'s flat listing. Every entry's path is
+ * first stripped of the skill's own path prefix and its internal `files`
+ * storage directory (see `stripSkillPathPrefix`) — the skill's own root
+ * folder and that `files` directory are Core storage implementation details,
+ * not authored structure, so neither appears as a wrapping node. An entry
+ * that strips to nothing (the skill root, or the bare `files` directory
+ * itself) contributes no node. Every folder entry is attached under its own
+ * stripped path so an empty grouping folder still appears; every file entry
+ * attaches under the folder chain its stripped path implies, synthesizing
+ * any intermediate folder the listing never enumerated on its own. A file
+ * node's `id` is the listing entry's own (unstripped) path, so it round-trips
  * back to `downloadSkillFile` without being re-derived; a folder node's `id`
- * only keys client-side expand/collapse state.
+ * is the stripped path and only keys client-side expand/collapse state.
  */
 export const buildSkillContentTree = (
   files: SkillMetadataItemDto[],
+  skillPath: string,
 ): CatalogContentTreeNode[] => {
   const folderNodesByPath = new Map<string, CatalogContentFolderNode>();
   const roots: CatalogContentTreeNode[] = [];
 
   for (const entry of files) {
+    const displayPath = stripSkillPathPrefix(entry.path, skillPath);
+    if (displayPath == null) continue;
+
     if (entry.nodeType === SkillMetadataItemDtoNodeTypeEnum.Folder) {
-      getOrCreateFolderChain(entry.path, folderNodesByPath, roots);
+      getOrCreateFolderChain(displayPath, folderNodesByPath, roots);
       continue;
     }
 
-    const lastSlash = entry.path.lastIndexOf('/');
-    const parentPath = lastSlash === -1 ? '' : entry.path.slice(0, lastSlash);
+    const lastSlash = displayPath.lastIndexOf('/');
+    const parentPath =
+      lastSlash === -1 ? '' : displayPath.slice(0, lastSlash);
     const parentItems = getOrCreateFolderChain(
       parentPath,
       folderNodesByPath,

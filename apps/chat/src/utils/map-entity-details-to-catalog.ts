@@ -28,6 +28,7 @@ import type {
   ToolsetEntityDetails,
   ToolsetSpecification,
 } from '../types/entity-details';
+import { formatCalendarDate } from './formatting';
 import { isPublicToolsetId } from './toolsets';
 
 const formatTokens = (n: number): string =>
@@ -36,9 +37,6 @@ const formatTokens = (n: number): string =>
     : n >= 1_000
       ? `${n / 1_000}K tokens`
       : `${n} tokens`;
-
-const formatReleaseDate = (timestampMs: number): string =>
-  new Date(timestampMs).toLocaleDateString();
 
 const formatCatalogDate = (date: string): string => {
   const dateParts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
@@ -58,7 +56,7 @@ const formatCatalogDate = (date: string): string => {
     return date;
   }
 
-  return formatReleaseDate(localDate.getTime());
+  return formatCalendarDate(localDate.getTime());
 };
 
 const PRICING_UNIT_KEY = 'unit';
@@ -150,7 +148,7 @@ const mapModelDetails = (
     if (s.createdAt != null)
       specs.push({
         label: 'Release date',
-        value: formatReleaseDate(s.createdAt),
+        value: formatCalendarDate(s.createdAt),
       });
     if (s.contextWindowTokens != null)
       specs.push({
@@ -282,7 +280,7 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
     if (s.createdAt != null)
       specs.push({
         label: 'Release date',
-        value: formatReleaseDate(s.createdAt),
+        value: formatCalendarDate(s.createdAt),
       });
     if (s.routes?.length)
       specs.push({ label: 'Routes', value: s.routes.join(' · ') });
@@ -469,7 +467,7 @@ const mapToolsetDetails = (data: ToolsetEntityDetails): CatalogItemTabData => {
     if (s.createdAt != null)
       specs.push({
         label: 'Release date',
-        value: formatReleaseDate(s.createdAt),
+        value: formatCalendarDate(s.createdAt),
       });
     if (s.authStatus?.scopesSupported?.length)
       specs.push({

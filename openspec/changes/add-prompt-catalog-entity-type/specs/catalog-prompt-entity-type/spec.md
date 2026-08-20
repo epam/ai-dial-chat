@@ -28,7 +28,7 @@ The lib MUST NOT branch on `Prompt` to reach any host-owned fact. It MUST NOT im
 
 ### Requirement: `Prompt` has a tab label and a canonical tab position
 
-`buildCatalogTabs` (`libs/catalog/src/utils/catalog-tabs.ts`) SHALL add `Prompt` to `DEFAULT_TAB_LABELS` with the English default `'Prompts'`, and to `TAB_ORDER` immediately after `CatalogEntityType.Toolset`.
+`buildCatalogTabs` (`libs/catalog/src/utils/catalog-tabs.ts`) SHALL add `Prompt` to `DEFAULT_TAB_LABELS` with the English default `'Prompts'`, and to `TAB_ORDER` immediately after `CatalogEntityType.Skill`, as the last entry.
 
 Tab derivation behaviour is unchanged: a tab appears only when at least one item of that type is present in `items`, and a host-supplied `tabLabels[CatalogEntityType.Prompt]` overrides the English default.
 
@@ -36,7 +36,7 @@ Tab derivation behaviour is unchanged: a tab appears only when at least one item
 
 - **WHEN** `buildCatalogTabs` is called with items containing at least one `Prompt` item
 - **THEN** the returned tabs include `{ id: 'PROMPT', label: 'Prompts' }`
-- **AND** it is positioned after the Toolsets tab and before any Skill tab
+- **AND** it is positioned after the Skills tab, as the last tab
 
 #### Scenario: Prompts tab is absent when no prompt items exist
 

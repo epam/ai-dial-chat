@@ -80,6 +80,10 @@ import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import CatalogView from '../CatalogView';
 import { SkillDetailsFilePreview } from '../SkillDetailsFilePreview';
 
+const formatLimitNumber = new Intl.NumberFormat(undefined, {
+  maximumFractionDigits: 2,
+}).format;
+
 /** Minimal fake popup `Window` — enough surface for `initiateOAuthLogin`/`waitForToolsetOAuthResult`. */
 const makeFakePopup = () => {
   const store = new Map<string, string>();
@@ -712,6 +716,7 @@ describe('CatalogView', () => {
       isLoading: false,
       error: null,
       refetchSkills: vi.fn().mockResolvedValue(undefined),
+      mergeSharedSkill: vi.fn(),
     });
     vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [],
@@ -1543,6 +1548,8 @@ describe('CatalogView', () => {
           label: CatalogI18nKeys.DetailsLimitsRequestsPerHour,
           used: 2,
           total: 10,
+          usedLabel: formatLimitNumber(2),
+          totalLabel: formatLimitNumber(10),
           valueLabel: CatalogI18nKeys.DetailsLimitsValue,
           ariaLabel: CatalogI18nKeys.DetailsLimitsProgressAriaLabel,
         },
@@ -1550,6 +1557,8 @@ describe('CatalogView', () => {
           label: CatalogI18nKeys.DetailsLimitsTokensPerDay,
           used: 2500,
           total: 10000,
+          usedLabel: formatLimitNumber(2500),
+          totalLabel: formatLimitNumber(10000),
           valueLabel: CatalogI18nKeys.DetailsLimitsValue,
           ariaLabel: CatalogI18nKeys.DetailsLimitsProgressAriaLabel,
         },
@@ -3986,6 +3995,7 @@ describe('CatalogView', () => {
         isLoading: false,
         error: null,
         refetchSkills: vi.fn().mockResolvedValue(undefined),
+        mergeSharedSkill: vi.fn(),
         ...overrides,
       });
 
