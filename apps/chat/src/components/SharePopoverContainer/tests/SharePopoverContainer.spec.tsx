@@ -167,7 +167,7 @@ describe('SharePopoverContainer', () => {
     );
   });
 
-  it('passes canEditAccess false for a prompt', () => {
+  it('passes canEditAccess true for a prompt', () => {
     mockUseShareLink();
     render(
       <SharePopoverContainer
@@ -177,7 +177,7 @@ describe('SharePopoverContainer', () => {
     );
 
     expect(mockSharePopover).toHaveBeenCalledWith(
-      expect.objectContaining({ canEditAccess: false }),
+      expect.objectContaining({ canEditAccess: true }),
       undefined,
     );
   });

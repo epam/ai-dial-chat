@@ -189,4 +189,4 @@ Depends on group 9. Bug fix — revises task 9.4 and design.md D7; see the `prom
 
 - [x] 14.1 **Bug.** `SharePopoverContainer`'s `EDITABLE_ACCESS_TYPES` omitted `CatalogEntityType.Prompt`, so a prompt's share popover always rendered "Can view" as a static label instead of the Agent/Skill/Toolset "Can view"/"Can edit" dropdown, even though `ShareService.createShareLink` already maps `Edit` to `['READ', 'WRITE']` for a prompt's `resourceKind`, and shared-prompt write access (`canEdit`/`isEditable`) was already fully wired (group 12.4).
 - [x] 14.2 **Fix.** Added `CatalogEntityType.Prompt` to `EDITABLE_ACCESS_TYPES` in `apps/chat/src/components/SharePopoverContainer/SharePopoverContainer.tsx`.
-- [ ] 14.3 Verify: `npm exec nx lint @epam/chat`, `npm exec nx test @epam/chat -- SharePopoverContainer`, and a manual share-popover check for a personal prompt.
+- [X] 14.3 Verify: `npm exec nx lint @epam/chat`, `npm exec nx test @epam/chat -- SharePopoverContainer`, and a manual share-popover check for a personal prompt.
