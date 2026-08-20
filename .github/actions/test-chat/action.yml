@@ -4,6 +4,9 @@ inputs:
   application-url:
     description: "Application URL of the environment, e.g., `https://chat-my-repo-pr-1.example.com`"
     required: true
+  enviroment-url:
+    description: "URL of the deployed review environment (common services)"
+    required: true
   test-repository:
     description: "GitHub repository with e2e-tests source code"
     default: "epam/ai-dial-chat"
