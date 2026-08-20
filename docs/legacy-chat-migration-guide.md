@@ -30,6 +30,8 @@ API, never a rebuild of the frontend image.
 ## Migration checklist
 
 1. Stand up `chat-api` with DIAL Core access and at least one auth provider.
+   If the provider uses a private CA, configure its trust bundle before startup
+   as described in [Private certificate authorities](#private-certificate-authorities).
 2. Port environment variables — see [Environment variables](#environment-variables).
 3. Port UI feature flags — see [UI feature flags](#ui-feature-flags).
 4. Port the themes configuration — see [Themes](#themes).
@@ -115,6 +117,20 @@ Practical consequences for a migration:
   are in `apps/chat-api/README.md` § "Auth provider environment variables".
 - For a cross-site iframe deployment, set `AUTH_COOKIE_SECURE=true` so the
   session cookie is `SameSite=None; Secure`.
+
+### Private certificate authorities
+
+In 1.0, `chat-api` discovers every configured OIDC provider during startup. A
+provider certificate issued by a private CA therefore causes startup to fail
+unless that CA is already trusted by the Node.js process.
+
+Provide the deployment's private CA bundle when migrating. Mount the PEM-encoded
+bundle into the `chat-api` container and set `NODE_EXTRA_CA_CERTS` to its
+in-container path before the process starts. The complete Docker Compose example
+and certificate-chain guidance are in the Chat API README section
+[Trusting a private certificate authority](../apps/chat-api/README.md#trusting-a-private-certificate-authority).
+Do not use `NODE_TLS_REJECT_UNAUTHORIZED=0`, which disables certificate
+verification for every HTTPS connection made by the process.
 
 Design detail — cookie format, refresh, federated logout, `SessionGuard` — is in
 [`docs/auth/`](./auth/).

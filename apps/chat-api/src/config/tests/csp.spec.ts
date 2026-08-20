@@ -19,12 +19,13 @@ class PingController {
 
 const createTestApp = async (
   allowedIframeOrigins: string[],
+  secureTransport = true,
 ): Promise<INestApplication> => {
   @Module({ controllers: [PingController] })
   class CspTestModule {}
 
   const app = await NestFactory.create(CspTestModule, { logger: false });
-  app.use(helmet(createHelmetOptions(allowedIframeOrigins)));
+  app.use(helmet(createHelmetOptions(allowedIframeOrigins, secureTransport)));
   await app.init();
   await app.listen(0, '127.0.0.1');
   return app;
@@ -96,5 +97,31 @@ describe('Helmet security headers', () => {
       'frame-ancestors https://partner.example.com',
     );
     expect(response.headers['x-frame-options']).toBeUndefined();
+  });
+
+  it('enforces HTTPS transport by default', async () => {
+    app = await createTestApp([]);
+    const response = await request(app.getHttpServer())
+      .get('/ping')
+      .expect(200);
+
+    expect(response.headers['content-security-policy']).toContain(
+      'upgrade-insecure-requests',
+    );
+    expect(response.headers['strict-transport-security']).toBe(
+      'max-age=31536000; includeSubDomains; preload',
+    );
+  });
+
+  it('allows local HTTP transport when secure transport is disabled', async () => {
+    app = await createTestApp([], false);
+    const response = await request(app.getHttpServer())
+      .get('/ping')
+      .expect(200);
+
+    expect(response.headers['content-security-policy']).not.toContain(
+      'upgrade-insecure-requests',
+    );
+    expect(response.headers['strict-transport-security']).toBeUndefined();
   });
 });

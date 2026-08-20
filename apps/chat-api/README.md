@@ -106,7 +106,7 @@ At least one identity provider (see [Auth provider environment variables](#auth-
 | `LOG_LEVEL`                             | Environment-dependent          | Minimum NestJS log level: `debug`, `log`, `warn`, or `error`. Defaults to `log` in production and `debug` otherwise.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `AUTH_SESSION_COOKIE_NAME`              | `__Host-chat.sess`             | Session cookie name                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `AUTH_TRANSACTION_COOKIE_NAME`          | `__Host-chat.tx`               | Login transaction cookie name                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| `AUTH_COOKIE_SECURE`                    | `true`                         | Set to `false` only for local HTTP smoke testing; runtime drops `__Host-` from cookie names when disabled                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `AUTH_COOKIE_SECURE`                    | `true`                         | Set to `false` only for local HTTP smoke testing; runtime drops `__Host-` from cookie names and disables HSTS plus CSP `upgrade-insecure-requests` when disabled                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `AUTH_POST_LOGOUT_REDIRECT_URI`         | —                              | Where the browser lands after IdP logout, applied to every configured provider. Required if at least one identity provider is configured.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `ADMIN_ROLE_NAMES`                      | `admin`                        | Comma-separated fallback admin role names, used by any provider that doesn't set its own `AUTH_{PROVIDER}_ADMIN_ROLE_NAMES`                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `DIAL_ROLES_FIELD`                      | `dial_roles`                   | Fallback dot-separated path to the roles claim in the ID/access token, used by any provider that doesn't set its own `AUTH_{PROVIDER}_DIAL_ROLES_FIELD`                                                                                                                                                                                                                                                                                                                                                                                                                              |
@@ -287,6 +287,36 @@ Google has no host variable (issuer is the fixed `https://accounts.google.com`) 
 
 \* Required only if that provider is being configured at all (signaled by its `CLIENT_ID` variable being set); the provider is skipped entirely otherwise.
 
+#### Trusting a private certificate authority
+
+At startup, `chat-api` discovers every configured OIDC provider over HTTPS. If
+an identity provider uses a certificate issued by a private CA, the Node.js
+process must trust that CA before the application starts; otherwise provider
+discovery fails and the application does not boot.
+
+Mount a PEM-encoded CA bundle into the container and point
+[`NODE_EXTRA_CA_CERTS`](https://nodejs.org/api/cli.html#node_extra_ca_certsfile)
+to it. For example, with Docker Compose:
+
+```yaml
+services:
+  chat:
+    environment:
+      NODE_EXTRA_CA_CERTS: /certificates/company-ca.pem
+    volumes:
+      - ./company-ca.pem:/certificates/company-ca.pem:ro
+```
+
+The bundle should contain the issuing root and any required intermediate CA
+certificates. If the server certificate is genuinely self-signed, include that
+certificate itself. The file must exist when the Node.js process starts because
+`NODE_EXTRA_CA_CERTS` is read only at process launch.
+
+`NODE_EXTRA_CA_CERTS` is a Node.js runtime variable, not an application-owned
+variable validated by `chat-api`. Do not use `NODE_TLS_REJECT_UNAUTHORIZED=0`:
+it disables certificate verification for every HTTPS connection made by the
+process.
+
 ### 3. Run the Application
 
 **Development mode:**
@@ -438,7 +468,7 @@ property so a client failure can be correlated with server traces and logs.
 - **Input Validation**: A global `ValidationPipe` (`whitelist`, `forbidNonWhitelisted`, `transform`) plus per-endpoint DTOs with validation decorators
 - **Path Traversal Protection**: Any string reaching a path, URL, or log line is constrained by an allowlist regex
 - **Session Security**: Encrypted session cookie, `HttpOnly` + `Secure` + `SameSite=Lax`, `__Host-` prefixed when host-scoped, with CSRF protection on state-changing requests
-- **Security Headers**: Helmet middleware with CSP, HSTS, and other security headers; `frame-ancestors` driven by `ALLOWED_IFRAME_ORIGINS`
+- **Security Headers**: Helmet middleware with CSP, HSTS, and other security headers; `frame-ancestors` driven by `ALLOWED_IFRAME_ORIGINS`. Local HTTP smoke mode (`AUTH_COOKIE_SECURE=false`) disables HSTS and CSP `upgrade-insecure-requests`
 - **CORS Configuration**: Restricted to configured origin with credentials support
 - **Rate Limiting**: Throttling to prevent abuse (100 req/min default, customizable per endpoint)
 - **Secret Hygiene**: Tokens, refresh tokens, and cookie payloads are never logged
@@ -651,6 +681,9 @@ kill -TERM %1                                  # should exit cleanly within a fe
 
 - **Check environment variables**: Ensure all required variables are set
 - **Validation errors**: The application validates environment variables at startup and will fail with clear error messages if configuration is invalid
+- **Self-signed certificate error**: Mount the private CA bundle and configure
+  `NODE_EXTRA_CA_CERTS` as described in
+  [Trusting a private certificate authority](#trusting-a-private-certificate-authority)
 
 ### Theme endpoints returning errors
 

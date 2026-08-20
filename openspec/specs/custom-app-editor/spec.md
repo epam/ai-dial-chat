@@ -68,6 +68,17 @@ The Save action on the Settings step SHALL stay disabled until the Chat completi
 - **WHEN** user types a MIME type and confirms
 - **THEN** it is added as a tag in the Attachment types field
 
+### Requirement: Attachment types — invalid MIME type blocks save
+A non-MIME-type entry MAY still be accepted as a tag in the Attachment types `TagInput` (the field shows an inline error as soon as the tag is added), but `CustomAppEditor` SHALL treat that inline error as blocking, the same way it treats the Chat completion URL error: clicking Save while any tag fails MIME-type validation SHALL set the field error and send no request, instead of routing through the "save anyway" confirmation used for other soft warnings (e.g. Features data). This differs from the Features-data-invalid case specifically because letting an invalid tag reach the create/update request has been observed to also silently drop unrelated Settings fields (e.g. Max attachments number) from what gets persisted; blocking the request is the fix, not merely a stricter opinion on tag content.
+
+#### Scenario: Save blocked by an invalid MIME type tag
+- **WHEN** the Attachment types field contains at least one tag that is not a valid MIME type and the user clicks Save
+- **THEN** the Attachment types field shows an "invalid MIME type" error and no create/update request is sent
+
+#### Scenario: Unrelated fields are unaffected by a blocked save
+- **WHEN** a save attempt is blocked by an invalid MIME type tag
+- **THEN** other Settings field values (e.g. Max attachments number) are left exactly as entered, since no request was sent and no reload occurred
+
 ### Requirement: Create — no type sent
 On save in creation mode, `CustomAppEditor` SHALL NOT send `type` in the create payload. Custom apps are plain-endpoint applications with no application-type schema ID; `application_type_schema_id` is omitted from the DIAL Core body.
 
