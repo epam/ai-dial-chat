@@ -27,6 +27,7 @@ export const buildFrameAncestorsDirective = (
  */
 export const createHelmetOptions = (
   allowedIframeOrigins: string[],
+  secureTransport = true,
 ): HelmetOptions => ({
   crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
   contentSecurityPolicy: {
@@ -41,12 +42,15 @@ export const createHelmetOptions = (
       connectSrc: ["'self'", 'blob:'],
       frameSrc: buildFrameSrcDirective(allowedIframeOrigins),
       frameAncestors: buildFrameAncestorsDirective(allowedIframeOrigins),
+      upgradeInsecureRequests: secureTransport ? [] : null,
     },
   },
   frameguard: allowedIframeOrigins.length > 0 ? false : undefined,
-  hsts: {
-    maxAge: 31536000, // 1 year in seconds
-    includeSubDomains: true,
-    preload: true,
-  },
+  hsts: secureTransport
+    ? {
+        maxAge: 31536000, // 1 year in seconds
+        includeSubDomains: true,
+        preload: true,
+      }
+    : false,
 });
