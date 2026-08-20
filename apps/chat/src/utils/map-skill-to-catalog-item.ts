@@ -346,8 +346,7 @@ export const buildSkillContentTree = (
     }
 
     const lastSlash = displayPath.lastIndexOf('/');
-    const parentPath =
-      lastSlash === -1 ? '' : displayPath.slice(0, lastSlash);
+    const parentPath = lastSlash === -1 ? '' : displayPath.slice(0, lastSlash);
     const parentItems = getOrCreateFolderChain(
       parentPath,
       folderNodesByPath,
