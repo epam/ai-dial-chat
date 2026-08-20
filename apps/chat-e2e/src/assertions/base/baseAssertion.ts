@@ -597,6 +597,26 @@ export class BaseAssertion {
       .toEqual(expectedValue);
   }
 
+  public assertArrayIncludes(
+    actualValues: unknown[],
+    expectedValue: unknown,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(actualValues, expectedMessage ?? ExpectedMessages.valuesAreEqual)
+      .toContain(expectedValue);
+  }
+
+  public assertValuesAreNotEqual(
+    actualValue: unknown,
+    expectedValue: unknown,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(actualValue, expectedMessage ?? ExpectedMessages.valuesAreNotEqual)
+      .not.toEqual(expectedValue);
+  }
+
   public assertValueIsNotUndefined(
     actualValue: unknown,
     expectedMessage?: string,

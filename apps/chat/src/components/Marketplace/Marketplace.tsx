@@ -110,6 +110,7 @@ export const Marketplace = () => {
             className={classNames('flex min-h-0 grow flex-col', {
               hidden: !isAgentsTab,
             })}
+            data-qa={isAgentsTab ? 'entities-section-container' : null}
           >
             <AgentsTabRenderer />
           </div>
@@ -117,6 +118,7 @@ export const Marketplace = () => {
             className={classNames('flex min-h-0 grow flex-col', {
               hidden: isAgentsTab,
             })}
+            data-qa={!isAgentsTab ? 'entities-section-container' : null}
           >
             <ToolsTabRenderer />
           </div>
