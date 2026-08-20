@@ -1520,7 +1520,7 @@ const CatalogView: FC<Props> = ({
       <input
         ref={skillArchiveFileInputRef}
         type="file"
-        accept=".zip"
+        accept=".zip,.md"
         className="sr-only"
         tabIndex={-1}
         aria-label={t(SkillArchiveImportI18nKeys.FileInputAriaLabel)}

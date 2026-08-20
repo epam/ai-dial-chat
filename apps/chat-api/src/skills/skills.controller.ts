@@ -417,15 +417,16 @@ export class SkillsController {
   })
   @ApiOperation({
     operationId: 'importSkillArchive',
-    summary: 'Create a new skill from an uploaded ZIP archive',
+    summary:
+      'Create a new skill from an uploaded ZIP archive or a standalone SKILL.md',
     description:
-      "Safely extracts and validates a whole-skill ZIP archive server-side (container/structure validity, path safety, encrypted/symlink rejection, incremental decompression limits, manifest UTF-8/frontmatter checks), then creates the skill atomically via the same If-None-Match: * uploadSkillFolder call createSkill uses. Uses the authenticated user's own bucket; a client-supplied bucket is never trusted.",
+      "Accepts either a whole-skill ZIP archive or a standalone file named exactly (case-sensitive) SKILL.md in the file field, safely extracts and validates it server-side (container/structure validity, path safety, encrypted/symlink rejection, incremental decompression limits, manifest UTF-8/frontmatter checks), then creates the skill atomically via the same If-None-Match: * uploadSkillFolder call createSkill uses. The two forms are told apart by the field's exact filename, never by its declared content type. Uses the authenticated user's own bucket; a client-supplied bucket is never trusted.",
   })
   @ApiResponse({ status: 201, type: SkillImportResponseDto })
   @ApiResponse({
     status: 400,
     description:
-      'Missing file, non-ZIP or corrupted archive, missing/ambiguous manifest, unsafe path, or invalid manifest content',
+      'Missing file, unsupported file type (neither a valid ZIP nor a file named exactly SKILL.md), non-ZIP or corrupted archive, missing/ambiguous manifest, unsafe path, or invalid manifest content',
   })
   @ApiResponse({
     status: 401,
@@ -439,12 +440,12 @@ export class SkillsController {
   @ApiResponse({
     status: 413,
     description:
-      'The archive, a decompressed file, or the total decompressed content exceeds a configured limit',
+      'The archive, a decompressed file, the total decompressed content, or a standalone SKILL.md exceeds a configured limit',
   })
   @ApiResponse({
     status: 422,
     description:
-      'Archive is structurally invalid: too many entries, more than one skill, duplicate paths, or an encrypted/symlink/unsupported entry',
+      'Archive is structurally invalid: too many entries, more than one skill, duplicate paths, or an encrypted/symlink/unsupported entry (standalone SKILL.md uploads never produce this status)',
   })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
@@ -467,6 +468,7 @@ export class SkillsController {
     req.on('close', () => abortController.abort());
     return this.skillsService.importSkillArchive(
       bucket,
+      file.originalname,
       file.path,
       at,
       abortController.signal,

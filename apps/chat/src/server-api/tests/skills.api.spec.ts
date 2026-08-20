@@ -433,6 +433,18 @@ describe('importSkillArchive', () => {
       error,
     );
   });
+
+  it('delegates to the generated SkillsApi with a SKILL.md-named File unchanged', async () => {
+    const spy = vi
+      .spyOn(skillsApi, 'importSkillArchive')
+      .mockResolvedValue(MOCK_IMPORT_RESPONSE);
+    const file = new File(['---\nname: docs-helper\n---\n'], 'SKILL.md');
+
+    const result = await importSkillArchive(file);
+
+    expect(spy).toHaveBeenCalledWith({ file }, undefined);
+    expect(result).toEqual(MOCK_IMPORT_RESPONSE);
+  });
 });
 
 const MOCK_OPERATION_RESULT: SkillOperationResultDto = { success: true };

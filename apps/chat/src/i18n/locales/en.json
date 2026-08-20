@@ -1220,19 +1220,20 @@
     "manifestImportConfirmMessage": "Importing this SKILL.md will replace the Name, Description, and Instructions fields. This cannot be undone."
   },
   "skillArchiveImport": {
-    "fileInputAriaLabel": "Upload a skill archive",
+    "fileInputAriaLabel": "Upload a skill ZIP archive or a SKILL.md file",
     "status": {
-      "uploading": "Uploading skill archive…",
-      "success": "Skill archive uploaded successfully.",
-      "error": "Skill archive upload failed."
+      "uploading": "Uploading skill…",
+      "success": "Skill uploaded successfully.",
+      "error": "Skill upload failed."
     },
     "error": {
       "title": "Skill import failed",
       "validation": "This archive isn't a valid skill package. Please check its contents and try again.",
+      "unsupportedFilename": "Please select a ZIP archive or a file named exactly \"SKILL.md\".",
       "collision": "A skill with this name already exists.",
       "rateLimited": "Too many attempts. Please wait a moment and try again.",
       "serviceUnavailable": "The service is temporarily unavailable. Please try again.",
-      "generic": "Couldn't import this skill archive. Please try again."
+      "generic": "Couldn't import this skill. Please try again."
     }
   },
   "entityNotifications": {
