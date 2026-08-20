@@ -635,6 +635,7 @@ const ConversationView: FC<Props> = ({
                     index={index}
                     totalCount={messages.length}
                     isAssistantTyping={isAssistantTyping}
+                    isCompactTypography={isMobile}
                     editingMessageIndexes={editingMessageIndexes}
                     onSelectStarter={onSelectStarter}
                     onStartEdit={isReadOnly ? undefined : onStartEdit}
