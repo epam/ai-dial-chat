@@ -30,9 +30,9 @@ private_output: true
 vars: [PSM_WINDOW_DAYS, PSM_MAX_FINDINGS]
 
 # Inspect chat-2.0's real dependency surface + lockfile, not the sandbox base.
-# The platform overlays development-1.0 source (preserving .github/.claude/agents)
+# The platform overlays development source (preserving .github/.claude/agents)
 # so fetch.sh reads that branch's package-lock.json.
-analysis_ref: development-1.0
+analysis_ref: development
 
 # Sonnet: the OSV pass is deterministic (script), but the news pass needs real
 # RELEVANT/TANGENTIAL/IGNORE judgement against the stack.
