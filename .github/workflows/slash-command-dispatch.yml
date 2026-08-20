@@ -33,9 +33,9 @@ jobs:
                 "issue_type": "pull-request",
                 "repository": "epam/ai-dial-ci",
                 "static_args": [
-                  "application=${{ steps.pr.outputs.base-ref == 'development-1.0' && 'ai-dial-chat-ng' || github.event.repository.name }}",
+                  "application=${{ steps.pr.outputs.base-ref == 'development' && 'ai-dial-chat-ng' || github.event.repository.name }}",
                   "test-applications=chat,overlay",
-                  "${{ steps.pr.outputs.base-ref == 'development-1.0' && 'skip-e2e' || '' }}"
+                  "${{ steps.pr.outputs.base-ref == 'development' && 'skip-e2e' || '' }}"
                 ]
               }
             ]
