@@ -5,7 +5,7 @@ on:
     types: [opened, synchronize, ready_for_review, reopened] # Allowed types: https://github.com/anthropics/claude-code-action/blob/4481e6d3c7bbb88db2a928ca3444c536f589c7c1/src/modes/detector.ts#L101
     branches:
       - development
-      - development-1.0
+      - development-0.x
       - release-*.*
 
 concurrency:
@@ -35,7 +35,7 @@ jobs:
           persist-credentials: true # TODO: set false when upstream issue be resolved https://github.com/anthropics/claude-code-action/issues/1236
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@6b082c41935b4c8a3b8b0ef85ba4ba4d9eeb8975 # v1.0.189
+        uses: anthropics/claude-code-action@9d7150bc8a3dae8149739a88019d192b579ad90c # v1.0.193
         with:
           anthropic_api_key: ${{ secrets.DIAL_API_KEY }}
           prompt: |

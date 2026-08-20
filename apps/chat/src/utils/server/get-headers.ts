@@ -26,7 +26,8 @@ export const getApiHeaders = ({
     headers['Api-Key'] = process.env.DIAL_API_KEY;
   }
 
-  const proxyLanguageHeader = process.env.PROXY_LANGUAGE_HEADER;
+  const proxyLanguageHeader =
+    process.env.PROXY_LANGUAGE_HEADER || 'accept-language';
   if (proxyLanguageHeader && language) {
     headers[proxyLanguageHeader] = language;
   }
