@@ -229,6 +229,9 @@ export class DeploymentsDetailsService {
       throw new NotFoundException('Resource not found');
     }
     const raw = result.data;
+    this.logger.debug(
+      `DIAL Core model details for "${deployment}": ${JSON.stringify(raw)}`,
+    );
     const limits = raw.limits;
 
     const data: DeploymentDetailsDto = {
@@ -292,6 +295,10 @@ export class DeploymentsDetailsService {
         createdAt: raw.created_at,
       },
     };
+
+    this.logger.debug(
+      `Model details sent to frontend for "${deployment}": ${JSON.stringify(data)}`,
+    );
 
     return data;
   }

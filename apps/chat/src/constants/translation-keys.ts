@@ -184,6 +184,8 @@ export enum CatalogI18nKeys {
   DetailsModelVendor = 'catalog.details.modelSpecification.vendor',
   DetailsModelLicense = 'catalog.details.modelSpecification.license',
   DetailsModelKnowledgeCutoffDate = 'catalog.details.modelSpecification.knowledgeCutoffDate',
+  DetailsModelInputModalities = 'catalog.details.modelSpecification.inputModalities',
+  DetailsModelOutputModalities = 'catalog.details.modelSpecification.outputModalities',
   DetailsTabLimits = 'catalog.details.tabLimits',
   DetailsLimitsRequestsPerHour = 'catalog.details.limits.requestsPerHour',
   DetailsLimitsRequestsPerDay = 'catalog.details.limits.requestsPerDay',
