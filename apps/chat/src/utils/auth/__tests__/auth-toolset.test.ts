@@ -14,36 +14,43 @@ const ORIGIN = 'https://chat.example.com';
 const SIGN_IN_URL = 'https://provider.example.com/authorize';
 
 /** Stands in for the login window the browser hands back from `window.open` */
-class FakeAuthWindow {
-  public closed = false;
-  public href = 'about:blank';
-  public close = vi.fn(() => {
-    this.closed = true;
+const createFakeAuthWindow = () => {
+  const state = { closed: false, href: 'about:blank' };
+
+  const replace = vi.fn((url: string) => {
+    state.href = url;
   });
-  public replace = vi.fn((url: string) => {
-    this.href = url;
+  const close = vi.fn(() => {
+    state.closed = true;
   });
 
-  get location() {
-    const authWindow = this;
-    return {
+  return {
+    state,
+    replace,
+    close,
+    get closed() {
+      return state.closed;
+    },
+    location: {
+      // Read fresh on every poll, so it reports the window's current href
       get href() {
-        return authWindow.href;
+        return state.href;
       },
-      replace: this.replace,
-    };
-  }
-}
+      replace,
+    },
+  };
+};
 
-let authWindow: FakeAuthWindow;
+let authWindow: ReturnType<typeof createFakeAuthWindow>;
 
-const asWindow = (value: FakeAuthWindow) => value as unknown as Window;
+const asWindow = (value: ReturnType<typeof createFakeAuthWindow>) =>
+  value as unknown as Window;
 
 beforeEach(() => {
   vi.useFakeTimers();
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
-  authWindow = new FakeAuthWindow();
+  authWindow = createFakeAuthWindow();
 
   Object.defineProperty(window, 'location', {
     value: { origin: ORIGIN, assign: vi.fn() },
@@ -78,7 +85,7 @@ describe('signInToolset', () => {
   const flush = () => vi.advanceTimersByTimeAsync(0);
 
   const settleWithUrl = (url: string) => {
-    authWindow.href = url;
+    authWindow.state.href = url;
     return vi.advanceTimersByTimeAsync(300);
   };
 
@@ -101,7 +108,7 @@ describe('signInToolset', () => {
   });
 
   it('redirects the current tab when the reserved window was discarded', async () => {
-    authWindow.closed = true;
+    authWindow.state.closed = true;
 
     await expect(
       signInToolset(SIGN_IN_URL, asWindow(authWindow)),
@@ -159,7 +166,7 @@ describe('signInToolset', () => {
     void signIn.catch(onRejected);
     await flush();
 
-    authWindow.closed = true;
+    authWindow.state.closed = true;
     await vi.advanceTimersByTimeAsync(300);
 
     expect(onRejected.mock.calls[0][0].details).toMatchObject({
