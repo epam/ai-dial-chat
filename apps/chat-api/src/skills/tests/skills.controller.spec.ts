@@ -10,14 +10,17 @@ import {
   PreconditionFailedException,
   ServiceUnavailableException,
   UnauthorizedException,
+  UnprocessableEntityException,
   ValidationPipe,
   VersioningType,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import type { Request, Response } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SkillListResponseDto } from '../dto/skill-metadata.dto';
+import { SkillArchiveUploadInterceptor } from '../import/skill-archive-upload.interceptor';
 import { SkillsController } from '../skills.controller';
 import { SkillsService } from '../skills.service';
 
@@ -36,7 +39,11 @@ const mockListResponse: SkillListResponseDto = {
 async function buildApp(service: unknown): Promise<INestApplication> {
   const module: TestingModule = await Test.createTestingModule({
     controllers: [SkillsController],
-    providers: [{ provide: SkillsService, useValue: service }],
+    providers: [
+      { provide: SkillsService, useValue: service },
+      SkillArchiveUploadInterceptor,
+      { provide: ConfigService, useValue: { get: () => undefined } },
+    ],
   }).compile();
 
   const app = module.createNestApplication();
@@ -74,6 +81,7 @@ describe('SkillsController (integration)', () => {
     createSkill: ReturnType<typeof vi.fn>;
     updateSkill: ReturnType<typeof vi.fn>;
     uploadSkillFile: ReturnType<typeof vi.fn>;
+    importSkillArchive: ReturnType<typeof vi.fn>;
     deleteSkill: ReturnType<typeof vi.fn>;
     deleteSkillFile: ReturnType<typeof vi.fn>;
     createSkillGroupingFolder: ReturnType<typeof vi.fn>;
@@ -94,6 +102,7 @@ describe('SkillsController (integration)', () => {
       createSkill: vi.fn(),
       updateSkill: vi.fn(),
       uploadSkillFile: vi.fn(),
+      importSkillArchive: vi.fn(),
       deleteSkill: vi.fn(),
       deleteSkillFile: vi.fn(),
       createSkillGroupingFolder: vi.fn(),
@@ -439,6 +448,129 @@ describe('SkillsController (integration)', () => {
         .field('skillManifest', 'manifest')
         .field('filePaths', '[]')
         .expect(429);
+    });
+  });
+
+  describe('POST /api/v1/skills/import', () => {
+    it('returns 201 and delegates to the service using the session bucket', async () => {
+      service.importSkillArchive.mockResolvedValue({
+        name: 'docs-helper',
+        path: 'docs-helper',
+        url: 'skills/test-bucket/docs-helper',
+        etag: '"abc123"',
+      });
+
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/skills/import')
+        .attach('file', Buffer.from('PK\x03\x04fake zip bytes'), 'skill.zip')
+        .expect(201);
+
+      expect(res.body).toEqual({
+        name: 'docs-helper',
+        path: 'docs-helper',
+        url: 'skills/test-bucket/docs-helper',
+        etag: '"abc123"',
+      });
+      expect(service.importSkillArchive).toHaveBeenCalledWith(
+        TEST_USER.bucket,
+        expect.any(String),
+        TEST_USER.at,
+        expect.any(AbortSignal),
+      );
+    });
+
+    it('ignores any client-supplied bucket and uses the session bucket', async () => {
+      service.importSkillArchive.mockResolvedValue({
+        name: 'docs-helper',
+        path: 'docs-helper',
+        url: 'skills/test-bucket/docs-helper',
+      });
+
+      await request(app.getHttpServer())
+        .post('/api/v1/skills/import')
+        .field('bucket', 'someone-elses-bucket')
+        .attach('file', Buffer.from('fake zip bytes'), 'skill.zip')
+        .expect(201);
+
+      expect(service.importSkillArchive).toHaveBeenCalledWith(
+        TEST_USER.bucket,
+        expect.any(String),
+        TEST_USER.at,
+        expect.any(AbortSignal),
+      );
+    });
+
+    it('returns 400 when no file is attached', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/skills/import')
+        .expect(400);
+      expect(service.importSkillArchive).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when the service rejects an invalid archive', async () => {
+      service.importSkillArchive.mockRejectedValue(
+        new BadRequestException('Invalid or corrupted ZIP archive'),
+      );
+      await request(app.getHttpServer())
+        .post('/api/v1/skills/import')
+        .attach('file', Buffer.from('not a zip'), 'skill.zip')
+        .expect(400);
+    });
+
+    it('returns 409 when the service throws ConflictException', async () => {
+      service.importSkillArchive.mockRejectedValue(new ConflictException());
+      await request(app.getHttpServer())
+        .post('/api/v1/skills/import')
+        .attach('file', Buffer.from('fake zip bytes'), 'skill.zip')
+        .expect(409);
+    });
+
+    it('returns 413 when the service throws PayloadTooLargeException', async () => {
+      service.importSkillArchive.mockRejectedValue(
+        new PayloadTooLargeException(),
+      );
+      await request(app.getHttpServer())
+        .post('/api/v1/skills/import')
+        .attach('file', Buffer.from('fake zip bytes'), 'skill.zip')
+        .expect(413);
+    });
+
+    it('returns 422 when the service throws UnprocessableEntityException', async () => {
+      service.importSkillArchive.mockRejectedValue(
+        new UnprocessableEntityException('Archive contains too many entries'),
+      );
+      await request(app.getHttpServer())
+        .post('/api/v1/skills/import')
+        .attach('file', Buffer.from('fake zip bytes'), 'skill.zip')
+        .expect(422);
+    });
+
+    it('returns 429 when the service throws a 429 HttpException', async () => {
+      service.importSkillArchive.mockRejectedValue(
+        new HttpException('Too many requests', 429),
+      );
+      await request(app.getHttpServer())
+        .post('/api/v1/skills/import')
+        .attach('file', Buffer.from('fake zip bytes'), 'skill.zip')
+        .expect(429);
+    });
+
+    it('returns 502 when the service throws BadGatewayException', async () => {
+      service.importSkillArchive.mockRejectedValue(new BadGatewayException());
+      await request(app.getHttpServer())
+        .post('/api/v1/skills/import')
+        .attach('file', Buffer.from('fake zip bytes'), 'skill.zip')
+        .expect(502);
+    });
+
+    it('returns 503 when the service throws ServiceUnavailableException', async () => {
+      service.importSkillArchive.mockRejectedValue(
+        new ServiceUnavailableException(),
+      );
+      await request(app.getHttpServer())
+        .post('/api/v1/skills/import')
+        .attach('file', Buffer.from('fake zip bytes'), 'skill.zip')
+        .expect(503);
     });
   });
 
