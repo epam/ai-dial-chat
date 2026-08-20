@@ -59,7 +59,7 @@ The voice bar SHALL have: height 40 px inner + `py-2` vertical padding (56 px to
 During recording the voice bar SHALL display:
 - A pulsing red recording dot on the left of the waveform (`--ci-voice-accent`, fallback `--text-error`). No elapsed-time counter is shown.
 - A live animated bar-histogram waveform rendered on a `<canvas>` element. A fixed-length ring buffer (200 slots) holds one RMS amplitude sample per `requestAnimationFrame` tick at ~60 fps. Each tick overwrites the oldest slot, advancing the write index, so the oldest bars scroll off the left edge and new bars appear on the right — giving a smooth scrolling effect. The canvas renders all 200 slots as narrow vertical bars (3 px wide, 1 px gap) spanning the canvas width. Bar heights are scaled by ×6 (clamped to canvas height) with a minimum height of 3 px. Bar colour is `--ci-voice-waveform` (fallback `--text-primary`).
-- A red mic icon button on the right. Clicking it stops recording, immediately attaches the audio blob as a `File` attachment, and returns to idle.
+- A white filled stop square button on the right. Clicking it stops recording, immediately attaches the audio blob as a `File` attachment, and returns to idle.
 - An X (discard) button on the right. Clicking it discards the recording without attaching anything and returns to idle.
 
 The RAF loop runs only while `state === 'recording'` and is cancelled when recording stops or the component unmounts.
