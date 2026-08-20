@@ -287,6 +287,36 @@ Google has no host variable (issuer is the fixed `https://accounts.google.com`) 
 
 \* Required only if that provider is being configured at all (signaled by its `CLIENT_ID` variable being set); the provider is skipped entirely otherwise.
 
+#### Trusting a private certificate authority
+
+At startup, `chat-api` discovers every configured OIDC provider over HTTPS. If
+an identity provider uses a certificate issued by a private CA, the Node.js
+process must trust that CA before the application starts; otherwise provider
+discovery fails and the application does not boot.
+
+Mount a PEM-encoded CA bundle into the container and point
+[`NODE_EXTRA_CA_CERTS`](https://nodejs.org/api/cli.html#node_extra_ca_certsfile)
+to it. For example, with Docker Compose:
+
+```yaml
+services:
+  chat:
+    environment:
+      NODE_EXTRA_CA_CERTS: /certificates/company-ca.pem
+    volumes:
+      - ./company-ca.pem:/certificates/company-ca.pem:ro
+```
+
+The bundle should contain the issuing root and any required intermediate CA
+certificates. If the server certificate is genuinely self-signed, include that
+certificate itself. The file must exist when the Node.js process starts because
+`NODE_EXTRA_CA_CERTS` is read only at process launch.
+
+`NODE_EXTRA_CA_CERTS` is a Node.js runtime variable, not an application-owned
+variable validated by `chat-api`. Do not use `NODE_TLS_REJECT_UNAUTHORIZED=0`:
+it disables certificate verification for every HTTPS connection made by the
+process.
+
 ### 3. Run the Application
 
 **Development mode:**
@@ -651,6 +681,9 @@ kill -TERM %1                                  # should exit cleanly within a fe
 
 - **Check environment variables**: Ensure all required variables are set
 - **Validation errors**: The application validates environment variables at startup and will fail with clear error messages if configuration is invalid
+- **Self-signed certificate error**: Mount the private CA bundle and configure
+  `NODE_EXTRA_CA_CERTS` as described in
+  [Trusting a private certificate authority](#trusting-a-private-certificate-authority)
 
 ### Theme endpoints returning errors
 
