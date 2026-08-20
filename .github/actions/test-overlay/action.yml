@@ -1,7 +1,7 @@
 name: test-overlay
 description: "Run ai-dial-chat (overlay mode) e2e-tests"
 inputs:
-  environment-url:
+  application-url:
     description: "Application URL of the environment, e.g., `https://overlay-my-repo-pr-1.example.com`"
     required: true
   test-repository:
@@ -71,7 +71,7 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       env:
-        ENVIRONMENT_URL: ${{ inputs.environment-url }}
+        ENVIRONMENT_URL: ${{ inputs.application-url }}
     - run: echo $E2E_USERNAME
       shell: bash
     - name: Run tests
@@ -88,7 +88,7 @@ runs:
         E2E_ADMIN: ${{ env.E2E_ADMIN }}
         E2E_OVERLAY_USERNAME: ${{ env.E2E_OVERLAY_USERNAME }}
         E2E_PASSWORD: ${{ env.E2E_PASSWORD }}
-        NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.environment-url }}
+        NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.application-url }}
         NEXT_PUBLIC_OVERLAY_USER_BUCKET: ${{ env.NEXT_PUBLIC_OVERLAY_USER_BUCKET }}
     - name: Generate Allure Report
       if: ${{ !cancelled() }}
