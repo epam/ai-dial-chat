@@ -603,7 +603,7 @@ integrations from typos and removed keys.
 
 ### Supported flags and defaults
 
-The new chat supports 40 flags.
+The new chat supports 41 flags.
 
 Enabled by default:
 
@@ -661,7 +661,15 @@ hide-regenerate-assistant-message
 hide-user-menu
 hide-user-settings
 hide-keyboard-shortcuts
+hide-navigation-menu
 ```
+
+`hide-navigation-menu` removes the mobile navigation menu in full â the
+header's hamburger button and the sheet behind it, which carries the nav items,
+the profile row, keyboard shortcuts, and log out. Reach for it when the host
+portal already owns sign-in and sign-out, so the sheet's log-out row would only
+mislead. It leaves the desktop navigation rail and its user menu alone; that
+surface is `hide-user-menu`'s.
 
 `disallow-change-agent` and `hide-change-agent` both act on the in-chat
 agent selector, and either one removes it: a control the user cannot open is

@@ -100,6 +100,12 @@ export enum OverlayFeature {
   ConversationsSection = 'conversations-section',
   /** Enables the app header. */
   Header = 'header',
+  /**
+   * Hides the header's hamburger button and the navigation sheet it opens â
+   * the mobile-breakpoint navigation surface carrying the nav items, profile,
+   * keyboard shortcuts, and log out.
+   */
+  HideNavigationMenu = 'hide-navigation-menu',
   /** Makes the conversations sidebar section open by default. */
   ShowConversationsSectionByDefault = 'showConversationsSectionByDefault',
   /** Hides the conversations panel's source filter tabs (All / My chats / Shared / Organization). */

@@ -8,6 +8,7 @@ import {
   ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationPanelI18nKeys,
+  NavigationI18nKeys,
   SidebarI18nKeys,
 } from '../../../constants/translation-keys';
 import { SourcesSidebarProvider } from '../../../context/SourcesSidebarContext';
@@ -66,8 +67,29 @@ describe('Header', () => {
       isLoading: false,
     });
     mockUseUiFeature.mockImplementation(
-      (feature) => feature !== OverlayFeature.HideNewConversation,
+      (feature) =>
+        feature !== OverlayFeature.HideNewConversation &&
+        feature !== OverlayFeature.HideNavigationMenu,
     );
+  });
+
+  it('hides the hamburger button when hide-navigation-menu is enabled', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) =>
+        feature !== OverlayFeature.HideNewConversation &&
+        feature !== OverlayFeature.ConversationsPanelToggle,
+    );
+    renderHeader();
+    expect(
+      screen.queryByRole('button', { name: NavigationI18nKeys.OpenMenu }),
+    ).toBeNull();
+  });
+
+  it('renders the hamburger button by default', () => {
+    renderHeader();
+    expect(
+      screen.getByRole('button', { name: NavigationI18nKeys.OpenMenu }),
+    ).toBeTruthy();
   });
 
   it('renders Header component', () => {
