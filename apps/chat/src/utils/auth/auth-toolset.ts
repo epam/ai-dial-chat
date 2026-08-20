@@ -74,6 +74,23 @@ const parseAuthErrorReason = (
 ): ToolsetAuthErrorReason | undefined =>
   Object.values(ToolsetAuthErrorReason).find((reason) => reason === value);
 
+/**
+ * Opens a blank login window, to be pointed at the authorization URL later.
+ *
+ * Must be called synchronously from the click handler: Safari only honors
+ * `window.open` while a user gesture is still on the stack, and the sign in URL
+ * is not known until the epic has run.
+ */
+export const openToolsetAuthWindow = (): Window | null => {
+  const popup = window.open('', TOOLSET_AUTH_POPUP_NAME, getPopupFeatures());
+
+  if (!popup) {
+    console.error('Unable to open the toolset login window');
+  }
+
+  return popup;
+};
+
 export const isToolsetAuthPopup = () =>
   typeof window !== 'undefined' &&
   !!window.opener &&
@@ -102,7 +119,7 @@ export const postToolsetAuthResult = (
 };
 
 /**
- * Opens the login window and waits for its outcome.
+ * Navigates the reserved login window to `url` and waits for its outcome.
  *
  * Resolves `true` when authentication succeeded, `false` when no login window
  * was used at all (the current tab is being redirected instead), and rejects
@@ -110,19 +127,29 @@ export const postToolsetAuthResult = (
  */
 export const signInToolset = async (
   url: string,
+  authWindow?: Window | null,
   isSignInInSameWindow?: boolean,
 ): Promise<boolean> => {
-  if (isSignInInSameWindow) {
-    window.location.assign(url.toString());
+  const redirectCurrentTab = () => {
+    authWindow?.close();
+    window.location.assign(url);
     return Promise.resolve(false);
+  };
+
+  if (isSignInInSameWindow) return redirectCurrentTab();
+
+  if (!authWindow || authWindow.closed) {
+    console.error('No login window available');
+    return redirectCurrentTab();
   }
 
-  const popup = window.open(url, TOOLSET_AUTH_POPUP_NAME, getPopupFeatures());
+  const popup = authWindow;
 
-  if (!popup) {
-    console.error('Unable to open popup');
-    window.location.assign(url.toString());
-    return Promise.resolve(false);
+  try {
+    popup.location.replace(url);
+  } catch (err) {
+    console.error('Could not navigate the login window', err);
+    return redirectCurrentTab();
   }
 
   return await new Promise<boolean>((resolve, reject) => {
