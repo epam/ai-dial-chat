@@ -99,6 +99,8 @@ Rather than leak the bucket into the client, `CreateShareLinkDto` gains an optio
 
 Unshare stays off (see Non-Goals): the DTO regex remains the blocker. `resolveSharedItemSummary` short-circuits `prompts/` ids because a prompt has no deployments/toolsets list entry to summarise.
 
+**Revised (bug fix).** The initial cut left `CatalogEntityType.Prompt` out of `SharePopoverContainer`'s `EDITABLE_ACCESS_TYPES`, so a shared prompt link was always view-only while Agent/Skill/Toolset links offered a "Can view" / "Can edit" choice. `ShareService.createShareLink` never special-cased `Prompt` in `ACCESS_PERMISSIONS` — `Edit` maps to `['READ', 'WRITE']` for any resource kind — and shared-prompt read/write via `canEdit`/`isEditable` (D3, group 12.4) was already wired end to end. There was no backend or product reason for the exclusion; it was an oversight from when the popover's editable-type set was first written. Fixed by adding `Prompt` to `EDITABLE_ACCESS_TYPES`.
+
 ### D8 — One feature key, `OverlayFeature.Prompts`, gates the whole surface
 
 `prompts` joins the `OverlayFeature` enum (`libs/chat-overlay/src/protocol/overlay-protocol.ts:55+`) and is read through the existing `useUiFeature` hook. It gates: prompt items entering `catalogItems`, the Prompt Create option, and the `PromptEditor` route (which redirects to the catalog when disabled). This is exactly how `OverlayFeature.Toolsets` gates toolsets today (`CatalogView.tsx:176,196-205,786`).
