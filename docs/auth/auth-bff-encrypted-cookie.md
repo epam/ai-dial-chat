@@ -64,7 +64,7 @@ The session is a JWE (`alg: dir`, `enc: A256GCM`) whose plaintext payload is:
 | Attribute  | Value                                                 | Reason                                                                                                       |
 | ---------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `HttpOnly` | `true`                                                | JS cannot read or write                                                                                      |
-| `Secure`   | `true` by default                                     | HTTPS only; may be disabled only for local HTTP smoke testing                                                |
+| `Secure`   | `true` by default                                     | HTTPS only; local HTTP smoke mode disables it together with HSTS and CSP `upgrade-insecure-requests`         |
 | `SameSite` | `Lax` by default; `None` for secure overlay embedding | Blocks most CSRF in the normal app; allows cross-site iframe requests only when overlay embedding is enabled |
 | `Path`     | `/`                                                   | One cookie for whole app                                                                                     |
 | `Max-Age`  | `rt_exp`                                              | Lives as long as the refresh token                                                                           |
