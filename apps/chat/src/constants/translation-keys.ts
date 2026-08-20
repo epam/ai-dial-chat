@@ -216,6 +216,8 @@ export enum CatalogI18nKeys {
   SkillsLoadError = 'catalog.skillsLoadError',
   CreatePrompt = 'catalog.create.prompt',
   CreateSkill = 'catalog.create.skill',
+  CreateSkillWriteInstructions = 'catalog.create.skillWriteInstructions',
+  CreateSkillUpload = 'catalog.create.skillUpload',
   FolderPersonal = 'catalog.folder.personal',
   FolderPublic = 'catalog.folder.public',
   FolderShared = 'catalog.folder.shared',
@@ -310,6 +312,7 @@ export enum DeploymentSelectorI18nKeys {
   RefetchToolsetsFailed = 'deploymentSelector.refetchToolsetsFailed',
   RefetchDeploymentsFailed = 'deploymentSelector.refetchDeploymentsFailed',
   BrowseCatalogLabel = 'deploymentSelector.browseCatalogLabel',
+  UnavailableTooltip = 'deploymentSelector.unavailableTooltip',
 }
 
 export enum PromptSelectorI18nKeys {
@@ -942,6 +945,19 @@ export enum SkillEditorI18nKeys {
   ManifestImportConfirmMessage = 'skillEditor.manifestImportConfirmMessage',
 }
 
+export enum SkillArchiveImportI18nKeys {
+  FileInputAriaLabel = 'skillArchiveImport.fileInputAriaLabel',
+  StatusUploading = 'skillArchiveImport.status.uploading',
+  StatusSuccess = 'skillArchiveImport.status.success',
+  StatusError = 'skillArchiveImport.status.error',
+  ErrorTitle = 'skillArchiveImport.error.title',
+  ErrorValidation = 'skillArchiveImport.error.validation',
+  ErrorCollision = 'skillArchiveImport.error.collision',
+  ErrorRateLimited = 'skillArchiveImport.error.rateLimited',
+  ErrorServiceUnavailable = 'skillArchiveImport.error.serviceUnavailable',
+  ErrorGeneric = 'skillArchiveImport.error.generic',
+}
+
 export enum AppsEditorI18nKeys {
   GeneralFormNamePlaceholder = 'appsEditor.generalForm.namePlaceholder',
   GeneralFormDescriptionPlaceholder = 'appsEditor.generalForm.descriptionPlaceholder',
@@ -1161,6 +1177,8 @@ export enum EntityNotificationsI18nKeys {
   ModelDeleted = 'entityNotifications.model.deleted',
   ModelPublishRequestedTitle = 'entityNotifications.model.publishRequestedTitle',
   ModelPublishRequested = 'entityNotifications.model.publishRequested',
+  SkillCreatedTitle = 'entityNotifications.skill.createdTitle',
+  SkillCreated = 'entityNotifications.skill.created',
   SkillDeletedTitle = 'entityNotifications.skill.deletedTitle',
   SkillDeleted = 'entityNotifications.skill.deleted',
   SkillDownloadedTitle = 'entityNotifications.skill.downloadedTitle',

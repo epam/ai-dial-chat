@@ -385,11 +385,7 @@ describe('buildSkillContentTree', () => {
 
   it('keeps two same-named files in different folders as distinct nodes', () => {
     const tree = buildSkillContentTree(
-      [
-        makeFile('SKILL.md'),
-        makeFile('a/run.py'),
-        makeFile('b/run.py'),
-      ],
+      [makeFile('SKILL.md'), makeFile('a/run.py'), makeFile('b/run.py')],
       '',
     );
 

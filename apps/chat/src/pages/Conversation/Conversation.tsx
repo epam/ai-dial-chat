@@ -53,7 +53,10 @@ import { buildNetworkUploadErrorNotification } from '../../utils/attachment-netw
 import { getConversationPath } from '../../utils/conversation-path';
 import { shouldWatchForDisplayNameUpdate } from '../../utils/display-name-watch';
 import { isAwaitingGenerationResume } from '../../utils/generation-resume';
-import { getLastDeploymentId } from '../../utils/message-utils';
+import {
+  getLastDeploymentId,
+  getLastUserMessageToolConfiguration,
+} from '../../utils/message-utils';
 
 interface Props {
   onDuplicateReadonly?: () => void;
@@ -74,6 +77,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const displayNameWatchCleanupRef = useRef<(() => void) | null>(null);
   const displayNameWatchKeyRef = useRef<string | null>(null);
   const notificationShownForRef = useRef<string | null>(null);
+  const restoredToolConfigIdRef = useRef<string | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
   const {
@@ -81,6 +85,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     selectedItemId: currentSelectedItemId,
     isLoading: isDeploymentsLoading,
   } = useDeployments();
+  const {
+    toolsMenuItems,
+    onToolToggle,
+    toolConfigurationValue,
+    restoreToolConfiguration,
+  } = useToolsMenu();
   const { handleClose: handleCloseSourcesSidebar, setMessages } =
     useSourcesSidebar();
   const { user } = useUser();
@@ -311,6 +321,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         if (modelToSelect) {
           restoreSelectedItemId(modelToSelect);
         }
+        if (restoredToolConfigIdRef.current !== id) {
+          restoredToolConfigIdRef.current = id;
+          restoreToolConfiguration(
+            getLastUserMessageToolConfiguration(result.messages),
+          );
+        }
 
         const lastMsg = result.messages[result.messages.length - 1];
 
@@ -383,6 +399,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     [
       navigate,
       restoreSelectedItemId,
+      restoreToolConfiguration,
       startStream,
       resumeIfAwaitingGeneration,
       updateConversationTitle,
@@ -417,9 +434,6 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
      */
     navigate(`${pathname}${search}`, { replace: true, state: null });
   }, [conversationId, prefetchedConversation, navigate, pathname, search]);
-
-  const { toolsMenuItems, onToolToggle, toolConfigurationValue } =
-    useToolsMenu();
 
   const {
     handleSend,

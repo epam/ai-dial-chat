@@ -1159,7 +1159,11 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                   />
                 )}
                 {activeTab === CatalogDetailsTab.Limits && (
-                  <LimitsTab limits={item.details?.limits} />
+                  <LimitsTab
+                    limits={item.details?.limits}
+                    costCapsSectionLabel={texts?.limitsCostCapsSectionLabel}
+                    unlimitedSectionLabel={texts?.limitsUnlimitedSectionLabel}
+                  />
                 )}
                 {activeTab === CatalogDetailsTab.Api &&
                   hasConnectableApi(item.details?.api) && (

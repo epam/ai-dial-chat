@@ -5617,6 +5617,37 @@ export interface SkillGroupingFolderResponseDto {
 /**
  *
  * @export
+ * @interface SkillImportResponseDto
+ */
+export interface SkillImportResponseDto {
+  /**
+   * The created skill's name, derived from its manifest
+   * @type {string}
+   * @memberof SkillImportResponseDto
+   */
+  name: string;
+  /**
+   * The created skill's destination path within the bucket
+   * @type {string}
+   * @memberof SkillImportResponseDto
+   */
+  path: string;
+  /**
+   * The created skill's DIAL Core resource URL
+   * @type {string}
+   * @memberof SkillImportResponseDto
+   */
+  url: string;
+  /**
+   * New ETag of the created skill, when DIAL Core returns one
+   * @type {string}
+   * @memberof SkillImportResponseDto
+   */
+  etag?: string;
+}
+/**
+ *
+ * @export
  * @interface SkillListResponseDto
  */
 export interface SkillListResponseDto {

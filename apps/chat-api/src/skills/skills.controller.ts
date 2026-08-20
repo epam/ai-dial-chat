@@ -55,10 +55,12 @@ import {
 } from './dto/skill-resource-query.dto';
 import {
   SkillFileUploadResponseDto,
+  SkillImportResponseDto,
   SkillUploadResponseDto,
 } from './dto/skill-upload-response.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
 import { UploadSkillFileDto } from './dto/upload-skill-file.dto';
+import { SkillArchiveUploadInterceptor } from './import/skill-archive-upload.interceptor';
 import { SkillsService } from './skills.service';
 
 interface UploadedMulterFile {
@@ -394,6 +396,78 @@ export class SkillsController {
       body.skillManifest,
       body.filePaths,
       files,
+      at,
+      abortController.signal,
+    );
+  }
+
+  @Post('import')
+  @HttpCode(201)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @UseInterceptors(SkillArchiveUploadInterceptor)
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @ApiOperation({
+    operationId: 'importSkillArchive',
+    summary: 'Create a new skill from an uploaded ZIP archive',
+    description:
+      "Safely extracts and validates a whole-skill ZIP archive server-side (container/structure validity, path safety, encrypted/symlink rejection, incremental decompression limits, manifest UTF-8/frontmatter checks), then creates the skill atomically via the same If-None-Match: * uploadSkillFolder call createSkill uses. Uses the authenticated user's own bucket; a client-supplied bucket is never trusted.",
+  })
+  @ApiResponse({ status: 201, type: SkillImportResponseDto })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Missing file, non-ZIP or corrupted archive, missing/ambiguous manifest, unsafe path, or invalid manifest content',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({
+    status: 409,
+    description: 'A skill already exists at this path',
+  })
+  @ApiResponse({
+    status: 413,
+    description:
+      'The archive, a decompressed file, or the total decompressed content exceeds a configured limit',
+  })
+  @ApiResponse({
+    status: 422,
+    description:
+      'Archive is structurally invalid: too many entries, more than one skill, duplicate paths, or an encrypted/symlink/unsupported entry',
+  })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  importSkillArchive(
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Req() req: Request,
+  ): Promise<SkillImportResponseDto> {
+    if (file == null) {
+      throw new BadRequestException('file is required');
+    }
+    const { at, bucket } = req.user as SessionUser;
+    const abortController = new AbortController();
+    req.on('close', () => abortController.abort());
+    return this.skillsService.importSkillArchive(
+      bucket,
+      file.path,
       at,
       abortController.signal,
     );

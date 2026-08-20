@@ -76,6 +76,18 @@ The rules section SHALL render each entry in `rules` as a removable chip showing
 
 The single-rule editor (`PublishAccessRuleEditor`) SHALL offer a source control (populated from `ruleSourceOptions`), a function control (`EQUAL` / `CONTAIN` / `REGEX`), and, for `EQUAL`/`CONTAIN`, a free-entry tag input for `targets`. The Save/Add action SHALL remain enabled regardless of validation state — it is disabled only while the host disables the section (see the submission-disabling requirement below). Activating Save while a source is missing, a function is missing, or zero targets have been entered SHALL NOT call `onSave`; instead it SHALL mark the editor as having attempted a save and show a localized inline "required" error under each incomplete field (source/function picker, or the targets input), associated with that field via its `invalid`/error-message props. On a successful save, each target SHALL be trimmed, and an exact-duplicate (post-trim, case-sensitive) target SHALL be rejected rather than added as a second identical tag.
 
+Changing the source control SHALL NEVER clear `targets` or the in-progress pattern — the source and targets/pattern fields are independent state. Switching the function control between `EQUAL` and `CONTAIN` SHALL also preserve any already-entered `targets`, since both functions share the same multi-tag input; only a transition across the `EQUAL`/`CONTAIN` ↔ `REGEX` boundary clears the targets/pattern state (see the following requirement).
+
+#### Scenario: Selecting a source preserves already-entered targets
+- **GIVEN** the user has entered one or more targets before selecting a source
+- **WHEN** the user selects a source from the source dropdown
+- **THEN** the previously entered targets remain in the targets field, unchanged
+
+#### Scenario: Switching between EQUAL and CONTAIN preserves entered targets
+- **GIVEN** the user has selected `EQUAL` and entered one or more targets
+- **WHEN** the user changes the function to `CONTAIN`
+- **THEN** the previously entered targets remain in the targets field, unchanged
+
 #### Scenario: Save stays enabled with no source selected
 - **GIVEN** the editor is open with a function and at least one target entered but no source selected
 - **WHEN** the user views the Save control
@@ -142,6 +154,11 @@ When `function` is `REGEX`, the editor SHALL offer exactly one text input (not a
 - **GIVEN** the user has entered a pattern under `REGEX`
 - **WHEN** the user switches `function` to `CONTAIN`
 - **THEN** the editor shows the multi-target tag input instead, starting empty, and does not carry the regex text over as a pre-filled tag
+
+#### Scenario: Switching from EQUAL or CONTAIN to REGEX clears the targets state
+- **GIVEN** the user has entered one or more targets under `EQUAL` or `CONTAIN`
+- **WHEN** the user switches `function` to `REGEX`
+- **THEN** the editor shows the single pattern input instead, starting empty, and does not carry any previously entered target over as a pre-filled pattern
 
 ### Requirement: Rules editor is disabled during submission and rules are limited to safe counts
 

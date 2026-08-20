@@ -22,7 +22,7 @@ skill: my-skill                        # required
 #   triggers:
 #     - on: pull_request
 #       filters:
-#         branches: [main, development-1.0]   # PR target branches
+#         branches: [main, development]       # PR target branches
 #         labels: [review-me]                  # all must be present on PR
 triggers: [pull_request]               # required
 

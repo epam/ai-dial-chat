@@ -19,8 +19,8 @@ const TAB_ORDER: CatalogEntityType[] = [
   CatalogEntityType.Model,
   CatalogEntityType.Agent,
   CatalogEntityType.Toolset,
-  CatalogEntityType.Prompt,
   CatalogEntityType.Skill,
+  CatalogEntityType.Prompt,
 ];
 
 /** Derives entity-type tabs from items present in the catalog, sorted by canonical order. */

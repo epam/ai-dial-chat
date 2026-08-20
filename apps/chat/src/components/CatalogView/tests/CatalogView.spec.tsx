@@ -80,6 +80,10 @@ import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import CatalogView from '../CatalogView';
 import { SkillDetailsFilePreview } from '../SkillDetailsFilePreview';
 
+const formatLimitNumber = new Intl.NumberFormat(undefined, {
+  maximumFractionDigits: 2,
+}).format;
+
 /** Minimal fake popup `Window` — enough surface for `initiateOAuthLogin`/`waitForToolsetOAuthResult`. */
 const makeFakePopup = () => {
   const store = new Map<string, string>();
@@ -494,7 +498,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
             logout global {item.id}
           </button>
         ))}
-        {(createOptions ?? []).map((option) => (
+        {(createOptions ?? []).flatMap((option) => [
           <button
             key={option.key}
             type="button"
@@ -503,8 +507,20 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
             }
           >
             {option.label}
-          </button>
-        ))}
+          </button>,
+          // eslint-disable-next-line testing-library/no-node-access -- `option.children` is a DropdownItem field, not a DOM node
+          ...(option.children ?? []).map((child) => (
+            <button
+              key={child.key}
+              type="button"
+              onClick={(domEvent) =>
+                child.onClick?.({ key: child.key, domEvent })
+              }
+            >
+              {child.label}
+            </button>
+          )),
+        ])}
         <output aria-label="Publish folder names">
           {(publishFolderItems ?? []).map((folder) => folder.name).join(',')}
         </output>
@@ -1544,6 +1560,8 @@ describe('CatalogView', () => {
           label: CatalogI18nKeys.DetailsLimitsRequestsPerHour,
           used: 2,
           total: 10,
+          usedLabel: formatLimitNumber(2),
+          totalLabel: formatLimitNumber(10),
           valueLabel: CatalogI18nKeys.DetailsLimitsValue,
           ariaLabel: CatalogI18nKeys.DetailsLimitsProgressAriaLabel,
         },
@@ -1551,6 +1569,8 @@ describe('CatalogView', () => {
           label: CatalogI18nKeys.DetailsLimitsTokensPerDay,
           used: 2500,
           total: 10000,
+          usedLabel: formatLimitNumber(2500),
+          totalLabel: formatLimitNumber(10000),
           valueLabel: CatalogI18nKeys.DetailsLimitsValue,
           ariaLabel: CatalogI18nKeys.DetailsLimitsProgressAriaLabel,
         },
@@ -3539,15 +3559,30 @@ describe('CatalogView', () => {
       ).toBeTruthy();
     });
 
-    it('navigates to the skill editor with the catalog return url from the Skill create option', async () => {
+    it('navigates to the skill editor with the catalog return url from the Skill submenu\'s "Write instructions" option', async () => {
       render(<CatalogView />);
       await user.click(
-        screen.getByRole('button', { name: 'catalog.create.skill' }),
+        screen.getByRole('button', {
+          name: 'catalog.create.skillWriteInstructions',
+        }),
       );
 
       expect(mockNavigate).toHaveBeenCalledWith(
         '/skill-editor?returnUrl=%2Fcatalog',
       );
+    });
+
+    it('offers no nested children other than "Write instructions" and "Upload" under Skill', () => {
+      render(<CatalogView />);
+
+      expect(
+        screen.getByRole('button', {
+          name: 'catalog.create.skillWriteInstructions',
+        }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole('button', { name: 'catalog.create.skillUpload' }),
+      ).toBeTruthy();
     });
   });
   describe('revoke access', () => {
