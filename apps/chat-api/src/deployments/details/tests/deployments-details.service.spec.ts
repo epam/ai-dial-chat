@@ -412,6 +412,7 @@ describe('DeploymentsDetailsService', () => {
             vendor: 'Vendor',
             license: 'License',
             knowledgeCutoffDate: '2026-08-17',
+            parameters: '100B',
             schemaSpecificExtra: 'not exposed',
           },
         }),
@@ -453,6 +454,7 @@ describe('DeploymentsDetailsService', () => {
             vendor: 'Vendor',
             license: 'License',
             knowledgeCutoffDate: '2026-08-17',
+            parameters: '100B',
           },
         },
       });

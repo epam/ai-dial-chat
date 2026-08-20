@@ -119,7 +119,10 @@
         "provider": "Provider",
         "vendor": "Vendor",
         "license": "License",
-        "knowledgeCutoffDate": "Knowledge cutoff date"
+        "knowledgeCutoffDate": "Knowledge cutoff date",
+        "parameters": "Parameters",
+        "inputModalities": "Input modalities",
+        "outputModalities": "Output modalities"
       },
       "limits": {
         "requestsPerHour": "Requests per hour",

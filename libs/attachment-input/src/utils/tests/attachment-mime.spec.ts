@@ -18,6 +18,10 @@ describe('mimeTypesToExtensionLabels', () => {
     expect(mimeTypesToExtensionLabels(['model/*'])).toBe('model files');
   });
 
+  it('converts the catch-all "*/*" wildcard to "All files"', () => {
+    expect(mimeTypesToExtensionLabels(['*/*'])).toBe('All files');
+  });
+
   it('joins multiple types with ", "', () => {
     expect(
       mimeTypesToExtensionLabels(['application/pdf', 'image/jpeg', 'text/csv']),
