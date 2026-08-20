@@ -346,7 +346,12 @@ const DeploymentSelectorPanel: FC<Props> = ({
           )}
 
           {(showCurrentlySelected || filteredFavorites.length > 0) && (
-            <p className="dial-tiny-lead-semi-text sticky top-0 z-10 bg-layer-raised px-3 pb-2 pt-2 text-tertiary will-change-transform">
+            <p
+              className={mergeClasses(
+                'dial-tiny-lead-semi-text sticky top-0 z-10 bg-layer-raised px-3 pb-2 pt-2 text-tertiary will-change-transform',
+                styles.stickyLabelSeamFix,
+              )}
+            >
               {favoritesLabel}
             </p>
           )}

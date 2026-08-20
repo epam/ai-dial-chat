@@ -307,6 +307,7 @@ export enum DeploymentSelectorI18nKeys {
   RefetchToolsetsFailed = 'deploymentSelector.refetchToolsetsFailed',
   RefetchDeploymentsFailed = 'deploymentSelector.refetchDeploymentsFailed',
   BrowseCatalogLabel = 'deploymentSelector.browseCatalogLabel',
+  UnavailableTooltip = 'deploymentSelector.unavailableTooltip',
 }
 
 export enum PromptSelectorI18nKeys {
