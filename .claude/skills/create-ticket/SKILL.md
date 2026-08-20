@@ -75,10 +75,10 @@ Build the ticket from the openspec change(s) rather than free description. This 
 ### B1 — Locate the change
 
 - If the user passed a specific `openspec/changes/...` folder path → use it, skip discovery.
-- Otherwise discover changes introduced on the current branch against the repo's base branch (`origin/development-1.0` — NOT `main`):
+- Otherwise discover changes introduced on the current branch against the repo's base branch (`origin/development` — NOT `main`):
 
   ```bash
-  git diff --name-only $(git merge-base HEAD origin/development-1.0) -- openspec/
+  git diff --name-only $(git merge-base HEAD origin/development) -- openspec/
   ```
 
 - If no openspec files are found on the branch → tell the user and offer to fall back to Mode A (from discussion). Do not stop silently.
