@@ -561,15 +561,15 @@ Do not send a partial diff. Always send the complete desired set.
 The following legacy strings are no longer recognized. Their corresponding
 behavior is unconditional in the new chat, so you can normally remove them:
 
-| Legacy flag               | New chat behavior                                                                                               |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `custom-logo`             | The logo always comes from theme configuration; use `theme` to select the theme.                                |
-| `show-layout-dividers`    | Dividers are a permanent part of the UI.                                                                        |
-| `top-settings`            | The top settings panel is always rendered.                                                                      |
-| `top-chat-model-settings` | The model selector is rendered; use `hide-change-agent` to remove it or `disallow-change-agent` to restrict it. |
-| `chat-header-border`      | The header bottom border is always rendered.                                                                    |
-| `chat-input-border`       | The input border is always rendered.                                                                            |
-| `user-message-align-end`  | User messages are always aligned to the inline end.                                                             |
+| Legacy flag               | New chat behavior                                                                                                                                                                             |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `custom-logo`             | The logo always comes from theme configuration; use `theme` to select the theme.                                                                                                              |
+| `show-layout-dividers`    | Dividers are a permanent part of the UI.                                                                                                                                                      |
+| `top-settings`            | The top settings panel is gone; the equivalent controls (temperature, system prompt, response format) live in the chat input's "+" menu. Use `chat-settings` to remove that entry everywhere. |
+| `top-chat-model-settings` | The model selector is rendered; use `hide-change-agent` to remove it or `disallow-change-agent` to restrict it.                                                                               |
+| `chat-header-border`      | The header bottom border is always rendered.                                                                                                                                                  |
+| `chat-input-border`       | The input border is always rendered.                                                                                                                                                          |
+| `user-message-align-end`  | User messages are always aligned to the inline end.                                                                                                                                           |
 
 ### UI flags not supported yet
 
@@ -603,7 +603,7 @@ integrations from typos and removed keys.
 
 ### Supported flags and defaults
 
-The new chat supports 39 flags.
+The new chat supports 40 flags.
 
 Enabled by default:
 
@@ -618,6 +618,7 @@ dislike-comment
 input-files
 live-chat-interaction
 empty-chat-settings
+chat-settings
 conversations-sharing
 applications-sharing
 toolsets-sharing
@@ -632,6 +633,14 @@ prompts
 skills
 voice-input
 ```
+
+`chat-settings` and `empty-chat-settings` are not independent. `chat-settings`
+is the master switch for the "Chat settings" entry in the chat input's "+" menu
+(temperature, system prompt, response format) â turning it off removes the entry
+on every screen. `empty-chat-settings` only narrows it to the empty-chat screen,
+which renders the entry when both keys are on. To take these settings away from
+users entirely, drop `chat-settings`; naming `empty-chat-settings` as well is not
+required.
 
 Disabled by default and enabled explicitly:
 

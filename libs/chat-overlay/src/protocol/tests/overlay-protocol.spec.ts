@@ -116,8 +116,8 @@ describe('isOverlayMessageResponse', () => {
 describe('OverlayFeature', () => {
   it('has exactly 39 unique members', () => {
     const values = Object.values(OverlayFeature);
-    expect(values).toHaveLength(39);
-    expect(new Set(values).size).toBe(39);
+    expect(values).toHaveLength(40);
+    expect(new Set(values).size).toBe(40);
   });
 
   it('includes the hide-keyboard-shortcuts feature key', () => {
