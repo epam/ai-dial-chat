@@ -245,6 +245,7 @@ describe('ConversationRoute — new chat model inheritance (issue #8150 Case 3)'
       toolsMenuItems: [],
       onToolToggle: vi.fn(),
       toolConfigurationValue: {},
+      restoreToolConfiguration: vi.fn(),
     });
     mockCreateConversation.mockResolvedValue({
       id: 'bucket/path__Hello',
