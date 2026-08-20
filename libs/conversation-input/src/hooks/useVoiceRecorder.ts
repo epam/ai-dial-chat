@@ -131,7 +131,9 @@ export const useVoiceRecorder = ({
       const baseMime = effectiveMime.split(';')[0];
       const ext = baseMime.split('/')[1] ?? 'webm';
       const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -1);
-      const file = new File([blob], `voice-${ts}.${ext}`, { type: baseMime });
+      const file = new File([blob], `voice-${ts}.${ext}`, {
+        type: effectiveMime,
+      });
       onAttachAudioRef.current(file);
       cleanupMedia();
       setErrorMessage(null);
