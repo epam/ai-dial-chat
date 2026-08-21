@@ -87,6 +87,8 @@ export interface ItemDetailsTexts {
   apiResponseSchemaLabel?: string;
   /** Accessible label for the copy-to-clipboard button. Default: `'Copy'`. */
   copyCodeAriaLabel?: string;
+  /** Message announced through the code block's live region once a copy completes. Default: `'Copied!'`. */
+  copiedCodeStatusLabel?: string;
   /** "Token pricing" section heading in the Pricing tab. Default: `'Token pricing'`. */
   pricingPricesSectionLabel?: string;
   /** "Usage limits" section heading in the Pricing tab. Default: `'Usage limits'`. */

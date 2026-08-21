@@ -140,7 +140,9 @@ describe('NewConversationComposer', () => {
 
   beforeEach(() => {
     mockUseUiFeature.mockImplementation(
-      (feature) => feature === OverlayFeature.EmptyChatSettings,
+      (feature) =>
+        feature === OverlayFeature.EmptyChatSettings ||
+        feature === OverlayFeature.ChatSettings,
     );
   });
 
@@ -173,7 +175,7 @@ describe('NewConversationComposer', () => {
     ).toBeTruthy();
   });
 
-  it('passes chatSettings through by default (empty-chat-settings enabled)', async () => {
+  it('passes chatSettings through when both chat-settings and empty-chat-settings are enabled', async () => {
     render(
       <Suspense fallback={null}>
         <NewConversationComposer
@@ -188,8 +190,30 @@ describe('NewConversationComposer', () => {
     expect(screen.getByLabelText('chat-settings').textContent).toBe('defined');
   });
 
+  it('omits chatSettings when chat-settings is disabled even though empty-chat-settings is enabled', async () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.EmptyChatSettings,
+    );
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+    await screen.findByTestId('conversation-input');
+    expect(screen.getByLabelText('chat-settings').textContent).toBe(
+      'undefined',
+    );
+  });
+
   it('omits chatSettings when empty-chat-settings is disabled', async () => {
-    mockUseUiFeature.mockReturnValue(false);
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.ChatSettings,
+    );
     render(
       <Suspense fallback={null}>
         <NewConversationComposer

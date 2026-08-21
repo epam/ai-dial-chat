@@ -50,6 +50,9 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
   const { isLogoutOpen, openLogout, closeLogout } = useLogout();
   const { currentThemeFavicon } = useTheme();
   const isUserMenuHidden = useUiFeature(OverlayFeature.HideUserMenu);
+  const isNavigationMenuHidden = useUiFeature(
+    OverlayFeature.HideNavigationMenu,
+  );
   const items = useNavigationItems();
   const profile = useNavigationUserProfile();
   const { languageGroup, keyboardGroup } = useNavigationMenuGroups();
@@ -106,25 +109,29 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
         />
       )}
 
-      <NavigationSheet
-        isOpen={isOpen}
-        onClose={onClose ?? (() => undefined)}
-        items={items}
-        onSelectItem={handleSelectItem}
-        profile={profile}
-        /* The sheet deliberately offers only the shortcut group — the locale
-           picker stays desktop-only, as it was before the lib extraction. */
-        groups={keyboardGroup ? [keyboardGroup] : undefined}
-        onLogout={openLogout}
-        footer={<FooterMessage />}
-        labels={{
-          title: t(NavigationI18nKeys.Menu),
-          close: t(ButtonsI18nKeys.Close),
-          back: t(NavigationI18nKeys.Back),
-          profile: t(NavigationI18nKeys.Profile),
-          logOut: t(ButtonsI18nKeys.LogOut),
-        }}
-      />
+      {/* Unmounted rather than kept closed: the sheet holds focusable rows,
+          and its only trigger is the header hamburger this key also removes. */}
+      {!isNavigationMenuHidden && (
+        <NavigationSheet
+          isOpen={isOpen}
+          onClose={onClose ?? (() => undefined)}
+          items={items}
+          onSelectItem={handleSelectItem}
+          profile={profile}
+          /* The sheet deliberately offers only the shortcut group — the locale
+             picker stays desktop-only, as it was before the lib extraction. */
+          groups={keyboardGroup ? [keyboardGroup] : undefined}
+          onLogout={openLogout}
+          footer={<FooterMessage />}
+          labels={{
+            title: t(NavigationI18nKeys.Menu),
+            close: t(ButtonsI18nKeys.Close),
+            back: t(NavigationI18nKeys.Back),
+            profile: t(NavigationI18nKeys.Profile),
+            logOut: t(ButtonsI18nKeys.LogOut),
+          }}
+        />
+      )}
 
       <LogoutConfirmationModal isOpen={isLogoutOpen} onClose={closeLogout} />
     </>

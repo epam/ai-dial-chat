@@ -151,7 +151,8 @@ const setDefaults = (
     (feature) =>
       feature !== OverlayFeature.HideUserMenu &&
       feature !== OverlayFeature.HideUserSettings &&
-      feature !== OverlayFeature.HideKeyboardShortcuts,
+      feature !== OverlayFeature.HideKeyboardShortcuts &&
+      feature !== OverlayFeature.HideNavigationMenu,
   );
 };
 
@@ -354,6 +355,17 @@ describe('Navigation mobile sheet', () => {
       screen.getByRole('button', { name: NavigationI18nKeys.Profile }),
     ).toBeTruthy();
     expect(screen.getByText('Footer message')).toBeTruthy();
+  });
+
+  it('is not mounted when hide-navigation-menu is enabled, even when asked to open', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.HideNavigationMenu,
+    );
+    renderNavigation({ isOpen: true });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: NavigationI18nKeys.Profile }),
+    ).toBeNull();
   });
 
   it('reaches the keyboard-shortcut options through the profile page', async () => {

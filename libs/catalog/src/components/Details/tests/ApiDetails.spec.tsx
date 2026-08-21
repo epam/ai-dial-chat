@@ -15,10 +15,15 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
     await importOriginal<typeof import('@epam/ai-dial-chat-shared')>();
   return {
     ...actual,
+    /*
+     * Mirrors the real block's a11y contract: a stable copy label plus a
+     * polite live region that carries the transient copied message.
+     */
     MarkdownCodeBlock: ({
       language,
       value,
       copyLabel,
+      copiedLabel,
       title,
       titleSlot,
       hideDownload,
@@ -26,19 +31,31 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
       language: string;
       value: string;
       copyLabel?: string;
+      copiedLabel?: string;
       title?: string;
       titleSlot?: ReactNode;
       hideDownload?: boolean;
-    }) => (
-      <div>
-        {titleSlot ?? <span>{title ?? (language || 'plain')}</span>}
-        <pre data-language={language}>{value}</pre>
-        <button onClick={() => void navigator.clipboard.writeText(value)}>
-          {copyLabel ?? 'Copy code'}
-        </button>
-        {!hideDownload && <button>Download code</button>}
-      </div>
-    ),
+    }) => {
+      const [isCopied, setIsCopied] = useState(false);
+      return (
+        <div>
+          {titleSlot ?? <span>{title ?? (language || 'plain')}</span>}
+          <pre data-language={language}>{value}</pre>
+          <button
+            onClick={() => {
+              void navigator.clipboard.writeText(value);
+              setIsCopied(true);
+            }}
+          >
+            {copyLabel ?? 'Copy code'}
+          </button>
+          <span role="status" aria-live="polite">
+            {isCopied ? (copiedLabel ?? 'Copied!') : ''}
+          </span>
+          {!hideDownload && <button>Download code</button>}
+        </div>
+      );
+    },
   };
 });
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
@@ -103,6 +120,37 @@ describe('ApiDetails', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(LONG_MCP_URL);
+  });
+
+  it('announces the endpoint copy through a polite live region', async () => {
+    render(
+      <ApiDetails
+        api={{ resource: { endpointUrl: LONG_MCP_URL } }}
+        copiedStatusLabel="Copied"
+      />,
+    );
+
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
+
+    expect(status.textContent).toBe('Copied');
+  });
+
+  it('forwards the copied status label to the snippet code block', async () => {
+    render(
+      <ApiDetails
+        api={{
+          snippets: [{ language: CodeLanguage.Curl, code: 'curl example' }],
+        }}
+        copiedStatusLabel="Copiado"
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
+
+    expect(screen.getByRole('status').textContent).toBe('Copiado');
   });
 
   it('renders the Model ID row separately from the endpoint code block', () => {

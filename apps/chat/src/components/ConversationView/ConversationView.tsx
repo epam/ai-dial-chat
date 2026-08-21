@@ -220,6 +220,7 @@ const ConversationView: FC<Props> = ({
     OverlayFeature.SkipFocusChatInputOnload,
   );
   const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
+  const isChatSettingsEnabled = useUiFeature(OverlayFeature.ChatSettings);
   // bucket is the authenticated user's DIAL Core storage bucket from their profile
   const bucket = user?.bucket ?? '';
   const [isDialFileManagerOpen, setIsDialFileManagerOpen] = useState(false);
@@ -635,6 +636,7 @@ const ConversationView: FC<Props> = ({
                     index={index}
                     totalCount={messages.length}
                     isAssistantTyping={isAssistantTyping}
+                    isCompactTypography={isMobile}
                     editingMessageIndexes={editingMessageIndexes}
                     onSelectStarter={onSelectStarter}
                     onStartEdit={isReadOnly ? undefined : onStartEdit}
@@ -800,7 +802,7 @@ const ConversationView: FC<Props> = ({
                 )}
                 messageHistory={messageHistory}
                 sendOnEnter={sendOnEnter}
-                chatSettings={chatSettings}
+                chatSettings={isChatSettingsEnabled ? chatSettings : undefined}
                 toolsMenuItems={toolsMenuItems}
                 onToolToggle={onToolToggle}
                 toolsMenuTitle={toolsMenuTitle}

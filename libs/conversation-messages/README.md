@@ -48,15 +48,17 @@ import {
 
 ### AssistantMessageBubble
 
-Renders an assistant message as markdown. Set `isStreaming` while the response is still arriving so newly appended text reveals smoothly. Use `markdownComponents` to inject custom renderers (for example citation markers from `@epam/ai-dial-quotations`), and `afterContent` to place a stages panel between the text and the actions bar.
+Renders an assistant message as markdown. Set `isStreaming` while the response is still arriving so newly appended text reveals smoothly. Use `markdownComponents` to inject custom renderers (for example citation markers from `@epam/ai-dial-quotations`), `markdownClassNames` to pick the markdown type scale (`COMPACT_MARKDOWN_CLASS_NAMES` from `@epam/ai-dial-chat-shared` drops the body copy one step for narrow viewports), and `afterContent` to place a stages panel between the text and the actions bar.
 
 ```tsx
+import { COMPACT_MARKDOWN_CLASS_NAMES } from '@epam/ai-dial-chat-shared';
 import { AssistantMessageBubble } from '@epam/ai-dial-conversation-messages';
 
 <AssistantMessageBubble
   text={message.content}
   isStreaming={isStreaming}
   markdownComponents={citationComponents}
+  markdownClassNames={COMPACT_MARKDOWN_CLASS_NAMES}
   afterContent={<StagesPanel stages={stages} isStreaming={isStreaming} />}
   starters={starters}
   onSelectStarter={handleSelectStarter}
