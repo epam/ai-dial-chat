@@ -5,7 +5,7 @@ import type {
   UserLimitStatsResponseDto,
 } from '@epam/ai-dial-chat-api-client';
 import { DeploymentItemDtoTypeEnum } from '@epam/ai-dial-chat-api-client';
-import { formatPrice } from '@epam/ai-dial-chat-shared';
+import { formatCost } from '@epam/ai-dial-chat-shared';
 import {
   ModelLimitMetricCell,
   ModelLimitMetricKind,
@@ -141,7 +141,7 @@ const buildCostMetricCell = (
   }
 
   const used = Math.max(0, stats.used);
-  const usedLabel = formatPrice(used);
+  const usedLabel = formatCost(used);
 
   return {
     kind: ModelLimitMetricKind.Unlimited,

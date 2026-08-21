@@ -264,15 +264,29 @@ describe('ModelLimitsSection', () => {
     expect(screen.getByText('GP')).toBeTruthy();
   });
 
-  it('keeps the full model name available via title when visually truncated', () => {
+  it('truncates the model name before its non-shrinking version', () => {
     renderSection({
-      rows: [{ ...baseRow, name: 'A Very Long Model Display Name' }],
+      rows: [
+        {
+          ...baseRow,
+          name: 'A Very Long Model Display Name',
+          version: '2025-12-11',
+        },
+      ],
     });
 
     const nameElement = screen.getByText('A Very Long Model Display Name');
     expect(nameElement.getAttribute('title')).toBe(
       'A Very Long Model Display Name',
     );
+    expect(nameElement.classList).toContain('min-w-0');
+    expect(nameElement.classList).toContain('flex-1');
+    expect(nameElement.classList).toContain('truncate');
+    expect(screen.getByText('2025-12-11').classList).toContain('shrink-0');
+
+    const itemCell = screen.getAllByRole('cell')[0];
+    expect(itemCell.classList).toContain('min-w-0');
+    expect(itemCell.classList).toContain('overflow-hidden');
   });
 
   it('keeps the same content and roles under an RTL ancestor', () => {

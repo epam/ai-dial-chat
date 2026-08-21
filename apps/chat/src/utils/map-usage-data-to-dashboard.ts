@@ -2,7 +2,7 @@ import type {
   LimitStatsDto,
   UserLimitStatsResponseDto,
 } from '@epam/ai-dial-chat-api-client';
-import { formatPrice } from '@epam/ai-dial-chat-shared';
+import { formatCost } from '@epam/ai-dial-chat-shared';
 import {
   UsageLimitCardData,
   UsageLimitStatus,
@@ -40,7 +40,7 @@ const mapStatsToCardData = (
   t: TFunction,
 ): UsageLimitCardData => {
   const used = Math.max(0, stats.used);
-  const usedLabel = formatPrice(used);
+  const usedLabel = formatCost(used);
 
   if (stats.total >= UNLIMITED_TOTAL_THRESHOLD) {
     return {
@@ -60,7 +60,7 @@ const mapStatsToCardData = (
   const total = Math.max(stats.total, 0);
   const remaining = Math.max(total - used, 0);
   const uncappedUsedPercent = total > 0 ? (used / total) * 100 : 100;
-  const totalLabel = formatPrice(total);
+  const totalLabel = formatCost(total);
 
   return {
     title,
@@ -69,7 +69,7 @@ const mapStatsToCardData = (
     total,
     usedLabel,
     totalLabel,
-    remainingLabel: formatPrice(remaining),
+    remainingLabel: formatCost(remaining),
     usedPercent: uncappedUsedPercent,
     status: getStatus(uncappedUsedPercent),
     progressAriaLabel: t(UsageI18nKeys.ProgressAriaLabel, {

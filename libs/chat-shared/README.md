@@ -246,6 +246,7 @@ import {
   copyMarkdownAsRichText,
   formatLastUsed,
   formatFileSize,
+  formatCost,
   formatPrice,
   formatUnitPrice,
   extractInitials,
@@ -265,6 +266,9 @@ const cssVars = buildCssVars({ '--cs-text': colors?.text });
 
 // Format a USD amount, keeping decimals for sub-dollar values
 formatPrice(0.3); // '$0.3'
+
+// Format accumulated USD usage to cents
+formatCost(0.788438); // '$0.79'
 
 // Re-quote a DIAL Core per-unit price for display
 formatUnitPrice('0.000003', 'token'); // '$3/M tokens'

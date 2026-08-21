@@ -89,28 +89,37 @@ export const ModelLimitsRow: FC<ModelLimitsRowProps> = ({
         styles.row,
       )}
     >
-      <div role="cell" className="flex min-w-0 items-center gap-3">
-        <DeploymentIcon
-          src={row.avatarSrc}
-          size={avatarSize}
-          initialsName={row.name}
-          fallback={
-            <InitialsAvatar
-              name={row.name}
-              size={avatarSize}
-              className="!rounded-xl"
-              textClassName="!text-lg"
-            />
-          }
-          styles={{ badgeClassName: '!rounded-xl' }}
-        />
-        <div className="flex min-w-0 flex-col gap-0.5">
+      <div
+        role="cell"
+        className="flex min-w-0 items-center gap-3 overflow-hidden"
+      >
+        <div className="shrink-0">
+          <DeploymentIcon
+            src={row.avatarSrc}
+            size={avatarSize}
+            initialsName={row.name}
+            fallback={
+              <InitialsAvatar
+                name={row.name}
+                size={avatarSize}
+                className="!rounded-xl"
+                textClassName="!text-lg"
+              />
+            }
+            styles={{ badgeClassName: '!rounded-xl' }}
+          />
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5 overflow-hidden">
           <span className={mergeClasses(modelTypeClassName, styles.modelType)}>
             {labels.modelTypeLabel}
           </span>
-          <div className="flex min-w-0 items-center gap-1">
+          <div className="flex min-w-0 items-center gap-1 overflow-hidden">
             <span
-              className={mergeClasses('truncate', nameClassName, styles.name)}
+              className={mergeClasses(
+                'min-w-0 flex-1 truncate',
+                nameClassName,
+                styles.name,
+              )}
               title={row.name}
             >
               {row.name}

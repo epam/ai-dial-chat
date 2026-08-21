@@ -509,6 +509,25 @@ describe('mapUserUsageToModelLimits', () => {
   });
 
   describe('formatting', () => {
+    it('rounds accumulated model costs to cents', () => {
+      const usage = withUsage({
+        'gpt-4o': {
+          dayCostStats: { used: 0.242753, total: 2 ** 53 },
+        },
+      });
+
+      const [row] = mapUserUsageToModelLimits(
+        usage,
+        [modelItem()],
+        ModelLimitsPeriod.Last24Hours,
+        'en',
+        t,
+      );
+
+      expect(row.cost.usedLabel).toBe('$0.24');
+      expect(row.cost.ariaLabel).toBe('$0.24 used, unlimited');
+    });
+
     it('never adds a currency symbol to token/request labels', () => {
       const usage = withUsage({
         'gpt-4o': {

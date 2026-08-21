@@ -71,6 +71,17 @@ describe('mapUsageDataToDashboard', () => {
     expect(result.map((card) => card.title)).toEqual(['Today']);
   });
 
+  it('rounds accumulated costs and remaining amounts to cents', () => {
+    const result = mapUsageDataToDashboard(
+      withStats({ dayCostStats: { used: 0.788438, total: 100 } }),
+      t,
+    );
+
+    expect(result[0].usedLabel).toBe('$0.79');
+    expect(result[0].remainingLabel).toBe('$99.21');
+    expect(result[0].progressAriaLabel).toBe('$0.79 of $100, 1% used');
+  });
+
   it('returns an empty array when no period has a usable stat', () => {
     const result = mapUsageDataToDashboard(withStats({}), t);
 
