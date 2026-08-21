@@ -3270,13 +3270,14 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
       const overlayNewConversationsFolder =
         state.overlay.newConversationsFolder;
 
-      // Local conversations are not persisted, so a missing one means it was
-      // discarded during teardown (e.g. exiting the app editor while the
-      // preview response is still streaming aborts the stream, which then
-      // reports isMessageStreaming: false for an already removed conversation).
-      // There is nothing to update and nothing the user could act on.
       if (!conversation) {
-        return EMPTY;
+        return of(
+          UIActions.showErrorToast({
+            message: translate(
+              'It looks like this conversation has been deleted. Please reload the page',
+            ),
+          }),
+        );
       }
 
       const hasMessages =
