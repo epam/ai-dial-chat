@@ -25,6 +25,28 @@ describe('markdownToRichTextHtml', () => {
     expect(html).toContain('<td style="border-top:1px solid #e0e6f0');
   });
 
+  it('paints the table surface, so its dark text survives a dark-themed target', () => {
+    const html = markdownToRichTextHtml(TABLE_MARKDOWN);
+
+    expect(html).toMatch(
+      /<table style="[^"]*background:#ffffff[^"]*color:#161b2d/,
+    );
+  });
+
+  it('leaves flowing text its color, which the host document owns', () => {
+    const html = markdownToRichTextHtml(
+      '# Title\n\nParagraph.\n\n- item\n\n> quote\n\n[link](https://dialx.ai)',
+    );
+
+    /* A `color` with no background under it is the dark-theme bug: the host
+       paints the surface, so only structure travels for flowing text. */
+    const styledFlowingText =
+      html.match(/<(?:h1|p|ul|li|blockquote|a) [^>]*style="[^"]*"/g) ?? [];
+
+    expect(styledFlowingText.length).toBeGreaterThan(0);
+    styledFlowingText.forEach((tag) => expect(tag).not.toContain('color:'));
+  });
+
   it('stripes every second body row, which no inline style could express', () => {
     const html = markdownToRichTextHtml(TABLE_MARKDOWN);
     const stripedRows = html.match(/<tr style="background:#f5f7fa"/g) ?? [];
@@ -60,18 +82,21 @@ describe('markdownToRichTextHtml', () => {
     expect(html).toContain('<ul style="font-size:14px');
     expect(html).toContain('<blockquote style="border-inline-start:3px solid');
     expect(html).toContain('<hr style="border:0');
-    /* Attribute order is the serializer's business — `href` lands first here. */
-    expect(html).toMatch(/<a [^>]*style="color:#2764d9/);
+    /* Attribute order is the serializer's business — `href` lands first here.
+       The link keeps its underline; the color belongs to the host document,
+       which styles hyperlinks itself. */
+    expect(html).toMatch(/<a [^>]*style="text-decoration:underline/);
   });
 
   it('leaves code inside a fence without the inline-code chip', () => {
     const html = markdownToRichTextHtml('```ts\nconst a = 1;\n```');
 
     expect(html).toContain('<pre style="background:#f8fafc');
-    /* The <pre> already draws the box; a second background inside it reads as
-       a nested chip, so the fenced <code> carries the face and nothing else. */
+    /* The <pre> already draws the box and the surface behind it; repeating
+       either inside reads as a nested chip, so the fenced <code> carries the
+       monospace face and nothing else. */
     expect(html).toMatch(
-      /<code [^>]*style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14px;color:#161b2d"/,
+      /<code [^>]*style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14px"/,
     );
   });
 
