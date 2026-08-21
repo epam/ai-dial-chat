@@ -65,6 +65,8 @@ export interface ModelSelectorLabels {
   searchPlaceholder?: string;
   /** Accessible label for the close button in the mobile bottom-sheet. Defaults to `'Close'`. */
   closeLabel?: string;
+  /** Tooltip shown when the selected deployment is no longer available (e.g. removed from the catalog). Defaults to `'This deployment is no longer available'`. */
+  unavailableTooltip?: string;
 }
 
 /** Labels for the selected-tools chip row that appears in the input when tools are active. */

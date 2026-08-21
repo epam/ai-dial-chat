@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CodeBlockTheme } from '../../../types/code-editor';
@@ -58,8 +58,14 @@ describe('MarkdownCodeBlock', () => {
   it('renders no label text when language is empty', () => {
     render(<MarkdownCodeBlock language="" value="const x = 1;" />);
 
-    // Empty language renders an empty label span with no accessible text.
-    const label = screen.getByText('', { selector: 'span' });
+    /*
+     * Empty language renders an empty label span with no accessible text. The
+     * copy live region is also an empty span, so scope the query to the label
+     * by its typography class rather than matching every empty span.
+     */
+    const label = screen.getByText('', {
+      selector: 'span.dial-tiny-lead-semi-text',
+    });
     expect(label.textContent).toBe('');
   });
 
@@ -102,7 +108,7 @@ describe('MarkdownCodeBlock', () => {
     expect(copyButton.textContent).toBe('');
   });
 
-  it('shows a Copied confirm state — writes the clipboard, swaps the icon and accessible name, and tints the button green', async () => {
+  it('shows a Copied confirm state — writes the clipboard, swaps the icon, and tints the button green', async () => {
     const user = userEvent.setup({ delay: null });
 
     render(
@@ -118,9 +124,36 @@ describe('MarkdownCodeBlock', () => {
 
     expect(copyToClipboard).toHaveBeenCalledWith('const x = 1;');
     const copiedButton = await screen.findByRole('button', {
-      name: 'Copied!',
+      name: 'Copy code',
     });
     expect(copiedButton.className).toContain('dial-kit-primary-ghost-button');
+  });
+
+  it('announces the copy through a polite live region while the button keeps its stable name', async () => {
+    const user = userEvent.setup({ delay: null });
+
+    render(
+      <MarkdownCodeBlock
+        language="typescript"
+        value="const x = 1;"
+        copyLabel="Copy code"
+        copiedLabel="Copied!"
+      />,
+    );
+
+    const status = screen.getByRole('status');
+    expect(status.getAttribute('aria-live')).toBe('polite');
+    expect(status.textContent).toBe('');
+
+    await user.click(screen.getByRole('button', { name: 'Copy code' }));
+
+    await waitFor(() => expect(status.textContent).toBe('Copied!'));
+    /*
+     * The transient message lives only in the live region — swapping the
+     * button's accessible name to it would rename the control mid-interaction.
+     */
+    expect(screen.getByRole('button', { name: 'Copy code' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Copied!' })).toBeNull();
   });
 
   it('renders a download button next to copy that downloads the code as a file', async () => {

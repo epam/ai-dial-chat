@@ -263,4 +263,62 @@ describe('useToolsMenu', () => {
 
     expect(result.current.onToolToggle).toBe(first);
   });
+
+  it('restoreToolConfiguration sets isSelected from a persisted configuration value', () => {
+    mockUseAppConfig.mockReturnValue(makeAppConfig('deep_research') as never);
+    mockUseDeployments.mockReturnValue(
+      makeDeployments('deploy-1', {
+        deep_research: { type: 'boolean', default: false },
+      }) as never,
+    );
+
+    const { result } = renderHook(() => useToolsMenu());
+
+    act(() => {
+      result.current.restoreToolConfiguration({ deep_research: true });
+    });
+
+    expect(result.current.toolsMenuItems[0].isSelected).toBe(true);
+    expect(result.current.toolConfigurationValue).toEqual({
+      deep_research: true,
+    });
+  });
+
+  it('restoreToolConfiguration ignores a non-boolean or missing value', () => {
+    mockUseAppConfig.mockReturnValue(makeAppConfig('deep_research') as never);
+    mockUseDeployments.mockReturnValue(
+      makeDeployments('deploy-1', {
+        deep_research: { type: 'boolean', default: false },
+      }) as never,
+    );
+
+    const { result } = renderHook(() => useToolsMenu());
+
+    act(() => {
+      result.current.restoreToolConfiguration({ other_tool: true });
+    });
+    expect(result.current.toolsMenuItems[0].isSelected).toBe(false);
+
+    act(() => {
+      result.current.restoreToolConfiguration(undefined);
+    });
+    expect(result.current.toolsMenuItems[0].isSelected).toBe(false);
+  });
+
+  it('restoreToolConfiguration is a no-op when deepResearchToolId is null', () => {
+    mockUseAppConfig.mockReturnValue(makeAppConfig(null) as never);
+    mockUseDeployments.mockReturnValue(
+      makeDeployments('deploy-1', {
+        deep_research: { type: 'boolean', default: false },
+      }) as never,
+    );
+
+    const { result } = renderHook(() => useToolsMenu());
+
+    act(() => {
+      result.current.restoreToolConfiguration({ deep_research: true });
+    });
+
+    expect(result.current.toolConfigurationValue).toEqual({});
+  });
 });

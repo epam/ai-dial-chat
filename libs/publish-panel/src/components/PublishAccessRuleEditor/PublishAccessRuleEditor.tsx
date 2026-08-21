@@ -144,11 +144,22 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
     setIsSourceOpen(false);
   };
 
+  /*
+   * EQUAL and CONTAIN both use the `TagInput` targets field, so switching
+   * between them keeps whatever targets are already entered. Only crossing
+   * the boundary to/from REGEX clears the fields, since that switches the
+   * input type entirely (tags vs. a single pattern string).
+   */
   const handleFunctionChange = (next: string | string[]) => {
     const value = Array.isArray(next) ? next[0] : next;
-    setRuleFunction(value as PublicationRuleFunction);
-    setTargets([]);
-    setPattern('');
+    const nextFunction = value as PublicationRuleFunction;
+    const wasRegex = ruleFunction === PublicationRuleFunction.Regex;
+    const willBeRegex = nextFunction === PublicationRuleFunction.Regex;
+    if (wasRegex !== willBeRegex) {
+      setTargets([]);
+      setPattern('');
+    }
+    setRuleFunction(nextFunction);
     setIsFunctionOpen(false);
   };
 

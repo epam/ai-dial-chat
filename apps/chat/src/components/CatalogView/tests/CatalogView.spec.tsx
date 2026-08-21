@@ -80,6 +80,10 @@ import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import CatalogView from '../CatalogView';
 import { SkillDetailsFilePreview } from '../SkillDetailsFilePreview';
 
+const formatLimitNumber = new Intl.NumberFormat(undefined, {
+  maximumFractionDigits: 2,
+}).format;
+
 /** Minimal fake popup `Window` — enough surface for `initiateOAuthLogin`/`waitForToolsetOAuthResult`. */
 const makeFakePopup = () => {
   const store = new Map<string, string>();
@@ -494,7 +498,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
             logout global {item.id}
           </button>
         ))}
-        {(createOptions ?? []).map((option) => (
+        {(createOptions ?? []).flatMap((option) => [
           <button
             key={option.key}
             type="button"
@@ -503,8 +507,20 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
             }
           >
             {option.label}
-          </button>
-        ))}
+          </button>,
+          // eslint-disable-next-line testing-library/no-node-access -- `option.children` is a DropdownItem field, not a DOM node
+          ...(option.children ?? []).map((child) => (
+            <button
+              key={child.key}
+              type="button"
+              onClick={(domEvent) =>
+                child.onClick?.({ key: child.key, domEvent })
+              }
+            >
+              {child.label}
+            </button>
+          )),
+        ])}
         <output aria-label="Publish folder names">
           {(publishFolderItems ?? []).map((folder) => folder.name).join(',')}
         </output>
@@ -1544,6 +1560,8 @@ describe('CatalogView', () => {
           label: CatalogI18nKeys.DetailsLimitsRequestsPerHour,
           used: 2,
           total: 10,
+          usedLabel: formatLimitNumber(2),
+          totalLabel: formatLimitNumber(10),
           valueLabel: CatalogI18nKeys.DetailsLimitsValue,
           ariaLabel: CatalogI18nKeys.DetailsLimitsProgressAriaLabel,
         },
@@ -1551,6 +1569,8 @@ describe('CatalogView', () => {
           label: CatalogI18nKeys.DetailsLimitsTokensPerDay,
           used: 2500,
           total: 10000,
+          usedLabel: formatLimitNumber(2500),
+          totalLabel: formatLimitNumber(10000),
           valueLabel: CatalogI18nKeys.DetailsLimitsValue,
           ariaLabel: CatalogI18nKeys.DetailsLimitsProgressAriaLabel,
         },
@@ -1562,14 +1582,7 @@ describe('CatalogView', () => {
         title: 'Capabilities',
         specs: [
           { label: 'Tools', value: true },
-          { label: 'MCP', value: false },
-          { label: 'Prompt caching', value: true },
           { label: 'Parallel tool calls', value: true },
-          { label: 'URL attachments', value: false },
-          { label: 'Folder attachments', value: false },
-          { label: 'Seed', value: false },
-          { label: 'System prompt', value: true },
-          { label: 'Resume', value: true },
           { label: 'Reasoning efforts', value: 'low · medium · high' },
         ],
       },
@@ -1582,7 +1595,10 @@ describe('CatalogView', () => {
             value: new Date(1780387921823).toLocaleDateString(),
           },
           { label: 'Context window', value: '128K tokens' },
-          { label: 'Input type', value: 'text/* · image/*' },
+          {
+            label: CatalogI18nKeys.DetailsModelInputModalities,
+            value: 'Text files, Image files',
+          },
         ],
       },
     ]);
@@ -1636,15 +1652,11 @@ describe('CatalogView', () => {
       },
       {
         title: 'Capabilities',
-        specs: [
-          { label: 'Tools', value: false },
-          { label: 'MCP', value: false },
-          { label: 'Prompt caching', value: false },
-        ],
+        specs: [{ label: 'Tools', value: false }],
       },
       {
         title: 'Configuration',
-        specs: [{ label: 'Input attachments', value: 'text/*' }],
+        specs: [{ label: 'Input attachments', value: 'Text files' }],
       },
     ]);
   });
@@ -1714,14 +1726,6 @@ describe('CatalogView', () => {
             label: 'Token endpoint',
             value: 'https://mcp.example.com/oauth/token',
           },
-        ],
-      },
-      {
-        title: 'Capabilities',
-        specs: [
-          { label: 'MCP', value: true },
-          { label: 'Prompt caching', value: false },
-          { label: 'System prompt', value: true },
         ],
       },
     ]);
@@ -3555,15 +3559,30 @@ describe('CatalogView', () => {
       ).toBeTruthy();
     });
 
-    it('navigates to the skill editor with the catalog return url from the Skill create option', async () => {
+    it('navigates to the skill editor with the catalog return url from the Skill submenu\'s "Write instructions" option', async () => {
       render(<CatalogView />);
       await user.click(
-        screen.getByRole('button', { name: 'catalog.create.skill' }),
+        screen.getByRole('button', {
+          name: 'catalog.create.skillWriteInstructions',
+        }),
       );
 
       expect(mockNavigate).toHaveBeenCalledWith(
         '/skill-editor?returnUrl=%2Fcatalog',
       );
+    });
+
+    it('offers no nested children other than "Write instructions" and "Upload" under Skill', () => {
+      render(<CatalogView />);
+
+      expect(
+        screen.getByRole('button', {
+          name: 'catalog.create.skillWriteInstructions',
+        }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole('button', { name: 'catalog.create.skillUpload' }),
+      ).toBeTruthy();
     });
   });
   describe('revoke access', () => {

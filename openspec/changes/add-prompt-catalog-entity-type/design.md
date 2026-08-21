@@ -31,7 +31,7 @@ Constraints that shape every decision below:
 
 ### D1 — `Prompt` is a `CatalogEntityType` member, not a parallel type system
 
-Add `Prompt = 'PROMPT'` to the existing enum, with an `ENTITY_TYPE_COLOR` entry and a `TAB_ORDER` slot after `Toolset`. Everything type-generic then works for free.
+Add `Prompt = 'PROMPT'` to the existing enum, with an `ENTITY_TYPE_COLOR` entry and a `TAB_ORDER` slot after `Skill`, as the last entry. Everything type-generic then works for free.
 
 *Alternatives:* a separate `PromptCatalog` component (duplicates search/sort/filter/details, and prompts stay invisible to catalog search); reusing `CatalogEntityType.Skill` (already exported and colour-mapped for a different concept — silently breaks any host filtering on it). Both rejected.
 
@@ -98,6 +98,8 @@ Rather than leak the bucket into the client, `CreateShareLinkDto` gains an optio
 `isShareVisible` returns `true` for a prompt only when `item.isMyApp` — DIAL Core grants access out of the owner's bucket, and the share endpoint deliberately qualifies only against the caller's own bucket.
 
 Unshare stays off (see Non-Goals): the DTO regex remains the blocker. `resolveSharedItemSummary` short-circuits `prompts/` ids because a prompt has no deployments/toolsets list entry to summarise.
+
+**Revised (bug fix).** The initial cut left `CatalogEntityType.Prompt` out of `SharePopoverContainer`'s `EDITABLE_ACCESS_TYPES`, so a shared prompt link was always view-only while Agent/Skill/Toolset links offered a "Can view" / "Can edit" choice. `ShareService.createShareLink` never special-cased `Prompt` in `ACCESS_PERMISSIONS` — `Edit` maps to `['READ', 'WRITE']` for any resource kind — and shared-prompt read/write via `canEdit`/`isEditable` (D3, group 12.4) was already wired end to end. There was no backend or product reason for the exclusion; it was an oversight from when the popover's editable-type set was first written. Fixed by adding `Prompt` to `EDITABLE_ACCESS_TYPES`.
 
 ### D8 — One feature key, `OverlayFeature.Prompts`, gates the whole surface
 

@@ -30,13 +30,18 @@ API, never a rebuild of the frontend image.
 ## Migration checklist
 
 1. Stand up `chat-api` with DIAL Core access and at least one auth provider.
+   If the provider uses a private CA, configure its trust bundle before startup
+   as described in [Private certificate authorities](#private-certificate-authorities).
 2. Port environment variables — see [Environment variables](#environment-variables).
-3. Port UI feature flags — see [UI feature flags](#ui-feature-flags).
-4. Port the themes configuration — see [Themes](#themes).
-5. Port any embedded-overlay integration — see [Embedding](#embedding).
-6. Point a non-production deployment at a copy of real storage and verify
+3. Re-register the OIDC redirect URI and the post-logout redirect URI with every
+   identity provider. Both moved in 1.0 — the callback path gained the `/v1` API
+   version segment — see [Authentication](#authentication).
+4. Port UI feature flags — see [UI feature flags](#ui-feature-flags).
+5. Port the themes configuration — see [Themes](#themes).
+6. Port any embedded-overlay integration — see [Embedding](#embedding).
+7. Point a non-production deployment at a copy of real storage and verify
    existing conversations — see [User data](#user-data).
-7. Review the [capabilities not in 1.0 yet](#capabilities-not-in-10-yet) and
+8. Review the [capabilities not in 1.0 yet](#capabilities-not-in-10-yet) and
    decide what to do about the flows that depend on them.
 
 ## Environment variables
@@ -49,19 +54,19 @@ describe what happens to a legacy deployment's variables. The source of truth is
 
 ### Renamed or re-shaped
 
-| Legacy                      | 1.0                                                        | Notes                                                                                  |
-| --------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `DIAL_API_HOST`             | `DIAL_CORE_URL`                                            | Internal URL, never exposed to browsers.                                               |
-| `NEXTAUTH_SECRET`           | `AUTH_SESSION_SECRET`                                      | Must be 64 hex characters (32 bytes) — generate a new one rather than reusing the old. |
-| `NEXTAUTH_URL`              | `AUTH_CALLBACK_BASE_URL`                                   | Public base URL of the **API**, used to build OIDC redirect URIs.                      |
-| `APP_BASE_ORIGIN`           | `CORS_ORIGIN`                                              | Origin of the browser application; also used by the CSRF origin check.                 |
-| `IS_IFRAME`                 | `OVERLAY_ENABLED`                                          | `ALLOWED_IFRAME_ORIGINS` keeps its name and now also gates incoming `postMessage`.     |
-| `ENABLED_FEATURES`          | `ENABLED_UI_FEATURES`                                      | Same replace semantics; several flag names changed — see below.                        |
-| `THEMES_CONFIG_HOST`        | `THEMES_CONFIG_URL`                                        | Add `THEMES_SERVICE_TIMEOUT_MS` if 5 s is too tight.                                   |
-| `DEFAULT_MODEL`             | `DEFAULT_DEPLOYMENT`                                       | Deployment id shown to users with no persisted selection.                              |
-| `HIDDEN_ENTITY_TAG`         | `HIDDEN_ENTITY_TAGS`                                       | Now plural, comma-separated.                                                           |
-| `PUBLICATION_FILTERS`       | `PUBLICATION_FILTER_SOURCES`                               | —                                                                                      |
-| `ANNOUNCEMENT_HTML_MESSAGE` | kept, or `ANNOUNCEMENT_TITLE` + `ANNOUNCEMENT_DESCRIPTION` | The legacy variable still works; the structured form is opt-in.                        |
+| Legacy                      | 1.0                                                        | Notes                                                                                                                                    |
+| --------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `DIAL_API_HOST`             | `DIAL_CORE_URL`                                            | Internal URL, never exposed to browsers.                                                                                                 |
+| `NEXTAUTH_SECRET`           | `AUTH_SESSION_SECRET`                                      | Must be 64 hex characters (32 bytes) — generate a new one rather than reusing the old.                                                   |
+| `NEXTAUTH_URL`              | `AUTH_CALLBACK_BASE_URL`                                   | Public base URL of the **API**, used to build OIDC redirect URIs. The callback path changed too — see [Authentication](#authentication). |
+| `APP_BASE_ORIGIN`           | `CORS_ORIGIN`                                              | Origin of the browser application; also used by the CSRF origin check.                                                                   |
+| `IS_IFRAME`                 | `OVERLAY_ENABLED`                                          | `ALLOWED_IFRAME_ORIGINS` keeps its name and now also gates incoming `postMessage`.                                                       |
+| `ENABLED_FEATURES`          | `ENABLED_UI_FEATURES`                                      | Same replace semantics; several flag names changed — see below.                                                                          |
+| `THEMES_CONFIG_HOST`        | `THEMES_CONFIG_URL`                                        | Add `THEMES_SERVICE_TIMEOUT_MS` if 5 s is too tight.                                                                                     |
+| `DEFAULT_MODEL`             | `DEFAULT_DEPLOYMENT`                                       | Deployment id shown to users with no persisted selection.                                                                                |
+| `HIDDEN_ENTITY_TAG`         | `HIDDEN_ENTITY_TAGS`                                       | Now plural, comma-separated.                                                                                                             |
+| `PUBLICATION_FILTERS`       | `PUBLICATION_FILTER_SOURCES`                               | —                                                                                                                                        |
+| `ANNOUNCEMENT_HTML_MESSAGE` | kept, or `ANNOUNCEMENT_TITLE` + `ANNOUNCEMENT_DESCRIPTION` | The legacy variable still works; the structured form is opt-in.                                                                          |
 
 ### Carried over unchanged
 
@@ -106,8 +111,37 @@ browser never receives a token, and `chat-api` holds the OIDC session in an
 encrypted `HttpOnly` cookie, refreshing the access token transparently.
 Practical consequences for a migration:
 
-- Register the new redirect URI with every identity provider —
-  `{AUTH_CALLBACK_BASE_URL}` now points at the API, not the web app.
+- **Re-register the redirect URI with every identity provider — the path changed,
+  not only the host.** 1.0 serves the OIDC callback from the API, under the
+  versioned API prefix:
+
+  ```text
+  {AUTH_CALLBACK_BASE_URL}/api/v1/auth/callback/{providerId}
+  ```
+
+  `{providerId}` is the provider's id as returned by
+  `GET /api/v1/auth/providers` — `keycloak`, `auth0`, `azure-ad`, `azure-b2c`,
+  `gitlab`, `google`, `ping-id`, `cognito`, `okta` — so a Keycloak client that
+  served the legacy chat changes like this:
+
+  | Deployment | Valid redirect URI                                       |
+  | ---------- | -------------------------------------------------------- |
+  | Legacy     | `https://chat.example.com/api/auth/callback/keycloak`    |
+  | 1.0        | `https://chat.example.com/api/v1/auth/callback/keycloak` |
+
+  The extra `/v1` is easy to miss when `AUTH_CALLBACK_BASE_URL` happens to equal
+  the legacy `NEXTAUTH_URL`, because then the host does not change at all. It is
+  fixed in `apps/chat-api/src/auth/auth.controller.ts` and is not derived from
+  `API_PREFIX`, so it cannot be configured back to the legacy path. A client left
+  on the legacy URI is rejected by the IdP before the callback is reached —
+  Keycloak answers the authorization request with `Invalid parameter:
+redirect_uri`.
+
+- **Register `AUTH_POST_LOGOUT_REDIRECT_URI` with the provider as well.** It is
+  required in 1.0 once any provider is configured, and federated logout sends the
+  browser there through the IdP, so it must be in the client's post-logout
+  allow-list (Keycloak: _Valid post logout redirect URIs_). Unlike the callback it
+  points at the **application** origin, not the API.
 - Existing sessions do not carry over. Users log in once after the switch.
 - Provider configuration keeps the legacy shape: one set of discrete
   `AUTH_{PROVIDER}_*` variables per provider, registered when its `CLIENT_ID` is
@@ -115,6 +149,20 @@ Practical consequences for a migration:
   are in `apps/chat-api/README.md` § "Auth provider environment variables".
 - For a cross-site iframe deployment, set `AUTH_COOKIE_SECURE=true` so the
   session cookie is `SameSite=None; Secure`.
+
+### Private certificate authorities
+
+In 1.0, `chat-api` discovers every configured OIDC provider during startup. A
+provider certificate issued by a private CA therefore causes startup to fail
+unless that CA is already trusted by the Node.js process.
+
+Provide the deployment's private CA bundle when migrating. Mount the PEM-encoded
+bundle into the `chat-api` container and set `NODE_EXTRA_CA_CERTS` to its
+in-container path before the process starts. The complete Docker Compose example
+and certificate-chain guidance are in the Chat API README section
+[Trusting a private certificate authority](../apps/chat-api/README.md#trusting-a-private-certificate-authority).
+Do not use `NODE_TLS_REJECT_UNAUTHORIZED=0`, which disables certificate
+verification for every HTTPS connection made by the process.
 
 Design detail — cookie format, refresh, federated logout, `SessionGuard` — is in
 [`docs/auth/`](./auth/).

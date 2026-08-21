@@ -67,6 +67,12 @@ export class ModelCatalogPropertiesDto {
     example: '2026-08-17',
   })
   knowledgeCutoffDate?: string;
+
+  @ApiPropertyOptional({
+    description: 'Model parameter count for catalog display',
+    example: '100B',
+  })
+  parameters?: string;
 }
 
 /**

@@ -96,6 +96,20 @@ OVERLAY_SANDBOX_ENABLED=false
 
 At least one identity provider (see [Auth provider environment variables](#auth-provider-environment-variables) below) must also be configured for login to work; the application otherwise boots with no providers registered.
 
+Each configured provider needs two URLs registered in its own client
+configuration on the identity provider side:
+
+| Registered in the IdP as    | Value                                                        |
+| --------------------------- | ------------------------------------------------------------ |
+| Redirect URI / callback URL | `{AUTH_CALLBACK_BASE_URL}/api/v1/auth/callback/{providerId}` |
+| Post-logout redirect URI    | the value of `AUTH_POST_LOGOUT_REDIRECT_URI`                 |
+
+`{providerId}` is the provider's fixed id, e.g.
+`http://localhost:5000/api/v1/auth/callback/keycloak`. Note that the `/api/v1`
+part of the callback is a literal in `src/auth/auth.controller.ts` and does not
+follow `API_PREFIX`, so a deployment that overrides `API_PREFIX` sends the IdP a
+`redirect_uri` that no longer resolves to a route.
+
 **Optional:**
 
 | Variable                                | Default                        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
@@ -106,7 +120,7 @@ At least one identity provider (see [Auth provider environment variables](#auth-
 | `LOG_LEVEL`                             | Environment-dependent          | Minimum NestJS log level: `debug`, `log`, `warn`, or `error`. Defaults to `log` in production and `debug` otherwise.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `AUTH_SESSION_COOKIE_NAME`              | `__Host-chat.sess`             | Session cookie name                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `AUTH_TRANSACTION_COOKIE_NAME`          | `__Host-chat.tx`               | Login transaction cookie name                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| `AUTH_COOKIE_SECURE`                    | `true`                         | Set to `false` only for local HTTP smoke testing; runtime drops `__Host-` from cookie names when disabled                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `AUTH_COOKIE_SECURE`                    | `true`                         | Set to `false` only for local HTTP smoke testing; runtime drops `__Host-` from cookie names and disables HSTS plus CSP `upgrade-insecure-requests` when disabled                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `AUTH_POST_LOGOUT_REDIRECT_URI`         | —                              | Where the browser lands after IdP logout, applied to every configured provider. Required if at least one identity provider is configured.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `ADMIN_ROLE_NAMES`                      | `admin`                        | Comma-separated fallback admin role names, used by any provider that doesn't set its own `AUTH_{PROVIDER}_ADMIN_ROLE_NAMES`                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `DIAL_ROLES_FIELD`                      | `dial_roles`                   | Fallback dot-separated path to the roles claim in the ID/access token, used by any provider that doesn't set its own `AUTH_{PROVIDER}_DIAL_ROLES_FIELD`                                                                                                                                                                                                                                                                                                                                                                                                                              |
@@ -122,10 +136,11 @@ At least one identity provider (see [Auth provider environment variables](#auth-
 | `ARCHIVE_UPLOAD_MAX_FILES`              | `1000`                         | Maximum number of non-directory entries extracted from one uploaded archive                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES` | `2147483648`                   | Maximum cumulative decompressed bytes across all entries of an uploaded archive, checked incrementally during extraction (default 2 GB)                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `ARCHIVE_UPLOAD_TIMEOUT_MS`             | `300000`                       | Wall-clock budget (milliseconds) for extracting and uploading an entire archive (default 5 min)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| `SKILL_UPLOAD_MAX_BYTES`                | `104857600`                    | Maximum size (bytes) of an uploaded whole-skill ZIP archive for `PUT /api/v1/skills` (default 100 MB); multer rejects larger payloads with 413                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| `SKILL_UPLOAD_MAX_FILES`                | `500`                          | Maximum number of ZIP entries validated before rejecting a whole-skill upload with 422                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| `SKILL_FILE_UPLOAD_MAX_BYTES`           | `20971520`                     | Maximum size (bytes) of a single in-skill file uploaded via `PUT /api/v1/skills/files` (default 20 MB); rejected with 413                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `SKILL_UPLOAD_MAX_FILES`                | `100`                          | Maximum number of files (including `SKILL.md`) in a whole-skill create/update via `POST`/`PUT /api/v1/skills`; rejected with 400                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `SKILL_FILE_UPLOAD_MAX_BYTES`           | `1048576`                      | Maximum size (bytes) of a single file in a whole-skill create/update, via `PUT /api/v1/skills/files`, or of a standalone `SKILL.md` uploaded to `POST /api/v1/skills/import` (default 1 MB); rejected with 413                                                                                                                                                                                                                                                                                                                                                                       |
+| `SKILL_UPLOAD_MAX_TOTAL_BYTES`          | `16777216`                     | Maximum cumulative content size (bytes) of a whole-skill create/update, including `SKILL.md` (default 16 MB); rejected with 413                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `SKILL_TRANSFER_TIMEOUT_MS`             | `60000`                        | Timeout for all skills-domain DIAL Core requests (milliseconds)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `SKILL_ARCHIVE_UPLOAD_MAX_BYTES`        | `20971520`                     | Maximum size (bytes) of the compressed ZIP archive accepted by `POST /api/v1/skills/import` before extraction (default 20 MB); rejected with 413. Distinct from `SKILL_UPLOAD_MAX_TOTAL_BYTES`, which bounds decompressed content                                                                                                                                                                                                                                                                                                                                                    |
 | `ASR_MODEL`                             | —                              | Deployment ID of a dedicated speech-to-text model. When set (together with the `voice-input` feature), the mic button is always shown and recorded audio is transcribed by this model via `POST /api/v1/transcription`. When absent, the mic button is shown only for deployments whose `inputAttachmentTypes` include an audio MIME type, and transcription is handled by the selected chat deployment.                                                                                                                                                                             |
 | `TRANSCRIBE_SIZE_LIMIT_BYTES`           | `5242880`                      | Maximum audio file size (in bytes) accepted for transcription. The frontend rejects recordings larger than this before upload. Default is 5 MB.                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `UTILITY_MODEL`                         | —                              | Deployment ID of a utility model for server-side tasks (e.g. LLM conversation naming). Not exposed to the frontend. Required together with `DIAL_API_KEY` and `LLM_CONVERSATION_NAMING_ENABLED=true` to enable automatic title generation after the first assistant reply.                                                                                                                                                                                                                                                                                                           |
@@ -286,6 +301,36 @@ Google has no host variable (issuer is the fixed `https://accounts.google.com`) 
 
 \* Required only if that provider is being configured at all (signaled by its `CLIENT_ID` variable being set); the provider is skipped entirely otherwise.
 
+#### Trusting a private certificate authority
+
+At startup, `chat-api` discovers every configured OIDC provider over HTTPS. If
+an identity provider uses a certificate issued by a private CA, the Node.js
+process must trust that CA before the application starts; otherwise provider
+discovery fails and the application does not boot.
+
+Mount a PEM-encoded CA bundle into the container and point
+[`NODE_EXTRA_CA_CERTS`](https://nodejs.org/api/cli.html#node_extra_ca_certsfile)
+to it. For example, with Docker Compose:
+
+```yaml
+services:
+  chat:
+    environment:
+      NODE_EXTRA_CA_CERTS: /certificates/company-ca.pem
+    volumes:
+      - ./company-ca.pem:/certificates/company-ca.pem:ro
+```
+
+The bundle should contain the issuing root and any required intermediate CA
+certificates. If the server certificate is genuinely self-signed, include that
+certificate itself. The file must exist when the Node.js process starts because
+`NODE_EXTRA_CA_CERTS` is read only at process launch.
+
+`NODE_EXTRA_CA_CERTS` is a Node.js runtime variable, not an application-owned
+variable validated by `chat-api`. Do not use `NODE_TLS_REJECT_UNAUTHORIZED=0`:
+it disables certificate verification for every HTTPS connection made by the
+process.
+
 ### 3. Run the Application
 
 **Development mode:**
@@ -437,7 +482,7 @@ property so a client failure can be correlated with server traces and logs.
 - **Input Validation**: A global `ValidationPipe` (`whitelist`, `forbidNonWhitelisted`, `transform`) plus per-endpoint DTOs with validation decorators
 - **Path Traversal Protection**: Any string reaching a path, URL, or log line is constrained by an allowlist regex
 - **Session Security**: Encrypted session cookie, `HttpOnly` + `Secure` + `SameSite=Lax`, `__Host-` prefixed when host-scoped, with CSRF protection on state-changing requests
-- **Security Headers**: Helmet middleware with CSP, HSTS, and other security headers; `frame-ancestors` driven by `ALLOWED_IFRAME_ORIGINS`
+- **Security Headers**: Helmet middleware with CSP, HSTS, and other security headers; `frame-ancestors` driven by `ALLOWED_IFRAME_ORIGINS`. Local HTTP smoke mode (`AUTH_COOKIE_SECURE=false`) disables HSTS and CSP `upgrade-insecure-requests`
 - **CORS Configuration**: Restricted to configured origin with credentials support
 - **Rate Limiting**: Throttling to prevent abuse (100 req/min default, customizable per endpoint)
 - **Secret Hygiene**: Tokens, refresh tokens, and cookie payloads are never logged
@@ -650,6 +695,9 @@ kill -TERM %1                                  # should exit cleanly within a fe
 
 - **Check environment variables**: Ensure all required variables are set
 - **Validation errors**: The application validates environment variables at startup and will fail with clear error messages if configuration is invalid
+- **Self-signed certificate error**: Mount the private CA bundle and configure
+  `NODE_EXTRA_CA_CERTS` as described in
+  [Trusting a private certificate authority](#trusting-a-private-certificate-authority)
 
 ### Theme endpoints returning errors
 

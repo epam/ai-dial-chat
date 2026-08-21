@@ -5480,6 +5480,75 @@
         ]
       }
     },
+    "/api/v1/skills/import": {
+      "post": {
+        "description": "Accepts either a whole-skill ZIP archive or a standalone file named exactly (case-sensitive) SKILL.md in the file field, safely extracts and validates it server-side (container/structure validity, path safety, encrypted/symlink rejection, incremental decompression limits, manifest UTF-8/frontmatter checks), then creates the skill atomically via the same If-None-Match: * uploadSkillFolder call createSkill uses. The two forms are told apart by the field's exact filename, never by its declared content type. Uses the authenticated user's own bucket; a client-supplied bucket is never trusted.",
+        "operationId": "importSkillArchive",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillImportResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing file, unsupported file type (neither a valid ZIP nor a file named exactly SKILL.md), non-ZIP or corrupted archive, missing/ambiguous manifest, unsafe path, or invalid manifest content"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "409": {
+            "description": "A skill already exists at this path"
+          },
+          "413": {
+            "description": "The archive, a decompressed file, the total decompressed content, or a standalone SKILL.md exceeds a configured limit"
+          },
+          "422": {
+            "description": "Archive is structurally invalid: too many entries, more than one skill, duplicate paths, or an encrypted/symlink/unsupported entry (standalone SKILL.md uploads never produce this status)"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Create a new skill from an uploaded ZIP archive or a standalone SKILL.md",
+        "tags": [
+          "skills"
+        ]
+      }
+    },
     "/api/v1/skills/grouping-folders": {
       "post": {
         "description": "Proxies DIAL Core createSkillGroupingFolder. Accepts no conditional request headers — the verified SDK schema declares none for this operation.",
@@ -7628,6 +7697,11 @@
             "type": "string",
             "description": "Model knowledge cutoff date for catalog display",
             "example": "2026-08-17"
+          },
+          "parameters": {
+            "type": "string",
+            "description": "Model parameter count for catalog display",
+            "example": "100B"
           }
         }
       },
@@ -11611,6 +11685,36 @@
             "example": "\"abc123\""
           }
         }
+      },
+      "SkillImportResponseDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The created skill's name, derived from its manifest",
+            "example": "docs-helper"
+          },
+          "path": {
+            "type": "string",
+            "description": "The created skill's destination path within the bucket",
+            "example": "docs-helper"
+          },
+          "url": {
+            "type": "string",
+            "description": "The created skill's DIAL Core resource URL",
+            "example": "skills/my-bucket/docs-helper"
+          },
+          "etag": {
+            "type": "string",
+            "description": "New ETag of the created skill, when DIAL Core returns one",
+            "example": "\"abc123\""
+          }
+        },
+        "required": [
+          "name",
+          "path",
+          "url"
+        ]
       },
       "SkillFileUploadResponseDto": {
         "type": "object",

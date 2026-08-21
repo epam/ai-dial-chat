@@ -16,8 +16,8 @@ description: >
 
 # Git Ship Skill
 
-Full cycle for **ai-dial-chat**: checkout new branch from `development-1.0` → stage → commit
-(Conventional Commits) → push → optional PR. Base branch is **`development-1.0`**.
+Full cycle for **ai-dial-chat**: checkout new branch from `development` → stage → commit
+(Conventional Commits) → push → optional PR. Base branch is **`development`**.
 
 Supporting files (read them when the step says so — don't inline everything up front):
 
@@ -34,7 +34,7 @@ git rev-parse --abbrev-ref HEAD                 # current branch
 gh pr view --json number,url,state 2>/dev/null  # open PR for current branch (if any)
 ```
 
-- **New-branch mode** — current branch is `development-1.0` (or another base branch), or there's no
+- **New-branch mode** — current branch is `development` (or another base branch), or there's no
   PR for it. Run the full cycle: Steps 1–6.
 - **Update-existing mode** — you're already on a feature branch **and** it has an open PR (or the
   user says "push to the existing PR" / "update my PR"). **Do not** create a new branch and **do
@@ -94,7 +94,7 @@ concise, imperative description. Breaking change → add `!` before the colon.
 
 ```bash
 # 1. Create branch from base (skip in update-existing mode)
-git checkout development-1.0
+git checkout development
 git checkout -b <type>/<short-slug>
 
 # 2. Stage all changes (includes any areas.md self-extend edit)
@@ -116,7 +116,7 @@ force push or rebase automatically.
 
 If the user requested a PR or draft PR, **read `.agents/skills/git-ship/examples/pr-body.md`** and
 follow the repo PR template (`.github/pull_request_template.md`) — fill every placeholder, then run
-the `gh pr create` command shown there with `--base development-1.0`.
+the `gh pr create` command shown there with `--base development`.
 
 ---
 

@@ -70,6 +70,16 @@ export const isValidSkillRelativePath = (relativePath: string): boolean => {
   return true;
 };
 
+/**
+ * Validates a Skill archive import's destination-name candidate (design.md
+ * D6, `add-skill-archive-import`): a single path segment, so a manifest's
+ * `name` can be used directly as the Skill's destination path without a
+ * grouping folder. Reuses `isValidSkillRelativePath` for the shared safety
+ * rules and additionally rejects any `/`.
+ */
+export const isValidSkillName = (name: string): boolean =>
+  isValidSkillRelativePath(name) && !name.includes('/');
+
 export interface SkillArchiveEntryPathResult {
   isDirectory: boolean;
   safeRelativePath: string | null;
