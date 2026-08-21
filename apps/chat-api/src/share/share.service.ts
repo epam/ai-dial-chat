@@ -9,15 +9,18 @@ import {
 import { ConfigService } from '@nestjs/config';
 import {
   handleDialFetchError,
+  handleDialSdkError,
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import {
   countRecipientsByUrl,
   resolveRecipientsCount,
 } from '../common/utils/resource-ownership';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { EnvironmentVariables } from '../config/environment.config';
+import { resolveConversationLocation } from '../conversations/utils/conversation.utils';
 import { DeploymentsService } from '../deployments/deployments.service';
 import { DialClientService } from '../dial/dial-client.service';
 import {
@@ -90,6 +93,75 @@ const CONVERSATION_SHARE_INVITATION_ROUTE_PATH = '/conversations/shared';
 
 /** DIAL Core conversation resource paths always start with this prefix. */
 const CONVERSATION_RESOURCE_PREFIX = 'conversations/';
+const FILE_RESOURCE_PREFIX = 'files/';
+
+interface AnnotationWithAttachment {
+  body?: {
+    source?: {
+      attachment?: unknown;
+    };
+  };
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const collectAttachmentResourceUrls = (
+  attachments: unknown,
+  resourceUrls: Set<string>,
+): void => {
+  if (!Array.isArray(attachments)) return;
+
+  for (const attachment of attachments) {
+    if (!isRecord(attachment)) continue;
+
+    for (const field of ['url', 'reference_url'] as const) {
+      const url = attachment[field];
+      if (typeof url !== 'string') continue;
+
+      const resourceUrl = url.split('#', 1)[0];
+      if (resourceUrl.startsWith(FILE_RESOURCE_PREFIX)) {
+        resourceUrls.add(resourceUrl);
+      }
+    }
+  }
+};
+
+/** Collects unique DIAL file resources referenced by messages, stages, and citations. */
+const collectConversationResourceUrls = (conversation: unknown): string[] => {
+  if (!isRecord(conversation) || !Array.isArray(conversation.messages)) {
+    return [];
+  }
+
+  const resourceUrls = new Set<string>();
+  for (const message of conversation.messages) {
+    if (!isRecord(message) || !isRecord(message.custom_content)) continue;
+
+    collectAttachmentResourceUrls(
+      message.custom_content.attachments,
+      resourceUrls,
+    );
+
+    const stages = message.custom_content.stages;
+    if (Array.isArray(stages)) {
+      for (const stage of stages) {
+        if (isRecord(stage)) {
+          collectAttachmentResourceUrls(stage.attachments, resourceUrls);
+        }
+      }
+    }
+
+    const annotations = message.custom_content.annotations;
+    if (!Array.isArray(annotations)) continue;
+    for (const annotation of annotations) {
+      const attachment = (annotation as AnnotationWithAttachment)?.body?.source
+        ?.attachment;
+      collectAttachmentResourceUrls([attachment], resourceUrls);
+    }
+  }
+
+  return [...resourceUrls];
+};
 
 const getInvitationRoutePath = (itemId: string): string =>
   itemId.startsWith(CONVERSATION_RESOURCE_PREFIX)
@@ -147,6 +219,54 @@ export class ShareService {
     return `${this.appOrigin}${getInvitationRoutePath(itemId)}/${invitationId}`;
   }
 
+  private async getRelatedResourceUrls(
+    accessToken: string,
+    sessionBucket: string,
+    resourceUrl: string,
+  ): Promise<string[]> {
+    if (!resourceUrl.startsWith(CONVERSATION_RESOURCE_PREFIX)) return [];
+
+    const conversationPath = resourceUrl.slice(
+      CONVERSATION_RESOURCE_PREFIX.length,
+    );
+    const { bucket, subPath } = resolveConversationLocation(
+      conversationPath,
+      sessionBucket,
+    );
+
+    let result;
+    try {
+      result = await this.dialClient.client.getConversation(
+        bucket,
+        encodeDialResourcePath(subPath),
+        { headers: getBearerAuthHeaders(accessToken) },
+      );
+    } catch (err) {
+      return handleDialSdkError(
+        err,
+        'load conversation resources before sharing',
+        this.logger,
+      );
+    }
+
+    if (result.error != null) {
+      return handleDialSdkError(
+        result.error,
+        'load conversation resources before sharing',
+        this.logger,
+        result.response,
+      );
+    }
+    if (result.data == null) {
+      this.logger.error(
+        `DIAL Core returned an empty conversation for resourceUrl=${resourceUrl}`,
+      );
+      throw new BadGatewayException('DIAL Core returned an empty conversation');
+    }
+
+    return collectConversationResourceUrls(result.data);
+  }
+
   /**
    * Creates a share link for a DIAL Core resource (catalog entity, prompt, or conversation).
    *
@@ -165,9 +285,17 @@ export class ShareService {
     const permissions = Array.from(
       new Set(access.flatMap((level) => ACCESS_PERMISSIONS[level])),
     );
+    const relatedResourceUrls = await this.getRelatedResourceUrls(
+      accessToken,
+      bucket,
+      resourceUrl,
+    );
     const requestBody = {
       invitationType: 'LINK' as const,
-      resources: [{ url: resourceUrl, permissions }],
+      resources: [resourceUrl, ...relatedResourceUrls].map((url) => ({
+        url,
+        permissions,
+      })),
     };
     this.logger.debug(
       `Requesting share link from DIAL Core: ${JSON.stringify(requestBody)}`,
