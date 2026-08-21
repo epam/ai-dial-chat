@@ -137,11 +137,6 @@ export class ToolsetLoginModal extends Popup {
     const popupPromise = this.page.waitForEvent('popup');
     await method();
     const popup = await popupPromise;
-    try {
-      await popup.waitForLoadState('domcontentloaded');
-    } catch {
-      // popup may close before DOM loads if the flow finishes very fast
-    }
     return popup;
   }
 

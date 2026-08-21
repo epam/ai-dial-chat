@@ -28,6 +28,7 @@ import {
   DEFAULT_QUICK_APPS_SCHEMA_2_ID,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
+import { Routes } from '@/src/constants/routes';
 import { HeadersNames } from '@/src/constants/server';
 
 import { safeParseJSON } from '../json';
@@ -81,7 +82,8 @@ export const getCommonPageProps: GetServerSideProps = async ({
 
   let session = null;
   if (
-    !Object.values(pages).some((page) => page && resolvedUrl?.includes(page))
+    !Object.values(pages).some((page) => page && resolvedUrl?.includes(page)) &&
+    !resolvedUrl?.startsWith(Routes.ToolsetSignIn)
   ) {
     session = await getServerSession(req, res, authOptions);
     if (!isServerSessionValid(session)) {

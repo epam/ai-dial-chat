@@ -440,6 +440,7 @@ const updateToolsetEpic: AppEpic = (action$) =>
                             ToolsetCredentialsLevel.GLOBAL,
                           apiKey: payload?.auth?.apiKey,
                           toolset: savedUpdatedToolset,
+                          authWindow: payload?.auth?.authWindow,
                         }),
                       ),
                     );
@@ -766,6 +767,9 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
             authSettings?.authenticationType === ToolsetAuthTypes.API_KEY &&
             payload.apiKey
           ) {
+            // An API key needs no login window
+            payload.authWindow?.close();
+
             return of(
               ToolsetActions.logInToolset({
                 toolsetId: payload.toolset.id,
@@ -814,7 +818,7 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
             }
 
             return defer(() =>
-              from(signInToolset(url.href)).pipe(
+              from(signInToolset(url.href, payload.authWindow)).pipe(
                 switchMap((isSignedIn) =>
                   !isSignedIn
                     ? of(
@@ -852,10 +856,14 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
             );
           }
 
+          // Nothing will navigate the reserved window, so do not leave it open
+          payload.authWindow?.close();
+
           return EMPTY;
         }),
         catchError((err) => {
           console.error('Failed to login', err);
+          payload.authWindow?.close();
           return of(ToolsetActions.logInToolsetFail(parseApiError(err)));
         }),
       );
