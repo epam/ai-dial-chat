@@ -1,6 +1,7 @@
 import { Page } from '@playwright/test';
 
 const POPUP_NAVIGATION_TIMEOUT = 30_000;
+const BLANK_URL = 'about:blank';
 
 /**
  * Waits until the OAuth login window has left `about:blank`.
@@ -14,11 +15,15 @@ const POPUP_NAVIGATION_TIMEOUT = 30_000;
 export const waitForOAuthPopupNavigation = async (
   popup: Page,
 ): Promise<void> => {
+  if (popup.isClosed() || popup.url() !== BLANK_URL) return;
+
   try {
-    await popup.waitForURL((url) => url.href !== 'about:blank', {
+    // `commit` rather than the default `load`: the OAuth provider is mocked and
+    // redirects straight through, so the blank document may never fire `load`.
+    await popup.waitForURL((url) => url.href !== BLANK_URL, {
+      waitUntil: 'commit',
       timeout: POPUP_NAVIGATION_TIMEOUT,
     });
-    await popup.waitForLoadState('domcontentloaded');
   } catch {
     // The popup can complete and close the whole flow before it settles here
   }
