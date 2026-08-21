@@ -304,8 +304,7 @@ export class ResponsesAdapter {
              * `item_id`; `mergeStages` concatenates `name` on every merge, so
              * repeating it would duplicate the "Thinking" label.
              */
-            const delta = (event as { delta?: string; item_id?: string })
-              .delta;
+            const delta = (event as { delta?: string; item_id?: string }).delta;
             const itemId = (event as { item_id?: string }).item_id;
             if (delta && itemId) {
               const isFirstDeltaForItem = !reasoningStageItemIds.has(itemId);

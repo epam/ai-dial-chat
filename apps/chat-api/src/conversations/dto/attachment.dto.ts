@@ -3,12 +3,20 @@ import {
   IsOptional,
   IsString,
   IsUrl,
+  Matches,
   ValidationOptions,
   isURL,
   registerDecorator,
 } from 'class-validator';
 
 const DIAL_FILE_URL_PATTERN = /^files\/[A-Za-z0-9_-]+\/.+$/;
+/**
+ * RFC 2045 media-type shape (`type/subtype`, no parameters). Rejects
+ * separators (`,`, `;`) that would corrupt a `data:` URI built from this
+ * value (see `ResponsesAdapter.buildInputItem`).
+ */
+const MIME_TYPE_PATTERN =
+  /^[a-zA-Z0-9][a-zA-Z0-9!#$&\-^_]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&\-^_.+]*$/;
 const INVALID_PERCENT_ENCODING = /%(?![0-9a-fA-F]{2})/;
 const ENCODED_PATH_SEPARATOR_OR_DOT = /%(?:2e|2f|5c)/i;
 
@@ -53,6 +61,9 @@ export class AttachmentDto {
 
   @ApiProperty({ description: 'MIME type of the attachment' })
   @IsString()
+  @Matches(MIME_TYPE_PATTERN, {
+    message: 'type must be a valid MIME type (type/subtype)',
+  })
   type!: string;
 
   @ApiProperty({ description: 'Display name of the attachment' })

@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import { IsArray, IsObject, IsOptional, ValidateNested } from 'class-validator';
 import { AnnotationDto } from './annotation.dto';
 import { AttachmentDto } from './attachment.dto';
+import { IsShallowObject } from './is-shallow-object.validator';
 import { StageDto } from './stage.dto';
 
 /** Optional DIAL extra payload attached to a user or assistant message. */
@@ -43,6 +44,7 @@ export class MessageCustomContentDto {
   })
   @IsOptional()
   @IsObject()
+  @IsShallowObject({ maxDepth: 10, maxKeys: 500 })
   form_schema?: Record<string, unknown>;
 
   @ApiPropertyOptional({
