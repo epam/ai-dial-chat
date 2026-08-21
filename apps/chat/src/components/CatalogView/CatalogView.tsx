@@ -1520,7 +1520,7 @@ const CatalogView: FC<Props> = ({
       <input
         ref={skillArchiveFileInputRef}
         type="file"
-        accept=".zip"
+        accept=".zip,.md"
         className="sr-only"
         tabIndex={-1}
         aria-label={t(SkillArchiveImportI18nKeys.FileInputAriaLabel)}
@@ -1655,6 +1655,7 @@ const CatalogView: FC<Props> = ({
           apiRequestExampleLabel: t(CatalogI18nKeys.DetailsApiRequestExample),
           apiResponseSchemaLabel: t(CatalogI18nKeys.DetailsApiResponseSchema),
           copyCodeAriaLabel: t(ButtonsI18nKeys.Copy),
+          copiedCodeStatusLabel: t(ButtonsI18nKeys.Copied),
           pricingPricesSectionLabel: t(
             CatalogI18nKeys.DetailsPricingPricesSection,
           ),

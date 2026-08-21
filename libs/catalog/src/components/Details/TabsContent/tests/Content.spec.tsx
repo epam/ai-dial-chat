@@ -355,7 +355,11 @@ describe('ContentTab — file selector', () => {
       />,
     );
 
-    expect(screen.getByRole('status').textContent).toBe('Loading file');
+    /* Queried by its text rather than by the bare status role: a rendered
+       preview can carry its own live region (MarkdownCodeBlock mounts one
+       for its copy control), so the role alone is not unique here. */
+    const status = screen.getByText('Loading file');
+    expect(status.getAttribute('role')).toBe('status');
   });
 
   it('announces nothing once the file has loaded', () => {
@@ -477,6 +481,10 @@ describe('ContentTab — file preview', () => {
     );
 
     expect(screen.queryByRole('heading', { name: 'Stale' })).toBeNull();
-    expect(screen.getByRole('status').textContent).toBe('Loading file');
+    /* Queried by its text rather than by the bare status role: a rendered
+       preview can carry its own live region (MarkdownCodeBlock mounts one
+       for its copy control), so the role alone is not unique here. */
+    const status = screen.getByText('Loading file');
+    expect(status.getAttribute('role')).toBe('status');
   });
 });

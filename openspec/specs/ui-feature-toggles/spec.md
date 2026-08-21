@@ -33,7 +33,7 @@
 
 ### Requirement: Default baseline preserves current unconditional behavior
 
-`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 22 default-on keys and exclude the 17 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `file-manager`, `prompts`... are default-on; `hide-edit-user-message`, `disabled-send`, `catalog-table-view`, `hide-change-agent`, `skills`... are default-off — the full 39-key membership is the `OverlayFeature` enum itself, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 39 keys, matching each surface's current unconditional behavior.
+`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 24 default-on keys and exclude the 17 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `file-manager`, `prompts`... are default-on; `hide-edit-user-message`, `disabled-send`, `catalog-table-view`, `hide-change-agent`, `skills`... are default-off — the full 41-key membership is the `OverlayFeature` enum itself, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 41 keys, matching each surface's current unconditional behavior.
 
 **RTL impact:** None for this requirement itself — individual owning-surface gates state their own RTL impact where relevant (see per-surface requirements below).
 
@@ -125,7 +125,7 @@ The effective visibility of the voice-input UI affordance SHALL be `isEnabled('v
 
 ### Requirement: Each transferable feature key gates exactly one owning surface
 
-Each of the 39 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
+Each of the 41 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
 
 **Accessibility:** Conditionally-unmounted controls remove themselves from both the accessibility tree and the tab order by not rendering — no `aria-hidden` container with focusable descendants is introduced by this change.
 
@@ -140,6 +140,68 @@ Each of the 39 transferable `OverlayFeature` values SHALL gate exactly the ownin
 
 - **WHEN** `isEnabled('hide-new-conversation')` is `true`
 - **THEN** the "New conversation" controls in `Header.tsx` and `ChatLayout.tsx` do not render, and no other header/layout control is affected
+
+### Requirement: chat-settings gates the settings entry everywhere; empty-chat-settings narrows it
+
+The "Chat settings" entry in the conversation input's "+" menu â and the modal (desktop) and bottom sheet (mobile) it opens, carrying temperature, system prompt, and response format â SHALL be removed wherever `isEnabled('chat-settings')` is `false`. `ConversationView` and `NewConversationComposer` SHALL both hide it by passing no `chatSettings` config to `ConversationInput`, the lib's own omit path, which drops the menu item and leaves the modal and sheet unmounted rather than hidden.
+
+`empty-chat-settings` SHALL narrow the entry to the empty-chat composer only: that screen renders it when **both** keys are enabled. A host that disables only `empty-chat-settings` therefore keeps the in-chat entry, its behavior before `chat-settings` existed, while a host that disables `chat-settings` loses the entry on every screen without having to name the narrower key too.
+
+**Accessibility:** The entry and its overlay are conditionally unmounted, so neither leaves an accessibility-tree node nor a tab stop.
+
+**i18n impact:** None â existing translated labels are shown or omitted.
+
+#### Scenario: chat-settings removes the entry from an active conversation
+
+- **WHEN** `isEnabled('chat-settings')` is `false`
+- **THEN** `ConversationView` passes no `chatSettings`, so the "+" menu renders no "Chat settings" item and neither the modal nor the bottom sheet is mounted
+
+#### Scenario: chat-settings overrides empty-chat-settings on the composer
+
+- **WHEN** `isEnabled('chat-settings')` is `false` and `isEnabled('empty-chat-settings')` is `true`
+- **THEN** the empty-chat composer still renders no "Chat settings" entry
+
+#### Scenario: empty-chat-settings alone leaves the in-chat entry
+
+- **WHEN** `isEnabled('empty-chat-settings')` is `false` and `isEnabled('chat-settings')` is `true`
+- **THEN** the empty-chat composer renders no "Chat settings" entry and an active conversation still renders it
+
+#### Scenario: Both entries render by default
+
+- **WHEN** no `enabledUiFeatures` and no overlay override are present
+- **THEN** both keys are default-on and the "Chat settings" entry renders on the composer and in an active conversation
+
+### Requirement: hide-navigation-menu removes the hamburger and the sheet it opens
+
+`isEnabled('hide-navigation-menu')` SHALL remove the mobile navigation menu in full: `Header` SHALL render no hamburger button, and `Navigation` SHALL leave `NavigationSheet` unmounted rather than merely closed. Both are required â the sheet carries focusable rows (nav items, profile, keyboard shortcuts, log out), so leaving it mounted-but-closed would keep them in the tab order once any other caller flipped its `isOpen`, and the hamburger is its only trigger.
+
+The key SHALL NOT affect the desktop navigation rail or its user menu, which `hide-user-menu` owns. It exists for embeds whose host portal already handles sign-in and sign-out, making the sheet's log-out row dead weight.
+
+**RTL impact:** None â the removed control and surface are omitted, not repositioned.
+
+**Accessibility:** Both the button and the sheet are absent from the DOM, so neither leaves an accessibility-tree node nor a tab stop.
+
+**i18n impact:** None â existing translated labels are omitted along with their controls.
+
+#### Scenario: The hamburger is gone
+
+- **WHEN** `isEnabled('hide-navigation-menu')` is `true`
+- **THEN** the header renders no button labelled by `NavigationI18nKeys.OpenMenu`
+
+#### Scenario: The sheet is unmounted even when asked to open
+
+- **WHEN** `isEnabled('hide-navigation-menu')` is `true` and `Navigation` receives `isOpen: true`
+- **THEN** no dialog is rendered and none of the sheet's rows are reachable
+
+#### Scenario: The desktop rail is untouched
+
+- **WHEN** `isEnabled('hide-navigation-menu')` is `true` and `isEnabled('hide-user-menu')` is `false`
+- **THEN** the desktop navigation rail still renders its user menu
+
+#### Scenario: The menu renders by default
+
+- **WHEN** no `enabledUiFeatures` and no overlay override are present
+- **THEN** the key is default-off, so the hamburger renders and opens the sheet
 
 ### Requirement: hide-keyboard-shortcuts removes the entry on both profile surfaces
 

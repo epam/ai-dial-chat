@@ -640,8 +640,8 @@ export class SkillsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Safely extracts and validates a whole-skill ZIP archive server-side (container/structure validity, path safety, encrypted/symlink rejection, incremental decompression limits, manifest UTF-8/frontmatter checks), then creates the skill atomically via the same If-None-Match: * uploadSkillFolder call createSkill uses. Uses the authenticated user\'s own bucket; a client-supplied bucket is never trusted.
-   * Create a new skill from an uploaded ZIP archive
+   * Accepts either a whole-skill ZIP archive or a standalone file named exactly (case-sensitive) SKILL.md in the file field, safely extracts and validates it server-side (container/structure validity, path safety, encrypted/symlink rejection, incremental decompression limits, manifest UTF-8/frontmatter checks), then creates the skill atomically via the same If-None-Match: * uploadSkillFolder call createSkill uses. The two forms are told apart by the field\'s exact filename, never by its declared content type. Uses the authenticated user\'s own bucket; a client-supplied bucket is never trusted.
+   * Create a new skill from an uploaded ZIP archive or a standalone SKILL.md
    */
   async importSkillArchiveRaw(
     requestParameters: ImportSkillArchiveRequest,
@@ -695,8 +695,8 @@ export class SkillsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Safely extracts and validates a whole-skill ZIP archive server-side (container/structure validity, path safety, encrypted/symlink rejection, incremental decompression limits, manifest UTF-8/frontmatter checks), then creates the skill atomically via the same If-None-Match: * uploadSkillFolder call createSkill uses. Uses the authenticated user\'s own bucket; a client-supplied bucket is never trusted.
-   * Create a new skill from an uploaded ZIP archive
+   * Accepts either a whole-skill ZIP archive or a standalone file named exactly (case-sensitive) SKILL.md in the file field, safely extracts and validates it server-side (container/structure validity, path safety, encrypted/symlink rejection, incremental decompression limits, manifest UTF-8/frontmatter checks), then creates the skill atomically via the same If-None-Match: * uploadSkillFolder call createSkill uses. The two forms are told apart by the field\'s exact filename, never by its declared content type. Uses the authenticated user\'s own bucket; a client-supplied bucket is never trusted.
+   * Create a new skill from an uploaded ZIP archive or a standalone SKILL.md
    */
   async importSkillArchive(
     requestParameters: ImportSkillArchiveRequest,

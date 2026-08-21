@@ -225,9 +225,14 @@ const NewConversationComposer: FC<Props> = ({
 
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
+  const isChatSettingsEnabled = useUiFeature(OverlayFeature.ChatSettings);
   const isEmptyChatSettingsEnabled = useUiFeature(
     OverlayFeature.EmptyChatSettings,
   );
+  /* `chat-settings` is the master switch for the settings entry on every screen;
+     `empty-chat-settings` narrows it to this one. Both must be on here. */
+  const isComposerChatSettingsEnabled =
+    isChatSettingsEnabled && isEmptyChatSettingsEnabled;
   const isHideEmptyChatChangeAgentEnabled = useUiFeature(
     OverlayFeature.HideEmptyChatChangeAgent,
   );
@@ -387,7 +392,9 @@ const NewConversationComposer: FC<Props> = ({
             VoiceRecordingI18nKeys.DiscardRecordingLabel,
           )}
           sendOnEnter={sendOnEnter}
-          chatSettings={isEmptyChatSettingsEnabled ? chatSettings : undefined}
+          chatSettings={
+            isComposerChatSettingsEnabled ? chatSettings : undefined
+          }
           pendingDropFiles={pendingFiles}
           onDropFilesConsumed={onFilesConsumed}
           pendingAttachments={pendingDialAttachments}

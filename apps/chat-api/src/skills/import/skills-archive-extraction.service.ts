@@ -149,7 +149,9 @@ export class SkillsArchiveExtractionService {
       this.logger.warn(
         `Failed to open uploaded skill archive: ${err instanceof Error ? err.message : String(err)}`,
       );
-      throw new BadRequestException('Invalid or corrupted ZIP archive');
+      throw new BadRequestException(
+        'Expected a ZIP archive or a file named exactly SKILL.md, but the upload is not a valid ZIP archive',
+      );
     }
   }
 

@@ -14,6 +14,18 @@ import {
 } from '../../types/entity-notification';
 import { useOperationNotification } from '../useOperationNotification';
 
+/** Required manifest filename, matching the BFF's exact, case-sensitive check. */
+const SKILL_MANIFEST_FILE = 'SKILL.md';
+
+/**
+ * Client-side UX shortcut only — the BFF is the actual authority on what it
+ * accepts. Flags a `.md`-named file that isn't exactly `SKILL.md` so the
+ * picker can reject it locally instead of round-tripping to the server for
+ * an outcome the client can already predict.
+ */
+const isUnsupportedMarkdownFilename = (fileName: string): boolean =>
+  fileName.toLowerCase().endsWith('.md') && fileName !== SKILL_MANIFEST_FILE;
+
 export enum SkillArchiveImportStatus {
   Idle = 'idle',
   Uploading = 'uploading',
@@ -133,14 +145,29 @@ export const useSkillArchiveImport = (): UseSkillArchiveImportResult => {
     fileInputRef.current?.click();
   }, []);
 
+  const rejectUnsupportedFilename = useCallback(() => {
+    setStatus(SkillArchiveImportStatus.Error);
+    const message = t(SkillArchiveImportI18nKeys.ErrorUnsupportedFilename);
+    setStatusMessage(message);
+    showErrorNotification({
+      title: t(SkillArchiveImportI18nKeys.ErrorTitle),
+      message,
+    });
+  }, [showErrorNotification, t]);
+
   const handleFileChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       /* Reset so selecting the same file again re-triggers onChange. */
       event.target.value = '';
-      if (file) void importArchive(file);
+      if (!file) return;
+      if (isUnsupportedMarkdownFilename(file.name)) {
+        rejectUnsupportedFilename();
+        return;
+      }
+      void importArchive(file);
     },
-    [importArchive],
+    [importArchive, rejectUnsupportedFilename],
   );
 
   return {

@@ -19,7 +19,7 @@
 
 ### D1 — `<picture>` element for responsive background; no theme variants
 
-**Decision:** Use a single `<picture>` element with one `<source>` for `(min-width: 1920px)` (`/1920_login.png`) and an `<img>` fallback for the 768-px asset (`/768_login.png`). The picture is hidden on mobile (`mobile:hidden`) where no background is shown. No light/dark theme variants — a single image pair is served regardless of active theme.
+**Decision:** Use a single `<picture>` element with one `<source>` for `(min-width: 1920px)` (`/1920_login.svg`) and an `<img>` fallback for the 768-px asset (`/768_login.svg`). The picture is hidden on mobile (`mobile:hidden`) where no background is shown. No light/dark theme variants — a single image pair is served regardless of active theme.
 
 **Rationale:** `<picture>` is the semantic HTML mechanism for art-direction breakpoints and avoids loading both resolutions. Providing theme variants would double the asset count and require runtime theme-to-filename mapping; the design does not require it.
 

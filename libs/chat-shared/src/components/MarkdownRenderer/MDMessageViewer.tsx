@@ -2,7 +2,10 @@ import { type FC, memo } from 'react';
 import type { Components } from 'react-markdown';
 import { CodeBlockTheme } from '../../types/code-editor';
 import { DEFAULT_MARKDOWN_CLASS_NAMES } from './markdown-class-names';
-import { MarkdownRenderer } from './MarkdownRenderer';
+import {
+  MarkdownRenderer,
+  type MarkdownRendererClassNames,
+} from './MarkdownRenderer';
 
 /** Props for the {@link MDMessageViewer} markdown renderer. */
 interface MDMessageViewerProps {
@@ -27,6 +30,12 @@ interface MDMessageViewerProps {
   codeBlockCopiedLabel?: string;
   /** Syntax highlight color theme for code blocks. Forwarded to {@link MarkdownRenderer}. */
   codeBlockTheme?: CodeBlockTheme;
+  /**
+   * Per-element typography classes. Defaults to {@link DEFAULT_MARKDOWN_CLASS_NAMES};
+   * pass {@link COMPACT_MARKDOWN_CLASS_NAMES} for the smaller body scale. Give a
+   * stable reference: this component is memoised.
+   */
+  classNames?: MarkdownRendererClassNames;
 }
 
 /** Renders assistant message content as formatted markdown. */
@@ -39,6 +48,7 @@ export const MDMessageViewer: FC<MDMessageViewerProps> = memo(
     codeBlockCopyLabel,
     codeBlockCopiedLabel,
     codeBlockTheme,
+    classNames = DEFAULT_MARKDOWN_CLASS_NAMES,
   }) => (
     <MarkdownRenderer
       content={content}
@@ -48,7 +58,7 @@ export const MDMessageViewer: FC<MDMessageViewerProps> = memo(
       codeBlockCopyLabel={codeBlockCopyLabel}
       codeBlockCopiedLabel={codeBlockCopiedLabel}
       codeBlockTheme={codeBlockTheme}
-      classNames={DEFAULT_MARKDOWN_CLASS_NAMES}
+      classNames={classNames}
     />
   ),
 );

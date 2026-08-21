@@ -1,9 +1,4 @@
-# skill-archive-import Specification
-
-## Purpose
-Specifies the Catalog "Upload" entry point and the `POST /api/v1/skills/import` BFF endpoint that let a user create a whole Skill from a single ZIP archive or from a standalone `SKILL.md` file: server-side extraction and validation, atomic creation via the existing multipart Skill contract, and the frontend workflow that wires file selection to the API call and Catalog refresh.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Catalog "Upload" entry imports a Skill archive or a standalone manifest
 
@@ -85,110 +80,6 @@ A successful import, of either input form, SHALL make exactly one `uploadSkillFo
 - **WHEN** a Skill already exists at the path derived from the uploaded payload's manifest `name`, regardless of whether the payload was an archive or a standalone manifest
 - **THEN** DIAL Core's `412` response is mapped to `409 Conflict`, no existing Skill is modified, and no partial Skill is created
 
-### Requirement: Archive container and structure validation
-
-The system SHALL reject, before extracting any file content, an archive that is: missing, empty, not a ZIP by signature (not merely by file extension or declared MIME type), truncated, or otherwise corrupted (`400`).
-
-After a successful open, the system SHALL enforce an entry-count ceiling read from the archive's central directory metadata alone, before extracting any entry's bytes (`422` if exceeded).
-
-The system SHALL ignore OS-added metadata noise before any structural validation: macOS's `__MACOSX/` resource-fork tree and any `.DS_Store` or `Thumbs.db` entry, at any nesting depth, are skipped entirely — like a directory entry — and never count toward the wrapper-directory, manifest, or duplicate-path checks below.
-
-The system SHALL determine the normalized set of relative paths as follows: if every entry shares one identical first path segment (and that segment is not `SKILL.md` itself), that segment is treated as an optional wrapper directory and stripped from every path before further validation; otherwise, no stripping occurs. After this normalization step, the archive SHALL contain exactly one entry whose path is exactly `SKILL.md` (case-sensitive) — zero such entries is `400`, more than one is `422`. The system SHALL reject duplicate normalized paths (`422`) and SHALL treat directory entries as directories, never as zero-byte files.
-
-#### Scenario: Non-ZIP file is rejected
-- **WHEN** a file without a valid ZIP local-file-header signature is uploaded, regardless of its filename extension or declared content type
-- **THEN** the response is `400 Bad Request`
-
-#### Scenario: Corrupted archive is rejected
-- **WHEN** a truncated or corrupted ZIP is uploaded
-- **THEN** the response is `400 Bad Request` and no partial extraction result is used
-
-#### Scenario: Archive with too many entries is rejected before extraction
-- **WHEN** an archive's central directory lists an entry count above the configured ceiling
-- **THEN** the response is `422 Unprocessable Entity` and no entry's content is read
-
-#### Scenario: A single common wrapper directory is stripped
-- **WHEN** every entry in the archive is nested under one identical top-level directory, e.g. `docs-helper/SKILL.md` and `docs-helper/scripts/run.sh`
-- **THEN** that directory is stripped and the Skill is created from `SKILL.md` and `scripts/run.sh`
-
-#### Scenario: A macOS Finder-created archive imports successfully
-- **WHEN** a user uploads a ZIP that Finder's "Compress" produced from a folder — containing the real `<name>/SKILL.md` content alongside a sibling `__MACOSX/<name>/._SKILL.md` resource-fork tree
-- **THEN** the `__MACOSX` entries are ignored, the wrapper directory is stripped from the remaining entries, and the Skill is created normally
-
-#### Scenario: Archive with no manifest is rejected
-- **WHEN** neither the raw nor the wrapper-stripped path set contains a `SKILL.md` entry
-- **THEN** the response is `400 Bad Request`
-
-#### Scenario: Archive with multiple Skills is rejected
-- **WHEN** an archive normalizes to more than one entry whose path is `SKILL.md` (e.g. two differently named top-level directories, each containing its own `SKILL.md`)
-- **THEN** the response is `422 Unprocessable Entity` and no Skill is created
-
-#### Scenario: Duplicate normalized paths are rejected
-- **WHEN** two archive entries normalize to the same relative path after any wrapper stripping
-- **THEN** the response is `422 Unprocessable Entity`
-
-#### Scenario: Directory entries are not counted as files
-- **WHEN** an archive contains explicit directory entries alongside file entries
-- **THEN** the directory entries are excluded from the file count and from the created Skill's files
-
-### Requirement: Entry-level safety rules reuse the existing Skill path contract
-
-Every extracted, normalized entry path SHALL be validated against the same relative-path safety rules the existing Skill multipart create endpoint enforces: no absolute path, no drive letter, no backslash, no empty/`.`/`..` segment, no control or NUL characters, no `.dial-resource` or `.dial-folder` segment, and no reserved first segment such as `files` or `v`. A path failing any of these rules SHALL be rejected (`400`).
-
-The system SHALL reject, per entry, before decompressing its content: encrypted entries, symbolic-link entries, and any entry that is neither a regular file nor a directory.
-
-#### Scenario: Path traversal is rejected
-- **WHEN** an archive entry's path contains a `..` segment or an absolute path
-- **THEN** the response is `400 Bad Request` and no file is written
-
-#### Scenario: Encrypted entry is rejected
-- **WHEN** an archive contains a password-protected (encrypted) entry
-- **THEN** the response is `422 Unprocessable Entity` and no Skill is created
-
-#### Scenario: Symbolic link entry is rejected
-- **WHEN** an archive contains an entry whose Unix external file attributes mark it as a symbolic link
-- **THEN** the response is `422 Unprocessable Entity` and no Skill is created
-
-### Requirement: Decompressed-content limits are enforced incrementally, not from ZIP metadata
-
-The system SHALL enforce the existing Skill content limits — maximum 100 files including `SKILL.md`, maximum 1 MiB per file, maximum 16 MiB total uncompressed content — against bytes actually produced while decompressing each entry, aborting the read as soon as a limit is exceeded. The system SHALL NOT rely on a ZIP entry's declared uncompressed-size metadata alone to make this determination.
-
-The system SHALL additionally enforce a separate, configurable compressed-ingress limit (`SKILL_ARCHIVE_UPLOAD_MAX_BYTES`) on the archive file as received, before extraction begins.
-
-#### Scenario: Oversized compressed upload is rejected before extraction
-- **WHEN** an uploaded archive's size exceeds `SKILL_ARCHIVE_UPLOAD_MAX_BYTES`
-- **THEN** the response is `413 Payload Too Large` and no extraction is attempted
-
-#### Scenario: A file count above the limit is rejected
-- **WHEN** an archive's normalized file set (including `SKILL.md`) exceeds 100 files
-- **THEN** the response is `400 Bad Request`
-
-#### Scenario: A single oversized file is rejected during decompression
-- **WHEN** decompressing one entry produces more than 1 MiB of content, regardless of the entry's declared compressed or uncompressed size
-- **THEN** decompression of that entry is aborted and the response is `413 Payload Too Large`
-
-#### Scenario: Total uncompressed content above the limit is rejected during decompression
-- **WHEN** the running total of decompressed bytes across all entries exceeds 16 MiB
-- **THEN** extraction is aborted and the response is `413 Payload Too Large`
-
-### Requirement: Manifest content validation
-
-The system SHALL decode the archive's `SKILL.md` entry as strict UTF-8, rejecting (`400`) any byte sequence that is not valid UTF-8. The system SHALL parse the manifest's YAML frontmatter and require non-empty string `name` and `description` fields, rejecting (`400`) a manifest with missing frontmatter, malformed YAML, or an empty or non-string `name` or `description`.
-
-The system SHALL derive the destination Skill path from the manifest's `name` field using the same path-safety contract the manual Skill-creation flow already applies to a Skill's destination path. The system SHALL NOT rewrite or otherwise modify the uploaded `SKILL.md` content; only the destination path is computed from `name`.
-
-#### Scenario: Invalid UTF-8 manifest is rejected
-- **WHEN** the archive's `SKILL.md` entry contains a byte sequence that is not valid UTF-8
-- **THEN** the response is `400 Bad Request`
-
-#### Scenario: Missing or invalid frontmatter is rejected
-- **WHEN** `SKILL.md`'s YAML frontmatter is missing, malformed, or has an empty or non-string `name` or `description`
-- **THEN** the response is `400 Bad Request`
-
-#### Scenario: Manifest content is stored unmodified
-- **WHEN** a valid archive is imported
-- **THEN** the created Skill's `SKILL.md` content is byte-for-byte identical to the archive's `SKILL.md` entry
-
 ### Requirement: Resource cleanup on every outcome
 
 The system SHALL remove the staged temporary uploaded file (archive or standalone manifest) and close any open archive read handle on success, on every validation failure, on request timeout, and on request disconnect or any unexpected error. The system SHALL abort in-progress extraction or manifest parsing and any pending Core call when the client disconnects or the request times out.
@@ -211,17 +102,7 @@ The system SHALL NOT log archive contents, manifest contents, authentication tok
 - **WHEN** extraction, manifest parsing, or the Core call does not complete within the configured timeout
 - **THEN** the request is aborted, the response reflects a service-unavailable condition, and the staged temporary file is deleted
 
-### Requirement: `SKILL_ARCHIVE_UPLOAD_MAX_BYTES` environment configuration
-
-The system SHALL define `SKILL_ARCHIVE_UPLOAD_MAX_BYTES` as a validated, optional environment variable in the Skills domain's environment configuration, with a documented default. The variable SHALL be distinct from the retired `SKILL_UPLOAD_MAX_BYTES` and from the existing decompressed-content limits (`SKILL_UPLOAD_MAX_FILES`, `SKILL_FILE_UPLOAD_MAX_BYTES`, `SKILL_UPLOAD_MAX_TOTAL_BYTES`). The variable and its default SHALL be documented in `apps/chat-api/README.md` and present in `apps/chat-api/.env.template`.
-
-#### Scenario: Default applies when unset
-- **WHEN** `SKILL_ARCHIVE_UPLOAD_MAX_BYTES` is not set in the environment
-- **THEN** the system uses its documented default compressed-ingress limit
-
-#### Scenario: Configured value overrides the default
-- **WHEN** `SKILL_ARCHIVE_UPLOAD_MAX_BYTES` is set to a valid positive integer
-- **THEN** the system enforces that value as the maximum accepted compressed archive size
+## ADDED Requirements
 
 ### Requirement: Standalone SKILL.md payload detection
 

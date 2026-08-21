@@ -50,17 +50,67 @@ The container SHALL:
 
 No new backend endpoint is introduced. `ShareConversationPopoverContainer` SHALL call the existing `getShareLink(itemId, access)` utility (`apps/chat/src/utils/share-link.ts`), which POSTs to `POST /api/v1/share` via `createShareLink` (`apps/chat/src/server-api/share.api.ts`), passing the conversation's DIAL Core resource path as `itemId` and `access: [ShareLinkAccess.View]`.
 
-The backend `POST /api/v1/share` (`apps/chat-api/src/share/share.controller.ts`) `@ApiOperation.description` SHALL be updated to state it creates a share link "for a DIAL Core resource (catalog entity or conversation)", replacing the catalog-only wording. `CreateShareLinkDto`, response DTOs, status codes (201/400/401/429/502/503), and the `@Throttle({ limit: 20, ttl: 60000 })` rate limit are unchanged.
+The backend `POST /api/v1/share` (`apps/chat-api/src/share/share.controller.ts`) `@ApiOperation.description` SHALL be updated to state it creates a share link "for a DIAL Core resource (catalog entity or conversation)", replacing the catalog-only wording. `CreateShareLinkDto`, response DTOs, and the `@Throttle({ limit: 20, ttl: 60000 })` rate limit are unchanged. Conversation-specific related-resource resolution is defined below; non-conversation resources continue to be proxied directly without an additional lookup.
 
 #### Scenario: Conversation itemId is accepted by the existing endpoint
 
 - **WHEN** `POST /api/v1/share` is called with `{ itemId: '<owned-conversation-path>', access: ['view'] }`
-- **THEN** the request is validated and proxied to DIAL Core exactly as any other `itemId`, with no conversation-specific validation branch
+- **THEN** the request is validated, the conversation and its related DIAL file resources are resolved server-side, and all resolved resources are included in the request proxied to DIAL Core
+
+#### Scenario: Non-conversation itemId requires no related-resource lookup
+
+- **WHEN** `POST /api/v1/share` is called with an application, toolset, skill, model, or prompt `itemId`
+- **THEN** the backend does not call DIAL Core's conversation-read API and proxies the resolved `itemId` directly to the sharing API
 
 #### Scenario: Swagger description reflects conversation support
 
 - **WHEN** the OpenAPI spec is generated (`npm run openapi`)
 - **THEN** the `createShareLink` operation description mentions conversations as a valid shareable resource
+
+### Requirement: Sharing a conversation includes its related DIAL file resources
+
+Before calling DIAL Core's `shareResource`, `ShareService.createShareLink` SHALL load a conversation whose resolved resource URL starts with `conversations/`. The read SHALL use the owning bucket and encoded bucket-relative path derived from the conversation resource URL, and SHALL forward the caller's bearer token.
+
+The service SHALL collect unique DIAL file resource URLs from:
+
+- message-level `custom_content.attachments`;
+- `custom_content.stages[].attachments`;
+- citation attachments at `custom_content.annotations[].body.source.attachment`.
+
+Both `url` and `reference_url` fields SHALL be considered. Only URLs starting with `files/` are shareable DIAL resources; public/external URLs and inline `data` attachments SHALL NOT be added to the sharing request. A URL fragment such as `#page=2` identifies a view within a file rather than a distinct resource and SHALL be removed before deduplication and sharing.
+
+The conversation resource SHALL remain the first item in `shareResource.resources`, followed by each unique related file resource in first-seen order. Every related resource SHALL receive the same resolved permissions as the conversation (`READ` for view access, `READ` and `WRITE` for edit access).
+
+If the conversation read throws, returns an upstream error, or returns no conversation data, link creation SHALL fail through the existing DIAL error-mapping behavior and `shareResource` SHALL NOT be called with an incomplete resource set.
+
+#### Scenario: Message attachments are shared with the conversation
+
+- **GIVEN** an owned conversation references `files/owner-bucket/report.pdf` in a message attachment
+- **WHEN** a view-only share link is created for that conversation
+- **THEN** `shareResource.resources` contains the conversation first and `files/owner-bucket/report.pdf` second, both with `permissions: ['READ']`
+
+#### Scenario: Duplicate references are shared once
+
+- **GIVEN** the same DIAL file URL appears in multiple messages, stages, or citations
+- **WHEN** a share link is created
+- **THEN** the file URL appears exactly once in `shareResource.resources`
+
+#### Scenario: Reference fragment is removed
+
+- **GIVEN** an attachment has `reference_url: 'files/owner-bucket/source.pdf#page=2'`
+- **WHEN** a share link is created
+- **THEN** the related resource is shared as `files/owner-bucket/source.pdf`
+
+#### Scenario: Non-DIAL and inline attachments do not become shared resources
+
+- **GIVEN** a conversation contains an HTTPS attachment URL and an inline `data` attachment
+- **WHEN** a share link is created
+- **THEN** neither attachment is added to `shareResource.resources`
+
+#### Scenario: Conversation lookup failure prevents a partial invitation
+
+- **WHEN** DIAL Core rejects or fails the conversation read performed before sharing
+- **THEN** link creation fails through the existing DIAL error mapper and `shareResource` is not called
 
 ### Requirement: Accepting a conversation share invitation redirects into the conversation, not the catalog
 
@@ -327,4 +377,3 @@ This change requires regenerating the OpenAPI spec (`npm run openapi`, `npm run 
 
 - **WHEN** `mergeSharedItem` is called while a `refetchDeployments()`/`refetchToolsets()` call is in flight
 - **THEN** the in-flight refetch's eventual result is still applied or discarded solely based on `deploymentsRequestIdRef`/`toolsetsRequestIdRef`, unaffected by the merge
-

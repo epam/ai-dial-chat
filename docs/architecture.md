@@ -316,14 +316,20 @@ Business controllers are versioned; three infrastructure controllers are deliber
 
 #### Auth (`/api/v1/auth`)
 
-| Method | Path                              | Description                    |
-| ------ | --------------------------------- | ------------------------------ |
-| `GET`  | `/api/v1/auth/me`                 | Current user profile (public)  |
-| `GET`  | `/api/v1/auth/providers`          | List configured auth providers |
-| `POST` | `/api/v1/auth/login/{providerId}` | Initiate OIDC flow             |
-| `POST` | `/api/v1/auth/callback`           | OIDC callback handler          |
-| `POST` | `/api/v1/auth/refresh`            | Refresh access token           |
-| `POST` | `/api/v1/auth/logout`             | Clear session cookie           |
+| Method | Path                                 | Description                                                             |
+| ------ | ------------------------------------ | ----------------------------------------------------------------------- |
+| `GET`  | `/api/v1/auth/providers`             | List configured auth providers (public)                                 |
+| `GET`  | `/api/v1/auth/login/{providerId}`    | Start the OIDC flow — 302 to the provider (public)                      |
+| `GET`  | `/api/v1/auth/callback/{providerId}` | OIDC callback — this is the redirect URI registered in the IdP (public) |
+| `POST` | `/api/v1/auth/logout`                | Clear the session cookie, then RP-initiated logout (public)             |
+| `GET`  | `/api/v1/auth/me`                    | Current user profile; also returns the `X-CSRF-Token` header            |
+
+There is no refresh endpoint: `CookieSessionStrategy` renews an expired access
+token through `RefreshService` while authenticating the incoming request, so the
+browser never triggers a refresh explicitly. The redirect URI a deployment must
+register with each identity provider is
+`{AUTH_CALLBACK_BASE_URL}/api/v1/auth/callback/{providerId}` — the `/api/v1`
+prefix is fixed in `auth.controller.ts`, not derived from `API_PREFIX`.
 
 #### Conversations (`/api/v1/conversations`)
 
@@ -405,14 +411,14 @@ Cookie-based OIDC. `apps/chat-api` owns all auth logic — libraries have zero k
 ```
 Browser                apps/chat-api                OIDC Provider
   │                         │                            │
-  │  POST /auth/login        │                            │
+  │  GET /auth/login/:id     │                            │
   │─────────────────────────▶│                            │
   │                         │──── authorization_endpoint ▶│
   │◀────────────────────────│        redirect_uri         │
   │  (redirect to provider) │                            │
   │─────────────────────────────────────────────────────▶│
   │◀─────────────────────────────────────────────────────│ (code)
-  │  POST /auth/callback     │                            │
+  │  GET /auth/callback/:id  │                            │
   │─────────────────────────▶│                            │
   │                         │◀──── token exchange ───────│
   │◀────────────────────────│ Set-Cookie: session=<enc>  │
