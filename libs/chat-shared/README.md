@@ -212,13 +212,17 @@ import { ResourceSummary } from '@epam/ai-dial-chat-shared';
 <ResourceSummary
   item={item}
   versionLabel="Version {version} · current"
-  colors={{ versionTagText: 'var(--text-accent)' }}
+  styles={{
+    colors: { versionTagText: 'var(--text-accent)' },
+    typography: { versionTagClassName: 'dial-tiny-text' },
+  }}
 />;
 ```
 
 Pass `hasVersionTag={false}` to drop the trailing tag and show the version
 inline after the name instead, or pass `children` to render arbitrary content
-in the row instead of the entity header.
+in the row instead of the entity header. The legacy top-level `colors` prop is
+still accepted; new consumers should use `styles.colors`.
 
 ## Hooks
 

@@ -36,6 +36,8 @@ export interface SettingsPanelColors {
   activeRowBackgroundHover?: string;
   /** Label and icon color of the active row. Defaults to `--text-accent`. */
   activeRowText?: string;
+  /** Keyboard focus ring color. Defaults to `--stroke-focus-black`. */
+  rowFocusOutline?: string;
 }
 
 /** Style overrides for the {@link SettingsPanel} component. */

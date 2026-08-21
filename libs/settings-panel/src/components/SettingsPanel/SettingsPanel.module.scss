@@ -5,6 +5,13 @@
 .row {
   color: var(--sp-row-text, var(--text-secondary, #57647a));
 
+  &:focus-visible {
+    outline-color: var(
+      --sp-row-focus-outline,
+      var(--stroke-focus-black, #161b2d)
+    );
+  }
+
   @media (hover: hover) {
     &:hover:not(:disabled):not(.rowActive) {
       background-color: var(

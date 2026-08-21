@@ -50,7 +50,7 @@ import { SettingsPanel } from '@epam/ai-dial-settings-panel';
 ```
 
 Pass `styles={{ typography, colors }}` to override the section-header/label typography classes or
-the row background/text colors (applied as CSS custom properties):
+the row background/text/focus colors (applied as CSS custom properties):
 
 ```tsx
 <SettingsPanel
@@ -58,7 +58,10 @@ the row background/text colors (applied as CSS custom properties):
   onSelect={setActiveTab}
   items={items}
   styles={{
-    colors: { activeRowBackground: '#e6f0ff' },
+    colors: {
+      activeRowBackground: '#e6f0ff',
+      rowFocusOutline: '#161b2d',
+    },
   }}
 />;
 ```

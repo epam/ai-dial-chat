@@ -125,7 +125,7 @@ const UsageTab: FC = () => {
                 labels={modelLimitsLabels}
               />
             ) : (
-              <p className="dial-small-text m-0 text-secondary">
+              <p className="dial-small-text text-secondary">
                 {t(UsageI18nKeys.ModelLimitsEmptyState)}
               </p>
             )}

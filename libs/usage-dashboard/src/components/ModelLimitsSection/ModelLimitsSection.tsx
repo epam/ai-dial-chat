@@ -18,6 +18,7 @@ const PERIOD_ORDER: ModelLimitsPeriod[] = [
   ModelLimitsPeriod.Last30Days,
 ];
 
+// TODO: Replace the legacy segmented control and remove these overrides when a 2.0 UI-kit equivalent is available.
 const PERIOD_SELECTOR_CLASS_NAME = [
   'box-border !inline-flex max-h-[54px] min-h-10 max-w-full items-center overflow-x-auto overflow-y-hidden !rounded-full border !border-tertiary !bg-layer-sunken p-1 desktop:h-10',
   '[&>button]:!m-0 [&>button]:!h-11 [&>button]:!flex-none [&>button]:!rounded-full [&>button]:!border-0 [&>button]:!bg-transparent [&>button]:!px-4 [&>button]:!py-0 [&>button]:!text-secondary desktop:[&>button]:!h-8',

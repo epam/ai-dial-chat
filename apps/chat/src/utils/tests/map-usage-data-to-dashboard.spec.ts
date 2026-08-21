@@ -53,12 +53,12 @@ describe('mapUsageDataToDashboard', () => {
       periodDescription: 'Last 24 hours',
       used: 3.6,
       total: 4,
-      usedLabel: '$3.60',
-      totalLabel: '$4.00',
-      remainingLabel: '$0.40',
+      usedLabel: '$3.6',
+      totalLabel: '$4',
+      remainingLabel: '$0.4',
       usedPercent: 90,
       status: UsageLimitStatus.RunningLow,
-      progressAriaLabel: '$3.60 of $4.00, 90% used',
+      progressAriaLabel: '$3.6 of $4, 90% used',
     });
   });
 
@@ -90,8 +90,8 @@ describe('mapUsageDataToDashboard', () => {
     );
 
     expect(result[0].used).toBe(0);
-    expect(result[0].usedLabel).toBe('$0.00');
-    expect(result[0].remainingLabel).toBe('$100.00');
+    expect(result[0].usedLabel).toBe('$0');
+    expect(result[0].remainingLabel).toBe('$100');
     expect(result[0].status).toBe(UsageLimitStatus.Default);
   });
 
@@ -115,10 +115,10 @@ describe('mapUsageDataToDashboard', () => {
       periodDescription: 'Last 24 hours',
       used: 12.5,
       total: 2 ** 53,
-      usedLabel: '$12.50',
+      usedLabel: '$12.5',
       isUnlimited: true,
       status: UsageLimitStatus.Default,
-      progressAriaLabel: '$12.50 used, unlimited',
+      progressAriaLabel: '$12.5 used, unlimited',
     });
   });
 
@@ -138,7 +138,7 @@ describe('mapUsageDataToDashboard', () => {
     );
 
     expect(result[0].usedPercent).toBe(137);
-    expect(result[0].remainingLabel).toBe('$0.00');
+    expect(result[0].remainingLabel).toBe('$0');
     expect(result[0].status).toBe(UsageLimitStatus.LimitReached);
   });
 

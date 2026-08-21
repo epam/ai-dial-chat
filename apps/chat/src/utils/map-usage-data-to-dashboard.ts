@@ -2,6 +2,7 @@ import type {
   LimitStatsDto,
   UserLimitStatsResponseDto,
 } from '@epam/ai-dial-chat-api-client';
+import { formatPrice } from '@epam/ai-dial-chat-shared';
 import {
   UsageLimitCardData,
   UsageLimitStatus,
@@ -15,11 +16,7 @@ const UNLIMITED_TOTAL_THRESHOLD = 2 ** 53;
 /** Percentage at/above which a card is `RunningLow` — below this it's `Default` ("within limits"). */
 const RUNNING_LOW_THRESHOLD_PERCENT = 75;
 
-const costFormatter = new Intl.NumberFormat(undefined, {
-  style: 'currency',
-  currency: 'USD',
-  maximumFractionDigits: 2,
-});
+// TODO: Investigate whether usage limits support configurable currencies or USD only.
 
 const isUsableStats = (
   stats: LimitStatsDto | undefined,
@@ -43,7 +40,7 @@ const mapStatsToCardData = (
   t: TFunction,
 ): UsageLimitCardData => {
   const used = Math.max(0, stats.used);
-  const usedLabel = costFormatter.format(used);
+  const usedLabel = formatPrice(used);
 
   if (stats.total >= UNLIMITED_TOTAL_THRESHOLD) {
     return {
@@ -63,7 +60,7 @@ const mapStatsToCardData = (
   const total = Math.max(stats.total, 0);
   const remaining = Math.max(total - used, 0);
   const uncappedUsedPercent = total > 0 ? (used / total) * 100 : 100;
-  const totalLabel = costFormatter.format(total);
+  const totalLabel = formatPrice(total);
 
   return {
     title,
@@ -72,7 +69,7 @@ const mapStatsToCardData = (
     total,
     usedLabel,
     totalLabel,
-    remainingLabel: costFormatter.format(remaining),
+    remainingLabel: formatPrice(remaining),
     usedPercent: uncappedUsedPercent,
     status: getStatus(uncappedUsedPercent),
     progressAriaLabel: t(UsageI18nKeys.ProgressAriaLabel, {

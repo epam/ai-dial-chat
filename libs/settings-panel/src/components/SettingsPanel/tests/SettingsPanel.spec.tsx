@@ -173,4 +173,16 @@ describe('SettingsPanel', () => {
 
     expect(screen.queryByText('Settings')).toBeNull();
   });
+
+  it('applies a custom row focus outline color', () => {
+    renderPanel({
+      styles: { colors: { rowFocusOutline: '#123456' } },
+    });
+
+    expect(
+      screen
+        .getByRole('tablist')
+        .parentElement?.style.getPropertyValue('--sp-row-focus-outline'),
+    ).toBe('#123456');
+  });
 });

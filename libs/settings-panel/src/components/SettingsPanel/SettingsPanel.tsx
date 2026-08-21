@@ -54,6 +54,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
     '--sp-active-row-bg': colors?.activeRowBackground,
     '--sp-active-row-bg-hover': colors?.activeRowBackgroundHover,
     '--sp-active-row-text': colors?.activeRowText,
+    '--sp-row-focus-outline': colors?.rowFocusOutline,
   });
 
   const activeIndex = items.findIndex((item) => item.id === activeId);
@@ -135,7 +136,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
               }}
               className={mergeClasses(
                 'flex h-11 w-full items-center gap-2 rounded-lg px-3 text-start desktop:h-10',
-                'focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-focus-black',
+                'focus-visible:outline focus-visible:-outline-offset-1',
                 styles.row,
                 isVisuallyActive && styles.rowActive,
               )}

@@ -5,6 +5,7 @@ import type {
   UserLimitStatsResponseDto,
 } from '@epam/ai-dial-chat-api-client';
 import { DeploymentItemDtoTypeEnum } from '@epam/ai-dial-chat-api-client';
+import { formatPrice } from '@epam/ai-dial-chat-shared';
 import {
   ModelLimitMetricCell,
   ModelLimitMetricKind,
@@ -24,12 +25,6 @@ const UNLIMITED_TOTAL_THRESHOLD = 2 ** 53;
 const RUNNING_LOW_THRESHOLD_PERCENT = 75;
 
 const numberFormatter = new Intl.NumberFormat(undefined, {
-  maximumFractionDigits: 2,
-});
-
-const costFormatter = new Intl.NumberFormat(undefined, {
-  style: 'currency',
-  currency: 'USD',
   maximumFractionDigits: 2,
 });
 
@@ -146,7 +141,7 @@ const buildCostMetricCell = (
   }
 
   const used = Math.max(0, stats.used);
-  const usedLabel = costFormatter.format(used);
+  const usedLabel = formatPrice(used);
 
   return {
     kind: ModelLimitMetricKind.Unlimited,
