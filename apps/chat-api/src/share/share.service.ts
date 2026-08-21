@@ -95,6 +95,14 @@ const CONVERSATION_SHARE_INVITATION_ROUTE_PATH = '/conversations/shared';
 const CONVERSATION_RESOURCE_PREFIX = 'conversations/';
 const FILE_RESOURCE_PREFIX = 'files/';
 
+interface AnnotationWithAttachment {
+  body?: {
+    source?: {
+      attachment?: unknown;
+    };
+  };
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
@@ -146,17 +154,9 @@ const collectConversationResourceUrls = (conversation: unknown): string[] => {
     const annotations = message.custom_content.annotations;
     if (!Array.isArray(annotations)) continue;
     for (const annotation of annotations) {
-      if (
-        isRecord(annotation) &&
-        isRecord(annotation.body) &&
-        isRecord(annotation.body.source) &&
-        isRecord(annotation.body.source.attachment)
-      ) {
-        collectAttachmentResourceUrls(
-          [annotation.body.source.attachment],
-          resourceUrls,
-        );
-      }
+      const attachment = (annotation as AnnotationWithAttachment)?.body?.source
+        ?.attachment;
+      collectAttachmentResourceUrls([attachment], resourceUrls);
     }
   }
 
