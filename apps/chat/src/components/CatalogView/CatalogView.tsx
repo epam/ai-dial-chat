@@ -1604,6 +1604,7 @@ const CatalogView: FC<Props> = ({
         apiRequestExampleLabel: t(CatalogI18nKeys.DetailsApiRequestExample),
         apiResponseSchemaLabel: t(CatalogI18nKeys.DetailsApiResponseSchema),
         copyCodeAriaLabel: t(ButtonsI18nKeys.Copy),
+        copiedCodeStatusLabel: t(ButtonsI18nKeys.Copied),
         pricingPricesSectionLabel: t(
           CatalogI18nKeys.DetailsPricingPricesSection,
         ),

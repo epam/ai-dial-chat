@@ -89,7 +89,9 @@ import {
 
 Syntax-highlighted code block with copy and download buttons. `language` and
 `value` are required; pass `isStreaming` to hide the copy button while content is
-still arriving.
+still arriving. The copy button keeps `copyLabel` as its accessible name at all
+times; `copiedLabel` is announced through the block's own
+`role="status" aria-live="polite"` region once the copy succeeds.
 
 ```tsx
 import { MarkdownCodeBlock } from '@epam/ai-dial-chat-shared';

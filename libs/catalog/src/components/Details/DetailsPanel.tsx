@@ -1157,6 +1157,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                       requestExampleLabel={texts?.apiRequestExampleLabel}
                       responseSchemaLabel={texts?.apiResponseSchemaLabel}
                       copyAriaLabel={texts?.copyCodeAriaLabel}
+                      copiedStatusLabel={texts?.copiedCodeStatusLabel}
                     />
                   )}
                 {activeTab === CatalogDetailsTab.Tools && (
