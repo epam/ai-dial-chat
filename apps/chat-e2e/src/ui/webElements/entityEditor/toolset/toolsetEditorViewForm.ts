@@ -10,7 +10,6 @@ import {
   EntityEditorViewForm,
   ListboxMenu,
 } from '@/src/ui/webElements';
-import { waitForOAuthPopupNavigation } from '@/src/utils';
 import { TokenEndpointAuthMethod } from '@epam/ai-dial-shared';
 import { Page } from '@playwright/test';
 
@@ -176,8 +175,9 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
 
   // OAuth login now opens a popup instead of redirecting the main page.
   // The mock route redirects the popup to the callback URL (302).
-  // We wait for the popup to load the callback page so the captured
-  // OAuth state is available right after this method returns.
+  // Returns the login window as soon as it opens. The app navigates it to the
+  // authorization endpoint asynchronously, so the captured OAuth state only
+  // becomes available later - navigateToCallback() waits for it.
   public async initAuthentication(
     button: Button,
     triggeredHttpHost?: string,
@@ -186,7 +186,6 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
       const popupPromise = this.page.waitForEvent('popup');
       await button.click();
       const popup = await popupPromise;
-      await waitForOAuthPopupNavigation(popup);
       return popup;
     }
     await button.click();
