@@ -1,12 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BasicI18nKeys } from '../../../constants/translation-keys';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as useUsageDataModule from '../../../hooks/useUsageData';
 import SettingsPage from '../SettingsPage';
 
 const mockUseFeatureFlag = vi.fn();
 vi.mock('../../../context/AppConfigContext', () => ({
   useFeatureFlag: (key: string) => mockUseFeatureFlag(key),
+}));
+
+vi.mock('../../../context/NotificationContext', () => ({
+  useNotification: vi.fn(),
 }));
 
 vi.mock('../../../hooks/useUsageData', () => ({
@@ -17,13 +22,19 @@ vi.mocked(useUsageDataModule.useUsageData).mockReturnValue({
   limits: undefined,
   usage: undefined,
   isLoading: true,
-  error: undefined,
+  limitsError: undefined,
+  usageError: undefined,
 });
 
 describe('SettingsPage', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     mockUseFeatureFlag.mockReturnValue(true);
+    const { useNotification } =
+      await import('../../../context/NotificationContext');
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(vi.fn()),
+    );
   });
 
   it('renders exactly one tab, labeled Usage, selected by default', () => {

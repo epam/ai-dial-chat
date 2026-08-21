@@ -45,6 +45,9 @@
   ],
   "references": [
     {
+      "path": "../../libs/usage-dashboard/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/prompt-editor/tsconfig.lib.json"
     },
     {
@@ -61,6 +64,9 @@
     },
     {
       "path": "../../libs/prompts/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/navigation-panel/tsconfig.lib.json"
     },
     {
       "path": "../../libs/attachment-input/tsconfig.lib.json"
@@ -109,9 +115,6 @@
     },
     {
       "path": "../../libs/attachment-canvas/tsconfig.lib.json"
-    },
-    {
-      "path": "../../libs/navigation-panel/tsconfig.lib.json"
     }
   ]
 }

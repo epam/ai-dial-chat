@@ -86,6 +86,9 @@
     },
     {
       "path": "./libs/navigation-panel"
+    },
+    {
+      "path": "./libs/usage-dashboard"
     }
   ]
 }

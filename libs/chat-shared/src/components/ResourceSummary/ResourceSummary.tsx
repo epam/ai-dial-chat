@@ -69,7 +69,7 @@ export const ResourceSummary: FC<ResourceSummaryProps> = ({
       {hasVersionTag && item.version && (
         <span
           className={mergeClasses(
-            'inline-flex h-[24px] max-w-[45%] shrink-0 items-center gap-1 rounded-lg border px-2 dial-tiny-text',
+            'dial-tiny-text inline-flex h-[24px] max-w-[45%] shrink-0 items-center gap-1 rounded-lg border px-2',
             styles.versionTag,
           )}
         >

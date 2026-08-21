@@ -90,7 +90,9 @@ export const UserMenu: FC<UserMenuProps> = memo(
           ? [
               {
                 key: 'settings',
-                label: <span className={labelClassName}>{labels.settings}</span>,
+                label: (
+                  <span className={labelClassName}>{labels.settings}</span>
+                ),
                 icon: <IconSettings size={DIAL_ICON_SIZE.SM} aria-hidden />,
                 onClick: onSettings,
               },

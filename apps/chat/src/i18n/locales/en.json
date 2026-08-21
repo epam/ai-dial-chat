@@ -1332,5 +1332,26 @@
       "downloadedTitle": "Folder downloaded successfully",
       "downloaded": "Folder \"{{name}}\" is saved on your device."
     }
+  },
+  "usage": {
+    "pageTitle": "Usage",
+    "pageDescription": "Cost, tokens and requests are metered independently — each can carry its own limit per day, week and month.",
+    "todayTitle": "Today",
+    "todayPeriodDescription": "Last 24 hours",
+    "thisWeekTitle": "This week",
+    "thisWeekPeriodDescription": "Last 7 days",
+    "thisMonthTitle": "This month",
+    "thisMonthPeriodDescription": "Last 30 days",
+    "defaultBadgeLabel": "Within limits",
+    "runningLowBadgeLabel": "Running low",
+    "limitReachedBadgeLabel": "Limit reached",
+    "usedOfTotalLabel": "used of {{total}}",
+    "remainingCaptionLabel": "{{remaining}} left",
+    "usedPercentLabel": "{{percent}}%",
+    "unlimitedProgressAriaLabel": "{{used}} used, unlimited",
+    "progressAriaLabel": "{{used}} of {{total}}, {{percent}}% used",
+    "partialLoadError": "We couldn't load some of your usage data. Showing what's available.",
+    "fullLoadError": "We couldn't load your usage data. Please try again later.",
+    "loading": "Loading usage data…"
   }
 }

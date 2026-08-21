@@ -29,10 +29,11 @@ describe('useUsageData', () => {
 
     expect(result.current.limits).toEqual(limits);
     expect(result.current.usage).toEqual(usage);
-    expect(result.current.error).toBeUndefined();
+    expect(result.current.limitsError).toBeUndefined();
+    expect(result.current.usageError).toBeUndefined();
   });
 
-  it('keeps the successful half of the data when one call rejects', async () => {
+  it('keeps the successful half of the data when only usage rejects', async () => {
     const limits = { deployments: { 'gpt-4o': {} } };
     mockGetUserLimits.mockResolvedValue(limits);
     mockGetUserUsage.mockRejectedValue(new Error('Network error'));
@@ -43,7 +44,37 @@ describe('useUsageData', () => {
 
     expect(result.current.limits).toEqual(limits);
     expect(result.current.usage).toBeUndefined();
-    expect(result.current.error).toBeInstanceOf(Error);
+    expect(result.current.limitsError).toBeUndefined();
+    expect(result.current.usageError).toBeInstanceOf(Error);
+  });
+
+  it('keeps the successful half of the data when only limits rejects', async () => {
+    const usage = { deployments: {} };
+    mockGetUserLimits.mockRejectedValue(new Error('Network error'));
+    mockGetUserUsage.mockResolvedValue(usage);
+
+    const { result } = renderHook(() => useUsageData());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.limits).toBeUndefined();
+    expect(result.current.usage).toEqual(usage);
+    expect(result.current.limitsError).toBeInstanceOf(Error);
+    expect(result.current.usageError).toBeUndefined();
+  });
+
+  it('reports both errors independently when both calls reject', async () => {
+    mockGetUserLimits.mockRejectedValue(new Error('Limits down'));
+    mockGetUserUsage.mockRejectedValue(new Error('Usage down'));
+
+    const { result } = renderHook(() => useUsageData());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.limits).toBeUndefined();
+    expect(result.current.usage).toBeUndefined();
+    expect(result.current.limitsError).toBeInstanceOf(Error);
+    expect(result.current.usageError).toBeInstanceOf(Error);
   });
 
   it('does not update state after unmount', async () => {
@@ -78,7 +109,8 @@ describe('useUsageData', () => {
       limits: undefined,
       usage: undefined,
       isLoading: false,
-      error: undefined,
+      limitsError: undefined,
+      usageError: undefined,
     });
   });
 

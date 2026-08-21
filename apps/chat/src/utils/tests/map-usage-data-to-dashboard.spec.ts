@@ -1,0 +1,213 @@
+import type { UserLimitStatsResponseDto } from '@epam/ai-dial-chat-api-client';
+import { UsageLimitStatus } from '@epam/ai-dial-usage-dashboard';
+import type { TFunction } from 'i18next';
+import { describe, expect, it } from 'vitest';
+import { UsageI18nKeys } from '../../constants/translation-keys';
+import { mapUsageDataToDashboard } from '../map-usage-data-to-dashboard';
+
+const labels: Partial<Record<UsageI18nKeys, string>> = {
+  [UsageI18nKeys.TodayTitle]: 'Today',
+  [UsageI18nKeys.TodayPeriodDescription]: 'Last 24 hours',
+  [UsageI18nKeys.ThisWeekTitle]: 'This week',
+  [UsageI18nKeys.ThisWeekPeriodDescription]: 'Last 7 days',
+  [UsageI18nKeys.ThisMonthTitle]: 'This month',
+  [UsageI18nKeys.ThisMonthPeriodDescription]: 'Last 30 days',
+};
+
+const t = ((key: string, params?: Record<string, unknown>) => {
+  if (key === UsageI18nKeys.UnlimitedProgressAriaLabel) {
+    return `${params?.used} used, unlimited`;
+  }
+  if (key === UsageI18nKeys.ProgressAriaLabel) {
+    return `${params?.used} of ${params?.total}, ${params?.percent}% used`;
+  }
+  return labels[key as UsageI18nKeys] ?? key;
+}) as TFunction;
+
+const withStats = (
+  fields: Partial<
+    Pick<
+      UserLimitStatsResponseDto,
+      'dayCostStats' | 'weekCostStats' | 'monthCostStats'
+    >
+  >,
+): UserLimitStatsResponseDto => ({ deployments: {}, ...fields });
+
+describe('mapUsageDataToDashboard', () => {
+  it('maps all three usable periods in Today/This week/This month order', () => {
+    const limits = withStats({
+      dayCostStats: { used: 3.6, total: 4 },
+      weekCostStats: { used: 11.2, total: 20 },
+      monthCostStats: { used: 41, total: 120 },
+    });
+
+    const result = mapUsageDataToDashboard(limits, undefined, t);
+
+    expect(result.map((card) => card.title)).toEqual([
+      'Today',
+      'This week',
+      'This month',
+    ]);
+    expect(result[0]).toEqual({
+      title: 'Today',
+      periodDescription: 'Last 24 hours',
+      used: 3.6,
+      total: 4,
+      usedLabel: '$3.60',
+      totalLabel: '$4.00',
+      remainingLabel: '$0.40',
+      usedPercent: 90,
+      status: UsageLimitStatus.RunningLow,
+      progressAriaLabel: '$3.60 of $4.00, 90% used',
+    });
+  });
+
+  it('omits a period entirely when the stat is missing from both responses', () => {
+    const result = mapUsageDataToDashboard(
+      withStats({ dayCostStats: { used: 1, total: 10 } }),
+      withStats({}),
+      t,
+    );
+
+    expect(result.map((card) => card.title)).toEqual(['Today']);
+  });
+
+  it('returns an empty array when no period has a usable stat', () => {
+    const result = mapUsageDataToDashboard(withStats({}), withStats({}), t);
+
+    expect(result).toEqual([]);
+  });
+
+  it('clamps a negative used value to zero', () => {
+    const result = mapUsageDataToDashboard(
+      withStats({ dayCostStats: { used: -5, total: 100 } }),
+      undefined,
+      t,
+    );
+
+    expect(result[0].used).toBe(0);
+    expect(result[0].usedLabel).toBe('$0.00');
+    expect(result[0].remainingLabel).toBe('$100.00');
+    expect(result[0].status).toBe(UsageLimitStatus.Default);
+  });
+
+  it('treats a NaN used or total as an unusable stat and omits the period', () => {
+    const result = mapUsageDataToDashboard(
+      withStats({ dayCostStats: { used: NaN, total: 100 } }),
+      undefined,
+      t,
+    );
+
+    expect(result).toEqual([]);
+  });
+
+  it('treats a total at the unlimited sentinel (2**53) as unlimited', () => {
+    const result = mapUsageDataToDashboard(
+      withStats({ dayCostStats: { used: 12.5, total: 2 ** 53 } }),
+      undefined,
+      t,
+    );
+
+    expect(result[0]).toEqual({
+      title: 'Today',
+      periodDescription: 'Last 24 hours',
+      used: 12.5,
+      total: 2 ** 53,
+      usedLabel: '$12.50',
+      isUnlimited: true,
+      status: UsageLimitStatus.Default,
+      progressAriaLabel: '$12.50 used, unlimited',
+    });
+  });
+
+  it('treats a total above the unlimited sentinel as unlimited', () => {
+    const result = mapUsageDataToDashboard(
+      withStats({ dayCostStats: { used: 0, total: 2 ** 60 } }),
+      undefined,
+      t,
+    );
+
+    expect(result[0].isUnlimited).toBe(true);
+  });
+
+  it('reports the real, uncapped percentage for used amounts over the total', () => {
+    const result = mapUsageDataToDashboard(
+      withStats({ dayCostStats: { used: 5.48, total: 4 } }),
+      undefined,
+      t,
+    );
+
+    expect(result[0].usedPercent).toBe(137);
+    expect(result[0].remainingLabel).toBe('$0.00');
+    expect(result[0].status).toBe(UsageLimitStatus.LimitReached);
+  });
+
+  it('treats exactly 75% used as RunningLow', () => {
+    const result = mapUsageDataToDashboard(
+      withStats({ dayCostStats: { used: 75, total: 100 } }),
+      undefined,
+      t,
+    );
+
+    expect(result[0].usedPercent).toBe(75);
+    expect(result[0].status).toBe(UsageLimitStatus.RunningLow);
+  });
+
+  it('treats just under 75% used as Default', () => {
+    const result = mapUsageDataToDashboard(
+      withStats({ dayCostStats: { used: 74.9, total: 100 } }),
+      undefined,
+      t,
+    );
+
+    expect(result[0].status).toBe(UsageLimitStatus.Default);
+  });
+
+  it('treats exactly 100% used as LimitReached', () => {
+    const result = mapUsageDataToDashboard(
+      withStats({ dayCostStats: { used: 100, total: 100 } }),
+      undefined,
+      t,
+    );
+
+    expect(result[0].status).toBe(UsageLimitStatus.LimitReached);
+  });
+
+  it('falls back to usage when limits failed but usage carries the same global aggregate', () => {
+    const usage = withStats({ monthCostStats: { used: 40.8, total: 120 } });
+
+    const result = mapUsageDataToDashboard(undefined, usage, t);
+
+    expect(result).toEqual([
+      {
+        title: 'This month',
+        periodDescription: 'Last 30 days',
+        used: 40.8,
+        total: 120,
+        usedLabel: '$40.80',
+        totalLabel: '$120.00',
+        remainingLabel: '$79.20',
+        usedPercent: 34,
+        status: UsageLimitStatus.Default,
+        progressAriaLabel: '$40.80 of $120.00, 34% used',
+      },
+    ]);
+  });
+
+  it('falls back to limits when usage failed but limits carries the same global aggregate', () => {
+    const limits = withStats({ monthCostStats: { used: 40.8, total: 120 } });
+
+    const result = mapUsageDataToDashboard(limits, undefined, t);
+
+    expect(result[0].used).toBe(40.8);
+  });
+
+  it('prefers limits over usage when both are present', () => {
+    const limits = withStats({ dayCostStats: { used: 1, total: 10 } });
+    const usage = withStats({ dayCostStats: { used: 9, total: 10 } });
+
+    const result = mapUsageDataToDashboard(limits, usage, t);
+
+    expect(result[0].used).toBe(1);
+  });
+});

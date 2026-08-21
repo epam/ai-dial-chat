@@ -16,8 +16,8 @@ import {
   ChatI18nKeys,
   NavigationI18nKeys,
 } from '../../constants/translation-keys';
-import { useUser } from '../../context/auth/UserContext';
 import { useFeatureFlag } from '../../context/AppConfigContext';
+import { useUser } from '../../context/auth/UserContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLogout } from '../../hooks/logout/useLogout';

@@ -1,14 +1,4 @@
-# usage-data-hook Specification
-
-## Purpose
-
-Defines the `Usage` tab (page header plus up to three aggregate cost-limit cards) and the
-`useUsageData` hook: fetching the current user's limits and usage from the existing BFF endpoints
-via the existing `server-api` wrappers, exposing per-request loading/error state, deduplicated
-error notifications, and the library-isolation contract that keeps presentational card rendering
-in `libs/usage-dashboard` while all data-fetching and DTO interpretation stays in `apps/chat`.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Usage tab renders the aggregate limit cards
 The system SHALL provide a `Usage` tab/page component, registered as the sole entry in the
@@ -74,7 +64,8 @@ interface UseUsageDataResult {
 fields such as `hourRequestStats`, `dayRequestStats`, `minuteTokenStats`, `dayTokenStats`,
 `weekTokenStats`, `dayCostStats`, `monthCostStats`, each `{ total: number; used: number }`).
 `limitsError` and `usageError` are set independently: `limitsError` reflects only the
-`getUserLimits()` promise's rejection (if any), `usageError` reflects only `getUserUsage()`'s.
+`getUserLimits()` promise's rejection (if any), `usageError` reflects only `getUserUsage()`'s. The
+previous single shared `error: Error | undefined` field is removed.
 
 #### Scenario: Both endpoints succeed
 - **WHEN** `useUsageData` is invoked and both `GET /api/v1/user/limits` and `GET /api/v1/user/usage`
@@ -124,23 +115,25 @@ fields such as `hourRequestStats`, `dayRequestStats`, `minuteTokenStats`, `dayTo
 
 ### Requirement: Library isolation between apps/chat and libs/usage-dashboard
 The system SHALL keep `useUsageData`, the `Usage` tab component, and the app-level mapper
-(`apps/chat/src/utils/map-usage-data-to-dashboard.ts`) under `apps/chat/src/`, reusing the existing
-`apps/chat/src/server-api/user-limits.ts` wrappers and the generated `UserLimitStatsResponseDto`
-type from `@epam/ai-dial-chat-api-client` without modification. All DTO interpretation — the
-unlimited-sentinel check (`total >= 2**53`), status-threshold derivation, currency formatting, and
-the `limits ?? usage` per-field fallback for the shared global cost stats — SHALL happen in the
-app-level mapper, not in `libs/usage-dashboard`.
+(`apps/chat/src/utils/map-usage-data-to-dashboard.ts`) under `apps/chat/src/`, reusing the existing `apps/chat/src/server-api/user-limits.ts` wrappers and the generated
+`UserLimitStatsResponseDto` type from `@epam/ai-dial-chat-api-client` without modification. All DTO
+interpretation — the unlimited-sentinel check (`total >= 2**53`), status-threshold derivation,
+currency formatting, and the `limits ?? usage` per-field fallback for the shared global cost
+stats — SHALL happen in the app-level mapper, not in `libs/usage-dashboard`.
 
-The presentational rendering of the cards SHALL live in the hand-authored `libs/usage-dashboard`
-package (see the `usage-dashboard-lib` capability), which SHALL NOT import the generated API
-client or any `server-api/*` wrapper, per the repository's library isolation rule.
+The presentational rendering of the two aggregate cards SHALL live in the hand-authored
+`libs/usage-dashboard` package (see the `usage-dashboard-lib` capability), which SHALL NOT import
+the generated API client or any `server-api/*` wrapper, per the repository's library isolation
+rule. This supersedes the previous rule that no `libs/*` package would be created for this data —
+that constraint applied to the data-fetching/interpretation concern, which still lives entirely in
+`apps/chat`.
 
 #### Scenario: Static analysis passes module boundary lint
 - **WHEN** `npm exec nx lint chat` and `npm exec nx lint usage-dashboard` run after this change
 - **THEN** `@nx/enforce-module-boundaries` reports no violations introduced by `useUsageData`, the
   `Usage` tab component, the mapper, or `libs/usage-dashboard`
 
----
+## ADDED Requirements
 
 ### Requirement: Deduplicated error notifications on fetch failure
 The system SHALL show a user-visible, localized error notification via the existing

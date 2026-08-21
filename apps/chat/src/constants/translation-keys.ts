@@ -1206,3 +1206,25 @@ export enum EntityNotificationsI18nKeys {
   FolderDownloadedTitle = 'entityNotifications.folder.downloadedTitle',
   FolderDownloaded = 'entityNotifications.folder.downloaded',
 }
+
+export enum UsageI18nKeys {
+  PageTitle = 'usage.pageTitle',
+  PageDescription = 'usage.pageDescription',
+  TodayTitle = 'usage.todayTitle',
+  TodayPeriodDescription = 'usage.todayPeriodDescription',
+  ThisWeekTitle = 'usage.thisWeekTitle',
+  ThisWeekPeriodDescription = 'usage.thisWeekPeriodDescription',
+  ThisMonthTitle = 'usage.thisMonthTitle',
+  ThisMonthPeriodDescription = 'usage.thisMonthPeriodDescription',
+  DefaultBadgeLabel = 'usage.defaultBadgeLabel',
+  RunningLowBadgeLabel = 'usage.runningLowBadgeLabel',
+  LimitReachedBadgeLabel = 'usage.limitReachedBadgeLabel',
+  UsedOfTotalLabel = 'usage.usedOfTotalLabel',
+  RemainingCaptionLabel = 'usage.remainingCaptionLabel',
+  UsedPercentLabel = 'usage.usedPercentLabel',
+  UnlimitedProgressAriaLabel = 'usage.unlimitedProgressAriaLabel',
+  ProgressAriaLabel = 'usage.progressAriaLabel',
+  PartialLoadError = 'usage.partialLoadError',
+  FullLoadError = 'usage.fullLoadError',
+  Loading = 'usage.loading',
+}
