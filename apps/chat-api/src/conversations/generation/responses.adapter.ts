@@ -18,6 +18,7 @@ import {
   type GenerationRelayTiming,
   type NormalizedStreamChunk,
   type ResponsesApiRequestBody,
+  type ResponsesInputContentPart,
   type ResponsesSseEvent,
   type ResponsesTerminalSignal,
 } from './generation.types';
@@ -65,18 +66,27 @@ export class ResponsesAdapter {
    * gated by a capability flag (no Responses-specific one exists in this
    * codebase) and never derived from deployment limits or Chat Completions
    * defaults.
+   *
+   * `reasoning.effort` is a hardcoded test value: sent as the first entry of
+   * `reasoningEfforts` (the deployment's own supported-values list) whenever
+   * that list is non-empty. Chat has no persisted per-conversation
+   * reasoning-effort setting to forward instead (unlike `temperature`).
    */
   buildRequest(params: {
     model: string;
     startConversation: ConversationResponseDto;
     messagesForCompletion: ConversationMessageDto[];
     temperatureSupported: boolean;
+    reasoningEfforts?: string[];
+    configuration?: Record<string, unknown>;
   }): ResponsesApiRequestBody {
     const {
       model,
       startConversation,
       messagesForCompletion,
       temperatureSupported,
+      reasoningEfforts,
+      configuration,
     } = params;
 
     const systemInput = startConversation.prompt
@@ -87,10 +97,7 @@ export class ResponsesAdapter {
       ...systemInput,
       ...messagesForCompletion
         .filter((m) => m.role !== ConversationMessageRole.Status)
-        .map((m) => ({
-          role: m.role as string,
-          content: m.content,
-        })),
+        .map((m) => this.buildInputItem(m)),
     ];
 
     const maxOutputTokens = startConversation.maxOutputTokens;
@@ -106,6 +113,61 @@ export class ResponsesAdapter {
       ...(isValidMaxOutputTokens(maxOutputTokens)
         ? { max_output_tokens: maxOutputTokens }
         : {}),
+      ...(reasoningEfforts?.length
+        ? { reasoning: { effort: reasoningEfforts[0] } }
+        : {}),
+      ...(configuration ? { custom_fields: { configuration } } : {}),
+    };
+  }
+
+  /**
+   * Attachment mapping (see
+   * `openspec/changes/extend-responses-api-capabilities/proposal.md` for the
+   * full live-test findings behind this). DIAL's own `custom_content
+   * .attachments` passthrough (mirroring Chat Completions) does not work on
+   * this endpoint — confirmed live, Core reports no image seen. Mapping to
+   * OpenAI-native content parts instead does work, but only for images:
+   *
+   * - `input_image`: confirmed working generally against a Responses-capable
+   *   deployment.
+   * - `input_file`: confirmed REJECTED by Core for any model other than
+   *   `qwen3.5-ocr` (`"Invalid content type: 'input_file' is only supported
+   *   for 'qwen3.5-ocr' model."`), with no capability flag found that
+   *   predicts this. Sending it unconditionally would break any non-image
+   *   attachment on most Responses deployments, so non-image attachments are
+   *   dropped here rather than mapped to `input_file` — until a real
+   *   capability signal or a documented Core contract is found, this must
+   *   not be sent unconditionally.
+   */
+  private buildInputItem(message: ConversationMessageDto): {
+    role: string;
+    content: string | ResponsesInputContentPart[];
+  } {
+    const validAttachments = (message.custom_content?.attachments ?? []).filter(
+      (attachment) => Boolean(attachment.data || attachment.url),
+    );
+
+    if (!validAttachments.length) {
+      return { role: message.role as string, content: message.content };
+    }
+
+    const imageParts: ResponsesInputContentPart[] = validAttachments
+      .filter((attachment) => attachment.type?.startsWith('image/'))
+      .map((attachment) => ({
+        type: 'input_image',
+        image_url: attachment.data
+          ? `data:${attachment.type};base64,${attachment.data}`
+          : (attachment.url as string),
+      }));
+
+    return {
+      role: message.role as string,
+      content: [
+        ...(message.content
+          ? [{ type: 'input_text', text: message.content } as const]
+          : []),
+        ...imageParts,
+      ],
     };
   }
 
@@ -192,9 +254,22 @@ export class ResponsesAdapter {
       let terminalSignal: ResponsesTerminalSignal | null = null;
       let isDone = false;
       const pendingChunks: string[] = [];
+      /* Tracks reasoning `item_id`s already opened as a stage, so the
+       * synthetic "Thinking" stage name is sent once, not on every delta. */
+      const reasoningStageItemIds = new Set<string>();
 
       const writeChunk = (chunk: NormalizedStreamChunk): void => {
         pendingChunks.push(`data: ${JSON.stringify(chunk)}\n\n`);
+        assembledMessage = applyChunkToMessage(assembledMessage, chunk);
+      };
+
+      /*
+       * Same accumulation as `writeChunk`, but never queued to
+       * `pendingChunks` — the reasoning "Thinking" stage is persisted on the
+       * assembled message (so it's available in exported/inspected
+       * conversation data) without being live-streamed to the browser UI.
+       */
+      const recordWithoutStreaming = (chunk: NormalizedStreamChunk): void => {
         assembledMessage = applyChunkToMessage(assembledMessage, chunk);
       };
 
@@ -215,6 +290,43 @@ export class ResponsesAdapter {
                 timing.firstDeltaAt = Date.now();
               }
               writeChunk({ choices: [{ delta: { content: delta } }] });
+            }
+            return;
+          }
+          case 'response.reasoning_text.delta': {
+            /*
+             * Records the model's reasoning into the persisted message using
+             * the pre-existing `stages` mechanism (see `mergeStages` in
+             * `apply-chunk.server.ts`) instead of a new wire concept, but via
+             * `recordWithoutStreaming` rather than `writeChunk` — reasoning is
+             * kept in the stored conversation data without being shown live in
+             * the chat UI. `name` is sent only on the first delta for a given
+             * `item_id`; `mergeStages` concatenates `name` on every merge, so
+             * repeating it would duplicate the "Thinking" label.
+             */
+            const delta = (event as { delta?: string; item_id?: string })
+              .delta;
+            const itemId = (event as { item_id?: string }).item_id;
+            if (delta && itemId) {
+              const isFirstDeltaForItem = !reasoningStageItemIds.has(itemId);
+              reasoningStageItemIds.add(itemId);
+              recordWithoutStreaming({
+                choices: [
+                  {
+                    delta: {
+                      custom_content: {
+                        stages: [
+                          {
+                            index: 0,
+                            ...(isFirstDeltaForItem && { name: 'Thinking' }),
+                            content: delta,
+                          },
+                        ],
+                      },
+                    },
+                  },
+                ],
+              });
             }
             return;
           }

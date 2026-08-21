@@ -1,33 +1,11 @@
+import { AnnotationDto as Annotation } from '../dto/annotation.dto';
 import { ConversationMessageDto } from '../dto/conversation-message.dto';
+import {
+  StageAttachmentDto as StageAttachment,
+  StageDto as Stage,
+} from '../dto/stage.dto';
 
 /** Minimal types matching the DIAL Core SSE delta payload. */
-
-interface StageAttachment {
-  index?: number;
-  title?: string;
-  data?: string;
-  [key: string]: unknown;
-}
-
-interface Stage {
-  index?: number;
-  name?: string;
-  content?: string;
-  attachments?: StageAttachment[];
-  [key: string]: unknown;
-}
-
-interface AnnotationBody {
-  title?: string;
-  quote?: string;
-  [key: string]: unknown;
-}
-
-interface Annotation {
-  index?: number;
-  body?: AnnotationBody;
-  [key: string]: unknown;
-}
 
 interface SseDelta {
   content?: string;
@@ -235,16 +213,13 @@ export const applyChunkToMessage = (
           ] as never,
         }),
         ...(stages?.length && {
-          stages: mergeStages(
-            (existing as { stages?: Stage[] }).stages ?? [],
-            stages,
-          ) as never,
+          stages: mergeStages(existing.stages ?? [], stages),
         }),
         ...(annotations?.length && {
           annotations: mergeAnnotations(
-            (existing as { annotations?: Annotation[] }).annotations ?? [],
+            existing.annotations ?? [],
             annotations,
-          ) as never,
+          ),
         }),
         ...(state && { state }),
       },

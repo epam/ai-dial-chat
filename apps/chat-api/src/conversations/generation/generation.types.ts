@@ -1,4 +1,5 @@
 import type { ConversationMessageDto } from '../dto/conversation-message.dto';
+import type { StageDto } from '../dto/stage.dto';
 
 /**
  * One item of the Responses API `input` array — a flattened role/text pair
@@ -7,8 +8,20 @@ import type { ConversationMessageDto } from '../dto/conversation-message.dto';
  */
 export interface ResponsesInputItem {
   role: string;
-  content: string;
+  content: string | ResponsesInputContentPart[];
 }
+
+/**
+ * Content-part shapes, mirroring the OpenAI Responses API public contract.
+ * `input_text`/`input_image` are confirmed live against DIAL Core's Responses
+ * endpoint (see `ResponsesAdapter.buildInputItem`). `input_file` is kept here
+ * for reference only — confirmed REJECTED by Core for any model other than
+ * `qwen3.5-ocr` and intentionally unused by `buildInputItem`.
+ */
+export type ResponsesInputContentPart =
+  | { type: 'input_text'; text: string }
+  | { type: 'input_image'; image_url: string }
+  | { type: 'input_file'; file_data: string; filename?: string };
 
 /**
  * First-iteration Responses request body. Always `stream: true` and
@@ -26,6 +39,24 @@ export interface ResponsesApiRequestBody {
   store: false;
   temperature?: number;
   max_output_tokens?: number;
+  /**
+   * OpenAI Responses API reasoning-effort control, sent only when the
+   * resolved deployment reports a non-empty `features.reasoningEfforts`.
+   * Chat has no persisted per-conversation reasoning-effort setting yet (no
+   * such field exists on `ConversationResponseDto`, unlike `temperature`) —
+   * see `ResponsesAdapter.buildRequest` for the hardcoded test value used
+   * while that setting doesn't exist.
+   */
+  reasoning?: { effort: string };
+  /**
+   * DIAL app `configuration_value` passthrough, mirroring the Chat
+   * Completions `custom_fields.configuration` shape verbatim
+   * (`ConversationStreamingService.streamCompletion`). Untested against
+   * Core's Responses endpoint — see the "Deep Research" entry in
+   * `openspec/changes/extend-responses-api-capabilities/proposal.md` once
+   * live-tested.
+   */
+  custom_fields?: { configuration: Record<string, unknown> };
 }
 
 /**
@@ -134,6 +165,14 @@ export interface NormalizedStreamChunk {
     delta?: {
       content?: string;
       responseId?: string;
+      /**
+       * Carries the Responses API's `response.reasoning_text.delta` content,
+       * reusing the pre-existing Chat Completions `stages` mechanism (see
+       * `apply-chunk.server.ts`'s `mergeStages`) rather than introducing a
+       * new wire concept — see `ResponsesAdapter`'s `handleEvent` for how the
+       * stage is opened/appended.
+       */
+      custom_content?: { stages?: StageDto[] };
     };
   }>;
 }
