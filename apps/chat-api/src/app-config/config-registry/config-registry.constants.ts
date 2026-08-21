@@ -258,6 +258,21 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     allowedRolesEnvVar: 'SCHEDULED_TASKS_ENABLED_ROLES',
   },
   {
+    key: 'features.settingsPageEnabled',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether the Settings page is enabled, including its gear-icon entry point in the ' +
+      'user menu, the /settings route, and the Usage tab data fetch. Set ' +
+      'SETTINGS_PAGE_ENABLED_ROLES to restrict to specific roles.',
+    owner: 'chat-team',
+    envVar: 'SETTINGS_PAGE_ENABLED',
+    allowedRolesEnvVar: 'SETTINGS_PAGE_ENABLED_ROLES',
+  },
+  {
     key: 'uiFeatures.enabledUiFeatures',
     type: 'config',
     valueType: 'json',

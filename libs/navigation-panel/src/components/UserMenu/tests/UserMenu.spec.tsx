@@ -169,4 +169,35 @@ describe('UserMenu', () => {
     fireEvent.click(screen.getByText(labels.logOut));
     expect(onLogout).toHaveBeenCalledOnce();
   });
+
+  it('renders a settings entry when onSettings is provided', () => {
+    render(
+      <UserMenu
+        profile={profile}
+        labels={{ ...labels, settings: 'Settings' }}
+        onLogout={vi.fn()}
+        onSettings={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('Settings')).toBeTruthy();
+  });
+
+  it('does not render a settings entry when onSettings is omitted', () => {
+    render(<UserMenu profile={profile} labels={labels} onLogout={vi.fn()} />);
+    expect(screen.queryByText('Settings')).toBeNull();
+  });
+
+  it('calls onSettings when the settings entry is clicked', () => {
+    const onSettings = vi.fn();
+    render(
+      <UserMenu
+        profile={profile}
+        labels={{ ...labels, settings: 'Settings' }}
+        onLogout={vi.fn()}
+        onSettings={onSettings}
+      />,
+    );
+    fireEvent.click(screen.getByText('Settings'));
+    expect(onSettings).toHaveBeenCalledOnce();
+  });
 });
