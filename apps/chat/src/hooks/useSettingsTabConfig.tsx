@@ -1,4 +1,5 @@
 import type { SettingsPanelItem } from '@epam/ai-dial-settings-panel';
+import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconLayoutGrid } from '@tabler/icons-react';
 import type { ComponentType } from 'react';
 import { useMemo } from 'react';
@@ -6,8 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { BasicI18nKeys } from '../constants/translation-keys';
 import UsageTab from '../pages/SettingsPage/UsageTab/UsageTab';
 import { SettingsTabs } from '../types/settings-tabs';
-
-const ICON_SIZE = 20;
 
 export interface SettingsTabConfigEntry {
   item: SettingsPanelItem;
@@ -32,7 +31,7 @@ export const useSettingsTabConfig = (): UseSettingsTabConfigResult => {
         item: {
           id: SettingsTabs.Usage,
           label: t(BasicI18nKeys.Usage),
-          icon: <IconLayoutGrid size={ICON_SIZE} aria-hidden />,
+          icon: <IconLayoutGrid size={DIAL_ICON_SIZE.MD} aria-hidden />,
         },
         Component: UsageTab,
       },

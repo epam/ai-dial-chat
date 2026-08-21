@@ -51,12 +51,12 @@ export const useUsageData = (enabled = true): UseUsageDataResult => {
         setUsage(usageResult.value);
       }
 
-      const rejected =
-        limitsResult.status === 'rejected'
-          ? limitsResult.reason
-          : usageResult.status === 'rejected'
-            ? usageResult.reason
-            : undefined;
+      let rejected: unknown;
+      if (limitsResult.status === 'rejected') {
+        rejected = limitsResult.reason;
+      } else if (usageResult.status === 'rejected') {
+        rejected = usageResult.reason;
+      }
 
       if (rejected !== undefined) {
         setError(
