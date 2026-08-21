@@ -33,11 +33,17 @@
   }
 }
 
+/* Bleeds the sticky label's background 1px upward so subpixel scroll
+   positions don't leave a seam where the row underneath peeks through. */
+.stickyLabelSeamFix {
+  box-shadow: 0 -1px 0 0 var(--bg-layer-raised, #fcfcfc);
+}
+
 /* Animates the scrollable list's own height across structural changes
    (a row moving to/from the "Currently selected" section); see
    listContentRef/listHeight in DeploymentSelectorPanel.tsx. */
 .listContent {
-  transition: height 200ms ease;
+  transition: max-height 200ms ease;
 }
 
 @media (prefers-reduced-motion: reduce) {

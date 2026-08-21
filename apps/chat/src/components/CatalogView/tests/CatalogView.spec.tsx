@@ -80,6 +80,10 @@ import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import CatalogView from '../CatalogView';
 import { SkillDetailsFilePreview } from '../SkillDetailsFilePreview';
 
+const formatLimitNumber = new Intl.NumberFormat(undefined, {
+  maximumFractionDigits: 2,
+}).format;
+
 /** Minimal fake popup `Window` — enough surface for `initiateOAuthLogin`/`waitForToolsetOAuthResult`. */
 const makeFakePopup = () => {
   const store = new Map<string, string>();
@@ -494,7 +498,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
             logout global {item.id}
           </button>
         ))}
-        {(createOptions ?? []).map((option) => (
+        {(createOptions ?? []).flatMap((option) => [
           <button
             key={option.key}
             type="button"
@@ -503,8 +507,20 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
             }
           >
             {option.label}
-          </button>
-        ))}
+          </button>,
+          // eslint-disable-next-line testing-library/no-node-access -- `option.children` is a DropdownItem field, not a DOM node
+          ...(option.children ?? []).map((child) => (
+            <button
+              key={child.key}
+              type="button"
+              onClick={(domEvent) =>
+                child.onClick?.({ key: child.key, domEvent })
+              }
+            >
+              {child.label}
+            </button>
+          )),
+        ])}
         <output aria-label="Publish folder names">
           {(publishFolderItems ?? []).map((folder) => folder.name).join(',')}
         </output>
@@ -682,6 +698,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentLimits).mockResolvedValue({});
@@ -710,6 +728,7 @@ describe('CatalogView', () => {
       isLoading: false,
       error: null,
       refetchSkills: vi.fn().mockResolvedValue(undefined),
+      mergeSharedSkill: vi.fn(),
     });
     vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [],
@@ -1163,6 +1182,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1194,6 +1215,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(useFavoriteApplications).mockReturnValue({
@@ -1238,6 +1261,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1275,6 +1300,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1309,6 +1336,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1342,6 +1371,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1375,6 +1406,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1406,6 +1439,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1434,6 +1469,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1460,6 +1497,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
@@ -1521,6 +1560,8 @@ describe('CatalogView', () => {
           label: CatalogI18nKeys.DetailsLimitsRequestsPerHour,
           used: 2,
           total: 10,
+          usedLabel: formatLimitNumber(2),
+          totalLabel: formatLimitNumber(10),
           valueLabel: CatalogI18nKeys.DetailsLimitsValue,
           ariaLabel: CatalogI18nKeys.DetailsLimitsProgressAriaLabel,
         },
@@ -1528,6 +1569,8 @@ describe('CatalogView', () => {
           label: CatalogI18nKeys.DetailsLimitsTokensPerDay,
           used: 2500,
           total: 10000,
+          usedLabel: formatLimitNumber(2500),
+          totalLabel: formatLimitNumber(10000),
           valueLabel: CatalogI18nKeys.DetailsLimitsValue,
           ariaLabel: CatalogI18nKeys.DetailsLimitsProgressAriaLabel,
         },
@@ -1539,14 +1582,7 @@ describe('CatalogView', () => {
         title: 'Capabilities',
         specs: [
           { label: 'Tools', value: true },
-          { label: 'MCP', value: false },
-          { label: 'Prompt caching', value: true },
           { label: 'Parallel tool calls', value: true },
-          { label: 'URL attachments', value: false },
-          { label: 'Folder attachments', value: false },
-          { label: 'Seed', value: false },
-          { label: 'System prompt', value: true },
-          { label: 'Resume', value: true },
           { label: 'Reasoning efforts', value: 'low · medium · high' },
         ],
       },
@@ -1559,7 +1595,10 @@ describe('CatalogView', () => {
             value: new Date(1780387921823).toLocaleDateString(),
           },
           { label: 'Context window', value: '128K tokens' },
-          { label: 'Input type', value: 'text/* · image/*' },
+          {
+            label: CatalogI18nKeys.DetailsModelInputModalities,
+            value: 'Text files, Image files',
+          },
         ],
       },
     ]);
@@ -1579,6 +1618,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
@@ -1611,15 +1652,11 @@ describe('CatalogView', () => {
       },
       {
         title: 'Capabilities',
-        specs: [
-          { label: 'Tools', value: false },
-          { label: 'MCP', value: false },
-          { label: 'Prompt caching', value: false },
-        ],
+        specs: [{ label: 'Tools', value: false }],
       },
       {
         title: 'Configuration',
-        specs: [{ label: 'Input attachments', value: 'text/*' }],
+        specs: [{ label: 'Input attachments', value: 'Text files' }],
       },
     ]);
   });
@@ -1640,6 +1677,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
@@ -1689,14 +1728,6 @@ describe('CatalogView', () => {
           },
         ],
       },
-      {
-        title: 'Capabilities',
-        specs: [
-          { label: 'MCP', value: true },
-          { label: 'Prompt caching', value: false },
-          { label: 'System prompt', value: true },
-        ],
-      },
     ]);
     expect(result.tools).toEqual({
       tools: [{ name: 'search' }, { name: 'fetch' }],
@@ -1723,6 +1754,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockRejectedValue(new Error('502'));
@@ -1761,6 +1794,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(loginToolset).mockResolvedValue({ success: true });
@@ -1805,6 +1840,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(loginToolset).mockResolvedValue({ success: true });
@@ -1848,6 +1885,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(logoutToolset).mockResolvedValue({ success: true });
@@ -1892,6 +1931,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(loginToolset).mockRejectedValue(new Error('network error'));
@@ -1938,6 +1979,8 @@ describe('CatalogView', () => {
         toolsets: getToolsets(),
         refetchToolsets,
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       }));
       return render(<CatalogView />);
@@ -2154,6 +2197,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(deleteToolset).mockResolvedValue(undefined);
@@ -2202,6 +2247,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments,
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(deleteApplication).mockResolvedValue(undefined);
@@ -2289,6 +2336,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(deleteToolset).mockRejectedValue(new Error('network error'));
@@ -2321,6 +2370,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       });
       vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
@@ -2352,6 +2403,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       });
       vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
@@ -2485,6 +2538,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       });
       const onClose = vi.fn();
@@ -2513,6 +2568,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       });
       const onClose = vi.fn();
@@ -2573,6 +2630,8 @@ describe('CatalogView', () => {
         ],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       });
       vi.mocked(useUiFeature).mockImplementation(
@@ -2605,6 +2664,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       } as never);
 
@@ -2629,6 +2690,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       } as never);
       vi.mocked(useUiFeature).mockImplementation(
@@ -2658,6 +2721,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       } as never);
       vi.mocked(useUiFeature).mockImplementation(
@@ -2694,6 +2759,8 @@ describe('CatalogView', () => {
         ],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       });
       vi.mocked(useUiFeature).mockImplementation(
@@ -2742,6 +2809,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
         ...overrides,
       } as ReturnType<typeof useDeployments>);
@@ -3490,15 +3559,30 @@ describe('CatalogView', () => {
       ).toBeTruthy();
     });
 
-    it('navigates to the skill editor with the catalog return url from the Skill create option', async () => {
+    it('navigates to the skill editor with the catalog return url from the Skill submenu\'s "Write instructions" option', async () => {
       render(<CatalogView />);
       await user.click(
-        screen.getByRole('button', { name: 'catalog.create.skill' }),
+        screen.getByRole('button', {
+          name: 'catalog.create.skillWriteInstructions',
+        }),
       );
 
       expect(mockNavigate).toHaveBeenCalledWith(
         '/skill-editor?returnUrl=%2Fcatalog',
       );
+    });
+
+    it('offers no nested children other than "Write instructions" and "Upload" under Skill', () => {
+      render(<CatalogView />);
+
+      expect(
+        screen.getByRole('button', {
+          name: 'catalog.create.skillWriteInstructions',
+        }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole('button', { name: 'catalog.create.skillUpload' }),
+      ).toBeTruthy();
     });
   });
   describe('revoke access', () => {
@@ -3526,6 +3610,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
         ...overrides,
       } as ReturnType<typeof useDeployments>);
@@ -3920,6 +4006,7 @@ describe('CatalogView', () => {
         isLoading: false,
         error: null,
         refetchSkills: vi.fn().mockResolvedValue(undefined),
+        mergeSharedSkill: vi.fn(),
         ...overrides,
       });
 

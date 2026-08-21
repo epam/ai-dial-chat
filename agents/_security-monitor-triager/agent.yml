@@ -26,10 +26,10 @@ max_turns: 60
 # payload.news[]). The platform downloads + decrypts it before this agent runs.
 needs: [proactive-security-monitor]
 
-# The SBOM + advisories were resolved against chat-2.0 (development-1.0). The
+# The SBOM + advisories were resolved against chat-2.0 (development). The
 # platform overlays that branch's source so reachability is validated against the
 # right code, and scopes the SARIF upload to that branch/commit.
-analysis_ref: development-1.0
+analysis_ref: development
 
 # SARIF -> Security tab: convert CONFIRMED/NEEDS_REVIEW payload.findings[] into
 # alerts (non-actionable verdicts upload as dismissed), scoped to analysis_ref.

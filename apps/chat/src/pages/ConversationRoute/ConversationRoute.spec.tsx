@@ -266,6 +266,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     mockUseUser.mockReturnValue({
@@ -293,6 +295,7 @@ describe('ConversationRoute', () => {
       toolsMenuItems: [],
       onToolToggle: vi.fn(),
       toolConfigurationValue: {},
+      restoreToolConfiguration: vi.fn(),
     });
     mockUseNotification.mockReturnValue(
       createNotificationContextValue(mockShowNotification),
@@ -492,6 +495,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -521,6 +526,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     renderRoute();
@@ -550,6 +557,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     renderRoute();
@@ -582,6 +591,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: function (
         item: DeploymentItemDto | DialToolsetDto,
       ): void {
@@ -646,6 +657,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -684,6 +697,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: function (
         item: DeploymentItemDto | DialToolsetDto,
       ): void {
@@ -737,6 +752,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -759,6 +776,7 @@ describe('ConversationRoute', () => {
       toolsMenuItems: [],
       onToolToggle: vi.fn(),
       toolConfigurationValue: { starter: true },
+      restoreToolConfiguration: vi.fn(),
     });
     const selectedDeploymentConfiguration: DeploymentConfigurationSchema = {
       type: 'object',
@@ -791,6 +809,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -850,6 +870,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -900,6 +922,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -949,6 +973,8 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     mockCreateConversation.mockRejectedValueOnce({

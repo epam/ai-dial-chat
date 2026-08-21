@@ -83,6 +83,9 @@
     },
     {
       "path": "./libs/settings-panel"
+    },
+    {
+      "path": "./libs/navigation-panel"
     }
   ]
 }

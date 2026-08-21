@@ -4,6 +4,10 @@ import { MulterModule } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { SkillsDownloadService } from './download/skills-download.service';
+import { SkillArchiveUploadInterceptor } from './import/skill-archive-upload.interceptor';
+import { SkillsArchiveExtractionService } from './import/skills-archive-extraction.service';
+import { SkillsImportService } from './import/skills-import.service';
+import { SkillsManifestImportService } from './import/skills-manifest-import.service';
 import { SkillsListingService } from './listing/skills-listing.service';
 import { SkillsLookupService } from './lookup/skills-lookup.service';
 import { SkillsMutationService } from './mutation/skills-mutation.service';
@@ -51,6 +55,10 @@ import { SkillsUploadService } from './upload/skills-upload.service';
     SkillsDownloadService,
     SkillsUploadService,
     SkillsMutationService,
+    SkillArchiveUploadInterceptor,
+    SkillsArchiveExtractionService,
+    SkillsManifestImportService,
+    SkillsImportService,
   ],
   exports: [SkillsService, SkillsLookupService],
 })

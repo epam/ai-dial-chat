@@ -120,7 +120,10 @@
         "provider": "Provider",
         "vendor": "Vendor",
         "license": "License",
-        "knowledgeCutoffDate": "Knowledge cutoff date"
+        "knowledgeCutoffDate": "Knowledge cutoff date",
+        "parameters": "Parameters",
+        "inputModalities": "Input modalities",
+        "outputModalities": "Output modalities"
       },
       "limits": {
         "requestsPerHour": "Requests per hour",
@@ -251,7 +254,9 @@
       "toolset": "Toolset",
       "customApp": "Custom App",
       "prompt": "Prompt",
-      "skill": "Skill"
+      "skill": "Skill",
+      "skillWriteInstructions": "Write instructions",
+      "skillUpload": "Upload"
     },
     "publishFolderSearchPlaceholder": "Search folders",
     "publishFolderEmptyState": "No folders match \"{{query}}\".",
@@ -282,7 +287,9 @@
     "empty": "No models available",
     "closeLabel": "Close model selector",
     "refetchToolsetsFailed": "Failed to refresh toolsets. The Catalog list may be out of date.",
-    "refetchDeploymentsFailed": "Failed to refresh applications. The Catalog list may be out of date."
+    "refetchDeploymentsFailed": "Failed to refresh applications. The Catalog list may be out of date.",
+    "browseCatalogLabel": "Catalog",
+    "unavailableTooltip": "This deployment is no longer available"
   },
   "promptSelector": {
     "addMenuLabel": "Prompts",
@@ -928,6 +935,7 @@
     "visibilityNote": "This deployment and its updates will be visible to users with the link.",
     "visibilityNoteEdit": "Anyone with the link will be able to view and edit this deployment.",
     "visibilityNoteConversation": "This conversation and its updates will be visible to users with the link.",
+    "nestedItemsNote": "Nested items such as prompts and files aren't shared automatically — share them separately so the app works correctly.",
     "copiedButtonLabel": "Copied",
     "linkAriaLabel": "Share link",
     "expiryNote": "This link is active for {{days}} days.",
@@ -1147,10 +1155,6 @@
     "filesTreeAriaLabel": "Skill files",
     "addUploadLabel": "Upload from device",
     "removeLabel": "Remove",
-    "removeConfirmTitle": "Remove file",
-    "removeConfirmMessage": "Remove \"{{path}}\"? This cannot be undone.",
-    "removeConfirmLabel": "Remove",
-    "removeCancelLabel": "Cancel",
     "editingFileLabel": "Editing file",
     "nameLabel": "Name",
     "namePlaceholder": "good-morning-breakfast",
@@ -1187,6 +1191,7 @@
       "manifestImportDeclined": "Manifest import cancelled, staged files kept."
     },
     "saveSuccessTitle": "Skill created",
+    "updateSuccessTitle": "Skill updated",
     "createSuccess": "\"{{name}}\" has been created.",
     "editTitle": "Edit skill",
     "saveLabel": "Save",
@@ -1214,6 +1219,23 @@
     "dropOverlaySubtitle": "Drop files here to add them to this skill",
     "manifestImportConfirmTitle": "Replace Skill metadata?",
     "manifestImportConfirmMessage": "Importing this SKILL.md will replace the Name, Description, and Instructions fields. This cannot be undone."
+  },
+  "skillArchiveImport": {
+    "fileInputAriaLabel": "Upload a skill ZIP archive or a SKILL.md file",
+    "status": {
+      "uploading": "Uploading skill…",
+      "success": "Skill uploaded successfully.",
+      "error": "Skill upload failed."
+    },
+    "error": {
+      "title": "Skill import failed",
+      "validation": "This archive isn't a valid skill package. Please check its contents and try again.",
+      "unsupportedFilename": "Please select a ZIP archive or a file named exactly \"SKILL.md\".",
+      "collision": "A skill with this name already exists.",
+      "rateLimited": "Too many attempts. Please wait a moment and try again.",
+      "serviceUnavailable": "The service is temporarily unavailable. Please try again.",
+      "generic": "Couldn't import this skill. Please try again."
+    }
   },
   "entityNotifications": {
     "prompt": {
@@ -1275,6 +1297,8 @@
       "publishRequested": "Publish request for model \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
     },
     "skill": {
+      "createdTitle": "Skill created successfully",
+      "created": "You can now see skill \"{{name}}\" in the catalog and My collection.",
       "deletedTitle": "Skill deleted successfully",
       "deleted": "Skill \"{{name}}\" is not available anymore.",
       "downloadedTitle": "Skill downloaded successfully",

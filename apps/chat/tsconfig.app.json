@@ -109,6 +109,9 @@
     },
     {
       "path": "../../libs/attachment-canvas/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/navigation-panel/tsconfig.lib.json"
     }
   ]
 }

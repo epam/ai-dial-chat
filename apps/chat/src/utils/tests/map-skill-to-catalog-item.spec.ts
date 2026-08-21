@@ -321,11 +321,11 @@ describe('buildSkillContentTree', () => {
   ) => (tree.type === CatalogContentNodeType.Folder ? tree : undefined);
 
   it('returns an empty tree for an empty listing', () => {
-    expect(buildSkillContentTree([])).toEqual([]);
+    expect(buildSkillContentTree([], '')).toEqual([]);
   });
 
   it('places a root-level file directly under the root', () => {
-    const tree = buildSkillContentTree([makeFile('SKILL.md')]);
+    const tree = buildSkillContentTree([makeFile('SKILL.md')], '');
 
     expect(tree).toEqual([
       { type: CatalogContentNodeType.File, id: 'SKILL.md', name: 'SKILL.md' },
@@ -333,11 +333,14 @@ describe('buildSkillContentTree', () => {
   });
 
   it('builds a two-level tree from a flat listing', () => {
-    const tree = buildSkillContentTree([
-      makeFile('SKILL.md'),
-      makeFile('scripts', SkillMetadataItemDtoNodeTypeEnum.Folder),
-      makeFile('scripts/run.py'),
-    ]);
+    const tree = buildSkillContentTree(
+      [
+        makeFile('SKILL.md'),
+        makeFile('scripts', SkillMetadataItemDtoNodeTypeEnum.Folder),
+        makeFile('scripts/run.py'),
+      ],
+      '',
+    );
 
     const scripts = folderNode(tree.find((node) => node.id === 'scripts')!);
     expect(scripts?.items).toEqual([
@@ -351,10 +354,10 @@ describe('buildSkillContentTree', () => {
 
   /* No 'agents' folder entry is ever listed — its own path is implied only by the nested file. */
   it('synthesizes an implicit intermediate folder a nested file implies but the listing never enumerated', () => {
-    const tree = buildSkillContentTree([
-      makeFile('SKILL.md'),
-      makeFile('agents/analyzer.md'),
-    ]);
+    const tree = buildSkillContentTree(
+      [makeFile('SKILL.md'), makeFile('agents/analyzer.md')],
+      '',
+    );
 
     const agents = folderNode(tree.find((node) => node.id === 'agents')!);
     expect(agents?.name).toBe('agents');
@@ -368,21 +371,23 @@ describe('buildSkillContentTree', () => {
   });
 
   it('still shows an explicit empty folder entry, with no items', () => {
-    const tree = buildSkillContentTree([
-      makeFile('SKILL.md'),
-      makeFile('assets', SkillMetadataItemDtoNodeTypeEnum.Folder),
-    ]);
+    const tree = buildSkillContentTree(
+      [
+        makeFile('SKILL.md'),
+        makeFile('assets', SkillMetadataItemDtoNodeTypeEnum.Folder),
+      ],
+      '',
+    );
 
     const assets = folderNode(tree.find((node) => node.id === 'assets')!);
     expect(assets?.items).toEqual([]);
   });
 
   it('keeps two same-named files in different folders as distinct nodes', () => {
-    const tree = buildSkillContentTree([
-      makeFile('SKILL.md'),
-      makeFile('a/run.py'),
-      makeFile('b/run.py'),
-    ]);
+    const tree = buildSkillContentTree(
+      [makeFile('SKILL.md'), makeFile('a/run.py'), makeFile('b/run.py')],
+      '',
+    );
 
     const a = folderNode(tree.find((node) => node.id === 'a')!);
     const b = folderNode(tree.find((node) => node.id === 'b')!);
@@ -392,11 +397,14 @@ describe('buildSkillContentTree', () => {
 
   /* The manifest is the file the panel opens on, so it heads the root regardless of name. */
   it('sorts the manifest first at the root, then the rest alphabetically', () => {
-    const tree = buildSkillContentTree([
-      makeFile('scripts', SkillMetadataItemDtoNodeTypeEnum.Folder),
-      makeFile('analyzer.md'),
-      makeFile('SKILL.md'),
-    ]);
+    const tree = buildSkillContentTree(
+      [
+        makeFile('scripts', SkillMetadataItemDtoNodeTypeEnum.Folder),
+        makeFile('analyzer.md'),
+        makeFile('SKILL.md'),
+      ],
+      '',
+    );
 
     expect(tree.map((node) => node.id)).toEqual([
       'SKILL.md',
@@ -405,11 +413,43 @@ describe('buildSkillContentTree', () => {
     ]);
   });
 
-  it('never mistakes a grouping folder for a file', () => {
-    const tree = buildSkillContentTree([
-      makeFile('SKILL.md'),
-      makeFile('scripts', SkillMetadataItemDtoNodeTypeEnum.Folder),
+  /*
+   * Core lists a skill's files under its own path and an internal `files`
+   * storage directory (e.g. `address-current-branch-review/files/SKILL.md`).
+   * Neither should appear as a wrapping node in the displayed tree — the
+   * panel already represents "inside this skill".
+   */
+  it('strips the skill path and internal files directory from every node', () => {
+    const skillPath = 'address-current-branch-review';
+    const tree = buildSkillContentTree(
+      [
+        makeFile(`${skillPath}/files`, SkillMetadataItemDtoNodeTypeEnum.Folder),
+        makeFile(`${skillPath}/files/SKILL.md`),
+        makeFile(`${skillPath}/files/agents/analyzer.md`),
+      ],
+      skillPath,
+    );
+
+    expect(tree.map((node) => node.id)).toEqual([
+      `${skillPath}/files/SKILL.md`,
+      'agents',
     ]);
+    const agents = folderNode(tree.find((node) => node.name === 'agents')!);
+    expect(fileNode(agents!.items[0])).toEqual({
+      type: CatalogContentNodeType.File,
+      id: `${skillPath}/files/agents/analyzer.md`,
+      name: 'analyzer.md',
+    });
+  });
+
+  it('never mistakes a grouping folder for a file', () => {
+    const tree = buildSkillContentTree(
+      [
+        makeFile('SKILL.md'),
+        makeFile('scripts', SkillMetadataItemDtoNodeTypeEnum.Folder),
+      ],
+      '',
+    );
 
     const scripts = tree.find((node) => node.id === 'scripts');
     expect(scripts?.type).toBe(CatalogContentNodeType.Folder);
@@ -417,7 +457,7 @@ describe('buildSkillContentTree', () => {
 
   /* The id stays opaque until the app-edge download adapter receives it. */
   it('uses the listing entry path verbatim as the file id, through at least one nested level', () => {
-    const tree = buildSkillContentTree([makeFile('scripts/run.py')]);
+    const tree = buildSkillContentTree([makeFile('scripts/run.py')], '');
 
     const scripts = folderNode(tree[0]);
     expect(fileNode(scripts!.items[0])).toEqual({

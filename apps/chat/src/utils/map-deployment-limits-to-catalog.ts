@@ -12,6 +12,8 @@ import { CatalogI18nKeys } from '../constants/translation-keys';
 interface DeploymentLimitMapping {
   key: keyof DeploymentLimitsResponseDto;
   labelKey: CatalogI18nKeys;
+  /** Whether this stat is denominated in cost (USD), formatted with a currency symbol. */
+  isCost?: boolean;
 }
 
 const LIMIT_STAT_MAPPINGS: DeploymentLimitMapping[] = [
@@ -42,24 +44,34 @@ const LIMIT_STAT_MAPPINGS: DeploymentLimitMapping[] = [
   {
     key: 'minuteCostStats',
     labelKey: CatalogI18nKeys.DetailsLimitsCostPerMinute,
+    isCost: true,
   },
   {
     key: 'dayCostStats',
     labelKey: CatalogI18nKeys.DetailsLimitsCostPerDay,
+    isCost: true,
   },
   {
     key: 'weekCostStats',
     labelKey: CatalogI18nKeys.DetailsLimitsCostPerWeek,
+    isCost: true,
   },
   {
     key: 'monthCostStats',
     labelKey: CatalogI18nKeys.DetailsLimitsCostPerMonth,
+    isCost: true,
   },
 ];
 
 const UNLIMITED_TOTAL_THRESHOLD = Number.MAX_SAFE_INTEGER;
 
 const numberFormatter = new Intl.NumberFormat(undefined, {
+  maximumFractionDigits: 2,
+});
+
+const costFormatter = new Intl.NumberFormat(undefined, {
+  style: 'currency',
+  currency: 'USD',
   maximumFractionDigits: 2,
 });
 
@@ -80,25 +92,28 @@ const shouldShowLimitStats = (
   return isUsableLimitStats(stats);
 };
 
-const formatLimitNumber = (value: number): string =>
-  numberFormatter.format(value);
+const formatLimitNumber = (value: number, isCost: boolean): string =>
+  isCost ? costFormatter.format(value) : numberFormatter.format(value);
 
 const mapLimitStatsToRow = (
   stats: LimitStatsDto,
   label: string,
   t: TFunction,
+  isCost: boolean,
 ): UsageLimitProgressRow => {
   const used = Math.max(0, stats.used);
   const total = stats.total;
-  const formattedUsed = formatLimitNumber(used);
-  const formattedTotal = formatLimitNumber(total);
+  const formattedUsed = formatLimitNumber(used, isCost);
+  const formattedTotal = formatLimitNumber(total, isCost);
   const isUnlimited = isUnlimitedTotal(total);
 
   return {
     label,
     used,
     total,
-    ...(isUnlimited ? { isUnlimited: true } : {}),
+    ...(isUnlimited
+      ? { isUnlimited: true }
+      : { usedLabel: formattedUsed, totalLabel: formattedTotal }),
     valueLabel: isUnlimited
       ? t(CatalogI18nKeys.DetailsLimitsUnlimitedValue)
       : t(CatalogI18nKeys.DetailsLimitsValue, {
@@ -129,7 +144,14 @@ export const mapDeploymentLimitsDtoToCatalogLimits = (
       return [];
     }
 
-    return [mapLimitStatsToRow(stats, t(mapping.labelKey), t)];
+    return [
+      mapLimitStatsToRow(
+        stats,
+        t(mapping.labelKey),
+        t,
+        mapping.isCost ?? false,
+      ),
+    ];
   });
 
   return rows.length > 0 ? { rows } : undefined;

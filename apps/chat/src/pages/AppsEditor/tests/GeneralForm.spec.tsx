@@ -354,7 +354,11 @@ describe('GeneralForm', () => {
       expect(ref.current?.getValues()).toEqual(
         expect.objectContaining({
           locales: [
-            { language: 'de', name: 'Meine App', description: 'Meine Beschreibung' },
+            {
+              language: 'de',
+              name: 'Meine App',
+              description: 'Meine Beschreibung',
+            },
           ],
           primaryLocale: PRIMARY_LOCALE,
         }),

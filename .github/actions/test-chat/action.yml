@@ -1,0 +1,103 @@
+name: test-chat
+description: "Run ai-dial-chat e2e-tests"
+inputs:
+  environment-url:
+    description: "Application URL of the environment, e.g., `https://chat-my-repo-pr-1.example.com`"
+    required: true
+  test-repository:
+    description: "GitHub repository with e2e-tests source code"
+    default: "epam/ai-dial-chat"
+  test-branch:
+    description: "Git branch name of the e2e-tests repository to use"
+    default: "development"
+  dotenv-file:
+    description: "Relative path from e2e-tests repo root to dotenv file with variables. Will be sourced before running tests"
+    default: "apps/chat-e2e/.env.ci"
+  java-distribution:
+    description: "Java distribution"
+    default: "temurin"
+  java-version:
+    description: "Java version"
+    default: "17"
+  node-version:
+    description: "NodeJS version to use"
+    default: "lts/*"
+  allure-version:
+    description: "Allure Report version"
+    default: "2.24.0"
+  report-prefix:
+    description: "Test report name prefix"
+    default: ${{ github.run_id }}
+  working-directory:
+    description: "Working directory to run tests in"
+    default: "tests"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        repository: ${{ inputs.test-repository }}
+        ref: ${{ inputs.test-branch }}
+        path: ${{ inputs.working-directory }}
+        lfs: true
+        persist-credentials: false
+    - uses: falti/dotenv-action@fff81fa3263fb96221c521b5e526e57c0c56d760 # v1.2.1
+      with:
+        path: "${{ inputs.working-directory }}/${{ inputs.dotenv-file }}"
+        log-variables: true
+        export-variables: true
+        keys-case: bypass
+    - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: ${{ inputs.node-version }}
+    - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+      with:
+        distribution: ${{ inputs.java-distribution }}
+        java-version: ${{ inputs.java-version }}
+    - name: Install Allure CLI
+      run: |
+        curl -fsSL --retry 5 --retry-delay 2 https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure_${ALLURE_VERSION}-1_all.deb -o /tmp/allure.deb
+        sudo dpkg -i /tmp/allure.deb
+        echo "Allure CLI version: $(allure --version)"
+      shell: bash
+      env:
+        ALLURE_VERSION: ${{ inputs.allure-version }}
+    - name: Install Playwright
+      run: |
+        npm ci
+        npx playwright install --with-deps
+        echo "Playwright version: $(npx playwright --version)"
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+    - run: echo $E2E_USERNAME
+      shell: bash
+    - name: Run tests
+      run: |
+        echo "URL to run e2e tests against:                 ${E2E_HOST}"
+        echo "Config for arithmetic e2e api tests:          ${ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS}"
+        echo "Config for attachment request e2e api tests:  ${ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS}"
+        echo "Config for attachment response e2e api tests: ${ENTITY_SIMPLE_REQUEST_FOR_API_TESTS}"
+        echo "Simple requests model for e2e tests:          ${SIMPLE_REQUEST_MODEL}"
+        npx nx run chat-e2e:e2e:chat --configuration=production --output-style=stream --skipInstall
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        E2E_HOST: ${{ inputs.environment-url }}
+        E2E_ADMIN: ${{ env.E2E_ADMIN }}
+        E2E_USERNAME: ${{ env.E2E_USERNAME }}
+        E2E_PASSWORD: ${{ env.E2E_PASSWORD }}
+    - name: Generate Allure Report
+      if: ${{ !cancelled() }}
+      run: |
+        allure generate ./apps/chat-e2e/allure-chat-results -o ./apps/chat-e2e/allure-chat-report --clean
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+    - name: Upload Allure Report
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: ${{ !cancelled() }}
+      with:
+        name: "${{ inputs.report-prefix }}-chat"
+        path: |
+          ${{ inputs.working-directory }}/apps/chat-e2e/allure-chat-report
+        retention-days: 30

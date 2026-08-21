@@ -72,9 +72,13 @@ export interface UsageLimitProgressRow {
   total: number;
   /** Whether the backend reports this row as effectively unlimited. */
   isUnlimited?: boolean;
-  /** Preformatted visible value, e.g. "1,200 / 5,000". */
+  /** Preformatted visible value, e.g. "1,200 / 5,000". Used as-is when `usedLabel`/`totalLabel` are absent. */
   valueLabel?: string;
-  /** Accessible label for the progress bar. */
+  /** Preformatted consumed amount, e.g. "$0.00", rendered with the row's normal value weight. Enables rendering `usedLabel` and `totalLabel` with different emphasis instead of the single `valueLabel` string. */
+  usedLabel?: string;
+  /** Preformatted limit amount, e.g. "$100.00", rendered with heavier emphasis than `usedLabel`. */
+  totalLabel?: string;
+  /** Accessible value text for the progress bar (`aria-valuetext`), overriding the default `used / total` reading. */
   ariaLabel?: string;
 }
 

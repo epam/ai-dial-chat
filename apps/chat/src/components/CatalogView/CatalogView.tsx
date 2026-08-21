@@ -38,6 +38,7 @@ import {
   FavoritesI18nKeys,
   NavigationI18nKeys,
   PublishI18nKeys,
+  SkillArchiveImportI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
@@ -50,6 +51,7 @@ import { useSkills } from '../../context/SkillsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
+import { useSkillArchiveImport } from '../../hooks/skills/useSkillArchiveImport';
 import {
   ToolsetLoginOutcomeType,
   useToolsetLogin,
@@ -100,6 +102,7 @@ import {
   type ParsedSkillResourceUrl,
 } from '../../types/skill';
 import { isQuickAppSchema } from '../../utils/application-schema';
+import { buildDeploymentConnectApi } from '../../utils/deployment-endpoint-url';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import { EXPORT_APP_NAME } from '../../utils/export-conversation';
@@ -245,6 +248,18 @@ const CatalogView: FC<Props> = ({
     [schemas],
   );
 
+  const quickAppDeploymentIds = useMemo(
+    () =>
+      new Set(
+        quickAppSchemaId
+          ? deployments
+              .filter((d) => d.applicationTypeSchemaId === quickAppSchemaId)
+              .map((d) => d.id)
+          : [],
+      ),
+    [deployments, quickAppSchemaId],
+  );
+
   const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
   const isCatalogTableViewEnabled = useUiFeature(
     OverlayFeature.CatalogTableView,
@@ -278,6 +293,13 @@ const CatalogView: FC<Props> = ({
     error: skillsError,
     refetchSkills,
   } = useSkills();
+
+  const {
+    fileInputRef: skillArchiveFileInputRef,
+    statusMessage: skillArchiveStatusMessage,
+    triggerFilePicker: triggerSkillArchivePicker,
+    handleFileChange: handleSkillArchiveFileChange,
+  } = useSkillArchiveImport();
 
   const isLoading =
     isDeploymentsLoading || isFavoritesLoading || isSkillsLoading;
@@ -519,7 +541,7 @@ const CatalogView: FC<Props> = ({
 
         const contentFiles =
           files.status === 'fulfilled'
-            ? buildSkillContentTree(files.value.items)
+            ? buildSkillContentTree(files.value.items, path)
             : [];
         const selectedFileId =
           files.status === 'fulfilled'
@@ -562,6 +584,21 @@ const CatalogView: FC<Props> = ({
           item.type,
           item.supportsMcp,
         );
+        /*
+         * DIAL Core routes generation through the same deployment-keyed
+         * endpoints for models and custom applications, so both entity
+         * types get a Connect entry built from their generation-API support
+         * flags.
+         */
+        const deploymentConnectApi =
+          entityDetails.type === 'MODEL' || entityDetails.type === 'AGENT'
+            ? buildDeploymentConnectApi(dialCoreExternalUrl ?? '', item.id, {
+                hasChatCompletion:
+                  entityDetails.data.capabilities?.hasChatCompletion,
+                hasResponsesApi:
+                  entityDetails.data.capabilities?.hasResponsesApi,
+              })
+            : undefined;
         return {
           ...catalogDetails,
           api:
@@ -571,7 +608,7 @@ const CatalogView: FC<Props> = ({
                   item.id,
                   mcpResourceKind,
                 )
-              : catalogDetails.api,
+              : (deploymentConnectApi ?? catalogDetails.api),
           limits: mapDeploymentLimitsDtoToCatalogLimits(limitsDto, t),
           credentials:
             entityDetails.type === 'TOOLSET'
@@ -1425,6 +1462,28 @@ const CatalogView: FC<Props> = ({
       });
     }
 
+    options.push({
+      key: 'skill',
+      label: t(CatalogI18nKeys.CreateSkill),
+      children: [
+        {
+          key: 'skill-write-instructions',
+          label: t(CatalogI18nKeys.CreateSkillWriteInstructions),
+          onClick: () => {
+            const params = new URLSearchParams({
+              [EditorQuery.ReturnUrl]: ROUTES.Catalog,
+            });
+            navigate(`${ROUTES.SkillEditor}?${params.toString()}`);
+          },
+        },
+        {
+          key: 'skill-upload',
+          label: t(CatalogI18nKeys.CreateSkillUpload),
+          onClick: triggerSkillArchivePicker,
+        },
+      ],
+    });
+
     if (isPromptsEnabled) {
       options.push({
         key: 'prompt',
@@ -1438,17 +1497,6 @@ const CatalogView: FC<Props> = ({
       });
     }
 
-    options.push({
-      key: 'skill',
-      label: t(CatalogI18nKeys.CreateSkill),
-      onClick: () => {
-        const params = new URLSearchParams({
-          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
-        });
-        navigate(`${ROUTES.SkillEditor}?${params.toString()}`);
-      },
-    });
-
     return options;
   }, [
     quickAppSchemaId,
@@ -1460,6 +1508,7 @@ const CatalogView: FC<Props> = ({
     isHideCustomAppCreationEnabled,
     isToolsetsEnabled,
     isCustomAppsEnabled,
+    triggerSkillArchivePicker,
   ]);
 
   if (!isCatalogEnabled && !isSelectorMode) {
@@ -1467,250 +1516,273 @@ const CatalogView: FC<Props> = ({
   }
 
   return (
-    <Catalog
-      items={visibleCatalogItems}
-      isLoading={isLoading}
-      favorites={favorites}
-      createOptions={createOptions}
-      hideCreateButton={isSelectorMode}
-      hidePageTitle={isSelectorMode}
-      initialViewMode={
-        isCatalogTableViewEnabled ? CatalogViewMode.List : undefined
-      }
-      selectedItemId={
-        isSelectorMode ? (selectedItemId ?? undefined) : undefined
-      }
-      initialDetailsItemId={initialDetailsItemId}
-      onCardClick={isSelectorMode ? handleCardSelect : undefined}
-      sortKey={isSelectorMode ? undefined : sortKey}
-      onSortChange={isSelectorMode ? undefined : setSortKey}
-      filterTopics={isSelectorMode ? undefined : reconciledFilterTopics}
-      onFilterTopicsChange={isSelectorMode ? undefined : setFilterTopics}
-      isMyAppsActive={isSelectorMode ? undefined : isMyAppsActive}
-      onMyAppsActiveChange={isSelectorMode ? undefined : setIsMyAppsActive}
-      activeTab={isSelectorMode ? undefined : activeTab}
-      onActiveTabChange={isSelectorMode ? undefined : setActiveTab}
-      onFetchDetails={handleFetchDetails}
-      onToggleFavorite={onToggleFavorite}
-      onUseInChat={handleUseInChat}
-      onLogin={handleLogin}
-      onLogout={handleLogout}
-      onEdit={handleEdit}
-      onDownload={handleDownload}
-      isDownloadVisible={isDownloadVisible}
-      onLoadContentFile={handleLoadContentFile}
-      renderContentFilePreview={renderContentFilePreview}
-      onDelete={handleDelete}
-      onUnshare={handleUnshare}
-      isUnshareVisible={isUnshareVisible}
-      onRevokeShare={handleRevokeShare}
-      onFetchRecipientsCount={handleFetchRecipientsCount}
-      isRevokeShareVisible={isRevokeShareVisible}
-      isPrimaryActionVisible={isPrimaryActionVisible}
-      isPublishVisible={isPublishVisible}
-      getPublishHistory={getPublishHistory}
-      publishFolderItems={publishFolderItems}
-      publishExpandedPaths={publishExpandedPaths}
-      onPublishExpandedPathsChange={onPublishExpandedPathsChange}
-      publishLoadingPaths={publishLoadingPaths}
-      onCreatePublishFolder={onCreatePublishFolder}
-      hasPublishWriteAccess={hasPublishWriteAccess}
-      onPublish={handlePublish}
-      onPublishSuccess={handlePublishSuccess}
-      onPublishError={handlePublishError}
-      ruleSourceOptions={config.publicationFilterSources}
-      onFetchExistingRules={handleFetchExistingRules}
-      publishLabels={{
-        searchPlaceholder: t(CatalogI18nKeys.PublishFolderSearchPlaceholder),
-        cancelCreatingFolderLabel: t(ButtonsI18nKeys.Cancel),
-        folderEmptyStateLabel: t(CatalogI18nKeys.PublishFolderEmptyState, {
-          query: '{query}',
-        }),
-        historyLoadingLabel: t(CatalogI18nKeys.PublishHistoryLoading),
-        historyErrorLabel: t(CatalogI18nKeys.PublishHistoryError),
-        submitError: t(PublishI18nKeys.SubmitErrorCallout),
-        accessRulesLabels: getAccessRulesLabels(t),
-      }}
-      shareOverlay={(item, onClose) => (
-        <SharePopoverContainer item={item} onClose={onClose} />
-      )}
-      isShareVisible={isShareVisible}
-      styles={{
-        typography: { pageHeadingFontClassName: 'dial-h1-text' },
-      }}
-      titles={{
-        pageTitle: t(NavigationI18nKeys.Catalog),
-        createLabel: t(ButtonsI18nKeys.Create),
-        favoritesTitle: t(FavoritesI18nKeys.Title),
-        browseTitle: t(ButtonsI18nKeys.Browse),
-        searchPlaceholder: t(CatalogI18nKeys.SearchPlaceholder),
-        noResultsTitle: (query) => t(CatalogI18nKeys.NoResultsTitle, { query }),
-        sortRecentlyUpdatedLabel: t(CatalogI18nKeys.SortRecentlyUpdated),
-        sortNewestLabel: t(CatalogI18nKeys.SortNewest),
-        sortNameAZLabel: t(CatalogI18nKeys.SortNameAZ),
-        featuredLabel: t(CatalogI18nKeys.FeaturedLabel),
-        gridViewLabel: t(CatalogI18nKeys.GridViewLabel),
-        listViewLabel: t(CatalogI18nKeys.ListViewLabel),
-        ariaLabel: t(NavigationI18nKeys.Catalog),
-        tabLabels: {
-          [CatalogEntityType.Model]: t(CatalogI18nKeys.TabModels),
-          [CatalogEntityType.Agent]: t(CatalogI18nKeys.TabApplications),
-          [CatalogEntityType.Toolset]: t(CatalogI18nKeys.TabToolsets),
-          [CatalogEntityType.Prompt]: t(CatalogI18nKeys.TabPrompts),
-          [CatalogEntityType.Skill]: t(CatalogI18nKeys.TabSkills),
-        },
-      }}
-      detailsTexts={{
-        tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
-        tabContentLabel: t(CatalogI18nKeys.DetailsTabContent),
-        tabLimitsLabel: t(CatalogI18nKeys.DetailsTabLimits),
-        contentFileSelectorAriaLabel: t(
-          CatalogI18nKeys.DetailsContentFileSelectorAriaLabel,
-        ),
-        contentFileCountLabel: (count: number) =>
-          t(CatalogI18nKeys.DetailsContentFileCount, { count }),
-        contentFileLoadingLabel: t(CatalogI18nKeys.DetailsContentFileLoading),
-        contentFileErrorLabel: t(CatalogI18nKeys.DetailsContentFileError),
-        contentFileUnsupportedLabel: t(
-          CatalogI18nKeys.DetailsContentFileUnsupported,
-        ),
-        primaryActionLabel: t(ButtonsI18nKeys.UseInChat),
-        editActionLabel: t(ButtonsI18nKeys.Edit),
-        downloadActionLabel: t(ButtonsI18nKeys.Download),
-        downloadingStatusLabel: t(CatalogI18nKeys.DetailsDownloadingStatus),
-        deleteActionLabel: t(ButtonsI18nKeys.Delete),
-        deletingStatusLabel: t(DialFileManagerI18nKeys.DeletingLabel),
-        apiResourceSectionLabel: t(CatalogI18nKeys.DetailsApiResourceSection),
-        apiSnippetSectionLabel: t(CatalogI18nKeys.DetailsApiSnippetSection),
-        apiModelIdLabel: t(CatalogI18nKeys.DetailsApiModelId),
-        apiEndpointLabel: t(ApiI18nKeys.EndpointLabel),
-        apiEndpointSectionLabel: t(ApiI18nKeys.EndpointLabel),
-        apiRequestExampleLabel: t(CatalogI18nKeys.DetailsApiRequestExample),
-        apiResponseSchemaLabel: t(CatalogI18nKeys.DetailsApiResponseSchema),
-        copyCodeAriaLabel: t(ButtonsI18nKeys.Copy),
-        pricingPricesSectionLabel: t(
-          CatalogI18nKeys.DetailsPricingPricesSection,
-        ),
-        pricingLimitsSectionLabel: t(
-          CatalogI18nKeys.DetailsPricingLimitsSection,
-        ),
-        loginActionLabel: t(ButtonsI18nKeys.LogIn),
-        logoutActionLabel: t(ButtonsI18nKeys.LogOut),
-        manageCredentialsActionLabel: (authenticationType) =>
-          authenticationType === ToolsetAuthenticationType.ApiKey
-            ? t(CatalogI18nKeys.CredentialsManageApiKeysLabel)
-            : t(CatalogI18nKeys.CredentialsManageLabel),
-        credentialsSignedInLabel: t(CatalogI18nKeys.CredentialsSignedInLabel),
-        credentialsSignedOutLabel: t(CatalogI18nKeys.CredentialsSignedOutLabel),
-        logoutConfirmMessage: t(AuthI18nKeys.LogOutConfirmDescription),
-        deleteApiKeyConfirmMessage: (level) =>
-          level === CredentialsLevel.Global
-            ? t(CatalogI18nKeys.CredentialsDeleteApiKeyConfirmMessageOrg)
-            : t(CatalogI18nKeys.CredentialsDeleteApiKeyConfirmMessagePersonal),
-        apiKeyFieldLabel: t(ApiI18nKeys.ApiKey),
-        apiKeyRequiredErrorMessage: t(
-          CatalogI18nKeys.CredentialsApiKeyRequiredErrorMessage,
-        ),
-        apiKeyActionLabel: t(ApiI18nKeys.ApiKey),
-        changeApiKeyActionLabel: t(
-          CatalogI18nKeys.CredentialsChangeApiKeyActionLabel,
-        ),
-        personalApiKeyPanelTitle: t(
-          CatalogI18nKeys.CredentialsPersonalApiKeyPanelTitle,
-        ),
-        personalApiKeyAddedMessage: t(
-          CatalogI18nKeys.CredentialsPersonalApiKeyAddedMessage,
-        ),
-        apiKeyConfiguredMessage: t(
-          CatalogI18nKeys.CredentialsApiKeyConfiguredMessage,
-        ),
-        addApiKeyActionLabel: t(ButtonsI18nKeys.Add),
-        addingApiKeyStatusLabel: t(
-          CatalogI18nKeys.CredentialsAddingApiKeyStatusLabel,
-        ),
-        apiKeyAddedLabel: (when) =>
-          t(CatalogI18nKeys.CredentialsApiKeyAddedLabel, { when }),
-        orgFallbackBannerTitle: (authenticationType) =>
-          authenticationType === ToolsetAuthenticationType.ApiKey
-            ? t(CatalogI18nKeys.CredentialsOrgFallbackBannerTitleApiKey)
-            : t(CatalogI18nKeys.CredentialsOrgFallbackBannerTitleCredentials),
-        orgFallbackBannerDescription: (authenticationType) =>
-          authenticationType === ToolsetAuthenticationType.ApiKey
-            ? t(CatalogI18nKeys.CredentialsOrgFallbackBannerDescriptionApiKey)
-            : t(
-                CatalogI18nKeys.CredentialsOrgFallbackBannerDescriptionCredentials,
-              ),
-        orgCredentialsActiveBannerTitle: (authenticationType) =>
-          authenticationType === ToolsetAuthenticationType.ApiKey
-            ? t(CatalogI18nKeys.CredentialsOrgActiveBannerTitleApiKey)
-            : t(CatalogI18nKeys.CredentialsOrgActiveBannerTitleCredentials),
-        personalCredentialsActiveBannerTitle: (authenticationType) =>
-          authenticationType === ToolsetAuthenticationType.ApiKey
-            ? t(CatalogI18nKeys.CredentialsPersonalActiveBannerTitleApiKey)
-            : t(
-                CatalogI18nKeys.CredentialsPersonalActiveBannerTitleCredentials,
-              ),
-        credentialsManagementTitle: (authenticationType) =>
-          authenticationType === ToolsetAuthenticationType.ApiKey
-            ? t(CatalogI18nKeys.CredentialsManagementTitleApiKey)
-            : t(CatalogI18nKeys.CredentialsManagementTitleCredentials),
-        credentialsManagementDescription: (authenticationType) =>
-          authenticationType === ToolsetAuthenticationType.ApiKey
-            ? t(CatalogI18nKeys.CredentialsManagementDescriptionApiKey)
-            : t(CatalogI18nKeys.CredentialsManagementDescriptionCredentials),
-        personalCredentialsLabel: t(CatalogI18nKeys.CredentialsPersonalLabel),
-        personalCredentialsDescription: t(
-          CatalogI18nKeys.CredentialsPersonalDescription,
-        ),
-        organizationCredentialsLabel: t(
-          CatalogI18nKeys.CredentialsOrganizationLabel,
-        ),
-        organizationCredentialsDescription: t(
-          CatalogI18nKeys.CredentialsOrganizationDescription,
-        ),
-        credentialsBadgeLoggedOutLabel: t(
-          CatalogI18nKeys.CredentialsBadgeLoggedOut,
-        ),
-        tabConnectLabel: t(ButtonsI18nKeys.Connect),
-        manageActionLabel: t(ButtonsI18nKeys.Manage),
-        deleteConfirmTitle: t(CatalogI18nKeys.DetailsDeleteConfirmTitle),
-        deleteConfirmMessage: (name) =>
-          t(CatalogI18nKeys.DetailsDeleteConfirmMessage, { name }),
-        deleteConfirmConsequences: [
-          t(CatalogI18nKeys.DetailsDeleteConsequenceSharedConfigurations),
-          t(CatalogI18nKeys.DetailsDeleteConsequenceUsersLoseAccess),
-          t(CatalogI18nKeys.DetailsDeleteConsequenceCannotBeUndone),
-        ],
-        unshareLabel: t(ButtonsI18nKeys.RemoveFromMyList),
-        unshareConfirmTitle: t(CatalogI18nKeys.DetailsUnshareConfirmTitle),
-        unshareConfirmMessage: (name) =>
-          t(CatalogI18nKeys.DetailsUnshareConfirmMessage, { name }),
-        unshareConfirmConsequences: [
-          t(CatalogI18nKeys.DetailsUnshareConsequenceYouLoseAccess),
-          t(CatalogI18nKeys.DetailsUnshareConsequenceOthersKeepAccess),
-          t(CatalogI18nKeys.DetailsUnshareConsequenceNeedNewInvitation),
-        ],
-        unsharingStatusLabel: t(CatalogI18nKeys.DetailsUnshareRemovingStatus),
-        revokeShareLabel: t(ButtonsI18nKeys.RevokeAccess),
-        revokeShareLabelWithCount: (count) =>
-          t(ButtonsI18nKeys.RevokeAccessWithCount, { count }),
-        revokeShareConfirmTitle: t(
-          CatalogI18nKeys.DetailsRevokeShareConfirmTitle,
-        ),
-        revokeShareConfirmMessage: (name) =>
-          t(CatalogI18nKeys.DetailsRevokeShareConfirmMessage, { name }),
-        revokeShareConfirmConsequences: [
-          t(CatalogI18nKeys.DetailsRevokeShareConsequenceOthersLoseAccess),
-          t(CatalogI18nKeys.DetailsRevokeShareConsequenceLinksStopWorking),
-          t(CatalogI18nKeys.DetailsRevokeShareConsequenceKeepsYourCopy),
-        ],
-        revokingShareStatusLabel: t(
-          CatalogI18nKeys.DetailsRevokeShareRevokingStatus,
-        ),
-        loggingOutStatusLabel: t(AuthI18nKeys.LoggingOutStatus),
-        cancelLabel: t(ButtonsI18nKeys.Cancel),
-      }}
-    />
+    <>
+      <input
+        ref={skillArchiveFileInputRef}
+        type="file"
+        accept=".zip,.md"
+        className="sr-only"
+        tabIndex={-1}
+        aria-label={t(SkillArchiveImportI18nKeys.FileInputAriaLabel)}
+        onChange={handleSkillArchiveFileChange}
+      />
+      <span role="status" aria-live="polite" className="sr-only">
+        {skillArchiveStatusMessage}
+      </span>
+      <Catalog
+        items={visibleCatalogItems}
+        isLoading={isLoading}
+        favorites={favorites}
+        createOptions={createOptions}
+        hideCreateButton={isSelectorMode}
+        hidePageTitle={isSelectorMode}
+        initialViewMode={
+          isCatalogTableViewEnabled ? CatalogViewMode.List : undefined
+        }
+        selectedItemId={
+          isSelectorMode ? (selectedItemId ?? undefined) : undefined
+        }
+        initialDetailsItemId={initialDetailsItemId}
+        onCardClick={isSelectorMode ? handleCardSelect : undefined}
+        sortKey={isSelectorMode ? undefined : sortKey}
+        onSortChange={isSelectorMode ? undefined : setSortKey}
+        filterTopics={isSelectorMode ? undefined : reconciledFilterTopics}
+        onFilterTopicsChange={isSelectorMode ? undefined : setFilterTopics}
+        isMyAppsActive={isSelectorMode ? undefined : isMyAppsActive}
+        onMyAppsActiveChange={isSelectorMode ? undefined : setIsMyAppsActive}
+        activeTab={isSelectorMode ? undefined : activeTab}
+        onActiveTabChange={isSelectorMode ? undefined : setActiveTab}
+        onFetchDetails={handleFetchDetails}
+        onToggleFavorite={onToggleFavorite}
+        onUseInChat={handleUseInChat}
+        onLogin={handleLogin}
+        onLogout={handleLogout}
+        onEdit={handleEdit}
+        onDownload={handleDownload}
+        isDownloadVisible={isDownloadVisible}
+        onLoadContentFile={handleLoadContentFile}
+        renderContentFilePreview={renderContentFilePreview}
+        onDelete={handleDelete}
+        onUnshare={handleUnshare}
+        isUnshareVisible={isUnshareVisible}
+        onRevokeShare={handleRevokeShare}
+        onFetchRecipientsCount={handleFetchRecipientsCount}
+        isRevokeShareVisible={isRevokeShareVisible}
+        isPrimaryActionVisible={isPrimaryActionVisible}
+        isPublishVisible={isPublishVisible}
+        getPublishHistory={getPublishHistory}
+        publishFolderItems={publishFolderItems}
+        publishExpandedPaths={publishExpandedPaths}
+        onPublishExpandedPathsChange={onPublishExpandedPathsChange}
+        publishLoadingPaths={publishLoadingPaths}
+        onCreatePublishFolder={onCreatePublishFolder}
+        hasPublishWriteAccess={hasPublishWriteAccess}
+        onPublish={handlePublish}
+        onPublishSuccess={handlePublishSuccess}
+        onPublishError={handlePublishError}
+        ruleSourceOptions={config.publicationFilterSources}
+        onFetchExistingRules={handleFetchExistingRules}
+        publishLabels={{
+          searchPlaceholder: t(CatalogI18nKeys.PublishFolderSearchPlaceholder),
+          cancelCreatingFolderLabel: t(ButtonsI18nKeys.Cancel),
+          folderEmptyStateLabel: t(CatalogI18nKeys.PublishFolderEmptyState, {
+            query: '{query}',
+          }),
+          historyLoadingLabel: t(CatalogI18nKeys.PublishHistoryLoading),
+          historyErrorLabel: t(CatalogI18nKeys.PublishHistoryError),
+          submitError: t(PublishI18nKeys.SubmitErrorCallout),
+          accessRulesLabels: getAccessRulesLabels(t),
+        }}
+        shareOverlay={(item, onClose) => (
+          <SharePopoverContainer
+            item={item}
+            isQuickApp={quickAppDeploymentIds.has(item.id)}
+            onClose={onClose}
+          />
+        )}
+        isShareVisible={isShareVisible}
+        styles={{
+          typography: { pageHeadingFontClassName: 'dial-h1-text' },
+        }}
+        titles={{
+          pageTitle: t(NavigationI18nKeys.Catalog),
+          createLabel: t(ButtonsI18nKeys.Create),
+          favoritesTitle: t(FavoritesI18nKeys.Title),
+          browseTitle: t(ButtonsI18nKeys.Browse),
+          searchPlaceholder: t(CatalogI18nKeys.SearchPlaceholder),
+          noResultsTitle: (query) =>
+            t(CatalogI18nKeys.NoResultsTitle, { query }),
+          sortRecentlyUpdatedLabel: t(CatalogI18nKeys.SortRecentlyUpdated),
+          sortNewestLabel: t(CatalogI18nKeys.SortNewest),
+          sortNameAZLabel: t(CatalogI18nKeys.SortNameAZ),
+          featuredLabel: t(CatalogI18nKeys.FeaturedLabel),
+          gridViewLabel: t(CatalogI18nKeys.GridViewLabel),
+          listViewLabel: t(CatalogI18nKeys.ListViewLabel),
+          ariaLabel: t(NavigationI18nKeys.Catalog),
+          tabLabels: {
+            [CatalogEntityType.Model]: t(CatalogI18nKeys.TabModels),
+            [CatalogEntityType.Agent]: t(CatalogI18nKeys.TabApplications),
+            [CatalogEntityType.Toolset]: t(CatalogI18nKeys.TabToolsets),
+            [CatalogEntityType.Prompt]: t(CatalogI18nKeys.TabPrompts),
+            [CatalogEntityType.Skill]: t(CatalogI18nKeys.TabSkills),
+          },
+        }}
+        detailsTexts={{
+          tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
+          tabContentLabel: t(CatalogI18nKeys.DetailsTabContent),
+          tabLimitsLabel: t(CatalogI18nKeys.DetailsTabLimits),
+          contentFileSelectorAriaLabel: t(
+            CatalogI18nKeys.DetailsContentFileSelectorAriaLabel,
+          ),
+          contentFileCountLabel: (count: number) =>
+            t(CatalogI18nKeys.DetailsContentFileCount, { count }),
+          contentFileLoadingLabel: t(CatalogI18nKeys.DetailsContentFileLoading),
+          contentFileErrorLabel: t(CatalogI18nKeys.DetailsContentFileError),
+          contentFileUnsupportedLabel: t(
+            CatalogI18nKeys.DetailsContentFileUnsupported,
+          ),
+          primaryActionLabel: t(ButtonsI18nKeys.UseInChat),
+          editActionLabel: t(ButtonsI18nKeys.Edit),
+          downloadActionLabel: t(ButtonsI18nKeys.Download),
+          downloadingStatusLabel: t(CatalogI18nKeys.DetailsDownloadingStatus),
+          deleteActionLabel: t(ButtonsI18nKeys.Delete),
+          deletingStatusLabel: t(DialFileManagerI18nKeys.DeletingLabel),
+          apiResourceSectionLabel: t(CatalogI18nKeys.DetailsApiResourceSection),
+          apiSnippetSectionLabel: t(CatalogI18nKeys.DetailsApiSnippetSection),
+          apiModelIdLabel: t(CatalogI18nKeys.DetailsApiModelId),
+          apiEndpointLabel: t(ApiI18nKeys.EndpointLabel),
+          apiEndpointSectionLabel: t(ApiI18nKeys.EndpointLabel),
+          apiRequestExampleLabel: t(CatalogI18nKeys.DetailsApiRequestExample),
+          apiResponseSchemaLabel: t(CatalogI18nKeys.DetailsApiResponseSchema),
+          copyCodeAriaLabel: t(ButtonsI18nKeys.Copy),
+          pricingPricesSectionLabel: t(
+            CatalogI18nKeys.DetailsPricingPricesSection,
+          ),
+          pricingLimitsSectionLabel: t(
+            CatalogI18nKeys.DetailsPricingLimitsSection,
+          ),
+          loginActionLabel: t(ButtonsI18nKeys.LogIn),
+          logoutActionLabel: t(ButtonsI18nKeys.LogOut),
+          manageCredentialsActionLabel: (authenticationType) =>
+            authenticationType === ToolsetAuthenticationType.ApiKey
+              ? t(CatalogI18nKeys.CredentialsManageApiKeysLabel)
+              : t(CatalogI18nKeys.CredentialsManageLabel),
+          credentialsSignedInLabel: t(CatalogI18nKeys.CredentialsSignedInLabel),
+          credentialsSignedOutLabel: t(
+            CatalogI18nKeys.CredentialsSignedOutLabel,
+          ),
+          logoutConfirmMessage: t(AuthI18nKeys.LogOutConfirmDescription),
+          deleteApiKeyConfirmMessage: (level) =>
+            level === CredentialsLevel.Global
+              ? t(CatalogI18nKeys.CredentialsDeleteApiKeyConfirmMessageOrg)
+              : t(
+                  CatalogI18nKeys.CredentialsDeleteApiKeyConfirmMessagePersonal,
+                ),
+          apiKeyFieldLabel: t(ApiI18nKeys.ApiKey),
+          apiKeyRequiredErrorMessage: t(
+            CatalogI18nKeys.CredentialsApiKeyRequiredErrorMessage,
+          ),
+          apiKeyActionLabel: t(ApiI18nKeys.ApiKey),
+          changeApiKeyActionLabel: t(
+            CatalogI18nKeys.CredentialsChangeApiKeyActionLabel,
+          ),
+          personalApiKeyPanelTitle: t(
+            CatalogI18nKeys.CredentialsPersonalApiKeyPanelTitle,
+          ),
+          personalApiKeyAddedMessage: t(
+            CatalogI18nKeys.CredentialsPersonalApiKeyAddedMessage,
+          ),
+          apiKeyConfiguredMessage: t(
+            CatalogI18nKeys.CredentialsApiKeyConfiguredMessage,
+          ),
+          addApiKeyActionLabel: t(ButtonsI18nKeys.Add),
+          addingApiKeyStatusLabel: t(
+            CatalogI18nKeys.CredentialsAddingApiKeyStatusLabel,
+          ),
+          apiKeyAddedLabel: (when) =>
+            t(CatalogI18nKeys.CredentialsApiKeyAddedLabel, { when }),
+          orgFallbackBannerTitle: (authenticationType) =>
+            authenticationType === ToolsetAuthenticationType.ApiKey
+              ? t(CatalogI18nKeys.CredentialsOrgFallbackBannerTitleApiKey)
+              : t(CatalogI18nKeys.CredentialsOrgFallbackBannerTitleCredentials),
+          orgFallbackBannerDescription: (authenticationType) =>
+            authenticationType === ToolsetAuthenticationType.ApiKey
+              ? t(CatalogI18nKeys.CredentialsOrgFallbackBannerDescriptionApiKey)
+              : t(
+                  CatalogI18nKeys.CredentialsOrgFallbackBannerDescriptionCredentials,
+                ),
+          orgCredentialsActiveBannerTitle: (authenticationType) =>
+            authenticationType === ToolsetAuthenticationType.ApiKey
+              ? t(CatalogI18nKeys.CredentialsOrgActiveBannerTitleApiKey)
+              : t(CatalogI18nKeys.CredentialsOrgActiveBannerTitleCredentials),
+          personalCredentialsActiveBannerTitle: (authenticationType) =>
+            authenticationType === ToolsetAuthenticationType.ApiKey
+              ? t(CatalogI18nKeys.CredentialsPersonalActiveBannerTitleApiKey)
+              : t(
+                  CatalogI18nKeys.CredentialsPersonalActiveBannerTitleCredentials,
+                ),
+          credentialsManagementTitle: (authenticationType) =>
+            authenticationType === ToolsetAuthenticationType.ApiKey
+              ? t(CatalogI18nKeys.CredentialsManagementTitleApiKey)
+              : t(CatalogI18nKeys.CredentialsManagementTitleCredentials),
+          credentialsManagementDescription: (authenticationType) =>
+            authenticationType === ToolsetAuthenticationType.ApiKey
+              ? t(CatalogI18nKeys.CredentialsManagementDescriptionApiKey)
+              : t(CatalogI18nKeys.CredentialsManagementDescriptionCredentials),
+          personalCredentialsLabel: t(CatalogI18nKeys.CredentialsPersonalLabel),
+          personalCredentialsDescription: t(
+            CatalogI18nKeys.CredentialsPersonalDescription,
+          ),
+          organizationCredentialsLabel: t(
+            CatalogI18nKeys.CredentialsOrganizationLabel,
+          ),
+          organizationCredentialsDescription: t(
+            CatalogI18nKeys.CredentialsOrganizationDescription,
+          ),
+          credentialsBadgeLoggedOutLabel: t(
+            CatalogI18nKeys.CredentialsBadgeLoggedOut,
+          ),
+          tabConnectLabel: t(ButtonsI18nKeys.Connect),
+          manageActionLabel: t(ButtonsI18nKeys.Manage),
+          deleteConfirmTitle: t(CatalogI18nKeys.DetailsDeleteConfirmTitle),
+          deleteConfirmMessage: (name) =>
+            t(CatalogI18nKeys.DetailsDeleteConfirmMessage, { name }),
+          deleteConfirmConsequences: [
+            t(CatalogI18nKeys.DetailsDeleteConsequenceSharedConfigurations),
+            t(CatalogI18nKeys.DetailsDeleteConsequenceUsersLoseAccess),
+            t(CatalogI18nKeys.DetailsDeleteConsequenceCannotBeUndone),
+          ],
+          unshareLabel: t(ButtonsI18nKeys.RemoveFromMyList),
+          unshareConfirmTitle: t(CatalogI18nKeys.DetailsUnshareConfirmTitle),
+          unshareConfirmMessage: (name) =>
+            t(CatalogI18nKeys.DetailsUnshareConfirmMessage, { name }),
+          unshareConfirmConsequences: [
+            t(CatalogI18nKeys.DetailsUnshareConsequenceYouLoseAccess),
+            t(CatalogI18nKeys.DetailsUnshareConsequenceOthersKeepAccess),
+            t(CatalogI18nKeys.DetailsUnshareConsequenceNeedNewInvitation),
+          ],
+          unsharingStatusLabel: t(CatalogI18nKeys.DetailsUnshareRemovingStatus),
+          revokeShareLabel: t(ButtonsI18nKeys.RevokeAccess),
+          revokeShareLabelWithCount: (count) =>
+            t(ButtonsI18nKeys.RevokeAccessWithCount, { count }),
+          revokeShareConfirmTitle: t(
+            CatalogI18nKeys.DetailsRevokeShareConfirmTitle,
+          ),
+          revokeShareConfirmMessage: (name) =>
+            t(CatalogI18nKeys.DetailsRevokeShareConfirmMessage, { name }),
+          revokeShareConfirmConsequences: [
+            t(CatalogI18nKeys.DetailsRevokeShareConsequenceOthersLoseAccess),
+            t(CatalogI18nKeys.DetailsRevokeShareConsequenceLinksStopWorking),
+            t(CatalogI18nKeys.DetailsRevokeShareConsequenceKeepsYourCopy),
+          ],
+          revokingShareStatusLabel: t(
+            CatalogI18nKeys.DetailsRevokeShareRevokingStatus,
+          ),
+          loggingOutStatusLabel: t(AuthI18nKeys.LoggingOutStatus),
+          cancelLabel: t(ButtonsI18nKeys.Cancel),
+        }}
+      />
+    </>
   );
 };
 

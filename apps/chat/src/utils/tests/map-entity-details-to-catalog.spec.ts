@@ -48,6 +48,7 @@ describe('mapEntityDetailsToCatalogDetails', () => {
               vendor: 'Vendor',
               license: 'License',
               knowledgeCutoffDate: '2026-08-17',
+              parameters: '100B',
             },
           },
         };
@@ -67,6 +68,7 @@ describe('mapEntityDetailsToCatalogDetails', () => {
               label: 'Knowledge cutoff date',
               value: new Date(2026, 7, 17).toLocaleDateString(),
             },
+            { label: 'Parameters', value: '100B' },
           ],
         },
       ]);

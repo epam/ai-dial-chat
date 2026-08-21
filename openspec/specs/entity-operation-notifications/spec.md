@@ -14,7 +14,7 @@ A user-initiated operation that mutates or exports an entity SHALL raise exactly
 | Quick app (`AppsEditor`) | **new** | **new** | required (catalog) | — | required (catalog) | specified only | — |
 | Custom app (`CustomAppEditor`) | **new** | **new** | required (catalog) | — | required (catalog) | specified only | — |
 | Toolset (`ToolsetEditor`) | **new** | **new** | required (catalog) | — | required (catalog) | specified only | — |
-| Model / Skill (catalog details) | — | — | required | — | required | specified only | — |
+| Model / Skill (catalog details) | required (Skill only, via archive import and any other Skill-create path) | — | required | — | required | specified only | — |
 | Conversation | not notified (see exclusions) | **new** (rename), **new** (duplicate) | required | required (export) | required | specified only | import, delete-all, unshare, revoke: required |
 | File | — | **new** (rename) | required | **new** (single, and a plural count for a multi-item selection) | — | — | upload, copy, move: required |
 | Folder | **new** | **new** (rename) | required | **new** (archive) | — | — | copy, move: required |
@@ -57,6 +57,11 @@ Exclusions, which SHALL NOT raise a success notification:
 
 - **WHEN** any operation in the matrix rejects
 - **THEN** only the existing error notification is shown, with its `requestId` behaviour unchanged, and no success notification is raised
+
+#### Scenario: Importing a Skill archive confirms creation
+
+- **WHEN** a user uploads a Skill ZIP archive from the Catalog and the archive is imported successfully
+- **THEN** a success notification titled `"Skill created successfully"` is shown, naming the new Skill
 
 ### Requirement: A completed operation always uses the Success variant
 

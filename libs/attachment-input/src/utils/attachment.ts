@@ -57,6 +57,7 @@ const WILDCARD_TYPE_LABELS: Record<string, string> = {
   audio: 'Audio files',
   video: 'Video files',
   text: 'Text files',
+  '*': 'All files',
 };
 
 /** Converts an array of MIME type strings (including wildcards) into a comma-separated human-readable label string. */

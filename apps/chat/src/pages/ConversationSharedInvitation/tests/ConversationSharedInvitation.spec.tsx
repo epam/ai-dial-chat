@@ -38,6 +38,18 @@ vi.mock('../../../context/DeploymentsContext', () => ({
   }),
 }));
 
+vi.mock('../../../context/SkillsContext', () => ({
+  useSkills: () => ({
+    skills: [],
+    publicSkills: [],
+    sharedWithMe: [],
+    isLoading: false,
+    error: null,
+    refetchSkills: vi.fn().mockResolvedValue(undefined),
+    mergeSharedSkill: vi.fn(),
+  }),
+}));
+
 vi.mock('../../../server-api/share.api', () => ({
   acceptInvitation: vi.fn(),
 }));

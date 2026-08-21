@@ -48,7 +48,7 @@ Specifies four shared hooks under `apps/chat/src/hooks/conversation/` — `useAt
 
 ### Requirement: useModelSelectorLabels hook
 
-`apps/chat/src/hooks/conversation/useModelSelectorLabels.ts` SHALL accept `{ isLoading, error, itemCount }` and return an object with `ariaLabel`, `loading`, `error`, `empty`, `searchPlaceholder`, and `closeLabel` string fields, sourced via `useTranslation()` using keys from `DeploymentsI18nKeys` and `BasicI18nKeys` in `translation-keys.ts`. No raw string literals are used for any label.
+`apps/chat/src/hooks/conversation/useModelSelectorLabels.ts` SHALL accept `{ isLoading, error, itemCount }` and return an object with `ariaLabel`, `loading`, `error`, `empty`, `searchPlaceholder`, `closeLabel`, and `unavailableTooltip` string fields, sourced via `useTranslation()` using keys from `DeploymentsI18nKeys` and `BasicI18nKeys` in `translation-keys.ts`. No raw string literals are used for any label.
 
 #### Scenario: Labels are consistent across both surfaces
 

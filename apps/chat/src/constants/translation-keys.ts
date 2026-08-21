@@ -185,6 +185,9 @@ export enum CatalogI18nKeys {
   DetailsModelVendor = 'catalog.details.modelSpecification.vendor',
   DetailsModelLicense = 'catalog.details.modelSpecification.license',
   DetailsModelKnowledgeCutoffDate = 'catalog.details.modelSpecification.knowledgeCutoffDate',
+  DetailsModelParameters = 'catalog.details.modelSpecification.parameters',
+  DetailsModelInputModalities = 'catalog.details.modelSpecification.inputModalities',
+  DetailsModelOutputModalities = 'catalog.details.modelSpecification.outputModalities',
   DetailsTabLimits = 'catalog.details.tabLimits',
   DetailsLimitsRequestsPerHour = 'catalog.details.limits.requestsPerHour',
   DetailsLimitsRequestsPerDay = 'catalog.details.limits.requestsPerDay',
@@ -214,6 +217,8 @@ export enum CatalogI18nKeys {
   SkillsLoadError = 'catalog.skillsLoadError',
   CreatePrompt = 'catalog.create.prompt',
   CreateSkill = 'catalog.create.skill',
+  CreateSkillWriteInstructions = 'catalog.create.skillWriteInstructions',
+  CreateSkillUpload = 'catalog.create.skillUpload',
   FolderPersonal = 'catalog.folder.personal',
   FolderPublic = 'catalog.folder.public',
   FolderShared = 'catalog.folder.shared',
@@ -307,6 +312,8 @@ export enum DeploymentSelectorI18nKeys {
   CloseLabel = 'deploymentSelector.closeLabel',
   RefetchToolsetsFailed = 'deploymentSelector.refetchToolsetsFailed',
   RefetchDeploymentsFailed = 'deploymentSelector.refetchDeploymentsFailed',
+  BrowseCatalogLabel = 'deploymentSelector.browseCatalogLabel',
+  UnavailableTooltip = 'deploymentSelector.unavailableTooltip',
 }
 
 export enum PromptSelectorI18nKeys {
@@ -875,10 +882,6 @@ export enum SkillEditorI18nKeys {
   FilesTreeAriaLabel = 'skillEditor.filesTreeAriaLabel',
   AddUploadLabel = 'skillEditor.addUploadLabel',
   RemoveLabel = 'skillEditor.removeLabel',
-  RemoveConfirmTitle = 'skillEditor.removeConfirmTitle',
-  RemoveConfirmMessage = 'skillEditor.removeConfirmMessage',
-  RemoveConfirmLabel = 'skillEditor.removeConfirmLabel',
-  RemoveCancelLabel = 'skillEditor.removeCancelLabel',
   EditingFileLabel = 'skillEditor.editingFileLabel',
   NameLabel = 'skillEditor.nameLabel',
   NamePlaceholder = 'skillEditor.namePlaceholder',
@@ -905,6 +908,7 @@ export enum SkillEditorI18nKeys {
   ErrorServiceUnavailable = 'skillEditor.error.serviceUnavailable',
   ErrorSave = 'skillEditor.error.save',
   SaveSuccessTitle = 'skillEditor.saveSuccessTitle',
+  UpdateSuccessTitle = 'skillEditor.updateSuccessTitle',
   CreateSuccess = 'skillEditor.createSuccess',
   EditTitle = 'skillEditor.editTitle',
   SaveLabel = 'skillEditor.saveLabel',
@@ -940,6 +944,20 @@ export enum SkillEditorI18nKeys {
   ErrorManifestImportDeclined = 'skillEditor.error.manifestImportDeclined',
   ManifestImportConfirmTitle = 'skillEditor.manifestImportConfirmTitle',
   ManifestImportConfirmMessage = 'skillEditor.manifestImportConfirmMessage',
+}
+
+export enum SkillArchiveImportI18nKeys {
+  FileInputAriaLabel = 'skillArchiveImport.fileInputAriaLabel',
+  StatusUploading = 'skillArchiveImport.status.uploading',
+  StatusSuccess = 'skillArchiveImport.status.success',
+  StatusError = 'skillArchiveImport.status.error',
+  ErrorTitle = 'skillArchiveImport.error.title',
+  ErrorValidation = 'skillArchiveImport.error.validation',
+  ErrorUnsupportedFilename = 'skillArchiveImport.error.unsupportedFilename',
+  ErrorCollision = 'skillArchiveImport.error.collision',
+  ErrorRateLimited = 'skillArchiveImport.error.rateLimited',
+  ErrorServiceUnavailable = 'skillArchiveImport.error.serviceUnavailable',
+  ErrorGeneric = 'skillArchiveImport.error.generic',
 }
 
 export enum AppsEditorI18nKeys {
@@ -1037,6 +1055,7 @@ export enum ShareI18nKeys {
   VisibilityNote = 'share.visibilityNote',
   VisibilityNoteEdit = 'share.visibilityNoteEdit',
   VisibilityNoteConversation = 'share.visibilityNoteConversation',
+  NestedItemsNote = 'share.nestedItemsNote',
   CopiedButtonLabel = 'share.copiedButtonLabel',
   LinkAriaLabel = 'share.linkAriaLabel',
   ExpiryNote = 'share.expiryNote',
@@ -1160,6 +1179,8 @@ export enum EntityNotificationsI18nKeys {
   ModelDeleted = 'entityNotifications.model.deleted',
   ModelPublishRequestedTitle = 'entityNotifications.model.publishRequestedTitle',
   ModelPublishRequested = 'entityNotifications.model.publishRequested',
+  SkillCreatedTitle = 'entityNotifications.skill.createdTitle',
+  SkillCreated = 'entityNotifications.skill.created',
   SkillDeletedTitle = 'entityNotifications.skill.deletedTitle',
   SkillDeleted = 'entityNotifications.skill.deleted',
   SkillDownloadedTitle = 'entityNotifications.skill.downloadedTitle',

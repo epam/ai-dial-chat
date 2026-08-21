@@ -91,6 +91,7 @@ const Providers = ({ children }: { children: ReactNode }) => (
       isLoading: false,
       error: null,
       refetchSkills,
+      mergeSharedSkill: vi.fn(),
     }}
   >
     <AttachmentCanvasProvider>
@@ -167,7 +168,13 @@ describe('SkillEditor page — supporting file preview', () => {
     await selectFile(user, 'notes.md');
 
     expect(await screen.findByRole('group', { name: 'notes.md' })).toBeTruthy();
-    expect(screen.getByText('Hello there', { exact: false })).toBeTruthy();
+    /* The canvas region mounts before the renderer paints the body, so the
+       content has to be awaited separately from the region itself. */
+    await waitFor(() =>
+      expect(
+        screen.getByRole('group', { name: 'notes.md' }).textContent,
+      ).toContain('Hello there'),
+    );
     expect(createSkill).not.toHaveBeenCalled();
     expect(downloadSkill).not.toHaveBeenCalled();
   });
@@ -186,7 +193,11 @@ describe('SkillEditor page — supporting file preview', () => {
     expect(
       await screen.findByRole('group', { name: 'data.json' }),
     ).toBeTruthy();
-    expect(screen.getByText('"value"', { exact: false })).toBeTruthy();
+    await waitFor(() =>
+      expect(
+        screen.getByRole('group', { name: 'data.json' }).textContent,
+      ).toContain('"value"'),
+    );
   });
 
   it('opens a plain-text/code preview for an unrecognized text extension', async () => {
@@ -278,7 +289,11 @@ describe('SkillEditor page — supporting file preview', () => {
     expect(
       await screen.findByRole('group', { name: 'analyzer.md' }),
     ).toBeTruthy();
-    expect(screen.getByText('Analyzer notes', { exact: false })).toBeTruthy();
+    await waitFor(() =>
+      expect(
+        screen.getByRole('group', { name: 'analyzer.md' }).textContent,
+      ).toContain('Analyzer notes'),
+    );
     expect(downloadSkill).toHaveBeenCalledOnce();
     expect(updateSkill).not.toHaveBeenCalled();
   });

@@ -1,41 +1,59 @@
-# @epam/chat-api-client
+# @epam/ai-dial-chat-api-client
 
 Generated OpenAPI client for the AI DIAL Chat API.
 
 ## Overview
 
-`@epam/chat-api-client` is a fully generated TypeScript client for the AI DIAL Chat backend API. It is produced automatically from the backend's OpenAPI/Swagger specification using the repository's `npm run openapi` script, which means all request/response DTOs, service method signatures, and endpoint paths stay in sync with the server contract without any manual effort. The package exposes typed service classes and DTO interfaces that can be imported in application-level code for making API calls. Because this client is generated, you must never edit its source files by hand — any change to the API contract should go through the backend Swagger source, followed by a regeneration step. To keep other hand-authored libraries free of app-specific transport knowledge, only application adapters (e.g. `apps/chat/src/server-api`) should import from this package; feature libs should remain unaware of the REST layer.
+`@epam/ai-dial-chat-api-client` is a fully generated TypeScript client for the AI DIAL Chat backend API. It is produced automatically from `apps/chat-api`'s OpenAPI document using the repository's `npm run openapi` script, which means all request/response DTOs, service method signatures, and endpoint paths stay in sync with the server contract without any manual effort. The package exposes typed API classes and DTO interfaces that can be imported in application-level code for making API calls. Because this client is generated, you must never edit its source files by hand — any change to the API contract goes through the NestJS controllers and DTOs, followed by a regeneration step. To keep other hand-authored libraries free of app-specific transport knowledge, only application adapters (`apps/chat/src/server-api`) import from this package; feature libs stay unaware of the REST layer.
+
+Handler names in `apps/chat-api` become the generated method names through the
+`operationIdFactory`, so a controller method called `listModels` surfaces here as
+`listModels`. Name backend handlers accordingly.
 
 ## Installation
 
 ```json
 {
   "dependencies": {
-    "@epam/chat-api-client": "*"
+    "@epam/ai-dial-chat-api-client": "*"
   }
 }
+```
+
+The Nx project is named `chat-api-client`, so Nx targets use that name:
+
+```sh
+npm exec nx build chat-api-client
+npm exec nx lint chat-api-client
 ```
 
 ## Regenerating the client
 
 ```sh
-npm run openapi
-npm run openapi:check
+npm run openapi        # emit the OpenAPI document and regenerate the client
+npm run openapi:check  # fail if the committed client drifted from the document
 ```
 
-Run these commands after any backend endpoint change, then build and lint the client.
+Run both after any backend endpoint change, then build and lint the client and
+commit the regenerated output. `npm run openapi:spec` and `npm run openapi:sdk`
+run the two halves individually.
 
 ## Usage
 
-```tsx
-import { SomeService, SomeResponseDto } from '@epam/chat-api-client';
+```ts
+import { ModelsApi, Configuration } from '@epam/ai-dial-chat-api-client';
 
-const result: SomeResponseDto = await SomeService.someEndpoint();
+const api = new ModelsApi(new Configuration({ basePath: '' }));
+const models = await api.listModels();
 ```
 
-All exported types and service classes come from the generated source. Refer to the OpenAPI specification or the Swagger UI for the full list of available endpoints and types.
+The generated code targets the Fetch API. All exported types and API classes come
+from the generated source under `src/generated/` — refer to the Swagger UI at
+`/api/docs` (development builds) or the emitted OpenAPI document for the full
+list of endpoints and types.
 
 ## Notes
 
-- This library has no peer dependencies — it is safe to import from both apps and other libraries.
+- This library has no hand-authored source and no peer dependencies beyond `tslib`.
 - Do not import this package from hand-authored `libs/*` libraries. Consume it through app-level adapters such as `apps/chat/src/server-api`.
+- `src/generated/README.md` is emitted by the OpenAPI generator; it is not maintained by hand.
