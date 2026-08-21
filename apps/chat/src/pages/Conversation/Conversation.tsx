@@ -185,11 +185,31 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
 
   useEffect(() => {
     setMessages(conversation?.messages ?? []);
-    return () => {
+  }, [conversation?.messages, setMessages]);
+
+  /*
+   * Switching to another conversation resets the sidebar, matching how the
+   * history panel and the attachment canvas behave on navigation. Route
+   * changes within `/conversations/*` do not unmount this page, so the reset
+   * has to be keyed on the id rather than left to the unmount cleanup below.
+   */
+  useEffect(() => {
+    handleCloseSourcesSidebar();
+  }, [conversationId, handleCloseSourcesSidebar]);
+
+  /*
+   * Cleanup must run only on unmount. Both callbacks are stable, so keeping
+   * `conversation?.messages` out of the deps stops the sources sidebar from
+   * closing on every message mutation (stream chunk, the post-stream
+   * conversation refetch, send, regenerate, edit, delete, status message).
+   */
+  useEffect(
+    () => () => {
       handleCloseSourcesSidebar();
       setMessages([]);
-    };
-  }, [handleCloseSourcesSidebar, conversation?.messages, setMessages]);
+    },
+    [handleCloseSourcesSidebar, setMessages],
+  );
 
   const addStatusMessage = useCallback(
     (msg: Message) => {
