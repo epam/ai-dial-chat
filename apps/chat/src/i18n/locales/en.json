@@ -169,7 +169,7 @@
         "personalDescription": "These credentials apply only to your account.",
         "organizationLabel": "Organization credentials",
         "organizationDescription": "Once added, these credentials will grant all users in your organization access to this toolset.",
-        "badgeLoggedOut": "LOGGED OUT",
+        "badgeLoggedOut": "Authorize to use this toolset.",
         "loginSuccessTitle": "Successful login",
         "loginSuccessOrg": "You have successfully logged into the \"{{name}}\" version {{version}} with credentials to entire organization.",
         "loginSuccessGlobal": "You have successfully logged into the \"{{name}}\" version {{version}}.",
