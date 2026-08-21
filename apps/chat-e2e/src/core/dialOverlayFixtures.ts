@@ -8,6 +8,7 @@ import {
   ChatMessages,
   ConfirmationDialog,
   ConversationSettingsModal,
+  DislikeCommentModal,
   DropdownMenu,
   FileDropArea,
   Marketplace,
@@ -17,6 +18,7 @@ import {
   MarketplaceSidebar,
   ModelInfoTooltip,
   PromptBar,
+  PublishingApprovalModal,
   PublishingRequestDialog,
   SendMessage,
   TalkToAgentDialog,
@@ -55,6 +57,7 @@ import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInter
 import { OverlayHomePage } from '@/src/ui/pages/overlay/overlayHomePage';
 import { OverlayMarketplacePage } from '@/src/ui/pages/overlay/overlayMarketplacePage';
 import {
+  ApproveRequiredConversationsTree,
   ConversationsTree,
   FolderConversations,
   OrganizationConversationsTree,
@@ -98,6 +101,7 @@ const dialOverlayTest = test.extend<{
   overlayConversations: ConversationsTree;
   overlayChatHeader: ChatHeader;
   overlayChatMessages: ChatMessages;
+  overlayDislikeCommentModal: DislikeCommentModal;
   overlayConversationSettingsModal: ConversationSettingsModal;
   overlayAgentSettings: AgentSettings;
   overlayItemApiHelper: ItemApiHelper;
@@ -140,6 +144,7 @@ const dialOverlayTest = test.extend<{
   overlayChatBarFolderAssertion: FolderAssertion<FolderConversations>;
   overlayShareApiHelper: ShareApiHelper;
   overlayApplicationApiHelper: ApplicationApiHelper;
+  overlayLocalStorageManager: LocalStorageManager;
   adminUserRequestContext: APIRequestContext;
   adminPublicationApiHelper: PublicationApiHelper;
   adminShareApiHelper: ShareApiHelper;
@@ -150,6 +155,15 @@ const dialOverlayTest = test.extend<{
   adminLocalStorageManager: LocalStorageManager;
   adminDataInjector: DataInjectorInterface;
   adminApplicationApiHelper: ApplicationApiHelper;
+  adminOverlayHomePage: OverlayHomePage;
+  adminOverlayHeader: Header;
+  adminOverlayChatBar: ChatBar;
+  adminOverlayConversations: ConversationsTree;
+  adminOverlayApproveRequiredConversations: ApproveRequiredConversationsTree;
+  adminOverlayChat: Chat;
+  adminOverlayChatMessages: ChatMessages;
+  adminOverlayPublishingApprovalModal: PublishingApprovalModal;
+  adminOverlayAccountSettings: AccountSettings;
   overlayActions: Actions;
   overlayConfiguration: Configuration;
   overlayDialog: Dialog;
@@ -231,6 +245,13 @@ const dialOverlayTest = test.extend<{
   overlayChatMessages: async ({ overlayChat }, use) => {
     const overlayChatMessages = overlayChat.getChatMessages();
     await use(overlayChatMessages);
+  },
+  overlayDislikeCommentModal: async ({ page, overlayHomePage }, use) => {
+    const overlayDislikeCommentModal = new DislikeCommentModal(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlayDislikeCommentModal);
   },
   overlayConversationSettingsModal: async ({ page, overlayHomePage }, use) => {
     const overlayConversationSettingsModal = new ConversationSettingsModal(
@@ -470,6 +491,10 @@ const dialOverlayTest = test.extend<{
     const overlayApplicationApiHelper = new ApplicationApiHelper(request);
     await use(overlayApplicationApiHelper);
   },
+  overlayLocalStorageManager: async ({ page }, use) => {
+    const overlayLocalStorageManager = new LocalStorageManager(page);
+    await use(overlayLocalStorageManager);
+  },
   adminUserRequestContext: async ({ playwright }, use) => {
     const adminUserRequestContext = await playwright.request.newContext({
       storageState: overlayStateFilePath(+config.workers!),
@@ -531,6 +556,60 @@ const dialOverlayTest = test.extend<{
       BucketUtil.getAdminUserBucket(),
     );
     await use(adminApplicationApiHelper);
+  },
+  adminOverlayHomePage: async ({ adminPage }, use) => {
+    const adminOverlayHomePage = new OverlayHomePage(adminPage);
+    await use(adminOverlayHomePage);
+  },
+  adminOverlayHeader: async ({ adminOverlayHomePage }, use) => {
+    const adminOverlayHeader = adminOverlayHomePage
+      .getOverlayContainer()
+      .getHeader();
+    await use(adminOverlayHeader);
+  },
+  adminOverlayChatBar: async ({ adminOverlayHomePage }, use) => {
+    const adminOverlayChatBar = adminOverlayHomePage
+      .getOverlayContainer()
+      .getChatBar();
+    await use(adminOverlayChatBar);
+  },
+  adminOverlayConversations: async ({ adminOverlayChatBar }, use) => {
+    const adminOverlayConversations =
+      adminOverlayChatBar.getConversationsTree();
+    await use(adminOverlayConversations);
+  },
+  adminOverlayApproveRequiredConversations: async (
+    { adminOverlayChatBar },
+    use,
+  ) => {
+    const adminOverlayApproveRequiredConversations =
+      adminOverlayChatBar.getApproveRequiredConversationsTree();
+    await use(adminOverlayApproveRequiredConversations);
+  },
+  adminOverlayChat: async ({ adminOverlayHomePage }, use) => {
+    const adminOverlayChat = adminOverlayHomePage
+      .getOverlayContainer()
+      .getFileDropArea()
+      .getChat();
+    await use(adminOverlayChat);
+  },
+  adminOverlayChatMessages: async ({ adminOverlayChat }, use) => {
+    const adminOverlayChatMessages = adminOverlayChat.getChatMessages();
+    await use(adminOverlayChatMessages);
+  },
+  adminOverlayPublishingApprovalModal: async (
+    { adminPage, adminOverlayHomePage },
+    use,
+  ) => {
+    const adminOverlayPublishingApprovalModal = new PublishingApprovalModal(
+      adminPage,
+      adminOverlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(adminOverlayPublishingApprovalModal);
+  },
+  adminOverlayAccountSettings: async ({ adminOverlayHeader }, use) => {
+    const adminOverlayAccountSettings = adminOverlayHeader.getAccountSettings();
+    await use(adminOverlayAccountSettings);
   },
   overlayActions: async ({ overlayHomePage }, use) => {
     const overlayActions = overlayHomePage.getActions();

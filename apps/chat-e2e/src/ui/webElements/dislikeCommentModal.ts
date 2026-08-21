@@ -1,11 +1,11 @@
 import { API } from '@/src/testData';
 import { DislikeCommentModalSelectors } from '@/src/ui/selectors';
 import { Popup } from '@/src/ui/webElements/common/popup';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class DislikeCommentModal extends Popup {
-  constructor(page: Page) {
-    super(page, DislikeCommentModalSelectors.modal);
+  constructor(page: Page, parentLocator?: Locator) {
+    super(page, DislikeCommentModalSelectors.modal, parentLocator);
   }
 
   public title = this.getChildElementBySelector(

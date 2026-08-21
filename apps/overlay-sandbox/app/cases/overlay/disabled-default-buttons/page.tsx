@@ -13,6 +13,7 @@ const overlayOptions = {
     Feature.HideEditUserMessage,
     Feature.HideRegenerateAssistantMessage,
     Feature.HideDeleteUserMessage,
+    Feature.HideUserMenu,
   ],
 };
 
