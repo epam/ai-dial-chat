@@ -64,11 +64,34 @@ import { MarkdownRenderer } from '@epam/ai-dial-chat-shared';
 <MarkdownRenderer content={markdownText} />;
 ```
 
+### MDMessageViewer
+
+Renders a chat message body as markdown. `classNames` selects the type scale and
+defaults to `DEFAULT_MARKDOWN_CLASS_NAMES`; pass `COMPACT_MARKDOWN_CLASS_NAMES`
+to drop the body copy (`p`, `strong`) one step while leaving headings, code, and
+tables untouched. The component is memoised, so pass a stable reference rather
+than an inline object.
+
+```tsx
+import {
+  COMPACT_MARKDOWN_CLASS_NAMES,
+  MDMessageViewer,
+} from '@epam/ai-dial-chat-shared';
+
+<MDMessageViewer
+  content={message.content}
+  isStreaming={isStreaming}
+  classNames={isMobile ? COMPACT_MARKDOWN_CLASS_NAMES : undefined}
+/>;
+```
+
 ### MarkdownCodeBlock
 
 Syntax-highlighted code block with copy and download buttons. `language` and
 `value` are required; pass `isStreaming` to hide the copy button while content is
-still arriving.
+still arriving. The copy button keeps `copyLabel` as its accessible name at all
+times; `copiedLabel` is announced through the block's own
+`role="status" aria-live="polite"` region once the copy succeeds.
 
 ```tsx
 import { MarkdownCodeBlock } from '@epam/ai-dial-chat-shared';

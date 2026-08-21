@@ -193,6 +193,53 @@ describe('AnnouncementsPopover — accessibility', () => {
   });
 });
 
+describe('AnnouncementsPopover — height and scrolling', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const manyAnnouncements = Array.from({ length: 20 }, (_unused, index) =>
+    makeAnnouncement({ title: `Announcement ${index + 1}` }),
+  );
+
+  it('renders every configured row rather than truncating the list', async () => {
+    await openPopover(manyAnnouncements);
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(20);
+  });
+
+  it('scrolls the capped panel instead of letting rows spill onto the page', async () => {
+    await openPopover(manyAnnouncements);
+
+    const region = screen.getByRole('region', {
+      name: 'announcementsPopover.listAriaLabel',
+    });
+
+    /* The scroll container is the floating panel the ui-kit caps with an inline
+       max-height, so it is the element that has to do the scrolling — a scroll
+       style on any descendant would leave the overflow uncontained. That panel
+       is the ui-kit's own element and carries no role of its own, so the only
+       way to reach it is through the region it wraps. */
+    // eslint-disable-next-line testing-library/no-node-access
+    const panel = region.parentElement;
+
+    expect(panel).toBeTruthy();
+    expect(panel?.className).toContain('overflow-y-auto');
+  });
+
+  it('lets a keyboard-only user focus the scrollable region', async () => {
+    await openPopover(manyAnnouncements);
+
+    const region = screen.getByRole('region', {
+      name: 'announcementsPopover.listAriaLabel',
+    });
+    expect(region.getAttribute('tabindex')).toBe('0');
+
+    region.focus();
+    expect(region.matches(':focus')).toBe(true);
+  });
+});
+
 describe('AnnouncementsPopover — sanitization', () => {
   beforeEach(() => {
     vi.clearAllMocks();

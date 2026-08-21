@@ -63,6 +63,13 @@ export enum OverlayFeature {
   DisabledSend = 'disabled-send',
   /** Suppresses the chat input's auto-focus effect on load. */
   SkipFocusChatInputOnload = 'skip-focus-chat-input-onload',
+  /**
+   * Enables the "Chat settings" entry (temperature, system prompt, response
+   * format) in the conversation input's "+" menu, on every screen that renders
+   * that input. Disabling it removes the entry everywhere, regardless of
+   * `EmptyChatSettings`.
+   */
+  ChatSettings = 'chat-settings',
   /** Enables the comment field in the negative-feedback (dislike) modal. */
   DislikeComment = 'dislike-comment',
   /** Enables attaching files to a message via the conversation input. */
@@ -77,7 +84,11 @@ export enum OverlayFeature {
   HideChangeAgent = 'hide-change-agent',
   /** Hides the new-conversation controls in the header/layout. */
   HideNewConversation = 'hide-new-conversation',
-  /** Enables the empty-chat (new conversation composer) settings UI. */
+  /**
+   * Enables the empty-chat (new conversation composer) settings UI. Narrows
+   * `ChatSettings` to that screen only â both must be enabled for the entry to
+   * appear there.
+   */
   EmptyChatSettings = 'empty-chat-settings',
   /** Hides the model selector on the empty-chat composer screen. */
   HideEmptyChatChangeAgent = 'hide-empty-chat-change-agent',
@@ -89,6 +100,12 @@ export enum OverlayFeature {
   ConversationsSection = 'conversations-section',
   /** Enables the app header. */
   Header = 'header',
+  /**
+   * Hides the header's hamburger button and the navigation sheet it opens â
+   * the mobile-breakpoint navigation surface carrying the nav items, profile,
+   * keyboard shortcuts, and log out.
+   */
+  HideNavigationMenu = 'hide-navigation-menu',
   /** Makes the conversations sidebar section open by default. */
   ShowConversationsSectionByDefault = 'showConversationsSectionByDefault',
   /** Hides the conversations panel's source filter tabs (All / My chats / Shared / Organization). */
