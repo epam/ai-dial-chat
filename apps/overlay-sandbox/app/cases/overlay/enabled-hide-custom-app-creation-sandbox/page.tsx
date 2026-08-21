@@ -3,22 +3,18 @@
 import { ChatOverlayWrapper } from '../../components/chatOverlayWrapper';
 import { commonOverlayProps } from '../../components/commonOverlayProps';
 
-import { ChatOverlayOptions, Feature } from '@epam/ai-dial-shared';
+import { Feature } from '@epam/ai-dial-shared';
 
 const overlayOptions = {
   ...commonOverlayProps,
   enabledFeatures: [
     Feature.ConversationsSection,
-    Feature.PromptsSection,
-    Feature.TopSettings,
-    Feature.TopClearConversation,
-    Feature.TopChatInfo,
-    Feature.TopChatModelSettings,
-    Feature.EmptyChatSettings,
     Feature.Header,
-    Feature.SkipFocusChatInputOnLoad,
+    Feature.Marketplace,
+    Feature.CustomApplications,
+    Feature.HideCustomAppCreation,
   ],
-} as ChatOverlayOptions;
+};
 
 export default function Index() {
   return <ChatOverlayWrapper overlayOptions={overlayOptions} />;
