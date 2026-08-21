@@ -84,9 +84,10 @@ describe('useUsageData', () => {
 
     rerender({ enabled: true });
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.isLoading).toBe(true);
+    await waitFor(() => expect(result.current.usage).toEqual(usage));
 
     expect(mockGetUserUsage).toHaveBeenCalledOnce();
-    expect(result.current.usage).toEqual(usage);
+    expect(result.current.isLoading).toBe(false);
   });
 });

@@ -32,6 +32,7 @@ export const useUsageData = (enabled = true): UseUsageDataResult => {
     }
 
     let cancelled = false;
+    setIsLoading(true);
 
     const fetchUsageData = async () => {
       try {
