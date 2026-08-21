@@ -18,5 +18,6 @@ jobs:
             {
               "github-app": "${{github.event.repository.name}}",
               "github-sha": "${{github.sha}}",
-              "gitlab-project-id": "1843"
+              "gitlab-project-id": "1843",
+              "test-branch": "development-0.x"
             }
