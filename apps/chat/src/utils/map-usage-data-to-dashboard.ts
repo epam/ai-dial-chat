@@ -84,17 +84,13 @@ const mapStatsToCardData = (
 };
 
 /**
- * Maps `useUsageData`'s `limits`/`usage` responses into `UsageLimitCardGroup`'s `cards` prop, in
- * Today/This week/This month order. A period is omitted entirely when neither response carries a
- * usable stat for it.
- *
- * The top-level `dayCostStats`/`weekCostStats`/`monthCostStats` fields represent the same global
- * cost budget in both responses, so each field is read from `limits` first and falls back to
- * `usage` only for that field — this fallback is specific to these aggregate fields and must not
- * be generalized to per-deployment data.
+ * Maps `useUsageData`'s `usage` response into `UsageLimitCardGroup`'s `cards` prop, in Today/This
+ * week/This month order. A period is omitted entirely when the response carries no usable stat
+ * for it. The top-level `dayCostStats`/`weekCostStats`/`monthCostStats` fields are the caller's
+ * real global cost budget — the same semantics `GET /api/v1/user/limits` would report — so no
+ * second source or fallback is needed here.
  */
 export const mapUsageDataToDashboard = (
-  limits: UserLimitStatsResponseDto | undefined,
   usage: UserLimitStatsResponseDto | undefined,
   t: TFunction,
 ): UsageLimitCardData[] => {
@@ -104,17 +100,17 @@ export const mapUsageDataToDashboard = (
     periodDescriptionKey: UsageI18nKeys;
   }[] = [
     {
-      stats: limits?.dayCostStats ?? usage?.dayCostStats,
+      stats: usage?.dayCostStats,
       titleKey: UsageI18nKeys.TodayTitle,
       periodDescriptionKey: UsageI18nKeys.TodayPeriodDescription,
     },
     {
-      stats: limits?.weekCostStats ?? usage?.weekCostStats,
+      stats: usage?.weekCostStats,
       titleKey: UsageI18nKeys.ThisWeekTitle,
       periodDescriptionKey: UsageI18nKeys.ThisWeekPeriodDescription,
     },
     {
-      stats: limits?.monthCostStats ?? usage?.monthCostStats,
+      stats: usage?.monthCostStats,
       titleKey: UsageI18nKeys.ThisMonthTitle,
       periodDescriptionKey: UsageI18nKeys.ThisMonthPeriodDescription,
     },

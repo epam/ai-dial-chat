@@ -3,12 +3,14 @@
 ## Overview
 
 Provides `UsageLimitCardGroup` and `UsageLimitCard`, presentational cards for a caller's aggregate
-cost-budget usage over a rolling period (e.g. today, this week, this month). The components are
-fully host-agnostic: they take already-normalized, preformatted amounts, a derived
-`UsageLimitStatus`, and localized labels via props — they never interpret raw API data, format
-currency, or compute percentages themselves. `UsageLimitCardGroup` renders each card as its own
-independent, equally-sized box: stacked on mobile, side by side on desktop. `UsageLimitCard` is
-also exported standalone for a single-card use case.
+cost-budget usage over a rolling period (e.g. today, this week, this month), and
+`ModelLimitsSection`, a presentational per-model table of Cost/Tokens/Requests/Status metrics with
+a controlled period selector. All components are fully host-agnostic: they take already-normalized,
+preformatted amounts, host-derived status enums, and localized labels via props — they never
+interpret raw API data, format currency, detect the unlimited sentinel, or compute percentages
+themselves. `UsageLimitCardGroup` renders each card as its own independent, equally-sized box:
+stacked on mobile, side by side on desktop. `UsageLimitCard` is also exported standalone for a
+single-card use case.
 
 ## Installation
 
@@ -82,7 +84,7 @@ typography classes (applied as CSS custom properties and class overrides):
   cards={cards}
   labels={labels}
   styles={{ colors: { cardBackground: '#0e1320' } }}
-/>;
+/>
 ```
 
 ### UsageLimitCard
@@ -90,7 +92,10 @@ typography classes (applied as CSS custom properties and class overrides):
 Renders a single card:
 
 ```tsx
-import { UsageLimitCard, UsageLimitStatus } from '@epam/ai-dial-usage-dashboard';
+import {
+  UsageLimitCard,
+  UsageLimitStatus,
+} from '@epam/ai-dial-usage-dashboard';
 
 <UsageLimitCard
   data={{
@@ -117,6 +122,83 @@ import { UsageLimitCard, UsageLimitStatus } from '@epam/ai-dial-usage-dashboard'
 />;
 ```
 
+### ModelLimitsSection
+
+Renders a "Model limits" heading (with the rendered row count), a controlled period selector, and
+a table of one row per model — model identity (avatar/name/version), Cost/Tokens/Requests cells,
+and an overall status badge:
+
+```tsx
+import {
+  ModelLimitMetricKind,
+  ModelLimitsPeriod,
+  ModelLimitsSection,
+  ModelLimitStatus,
+} from '@epam/ai-dial-usage-dashboard';
+import { useState } from 'react';
+
+const [period, setPeriod] = useState(ModelLimitsPeriod.Last24Hours);
+
+<ModelLimitsSection
+  rows={[
+    {
+      id: 'gpt-4o',
+      name: 'GPT-4o',
+      version: '2024-08-06',
+      avatarSrc: 'https://example.com/gpt-4o.png',
+      cost: {
+        kind: ModelLimitMetricKind.Unlimited,
+        usedLabel: '$3.20',
+        ariaLabel: '$3.20 used, unlimited',
+      },
+      tokens: {
+        kind: ModelLimitMetricKind.Finite,
+        usedLabel: '4,000',
+        totalLabel: '10,000',
+        usedPercent: 40,
+        status: ModelLimitStatus.WithinLimits,
+        ariaLabel: '4,000 of 10,000, 40% used',
+      },
+      requests: {
+        kind: ModelLimitMetricKind.Unavailable,
+        ariaLabel: 'Not available',
+      },
+      status: ModelLimitStatus.WithinLimits,
+    },
+  ]}
+  period={period}
+  onPeriodChange={setPeriod}
+  labels={{
+    headingLabel: 'Model limits',
+    periodLabels: {
+      [ModelLimitsPeriod.LastMinute]: 'Last minute',
+      [ModelLimitsPeriod.LastHour]: 'Last hour',
+      [ModelLimitsPeriod.Last24Hours]: 'Last 24 hours',
+      [ModelLimitsPeriod.Last7Days]: 'Last 7 days',
+      [ModelLimitsPeriod.Last30Days]: 'Last 30 days',
+    },
+    periodSelectorAriaLabel: 'Select usage period',
+    itemColumnLabel: 'Item',
+    costColumnLabel: 'Cost',
+    tokensColumnLabel: 'Tokens',
+    requestsColumnLabel: 'Requests',
+    statusColumnLabel: 'Status',
+    modelTypeLabel: 'Model',
+    noLimitLabel: 'No limit',
+    unavailableLabel: 'Not available',
+    withinLimitsBadgeLabel: 'Within limits',
+    runningLowBadgeLabel: 'Running low',
+    limitReachedBadgeLabel: 'Limit reached',
+    noLimitBadgeLabel: 'No limit',
+    unavailableBadgeLabel: 'Unavailable',
+  }}
+/>;
+```
+
+`ModelLimitsSection` is fully controlled: it never manages the selected period itself, never
+refetches anything, and never infers the unlimited sentinel or a metric's status — the host derives
+`kind`, `usedPercent`, and `status` for every cell and `status` for the row.
+
 ## Types
 
 - `UsageLimitStatus` — `Default | RunningLow | LimitReached`
@@ -127,3 +209,13 @@ import { UsageLimitCard, UsageLimitStatus } from '@epam/ai-dial-usage-dashboard'
 - `UsageLimitCardGroupStyles` — `{ colors?, typography? }`
 - `UsageLimitCardGroupColors` — CSS-custom-property color overrides
 - `UsageLimitCardGroupTypography` — typography class overrides
+- `ModelLimitStatus` — `WithinLimits | RunningLow | LimitReached | NoLimit | Unavailable`
+- `ModelLimitsPeriod` — `LastMinute | LastHour | Last24Hours | Last7Days | Last30Days`
+- `ModelLimitMetricKind` — `Finite | Unlimited | Unavailable`
+- `ModelLimitMetricCell` — `{ kind, usedLabel?, totalLabel?, usedPercent?, status?, ariaLabel }`
+- `ModelLimitRow` — `{ id, name, version?, avatarSrc?, cost, tokens, requests, status }`
+- `ModelLimitsLabels` — `{ headingLabel, periodLabels, periodSelectorAriaLabel, itemColumnLabel, costColumnLabel, tokensColumnLabel, requestsColumnLabel, statusColumnLabel, modelTypeLabel, noLimitLabel, unavailableLabel, withinLimitsBadgeLabel, runningLowBadgeLabel, limitReachedBadgeLabel, noLimitBadgeLabel, unavailableBadgeLabel }`
+- `ModelLimitsSectionProps` — `{ rows, period, onPeriodChange, labels, styles? }`
+- `ModelLimitsStyles` — `{ colors?, typography? }`
+- `ModelLimitsColors` — CSS-custom-property color overrides
+- `ModelLimitsTypography` — typography class overrides

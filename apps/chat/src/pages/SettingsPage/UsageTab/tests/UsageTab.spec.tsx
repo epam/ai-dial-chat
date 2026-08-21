@@ -1,15 +1,22 @@
+import { DeploymentItemDtoTypeEnum } from '@epam/ai-dial-chat-api-client';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsageI18nKeys } from '../../../../constants/translation-keys';
 import { useFeatureFlag } from '../../../../context/AppConfigContext';
+import { useDeployments } from '../../../../context/DeploymentsContext';
 import { useNotification } from '../../../../context/NotificationContext';
+import { createDeploymentsContextValue } from '../../../../context/tests/deployments-context-mock';
 import { createNotificationContextValue } from '../../../../context/tests/notification-context-mock';
 import { useUsageData } from '../../../../hooks/useUsageData';
 import UsageTab from '../UsageTab';
 
 vi.mock('../../../../context/AppConfigContext', () => ({
   useFeatureFlag: vi.fn(),
+}));
+
+vi.mock('../../../../context/DeploymentsContext', () => ({
+  useDeployments: vi.fn(),
 }));
 
 vi.mock('../../../../context/NotificationContext', () => ({
@@ -32,10 +39,22 @@ vi.mock('@epam/ai-dial-usage-dashboard', async (importOriginal) => {
         ))}
       </div>
     ),
+    ModelLimitsSection: ({
+      rows,
+    }: {
+      rows: { id: string; name: string }[];
+    }) => (
+      <div>
+        {rows.map((row) => (
+          <span key={row.id}>{row.name}</span>
+        ))}
+      </div>
+    ),
   };
 });
 
 const mockUseFeatureFlag = vi.mocked(useFeatureFlag);
+const mockUseDeployments = vi.mocked(useDeployments);
 const mockUseNotification = vi.mocked(useNotification);
 const mockUseUsageData = vi.mocked(useUsageData);
 const showNotification = vi.fn();
@@ -46,17 +65,16 @@ describe('UsageTab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseFeatureFlag.mockReturnValue(true);
+    mockUseDeployments.mockReturnValue(createDeploymentsContextValue());
     mockUseNotification.mockReturnValue(
       createNotificationContextValue(showNotification),
     );
   });
 
-  it('renders the page header and a loading announcement, but no cards, while loading', () => {
+  it('renders a visible loader, but no cards, while usage is loading', () => {
     mockUseUsageData.mockReturnValue({
-      limits: undefined,
       usage: undefined,
       isLoading: true,
-      limitsError: undefined,
       usageError: undefined,
     });
 
@@ -66,22 +84,45 @@ describe('UsageTab', () => {
       screen.getByRole('heading', { name: UsageI18nKeys.PageTitle }),
     ).toBeTruthy();
     expect(screen.getByText(UsageI18nKeys.PageDescription)).toBeTruthy();
+    expect(
+      screen.getByRole('img', { name: UsageI18nKeys.Loading }),
+    ).toBeTruthy();
     expect(screen.queryByText(UsageI18nKeys.TodayTitle)).toBeNull();
     expect(screen.queryByText(UsageI18nKeys.ThisWeekTitle)).toBeNull();
     expect(screen.queryByText(UsageI18nKeys.ThisMonthTitle)).toBeNull();
   });
 
+  it('renders a visible loader, but no dashboard content, while deployments are loading', () => {
+    mockUseDeployments.mockReturnValue(
+      createDeploymentsContextValue({ isLoading: true }),
+    );
+    mockUseUsageData.mockReturnValue({
+      usage: {
+        deployments: {},
+        dayCostStats: usableStats,
+      },
+      isLoading: false,
+      usageError: undefined,
+    });
+
+    render(<UsageTab />);
+
+    expect(
+      screen.getByRole('img', { name: UsageI18nKeys.Loading }),
+    ).toBeTruthy();
+    expect(screen.queryByText(UsageI18nKeys.TodayTitle)).toBeNull();
+    expect(screen.queryByText(UsageI18nKeys.ModelLimitsEmptyState)).toBeNull();
+  });
+
   it('renders the page header and all three cards once all stats resolve', () => {
     mockUseUsageData.mockReturnValue({
-      limits: {
+      usage: {
         deployments: {},
         dayCostStats: usableStats,
         weekCostStats: usableStats,
         monthCostStats: usableStats,
       },
-      usage: undefined,
       isLoading: false,
-      limitsError: undefined,
       usageError: undefined,
     });
 
@@ -98,10 +139,8 @@ describe('UsageTab', () => {
 
   it('renders only the available cards when other stats are missing', () => {
     mockUseUsageData.mockReturnValue({
-      limits: { deployments: {}, dayCostStats: usableStats },
-      usage: { deployments: {} },
+      usage: { deployments: {}, dayCostStats: usableStats },
       isLoading: false,
-      limitsError: undefined,
       usageError: undefined,
     });
 
@@ -112,25 +151,16 @@ describe('UsageTab', () => {
     expect(screen.queryByText(UsageI18nKeys.ThisMonthTitle)).toBeNull();
   });
 
-  it('shows one partial-failure notification and still renders the successful data when only one endpoint fails', () => {
+  it('shows an error notification and no cards when the fetch fails', () => {
     mockUseUsageData.mockReturnValue({
-      limits: {
-        deployments: {},
-        dayCostStats: usableStats,
-        weekCostStats: usableStats,
-        monthCostStats: usableStats,
-      },
       usage: undefined,
       isLoading: false,
-      limitsError: undefined,
       usageError: new Error('usage down'),
     });
 
     render(<UsageTab />);
 
-    expect(screen.getByText(UsageI18nKeys.TodayTitle)).toBeTruthy();
-    expect(screen.getByText(UsageI18nKeys.ThisWeekTitle)).toBeTruthy();
-    expect(screen.getByText(UsageI18nKeys.ThisMonthTitle)).toBeTruthy();
+    expect(screen.queryByText(UsageI18nKeys.TodayTitle)).toBeNull();
     expect(showNotification).toHaveBeenCalledOnce();
     expect(showNotification).toHaveBeenCalledWith(
       expect.objectContaining({ variant: NotificationVariant.Error }),
@@ -139,33 +169,82 @@ describe('UsageTab', () => {
     expect(message).not.toContain('usage down');
   });
 
-  it('shows one consolidated notification, not two, when both endpoints fail', () => {
+  it('does not repeat the notification on a re-render with the same error', () => {
     mockUseUsageData.mockReturnValue({
-      limits: undefined,
       usage: undefined,
       isLoading: false,
-      limitsError: new Error('limits down'),
       usageError: new Error('usage down'),
-    });
-
-    render(<UsageTab />);
-
-    expect(screen.queryByText(UsageI18nKeys.TodayTitle)).toBeNull();
-    expect(showNotification).toHaveBeenCalledOnce();
-  });
-
-  it('does not repeat the notification on a re-render with the same errors', () => {
-    mockUseUsageData.mockReturnValue({
-      limits: undefined,
-      usage: undefined,
-      isLoading: false,
-      limitsError: new Error('limits down'),
-      usageError: undefined,
     });
 
     const { rerender } = render(<UsageTab />);
     rerender(<UsageTab />);
 
     expect(showNotification).toHaveBeenCalledOnce();
+  });
+
+  describe('Model limits section', () => {
+    it('renders one row per accessible model below the aggregate cards', () => {
+      mockUseDeployments.mockReturnValue(
+        createDeploymentsContextValue({
+          items: [
+            {
+              id: 'gpt-4o',
+              displayName: 'GPT-4o',
+              type: DeploymentItemDtoTypeEnum.Model,
+            },
+            {
+              id: 'claude-3',
+              displayName: 'Claude 3',
+              type: DeploymentItemDtoTypeEnum.Model,
+            },
+          ],
+        }),
+      );
+      mockUseUsageData.mockReturnValue({
+        usage: {
+          deployments: {
+            'gpt-4o': { dayTokenStats: usableStats },
+            'claude-3': { dayTokenStats: usableStats },
+          },
+        },
+        isLoading: false,
+        usageError: undefined,
+      });
+
+      render(<UsageTab />);
+
+      expect(screen.getByText('GPT-4o')).toBeTruthy();
+      expect(screen.getByText('Claude 3')).toBeTruthy();
+    });
+
+    it('shows an empty state instead of an empty table when `usage.deployments` is empty', () => {
+      mockUseUsageData.mockReturnValue({
+        usage: { deployments: {} },
+        isLoading: false,
+        usageError: undefined,
+      });
+
+      render(<UsageTab />);
+
+      expect(
+        screen.getByText(UsageI18nKeys.ModelLimitsEmptyState),
+      ).toBeTruthy();
+    });
+
+    it('shows an empty state, not a stale table, when the usage fetch failed', () => {
+      mockUseUsageData.mockReturnValue({
+        usage: undefined,
+        isLoading: false,
+        usageError: new Error('usage down'),
+      });
+
+      render(<UsageTab />);
+
+      expect(
+        screen.getByText(UsageI18nKeys.ModelLimitsEmptyState),
+      ).toBeTruthy();
+      // Still exactly one notification — the model-limits section does not add its own.
+      expect(showNotification).toHaveBeenCalledOnce();
+    });
   });
 });

@@ -10,3 +10,18 @@ export type {
   UsageLimitCardGroupTypography,
   UsageLimitCardProps,
 } from './models/usage-limit-card-props';
+export { ModelLimitsSection } from './components/ModelLimitsSection/ModelLimitsSection';
+export {
+  ModelLimitMetricKind,
+  ModelLimitStatus,
+  ModelLimitsPeriod,
+} from './models/model-limits-props';
+export type {
+  ModelLimitMetricCell,
+  ModelLimitRow,
+  ModelLimitsColors,
+  ModelLimitsLabels,
+  ModelLimitsSectionProps,
+  ModelLimitsStyles,
+  ModelLimitsTypography,
+} from './models/model-limits-props';

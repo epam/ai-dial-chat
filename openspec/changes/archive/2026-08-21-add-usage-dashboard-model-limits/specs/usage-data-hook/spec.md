@@ -1,15 +1,4 @@
-# usage-data-hook Specification
-
-## Purpose
-
-Defines the `Usage` tab (page header plus up to three aggregate cost-limit cards) and the
-`useUsageData` hook: fetching the current user's usage from the existing BFF `GET
-/api/v1/user/usage` endpoint via the existing `server-api` wrapper, exposing per-request
-loading/error state, a deduplicated error notification, and the library-isolation contract that
-keeps presentational card rendering in `libs/usage-dashboard` while all data-fetching and DTO
-interpretation stays in `apps/chat`.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Usage tab renders the aggregate limit cards
 The system SHALL provide a `Usage` tab/page component, registered as the sole entry in the

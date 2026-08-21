@@ -1,17 +1,13 @@
 import type { UserLimitStatsResponseDto } from '@epam/ai-dial-chat-api-client';
 import { useEffect, useState } from 'react';
-import { getUserLimits, getUserUsage } from '../server-api/user-limits';
+import { getUserUsage } from '../server-api/user-limits';
 
 export interface UseUsageDataResult {
-  /** Aggregate limits for every deployment visible to the caller. */
-  limits: UserLimitStatsResponseDto | undefined;
-  /** Limits restricted to deployments used in the trailing 30 days. */
+  /** Rolling usage and rate-limit stats for every deployment the caller has used in the trailing 30 days, plus the caller's global cost budget. */
   usage: UserLimitStatsResponseDto | undefined;
-  /** `true` while either fetch is in flight. */
+  /** `true` while the fetch is in flight. */
   isLoading: boolean;
-  /** Set if `getUserLimits()` rejects; `usage` is still returned if it succeeded. */
-  limitsError: Error | undefined;
-  /** Set if `getUserUsage()` rejects; `limits` is still returned if it succeeded. */
+  /** Set if `getUserUsage()` rejects. */
   usageError: Error | undefined;
 }
 
@@ -19,21 +15,14 @@ const toError = (reason: unknown): Error =>
   reason instanceof Error ? reason : new Error(String(reason));
 
 /**
- * Fetches GET /api/v1/user/limits and GET /api/v1/user/usage on mount.
- *
- * Uses `Promise.allSettled` (not `Promise.all`) so one endpoint rejecting
- * doesn't discard data the other endpoint successfully returned. Each
- * endpoint's failure is reported independently via `limitsError`/`usageError`
- * so a caller can tell which call failed.
+ * Fetches GET /api/v1/user/usage on mount.
  *
  * `enabled` (default `true`) lets a caller behind a feature flag skip the
  * fetch entirely, mirroring `useScheduledTasks(enabled)`.
  */
 export const useUsageData = (enabled = true): UseUsageDataResult => {
-  const [limits, setLimits] = useState<UserLimitStatsResponseDto>();
   const [usage, setUsage] = useState<UserLimitStatsResponseDto>();
   const [isLoading, setIsLoading] = useState(enabled);
-  const [limitsError, setLimitsError] = useState<Error>();
   const [usageError, setUsageError] = useState<Error>();
 
   useEffect(() => {
@@ -45,26 +34,16 @@ export const useUsageData = (enabled = true): UseUsageDataResult => {
     let cancelled = false;
 
     const fetchUsageData = async () => {
-      const [limitsResult, usageResult] = await Promise.allSettled([
-        getUserLimits(),
-        getUserUsage(),
-      ]);
-
-      if (cancelled) return;
-
-      if (limitsResult.status === 'fulfilled') {
-        setLimits(limitsResult.value);
-      } else {
-        setLimitsError(toError(limitsResult.reason));
+      try {
+        const result = await getUserUsage();
+        if (cancelled) return;
+        setUsage(result);
+      } catch (reason) {
+        if (cancelled) return;
+        setUsageError(toError(reason));
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
-
-      if (usageResult.status === 'fulfilled') {
-        setUsage(usageResult.value);
-      } else {
-        setUsageError(toError(usageResult.reason));
-      }
-
-      setIsLoading(false);
     };
 
     void fetchUsageData();
@@ -74,5 +53,5 @@ export const useUsageData = (enabled = true): UseUsageDataResult => {
     };
   }, [enabled]);
 
-  return { limits, usage, isLoading, limitsError, usageError };
+  return { usage, isLoading, usageError };
 };

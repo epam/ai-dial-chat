@@ -1350,8 +1350,21 @@
     "usedPercentLabel": "{{percent}}%",
     "unlimitedProgressAriaLabel": "{{used}} used, unlimited",
     "progressAriaLabel": "{{used}} of {{total}}, {{percent}}% used",
-    "partialLoadError": "We couldn't load some of your usage data. Showing what's available.",
     "fullLoadError": "We couldn't load your usage data. Please try again later.",
-    "loading": "Loading usage data…"
+    "loading": "Loading usage data…",
+    "modelLimitsHeading": "Model limits",
+    "modelLimitsEmptyState": "No models to show yet.",
+    "periodSelectorAriaLabel": "Select usage period",
+    "itemColumnLabel": "Item",
+    "costColumnLabel": "Cost",
+    "tokensColumnLabel": "Tokens",
+    "requestsColumnLabel": "Requests",
+    "statusColumnLabel": "Status",
+    "modelTypeLabel": "Model",
+    "periodLastMinuteLabel": "Last minute",
+    "periodLastHourLabel": "Last hour",
+    "noLimitLabel": "No limit",
+    "unavailableLabel": "Not available",
+    "unavailableBadgeLabel": "Unavailable"
   }
 }

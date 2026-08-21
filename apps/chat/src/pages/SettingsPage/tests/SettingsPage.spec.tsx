@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BasicI18nKeys } from '../../../constants/translation-keys';
+import { createDeploymentsContextValue } from '../../../context/tests/deployments-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as useUsageDataModule from '../../../hooks/useUsageData';
 import SettingsPage from '../SettingsPage';
@@ -8,6 +9,10 @@ import SettingsPage from '../SettingsPage';
 const mockUseFeatureFlag = vi.fn();
 vi.mock('../../../context/AppConfigContext', () => ({
   useFeatureFlag: (key: string) => mockUseFeatureFlag(key),
+}));
+
+vi.mock('../../../context/DeploymentsContext', () => ({
+  useDeployments: vi.fn(),
 }));
 
 vi.mock('../../../context/NotificationContext', () => ({
@@ -19,10 +24,8 @@ vi.mock('../../../hooks/useUsageData', () => ({
 }));
 
 vi.mocked(useUsageDataModule.useUsageData).mockReturnValue({
-  limits: undefined,
   usage: undefined,
   isLoading: true,
-  limitsError: undefined,
   usageError: undefined,
 });
 
@@ -30,6 +33,9 @@ describe('SettingsPage', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     mockUseFeatureFlag.mockReturnValue(true);
+    const { useDeployments } =
+      await import('../../../context/DeploymentsContext');
+    vi.mocked(useDeployments).mockReturnValue(createDeploymentsContextValue());
     const { useNotification } =
       await import('../../../context/NotificationContext');
     vi.mocked(useNotification).mockReturnValue(
