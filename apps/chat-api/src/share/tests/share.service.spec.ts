@@ -239,6 +239,54 @@ describe('ShareService', () => {
       });
     });
 
+    it('does not share partial resources when the conversation lookup rejects', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockRejectedValue(
+        new TypeError('fetch failed'),
+      );
+      const shareSpy = vi.spyOn(dialClient.client, 'shareResource');
+
+      await expect(
+        service.createShareLink('token-abc', 'session-bucket', {
+          itemId: 'conversations/owner-bucket/my-chat.json',
+          access: [ShareAccess.View],
+        }),
+      ).rejects.toThrow(ServiceUnavailableException);
+      expect(shareSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not share partial resources when the conversation lookup returns an upstream error', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+        errResponse(HttpStatus.NOT_FOUND),
+      );
+      const shareSpy = vi.spyOn(dialClient.client, 'shareResource');
+
+      await expect(
+        service.createShareLink('token-abc', 'session-bucket', {
+          itemId: 'conversations/owner-bucket/my-chat.json',
+          access: [ShareAccess.View],
+        }),
+      ).rejects.toThrow(NotFoundException);
+      expect(shareSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not share partial resources when the conversation lookup returns no data', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+        okResponse(null),
+      );
+      const shareSpy = vi.spyOn(dialClient.client, 'shareResource');
+
+      await expect(
+        service.createShareLink('token-abc', 'session-bucket', {
+          itemId: 'conversations/owner-bucket/my-chat.json',
+          access: [ShareAccess.View],
+        }),
+      ).rejects.toThrow(BadGatewayException);
+      expect(shareSpy).not.toHaveBeenCalled();
+    });
+
     it('does not load related resources for a non-conversation item', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'shareResource').mockResolvedValue(
@@ -282,7 +330,7 @@ describe('ShareService', () => {
     });
 
     it("qualifies a prompt itemId with the caller's bucket", async () => {
-      const { service } = makeService();
+      const { service, dialClient } = makeService();
       const spy = vi
         .spyOn(service['dialClient'].client, 'shareResource')
         .mockResolvedValue(okResponse({ invitationLink: '/invite/p1' }));
@@ -307,6 +355,7 @@ describe('ShareService', () => {
       });
       /* Prompts live in the catalog, so they use the catalog accept route. */
       expect(result.url).toBe('https://example.com/catalog/shared/p1');
+      expect(dialClient.client.getConversation).not.toHaveBeenCalled();
     });
 
     it('percent-encodes a prompt itemId nested inside a folder with a space in its name', async () => {
