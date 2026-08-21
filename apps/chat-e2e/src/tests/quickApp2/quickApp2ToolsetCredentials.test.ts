@@ -14,8 +14,10 @@ import {
 } from '@/src/testData';
 import { ApiKeyMockHelper } from '@/src/testData/toolsets/apiKeyMockHelper';
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { AddQuickApp2SettingsFormSelector } from '@/src/ui/selectors/dialogSelectors';
 import { GeneratorUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import {
   PublishActions,
   Toolset,
@@ -1652,7 +1654,10 @@ dialAdminTest(
     adminDialHomePage,
     adminLocalStorageManager,
     adminApproveRequiredPrompts,
+    adminApproveRequiredPromptsAssertion,
     adminPublishingApprovalModal,
+    adminPublishingApprovalModalAssertion,
+    adminEntityEditorHeader,
     adminPublishedApplicationReviewModal,
     adminEntityEditorPage,
     adminQuickApp2EditorViewForm,
@@ -1686,6 +1691,9 @@ dialAdminTest(
       GeneratorUtil.randomPublicationRequestName();
     const ownToolsetRequestName = GeneratorUtil.randomPublicationRequestName();
     const version = ExpectedConstants.defaultEntityVersion;
+    const expectedColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.bgAccentTertiaryAlpha,
+    );
     let publicToolset: Toolset;
     let oauthMock: OAuthMockHelper;
 
@@ -1778,6 +1786,13 @@ dialAdminTest(
         await adminApproveRequiredPrompts.selectRequest(
           publicToolsetRequestName,
         );
+        await adminApproveRequiredPromptsAssertion.assertFolderBackgroundColor(
+          { name: publicToolsetRequestName },
+          expectedColor,
+        );
+        await adminPublishingApprovalModalAssertion.assertGeneralInfo({
+          requestName: publicToolsetRequestName,
+        });
         await adminPublishingApprovalModal.goToEntityReview();
         await baseAssertion.assertElementState(
           adminPublishedApplicationReviewModal,
@@ -1841,8 +1856,16 @@ dialAdminTest(
       'Admin opens the publication request with the private toolset and goes to edit',
       async () => {
         // The approve screen holds the chat area, so there is no agent info here.
-        await adminDialHomePage.navigateBack({ waitForAgentInfo: false });
+        await adminEntityEditorHeader.saveAndExitButton.click();
+        await adminPublishedApplicationReviewModal.getCloseButton().click();
         await adminApproveRequiredPrompts.selectRequest(ownToolsetRequestName);
+        await adminApproveRequiredPromptsAssertion.assertFolderBackgroundColor(
+          { name: ownToolsetRequestName },
+          expectedColor,
+        );
+        await adminPublishingApprovalModalAssertion.assertGeneralInfo({
+          requestName: ownToolsetRequestName,
+        });
         await adminPublishingApprovalModal.goToEntityReview();
         await adminPublishedApplicationReviewModal.editApplicationButton.click();
         await adminEntityEditorPage.waitForPageLoadedForEdit(

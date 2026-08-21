@@ -5,6 +5,7 @@ import {
   MarketplaceExpectedMessages,
   MarketplaceFilterTypes,
   MenuOptions,
+  MockedChatApiResponseBodies,
   OverlaySandboxUrls,
   SourcesFilterOptions,
 } from '@/src/testData';
@@ -167,21 +168,46 @@ dialOverlayTest(
 );
 
 dialOverlayTest(
-  '[Overlay] DIAL Marketplace feature is disabled - Feature.Marketplace',
+  '[Overlay] DIAL Marketplace feature is disabled - Feature.Marketplace.\n' +
+    `'Add the agent to My workspace to continue' button does not exist when feature.Marketplace is not enabled`,
   async ({
     overlayHomePage,
     overlayChat,
     overlayTalkToAgentDialog,
     overlayTalkToAgentDialogAssertion,
+    overlaySendMessage,
     overlayNavigationPanel,
     overlayBaseAssertion,
+    conversationData,
+    overlayDataInjector,
+    overlayLocalStorageManager,
+    overlayFileApiHelper,
+    overlayConversations,
+    overlayHeader,
+    baseAssertion,
+    overlayToast,
     setTestIds,
   }) => {
-    setTestIds('EPMDIAL-2298');
+    setTestIds('EPMDIAL-2298', 'EPMDIAL-2287');
+    let conversation: Conversation;
+
+    await dialOverlayTest.step(
+      'Create conversation with default model',
+      async () => {
+        conversation = conversationData.prepareDefaultConversation();
+        await overlayDataInjector.createConversations([conversation]);
+      },
+    );
 
     await dialOverlayTest.step(
       'Verify bottom navigation buttons are not available',
       async () => {
+        await overlayFileApiHelper.updateInstalledDeployments([]);
+        await overlayLocalStorageManager.setRecentModelsIdsAndUseLastModel();
+        await overlayLocalStorageManager.setShowSideBarPanels({
+          isChatBarDisplayed: true,
+          isPromptBarDisplayed: false,
+        });
         await overlayHomePage.navigateToUrl(
           OverlaySandboxUrls.disableMarketplaceUrl,
         );
@@ -221,6 +247,37 @@ dialOverlayTest(
           'hidden',
         );
         await overlayTalkToAgentDialog.getCloseButton().click();
+      },
+    );
+
+    await dialOverlayTest.step(
+      'Select created conversation and verify no "Add the agent to My workspace to continue" btn available, send input is displayed',
+      async () => {
+        await overlayHeader.leftPanelToggle.click();
+        await overlayConversations.selectEntity(conversation.name);
+        await baseAssertion.assertElementState(
+          overlayChat.addModelButton,
+          'hidden',
+        );
+        await baseAssertion.assertElementState(
+          overlaySendMessage.messageInput,
+          'visible',
+        );
+      },
+    );
+
+    await dialOverlayTest.step(
+      'Send new request and verify no any toast appears',
+      async () => {
+        await overlayHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+          { isOverlay: true },
+        );
+        await baseAssertion.assertElementState(
+          overlaySendMessage.messageInput,
+          'visible',
+        );
+        await baseAssertion.assertElementState(overlayToast, 'hidden');
       },
     );
   },
@@ -298,6 +355,46 @@ dialOverlayTest(
         await overlayAppsDropdownMenuAssertion.assertMenuIncludesOptions(
           AddAppMenuOptions.customApp,
           AddAppMenuOptions.codeApp,
+        );
+      },
+    );
+  },
+);
+
+dialOverlayTest(
+  '[Overlay] Add button on My workspace is available but without Custom app option - Feature.HideCustomAppCreation',
+  async ({
+    overlayHomePage,
+    overlayMarketplacePage,
+    overlayMarketplaceHeader,
+    overlayBaseAssertion,
+    overlayNavigationPanel,
+    overlayAppsDropdownMenuAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMDIAL-2294');
+    let addAppBtn: BaseElement;
+
+    await dialOverlayTest.step(
+      'Go to "My Workspace" page and verify "Add App" button is available',
+      async () => {
+        await overlayHomePage.navigateToUrl(
+          OverlaySandboxUrls.enableHideCustomAppCreationUrl,
+        );
+        await overlayHomePage.waitForPageLoaded();
+        await overlayNavigationPanel.myWorkspaceButton.click();
+        await overlayMarketplacePage.waitForPageLoaded();
+        addAppBtn = overlayMarketplaceHeader.addAppButton;
+        await overlayBaseAssertion.assertElementState(addAppBtn, 'visible');
+      },
+    );
+
+    await dialOverlayTest.step(
+      'Expand "Add app" button and verify "Custom app" option is not available',
+      async () => {
+        await addAppBtn.click();
+        await overlayAppsDropdownMenuAssertion.assertMenuExcludesOptions(
+          AddAppMenuOptions.customApp,
         );
       },
     );

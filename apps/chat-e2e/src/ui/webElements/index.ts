@@ -5,6 +5,7 @@ export * from './dragFile';
 export * from './chat';
 export * from './chatBar';
 export * from './chatMessages';
+export * from './dislikeCommentModal';
 export * from './conversationSettingsModal';
 export * from './sendMessage';
 export * from './promptBar';
