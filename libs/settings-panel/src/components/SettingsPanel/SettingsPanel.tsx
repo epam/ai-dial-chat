@@ -42,7 +42,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
   const rowRefs = useRef(new Map<string, HTMLButtonElement>());
 
   const {
-    sectionLabelClassName = 'dial-tiny-lead-semi-text',
+    sectionLabelClassName = 'dial-h1-text',
     itemLabelClassName = 'dial-small-text',
     activeItemLabelClassName = 'dial-small-semi-text',
   } = settingsPanelStyles?.typography ?? {};
@@ -90,20 +90,18 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
 
   return (
     <div
-      className={mergeClasses('flex flex-col gap-3', className)}
+      className={mergeClasses('flex flex-col gap-3 bg-layer-raised', className)}
       style={cssVars}
     >
       {sectionLabel && (
-        <span
-          id={headerId}
-          className={mergeClasses(
-            styles.sectionLabel,
-            'px-2',
-            sectionLabelClassName,
-          )}
-        >
-          {sectionLabel}
-        </span>
+        <div className="flex h-16 shrink-0 items-center px-4">
+          <span
+            id={headerId}
+            className={mergeClasses(styles.sectionLabel, sectionLabelClassName)}
+          >
+            {sectionLabel}
+          </span>
+        </div>
       )}
       <div
         role="tablist"
@@ -114,10 +112,11 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
         // a tab stop, but jsx-a11y requires an interactive role to declare
         // its own (non-reachable) focusability.
         tabIndex={-1}
-        className="flex flex-col gap-1"
+        className="flex flex-col"
       >
         {items.map((item) => {
           const isActive = item.id === activeId;
+          const isVisuallyActive = isActive && items.length > 1;
           return (
             <button
               key={item.id}
@@ -135,17 +134,20 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
                 if (!item.disabled && !isActive) onSelect(item.id);
               }}
               className={mergeClasses(
-                'flex items-center gap-2.5 rounded-lg px-3 py-2 text-start',
+                'flex h-11 w-full items-center gap-2 rounded-lg px-3 text-start desktop:h-10',
                 'focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-focus-black',
                 styles.row,
-                isActive && styles.rowActive,
+                isVisuallyActive && styles.rowActive,
               )}
             >
               {item.icon}
               <span
-                className={
-                  isActive ? activeItemLabelClassName : itemLabelClassName
-                }
+                className={mergeClasses(
+                  isVisuallyActive
+                    ? activeItemLabelClassName
+                    : itemLabelClassName,
+                  !isVisuallyActive && 'text-primary',
+                )}
               >
                 {item.label}
               </span>

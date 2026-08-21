@@ -14,7 +14,7 @@ export interface SettingsPanelItem {
 
 /** Typography overrides for the {@link SettingsPanel} component. */
 export interface SettingsPanelTypography {
-  /** Typography class applied to the section header. Defaults to `'dial-tiny-lead-semi-text'` (auto-uppercases; pass the label sentence-case). */
+  /** Typography class applied to the section header. Defaults to `'dial-h1-text'`. */
   sectionLabelClassName?: string;
   /** Typography class applied to an inactive row's label. Defaults to `'dial-small-text'`. */
   itemLabelClassName?: string;
@@ -24,7 +24,7 @@ export interface SettingsPanelTypography {
 
 /** Color overrides for the {@link SettingsPanel} component, applied as CSS custom properties. */
 export interface SettingsPanelColors {
-  /** Label color of the section header. Defaults to `--text-secondary`. */
+  /** Label color of the section header. Defaults to `--text-primary`. */
   sectionLabelText?: string;
   /** Label and icon color of an inactive row (enabled or disabled). Defaults to `--text-secondary`. */
   rowText?: string;

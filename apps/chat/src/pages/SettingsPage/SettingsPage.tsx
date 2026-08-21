@@ -13,16 +13,16 @@ const SettingsPage: FC = () => {
   const ActiveTabComponent = tabComponents[activeTab];
 
   return (
-    <div className="flex size-full min-h-0">
+    <div className="flex size-full min-h-0 bg-layer-base">
       <h1 className="sr-only">{t(BasicI18nKeys.Settings)}</h1>
       <SettingsPanel
-        className="w-[220px] shrink-0 border-e border-e-tertiary p-3"
+        className="w-[240px] shrink-0 border-e border-e-tertiary shadow-sm"
         sectionLabel={t(BasicI18nKeys.Settings)}
         items={items}
         activeId={activeTab}
         onSelect={(id) => setActiveTab(id as SettingsTabs)}
       />
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         {ActiveTabComponent && <ActiveTabComponent />}
       </div>
     </div>

@@ -2,13 +2,16 @@
 
 ## Overview
 
-Provides `SettingsPanel`, a presentational vertical navigation panel: an optional section header
-followed by icon + label rows, with the active row highlighted. The component is fully
+Provides `SettingsPanel`, a presentational vertical navigation panel: an optional 64px section
+header followed by icon + label rows, with the active row highlighted. The panel uses the raised
+background token; its header uses `dial-h1-text` and the primary text token. The component is fully
 host-agnostic — it takes already-localized labels, host-resolved icons, and the active/selected
 state via props, and calls back via `onSelect`. It implements the ARIA "automatic activation"
 tabs pattern adapted to a vertical layout: roving `tabIndex`, `ArrowUp`/`ArrowDown` move focus and
 selection between enabled rows (wrapping at the ends), `Home`/`End` jump to the first/last enabled
-row, and disabled rows are skipped entirely by keyboard navigation.
+row, and disabled rows are skipped entirely by keyboard navigation. A single row remains
+semantically selected but uses the neutral visual state because there is no alternative tab to
+distinguish it from.
 
 ## Installation
 
