@@ -82,7 +82,13 @@
       "path": "./libs/prompts"
     },
     {
+      "path": "./libs/settings-panel"
+    },
+    {
       "path": "./libs/navigation-panel"
+    },
+    {
+      "path": "./libs/usage-dashboard"
     }
   ]
 }

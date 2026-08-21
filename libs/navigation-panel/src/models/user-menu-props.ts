@@ -44,6 +44,8 @@ export interface UserMenuLabels {
   avatarAlt: string;
   /** Label of the log-out entry. */
   logOut: string;
+  /** Label of the settings entry; required when `onSettings` is provided. */
+  settings?: string;
 }
 
 /** Props accepted by `UserMenu`. */
@@ -56,6 +58,8 @@ export interface UserMenuProps {
   groups?: NavigationMenuGroup[];
   /** Called when the user picks "Log out"; the host owns the confirmation flow. */
   onLogout: () => void;
+  /** When provided, renders a Settings entry that invokes this callback. */
+  onSettings?: () => void;
   /** Hides the avatar tooltip — set on touch layouts where hover never fires. */
   isTooltipHidden?: boolean;
   /** Style overrides for colors, typography, and class names. */

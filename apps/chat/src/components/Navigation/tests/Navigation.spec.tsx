@@ -6,6 +6,7 @@ import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NAVIGATION_CONFIG } from '../../../constants/navigation';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   NavigationI18nKeys,
   SettingsI18nKeys,
@@ -96,8 +97,10 @@ vi.mock('../../../context/ThemeContext', () => ({
 }));
 
 const useAppConfigMock = vi.fn();
+const useFeatureFlagMock = vi.fn();
 vi.mock('../../../context/AppConfigContext', () => ({
   useAppConfig: () => useAppConfigMock(),
+  useFeatureFlag: (key: string) => useFeatureFlagMock(key),
 }));
 
 const useUserMock = vi.fn();
@@ -145,6 +148,7 @@ const setDefaults = (
     status: UserConfigStatus.Ready,
     features: { scheduledTasksEnabled: true },
   });
+  useFeatureFlagMock.mockReturnValue(false);
   useUserMock.mockReturnValue(authenticatedUser);
   /* Default posture: every route feature on, every `Hide*` opt-out off. */
   mockUseUiFeature.mockImplementation(
@@ -334,6 +338,21 @@ describe('Navigation user menu', () => {
     renderNavigation();
     expect(screen.getByText(SettingsI18nKeys.Language)).toBeTruthy();
     expect(screen.queryByText(SettingsI18nKeys.KeyboardShortcuts)).toBeNull();
+  });
+
+  it('hides the Settings entry when the Settings page flag is off', () => {
+    renderNavigation();
+
+    expect(screen.queryByText(BasicI18nKeys.Settings)).toBeNull();
+    expect(useFeatureFlagMock).toHaveBeenCalledWith('settingsPageEnabled');
+  });
+
+  it('shows the Settings entry when the Settings page flag is on', () => {
+    useFeatureFlagMock.mockReturnValue(true);
+
+    renderNavigation();
+
+    expect(screen.getByText(BasicI18nKeys.Settings)).toBeTruthy();
   });
 });
 

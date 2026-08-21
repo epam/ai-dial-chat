@@ -35,6 +35,8 @@
     "prepare": "git config core.hooksPath .githooks"
   },
   "devDependencies": {
+    "@babel/core": "^7.14.5",
+    "@babel/preset-react": "^7.14.5",
     "@eslint/js": "^9.8.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@nestjs/schematics": "^11.0.0",
@@ -46,6 +48,7 @@
     "@nx/react": "22.7.5",
     "@nx/vite": "22.7.5",
     "@nx/vitest": "22.7.5",
+    "@nx/web": "22.7.5",
     "@nx/webpack": "22.7.5",
     "@openapitools/openapi-generator-cli": "^2.33.1",
     "@swc-node/register": "1.11.1",
@@ -65,6 +68,7 @@
     "@vitejs/plugin-react": "^6.0.0",
     "@vitest/coverage-v8": "~4.1.0",
     "@vitest/ui": "~4.1.0",
+    "ajv": "^8.0.0",
     "autoprefixer": "^10.4.13",
     "cross-env": "^10.1.0",
     "eslint": "^9.39.4",
