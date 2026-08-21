@@ -14,6 +14,7 @@ const overlayOptions = {
     Feature.HideRegenerateAssistantMessage,
     Feature.HideDeleteUserMessage,
     Feature.HideUserMenu,
+    Feature.ConversationsPublishing,
   ],
 };
 
