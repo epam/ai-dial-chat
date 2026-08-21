@@ -256,7 +256,10 @@ describe('SharePopover', () => {
       <SharePopover
         {...makeProps({
           onClose,
-          labels: { expiryNote: EXPIRY_NOTE, nestedItemsNote: NESTED_ITEMS_NOTE },
+          labels: {
+            expiryNote: EXPIRY_NOTE,
+            nestedItemsNote: NESTED_ITEMS_NOTE,
+          },
         })}
       />,
     );

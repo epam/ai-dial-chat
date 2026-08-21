@@ -175,7 +175,8 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   const titleClassName = typography.titleClassName ?? 'dial-body-semi-text';
   const helperTextClassName =
     typography.helperTextClassName ?? 'dial-tiny-semi-text';
-  const removeIconClassName = typography.removeIconClassName ?? 'text-secondary';
+  const removeIconClassName =
+    typography.removeIconClassName ?? 'text-secondary';
   const cssVars = buildCssVars({
     '--se-title-color': colors?.title,
     '--se-helper-text-color': colors?.helperText,
