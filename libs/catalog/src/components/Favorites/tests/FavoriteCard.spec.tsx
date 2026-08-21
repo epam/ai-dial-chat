@@ -43,7 +43,7 @@ describe('FavoriteCard — selected state', () => {
 });
 
 describe('FavoriteCard — credentials badge', () => {
-  it('shows the LOGGED OUT badge for a signed-out API_KEY toolset', () => {
+  it('shows the logged-out warning icon for a signed-out API_KEY toolset', () => {
     render(
       <FavoriteCard
         item={makeItem({
@@ -53,14 +53,16 @@ describe('FavoriteCard — credentials badge', () => {
             globalStatus: CredentialStatus.SignedOut,
           },
         })}
-        credentialsBadgeLoggedOutLabel="LOGGED OUT"
+        credentialsBadgeLoggedOutLabel="Authorize to use this toolset."
       />,
     );
 
-    expect(screen.getByText('LOGGED OUT')).toBeTruthy();
+    expect(
+      screen.getByRole('img', { name: 'Authorize to use this toolset.' }),
+    ).toBeTruthy();
   });
 
-  it('shows the LOGGED OUT badge for a signed-out OAUTH toolset', () => {
+  it('shows the logged-out warning icon for a signed-out OAUTH toolset', () => {
     render(
       <FavoriteCard
         item={makeItem({
@@ -70,14 +72,16 @@ describe('FavoriteCard — credentials badge', () => {
             globalStatus: CredentialStatus.SignedOut,
           },
         })}
-        credentialsBadgeLoggedOutLabel="LOGGED OUT"
+        credentialsBadgeLoggedOutLabel="Authorize to use this toolset."
       />,
     );
 
-    expect(screen.getByText('LOGGED OUT')).toBeTruthy();
+    expect(
+      screen.getByRole('img', { name: 'Authorize to use this toolset.' }),
+    ).toBeTruthy();
   });
 
-  it('shows no badge when signed in', () => {
+  it('shows no warning icon when signed in', () => {
     render(
       <FavoriteCard
         item={makeItem({
@@ -87,14 +91,16 @@ describe('FavoriteCard — credentials badge', () => {
             globalStatus: CredentialStatus.SignedOut,
           },
         })}
-        credentialsBadgeLoggedOutLabel="LOGGED OUT"
+        credentialsBadgeLoggedOutLabel="Authorize to use this toolset."
       />,
     );
 
-    expect(screen.queryByText('LOGGED OUT')).toBeNull();
+    expect(
+      screen.queryByRole('img', { name: 'Authorize to use this toolset.' }),
+    ).toBeNull();
   });
 
-  it('shows no badge for authenticationType NONE', () => {
+  it('shows no warning icon for authenticationType NONE', () => {
     render(
       <FavoriteCard
         item={makeItem({
@@ -102,10 +108,12 @@ describe('FavoriteCard — credentials badge', () => {
             authenticationType: ToolsetAuthenticationType.None,
           },
         })}
-        credentialsBadgeLoggedOutLabel="LOGGED OUT"
+        credentialsBadgeLoggedOutLabel="Authorize to use this toolset."
       />,
     );
 
-    expect(screen.queryByText('LOGGED OUT')).toBeNull();
+    expect(
+      screen.queryByRole('img', { name: 'Authorize to use this toolset.' }),
+    ).toBeNull();
   });
 });

@@ -136,7 +136,10 @@ export { InfoCard } from './components/InfoCard/InfoCard';
 export type { InfoCardProps } from './components/InfoCard/InfoCard';
 
 export { CredentialsBadge } from './components/CredentialsBadge/CredentialsBadge';
-export type { CredentialsBadgeProps } from './components/CredentialsBadge/CredentialsBadge';
+export type {
+  CredentialsBadgeColors,
+  CredentialsBadgeProps,
+} from './components/CredentialsBadge/CredentialsBadge';
 
 export { ContentTab } from './components/Details/TabsContent/Content';
 export type { ContentTabProps } from './components/Details/TabsContent/Content';
