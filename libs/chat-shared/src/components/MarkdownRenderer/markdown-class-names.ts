@@ -16,3 +16,14 @@ export const DEFAULT_MARKDOWN_CLASS_NAMES: MarkdownRendererClassNames = {
   link: 'break-words [overflow-wrap:anywhere]',
   tableWrapper: 'my-4',
 };
+
+/**
+ * {@link DEFAULT_MARKDOWN_CLASS_NAMES} with the body copy one step down the
+ * type scale. Headings, code, and tables are unchanged — only the text that
+ * dominates a long answer shrinks, so more of it fits on a narrow viewport.
+ */
+export const COMPACT_MARKDOWN_CLASS_NAMES: MarkdownRendererClassNames = {
+  ...DEFAULT_MARKDOWN_CLASS_NAMES,
+  p: 'dial-small-paragraph-text mb-3 break-words [overflow-wrap:anywhere] [text-wrap:pretty] last:mb-0',
+  strong: 'dial-small-paragraph-semi-text',
+};

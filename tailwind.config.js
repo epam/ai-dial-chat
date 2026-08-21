@@ -2,9 +2,9 @@
 
 const backgroundsColors = {
   transparent: 'transparent',
-  'layer-sunken': 'var(--bg-layer-sunken, #EEF1F7)', // grey-300
-  'layer-base': 'var(--bg-layer-base, #F5F7FA)', // grey-200
-  'layer-raised': 'var(--bg-layer-raised, #FCFCFC)', // grey-100
+  'layer-sunken': 'var(--bg-layer-sunken, #EEF1F7)', // grey-150
+  'layer-base': 'var(--bg-layer-base, #F5F7FA)', // grey-100
+  'layer-raised': 'var(--bg-layer-raised, #FCFCFC)', // grey-50
   error: 'var(--bg-error, #F3D6D8)', // red-100
   warning: 'var(--bg-warning, #FAF0CF)', // yellow-100
   info: 'var(--bg-info, #E1EAF9)', // blue-100
@@ -25,9 +25,9 @@ const controlsBgColors = {
 
   'control-accent': 'var(--bg-control-accent, #124ACE)', // blue-500
 
-  'control-neutral': 'var(--bg-control-neutral, #FCFCFC)', // grey-100
-  'control-neutral-hover': 'var(--bg-control-neutral-hover, #E0E6F0)', // grey-500
-  'control-neutral-active': 'var(--bg-control-neutral-active, #D1DBEA)', // grey-600
+  'control-neutral': 'var(--bg-control-neutral, #FCFCFC)', // grey-50
+  'control-neutral-hover': 'var(--bg-control-neutral-hover, #E0E6F0)', // grey-250
+  'control-neutral-active': 'var(--bg-control-neutral-active, #D1DBEA)', // grey-350
 
   'control-error': 'var(--bg-control-error, #AE2F2F)', // red-800
   'control-error-hover': 'var(--bg-control-error-hover, #BF3939)', // red-700
@@ -64,8 +64,8 @@ const visualTextColors = {
 const borderColors = {
   transparent: 'transparent',
   primary: 'var(--stroke-primary, #57647A)', // grey-800
-  secondary: 'var(--stroke-secondary, #D1DBEA)', // grey-600
-  tertiary: 'var(--stroke-tertiary, #E0E6F0)', // grey-500
+  secondary: 'var(--stroke-secondary, #D1DBEA)', // grey-350
+  tertiary: 'var(--stroke-tertiary, #E0E6F0)', // grey-250
   error: 'var(--stroke-error, #AE2F2F)', // red-800
   warning: 'var(--stroke-warning, #EEC840)', // yellow-500
   info: 'var(--stroke-info, #124ACE)', // blue-500
@@ -98,8 +98,8 @@ const placeholderColor = {
 };
 
 const controlsTextColors = {
-  'control-permanent': 'var(--text-control-permanent, #FCFCFC)', // grey-100
-  'control-disable-alpha': 'var(--text-control-disable-alpha, #DCE0E8)', // grey-550
+  'control-permanent': 'var(--text-control-permanent, #FCFCFC)', // grey-50
+  'control-disable-alpha': 'var(--text-control-disable-alpha, #DCE0E8)', // grey-300
   'control-disable-beta': 'var(--text-control-disable-beta, #848E9C)', // grey-700
   'control-blue-hover': 'var(--text-control-blue-hover, #5976E9)', // blue-300
   'control-blue-active': 'var(--text-control-blue-active, #6785FB)', // blue-200

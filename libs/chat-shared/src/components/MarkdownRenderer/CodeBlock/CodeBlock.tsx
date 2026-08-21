@@ -45,7 +45,7 @@ export interface MarkdownCodeBlockProps {
   theme?: CodeBlockTheme;
   /** Accessible label for the copy button. Defaults to `'Copy code'`. */
   copyLabel?: string;
-  /** Accessible label for the copy button after copy completes. Defaults to `'Copied!'`. */
+  /** Message announced through the block's `aria-live="polite"` region after a copy completes. The copy button's own accessible name stays `copyLabel`. Defaults to `'Copied!'`. */
   copiedLabel?: string;
   /** Accessible label for the download button. Defaults to `'Download code'`. */
   downloadLabel?: string;
@@ -155,7 +155,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
                     <IconCopy size={DIAL_ICON_SIZE.SM} aria-hidden />
                   )
                 }
-                aria-label={isCopied ? copiedLabel : copyLabel}
+                aria-label={copyLabel}
                 size={ElementSize.Small}
                 onClick={copy}
               />
@@ -194,6 +194,13 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
             </pre>
           )}
         </div>
+        {/*
+         * Copy success leaves no persistent visible text, so it is announced
+         * here; the button keeps its stable `copyLabel` accessible name.
+         */}
+        <span role="status" aria-live="polite" className="sr-only">
+          {isCopied ? copiedLabel : ''}
+        </span>
       </div>
     );
   },
