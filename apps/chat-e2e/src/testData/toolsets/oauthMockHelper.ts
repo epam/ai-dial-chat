@@ -107,18 +107,26 @@ export class OAuthMockHelper extends BaseAuthMockHelper<ToolsetOAuthSignInReques
     await this.setupSignOutRoute();
   }
 
+  /**
+   * Waits until the authorization request has reached the mocked route.
+   *
+   * The app reserves the login window synchronously on click - so Safari
+   * accepts it as user-initiated - and navigates it to the authorization
+   * endpoint only afterwards. Callers that read the captured OAuth state right
+   * after the login click must await this first.
+   */
+  async waitForOAuthRedirect(popup?: Page): Promise<void> {
+    if (popup && this.isFlowAlreadyDone(popup)) return;
+
+    await this.callbackCaptured.wait(CALLBACK_CAPTURE_TIMEOUT);
+  }
+
   // Drives the popup through the OAuth callback and waits for it to close —
   // the signal that sign-in fully landed. We navigate there ourselves unless
   // the mocked auth redirect already got it there first, or the flow is
   // already done.
   async navigateToCallback(popup: Page): Promise<void> {
-    // The app reserves the login window synchronously on click - so Safari
-    // accepts it as user-initiated - and navigates it to the authorization
-    // endpoint only afterwards. Until that request reaches the mocked route
-    // there is no callback URL to drive the popup to.
-    if (!this.isFlowAlreadyDone(popup)) {
-      await this.callbackCaptured.wait(CALLBACK_CAPTURE_TIMEOUT);
-    }
+    await this.waitForOAuthRedirect(popup);
 
     if (!this.oauthState.callbackUrl) {
       throw new Error(
