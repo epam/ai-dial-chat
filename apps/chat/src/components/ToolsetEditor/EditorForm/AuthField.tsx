@@ -4,6 +4,7 @@ import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getToolsetPayload, isToolsetSignedIn } from '@/src/utils/app/toolsets';
+import { openToolsetAuthWindow } from '@/src/utils/auth/auth-toolset';
 
 import { ToolsetCredentialsLevel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
@@ -210,40 +211,51 @@ export const AuthField = ({ isDisabled, tooltip }: AuthFieldProps) => {
 
   const handleLogIn = useCallback(
     (data: ToolsetLoginFormType) => {
-      trigger(['endpoint']).then((isValid) => {
-        if (toolsetDetails && isValid) {
-          const newToolset = getToolsetPayload(
-            {
-              ...toolsetDetails,
-              endpoint: endpoint.trim(),
-              transport,
-              allowedTools,
-              authSettings: {
-                authenticationType: data.authenticationType,
-                apiKeyHeader: data.keyHeader,
-                ...(data.withLogin === WithLogin.WithConfig && {
-                  clientId: data.clientId,
-                  clientSecret: data.clientSecret,
-                  authorizationEndpoint: data.authorizationEndpoint,
-                  tokenEndpoint: data.tokenEndpoint,
-                  tokenEndpointAuthMethod: data.tokenEndpointAuthMethod,
-                  scopesSupported: data.scopes,
-                }),
-              },
-            },
-            toolsetDetails,
-          );
+      // Reserved before the async validation and save: Safari only honors
+      // `window.open` while the click is still on the stack.
+      const authWindow =
+        data.authenticationType === ToolsetAuthTypes.OAUTH
+          ? openToolsetAuthWindow()
+          : null;
 
-          dispatch(
-            ToolsetActions.updateToolset({
-              oldToolset: toolsetDetails,
-              newToolset,
-              auth: {
-                apiKey: data.apiKey,
-              },
-            }),
-          );
+      trigger(['endpoint']).then((isValid) => {
+        if (!toolsetDetails || !isValid) {
+          authWindow?.close();
+          return;
         }
+
+        const newToolset = getToolsetPayload(
+          {
+            ...toolsetDetails,
+            endpoint: endpoint.trim(),
+            transport,
+            allowedTools,
+            authSettings: {
+              authenticationType: data.authenticationType,
+              apiKeyHeader: data.keyHeader,
+              ...(data.withLogin === WithLogin.WithConfig && {
+                clientId: data.clientId,
+                clientSecret: data.clientSecret,
+                authorizationEndpoint: data.authorizationEndpoint,
+                tokenEndpoint: data.tokenEndpoint,
+                tokenEndpointAuthMethod: data.tokenEndpointAuthMethod,
+                scopesSupported: data.scopes,
+              }),
+            },
+          },
+          toolsetDetails,
+        );
+
+        dispatch(
+          ToolsetActions.updateToolset({
+            oldToolset: toolsetDetails,
+            newToolset,
+            auth: {
+              apiKey: data.apiKey,
+              authWindow,
+            },
+          }),
+        );
       });
     },
     [allowedTools, dispatch, endpoint, toolsetDetails, transport, trigger],

@@ -440,6 +440,7 @@ const updateToolsetEpic: AppEpic = (action$) =>
                             ToolsetCredentialsLevel.GLOBAL,
                           apiKey: payload?.auth?.apiKey,
                           toolset: savedUpdatedToolset,
+                          authWindow: payload?.auth?.authWindow,
                         }),
                       ),
                     );
