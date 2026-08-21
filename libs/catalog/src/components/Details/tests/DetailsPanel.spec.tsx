@@ -1159,7 +1159,19 @@ describe('DetailsPanel', () => {
     expect(screen.queryByRole('button', { name: 'Connect' })).toBeNull();
   });
 
-  it('hides the Connect tab when the api data carries no endpoint URL, as for a model', () => {
+  it('hides the Connect tab when the api data is only a resource identifier, as for a model with no endpoints', () => {
+    renderPanel({
+      item: makeItem({
+        details: {
+          api: { resource: { modelId: 'gpt-4o' } },
+        },
+      }),
+    });
+
+    expect(screen.queryByRole('button', { name: 'Connect' })).toBeNull();
+  });
+
+  it('shows the Connect tab when the api data carries a multi-endpoint list, as for a model', async () => {
     renderPanel({
       item: makeItem({
         details: {
@@ -1173,7 +1185,9 @@ describe('DetailsPanel', () => {
       }),
     });
 
-    expect(screen.queryByRole('button', { name: 'Connect' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Connect' }));
+
+    expect(screen.getByText('Api')).toBeTruthy();
   });
 
   it('replaces the details content with the publish panel when Publish is clicked', async () => {

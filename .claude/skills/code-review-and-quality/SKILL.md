@@ -117,7 +117,7 @@ If a pipeline job is configured to publish comments:
 Automated review passed.
 
 - No blocking findings.
-- Verification: `npm exec nx affected --target=test --base=origin/development-1.0` passed.
+- Verification: `npm exec nx affected --target=test --base=origin/development` passed.
 - Scope checked: correctness, architecture boundaries, security, performance, responsive parity, documentation accuracy, and OpenSpec alignment.
 ```
 
@@ -293,7 +293,7 @@ In pipeline JSON, use lowercase severity values: `critical`, `required`, `warnin
 When checking "tests / build / lint":
 
 - Prefer `npm exec nx test <project>`, `npm exec nx lint <project>`, `npm exec nx build <project>` for touched projects (see `openspec/config.yaml` and `AGENTS.md`).
-- For broad checks, use affected targets with the repository base branch: `npm exec nx affected --target=<target> --base=origin/development-1.0`.
+- For broad checks, use affected targets with the repository base branch: `npm exec nx affected --target=<target> --base=origin/development`.
 - In CI pipeline review mode, do not run `npm exec nx build ...` or `npm exec nx affected --target=build ...`; rely on dedicated CI build jobs if build evidence is needed.
 - Do not use `origin/main` as the affected base in this workspace.
 - When unsure which project owns a path, use `npm exec nx show projects` or `npm exec nx show project <name> --json`.
@@ -311,7 +311,7 @@ Select the smallest validation set that proves the change:
 | HTTP API contract          | Backend checks plus `npm run openapi`, `npm run openapi:check`, `npm exec nx build chat-api-client`, `npm exec nx lint chat-api-client`                         |
 | Shared lib                 | Test/lint/build for the touched lib and any directly affected app when behavior is consumed, plus `npm run validate:docs` when its public API or README changed |
 | README / `docs/**`         | `npm run validate:docs`; `npm run validate:agent-docs` as well when `.claude/**`, `.agents/**`, `AGENTS.md`, or `CLAUDE.md` changed                             |
-| Broad cross-project change | `npm exec nx affected --target=lint --base=origin/development-1.0` and affected test/build targets as appropriate                                               |
+| Broad cross-project change | `npm exec nx affected --target=lint --base=origin/development` and affected test/build targets as appropriate                                                   |
 | CI-only review             | Prefer `monitor-ci` skill for Nx Cloud status and self-healing context; do not start build targets from the review job                                          |
 
 Record skipped checks with a reason. A review without a verification story is incomplete.

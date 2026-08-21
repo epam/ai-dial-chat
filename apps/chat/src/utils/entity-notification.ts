@@ -125,6 +125,10 @@ export const ENTITY_OPERATION_NOTIFICATIONS = {
     },
   },
   [NotifiableEntity.Skill]: {
+    [EntityOperation.Created]: {
+      titleKey: EntityNotificationsI18nKeys.SkillCreatedTitle,
+      messageKey: EntityNotificationsI18nKeys.SkillCreated,
+    },
     [EntityOperation.Deleted]: {
       titleKey: EntityNotificationsI18nKeys.SkillDeletedTitle,
       messageKey: EntityNotificationsI18nKeys.SkillDeleted,

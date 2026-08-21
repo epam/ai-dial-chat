@@ -31,7 +31,10 @@ import {
   type ReactNode,
 } from 'react';
 import type { CatalogItem } from '../../models/catalog-item';
-import type { CatalogContentFilePreview } from '../../models/item-details-data';
+import type {
+  CatalogContentFilePreview,
+  CatalogItemApiDetails,
+} from '../../models/item-details-data';
 import type { DetailsPanelProps } from '../../models/item-details-props';
 import { CatalogContentPreviewType } from '../../types/catalog-content-type';
 import { CatalogDetailsTab } from '../../types/detail-tab';
@@ -76,6 +79,17 @@ const CONTENT_FIRST_ENTITY_TYPES = new Set<CatalogEntityType>([
   CatalogEntityType.Prompt,
   CatalogEntityType.Skill,
 ]);
+
+/**
+ * An item is worth a Connect tab only when its api data names something to
+ * connect to — a single endpoint URL or a non-empty multi-endpoint list (e.g.
+ * a model's Chat Completions/Responses endpoints). A resource identifier
+ * alone (a model's `modelId` with no endpoints) has nothing to connect to.
+ */
+const hasConnectableApi = (
+  api: CatalogItemApiDetails | undefined,
+): api is CatalogItemApiDetails =>
+  api?.resource?.endpointUrl != null || (api?.endpoints?.length ?? 0) > 0;
 
 const NO_OP_PUBLISH = async () => undefined;
 const EMPTY_PUBLISH_FOLDERS: PublishFolderNode[] = [];
@@ -700,11 +714,13 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     }
     /*
      * Connect is pushed last, after every other tab, regardless of type. It
-     * needs a connectable endpoint URL to be worth showing: items whose api
-     * data is only a resource identifier (a model's `modelId`) have nothing
-     * to connect to.
+     * needs a connectable endpoint to be worth showing — either a single
+     * endpoint URL or a non-empty multi-endpoint list (e.g. a model's Chat
+     * Completions/Responses endpoints). Items whose api data is only a
+     * resource identifier (a model's `modelId` with no endpoints) have
+     * nothing to connect to.
      */
-    if (item.details?.api?.resource?.endpointUrl != null) {
+    if (hasConnectableApi(item.details?.api)) {
       result.push({
         id: CatalogDetailsTab.Api,
         label: texts?.tabConnectLabel ?? 'Connect',
@@ -1143,12 +1159,16 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                   />
                 )}
                 {activeTab === CatalogDetailsTab.Limits && (
-                  <LimitsTab limits={item.details?.limits} />
+                  <LimitsTab
+                    limits={item.details?.limits}
+                    costCapsSectionLabel={texts?.limitsCostCapsSectionLabel}
+                    unlimitedSectionLabel={texts?.limitsUnlimitedSectionLabel}
+                  />
                 )}
                 {activeTab === CatalogDetailsTab.Api &&
-                  item.details?.api?.resource?.endpointUrl != null && (
+                  hasConnectableApi(item.details?.api) && (
                     <ApiDetails
-                      api={item.details.api}
+                      api={item.details?.api}
                       resourceSectionLabel={texts?.apiResourceSectionLabel}
                       snippetSectionLabel={texts?.apiSnippetSectionLabel}
                       modelIdLabel={texts?.apiModelIdLabel}

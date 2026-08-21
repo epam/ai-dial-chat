@@ -92,12 +92,12 @@ const LoginPage: FC = () => {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-layer-sunken mobile:bg-layer-raised mobile:px-6">
       <div
-        className="pointer-events-none absolute inset-0 size-full mobile:hidden"
+        className="pointer-events-none absolute inset-0 size-full"
         aria-hidden="true"
       >
         <picture className="block size-full">
-          <source media="(min-width: 1920px)" srcSet="/1920_login.png" />
-          <img src="/768_login.png" alt="" className="size-full object-cover" />
+          <source media="(min-width: 1920px)" srcSet="/1920_login.svg" />
+          <img src="/768_login.svg" alt="" className="size-full object-cover" />
         </picture>
       </div>
 

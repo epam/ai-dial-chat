@@ -295,6 +295,7 @@ describe('ConversationRoute', () => {
       toolsMenuItems: [],
       onToolToggle: vi.fn(),
       toolConfigurationValue: {},
+      restoreToolConfiguration: vi.fn(),
     });
     mockUseNotification.mockReturnValue(
       createNotificationContextValue(mockShowNotification),
@@ -775,6 +776,7 @@ describe('ConversationRoute', () => {
       toolsMenuItems: [],
       onToolToggle: vi.fn(),
       toolConfigurationValue: { starter: true },
+      restoreToolConfiguration: vi.fn(),
     });
     const selectedDeploymentConfiguration: DeploymentConfigurationSchema = {
       type: 'object',

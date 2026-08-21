@@ -11,6 +11,7 @@ import {
 import { describe, expect, it } from 'vitest';
 import {
   getLastDeploymentId,
+  getLastUserMessageToolConfiguration,
   isMessageChanged,
   isMessageStreaming,
   messageHasStages,
@@ -121,6 +122,50 @@ describe('getLastDeploymentId', () => {
     expect(
       getLastDeploymentId([userMessage(), statusModelChanged('model-x')]),
     ).toBe('model-x');
+  });
+});
+
+/*
+ * ---------------------------------------------------------------------------
+ * getLastUserMessageToolConfiguration
+ * ---------------------------------------------------------------------------
+ */
+
+describe('getLastUserMessageToolConfiguration', () => {
+  it('returns undefined for an empty list', () => {
+    expect(getLastUserMessageToolConfiguration([])).toBeUndefined();
+  });
+
+  it('returns undefined when the last user message has no configuration_value', () => {
+    expect(
+      getLastUserMessageToolConfiguration([userMessage(), assistantMessage()]),
+    ).toBeUndefined();
+  });
+
+  it('returns the configuration_value from the last user message', () => {
+    const withConfig: Message = {
+      ...userMessage('second'),
+      custom_content: { configuration_value: { deep_research: true } },
+    };
+    const messages: Message[] = [
+      { ...userMessage('first'), custom_content: {} },
+      assistantMessage(),
+      withConfig,
+      assistantMessage(),
+    ];
+    expect(getLastUserMessageToolConfiguration(messages)).toEqual({
+      deep_research: true,
+    });
+  });
+
+  it('reads the configuration from the last user message while awaiting a reply', () => {
+    const withConfig: Message = {
+      ...userMessage('awaiting reply'),
+      custom_content: { configuration_value: { deep_research: true } },
+    };
+    expect(getLastUserMessageToolConfiguration([withConfig])).toEqual({
+      deep_research: true,
+    });
   });
 });
 

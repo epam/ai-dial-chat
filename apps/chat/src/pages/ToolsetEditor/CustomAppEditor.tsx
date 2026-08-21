@@ -418,15 +418,21 @@ const CustomAppEditor: FC = () => {
       });
       return;
     }
-    setSettingsErrors({});
-
     const hasMimeError = settingsForm.inputAttachmentTypes.some(
       (tag) => !MIME_TYPE_REGEX.test(tag),
     );
+    if (hasMimeError) {
+      setSettingsErrors({
+        inputAttachmentTypes: t(CustomAppI18nKeys.InvalidMimeType),
+      });
+      return;
+    }
+    setSettingsErrors({});
+
     const hasFeaturesDataError = !isValidFeaturesData(
       settingsForm.featuresData,
     );
-    if (hasMimeError || hasFeaturesDataError) {
+    if (hasFeaturesDataError) {
       setIsConfirmSaveOpen(true);
       return;
     }

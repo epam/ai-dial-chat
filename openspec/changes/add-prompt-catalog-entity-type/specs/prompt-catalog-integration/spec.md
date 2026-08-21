@@ -162,7 +162,7 @@ Failures SHALL resolve `undefined` exactly as the existing deployment path does,
 `CatalogView` SHALL wire each action for prompts as follows:
 
 - **Delete** — `handleDelete` gains a Prompt branch calling `deletePrompt(item.id)` then `refetchPrompts()`. Success and failure notifications reuse the existing `CatalogI18nKeys.DetailsDeleteSuccess*` / `DetailsDeleteError` keys.
-- **Share** — enabled. `isShareVisible` returns `true` for a personal prompt (`item.isMyApp`) and `false` for shared or organisation prompts. `SharePopoverContainer` SHALL pass `CreateShareLinkDtoResourceKindEnum.Prompt` to `useShareLink` for a Prompt item, so the backend qualifies the bucket-relative path; `canEditAccess` is `false`, since a prompt is not in `EDITABLE_ACCESS_TYPES`.
+- **Share** — enabled. `isShareVisible` returns `true` for a personal prompt (`item.isMyApp`) and `false` for shared or organisation prompts. `SharePopoverContainer` SHALL pass `CreateShareLinkDtoResourceKindEnum.Prompt` to `useShareLink` for a Prompt item, so the backend qualifies the bucket-relative path; `canEditAccess` is `true`.
 - **Favourite** — enabled. `onToggleFavorite` resolves the user-config section through `resolveFavoriteEntityType(item.type)`, which maps Prompt to `FavoriteEntityType.Prompt`, Toolset to `FavoriteEntityType.Toolset`, and everything else to `FavoriteEntityType.Deployment`. Prompts appear in the Favorites strip like any other favourited item.
 - **Download** — enabled for every prompt source. See `prompt-download` for the file format and the wiring.
 - **Edit** — enabled for personal prompts and shared prompts whose listing metadata yields `canEdit: true`; always hidden for organisation prompts even if upstream metadata unexpectedly carries `WRITE`.

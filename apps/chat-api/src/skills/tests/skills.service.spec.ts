@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { SkillsDownloadService } from '../download/skills-download.service';
+import type { SkillsImportService } from '../import/skills-import.service';
 import type { SkillsListingService } from '../listing/skills-listing.service';
 import type { SkillsMutationService } from '../mutation/skills-mutation.service';
 import { SkillsService } from '../skills.service';
@@ -37,12 +38,18 @@ describe('SkillsService', () => {
         .fn()
         .mockResolvedValue('deleteSkillGroupingFolder-result'),
     } as unknown as SkillsMutationService;
+    const importService = {
+      importSkillArchive: vi
+        .fn()
+        .mockResolvedValue('importSkillArchive-result'),
+    } as unknown as SkillsImportService;
 
     const service = new SkillsService(
       listingService,
       downloadService,
       uploadService,
       mutationService,
+      importService,
     );
 
     return {
@@ -51,6 +58,7 @@ describe('SkillsService', () => {
       downloadService,
       uploadService,
       mutationService,
+      importService,
     };
   };
 
@@ -187,6 +195,23 @@ describe('SkillsService', () => {
       '"etag"',
     );
     expect(result).toBe('uploadSkillFile-result');
+  });
+
+  it('delegates importSkillArchive to SkillsImportService', async () => {
+    const { service, importService } = makeService();
+    const result = await service.importSkillArchive(
+      'bucket',
+      'archive.zip',
+      '/tmp/archive.zip',
+      'token',
+    );
+    expect(importService.importSkillArchive).toHaveBeenCalledWith(
+      'bucket',
+      'archive.zip',
+      '/tmp/archive.zip',
+      'token',
+    );
+    expect(result).toBe('importSkillArchive-result');
   });
 
   it('delegates deleteSkill to SkillsMutationService', async () => {

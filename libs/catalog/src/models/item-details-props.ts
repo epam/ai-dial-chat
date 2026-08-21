@@ -93,6 +93,10 @@ export interface ItemDetailsTexts {
   pricingPricesSectionLabel?: string;
   /** "Usage limits" section heading in the Pricing tab. Default: `'Usage limits'`. */
   pricingLimitsSectionLabel?: string;
+  /** "Cost caps" section heading in the Limits tab. Default: `'Cost caps'`. */
+  limitsCostCapsSectionLabel?: string;
+  /** "Unlimited" section heading in the Limits tab. Default: `'Unlimited'`. */
+  limitsUnlimitedSectionLabel?: string;
   /** Accessible label for the loading placeholder shown next to the tab row while structured details are being fetched. Default: `'Loading details'`. */
   detailsLoadingAriaLabel?: string;
   /** "Log in" action button label, shown when the item's credentials are not signed in. Default: `'Log in'`. */

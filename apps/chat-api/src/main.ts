@@ -87,6 +87,8 @@ async function bootstrap() {
   const allowedIframeOrigins = configService.get('ALLOWED_IFRAME_ORIGINS', {
     infer: true,
   });
+  const secureTransport =
+    configService.get('AUTH_COOKIE_SECURE', { infer: true }) !== false;
 
   app.useBodyParser('json', {
     limit: configService.get('CONVERSATION_BODY_SIZE_LIMIT_BYTES', {
@@ -95,7 +97,9 @@ async function bootstrap() {
   });
 
   // Security headers middleware
-  app.use(helmet(createHelmetOptions(allowedIframeOrigins ?? [])));
+  app.use(
+    helmet(createHelmetOptions(allowedIframeOrigins ?? [], secureTransport)),
+  );
 
   app.useGlobalPipes(
     new ValidationPipe({
