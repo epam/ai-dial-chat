@@ -36,7 +36,7 @@ export interface FavoriteCardProps {
   removeFromFavoritesAriaLabel?: string;
   /** Whether this card represents the currently selected item — shows an accent border, tinted background, and a checkmark. Default: false. */
   isSelected?: boolean;
-  /** Credentials-status badge label shown when signed out. Default: `'LOGGED OUT'`. */
+  /** Accessible label for the logged-out warning icon on the entity avatar, and the text shown in its hover tooltip. Default: `'Authorize to use this toolset.'`. */
   credentialsBadgeLoggedOutLabel?: string;
 }
 
@@ -133,10 +133,12 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
               lastUsedClassName,
             },
           }}
-        />
-        <CredentialsBadge
-          credentials={item.credentials}
-          loggedOutLabel={credentialsBadgeLoggedOutLabel}
+          iconOverlay={
+            <CredentialsBadge
+              credentials={item.credentials}
+              loggedOutLabel={credentialsBadgeLoggedOutLabel}
+            />
+          }
         />
       </div>
       <StarToggleButton
