@@ -109,6 +109,7 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 | `@epam/ai-dial-builder-form`             | `builder-form`             | Presentational builder form for composing and editing DIAL entities          |
 | `@epam/ai-dial-deployment-creation-form` | `deployment-creation-form` | Form for creating and editing a deployment                                   |
 | `@epam/ai-dial-scheduled-tasks`          | `scheduled-tasks`          | Scheduled Tasks page shell — header, toolbar, empty state                    |
+| `@epam/ai-dial-usage-dashboard`          | `usage-dashboard`          | Aggregate daily/monthly cost-limit cards for the Settings Usage tab         |
 
 `libs/ai-dial-kit/` is a leftover build-output directory from a removed library — no `package.json`, no sources, no importers. Do not add to it.
 

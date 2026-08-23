@@ -1,0 +1,37 @@
+{
+  "name": "@epam/ai-dial-usage-dashboard",
+  "description": "Presentational aggregate cost-limit cards for the Usage settings dashboard",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@epam/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "peerDependencies": {
+    "@epam/ai-dial-chat-shared": "*",
+    "@epam/ai-dial-ui-kit": "^0.13.0",
+    "react": "^19.2.7"
+  },
+  "nx": {
+    "name": "usage-dashboard",
+    "tags": [
+      "type:ui",
+      "publishable"
+    ],
+    "targets": {
+      "publish": {
+        "command": "node tools/publish-lib.mjs {projectName} --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
+      }
+    }
+  }
+}

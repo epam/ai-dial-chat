@@ -45,4 +45,17 @@ describe('ResourceSummary', () => {
     render(<ResourceSummary item={{ ...item, version: '' }} />);
     expect(screen.queryByText(/current/)).toBeNull();
   });
+
+  it('applies a custom typography class to the version tag', () => {
+    render(
+      <ResourceSummary
+        item={item}
+        styles={{ typography: { versionTagClassName: 'custom-version' } }}
+      />,
+    );
+
+    expect(
+      screen.getByText('Version 4.0.1 · current').parentElement?.classList,
+    ).toContain('custom-version');
+  });
 });

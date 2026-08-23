@@ -20,6 +20,20 @@ export interface ResourceSummaryColors {
   versionTagText?: string;
 }
 
+/** Typography overrides for the `ResourceSummary` row. */
+export interface ResourceSummaryTypography {
+  /** Typography class applied to the version tag. Defaults to `'dial-tiny-text'`. */
+  versionTagClassName?: string;
+}
+
+/** Style overrides for `ResourceSummary`. */
+export interface ResourceSummaryStyles {
+  /** Color overrides applied as CSS custom properties. */
+  colors?: ResourceSummaryColors;
+  /** Typography class overrides. */
+  typography?: ResourceSummaryTypography;
+}
+
 /** Props for `ResourceSummary`. */
 export interface ResourceSummaryProps {
   /** Entity shown in the row as an icon, type label, name, and version tag. Ignored when `children` is set. */
@@ -34,7 +48,9 @@ export interface ResourceSummaryProps {
   iconSize?: number;
   /** CSS class applied to the row. */
   className?: string;
-  /** Color overrides applied as CSS custom properties. */
+  /** Style overrides. */
+  styles?: ResourceSummaryStyles;
+  /** Color overrides applied as CSS custom properties. Prefer `styles.colors`. */
   colors?: ResourceSummaryColors;
 }
 
@@ -46,8 +62,12 @@ export const ResourceSummary: FC<ResourceSummaryProps> = ({
   hasVersionTag = true,
   iconSize = 40,
   className,
-  colors,
+  styles: stylesProp,
+  colors: colorsProp,
 }) => {
+  const colors = stylesProp?.colors ?? colorsProp;
+  const { versionTagClassName = 'dial-tiny-text' } =
+    stylesProp?.typography ?? {};
   const cssVars = buildCssVars({
     '--rs-border': colors?.border,
     '--rs-bg': colors?.background,
@@ -69,7 +89,8 @@ export const ResourceSummary: FC<ResourceSummaryProps> = ({
       {hasVersionTag && item.version && (
         <span
           className={mergeClasses(
-            'dial-tiny-text inline-flex h-[24px] max-w-[45%] shrink-0 items-center gap-1 rounded-lg border px-2',
+            'inline-flex h-[24px] max-w-[45%] shrink-0 items-center gap-1 rounded-lg border px-2',
+            versionTagClassName,
             styles.versionTag,
           )}
         >

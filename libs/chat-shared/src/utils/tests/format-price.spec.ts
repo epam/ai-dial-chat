@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { formatPrice, formatUnitPrice } from '../format-price';
+import { formatCost, formatPrice, formatUnitPrice } from '../format-price';
+
+describe('formatCost', () => {
+  it('rounds accumulated costs to cents', () => {
+    expect(formatCost(0.788438)).toBe('$0.79');
+    expect(formatCost(0.242753)).toBe('$0.24');
+    expect(formatCost(0)).toBe('$0');
+  });
+});
 
 describe('formatPrice', () => {
   it('formats amounts of a dollar or more with up to two decimals', () => {

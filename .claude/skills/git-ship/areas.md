@@ -43,6 +43,7 @@ Apply in order, stop at the first match:
 | `conversation-panel`    | Conversation panel container and layout                       |
 | `conversation-stages`   | Stage / step rendering inside a conversation                  |
 | `scheduled-tasks`       | Scheduled tasks UI (detail view, cards, runs history)         |
+| `settings`              | Settings page, panel components, usage data, and UI           |
 | `sidebar`               | Sidebar navigation                                            |
 | `skill-editor`          | Skill editor UI and authoring components                      |
 | `source-panel`          | Sources panel                                                 |

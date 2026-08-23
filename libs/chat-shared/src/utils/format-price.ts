@@ -22,12 +22,16 @@ const smallPriceFormatter = new Intl.NumberFormat(PRICE_LOCALE, {
   maximumFractionDigits: 6,
 });
 
+/** Formats an accumulated USD cost with at most two decimals (for example, `$0.79`). */
+export const formatCost = (value: number): string =>
+  priceFormatter.format(value);
+
 /** Formats an amount as USD, keeping up to six decimals for sub-dollar values (e.g. `$3`, `$0.3`). */
 export const formatPrice = (value: number): string => {
   if (value !== 0 && Math.abs(value) < 1) {
     return smallPriceFormatter.format(value);
   }
-  return priceFormatter.format(value);
+  return formatCost(value);
 };
 
 /*
